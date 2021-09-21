@@ -261,12 +261,12 @@ impl OpCode {
     }
 
 	#[inline]
-    fn as_u8(&self) -> u8 {
+    pub fn as_u8(&self) -> u8 {
 		*self as u8
 	}
 
 	#[inline]
-    fn as_usize(&self) -> usize {
+    pub const fn as_usize(&self) -> usize {
 		*self as usize
 	}
 }

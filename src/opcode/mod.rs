@@ -9,17 +9,14 @@ mod system;
 
 pub use opcode_type::OpCode;
 
-use crate::{
-    error::{ExitError, ExitFatal, ExitReason, ExitSucceed},
-    CallScheme, Handler, Machine,
-};
+use crate::{CallScheme, ExtHandler, Handler, Machine, error::{ExitError, ExitFatal, ExitReason, ExitSucceed}, spec::Spec};
 use core::ops::{BitAnd, BitOr, BitXor};
 use primitive_types::{H256, U256};
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub enum Control {
-    ContinueOne,
-    Continue(usize),
+    Continue,
+    ContinueN(usize),
     Exit(ExitReason),
     Jump(usize),
 }
@@ -181,7 +178,7 @@ fn eval_msize(state: &mut Machine) -> Control {
 }
 
 fn eval_jumpdest() -> Control {
-    Control::Continue(1)
+    Control::Continue
 }
 
 fn eval_push1(state: &mut Machine, position: usize) -> Control {
@@ -453,7 +450,7 @@ fn eval_invalid() -> Control {
 }
 
 #[inline]
-pub fn eval<H: Handler, const CALL_TRACE: bool, const GAS_TRACE: bool, const OPCODE_TRACE: bool>(
+pub fn eval<H: ExtHandler, SPEC: Spec, const CALL_TRACE: bool, const GAS_TRACE: bool, const OPCODE_TRACE: bool>(
     state: &mut Machine,
     opcode: OpCode,
     position: usize,

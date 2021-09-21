@@ -3,13 +3,7 @@ use std::{ops::Range, rc::Rc};
 use super::opcode::eval;
 use primitive_types::U256;
 
-use crate::{
-    error::{ExitReason, ExitSucceed},
-    memory::Memory,
-    opcode::{Control, OpCode},
-    stack::Stack,
-    Context, Handler,
-};
+use crate::{Context, ExtHandler, Handler, error::{ExitReason, ExitSucceed}, memory::Memory, opcode::{Control, OpCode}, spec::Spec, stack::Stack};
 
 pub struct Machine {
     /// Program data.
@@ -34,6 +28,29 @@ pub struct Machine {
 }
 
 impl Machine {
+    pub fn new(code: Vec<u8>, context: Context) -> Self {
+        Self {
+            /// Program data.
+            data: Rc::new(Vec::new()),
+            /// Program code.
+            code: Rc::new(Vec::new()),
+            /// Program counter.
+            program_counter: 0,
+            /// Return value.
+            return_range: Range::default(),
+            /// Code validity maps.
+            valid_jump_addresses: ValidJumpAddress::new(&code),
+            /// Memory.
+            memory: Memory::new(100),
+            /// Stack.
+            stack: Stack::new(),
+            /// machine execution contexts,
+            context,
+            /// Return stuff
+            status: Ok(()),
+            return_data_buffer: Vec::new(),
+        }
+    }
     /// Reference of machine stack.
     pub fn stack(&self) -> &Stack {
         &self.stack
@@ -55,52 +72,56 @@ impl Machine {
         self.program_counter
     }
 
-	/// loop steps until we are finished with execution
-	pub fn run<H: Handler, const GAS_TRACE: bool>(&mut self, handler: &mut H) -> Result<(),ExitReason> {
-		loop {
-			self.step::<H,GAS_TRACE>(handler)?
-		}
-	}
+    /// loop steps until we are finished with execution
+    pub fn run<H: ExtHandler, SPEC: Spec>(&mut self, handler: &mut H) -> ExitReason {
+        loop {
+            if let Err(reson) = self.step::<H, SPEC>(handler) {
+                return reson;
+            }
+        }
+    }
 
     #[inline]
     /// Step the machine, executing one opcode. It then returns.
-    pub fn step<H: Handler, const GAS_TRACE: bool>(
+    pub fn step<H: ExtHandler, SPEC: Spec>(
         &mut self,
         handler: &mut H,
     ) -> Result<(), ExitReason> {
         let program_counter = self.program_counter;
 
-        // extract opcode from code and do prevalidating for gas computation
+        // extract next opcode from code
         let opcode = self
             .code
             .get(program_counter)
             .map(|&opcode| OpCode::try_from_u8(opcode))
             .flatten();
-        // if there is no opcode in code or OpCode is invalid return error.
+        // if there is no opcode in code or OpCode is invalid, return error.
         if opcode.is_none() {
             self.status = Err(ExitSucceed::Stopped.into());
             return Err(ExitSucceed::Stopped.into());
         }
         let opcode = opcode.unwrap();
 
-        // call prevalidation to calcuate gas for this opcode
-        match handler.pre_validate::<GAS_TRACE>(&self.context, opcode, &self.stack) {
+        // call prevalidation to calcuate gas consumption for this opcode
+        handler.trace_opcode(&self.context, opcode, &self.stack);
+        /*
+        match handler.opcode(&self.context, opcode, &self.stack) {
             Ok(()) => (),
             Err(e) => {
                 self.status = Err(ExitReason::Error(e));
                 return self.status.clone();
             }
-        }
-        // check status and return if not present
+        }*/
+        // check machine status and return if not present
         self.status.as_ref().map_err(|reason| reason.clone())?;
 
-		// evaluate next opcode
-        match eval::<H, false, false, false>(self, opcode, program_counter, handler) {
-            Control::ContinueOne => {
+        // evaluate opcode/execute instruction
+        match eval::<H, SPEC, false, false, false>(self, opcode, program_counter, handler) {
+            Control::Continue => {
                 self.program_counter = program_counter + 1;
                 Ok(())
             }
-            Control::Continue(p) => {
+            Control::ContinueN(p) => {
                 self.program_counter = program_counter + p;
                 Ok(())
             }
@@ -112,6 +133,32 @@ impl Machine {
                 self.program_counter = p;
                 Ok(())
             }
+        }
+    }
+
+    /// Copy and get the return value of the machine, if any.
+    pub fn return_value(&self) -> Vec<u8> {
+        if self.return_range.start > U256::from(usize::MAX) {
+            let mut ret = Vec::new();
+            ret.resize(
+                (self.return_range.end - self.return_range.start).as_usize(),
+                0,
+            );
+            ret
+        } else if self.return_range.end > U256::from(usize::MAX) {
+            let mut ret = self.memory.get(
+                self.return_range.start.as_usize(),
+                usize::MAX - self.return_range.start.as_usize(),
+            );
+            while ret.len() < (self.return_range.end - self.return_range.start).as_usize() {
+                ret.push(0);
+            }
+            ret
+        } else {
+            self.memory.get(
+                self.return_range.start.as_usize(),
+                (self.return_range.end - self.return_range.start).as_usize(),
+            )
         }
     }
 }

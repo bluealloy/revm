@@ -1,25 +1,4 @@
-
-
-pub enum EvmError {
-    StackOverflow,
-    StackUnderflow,
-}
-
-use crate::opcode::OpCode;
 use alloc::borrow::Cow;
-
-/// Trap which indicates that an `ExternalOpcode` has to be handled.
-//pub type Trap = OpCode;
-
-// /// Capture represents the result of execution.
-// #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-// pub enum Capture<E, T> {
-// 	/// The machine has exited. It cannot be executed again.
-// 	Exit(E),
-// 	/// The machine has trapped. It is waiting for external information, and can
-// 	/// be executed again.
-// 	Trap(T),
-// }
 
 /// Exit reason.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -94,7 +73,7 @@ impl From<ExitRevert> for ExitReason {
 }
 
 /// Exit error reason.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone,Copy, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "with-codec", derive(codec::Encode, codec::Decode))]
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ExitError {
@@ -128,8 +107,8 @@ pub enum ExitError {
 	/// Attempt to create an empty account (runtime, unused).
 	CreateEmpty,
 
-	/// Other normal errors.
-	Other(Cow<'static, str>),
+	// Other normal errors.
+	//Other(Cow<'static, str>),
 }
 
 impl From<ExitError> for ExitReason {
@@ -145,8 +124,6 @@ impl From<ExitError> for ExitReason {
 pub enum ExitFatal {
 	/// The operation is not supported.
 	NotSupported,
-	/// The trap (interrupt) is unhandled.
-	UnhandledInterrupt,
 	/// The environment explictly set call errors as fatal error.
 	CallErrorAsFatal(ExitError),
 

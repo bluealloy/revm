@@ -1,12 +1,13 @@
 use super::Control;
 use crate::{
     error::{ExitError, ExitFatal, ExitReason, ExitSucceed},
-    CallScheme, Context, CreateScheme, Handler, Machine, Transfer,
+    CallScheme, Context, CreateScheme, ExtHandler, Machine, Transfer,
 };
 // 	CallScheme, Capture, Context, CreateScheme, ,
 // 	, Runtime, Transfer,
 // };
 use alloc::vec::Vec;
+use bytes::{Bytes, BytesMut};
 use core::cmp::min;
 use primitive_types::{H256, U256};
 use sha3::{Digest, Keccak256};
@@ -27,47 +28,47 @@ pub fn sha3(machine: &mut Machine) -> Control {
     let ret = Keccak256::digest(data.as_slice());
     push!(machine, H256::from_slice(ret.as_slice()));
 
-    Control::ContinueOne
+    Control::Continue
 }
 
-pub fn chainid<H: Handler>(machine: &mut Machine, handler: &H) -> Control {
+pub fn chainid<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
     push_u256!(machine, handler.chain_id());
 
-    Control::ContinueOne
+    Control::Continue
 }
 
 pub fn address(machine: &mut Machine) -> Control {
     let ret = H256::from(machine.context.address);
     push!(machine, ret);
 
-    Control::ContinueOne
+    Control::Continue
 }
 
-pub fn balance<H: Handler>(machine: &mut Machine, handler: &H) -> Control {
+pub fn balance<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
     pop!(machine, address);
-    push_u256!(machine, handler.balance(address.into()));
+    push_u256!(machine, handler.balance(address.into()).0);
 
-    Control::ContinueOne
+    Control::Continue
 }
 
-pub fn selfbalance<H: Handler>(machine: &mut Machine, handler: &H) -> Control {
-    push_u256!(machine, handler.balance(machine.context.address));
+pub fn selfbalance<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
+    push_u256!(machine, handler.balance(machine.context.address).0);
 
-    Control::ContinueOne
+    Control::Continue
 }
 
-pub fn origin<H: Handler>(machine: &mut Machine, handler: &H) -> Control {
+pub fn origin<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
     let ret = H256::from(handler.origin());
     push!(machine, ret);
 
-    Control::ContinueOne
+    Control::Continue
 }
 
 pub fn caller(machine: &mut Machine) -> Control {
     let ret = H256::from(machine.context.caller);
     push!(machine, ret);
 
-    Control::ContinueOne
+    Control::Continue
 }
 
 pub fn callvalue(machine: &mut Machine) -> Control {
@@ -75,32 +76,32 @@ pub fn callvalue(machine: &mut Machine) -> Control {
     machine.context.apparent_value.to_big_endian(&mut ret[..]);
     push!(machine, ret);
 
-    Control::ContinueOne
+    Control::Continue
 }
 
-pub fn gasprice<H: Handler>(machine: &mut Machine, handler: &H) -> Control {
+pub fn gasprice<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
     let mut ret = H256::default();
     handler.gas_price().to_big_endian(&mut ret[..]);
     push!(machine, ret);
 
-    Control::ContinueOne
+    Control::Continue
 }
 
-pub fn extcodesize<H: Handler>(machine: &mut Machine, handler: &H) -> Control {
+pub fn extcodesize<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
     pop!(machine, address);
-    push_u256!(machine, handler.code_size(address.into()));
+    push_u256!(machine, handler.code_size(address.into()).0);
 
-    Control::ContinueOne
+    Control::Continue
 }
 
-pub fn extcodehash<H: Handler>(machine: &mut Machine, handler: &H) -> Control {
+pub fn extcodehash<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
     pop!(machine, address);
-    push!(machine, handler.code_hash(address.into()));
+    push!(machine, handler.code_hash(address.into()).0);
 
-    Control::ContinueOne
+    Control::Continue
 }
 
-pub fn extcodecopy<H: Handler>(machine: &mut Machine, handler: &H) -> Control {
+pub fn extcodecopy<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
     pop!(machine, address);
     pop_u256!(machine, memory_offset, code_offset, len);
 
@@ -109,20 +110,20 @@ pub fn extcodecopy<H: Handler>(machine: &mut Machine, handler: &H) -> Control {
         memory_offset,
         code_offset,
         len,
-        &handler.code(address.into()),
+        &handler.code(address.into()).0,
     ) {
         Ok(()) => (),
         Err(e) => return Control::Exit(e.into()),
     };
 
-    Control::ContinueOne
+    Control::Continue
 }
 
 pub fn returndatasize(machine: &mut Machine) -> Control {
     let size = U256::from(machine.return_data_buffer.len());
     push_u256!(machine, size);
 
-    Control::ContinueOne
+    Control::Continue
 }
 
 pub fn returndatacopy(machine: &mut Machine) -> Control {
@@ -141,47 +142,47 @@ pub fn returndatacopy(machine: &mut Machine) -> Control {
         .memory
         .copy_large(memory_offset, data_offset, len, &machine.return_data_buffer)
     {
-        Ok(()) => Control::ContinueOne,
+        Ok(()) => Control::Continue,
         Err(e) => Control::Exit(e.into()),
     }
 }
 
-pub fn blockhash<H: Handler>(machine: &mut Machine, handler: &H) -> Control {
+pub fn blockhash<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
     pop_u256!(machine, number);
     push!(machine, handler.block_hash(number));
 
-    Control::ContinueOne
+    Control::Continue
 }
 
-pub fn coinbase<H: Handler>(machine: &mut Machine, handler: &H) -> Control {
+pub fn coinbase<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
     push!(machine, handler.block_coinbase().into());
-    Control::ContinueOne
+    Control::Continue
 }
 
-pub fn timestamp<H: Handler>(machine: &mut Machine, handler: &H) -> Control {
+pub fn timestamp<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
     push_u256!(machine, handler.block_timestamp());
-    Control::ContinueOne
+    Control::Continue
 }
 
-pub fn number<H: Handler>(machine: &mut Machine, handler: &H) -> Control {
+pub fn number<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
     push_u256!(machine, handler.block_number());
-    Control::ContinueOne
+    Control::Continue
 }
 
-pub fn difficulty<H: Handler>(machine: &mut Machine, handler: &H) -> Control {
+pub fn difficulty<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
     push_u256!(machine, handler.block_difficulty());
-    Control::ContinueOne
+    Control::Continue
 }
 
-pub fn gaslimit<H: Handler>(machine: &mut Machine, handler: &H) -> Control {
+pub fn gaslimit<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
     push_u256!(machine, handler.block_gas_limit());
-    Control::ContinueOne
+    Control::Continue
 }
 
-pub fn sload<H: Handler, const OPCODE_TRACE: bool>(machine: &mut Machine, handler: &H) -> Control {
+pub fn sload<H: ExtHandler, const OPCODE_TRACE: bool>(machine: &mut Machine, handler: &mut H) -> Control {
     pop!(machine, index);
     let value = handler.storage(machine.context.address, index);
-    push!(machine, value);
+    push!(machine, value.0);
     // if OPCODE_TRACE {
     // 	event!(SLoad {
     // 		address: machine.context.address,
@@ -190,10 +191,10 @@ pub fn sload<H: Handler, const OPCODE_TRACE: bool>(machine: &mut Machine, handle
     // 	});
     // }
 
-    Control::ContinueOne
+    Control::Continue
 }
 
-pub fn sstore<H: Handler, const OPCODE_TRACE: bool>(
+pub fn sstore<H: ExtHandler, const OPCODE_TRACE: bool>(
     machine: &mut Machine,
     handler: &mut H,
 ) -> Control {
@@ -207,28 +208,28 @@ pub fn sstore<H: Handler, const OPCODE_TRACE: bool>(
     // }
 
     match handler.set_storage(machine.context.address, index, value) {
-        Ok(()) => Control::ContinueOne,
+        Ok(_) => Control::Continue,
         Err(e) => Control::Exit(e.into()),
     }
 }
 
-pub fn gas<H: Handler>(machine: &mut Machine, handler: &H) -> Control {
+pub fn gas<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
     push_u256!(machine, handler.gas_left());
 
-    Control::ContinueOne
+    Control::Continue
 }
 
-pub fn log<H: Handler>(machine: &mut Machine, n: u8, handler: &mut H) -> Control {
+pub fn log<H: ExtHandler>(machine: &mut Machine, n: u8, handler: &mut H) -> Control {
     pop_u256!(machine, offset, len);
 
     try_or_fail!(machine.memory_mut().resize_offset(offset, len));
     let data = if len == U256::zero() {
-        Vec::new()
+        Bytes::new()
     } else {
         let offset = as_usize_or_fail!(offset);
         let len = as_usize_or_fail!(len);
 
-        machine.memory().get(offset, len)
+        Bytes::from(machine.memory().get(offset, len))
     };
 
     let mut topics = Vec::new();
@@ -241,13 +242,11 @@ pub fn log<H: Handler>(machine: &mut Machine, n: u8, handler: &mut H) -> Control
         }
     }
 
-    match handler.log(machine.context.address, topics, data) {
-        Ok(()) => Control::ContinueOne,
-        Err(e) => Control::Exit(e.into()),
-    }
+    handler.log(machine.context.address, topics, data);
+    Control::Continue
 }
 
-pub fn suicide<H: Handler, const CALL_TRACE: bool>(
+pub fn suicide<H: ExtHandler, const CALL_TRACE: bool>(
     machine: &mut Machine,
     handler: &mut H,
 ) -> Control {
@@ -262,7 +261,7 @@ pub fn suicide<H: Handler, const CALL_TRACE: bool>(
 }
 
 pub fn create<
-    H: Handler,
+    H: ExtHandler,
     const CALL_TRACE: bool,
     const GAS_TRACE: bool,
     const OPCODE_TRACE: bool,
@@ -312,15 +311,15 @@ pub fn create<
     match reason {
         ExitReason::Succeed(_) => {
             push!(machine, create_address);
-            Control::ContinueOne
+            Control::Continue
         }
         ExitReason::Revert(_) => {
             push!(machine, H256::default());
-            Control::ContinueOne
+            Control::Continue
         }
         ExitReason::Error(_) => {
             push!(machine, H256::default());
-            Control::ContinueOne
+            Control::Continue
         }
         ExitReason::Fatal(e) => {
             push!(machine, H256::default());
@@ -329,7 +328,7 @@ pub fn create<
     }
 }
 
-pub fn call<H: Handler, const CALL_TRACE: bool, const GAS_TRACE: bool, const OPCODE_TRACE: bool>(
+pub fn call<H: ExtHandler, const CALL_TRACE: bool, const GAS_TRACE: bool, const OPCODE_TRACE: bool>(
     machine: &mut Machine,
     scheme: CallScheme,
     handler: &mut H,
@@ -421,11 +420,11 @@ pub fn call<H: Handler, const CALL_TRACE: bool, const GAS_TRACE: bool, const OPC
             ) {
                 Ok(()) => {
                     push_u256!(machine, U256::one());
-                    Control::ContinueOne
+                    Control::Continue
                 }
                 Err(_) => {
                     push_u256!(machine, U256::zero());
-                    Control::ContinueOne
+                    Control::Continue
                 }
             }
         }
@@ -439,12 +438,12 @@ pub fn call<H: Handler, const CALL_TRACE: bool, const GAS_TRACE: bool, const OPC
                 &machine.return_data_buffer,
             );
 
-            Control::ContinueOne
+            Control::Continue
         }
         ExitReason::Error(_) => {
             push_u256!(machine, U256::zero());
 
-            Control::ContinueOne
+            Control::Continue
         }
         ExitReason::Fatal(e) => {
             push_u256!(machine, U256::zero());
