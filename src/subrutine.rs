@@ -8,7 +8,7 @@ use std::{
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
 
-use crate::{error::ExitError, Basic, Log};
+use crate::{error::ExitError, Basic, Log, Transfer};
 
 pub struct SubRutine {
     /// Applied changes to our state
@@ -40,6 +40,8 @@ impl SubRutine {
             depth: 0,
         }
     }
+
+    pub fn touch(&mut self, address: H160) {}
 
     pub fn depth(&self) -> usize {
         self.depth

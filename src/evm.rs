@@ -1,4 +1,7 @@
-use std::{marker::PhantomData, process::ExitStatus};
+use std::{
+    marker::PhantomData,
+    process::{exit, ExitStatus},
+};
 
 use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
@@ -106,9 +109,9 @@ impl<'a, SPEC: Spec> EVM<'a, SPEC> {
         // create new machine and execute init function
         let contract = Contract::new(Bytes::new(), init_code, address, caller, value);
         let mut machine = Machine::new(contract);
-        let res = machine.run::<Self, SPEC>(self);
+        let exit_reason = machine.run::<Self, SPEC>(self);
         // handler error if present on execution
-        match res {
+        match exit_reason {
             ExitReason::Succeed(s) => {
                 // if ok, check contract creation limit and calculate gas deduction on output len.
                 let out = machine.return_value();
@@ -134,7 +137,7 @@ impl<'a, SPEC: Spec> EVM<'a, SPEC> {
             }
             ExitReason::Error(_) | ExitReason::Fatal(_) => {
                 let _ = self.subrutine.exit_discard(checkpoint);
-                (res.clone(), None, machine.return_value())
+                (exit_reason.clone(), None, machine.return_value())
             }
         }
     }
@@ -151,7 +154,66 @@ impl<'a, SPEC: Spec> EVM<'a, SPEC> {
         take_stipend: bool,
         context: Context,
     ) -> (ExitReason, Bytes) {
-        todo!()
+        // call trace_opcode.
+        // self.trace_opcode(contract, opcode, stack)
+
+        // wtf is l64  calculate it here and set gas
+        let mut gas_limit: u64 = 0;
+
+        // Check stipend and if we are transfering some value
+
+        if let Some(transfer) = transfer.as_ref() {
+            if take_stipend && transfer.value != U256::zero() {
+                gas_limit = gas_limit.saturating_add(SPEC::call_stipend);
+            }
+        }
+
+        // get code that we want to call
+        let (code, _) = self.code(code_address);
+        // Create subrutine checkpoint
+        let checkpoint = self.subrutine.create_checkpoint();
+        // TODO touch address
+        self.subrutine.touch(context.address);
+        // check depth of calls
+        if self.subrutine.depth() > SPEC::call_stack_limit {
+            return (ExitError::CallTooDeep.into(), Bytes::new());
+        }
+
+        // transfer value from caller to called address;
+        if let Some(transfer) = transfer {
+            if let Err(e) =
+                self.subrutine
+                    .transfer(transfer.source, transfer.target, transfer.value)
+            {
+                let _ = self.subrutine.exit_revert(checkpoint);
+                return (ExitReason::Error(e), Bytes::new());
+            }
+        }
+        // TODO check if we are calling PRECOMPILES and call it here and return.
+        // create machine and execute it
+        let contract = Contract::new(
+            input,
+            code,
+            context.address,
+            context.caller,
+            context.apparent_value,
+        );
+        let mut machine = Machine::new(contract);
+        let exit_reason = machine.run::<Self, SPEC>(self);
+        match exit_reason {
+            ExitReason::Succeed(_) => {
+                let _ = self.subrutine.exit_revert(checkpoint);
+                (exit_reason, machine.return_value())
+            }
+            ExitReason::Revert(revert) => {
+                let _ = self.subrutine.exit_revert(checkpoint);
+                (exit_reason, machine.return_value())
+            }
+            ExitReason::Error(_) | ExitReason::Fatal(_) => {
+                let _ = self.subrutine.exit_discard(checkpoint);
+                (exit_reason, machine.return_value())
+            }
+        }
     }
 }
 
