@@ -7,7 +7,8 @@ use crate::{
     error::{ExitError, ExitReason, ExitSucceed},
     opcode::OpCode,
     spec::Spec,
-    stack::Stack,
+    machine::Stack,
+    db::Database,
     subrutine::SubRutine,
     Basic, Context, CreateScheme, GlobalContext, Log, Machine, Transfer,
 };
@@ -295,25 +296,6 @@ impl<'a, SPEC: Spec> Handler for EVM<'a, SPEC> {
 impl<'a, SPEC: Spec> Tracing for EVM<'a, SPEC> {}
 impl<'a, SPEC: Spec> ExtHandler2 for EVM<'a, SPEC> {}
 impl<'a, SPEC: Spec> ExtHandler for EVM<'a, SPEC> {}
-
-pub trait Database {
-    /// Whether account at address exists.
-    fn exists(&mut self, address: H160) -> bool;
-    /// Get basic account information.
-    fn basic(&mut self, address: H160) -> Basic;
-    /// Get account code.
-    fn code(&mut self, address: H160) -> Bytes;
-    /// Get storage value of address at index.
-    fn storage(&mut self, address: H160, index: H256) -> H256;
-    /// Get original storage value of address at index, if available.
-    fn original_storage(&mut self, address: H160, index: H256) -> Option<H256>;
-
-    // History related
-    fn block_hash(&mut self, number: U256) -> H256;
-
-    //apply
-    //traces
-}
 
 /// EVM context handler.
 pub trait Handler {

@@ -9,7 +9,7 @@ extern crate alloc;
 use alloc::vec::Vec;
 use core::cmp::max;
 use std::marker::PhantomData;
-use crate::{error::ExitError,opcode::OpCode, stack::Stack,ExtHandler};
+use crate::{error::ExitError,opcode::OpCode, machine::Stack,ExtHandler};
 use primitive_types::{H160, H256, U256};
 use super::{calc,constants};
 

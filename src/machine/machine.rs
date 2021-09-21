@@ -1,9 +1,10 @@
 use std::{ops::Range, rc::Rc};
 
-use super::opcode::eval;
+use crate::opcode::eval;
 use primitive_types::U256;
 
-use crate::{Context, ExtHandler, Handler, error::{ExitReason, ExitSucceed}, memory::Memory, opcode::{Control, OpCode}, spec::Spec, stack::Stack};
+use crate::{Context, ExtHandler, Handler, error::{ExitReason, ExitSucceed}, opcode::{Control, OpCode}, spec::Spec};
+use super::{memory::Memory,stack::Stack};
 
 pub struct Machine {
     /// Program data.

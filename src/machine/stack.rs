@@ -1,5 +1,5 @@
 use primitive_types::H256;
-use super::error::ExitError;
+use crate::error::ExitError;
 
 pub const STACK_MAX_LIMIT: usize = 1000000;
 
