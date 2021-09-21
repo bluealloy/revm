@@ -10,7 +10,7 @@ mod spec;
 mod subrutine;
 mod utils;
 
-pub use evm::{EVM, ExtHandler, Handler};
+pub use evm::{ExtHandler, Handler, EVM};
 pub use machine::Machine;
 pub use models::*;
 
@@ -23,5 +23,4 @@ fn main() {
     let mut db = db::DummyDB;
     let context = GlobalContext::default();
     let evm = EVM::<BerlinSpec>::new(&mut db as &mut dyn Database, context);
-    
 }

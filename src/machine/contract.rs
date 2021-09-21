@@ -19,13 +19,7 @@ pub struct Contract {
 }
 
 impl Contract {
-    pub fn new(
-        input: Bytes,
-        code: Bytes,
-        address: H160,
-        caller: H160,
-        value: U256,
-    ) -> Self {
+    pub fn new(input: Bytes, code: Bytes, address: H160, caller: H160, value: U256) -> Self {
         let jumpdest = ValidJumpAddress::new(code.as_ref());
         Self {
             input,

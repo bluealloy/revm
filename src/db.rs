@@ -22,7 +22,6 @@ pub trait Database {
     //traces
 }
 
-
 pub struct DummyDB;
 
 impl Database for DummyDB {

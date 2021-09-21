@@ -4,9 +4,13 @@ use crate::opcode::eval;
 use bytes::Bytes;
 use primitive_types::U256;
 
-use crate::{Context, ExtHandler, Handler, error::{ExitReason, ExitSucceed}, opcode::{Control, OpCode}, spec::Spec};
 use super::{contract::Contract, memory::Memory, stack::Stack};
-
+use crate::{
+    error::{ExitReason, ExitSucceed},
+    opcode::{Control, OpCode},
+    spec::Spec,
+    Context, ExtHandler, Handler,
+};
 
 pub struct Machine {
     /// Contract information and invoking data
@@ -72,14 +76,12 @@ impl Machine {
 
     #[inline]
     /// Step the machine, executing one opcode. It then returns.
-    pub fn step<H: ExtHandler, SPEC: Spec>(
-        &mut self,
-        handler: &mut H,
-    ) -> Result<(), ExitReason> {
+    pub fn step<H: ExtHandler, SPEC: Spec>(&mut self, handler: &mut H) -> Result<(), ExitReason> {
         let program_counter = self.program_counter;
 
         // extract next opcode from code
-        let opcode = self.contract
+        let opcode = self
+            .contract
             .code
             .get(program_counter)
             .map(|&opcode| OpCode::try_from_u8(opcode))
@@ -135,10 +137,13 @@ impl Machine {
             );
             Bytes::from(ret)
         } else if self.return_range.end > U256::from(usize::MAX) {
-            let mut ret = self.memory.get(
-                self.return_range.start.as_usize(),
-                usize::MAX - self.return_range.start.as_usize(),
-            ).to_vec();
+            let mut ret = self
+                .memory
+                .get(
+                    self.return_range.start.as_usize(),
+                    usize::MAX - self.return_range.start.as_usize(),
+                )
+                .to_vec();
             while ret.len() < (self.return_range.end - self.return_range.start).as_usize() {
                 ret.push(0);
             }

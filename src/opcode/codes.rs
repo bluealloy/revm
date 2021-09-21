@@ -1,4 +1,3 @@
-
 use num_enum::TryFromPrimitive;
 use std::convert::TryFrom;
 /// Opcode enum. One-to-one corresponding to an `u8` value.
@@ -10,92 +9,92 @@ use std::convert::TryFrom;
 #[repr(u8)]
 #[derive(Eq, PartialEq, TryFromPrimitive, Ord, PartialOrd, Clone, Copy, Debug, Hash)]
 pub enum OpCode {
-	/// `STOP`
-	STOP =  0x00,
-	/// `ADD`
+    /// `STOP`
+    STOP = 0x00,
+    /// `ADD`
     ADD = 0x01,
-	/// `MUL`
+    /// `MUL`
     MUL = 0x02,
-	/// `SUB`
+    /// `SUB`
     SUB = 0x03,
-	/// `DIV`
+    /// `DIV`
     DIV = 0x04,
-	/// `SDIV`
+    /// `SDIV`
     SDIV = 0x05,
-	/// `MOD`
+    /// `MOD`
     MOD = 0x06,
-	/// `SMOD`
+    /// `SMOD`
     SMOD = 0x07,
-	/// `ADDMOD`
+    /// `ADDMOD`
     ADDMOD = 0x08,
-	/// `MULMOD`
+    /// `MULMOD`
     MULMOD = 0x09,
-	/// `EXP`
+    /// `EXP`
     EXP = 0x0a,
-	/// `SIGNEXTEND`
+    /// `SIGNEXTEND`
     SIGNEXTEND = 0x0b,
 
-	/// `LT`
+    /// `LT`
     LT = 0x10,
-	/// `GT`
+    /// `GT`
     GT = 0x11,
-	/// `SLT`
+    /// `SLT`
     SLT = 0x12,
-	/// `SGT`
+    /// `SGT`
     SGT = 0x13,
-	/// `EQ`
+    /// `EQ`
     EQ = 0x14,
-	/// `ISZERO`
+    /// `ISZERO`
     ISZERO = 0x15,
-	/// `AND`
+    /// `AND`
     AND = 0x16,
-	/// `OR`
+    /// `OR`
     OR = 0x17,
-	/// `XOR`
+    /// `XOR`
     XOR = 0x18,
-	/// `NOT`
+    /// `NOT`
     NOT = 0x19,
-	/// `BYTE`
+    /// `BYTE`
     BYTE = 0x1a,
 
-	/// `CALLDATALOAD`
+    /// `CALLDATALOAD`
     CALLDATALOAD = 0x35,
-	/// `CALLDATASIZE`
+    /// `CALLDATASIZE`
     CALLDATASIZE = 0x36,
-	/// `CALLDATACOPY`
+    /// `CALLDATACOPY`
     CALLDATACOPY = 0x37,
-	/// `CODESIZE`
+    /// `CODESIZE`
     CODESIZE = 0x38,
-	/// `CODECOPY`
+    /// `CODECOPY`
     CODECOPY = 0x39,
 
-	/// `SHL`
+    /// `SHL`
     SHL = 0x1b,
-	/// `SHR`
+    /// `SHR`
     SHR = 0x1c,
-	/// `SAR`
+    /// `SAR`
     SAR = 0x1d,
 
-	/// `POP`
+    /// `POP`
     POP = 0x50,
-	/// `MLOAD`
+    /// `MLOAD`
     MLOAD = 0x51,
-	/// `MSTORE`
+    /// `MSTORE`
     MSTORE = 0x52,
-	/// `MSTORE8`
+    /// `MSTORE8`
     MSTORE8 = 0x53,
-	/// `JUMP`
+    /// `JUMP`
     JUMP = 0x56,
-	/// `JUMPI`
+    /// `JUMPI`
     JUMPI = 0x57,
-	/// `PC`
+    /// `PC`
     PC = 0x58,
-	/// `MSIZE`
+    /// `MSIZE`
     MSIZE = 0x59,
-	/// `JUMPDEST`
+    /// `JUMPDEST`
     JUMPDEST = 0x5b,
 
-	/// `PUSHn`
+    /// `PUSHn`
     PUSH1 = 0x60,
     PUSH2 = 0x61,
     PUSH3 = 0x62,
@@ -129,7 +128,7 @@ pub enum OpCode {
     PUSH31 = 0x7e,
     PUSH32 = 0x7f,
 
-	/// `DUPn`
+    /// `DUPn`
     DUP1 = 0x80,
     DUP2 = 0x81,
     DUP3 = 0x82,
@@ -147,7 +146,7 @@ pub enum OpCode {
     DUP15 = 0x8e,
     DUP16 = 0x8f,
 
-	/// `SWAPn`
+    /// `SWAPn`
     SWAP1 = 0x90,
     SWAP2 = 0x91,
     SWAP3 = 0x92,
@@ -165,87 +164,87 @@ pub enum OpCode {
     SWAP15 = 0x9e,
     SWAP16 = 0x9f,
 
-	/// `RETURN`
+    /// `RETURN`
     RETURN = 0xf3,
-	/// `REVERT`
+    /// `REVERT`
     REVERT = 0xfd,
 
-	/// `INVALID`
+    /// `INVALID`
     INVALID = 0xfe,
 
-	/// `SHA3`
+    /// `SHA3`
     SHA3 = 0x20,
-	/// `ADDRESS`
+    /// `ADDRESS`
     ADDRESS = 0x30,
-	/// `BALANCE`
+    /// `BALANCE`
     BALANCE = 0x31,
-	/// `SELFBALANCE`
+    /// `SELFBALANCE`
     SELFBALANCE = 0x47,
-	/// `ORIGIN`
+    /// `ORIGIN`
     ORIGIN = 0x32,
-	/// `CALLER`
+    /// `CALLER`
     CALLER = 0x33,
-	/// `CALLVALUE`
+    /// `CALLVALUE`
     CALLVALUE = 0x34,
-	/// `GASPRICE`
+    /// `GASPRICE`
     GASPRICE = 0x3a,
-	/// `EXTCODESIZE`
+    /// `EXTCODESIZE`
     EXTCODESIZE = 0x3b,
-	/// `EXTCODECOPY`
+    /// `EXTCODECOPY`
     EXTCODECOPY = 0x3c,
-	/// `EXTCODEHASH`
+    /// `EXTCODEHASH`
     EXTCODEHASH = 0x3f,
-	/// `RETURNDATASIZE`
+    /// `RETURNDATASIZE`
     RETURNDATASIZE = 0x3d,
-	/// `RETURNDATACOPY`
+    /// `RETURNDATACOPY`
     RETURNDATACOPY = 0x3e,
-	/// `BLOCKHASH`
+    /// `BLOCKHASH`
     BLOCKHASH = 0x40,
-	/// `COINBASE`
+    /// `COINBASE`
     COINBASE = 0x41,
-	/// `TIMESTAMP`
+    /// `TIMESTAMP`
     TIMESTAMP = 0x42,
-	/// `NUMBER`
+    /// `NUMBER`
     NUMBER = 0x43,
-	/// `DIFFICULTY`
+    /// `DIFFICULTY`
     DIFFICULTY = 0x44,
-	/// `GASLIMIT`
+    /// `GASLIMIT`
     GASLIMIT = 0x45,
-	/// `SLOAD`
+    /// `SLOAD`
     SLOAD = 0x54,
-	/// `SSTORE`
+    /// `SSTORE`
     SSTORE = 0x55,
-	/// `GAS`
+    /// `GAS`
     GAS = 0x5a,
-	/// `LOGn`
+    /// `LOGn`
     LOG0 = 0xa0,
     LOG1 = 0xa1,
     LOG2 = 0xa2,
     LOG3 = 0xa3,
     LOG4 = 0xa4,
-	/// `CREATE`
+    /// `CREATE`
     CREATE = 0xf0,
-	/// `CREATE2`
+    /// `CREATE2`
     CREATE2 = 0xf5,
-	/// `CALL`
+    /// `CALL`
     CALL = 0xf1,
-	/// `CALLCODE`
+    /// `CALLCODE`
     CALLCODE = 0xf2,
-	/// `DELEGATECALL`
+    /// `DELEGATECALL`
     DELEGATECALL = 0xf4,
-	/// `STATICCALL`
+    /// `STATICCALL`
     STATICCALL = 0xfa,
-	/// `SUICIDE`
+    /// `SUICIDE`
     SUICIDE = 0xff,
-	/// `CHAINID`
+    /// `CHAINID`
     CHAINID = 0x46,
 }
 
 impl OpCode {
-	/// Whether the opcode is a push opcode.
-	pub fn is_push_self(&self) -> Option<u8> {
+    /// Whether the opcode is a push opcode.
+    pub fn is_push_self(&self) -> Option<u8> {
         Self::is_push(*self as u8)
-	}
+    }
 
     pub fn try_from_u8(opcode: u8) -> Option<OpCode> {
         OpCode::try_from(opcode).ok()
@@ -254,19 +253,19 @@ impl OpCode {
     #[inline]
     pub fn is_push(opcode: u8) -> Option<u8> {
         if (0x60..=0x7f).contains(&opcode) {
-			Some(opcode - 0x60 + 1)
-		} else {
-			None
-		}
+            Some(opcode - 0x60 + 1)
+        } else {
+            None
+        }
     }
 
-	#[inline]
+    #[inline]
     pub fn as_u8(&self) -> u8 {
-		*self as u8
-	}
+        *self as u8
+    }
 
-	#[inline]
+    #[inline]
     pub const fn as_usize(&self) -> usize {
-		*self as usize
-	}
+        *self as usize
+    }
 }

@@ -70,14 +70,14 @@ impl SubRutine {
         Ok(())
     }
 
-    pub fn exit_revert(&mut self, checkpoint: SubRutineCheckpoint){
+    pub fn exit_revert(&mut self, checkpoint: SubRutineCheckpoint) {
         self.logs.truncate(checkpoint.log_i);
         // revert all changes from changeset
         self.changeset.truncate(checkpoint.changeset_i);
         self.depth -= 1;
     }
 
-    pub fn exit_discard(&mut self, checkpoint: SubRutineCheckpoint){
+    pub fn exit_discard(&mut self, checkpoint: SubRutineCheckpoint) {
         self.logs.truncate(checkpoint.log_i);
         // revert all changes from changeset
         self.changeset.truncate(checkpoint.changeset_i);

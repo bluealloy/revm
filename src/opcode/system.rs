@@ -179,7 +179,10 @@ pub fn gaslimit<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Contro
     Control::Continue
 }
 
-pub fn sload<H: ExtHandler, const OPCODE_TRACE: bool>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn sload<H: ExtHandler, const OPCODE_TRACE: bool>(
+    machine: &mut Machine,
+    handler: &mut H,
+) -> Control {
     pop!(machine, index);
     let value = handler.storage(machine.contract.address, index);
     push!(machine, value.0);
@@ -328,7 +331,12 @@ pub fn create<
     }
 }
 
-pub fn call<H: ExtHandler, const CALL_TRACE: bool, const GAS_TRACE: bool, const OPCODE_TRACE: bool>(
+pub fn call<
+    H: ExtHandler,
+    const CALL_TRACE: bool,
+    const GAS_TRACE: bool,
+    const OPCODE_TRACE: bool,
+>(
     machine: &mut Machine,
     scheme: CallScheme,
     handler: &mut H,
