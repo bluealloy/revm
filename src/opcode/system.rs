@@ -17,7 +17,7 @@ pub fn sha3(machine: &mut Machine) -> Control {
 
     try_or_fail!(machine.memory_mut().resize_offset(from, len));
     let data = if len == U256::zero() {
-        Vec::new()
+        Bytes::new()
     } else {
         let from = as_usize_or_fail!(from);
         let len = as_usize_or_fail!(len);
@@ -25,7 +25,7 @@ pub fn sha3(machine: &mut Machine) -> Control {
         machine.memory_mut().get(from, len)
     };
 
-    let ret = Keccak256::digest(data.as_slice());
+    let ret = Keccak256::digest(data.as_ref());
     push!(machine, H256::from_slice(ret.as_slice()));
 
     Control::Continue
@@ -38,7 +38,7 @@ pub fn chainid<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control
 }
 
 pub fn address(machine: &mut Machine) -> Control {
-    let ret = H256::from(machine.context.address);
+    let ret = H256::from(machine.contract.address);
     push!(machine, ret);
 
     Control::Continue
@@ -52,7 +52,7 @@ pub fn balance<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control
 }
 
 pub fn selfbalance<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
-    push_u256!(machine, handler.balance(machine.context.address).0);
+    push_u256!(machine, handler.balance(machine.contract.address).0);
 
     Control::Continue
 }
@@ -65,7 +65,7 @@ pub fn origin<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control 
 }
 
 pub fn caller(machine: &mut Machine) -> Control {
-    let ret = H256::from(machine.context.caller);
+    let ret = H256::from(machine.contract.caller);
     push!(machine, ret);
 
     Control::Continue
@@ -73,7 +73,7 @@ pub fn caller(machine: &mut Machine) -> Control {
 
 pub fn callvalue(machine: &mut Machine) -> Control {
     let mut ret = H256::default();
-    machine.context.apparent_value.to_big_endian(&mut ret[..]);
+    machine.contract.value.to_big_endian(&mut ret[..]);
     push!(machine, ret);
 
     Control::Continue
@@ -181,11 +181,11 @@ pub fn gaslimit<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Contro
 
 pub fn sload<H: ExtHandler, const OPCODE_TRACE: bool>(machine: &mut Machine, handler: &mut H) -> Control {
     pop!(machine, index);
-    let value = handler.storage(machine.context.address, index);
+    let value = handler.storage(machine.contract.address, index);
     push!(machine, value.0);
     // if OPCODE_TRACE {
     // 	event!(SLoad {
-    // 		address: machine.context.address,
+    // 		address: machine.contract.address,
     // 		index,
     // 		value
     // 	});
@@ -201,13 +201,13 @@ pub fn sstore<H: ExtHandler, const OPCODE_TRACE: bool>(
     pop!(machine, index, value);
     // if OPCODE_TRACE {
     // 	event!(SStore {
-    // 		address: machine.context.address,
+    // 		address: machine.contract.address,
     // 		index,
     // 		value
     // 	});
     // }
 
-    match handler.set_storage(machine.context.address, index, value) {
+    match handler.set_storage(machine.contract.address, index, value) {
         Ok(_) => Control::Continue,
         Err(e) => Control::Exit(e.into()),
     }
@@ -242,7 +242,7 @@ pub fn log<H: ExtHandler>(machine: &mut Machine, n: u8, handler: &mut H) -> Cont
         }
     }
 
-    handler.log(machine.context.address, topics, data);
+    handler.log(machine.contract.address, topics, data);
     Control::Continue
 }
 
@@ -252,7 +252,7 @@ pub fn suicide<H: ExtHandler, const CALL_TRACE: bool>(
 ) -> Control {
     pop!(machine, target);
 
-    match handler.mark_delete::<CALL_TRACE>(machine.context.address, target.into()) {
+    match handler.mark_delete::<CALL_TRACE>(machine.contract.address, target.into()) {
         Ok(()) => (),
         Err(e) => return Control::Exit(e.into()),
     }
@@ -270,13 +270,13 @@ pub fn create<
     is_create2: bool,
     handler: &mut H,
 ) -> Control {
-    machine.return_data_buffer = Vec::new();
+    machine.return_data_buffer = Bytes::new();
 
     pop_u256!(machine, value, code_offset, len);
 
     try_or_fail!(machine.memory_mut().resize_offset(code_offset, len));
     let code = if len == U256::zero() {
-        Vec::new()
+        Bytes::new()
     } else {
         let code_offset = as_usize_or_fail!(code_offset);
         let len = as_usize_or_fail!(len);
@@ -288,18 +288,18 @@ pub fn create<
         pop!(machine, salt);
         let code_hash = H256::from_slice(Keccak256::digest(&code).as_slice());
         CreateScheme::Create2 {
-            caller: machine.context.address,
+            caller: machine.contract.address,
             salt,
             code_hash,
         }
     } else {
         CreateScheme::Legacy {
-            caller: machine.context.address,
+            caller: machine.contract.address,
         }
     };
 
     let (reason, address, return_data) = handler.create::<CALL_TRACE, GAS_TRACE, OPCODE_TRACE>(
-        machine.context.address,
+        machine.contract.address,
         scheme,
         value,
         code,
@@ -333,7 +333,7 @@ pub fn call<H: ExtHandler, const CALL_TRACE: bool, const GAS_TRACE: bool, const 
     scheme: CallScheme,
     handler: &mut H,
 ) -> Control {
-    machine.return_data_buffer = Vec::new();
+    machine.return_data_buffer = Bytes::new();
 
     pop_u256!(machine, gas);
     pop!(machine, to);
@@ -357,7 +357,7 @@ pub fn call<H: ExtHandler, const CALL_TRACE: bool, const GAS_TRACE: bool, const 
     try_or_fail!(machine.memory_mut().resize_offset(out_offset, out_len));
 
     let input = if in_len == U256::zero() {
-        Vec::new()
+        Bytes::new()
     } else {
         let in_offset = as_usize_or_fail!(in_offset);
         let in_len = as_usize_or_fail!(in_len);
@@ -368,31 +368,31 @@ pub fn call<H: ExtHandler, const CALL_TRACE: bool, const GAS_TRACE: bool, const 
     let context = match scheme {
         CallScheme::Call | CallScheme::StaticCall => Context {
             address: to.into(),
-            caller: machine.context.address,
+            caller: machine.contract.address,
             apparent_value: value,
         },
         CallScheme::CallCode => Context {
-            address: machine.context.address,
-            caller: machine.context.address,
+            address: machine.contract.address,
+            caller: machine.contract.address,
             apparent_value: value,
         },
         CallScheme::DelegateCall => Context {
-            address: machine.context.address,
-            caller: machine.context.caller,
-            apparent_value: machine.context.apparent_value,
+            address: machine.contract.address,
+            caller: machine.contract.caller,
+            apparent_value: machine.contract.value,
         },
     };
 
     let transfer = if scheme == CallScheme::Call {
         Some(Transfer {
-            source: machine.context.address,
+            source: machine.contract.address,
             target: to.into(),
             value,
         })
     } else if scheme == CallScheme::CallCode {
         Some(Transfer {
-            source: machine.context.address,
-            target: machine.context.address,
+            source: machine.contract.address,
+            target: machine.contract.address,
             value,
         })
     } else {

@@ -4,11 +4,11 @@ use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
 
 use crate::{
+    db::Database,
     error::{ExitError, ExitReason, ExitSucceed},
+    machine::{Contract, Stack},
     opcode::OpCode,
     spec::Spec,
-    machine::Stack,
-    db::Database,
     subrutine::SubRutine,
     Basic, Context, CreateScheme, GlobalContext, Log, Machine, Transfer,
 };
@@ -65,10 +65,10 @@ impl<'a, SPEC: Spec> EVM<'a, SPEC> {
         caller: H160,
         scheme: CreateScheme,
         value: U256,
-        init_code: Vec<u8>,
+        init_code: Bytes,
         target_gas: Option<u64>,
         take_l64: bool,
-    ) -> (ExitReason, Option<H160>, Vec<u8>) {
+    ) -> (ExitReason, Option<H160>, Bytes) {
         //todo!()
 
         // TODO set caller/contract_add/precompiles as hot access
@@ -77,12 +77,12 @@ impl<'a, SPEC: Spec> EVM<'a, SPEC> {
         self.trace_call();
         // check depth of calls
         if self.subrutine.depth() > SPEC::call_stack_limit {
-            return (ExitError::CallTooDeep.into(), None, Vec::new());
+            return (ExitError::CallTooDeep.into(), None, Bytes::new());
         }
 
         // check balance of caller and value
         if self.balance(caller).0 < value {
-            return (ExitError::OutOfFund.into(), None, Vec::new());
+            return (ExitError::OutOfFund.into(), None, Bytes::new());
         }
         // create address
         let address = self.create_address(scheme);
@@ -97,19 +97,15 @@ impl<'a, SPEC: Spec> EVM<'a, SPEC> {
         // transfer value to contract address
         if let Err(e) = self.subrutine.transfer(caller, address, value) {
             let _ = self.subrutine.exit_revert(checkpoint);
-            return (ExitReason::Error(e), None, Vec::new());
+            return (ExitReason::Error(e), None, Bytes::new());
         }
         // inc nonce of contract
         if SPEC::create_increase_nonce {
             self.subrutine.inc_nonce(address);
         }
         // create new machine and execute init function
-        let context = Context {
-            address,
-            caller,
-            apparent_value: value,
-        };
-        let mut machine = Machine::new(init_code, context);
+        let contract = Contract::new(Bytes::new(), init_code, address, caller, value);
+        let mut machine = Machine::new(contract);
         let res = machine.run::<Self, SPEC>(self);
         // handler error if present on execution
         match res {
@@ -120,16 +116,16 @@ impl<'a, SPEC: Spec> EVM<'a, SPEC> {
                     if out.len() > limit {
                         // TODO reduce gas and return
                         self.subrutine.exit_discard(checkpoint);
-                        return (ExitError::CreateContractLimit.into(), None, Vec::new());
+                        return (ExitError::CreateContractLimit.into(), None, Bytes::new());
                     }
                 }
                 // dummy return TODO proper handling
-                
+
                 let e = self.subrutine.exit_commit(checkpoint);
                 (
                     ExitReason::Succeed(ExitSucceed::Returned),
                     Some(address),
-                    Vec::new(),
+                    Bytes::new(),
                 )
             }
             ExitReason::Revert(revert) => {
@@ -148,13 +144,13 @@ impl<'a, SPEC: Spec> EVM<'a, SPEC> {
         &mut self,
         code_address: H160,
         transfer: Option<Transfer>,
-        input: Vec<u8>,
+        input: Bytes,
         target_gas: Option<u64>,
         is_static: bool,
         take_l64: bool,
         take_stipend: bool,
         context: Context,
-    ) -> (ExitReason, Vec<u8>) {
+    ) -> (ExitReason, Bytes) {
         todo!()
     }
 }
@@ -265,9 +261,9 @@ impl<'a, SPEC: Spec> Handler for EVM<'a, SPEC> {
         caller: H160,
         scheme: CreateScheme,
         value: U256,
-        init_code: Vec<u8>,
+        init_code: Bytes,
         target_gas: Option<u64>,
-    ) -> (ExitReason, Option<H160>, Vec<u8>) {
+    ) -> (ExitReason, Option<H160>, Bytes) {
         self.create_inner(caller, scheme, value, init_code, target_gas, true)
     }
 
@@ -275,11 +271,11 @@ impl<'a, SPEC: Spec> Handler for EVM<'a, SPEC> {
         &mut self,
         code_address: H160,
         transfer: Option<Transfer>,
-        input: Vec<u8>,
+        input: Bytes,
         target_gas: Option<u64>,
         is_static: bool,
         context: Context,
-    ) -> (ExitReason, Vec<u8>) {
+    ) -> (ExitReason, Bytes) {
         self.call_inner(
             code_address,
             transfer,
@@ -347,24 +343,24 @@ pub trait Handler {
         caller: H160,
         scheme: CreateScheme,
         value: U256,
-        init_code: Vec<u8>,
+        init_code: Bytes,
         target_gas: Option<u64>,
-    ) -> (ExitReason, Option<H160>, Vec<u8>);
+    ) -> (ExitReason, Option<H160>, Bytes);
 
     /// Invoke a call operation.
     fn call<const CALL_TRACE: bool, const GAS_TRACE: bool, const OPCODE_TRACE: bool>(
         &mut self,
         code_address: H160,
         transfer: Option<Transfer>,
-        input: Vec<u8>,
+        input: Bytes,
         target_gas: Option<u64>,
         is_static: bool,
         context: Context,
-    ) -> (ExitReason, Vec<u8>);
+    ) -> (ExitReason, Bytes);
 }
 
 pub trait Tracing {
-    fn trace_opcode(&mut self, context: &Context, opcode: OpCode, stack: &Stack) {}
+    fn trace_opcode(&mut self, contract: &Contract, opcode: OpCode, stack: &Stack) {}
     fn trace_call(&mut self) {}
 }
 

@@ -23,4 +23,5 @@ fn main() {
     let mut db = db::DummyDB;
     let context = GlobalContext::default();
     let evm = EVM::<BerlinSpec>::new(&mut db as &mut dyn Database, context);
+    
 }

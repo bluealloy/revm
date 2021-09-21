@@ -1,5 +1,6 @@
 use crate::error::{ExitError, ExitFatal};
 use alloc::vec::Vec;
+use bytes::Bytes;
 use core::cmp::min;
 use core::ops::{BitAnd, Not};
 use primitive_types::U256;
@@ -79,7 +80,7 @@ impl Memory {
 	///
 	/// Value of `size` is considered trusted. If they're too large,
 	/// the program can run out of memory, or it can overflow.
-	pub fn get(&self, offset: usize, size: usize) -> Vec<u8> {
+	pub fn get(&self, offset: usize, size: usize) -> Bytes {
 		let mut ret = Vec::new();
 		ret.resize(size, 0);
 
@@ -93,7 +94,7 @@ impl Memory {
 			ret[index] = self.data[position];
 		}
 
-		ret
+		ret.into()
 	}
 
 	/// Set memory region at given offset. The offset and value is considered
