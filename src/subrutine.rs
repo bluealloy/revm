@@ -1,6 +1,7 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{btree_map::OccupiedEntry, hash_map::Entry, HashMap, HashSet},
     fs::File,
+    ops::DerefMut,
     rc::Rc,
     thread::AccessError,
 };
@@ -8,7 +9,7 @@ use std::{
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
 
-use crate::{error::ExitError, Basic, Log, Transfer};
+use crate::{db::Database, error::ExitError, AccountInfo, Log, Transfer};
 
 pub struct SubRutine {
     /// Applied changes to our state
@@ -18,8 +19,10 @@ pub struct SubRutine {
     /// It contains original values before they were changes.
     /// it is made like this so that we can revert to previous state in case of
     /// exit or revert
-    changeset: Vec<HashMap<H160, (Account, Filth)>>,
-    // how deep are we in call stack.
+    /// if account is none it means that account was cold in previoud changeset
+    /// Additional HashSet represent cold storage slots.
+    changeset: Vec<HashMap<H160, Option<(Account, HashSet<H256>)>>>,
+    /// how deep are we in call stack.
     depth: usize,
 }
 
@@ -32,16 +35,73 @@ pub struct SubRutineCheckpoint {
 
 impl SubRutine {
     pub fn new() -> SubRutine {
+        let mut changeset = Vec::new();
+        changeset.push(HashMap::new());
         Self {
             state: HashMap::new(),
             precompiles: HashSet::new(),
             logs: Vec::new(),
-            changeset: Vec::new(),
+            changeset,
             depth: 0,
         }
     }
 
-    pub fn touch(&mut self, address: H160) {}
+    /// load account into memory. return if it is cold or hot accessed
+    pub fn load_account<DB: Database>(&mut self, address: H160, db: &mut DB) -> bool {
+        let is_cold = match self.state.entry(address.clone()) {
+            Entry::Occupied(occ) => false,
+            Entry::Vacant(vac) => {
+                let acc: Account = db.basic(address.clone()).into();
+                vac.insert(acc.clone());
+                // insert none in changeset that represent that we just loaded this acc in this subrutine
+                self.changeset
+                    .last_mut()
+                    .unwrap()
+                    .insert(address.clone(), None);
+                true
+            }
+        };
+        is_cold
+    }
+
+    pub fn load_code<DB: Database>(&mut self, address: H160, db: &mut DB) -> bool {
+        let is_cold = self.load_account(address.clone(), db);
+        let acc = self.state.get_mut(&address).unwrap();
+
+        if acc.info.code.is_none() {
+            let code = if let Some(code_hash) = acc.info.code_hash {
+                db.code_by_hash(code_hash)
+            } else {
+                db.code(address)
+            };
+            acc.info.code = Some(code);
+        }
+        is_cold
+    }
+    // account is allways present for storage that we want to access
+    pub fn load_storage<DB: Database>(
+        &mut self,
+        address: H160,
+        index: H256,
+        db: &mut DB,
+    ) -> (H256, bool) {
+        let acc = self.account_mut(address);
+        match acc.storage.entry(index) {
+            Entry::Occupied(occ) => (occ.get().clone(), false),
+            Entry::Vacant(vac) => {
+                if acc.destroyed {
+                    (vac.insert(H256::zero()).clone(), true)
+                } else {
+                    (vac.insert(db.storage(address, index)).clone(), true)
+                }
+            }
+        }
+    }
+
+    /// Use it with load_account function.
+    pub fn account_mut(&mut self, address: H160) -> &mut Account {
+        self.state.get_mut(&address).unwrap() // Allways assume that acc is already loaded
+    }
 
     pub fn depth(&self) -> usize {
         self.depth
@@ -86,15 +146,49 @@ impl SubRutine {
         self.depth -= 1;
     }
 
-    pub fn set_storage(
+
+    // TODO check, but for now it seems just fine! TODO check destroyed flah
+    pub fn sstore<DB: Database>(
         &mut self,
         address: H160,
         index: H256,
         value: H256,
-    ) -> Result<bool, ExitError> {
-        // TODO see if we need to read account from DB or we need to saparate storage from accounts.
-        //self.known_account(&address)
-        Ok(true)
+        db: &mut DB,
+    ) -> (H256, bool) {
+        // assume that acc exists
+        let (present, is_cold) = self.load_storage(address, index, db);
+        if present == value {
+            return (present, is_cold);
+        }
+        let acc = self.state.get_mut(&address).unwrap();
+        // insert original value inside changeset
+        match self.changeset.last_mut().unwrap().entry(address.clone()) {
+            Entry::Occupied(mut occ) => {
+                // there is account present inside changeset.
+                if let Some((acc, cold_storage)) = occ.get_mut() {
+                    if is_cold {
+                        cold_storage.insert(index);
+                    } else {
+                        // insert original value inside set if there is nothing there.
+                        acc.storage.entry(index).or_insert(present);
+                    }
+                }
+                // if changeset is empty account is cold loaded inside this subrutine and we dont need to do anything
+            }
+            Entry::Vacant(vac) => {
+                // if account is not present that means that account is loaded in past and we yet didnt made any
+                // changes inside this subrutine. Make a copy of curreny not changed acc and set it inside changeset
+                let mut was_cold_storage = HashSet::new();
+                if is_cold {
+                    was_cold_storage.insert(index);
+                }
+                vac.insert(Some((acc.clone(),was_cold_storage)));
+            }
+        }
+        // insert slot to state.
+        acc.storage.insert(index, value);
+
+        (present, is_cold)
     }
 
     pub fn log(&mut self, log: Log) {
@@ -106,7 +200,7 @@ impl SubRutine {
     }
     /*
 
-    pub fn known_basic(&self, address: H160) -> Option<Basic> {
+    pub fn known_basic(&self, address: H160) -> Option<AccountInfo> {
         self.known_account(address).map(|acc| acc.basic.clone())
     }
 
@@ -169,26 +263,22 @@ impl SubRutine {
     }*/
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Account {
     /// Balance of the account.
-    pub basic: Basic,
-    /// Unmodified account balance.
-    pub old_balance: Option<U256>,
-    /// Nonce of the account.
-    pub code: Option<Bytes>,
-    /// code hash
-    pub code_hash: H256,
+    pub info: AccountInfo,
     /// storage cache
     pub storage: HashMap<H256, H256>,
+    /// if selfdestruct opcode is set destroyed flag will be true. If true we dont need to fetch slot from DB.
+    pub destroyed: bool,
 }
 
-#[derive(Eq, PartialEq, Clone, Copy, Debug)]
-enum Filth {
-    /// account loaded but not modified
-    Cached,
-    /// Account or any of its part is modified.
-    Dirty,
-    /// Account is selfdestructed
-    Selfdestruct,
+impl From<AccountInfo> for Account {
+    fn from(info: AccountInfo) -> Self {
+        Self {
+            info,
+            storage: HashMap::new(),
+            destroyed: false,
+        }
+    }
 }

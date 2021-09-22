@@ -13,53 +13,27 @@ use crate::{
     opcode::OpCode,
     spec::Spec,
     subrutine::SubRutine,
-    Basic, Context, CreateScheme, GlobalContext, Log, Machine, Transfer,
+    util, AccountInfo, Context, CreateScheme, GlobalEnv, Log, Machine, Transfer,
 };
 use bytes::Bytes;
 
-pub struct EVM<'a, SPEC: Spec> {
-    db: &'a mut dyn Database,
-    global_context: GlobalContext,
+pub struct EVM<'a, SPEC: Spec, DB: Database> {
+    db: &'a mut DB,
+    global_env: GlobalEnv,
     subrutine: SubRutine,
     gas: U256,
     phantomdata: PhantomData<SPEC>,
 }
 
-impl<'a, SPEC: Spec> EVM<'a, SPEC> {
-    pub fn new(db: &'a mut dyn Database, global_context: GlobalContext) -> Self {
-        let gas = global_context.gas_limit.clone();
+impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
+    pub fn new(db: &'a mut DB, global_env: GlobalEnv) -> Self {
+        let gas = global_env.gas_limit.clone();
         Self {
             db,
-            global_context,
+            global_env,
             subrutine: SubRutine::new(),
             gas,
             phantomdata: PhantomData,
-        }
-    }
-
-    /// Get the create address from given scheme.
-    pub fn create_address(&mut self, scheme: CreateScheme) -> H160 {
-        match scheme {
-            CreateScheme::Create2 {
-                caller,
-                code_hash,
-                salt,
-            } => {
-                let mut hasher = Keccak256::new();
-                hasher.update(&[0xff]);
-                hasher.update(&caller[..]);
-                hasher.update(&salt[..]);
-                hasher.update(&code_hash[..]);
-                H256::from_slice(hasher.finalize().as_slice()).into()
-            }
-            CreateScheme::Legacy { caller } => {
-                let (nonce, _) = self.balance(caller);
-                let mut stream = rlp::RlpStream::new_list(2);
-                stream.append(&caller);
-                stream.append(&nonce);
-                H256::from_slice(Keccak256::digest(&stream.out()).as_slice()).into()
-            }
-            CreateScheme::Fixed(naddress) => naddress,
         }
     }
 
@@ -88,7 +62,7 @@ impl<'a, SPEC: Spec> EVM<'a, SPEC> {
             return (ExitError::OutOfFund.into(), None, Bytes::new());
         }
         // create address
-        let address = self.create_address(scheme);
+        let address = util::create_address(scheme);
         // TODO wtf is l64 gas reduction. Check spec. Return gas and set gas_limit
         // inc nonce of caller
         self.subrutine.inc_nonce(caller);
@@ -173,7 +147,7 @@ impl<'a, SPEC: Spec> EVM<'a, SPEC> {
         // Create subrutine checkpoint
         let checkpoint = self.subrutine.create_checkpoint();
         // TODO touch address
-        self.subrutine.touch(context.address);
+        //self.subrutine.touch(context.address);
         // check depth of calls
         if self.subrutine.depth() > SPEC::call_stack_limit {
             return (ExitError::CallTooDeep.into(), Bytes::new());
@@ -217,9 +191,9 @@ impl<'a, SPEC: Spec> EVM<'a, SPEC> {
     }
 }
 
-impl<'a, SPEC: Spec> Handler for EVM<'a, SPEC> {
-    fn global_context(&self) -> &GlobalContext {
-        &self.global_context
+impl<'a, SPEC: Spec, DB: Database> Handler for EVM<'a, SPEC, DB> {
+    fn global_env(&self) -> &GlobalEnv {
+        &self.global_env
     }
 
     fn block_hash(&mut self, number: U256) -> H256 {
@@ -227,50 +201,30 @@ impl<'a, SPEC: Spec> Handler for EVM<'a, SPEC> {
     }
 
     fn balance(&mut self, address: H160) -> (U256, bool) {
-        if let Some(acc) = self.subrutine.known_account(&address).map(|acc| acc.basic) {
-            // set it as hot access
-            (acc.balance, false)
-        } else {
-            // set it as cold access
-            (self.db.basic(address).balance, true) //TODO LOAD IT
-        }
+        let is_cold = self.subrutine.load_account(address.clone(), self.db);
+        (self.subrutine.account_mut(address).info.balance, is_cold)
     }
 
-    fn nonce(&mut self, address: H160) -> (U256, bool) {
-        if let Some(acc) = self.subrutine.known_account(&address).map(|acc| acc.basic) {
-            // set it as hot access
-            (acc.nonce, false)
-        } else {
-            // set it as cold access
-            (self.db.basic(address).nonce, true) //TODO LOAD IT
-        }
+    fn nonce(&mut self, address: H160) -> (u64, bool) {
+        let is_cold = self.subrutine.load_account(address.clone(), self.db);
+        (self.subrutine.account_mut(address).info.nonce, is_cold)
     }
 
     fn code(&mut self, address: H160) -> (Bytes, bool) {
-        if let Some(acc) = self.subrutine.known_account(&address) {
-            // set it as hot access
-            (acc.code.clone().unwrap(), false)
-        } else {
-            // set it as cold access
-            (self.db.code(address), true) //TODO LOAD IT
-        }
+        let is_cold = self.subrutine.load_code(address.clone(), self.db);
+        let code = self
+            .subrutine
+            .account_mut(address)
+            .info
+            .code
+            .clone()
+            .unwrap();
+        (code, is_cold)
     }
 
     fn storage(&mut self, address: H160, index: H256) -> (H256, bool) {
         // account is allways hot. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
-        if let Some(&slot) = self
-            .subrutine
-            .known_account(&address)
-            .unwrap()
-            .storage
-            .get(&index)
-        {
-            // set it as hot access
-            (slot, true)
-        } else {
-            // set it as cold access
-            (self.db.storage(address, index), false)
-        }
+        self.subrutine.load_storage(address, index, self.db)
     }
 
     fn original_storage(&mut self, address: H160, index: H256) -> H256 {
@@ -296,8 +250,8 @@ impl<'a, SPEC: Spec> Handler for EVM<'a, SPEC> {
     }
 
     // TODO check return value, should it be is_cold or maybe original value
-    fn set_storage(&mut self, address: H160, index: H256, value: H256) -> Result<bool, ExitError> {
-        self.subrutine.set_storage(address, index, value)
+    fn sstore(&mut self, address: H160, index: H256, value: H256) {
+        self.subrutine.sstore(address, index, value, self.db);
     }
 
     fn log(&mut self, address: H160, topics: Vec<H256>, data: Bytes) {
@@ -351,21 +305,20 @@ impl<'a, SPEC: Spec> Handler for EVM<'a, SPEC> {
     }
 }
 
-impl<'a, SPEC: Spec> Tracing for EVM<'a, SPEC> {}
-impl<'a, SPEC: Spec> ExtHandler2 for EVM<'a, SPEC> {}
-impl<'a, SPEC: Spec> ExtHandler for EVM<'a, SPEC> {}
+impl<'a, SPEC: Spec, DB: Database> Tracing for EVM<'a, SPEC, DB> {}
+impl<'a, SPEC: Spec, DB: Database> ExtHandler for EVM<'a, SPEC, DB> {}
 
 /// EVM context handler.
 pub trait Handler {
     /// Get global const context of evm execution
-    fn global_context(&self) -> &GlobalContext;
+    fn global_env(&self) -> &GlobalEnv;
 
     /// Get environmental block hash.
     fn block_hash(&mut self, number: U256) -> H256;
     /// Get balance of address.
     fn balance(&mut self, address: H160) -> (U256, bool);
     /// Get balance of address.
-    fn nonce(&mut self, address: H160) -> (U256, bool);
+    fn nonce(&mut self, address: H160) -> (u64, bool);
 
     /// Get code of address.
     fn code(&mut self, address: H160) -> (Bytes, bool);
@@ -390,7 +343,7 @@ pub trait Handler {
     /// Get the gas left value. It contacts gasometer
     fn gas_left(&self) -> U256;
     /// Set storage value of address at index. Return if slot is cold/hot access.
-    fn set_storage(&mut self, address: H160, index: H256, value: H256) -> Result<bool, ExitError>;
+    fn sstore(&mut self, address: H160, index: H256, value: H256);
     /// Create a log owned by address with given topics and data.
     fn log(&mut self, address: H160, topics: Vec<H256>, data: Bytes);
     /// Mark an address to be deleted, with funds transferred to target.
@@ -426,7 +379,7 @@ pub trait Tracing {
     fn trace_call(&mut self) {}
 }
 
-pub trait ExtHandler2: Handler {
+pub trait ExtHandler: Handler + Tracing {
     /// Get code size of address.
     fn code_size(&mut self, address: H160) -> (U256, bool) {
         let (code, is_cold) = self.code(address);
@@ -443,37 +396,34 @@ pub trait ExtHandler2: Handler {
 
     /// Get the gas price value.
     fn gas_price(&self) -> U256 {
-        self.global_context().gas_price
+        self.global_env().gas_price
     }
     /// Get execution origin.
     fn origin(&self) -> H160 {
-        self.global_context().origin
+        self.global_env().origin
     }
     /// Get environmental block number.
     fn block_number(&self) -> U256 {
-        self.global_context().block_number
+        self.global_env().block_number
     }
     /// Get environmental coinbase.
     fn block_coinbase(&self) -> H160 {
-        self.global_context().block_coinbase
+        self.global_env().block_coinbase
     }
     /// Get environmental block timestamp.
     fn block_timestamp(&self) -> U256 {
-        self.global_context().block_timestamp
+        self.global_env().block_timestamp
     }
     /// Get environmental block difficulty.
     fn block_difficulty(&self) -> U256 {
-        self.global_context().block_difficulty
+        self.global_env().block_difficulty
     }
     /// Get environmental gas limit.
     fn block_gas_limit(&self) -> U256 {
-        self.global_context().block_gas_limit
+        self.global_env().block_gas_limit
     }
     /// Get environmental chain ID.
     fn chain_id(&self) -> U256 {
-        self.global_context().chain_id
+        self.global_env().chain_id
     }
 }
-
-// TODO cleanup this mess of traits
-pub trait ExtHandler: ExtHandler2 + Tracing {}

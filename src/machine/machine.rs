@@ -1,4 +1,4 @@
-use std::{ops::Range, rc::Rc};
+use std::{ops::Range};
 
 use crate::opcode::eval;
 use bytes::Bytes;
@@ -9,7 +9,7 @@ use crate::{
     error::{ExitReason, ExitSucceed},
     opcode::{Control, OpCode},
     spec::Spec,
-    Context, ExtHandler, Handler,
+    ExtHandler
 };
 
 pub struct Machine {

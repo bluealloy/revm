@@ -8,19 +8,19 @@ mod models;
 mod opcode;
 mod spec;
 mod subrutine;
-mod utils;
+mod util;
 
 pub use evm::{ExtHandler, Handler, EVM};
 pub use machine::Machine;
 pub use models::*;
 
-use crate::{db::Database, spec::BerlinSpec};
+use crate::{db::{Database, DummyDB}, spec::BerlinSpec};
 
 extern crate alloc;
 
 fn main() {
     println!("Hello, world!");
     let mut db = db::DummyDB;
-    let context = GlobalContext::default();
-    let evm = EVM::<BerlinSpec>::new(&mut db as &mut dyn Database, context);
+    let context = GlobalEnv::default();
+    let evm = EVM::<BerlinSpec,DummyDB>::new(&mut db, context);
 }

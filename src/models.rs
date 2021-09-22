@@ -1,15 +1,19 @@
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
 
-/// Basic account information.
-#[derive(Clone, Copy, Eq, PartialEq, Debug, Default)]
+/// AccountInfo account information.
+#[derive(Clone, Eq, PartialEq, Debug, Default)]
 #[cfg_attr(feature = "with-codec", derive(codec::Encode, codec::Decode))]
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Basic {
+pub struct AccountInfo {
     /// Account balance.
     pub balance: U256,
+    /// code hash,
+    pub code_hash: Option<H256>,
+    /// code
+    pub code: Option<Bytes>,
     /// Account nonce.
-    pub nonce: U256,
+    pub nonce: u64,
 }
 
 /// Create scheme.
@@ -19,6 +23,8 @@ pub enum CreateScheme {
     Legacy {
         /// Caller of the create.
         caller: H160,
+        /// Caller nonce
+        nonce: u64,
     },
     /// Create scheme of `CREATE2`.
     Create2 {
@@ -57,7 +63,7 @@ pub struct Context {
 }
 
 #[derive(Clone, Eq, PartialEq, Debug, Default)]
-pub struct GlobalContext {
+pub struct GlobalEnv {
     /// amount of gas that we can spend.
     pub gas_limit: U256,
     /// Gas price

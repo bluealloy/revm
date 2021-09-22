@@ -7,7 +7,7 @@ use crate::{
 // 	, Runtime, Transfer,
 // };
 use alloc::vec::Vec;
-use bytes::{Bytes, BytesMut};
+use bytes::Bytes;
 use core::cmp::min;
 use primitive_types::{H256, U256};
 use sha3::{Digest, Keccak256};
@@ -210,10 +210,8 @@ pub fn sstore<H: ExtHandler, const OPCODE_TRACE: bool>(
     // 	});
     // }
 
-    match handler.set_storage(machine.contract.address, index, value) {
-        Ok(_) => Control::Continue,
-        Err(e) => Control::Exit(e.into()),
-    }
+    handler.sstore(machine.contract.address, index, value);
+    Control::Continue
 }
 
 pub fn gas<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
@@ -286,7 +284,6 @@ pub fn create<
 
         machine.memory().get(code_offset, len)
     };
-
     let scheme = if is_create2 {
         pop!(machine, salt);
         let code_hash = H256::from_slice(Keccak256::digest(&code).as_slice());
@@ -296,8 +293,10 @@ pub fn create<
             code_hash,
         }
     } else {
+        let (nonce,_) = handler.nonce(machine.contract.address);
         CreateScheme::Legacy {
             caller: machine.contract.address,
+            nonce,
         }
     };
 
