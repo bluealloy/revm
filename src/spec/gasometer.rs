@@ -535,7 +535,7 @@ pub fn dynamic_opcode_cost<H: ExtHandler, SPEC: Spec>(
 
             GasCost::SStore {
                 original: handler.original_storage(address, index),
-                current: handler.storage(address, index).0,
+                current: handler.sload(address, index).0,
                 new: value,
                 target_is_cold: handler.is_cold_storage(address, index),
             }

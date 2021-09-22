@@ -1,9 +1,9 @@
 use super::Control;
 use crate::{
     error::{ExitError, ExitFatal, ExitReason, ExitSucceed},
-    CallScheme, Context, CreateScheme, ExtHandler, Machine, Transfer,
+    CallScheme, CallContext, CreateScheme, ExtHandler, Machine, Transfer,
 };
-// 	CallScheme, Capture, Context, CreateScheme, ,
+// 	CallScheme, Capture, CallContext, CreateScheme, ,
 // 	, Runtime, Transfer,
 // };
 use alloc::vec::Vec;
@@ -184,7 +184,7 @@ pub fn sload<H: ExtHandler, const OPCODE_TRACE: bool>(
     handler: &mut H,
 ) -> Control {
     pop!(machine, index);
-    let value = handler.storage(machine.contract.address, index);
+    let value = handler.sload(machine.contract.address, index);
     push!(machine, value.0);
     // if OPCODE_TRACE {
     // 	event!(SLoad {
@@ -373,17 +373,17 @@ pub fn call<
     };
 
     let context = match scheme {
-        CallScheme::Call | CallScheme::StaticCall => Context {
+        CallScheme::Call | CallScheme::StaticCall => CallContext {
             address: to.into(),
             caller: machine.contract.address,
             apparent_value: value,
         },
-        CallScheme::CallCode => Context {
+        CallScheme::CallCode => CallContext {
             address: machine.contract.address,
             caller: machine.contract.address,
             apparent_value: value,
         },
-        CallScheme::DelegateCall => Context {
+        CallScheme::DelegateCall => CallContext {
             address: machine.contract.address,
             caller: machine.contract.caller,
             apparent_value: machine.contract.value,

@@ -21,6 +21,6 @@ extern crate alloc;
 fn main() {
     println!("Hello, world!");
     let mut db = db::DummyDB;
-    let context = GlobalEnv::default();
-    let evm = EVM::<BerlinSpec,DummyDB>::new(&mut db, context);
+    let envs = GlobalEnv::default();
+    let evm = EVM::<BerlinSpec,DummyDB>::new(&mut db, envs);
 }

@@ -102,18 +102,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "evmr"
-version = "0.1.0"
-dependencies = [
- "bit-set",
- "bytes",
- "num_enum",
- "primitive-types",
- "rlp",
- "sha3",
-]
-
-[[package]]
 name = "fixed-hash"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -333,6 +321,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d34f1408f55294453790c48b2f1ebbb1c5b4b7563eb1f418bcfcfdbb06ebb4e7"
 dependencies = [
  "getrandom",
+]
+
+[[package]]
+name = "revm"
+version = "0.1.0"
+dependencies = [
+ "bit-set",
+ "bytes",
+ "num_enum",
+ "primitive-types",
+ "rlp",
+ "sha3",
 ]
 
 [[package]]

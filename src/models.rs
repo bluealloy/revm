@@ -51,9 +51,9 @@ pub enum CallScheme {
     StaticCall,
 }
 
-/// Context of the runtime.
+/// CallContext of the runtime.
 #[derive(Clone, Debug)]
-pub struct Context {
+pub struct CallContext {
     /// Execution address.
     pub address: H160,
     /// Caller of the EVM.

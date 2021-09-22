@@ -13,7 +13,7 @@ use crate::{
     opcode::OpCode,
     spec::Spec,
     subrutine::SubRutine,
-    util, AccountInfo, Context, CreateScheme, GlobalEnv, Log, Machine, Transfer,
+    util, AccountInfo, CallContext, CreateScheme, GlobalEnv, Log, Machine, Transfer,
 };
 use bytes::Bytes;
 
@@ -23,6 +23,7 @@ pub struct EVM<'a, SPEC: Spec, DB: Database> {
     subrutine: SubRutine,
     gas: U256,
     phantomdata: PhantomData<SPEC>,
+    is_static: bool,
 }
 
 impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
@@ -34,6 +35,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
             subrutine: SubRutine::new(),
             gas,
             phantomdata: PhantomData,
+            is_static: false,
         }
     }
 
@@ -49,6 +51,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         //todo!()
 
         // TODO set caller/contract_add/precompiles as hot access
+        let is_cold = self.subrutine.load_account(caller, self.db);
 
         // trace call
         self.trace_call();
@@ -73,7 +76,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
 
         // transfer value to contract address
         if let Err(e) = self.subrutine.transfer(caller, address, value) {
-            let _ = self.subrutine.exit_revert(checkpoint);
+            let _ = self.subrutine.checkpoint_revert(checkpoint);
             return (ExitReason::Error(e), None, Bytes::new());
         }
         // inc nonce of contract
@@ -92,13 +95,13 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
                 if let Some(limit) = SPEC::create_contract_limit {
                     if out.len() > limit {
                         // TODO reduce gas and return
-                        self.subrutine.exit_discard(checkpoint);
+                        self.subrutine.checkpoint_discard(checkpoint);
                         return (ExitError::CreateContractLimit.into(), None, Bytes::new());
                     }
                 }
                 // dummy return TODO proper handling
 
-                let e = self.subrutine.exit_commit(checkpoint);
+                let e = self.subrutine.checkpoint_commit(checkpoint);
                 (
                     ExitReason::Succeed(ExitSucceed::Returned),
                     Some(address),
@@ -106,11 +109,11 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
                 )
             }
             ExitReason::Revert(revert) => {
-                let _ = self.subrutine.exit_revert(checkpoint);
+                let _ = self.subrutine.checkpoint_revert(checkpoint);
                 (ExitReason::Revert(revert), None, machine.return_value())
             }
             ExitReason::Error(_) | ExitReason::Fatal(_) => {
-                let _ = self.subrutine.exit_discard(checkpoint);
+                let _ = self.subrutine.checkpoint_discard(checkpoint);
                 (exit_reason.clone(), None, machine.return_value())
             }
         }
@@ -126,7 +129,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         is_static: bool,
         take_l64: bool,
         take_stipend: bool,
-        context: Context,
+        context: CallContext,
     ) -> (ExitReason, Bytes) {
         // call trace_opcode.
         // self.trace_opcode(contract, opcode, stack)
@@ -159,7 +162,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
                 self.subrutine
                     .transfer(transfer.source, transfer.target, transfer.value)
             {
-                let _ = self.subrutine.exit_revert(checkpoint);
+                let _ = self.subrutine.checkpoint_revert(checkpoint);
                 return (ExitReason::Error(e), Bytes::new());
             }
         }
@@ -176,15 +179,15 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         let exit_reason = machine.run::<Self, SPEC>(self);
         match exit_reason {
             ExitReason::Succeed(_) => {
-                let _ = self.subrutine.exit_revert(checkpoint);
+                let _ = self.subrutine.checkpoint_revert(checkpoint);
                 (exit_reason, machine.return_value())
             }
             ExitReason::Revert(revert) => {
-                let _ = self.subrutine.exit_revert(checkpoint);
+                let _ = self.subrutine.checkpoint_revert(checkpoint);
                 (exit_reason, machine.return_value())
             }
             ExitReason::Error(_) | ExitReason::Fatal(_) => {
-                let _ = self.subrutine.exit_discard(checkpoint);
+                let _ = self.subrutine.checkpoint_discard(checkpoint);
                 (exit_reason, machine.return_value())
             }
         }
@@ -201,30 +204,23 @@ impl<'a, SPEC: Spec, DB: Database> Handler for EVM<'a, SPEC, DB> {
     }
 
     fn balance(&mut self, address: H160) -> (U256, bool) {
-        let is_cold = self.subrutine.load_account(address.clone(), self.db);
-        (self.subrutine.account_mut(address).info.balance, is_cold)
+        let (acc, is_cold) = self.subrutine.load_account(address.clone(), self.db);
+        (acc.info.balance, is_cold)
     }
 
     fn nonce(&mut self, address: H160) -> (u64, bool) {
-        let is_cold = self.subrutine.load_account(address.clone(), self.db);
-        (self.subrutine.account_mut(address).info.nonce, is_cold)
+        let (acc, is_cold) = self.subrutine.load_account(address.clone(), self.db);
+        (acc.info.nonce, is_cold)
     }
 
     fn code(&mut self, address: H160) -> (Bytes, bool) {
-        let is_cold = self.subrutine.load_code(address.clone(), self.db);
-        let code = self
-            .subrutine
-            .account_mut(address)
-            .info
-            .code
-            .clone()
-            .unwrap();
-        (code, is_cold)
+        let (acc, is_cold) = self.subrutine.load_code(address.clone(), self.db);
+        (acc.info.code.clone().unwrap(), is_cold)
     }
 
-    fn storage(&mut self, address: H160, index: H256) -> (H256, bool) {
+    fn sload(&mut self, address: H160, index: H256) -> (H256, bool) {
         // account is allways hot. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
-        self.subrutine.load_storage(address, index, self.db)
+        self.subrutine.sload(address, index, self.db)
     }
 
     fn original_storage(&mut self, address: H160, index: H256) -> H256 {
@@ -290,7 +286,7 @@ impl<'a, SPEC: Spec, DB: Database> Handler for EVM<'a, SPEC, DB> {
         input: Bytes,
         target_gas: Option<u64>,
         is_static: bool,
-        context: Context,
+        context: CallContext,
     ) -> (ExitReason, Bytes) {
         self.call_inner(
             code_address,
@@ -323,7 +319,9 @@ pub trait Handler {
     /// Get code of address.
     fn code(&mut self, address: H160) -> (Bytes, bool);
     /// Get storage value of address at index.
-    fn storage(&mut self, address: H160, index: H256) -> (H256, bool);
+    fn sload(&mut self, address: H160, index: H256) -> (H256, bool);
+    /// Set storage value of address at index. Return if slot is cold/hot access.
+    fn sstore(&mut self, address: H160, index: H256, value: H256);
     /// Get original storage value of address at index.
     fn original_storage(&mut self, address: H160, index: H256) -> H256;
     /// Check whether an address exists.
@@ -342,8 +340,6 @@ pub trait Handler {
 
     /// Get the gas left value. It contacts gasometer
     fn gas_left(&self) -> U256;
-    /// Set storage value of address at index. Return if slot is cold/hot access.
-    fn sstore(&mut self, address: H160, index: H256, value: H256);
     /// Create a log owned by address with given topics and data.
     fn log(&mut self, address: H160, topics: Vec<H256>, data: Bytes);
     /// Mark an address to be deleted, with funds transferred to target.
@@ -370,7 +366,7 @@ pub trait Handler {
         input: Bytes,
         target_gas: Option<u64>,
         is_static: bool,
-        context: Context,
+        context: CallContext,
     ) -> (ExitReason, Bytes);
 }
 
