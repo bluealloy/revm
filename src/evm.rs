@@ -12,7 +12,7 @@ use crate::{
     machine::{Contract, Stack},
     opcode::OpCode,
     spec::Spec,
-    subrutine::SubRutine,
+    subroutine::SubRoutine,
     util, AccountInfo, CallContext, CreateScheme, GlobalEnv, Log, Machine, Transfer,
 };
 use bytes::Bytes;
@@ -20,7 +20,7 @@ use bytes::Bytes;
 pub struct EVM<'a, SPEC: Spec, DB: Database> {
     db: &'a mut DB,
     global_env: GlobalEnv,
-    subrutine: SubRutine,
+    subroutine: SubRoutine,
     gas: U256,
     phantomdata: PhantomData<SPEC>,
     is_static: bool,
@@ -32,7 +32,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         Self {
             db,
             global_env,
-            subrutine: SubRutine::new(),
+            subroutine: SubRoutine::new(),
             gas,
             phantomdata: PhantomData,
             is_static: false,
@@ -51,12 +51,12 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         //todo!()
 
         // TODO set caller/contract_add/precompiles as hot access
-        let is_cold = self.subrutine.load_account(caller, self.db);
+        let is_cold = self.subroutine.load_account(caller, self.db);
 
         // trace call
         self.trace_call();
         // check depth of calls
-        if self.subrutine.depth() > SPEC::call_stack_limit {
+        if self.subroutine.depth() > SPEC::call_stack_limit {
             return (ExitError::CallTooDeep.into(), None, Bytes::new());
         }
 
@@ -68,20 +68,20 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         let address = util::create_address(scheme);
         // TODO wtf is l64 gas reduction. Check spec. Return gas and set gas_limit
         // inc nonce of caller
-        self.subrutine.inc_nonce(caller);
+        self.subroutine.inc_nonce(caller);
         // enter into subroutine
-        let checkpoint = self.subrutine.create_checkpoint();
+        let checkpoint = self.subroutine.create_checkpoint();
         // TODO check for code colision by checking nonce and code of created address
         // TODO reset storage to be sure that we dont overlap anything
 
         // transfer value to contract address
-        if let Err(e) = self.subrutine.transfer(caller, address, value) {
-            let _ = self.subrutine.checkpoint_revert(checkpoint);
+        if let Err(e) = self.subroutine.transfer(caller, address, value) {
+            let _ = self.subroutine.checkpoint_revert(checkpoint);
             return (ExitReason::Error(e), None, Bytes::new());
         }
         // inc nonce of contract
         if SPEC::create_increase_nonce {
-            self.subrutine.inc_nonce(address);
+            self.subroutine.inc_nonce(address);
         }
         // create new machine and execute init function
         let contract = Contract::new(Bytes::new(), init_code, address, caller, value);
@@ -95,13 +95,13 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
                 if let Some(limit) = SPEC::create_contract_limit {
                     if out.len() > limit {
                         // TODO reduce gas and return
-                        self.subrutine.checkpoint_discard(checkpoint);
+                        self.subroutine.checkpoint_discard(checkpoint);
                         return (ExitError::CreateContractLimit.into(), None, Bytes::new());
                     }
                 }
                 // dummy return TODO proper handling
 
-                let e = self.subrutine.checkpoint_commit(checkpoint);
+                let e = self.subroutine.checkpoint_commit(checkpoint);
                 (
                     ExitReason::Succeed(ExitSucceed::Returned),
                     Some(address),
@@ -109,11 +109,11 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
                 )
             }
             ExitReason::Revert(revert) => {
-                let _ = self.subrutine.checkpoint_revert(checkpoint);
+                let _ = self.subroutine.checkpoint_revert(checkpoint);
                 (ExitReason::Revert(revert), None, machine.return_value())
             }
             ExitReason::Error(_) | ExitReason::Fatal(_) => {
-                let _ = self.subrutine.checkpoint_discard(checkpoint);
+                let _ = self.subroutine.checkpoint_discard(checkpoint);
                 (exit_reason.clone(), None, machine.return_value())
             }
         }
@@ -147,22 +147,22 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
 
         // get code that we want to call
         let (code, _) = self.code(code_address);
-        // Create subrutine checkpoint
-        let checkpoint = self.subrutine.create_checkpoint();
+        // Create subroutine checkpoint
+        let checkpoint = self.subroutine.create_checkpoint();
         // TODO touch address
-        //self.subrutine.touch(context.address);
+        //self.subroutine.touch(context.address);
         // check depth of calls
-        if self.subrutine.depth() > SPEC::call_stack_limit {
+        if self.subroutine.depth() > SPEC::call_stack_limit {
             return (ExitError::CallTooDeep.into(), Bytes::new());
         }
 
         // transfer value from caller to called address;
         if let Some(transfer) = transfer {
             if let Err(e) =
-                self.subrutine
+                self.subroutine
                     .transfer(transfer.source, transfer.target, transfer.value)
             {
-                let _ = self.subrutine.checkpoint_revert(checkpoint);
+                let _ = self.subroutine.checkpoint_revert(checkpoint);
                 return (ExitReason::Error(e), Bytes::new());
             }
         }
@@ -179,15 +179,15 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         let exit_reason = machine.run::<Self, SPEC>(self);
         match exit_reason {
             ExitReason::Succeed(_) => {
-                let _ = self.subrutine.checkpoint_revert(checkpoint);
+                let _ = self.subroutine.checkpoint_revert(checkpoint);
                 (exit_reason, machine.return_value())
             }
             ExitReason::Revert(revert) => {
-                let _ = self.subrutine.checkpoint_revert(checkpoint);
+                let _ = self.subroutine.checkpoint_revert(checkpoint);
                 (exit_reason, machine.return_value())
             }
             ExitReason::Error(_) | ExitReason::Fatal(_) => {
-                let _ = self.subrutine.checkpoint_discard(checkpoint);
+                let _ = self.subroutine.checkpoint_discard(checkpoint);
                 (exit_reason, machine.return_value())
             }
         }
@@ -204,23 +204,23 @@ impl<'a, SPEC: Spec, DB: Database> Handler for EVM<'a, SPEC, DB> {
     }
 
     fn balance(&mut self, address: H160) -> (U256, bool) {
-        let (acc, is_cold) = self.subrutine.load_account(address.clone(), self.db);
+        let (acc, is_cold) = self.subroutine.load_account(address.clone(), self.db);
         (acc.info.balance, is_cold)
     }
 
     fn nonce(&mut self, address: H160) -> (u64, bool) {
-        let (acc, is_cold) = self.subrutine.load_account(address.clone(), self.db);
+        let (acc, is_cold) = self.subroutine.load_account(address.clone(), self.db);
         (acc.info.nonce, is_cold)
     }
 
     fn code(&mut self, address: H160) -> (Bytes, bool) {
-        let (acc, is_cold) = self.subrutine.load_code(address.clone(), self.db);
+        let (acc, is_cold) = self.subroutine.load_code(address.clone(), self.db);
         (acc.info.code.clone().unwrap(), is_cold)
     }
 
     fn sload(&mut self, address: H160, index: H256) -> (H256, bool) {
         // account is allways hot. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
-        self.subrutine.sload(address, index, self.db)
+        self.subroutine.sload(address, index, self.db)
     }
 
     fn original_storage(&mut self, address: H160, index: H256) -> H256 {
@@ -247,7 +247,7 @@ impl<'a, SPEC: Spec, DB: Database> Handler for EVM<'a, SPEC, DB> {
 
     // TODO check return value, should it be is_cold or maybe original value
     fn sstore(&mut self, address: H160, index: H256, value: H256) {
-        self.subrutine.sstore(address, index, value, self.db);
+        self.subroutine.sstore(address, index, value, self.db);
     }
 
     fn log(&mut self, address: H160, topics: Vec<H256>, data: Bytes) {
@@ -256,7 +256,7 @@ impl<'a, SPEC: Spec, DB: Database> Handler for EVM<'a, SPEC, DB> {
             topics,
             data,
         };
-        self.subrutine.log(log);
+        self.subroutine.log(log);
     }
 
     // DO it later :)

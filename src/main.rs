@@ -7,7 +7,7 @@ mod machine;
 mod models;
 mod opcode;
 mod spec;
-mod subrutine;
+mod subroutine;
 mod util;
 
 pub use evm::{ExtHandler, Handler, EVM};
