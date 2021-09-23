@@ -26,7 +26,6 @@ pub struct SubRoutine {
     depth: usize,
     /// is static subroutine. SSTORE and various CALLs are not permited
     is_static: bool,
-
 }
 
 /// SubRoutine checkpoint that will help us to go back from this
@@ -132,7 +131,7 @@ impl SubRoutine {
     }
 
     ///
-    pub fn checkpoint_commit(&mut self, checkpoint: SubRoutineCheckpoint) -> Result<(), ExitError> {
+    pub fn checkpoint_commit(&mut self, _checkpoint: SubRoutineCheckpoint) -> Result<(), ExitError> {
         self.depth -= 1;
         // we are continuing to use present checkpoint because it is merge between ours and parents
         Ok(())

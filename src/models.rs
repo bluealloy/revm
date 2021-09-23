@@ -16,6 +16,18 @@ pub struct AccountInfo {
     pub nonce: u64,
 }
 
+impl AccountInfo {
+    pub fn is_empty(&self) -> bool {
+        self.nonce == 0
+            && self.balance == U256::zero()
+            && (self.code_hash == None || self.code_hash == Some(H256::zero()))
+    }
+
+    pub fn exists(&self) -> bool {
+        !self.is_empty()
+    }
+}
+
 /// Create scheme.
 #[derive(Clone, Copy, Eq, PartialEq, Debug)]
 pub enum CreateScheme {

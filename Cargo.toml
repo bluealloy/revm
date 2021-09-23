@@ -12,3 +12,4 @@ bytes = "1.1"
 sha3 = { version = "0.9", default-features = false }
 num_enum = "0.5"
 rlp = { version = "0.5", default-features = false }
+hex = "0.4"

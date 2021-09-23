@@ -39,6 +39,34 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         }
     }
 
+    pub fn transact_create(
+        &mut self,
+        caller: H160,
+        value: U256,
+        init_code: Bytes,
+        salt: H256,
+        gas_limit: u64,
+        access_list: Vec<(H160, Vec<H256>)>,
+    ) -> ExitReason {
+
+        //TODO calculate transacition cost and add it to gasometer
+		let code_hash = H256::from_slice(Keccak256::digest(&init_code).as_slice());
+
+        // load access_list items into subrutine
+
+        let (exit_reason,_,_) = self.create_inner(caller, CreateScheme::Create2 {
+            caller,
+            code_hash,
+            salt,
+        }, 
+        value,
+        init_code,
+        Some(gas_limit),
+        false);
+        
+        exit_reason
+    }
+
     fn create_inner(
         &mut self,
         caller: H160,
@@ -371,7 +399,9 @@ pub trait Handler {
 }
 
 pub trait Tracing {
-    fn trace_opcode(&mut self, contract: &Contract, opcode: OpCode, stack: &Stack) {}
+    fn trace_opcode(&mut self, contract: &Contract, opcode: OpCode, stack: &Stack) {
+        println!("Opcode:{:?} ({:?}), stack(limit:{}):{:?}",opcode, opcode as u8,stack.limit(),stack.data());
+    }
     fn trace_call(&mut self) {}
 }
 

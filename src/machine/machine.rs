@@ -33,8 +33,8 @@ impl Machine {
         Self {
             program_counter: 0,
             return_range: Range::default(),
-            memory: Memory::new(100),
-            stack: Stack::new(),
+            memory: Memory::new(10000),
+            stack: Stack::new(10000),
             status: Ok(()),
             return_data_buffer: Bytes::new(),
             contract,

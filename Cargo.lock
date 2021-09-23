@@ -329,6 +329,7 @@ version = "0.1.0"
 dependencies = [
  "bit-set",
  "bytes",
+ "hex",
  "num_enum",
  "primitive-types",
  "rlp",
