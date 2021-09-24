@@ -95,14 +95,7 @@ impl Machine {
 
         // call prevalidation to calcuate gas consumption for this opcode
         handler.trace_opcode(&self.contract, opcode, &self.stack);
-        /*
-        match handler.opcode(&self.context, opcode, &self.stack) {
-            Ok(()) => (),
-            Err(e) => {
-                self.status = Err(ExitReason::Error(e));
-                return self.status.clone();
-            }
-        }*/
+
         // check machine status and return if not present
         self.status.as_ref().map_err(|reason| reason.clone())?;
 

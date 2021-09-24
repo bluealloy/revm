@@ -26,6 +26,11 @@ pub struct EVM<'a, SPEC: Spec, DB: Database> {
     is_static: bool,
 }
 
+pub enum CreateType {
+    Create,
+    Create2(H256), // H256 is salt
+}
+
 impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
     pub fn new(db: &'a mut DB, global_env: GlobalEnv) -> Self {
         let gas = global_env.gas_limit.clone();
@@ -39,32 +44,73 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         }
     }
 
-    pub fn transact_create(
+    pub fn call(
+        &mut self,
+        caller: H160,
+        address: H160,
+        value: U256,
+        data: Bytes,
+        gas_limit: u64,
+        access_list: Vec<(H160, Vec<H256>)>,
+    ) -> (ExitReason, Bytes) {
+        // TODO calculate gascost
+        //let transaction_cost = gasometer::call_transaction_cost(&data, &access_list);
+
+        self.load_access_list(access_list);
+
+        self.subroutine.load_account(caller, self.db);
+        self.subroutine.inc_nonce(caller);
+
+        let context = CallContext {
+            caller,
+            address,
+            apparent_value: value,
+        };
+
+        self.call_inner(
+            address,
+            Some(Transfer {
+                source: caller,
+                target: address,
+                value,
+            }),
+            data,
+            Some(gas_limit),
+            false,
+            false,
+            false,
+            context,
+        )
+    }
+
+    pub fn create(
         &mut self,
         caller: H160,
         value: U256,
         init_code: Bytes,
-        salt: H256,
+        create_scheme: CreateScheme,
         gas_limit: u64,
         access_list: Vec<(H160, Vec<H256>)>,
     ) -> ExitReason {
-
         //TODO calculate transacition cost and add it to gasometer
-		let code_hash = H256::from_slice(Keccak256::digest(&init_code).as_slice());
-
         // load access_list items into subrutine
 
-        let (exit_reason,_,_) = self.create_inner(caller, CreateScheme::Create2 {
+        self.load_access_list(access_list);
+
+        let (exit_reason, _, _) = self.create_inner(
             caller,
-            code_hash,
-            salt,
-        }, 
-        value,
-        init_code,
-        Some(gas_limit),
-        false);
-        
+            create_scheme,
+            value,
+            init_code,
+            Some(gas_limit),
+            false,
+        );
+
         exit_reason
+    }
+    
+    fn load_access_list(&mut self, access_list: Vec<(H160, Vec<H256>)>) {
+
     }
 
     fn create_inner(
@@ -78,8 +124,8 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
     ) -> (ExitReason, Option<H160>, Bytes) {
         //todo!()
 
-        // TODO set caller/contract_add/precompiles as hot access
-        let is_cold = self.subroutine.load_account(caller, self.db);
+        // set caller/contract_add/precompiles as hot access. PRobably can be removed. Acc shold be allready hot.
+        self.subroutine.load_account(caller, self.db);
 
         // trace call
         self.trace_call();
@@ -92,18 +138,27 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         if self.balance(caller).0 < value {
             return (ExitError::OutOfFund.into(), None, Bytes::new());
         }
+        
+        let code_hash = H256::from_slice(Keccak256::digest(&init_code).as_slice());
         // create address
-        let address = util::create_address(scheme);
+        let address = match scheme {
+            CreateScheme::Create => {
+                util::create_address(caller, self.subroutine.account(caller).info.nonce)
+            }
+            CreateScheme::Create2 { salt } => {
+                util::create2_address(caller, code_hash, salt)
+            }
+        };
         // TODO wtf is l64 gas reduction. Check spec. Return gas and set gas_limit
         // inc nonce of caller
         self.subroutine.inc_nonce(caller);
         // enter into subroutine
         let checkpoint = self.subroutine.create_checkpoint();
         // TODO check for code colision by checking nonce and code of created address
-        // TODO reset storage to be sure that we dont overlap anything
+        // TODO reset storage to be sure that we dont need to ask db for storage
 
         // transfer value to contract address
-        if let Err(e) = self.subroutine.transfer(caller, address, value) {
+        if let Err(e) = self.subroutine.transfer(caller, address, value,self.db) {
             let _ = self.subroutine.checkpoint_revert(checkpoint);
             return (ExitReason::Error(e), None, Bytes::new());
         }
@@ -119,17 +174,21 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         match exit_reason {
             ExitReason::Succeed(s) => {
                 // if ok, check contract creation limit and calculate gas deduction on output len.
-                let out = machine.return_value();
+                let code = machine.return_value();
                 if let Some(limit) = SPEC::create_contract_limit {
-                    if out.len() > limit {
+                    if code.len() > limit {
                         // TODO reduce gas and return
                         self.subroutine.checkpoint_discard(checkpoint);
                         return (ExitError::CreateContractLimit.into(), None, Bytes::new());
                     }
                 }
-                // dummy return TODO proper handling
+                // TODO check gas used and revert if we overspend
+                println!("SM created: {:?}",address);
+                let acc = self.subroutine.account_mut(address);
+                acc.info.code = Some(code);
+                acc.info.code_hash = Some(code_hash);
 
-                let e = self.subroutine.checkpoint_commit(checkpoint);
+                self.subroutine.checkpoint_commit(checkpoint);
                 (
                     ExitReason::Succeed(ExitSucceed::Returned),
                     Some(address),
@@ -160,7 +219,6 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         context: CallContext,
     ) -> (ExitReason, Bytes) {
         // call trace_opcode.
-        // self.trace_opcode(contract, opcode, stack)
 
         // wtf is l64  calculate it here and set gas
         let mut gas_limit: u64 = 0;
@@ -178,7 +236,8 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         // Create subroutine checkpoint
         let checkpoint = self.subroutine.create_checkpoint();
         // TODO touch address
-        //self.subroutine.touch(context.address);
+        // self.subroutine.touch(context.address);
+        self.subroutine.load_account(context.address, self.db);
         // check depth of calls
         if self.subroutine.depth() > SPEC::call_stack_limit {
             return (ExitError::CallTooDeep.into(), Bytes::new());
@@ -188,7 +247,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         if let Some(transfer) = transfer {
             if let Err(e) =
                 self.subroutine
-                    .transfer(transfer.source, transfer.target, transfer.value)
+                    .transfer(transfer.source, transfer.target, transfer.value,self.db)
             {
                 let _ = self.subroutine.checkpoint_revert(checkpoint);
                 return (ExitReason::Error(e), Bytes::new());
@@ -232,23 +291,23 @@ impl<'a, SPEC: Spec, DB: Database> Handler for EVM<'a, SPEC, DB> {
     }
 
     fn balance(&mut self, address: H160) -> (U256, bool) {
-        let (acc, is_cold) = self.subroutine.load_account(address.clone(), self.db);
+        let (acc, is_cold) = self.subroutine.load_account(address, self.db);
         (acc.info.balance, is_cold)
     }
 
-    fn nonce(&mut self, address: H160) -> (u64, bool) {
-        let (acc, is_cold) = self.subroutine.load_account(address.clone(), self.db);
-        (acc.info.nonce, is_cold)
-    }
-
     fn code(&mut self, address: H160) -> (Bytes, bool) {
-        let (acc, is_cold) = self.subroutine.load_code(address.clone(), self.db);
+        let (acc, is_cold) = self.subroutine.load_code(address, self.db);
         (acc.info.code.clone().unwrap(), is_cold)
     }
 
     fn sload(&mut self, address: H160, index: H256) -> (H256, bool) {
         // account is allways hot. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
         self.subroutine.sload(address, index, self.db)
+    }
+
+    // TODO check return value, should it be is_cold or maybe original value
+    fn sstore(&mut self, address: H160, index: H256, value: H256) {
+        self.subroutine.sstore(address, index, value, self.db);
     }
 
     fn original_storage(&mut self, address: H160, index: H256) -> H256 {
@@ -261,21 +320,16 @@ impl<'a, SPEC: Spec, DB: Database> Handler for EVM<'a, SPEC, DB> {
     // }
 
     // This two next functions should be removed. THhis information should be passed when asking needed data/account/slot
-    fn is_cold(&self, address: H160) -> bool {
-        true
-    }
+    // fn is_cold(&self, address: H160) -> bool {
+    //     true
+    // }
 
-    fn is_cold_storage(&self, address: H160, index: H256) -> bool {
-        true
-    }
+    // fn is_cold_storage(&self, address: H160, index: H256) -> bool {
+    //     true
+    // }
 
     fn gas_left(&self) -> U256 {
         self.gas
-    }
-
-    // TODO check return value, should it be is_cold or maybe original value
-    fn sstore(&mut self, address: H160, index: H256, value: H256) {
-        self.subroutine.sstore(address, index, value, self.db);
     }
 
     fn log(&mut self, address: H160, topics: Vec<H256>, data: Bytes) {
@@ -287,8 +341,7 @@ impl<'a, SPEC: Spec, DB: Database> Handler for EVM<'a, SPEC, DB> {
         self.subroutine.log(log);
     }
 
-    // DO it later :)
-    fn mark_delete<const CALL_TRACE: bool>(
+    fn selfdestruct<const CALL_TRACE: bool>(
         &mut self,
         address: H160,
         target: H160,
@@ -341,9 +394,6 @@ pub trait Handler {
     fn block_hash(&mut self, number: U256) -> H256;
     /// Get balance of address.
     fn balance(&mut self, address: H160) -> (U256, bool);
-    /// Get balance of address.
-    fn nonce(&mut self, address: H160) -> (u64, bool);
-
     /// Get code of address.
     fn code(&mut self, address: H160) -> (Bytes, bool);
     /// Get storage value of address at index.
@@ -352,26 +402,18 @@ pub trait Handler {
     fn sstore(&mut self, address: H160, index: H256, value: H256);
     /// Get original storage value of address at index.
     fn original_storage(&mut self, address: H160, index: H256) -> H256;
-    /// Check whether an address exists.
+
+    // Check whether an address exists.
     //fn exists(&self, address: H160) -> bool;
-    /// Check whether an address has already been deleted. Should be merged with selfdestruct mark_delete call
+    // Check whether an address has already been deleted. Should be merged with selfdestruct mark_delete call
     // fn deleted(&self, address: H160) -> bool;
-    /// Checks if the address or (address, index) pair has been previously accessed
-    /// (or set in `accessed_addresses` / `accessed_storage_keys` via an access list
-    /// transaction).
-    /// References:
-    /// * https://eips.ethereum.org/EIPS/eip-2929
-    /// * https://eips.ethereum.org/EIPS/eip-2930
-    /// TODO REMOVE THIS STUFF
-    fn is_cold(&self, address: H160) -> bool;
-    fn is_cold_storage(&self, address: H160, index: H256) -> bool;
 
     /// Get the gas left value. It contacts gasometer
     fn gas_left(&self) -> U256;
     /// Create a log owned by address with given topics and data.
     fn log(&mut self, address: H160, topics: Vec<H256>, data: Bytes);
     /// Mark an address to be deleted, with funds transferred to target.
-    fn mark_delete<const CALL_TRACE: bool>(
+    fn selfdestruct<const CALL_TRACE: bool>(
         &mut self,
         address: H160,
         target: H160,
@@ -400,7 +442,7 @@ pub trait Handler {
 
 pub trait Tracing {
     fn trace_opcode(&mut self, contract: &Contract, opcode: OpCode, stack: &Stack) {
-        println!("Opcode:{:?} ({:?}), stack(limit:{}):{:?}",opcode, opcode as u8,stack.limit(),stack.data());
+        println!("Opcode:{:?} ({:?}), stack:{:?}",opcode, opcode as u8,stack.data());
     }
     fn trace_call(&mut self) {}
 }

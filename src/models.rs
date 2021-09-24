@@ -32,23 +32,12 @@ impl AccountInfo {
 #[derive(Clone, Copy, Eq, PartialEq, Debug)]
 pub enum CreateScheme {
     /// Legacy create scheme of `CREATE`.
-    Legacy {
-        /// Caller of the create.
-        caller: H160,
-        /// Caller nonce
-        nonce: u64,
-    },
+    Create,
     /// Create scheme of `CREATE2`.
     Create2 {
-        /// Caller of the create.
-        caller: H160,
-        /// Code hash.
-        code_hash: H256,
         /// Salt.
         salt: H256,
     },
-    /// Create at a fixed location.
-    Fixed(H160),
 }
 
 #[derive(Clone, Copy, Eq, PartialEq, Debug)]

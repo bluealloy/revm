@@ -62,7 +62,7 @@ impl SubRoutine {
     }
 
     /// load account into memory. return if it is cold or hot accessed
-    pub fn load_account<DB: Database>(&mut self, address: H160, db: &mut DB) -> (&Account,bool) {
+    pub fn load_account<DB: Database>(&mut self, address: H160, db: &mut DB) -> (&Account, bool) {
         let is_cold = match self.state.entry(address.clone()) {
             Entry::Occupied(occ) => false,
             Entry::Vacant(vac) => {
@@ -76,11 +76,11 @@ impl SubRoutine {
                 true
             }
         };
-        (self.state.get(&address).unwrap(),is_cold)
+        (self.state.get(&address).unwrap(), is_cold)
     }
 
-    pub fn load_code<DB: Database>(&mut self, address: H160, db: &mut DB) -> (&Account,bool) {
-        let (_,is_cold) = self.load_account(address.clone(), db);
+    pub fn load_code<DB: Database>(&mut self, address: H160, db: &mut DB) -> (&Account, bool) {
+        let (_, is_cold) = self.load_account(address.clone(), db);
         let acc = self.state.get_mut(&address).unwrap();
 
         if acc.info.code.is_none() {
@@ -91,12 +91,17 @@ impl SubRoutine {
             };
             acc.info.code = Some(code);
         }
-        (acc,is_cold)
+        (acc, is_cold)
     }
 
     /// Use it with load_account function.
     pub fn account(&self, address: H160) -> &Account {
         self.state.get(&address).unwrap() // Allways assume that acc is already loaded
+    }
+
+    /// use it only if you know that acc is hot
+    pub fn account_mut(&mut self, address: H160) -> &mut Account {
+        self.state.get_mut(&address).unwrap()
     }
 
     pub fn depth(&self) -> usize {
@@ -113,10 +118,26 @@ impl SubRoutine {
         acc.info.nonce += 1;
     }
 
-    pub fn transfer(&mut self, from: H160, to: H160, value: U256) -> Result<(), ExitError> {
-        // TODO check funds and do transfer
-
-        Ok(())
+    pub fn transfer<DB: Database>(
+        &mut self,
+        from: H160,
+        to: H160,
+        value: U256,
+        db: &mut DB,
+    ) -> Result<(bool, bool), ExitError> {
+        // load accounts
+        let (_, from_is_cold) = self.load_account(from, db);
+        let (_, to_is_cold) = self.load_account(to, db);
+        // check from balance and substract value
+        let from = self.state.get_mut(&from).unwrap();
+        if from.info.balance < value {
+            return Err(ExitError::OutOfFund);
+        }
+        from.info.balance -= value;
+        // add value to to account
+        let to = self.state.get_mut(&to).unwrap();
+        to.info.balance += value;
+        Ok((from_is_cold, to_is_cold))
     }
 
     pub fn create_checkpoint(&mut self) -> SubRoutineCheckpoint {
@@ -131,10 +152,12 @@ impl SubRoutine {
     }
 
     ///
-    pub fn checkpoint_commit(&mut self, _checkpoint: SubRoutineCheckpoint) -> Result<(), ExitError> {
+    pub fn checkpoint_commit(
+        &mut self,
+        _checkpoint: SubRoutineCheckpoint,
+    ) {
         self.depth -= 1;
         // we are continuing to use present checkpoint because it is merge between ours and parents
-        Ok(())
     }
 
     pub fn checkpoint_revert(&mut self, checkpoint: SubRoutineCheckpoint) {
@@ -167,7 +190,7 @@ impl SubRoutine {
 
     // CHECK account is allways present for storage that we want to access
     pub fn sload<DB: Database>(&mut self, address: H160, index: H256, db: &mut DB) -> (H256, bool) {
-        let acc =self.state.get_mut(&address).unwrap(); // asume acc is hot
+        let acc = self.state.get_mut(&address).unwrap(); // asume acc is hot
         match acc.storage.entry(index) {
             Entry::Occupied(occ) => (occ.get().clone(), false),
             Entry::Vacant(vac) => {

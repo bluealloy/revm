@@ -321,6 +321,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "revm-test"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "hex",
+ "primitive-types",
+ "revm",
+]
+
+[[package]]
 name = "rlp"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -65,7 +65,7 @@ impl Spec for BerlinSpec {
     /// Memory limit.
     const memory_limit: usize = 0;
     /// Call limit.
-    const call_stack_limit: usize = 0;
+    const call_stack_limit: usize = 1024;
     /// Create contract limit. TODO set usize to MAX
     const create_contract_limit: Option<usize> = None;
     /// Call stipend.

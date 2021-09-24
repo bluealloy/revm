@@ -1,7 +1,7 @@
 use super::Control;
 use crate::{
     error::{ExitError, ExitFatal, ExitReason, ExitSucceed},
-    CallScheme, CallContext, CreateScheme, ExtHandler, Machine, Transfer,
+    CallContext, CallScheme, CreateScheme, ExtHandler, Machine, Transfer,
 };
 // 	CallScheme, Capture, CallContext, CreateScheme, ,
 // 	, Runtime, Transfer,
@@ -186,14 +186,6 @@ pub fn sload<H: ExtHandler, const OPCODE_TRACE: bool>(
     pop!(machine, index);
     let value = handler.sload(machine.contract.address, index);
     push!(machine, value.0);
-    // if OPCODE_TRACE {
-    // 	event!(SLoad {
-    // 		address: machine.contract.address,
-    // 		index,
-    // 		value
-    // 	});
-    // }
-
     Control::Continue
 }
 
@@ -202,14 +194,6 @@ pub fn sstore<H: ExtHandler, const OPCODE_TRACE: bool>(
     handler: &mut H,
 ) -> Control {
     pop!(machine, index, value);
-    // if OPCODE_TRACE {
-    // 	event!(SStore {
-    // 		address: machine.contract.address,
-    // 		index,
-    // 		value
-    // 	});
-    // }
-
     handler.sstore(machine.contract.address, index, value);
     Control::Continue
 }
@@ -253,7 +237,7 @@ pub fn suicide<H: ExtHandler, const CALL_TRACE: bool>(
 ) -> Control {
     pop!(machine, target);
 
-    match handler.mark_delete::<CALL_TRACE>(machine.contract.address, target.into()) {
+    match handler.selfdestruct::<CALL_TRACE>(machine.contract.address, target.into()) {
         Ok(()) => (),
         Err(e) => return Control::Exit(e.into()),
     }
@@ -286,18 +270,10 @@ pub fn create<
     };
     let scheme = if is_create2 {
         pop!(machine, salt);
-        let code_hash = H256::from_slice(Keccak256::digest(&code).as_slice());
-        CreateScheme::Create2 {
-            caller: machine.contract.address,
-            salt,
-            code_hash,
-        }
+        //let code_hash = H256::from_slice(Keccak256::digest(&code).as_slice());
+        CreateScheme::Create2 { salt }
     } else {
-        let (nonce,_) = handler.nonce(machine.contract.address);
-        CreateScheme::Legacy {
-            caller: machine.contract.address,
-            nonce,
-        }
+        CreateScheme::Create
     };
 
     let (reason, address, return_data) = handler.create::<CALL_TRACE, GAS_TRACE, OPCODE_TRACE>(
