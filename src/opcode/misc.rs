@@ -1,7 +1,7 @@
 use super::Control;
 use crate::{
     error::{ExitError, ExitFatal, ExitRevert, ExitSucceed},
-    Machine,
+    machine::Machine,
 };
 use core::cmp::min;
 use primitive_types::{H256, U256};

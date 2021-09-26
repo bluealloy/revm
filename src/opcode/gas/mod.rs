@@ -5,8 +5,12 @@
 //#![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
+mod calc;
+mod constants;
+mod utils;
 
-use super::{calc, constants};
+
+//use super::{calc, constants};
 use crate::{error::ExitError, machine::Stack, opcode::OpCode, ExtHandler};
 use alloc::vec::Vec;
 use core::cmp::max;
@@ -685,7 +689,7 @@ impl<SPEC: Spec> Inner<SPEC> {
         let rem = end % 32;
         let new = if rem == 0 { end / 32 } else { end / 32 + 1 };
 
-        Ok(max(self.memory_gas, super::calc::memory_gas(new)?))
+        Ok(max(self.memory_gas, calc::memory_gas(new)?))
     }
 
     fn extra_check(&self, cost: GasCost, after_gas: u64) -> Result<(), ExitError> {

@@ -1,20 +1,24 @@
 #![allow(dead_code)]
 
-pub mod db;
-pub mod error;
-pub mod evm;
-pub mod machine;
-pub mod models;
-pub mod opcode;
-pub mod spec;
-pub mod subroutine;
-pub mod util;
+mod db;
+mod error;
+mod evm;
+mod machine;
+mod models;
+mod opcode;
+mod spec;
+mod subroutine;
+mod util;
 
-pub use evm::{ExtHandler, Handler, EVM};
-pub use machine::Machine;
-pub use models::*;
-pub use db::{Database, StateDB};
-pub use spec::*;
+use evm::ExtHandler;
 
 
 extern crate alloc;
+
+pub use evm::EVM;
+pub use subroutine::Account;
+pub use models::*;
+pub use error::*;
+pub use machine::Machine;
+pub use db::{Database, StateDB};
+pub use spec::*;

@@ -6,13 +6,14 @@ mod codes;
 mod i256;
 mod misc;
 mod system;
+mod gas;
 
 pub use codes::OpCode;
 
 use crate::{
     error::{ExitError, ExitReason, ExitSucceed},
     spec::Spec,
-    CallScheme, ExtHandler, Machine,
+    CallScheme, ExtHandler, machine::Machine,
 };
 use core::ops::{BitAnd, BitOr, BitXor};
 use primitive_types::{H256, U256};

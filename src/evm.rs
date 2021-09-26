@@ -1,34 +1,19 @@
-use std::{
-    marker::PhantomData,
-    process::{exit, ExitStatus},
-};
+use std::{collections::HashMap, marker::PhantomData};
 
 use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
 
-use crate::{
-    db::Database,
-    error::{ExitError, ExitReason, ExitSucceed},
-    machine::{Contract, Stack},
-    opcode::OpCode,
-    spec::Spec,
-    subroutine::SubRoutine,
-    util, AccountInfo, CallContext, CreateScheme, GlobalEnv, Log, Machine, Transfer,
-};
+use crate::{CallContext, CreateScheme, GlobalEnv, Log, Transfer, db::Database, error::{ExitError, ExitReason, ExitSucceed}, machine::{Contract, Machine, Stack}, opcode::OpCode, spec::Spec, subroutine::{Account, State, SubRoutine}, util};
 use bytes::Bytes;
 
 pub struct EVM<'a, SPEC: Spec, DB: Database> {
     db: &'a mut DB,
     global_env: GlobalEnv,
     subroutine: SubRoutine,
+    precompiles: HashMap<H160, ()>,
     gas: U256,
     phantomdata: PhantomData<SPEC>,
     is_static: bool,
-}
-
-pub enum CreateType {
-    Create,
-    Create2(H256), // H256 is salt
 }
 
 impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
@@ -38,10 +23,15 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
             db,
             global_env,
             subroutine: SubRoutine::new(),
+            precompiles: HashMap::new(),
             gas,
             phantomdata: PhantomData,
             is_static: false,
         }
+    }
+
+    pub fn finalize(&mut self) -> (U256,HashMap<H160,Account>) {
+        (self.gas,self.subroutine.finalize())
     }
 
     pub fn call(
@@ -50,9 +40,9 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         address: H160,
         value: U256,
         data: Bytes,
-        gas_limit: u64,
+        gas_limit: U256,
         access_list: Vec<(H160, Vec<H256>)>,
-    ) -> (ExitReason, Bytes) {
+    ) -> (ExitReason, Bytes, U256, State) {
         // TODO calculate gascost
         //let transaction_cost = gasometer::call_transaction_cost(&data, &access_list);
 
@@ -67,7 +57,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
             apparent_value: value,
         };
 
-        self.call_inner(
+        let (exit,bytes) = self.call_inner(
             address,
             Some(Transfer {
                 source: caller,
@@ -75,12 +65,13 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
                 value,
             }),
             data,
-            Some(gas_limit),
+            gas_limit,
             false,
             false,
             false,
             context,
-        )
+        );
+        (exit,bytes,self.gas,self.subroutine.finalize())
     }
 
     pub fn create(
@@ -89,9 +80,9 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         value: U256,
         init_code: Bytes,
         create_scheme: CreateScheme,
-        gas_limit: u64,
+        gas_limit: U256,
         access_list: Vec<(H160, Vec<H256>)>,
-    ) -> ExitReason {
+    ) -> (ExitReason,U256,State) {
         //TODO calculate transacition cost and add it to gasometer
         // load access_list items into subrutine
 
@@ -102,16 +93,15 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
             create_scheme,
             value,
             init_code,
-            Some(gas_limit),
+            gas_limit,
             false,
         );
 
-        exit_reason
+        
+        (exit_reason,self.gas,self.subroutine.finalize())
     }
-    
-    fn load_access_list(&mut self, access_list: Vec<(H160, Vec<H256>)>) {
 
-    }
+    fn load_access_list(&mut self, access_list: Vec<(H160, Vec<H256>)>) {}
 
     fn create_inner(
         &mut self,
@@ -119,7 +109,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         scheme: CreateScheme,
         value: U256,
         init_code: Bytes,
-        target_gas: Option<u64>,
+        gas: U256,
         take_l64: bool,
     ) -> (ExitReason, Option<H160>, Bytes) {
         //todo!()
@@ -138,16 +128,14 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         if self.balance(caller).0 < value {
             return (ExitError::OutOfFund.into(), None, Bytes::new());
         }
-        
+
         let code_hash = H256::from_slice(Keccak256::digest(&init_code).as_slice());
         // create address
         let address = match scheme {
             CreateScheme::Create => {
                 util::create_address(caller, self.subroutine.account(caller).info.nonce)
             }
-            CreateScheme::Create2 { salt } => {
-                util::create2_address(caller, code_hash, salt)
-            }
+            CreateScheme::Create2 { salt } => util::create2_address(caller, code_hash, salt),
         };
         // TODO wtf is l64 gas reduction. Check spec. Return gas and set gas_limit
         // inc nonce of caller
@@ -158,7 +146,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         // TODO reset storage to be sure that we dont need to ask db for storage
 
         // transfer value to contract address
-        if let Err(e) = self.subroutine.transfer(caller, address, value,self.db) {
+        if let Err(e) = self.subroutine.transfer(caller, address, value, self.db) {
             let _ = self.subroutine.checkpoint_revert(checkpoint);
             return (ExitReason::Error(e), None, Bytes::new());
         }
@@ -168,7 +156,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         }
         // create new machine and execute init function
         let contract = Contract::new(Bytes::new(), init_code, address, caller, value);
-        let mut machine = Machine::new(contract);
+        let mut machine = Machine::new(contract, gas);
         let exit_reason = machine.run::<Self, SPEC>(self);
         // handler error if present on execution
         match exit_reason {
@@ -183,10 +171,8 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
                     }
                 }
                 // TODO check gas used and revert if we overspend
-                println!("SM created: {:?}",address);
-                let acc = self.subroutine.account_mut(address);
-                acc.info.code = Some(code);
-                acc.info.code_hash = Some(code_hash);
+                println!("SM created: {:?}", address);
+                self.subroutine.set_code(address,code,code_hash);
 
                 self.subroutine.checkpoint_commit(checkpoint);
                 (
@@ -212,7 +198,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         code_address: H160,
         transfer: Option<Transfer>,
         input: Bytes,
-        target_gas: Option<u64>,
+        gas: U256,
         is_static: bool,
         take_l64: bool,
         take_stipend: bool,
@@ -247,7 +233,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         if let Some(transfer) = transfer {
             if let Err(e) =
                 self.subroutine
-                    .transfer(transfer.source, transfer.target, transfer.value,self.db)
+                    .transfer(transfer.source, transfer.target, transfer.value, self.db)
             {
                 let _ = self.subroutine.checkpoint_revert(checkpoint);
                 return (ExitReason::Error(e), Bytes::new());
@@ -262,11 +248,11 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
             context.caller,
             context.apparent_value,
         );
-        let mut machine = Machine::new(contract);
+        let mut machine = Machine::new(contract, gas);
         let exit_reason = machine.run::<Self, SPEC>(self);
         match exit_reason {
             ExitReason::Succeed(_) => {
-                let _ = self.subroutine.checkpoint_revert(checkpoint);
+                let _ = self.subroutine.checkpoint_commit(checkpoint);
                 (exit_reason, machine.return_value())
             }
             ExitReason::Revert(revert) => {
@@ -314,24 +300,6 @@ impl<'a, SPEC: Spec, DB: Database> Handler for EVM<'a, SPEC, DB> {
         self.db.original_storage(address, index).unwrap_or_default()
     }
 
-    // TODO Used for selfdestruct gas calculation. Should probably be merged with delete call
-    // fn deleted(&self, address: H160) -> bool {
-    //     true
-    // }
-
-    // This two next functions should be removed. THhis information should be passed when asking needed data/account/slot
-    // fn is_cold(&self, address: H160) -> bool {
-    //     true
-    // }
-
-    // fn is_cold_storage(&self, address: H160, index: H256) -> bool {
-    //     true
-    // }
-
-    fn gas_left(&self) -> U256 {
-        self.gas
-    }
-
     fn log(&mut self, address: H160, topics: Vec<H256>, data: Bytes) {
         let log = Log {
             address,
@@ -355,9 +323,9 @@ impl<'a, SPEC: Spec, DB: Database> Handler for EVM<'a, SPEC, DB> {
         scheme: CreateScheme,
         value: U256,
         init_code: Bytes,
-        target_gas: Option<u64>,
+        gas: U256,
     ) -> (ExitReason, Option<H160>, Bytes) {
-        self.create_inner(caller, scheme, value, init_code, target_gas, true)
+        self.create_inner(caller, scheme, value, init_code, gas, true)
     }
 
     fn call<const CALL_TRACE: bool, const GAS_TRACE: bool, const OPCODE_TRACE: bool>(
@@ -365,7 +333,7 @@ impl<'a, SPEC: Spec, DB: Database> Handler for EVM<'a, SPEC, DB> {
         code_address: H160,
         transfer: Option<Transfer>,
         input: Bytes,
-        target_gas: Option<u64>,
+        gas: U256,
         is_static: bool,
         context: CallContext,
     ) -> (ExitReason, Bytes) {
@@ -373,7 +341,7 @@ impl<'a, SPEC: Spec, DB: Database> Handler for EVM<'a, SPEC, DB> {
             code_address,
             transfer,
             input,
-            target_gas,
+            gas,
             is_static,
             true,
             true,
@@ -402,14 +370,6 @@ pub trait Handler {
     fn sstore(&mut self, address: H160, index: H256, value: H256);
     /// Get original storage value of address at index.
     fn original_storage(&mut self, address: H160, index: H256) -> H256;
-
-    // Check whether an address exists.
-    //fn exists(&self, address: H160) -> bool;
-    // Check whether an address has already been deleted. Should be merged with selfdestruct mark_delete call
-    // fn deleted(&self, address: H160) -> bool;
-
-    /// Get the gas left value. It contacts gasometer
-    fn gas_left(&self) -> U256;
     /// Create a log owned by address with given topics and data.
     fn log(&mut self, address: H160, topics: Vec<H256>, data: Bytes);
     /// Mark an address to be deleted, with funds transferred to target.
@@ -425,7 +385,7 @@ pub trait Handler {
         scheme: CreateScheme,
         value: U256,
         init_code: Bytes,
-        target_gas: Option<u64>,
+        gas: U256,
     ) -> (ExitReason, Option<H160>, Bytes);
 
     /// Invoke a call operation.
@@ -434,7 +394,7 @@ pub trait Handler {
         code_address: H160,
         transfer: Option<Transfer>,
         input: Bytes,
-        target_gas: Option<u64>,
+        gas: U256,
         is_static: bool,
         context: CallContext,
     ) -> (ExitReason, Bytes);
@@ -442,7 +402,12 @@ pub trait Handler {
 
 pub trait Tracing {
     fn trace_opcode(&mut self, contract: &Contract, opcode: OpCode, stack: &Stack) {
-        println!("Opcode:{:?} ({:?}), stack:{:?}",opcode, opcode as u8,stack.data());
+        println!(
+            "Opcode:{:?} ({:?}), stack:{:?}",
+            opcode,
+            opcode as u8,
+            stack.data()
+        );
     }
     fn trace_call(&mut self) {}
 }

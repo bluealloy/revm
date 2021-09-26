@@ -26,10 +26,12 @@ pub struct Machine {
     /// Return stuff
     pub status: Result<(), ExitReason>,
     pub return_data_buffer: Bytes,
+    /// left gas
+    pub gas_left: U256,
 }
 
 impl Machine {
-    pub fn new(contract: Contract) -> Self {
+    pub fn new(contract: Contract, gas_left: U256) -> Self {
         Self {
             program_counter: 0,
             return_range: Range::default(),
@@ -38,6 +40,7 @@ impl Machine {
             status: Ok(()),
             return_data_buffer: Bytes::new(),
             contract,
+            gas_left,
         }
     }
     pub fn contract(&self) -> &Contract {

@@ -26,3 +26,82 @@ The structure of the project is getting crystallized and we can see few parts th
 - `machine` contains memory and execution stack of smart contracts. It calls opcode for execution and contains `step` function. It reads the contract, extracts opcodes and handles memory.
 - `subroutine` for various calls/creates we need to have separate `machine` and separate accessed locations. This is place where all of this is done, additionaly, it contains all caches of accessed accounts/slots/code. EIP2929 related access is integrated into state memory. Getting inside new call `subroutine` creates checkpoint that contain needed information that can revert state if subcall reverts or needs to be discardet. Changeset is made so it is optimistic that means that we dont do any work if call is finished successfully and only do something when it fials. 
 - `EVM`- Is main entry to the lib,it  implements `Handler` and connects `subroutine` and `machine` and does `subroutine checkpoint` switches.
+
+
+
+
+### Subroutine
+
+
+Changelogs are created in every subroutine and represent action that needs to happen so that present state can be reverted to state before subroutine. All actions can be found here.
+
+LoadAccount-> Remove account from state
+LoadSlot -> (Acc is already loaded)
+
+
+changelog can be:
+LoadedCold -> when reverting remove account from state.
+Dirty(Acc(Info,Storage),SlotState(ColdLoad,Dirtied)) ->
+        - apply all storage in reverse
+        - remove all cold loaded slots
+        - remove all Dirty slots 
+Destroyed(Acc(Info,Storage)) -> swap all Info and Storage from current state
+
+
+c  D D r r r r r r r r r
+Clean Dir Dir Des Dir Dir Des Dir Dir
+
+Cold  Dir Dir Des Dir Dir Des Dir Dir
+
+C D D R D D R D D
+
+Revert
+D
+D
+
+change1:
+1: loaded
+
+Changes2:
+1[2] = load 5
+1[2] = 5 -> 6
+1[4] = load 2
+
+changes3:
+1[2] = 6 -> 7
+
+change4: 
+1: destroy
+1[2] = load 10
+1[2] = 10 -> 11
+
+change5:
+1: destroy
+1[2] = 11 -> 12
+
+
+changelog1:
+1: cold
+
+changelo2:
+1: dirty
+1[2] = cold
+1[4] = cold
+
+changelo3:
+1: dirty
+1[2] = 6
+1[2] = dirty
+
+changelog4:
+1: destroyed
+    1[2] = 6
+    1[4] = 2
+
+changelog5:
+1: dirty
+1[2] = 11
+
+
+
+------------------------

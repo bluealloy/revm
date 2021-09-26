@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use primitive_types::{H160, H256, U256};
 
-use crate::{AccountInfo, Log};
+use crate::{AccountInfo, Log, Account};
 use bytes::Bytes;
 
 pub trait Database {
@@ -37,6 +37,17 @@ pub struct StateDB {
 impl StateDB {
     pub fn insert_cache(&mut self, address: H160, account: AccountInfo) {
         self.cache.insert(address, account);
+    }
+
+    pub fn apply(&mut self, changes: HashMap<H160, Account>) {
+        for (add,acc) in changes {
+            self.cache.insert(add,acc.info);
+            for (index,value) in acc.storage {
+                self.storage.insert((add,index),value);
+            }
+        }
+
+        
     }
 
     /// Create a new memory backend.

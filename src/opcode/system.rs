@@ -1,7 +1,7 @@
 use super::Control;
 use crate::{
     error::{ExitError, ExitFatal, ExitReason, ExitSucceed},
-    CallContext, CallScheme, CreateScheme, ExtHandler, Machine, Transfer,
+    CallContext, CallScheme, CreateScheme, ExtHandler, machine::Machine, Transfer,
 };
 // 	CallScheme, Capture, CallContext, CreateScheme, ,
 // 	, Runtime, Transfer,
@@ -199,7 +199,7 @@ pub fn sstore<H: ExtHandler, const OPCODE_TRACE: bool>(
 }
 
 pub fn gas<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
-    push_u256!(machine, handler.gas_left());
+    push_u256!(machine, machine.gas_left);
 
     Control::Continue
 }
@@ -281,7 +281,7 @@ pub fn create<
         scheme,
         value,
         code,
-        None,
+        machine.gas_left,
     );
     machine.return_data_buffer = return_data;
     let create_address: H256 = address.map(|a| a.into()).unwrap_or_default();
@@ -320,12 +320,7 @@ pub fn call<
 
     pop_u256!(machine, gas);
     pop!(machine, to);
-    let gas = if gas > U256::from(u64::MAX) {
-        None
-    } else {
-        Some(gas.as_u64())
-    };
-
+    
     let value = match scheme {
         CallScheme::Call | CallScheme::CallCode => {
             pop_u256!(machine, value);
