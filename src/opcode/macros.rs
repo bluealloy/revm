@@ -25,6 +25,15 @@ macro_rules! gas {
     };
 }
 
+macro_rules! gas_or_fail {
+    ($machine:expr, $gas:expr) => {
+        match $gas {
+            Some(gas_used) => gas!($machine,gas_used),
+            None => return Control::Exit(ExitReason::Error(ExitError::OutOfGas)),
+        }
+    };
+}
+
 macro_rules! pop {
 	( $machine:expr, $( $x:ident ),* ) => (
 		$(

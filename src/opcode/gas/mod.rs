@@ -10,6 +10,7 @@ mod constants;
 mod utils;
 
 pub use constants::*;
+pub use calc::*;
 
 
 //use super::{calc, constants};
@@ -691,7 +692,8 @@ impl<SPEC: Spec> Inner<SPEC> {
         let rem = end % 32;
         let new = if rem == 0 { end / 32 } else { end / 32 + 1 };
 
-        Ok(max(self.memory_gas, calc::memory_gas(new)?))
+        //Ok(max(self.memory_gas, calc::memory_gas(new)?))
+        Ok(self.memory_gas)
     }
 
     fn extra_check(&self, cost: GasCost, after_gas: u64) -> Result<(), ExitError> {
@@ -746,10 +748,10 @@ impl<SPEC: Spec> Inner<SPEC> {
                 target_is_cold,
             } => calc::sstore_cost::<SPEC>(original, current, new, gas, target_is_cold)?,
 
-            GasCost::Sha3 { len } => calc::sha3_cost(len)?,
-            GasCost::Log { n, len } => calc::log_cost(n, len)?,
-            GasCost::VeryLowCopy { len } => calc::verylowcopy_cost(len)?,
-            GasCost::Exp { power } => calc::exp_cost::<SPEC>(power)?,
+            //GasCost::Sha3 { len } => calc::sha3_cost(len)?,
+            //GasCost::Log { n, len } => calc::log_cost(n, len)?,
+            //GasCost::VeryLowCopy { len } => calc::verylowcopy_cost(len)?,
+            //GasCost::Exp { power } => calc::exp_cost::<SPEC>(power)?,
             GasCost::Create => constants::CREATE,
             GasCost::Create2 { len } => calc::create2_cost(len)?,
             GasCost::SLoad { target_is_cold } => calc::sload_cost::<SPEC>(target_is_cold),
@@ -761,19 +763,20 @@ impl<SPEC: Spec> Inner<SPEC> {
             GasCost::Invalid => return Err(ExitError::OutOfGas),
 
             GasCost::ExtCodeSize { target_is_cold } => {
-                calc::address_access_cost::<SPEC>(target_is_cold, SPEC::gas_ext_code)
+                calc::account_access_cost::<SPEC>(target_is_cold, SPEC::gas_ext_code)
             }
-            GasCost::ExtCodeCopy {
-                target_is_cold,
-                len,
-            } => calc::extcodecopy_cost::<SPEC>(len, target_is_cold)?,
+            //GasCost::ExtCodeCopy {
+            //    target_is_cold,
+            //    len,
+            //} => calc::extcodecopy_cost::<SPEC>(len, target_is_cold)?,
             GasCost::Balance { target_is_cold } => {
-                calc::address_access_cost::<SPEC>(target_is_cold, SPEC::gas_balance)
+                calc::account_access_cost::<SPEC>(target_is_cold, SPEC::gas_balance)
             }
             GasCost::BlockHash => constants::BLOCKHASH,
             GasCost::ExtCodeHash { target_is_cold } => {
-                calc::address_access_cost::<SPEC>(target_is_cold, SPEC::gas_ext_code_hash)
+                calc::account_access_cost::<SPEC>(target_is_cold, SPEC::gas_ext_code_hash)
             }
+            _ => 0,
         })
     }
 

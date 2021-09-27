@@ -3,6 +3,7 @@ use alloc::vec::Vec;
 use bytes::Bytes;
 use core::cmp::min;
 use core::ops::{BitAnd, Not};
+use std::cmp::max;
 use primitive_types::U256;
 
 /// A sequencial memory. It uses Rust's `Vec` for internal
@@ -12,6 +13,7 @@ pub struct Memory {
     data: Vec<u8>,
     effective_len: U256,
     limit: usize,
+    gas: u64,
 }
 
 impl Memory {
@@ -21,6 +23,7 @@ impl Memory {
             data: Vec::new(),
             effective_len: U256::zero(),
             limit,
+            gas: 0,
         }
     }
 
@@ -58,21 +61,39 @@ impl Memory {
         }
 
         if let Some(end) = offset.checked_add(len) {
-            self.resize_end(end)
+            // Resize the memory, making it cover to `end`, with 32 bytes as the step.
+            if end > self.effective_len {
+                let new_end = next_multiple_of_32(end).ok_or(ExitError::InvalidRange)?;
+                self.effective_len = new_end;
+            }
+            // record gas that is spend on memory
+            self.gas = self.record_memory_gas(offset,len)?;
+            Ok(())
         } else {
             Err(ExitError::InvalidRange)
         }
     }
 
-    /// Resize the memory, making it cover to `end`, with 32 bytes as the step.
-    pub fn resize_end(&mut self, end: U256) -> Result<(), ExitError> {
-        if end > self.effective_len {
-            let new_end = next_multiple_of_32(end).ok_or(ExitError::InvalidRange)?;
-            self.effective_len = new_end;
-        }
+    // TODO proably can omit some checks but do this later.
+	fn record_memory_gas(&self, from: U256, len: U256) -> Result<u64, ExitError> {
 
-        Ok(())
-    }
+		if len == U256::zero() {
+			return Ok(self.gas);
+		}
+
+		let end = from.checked_add(len).ok_or(ExitError::OutOfGas)?;
+
+		if end > U256::from(usize::MAX) {
+			return Err(ExitError::OutOfGas);
+		}
+		let end = end.as_usize();
+
+		let rem = end % 32;
+		let new = if rem == 0 { end / 32 } else { end / 32 + 1 };
+
+		Ok(max(self.gas, crate::opcode::gas::memory_gas(new)?))
+	}
+
 
     /// Get memory region at given offset.
     ///

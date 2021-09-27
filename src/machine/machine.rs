@@ -1,6 +1,6 @@
-use std::{ops::Range};
+use std::{cmp::max, ops::Range};
 
-use crate::{ExitError, opcode::eval};
+use crate::{opcode::eval, ExitError};
 use bytes::Bytes;
 use primitive_types::U256;
 
@@ -9,7 +9,7 @@ use crate::{
     error::{ExitReason, ExitSucceed},
     opcode::{Control, OpCode},
     spec::Spec,
-    ExtHandler
+    ExtHandler,
 };
 
 pub struct Machine {
@@ -26,9 +26,23 @@ pub struct Machine {
     /// Return stuff
     pub status: Result<(), ExitReason>,
     pub return_data_buffer: Bytes,
-    /// left gas
-    pub gas_used: u64,
-    pub gas_limit: u64,
+    /// left gas. Memory gas can be found in Memory field.
+    pub gas: Gas,
+}
+
+pub struct Gas {
+    pub limit: u64,
+    pub used: u64,
+    pub refunded: u64,
+}
+impl Gas {
+    pub fn new(limit: u64) -> Self {
+        Self {
+            limit,
+            used: 0,
+            refunded: 0,
+        }
+    }
 }
 
 impl Machine {
@@ -41,31 +55,45 @@ impl Machine {
             status: Ok(()),
             return_data_buffer: Bytes::new(),
             contract,
-            gas_used: 0,
-            gas_limit,
+            gas: Gas::new(gas_limit),
         }
     }
     pub fn contract(&self) -> &Contract {
         &self.contract
     }
 
+    #[inline(always)]
+    pub fn gas(&mut self) -> &mut Gas {
+        &mut self.gas
+    }
+
     pub fn gas_left(&self) -> u64 {
-        self.gas_limit - self.gas_used
+        self.gas.limit - self.gas.used
     }
 
     #[inline(always)]
     pub fn spend_gas_bool(&mut self, gas: u64) -> bool {
-        self.gas_used += gas;
-        if self.gas_used > self.gas_limit {
+        self.gas.used += gas;
+        if self.gas.used > self.gas.limit {
             true
         } else {
             false
         }
     }
 
+    pub fn spend_gas_option(&mut self, gas: u64) -> bool {
+        self.gas.used += gas;
+        if self.gas.used > self.gas.limit {
+            true
+        } else {
+            false
+        }
+    }
+
+    #[inline(always)]
     pub fn spend_gas(&mut self, gas: u64) -> Control {
-        self.gas_used += gas;
-        if self.gas_used > self.gas_limit {
+        self.gas.used += gas;
+        if self.gas.used > self.gas.limit {
             Control::Exit(ExitReason::Error(ExitError::OutOfGas))
         } else {
             Control::Continue

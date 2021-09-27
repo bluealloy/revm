@@ -1,5 +1,5 @@
 use super::{Control,gas};
-use crate::{Spec, error::{ExitError, ExitReason, ExitFatal, ExitRevert, ExitSucceed}, machine::Machine};
+use crate::{Spec, error::{ExitError, ExitReason, ExitFatal, ExitRevert, ExitSucceed}, machine::Machine, opcode::gas::verylowcopy_cost};
 use core::cmp::min;
 use primitive_types::{H256, U256};
 
@@ -14,6 +14,7 @@ pub fn codesize(state: &mut Machine) -> Control {
 #[inline]
 pub fn codecopy(state: &mut Machine) -> Control {
     pop_u256!(state, memory_offset, code_offset, len);
+    gas_or_fail!(state, gas::verylowcopy_cost(len));
 
     try_or_fail!(state.memory.resize_offset(memory_offset, len));
     match state
@@ -60,6 +61,7 @@ pub fn calldatasize(state: &mut Machine) -> Control {
 #[inline]
 pub fn calldatacopy(state: &mut Machine) -> Control {
     pop_u256!(state, memory_offset, data_offset, len);
+    gas_or_fail!(state,gas::verylowcopy_cost(len));
 
     try_or_fail!(state.memory.resize_offset(memory_offset, len));
     if len == U256::zero() {
@@ -84,8 +86,11 @@ pub fn pop(state: &mut Machine) -> Control {
 
 #[inline]
 pub fn mload(state: &mut Machine) -> Control {
+    gas!(state,gas::VERYLOW);
     pop_u256!(state, index);
-    try_or_fail!(state.memory.resize_offset(index, U256::from(32)));
+
+    // memory aditional gas checked here
+    try_or_fail!(state.memory.resize_offset(index, U256::from(32))); 
     let index = as_usize_or_fail!(index);
     let value = H256::from_slice(&state.memory.get(index, 32)[..]);
     push!(state, value);
@@ -94,8 +99,12 @@ pub fn mload(state: &mut Machine) -> Control {
 
 #[inline]
 pub fn mstore(state: &mut Machine) -> Control {
+    gas!(state,gas::VERYLOW);
+
     pop_u256!(state, index);
     pop!(state, value);
+
+    // memory aditional gas checked here
     try_or_fail!(state.memory.resize_offset(index, U256::from(32)));
     let index = as_usize_or_fail!(index);
     match state.memory.set(index, &value[..], Some(32)) {
@@ -106,7 +115,11 @@ pub fn mstore(state: &mut Machine) -> Control {
 
 #[inline]
 pub fn mstore8(state: &mut Machine) -> Control {
+    gas!(state,gas::VERYLOW);
+
     pop_u256!(state, index, value);
+    
+    // memory aditional gas checked here
     try_or_fail!(state.memory.resize_offset(index, U256::one()));
     let index = as_usize_or_fail!(index);
     let value = (value.low_u32() & 0xff) as u8;
@@ -213,8 +226,8 @@ pub fn swap(state: &mut Machine, n: usize) -> Control {
 #[inline]
 pub fn ret(state: &mut Machine) -> Control {
     // zero gas cost gas!(state,gas::ZERO);
-    
     pop_u256!(state, start, len);
+    // memory gas calculated inside resize_offset
     try_or_fail!(state.memory.resize_offset(start, len));
     state.return_range = start..(start + len);
     Control::Exit(ExitSucceed::Returned.into())
@@ -224,8 +237,8 @@ pub fn ret(state: &mut Machine) -> Control {
 pub fn revert<SPEC: Spec>(state: &mut Machine) -> Control {
     enabled!(SPEC::has_revert);
     // zero gas cost gas!(state,gas::ZERO);
-
     pop_u256!(state, start, len);
+    // memory gas calculated inside resize_offset
     try_or_fail!(state.memory.resize_offset(start, len));
     state.return_range = start..(start + len);
     Control::Exit(ExitRevert::Reverted.into())

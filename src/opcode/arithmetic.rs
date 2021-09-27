@@ -1,7 +1,9 @@
-use super::i256::I256;
+use crate::{Machine, Spec, error::*, opcode::gas};
+
+use super::{i256::I256, Control};
 use core::convert::TryInto;
 use core::ops::Rem;
-use primitive_types::{U256, U512};
+use primitive_types::{H256, U256, U512};
 
 #[inline]
 pub fn div(op1: U256, op2: U256) -> U256 {
@@ -84,8 +86,17 @@ pub fn exp(op1: U256, op2: U256) -> U256 {
         op2 >>= 1;
         op1 = op1.overflowing_mul(op1).0;
     }
-
     r
+}
+
+#[inline]
+pub fn eval_exp<SPEC: Spec>(machine: &mut Machine) -> Control {
+    pop_u256!(machine, op1, op2);
+    gas_or_fail!(machine, gas::exp_cost::<SPEC>(op2));
+    let ret = exp(op1, op2);
+    push_u256!(machine, ret);
+
+    Control::Continue
 }
 
 /// In the yellow paper `SIGNEXTEND` is defined to take two inputs, we will call them

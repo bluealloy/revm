@@ -87,110 +87,89 @@ pub fn create2_cost(len: U256) -> Result<u64, ExitError> {
     Ok(gas.as_u64())
 }
 
-pub fn exp_cost<SPEC: Spec>(power: U256) -> Result<u64, ExitError> {
+pub fn exp_cost<SPEC: Spec>(power: U256) -> Option<u64> {
     if power == U256::zero() {
-        Ok(EXP)
+        Some(EXP)
     } else {
-        let gas = U256::from(EXP)
-            .checked_add(
-                U256::from(SPEC::gas_expbyte)
-                    .checked_mul(U256::from(super::utils::log2floor(power) / 8 + 1))
-                    .ok_or(ExitError::OutOfGas)?,
-            )
-            .ok_or(ExitError::OutOfGas)?;
+        let gas = U256::from(EXP).checked_add(
+            U256::from(SPEC::gas_expbyte)
+                .checked_mul(U256::from(super::utils::log2floor(power) / 8 + 1))?,
+        )?;
 
         if gas > U256::from(u64::MAX) {
-            return Err(ExitError::OutOfGas);
+            return None;
         }
 
-        Ok(gas.as_u64())
+        Some(gas.as_u64())
     }
 }
 
-pub fn verylowcopy_cost(len: U256) -> Result<u64, ExitError> {
+pub fn verylowcopy_cost(len: U256) -> Option<u64> {
     let wordd = len / U256::from(32);
     let wordr = len % U256::from(32);
 
-    let gas = U256::from(VERYLOW)
-        .checked_add(
-            U256::from(COPY)
-                .checked_mul(if wordr == U256::zero() {
-                    wordd
-                } else {
-                    wordd + U256::one()
-                })
-                .ok_or(ExitError::OutOfGas)?,
-        )
-        .ok_or(ExitError::OutOfGas)?;
+    let gas = U256::from(VERYLOW).checked_add(U256::from(COPY).checked_mul(
+        if wordr == U256::zero() {
+            wordd
+        } else {
+            wordd + U256::one()
+        },
+    )?)?;
 
     if gas > U256::from(u64::MAX) {
-        return Err(ExitError::OutOfGas);
+        return None;
     }
 
-    Ok(gas.as_u64())
+    Some(gas.as_u64())
 }
 
-pub fn extcodecopy_cost<SPEC: Spec>(len: U256, is_cold: bool) -> Result<u64, ExitError> {
+pub fn extcodecopy_cost<SPEC: Spec>(len: U256, is_cold: bool) -> Option<u64> {
     let wordd = len / U256::from(32);
     let wordr = len % U256::from(32);
-    let gas = U256::from(address_access_cost::<SPEC>(is_cold, SPEC::gas_ext_code))
-        .checked_add(
-            U256::from(COPY)
-                .checked_mul(if wordr == U256::zero() {
-                    wordd
-                } else {
-                    wordd + U256::one()
-                })
-                .ok_or(ExitError::OutOfGas)?,
-        )
-        .ok_or(ExitError::OutOfGas)?;
+    let gas = U256::from(account_access_cost::<SPEC>(is_cold, SPEC::gas_ext_code)).checked_add(
+        U256::from(COPY).checked_mul(if wordr == U256::zero() {
+            wordd
+        } else {
+            wordd + U256::one()
+        })?,
+    )?;
 
     if gas > U256::from(u64::MAX) {
-        return Err(ExitError::OutOfGas);
+        return None;
     }
 
-    Ok(gas.as_u64())
+    Some(gas.as_u64())
 }
 
-pub fn log_cost(n: u8, len: U256) -> Result<u64, ExitError> {
+pub fn log_cost(n: u8, len: U256) -> Option<u64> {
     let gas = U256::from(LOG)
-        .checked_add(
-            U256::from(LOGDATA)
-                .checked_mul(len)
-                .ok_or(ExitError::OutOfGas)?,
-        )
-        .ok_or(ExitError::OutOfGas)?
-        .checked_add(U256::from(LOGTOPIC * n as u64))
-        .ok_or(ExitError::OutOfGas)?;
+        .checked_add(U256::from(LOGDATA).checked_mul(len)?)?
+        .checked_add(U256::from(LOGTOPIC * n as u64))?;
 
     if gas > U256::from(u64::MAX) {
-        return Err(ExitError::OutOfGas);
+        return None
     }
 
-    Ok(gas.as_u64())
+    Some(gas.as_u64())
 }
 
-pub fn sha3_cost(len: U256) -> Result<u64, ExitError> {
+pub fn sha3_cost(len: U256) -> Option<u64> {
     let wordd = len / U256::from(32);
     let wordr = len % U256::from(32);
 
-    let gas = U256::from(SHA3)
-        .checked_add(
-            U256::from(SHA3WORD)
-                .checked_mul(if wordr == U256::zero() {
-                    wordd
-                } else {
-                    wordd + U256::one()
-                })
-                .ok_or(ExitError::OutOfGas)?,
-        )
-        .ok_or(ExitError::OutOfGas)?;
+    let gas = U256::from(SHA3).checked_add(U256::from(SHA3WORD).checked_mul(
+        if wordr == U256::zero() {
+            wordd
+        } else {
+            wordd + U256::one()
+        },
+    )?)?;
 
     if gas > U256::from(u64::MAX) {
-        return Err(ExitError::OutOfGas);
+        return None;
     }
 
-    Ok(gas.as_u64())
+    Some(gas.as_u64())
 }
 
 pub fn sload_cost<SPEC: Spec>(is_cold: bool) -> u64 {
@@ -285,12 +264,13 @@ pub fn call_cost<SPEC: Spec>(
     new_account: bool,
 ) -> u64 {
     let transfers_value = value != U256::default();
-    address_access_cost::<SPEC>(is_cold, SPEC::gas_call)
+    account_access_cost::<SPEC>(is_cold, SPEC::gas_call)
         + xfer_cost(is_call_or_callcode, transfers_value)
         + new_cost::<SPEC>(is_call_or_staticcall, new_account, transfers_value)
 }
 
-pub fn address_access_cost<SPEC: Spec>(is_cold: bool, regular_value: u64) -> u64 {
+#[inline(always)]
+pub fn account_access_cost<SPEC: Spec>(is_cold: bool, regular_value: u64) -> u64 {
     if SPEC::increase_state_access_gas {
         if is_cold {
             SPEC::gas_account_access_cold
@@ -332,6 +312,11 @@ fn new_cost<SPEC: Spec>(
         0
     }
 }
+
+// pub fn memory_gas(a: usize) -> Option<u64> {
+//     let a = a as u64;
+//     MEMORY.checked_mul(a)?.checked_add(a.checked_mul(a)? / 512)
+// }
 
 pub fn memory_gas(a: usize) -> Result<u64, ExitError> {
     let a = a as u64;

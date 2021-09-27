@@ -1,5 +1,9 @@
-use super::{Control,gas};
-use crate::{CallContext, CallScheme, CreateScheme, ExtHandler, Spec, Transfer, error::{ExitError, ExitFatal, ExitReason, ExitSucceed}, machine::Machine};
+use super::{gas, Control};
+use crate::{
+    error::{ExitError, ExitFatal, ExitReason, ExitSucceed},
+    machine::Machine,
+    CallContext, CallScheme, CreateScheme, ExtHandler, Spec, Transfer,
+};
 // 	CallScheme, Capture, CallContext, CreateScheme, ,
 // 	, Runtime, Transfer,
 // };
@@ -11,7 +15,9 @@ use sha3::{Digest, Keccak256};
 
 pub fn sha3(machine: &mut Machine) -> Control {
     pop_u256!(machine, from, len);
+    gas_or_fail!(machine, gas::sha3_cost(len));
 
+    // memory gas is calculated inside resize_offset
     try_or_fail!(machine.memory_mut().resize_offset(from, len));
     let data = if len == U256::zero() {
         Bytes::new()
@@ -30,7 +36,7 @@ pub fn sha3(machine: &mut Machine) -> Control {
 
 pub fn chainid<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
     enabled!(SPEC::has_chain_id);
-    gas!(machine,gas::BASE);
+    gas!(machine, gas::BASE);
 
     push_u256!(machine, handler.chain_id());
 
@@ -38,31 +44,37 @@ pub fn chainid<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H
 }
 
 pub fn address(machine: &mut Machine) -> Control {
-    gas!(machine,gas::BASE);
-    
+    gas!(machine, gas::BASE);
+
     let ret = H256::from(machine.contract.address);
     push!(machine, ret);
 
     Control::Continue
 }
 
-pub fn balance<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn balance<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
     pop!(machine, address);
-    push_u256!(machine, handler.balance(address.into()).0);
+    let (balance, is_cold) = handler.balance(address.into());
+    gas!(
+        machine,
+        gas::account_access_cost::<SPEC>(is_cold, SPEC::gas_balance)
+    );
+    push_u256!(machine, balance);
 
     Control::Continue
 }
 
 pub fn selfbalance<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
     enabled!(SPEC::has_self_balance);
-
-    push_u256!(machine, handler.balance(machine.contract.address).0);
+    let (balance, _) = handler.balance(machine.contract.address);
+    gas!(machine, gas::LOW);
+    push_u256!(machine, balance);
 
     Control::Continue
 }
 
 pub fn origin<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
-    gas!(machine,gas::BASE);
+    gas!(machine, gas::BASE);
 
     let ret = H256::from(handler.origin());
     push!(machine, ret);
@@ -71,7 +83,7 @@ pub fn origin<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control 
 }
 
 pub fn caller(machine: &mut Machine) -> Control {
-    gas!(machine,gas::BASE);
+    gas!(machine, gas::BASE);
 
     let ret = H256::from(machine.contract.caller);
     push!(machine, ret);
@@ -80,7 +92,7 @@ pub fn caller(machine: &mut Machine) -> Control {
 }
 
 pub fn callvalue(machine: &mut Machine) -> Control {
-    gas!(machine,gas::BASE);
+    gas!(machine, gas::BASE);
 
     let mut ret = H256::default();
     machine.contract.value.to_big_endian(&mut ret[..]);
@@ -90,7 +102,7 @@ pub fn callvalue(machine: &mut Machine) -> Control {
 }
 
 pub fn gasprice<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
-    gas!(machine,gas::BASE);
+    gas!(machine, gas::BASE);
 
     let mut ret = H256::default();
     handler.gas_price().to_big_endian(&mut ret[..]);
@@ -99,32 +111,45 @@ pub fn gasprice<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Contro
     Control::Continue
 }
 
-pub fn extcodesize<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn extcodesize<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
     pop!(machine, address);
-    push_u256!(machine, handler.code_size(address.into()).0);
+
+    let (code_size, is_cold) = handler.code_size(address.into());
+    gas!(
+        machine,
+        gas::account_access_cost::<SPEC>(is_cold, SPEC::gas_ext_code)
+    );
+
+    push_u256!(machine, code_size);
 
     Control::Continue
 }
 
-pub fn extcodehash<H: ExtHandler,SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn extcodehash<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
     enabled!(SPEC::has_ext_code_hash);
     pop!(machine, address);
-    push!(machine, handler.code_hash(address.into()).0);
+    let (code_hash, is_cold) = handler.code_hash(address.into());
+    gas!(
+        machine,
+        gas::account_access_cost::<SPEC>(is_cold, SPEC::gas_ext_code_hash)
+    );
+    push!(machine, code_hash);
 
     Control::Continue
 }
 
-pub fn extcodecopy<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn extcodecopy<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
     pop!(machine, address);
     pop_u256!(machine, memory_offset, code_offset, len);
 
+    let (code, is_cold) = handler.code(address.into());
+    gas_or_fail!(machine, gas::extcodecopy_cost::<SPEC>(len, is_cold));
+
     try_or_fail!(machine.memory_mut().resize_offset(memory_offset, len));
-    match machine.memory_mut().copy_large(
-        memory_offset,
-        code_offset,
-        len,
-        &handler.code(address.into()).0,
-    ) {
+    match machine
+        .memory_mut()
+        .copy_large(memory_offset, code_offset, len, &code)
+    {
         Ok(()) => (),
         Err(e) => return Control::Exit(e.into()),
     };
@@ -134,7 +159,7 @@ pub fn extcodecopy<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Con
 
 pub fn returndatasize<SPEC: Spec>(machine: &mut Machine) -> Control {
     enabled!(SPEC::has_return_data);
-    gas!(machine,gas::BASE);
+    gas!(machine, gas::BASE);
 
     let size = U256::from(machine.return_data_buffer.len());
     push_u256!(machine, size);
@@ -145,7 +170,7 @@ pub fn returndatasize<SPEC: Spec>(machine: &mut Machine) -> Control {
 pub fn returndatacopy<SPEC: Spec>(machine: &mut Machine) -> Control {
     enabled!(SPEC::has_return_data);
     pop_u256!(machine, memory_offset, data_offset, len);
-
+    gas_or_fail!(machine, gas::verylowcopy_cost(len));
     try_or_fail!(machine.memory_mut().resize_offset(memory_offset, len));
     if data_offset
         .checked_add(len)
@@ -165,6 +190,8 @@ pub fn returndatacopy<SPEC: Spec>(machine: &mut Machine) -> Control {
 }
 
 pub fn blockhash<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
+    gas!(machine, gas::BLOCKHASH);
+
     pop_u256!(machine, number);
     push!(machine, handler.block_hash(number));
 
@@ -172,34 +199,34 @@ pub fn blockhash<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Contr
 }
 
 pub fn coinbase<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
-    gas!(machine,gas::BASE);
+    gas!(machine, gas::BASE);
 
     push!(machine, handler.block_coinbase().into());
     Control::Continue
 }
 
 pub fn timestamp<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
-    gas!(machine,gas::BASE);
+    gas!(machine, gas::BASE);
     push_u256!(machine, handler.block_timestamp());
     Control::Continue
 }
 
 pub fn number<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
-    gas!(machine,gas::BASE);
+    gas!(machine, gas::BASE);
 
     push_u256!(machine, handler.block_number());
     Control::Continue
 }
 
 pub fn difficulty<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
-    gas!(machine,gas::BASE);
+    gas!(machine, gas::BASE);
 
     push_u256!(machine, handler.block_difficulty());
     Control::Continue
 }
 
 pub fn gaslimit<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
-    gas!(machine,gas::BASE);
+    gas!(machine, gas::BASE);
 
     push_u256!(machine, handler.block_gas_limit());
     Control::Continue
@@ -215,10 +242,7 @@ pub fn sload<H: ExtHandler, const OPCODE_TRACE: bool>(
     Control::Continue
 }
 
-pub fn sstore<H: ExtHandler, SPEC: Spec>(
-    machine: &mut Machine,
-    handler: &mut H,
-) -> Control {
+pub fn sstore<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
     enabled!(SPEC::is_not_static_call);
     pop!(machine, index, value);
     handler.sstore(machine.contract.address, index, value);
@@ -226,17 +250,17 @@ pub fn sstore<H: ExtHandler, SPEC: Spec>(
 }
 
 pub fn gas<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
-    gas!(machine,gas::BASE);
+    gas!(machine, gas::BASE);
 
     push_u256!(machine, U256::from(machine.gas_left()));
     Control::Continue
 }
 
-pub fn log<H: ExtHandler,SPEC: Spec>(machine: &mut Machine, n: u8, handler: &mut H) -> Control {
+pub fn log<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, n: u8, handler: &mut H) -> Control {
     enabled!(SPEC::is_not_static_call);
 
     pop_u256!(machine, offset, len);
-
+    gas_or_fail!(machine,gas::log_cost(n, len));
     try_or_fail!(machine.memory_mut().resize_offset(offset, len));
     let data = if len == U256::zero() {
         Bytes::new()
@@ -261,10 +285,7 @@ pub fn log<H: ExtHandler,SPEC: Spec>(machine: &mut Machine, n: u8, handler: &mut
     Control::Continue
 }
 
-pub fn suicide<H: ExtHandler, SPEC: Spec>(
-    machine: &mut Machine,
-    handler: &mut H,
-) -> Control {
+pub fn suicide<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
     enabled!(SPEC::is_not_static_call);
 
     pop!(machine, target);
@@ -277,8 +298,7 @@ pub fn suicide<H: ExtHandler, SPEC: Spec>(
     Control::Exit(ExitSucceed::Suicided.into())
 }
 
-pub fn create<
-    H: ExtHandler, SPEC: Spec>(
+pub fn create<H: ExtHandler, SPEC: Spec>(
     machine: &mut Machine,
     is_create2: bool,
     handler: &mut H,
@@ -336,9 +356,7 @@ pub fn create<
     }
 }
 
-pub fn call<
-    H: ExtHandler,
-    SPEC: Spec>(
+pub fn call<H: ExtHandler, SPEC: Spec>(
     machine: &mut Machine,
     scheme: CallScheme,
     handler: &mut H,

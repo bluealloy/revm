@@ -3,7 +3,7 @@ mod macros;
 mod arithmetic;
 mod bitwise;
 mod codes;
-mod gas;
+pub(crate) mod gas;
 mod i256;
 mod misc;
 mod system;
@@ -48,7 +48,7 @@ pub fn eval<
         OpCode::SMOD => op2_u256_fn!(state, arithmetic::srem, gas::LOW),
         OpCode::ADDMOD => op3_u256_fn!(state, arithmetic::addmod, gas::MID),
         OpCode::MULMOD => op3_u256_fn!(state, arithmetic::mulmod, gas::MID),
-        OpCode::EXP => op2_u256_fn!(state, arithmetic::exp, gas::VERYLOW), //check gas incorect
+        OpCode::EXP => arithmetic::eval_exp::<S>(state),
         OpCode::SIGNEXTEND => op2_u256_fn!(state, arithmetic::signextend, gas::LOW),
         OpCode::LT => op2_u256_bool_ref!(state, lt, gas::VERYLOW),
         OpCode::GT => op2_u256_bool_ref!(state, gt, gas::VERYLOW),
@@ -65,14 +65,14 @@ pub fn eval<
         OpCode::SHR => op2_u256_fn!(state, bitwise::shr, gas::VERYLOW, S::has_bitwise_shifting),
         OpCode::SAR => op2_u256_fn!(state, bitwise::sar, gas::VERYLOW, S::has_bitwise_shifting),
         OpCode::CODESIZE => misc::codesize(state),
-        OpCode::CODECOPY => misc::codecopy(state), // check
+        OpCode::CODECOPY => misc::codecopy(state),
         OpCode::CALLDATALOAD => misc::calldataload(state),
         OpCode::CALLDATASIZE => misc::calldatasize(state),
-        OpCode::CALLDATACOPY => misc::calldatacopy(state), // check
+        OpCode::CALLDATACOPY => misc::calldatacopy(state),
         OpCode::POP => misc::pop(state),
-        OpCode::MLOAD => misc::mload(state),    // check
-        OpCode::MSTORE => misc::mstore(state),  // check
-        OpCode::MSTORE8 => misc::mstore(state), // check
+        OpCode::MLOAD => misc::mload(state),
+        OpCode::MSTORE => misc::mstore(state),
+        OpCode::MSTORE8 => misc::mstore(state),
         OpCode::JUMP => misc::jump(state),
         OpCode::JUMPI => misc::jumpi(state),
         OpCode::PC => misc::pc(state, position),
@@ -146,23 +146,23 @@ pub fn eval<
         OpCode::SWAP15 => misc::swap(state, 15),
         OpCode::SWAP16 => misc::swap(state, 16),
 
-        OpCode::RETURN => misc::ret(state), //check
+        OpCode::RETURN => misc::ret(state),
         OpCode::REVERT => misc::revert::<S>(state),
         OpCode::INVALID => Control::Exit(ExitError::DesignatedInvalid.into()),
-        OpCode::SHA3 => system::sha3(state), //check
+        OpCode::SHA3 => system::sha3(state),
         OpCode::ADDRESS => system::address(state),
-        OpCode::BALANCE => system::balance(state, handler), //check
-        OpCode::SELFBALANCE => system::selfbalance::<H,S>(state, handler), //check
+        OpCode::BALANCE => system::balance::<H,S>(state, handler),
+        OpCode::SELFBALANCE => system::selfbalance::<H,S>(state, handler),
         OpCode::ORIGIN => system::origin(state, handler),
         OpCode::CALLER => system::caller(state),
         OpCode::CALLVALUE => system::callvalue(state),
         OpCode::GASPRICE => system::gasprice(state, handler),
-        OpCode::EXTCODESIZE => system::extcodesize(state, handler), //check
-        OpCode::EXTCODEHASH => system::extcodehash::<H,S>(state, handler), //check
-        OpCode::EXTCODECOPY => system::extcodecopy(state, handler), //check
+        OpCode::EXTCODESIZE => system::extcodesize::<H,S>(state, handler),
+        OpCode::EXTCODEHASH => system::extcodehash::<H,S>(state, handler),
+        OpCode::EXTCODECOPY => system::extcodecopy::<H,S>(state, handler),
         OpCode::RETURNDATASIZE => system::returndatasize::<S>(state),
-        OpCode::RETURNDATACOPY => system::returndatacopy::<S>(state),    //check
-        OpCode::BLOCKHASH => system::blockhash(state, handler),     //check
+        OpCode::RETURNDATACOPY => system::returndatacopy::<S>(state),
+        OpCode::BLOCKHASH => system::blockhash(state, handler),
         OpCode::COINBASE => system::coinbase(state, handler),
         OpCode::TIMESTAMP => system::timestamp(state, handler),
         OpCode::NUMBER => system::number(state, handler),
@@ -171,12 +171,12 @@ pub fn eval<
         OpCode::SLOAD => system::sload::<H,false>(state, handler), //check
         OpCode::SSTORE => system::sstore::<H, S>(state, handler), //check
         OpCode::GAS => system::gas(state, handler),
-        OpCode::LOG0 => system::log::<H,S>(state, 0, handler), //check
-        OpCode::LOG1 => system::log::<H,S>(state, 1, handler), //check
-        OpCode::LOG2 => system::log::<H,S>(state, 2, handler), //check
-        OpCode::LOG3 => system::log::<H,S>(state, 3, handler), //check
-        OpCode::LOG4 => system::log::<H,S>(state, 4, handler), //check
-        OpCode::SUICIDE => system::suicide::<H,S>(state, handler), //check
+        OpCode::LOG0 => system::log::<H,S>(state, 0, handler),
+        OpCode::LOG1 => system::log::<H,S>(state, 1, handler),
+        OpCode::LOG2 => system::log::<H,S>(state, 2, handler),
+        OpCode::LOG3 => system::log::<H,S>(state, 3, handler),
+        OpCode::LOG4 => system::log::<H,S>(state, 4, handler),
+        OpCode::SUICIDE => system::suicide::<H,S>(state, handler),
         OpCode::CREATE => system::create::<H,S>(state, false, handler), //check
         OpCode::CREATE2 => system::create::<H,S>(state, true, handler), //check
         OpCode::CALL => system::call::<H,S>(state, CallScheme::Call, handler), //check
