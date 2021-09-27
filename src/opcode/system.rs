@@ -232,20 +232,19 @@ pub fn gaslimit<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Contro
     Control::Continue
 }
 
-pub fn sload<H: ExtHandler, const OPCODE_TRACE: bool>(
-    machine: &mut Machine,
-    handler: &mut H,
-) -> Control {
+pub fn sload<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
     pop!(machine, index);
-    let value = handler.sload(machine.contract.address, index);
-    push!(machine, value.0);
+    let (value, is_cold) = handler.sload(machine.contract.address, index);
+    gas!(machine, gas::sload_cost::<SPEC>(is_cold));
+    push!(machine, value);
     Control::Continue
 }
 
 pub fn sstore<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
     enabled!(SPEC::is_not_static_call);
+
     pop!(machine, index, value);
-    handler.sstore(machine.contract.address, index, value);
+    let () = handler.sstore(machine.contract.address, index, value);
     Control::Continue
 }
 
@@ -260,7 +259,7 @@ pub fn log<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, n: u8, handler: &mu
     enabled!(SPEC::is_not_static_call);
 
     pop_u256!(machine, offset, len);
-    gas_or_fail!(machine,gas::log_cost(n, len));
+    gas_or_fail!(machine, gas::log_cost(n, len));
     try_or_fail!(machine.memory_mut().resize_offset(offset, len));
     let data = if len == U256::zero() {
         Bytes::new()

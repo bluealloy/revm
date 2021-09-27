@@ -147,7 +147,7 @@ pub fn log_cost(n: u8, len: U256) -> Option<u64> {
         .checked_add(U256::from(LOGTOPIC * n as u64))?;
 
     if gas > U256::from(u64::MAX) {
-        return None
+        return None;
     }
 
     Some(gas.as_u64())

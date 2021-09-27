@@ -168,7 +168,7 @@ pub fn eval<
         OpCode::NUMBER => system::number(state, handler),
         OpCode::DIFFICULTY => system::difficulty(state, handler),
         OpCode::GASLIMIT => system::gaslimit(state, handler),
-        OpCode::SLOAD => system::sload::<H,false>(state, handler), //check
+        OpCode::SLOAD => system::sload::<H,S>(state, handler),
         OpCode::SSTORE => system::sstore::<H, S>(state, handler), //check
         OpCode::GAS => system::gas(state, handler),
         OpCode::LOG0 => system::log::<H,S>(state, 0, handler),

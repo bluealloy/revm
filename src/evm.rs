@@ -367,7 +367,7 @@ pub trait Handler {
     /// Get storage value of address at index.
     fn sload(&mut self, address: H160, index: H256) -> (H256, bool);
     /// Set storage value of address at index. Return if slot is cold/hot access.
-    fn sstore(&mut self, address: H160, index: H256, value: H256);
+    fn sstore(&mut self, address: H160, index: H256, value: H256) ;//-> (original,current,is_cold);
     /// Get original storage value of address at index.
     fn original_storage(&mut self, address: H160, index: H256) -> H256;
     /// Create a log owned by address with given topics and data.
