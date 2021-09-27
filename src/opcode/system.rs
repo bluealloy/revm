@@ -1,8 +1,5 @@
-use super::Control;
-use crate::{
-    error::{ExitError, ExitFatal, ExitReason, ExitSucceed},
-    CallContext, CallScheme, CreateScheme, ExtHandler, machine::Machine, Transfer,
-};
+use super::{Control,gas};
+use crate::{CallContext, CallScheme, CreateScheme, ExtHandler, Spec, Transfer, error::{ExitError, ExitFatal, ExitReason, ExitSucceed}, machine::Machine};
 // 	CallScheme, Capture, CallContext, CreateScheme, ,
 // 	, Runtime, Transfer,
 // };
@@ -31,13 +28,18 @@ pub fn sha3(machine: &mut Machine) -> Control {
     Control::Continue
 }
 
-pub fn chainid<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn chainid<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
+    enabled!(SPEC::has_chain_id);
+    gas!(machine,gas::BASE);
+
     push_u256!(machine, handler.chain_id());
 
     Control::Continue
 }
 
 pub fn address(machine: &mut Machine) -> Control {
+    gas!(machine,gas::BASE);
+    
     let ret = H256::from(machine.contract.address);
     push!(machine, ret);
 
@@ -58,6 +60,8 @@ pub fn selfbalance<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Con
 }
 
 pub fn origin<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
+    gas!(machine,gas::BASE);
+
     let ret = H256::from(handler.origin());
     push!(machine, ret);
 
@@ -65,6 +69,8 @@ pub fn origin<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control 
 }
 
 pub fn caller(machine: &mut Machine) -> Control {
+    gas!(machine,gas::BASE);
+
     let ret = H256::from(machine.contract.caller);
     push!(machine, ret);
 
@@ -72,6 +78,8 @@ pub fn caller(machine: &mut Machine) -> Control {
 }
 
 pub fn callvalue(machine: &mut Machine) -> Control {
+    gas!(machine,gas::BASE);
+
     let mut ret = H256::default();
     machine.contract.value.to_big_endian(&mut ret[..]);
     push!(machine, ret);
@@ -80,6 +88,8 @@ pub fn callvalue(machine: &mut Machine) -> Control {
 }
 
 pub fn gasprice<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
+    gas!(machine,gas::BASE);
+
     let mut ret = H256::default();
     handler.gas_price().to_big_endian(&mut ret[..]);
     push!(machine, ret);
@@ -155,26 +165,35 @@ pub fn blockhash<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Contr
 }
 
 pub fn coinbase<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
+    gas!(machine,gas::BASE);
+
     push!(machine, handler.block_coinbase().into());
     Control::Continue
 }
 
 pub fn timestamp<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
+    gas!(machine,gas::BASE);
     push_u256!(machine, handler.block_timestamp());
     Control::Continue
 }
 
 pub fn number<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
+    gas!(machine,gas::BASE);
+
     push_u256!(machine, handler.block_number());
     Control::Continue
 }
 
 pub fn difficulty<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
+    gas!(machine,gas::BASE);
+
     push_u256!(machine, handler.block_difficulty());
     Control::Continue
 }
 
 pub fn gaslimit<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
+    gas!(machine,gas::BASE);
+
     push_u256!(machine, handler.block_gas_limit());
     Control::Continue
 }
@@ -199,8 +218,9 @@ pub fn sstore<H: ExtHandler, const OPCODE_TRACE: bool>(
 }
 
 pub fn gas<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
-    push_u256!(machine, machine.gas_left);
+    gas!(machine,gas::BASE);
 
+    push_u256!(machine, U256::from(machine.gas_left()));
     Control::Continue
 }
 
@@ -246,11 +266,7 @@ pub fn suicide<H: ExtHandler, const CALL_TRACE: bool>(
 }
 
 pub fn create<
-    H: ExtHandler,
-    const CALL_TRACE: bool,
-    const GAS_TRACE: bool,
-    const OPCODE_TRACE: bool,
->(
+    H: ExtHandler>(
     machine: &mut Machine,
     is_create2: bool,
     handler: &mut H,
@@ -276,12 +292,12 @@ pub fn create<
         CreateScheme::Create
     };
 
-    let (reason, address, return_data) = handler.create::<CALL_TRACE, GAS_TRACE, OPCODE_TRACE>(
+    let (reason, address, return_data) = handler.create(
         machine.contract.address,
         scheme,
         value,
         code,
-        machine.gas_left,
+        machine.gas_left(),
     );
     machine.return_data_buffer = return_data;
     let create_address: H256 = address.map(|a| a.into()).unwrap_or_default();
@@ -307,11 +323,7 @@ pub fn create<
 }
 
 pub fn call<
-    H: ExtHandler,
-    const CALL_TRACE: bool,
-    const GAS_TRACE: bool,
-    const OPCODE_TRACE: bool,
->(
+    H: ExtHandler>(
     machine: &mut Machine,
     scheme: CallScheme,
     handler: &mut H,
@@ -320,7 +332,12 @@ pub fn call<
 
     pop_u256!(machine, gas);
     pop!(machine, to);
-    
+    let gas = if gas > U256::from(u64::MAX) {
+        u64::MAX
+    } else {
+        gas.as_u64()
+    };
+
     let value = match scheme {
         CallScheme::Call | CallScheme::CallCode => {
             pop_u256!(machine, value);
@@ -377,7 +394,7 @@ pub fn call<
         None
     };
 
-    let (reason, return_data) = handler.call::<CALL_TRACE, GAS_TRACE, OPCODE_TRACE>(
+    let (reason, return_data) = handler.call(
         to.into(),
         transfer,
         input,

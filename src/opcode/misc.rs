@@ -1,13 +1,11 @@
-use super::Control;
-use crate::{
-    error::{ExitError, ExitFatal, ExitRevert, ExitSucceed},
-    machine::Machine,
-};
+use super::{Control,gas};
+use crate::{Spec, error::{ExitError, ExitReason, ExitFatal, ExitRevert, ExitSucceed}, machine::Machine};
 use core::cmp::min;
 use primitive_types::{H256, U256};
 
 #[inline]
 pub fn codesize(state: &mut Machine) -> Control {
+    gas!(state,gas::BASE);
     let size = U256::from(state.contract.code.len());
     push_u256!(state, size);
     Control::Continue
@@ -29,6 +27,8 @@ pub fn codecopy(state: &mut Machine) -> Control {
 
 #[inline]
 pub fn calldataload(state: &mut Machine) -> Control {
+    gas!(state,gas::VERYLOW);
+
     pop_u256!(state, index);
 
     let mut load = [0u8; 32];
@@ -50,6 +50,8 @@ pub fn calldataload(state: &mut Machine) -> Control {
 
 #[inline]
 pub fn calldatasize(state: &mut Machine) -> Control {
+    gas!(state,gas::BASE);
+
     let len = U256::from(state.contract.input.len());
     push_u256!(state, len);
     Control::Continue
@@ -75,6 +77,7 @@ pub fn calldatacopy(state: &mut Machine) -> Control {
 
 #[inline]
 pub fn pop(state: &mut Machine) -> Control {
+    gas!(state,gas::BASE);
     pop!(state, _val);
     Control::Continue
 }
@@ -115,6 +118,8 @@ pub fn mstore8(state: &mut Machine) -> Control {
 
 #[inline]
 pub fn jump(state: &mut Machine) -> Control {
+    gas!(state,gas::MID);
+
     pop_u256!(state, dest);
     let dest = as_usize_or_fail!(dest, ExitError::InvalidJump);
 
@@ -127,6 +132,8 @@ pub fn jump(state: &mut Machine) -> Control {
 
 #[inline]
 pub fn jumpi(state: &mut Machine) -> Control {
+    gas!(state,gas::HIGH);
+
     pop_u256!(state, dest);
     pop!(state, value);
     let dest = as_usize_or_fail!(dest, ExitError::InvalidJump);
@@ -144,18 +151,21 @@ pub fn jumpi(state: &mut Machine) -> Control {
 
 #[inline]
 pub fn pc(state: &mut Machine, position: usize) -> Control {
+    gas!(state,gas::BASE);
     push_u256!(state, U256::from(position));
     Control::Continue
 }
 
 #[inline]
 pub fn msize(state: &mut Machine) -> Control {
+    gas!(state,gas::BASE);
     push_u256!(state, state.memory.effective_len());
     Control::Continue
 }
 
 #[inline]
 pub fn push(state: &mut Machine, n: usize, position: usize) -> Control {
+    gas!(state,gas::VERYLOW);
     let end = min(position + 1 + n, state.contract.code.len());
     let slice = &state.contract.code[(position + 1)..end];
     let mut val = [0u8; 32];
@@ -167,6 +177,8 @@ pub fn push(state: &mut Machine, n: usize, position: usize) -> Control {
 
 #[inline]
 pub fn dup(state: &mut Machine, n: usize) -> Control {
+    gas!(state,gas::VERYLOW);
+    
     let value = match state.stack.peek(n - 1) {
         Ok(value) => value,
         Err(e) => return Control::Exit(e.into()),
@@ -177,6 +189,8 @@ pub fn dup(state: &mut Machine, n: usize) -> Control {
 
 #[inline]
 pub fn swap(state: &mut Machine, n: usize) -> Control {
+    gas!(state,gas::VERYLOW);
+    
     let val1 = match state.stack.peek(0) {
         Ok(value) => value,
         Err(e) => return Control::Exit(e.into()),
@@ -205,7 +219,10 @@ pub fn ret(state: &mut Machine) -> Control {
 }
 
 #[inline]
-pub fn revert(state: &mut Machine) -> Control {
+pub fn revert<SPEC: Spec>(state: &mut Machine) -> Control {
+    enabled!(SPEC::has_revert);
+    // zero gas cost
+
     pop_u256!(state, start, len);
     try_or_fail!(state.memory.resize_offset(start, len));
     state.return_range = start..(start + len);

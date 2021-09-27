@@ -9,6 +9,8 @@ mod calc;
 mod constants;
 mod utils;
 
+pub use constants::*;
+
 
 //use super::{calc, constants};
 use crate::{error::ExitError, machine::Stack, opcode::OpCode, ExtHandler};
@@ -142,7 +144,7 @@ impl<SPEC: Spec> Gasometer<SPEC> {
     #[inline]
     /// Record `CREATE` code deposit.
     pub fn record_deposit<const GAS_TRACE: bool>(&mut self, len: usize) -> Result<(), ExitError> {
-        let cost = len as u64 * constants::G_CODEDEPOSIT;
+        let cost = len as u64 * constants::CODEDEPOSIT;
         self.record_cost::<GAS_TRACE>(cost)
     }
 
@@ -301,117 +303,117 @@ pub fn static_opcode_cost(opcode: OpCode) -> Option<u64> {
     static TABLE: [Option<u64>; 256] = {
         let mut table = [None; 256];
 
-        table[OpCode::STOP.as_usize()] = Some(constants::G_ZERO);
-        table[OpCode::CALLDATASIZE.as_usize()] = Some(constants::G_BASE);
-        table[OpCode::CODESIZE.as_usize()] = Some(constants::G_BASE);
-        table[OpCode::POP.as_usize()] = Some(constants::G_BASE);
-        table[OpCode::PC.as_usize()] = Some(constants::G_BASE);
-        table[OpCode::MSIZE.as_usize()] = Some(constants::G_BASE);
+        table[OpCode::STOP.as_usize()] = Some(constants::ZERO);
+        table[OpCode::CALLDATASIZE.as_usize()] = Some(constants::BASE);
+        table[OpCode::CODESIZE.as_usize()] = Some(constants::BASE);
+        table[OpCode::POP.as_usize()] = Some(constants::BASE);
+        table[OpCode::PC.as_usize()] = Some(constants::BASE);
+        table[OpCode::MSIZE.as_usize()] = Some(constants::BASE);
 
-        table[OpCode::ADDRESS.as_usize()] = Some(constants::G_BASE);
-        table[OpCode::ORIGIN.as_usize()] = Some(constants::G_BASE);
-        table[OpCode::CALLER.as_usize()] = Some(constants::G_BASE);
-        table[OpCode::CALLVALUE.as_usize()] = Some(constants::G_BASE);
-        table[OpCode::COINBASE.as_usize()] = Some(constants::G_BASE);
-        table[OpCode::TIMESTAMP.as_usize()] = Some(constants::G_BASE);
-        table[OpCode::NUMBER.as_usize()] = Some(constants::G_BASE);
-        table[OpCode::DIFFICULTY.as_usize()] = Some(constants::G_BASE);
-        table[OpCode::GASLIMIT.as_usize()] = Some(constants::G_BASE);
-        table[OpCode::GASPRICE.as_usize()] = Some(constants::G_BASE);
-        table[OpCode::GAS.as_usize()] = Some(constants::G_BASE);
+        table[OpCode::ADDRESS.as_usize()] = Some(constants::BASE);
+        table[OpCode::ORIGIN.as_usize()] = Some(constants::BASE);
+        table[OpCode::CALLER.as_usize()] = Some(constants::BASE);
+        table[OpCode::CALLVALUE.as_usize()] = Some(constants::BASE);
+        table[OpCode::COINBASE.as_usize()] = Some(constants::BASE);
+        table[OpCode::TIMESTAMP.as_usize()] = Some(constants::BASE);
+        table[OpCode::NUMBER.as_usize()] = Some(constants::BASE);
+        table[OpCode::DIFFICULTY.as_usize()] = Some(constants::BASE);
+        table[OpCode::GASLIMIT.as_usize()] = Some(constants::BASE);
+        table[OpCode::GASPRICE.as_usize()] = Some(constants::BASE);
+        table[OpCode::GAS.as_usize()] = Some(constants::BASE);
 
-        table[OpCode::ADD.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::SUB.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::NOT.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::LT.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::GT.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::SLT.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::SGT.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::EQ.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::ISZERO.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::AND.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::OR.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::XOR.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::BYTE.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::CALLDATALOAD.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH1.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH2.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH3.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH4.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH5.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH6.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH7.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH8.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH9.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH10.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH11.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH12.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH13.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH14.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH15.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH16.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH17.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH18.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH19.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH20.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH21.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH22.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH23.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH24.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH25.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH26.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH27.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH28.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH29.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH30.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH31.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::PUSH32.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::DUP1.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::DUP2.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::DUP3.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::DUP4.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::DUP5.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::DUP6.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::DUP7.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::DUP8.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::DUP9.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::DUP10.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::DUP11.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::DUP12.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::DUP13.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::DUP14.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::DUP15.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::DUP16.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::SWAP1.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::SWAP2.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::SWAP3.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::SWAP4.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::SWAP5.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::SWAP6.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::SWAP7.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::SWAP8.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::SWAP9.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::SWAP10.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::SWAP11.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::SWAP12.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::SWAP13.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::SWAP14.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::SWAP15.as_usize()] = Some(constants::G_VERYLOW);
-        table[OpCode::SWAP16.as_usize()] = Some(constants::G_VERYLOW);
+        table[OpCode::ADD.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::SUB.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::NOT.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::LT.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::GT.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::SLT.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::SGT.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::EQ.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::ISZERO.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::AND.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::OR.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::XOR.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::BYTE.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::CALLDATALOAD.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH1.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH2.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH3.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH4.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH5.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH6.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH7.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH8.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH9.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH10.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH11.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH12.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH13.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH14.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH15.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH16.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH17.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH18.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH19.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH20.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH21.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH22.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH23.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH24.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH25.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH26.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH27.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH28.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH29.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH30.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH31.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::PUSH32.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::DUP1.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::DUP2.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::DUP3.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::DUP4.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::DUP5.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::DUP6.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::DUP7.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::DUP8.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::DUP9.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::DUP10.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::DUP11.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::DUP12.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::DUP13.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::DUP14.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::DUP15.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::DUP16.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::SWAP1.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::SWAP2.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::SWAP3.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::SWAP4.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::SWAP5.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::SWAP6.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::SWAP7.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::SWAP8.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::SWAP9.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::SWAP10.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::SWAP11.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::SWAP12.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::SWAP13.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::SWAP14.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::SWAP15.as_usize()] = Some(constants::VERYLOW);
+        table[OpCode::SWAP16.as_usize()] = Some(constants::VERYLOW);
 
-        table[OpCode::MUL.as_usize()] = Some(constants::G_LOW);
-        table[OpCode::DIV.as_usize()] = Some(constants::G_LOW);
-        table[OpCode::SDIV.as_usize()] = Some(constants::G_LOW);
-        table[OpCode::MOD.as_usize()] = Some(constants::G_LOW);
-        table[OpCode::SMOD.as_usize()] = Some(constants::G_LOW);
-        table[OpCode::SIGNEXTEND.as_usize()] = Some(constants::G_LOW);
+        table[OpCode::MUL.as_usize()] = Some(constants::LOW);
+        table[OpCode::DIV.as_usize()] = Some(constants::LOW);
+        table[OpCode::SDIV.as_usize()] = Some(constants::LOW);
+        table[OpCode::MOD.as_usize()] = Some(constants::LOW);
+        table[OpCode::SMOD.as_usize()] = Some(constants::LOW);
+        table[OpCode::SIGNEXTEND.as_usize()] = Some(constants::LOW);
 
-        table[OpCode::ADDMOD.as_usize()] = Some(constants::G_MID);
-        table[OpCode::MULMOD.as_usize()] = Some(constants::G_MID);
-        table[OpCode::JUMP.as_usize()] = Some(constants::G_MID);
+        table[OpCode::ADDMOD.as_usize()] = Some(constants::MID);
+        table[OpCode::MULMOD.as_usize()] = Some(constants::MID);
+        table[OpCode::JUMP.as_usize()] = Some(constants::MID);
 
-        table[OpCode::JUMPI.as_usize()] = Some(constants::G_HIGH);
-        table[OpCode::JUMPDEST.as_usize()] = Some(constants::G_JUMPDEST);
+        table[OpCode::JUMPI.as_usize()] = Some(constants::HIGH);
+        table[OpCode::JUMPDEST.as_usize()] = Some(constants::JUMPDEST);
 
         table
     };
@@ -748,14 +750,14 @@ impl<SPEC: Spec> Inner<SPEC> {
             GasCost::Log { n, len } => calc::log_cost(n, len)?,
             GasCost::VeryLowCopy { len } => calc::verylowcopy_cost(len)?,
             GasCost::Exp { power } => calc::exp_cost::<SPEC>(power)?,
-            GasCost::Create => constants::G_CREATE,
+            GasCost::Create => constants::CREATE,
             GasCost::Create2 { len } => calc::create2_cost(len)?,
             GasCost::SLoad { target_is_cold } => calc::sload_cost::<SPEC>(target_is_cold),
 
-            GasCost::Zero => constants::G_ZERO,
-            GasCost::Base => constants::G_BASE,
-            GasCost::VeryLow => constants::G_VERYLOW,
-            GasCost::Low => constants::G_LOW,
+            GasCost::Zero => constants::ZERO,
+            GasCost::Base => constants::BASE,
+            GasCost::VeryLow => constants::VERYLOW,
+            GasCost::Low => constants::LOW,
             GasCost::Invalid => return Err(ExitError::OutOfGas),
 
             GasCost::ExtCodeSize { target_is_cold } => {
@@ -768,7 +770,7 @@ impl<SPEC: Spec> Inner<SPEC> {
             GasCost::Balance { target_is_cold } => {
                 calc::address_access_cost::<SPEC>(target_is_cold, SPEC::gas_balance)
             }
-            GasCost::BlockHash => constants::G_BLOCKHASH,
+            GasCost::BlockHash => constants::BLOCKHASH,
             GasCost::ExtCodeHash { target_is_cold } => {
                 calc::address_access_cost::<SPEC>(target_is_cold, SPEC::gas_ext_code_hash)
             }

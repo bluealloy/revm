@@ -1,6 +1,6 @@
 use std::{ops::Range};
 
-use crate::opcode::eval;
+use crate::{ExitError, opcode::eval};
 use bytes::Bytes;
 use primitive_types::U256;
 
@@ -27,11 +27,12 @@ pub struct Machine {
     pub status: Result<(), ExitReason>,
     pub return_data_buffer: Bytes,
     /// left gas
-    pub gas_left: U256,
+    pub gas_used: u64,
+    pub gas_limit: u64,
 }
 
 impl Machine {
-    pub fn new(contract: Contract, gas_left: U256) -> Self {
+    pub fn new(contract: Contract, gas_limit: u64) -> Self {
         Self {
             program_counter: 0,
             return_range: Range::default(),
@@ -40,11 +41,35 @@ impl Machine {
             status: Ok(()),
             return_data_buffer: Bytes::new(),
             contract,
-            gas_left,
+            gas_used: 0,
+            gas_limit,
         }
     }
     pub fn contract(&self) -> &Contract {
         &self.contract
+    }
+
+    pub fn gas_left(&self) -> u64 {
+        self.gas_limit - self.gas_used
+    }
+
+    #[inline(always)]
+    pub fn spend_gas_bool(&mut self, gas: u64) -> bool {
+        self.gas_used += gas;
+        if self.gas_used > self.gas_limit {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn spend_gas(&mut self, gas: u64) -> Control {
+        self.gas_used += gas;
+        if self.gas_used > self.gas_limit {
+            Control::Exit(ExitReason::Error(ExitError::OutOfGas))
+        } else {
+            Control::Continue
+        }
     }
 
     /// Reference of machine stack.
@@ -92,7 +117,7 @@ impl Machine {
         // if there is no opcode in code or OpCode is invalid, return error.
         if opcode.is_none() {
             self.status = Err(ExitSucceed::Stopped.into());
-            return Err(ExitSucceed::Stopped.into());
+            return Err(ExitSucceed::Stopped.into()); // TODO this not seems right, for invalid opcode
         }
         let opcode = opcode.unwrap();
 

@@ -1,8 +1,26 @@
+pub use crate::error::{ExitError, ExitReason};
+
 macro_rules! try_or_fail {
     ( $e:expr ) => {
         match $e {
             Ok(v) => v,
             Err(e) => return Control::Exit(e.into()),
+        }
+    };
+}
+
+macro_rules! enabled {
+    ($spec:ident :: $enabled:ident) => {
+        if !$spec::$enabled {
+            return Control::Exit(ExitReason::Error(ExitError::OpcodeDisabled));
+        }
+    };
+}
+
+macro_rules! gas {
+    ($machine:expr, $gas:expr) => {
+        if $machine.spend_gas_bool($gas) {
+            return Control::Exit(ExitReason::Error(ExitError::OutOfGas));
         }
     };
 }
@@ -54,7 +72,8 @@ macro_rules! push_u256 {
 }
 
 macro_rules! op1_u256_fn {
-    ( $machine:expr, $op:path ) => {{
+    ( $machine:expr, $op:path, $gas:expr ) => {{
+        gas!($machine, $gas);
         pop_u256!($machine, op1);
         let ret = $op(op1);
         push_u256!($machine, ret);
@@ -64,7 +83,8 @@ macro_rules! op1_u256_fn {
 }
 
 macro_rules! op2_u256_bool_ref {
-    ( $machine:expr, $op:ident ) => {{
+    ( $machine:expr, $op:ident, $gas:expr ) => {{
+        gas!($machine, $gas);
         pop_u256!($machine, op1, op2);
         let ret = op1.$op(&op2);
         push_u256!($machine, if ret { U256::one() } else { U256::zero() });
@@ -74,7 +94,8 @@ macro_rules! op2_u256_bool_ref {
 }
 
 macro_rules! op2_u256 {
-    ( $machine:expr, $op:ident ) => {{
+    ( $machine:expr, $op:ident, $gas:expr ) => {{
+        gas!($machine, $gas);
         pop_u256!($machine, op1, op2);
         let ret = op1.$op(op2);
         push_u256!($machine, ret);
@@ -84,7 +105,9 @@ macro_rules! op2_u256 {
 }
 
 macro_rules! op2_u256_tuple {
-    ( $machine:expr, $op:ident ) => {{
+    ( $machine:expr, $op:ident, $gas:expr ) => {{
+        gas!($machine, $gas);
+
         pop_u256!($machine, op1, op2);
         let (ret, ..) = op1.$op(op2);
         push_u256!($machine, ret);
@@ -94,22 +117,34 @@ macro_rules! op2_u256_tuple {
 }
 
 macro_rules! op2_u256_fn {
-    ( $machine:expr, $op:path ) => {{
+    ( $machine:expr, $op:path, $gas:expr  ) => {{
+        gas!($machine, $gas);
+
         pop_u256!($machine, op1, op2);
         let ret = $op(op1, op2);
         push_u256!($machine, ret);
 
         Control::Continue
     }};
+    ( $machine:expr, $op:path, $gas:expr, $spec:ident :: $enabled:ident) => {{
+        enabled!($spec::$enabled);
+        op2_u256_fn!($machine,$op,$gas)
+    }};
 }
 
 macro_rules! op3_u256_fn {
-    ( $machine:expr, $op:path ) => {{
+    ( $machine:expr, $op:path, $gas:expr  ) => {{
+        gas!($machine,$gas);
+
         pop_u256!($machine, op1, op2, op3);
         let ret = $op(op1, op2, op3);
         push_u256!($machine, ret);
 
         Control::Continue
+    }};
+    ( $machine:expr, $op:path, $gas:expr, $spec:ident :: $enabled:ident) => {{
+        enabled!($spec::$enabled);
+        op3_u256_fn!($machine,$op,$gas)
     }};
 }
 

@@ -106,8 +106,9 @@ pub enum ExitError {
     PCUnderflow,
     /// Attempt to create an empty account (runtime, unused).
     CreateEmpty,
-    // Other normal errors.
-    //Other(Cow<'static, str>),
+
+    /// opcode not enabled,
+    OpcodeDisabled,
 }
 
 impl From<ExitError> for ExitReason {

@@ -40,7 +40,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         address: H160,
         value: U256,
         data: Bytes,
-        gas_limit: U256,
+        gas_limit: u64,
         access_list: Vec<(H160, Vec<H256>)>,
     ) -> (ExitReason, Bytes, U256, State) {
         // TODO calculate gascost
@@ -80,7 +80,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         value: U256,
         init_code: Bytes,
         create_scheme: CreateScheme,
-        gas_limit: U256,
+        gas_limit: u64,
         access_list: Vec<(H160, Vec<H256>)>,
     ) -> (ExitReason,U256,State) {
         //TODO calculate transacition cost and add it to gasometer
@@ -109,7 +109,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         scheme: CreateScheme,
         value: U256,
         init_code: Bytes,
-        gas: U256,
+        gas_limit: u64,
         take_l64: bool,
     ) -> (ExitReason, Option<H160>, Bytes) {
         //todo!()
@@ -156,7 +156,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         }
         // create new machine and execute init function
         let contract = Contract::new(Bytes::new(), init_code, address, caller, value);
-        let mut machine = Machine::new(contract, gas);
+        let mut machine = Machine::new(contract, gas_limit);
         let exit_reason = machine.run::<Self, SPEC>(self);
         // handler error if present on execution
         match exit_reason {
@@ -198,7 +198,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         code_address: H160,
         transfer: Option<Transfer>,
         input: Bytes,
-        gas: U256,
+        gas_limit: u64,
         is_static: bool,
         take_l64: bool,
         take_stipend: bool,
@@ -207,7 +207,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         // call trace_opcode.
 
         // wtf is l64  calculate it here and set gas
-        let mut gas_limit: u64 = 0;
+        let mut gas_limit: u64 = gas_limit;
 
         // Check stipend and if we are transfering some value
 
@@ -248,7 +248,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
             context.caller,
             context.apparent_value,
         );
-        let mut machine = Machine::new(contract, gas);
+        let mut machine = Machine::new(contract, gas_limit);
         let exit_reason = machine.run::<Self, SPEC>(self);
         match exit_reason {
             ExitReason::Succeed(_) => {
@@ -317,23 +317,23 @@ impl<'a, SPEC: Spec, DB: Database> Handler for EVM<'a, SPEC, DB> {
         Ok(())
     }
 
-    fn create<const CALL_TRACE: bool, const GAS_TRACE: bool, const OPCODE_TRACE: bool>(
+    fn create(
         &mut self,
         caller: H160,
         scheme: CreateScheme,
         value: U256,
         init_code: Bytes,
-        gas: U256,
+        gas: u64,
     ) -> (ExitReason, Option<H160>, Bytes) {
         self.create_inner(caller, scheme, value, init_code, gas, true)
     }
 
-    fn call<const CALL_TRACE: bool, const GAS_TRACE: bool, const OPCODE_TRACE: bool>(
+    fn call(
         &mut self,
         code_address: H160,
         transfer: Option<Transfer>,
         input: Bytes,
-        gas: U256,
+        gas: u64,
         is_static: bool,
         context: CallContext,
     ) -> (ExitReason, Bytes) {
@@ -379,22 +379,22 @@ pub trait Handler {
         target: H160,
     ) -> Result<(), ExitError>;
     /// Invoke a create operation.
-    fn create<const CALL_TRACE: bool, const GAS_TRACE: bool, const OPCODE_TRACE: bool>(
+    fn create(
         &mut self,
         caller: H160,
         scheme: CreateScheme,
         value: U256,
         init_code: Bytes,
-        gas: U256,
+        gas: u64,
     ) -> (ExitReason, Option<H160>, Bytes);
 
     /// Invoke a call operation.
-    fn call<const CALL_TRACE: bool, const GAS_TRACE: bool, const OPCODE_TRACE: bool>(
+    fn call(
         &mut self,
         code_address: H160,
         transfer: Option<Transfer>,
         input: Bytes,
-        gas: U256,
+        gas: u64,
         is_static: bool,
         context: CallContext,
     ) -> (ExitReason, Bytes);

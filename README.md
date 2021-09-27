@@ -1,6 +1,6 @@
 # revm - Revolutionary Machine
 
-Is **Rust Ethereum Virtual Machine** with great name that is focused on **speed** and **simplicity**. It gets ispiration from SputnikVM (opcodes/machine are copied from here), OpenEthereum and Geth.
+Is **Rust Ethereum Virtual Machine** with great name that is focused on **speed** and **simplicity**. It gets ispiration from SputnikVM (opcodes/machine are copied from here), OpenEthereum and Geth. This is probably one of the fasted implementation of EVM,for  statically used types to packed changelogs for subroutines to merging eip2929 in EVM state so that it can be accesses faster are the things that are improving speed of execution. 
 
 I love when I see that project has list of postulates that it follows, it can give outsider good feel on how maintainers are making decision and what is important for them. Here is list of them for **revm**:
 - **EVM compatibility and stability** - this goes without saying but it is nice to put it here. In blockchain industry, stability is most desired attribute of any system.
@@ -28,36 +28,21 @@ The structure of the project is getting crystallized and we can see few parts th
 - `EVM`- Is main entry to the lib,it  implements `Handler` and connects `subroutine` and `machine` and does `subroutine checkpoint` switches.
 
 
-
-
 ### Subroutine
 
+Changelogs are created in every subroutine and represent action that needs to happen so that present state can be reverted to state before subroutine. It contains list of accounts with original values that can be used to revert current state to state before this subroutine started.
 
-Changelogs are created in every subroutine and represent action that needs to happen so that present state can be reverted to state before subroutine. All actions can be found here.
-
-LoadAccount-> Remove account from state
-LoadSlot -> (Acc is already loaded)
-
-
-changelog can be:
-LoadedCold -> when reverting remove account from state.
-Dirty(Acc(Info,Storage),SlotState(ColdLoad,Dirtied)) ->
-        - apply all storage in reverse
-        - remove all cold loaded slots
-        - remove all Dirty slots 
-Destroyed(Acc(Info,Storage)) -> swap all Info and Storage from current state
+Depending on subroutine and if account was previously loaded/destryoyed, accounts in changelog can have:
+- LoadedCold -> when reverting remove account from state.
+- Dirty(_) -> account is already hot, and in this subroutine we are changing it. Field needed for that are:
+        - original_slot: HashMap<H256,SlotChangeLog>:
+            SlotChangeLog can be: ColdLoad or Dirty(H256)
+        - info: (balance/nonce/code)
+        - was_cold: bool
+- Destroyed(Account) -> swap all Info and Storage from current state
 
 
-c  D D r r r r r r r r r
-Clean Dir Dir Des Dir Dir Des Dir Dir
-
-Cold  Dir Dir Des Dir Dir Des Dir Dir
-
-C D D R D D R D D
-
-Revert
-D
-D
+Changelog example
 
 change1:
 1: loaded

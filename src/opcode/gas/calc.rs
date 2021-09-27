@@ -15,7 +15,7 @@ pub fn suicide_refund(already_removed: bool) -> i64 {
     if already_removed {
         0
     } else {
-        R_SUICIDE
+        SUICIDE
     }
 }
 
@@ -67,7 +67,7 @@ pub fn sstore_refund<SPEC: Spec>(original: H256, current: H256, new: H256) -> i6
 }
 
 pub fn create2_cost(len: U256) -> Result<u64, ExitError> {
-    let base = U256::from(G_CREATE);
+    let base = U256::from(CREATE);
     // ceil(len / 32.0)
     let sha_addup_base = len / U256::from(32)
         + if len % U256::from(32) == U256::zero() {
@@ -75,7 +75,7 @@ pub fn create2_cost(len: U256) -> Result<u64, ExitError> {
         } else {
             U256::one()
         };
-    let sha_addup = U256::from(G_SHA3WORD)
+    let sha_addup = U256::from(SHA3WORD)
         .checked_mul(sha_addup_base)
         .ok_or(ExitError::OutOfGas)?;
     let gas = base.checked_add(sha_addup).ok_or(ExitError::OutOfGas)?;
@@ -89,9 +89,9 @@ pub fn create2_cost(len: U256) -> Result<u64, ExitError> {
 
 pub fn exp_cost<SPEC: Spec>(power: U256) -> Result<u64, ExitError> {
     if power == U256::zero() {
-        Ok(G_EXP)
+        Ok(EXP)
     } else {
-        let gas = U256::from(G_EXP)
+        let gas = U256::from(EXP)
             .checked_add(
                 U256::from(SPEC::gas_expbyte)
                     .checked_mul(U256::from(super::utils::log2floor(power) / 8 + 1))
@@ -111,9 +111,9 @@ pub fn verylowcopy_cost(len: U256) -> Result<u64, ExitError> {
     let wordd = len / U256::from(32);
     let wordr = len % U256::from(32);
 
-    let gas = U256::from(G_VERYLOW)
+    let gas = U256::from(VERYLOW)
         .checked_add(
-            U256::from(G_COPY)
+            U256::from(COPY)
                 .checked_mul(if wordr == U256::zero() {
                     wordd
                 } else {
@@ -135,7 +135,7 @@ pub fn extcodecopy_cost<SPEC: Spec>(len: U256, is_cold: bool) -> Result<u64, Exi
     let wordr = len % U256::from(32);
     let gas = U256::from(address_access_cost::<SPEC>(is_cold, SPEC::gas_ext_code))
         .checked_add(
-            U256::from(G_COPY)
+            U256::from(COPY)
                 .checked_mul(if wordr == U256::zero() {
                     wordd
                 } else {
@@ -153,14 +153,14 @@ pub fn extcodecopy_cost<SPEC: Spec>(len: U256, is_cold: bool) -> Result<u64, Exi
 }
 
 pub fn log_cost(n: u8, len: U256) -> Result<u64, ExitError> {
-    let gas = U256::from(G_LOG)
+    let gas = U256::from(LOG)
         .checked_add(
-            U256::from(G_LOGDATA)
+            U256::from(LOGDATA)
                 .checked_mul(len)
                 .ok_or(ExitError::OutOfGas)?,
         )
         .ok_or(ExitError::OutOfGas)?
-        .checked_add(U256::from(G_LOGTOPIC * n as u64))
+        .checked_add(U256::from(LOGTOPIC * n as u64))
         .ok_or(ExitError::OutOfGas)?;
 
     if gas > U256::from(u64::MAX) {
@@ -174,9 +174,9 @@ pub fn sha3_cost(len: U256) -> Result<u64, ExitError> {
     let wordd = len / U256::from(32);
     let wordr = len % U256::from(32);
 
-    let gas = U256::from(G_SHA3)
+    let gas = U256::from(SHA3)
         .checked_add(
-            U256::from(G_SHA3WORD)
+            U256::from(SHA3WORD)
                 .checked_mul(if wordr == U256::zero() {
                     wordd
                 } else {
@@ -304,7 +304,7 @@ pub fn address_access_cost<SPEC: Spec>(is_cold: bool, regular_value: u64) -> u64
 
 fn xfer_cost(is_call_or_callcode: bool, transfers_value: bool) -> u64 {
     if is_call_or_callcode && transfers_value {
-        G_CALLVALUE
+        CALLVALUE
     } else {
         0
     }
@@ -319,12 +319,12 @@ fn new_cost<SPEC: Spec>(
     if is_call_or_staticcall {
         if !SPEC::empty_considered_exists {
             if transfers_value && new_account {
-                G_NEWACCOUNT
+                NEWACCOUNT
             } else {
                 0
             }
         } else if new_account {
-            G_NEWACCOUNT
+            NEWACCOUNT
         } else {
             0
         }
@@ -335,7 +335,7 @@ fn new_cost<SPEC: Spec>(
 
 pub fn memory_gas(a: usize) -> Result<u64, ExitError> {
     let a = a as u64;
-    G_MEMORY
+    MEMORY
         .checked_mul(a)
         .ok_or(ExitError::OutOfGas)?
         .checked_add(a.checked_mul(a).ok_or(ExitError::OutOfGas)? / 512)
