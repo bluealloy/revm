@@ -128,7 +128,7 @@ impl Machine {
         self.status.as_ref().map_err(|reason| reason.clone())?;
 
         // evaluate opcode/execute instruction
-        match eval::<H, SPEC, false, false, false>(self, opcode, program_counter, handler) {
+        match eval::<H, SPEC>(self, opcode, program_counter, handler) {
             Control::Continue => {
                 self.program_counter = program_counter + 1;
                 Ok(())

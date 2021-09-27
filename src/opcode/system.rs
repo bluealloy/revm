@@ -53,7 +53,9 @@ pub fn balance<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control
     Control::Continue
 }
 
-pub fn selfbalance<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn selfbalance<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
+    enabled!(SPEC::has_self_balance);
+
     push_u256!(machine, handler.balance(machine.contract.address).0);
 
     Control::Continue
@@ -104,7 +106,8 @@ pub fn extcodesize<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Con
     Control::Continue
 }
 
-pub fn extcodehash<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn extcodehash<H: ExtHandler,SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
+    enabled!(SPEC::has_ext_code_hash);
     pop!(machine, address);
     push!(machine, handler.code_hash(address.into()).0);
 
@@ -129,14 +132,18 @@ pub fn extcodecopy<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Con
     Control::Continue
 }
 
-pub fn returndatasize(machine: &mut Machine) -> Control {
+pub fn returndatasize<SPEC: Spec>(machine: &mut Machine) -> Control {
+    enabled!(SPEC::has_return_data);
+    gas!(machine,gas::BASE);
+
     let size = U256::from(machine.return_data_buffer.len());
     push_u256!(machine, size);
 
     Control::Continue
 }
 
-pub fn returndatacopy(machine: &mut Machine) -> Control {
+pub fn returndatacopy<SPEC: Spec>(machine: &mut Machine) -> Control {
+    enabled!(SPEC::has_return_data);
     pop_u256!(machine, memory_offset, data_offset, len);
 
     try_or_fail!(machine.memory_mut().resize_offset(memory_offset, len));
@@ -208,10 +215,11 @@ pub fn sload<H: ExtHandler, const OPCODE_TRACE: bool>(
     Control::Continue
 }
 
-pub fn sstore<H: ExtHandler, const OPCODE_TRACE: bool>(
+pub fn sstore<H: ExtHandler, SPEC: Spec>(
     machine: &mut Machine,
     handler: &mut H,
 ) -> Control {
+    enabled!(SPEC::is_not_static_call);
     pop!(machine, index, value);
     handler.sstore(machine.contract.address, index, value);
     Control::Continue
@@ -224,7 +232,9 @@ pub fn gas<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
     Control::Continue
 }
 
-pub fn log<H: ExtHandler>(machine: &mut Machine, n: u8, handler: &mut H) -> Control {
+pub fn log<H: ExtHandler,SPEC: Spec>(machine: &mut Machine, n: u8, handler: &mut H) -> Control {
+    enabled!(SPEC::is_not_static_call);
+
     pop_u256!(machine, offset, len);
 
     try_or_fail!(machine.memory_mut().resize_offset(offset, len));
@@ -251,13 +261,15 @@ pub fn log<H: ExtHandler>(machine: &mut Machine, n: u8, handler: &mut H) -> Cont
     Control::Continue
 }
 
-pub fn suicide<H: ExtHandler, const CALL_TRACE: bool>(
+pub fn suicide<H: ExtHandler, SPEC: Spec>(
     machine: &mut Machine,
     handler: &mut H,
 ) -> Control {
+    enabled!(SPEC::is_not_static_call);
+
     pop!(machine, target);
 
-    match handler.selfdestruct::<CALL_TRACE>(machine.contract.address, target.into()) {
+    match handler.selfdestruct::<false>(machine.contract.address, target.into()) {
         Ok(()) => (),
         Err(e) => return Control::Exit(e.into()),
     }
@@ -266,11 +278,13 @@ pub fn suicide<H: ExtHandler, const CALL_TRACE: bool>(
 }
 
 pub fn create<
-    H: ExtHandler>(
+    H: ExtHandler, SPEC: Spec>(
     machine: &mut Machine,
     is_create2: bool,
     handler: &mut H,
 ) -> Control {
+    enabled!(SPEC::is_not_static_call);
+
     machine.return_data_buffer = Bytes::new();
 
     pop_u256!(machine, value, code_offset, len);
@@ -323,11 +337,18 @@ pub fn create<
 }
 
 pub fn call<
-    H: ExtHandler>(
+    H: ExtHandler,
+    SPEC: Spec>(
     machine: &mut Machine,
     scheme: CallScheme,
     handler: &mut H,
 ) -> Control {
+    match scheme {
+        CallScheme::Call => enabled!(SPEC::is_not_static_call),
+        CallScheme::DelegateCall => enabled!(SPEC::has_delegate_call),
+        _ => (),
+    }
+
     machine.return_data_buffer = Bytes::new();
 
     pop_u256!(machine, gas);

@@ -212,6 +212,8 @@ pub fn swap(state: &mut Machine, n: usize) -> Control {
 
 #[inline]
 pub fn ret(state: &mut Machine) -> Control {
+    // zero gas cost gas!(state,gas::ZERO);
+    
     pop_u256!(state, start, len);
     try_or_fail!(state.memory.resize_offset(start, len));
     state.return_range = start..(start + len);
@@ -221,7 +223,7 @@ pub fn ret(state: &mut Machine) -> Control {
 #[inline]
 pub fn revert<SPEC: Spec>(state: &mut Machine) -> Control {
     enabled!(SPEC::has_revert);
-    // zero gas cost
+    // zero gas cost gas!(state,gas::ZERO);
 
     pop_u256!(state, start, len);
     try_or_fail!(state.memory.resize_offset(start, len));

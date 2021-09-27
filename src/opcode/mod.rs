@@ -31,9 +31,6 @@ pub enum Control {
 pub fn eval<
     H: ExtHandler,
     S: Spec,
-    const CALL_TRACE: bool,
-    const GAS_TRACE: bool,
-    const OPCODE_TRACE: bool,
 >(
     state: &mut Machine,
     opcode: OpCode,
@@ -155,37 +152,37 @@ pub fn eval<
         OpCode::SHA3 => system::sha3(state), //check
         OpCode::ADDRESS => system::address(state),
         OpCode::BALANCE => system::balance(state, handler), //check
-        OpCode::SELFBALANCE => system::selfbalance(state, handler), //check
+        OpCode::SELFBALANCE => system::selfbalance::<H,S>(state, handler), //check
         OpCode::ORIGIN => system::origin(state, handler),
         OpCode::CALLER => system::caller(state),
         OpCode::CALLVALUE => system::callvalue(state),
         OpCode::GASPRICE => system::gasprice(state, handler),
         OpCode::EXTCODESIZE => system::extcodesize(state, handler), //check
-        OpCode::EXTCODEHASH => system::extcodehash(state, handler), //check
+        OpCode::EXTCODEHASH => system::extcodehash::<H,S>(state, handler), //check
         OpCode::EXTCODECOPY => system::extcodecopy(state, handler), //check
-        OpCode::RETURNDATASIZE => system::returndatasize(state),    //check
-        OpCode::RETURNDATACOPY => system::returndatacopy(state),    //check
+        OpCode::RETURNDATASIZE => system::returndatasize::<S>(state),
+        OpCode::RETURNDATACOPY => system::returndatacopy::<S>(state),    //check
         OpCode::BLOCKHASH => system::blockhash(state, handler),     //check
         OpCode::COINBASE => system::coinbase(state, handler),
         OpCode::TIMESTAMP => system::timestamp(state, handler),
         OpCode::NUMBER => system::number(state, handler),
         OpCode::DIFFICULTY => system::difficulty(state, handler),
         OpCode::GASLIMIT => system::gaslimit(state, handler),
-        OpCode::SLOAD => system::sload::<H, OPCODE_TRACE>(state, handler), //check
-        OpCode::SSTORE => system::sstore::<H, OPCODE_TRACE>(state, handler), //check
+        OpCode::SLOAD => system::sload::<H,false>(state, handler), //check
+        OpCode::SSTORE => system::sstore::<H, S>(state, handler), //check
         OpCode::GAS => system::gas(state, handler),
-        OpCode::LOG0 => system::log(state, 0, handler), //check
-        OpCode::LOG1 => system::log(state, 1, handler), //check
-        OpCode::LOG2 => system::log(state, 2, handler), //check
-        OpCode::LOG3 => system::log(state, 3, handler), //check
-        OpCode::LOG4 => system::log(state, 4, handler), //check
-        OpCode::SUICIDE => system::suicide::<H, CALL_TRACE>(state, handler), //check
-        OpCode::CREATE => system::create(state, false, handler), //check
-        OpCode::CREATE2 => system::create(state, true, handler), //check
-        OpCode::CALL => system::call(state, CallScheme::Call, handler), //check
-        OpCode::CALLCODE => system::call(state, CallScheme::CallCode, handler), //check
-        OpCode::DELEGATECALL => system::call(state, CallScheme::DelegateCall, handler), //check
-        OpCode::STATICCALL => system::call(state, CallScheme::StaticCall, handler), //check
+        OpCode::LOG0 => system::log::<H,S>(state, 0, handler), //check
+        OpCode::LOG1 => system::log::<H,S>(state, 1, handler), //check
+        OpCode::LOG2 => system::log::<H,S>(state, 2, handler), //check
+        OpCode::LOG3 => system::log::<H,S>(state, 3, handler), //check
+        OpCode::LOG4 => system::log::<H,S>(state, 4, handler), //check
+        OpCode::SUICIDE => system::suicide::<H,S>(state, handler), //check
+        OpCode::CREATE => system::create::<H,S>(state, false, handler), //check
+        OpCode::CREATE2 => system::create::<H,S>(state, true, handler), //check
+        OpCode::CALL => system::call::<H,S>(state, CallScheme::Call, handler), //check
+        OpCode::CALLCODE => system::call::<H,S>(state, CallScheme::CallCode, handler), //check
+        OpCode::DELEGATECALL => system::call::<H,S>(state, CallScheme::DelegateCall, handler), //check
+        OpCode::STATICCALL => system::call::<H,S>(state, CallScheme::StaticCall, handler), //check
         OpCode::CHAINID => system::chainid::<H, S>(state, handler),
     }
 }

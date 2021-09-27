@@ -1,9 +1,13 @@
 use super::Spec;
 
 #[derive(Clone)]
-pub struct BerlinSpec;
+pub struct BerlinSpecTemp<const STATIC_CALL: bool>;
 
-impl Spec for BerlinSpec {
+pub type BerlinSpec = BerlinSpecTemp<true>;
+pub type BerlinSpecStatic = BerlinSpecTemp<false>;
+
+impl<const STATIC_CALL: bool> Spec for BerlinSpecTemp<STATIC_CALL> {
+    const is_not_static_call: bool = STATIC_CALL;
     /// Gas paid for extcode.
     const gas_ext_code: u64 = 0;
     /// Gas paid for extcodehash.

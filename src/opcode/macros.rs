@@ -10,8 +10,8 @@ macro_rules! try_or_fail {
 }
 
 macro_rules! enabled {
-    ($spec:ident :: $enabled:ident) => {
-        if !$spec::$enabled {
+    ($expresion:expr ) => {
+        if !$expresion {
             return Control::Exit(ExitReason::Error(ExitError::OpcodeDisabled));
         }
     };

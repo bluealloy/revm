@@ -1,4 +1,5 @@
 pub trait Spec: Clone {
+    const is_not_static_call: bool;
     /// Gas paid for extcode.
     const gas_ext_code: u64;
     /// Gas paid for extcodehash.
