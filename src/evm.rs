@@ -7,7 +7,7 @@ use crate::{
     error::{ExitError, ExitReason, ExitSucceed},
     machine::{Contract, Gas, Machine, Stack},
     opcode::OpCode,
-    spec::Spec,
+    spec::{Spec,NotStaticSpec},
     subroutine::{Account, State, SubRoutine},
     util, CallContext, CreateScheme, GlobalEnv, Log, Transfer,
 };
@@ -19,7 +19,6 @@ pub struct EVM<'a, DB: Database> {
     subroutine: SubRoutine,
     precompiles: Map<H160, ()>,
     gas: U256,
-    is_static: bool,
 }
 
 impl<'a, DB: Database> EVM<'a, DB> {
@@ -31,7 +30,6 @@ impl<'a, DB: Database> EVM<'a, DB> {
             subroutine: SubRoutine::new(),
             precompiles: Map::new(),
             gas,
-            is_static: false,
         }
     }
 
@@ -72,13 +70,12 @@ impl<'a, DB: Database> EVM<'a, DB> {
             data,
             gas_limit,
             false,
-            false,
             context,
         );
         (exit, bytes, self.gas, self.subroutine.finalize())
     }
 
-    pub fn create<SPEC: Spec>(
+    pub fn create<SPEC: Spec+NotStaticSpec>(
         &mut self,
         caller: H160,
         value: U256,
@@ -221,7 +218,6 @@ impl<'a, DB: Database> EVM<'a, DB> {
         transfer: Option<Transfer>,
         input: Bytes,
         gas_limit: u64,
-        is_static: bool,
         take_stipend: bool,
         context: CallContext,
     ) -> (ExitReason, Gas, Bytes) {
@@ -334,8 +330,8 @@ impl<'a, DB: Database> Handler for EVM<'a, DB> {
 
     fn selfdestruct(
         &mut self,
-        address: H160,
-        target: H160,
+        _address: H160,
+        _target: H160,
     ) -> Result<SelfDestructResult, ExitError> {
         Ok(SelfDestructResult {
             value: U256::from(10),
@@ -363,10 +359,9 @@ impl<'a, DB: Database> Handler for EVM<'a, DB> {
         transfer: Option<Transfer>,
         input: Bytes,
         gas: u64,
-        is_static: bool,
         context: CallContext,
     ) -> (ExitReason, Gas, Bytes) {
-        self.call_inner::<SPEC>(code_address, transfer, input, gas, is_static, true, context)
+        self.call_inner::<SPEC>(code_address, transfer, input, gas, true, context)
     }
 }
 
@@ -421,19 +416,18 @@ pub trait Handler {
         transfer: Option<Transfer>,
         input: Bytes,
         gas: u64,
-        is_static: bool,
         context: CallContext,
     ) -> (ExitReason, Gas, Bytes);
 }
 
 pub trait Tracing {
-    fn trace_opcode(&mut self, contract: &Contract, opcode: OpCode, stack: &Stack) {
-        // println!(
-        //     "Opcode:{:?} ({:?}), stack:{:?}",
-        //     opcode,
-        //     opcode as u8,
-        //     stack.data()
-        // );
+    fn trace_opcode(&mut self, _contract: &Contract, opcode: OpCode, _stack: &Stack) {
+        println!(
+            "Opcode:{:?} ({:?})",
+            opcode,
+            opcode as u8,
+            //stack.data()
+        );
     }
     fn trace_call(&mut self) {}
 }

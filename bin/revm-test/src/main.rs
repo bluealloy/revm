@@ -69,7 +69,7 @@ fn main() {
 
     let res = {
         let mut evm = EVM::<StateDB>::new(&mut db, envs);
-        evm.call::<BerlinSpec>(
+        evm.call::<BerlinSpecStatic>(
             H160::from_str("0xf000000000000000000000000000000000000000").unwrap(),
             H160::from_str("0xa521a7d4fd9bd91af46cd678f4636dffb991742a").unwrap(),
             U256::zero(),

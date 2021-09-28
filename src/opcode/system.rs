@@ -469,9 +469,9 @@ pub fn call<H: ExtHandler, SPEC: Spec>(
 
     // CALL CONTRACT, with static or ordinary spec.
     let (reason, _gas, return_data) = if matches!(scheme, CallScheme::StaticCall) {
-        handler.call::<SPEC::STATIC>(to.into(), transfer, input, gas_limit, true, context)
+        handler.call::<SPEC::STATIC>(to.into(), transfer, input, gas_limit, context)
     } else {
-        handler.call::<SPEC>(to.into(), transfer, input, gas_limit, true, context)
+        handler.call::<SPEC>(to.into(), transfer, input, gas_limit, context)
     };
     machine.return_data_buffer = return_data;
     let target_len = min(out_len, U256::from(machine.return_data_buffer.len()));

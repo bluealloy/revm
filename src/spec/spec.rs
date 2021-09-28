@@ -1,3 +1,6 @@
+
+pub trait NotStaticSpec {}
+
 pub trait Spec {
     /// litle bit of magic. We can have child version of Spec that contains static flag enabled
     type STATIC: Spec;
