@@ -9,9 +9,8 @@ mod calc;
 mod constants;
 mod utils;
 
-pub use constants::*;
 pub use calc::*;
-
+pub use constants::*;
 
 //use super::{calc, constants};
 use crate::{error::ExitError, machine::Stack, opcode::OpCode, ExtHandler};
@@ -481,7 +480,7 @@ pub fn dynamic_opcode_cost<H: ExtHandler, SPEC: Spec>(
                 value: U256::from_big_endian(&stack.peek(2)?[..]),
                 gas: U256::from_big_endian(&stack.peek(0)?[..]),
                 target_is_cold: true, //handler.is_cold(target),
-                target_exists: true, //handler.exists(target)
+                target_exists: true,  //handler.exists(target)
             }
         }
         OpCode::STATICCALL => {
@@ -490,7 +489,7 @@ pub fn dynamic_opcode_cost<H: ExtHandler, SPEC: Spec>(
             GasCost::StaticCall {
                 gas: U256::from_big_endian(&stack.peek(0)?[..]),
                 target_is_cold: true, //handler.is_cold(target),
-                target_exists: true, //handler.exists(target)
+                target_exists: true,  //handler.exists(target)
             }
         }
         OpCode::SHA3 => GasCost::Sha3 {
@@ -524,7 +523,7 @@ pub fn dynamic_opcode_cost<H: ExtHandler, SPEC: Spec>(
             GasCost::DelegateCall {
                 gas: U256::from_big_endian(&stack.peek(0)?[..]),
                 target_is_cold: true, //handler.is_cold(target),
-                target_exists: true, //handler.exists(target)
+                target_exists: true,  //handler.exists(target)
             }
         }
         OpCode::DELEGATECALL => GasCost::Invalid,
@@ -576,7 +575,7 @@ pub fn dynamic_opcode_cost<H: ExtHandler, SPEC: Spec>(
             storage_target = StorageTarget::Address(target);
             GasCost::SelfDestruct {
                 value: handler.balance(address).0,
-                target_is_cold: true, //handler.is_cold(target),
+                target_is_cold: true,   //handler.is_cold(target),
                 target_exists: true,    //handler.exists(target)
                 already_removed: false, //handler.deleted(address),
             }
@@ -591,7 +590,7 @@ pub fn dynamic_opcode_cost<H: ExtHandler, SPEC: Spec>(
                 value: U256::from_big_endian(&stack.peek(2)?[..]),
                 gas: U256::from_big_endian(&stack.peek(0)?[..]),
                 target_is_cold: true, //handler.is_cold(target),
-                target_exists: true, //handler.exists(target)
+                target_exists: true,  //handler.exists(target)
             }
         }
 

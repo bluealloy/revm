@@ -3,8 +3,8 @@ use alloc::vec::Vec;
 use bytes::Bytes;
 use core::cmp::min;
 use core::ops::{BitAnd, Not};
-use std::cmp::max;
 use primitive_types::U256;
+use std::cmp::max;
 
 /// A sequencial memory. It uses Rust's `Vec` for internal
 /// representation.
@@ -71,7 +71,7 @@ impl Memory {
                 self.effective_len = new_end;
             }
             // record gas that is spend on memory
-            self.gas = self.record_memory_gas(offset,len)?;
+            self.gas = self.record_memory_gas(offset, len)?;
             Ok(())
         } else {
             Err(ExitError::InvalidRange)
@@ -79,25 +79,23 @@ impl Memory {
     }
 
     // TODO proably can omit some checks but do this later.
-	fn record_memory_gas(&self, from: U256, len: U256) -> Result<u64, ExitError> {
+    fn record_memory_gas(&self, from: U256, len: U256) -> Result<u64, ExitError> {
+        if len == U256::zero() {
+            return Ok(self.gas);
+        }
 
-		if len == U256::zero() {
-			return Ok(self.gas);
-		}
+        let end = from.checked_add(len).ok_or(ExitError::OutOfGas)?;
 
-		let end = from.checked_add(len).ok_or(ExitError::OutOfGas)?;
+        if end > U256::from(usize::MAX) {
+            return Err(ExitError::OutOfGas);
+        }
+        let end = end.as_usize();
 
-		if end > U256::from(usize::MAX) {
-			return Err(ExitError::OutOfGas);
-		}
-		let end = end.as_usize();
+        let rem = end % 32;
+        let new = if rem == 0 { end / 32 } else { end / 32 + 1 };
 
-		let rem = end % 32;
-		let new = if rem == 0 { end / 32 } else { end / 32 + 1 };
-
-		Ok(max(self.gas, crate::opcode::gas::memory_gas(new)?))
-	}
-
+        Ok(max(self.gas, crate::opcode::gas::memory_gas(new)?))
+    }
 
     /// Get memory region at given offset.
     ///

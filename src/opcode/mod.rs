@@ -28,10 +28,7 @@ pub enum Control {
 }
 
 #[inline]
-pub fn eval<
-    H: ExtHandler,
-    S: Spec,
->(
+pub fn eval<H: ExtHandler, S: Spec>(
     machine: &mut Machine,
     opcode: OpCode,
     position: usize,
@@ -39,31 +36,31 @@ pub fn eval<
 ) -> Control {
     match opcode {
         OpCode::STOP => Control::Exit(ExitSucceed::Stopped.into()),
-        OpCode::ADD => op2_u256_tuple!(machine,overflowing_add, gas::VERYLOW),
-        OpCode::MUL => op2_u256_tuple!(machine,overflowing_mul, gas::LOW),
-        OpCode::SUB => op2_u256_tuple!(machine,overflowing_sub, gas::VERYLOW),
-        OpCode::DIV => op2_u256_fn!(machine,arithmetic::div, gas::LOW),
-        OpCode::SDIV => op2_u256_fn!(machine,arithmetic::sdiv, gas::LOW),
-        OpCode::MOD => op2_u256_fn!(machine,arithmetic::rem, gas::LOW),
-        OpCode::SMOD => op2_u256_fn!(machine,arithmetic::srem, gas::LOW),
-        OpCode::ADDMOD => op3_u256_fn!(machine,arithmetic::addmod, gas::MID),
-        OpCode::MULMOD => op3_u256_fn!(machine,arithmetic::mulmod, gas::MID),
+        OpCode::ADD => op2_u256_tuple!(machine, overflowing_add, gas::VERYLOW),
+        OpCode::MUL => op2_u256_tuple!(machine, overflowing_mul, gas::LOW),
+        OpCode::SUB => op2_u256_tuple!(machine, overflowing_sub, gas::VERYLOW),
+        OpCode::DIV => op2_u256_fn!(machine, arithmetic::div, gas::LOW),
+        OpCode::SDIV => op2_u256_fn!(machine, arithmetic::sdiv, gas::LOW),
+        OpCode::MOD => op2_u256_fn!(machine, arithmetic::rem, gas::LOW),
+        OpCode::SMOD => op2_u256_fn!(machine, arithmetic::srem, gas::LOW),
+        OpCode::ADDMOD => op3_u256_fn!(machine, arithmetic::addmod, gas::MID),
+        OpCode::MULMOD => op3_u256_fn!(machine, arithmetic::mulmod, gas::MID),
         OpCode::EXP => arithmetic::eval_exp::<S>(machine),
-        OpCode::SIGNEXTEND => op2_u256_fn!(machine,arithmetic::signextend, gas::LOW),
-        OpCode::LT => op2_u256_bool_ref!(machine,lt, gas::VERYLOW),
-        OpCode::GT => op2_u256_bool_ref!(machine,gt, gas::VERYLOW),
-        OpCode::SLT => op2_u256_fn!(machine,bitwise::slt, gas::VERYLOW),
-        OpCode::SGT => op2_u256_fn!(machine,bitwise::sgt, gas::VERYLOW),
-        OpCode::EQ => op2_u256_bool_ref!(machine,eq, gas::VERYLOW),
-        OpCode::ISZERO => op1_u256_fn!(machine,bitwise::iszero, gas::VERYLOW),
-        OpCode::AND => op2_u256!(machine,bitand, gas::VERYLOW),
-        OpCode::OR => op2_u256!(machine,bitor, gas::VERYLOW),
-        OpCode::XOR => op2_u256!(machine,bitxor, gas::VERYLOW),
-        OpCode::NOT => op1_u256_fn!(machine,bitwise::not, gas::VERYLOW),
-        OpCode::BYTE => op2_u256_fn!(machine,bitwise::byte, gas::VERYLOW),
-        OpCode::SHL => op2_u256_fn!(machine,bitwise::shl, gas::VERYLOW, S::has_bitwise_shifting),
-        OpCode::SHR => op2_u256_fn!(machine,bitwise::shr, gas::VERYLOW, S::has_bitwise_shifting),
-        OpCode::SAR => op2_u256_fn!(machine,bitwise::sar, gas::VERYLOW, S::has_bitwise_shifting),
+        OpCode::SIGNEXTEND => op2_u256_fn!(machine, arithmetic::signextend, gas::LOW),
+        OpCode::LT => op2_u256_bool_ref!(machine, lt, gas::VERYLOW),
+        OpCode::GT => op2_u256_bool_ref!(machine, gt, gas::VERYLOW),
+        OpCode::SLT => op2_u256_fn!(machine, bitwise::slt, gas::VERYLOW),
+        OpCode::SGT => op2_u256_fn!(machine, bitwise::sgt, gas::VERYLOW),
+        OpCode::EQ => op2_u256_bool_ref!(machine, eq, gas::VERYLOW),
+        OpCode::ISZERO => op1_u256_fn!(machine, bitwise::iszero, gas::VERYLOW),
+        OpCode::AND => op2_u256!(machine, bitand, gas::VERYLOW),
+        OpCode::OR => op2_u256!(machine, bitor, gas::VERYLOW),
+        OpCode::XOR => op2_u256!(machine, bitxor, gas::VERYLOW),
+        OpCode::NOT => op1_u256_fn!(machine, bitwise::not, gas::VERYLOW),
+        OpCode::BYTE => op2_u256_fn!(machine, bitwise::byte, gas::VERYLOW),
+        OpCode::SHL => op2_u256_fn!(machine, bitwise::shl, gas::VERYLOW, S::has_bitwise_shifting),
+        OpCode::SHR => op2_u256_fn!(machine, bitwise::shr, gas::VERYLOW, S::has_bitwise_shifting),
+        OpCode::SAR => op2_u256_fn!(machine, bitwise::sar, gas::VERYLOW, S::has_bitwise_shifting),
         OpCode::CODESIZE => misc::codesize(machine),
         OpCode::CODECOPY => misc::codecopy(machine),
         OpCode::CALLDATALOAD => misc::calldataload(machine),
@@ -151,15 +148,15 @@ pub fn eval<
         OpCode::INVALID => Control::Exit(ExitError::DesignatedInvalid.into()),
         OpCode::SHA3 => system::sha3(machine),
         OpCode::ADDRESS => system::address(machine),
-        OpCode::BALANCE => system::balance::<H,S>(machine, handler),
-        OpCode::SELFBALANCE => system::selfbalance::<H,S>(machine, handler),
+        OpCode::BALANCE => system::balance::<H, S>(machine, handler),
+        OpCode::SELFBALANCE => system::selfbalance::<H, S>(machine, handler),
         OpCode::ORIGIN => system::origin(machine, handler),
         OpCode::CALLER => system::caller(machine),
         OpCode::CALLVALUE => system::callvalue(machine),
         OpCode::GASPRICE => system::gasprice(machine, handler),
-        OpCode::EXTCODESIZE => system::extcodesize::<H,S>(machine, handler),
-        OpCode::EXTCODEHASH => system::extcodehash::<H,S>(machine, handler),
-        OpCode::EXTCODECOPY => system::extcodecopy::<H,S>(machine, handler),
+        OpCode::EXTCODESIZE => system::extcodesize::<H, S>(machine, handler),
+        OpCode::EXTCODEHASH => system::extcodehash::<H, S>(machine, handler),
+        OpCode::EXTCODECOPY => system::extcodecopy::<H, S>(machine, handler),
         OpCode::RETURNDATASIZE => system::returndatasize::<S>(machine),
         OpCode::RETURNDATACOPY => system::returndatacopy::<S>(machine),
         OpCode::BLOCKHASH => system::blockhash(machine, handler),
@@ -168,21 +165,21 @@ pub fn eval<
         OpCode::NUMBER => system::number(machine, handler),
         OpCode::DIFFICULTY => system::difficulty(machine, handler),
         OpCode::GASLIMIT => system::gaslimit(machine, handler),
-        OpCode::SLOAD => system::sload::<H,S>(machine, handler),
+        OpCode::SLOAD => system::sload::<H, S>(machine, handler),
         OpCode::SSTORE => system::sstore::<H, S>(machine, handler),
         OpCode::GAS => system::gas(machine, handler),
-        OpCode::LOG0 => system::log::<H,S>(machine, 0, handler),
-        OpCode::LOG1 => system::log::<H,S>(machine, 1, handler),
-        OpCode::LOG2 => system::log::<H,S>(machine, 2, handler),
-        OpCode::LOG3 => system::log::<H,S>(machine, 3, handler),
-        OpCode::LOG4 => system::log::<H,S>(machine, 4, handler),
-        OpCode::SELFDESTRUCT => system::selfdestruct::<H,S>(machine, handler),
-        OpCode::CREATE => system::create::<H,S>(machine, false, handler), //check
-        OpCode::CREATE2 => system::create::<H,S>(machine, true, handler), //check
-        OpCode::CALL => system::call::<H,S>(machine, CallScheme::Call, handler), //check
-        OpCode::CALLCODE => system::call::<H,S>(machine, CallScheme::CallCode, handler), //check
-        OpCode::DELEGATECALL => system::call::<H,S>(machine, CallScheme::DelegateCall, handler), //check
-        OpCode::STATICCALL => system::call::<H,S>(machine, CallScheme::StaticCall, handler), //check
+        OpCode::LOG0 => system::log::<H, S>(machine, 0, handler),
+        OpCode::LOG1 => system::log::<H, S>(machine, 1, handler),
+        OpCode::LOG2 => system::log::<H, S>(machine, 2, handler),
+        OpCode::LOG3 => system::log::<H, S>(machine, 3, handler),
+        OpCode::LOG4 => system::log::<H, S>(machine, 4, handler),
+        OpCode::SELFDESTRUCT => system::selfdestruct::<H, S>(machine, handler),
+        OpCode::CREATE => system::create::<H, S>(machine, false, handler), //check
+        OpCode::CREATE2 => system::create::<H, S>(machine, true, handler), //check
+        OpCode::CALL => system::call::<H, S>(machine, CallScheme::Call, handler), //check
+        OpCode::CALLCODE => system::call::<H, S>(machine, CallScheme::CallCode, handler), //check
+        OpCode::DELEGATECALL => system::call::<H, S>(machine, CallScheme::DelegateCall, handler), //check
+        OpCode::STATICCALL => system::call::<H, S>(machine, CallScheme::StaticCall, handler), //check
         OpCode::CHAINID => system::chainid::<H, S>(machine, handler),
     }
 }

@@ -1,6 +1,6 @@
 use super::constants::*;
-use crate::{error::ExitError, evm::SelfDestructResult};
 use crate::spec::Spec;
+use crate::{error::ExitError, evm::SelfDestructResult};
 use primitive_types::{H256, U256};
 
 pub fn call_extra_check<SPEC: Spec>(gas: U256, after_gas: u64) -> Result<(), ExitError> {

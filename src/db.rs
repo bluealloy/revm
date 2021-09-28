@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use primitive_types::{H160, H256, U256};
 
-use crate::{AccountInfo, Log, Account};
+use crate::{Account, AccountInfo, Log};
 use bytes::Bytes;
 
 pub trait Database {
@@ -30,7 +30,7 @@ pub trait Database {
 //#[derive(Clone)]
 pub struct StateDB {
     cache: HashMap<H160, AccountInfo>,
-    storage: HashMap<(H160,H256),H256>,
+    storage: HashMap<(H160, H256), H256>,
     logs: Vec<Log>,
 }
 
@@ -40,14 +40,12 @@ impl StateDB {
     }
 
     pub fn apply(&mut self, changes: HashMap<H160, Account>) {
-        for (add,acc) in changes {
-            self.cache.insert(add,acc.info);
-            for (index,value) in acc.storage {
-                self.storage.insert((add,index),value);
+        for (add, acc) in changes {
+            self.cache.insert(add, acc.info);
+            for (index, value) in acc.storage {
+                self.storage.insert((add, index), value);
             }
         }
-
-        
     }
 
     /// Create a new memory backend.
@@ -115,7 +113,7 @@ impl Database for StateDB {
             if let Some(ref code) = acc.code {
                 return code.clone();
             }
-            if acc.code_hash.is_none(){
+            if acc.code_hash.is_none() {
                 return Bytes::new();
             }
             Bytes::new()
@@ -134,7 +132,7 @@ impl Database for StateDB {
     fn storage(&mut self, address: H160, index: H256) -> H256 {
         //log::info!(target: "evm::handler", "{:?} storage index {:?}",address, index);
         if self.fetch_account(&address) {
-            if let Some(slot) = self.storage.get(&(address,index)) {
+            if let Some(slot) = self.storage.get(&(address, index)) {
                 return slot.clone();
             }
             H256::zero()
@@ -160,7 +158,7 @@ impl Database for StateDB {
     /// on assumption that this operation is not common.
     fn original_storage(&mut self, address: H160, index: H256) -> Option<H256> {
         //log::info!(target: "evm::handler", "{:?} original storage {:?}",address,index);
-        Some(self.storage(address,index))
+        Some(self.storage(address, index))
         /*
         if self.fetch_account(&address) {
             let mut cache = self.cache.lock();

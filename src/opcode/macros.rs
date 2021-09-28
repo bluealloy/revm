@@ -34,7 +34,7 @@ macro_rules! refund {
 macro_rules! gas_or_fail {
     ($machine:expr, $gas:expr) => {
         match $gas {
-            Some(gas_used) => gas!($machine,gas_used),
+            Some(gas_used) => gas!($machine, gas_used),
             None => return Control::Exit(ExitReason::Error(ExitError::OutOfGas)),
         }
     };
@@ -143,13 +143,13 @@ macro_rules! op2_u256_fn {
     }};
     ( $machine:expr, $op:path, $gas:expr, $spec:ident :: $enabled:ident) => {{
         enabled!($spec::$enabled);
-        op2_u256_fn!($machine,$op,$gas)
+        op2_u256_fn!($machine, $op, $gas)
     }};
 }
 
 macro_rules! op3_u256_fn {
     ( $machine:expr, $op:path, $gas:expr  ) => {{
-        gas!($machine,$gas);
+        gas!($machine, $gas);
 
         pop_u256!($machine, op1, op2, op3);
         let ret = $op(op1, op2, op3);
@@ -159,7 +159,7 @@ macro_rules! op3_u256_fn {
     }};
     ( $machine:expr, $op:path, $gas:expr, $spec:ident :: $enabled:ident) => {{
         enabled!($spec::$enabled);
-        op3_u256_fn!($machine,$op,$gas)
+        op3_u256_fn!($machine, $op, $gas)
     }};
 }
 
