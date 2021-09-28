@@ -1,9 +1,17 @@
-use std::{collections::HashMap, marker::PhantomData};
-
+use core::marker::PhantomData;
 use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
+use std::collections::HashMap;
 
-use crate::{CallContext, CreateScheme, GlobalEnv, Log, Transfer, db::Database, error::{ExitError, ExitReason, ExitSucceed}, machine::{Contract, Gas, Machine, Stack}, opcode::OpCode, spec::Spec, subroutine::{Account, State, SubRoutine}, util};
+use crate::{
+    db::Database,
+    error::{ExitError, ExitReason, ExitSucceed},
+    machine::{Contract, Gas, Machine, Stack},
+    opcode::OpCode,
+    spec::Spec,
+    subroutine::{Account, State, SubRoutine},
+    util, CallContext, CreateScheme, GlobalEnv, Log, Transfer,
+};
 use bytes::Bytes;
 
 pub struct EVM<'a, SPEC: Spec, DB: Database> {
@@ -114,12 +122,22 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         self.trace_call();
         // check depth of calls
         if self.subroutine.depth() > SPEC::call_stack_limit {
-            return (ExitError::CallTooDeep.into(), None, Gas::default(), Bytes::new());
+            return (
+                ExitError::CallTooDeep.into(),
+                None,
+                Gas::default(),
+                Bytes::new(),
+            );
         }
 
         // check balance of caller and value
         if self.balance(caller).0 < value {
-            return (ExitError::OutOfFund.into(), None,Gas::default(), Bytes::new());
+            return (
+                ExitError::OutOfFund.into(),
+                None,
+                Gas::default(),
+                Bytes::new(),
+            );
         }
 
         let code_hash = H256::from_slice(Keccak256::digest(&init_code).as_slice());
@@ -160,7 +178,12 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
                     if code.len() > limit {
                         // TODO reduce gas and return
                         self.subroutine.checkpoint_discard(checkpoint);
-                        return (ExitError::CreateContractLimit.into(), None, machine.gas, Bytes::new());
+                        return (
+                            ExitError::CreateContractLimit.into(),
+                            None,
+                            machine.gas,
+                            Bytes::new(),
+                        );
                     }
                 }
                 // TODO check gas used and revert if we overspend
@@ -170,17 +193,28 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
                 self.subroutine.checkpoint_commit(checkpoint);
                 (
                     ExitReason::Succeed(ExitSucceed::Returned),
-                    Some(address),machine.gas, 
+                    Some(address),
+                    machine.gas,
                     Bytes::new(),
                 )
             }
             ExitReason::Revert(revert) => {
                 let _ = self.subroutine.checkpoint_revert(checkpoint);
-                (ExitReason::Revert(revert), None, machine.gas, machine.return_value())
+                (
+                    ExitReason::Revert(revert),
+                    None,
+                    machine.gas,
+                    machine.return_value(),
+                )
             }
             ExitReason::Error(_) | ExitReason::Fatal(_) => {
                 let _ = self.subroutine.checkpoint_discard(checkpoint);
-                (exit_reason.clone(), None, machine.gas, machine.return_value())
+                (
+                    exit_reason.clone(),
+                    None,
+                    machine.gas,
+                    machine.return_value(),
+                )
             }
         }
     }
@@ -324,7 +358,7 @@ impl<'a, SPEC: Spec, DB: Database> Handler for EVM<'a, SPEC, DB> {
         value: U256,
         init_code: Bytes,
         gas: u64,
-    ) -> (ExitReason, Option<H160>, Gas,  Bytes) {
+    ) -> (ExitReason, Option<H160>, Gas, Bytes) {
         self.create_inner(caller, scheme, value, init_code, gas, true)
     }
 

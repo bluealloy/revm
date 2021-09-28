@@ -4,7 +4,6 @@ use bytes::Bytes;
 use core::cmp::min;
 use core::ops::{BitAnd, Not};
 use primitive_types::U256;
-use std::cmp::max;
 
 /// A sequencial memory. It uses Rust's `Vec` for internal
 /// representation.
@@ -13,7 +12,6 @@ pub struct Memory {
     data: Vec<u8>,
     effective_len: U256,
     limit: usize,
-    gas: u64,
 }
 
 impl Memory {
@@ -23,12 +21,7 @@ impl Memory {
             data: Vec::new(),
             effective_len: U256::zero(),
             limit,
-            gas: 0,
         }
-    }
-
-    pub fn gas(&self) -> u64 {
-        self.gas
     }
 
     /// Memory limit.
@@ -59,9 +52,9 @@ impl Memory {
     /// Resize the memory, making it cover the memory region of `offset..(offset
     /// + len)`, with 32 bytes as the step. If the length is zero, this function
     /// does nothing.
-    pub fn resize_offset(&mut self, offset: U256, len: U256) -> Result<(), ExitError> {
+    pub fn resize_offset(&mut self, offset: U256, len: U256) -> Result<u64, ExitError> {
         if len == U256::zero() {
-            return Ok(());
+            return Ok(0);
         }
 
         if let Some(end) = offset.checked_add(len) {
@@ -70,18 +63,16 @@ impl Memory {
                 let new_end = next_multiple_of_32(end).ok_or(ExitError::InvalidRange)?;
                 self.effective_len = new_end;
             }
-            // record gas that is spend on memory
-            self.gas = self.record_memory_gas(offset, len)?;
-            Ok(())
+            self.memory_gas(offset, len)
         } else {
             Err(ExitError::InvalidRange)
         }
     }
 
     // TODO proably can omit some checks but do this later.
-    fn record_memory_gas(&self, from: U256, len: U256) -> Result<u64, ExitError> {
+    fn memory_gas(&self, from: U256, len: U256) -> Result<u64, ExitError> {
         if len == U256::zero() {
-            return Ok(self.gas);
+            return Ok(0);
         }
 
         let end = from.checked_add(len).ok_or(ExitError::OutOfGas)?;
@@ -94,7 +85,7 @@ impl Memory {
         let rem = end % 32;
         let new = if rem == 0 { end / 32 } else { end / 32 + 1 };
 
-        Ok(max(self.gas, crate::opcode::gas::memory_gas(new)?))
+        crate::opcode::gas::memory_gas(new)
     }
 
     /// Get memory region at given offset.

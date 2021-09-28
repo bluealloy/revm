@@ -1,7 +1,6 @@
-use std::{cmp::max, ops::Range};
-
 use crate::{opcode::eval, ExitError};
 use bytes::Bytes;
+use core::{cmp::max, ops::Range};
 use primitive_types::U256;
 
 use super::{contract::Contract, memory::Memory, stack::Stack};
@@ -30,10 +29,11 @@ pub struct Machine {
     pub gas: Gas,
 }
 
-#[derive(Clone,Copy, Default)]
+#[derive(Clone, Copy, Default)]
 pub struct Gas {
     pub limit: u64,
     pub used: u64,
+    pub memory: u64,
     pub refunded: i64,
 }
 impl Gas {
@@ -41,8 +41,17 @@ impl Gas {
         Self {
             limit,
             used: 0,
+            memory: 0,
             refunded: 0,
         }
+    }
+
+    pub fn remaining(&self) -> u64 {
+        self.limit - self.used - self.memory
+    }
+
+    pub fn left(&self) -> u64 {
+        self.limit - self.used
     }
 }
 
@@ -63,30 +72,23 @@ impl Machine {
         &self.contract
     }
 
-    #[inline(always)]
-    pub fn remaining_gas(&mut self) -> u64 {
-        self.gas.limit - self.gas.used - self.memory.gas()
+    pub fn gas(&mut self) -> &Gas {
+        &self.gas
     }
 
-    pub fn gas_left(&self) -> u64 {
-        self.gas.limit - self.gas.used
-    }
-
+    /// used in gas_refund! macro
     pub fn gas_refund(&mut self, refund: i64) {
         self.gas.refunded += refund;
     }
 
-    #[inline(always)]
-    pub fn spend_gas_bool(&mut self, gas: u64) -> bool {
-        self.gas.used += gas;
-        if self.gas.used > self.gas.limit {
-            true
-        } else {
-            false
-        }
+    /// used in memory_resize! macro
+    pub fn gas_memory(&mut self, gas_memory: u64) {
+        self.gas.memory = max(self.gas.memory, gas_memory);
     }
 
-    pub fn spend_gas_option(&mut self, gas: u64) -> bool {
+    /// used in gas! macro
+    #[inline(always)]
+    pub fn spend_gas_bool(&mut self, gas: u64) -> bool {
         self.gas.used += gas;
         if self.gas.used > self.gas.limit {
             true

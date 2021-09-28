@@ -2,7 +2,6 @@ use super::{gas, Control};
 use crate::{
     error::{ExitError, ExitFatal, ExitReason, ExitSucceed},
     machine::Machine,
-    opcode::gas::SELFDESTRUCT,
     CallContext, CallScheme, CreateScheme, ExtHandler, Spec, Transfer,
 };
 // 	CallScheme, Capture, CallContext, CreateScheme, ,
@@ -18,8 +17,7 @@ pub fn sha3(machine: &mut Machine) -> Control {
     pop_u256!(machine, from, len);
     gas_or_fail!(machine, gas::sha3_cost(len));
 
-    // memory gas is calculated inside resize_offset
-    try_or_fail!(machine.memory_mut().resize_offset(from, len));
+    memory_resize!(machine, from, len);
     let data = if len == U256::zero() {
         Bytes::new()
     } else {
@@ -146,7 +144,7 @@ pub fn extcodecopy<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &m
     let (code, is_cold) = handler.code(address.into());
     gas_or_fail!(machine, gas::extcodecopy_cost::<SPEC>(len, is_cold));
 
-    try_or_fail!(machine.memory_mut().resize_offset(memory_offset, len));
+    memory_resize!(machine, memory_offset, len);
     match machine
         .memory_mut()
         .copy_large(memory_offset, code_offset, len, &code)
@@ -172,7 +170,7 @@ pub fn returndatacopy<SPEC: Spec>(machine: &mut Machine) -> Control {
     enabled!(SPEC::has_return_data);
     pop_u256!(machine, memory_offset, data_offset, len);
     gas_or_fail!(machine, gas::verylowcopy_cost(len));
-    try_or_fail!(machine.memory_mut().resize_offset(memory_offset, len));
+    memory_resize!(machine, memory_offset, len);
     if data_offset
         .checked_add(len)
         .map(|l| l > U256::from(machine.return_data_buffer.len()))
@@ -250,20 +248,20 @@ pub fn sstore<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H)
     if SPEC::estimate {
         gas!(machine, SPEC::gas_sstore_set)
     } else {
-        let gas = machine.remaining_gas();
+        let remaining_gas = machine.gas.remaining();
         gas_or_fail!(
             machine,
-            gas::sstore_cost::<SPEC>(original, present, new, gas, is_cold)
+            gas::sstore_cost::<SPEC>(original, present, new, remaining_gas, is_cold)
         );
         refund!(machine, gas::sstore_refund::<SPEC>(original, present, new));
     }
     Control::Continue
 }
 
-pub fn gas<H: ExtHandler>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn gas(machine: &mut Machine) -> Control {
     gas!(machine, gas::BASE);
 
-    push_u256!(machine, U256::from(machine.gas_left()));
+    push_u256!(machine, U256::from(machine.gas().left()));
     Control::Continue
 }
 
@@ -272,7 +270,7 @@ pub fn log<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, n: u8, handler: &mu
 
     pop_u256!(machine, offset, len);
     gas_or_fail!(machine, gas::log_cost(n, len));
-    try_or_fail!(machine.memory_mut().resize_offset(offset, len));
+    memory_resize!(machine, offset, len);
     let data = if len == U256::zero() {
         Bytes::new()
     } else {
@@ -321,7 +319,7 @@ pub fn create<H: ExtHandler, SPEC: Spec>(
 
     pop_u256!(machine, value, code_offset, len);
 
-    try_or_fail!(machine.memory_mut().resize_offset(code_offset, len));
+    memory_resize!(machine, code_offset, len);
     let code = if len == U256::zero() {
         Bytes::new()
     } else {
@@ -343,7 +341,7 @@ pub fn create<H: ExtHandler, SPEC: Spec>(
         scheme,
         value,
         code,
-        machine.gas_left(),
+        machine.gas().left(),
     );
     machine.return_data_buffer = return_data;
     let create_address: H256 = address.map(|a| a.into()).unwrap_or_default();
@@ -399,8 +397,8 @@ pub fn call<H: ExtHandler, SPEC: Spec>(
 
     pop_u256!(machine, in_offset, in_len, out_offset, out_len);
 
-    try_or_fail!(machine.memory_mut().resize_offset(in_offset, in_len));
-    try_or_fail!(machine.memory_mut().resize_offset(out_offset, out_len));
+    memory_resize!(machine, in_offset, in_len);
+    memory_resize!(machine, out_offset, out_len);
 
     let input = if in_len == U256::zero() {
         Bytes::new()

@@ -1,5 +1,5 @@
+use core::convert::TryFrom;
 use num_enum::TryFromPrimitive;
-use std::convert::TryFrom;
 /// Opcode enum. One-to-one corresponding to an `u8` value.
 //#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 //pub struct Opcode(pub u8,

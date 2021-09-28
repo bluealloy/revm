@@ -132,8 +132,8 @@ impl Rem for I256 {
 #[cfg(test)]
 mod tests {
     use super::{Sign, I256};
+    use core::num::Wrapping;
     use primitive_types::U256;
-    use std::num::Wrapping;
 
     #[test]
     fn div_i256() {

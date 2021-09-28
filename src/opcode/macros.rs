@@ -40,6 +40,13 @@ macro_rules! gas_or_fail {
     };
 }
 
+macro_rules! memory_resize {
+    ($machine:expr, $start:expr, $len:expr) => {
+        let new_gas_memory = try_or_fail!($machine.memory.resize_offset($start, $len));
+        $machine.gas_memory(new_gas_memory)
+    };
+}
+
 macro_rules! pop {
 	( $machine:expr, $( $x:ident ),* ) => (
 		$(

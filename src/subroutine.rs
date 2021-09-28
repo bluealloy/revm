@@ -1,9 +1,6 @@
-use std::{
-    collections::{hash_map::Entry, HashMap, HashSet},
-    fs::File,
-    iter::Filter,
-    mem::{self, swap},
-};
+use std::collections::{hash_map::Entry, HashMap};
+
+use core::mem::{self};
 
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
@@ -246,7 +243,7 @@ impl SubRoutine {
                                     // and with that unwrap is okay.
                                     let present = acc.storage.insert(slot, previous).unwrap();
                                     match dirty.entry(slot) {
-                                        Entry::Occupied(mut entry) => {
+                                        Entry::Occupied(entry) => {
                                             if previous == *entry.get() {
                                                 entry.remove();
                                             }
@@ -323,7 +320,7 @@ impl SubRoutine {
     /// load account into memory. return if it is cold or hot accessed
     pub fn load_account<DB: Database>(&mut self, address: H160, db: &mut DB) -> (&Account, bool) {
         let is_cold = match self.state.entry(address.clone()) {
-            Entry::Occupied(occ) => false,
+            Entry::Occupied(_) => false,
             Entry::Vacant(vac) => {
                 let acc: Account = db.basic(address.clone()).into();
                 vac.insert(acc.clone());

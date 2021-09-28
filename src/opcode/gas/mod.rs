@@ -1,6 +1,6 @@
 //#![deny(warnings)]
 #![forbid(unsafe_code, unused_variables)]
-#![cfg_attr(not(feature = "std"), no_std)]
+//#![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
 mod calc;

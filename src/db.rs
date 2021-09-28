@@ -78,7 +78,7 @@ impl StateDB {
 }
 
 impl Database for StateDB {
-    fn block_hash(&mut self, number: U256) -> H256 {
+    fn block_hash(&mut self, _number: U256) -> H256 {
         // if number >= self.vicinity.block_number
         // 	|| self.vicinity.block_number - number - U256::one()
         // 		>= U256::from(self.vicinity.block_hashes.len())
@@ -173,7 +173,7 @@ impl Database for StateDB {
         }*/
     }
 
-    fn code_by_hash(&mut self, code_hash: H256) -> Bytes {
+    fn code_by_hash(&mut self, _code_hash: H256) -> Bytes {
         todo!()
     }
 }

@@ -2,7 +2,6 @@ use super::{gas, Control};
 use crate::{
     error::{ExitError, ExitFatal, ExitReason, ExitRevert, ExitSucceed},
     machine::Machine,
-    opcode::gas::verylowcopy_cost,
     Spec,
 };
 use core::cmp::min;
@@ -20,15 +19,15 @@ pub fn codesize(machine: &mut Machine) -> Control {
 pub fn codecopy(machine: &mut Machine) -> Control {
     pop_u256!(machine, memory_offset, code_offset, len);
     gas_or_fail!(machine, gas::verylowcopy_cost(len));
+    memory_resize!(machine, memory_offset, len);
 
-    try_or_fail!(machine.memory.resize_offset(memory_offset, len));
-    match machine
-        .memory
-        .copy_large(memory_offset, code_offset, len, &machine.contract.code)
-    {
-        Ok(()) => Control::Continue,
-        Err(e) => Control::Exit(e.into()),
-    }
+    try_or_fail!(machine.memory.copy_large(
+        memory_offset,
+        code_offset,
+        len,
+        &machine.contract.code
+    ));
+    Control::Continue
 }
 
 #[inline]
@@ -67,19 +66,19 @@ pub fn calldatasize(machine: &mut Machine) -> Control {
 pub fn calldatacopy(machine: &mut Machine) -> Control {
     pop_u256!(machine, memory_offset, data_offset, len);
     gas_or_fail!(machine, gas::verylowcopy_cost(len));
+    memory_resize!(machine, memory_offset, len);
 
-    try_or_fail!(machine.memory.resize_offset(memory_offset, len));
     if len == U256::zero() {
         return Control::Continue;
     }
 
-    match machine
-        .memory
-        .copy_large(memory_offset, data_offset, len, &machine.contract.input)
-    {
-        Ok(()) => Control::Continue,
-        Err(e) => Control::Exit(e.into()),
-    }
+    try_or_fail!(machine.memory.copy_large(
+        memory_offset,
+        data_offset,
+        len,
+        &machine.contract.input
+    ));
+    Control::Continue
 }
 
 #[inline]
@@ -95,7 +94,7 @@ pub fn mload(machine: &mut Machine) -> Control {
     pop_u256!(machine, index);
 
     // memory aditional gas checked here
-    try_or_fail!(machine.memory.resize_offset(index, U256::from(32)));
+    memory_resize!(machine, index, U256::from(32));
     let index = as_usize_or_fail!(index);
     let value = H256::from_slice(&machine.memory.get(index, 32)[..]);
     push!(machine, value);
@@ -109,13 +108,10 @@ pub fn mstore(machine: &mut Machine) -> Control {
     pop_u256!(machine, index);
     pop!(machine, value);
 
-    // memory aditional gas checked here
-    try_or_fail!(machine.memory.resize_offset(index, U256::from(32)));
+    memory_resize!(machine, index, U256::from(32));
     let index = as_usize_or_fail!(index);
-    match machine.memory.set(index, &value[..], Some(32)) {
-        Ok(()) => Control::Continue,
-        Err(e) => Control::Exit(e.into()),
-    }
+    try_or_fail!(machine.memory.set(index, &value[..], Some(32)));
+    Control::Continue
 }
 
 #[inline]
@@ -125,13 +121,11 @@ pub fn mstore8(machine: &mut Machine) -> Control {
     pop_u256!(machine, index, value);
 
     // memory aditional gas checked here
-    try_or_fail!(machine.memory.resize_offset(index, U256::one()));
+    memory_resize!(machine, index, U256::one());
     let index = as_usize_or_fail!(index);
     let value = (value.low_u32() & 0xff) as u8;
-    match machine.memory.set(index, &[value], Some(1)) {
-        Ok(()) => Control::Continue,
-        Err(e) => Control::Exit(e.into()),
-    }
+    try_or_fail!(machine.memory.set(index, &[value], Some(1)));
+    Control::Continue
 }
 
 #[inline]
@@ -197,10 +191,7 @@ pub fn push(machine: &mut Machine, n: usize, position: usize) -> Control {
 pub fn dup(machine: &mut Machine, n: usize) -> Control {
     gas!(machine, gas::VERYLOW);
 
-    let value = match machine.stack.peek(n - 1) {
-        Ok(value) => value,
-        Err(e) => return Control::Exit(e.into()),
-    };
+    let value = try_or_fail!(machine.stack.peek(n - 1));
     push!(machine, value);
     Control::Continue
 }
@@ -209,22 +200,10 @@ pub fn dup(machine: &mut Machine, n: usize) -> Control {
 pub fn swap(machine: &mut Machine, n: usize) -> Control {
     gas!(machine, gas::VERYLOW);
 
-    let val1 = match machine.stack.peek(0) {
-        Ok(value) => value,
-        Err(e) => return Control::Exit(e.into()),
-    };
-    let val2 = match machine.stack.peek(n) {
-        Ok(value) => value,
-        Err(e) => return Control::Exit(e.into()),
-    };
-    match machine.stack.set(0, val2) {
-        Ok(()) => (),
-        Err(e) => return Control::Exit(e.into()),
-    }
-    match machine.stack.set(n, val1) {
-        Ok(()) => (),
-        Err(e) => return Control::Exit(e.into()),
-    }
+    let val1 = try_or_fail!(machine.stack.peek(0));
+    let val2 = try_or_fail!(machine.stack.peek(n));
+    try_or_fail!(machine.stack.set(0, val2));
+    try_or_fail!(machine.stack.set(n, val1));
     Control::Continue
 }
 
@@ -232,8 +211,7 @@ pub fn swap(machine: &mut Machine, n: usize) -> Control {
 pub fn ret(machine: &mut Machine) -> Control {
     // zero gas cost gas!(machine,gas::ZERO);
     pop_u256!(machine, start, len);
-    // memory gas calculated inside resize_offset
-    try_or_fail!(machine.memory.resize_offset(start, len));
+    memory_resize!(machine, start, len);
     machine.return_range = start..(start + len);
     Control::Exit(ExitSucceed::Returned.into())
 }
@@ -243,8 +221,7 @@ pub fn revert<SPEC: Spec>(machine: &mut Machine) -> Control {
     enabled!(SPEC::has_revert);
     // zero gas cost gas!(machine,gas::ZERO);
     pop_u256!(machine, start, len);
-    // memory gas calculated inside resize_offset
-    try_or_fail!(machine.memory.resize_offset(start, len));
+    memory_resize!(machine, start, len);
     machine.return_range = start..(start + len);
     Control::Exit(ExitRevert::Reverted.into())
 }

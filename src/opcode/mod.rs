@@ -167,7 +167,7 @@ pub fn eval<H: ExtHandler, S: Spec>(
         OpCode::GASLIMIT => system::gaslimit(machine, handler),
         OpCode::SLOAD => system::sload::<H, S>(machine, handler),
         OpCode::SSTORE => system::sstore::<H, S>(machine, handler),
-        OpCode::GAS => system::gas(machine, handler),
+        OpCode::GAS => system::gas(machine),
         OpCode::LOG0 => system::log::<H, S>(machine, 0, handler),
         OpCode::LOG1 => system::log::<H, S>(machine, 1, handler),
         OpCode::LOG2 => system::log::<H, S>(machine, 2, handler),
