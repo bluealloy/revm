@@ -3,15 +3,7 @@ use std::{collections::HashMap, marker::PhantomData};
 use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
 
-use crate::{
-    db::Database,
-    error::{ExitError, ExitReason, ExitSucceed},
-    machine::{Contract, Machine, Stack},
-    opcode::OpCode,
-    spec::Spec,
-    subroutine::{Account, State, SubRoutine},
-    util, CallContext, CreateScheme, GlobalEnv, Log, Transfer,
-};
+use crate::{CallContext, CreateScheme, GlobalEnv, Log, Transfer, db::Database, error::{ExitError, ExitReason, ExitSucceed}, machine::{Contract, Gas, Machine, Stack}, opcode::OpCode, spec::Spec, subroutine::{Account, State, SubRoutine}, util};
 use bytes::Bytes;
 
 pub struct EVM<'a, SPEC: Spec, DB: Database> {
@@ -65,7 +57,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
             apparent_value: value,
         };
 
-        let (exit, bytes) = self.call_inner(
+        let (exit, gas, bytes) = self.call_inner(
             address,
             Some(Transfer {
                 source: caller,
@@ -96,7 +88,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
 
         self.load_access_list(access_list);
 
-        let (exit_reason, _, _) =
+        let (exit_reason, ..) =
             self.create_inner(caller, create_scheme, value, init_code, gas_limit, false);
 
         (exit_reason, self.gas, self.subroutine.finalize())
@@ -112,7 +104,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         init_code: Bytes,
         gas_limit: u64,
         take_l64: bool,
-    ) -> (ExitReason, Option<H160>, Bytes) {
+    ) -> (ExitReason, Option<H160>, Gas, Bytes) {
         //todo!()
 
         // set caller/contract_add/precompiles as hot access. PRobably can be removed. Acc shold be allready hot.
@@ -122,12 +114,12 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         self.trace_call();
         // check depth of calls
         if self.subroutine.depth() > SPEC::call_stack_limit {
-            return (ExitError::CallTooDeep.into(), None, Bytes::new());
+            return (ExitError::CallTooDeep.into(), None, Gas::default(), Bytes::new());
         }
 
         // check balance of caller and value
         if self.balance(caller).0 < value {
-            return (ExitError::OutOfFund.into(), None, Bytes::new());
+            return (ExitError::OutOfFund.into(), None,Gas::default(), Bytes::new());
         }
 
         let code_hash = H256::from_slice(Keccak256::digest(&init_code).as_slice());
@@ -149,7 +141,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         // transfer value to contract address
         if let Err(e) = self.subroutine.transfer(caller, address, value, self.db) {
             let _ = self.subroutine.checkpoint_revert(checkpoint);
-            return (ExitReason::Error(e), None, Bytes::new());
+            return (ExitReason::Error(e), None, Gas::default(), Bytes::new());
         }
         // inc nonce of contract
         if SPEC::create_increase_nonce {
@@ -168,7 +160,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
                     if code.len() > limit {
                         // TODO reduce gas and return
                         self.subroutine.checkpoint_discard(checkpoint);
-                        return (ExitError::CreateContractLimit.into(), None, Bytes::new());
+                        return (ExitError::CreateContractLimit.into(), None, machine.gas, Bytes::new());
                     }
                 }
                 // TODO check gas used and revert if we overspend
@@ -178,17 +170,17 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
                 self.subroutine.checkpoint_commit(checkpoint);
                 (
                     ExitReason::Succeed(ExitSucceed::Returned),
-                    Some(address),
+                    Some(address),machine.gas, 
                     Bytes::new(),
                 )
             }
             ExitReason::Revert(revert) => {
                 let _ = self.subroutine.checkpoint_revert(checkpoint);
-                (ExitReason::Revert(revert), None, machine.return_value())
+                (ExitReason::Revert(revert), None, machine.gas, machine.return_value())
             }
             ExitReason::Error(_) | ExitReason::Fatal(_) => {
                 let _ = self.subroutine.checkpoint_discard(checkpoint);
-                (exit_reason.clone(), None, machine.return_value())
+                (exit_reason.clone(), None, machine.gas, machine.return_value())
             }
         }
     }
@@ -204,7 +196,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         take_l64: bool,
         take_stipend: bool,
         context: CallContext,
-    ) -> (ExitReason, Bytes) {
+    ) -> (ExitReason, Gas, Bytes) {
         // call trace_opcode.
 
         // wtf is l64  calculate it here and set gas
@@ -227,7 +219,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         self.subroutine.load_account(context.address, self.db);
         // check depth of calls
         if self.subroutine.depth() > SPEC::call_stack_limit {
-            return (ExitError::CallTooDeep.into(), Bytes::new());
+            return (ExitError::CallTooDeep.into(), Gas::default(), Bytes::new());
         }
 
         // transfer value from caller to called address;
@@ -237,7 +229,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
                     .transfer(transfer.source, transfer.target, transfer.value, self.db)
             {
                 let _ = self.subroutine.checkpoint_revert(checkpoint);
-                return (ExitReason::Error(e), Bytes::new());
+                return (ExitReason::Error(e), Gas::default(), Bytes::new());
             }
         }
         // TODO check if we are calling PRECOMPILES and call it here and return.
@@ -251,18 +243,19 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         );
         let mut machine = Machine::new(contract, gas_limit);
         let exit_reason = machine.run::<Self, SPEC>(self);
+        //let gas = machine.gas;
         match exit_reason {
             ExitReason::Succeed(_) => {
                 let _ = self.subroutine.checkpoint_commit(checkpoint);
-                (exit_reason, machine.return_value())
+                (exit_reason, machine.gas, machine.return_value())
             }
             ExitReason::Revert(revert) => {
                 let _ = self.subroutine.checkpoint_revert(checkpoint);
-                (exit_reason, machine.return_value())
+                (exit_reason, machine.gas, machine.return_value())
             }
             ExitReason::Error(_) | ExitReason::Fatal(_) => {
                 let _ = self.subroutine.checkpoint_discard(checkpoint);
-                (exit_reason, machine.return_value())
+                (exit_reason, machine.gas, machine.return_value())
             }
         }
     }
@@ -331,7 +324,7 @@ impl<'a, SPEC: Spec, DB: Database> Handler for EVM<'a, SPEC, DB> {
         value: U256,
         init_code: Bytes,
         gas: u64,
-    ) -> (ExitReason, Option<H160>, Bytes) {
+    ) -> (ExitReason, Option<H160>, Gas,  Bytes) {
         self.create_inner(caller, scheme, value, init_code, gas, true)
     }
 
@@ -343,7 +336,7 @@ impl<'a, SPEC: Spec, DB: Database> Handler for EVM<'a, SPEC, DB> {
         gas: u64,
         is_static: bool,
         context: CallContext,
-    ) -> (ExitReason, Bytes) {
+    ) -> (ExitReason, Gas, Bytes) {
         self.call_inner(
             code_address,
             transfer,
@@ -399,7 +392,7 @@ pub trait Handler {
         value: U256,
         init_code: Bytes,
         gas: u64,
-    ) -> (ExitReason, Option<H160>, Bytes);
+    ) -> (ExitReason, Option<H160>, Gas, Bytes);
 
     /// Invoke a call operation.
     fn call(
@@ -410,7 +403,7 @@ pub trait Handler {
         gas: u64,
         is_static: bool,
         context: CallContext,
-    ) -> (ExitReason, Bytes);
+    ) -> (ExitReason, Gas, Bytes);
 }
 
 pub trait Tracing {

@@ -338,7 +338,7 @@ pub fn create<H: ExtHandler, SPEC: Spec>(
         CreateScheme::Create
     };
 
-    let (reason, address, return_data) = handler.create(
+    let (reason, address, gas, return_data) = handler.create(
         machine.contract.address,
         scheme,
         value,
@@ -445,7 +445,7 @@ pub fn call<H: ExtHandler, SPEC: Spec>(
         None
     };
 
-    let (reason, return_data) = handler.call(
+    let (reason, gas, return_data) = handler.call(
         to.into(),
         transfer,
         input,
