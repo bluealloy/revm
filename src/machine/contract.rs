@@ -1,3 +1,4 @@
+use crate::collection::vec::Vec;
 use bytes::Bytes;
 use primitive_types::{H160, U256};
 

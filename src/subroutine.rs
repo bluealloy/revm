@@ -1,4 +1,4 @@
-use std::collections::{hash_map::Entry, HashMap};
+use crate::collection::{Map,Entry, vec, vec::Vec};
 
 use core::mem::{self};
 
@@ -17,7 +17,7 @@ pub struct SubRoutine {
     /// exit or revert
     /// if account is none it means that account was cold in previoud changelog
     /// Additional HashSet represent cold storage slots.
-    changelog: Vec<HashMap<H160, ChangeLog>>,
+    changelog: Vec<Map<H160, ChangeLog>>,
     /// how deep are we in call stack.
     depth: usize,
 }
@@ -27,7 +27,7 @@ pub struct SubRoutine {
 // HashSet<H256> contains slot changelog
 // acc.storage contains previous slots that are changes in this changelog
 // acc.filth contains previous change
-//pub type ChangeLog = HashMap<H160, Option<(Account, HashMap<H256, SlotChangeLog>)>>;
+//pub type ChangeLog = Map<H160, Option<(Account, Map<H256, SlotChangeLog>)>>;
 
 #[derive(Debug, Clone)]
 pub enum ChangeLog {
@@ -41,13 +41,13 @@ pub struct DirtyChangeLog {
     // contains previous values of slot.
     // If it is cold loaded in this subrutine SlotChangeLog will be COLD.
     // if it is hot and it gets changes somewhare in child subroutine, SlotChangeLog will contain old value OriginalDirty,
-    dirty_storage: HashMap<H256, SlotChangeLog>,
+    dirty_storage: Map<H256, SlotChangeLog>,
     // account info, when reverting just overrride state value.
     info: AccountInfo,
     was_clean: bool,
 }
 
-pub type State = HashMap<H160, Account>;
+pub type State = Map<H160, Account>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SlotChangeLog {
@@ -65,9 +65,9 @@ pub struct SubRoutineCheckpoint {
 impl SubRoutine {
     pub fn new() -> SubRoutine {
         Self {
-            state: HashMap::new(),
+            state: Map::new(),
             logs: Vec::new(),
-            changelog: vec![HashMap::new(); 1],
+            changelog: vec![Map::new(); 1],
             depth: 0,
         }
     }
@@ -75,11 +75,12 @@ impl SubRoutine {
     /// do cleanup and return modified state
     /// Do take that filthy stuff and return it back.
     /// Some states of Filth enum are internaly used but in output it can only be:
-    /// 1. Dirty with empty HashMap (HashMap is internaly used). Only changed slots are returned in `storage` or
+    /// 1. Dirty with empty Map (Map is internaly used). Only changed slots are returned in `storage` or
     /// 2. Destroyed if selfdestruct was called.
     pub fn finalize(&mut self) -> State {
-        let mut out = HashMap::new();
-        for (add, mut acc) in self.state.drain() {
+        let mut out = Map::new();
+        let state = mem::take(&mut self.state);
+        for (add, mut acc) in state.into_iter() {
             let dirty = acc.filth.clean();
             match acc.filth {
                 Filth::Clean => {}
@@ -90,7 +91,7 @@ impl SubRoutine {
                 Filth::Dirty(_) => {
                     // check original and cleanup slots that are not dirty.
                     // In this case,return slots that are found in dirty_originals
-                    let mut change = HashMap::new();
+                    let mut change = Map::new();
                     for &dirty_key in dirty.keys() {
                         change.insert(dirty_key, acc.storage.get(&dirty_key).cloned().unwrap());
                     }
@@ -101,11 +102,11 @@ impl SubRoutine {
         }
         // state cleanup
         self.logs.clear();
-        println!(" changeset: {:?}", self.changelog);
+        //println!(" changeset: {:?}", self.changelog);
         //assert!(self.changelog.len() == 1, "Changeset ");
-        self.changelog = vec![HashMap::new(); 1];
+        self.changelog = vec![Map::new(); 1];
         self.depth = 0;
-        self.state = HashMap::new();
+        self.state = Map::new();
         out
     }
 
@@ -148,7 +149,7 @@ impl SubRoutine {
                 let was_clean = matches!(acc.filth, Filth::Clean);
                 let mut changelog = DirtyChangeLog {
                     info: acc.info.clone(),
-                    dirty_storage: HashMap::new(),
+                    dirty_storage: Map::new(),
                     was_clean,
                 };
 
@@ -168,8 +169,8 @@ impl SubRoutine {
         db: &mut DB,
     ) -> Result<(bool, bool), ExitError> {
         // load accounts
-        let (_, from_is_cold) = self.load_account(from, db);
-        let (_, to_is_cold) = self.load_account(to, db);
+        let from_is_cold = self.load_account(from, db);
+        let to_is_cold = self.load_account(to, db);
         // check from balance and substract value
         let from = self.log_dirty(from, |_| {});
         if from.info.balance < value {
@@ -194,7 +195,7 @@ impl SubRoutine {
         checkpoint
     }
 
-    fn revert_changelog(state: &mut State, changelog: HashMap<H160, ChangeLog>) {
+    fn revert_changelog(state: &mut State, changelog: Map<H160, ChangeLog>) {
         for (add, acc_change) in changelog {
             match acc_change {
                 // it was cold loaded. Remove it from global set
@@ -264,7 +265,7 @@ impl SubRoutine {
     pub fn checkpoint_commit(&mut self, _checkpoint: SubRoutineCheckpoint) {
         self.depth -= 1;
         // we are continuing to use present checkpoint because it is merge between ours and parents
-        println!("Checkpoint:{:?}", self.changelog.last().unwrap());
+        //println!("Checkpoint:{:?}", self.changelog.last().unwrap());
     }
 
     pub fn checkpoint_revert(&mut self, checkpoint: SubRoutineCheckpoint) {
@@ -277,7 +278,6 @@ impl SubRoutine {
             .take(leng - checkpoint.changelog_i)
             .for_each(|cs| Self::revert_changelog(state, mem::take(cs)));
 
-        // TODO revert all changes from changelog
         self.logs.truncate(checkpoint.log_i);
         self.changelog.truncate(checkpoint.changelog_i);
         self.depth -= 1;
@@ -298,7 +298,7 @@ impl SubRoutine {
         self.depth -= 1;
     }
 
-    // CHECK probably expand it to target address where value is going to be transfered
+    // TODO probably expand it to target address where value is going to be transfered
     pub fn destroy_storage(&mut self, address: H160) {
         let acc = self.state.get_mut(&address).unwrap();
         // if there is no account in this subroutine changelog,
@@ -306,7 +306,7 @@ impl SubRoutine {
 
         // BIG TODO MERGE storage with changelog. Revert changes and save FULL ACCOUNT in changeset.
         match self.changelog.last_mut().unwrap().entry(address.clone()) {
-            Entry::Occupied(entry) => {
+            Entry::Occupied(_) => {
                 // TODO revert current changelog and save it as original
             }
             Entry::Vacant(entry) => {
@@ -318,7 +318,7 @@ impl SubRoutine {
     }
 
     /// load account into memory. return if it is cold or hot accessed
-    pub fn load_account<DB: Database>(&mut self, address: H160, db: &mut DB) -> (&Account, bool) {
+    pub fn load_account<DB: Database>(&mut self, address: H160, db: &mut DB) -> bool {
         let is_cold = match self.state.entry(address.clone()) {
             Entry::Occupied(_) => false,
             Entry::Vacant(vac) => {
@@ -332,11 +332,11 @@ impl SubRoutine {
                 true
             }
         };
-        (self.state.get(&address).unwrap(), is_cold)
+        is_cold
     }
 
     pub fn load_code<DB: Database>(&mut self, address: H160, db: &mut DB) -> (&Account, bool) {
-        let (_, is_cold) = self.load_account(address.clone(), db);
+        let is_cold = self.load_account(address.clone(), db);
         let acc = self.state.get_mut(&address).unwrap();
 
         if acc.info.code.is_none() {
@@ -379,7 +379,7 @@ impl SubRoutine {
                         // this can happen if we previously loaded acc and now want to access it again.
                         let mut dirty = DirtyChangeLog {
                             info: acc.info.clone(),
-                            dirty_storage: HashMap::new(),
+                            dirty_storage: Map::new(),
                             was_clean: matches!(acc.filth, Filth::Clean),
                         };
                         dirty.dirty_storage.insert(index, SlotChangeLog::Cold);
@@ -405,7 +405,7 @@ impl SubRoutine {
         // assume that acc exists and load the slot.
         let (present, is_cold) = self.sload(address, index, db);
         let acc = self.state.get_mut(&address).unwrap();
-        // if there is no original value in dirty return present value. This is our original
+        // if there is no original value in dirty return present valuem that is our original.
         let original = if let Some(original) = acc.filth.original_slot(index) {
             original
         } else {
@@ -449,7 +449,7 @@ pub struct Account {
     /// Balance of the account.
     pub info: AccountInfo,
     /// storage cache
-    pub storage: HashMap<H256, H256>,
+    pub storage: Map<H256, H256>,
     /// is account info is dirty, destroyed or clean.
     /// if selfdestruct opcode is called, destroyed flag will be true. If true we dont need to fetch slot from DB.
     /// dirty flag contains list of original value and this is used to determent if slot was changed
@@ -461,7 +461,7 @@ impl From<AccountInfo> for Account {
     fn from(info: AccountInfo) -> Self {
         Self {
             info,
-            storage: HashMap::new(),
+            storage: Map::new(),
             filth: Filth::Clean,
         }
     }
@@ -470,7 +470,7 @@ impl From<AccountInfo> for Account {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Filth {
     Clean,
-    Dirty(HashMap<H256, H256>), //original state, slots that we changed.
+    Dirty(Map<H256, H256>), //original state, slots that we changed.
     Destroyed,
 }
 
@@ -480,7 +480,7 @@ impl Filth {
     pub fn insert_dirty_original(&mut self, index: H256, present_value: H256) {
         match self {
             Self::Clean => {
-                let mut map = HashMap::new();
+                let mut map = Map::new();
                 map.insert(index, present_value);
                 *self = Self::Dirty(map);
             }
@@ -499,16 +499,16 @@ impl Filth {
         }
     }
 
-    pub fn clean(&mut self) -> HashMap<H256, H256> {
+    pub fn clean(&mut self) -> Map<H256, H256> {
         match self {
-            Self::Dirty(out) => mem::replace(out, HashMap::new()),
-            _ => HashMap::new(),
+            Self::Dirty(out) => mem::replace(out, Map::new()),
+            _ => Map::new(),
         }
     }
 
     pub fn make_dirty(&mut self) {
         match self {
-            Self::Clean => *self = Self::Dirty(HashMap::new()),
+            Self::Clean => *self = Self::Dirty(Map::new()),
             _ => (),
         }
     }

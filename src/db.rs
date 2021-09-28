@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use crate::collection::{Map, vec::Vec};
 
 use primitive_types::{H160, H256, U256};
 
@@ -26,11 +26,11 @@ pub trait Database {
     //traces
 }
 
-/// Memory backend, storing all state values in a `BTreeMap` in memory.
+/// Memory backend, storing all state values in a `Map` in memory.
 //#[derive(Clone)]
 pub struct StateDB {
-    cache: HashMap<H160, AccountInfo>,
-    storage: HashMap<(H160, H256), H256>,
+    cache: Map<H160, AccountInfo>,
+    storage: Map<(H160, H256), H256>,
     logs: Vec<Log>,
 }
 
@@ -39,7 +39,7 @@ impl StateDB {
         self.cache.insert(address, account);
     }
 
-    pub fn apply(&mut self, changes: HashMap<H160, Account>) {
+    pub fn apply(&mut self, changes: Map<H160, Account>) {
         for (add, acc) in changes {
             self.cache.insert(add, acc.info);
             for (index, value) in acc.storage {
@@ -51,8 +51,8 @@ impl StateDB {
     /// Create a new memory backend.
     pub fn new() -> Self {
         Self {
-            cache: HashMap::new(),
-            storage: HashMap::new(),
+            cache: Map::new(),
+            storage: Map::new(),
             logs: Vec::new(),
         }
     }

@@ -1,4 +1,4 @@
-use alloc::borrow::Cow;
+use crate::collection::Cow;
 
 /// Exit reason.
 #[derive(Clone, Debug, Eq, PartialEq)]

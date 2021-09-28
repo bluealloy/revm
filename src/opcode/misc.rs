@@ -218,7 +218,7 @@ pub fn ret(machine: &mut Machine) -> Control {
 
 #[inline]
 pub fn revert<SPEC: Spec>(machine: &mut Machine) -> Control {
-    enabled!(SPEC::has_revert);
+    enabled!(SPEC::HAS_REVERT);
     // zero gas cost gas!(machine,gas::ZERO);
     pop_u256!(machine, start, len);
     memory_resize!(machine, start, len);

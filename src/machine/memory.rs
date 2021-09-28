@@ -1,5 +1,5 @@
 use crate::error::{ExitError, ExitFatal};
-use alloc::vec::Vec;
+use crate::collection::vec::Vec;
 use bytes::Bytes;
 use core::cmp::min;
 use core::ops::{BitAnd, Not};

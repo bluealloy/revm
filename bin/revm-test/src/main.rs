@@ -2,7 +2,7 @@ use std::{str::FromStr, time::Instant};
 
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
-use revm::{AccountInfo, BerlinSpec, CreateScheme, GlobalEnv, StateDB, EVM};
+use revm::{AccountInfo, BerlinSpec, BerlinSpecStatic, CreateScheme, EVM, GlobalEnv, StateDB};
 
 use hex::{self, ToHex};
 
@@ -32,9 +32,9 @@ fn main() {
     let envs = GlobalEnv::default();
     let timestamp = Instant::now();
     let res = {
-        let mut evm = EVM::<BerlinSpec, StateDB>::new(&mut db, envs.clone());
+        let mut evm = EVM::<StateDB>::new(&mut db, envs.clone());
         //for _ in 0..10000 {
-        evm.create(
+        evm.create::<BerlinSpec>(
         H160::from_str("0xf000000000000000000000000000000000000000").unwrap(),
         U256::zero(),
         //hex::decode("0f14a4060000000000000000000000000000000000000000000000000000000000b71b00")
@@ -51,8 +51,8 @@ fn main() {
     let timestamp = Instant::now();
 
     let res = {
-        let mut evm = EVM::<BerlinSpec, StateDB>::new(&mut db, envs.clone());
-        evm.call(
+        let mut evm = EVM::<StateDB>::new(&mut db, envs.clone());
+        evm.call::<BerlinSpec>(
             H160::from_str("0xf000000000000000000000000000000000000000").unwrap(),
             H160::from_str("0xa521a7d4fd9bd91af46cd678f4636dffb991742a").unwrap(),
             U256::zero(),
@@ -68,8 +68,8 @@ fn main() {
     let timestamp = Instant::now();
 
     let res = {
-        let mut evm = EVM::<BerlinSpec, StateDB>::new(&mut db, envs);
-        evm.call(
+        let mut evm = EVM::<StateDB>::new(&mut db, envs);
+        evm.call::<BerlinSpec>(
             H160::from_str("0xf000000000000000000000000000000000000000").unwrap(),
             H160::from_str("0xa521a7d4fd9bd91af46cd678f4636dffb991742a").unwrap(),
             U256::zero(),

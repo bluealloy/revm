@@ -7,7 +7,7 @@ use crate::{
 // 	CallScheme, Capture, CallContext, CreateScheme, ,
 // 	, Runtime, Transfer,
 // };
-use alloc::vec::Vec;
+use crate::collection::vec::Vec;
 use bytes::Bytes;
 use core::cmp::min;
 use primitive_types::{H256, U256};
@@ -34,7 +34,7 @@ pub fn sha3(machine: &mut Machine) -> Control {
 }
 
 pub fn chainid<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
-    enabled!(SPEC::has_chain_id);
+    enabled!(SPEC::HAS_CHAIN_ID);
     gas!(machine, gas::BASE);
 
     push_u256!(machine, handler.chain_id());
@@ -56,7 +56,7 @@ pub fn balance<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H
     let (balance, is_cold) = handler.balance(address.into());
     gas!(
         machine,
-        gas::account_access_cost::<SPEC>(is_cold, SPEC::gas_balance)
+        gas::account_access_cost::<SPEC>(is_cold, SPEC::GAS_BALANCE)
     );
     push_u256!(machine, balance);
 
@@ -64,7 +64,7 @@ pub fn balance<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H
 }
 
 pub fn selfbalance<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
-    enabled!(SPEC::has_self_balance);
+    enabled!(SPEC::HAS_SELF_BALANCE);
     let (balance, _) = handler.balance(machine.contract.address);
     gas!(machine, gas::LOW);
     push_u256!(machine, balance);
@@ -116,7 +116,7 @@ pub fn extcodesize<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &m
     let (code_size, is_cold) = handler.code_size(address.into());
     gas!(
         machine,
-        gas::account_access_cost::<SPEC>(is_cold, SPEC::gas_ext_code)
+        gas::account_access_cost::<SPEC>(is_cold, SPEC::GAS_EXT_CODE)
     );
 
     push_u256!(machine, code_size);
@@ -125,12 +125,12 @@ pub fn extcodesize<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &m
 }
 
 pub fn extcodehash<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
-    enabled!(SPEC::has_ext_code_hash);
+    enabled!(SPEC::HAS_EXT_CODE_HASH);
     pop!(machine, address);
     let (code_hash, is_cold) = handler.code_hash(address.into());
     gas!(
         machine,
-        gas::account_access_cost::<SPEC>(is_cold, SPEC::gas_ext_code_hash)
+        gas::account_access_cost::<SPEC>(is_cold, SPEC::GAS_EXT_CODE_HASH)
     );
     push!(machine, code_hash);
 
@@ -157,7 +157,7 @@ pub fn extcodecopy<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &m
 }
 
 pub fn returndatasize<SPEC: Spec>(machine: &mut Machine) -> Control {
-    enabled!(SPEC::has_return_data);
+    enabled!(SPEC::HAS_RETURN_DATA);
     gas!(machine, gas::BASE);
 
     let size = U256::from(machine.return_data_buffer.len());
@@ -167,7 +167,7 @@ pub fn returndatasize<SPEC: Spec>(machine: &mut Machine) -> Control {
 }
 
 pub fn returndatacopy<SPEC: Spec>(machine: &mut Machine) -> Control {
-    enabled!(SPEC::has_return_data);
+    enabled!(SPEC::HAS_RETURN_DATA);
     pop_u256!(machine, memory_offset, data_offset, len);
     gas_or_fail!(machine, gas::verylowcopy_cost(len));
     memory_resize!(machine, memory_offset, len);
@@ -240,13 +240,13 @@ pub fn sload<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) 
 }
 
 pub fn sstore<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
-    enabled!(SPEC::is_not_static_call);
+    enabled!(!SPEC::IS_STATIC_CALL);
 
     pop!(machine, index, value);
     let (original, present, new, is_cold) = handler.sstore(machine.contract.address, index, value);
 
-    if SPEC::estimate {
-        gas!(machine, SPEC::gas_sstore_set)
+    if SPEC::ESTIMATE {
+        gas!(machine, SPEC::GAS_SSTORE_SET)
     } else {
         let remaining_gas = machine.gas.remaining();
         gas_or_fail!(
@@ -266,7 +266,7 @@ pub fn gas(machine: &mut Machine) -> Control {
 }
 
 pub fn log<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, n: u8, handler: &mut H) -> Control {
-    enabled!(SPEC::is_not_static_call);
+    enabled!(!SPEC::IS_STATIC_CALL);
 
     pop_u256!(machine, offset, len);
     gas_or_fail!(machine, gas::log_cost(n, len));
@@ -295,12 +295,12 @@ pub fn log<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, n: u8, handler: &mu
 }
 
 pub fn selfdestruct<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
-    enabled!(SPEC::is_not_static_call);
+    enabled!(!SPEC::IS_STATIC_CALL);
     pop!(machine, target);
 
     let res = try_or_fail!(handler.selfdestruct(machine.contract.address, target.into()));
 
-    if !SPEC::estimate && res.previously_destroyed {
+    if !SPEC::ESTIMATE && res.previously_destroyed {
         refund!(machine, gas::SELFDESTRUCT)
     }
     gas!(machine, gas::selfdestruct_cost::<SPEC>(res));
@@ -313,7 +313,7 @@ pub fn create<H: ExtHandler, SPEC: Spec>(
     is_create2: bool,
     handler: &mut H,
 ) -> Control {
-    enabled!(SPEC::is_not_static_call);
+    enabled!(!SPEC::IS_STATIC_CALL);
 
     machine.return_data_buffer = Bytes::new();
 
@@ -336,13 +336,11 @@ pub fn create<H: ExtHandler, SPEC: Spec>(
         CreateScheme::Create
     };
 
-    let (reason, address, gas, return_data) = handler.create(
-        machine.contract.address,
-        scheme,
-        value,
-        code,
-        machine.gas().left(),
-    );
+    // take remaining gas and deduce l64 part of it.
+    let gas_limit = try_or_fail!(gas_call_l64_after::<SPEC>(machine));
+
+    let (reason, address, _gas, return_data) =
+        handler.create::<SPEC>(machine.contract.address, scheme, value, code, gas_limit);
     machine.return_data_buffer = return_data;
     let create_address: H256 = address.map(|a| a.into()).unwrap_or_default();
 
@@ -366,25 +364,47 @@ pub fn create<H: ExtHandler, SPEC: Spec>(
     }
 }
 
+#[inline]
+fn gas_call_l64_after<SPEC: Spec>(machine: &mut Machine) -> Result<u64, ExitReason> {
+    fn l64(gas: u64) -> u64 {
+        gas - gas / 64
+    }
+
+    if SPEC::CALL_L64_AFTER_GAS {
+        if SPEC::ESTIMATE {
+            let initial_after_gas = machine.gas().remaining();
+            let diff = initial_after_gas - l64(initial_after_gas);
+            if machine.spend_gas_bool(diff) {
+                return Err(ExitReason::Error(ExitError::OutOfGas));
+            }
+            Ok(machine.gas().remaining())
+        } else {
+            Ok(l64(machine.gas().remaining()))
+        }
+    } else {
+        Ok(machine.gas().remaining())
+    }
+}
+
 pub fn call<H: ExtHandler, SPEC: Spec>(
     machine: &mut Machine,
     scheme: CallScheme,
     handler: &mut H,
 ) -> Control {
     match scheme {
-        CallScheme::Call => enabled!(SPEC::is_not_static_call),
-        CallScheme::DelegateCall => enabled!(SPEC::has_delegate_call),
+        CallScheme::Call => enabled!(!SPEC::IS_STATIC_CALL),
+        CallScheme::DelegateCall => enabled!(SPEC::HAS_DELEGATE_CALL),
         _ => (),
     }
 
     machine.return_data_buffer = Bytes::new();
 
-    pop_u256!(machine, gas);
+    pop_u256!(machine, local_gas_limit);
     pop!(machine, to);
-    let gas = if gas > U256::from(u64::MAX) {
+    let local_gas_limit = if local_gas_limit > U256::from(u64::MAX) {
         u64::MAX
     } else {
-        gas.as_u64()
+        local_gas_limit.as_u64()
     };
 
     let value = match scheme {
@@ -443,14 +463,16 @@ pub fn call<H: ExtHandler, SPEC: Spec>(
         None
     };
 
-    let (reason, gas, return_data) = handler.call(
-        to.into(),
-        transfer,
-        input,
-        gas,
-        scheme == CallScheme::StaticCall,
-        context,
-    );
+    // take l64 part of gas_limit
+    let global_gas_limit = try_or_fail!(gas_call_l64_after::<SPEC>(machine));
+    let gas_limit = min(global_gas_limit, local_gas_limit);
+
+    // CALL CONTRACT, with static or ordinary spec.
+    let (reason, _gas, return_data) = if matches!(scheme, CallScheme::StaticCall) {
+        handler.call::<SPEC::STATIC>(to.into(), transfer, input, gas_limit, true, context)
+    } else {
+        handler.call::<SPEC>(to.into(), transfer, input, gas_limit, true, context)
+    };
     machine.return_data_buffer = return_data;
     let target_len = min(out_len, U256::from(machine.return_data_buffer.len()));
 

@@ -1,87 +1,90 @@
-pub trait Spec: Clone {
-    const is_not_static_call: bool;
+pub trait Spec {
+    /// litle bit of magic. We can have child version of Spec that contains static flag enabled
+    type STATIC: Spec;
+    /// static flag used in STATIC type;
+    const IS_STATIC_CALL: bool;
     /// Gas paid for extcode.
-    const gas_ext_code: u64;
+    const GAS_EXT_CODE: u64;
     /// Gas paid for extcodehash.
-    const gas_ext_code_hash: u64;
+    const GAS_EXT_CODE_HASH: u64;
     /// Gas paid for sstore set.
-    const gas_sstore_set: u64;
+    const GAS_SSTORE_SET: u64;
     /// Gas paid for sstore reset.
-    const gas_sstore_reset: u64;
+    const GAS_SSTORE_RESET: u64;
     /// Gas paid for sstore refund.
-    const refund_sstore_clears: i64;
+    const REFUND_SSTORE_CLEARS: i64;
     /// Gas paid for BALANCE opcode.
-    const gas_balance: u64;
+    const GAS_BALANCE: u64;
     /// Gas paid for SLOAD opcode.
-    const gas_sload: u64;
+    const GAS_SLOAD: u64;
     /// Gas paid for cold SLOAD opcode.
-    const gas_sload_cold: u64;
+    const GAS_SLOAD_COLD: u64;
     /// Gas paid for SELFDESTRUCT opcode.
-    const gas_selfdestruct: u64;
+    const GAS_SELFDESTRUCT: u64;
     /// Gas paid for SELFDESTRUCT opcode when it hits a new account.
-    const gas_selfdestruct_new_account: u64;
+    const GAS_SELFDESTRUCT_NEW_ACCOUNT: u64;
     /// Gas paid for CALL opcode.
-    const gas_call: u64;
+    const GAS_CALL: u64;
     /// Gas paid for EXP opcode for every byte.
-    const gas_expbyte: u64;
+    const GAS_EXPBYTE: u64;
     /// Gas paid for a contract creation transaction.
-    const gas_transaction_create: u64;
+    const GAS_TRANSACTION_CREATE: u64;
     /// Gas paid for a message call transaction.
-    const gas_transaction_call: u64;
+    const GAS_TRANSACTION_CALL: u64;
     /// Gas paid for zero data in a transaction.
-    const gas_transaction_zero_data: u64;
+    const GAS_TRANSACTION_ZERO_DATA: u64;
     /// Gas paid for non-zero data in a transaction.
-    const gas_transaction_non_zero_data: u64;
+    const GAS_TRANSACTION_NON_ZERO_DATA: u64;
     /// Gas paid per address in transaction access list (see EIP-2930).
-    const gas_access_list_address: u64;
+    const GAS_ACCESS_LIST_ADDRESS: u64;
     /// Gas paid per storage key in transaction access list (see EIP-2930).
-    const gas_access_list_storage_key: u64;
+    const GAS_ACCESS_LIST_STORAGE_KEY: u64;
     /// Gas paid for accessing cold account.
-    const gas_account_access_cold: u64;
+    const GAS_ACCOUNT_ACCESS_COLD: u64;
     /// Gas paid for accessing ready storage.
-    const gas_storage_read_warm: u64;
+    const GAS_STORAGE_READ_WARM: u64;
     /// EIP-1283.
-    const sstore_gas_metering: bool;
+    const SSTORE_GAS_METERING: bool;
     /// EIP-1706.
-    const sstore_revert_under_stipend: bool;
+    const SSTORE_REVERT_UNDER_STIPEND: bool;
     /// EIP-2929
-    const increase_state_access_gas: bool;
+    const INCREASE_STATE_ACCESS_GAS: bool;
     /// Whether to throw out of gas error when
     /// CALL/CALLCODE/DELEGATECALL requires more than maximum amount
     /// of gas.
-    const err_on_call_with_more_gas: bool;
+    const ERR_ON_CALL_WITH_MORE_GAS: bool;
     /// Take l64 for callcreate after gas.
-    const call_l64_after_gas: bool;
+    const CALL_L64_AFTER_GAS: bool;
     /// Whether empty account is considered exists.
-    const empty_considered_exists: bool;
+    const EMPTY_CONSIDERED_EXISTS: bool;
     /// Whether create transactions and create opcode increases nonce by one.
-    const create_increase_nonce: bool;
+    const CREATE_INCREASE_NONCE: bool;
     /// Stack limit.
-    const stack_limit: usize;
+    const STACK_LIMIT: usize;
     /// Memory limit.
-    const memory_limit: usize;
+    const MEMORY_LIMIT: usize;
     /// Call limit.
-    const call_stack_limit: usize;
+    const CALL_STACK_LIMIT: usize;
     /// Create contract limit.
-    const create_contract_limit: Option<usize>;
+    const CREATE_CONTRACT_LIMIT: Option<usize>;
     /// Call stipend.
-    const call_stipend: u64;
+    const CALL_STIPEND: u64;
     /// Has delegate call.
-    const has_delegate_call: bool;
+    const HAS_DELEGATE_CALL: bool;
     /// Has create2.
-    const has_create2: bool;
+    const HAS_CREATE2: bool;
     /// Has revert.
-    const has_revert: bool;
+    const HAS_REVERT: bool;
     /// Has return data.
-    const has_return_data: bool;
+    const HAS_RETURN_DATA: bool;
     /// Has bitwise shifting.
-    const has_bitwise_shifting: bool;
+    const HAS_BITWISE_SHIFTING: bool;
     /// Has chain ID.
-    const has_chain_id: bool;
+    const HAS_CHAIN_ID: bool;
     /// Has self balance.
-    const has_self_balance: bool;
+    const HAS_SELF_BALANCE: bool;
     /// Has ext code hash.
-    const has_ext_code_hash: bool;
+    const HAS_EXT_CODE_HASH: bool;
     /// Whether the gasometer is running in estimate mode.
-    const estimate: bool;
+    const ESTIMATE: bool;
 }

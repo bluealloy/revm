@@ -1,7 +1,6 @@
-use core::marker::PhantomData;
 use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
-use std::collections::HashMap;
+use crate::collection::{Map, vec::Vec};
 
 use crate::{
     db::Database,
@@ -14,35 +13,33 @@ use crate::{
 };
 use bytes::Bytes;
 
-pub struct EVM<'a, SPEC: Spec, DB: Database> {
+pub struct EVM<'a, DB: Database> {
     db: &'a mut DB,
     global_env: GlobalEnv,
     subroutine: SubRoutine,
-    precompiles: HashMap<H160, ()>,
+    precompiles: Map<H160, ()>,
     gas: U256,
-    phantomdata: PhantomData<SPEC>,
     is_static: bool,
 }
 
-impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
+impl<'a, DB: Database> EVM<'a, DB> {
     pub fn new(db: &'a mut DB, global_env: GlobalEnv) -> Self {
         let gas = global_env.gas_limit.clone();
         Self {
             db,
             global_env,
             subroutine: SubRoutine::new(),
-            precompiles: HashMap::new(),
+            precompiles: Map::new(),
             gas,
-            phantomdata: PhantomData,
             is_static: false,
         }
     }
 
-    pub fn finalize(&mut self) -> (U256, HashMap<H160, Account>) {
+    pub fn finalize(&mut self) -> (U256, Map<H160, Account>) {
         (self.gas, self.subroutine.finalize())
     }
 
-    pub fn call(
+    pub fn call<SPEC: Spec>(
         &mut self,
         caller: H160,
         address: H160,
@@ -65,7 +62,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
             apparent_value: value,
         };
 
-        let (exit, gas, bytes) = self.call_inner(
+        let (exit, gas, bytes) = self.call_inner::<SPEC>(
             address,
             Some(Transfer {
                 source: caller,
@@ -76,13 +73,12 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
             gas_limit,
             false,
             false,
-            false,
             context,
         );
         (exit, bytes, self.gas, self.subroutine.finalize())
     }
 
-    pub fn create(
+    pub fn create<SPEC: Spec>(
         &mut self,
         caller: H160,
         value: U256,
@@ -97,21 +93,20 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         self.load_access_list(access_list);
 
         let (exit_reason, ..) =
-            self.create_inner(caller, create_scheme, value, init_code, gas_limit, false);
+            self.create_inner::<SPEC>(caller, create_scheme, value, init_code, gas_limit);
 
         (exit_reason, self.gas, self.subroutine.finalize())
     }
 
     fn load_access_list(&mut self, access_list: Vec<(H160, Vec<H256>)>) {}
 
-    fn create_inner(
+    fn create_inner<SPEC: Spec>(
         &mut self,
         caller: H160,
         scheme: CreateScheme,
         value: U256,
         init_code: Bytes,
         gas_limit: u64,
-        take_l64: bool,
     ) -> (ExitReason, Option<H160>, Gas, Bytes) {
         //todo!()
 
@@ -121,7 +116,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         // trace call
         self.trace_call();
         // check depth of calls
-        if self.subroutine.depth() > SPEC::call_stack_limit {
+        if self.subroutine.depth() > SPEC::CALL_STACK_LIMIT {
             return (
                 ExitError::CallTooDeep.into(),
                 None,
@@ -162,7 +157,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
             return (ExitReason::Error(e), None, Gas::default(), Bytes::new());
         }
         // inc nonce of contract
-        if SPEC::create_increase_nonce {
+        if SPEC::CREATE_INCREASE_NONCE {
             self.subroutine.inc_nonce(address);
         }
         // create new machine and execute init function
@@ -171,10 +166,10 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         let exit_reason = machine.run::<Self, SPEC>(self);
         // handler error if present on execution
         match exit_reason {
-            ExitReason::Succeed(s) => {
+            ExitReason::Succeed(_) => {
                 // if ok, check contract creation limit and calculate gas deduction on output len.
                 let code = machine.return_value();
-                if let Some(limit) = SPEC::create_contract_limit {
+                if let Some(limit) = SPEC::CREATE_CONTRACT_LIMIT {
                     if code.len() > limit {
                         // TODO reduce gas and return
                         self.subroutine.checkpoint_discard(checkpoint);
@@ -187,7 +182,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
                     }
                 }
                 // TODO check gas used and revert if we overspend
-                println!("SM created: {:?}", address);
+                //println!("SM created: {:?}", address);
                 self.subroutine.set_code(address, code, code_hash);
 
                 self.subroutine.checkpoint_commit(checkpoint);
@@ -220,14 +215,13 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
     }
 
     #[allow(clippy::too_many_arguments)]
-    fn call_inner(
+    fn call_inner<SPEC: Spec>(
         &mut self,
         code_address: H160,
         transfer: Option<Transfer>,
         input: Bytes,
         gas_limit: u64,
         is_static: bool,
-        take_l64: bool,
         take_stipend: bool,
         context: CallContext,
     ) -> (ExitReason, Gas, Bytes) {
@@ -240,7 +234,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
 
         if let Some(transfer) = transfer.as_ref() {
             if take_stipend && transfer.value != U256::zero() {
-                gas_limit = gas_limit.saturating_add(SPEC::call_stipend);
+                gas_limit = gas_limit.saturating_add(SPEC::CALL_STIPEND);
             }
         }
 
@@ -252,7 +246,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         // self.subroutine.touch(context.address);
         self.subroutine.load_account(context.address, self.db);
         // check depth of calls
-        if self.subroutine.depth() > SPEC::call_stack_limit {
+        if self.subroutine.depth() > SPEC::CALL_STACK_LIMIT {
             return (ExitError::CallTooDeep.into(), Gas::default(), Bytes::new());
         }
 
@@ -283,7 +277,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
                 let _ = self.subroutine.checkpoint_commit(checkpoint);
                 (exit_reason, machine.gas, machine.return_value())
             }
-            ExitReason::Revert(revert) => {
+            ExitReason::Revert(_) => {
                 let _ = self.subroutine.checkpoint_revert(checkpoint);
                 (exit_reason, machine.gas, machine.return_value())
             }
@@ -295,7 +289,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
     }
 }
 
-impl<'a, SPEC: Spec, DB: Database> Handler for EVM<'a, SPEC, DB> {
+impl<'a, DB: Database> Handler for EVM<'a, DB> {
     fn global_env(&self) -> &GlobalEnv {
         &self.global_env
     }
@@ -305,8 +299,9 @@ impl<'a, SPEC: Spec, DB: Database> Handler for EVM<'a, SPEC, DB> {
     }
 
     fn balance(&mut self, address: H160) -> (U256, bool) {
-        let (acc, is_cold) = self.subroutine.load_account(address, self.db);
-        (acc.info.balance, is_cold)
+        let is_cold = self.subroutine.load_account(address, self.db);
+        let balance = self.subroutine.account(address).info.balance;
+        (balance, is_cold)
     }
 
     fn code(&mut self, address: H160) -> (Bytes, bool) {
@@ -351,7 +346,7 @@ impl<'a, SPEC: Spec, DB: Database> Handler for EVM<'a, SPEC, DB> {
         // TODO
     }
 
-    fn create(
+    fn create<SPEC: Spec>(
         &mut self,
         caller: H160,
         scheme: CreateScheme,
@@ -359,10 +354,10 @@ impl<'a, SPEC: Spec, DB: Database> Handler for EVM<'a, SPEC, DB> {
         init_code: Bytes,
         gas: u64,
     ) -> (ExitReason, Option<H160>, Gas, Bytes) {
-        self.create_inner(caller, scheme, value, init_code, gas, true)
+        self.create_inner::<SPEC>(caller, scheme, value, init_code, gas)
     }
 
-    fn call(
+    fn call<SPEC: Spec>(
         &mut self,
         code_address: H160,
         transfer: Option<Transfer>,
@@ -371,21 +366,12 @@ impl<'a, SPEC: Spec, DB: Database> Handler for EVM<'a, SPEC, DB> {
         is_static: bool,
         context: CallContext,
     ) -> (ExitReason, Gas, Bytes) {
-        self.call_inner(
-            code_address,
-            transfer,
-            input,
-            gas,
-            is_static,
-            true,
-            true,
-            context,
-        )
+        self.call_inner::<SPEC>(code_address, transfer, input, gas, is_static, true, context)
     }
 }
 
-impl<'a, SPEC: Spec, DB: Database> Tracing for EVM<'a, SPEC, DB> {}
-impl<'a, SPEC: Spec, DB: Database> ExtHandler for EVM<'a, SPEC, DB> {}
+impl<'a, DB: Database> Tracing for EVM<'a, DB> {}
+impl<'a, DB: Database> ExtHandler for EVM<'a, DB> {}
 
 pub struct SelfDestructResult {
     pub value: U256,
@@ -419,7 +405,7 @@ pub trait Handler {
         target: H160,
     ) -> Result<SelfDestructResult, ExitError>;
     /// Invoke a create operation.
-    fn create(
+    fn create<SPEC: Spec>(
         &mut self,
         caller: H160,
         scheme: CreateScheme,
@@ -429,7 +415,7 @@ pub trait Handler {
     ) -> (ExitReason, Option<H160>, Gas, Bytes);
 
     /// Invoke a call operation.
-    fn call(
+    fn call<SPEC: Spec>(
         &mut self,
         code_address: H160,
         transfer: Option<Transfer>,
@@ -442,12 +428,12 @@ pub trait Handler {
 
 pub trait Tracing {
     fn trace_opcode(&mut self, contract: &Contract, opcode: OpCode, stack: &Stack) {
-        println!(
-            "Opcode:{:?} ({:?}), stack:{:?}",
-            opcode,
-            opcode as u8,
-            stack.data()
-        );
+        // println!(
+        //     "Opcode:{:?} ({:?}), stack:{:?}",
+        //     opcode,
+        //     opcode as u8,
+        //     stack.data()
+        // );
     }
     fn trace_call(&mut self) {}
 }
