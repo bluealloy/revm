@@ -47,8 +47,8 @@ pub enum ExitSucceed {
     Stopped,
     /// Machine encountered an explict return.
     Returned,
-    /// Machine encountered an explict suicide.
-    Suicided,
+    /// Machine encountered an explict selfdestruct.
+    SelfDestructed,
 }
 
 impl From<ExitSucceed> for ExitReason {

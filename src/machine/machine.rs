@@ -33,7 +33,7 @@ pub struct Machine {
 pub struct Gas {
     pub limit: u64,
     pub used: u64,
-    pub refunded: u64,
+    pub refunded: i64,
 }
 impl Gas {
     pub fn new(limit: u64) -> Self {
@@ -63,12 +63,16 @@ impl Machine {
     }
 
     #[inline(always)]
-    pub fn gas(&mut self) -> &mut Gas {
-        &mut self.gas
+    pub fn remaining_gas(&mut self) -> u64 {
+        self.gas.limit - self.gas.used - self.memory.gas()
     }
 
     pub fn gas_left(&self) -> u64 {
         self.gas.limit - self.gas.used
+    }
+
+    pub fn gas_refund(&mut self, refund: i64) {
+        self.gas.refunded += refund;
     }
 
     #[inline(always)]

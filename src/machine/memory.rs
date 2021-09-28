@@ -27,6 +27,10 @@ impl Memory {
         }
     }
 
+    pub fn gas(&self) -> u64 {
+        self.gas
+    }
+
     /// Memory limit.
     pub fn limit(&self) -> usize {
         self.limit

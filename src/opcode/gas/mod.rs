@@ -571,10 +571,10 @@ pub fn dynamic_opcode_cost<H: ExtHandler, SPEC: Spec>(
         OpCode::CREATE2 if !is_static && SPEC::has_create2 => GasCost::Create2 {
             len: U256::from_big_endian(&stack.peek(2)?[..]),
         },
-        OpCode::SUICIDE if !is_static => {
+        OpCode::SELFDESTRUCT if !is_static => {
             let target = stack.peek(0)?.into();
             storage_target = StorageTarget::Address(target);
-            GasCost::Suicide {
+            GasCost::SelfDestruct {
                 value: handler.balance(address).0,
                 target_is_cold: true, //handler.is_cold(target),
                 target_exists: true,    //handler.exists(target)
@@ -734,24 +734,7 @@ impl<SPEC: Spec> Inner<SPEC> {
                 ..
             } => calc::call_cost::<SPEC>(U256::zero(), target_is_cold, false, true, !target_exists),
 
-            GasCost::Suicide {
-                value,
-                target_is_cold,
-                target_exists,
-                ..
-            } => calc::suicide_cost::<SPEC>(value, target_is_cold, target_exists),
             GasCost::SStore { .. } if SPEC::estimate => SPEC::gas_sstore_set,
-            GasCost::SStore {
-                original,
-                current,
-                new,
-                target_is_cold,
-            } => calc::sstore_cost::<SPEC>(original, current, new, gas, target_is_cold)?,
-
-            //GasCost::Sha3 { len } => calc::sha3_cost(len)?,
-            //GasCost::Log { n, len } => calc::log_cost(n, len)?,
-            //GasCost::VeryLowCopy { len } => calc::verylowcopy_cost(len)?,
-            //GasCost::Exp { power } => calc::exp_cost::<SPEC>(power)?,
             GasCost::Create => constants::CREATE,
             GasCost::Create2 { len } => calc::create2_cost(len)?,
             GasCost::SLoad { target_is_cold } => calc::sload_cost::<SPEC>(target_is_cold),
@@ -765,10 +748,6 @@ impl<SPEC: Spec> Inner<SPEC> {
             GasCost::ExtCodeSize { target_is_cold } => {
                 calc::account_access_cost::<SPEC>(target_is_cold, SPEC::gas_ext_code)
             }
-            //GasCost::ExtCodeCopy {
-            //    target_is_cold,
-            //    len,
-            //} => calc::extcodecopy_cost::<SPEC>(len, target_is_cold)?,
             GasCost::Balance { target_is_cold } => {
                 calc::account_access_cost::<SPEC>(target_is_cold, SPEC::gas_balance)
             }
@@ -790,9 +769,9 @@ impl<SPEC: Spec> Inner<SPEC> {
                 new,
                 ..
             } => calc::sstore_refund::<SPEC>(original, current, new),
-            GasCost::Suicide {
-                already_removed, ..
-            } => calc::suicide_refund(already_removed),
+            //GasCost::SelfDestruct {
+            //    already_removed, ..
+            //} => calc::selfdestruct_refund(already_removed),
             _ => 0,
         }
     }
@@ -870,8 +849,8 @@ pub enum GasCost {
         /// Whether the target exists.
         target_exists: bool,
     },
-    /// Gas cost for `SUICIDE`.
-    Suicide {
+    /// Gas cost for `SELFDESTRUCT`.
+    SelfDestruct {
         /// Value.
         value: U256,
         /// True if target has not been previously accessed in this transaction

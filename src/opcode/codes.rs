@@ -234,8 +234,8 @@ pub enum OpCode {
     DELEGATECALL = 0xf4,
     /// `STATICCALL`
     STATICCALL = 0xfa,
-    /// `SUICIDE`
-    SUICIDE = 0xff,
+    /// `SELFDESTRUCT`
+    SELFDESTRUCT = 0xff,
     /// `CHAINID`
     CHAINID = 0x46,
 }

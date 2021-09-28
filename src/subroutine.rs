@@ -396,26 +396,33 @@ impl SubRoutine {
         }
     }
 
-    // account should already be present in our state.
+    /// account should already be present in our state.
+    /// returns (original,present,new) slot
     pub fn sstore<DB: Database>(
         &mut self,
         address: H160,
         index: H256,
-        value: H256,
+        new: H256,
         db: &mut DB,
-    ) -> (H256, bool) {
+    ) -> (H256, H256, H256, bool) {
         // assume that acc exists and load the slot.
         let (present, is_cold) = self.sload(address, index, db);
-        if present == value {
-            // new value is same as present, we dont need to do anything
-            return (present, is_cold);
-        }
         let acc = self.state.get_mut(&address).unwrap();
+        // if there is no original value in dirty return present value. This is our original
+        let original = if let Some(original) = acc.filth.original_slot(index) {
+            original
+        } else {
+            present
+        };
+        // new value is same as present, we dont need to do anything
+        if present == new {
+            return (original, present, new, is_cold);
+        }
 
         // if clean tag it as dirty. If original value not found, insert present value (it is original).
         acc.filth.insert_dirty_original(index, present);
         // insert value into present state.
-        acc.storage.insert(index, value);
+        acc.storage.insert(index, new);
 
         // insert present value inside changelog so that it can be reverted if needed.
         if let ChangeLog::Dirty(dirty_log) = self
@@ -431,7 +438,7 @@ impl SubRoutine {
             }
         }
 
-        (present, is_cold)
+        (original, present, new, is_cold)
     }
 
     /// push log into subroutine
@@ -487,6 +494,14 @@ impl Filth {
             Self::Destroyed => (),
         }
     }
+    pub fn original_slot(&mut self, index: H256) -> Option<H256> {
+        match self {
+            Self::Clean => None,
+            Self::Dirty(ref originals) => originals.get(&index).cloned(),
+            Self::Destroyed => Some(H256::zero()),
+        }
+    }
+
     pub fn clean(&mut self) -> HashMap<H256, H256> {
         match self {
             Self::Dirty(out) => mem::replace(out, HashMap::new()),

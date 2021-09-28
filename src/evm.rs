@@ -3,7 +3,15 @@ use std::{collections::HashMap, marker::PhantomData};
 use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
 
-use crate::{CallContext, CreateScheme, GlobalEnv, Log, Transfer, db::Database, error::{ExitError, ExitReason, ExitSucceed}, machine::{Contract, Machine, Stack}, opcode::OpCode, spec::Spec, subroutine::{Account, State, SubRoutine}, util};
+use crate::{
+    db::Database,
+    error::{ExitError, ExitReason, ExitSucceed},
+    machine::{Contract, Machine, Stack},
+    opcode::OpCode,
+    spec::Spec,
+    subroutine::{Account, State, SubRoutine},
+    util, CallContext, CreateScheme, GlobalEnv, Log, Transfer,
+};
 use bytes::Bytes;
 
 pub struct EVM<'a, SPEC: Spec, DB: Database> {
@@ -30,8 +38,8 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         }
     }
 
-    pub fn finalize(&mut self) -> (U256,HashMap<H160,Account>) {
-        (self.gas,self.subroutine.finalize())
+    pub fn finalize(&mut self) -> (U256, HashMap<H160, Account>) {
+        (self.gas, self.subroutine.finalize())
     }
 
     pub fn call(
@@ -57,7 +65,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
             apparent_value: value,
         };
 
-        let (exit,bytes) = self.call_inner(
+        let (exit, bytes) = self.call_inner(
             address,
             Some(Transfer {
                 source: caller,
@@ -71,7 +79,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
             false,
             context,
         );
-        (exit,bytes,self.gas,self.subroutine.finalize())
+        (exit, bytes, self.gas, self.subroutine.finalize())
     }
 
     pub fn create(
@@ -82,23 +90,16 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
         create_scheme: CreateScheme,
         gas_limit: u64,
         access_list: Vec<(H160, Vec<H256>)>,
-    ) -> (ExitReason,U256,State) {
+    ) -> (ExitReason, U256, State) {
         //TODO calculate transacition cost and add it to gasometer
         // load access_list items into subrutine
 
         self.load_access_list(access_list);
 
-        let (exit_reason, _, _) = self.create_inner(
-            caller,
-            create_scheme,
-            value,
-            init_code,
-            gas_limit,
-            false,
-        );
+        let (exit_reason, _, _) =
+            self.create_inner(caller, create_scheme, value, init_code, gas_limit, false);
 
-        
-        (exit_reason,self.gas,self.subroutine.finalize())
+        (exit_reason, self.gas, self.subroutine.finalize())
     }
 
     fn load_access_list(&mut self, access_list: Vec<(H160, Vec<H256>)>) {}
@@ -172,7 +173,7 @@ impl<'a, SPEC: Spec, DB: Database> EVM<'a, SPEC, DB> {
                 }
                 // TODO check gas used and revert if we overspend
                 println!("SM created: {:?}", address);
-                self.subroutine.set_code(address,code,code_hash);
+                self.subroutine.set_code(address, code, code_hash);
 
                 self.subroutine.checkpoint_commit(checkpoint);
                 (
@@ -292,8 +293,8 @@ impl<'a, SPEC: Spec, DB: Database> Handler for EVM<'a, SPEC, DB> {
     }
 
     // TODO check return value, should it be is_cold or maybe original value
-    fn sstore(&mut self, address: H160, index: H256, value: H256) {
-        self.subroutine.sstore(address, index, value, self.db);
+    fn sstore(&mut self, address: H160, index: H256, value: H256) -> (H256, H256, H256, bool) {
+        self.subroutine.sstore(address, index, value, self.db)
     }
 
     fn original_storage(&mut self, address: H160, index: H256) -> H256 {
@@ -309,12 +310,18 @@ impl<'a, SPEC: Spec, DB: Database> Handler for EVM<'a, SPEC, DB> {
         self.subroutine.log(log);
     }
 
-    fn selfdestruct<const CALL_TRACE: bool>(
+    fn selfdestruct(
         &mut self,
         address: H160,
         target: H160,
-    ) -> Result<(), ExitError> {
-        Ok(())
+    ) -> Result<SelfDestructResult, ExitError> {
+        Ok(SelfDestructResult {
+            value: U256::from(10),
+            is_cold: false,
+            exists: true,
+            previously_destroyed: false,
+        })
+        // TODO
     }
 
     fn create(
@@ -353,6 +360,12 @@ impl<'a, SPEC: Spec, DB: Database> Handler for EVM<'a, SPEC, DB> {
 impl<'a, SPEC: Spec, DB: Database> Tracing for EVM<'a, SPEC, DB> {}
 impl<'a, SPEC: Spec, DB: Database> ExtHandler for EVM<'a, SPEC, DB> {}
 
+pub struct SelfDestructResult {
+    pub value: U256,
+    pub is_cold: bool,
+    pub exists: bool,
+    pub previously_destroyed: bool,
+}
 /// EVM context handler.
 pub trait Handler {
     /// Get global const context of evm execution
@@ -367,17 +380,17 @@ pub trait Handler {
     /// Get storage value of address at index.
     fn sload(&mut self, address: H160, index: H256) -> (H256, bool);
     /// Set storage value of address at index. Return if slot is cold/hot access.
-    fn sstore(&mut self, address: H160, index: H256, value: H256) ;//-> (original,current,is_cold);
+    fn sstore(&mut self, address: H160, index: H256, value: H256) -> (H256, H256, H256, bool);
     /// Get original storage value of address at index.
     fn original_storage(&mut self, address: H160, index: H256) -> H256;
     /// Create a log owned by address with given topics and data.
     fn log(&mut self, address: H160, topics: Vec<H256>, data: Bytes);
     /// Mark an address to be deleted, with funds transferred to target.
-    fn selfdestruct<const CALL_TRACE: bool>(
+    fn selfdestruct(
         &mut self,
         address: H160,
         target: H160,
-    ) -> Result<(), ExitError>;
+    ) -> Result<SelfDestructResult, ExitError>;
     /// Invoke a create operation.
     fn create(
         &mut self,

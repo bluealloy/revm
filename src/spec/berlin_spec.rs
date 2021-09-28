@@ -24,10 +24,10 @@ impl<const STATIC_CALL: bool> Spec for BerlinSpecTemp<STATIC_CALL> {
     const gas_sload: u64 = 0;
     /// Gas paid for cold SLOAD opcode.
     const gas_sload_cold: u64 = 2100;
-    /// Gas paid for SUICIDE opcode.
-    const gas_suicide: u64 = 5000;
-    /// Gas paid for SUICIDE opcode when it hits a new account.
-    const gas_suicide_new_account: u64 = 25000;
+    /// Gas paid for SELFDESTRUCT opcode.
+    const gas_selfdestruct: u64 = 5000;
+    /// Gas paid for SELFDESTRUCT opcode when it hits a new account.
+    const gas_selfdestruct_new_account: u64 = 25000;
     /// Gas paid for CALL opcode.
     const gas_call: u64 = 0;
     /// Gas paid for EXP opcode for every byte.

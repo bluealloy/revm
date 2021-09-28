@@ -2,6 +2,7 @@ use super::{gas, Control};
 use crate::{
     error::{ExitError, ExitFatal, ExitReason, ExitSucceed},
     machine::Machine,
+    opcode::gas::SELFDESTRUCT,
     CallContext, CallScheme, CreateScheme, ExtHandler, Spec, Transfer,
 };
 // 	CallScheme, Capture, CallContext, CreateScheme, ,
@@ -244,7 +245,18 @@ pub fn sstore<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H)
     enabled!(SPEC::is_not_static_call);
 
     pop!(machine, index, value);
-    let () = handler.sstore(machine.contract.address, index, value);
+    let (original, present, new, is_cold) = handler.sstore(machine.contract.address, index, value);
+
+    if SPEC::estimate {
+        gas!(machine, SPEC::gas_sstore_set)
+    } else {
+        let gas = machine.remaining_gas();
+        gas_or_fail!(
+            machine,
+            gas::sstore_cost::<SPEC>(original, present, new, gas, is_cold)
+        );
+        refund!(machine, gas::sstore_refund::<SPEC>(original, present, new));
+    }
     Control::Continue
 }
 
@@ -284,17 +296,18 @@ pub fn log<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, n: u8, handler: &mu
     Control::Continue
 }
 
-pub fn suicide<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn selfdestruct<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
     enabled!(SPEC::is_not_static_call);
-
     pop!(machine, target);
 
-    match handler.selfdestruct::<false>(machine.contract.address, target.into()) {
-        Ok(()) => (),
-        Err(e) => return Control::Exit(e.into()),
-    }
+    let res = try_or_fail!(handler.selfdestruct(machine.contract.address, target.into()));
 
-    Control::Exit(ExitSucceed::Suicided.into())
+    if !SPEC::estimate && res.previously_destroyed {
+        refund!(machine, gas::SELFDESTRUCT)
+    }
+    gas!(machine, gas::selfdestruct_cost::<SPEC>(res));
+
+    Control::Exit(ExitSucceed::SelfDestructed.into())
 }
 
 pub fn create<H: ExtHandler, SPEC: Spec>(

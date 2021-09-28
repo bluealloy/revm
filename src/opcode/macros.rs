@@ -25,6 +25,12 @@ macro_rules! gas {
     };
 }
 
+macro_rules! refund {
+    ($machine:expr, $gas:expr) => {
+        $machine.gas_refund($gas)
+    };
+}
+
 macro_rules! gas_or_fail {
     ($machine:expr, $gas:expr) => {
         match $gas {

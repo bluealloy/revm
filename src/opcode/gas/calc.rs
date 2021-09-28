@@ -1,5 +1,5 @@
 use super::constants::*;
-use crate::error::ExitError;
+use crate::{error::ExitError, evm::SelfDestructResult};
 use crate::spec::Spec;
 use primitive_types::{H256, U256};
 
@@ -8,14 +8,6 @@ pub fn call_extra_check<SPEC: Spec>(gas: U256, after_gas: u64) -> Result<(), Exi
         Err(ExitError::OutOfGas)
     } else {
         Ok(())
-    }
-}
-
-pub fn suicide_refund(already_removed: bool) -> i64 {
-    if already_removed {
-        0
-    } else {
-        SUICIDE
     }
 }
 
@@ -191,7 +183,7 @@ pub fn sstore_cost<SPEC: Spec>(
     new: H256,
     gas: u64,
     is_cold: bool,
-) -> Result<u64, ExitError> {
+) -> Option<u64> {
     let (gas_sload, gas_sstore_reset) = if SPEC::increase_state_access_gas {
         (
             SPEC::gas_storage_read_warm,
@@ -202,7 +194,7 @@ pub fn sstore_cost<SPEC: Spec>(
     };
     let gas_cost = if SPEC::sstore_gas_metering {
         if SPEC::sstore_revert_under_stipend && gas <= SPEC::call_stipend {
-            return Err(ExitError::OutOfGas);
+            return None;
         }
 
         if new == current {
@@ -225,32 +217,30 @@ pub fn sstore_cost<SPEC: Spec>(
             gas_sstore_reset
         }
     };
-    Ok(
-        // In EIP-2929 we charge extra if the slot has not been used yet in this transaction
-        if is_cold {
-            gas_cost + SPEC::gas_sload_cold
-        } else {
-            gas_cost
-        },
-    )
+    // In EIP-2929 we charge extra if the slot has not been used yet in this transaction
+    if is_cold {
+        Some(gas_cost + SPEC::gas_sload_cold)
+    } else {
+        Some(gas_cost)
+    }
 }
 
-pub fn suicide_cost<SPEC: Spec>(value: U256, is_cold: bool, target_exists: bool) -> u64 {
+pub fn selfdestruct_cost<SPEC: Spec>(res: SelfDestructResult) -> u64 {
     let eip161 = !SPEC::empty_considered_exists;
     let should_charge_topup = if eip161 {
-        value != U256::zero() && !target_exists
+        res.value != U256::zero() && !res.exists
     } else {
-        !target_exists
+        !res.exists
     };
 
-    let suicide_gas_topup = if should_charge_topup {
-        SPEC::gas_suicide_new_account
+    let selfdestruct_gas_topup = if should_charge_topup {
+        SPEC::gas_selfdestruct_new_account
     } else {
         0
     };
 
-    let mut gas = SPEC::gas_suicide + suicide_gas_topup;
-    if SPEC::increase_state_access_gas && is_cold {
+    let mut gas = SPEC::gas_selfdestruct + selfdestruct_gas_topup;
+    if SPEC::increase_state_access_gas && res.is_cold {
         gas += SPEC::gas_account_access_cold
     }
     gas
