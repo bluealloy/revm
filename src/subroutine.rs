@@ -1,4 +1,4 @@
-use crate::collection::{Map,Entry, vec, vec::Vec};
+use crate::collection::{vec, vec::Vec, Entry, Map};
 
 use core::mem::{self};
 
@@ -34,6 +34,11 @@ pub enum ChangeLog {
     ColdLoaded,
     Dirty(DirtyChangeLog),
     Destroyed(Account),
+    /// TODO check if there is possibility for acc to have some balance before contract is created.
+    /// if that is possible we need U256 to revert to old value.
+    /// storage/code/code_hash/nonce had default value.
+    /// filth can only be Clean or Dirty. Clean for original balance and dirty with empty HashMap for changed balance.
+    Created(U256,Filth),
 }
 
 #[derive(Debug, Clone)]
@@ -84,8 +89,8 @@ impl SubRoutine {
             let dirty = acc.filth.clean();
             match acc.filth {
                 Filth::Clean => {}
-                Filth::Destroyed => {
-                    // acc was destroyed just add it to output
+                Filth::DestroyedOrNew => {
+                    // acc was destroyed or newly created. just add it to output
                     out.insert(add, acc);
                 }
                 Filth::Dirty(_) => {
@@ -115,15 +120,15 @@ impl SubRoutine {
         self.state.get(&address).unwrap() // Allways assume that acc is already loaded
     }
 
-    /// use it only if you know that acc is hot
-    pub fn set_code(&mut self, address: H160, code: Bytes, code_hash: H256) {
-        let acc = self.state.get_mut(&address).unwrap();
-        acc.info.code = Some(code);
-        acc.info.code_hash = Some(code_hash);
-    }
-
     pub fn depth(&self) -> usize {
         self.depth
+    }
+
+    /// use it only if you know that acc is hot
+    pub fn set_code(&mut self, address: H160, code: Bytes, code_hash: H256) {
+        let acc = self.log_dirty(address, |_| {});
+        acc.info.code = Some(code);
+        acc.info.code_hash = Some(code_hash);
     }
 
     pub fn inc_nonce(&mut self, address: H160) {
@@ -195,6 +200,28 @@ impl SubRoutine {
         checkpoint
     }
 
+    /// 
+    /// return if it has collition of addresses
+    pub fn new_contract_acc<DB: Database>(&mut self, address: H160, db: &mut DB) -> bool {
+        let (acc, _) = self.load_code(address, db);
+        if !acc.info.code.as_ref().unwrap().is_empty() || acc.info.nonce > 0 {
+            return true;
+        }
+        let original_balance = acc.info.balance;
+        let mut original_filth = acc.filth.clone();
+        original_filth.clean();
+
+        acc.filth = Filth::DestroyedOrNew;
+        // mark it in changelog as newly created
+        self.changelog
+            .last_mut()
+            .unwrap()
+            .entry(address)
+            .or_insert_with(|| ChangeLog::Created(original_balance,original_filth));
+
+        false
+    }
+
     fn revert_changelog(state: &mut State, changelog: Map<H160, ChangeLog>) {
         for (add, acc_change) in changelog {
             match acc_change {
@@ -204,6 +231,15 @@ impl SubRoutine {
                 }
                 ChangeLog::Destroyed(account) => {
                     state.insert(add, account.clone()); // done
+                }
+                ChangeLog::Created(balance,orig_filth) => {
+                    let acc = state.get_mut(&add).unwrap();
+                    acc.info.code = None;
+                    acc.info.code_hash = None;
+                    acc.info.nonce = 0;
+                    acc.info.balance = balance;
+                    acc.filth = orig_filth;
+                    acc.storage.clear();
                 }
                 // if there are dirty changes in log
                 ChangeLog::Dirty(dirty_log) => {
@@ -216,7 +252,7 @@ impl SubRoutine {
                     if dirty_log.was_clean {
                         acc.filth = Filth::Clean;
                     }
-                    if dirty_log.was_clean || matches!(acc.filth, Filth::Destroyed) {
+                    if dirty_log.was_clean || matches!(acc.filth, Filth::DestroyedOrNew) {
                         // Handle storage change
                         for (slot, log) in dirty_log.dirty_storage {
                             match log {
@@ -313,7 +349,7 @@ impl SubRoutine {
                 entry.insert(ChangeLog::Destroyed(acc.clone()));
             }
         }
-        acc.filth = Filth::Destroyed;
+        acc.filth = Filth::DestroyedOrNew;
         acc.storage.clear();
     }
 
@@ -335,7 +371,7 @@ impl SubRoutine {
         is_cold
     }
 
-    pub fn load_code<DB: Database>(&mut self, address: H160, db: &mut DB) -> (&Account, bool) {
+    pub fn load_code<DB: Database>(&mut self, address: H160, db: &mut DB) -> (&mut Account, bool) {
         let is_cold = self.load_account(address.clone(), db);
         let acc = self.state.get_mut(&address).unwrap();
 
@@ -358,7 +394,7 @@ impl SubRoutine {
             // add slot to ColdLoaded in changelog
             Entry::Vacant(vac) => {
                 // if storage was destroyed, we dont need to ping db.
-                let value = if acc.filth == Filth::Destroyed {
+                let value = if acc.filth == Filth::DestroyedOrNew {
                     H256::zero()
                 } else {
                     db.storage(address, index)
@@ -469,9 +505,13 @@ impl From<AccountInfo> for Account {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Filth {
+    /// clean load from db
     Clean,
-    Dirty(Map<H256, H256>), //original state, slots that we changed.
-    Destroyed,
+    ///  original state, and contains slots with original values that we changed.
+    Dirty(Map<H256, H256>),
+    /// destroyed by selfdestruct or it is newly
+    ///  created by create/create2 opcode. Either way dont save original values
+    DestroyedOrNew,
 }
 
 impl Filth {
@@ -488,14 +528,14 @@ impl Filth {
                 // insert only if not present. If present it is assumed with always have original value.
                 originals.entry(index).or_insert(present_value);
             }
-            Self::Destroyed => (),
+            Self::DestroyedOrNew => (),
         }
     }
     pub fn original_slot(&mut self, index: H256) -> Option<H256> {
         match self {
             Self::Clean => None,
             Self::Dirty(ref originals) => originals.get(&index).cloned(),
-            Self::Destroyed => Some(H256::zero()),
+            Self::DestroyedOrNew => Some(H256::zero()),
         }
     }
 

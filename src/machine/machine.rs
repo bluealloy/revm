@@ -1,5 +1,5 @@
-use crate::{opcode::eval, ExitError};
 use crate::collection::vec::Vec;
+use crate::{opcode::eval, ExitError};
 use bytes::Bytes;
 use core::{cmp::max, ops::Range};
 use primitive_types::U256;
@@ -30,7 +30,7 @@ pub struct Machine {
     pub gas: Gas,
 }
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Default, Debug)]
 pub struct Gas {
     pub limit: u64,
     pub used: u64,
@@ -53,6 +53,21 @@ impl Gas {
 
     pub fn left(&self) -> u64 {
         self.limit - self.used
+    }
+
+    pub fn total_used_gas(&self) -> u64 {
+        self.used + self.memory
+    }
+
+    /// Record an explict cost.
+    pub fn record_cost(&mut self, cost: u64) -> bool {
+        let all_gas_cost = self.used + self.memory + cost;
+        if self.limit < all_gas_cost {
+            return false;
+        }
+
+        self.used += cost;
+        true
     }
 }
 

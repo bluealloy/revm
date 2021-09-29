@@ -66,8 +66,6 @@ pub struct CallContext {
 
 #[derive(Clone, Eq, PartialEq, Debug, Default)]
 pub struct GlobalEnv {
-    /// amount of gas that we can spend.
-    pub gas_limit: U256,
     /// Gas price
     pub gas_price: U256,
     /// Get environmental block number.

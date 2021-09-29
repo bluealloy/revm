@@ -1,13 +1,13 @@
+use crate::collection::{vec::Vec, Map};
 use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
-use crate::collection::{Map, vec::Vec};
 
 use crate::{
     db::Database,
     error::{ExitError, ExitReason, ExitSucceed},
     machine::{Contract, Gas, Machine, Stack},
     opcode::OpCode,
-    spec::{Spec,NotStaticSpec},
+    spec::{NotStaticSpec, Spec},
     subroutine::{Account, State, SubRoutine},
     util, CallContext, CreateScheme, GlobalEnv, Log, Transfer,
 };
@@ -18,23 +18,20 @@ pub struct EVM<'a, DB: Database> {
     global_env: GlobalEnv,
     subroutine: SubRoutine,
     precompiles: Map<H160, ()>,
-    gas: U256,
 }
 
 impl<'a, DB: Database> EVM<'a, DB> {
     pub fn new(db: &'a mut DB, global_env: GlobalEnv) -> Self {
-        let gas = global_env.gas_limit.clone();
         Self {
             db,
             global_env,
             subroutine: SubRoutine::new(),
             precompiles: Map::new(),
-            gas,
         }
     }
 
-    pub fn finalize(&mut self) -> (U256, Map<H160, Account>) {
-        (self.gas, self.subroutine.finalize())
+    pub fn finalize(&mut self) -> Map<H160, Account> {
+        self.subroutine.finalize()
     }
 
     pub fn call<SPEC: Spec>(
@@ -45,11 +42,16 @@ impl<'a, DB: Database> EVM<'a, DB> {
         data: Bytes,
         gas_limit: u64,
         access_list: Vec<(H160, Vec<H256>)>,
-    ) -> (ExitReason, Bytes, U256, State) {
+    ) -> (ExitReason, Bytes, Gas, State) {
         // TODO calculate gascost
         //let transaction_cost = gasometer::call_transaction_cost(&data, &access_list);
 
-        self.load_access_list(access_list);
+        
+        let gas_used_init = self.initialization::<SPEC>(&data, false, access_list);
+        if gas_limit < gas_used_init {
+            return (ExitReason::Error(ExitError::OutOfGas),Bytes::new(),Gas::default(),State::default())
+        }
+        let gas_limit = gas_limit-gas_used_init;
 
         self.subroutine.load_account(caller, self.db);
         self.subroutine.inc_nonce(caller);
@@ -60,7 +62,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
             apparent_value: value,
         };
 
-        let (exit, gas, bytes) = self.call_inner::<SPEC>(
+        let (exit, mut gas, bytes) = self.call_inner::<SPEC>(
             address,
             Some(Transfer {
                 source: caller,
@@ -72,10 +74,11 @@ impl<'a, DB: Database> EVM<'a, DB> {
             false,
             context,
         );
-        (exit, bytes, self.gas, self.subroutine.finalize())
+        gas.used += gas_used_init;
+        (exit, bytes, gas, self.subroutine.finalize())
     }
 
-    pub fn create<SPEC: Spec+NotStaticSpec>(
+    pub fn create<SPEC: Spec + NotStaticSpec>(
         &mut self,
         caller: H160,
         value: U256,
@@ -83,19 +86,52 @@ impl<'a, DB: Database> EVM<'a, DB> {
         create_scheme: CreateScheme,
         gas_limit: u64,
         access_list: Vec<(H160, Vec<H256>)>,
-    ) -> (ExitReason, U256, State) {
-        //TODO calculate transacition cost and add it to gasometer
-        // load access_list items into subrutine
+    ) -> (ExitReason, Option<H160>, Gas, State) {
 
-        self.load_access_list(access_list);
+        let gas_used_init = self.initialization::<SPEC>(&init_code, true, access_list);
+        if gas_limit < gas_used_init {
+            return (ExitReason::Error(ExitError::OutOfGas),None,Gas::default(),State::default())
+        }
+        let gas_limit = gas_limit-gas_used_init;
 
-        let (exit_reason, ..) =
+        let (exit_reason, address, mut gas, _) =
             self.create_inner::<SPEC>(caller, create_scheme, value, init_code, gas_limit);
 
-        (exit_reason, self.gas, self.subroutine.finalize())
+        gas.used += gas_used_init;
+        (exit_reason, address, gas, self.subroutine.finalize())
     }
 
-    fn load_access_list(&mut self, access_list: Vec<(H160, Vec<H256>)>) {}
+    fn initialization<SPEC: Spec>(
+        &mut self,
+        input: &Bytes,
+        is_create: bool,
+        access_list: Vec<(H160, Vec<H256>)>,
+    ) -> u64 {
+        let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
+        let non_zero_data_len = (input.len() as u64 - zero_data_len) as u64;
+        let accessed_accounts = access_list.len() as u64;
+        let mut accessed_slots = 0 as u64;
+
+        for (address, slots) in access_list {
+            self.subroutine.load_account(address, self.db);
+            accessed_slots += slots.len() as u64;
+            for slot in slots {
+                self.subroutine.sload(address, slot, self.db);
+            }
+        }
+
+        let transact = if is_create {
+            SPEC::GAS_TRANSACTION_CREATE
+        } else {
+            SPEC::GAS_TRANSACTION_CALL
+        };
+
+        transact
+            + zero_data_len * SPEC::GAS_TRANSACTION_ZERO_DATA
+            + non_zero_data_len * SPEC::GAS_TRANSACTION_NON_ZERO_DATA
+            + accessed_accounts * SPEC::GAS_ACCESS_LIST_ADDRESS
+            + accessed_slots * SPEC::GAS_ACCESS_LIST_STORAGE_KEY
+    }
 
     fn create_inner<SPEC: Spec>(
         &mut self,
@@ -105,9 +141,9 @@ impl<'a, DB: Database> EVM<'a, DB> {
         init_code: Bytes,
         gas_limit: u64,
     ) -> (ExitReason, Option<H160>, Gas, Bytes) {
-        //todo!()
+        //TODO PRECOMPILES
 
-        // set caller/contract_add/precompiles as hot access. PRobably can be removed. Acc shold be allready hot.
+        // set caller/contract_add/precompiles as hot access. Probably can be removed. Acc shold be allready hot.
         self.subroutine.load_account(caller, self.db);
 
         // trace call
@@ -147,6 +183,15 @@ impl<'a, DB: Database> EVM<'a, DB> {
         let checkpoint = self.subroutine.create_checkpoint();
         // TODO check for code colision by checking nonce and code of created address
         // TODO reset storage to be sure that we dont need to ask db for storage
+        if self.subroutine.new_contract_acc(address, self.db) {
+            self.subroutine.checkpoint_discard(checkpoint);
+            return (
+                ExitError::CreateCollision.into(),
+                None,
+                Gas::default(),
+                Bytes::new(),
+            );
+        }
 
         // transfer value to contract address
         if let Err(e) = self.subroutine.transfer(caller, address, value, self.db) {
@@ -178,17 +223,28 @@ impl<'a, DB: Database> EVM<'a, DB> {
                         );
                     }
                 }
-                // TODO check gas used and revert if we overspend
-                //println!("SM created: {:?}", address);
-                self.subroutine.set_code(address, code, code_hash);
-
-                self.subroutine.checkpoint_commit(checkpoint);
-                (
-                    ExitReason::Succeed(ExitSucceed::Returned),
-                    Some(address),
-                    machine.gas,
-                    Bytes::new(),
-                )
+                let gas_for_code = code.len() as u64 * crate::opcode::gas::CODEDEPOSIT;
+                // record code deposit gas cost and check if we are out of gas.
+                if !machine.gas.record_cost(gas_for_code) {
+                    self.subroutine.checkpoint_discard(checkpoint);
+                    (
+                        ExitReason::Error(ExitError::OutOfGas),
+                        None,
+                        Gas::default(),
+                        Bytes::new(),
+                    )
+                } else {
+                    println!("SM created: {:?}", address);
+                    // if we have enought gas, set code and do checkpoint comit.
+                    self.subroutine.set_code(address, code, code_hash);
+                    self.subroutine.checkpoint_commit(checkpoint);
+                    (
+                        ExitReason::Succeed(ExitSucceed::Returned),
+                        Some(address),
+                        machine.gas,
+                        Bytes::new(),
+                    )
+                }
             }
             ExitReason::Revert(revert) => {
                 let _ = self.subroutine.checkpoint_revert(checkpoint);
