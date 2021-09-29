@@ -1,22 +1,23 @@
 # revm - Revolutionary Machine
 
-Is **Rust Ethereum Virtual Machine** with great name that is focused on **speed** and **simplicity**. It gets ispiration from SputnikVM (opcodes/machine are copied from here), OpenEthereum and Geth. This is probably one of the fasted implementation of EVM,for  statically used types to packed changelogs for subroutines to merging eip2929 in EVM state so that it can be accesses faster are the things that are improving speed of execution. 
+Is **Rust Ethereum Virtual Machine** with great name that is focused on **speed** and **simplicity**. It gets ispiration from SputnikVM (opcodes/machine are copied from here), OpenEthereum and Geth. This is probably one of the fasted implementation of EVM, from const EVM Spec to optimistic changelogs for subroutines to merging eip2929 in EVM state so that it can be accesses only once are some of the things that are improving the speed of execution. 
 
-I love when I see that project has list of postulates that it follows, it can give outsider good feel on how maintainers are making decision and what is important for them. Here is list of them for **revm**:
+Here is list of things that i would like to use as guide in this project:
 - **EVM compatibility and stability** - this goes without saying but it is nice to put it here. In blockchain industry, stability is most desired attribute of any system.
-- **Speed** - is one of most important things and most decision are made to complement this.
-- **Simplification** - simplification of internals so that it can be easily understood and extended, and interface that can be easily used or integrated into other project.
-- **wasm** - `[no_std]` so that it can be used as wasm lib and integrate with JavaScript.
+- **Speed** - is one of the most important things and most decision are made to complement this.
+- **Simplicity** - simplification of internals so that it can be easily understood and extended, and interface that can be easily used or integrated into other project.
+- **interfacing** - `[no_std]` so that it can be used as wasm lib and integrate with JavaScript and cpp binding if needed.
 
-## TODOs
+## Status of project
 
-project is just starting and there are a lot of things that needs to be done. Here is incomplete list of TODO's that we can implement:
+I just started this project as a hobby to kill some time. Presenty it has good structure and I would like to finish it and make it functional but we will see how far we will go. There are a lot of things that still needs to be done, here are some of TODO's that could be added:
+
 - integrate ethereum consensus tests
-- Write a lot of rust tests
 - Write a lot of comments and explanations.
+- Add MemoryCache for Database interface.
+- Write a lot of rust tests
 - wasm interface
 - C++ interface
-
 
 ## Project structure:
 
@@ -32,61 +33,11 @@ The structure of the project is getting crystallized and we can see few parts th
 
 Changelogs are created in every subroutine and represent action that needs to happen so that present state can be reverted to state before subroutine. It contains list of accounts with original values that can be used to revert current state to state before this subroutine started.
 
-Depending on subroutine and if account was previously loaded/destryoyed, accounts in changelog can have:
-- LoadedCold -> when reverting remove account from state.
+Depending on subroutine and if account was previously loaded/destryoyed, accounts in changelog can be:
+- LoadedCold -> when reverting, remove account from state.
 - Dirty(_) -> account is already hot, and in this subroutine we are changing it. Field needed for that are:
         - original_slot: HashMap<H256,SlotChangeLog>:
             SlotChangeLog can be: ColdLoad or Dirty(H256)
-        - info: (balance/nonce/code)
+        - info: (original balance/nonce/code)
         - was_cold: bool
 - Destroyed(Account) -> swap all Info and Storage from current state
-
-
-Changelog example
-
-change1:
-1: loaded
-
-Changes2:
-1[2] = load 5
-1[2] = 5 -> 6
-1[4] = load 2
-
-changes3:
-1[2] = 6 -> 7
-
-change4: 
-1: destroy
-1[2] = load 10
-1[2] = 10 -> 11
-
-change5:
-1: destroy
-1[2] = 11 -> 12
-
-
-changelog1:
-1: cold
-
-changelo2:
-1: dirty
-1[2] = cold
-1[4] = cold
-
-changelo3:
-1: dirty
-1[2] = 6
-1[2] = dirty
-
-changelog4:
-1: destroyed
-    1[2] = 6
-    1[4] = 2
-
-changelog5:
-1: dirty
-1[2] = 11
-
-
-
-------------------------

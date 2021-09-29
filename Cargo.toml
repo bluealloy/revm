@@ -2,8 +2,12 @@
 name = "revm"
 version = "0.1.0"
 edition = "2018"
+license = "Apache-2.0"
+authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
+description = "Placeholder lib for REVM - Rust Ethereum virtual machine"
+repository = "https://github.com/bluealloy/revm"
+keywords = ["no_std", "ethereum", "evm"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 primitive-types = {version ="0.10", features = ["rlp"]}
