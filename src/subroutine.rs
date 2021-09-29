@@ -176,6 +176,9 @@ impl SubRoutine {
         // load accounts
         let from_is_cold = self.load_account(from, db);
         let to_is_cold = self.load_account(to, db);
+        if value == U256::zero() {
+            return Ok((from_is_cold,to_is_cold));
+        }
         // check from balance and substract value
         let from = self.log_dirty(from, |_| {});
         if from.info.balance < value {
