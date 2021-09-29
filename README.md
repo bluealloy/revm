@@ -8,9 +8,12 @@ Here is list of things that i would like to use as guide in this project:
 - **Simplicity** - simplification of internals so that it can be easily understood and extended, and interface that can be easily used or integrated into other project.
 - **interfacing** - `[no_std]` so that it can be used as wasm lib and integrate with JavaScript and cpp binding if needed.
 
+## Usage
+
+Please check `bin/revm-test`, interface is maybe susceptible to change but it will not deviate much from current one. 
 ## Status of project
 
-I just started this project as a hobby to kill some time. Presenty it has good structure and I would like to finish it and make it functional but we will see how far we will go. There are a lot of things that still needs to be done, here are some of TODO's that could be added:
+I just started this project as a hobby to kill some time. Presenty it has good structure and I would like to finish it and make it functional but we will see how far we will go. If you want to use this project be free to contact me and we can talk. There are a lot of things that still needs to be done, here are some of TODO's that could be added:
 
 - integrate ethereum consensus tests
 - Write a lot of comments and explanations.
