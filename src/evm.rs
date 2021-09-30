@@ -478,12 +478,12 @@ pub trait Handler {
 
 pub trait Tracing {
     fn trace_opcode(&mut self, _contract: &Contract, opcode: OpCode, _stack: &Stack) {
-        println!(
-            "Opcode:{:?} ({:?})",
-            opcode,
-            opcode as u8,
-            //stack.data()
-        );
+        // println!(
+        //     "Opcode:{:?} ({:?})",
+        //     opcode,
+        //     opcode as u8,
+        //     //stack.data()
+        // );
     }
     fn trace_call(&mut self) {}
 }

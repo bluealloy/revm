@@ -9,17 +9,17 @@ use deserializer::*;
 use serde_derive::*;
 use serde_json::{self, Error};
 
-use self::spec::SpecName;
+pub use self::spec::SpecName;
 
 #[derive(Debug, PartialEq, Deserialize)]
 pub struct TestSuit(pub BTreeMap<String, TestUnit>);
 
 #[derive(Debug, PartialEq, Deserialize)]
 pub struct TestUnit {
-    env: Env,
-    pre: HashMap<H160, AccountInfo>,
-    post: BTreeMap<SpecName,Vec<Test>>,
-    transaction: TransactionParts,
+    pub env: Env,
+    pub pre: HashMap<H160, AccountInfo>,
+    pub post: BTreeMap<SpecName,Vec<Test>>,
+    pub transaction: TransactionParts,
 }
 
 
@@ -29,7 +29,7 @@ pub struct Test {
     /// Post state hash
     pub hash: H256,
     /// Indexes
-    pub indexes: TestIndices,
+    pub indexes: TxPartIndices,
     // logs
     pub logs: H256,
     #[serde(deserialize_with = "deserialize_str_as_bytes")]
@@ -37,10 +37,10 @@ pub struct Test {
 }
 
 #[derive(Debug, PartialEq, Deserialize)]
-pub struct TestIndices {
-    pub data: u64,
-    pub gas: u64,
-    pub value: u64,
+pub struct TxPartIndices {
+    pub data: usize,
+    pub gas: usize,
+    pub value: usize,
 }
 
 #[derive(Clone, Debug, PartialEq, Deserialize)]
@@ -92,11 +92,10 @@ pub struct TransactionParts {
 #[serde(rename_all = "camelCase")]
 pub struct AccessListItem {
     pub address: H160,
-    pub storage_slots: Vec<H256>,
+    pub storage_keys: Vec<H256>,
 }
 
 pub type AccessList = Vec<AccessListItem>;
-
 
 #[cfg(test)]
 mod tests {

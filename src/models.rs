@@ -81,6 +81,8 @@ pub struct GlobalEnv {
     /// Get environmental chain ID.
     pub chain_id: U256,
     /// Get execution origin
+    pub block_basefee: Option<U256>,
+    /// Get execution origin
     pub origin: H160,
 }
 

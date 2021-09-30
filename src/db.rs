@@ -39,6 +39,10 @@ impl StateDB {
         self.cache.insert(address, account);
     }
 
+    pub fn insert_cache_storage(&mut self, address: H160, slot: H256, value: H256) {
+        self.storage.insert((address,slot), value);
+    }
+
     pub fn apply(&mut self, changes: Map<H160, Account>) {
         for (add, acc) in changes {
             self.cache.insert(add, acc.info);
