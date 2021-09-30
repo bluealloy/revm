@@ -142,6 +142,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
         gas_limit: u64,
     ) -> (ExitReason, Option<H160>, Gas, Bytes) {
         //TODO PRECOMPILES
+        //println!("create depth:{}",self.subroutine.depth());
 
         // set caller/contract_add/precompiles as hot access. Probably can be removed. Acc shold be allready hot.
         self.subroutine.load_account(caller, self.db);
@@ -234,7 +235,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
                         Bytes::new(),
                     )
                 } else {
-                    println!("SM created: {:?}", address);
+                    //println!("SM created: {:?}", address);
                     // if we have enought gas, set code and do checkpoint comit.
                     self.subroutine.set_code(address, code, code_hash);
                     self.subroutine.checkpoint_commit(checkpoint);
@@ -273,17 +274,16 @@ impl<'a, DB: Database> EVM<'a, DB> {
         code_address: H160,
         transfer: Option<Transfer>,
         input: Bytes,
-        gas_limit: u64,
+        mut gas_limit: u64,
         take_stipend: bool,
         context: CallContext,
     ) -> (ExitReason, Gas, Bytes) {
         // call trace_opcode.
 
-        // wtf is l64  calculate it here and set gas
-        let mut gas_limit: u64 = gas_limit;
+        //println!("call depth:{}",self.subroutine.depth());
+    
 
         // Check stipend and if we are transfering some value
-
         if let Some(transfer) = transfer.as_ref() {
             if take_stipend && transfer.value != U256::zero() {
                 gas_limit = gas_limit.saturating_add(SPEC::CALL_STIPEND);

@@ -19,7 +19,7 @@ macro_rules! enabled {
 
 macro_rules! gas {
     ($machine:expr, $gas:expr) => {
-        if $machine.spend_gas_bool($gas) {
+        if $machine.gas.record_cost($gas) {
             return Control::Exit(ExitReason::Error(ExitError::OutOfGas));
         }
     };

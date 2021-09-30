@@ -48,7 +48,7 @@ impl Gas {
     }
 
     pub fn remaining(&self) -> u64 {
-        self.limit - self.used - self.memory
+        (self.limit - self.used) - self.memory
     }
 
     pub fn left(&self) -> u64 {
@@ -60,6 +60,7 @@ impl Gas {
     }
 
     /// Record an explict cost.
+    #[inline(always)]
     pub fn record_cost(&mut self, cost: u64) -> bool {
         let all_gas_cost = self.used + self.memory + cost;
         if self.limit < all_gas_cost {
@@ -69,6 +70,16 @@ impl Gas {
         self.used += cost;
         true
     }
+    pub fn record_cost_control(&mut self, cost: u64) -> Control {
+        let all_gas_cost = self.used + self.memory + cost;
+        if self.limit < all_gas_cost {
+            return Control::Exit(ExitReason::Error(ExitError::OutOfGas))
+        }
+
+        self.used += cost;
+        Control::Continue
+    }
+    
 }
 
 impl Machine {
@@ -100,27 +111,6 @@ impl Machine {
     /// used in memory_resize! macro
     pub fn gas_memory(&mut self, gas_memory: u64) {
         self.gas.memory = max(self.gas.memory, gas_memory);
-    }
-
-    /// used in gas! macro
-    #[inline(always)]
-    pub fn spend_gas_bool(&mut self, gas: u64) -> bool {
-        self.gas.used += gas;
-        if self.gas.used > self.gas.limit {
-            true
-        } else {
-            false
-        }
-    }
-
-    #[inline(always)]
-    pub fn spend_gas(&mut self, gas: u64) -> Control {
-        self.gas.used += gas;
-        if self.gas.used > self.gas.limit {
-            Control::Exit(ExitReason::Error(ExitError::OutOfGas))
-        } else {
-            Control::Continue
-        }
     }
 
     /// Reference of machine stack.

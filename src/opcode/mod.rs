@@ -74,7 +74,7 @@ pub fn eval<H: ExtHandler, S: Spec>(
         OpCode::JUMPI => misc::jumpi(machine),
         OpCode::PC => misc::pc(machine, position),
         OpCode::MSIZE => misc::msize(machine),
-        OpCode::JUMPDEST => machine.spend_gas(gas::JUMPDEST),
+        OpCode::JUMPDEST => machine.gas.record_cost_control(gas::JUMPDEST),
 
         OpCode::PUSH1 => misc::push(machine, 1, position),
         OpCode::PUSH2 => misc::push(machine, 2, position),
