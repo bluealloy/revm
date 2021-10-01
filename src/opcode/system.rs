@@ -261,7 +261,7 @@ pub fn sstore<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H)
 pub fn gas(machine: &mut Machine) -> Control {
     gas!(machine, gas::BASE);
 
-    push_u256!(machine, U256::from(machine.gas().left()));
+    push_u256!(machine, U256::from(machine.gas.remaining()));
     Control::Continue
 }
 
@@ -338,7 +338,7 @@ pub fn create<H: ExtHandler, SPEC: Spec>(
 
     // take remaining gas and deduce l64 part of it.
     let gas_limit = try_or_fail!(gas_call_l64_after::<SPEC>(machine));
-    gas!(machine,gas_limit);
+    gas!(machine, gas_limit);
     let (reason, address, gas, return_data) =
         handler.create::<SPEC>(machine.contract.address, scheme, value, code, gas_limit);
     machine.return_data_buffer = return_data;
@@ -347,17 +347,17 @@ pub fn create<H: ExtHandler, SPEC: Spec>(
     match reason {
         ExitReason::Succeed(_) => {
             // return remaining gas not used in subcall
-            machine.gas.used -= gas.remaining();
+            machine.gas.erase_cost(gas.remaining());
             // add refunded gas from subcall
-            machine.gas.refunded += gas.refunded;
+            machine.gas.record_refund(gas.refunded());
             // push new address to stack
             push!(machine, create_address);
             Control::Continue
         }
         ExitReason::Revert(_) => {
             // return remaining gas not used in subcall
-            machine.gas.used -= gas.remaining();
-            
+            machine.gas.erase_cost(gas.remaining());
+
             push!(machine, H256::default());
             Control::Continue
         }
@@ -475,7 +475,7 @@ pub fn call<H: ExtHandler, SPEC: Spec>(
     let global_gas_limit = try_or_fail!(gas_call_l64_after::<SPEC>(machine));
     let gas_limit = min(global_gas_limit, local_gas_limit);
 
-    gas!(machine,gas_limit);
+    gas!(machine, gas_limit);
     // CALL CONTRACT, with static or ordinary spec.
     let (reason, gas, return_data) = if matches!(scheme, CallScheme::StaticCall) {
         handler.call::<SPEC::STATIC>(to.into(), transfer, input, gas_limit, context)
@@ -488,9 +488,9 @@ pub fn call<H: ExtHandler, SPEC: Spec>(
     match reason {
         ExitReason::Succeed(_) => {
             // return remaining gas not used in subcall
-            machine.gas.used -= gas.remaining();
+            machine.gas.erase_cost(gas.remaining());
             // add refunded gas from subcall
-            machine.gas.refunded += gas.refunded;
+            machine.gas.record_refund(gas.refunded());
             match machine.memory.copy_large(
                 out_offset,
                 U256::zero(),
@@ -509,7 +509,7 @@ pub fn call<H: ExtHandler, SPEC: Spec>(
         }
         ExitReason::Revert(_) => {
             // return remaining gas not used in subcall
-            machine.gas.used -= gas.remaining();
+            machine.gas.erase_cost(gas.remaining());
 
             push_u256!(machine, U256::zero());
 

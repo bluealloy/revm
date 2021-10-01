@@ -1,7 +1,8 @@
-use crate::collection::{Map, vec::Vec};
+use crate::collection::{vec::Vec, Map};
 
 use primitive_types::{H160, H256, U256};
 
+use super::trie;
 use crate::{Account, AccountInfo, Log};
 use bytes::Bytes;
 
@@ -27,10 +28,10 @@ pub trait Database {
 }
 
 /// Memory backend, storing all state values in a `Map` in memory.
-//#[derive(Clone)]
+#[derive(Debug)]
 pub struct StateDB {
     cache: Map<H160, AccountInfo>,
-    storage: Map<(H160, H256), H256>,
+    storage: Map<H160, Map<H256, H256>>,
     logs: Vec<Log>,
 }
 
@@ -40,16 +41,31 @@ impl StateDB {
     }
 
     pub fn insert_cache_storage(&mut self, address: H160, slot: H256, value: H256) {
-        self.storage.insert((address,slot), value);
+        self.storage.entry(address).or_default().insert(slot, value);
     }
 
     pub fn apply(&mut self, changes: Map<H160, Account>) {
         for (add, acc) in changes {
             self.cache.insert(add, acc.info);
             for (index, value) in acc.storage {
-                self.storage.insert((add, index), value);
+                self.storage.entry(add).or_default().insert(index, value);
             }
         }
+    }
+
+    pub fn state_root(&self) -> H256 {
+        let vec = self
+            .cache
+            .iter()
+            .map(|(address, info)| {
+                let storage = self.storage.get(address).cloned().unwrap_or_default();
+                let storage_root = trie::trie_account_rlp(info, storage);
+                //println!("\naddress:{:?}storage_root:{:?}\n",hex::encode(address),hex::encode(&storage_root));
+                (address.clone(), storage_root)
+            })
+            .collect();
+
+        trie::trie_root(vec)
     }
 
     /// Create a new memory backend.
@@ -136,8 +152,10 @@ impl Database for StateDB {
     fn storage(&mut self, address: H160, index: H256) -> H256 {
         //log::info!(target: "evm::handler", "{:?} storage index {:?}",address, index);
         if self.fetch_account(&address) {
-            if let Some(slot) = self.storage.get(&(address, index)) {
-                return slot.clone();
+            if let Some(storage) = self.storage.get(&address) {
+                if let Some(slot) = storage.get(&index) {
+                    return slot.clone();
+                }
             }
             H256::zero()
             /*

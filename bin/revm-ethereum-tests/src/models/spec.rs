@@ -1,7 +1,7 @@
 
 use serde_derive::*;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Hash, Ord, Deserialize)]
 pub enum SpecName {
     EIP150,
     EIP158,

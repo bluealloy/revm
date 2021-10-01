@@ -32,10 +32,10 @@ pub struct Machine {
 
 #[derive(Clone, Copy, Default, Debug)]
 pub struct Gas {
-    pub limit: u64,
-    pub used: u64,
-    pub memory: u64,
-    pub refunded: i64,
+    limit: u64,
+    used: u64,
+    memory: u64,
+    refunded: i64,
 }
 impl Gas {
     pub fn new(limit: u64) -> Self {
@@ -47,39 +47,59 @@ impl Gas {
         }
     }
 
+    pub fn limit_mut(&mut self) -> &mut u64{
+        &mut self.limit
+    }
+
+    pub fn limit(&self) -> u64 {
+        self.limit
+    }
+    pub fn used(&self) -> u64 {
+        self.used
+    }
+    pub fn memory(&self) -> u64 {
+        self.memory
+    }
+
+    pub fn refunded(&self) -> i64 {
+        self.refunded
+    }
+
+    pub fn all_used(&self) -> u64 {
+        (self.used+self.memory)// as i64-self.refunded
+    }
+
     pub fn remaining(&self) -> u64 {
         (self.limit - self.used) - self.memory
     }
 
-    pub fn left(&self) -> u64 {
-        self.limit - self.used
+    pub fn erase_cost(&mut self, returned: u64) {
+        self.used -= returned;
     }
 
-    pub fn total_used_gas(&self) -> u64 {
-        self.used + self.memory
+    pub fn record_refund(&mut self, refund: i64) {
+        self.refunded += refund;
     }
 
     /// Record an explict cost.
     #[inline(always)]
     pub fn record_cost(&mut self, cost: u64) -> bool {
-        let all_gas_cost = self.used + self.memory + cost;
-        if self.limit < all_gas_cost {
+        let all_used_gas = self.used + self.memory + cost;
+        if self.limit < all_used_gas {
             return false;
         }
 
         self.used += cost;
         true
     }
-    pub fn record_cost_control(&mut self, cost: u64) -> Control {
-        let all_gas_cost = self.used + self.memory + cost;
-        if self.limit < all_gas_cost {
-            return Control::Exit(ExitReason::Error(ExitError::OutOfGas))
-        }
 
-        self.used += cost;
+    #[inline(always)]
+    pub fn record_cost_control(&mut self, cost: u64) -> Control {
+        if !self.record_cost(cost) {
+            return Control::Exit(ExitReason::Error(ExitError::OutOfGas));
+        }
         Control::Continue
     }
-    
 }
 
 impl Machine {
@@ -163,7 +183,7 @@ impl Machine {
         let opcode = opcode.unwrap();
 
         // call prevalidation to calcuate gas consumption for this opcode
-        handler.trace_opcode(&self.contract, opcode, &self.stack);
+        handler.trace_opcode(opcode, &self);
 
         // check machine status and return if not present
         self.status.as_ref().map_err(|reason| reason.clone())?;

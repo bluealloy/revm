@@ -1,0 +1,46 @@
+
+use hash_db::Hasher;
+use plain_hasher::PlainHasher;
+
+use triehash::sec_trie_root;
+
+use bytes::Bytes;
+use primitive_types::{H160, H256, U256};
+use rlp::RlpStream;
+use sha3::{Digest, Keccak256};
+
+use crate::{collection::Map, models::AccountInfo};
+
+/// Returns the RLP for this account.
+pub fn trie_account_rlp(info: &AccountInfo, storage: Map<H256, H256>) -> Bytes {
+    let mut stream = RlpStream::new_list(4);
+    stream.append(&info.nonce);
+    stream.append(&info.balance);
+    stream.append(&{
+        
+        let storage_root = sec_trie_root::<KeccakHasher, _, _, _>(
+        storage
+            .into_iter()
+            .map(|(k, v)| (k, rlp::encode(&U256::from(v.as_ref() as &[u8])))));
+            //println!("\nbalance:{:?}storage_root:{:?}\n",info.balance,hex::encode(&storage_root));
+        storage_root.clone()
+    });
+    stream.append(&Keccak256::digest(info.code.as_ref().unwrap_or(&Bytes::new())).as_slice());
+    stream.out().freeze()
+}
+
+pub fn trie_root(acc_data: Vec<(H160,Bytes)>) -> H256 {
+    sec_trie_root::<KeccakHasher, _, _, _>(acc_data.into_iter())
+}
+
+#[derive(Default, Debug, Clone, PartialEq)]
+pub struct KeccakHasher;
+impl Hasher for KeccakHasher {
+    type Out = H256;
+    type StdHasher = PlainHasher;
+    const LENGTH: usize = 32;
+    fn hash(x: &[u8]) -> Self::Out {
+        let out = Keccak256::digest(x);
+        H256::from_slice(out.as_slice())
+    }
+}

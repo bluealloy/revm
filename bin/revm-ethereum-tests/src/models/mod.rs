@@ -18,7 +18,7 @@ pub struct TestSuit(pub BTreeMap<String, TestUnit>);
 pub struct TestUnit {
     pub env: Env,
     pub pre: HashMap<H160, AccountInfo>,
-    pub post: BTreeMap<SpecName,Vec<Test>>,
+    pub post: HashMap<SpecName,Vec<Test>>,
     pub transaction: TransactionParts,
 }
 

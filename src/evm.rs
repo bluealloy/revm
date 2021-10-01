@@ -1,11 +1,11 @@
-use crate::collection::{vec::Vec, Map};
+use crate::{AccountInfo, collection::{vec::Vec, Map}};
 use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
 
 use crate::{
     db::Database,
     error::{ExitError, ExitReason, ExitSucceed},
-    machine::{Contract, Gas, Machine, Stack},
+    machine::{Contract, Gas, Machine, Stack, Memory},
     opcode::OpCode,
     spec::{NotStaticSpec, Spec},
     subroutine::{Account, State, SubRoutine},
@@ -30,8 +30,19 @@ impl<'a, DB: Database> EVM<'a, DB> {
         }
     }
 
-    pub fn finalize(&mut self) -> Map<H160, Account> {
-        self.subroutine.finalize()
+    fn finalize(&mut self,caller: H160, gas: Gas) -> Map<H160, Account> {
+        let eth_spend = U256::from(gas.all_used())*self.global_env.gas_price;
+        let eth_refunded = U256::from(gas.refunded())*self.global_env.gas_price;
+       let mut out = self.subroutine.finalize();
+        let acc = out.get_mut(&caller).unwrap();
+        acc.info.balance += eth_refunded;
+        acc.info.balance -= eth_spend;
+
+        let coinbase= self.global_env.block_coinbase;
+        let coinbase = out.entry(coinbase).or_insert_with(|| Account::from(AccountInfo::default()));
+        coinbase.info.balance += eth_spend;
+        coinbase.filth.make_dirty();
+        out
     }
 
     pub fn call<SPEC: Spec>(
@@ -45,7 +56,6 @@ impl<'a, DB: Database> EVM<'a, DB> {
     ) -> (ExitReason, Bytes, Gas, State) {
         // TODO calculate gascost
         //let transaction_cost = gasometer::call_transaction_cost(&data, &access_list);
-
         
         let gas_used_init = self.initialization::<SPEC>(&data, false, access_list);
         if gas_limit < gas_used_init {
@@ -74,8 +84,11 @@ impl<'a, DB: Database> EVM<'a, DB> {
             false,
             context,
         );
-        gas.used += gas_used_init;
-        (exit, bytes, gas, self.subroutine.finalize())
+        *gas.limit_mut() = gas_limit;
+        gas.record_cost(gas_used_init);
+
+        //TODO gas.used += gas_used_init;
+        (exit, bytes, gas, self.finalize(caller,gas))
     }
 
     pub fn create<SPEC: Spec + NotStaticSpec>(
@@ -96,9 +109,10 @@ impl<'a, DB: Database> EVM<'a, DB> {
 
         let (exit_reason, address, mut gas, _) =
             self.create_inner::<SPEC>(caller, create_scheme, value, init_code, gas_limit);
+        *gas.limit_mut() = gas_limit;
+        gas.record_cost(gas_used_init);
 
-        gas.used += gas_used_init;
-        (exit_reason, address, gas, self.subroutine.finalize())
+        (exit_reason, address, gas, self.finalize(caller,gas))
     }
 
     fn initialization<SPEC: Spec>(
@@ -477,12 +491,14 @@ pub trait Handler {
 }
 
 pub trait Tracing {
-    fn trace_opcode(&mut self, _contract: &Contract, opcode: OpCode, _stack: &Stack) {
+    fn trace_opcode(&mut self, opcode: OpCode, machine: &Machine) {
         // println!(
-        //     "Opcode:{:?} ({:?})",
+        //     "Opcode:{:?} ({:?}) gas{:?}, Stack:{:?}, Data:{:?}",
         //     opcode,
         //     opcode as u8,
-        //     //stack.data()
+        //     machine.gas.remaining(),
+        //     machine.stack.data(),
+        //     machine.memory.data(),
         // );
     }
     fn trace_call(&mut self) {}
