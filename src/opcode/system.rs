@@ -473,7 +473,14 @@ pub fn call<H: ExtHandler, SPEC: Spec>(
 
     // take l64 part of gas_limit
     let global_gas_limit = try_or_fail!(gas_call_l64_after::<SPEC>(machine));
-    let gas_limit = min(global_gas_limit, local_gas_limit);
+    let mut gas_limit = min(global_gas_limit, local_gas_limit);
+
+    // Check stipend and if we are transfering some value
+    if let Some(transfer) = transfer.as_ref() {
+        if transfer.value != U256::zero() {
+            gas_limit = gas_limit.saturating_add(SPEC::CALL_STIPEND);
+        }
+    }
 
     gas!(machine, gas_limit);
     // CALL CONTRACT, with static or ordinary spec.

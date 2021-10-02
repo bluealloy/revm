@@ -73,7 +73,7 @@ impl From<ExitRevert> for ExitReason {
 }
 
 /// Exit error reason.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "with-codec", derive(codec::Encode, codec::Decode))]
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ExitError {
@@ -109,6 +109,9 @@ pub enum ExitError {
 
     /// opcode not enabled,
     OpcodeDisabled,
+
+    /// Other normal errors.
+	Other(Cow<'static, str>),
 }
 
 impl From<ExitError> for ExitReason {

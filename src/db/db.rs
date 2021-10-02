@@ -28,7 +28,7 @@ pub trait Database {
 }
 
 /// Memory backend, storing all state values in a `Map` in memory.
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct StateDB {
     cache: Map<H160, AccountInfo>,
     storage: Map<H160, Map<H256, H256>>,

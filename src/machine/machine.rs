@@ -66,7 +66,7 @@ impl Gas {
     }
 
     pub fn all_used(&self) -> u64 {
-        (self.used+self.memory)// as i64-self.refunded
+        self.used+self.memory 
     }
 
     pub fn remaining(&self) -> u64 {

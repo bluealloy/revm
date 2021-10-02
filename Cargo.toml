@@ -19,3 +19,10 @@ hex = "0.4"
 triehash = "0.8"
 hash-db = "0.15"
 plain_hasher = "0.2"
+# used in precompiles
+num = { version = "0.4.0", default-features = false, features = ["alloc"] }
+
+# precompiles
+sha2 = { version = "0.9.3", default-features = false, optional = true }
+blake2 = "0.9"
+borsh = { version = "0.9", default-features = false }

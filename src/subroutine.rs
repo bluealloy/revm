@@ -7,7 +7,7 @@ use primitive_types::{H160, H256, U256};
 
 use crate::{db::Database, error::ExitError, AccountInfo, Log};
 
-pub struct  SubRoutine {
+pub struct SubRoutine {
     /// Applied changes to our state
     state: State,
     /// logs
@@ -38,7 +38,9 @@ pub enum ChangeLog {
     /// if that is possible we need U256 to revert to old value.
     /// storage/code/code_hash/nonce had default value.
     /// filth can only be Clean or Dirty. Clean for original balance and dirty with empty HashMap for changed balance.
-    Created(U256,Filth),
+    Created(U256, Filth),
+    // precompile old balance value and flag if it is
+    PrecompileBalanceChange(U256, bool), //TODO add it to balance change
 }
 
 #[derive(Debug, Clone)]
@@ -68,9 +70,15 @@ pub struct SubRoutineCheckpoint {
 }
 
 impl SubRoutine {
-    pub fn new() -> SubRoutine {
+    pub fn new(precompiles: Map<H160, AccountInfo> ) -> SubRoutine {
+        let state = precompiles.into_iter().map(|(k,value)| {
+            let mut acc = Account::from(value);
+            acc.filth = Filth::Precompile(false);
+            (k,acc)
+        }).collect();
+
         Self {
-            state: Map::new(),
+            state,
             logs: Vec::new(),
             changelog: vec![Map::new(); 1],
             depth: 0,
@@ -88,8 +96,7 @@ impl SubRoutine {
         for (add, mut acc) in state.into_iter() {
             let dirty = acc.filth.clean();
             match acc.filth {
-                Filth::Clean => {}
-                Filth::DestroyedOrNew => {
+                Filth::DestroyedOrNew | Filth::Precompile(true) => {
                     // acc was destroyed or newly created. just add it to output
                     out.insert(add, acc);
                 }
@@ -103,6 +110,7 @@ impl SubRoutine {
                     acc.storage = change;
                     out.insert(add, acc);
                 }
+                _ => {}
             }
         }
         // state cleanup
@@ -131,10 +139,12 @@ impl SubRoutine {
         acc.info.code_hash = Some(code_hash);
     }
 
-    pub fn inc_nonce(&mut self, address: H160) {
+    pub fn inc_nonce(&mut self, address: H160) -> u64 {
         // asume account is hot and loaded
         let acc = self.log_dirty(address, |_| {});
+        let old_nonce = acc.info.nonce;
         acc.info.nonce += 1;
+        old_nonce
     }
 
     // log dirty change and return account back
@@ -177,7 +187,7 @@ impl SubRoutine {
         let from_is_cold = self.load_account(from, db);
         let to_is_cold = self.load_account(to, db);
         if value == U256::zero() {
-            return Ok((from_is_cold,to_is_cold));
+            return Ok((from_is_cold, to_is_cold));
         }
         // check from balance and substract value
         let from = self.log_dirty(from, |_| {});
@@ -203,7 +213,7 @@ impl SubRoutine {
         checkpoint
     }
 
-    /// 
+    ///
     /// return if it has collition of addresses
     pub fn new_contract_acc<DB: Database>(&mut self, address: H160, db: &mut DB) -> bool {
         let (acc, _) = self.load_code(address, db);
@@ -220,7 +230,7 @@ impl SubRoutine {
             .last_mut()
             .unwrap()
             .entry(address)
-            .or_insert_with(|| ChangeLog::Created(original_balance,original_filth));
+            .or_insert_with(|| ChangeLog::Created(original_balance, original_filth));
 
         false
     }
@@ -232,10 +242,15 @@ impl SubRoutine {
                 ChangeLog::ColdLoaded => {
                     state.remove(&add); //done
                 }
+                ChangeLog::PrecompileBalanceChange(original_balance, flag) => {
+                    let acc = state.get_mut(&add).unwrap();
+                    acc.info.balance = original_balance;
+                    acc.filth = Filth::Precompile(flag);
+                }
                 ChangeLog::Destroyed(account) => {
                     state.insert(add, account.clone()); // done
                 }
-                ChangeLog::Created(balance,orig_filth) => {
+                ChangeLog::Created(balance, orig_filth) => {
                     let acc = state.get_mut(&add).unwrap();
                     acc.info.code = None;
                     acc.info.code_hash = None;
@@ -466,18 +481,11 @@ impl SubRoutine {
         acc.storage.insert(index, new);
 
         // insert present value inside changelog so that it can be reverted if needed.
-        if let ChangeLog::Dirty(dirty_log) = self
-            .changelog
-            .last_mut()
-            .unwrap()
-            .get_mut(&address)
-            .unwrap()
-        {
-            // if it first time dirty, mark it as such.
+        self.log_dirty(address, |dirty_log| {
             if let Entry::Vacant(entry) = dirty_log.dirty_storage.entry(index) {
                 entry.insert(SlotChangeLog::OriginalDirty(present));
             }
-        }
+        });
 
         (original, present, new, is_cold)
     }
@@ -520,6 +528,9 @@ pub enum Filth {
     /// destroyed by selfdestruct or it is newly
     ///  created by create/create2 opcode. Either way dont save original values
     DestroyedOrNew,
+    // precompile
+    // bool signals if it is dirty or not
+    Precompile(bool),
 }
 
 impl Filth {
@@ -537,11 +548,12 @@ impl Filth {
                 originals.entry(index).or_insert(present_value);
             }
             Self::DestroyedOrNew => (),
+            Self::Precompile(_) => panic!("Insert dirty for precompile is not possible"),
         }
     }
     pub fn original_slot(&mut self, index: H256) -> Option<H256> {
         match self {
-            Self::Clean => None,
+            Self::Clean | Self::Precompile(_) => None,
             Self::Dirty(ref originals) => originals.get(&index).cloned(),
             Self::DestroyedOrNew => Some(H256::zero()),
         }
@@ -557,6 +569,7 @@ impl Filth {
     pub fn make_dirty(&mut self) {
         match self {
             Self::Clean => *self = Self::Dirty(Map::new()),
+            Self::Precompile(flag) => *flag = true,
             _ => (),
         }
     }

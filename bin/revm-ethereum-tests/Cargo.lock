@@ -425,6 +425,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "sha3",
+ "thiserror",
  "walkdir",
 ]
 

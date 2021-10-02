@@ -11,7 +11,7 @@ use std::{
     thread,
 };
 
-use sha3::{Digest,Keccak256};
+use sha3::{Digest, Keccak256};
 
 use bytes::Bytes;
 use indicatif::ProgressBar;
@@ -21,6 +21,17 @@ use std::sync::atomic::Ordering;
 use walkdir::{DirEntry, WalkDir};
 
 use crate::models::{SpecName, TestSuit};
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum TestError {
+    #[error("Root missmatched. Expected: {expect:?} got:{got:?}")]
+    RootMissmatch { got: H256, expect: H256 },
+    #[error("EVM returned error: {0:?}")]
+    EVMReturnError(revm::ExitReason),
+    #[error("Serde json error")]
+    SerdeDeserialize(#[from] serde_json::Error),
+}
 
 pub fn find_all_json_tests(path: PathBuf) -> Vec<PathBuf> {
     WalkDir::new(path)
@@ -31,7 +42,7 @@ pub fn find_all_json_tests(path: PathBuf) -> Vec<PathBuf> {
         .collect::<Vec<PathBuf>>()
 }
 
-pub fn execute_test_suit(path: &PathBuf) -> Result<(), Box<dyn Error>> {
+pub fn execute_test_suit(path: &PathBuf) -> Result<(), TestError> {
     let json_reader = std::fs::read(&path).unwrap();
     let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
     for (name, unit) in suit.0.into_iter() {
@@ -74,6 +85,7 @@ pub fn execute_test_suit(path: &PathBuf) -> Result<(), Box<dyn Error>> {
                 origin: caller.clone(), // TODO ?
             };
             for test in tests {
+                let mut database = database.clone();
                 let gas_limit = unit
                     .transaction
                     .gas_limit
@@ -109,11 +121,18 @@ pub fn execute_test_suit(path: &PathBuf) -> Result<(), Box<dyn Error>> {
                     gas_limit.as_u64()
                 };
                 let mut evm = revm::EVM::new(&mut database, global_env.clone());
-                let (ret,gas, state) = if let Some(to) = unit.transaction.to {
-                    let (ret,_,gas,state) = evm.call::<BerlinSpec>(caller.clone(), to, value, data, gas_limit, access_list);
-                    (ret,gas, state)
+                let (ret, gas, state) = if let Some(to) = unit.transaction.to {
+                    let (ret, _, gas, state) = evm.call::<BerlinSpec>(
+                        caller.clone(),
+                        to,
+                        value,
+                        data,
+                        gas_limit,
+                        access_list,
+                    );
+                    (ret, gas, state)
                 } else {
-                    let (ret,_,gas,state) = evm.create::<BerlinSpec>(
+                    let (ret, _, gas, state) = evm.create::<BerlinSpec>(
                         caller.clone(),
                         value,
                         data,
@@ -121,18 +140,18 @@ pub fn execute_test_suit(path: &PathBuf) -> Result<(), Box<dyn Error>> {
                         gas_limit,
                         access_list,
                     );
-                    (ret,gas, state)
+                    (ret, gas, state)
                 };
-                if !matches!(ret,ExitReason::Succeed(_)) {
-                    println!("{:?} failed execution gas:{:?} , error: {:?}",path,gas, ret);
-                }
-
                 database.apply(state);
                 let state_root = database.state_root();
-                //println!("\nApplied state:{:?}\n",database);
-                //println!("\nStateroot: {:?}\n",state_root);
-                if test.hash == state_root {
-                    println!("{:?} state_root IS CORRECT:{:?}",path, database.state_root());
+                if test.hash != state_root {
+                    println!("is_create:{}", unit.transaction.to.is_none());
+                    println!("\nApplied state:{:?}\n", database);
+                    println!("\nStateroot: {:?}\n", state_root);
+                    return Err(TestError::RootMissmatch {
+                        got: state_root,
+                        expect: test.hash,
+                    });
                 }
             }
         }
@@ -144,14 +163,14 @@ pub fn run(mut test_files: Vec<PathBuf>) {
     let endjob = Arc::new(AtomicBool::new(false));
     let console_bar = Arc::new(ProgressBar::new(test_files.len() as u64));
     let mut joins = Vec::new();
-    for chunk in test_files.chunks(1000) {
+    for chunk in test_files.chunks(5000) {
         let chunk = Vec::from(chunk);
         let endjob = endjob.clone();
         let console_bar = console_bar.clone();
 
         joins.push(
             std::thread::Builder::new()
-                .stack_size(50 * 1024 * 1024)
+                .stack_size(20 * 1024 * 1024)
                 .spawn(move || {
                     for test in chunk {
                         if endjob.load(Ordering::SeqCst) {
@@ -166,7 +185,8 @@ pub fn run(mut test_files: Vec<PathBuf>) {
                         }
                         console_bar.inc(1);
                     }
-                }).unwrap(),
+                })
+                .unwrap(),
         );
     }
     for handler in joins {

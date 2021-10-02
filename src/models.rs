@@ -27,6 +27,15 @@ impl AccountInfo {
     pub fn exists(&self) -> bool {
         !self.is_empty()
     }
+
+    pub fn from_balance(balance: U256) -> Self {
+        Self {
+            balance,
+            code_hash: None,
+            code: None,
+            nonce: 0,
+        }
+    }
 }
 
 /// Create scheme.

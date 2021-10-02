@@ -1,11 +1,14 @@
-use crate::{AccountInfo, collection::{vec::Vec, Map}};
+use crate::{
+    collection::{vec::Vec, Map},
+    precompiles, AccountInfo,
+};
 use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
 
 use crate::{
     db::Database,
     error::{ExitError, ExitReason, ExitSucceed},
-    machine::{Contract, Gas, Machine, Stack, Memory},
+    machine::{Contract, Gas, Machine, Memory, Stack},
     opcode::OpCode,
     spec::{NotStaticSpec, Spec},
     subroutine::{Account, State, SubRoutine},
@@ -25,24 +28,28 @@ impl<'a, DB: Database> EVM<'a, DB> {
         Self {
             db,
             global_env,
-            subroutine: SubRoutine::new(),
+            subroutine: SubRoutine::new(precompiles::accounts()),
             precompiles: Map::new(),
         }
     }
 
-    fn finalize(&mut self,caller: H160, gas: Gas) -> Map<H160, Account> {
-        let eth_spend = U256::from(gas.all_used())*self.global_env.gas_price;
-        let eth_refunded = U256::from(gas.refunded())*self.global_env.gas_price;
-       let mut out = self.subroutine.finalize();
+    fn finalize(
+        &mut self,
+        caller: H160,
+        used_gas_sum: u64,
+        refunded_gas: u64,
+    ) -> Result<Map<H160, Account>, ExitReason> {
+        let eth_spend = U256::from(used_gas_sum) * self.global_env.gas_price;
+        let eth_refunded = U256::from(refunded_gas) * self.global_env.gas_price;
+        let coinbase = self.global_env.block_coinbase;
+        // all checks are done prior to this call, so we are safe to transfer without checking outcome.
+        let _ = self
+            .subroutine
+            .transfer(caller, coinbase, eth_spend, self.db);
+        let mut out = self.subroutine.finalize();
         let acc = out.get_mut(&caller).unwrap();
         acc.info.balance += eth_refunded;
-        acc.info.balance -= eth_spend;
-
-        let coinbase= self.global_env.block_coinbase;
-        let coinbase = out.entry(coinbase).or_insert_with(|| Account::from(AccountInfo::default()));
-        coinbase.info.balance += eth_spend;
-        coinbase.filth.make_dirty();
-        out
+        Ok(out)
     }
 
     pub fn call<SPEC: Spec>(
@@ -53,15 +60,16 @@ impl<'a, DB: Database> EVM<'a, DB> {
         data: Bytes,
         gas_limit: u64,
         access_list: Vec<(H160, Vec<H256>)>,
-    ) -> (ExitReason, Bytes, Gas, State) {
-        // TODO calculate gascost
-        //let transaction_cost = gasometer::call_transaction_cost(&data, &access_list);
-        
+    ) -> (ExitReason, Bytes, u64, State) {
         let gas_used_init = self.initialization::<SPEC>(&data, false, access_list);
         if gas_limit < gas_used_init {
-            return (ExitReason::Error(ExitError::OutOfGas),Bytes::new(),Gas::default(),State::default())
+            return (
+                ExitReason::Error(ExitError::OutOfGas),
+                Bytes::new(),
+                0,
+                State::default(),
+            );
         }
-        let gas_limit = gas_limit-gas_used_init;
 
         self.subroutine.load_account(caller, self.db);
         self.subroutine.inc_nonce(caller);
@@ -72,7 +80,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
             apparent_value: value,
         };
 
-        let (exit, mut gas, bytes) = self.call_inner::<SPEC>(
+        let (exit_reason, gas, bytes) = self.call_inner::<SPEC>(
             address,
             Some(Transfer {
                 source: caller,
@@ -80,15 +88,19 @@ impl<'a, DB: Database> EVM<'a, DB> {
                 value,
             }),
             data,
-            gas_limit,
-            false,
+            gas_limit - gas_used_init,
             context,
         );
-        *gas.limit_mut() = gas_limit;
-        gas.record_cost(gas_used_init);
+        let gas_spend = match exit_reason {
+            ExitReason::Error(ExitError::OutOfGas) => gas_limit,
+            _ => gas.all_used() + gas_used_init,
+        };
 
-        //TODO gas.used += gas_used_init;
-        (exit, bytes, gas, self.finalize(caller,gas))
+        match self.finalize(caller, gas_spend, gas.refunded() as u64) {
+            //TODO check if refunded can be negative :)
+            Err(e) => (e, bytes, gas_spend, Map::new()),
+            Ok(state) => (exit_reason, bytes, gas_spend, state),
+        }
     }
 
     pub fn create<SPEC: Spec + NotStaticSpec>(
@@ -99,20 +111,34 @@ impl<'a, DB: Database> EVM<'a, DB> {
         create_scheme: CreateScheme,
         gas_limit: u64,
         access_list: Vec<(H160, Vec<H256>)>,
-    ) -> (ExitReason, Option<H160>, Gas, State) {
-
+    ) -> (ExitReason, Option<H160>, u64, State) {
         let gas_used_init = self.initialization::<SPEC>(&init_code, true, access_list);
         if gas_limit < gas_used_init {
-            return (ExitReason::Error(ExitError::OutOfGas),None,Gas::default(),State::default())
+            return (
+                ExitReason::Error(ExitError::OutOfGas),
+                None,
+                0,
+                State::default(),
+            );
         }
-        let gas_limit = gas_limit-gas_used_init;
 
-        let (exit_reason, address, mut gas, _) =
-            self.create_inner::<SPEC>(caller, create_scheme, value, init_code, gas_limit);
-        *gas.limit_mut() = gas_limit;
-        gas.record_cost(gas_used_init);
+        let (exit_reason, address, gas, _) = self.create_inner::<SPEC>(
+            caller,
+            create_scheme,
+            value,
+            init_code,
+            gas_limit - gas_used_init,
+        );
 
-        (exit_reason, address, gas, self.finalize(caller,gas))
+        let gas_spend = match exit_reason {
+            ExitReason::Error(ExitError::OutOfGas) => gas_limit,
+            _ => gas.all_used() + gas_used_init,
+        };
+
+        match self.finalize(caller, gas_spend, gas.refunded() as u64) {
+            Err(e) => (e, address, gas_spend, Map::new()),
+            Ok(state) => (exit_reason, address, gas_spend, state),
+        }
     }
 
     fn initialization<SPEC: Spec>(
@@ -155,10 +181,9 @@ impl<'a, DB: Database> EVM<'a, DB> {
         init_code: Bytes,
         gas_limit: u64,
     ) -> (ExitReason, Option<H160>, Gas, Bytes) {
-        //TODO PRECOMPILES
         //println!("create depth:{}",self.subroutine.depth());
 
-        // set caller/contract_add/precompiles as hot access. Probably can be removed. Acc shold be allready hot.
+        // TODO set caller/contract_add/precompiles as hot access. Probably can be removed. Acc shold be allready hot.
         self.subroutine.load_account(caller, self.db);
 
         // trace call
@@ -172,7 +197,6 @@ impl<'a, DB: Database> EVM<'a, DB> {
                 Bytes::new(),
             );
         }
-
         // check balance of caller and value
         if self.balance(caller).0 < value {
             return (
@@ -182,22 +206,17 @@ impl<'a, DB: Database> EVM<'a, DB> {
                 Bytes::new(),
             );
         }
-
-        let code_hash = H256::from_slice(Keccak256::digest(&init_code).as_slice());
-        // create address
-        let address = match scheme {
-            CreateScheme::Create => {
-                util::create_address(caller, self.subroutine.account(caller).info.nonce)
-            }
-            CreateScheme::Create2 { salt } => util::create2_address(caller, code_hash, salt),
-        };
-        // TODO wtf is l64 gas reduction. Check spec. Return gas and set gas_limit
         // inc nonce of caller
-        self.subroutine.inc_nonce(caller);
+        let old_nonce = self.subroutine.inc_nonce(caller);
         // enter into subroutine
         let checkpoint = self.subroutine.create_checkpoint();
-        // TODO check for code colision by checking nonce and code of created address
-        // TODO reset storage to be sure that we dont need to ask db for storage
+        // create address
+        let code_hash = H256::from_slice(Keccak256::digest(&init_code).as_slice());
+        let address = match scheme {
+            CreateScheme::Create => util::create_address(caller, old_nonce),
+            CreateScheme::Create2 { salt } => util::create2_address(caller, code_hash, salt),
+        };
+        // create contract account and check for collision
         if self.subroutine.new_contract_acc(address, self.db) {
             self.subroutine.checkpoint_discard(checkpoint);
             return (
@@ -245,7 +264,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
                     (
                         ExitReason::Error(ExitError::OutOfGas),
                         None,
-                        Gas::default(),
+                        machine.gas,
                         Bytes::new(),
                     )
                 } else {
@@ -289,33 +308,17 @@ impl<'a, DB: Database> EVM<'a, DB> {
         transfer: Option<Transfer>,
         input: Bytes,
         mut gas_limit: u64,
-        take_stipend: bool,
         context: CallContext,
     ) -> (ExitReason, Gas, Bytes) {
-        // call trace_opcode.
-
-        //println!("call depth:{}",self.subroutine.depth());
-    
-
-        // Check stipend and if we are transfering some value
-        if let Some(transfer) = transfer.as_ref() {
-            if take_stipend && transfer.value != U256::zero() {
-                gas_limit = gas_limit.saturating_add(SPEC::CALL_STIPEND);
-            }
-        }
-
         // get code that we want to call
         let (code, _) = self.code(code_address);
         // Create subroutine checkpoint
         let checkpoint = self.subroutine.create_checkpoint();
-        // TODO touch address
-        // self.subroutine.touch(context.address);
         self.subroutine.load_account(context.address, self.db);
         // check depth of calls
         if self.subroutine.depth() > SPEC::CALL_STACK_LIMIT {
             return (ExitError::CallTooDeep.into(), Gas::default(), Bytes::new());
         }
-
         // transfer value from caller to called address;
         if let Some(transfer) = transfer {
             if let Err(e) =
@@ -431,7 +434,7 @@ impl<'a, DB: Database> Handler for EVM<'a, DB> {
         gas: u64,
         context: CallContext,
     ) -> (ExitReason, Gas, Bytes) {
-        self.call_inner::<SPEC>(code_address, transfer, input, gas, true, context)
+        self.call_inner::<SPEC>(code_address, transfer, input, gas, context)
     }
 }
 
@@ -492,14 +495,14 @@ pub trait Handler {
 
 pub trait Tracing {
     fn trace_opcode(&mut self, opcode: OpCode, machine: &Machine) {
-        // println!(
-        //     "Opcode:{:?} ({:?}) gas{:?}, Stack:{:?}, Data:{:?}",
-        //     opcode,
-        //     opcode as u8,
-        //     machine.gas.remaining(),
-        //     machine.stack.data(),
-        //     machine.memory.data(),
-        // );
+        println!(
+            "Opcode:{:?}({:?}) gas:{:?}, Stack:{:?}, Data:{:?}",
+            opcode,
+            opcode as u8,
+            machine.gas.remaining(),
+            machine.stack.data(),
+            machine.memory.data(),
+        );
     }
     fn trace_call(&mut self) {}
 }

@@ -11,6 +11,7 @@ mod spec;
 mod subroutine;
 mod util;
 mod db;
+mod precompiles;
 
 use evm::ExtHandler;
 
@@ -30,7 +31,7 @@ pub mod collection {
     pub use alloc::collections::{btree_map::Entry, BTreeMap as Map};
     pub use alloc::vec;
     pub use alloc::vec::Vec;
-    pub use alloc::borrow::Cow;
+    pub use alloc::borrow::{Borrow,Cow};
 }
 
 #[cfg(not(no_sdt))]
@@ -38,5 +39,5 @@ pub mod collection {
     pub use std::collections::{hash_map::Entry, HashMap as Map};
     pub use std::vec;
     pub use std::vec::Vec;
-    pub use std::borrow::Cow;
+    pub use std::borrow::{Cow,Cow::Borrowed};
 }
