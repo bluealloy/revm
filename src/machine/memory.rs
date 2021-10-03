@@ -56,7 +56,7 @@ impl Memory {
         if len == U256::zero() {
             return Ok(0);
         }
-
+        
         if let Some(end) = offset.checked_add(len) {
             // Resize the memory, making it cover to `end`, with 32 bytes as the step.
             if end > self.effective_len {

@@ -58,7 +58,7 @@ pub fn sstore_refund<SPEC: Spec>(original: H256, current: H256, new: H256) -> i6
     }
 }
 
-pub fn create2_cost(len: U256) -> Result<u64, ExitError> {
+pub fn create2_cost(len: U256) -> Option<u64> {
     let base = U256::from(CREATE);
     // ceil(len / 32.0)
     let sha_addup_base = len / U256::from(32)
@@ -67,16 +67,14 @@ pub fn create2_cost(len: U256) -> Result<u64, ExitError> {
         } else {
             U256::one()
         };
-    let sha_addup = U256::from(SHA3WORD)
-        .checked_mul(sha_addup_base)
-        .ok_or(ExitError::OutOfGas)?;
-    let gas = base.checked_add(sha_addup).ok_or(ExitError::OutOfGas)?;
+    let sha_addup = U256::from(SHA3WORD).checked_mul(sha_addup_base)?;
+    let gas = base.checked_add(sha_addup)?;
 
     if gas > U256::from(u64::MAX) {
-        return Err(ExitError::OutOfGas);
+        return None;
     }
 
-    Ok(gas.as_u64())
+    Some(gas.as_u64())
 }
 
 pub fn exp_cost<SPEC: Spec>(power: U256) -> Option<u64> {
@@ -248,15 +246,20 @@ pub fn selfdestruct_cost<SPEC: Spec>(res: SelfDestructResult) -> u64 {
 
 pub fn call_cost<SPEC: Spec>(
     value: U256,
-    is_cold: bool,
+    // None-> not exists. Some -> true. Value is_cold or not.
+    exist_and_is_cold: Option<bool>,
     is_call_or_callcode: bool,
     is_call_or_staticcall: bool,
-    new_account: bool,
+    //new_account: bool,
 ) -> u64 {
     let transfers_value = value != U256::default();
-    account_access_cost::<SPEC>(is_cold, SPEC::GAS_CALL)
+    account_access_cost::<SPEC>(exist_and_is_cold.unwrap_or(true), SPEC::GAS_CALL)
         + xfer_cost(is_call_or_callcode, transfers_value)
-        + new_cost::<SPEC>(is_call_or_staticcall, new_account, transfers_value)
+        + new_cost::<SPEC>(
+            is_call_or_staticcall,
+            exist_and_is_cold.is_some(),
+            transfers_value,
+        )
 }
 
 #[inline(always)]
@@ -302,11 +305,6 @@ fn new_cost<SPEC: Spec>(
         0
     }
 }
-
-// pub fn memory_gas(a: usize) -> Option<u64> {
-//     let a = a as u64;
-//     MEMORY.checked_mul(a)?.checked_add(a.checked_mul(a)? / 512)
-// }
 
 pub fn memory_gas(a: usize) -> Result<u64, ExitError> {
     let a = a as u64;

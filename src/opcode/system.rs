@@ -54,6 +54,7 @@ pub fn address(machine: &mut Machine) -> Control {
 pub fn balance<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
     pop!(machine, address);
     let (balance, is_cold) = handler.balance(address.into());
+    //println!("is balance cold:{} {}",balance,is_cold);
     gas!(
         machine,
         gas::account_access_cost::<SPEC>(is_cold, SPEC::GAS_BALANCE)
@@ -330,15 +331,17 @@ pub fn create<H: ExtHandler, SPEC: Spec>(
     };
     let scheme = if is_create2 {
         pop!(machine, salt);
-        //let code_hash = H256::from_slice(Keccak256::digest(&code).as_slice());
+        gas_or_fail!(machine, gas::create2_cost(len));
         CreateScheme::Create2 { salt }
     } else {
+        gas!(machine, gas::CREATE);
         CreateScheme::Create
     };
 
     // take remaining gas and deduce l64 part of it.
     let gas_limit = try_or_fail!(gas_call_l64_after::<SPEC>(machine));
     gas!(machine, gas_limit);
+
     let (reason, address, gas, return_data) =
         handler.create::<SPEC>(machine.contract.address, scheme, value, code, gas_limit);
     machine.return_data_buffer = return_data;
@@ -471,23 +474,38 @@ pub fn call<H: ExtHandler, SPEC: Spec>(
         None
     };
 
+    let to = to.into();
+    // load account and calculate gas cost.
+    let exist_and_is_cold = handler.load_account(to);
+    gas!(
+        machine,
+        gas::call_cost::<SPEC>(
+            value,
+            exist_and_is_cold,
+            matches!(scheme, CallScheme::Call | CallScheme::CallCode),
+            matches!(scheme, CallScheme::Call | CallScheme::StaticCall),
+        )
+    );
+    
+
     // take l64 part of gas_limit
     let global_gas_limit = try_or_fail!(gas_call_l64_after::<SPEC>(machine));
     let mut gas_limit = min(global_gas_limit, local_gas_limit);
 
-    // Check stipend and if we are transfering some value
+    gas!(machine, gas_limit);
+
+    // add call stipend if there is value to be transfered.
     if let Some(transfer) = transfer.as_ref() {
         if transfer.value != U256::zero() {
             gas_limit = gas_limit.saturating_add(SPEC::CALL_STIPEND);
         }
     }
 
-    gas!(machine, gas_limit);
     // CALL CONTRACT, with static or ordinary spec.
     let (reason, gas, return_data) = if matches!(scheme, CallScheme::StaticCall) {
-        handler.call::<SPEC::STATIC>(to.into(), transfer, input, gas_limit, context)
+        handler.call::<SPEC::STATIC>(to, transfer, input, gas_limit, context)
     } else {
-        handler.call::<SPEC>(to.into(), transfer, input, gas_limit, context)
+        handler.call::<SPEC>(to, transfer, input, gas_limit, context)
     };
     machine.return_data_buffer = return_data;
     let target_len = min(out_len, U256::from(machine.return_data_buffer.len()));

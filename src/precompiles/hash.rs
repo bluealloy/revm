@@ -2,7 +2,7 @@ use crate::precompiles::{Precompile, PrecompileOutput, PrecompileResult};
 use crate::collection::{vec};
 use primitive_types::H160 as Address;
 use crate::{models::CallContext, ExitError};
-
+use sha2::*;
 mod costs {
     pub(super) const SHA256_BASE: u64 = 60;
 

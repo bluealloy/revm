@@ -1,6 +1,6 @@
-pub(crate) use crate::precompiles::secp256k1::ecrecover;
 use crate::collection::{vec, Vec};
-use crate::{ExitError, Machine};
+pub(crate) use crate::precompiles::secp256k1::ecrecover;
+use crate::{models::CallContext, ExitSucceed, Log};
 use crate::{
     precompiles::blake2::Blake2F,
     precompiles::bn128::{Bn128Add, Bn128Mul, Bn128Pair},
@@ -10,7 +10,7 @@ use crate::{
     //precompiles::native::{ExitToEthereum, ExitToNear},
     precompiles::secp256k1::ECRecover,
 };
-use crate::{Log,models::CallContext, ExitSucceed};
+use crate::{ExitError, Machine};
 use primitive_types::H160 as Address;
 
 mod blake2;
@@ -49,10 +49,8 @@ impl Default for PrecompileOutput {
     }
 }
 
-
-
 /// A precompile operation result.
-type PrecompileResult = Result<PrecompileOutput, ExitError>;
+pub type PrecompileResult = Result<PrecompileOutput, ExitError>;
 
 type EvmPrecompileResult = Result<PrecompileOutput, ExitError>;
 
@@ -62,7 +60,12 @@ pub trait Precompile {
     fn required_gas(input: &[u8]) -> Result<u64, ExitError>;
 
     /// Runs the precompile function.
-    fn run(input: &[u8], target_gas: u64, machine: &CallContext, is_static: bool) -> PrecompileResult;
+    fn run(
+        input: &[u8],
+        target_gas: u64,
+        machine: &CallContext,
+        is_static: bool,
+    ) -> PrecompileResult;
 }
 
 /// Hard fork marker.
@@ -88,14 +91,25 @@ impl HardFork for Istanbul {}
 
 impl HardFork for Berlin {}
 
-type PrecompileFn = fn(&[u8], u64, &CallContext, bool) -> PrecompileResult;
+pub type PrecompileFn = fn(&[u8], u64, &CallContext, bool) -> PrecompileResult;
 
-pub(crate) struct Precompiles {
+pub struct Precompiles {
     addresses: Vec<Address>,
     fun: Vec<PrecompileFn>,
 }
 
 impl Precompiles {
+    pub fn new() -> Self {
+        Self {
+            addresses: Vec::new(),
+            fun: Vec::new(),
+        }
+    }
+
+    pub fn addresses(&self) -> &[Address] {
+        &self.addresses
+    }
+
     #[allow(dead_code)]
     pub fn new_homestead() -> Self {
         let addresses = vec![
@@ -178,16 +192,17 @@ impl Precompiles {
     }
 
     #[allow(dead_code)]
-    fn new_berlin() -> Self {
+    pub fn new_berlin() -> Self {
         Self::new_istanbul()
     }
 
-    fn get_fun(&self, address: &Address) -> Option<PrecompileFn> {
-        self.addresses
-            .iter()
-            .position(|e| e == address)
-            .and_then(|i| self.fun.get(i))
-            .copied()
+    pub fn get_fun(&self, address: &Address) -> Option<PrecompileFn> {
+        //return None;
+        if let Some(index) = self.addresses.iter().position(|t| t == address) {
+            self.fun.get(index).cloned()
+        } else {
+            None
+        }
     }
 }
 

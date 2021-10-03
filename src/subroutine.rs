@@ -70,12 +70,15 @@ pub struct SubRoutineCheckpoint {
 }
 
 impl SubRoutine {
-    pub fn new(precompiles: Map<H160, AccountInfo> ) -> SubRoutine {
-        let state = precompiles.into_iter().map(|(k,value)| {
-            let mut acc = Account::from(value);
-            acc.filth = Filth::Precompile(false);
-            (k,acc)
-        }).collect();
+    pub fn new(precompiles: Map<H160, AccountInfo>) -> SubRoutine {
+        let state = precompiles
+            .into_iter()
+            .map(|(k, value)| {
+                let mut acc = Account::from(value);
+                acc.filth = Filth::Precompile(false);
+                (k, acc)
+            })
+            .collect();
 
         Self {
             state,
@@ -215,10 +218,13 @@ impl SubRoutine {
 
     ///
     /// return if it has collition of addresses
-    pub fn new_contract_acc<DB: Database>(&mut self, address: H160, db: &mut DB) -> bool {
+    pub fn new_contract_acc<DB: Database>(&mut self, address: H160, precompiles: &[H160], db: &mut DB) -> bool {
         let (acc, _) = self.load_code(address, db);
         if !acc.info.code.as_ref().unwrap().is_empty() || acc.info.nonce > 0 {
-            return true;
+            return false;
+        }
+        if precompiles.contains(&address) {
+            return false;
         }
         let original_balance = acc.info.balance;
         let mut original_filth = acc.filth.clone();
@@ -232,7 +238,7 @@ impl SubRoutine {
             .entry(address)
             .or_insert_with(|| ChangeLog::Created(original_balance, original_filth));
 
-        false
+        true
     }
 
     fn revert_changelog(state: &mut State, changelog: Map<H160, ChangeLog>) {
@@ -373,20 +379,31 @@ impl SubRoutine {
 
     /// load account into memory. return if it is cold or hot accessed
     pub fn load_account<DB: Database>(&mut self, address: H160, db: &mut DB) -> bool {
-        let is_cold = match self.state.entry(address.clone()) {
-            Entry::Occupied(_) => false,
+        self.load_account_exist(address, db).unwrap_or(true)
+    }
+
+    pub fn load_account_exist<DB: Database>(&mut self, address: H160, db: &mut DB) -> Option<bool> {
+        let exist_is_cold = match self.state.entry(address.clone()) {
+            Entry::Occupied(_) => Some(false),
             Entry::Vacant(vac) => {
-                let acc: Account = db.basic(address.clone()).into();
+                let mut exist = Some(true);
+                let acc: Account = db
+                    .exists(address)
+                    .unwrap_or_else(|| {
+                        exist = None;
+                        AccountInfo::default()
+                    })
+                    .into();
                 vac.insert(acc.clone());
                 // insert none in changelog that represent that we just loaded this acc in this subroutine
                 self.changelog
                     .last_mut()
                     .unwrap()
                     .insert(address.clone(), ChangeLog::ColdLoaded);
-                true
+                exist
             }
         };
-        is_cold
+        exist_is_cold
     }
 
     pub fn load_code<DB: Database>(&mut self, address: H160, db: &mut DB) -> (&mut Account, bool) {

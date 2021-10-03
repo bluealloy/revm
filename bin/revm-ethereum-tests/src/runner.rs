@@ -25,8 +25,8 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum TestError {
-    #[error("Root missmatched. Expected: {expect:?} got:{got:?}")]
-    RootMissmatch { got: H256, expect: H256 },
+    #[error(" Test:{id}, Root missmatched, Expected: {expect:?} got:{got:?}")]
+    RootMissmatch { id:usize, got: H256, expect: H256 },
     #[error("EVM returned error: {0:?}")]
     EVMReturnError(revm::ExitReason),
     #[error("Serde json error")]
@@ -84,7 +84,7 @@ pub fn execute_test_suit(path: &PathBuf) -> Result<(), TestError> {
                 chain_id: 1.into(),     // TODO ?
                 origin: caller.clone(), // TODO ?
             };
-            for test in tests {
+            for (id,test) in tests.into_iter().enumerate() {
                 let mut database = database.clone();
                 let gas_limit = unit
                     .transaction
@@ -149,6 +149,7 @@ pub fn execute_test_suit(path: &PathBuf) -> Result<(), TestError> {
                     println!("\nApplied state:{:?}\n", database);
                     println!("\nStateroot: {:?}\n", state_root);
                     return Err(TestError::RootMissmatch {
+                        id,
                         got: state_root,
                         expect: test.hash,
                     });

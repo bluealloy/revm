@@ -1,9 +1,23 @@
+pub(crate) use crate::precompiles::Precompiles;
+
 
 pub trait NotStaticSpec {}
+
+
+pub const BERLIN : u8 = 1;
+pub const LONDON : u8 = 2;
 
 pub trait Spec {
     /// litle bit of magic. We can have child version of Spec that contains static flag enabled
     type STATIC: Spec;
+    
+    fn enabled(spec_id: u8) -> bool {
+        Self::SPEC_ID <= spec_id
+    }
+
+    fn precompiles() -> Precompiles;
+
+    const SPEC_ID: u8;
     /// static flag used in STATIC type;
     const IS_STATIC_CALL: bool;
     /// Gas paid for extcode.

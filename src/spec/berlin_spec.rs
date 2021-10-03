@@ -1,4 +1,4 @@
-use crate::NotStaticSpec;
+use crate::{NotStaticSpec, precompiles::Precompiles};
 
 use super::Spec;
 
@@ -15,6 +15,14 @@ impl NotStaticSpec for BerlinSpec {}
 
 impl<const IS_STATIC_CALL: bool> Spec for BerlinSpecImpl<IS_STATIC_CALL> {
     type STATIC = BerlinSpecImpl<true>;
+    
+    //specification id
+    const SPEC_ID: u8 = super::spec::BERLIN;
+    //precompiles
+    fn precompiles() -> Precompiles {
+        Precompiles::new_berlin()
+    }
+
     const IS_STATIC_CALL: bool = IS_STATIC_CALL;
     /// Gas paid for extcode.
     const GAS_EXT_CODE: u64 = 0;

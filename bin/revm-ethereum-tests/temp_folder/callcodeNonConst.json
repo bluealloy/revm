@@ -1,13 +1,13 @@
 {
-    "callcodeNonConst" : {
+    "jumpiNonConst" : {
         "_info" : {
             "comment" : "",
             "filling-rpc-server" : "evm version 1.10.9-unstable-5d64c754-20210831",
             "filling-tool-version" : "retesteth-0.2.0-memory+commit.7c392173.Linux.g++",
-            "generatedTestHash" : "c01f0c27daf7faad0873a7708c9c12ac0412fed7095688745bac1cabfad49897",
+            "generatedTestHash" : "1ee40bc03a70e4965c7fac6d87957abfe3c432b26b6eccddf9fc50c9781ed6e0",
             "lllcversion" : "Version: 0.5.14-develop.2021.6.15+commit.401d5358.Linux.g++",
-            "source" : "src/GeneralStateTestsFiller/stArgsZeroOneBalance/callcodeNonConstFiller.yml",
-            "sourceHash" : "033bfb98a1f4a71e6b5422a83305e6be13cc95127c071ad4a714ca962774f79c"
+            "source" : "src/GeneralStateTestsFiller/stArgsZeroOneBalance/jumpiNonConstFiller.yml",
+            "sourceHash" : "92603bb1f3e2e8ccb34ad6bada991aa4149877dd6bb24d57048d6d843d62f455"
         },
         "env" : {
             "currentBaseFee" : "0x0a",
@@ -21,17 +21,7 @@
         "post" : {
             "Berlin" : [
                 {
-                    "hash" : "0xdb2a14555158e06eb71e2db77ef3aabc90fdcbe4c33823407bfbb9de28b3b8f2",
-                    "indexes" : {
-                        "data" : 0,
-                        "gas" : 0,
-                        "value" : 0
-                    },
-                    "logs" : "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-                    "txbytes" : "0xf860800a83061a8094095e7baea6a6c7c4c2dfeb977efac326af552d8780801ba072ed817487b84ba367d15d2f039b5fc5f087d0a8882fbdf73e8cb49357e1ce30a0403d800545b8fc544f92ce8124e2255f8c3c6af93f28243a120585d4c4c6a2a3"
-                },
-                {
-                    "hash" : "0xc1526966e3be8309a78eb793b0493e0df413fa948840be6649be84c6c51b8fd7",
+                    "hash" : "0xac378613fee86db7c28b1c1c94ccb7633b6be96bda110a11110dc0cbc6c783d5",
                     "indexes" : {
                         "data" : 0,
                         "gas" : 0,
@@ -45,7 +35,7 @@
         "pre" : {
             "0x095e7baea6a6c7c4c2dfeb977efac326af552d87" : {
                 "balance" : "0x00",
-                "code" : "0x73095e7baea6a6c7c4c2dfeb977efac326af552d873173095e7baea6a6c7c4c2dfeb977efac326af552d873173095e7baea6a6c7c4c2dfeb977efac326af552d873173095e7baea6a6c7c4c2dfeb977efac326af552d873173095e7baea6a6c7c4c2dfeb977efac326af552d873173095e7baea6a6c7c4c2dfeb977efac326af552d873173095e7baea6a6c7c4c2dfeb977efac326af552d8731f260005500",
+                "code" : "0x73095e7baea6a6c7c4c2dfeb977efac326af552d873173095e7baea6a6c7c4c2dfeb977efac326af552d87315700",
                 "nonce" : "0x00",
                 "storage" : {
                 }

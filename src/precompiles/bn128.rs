@@ -4,7 +4,8 @@ use crate::precompiles::{
 use crate::collection::*;
 use crate::{models::CallContext, ExitError};
 use core::marker::PhantomData;
-use primitive_types::H160 as Address;
+use primitive_types::{H160 as Address, U256};
+use borsh;
 
 /// bn128 costs.
 mod costs {
@@ -304,7 +305,7 @@ impl<HF: HardFork> Bn128Pair<HF> {
                 U256::zero()
             }
         };
-
+        
         Ok(output.to_big_endian().to_vec())
     }
 }

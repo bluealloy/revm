@@ -8,7 +8,7 @@ use bytes::Bytes;
 
 pub trait Database {
     /// Whether account at address exists.
-    fn exists(&mut self, address: H160) -> bool;
+    fn exists(&mut self, address: H160) -> Option<AccountInfo>;
     /// Get basic account information.
     fn basic(&mut self, address: H160) -> AccountInfo;
     /// Get account code.
@@ -17,8 +17,6 @@ pub trait Database {
     fn code_by_hash(&mut self, code_hash: H256) -> Bytes;
     /// Get storage value of address at index.
     fn storage(&mut self, address: H160, index: H256) -> H256;
-    /// Get original storage value of address at index, if available.
-    fn original_storage(&mut self, address: H160, index: H256) -> Option<H256>;
 
     // History related
     fn block_hash(&mut self, number: U256) -> H256;
@@ -112,9 +110,13 @@ impl Database for StateDB {
         H256::zero()
     }
 
-    fn exists(&mut self, address: H160) -> bool {
+    fn exists(&mut self, address: H160) -> Option<AccountInfo> {
         //log::info!(target: "evm::handler", "{:?} exists",address);
-        !self.fetch_account(&address)
+        if self.fetch_account(&address) {
+            Some(self.cache.get(&address).cloned().unwrap())
+        } else {
+            None
+        }
     }
 
     fn basic(&mut self, address: H160) -> AccountInfo {
@@ -174,25 +176,6 @@ impl Database for StateDB {
         } else {
             H256::zero()
         }
-    }
-
-    /// TODO maybe optimize so that we save both original and new value. For now leave it to allways fetch from db
-    /// on assumption that this operation is not common.
-    fn original_storage(&mut self, address: H160, index: H256) -> Option<H256> {
-        //log::info!(target: "evm::handler", "{:?} original storage {:?}",address,index);
-        Some(self.storage(address, index))
-        /*
-        if self.fetch_account(&address) {
-            let mut cache = self.cache.lock();
-            let acc = cache.get_mut(&address).unwrap();
-            let eth_address = ethH160::from(address.0);
-            let eth_index = ethH256::from(index.0);
-            self.db
-                .storage(&eth_address, acc.incarnation, &eth_index)
-                .map(|storage| H256::from(storage.0))
-        } else {
-            None
-        }*/
     }
 
     fn code_by_hash(&mut self, _code_hash: H256) -> Bytes {

@@ -30,7 +30,7 @@ pub(crate) fn ecrecover(hash: H256, signature: &[u8]) -> Result<Address, ExitErr
 
 #[cfg(not(feature = "contract"))]
 fn internal_impl(hash: H256, signature: &[u8]) -> Result<Address, ExitError> {
-    use sha3::{Digest,secp256k1};
+    use sha3::{Digest};
 
     let hash = secp256k1::Message::parse_slice(hash.as_bytes()).unwrap();
     let v = signature[64];

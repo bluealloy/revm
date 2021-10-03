@@ -5,6 +5,9 @@ use crate::{
 use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
 
+use super::precompiles::{
+    Precompile, PrecompileFn, PrecompileOutput, PrecompileResult, Precompiles,
+};
 use crate::{
     db::Database,
     error::{ExitError, ExitReason, ExitSucceed},
@@ -20,7 +23,7 @@ pub struct EVM<'a, DB: Database> {
     db: &'a mut DB,
     global_env: GlobalEnv,
     subroutine: SubRoutine,
-    precompiles: Map<H160, ()>,
+    precompiles: Precompiles,
 }
 
 impl<'a, DB: Database> EVM<'a, DB> {
@@ -28,8 +31,8 @@ impl<'a, DB: Database> EVM<'a, DB> {
         Self {
             db,
             global_env,
-            subroutine: SubRoutine::new(precompiles::accounts()),
-            precompiles: Map::new(),
+            subroutine: SubRoutine::new(Map::new()), //precompiles::accounts()),
+            precompiles: Precompiles::new(),
         }
     }
 
@@ -147,6 +150,12 @@ impl<'a, DB: Database> EVM<'a, DB> {
         is_create: bool,
         access_list: Vec<(H160, Vec<H256>)>,
     ) -> u64 {
+        self.precompiles = SPEC::precompiles();
+        for &ward_acc in self.precompiles.addresses().iter() {
+            //println!("Preloaded:{:?}",ward_acc);
+            self.subroutine.load_account(ward_acc,self.db);
+        }
+
         let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
         let non_zero_data_len = (input.len() as u64 - zero_data_len) as u64;
         let accessed_accounts = access_list.len() as u64;
@@ -183,11 +192,10 @@ impl<'a, DB: Database> EVM<'a, DB> {
     ) -> (ExitReason, Option<H160>, Gas, Bytes) {
         //println!("create depth:{}",self.subroutine.depth());
 
-        // TODO set caller/contract_add/precompiles as hot access. Probably can be removed. Acc shold be allready hot.
         self.subroutine.load_account(caller, self.db);
 
-        // trace call
-        self.trace_call();
+        // trace create
+    
         // check depth of calls
         if self.subroutine.depth() > SPEC::CALL_STACK_LIMIT {
             return (
@@ -217,7 +225,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
             CreateScheme::Create2 { salt } => util::create2_address(caller, code_hash, salt),
         };
         // create contract account and check for collision
-        if self.subroutine.new_contract_acc(address, self.db) {
+        if !self.subroutine.new_contract_acc(address,self.precompiles.addresses(), self.db) {
             self.subroutine.checkpoint_discard(checkpoint);
             return (
                 ExitError::CreateCollision.into(),
@@ -226,6 +234,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
                 Bytes::new(),
             );
         }
+        // if if add 
 
         // transfer value to contract address
         if let Err(e) = self.subroutine.transfer(caller, address, value, self.db) {
@@ -315,6 +324,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
         // Create subroutine checkpoint
         let checkpoint = self.subroutine.create_checkpoint();
         self.subroutine.load_account(context.address, self.db);
+        self.trace_call(code_address,&context,&transfer,&input,SPEC::IS_STATIC_CALL);
         // check depth of calls
         if self.subroutine.depth() > SPEC::CALL_STACK_LIMIT {
             return (ExitError::CallTooDeep.into(), Gas::default(), Bytes::new());
@@ -330,6 +340,24 @@ impl<'a, DB: Database> EVM<'a, DB> {
             }
         }
         // TODO check if we are calling PRECOMPILES and call it here and return.
+        if let Some(precomp) = self.precompiles.get_fun(&code_address) {
+            let mut gas = Gas::new(gas_limit.clone());
+            let precompile = precomp as PrecompileFn;
+            return match (precompile)(input.as_ref(), gas_limit, &context, SPEC::IS_STATIC_CALL) {
+                Ok(PrecompileOutput { output, cost, logs }) => {
+                    logs.into_iter()
+                        .for_each(|l| self.log(l.address, l.topics, l.data));
+                    gas.record_cost(cost);
+                    let _ = self.subroutine.checkpoint_commit(checkpoint);
+                    (ExitReason::Succeed(ExitSucceed::Returned), gas, Bytes::from(output))
+                }
+                Err(e) => {
+                    let _ = self.subroutine.checkpoint_discard(checkpoint); //TODO chekc
+                    (ExitReason::Error(e), gas, Bytes::new())
+                }
+            };
+        }
+
         // create machine and execute it
         let contract = Contract::new(
             input,
@@ -363,6 +391,10 @@ impl<'a, DB: Database> Handler for EVM<'a, DB> {
         &self.global_env
     }
 
+    fn load_account(&mut self, address: H160) -> Option<bool> {
+        self.subroutine.load_account_exist(address, self.db)
+    }
+
     fn block_hash(&mut self, number: U256) -> H256 {
         self.db.block_hash(number)
     }
@@ -386,10 +418,6 @@ impl<'a, DB: Database> Handler for EVM<'a, DB> {
     // TODO check return value, should it be is_cold or maybe original value
     fn sstore(&mut self, address: H160, index: H256, value: H256) -> (H256, H256, H256, bool) {
         self.subroutine.sstore(address, index, value, self.db)
-    }
-
-    fn original_storage(&mut self, address: H160, index: H256) -> H256 {
-        self.db.original_storage(address, index).unwrap_or_default()
     }
 
     fn log(&mut self, address: H160, topics: Vec<H256>, data: Bytes) {
@@ -452,6 +480,8 @@ pub trait Handler {
     /// Get global const context of evm execution
     fn global_env(&self) -> &GlobalEnv;
 
+    /// load account. None it does not exist. Some value true is_cold.
+    fn load_account(&mut self, address: H160) -> Option<bool>;
     /// Get environmental block hash.
     fn block_hash(&mut self, number: U256) -> H256;
     /// Get balance of address.
@@ -462,8 +492,6 @@ pub trait Handler {
     fn sload(&mut self, address: H160, index: H256) -> (H256, bool);
     /// Set storage value of address at index. Return if slot is cold/hot access.
     fn sstore(&mut self, address: H160, index: H256, value: H256) -> (H256, H256, H256, bool);
-    /// Get original storage value of address at index.
-    fn original_storage(&mut self, address: H160, index: H256) -> H256;
     /// Create a log owned by address with given topics and data.
     fn log(&mut self, address: H160, topics: Vec<H256>, data: Bytes);
     /// Mark an address to be deleted, with funds transferred to target.
@@ -496,15 +524,25 @@ pub trait Handler {
 pub trait Tracing {
     fn trace_opcode(&mut self, opcode: OpCode, machine: &Machine) {
         println!(
-            "Opcode:{:?}({:?}) gas:{:?}, Stack:{:?}, Data:{:?}",
+            "OPCODE:    {:?}({:?}) gas:{:#x}({}), Stack:{:?}, Data:{:?}",
             opcode,
             opcode as u8,
+            machine.gas.remaining(),
             machine.gas.remaining(),
             machine.stack.data(),
             machine.memory.data(),
         );
     }
-    fn trace_call(&mut self) {}
+    fn trace_call(&mut self,call: H160, context: &CallContext, transfer: &Option<Transfer>,input:&Bytes,is_static:bool) {
+        println!(
+            "SM CALL:   {:?},context:{:?}, is_static:{:?}, transfer:{:?}, input:{:?}",
+            call,
+            context,
+            is_static,
+            transfer,
+            input,
+        );
+    }
 }
 
 pub trait ExtHandler: Handler + Tracing {

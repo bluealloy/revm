@@ -90,7 +90,7 @@ impl Precompile for Blake2F {
         }
         let finished = input[212] != 0;
 
-        let output = blake2::blake2b::Blake2b(rounds, h, m, t, finished).to_vec();
+        let output = blake2::blake2b_f(rounds, h, m, t, finished).to_vec();
         Ok(PrecompileOutput::without_logs(cost, output))
     }
 }
