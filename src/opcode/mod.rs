@@ -69,7 +69,7 @@ pub fn eval<H: ExtHandler, S: Spec>(
         OpCode::POP => misc::pop(machine),
         OpCode::MLOAD => misc::mload(machine),
         OpCode::MSTORE => misc::mstore(machine),
-        OpCode::MSTORE8 => misc::mstore(machine),
+        OpCode::MSTORE8 => misc::mstore8(machine),
         OpCode::JUMP => misc::jump(machine),
         OpCode::JUMPI => misc::jumpi(machine),
         OpCode::PC => misc::pc(machine, position),

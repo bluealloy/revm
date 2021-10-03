@@ -1,13 +1,13 @@
 {
-    "jumpiNonConst" : {
+    "mstore8NonConst" : {
         "_info" : {
             "comment" : "",
             "filling-rpc-server" : "evm version 1.10.9-unstable-5d64c754-20210831",
             "filling-tool-version" : "retesteth-0.2.0-memory+commit.7c392173.Linux.g++",
-            "generatedTestHash" : "1ee40bc03a70e4965c7fac6d87957abfe3c432b26b6eccddf9fc50c9781ed6e0",
+            "generatedTestHash" : "f0c45c3c2a2031dd003b2f58873381d3ca46fe0305c212bcb92b9511b7abcaa6",
             "lllcversion" : "Version: 0.5.14-develop.2021.6.15+commit.401d5358.Linux.g++",
-            "source" : "src/GeneralStateTestsFiller/stArgsZeroOneBalance/jumpiNonConstFiller.yml",
-            "sourceHash" : "92603bb1f3e2e8ccb34ad6bada991aa4149877dd6bb24d57048d6d843d62f455"
+            "source" : "src/GeneralStateTestsFiller/stArgsZeroOneBalance/mstore8NonConstFiller.yml",
+            "sourceHash" : "0b1402aae4a12a4ae598360ab0464d0bfbeb94c70e1720484409b55ab43b212f"
         },
         "env" : {
             "currentBaseFee" : "0x0a",
@@ -21,7 +21,7 @@
         "post" : {
             "Berlin" : [
                 {
-                    "hash" : "0xac378613fee86db7c28b1c1c94ccb7633b6be96bda110a11110dc0cbc6c783d5",
+                    "hash" : "0x2c7b29a448816ef699eb67ba8f2cf01056d71d93a1f77c226cb2ed0053c478ee",
                     "indexes" : {
                         "data" : 0,
                         "gas" : 0,
@@ -35,7 +35,7 @@
         "pre" : {
             "0x095e7baea6a6c7c4c2dfeb977efac326af552d87" : {
                 "balance" : "0x00",
-                "code" : "0x73095e7baea6a6c7c4c2dfeb977efac326af552d873173095e7baea6a6c7c4c2dfeb977efac326af552d87315700",
+                "code" : "0x73095e7baea6a6c7c4c2dfeb977efac326af552d873173095e7baea6a6c7c4c2dfeb977efac326af552d87315300",
                 "nonce" : "0x00",
                 "storage" : {
                 }
