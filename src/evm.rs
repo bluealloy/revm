@@ -95,7 +95,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
             context,
         );
         let gas_spend = match exit_reason {
-            ExitReason::Error(ExitError::OutOfGas) => gas_limit,
+            ExitReason::Error(_) => gas_limit,
             _ => gas.all_used() + gas_used_init,
         };
 
@@ -134,7 +134,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
         );
 
         let gas_spend = match exit_reason {
-            ExitReason::Error(ExitError::OutOfGas) => gas_limit,
+            ExitReason::Error(_) => gas_limit,
             _ => gas.all_used() + gas_used_init,
         };
 
@@ -235,6 +235,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
             );
         }
         // if if add 
+
 
         // transfer value to contract address
         if let Err(e) = self.subroutine.transfer(caller, address, value, self.db) {
