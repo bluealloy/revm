@@ -194,7 +194,7 @@ pub fn run(mut test_files: Vec<PathBuf>) {
         let _ = handler.join();
     }
     // if not error finish console bar
-    if !endjob.load(Ordering::SeqCst) {
-        console_bar.finish();
-    }
+    //if endjob.load(Ordering::SeqCst) {
+    console_bar.finish_at_current_pos()
+    //}
 }

@@ -26,7 +26,7 @@ pub trait Database {
 }
 
 /// Memory backend, storing all state values in a `Map` in memory.
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone)]
 pub struct StateDB {
     cache: Map<H160, AccountInfo>,
     storage: Map<H160, Map<H256, H256>>,
@@ -44,9 +44,13 @@ impl StateDB {
 
     pub fn apply(&mut self, changes: Map<H160, Account>) {
         for (add, acc) in changes {
-            self.cache.insert(add, acc.info);
-            for (index, value) in acc.storage {
-                self.storage.entry(add).or_default().insert(index, value);
+            if acc.is_empty() {
+                self.cache.remove(&add);
+            } else {
+                self.cache.insert(add, acc.info);
+                for (index, value) in acc.storage {
+                    self.storage.entry(add).or_default().insert(index, value);
+                }
             }
         }
     }

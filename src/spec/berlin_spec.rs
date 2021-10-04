@@ -77,7 +77,7 @@ impl<const IS_STATIC_CALL: bool> Spec for BerlinSpecImpl<IS_STATIC_CALL> {
     /// Take l64 for callcreate after gas.
     const CALL_L64_AFTER_GAS: bool = false;
     /// Whether empty account is considered exists.
-    const EMPTY_CONSIDERED_EXISTS: bool = true;
+    const EMPTY_CONSIDERED_EXISTS: bool = false;
     /// Whether create transactions and create opcode increases nonce by one.
     const CREATE_INCREASE_NONCE: bool = true;
     /// Stack limit.

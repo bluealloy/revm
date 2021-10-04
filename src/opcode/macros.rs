@@ -12,7 +12,7 @@ macro_rules! try_or_fail {
 macro_rules! enabled {
     ($expresion:expr ) => {
         if !$expresion {
-            return Control::Exit(ExitReason::Error(ExitError::OpcodeDisabled));
+            return Control::Exit(ExitReason::Error(ExitError::OpcodeNotFound));
         }
     };
 }
@@ -27,7 +27,9 @@ macro_rules! gas {
 
 macro_rules! refund {
     ($machine:expr, $gas:expr) => {
-        $machine.gas_refund($gas)
+        {
+        $machine.gas_refund($gas);
+        }
     };
 }
 

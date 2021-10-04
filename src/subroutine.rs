@@ -1,9 +1,14 @@
-use crate::collection::{vec, vec::Vec, Entry, Map};
+use crate::{
+    collection::{vec, vec::Vec, Entry, Map},
+    evm::SelfDestructResult,
+};
 
 use core::mem::{self};
 
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
+use rlp::Decodable;
+use secp256k1::curve::Field;
 
 use crate::{db::Database, error::ExitError, AccountInfo, Log};
 
@@ -99,8 +104,8 @@ impl SubRoutine {
         for (add, mut acc) in state.into_iter() {
             let dirty = acc.filth.clean();
             match acc.filth {
-                Filth::DestroyedOrNew | Filth::Precompile(true) => {
-                    // acc was destroyed or newly created. just add it to output
+                Filth::Destroyed | Filth::NewlyCreated | Filth::Precompile(true) => {
+                    // acc was destroyed or newly created or if it is changed precompile, just add it to output.
                     out.insert(add, acc);
                 }
                 Filth::Dirty(_) => {
@@ -164,15 +169,20 @@ impl SubRoutine {
                 }
             }
             Entry::Vacant(entry) => {
-                let was_clean = matches!(acc.filth, Filth::Clean);
-                let mut changelog = DirtyChangeLog {
-                    info: acc.info.clone(),
-                    dirty_storage: Map::new(),
-                    was_clean,
+                let changelog = if let Filth::Precompile(was_dirty) = acc.filth {
+                    ChangeLog::PrecompileBalanceChange(acc.info.balance, was_dirty)
+                } else {
+                    let was_clean = matches!(acc.filth, Filth::Clean);
+                    let mut changelog = DirtyChangeLog {
+                        info: acc.info.clone(),
+                        dirty_storage: Map::new(),
+                        was_clean,
+                    };
+                    update(&mut changelog);
+                    ChangeLog::Dirty(changelog)
                 };
 
-                update(&mut changelog);
-                entry.insert(ChangeLog::Dirty(changelog));
+                entry.insert(changelog);
             }
         }
         acc.filth.make_dirty();
@@ -189,6 +199,7 @@ impl SubRoutine {
         // load accounts
         let from_is_cold = self.load_account(from, db);
         let to_is_cold = self.load_account(to, db);
+
         if value == U256::zero() {
             return Ok((from_is_cold, to_is_cold));
         }
@@ -218,7 +229,12 @@ impl SubRoutine {
 
     ///
     /// return if it has collition of addresses
-    pub fn new_contract_acc<DB: Database>(&mut self, address: H160, precompiles: &[H160], db: &mut DB) -> bool {
+    pub fn new_contract_acc<DB: Database>(
+        &mut self,
+        address: H160,
+        precompiles: &[H160],
+        db: &mut DB,
+    ) -> bool {
         let (acc, _) = self.load_code(address, db);
         if !acc.info.code.as_ref().unwrap().is_empty() || acc.info.nonce > 0 {
             return false;
@@ -229,8 +245,9 @@ impl SubRoutine {
         let original_balance = acc.info.balance;
         let mut original_filth = acc.filth.clone();
         original_filth.clean();
-
-        acc.filth = Filth::DestroyedOrNew;
+        if acc.filth == Filth::Destroyed {
+            acc.filth = Filth::NewlyCreated;
+        }
         // mark it in changelog as newly created
         self.changelog
             .last_mut()
@@ -241,84 +258,95 @@ impl SubRoutine {
         true
     }
 
-    fn revert_changelog(state: &mut State, changelog: Map<H160, ChangeLog>) {
-        for (add, acc_change) in changelog {
-            match acc_change {
-                // it was cold loaded. Remove it from global set
-                ChangeLog::ColdLoaded => {
-                    state.remove(&add); //done
-                }
-                ChangeLog::PrecompileBalanceChange(original_balance, flag) => {
-                    let acc = state.get_mut(&add).unwrap();
-                    acc.info.balance = original_balance;
-                    acc.filth = Filth::Precompile(flag);
-                }
-                ChangeLog::Destroyed(account) => {
-                    state.insert(add, account.clone()); // done
-                }
-                ChangeLog::Created(balance, orig_filth) => {
-                    let acc = state.get_mut(&add).unwrap();
-                    acc.info.code = None;
-                    acc.info.code_hash = None;
-                    acc.info.nonce = 0;
-                    acc.info.balance = balance;
-                    acc.filth = orig_filth;
-                    acc.storage.clear();
-                }
-                // if there are dirty changes in log
-                ChangeLog::Dirty(dirty_log) => {
-                    let acc = state.get_mut(&add).unwrap(); // should be present
+    #[inline]
+    fn revert_account_changelog(
+        state: &mut State,
+        add: H160,
+        acc_change: ChangeLog,
+    ) -> Option<Account> {
+        match acc_change {
+            // it was cold loaded. Remove it from global set
+            ChangeLog::ColdLoaded => state.remove(&add),
+            ChangeLog::PrecompileBalanceChange(original_balance, flag) => {
+                let acc = state.get_mut(&add).unwrap();
+                acc.info.balance = original_balance;
+                acc.filth = Filth::Precompile(flag);
+                None
+            }
+            ChangeLog::Destroyed(account) => {
+                state.insert(add, account.clone()); // done
+                Some(account)
+            }
+            ChangeLog::Created(balance, orig_filth) => {
+                let acc = state.get_mut(&add).unwrap();
+                acc.info.code = None;
+                acc.info.code_hash = None;
+                acc.info.nonce = 0;
+                acc.info.balance = balance;
+                acc.filth = orig_filth;
+                acc.storage.clear();
+                Some(acc.clone())
+            }
+            // if there are dirty changes in log
+            ChangeLog::Dirty(dirty_log) => {
+                let acc = state.get_mut(&add).unwrap(); // should be present
 
-                    // changset is clean,
-                    acc.info.balance = dirty_log.info.balance;
-                    acc.info.nonce = dirty_log.info.nonce;
-                    // BIG TODO filth
-                    if dirty_log.was_clean {
-                        acc.filth = Filth::Clean;
-                    }
-                    if dirty_log.was_clean || matches!(acc.filth, Filth::DestroyedOrNew) {
-                        // Handle storage change
-                        for (slot, log) in dirty_log.dirty_storage {
-                            match log {
-                                SlotChangeLog::Cold => {
-                                    acc.storage.remove(&slot);
-                                }
-                                SlotChangeLog::OriginalDirty(previous) => {
-                                    acc.storage.insert(slot, previous);
-                                }
+                // changset is clean,
+                acc.info.balance = dirty_log.info.balance;
+                acc.info.nonce = dirty_log.info.nonce;
+                // BIG TODO filth
+                if dirty_log.was_clean {
+                    acc.filth = Filth::Clean;
+                }
+                if dirty_log.was_clean || matches!(acc.filth, Filth::Destroyed | Filth::NewlyCreated) {
+                    // Handle storage change
+                    for (slot, log) in dirty_log.dirty_storage {
+                        match log {
+                            SlotChangeLog::Cold => {
+                                acc.storage.remove(&slot);
+                            }
+                            SlotChangeLog::OriginalDirty(previous) => {
+                                acc.storage.insert(slot, previous);
                             }
                         }
-                    } else {
-                        let dirty = match &mut acc.filth {
-                            Filth::Dirty(dirty) => dirty,
-                            _ => panic!("panic this should not happen"),
-                        };
-                        for (slot, log) in dirty_log.dirty_storage {
-                            match log {
-                                SlotChangeLog::Cold => {
-                                    acc.storage.remove(&slot);
-                                    dirty.remove(&slot);
-                                }
-                                SlotChangeLog::OriginalDirty(previous) => {
-                                    // if it is marked as dirty that means we wrote something in this slot.
-                                    // and with that unwrap is okay.
-                                    let present = acc.storage.insert(slot, previous).unwrap();
-                                    match dirty.entry(slot) {
-                                        Entry::Occupied(entry) => {
-                                            if previous == *entry.get() {
-                                                entry.remove();
-                                            }
+                    }
+                } else {
+                    let dirty = match &mut acc.filth {
+                        Filth::Dirty(dirty) => dirty,
+                        _ => panic!("panic this should not happen"),
+                    };
+                    for (slot, log) in dirty_log.dirty_storage {
+                        match log {
+                            SlotChangeLog::Cold => {
+                                acc.storage.remove(&slot);
+                                dirty.remove(&slot);
+                            }
+                            SlotChangeLog::OriginalDirty(previous) => {
+                                // if it is marked as dirty that means we wrote something in this slot.
+                                // and with that unwrap is okay.
+                                let present = acc.storage.insert(slot, previous).unwrap();
+                                match dirty.entry(slot) {
+                                    Entry::Occupied(entry) => {
+                                        if previous == *entry.get() {
+                                            entry.remove();
                                         }
-                                        Entry::Vacant(entry) => {
-                                            entry.insert(present);
-                                        }
+                                    }
+                                    Entry::Vacant(entry) => {
+                                        entry.insert(present);
                                     }
                                 }
                             }
                         }
                     }
                 }
+                Some(acc.clone())
             }
+        }
+    }
+
+    fn revert_changelog(state: &mut State, changelog: Map<H160, ChangeLog>) {
+        for (add, acc_change) in changelog {
+            Self::revert_account_changelog(state, add, acc_change);
         }
     }
 
@@ -358,52 +386,80 @@ impl SubRoutine {
         self.depth -= 1;
     }
 
-    // TODO probably expand it to target address where value is going to be transfered
-    pub fn destroy_storage(&mut self, address: H160) {
+    /// transfer balance from address to target. Check if target exist/is_cold
+    pub fn selfdestruct<DB: Database>(
+        &mut self,
+        address: H160,
+        target: H160,
+        db: &mut DB,
+    ) -> SelfDestructResult {
+        let (is_cold, exists) = self.load_account_exist(target, db);
+        // transfer all the balance
         let acc = self.state.get_mut(&address).unwrap();
+        let value = acc.info.balance;
+        let had_value = value != U256::zero();
+        let previously_destroyed = matches!(acc.filth, Filth::Destroyed);
+        let target = self.log_dirty(target, |_| {});
+        target.info.balance += value;
         // if there is no account in this subroutine changelog,
         // save it so that it can be restored if subroutine needs to be rediscarded.
-
-        // BIG TODO MERGE storage with changelog. Revert changes and save FULL ACCOUNT in changeset.
-        match self.changelog.last_mut().unwrap().entry(address.clone()) {
-            Entry::Occupied(_) => {
-                // TODO revert current changelog and save it as original
+        let acc = match self.changelog.last_mut().unwrap().entry(address) {
+            Entry::Occupied(mut entry) => {
+                let changelog = entry.get_mut();
+                // revert current changelog
+                let acc =
+                    Self::revert_account_changelog(&mut self.state, address, changelog.clone())
+                        .unwrap();
+                // mark it as destryoted and save original account if needed to revert it.
+                *changelog = ChangeLog::Destroyed(acc.clone());
+                self.state.entry(address).or_insert(acc)
             }
             Entry::Vacant(entry) => {
+                // no change logs. Take current state acc and save it
+                let acc = self.state.get_mut(&address).unwrap();
                 entry.insert(ChangeLog::Destroyed(acc.clone()));
+                acc
             }
+        };
+        // nulify state and info. Mark acc as destroyed.
+        acc.filth = Filth::Destroyed;
+        acc.storage = Map::new();
+        acc.info = AccountInfo::default();
+        SelfDestructResult {
+            had_value,
+            is_cold,
+            exists,
+            previously_destroyed,
         }
-        acc.filth = Filth::DestroyedOrNew;
-        acc.storage.clear();
     }
 
     /// load account into memory. return if it is cold or hot accessed
-    pub fn load_account<DB: Database>(&mut self, address: H160, db: &mut DB) -> bool {
-        self.load_account_exist(address, db).unwrap_or(true)
-    }
-
-    pub fn load_account_exist<DB: Database>(&mut self, address: H160, db: &mut DB) -> Option<bool> {
-        let exist_is_cold = match self.state.entry(address.clone()) {
-            Entry::Occupied(_) => Some(false),
-            Entry::Vacant(vac) => {
-                let mut exist = Some(true);
-                let acc: Account = db
-                    .exists(address)
-                    .unwrap_or_else(|| {
-                        exist = None;
-                        AccountInfo::default()
-                    })
-                    .into();
-                vac.insert(acc.clone());
+    pub fn load_account<'a, DB: Database>(&'a mut self, address: H160, db: &mut DB) -> bool {
+        let is_cold = match self.state.entry(address.clone()) {
+            Entry::Occupied::<'a>(ref mut entry) => false,
+            Entry::Vacant::<'a>(vac) => {
+                let acc: Account = db.basic(address).into();
                 // insert none in changelog that represent that we just loaded this acc in this subroutine
                 self.changelog
                     .last_mut()
                     .unwrap()
                     .insert(address.clone(), ChangeLog::ColdLoaded);
-                exist
+                vac.insert(acc.clone());
+                true
             }
         };
-        exist_is_cold
+        is_cold
+    }
+
+    // first is is_cold second bool is exists.
+    pub fn load_account_exist<DB: Database>(&mut self, address: H160, db: &mut DB) -> (bool, bool) {
+        let (acc, is_cold) = self.load_code(address, db);
+        let info = acc.info.clone();
+        let exists = info.balance == U256::zero()
+            && info.nonce == 0
+            && info.code.unwrap_or_default() == Bytes::default();
+        //&& info.code_hash.unwrap_or_default() == H256::default();
+        (is_cold, !exists)
     }
 
     pub fn load_code<DB: Database>(&mut self, address: H160, db: &mut DB) -> (&mut Account, bool) {
@@ -429,7 +485,7 @@ impl SubRoutine {
             // add slot to ColdLoaded in changelog
             Entry::Vacant(vac) => {
                 // if storage was destroyed, we dont need to ping db.
-                let value = if acc.filth == Filth::DestroyedOrNew {
+                let value = if matches!(acc.filth, Filth::Destroyed | Filth::NewlyCreated) {
                     H256::zero()
                 } else {
                     db.storage(address, index)
@@ -526,6 +582,17 @@ pub struct Account {
     pub filth: Filth,
 }
 
+impl Account {
+    pub fn is_empty(&self) -> bool {
+        let code_empty = if let Some(ref code) = self.info.code {
+            code.is_empty()
+        } else {
+            true
+        };
+        self.info.balance == U256::zero() && self.info.nonce == 0 && code_empty
+    }
+}
+
 impl From<AccountInfo> for Account {
     fn from(info: AccountInfo) -> Self {
         Self {
@@ -544,7 +611,9 @@ pub enum Filth {
     Dirty(Map<H256, H256>),
     /// destroyed by selfdestruct or it is newly
     ///  created by create/create2 opcode. Either way dont save original values
-    DestroyedOrNew,
+    Destroyed,
+    
+    NewlyCreated,
     // precompile
     // bool signals if it is dirty or not
     Precompile(bool),
@@ -564,7 +633,7 @@ impl Filth {
                 // insert only if not present. If present it is assumed with always have original value.
                 originals.entry(index).or_insert(present_value);
             }
-            Self::DestroyedOrNew => (),
+            Self::Destroyed | Self::NewlyCreated => (),
             Self::Precompile(_) => panic!("Insert dirty for precompile is not possible"),
         }
     }
@@ -572,7 +641,7 @@ impl Filth {
         match self {
             Self::Clean | Self::Precompile(_) => None,
             Self::Dirty(ref originals) => originals.get(&index).cloned(),
-            Self::DestroyedOrNew => Some(H256::zero()),
+            Self::Destroyed | Self::NewlyCreated => Some(H256::zero()),
         }
     }
 

@@ -4,6 +4,7 @@ use crate::{
 };
 use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
+use core::cmp::min;
 
 use super::precompiles::{
     Precompile, PrecompileFn, PrecompileOutput, PrecompileResult, Precompiles,
@@ -40,10 +41,8 @@ impl<'a, DB: Database> EVM<'a, DB> {
         &mut self,
         caller: H160,
         used_gas_sum: u64,
-        refunded_gas: u64,
     ) -> Result<Map<H160, Account>, ExitReason> {
         let eth_spend = U256::from(used_gas_sum) * self.global_env.gas_price;
-        let eth_refunded = U256::from(refunded_gas) * self.global_env.gas_price;
         let coinbase = self.global_env.block_coinbase;
         // all checks are done prior to this call, so we are safe to transfer without checking outcome.
         let _ = self
@@ -51,7 +50,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
             .transfer(caller, coinbase, eth_spend, self.db);
         let mut out = self.subroutine.finalize();
         let acc = out.get_mut(&caller).unwrap();
-        acc.info.balance += eth_refunded;
+        //acc.info.balance += eth_refunded;
         Ok(out)
     }
 
@@ -94,12 +93,16 @@ impl<'a, DB: Database> EVM<'a, DB> {
             gas_limit - gas_used_init,
             context,
         );
-        let gas_spend = match exit_reason {
+        
+        let mut gas_spend = match exit_reason {
             ExitReason::Error(_) => gas_limit,
             _ => gas.all_used() + gas_used_init,
         };
+        
+        let refund_amt = min(gas.refunded() as u64, gas_spend/2); // for london constant is 5 not 2.
+        gas_spend -= refund_amt;
 
-        match self.finalize(caller, gas_spend, gas.refunded() as u64) {
+        match self.finalize(caller, gas_spend) {
             //TODO check if refunded can be negative :)
             Err(e) => (e, bytes, gas_spend, Map::new()),
             Ok(state) => (exit_reason, bytes, gas_spend, state),
@@ -133,12 +136,18 @@ impl<'a, DB: Database> EVM<'a, DB> {
             gas_limit - gas_used_init,
         );
 
-        let gas_spend = match exit_reason {
+        let mut gas_spend = match exit_reason {
             ExitReason::Error(_) => gas_limit,
             _ => gas.all_used() + gas_used_init,
         };
+        println!("gas_spend:{:X} {} gas:{:?}",gas_spend,gas_spend,gas);
+        let refund_amt = min(gas.refunded() as u64, gas_spend/2); // for london constant is 5 not 2.
+        gas_spend -= refund_amt;
+        
+        println!("final gas_spend:{:X} {} refunded:{:?}",gas_spend,gas_spend,gas.refunded());
+        println!("remaining gas:{:X} {} gas used:{:X} {}",gas.remaining(),gas.remaining(),gas.all_used(),gas.all_used());
 
-        match self.finalize(caller, gas_spend, gas.refunded() as u64) {
+        match self.finalize(caller, gas_spend) {
             Err(e) => (e, address, gas_spend, Map::new()),
             Ok(state) => (exit_reason, address, gas_spend, state),
         }
@@ -191,7 +200,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
         gas_limit: u64,
     ) -> (ExitReason, Option<H160>, Gas, Bytes) {
         //println!("create depth:{}",self.subroutine.depth());
-
+        let gas = Gas::new(gas_limit);
         self.subroutine.load_account(caller, self.db);
 
         // trace create
@@ -201,7 +210,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
             return (
                 ExitError::CallTooDeep.into(),
                 None,
-                Gas::default(),
+                gas,
                 Bytes::new(),
             );
         }
@@ -230,7 +239,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
             return (
                 ExitError::CreateCollision.into(),
                 None,
-                Gas::default(),
+                gas,
                 Bytes::new(),
             );
         }
@@ -240,7 +249,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
         // transfer value to contract address
         if let Err(e) = self.subroutine.transfer(caller, address, value, self.db) {
             let _ = self.subroutine.checkpoint_revert(checkpoint);
-            return (ExitReason::Error(e), None, Gas::default(), Bytes::new());
+            return (ExitReason::Error(e), None, gas, Bytes::new());
         }
         // inc nonce of contract
         if SPEC::CREATE_INCREASE_NONCE {
@@ -248,7 +257,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
         }
         // create new machine and execute init function
         let contract = Contract::new(Bytes::new(), init_code, address, caller, value);
-        let mut machine = Machine::new(contract, gas_limit);
+        let mut machine = Machine::new(contract, gas.limit());
         let exit_reason = machine.run::<Self, SPEC>(self);
         // handler error if present on execution
         match exit_reason {
@@ -392,7 +401,7 @@ impl<'a, DB: Database> Handler for EVM<'a, DB> {
         &self.global_env
     }
 
-    fn load_account(&mut self, address: H160) -> Option<bool> {
+    fn load_account(&mut self, address: H160) -> (bool, bool) {
         self.subroutine.load_account_exist(address, self.db)
     }
 
@@ -432,16 +441,10 @@ impl<'a, DB: Database> Handler for EVM<'a, DB> {
 
     fn selfdestruct(
         &mut self,
-        _address: H160,
-        _target: H160,
-    ) -> Result<SelfDestructResult, ExitError> {
-        Ok(SelfDestructResult {
-            value: U256::from(10),
-            is_cold: false,
-            exists: true,
-            previously_destroyed: false,
-        })
-        // TODO
+        address: H160,
+        target: H160,
+    ) -> SelfDestructResult {
+        self.subroutine.selfdestruct(address,target,self.db)
     }
 
     fn create<SPEC: Spec>(
@@ -470,10 +473,11 @@ impl<'a, DB: Database> Handler for EVM<'a, DB> {
 impl<'a, DB: Database> Tracing for EVM<'a, DB> {}
 impl<'a, DB: Database> ExtHandler for EVM<'a, DB> {}
 
+#[derive(Default)]
 pub struct SelfDestructResult {
-    pub value: U256,
-    pub is_cold: bool,
+    pub had_value: bool,
     pub exists: bool,
+    pub is_cold: bool,
     pub previously_destroyed: bool,
 }
 /// EVM context handler.
@@ -482,7 +486,7 @@ pub trait Handler {
     fn global_env(&self) -> &GlobalEnv;
 
     /// load account. None it does not exist. Some value true is_cold.
-    fn load_account(&mut self, address: H160) -> Option<bool>;
+    fn load_account(&mut self, address: H160) -> (bool,bool);
     /// Get environmental block hash.
     fn block_hash(&mut self, number: U256) -> H256;
     /// Get balance of address.
@@ -500,7 +504,7 @@ pub trait Handler {
         &mut self,
         address: H160,
         target: H160,
-    ) -> Result<SelfDestructResult, ExitError>;
+    ) -> SelfDestructResult;
     /// Invoke a create operation.
     fn create<SPEC: Spec>(
         &mut self,
@@ -525,13 +529,15 @@ pub trait Handler {
 pub trait Tracing {
     fn trace_opcode(&mut self, opcode: OpCode, machine: &Machine) {
         println!(
-            "OPCODE:    {:?}({:?}) gas:{:#x}({}), Stack:{:?}, Data:{:?}",
+            "OPCODE: {:?}({:?}) gas:{:#x}({}), refund:{:#x}({}) Stack:{:?}, Data:{:?}",
             opcode,
             opcode as u8,
             machine.gas.remaining(),
             machine.gas.remaining(),
+            machine.gas.refunded(),
+            machine.gas.refunded(),
             machine.stack.data(),
-            machine.memory.data(),
+            hex::encode(machine.memory.data()),
         );
     }
     fn trace_call(&mut self,call: H160, context: &CallContext, transfer: &Option<Transfer>,input:&Bytes,is_static:bool) {

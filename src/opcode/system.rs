@@ -299,9 +299,9 @@ pub fn selfdestruct<H: ExtHandler, SPEC: Spec>(machine: &mut Machine, handler: &
     enabled!(!SPEC::IS_STATIC_CALL);
     pop!(machine, target);
 
-    let res = try_or_fail!(handler.selfdestruct(machine.contract.address, target.into()));
+    let res = handler.selfdestruct(machine.contract.address, target.into());
 
-    if !SPEC::ESTIMATE && res.previously_destroyed {
+    if !SPEC::ESTIMATE && !res.previously_destroyed {
         refund!(machine, gas::SELFDESTRUCT)
     }
     gas!(machine, gas::selfdestruct_cost::<SPEC>(res));
@@ -476,12 +476,13 @@ pub fn call<H: ExtHandler, SPEC: Spec>(
 
     let to = to.into();
     // load account and calculate gas cost.
-    let exist_and_is_cold = handler.load_account(to);
+    let (is_cold,exists) = handler.load_account(to);
     gas!(
         machine,
         gas::call_cost::<SPEC>(
             value,
-            exist_and_is_cold,
+            exists,
+            is_cold,
             matches!(scheme, CallScheme::Call | CallScheme::CallCode),
             matches!(scheme, CallScheme::Call | CallScheme::StaticCall),
         )

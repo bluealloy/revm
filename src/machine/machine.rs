@@ -23,8 +23,7 @@ pub struct Machine {
     pub memory: Memory,
     /// Stack.
     pub stack: Stack,
-    /// Return stuff
-    pub status: Result<(), ExitReason>,
+    /// After call returns, its return data is saved here.
     pub return_data_buffer: Bytes,
     /// left gas. Memory gas can be found in Memory field.
     pub gas: Gas,
@@ -109,7 +108,6 @@ impl Machine {
             return_range: Range::default(),
             memory: Memory::new(10000),
             stack: Stack::new(10000),
-            status: Ok(()),
             return_data_buffer: Bytes::new(),
             contract,
             gas: Gas::new(gas_limit),
@@ -177,16 +175,12 @@ impl Machine {
             .flatten();
         // if there is no opcode in code or OpCode is invalid, return error.
         if opcode.is_none() {
-            self.status = Err(ExitSucceed::Stopped.into());
-            return Err(ExitSucceed::Stopped.into()); // TODO this not seems right, for invalid opcode
+            return Err(ExitError::OpcodeNotFound.into()); // TODO this not seems right, for invalid opcode
         }
         let opcode = opcode.unwrap();
 
         // call prevalidation to calcuate gas consumption for this opcode
         handler.trace_opcode(opcode, &self);
-
-        // check machine status and return if not present
-        self.status.as_ref().map_err(|reason| reason.clone())?;
 
         // evaluate opcode/execute instruction
         match eval::<H, SPEC>(self, opcode, program_counter, handler) {
@@ -199,7 +193,6 @@ impl Machine {
                 Ok(())
             }
             Control::Exit(e) => {
-                self.status = Err(e.clone());
                 Err(e)
             }
             Control::Jump(p) => {

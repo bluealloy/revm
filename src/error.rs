@@ -107,8 +107,8 @@ pub enum ExitError {
     /// Attempt to create an empty account (runtime, unused).
     CreateEmpty,
 
-    /// opcode not enabled,
-    OpcodeDisabled,
+    /// opcode not found,
+    OpcodeNotFound,
 
     /// Other normal errors.
 	Other(Cow<'static, str>),

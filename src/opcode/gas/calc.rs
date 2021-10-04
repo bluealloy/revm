@@ -226,7 +226,7 @@ pub fn sstore_cost<SPEC: Spec>(
 pub fn selfdestruct_cost<SPEC: Spec>(res: SelfDestructResult) -> u64 {
     let eip161 = !SPEC::EMPTY_CONSIDERED_EXISTS;
     let should_charge_topup = if eip161 {
-        res.value != U256::zero() && !res.exists
+        res.had_value && !res.exists
     } else {
         !res.exists
     };
@@ -247,17 +247,18 @@ pub fn selfdestruct_cost<SPEC: Spec>(res: SelfDestructResult) -> u64 {
 pub fn call_cost<SPEC: Spec>(
     value: U256,
     // None-> not exists. Some -> true. Value is_cold or not.
-    exist_and_is_cold: Option<bool>,
+    exist: bool,
+    is_cold: bool,
     is_call_or_callcode: bool,
     is_call_or_staticcall: bool,
     //new_account: bool,
 ) -> u64 {
     let transfers_value = value != U256::default();
-    account_access_cost::<SPEC>(exist_and_is_cold.unwrap_or(true), SPEC::GAS_CALL)
+    account_access_cost::<SPEC>(is_cold, SPEC::GAS_CALL)
         + xfer_cost(is_call_or_callcode, transfers_value)
         + new_cost::<SPEC>(
             is_call_or_staticcall,
-            exist_and_is_cold.is_some(),
+            exist,
             transfers_value,
         )
 }
