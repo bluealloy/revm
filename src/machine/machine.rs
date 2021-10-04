@@ -46,7 +46,7 @@ impl Gas {
         }
     }
 
-    pub fn limit_mut(&mut self) -> &mut u64{
+    pub fn limit_mut(&mut self) -> &mut u64 {
         &mut self.limit
     }
 
@@ -65,7 +65,7 @@ impl Gas {
     }
 
     pub fn all_used(&self) -> u64 {
-        self.used+self.memory 
+        self.used + self.memory
     }
 
     pub fn remaining(&self) -> u64 {
@@ -167,18 +167,7 @@ impl Machine {
         let program_counter = self.program_counter;
 
         // extract next opcode from code
-        let opcode = self
-            .contract
-            .code
-            .get(program_counter)
-            .map(|&opcode| OpCode::try_from_u8(opcode))
-            .flatten();
-        // if there is no opcode in code or OpCode is invalid, return error.
-        if opcode.is_none() {
-            return Err(ExitError::OpcodeNotFound.into()); // TODO this not seems right, for invalid opcode
-        }
-        let opcode = opcode.unwrap();
-
+        let opcode = self.contract.opcode(program_counter)?;
         // call prevalidation to calcuate gas consumption for this opcode
         handler.trace_opcode(opcode, &self);
 
@@ -192,9 +181,7 @@ impl Machine {
                 self.program_counter = program_counter + p;
                 Ok(())
             }
-            Control::Exit(e) => {
-                Err(e)
-            }
+            Control::Exit(e) => Err(e),
             Control::Jump(p) => {
                 self.program_counter = p;
                 Ok(())

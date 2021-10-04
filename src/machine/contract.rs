@@ -1,4 +1,4 @@
-use crate::collection::vec::Vec;
+use crate::{ExitError, ExitReason, ExitSucceed, collection::vec::Vec};
 use bytes::Bytes;
 use primitive_types::{H160, U256};
 
@@ -30,6 +30,22 @@ impl Contract {
             value,
             jumpdest,
         }
+    }
+
+    pub fn opcode(&self,program_counter: usize) -> Result<OpCode,ExitReason> {
+        let opcode = {
+            if let Some(opcode_byte) = self.code.get(program_counter) {
+                let opcode = OpCode::try_from_u8(*opcode_byte);
+                // if there is no opcode in code or OpCode is invalid, return error.
+                if opcode.is_none() {
+                    return Err(ExitError::OpcodeNotFound.into()); // TODO this not seems right, for invalid opcode
+                }
+                opcode.unwrap()
+            } else {
+                return Err(ExitSucceed::Stopped.into());
+            }
+        };
+        Ok(opcode)
     }
 }
 

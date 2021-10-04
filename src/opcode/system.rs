@@ -517,6 +517,7 @@ pub fn call<H: ExtHandler, SPEC: Spec>(
             machine.gas.erase_cost(gas.remaining());
             // add refunded gas from subcall
             machine.gas.record_refund(gas.refunded());
+            println!("Succedd");
             match machine.memory.copy_large(
                 out_offset,
                 U256::zero(),
@@ -534,6 +535,7 @@ pub fn call<H: ExtHandler, SPEC: Spec>(
             }
         }
         ExitReason::Revert(_) => {
+            println!("revert");
             // return remaining gas not used in subcall
             machine.gas.erase_cost(gas.remaining());
 
@@ -548,12 +550,14 @@ pub fn call<H: ExtHandler, SPEC: Spec>(
 
             Control::Continue
         }
-        ExitReason::Error(_) => {
+        ExitReason::Error(e) => {
+            println!("error: {:?}",e);
             push_u256!(machine, U256::zero());
 
             Control::Continue
         }
         ExitReason::Fatal(e) => {
+            println!("fatal");
             push_u256!(machine, U256::zero());
 
             Control::Exit(e.into())

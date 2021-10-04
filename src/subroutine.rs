@@ -531,7 +531,7 @@ impl SubRoutine {
     ) -> (H256, H256, H256, bool) {
         // assume that acc exists and load the slot.
         let (present, is_cold) = self.sload(address, index, db);
-        //println!("sstore:{:?}:{:?}:{:?}:{:?}:{:?}",address,index,new,present,is_cold);
+        println!("sstore:{:?}:{:?}:{:?}:{:?}:{:?}",address,index,new,present,is_cold);
         let acc = self.state.get_mut(&address).unwrap();
         // if there is no original value in dirty return present valuem that is our original.
         let original = if let Some(original) = acc.filth.original_slot(index) {
@@ -541,10 +541,7 @@ impl SubRoutine {
         };
         // new value is same as present, we dont need to do anything
         if present == new {
-            // if is_cold {
-            //     acc.storage.insert(index,new);
-            //     acc.filth.insert_dirty_original(index, present);
-            // }
+            println!("present and new are same");
             return (original, present, new, is_cold);
         }
 
