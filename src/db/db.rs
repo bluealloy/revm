@@ -49,7 +49,12 @@ impl StateDB {
             } else {
                 self.cache.insert(add, acc.info);
                 for (index, value) in acc.storage {
-                    self.storage.entry(add).or_default().insert(index, value);
+                    let storage = self.storage.entry(add).or_default();
+                    if value == H256::zero() {
+                        storage.remove( &index);
+                    } else {
+                        storage.insert(index, value);
+                    }
                 }
             }
         }
