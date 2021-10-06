@@ -480,7 +480,7 @@ impl SubRoutine {
     // account is already present and loaded.
     pub fn sload<DB: Database>(&mut self, address: H160, index: H256, db: &mut DB) -> (H256, bool) {
         let acc = self.state.get_mut(&address).unwrap(); // asume acc is hot
-        match acc.storage.entry(index) {
+        let load = match acc.storage.entry(index) {
             Entry::Occupied(occ) => (occ.get().clone(), false),
             // add slot to ColdLoaded in changelog
             Entry::Vacant(vac) => {
@@ -517,7 +517,9 @@ impl SubRoutine {
 
                 (value, true)
             }
-        }
+        };
+        println!("sload:acc{:?}:{:?}=>{:?}",address,index,load);
+        load
     }
 
     /// account should already be present in our state.
@@ -531,7 +533,7 @@ impl SubRoutine {
     ) -> (H256, H256, H256, bool) {
         // assume that acc exists and load the slot.
         let (present, is_cold) = self.sload(address, index, db);
-        println!("sstore:{:?}:{:?}:{:?}:{:?}:{:?}",address,index,new,present,is_cold);
+        println!("sstore:{:?}:{:?}({:?})=>{:?}::{:?}",address,index,present,new,is_cold);
         let acc = self.state.get_mut(&address).unwrap();
         // if there is no original value in dirty return present valuem that is our original.
         let original = if let Some(original) = acc.filth.original_slot(index) {
