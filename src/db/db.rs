@@ -48,13 +48,16 @@ impl StateDB {
                 self.cache.remove(&add);
             } else {
                 self.cache.insert(add, acc.info);
+                let storage = self.storage.entry(add.clone()).or_default();
                 for (index, value) in acc.storage {
-                    let storage = self.storage.entry(add).or_default();
                     if value == H256::zero() {
-                        storage.remove( &index);
+                        storage.remove(&index);
                     } else {
                         storage.insert(index, value);
                     }
+                }
+                if storage.is_empty() {
+                    self.storage.remove(&add);
                 }
             }
         }

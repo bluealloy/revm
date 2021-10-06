@@ -529,15 +529,16 @@ pub trait Handler {
 pub trait Tracing {
     fn trace_opcode(&mut self, opcode: OpCode, machine: &Machine) {
         println!(
-            "OPCODE: {:?}({:?}) gas:{:#x}({}), refund:{:#x}({}) Stack:{:?}, Data:{:?}",
+            "OPCODE: {:?}({:?}) PC:{}, gas:{:#x}({}), refund:{:#x}({}) Stack:, Data:",
             opcode,
             opcode as u8,
+            machine.program_counter(),
             machine.gas.remaining(),
             machine.gas.remaining(),
             machine.gas.refunded(),
             machine.gas.refunded(),
-            machine.stack.data(),
-            hex::encode(machine.memory.data()),
+            //machine.stack.data(),
+            //hex::encode(machine.memory.data()),
         );
     }
     fn trace_call(&mut self,call: H160, context: &CallContext, transfer: &Option<Transfer>,input:&Bytes,is_static:bool) {
@@ -561,9 +562,10 @@ pub trait ExtHandler: Handler + Tracing {
     /// Get code hash of address.
     fn code_hash(&mut self, address: H160) -> (H256, bool) {
         let (code, is_cold) = self.code(address);
-        if code.is_empty() {
-            return (H256::default(), true); // TODO check is_cold
-        }
+        // if code.is_empty() {
+        //     return (Keccak256::, is_cold);
+        // }
+        // TODO see to optimize and use upper if. But for now leave it
         (H256::from_slice(&Keccak256::digest(code.as_ref())), is_cold)
     }
 
