@@ -246,19 +246,17 @@ pub fn selfdestruct_cost<SPEC: Spec>(res: SelfDestructResult) -> u64 {
 
 pub fn call_cost<SPEC: Spec>(
     value: U256,
-    // None-> not exists. Some -> true. Value is_cold or not.
-    exist: bool,
+    new_account: bool,
     is_cold: bool,
     is_call_or_callcode: bool,
     is_call_or_staticcall: bool,
-    //new_account: bool,
 ) -> u64 {
     let transfers_value = value != U256::default();
     account_access_cost::<SPEC>(is_cold, SPEC::GAS_CALL)
         + xfer_cost(is_call_or_callcode, transfers_value)
         + new_cost::<SPEC>(
             is_call_or_staticcall,
-            exist,
+            new_account,
             transfers_value,
         )
 }

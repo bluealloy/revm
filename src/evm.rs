@@ -504,7 +504,7 @@ pub trait Handler {
     /// Get global const context of evm execution
     fn global_env(&self) -> &GlobalEnv;
 
-    /// load account. None it does not exist. Some value true is_cold.
+    /// load account. Returns (is_cold,is_new_account)
     fn load_account(&mut self, address: H160) -> (bool, bool);
     /// Get environmental block hash.
     fn block_hash(&mut self, number: U256) -> H256;
@@ -545,18 +545,18 @@ pub trait Handler {
 
 pub trait Tracing {
     fn trace_opcode(&mut self, opcode: OpCode, machine: &Machine) {
-        println!(
-            "OPCODE: {:?}({:?}) PC:{}, gas:{:#x}({}), refund:{:#x}({}) Stack:{:?}, Data:",
-            opcode,
-            opcode as u8,
-            machine.program_counter(),
-            machine.gas.remaining(),
-            machine.gas.remaining(),
-            machine.gas.refunded(),
-            machine.gas.refunded(),
-            machine.stack.data(),
-            // hex::encode(machine.memory.data()),
-        );
+        // println!(
+        //     "OPCODE: {:?}({:?}) PC:{}, gas:{:#x}({}), refund:{:#x}({}) Stack:{:?}, Data:",
+        //     opcode,
+        //     opcode as u8,
+        //     machine.program_counter(),
+        //     machine.gas.remaining(),
+        //     machine.gas.remaining(),
+        //     machine.gas.refunded(),
+        //     machine.gas.refunded(),
+        //     machine.stack.data(),
+        //     // hex::encode(machine.memory.data()),
+        // );
     }
     fn trace_call(
         &mut self,
@@ -566,10 +566,10 @@ pub trait Tracing {
         input: &Bytes,
         is_static: bool,
     ) {
-        println!(
-            "SM CALL:   {:?},context:{:?}, is_static:{:?}, transfer:{:?}, input:{:?}",
-            call, context, is_static, transfer, input,
-        );
+        // println!(
+        //     "SM CALL:   {:?},context:{:?}, is_static:{:?}, transfer:{:?}, input:{:?}",
+        //     call, context, is_static, transfer, input,
+        // );
     }
 }
 

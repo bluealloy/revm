@@ -476,12 +476,12 @@ pub fn call<H: ExtHandler, SPEC: Spec>(
 
     let to = to.into();
     // load account and calculate gas cost.
-    let (is_cold,exists) = handler.load_account(to);
+    let (is_cold,new_account) = handler.load_account(to);
     gas!(
         machine,
         gas::call_cost::<SPEC>(
             value,
-            exists,
+            new_account,
             is_cold,
             matches!(scheme, CallScheme::Call | CallScheme::CallCode),
             matches!(scheme, CallScheme::Call | CallScheme::StaticCall),
@@ -517,7 +517,6 @@ pub fn call<H: ExtHandler, SPEC: Spec>(
             machine.gas.erase_cost(gas.remaining());
             // add refunded gas from subcall
             machine.gas.record_refund(gas.refunded());
-            println!("Succedd");
             match machine.memory.copy_large(
                 out_offset,
                 U256::zero(),
@@ -535,7 +534,6 @@ pub fn call<H: ExtHandler, SPEC: Spec>(
             }
         }
         ExitReason::Revert(_) => {
-            println!("revert");
             // return remaining gas not used in subcall
             machine.gas.erase_cost(gas.remaining());
 
@@ -551,13 +549,11 @@ pub fn call<H: ExtHandler, SPEC: Spec>(
             Control::Continue
         }
         ExitReason::Error(e) => {
-            println!("error: {:?}",e);
             push_u256!(machine, U256::zero());
 
             Control::Continue
         }
         ExitReason::Fatal(e) => {
-            println!("fatal");
             push_u256!(machine, U256::zero());
 
             Control::Exit(e.into())

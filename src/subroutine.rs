@@ -393,7 +393,8 @@ impl SubRoutine {
         target: H160,
         db: &mut DB,
     ) -> SelfDestructResult {
-        let (is_cold, exists) = self.load_account_exist(target, db);
+        let (is_cold, new_account) = self.load_account_exist(target, db);
+        let exists = !new_account;
         // transfer all the balance
         let acc = self.state.get_mut(&address).unwrap();
         let value = acc.info.balance;
@@ -459,7 +460,7 @@ impl SubRoutine {
             && info.nonce == 0
             && info.code.unwrap_or_default() == Bytes::default();
         //&& info.code_hash.unwrap_or_default() == H256::default();
-        (is_cold, !exists)
+        (is_cold, exists)
     }
 
     pub fn load_code<DB: Database>(&mut self, address: H160, db: &mut DB) -> (&mut Account, bool) {
@@ -518,7 +519,7 @@ impl SubRoutine {
                 (value, true)
             }
         };
-        println!("sload:acc{:?}:{:?}=>{:?}",address,index,load);
+        //println!("sload:acc{:?}:{:?}=>{:?}",address,index,load);
         load
     }
 
@@ -533,7 +534,7 @@ impl SubRoutine {
     ) -> (H256, H256, H256, bool) {
         // assume that acc exists and load the slot.
         let (present, is_cold) = self.sload(address, index, db);
-        println!("sstore:{:?}:{:?}({:?})=>{:?}::{:?}",address,index,present,new,is_cold);
+        //println!("sstore:{:?}:{:?}({:?})=>{:?}::{:?}",address,index,present,new,is_cold);
         let acc = self.state.get_mut(&address).unwrap();
         // if there is no original value in dirty return present valuem that is our original.
         let original = if let Some(original) = acc.filth.original_slot(index) {
@@ -543,7 +544,6 @@ impl SubRoutine {
         };
         // new value is same as present, we dont need to do anything
         if present == new {
-            println!("present and new are same");
             return (original, present, new, is_cold);
         }
 
