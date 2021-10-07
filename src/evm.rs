@@ -329,7 +329,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
         code_address: H160,
         transfer: Option<Transfer>,
         input: Bytes,
-        mut gas_limit: u64,
+        gas_limit: u64,
         context: CallContext,
     ) -> (ExitReason, Gas, Bytes) {
         // get code that we want to call
@@ -391,7 +391,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
         );
         let mut machine = Machine::new(contract, gas_limit);
         let exit_reason = machine.run::<Self, SPEC>(self);
-        //let gas = machine.gas;
+
         match exit_reason {
             ExitReason::Succeed(_) => {
                 let _ = self.subroutine.checkpoint_commit(checkpoint);
@@ -545,18 +545,18 @@ pub trait Handler {
 
 pub trait Tracing {
     fn trace_opcode(&mut self, opcode: OpCode, machine: &Machine) {
-        // println!(
-        //     "OPCODE: {:?}({:?}) PC:{}, gas:{:#x}({}), refund:{:#x}({}) Stack:{:?}, Data:",
-        //     opcode,
-        //     opcode as u8,
-        //     machine.program_counter(),
-        //     machine.gas.remaining(),
-        //     machine.gas.remaining(),
-        //     machine.gas.refunded(),
-        //     machine.gas.refunded(),
-        //     machine.stack.data(),
-        //     // hex::encode(machine.memory.data()),
-        // );
+        println!(
+            "OPCODE: {:?}({:?}) PC:{}, gas:{:#x}({}), refund:{:#x}({}) Stack:{:?}, Data:",
+            opcode,
+            opcode as u8,
+            machine.program_counter(),
+            machine.gas.remaining(),
+            machine.gas.remaining(),
+            machine.gas.refunded(),
+            machine.gas.refunded(),
+            machine.stack.data(),
+            // hex::encode(machine.memory.data()),
+        );
     }
     fn trace_call(
         &mut self,
@@ -566,10 +566,10 @@ pub trait Tracing {
         input: &Bytes,
         is_static: bool,
     ) {
-        // println!(
-        //     "SM CALL:   {:?},context:{:?}, is_static:{:?}, transfer:{:?}, input:{:?}",
-        //     call, context, is_static, transfer, input,
-        // );
+        println!(
+            "SM CALL:   {:?},context:{:?}, is_static:{:?}, transfer:{:?}, input:{:?}",
+            call, context, is_static, transfer, input,
+        );
     }
 }
 

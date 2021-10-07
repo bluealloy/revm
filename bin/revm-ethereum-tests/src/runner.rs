@@ -164,7 +164,7 @@ pub fn run(mut test_files: Vec<PathBuf>) {
     let endjob = Arc::new(AtomicBool::new(false));
     let console_bar = Arc::new(ProgressBar::new(test_files.len() as u64));
     let mut joins = Vec::new();
-    for chunk in test_files.chunks(5000) {
+    for chunk in test_files.chunks(50000) {
         let chunk = Vec::from(chunk);
         let endjob = endjob.clone();
         let console_bar = console_bar.clone();
@@ -177,6 +177,7 @@ pub fn run(mut test_files: Vec<PathBuf>) {
                         if endjob.load(Ordering::SeqCst) {
                             return;
                         }
+                        println!("Test:{:?}",test);
                         if let Err(err) = execute_test_suit(&test) {
                             endjob.store(true, Ordering::SeqCst);
                             println!("{:?} failed: {}", test, err);

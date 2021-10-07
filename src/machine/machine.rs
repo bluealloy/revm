@@ -83,12 +83,24 @@ impl Gas {
     /// Record an explict cost.
     #[inline(always)]
     pub fn record_cost(&mut self, cost: u64) -> bool {
-        let all_used_gas = self.used + self.memory + cost;
-        if self.limit < all_used_gas {
+        let all_used_gas: u128 = self.used as u128 + self.memory as u128 + cost as u128;
+        if (self.limit as u128) < all_used_gas {
             return false;
         }
 
         self.used += cost;
+        true
+    }
+
+    /// used in memory_resize! macro
+    pub fn record_memory(&mut self, gas_memory: u64) -> bool {
+      
+        let max_memory = max(self.memory, gas_memory);
+        let all_used_gas: u128 = self.used as u128 + gas_memory as u128;
+        if (self.limit as u128) < all_used_gas {
+            return false;
+        }
+        self.memory = max_memory;
         true
     }
 
@@ -98,6 +110,11 @@ impl Gas {
             return Control::Exit(ExitReason::Error(ExitError::OutOfGas));
         }
         Control::Continue
+    }
+
+    /// used in gas_refund! macro
+    pub fn gas_refund(&mut self, refund: i64) {
+        self.refunded += refund;
     }
 }
 
@@ -119,16 +136,6 @@ impl Machine {
 
     pub fn gas(&mut self) -> &Gas {
         &self.gas
-    }
-
-    /// used in gas_refund! macro
-    pub fn gas_refund(&mut self, refund: i64) {
-        self.gas.refunded += refund;
-    }
-
-    /// used in memory_resize! macro
-    pub fn gas_memory(&mut self, gas_memory: u64) {
-        self.gas.memory = max(self.gas.memory, gas_memory);
     }
 
     /// Reference of machine stack.

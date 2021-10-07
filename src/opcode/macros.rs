@@ -28,7 +28,7 @@ macro_rules! gas {
 macro_rules! refund {
     ($machine:expr, $gas:expr) => {
         {
-        $machine.gas_refund($gas);
+        $machine.gas.gas_refund($gas);
         }
     };
 }
@@ -46,7 +46,9 @@ macro_rules! memory_resize {
     ($machine:expr, $start:expr, $len:expr) => {
         {
             let new_gas_memory = try_or_fail!($machine.memory.resize_offset($start, $len));
-            $machine.gas_memory(new_gas_memory)
+            if !$machine.gas.record_memory(new_gas_memory) {
+                return Control::Exit(ExitReason::Error(ExitError::OutOfGas));
+            }
         }
     };
 }
