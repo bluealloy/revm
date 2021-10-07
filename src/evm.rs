@@ -225,7 +225,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
             return (
                 ExitError::OutOfFund.into(),
                 None,
-                Gas::default(),
+                gas,
                 Bytes::new(),
             );
         }
@@ -252,7 +252,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
         // transfer value to contract address
         if let Err(e) = self.subroutine.transfer(caller, address, value, self.db) {
             let _ = self.subroutine.checkpoint_revert(checkpoint);
-            return (ExitReason::Error(e), None, gas, Bytes::new());
+            return (e.into(), None, gas, Bytes::new());
         }
         // inc nonce of contract
         if SPEC::CREATE_INCREASE_NONCE {
@@ -332,6 +332,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
         gas_limit: u64,
         context: CallContext,
     ) -> (ExitReason, Gas, Bytes) {
+        let gas = Gas::new(gas_limit);
         // get code that we want to call
         let (code, _) = self.code(code_address);
         // Create subroutine checkpoint
@@ -346,7 +347,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
         );
         // check depth of calls
         if self.subroutine.depth() > SPEC::CALL_STACK_LIMIT {
-            return (ExitError::CallTooDeep.into(), Gas::default(), Bytes::new());
+            return (ExitError::CallTooDeep.into(), gas, Bytes::new());
         }
         // transfer value from caller to called address;
         if let Some(transfer) = transfer {
@@ -355,7 +356,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
                     .transfer(transfer.source, transfer.target, transfer.value, self.db)
             {
                 let _ = self.subroutine.checkpoint_revert(checkpoint);
-                return (ExitReason::Error(e), Gas::default(), Bytes::new());
+                return (e.into(), gas, Bytes::new());
             }
         }
         // TODO check if we are calling PRECOMPILES and call it here and return.

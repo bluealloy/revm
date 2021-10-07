@@ -75,7 +75,7 @@ impl<const IS_STATIC_CALL: bool> Spec for BerlinSpecImpl<IS_STATIC_CALL> {
     /// of gas.
     const ERR_ON_CALL_WITH_MORE_GAS: bool = false;
     /// Take l64 for callcreate after gas.
-    const CALL_L64_AFTER_GAS: bool = false;
+    const CALL_L64_AFTER_GAS: bool = true;
     /// Whether empty account is considered exists.
     const EMPTY_CONSIDERED_EXISTS: bool = false;
     /// Whether create transactions and create opcode increases nonce by one.

@@ -29,7 +29,7 @@ pub struct Machine {
     pub gas: Gas,
 }
 
-#[derive(Clone, Copy, Default, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct Gas {
     limit: u64,
     used: u64,

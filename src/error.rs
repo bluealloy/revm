@@ -64,6 +64,8 @@ impl From<ExitSucceed> for ExitReason {
 pub enum ExitRevert {
     /// Machine encountered an explict revert.
     Reverted,
+    /// Account does not have balance, revert it.
+    OutOfFund, 
 }
 
 impl From<ExitRevert> for ExitReason {

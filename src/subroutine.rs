@@ -1,7 +1,4 @@
-use crate::{
-    collection::{vec, vec::Vec, Entry, Map},
-    evm::SelfDestructResult,
-};
+use crate::{ExitRevert, collection::{vec, vec::Vec, Entry, Map}, evm::SelfDestructResult};
 
 use core::mem::{self};
 
@@ -195,7 +192,7 @@ impl SubRoutine {
         to: H160,
         value: U256,
         db: &mut DB,
-    ) -> Result<(bool, bool), ExitError> {
+    ) -> Result<(bool, bool), ExitRevert> {
         // load accounts
         let from_is_cold = self.load_account(from, db);
         let to_is_cold = self.load_account(to, db);
@@ -206,7 +203,8 @@ impl SubRoutine {
         // check from balance and substract value
         let from = self.log_dirty(from, |_| {});
         if from.info.balance < value {
-            return Err(ExitError::OutOfFund);
+            // TODO shold we remove it from log_dirty
+            return Err(ExitRevert::OutOfFund);
         }
         from.info.balance -= value;
 
