@@ -3,7 +3,7 @@ use primitive_types::{H160, H256, U256};
 
 use crate::{CallContext, CreateScheme, Machine, Transfer, opcode::Control};
 
-pub trait Inspector {
+pub trait Inspector: {
     // get opcode by calling `machine.contract.opcode(machine.program_counter())`.
     // all other information can be obtained from machine.
     fn step(&mut self, machine: &mut Machine);
@@ -47,6 +47,7 @@ pub trait Inspector {
     fn selfdestruct(&mut self);
 }
 
+#[derive(Clone)]
 pub struct NoOpInspector();
 
 impl Inspector for NoOpInspector {

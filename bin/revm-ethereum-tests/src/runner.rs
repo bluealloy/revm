@@ -16,17 +16,20 @@ use sha3::{Digest, Keccak256};
 use bytes::Bytes;
 use indicatif::ProgressBar;
 use primitive_types::{H160, H256, U256};
-use revm::{BerlinSpec, ExitReason, GlobalEnv};
+use revm::{BerlinSpec, ExitReason, GlobalEnv, Inspector};
 use std::sync::atomic::Ordering;
 use walkdir::{DirEntry, WalkDir};
 
-use crate::models::{SpecName, TestSuit};
+use crate::{
+    models::{SpecName, TestSuit},
+    trace::CustomPrintTracer,
+};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum TestError {
     #[error(" Test:{id}, Root missmatched, Expected: {expect:?} got:{got:?}")]
-    RootMissmatch { id:usize, got: H256, expect: H256 },
+    RootMissmatch { id: usize, got: H256, expect: H256 },
     #[error("EVM returned error: {0:?}")]
     EVMReturnError(revm::ExitReason),
     #[error("Serde json error")]
@@ -42,7 +45,7 @@ pub fn find_all_json_tests(path: PathBuf) -> Vec<PathBuf> {
         .collect::<Vec<PathBuf>>()
 }
 
-pub fn execute_test_suit(path: &PathBuf) -> Result<(), TestError> {
+pub fn execute_test_suit<INSP: Inspector+Clone+'static>(path: &PathBuf, inspector: Box<INSP>) -> Result<(), TestError> {
     let json_reader = std::fs::read(&path).unwrap();
     let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
     for (name, unit) in suit.0.into_iter() {
@@ -84,7 +87,7 @@ pub fn execute_test_suit(path: &PathBuf) -> Result<(), TestError> {
                 chain_id: 1.into(),     // TODO ?
                 origin: caller.clone(), // TODO ?
             };
-            for (id,test) in tests.into_iter().enumerate() {
+            for (id, test) in tests.into_iter().enumerate() {
                 let mut database = database.clone();
                 let gas_limit = unit
                     .transaction
@@ -120,7 +123,8 @@ pub fn execute_test_suit(path: &PathBuf) -> Result<(), TestError> {
                 } else {
                     gas_limit.as_u64()
                 };
-                let mut evm = revm::EVM::new(&mut database, global_env.clone());
+                let mut evm = revm::EVM::new(&mut database, global_env.clone())
+                    .inspector(inspector.clone());
                 let (ret, gas, state) = if let Some(to) = unit.transaction.to {
                     let (ret, _, gas, state) = evm.call::<BerlinSpec>(
                         caller.clone(),
@@ -160,7 +164,7 @@ pub fn execute_test_suit(path: &PathBuf) -> Result<(), TestError> {
     Ok(())
 }
 
-pub fn run(mut test_files: Vec<PathBuf>) {
+pub fn run<INSP: Inspector+Clone+Send+'static>(mut test_files: Vec<PathBuf>, inspector: Box<INSP>) {
     let endjob = Arc::new(AtomicBool::new(false));
     let console_bar = Arc::new(ProgressBar::new(test_files.len() as u64));
     let mut joins = Vec::new();
@@ -168,6 +172,7 @@ pub fn run(mut test_files: Vec<PathBuf>) {
         let chunk = Vec::from(chunk);
         let endjob = endjob.clone();
         let console_bar = console_bar.clone();
+        let insp = inspector.clone();
 
         joins.push(
             std::thread::Builder::new()
@@ -177,8 +182,8 @@ pub fn run(mut test_files: Vec<PathBuf>) {
                         if endjob.load(Ordering::SeqCst) {
                             return;
                         }
-                        println!("Test:{:?}",test);
-                        if let Err(err) = execute_test_suit(&test) {
+                        println!("Test:{:?}", test);
+                        if let Err(err) = execute_test_suit(&test,insp.clone()) {
                             endjob.store(true, Ordering::SeqCst);
                             println!("{:?} failed: {}", test, err);
                             return;

@@ -6,6 +6,9 @@ use std::{path::PathBuf};
 
 use serde::de::Error;
 
+use crate::trace::CustomPrintTracer;
+use revm::NoOpInspector;
+
 pub fn main() {
     //let folder_path = "./tests/GeneralStateTests";
     let folder_path = "./temp_folder";
@@ -13,14 +16,14 @@ pub fn main() {
 
     //test_files.truncate(300); //for test only
     println!("Start running tests.");
-    runner::run(test_files)
+    let inspector = Box::new(CustomPrintTracer{});
+    //let inspector = Box::new(NoOpInspector());
+    runner::run(test_files,inspector)
 }
 
 
 // big nonce test. Not applicable.
 // big gas limit test. Not applicable.
-//https://github.com/ethereum/go-ethereum/blob/v1.9.25/tests/transaction_test.go#L40
-// https://github.com/ethereum/go-ethereum/blob/v1.9.25/tests/transaction_test.go#L31
 //      "ttNonce"
 //      "TransactionWithHighNonce256.json"
         

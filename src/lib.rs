@@ -21,7 +21,7 @@ extern crate alloc;
 pub use db::{Database, StateDB};
 pub use error::*;
 pub use evm::EVM;
-pub use inspector::Inspector;
+pub use inspector::{Inspector,NoOpInspector};
 pub use machine::Machine;
 pub use opcode::Control;
 pub use models::*;

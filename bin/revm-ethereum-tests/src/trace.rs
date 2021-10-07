@@ -4,10 +4,10 @@
 
 pub use revm::{Control,Inspector};
 
+#[derive(Clone)]
+pub struct CustomPrintTracer {}
 
-pub struct Tracer {}
-
-impl Inspector for Tracer {
+impl Inspector for CustomPrintTracer {
 
     // get opcode by calling `machine.contract.opcode(machine.program_counter())`.
     // all other information can be obtained from machine.
@@ -32,11 +32,11 @@ impl Inspector for Tracer {
     }
 
     fn eval(&mut self, eval: &mut Control, machine: &mut revm::Machine) {
-        todo!()
+        
     }
 
     fn sload(&mut self, address: &primitive_types::H160, slot: &primitive_types::H256, value: &primitive_types::H256, is_cold: bool) {
-        todo!()
+        
     }
 
     fn sstore(
@@ -48,7 +48,6 @@ impl Inspector for Tracer {
         original_value: primitive_types::H256,
         is_cold: bool,
     ) {
-        todo!()
     }
 
     fn call(
@@ -67,7 +66,7 @@ impl Inspector for Tracer {
     }
 
     fn call_return(&mut self) {
-        todo!()
+        
     }
 
     fn create(
@@ -78,15 +77,14 @@ impl Inspector for Tracer {
         init_code: &bytes::Bytes,
         gas: u64,
     ) {
-        todo!()
     }
 
     fn create_return(&mut self) {
-        todo!()
+        
     }
 
     fn selfdestruct(&mut self) {
-        todo!()
+        
     }
 
 }

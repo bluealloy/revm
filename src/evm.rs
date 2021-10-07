@@ -36,6 +36,11 @@ impl<'a, DB: Database> EVM<'a, DB> {
         }
     }
 
+    pub fn inspector(mut self,inspector: Box<dyn Inspector>) -> EVM<'a,DB> {
+        self.inspector = inspector;
+        self
+    }
+
     fn finalize(
         &mut self,
         caller: H160,
