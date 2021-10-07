@@ -20,6 +20,8 @@ pub trait Spec {
     const SPEC_ID: u8;
     /// static flag used in STATIC type;
     const IS_STATIC_CALL: bool;
+    /// call inspector for tracing.
+    const INSPECTOR_ENABLED: bool;
     /// Gas paid for extcode.
     const GAS_EXT_CODE: u64;
     /// Gas paid for extcodehash.

@@ -12,15 +12,18 @@ mod subroutine;
 mod util;
 mod db;
 mod precompiles;
+mod inspector;
 
-use evm::ExtHandler;
+use evm::Handler;
 
 extern crate alloc;
 
 pub use db::{Database, StateDB};
 pub use error::*;
 pub use evm::EVM;
+pub use inspector::Inspector;
 pub use machine::Machine;
+pub use opcode::Control;
 pub use models::*;
 pub use spec::*;
 pub use subroutine::Account;

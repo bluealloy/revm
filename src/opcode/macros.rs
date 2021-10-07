@@ -9,8 +9,21 @@ macro_rules! try_or_fail {
     };
 }
 
+macro_rules! inspect {
+    ($handler:ident, $inspect_fn:ident) => {
+        if SPEC::INSPECTOR_ENABLED {
+            $handler.inspect().$inspect_fn();
+        }
+    };
+    ($handler:ident, $inspect_fn:ident, $($args:expr),*) => {
+        if SPEC::INSPECTOR_ENABLED {
+            $handler.inspect().$inspect_fn( $($args),* );
+        }
+    };
+}
+
 macro_rules! enabled {
-    ($expresion:expr ) => {
+    ($expresion:expr) => {
         if !$expresion {
             return Control::Exit(ExitReason::Error(ExitError::OpcodeNotFound));
         }

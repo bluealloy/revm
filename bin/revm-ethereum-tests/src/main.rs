@@ -1,5 +1,6 @@
 mod runner;
 mod models;
+mod trace;
 
 use std::{path::PathBuf};
 
@@ -14,3 +15,12 @@ pub fn main() {
     println!("Start running tests.");
     runner::run(test_files)
 }
+
+
+// big nonce test. Not applicable.
+// big gas limit test. Not applicable.
+//https://github.com/ethereum/go-ethereum/blob/v1.9.25/tests/transaction_test.go#L40
+// https://github.com/ethereum/go-ethereum/blob/v1.9.25/tests/transaction_test.go#L31
+//      "ttNonce"
+//      "TransactionWithHighNonce256.json"
+        

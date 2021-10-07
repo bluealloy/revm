@@ -26,6 +26,8 @@ impl<const IS_STATIC_CALL: bool> Spec for BerlinSpecImpl<IS_STATIC_CALL> {
     const IS_STATIC_CALL: bool = IS_STATIC_CALL;
     /// Gas paid for extcode.
     const GAS_EXT_CODE: u64 = 0;
+    /// inspector;
+    const INSPECTOR_ENABLED: bool = true;
     /// Gas paid for extcodehash.
     const GAS_EXT_CODE_HASH: u64 = 0;
     /// Gas paid for sstore set.

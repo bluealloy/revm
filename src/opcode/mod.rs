@@ -14,7 +14,7 @@ use crate::{
     error::{ExitError, ExitReason, ExitSucceed},
     machine::Machine,
     spec::Spec,
-    CallScheme, ExtHandler,
+    CallScheme, Handler,
 };
 use core::ops::{BitAnd, BitOr, BitXor};
 use primitive_types::{H256, U256};
@@ -28,7 +28,7 @@ pub enum Control {
 }
 
 #[inline]
-pub fn eval<H: ExtHandler, S: Spec>(
+pub fn eval<H: Handler, S: Spec>(
     machine: &mut Machine,
     opcode: OpCode,
     position: usize,

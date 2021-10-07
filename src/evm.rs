@@ -1,7 +1,4 @@
-use crate::{
-    collection::{vec::Vec, Map},
-    precompiles, AccountInfo,
-};
+use crate::{AccountInfo, Inspector, collection::{vec::Vec, Map}, inspector::NoOpInspector, opcode::Control, precompiles};
 use core::cmp::min;
 use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
@@ -25,6 +22,7 @@ pub struct EVM<'a, DB: Database> {
     global_env: GlobalEnv,
     subroutine: SubRoutine,
     precompiles: Precompiles,
+    inspector: Box<dyn Inspector>,
 }
 
 impl<'a, DB: Database> EVM<'a, DB> {
@@ -34,6 +32,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
             global_env,
             subroutine: SubRoutine::new(Map::new()), //precompiles::accounts()),
             precompiles: Precompiles::new(),
+            inspector: Box::new(NoOpInspector()),
         }
     }
 
@@ -222,12 +221,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
         }
         // check balance of caller and value
         if self.balance(caller).0 < value {
-            return (
-                ExitError::OutOfFund.into(),
-                None,
-                gas,
-                Bytes::new(),
-            );
+            return (ExitError::OutOfFund.into(), None, gas, Bytes::new());
         }
         // inc nonce of caller
         let old_nonce = self.subroutine.inc_nonce(caller);
@@ -338,13 +332,6 @@ impl<'a, DB: Database> EVM<'a, DB> {
         // Create subroutine checkpoint
         let checkpoint = self.subroutine.create_checkpoint();
         self.subroutine.load_account(context.address, self.db);
-        self.trace_call(
-            code_address,
-            &context,
-            &transfer,
-            &input,
-            SPEC::IS_STATIC_CALL,
-        );
         // check depth of calls
         if self.subroutine.depth() > SPEC::CALL_STACK_LIMIT {
             return (ExitError::CallTooDeep.into(), gas, Bytes::new());
@@ -411,16 +398,21 @@ impl<'a, DB: Database> EVM<'a, DB> {
 }
 
 impl<'a, DB: Database> Handler for EVM<'a, DB> {
-    fn global_env(&self) -> &GlobalEnv {
+    fn env(&self) -> &GlobalEnv {
         &self.global_env
     }
 
-    fn load_account(&mut self, address: H160) -> (bool, bool) {
-        self.subroutine.load_account_exist(address, self.db)
+    
+    fn inspect(&mut self) -> &mut dyn Inspector {
+        self.inspector.as_mut()
     }
 
     fn block_hash(&mut self, number: U256) -> H256 {
         self.db.block_hash(number)
+    }
+
+    fn load_account(&mut self, address: H160) -> (bool, bool) {
+        self.subroutine.load_account_exist(address, self.db)
     }
 
     fn balance(&mut self, address: H160) -> (U256, bool) {
@@ -436,7 +428,7 @@ impl<'a, DB: Database> Handler for EVM<'a, DB> {
 
     /// Get code hash of address.
     fn code_hash(&mut self, address: H160) -> (H256, bool) {
-        let (acc,is_cold) = self.subroutine.load_code(address, self.db);
+        let (acc, is_cold) = self.subroutine.load_code(address, self.db);
         if acc.is_empty() {
             return (H256::zero(), is_cold);
         }
@@ -446,12 +438,15 @@ impl<'a, DB: Database> Handler for EVM<'a, DB> {
 
     fn sload(&mut self, address: H160, index: H256) -> (H256, bool) {
         // account is allways hot. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
-        self.subroutine.sload(address, index, self.db)
+        let ret = self.subroutine.sload(address, index, self.db);
+        self.inspect().sload(&address, &index, &ret.0, ret.1);
+        ret
     }
 
-    // TODO check return value, should it be is_cold or maybe original value
     fn sstore(&mut self, address: H160, index: H256, value: H256) -> (H256, H256, H256, bool) {
-        self.subroutine.sstore(address, index, value, self.db)
+        let (original, old, new, is_cold) = self.subroutine.sstore(address, index, value, self.db);
+        self.inspect().sstore(address, index, new, old, original, is_cold);
+        (original, old, new, is_cold)
     }
 
     fn log(&mut self, address: H160, topics: Vec<H256>, data: Bytes) {
@@ -490,9 +485,6 @@ impl<'a, DB: Database> Handler for EVM<'a, DB> {
     }
 }
 
-impl<'a, DB: Database> Tracing for EVM<'a, DB> {}
-impl<'a, DB: Database> ExtHandler for EVM<'a, DB> {}
-
 #[derive(Default)]
 pub struct SelfDestructResult {
     pub had_value: bool,
@@ -503,7 +495,9 @@ pub struct SelfDestructResult {
 /// EVM context handler.
 pub trait Handler {
     /// Get global const context of evm execution
-    fn global_env(&self) -> &GlobalEnv;
+    fn env(&self) -> &GlobalEnv;
+
+    fn inspect(&mut self) -> &mut dyn Inspector;
 
     /// load account. Returns (is_cold,is_new_account)
     fn load_account(&mut self, address: H160) -> (bool, bool);
@@ -542,75 +536,4 @@ pub trait Handler {
         gas: u64,
         context: CallContext,
     ) -> (ExitReason, Gas, Bytes);
-}
-
-pub trait Tracing {
-    fn trace_opcode(&mut self, opcode: OpCode, machine: &Machine) {
-        println!(
-            "OPCODE: {:?}({:?}) PC:{}, gas:{:#x}({}), refund:{:#x}({}) Stack:{:?}, Data:",
-            opcode,
-            opcode as u8,
-            machine.program_counter(),
-            machine.gas.remaining(),
-            machine.gas.remaining(),
-            machine.gas.refunded(),
-            machine.gas.refunded(),
-            machine.stack.data(),
-            // hex::encode(machine.memory.data()),
-        );
-    }
-    fn trace_call(
-        &mut self,
-        call: H160,
-        context: &CallContext,
-        transfer: &Option<Transfer>,
-        input: &Bytes,
-        is_static: bool,
-    ) {
-        println!(
-            "SM CALL:   {:?},context:{:?}, is_static:{:?}, transfer:{:?}, input:{:?}",
-            call, context, is_static, transfer, input,
-        );
-    }
-}
-
-pub trait ExtHandler: Handler + Tracing {
-    /// Get code size of address.
-    fn code_size(&mut self, address: H160) -> (U256, bool) {
-        let (code, is_cold) = self.code(address);
-        (U256::from(code.len()), is_cold)
-    }
-
-    /// Get the gas price value.
-    fn gas_price(&self) -> U256 {
-        self.global_env().gas_price
-    }
-    /// Get execution origin.
-    fn origin(&self) -> H160 {
-        self.global_env().origin
-    }
-    /// Get environmental block number.
-    fn block_number(&self) -> U256 {
-        self.global_env().block_number
-    }
-    /// Get environmental coinbase.
-    fn block_coinbase(&self) -> H160 {
-        self.global_env().block_coinbase
-    }
-    /// Get environmental block timestamp.
-    fn block_timestamp(&self) -> U256 {
-        self.global_env().block_timestamp
-    }
-    /// Get environmental block difficulty.
-    fn block_difficulty(&self) -> U256 {
-        self.global_env().block_difficulty
-    }
-    /// Get environmental gas limit.
-    fn block_gas_limit(&self) -> U256 {
-        self.global_env().block_gas_limit
-    }
-    /// Get environmental chain ID.
-    fn chain_id(&self) -> U256 {
-        self.global_env().chain_id
-    }
 }

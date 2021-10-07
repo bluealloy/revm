@@ -9,7 +9,7 @@ use crate::{
     error::{ExitReason, ExitSucceed},
     opcode::{Control, OpCode},
     spec::Spec,
-    ExtHandler,
+    Handler,
 };
 
 pub struct Machine {
@@ -160,7 +160,7 @@ impl Machine {
     }
 
     /// loop steps until we are finished with execution
-    pub fn run<H: ExtHandler, SPEC: Spec>(&mut self, handler: &mut H) -> ExitReason {
+    pub fn run<H: Handler, SPEC: Spec>(&mut self, handler: &mut H) -> ExitReason {
         loop {
             if let Err(reson) = self.step::<H, SPEC>(handler) {
                 return reson;
@@ -170,30 +170,31 @@ impl Machine {
 
     #[inline]
     /// Step the machine, executing one opcode. It then returns.
-    pub fn step<H: ExtHandler, SPEC: Spec>(&mut self, handler: &mut H) -> Result<(), ExitReason> {
-        let program_counter = self.program_counter;
+    pub fn step<H: Handler, SPEC: Spec>(&mut self, handler: &mut H) -> Result<(), ExitReason> {
+       
+        handler.inspect().step(self);
 
         // extract next opcode from code
-        let opcode = self.contract.opcode(program_counter)?;
-        // call prevalidation to calcuate gas consumption for this opcode
-        handler.trace_opcode(opcode, &self);
+        let opcode = self.contract.opcode(self.program_counter)?;
+        
 
         // evaluate opcode/execute instruction
-        match eval::<H, SPEC>(self, opcode, program_counter, handler) {
+        let mut eval = eval::<H, SPEC>(self, opcode, self.program_counter, handler);
+        handler.inspect().eval(&mut eval, self);
+        match eval {
             Control::Continue => {
-                self.program_counter = program_counter + 1;
-                Ok(())
+                self.program_counter += 1;
             }
             Control::ContinueN(p) => {
-                self.program_counter = program_counter + p;
-                Ok(())
+                self.program_counter += p;
             }
-            Control::Exit(e) => Err(e),
+            Control::Exit(e) => return Err(e),
             Control::Jump(p) => {
                 self.program_counter = p;
-                Ok(())
             }
         }
+        
+        Ok(())
     }
 
     /// Copy and get the return value of the machine, if any.

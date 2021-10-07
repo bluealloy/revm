@@ -171,7 +171,7 @@ pub fn run(mut test_files: Vec<PathBuf>) {
 
         joins.push(
             std::thread::Builder::new()
-                .stack_size(20 * 1024 * 1024)
+                .stack_size(50 * 1024 * 1024)
                 .spawn(move || {
                     for test in chunk {
                         if endjob.load(Ordering::SeqCst) {

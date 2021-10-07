@@ -215,12 +215,12 @@ impl SubRoutine {
     }
 
     pub fn create_checkpoint(&mut self) -> SubRoutineCheckpoint {
-        self.depth += 1;
         let checkpoint = SubRoutineCheckpoint {
             log_i: self.logs.len(),
             changelog_i: self.changelog.len(),
             depth: self.depth,
         };
+        self.depth += 1;
         self.changelog.push(Default::default());
         checkpoint
     }
