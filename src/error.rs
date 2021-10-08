@@ -65,7 +65,9 @@ pub enum ExitRevert {
     /// Machine encountered an explict revert.
     Reverted,
     /// Account does not have balance, revert it.
-    OutOfFund, 
+    OutOfFund,
+    /// Hit call stack limit
+    CallTooDeep,
 }
 
 impl From<ExitRevert> for ExitReason {
@@ -89,8 +91,6 @@ pub enum ExitError {
     InvalidRange,
     /// Encountered the designated invalid opcode.
     DesignatedInvalid,
-    /// Call stack is too deep (runtime).
-    CallTooDeep,
     /// Create opcode encountered collision (runtime).
     CreateCollision,
     /// Create init code exceeds limit (runtime).

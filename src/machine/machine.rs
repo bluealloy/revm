@@ -27,6 +27,8 @@ pub struct Machine {
     pub return_data_buffer: Bytes,
     /// left gas. Memory gas can be found in Memory field.
     pub gas: Gas,
+    /// used only for inspector.
+    pub call_depth: u64,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -119,7 +121,7 @@ impl Gas {
 }
 
 impl Machine {
-    pub fn new(contract: Contract, gas_limit: u64) -> Self {
+    pub fn new(contract: Contract, gas_limit: u64, call_depth: u64) -> Self {
         Self {
             program_counter: 0,
             return_range: Range::default(),
@@ -128,6 +130,7 @@ impl Machine {
             return_data_buffer: Bytes::new(),
             contract,
             gas: Gas::new(gas_limit),
+            call_depth,
         }
     }
     pub fn contract(&self) -> &Contract {

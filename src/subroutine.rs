@@ -133,8 +133,8 @@ impl SubRoutine {
         self.state.get(&address).unwrap() // Allways assume that acc is already loaded
     }
 
-    pub fn depth(&self) -> usize {
-        self.depth
+    pub fn depth(&self) -> u64 {
+        self.depth as u64
     }
 
     /// use it only if you know that acc is hot

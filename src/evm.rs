@@ -1,4 +1,4 @@
-use crate::{AccountInfo, Inspector, collection::{vec::Vec, Map}, inspector::NoOpInspector, opcode::Control, precompiles};
+use crate::{AccountInfo, ExitRevert, Inspector, collection::{vec::Vec, Map}, inspector::NoOpInspector, opcode::Control, precompiles};
 use core::cmp::min;
 use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
@@ -36,7 +36,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
         }
     }
 
-    pub fn inspector(mut self,inspector: Box<dyn Inspector>) -> EVM<'a,DB> {
+    pub fn inspector(mut self, inspector: Box<dyn Inspector>) -> EVM<'a, DB> {
         self.inspector = inspector;
         self
     }
@@ -221,8 +221,9 @@ impl<'a, DB: Database> EVM<'a, DB> {
         // trace create
 
         // check depth of calls
-        if self.subroutine.depth() > SPEC::CALL_STACK_LIMIT {
-            return (ExitError::CallTooDeep.into(), None, gas, Bytes::new());
+        // it seems strange but this is how geth works in logs you can see 1025 depth even if 1024 is limit.
+        if self.subroutine.depth() > SPEC::CALL_STACK_LIMIT+1 {
+            return (ExitRevert::CallTooDeep.into(), None, gas, Bytes::new());
         }
         // check balance of caller and value
         if self.balance(caller).0 < value {
@@ -259,7 +260,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
         }
         // create new machine and execute init function
         let contract = Contract::new(Bytes::new(), init_code, address, caller, value);
-        let mut machine = Machine::new(contract, gas.limit());
+        let mut machine = Machine::new(contract, gas.limit(), self.subroutine.depth());
         let exit_reason = machine.run::<Self, SPEC>(self);
         // handler error if present on execution
         match exit_reason {
@@ -338,8 +339,8 @@ impl<'a, DB: Database> EVM<'a, DB> {
         let checkpoint = self.subroutine.create_checkpoint();
         self.subroutine.load_account(context.address, self.db);
         // check depth of calls
-        if self.subroutine.depth() > SPEC::CALL_STACK_LIMIT {
-            return (ExitError::CallTooDeep.into(), gas, Bytes::new());
+        if self.subroutine.depth() > SPEC::CALL_STACK_LIMIT+1 {
+            return (ExitRevert::CallTooDeep.into(), gas, Bytes::new());
         }
         // transfer value from caller to called address;
         if let Some(transfer) = transfer {
@@ -382,7 +383,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
             context.caller,
             context.apparent_value,
         );
-        let mut machine = Machine::new(contract, gas_limit);
+        let mut machine = Machine::new(contract, gas_limit, self.subroutine.depth());
         let exit_reason = machine.run::<Self, SPEC>(self);
 
         match exit_reason {
@@ -407,7 +408,6 @@ impl<'a, DB: Database> Handler for EVM<'a, DB> {
         &self.global_env
     }
 
-    
     fn inspect(&mut self) -> &mut dyn Inspector {
         self.inspector.as_mut()
     }
@@ -450,7 +450,8 @@ impl<'a, DB: Database> Handler for EVM<'a, DB> {
 
     fn sstore(&mut self, address: H160, index: H256, value: H256) -> (H256, H256, H256, bool) {
         let (original, old, new, is_cold) = self.subroutine.sstore(address, index, value, self.db);
-        self.inspect().sstore(address, index, new, old, original, is_cold);
+        self.inspect()
+            .sstore(address, index, new, old, original, is_cold);
         (original, old, new, is_cold)
     }
 

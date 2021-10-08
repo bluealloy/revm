@@ -87,7 +87,7 @@ impl<const IS_STATIC_CALL: bool> Spec for BerlinSpecImpl<IS_STATIC_CALL> {
     /// Memory limit.
     const MEMORY_LIMIT: usize = usize::MAX;
     /// Call limit.
-    const CALL_STACK_LIMIT: usize = 1024;
+    const CALL_STACK_LIMIT: u64 = 1024;
     /// Create contract limit. TODO set usize to MAX
     const CREATE_CONTRACT_LIMIT: Option<usize> = Some(0x6000);
     /// Call stipend.

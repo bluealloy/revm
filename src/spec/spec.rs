@@ -83,7 +83,7 @@ pub trait Spec {
     /// Memory limit.
     const MEMORY_LIMIT: usize;
     /// Call limit.
-    const CALL_STACK_LIMIT: usize;
+    const CALL_STACK_LIMIT: u64;
     /// Create contract limit.
     const CREATE_CONTRACT_LIMIT: Option<usize>;
     /// Call stipend.
