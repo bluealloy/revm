@@ -18,7 +18,7 @@ impl Inspector for CustomPrintTracer {
         };
         //if self.
         println!(
-            "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data:",
+            "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack.len:{:?}, Data:",
             machine.call_depth,
             machine.program_counter(),
             machine.gas.remaining(),

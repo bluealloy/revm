@@ -1,4 +1,9 @@
-use crate::{AccountInfo, ExitRevert, Inspector, collection::{vec::Vec, Map}, inspector::NoOpInspector, opcode::Control, precompiles};
+use crate::{
+    collection::{vec::Vec, Map},
+    inspector::NoOpInspector,
+    opcode::Control,
+    precompiles, AccountInfo, ExitRevert, Inspector,
+};
 use core::cmp::min;
 use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
@@ -98,13 +103,15 @@ impl<'a, DB: Database> EVM<'a, DB> {
             context,
         );
 
-        let mut gas_spend = match exit_reason {
+        let gas_spend = match exit_reason {
             ExitReason::Error(_) => gas_limit,
-            _ => gas.all_used() + gas_used_init,
+            _ => {
+                let mut gas_spend = gas.all_used() + gas_used_init;
+                let refund_amt = min(gas.refunded() as u64, gas_spend / 2); // for london constant is 5 not 2.
+                gas_spend -= refund_amt;
+                gas_spend
+            }
         };
-
-        let refund_amt = min(gas.refunded() as u64, gas_spend / 2); // for london constant is 5 not 2.
-        gas_spend -= refund_amt;
 
         match self.finalize(caller, gas_spend) {
             //TODO check if refunded can be negative :)
@@ -222,12 +229,12 @@ impl<'a, DB: Database> EVM<'a, DB> {
 
         // check depth of calls
         // it seems strange but this is how geth works in logs you can see 1025 depth even if 1024 is limit.
-        if self.subroutine.depth() > SPEC::CALL_STACK_LIMIT+1 {
+        if self.subroutine.depth() > SPEC::CALL_STACK_LIMIT + 1 {
             return (ExitRevert::CallTooDeep.into(), None, gas, Bytes::new());
         }
         // check balance of caller and value
         if self.balance(caller).0 < value {
-            return (ExitError::OutOfFund.into(), None, gas, Bytes::new());
+            return (ExitRevert::OutOfFund.into(), None, gas, Bytes::new());
         }
         // inc nonce of caller
         let old_nonce = self.subroutine.inc_nonce(caller);
@@ -260,46 +267,32 @@ impl<'a, DB: Database> EVM<'a, DB> {
         }
         // create new machine and execute init function
         let contract = Contract::new(Bytes::new(), init_code, address, caller, value);
-        let mut machine = Machine::new(contract, gas.limit(), self.subroutine.depth());
+        let mut machine = Machine::new::<SPEC>(contract, gas.limit(), self.subroutine.depth());
         let exit_reason = machine.run::<Self, SPEC>(self);
         // handler error if present on execution
         match exit_reason {
             ExitReason::Succeed(_) => {
+                let b = Bytes::new();
                 // if ok, check contract creation limit and calculate gas deduction on output len.
                 let code = machine.return_value();
                 if let Some(limit) = SPEC::CREATE_CONTRACT_LIMIT {
                     if code.len() > limit {
                         // TODO reduce gas and return
                         self.subroutine.checkpoint_discard(checkpoint);
-                        return (
-                            ExitError::CreateContractLimit.into(),
-                            None,
-                            machine.gas,
-                            Bytes::new(),
-                        );
+                        return (ExitError::CreateContractLimit.into(), None, machine.gas, b);
                     }
                 }
                 let gas_for_code = code.len() as u64 * crate::opcode::gas::CODEDEPOSIT;
                 // record code deposit gas cost and check if we are out of gas.
                 if !machine.gas.record_cost(gas_for_code) {
                     self.subroutine.checkpoint_discard(checkpoint);
-                    (
-                        ExitReason::Error(ExitError::OutOfGas),
-                        None,
-                        machine.gas,
-                        Bytes::new(),
-                    )
+                    (ExitError::OutOfGas.into(), None, machine.gas, b)
                 } else {
                     //println!("SM created: {:?}", address);
                     // if we have enought gas, set code and do checkpoint comit.
                     self.subroutine.set_code(address, code, code_hash);
                     self.subroutine.checkpoint_commit(checkpoint);
-                    (
-                        ExitReason::Succeed(ExitSucceed::Returned),
-                        Some(address),
-                        machine.gas,
-                        Bytes::new(),
-                    )
+                    (ExitSucceed::Returned.into(), Some(address), machine.gas, b)
                 }
             }
             ExitReason::Revert(revert) => {
@@ -339,7 +332,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
         let checkpoint = self.subroutine.create_checkpoint();
         self.subroutine.load_account(context.address, self.db);
         // check depth of calls
-        if self.subroutine.depth() > SPEC::CALL_STACK_LIMIT+1 {
+        if self.subroutine.depth() > SPEC::CALL_STACK_LIMIT + 1 {
             return (ExitRevert::CallTooDeep.into(), gas, Bytes::new());
         }
         // transfer value from caller to called address;
@@ -362,14 +355,10 @@ impl<'a, DB: Database> EVM<'a, DB> {
                         .for_each(|l| self.log(l.address, l.topics, l.data));
                     gas.record_cost(cost);
                     let _ = self.subroutine.checkpoint_commit(checkpoint);
-                    (
-                        ExitReason::Succeed(ExitSucceed::Returned),
-                        gas,
-                        Bytes::from(output),
-                    )
+                    (ExitSucceed::Returned.into(), gas, Bytes::from(output))
                 }
                 Err(e) => {
-                    let _ = self.subroutine.checkpoint_discard(checkpoint); //TODO chekc
+                    let _ = self.subroutine.checkpoint_discard(checkpoint); //TODO check if we are discarding or reverting
                     (ExitReason::Error(e), gas, Bytes::new())
                 }
             };
@@ -383,7 +372,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
             context.caller,
             context.apparent_value,
         );
-        let mut machine = Machine::new(contract, gas_limit, self.subroutine.depth());
+        let mut machine = Machine::new::<SPEC>(contract, gas_limit, self.subroutine.depth());
         let exit_reason = machine.run::<Self, SPEC>(self);
 
         match exit_reason {

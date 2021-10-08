@@ -121,12 +121,12 @@ impl Gas {
 }
 
 impl Machine {
-    pub fn new(contract: Contract, gas_limit: u64, call_depth: u64) -> Self {
+    pub fn new<SPEC: Spec>(contract: Contract, gas_limit: u64, call_depth: u64) -> Self {
         Self {
             program_counter: 0,
             return_range: Range::default(),
-            memory: Memory::new(10000),
-            stack: Stack::new(10000),
+            memory: Memory::new(SPEC::MEMORY_LIMIT),
+            stack: Stack::new(SPEC::STACK_LIMIT),
             return_data_buffer: Bytes::new(),
             contract,
             gas: Gas::new(gas_limit),
