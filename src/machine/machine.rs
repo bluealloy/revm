@@ -16,7 +16,7 @@ pub struct Machine {
     /// Contract information and invoking data
     pub contract: Contract,
     /// Program counter.
-    program_counter: usize,
+    pub program_counter: usize,
     /// Return value.
     pub return_range: Range<U256>,
     /// Memory.
@@ -178,6 +178,7 @@ impl Machine {
         handler.inspect().step(self);
 
         // extract next opcode from code
+        let program_counter = self.program_counter;
         let opcode = self.contract.opcode(self.program_counter)?;
         
 

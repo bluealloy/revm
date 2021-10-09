@@ -116,7 +116,7 @@ pub fn verylowcopy_cost(len: U256) -> Option<u64> {
 pub fn extcodecopy_cost<SPEC: Spec>(len: U256, is_cold: bool) -> Option<u64> {
     let wordd = len / U256::from(32);
     let wordr = len % U256::from(32);
-    let gas = U256::from(account_access_cost::<SPEC>(is_cold, SPEC::GAS_EXT_CODE)).checked_add(
+    let gas = U256::from(hot_cold_cost::<SPEC>(is_cold, SPEC::GAS_EXT_CODE)).checked_add(
         U256::from(COPY).checked_mul(if wordr == U256::zero() {
             wordd
         } else {
@@ -252,7 +252,7 @@ pub fn call_cost<SPEC: Spec>(
     is_call_or_staticcall: bool,
 ) -> u64 {
     let transfers_value = value != U256::default();
-    account_access_cost::<SPEC>(is_cold, SPEC::GAS_CALL)
+    hot_cold_cost::<SPEC>(is_cold, SPEC::GAS_CALL)
         + xfer_cost(is_call_or_callcode, transfers_value)
         + new_cost::<SPEC>(
             is_call_or_staticcall,
@@ -262,7 +262,7 @@ pub fn call_cost<SPEC: Spec>(
 }
 
 #[inline(always)]
-pub fn account_access_cost<SPEC: Spec>(is_cold: bool, regular_value: u64) -> u64 {
+pub fn hot_cold_cost<SPEC: Spec>(is_cold: bool, regular_value: u64) -> u64 {
     if SPEC::INCREASE_STATE_ACCESS_GAS {
         if is_cold {
             SPEC::GAS_ACCOUNT_ACCESS_COLD

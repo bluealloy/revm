@@ -426,7 +426,8 @@ impl SubRoutine {
         // nulify state and info. Mark acc as destroyed.
         acc.filth = Filth::Destroyed;
         acc.storage = Map::new();
-        acc.info = AccountInfo::default();
+        acc.info.nonce = 0;
+        acc.info.balance = U256::zero();
         SelfDestructResult {
             had_value,
             is_cold,
@@ -474,7 +475,9 @@ impl SubRoutine {
                 db.code(address)
             };
             acc.info.code = Some(code);
-        }
+        }// } else {
+        //     acc.info.code = Some(Bytes::new());
+        // }
         (acc, is_cold)
     }
 

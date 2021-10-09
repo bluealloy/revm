@@ -57,7 +57,7 @@ pub fn balance<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -
     //println!("is balance cold:{} {}",balance,is_cold);
     gas!(
         machine,
-        gas::account_access_cost::<SPEC>(is_cold, SPEC::GAS_BALANCE)
+        gas::hot_cold_cost::<SPEC>(is_cold, SPEC::GAS_BALANCE)
     );
     push_u256!(machine, balance);
 
@@ -117,7 +117,7 @@ pub fn extcodesize<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
     let (code, is_cold) = handler.code(address.into());
     gas!(
         machine,
-        gas::account_access_cost::<SPEC>(is_cold, SPEC::GAS_EXT_CODE)
+        gas::hot_cold_cost::<SPEC>(is_cold, SPEC::GAS_EXT_CODE)
     );
 
     push_u256!(machine, U256::from(code.len()));
@@ -131,7 +131,7 @@ pub fn extcodehash<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
     let (code_hash, is_cold) = handler.code_hash(address.into());
     gas!(
         machine,
-        gas::account_access_cost::<SPEC>(is_cold, SPEC::GAS_EXT_CODE_HASH)
+        gas::hot_cold_cost::<SPEC>(is_cold, SPEC::GAS_EXT_CODE_HASH)
     );
     push!(machine, code_hash);
 

@@ -16,7 +16,7 @@ pub struct Contract {
     /// Value send to contract.
     pub value: U256,
     /// Precomputed valid jump addresses
-    pub jumpdest: ValidJumpAddress,
+    jumpdest: ValidJumpAddress,
 }
 
 impl Contract {
@@ -30,6 +30,10 @@ impl Contract {
             value,
             jumpdest,
         }
+    }
+
+    pub fn is_valid_jump(&self, possition: usize) -> bool {
+        self.jumpdest.is_valid(possition)
     }
 
     pub fn new_with_context(input: Bytes, code: Bytes, call_context: &CallContext) -> Self {

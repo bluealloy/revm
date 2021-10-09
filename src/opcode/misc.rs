@@ -135,7 +135,7 @@ pub fn jump(machine: &mut Machine) -> Control {
     pop_u256!(machine, dest);
     let dest = as_usize_or_fail!(dest, ExitError::InvalidJump);
 
-    if machine.contract.jumpdest.is_valid(dest) {
+    if machine.contract.is_valid_jump(dest) {
         Control::Jump(dest)
     } else {
         Control::Exit(ExitError::InvalidJump.into())
@@ -151,9 +151,10 @@ pub fn jumpi(machine: &mut Machine) -> Control {
     let dest = as_usize_or_fail!(dest, ExitError::InvalidJump);
 
     if value != H256::zero() {
-        if machine.contract.jumpdest.is_valid(dest) {
+        if machine.contract.is_valid_jump(dest) {
             Control::Jump(dest)
         } else {
+            //println!("contract:{:?}", hex::encode(&machine.contract.code));
             Control::Exit(ExitError::InvalidJump.into())
         }
     } else {

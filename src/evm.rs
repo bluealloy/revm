@@ -372,12 +372,12 @@ impl<'a, DB: Database> EVM<'a, DB> {
             let contract = Contract::new_with_context(input, code, &context);
             let mut machine = Machine::new::<SPEC>(contract, gas_limit, self.subroutine.depth());
             let exit_reason = machine.run::<Self, SPEC>(self);
-            if matches!(exit_reason,ExitReason::Succeed(_)) {
+            if matches!(exit_reason, ExitReason::Succeed(_)) {
                 self.subroutine.checkpoint_commit();
             } else {
                 self.subroutine.checkpoint_revert(checkpoint);
             }
-                
+
             (exit_reason, machine.gas, machine.return_value())
         }
     }
@@ -415,7 +415,7 @@ impl<'a, DB: Database> Handler for EVM<'a, DB> {
         if is_cold {
             self.inspector.load_account(&address);
         }
-        (acc.info.code.clone().unwrap(), is_cold)
+        (acc.info.code.clone().unwrap_or_default(), is_cold)
     }
 
     /// Get code hash of address.
