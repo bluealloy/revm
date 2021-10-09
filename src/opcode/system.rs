@@ -395,11 +395,15 @@ pub fn create<H: Handler, SPEC: Spec>(
     let (reason, address, gas, return_data) =
         handler.create::<SPEC>(machine.contract.address, scheme, value, code, gas_limit);
     machine.return_data_buffer = return_data;
-    let created_address: H256 = address.map(|a| a.into()).unwrap_or_default();
+    let created_address: H256 = if matches!(reason, ExitReason::Succeed(_)) {
+        address.map(|a| a.into()).unwrap_or_default()
+    } else {
+        H256::default()
+    };
     inspect!(handler, create_return, created_address);
+    push!(machine, created_address);
     // reimburse gas that is not spend
     machine.gas.reimburse_unspend(&reason, gas);
-    push!(machine, created_address);
     match reason {
         ExitReason::Fatal(e) => Control::Exit(e.into()),
         _ => Control::Continue,
