@@ -112,6 +112,9 @@ pub enum ExitError {
     /// opcode not found,
     OpcodeNotFound,
 
+    /// calling CALL inside static call
+    CallNotAllowedInsideStatic,
+
     /// Other normal errors.
 	Other(Cow<'static, str>),
 }

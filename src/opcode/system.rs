@@ -430,12 +430,9 @@ pub fn call<H: Handler, SPEC: Spec>(
     scheme: CallScheme,
     handler: &mut H,
 ) -> Control {
-    match scheme {
-        CallScheme::Call => enabled!(!SPEC::IS_STATIC_CALL),
-        CallScheme::DelegateCall => enabled!(SPEC::HAS_DELEGATE_CALL),
-        _ => (),
+    if scheme == CallScheme::DelegateCall {
+        enabled!(SPEC::HAS_DELEGATE_CALL)
     }
-
     machine.return_data_buffer = Bytes::new();
 
     pop_u256!(machine, local_gas_limit);
@@ -447,8 +444,15 @@ pub fn call<H: Handler, SPEC: Spec>(
     };
 
     let value = match scheme {
-        CallScheme::Call | CallScheme::CallCode => {
+        CallScheme::CallCode => {
             pop_u256!(machine, value);
+            value
+        }
+        CallScheme::Call => {
+            pop_u256!(machine, value);
+            if SPEC::IS_STATIC_CALL && value != U256::zero() {
+                return Control::Exit(ExitReason::Error(ExitError::CallNotAllowedInsideStatic));
+            }
             value
         }
         CallScheme::DelegateCall | CallScheme::StaticCall => U256::zero(),
