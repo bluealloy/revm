@@ -273,8 +273,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
         let contract = Contract::new(Bytes::new(), init_code, created_address, caller, value);
         let mut machine = Machine::new::<SPEC>(contract, gas.limit(), self.subroutine.depth());
         let exit_reason = machine.run::<Self, SPEC>(self);
-        // handler error if present on execution
-        self.subroutine.depth_decs();
+        // handler error if present on execution\
         match exit_reason {
             ExitReason::Succeed(_) => {
                 let b = Bytes::new();
@@ -294,6 +293,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
                     (ExitError::OutOfGas.into(), ret, machine.gas, b)
                 } else {
                     // if we have enought gas
+                    self.subroutine.checkpoint_commit();
                     self.subroutine.set_code(created_address, code, code_hash);
                     (ExitSucceed::Returned.into(), ret, machine.gas, b)
                 }
@@ -350,12 +350,12 @@ impl<'a, DB: Database> EVM<'a, DB> {
         }
         // call precompiles
         if let Some(precompile) = self.precompiles.get_fun(&code_address) {
-            self.subroutine.depth_decs();
             match (precompile)(input.as_ref(), gas_limit, &context, SPEC::IS_STATIC_CALL) {
                 Ok(PrecompileOutput { output, cost, logs }) => {
                     if gas.record_cost(cost) {
                         logs.into_iter()
                             .for_each(|l| self.log(l.address, l.topics, l.data));
+                        self.subroutine.checkpoint_commit();
                         (ExitSucceed::Returned.into(), gas, Bytes::from(output))
                     } else {
                         self.subroutine.checkpoint_revert(checkpoint);
@@ -372,10 +372,12 @@ impl<'a, DB: Database> EVM<'a, DB> {
             let contract = Contract::new_with_context(input, code, &context);
             let mut machine = Machine::new::<SPEC>(contract, gas_limit, self.subroutine.depth());
             let exit_reason = machine.run::<Self, SPEC>(self);
-            self.subroutine.depth_decs();
-            if !matches!(exit_reason,ExitReason::Succeed(_)) {
+            if matches!(exit_reason,ExitReason::Succeed(_)) {
+                self.subroutine.checkpoint_commit();
+            } else {
                 self.subroutine.checkpoint_revert(checkpoint);
             }
+                
             (exit_reason, machine.gas, machine.return_value())
         }
     }

@@ -366,12 +366,13 @@ impl SubRoutine {
         }
     }
 
-    pub fn depth_decs(&mut self) {
+    pub fn checkpoint_commit(&mut self) {
         self.depth -= 1;
     }
 
     pub fn checkpoint_revert(&mut self, checkpoint: SubRoutineCheckpoint) {
         let state = &mut self.state;
+        self.depth -= 1;
         // iterate over last N changelogs and revert it to our global state
         let leng = self.changelog.len();
         self.changelog
