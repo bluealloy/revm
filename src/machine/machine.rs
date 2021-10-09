@@ -48,6 +48,19 @@ impl Gas {
         }
     }
 
+    pub fn reimburse_unspend(&mut self, exit: &ExitReason, other: Gas) {
+        match exit {
+            ExitReason::Succeed(_) => {
+                self.erase_cost(other.remaining());
+                self.record_refund(other.refunded());
+            }
+            ExitReason::Revert(_) => {
+                self.erase_cost(other.remaining());
+            }
+            _ => {}
+        }
+    }
+
     pub fn limit_mut(&mut self) -> &mut u64 {
         &mut self.limit
     }
@@ -55,9 +68,7 @@ impl Gas {
     pub fn limit(&self) -> u64 {
         self.limit
     }
-    pub fn used(&self) -> u64 {
-        self.used
-    }
+
     pub fn memory(&self) -> u64 {
         self.memory
     }
@@ -66,7 +77,7 @@ impl Gas {
         self.refunded
     }
 
-    pub fn all_used(&self) -> u64 {
+    pub fn spend(&self) -> u64 {
         self.used + self.memory
     }
 
@@ -96,7 +107,6 @@ impl Gas {
 
     /// used in memory_resize! macro
     pub fn record_memory(&mut self, gas_memory: u64) -> bool {
-      
         let max_memory = max(self.memory, gas_memory);
         let all_used_gas: u128 = self.used as u128 + gas_memory as u128;
         if (self.limit as u128) < all_used_gas {
@@ -174,13 +184,11 @@ impl Machine {
     #[inline]
     /// Step the machine, executing one opcode. It then returns.
     pub fn step<H: Handler, SPEC: Spec>(&mut self, handler: &mut H) -> Result<(), ExitReason> {
-       
         handler.inspect().step(self);
 
         // extract next opcode from code
         let program_counter = self.program_counter;
         let opcode = self.contract.opcode(self.program_counter)?;
-        
 
         // evaluate opcode/execute instruction
         let mut eval = eval::<H, SPEC>(self, opcode, self.program_counter, handler);
@@ -197,7 +205,7 @@ impl Machine {
                 self.program_counter = p;
             }
         }
-        
+
         Ok(())
     }
 

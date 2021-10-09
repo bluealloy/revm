@@ -109,7 +109,7 @@ impl SubRoutine {
                     acc.info.code = None;
                     out.insert(add, acc);
                 }
-                Filth::NewlyCreated => { 
+                Filth::NewlyCreated => {
                     // acc was destroyed or newly created or if it is changed precompile, just add it to output.
                     out.insert(add, acc);
                 }
@@ -158,6 +158,24 @@ impl SubRoutine {
         let old_nonce = acc.info.nonce;
         acc.info.nonce += 1;
         old_nonce
+    }
+
+    pub fn balance_add(&mut self, address: H160, payment: U256) -> bool {
+        let acc = self.log_dirty(address, |_| {});
+        if let Some(balance) = acc.info.balance.checked_add(payment) {
+            acc.info.balance = balance;
+            return true;
+        }
+        return false;
+    }
+
+    pub fn balance_sub(&mut self, address: H160, payment: U256) -> bool {
+        let acc = self.log_dirty(address, |_| {});
+        if let Some(balance) = acc.info.balance.checked_sub(payment) {
+            acc.info.balance = balance;
+            return true;
+        }
+        return false;
     }
 
     // log dirty change and return account back
@@ -479,9 +497,9 @@ impl SubRoutine {
                 db.code(address)
             };
             acc.info.code = Some(code);
-        }// } else {
-        //     acc.info.code = Some(Bytes::new());
-        // }
+        } // } else {
+          //     acc.info.code = Some(Bytes::new());
+          // }
         (acc, is_cold)
     }
 

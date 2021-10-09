@@ -46,21 +46,20 @@ impl<'a, DB: Database> EVM<'a, DB> {
         self
     }
 
-    fn finalize(
-        &mut self,
-        caller: H160,
-        used_gas_sum: u64,
-    ) -> Result<Map<H160, Account>, ExitReason> {
-        let eth_spend = U256::from(used_gas_sum) * self.global_env.gas_price;
+    fn finalize(&mut self, caller: H160, gas: &Gas) -> Result<Map<H160, Account>, ExitReason> {
+        let gas_price = self.global_env.gas_price;
         let coinbase = self.global_env.block_coinbase;
-        // all checks are done prior to this call, so we are safe to transfer without checking outcome.
-        let _ = self
-            .subroutine
-            .transfer(caller, coinbase, eth_spend, self.db);
-        let mut out = self.subroutine.finalize();
-        let acc = out.get_mut(&caller).unwrap();
-        //acc.info.balance += eth_refunded;
-        Ok(out)
+
+        let gas_refunded = min( gas.refunded() as u64,gas.spend()/2);
+        self.subroutine.balance_add(
+            caller,
+            gas_price * (gas.remaining() + gas_refunded),
+        );
+        self.subroutine.load_account(coinbase, self.db);
+        self.subroutine
+            .balance_add(coinbase, gas_price * (gas.spend() - gas_refunded));
+
+        Ok(self.subroutine.finalize())
     }
 
     fn inner_load_account(&mut self, caller: H160) -> bool {
@@ -80,8 +79,8 @@ impl<'a, DB: Database> EVM<'a, DB> {
         gas_limit: u64,
         access_list: Vec<(H160, Vec<H256>)>,
     ) -> (ExitReason, Bytes, u64, State) {
-        let gas_used_init = self.initialization::<SPEC>(&data, false, access_list);
-        if gas_limit < gas_used_init {
+        let mut gas = Gas::new(gas_limit);
+        if !gas.record_cost(self.initialization::<SPEC>(&data, false, access_list)) {
             return (
                 ExitReason::Error(ExitError::OutOfGas),
                 Bytes::new(),
@@ -90,16 +89,29 @@ impl<'a, DB: Database> EVM<'a, DB> {
             );
         }
 
-        self.load_account(caller);
+        self.inner_load_account(caller);
         self.subroutine.inc_nonce(caller);
+
+        // substract gas_limit*gas_price from current account.
+        let payment_value = U256::from(gas_limit) * self.global_env.gas_price;
+        if !self.subroutine.balance_sub(caller, payment_value) {
+            return (
+                ExitReason::Error(ExitError::OutOfFund),
+                Bytes::new(),
+                0,
+                State::new(),
+            );
+        }
 
         let context = CallContext {
             caller,
             address,
             apparent_value: value,
         };
-
-        let (exit_reason, gas, bytes) = self.call_inner::<SPEC>(
+        // record all as cost;
+        let gas_limit = gas.remaining();
+        gas.record_cost(gas_limit);
+        let (exit_reason, ret_gas, bytes) = self.call_inner::<SPEC>(
             address,
             Some(Transfer {
                 source: caller,
@@ -107,25 +119,15 @@ impl<'a, DB: Database> EVM<'a, DB> {
                 value,
             }),
             data,
-            gas_limit - gas_used_init,
+            gas_limit,
             context,
         );
 
-        let gas_spend = match exit_reason {
-            ExitReason::Succeed(_) => {
-                let mut gas_spend = gas.all_used() + gas_used_init;
-                let refund_amt = min(gas.refunded() as u64, gas_spend / 2); // for london constant is 5 not 2.
-                gas_spend -= refund_amt;
-                gas_spend
-            }
-            ExitReason::Revert(_) => gas.all_used() + gas_used_init,
-            _ => gas_limit,
-        };
-
-        match self.finalize(caller, gas_spend) {
+        gas.reimburse_unspend(&exit_reason, ret_gas);
+        match self.finalize(caller, &gas) {
             //TODO check if refunded can be negative :)
-            Err(e) => (e, bytes, gas_spend, Map::new()),
-            Ok(state) => (exit_reason, bytes, gas_spend, state),
+            Err(e) => (e, bytes, gas.spend(), Map::new()),
+            Ok(state) => (exit_reason, bytes, gas.spend(), state),
         }
     }
 
@@ -138,8 +140,8 @@ impl<'a, DB: Database> EVM<'a, DB> {
         gas_limit: u64,
         access_list: Vec<(H160, Vec<H256>)>,
     ) -> (ExitReason, Option<H160>, u64, State) {
-        let gas_used_init = self.initialization::<SPEC>(&init_code, true, access_list);
-        if gas_limit < gas_used_init {
+        let mut gas = Gas::new(gas_limit);
+        if !gas.record_cost(self.initialization::<SPEC>(&init_code, true, access_list)) {
             return (
                 ExitReason::Error(ExitError::OutOfGas),
                 None,
@@ -147,29 +149,28 @@ impl<'a, DB: Database> EVM<'a, DB> {
                 State::default(),
             );
         }
+        self.subroutine.load_account(caller, self.db);
+        let payment_value = U256::from(gas_limit) * self.global_env.gas_price;
+        if !self.subroutine.balance_sub(caller, payment_value) {
+            return (
+                ExitReason::Error(ExitError::OutOfFund),
+                None,
+                0,
+                State::new(),
+            );
+        }
 
-        let (exit_reason, address, gas, _) = self.create_inner::<SPEC>(
-            caller,
-            create_scheme,
-            value,
-            init_code,
-            gas_limit - gas_used_init,
-        );
+        // record all as cost;
+        let gas_limit = gas.remaining();
+        gas.record_cost(gas_limit);
+        let (exit_reason, address, ret_gas, _) =
+            self.create_inner::<SPEC>(caller, create_scheme, value, init_code, gas_limit);
 
-        let gas_spend = match exit_reason {
-            ExitReason::Succeed(_) => {
-                let mut gas_spend = gas.all_used() + gas_used_init;
-                let refund_amt = min(gas.refunded() as u64, gas_spend / 2); // for london constant is 5 not 2.
-                gas_spend -= refund_amt;
-                gas_spend
-            }
-            ExitReason::Revert(_) => gas.all_used() + gas_used_init,
-            _ => gas_limit,
-        };
+        gas.reimburse_unspend(&exit_reason, ret_gas);
 
-        match self.finalize(caller, gas_spend) {
-            Err(e) => (e, address, gas_spend, Map::new()),
-            Ok(state) => (exit_reason, address, gas_spend, state),
+        match self.finalize(caller, &gas) {
+            Err(e) => (e, address, gas.spend(), Map::new()),
+            Ok(state) => (exit_reason, address, gas.spend(), state),
         }
     }
 

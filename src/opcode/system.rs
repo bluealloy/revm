@@ -397,31 +397,12 @@ pub fn create<H: Handler, SPEC: Spec>(
     machine.return_data_buffer = return_data;
     let created_address: H256 = address.map(|a| a.into()).unwrap_or_default();
     inspect!(handler, create_return, created_address);
+    // reimburse gas that is not spend
+    machine.gas.reimburse_unspend(&reason, gas);
+    push!(machine, created_address);
     match reason {
-        ExitReason::Succeed(_) => {
-            // return remaining gas not used in subcall
-            machine.gas.erase_cost(gas.remaining());
-            // add refunded gas from subcall
-            machine.gas.record_refund(gas.refunded());
-            // push new address to stack
-            push!(machine, created_address);
-            Control::Continue
-        }
-        ExitReason::Revert(_) => {
-            // return remaining gas not used in subcall
-            machine.gas.erase_cost(gas.remaining());
-
-            push!(machine, H256::default());
-            Control::Continue
-        }
-        ExitReason::Error(_) => {
-            push!(machine, H256::default());
-            Control::Continue
-        }
-        ExitReason::Fatal(e) => {
-            push!(machine, H256::default());
-            Control::Exit(e.into())
-        }
+        ExitReason::Fatal(e) => Control::Exit(e.into()),
+        _ => Control::Continue,
     }
 }
 
@@ -545,13 +526,10 @@ pub fn call<H: Handler, SPEC: Spec>(
     };
     machine.return_data_buffer = return_data;
     let target_len = min(out_len, U256::from(machine.return_data_buffer.len()));
-
+    // return unspend gas.
+    machine.gas.reimburse_unspend(&reason, gas);
     match reason {
         ExitReason::Succeed(_) => {
-            // return remaining gas not used in subcall
-            machine.gas.erase_cost(gas.remaining());
-            // add refunded gas from subcall
-            machine.gas.record_refund(gas.refunded());
             match machine.memory.copy_large(
                 out_offset,
                 U256::zero(),
@@ -569,18 +547,13 @@ pub fn call<H: Handler, SPEC: Spec>(
             }
         }
         ExitReason::Revert(_) => {
-            // return remaining gas not used in subcall
-            machine.gas.erase_cost(gas.remaining());
-
             push_u256!(machine, U256::zero());
-
             let _ = machine.memory.copy_large(
                 out_offset,
                 U256::zero(),
                 target_len,
                 &machine.return_data_buffer,
             );
-
             Control::Continue
         }
         ExitReason::Error(_) => {
