@@ -46,6 +46,7 @@ impl StateDB {
         for (add, acc) in changes {
             if acc.is_empty() {
                 self.cache.remove(&add);
+                self.storage.remove(&add);
             } else {
                 self.cache.insert(add, acc.info);
                 let storage = self.storage.entry(add.clone()).or_default();

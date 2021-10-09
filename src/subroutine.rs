@@ -105,7 +105,11 @@ impl SubRoutine {
         for (add, mut acc) in state.into_iter() {
             let dirty = acc.filth.clean();
             match acc.filth {
-                Filth::Destroyed | Filth::NewlyCreated | Filth::Precompile(true) => {
+                Filth::Destroyed | Filth::Precompile(true) => {
+                    acc.info.code = None;
+                    out.insert(add, acc);
+                }
+                Filth::NewlyCreated => { 
                     // acc was destroyed or newly created or if it is changed precompile, just add it to output.
                     out.insert(add, acc);
                 }
