@@ -11,7 +11,7 @@ use crate::{
     precompiles::secp256k1::ECRecover,
 };
 use crate::{ExitError, Machine};
-use primitive_types::H160 as Address;
+use primitive_types::{H160 as Address, U256};
 
 mod blake2;
 mod bn128;
@@ -171,8 +171,6 @@ impl Precompiles {
             Bn128Mul::<Istanbul>::ADDRESS,
             Bn128Pair::<Istanbul>::ADDRESS,
             Blake2F::ADDRESS,
-            //ExitToNear::ADDRESS,
-            //ExitToEthereum::ADDRESS,
         ];
         let fun: Vec<PrecompileFn> = vec![
             ECRecover::run,
@@ -184,8 +182,6 @@ impl Precompiles {
             Bn128Mul::<Istanbul>::run,
             Bn128Pair::<Istanbul>::run,
             Blake2F::run,
-            //ExitToNear::run,
-            //ExitToEthereum::run,
         ];
 
         Precompiles { addresses, fun }
@@ -193,7 +189,30 @@ impl Precompiles {
 
     #[allow(dead_code)]
     pub fn new_berlin() -> Self {
-        Self::new_istanbul()
+        let addresses = vec![
+            ECRecover::ADDRESS,
+            SHA256::ADDRESS,
+            RIPEMD160::ADDRESS,
+            Identity::ADDRESS,
+            ModExp::<Berlin>::ADDRESS,
+            Bn128Add::<Istanbul>::ADDRESS,
+            Bn128Mul::<Istanbul>::ADDRESS,
+            Bn128Pair::<Istanbul>::ADDRESS,
+            Blake2F::ADDRESS,
+        ];
+        let fun: Vec<PrecompileFn> = vec![
+            ECRecover::run,
+            SHA256::run,
+            RIPEMD160::run,
+            Identity::run,
+            ModExp::<Berlin>::run,
+            Bn128Add::<Istanbul>::run,
+            Bn128Mul::<Istanbul>::run,
+            Bn128Pair::<Istanbul>::run,
+            Blake2F::run,
+        ];
+
+        Precompiles { addresses, fun }
     }
 
     pub fn get_fun(&self, address: &Address) -> Option<PrecompileFn> {
@@ -269,6 +288,14 @@ const fn make_address(x: u32, y: u128) -> Address {
         y_bytes[15],
     ])
 }
+
+//use for test
+pub fn u256_to_arr(value: &U256) -> [u8; 32] {
+    let mut result = [0u8; 32];
+    value.to_big_endian(&mut result);
+    result
+}
+
 /*
 #[cfg(test)]
 mod tests {

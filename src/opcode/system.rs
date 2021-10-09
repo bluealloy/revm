@@ -327,6 +327,28 @@ pub fn selfdestruct<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut
     Control::Exit(ExitSucceed::SelfDestructed.into())
 }
 
+#[inline]
+fn gas_call_l64_after<SPEC: Spec>(machine: &mut Machine) -> Result<u64, ExitReason> {
+    fn l64(gas: u64) -> u64 {
+        gas - gas / 64
+    }
+
+    if SPEC::CALL_L64_AFTER_GAS {
+        if SPEC::ESTIMATE {
+            let initial_after_gas = machine.gas().remaining();
+            let diff = initial_after_gas - l64(initial_after_gas);
+            if machine.gas.record_cost(diff) {
+                return Err(ExitReason::Error(ExitError::OutOfGas));
+            }
+            Ok(machine.gas().remaining())
+        } else {
+            Ok(l64(machine.gas().remaining()))
+        }
+    } else {
+        Ok(machine.gas().remaining())
+    }
+}
+
 pub fn create<H: Handler, SPEC: Spec>(
     machine: &mut Machine,
     is_create2: bool,
@@ -373,8 +395,8 @@ pub fn create<H: Handler, SPEC: Spec>(
     let (reason, address, gas, return_data) =
         handler.create::<SPEC>(machine.contract.address, scheme, value, code, gas_limit);
     machine.return_data_buffer = return_data;
-    let create_address: H256 = address.map(|a| a.into()).unwrap_or_default();
-
+    let created_address: H256 = address.map(|a| a.into()).unwrap_or_default();
+    inspect!(handler, create_return, created_address);
     match reason {
         ExitReason::Succeed(_) => {
             // return remaining gas not used in subcall
@@ -382,7 +404,7 @@ pub fn create<H: Handler, SPEC: Spec>(
             // add refunded gas from subcall
             machine.gas.record_refund(gas.refunded());
             // push new address to stack
-            push!(machine, create_address);
+            push!(machine, created_address);
             Control::Continue
         }
         ExitReason::Revert(_) => {
@@ -400,28 +422,6 @@ pub fn create<H: Handler, SPEC: Spec>(
             push!(machine, H256::default());
             Control::Exit(e.into())
         }
-    }
-}
-
-#[inline]
-fn gas_call_l64_after<SPEC: Spec>(machine: &mut Machine) -> Result<u64, ExitReason> {
-    fn l64(gas: u64) -> u64 {
-        gas - gas / 64
-    }
-
-    if SPEC::CALL_L64_AFTER_GAS {
-        if SPEC::ESTIMATE {
-            let initial_after_gas = machine.gas().remaining();
-            let diff = initial_after_gas - l64(initial_after_gas);
-            if machine.gas.record_cost(diff) {
-                return Err(ExitReason::Error(ExitError::OutOfGas));
-            }
-            Ok(machine.gas().remaining())
-        } else {
-            Ok(l64(machine.gas().remaining()))
-        }
-    } else {
-        Ok(machine.gas().remaining())
     }
 }
 
@@ -504,12 +504,14 @@ pub fn call<H: Handler, SPEC: Spec>(
 
     let to = to.into();
     // load account and calculate gas cost.
-    let (is_cold, new_account) = handler.load_account(to);
+    let (is_cold, exist) = handler.load_account(to);
+    let is_new = !exist;
+    //let is_cold = false;
     gas!(
         machine,
         gas::call_cost::<SPEC>(
             value,
-            new_account,
+            is_new,
             is_cold,
             matches!(scheme, CallScheme::Call | CallScheme::CallCode),
             matches!(scheme, CallScheme::Call | CallScheme::StaticCall),
@@ -577,14 +579,12 @@ pub fn call<H: Handler, SPEC: Spec>(
 
             Control::Continue
         }
-        ExitReason::Error(e) => {
+        ExitReason::Error(_) => {
             push_u256!(machine, U256::zero());
-
             Control::Continue
         }
         ExitReason::Fatal(e) => {
             push_u256!(machine, U256::zero());
-
             Control::Exit(e.into())
         }
     }

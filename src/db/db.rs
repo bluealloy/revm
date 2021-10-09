@@ -49,6 +49,9 @@ impl StateDB {
             } else {
                 self.cache.insert(add, acc.info);
                 let storage = self.storage.entry(add.clone()).or_default();
+                if acc.filth.abandon_old_storage() {
+                    storage.clear();
+                }
                 for (index, value) in acc.storage {
                     if value == H256::zero() {
                         storage.remove(&index);
@@ -70,7 +73,6 @@ impl StateDB {
             .map(|(address, info)| {
                 let storage = self.storage.get(address).cloned().unwrap_or_default();
                 let storage_root = trie::trie_account_rlp(info, storage);
-                //println!("\naddress:{:?}storage_root:{:?}\n",hex::encode(address),hex::encode(&storage_root));
                 (address.clone(), storage_root)
             })
             .collect();

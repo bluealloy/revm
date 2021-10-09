@@ -63,6 +63,14 @@ impl<'a, DB: Database> EVM<'a, DB> {
         Ok(out)
     }
 
+    fn inner_load_account(&mut self, caller: H160) -> bool {
+        let is_cold = self.subroutine.load_account(caller, self.db);
+        if is_cold {
+            self.inspector.load_account(&caller);
+        }
+        is_cold
+    }
+
     pub fn call<SPEC: Spec>(
         &mut self,
         caller: H160,
@@ -82,7 +90,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
             );
         }
 
-        self.subroutine.load_account(caller, self.db);
+        self.load_account(caller);
         self.subroutine.inc_nonce(caller);
 
         let context = CallContext {
@@ -104,13 +112,14 @@ impl<'a, DB: Database> EVM<'a, DB> {
         );
 
         let gas_spend = match exit_reason {
-            ExitReason::Error(_) => gas_limit,
-            _ => {
+            ExitReason::Succeed(_) => {
                 let mut gas_spend = gas.all_used() + gas_used_init;
                 let refund_amt = min(gas.refunded() as u64, gas_spend / 2); // for london constant is 5 not 2.
                 gas_spend -= refund_amt;
                 gas_spend
             }
+            ExitReason::Revert(_) => gas.all_used() + gas_used_init,
+            _ => gas_limit,
         };
 
         match self.finalize(caller, gas_spend) {
@@ -147,27 +156,16 @@ impl<'a, DB: Database> EVM<'a, DB> {
             gas_limit - gas_used_init,
         );
 
-        let mut gas_spend = match exit_reason {
-            ExitReason::Error(_) => gas_limit,
-            _ => gas.all_used() + gas_used_init,
+        let gas_spend = match exit_reason {
+            ExitReason::Succeed(_) => {
+                let mut gas_spend = gas.all_used() + gas_used_init;
+                let refund_amt = min(gas.refunded() as u64, gas_spend / 2); // for london constant is 5 not 2.
+                gas_spend -= refund_amt;
+                gas_spend
+            }
+            ExitReason::Revert(_) => gas.all_used() + gas_used_init,
+            _ => gas_limit,
         };
-        println!("gas_spend:{:X} {} gas:{:?}", gas_spend, gas_spend, gas);
-        let refund_amt = min(gas.refunded() as u64, gas_spend / 2); // for london constant is 5 not 2.
-        gas_spend -= refund_amt;
-
-        println!(
-            "final gas_spend:{:X} {} refunded:{:?}",
-            gas_spend,
-            gas_spend,
-            gas.refunded()
-        );
-        println!(
-            "remaining gas:{:X} {} gas used:{:X} {}",
-            gas.remaining(),
-            gas.remaining(),
-            gas.all_used(),
-            gas.all_used()
-        );
 
         match self.finalize(caller, gas_spend) {
             Err(e) => (e, address, gas_spend, Map::new()),
@@ -183,7 +181,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
     ) -> u64 {
         self.precompiles = SPEC::precompiles();
         for &ward_acc in self.precompiles.addresses().iter() {
-            //println!("Preloaded:{:?}",ward_acc);
+            //TODO trace load precompiles?
             self.subroutine.load_account(ward_acc, self.db);
         }
 
@@ -193,6 +191,7 @@ impl<'a, DB: Database> EVM<'a, DB> {
         let mut accessed_slots = 0 as u64;
 
         for (address, slots) in access_list {
+            //TODO trace load access_list?
             self.subroutine.load_account(address, self.db);
             accessed_slots += slots.len() as u64;
             for slot in slots {
@@ -223,13 +222,10 @@ impl<'a, DB: Database> EVM<'a, DB> {
     ) -> (ExitReason, Option<H160>, Gas, Bytes) {
         //println!("create depth:{}",self.subroutine.depth());
         let gas = Gas::new(gas_limit);
-        self.subroutine.load_account(caller, self.db);
-
-        // trace create
+        self.load_account(caller);
 
         // check depth of calls
-        // it seems strange but this is how geth works in logs you can see 1025 depth even if 1024 is limit.
-        if self.subroutine.depth() > SPEC::CALL_STACK_LIMIT + 1 {
+        if self.subroutine.depth() > SPEC::CALL_STACK_LIMIT {
             return (ExitRevert::CallTooDeep.into(), None, gas, Bytes::new());
         }
         // check balance of caller and value
@@ -238,38 +234,47 @@ impl<'a, DB: Database> EVM<'a, DB> {
         }
         // inc nonce of caller
         let old_nonce = self.subroutine.inc_nonce(caller);
-        // enter into subroutine
-        let checkpoint = self.subroutine.create_checkpoint();
         // create address
         let code_hash = H256::from_slice(Keccak256::digest(&init_code).as_slice());
-        let address = match scheme {
+        let created_address = match scheme {
             CreateScheme::Create => util::create_address(caller, old_nonce),
             CreateScheme::Create2 { salt } => util::create2_address(caller, code_hash, salt),
         };
+        let ret = Some(created_address);
+
+        // load account so that it will be hot
+        self.load_account(created_address);
+
+        // enter into subroutine
+        let checkpoint = self.subroutine.create_checkpoint();
+
         // create contract account and check for collision
         if !self
             .subroutine
-            .new_contract_acc(address, self.precompiles.addresses(), self.db)
+            .new_contract_acc(created_address, self.precompiles.addresses(), self.db)
         {
-            self.subroutine.checkpoint_discard(checkpoint);
-            return (ExitError::CreateCollision.into(), None, gas, Bytes::new());
+            self.subroutine.checkpoint_revert(checkpoint);
+            return (ExitError::CreateCollision.into(), ret, gas, Bytes::new());
         }
-        // if if add
 
         // transfer value to contract address
-        if let Err(e) = self.subroutine.transfer(caller, address, value, self.db) {
-            let _ = self.subroutine.checkpoint_revert(checkpoint);
-            return (e.into(), None, gas, Bytes::new());
+        if let Err(e) = self
+            .subroutine
+            .transfer(caller, created_address, value, self.db)
+        {
+            self.subroutine.checkpoint_revert(checkpoint);
+            return (e.into(), ret, gas, Bytes::new());
         }
         // inc nonce of contract
         if SPEC::CREATE_INCREASE_NONCE {
-            self.subroutine.inc_nonce(address);
+            self.subroutine.inc_nonce(created_address);
         }
         // create new machine and execute init function
-        let contract = Contract::new(Bytes::new(), init_code, address, caller, value);
+        let contract = Contract::new(Bytes::new(), init_code, created_address, caller, value);
         let mut machine = Machine::new::<SPEC>(contract, gas.limit(), self.subroutine.depth());
         let exit_reason = machine.run::<Self, SPEC>(self);
         // handler error if present on execution
+        self.subroutine.depth_decs();
         match exit_reason {
             ExitReason::Succeed(_) => {
                 let b = Bytes::new();
@@ -278,40 +283,24 @@ impl<'a, DB: Database> EVM<'a, DB> {
                 if let Some(limit) = SPEC::CREATE_CONTRACT_LIMIT {
                     if code.len() > limit {
                         // TODO reduce gas and return
-                        self.subroutine.checkpoint_discard(checkpoint);
-                        return (ExitError::CreateContractLimit.into(), None, machine.gas, b);
+                        self.subroutine.checkpoint_revert(checkpoint);
+                        return (ExitError::CreateContractLimit.into(), ret, machine.gas, b);
                     }
                 }
                 let gas_for_code = code.len() as u64 * crate::opcode::gas::CODEDEPOSIT;
                 // record code deposit gas cost and check if we are out of gas.
                 if !machine.gas.record_cost(gas_for_code) {
-                    self.subroutine.checkpoint_discard(checkpoint);
-                    (ExitError::OutOfGas.into(), None, machine.gas, b)
+                    self.subroutine.checkpoint_revert(checkpoint);
+                    (ExitError::OutOfGas.into(), ret, machine.gas, b)
                 } else {
-                    //println!("SM created: {:?}", address);
-                    // if we have enought gas, set code and do checkpoint comit.
-                    self.subroutine.set_code(address, code, code_hash);
-                    self.subroutine.checkpoint_commit(checkpoint);
-                    (ExitSucceed::Returned.into(), Some(address), machine.gas, b)
+                    // if we have enought gas
+                    self.subroutine.set_code(created_address, code, code_hash);
+                    (ExitSucceed::Returned.into(), ret, machine.gas, b)
                 }
             }
-            ExitReason::Revert(revert) => {
-                let _ = self.subroutine.checkpoint_revert(checkpoint);
-                (
-                    ExitReason::Revert(revert),
-                    None,
-                    machine.gas,
-                    machine.return_value(),
-                )
-            }
-            ExitReason::Error(_) | ExitReason::Fatal(_) => {
-                let _ = self.subroutine.checkpoint_discard(checkpoint);
-                (
-                    exit_reason.clone(),
-                    None,
-                    machine.gas,
-                    machine.return_value(),
-                )
+            _ => {
+                self.subroutine.checkpoint_revert(checkpoint);
+                (exit_reason, ret, machine.gas, machine.return_value())
             }
         }
     }
@@ -325,69 +314,69 @@ impl<'a, DB: Database> EVM<'a, DB> {
         gas_limit: u64,
         context: CallContext,
     ) -> (ExitReason, Gas, Bytes) {
-        let gas = Gas::new(gas_limit);
-        // get code that we want to call
+        let mut gas = Gas::new(gas_limit);
+        // Load account and get code.
         let (code, _) = self.code(code_address);
         // Create subroutine checkpoint
         let checkpoint = self.subroutine.create_checkpoint();
-        self.subroutine.load_account(context.address, self.db);
+        self.load_account(context.address);
         // check depth of calls
+        // it seems strange but +1 is how geth works, in logs you can see 1025 depth even if 1024 is limit.
+        // TODO check +1.
         if self.subroutine.depth() > SPEC::CALL_STACK_LIMIT + 1 {
             return (ExitRevert::CallTooDeep.into(), gas, Bytes::new());
         }
-        // transfer value from caller to called address;
+        // transfer value from caller to called account;
         if let Some(transfer) = transfer {
-            if let Err(e) =
-                self.subroutine
-                    .transfer(transfer.source, transfer.target, transfer.value, self.db)
-            {
-                let _ = self.subroutine.checkpoint_revert(checkpoint);
-                return (e.into(), gas, Bytes::new());
+            match self.subroutine.transfer(
+                transfer.source,
+                transfer.target,
+                transfer.value,
+                self.db,
+            ) {
+                Err(e) => {
+                    self.subroutine.checkpoint_revert(checkpoint);
+                    return (e.into(), gas, Bytes::new());
+                }
+                Ok((source_is_cold, target_is_cold)) => {
+                    if source_is_cold {
+                        self.inspector.load_account(&transfer.source);
+                    }
+                    if target_is_cold {
+                        self.inspector.load_account(&transfer.target);
+                    }
+                }
             }
         }
-        // TODO check if we are calling PRECOMPILES and call it here and return.
-        if let Some(precomp) = self.precompiles.get_fun(&code_address) {
-            let mut gas = Gas::new(gas_limit.clone());
-            let precompile = precomp as PrecompileFn;
-            return match (precompile)(input.as_ref(), gas_limit, &context, SPEC::IS_STATIC_CALL) {
+        // call precompiles
+        if let Some(precompile) = self.precompiles.get_fun(&code_address) {
+            self.subroutine.depth_decs();
+            match (precompile)(input.as_ref(), gas_limit, &context, SPEC::IS_STATIC_CALL) {
                 Ok(PrecompileOutput { output, cost, logs }) => {
-                    logs.into_iter()
-                        .for_each(|l| self.log(l.address, l.topics, l.data));
-                    gas.record_cost(cost);
-                    let _ = self.subroutine.checkpoint_commit(checkpoint);
-                    (ExitSucceed::Returned.into(), gas, Bytes::from(output))
+                    if gas.record_cost(cost) {
+                        logs.into_iter()
+                            .for_each(|l| self.log(l.address, l.topics, l.data));
+                        (ExitSucceed::Returned.into(), gas, Bytes::from(output))
+                    } else {
+                        self.subroutine.checkpoint_revert(checkpoint);
+                        (ExitError::OutOfGas.into(), gas, Bytes::new())
+                    }
                 }
                 Err(e) => {
-                    let _ = self.subroutine.checkpoint_discard(checkpoint); //TODO check if we are discarding or reverting
+                    self.subroutine.checkpoint_revert(checkpoint); //TODO check if we are discarding or reverting
                     (ExitReason::Error(e), gas, Bytes::new())
                 }
-            };
-        }
-
-        // create machine and execute it
-        let contract = Contract::new(
-            input,
-            code,
-            context.address,
-            context.caller,
-            context.apparent_value,
-        );
-        let mut machine = Machine::new::<SPEC>(contract, gas_limit, self.subroutine.depth());
-        let exit_reason = machine.run::<Self, SPEC>(self);
-
-        match exit_reason {
-            ExitReason::Succeed(_) => {
-                let _ = self.subroutine.checkpoint_commit(checkpoint);
-                (exit_reason, machine.gas, machine.return_value())
             }
-            ExitReason::Revert(_) => {
-                let _ = self.subroutine.checkpoint_revert(checkpoint);
-                (exit_reason, machine.gas, machine.return_value())
+        } else {
+            // create machine and execute subcall
+            let contract = Contract::new_with_context(input, code, &context);
+            let mut machine = Machine::new::<SPEC>(contract, gas_limit, self.subroutine.depth());
+            let exit_reason = machine.run::<Self, SPEC>(self);
+            self.subroutine.depth_decs();
+            if !matches!(exit_reason,ExitReason::Succeed(_)) {
+                self.subroutine.checkpoint_revert(checkpoint);
             }
-            ExitReason::Error(_) | ExitReason::Fatal(_) => {
-                let _ = self.subroutine.checkpoint_discard(checkpoint);
-                (exit_reason, machine.gas, machine.return_value())
-            }
+            (exit_reason, machine.gas, machine.return_value())
         }
     }
 }
@@ -406,23 +395,33 @@ impl<'a, DB: Database> Handler for EVM<'a, DB> {
     }
 
     fn load_account(&mut self, address: H160) -> (bool, bool) {
-        self.subroutine.load_account_exist(address, self.db)
+        let (is_cold, exists) = self.subroutine.load_account_exist(address, self.db);
+        if is_cold {
+            self.inspector.load_account(&address);
+        }
+        (is_cold, exists)
     }
 
     fn balance(&mut self, address: H160) -> (U256, bool) {
-        let is_cold = self.subroutine.load_account(address, self.db);
+        let is_cold = self.inner_load_account(address);
         let balance = self.subroutine.account(address).info.balance;
         (balance, is_cold)
     }
 
     fn code(&mut self, address: H160) -> (Bytes, bool) {
         let (acc, is_cold) = self.subroutine.load_code(address, self.db);
+        if is_cold {
+            self.inspector.load_account(&address);
+        }
         (acc.info.code.clone().unwrap(), is_cold)
     }
 
     /// Get code hash of address.
     fn code_hash(&mut self, address: H160) -> (H256, bool) {
         let (acc, is_cold) = self.subroutine.load_code(address, self.db);
+        if is_cold {
+            self.inspector.load_account(&address);
+        }
         if acc.is_empty() {
             return (H256::zero(), is_cold);
         }
@@ -432,16 +431,11 @@ impl<'a, DB: Database> Handler for EVM<'a, DB> {
 
     fn sload(&mut self, address: H160, index: H256) -> (H256, bool) {
         // account is allways hot. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
-        let ret = self.subroutine.sload(address, index, self.db);
-        self.inspect().sload(&address, &index, &ret.0, ret.1);
-        ret
+        self.subroutine.sload(address, index, self.db)
     }
 
     fn sstore(&mut self, address: H160, index: H256, value: H256) -> (H256, H256, H256, bool) {
-        let (original, old, new, is_cold) = self.subroutine.sstore(address, index, value, self.db);
-        self.inspect()
-            .sstore(address, index, new, old, original, is_cold);
-        (original, old, new, is_cold)
+        self.subroutine.sstore(address, index, value, self.db)
     }
 
     fn log(&mut self, address: H160, topics: Vec<H256>, data: Bytes) {
@@ -454,7 +448,11 @@ impl<'a, DB: Database> Handler for EVM<'a, DB> {
     }
 
     fn selfdestruct(&mut self, address: H160, target: H160) -> SelfDestructResult {
-        self.subroutine.selfdestruct(address, target, self.db)
+        let res = self.subroutine.selfdestruct(address, target, self.db);
+        if res.is_cold {
+            self.inspector.load_account(&target);
+        }
+        res
     }
 
     fn create<SPEC: Spec>(

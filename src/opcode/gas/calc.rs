@@ -246,7 +246,7 @@ pub fn selfdestruct_cost<SPEC: Spec>(res: SelfDestructResult) -> u64 {
 
 pub fn call_cost<SPEC: Spec>(
     value: U256,
-    new_account: bool,
+    is_new: bool,
     is_cold: bool,
     is_call_or_callcode: bool,
     is_call_or_staticcall: bool,
@@ -256,7 +256,7 @@ pub fn call_cost<SPEC: Spec>(
         + xfer_cost(is_call_or_callcode, transfers_value)
         + new_cost::<SPEC>(
             is_call_or_staticcall,
-            new_account,
+            is_new,
             transfers_value,
         )
 }
@@ -284,18 +284,17 @@ fn xfer_cost(is_call_or_callcode: bool, transfers_value: bool) -> u64 {
 
 fn new_cost<SPEC: Spec>(
     is_call_or_staticcall: bool,
-    new_account: bool,
+    is_new: bool,
     transfers_value: bool,
 ) -> u64 {
-    //let eip161 = !SPEC::empty_considered_exists;
     if is_call_or_staticcall {
         if !SPEC::EMPTY_CONSIDERED_EXISTS {
-            if transfers_value && new_account {
+            if transfers_value && is_new {
                 NEWACCOUNT
             } else {
                 0
             }
-        } else if new_account {
+        } else if is_new {
             NEWACCOUNT
         } else {
             0

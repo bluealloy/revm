@@ -1,4 +1,3 @@
-
 use hash_db::Hasher;
 use plain_hasher::PlainHasher;
 
@@ -17,19 +16,18 @@ pub fn trie_account_rlp(info: &AccountInfo, storage: Map<H256, H256>) -> Bytes {
     stream.append(&info.nonce);
     stream.append(&info.balance);
     stream.append(&{
-        
         let storage_root = sec_trie_root::<KeccakHasher, _, _, _>(
-        storage
-            .into_iter()
-            .map(|(k, v)| (k, rlp::encode(&U256::from(v.as_ref() as &[u8])))));
-            //println!("\nbalance:{:?}storage_root:{:?}\n",info.balance,hex::encode(&storage_root));
+            storage
+                .into_iter()
+                .map(|(k, v)| (k, rlp::encode(&U256::from(v.as_ref() as &[u8])))),
+        );
         storage_root.clone()
     });
     stream.append(&Keccak256::digest(info.code.as_ref().unwrap_or(&Bytes::new())).as_slice());
     stream.out().freeze()
 }
 
-pub fn trie_root(acc_data: Vec<(H160,Bytes)>) -> H256 {
+pub fn trie_root(acc_data: Vec<(H160, Bytes)>) -> H256 {
     sec_trie_root::<KeccakHasher, _, _, _>(acc_data.into_iter())
 }
 

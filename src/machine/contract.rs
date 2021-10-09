@@ -1,4 +1,4 @@
-use crate::{ExitError, ExitReason, ExitSucceed, collection::vec::Vec};
+use crate::{collection::vec::Vec, CallContext, ExitError, ExitReason, ExitSucceed};
 use bytes::Bytes;
 use primitive_types::{H160, U256};
 
@@ -32,7 +32,17 @@ impl Contract {
         }
     }
 
-    pub fn opcode(&self,program_counter: usize) -> Result<OpCode,ExitReason> {
+    pub fn new_with_context(input: Bytes, code: Bytes, call_context: &CallContext) -> Self {
+        Self::new(
+            input,
+            code,
+            call_context.address,
+            call_context.caller,
+            call_context.apparent_value,
+        )
+    }
+
+    pub fn opcode(&self, program_counter: usize) -> Result<OpCode, ExitReason> {
         let opcode = {
             if let Some(opcode_byte) = self.code.get(program_counter) {
                 let opcode = OpCode::try_from_u8(*opcode_byte);

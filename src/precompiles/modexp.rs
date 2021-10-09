@@ -2,7 +2,7 @@ use crate::precompiles::{
     Berlin, Byzantium, HardFork, Precompile, PrecompileOutput, PrecompileResult,
 };
 use crate::collection::Vec;
-use core::marker::PhantomData;
+use core::{cmp::min,marker::PhantomData};
 use crate::{models::CallContext, ExitError};
 use num::{BigUint, Integer};
 use primitive_types::{H160 as Address,U256};
@@ -12,6 +12,7 @@ pub(super) struct ModExp<HF: HardFork>(PhantomData<HF>);
 impl<HF: HardFork> ModExp<HF> {
     pub(super) const ADDRESS: Address = super::make_address(0, 5);
 }
+
 
 impl<HF: HardFork> ModExp<HF> {
     // Note: the output of this function is bounded by 2^67
@@ -52,6 +53,7 @@ impl<HF: HardFork> ModExp<HF> {
         let base = parse_bytes(input, base_start, base_len, BigUint::from_bytes_be);
         let exponent = parse_bytes(input, exp_start, exp_len, BigUint::from_bytes_be);
         let modulus = parse_bytes(input, mod_start, mod_len, BigUint::from_bytes_be);
+        println!("\nmodulux:{:?}\n",modulus);
 
         let output = {
             let computed_result = if modulus == BigUint::from(0u32) {
@@ -164,12 +166,20 @@ fn parse_bytes<T, F: FnOnce(&[u8]) -> T>(input: &[u8], start: usize, size: usize
     if start >= len {
         return f(&[]);
     }
+    
+    let end = min(start+size,len);
+    let mut out: Vec<u8> = vec![0; size];
+    let (overlap,_) = out.split_at_mut(end-start);
+    overlap.copy_from_slice(&input[start..end]);
+    f(&out)
+    
+    /* original wrong
     let end = start + size;
     if end > len {
         f(&input[start..len])
     } else {
         f(&input[start..end])
-    }
+    }*/
 }
 
 fn saturating_round(x: U256) -> u64 {
@@ -192,23 +202,34 @@ fn parse_lengths(input: &[u8]) -> (u64, u64, u64) {
 
     (base_len, exp_len, mod_len)
 }
-/*
+
 #[cfg(test)]
 mod tests {
-    use crate::test_utils::new_context;
 
     use super::*;
 
     // Byzantium tests: https://github.com/holiman/go-ethereum/blob/master/core/vm/testdata/precompiles/modexp.json
     // Berlin tests:https://github.com/holiman/go-ethereum/blob/master/core/vm/testdata/precompiles/modexp_eip2565.json
 
+    
     struct Test {
         input: &'static str,
         expected: &'static str,
         name: &'static str,
     }
 
-    const TESTS: [Test; 17] = [
+    const TESTS: [Test; 18] = [
+        Test {
+            input: "\
+            0000000000000000000000000000000000000000000000000000000000000001\
+            0000000000000000000000000000000000000000000000000000000000000020\
+            0000000000000000000000000000000000000000000000000000000000000020\
+            03\
+            fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2e\
+            ffffffffffffffffffffffffffffffffffffffffff2f",
+            expected: "162ead82cadefaeaf6e9283248fdf2f2845f6396f6f17c4d5a39f820b6f6b5f9",
+            name: "eth_tests_create2callPrecompiles_test0_berlin",
+        },
         Test {
             input: "\
             0000000000000000000000000000000000000000000000000000000000000001\
@@ -343,13 +364,13 @@ mod tests {
         }
     ];
 
-    const BYZANTIUM_GAS: [u64; 17] = [
-        13_056, 13_056, 204, 204, 3_276, 665, 665, 10_649, 1_894, 1_894, 30_310, 5_580, 5_580,
+    const BYZANTIUM_GAS: [u64; 18] = [
+        13_056, 13_056, 13_056, 204, 204, 3_276, 665, 665, 10_649, 1_894, 1_894, 30_310, 5_580, 5_580,
         89_292, 17_868, 17_868, 285_900,
     ];
 
-    const BERLIN_GAS: [u64; 17] = [
-        1_360, 1_360, 200, 200, 341, 200, 200, 1_365, 341, 341, 5_461, 1_365, 1_365, 21_845, 5_461,
+    const BERLIN_GAS: [u64; 18] = [
+        1_360, 1_360, 1_360, 200, 200, 341, 200, 200, 1_365, 341, 341, 5_461, 1_365, 1_365, 21_845, 5_461,
         5_461, 87_381,
     ];
 
@@ -358,11 +379,11 @@ mod tests {
         for (test, test_gas) in TESTS.iter().zip(BYZANTIUM_GAS.iter()) {
             let input = hex::decode(&test.input).unwrap();
 
-            let res = ModExp::<Byzantium>::run(&input, *test_gas, &new_context(), false)
+            let res = ModExp::<Byzantium>::run(&input, *test_gas, &CallContext::default(), false)
                 .unwrap()
                 .output;
             let expected = hex::decode(&test.expected).unwrap();
-            assert_eq!(res, expected, "{}", test.name);
+            assert_eq!(res, expected, "test:{}", test.name);
         }
     }
 
@@ -372,7 +393,7 @@ mod tests {
             let input = hex::decode(&test.input).unwrap();
 
             let gas = ModExp::<Byzantium>::required_gas(&input).unwrap();
-            assert_eq!(gas, *test_gas, "{} gas", test.name);
+            assert_eq!(gas, *test_gas, "test:{} gas", test.name);
         }
     }
 
@@ -395,11 +416,11 @@ mod tests {
         let exp = U256::MAX;
 
         let mut input: Vec<u8> = Vec::new();
-        input.extend_from_slice(&crate::types::u256_to_arr(&base_len));
-        input.extend_from_slice(&crate::types::u256_to_arr(&exp_len));
-        input.extend_from_slice(&crate::types::u256_to_arr(&mod_len));
+        input.extend_from_slice(&crate::precompiles::u256_to_arr(&base_len));
+        input.extend_from_slice(&crate::precompiles::u256_to_arr(&exp_len));
+        input.extend_from_slice(&crate::precompiles::u256_to_arr(&mod_len));
         input.extend_from_slice(&base.to_be_bytes());
-        input.extend_from_slice(&crate::types::u256_to_arr(&exp));
+        input.extend_from_slice(&crate::precompiles::u256_to_arr(&exp));
 
         // completes without any overflow
         ModExp::<Berlin>::required_gas(&input).unwrap();
@@ -414,11 +435,11 @@ mod tests {
         let exp = U256::MAX;
 
         let mut input: Vec<u8> = Vec::new();
-        input.extend_from_slice(&crate::types::u256_to_arr(&base_len));
-        input.extend_from_slice(&crate::types::u256_to_arr(&exp_len));
-        input.extend_from_slice(&crate::types::u256_to_arr(&mod_len));
+        input.extend_from_slice(&crate::precompiles::u256_to_arr(&base_len));
+        input.extend_from_slice(&crate::precompiles::u256_to_arr(&exp_len));
+        input.extend_from_slice(&crate::precompiles::u256_to_arr(&mod_len));
         input.extend_from_slice(&base.to_be_bytes());
-        input.extend_from_slice(&crate::types::u256_to_arr(&exp));
+        input.extend_from_slice(&crate::precompiles::u256_to_arr(&exp));
 
         // completes without any overflow
         ModExp::<Berlin>::required_gas(&input).unwrap();
@@ -426,9 +447,8 @@ mod tests {
 
     #[test]
     fn test_berlin_modexp_empty_input() {
-        let res = ModExp::<Berlin>::run(&[], 100_000, &new_context(), false).unwrap();
+        let res = ModExp::<Berlin>::run(&[], 100_000, &CallContext::default(), false).unwrap();
         let expected: Vec<u8> = Vec::new();
         assert_eq!(res.output, expected)
     }
 }
-*/

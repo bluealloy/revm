@@ -1,4 +1,8 @@
-use crate::{ExitRevert, collection::{vec, vec::Vec, Entry, Map}, evm::SelfDestructResult};
+use crate::{
+    collection::{vec, vec::Vec, Entry, Map},
+    evm::SelfDestructResult,
+    ExitRevert,
+};
 
 use core::mem::{self};
 
@@ -195,11 +199,12 @@ impl SubRoutine {
     ) -> Result<(bool, bool), ExitRevert> {
         // load accounts
         let from_is_cold = self.load_account(from, db);
-        let to_is_cold = self.load_account(to, db);
 
         if value == U256::zero() {
-            return Ok((from_is_cold, to_is_cold));
+            return Ok((from_is_cold, false));
         }
+
+        let to_is_cold = self.load_account(to, db);
         // check from balance and substract value
         let from = self.log_dirty(from, |_| {});
         if from.info.balance < value {
@@ -234,18 +239,29 @@ impl SubRoutine {
         db: &mut DB,
     ) -> bool {
         let (acc, _) = self.load_code(address, db);
-        if !acc.info.code.as_ref().unwrap().is_empty() || acc.info.nonce > 0 {
+        // check collision. Code exists
+        if let Some(ref code) = acc.info.code {
+            if !code.is_empty() {
+                return false;
+            }
+        }
+        // Check collision. Nonce is not zero
+        if acc.info.nonce != 0 {
             return false;
         }
+
+        // Check collision. New account address is precompile.
         if precompiles.contains(&address) {
             return false;
         }
-        let original_balance = acc.info.balance;
-        let mut original_filth = acc.filth.clone();
-        original_filth.clean();
-        if acc.filth == Filth::Destroyed {
-            acc.filth = Filth::NewlyCreated;
+        // TODO please check this. Does account that is destroyed is forbiden to be recreated again with create2?
+        if matches!(acc.filth, Filth::Destroyed | Filth::NewlyCreated) {
+            return false;
         }
+
+        let original_balance = acc.info.balance;
+        let original_filth = acc.filth.clone();
+        acc.filth = Filth::NewlyCreated;
         // mark it in changelog as newly created
         self.changelog
             .last_mut()
@@ -296,7 +312,9 @@ impl SubRoutine {
                 if dirty_log.was_clean {
                     acc.filth = Filth::Clean;
                 }
-                if dirty_log.was_clean || matches!(acc.filth, Filth::Destroyed | Filth::NewlyCreated) {
+                if dirty_log.was_clean
+                    || matches!(acc.filth, Filth::Destroyed | Filth::NewlyCreated)
+                {
                     // Handle storage change
                     for (slot, log) in dirty_log.dirty_storage {
                         match log {
@@ -348,10 +366,8 @@ impl SubRoutine {
         }
     }
 
-    pub fn checkpoint_commit(&mut self, _checkpoint: SubRoutineCheckpoint) {
+    pub fn depth_decs(&mut self) {
         self.depth -= 1;
-        // we are continuing to use present checkpoint because it is merge between ours and parents
-        //println!("Checkpoint:{:?}", self.changelog.last().unwrap());
     }
 
     pub fn checkpoint_revert(&mut self, checkpoint: SubRoutineCheckpoint) {
@@ -366,22 +382,6 @@ impl SubRoutine {
 
         self.logs.truncate(checkpoint.log_i);
         self.changelog.truncate(checkpoint.changelog_i);
-        self.depth -= 1;
-    }
-
-    pub fn checkpoint_discard(&mut self, checkpoint: SubRoutineCheckpoint) {
-        let state = &mut self.state;
-        // iterate over last N changelogs and revert it to our global state
-        let leng = self.changelog.len();
-        self.changelog
-            .iter_mut()
-            .rev()
-            .take(leng - checkpoint.changelog_i)
-            .for_each(|cs| Self::revert_changelog(state, mem::take(cs)));
-
-        self.logs.truncate(checkpoint.log_i);
-        self.changelog.truncate(checkpoint.changelog_i);
-        self.depth -= 1;
     }
 
     /// transfer balance from address to target. Check if target exist/is_cold
@@ -391,15 +391,17 @@ impl SubRoutine {
         target: H160,
         db: &mut DB,
     ) -> SelfDestructResult {
-        let (is_cold, new_account) = self.load_account_exist(target, db);
-        let exists = !new_account;
+        let (is_cold, exists) = self.load_account_exist(target, db);
         // transfer all the balance
-        let acc = self.state.get_mut(&address).unwrap();
-        let value = acc.info.balance;
-        let had_value = value != U256::zero();
-        let previously_destroyed = matches!(acc.filth, Filth::Destroyed);
-        let target = self.log_dirty(target, |_| {});
-        target.info.balance += value;
+        let (had_value, previously_destroyed) = {
+            let acc = self.state.get_mut(&address).unwrap();
+            let value = acc.info.balance;
+            let had_value = value != U256::zero();
+            let previously_destroyed = matches!(acc.filth, Filth::Destroyed);
+            let target = self.log_dirty(target, |_| {});
+            target.info.balance += value;
+            (had_value, previously_destroyed)
+        };
         // if there is no account in this subroutine changelog,
         // save it so that it can be restored if subroutine needs to be rediscarded.
         let acc = match self.changelog.last_mut().unwrap().entry(address) {
@@ -454,18 +456,17 @@ impl SubRoutine {
     pub fn load_account_exist<DB: Database>(&mut self, address: H160, db: &mut DB) -> (bool, bool) {
         let (acc, is_cold) = self.load_code(address, db);
         let info = acc.info.clone();
-        let exists = info.balance == U256::zero()
+        let is_empty = info.balance == U256::zero()
             && info.nonce == 0
             && info.code.unwrap_or_default() == Bytes::default();
-        //&& info.code_hash.unwrap_or_default() == H256::default();
-        (is_cold, exists)
+        (is_cold, !is_empty)
     }
 
     pub fn load_code<DB: Database>(&mut self, address: H160, db: &mut DB) -> (&mut Account, bool) {
         let is_cold = self.load_account(address.clone(), db);
         let acc = self.state.get_mut(&address).unwrap();
-
-        if acc.info.code.is_none() {
+        let dont_load_from_db = !matches!(acc.filth, Filth::Destroyed | Filth::NewlyCreated);
+        if dont_load_from_db && acc.info.code.is_none() {
             let code = if let Some(code_hash) = acc.info.code_hash {
                 db.code_by_hash(code_hash)
             } else {
@@ -517,7 +518,6 @@ impl SubRoutine {
                 (value, true)
             }
         };
-        //println!("sload:acc{:?}:{:?}=>{:?}",address,index,load);
         load
     }
 
@@ -609,7 +609,7 @@ pub enum Filth {
     /// destroyed by selfdestruct or it is newly
     ///  created by create/create2 opcode. Either way dont save original values
     Destroyed,
-    
+
     NewlyCreated,
     // precompile
     // bool signals if it is dirty or not
@@ -617,6 +617,9 @@ pub enum Filth {
 }
 
 impl Filth {
+    pub fn abandon_old_storage(&self) -> bool {
+        matches!(self, Self::Destroyed | Self::NewlyCreated)
+    }
     /// insert into dirty flag and return if slot was already dirty or not.
     #[inline]
     pub fn insert_dirty_original(&mut self, index: H256, present_value: H256) {
