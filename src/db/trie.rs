@@ -22,6 +22,7 @@ pub fn trie_account_rlp(info: &AccountInfo, storage: Map<H256, H256>) -> Bytes {
         let storage_root = sec_trie_root::<KeccakHasher, _, _, _>(
             storage
                 .into_iter()
+                .filter(|(k,v)| v != &H256::zero())
                 .map(|(k, v)| (k, rlp::encode(&U256::from(v.as_ref() as &[u8])))),
         );
         storage_root.clone()
