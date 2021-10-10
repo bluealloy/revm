@@ -1,6 +1,7 @@
 #![feature(slice_as_chunks)]
 
 use std::{
+    collections::HashMap,
     error::Error,
     path::{Path, PathBuf},
     str::FromStr,
@@ -52,6 +53,21 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
     let json_reader = std::fs::read(&path).unwrap();
     let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
     let skip_test_unit = vec!["typeTwoBerlin"];
+
+    let map_caller_keys: HashMap<_, _> = vec![
+        (
+            H256::from_str("45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8")
+                .unwrap(),
+            H160::from_str("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b").unwrap(),
+        ),
+        (
+            H256::from_str("0xc85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4")
+                .unwrap(),
+            H160::from_str("0xcd2a3d9f938e13cd947ec05abc7fe734df8dd826").unwrap(),
+        ),
+    ]
+    .into_iter()
+    .collect();
     for (name, unit) in suit.0.into_iter() {
         if skip_test_unit.contains(&name.as_ref()) {
             continue;
@@ -83,13 +99,13 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
             }
         }
 
+        let caller = map_caller_keys.get(&unit.transaction.secret_key.unwrap()).unwrap();
         // post and execution
         for (spec_name, tests) in unit.post {
             if !matches!(spec_name, SpecName::Berlin) {
                 //TODO fix this
                 continue;
             }
-            let caller = H160::from_str("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b").unwrap();
             let global_env = GlobalEnv {
                 gas_price: unit.transaction.gas_price.unwrap_or_default(),
                 block_number: unit.env.current_number,

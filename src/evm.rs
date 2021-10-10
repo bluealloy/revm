@@ -139,14 +139,6 @@ impl<'a, DB: Database> EVM<'a, DB> {
         access_list: Vec<(H160, Vec<H256>)>,
     ) -> (ExitReason, Option<H160>, u64, State) {
         let mut gas = Gas::new(gas_limit);
-        if !gas.record_cost(self.initialization::<SPEC>(&init_code, true, access_list)) {
-            return (
-                ExitReason::Error(ExitError::OutOfGas),
-                None,
-                0,
-                State::default(),
-            );
-        }
         self.subroutine.load_account(caller, self.db);
         let payment_value = U256::from(gas_limit) * self.global_env.gas_price;
         if !self.subroutine.balance_sub(caller, payment_value) {
@@ -155,6 +147,14 @@ impl<'a, DB: Database> EVM<'a, DB> {
                 None,
                 0,
                 State::new(),
+            );
+        }
+        if !gas.record_cost(self.initialization::<SPEC>(&init_code, true, access_list)) {
+            return (
+                ExitReason::Error(ExitError::OutOfGas),
+                None,
+                0,
+                State::default(),
             );
         }
 
