@@ -506,7 +506,7 @@ impl SubRoutine {
             // add slot to ColdLoaded in changelog
             Entry::Vacant(vac) => {
                 // if storage was destroyed, we dont need to ping db.
-                let value = if matches!(acc.filth, Filth::Destroyed | Filth::NewlyCreated) {
+                let value = if matches!(acc.filth, Filth::NewlyCreated) {
                     H256::zero()
                 } else {
                     db.storage(address, index)
@@ -555,7 +555,7 @@ impl SubRoutine {
         let (present, is_cold) = self.sload(address, index, db);
         //println!("sstore:{:?}:{:?}({:?})=>{:?}::{:?}",address,index,present,new,is_cold);
         let acc = self.state.get_mut(&address).unwrap();
-        // if there is no original value in dirty return present valuem that is our original.
+        // if there is no original value in dirty return present value, that is our original.
         let original = if let Some(original) = acc.filth.original_slot(index) {
             original
         } else {
@@ -657,7 +657,8 @@ impl Filth {
         match self {
             Self::Clean | Self::Precompile(_) => None,
             Self::Dirty(ref originals) => originals.get(&index).cloned(),
-            Self::Destroyed | Self::NewlyCreated => Some(H256::zero()),
+            Self::Destroyed => None, 
+            Self::NewlyCreated => Some(H256::zero()),
         }
     }
 
