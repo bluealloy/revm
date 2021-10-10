@@ -56,7 +56,7 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
 
     let map_caller_keys: HashMap<_, _> = vec![
         (
-            H256::from_str("45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8")
+            H256::from_str("0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8")
                 .unwrap(),
             H160::from_str("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b").unwrap(),
         ),
@@ -65,6 +65,18 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
                 .unwrap(),
             H160::from_str("0xcd2a3d9f938e13cd947ec05abc7fe734df8dd826").unwrap(),
         ),
+        (
+            H256::from_str("0x044852b2a670ade5407e78fb2863c51de9fcb96542a07186fe3aeda6bb8a116d")
+                .unwrap(),
+            H160::from_str("0x82a978b3f5962a5b0957d9ee9eef472ee55b42f1").unwrap(),
+        ),
+        (
+            H256::from_str("0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8")
+                .unwrap(),
+            H160::from_str("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b").unwrap(),
+        ),
+
+        
     ]
     .into_iter()
     .collect();

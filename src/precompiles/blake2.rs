@@ -42,12 +42,12 @@ impl Precompile for Blake2F {
             return Err(ExitError::Other(Borrowed("Invalid last flag for blake2")));
         }
 
-        let cost = Self::required_gas(input)?;
+        // rounds 4 bytes
+        let rounds = u32::from_be_bytes(input[..4].try_into().unwrap()) as usize;
+        let cost = rounds as u64 * costs::F_ROUND;
         if cost > target_gas {
             return Err(ExitError::OutOfGas);
         }
-        // rounds 4 bytes
-        let rounds = u32::from_be_bytes(input[..4].try_into().unwrap()) as usize;
         let mut h = [0u64; 8];
         let mut m = [0u64; 16];
         let mut t = [0u64, 2];
