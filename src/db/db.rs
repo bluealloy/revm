@@ -1,4 +1,4 @@
-use crate::collection::{vec::Vec, Map};
+use crate::collection::{vec::Vec, Entry, Map};
 
 use primitive_types::{H160, H256, U256};
 
@@ -14,7 +14,7 @@ pub trait Database {
     /// Get account code.
     fn code(&mut self, address: H160) -> Bytes;
     /// Get account code by its hash
-    fn code_by_hash(&mut self, code_hash: H256) -> Bytes;
+    //fn code_by_hash(&mut self, code_hash: H256) -> Bytes;
     /// Get storage value of address at index.
     fn storage(&mut self, address: H160, index: H256) -> H256;
 
@@ -91,7 +91,7 @@ impl StateDB {
     }
 
     /// return true if account exists or fetch it from database
-    fn fetch_account(&self, address: &H160) -> bool {
+    fn fetch_account(&mut self, address: &H160) -> bool {
         {
             if let Some(acc) = self.cache.get(address) {
                 return acc.exists();
@@ -126,7 +126,7 @@ impl Database for StateDB {
     }
 
     fn exists(&mut self, address: H160) -> Option<AccountInfo> {
-        //log::info!(target: "evm::handler", "{:?} exists",address);
+        println!("\nTESTTT:     {:?} exists\n", address);
         if self.fetch_account(&address) {
             Some(self.cache.get(&address).cloned().unwrap())
         } else {
@@ -193,7 +193,7 @@ impl Database for StateDB {
         }
     }
 
-    fn code_by_hash(&mut self, _code_hash: H256) -> Bytes {
-        todo!()
-    }
+    // fn code_by_hash(&mut self, _code_hash: H256) -> Bytes {
+    //     todo!()
+    // }
 }

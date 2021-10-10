@@ -221,11 +221,6 @@ impl SubRoutine {
     ) -> Result<(bool, bool), ExitRevert> {
         // load accounts
         let from_is_cold = self.load_account(from, db);
-
-        if value == U256::zero() {
-            return Ok((from_is_cold, false));
-        }
-
         let to_is_cold = self.load_account(to, db);
         // check from balance and substract value
         let from = self.log_dirty(from, |_| {});
@@ -491,12 +486,12 @@ impl SubRoutine {
         let acc = self.state.get_mut(&address).unwrap();
         let dont_load_from_db = !matches!(acc.filth, Filth::Destroyed | Filth::NewlyCreated);
         if dont_load_from_db && acc.info.code.is_none() {
-            let code = if let Some(code_hash) = acc.info.code_hash {
-                db.code_by_hash(code_hash)
-            } else {
-                db.code(address)
-            };
-            acc.info.code = Some(code);
+            // let code = if let Some(code_hash) = acc.info.code_hash {
+            //     db.code_by_hash(code_hash)
+            // } else {
+            //     db.code(address)
+            // };
+            acc.info.code = Some(db.code(address));
         } // } else {
           //     acc.info.code = Some(Bytes::new());
           // }
@@ -607,12 +602,7 @@ pub struct Account {
 
 impl Account {
     pub fn is_empty(&self) -> bool {
-        let code_empty = if let Some(ref code) = self.info.code {
-            code.is_empty()
-        } else {
-            true
-        };
-        self.info.balance == U256::zero() && self.info.nonce == 0 && code_empty
+        self.info.is_empty()
     }
 }
 

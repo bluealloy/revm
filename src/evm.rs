@@ -50,11 +50,9 @@ impl<'a, DB: Database> EVM<'a, DB> {
         let gas_price = self.global_env.gas_price;
         let coinbase = self.global_env.block_coinbase;
 
-        let gas_refunded = min( gas.refunded() as u64,gas.spend()/2);
-        self.subroutine.balance_add(
-            caller,
-            gas_price * (gas.remaining() + gas_refunded),
-        );
+        let gas_refunded = min(gas.refunded() as u64, gas.spend() / 2);
+        self.subroutine
+            .balance_add(caller, gas_price * (gas.remaining() + gas_refunded));
         self.subroutine.load_account(coinbase, self.db);
         self.subroutine
             .balance_add(coinbase, gas_price * (gas.spend() - gas_refunded));
@@ -429,7 +427,12 @@ impl<'a, DB: Database> Handler for EVM<'a, DB> {
             return (H256::zero(), is_cold);
         }
 
-        (acc.info.code_hash.unwrap(), is_cold)
+        (
+            H256::from_slice(
+                Keccak256::digest(&acc.info.code.clone().unwrap_or_default()).as_slice(),
+            ),
+            is_cold,
+        )
     }
 
     fn sload(&mut self, address: H160, index: H256) -> (H256, bool) {
