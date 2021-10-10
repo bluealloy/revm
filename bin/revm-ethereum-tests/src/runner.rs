@@ -195,7 +195,7 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
 }
 
 pub fn run<INSP: Inspector + Clone + Send + 'static>(
-    mut test_files: Vec<PathBuf>,
+    mut test_files: &[PathBuf],
     inspector: Box<INSP>,
 ) {
     let endjob = Arc::new(AtomicBool::new(false));

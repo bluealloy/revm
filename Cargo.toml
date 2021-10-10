@@ -22,7 +22,6 @@ plain_hasher = "0.2"
 num = { version = "0.4.0", default-features = false, features = ["alloc"] }
 #precompile libs down below taken from aurora-engine
 sha2 = { version = "0.9.3", default-features = false }
-blake2 = { git = "https://github.com/near/near-blake2.git", package="near-blake2", rev = "cebb7df79608a7058017940830d37c37d55d21fe", default-features = false }
 borsh = { version = "0.9", default-features = false }
 ripemd160 = { version = "0.9.1", default-features = false }
 libsecp256k1 = { version = "0.3.5", default-features = false }

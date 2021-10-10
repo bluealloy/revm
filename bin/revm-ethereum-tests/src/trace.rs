@@ -99,7 +99,7 @@ impl Inspector for CustomPrintTracer {
         println!("CREATE Address:{:?}", address);
     }
 
-    fn selfdestruct(&mut self) {
-        println!("SELFDESTRUCT CALLED");
+    fn selfdestruct(&mut self){//, address: H160, target: H160) {
+        println!("SELFDESTRUCT on ");//{:?} target: {:?}", address, target);
     }
 }
