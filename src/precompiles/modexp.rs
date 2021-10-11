@@ -68,21 +68,20 @@ impl<HF: HardFork> ModExp<HF> {
         let mod_len = mod_len_big.to_usize().expect("mod_len out of bounds");
 
         // input length should be at least 96 + user-specified length of base + exp + mod
-        let total_len = base_len + exp_len + mod_len + 96;
-        if input.len() < total_len {
-            return Err(ExitError::Other("insufficient input size".into()));
-        }
+        let len = input.len();
 
         // Gas formula allows arbitrary large exp_len when base and modulus are empty, so we need to handle empty base first.
         let (r, gas_cost) = if base_len == 0 && mod_len == 0 {
             (BigUint::zero(), MIN_GAS_COST)
         } else {
             // read the numbers themselves.
-            let base_start = 96; // previous 3 32-byte fields
-            let base = BigUint::from_bytes_be(&input[base_start..base_start + base_len]);
+            let base_start = 96;
+            let base_end = min(base_start + base_len, len);
+            let base = BigUint::from_bytes_be(&input[base_start..base_end]);
 
-            let exp_start = base_start + base_len;
-            let exponent = BigUint::from_bytes_be(&input[exp_start..exp_start + exp_len]);
+            let exp_start = base_end;
+            let exp_end = min(base_end + exp_len, len);
+            let exponent = BigUint::from_bytes_be(&input[exp_start..exp_end]);
 
             // do our gas accounting
             // TODO: we could technically avoid reading base first...
@@ -91,8 +90,9 @@ impl<HF: HardFork> ModExp<HF> {
                 gas_limit,
             )?;
 
-            let mod_start = exp_start + exp_len;
-            let modulus = BigUint::from_bytes_be(&input[mod_start..mod_start + mod_len]);
+            let mod_start = exp_end;
+            let mod_end = min(mod_start + mod_len, len);
+            let modulus = BigUint::from_bytes_be(&input[mod_start..mod_end]);
 
             if modulus.is_zero() || modulus.is_one() {
                 (BigUint::zero(), gas_cost)
@@ -185,7 +185,7 @@ impl Precompile for ModExp<Byzantium> {
 impl ModExp<Berlin> {
     // Calculate gas cost according to EIP 2565:
     // https://eips.ethereum.org/EIPS/eip-2565
-    fn calculate_gas_cost(
+    fn berlin_gas_calc(
         base_length: u64,
         exp_length: u64,
         mod_length: u64,
@@ -226,7 +226,7 @@ impl ModExp<Berlin> {
         let iteration_count = calculate_iteration_count(exp_length, exponent);
         let gas = max(
             MIN_GAS_COST,
-            multiplication_complexity * iteration_count / 3,
+            (multiplication_complexity * iteration_count) / 3,
         );
 
         gas
@@ -241,7 +241,7 @@ impl Precompile for ModExp<Berlin> {
         _is_static: bool,
     ) -> PrecompileResult {
         Self::run_inner(input, gas_limit, |a, b, c, d| {
-            Self::calculate_gas_cost(a, b, c, d)
+            Self::berlin_gas_calc(a, b, c, d)
         })
     }
 }
