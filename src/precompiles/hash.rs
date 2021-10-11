@@ -1,23 +1,9 @@
+use super::{calc_linear_cost_u32, gas_quert};
+use crate::collection::vec;
 use crate::precompiles::{Precompile, PrecompileOutput, PrecompileResult};
-use crate::collection::{vec};
-use primitive_types::H160 as Address;
 use crate::{models::CallContext, ExitError};
+use primitive_types::H160 as Address;
 use sha2::*;
-mod costs {
-    pub(super) const SHA256_BASE: u64 = 60;
-
-    pub(super) const SHA256_PER_WORD: u64 = 12;
-
-    pub(super) const RIPEMD160_BASE: u64 = 600;
-
-    pub(super) const RIPEMD160_PER_WORD: u64 = 12;
-}
-
-mod consts {
-    pub(super) const SHA256_WORD_LEN: u64 = 32;
-
-    pub(super) const RIPEMD_WORD_LEN: u64 = 32;
-}
 
 /// SHA256 precompile.
 pub struct SHA256;
@@ -27,58 +13,18 @@ impl SHA256 {
 }
 
 impl Precompile for SHA256 {
-    fn required_gas(input: &[u8]) -> Result<u64, ExitError> {
-        Ok(
-            (input.len() as u64 + consts::SHA256_WORD_LEN - 1) / consts::SHA256_WORD_LEN
-                * costs::SHA256_PER_WORD
-                + costs::SHA256_BASE,
-        )
-    }
-
     /// See: https://ethereum.github.io/yellowpaper/paper.pdf
     /// See: https://docs.soliditylang.org/en/develop/units-and-global-variables.html#mathematical-and-cryptographic-functions
     /// See: https://etherscan.io/address/0000000000000000000000000000000000000002
-    #[cfg(not(feature = "contract"))]
     fn run(
         input: &[u8],
-        target_gas: u64,
+        gas_limit: u64,
         _context: &CallContext,
         _is_static: bool,
     ) -> PrecompileResult {
-        use sha2::Digest;
-
-        if Self::required_gas(input)? > target_gas {
-            return Err(ExitError::OutOfGas);
-        }
-
-        let cost = Self::required_gas(input)?;
-        if cost > target_gas {
-            Err(ExitError::OutOfGas)
-        } else {
-            let output = sha2::Sha256::digest(input).to_vec();
-            Ok(PrecompileOutput::without_logs(cost, output))
-        }
-    }
-
-    /// See: https://ethereum.github.io/yellowpaper/paper.pdf
-    /// See: https://docs.soliditylang.org/en/develop/units-and-global-variables.html#mathematical-and-cryptographic-functions
-    /// See: https://etherscan.io/address/0000000000000000000000000000000000000002
-    #[cfg(feature = "contract")]
-    fn run(
-        input: &[u8],
-        target_gas: u64,
-        _context: &CallContext,
-        _is_static: bool,
-    ) -> PrecompileResult {
-        use crate::sdk;
-
-        let cost = Self::required_gas(input)?;
-        if cost > target_gas {
-            Err(ExitError::OutOfGas)
-        } else {
-            let output = sdk::sha256(input).as_bytes().to_vec();
-            Ok(PrecompileOutput::without_logs(cost, output))
-        }
+        let cost = gas_quert(calc_linear_cost_u32(input.len(), 12, 60), gas_limit)?;
+        let output = sha2::Sha256::digest(input).to_vec();
+        Ok(PrecompileOutput::without_logs(cost, output))
     }
 }
 
@@ -87,49 +33,22 @@ pub struct RIPEMD160;
 
 impl RIPEMD160 {
     pub(super) const ADDRESS: Address = super::make_address(0, 3);
-
-    #[cfg(not(feature = "contract"))]
-    fn internal_impl(input: &[u8]) -> [u8; 20] {
-        use ripemd160::Digest;
-        let hash = ripemd160::Ripemd160::digest(input);
-        let mut output = [0u8; 20];
-        output.copy_from_slice(&hash);
-        output
-    }
 }
 
 impl Precompile for RIPEMD160 {
-    fn required_gas(input: &[u8]) -> Result<u64, ExitError> {
-        Ok(
-            (input.len() as u64 + consts::RIPEMD_WORD_LEN - 1) / consts::RIPEMD_WORD_LEN
-                * costs::RIPEMD160_PER_WORD
-                + costs::RIPEMD160_BASE,
-        )
-    }
-
     /// See: https://ethereum.github.io/yellowpaper/paper.pdf
     /// See: https://docs.soliditylang.org/en/develop/units-and-global-variables.html#mathematical-and-cryptographic-functions
     /// See: https://etherscan.io/address/0000000000000000000000000000000000000003
     fn run(
         input: &[u8],
-        target_gas: u64,
+        gas_limit: u64,
         _context: &CallContext,
         _is_static: bool,
     ) -> PrecompileResult {
-        let cost = Self::required_gas(input)?;
-        if cost > target_gas {
-            Err(ExitError::OutOfGas)
-        } else {
-            #[cfg(not(feature = "contract"))]
-            let hash = Self::internal_impl(input);
-            #[cfg(feature = "contract")]
-            let hash = crate::sdk::ripemd160(input);
-            // The result needs to be padded with leading zeros because it is only 20 bytes, but
-            // the evm works with 32-byte words.
-            let mut output = vec![0u8; 32];
-            output[12..].copy_from_slice(&hash);
-            Ok(PrecompileOutput::without_logs(cost, output))
-        }
+        let gas_used = gas_quert(calc_linear_cost_u32(input.len(), 120, 600), gas_limit)?;
+        let mut ret = [0u8; 32];
+        ret[12..32].copy_from_slice(&ripemd160::Ripemd160::digest(input));
+        Ok(PrecompileOutput::without_logs(gas_used, ret.to_vec()))
     }
 }
 

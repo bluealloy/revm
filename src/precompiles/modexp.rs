@@ -1,80 +1,129 @@
+use super::gas_quert;
+use crate::collection::Vec;
 use crate::precompiles::{
     Berlin, Byzantium, HardFork, Precompile, PrecompileOutput, PrecompileResult,
 };
-use crate::collection::Vec;
-use core::{cmp::min,marker::PhantomData};
 use crate::{models::CallContext, ExitError};
-use num::{BigUint, Integer};
-use primitive_types::{H160 as Address,U256};
-
+use core::cmp::max;
+use core::ops::BitAnd;
+use core::{cmp::min, marker::PhantomData};
+use num::{BigUint, FromPrimitive, Integer, One, ToPrimitive, Zero};
+use primitive_types::{H160 as Address, U256};
 pub(super) struct ModExp<HF: HardFork>(PhantomData<HF>);
 
 impl<HF: HardFork> ModExp<HF> {
     pub(super) const ADDRESS: Address = super::make_address(0, 5);
 }
 
+const MIN_GAS_COST: u64 = 200;
 
+/* https://ethereum-magicians.org/t/eip-2565-big-integer-modular-exponentiation-eip-198-gas-cost/4150/10
+old calculation of cunsumption.
+def mult_complexity(x):
+    if x <= 64: return x ** 2
+    elif x <= 1024: return x ** 2 // 4 + 96 * x - 3072
+    else: return x ** 2 // 16 + 480 * x - 199680
+where is x is max(length_of_MODULUS, length_of_BASE)
+*/
 impl<HF: HardFork> ModExp<HF> {
-    // Note: the output of this function is bounded by 2^67
-    fn calc_iter_count(exp_len: u64, base_len: u64, bytes: &[u8]) -> U256 {
-        #[allow(clippy::redundant_closure)]
-        let exp = parse_bytes(
-            bytes,
-            (base_len as usize).saturating_add(96),
-            core::cmp::min(32, exp_len as usize),
-            // I don't understand why I need a closure here, but doesn't compile without one
-            |x| U256::from(x),
-        );
+    fn run_inner<F>(input: &[u8], gas_limit: u64, calc_gas: F) -> PrecompileResult
+    where
+        F: FnOnce(u64, u64, u64, &BigUint) -> u64,
+    {
+        if input.len() < 96 {
+            return Err(ExitError::Other(
+                "input must contain at least 96 bytes".into(),
+            ));
+        };
 
-        if exp_len <= 32 && exp.is_zero() {
-            U256::zero()
-        } else if exp_len <= 32 {
-            U256::from(exp.bits()) - U256::from(1)
-        } else {
-            // else > 32
-            U256::from(8) * U256::from(exp_len - 32) + U256::from(exp.bits()) - U256::from(1)
+        // reasonable assumption: this must fit within the Ethereum EVM's max stack size
+        let max_size_big = BigUint::from_u32(1024).expect("can't create BigUint");
+
+        let mut buf = [0; 32];
+        buf.copy_from_slice(&input[0..32]);
+        let base_len_big = BigUint::from_bytes_be(&buf);
+        if base_len_big > max_size_big {
+            return Err(ExitError::Other("unreasonably large base length".into()));
         }
-    }
 
-    fn run_inner(input: &[u8]) -> Result<Vec<u8>, ExitError> {
-        let (base_len, exp_len, mod_len) = parse_lengths(input);
-        let base_len = base_len as usize;
-        let exp_len = exp_len as usize;
-        let mod_len = mod_len as usize;
+        buf.copy_from_slice(&input[32..64]);
+        let exp_len_big = BigUint::from_bytes_be(&buf);
+        if exp_len_big > max_size_big {
+            return Err(ExitError::Other(
+                "unreasonably large exponent length".into(),
+            ));
+        }
 
-        let base_start = 96;
-        let base_end = base_len.saturating_add(base_start);
+        buf.copy_from_slice(&input[64..96]);
+        let mod_len_big = BigUint::from_bytes_be(&buf);
+        if mod_len_big > max_size_big {
+            return Err(ExitError::Other(
+                "unreasonably large exponent length".into(),
+            ));
+        }
 
-        let exp_start = base_end;
-        let exp_end = exp_len.saturating_add(exp_start);
+        // bounds check handled above
+        let base_len = base_len_big.to_usize().expect("base_len out of bounds");
+        let exp_len = exp_len_big.to_usize().expect("exp_len out of bounds");
+        let mod_len = mod_len_big.to_usize().expect("mod_len out of bounds");
 
-        let mod_start = exp_end;
+        // input length should be at least 96 + user-specified length of base + exp + mod
+        let total_len = base_len + exp_len + mod_len + 96;
+        if input.len() < total_len {
+            return Err(ExitError::Other("insufficient input size".into()));
+        }
 
-        let base = parse_bytes(input, base_start, base_len, BigUint::from_bytes_be);
-        let exponent = parse_bytes(input, exp_start, exp_len, BigUint::from_bytes_be);
-        let modulus = parse_bytes(input, mod_start, mod_len, BigUint::from_bytes_be);
-        println!("\nmodulux:{:?}\n",modulus);
+        // Gas formula allows arbitrary large exp_len when base and modulus are empty, so we need to handle empty base first.
+        let (r, gas_cost) = if base_len == 0 && mod_len == 0 {
+            (BigUint::zero(), MIN_GAS_COST)
+        } else {
+            // read the numbers themselves.
+            let base_start = 96; // previous 3 32-byte fields
+            let base = BigUint::from_bytes_be(&input[base_start..base_start + base_len]);
 
-        let output = {
-            let computed_result = if modulus == BigUint::from(0u32) {
-                Vec::new()
+            let exp_start = base_start + base_len;
+            let exponent = BigUint::from_bytes_be(&input[exp_start..exp_start + exp_len]);
+
+            // do our gas accounting
+            // TODO: we could technically avoid reading base first...
+            let gas_cost = gas_quert(
+                calc_gas(base_len as u64, exp_len as u64, mod_len as u64, &exponent),
+                gas_limit,
+            )?;
+
+            let mod_start = exp_start + exp_len;
+            let modulus = BigUint::from_bytes_be(&input[mod_start..mod_start + mod_len]);
+
+            if modulus.is_zero() || modulus.is_one() {
+                (BigUint::zero(), gas_cost)
             } else {
-                base.modpow(&exponent, &modulus).to_bytes_be()
-            };
-            // The result must be the same length as the input modulus.
-            // To ensure this we pad on the left with zeros.
-            if mod_len > computed_result.len() {
-                let diff = mod_len - computed_result.len();
-                let mut padded_result = Vec::with_capacity(mod_len);
-                padded_result.extend(core::iter::repeat(0).take(diff));
-                padded_result.extend_from_slice(&computed_result);
-                padded_result
-            } else {
-                computed_result
+                (base.modpow(&exponent, &modulus), gas_cost)
             }
         };
 
-        Ok(output)
+        // write output to given memory, left padded and same length as the modulus.
+        let bytes = r.to_bytes_be();
+
+        // always true except in the case of zero-length modulus, which leads to
+        // output of length and value 1.
+        if bytes.len() == mod_len {
+            Ok(PrecompileOutput {
+                cost: gas_cost,
+                output: bytes.to_vec(),
+                logs: Default::default(),
+            })
+        } else if bytes.len() < mod_len {
+            let mut ret = Vec::with_capacity(mod_len);
+            ret.extend(core::iter::repeat(0).take(mod_len - bytes.len()));
+            ret.extend_from_slice(&bytes[..]);
+            Ok(PrecompileOutput {
+                cost: gas_cost,
+                output: ret.to_vec(),
+                logs: Default::default(),
+            })
+        } else {
+            Err(ExitError::Other("failed".into()))
+        }
     }
 }
 
@@ -92,117 +141,112 @@ impl ModExp<Byzantium> {
             x_sq / U256::from(16) + U256::from(480) * x - U256::from(199_680)
         }
     }
-}
 
-impl Precompile for ModExp<Byzantium> {
-    fn required_gas(input: &[u8]) -> Result<u64, ExitError> {
-        let (base_len, exp_len, mod_len) = parse_lengths(input);
+    fn calc_iter_count(exp_len: u64, exponent: &BigUint) -> U256 {
+        if exp_len <= 32 && exponent.is_zero() {
+            U256::zero()
+        } else if exp_len <= 32 {
+            U256::from(exponent.bits()) - U256::from(1)
+        } else {
+            // else > 32
+            U256::from(8) * U256::from(exp_len - 32) + U256::from(exponent.bits()) - U256::from(1)
+        }
+    }
 
+    fn byzantium_gas_calc(base_len: u64, exp_len: u64, mod_len: u64, exponent: &BigUint) -> u64 {
         let mul = Self::mul_complexity(core::cmp::max(mod_len, base_len));
-        let iter_count = Self::calc_iter_count(exp_len, base_len, input);
+        let iter_count = Self::calc_iter_count(exp_len, exponent);
         // mul * iter_count bounded by 2^195 < 2^256 (no overflow)
         let gas = mul * core::cmp::max(iter_count, U256::one()) / U256::from(20);
 
-        Ok(saturating_round(gas))
+        if gas.bits() > 64 {
+            u64::MAX
+        } else {
+            gas.as_u64()
+        }
     }
+}
 
+impl Precompile for ModExp<Byzantium> {
     /// See: https://eips.ethereum.org/EIPS/eip-198
     /// See: https://etherscan.io/address/0000000000000000000000000000000000000005
     fn run(
         input: &[u8],
-        target_gas: u64,
+        gas_limit: u64,
         _context: &CallContext,
         _is_static: bool,
     ) -> PrecompileResult {
-        let cost = Self::required_gas(input)?;
-        if cost > target_gas {
-            Err(ExitError::OutOfGas)
-        } else {
-            let output = Self::run_inner(input)?;
-            Ok(PrecompileOutput::without_logs(cost, output))
-        }
+        Self::run_inner(input, gas_limit, |a, b, c, d| {
+            Self::byzantium_gas_calc(a, b, c, d)
+        })
     }
 }
 
 impl ModExp<Berlin> {
-    // output bounded by 2^122
-    fn mul_complexity(base_len: u64, mod_len: u64) -> U256 {
-        let max_len = core::cmp::max(mod_len, base_len);
-        let words = U256::from(max_len.div_ceil(&8));
-        words * words
+    // Calculate gas cost according to EIP 2565:
+    // https://eips.ethereum.org/EIPS/eip-2565
+    fn calculate_gas_cost(
+        base_length: u64,
+        exp_length: u64,
+        mod_length: u64,
+        exponent: &BigUint,
+    ) -> u64 {
+        fn calculate_multiplication_complexity(base_length: u64, mod_length: u64) -> u64 {
+            let max_length = max(base_length, mod_length);
+            let mut words = max_length / 8;
+            if max_length % 8 > 0 {
+                words += 1;
+            }
+
+            // TODO: prevent/handle overflow
+            words * words
+        }
+
+        fn calculate_iteration_count(exp_length: u64, exponent: &BigUint) -> u64 {
+            let mut iteration_count: u64 = 0;
+
+            if exp_length <= 32 && exponent.is_zero() {
+                iteration_count = 0;
+            } else if exp_length <= 32 {
+                iteration_count = exponent.bits() - 1;
+            } else if exp_length > 32 {
+                // construct BigUint to represent (2^256) - 1
+                let bytes: [u8; 32] = [0xFF; 32];
+                let max_256_bit_uint = BigUint::from_bytes_be(&bytes);
+
+                iteration_count =
+                    (8 * (exp_length - 32)) + ((exponent.bitand(max_256_bit_uint)).bits() - 1);
+            }
+
+            max(iteration_count, 1)
+        }
+
+        let multiplication_complexity =
+            calculate_multiplication_complexity(base_length, mod_length);
+        let iteration_count = calculate_iteration_count(exp_length, exponent);
+        let gas = max(
+            MIN_GAS_COST,
+            multiplication_complexity * iteration_count / 3,
+        );
+
+        gas
     }
 }
 
 impl Precompile for ModExp<Berlin> {
-    fn required_gas(input: &[u8]) -> Result<u64, ExitError> {
-        let (base_len, exp_len, mod_len) = parse_lengths(input);
-
-        let mul = Self::mul_complexity(base_len, mod_len);
-        let iter_count = Self::calc_iter_count(exp_len, base_len, input);
-        // mul * iter_count bounded by 2^189 (so no overflow)
-        let gas = mul * iter_count / U256::from(3);
-
-        Ok(core::cmp::max(200, saturating_round(gas)))
-    }
-
     fn run(
         input: &[u8],
-        target_gas: u64,
+        gas_limit: u64,
         _context: &CallContext,
         _is_static: bool,
     ) -> PrecompileResult {
-        let cost = Self::required_gas(input)?;
-        if cost > target_gas {
-            Err(ExitError::OutOfGas)
-        } else {
-            let output = Self::run_inner(input)?;
-            Ok(PrecompileOutput::without_logs(cost, output))
-        }
+        Self::run_inner(input, gas_limit, |a, b, c, d| {
+            Self::calculate_gas_cost(a, b, c, d)
+        })
     }
 }
 
-fn parse_bytes<T, F: FnOnce(&[u8]) -> T>(input: &[u8], start: usize, size: usize, f: F) -> T {
-    let len = input.len();
-    if start >= len {
-        return f(&[]);
-    }
-    
-    let end = min(start+size,len);
-    let mut out: Vec<u8> = vec![0; size];
-    let (overlap,_) = out.split_at_mut(end-start);
-    overlap.copy_from_slice(&input[start..end]);
-    f(&out)
-    
-    /* original wrong
-    let end = start + size;
-    if end > len {
-        f(&input[start..len])
-    } else {
-        f(&input[start..end])
-    }*/
-}
-
-fn saturating_round(x: U256) -> u64 {
-    if x.bits() > 64 {
-        u64::MAX
-    } else {
-        x.as_u64()
-    }
-}
-
-fn parse_lengths(input: &[u8]) -> (u64, u64, u64) {
-    let parse = |start: usize| -> u64 {
-        // I don't understand why I need a closure here, but doesn't compile without one
-        #[allow(clippy::redundant_closure)]
-        saturating_round(parse_bytes(input, start, 32, |x| U256::from(x)))
-    };
-    let base_len = parse(0);
-    let exp_len = parse(32);
-    let mod_len = parse(64);
-
-    (base_len, exp_len, mod_len)
-}
-
+/*
 #[cfg(test)]
 mod tests {
 
@@ -211,7 +255,6 @@ mod tests {
     // Byzantium tests: https://github.com/holiman/go-ethereum/blob/master/core/vm/testdata/precompiles/modexp.json
     // Berlin tests:https://github.com/holiman/go-ethereum/blob/master/core/vm/testdata/precompiles/modexp_eip2565.json
 
-    
     struct Test {
         input: &'static str,
         expected: &'static str,
@@ -365,13 +408,13 @@ mod tests {
     ];
 
     const BYZANTIUM_GAS: [u64; 18] = [
-        13_056, 13_056, 13_056, 204, 204, 3_276, 665, 665, 10_649, 1_894, 1_894, 30_310, 5_580, 5_580,
-        89_292, 17_868, 17_868, 285_900,
+        13_056, 13_056, 13_056, 204, 204, 3_276, 665, 665, 10_649, 1_894, 1_894, 30_310, 5_580,
+        5_580, 89_292, 17_868, 17_868, 285_900,
     ];
 
     const BERLIN_GAS: [u64; 18] = [
-        1_360, 1_360, 1_360, 200, 200, 341, 200, 200, 1_365, 341, 341, 5_461, 1_365, 1_365, 21_845, 5_461,
-        5_461, 87_381,
+        1_360, 1_360, 1_360, 200, 200, 341, 200, 200, 1_365, 341, 341, 5_461, 1_365, 1_365, 21_845,
+        5_461, 5_461, 87_381,
     ];
 
     #[test]
@@ -452,3 +495,4 @@ mod tests {
         assert_eq!(res.output, expected)
     }
 }
+ */

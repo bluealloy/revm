@@ -1,114 +1,80 @@
 use crate::precompiles::{Precompile, PrecompileOutput, PrecompileResult};
-use crate::collection::*;
-use primitive_types::{H160 as Address,H256};
 use crate::{CallContext, ExitError};
-
-
+use core::cmp::min;
+use primitive_types::{H160 as Address};
+use sha3::{Digest, Keccak256};
 mod costs {
     pub(super) const ECRECOVER_BASE: u64 = 3_000;
 }
-
 mod consts {
     pub(super) const INPUT_LEN: usize = 128;
-}
-
-/// See: https://ethereum.github.io/yellowpaper/paper.pdf
-/// See: https://docs.soliditylang.org/en/develop/units-and-global-variables.html#mathematical-and-cryptographic-functions
-/// See: https://etherscan.io/address/0000000000000000000000000000000000000001
-// Quite a few library methods rely on this and that should be changed. This
-// should only be for precompiles.
-pub(crate) fn ecrecover(hash: H256, signature: &[u8]) -> Result<Address, ExitError> {
-    assert_eq!(signature.len(), 65);
-
-    #[cfg(feature = "contract")]
-    return crate::sdk::ecrecover(hash, signature)
-        .map_err(|e| ExitError::Other(Borrowed(e.as_str())));
-
-    #[cfg(not(feature = "contract"))]
-    internal_impl(hash, signature)
-}
-
-#[cfg(not(feature = "contract"))]
-fn internal_impl(hash: H256, signature: &[u8]) -> Result<Address, ExitError> {
-    use sha3::{Digest};
-
-    let hash = secp256k1::Message::parse_slice(hash.as_bytes()).unwrap();
-    let v = signature[64];
-    let signature = secp256k1::Signature::parse_slice(&signature[0..64]).unwrap();
-    let bit = match v {
-        0..=26 => v,
-        _ => v - 27,
-    };
-
-    if let Ok(recovery_id) = secp256k1::RecoveryId::parse(bit) {
-        if let Ok(public_key) = secp256k1::recover(&hash, &signature, &recovery_id) {
-            // recover returns a 65-byte key, but addresses come from the raw 64-byte key
-            let r = sha3::Keccak256::digest(&public_key.serialize()[1..]);
-            return Ok(Address::from_slice(&r[12..]));
-        }
-    }
-
-    Err(ExitError::Other(Borrowed(
-        "Internal error",
-    )))
 }
 
 pub(super) struct ECRecover;
 
 impl ECRecover {
     pub(super) const ADDRESS: Address = super::make_address(0, 1);
+
+    fn secp256k1_ecdsa_recover(
+        sig: &[u8; 65],
+        msg: &[u8; 32],
+    ) -> Result<[u8; 64], EcdsaVerifyError> {
+        let rs = libsecp256k1::Signature::parse_standard_slice(&sig[0..64])
+            .map_err(|_| EcdsaVerifyError::BadRS)?;
+        let v = libsecp256k1::RecoveryId::parse(
+            if sig[64] > 26 { sig[64] - 27 } else { sig[64] } as u8
+        )
+        .map_err(|_| EcdsaVerifyError::BadV)?;
+        let pubkey = libsecp256k1::recover(&libsecp256k1::Message::parse(msg), &rs, &v)
+            .map_err(|_| EcdsaVerifyError::BadSignature)?;
+        let mut res = [0u8; 64];
+        res.copy_from_slice(&pubkey.serialize()[1..65]);
+        Ok(res)
+    }
+}
+
+/// Error verifying ECDSA signature
+pub enum EcdsaVerifyError {
+    /// Incorrect value of R or S
+    BadRS,
+    /// Incorrect value of V
+    BadV,
+    /// Invalid signature
+    BadSignature,
 }
 
 impl Precompile for ECRecover {
-    fn required_gas(_input: &[u8]) -> Result<u64, ExitError> {
-        Ok(costs::ECRECOVER_BASE)
-    }
-
     fn run(
-        input: &[u8],
+        i: &[u8],
         target_gas: u64,
         _context: &CallContext,
         _is_static: bool,
     ) -> PrecompileResult {
-        let cost = Self::required_gas(input)?;
+        let cost = costs::ECRECOVER_BASE;
         if cost > target_gas {
             return Err(ExitError::OutOfGas);
         }
+        let mut input = [0u8; 128];
+        input[..min(i.len(), 128)].copy_from_slice(&i[..min(i.len(), 128)]);
 
-        let mut input = input.to_vec();
-        input.resize(consts::INPUT_LEN, 0);
+        let mut msg = [0u8; 32];
+        let mut sig = [0u8; 65];
 
-        let mut hash = [0; 32];
-        hash.copy_from_slice(&input[0..32]);
+        msg[0..32].copy_from_slice(&input[0..32]);
+        sig[0..32].copy_from_slice(&input[64..96]);
+        sig[32..64].copy_from_slice(&input[96..128]);
+        sig[64] = input[63];
 
-        let mut v = [0; 32];
-        v.copy_from_slice(&input[32..64]);
-
-        let mut signature = [0; 65]; // signature is (r, s, v), typed (uint256, uint256, uint8)
-        signature[0..32].copy_from_slice(&input[64..96]); // r
-        signature[32..64].copy_from_slice(&input[96..128]); // s
-
-        let v_bit = match v[31] {
-            27 | 28 if v[..31] == [0; 31] => v[31] - 27,
-            _ => {
-                return Ok(PrecompileOutput::without_logs(cost, vec![255u8; 32]));
+        let result = match Self::secp256k1_ecdsa_recover(&sig, &msg) {
+            Ok(pubkey) => {
+                let mut address = Keccak256::digest(&pubkey).as_slice().to_vec();
+                address[0..12].copy_from_slice(&[0u8; 12]);
+                address.to_vec()
             }
-        };
-        signature[64] = v_bit; // v
-
-        let address_res = ecrecover(H256::from_slice(&hash), &signature);
-        let output = match address_res {
-            Ok(a) => {
-                let mut output = [0u8; 32];
-                output[12..32].copy_from_slice(a.as_bytes());
-                output.to_vec()
-            }
-            Err(_) => {
-                vec![255u8; 32]
-            }
+            Err(_) => [0u8; 0].to_vec(),
         };
 
-        Ok(PrecompileOutput::without_logs(cost, output))
+        Ok(PrecompileOutput::without_logs(cost, result))
     }
 }
 

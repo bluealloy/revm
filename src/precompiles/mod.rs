@@ -1,5 +1,5 @@
 use crate::collection::{vec, Vec};
-pub(crate) use crate::precompiles::secp256k1::ecrecover;
+//pub(crate) use crate::precompiles::secp256k1::ecrecover;
 use crate::{models::CallContext, ExitSucceed, Log};
 use crate::{
     precompiles::blake2::Blake2F,
@@ -19,6 +19,17 @@ mod hash;
 mod identity;
 mod modexp;
 mod secp256k1;
+
+pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
+    (len as u64 + 32 - 1) / 32 * word + base
+}
+
+pub fn gas_quert(gas_used: u64, gas_limit: u64) -> Result<u64, ExitError> {
+    if gas_used > gas_limit {
+        return Err(ExitError::OutOfGas);
+    }
+    Ok(gas_used)
+}
 
 #[derive(Debug)]
 pub struct PrecompileOutput {
@@ -54,9 +65,6 @@ type EvmPrecompileResult = Result<PrecompileOutput, ExitError>;
 
 /// A precompiled function for use in the EVM.
 pub trait Precompile {
-    /// The required gas in order to run the precompile function.
-    fn required_gas(input: &[u8]) -> Result<u64, ExitError>;
-
     /// Runs the precompile function.
     fn run(
         input: &[u8],

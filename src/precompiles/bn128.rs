@@ -98,9 +98,6 @@ impl<HF: HardFork> Bn128Add<HF> {
 }
 
 impl Precompile for Bn128Add<Byzantium> {
-    fn required_gas(_input: &[u8]) -> Result<u64, ExitError> {
-        Ok(costs::BYZANTIUM_ADD)
-    }
 
     /// Takes in two points on the elliptic curve alt_bn128 and calculates the sum
     /// of them.
@@ -108,7 +105,7 @@ impl Precompile for Bn128Add<Byzantium> {
     /// See: https://eips.ethereum.org/EIPS/eip-196
     /// See: https://etherscan.io/address/0000000000000000000000000000000000000006
     fn run(input: &[u8], target_gas: u64, context: &CallContext, _is_static: bool) -> PrecompileResult {
-        let cost = Self::required_gas(input)?;
+        let cost = costs::BYZANTIUM_ADD;
         if cost > target_gas {
             Err(ExitError::OutOfGas)
         } else {
@@ -119,9 +116,6 @@ impl Precompile for Bn128Add<Byzantium> {
 }
 
 impl Precompile for Bn128Add<Istanbul> {
-    fn required_gas(_input: &[u8]) -> Result<u64, ExitError> {
-        Ok(costs::ISTANBUL_ADD)
-    }
 
     /// Takes in two points on the elliptic curve alt_bn128 and calculates the sum
     /// of them.
@@ -129,7 +123,7 @@ impl Precompile for Bn128Add<Istanbul> {
     /// See: https://eips.ethereum.org/EIPS/eip-196
     /// See: https://etherscan.io/address/0000000000000000000000000000000000000006
     fn run(input: &[u8], target_gas: u64, context: &CallContext, _is_static: bool) -> PrecompileResult {
-        let cost = Self::required_gas(input)?;
+        let cost = costs::ISTANBUL_ADD;
         if cost > target_gas {
             Err(ExitError::OutOfGas)
         } else {
@@ -171,16 +165,12 @@ impl<HF: HardFork> Bn128Mul<HF> {
 }
 
 impl Precompile for Bn128Mul<Byzantium> {
-    fn required_gas(_input: &[u8]) -> Result<u64, ExitError> {
-        Ok(costs::BYZANTIUM_MUL)
-    }
-
     /// Takes in two points on the elliptic curve alt_bn128 and multiples them.
     ///
     /// See: https://eips.ethereum.org/EIPS/eip-196
     /// See: https://etherscan.io/address/0000000000000000000000000000000000000007
     fn run(input: &[u8], target_gas: u64, context: &CallContext, _is_static: bool) -> PrecompileResult {
-        let cost = Self::required_gas(input)?;
+        let cost = costs::BYZANTIUM_MUL;
         if cost > target_gas {
             Err(ExitError::OutOfGas)
         } else {
@@ -191,16 +181,13 @@ impl Precompile for Bn128Mul<Byzantium> {
 }
 
 impl Precompile for Bn128Mul<Istanbul> {
-    fn required_gas(_input: &[u8]) -> Result<u64, ExitError> {
-        Ok(costs::ISTANBUL_MUL)
-    }
 
     /// Takes in two points on the elliptic curve alt_bn128 and multiples them.
     ///
     /// See: https://eips.ethereum.org/EIPS/eip-196
     /// See: https://etherscan.io/address/0000000000000000000000000000000000000007
     fn run(input: &[u8], target_gas: u64, context: &CallContext, _is_static: bool) -> PrecompileResult {
-        let cost = Self::required_gas(input)?;
+        let cost = costs::ISTANBUL_MUL;
         if cost > target_gas {
             Err(ExitError::OutOfGas)
         } else {
@@ -311,19 +298,15 @@ impl<HF: HardFork> Bn128Pair<HF> {
 }
 
 impl Precompile for Bn128Pair<Byzantium> {
-    fn required_gas(input: &[u8]) -> Result<u64, ExitError> {
-        Ok(
-            costs::BYZANTIUM_PAIR_PER_POINT * input.len() as u64 / consts::PAIR_ELEMENT_LEN as u64
-                + costs::BYZANTIUM_PAIR_BASE,
-        )
-    }
+
 
     /// Takes in elements and calculates the pair.
     ///
     /// See: https://eips.ethereum.org/EIPS/eip-197
     /// See: https://etherscan.io/address/0000000000000000000000000000000000000008
     fn run(input: &[u8], target_gas: u64, context: &CallContext, _is_static: bool) -> PrecompileResult {
-        let cost = Self::required_gas(input)?;
+        let cost = costs::BYZANTIUM_PAIR_PER_POINT * input.len() as u64 / consts::PAIR_ELEMENT_LEN as u64
+        + costs::BYZANTIUM_PAIR_BASE;
         if cost > target_gas {
             Err(ExitError::OutOfGas)
         } else {
@@ -334,19 +317,14 @@ impl Precompile for Bn128Pair<Byzantium> {
 }
 
 impl Precompile for Bn128Pair<Istanbul> {
-    fn required_gas(input: &[u8]) -> Result<u64, ExitError> {
-        Ok(
-            costs::ISTANBUL_PAIR_PER_POINT * input.len() as u64 / consts::PAIR_ELEMENT_LEN as u64
-                + costs::ISTANBUL_PAIR_BASE,
-        )
-    }
 
     /// Takes in elements and calculates the pair.
     ///
     /// See: https://eips.ethereum.org/EIPS/eip-197
     /// See: https://etherscan.io/address/0000000000000000000000000000000000000008
     fn run(input: &[u8], target_gas: u64, context: &CallContext, _is_static: bool) -> PrecompileResult {
-        let cost = Self::required_gas(input)?;
+        let cost = costs::ISTANBUL_PAIR_PER_POINT * input.len() as u64 / consts::PAIR_ELEMENT_LEN as u64
+        + costs::ISTANBUL_PAIR_BASE;
         if cost > target_gas {
             Err(ExitError::OutOfGas)
         } else {

@@ -9,7 +9,6 @@ use core::mem::{self};
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
 use rlp::Decodable;
-use secp256k1::curve::Field;
 
 use crate::{db::Database, error::ExitError, AccountInfo, Log};
 

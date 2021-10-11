@@ -3,6 +3,8 @@ use crate::{models::CallContext, ExitError};
 
 use primitive_types::H160 as Address;
 
+use super::{gas_quert,calc_linear_cost_u32};
+
 /// Identity precompile costs.
 mod costs {
     /// The base cost of the operation.
@@ -21,9 +23,6 @@ pub struct Identity;
 
 impl Identity {
     pub(super) const ADDRESS: Address = super::make_address(0, 4);
-}
-
-impl Precompile for Identity {
     fn required_gas(input: &[u8]) -> Result<u64, ExitError> {
         Ok(
             (input.len() as u64 + consts::IDENTITY_WORD_LEN - 1) / consts::IDENTITY_WORD_LEN
@@ -31,6 +30,9 @@ impl Precompile for Identity {
                 + costs::IDENTITY_BASE,
         )
     }
+}
+
+impl Precompile for Identity {
 
     /// Takes the input bytes, copies them, and returns it as the output.
     ///
@@ -38,16 +40,12 @@ impl Precompile for Identity {
     /// See: https://etherscan.io/address/0000000000000000000000000000000000000004
     fn run(
         input: &[u8],
-        target_gas: u64,
+        gas_limit: u64,
         _context: &CallContext,
         _is_static: bool,
     ) -> PrecompileResult {
-        let cost = Self::required_gas(input)?;
-        if cost > target_gas {
-            Err(ExitError::OutOfGas)
-        } else {
-            Ok(PrecompileOutput::without_logs(cost, input.to_vec()))
-        }
+        let gas_used = gas_quert(calc_linear_cost_u32(input.len(),15,3), gas_limit)?;
+        Ok(PrecompileOutput::without_logs(gas_used, input.to_vec()))
     }
 }
 /*

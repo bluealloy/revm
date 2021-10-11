@@ -24,5 +24,5 @@ num = { version = "0.4.0", default-features = false, features = ["alloc"] }
 sha2 = { version = "0.9.3", default-features = false }
 borsh = { version = "0.9", default-features = false }
 ripemd160 = { version = "0.9.1", default-features = false }
-libsecp256k1 = { version = "0.3.5", default-features = false }
+libsecp256k1 = { version = "0.7.0"}
 bn = { package = "aurora-bn", git = "https://github.com/aurora-is-near/aurora-bn.git", default-features = false }
