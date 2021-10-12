@@ -1,14 +1,14 @@
 use super::gas_quert;
 use crate::collection::Vec;
+use crate::models::CallContext;
 use crate::precompiles::{
     Berlin, Byzantium, HardFork, Precompile, PrecompileOutput, PrecompileResult,
 };
-use crate::{models::CallContext, ExitError};
 use core::cmp::max;
-use core::ops::BitAnd;
 use core::mem::size_of;
+use core::ops::BitAnd;
 use core::{cmp::min, marker::PhantomData};
-use num::{BigUint, FromPrimitive, Integer, One, ToPrimitive, Zero};
+use num::{BigUint, One, Zero};
 use primitive_types::{H160 as Address, U256};
 pub(super) struct ModExp<HF: HardFork>(PhantomData<HF>);
 
@@ -51,39 +51,21 @@ impl<HF: HardFork> ModExp<HF> {
         F: FnOnce(u64, u64, u64, &BigUint) -> u64,
     {
         let len = input.len();
-
-        let read_u64 = |from: usize, to: usize| {
-            let from_zero = min(from, len);
-            let from = min(from_zero + 24, len);
-            let to = min(to, len);
-            let mut overflow = [0u8; 24];
-            overflow[..from - from_zero].copy_from_slice(&input[from_zero..from]);
-
-            let mut len_bytes = [0u8; 4];
-            len_bytes[..to - from].copy_from_slice(&input[from..to]);
-            (
-                u32::from_be_bytes(len_bytes) as usize,
-                !overflow.iter().all(|&x| x == 0),
-            )
-        };
-        
         let (base_len, base_overflow) = read_n!(input, 0, 32, 24, u64);
         let (exp_len, exp_overflow) = read_n!(input, 32, 64, 30, u16); //leave for exp only 2 bytes
         let (mod_len, mod_overflow) = read_n!(input, 64, 96, 24, u64);
-        // println!(
-        //     "len:{},base:{},exp:{},mod:{}",
-        //     len, base_len, exp_len, mod_len
-        // );
-        // Gas formula allows arbitrary large exp_len when base and modulus are empty, so we need to handle empty base first.
-        let (r, gas_cost) = if base_len == 0 && mod_len == 0 {
-            //println!("mmm");
-            (BigUint::zero(), MIN_GAS_COST)
-        } else if base_overflow || exp_overflow || mod_overflow {
-            //println!("mmm overflow");
-            // (BigUint::zero(), u64::MAX)
+
+        if base_overflow || mod_overflow {
             return Ok(PrecompileOutput::without_logs(u64::MAX, Vec::new()));
+        }
+
+        let (r, gas_cost) = if base_len == 0 && mod_len == 0 {
+            (BigUint::zero(), MIN_GAS_COST)
         } else {
-            //println!("yep");
+            if exp_overflow {
+                return Ok(PrecompileOutput::without_logs(u64::MAX, Vec::new()));
+            }
+
             let read_big = |from: usize, to: usize| {
                 let mut out = vec![0; to - from];
                 let from = min(from, len);
@@ -96,11 +78,8 @@ impl<HF: HardFork> ModExp<HF> {
             let base_end = base_start + base_len;
             let exp_end = base_end + exp_len;
             let mod_end = exp_end + mod_len;
-            //println!("yep1:{:?}",base);
 
-            // TODO we need to handle big vec realocation
             let exponent = read_big(base_end, exp_end);
-            //println!("yep2:{:?}",exponent);
 
             let gas_cost = gas_quert(
                 calc_gas(base_len as u64, exp_len as u64, mod_len as u64, &exponent),
@@ -108,9 +87,7 @@ impl<HF: HardFork> ModExp<HF> {
             )?;
 
             let base = read_big(base_start, base_end);
-            //println!("yep3:{}",gas_cost);
             let modulus = read_big(exp_end, mod_end);
-            //println!("yep4:{:?}",modulus);
 
             if modulus.is_zero() || modulus.is_one() {
                 (BigUint::zero(), gas_cost)
@@ -123,12 +100,9 @@ impl<HF: HardFork> ModExp<HF> {
 
         // write output to given memory, left padded and same length as the modulus.
         let bytes = r.to_bytes_be();
-        //println!("OUTPUT:{:?}", hex::encode(&bytes));
         // always true except in the case of zero-length modulus, which leads to
         // output of length and value 1.
         if bytes.len() == mod_len {
-            Ok(PrecompileOutput::without_logs(gas_cost, bytes.to_vec()))
-        } else if mod_len > 1020 {
             Ok(PrecompileOutput::without_logs(gas_cost, bytes.to_vec()))
         } else if bytes.len() < mod_len {
             let mut ret = Vec::with_capacity(mod_len);
