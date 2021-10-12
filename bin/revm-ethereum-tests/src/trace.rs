@@ -14,7 +14,7 @@ impl Inspector for CustomPrintTracer {
         };
         //if self.
         println!(
-            "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data:",
+            "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data:{:?}",
             machine.call_depth,
             machine.program_counter(),
             machine.gas.remaining(),
@@ -24,7 +24,7 @@ impl Inspector for CustomPrintTracer {
             machine.gas.refunded(),
             machine.gas.refunded(),
             machine.stack.data(),
-            //hex::encode(machine.memory.data()),
+            hex::encode(machine.memory.data()),
         );
     }
 

@@ -130,6 +130,7 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
                 origin: caller.clone(), // TODO ?
             };
             for (id, test) in tests.into_iter().enumerate() {
+                println!("hash:{:?},test indices:{:?}",test.hash, test.indexes);
                 let mut database = database.clone();
                 let gas_limit = unit
                     .transaction
