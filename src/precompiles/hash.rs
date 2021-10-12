@@ -22,7 +22,7 @@ impl Precompile for SHA256 {
         _context: &CallContext,
         _is_static: bool,
     ) -> PrecompileResult {
-        let cost = gas_quert(calc_linear_cost_u32(input.len(), 12, 60), gas_limit)?;
+        let cost = gas_quert(calc_linear_cost_u32(input.len(), 60, 12), gas_limit)?;
         let output = sha2::Sha256::digest(input).to_vec();
         Ok(PrecompileOutput::without_logs(cost, output))
     }
@@ -45,7 +45,7 @@ impl Precompile for RIPEMD160 {
         _context: &CallContext,
         _is_static: bool,
     ) -> PrecompileResult {
-        let gas_used = gas_quert(calc_linear_cost_u32(input.len(), 120, 600), gas_limit)?;
+        let gas_used = gas_quert(calc_linear_cost_u32(input.len(), 600, 120), gas_limit)?;
         let mut ret = [0u8; 32];
         ret[12..32].copy_from_slice(&ripemd160::Ripemd160::digest(input));
         Ok(PrecompileOutput::without_logs(gas_used, ret.to_vec()))

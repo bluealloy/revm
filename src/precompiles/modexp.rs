@@ -6,6 +6,7 @@ use crate::precompiles::{
 use crate::{models::CallContext, ExitError};
 use core::cmp::max;
 use core::ops::BitAnd;
+use core::mem::size_of;
 use core::{cmp::min, marker::PhantomData};
 use num::{BigUint, FromPrimitive, Integer, One, ToPrimitive, Zero};
 use primitive_types::{H160 as Address, U256};
@@ -17,57 +18,6 @@ impl<HF: HardFork> ModExp<HF> {
 
 const MIN_GAS_COST: u64 = 200;
 
-
-// calculate modexp: left-to-right binary exponentiation to keep multiplicands lower
-fn modexp(mut base: BigUint, exp: Vec<u8>, modulus: BigUint) -> BigUint {
-    const BITS_PER_DIGIT: usize = 8;
-
-    // n^m % 0 || n^m % 1
-    if modulus <= BigUint::one() {
-        return BigUint::zero();
-    }
-
-    // normalize exponent
-    let mut exp = exp.into_iter().skip_while(|d| *d == 0).peekable();
-
-    // n^0 % m
-    if exp.peek().is_none() {
-        return BigUint::one();
-    }
-
-    // 0^n % m, n > 0
-    if base.is_zero() {
-        return BigUint::zero();
-    }
-
-    base %= &modulus;
-
-    // Fast path for base divisible by modulus.
-    if base.is_zero() {
-        return BigUint::zero();
-    }
-
-    // Left-to-right binary exponentiation (Handbook of Applied Cryptography - Algorithm 14.79).
-    // http://www.cacr.math.uwaterloo.ca/hac/about/chap14.pdf
-    let mut result = BigUint::one();
-
-    for digit in exp {
-        let mut mask = 1 << (BITS_PER_DIGIT - 1);
-
-        for _ in 0..BITS_PER_DIGIT {
-            result = &result * &result % &modulus;
-
-            if digit & mask > 0 {
-                result = result * &base % &modulus;
-            }
-
-            mask >>= 1;
-        }
-    }
-
-    result
-}
-
 /* https://ethereum-magicians.org/t/eip-2565-big-integer-modular-exponentiation-eip-198-gas-cost/4150/10
 old calculation of cunsumption.
 def mult_complexity(x):
@@ -76,6 +26,25 @@ def mult_complexity(x):
     else: return x ** 2 // 16 + 480 * x - 199680
 where is x is max(length_of_MODULUS, length_of_BASE)
 */
+
+macro_rules! read_n {
+    ($input:expr,$from:expr,$to:expr, $split:expr, $t:ident) => {{
+        let len = $input.len();
+        let from_zero = min($from, len);
+        let from = min(from_zero + $split, len);
+        let to = min($to, len);
+        let mut overflow = [0u8; $split];
+        overflow[..from - from_zero].copy_from_slice(&$input[from_zero..from]);
+
+        let mut len_bytes = [0u8; size_of::<$t>()];
+        len_bytes[..to - from].copy_from_slice(&$input[from..to]);
+        (
+            $t::from_be_bytes(len_bytes) as usize,
+            !overflow.iter().all(|&x| x == 0),
+        )
+    }};
+}
+
 impl<HF: HardFork> ModExp<HF> {
     fn run_inner<F>(input: &[u8], gas_limit: u64, calc_gas: F) -> PrecompileResult
     where
@@ -90,17 +59,17 @@ impl<HF: HardFork> ModExp<HF> {
             let mut overflow = [0u8; 24];
             overflow[..from - from_zero].copy_from_slice(&input[from_zero..from]);
 
-            let mut len_bytes = [0u8; 8];
+            let mut len_bytes = [0u8; 4];
             len_bytes[..to - from].copy_from_slice(&input[from..to]);
             (
-                u64::from_be_bytes(len_bytes) as usize,
+                u32::from_be_bytes(len_bytes) as usize,
                 !overflow.iter().all(|&x| x == 0),
             )
         };
-
-        let (base_len, base_overflow) = read_u64(0, 32);
-        let (exp_len, exp_overflow) = read_u64(32, 64);
-        let (mod_len, mod_overflow) = read_u64(64, 96);
+        
+        let (base_len, base_overflow) = read_n!(input, 0, 32, 24, u64);
+        let (exp_len, exp_overflow) = read_n!(input, 32, 64, 30, u16); //leave for exp only 2 bytes
+        let (mod_len, mod_overflow) = read_n!(input, 64, 96, 24, u64);
         // println!(
         //     "len:{},base:{},exp:{},mod:{}",
         //     len, base_len, exp_len, mod_len
@@ -116,37 +85,37 @@ impl<HF: HardFork> ModExp<HF> {
         } else {
             //println!("yep");
             let read_big = |from: usize, to: usize| {
-                let mut out = vec![0; to-from];
+                let mut out = vec![0; to - from];
                 let from = min(from, len);
                 let to = min(to, len);
-                out[..to-from].copy_from_slice(&input[from..to]);
+                out[..to - from].copy_from_slice(&input[from..to]);
                 BigUint::from_bytes_be(&out)
             };
 
             let base_start = 96;
             let base_end = base_start + base_len;
-            let base = read_big(base_start, base_end);
-            println!("yep1:{:?}",base);
-
             let exp_end = base_end + exp_len;
-            let exponent = read_big(base_end, exp_end);
-            println!("yep2:{:?}",exponent);
+            let mod_end = exp_end + mod_len;
+            //println!("yep1:{:?}",base);
 
-            // do our gas accounting
-            // TODO: we could technically avoid reading base first...
+            // TODO we need to handle big vec realocation
+            let exponent = read_big(base_end, exp_end);
+            //println!("yep2:{:?}",exponent);
+
             let gas_cost = gas_quert(
                 calc_gas(base_len as u64, exp_len as u64, mod_len as u64, &exponent),
                 gas_limit,
             )?;
-            println!("yep3:{}",gas_cost);
-            let modulus = read_big(exp_end, exp_end + mod_len);
-            println!("yep4:{:?}",modulus);
+
+            let base = read_big(base_start, base_end);
+            //println!("yep3:{}",gas_cost);
+            let modulus = read_big(exp_end, mod_end);
+            //println!("yep4:{:?}",modulus);
 
             if modulus.is_zero() || modulus.is_one() {
                 (BigUint::zero(), gas_cost)
             } else {
-                //(base.modpow(&exponent, &modulus), gas_cost)
-                (modexp(base,exponent.to_bytes_le(),modulus),gas_cost)
+                (base.modpow(&exponent, &modulus), gas_cost)
             }
         };
 
@@ -154,10 +123,12 @@ impl<HF: HardFork> ModExp<HF> {
 
         // write output to given memory, left padded and same length as the modulus.
         let bytes = r.to_bytes_be();
-        println!("OUTPUT:{:?}", hex::encode(&bytes));
+        //println!("OUTPUT:{:?}", hex::encode(&bytes));
         // always true except in the case of zero-length modulus, which leads to
         // output of length and value 1.
         if bytes.len() == mod_len {
+            Ok(PrecompileOutput::without_logs(gas_cost, bytes.to_vec()))
+        } else if mod_len > 1020 {
             Ok(PrecompileOutput::without_logs(gas_cost, bytes.to_vec()))
         } else if bytes.len() < mod_len {
             let mut ret = Vec::with_capacity(mod_len);
