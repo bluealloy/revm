@@ -30,58 +30,51 @@ impl<HF: HardFork> ModExp<HF> {
     where
         F: FnOnce(u64, u64, u64, &BigUint) -> u64,
     {
-        if input.len() < 96 {
-            return Err(ExitError::Other(
-                "input must contain at least 96 bytes".into(),
-            ));
-        };
-
-        // reasonable assumption: this must fit within the Ethereum EVM's max stack size
-        let max_size_big = BigUint::from_u32(1024).expect("can't create BigUint");
-
-        let mut buf = [0; 32];
-        buf.copy_from_slice(&input[0..32]);
-        let base_len_big = BigUint::from_bytes_be(&buf);
-        if base_len_big > max_size_big {
-            return Err(ExitError::Other("unreasonably large base length".into()));
-        }
-
-        buf.copy_from_slice(&input[32..64]);
-        let exp_len_big = BigUint::from_bytes_be(&buf);
-        if exp_len_big > max_size_big {
-            return Err(ExitError::Other(
-                "unreasonably large exponent length".into(),
-            ));
-        }
-
-        buf.copy_from_slice(&input[64..96]);
-        let mod_len_big = BigUint::from_bytes_be(&buf);
-        if mod_len_big > max_size_big {
-            return Err(ExitError::Other(
-                "unreasonably large exponent length".into(),
-            ));
-        }
-
-        // bounds check handled above
-        let base_len = base_len_big.to_usize().expect("base_len out of bounds");
-        let exp_len = exp_len_big.to_usize().expect("exp_len out of bounds");
-        let mod_len = mod_len_big.to_usize().expect("mod_len out of bounds");
-
-        // input length should be at least 96 + user-specified length of base + exp + mod
         let len = input.len();
 
+        let read_u64 = |from: usize, to: usize| {
+            let from_zero = min(from, len);
+            let from = min(from_zero + 24, len);
+            let to = min(to, len);
+            let mut overflow = [0u8; 24];
+            overflow[..from - from_zero].copy_from_slice(&input[from_zero..from]);
+
+            let mut len_bytes = [0u8; 8];
+            len_bytes[..to - from].copy_from_slice(&input[from..to]);
+            (
+                u64::from_be_bytes(len_bytes) as usize,
+                !overflow.iter().all(|&x| x == 0),
+            )
+        };
+
+        let (base_len, base_overflow) = read_u64(0, 32);
+        let (exp_len, exp_overflow) = read_u64(32, 64);
+        let (mod_len, mod_overflow) = read_u64(64, 96);
+        //println!("len:{},base:{},exp:{},mod:{}",len, base_len,exp_len,mod_len);
         // Gas formula allows arbitrary large exp_len when base and modulus are empty, so we need to handle empty base first.
         let (r, gas_cost) = if base_len == 0 && mod_len == 0 {
+            //println!("mmm");
             (BigUint::zero(), MIN_GAS_COST)
+        } else if base_overflow || exp_overflow || mod_overflow {
+            // println!("mmm overflow");
+            // (BigUint::zero(), u64::MAX)
+            return Ok(PrecompileOutput::without_logs(u64::MAX, Vec::new()))
         } else {
-            // read the numbers themselves.
-            let base_start = 96;
-            let base_end = min(base_start + base_len, len);
-            let base = BigUint::from_bytes_be(&input[base_start..base_end]);
+            //println!("yep");
+            let read_big = |from: usize, to: usize| {
+                let from = min(from, len);
+                let to = min(to, len);
+                BigUint::from_bytes_be(&input[from..to])
+            };
 
-            let exp_start = base_end;
-            let exp_end = min(base_end + exp_len, len);
-            let exponent = BigUint::from_bytes_be(&input[exp_start..exp_end]);
+            let base_start = 96;
+            let base_end = base_start + base_len;
+            let base = read_big(base_start, base_end);
+           // println!("yep1");
+
+            let exp_end = base_end + exp_len;
+            let exponent = read_big(base_end, exp_end);
+            //println!("yep2");
 
             // do our gas accounting
             // TODO: we could technically avoid reading base first...
@@ -89,10 +82,9 @@ impl<HF: HardFork> ModExp<HF> {
                 calc_gas(base_len as u64, exp_len as u64, mod_len as u64, &exponent),
                 gas_limit,
             )?;
-
-            let mod_start = exp_end;
-            let mod_end = min(mod_start + mod_len, len);
-            let modulus = BigUint::from_bytes_be(&input[mod_start..mod_end]);
+            //println!("yep3");
+            let modulus = read_big(exp_end, exp_end + mod_len);
+            //println!("yep4");
 
             if modulus.is_zero() || modulus.is_one() {
                 (BigUint::zero(), gas_cost)
@@ -101,28 +93,22 @@ impl<HF: HardFork> ModExp<HF> {
             }
         };
 
+        let gas_cost = max(gas_cost, MIN_GAS_COST);
+
         // write output to given memory, left padded and same length as the modulus.
         let bytes = r.to_bytes_be();
 
         // always true except in the case of zero-length modulus, which leads to
         // output of length and value 1.
         if bytes.len() == mod_len {
-            Ok(PrecompileOutput {
-                cost: gas_cost,
-                output: bytes.to_vec(),
-                logs: Default::default(),
-            })
+            Ok(PrecompileOutput::without_logs(gas_cost, bytes.to_vec()))
         } else if bytes.len() < mod_len {
             let mut ret = Vec::with_capacity(mod_len);
             ret.extend(core::iter::repeat(0).take(mod_len - bytes.len()));
             ret.extend_from_slice(&bytes[..]);
-            Ok(PrecompileOutput {
-                cost: gas_cost,
-                output: ret.to_vec(),
-                logs: Default::default(),
-            })
+            Ok(PrecompileOutput::without_logs(gas_cost, ret.to_vec()))
         } else {
-            Err(ExitError::Other("failed".into()))
+            Ok(PrecompileOutput::without_logs(gas_cost, Vec::new()))
         }
     }
 }
@@ -191,15 +177,10 @@ impl ModExp<Berlin> {
         mod_length: u64,
         exponent: &BigUint,
     ) -> u64 {
-        fn calculate_multiplication_complexity(base_length: u64, mod_length: u64) -> u64 {
+        fn calculate_multiplication_complexity(base_length: u64, mod_length: u64) -> f64 {
             let max_length = max(base_length, mod_length);
-            let mut words = max_length / 8;
-            if max_length % 8 > 0 {
-                words += 1;
-            }
-
-            // TODO: prevent/handle overflow
-            words * words
+            let words = (max_length as f64 / 8f64).ceil();
+            words.powi(2)
         }
 
         fn calculate_iteration_count(exp_length: u64, exponent: &BigUint) -> u64 {
@@ -226,7 +207,7 @@ impl ModExp<Berlin> {
         let iteration_count = calculate_iteration_count(exp_length, exponent);
         let gas = max(
             MIN_GAS_COST,
-            (multiplication_complexity * iteration_count) / 3,
+            ((multiplication_complexity * iteration_count as f64) / 3f64).floor() as u64,
         );
 
         gas
