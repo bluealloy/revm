@@ -50,15 +50,18 @@ impl<HF: HardFork> ModExp<HF> {
         let (base_len, base_overflow) = read_u64(0, 32);
         let (exp_len, exp_overflow) = read_u64(32, 64);
         let (mod_len, mod_overflow) = read_u64(64, 96);
-        //println!("len:{},base:{},exp:{},mod:{}",len, base_len,exp_len,mod_len);
+        println!(
+            "len:{},base:{},exp:{},mod:{}",
+            len, base_len, exp_len, mod_len
+        );
         // Gas formula allows arbitrary large exp_len when base and modulus are empty, so we need to handle empty base first.
         let (r, gas_cost) = if base_len == 0 && mod_len == 0 {
-            //println!("mmm");
+            println!("mmm");
             (BigUint::zero(), MIN_GAS_COST)
         } else if base_overflow || exp_overflow || mod_overflow {
-            // println!("mmm overflow");
+            println!("mmm overflow");
             // (BigUint::zero(), u64::MAX)
-            return Ok(PrecompileOutput::without_logs(u64::MAX, Vec::new()))
+            return Ok(PrecompileOutput::without_logs(u64::MAX, Vec::new()));
         } else {
             //println!("yep");
             let read_big = |from: usize, to: usize| {
@@ -70,11 +73,11 @@ impl<HF: HardFork> ModExp<HF> {
             let base_start = 96;
             let base_end = base_start + base_len;
             let base = read_big(base_start, base_end);
-           // println!("yep1");
+            println!("yep1");
 
             let exp_end = base_end + exp_len;
             let exponent = read_big(base_end, exp_end);
-            //println!("yep2");
+            println!("yep2");
 
             // do our gas accounting
             // TODO: we could technically avoid reading base first...
@@ -82,9 +85,9 @@ impl<HF: HardFork> ModExp<HF> {
                 calc_gas(base_len as u64, exp_len as u64, mod_len as u64, &exponent),
                 gas_limit,
             )?;
-            //println!("yep3");
+            println!("yep3");
             let modulus = read_big(exp_end, exp_end + mod_len);
-            //println!("yep4");
+            println!("yep4");
 
             if modulus.is_zero() || modulus.is_one() {
                 (BigUint::zero(), gas_cost)
@@ -177,10 +180,16 @@ impl ModExp<Berlin> {
         mod_length: u64,
         exponent: &BigUint,
     ) -> u64 {
-        fn calculate_multiplication_complexity(base_length: u64, mod_length: u64) -> f64 {
+        fn calculate_multiplication_complexity(base_length: u64, mod_length: u64) -> U256 {
             let max_length = max(base_length, mod_length);
-            let words = (max_length as f64 / 8f64).ceil();
-            words.powi(2)
+            let mut words = max_length / 8;
+            if max_length % 8 > 0 {
+                words += 1;
+            }
+
+            // TODO: prevent/handle overflow
+            let words = U256::from(words);
+            words * words
         }
 
         fn calculate_iteration_count(exp_length: u64, exponent: &BigUint) -> u64 {
@@ -205,12 +214,12 @@ impl ModExp<Berlin> {
         let multiplication_complexity =
             calculate_multiplication_complexity(base_length, mod_length);
         let iteration_count = calculate_iteration_count(exp_length, exponent);
-        let gas = max(
-            MIN_GAS_COST,
-            ((multiplication_complexity * iteration_count as f64) / 3f64).floor() as u64,
-        );
-
-        gas
+        let gas = ((multiplication_complexity * U256::from(iteration_count)) / 3);
+        if gas > U256::from(u64::MAX) {
+            return u64::MAX;
+        } else {
+            max(MIN_GAS_COST, gas.as_u64())
+        }
     }
 }
 
