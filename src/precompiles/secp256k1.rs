@@ -1,7 +1,7 @@
 use crate::precompiles::{Precompile, PrecompileOutput, PrecompileResult};
 use crate::{CallContext, ExitError};
 use core::cmp::min;
-use primitive_types::{H160 as Address};
+use primitive_types::{H160 as Address, H256};
 use sha3::{Digest, Keccak256};
 mod costs {
     pub(super) const ECRECOVER_BASE: u64 = 3_000;
@@ -10,26 +10,29 @@ mod consts {
     pub(super) const INPUT_LEN: usize = 128;
 }
 
+//use libsecp256k1::ThirtyTwoByteHash;
+use parity_crypto::{
+    digest,
+    publickey::{public_to_address, recover, Error as ParityCryptoError, Signature},
+};
+
 pub(super) struct ECRecover;
 
 impl ECRecover {
     pub(super) const ADDRESS: Address = super::make_address(0, 1);
 
+    // return padded address as H256
     fn secp256k1_ecdsa_recover(
         sig: &[u8; 65],
         msg: &[u8; 32],
-    ) -> Result<[u8; 64], EcdsaVerifyError> {
-        let rs = libsecp256k1::Signature::parse_standard_slice(&sig[0..64])
-            .map_err(|_| EcdsaVerifyError::BadRS)?;
-        let v = libsecp256k1::RecoveryId::parse(
-            if sig[64] > 26 { sig[64] - 27 } else { sig[64] } as u8
-        )
-        .map_err(|_| EcdsaVerifyError::BadV)?;
-        let pubkey = libsecp256k1::recover(&libsecp256k1::Message::parse(msg), &rs, &v)
-            .map_err(|_| EcdsaVerifyError::BadSignature)?;
-        let mut res = [0u8; 64];
-        res.copy_from_slice(&pubkey.serialize()[1..65]);
-        Ok(res)
+    ) -> Result<Address, ParityCryptoError> {
+        let rs = Signature::from_electrum(&sig[..]);
+        if rs == Signature::default() {
+            return Err(ParityCryptoError::InvalidSignature);
+        }
+        let msg = H256::from_slice(msg);
+        let address = public_to_address(&recover(&rs, &msg)?);
+        Ok(address)
     }
 }
 
@@ -63,18 +66,21 @@ impl Precompile for ECRecover {
         msg[0..32].copy_from_slice(&input[0..32]);
         sig[0..32].copy_from_slice(&input[64..96]);
         sig[32..64].copy_from_slice(&input[96..128]);
+
+        // TODO do this correctly: return if there is junk in V.
+        if input[32..63] != [0u8; 31] || !matches!(input[63], 27 | 28) {
+            return Ok(PrecompileOutput::without_logs(cost, Vec::new()));
+        }
+
+        // TODO hm it will fail for chainId that are more then one byte;
         sig[64] = input[63];
 
-        let result = match Self::secp256k1_ecdsa_recover(&sig, &msg) {
-            Ok(pubkey) => {
-                let mut address = Keccak256::digest(&pubkey).as_slice().to_vec();
-                address[0..12].copy_from_slice(&[0u8; 12]);
-                address.to_vec()
-            }
-            Err(_) => [0u8; 0].to_vec(),
+        let out = match Self::secp256k1_ecdsa_recover(&sig, &msg) {
+            Ok(out) => H256::from(out).as_bytes().to_vec(),
+            Err(_) => Vec::new(),
         };
 
-        Ok(PrecompileOutput::without_logs(cost, result))
+        Ok(PrecompileOutput::without_logs(cost, out))
     }
 }
 

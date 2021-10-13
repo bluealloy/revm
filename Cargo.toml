@@ -25,4 +25,5 @@ sha2 = { version = "0.9.3", default-features = false }
 borsh = { version = "0.9", default-features = false }
 ripemd160 = { version = "0.9.1", default-features = false }
 libsecp256k1 = { version = "0.7.0"}
+parity-crypto = { version = "0.9.0", features = [ "publickey" ] }
 bn = { package = "aurora-bn", git = "https://github.com/aurora-is-near/aurora-bn.git", default-features = false }

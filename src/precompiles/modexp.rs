@@ -27,21 +27,20 @@ def mult_complexity(x):
 where is x is max(length_of_MODULUS, length_of_BASE)
 */
 
-macro_rules! read_n {
-    ($input:expr,$from:expr,$to:expr, $split:expr, $t:ident) => {{
+macro_rules! read_u64_with_overflow {
+    ($input:expr,$from:expr,$to:expr, $overflow_limit:expr) => {{
+        const SPLIT: usize = 32 - size_of::<u64>();
         let len = $input.len();
         let from_zero = min($from, len);
-        let from = min(from_zero + $split, len);
+        let from = min(from_zero + SPLIT, len);
         let to = min($to, len);
-        let mut overflow = [0u8; $split];
-        overflow[..from - from_zero].copy_from_slice(&$input[from_zero..from]);
+        let overflow_bytes = &$input[from_zero..from];
 
-        let mut len_bytes = [0u8; size_of::<$t>()];
+        let mut len_bytes = [0u8; size_of::<u64>()];
         len_bytes[..to - from].copy_from_slice(&$input[from..to]);
-        (
-            $t::from_be_bytes(len_bytes) as usize,
-            !overflow.iter().all(|&x| x == 0),
-        )
+        let out = u64::from_be_bytes(len_bytes) as usize;
+        let overflow = !(out < $overflow_limit && overflow_bytes.iter().all(|&x| x == 0));
+        (out, overflow)
     }};
 }
 
@@ -51,9 +50,11 @@ impl<HF: HardFork> ModExp<HF> {
         F: FnOnce(u64, u64, u64, &BigUint) -> u64,
     {
         let len = input.len();
-        let (base_len, base_overflow) = read_n!(input, 0, 32, 24, u64);
-        let (exp_len, exp_overflow) = read_n!(input, 32, 64, 30, u16); //leave for exp only 2 bytes
-        let (mod_len, mod_overflow) = read_n!(input, 64, 96, 24, u64);
+
+        //TODO return to this and put some meaningful values for overflow limit
+        let (base_len, base_overflow) = read_u64_with_overflow!(input, 0, 32, 100000);
+        let (exp_len, exp_overflow) = read_u64_with_overflow!(input, 32, 64, 100000);
+        let (mod_len, mod_overflow) = read_u64_with_overflow!(input, 64, 96, 1024);
 
         if base_overflow || mod_overflow {
             return Ok(PrecompileOutput::without_logs(u64::MAX, Vec::new()));
@@ -62,6 +63,7 @@ impl<HF: HardFork> ModExp<HF> {
         let (r, gas_cost) = if base_len == 0 && mod_len == 0 {
             (BigUint::zero(), MIN_GAS_COST)
         } else {
+            // this is litlle big peculiar, if base/mod is
             if exp_overflow {
                 return Ok(PrecompileOutput::without_logs(u64::MAX, Vec::new()));
             }
