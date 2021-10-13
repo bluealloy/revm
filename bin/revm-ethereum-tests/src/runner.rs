@@ -75,7 +75,12 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
                 .unwrap(),
             H160::from_str("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b").unwrap(),
         ),
-
+        (
+            H256::from_str("0x6a7eeac5f12b409d42028f66b0b2132535ee158cfda439e3bfdd4558e8f4bf6c")
+                .unwrap(),
+            H160::from_str("0xc9c5a15a403e41498b6f69f6f89dd9f5892d21f7").unwrap(),
+        ),
+        
         
     ]
     .into_iter()
