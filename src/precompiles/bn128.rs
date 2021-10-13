@@ -1,11 +1,11 @@
+use crate::collection::*;
 use crate::precompiles::{
     Byzantium, HardFork, Istanbul, Precompile, PrecompileOutput, PrecompileResult,
 };
-use crate::collection::*;
 use crate::{models::CallContext, ExitError};
+use borsh;
 use core::marker::PhantomData;
 use primitive_types::{H160 as Address, U256};
-use borsh;
 
 /// bn128 costs.
 mod costs {
@@ -53,12 +53,12 @@ fn read_point(input: &[u8], pos: usize) -> Result<bn::G1, ExitError> {
     let mut px_buf = [0u8; 32];
     px_buf.copy_from_slice(&input[pos..(pos + 32)]);
     let px =
-        Fq::interpret(&px_buf).map_err(|_e| ExitError::Other(Borrowed("ERR_BN128_INVALID_X")))?;
+        Fq::from_slice(&px_buf).map_err(|_e| ExitError::Other(Borrowed("ERR_BN128_INVALID_X")))?;
 
     let mut py_buf = [0u8; 32];
     py_buf.copy_from_slice(&input[(pos + 32)..(pos + 64)]);
     let py =
-        Fq::interpret(&py_buf).map_err(|_e| ExitError::Other(Borrowed("ERR_BN128_INVALID_Y")))?;
+        Fq::from_slice(&py_buf).map_err(|_e| ExitError::Other(Borrowed("ERR_BN128_INVALID_Y")))?;
 
     Ok(if px == Fq::zero() && py == bn::Fq::zero() {
         G1::zero()
@@ -87,10 +87,14 @@ impl<HF: HardFork> Bn128Add<HF> {
 
         let mut output = [0u8; 64];
         if let Some(sum) = AffineG1::from_jacobian(p1 + p2) {
-            let x = sum.x().into_u256().to_big_endian();
-            let y = sum.y().into_u256().to_big_endian();
-            output[0..32].copy_from_slice(&x);
-            output[32..64].copy_from_slice(&y);
+            sum.x()
+                .into_u256()
+                .to_big_endian(&mut output[..32])
+                .unwrap();
+            sum.y()
+                .into_u256()
+                .to_big_endian(&mut output[32..])
+                .unwrap();
         }
 
         Ok(output.to_vec())
@@ -98,13 +102,17 @@ impl<HF: HardFork> Bn128Add<HF> {
 }
 
 impl Precompile for Bn128Add<Byzantium> {
-
     /// Takes in two points on the elliptic curve alt_bn128 and calculates the sum
     /// of them.
     ///
     /// See: https://eips.ethereum.org/EIPS/eip-196
     /// See: https://etherscan.io/address/0000000000000000000000000000000000000006
-    fn run(input: &[u8], target_gas: u64, context: &CallContext, _is_static: bool) -> PrecompileResult {
+    fn run(
+        input: &[u8],
+        target_gas: u64,
+        context: &CallContext,
+        _is_static: bool,
+    ) -> PrecompileResult {
         let cost = costs::BYZANTIUM_ADD;
         if cost > target_gas {
             Err(ExitError::OutOfGas)
@@ -116,13 +124,17 @@ impl Precompile for Bn128Add<Byzantium> {
 }
 
 impl Precompile for Bn128Add<Istanbul> {
-
     /// Takes in two points on the elliptic curve alt_bn128 and calculates the sum
     /// of them.
     ///
     /// See: https://eips.ethereum.org/EIPS/eip-196
     /// See: https://etherscan.io/address/0000000000000000000000000000000000000006
-    fn run(input: &[u8], target_gas: u64, context: &CallContext, _is_static: bool) -> PrecompileResult {
+    fn run(
+        input: &[u8],
+        target_gas: u64,
+        context: &CallContext,
+        _is_static: bool,
+    ) -> PrecompileResult {
         let cost = costs::ISTANBUL_ADD;
         if cost > target_gas {
             Err(ExitError::OutOfGas)
@@ -147,20 +159,19 @@ impl<HF: HardFork> Bn128Mul<HF> {
         input.resize(consts::MUL_INPUT_LEN, 0);
 
         let p = read_point(&input, 0)?;
+
         let mut fr_buf = [0u8; 32];
         fr_buf.copy_from_slice(&input[64..96]);
-        let fr = bn::Fr::interpret(&fr_buf)
-            .map_err(|_e| ExitError::Other(Borrowed("ERR_BN128_INVALID_FE")))?;
+        let fr = bn::Fr::from_slice(&fr_buf[..])
+            .map_err(|_| ExitError::Other(Borrowed("Invalid field element")))?;
 
-        let mut output = [0u8; 64];
+        let mut out = [0u8; 64];
         if let Some(mul) = AffineG1::from_jacobian(p * fr) {
-            let x = mul.x().into_u256().to_big_endian();
-            let y = mul.y().into_u256().to_big_endian();
-            output[0..32].copy_from_slice(&x);
-            output[32..64].copy_from_slice(&y);
+            mul.x().to_big_endian(&mut out[..32]).unwrap();
+            mul.y().to_big_endian(&mut out[32..]).unwrap();
         }
 
-        Ok(output.to_vec())
+        Ok(out.to_vec())
     }
 }
 
@@ -169,7 +180,12 @@ impl Precompile for Bn128Mul<Byzantium> {
     ///
     /// See: https://eips.ethereum.org/EIPS/eip-196
     /// See: https://etherscan.io/address/0000000000000000000000000000000000000007
-    fn run(input: &[u8], target_gas: u64, context: &CallContext, _is_static: bool) -> PrecompileResult {
+    fn run(
+        input: &[u8],
+        target_gas: u64,
+        context: &CallContext,
+        _is_static: bool,
+    ) -> PrecompileResult {
         let cost = costs::BYZANTIUM_MUL;
         if cost > target_gas {
             Err(ExitError::OutOfGas)
@@ -181,12 +197,16 @@ impl Precompile for Bn128Mul<Byzantium> {
 }
 
 impl Precompile for Bn128Mul<Istanbul> {
-
     /// Takes in two points on the elliptic curve alt_bn128 and multiples them.
     ///
     /// See: https://eips.ethereum.org/EIPS/eip-196
     /// See: https://etherscan.io/address/0000000000000000000000000000000000000007
-    fn run(input: &[u8], target_gas: u64, context: &CallContext, _is_static: bool) -> PrecompileResult {
+    fn run(
+        input: &[u8],
+        target_gas: u64,
+        context: &CallContext,
+        _is_static: bool,
+    ) -> PrecompileResult {
         let cost = costs::ISTANBUL_MUL;
         if cost > target_gas {
             Err(ExitError::OutOfGas)
@@ -205,7 +225,7 @@ impl<HF: HardFork> Bn128Pair<HF> {
 
 impl<HF: HardFork> Bn128Pair<HF> {
     fn run_inner(input: &[u8], _context: &CallContext) -> Result<Vec<u8>, ExitError> {
-        use bn::{arith::U256, AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
+        use bn::{AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
 
         if input.len() % consts::PAIR_ELEMENT_LEN != 0 {
             return Err(ExitError::Other(Borrowed("ERR_BN128_INVALID_LEN")));
@@ -223,37 +243,37 @@ impl<HF: HardFork> Bn128Pair<HF> {
                 buf.copy_from_slice(
                     &input[(idx * consts::PAIR_ELEMENT_LEN)..(idx * consts::PAIR_ELEMENT_LEN + 32)],
                 );
-                let ax = Fq::interpret(&buf)
+                let ax = Fq::from_slice(&buf)
                     .map_err(|_e| ExitError::Other(Borrowed("ERR_BN128_INVALID_AX")))?;
                 buf.copy_from_slice(
                     &input[(idx * consts::PAIR_ELEMENT_LEN + 32)
                         ..(idx * consts::PAIR_ELEMENT_LEN + 64)],
                 );
-                let ay = Fq::interpret(&buf)
+                let ay = Fq::from_slice(&buf)
                     .map_err(|_e| ExitError::Other(Borrowed("ERR_BN128_INVALID_AY")))?;
                 buf.copy_from_slice(
                     &input[(idx * consts::PAIR_ELEMENT_LEN + 64)
                         ..(idx * consts::PAIR_ELEMENT_LEN + 96)],
                 );
-                let bay = Fq::interpret(&buf)
+                let bay = Fq::from_slice(&buf)
                     .map_err(|_e| ExitError::Other(Borrowed("ERR_BN128_INVALID_B_AY")))?;
                 buf.copy_from_slice(
                     &input[(idx * consts::PAIR_ELEMENT_LEN + 96)
                         ..(idx * consts::PAIR_ELEMENT_LEN + 128)],
                 );
-                let bax = Fq::interpret(&buf)
+                let bax = Fq::from_slice(&buf)
                     .map_err(|_e| ExitError::Other(Borrowed("ERR_BN128_INVALID_B_AX")))?;
                 buf.copy_from_slice(
                     &input[(idx * consts::PAIR_ELEMENT_LEN + 128)
                         ..(idx * consts::PAIR_ELEMENT_LEN + 160)],
                 );
-                let bby = Fq::interpret(&buf)
+                let bby = Fq::from_slice(&buf)
                     .map_err(|_e| ExitError::Other(Borrowed("ERR_BN128_INVALID_B_BY")))?;
                 buf.copy_from_slice(
                     &input[(idx * consts::PAIR_ELEMENT_LEN + 160)
                         ..(idx * consts::PAIR_ELEMENT_LEN + 192)],
                 );
-                let bbx = Fq::interpret(&buf)
+                let bbx = Fq::from_slice(&buf)
                     .map_err(|_e| ExitError::Other(Borrowed("ERR_BN128_INVALID_B_BX")))?;
 
                 let a = {
@@ -292,21 +312,28 @@ impl<HF: HardFork> Bn128Pair<HF> {
                 U256::zero()
             }
         };
-        
-        Ok(output.to_big_endian().to_vec())
+
+        let mut buf = [0u8; 32];
+        output.to_big_endian(&mut buf);
+
+        Ok(buf.to_vec())
     }
 }
 
 impl Precompile for Bn128Pair<Byzantium> {
-
-
     /// Takes in elements and calculates the pair.
     ///
     /// See: https://eips.ethereum.org/EIPS/eip-197
     /// See: https://etherscan.io/address/0000000000000000000000000000000000000008
-    fn run(input: &[u8], target_gas: u64, context: &CallContext, _is_static: bool) -> PrecompileResult {
-        let cost = costs::BYZANTIUM_PAIR_PER_POINT * input.len() as u64 / consts::PAIR_ELEMENT_LEN as u64
-        + costs::BYZANTIUM_PAIR_BASE;
+    fn run(
+        input: &[u8],
+        target_gas: u64,
+        context: &CallContext,
+        _is_static: bool,
+    ) -> PrecompileResult {
+        let cost = costs::BYZANTIUM_PAIR_PER_POINT * input.len() as u64
+            / consts::PAIR_ELEMENT_LEN as u64
+            + costs::BYZANTIUM_PAIR_BASE;
         if cost > target_gas {
             Err(ExitError::OutOfGas)
         } else {
@@ -317,14 +344,19 @@ impl Precompile for Bn128Pair<Byzantium> {
 }
 
 impl Precompile for Bn128Pair<Istanbul> {
-
     /// Takes in elements and calculates the pair.
     ///
     /// See: https://eips.ethereum.org/EIPS/eip-197
     /// See: https://etherscan.io/address/0000000000000000000000000000000000000008
-    fn run(input: &[u8], target_gas: u64, context: &CallContext, _is_static: bool) -> PrecompileResult {
-        let cost = costs::ISTANBUL_PAIR_PER_POINT * input.len() as u64 / consts::PAIR_ELEMENT_LEN as u64
-        + costs::ISTANBUL_PAIR_BASE;
+    fn run(
+        input: &[u8],
+        target_gas: u64,
+        context: &CallContext,
+        _is_static: bool,
+    ) -> PrecompileResult {
+        let cost = costs::ISTANBUL_PAIR_PER_POINT * input.len() as u64
+            / consts::PAIR_ELEMENT_LEN as u64
+            + costs::ISTANBUL_PAIR_BASE;
         if cost > target_gas {
             Err(ExitError::OutOfGas)
         } else {

@@ -75,34 +75,35 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
         "sstore_combinations_initial20",
         "sstore_combinations_initial21_2",
         "SuicidesAndInternlCallSuicidesSuccess",
-        "ecmul_1-2_5617_21000_128",
-        "ecmul_1-2_5617_21000_96",
-        "ecmul_1-2_5617_28000_128",
-        "ecmul_1-2_5617_28000_96",
-        "ecmul_1-2_9935_21000_128",
-        "ecmul_1-2_9935_21000_96",
-        "ecmul_1-2_9935_28000_96",
-        "ecmul_1-2_9935_28000_128",
-        "ecmul_7827-6598_5617_21000_128",
-        "ecmul_7827-6598_5617_21000_96",
-        "ecmul_7827-6598_5617_28000_128",
-        "ecmul_7827-6598_5617_28000_96",
-        "ecmul_7827-6598_9935_21000_128",
-        "ecmul_7827-6598_9935_21000_96",
-        "ecmul_7827-6598_9935_28000_96",
-        "ecmul_7827-6598_9935_28000_128",
-        "ecmul_0-0_5617_21000_128",
-        "ecmul_0-0_5617_21000_96",
-        "ecmul_0-0_5617_28000_128",
-        "ecmul_0-0_5617_28000_96",
-        "ecmul_0-0_9935_21000_128",
-        "ecmul_0-0_9935_21000_96",
-        "ecmul_0-0_9935_28000_96",
-        "ecmul_0-0_9935_28000_128",
-        "pointMulAdd2",
+        "randomStatetest642",
+        //"ecadd_1-3_0-0_21000_80",
+        // "ecmul_1-2_5617_21000_128",
+        // "ecmul_1-2_5617_21000_96",
+        // "ecmul_1-2_5617_28000_128",
+        // "ecmul_1-2_5617_28000_96",
+        //"ecmul_1-2_9935_21000_128",
+        //"ecmul_1-2_9935_21000_96",
+        //"ecmul_1-2_9935_28000_96",
+        //"ecmul_1-2_9935_28000_128",
+        // "ecmul_7827-6598_5617_21000_128",
+        // "ecmul_7827-6598_5617_21000_96",
+        // "ecmul_7827-6598_5617_28000_128",
+        // "ecmul_7827-6598_5617_28000_96",
+        //"ecmul_7827-6598_9935_21000_128",
+        //"ecmul_7827-6598_9935_21000_96",
+        //"ecmul_7827-6598_9935_28000_96",
+        //"ecmul_7827-6598_9935_28000_128",
+        // "ecmul_0-0_5617_21000_128",
+        // "ecmul_0-0_5617_21000_96",
+        // "ecmul_0-0_5617_28000_128",
+        // "ecmul_0-0_5617_28000_96",
+        // "ecmul_0-0_9935_21000_128",
+        // "ecmul_0-0_9935_21000_96",
+        // "ecmul_0-0_9935_28000_96",
+        // "ecmul_0-0_9935_28000_128",
+        //"pointMulAdd2",
         "jumpi",
     ].into_iter().collect();
-
 
     let map_caller_keys: HashMap<_, _> = vec![
         (
@@ -257,14 +258,13 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
                 if test.hash != state_root {
                     println!("UNIT_TEST:{}\n",name);
                     break;
-                    /*
-                    println!("\nApplied state:{:?}\n", database);
-                    println!("\nStateroot: {:?}\n", state_root);
-                    return Err(TestError::RootMissmatch {
-                        id,
-                        got: state_root,
-                        expect: test.hash,
-                    });*/
+                    //println!("\nApplied state:{:?}\n", database);
+                    //println!("\nStateroot: {:?}\n", state_root);
+                    // return Err(TestError::RootMissmatch {
+                    //     id,
+                    //     got: state_root,
+                    //     expect: test.hash,
+                    // });
                 }
             }
         }
@@ -279,7 +279,7 @@ pub fn run<INSP: Inspector + Clone + Send + 'static>(
     let endjob = Arc::new(AtomicBool::new(false));
     let console_bar = Arc::new(ProgressBar::new(test_files.len() as u64));
     let mut joins = Vec::new();
-    for chunk in test_files.chunks(300) {
+    for chunk in test_files.chunks(30000) {
         let chunk = Vec::from(chunk);
         let endjob = endjob.clone();
         let console_bar = console_bar.clone();

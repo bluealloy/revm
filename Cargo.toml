@@ -20,10 +20,9 @@ triehash = "0.8"
 hash-db = "0.15"
 plain_hasher = "0.2"
 num = { version = "0.4.0", default-features = false, features = ["alloc"] }
-#precompile libs down below taken from aurora-engine
+#libs below are for precompiles. See to move them to saparate lib.
 sha2 = { version = "0.9.3", default-features = false }
 borsh = { version = "0.9", default-features = false }
 ripemd160 = { version = "0.9.1", default-features = false }
-libsecp256k1 = { version = "0.7.0"}
-parity-crypto = { version = "0.9.0", features = [ "publickey" ] }
-bn = { package = "aurora-bn", git = "https://github.com/aurora-is-near/aurora-bn.git", default-features = false }
+parity-crypto = { version = "0.9.0", default-features = false, features = [ "publickey" ] }
+bn = { package="substrate-bn", git = "https://github.com/paritytech/bn", default-features = false }
