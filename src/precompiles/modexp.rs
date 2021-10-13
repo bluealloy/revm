@@ -54,7 +54,7 @@ impl<HF: HardFork> ModExp<HF> {
         //TODO return to this and put some meaningful values for overflow limit
         let (base_len, base_overflow) = read_u64_with_overflow!(input, 0, 32, 100000);
         let (exp_len, exp_overflow) = read_u64_with_overflow!(input, 32, 64, 100000);
-        let (mod_len, mod_overflow) = read_u64_with_overflow!(input, 64, 96, 1024);
+        let (mod_len, mod_overflow) = read_u64_with_overflow!(input, 64, 96, 255);
 
         if base_overflow || mod_overflow {
             return Ok(PrecompileOutput::without_logs(u64::MAX, Vec::new()));
@@ -202,9 +202,11 @@ impl ModExp<Berlin> {
                 // construct BigUint to represent (2^256) - 1
                 let bytes: [u8; 32] = [0xFF; 32];
                 let max_256_bit_uint = BigUint::from_bytes_be(&bytes);
-
-                iteration_count =
-                    (8 * (exp_length - 32)) + ((exponent.bitand(max_256_bit_uint)).bits() - 1);
+                iteration_count = 8 * (exp_length - 32);
+                let bits = (exponent.bitand(max_256_bit_uint)).bits();
+                if bits > 0 {
+                    iteration_count += bits - 1;
+                }
             }
 
             max(iteration_count, 1)
