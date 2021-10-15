@@ -1,8 +1,12 @@
-use crate::error::{ExitError, ExitFatal};
-use crate::collection::vec::Vec;
+use crate::{
+    collection::vec::Vec,
+    error::{ExitError, ExitFatal},
+};
 use bytes::Bytes;
-use core::cmp::min;
-use core::ops::{BitAnd, Not};
+use core::{
+    cmp::min,
+    ops::{BitAnd, Not},
+};
 use primitive_types::U256;
 
 /// A sequencial memory. It uses Rust's `Vec` for internal
@@ -56,7 +60,7 @@ impl Memory {
         if len == U256::zero() {
             return Ok(0);
         }
-        
+
         if let Some(end) = offset.checked_add(len) {
             // Resize the memory, making it cover to `end`, with 32 bytes as the step.
             if end > self.effective_len {

@@ -1,21 +1,12 @@
 use crate::{
-    collection::{vec::Vec},
-    evm_impl::EVMImpl, BerlinSpec, FrontierSpec, Inspector, IstanbulSpec,
-    LatestSpec, SpecId,
+    collection::vec::Vec, db::Database, error::ExitReason, evm_impl::EVMImpl, subroutine::State,
+    BerlinSpec, CreateScheme, FrontierSpec, GlobalEnv, Inspector, IstanbulSpec, LatestSpec, SpecId,
 };
 
 use primitive_types::{H160, H256, U256};
 use sha3::Digest;
 
-
-use super::precompiles::{
-    Precompiles,
-};
-use crate::{
-    db::Database,
-    error::{ExitReason},
-    subroutine::{State}, CreateScheme, GlobalEnv,
-};
+use super::precompiles::Precompiles;
 use bytes::Bytes;
 
 fn new_inner<'a, DB: Database, const INSPECT: bool>(

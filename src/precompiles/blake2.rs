@@ -1,9 +1,10 @@
 use crate::{models::CallContext, ExitError};
 
-use crate::collection::{Borrowed};
-use crate::precompiles::{Precompile, PrecompileOutput, PrecompileResult};
+use crate::{
+    collection::Borrowed,
+    precompiles::{Precompile, PrecompileOutput, PrecompileResult},
+};
 use core::convert::TryInto;
-
 
 use primitive_types::H160 as Address;
 
@@ -28,8 +29,6 @@ impl Blake2F {
 }
 
 impl Precompile for Blake2F {
-
-
     /// reference: https://eips.ethereum.org/EIPS/eip-152
     /// input format:
     /// [4 bytes for rounds][64 bytes for h][128 bytes for m][8 bytes for t_0][8 bytes for t_1][1 byte for f]

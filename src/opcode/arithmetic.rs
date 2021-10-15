@@ -1,8 +1,7 @@
 use crate::{error::*, opcode::gas, Machine, Spec};
 
 use super::{i256::I256, Control};
-use core::convert::TryInto;
-use core::ops::Rem;
+use core::{convert::TryInto, ops::Rem};
 use primitive_types::{H256, U256, U512};
 
 #[inline]

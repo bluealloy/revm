@@ -2,7 +2,8 @@ use super::{gas, Control};
 use crate::{
     error::{ExitError, ExitFatal, ExitReason, ExitRevert, ExitSucceed},
     machine::Machine,
-    Spec,SpecId::*
+    Spec,
+    SpecId::*,
 };
 use core::cmp::min;
 use primitive_types::{H256, U256};

@@ -1,5 +1,4 @@
-use crate::error::ExitError;
-use crate::collection::vec::Vec;
+use crate::{collection::vec::Vec, error::ExitError};
 use primitive_types::H256;
 
 /// EVM stack.

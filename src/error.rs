@@ -116,7 +116,7 @@ pub enum ExitError {
     CallNotAllowedInsideStatic,
 
     /// Other normal errors.
-	Other(Cow<'static, str>),
+    Other(Cow<'static, str>),
 }
 
 impl From<ExitError> for ExitReason {

@@ -1,13 +1,15 @@
 use super::gas_quert;
-use crate::collection::Vec;
-use crate::models::CallContext;
-use crate::precompiles::{
-    Berlin, Byzantium, HardFork, Precompile, PrecompileOutput, PrecompileResult,
+use crate::{
+    collection::Vec,
+    models::CallContext,
+    precompiles::{Berlin, Byzantium, HardFork, Precompile, PrecompileOutput, PrecompileResult},
 };
-use core::cmp::max;
-use core::mem::size_of;
-use core::ops::BitAnd;
-use core::{cmp::min, marker::PhantomData};
+use core::{
+    cmp::{max, min},
+    marker::PhantomData,
+    mem::size_of,
+    ops::BitAnd,
+};
 use num::{BigUint, One, Zero};
 use primitive_types::{H160 as Address, U256};
 pub(super) struct ModExp<HF: HardFork>(PhantomData<HF>);

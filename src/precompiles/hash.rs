@@ -1,7 +1,9 @@
 use super::{calc_linear_cost_u32, gas_quert};
 
-use crate::precompiles::{Precompile, PrecompileOutput, PrecompileResult};
-use crate::{models::CallContext};
+use crate::{
+    models::CallContext,
+    precompiles::{Precompile, PrecompileOutput, PrecompileResult},
+};
 use primitive_types::H160 as Address;
 use sha2::*;
 

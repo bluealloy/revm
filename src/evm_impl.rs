@@ -1,22 +1,19 @@
-use crate::{
-    collection::{vec::Vec, Map},
-    machine, ExitRevert, Inspector, EVM,
-};
-use core::cmp::min;
+use core::{cmp::min, marker::PhantomData};
 use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
-use std::marker::PhantomData;
 
 use super::precompiles::{PrecompileOutput, Precompiles};
 use crate::{
+    collection::{vec::Vec, Map},
     db::Database,
     error::{ExitError, ExitReason, ExitSucceed},
+    machine,
     machine::{Contract, Gas, Machine},
     models::SelfDestructResult,
     opcode::gas,
     spec::{Spec, SpecId::*},
     subroutine::{Account, State, SubRoutine},
-    util, CallContext, CreateScheme, GlobalEnv, Log, Transfer,
+    util, CallContext, CreateScheme, ExitRevert, GlobalEnv, Inspector, Log, Transfer, EVM,
 };
 use bytes::Bytes;
 

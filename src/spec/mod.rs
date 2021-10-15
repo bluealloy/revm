@@ -1,17 +1,16 @@
 mod berlin_spec;
+mod frontier_spec;
 mod instanbul_spec;
 mod latest_spec;
-mod frontier_spec;
 mod spec;
 
 pub use berlin_spec::BerlinSpec;
+pub use frontier_spec::FrontierSpec;
 pub use instanbul_spec::IstanbulSpec;
 pub use latest_spec::LatestSpec;
-pub use frontier_spec::FrontierSpec;
 pub use spec::Spec;
 
 pub(crate) use spec::NotStaticSpec;
-
 
 #[repr(u8)]
 pub enum SpecId {
@@ -24,7 +23,7 @@ pub enum SpecId {
     CONSTANTINOPLE = 7,
     PETERSBURG = 8,
     ISTANBUL = 9,
-    MUIRGLACIER =10,
+    MUIRGLACIER = 10,
     BERLIN = 11,
     LONDON = 12,
     LATEST = 13,
@@ -54,7 +53,7 @@ impl From<&str> for SpecId {
 
 impl SpecId {
     #[inline]
-    pub fn enabled(self,current_id: u8) -> bool {
+    pub fn enabled(self, current_id: u8) -> bool {
         self as u8 > current_id
-    } 
+    }
 }

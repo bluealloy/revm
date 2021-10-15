@@ -1,5 +1,7 @@
-use core::cmp::Ordering;
-use core::ops::{Div, Rem};
+use core::{
+    cmp::Ordering,
+    ops::{Div, Rem},
+};
 use primitive_types::U256;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]

@@ -1,9 +1,12 @@
-use crate::precompiles::{Precompile, PrecompileOutput, PrecompileResult};
-use crate::{models::CallContext, ExitError};
+use crate::{
+    models::CallContext,
+    precompiles::{Precompile, PrecompileOutput, PrecompileResult},
+    ExitError,
+};
 
 use primitive_types::H160 as Address;
 
-use super::{gas_quert,calc_linear_cost_u32};
+use super::{calc_linear_cost_u32, gas_quert};
 
 /// Identity precompile costs.
 mod costs {
@@ -33,7 +36,6 @@ impl Identity {
 }
 
 impl Precompile for Identity {
-
     /// Takes the input bytes, copies them, and returns it as the output.
     ///
     /// See: https://ethereum.github.io/yellowpaper/paper.pdf
@@ -44,7 +46,7 @@ impl Precompile for Identity {
         _context: &CallContext,
         _is_static: bool,
     ) -> PrecompileResult {
-        let gas_used = gas_quert(calc_linear_cost_u32(input.len(),15,3), gas_limit)?;
+        let gas_used = gas_quert(calc_linear_cost_u32(input.len(), 15, 3), gas_limit)?;
         Ok(PrecompileOutput::without_logs(gas_used, input.to_vec()))
     }
 }

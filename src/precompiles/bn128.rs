@@ -1,8 +1,9 @@
-use crate::collection::*;
-use crate::precompiles::{
-    Byzantium, HardFork, Istanbul, Precompile, PrecompileOutput, PrecompileResult,
+use crate::{
+    collection::*,
+    models::CallContext,
+    precompiles::{Byzantium, HardFork, Istanbul, Precompile, PrecompileOutput, PrecompileResult},
+    ExitError,
 };
-use crate::{models::CallContext, ExitError};
 
 use core::marker::PhantomData;
 use primitive_types::{H160 as Address, U256};

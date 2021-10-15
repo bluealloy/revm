@@ -1,16 +1,17 @@
 use crate::collection::{vec, Vec};
 //pub(crate) use crate::precompiles::secp256k1::ecrecover;
-use crate::{models::CallContext, Log};
 use crate::{
-    precompiles::blake2::Blake2F,
-    precompiles::bn128::{Bn128Add, Bn128Mul, Bn128Pair},
-    precompiles::hash::{RIPEMD160, SHA256},
-    precompiles::identity::Identity,
-    precompiles::modexp::ModExp,
-    //precompiles::native::{ExitToEthereum, ExitToNear},
-    precompiles::secp256k1::ECRecover,
+    models::CallContext,
+    precompiles::{
+        blake2::Blake2F,
+        bn128::{Bn128Add, Bn128Mul, Bn128Pair},
+        hash::{RIPEMD160, SHA256},
+        identity::Identity,
+        modexp::ModExp,
+        secp256k1::ECRecover,
+    },
+    ExitError, Log,
 };
-use crate::{ExitError};
 use primitive_types::{H160 as Address, U256};
 
 mod blake2;

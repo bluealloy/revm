@@ -9,7 +9,6 @@ use core::mem::{self};
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
 
-
 use crate::{db::Database, AccountInfo, Log};
 
 pub struct SubRoutine {
@@ -656,7 +655,7 @@ impl Filth {
         match self {
             Self::Clean | Self::Precompile(_) => None,
             Self::Dirty(ref originals) => originals.get(&index).cloned(),
-            Self::Destroyed => None, 
+            Self::Destroyed => None,
             Self::NewlyCreated => Some(H256::zero()),
         }
     }

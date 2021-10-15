@@ -17,18 +17,14 @@ pub struct AccountInfo {
     pub nonce: u64,
 }
 
-
-
-
 impl AccountInfo {
     pub fn is_empty(&self) -> bool {
-            let code_empty = if let Some(ref code) = self.code {
-                        code.is_empty()
-                    } else {
-                        true
-                    };
-                    self.balance == U256::zero() && self.nonce == 0 && code_empty
-            
+        let code_empty = if let Some(ref code) = self.code {
+            code.is_empty()
+        } else {
+            true
+        };
+        self.balance == U256::zero() && self.nonce == 0 && code_empty
     }
 
     pub fn exists(&self) -> bool {

@@ -7,8 +7,7 @@ use crate::{
 // 	CallScheme, Capture, CallContext, CreateScheme, ,
 // 	, Runtime, Transfer,
 // };
-use crate::collection::vec::Vec;
-use crate::spec::SpecId::*;
+use crate::{collection::vec::Vec, spec::SpecId::*};
 use bytes::Bytes;
 use core::cmp::min;
 use primitive_types::{H256, U256};
