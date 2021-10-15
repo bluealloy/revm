@@ -8,6 +8,7 @@ use crate::{
 // 	, Runtime, Transfer,
 // };
 use crate::collection::vec::Vec;
+use crate::spec::SpecId::*;
 use bytes::Bytes;
 use core::cmp::min;
 use primitive_types::{H256, U256};
@@ -34,7 +35,7 @@ pub fn sha3(machine: &mut Machine) -> Control {
 }
 
 pub fn chainid<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
-    enabled!(SPEC::HAS_CHAIN_ID);
+    enabled!(SPEC::enabled(ISTANBUL));
     gas!(machine, gas::BASE);
 
     push_u256!(machine, handler.env().chain_id);
@@ -54,10 +55,19 @@ pub fn address(machine: &mut Machine) -> Control {
 pub fn balance<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
     pop!(machine, address);
     let (balance, is_cold) = handler.balance(address.into());
-    //println!("is balance cold:{} {}",balance,is_cold);
     gas!(
         machine,
-        gas::hot_cold_cost::<SPEC>(is_cold, SPEC::GAS_BALANCE)
+        if SPEC::enabled(BERLIN) {
+            if is_cold {
+                2600
+            } else {
+                200
+            }
+        } else if SPEC::enabled(ISTANBUL) {
+            700
+        } else {
+            20
+        }
     );
     push_u256!(machine, balance);
 
@@ -65,7 +75,7 @@ pub fn balance<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -
 }
 
 pub fn selfbalance<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
-    enabled!(SPEC::HAS_SELF_BALANCE);
+    enabled!(SPEC::enabled(ISTANBUL));
     let (balance, _) = handler.balance(machine.contract.address);
     gas!(machine, gas::LOW);
     push_u256!(machine, balance);
@@ -117,7 +127,17 @@ pub fn extcodesize<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
     let (code, is_cold) = handler.code(address.into());
     gas!(
         machine,
-        gas::hot_cold_cost::<SPEC>(is_cold, SPEC::GAS_EXT_CODE)
+        if SPEC::enabled(BERLIN) {
+            if is_cold {
+                2600
+            } else {
+                200
+            }
+        } else if SPEC::enabled(ISTANBUL) {
+            700
+        } else {
+            20
+        }
     );
 
     push_u256!(machine, U256::from(code.len()));
@@ -126,12 +146,22 @@ pub fn extcodesize<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
 }
 
 pub fn extcodehash<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
-    enabled!(SPEC::HAS_EXT_CODE_HASH);
+    enabled!(SPEC::enabled(ISTANBUL));
     pop!(machine, address);
     let (code_hash, is_cold) = handler.code_hash(address.into());
     gas!(
         machine,
-        gas::hot_cold_cost::<SPEC>(is_cold, SPEC::GAS_EXT_CODE_HASH)
+        if SPEC::enabled(BERLIN) {
+            if is_cold {
+                2600
+            } else {
+                200
+            }
+        } else if SPEC::enabled(ISTANBUL) {
+            700
+        } else {
+            20
+        }
     );
     push!(machine, code_hash);
 
@@ -158,7 +188,7 @@ pub fn extcodecopy<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
 }
 
 pub fn returndatasize<SPEC: Spec>(machine: &mut Machine) -> Control {
-    enabled!(SPEC::HAS_RETURN_DATA);
+    enabled!(SPEC::enabled(ISTANBUL));
     gas!(machine, gas::BASE);
 
     let size = U256::from(machine.return_data_buffer.len());
@@ -168,7 +198,7 @@ pub fn returndatasize<SPEC: Spec>(machine: &mut Machine) -> Control {
 }
 
 pub fn returndatacopy<SPEC: Spec>(machine: &mut Machine) -> Control {
-    enabled!(SPEC::HAS_RETURN_DATA);
+    enabled!(SPEC::enabled(ISTANBUL));
     pop_u256!(machine, memory_offset, data_offset, len);
     gas_or_fail!(machine, gas::verylowcopy_cost(len));
     memory_resize!(machine, memory_offset, len);
@@ -263,16 +293,12 @@ pub fn sstore<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) ->
         original,
         is_cold
     );
-    if SPEC::ESTIMATE {
-        gas!(machine, SPEC::GAS_SSTORE_SET)
-    } else {
-        let remaining_gas = machine.gas.remaining();
-        gas_or_fail!(
-            machine,
-            gas::sstore_cost::<SPEC>(original, old, new, remaining_gas, is_cold)
-        );
-        refund!(machine, gas::sstore_refund::<SPEC>(original, old, new));
-    }
+    let remaining_gas = machine.gas.remaining();
+    gas_or_fail!(
+        machine,
+        gas::sstore_cost::<SPEC>(original, old, new, remaining_gas, is_cold)
+    );
+    refund!(machine, gas::sstore_refund::<SPEC>(original, old, new));
     Control::Continue
 }
 
@@ -319,7 +345,7 @@ pub fn selfdestruct<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut
     let res = handler.selfdestruct(machine.contract.address, target.into());
     inspect!(handler, selfdestruct);
 
-    if !SPEC::ESTIMATE && !res.previously_destroyed {
+    if !res.previously_destroyed {
         refund!(machine, gas::SELFDESTRUCT)
     }
     gas!(machine, gas::selfdestruct_cost::<SPEC>(res));
@@ -333,17 +359,8 @@ fn gas_call_l64_after<SPEC: Spec>(machine: &mut Machine) -> Result<u64, ExitReas
         gas - gas / 64
     }
 
-    if SPEC::CALL_L64_AFTER_GAS {
-        if SPEC::ESTIMATE {
-            let initial_after_gas = machine.gas().remaining();
-            let diff = initial_after_gas - l64(initial_after_gas);
-            if machine.gas.record_cost(diff) {
-                return Err(ExitReason::Error(ExitError::OutOfGas));
-            }
-            Ok(machine.gas().remaining())
-        } else {
-            Ok(l64(machine.gas().remaining()))
-        }
+    if SPEC::enabled(ISTANBUL) {
+        Ok(l64(machine.gas().remaining()))
     } else {
         Ok(machine.gas().remaining())
     }
@@ -416,7 +433,7 @@ pub fn call<H: Handler, SPEC: Spec>(
     handler: &mut H,
 ) -> Control {
     if scheme == CallScheme::DelegateCall {
-        enabled!(SPEC::HAS_DELEGATE_CALL)
+        enabled!(SPEC::enabled(ISTANBUL))
     }
     machine.return_data_buffer = Bytes::new();
 
@@ -516,7 +533,7 @@ pub fn call<H: Handler, SPEC: Spec>(
     // add call stipend if there is value to be transfered.
     if let Some(transfer) = transfer.as_ref() {
         if transfer.value != U256::zero() {
-            gas_limit = gas_limit.saturating_add(SPEC::CALL_STIPEND);
+            gas_limit = gas_limit.saturating_add(gas::CALL_STIPEND);
         }
     }
     let is_static = matches!(scheme, CallScheme::StaticCall);

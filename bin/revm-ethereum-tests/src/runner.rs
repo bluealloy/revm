@@ -18,7 +18,7 @@ use sha3::{Digest, Keccak256};
 use bytes::Bytes;
 use indicatif::ProgressBar;
 use primitive_types::{H160, H256, U256};
-use revm::{BerlinSpec, ExitReason, GlobalEnv, Inspector};
+use revm::{BerlinSpec, ExitReason, GlobalEnv, Inspector, SpecId};
 use std::sync::atomic::Ordering;
 use walkdir::{DirEntry, WalkDir};
 
@@ -103,7 +103,9 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
         // "ecmul_0-0_9935_28000_128",
         //"pointMulAdd2",
         "jumpi",
-    ].into_iter().collect();
+    ]
+    .into_iter()
+    .collect();
 
     let map_caller_keys: HashMap<_, _> = vec![
         (
@@ -136,8 +138,6 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
                 .unwrap(),
             H160::from_str("0x3fb1cd2cd96c6d5c0b5eb3322d807b34482481d4").unwrap(),
         ),
-
-        
     ]
     .into_iter()
     .collect();
@@ -230,33 +230,35 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
                 } else {
                     gas_limit.as_u64()
                 };
-                let mut evm =
-                    revm::EVM::new(&mut database, global_env.clone()).inspector(inspector.clone());
-                let (ret, gas, state) = if let Some(to) = unit.transaction.to {
-                    let (ret, _, gas, state) = evm.call::<BerlinSpec>(
-                        caller.clone(),
-                        to,
-                        value,
-                        data,
-                        gas_limit,
-                        access_list,
+                let inspector = inspector.clone();
+                let (ret, gas, state) = {
+                    let mut evm = revm::new_inspect(
+                        SpecId::BERLIN,
+                        global_env.clone(),
+                        &mut database,
+                        inspector,
                     );
-                    (ret, gas, state)
-                } else {
-                    let (ret, _, gas, state) = evm.create::<BerlinSpec>(
-                        caller.clone(),
-                        value,
-                        data,
-                        revm::CreateScheme::Create,
-                        gas_limit,
-                        access_list,
-                    );
-                    (ret, gas, state)
+                    if let Some(to) = unit.transaction.to {
+                        let (ret, _, gas, state) =
+                            evm.call(caller.clone(), to, value, data, gas_limit, access_list);
+                        (ret, gas, state)
+                    } else {
+                        let (ret, _, gas, state) = evm.create(
+                            caller.clone(),
+                            value,
+                            data,
+                            revm::CreateScheme::Create,
+                            gas_limit,
+                            access_list,
+                        );
+                        (ret, gas, state)
+                    }
                 };
+                //println!("inspector{:?}",inspector);
                 database.apply(state);
                 let state_root = database.state_root();
                 if test.hash != state_root {
-                    println!("UNIT_TEST:{}\n",name);
+                    println!("UNIT_TEST:{}\n", name);
                     break;
                     //println!("\nApplied state:{:?}\n", database);
                     //println!("\nStateroot: {:?}\n", state_root);

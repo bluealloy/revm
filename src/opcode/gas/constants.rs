@@ -19,3 +19,22 @@ pub const SHA3WORD: u64 = 6;
 pub const COPY: u64 = 3;
 pub const BLOCKHASH: u64 = 20;
 pub const CODEDEPOSIT: u64 = 200;
+
+pub const SSTORE_SET: u64 = 20000;
+pub const SSTORE_RESET: u64 = 5000;
+pub const REFUND_SSTORE_CLEARS: i64 = 15000;
+
+pub const SLOAD: u64 = 1;
+
+pub const TRANSACTION_ZERO_DATA: u64 = 4;
+pub const TRANSACTION_NON_ZERO_DATA_INIT: u64 = 16;
+pub const TRANSACTION_NON_ZERO_DATA_FRONTIER: u64 = 68;
+
+// berlin eip2929 constants
+pub const ACCESS_LIST_ADDRESS: u64 = 2400;
+pub const ACCESS_LIST_STORAGE_KEY: u64 = 1900;
+pub const ACCOUNT_ACCESS_COLD: u64 = 2600;
+pub const STORAGE_READ_WARM: u64 = 100;
+pub const SLOAD_COLD: u64 = 2100;
+
+pub const CALL_STIPEND: u64 = 2300;

@@ -4,6 +4,7 @@
 
 mod error;
 mod evm;
+mod evm_impl;
 mod machine;
 mod models;
 mod opcode;
@@ -14,13 +15,13 @@ mod db;
 mod precompiles;
 mod inspector;
 
-use evm::Handler;
+use evm_impl::Handler;
 
 extern crate alloc;
 
 pub use db::{Database, StateDB};
 pub use error::*;
-pub use evm::EVM;
+pub use evm::{EVM,new,new_inspect};
 pub use inspector::{Inspector,NoOpInspector};
 pub use machine::Machine;
 pub use opcode::Control;

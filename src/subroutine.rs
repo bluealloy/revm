@@ -1,6 +1,6 @@
 use crate::{
     collection::{vec, vec::Vec, Entry, Map},
-    evm::SelfDestructResult,
+    models::SelfDestructResult,
     ExitRevert,
 };
 

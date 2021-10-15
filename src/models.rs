@@ -121,3 +121,11 @@ pub struct Log {
     pub topics: Vec<H256>,
     pub data: Bytes,
 }
+
+#[derive(Default)]
+pub struct SelfDestructResult {
+    pub had_value: bool,
+    pub exists: bool,
+    pub is_cold: bool,
+    pub previously_destroyed: bool,
+}

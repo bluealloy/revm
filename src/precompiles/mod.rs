@@ -221,6 +221,11 @@ impl Precompiles {
         Precompiles { addresses, fun }
     }
 
+    #[allow(dead_code)]
+    pub fn new_latest() -> Self {
+        Self::new_berlin()
+    }
+
     pub fn get_fun(&self, address: &Address) -> Option<PrecompileFn> {
         //return None;
         if let Some(index) = self.addresses.iter().position(|t| t == address) {

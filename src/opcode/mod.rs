@@ -13,7 +13,7 @@ pub use codes::OpCode;
 use crate::{
     error::{ExitError, ExitReason, ExitSucceed},
     machine::Machine,
-    spec::Spec,
+    spec::{Spec, SpecId::*},
     CallScheme, Handler,
 };
 use core::ops::{BitAnd, BitOr, BitXor};
@@ -58,9 +58,9 @@ pub fn eval<H: Handler, S: Spec>(
         OpCode::XOR => op2_u256!(machine, bitxor, gas::VERYLOW),
         OpCode::NOT => op1_u256_fn!(machine, bitwise::not, gas::VERYLOW),
         OpCode::BYTE => op2_u256_fn!(machine, bitwise::byte, gas::VERYLOW),
-        OpCode::SHL => op2_u256_fn!(machine, bitwise::shl, gas::VERYLOW, S::HAS_BITWISE_SHIFTING),
-        OpCode::SHR => op2_u256_fn!(machine, bitwise::shr, gas::VERYLOW, S::HAS_BITWISE_SHIFTING),
-        OpCode::SAR => op2_u256_fn!(machine, bitwise::sar, gas::VERYLOW, S::HAS_BITWISE_SHIFTING),
+        OpCode::SHL => op2_u256_fn!(machine, bitwise::shl, gas::VERYLOW, S::enabled(ISTANBUL)),
+        OpCode::SHR => op2_u256_fn!(machine, bitwise::shr, gas::VERYLOW, S::enabled(ISTANBUL)),
+        OpCode::SAR => op2_u256_fn!(machine, bitwise::sar, gas::VERYLOW, S::enabled(ISTANBUL)),
         OpCode::CODESIZE => misc::codesize(machine),
         OpCode::CODECOPY => misc::codecopy(machine),
         OpCode::CALLDATALOAD => misc::calldataload(machine),

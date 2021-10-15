@@ -12,6 +12,9 @@ use crate::{
     Handler,
 };
 
+pub const STACK_LIMIT: u64 = 1024;
+pub const CALL_STACK_LIMIT: u64 = 1024;
+
 pub struct Machine {
     /// Contract information and invoking data
     pub contract: Contract,
@@ -135,8 +138,8 @@ impl Machine {
         Self {
             program_counter: 0,
             return_range: Range::default(),
-            memory: Memory::new(SPEC::MEMORY_LIMIT),
-            stack: Stack::new(SPEC::STACK_LIMIT),
+            memory: Memory::new(usize::MAX),
+            stack: Stack::new(STACK_LIMIT as usize),
             return_data_buffer: Bytes::new(),
             contract,
             gas: Gas::new(gas_limit),

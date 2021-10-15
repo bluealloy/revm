@@ -11,12 +11,12 @@ macro_rules! try_or_fail {
 
 macro_rules! inspect {
     ($handler:ident, $inspect_fn:ident) => {
-        if SPEC::INSPECTOR_ENABLED {
+        if H::INSPECT {
             $handler.inspect().$inspect_fn();
         }
     };
     ($handler:ident, $inspect_fn:ident, $($args:expr),*) => {
-        if SPEC::INSPECTOR_ENABLED {
+        if H::INSPECT {
             $handler.inspect().$inspect_fn( $($args),* );
         }
     };
@@ -32,18 +32,16 @@ macro_rules! enabled {
 
 macro_rules! gas {
     ($machine:expr, $gas:expr) => {
-        if !$machine.gas.record_cost($gas) {
+        if !$machine.gas.record_cost(($gas)) {
             return Control::Exit(ExitReason::Error(ExitError::OutOfGas));
         }
     };
 }
 
 macro_rules! refund {
-    ($machine:expr, $gas:expr) => {
-        {
+    ($machine:expr, $gas:expr) => {{
         $machine.gas.gas_refund($gas);
-        }
-    };
+    }};
 }
 
 macro_rules! gas_or_fail {
@@ -56,14 +54,12 @@ macro_rules! gas_or_fail {
 }
 
 macro_rules! memory_resize {
-    ($machine:expr, $start:expr, $len:expr) => {
-        {
-            let new_gas_memory = try_or_fail!($machine.memory.resize_offset($start, $len));
-            if !$machine.gas.record_memory(new_gas_memory) {
-                return Control::Exit(ExitReason::Error(ExitError::OutOfGas));
-            }
+    ($machine:expr, $start:expr, $len:expr) => {{
+        let new_gas_memory = try_or_fail!($machine.memory.resize_offset($start, $len));
+        if !$machine.gas.record_memory(new_gas_memory) {
+            return Control::Exit(ExitReason::Error(ExitError::OutOfGas));
         }
-    };
+    }};
 }
 
 macro_rules! pop {
@@ -167,8 +163,8 @@ macro_rules! op2_u256_fn {
 
         Control::Continue
     }};
-    ( $machine:expr, $op:path, $gas:expr, $spec:ident :: $enabled:ident) => {{
-        enabled!($spec::$enabled);
+    ( $machine:expr, $op:path, $gas:expr, $enabled:expr) => {{
+        enabled!(($enabled));
         op2_u256_fn!($machine, $op, $gas)
     }};
 }

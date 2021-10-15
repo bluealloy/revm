@@ -4,6 +4,7 @@ use primitive_types::{H160, H256, U256};
 use crate::{opcode::Control, CallContext, CreateScheme, Machine, Transfer};
 
 pub trait Inspector {
+    
     // get opcode by calling `machine.contract.opcode(machine.program_counter())`.
     // all other information can be obtained from machine.
     fn step(&mut self, machine: &mut Machine);
