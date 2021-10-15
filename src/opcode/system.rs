@@ -58,9 +58,9 @@ pub fn balance<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -
         machine,
         if SPEC::enabled(BERLIN) {
             if is_cold {
-                2600
+                gas::ACCOUNT_ACCESS_COLD
             } else {
-                200
+                gas::STORAGE_READ_WARM
             }
         } else if SPEC::enabled(ISTANBUL) {
             700
@@ -128,9 +128,9 @@ pub fn extcodesize<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
         machine,
         if SPEC::enabled(BERLIN) {
             if is_cold {
-                2600
+                gas::ACCOUNT_ACCESS_COLD
             } else {
-                200
+                gas::STORAGE_READ_WARM
             }
         } else if SPEC::enabled(ISTANBUL) {
             700
@@ -152,9 +152,9 @@ pub fn extcodehash<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
         machine,
         if SPEC::enabled(BERLIN) {
             if is_cold {
-                2600
+                gas::ACCOUNT_ACCESS_COLD
             } else {
-                200
+                gas::STORAGE_READ_WARM
             }
         } else if SPEC::enabled(ISTANBUL) {
             700

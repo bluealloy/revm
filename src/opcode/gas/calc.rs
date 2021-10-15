@@ -110,9 +110,9 @@ pub fn extcodecopy_cost<SPEC: Spec>(len: U256, is_cold: bool) -> Option<u64> {
     let wordr = len % U256::from(32);
     let base_gas: u64 = if SPEC::enabled(BERLIN) {
         if is_cold {
-            2600
+            ACCOUNT_ACCESS_COLD
         } else {
-            200
+            STORAGE_READ_WARM
         }
     } else if SPEC::enabled(ISTANBUL) {
         700
@@ -170,14 +170,14 @@ pub fn sha3_cost(len: U256) -> Option<u64> {
 pub fn sload_cost<SPEC: Spec>(is_cold: bool) -> u64 {
     if SPEC::enabled(BERLIN) {
         if is_cold {
-            2100
+            SLOAD_COLD
         } else {
-            100
+            STORAGE_READ_WARM
         }
     } else if SPEC::enabled(ISTANBUL) {
         800
     } else {
-        40
+        50
     }
 }
 

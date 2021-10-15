@@ -6,6 +6,7 @@ pub trait Spec {
     /// litle bit of magic. We can have child version of Spec that contains static flag enabled
     type STATIC: Spec;
 
+    #[inline(always)]
     fn enabled(spec_id: SpecId) -> bool {
         Self::SPEC_ID as u8 >= spec_id as u8
     }

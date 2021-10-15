@@ -259,14 +259,14 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
                 let state_root = database.state_root();
                 if test.hash != state_root {
                     println!("UNIT_TEST:{}\n", name);
-                    break;
-                    //println!("\nApplied state:{:?}\n", database);
-                    //println!("\nStateroot: {:?}\n", state_root);
-                    // return Err(TestError::RootMissmatch {
-                    //     id,
-                    //     got: state_root,
-                    //     expect: test.hash,
-                    // });
+                    //break;
+                    println!("\nApplied state:{:?}\n", database);
+                    println!("\nStateroot: {:?}\n", state_root);
+                    return Err(TestError::RootMissmatch {
+                        id,
+                        got: state_root,
+                        expect: test.hash,
+                    });
                 }
             }
         }
