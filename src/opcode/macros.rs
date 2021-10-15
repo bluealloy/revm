@@ -22,7 +22,7 @@ macro_rules! inspect {
     };
 }
 
-macro_rules! enabled {
+macro_rules! check {
     ($expresion:expr) => {
         if !$expresion {
             return Control::Exit(ExitReason::Error(ExitError::OpcodeNotFound));
@@ -164,7 +164,7 @@ macro_rules! op2_u256_fn {
         Control::Continue
     }};
     ( $machine:expr, $op:path, $gas:expr, $enabled:expr) => {{
-        enabled!(($enabled));
+        check!(($enabled));
         op2_u256_fn!($machine, $op, $gas)
     }};
 }
@@ -180,7 +180,7 @@ macro_rules! op3_u256_fn {
         Control::Continue
     }};
     ( $machine:expr, $op:path, $gas:expr, $spec:ident :: $enabled:ident) => {{
-        enabled!($spec::$enabled);
+        check!($spec::$enabled);
         op3_u256_fn!($machine, $op, $gas)
     }};
 }

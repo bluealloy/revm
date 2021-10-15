@@ -7,7 +7,7 @@ pub trait Spec {
     type STATIC: Spec;
 
     fn enabled(spec_id: SpecId) -> bool {
-        Self::SPEC_ID as u8 <= spec_id as u8
+        Self::SPEC_ID as u8 >= spec_id as u8
     }
 
     const SPEC_ID: SpecId;

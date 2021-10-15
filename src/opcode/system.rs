@@ -34,7 +34,7 @@ pub fn sha3(machine: &mut Machine) -> Control {
 }
 
 pub fn chainid<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
-    enabled!(SPEC::enabled(ISTANBUL));
+    check!(SPEC::enabled(ISTANBUL));
     gas!(machine, gas::BASE);
 
     push_u256!(machine, handler.env().chain_id);
@@ -74,7 +74,7 @@ pub fn balance<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -
 }
 
 pub fn selfbalance<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
-    enabled!(SPEC::enabled(ISTANBUL));
+    check!(SPEC::enabled(ISTANBUL));
     let (balance, _) = handler.balance(machine.contract.address);
     gas!(machine, gas::LOW);
     push_u256!(machine, balance);
@@ -145,7 +145,7 @@ pub fn extcodesize<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
 }
 
 pub fn extcodehash<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
-    enabled!(SPEC::enabled(ISTANBUL));
+    check!(SPEC::enabled(ISTANBUL));
     pop!(machine, address);
     let (code_hash, is_cold) = handler.code_hash(address.into());
     gas!(
@@ -187,7 +187,7 @@ pub fn extcodecopy<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
 }
 
 pub fn returndatasize<SPEC: Spec>(machine: &mut Machine) -> Control {
-    enabled!(SPEC::enabled(ISTANBUL));
+    check!(SPEC::enabled(ISTANBUL));
     gas!(machine, gas::BASE);
 
     let size = U256::from(machine.return_data_buffer.len());
@@ -197,7 +197,7 @@ pub fn returndatasize<SPEC: Spec>(machine: &mut Machine) -> Control {
 }
 
 pub fn returndatacopy<SPEC: Spec>(machine: &mut Machine) -> Control {
-    enabled!(SPEC::enabled(ISTANBUL));
+    check!(SPEC::enabled(ISTANBUL));
     pop_u256!(machine, memory_offset, data_offset, len);
     gas_or_fail!(machine, gas::verylowcopy_cost(len));
     memory_resize!(machine, memory_offset, len);
@@ -278,7 +278,7 @@ pub fn sload<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> 
 }
 
 pub fn sstore<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
-    enabled!(!SPEC::IS_STATIC_CALL);
+    check!(!SPEC::IS_STATIC_CALL);
 
     pop!(machine, index, value);
     let (original, old, new, is_cold) = handler.sstore(machine.contract.address, index, value);
@@ -309,7 +309,7 @@ pub fn gas(machine: &mut Machine) -> Control {
 }
 
 pub fn log<H: Handler, SPEC: Spec>(machine: &mut Machine, n: u8, handler: &mut H) -> Control {
-    enabled!(!SPEC::IS_STATIC_CALL);
+    check!(!SPEC::IS_STATIC_CALL);
 
     pop_u256!(machine, offset, len);
     gas_or_fail!(machine, gas::log_cost(n, len));
@@ -338,7 +338,7 @@ pub fn log<H: Handler, SPEC: Spec>(machine: &mut Machine, n: u8, handler: &mut H
 }
 
 pub fn selfdestruct<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
-    enabled!(!SPEC::IS_STATIC_CALL);
+    check!(!SPEC::IS_STATIC_CALL);
     pop!(machine, target);
 
     let res = handler.selfdestruct(machine.contract.address, target.into());
@@ -370,7 +370,7 @@ pub fn create<H: Handler, SPEC: Spec>(
     is_create2: bool,
     handler: &mut H,
 ) -> Control {
-    enabled!(!SPEC::IS_STATIC_CALL);
+    check!(!SPEC::IS_STATIC_CALL);
 
     machine.return_data_buffer = Bytes::new();
 
@@ -432,7 +432,7 @@ pub fn call<H: Handler, SPEC: Spec>(
     handler: &mut H,
 ) -> Control {
     if scheme == CallScheme::DelegateCall {
-        enabled!(SPEC::enabled(ISTANBUL))
+        check!(SPEC::enabled(ISTANBUL))
     }
     machine.return_data_buffer = Bytes::new();
 
