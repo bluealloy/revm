@@ -1,4 +1,4 @@
-use crate::collection::{vec::Vec, Entry, Map};
+use crate::collection::{vec::Vec, Map};
 
 use primitive_types::{H160, H256, U256};
 

@@ -3,7 +3,7 @@ use crate::precompiles::{
     Byzantium, HardFork, Istanbul, Precompile, PrecompileOutput, PrecompileResult,
 };
 use crate::{models::CallContext, ExitError};
-use borsh;
+
 use core::marker::PhantomData;
 use primitive_types::{H160 as Address, U256};
 

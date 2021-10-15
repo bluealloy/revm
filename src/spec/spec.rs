@@ -1,5 +1,5 @@
 use crate::SpecId;
-pub(crate) use crate::precompiles::Precompiles;
+
 
 
 pub trait NotStaticSpec {}

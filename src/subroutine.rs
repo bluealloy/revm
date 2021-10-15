@@ -8,9 +8,9 @@ use core::mem::{self};
 
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
-use rlp::Decodable;
 
-use crate::{db::Database, error::ExitError, AccountInfo, Log};
+
+use crate::{db::Database, AccountInfo, Log};
 
 pub struct SubRoutine {
     /// Applied changes to our state
@@ -455,7 +455,7 @@ impl SubRoutine {
     /// load account into memory. return if it is cold or hot accessed
     pub fn load_account<'a, DB: Database>(&'a mut self, address: H160, db: &mut DB) -> bool {
         let is_cold = match self.state.entry(address.clone()) {
-            Entry::Occupied::<'a>(ref mut entry) => false,
+            Entry::Occupied::<'a>(ref mut _entry) => false,
             Entry::Vacant::<'a>(vac) => {
                 let acc: Account = db.basic(address).into();
                 // insert none in changelog that represent that we just loaded this acc in this subroutine

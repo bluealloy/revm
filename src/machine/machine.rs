@@ -6,8 +6,8 @@ use primitive_types::U256;
 
 use super::{contract::Contract, memory::Memory, stack::Stack};
 use crate::{
-    error::{ExitReason, ExitSucceed},
-    opcode::{Control, OpCode},
+    error::{ExitReason},
+    opcode::{Control},
     spec::Spec,
     Handler,
 };
@@ -190,7 +190,7 @@ impl Machine {
         handler.inspect().step(self);
 
         // extract next opcode from code
-        let program_counter = self.program_counter;
+        let _program_counter = self.program_counter;
         let opcode = self.contract.opcode(self.program_counter)?;
 
         // evaluate opcode/execute instruction

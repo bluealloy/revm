@@ -1,27 +1,20 @@
 use crate::{
-    collection::{vec::Vec, Map},
-    evm_impl::EVMImpl,
-    inspector::NoOpInspector,
-    opcode::Control,
-    precompiles, AccountInfo, BerlinSpec, ExitRevert, FrontierSpec, Inspector, IstanbulSpec,
+    collection::{vec::Vec},
+    evm_impl::EVMImpl, BerlinSpec, FrontierSpec, Inspector, IstanbulSpec,
     LatestSpec, SpecId,
 };
-use core::cmp::min;
+
 use primitive_types::{H160, H256, U256};
-use sha3::{Digest, Keccak256};
-use std::marker::PhantomData;
+use sha3::Digest;
+
 
 use super::precompiles::{
-    Precompile, PrecompileFn, PrecompileOutput, PrecompileResult, Precompiles,
+    Precompiles,
 };
 use crate::{
     db::Database,
-    error::{ExitError, ExitReason, ExitSucceed},
-    machine::{Contract, Gas, Machine, Memory, Stack},
-    opcode::OpCode,
-    spec::{NotStaticSpec, Spec},
-    subroutine::{Account, State, SubRoutine},
-    util, CallContext, CreateScheme, GlobalEnv, Log, Transfer,
+    error::{ExitReason},
+    subroutine::{State}, CreateScheme, GlobalEnv,
 };
 use bytes::Bytes;
 

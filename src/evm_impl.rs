@@ -1,6 +1,5 @@
 use crate::{
     collection::{vec::Vec, Map},
-    inspector::NoOpInspector,
     machine, ExitRevert, Inspector, EVM,
 };
 use core::cmp::min;

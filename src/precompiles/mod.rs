@@ -1,6 +1,6 @@
 use crate::collection::{vec, Vec};
 //pub(crate) use crate::precompiles::secp256k1::ecrecover;
-use crate::{models::CallContext, ExitSucceed, Log};
+use crate::{models::CallContext, Log};
 use crate::{
     precompiles::blake2::Blake2F,
     precompiles::bn128::{Bn128Add, Bn128Mul, Bn128Pair},
@@ -10,7 +10,7 @@ use crate::{
     //precompiles::native::{ExitToEthereum, ExitToNear},
     precompiles::secp256k1::ECRecover,
 };
-use crate::{ExitError, Machine};
+use crate::{ExitError};
 use primitive_types::{H160 as Address, U256};
 
 mod blake2;

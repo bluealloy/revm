@@ -1,9 +1,9 @@
 use crate::{models::CallContext, ExitError};
 
-use crate::collection::{Borrowed, Cow};
+use crate::collection::{Borrowed};
 use crate::precompiles::{Precompile, PrecompileOutput, PrecompileResult};
 use core::convert::TryInto;
-use core::mem;
+
 
 use primitive_types::H160 as Address;
 

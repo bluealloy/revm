@@ -1,4 +1,4 @@
-use crate::{NotStaticSpec, SpecId, precompiles::Precompiles};
+use crate::{NotStaticSpec, SpecId};
 
 use super::Spec;
 

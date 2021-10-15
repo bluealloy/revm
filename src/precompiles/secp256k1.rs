@@ -2,7 +2,7 @@ use crate::precompiles::{Precompile, PrecompileOutput, PrecompileResult};
 use crate::{CallContext, ExitError};
 use core::cmp::min;
 use primitive_types::{H160 as Address, H256};
-use sha3::{Digest, Keccak256};
+use sha3::{Digest};
 mod costs {
     pub(super) const ECRECOVER_BASE: u64 = 3_000;
 }
@@ -12,7 +12,6 @@ mod consts {
 
 //use libsecp256k1::ThirtyTwoByteHash;
 use parity_crypto::{
-    digest,
     publickey::{public_to_address, recover, Error as ParityCryptoError, Signature},
 };
 
