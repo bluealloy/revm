@@ -18,10 +18,9 @@ pub struct TestSuit(pub BTreeMap<String, TestUnit>);
 pub struct TestUnit {
     pub env: Env,
     pub pre: HashMap<H160, AccountInfo>,
-    pub post: HashMap<SpecName,Vec<Test>>,
+    pub post: HashMap<SpecName, Vec<Test>>,
     pub transaction: TransactionParts,
 }
-
 
 /// State test indexed state result deserialization.
 #[derive(Debug, PartialEq, Deserialize)]
@@ -102,10 +101,10 @@ mod tests {
     use super::*;
 
     #[test]
-    pub fn serialize_u256() -> Result<(),Error> {
+    pub fn serialize_u256() -> Result<(), Error> {
         let json = r#"{"item":"0x10"}"#;
 
-        #[derive(Deserialize,Debug)]
+        #[derive(Deserialize, Debug)]
         pub struct Test {
             item: Option<U256>,
         }
@@ -113,7 +112,5 @@ mod tests {
         let out: Test = serde_json::from_str(json)?;
         println!("out:{:?}", out);
         Ok(())
-
     }
-
 }

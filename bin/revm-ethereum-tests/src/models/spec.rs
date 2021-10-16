@@ -1,4 +1,3 @@
-
 use serde_derive::*;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Hash, Ord, Deserialize)]

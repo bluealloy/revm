@@ -54,7 +54,7 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
     let json_reader = std::fs::read(&path).unwrap();
     let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
     let skip_test_unit: HashSet<_> = vec![
-        "typeTwoBerlin",                  //txbyte is of type 02 and we dont parse bytes for this test to fail
+        "typeTwoBerlin", //txbyte is of type 02 and we dont parse bytes for this test to fail
         "modexp_modsize0_returndatasize", //modexp
         "RevertPrecompiledTouch",
         "RevertPrecompiledTouchExactOOG",
@@ -203,7 +203,7 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
                 } else {
                     gas_limit.as_u64()
                 };
-                
+
                 let to = match unit.transaction.to {
                     Some(add) => TransactTo::Call(add),
                     None => TransactTo::Create(CreateScheme::Create),
