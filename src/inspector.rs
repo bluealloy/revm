@@ -9,7 +9,7 @@ pub trait Inspector {
     fn step(&mut self, machine: &mut Machine);
     fn eval(&mut self, eval: &mut Control, machine: &mut Machine);
 
-    fn load_account(&mut self, _address: &H160) {}
+    fn load_account(&mut self, address: &H160);
 
     fn sload(&mut self, address: &H160, slot: &H256, value: &H256, is_cold: bool);
 
@@ -56,6 +56,9 @@ impl Inspector for NoOpInspector {
     fn step(&mut self, _machine: &mut Machine) {}
 
     fn eval(&mut self, _eval: &mut Control, _machine: &mut Machine) {}
+
+    
+    fn load_account(&mut self, _address: &H160) {}
 
     fn sload(&mut self, _address: &H160, _slot: &H256, _value: &H256, _is_cold: bool) {}
 

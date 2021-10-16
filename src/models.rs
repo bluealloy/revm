@@ -41,6 +41,12 @@ impl AccountInfo {
     }
 }
 
+
+pub enum TransactTo {
+    Call(H160),
+    Create(CreateScheme),
+}
+
 /// Create scheme.
 #[derive(Clone, Copy, Eq, PartialEq, Debug)]
 pub enum CreateScheme {

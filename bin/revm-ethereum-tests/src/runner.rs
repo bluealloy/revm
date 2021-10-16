@@ -18,7 +18,7 @@ use sha3::{Digest, Keccak256};
 use bytes::Bytes;
 use indicatif::ProgressBar;
 use primitive_types::{H160, H256, U256};
-use revm::{BerlinSpec, ExitReason, GlobalEnv, Inspector, SpecId};
+use revm::{BerlinSpec, CreateScheme, ExitReason, GlobalEnv, Inspector, SpecId, TransactTo};
 use std::sync::atomic::Ordering;
 use walkdir::{DirEntry, WalkDir};
 
@@ -54,7 +54,7 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
     let json_reader = std::fs::read(&path).unwrap();
     let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
     let skip_test_unit: HashSet<_> = vec![
-        "typeTwoBerlin",                  //txbyte is of type 02 and we dont parse bytes
+        "typeTwoBerlin",                  //txbyte is of type 02 and we dont parse bytes for this test to fail
         "modexp_modsize0_returndatasize", //modexp
         "RevertPrecompiledTouch",
         "RevertPrecompiledTouchExactOOG",
@@ -76,33 +76,6 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
         "sstore_combinations_initial21_2",
         "SuicidesAndInternlCallSuicidesSuccess",
         "randomStatetest642",
-        //"ecadd_1-3_0-0_21000_80",
-        // "ecmul_1-2_5617_21000_128",
-        // "ecmul_1-2_5617_21000_96",
-        // "ecmul_1-2_5617_28000_128",
-        // "ecmul_1-2_5617_28000_96",
-        //"ecmul_1-2_9935_21000_128",
-        //"ecmul_1-2_9935_21000_96",
-        //"ecmul_1-2_9935_28000_96",
-        //"ecmul_1-2_9935_28000_128",
-        // "ecmul_7827-6598_5617_21000_128",
-        // "ecmul_7827-6598_5617_21000_96",
-        // "ecmul_7827-6598_5617_28000_128",
-        // "ecmul_7827-6598_5617_28000_96",
-        //"ecmul_7827-6598_9935_21000_128",
-        //"ecmul_7827-6598_9935_21000_96",
-        //"ecmul_7827-6598_9935_28000_96",
-        //"ecmul_7827-6598_9935_28000_128",
-        // "ecmul_0-0_5617_21000_128",
-        // "ecmul_0-0_5617_21000_96",
-        // "ecmul_0-0_5617_28000_128",
-        // "ecmul_0-0_5617_28000_96",
-        // "ecmul_0-0_9935_21000_128",
-        // "ecmul_0-0_9935_21000_96",
-        // "ecmul_0-0_9935_28000_96",
-        // "ecmul_0-0_9935_28000_128",
-        //"pointMulAdd2",
-        "jumpi",
     ]
     .into_iter()
     .collect();
@@ -230,29 +203,21 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
                 } else {
                     gas_limit.as_u64()
                 };
+                
+                let to = match unit.transaction.to {
+                    Some(add) => TransactTo::Call(add),
+                    None => TransactTo::Create(CreateScheme::Create),
+                };
                 let inspector = inspector.clone();
-                let (ret, gas, state) = {
+                let (ret, out, gas, state) = {
                     let mut evm = revm::new_inspect(
                         SpecId::BERLIN,
                         global_env.clone(),
                         &mut database,
                         inspector,
                     );
-                    if let Some(to) = unit.transaction.to {
-                        let (ret, _, gas, state) =
-                            evm.call(caller.clone(), to, value, data, gas_limit, access_list);
-                        (ret, gas, state)
-                    } else {
-                        let (ret, _, gas, state) = evm.create(
-                            caller.clone(),
-                            value,
-                            data,
-                            revm::CreateScheme::Create,
-                            gas_limit,
-                            access_list,
-                        );
-                        (ret, gas, state)
-                    }
+
+                    evm.transact(caller.clone(), to, value, data, gas_limit, access_list)
                 };
                 //println!("inspector{:?}",inspector);
                 database.apply(state);

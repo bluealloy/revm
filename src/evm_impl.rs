@@ -13,7 +13,8 @@ use crate::{
     opcode::gas,
     spec::{Spec, SpecId::*},
     subroutine::{Account, State, SubRoutine},
-    util, CallContext, CreateScheme, ExitRevert, GlobalEnv, Inspector, Log, Transfer, EVM,
+    util, CallContext, CreateScheme, ExitRevert, GlobalEnv, Inspector, Log, TransactTo, Transfer,
+    EVM,
 };
 use bytes::Bytes;
 
@@ -27,10 +28,10 @@ pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
 }
 
 impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSPEC, DB, INSPECT> {
-    fn call(
+    fn transact(
         &mut self,
         caller: H160,
-        address: H160,
+        transact_to: TransactTo,
         value: U256,
         data: Bytes,
         gas_limit: u64,
@@ -39,101 +40,62 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
         if INSPECT && self.inspector.as_mut().is_none() {
             panic!("Inspector not set but inspect flag is true");
         }
+
         let mut gas = Gas::new(gas_limit);
-        if !gas.record_cost(self.initialization::<GSPEC>(&data, false, access_list)) {
-            return (
-                ExitReason::Error(ExitError::OutOfGas),
-                Bytes::new(),
-                0,
-                State::default(),
-            );
+        //If there is no initial gas, should we take whatever is present?
+        if !gas.record_cost(self.initialization::<GSPEC>(
+            &data,
+            matches!(transact_to, TransactTo::Create(_)),
+            access_list,
+        )) {
+            return (ExitError::OutOfGas.into(), Bytes::new(), 0, State::new());
         }
 
+        // load acc
         self.inner_load_account(caller);
-        self.subroutine.inc_nonce(caller);
 
         // substract gas_limit*gas_price from current account.
         let payment_value = U256::from(gas_limit) * self.global_env.gas_price;
         if !self.subroutine.balance_sub(caller, payment_value) {
-            return (
-                ExitReason::Error(ExitError::OutOfFund),
-                Bytes::new(),
-                0,
-                State::new(),
-            );
+            return (ExitError::OutOfFund.into(), Bytes::new(), 0, State::new());
         }
 
-        let context = CallContext {
-            caller,
-            address,
-            apparent_value: value,
-        };
         // record all as cost;
         let gas_limit = gas.remaining();
         gas.record_cost(gas_limit);
-        let (exit_reason, ret_gas, bytes) = self.call_inner::<GSPEC>(
-            address,
-            Some(Transfer {
-                source: caller,
-                target: address,
-                value,
-            }),
-            data,
-            gas_limit,
-            context,
-        );
+
+        // call inner handling of call/create
+        let (exit_reason, ret_gas, bytes) = match transact_to {
+            TransactTo::Call(address) => {
+                self.subroutine.inc_nonce(caller);
+                let context = CallContext {
+                    caller,
+                    address,
+                    apparent_value: value,
+                };
+                self.call_inner::<GSPEC>(
+                    address,
+                    Some(Transfer {
+                        source: caller,
+                        target: address,
+                        value,
+                    }),
+                    data,
+                    gas_limit,
+                    context,
+                )
+            }
+            TransactTo::Create(scheme) => {
+                let (exit, address, ret_gas, bytes) =
+                    self.create_inner::<GSPEC>(caller, scheme, value, data, gas_limit);
+                (exit, ret_gas, bytes)
+            }
+        };
 
         gas.reimburse_unspend(&exit_reason, ret_gas);
         match self.finalize(caller, &gas) {
-            //TODO check if refunded can be negative :)
             Err(e) => (e, bytes, gas.spend(), Map::new()),
             Ok(state) => (exit_reason, bytes, gas.spend(), state),
-        }
-    }
-
-    fn create(
-        &mut self,
-        caller: H160,
-        value: U256,
-        init_code: Bytes,
-        create_scheme: CreateScheme,
-        gas_limit: u64,
-        access_list: Vec<(H160, Vec<H256>)>,
-    ) -> (ExitReason, Option<H160>, u64, State) {
-        if INSPECT && self.inspector.as_mut().is_none() {
-            panic!("Inspector not set anbutd inspect flag is true");
-        }
-        let mut gas = Gas::new(gas_limit);
-        self.subroutine.load_account(caller, self.db);
-        let payment_value = U256::from(gas_limit) * self.global_env.gas_price;
-        if !self.subroutine.balance_sub(caller, payment_value) {
-            return (
-                ExitReason::Error(ExitError::OutOfFund),
-                None,
-                0,
-                State::new(),
-            );
-        }
-        if !gas.record_cost(self.initialization::<GSPEC>(&init_code, true, access_list)) {
-            return (
-                ExitReason::Error(ExitError::OutOfGas),
-                None,
-                0,
-                State::default(),
-            );
-        }
-
-        // record all as cost;
-        let gas_limit = gas.remaining();
-        gas.record_cost(gas_limit);
-        let (exit_reason, address, ret_gas, _) =
-            self.create_inner::<GSPEC>(caller, create_scheme, value, init_code, gas_limit);
-
-        gas.reimburse_unspend(&exit_reason, ret_gas);
-
-        match self.finalize(caller, &gas) {
-            Err(e) => (e, address, gas.spend(), Map::new()),
-            Ok(state) => (exit_reason, address, gas.spend(), state),
         }
     }
 }
@@ -247,10 +209,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         if self.subroutine.depth() > machine::CALL_STACK_LIMIT {
             return (ExitRevert::CallTooDeep.into(), None, gas, Bytes::new());
         }
-        // check balance of caller and value
+        // check balance of caller and value. Do this before increasing nonce
         if self.balance(caller).0 < value {
             return (ExitRevert::OutOfFund.into(), None, gas, Bytes::new());
         }
+
         // inc nonce of caller
         let old_nonce = self.subroutine.inc_nonce(caller);
         // create address

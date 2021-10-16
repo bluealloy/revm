@@ -1,7 +1,4 @@
-use crate::{
-    collection::vec::Vec, db::Database, error::ExitReason, evm_impl::EVMImpl, subroutine::State,
-    BerlinSpec, CreateScheme, FrontierSpec, GlobalEnv, Inspector, IstanbulSpec, LatestSpec, SpecId,
-};
+use crate::{BerlinSpec, CreateScheme, FrontierSpec, GlobalEnv, Inspector, IstanbulSpec, LatestSpec, SpecId, TransactTo, collection::vec::Vec, db::Database, error::ExitReason, evm_impl::EVMImpl, subroutine::State};
 
 use primitive_types::{H160, H256, U256};
 use sha3::Digest;
@@ -60,23 +57,17 @@ pub fn new_inspect<'a, DB: Database>(
     new_inner::<DB, true>(specid, global_env, db, Some(inspector))
 }
 
+
 pub trait EVM {
-    fn call(
+    /// Do transaction.
+    /// Return ExitReason, Output for call or Address if we are creating contract, gas spend, State that needs to be applied.
+    fn transact(
         &mut self,
         caller: H160,
-        address: H160,
+        transact_to: TransactTo,
         value: U256,
         data: Bytes,
         gas_limit: u64,
         access_list: Vec<(H160, Vec<H256>)>,
     ) -> (ExitReason, Bytes, u64, State);
-    fn create(
-        &mut self,
-        caller: H160,
-        value: U256,
-        init_code: Bytes,
-        create_scheme: CreateScheme,
-        gas_limit: u64,
-        access_list: Vec<(H160, Vec<H256>)>,
-    ) -> (ExitReason, Option<H160>, u64, State);
 }
