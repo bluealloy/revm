@@ -38,39 +38,52 @@ Example with creating simple set/get smartcontract and calling create and two ca
 
     // execution globals block hash/gas_limit/coinbase/timestamp..
     let envs = GlobalEnv::default();
-    let res = EVM::new(&mut db, envs.clone()).create::<BerlinSpec>(
-        caller,
-        U256::zero(), // value transfered
-        create_data,
-        CreateScheme::Create,
-        u64::MAX,   // gas_limit
-        Vec::new(), // access_list
-    );
-    println!("create simple set/get smart contract:{:?}\n", res);
-    db.apply(res.3);
-    let contract_address = res.1.unwrap();
 
-    let res = EVM::new(&mut db, envs.clone()).call::<BerlinSpec>(
-        caller,
-        contract_address,
-        U256::zero(), // value transfered
-        call_data_set,
-        u64::MAX,   //gas_limit
-        Vec::new(), // access_list
-    );
-    println!("set value: {:?}\n", res);
-    db.apply(res.3);
+    let (_, out, _, state) = {
+        let mut evm = revm::new(SpecId::BERLIN, envs.clone(), &mut db);
+        evm.transact(
+            caller.clone(),
+            TransactTo::create(),
+            U256::zero(),
+            create_data,
+            u64::MAX,
+            Vec::new(),
+        )
+    };
+    db.apply(state);
+    let contract_address = match out {
+        TransactOut::Create(_, Some(add)) => add,
+        _ => panic!("not gona happen"),
+    };
 
-    let res = EVM::new(&mut db, envs.clone()).call::<BerlinSpecStatic>(
-        caller,
-        contract_address,
-        U256::zero(), // value transfered
-        call_data_get,
-        u64::MAX,   // gas_limit
-        Vec::new(), // access_list
-    );
-    println!("get value (StaticCall): {:?}\n", res);
-    db.apply(res.3);
+    let (_, _, _, state) = {
+        let mut evm = revm::new(SpecId::BERLIN, envs.clone(), &mut db);
+
+        evm.transact(
+            caller,
+            TransactTo::Call(contract_address),
+            U256::zero(), // value transfered
+            call_data_set,
+            u64::MAX,   //gas_limit
+            Vec::new(), // access_list
+        )
+    };
+    db.apply(state);
+
+    let (_, out,_, state) = {
+        let mut evm = revm::new(SpecId::BERLIN, envs.clone(), &mut db);
+
+        evm.transact(
+            caller,
+            TransactTo::Call(contract_address),
+            U256::zero(), // value transfered
+            call_data_get,
+            u64::MAX,   // gas_limit
+            Vec::new(), // access_list
+        )
+    };
+    println!("get value (StaticCall): {:?}\n", out);
+    db.apply(state);
 ```
 ## Status of project
 
@@ -84,6 +97,18 @@ I just started this project as a hobby to kill some time. Presenty it has good s
 - wasm interface
 - C++ interface
 
+## Changelogs
+
+### 17.10.2021:
+
+-For past few weeks working on this structure and project in general become really good and I like it. For me it surved as good distraction for past few weeks and i think i am going to get drained if i continue working on it, so i am taking break and i intend to come back after few months and finish it.
+- For status:
+    * machine/spec/opcodes/precompiles(without modexp) feels good and I probably dont need to touch them.
+    * inspector: is what i wanted, full control on insides of EVM so that we can control it and modify it. will probably needs to add some small tweaks to interface but nothing major.
+    * subroutines: Feels okay but it needs more scrutiny just to be sure that all corner cases are covered.
+    * All calls/creates probably can be rewriten and consolidate into one bloob to simplify that logic. Will need to investa time to be sure
+    * Test that are failing (~20) are mostly related to EIP-158: State clearing. For EIP-158 I will time to do it properly.
+    * There is probably benefit of replaing HashMap hasher with something simpler, but this is research for another time.
 ## Project structure:
 
 The structure of the project is getting crystallized and we can see few parts that are worthy to write about:
@@ -106,11 +131,3 @@ Depending on subroutine and if account was previously loaded/destryoyed, account
         - info: (original balance/nonce/code)
         - was_cold: bool
 - Destroyed(Account) -> swap all Info and Storage from current state
-
-
-
-STATE DB APPLY:
-
-Acc conditions stay:
-
-If it empty is inside json and empty dont remove it.

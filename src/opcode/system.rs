@@ -506,7 +506,7 @@ pub fn call<H: Handler, SPEC: Spec>(
     } else { //this is dummy send for StaticCall and DelegateCall, it should do nothing and dont touch anything. 
         Transfer {
             source: machine.contract.address,
-            target: to.into(),
+            target: machine.contract.address,
             value: U256::zero(),
         }
     };

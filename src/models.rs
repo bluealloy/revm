@@ -47,6 +47,19 @@ pub enum TransactTo {
     Create(CreateScheme),
 }
 
+impl TransactTo {
+    pub fn create() -> Self {
+        Self::Create(CreateScheme::Create)
+    }
+}
+
+#[derive(Debug)]
+pub enum TransactOut {
+    None,
+    Call(Bytes),
+    Create(Bytes,Option<H160>),
+}
+
 /// Create scheme.
 #[derive(Clone, Copy, Eq, PartialEq, Debug)]
 pub enum CreateScheme {

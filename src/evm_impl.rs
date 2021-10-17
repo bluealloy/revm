@@ -3,19 +3,7 @@ use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
 
 use super::precompiles::{PrecompileOutput, Precompiles};
-use crate::{
-    collection::{vec::Vec, Map},
-    db::Database,
-    error::{ExitError, ExitReason, ExitSucceed},
-    machine,
-    machine::{Contract, Gas, Machine},
-    models::SelfDestructResult,
-    opcode::gas,
-    spec::{Spec, SpecId::*},
-    subroutine::{Account, State, SubRoutine},
-    util, CallContext, CreateScheme, ExitRevert, GlobalEnv, Inspector, Log, TransactTo, Transfer,
-    EVM,
-};
+use crate::{CallContext, CreateScheme, EVM, ExitRevert, GlobalEnv, Inspector, Log, TransactOut, TransactTo, Transfer, collection::{vec::Vec, Map}, db::Database, error::{ExitError, ExitReason, ExitSucceed}, machine, machine::{Contract, Gas, Machine}, models::SelfDestructResult, opcode::gas, spec::{Spec, SpecId::*}, subroutine::{Account, State, SubRoutine}, util};
 use bytes::Bytes;
 
 pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
@@ -36,7 +24,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
         data: Bytes,
         gas_limit: u64,
         access_list: Vec<(H160, Vec<H256>)>,
-    ) -> (ExitReason, Bytes, u64, State) {
+    ) -> (ExitReason, TransactOut, u64, State) {
         if INSPECT && self.inspector.as_mut().is_none() {
             panic!("Inspector not set but inspect flag is true");
         }
@@ -48,7 +36,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
             matches!(transact_to, TransactTo::Create(_)),
             access_list,
         )) {
-            return (ExitError::OutOfGas.into(), Bytes::new(), 0, State::new());
+            return (ExitError::OutOfGas.into(), TransactOut::None, 0, State::new());
         }
 
         // load acc
@@ -57,7 +45,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
         // substract gas_limit*gas_price from current account.
         let payment_value = U256::from(gas_limit) * self.global_env.gas_price;
         if !self.subroutine.balance_sub(caller, payment_value) {
-            return (ExitError::OutOfFund.into(), Bytes::new(), 0, State::new());
+            return (ExitError::OutOfFund.into(), TransactOut::None, 0, State::new());
         }
 
         // record all as cost;
@@ -65,7 +53,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
         gas.record_cost(gas_limit);
 
         // call inner handling of call/create
-        let (exit_reason, ret_gas, bytes) = match transact_to {
+        let (exit_reason, ret_gas, out) = match transact_to {
             TransactTo::Call(address) => {
                 self.subroutine.inc_nonce(caller);
                 let context = CallContext {
@@ -73,7 +61,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
                     address,
                     apparent_value: value,
                 };
-                self.call_inner::<GSPEC>(
+                let (exit,gas,bytes) = self.call_inner::<GSPEC>(
                     address,
                     Transfer {
                         source: caller,
@@ -83,19 +71,20 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
                     data,
                     gas_limit,
                     context,
-                )
+                );
+                (exit,gas,TransactOut::Call(bytes))
             }
             TransactTo::Create(scheme) => {
                 let (exit, address, ret_gas, bytes) =
                     self.create_inner::<GSPEC>(caller, scheme, value, data, gas_limit);
-                (exit, ret_gas, bytes)
+                (exit, ret_gas, TransactOut::Create(bytes,address))
             }
         };
 
         gas.reimburse_unspend(&exit_reason, ret_gas);
         match self.finalize(caller, &gas) {
-            Err(e) => (e, bytes, gas.spend(), Map::new()),
-            Ok(state) => (exit_reason, bytes, gas.spend(), state),
+            Err(e) => (e, out, gas.spend(), Map::new()),
+            Ok(state) => (exit_reason, out, gas.spend(), state),
         }
     }
 }
@@ -306,9 +295,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         if self.subroutine.depth() > machine::CALL_STACK_LIMIT + 1 {
             return (ExitRevert::CallTooDeep.into(), gas, Bytes::new());
         }
-        if transfer.value == U256::zero() {
-            self.subroutine.balance_add(code_address, U256::zero()); //touch code address
-        }
+
         // transfer value from caller to called account;
         match self
             .subroutine

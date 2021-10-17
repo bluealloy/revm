@@ -1,4 +1,4 @@
-use crate::{BerlinSpec, CreateScheme, FrontierSpec, GlobalEnv, Inspector, IstanbulSpec, LatestSpec, SpecId, TransactTo, collection::vec::Vec, db::Database, error::ExitReason, evm_impl::EVMImpl, subroutine::State};
+use crate::{BerlinSpec, CreateScheme, FrontierSpec, GlobalEnv, Inspector, IstanbulSpec, LatestSpec, SpecId, TransactOut, TransactTo, collection::vec::Vec, db::Database, error::ExitReason, evm_impl::EVMImpl, subroutine::State};
 
 use primitive_types::{H160, H256, U256};
 use sha3::Digest;
@@ -69,5 +69,5 @@ pub trait EVM {
         data: Bytes,
         gas_limit: u64,
         access_list: Vec<(H160, Vec<H256>)>,
-    ) -> (ExitReason, Bytes, u64, State);
+    ) -> (ExitReason, TransactOut, u64, State);
 }

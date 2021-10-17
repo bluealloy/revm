@@ -62,7 +62,7 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
         "RevertPrecompiledTouch_nonce",
         "RevertPrecompiledTouch_noncestorage",
         "failed_tx_xcf416c53",
-        //"sstore_combinations_initial00",
+        "sstore_combinations_initial00",
         "sstore_combinations_initial00_2",
         "sstore_combinations_initial01",
         "sstore_combinations_initial01_2",
@@ -75,7 +75,6 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
         "sstore_combinations_initial20",
         "sstore_combinations_initial21_2",
         "SuicidesAndInternlCallSuicidesSuccess",
-        //"ExtCodeCopyTests",
     ]
     .into_iter()
     .collect();
