@@ -172,8 +172,11 @@ impl Machine {
     /// loop steps until we are finished with execution
     pub fn run<H: Handler, SPEC: Spec>(&mut self, handler: &mut H) -> ExitReason {
         loop {
-            if let Err(reson) = self.step::<H, SPEC>(handler) {
-                return reson;
+            if let Err(reason) = self.step::<H, SPEC>(handler) {
+                if H::INSPECT {
+                    handler.inspect().call_return(reason.clone());
+                }
+                return reason;
             }
         }
     }
@@ -181,15 +184,18 @@ impl Machine {
     #[inline]
     /// Step the machine, executing one opcode. It then returns.
     pub fn step<H: Handler, SPEC: Spec>(&mut self, handler: &mut H) -> Result<(), ExitReason> {
-        handler.inspect().step(self);
-
+        if H::INSPECT {
+            handler.inspect().step(self);
+        }
         // extract next opcode from code
         let _program_counter = self.program_counter;
         let opcode = self.contract.opcode(self.program_counter)?;
 
         // evaluate opcode/execute instruction
         let mut eval = eval::<H, SPEC>(self, opcode, self.program_counter, handler);
-        handler.inspect().eval(&mut eval, self);
+        if H::INSPECT {
+            handler.inspect().eval(&mut eval, self);
+        }
         match eval {
             Control::Continue => {
                 self.program_counter += 1;
@@ -197,7 +203,9 @@ impl Machine {
             Control::ContinueN(p) => {
                 self.program_counter += p;
             }
-            Control::Exit(e) => return Err(e),
+            Control::Exit(e) => {
+                return Err(e);
+            }
             Control::Jump(p) => {
                 self.program_counter = p;
             }

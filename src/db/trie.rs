@@ -11,7 +11,7 @@ use sha3::{Digest, Keccak256};
 use crate::{collection::Map, models::AccountInfo};
 
 /// Returns the RLP for this account.
-pub fn trie_account_rlp(info: &AccountInfo, storage: Map<H256, H256>) -> Bytes {
+pub fn trie_account_rlp(info: &AccountInfo, mut storage: Map<H256, H256>) -> Bytes {
     let mut stream = RlpStream::new_list(4);
     let b = Bytes::new();
     let code = info.code.as_ref().unwrap_or(&b);

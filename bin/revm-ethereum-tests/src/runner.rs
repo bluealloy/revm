@@ -54,7 +54,7 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
     let json_reader = std::fs::read(&path).unwrap();
     let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
     let skip_test_unit: HashSet<_> = vec![
-        "typeTwoBerlin", //txbyte is of type 02 and we dont parse bytes for this test to fail
+        "typeTwoBerlin", //txbyte is of type 02 and we dont parse bytes for this test to fail as it
         "modexp_modsize0_returndatasize", //modexp
         "RevertPrecompiledTouch",
         "RevertPrecompiledTouchExactOOG",
@@ -62,7 +62,7 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
         "RevertPrecompiledTouch_nonce",
         "RevertPrecompiledTouch_noncestorage",
         "failed_tx_xcf416c53",
-        "sstore_combinations_initial00",
+        //"sstore_combinations_initial00",
         "sstore_combinations_initial00_2",
         "sstore_combinations_initial01",
         "sstore_combinations_initial01_2",
@@ -75,7 +75,7 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
         "sstore_combinations_initial20",
         "sstore_combinations_initial21_2",
         "SuicidesAndInternlCallSuicidesSuccess",
-        "randomStatetest642",
+        //"ExtCodeCopyTests",
     ]
     .into_iter()
     .collect();
@@ -122,13 +122,6 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
         // Create database and insert cache
         let mut database = revm::StateDB::new();
         for (address, info) in unit.pre.iter() {
-            // if info.balance == U256::zero()
-            //     && info.nonce == 0
-            //     && info.code.is_empty()
-            //     && info.storage.is_empty()
-            // {
-            //     continue;
-            // }
             let acc_info = revm::AccountInfo {
                 balance: info.balance,
                 code_hash: Some(H256::from_slice(Keccak256::digest(&info.code).as_slice())), //try with dummy hash.

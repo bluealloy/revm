@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use crate::collection::{vec::Vec, Map};
 
 use primitive_types::{H160, H256, U256};
@@ -72,7 +74,7 @@ impl StateDB {
             .cache
             .iter()
             .map(|(address, info)| {
-                let storage = self.storage.get(address).cloned().unwrap_or_default();
+                let storage = self.storage.get(address).cloned().unwrap_or_default(); 
                 let storage_root = trie::trie_account_rlp(info, storage);
                 (address.clone(), storage_root)
             })
@@ -139,7 +141,12 @@ impl Database for StateDB {
         if self.fetch_account(&address) {
             self.cache.get(&address).cloned().unwrap()
         } else {
-            AccountInfo::default()
+            AccountInfo {
+                balance: U256::zero(),
+                nonce: 0,
+                code: Some(Bytes::new()),
+                code_hash: None,
+            }
         }
     }
 

@@ -1,4 +1,5 @@
 use primitive_types::{H160, H256, U256};
+use revm::ExitReason;
 pub use revm::{Control, Inspector};
 
 #[derive(Clone)]
@@ -60,7 +61,7 @@ impl Inspector for CustomPrintTracer {
         &mut self,
         call: H160,
         context: &revm::CallContext,
-        transfer: &Option<revm::Transfer>,
+        transfer: &revm::Transfer,
         input: &bytes::Bytes,
         gas_limit: u64,
         is_static: bool,
@@ -75,7 +76,9 @@ impl Inspector for CustomPrintTracer {
         );
     }
 
-    fn call_return(&mut self) {}
+    fn call_return(&mut self, exit: ExitReason) {
+        println!("\nSM EXIT:{:?}\n",exit);
+    }
 
     fn create(
         &mut self,

@@ -75,11 +75,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
                 };
                 self.call_inner::<GSPEC>(
                     address,
-                    Some(Transfer {
+                    Transfer {
                         source: caller,
                         target: address,
                         value,
-                    }),
+                    },
                     data,
                     gas_limit,
                     context,
@@ -289,7 +289,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     fn call_inner<SPEC: Spec>(
         &mut self,
         code_address: H160,
-        transfer: Option<Transfer>,
+        transfer: Transfer,
         input: Bytes,
         gas_limit: u64,
         context: CallContext,
@@ -306,31 +306,30 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         if self.subroutine.depth() > machine::CALL_STACK_LIMIT + 1 {
             return (ExitRevert::CallTooDeep.into(), gas, Bytes::new());
         }
+        if transfer.value == U256::zero() {
+            self.subroutine.balance_add(code_address, U256::zero()); //touch code address
+        }
         // transfer value from caller to called account;
-        if let Some(transfer) = transfer {
-            match self.subroutine.transfer(
-                transfer.source,
-                transfer.target,
-                transfer.value,
-                self.db,
-            ) {
-                Err(e) => {
-                    self.subroutine.checkpoint_revert(checkpoint);
-                    return (e.into(), gas, Bytes::new());
+        match self
+            .subroutine
+            .transfer(transfer.source, transfer.target, transfer.value, self.db)
+        {
+            Err(e) => {
+                self.subroutine.checkpoint_revert(checkpoint);
+                return (e.into(), gas, Bytes::new());
+            }
+            Ok((source_is_cold, target_is_cold)) => {
+                if INSPECT && source_is_cold {
+                    self.inspector
+                        .as_mut()
+                        .unwrap()
+                        .load_account(&transfer.source);
                 }
-                Ok((source_is_cold, target_is_cold)) => {
-                    if INSPECT && source_is_cold {
-                        self.inspector
-                            .as_mut()
-                            .unwrap()
-                            .load_account(&transfer.source);
-                    }
-                    if INSPECT && target_is_cold {
-                        self.inspector
-                            .as_mut()
-                            .unwrap()
-                            .load_account(&transfer.target);
-                    }
+                if INSPECT && target_is_cold {
+                    self.inspector
+                        .as_mut()
+                        .unwrap()
+                        .load_account(&transfer.target);
                 }
             }
         }
@@ -466,7 +465,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Handler
     fn call<SPEC: Spec>(
         &mut self,
         code_address: H160,
-        transfer: Option<Transfer>,
+        transfer: Transfer,
         input: Bytes,
         gas: u64,
         context: CallContext,
@@ -515,7 +514,7 @@ pub trait Handler {
     fn call<SPEC: Spec>(
         &mut self,
         code_address: H160,
-        transfer: Option<Transfer>,
+        transfer: Transfer,
         input: Bytes,
         gas: u64,
         context: CallContext,

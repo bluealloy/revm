@@ -492,19 +492,23 @@ pub fn call<H: Handler, SPEC: Spec>(
     };
 
     let transfer = if scheme == CallScheme::Call {
-        Some(Transfer {
+        Transfer {
             source: machine.contract.address,
             target: to.into(),
             value,
-        })
+        }
     } else if scheme == CallScheme::CallCode {
-        Some(Transfer {
+        Transfer {
             source: machine.contract.address,
             target: machine.contract.address,
             value,
-        })
-    } else {
-        None
+        }
+    } else { //this is dummy send for StaticCall and DelegateCall, it should do nothing and dont touch anything. 
+        Transfer {
+            source: machine.contract.address,
+            target: to.into(),
+            value: U256::zero(),
+        }
     };
 
     let to = to.into();
@@ -530,10 +534,8 @@ pub fn call<H: Handler, SPEC: Spec>(
     gas!(machine, gas_limit);
 
     // add call stipend if there is value to be transfered.
-    if let Some(transfer) = transfer.as_ref() {
-        if transfer.value != U256::zero() {
+    if matches!(scheme,CallScheme::Call | CallScheme::CallCode) && transfer.value != U256::zero() {
             gas_limit = gas_limit.saturating_add(gas::CALL_STIPEND);
-        }
     }
     let is_static = matches!(scheme, CallScheme::StaticCall);
     inspect!(handler, call, to, &context, &transfer, &input, gas_limit, is_static);

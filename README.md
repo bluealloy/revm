@@ -106,3 +106,11 @@ Depending on subroutine and if account was previously loaded/destryoyed, account
         - info: (original balance/nonce/code)
         - was_cold: bool
 - Destroyed(Account) -> swap all Info and Storage from current state
+
+
+
+STATE DB APPLY:
+
+Acc conditions stay:
+
+If it empty is inside json and empty dont remove it.

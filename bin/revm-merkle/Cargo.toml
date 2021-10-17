@@ -1,0 +1,19 @@
+[package]
+name = "revm-merkle"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+primitive-types = {version ="0.10", features = ["rlp","serde"]}
+bytes = "1.1"
+hex = "0.4"
+serde = "1.0"
+serde_json = "1.0"
+serde_derive = "1.0"
+rlp = { version = "0.5", default-features = false }
+triehash = "0.8"
+hash-db = "0.15"
+plain_hasher = "0.2"
+sha3 = { version = "0.9", default-features = false}
