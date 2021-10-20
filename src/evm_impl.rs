@@ -118,10 +118,14 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         inspector: Option<Box<dyn Inspector + 'a>>,
         precompiles: Precompiles,
     ) -> Self {
+        let mut precompile_acc = Map::new();
+        for add in precompiles.addresses() {
+            precompile_acc.insert(add.clone(),db.basic(add.clone()));
+        }
         Self {
             db,
             global_env,
-            subroutine: SubRoutine::new(Map::new()), //precompiles::accounts()),
+            subroutine: SubRoutine::new(precompile_acc),
             precompiles,
             inspector,
             _phantomdata: PhantomData {},
@@ -316,8 +320,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
         // Create subroutine checkpoint
         let checkpoint = self.subroutine.create_checkpoint();
-        self.load_account(context.address);
-        // check depth of calls
+        //touch address. For "EIP-158 State Clear" this will erase empty accounts.
+        if transfer.value == U256::zero() {
+            self.load_account(context.address);
+            self.subroutine.balance_add(context.address, U256::zero()); // touch the acc
+        }
 
         // transfer value from caller to called account;
         match self
@@ -349,8 +356,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             match (precompile)(input.as_ref(), gas_limit, &context, SPEC::IS_STATIC_CALL) {
                 Ok(PrecompileOutput { output, cost, logs }) => {
                     if gas.record_cost(cost) {
-                        logs.into_iter()
-                            .for_each(|l| self.log(l.address, l.topics, l.data));
+                        logs.into_iter().for_each(|l| self.subroutine.log(l));
                         self.subroutine.checkpoint_commit();
                         (ExitSucceed::Returned.into(), gas, Bytes::from(output))
                     } else {

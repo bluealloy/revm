@@ -5,6 +5,7 @@ use crate::{
 };
 
 use core::mem::{self};
+use std::str::FromStr;
 
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
@@ -103,7 +104,7 @@ impl SubRoutine {
         for (add, mut acc) in state.into_iter() {
             let dirty = acc.filth.clean();
             match acc.filth {
-                 // acc was destroyed or if it is changed precompile, just add it to output.
+                // acc was destroyed or if it is changed precompile, just add it to output.
                 Filth::Destroyed | Filth::Precompile(true) => {
                     acc.info.code = None;
                     out.insert(add, acc);
@@ -234,17 +235,6 @@ impl SubRoutine {
         Ok((from_is_cold, to_is_cold))
     }
 
-    pub fn create_checkpoint(&mut self) -> SubRoutineCheckpoint {
-        let checkpoint = SubRoutineCheckpoint {
-            log_i: self.logs.len(),
-            changelog_i: self.changelog.len(),
-            depth: self.depth,
-        };
-        self.depth += 1;
-        self.changelog.push(Default::default());
-        checkpoint
-    }
-
     ///
     /// return if it has collition of addresses
     pub fn new_contract_acc<DB: Database>(
@@ -299,7 +289,11 @@ impl SubRoutine {
             ChangeLog::PrecompileBalanceChange(original_balance, flag) => {
                 let acc = state.get_mut(&add).unwrap();
                 acc.info.balance = original_balance;
-                acc.filth = Filth::Precompile(flag);
+                if add == H160::from_low_u64_be(3) {
+                    acc.filth = Filth::Precompile(true);
+                } else {
+                    acc.filth = Filth::Precompile(flag);
+                }
                 None
             }
             ChangeLog::Destroyed(account) => {
@@ -379,6 +373,17 @@ impl SubRoutine {
         for (add, acc_change) in changelog {
             Self::revert_account_changelog(state, add, acc_change);
         }
+    }
+
+    pub fn create_checkpoint(&mut self) -> SubRoutineCheckpoint {
+        let checkpoint = SubRoutineCheckpoint {
+            log_i: self.logs.len(),
+            changelog_i: self.changelog.len(),
+            depth: self.depth,
+        };
+        self.depth += 1;
+        self.changelog.push(Default::default());
+        checkpoint
     }
 
     pub fn checkpoint_commit(&mut self) {
@@ -482,7 +487,7 @@ impl SubRoutine {
     pub fn load_code<DB: Database>(&mut self, address: H160, db: &mut DB) -> (&mut Account, bool) {
         let is_cold = self.load_account(address.clone(), db);
         let acc = self.state.get_mut(&address).unwrap();
-        let dont_load_from_db = !matches!(acc.filth, Filth::Destroyed | Filth::NewlyCreated);
+        let dont_load_from_db = !matches!(acc.filth, Filth::Destroyed | Filth::NewlyCreated | Filth::Precompile(_));
         if dont_load_from_db && acc.info.code.is_none() {
             // let code = if let Some(code_hash) = acc.info.code_hash {
             //     db.code_by_hash(code_hash)

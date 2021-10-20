@@ -509,6 +509,8 @@ pub fn call<H: Handler, SPEC: Spec>(
         handler.call::<SPEC>(to, transfer, input, gas_limit, context)
     };
     machine.return_data_buffer = return_data;
+
+    inspect!(handler, call_return, reason.clone());
     let target_len = min(out_len, U256::from(machine.return_data_buffer.len()));
     // return unspend gas.
     machine.gas.reimburse_unspend(&reason, gas);

@@ -56,24 +56,7 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
     let skip_test_unit: HashSet<_> = vec![
         "typeTwoBerlin", //txbyte is of type 02 and we dont parse bytes for this test to fail as it
         "modexp_modsize0_returndatasize", //modexp
-        "RevertPrecompiledTouch",
-        "RevertPrecompiledTouchExactOOG",
-        "RevertPrecompiledTouch_storage",
-        "RevertPrecompiledTouch_nonce",
-        "RevertPrecompiledTouch_noncestorage",
-        "failed_tx_xcf416c53",
-        "sstore_combinations_initial00",
-        "sstore_combinations_initial00_2",
-        "sstore_combinations_initial01",
-        "sstore_combinations_initial01_2",
-        "sstore_combinations_initial10",
-        "sstore_combinations_initial11",
-        "sstore_combinations_initial11_2",
-        "sstore_combinations_initial20_2",
-        "sstore_combinations_initial21",
-        "sstore_combinations_initial10_2",
-        "sstore_combinations_initial20",
-        "sstore_combinations_initial21_2",
+        //"failed_tx_xcf416c53",
         "SuicidesAndInternlCallSuicidesSuccess",
     ]
     .into_iter()
@@ -216,7 +199,7 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
                 let state_root = database.state_root();
                 if test.hash != state_root {
                     println!("UNIT_TEST:{}\n", name);
-                    //break;
+                    break;
                     println!("\nApplied state:{:?}\n", database);
                     println!("\nStateroot: {:?}\n", state_root);
                     return Err(TestError::RootMissmatch {

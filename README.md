@@ -106,7 +106,6 @@ I just started this project as a hobby to kill some time. Presenty it has good s
     * machine/spec/opcodes/precompiles(without modexp) feels good and I probably dont need to touch them.
     * inspector: is what i wanted, full control on insides of EVM so that we can control it and modify it. will probably needs to add some small tweaks to interface but nothing major.
     * subroutines: Feels okay but it needs more scrutiny just to be sure that all corner cases are covered.
-    * All calls/creates probably can be rewriten and consolidate into one bloob to simplify that logic. Will need to investa time to be sure
     * Test that are failing (~20) are mostly related to EIP-158: State clearing. For EIP-158 I will time to do it properly.
     * There is probably benefit of replaing HashMap hasher with something simpler, but this is research for another time.
 ## Project structure:

@@ -4,8 +4,6 @@ mod trace;
 
 use std::{env, path::PathBuf};
 
-use serde::de::Error;
-
 use crate::trace::CustomPrintTracer;
 use revm::NoOpInspector;
 
