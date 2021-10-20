@@ -54,20 +54,7 @@ pub fn address(machine: &mut Machine) -> Control {
 pub fn balance<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
     pop!(machine, address);
     let (balance, is_cold) = handler.balance(address.into());
-    gas!(
-        machine,
-        if SPEC::enabled(BERLIN) {
-            if is_cold {
-                gas::ACCOUNT_ACCESS_COLD
-            } else {
-                gas::STORAGE_READ_WARM
-            }
-        } else if SPEC::enabled(ISTANBUL) {
-            700
-        } else {
-            20
-        }
-    );
+    gas!(machine, gas::account_access_gas::<SPEC>(is_cold));
     push_u256!(machine, balance);
 
     Control::Continue
@@ -124,20 +111,7 @@ pub fn extcodesize<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
     pop!(machine, address);
 
     let (code, is_cold) = handler.code(address.into());
-    gas!(
-        machine,
-        if SPEC::enabled(BERLIN) {
-            if is_cold {
-                gas::ACCOUNT_ACCESS_COLD
-            } else {
-                gas::STORAGE_READ_WARM
-            }
-        } else if SPEC::enabled(ISTANBUL) {
-            700
-        } else {
-            20
-        }
-    );
+    gas!(machine, gas::account_access_gas::<SPEC>(is_cold));
 
     push_u256!(machine, U256::from(code.len()));
 
@@ -148,20 +122,7 @@ pub fn extcodehash<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
     check!(SPEC::enabled(ISTANBUL));
     pop!(machine, address);
     let (code_hash, is_cold) = handler.code_hash(address.into());
-    gas!(
-        machine,
-        if SPEC::enabled(BERLIN) {
-            if is_cold {
-                gas::ACCOUNT_ACCESS_COLD
-            } else {
-                gas::STORAGE_READ_WARM
-            }
-        } else if SPEC::enabled(ISTANBUL) {
-            700
-        } else {
-            20
-        }
-    );
+    gas!(machine, gas::account_access_gas::<SPEC>(is_cold));
     push!(machine, code_hash);
 
     Control::Continue
@@ -503,7 +464,8 @@ pub fn call<H: Handler, SPEC: Spec>(
             target: machine.contract.address,
             value,
         }
-    } else { //this is dummy send for StaticCall and DelegateCall, it should do nothing and dont touch anything. 
+    } else {
+        //this is dummy send for StaticCall and DelegateCall, it should do nothing and dont touch anything.
         Transfer {
             source: machine.contract.address,
             target: machine.contract.address,
@@ -534,8 +496,8 @@ pub fn call<H: Handler, SPEC: Spec>(
     gas!(machine, gas_limit);
 
     // add call stipend if there is value to be transfered.
-    if matches!(scheme,CallScheme::Call | CallScheme::CallCode) && transfer.value != U256::zero() {
-            gas_limit = gas_limit.saturating_add(gas::CALL_STIPEND);
+    if matches!(scheme, CallScheme::Call | CallScheme::CallCode) && transfer.value != U256::zero() {
+        gas_limit = gas_limit.saturating_add(gas::CALL_STIPEND);
     }
     let is_static = matches!(scheme, CallScheme::StaticCall);
     inspect!(handler, call, to, &context, &transfer, &input, gas_limit, is_static);

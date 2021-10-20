@@ -3,7 +3,19 @@ use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
 
 use super::precompiles::{PrecompileOutput, Precompiles};
-use crate::{CallContext, CreateScheme, EVM, ExitRevert, GlobalEnv, Inspector, Log, TransactOut, TransactTo, Transfer, collection::{vec::Vec, Map}, db::Database, error::{ExitError, ExitReason, ExitSucceed}, machine, machine::{Contract, Gas, Machine}, models::SelfDestructResult, opcode::gas, spec::{Spec, SpecId::*}, subroutine::{Account, State, SubRoutine}, util};
+use crate::{
+    collection::{vec::Vec, Map},
+    db::Database,
+    error::{ExitError, ExitReason, ExitSucceed},
+    machine,
+    machine::{Contract, Gas, Machine},
+    models::SelfDestructResult,
+    opcode::gas,
+    spec::{Spec, SpecId::*},
+    subroutine::{Account, State, SubRoutine},
+    util, CallContext, CreateScheme, ExitRevert, GlobalEnv, Inspector, Log, TransactOut,
+    TransactTo, Transfer, EVM,
+};
 use bytes::Bytes;
 
 pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
@@ -36,7 +48,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
             matches!(transact_to, TransactTo::Create(_)),
             access_list,
         )) {
-            return (ExitError::OutOfGas.into(), TransactOut::None, 0, State::new());
+            return (
+                ExitError::OutOfGas.into(),
+                TransactOut::None,
+                0,
+                State::new(),
+            );
         }
 
         // load acc
@@ -45,7 +62,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
         // substract gas_limit*gas_price from current account.
         let payment_value = U256::from(gas_limit) * self.global_env.gas_price;
         if !self.subroutine.balance_sub(caller, payment_value) {
-            return (ExitError::OutOfFund.into(), TransactOut::None, 0, State::new());
+            return (
+                ExitError::OutOfFund.into(),
+                TransactOut::None,
+                0,
+                State::new(),
+            );
         }
 
         // record all as cost;
@@ -61,7 +83,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
                     address,
                     apparent_value: value,
                 };
-                let (exit,gas,bytes) = self.call_inner::<GSPEC>(
+                let (exit, gas, bytes) = self.call_inner::<GSPEC>(
                     address,
                     Transfer {
                         source: caller,
@@ -72,12 +94,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
                     gas_limit,
                     context,
                 );
-                (exit,gas,TransactOut::Call(bytes))
+                (exit, gas, TransactOut::Call(bytes))
             }
             TransactTo::Create(scheme) => {
                 let (exit, address, ret_gas, bytes) =
                     self.create_inner::<GSPEC>(caller, scheme, value, data, gas_limit);
-                (exit, ret_gas, TransactOut::Create(bytes,address))
+                (exit, ret_gas, TransactOut::Create(bytes, address))
             }
         };
 
@@ -284,17 +306,18 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         context: CallContext,
     ) -> (ExitReason, Gas, Bytes) {
         let mut gas = Gas::new(gas_limit);
-        // Load account and get code.
+        // Load account and get code. Account is now hot.
         let (code, _) = self.code(code_address);
+
+        // check depth
+        if self.subroutine.depth() > machine::CALL_STACK_LIMIT {
+            return (ExitRevert::CallTooDeep.into(), gas, Bytes::new());
+        }
+
         // Create subroutine checkpoint
         let checkpoint = self.subroutine.create_checkpoint();
         self.load_account(context.address);
         // check depth of calls
-        // it seems strange but +1 is how geth works, in logs you can see 1025 depth even if 1024 is limit.
-        // TODO check +1.
-        if self.subroutine.depth() > machine::CALL_STACK_LIMIT + 1 {
-            return (ExitRevert::CallTooDeep.into(), gas, Bytes::new());
-        }
 
         // transfer value from caller to called account;
         match self
@@ -320,6 +343,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 }
             }
         }
+
         // call precompiles
         if let Some(precompile) = self.precompiles.get_fun(&code_address) {
             match (precompile)(input.as_ref(), gas_limit, &context, SPEC::IS_STATIC_CALL) {

@@ -136,6 +136,21 @@ pub fn extcodecopy_cost<SPEC: Spec>(len: U256, is_cold: bool) -> Option<u64> {
     Some(gas.as_u64())
 }
 
+pub fn account_access_gas<SPEC: Spec>(is_cold: bool) -> u64 {
+    if SPEC::enabled(BERLIN) {
+        if is_cold {
+            ACCOUNT_ACCESS_COLD
+        } else {
+            STORAGE_READ_WARM
+        }
+    } else if SPEC::enabled(ISTANBUL) {
+        700
+    } else {
+        20
+    }
+}
+
+
 pub fn log_cost(n: u8, len: U256) -> Option<u64> {
     let gas = U256::from(LOG)
         .checked_add(U256::from(LOGDATA).checked_mul(len)?)?
@@ -299,6 +314,7 @@ fn xfer_cost(is_call_or_callcode: bool, transfers_value: bool) -> u64 {
         0
     }
 }
+
 
 fn new_cost<SPEC: Spec>(is_call_or_staticcall: bool, is_new: bool, transfers_value: bool) -> u64 {
     if is_call_or_staticcall {
