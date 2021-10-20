@@ -7,7 +7,7 @@ mod spec;
 use deserializer::*;
 
 use serde_derive::*;
-use serde_json::{self, Error};
+use serde_json::{self};
 
 pub use self::spec::SpecName;
 

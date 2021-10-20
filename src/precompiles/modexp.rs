@@ -8,7 +8,6 @@ use core::{
     cmp::{max, min},
     marker::PhantomData,
     mem::size_of,
-    ops::BitAnd,
 };
 use num::{BigUint, One, Zero};
 use primitive_types::{H160 as Address, U256};

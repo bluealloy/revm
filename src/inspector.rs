@@ -84,7 +84,7 @@ impl Inspector for NoOpInspector {
     ) {
     }
 
-    fn call_return(&mut self, exit: ExitReason) {}
+    fn call_return(&mut self, _exit: ExitReason) {}
 
     fn create(
         &mut self,

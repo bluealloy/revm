@@ -1,4 +1,4 @@
-use crate::{BerlinSpec, CreateScheme, FrontierSpec, GlobalEnv, Inspector, IstanbulSpec, LatestSpec, SpecId, TransactOut, TransactTo, collection::vec::Vec, db::Database, error::ExitReason, evm_impl::EVMImpl, subroutine::State};
+use crate::{BerlinSpec, FrontierSpec, GlobalEnv, Inspector, IstanbulSpec, LatestSpec, SpecId, TransactOut, TransactTo, collection::vec::Vec, db::Database, error::ExitReason, evm_impl::EVMImpl, subroutine::State};
 
 use primitive_types::{H160, H256, U256};
 use sha3::Digest;

@@ -33,7 +33,7 @@ impl Inspector for CustomPrintTracer {
         println!("ACCOUNT LOADED:{:?}", address);
     }
 
-    fn eval(&mut self, eval: &mut Control, machine: &mut revm::Machine) {}
+    fn eval(&mut self, _eval: &mut Control, _machine: &mut revm::Machine) {}
 
     fn sload(&mut self, address: &H160, slot: &H256, value: &H256, is_cold: bool) {
         println!(
@@ -63,7 +63,7 @@ impl Inspector for CustomPrintTracer {
         context: &revm::CallContext,
         transfer: &revm::Transfer,
         input: &bytes::Bytes,
-        gas_limit: u64,
+        _gas_limit: u64,
         is_static: bool,
     ) {
         println!(

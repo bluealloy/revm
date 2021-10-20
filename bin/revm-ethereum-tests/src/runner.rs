@@ -2,29 +2,25 @@
 
 use std::{
     collections::{HashMap, HashSet},
-    error::Error,
-    iter::FromIterator,
-    path::{Path, PathBuf},
+    path::{PathBuf},
     str::FromStr,
     sync::{
-        atomic::{AtomicBool, AtomicU64, AtomicUsize},
+        atomic::{AtomicBool},
         Arc, Mutex,
     },
-    thread,
 };
 
 use sha3::{Digest, Keccak256};
 
-use bytes::Bytes;
+
 use indicatif::ProgressBar;
 use primitive_types::{H160, H256, U256};
-use revm::{BerlinSpec, CreateScheme, ExitReason, GlobalEnv, Inspector, SpecId, TransactTo};
+use revm::{CreateScheme, GlobalEnv, Inspector, SpecId, TransactTo};
 use std::sync::atomic::Ordering;
 use walkdir::{DirEntry, WalkDir};
 
 use crate::{
     models::{SpecName, TestSuit},
-    trace::CustomPrintTracer,
 };
 use thiserror::Error;
 
@@ -182,7 +178,7 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
                     None => TransactTo::Create(CreateScheme::Create),
                 };
                 let inspector = inspector.clone();
-                let (ret, out, gas, state) = {
+                let (_ret, _out, _gas, state) = {
                     let mut evm = revm::new_inspect(
                         SpecId::BERLIN,
                         global_env.clone(),
@@ -213,7 +209,7 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
 }
 
 pub fn run<INSP: Inspector + Clone + Send + 'static>(
-    mut test_files: Vec<PathBuf>,
+    test_files: Vec<PathBuf>,
     inspector: Box<INSP>,
 ) {
     let endjob = Arc::new(AtomicBool::new(false));

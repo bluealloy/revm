@@ -5,7 +5,7 @@ use crate::{
 };
 
 use core::mem::{self};
-use std::str::FromStr;
+
 
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
