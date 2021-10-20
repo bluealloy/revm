@@ -8,7 +8,7 @@ use std::{
     str::FromStr,
     sync::{
         atomic::{AtomicBool, AtomicU64, AtomicUsize},
-        Arc,
+        Arc, Mutex,
     },
     thread,
 };
@@ -55,8 +55,6 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
     let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
     let skip_test_unit: HashSet<_> = vec![
         "typeTwoBerlin", //txbyte is of type 02 and we dont parse bytes for this test to fail as it
-        "modexp_modsize0_returndatasize", //modexp
-        //"failed_tx_xcf416c53",
         "SuicidesAndInternlCallSuicidesSuccess",
     ]
     .into_iter()
@@ -198,8 +196,8 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
                 database.apply(state);
                 let state_root = database.state_root();
                 if test.hash != state_root {
-                    println!("UNIT_TEST:{}\n", name);
-                    break;
+                    println!("{:?} UNIT_TEST:{}\n", path, name);
+                    //break;
                     println!("\nApplied state:{:?}\n", database);
                     println!("\nStateroot: {:?}\n", state_root);
                     return Err(TestError::RootMissmatch {
@@ -215,14 +213,16 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
 }
 
 pub fn run<INSP: Inspector + Clone + Send + 'static>(
-    mut test_files: &[PathBuf],
+    mut test_files: Vec<PathBuf>,
     inspector: Box<INSP>,
 ) {
     let endjob = Arc::new(AtomicBool::new(false));
     let console_bar = Arc::new(ProgressBar::new(test_files.len() as u64));
     let mut joins = Vec::new();
-    for chunk in test_files.chunks(30000) {
-        let chunk = Vec::from(chunk);
+    let queue = Arc::new(Mutex::new((0, test_files)));
+
+    for _ in 0..10 {
+        let queue = queue.clone();
         let endjob = endjob.clone();
         let console_bar = console_bar.clone();
         let insp = inspector.clone();
@@ -231,17 +231,23 @@ pub fn run<INSP: Inspector + Clone + Send + 'static>(
             std::thread::Builder::new()
                 .stack_size(50 * 1024 * 1024)
                 .spawn(move || {
-                    for test in chunk {
+                    loop {
+                        let test_path = {
+                            let mut queue = queue.lock().unwrap();
+                            if queue.1.len() <= queue.0 {
+                                break;
+                            }
+                            let test_path = queue.1[queue.0].clone();
+                            queue.0 += 1;
+                            test_path
+                        };
                         if endjob.load(Ordering::SeqCst) {
                             return;
                         }
-                        //println!("Test:{:?}", test);
-                        if let Err(err) = execute_test_suit(&test, insp.clone()) {
+                        if let Err(err) = execute_test_suit(&test_path, insp.clone()) {
                             endjob.store(true, Ordering::SeqCst);
-                            println!("{:?} failed: {}", test, err);
+                            println!("{:?} failed: {}", test_path, err);
                             return;
-                        } else {
-                            //println!("{:?} is okay", test);
                         }
                         console_bar.inc(1);
                     }

@@ -52,11 +52,9 @@ impl<HF: HardFork> ModExp<HF> {
         F: FnOnce(u64, u64, u64, &BigUint) -> u64,
     {
         let len = input.len();
-
-        //TODO return to this and put some meaningful values for overflow limit
-        let (base_len, base_overflow) = read_u64_with_overflow!(input, 0, 32, 100000);
-        let (exp_len, exp_overflow) = read_u64_with_overflow!(input, 32, 64, 100000);
-        let (mod_len, mod_overflow) = read_u64_with_overflow!(input, 64, 96, 255);
+        let (base_len, base_overflow) = read_u64_with_overflow!(input, 0, 32, u16::MAX as usize);
+        let (exp_len, exp_overflow) = read_u64_with_overflow!(input, 32, 64, u16::MAX as usize);
+        let (mod_len, mod_overflow) = read_u64_with_overflow!(input, 64, 96, u16::MAX as usize);
 
         if base_overflow || mod_overflow {
             return Ok(PrecompileOutput::without_logs(u64::MAX, Vec::new()));
@@ -69,6 +67,24 @@ impl<HF: HardFork> ModExp<HF> {
             if exp_overflow {
                 return Ok(PrecompileOutput::without_logs(u64::MAX, Vec::new()));
             }
+            let base_start = 96;
+            let base_end = base_start + base_len;
+            let exp_end = base_end + exp_len;
+            let exp_highp_end = base_end + min(32, exp_len);
+            let mod_end = exp_end + mod_len;
+
+            let exp_highp = {
+                let mut out = vec![0; 32];
+                let from = min(base_end, len);
+                let to = min(exp_highp_end, len);
+                out[32 - (to - from)..].copy_from_slice(&input[from..to]);
+                BigUint::from_bytes_be(&out)
+            };
+
+            let gas_cost = gas_quert(
+                calc_gas(base_len as u64, exp_len as u64, mod_len as u64, &exp_highp),
+                gas_limit,
+            )?;
 
             let read_big = |from: usize, to: usize| {
                 let mut out = vec![0; to - from];
@@ -78,19 +94,8 @@ impl<HF: HardFork> ModExp<HF> {
                 BigUint::from_bytes_be(&out)
             };
 
-            let base_start = 96;
-            let base_end = base_start + base_len;
-            let exp_end = base_end + exp_len;
-            let mod_end = exp_end + mod_len;
-
-            let exponent = read_big(base_end, exp_end);
-
-            let gas_cost = gas_quert(
-                calc_gas(base_len as u64, exp_len as u64, mod_len as u64, &exponent),
-                gas_limit,
-            )?;
-
             let base = read_big(base_start, base_end);
+            let exponent = read_big(base_end, exp_end);
             let modulus = read_big(exp_end, mod_end);
 
             if modulus.is_zero() || modulus.is_one() {
@@ -181,7 +186,7 @@ impl ModExp<Berlin> {
         base_length: u64,
         exp_length: u64,
         mod_length: u64,
-        exponent: &BigUint,
+        exp_highp: &BigUint,
     ) -> u64 {
         fn calculate_multiplication_complexity(base_length: u64, mod_length: u64) -> U256 {
             let max_length = max(base_length, mod_length);
@@ -193,22 +198,15 @@ impl ModExp<Berlin> {
             words * words
         }
 
-        fn calculate_iteration_count(exp_length: u64, exponent: &BigUint) -> u64 {
+        fn calculate_iteration_count(exp_length: u64, exp_highp: &BigUint) -> u64 {
             let mut iteration_count: u64 = 0;
 
-            if exp_length <= 32 && exponent.is_zero() {
+            if exp_length <= 32 && exp_highp.is_zero() {
                 iteration_count = 0;
             } else if exp_length <= 32 {
-                iteration_count = exponent.bits() - 1;
+                iteration_count = exp_highp.bits() - 1;
             } else if exp_length > 32 {
-                // construct BigUint to represent (2^256) - 1
-                let bytes: [u8; 32] = [0xFF; 32];
-                let max_256_bit_uint = BigUint::from_bytes_be(&bytes);
-                iteration_count = 8 * (exp_length - 32);
-                let bits = (exponent.bitand(max_256_bit_uint)).bits();
-                if bits > 0 {
-                    iteration_count += bits - 1;
-                }
+                iteration_count = (8 * (exp_length - 32)) + max(1, exp_highp.bits()) - 1;
             }
 
             max(iteration_count, 1)
@@ -216,7 +214,7 @@ impl ModExp<Berlin> {
 
         let multiplication_complexity =
             calculate_multiplication_complexity(base_length, mod_length);
-        let iteration_count = calculate_iteration_count(exp_length, exponent);
+        let iteration_count = calculate_iteration_count(exp_length, exp_highp);
         let gas = (multiplication_complexity * U256::from(iteration_count)) / 3;
         if gas > U256::from(u64::MAX) {
             return u64::MAX;
@@ -239,7 +237,6 @@ impl Precompile for ModExp<Berlin> {
     }
 }
 
-/*
 #[cfg(test)]
 mod tests {
 
@@ -248,13 +245,28 @@ mod tests {
     // Byzantium tests: https://github.com/holiman/go-ethereum/blob/master/core/vm/testdata/precompiles/modexp.json
     // Berlin tests:https://github.com/holiman/go-ethereum/blob/master/core/vm/testdata/precompiles/modexp_eip2565.json
 
+    //0x0000000000000000000000000000000000000000000000000000000000000064000000000000000000000000000000000000000000000000000000000000006400000000000000000000000000000000000000000000000000000000000000645442ddc2b70f66c1f6d2b296c0a875be7eddd0a80958cbc7425f1899ccf90511a5c318226e48ee23f130b44dc17a691ce66be5da18b85ed7943535b205aa125e9f59294a00f05155c23e97dac6b3a00b0c63c8411bf815fc183b420b4d9dc5f715040d5c60957f52d334b843197adec58c131c907cd96059fc5adce9dda351b5df3d666fcf3eb63c46851c1816e323f2119ebdf5ef35
+
     struct Test {
         input: &'static str,
         expected: &'static str,
         name: &'static str,
     }
 
-    const TESTS: [Test; 18] = [
+    const TESTS: [Test; 19] = [
+        Test {
+            input: "\
+            0000000000000000000000000000000000000000000000000000000000000064\
+            0000000000000000000000000000000000000000000000000000000000000064\
+            0000000000000000000000000000000000000000000000000000000000000064\
+            5442ddc2b70f66c1f6d2b296c0a875be7eddd0a80958cbc7425f1899ccf90511\
+            a5c318226e48ee23f130b44dc17a691ce66be5da18b85ed7943535b205aa125e\
+            9f59294a00f05155c23e97dac6b3a00b0c63c8411bf815fc183b420b4d9dc5f7\
+            15040d5c60957f52d334b843197adec58c131c907cd96059fc5adce9dda351b5\
+            df3d666fcf3eb63c46851c1816e323f2119ebdf5ef35",
+            expected: "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+            name: "eth_tests_modexp_modsize0_returndatasizeFiller",
+        },
         Test {
             input: "\
             0000000000000000000000000000000000000000000000000000000000000001\
@@ -400,14 +412,14 @@ mod tests {
         }
     ];
 
-    const BYZANTIUM_GAS: [u64; 18] = [
-        13_056, 13_056, 13_056, 204, 204, 3_276, 665, 665, 10_649, 1_894, 1_894, 30_310, 5_580,
+    const BYZANTIUM_GAS: [u64; 19] = [
+        0, 13_056, 13_056, 13_056, 204, 204, 3_276, 665, 665, 10_649, 1_894, 1_894, 30_310, 5_580,
         5_580, 89_292, 17_868, 17_868, 285_900,
     ];
 
-    const BERLIN_GAS: [u64; 18] = [
-        1_360, 1_360, 1_360, 200, 200, 341, 200, 200, 1_365, 341, 341, 5_461, 1_365, 1_365, 21_845,
-        5_461, 5_461, 87_381,
+    const BERLIN_GAS: [u64; 19] = [
+        44_954, 1_360, 1_360, 1_360, 200, 200, 341, 200, 200, 1_365, 341, 341, 5_461, 1_365, 1_365,
+        21_845, 5_461, 5_461, 87_381,
     ];
 
     #[test]
@@ -423,63 +435,72 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_byzantium_modexp_gas() {
-        for (test, test_gas) in TESTS.iter().zip(BYZANTIUM_GAS.iter()) {
-            let input = hex::decode(&test.input).unwrap();
+    // #[test]
+    // fn test_byzantium_modexp_gas() {
+    //     for (test, test_gas) in TESTS.iter().zip(BYZANTIUM_GAS.iter()) {
+    //         let input = hex::decode(&test.input).unwrap();
 
-            let gas = ModExp::<Byzantium>::required_gas(&input).unwrap();
-            assert_eq!(gas, *test_gas, "test:{} gas", test.name);
-        }
-    }
+    //         let gas = ModExp::<Byzantium>::required_gas(&input).unwrap();
+    //         assert_eq!(gas, *test_gas, "test:{} gas", test.name);
+    //     }
+    // }
 
     #[test]
     fn test_berlin_modexp_gas() {
-        for (test, test_gas) in TESTS.iter().zip(BERLIN_GAS.iter()) {
+        for ((i, test), test_gas) in TESTS.iter().enumerate().zip(BERLIN_GAS.iter()) {
             let input = hex::decode(&test.input).unwrap();
 
-            let gas = ModExp::<Berlin>::required_gas(&input).unwrap();
-            assert_eq!(gas, *test_gas, "{} gas", test.name);
+            let gas_limit = 100_000;
+            let out =
+                ModExp::<Berlin>::run(&input, gas_limit, &CallContext::default(), false).unwrap();
+
+            assert_eq!(
+                hex::encode(out.output),
+                test.expected,
+                "{} expected",
+                test.name
+            );
+            assert_eq!(out.cost, *test_gas, "{} gas, index:{}", test.name, i);
         }
     }
 
-    #[test]
-    fn test_berlin_modexp_big_input() {
-        let base_len = U256::from(4);
-        let exp_len = U256::from(u64::MAX);
-        let mod_len = U256::from(4);
-        let base: u32 = 1;
-        let exp = U256::MAX;
+    // #[test]
+    // fn test_berlin_modexp_big_input() {
+    //     let base_len = U256::from(4);
+    //     let exp_len = U256::from(u64::MAX);
+    //     let mod_len = U256::from(4);
+    //     let base: u32 = 1;
+    //     let exp = U256::MAX;
 
-        let mut input: Vec<u8> = Vec::new();
-        input.extend_from_slice(&crate::precompiles::u256_to_arr(&base_len));
-        input.extend_from_slice(&crate::precompiles::u256_to_arr(&exp_len));
-        input.extend_from_slice(&crate::precompiles::u256_to_arr(&mod_len));
-        input.extend_from_slice(&base.to_be_bytes());
-        input.extend_from_slice(&crate::precompiles::u256_to_arr(&exp));
+    //     let mut input: Vec<u8> = Vec::new();
+    //     input.extend_from_slice(&crate::precompiles::u256_to_arr(&base_len));
+    //     input.extend_from_slice(&crate::precompiles::u256_to_arr(&exp_len));
+    //     input.extend_from_slice(&crate::precompiles::u256_to_arr(&mod_len));
+    //     input.extend_from_slice(&base.to_be_bytes());
+    //     input.extend_from_slice(&crate::precompiles::u256_to_arr(&exp));
 
-        // completes without any overflow
-        ModExp::<Berlin>::required_gas(&input).unwrap();
-    }
+    //     // completes without any overflow
+    //     ModExp::<Berlin>::required_gas(&input).unwrap();
+    // }
 
-    #[test]
-    fn test_berlin_modexp_bigger_input() {
-        let base_len = U256::MAX;
-        let exp_len = U256::MAX;
-        let mod_len = U256::MAX;
-        let base: u32 = 1;
-        let exp = U256::MAX;
+    // #[test]
+    // fn test_berlin_modexp_bigger_input() {
+    //     let base_len = U256::MAX;
+    //     let exp_len = U256::MAX;
+    //     let mod_len = U256::MAX;
+    //     let base: u32 = 1;
+    //     let exp = U256::MAX;
 
-        let mut input: Vec<u8> = Vec::new();
-        input.extend_from_slice(&crate::precompiles::u256_to_arr(&base_len));
-        input.extend_from_slice(&crate::precompiles::u256_to_arr(&exp_len));
-        input.extend_from_slice(&crate::precompiles::u256_to_arr(&mod_len));
-        input.extend_from_slice(&base.to_be_bytes());
-        input.extend_from_slice(&crate::precompiles::u256_to_arr(&exp));
+    //     let mut input: Vec<u8> = Vec::new();
+    //     input.extend_from_slice(&crate::precompiles::u256_to_arr(&base_len));
+    //     input.extend_from_slice(&crate::precompiles::u256_to_arr(&exp_len));
+    //     input.extend_from_slice(&crate::precompiles::u256_to_arr(&mod_len));
+    //     input.extend_from_slice(&base.to_be_bytes());
+    //     input.extend_from_slice(&crate::precompiles::u256_to_arr(&exp));
 
-        // completes without any overflow
-        ModExp::<Berlin>::required_gas(&input).unwrap();
-    }
+    //     // completes without any overflow
+    //     ModExp::<Berlin>::required_gas(&input).unwrap();
+    // }
 
     #[test]
     fn test_berlin_modexp_empty_input() {
@@ -488,4 +509,3 @@ mod tests {
         assert_eq!(res.output, expected)
     }
 }
- */

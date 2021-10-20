@@ -33,11 +33,14 @@ pub fn main() {
     //let inspector = Box::new(NoOpInspector());
     if args.len() == 1 {
         runner::run(
-            &test_files.as_slice()[skip..],
+            test_files.as_slice()[skip..].to_vec(),
             Box::new(CustomPrintTracer {}),
         )
     } else {
-        runner::run(&test_files.as_slice()[skip..], Box::new(NoOpInspector()))
+        runner::run(
+            test_files.as_slice()[skip..].to_vec(),
+            Box::new(NoOpInspector()),
+        )
     }
 }
 
