@@ -17,8 +17,6 @@ impl<HF: HardFork> ModExp<HF> {
     pub(super) const ADDRESS: Address = super::make_address(0, 5);
 }
 
-const MIN_GAS_COST: u64 = 200;
-
 /* https://ethereum-magicians.org/t/eip-2565-big-integer-modular-exponentiation-eip-198-gas-cost/4150/10
 old calculation of cunsumption.
 def mult_complexity(x):
@@ -60,7 +58,7 @@ impl<HF: HardFork> ModExp<HF> {
         max(iteration_count, 1)
     }
 
-    fn run_inner<F>(input: &[u8], gas_limit: u64, calc_gas: F) -> PrecompileResult
+    fn run_inner<F>(input: &[u8], gas_limit: u64, min_gas: u64, calc_gas: F) -> PrecompileResult
     where
         F: FnOnce(u64, u64, u64, &BigUint) -> u64,
     {
@@ -74,7 +72,7 @@ impl<HF: HardFork> ModExp<HF> {
         }
 
         let (r, gas_cost) = if base_len == 0 && mod_len == 0 {
-            (BigUint::zero(), MIN_GAS_COST)
+            (BigUint::zero(), min_gas)
         } else {
             // this is litlle big peculiar, if base/mod is
             if exp_overflow {
@@ -90,7 +88,9 @@ impl<HF: HardFork> ModExp<HF> {
                 let mut out = vec![0; 32];
                 let from = min(base_end, len);
                 let to = min(exp_highp_end, len);
-                out[32 - (to - from)..].copy_from_slice(&input[from..to]);
+                let target_from = 32 - (exp_highp_end - base_end); // 32 - exp length
+                let target_to = target_from + (to - from); // beginning + size to copy
+                out[target_from..target_to].copy_from_slice(&input[from..to]);
                 BigUint::from_bytes_be(&out)
             };
 
@@ -173,7 +173,7 @@ impl Precompile for ModExp<Byzantium> {
         _context: &CallContext,
         _is_static: bool,
     ) -> PrecompileResult {
-        Self::run_inner(input, gas_limit, |a, b, c, d| {
+        Self::run_inner(input, gas_limit, 0, |a, b, c, d| {
             Self::byzantium_gas_calc(a, b, c, d)
         })
     }
@@ -205,7 +205,7 @@ impl ModExp<Berlin> {
         if gas > U256::from(u64::MAX) {
             return u64::MAX;
         } else {
-            max(MIN_GAS_COST, gas.as_u64())
+            max(200, gas.as_u64())
         }
     }
 }
@@ -217,7 +217,7 @@ impl Precompile for ModExp<Berlin> {
         _context: &CallContext,
         _is_static: bool,
     ) -> PrecompileResult {
-        Self::run_inner(input, gas_limit, |a, b, c, d| {
+        Self::run_inner(input, gas_limit, 200, |a, b, c, d| {
             Self::berlin_gas_calc(a, b, c, d)
         })
     }
