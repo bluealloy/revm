@@ -120,7 +120,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     ) -> Self {
         let mut precompile_acc = Map::new();
         for add in precompiles.addresses() {
-            precompile_acc.insert(add.clone(),db.basic(add.clone()));
+            precompile_acc.insert(add.clone(), db.basic(add.clone()));
         }
         Self {
             db,
@@ -171,20 +171,28 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
         let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
         let non_zero_data_len = (input.len() as u64 - zero_data_len) as u64;
-        let accessed_accounts = access_list.len() as u64;
-        let mut accessed_slots = 0 as u64;
+        let (accessed_accounts, accessed_slots) = {
+            if SPEC::enabled(ISTANBUL) {
+                let mut accessed_slots = 0 as u64;
+                let accessed_accounts = access_list.len() as u64;
 
-        for (address, slots) in access_list {
-            //TODO trace load access_list?
-            self.subroutine.load_account(address, self.db);
-            accessed_slots += slots.len() as u64;
-            for slot in slots {
-                self.subroutine.sload(address, slot, self.db);
+                for (address, slots) in access_list {
+                    //TODO trace load access_list?
+                    self.subroutine.load_account(address, self.db);
+                    accessed_slots += slots.len() as u64;
+                    for slot in slots {
+                        self.subroutine.sload(address, slot, self.db);
+                    }
+                }
+                (accessed_accounts, accessed_slots)
+            } else {
+                (0, 0)
             }
-        }
+        };
 
         let transact = if is_create {
-            if SPEC::enabled(ISTANBUL) {
+            if SPEC::enabled(HOMESTEAD) {
+                // EIP-2: Homestead Hard-fork Changes
                 53000
             } else {
                 21000
@@ -193,13 +201,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             21000
         };
 
-        let gas_transaction_non_zero_data = if SPEC::enabled(BERLIN) {
-            gas::TRANSACTION_NON_ZERO_DATA_INIT
-        } else if SPEC::enabled(FRONTIER) {
-            gas::TRANSACTION_NON_ZERO_DATA_FRONTIER
-        } else {
-            gas::TRANSACTION_NON_ZERO_DATA_INIT
-        };
+        // EIP-2028: Transaction data gas cost reduction
+        let gas_transaction_non_zero_data = if SPEC::enabled(ISTANBUL) { 16 } else { 68 };
 
         transact
             + zero_data_len * gas::TRANSACTION_ZERO_DATA
@@ -276,8 +279,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 let b = Bytes::new();
                 // if ok, check contract creation limit and calculate gas deduction on output len.
                 let code = machine.return_value();
-                if SPEC::enabled(ISTANBUL) && code.len() > 0x6000 {
-                    // TODO reduce gas and return
+
+                // EIP-170: Contract code size limit
+                if SPEC::enabled(SPURIOUS_DRAGON) && code.len() > 0x6000 {
                     self.subroutine.checkpoint_revert(checkpoint);
                     return (ExitError::CreateContractLimit.into(), ret, machine.gas, b);
                 }

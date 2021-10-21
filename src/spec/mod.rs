@@ -1,10 +1,12 @@
 mod berlin_spec;
+mod byzantium_spec;
 mod frontier_spec;
 mod instanbul_spec;
 mod latest_spec;
 mod spec;
 
 pub use berlin_spec::BerlinSpec;
+pub use byzantium_spec::ByzantiumSpec;
 pub use frontier_spec::FrontierSpec;
 pub use instanbul_spec::IstanbulSpec;
 pub use latest_spec::LatestSpec;
@@ -13,20 +15,20 @@ pub use spec::Spec;
 pub(crate) use spec::NotStaticSpec;
 
 #[repr(u8)]
+#[derive(Debug)]
 pub enum SpecId {
-    HOMESTEAD = 1,
-    DAO = 2,
+    FRONTIER = 1,
+    HOMESTEAD = 2,
     TANGERINE = 3,
-    SPURIOUS = 4,
-    FRONTIER = 5,
-    BYZANTINE = 6,
-    CONSTANTINOPLE = 7,
-    PETERSBURG = 8,
-    ISTANBUL = 9,
-    MUIRGLACIER = 10,
-    BERLIN = 11,
-    LONDON = 12,
-    LATEST = 13,
+    SPURIOUS_DRAGON = 4,
+    BYZANTINE = 5,
+    CONSTANTINOPLE = 6,
+    PETERSBURG = 7,
+    ISTANBUL = 8,
+    MUIRGLACIER = 9,
+    BERLIN = 10,
+    LONDON = 11,
+    LATEST = 12,
 }
 
 pub use SpecId::*;
@@ -34,11 +36,10 @@ pub use SpecId::*;
 impl From<&str> for SpecId {
     fn from(name: &str) -> Self {
         match name {
-            "Homestead" => SpecId::HOMESTEAD,
-            "Dao" => SpecId::DAO,
-            "Tangerine" => SpecId::TANGERINE,
-            "Spurious" => SpecId::SPURIOUS,
             "Frontier" => SpecId::FRONTIER,
+            "Homestead" => SpecId::HOMESTEAD,
+            "Tangerine" => SpecId::TANGERINE,
+            "Spurious" => SpecId::SPURIOUS_DRAGON,
             "Byzantium" => SpecId::BYZANTINE,
             "Constantinople" => SpecId::CONSTANTINOPLE,
             "Petersburg" => SpecId::PETERSBURG,

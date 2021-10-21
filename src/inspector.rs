@@ -1,7 +1,7 @@
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
 
-use crate::{CallContext, CreateScheme, ExitReason, Machine, Transfer, opcode::Control};
+use crate::{opcode::Control, CallContext, CreateScheme, ExitReason, Machine, Transfer};
 
 pub trait Inspector {
     // get opcode by calling `machine.contract.opcode(machine.program_counter())`.
@@ -57,7 +57,6 @@ impl Inspector for NoOpInspector {
 
     fn eval(&mut self, _eval: &mut Control, _machine: &mut Machine) {}
 
-    
     fn load_account(&mut self, _address: &H160) {}
 
     fn sload(&mut self, _address: &H160, _slot: &H256, _value: &H256, _is_cold: bool) {}

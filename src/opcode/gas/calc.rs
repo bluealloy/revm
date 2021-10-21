@@ -29,7 +29,7 @@ pub fn sstore_refund<SPEC: Spec>(original: H256, current: H256, new: H256) -> i6
                     let (gas_sstore_reset, gas_sload) = if SPEC::enabled(BERLIN) {
                         (SSTORE_RESET - SLOAD_COLD, STORAGE_READ_WARM)
                     } else {
-                        (SSTORE_RESET, SLOAD)
+                        (SSTORE_RESET, sload_cost::<SPEC>(false))
                     };
                     if original == H256::default() {
                         refund += (SSTORE_SET - gas_sload) as i64;
@@ -73,7 +73,11 @@ pub fn exp_cost<SPEC: Spec>(power: U256) -> Option<u64> {
     if power == U256::zero() {
         Some(EXP)
     } else {
-        let gas_byte = U256::from(if SPEC::enabled(ISTANBUL) { 50 } else { 10 });
+        let gas_byte = U256::from(if SPEC::enabled(SPURIOUS_DRAGON) {
+            50
+        } else {
+            10
+        }); // EIP-160: EXP cost increase
         let gas = U256::from(EXP).checked_add(
             gas_byte.checked_mul(U256::from(super::utils::log2floor(power) / 8 + 1))?,
         )?;
@@ -150,7 +154,6 @@ pub fn account_access_gas<SPEC: Spec>(is_cold: bool) -> u64 {
     }
 }
 
-
 pub fn log_cost(n: u8, len: U256) -> Option<u64> {
     let gas = U256::from(LOG)
         .checked_add(U256::from(LOGDATA).checked_mul(len)?)?
@@ -190,7 +193,11 @@ pub fn sload_cost<SPEC: Spec>(is_cold: bool) -> u64 {
             STORAGE_READ_WARM
         }
     } else if SPEC::enabled(ISTANBUL) {
+        // EIP-1884: Repricing for trie-size-dependent opcodes
         800
+    } else if SPEC::enabled(TANGERINE) {
+        // EIP-150: Gas cost changes for IO-heavy operations
+        200
     } else {
         50
     }
@@ -207,10 +214,10 @@ pub fn sstore_cost<SPEC: Spec>(
     let (gas_sload, gas_sstore_reset) = if SPEC::enabled(BERLIN) {
         (STORAGE_READ_WARM, SSTORE_RESET - SLOAD_COLD)
     } else {
-        (SLOAD, SSTORE_RESET)
+        (sload_cost::<SPEC>(is_cold), SSTORE_RESET)
     };
-    let gas_cost = if SPEC::enabled(ISTANBUL) {
-        if SPEC::enabled(ISTANBUL) && gas <= CALL_STIPEND {
+    let gas_cost = if SPEC::enabled(CONSTANTINOPLE) {
+        if SPEC::enabled(CONSTANTINOPLE) && gas <= CALL_STIPEND {
             return None;
         }
 
@@ -250,7 +257,8 @@ pub fn selfdestruct_cost<SPEC: Spec>(res: SelfDestructResult) -> u64 {
     };
 
     let selfdestruct_gas_topup = if should_charge_topup {
-        if SPEC::enabled(ISTANBUL) {
+        if SPEC::enabled(TANGERINE) {
+            //EIP-150: Gas cost changes for IO-heavy operations
             25000
         } else {
             0
@@ -259,7 +267,7 @@ pub fn selfdestruct_cost<SPEC: Spec>(res: SelfDestructResult) -> u64 {
         0
     };
 
-    let selfdestruct_gas = if SPEC::enabled(ISTANBUL) { 5000 } else { 0 };
+    let selfdestruct_gas = if SPEC::enabled(TANGERINE) { 5000 } else { 0 }; //EIP-150: Gas cost changes for IO-heavy operations
 
     let mut gas = selfdestruct_gas + selfdestruct_gas_topup;
     if SPEC::enabled(BERLIN) && res.is_cold {
@@ -283,7 +291,8 @@ pub fn call_cost<SPEC: Spec>(
         } else {
             STORAGE_READ_WARM
         }
-    } else if SPEC::enabled(ISTANBUL) {
+    } else if SPEC::enabled(TANGERINE) {
+        // EIP-150: Gas cost changes for IO-heavy operations
         700
     } else {
         40
@@ -314,7 +323,6 @@ fn xfer_cost(is_call_or_callcode: bool, transfers_value: bool) -> u64 {
         0
     }
 }
-
 
 fn new_cost<SPEC: Spec>(is_call_or_staticcall: bool, is_new: bool, transfers_value: bool) -> u64 {
     if is_call_or_staticcall {

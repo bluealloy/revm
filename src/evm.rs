@@ -1,4 +1,8 @@
-use crate::{BerlinSpec, FrontierSpec, GlobalEnv, Inspector, IstanbulSpec, LatestSpec, SpecId, TransactOut, TransactTo, collection::vec::Vec, db::Database, error::ExitReason, evm_impl::EVMImpl, subroutine::State};
+use crate::{
+    collection::vec::Vec, db::Database, error::ExitReason, evm_impl::EVMImpl,
+    precompiles::Byzantium, subroutine::State, BerlinSpec, ByzantiumSpec, FrontierSpec, GlobalEnv,
+    Inspector, IstanbulSpec, LatestSpec, SpecId, TransactOut, TransactTo,
+};
 
 use primitive_types::{H160, H256, U256};
 use sha3::Digest;
@@ -17,25 +21,25 @@ fn new_inner<'a, DB: Database, const INSPECT: bool>(
             db,
             global_env,
             inspector,
-            Precompiles::new_berlin(),
+            Precompiles::new::<BerlinSpec>(),
         )) as Box<dyn EVM + 'a>,
         SpecId::BERLIN => Box::new(EVMImpl::<'a, BerlinSpec, DB, INSPECT>::new(
             db,
             global_env,
             inspector,
-            Precompiles::new_berlin(),
+            Precompiles::new::<BerlinSpec>(),
         )) as Box<dyn EVM + 'a>,
         SpecId::ISTANBUL => Box::new(EVMImpl::<'a, IstanbulSpec, DB, INSPECT>::new(
             db,
             global_env,
             inspector,
-            Precompiles::new_istanbul(),
+            Precompiles::new::<IstanbulSpec>(),
         )) as Box<dyn EVM + 'a>,
-        SpecId::BYZANTINE => Box::new(EVMImpl::<'a, FrontierSpec, DB, INSPECT>::new(
+        SpecId::BYZANTINE => Box::new(EVMImpl::<'a, ByzantiumSpec, DB, INSPECT>::new(
             db,
             global_env,
             inspector,
-            Precompiles::new_berlin(),
+            Precompiles::new::<ByzantiumSpec>(),
         )) as Box<dyn EVM + 'a>,
         _ => panic!("Spec Not supported"),
     }
@@ -56,7 +60,6 @@ pub fn new_inspect<'a, DB: Database>(
 ) -> Box<dyn EVM + 'a> {
     new_inner::<DB, true>(specid, global_env, db, Some(inspector))
 }
-
 
 pub trait EVM {
     /// Do transaction.

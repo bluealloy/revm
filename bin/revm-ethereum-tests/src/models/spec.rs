@@ -1,3 +1,4 @@
+use revm::SpecId;
 use serde_derive::*;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Hash, Ord, Deserialize)]
@@ -19,4 +20,14 @@ pub enum SpecName {
     Berlin,
     London,
     BerlinToLondonAt5,
+}
+
+impl SpecName {
+    pub fn to_spec_id(&self) -> SpecId {
+        match self {
+            Self::Berlin => SpecId::BERLIN,
+            Self::Istanbul => SpecId::ISTANBUL,
+            _ => panic!("Conversion failed"),
+        }
+    }
 }

@@ -34,7 +34,7 @@ pub fn sha3(machine: &mut Machine) -> Control {
 }
 
 pub fn chainid<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
-    check!(SPEC::enabled(ISTANBUL));
+    check!(SPEC::enabled(ISTANBUL)); // EIP-1344: ChainID opcode
     gas!(machine, gas::BASE);
 
     push_u256!(machine, handler.env().chain_id);
@@ -54,14 +54,24 @@ pub fn address(machine: &mut Machine) -> Control {
 pub fn balance<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
     pop!(machine, address);
     let (balance, is_cold) = handler.balance(address.into());
-    gas!(machine, gas::account_access_gas::<SPEC>(is_cold));
+    gas!(
+        machine,
+        if SPEC::enabled(ISTANBUL) {
+            // EIP-1884: Repricing for trie-size-dependent opcodes
+            gas::account_access_gas::<SPEC>(is_cold)
+        } else if SPEC::enabled(TANGERINE) {
+            400
+        } else {
+            20
+        }
+    );
     push_u256!(machine, balance);
 
     Control::Continue
 }
 
 pub fn selfbalance<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
-    check!(SPEC::enabled(ISTANBUL));
+    check!(SPEC::enabled(ISTANBUL)); // EIP-1884: Repricing for trie-size-dependent opcodes
     let (balance, _) = handler.balance(machine.contract.address);
     gas!(machine, gas::LOW);
     push_u256!(machine, balance);
@@ -119,10 +129,18 @@ pub fn extcodesize<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
 }
 
 pub fn extcodehash<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
-    check!(SPEC::enabled(ISTANBUL));
+    check!(SPEC::enabled(CONSTANTINOPLE)); // EIP-1052: EXTCODEHASH opcode
     pop!(machine, address);
     let (code_hash, is_cold) = handler.code_hash(address.into());
-    gas!(machine, gas::account_access_gas::<SPEC>(is_cold));
+    gas!(
+        machine,
+        if SPEC::enabled(ISTANBUL) {
+            // EIP-1884: Repricing for trie-size-dependent opcodes
+            gas::account_access_gas::<SPEC>(is_cold)
+        } else {
+            400
+        }
+    );
     push!(machine, code_hash);
 
     Control::Continue
@@ -148,7 +166,7 @@ pub fn extcodecopy<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
 }
 
 pub fn returndatasize<SPEC: Spec>(machine: &mut Machine) -> Control {
-    check!(SPEC::enabled(ISTANBUL));
+    check!(SPEC::enabled(BYZANTINE)); // EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
     gas!(machine, gas::BASE);
 
     let size = U256::from(machine.return_data_buffer.len());
@@ -158,7 +176,7 @@ pub fn returndatasize<SPEC: Spec>(machine: &mut Machine) -> Control {
 }
 
 pub fn returndatacopy<SPEC: Spec>(machine: &mut Machine) -> Control {
-    check!(SPEC::enabled(ISTANBUL));
+    check!(SPEC::enabled(BYZANTINE)); // EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
     pop_u256!(machine, memory_offset, data_offset, len);
     gas_or_fail!(machine, gas::verylowcopy_cost(len));
     memory_resize!(machine, memory_offset, len);
@@ -315,12 +333,10 @@ pub fn selfdestruct<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut
 
 #[inline]
 fn gas_call_l64_after<SPEC: Spec>(machine: &mut Machine) -> Result<u64, ExitReason> {
-    fn l64(gas: u64) -> u64 {
-        gas - gas / 64
-    }
-
-    if SPEC::enabled(ISTANBUL) {
-        Ok(l64(machine.gas().remaining()))
+    if SPEC::enabled(TANGERINE) {
+        //EIP-150: Gas cost changes for IO-heavy operations
+        let gas = machine.gas().remaining();
+        Ok(gas - gas / 64)
     } else {
         Ok(machine.gas().remaining())
     }
@@ -332,6 +348,9 @@ pub fn create<H: Handler, SPEC: Spec>(
     handler: &mut H,
 ) -> Control {
     check!(!SPEC::IS_STATIC_CALL);
+    if is_create2 {
+        check!(SPEC::enabled(CONSTANTINOPLE)); // EIP-1014: Skinny CREATE2
+    }
 
     machine.return_data_buffer = Bytes::new();
 
@@ -392,8 +411,10 @@ pub fn call<H: Handler, SPEC: Spec>(
     scheme: CallScheme,
     handler: &mut H,
 ) -> Control {
-    if scheme == CallScheme::DelegateCall {
-        check!(SPEC::enabled(ISTANBUL))
+    match scheme {
+        CallScheme::DelegateCall => check!(SPEC::enabled(HOMESTEAD)), // EIP-7: DELEGATECALL
+        CallScheme::StaticCall => check!(SPEC::enabled(BYZANTINE)), // EIP-214: New opcode STATICCALL
+        _ => (),
     }
     machine.return_data_buffer = Bytes::new();
 

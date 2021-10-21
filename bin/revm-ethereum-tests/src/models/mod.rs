@@ -99,11 +99,11 @@ pub type AccessList = Vec<AccessListItem>;
 #[cfg(test)]
 mod tests {
 
-    use serde_json::Error;
     use super::*;
+    use serde_json::Error;
 
     #[test]
-    pub fn serialize_u256() -> Result<(),Error> {
+    pub fn serialize_u256() -> Result<(), Error> {
         let json = r#"{"_item":"0x10"}"#;
 
         #[derive(Deserialize, Debug)]

@@ -220,8 +220,8 @@ pub fn ret(machine: &mut Machine) -> Control {
 
 #[inline]
 pub fn revert<SPEC: Spec>(machine: &mut Machine) -> Control {
-    check!(SPEC::enabled(ISTANBUL));
-    // zero gas cost gas!(machine,gas::ZERO);
+    check!(SPEC::enabled(BYZANTINE)); // EIP-140: REVERT instruction
+                                      // zero gas cost gas!(machine,gas::ZERO);
     pop_u256!(machine, start, len);
     memory_resize!(machine, start, len);
     machine.return_range = start..(start + len);

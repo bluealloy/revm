@@ -1,4 +1,7 @@
-use crate::{collection::{vec::Vec, Map}, subroutine::Filth};
+use crate::{
+    collection::{vec::Vec, Map},
+    subroutine::Filth,
+};
 
 use primitive_types::{H160, H256, U256};
 

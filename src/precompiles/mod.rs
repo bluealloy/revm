@@ -1,4 +1,7 @@
-use crate::collection::{vec, Vec};
+use crate::{
+    collection::{vec, Vec},
+    Spec, SpecId,
+};
 //pub(crate) use crate::precompiles::secp256k1::ecrecover;
 use crate::{
     models::CallContext,
@@ -106,125 +109,68 @@ pub struct Precompiles {
 }
 
 impl Precompiles {
-    pub fn new() -> Self {
+    //TODO refactor this
+    pub fn new<SPEC: Spec>() -> Self {
+        let mut add = Vec::new();
+        let mut fun: Vec<PrecompileFn> = Vec::new();
+        if SPEC::enabled(SpecId::HOMESTEAD) {
+            add.push(ECRecover::ADDRESS);
+            add.push(SHA256::ADDRESS);
+            add.push(RIPEMD160::ADDRESS);
+
+            fun.push(ECRecover::run);
+            fun.push(SHA256::run);
+            fun.push(RIPEMD160::run);
+        }
+        if SPEC::enabled(SpecId::BYZANTINE) {
+            add.push(Identity::ADDRESS);
+            fun.push(Identity::run);
+        }
+
+        if SPEC::enabled(SpecId::ISTANBUL) {
+            // EIP-152: Add BLAKE2 compression function `F` precompile
+            add.push(Blake2F::ADDRESS);
+            fun.push(Blake2F::run);
+        }
+
+        if SPEC::enabled(SpecId::ISTANBUL) {
+            // EIP-1108: Reduce alt_bn128 precompile gas costs
+            add.push(Bn128Add::<Istanbul>::ADDRESS);
+            add.push(Bn128Mul::<Istanbul>::ADDRESS);
+            add.push(Bn128Pair::<Istanbul>::ADDRESS);
+
+            fun.push(Bn128Add::<Istanbul>::run);
+            fun.push(Bn128Mul::<Istanbul>::run);
+            fun.push(Bn128Pair::<Istanbul>::run);
+        } else if SPEC::enabled(SpecId::BYZANTINE) {
+            // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128
+            // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128
+            add.push(Bn128Add::<Byzantium>::ADDRESS);
+            add.push(Bn128Mul::<Byzantium>::ADDRESS);
+            add.push(Bn128Pair::<Byzantium>::ADDRESS);
+
+            fun.push(Bn128Add::<Byzantium>::run);
+            fun.push(Bn128Mul::<Byzantium>::run);
+            fun.push(Bn128Pair::<Byzantium>::run);
+        }
+
+        if SPEC::enabled(SpecId::BERLIN) {
+            add.push(ModExp::<Berlin>::ADDRESS);
+            fun.push(ModExp::<Berlin>::run);
+        } else if SPEC::enabled(SpecId::BYZANTINE) {
+            //EIP-198: Big integer modular exponentiation
+            add.push(ModExp::<Byzantium>::ADDRESS);
+            fun.push(ModExp::<Byzantium>::run);
+        }
+
         Self {
-            addresses: Vec::new(),
-            fun: Vec::new(),
+            addresses: add,
+            fun,
         }
     }
 
     pub fn addresses(&self) -> &[Address] {
         &self.addresses
-    }
-
-    #[allow(dead_code)]
-    pub fn new_homestead() -> Self {
-        let addresses = vec![
-            ECRecover::ADDRESS,
-            SHA256::ADDRESS,
-            RIPEMD160::ADDRESS,
-            //ExitToNear::ADDRESS,
-            //ExitToEthereum::ADDRESS,
-        ];
-        let fun: Vec<PrecompileFn> = vec![
-            ECRecover::run,
-            SHA256::run,
-            RIPEMD160::run,
-            //ExitToNear::run,
-            //ExitToEthereum::run,
-        ];
-
-        Precompiles { addresses, fun }
-    }
-
-    #[allow(dead_code)]
-    pub fn new_byzantium() -> Self {
-        let addresses = vec![
-            ECRecover::ADDRESS,
-            SHA256::ADDRESS,
-            RIPEMD160::ADDRESS,
-            Identity::ADDRESS,
-            ModExp::<Byzantium>::ADDRESS,
-            Bn128Add::<Byzantium>::ADDRESS,
-            Bn128Mul::<Byzantium>::ADDRESS,
-            Bn128Pair::<Byzantium>::ADDRESS,
-            //ExitToNear::ADDRESS,
-            //ExitToEthereum::ADDRESS,
-        ];
-        let fun: Vec<PrecompileFn> = vec![
-            ECRecover::run,
-            SHA256::run,
-            RIPEMD160::run,
-            Identity::run,
-            ModExp::<Byzantium>::run,
-            Bn128Add::<Byzantium>::run,
-            Bn128Mul::<Byzantium>::run,
-            Bn128Pair::<Byzantium>::run,
-            //ExitToNear::run,
-            //ExitToEthereum::run,
-        ];
-
-        Precompiles { addresses, fun }
-    }
-
-    pub fn new_istanbul() -> Self {
-        let addresses = vec![
-            ECRecover::ADDRESS,
-            SHA256::ADDRESS,
-            RIPEMD160::ADDRESS,
-            Identity::ADDRESS,
-            ModExp::<Byzantium>::ADDRESS,
-            Bn128Add::<Istanbul>::ADDRESS,
-            Bn128Mul::<Istanbul>::ADDRESS,
-            Bn128Pair::<Istanbul>::ADDRESS,
-            Blake2F::ADDRESS,
-        ];
-        let fun: Vec<PrecompileFn> = vec![
-            ECRecover::run,
-            SHA256::run,
-            RIPEMD160::run,
-            Identity::run,
-            ModExp::<Byzantium>::run,
-            Bn128Add::<Istanbul>::run,
-            Bn128Mul::<Istanbul>::run,
-            Bn128Pair::<Istanbul>::run,
-            Blake2F::run,
-        ];
-
-        Precompiles { addresses, fun }
-    }
-
-    #[allow(dead_code)]
-    pub fn new_berlin() -> Self {
-        let addresses = vec![
-            ECRecover::ADDRESS,
-            SHA256::ADDRESS,
-            RIPEMD160::ADDRESS,
-            Identity::ADDRESS,
-            ModExp::<Berlin>::ADDRESS,
-            Bn128Add::<Istanbul>::ADDRESS,
-            Bn128Mul::<Istanbul>::ADDRESS,
-            Bn128Pair::<Istanbul>::ADDRESS,
-            Blake2F::ADDRESS,
-        ];
-        let fun: Vec<PrecompileFn> = vec![
-            ECRecover::run,
-            SHA256::run,
-            RIPEMD160::run,
-            Identity::run,
-            ModExp::<Berlin>::run,
-            Bn128Add::<Istanbul>::run,
-            Bn128Mul::<Istanbul>::run,
-            Bn128Pair::<Istanbul>::run,
-            Blake2F::run,
-        ];
-
-        Precompiles { addresses, fun }
-    }
-
-    #[allow(dead_code)]
-    pub fn new_latest() -> Self {
-        Self::new_berlin()
     }
 
     pub fn get_fun(&self, address: &Address) -> Option<PrecompileFn> {

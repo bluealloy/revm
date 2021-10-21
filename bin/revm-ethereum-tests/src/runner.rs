@@ -1,15 +1,11 @@
 use std::{
     collections::{HashMap, HashSet},
-    path::{PathBuf},
+    path::PathBuf,
     str::FromStr,
-    sync::{
-        atomic::{AtomicBool},
-        Arc, Mutex,
-    },
+    sync::{atomic::AtomicBool, Arc, Mutex},
 };
 
 use sha3::{Digest, Keccak256};
-
 
 use indicatif::ProgressBar;
 use primitive_types::{H160, H256, U256};
@@ -17,15 +13,18 @@ use revm::{CreateScheme, GlobalEnv, Inspector, SpecId, TransactTo};
 use std::sync::atomic::Ordering;
 use walkdir::{DirEntry, WalkDir};
 
-use crate::{
-    models::{SpecName, TestSuit},
-};
+use crate::models::{SpecName, TestSuit};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum TestError {
-    #[error(" Test:{id}, Root missmatched, Expected: {expect:?} got:{got:?}")]
-    RootMissmatch { id: usize, got: H256, expect: H256 },
+    #[error(" Test:{spec_id:?}:{id}, Root missmatched, Expected: {expect:?} got:{got:?}")]
+    RootMissmatch {
+        spec_id: SpecId,
+        id: usize,
+        got: H256,
+        expect: H256,
+    },
     #[error("Serde json error")]
     SerdeDeserialize(#[from] serde_json::Error),
 }
@@ -47,7 +46,6 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
     let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
     let skip_test_unit: HashSet<_> = vec![
         "typeTwoBerlin", //txbyte is of type 02 and we dont parse bytes for this test to fail as it
-        //"SuicidesAndInternlCallSuicidesSuccess",
     ]
     .into_iter()
     .collect();
@@ -116,10 +114,10 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
             .unwrap();
         // post and execution
         for (spec_name, tests) in unit.post {
-            if !matches!(spec_name, SpecName::Berlin) {
-                //TODO fix this
+            if !matches!(spec_name, SpecName::Berlin | SpecName::Istanbul) {
                 continue;
             }
+            let spec_id = spec_name.to_spec_id();
             let global_env = GlobalEnv {
                 gas_price: unit.transaction.gas_price.unwrap_or_default(),
                 block_number: unit.env.current_number,
@@ -176,7 +174,7 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
                 let inspector = inspector.clone();
                 let (_ret, _out, _gas, state) = {
                     let mut evm = revm::new_inspect(
-                        SpecId::BERLIN,
+                        spec_name.to_spec_id(),
                         global_env.clone(),
                         &mut database,
                         inspector,
@@ -193,6 +191,7 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
                     println!("\nApplied state:{:?}\n", database);
                     println!("\nStateroot: {:?}\n", state_root);
                     return Err(TestError::RootMissmatch {
+                        spec_id,
                         id,
                         got: state_root,
                         expect: test.hash,
@@ -213,7 +212,7 @@ pub fn run<INSP: Inspector + Clone + Send + 'static>(
     let mut joins = Vec::new();
     let queue = Arc::new(Mutex::new((0, test_files)));
 
-    for _ in 0..10 {
+    for _ in 0..1 {
         let queue = queue.clone();
         let endjob = endjob.clone();
         let console_bar = console_bar.clone();
@@ -222,27 +221,25 @@ pub fn run<INSP: Inspector + Clone + Send + 'static>(
         joins.push(
             std::thread::Builder::new()
                 .stack_size(50 * 1024 * 1024)
-                .spawn(move || {
-                    loop {
-                        let test_path = {
-                            let mut queue = queue.lock().unwrap();
-                            if queue.1.len() <= queue.0 {
-                                break;
-                            }
-                            let test_path = queue.1[queue.0].clone();
-                            queue.0 += 1;
-                            test_path
-                        };
-                        if endjob.load(Ordering::SeqCst) {
-                            return;
+                .spawn(move || loop {
+                    let test_path = {
+                        let mut queue = queue.lock().unwrap();
+                        if queue.1.len() <= queue.0 {
+                            break;
                         }
-                        if let Err(err) = execute_test_suit(&test_path, insp.clone()) {
-                            endjob.store(true, Ordering::SeqCst);
-                            println!("{:?} failed: {}", test_path, err);
-                            return;
-                        }
-                        console_bar.inc(1);
+                        let test_path = queue.1[queue.0].clone();
+                        queue.0 += 1;
+                        test_path
+                    };
+                    if endjob.load(Ordering::SeqCst) {
+                        return;
                     }
+                    if let Err(err) = execute_test_suit(&test_path, insp.clone()) {
+                        endjob.store(true, Ordering::SeqCst);
+                        println!("{:?} failed: {}", test_path, err);
+                        return;
+                    }
+                    console_bar.inc(1);
                 })
                 .unwrap(),
         );

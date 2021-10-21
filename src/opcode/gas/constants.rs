@@ -24,8 +24,6 @@ pub const SSTORE_SET: u64 = 20000;
 pub const SSTORE_RESET: u64 = 5000;
 pub const REFUND_SSTORE_CLEARS: i64 = 15000;
 
-pub const SLOAD: u64 = 1;
-
 pub const TRANSACTION_ZERO_DATA: u64 = 4;
 pub const TRANSACTION_NON_ZERO_DATA_INIT: u64 = 16;
 pub const TRANSACTION_NON_ZERO_DATA_FRONTIER: u64 = 68;

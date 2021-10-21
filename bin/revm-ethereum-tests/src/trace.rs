@@ -77,7 +77,7 @@ impl Inspector for CustomPrintTracer {
     }
 
     fn call_return(&mut self, exit: ExitReason) {
-        println!("\nSM EXIT:{:?}\n",exit);
+        println!("\nSM EXIT:{:?}\n", exit);
     }
 
     fn create(

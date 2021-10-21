@@ -41,7 +41,6 @@ impl AccountInfo {
     }
 }
 
-
 pub enum TransactTo {
     Call(H160),
     Create(CreateScheme),
@@ -57,7 +56,7 @@ impl TransactTo {
 pub enum TransactOut {
     None,
     Call(Bytes),
-    Create(Bytes,Option<H160>),
+    Create(Bytes, Option<H160>),
 }
 
 /// Create scheme.
