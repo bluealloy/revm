@@ -1,5 +1,3 @@
-#![feature(slice_as_chunks)]
-
 use std::{
     collections::{HashMap, HashSet},
     path::{PathBuf},
@@ -28,8 +26,6 @@ use thiserror::Error;
 pub enum TestError {
     #[error(" Test:{id}, Root missmatched, Expected: {expect:?} got:{got:?}")]
     RootMissmatch { id: usize, got: H256, expect: H256 },
-    #[error("EVM returned error: {0:?}")]
-    EVMReturnError(revm::ExitReason),
     #[error("Serde json error")]
     SerdeDeserialize(#[from] serde_json::Error),
 }
@@ -51,7 +47,7 @@ pub fn execute_test_suit<INSP: Inspector + Clone + 'static>(
     let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
     let skip_test_unit: HashSet<_> = vec![
         "typeTwoBerlin", //txbyte is of type 02 and we dont parse bytes for this test to fail as it
-        "SuicidesAndInternlCallSuicidesSuccess",
+        //"SuicidesAndInternlCallSuicidesSuccess",
     ]
     .into_iter()
     .collect();

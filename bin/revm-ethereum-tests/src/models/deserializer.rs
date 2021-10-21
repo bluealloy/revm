@@ -22,7 +22,7 @@ where
     Ok(output)
 }
 
-pub fn deserialize_str_as_U256<'de, D>(deserializer: D) -> Result<U256, D::Error>
+pub fn deserialize_str_as_u256<'de, D>(deserializer: D) -> Result<U256, D::Error>
 where
     D: de::Deserializer<'de>,
 {

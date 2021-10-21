@@ -58,13 +58,13 @@ pub struct AccountInfo {
 #[serde(rename_all = "camelCase")]
 pub struct Env {
     pub current_coinbase: H160,
-    #[serde(deserialize_with = "deserialize_str_as_U256")]
+    #[serde(deserialize_with = "deserialize_str_as_u256")]
     pub current_difficulty: U256,
-    #[serde(deserialize_with = "deserialize_str_as_U256")]
+    #[serde(deserialize_with = "deserialize_str_as_u256")]
     pub current_gas_limit: U256,
-    #[serde(deserialize_with = "deserialize_str_as_U256")]
+    #[serde(deserialize_with = "deserialize_str_as_u256")]
     pub current_number: U256,
-    #[serde(deserialize_with = "deserialize_str_as_U256")]
+    #[serde(deserialize_with = "deserialize_str_as_u256")]
     pub current_timestamp: U256,
     pub current_base_fee: Option<U256>,
     pub previous_hash: H256,
@@ -98,15 +98,17 @@ pub type AccessList = Vec<AccessListItem>;
 
 #[cfg(test)]
 mod tests {
+
+    use serde_json::Error;
     use super::*;
 
     #[test]
-    pub fn serialize_u256() -> Result<(), Error> {
-        let json = r#"{"item":"0x10"}"#;
+    pub fn serialize_u256() -> Result<(),Error> {
+        let json = r#"{"_item":"0x10"}"#;
 
         #[derive(Deserialize, Debug)]
         pub struct Test {
-            item: Option<U256>,
+            _item: Option<U256>,
         }
 
         let out: Test = serde_json::from_str(json)?;

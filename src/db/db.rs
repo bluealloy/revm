@@ -1,6 +1,4 @@
-
-
-use crate::collection::{vec::Vec, Map};
+use crate::{collection::{vec::Vec, Map}, subroutine::Filth};
 
 use primitive_types::{H160, H256, U256};
 
@@ -46,7 +44,7 @@ impl StateDB {
 
     pub fn apply(&mut self, changes: Map<H160, Account>) {
         for (add, acc) in changes {
-            if acc.is_empty() {
+            if acc.is_empty() || matches!(acc.filth, Filth::Destroyed) {
                 self.cache.remove(&add);
                 self.storage.remove(&add);
             } else {
@@ -74,7 +72,7 @@ impl StateDB {
             .cache
             .iter()
             .map(|(address, info)| {
-                let storage = self.storage.get(address).cloned().unwrap_or_default(); 
+                let storage = self.storage.get(address).cloned().unwrap_or_default();
                 let storage_root = trie::trie_account_rlp(info, storage);
                 (address.clone(), storage_root)
             })

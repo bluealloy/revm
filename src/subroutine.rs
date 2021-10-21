@@ -6,7 +6,6 @@ use crate::{
 
 use core::mem::{self};
 
-
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
 
@@ -432,7 +431,7 @@ impl SubRoutine {
                 let acc =
                     Self::revert_account_changelog(&mut self.state, address, changelog.clone())
                         .unwrap();
-                // mark it as destryoted and save original account if needed to revert it.
+                // mark it as destroyed and save original account if needed to revert it.
                 *changelog = ChangeLog::Destroyed(acc.clone());
                 self.state.entry(address).or_insert(acc)
             }
@@ -487,7 +486,10 @@ impl SubRoutine {
     pub fn load_code<DB: Database>(&mut self, address: H160, db: &mut DB) -> (&mut Account, bool) {
         let is_cold = self.load_account(address.clone(), db);
         let acc = self.state.get_mut(&address).unwrap();
-        let dont_load_from_db = !matches!(acc.filth, Filth::Destroyed | Filth::NewlyCreated | Filth::Precompile(_));
+        let dont_load_from_db = !matches!(
+            acc.filth,
+            Filth::Destroyed | Filth::NewlyCreated | Filth::Precompile(_)
+        );
         if dont_load_from_db && acc.info.code.is_none() {
             // let code = if let Some(code_hash) = acc.info.code_hash {
             //     db.code_by_hash(code_hash)
