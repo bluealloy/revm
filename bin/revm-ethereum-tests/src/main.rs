@@ -34,12 +34,12 @@ pub fn main() {
     if args.len() == 1 {
         runner::run(
             test_files.as_slice()[skip..].to_vec(),
-            Box::new(CustomPrintTracer {}),
+            CustomPrintTracer {},
         )
     } else {
         runner::run(
             test_files.as_slice()[skip..].to_vec(),
-            Box::new(NoOpInspector()),
+            NoOpInspector(),
         )
     }
 }

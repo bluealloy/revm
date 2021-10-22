@@ -23,7 +23,7 @@ pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
     global_env: GlobalEnv,
     subroutine: SubRoutine,
     precompiles: Precompiles,
-    inspector: Option<Box<dyn Inspector + 'a>>,
+    inspector: &'a mut dyn Inspector,
     _phantomdata: PhantomData<GSPEC>,
 }
 
@@ -37,9 +37,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
         gas_limit: u64,
         access_list: Vec<(H160, Vec<H256>)>,
     ) -> (ExitReason, TransactOut, u64, State) {
-        if INSPECT && self.inspector.as_mut().is_none() {
-            panic!("Inspector not set but inspect flag is true");
-        }
 
         let mut gas = Gas::new(gas_limit);
         //If there is no initial gas, should we take whatever is present?
@@ -115,7 +112,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     pub fn new(
         db: &'a mut DB,
         global_env: GlobalEnv,
-        inspector: Option<Box<dyn Inspector + 'a>>,
+        inspector: &'a mut dyn Inspector,
         precompiles: Precompiles,
     ) -> Self {
         let mut precompile_acc = Map::new();
@@ -149,11 +146,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     fn inner_load_account(&mut self, caller: H160) -> bool {
         let is_cold = self.subroutine.load_account(caller, self.db);
         if INSPECT && is_cold {
-            self.inspector
-                .as_mut()
-                .as_mut()
-                .unwrap()
-                .load_account(&caller);
+            self.inspector.load_account(&caller);
         }
         is_cold
     }
@@ -341,16 +334,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             }
             Ok((source_is_cold, target_is_cold)) => {
                 if INSPECT && source_is_cold {
-                    self.inspector
-                        .as_mut()
-                        .unwrap()
-                        .load_account(&transfer.source);
+                    self.inspector.load_account(&transfer.source);
                 }
                 if INSPECT && target_is_cold {
-                    self.inspector
-                        .as_mut()
-                        .unwrap()
-                        .load_account(&transfer.target);
+                    self.inspector.load_account(&transfer.target);
                 }
             }
         }
@@ -399,7 +386,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Handler
     }
 
     fn inspect(&mut self) -> &mut dyn Inspector {
-        self.inspector.as_mut().unwrap().as_mut()
+        self.inspector
     }
 
     fn block_hash(&mut self, number: U256) -> H256 {
@@ -409,7 +396,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Handler
     fn load_account(&mut self, address: H160) -> (bool, bool) {
         let (is_cold, exists) = self.subroutine.load_account_exist(address, self.db);
         if INSPECT && is_cold {
-            self.inspector.as_mut().unwrap().load_account(&address);
+            self.inspector.load_account(&address);
         }
         (is_cold, exists)
     }
@@ -423,7 +410,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Handler
     fn code(&mut self, address: H160) -> (Bytes, bool) {
         let (acc, is_cold) = self.subroutine.load_code(address, self.db);
         if INSPECT && is_cold {
-            self.inspector.as_mut().unwrap().load_account(&address);
+            self.inspector.load_account(&address);
         }
         (acc.info.code.clone().unwrap_or_default(), is_cold)
     }
@@ -432,7 +419,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Handler
     fn code_hash(&mut self, address: H160) -> (H256, bool) {
         let (acc, is_cold) = self.subroutine.load_code(address, self.db);
         if INSPECT && is_cold {
-            self.inspector.as_mut().unwrap().load_account(&address);
+            self.inspector.load_account(&address);
         }
         if acc.is_empty() {
             return (H256::zero(), is_cold);
@@ -467,7 +454,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Handler
     fn selfdestruct(&mut self, address: H160, target: H160) -> SelfDestructResult {
         let res = self.subroutine.selfdestruct(address, target, self.db);
         if INSPECT && res.is_cold {
-            self.inspector.as_mut().unwrap().load_account(&target);
+            self.inspector.load_account(&target);
         }
         res
     }

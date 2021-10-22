@@ -17,9 +17,8 @@ mod util;
 
 use evm_impl::Handler;
 
-extern crate alloc;
 
-pub use db::{Database, StateDB};
+pub use db::{Database, DummyStateDB};
 pub use error::*;
 pub use evm::{new, new_inspect, EVM};
 pub use inspector::{Inspector, NoOpInspector};
@@ -32,6 +31,7 @@ pub use subroutine::Account;
 /// libraries for no_sdt flag
 #[cfg(no_sdt)]
 pub mod collection {
+    extern crate alloc;
     pub use alloc::{
         borrow::{Borrow, Cow},
         collections::{btree_map::Entry, BTreeMap as Map},

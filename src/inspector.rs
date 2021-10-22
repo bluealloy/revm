@@ -49,7 +49,7 @@ pub trait Inspector {
     fn selfdestruct(&mut self);
 }
 
-#[derive(Clone)]
+#[derive(Clone,Copy)]
 pub struct NoOpInspector();
 
 impl Inspector for NoOpInspector {

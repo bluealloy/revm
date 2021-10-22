@@ -1,21 +1,10 @@
-mod berlin_spec;
-mod byzantium_spec;
-mod frontier_spec;
-mod instanbul_spec;
-mod latest_spec;
 mod spec;
 
-pub use berlin_spec::BerlinSpec;
-pub use byzantium_spec::ByzantiumSpec;
-pub use frontier_spec::FrontierSpec;
-pub use instanbul_spec::IstanbulSpec;
-pub use latest_spec::LatestSpec;
-pub use spec::Spec;
-
-pub(crate) use spec::NotStaticSpec;
+pub use spec::*;
 
 #[repr(u8)]
 #[derive(Debug)]
+#[allow(non_camel_case_types)]
 pub enum SpecId {
     FRONTIER = 1,
     HOMESTEAD = 2,

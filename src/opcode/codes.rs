@@ -180,6 +180,8 @@ pub enum OpCode {
     BALANCE = 0x31,
     /// `SELFBALANCE`
     SELFBALANCE = 0x47,
+    /// `BASEFEE`
+    BASEFEE = 0x48,
     /// `ORIGIN`
     ORIGIN = 0x32,
     /// `CALLER`

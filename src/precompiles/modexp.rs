@@ -17,14 +17,6 @@ impl<HF: HardFork> ModExp<HF> {
     pub(super) const ADDRESS: Address = super::make_address(0, 5);
 }
 
-/* https://ethereum-magicians.org/t/eip-2565-big-integer-modular-exponentiation-eip-198-gas-cost/4150/10
-old calculation of cunsumption.
-def mult_complexity(x):
-    if x <= 64: return x ** 2
-    elif x <= 1024: return x ** 2 // 4 + 96 * x - 3072
-    else: return x ** 2 // 16 + 480 * x - 199680
-where is x is max(length_of_MODULUS, length_of_BASE)
-*/
 
 macro_rules! read_u64_with_overflow {
     ($input:expr,$from:expr,$to:expr, $overflow_limit:expr) => {{

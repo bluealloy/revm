@@ -79,6 +79,15 @@ pub fn selfbalance<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
     Control::Continue
 }
 
+pub fn basefee<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
+    check!(SPEC::enabled(LONDON)); // EIP-1884: Repricing for trie-size-dependent opcodes
+    let basefee = handler.env().block_basefee.unwrap_or_default();
+    gas!(machine, gas::BASE);
+    push_u256!(machine, basefee);
+
+    Control::Continue
+}
+
 pub fn origin<H: Handler>(machine: &mut Machine, handler: &mut H) -> Control {
     gas!(machine, gas::BASE);
 
