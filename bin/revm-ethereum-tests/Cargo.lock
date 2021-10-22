@@ -1136,7 +1136,8 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 [[package]]
 name = "substrate-bn"
 version = "0.6.0"
-source = "git+https://github.com/paritytech/bn#63f8c587356a67b33c7396af98e065b66fca5dda"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72b5bbfa79abbae15dd642ea8176a21a635ff3c00059961d1ea27ad04e5b441c"
 dependencies = [
  "byteorder",
  "crunchy",

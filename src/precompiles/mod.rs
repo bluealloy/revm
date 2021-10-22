@@ -1,5 +1,5 @@
 use crate::{
-    collection::{vec, Vec},
+    collection::Vec,
     Spec, SpecId,
 };
 //pub(crate) use crate::precompiles::secp256k1::ecrecover;

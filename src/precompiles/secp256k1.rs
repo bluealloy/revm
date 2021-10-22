@@ -4,7 +4,6 @@ use crate::{
 };
 use core::cmp::min;
 use primitive_types::{H160 as Address, H256};
-use sha3::Digest;
 mod costs {
     pub(super) const ECRECOVER_BASE: u64 = 3_000;
 }

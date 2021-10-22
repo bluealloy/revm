@@ -1,13 +1,12 @@
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
-use std::{cmp::min, collections::{BTreeMap, HashMap}};
+use std::{collections::{BTreeMap, HashMap}};
 mod deserializer;
 mod spec;
 
 use deserializer::*;
 
 use serde_derive::*;
-use serde_json::{self};
 
 pub use self::spec::SpecName;
 

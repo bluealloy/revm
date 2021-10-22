@@ -25,4 +25,4 @@ sha2 = { version = "0.9.3", default-features = false }
 borsh = { version = "0.9", default-features = false }
 ripemd160 = { version = "0.9.1", default-features = false }
 parity-crypto = { version = "0.9.0", default-features = false, features = [ "publickey" ] }
-bn = { package="substrate-bn", git = "https://github.com/paritytech/bn", default-features = false }
+bn = { package="substrate-bn", version="0.6", default-features = false }

@@ -1,12 +1,6 @@
-use crate::{
-    collection::{vec::Vec, Map},
-    subroutine::Filth,
-};
-
 use primitive_types::{H160, H256, U256};
 
-use super::trie;
-use crate::{Account, AccountInfo, Log};
+use crate::AccountInfo;
 use bytes::Bytes;
 
 pub trait Database {

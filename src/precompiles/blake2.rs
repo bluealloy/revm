@@ -50,7 +50,6 @@ impl Precompile for Blake2F {
         }
         let mut h = [0u64; 8];
         let mut m = [0u64; 16];
-        let mut t = [0u64, 2];
 
         for (i, pos) in (4..68).step_by(8).enumerate() {
             h[i] = u64::from_le_bytes(input[pos..pos + 8].try_into().unwrap());
@@ -58,7 +57,7 @@ impl Precompile for Blake2F {
         for (i, pos) in (68..196).step_by(8).enumerate() {
             m[i] = u64::from_le_bytes(input[pos..pos + 8].try_into().unwrap());
         }
-        t = [
+        let t = [
             u64::from_le_bytes(input[196..196 + 8].try_into().unwrap()),
             u64::from_le_bytes(input[204..204 + 8].try_into().unwrap()),
         ];
