@@ -135,14 +135,27 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     ) -> Result<Map<H160, Account>, ExitReason> {
         let gas_price = self.global_env.gas_price;
         let coinbase = self.global_env.block_coinbase;
+        let basefee = self.global_env.block_basefee;
         let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 }; // EIP-3529: Reduction in refunds
         let gas_refunded = min(gas.refunded() as u64, gas.spend() / max_refund_quotient);
+        println!(
+            "\n spend:{}, refunded:{}, gas_price:{}, basefee:{:?}",
+            gas.spend(),
+            gas_refunded,
+            gas_price,
+            basefee,
+        );
         self.subroutine
             .balance_add(caller, gas_price * (gas.remaining() + gas_refunded));
-        if !SPEC::enabled(LONDON) {
+        let coinbase_gas_price = if SPEC::enabled(LONDON) {
+            gas_price.saturating_sub(basefee.unwrap_or_default())
+        } else {
+            gas_price
+        };
+        if coinbase_gas_price != U256::zero() {
             self.subroutine.load_account(coinbase, self.db);
             self.subroutine
-                .balance_add(coinbase, gas_price * (gas.spend() - gas_refunded));
+                .balance_add(coinbase, coinbase_gas_price * (gas.spend() - gas_refunded));
         }
         Ok(self.subroutine.finalize())
     }
