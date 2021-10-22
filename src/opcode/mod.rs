@@ -165,7 +165,7 @@ pub fn eval<H: Handler, S: Spec>(
         OpCode::ADDRESS => system::address(machine),
         OpCode::BALANCE => system::balance::<H, S>(machine, handler),
         OpCode::SELFBALANCE => system::selfbalance::<H, S>(machine, handler),
-        OpCode::BASEFEE => system::basefee::<H,S>(machine,handler),
+        OpCode::BASEFEE => system::basefee::<H, S>(machine, handler),
         OpCode::ORIGIN => system::origin(machine, handler),
         OpCode::CALLER => system::caller(machine),
         OpCode::CALLVALUE => system::callvalue(machine),

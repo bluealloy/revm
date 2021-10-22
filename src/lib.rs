@@ -17,7 +17,6 @@ mod util;
 
 use evm_impl::Handler;
 
-
 pub use db::{Database, DummyStateDB};
 pub use error::*;
 pub use evm::{new, new_inspect, EVM};

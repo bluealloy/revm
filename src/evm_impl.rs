@@ -104,8 +104,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
         }
 
         // check if we have enought balance for value transfer.
-        let difference = self.global_env.gas_max_fee-self.global_env.effective_gas_price();
-        if difference+value > self.subroutine.account(caller).info.balance {
+        let difference = self.global_env.gas_max_fee - self.global_env.effective_gas_price();
+        if difference + value > self.subroutine.account(caller).info.balance {
             return (
                 ExitError::OutOfFund.into(),
                 TransactOut::None,

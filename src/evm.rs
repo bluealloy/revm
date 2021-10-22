@@ -36,13 +36,11 @@ fn new_inner<'a, DB: Database, const INSPECT: bool>(
     }
 }
 
-
 pub fn new<'a, DB: Database>(
     specid: SpecId,
     global_env: GlobalEnv,
     db: &'a mut DB,
 ) -> Box<dyn EVM + 'a> {
-    
     /**** SAFETY ********
      * NOOP_INSP is not used inside EVM because INSPECTOR flag is set to false and
      * no fn is going to be called from inspector so it is just dummy placeholder.

@@ -120,7 +120,10 @@ pub fn gasprice<H: Handler>(machine: &mut Machine, handler: &mut H) -> Control {
     gas!(machine, gas::BASE);
 
     let mut ret = H256::default();
-    handler.env().effective_gas_price().to_big_endian(&mut ret[..]);
+    handler
+        .env()
+        .effective_gas_price()
+        .to_big_endian(&mut ret[..]);
     push!(machine, ret);
 
     Control::Continue
@@ -332,7 +335,7 @@ pub fn selfdestruct<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut
     let res = handler.selfdestruct(machine.contract.address, target.into());
     inspect!(handler, selfdestruct);
 
-    // EIP-3529: Reduction in refunds 
+    // EIP-3529: Reduction in refunds
     if !SPEC::enabled(LONDON) && !res.previously_destroyed {
         refund!(machine, gas::SELFDESTRUCT)
     }

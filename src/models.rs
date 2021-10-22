@@ -125,14 +125,12 @@ impl GlobalEnv {
         if self.block_basefee.is_none() || self.gas_priority_fee.is_none() {
             self.gas_max_fee
         } else {
-
-        
-        min(
-            self.gas_max_fee,
-            self.block_basefee.unwrap() + self.gas_priority_fee.unwrap(),
-        )
+            min(
+                self.gas_max_fee,
+                self.block_basefee.unwrap() + self.gas_priority_fee.unwrap(),
+            )
+        }
     }
-}
 }
 
 /// Transfer from source to target, with given value.
