@@ -120,7 +120,7 @@ pub fn gasprice<H: Handler>(machine: &mut Machine, handler: &mut H) -> Control {
     gas!(machine, gas::BASE);
 
     let mut ret = H256::default();
-    handler.env().gas_price.to_big_endian(&mut ret[..]);
+    handler.env().effective_gas_price().to_big_endian(&mut ret[..]);
     push!(machine, ret);
 
     Control::Continue

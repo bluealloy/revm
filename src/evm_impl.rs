@@ -37,6 +37,43 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
         gas_limit: u64,
         access_list: Vec<(H160, Vec<H256>)>,
     ) -> (ExitReason, TransactOut, u64, State) {
+        if GSPEC::enabled(LONDON) {
+            if let Some(priority_fee) = self.global_env.gas_priority_fee {
+                if priority_fee > self.global_env.gas_max_fee {
+                    return (
+                        ExitError::GasMaxFeeGreaterThanPriorityFee.into(),
+                        TransactOut::None,
+                        0,
+                        State::new(),
+                    );
+                }
+            }
+            let effective_gas_price = self.global_env.effective_gas_price();
+            let basefee = self.global_env.block_basefee.unwrap_or_default();
+
+            // check minimal cost against basefee
+            // TODO maybe do this checks when creating evm. We already have all data there
+            // or should be move effective_gas_price inside transact fn
+            if effective_gas_price < basefee {
+                return (
+                    ExitError::GasPriceLessThenBasefee.into(),
+                    TransactOut::None,
+                    0,
+                    State::new(),
+                );
+            }
+            // check if priority fee is lower then max fee
+        }
+        // unusual to be found here, but check if gas_limit is more then block_gas_limit
+        if U256::from(gas_limit) > self.global_env.block_gas_limit {
+            return (
+                ExitError::CallerGasLimitMoreThenBlock.into(),
+                TransactOut::None,
+                0,
+                State::new(),
+            );
+        }
+
         let mut gas = Gas::new(gas_limit);
         //If there is no initial gas, should we take whatever is present?
         if !gas.record_cost(self.initialization::<GSPEC>(
@@ -56,8 +93,19 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
         self.inner_load_account(caller);
 
         // substract gas_limit*gas_price from current account.
-        let payment_value = U256::from(gas_limit) * self.global_env.gas_price;
+        let payment_value = U256::from(gas_limit) * self.global_env.effective_gas_price();
         if !self.subroutine.balance_sub(caller, payment_value) {
+            return (
+                ExitError::LackOfFundForGasLimit.into(),
+                TransactOut::None,
+                0,
+                State::new(),
+            );
+        }
+
+        // check if we have enought balance for value transfer.
+        let difference = self.global_env.gas_max_fee-self.global_env.effective_gas_price();
+        if difference+value > self.subroutine.account(caller).info.balance {
             return (
                 ExitError::OutOfFund.into(),
                 TransactOut::None,
@@ -133,30 +181,25 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         caller: H160,
         gas: &Gas,
     ) -> Result<Map<H160, Account>, ExitReason> {
-        let gas_price = self.global_env.gas_price;
+        let effective_gas_price = self.global_env.effective_gas_price();
         let coinbase = self.global_env.block_coinbase;
         let basefee = self.global_env.block_basefee;
         let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 }; // EIP-3529: Reduction in refunds
         let gas_refunded = min(gas.refunded() as u64, gas.spend() / max_refund_quotient);
-        println!(
-            "\n spend:{}, refunded:{}, gas_price:{}, basefee:{:?}",
-            gas.spend(),
-            gas_refunded,
-            gas_price,
-            basefee,
+        self.subroutine.balance_add(
+            caller,
+            effective_gas_price * (gas.remaining() + gas_refunded),
         );
-        self.subroutine
-            .balance_add(caller, gas_price * (gas.remaining() + gas_refunded));
         let coinbase_gas_price = if SPEC::enabled(LONDON) {
-            gas_price.saturating_sub(basefee.unwrap_or_default())
+            effective_gas_price.saturating_sub(basefee.unwrap_or_default())
         } else {
-            gas_price
+            effective_gas_price
         };
-        if coinbase_gas_price != U256::zero() {
-            self.subroutine.load_account(coinbase, self.db);
-            self.subroutine
-                .balance_add(coinbase, coinbase_gas_price * (gas.spend() - gas_refunded));
-        }
+        //if coinbase_gas_price != U256::zero() {
+        self.subroutine.load_account(coinbase, self.db);
+        self.subroutine
+            .balance_add(coinbase, coinbase_gas_price * (gas.spend() - gas_refunded));
+        //}
         Ok(self.subroutine.finalize())
     }
 
@@ -340,7 +383,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
         // Create subroutine checkpoint
         let checkpoint = self.subroutine.create_checkpoint();
-        //touch address. For "EIP-158 State Clear" this will erase empty accounts.
+        // touch address. For "EIP-158 State Clear" this will erase empty accounts.
         if transfer.value == U256::zero() {
             self.load_account(context.address);
             self.subroutine.balance_add(context.address, U256::zero()); // touch the acc

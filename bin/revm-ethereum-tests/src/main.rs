@@ -24,29 +24,12 @@ pub fn main() {
         }
         ("./tests/GeneralStateTests", skip)
     };
-    //let folder_path = "./tests/GeneralStateTests";
-    //let folder_path = "./temp_folder";
     let test_files = runner::find_all_json_tests(PathBuf::from(folder_path));
-    //test_files.truncate(300); //for test only
-    println!("Start running tests.skip{:?}", skip);
-    //let inspector = Box::new(CustomPrintTracer{});
-    //let inspector = Box::new(NoOpInspector());
+    println!("Start running tests skip+{:?}", skip);
+    let test_files = test_files.as_slice()[skip..].to_vec();
     if args.len() == 1 {
-        runner::run(
-            test_files.as_slice()[skip..].to_vec(),
-            CustomPrintTracer {},
-        )
+        runner::run(test_files, CustomPrintTracer {})
     } else {
-        runner::run(
-            test_files.as_slice()[skip..].to_vec(),
-            NoOpInspector(),
-        )
+        runner::run(test_files, NoOpInspector())
     }
 }
-
-// big nonce test. Not applicable.
-// big gas limit test. Not applicable.
-//      "ttNonce"
-//      "TransactionWithHighNonce256.json"
-
-// skip: typeTwoBerlin we dont parse txbytes

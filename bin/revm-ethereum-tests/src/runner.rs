@@ -111,18 +111,27 @@ pub fn execute_test_suit(path: &PathBuf, inspector: &mut dyn Inspector) -> Resul
             .unwrap();
         // post and execution
         for (spec_name, tests) in unit.post {
-            if !matches!(spec_name, SpecName::London | SpecName::Berlin | SpecName::Istanbul) {
+            if !matches!(
+                spec_name,
+                SpecName::London | SpecName::Berlin | SpecName::Istanbul
+            ) {
                 continue;
             }
             let spec_id = spec_name.to_spec_id();
+
+            let block_basefee = unit.env.current_base_fee;
             let global_env = GlobalEnv {
-                gas_price: unit.transaction.gas_price.unwrap_or_default(),
+                gas_max_fee: unit
+                    .transaction
+                    .gas_price
+                    .unwrap_or(unit.transaction.max_fee_per_gas.unwrap_or_default()),
+                gas_priority_fee: unit.transaction.max_priority_fee_per_gas,
                 block_number: unit.env.current_number,
                 block_coinbase: unit.env.current_coinbase,
                 block_timestamp: unit.env.current_timestamp,
                 block_difficulty: unit.env.current_difficulty,
                 block_gas_limit: unit.env.current_gas_limit,
-                block_basefee: unit.env.current_base_fee,
+                block_basefee,
                 chain_id: 1.into(),     // TODO ?
                 origin: caller.clone(), // TODO ?
             };
@@ -169,16 +178,13 @@ pub fn execute_test_suit(path: &PathBuf, inspector: &mut dyn Inspector) -> Resul
                     None => TransactTo::Create(CreateScheme::Create),
                 };
                 //let mut inspector = inspector.clone();
-                let (_ret, _out, _gas, state) = {
-                    let mut evm = revm::new_inspect(
-                        spec_name.to_spec_id(),
-                        global_env.clone(),
-                        &mut database,
-                        inspector,
-                    );
-
-                    evm.transact(caller.clone(), to, value, data, gas_limit, access_list)
-                };
+                let (_ret, _out, _gas, state) = revm::new_inspect(
+                    spec_name.to_spec_id(),
+                    global_env.clone(),
+                    &mut database,
+                    inspector,
+                )
+                .transact(caller.clone(), to, value, data, gas_limit, access_list);
                 //println!("inspector{:?}",inspector);
                 database.apply(state);
                 let state_root = database.state_root();
@@ -200,10 +206,7 @@ pub fn execute_test_suit(path: &PathBuf, inspector: &mut dyn Inspector) -> Resul
     Ok(())
 }
 
-pub fn run<INSP: 'static + Inspector + Clone + Send>(
-    test_files: Vec<PathBuf>,
-    inspector: INSP,
-) {
+pub fn run<INSP: 'static + Inspector + Clone + Send>(test_files: Vec<PathBuf>, inspector: INSP) {
     let endjob = Arc::new(AtomicBool::new(false));
     let console_bar = Arc::new(ProgressBar::new(test_files.len() as u64));
     let mut joins = Vec::new();

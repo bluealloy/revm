@@ -105,6 +105,14 @@ pub enum ExitError {
     OutOfGas,
     /// Not enough fund to start the execution (runtime).
     OutOfFund,
+    /// Effective gas price is less then basefee
+    GasPriceLessThenBasefee,
+    /// Caller does not have enought funds to cover full spending of gas_limit
+    LackOfFundForGasLimit,
+    /// Caller gas_limit is greater then block gas limit
+    CallerGasLimitMoreThenBlock,
+    /// GasMaxFee greater than priority fee
+    GasMaxFeeGreaterThanPriorityFee,
 
     /// PC underflowed (unused).
     PCUnderflow,

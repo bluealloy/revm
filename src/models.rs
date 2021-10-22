@@ -1,3 +1,5 @@
+use core::cmp::min;
+
 use crate::collection::vec::Vec;
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
@@ -96,8 +98,10 @@ pub struct CallContext {
 
 #[derive(Clone, Eq, PartialEq, Debug, Default)]
 pub struct GlobalEnv {
-    /// Gas price
-    pub gas_price: U256,
+    /// Gas price or after London it is
+    pub gas_max_fee: U256,
+    /// max priority fee introduced in LONDON upgrade
+    pub gas_priority_fee: Option<U256>,
     /// Get environmental block number.
     pub block_number: U256,
     /// Get environmental coinbase.
@@ -114,6 +118,21 @@ pub struct GlobalEnv {
     pub block_basefee: Option<U256>,
     /// Get execution origin
     pub origin: H160,
+}
+
+impl GlobalEnv {
+    pub fn effective_gas_price(&self) -> U256 {
+        if self.block_basefee.is_none() || self.gas_priority_fee.is_none() {
+            self.gas_max_fee
+        } else {
+
+        
+        min(
+            self.gas_max_fee,
+            self.block_basefee.unwrap() + self.gas_priority_fee.unwrap(),
+        )
+    }
+}
 }
 
 /// Transfer from source to target, with given value.
