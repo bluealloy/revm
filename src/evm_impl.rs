@@ -37,7 +37,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
         gas_limit: u64,
         access_list: Vec<(H160, Vec<H256>)>,
     ) -> (ExitReason, TransactOut, u64, State) {
-
         let mut gas = Gas::new(gas_limit);
         //If there is no initial gas, should we take whatever is present?
         if !gas.record_cost(self.initialization::<GSPEC>(
@@ -101,7 +100,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
         };
 
         gas.reimburse_unspend(&exit_reason, ret_gas);
-        match self.finalize(caller, &gas) {
+        match self.finalize::<GSPEC>(caller, &gas) {
             Err(e) => (e, out, gas.spend(), Map::new()),
             Ok(state) => (exit_reason, out, gas.spend(), state),
         }
@@ -129,17 +128,22 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
     }
 
-    fn finalize(&mut self, caller: H160, gas: &Gas) -> Result<Map<H160, Account>, ExitReason> {
+    fn finalize<SPEC: Spec>(
+        &mut self,
+        caller: H160,
+        gas: &Gas,
+    ) -> Result<Map<H160, Account>, ExitReason> {
         let gas_price = self.global_env.gas_price;
         let coinbase = self.global_env.block_coinbase;
-
-        let gas_refunded = min(gas.refunded() as u64, gas.spend() / 2);
+        let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 }; // EIP-3529: Reduction in refunds
+        let gas_refunded = min(gas.refunded() as u64, gas.spend() / max_refund_quotient);
         self.subroutine
             .balance_add(caller, gas_price * (gas.remaining() + gas_refunded));
-        self.subroutine.load_account(coinbase, self.db);
-        self.subroutine
-            .balance_add(coinbase, gas_price * (gas.spend() - gas_refunded));
-
+        if !SPEC::enabled(LONDON) {
+            self.subroutine.load_account(coinbase, self.db);
+            self.subroutine
+                .balance_add(coinbase, gas_price * (gas.spend() - gas_refunded));
+        }
         Ok(self.subroutine.finalize())
     }
 
@@ -272,6 +276,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 let b = Bytes::new();
                 // if ok, check contract creation limit and calculate gas deduction on output len.
                 let code = machine.return_value();
+
+                // EIP-3541: Reject new contract code starting with the 0xEF byte
+                if SPEC::enabled(LONDON) && !code.is_empty() && code.get(0) == Some(&0xEF) {
+                    self.subroutine.checkpoint_revert(checkpoint);
+                    return (ExitError::CreateContractWithEF.into(), ret, machine.gas, b);
+                }
 
                 // EIP-170: Contract code size limit
                 if SPEC::enabled(SPURIOUS_DRAGON) && code.len() > 0x6000 {

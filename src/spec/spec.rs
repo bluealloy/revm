@@ -48,9 +48,9 @@ spec!(ISTANBUL);
 spec!(BYZANTINE);
 spec!(FRONTIER);
 
+pub use LONDON::SpecImpl as LondonSpec;
 pub use BERLIN::SpecImpl as BerlinSpec;
 pub use BYZANTINE::SpecImpl as ByzantineSpec;
 pub use FRONTIER::SpecImpl as FrontierSpec;
 pub use ISTANBUL::SpecImpl as IstanbulSpec;
 pub use LATEST::SpecImpl as LatestSpec;
-pub use LONDON::SpecImpl as LondonSpec;

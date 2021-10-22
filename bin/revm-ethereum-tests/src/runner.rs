@@ -111,7 +111,7 @@ pub fn execute_test_suit(path: &PathBuf, inspector: &mut dyn Inspector) -> Resul
             .unwrap();
         // post and execution
         for (spec_name, tests) in unit.post {
-            if !matches!(spec_name, SpecName::Berlin | SpecName::Istanbul) {
+            if !matches!(spec_name, SpecName::London | SpecName::Berlin | SpecName::Istanbul) {
                 continue;
             }
             let spec_id = spec_name.to_spec_id();
@@ -209,7 +209,7 @@ pub fn run<INSP: 'static + Inspector + Clone + Send>(
     let mut joins = Vec::new();
     let queue = Arc::new(Mutex::new((0, test_files)));
 
-    for _ in 0..10 {
+    for _ in 0..1 {
         let queue = queue.clone();
         let endjob = endjob.clone();
         let console_bar = console_bar.clone();

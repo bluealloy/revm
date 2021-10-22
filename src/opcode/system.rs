@@ -80,7 +80,7 @@ pub fn selfbalance<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
 }
 
 pub fn basefee<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
-    check!(SPEC::enabled(LONDON)); // EIP-1884: Repricing for trie-size-dependent opcodes
+    check!(SPEC::enabled(LONDON)); // EIP-3198: BASEFEE opcode
     let basefee = handler.env().block_basefee.unwrap_or_default();
     gas!(machine, gas::BASE);
     push_u256!(machine, basefee);
@@ -332,7 +332,8 @@ pub fn selfdestruct<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut
     let res = handler.selfdestruct(machine.contract.address, target.into());
     inspect!(handler, selfdestruct);
 
-    if !res.previously_destroyed {
+    // EIP-3529: Reduction in refunds 
+    if !SPEC::enabled(LONDON) && !res.previously_destroyed {
         refund!(machine, gas::SELFDESTRUCT)
     }
     gas!(machine, gas::selfdestruct_cost::<SPEC>(res));

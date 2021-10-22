@@ -9,19 +9,25 @@ use primitive_types::{H256, U256};
 #[allow(clippy::collapsible_else_if)]
 pub fn sstore_refund<SPEC: Spec>(original: H256, current: H256, new: H256) -> i64 {
     if SPEC::enabled(ISTANBUL) {
+        // EIP-3529: Reduction in refunds
+        let sstore_clears_schedule = if SPEC::enabled(LONDON) {
+            (SSTORE_RESET - SLOAD_COLD + ACCESS_LIST_STORAGE_KEY) as i64
+        } else {
+            REFUND_SSTORE_CLEARS
+        };
         if current == new {
             0
         } else {
             if original == current && new == H256::default() {
-                REFUND_SSTORE_CLEARS
+                sstore_clears_schedule
             } else {
                 let mut refund = 0;
 
                 if original != H256::default() {
                     if current == H256::default() {
-                        refund -= REFUND_SSTORE_CLEARS;
+                        refund -= sstore_clears_schedule;
                     } else if new == H256::default() {
-                        refund += REFUND_SSTORE_CLEARS;
+                        refund += sstore_clears_schedule;
                     }
                 }
 

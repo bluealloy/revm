@@ -95,6 +95,8 @@ pub enum ExitError {
     CreateCollision,
     /// Create init code exceeds limit (runtime).
     CreateContractLimit,
+    /// Create contract that begins with EF
+    CreateContractWithEF,
 
     /// An opcode accesses external information, but the request is off offset
     /// limit (runtime).
