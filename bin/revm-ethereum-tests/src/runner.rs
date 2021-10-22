@@ -212,7 +212,7 @@ pub fn run<INSP: 'static + Inspector + Clone + Send>(test_files: Vec<PathBuf>, i
     let mut joins = Vec::new();
     let queue = Arc::new(Mutex::new((0, test_files)));
 
-    for _ in 0..1 {
+    for _ in 0..10 {
         let queue = queue.clone();
         let endjob = endjob.clone();
         let console_bar = console_bar.clone();
