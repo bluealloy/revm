@@ -1,6 +1,6 @@
 # revm - Revolutionary Machine
 
-Is **Rust Ethereum Virtual Machine** with great name that is focused on **speed** and **simplicity**. It gets ispiration from `SputnikVM` (opcodes/machine are copied from here), `OpenEthereum` and `Geth`. This is probably one of the fasted implementation of EVM, from const EVM Spec to optimistic changelogs for subroutines to merging `eip2929` in EVM state so that it can be accesses only once are some of the things that are improving the speed of execution. 
+Is **Rust Ethereum Virtual Machine** with great name that is focused on **speed** and **simplicity**. It gets ispiration from `SputnikVM` (opcodes/machine are copied from here), `OpenEthereum` and `Geth`. This is probably one of the fastest implementation of EVM, from const EVM Spec to optimistic changelogs for subroutines to merging `eip2929` in EVM state so that it can be accesses only once are some of the things that are improving the speed of execution. 
 
 Here is list of things that i would like to use as guide in this project:
 - **EVM compatibility and stability** - this goes without saying but it is nice to put it here. In blockchain industry, stability is most desired attribute of any system.

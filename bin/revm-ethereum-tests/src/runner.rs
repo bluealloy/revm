@@ -3,6 +3,7 @@ use std::{
     path::PathBuf,
     str::FromStr,
     sync::{atomic::AtomicBool, Arc, Mutex},
+    time::{Duration, Instant},
 };
 
 use sha3::{Digest, Keccak256};
@@ -38,7 +39,11 @@ pub fn find_all_json_tests(path: PathBuf) -> Vec<PathBuf> {
         .collect::<Vec<PathBuf>>()
 }
 
-pub fn execute_test_suit(path: &PathBuf, inspector: &mut dyn Inspector) -> Result<(), TestError> {
+pub fn execute_test_suit(
+    path: &PathBuf,
+    elapsed: &Arc<Mutex<Duration>>,
+    inspector: &mut dyn Inspector,
+) -> Result<(), TestError> {
     let json_reader = std::fs::read(&path).unwrap();
     let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
     let skip_test_unit: HashSet<_> = vec![
@@ -177,6 +182,7 @@ pub fn execute_test_suit(path: &PathBuf, inspector: &mut dyn Inspector) -> Resul
                     Some(add) => TransactTo::Call(add),
                     None => TransactTo::Create(CreateScheme::Create),
                 };
+                let timer = Instant::now();
                 let (_ret, _out, _gas, state) = revm::new_inspect(
                     spec_name.to_spec_id(),
                     global_env.clone(),
@@ -184,6 +190,8 @@ pub fn execute_test_suit(path: &PathBuf, inspector: &mut dyn Inspector) -> Resul
                     inspector,
                 )
                 .transact(caller.clone(), to, value, data, gas_limit, access_list);
+                let timer = timer.elapsed();
+                *elapsed.lock().unwrap() += timer;
                 database.apply(state);
                 let state_root = database.state_root();
                 if test.hash != state_root {
@@ -209,11 +217,12 @@ pub fn run<INSP: 'static + Inspector + Clone + Send>(test_files: Vec<PathBuf>, i
     let console_bar = Arc::new(ProgressBar::new(test_files.len() as u64));
     let mut joins = Vec::new();
     let queue = Arc::new(Mutex::new((0, test_files)));
-
+    let elapsed = Arc::new(Mutex::new(std::time::Duration::ZERO));
     for _ in 0..10 {
         let queue = queue.clone();
         let endjob = endjob.clone();
         let console_bar = console_bar.clone();
+        let elapsed = elapsed.clone();
         let mut insp = inspector.clone();
 
         joins.push(
@@ -232,7 +241,7 @@ pub fn run<INSP: 'static + Inspector + Clone + Send>(test_files: Vec<PathBuf>, i
                     if endjob.load(Ordering::SeqCst) {
                         return;
                     }
-                    if let Err(err) = execute_test_suit(&test_path, &mut insp as &mut dyn Inspector)
+                    if let Err(err) = execute_test_suit(&test_path, &elapsed, &mut insp as &mut dyn Inspector)
                     {
                         endjob.store(true, Ordering::SeqCst);
                         println!("{:?} failed: {}", test_path, err);
@@ -246,5 +255,6 @@ pub fn run<INSP: 'static + Inspector + Clone + Send>(test_files: Vec<PathBuf>, i
     for handler in joins {
         let _ = handler.join();
     }
-    console_bar.finish_at_current_pos()
+    console_bar.finish_at_current_pos();
+    println!("Finished execution. Time:{:?}",elapsed.lock().unwrap());
 }
