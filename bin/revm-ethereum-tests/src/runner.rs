@@ -1,10 +1,4 @@
-use std::{
-    collections::{HashMap, HashSet},
-    path::PathBuf,
-    str::FromStr,
-    sync::{atomic::AtomicBool, Arc, Mutex},
-    time::{Duration, Instant},
-};
+use std::{collections::{HashMap, HashSet}, ffi::OsStr, path::PathBuf, str::FromStr, sync::{atomic::AtomicBool, Arc, Mutex}, time::{Duration, Instant}};
 
 use sha3::{Digest, Keccak256};
 
@@ -44,6 +38,9 @@ pub fn execute_test_suit(
     elapsed: &Arc<Mutex<Duration>>,
     inspector: &mut dyn Inspector,
 ) -> Result<(), TestError> {
+    if path.file_name() == Some(OsStr::new("ValueOverflow.json")) {
+        return Ok(())
+    }
     let json_reader = std::fs::read(&path).unwrap();
     let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
     let skip_test_unit: HashSet<_> = vec![
@@ -241,10 +238,11 @@ pub fn run<INSP: 'static + Inspector + Clone + Send>(test_files: Vec<PathBuf>, i
                     if endjob.load(Ordering::SeqCst) {
                         return;
                     }
+                    //println!("Test:{:?}",test_path);
                     if let Err(err) = execute_test_suit(&test_path, &elapsed, &mut insp as &mut dyn Inspector)
                     {
                         endjob.store(true, Ordering::SeqCst);
-                        println!("{:?} failed: {}", test_path, err);
+                        println!("\n{:?} failed: {}\n", test_path, err);
                         return;
                     }
                     console_bar.inc(1);
