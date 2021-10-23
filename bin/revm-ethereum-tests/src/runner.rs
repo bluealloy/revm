@@ -248,8 +248,5 @@ pub fn run<INSP: 'static + Inspector + Clone + Send>(test_files: Vec<PathBuf>, i
     for handler in joins {
         let _ = handler.join();
     }
-    // if not error finish console bar
-    //if endjob.load(Ordering::SeqCst) {
     console_bar.finish_at_current_pos()
-    //}
 }

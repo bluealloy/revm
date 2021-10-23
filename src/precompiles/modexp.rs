@@ -65,7 +65,7 @@ impl<HF: HardFork> ModExp<HF> {
         let (r, gas_cost) = if base_len == 0 && mod_len == 0 {
             (BigUint::zero(), min_gas)
         } else {
-            // this is litlle big peculiar, if base/mod is
+            // set limit for exp overflow
             if exp_overflow {
                 return Ok(PrecompileOutput::without_logs(u64::MAX, Vec::new()));
             }

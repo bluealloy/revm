@@ -83,6 +83,9 @@ I just started this project as a hobby to kill some time. Presenty it has good s
 
 ## Changelogs
 
+### 23.10.2021:
+Published v0.2.0. London supported and all eth state test are 100% passing or Istanbul/Berlin/London.
+
 ### 17.10.2021:
 
 -For past few weeks working on this structure and project in general become really good and I like it. For me it surved as good distraction for past few weeks and i think i am going to get drained if i continue working on it, so i am taking break and i intend to come back after few months and finish it.
