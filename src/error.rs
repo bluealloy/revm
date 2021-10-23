@@ -113,9 +113,10 @@ pub enum ExitError {
     CallerGasLimitMoreThenBlock,
     /// GasMaxFee greater than priority fee
     GasMaxFeeGreaterThanPriorityFee,
-
     /// EIP-3607: Reject transactions from senders with deployed code 
     RejectCallerWithCode,
+    /// gas_limit*effective gas oveflows
+    OverflowPayment,
 
     /// PC underflowed (unused).
     PCUnderflow,

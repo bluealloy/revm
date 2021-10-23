@@ -82,9 +82,14 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
         }
 
         // substract gas_limit*gas_price from current account.
-        let payment_value = U256::from(gas_limit) * self.global_env.effective_gas_price();
-        if !self.subroutine.balance_sub(caller, payment_value) {
-            return exit_error(ExitError::LackOfFundForGasLimit.into());
+        if let Some(payment_value) =
+            U256::from(gas_limit).checked_mul(self.global_env.effective_gas_price())
+        {
+            if !self.subroutine.balance_sub(caller, payment_value) {
+                return exit_error(ExitError::LackOfFundForGasLimit.into());
+            }
+        } else {
+            return exit_error(ExitError::OverflowPayment.into());
         }
 
         // check if we have enought balance for value transfer.
