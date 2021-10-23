@@ -1,8 +1,4 @@
-use crate::{
-    collection::{vec, vec::Vec, Entry, Map},
-    models::SelfDestructResult,
-    ExitRevert,
-};
+use crate::{ExitRevert, KECCAK_EMPTY, collection::{vec, vec::Vec, Entry, Map}, models::SelfDestructResult};
 
 use core::mem::{self};
 
@@ -106,6 +102,7 @@ impl SubRoutine {
                 // acc was destroyed or if it is changed precompile, just add it to output.
                 Filth::Destroyed | Filth::Precompile(true) => {
                     acc.info.code = None;
+                    acc.info.code_hash = H256::zero();
                     out.insert(add, acc);
                 }
                 // acc is newly created.
@@ -147,7 +144,7 @@ impl SubRoutine {
     pub fn set_code(&mut self, address: H160, code: Bytes, code_hash: H256) {
         let acc = self.log_dirty(address, |_| {});
         acc.info.code = Some(code);
-        acc.info.code_hash = Some(code_hash);
+        acc.info.code_hash = code_hash;
     }
 
     pub fn inc_nonce(&mut self, address: H160) -> u64 {
@@ -301,8 +298,8 @@ impl SubRoutine {
             }
             ChangeLog::Created(balance, orig_filth) => {
                 let acc = state.get_mut(&add).unwrap();
-                acc.info.code = None;
-                acc.info.code_hash = None;
+                acc.info.code = Some(Bytes::new());
+                acc.info.code_hash = KECCAK_EMPTY;
                 acc.info.nonce = 0;
                 acc.info.balance = balance;
                 acc.filth = orig_filth;
@@ -477,29 +474,25 @@ impl SubRoutine {
     pub fn load_account_exist<DB: Database>(&mut self, address: H160, db: &mut DB) -> (bool, bool) {
         let (acc, is_cold) = self.load_code(address, db);
         let info = acc.info.clone();
-        let is_empty = info.balance == U256::zero()
-            && info.nonce == 0
-            && info.code.unwrap_or_default() == Bytes::default();
+        let is_empty = info.is_empty();
         (is_cold, !is_empty)
     }
 
     pub fn load_code<DB: Database>(&mut self, address: H160, db: &mut DB) -> (&mut Account, bool) {
         let is_cold = self.load_account(address.clone(), db);
         let acc = self.state.get_mut(&address).unwrap();
-        let dont_load_from_db = !matches!(
+        let dont_load_from_db = matches!(
             acc.filth,
             Filth::Destroyed | Filth::NewlyCreated | Filth::Precompile(_)
         );
-        if dont_load_from_db && acc.info.code.is_none() {
-            // let code = if let Some(code_hash) = acc.info.code_hash {
-            //     db.code_by_hash(code_hash)
-            // } else {
-            //     db.code(address)
-            // };
-            acc.info.code = Some(db.code(address));
-        } // } else {
-          //     acc.info.code = Some(Bytes::new());
-          // }
+        if acc.info.code.is_none() {
+            let code = if dont_load_from_db {
+                Bytes::new()
+            } else {
+                db.code_by_hash(acc.info.code_hash)
+            };
+            acc.info.code = Some(code);
+        }
         (acc, is_cold)
     }
 
@@ -558,7 +551,6 @@ impl SubRoutine {
     ) -> (H256, H256, H256, bool) {
         // assume that acc exists and load the slot.
         let (present, is_cold) = self.sload(address, index, db);
-        //println!("sstore:{:?}:{:?}({:?})=>{:?}::{:?}",address,index,present,new,is_cold);
         let acc = self.state.get_mut(&address).unwrap();
         // if there is no original value in dirty return present value, that is our original.
         let original = if let Some(original) = acc.filth.original_slot(index) {

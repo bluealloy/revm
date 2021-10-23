@@ -13,9 +13,6 @@ use crate::{collection::Map, models::AccountInfo};
 /// Returns the RLP for this account.
 pub fn trie_account_rlp(info: &AccountInfo, storage: Map<H256, H256>) -> Bytes {
     let mut stream = RlpStream::new_list(4);
-    let b = Bytes::new();
-    let code = info.code.as_ref().unwrap_or(&b);
-    let code_hash = Keccak256::digest(code);
     stream.append(&info.nonce);
     stream.append(&info.balance);
     stream.append(&{
@@ -27,7 +24,7 @@ pub fn trie_account_rlp(info: &AccountInfo, storage: Map<H256, H256>) -> Bytes {
         );
         storage_root.clone()
     });
-    stream.append(&code_hash.as_slice());
+    stream.append(&info.code_hash.as_bytes());
     stream.out().freeze()
 }
 

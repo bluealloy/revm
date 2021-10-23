@@ -4,28 +4,41 @@ use crate::collection::vec::Vec;
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
 
+
+pub const KECCAK_EMPTY: H256 = H256([
+	0xc5, 0xd2, 0x46, 0x01, 0x86, 0xf7, 0x23, 0x3c, 0x92, 0x7e, 0x7d, 0xb2, 0xdc, 0xc7, 0x03, 0xc0, 0xe5, 0x00, 0xb6,
+	0x53, 0xca, 0x82, 0x27, 0x3b, 0x7b, 0xfa, 0xd8, 0x04, 0x5d, 0x85, 0xa4, 0x70,
+]);
+
 /// AccountInfo account information.
-#[derive(Clone, Eq, PartialEq, Debug, Default)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 #[cfg_attr(feature = "with-codec", derive(codec::Encode, codec::Decode))]
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AccountInfo {
     /// Account balance.
     pub balance: U256,
     /// code hash,
-    pub code_hash: Option<H256>,
+    pub code_hash: H256,
     /// code
     pub code: Option<Bytes>,
     /// Account nonce.
     pub nonce: u64,
 }
 
+impl Default for AccountInfo {
+    fn default() -> Self {
+        Self {
+            balance: U256::zero(),
+            code_hash: KECCAK_EMPTY,
+            code: None,
+            nonce: 0,
+        }
+    }
+}
+
 impl AccountInfo {
     pub fn is_empty(&self) -> bool {
-        let code_empty = if let Some(ref code) = self.code {
-            code.is_empty()
-        } else {
-            true
-        };
+        let code_empty = self.code_hash == KECCAK_EMPTY || self.code_hash == H256::zero();
         self.balance == U256::zero() && self.nonce == 0 && code_empty
     }
 
@@ -34,12 +47,9 @@ impl AccountInfo {
     }
 
     pub fn from_balance(balance: U256) -> Self {
-        Self {
-            balance,
-            code_hash: None,
-            code: None,
-            nonce: 0,
-        }
+        let mut def = Self::default();
+        def.balance = balance;
+        def
     }
 }
 

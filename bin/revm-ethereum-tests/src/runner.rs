@@ -91,7 +91,7 @@ pub fn execute_test_suit(path: &PathBuf, inspector: &mut dyn Inspector) -> Resul
         for (address, info) in unit.pre.iter() {
             let acc_info = revm::AccountInfo {
                 balance: info.balance,
-                code_hash: Some(H256::from_slice(Keccak256::digest(&info.code).as_slice())), //try with dummy hash.
+                code_hash: H256::from_slice(Keccak256::digest(&info.code).as_slice()), //try with dummy hash.
                 code: Some(info.code.clone()),
                 nonce: info.nonce,
             };
@@ -177,7 +177,6 @@ pub fn execute_test_suit(path: &PathBuf, inspector: &mut dyn Inspector) -> Resul
                     Some(add) => TransactTo::Call(add),
                     None => TransactTo::Create(CreateScheme::Create),
                 };
-                //let mut inspector = inspector.clone();
                 let (_ret, _out, _gas, state) = revm::new_inspect(
                     spec_name.to_spec_id(),
                     global_env.clone(),
@@ -185,7 +184,6 @@ pub fn execute_test_suit(path: &PathBuf, inspector: &mut dyn Inspector) -> Resul
                     inspector,
                 )
                 .transact(caller.clone(), to, value, data, gas_limit, access_list);
-                //println!("inspector{:?}",inspector);
                 database.apply(state);
                 let state_root = database.state_root();
                 if test.hash != state_root {

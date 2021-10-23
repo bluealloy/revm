@@ -1,10 +1,8 @@
-use crate::{
-    collection::{vec::Vec, Map},
-    subroutine::Filth,
-    Database,
-};
+use crate::{Database, KECCAK_EMPTY, collection::{vec::Vec, Entry, Map}, subroutine::Filth};
 
 use primitive_types::{H160, H256, U256};
+
+use sha3::{Digest, Keccak256};
 
 use super::trie;
 use crate::{Account, AccountInfo, Log};
@@ -13,13 +11,28 @@ use bytes::Bytes;
 /// Memory backend, storing all state values in a `Map` in memory.
 #[derive(Debug, Clone)]
 pub struct DummyStateDB {
+    /// dummy account info where code is allways None. Code bytes can be found in `contracts`
     cache: Map<H160, AccountInfo>,
     storage: Map<H160, Map<H256, H256>>,
+    contracts: Map<H256, Bytes>,
     logs: Vec<Log>,
 }
 
 impl DummyStateDB {
-    pub fn insert_cache(&mut self, address: H160, account: AccountInfo) {
+    pub fn insert_cache(&mut self, address: H160, mut account: AccountInfo) {
+        let code = core::mem::take(&mut account.code);
+        if let Some(code) = code {
+            if !code.is_empty() {
+                let code_hash = H256::from_slice(&Keccak256::digest(&code));
+                account.code_hash = code_hash;
+                self.contracts.insert(code_hash, code);
+            }
+        }
+        // TODO see to remove zero from revm so that we dont need to do this.
+        // it fails with selfdestruct
+        if account.code_hash == H256::zero() {
+            account.code_hash = KECCAK_EMPTY;
+        }
         self.cache.insert(address, account);
     }
 
@@ -33,7 +46,7 @@ impl DummyStateDB {
                 self.cache.remove(&add);
                 self.storage.remove(&add);
             } else {
-                self.cache.insert(add, acc.info);
+                self.insert_cache(add, acc.info);
                 let storage = self.storage.entry(add.clone()).or_default();
                 if acc.filth.abandon_old_storage() {
                     storage.clear();
@@ -68,9 +81,13 @@ impl DummyStateDB {
 
     /// Create a new memory backend.
     pub fn new() -> Self {
+        let mut contracts = Map::new();
+        contracts.insert(KECCAK_EMPTY, Bytes::new());
+        contracts.insert(H256::zero(), Bytes::new());
         Self {
             cache: Map::new(),
             storage: Map::new(),
+            contracts,
             logs: Vec::new(),
         }
     }
@@ -111,7 +128,6 @@ impl Database for DummyStateDB {
     }
 
     fn exists(&mut self, address: H160) -> Option<AccountInfo> {
-        println!("\nTESTTT:     {:?} exists\n", address);
         if self.fetch_account(&address) {
             Some(self.cache.get(&address).cloned().unwrap())
         } else {
@@ -120,44 +136,16 @@ impl Database for DummyStateDB {
     }
 
     fn basic(&mut self, address: H160) -> AccountInfo {
-        //log::info!(target: "evm::handler", "{:?} basic acc info",address);
         if self.fetch_account(&address) {
-            self.cache.get(&address).cloned().unwrap()
+            let mut basic = self.cache.get(&address).cloned().unwrap();
+            basic.code = None;
+            basic
         } else {
-            AccountInfo {
-                balance: U256::zero(),
-                nonce: 0,
-                code: Some(Bytes::new()),
-                code_hash: None,
-            }
-        }
-    }
-
-    fn code(&mut self, address: H160) -> Bytes {
-        //log::info!(target: "evm::handler", "{:?} code",address);
-        if self.fetch_account(&address) {
-            let acc = self.cache.get_mut(&address).unwrap();
-            if let Some(ref code) = acc.code {
-                return code.clone();
-            }
-            if acc.code_hash.is_none() {
-                return Bytes::new();
-            }
-            Bytes::new()
-            /*let code = self.db.contract(&acc.code_hash.unwrap());
-            if code.is_none() {
-                return Bytes::new();
-            }
-            let code = code.unwrap();
-            acc.code = Some(code.clone());
-            code*/
-        } else {
-            Bytes::new()
+            AccountInfo::default()
         }
     }
 
     fn storage(&mut self, address: H160, index: H256) -> H256 {
-        //log::info!(target: "evm::handler", "{:?} storage index {:?}",address, index);
         if self.fetch_account(&address) {
             if let Some(storage) = self.storage.get(&address) {
                 if let Some(slot) = storage.get(&index) {
@@ -183,7 +171,13 @@ impl Database for DummyStateDB {
         }
     }
 
-    // fn code_by_hash(&mut self, _code_hash: H256) -> Bytes {
-    //     todo!()
-    // }
+    fn code_by_hash(&mut self, code_hash: H256) -> Bytes {
+        match self.contracts.entry(code_hash) {
+            Entry::Occupied(entry) => entry.get().clone(),
+            Entry::Vacant(_entry) => {
+                // TODO fetch from db
+                Bytes::new()
+            }
+        }
+    }
 }

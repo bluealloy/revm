@@ -155,7 +155,6 @@ pub fn jumpi(machine: &mut Machine) -> Control {
         if machine.contract.is_valid_jump(dest) {
             Control::Jump(dest)
         } else {
-            //println!("contract:{:?}", hex::encode(&machine.contract.code));
             Control::Exit(ExitError::InvalidJump.into())
         }
     } else {

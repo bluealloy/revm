@@ -272,7 +272,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         init_code: Bytes,
         gas_limit: u64,
     ) -> (ExitReason, Option<H160>, Gas, Bytes) {
-        //println!("create depth:{}",self.subroutine.depth());
         let gas = Gas::new(gas_limit);
         self.load_account(caller);
 
@@ -352,6 +351,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 } else {
                     // if we have enought gas
                     self.subroutine.checkpoint_commit();
+                    let code_hash = H256::from_slice(Keccak256::digest(&code).as_slice());
                     self.subroutine.set_code(created_address, code, code_hash);
                     (ExitSucceed::Returned.into(), ret, machine.gas, b)
                 }
@@ -478,7 +478,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Handler
         if INSPECT && is_cold {
             self.inspector.load_account(&address);
         }
-        (acc.info.code.clone().unwrap_or_default(), is_cold)
+        (acc.info.code.clone().unwrap(), is_cold)
     }
 
     /// Get code hash of address.
@@ -493,7 +493,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Handler
 
         (
             H256::from_slice(
-                Keccak256::digest(&acc.info.code.clone().unwrap_or_default()).as_slice(),
+                Keccak256::digest(&acc.info.code.clone().unwrap()).as_slice(),
             ),
             is_cold,
         )
