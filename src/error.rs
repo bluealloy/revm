@@ -114,6 +114,9 @@ pub enum ExitError {
     /// GasMaxFee greater than priority fee
     GasMaxFeeGreaterThanPriorityFee,
 
+    /// EIP-3607: Reject transactions from senders with deployed code 
+    RejectCallerWithCode,
+
     /// PC underflowed (unused).
     PCUnderflow,
     /// Attempt to create an empty account (runtime, unused).

@@ -14,7 +14,7 @@ use crate::{
     spec::{Spec, SpecId::*},
     subroutine::{Account, State, SubRoutine},
     util, CallContext, CreateScheme, ExitRevert, GlobalEnv, Inspector, Log, TransactOut,
-    TransactTo, Transfer, EVM,
+    TransactTo, Transfer, EVM, KECCAK_EMPTY,
 };
 use bytes::Bytes;
 
@@ -37,15 +37,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
         gas_limit: u64,
         access_list: Vec<(H160, Vec<H256>)>,
     ) -> (ExitReason, TransactOut, u64, State) {
+        let exit_error = |reason: ExitReason| (reason, TransactOut::None, 0, State::new());
+
         if GSPEC::enabled(LONDON) {
             if let Some(priority_fee) = self.global_env.gas_priority_fee {
                 if priority_fee > self.global_env.gas_max_fee {
-                    return (
-                        ExitError::GasMaxFeeGreaterThanPriorityFee.into(),
-                        TransactOut::None,
-                        0,
-                        State::new(),
-                    );
+                    return exit_error(ExitError::GasMaxFeeGreaterThanPriorityFee.into());
                 }
             }
             let effective_gas_price = self.global_env.effective_gas_price();
@@ -55,63 +52,45 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
             // TODO maybe do this checks when creating evm. We already have all data there
             // or should be move effective_gas_price inside transact fn
             if effective_gas_price < basefee {
-                return (
-                    ExitError::GasPriceLessThenBasefee.into(),
-                    TransactOut::None,
-                    0,
-                    State::new(),
-                );
+                return exit_error(ExitError::GasPriceLessThenBasefee.into());
             }
             // check if priority fee is lower then max fee
         }
         // unusual to be found here, but check if gas_limit is more then block_gas_limit
         if U256::from(gas_limit) > self.global_env.block_gas_limit {
-            return (
-                ExitError::CallerGasLimitMoreThenBlock.into(),
-                TransactOut::None,
-                0,
-                State::new(),
-            );
+            return exit_error(ExitError::CallerGasLimitMoreThenBlock.into());
         }
 
         let mut gas = Gas::new(gas_limit);
-        //If there is no initial gas, should we take whatever is present?
+        // record initial gas cost.
         if !gas.record_cost(self.initialization::<GSPEC>(
             &data,
             matches!(transact_to, TransactTo::Create(_)),
             access_list,
         )) {
-            return (
-                ExitError::OutOfGas.into(),
-                TransactOut::None,
-                0,
-                State::new(),
-            );
+            return exit_error(ExitError::OutOfGas.into());
         }
 
         // load acc
         self.inner_load_account(caller);
 
+        // EIP-3607: Reject transactions from senders with deployed code
+        // This EIP is introduced after london but there was no colision in past
+        // so we can leave it enabled always
+        if self.subroutine.account(caller).info.code_hash != KECCAK_EMPTY {
+            return exit_error(ExitError::RejectCallerWithCode.into());
+        }
+
         // substract gas_limit*gas_price from current account.
         let payment_value = U256::from(gas_limit) * self.global_env.effective_gas_price();
         if !self.subroutine.balance_sub(caller, payment_value) {
-            return (
-                ExitError::LackOfFundForGasLimit.into(),
-                TransactOut::None,
-                0,
-                State::new(),
-            );
+            return exit_error(ExitError::LackOfFundForGasLimit.into());
         }
 
         // check if we have enought balance for value transfer.
         let difference = self.global_env.gas_max_fee - self.global_env.effective_gas_price();
         if difference + value > self.subroutine.account(caller).info.balance {
-            return (
-                ExitError::OutOfFund.into(),
-                TransactOut::None,
-                0,
-                State::new(),
-            );
+            return exit_error(ExitError::OutOfFund.into());
         }
 
         // record all as cost;
@@ -225,7 +204,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
         let non_zero_data_len = (input.len() as u64 - zero_data_len) as u64;
         let (accessed_accounts, accessed_slots) = {
-            if SPEC::enabled(ISTANBUL) {
+            if SPEC::enabled(BERLIN) {
                 let mut accessed_slots = 0 as u64;
                 let accessed_accounts = access_list.len() as u64;
 
@@ -492,9 +471,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Handler
         }
 
         (
-            H256::from_slice(
-                Keccak256::digest(&acc.info.code.clone().unwrap()).as_slice(),
-            ),
+            H256::from_slice(Keccak256::digest(&acc.info.code.clone().unwrap()).as_slice()),
             is_cold,
         )
     }
