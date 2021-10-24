@@ -8,7 +8,24 @@ use primitive_types::{H160, H256, U256};
 use rlp::RlpStream;
 use sha3::{Digest, Keccak256};
 
-use crate::{collection::Map, models::AccountInfo};
+use crate::{models::AccountInfo};
+use std::collections::HashMap as Map;
+
+pub fn merkle_trie_root(
+    accounts: &Map<H160, AccountInfo>,
+    storage: &Map<H160, Map<H256, H256>>,
+) -> H256 {
+    let vec = accounts
+        .iter()
+        .map(|(address, info)| {
+            let storage = storage.get(address).cloned().unwrap_or_default();
+            let storage_root = trie_account_rlp(info, storage);
+            (address.clone(), storage_root)
+        })
+        .collect();
+
+    trie_root(vec)
+}
 
 /// Returns the RLP for this account.
 pub fn trie_account_rlp(info: &AccountInfo, storage: Map<H256, H256>) -> Bytes {

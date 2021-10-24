@@ -1,10 +1,12 @@
-use crate::{Database, KECCAK_EMPTY, collection::{vec::Vec, Entry, Map}, subroutine::Filth};
+use crate::{
+    collection::{vec::Vec, Entry, Map},
+    subroutine::Filth,
+    Database, KECCAK_EMPTY,
+};
 
 use primitive_types::{H160, H256, U256};
 
 use sha3::{Digest, Keccak256};
-
-use super::trie;
 use crate::{Account, AccountInfo, Log};
 use bytes::Bytes;
 
@@ -19,6 +21,13 @@ pub struct DummyStateDB {
 }
 
 impl DummyStateDB {
+    pub fn cache(&self) -> &Map<H160,AccountInfo> {
+        &self.cache
+    }
+    pub fn storage(&self) -> &Map<H160,Map<H256,H256>> {
+        &self.storage
+    }
+    
     pub fn insert_cache(&mut self, address: H160, mut account: AccountInfo) {
         let code = core::mem::take(&mut account.code);
         if let Some(code) = code {
@@ -63,20 +72,6 @@ impl DummyStateDB {
                 }
             }
         }
-    }
-
-    pub fn state_root(&self) -> H256 {
-        let vec = self
-            .cache
-            .iter()
-            .map(|(address, info)| {
-                let storage = self.storage.get(address).cloned().unwrap_or_default();
-                let storage_root = trie::trie_account_rlp(info, storage);
-                (address.clone(), storage_root)
-            })
-            .collect();
-
-        trie::trie_root(vec)
     }
 
     /// Create a new memory backend.

@@ -950,19 +950,15 @@ version = "0.2.0"
 dependencies = [
  "borsh",
  "bytes",
- "hash-db",
  "hex",
  "num",
  "num_enum",
  "parity-crypto",
- "plain_hasher",
  "primitive-types",
  "ripemd160",
- "rlp",
  "sha2",
  "sha3",
  "substrate-bn",
- "triehash",
 ]
 
 [[package]]
@@ -970,15 +966,19 @@ name = "revm-ethereum-tests"
 version = "0.1.0"
 dependencies = [
  "bytes",
+ "hash-db",
  "hex",
  "indicatif",
+ "plain_hasher",
  "primitive-types",
  "revm",
+ "rlp",
  "serde",
  "serde_derive",
  "serde_json",
  "sha3",
  "thiserror",
+ "triehash",
  "walkdir",
 ]
 
