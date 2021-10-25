@@ -1,4 +1,4 @@
-use crate::{ExitError, StandardPrecompileFn};
+use crate::{gas_query, ExitError, StandardPrecompileFn};
 
 use crate::{collection::Borrowed, Precompile, PrecompileOutput, PrecompileResult};
 use core::convert::TryInto;
@@ -23,10 +23,8 @@ fn run(input: &[u8], target_gas: u64) -> PrecompileResult {
 
     // rounds 4 bytes
     let rounds = u32::from_be_bytes(input[..4].try_into().unwrap()) as usize;
-    let cost = rounds as u64 * F_ROUND;
-    if cost > target_gas {
-        return Err(ExitError::OutOfGas);
-    }
+    let cost = gas_query(rounds as u64 * F_ROUND, target_gas)?;
+
     let mut h = [0u64; 8];
     let mut m = [0u64; 16];
 

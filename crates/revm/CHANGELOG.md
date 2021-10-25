@@ -1,4 +1,6 @@
+# v0.2.2
 
+Same as v0.2.1 but added readme.
 # v0.2.1
 date: 25.10.2021
 

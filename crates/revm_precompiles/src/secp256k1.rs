@@ -1,4 +1,4 @@
-use crate::{ExitError, Precompile, PrecompileOutput, PrecompileResult, StandardPrecompileFn};
+use crate::{ExitError, Precompile, PrecompileOutput, PrecompileResult, StandardPrecompileFn, gas_query};
 use core::cmp::min;
 use parity_crypto::publickey::{public_to_address, recover, Error as ParityCryptoError, Signature};
 use primitive_types::{H160 as Address, H256};
@@ -22,10 +22,7 @@ fn secp256k1_ecdsa_recover(sig: &[u8; 65], msg: &[u8; 32]) -> Result<Address, Pa
 }
 
 fn ec_recover_run(i: &[u8], target_gas: u64) -> PrecompileResult {
-    let cost = ECRECOVER_BASE;
-    if cost > target_gas {
-        return Err(ExitError::OutOfGas);
-    }
+    let cost = gas_query(ECRECOVER_BASE,target_gas)?;
     let mut input = [0u8; 128];
     input[..min(i.len(), 128)].copy_from_slice(&i[..min(i.len(), 128)]);
 

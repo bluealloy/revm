@@ -1,4 +1,4 @@
-use crate::{collection::*, ExitError, Precompile, PrecompileOutput, PrecompileResult};
+use crate::{collection::*, gas_query, ExitError, Precompile, PrecompileOutput, PrecompileResult};
 
 use primitive_types::{H160 as Address, U256};
 
@@ -105,9 +105,7 @@ fn read_point(input: &[u8], pos: usize) -> Result<bn::G1, ExitError> {
 }
 
 fn run_add(input: &[u8], cost: u64, target_gas: u64) -> PrecompileResult {
-    if cost > target_gas {
-        return Err(ExitError::OutOfGas);
-    }
+    let cost = gas_query(cost, target_gas)?;
 
     use bn::AffineG1;
 
@@ -133,9 +131,7 @@ fn run_add(input: &[u8], cost: u64, target_gas: u64) -> PrecompileResult {
 }
 
 fn run_mul(input: &[u8], cost: u64, target_gas: u64) -> PrecompileResult {
-    if cost > target_gas {
-        return Err(ExitError::OutOfGas);
-    }
+    let cost = gas_query(cost, target_gas)?;
     use bn::AffineG1;
 
     let mut input = input.to_vec();
@@ -164,9 +160,7 @@ fn run_pair(
     target_gas: u64,
 ) -> PrecompileResult {
     let cost = pair_per_point_cost * input.len() as u64 / PAIR_ELEMENT_LEN as u64 + pair_base_cost;
-    if cost > target_gas {
-        return Err(ExitError::OutOfGas);
-    }
+    let cost = gas_query(cost, target_gas)?;
 
     use bn::{AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
 

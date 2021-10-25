@@ -1,4 +1,4 @@
-use super::gas_quert;
+use super::gas_query;
 use crate::{
     collection::Vec, Precompile, PrecompileOutput, PrecompileResult, StandardPrecompileFn,
 };
@@ -100,7 +100,7 @@ where
             BigUint::from_bytes_be(&out)
         };
 
-        let gas_cost = gas_quert(
+        let gas_cost = gas_query(
             calc_gas(base_len as u64, exp_len as u64, mod_len as u64, &exp_highp),
             gas_limit,
         )?;

@@ -37,7 +37,7 @@ pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base
 }
 
-pub fn gas_quert(gas_used: u64, gas_limit: u64) -> Result<u64, ExitError> {
+pub fn gas_query(gas_used: u64, gas_limit: u64) -> Result<u64, ExitError> {
     if gas_used > gas_limit {
         return Err(ExitError::OutOfGas);
     }
