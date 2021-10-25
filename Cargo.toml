@@ -5,4 +5,3 @@ members = [
     "bins/*",
 ]
 default-members = ["crates/revm"]
-#, "bin/revm-ethereum-tests", "bin/*"]
