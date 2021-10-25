@@ -1,7 +1,7 @@
+mod merkle_trie;
 mod models;
 mod runner;
 mod trace;
-mod merkle_trie;
 
 use std::{env, path::PathBuf};
 

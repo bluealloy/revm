@@ -1,4 +1,5 @@
 use crate::collection::Cow;
+use revm_precompiles::ExitError as PrecompileError;
 
 /// Exit reason.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -113,7 +114,7 @@ pub enum ExitError {
     CallerGasLimitMoreThenBlock,
     /// GasMaxFee greater than priority fee
     GasMaxFeeGreaterThanPriorityFee,
-    /// EIP-3607: Reject transactions from senders with deployed code 
+    /// EIP-3607: Reject transactions from senders with deployed code
     RejectCallerWithCode,
     /// gas_limit*effective gas oveflows
     OverflowPayment,
@@ -131,6 +132,8 @@ pub enum ExitError {
 
     /// Other normal errors.
     Other(Cow<'static, str>),
+
+    Precompile(PrecompileError),
 }
 
 impl From<ExitError> for ExitReason {

@@ -1,28 +1,37 @@
-use crate::{
-    collection::Vec,
-    Spec, SpecId,
-};
-//pub(crate) use crate::precompiles::secp256k1::ecrecover;
-use crate::{
-    models::CallContext,
-    precompiles::{
-        blake2::Blake2F,
-        bn128::{Bn128Add, Bn128Mul, Bn128Pair},
-        hash::{RIPEMD160, SHA256},
-        identity::Identity,
-        modexp::ModExp,
-        secp256k1::ECRecover,
-    },
-    ExitError, Log,
-};
-use primitive_types::{H160 as Address, U256};
+use bytes::Bytes;
+use primitive_types::{H160 as Address, H256, U256};
 
 mod blake2;
 mod bn128;
+mod error;
 mod hash;
 mod identity;
 mod modexp;
 mod secp256k1;
+
+pub use error::ExitError;
+
+/// libraries for no_sdt flag
+#[cfg(no_sdt)]
+pub mod collection {
+    extern crate alloc;
+    pub use alloc::{
+        borrow::{Borrow, Cow},
+        collections::{btree_map::Entry, BTreeMap as Map},
+        vec,
+        vec::Vec,
+    };
+}
+
+#[cfg(not(no_sdt))]
+pub mod collection {
+    pub use std::{
+        borrow::{Cow, Cow::Borrowed},
+        collections::{hash_map::Entry, HashMap as Map},
+        vec,
+        vec::Vec,
+    };
+}
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base
@@ -40,6 +49,13 @@ pub struct PrecompileOutput {
     pub cost: u64,
     pub output: Vec<u8>,
     pub logs: Vec<Log>,
+}
+
+#[derive(Debug)]
+pub struct Log {
+    pub address: Address,
+    pub topics: Vec<H256>,
+    pub data: Bytes,
 }
 
 impl PrecompileOutput {
@@ -65,118 +81,85 @@ impl Default for PrecompileOutput {
 /// A precompile operation result.
 pub type PrecompileResult = Result<PrecompileOutput, ExitError>;
 
-type EvmPrecompileResult = Result<PrecompileOutput, ExitError>;
-
-/// A precompiled function for use in the EVM.
-pub trait Precompile {
-    /// Runs the precompile function.
-    fn run(
-        input: &[u8],
-        target_gas: u64,
-        machine: &CallContext,
-        is_static: bool,
-    ) -> PrecompileResult;
-}
-
-/// Hard fork marker.
-pub trait HardFork {}
-
-/// Homestead hard fork marker.
-pub struct Homestead;
-
-/// Homestead hard fork marker.
-pub struct Byzantium;
-
-/// Homestead hard fork marker.
-pub struct Istanbul;
-
-/// Homestead hard fork marker.
-pub struct Berlin;
-
-impl HardFork for Homestead {}
-
-impl HardFork for Byzantium {}
-
-impl HardFork for Istanbul {}
-
-impl HardFork for Berlin {}
-
-pub type PrecompileFn = fn(&[u8], u64, &CallContext, bool) -> PrecompileResult;
+pub type StandardPrecompileFn = fn(&[u8], u64) -> PrecompileResult;
+pub type CustomPrecompileFn = fn(&[u8], u64) -> PrecompileResult;
 
 pub struct Precompiles {
-    addresses: Vec<Address>,
-    fun: Vec<PrecompileFn>,
+    fun: Vec<(Address, Precompile)>,
+}
+
+#[derive(Clone)]
+pub enum Precompile {
+    Standard(StandardPrecompileFn),
+    Custom(CustomPrecompileFn),
+}
+
+pub enum SpecId {
+    HOMESTEAD = 0,
+    BYZANTINE = 1,
+    ISTANBUL = 2,
+    BERLIN = 3,
+}
+
+impl SpecId {
+    pub const fn enabled(self, spec_id: u8) -> bool {
+        spec_id as u8 >= self as u8
+    }
 }
 
 impl Precompiles {
     //TODO refactor this
-    pub fn new<SPEC: Spec>() -> Self {
-        let mut add = Vec::new();
-        let mut fun: Vec<PrecompileFn> = Vec::new();
-        if SPEC::enabled(SpecId::HOMESTEAD) {
-            add.push(ECRecover::ADDRESS);
-            add.push(SHA256::ADDRESS);
-            add.push(RIPEMD160::ADDRESS);
-
-            fun.push(ECRecover::run);
-            fun.push(SHA256::run);
-            fun.push(RIPEMD160::run);
+    pub fn new<const SPEC_ID: u8>() -> Self {
+        let mut fun: Vec<(Address, Precompile)> = Vec::new();
+        if SpecId::HOMESTEAD.enabled(SPEC_ID) {
+            fun.push(hash::SHA256);
+            fun.push(hash::RIPED160);
+            fun.push(secp256k1::ECRECOVER);
+            // TODO check if this goes here
+            fun.push(identity::FUN);
         }
-        if SPEC::enabled(SpecId::BYZANTINE) {
-            add.push(Identity::ADDRESS);
-            fun.push(Identity::run);
-        }
+        if SpecId::BYZANTINE.enabled(SPEC_ID) {}
 
-        if SPEC::enabled(SpecId::ISTANBUL) {
+        if SpecId::ISTANBUL.enabled(SPEC_ID) {
             // EIP-152: Add BLAKE2 compression function `F` precompile
-            add.push(Blake2F::ADDRESS);
-            fun.push(Blake2F::run);
+            fun.push(blake2::FUN);
         }
 
-        if SPEC::enabled(SpecId::ISTANBUL) {
+        if SpecId::ISTANBUL.enabled(SPEC_ID) {
             // EIP-1108: Reduce alt_bn128 precompile gas costs
-            add.push(Bn128Add::<Istanbul>::ADDRESS);
-            add.push(Bn128Mul::<Istanbul>::ADDRESS);
-            add.push(Bn128Pair::<Istanbul>::ADDRESS);
-
-            fun.push(Bn128Add::<Istanbul>::run);
-            fun.push(Bn128Mul::<Istanbul>::run);
-            fun.push(Bn128Pair::<Istanbul>::run);
-        } else if SPEC::enabled(SpecId::BYZANTINE) {
+            fun.push(bn128::add::ISTANBUL);
+            fun.push(bn128::mul::ISTANBUL);
+            fun.push(bn128::pair::ISTANBUL);
+        } else if SpecId::BYZANTINE.enabled(SPEC_ID) {
             // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128
             // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128
-            add.push(Bn128Add::<Byzantium>::ADDRESS);
-            add.push(Bn128Mul::<Byzantium>::ADDRESS);
-            add.push(Bn128Pair::<Byzantium>::ADDRESS);
-
-            fun.push(Bn128Add::<Byzantium>::run);
-            fun.push(Bn128Mul::<Byzantium>::run);
-            fun.push(Bn128Pair::<Byzantium>::run);
+            fun.push(bn128::add::BYZANTIUM);
+            fun.push(bn128::mul::BYZANTIUM);
+            fun.push(bn128::pair::BYZANTIUM);
         }
 
-        if SPEC::enabled(SpecId::BERLIN) {
-            add.push(ModExp::<Berlin>::ADDRESS);
-            fun.push(ModExp::<Berlin>::run);
-        } else if SPEC::enabled(SpecId::BYZANTINE) {
+        if SpecId::BERLIN.enabled(SPEC_ID) {
+            fun.push(modexp::BERLIN);
+        } else if SpecId::BYZANTINE.enabled(SPEC_ID) {
             //EIP-198: Big integer modular exponentiation
-            add.push(ModExp::<Byzantium>::ADDRESS);
-            fun.push(ModExp::<Byzantium>::run);
+            fun.push(modexp::BYZANTIUM);
         }
 
-        Self {
-            addresses: add,
-            fun,
-        }
+        Self { fun }
     }
 
-    pub fn addresses(&self) -> &[Address] {
-        &self.addresses
+    pub fn as_slice(&self) -> &[(Address, Precompile)] {
+        &self.fun
     }
 
-    pub fn get_fun(&self, address: &Address) -> Option<PrecompileFn> {
+    pub fn contains(&self, address: &Address) -> bool {
+        matches!(self.get(address), Some(_))
+    }
+
+    pub fn get(&self, address: &Address) -> Option<Precompile> {
         //return None;
-        if let Some(index) = self.addresses.iter().position(|t| t == address) {
-            self.fun.get(index).cloned()
+        if let Some((_, precompile)) = self.fun.iter().find(|(t, _)| t == address) {
+            Some(precompile.clone())
         } else {
             None
         }

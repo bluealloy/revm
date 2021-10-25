@@ -10,7 +10,6 @@ mod inspector;
 mod machine;
 mod models;
 mod opcode;
-mod precompiles;
 mod spec;
 mod subroutine;
 mod util;

@@ -1,0 +1,20 @@
+[package]
+authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
+description = "REVM - Rust Ethereum virtual machine"
+edition = "2018"
+keywords = ["no_std", "ethereum", "evm"]
+license = "Apache-2.0"
+name = "revm"
+repository = "https://github.com/bluealloy/revm"
+version = "0.2.0"
+
+[dependencies]
+bytes = "1.1" 
+num_enum = "0.5" #used for opcodes from u8 cast
+primitive-types = {version = "0.10", features = ["rlp"]} 
+revm_precompiles = {path = "../revm_precompiles"} 
+rlp = {version = "0.5", default-features = false}#used for create2 address calculation 
+sha3 = {version = "0.9", default-features = false} 
+
+[dev-dependencies]
+hex = "0.4"

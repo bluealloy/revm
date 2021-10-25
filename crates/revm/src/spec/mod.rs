@@ -1,5 +1,6 @@
 mod spec;
 
+use revm_precompiles::SpecId as PrecompileId;
 pub use spec::*;
 
 #[repr(u8)]
@@ -18,6 +19,17 @@ pub enum SpecId {
     BERLIN = 10,
     LONDON = 11,
     LATEST = 12,
+}
+
+impl SpecId {
+    pub const fn to_precompile_id(self) -> u8 {
+        match self {
+            FRONTIER | HOMESTEAD | TANGERINE | SPURIOUS_DRAGON => PrecompileId::HOMESTEAD as u8,
+            BYZANTINE | CONSTANTINOPLE | PETERSBURG => PrecompileId::BYZANTINE as u8,
+            ISTANBUL | MUIRGLACIER => PrecompileId::ISTANBUL as u8,
+            BERLIN | LONDON | LATEST => PrecompileId::BERLIN as u8,
+        }
+    }
 }
 
 pub use SpecId::*;

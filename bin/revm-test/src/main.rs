@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use bytes::Bytes;
 use primitive_types::{H160, U256};
-use revm::{AccountInfo, DummyStateDB, GlobalEnv, SpecId, TransactOut, TransactTo};
+use revm::{AccountInfo, DummyStateDB, GlobalEnv, SpecId, TransactOut, TransactTo, KECCAK_EMPTY};
 
 extern crate alloc;
 
@@ -17,7 +17,7 @@ pub fn simple_example() {
             nonce: 1,
             balance: U256::from(10000000),
             code: None,
-            code_hash: None,
+            code_hash: KECCAK_EMPTY,
         },
     );
 

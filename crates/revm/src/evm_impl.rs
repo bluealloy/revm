@@ -2,7 +2,6 @@ use core::{cmp::min, marker::PhantomData};
 use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
 
-use super::precompiles::{PrecompileOutput, Precompiles};
 use crate::{
     collection::{vec::Vec, Map},
     db::Database,
@@ -17,6 +16,7 @@ use crate::{
     TransactTo, Transfer, EVM, KECCAK_EMPTY,
 };
 use bytes::Bytes;
+use revm_precompiles::{Precompile, PrecompileOutput, Precompiles};
 
 pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
     db: &'a mut DB,
@@ -147,7 +147,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         precompiles: Precompiles,
     ) -> Self {
         let mut precompile_acc = Map::new();
-        for add in precompiles.addresses() {
+        for (add, _) in precompiles.as_slice() {
             precompile_acc.insert(add.clone(), db.basic(add.clone()));
         }
         Self {
@@ -201,9 +201,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         is_create: bool,
         access_list: Vec<(H160, Vec<H256>)>,
     ) -> u64 {
-        for &ward_acc in self.precompiles.addresses().iter() {
+        for (ward_acc, _) in self.precompiles.as_slice() {
             //TODO trace load precompiles?
-            self.subroutine.load_account(ward_acc, self.db);
+            self.subroutine.load_account(ward_acc.clone(), self.db);
         }
 
         let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
@@ -285,10 +285,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let checkpoint = self.subroutine.create_checkpoint();
 
         // create contract account and check for collision
-        if !self
-            .subroutine
-            .new_contract_acc(created_address, self.precompiles.addresses(), self.db)
-        {
+        if !self.subroutine.new_contract_acc(
+            created_address,
+            self.precompiles.contains(&created_address),
+            self.db,
+        ) {
             self.subroutine.checkpoint_revert(checkpoint);
             return (ExitError::CreateCollision.into(), ret, gas, Bytes::new());
         }
@@ -393,11 +394,21 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
 
         // call precompiles
-        if let Some(precompile) = self.precompiles.get_fun(&code_address) {
-            match (precompile)(input.as_ref(), gas_limit, &context, SPEC::IS_STATIC_CALL) {
+        if let Some(precompile) = self.precompiles.get(&code_address) {
+            let out = match precompile {
+                Precompile::Standard(fun) => fun(input.as_ref(), gas_limit),
+                Precompile::Custom(fun) => fun(input.as_ref(), gas_limit),
+            };
+            match out {
                 Ok(PrecompileOutput { output, cost, logs }) => {
                     if gas.record_cost(cost) {
-                        logs.into_iter().for_each(|l| self.subroutine.log(l));
+                        logs.into_iter().for_each(|l| {
+                            self.subroutine.log(Log {
+                                address: l.address,
+                                topics: l.topics,
+                                data: l.data,
+                            })
+                        });
                         self.subroutine.checkpoint_commit();
                         (ExitSucceed::Returned.into(), gas, Bytes::from(output))
                     } else {
@@ -407,7 +418,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 }
                 Err(e) => {
                     self.subroutine.checkpoint_revert(checkpoint); //TODO check if we are discarding or reverting
-                    (ExitReason::Error(e), gas, Bytes::new())
+                    (ExitError::Precompile(e).into(), gas, Bytes::new())
                 }
             }
         } else {

@@ -6,9 +6,9 @@ use crate::{
 
 use primitive_types::{H160, H256, U256};
 
-use sha3::{Digest, Keccak256};
 use crate::{Account, AccountInfo, Log};
 use bytes::Bytes;
+use sha3::{Digest, Keccak256};
 
 /// Memory backend, storing all state values in a `Map` in memory.
 #[derive(Debug, Clone)]
@@ -21,13 +21,13 @@ pub struct DummyStateDB {
 }
 
 impl DummyStateDB {
-    pub fn cache(&self) -> &Map<H160,AccountInfo> {
+    pub fn cache(&self) -> &Map<H160, AccountInfo> {
         &self.cache
     }
-    pub fn storage(&self) -> &Map<H160,Map<H256,H256>> {
+    pub fn storage(&self) -> &Map<H160, Map<H256, H256>> {
         &self.storage
     }
-    
+
     pub fn insert_cache(&mut self, address: H160, mut account: AccountInfo) {
         let code = core::mem::take(&mut account.code);
         if let Some(code) = code {

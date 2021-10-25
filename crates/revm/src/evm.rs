@@ -1,13 +1,13 @@
 use crate::{
     collection::vec::Vec, db::Database, error::ExitReason, evm_impl::EVMImpl, subroutine::State,
     BerlinSpec, ByzantineSpec, GlobalEnv, Inspector, IstanbulSpec, LatestSpec, LondonSpec,
-    NoOpInspector, SpecId, TransactOut, TransactTo,
+    NoOpInspector, Spec, SpecId, TransactOut, TransactTo,
 };
 
 use primitive_types::{H160, H256, U256};
 
-use super::precompiles::Precompiles;
 use bytes::Bytes;
+use revm_precompiles::Precompiles;
 
 macro_rules! create_evm {
     ($spec:tt,$db:ident,$global_env:ident,$inspector:ident) => {
@@ -15,7 +15,7 @@ macro_rules! create_evm {
             $db,
             $global_env,
             $inspector,
-            Precompiles::new::<$spec>(),
+            Precompiles::new::<{ SpecId::to_precompile_id($spec::SPEC_ID) }>(),
         )) as Box<dyn EVM + 'a>
     };
 }

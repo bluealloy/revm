@@ -1,0 +1,24 @@
+[package]
+name = "revm_precompiles"
+version = "0.1.0"
+edition = "2018"
+license = "Apache-2.0"
+authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
+description = "REVM Precompiles - Ethereum compatible precompiled contracts"
+repository = "https://github.com/bluealloy/revm"
+keywords = ["no_std", "ethereum", "evm", "precompiles"]
+
+
+[dependencies]
+primitive-types = {version ="0.10", features = ["rlp"]}
+bytes = "1.1"
+num = { version = "0.4.0", default-features = false, features = ["alloc"] }
+sha2 = { version = "0.9.3", default-features = false }
+borsh = { version = "0.9", default-features = false }
+ripemd160 = { version = "0.9.1", default-features = false }
+parity-crypto = { version = "0.9.0", default-features = false, features = [ "publickey" ] }
+bn = { package="substrate-bn", version="0.6", default-features = false }
+
+
+[dev-dependencies]
+hex = "0.4"

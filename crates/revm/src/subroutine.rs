@@ -1,4 +1,8 @@
-use crate::{ExitRevert, KECCAK_EMPTY, collection::{vec, vec::Vec, Entry, Map}, models::SelfDestructResult};
+use crate::{
+    collection::{vec, vec::Vec, Entry, Map},
+    models::SelfDestructResult,
+    ExitRevert, KECCAK_EMPTY,
+};
 
 use core::mem::{self};
 
@@ -236,7 +240,7 @@ impl SubRoutine {
     pub fn new_contract_acc<DB: Database>(
         &mut self,
         address: H160,
-        precompiles: &[H160],
+        is_precompile: bool,
         db: &mut DB,
     ) -> bool {
         let (acc, _) = self.load_code(address, db);
@@ -252,7 +256,7 @@ impl SubRoutine {
         }
 
         // Check collision. New account address is precompile.
-        if precompiles.contains(&address) {
+        if is_precompile {
             return false;
         }
         // TODO please check this. Does account that is destroyed is forbiden to be recreated again with create2?

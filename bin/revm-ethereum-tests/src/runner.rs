@@ -15,7 +15,10 @@ use revm::{CreateScheme, GlobalEnv, Inspector, SpecId, TransactTo};
 use std::sync::atomic::Ordering;
 use walkdir::{DirEntry, WalkDir};
 
-use crate::models::{SpecName, TestSuit};
+use crate::{
+    merkle_trie::merkle_trie_root,
+    models::{SpecName, TestSuit},
+};
 use thiserror::Error;
 
 #[derive(Debug, Error)]

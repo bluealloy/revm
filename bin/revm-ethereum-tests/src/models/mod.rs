@@ -1,6 +1,6 @@
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
-use std::{collections::{BTreeMap, HashMap}};
+use std::collections::{BTreeMap, HashMap};
 mod deserializer;
 mod spec;
 

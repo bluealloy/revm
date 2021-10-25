@@ -1,85 +1,55 @@
-use crate::{
-    precompiles::{Precompile, PrecompileOutput, PrecompileResult},
-    CallContext, ExitError,
-};
+use crate::{ExitError, Precompile, PrecompileOutput, PrecompileResult, StandardPrecompileFn};
 use core::cmp::min;
-use primitive_types::{H160 as Address, H256};
-mod costs {
-    pub(super) const ECRECOVER_BASE: u64 = 3_000;
-}
-mod consts {
-    pub(super) const INPUT_LEN: usize = 128;
-}
-
-//use libsecp256k1::ThirtyTwoByteHash;
 use parity_crypto::publickey::{public_to_address, recover, Error as ParityCryptoError, Signature};
+use primitive_types::{H160 as Address, H256};
 
-pub(super) struct ECRecover;
+const ECRECOVER_BASE: u64 = 3_000;
 
-impl ECRecover {
-    pub(super) const ADDRESS: Address = super::make_address(0, 1);
+pub const ECRECOVER: (Address, Precompile) = (
+    super::make_address(0, 1),
+    Precompile::Standard(ec_recover_run as StandardPrecompileFn),
+);
 
-    // return padded address as H256
-    fn secp256k1_ecdsa_recover(
-        sig: &[u8; 65],
-        msg: &[u8; 32],
-    ) -> Result<Address, ParityCryptoError> {
-        let rs = Signature::from_electrum(&sig[..]);
-        if rs == Signature::default() {
-            return Err(ParityCryptoError::InvalidSignature);
-        }
-        let msg = H256::from_slice(msg);
-        let address = public_to_address(&recover(&rs, &msg)?);
-        Ok(address)
+// return padded address as H256
+fn secp256k1_ecdsa_recover(sig: &[u8; 65], msg: &[u8; 32]) -> Result<Address, ParityCryptoError> {
+    let rs = Signature::from_electrum(&sig[..]);
+    if rs == Signature::default() {
+        return Err(ParityCryptoError::InvalidSignature);
     }
+    let msg = H256::from_slice(msg);
+    let address = public_to_address(&recover(&rs, &msg)?);
+    Ok(address)
 }
 
-/// Error verifying ECDSA signature
-pub enum EcdsaVerifyError {
-    /// Incorrect value of R or S
-    BadRS,
-    /// Incorrect value of V
-    BadV,
-    /// Invalid signature
-    BadSignature,
-}
-
-impl Precompile for ECRecover {
-    fn run(
-        i: &[u8],
-        target_gas: u64,
-        _context: &CallContext,
-        _is_static: bool,
-    ) -> PrecompileResult {
-        let cost = costs::ECRECOVER_BASE;
-        if cost > target_gas {
-            return Err(ExitError::OutOfGas);
-        }
-        let mut input = [0u8; 128];
-        input[..min(i.len(), 128)].copy_from_slice(&i[..min(i.len(), 128)]);
-
-        let mut msg = [0u8; 32];
-        let mut sig = [0u8; 65];
-
-        msg[0..32].copy_from_slice(&input[0..32]);
-        sig[0..32].copy_from_slice(&input[64..96]);
-        sig[32..64].copy_from_slice(&input[96..128]);
-
-        // TODO do this correctly: return if there is junk in V.
-        if input[32..63] != [0u8; 31] || !matches!(input[63], 27 | 28) {
-            return Ok(PrecompileOutput::without_logs(cost, Vec::new()));
-        }
-
-        // TODO hm it will fail for chainId that are more then one byte;
-        sig[64] = input[63];
-
-        let out = match Self::secp256k1_ecdsa_recover(&sig, &msg) {
-            Ok(out) => H256::from(out).as_bytes().to_vec(),
-            Err(_) => Vec::new(),
-        };
-
-        Ok(PrecompileOutput::without_logs(cost, out))
+fn ec_recover_run(i: &[u8], target_gas: u64) -> PrecompileResult {
+    let cost = ECRECOVER_BASE;
+    if cost > target_gas {
+        return Err(ExitError::OutOfGas);
     }
+    let mut input = [0u8; 128];
+    input[..min(i.len(), 128)].copy_from_slice(&i[..min(i.len(), 128)]);
+
+    let mut msg = [0u8; 32];
+    let mut sig = [0u8; 65];
+
+    msg[0..32].copy_from_slice(&input[0..32]);
+    sig[0..32].copy_from_slice(&input[64..96]);
+    sig[32..64].copy_from_slice(&input[96..128]);
+
+    // TODO do this correctly: return if there is junk in V.
+    if input[32..63] != [0u8; 31] || !matches!(input[63], 27 | 28) {
+        return Ok(PrecompileOutput::without_logs(cost, Vec::new()));
+    }
+
+    // TODO hm it will fail for chainId that are more then one byte;
+    sig[64] = input[63];
+
+    let out = match secp256k1_ecdsa_recover(&sig, &msg) {
+        Ok(out) => H256::from(out).as_bytes().to_vec(),
+        Err(_) => Vec::new(),
+    };
+
+    Ok(PrecompileOutput::without_logs(cost, out))
 }
 
 /*
