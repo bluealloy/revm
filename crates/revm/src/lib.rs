@@ -26,8 +26,8 @@ pub use opcode::Control;
 pub use spec::*;
 pub use subroutine::Account;
 
-/// libraries for no_sdt flag
-#[cfg(no_sdt)]
+/// libraries for no_std flag
+#[cfg(no_std)]
 pub mod collection {
     extern crate alloc;
     pub use alloc::{
@@ -38,7 +38,7 @@ pub mod collection {
     };
 }
 
-#[cfg(not(no_sdt))]
+#[cfg(not(no_std))]
 pub mod collection {
     pub use std::{
         borrow::{Cow, Cow::Borrowed},
