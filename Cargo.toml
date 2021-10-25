@@ -2,7 +2,7 @@
 [workspace]
 members = [
     "crates/*",
-    "bin/*",
+    "bins/*",
 ]
 default-members = ["crates/revm"]
 #, "bin/revm-ethereum-tests", "bin/*"]
