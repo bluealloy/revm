@@ -5,4 +5,4 @@ target
 .vscode
 
 
-bin/revm-ethereum-tests/temp_folder
+bins/revm-ethereum-tests/temp_folder
