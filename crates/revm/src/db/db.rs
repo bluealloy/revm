@@ -16,3 +16,25 @@ pub trait Database {
     // History related
     fn block_hash(&mut self, number: U256) -> H256;
 }
+
+impl<'a, D: Database> Database for &'a mut D {
+    fn exists(&mut self, address: H160) -> Option<AccountInfo> {
+        (*self).exists(address)
+    }
+
+    fn basic(&mut self, address: H160) -> AccountInfo {
+        (*self).basic(address)
+    }
+
+    fn code_by_hash(&mut self, code_hash: H256) -> Bytes {
+        (*self).code_by_hash(code_hash)
+    }
+
+    fn storage(&mut self, address: H160, index: H256) -> H256 {
+        (*self).storage(address, index)
+    }
+
+    fn block_hash(&mut self, number: U256) -> H256 {
+        (*self).block_hash(number)
+    }
+}

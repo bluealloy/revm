@@ -28,6 +28,10 @@ pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
 }
 
 impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSPEC, DB, INSPECT> {
+    fn state_mut(&mut self) -> &mut dyn Database {
+        &mut self.db
+    }
+
     fn transact(
         &mut self,
         caller: H160,

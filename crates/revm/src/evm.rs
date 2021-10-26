@@ -61,6 +61,8 @@ pub fn new_inspect<'a, DB: Database>(
 }
 
 pub trait EVM {
+    fn state_mut(&mut self) -> &mut dyn Database;
+
     /// Do transaction.
     /// Return ExitReason, Output for call or Address if we are creating contract, gas spend, State that needs to be applied.
     fn transact(
