@@ -15,6 +15,8 @@ pub trait Database {
 
     // History related
     fn block_hash(&mut self, number: U256) -> H256;
+
+    fn account_mut(&mut self, address: H160) -> &mut AccountInfo;
 }
 
 impl<'a, D: Database> Database for &'a mut D {
@@ -36,5 +38,9 @@ impl<'a, D: Database> Database for &'a mut D {
 
     fn block_hash(&mut self, number: U256) -> H256 {
         (*self).block_hash(number)
+    }
+
+    fn account_mut(&mut self, address: H160) -> &mut AccountInfo {
+        (*self).account_mut(address)
     }
 }

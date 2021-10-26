@@ -175,4 +175,9 @@ impl Database for DummyStateDB {
             }
         }
     }
+
+    fn account_mut(&mut self, address: H160) -> &mut AccountInfo {
+        let account = self.cache.entry(address).or_insert_with(Default::default);
+        account
+    }
 }
