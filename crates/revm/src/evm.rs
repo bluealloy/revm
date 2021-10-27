@@ -39,7 +39,7 @@ impl<'a, DB: Database + WriteDatabase> EVM<'a, DB> {
 
     /// do dummy transaction and return change state. Does not touch the DB.
     pub fn transact_only(&mut self) -> (ExitReason, TransactOut, u64, State) {
-        if let Some(db) = &mut self.db {
+        if let Some(db) = self.db.as_mut() {
             let (exit, out, gas, state) = if let Some(inspector) = self.inspector.as_mut() {
                 inner_inspect(&self.env, db, *inspector)
             } else {
