@@ -126,7 +126,8 @@ pub fn execute_test_suit(
         env.block.coinbase = unit.env.current_coinbase;
         env.block.timestamp = unit.env.current_timestamp;
         env.block.gas_limit = unit.env.current_gas_limit;
-        env.block.basefee = unit.env.current_gas_limit;
+        env.block.basefee = unit.env.current_base_fee.unwrap_or_default();
+        env.block.difficulty = unit.env.current_difficulty;
 
         //tx env
         env.tx.caller = map_caller_keys
@@ -194,17 +195,18 @@ pub fn execute_test_suit(
                     None => TransactTo::Create(CreateScheme::Create),
                 };
                 env.tx.transact_to = to;
-                let timer = Instant::now();
 
-                let database = database.clone();
+                let mut database = database.clone();
                 let mut evm = revm::new();
-                evm.database(database);
+                evm.database(&mut database);
                 evm.inspector(inspector);
                 evm.env = env.clone();
                 // do the deed
+                
+                let timer = Instant::now();
                 let (_ret, _out, _gas) = evm.transact();
-
                 let timer = timer.elapsed();
+
                 *elapsed.lock().unwrap() += timer;
                 let db = evm.db().unwrap();
                 let state_root = merkle_trie_root(db.cache(), db.storage());
@@ -232,7 +234,7 @@ pub fn run<INSP: 'static + Inspector + Clone + Send>(test_files: Vec<PathBuf>, i
     let mut joins = Vec::new();
     let queue = Arc::new(Mutex::new((0, test_files)));
     let elapsed = Arc::new(Mutex::new(std::time::Duration::ZERO));
-    for _ in 0..1 {
+    for _ in 0..10 {
         let queue = queue.clone();
         let endjob = endjob.clone();
         let console_bar = console_bar.clone();
