@@ -1,15 +1,11 @@
 use crate::{
-    collection::vec::Vec,
     db::{Database, WriteDatabase},
     error::ExitReason,
     evm_impl::EVMImpl,
     subroutine::State,
-    BerlinSpec, BlockEnv, ByzantineSpec, CfgEnv, Env, Inspector, IstanbulSpec, LatestSpec,
-    LondonSpec, NoOpInspector, Spec, SpecId, TransactOut, TransactTo, TxEnv,
+    BerlinSpec, ByzantineSpec, Env, Inspector, IstanbulSpec, LatestSpec, LondonSpec, NoOpInspector,
+    Spec, SpecId, TransactOut,
 };
-
-use bytes::Bytes;
-use primitive_types::{H160, H256, U256};
 use revm_precompiles::Precompiles;
 /// Struct that takes Database and enabled transact to update state dirrectly to database.
 /// additionaly it allows user to set all environment parameters.
