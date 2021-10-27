@@ -12,15 +12,15 @@ use crate::{
     opcode::gas,
     spec::{Spec, SpecId::*},
     subroutine::{Account, State, SubRoutine},
-    util, CallContext, CreateScheme, ExitRevert, GlobalEnv, Inspector, Log, TransactOut,
-    TransactTo, Transfer, EVM, KECCAK_EMPTY,
+    util, CallContext, CreateScheme, Env, ExitRevert, Inspector, Log, TransactOut, TransactTo,
+    Transfer, EVM, KECCAK_EMPTY,
 };
 use bytes::Bytes;
 use revm_precompiles::{Precompile, PrecompileOutput, Precompiles};
 
 pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
     db: &'a mut DB,
-    global_env: GlobalEnv,
+    env: &'a Env,
     subroutine: SubRoutine,
     precompiles: Precompiles,
     inspector: &'a mut dyn Inspector,
@@ -40,13 +40,14 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
         let exit_error = |reason: ExitReason| (reason, TransactOut::None, 0, State::new());
 
         if GSPEC::enabled(LONDON) {
-            if let Some(priority_fee) = self.global_env.gas_priority_fee {
-                if priority_fee > self.global_env.gas_max_fee {
+            if let Some(priority_fee) = self.env.tx.gas_priority_fee {
+                if priority_fee > self.env.tx.gas_price {
+                    // or gas_max_fee for eip1559
                     return exit_error(ExitError::GasMaxFeeGreaterThanPriorityFee.into());
                 }
             }
-            let effective_gas_price = self.global_env.effective_gas_price();
-            let basefee = self.global_env.block_basefee.unwrap_or_default();
+            let effective_gas_price = self.env.effective_gas_price();
+            let basefee = self.env.block.basefee;
 
             // check minimal cost against basefee
             // TODO maybe do this checks when creating evm. We already have all data there
@@ -57,7 +58,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
             // check if priority fee is lower then max fee
         }
         // unusual to be found here, but check if gas_limit is more then block_gas_limit
-        if U256::from(gas_limit) > self.global_env.block_gas_limit {
+        if U256::from(gas_limit) > self.env.block.gas_limit {
             return exit_error(ExitError::CallerGasLimitMoreThenBlock.into());
         }
 
@@ -83,7 +84,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
 
         // substract gas_limit*gas_price from current account.
         if let Some(payment_value) =
-            U256::from(gas_limit).checked_mul(self.global_env.effective_gas_price())
+            U256::from(gas_limit).checked_mul(self.env.effective_gas_price())
         {
             if !self.subroutine.balance_sub(caller, payment_value) {
                 return exit_error(ExitError::LackOfFundForGasLimit.into());
@@ -93,7 +94,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
         }
 
         // check if we have enought balance for value transfer.
-        let difference = self.global_env.gas_max_fee - self.global_env.effective_gas_price();
+        let difference = self.env.tx.gas_price - self.env.effective_gas_price();
         if difference + value > self.subroutine.account(caller).info.balance {
             return exit_error(ExitError::OutOfFund.into());
         }
@@ -142,7 +143,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
 impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, INSPECT> {
     pub fn new(
         db: &'a mut DB,
-        global_env: GlobalEnv,
+        env: &'a Env,
         inspector: &'a mut dyn Inspector,
         precompiles: Precompiles,
     ) -> Self {
@@ -152,7 +153,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
         Self {
             db,
-            global_env,
+            env,
             subroutine: SubRoutine::new(precompile_acc),
             precompiles,
             inspector,
@@ -165,9 +166,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         caller: H160,
         gas: &Gas,
     ) -> Result<Map<H160, Account>, ExitReason> {
-        let effective_gas_price = self.global_env.effective_gas_price();
-        let coinbase = self.global_env.block_coinbase;
-        let basefee = self.global_env.block_basefee;
+        let effective_gas_price = self.env.effective_gas_price();
+        let coinbase = self.env.block.coinbase;
+        let basefee = self.env.block.basefee;
         let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 }; // EIP-3529: Reduction in refunds
         let gas_refunded = min(gas.refunded() as u64, gas.spend() / max_refund_quotient);
         self.subroutine.balance_add(
@@ -175,7 +176,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             effective_gas_price * (gas.remaining() + gas_refunded),
         );
         let coinbase_gas_price = if SPEC::enabled(LONDON) {
-            effective_gas_price.saturating_sub(basefee.unwrap_or_default())
+            effective_gas_price.saturating_sub(basefee)
         } else {
             effective_gas_price
         };
@@ -442,8 +443,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Handler
 {
     const INSPECT: bool = INSPECT;
 
-    fn env(&self) -> &GlobalEnv {
-        &self.global_env
+    fn env(&self) -> &Env {
+        &self.env
     }
 
     fn inspect(&mut self) -> &mut dyn Inspector {
@@ -545,7 +546,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Handler
 pub trait Handler {
     const INSPECT: bool;
     /// Get global const context of evm execution
-    fn env(&self) -> &GlobalEnv;
+    fn env(&self) -> &Env;
 
     fn inspect(&mut self) -> &mut dyn Inspector;
 

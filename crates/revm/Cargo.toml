@@ -14,7 +14,8 @@ num_enum = "0.5" #used for opcodes from u8 cast
 primitive-types = {version = "0.10", features = ["rlp"]}
 revm_precompiles = {path = "../revm_precompiles", version="0.1"} 
 rlp = {version = "0.5", default-features = false}#used for create2 address calculation 
-sha3 = {version = "0.9", default-features = false} 
+sha3 = {version = "0.9", default-features = false}
+auto_impl = "0.4"
 
 [dev-dependencies]
 hex = "0.4"

@@ -37,7 +37,7 @@ pub fn chainid<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -
     check!(SPEC::enabled(ISTANBUL)); // EIP-1344: ChainID opcode
     gas!(machine, gas::BASE);
 
-    push_u256!(machine, handler.env().chain_id);
+    push_u256!(machine, handler.env().cfg.chain_id);
 
     Control::Continue
 }
@@ -81,7 +81,7 @@ pub fn selfbalance<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
 
 pub fn basefee<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
     check!(SPEC::enabled(LONDON)); // EIP-3198: BASEFEE opcode
-    let basefee = handler.env().block_basefee.unwrap_or_default();
+    let basefee = handler.env().block.basefee;
     gas!(machine, gas::BASE);
     push_u256!(machine, basefee);
 
@@ -91,7 +91,7 @@ pub fn basefee<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -
 pub fn origin<H: Handler>(machine: &mut Machine, handler: &mut H) -> Control {
     gas!(machine, gas::BASE);
 
-    let ret = H256::from(handler.env().origin);
+    let ret = H256::from(handler.env().tx.caller);
     push!(machine, ret);
 
     Control::Continue
@@ -221,34 +221,34 @@ pub fn blockhash<H: Handler>(machine: &mut Machine, handler: &mut H) -> Control 
 pub fn coinbase<H: Handler>(machine: &mut Machine, handler: &mut H) -> Control {
     gas!(machine, gas::BASE);
 
-    push!(machine, handler.env().block_coinbase.into());
+    push!(machine, handler.env().block.coinbase.into());
     Control::Continue
 }
 
 pub fn timestamp<H: Handler>(machine: &mut Machine, handler: &mut H) -> Control {
     gas!(machine, gas::BASE);
-    push_u256!(machine, handler.env().block_timestamp);
+    push_u256!(machine, handler.env().block.timestamp);
     Control::Continue
 }
 
 pub fn number<H: Handler>(machine: &mut Machine, handler: &mut H) -> Control {
     gas!(machine, gas::BASE);
 
-    push_u256!(machine, handler.env().block_number);
+    push_u256!(machine, handler.env().block.number);
     Control::Continue
 }
 
 pub fn difficulty<H: Handler>(machine: &mut Machine, handler: &mut H) -> Control {
     gas!(machine, gas::BASE);
 
-    push_u256!(machine, handler.env().block_difficulty);
+    push_u256!(machine, handler.env().block.difficulty);
     Control::Continue
 }
 
 pub fn gaslimit<H: Handler>(machine: &mut Machine, handler: &mut H) -> Control {
     gas!(machine, gas::BASE);
 
-    push_u256!(machine, handler.env().block_gas_limit);
+    push_u256!(machine, handler.env().block.gas_limit);
     Control::Continue
 }
 

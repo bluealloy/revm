@@ -1,6 +1,6 @@
 use core::cmp::min;
 
-use crate::collection::vec::Vec;
+use crate::{collection::vec::Vec, SpecId};
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
 
@@ -105,39 +105,105 @@ pub struct CallContext {
     pub apparent_value: U256,
 }
 
-#[derive(Clone, Eq, PartialEq, Debug, Default)]
-pub struct GlobalEnv {
-    /// Gas price or after London it is
-    pub gas_max_fee: U256,
-    /// max priority fee introduced in LONDON upgrade
-    pub gas_priority_fee: Option<U256>,
-    /// Get environmental block number.
-    pub block_number: U256,
-    /// Get environmental coinbase.
-    pub block_coinbase: H160,
-    /// Get environmental block timestamp.
-    pub block_timestamp: U256,
-    /// Get environmental block difficulty.
-    pub block_difficulty: U256,
-    /// Get environmental gas limit.
-    pub block_gas_limit: U256,
-    /// Get environmental chain ID.
-    pub chain_id: U256,
-    /// Get execution origin
-    pub block_basefee: Option<U256>,
-    /// Get execution origin
-    pub origin: H160,
+pub struct Env {
+    pub cfg: CfgEnv,
+    pub block: BlockEnv,
+    pub tx: TxEnv,
 }
 
-impl GlobalEnv {
+pub struct BlockEnv {
+    pub gas_limit: U256,
+    /// somebody call it nonce
+    pub number: U256,
+    /// Coinbase or miner or address that created and signed the block.
+    /// Address where we are going to send gas spend
+    pub coinbase: H160,
+    pub timestamp: U256,
+    pub difficulty: U256,
+    /// basefee is added in EIP1559 London upgrade
+    pub basefee: U256,
+    /// incrementaly added on every transaction. It can be cleared if needed
+    pub gas_used: U256,
+}
+
+pub struct TxEnv {
+    /// Caller or Author or tx signer
+    pub caller: H160,
+    pub gas_limit: u64,
+    pub gas_price: U256,
+    pub gas_priority_fee: Option<U256>,
+    pub transact_to: TransactTo,
+    pub value: U256,
+    pub data: Bytes,
+    pub chain_id: Option<u64>,
+    pub nonce: Option<u64>,
+    pub access_list: Vec<(H160, Vec<H256>)>,
+}
+
+pub struct CfgEnv {
+    pub chain_id: U256,
+    pub spec_id: SpecId,
+}
+
+impl Default for CfgEnv {
+    fn default() -> CfgEnv {
+        CfgEnv {
+            chain_id: 1.into(), //mainnet is 1
+            spec_id: SpecId::LATEST,
+        }
+    }
+}
+
+impl Default for BlockEnv {
+    fn default() -> BlockEnv {
+        BlockEnv {
+            gas_limit: U256::MAX,
+            number: 0.into(),
+            coinbase: H160::zero(), //zero address
+            timestamp: U256::one(),
+            difficulty: U256::zero(),
+            basefee: U256::zero(),
+            gas_used: U256::zero(),
+        }
+    }
+}
+
+impl Default for TxEnv {
+    fn default() -> TxEnv {
+        TxEnv {
+            caller: H160::zero(),
+            gas_limit: u64::MAX,
+            gas_price: U256::zero(),
+            gas_priority_fee: None,
+            transact_to: TransactTo::Call(H160::zero()), //will do nothing
+            value: U256::zero(),
+            data: Bytes::new(),
+            chain_id: None,
+            nonce: None,
+            access_list: Vec::new(),
+        }
+    }
+}
+
+impl Env {
     pub fn effective_gas_price(&self) -> U256 {
-        if self.block_basefee.is_none() || self.gas_priority_fee.is_none() {
-            self.gas_max_fee
+        if self.tx.gas_priority_fee.is_none() {
+            self.tx.gas_price
         } else {
             min(
-                self.gas_max_fee,
-                self.block_basefee.unwrap() + self.gas_priority_fee.unwrap(),
+                self.tx.gas_price,
+                self.block.basefee + self.tx.gas_priority_fee.unwrap(),
             )
+        }
+    }
+}
+
+impl Default for Env {
+    fn default() -> Env {
+        Env {
+            cfg: CfgEnv::default(),
+            block: BlockEnv::default(),
+            tx: TxEnv::default(),
         }
     }
 }

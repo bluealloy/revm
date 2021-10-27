@@ -4,7 +4,7 @@ use revm_precompiles::SpecId as PrecompileId;
 pub use spec::*;
 
 #[repr(u8)]
-#[derive(Debug)]
+#[derive(Debug,Copy,Clone)]
 #[allow(non_camel_case_types)]
 pub enum SpecId {
     FRONTIER = 1,
