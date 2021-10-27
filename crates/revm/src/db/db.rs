@@ -1,4 +1,4 @@
-use crate::{Account, collection::Map};
+use crate::{collection::Map, Account};
 
 use primitive_types::{H160, H256, U256};
 
@@ -21,10 +21,9 @@ pub trait Database {
     fn block_hash(&mut self, number: U256) -> H256;
 }
 
-
 #[auto_impl(& mut, Box)]
 pub trait WriteDatabase {
-    fn apply(&mut self,changes: Map<H160, Account>);
+    fn apply(&mut self, changes: Map<H160, Account>);
 }
 
 #[auto_impl(&, Box)]

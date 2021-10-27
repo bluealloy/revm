@@ -76,8 +76,6 @@ impl<'a, DB: Database + WriteDatabase> EVM<'a, DB> {
     }
 }
 
-
-
 macro_rules! create_evm {
     ($spec:tt,$db:ident,$env:ident,$inspector:ident) => {
         Box::new(EVMImpl::<'a, $spec, DB, INSPECT>::new(

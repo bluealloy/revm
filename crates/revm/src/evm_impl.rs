@@ -12,8 +12,8 @@ use crate::{
     opcode::gas,
     spec::{Spec, SpecId::*},
     subroutine::{Account, State, SubRoutine},
-    util, CallContext, CreateScheme, Env, ExitRevert, Inspector, Log, TransactOut, TransactTo,
-    Transfer, Transact, KECCAK_EMPTY,
+    util, CallContext, CreateScheme, Env, ExitRevert, Inspector, Log, Transact, TransactOut,
+    TransactTo, Transfer, KECCAK_EMPTY,
 };
 use bytes::Bytes;
 use revm_precompiles::{Precompile, PrecompileOutput, Precompiles};
@@ -27,7 +27,9 @@ pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
     _phantomdata: PhantomData<GSPEC>,
 }
 
-impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact for EVMImpl<'a, GSPEC, DB, INSPECT> {
+impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
+    for EVMImpl<'a, GSPEC, DB, INSPECT>
+{
     fn transact(&mut self) -> (ExitReason, TransactOut, u64, State) {
         let caller = self.env.tx.caller;
         let value = self.env.tx.value;
