@@ -117,10 +117,28 @@ pub fn execute_test_suit(
                 )
             }
         }
+        let mut env = Env::default();
+        // cfg env. SpecId is set down the road
+        env.cfg.chain_id = 1.into(); // for mainnet
 
-        let caller = map_caller_keys
+        // block env
+        env.block.number = unit.env.current_number;
+        env.block.coinbase = unit.env.current_coinbase;
+        env.block.timestamp = unit.env.current_timestamp;
+        env.block.gas_limit = unit.env.current_gas_limit;
+        env.block.basefee = unit.env.current_gas_limit;
+
+        //tx env
+        env.tx.caller = map_caller_keys
             .get(&unit.transaction.secret_key.unwrap())
-            .unwrap();
+            .unwrap()
+            .clone();
+        env.tx.gas_price = unit
+            .transaction
+            .gas_price
+            .unwrap_or(unit.transaction.max_fee_per_gas.unwrap_or_default());
+        env.tx.gas_priority_fee = unit.transaction.max_priority_fee_per_gas;
+
         // post and execution
         for (spec_name, tests) in unit.post {
             if !matches!(
@@ -129,45 +147,35 @@ pub fn execute_test_suit(
             ) {
                 continue;
             }
-            let spec_id = spec_name.to_spec_id();
+            
+            env.cfg.spec_id = spec_name.to_spec_id();
 
-            let block_basefee = unit.env.current_base_fee;
-            let global_env = Env {
-                gas_max_fee: unit
-                    .transaction
-                    .gas_price
-                    .unwrap_or(unit.transaction.max_fee_per_gas.unwrap_or_default()),
-                gas_priority_fee: unit.transaction.max_priority_fee_per_gas,
-                block_number: unit.env.current_number,
-                block_coinbase: unit.env.current_coinbase,
-                block_timestamp: unit.env.current_timestamp,
-                block_difficulty: unit.env.current_difficulty,
-                block_gas_limit: unit.env.current_gas_limit,
-                block_basefee,
-                chain_id: 1.into(),     // TODO ?
-                origin: caller.clone(), // TODO ?
-            };
             for (id, test) in tests.into_iter().enumerate() {
-                //println!("hash:{:?},test indices:{:?}", test.hash, test.indexes);
-                let mut database = database.clone();
                 let gas_limit = unit
                     .transaction
                     .gas_limit
                     .get(test.indexes.gas)
                     .unwrap()
                     .clone();
-                let data = unit
+                let gas_limit = if gas_limit > U256::from(u64::MAX) {
+                    u64::MAX
+                } else {
+                    gas_limit.as_u64()
+                };
+                env.tx.gas_limit = gas_limit;
+                env.tx.data = unit
                     .transaction
                     .data
                     .get(test.indexes.data)
                     .unwrap()
                     .clone();
-                let value = unit
+                env.tx.value = unit
                     .transaction
                     .value
                     .get(test.indexes.value)
                     .unwrap()
                     .clone();
+
                 let access_list = match unit.transaction.access_lists {
                     Some(ref access_list) => access_list
                         .get(test.indexes.data)
@@ -179,35 +187,34 @@ pub fn execute_test_suit(
                         .collect(),
                     None => Vec::new(),
                 };
-                let gas_limit = if gas_limit > U256::from(u64::MAX) {
-                    u64::MAX
-                } else {
-                    gas_limit.as_u64()
-                };
+                env.tx.access_list = access_list;
 
                 let to = match unit.transaction.to {
                     Some(add) => TransactTo::Call(add),
                     None => TransactTo::Create(CreateScheme::Create),
                 };
+                env.tx.transact_to = to;
                 let timer = Instant::now();
-                let (_ret, _out, _gas, state) = revm::new_inspect(
-                    spec_name.to_spec_id(),
-                    global_env.clone(),
-                    &mut database,
-                    inspector,
-                )
-                .transact(caller.clone(), to, value, data, gas_limit, access_list);
+
+                let mut database = database.clone();
+                let mut evm = revm::new();
+                evm.database(&mut database);
+                evm.inspector(inspector);
+                evm.env = env.clone();
+                // do the deed
+                let (_ret, _out, _gas) = evm.transact();
+
                 let timer = timer.elapsed();
                 *elapsed.lock().unwrap() += timer;
-                database.apply(state);
-                let state_root = merkle_trie_root(database.cache(), database.storage());
+                let db = evm.db().as_ref().unwrap();
+                let state_root = merkle_trie_root(db.cache(), db.storage());
                 if test.hash != state_root {
                     println!("{:?} UNIT_TEST:{}\n", path, name);
                     //break;
-                    println!("\nApplied state:{:?}\n", database);
+                    println!("\nApplied state:{:?}\n", db);
                     println!("\nStateroot: {:?}\n", state_root);
                     return Err(TestError::RootMissmatch {
-                        spec_id,
+                        spec_id: env.cfg.spec_id,
                         id,
                         got: state_root,
                         expect: test.hash,
@@ -225,7 +232,7 @@ pub fn run<INSP: 'static + Inspector + Clone + Send>(test_files: Vec<PathBuf>, i
     let mut joins = Vec::new();
     let queue = Arc::new(Mutex::new((0, test_files)));
     let elapsed = Arc::new(Mutex::new(std::time::Duration::ZERO));
-    for _ in 0..10 {
+    for _ in 0..1 {
         let queue = queue.clone();
         let endjob = endjob.clone();
         let console_bar = console_bar.clone();

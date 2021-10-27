@@ -68,26 +68,26 @@ pub trait Transact {
 /// additionaly it allows user to partialy set config parameters.
 /// Parameters that can be set are devided between Config, Block and Transaction  
 pub struct EVM<'a, DB: Database + WriteDatabase> {
-    env: Env,
-    db: &'a mut DB,
-    inspector: Option<&'a mut dyn Inspector>,
+    pub env: Env,
+    pub db: Option<&'a mut DB>,
+    pub inspector: Option<&'a mut dyn Inspector>,
 }
 
-pub fn new<'a, DB: Database + WriteDatabase>(db: &'a mut DB) -> EVM<'a, DB> {
-    EVM::new(db)
+pub fn new<'a, DB: Database + WriteDatabase>() -> EVM<'a, DB> {
+    EVM::new()
 }
 
 impl<'a, DB: Database + WriteDatabase> EVM<'a, DB> {
-    pub fn new(db: &'a mut DB) -> Self {
+    pub fn new() -> Self {
         Self {
             env: Env::default(),
-            db,
+            db: None,
             inspector: None,
         }
     }
 
-    pub fn state(&mut self) -> &mut DB {
-        self.db
+    pub fn db(&mut self) -> &Option<&mut DB> {
+        &self.db
     }
 
     pub fn clear_gas_used(&mut self) -> U256 {
@@ -95,98 +95,30 @@ impl<'a, DB: Database + WriteDatabase> EVM<'a, DB> {
     }
 
     pub fn transact(&mut self) -> (ExitReason, TransactOut, u64) {
-        let (exit, out, gas, state) = if let Some(inspector) = &mut self.inspector {
-            inner_inspect(&self.env, self.db, inspector)
+        let db = &mut self.db;
+        if let Some(db) = db {
+            let (exit, out, gas, state) = if let Some(inspector) = &mut self.inspector {
+                inner_inspect(&self.env, *db, inspector)
+            } else {
+                inner(&self.env, *db)
+            }
+            .transact();
+            db.apply(state);
+            return (exit, out, gas);
         } else {
-            inner(&self.env, self.db)
+            panic!("Database handler needs to be set");
         }
-        .transact();
-        self.db.apply(state);
-        (exit, out, gas)
     }
 }
 
 /// All functions inside this impl are various setters for evn.
 /// all setters are prefixed with cfg_, block_, tx_ for better readability.
 impl<'a, DB: Database + WriteDatabase> EVM<'a, DB> {
-    pub fn env(&mut self, env: Env) {
-        self.env = env;
-    }
-
     pub fn inspector(&mut self, inspector: &'a mut dyn Inspector) {
         self.inspector = Some(inspector);
     }
 
-    /********** CFG *****************/
-
-    pub fn cfg(&mut self, cfg: CfgEnv) {
-        self.env.cfg = cfg;
-    }
-    pub fn cfg_chain_id(&mut self, chain_id: U256) {
-        self.env.cfg.chain_id = chain_id;
-    }
-    pub fn cfg_spec_id(&mut self, spec_id: SpecId) {
-        self.env.cfg.spec_id = spec_id;
-    }
-
-    /********** BLOCK **************/
-
-    pub fn block(&mut self, block: BlockEnv) {
-        self.env.block = block;
-    }
-    pub fn block_gas_limit(&mut self, gas_limit: U256) {
-        self.env.block.gas_limit = gas_limit;
-    }
-    pub fn block_number(&mut self, number: U256) {
-        self.env.block.number = number;
-    }
-
-    pub fn block_coinbase(&mut self, coinbase: H160) {
-        self.env.block.coinbase = coinbase;
-    }
-    pub fn block_timestamp(&mut self, timestamp: U256) {
-        self.env.block.timestamp = timestamp;
-    }
-    pub fn block_difficulty(&mut self, difficulty: U256) {
-        self.env.block.difficulty = difficulty;
-    }
-    pub fn block_basefee(&mut self, basefee: U256) {
-        self.env.block.basefee = basefee;
-    }
-    pub fn block_gas_used(&mut self, gas_used: U256) {
-        self.env.block.gas_used = gas_used;
-    }
-
-    /************* TX *****************/
-
-    pub fn tx(&mut self, tx: TxEnv) {
-        self.env.tx = tx;
-    }
-    pub fn tx_caller(&mut self, caller: H160) {
-        self.env.tx.caller = caller;
-    }
-    pub fn tx_gas_limit(&mut self, gas_limit: u64) {
-        self.env.tx.gas_limit = gas_limit;
-    }
-    pub fn tx_gas_price(&mut self, gas_price: U256) {
-        self.env.tx.gas_price = gas_price;
-    }
-    pub fn tx_gas_priority_fee(&mut self, gas_priority_fee: Option<U256>) {
-        self.env.tx.gas_priority_fee = gas_priority_fee;
-    }
-    pub fn tx_transact_to(&mut self, transact_to: TransactTo) {
-        self.env.tx.transact_to = transact_to;
-    }
-    pub fn tx_data(&mut self, data: Bytes) {
-        self.env.tx.data = data;
-    }
-    pub fn tx_value(&mut self, value: U256) {
-        self.env.tx.value = value;
-    }
-    pub fn tx_nonce(&mut self, nonce: Option<u64>) {
-        self.env.tx.nonce = nonce;
-    }
-    pub fn tx_access_list(&mut self, access_list: Vec<(H160, Vec<H256>)>) {
-        self.env.tx.access_list = access_list;
+    pub fn database(&mut self, db: &'a mut DB) {
+        self.db = Some(db);
     }
 }

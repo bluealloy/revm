@@ -106,12 +106,13 @@ pub struct CallContext {
     pub apparent_value: U256,
 }
 
+#[derive(Clone)]
 pub struct Env {
     pub cfg: CfgEnv,
     pub block: BlockEnv,
     pub tx: TxEnv,
 }
-
+#[derive(Clone)]
 pub struct BlockEnv {
     pub gas_limit: U256,
     /// somebody call it nonce
@@ -126,7 +127,7 @@ pub struct BlockEnv {
     /// incrementaly added on every transaction. It can be cleared if needed
     pub gas_used: U256,
 }
-
+#[derive(Clone)]
 pub struct TxEnv {
     /// Caller or Author or tx signer
     pub caller: H160,
@@ -140,7 +141,7 @@ pub struct TxEnv {
     pub nonce: Option<u64>,
     pub access_list: Vec<(H160, Vec<H256>)>,
 }
-
+#[derive(Clone)]
 pub struct CfgEnv {
     pub chain_id: U256,
     pub spec_id: SpecId,
