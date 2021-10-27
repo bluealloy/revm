@@ -52,6 +52,7 @@ impl AccountInfo {
     }
 }
 
+#[derive(Clone)]
 pub enum TransactTo {
     Call(H160),
     Create(CreateScheme),

@@ -13,7 +13,7 @@ use crate::{
     spec::{Spec, SpecId::*},
     subroutine::{Account, State, SubRoutine},
     util, CallContext, CreateScheme, Env, ExitRevert, Inspector, Log, TransactOut, TransactTo,
-    Transfer, EVM, KECCAK_EMPTY,
+    Transfer, Transact, KECCAK_EMPTY,
 };
 use bytes::Bytes;
 use revm_precompiles::{Precompile, PrecompileOutput, Precompiles};
@@ -27,16 +27,12 @@ pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
     _phantomdata: PhantomData<GSPEC>,
 }
 
-impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSPEC, DB, INSPECT> {
-    fn transact(
-        &mut self,
-        caller: H160,
-        transact_to: TransactTo,
-        value: U256,
-        data: Bytes,
-        gas_limit: u64,
-        access_list: Vec<(H160, Vec<H256>)>,
-    ) -> (ExitReason, TransactOut, u64, State) {
+impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact for EVMImpl<'a, GSPEC, DB, INSPECT> {
+    fn transact(&mut self) -> (ExitReason, TransactOut, u64, State) {
+        let caller = self.env.tx.caller;
+        let value = self.env.tx.value;
+        let data = self.env.tx.data.clone();
+        let gas_limit = self.env.tx.gas_limit;
         let exit_error = |reason: ExitReason| (reason, TransactOut::None, 0, State::new());
 
         if GSPEC::enabled(LONDON) {
@@ -64,11 +60,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
 
         let mut gas = Gas::new(gas_limit);
         // record initial gas cost.
-        if !gas.record_cost(self.initialization::<GSPEC>(
-            &data,
-            matches!(transact_to, TransactTo::Create(_)),
-            access_list,
-        )) {
+        if !gas.record_cost(self.initialization::<GSPEC>()) {
             return exit_error(ExitError::OutOfGas.into());
         }
 
@@ -104,7 +96,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVM for EVMImpl<'a, GSP
         gas.record_cost(gas_limit);
 
         // call inner handling of call/create
-        let (exit_reason, ret_gas, out) = match transact_to {
+        let (exit_reason, ret_gas, out) = match self.env.tx.transact_to {
             TransactTo::Call(address) => {
                 self.subroutine.inc_nonce(caller);
                 let context = CallContext {
@@ -196,12 +188,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         is_cold
     }
 
-    fn initialization<SPEC: Spec>(
-        &mut self,
-        input: &Bytes,
-        is_create: bool,
-        access_list: Vec<(H160, Vec<H256>)>,
-    ) -> u64 {
+    fn initialization<SPEC: Spec>(&mut self) -> u64 {
+        let is_create = matches!(self.env.tx.transact_to, TransactTo::Create(_));
+        let input = &self.env.tx.data;
+        let access_list = self.env.tx.access_list.clone();
         for (ward_acc, _) in self.precompiles.as_slice() {
             //TODO trace load precompiles?
             self.subroutine.load_account(ward_acc.clone(), self.db);

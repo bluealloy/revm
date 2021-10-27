@@ -18,7 +18,7 @@ use evm_impl::Handler;
 
 pub use db::{Database, DummyStateDB};
 pub use error::*;
-pub use evm::{new, new_inspect, EVM};
+pub use evm::{new,inner, inner_inspect, EVM,Transact};
 pub use inspector::{Inspector, NoOpInspector};
 pub use machine::Machine;
 pub use models::*;

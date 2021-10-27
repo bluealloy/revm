@@ -10,6 +10,8 @@ use crate::{Account, AccountInfo, Log};
 use bytes::Bytes;
 use sha3::{Digest, Keccak256};
 
+use super::WriteDatabase;
+
 /// Memory backend, storing all state values in a `Map` in memory.
 #[derive(Debug, Clone)]
 pub struct DummyStateDB {
@@ -49,31 +51,6 @@ impl DummyStateDB {
         self.storage.entry(address).or_default().insert(slot, value);
     }
 
-    pub fn apply(&mut self, changes: Map<H160, Account>) {
-        for (add, acc) in changes {
-            if acc.is_empty() || matches!(acc.filth, Filth::Destroyed) {
-                self.cache.remove(&add);
-                self.storage.remove(&add);
-            } else {
-                self.insert_cache(add, acc.info);
-                let storage = self.storage.entry(add.clone()).or_default();
-                if acc.filth.abandon_old_storage() {
-                    storage.clear();
-                }
-                for (index, value) in acc.storage {
-                    if value == H256::zero() {
-                        storage.remove(&index);
-                    } else {
-                        storage.insert(index, value);
-                    }
-                }
-                if storage.is_empty() {
-                    self.storage.remove(&add);
-                }
-            }
-        }
-    }
-
     /// Create a new memory backend.
     pub fn new() -> Self {
         let mut contracts = Map::new();
@@ -104,6 +81,33 @@ impl DummyStateDB {
         // };
         // self.cache.insert(address.clone(), acc);
         // exists
+    }
+}
+
+impl WriteDatabase for DummyStateDB {
+    fn apply(&mut self, changes: Map<H160, Account>) {
+        for (add, acc) in changes {
+            if acc.is_empty() || matches!(acc.filth, Filth::Destroyed) {
+                self.cache.remove(&add);
+                self.storage.remove(&add);
+            } else {
+                self.insert_cache(add, acc.info);
+                let storage = self.storage.entry(add.clone()).or_default();
+                if acc.filth.abandon_old_storage() {
+                    storage.clear();
+                }
+                for (index, value) in acc.storage {
+                    if value == H256::zero() {
+                        storage.remove(&index);
+                    } else {
+                        storage.insert(index, value);
+                    }
+                }
+                if storage.is_empty() {
+                    self.storage.remove(&add);
+                }
+            }
+        }
     }
 }
 

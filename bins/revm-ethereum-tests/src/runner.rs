@@ -11,7 +11,7 @@ use sha3::{Digest, Keccak256};
 
 use indicatif::ProgressBar;
 use primitive_types::{H160, H256, U256};
-use revm::{CreateScheme, GlobalEnv, Inspector, SpecId, TransactTo};
+use revm::{CreateScheme, Env, Inspector, SpecId, TransactTo};
 use std::sync::atomic::Ordering;
 use walkdir::{DirEntry, WalkDir};
 
@@ -132,7 +132,7 @@ pub fn execute_test_suit(
             let spec_id = spec_name.to_spec_id();
 
             let block_basefee = unit.env.current_base_fee;
-            let global_env = GlobalEnv {
+            let global_env = Env {
                 gas_max_fee: unit
                     .transaction
                     .gas_price
