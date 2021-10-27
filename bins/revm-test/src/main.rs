@@ -10,8 +10,9 @@ pub fn simple_example() {
     let caller = H160::from_str("0x1000000000000000000000000000000000000000").unwrap();
     // StateDB is dummy state that implements Database trait.
     // add one account and some eth for testing.
-    let mut db = DummyStateDB::new();
-    db.insert_cache(
+    let mut evm = revm::new();
+    evm.database(DummyStateDB::new());
+    evm.db().unwrap().insert_cache(
         caller.clone(),
         AccountInfo {
             nonce: 1,
@@ -22,8 +23,6 @@ pub fn simple_example() {
     );
 
     // execution globals block hash/gas_limit/coinbase/timestamp..
-    let mut evm = revm::new();
-    evm.database(&mut db);
     evm.env.tx.caller = caller.clone();
 
     evm.env.tx.transact_to = TransactTo::create();
@@ -53,5 +52,46 @@ pub fn simple_example() {
 fn main() {
     println!("Hello, world!");
     simple_example();
+    let mut a = {
+        let b = Box::new(B { b: 10 });
+        let a = AA::new(b);
+        a
+    };
+    a.call();
+    a.call();
+
     return;
+}
+
+pub struct AA<T: TT> {
+    b: T,
+}
+
+impl<T: TT> AA<T> {
+    pub fn new(b: T) -> Self {
+        AA { b }
+    }
+    pub fn call(&mut self) {
+        println!("CALL B:{}", self.b.test());
+    }
+}
+
+pub struct B {
+    pub b: u32,
+}
+
+impl TT for B {
+    fn test(&mut self) -> u32 {
+        self.b += 1;
+        self.b
+    }
+}
+
+use auto_impl::auto_impl;
+
+#[auto_impl(&mut,Box)]
+pub trait TT {
+    fn test(&mut self) -> u32 {
+        10
+    }
 }

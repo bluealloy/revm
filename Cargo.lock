@@ -1042,6 +1042,7 @@ dependencies = [
 name = "revm-test"
 version = "0.1.0"
 dependencies = [
+ "auto_impl",
  "bytes",
  "hex",
  "primitive-types",

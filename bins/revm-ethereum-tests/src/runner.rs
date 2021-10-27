@@ -196,9 +196,9 @@ pub fn execute_test_suit(
                 env.tx.transact_to = to;
                 let timer = Instant::now();
 
-                let mut database = database.clone();
+                let database = database.clone();
                 let mut evm = revm::new();
-                evm.database(&mut database);
+                evm.database(database);
                 evm.inspector(inspector);
                 evm.env = env.clone();
                 // do the deed
@@ -206,7 +206,7 @@ pub fn execute_test_suit(
 
                 let timer = timer.elapsed();
                 *elapsed.lock().unwrap() += timer;
-                let db = evm.db().as_ref().unwrap();
+                let db = evm.db().unwrap();
                 let state_root = merkle_trie_root(db.cache(), db.storage());
                 if test.hash != state_root {
                     println!("{:?} UNIT_TEST:{}\n", path, name);

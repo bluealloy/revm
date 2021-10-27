@@ -10,3 +10,4 @@ revm = {path="../../crates/revm"}
 primitive-types = {version ="0.10", features = ["rlp"]}
 bytes = "1.1"
 hex = "0.4"
+auto_impl = "0.4"
