@@ -1,3 +1,15 @@
+# v0.3.0
+date: 27.10.2021
+
+Interface revamped and now looks a lot better.
+
+Log:
+* 1b1ebd8 - [revm] Interface. Inspector added, Env cleanup. revm-test passes (9 hours ago) <rakita>
+* 351d4e0 - BIG interface change (11 hours ago) <rakita>
+* a723827 - no_sdt to no_std (2 days ago) <rakita>
+* a449bed - [precompiles] spelling, small cleanup (2 days ago) <rakita>
+
+
 # v0.2.2
 
 Same as v0.2.1 but added readme.

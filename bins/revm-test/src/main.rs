@@ -52,46 +52,5 @@ pub fn simple_example() {
 fn main() {
     println!("Hello, world!");
     simple_example();
-    let mut a = {
-        let b = Box::new(B { b: 10 });
-        let a = AA::new(b);
-        a
-    };
-    a.call();
-    a.call();
-
     return;
-}
-
-pub struct AA<T: TT> {
-    b: T,
-}
-
-impl<T: TT> AA<T> {
-    pub fn new(b: T) -> Self {
-        AA { b }
-    }
-    pub fn call(&mut self) {
-        println!("CALL B:{}", self.b.test());
-    }
-}
-
-pub struct B {
-    pub b: u32,
-}
-
-impl TT for B {
-    fn test(&mut self) -> u32 {
-        self.b += 1;
-        self.b
-    }
-}
-
-use auto_impl::auto_impl;
-
-#[auto_impl(&mut,Box)]
-pub trait TT {
-    fn test(&mut self) -> u32 {
-        10
-    }
 }

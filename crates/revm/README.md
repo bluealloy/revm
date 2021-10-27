@@ -10,64 +10,52 @@ Here is list of things that i would like to use as guide in this project:
 
 ## Usage
 
-Please check `bin/revm-test`, interface is maybe susceptible to change but it will not deviate much from current one.
+Please check `bins/revm-test` for simple use case.
+
+All ethereum state tests can be found `bins/revm-ethereum-tests` and can be run with `cargo run --release -- all`
 
 Example with creating simple set/get smartcontract and calling create and two calls:
 ```rust
     let caller = H160::from_str("0x1000000000000000000000000000000000000000").unwrap();
     // StateDB is dummy state that implements Database trait.
     // add one account and some eth for testing.
-    let mut db = DummyStateDB::new();
-    db.insert_cache(
+    let mut evm = revm::new();
+    evm.database(DummyStateDB::new());
+    evm.db().unwrap().insert_cache(
         caller.clone(),
         AccountInfo {
             nonce: 1,
             balance: U256::from(10000000),
             code: None,
-            code_hash: None,
+            code_hash: KECCAK_EMPTY,
         },
     );
 
     // execution globals block hash/gas_limit/coinbase/timestamp..
-    let envs = GlobalEnv::default();
+    evm.env.tx.caller = caller.clone();
 
-    let (_, out, _, state) = revm::new(SpecId::BERLIN, envs.clone(), &mut db).transact(
-        caller.clone(),
-        TransactTo::create(),
-        U256::zero(),
-        Bytes::from(hex::decode("608060405234801561001057600080fd5b50610150806100206000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c80632e64cec11461003b5780636057361d14610059575b600080fd5b610043610075565b60405161005091906100d9565b60405180910390f35b610073600480360381019061006e919061009d565b61007e565b005b60008054905090565b8060008190555050565b60008135905061009781610103565b92915050565b6000602082840312156100b3576100b26100fe565b5b60006100c184828501610088565b91505092915050565b6100d3816100f4565b82525050565b60006020820190506100ee60008301846100ca565b92915050565b6000819050919050565b600080fd5b61010c816100f4565b811461011757600080fd5b5056fea2646970667358221220404e37f487a89a932dca5e77faaf6ca2de3b991f93d230604b1b8daaef64766264736f6c63430008070033").unwrap()),
-        u64::MAX,
-        Vec::new(),
-    );
-    db.apply(state);
+    evm.env.tx.transact_to = TransactTo::create();
+    evm.env.tx.data = Bytes::from(hex::decode("608060405234801561001057600080fd5b50610150806100206000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c80632e64cec11461003b5780636057361d14610059575b600080fd5b610043610075565b60405161005091906100d9565b60405180910390f35b610073600480360381019061006e919061009d565b61007e565b005b60008054905090565b8060008190555050565b60008135905061009781610103565b92915050565b6000602082840312156100b3576100b26100fe565b5b60006100c184828501610088565b91505092915050565b6100d3816100f4565b82525050565b60006020820190506100ee60008301846100ca565b92915050565b6000819050919050565b600080fd5b61010c816100f4565b811461011757600080fd5b5056fea2646970667358221220404e37f487a89a932dca5e77faaf6ca2de3b991f93d230604b1b8daaef64766264736f6c63430008070033").unwrap());
+
+    let (_, out, _) = evm.transact();
     let contract_address = match out {
         TransactOut::Create(_, Some(add)) => add,
         _ => panic!("not gona happen"),
     };
 
-    let (_, _, _, state) = revm::new(SpecId::BERLIN, envs.clone(), &mut db).transact(
-        caller,
-        TransactTo::Call(contract_address),
-        U256::zero(), // value transfered
-        Bytes::from(
-            hex::decode("6057361d0000000000000000000000000000000000000000000000000000000000000015")
-                .unwrap(),
-        ),
-        u64::MAX,   //gas_limit
-        Vec::new(), // access_list
-    );
-    db.apply(state);
+    evm.env.tx.transact_to = TransactTo::Call(contract_address);
+    evm.env.tx.data =
+        hex::decode("6057361d0000000000000000000000000000000000000000000000000000000000000015")
+            .unwrap()
+            .into();
+    evm.transact();
 
-    let (_, out, _, state) = revm::new(SpecId::BERLIN, envs.clone(), &mut db).transact(
-        caller,
-        TransactTo::Call(contract_address),
-        U256::zero(), // value transfered
-        Bytes::from(hex::decode("2e64cec1").unwrap()),
-        u64::MAX,   // gas_limit
-        Vec::new(), // access_list
-    );
+    evm.env.tx.transact_to = TransactTo::Call(contract_address);
+    evm.env.tx.data = hex::decode("2e64cec1").unwrap().into();
+
+    let (_, out, _) = evm.transact();
+
     println!("get value (StaticCall): {:?}\n", out);
-    db.apply(state);
 ```
 ## Status of project
 
@@ -80,21 +68,6 @@ I just started this project as a hobby to kill some time. Presenty it has good s
 - Write a lot of rust tests
 - wasm interface
 - C++ interface
-
-## Changelogs
-
-### 23.10.2021:
-Published v0.2.0. London supported and all eth state test are 100% passing or Istanbul/Berlin/London.
-
-### 17.10.2021:
-
--For past few weeks working on this structure and project in general become really good and I like it. For me it surved as good distraction for past few weeks and i think i am going to get drained if i continue working on it, so i am taking break and i intend to come back after few months and finish it.
-- For status:
-    * machine/spec/opcodes/precompiles(without modexp) feels good and I probably dont need to touch them.
-    * inspector: is what i wanted, full control on insides of EVM so that we can control it and modify it. will probably needs to add some small tweaks to interface but nothing major.
-    * subroutines: Feels okay but it needs more scrutiny just to be sure that all corner cases are covered.
-    * Test that are failing (~20) are mostly related to EIP-158: State clearing. For EIP-158 I will time to do it properly.
-    * There is probably benefit of replaing HashMap hasher with something simpler, but this is research for another time.
 ## Project structure:
 
 The structure of the project is getting crystallized and we can see few parts that are worthy to write about:
