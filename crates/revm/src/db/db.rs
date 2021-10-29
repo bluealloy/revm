@@ -22,12 +22,12 @@ pub trait Database {
 }
 
 #[auto_impl(& mut, Box)]
-pub trait WriteDatabase {
-    fn apply(&mut self, changes: Map<H160, Account>);
+pub trait DatabaseCommit {
+    fn commit(&mut self, changes: Map<H160, Account>);
 }
 
 #[auto_impl(&, Box)]
-pub trait RefDatabase {
+pub trait DatabaseRef {
     /// Whether account at address exists.
     fn exists(&self, address: H160) -> Option<AccountInfo>;
     /// Get basic account information.
@@ -42,7 +42,15 @@ pub trait RefDatabase {
 }
 
 pub struct RefDBWrapper<'a> {
-    pub db: &'a dyn RefDatabase,
+    pub db: &'a dyn DatabaseRef,
+}
+
+impl<'a> RefDBWrapper<'a> {
+    pub fn new(db: &'a dyn DatabaseRef) -> Self {
+        Self {
+            db
+        }
+    }
 }
 
 impl<'a> Database for RefDBWrapper<'a> {

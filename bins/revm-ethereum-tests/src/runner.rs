@@ -51,6 +51,24 @@ pub fn execute_test_suit(
     if path.file_name() == Some(OsStr::new("ValueOverflow.json")) {
         return Ok(());
     }
+    // /*
+    
+    if path.file_name() == Some(OsStr::new("loopExp.json")) {
+        return Ok(());
+    }
+    if path.file_name() == Some(OsStr::new("Call50000_sha256.json")) {
+        return Ok(());
+    }
+    if path.file_name() == Some(OsStr::new("static_Call50000_sha256.json")) {
+        return Ok(());
+    }
+    if path.file_name() == Some(OsStr::new("loopMul.json")) {
+        return Ok(());
+    }
+    if path.file_name() == Some(OsStr::new("CALLBlake2f_MaxRounds.json")) {
+        return Ok(());
+    }
+    //*/
     let json_reader = std::fs::read(&path).unwrap();
     let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
     let skip_test_unit: HashSet<_> = vec![
@@ -256,7 +274,7 @@ pub fn run<INSP: 'static + Inspector + Clone + Send>(test_files: Vec<PathBuf>, i
                     if endjob.load(Ordering::SeqCst) {
                         return;
                     }
-                    //println!("Test:{:?}",test_path);
+                    //println!("Test:{:?}\n",test_path);
                     if let Err(err) =
                         execute_test_suit(&test_path, &elapsed, &mut insp as &mut dyn Inspector)
                     {
@@ -264,6 +282,8 @@ pub fn run<INSP: 'static + Inspector + Clone + Send>(test_files: Vec<PathBuf>, i
                         println!("\n{:?} failed: {}\n", test_path, err);
                         return;
                     }
+                    
+                    //println!("TestDone:{:?}\n",test_path);
                     console_bar.inc(1);
                 })
                 .unwrap(),

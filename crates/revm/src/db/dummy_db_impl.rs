@@ -10,7 +10,7 @@ use crate::{Account, AccountInfo, Log};
 use bytes::Bytes;
 use sha3::{Digest, Keccak256};
 
-use super::WriteDatabase;
+use super::DatabaseCommit;
 
 /// Memory backend, storing all state values in a `Map` in memory.
 #[derive(Debug, Clone)]
@@ -84,8 +84,8 @@ impl DummyStateDB {
     }
 }
 
-impl WriteDatabase for DummyStateDB {
-    fn apply(&mut self, changes: Map<H160, Account>) {
+impl DatabaseCommit for DummyStateDB {
+    fn commit(&mut self, changes: Map<H160, Account>) {
         for (add, acc) in changes {
             if acc.is_empty() || matches!(acc.filth, Filth::Destroyed) {
                 self.cache.remove(&add);
