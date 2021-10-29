@@ -2,7 +2,9 @@ use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
 
 use crate::{opcode::Control, CallContext, CreateScheme, ExitReason, Machine, Transfer};
+use auto_impl::auto_impl;
 
+#[auto_impl(&mut, Box)]
 pub trait Inspector {
     // get opcode by calling `machine.contract.opcode(machine.program_counter())`.
     // all other information can be obtained from machine.

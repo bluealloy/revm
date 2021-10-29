@@ -12,8 +12,8 @@ use crate::{
     opcode::gas,
     spec::{Spec, SpecId::*},
     subroutine::{Account, State, SubRoutine},
-    util, CallContext, CreateScheme, Env, ExitRevert, Inspector, Log, Transact, TransactOut,
-    TransactTo, Transfer, KECCAK_EMPTY,
+    util, CallContext, CreateScheme, Env, ExitRevert, Inspector, Log, TransactOut, TransactTo,
+    Transfer, KECCAK_EMPTY,
 };
 use bytes::Bytes;
 use revm_precompiles::{Precompile, PrecompileOutput, Precompiles};
@@ -25,6 +25,12 @@ pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
     precompiles: Precompiles,
     inspector: &'a mut dyn Inspector,
     _phantomdata: PhantomData<GSPEC>,
+}
+
+pub trait Transact {
+    /// Do transaction.
+    /// Return ExitReason, Output for call or Address if we are creating contract, gas spend, State that needs to be applied.
+    fn transact(&mut self) -> (ExitReason, TransactOut, u64, State);
 }
 
 impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact

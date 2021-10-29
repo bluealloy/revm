@@ -1,7 +1,7 @@
 use crate::{
     db::{Database, WriteDatabase},
     error::ExitReason,
-    evm_impl::EVMImpl,
+    evm_impl::{EVMImpl, Transact},
     subroutine::State,
     BerlinSpec, ByzantineSpec, Env, Inspector, IstanbulSpec, LatestSpec, LondonSpec, NoOpInspector,
     Spec, SpecId, TransactOut,
@@ -9,24 +9,29 @@ use crate::{
 use revm_precompiles::Precompiles;
 /// Struct that takes Database and enabled transact to update state dirrectly to database.
 /// additionaly it allows user to set all environment parameters.
+/// 
 /// Parameters that can be set are devided between Config, Block and Transaction(tx)
-pub struct EVM<'a, DB: Database + WriteDatabase> {
+/// 
+/// For transacting on EVM you can call transact_commit that will automatically apply changes to db.
+pub struct EVM<DB: Database + WriteDatabase> {
     pub env: Env,
-    pub inspector: Option<&'a mut dyn Inspector>,
-    db: Option<DB>,
+    pub db: Option<DB>,
 }
 
-pub fn new<'a, DB: Database + WriteDatabase>() -> EVM<'a, DB> {
+pub fn new<DB: Database + WriteDatabase>() -> EVM<DB> {
     EVM::new()
 }
 
-impl<'a, DB: Database + WriteDatabase> EVM<'a, DB> {
+impl<DB: Database + WriteDatabase> EVM<DB> {
     pub fn new() -> Self {
         Self {
             env: Env::default(),
             db: None,
-            inspector: None,
         }
+    }
+
+    pub fn database(&mut self, db: DB) {
+        self.db = Some(db);
     }
 
     pub fn db(&mut self) -> Option<&mut DB> {
@@ -37,38 +42,47 @@ impl<'a, DB: Database + WriteDatabase> EVM<'a, DB> {
         core::mem::take(&mut self.db).unwrap()
     }
 
-    /// do dummy transaction and return change state. Does not touch the DB.
-    pub fn transact_only(&mut self) -> (ExitReason, TransactOut, u64, State) {
+    /// Execute transaction without writing to DB, return change state.
+    pub fn transact(&mut self) -> (ExitReason, TransactOut, u64, State) {
         if let Some(db) = self.db.as_mut() {
-            let (exit, out, gas, state) = if let Some(inspector) = self.inspector.as_mut() {
-                inner_inspect(&self.env, db, *inspector)
-            } else {
-                inner(&self.env, db)
-            }
-            .transact();
-            return (exit, out, gas, state);
+            let mut noop = NoOpInspector {};
+            let out =
+                evm_inner::<DB, false>(self.env.cfg.spec_id, &mut self.env, db, &mut noop).transact();
+            out
         } else {
-            panic!("Database handler needs to be set");
+            panic!("Database needs to be set");
         }
     }
 
-    /// Do transaction and apply result to database
-    pub fn transact(&mut self) -> (ExitReason, TransactOut, u64) {
-        let (exit, out, gas, state) = self.transact_only();
+    /// Execute transaction and apply result to database
+    pub fn transact_commit(&mut self) -> (ExitReason, TransactOut, u64) {
+        let (exit, out, gas, state) = self.transact();
         self.db.as_mut().unwrap().apply(state);
         (exit, out, gas)
     }
-}
 
-/// All functions inside this impl are various setters for evn.
-/// all setters are prefixed with cfg_, block_, tx_ for better readability.
-impl<'a, DB: Database + WriteDatabase> EVM<'a, DB> {
-    pub fn inspector(&mut self, inspector: &'a mut dyn Inspector) {
-        self.inspector = Some(inspector);
+    /// Execute transaction with given inspector, without wring to DB. Return change state.
+    pub fn inspect<INSP: Inspector>(
+        &mut self,
+        mut inspector: INSP,
+    ) -> (ExitReason, TransactOut, u64, State) {
+        if let Some(db) = self.db.as_mut() {
+            let out = evm_inner::<DB, true>(self.env.cfg.spec_id, &mut self.env, db, &mut inspector)
+                .transact();
+            out
+        } else {
+            panic!("Database needs to be set");
+        }
     }
 
-    pub fn database(&mut self, db: DB) {
-        self.db = Some(db);
+    /// Inspect transaction and commit changes to database.
+    pub fn inspect_commit<INSP: Inspector>(
+        &mut self,
+        inspector: INSP,
+    ) -> (ExitReason, TransactOut, u64) {
+        let (exit, out, gas, state) = self.inspect(inspector);
+        self.db.as_mut().unwrap().apply(state);
+        (exit, out, gas)
     }
 }
 
@@ -83,7 +97,7 @@ macro_rules! create_evm {
     };
 }
 
-fn inner_wrapper<'a, DB: Database, const INSPECT: bool>(
+fn evm_inner<'a, DB: Database, const INSPECT: bool>(
     specid: SpecId,
     env: &'a Env,
     db: &'a mut DB,
@@ -97,29 +111,4 @@ fn inner_wrapper<'a, DB: Database, const INSPECT: bool>(
         SpecId::BYZANTINE => create_evm!(ByzantineSpec, db, env, insp),
         _ => panic!("Spec Not supported"),
     }
-}
-
-pub fn inner<'a, DB: Database>(env: &'a Env, db: &'a mut DB) -> Box<dyn Transact + 'a> {
-    /**** SAFETY ********
-     * NOOP_INSP is not used inside EVM because INSPECTOR flag is set to false and
-     * no fn is going to be called from inspector so it is just dummy placeholder.
-     * And NoOpInspector is empty struct.
-     */
-    static mut NOOP_INSP: NoOpInspector = NoOpInspector {};
-    inner_wrapper::<DB, false>(env.cfg.spec_id, env, db, unsafe { &mut NOOP_INSP }
-        as &'a mut dyn Inspector)
-}
-
-pub fn inner_inspect<'a, DB: Database>(
-    env: &'a Env,
-    db: &'a mut DB,
-    inspector: &'a mut dyn Inspector,
-) -> Box<dyn Transact + 'a> {
-    inner_wrapper::<DB, true>(env.cfg.spec_id, env, db, inspector)
-}
-
-pub trait Transact {
-    /// Do transaction.
-    /// Return ExitReason, Output for call or Address if we are creating contract, gas spend, State that needs to be applied.
-    fn transact(&mut self) -> (ExitReason, TransactOut, u64, State);
 }

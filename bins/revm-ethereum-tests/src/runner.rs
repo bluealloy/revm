@@ -148,7 +148,7 @@ pub fn execute_test_suit(
             ) {
                 continue;
             }
-            
+
             env.cfg.spec_id = spec_name.to_spec_id();
 
             for (id, test) in tests.into_iter().enumerate() {
@@ -199,12 +199,11 @@ pub fn execute_test_suit(
                 let mut database = database.clone();
                 let mut evm = revm::new();
                 evm.database(&mut database);
-                evm.inspector(inspector);
                 evm.env = env.clone();
                 // do the deed
-                
+
                 let timer = Instant::now();
-                let (_ret, _out, _gas) = evm.transact();
+                let (_ret, _out, _gas) = evm.inspect_commit(&mut *inspector);
                 let timer = timer.elapsed();
 
                 *elapsed.lock().unwrap() += timer;
