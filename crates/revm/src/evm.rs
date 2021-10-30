@@ -6,6 +6,7 @@ use crate::{
     BerlinSpec, ByzantineSpec, Env, Inspector, IstanbulSpec, LatestSpec, LondonSpec, NoOpInspector,
     Spec, SpecId, TransactOut,
 };
+use alloc::boxed::Box;
 use revm_precompiles::Precompiles;
 /// Struct that takes Database and enabled transact to update state dirrectly to database.
 /// additionaly it allows user to set all environment parameters.

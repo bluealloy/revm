@@ -1,4 +1,4 @@
-use crate::collection::Cow;
+use alloc::borrow::Cow;
 use revm_precompiles::ExitError as PrecompileError;
 
 /// Exit reason.

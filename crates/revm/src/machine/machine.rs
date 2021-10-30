@@ -1,4 +1,4 @@
-use crate::{collection::vec::Vec, opcode::eval, ExitError};
+use crate::{alloc::vec::Vec, opcode::eval, ExitError};
 use bytes::Bytes;
 use core::{cmp::max, ops::Range};
 use primitive_types::U256;

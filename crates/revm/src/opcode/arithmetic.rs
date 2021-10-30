@@ -132,7 +132,7 @@ pub fn signextend(op1: U256, op2: U256) -> U256 {
 
 #[cfg(test)]
 mod tests {
-    use crate::collection::vec;
+    use alloc::vec;
 
     use super::{signextend, U256};
 

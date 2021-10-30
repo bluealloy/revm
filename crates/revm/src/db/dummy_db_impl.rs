@@ -1,8 +1,10 @@
 use crate::{
-    collection::{vec::Vec, Entry, Map},
     subroutine::Filth,
     Database, KECCAK_EMPTY,
 };
+
+use alloc::vec::Vec;
+use hashbrown::{HashMap as Map, hash_map::Entry};
 
 use primitive_types::{H160, H256, U256};
 

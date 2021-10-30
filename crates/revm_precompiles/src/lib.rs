@@ -1,5 +1,8 @@
+#![no_std]
+
 use bytes::Bytes;
 use primitive_types::{H160 as Address, H256, U256};
+
 
 mod blake2;
 mod bn128;
@@ -9,29 +12,13 @@ mod identity;
 mod modexp;
 mod secp256k1;
 
+
 pub use error::ExitError;
 
 /// libraries for no_std flag
-#[cfg(no_std)]
-pub mod collection {
-    extern crate alloc;
-    pub use alloc::{
-        borrow::{Borrow, Cow},
-        collections::{btree_map::Entry, BTreeMap as Map},
-        vec,
-        vec::Vec,
-    };
-}
-
-#[cfg(not(no_std))]
-pub mod collection {
-    pub use std::{
-        borrow::{Cow, Cow::Borrowed},
-        collections::{hash_map::Entry, HashMap as Map},
-        vec,
-        vec::Vec,
-    };
-}
+#[macro_use]
+extern crate alloc;
+use alloc::vec::Vec;
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base

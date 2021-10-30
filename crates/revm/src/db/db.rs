@@ -1,4 +1,5 @@
-use crate::{collection::Map, Account};
+use crate::Account;
+use hashbrown::HashMap as Map;
 
 use primitive_types::{H160, H256, U256};
 
@@ -47,9 +48,7 @@ pub struct RefDBWrapper<'a> {
 
 impl<'a> RefDBWrapper<'a> {
     pub fn new(db: &'a dyn DatabaseRef) -> Self {
-        Self {
-            db
-        }
+        Self { db }
     }
 }
 

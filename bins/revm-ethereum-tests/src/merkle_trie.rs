@@ -9,7 +9,7 @@ use rlp::RlpStream;
 use sha3::{Digest, Keccak256};
 
 use revm::AccountInfo;
-use std::collections::HashMap as Map;
+use hashbrown::HashMap as Map;
 
 pub fn merkle_trie_root(
     accounts: &Map<H160, AccountInfo>,

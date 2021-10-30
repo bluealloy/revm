@@ -15,7 +15,13 @@ primitive-types = {version = "0.10", features = ["rlp"]}
 revm_precompiles = {path = "../revm_precompiles", version="0.1"} 
 rlp = {version = "0.5", default-features = false}#used for create2 address calculation 
 sha3 = {version = "0.9", default-features = false}
-auto_impl = "0.4"
+auto_impl = {version="0.4", git="https://github.com/dimpolo/auto_impl.git", rev="61874ef"}
+hashbrown = "0.11"
 
 [dev-dependencies]
 hex = "0.4"
+
+
+[features]
+default = ["std"]
+std = ["bytes/std","num_enum/std","primitive-types/std", "sha3/std","rlp/std"]

@@ -1,4 +1,4 @@
-use crate::{collection::vec::Vec, CallContext, ExitError, ExitReason, ExitSucceed};
+use crate::{alloc::vec::Vec, CallContext, ExitError, ExitReason, ExitSucceed};
 use bytes::Bytes;
 use primitive_types::{H160, U256};
 

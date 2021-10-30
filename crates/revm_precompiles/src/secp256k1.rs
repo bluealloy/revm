@@ -1,7 +1,13 @@
 use crate::{gas_query, Precompile, PrecompileOutput, PrecompileResult, StandardPrecompileFn};
-use core::cmp::min;
+use alloc::vec::Vec;
+use core::{cmp::min, convert::TryFrom};
 use parity_crypto::publickey::{public_to_address, recover, Error as ParityCryptoError, Signature};
-use primitive_types::{H160 as Address, H256};
+// use k256::{
+//     ecdsa::{recoverable, signature::Signer, Error, SigningKey},
+//     EncodedPoint as K256PublicKey,
+// };
+use primitive_types::{H160 as Address, H256, H512};
+use sha3::{Digest, Keccak256};
 
 const ECRECOVER_BASE: u64 = 3_000;
 
@@ -10,15 +16,96 @@ pub const ECRECOVER: (Address, Precompile) = (
     Precompile::Standard(ec_recover_run as StandardPrecompileFn),
 );
 
+/// Error verifying ECDSA signature
+//#[derive(Encode, Decode)]
+pub enum EcdsaVerifyError {
+    /// Incorrect value of R or S
+    BadRS,
+    /// Incorrect value of V
+    BadV,
+    /// Invalid signature
+    BadSignature,
+}
+
+/// Verify and recover a SECP256k1 ECDSA signature.
+///
+/// - `sig` is passed in RSV format. V should be either `0/1` or `27/28`.
+/// - `msg` is the blake2-256 hash of the message.
+///
+/// Returns `Err` if the signature is bad, otherwise the 64-byte pubkey
+/// (doesn't include the 0x04 prefix).
+// fn sp_secp256k1_ecdsa_recover(sig: &[u8; 65], msg: &[u8; 32]) -> Result<address, EcdsaVerifyError> {
+//     let rs = libsecp256k1::Signature::parse_overflowing_slice(&sig[0..64])
+//         .map_err(|_| EcdsaVerifyError::BadRS)?;
+//     let v =
+//         libsecp256k1::RecoveryId::parse(if sig[64] > 26 { sig[64] - 27 } else { sig[64] } as u8)
+//             .map_err(|_| EcdsaVerifyError::BadV)?;
+//     let pubkey = libsecp256k1::recover(&libsecp256k1::Message::parse(msg), &rs, &v)
+//         .map_err(|_| EcdsaVerifyError::BadSignature)?;
+//     let mut res = [0u8; 64];
+//     res.copy_from_slice(&pubkey.serialize()[1..65]);
+//     let hash = Keccak256::digest(&res[1..]);
+//     let mut address = Address::zero();
+//     address.as_bytes_mut().copy_from_slice(&hash[12..]);
+//     Ok(address)
+//     //Ok(res)
+// }
+
+/*
+fn secp256k1_ecdsa_recover(sig: &mut [u8; 65], msg: &[u8; 32]) -> Result<Address, Error> {
+    sig[64] -= 27;
+    let sig = recoverable::Signature::try_from(sig.as_ref()).unwrap();
+    let verify_key = sig.recover_verify_key(msg)?;
+    let uncompressed_pub_key = K256PublicKey::from(&verify_key).decompress();
+    if let Some(public_key) = uncompressed_pub_key {
+        let public_key = public_key.as_bytes();
+        debug_assert_eq!(public_key[0], 0x04);
+        let hash = if public_key[0] == 0x04 {
+            //println!("\n\n public_key {:?} \n\n",hex::encode(public_key));
+            let hash = Keccak256::digest(public_key[1..].as_ref());
+            //println!("\n\n hash {:?} \n\n",hex::encode(hash));
+            hash
+        } else {
+            Keccak256::digest(&public_key[1..])
+        };
+        //let hash = Keccak256::digest(&public_key[1..]);
+        let mut address = Address::zero();
+        address.as_bytes_mut().copy_from_slice(&hash[12..]);
+        Ok(address)
+    } else {
+        Err(Error::new())
+    }
+}*/
+
 // return padded address as H256
+
+/*
 fn secp256k1_ecdsa_recover(sig: &[u8; 65], msg: &[u8; 32]) -> Result<Address, ParityCryptoError> {
     let rs = Signature::from_electrum(&sig[..]);
     if rs == Signature::default() {
         return Err(ParityCryptoError::InvalidSignature);
     }
-    let msg = H256::from_slice(msg);
-    let address = public_to_address(&recover(&rs, &msg)?);
-    Ok(address)
+    //let msg = H256::from_slice(msg);
+    let address = public_to_address(&recover(&rs, &msg.into())?);
+    Ok( Address(address.0))
+}*/
+use secp256k1::{
+    recovery::{RecoverableSignature, RecoveryId},
+    Message, SECP256K1,
+};
+
+fn secp256k1_ecdsa_recover(sig: &[u8; 65], msg: &[u8; 32]) -> Result<Address, secp256k1::Error> {
+    let sig = RecoverableSignature::from_compact(
+        &sig[0..64],
+        RecoveryId::from_i32((sig[64] - 27) as i32)?,
+    )?;
+
+    let public = &SECP256K1
+        .recover(&Message::from_slice(&msg[..32])?, &sig)?;
+
+    let mut out = vec![0; 20];
+    out.copy_from_slice(&Keccak256::digest(&public.serialize_uncompressed()[1..])[12..]);
+    Ok(Address::from_slice(&out))
 }
 
 fn ec_recover_run(i: &[u8], target_gas: u64) -> PrecompileResult {
@@ -41,7 +128,7 @@ fn ec_recover_run(i: &[u8], target_gas: u64) -> PrecompileResult {
     // TODO hm it will fail for chainId that are more then one byte;
     sig[64] = input[63];
 
-    let out = match secp256k1_ecdsa_recover(&sig, &msg) {
+    let out = match secp256k1_ecdsa_recover(&mut sig, &msg) {
         Ok(out) => H256::from(out).as_bytes().to_vec(),
         Err(_) => Vec::new(),
     };

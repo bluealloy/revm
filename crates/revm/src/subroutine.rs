@@ -1,8 +1,6 @@
-use crate::{
-    collection::{vec, vec::Vec, Entry, Map},
-    models::SelfDestructResult,
-    ExitRevert, KECCAK_EMPTY,
-};
+use crate::{models::SelfDestructResult, ExitRevert, KECCAK_EMPTY};
+use alloc::{vec, vec::Vec};
+use hashbrown::{hash_map::Entry, HashMap as Map};
 
 use core::mem::{self};
 

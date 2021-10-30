@@ -1,4 +1,4 @@
-use crate::collection::Cow;
+use alloc::borrow::Cow;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum ExitError {

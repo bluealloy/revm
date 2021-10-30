@@ -1,6 +1,6 @@
 use core::cmp::min;
 
-use crate::{collection::vec::Vec, SpecId};
+use crate::{alloc::vec::Vec, SpecId};
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
 

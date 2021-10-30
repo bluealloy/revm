@@ -1,8 +1,8 @@
 use crate::{gas_query, ExitError, StandardPrecompileFn};
 
-use crate::{collection::Borrowed, Precompile, PrecompileOutput, PrecompileResult};
+use crate::{Precompile, PrecompileOutput, PrecompileResult};
 use core::convert::TryInto;
-
+use alloc::borrow::Cow;
 use primitive_types::H160 as Address;
 
 const F_ROUND: u64 = 1;
@@ -18,7 +18,7 @@ pub const FUN: (Address, Precompile) = (
 /// [4 bytes for rounds][64 bytes for h][128 bytes for m][8 bytes for t_0][8 bytes for t_1][1 byte for f]
 fn run(input: &[u8], target_gas: u64) -> PrecompileResult {
     if input.len() != INPUT_LENGTH {
-        return Err(ExitError::Other(Borrowed("Invalid last flag for blake2")));
+        return Err(ExitError::Other(Cow::Borrowed("Invalid last flag for blake2")));
     }
 
     // rounds 4 bytes
@@ -42,7 +42,7 @@ fn run(input: &[u8], target_gas: u64) -> PrecompileResult {
     let f = match input[212] {
         1 => true,
         0 => false,
-        _ => return Err(ExitError::Other(Borrowed("Invalid last flag for blake2"))),
+        _ => return Err(ExitError::Other(Cow::Borrowed("Invalid last flag for blake2"))),
     };
 
     algo::compress(rounds, &mut h, m, t, f);

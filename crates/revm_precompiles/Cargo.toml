@@ -10,14 +10,17 @@ keywords = ["no_std", "ethereum", "evm", "precompiles"]
 
 
 [dependencies]
-primitive-types = {version ="0.10", features = ["rlp"]}
-bytes = "1.1"
+primitive-types = {version ="0.10", default-features = false, features = ["rlp"]}
+bytes = {version="1.1", default-features = false}
 num = { version = "0.4.0", default-features = false, features = ["alloc"] }
 sha2 = { version = "0.9.3", default-features = false }
+sha3 = { version = "0.9.1", default-features = false }
 borsh = { version = "0.9", default-features = false }
 ripemd160 = { version = "0.9.1", default-features = false }
 parity-crypto = { version = "0.9.0", default-features = false, features = [ "publickey" ] }
+secp256k1 = { version = "0.20", features = ["global-context", "recovery"] }
 bn = { package="substrate-bn", version="0.6", default-features = false }
+#k256 = { version="0.9", default-features = false, features = ["ecdsa","keccak256"]}
 
 
 [dev-dependencies]

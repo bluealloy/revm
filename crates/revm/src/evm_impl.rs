@@ -1,9 +1,9 @@
 use core::{cmp::min, marker::PhantomData};
 use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
-
+use alloc::vec::Vec;
+use hashbrown::HashMap as Map;
 use crate::{
-    collection::{vec::Vec, Map},
     db::Database,
     error::{ExitError, ExitReason, ExitSucceed},
     machine,

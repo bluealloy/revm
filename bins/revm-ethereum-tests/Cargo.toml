@@ -22,3 +22,4 @@ sha3 = {version = "0.9", default-features = false}
 thiserror = "1.0"
 triehash = "0.8"
 walkdir = "2.3"
+hashbrown = "0.11"

@@ -1,5 +1,5 @@
 use crate::{
-    collection::vec::Vec,
+    alloc::vec::Vec,
     error::{ExitError, ExitFatal},
 };
 use bytes::Bytes;

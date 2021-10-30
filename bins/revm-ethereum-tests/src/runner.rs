@@ -68,7 +68,8 @@ pub fn execute_test_suit(
     if path.file_name() == Some(OsStr::new("CALLBlake2f_MaxRounds.json")) {
         return Ok(());
     }
-    //*/
+    // */
+    
     let json_reader = std::fs::read(&path).unwrap();
     let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
     let skip_test_unit: HashSet<_> = vec![
@@ -251,7 +252,7 @@ pub fn run<INSP: 'static + Inspector + Clone + Send>(test_files: Vec<PathBuf>, i
     let mut joins = Vec::new();
     let queue = Arc::new(Mutex::new((0, test_files)));
     let elapsed = Arc::new(Mutex::new(std::time::Duration::ZERO));
-    for _ in 0..10 {
+    for _ in 0..1 {
         let queue = queue.clone();
         let endjob = endjob.clone();
         let console_bar = console_bar.clone();
