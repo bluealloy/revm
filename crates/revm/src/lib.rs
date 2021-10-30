@@ -26,12 +26,5 @@ pub use opcode::Control;
 pub use spec::*;
 pub use subroutine::Account;
 
-/// libraries for no_std flag
-//#[cfg(no_std)]
+
 extern crate alloc;
-pub use alloc::{
-    borrow::{Borrow, Cow},
-    collections::{btree_map::Entry, BTreeMap as Map},
-    vec,
-    vec::Vec,
-};

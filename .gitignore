@@ -3,6 +3,7 @@
 
 target
 .vscode
+pkg/
 
 
 bins/revm-ethereum-tests/temp_folder
