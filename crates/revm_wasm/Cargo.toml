@@ -3,7 +3,7 @@ name = "revmjs"
 version = "0.0.0"
 authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
 description = "REVM WASM - Rust Ethereum Virtual Machine Web Assembly lib"
-license = "MIT/Apache-2.0"
+license = "MIT"
 repository = "https://github.com/bluealloy/revm"
 edition = "2018"
 keywords = ["ethereum", "evm","rust"]
@@ -18,3 +18,4 @@ primitive-types = {version = "0.10", default-features = false, features = ["rlp"
 revm = {path = "../revm", version="0.4", default-features=false}#, features=["ecrecover"]} 
 getrandom = {version="0.2", features=["js"]}
 bytes = "1.1"
+hex = "0.4"

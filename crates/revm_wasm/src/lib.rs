@@ -2,15 +2,9 @@ use core::str::FromStr;
 
 use bytes::{Bytes, BytesMut};
 use primitive_types::{H160, U256};
-use revm::{
-    AccountInfo, DummyStateDB, Env, TransactTo, TxEnv as revmTxEnv, EVM as rEVM, KECCAK_EMPTY,
-};
+use revm::{AccountInfo, DummyStateDB, EVM as rEVM, Env, KECCAK_EMPTY, TransactOut, TransactTo, TxEnv as revmTxEnv};
 use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen]
-extern "C" {
-    pub fn alert(s: &str);
-}
 
 #[wasm_bindgen]
 extern "C" {
@@ -18,17 +12,6 @@ extern "C" {
     // `log(..)`
     #[wasm_bindgen(js_namespace = console)]
     fn log(s: &str);
-}
-
-#[wasm_bindgen(module = "bn.js")]
-extern "C" {
-    pub type BN;
-
-    #[wasm_bindgen(constructor)]
-    pub fn new(number: String, base: u32) -> BN;
-
-    #[wasm_bindgen(method)]
-    fn toString(this: &BN, base: u32) -> String;
 }
 
 // Next let's define a macro that's like `println!`, only it works for
@@ -45,8 +28,8 @@ macro_rules! console_log {
 #[wasm_bindgen]
 pub struct EVM {
     revm: rEVM<DummyStateDB>,
-    env: Env,
 }
+
 
 // #[wasm_bindgen]
 // pub struct CfgEnv {
@@ -83,13 +66,16 @@ pub fn ret15() -> u32 {
 
 #[wasm_bindgen]
 impl EVM {
-    #[wasm_bindgen(constructor)]
+    //#[wasm_bindgen(constructor)]
     pub fn new() -> EVM {
+        console_log!("debug inception");
         let mut evm = EVM {
             revm: rEVM::new(),
-            env: Env::default(),
         };
+        evm.revm.database(DummyStateDB::new());
+        console_log!("debug0.1");
         let caller: H160 = H160::from_str("0x1000000000000000000000000000000000000000").unwrap();
+        console_log!("debug1");
         evm.revm.db().unwrap().insert_cache(
             caller.clone(),
             AccountInfo {
@@ -99,28 +85,39 @@ impl EVM {
                 code_hash: KECCAK_EMPTY,
             },
         );
+        console_log!("debug2");
         evm.revm.env.tx.caller = caller;
+        console_log!("debug3");
 
         evm
     }
 
     pub fn transact(&mut self) -> u64 {
-        let (_, _, gas) = self.revm.transact_commit();
+        let (exit, data, gas) = self.revm.transact_commit();
+        console_log!("exit:{:?}, data:{:?}",exit,data);
+        if let TransactOut::Create(data,add) = data {
+            if let Some(add) = add {
+                console_log!("ADD:{}",hex::encode(add));
+            }
+        }
         gas
     }
 
     /****** ALL ENV SETTERS ********/
 
     pub fn env_tx_caller(&mut self, tx_caller: &[u8]) {
-        self.env.tx.caller = H160::from_slice(tx_caller);
+        self.revm.env.tx.caller = H160::from_slice(tx_caller);
     }
+
     pub fn env_tx_data(&mut self, data: &[u8]) {
-        self.env.tx.data = BytesMut::from(data).freeze();
+        
+        console_log!("data:{:?}",hex::encode(data));
+        self.revm.env.tx.data = BytesMut::from(data).freeze();
     }
     pub fn env_tx_transact_to_create(&mut self) {
-        self.env.tx.transact_to = TransactTo::create();
+        self.revm.env.tx.transact_to = TransactTo::create();
     }
     pub fn env_tx_transact_to_call(&mut self, to: &[u8]) {
-        self.env.tx.transact_to = TransactTo::Call(H160::from_slice(to));
+        self.revm.env.tx.transact_to = TransactTo::Call(H160::from_slice(to));
     }
 }

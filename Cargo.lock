@@ -739,6 +739,7 @@ version = "0.0.0"
 dependencies = [
  "bytes",
  "getrandom",
+ "hex",
  "js-sys",
  "primitive-types",
  "revm",
