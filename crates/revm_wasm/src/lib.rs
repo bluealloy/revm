@@ -81,10 +81,8 @@ pub fn ret15() -> u32 {
     15
 }
 
-
 #[wasm_bindgen]
 impl EVM {
-
     #[wasm_bindgen(constructor)]
     pub fn new() -> EVM {
         let mut evm = EVM {
@@ -102,7 +100,7 @@ impl EVM {
             },
         );
         evm.revm.env.tx.caller = caller;
-    
+
         evm
     }
 

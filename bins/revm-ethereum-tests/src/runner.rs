@@ -52,7 +52,7 @@ pub fn execute_test_suit(
         return Ok(());
     }
     // /*
-    
+
     if path.file_name() == Some(OsStr::new("loopExp.json")) {
         return Ok(());
     }
@@ -69,7 +69,6 @@ pub fn execute_test_suit(
         return Ok(());
     }
     // */
-    
     let json_reader = std::fs::read(&path).unwrap();
     let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
     let skip_test_unit: HashSet<_> = vec![
@@ -283,7 +282,7 @@ pub fn run<INSP: 'static + Inspector + Clone + Send>(test_files: Vec<PathBuf>, i
                         println!("\n{:?} failed: {}\n", test_path, err);
                         return;
                     }
-                    
+
                     //println!("TestDone:{:?}\n",test_path);
                     console_bar.inc(1);
                 })

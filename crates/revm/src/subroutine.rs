@@ -275,9 +275,7 @@ impl SubRoutine {
         true
     }
 
-    const PRECOMPILE3: H160 = H160([
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
-    ]);
+    const PRECOMPILE3: H160 = H160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]);
 
     #[inline]
     fn revert_account_changelog(

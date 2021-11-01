@@ -1,8 +1,3 @@
-use core::{cmp::min, marker::PhantomData};
-use primitive_types::{H160, H256, U256};
-use sha3::{Digest, Keccak256};
-use alloc::vec::Vec;
-use hashbrown::HashMap as Map;
 use crate::{
     db::Database,
     error::{ExitError, ExitReason, ExitSucceed},
@@ -15,8 +10,13 @@ use crate::{
     util, CallContext, CreateScheme, Env, ExitRevert, Inspector, Log, TransactOut, TransactTo,
     Transfer, KECCAK_EMPTY,
 };
+use alloc::vec::Vec;
 use bytes::Bytes;
+use core::{cmp::min, marker::PhantomData};
+use hashbrown::HashMap as Map;
+use primitive_types::{H160, H256, U256};
 use revm_precompiles::{Precompile, PrecompileOutput, Precompiles};
+use sha3::{Digest, Keccak256};
 
 pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
     db: &'a mut DB,

@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use bytes::Bytes;
 use primitive_types::{H160, U256};
-use revm::{AccountInfo, DummyStateDB, KECCAK_EMPTY, NoOpInspector, TransactOut, TransactTo};
+use revm::{AccountInfo, DummyStateDB, NoOpInspector, TransactOut, TransactTo, KECCAK_EMPTY};
 
 extern crate alloc;
 

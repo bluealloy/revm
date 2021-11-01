@@ -1,5 +1,5 @@
 use crate::{
-    db::{Database, DatabaseRef, RefDBWrapper, DatabaseCommit},
+    db::{Database, DatabaseCommit, DatabaseRef, RefDBWrapper},
     error::ExitReason,
     evm_impl::{EVMImpl, Transact},
     subroutine::State,
@@ -14,7 +14,7 @@ use revm_precompiles::Precompiles;
 /// Parameters that can be set are devided between Config, Block and Transaction(tx)
 ///
 /// For transacting on EVM you can call transact_commit that will automatically apply changes to db.
-/// 
+///
 /// You can do a lot with rust and traits. For Database abstractions that we need you can implement,
 /// Database, DatabaseRef or Database+DatabaseCommit and they enable functionality depending on what kind of
 /// handling of struct you want.

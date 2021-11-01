@@ -1,6 +1,6 @@
 use crate::{gas_query, ExitError, Precompile, PrecompileOutput, PrecompileResult};
 
-use alloc::{vec::Vec,borrow::Cow};
+use alloc::{borrow::Cow, vec::Vec};
 use primitive_types::{H160 as Address, U256};
 
 pub mod add {
@@ -88,13 +88,13 @@ fn read_point(input: &[u8], pos: usize) -> Result<bn::G1, ExitError> {
 
     let mut px_buf = [0u8; 32];
     px_buf.copy_from_slice(&input[pos..(pos + 32)]);
-    let px =
-        Fq::from_slice(&px_buf).map_err(|_e| ExitError::Other(Cow::Borrowed("ERR_BN128_INVALID_X")))?;
+    let px = Fq::from_slice(&px_buf)
+        .map_err(|_e| ExitError::Other(Cow::Borrowed("ERR_BN128_INVALID_X")))?;
 
     let mut py_buf = [0u8; 32];
     py_buf.copy_from_slice(&input[(pos + 32)..(pos + 64)]);
-    let py =
-        Fq::from_slice(&py_buf).map_err(|_e| ExitError::Other(Cow::Borrowed("ERR_BN128_INVALID_Y")))?;
+    let py = Fq::from_slice(&py_buf)
+        .map_err(|_e| ExitError::Other(Cow::Borrowed("ERR_BN128_INVALID_Y")))?;
 
     Ok(if px == Fq::zero() && py == bn::Fq::zero() {
         G1::zero()

@@ -8,8 +8,8 @@ use primitive_types::{H160, H256, U256};
 use rlp::RlpStream;
 use sha3::{Digest, Keccak256};
 
-use revm::AccountInfo;
 use hashbrown::HashMap as Map;
+use revm::AccountInfo;
 
 pub fn merkle_trie_root(
     accounts: &Map<H160, AccountInfo>,

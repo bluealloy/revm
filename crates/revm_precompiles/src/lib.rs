@@ -3,7 +3,6 @@
 use bytes::Bytes;
 use primitive_types::{H160 as Address, H256, U256};
 
-
 mod blake2;
 mod bn128;
 mod error;
@@ -11,10 +10,8 @@ mod hash;
 mod identity;
 mod modexp;
 
-
 #[cfg(feature = "secp256k1")]
 mod secp256k1;
-
 
 pub use error::ExitError;
 
