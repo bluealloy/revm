@@ -275,6 +275,10 @@ impl SubRoutine {
         true
     }
 
+    const PRECOMPILE3: H160 = H160([
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
+    ]);
+
     #[inline]
     fn revert_account_changelog(
         state: &mut State,
@@ -287,7 +291,7 @@ impl SubRoutine {
             ChangeLog::PrecompileBalanceChange(original_balance, flag) => {
                 let acc = state.get_mut(&add).unwrap();
                 acc.info.balance = original_balance;
-                if add == H160::from_low_u64_be(3) {
+                if add == Self::PRECOMPILE3 {
                     acc.filth = Filth::Precompile(true);
                 } else {
                     acc.filth = Filth::Precompile(flag);

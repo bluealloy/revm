@@ -734,11 +734,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "revm_wasm"
-version = "0.1.0"
+name = "revmjs"
+version = "0.0.0"
 dependencies = [
+ "bytes",
  "getrandom",
  "js-sys",
+ "primitive-types",
  "revm",
  "wasm-bindgen",
 ]
