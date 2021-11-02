@@ -28,7 +28,8 @@ checksum = "be4dc07131ffa69b8072d35f5007352af944213cde02545e2103680baed38fcd"
 [[package]]
 name = "auto_impl"
 version = "0.4.1"
-source = "git+https://github.com/dimpolo/auto_impl.git?rev=61874ef#61874eff148e8cc6a8f54d9e263987ac095d7a81"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42cbf586c80ada5e5ccdecae80d3ef0854f224e2dd74435f8d87e6831b8d0a38"
 dependencies = [
  "proc-macro-error",
  "proc-macro2",
@@ -719,7 +720,7 @@ dependencies = [
 
 [[package]]
 name = "revm_precompiles"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "borsh",
  "bytes",
@@ -735,7 +736,7 @@ dependencies = [
 
 [[package]]
 name = "revmjs"
-version = "0.0.0"
+version = "0.1.0"
 dependencies = [
  "bytes",
  "getrandom",

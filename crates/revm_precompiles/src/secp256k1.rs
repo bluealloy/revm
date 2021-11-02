@@ -1,7 +1,7 @@
 use crate::{gas_query, Precompile, PrecompileOutput, PrecompileResult, StandardPrecompileFn};
 use alloc::vec::Vec;
-use core::{cmp::min, convert::TryFrom};
-use primitive_types::{H160 as Address, H256, H512};
+use core::cmp::min;
+use primitive_types::{H160 as Address, H256};
 use sha3::{Digest, Keccak256};
 
 const ECRECOVER_BASE: u64 = 3_000;

@@ -1,5 +1,14 @@
+# v0.4.1
+date: 02.11.2021
+
+Change in interface and how you can call evm. There is now multiple Database traits for use and inspector is taken on transact call as reference.
+
+* 20ac70b - Database traits made useful.
+* 46b5bcd - EVM Interface changed. Inspector called separately.
+
+
 # v0.3.1
-data 27.10.2021
+date: 27.10.2021
 
 remove some warnings for unused imports and done cargo fmt.
 # v0.3.0

@@ -1,17 +1,7 @@
-use core::str::FromStr;
-use std::thread::AccessError;
-
 use bytes::{Bytes, BytesMut};
 use primitive_types::{H160, H256, U256};
-use revm::{
-    AccountInfo, DummyStateDB, Env, SpecId, TransactOut, TransactTo, TxEnv as revmTxEnv,
-    EVM as rEVM, KECCAK_EMPTY,
-};
-use wasm_bindgen::{
-    convert::{FromWasmAbi, IntoWasmAbi, WasmSlice},
-    describe::{inform, WasmDescribe, SLICE, VECTOR},
-    prelude::*,
-};
+use revm::{AccountInfo, DatabaseCommit, DummyStateDB, SpecId, TransactTo, EVM as rEVM};
+use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 extern "C" {
@@ -47,8 +37,15 @@ impl EVM {
     }
 
     pub fn transact(&mut self) -> u64 {
-        let (exit, data, gas) = self.revm.transact_commit();
-        console_log!("Transact done, exit:{:?}, gas:{:?}, data:{:?}", exit, gas, data);
+        let (exit, data, gas, state) = self.revm.transact();
+        console_log!(
+            "Transact done, exit:{:?}, gas:{:?}, data:{:?}\nstate_chage:{:?}",
+            exit,
+            gas,
+            data,
+            state
+        );
+        self.revm.db().unwrap().commit(state);
         gas
     }
 

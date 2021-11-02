@@ -37,7 +37,7 @@ impl Default for AccountInfo {
 }
 
 impl AccountInfo {
-    pub fn new(balance:U256,nonce:u64,code: Bytes) -> Self {
+    pub fn new(balance: U256, nonce: u64, code: Bytes) -> Self {
         let code_hash = if code.is_empty() {
             KECCAK_EMPTY
         } else {
@@ -47,7 +47,7 @@ impl AccountInfo {
             balance,
             nonce,
             code: Some(code),
-            code_hash
+            code_hash,
         }
     }
 
@@ -67,7 +67,7 @@ impl AccountInfo {
     }
 }
 
-#[derive(Clone,Debug)]
+#[derive(Clone, Debug)]
 pub enum TransactTo {
     Call(H160),
     Create(CreateScheme),
@@ -121,13 +121,13 @@ pub struct CallContext {
     pub apparent_value: U256,
 }
 
-#[derive(Clone,Debug)]
+#[derive(Clone, Debug)]
 pub struct Env {
     pub cfg: CfgEnv,
     pub block: BlockEnv,
     pub tx: TxEnv,
 }
-#[derive(Clone,Debug)]
+#[derive(Clone, Debug)]
 pub struct BlockEnv {
     pub gas_limit: U256,
     /// somebody call it nonce
@@ -142,7 +142,7 @@ pub struct BlockEnv {
     /// incrementaly added on every transaction. It can be cleared if needed
     pub gas_used: U256,
 }
-#[derive(Clone,Debug)]
+#[derive(Clone, Debug)]
 pub struct TxEnv {
     /// Caller or Author or tx signer
     pub caller: H160,
@@ -156,7 +156,7 @@ pub struct TxEnv {
     pub nonce: Option<u64>,
     pub access_list: Vec<(H160, Vec<H256>)>,
 }
-#[derive(Clone,Debug)]
+#[derive(Clone, Debug)]
 pub struct CfgEnv {
     pub chain_id: U256,
     pub spec_id: SpecId,

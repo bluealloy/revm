@@ -1,6 +1,6 @@
 use super::gas_query;
 use crate::{Precompile, PrecompileOutput, PrecompileResult, StandardPrecompileFn};
-use alloc::vec::{self, Vec};
+use alloc::vec::Vec;
 use core::{
     cmp::{max, min},
     mem::size_of,
