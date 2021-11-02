@@ -1,10 +1,12 @@
 mod spec;
 
+use core::convert::TryFrom;
+use num_enum::TryFromPrimitive;
 use revm_precompiles::SpecId as PrecompileId;
 pub use spec::*;
 
 #[repr(u8)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, TryFromPrimitive)]
 #[allow(non_camel_case_types)]
 pub enum SpecId {
     FRONTIER = 1,
@@ -29,6 +31,10 @@ impl SpecId {
             ISTANBUL | MUIRGLACIER => PrecompileId::ISTANBUL as u8,
             BERLIN | LONDON | LATEST => PrecompileId::BERLIN as u8,
         }
+    }
+
+    pub fn try_from_u8(spec_id: u8) -> Option<Self> {
+        Self::try_from(spec_id).ok()
     }
 }
 

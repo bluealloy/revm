@@ -3,6 +3,7 @@ use core::cmp::min;
 use crate::{alloc::vec::Vec, SpecId};
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
+use sha3::{Digest, Keccak256};
 
 pub const KECCAK_EMPTY: H256 = H256([
     0xc5, 0xd2, 0x46, 0x01, 0x86, 0xf7, 0x23, 0x3c, 0x92, 0x7e, 0x7d, 0xb2, 0xdc, 0xc7, 0x03, 0xc0,
@@ -36,6 +37,20 @@ impl Default for AccountInfo {
 }
 
 impl AccountInfo {
+    pub fn new(balance:U256,nonce:u64,code: Bytes) -> Self {
+        let code_hash = if code.is_empty() {
+            KECCAK_EMPTY
+        } else {
+            H256::from_slice(Keccak256::digest(&code).as_slice())
+        };
+        Self {
+            balance,
+            nonce,
+            code: Some(code),
+            code_hash
+        }
+    }
+
     pub fn is_empty(&self) -> bool {
         let code_empty = self.code_hash == KECCAK_EMPTY || self.code_hash == H256::zero();
         self.balance == U256::zero() && self.nonce == 0 && code_empty
@@ -52,7 +67,7 @@ impl AccountInfo {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub enum TransactTo {
     Call(H160),
     Create(CreateScheme),
@@ -106,13 +121,13 @@ pub struct CallContext {
     pub apparent_value: U256,
 }
 
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct Env {
     pub cfg: CfgEnv,
     pub block: BlockEnv,
     pub tx: TxEnv,
 }
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct BlockEnv {
     pub gas_limit: U256,
     /// somebody call it nonce
@@ -127,7 +142,7 @@ pub struct BlockEnv {
     /// incrementaly added on every transaction. It can be cleared if needed
     pub gas_used: U256,
 }
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct TxEnv {
     /// Caller or Author or tx signer
     pub caller: H160,
@@ -141,7 +156,7 @@ pub struct TxEnv {
     pub nonce: Option<u64>,
     pub access_list: Vec<(H160, Vec<H256>)>,
 }
-#[derive(Clone)]
+#[derive(Clone,Debug)]
 pub struct CfgEnv {
     pub chain_id: U256,
     pub spec_id: SpecId,
