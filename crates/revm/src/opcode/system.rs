@@ -283,11 +283,10 @@ pub fn sstore<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) ->
         original,
         is_cold
     );
-    let remaining_gas = machine.gas.remaining();
-    gas_or_fail!(
-        machine,
+    gas_or_fail!(machine, {
+        let remaining_gas = machine.gas.remaining();
         gas::sstore_cost::<SPEC>(original, old, new, remaining_gas, is_cold)
-    );
+    });
     refund!(machine, gas::sstore_refund::<SPEC>(original, old, new));
     Control::Continue
 }
