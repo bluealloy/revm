@@ -89,7 +89,7 @@ impl Memory {
         let rem = end % 32;
         let new = if rem == 0 { end / 32 } else { end / 32 + 1 };
 
-        crate::opcode::gas::memory_gas(new)
+        crate::instructions::gas::memory_gas(new)
     }
 
     /// Get memory region at given offset.

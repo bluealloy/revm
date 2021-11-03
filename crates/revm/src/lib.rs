@@ -9,7 +9,7 @@ mod evm_impl;
 mod inspector;
 mod machine;
 mod models;
-mod opcode;
+mod instructions;
 mod spec;
 mod subroutine;
 mod util;
@@ -22,7 +22,7 @@ pub use evm::{new, EVM};
 pub use inspector::{Inspector, NoOpInspector};
 pub use machine::Machine;
 pub use models::*;
-pub use opcode::Control;
+pub use instructions::Control;
 pub use spec::*;
 pub use subroutine::Account;
 

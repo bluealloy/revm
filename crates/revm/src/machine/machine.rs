@@ -1,10 +1,10 @@
-use crate::{alloc::vec::Vec, opcode::eval};
+use crate::{alloc::vec::Vec, instructions::eval};
 use bytes::Bytes;
 use core::{cmp::max, ops::Range};
 use primitive_types::U256;
 
 use super::{contract::Contract, memory::Memory, stack::Stack};
-use crate::{error::ExitReason, opcode::Control, spec::Spec, Handler};
+use crate::{error::ExitReason, instructions::Control, spec::Spec, Handler};
 
 pub const STACK_LIMIT: u64 = 1024;
 pub const CALL_STACK_LIMIT: u64 = 1024;

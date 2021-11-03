@@ -1,7 +1,7 @@
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
 
-use crate::{opcode::Control, CallContext, CreateScheme, ExitReason, Machine, Transfer};
+use crate::{instructions::Control, CallContext, CreateScheme, ExitReason, Machine, Transfer};
 use auto_impl::auto_impl;
 
 #[auto_impl(&mut, Box)]

@@ -2,7 +2,7 @@ use crate::{alloc::vec::Vec, CallContext, ExitError, ExitReason, ExitSucceed};
 use bytes::Bytes;
 use primitive_types::{H160, U256};
 
-use crate::opcode::OpCode;
+use crate::instructions::opcode::{self,OpCode};
 
 pub struct Contract {
     /// Contracts data
@@ -76,7 +76,7 @@ impl ValidJumpAddress {
         let mut i = 0;
         while i < code.len() {
             let opcode = code[i] as u8;
-            if opcode == OpCode::JUMPDEST as u8 {
+            if opcode == opcode::JUMPDEST as u8 {
                 jumps[i] = true;
                 i += 1;
             } else if let Some(v) = OpCode::is_push(opcode) {
