@@ -32,7 +32,7 @@ macro_rules! check {
 
 macro_rules! gas {
     ($machine:expr, $gas:expr) => {
-        if S::USE_GAS {
+        if crate::USE_GAS {
             if !$machine.gas.record_cost(($gas)) {
                 return Control::Exit(ExitReason::Error(ExitError::OutOfGas));
             }
@@ -42,7 +42,7 @@ macro_rules! gas {
 
 macro_rules! refund {
     ($machine:expr, $gas:expr) => {{
-        if S::USE_GAS {
+        if crate::USE_GAS {
             $machine.gas.gas_refund($gas);
         }
     }};
@@ -50,7 +50,7 @@ macro_rules! refund {
 
 macro_rules! gas_or_fail {
     ($machine:expr, $gas:expr) => {
-        if S::USE_GAS {
+        if crate::USE_GAS {
             match $gas {
                 Some(gas_used) => gas!($machine, gas_used),
                 None => return Control::Exit(ExitReason::Error(ExitError::OutOfGas)),
@@ -62,7 +62,7 @@ macro_rules! gas_or_fail {
 macro_rules! memory_resize {
     ($machine:expr, $start:expr, $len:expr) => {{
         let new_gas_memory = try_or_fail!($machine.memory.resize_offset($start, $len));
-        if S::USE_GAS {
+        if crate::USE_GAS {
             if !$machine.gas.record_memory(new_gas_memory) {
                 return Control::Exit(ExitReason::Error(ExitError::OutOfGas));
             }

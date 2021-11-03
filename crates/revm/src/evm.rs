@@ -129,21 +129,12 @@ impl<DB> EVM<DB> {
 
 macro_rules! create_evm {
     ($spec:ident, $db:ident,$env:ident,$inspector:ident) => {
-        if $env.cfg.use_gas {
-            Box::new(EVMImpl::<'a, $spec<true>, DB, INSPECT>::new(
-                $db,
-                $env,
-                $inspector,
-                Precompiles::new::<{ SpecId::to_precompile_id($spec::<true>::SPEC_ID) }>(),
-            )) as Box<dyn Transact + 'a>
-        } else {
-            Box::new(EVMImpl::<'a, $spec<false>, DB, INSPECT>::new(
-                $db,
-                $env,
-                $inspector,
-                Precompiles::new::<{ SpecId::to_precompile_id($spec::<false>::SPEC_ID) }>(),
-            )) as Box<dyn Transact + 'a>
-        }
+        Box::new(EVMImpl::<'a, $spec, DB, INSPECT>::new(
+            $db,
+            $env,
+            $inspector,
+            Precompiles::new::<{ SpecId::to_precompile_id($spec::SPEC_ID) }>(),
+        )) as Box<dyn Transact + 'a>
     };
 }
 

@@ -89,9 +89,9 @@ pub fn exp(op1: U256, op2: U256) -> U256 {
 }
 
 #[inline(always)]
-pub fn eval_exp<S: Spec>(machine: &mut Machine) -> Control {
+pub fn eval_exp<SPEC: Spec>(machine: &mut Machine) -> Control {
     pop_u256!(machine, op1, op2);
-    gas_or_fail!(machine, gas::exp_cost::<S>(op2));
+    gas_or_fail!(machine, gas::exp_cost::<SPEC>(op2));
     let ret = exp(op1, op2);
     push_u256!(machine, ret);
 

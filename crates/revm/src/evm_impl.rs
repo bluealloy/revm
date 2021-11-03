@@ -18,6 +18,7 @@ use primitive_types::{H160, H256, U256};
 use revm_precompiles::{Precompile, PrecompileOutput, Precompiles};
 use sha3::{Digest, Keccak256};
 
+
 pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
     db: &'a mut DB,
     env: &'a Env,
@@ -101,7 +102,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
 
         // record all as cost;
         let gas_limit = gas.remaining();
-        if GSPEC::USE_GAS {
+        if crate::USE_GAS {
             gas.record_cost(gas_limit);
         }
 
@@ -133,7 +134,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
                 (exit, ret_gas, TransactOut::Create(bytes, address))
             }
         };
-        if GSPEC::USE_GAS {
+        if crate::USE_GAS {
             gas.reimburse_unspend(&exit_reason, ret_gas);
         }
         match self.finalize::<GSPEC>(caller, &gas) {
@@ -170,7 +171,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         gas: &Gas,
     ) -> Result<Map<H160, Account>, ExitReason> {
         let coinbase = self.env.block.coinbase;
-        if SPEC::USE_GAS {
+        if crate::USE_GAS {
             let effective_gas_price = self.env.effective_gas_price();
             let basefee = self.env.block.basefee;
             let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 }; // EIP-3529: Reduction in refunds
@@ -213,7 +214,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             self.subroutine.load_account(ward_acc.clone(), self.db);
         }
 
-        if SPEC::USE_GAS {
+        if crate::USE_GAS {
             let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
             let non_zero_data_len = (input.len() as u64 - zero_data_len) as u64;
             let (accessed_accounts, accessed_slots) = {
@@ -339,7 +340,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     self.subroutine.checkpoint_revert(checkpoint);
                     return (ExitError::CreateContractLimit.into(), ret, machine.gas, b);
                 }
-                if SPEC::USE_GAS {
+                if crate::USE_GAS {
                     let gas_for_code = code.len() as u64 * crate::opcode::gas::CODEDEPOSIT;
                     // record code deposit gas cost and check if we are out of gas.
                     if !machine.gas.record_cost(gas_for_code) {
@@ -413,7 +414,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             };
             match out {
                 Ok(PrecompileOutput { output, cost, logs }) => {
-                    if !SPEC::USE_GAS || gas.record_cost(cost) {
+                    if !crate::USE_GAS || gas.record_cost(cost) {
                         logs.into_iter().for_each(|l| {
                             self.subroutine.log(Log {
                                 address: l.address,

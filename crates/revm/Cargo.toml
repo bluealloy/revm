@@ -24,5 +24,6 @@ hex = "0.4"
 
 [features]
 default = ["std","ecrecover"]
+no_gas_measuring = []
 std = ["bytes/std", "num_enum/std", "primitive-types/std", "sha3/std", "rlp/std"]
 ecrecover = ["revm_precompiles/ecrecover"]

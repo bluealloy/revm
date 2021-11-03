@@ -9,7 +9,7 @@ use core::cmp::min;
 use primitive_types::{H256, U256};
 
 #[inline(always)]
-pub fn codesize<S: Spec>(machine: &mut Machine) -> Control {
+pub fn codesize(machine: &mut Machine) -> Control {
     gas!(machine, gas::BASE);
     let size = U256::from(machine.contract.code.len());
     push_u256!(machine, size);
@@ -17,7 +17,7 @@ pub fn codesize<S: Spec>(machine: &mut Machine) -> Control {
 }
 
 #[inline(always)]
-pub fn codecopy<S: Spec>(machine: &mut Machine) -> Control {
+pub fn codecopy(machine: &mut Machine) -> Control {
     pop_u256!(machine, memory_offset, code_offset, len);
     gas_or_fail!(machine, gas::verylowcopy_cost(len));
     memory_resize!(machine, memory_offset, len);
@@ -32,7 +32,7 @@ pub fn codecopy<S: Spec>(machine: &mut Machine) -> Control {
 }
 
 #[inline(always)]
-pub fn calldataload<S: Spec>(machine: &mut Machine) -> Control {
+pub fn calldataload(machine: &mut Machine) -> Control {
     gas!(machine, gas::VERYLOW);
 
     pop_u256!(machine, index);
@@ -55,7 +55,7 @@ pub fn calldataload<S: Spec>(machine: &mut Machine) -> Control {
 }
 
 #[inline(always)]
-pub fn calldatasize<S: Spec>(machine: &mut Machine) -> Control {
+pub fn calldatasize(machine: &mut Machine) -> Control {
     gas!(machine, gas::BASE);
 
     let len = U256::from(machine.contract.input.len());
@@ -64,7 +64,7 @@ pub fn calldatasize<S: Spec>(machine: &mut Machine) -> Control {
 }
 
 #[inline(always)]
-pub fn calldatacopy<S: Spec>(machine: &mut Machine) -> Control {
+pub fn calldatacopy(machine: &mut Machine) -> Control {
     pop_u256!(machine, memory_offset, data_offset, len);
     gas_or_fail!(machine, gas::verylowcopy_cost(len));
     memory_resize!(machine, memory_offset, len);
@@ -83,14 +83,14 @@ pub fn calldatacopy<S: Spec>(machine: &mut Machine) -> Control {
 }
 
 #[inline(always)]
-pub fn pop<S: Spec>(machine: &mut Machine) -> Control {
+pub fn pop(machine: &mut Machine) -> Control {
     gas!(machine, gas::BASE);
     pop!(machine, _val);
     Control::Continue
 }
 
 #[inline(always)]
-pub fn mload<S: Spec>(machine: &mut Machine) -> Control {
+pub fn mload(machine: &mut Machine) -> Control {
     gas!(machine, gas::VERYLOW);
     pop_u256!(machine, index);
 
@@ -103,7 +103,7 @@ pub fn mload<S: Spec>(machine: &mut Machine) -> Control {
 }
 
 #[inline(always)]
-pub fn mstore<S: Spec>(machine: &mut Machine) -> Control {
+pub fn mstore(machine: &mut Machine) -> Control {
     gas!(machine, gas::VERYLOW);
 
     pop_u256!(machine, index);
@@ -116,7 +116,7 @@ pub fn mstore<S: Spec>(machine: &mut Machine) -> Control {
 }
 
 #[inline(always)]
-pub fn mstore8<S: Spec>(machine: &mut Machine) -> Control {
+pub fn mstore8(machine: &mut Machine) -> Control {
     gas!(machine, gas::VERYLOW);
 
     pop_u256!(machine, index, value);
@@ -130,7 +130,7 @@ pub fn mstore8<S: Spec>(machine: &mut Machine) -> Control {
 }
 
 #[inline(always)]
-pub fn jump<S: Spec>(machine: &mut Machine) -> Control {
+pub fn jump(machine: &mut Machine) -> Control {
     gas!(machine, gas::MID);
 
     pop_u256!(machine, dest);
@@ -144,7 +144,7 @@ pub fn jump<S: Spec>(machine: &mut Machine) -> Control {
 }
 
 #[inline(always)]
-pub fn jumpi<S: Spec>(machine: &mut Machine) -> Control {
+pub fn jumpi(machine: &mut Machine) -> Control {
     gas!(machine, gas::HIGH);
 
     pop_u256!(machine, dest);
@@ -163,27 +163,27 @@ pub fn jumpi<S: Spec>(machine: &mut Machine) -> Control {
 }
 
 #[inline(always)]
-pub fn jumpdest<S: Spec>(machine: &mut Machine) -> Control {
-    gas!(machine, gas::JUMPDEST);
+pub fn jumpdest(machine: &mut Machine) -> Control {
+    gas!(machine,gas::JUMPDEST);
     Control::Continue
 }
 
 #[inline(always)]
-pub fn pc<S: Spec>(machine: &mut Machine, position: usize) -> Control {
+pub fn pc(machine: &mut Machine, position: usize) -> Control {
     gas!(machine, gas::BASE);
     push_u256!(machine, U256::from(position));
     Control::Continue
 }
 
 #[inline(always)]
-pub fn msize<S: Spec>(machine: &mut Machine) -> Control {
+pub fn msize(machine: &mut Machine) -> Control {
     gas!(machine, gas::BASE);
     push_u256!(machine, machine.memory.effective_len());
     Control::Continue
 }
 
 #[inline(always)]
-pub fn push<S: Spec>(machine: &mut Machine, n: usize, position: usize) -> Control {
+pub fn push(machine: &mut Machine, n: usize, position: usize) -> Control {
     gas!(machine, gas::VERYLOW);
     let end = min(position + 1 + n, machine.contract.code.len());
     let slice = &machine.contract.code[(position + 1)..end];
@@ -195,7 +195,7 @@ pub fn push<S: Spec>(machine: &mut Machine, n: usize, position: usize) -> Contro
 }
 
 #[inline(always)]
-pub fn dup<S: Spec>(machine: &mut Machine, n: usize) -> Control {
+pub fn dup(machine: &mut Machine, n: usize) -> Control {
     gas!(machine, gas::VERYLOW);
 
     let value = try_or_fail!(machine.stack.peek(n - 1));
@@ -204,7 +204,7 @@ pub fn dup<S: Spec>(machine: &mut Machine, n: usize) -> Control {
 }
 
 #[inline(always)]
-pub fn swap<S: Spec>(machine: &mut Machine, n: usize) -> Control {
+pub fn swap(machine: &mut Machine, n: usize) -> Control {
     gas!(machine, gas::VERYLOW);
 
     let val1 = try_or_fail!(machine.stack.peek(0));
@@ -215,7 +215,7 @@ pub fn swap<S: Spec>(machine: &mut Machine, n: usize) -> Control {
 }
 
 #[inline(always)]
-pub fn ret<S: Spec>(machine: &mut Machine) -> Control {
+pub fn ret(machine: &mut Machine) -> Control {
     // zero gas cost gas!(machine,gas::ZERO);
     pop_u256!(machine, start, len);
     memory_resize!(machine, start, len);
@@ -224,8 +224,8 @@ pub fn ret<S: Spec>(machine: &mut Machine) -> Control {
 }
 
 #[inline(always)]
-pub fn revert<S: Spec>(machine: &mut Machine) -> Control {
-    check!(S::enabled(BYZANTINE)); // EIP-140: REVERT instruction
+pub fn revert<SPEC: Spec>(machine: &mut Machine) -> Control {
+    check!(SPEC::enabled(BYZANTINE)); // EIP-140: REVERT instruction
                                       // zero gas cost gas!(machine,gas::ZERO);
     pop_u256!(machine, start, len);
     memory_resize!(machine, start, len);
