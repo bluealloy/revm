@@ -67,7 +67,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
         }
 
         let mut gas = Gas::new(gas_limit);
-        // record initial gas cost.
+        // record initial gas cost. if not using gas metering init will return 0
         if !gas.record_cost(self.initialization::<GSPEC>()) {
             return exit_error(ExitError::OutOfGas.into());
         }
@@ -101,7 +101,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
 
         // record all as cost;
         let gas_limit = gas.remaining();
-        gas.record_cost(gas_limit);
+        if GSPEC::USE_GAS {
+            gas.record_cost(gas_limit);
+        }
 
         // call inner handling of call/create
         let (exit_reason, ret_gas, out) = match self.env.tx.transact_to {
@@ -131,8 +133,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
                 (exit, ret_gas, TransactOut::Create(bytes, address))
             }
         };
-
-        gas.reimburse_unspend(&exit_reason, ret_gas);
+        if GSPEC::USE_GAS {
+            gas.reimburse_unspend(&exit_reason, ret_gas);
+        }
         match self.finalize::<GSPEC>(caller, &gas) {
             Err(e) => (e, out, gas.spend(), Map::new()),
             Ok(state) => (exit_reason, out, gas.spend(), state),
@@ -166,25 +169,30 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         caller: H160,
         gas: &Gas,
     ) -> Result<Map<H160, Account>, ExitReason> {
-        let effective_gas_price = self.env.effective_gas_price();
         let coinbase = self.env.block.coinbase;
-        let basefee = self.env.block.basefee;
-        let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 }; // EIP-3529: Reduction in refunds
-        let gas_refunded = min(gas.refunded() as u64, gas.spend() / max_refund_quotient);
-        self.subroutine.balance_add(
-            caller,
-            effective_gas_price * (gas.remaining() + gas_refunded),
-        );
-        let coinbase_gas_price = if SPEC::enabled(LONDON) {
-            effective_gas_price.saturating_sub(basefee)
+        if SPEC::USE_GAS {
+            let effective_gas_price = self.env.effective_gas_price();
+            let basefee = self.env.block.basefee;
+            let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 }; // EIP-3529: Reduction in refunds
+            let gas_refunded = min(gas.refunded() as u64, gas.spend() / max_refund_quotient);
+            self.subroutine.balance_add(
+                caller,
+                effective_gas_price * (gas.remaining() + gas_refunded),
+            );
+            let coinbase_gas_price = if SPEC::enabled(LONDON) {
+                effective_gas_price.saturating_sub(basefee)
+            } else {
+                effective_gas_price
+            };
+
+            self.subroutine.load_account(coinbase, self.db);
+            self.subroutine
+                .balance_add(coinbase, coinbase_gas_price * (gas.spend() - gas_refunded));
         } else {
-            effective_gas_price
-        };
-        //if coinbase_gas_price != U256::zero() {
-        self.subroutine.load_account(coinbase, self.db);
-        self.subroutine
-            .balance_add(coinbase, coinbase_gas_price * (gas.spend() - gas_refunded));
-        //}
+            // touch coinbase
+            self.subroutine.load_account(coinbase, self.db);
+            self.subroutine.balance_add(coinbase, U256::zero());
+        }
         Ok(self.subroutine.finalize())
     }
 
@@ -205,46 +213,50 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             self.subroutine.load_account(ward_acc.clone(), self.db);
         }
 
-        let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
-        let non_zero_data_len = (input.len() as u64 - zero_data_len) as u64;
-        let (accessed_accounts, accessed_slots) = {
-            if SPEC::enabled(BERLIN) {
-                let mut accessed_slots = 0 as u64;
-                let accessed_accounts = access_list.len() as u64;
+        if SPEC::USE_GAS {
+            let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
+            let non_zero_data_len = (input.len() as u64 - zero_data_len) as u64;
+            let (accessed_accounts, accessed_slots) = {
+                if SPEC::enabled(BERLIN) {
+                    let mut accessed_slots = 0 as u64;
+                    let accessed_accounts = access_list.len() as u64;
 
-                for (address, slots) in access_list {
-                    //TODO trace load access_list?
-                    self.subroutine.load_account(address, self.db);
-                    accessed_slots += slots.len() as u64;
-                    for slot in slots {
-                        self.subroutine.sload(address, slot, self.db);
+                    for (address, slots) in access_list {
+                        //TODO trace load access_list?
+                        self.subroutine.load_account(address, self.db);
+                        accessed_slots += slots.len() as u64;
+                        for slot in slots {
+                            self.subroutine.sload(address, slot, self.db);
+                        }
                     }
+                    (accessed_accounts, accessed_slots)
+                } else {
+                    (0, 0)
                 }
-                (accessed_accounts, accessed_slots)
-            } else {
-                (0, 0)
-            }
-        };
+            };
 
-        let transact = if is_create {
-            if SPEC::enabled(HOMESTEAD) {
-                // EIP-2: Homestead Hard-fork Changes
-                53000
+            let transact = if is_create {
+                if SPEC::enabled(HOMESTEAD) {
+                    // EIP-2: Homestead Hard-fork Changes
+                    53000
+                } else {
+                    21000
+                }
             } else {
                 21000
-            }
+            };
+
+            // EIP-2028: Transaction data gas cost reduction
+            let gas_transaction_non_zero_data = if SPEC::enabled(ISTANBUL) { 16 } else { 68 };
+
+            transact
+                + zero_data_len * gas::TRANSACTION_ZERO_DATA
+                + non_zero_data_len * gas_transaction_non_zero_data
+                + accessed_accounts * gas::ACCESS_LIST_ADDRESS
+                + accessed_slots * gas::ACCESS_LIST_STORAGE_KEY
         } else {
-            21000
-        };
-
-        // EIP-2028: Transaction data gas cost reduction
-        let gas_transaction_non_zero_data = if SPEC::enabled(ISTANBUL) { 16 } else { 68 };
-
-        transact
-            + zero_data_len * gas::TRANSACTION_ZERO_DATA
-            + non_zero_data_len * gas_transaction_non_zero_data
-            + accessed_accounts * gas::ACCESS_LIST_ADDRESS
-            + accessed_slots * gas::ACCESS_LIST_STORAGE_KEY
+            0
+        }
     }
 
     fn create_inner<SPEC: Spec>(
@@ -327,18 +339,19 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     self.subroutine.checkpoint_revert(checkpoint);
                     return (ExitError::CreateContractLimit.into(), ret, machine.gas, b);
                 }
-                let gas_for_code = code.len() as u64 * crate::opcode::gas::CODEDEPOSIT;
-                // record code deposit gas cost and check if we are out of gas.
-                if !machine.gas.record_cost(gas_for_code) {
-                    self.subroutine.checkpoint_revert(checkpoint);
-                    (ExitError::OutOfGas.into(), ret, machine.gas, b)
-                } else {
-                    // if we have enought gas
-                    self.subroutine.checkpoint_commit();
-                    let code_hash = H256::from_slice(Keccak256::digest(&code).as_slice());
-                    self.subroutine.set_code(created_address, code, code_hash);
-                    (ExitSucceed::Returned.into(), ret, machine.gas, b)
+                if SPEC::USE_GAS {
+                    let gas_for_code = code.len() as u64 * crate::opcode::gas::CODEDEPOSIT;
+                    // record code deposit gas cost and check if we are out of gas.
+                    if !machine.gas.record_cost(gas_for_code) {
+                        self.subroutine.checkpoint_revert(checkpoint);
+                        return (ExitError::OutOfGas.into(), ret, machine.gas, b);
+                    }
                 }
+                // if we have enought gas
+                self.subroutine.checkpoint_commit();
+                let code_hash = H256::from_slice(Keccak256::digest(&code).as_slice());
+                self.subroutine.set_code(created_address, code, code_hash);
+                (ExitSucceed::Returned.into(), ret, machine.gas, b)
             }
             _ => {
                 self.subroutine.checkpoint_revert(checkpoint);
@@ -400,7 +413,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             };
             match out {
                 Ok(PrecompileOutput { output, cost, logs }) => {
-                    if gas.record_cost(cost) {
+                    if !SPEC::USE_GAS || gas.record_cost(cost) {
                         logs.into_iter().for_each(|l| {
                             self.subroutine.log(Log {
                                 address: l.address,

@@ -56,8 +56,7 @@ impl<DB: Database> EVM<DB> {
     pub fn transact(&mut self) -> (ExitReason, TransactOut, u64, State) {
         if let Some(db) = self.db.as_mut() {
             let mut noop = NoOpInspector {};
-            let out =
-                evm_inner::<DB, false>(self.env.cfg.spec_id, &self.env, db, &mut noop).transact();
+            let out = evm_inner::<DB, false>(&self.env, db, &mut noop).transact();
             out
         } else {
             panic!("Database needs to be set");
@@ -70,7 +69,7 @@ impl<DB: Database> EVM<DB> {
         mut inspector: INSP,
     ) -> (ExitReason, TransactOut, u64, State) {
         if let Some(db) = self.db.as_mut() {
-            evm_inner::<DB, true>(self.env.cfg.spec_id, &self.env, db, &mut inspector).transact()
+            evm_inner::<DB, true>(&self.env, db, &mut inspector).transact()
         } else {
             panic!("Database needs to be set");
         }
@@ -84,9 +83,7 @@ impl<DB: DatabaseRef> EVM<DB> {
             let mut noop = NoOpInspector {};
             let mut db = RefDBWrapper::new(db);
             let db = &mut db;
-            let out =
-                evm_inner::<RefDBWrapper, false>(self.env.cfg.spec_id, &self.env, db, &mut noop)
-                    .transact();
+            let out = evm_inner::<RefDBWrapper, false>(&self.env, db, &mut noop).transact();
             out
         } else {
             panic!("Database needs to be set");
@@ -101,13 +98,7 @@ impl<DB: DatabaseRef> EVM<DB> {
         if let Some(db) = self.db.as_ref() {
             let mut db = RefDBWrapper::new(db);
             let db = &mut db;
-            let out = evm_inner::<RefDBWrapper, true>(
-                self.env.cfg.spec_id,
-                &self.env,
-                db,
-                &mut inspector,
-            )
-            .transact();
+            let out = evm_inner::<RefDBWrapper, true>(&self.env, db, &mut inspector).transact();
             out
         } else {
             panic!("Database needs to be set");
@@ -137,23 +128,31 @@ impl<DB> EVM<DB> {
 }
 
 macro_rules! create_evm {
-    ($spec:tt,$db:ident,$env:ident,$inspector:ident) => {
-        Box::new(EVMImpl::<'a, $spec, DB, INSPECT>::new(
-            $db,
-            $env,
-            $inspector,
-            Precompiles::new::<{ SpecId::to_precompile_id($spec::SPEC_ID) }>(),
-        )) as Box<dyn Transact + 'a>
+    ($spec:ident, $db:ident,$env:ident,$inspector:ident) => {
+        if $env.cfg.use_gas {
+            Box::new(EVMImpl::<'a, $spec<true>, DB, INSPECT>::new(
+                $db,
+                $env,
+                $inspector,
+                Precompiles::new::<{ SpecId::to_precompile_id($spec::<true>::SPEC_ID) }>(),
+            )) as Box<dyn Transact + 'a>
+        } else {
+            Box::new(EVMImpl::<'a, $spec<false>, DB, INSPECT>::new(
+                $db,
+                $env,
+                $inspector,
+                Precompiles::new::<{ SpecId::to_precompile_id($spec::<false>::SPEC_ID) }>(),
+            )) as Box<dyn Transact + 'a>
+        }
     };
 }
 
-fn evm_inner<'a, DB: Database, const INSPECT: bool>(
-    specid: SpecId,
+pub fn evm_inner<'a, DB: Database, const INSPECT: bool>(
     env: &'a Env,
     db: &'a mut DB,
     insp: &'a mut dyn Inspector,
 ) -> Box<dyn Transact + 'a> {
-    match specid {
+    match env.cfg.spec_id {
         SpecId::LATEST => create_evm!(LatestSpec, db, env, insp),
         SpecId::LONDON => create_evm!(LondonSpec, db, env, insp),
         SpecId::BERLIN => create_evm!(BerlinSpec, db, env, insp),

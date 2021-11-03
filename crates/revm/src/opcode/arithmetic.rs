@@ -4,7 +4,7 @@ use super::{i256::I256, Control};
 use core::{convert::TryInto, ops::Rem};
 use primitive_types::{H256, U256, U512};
 
-#[inline]
+#[inline(always)]
 pub fn div(op1: U256, op2: U256) -> U256 {
     if op2 == U256::zero() {
         U256::zero()
@@ -13,7 +13,7 @@ pub fn div(op1: U256, op2: U256) -> U256 {
     }
 }
 
-#[inline]
+#[inline(always)]
 pub fn sdiv(op1: U256, op2: U256) -> U256 {
     let op1: I256 = op1.into();
     let op2: I256 = op2.into();
@@ -21,7 +21,7 @@ pub fn sdiv(op1: U256, op2: U256) -> U256 {
     ret.into()
 }
 
-#[inline]
+#[inline(always)]
 pub fn rem(op1: U256, op2: U256) -> U256 {
     if op2 == U256::zero() {
         U256::zero()
@@ -30,7 +30,7 @@ pub fn rem(op1: U256, op2: U256) -> U256 {
     }
 }
 
-#[inline]
+#[inline(always)]
 pub fn srem(op1: U256, op2: U256) -> U256 {
     if op2 == U256::zero() {
         U256::zero()
@@ -42,7 +42,7 @@ pub fn srem(op1: U256, op2: U256) -> U256 {
     }
 }
 
-#[inline]
+#[inline(always)]
 pub fn addmod(op1: U256, op2: U256, op3: U256) -> U256 {
     let op1: U512 = op1.into();
     let op2: U512 = op2.into();
@@ -57,7 +57,7 @@ pub fn addmod(op1: U256, op2: U256, op3: U256) -> U256 {
     }
 }
 
-#[inline]
+#[inline(always)]
 pub fn mulmod(op1: U256, op2: U256, op3: U256) -> U256 {
     let op1: U512 = op1.into();
     let op2: U512 = op2.into();
@@ -72,7 +72,7 @@ pub fn mulmod(op1: U256, op2: U256, op3: U256) -> U256 {
     }
 }
 
-#[inline]
+#[inline(always)]
 pub fn exp(op1: U256, op2: U256) -> U256 {
     let mut op1 = op1;
     let mut op2 = op2;
@@ -88,10 +88,10 @@ pub fn exp(op1: U256, op2: U256) -> U256 {
     r
 }
 
-#[inline]
-pub fn eval_exp<SPEC: Spec>(machine: &mut Machine) -> Control {
+#[inline(always)]
+pub fn eval_exp<S: Spec>(machine: &mut Machine) -> Control {
     pop_u256!(machine, op1, op2);
-    gas_or_fail!(machine, gas::exp_cost::<SPEC>(op2));
+    gas_or_fail!(machine, gas::exp_cost::<S>(op2));
     let ret = exp(op1, op2);
     push_u256!(machine, ret);
 
@@ -113,7 +113,7 @@ pub fn eval_exp<SPEC: Spec>(machine: &mut Machine) -> Control {
 /// `y | !mask` where `|` is the bitwise `OR` and `!` is bitwise negation. Similarly, if
 /// `b == 0` then the yellow paper says the output should start with all zeros, then end with
 /// bits from `b`; this is equal to `y & mask` where `&` is bitwise `AND`.
-#[inline]
+#[inline(always)]
 pub fn signextend(op1: U256, op2: U256) -> U256 {
     if op1 < U256::from(32) {
         // `low_u32` works since op1 < 32

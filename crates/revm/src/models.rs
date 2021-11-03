@@ -160,6 +160,7 @@ pub struct TxEnv {
 pub struct CfgEnv {
     pub chain_id: U256,
     pub spec_id: SpecId,
+    pub use_gas: bool,
 }
 
 impl Default for CfgEnv {
@@ -167,6 +168,7 @@ impl Default for CfgEnv {
         CfgEnv {
             chain_id: 1.into(), //mainnet is 1
             spec_id: SpecId::LATEST,
+            use_gas: true,
         }
     }
 }

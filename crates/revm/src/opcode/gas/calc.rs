@@ -7,10 +7,10 @@ use crate::{
 use primitive_types::{H256, U256};
 
 #[allow(clippy::collapsible_else_if)]
-pub fn sstore_refund<SPEC: Spec>(original: H256, current: H256, new: H256) -> i64 {
-    if SPEC::enabled(ISTANBUL) {
+pub fn sstore_refund<S: Spec>(original: H256, current: H256, new: H256) -> i64 {
+    if S::enabled(ISTANBUL) {
         // EIP-3529: Reduction in refunds
-        let sstore_clears_schedule = if SPEC::enabled(LONDON) {
+        let sstore_clears_schedule = if S::enabled(LONDON) {
             (SSTORE_RESET - SLOAD_COLD + ACCESS_LIST_STORAGE_KEY) as i64
         } else {
             REFUND_SSTORE_CLEARS
@@ -32,10 +32,10 @@ pub fn sstore_refund<SPEC: Spec>(original: H256, current: H256, new: H256) -> i6
                 }
 
                 if original == new {
-                    let (gas_sstore_reset, gas_sload) = if SPEC::enabled(BERLIN) {
+                    let (gas_sstore_reset, gas_sload) = if S::enabled(BERLIN) {
                         (SSTORE_RESET - SLOAD_COLD, STORAGE_READ_WARM)
                     } else {
-                        (SSTORE_RESET, sload_cost::<SPEC>(false))
+                        (SSTORE_RESET, sload_cost::<S>(false))
                     };
                     if original == H256::default() {
                         refund += (SSTORE_SET - gas_sload) as i64;
@@ -75,11 +75,11 @@ pub fn create2_cost(len: U256) -> Option<u64> {
     Some(gas.as_u64())
 }
 
-pub fn exp_cost<SPEC: Spec>(power: U256) -> Option<u64> {
+pub fn exp_cost<S: Spec>(power: U256) -> Option<u64> {
     if power == U256::zero() {
         Some(EXP)
     } else {
-        let gas_byte = U256::from(if SPEC::enabled(SPURIOUS_DRAGON) {
+        let gas_byte = U256::from(if S::enabled(SPURIOUS_DRAGON) {
             50
         } else {
             10
@@ -115,16 +115,16 @@ pub fn verylowcopy_cost(len: U256) -> Option<u64> {
     Some(gas.as_u64())
 }
 
-pub fn extcodecopy_cost<SPEC: Spec>(len: U256, is_cold: bool) -> Option<u64> {
+pub fn extcodecopy_cost<S: Spec>(len: U256, is_cold: bool) -> Option<u64> {
     let wordd = len / U256::from(32);
     let wordr = len % U256::from(32);
-    let base_gas: u64 = if SPEC::enabled(BERLIN) {
+    let base_gas: u64 = if S::enabled(BERLIN) {
         if is_cold {
             ACCOUNT_ACCESS_COLD
         } else {
             STORAGE_READ_WARM
         }
-    } else if SPEC::enabled(ISTANBUL) {
+    } else if S::enabled(ISTANBUL) {
         700
     } else {
         20
@@ -146,14 +146,14 @@ pub fn extcodecopy_cost<SPEC: Spec>(len: U256, is_cold: bool) -> Option<u64> {
     Some(gas.as_u64())
 }
 
-pub fn account_access_gas<SPEC: Spec>(is_cold: bool) -> u64 {
-    if SPEC::enabled(BERLIN) {
+pub fn account_access_gas<S: Spec>(is_cold: bool) -> u64 {
+    if S::enabled(BERLIN) {
         if is_cold {
             ACCOUNT_ACCESS_COLD
         } else {
             STORAGE_READ_WARM
         }
-    } else if SPEC::enabled(ISTANBUL) {
+    } else if S::enabled(ISTANBUL) {
         700
     } else {
         20
@@ -191,17 +191,17 @@ pub fn sha3_cost(len: U256) -> Option<u64> {
     Some(gas.as_u64())
 }
 
-pub fn sload_cost<SPEC: Spec>(is_cold: bool) -> u64 {
-    if SPEC::enabled(BERLIN) {
+pub fn sload_cost<S: Spec>(is_cold: bool) -> u64 {
+    if S::enabled(BERLIN) {
         if is_cold {
             SLOAD_COLD
         } else {
             STORAGE_READ_WARM
         }
-    } else if SPEC::enabled(ISTANBUL) {
+    } else if S::enabled(ISTANBUL) {
         // EIP-1884: Repricing for trie-size-dependent opcodes
         800
-    } else if SPEC::enabled(TANGERINE) {
+    } else if S::enabled(TANGERINE) {
         // EIP-150: Gas cost changes for IO-heavy operations
         200
     } else {
@@ -210,7 +210,7 @@ pub fn sload_cost<SPEC: Spec>(is_cold: bool) -> u64 {
 }
 
 #[allow(clippy::collapsible_else_if)]
-pub fn sstore_cost<SPEC: Spec>(
+pub fn sstore_cost<S: Spec>(
     original: H256,
     current: H256,
     new: H256,
@@ -218,13 +218,13 @@ pub fn sstore_cost<SPEC: Spec>(
     is_cold: bool,
 ) -> Option<u64> {
     // TODO untengle this mess and make it more elegant
-    let (gas_sload, gas_sstore_reset) = if SPEC::enabled(BERLIN) {
+    let (gas_sload, gas_sstore_reset) = if S::enabled(BERLIN) {
         (STORAGE_READ_WARM, SSTORE_RESET - SLOAD_COLD)
     } else {
-        (sload_cost::<SPEC>(is_cold), SSTORE_RESET)
+        (sload_cost::<S>(is_cold), SSTORE_RESET)
     };
-    let gas_cost = if SPEC::enabled(CONSTANTINOPLE) {
-        if SPEC::enabled(CONSTANTINOPLE) && gas <= CALL_STIPEND {
+    let gas_cost = if S::enabled(CONSTANTINOPLE) {
+        if S::enabled(CONSTANTINOPLE) && gas <= CALL_STIPEND {
             return None;
         }
 
@@ -249,22 +249,22 @@ pub fn sstore_cost<SPEC: Spec>(
         }
     };
     // In EIP-2929 we charge extra if the slot has not been used yet in this transaction
-    if SPEC::enabled(BERLIN) && is_cold {
+    if S::enabled(BERLIN) && is_cold {
         Some(gas_cost + SLOAD_COLD)
     } else {
         Some(gas_cost)
     }
 }
 
-pub fn selfdestruct_cost<SPEC: Spec>(res: SelfDestructResult) -> u64 {
-    let should_charge_topup = if SPEC::enabled(ISTANBUL) {
+pub fn selfdestruct_cost<S: Spec>(res: SelfDestructResult) -> u64 {
+    let should_charge_topup = if S::enabled(ISTANBUL) {
         res.had_value && !res.exists
     } else {
         !res.exists
     };
 
     let selfdestruct_gas_topup = if should_charge_topup {
-        if SPEC::enabled(TANGERINE) {
+        if S::enabled(TANGERINE) {
             //EIP-150: Gas cost changes for IO-heavy operations
             25000
         } else {
@@ -274,16 +274,16 @@ pub fn selfdestruct_cost<SPEC: Spec>(res: SelfDestructResult) -> u64 {
         0
     };
 
-    let selfdestruct_gas = if SPEC::enabled(TANGERINE) { 5000 } else { 0 }; //EIP-150: Gas cost changes for IO-heavy operations
+    let selfdestruct_gas = if S::enabled(TANGERINE) { 5000 } else { 0 }; //EIP-150: Gas cost changes for IO-heavy operations
 
     let mut gas = selfdestruct_gas + selfdestruct_gas_topup;
-    if SPEC::enabled(BERLIN) && res.is_cold {
+    if S::enabled(BERLIN) && res.is_cold {
         gas += ACCOUNT_ACCESS_COLD
     }
     gas
 }
 
-pub fn call_cost<SPEC: Spec>(
+pub fn call_cost<S: Spec>(
     value: U256,
     is_new: bool,
     is_cold: bool,
@@ -292,13 +292,13 @@ pub fn call_cost<SPEC: Spec>(
 ) -> u64 {
     let transfers_value = value != U256::default();
 
-    let call_gas = if SPEC::enabled(BERLIN) {
+    let call_gas = if S::enabled(BERLIN) {
         if is_cold {
             ACCOUNT_ACCESS_COLD
         } else {
             STORAGE_READ_WARM
         }
-    } else if SPEC::enabled(TANGERINE) {
+    } else if S::enabled(TANGERINE) {
         // EIP-150: Gas cost changes for IO-heavy operations
         700
     } else {
@@ -307,12 +307,12 @@ pub fn call_cost<SPEC: Spec>(
 
     call_gas
         + xfer_cost(is_call_or_callcode, transfers_value)
-        + new_cost::<SPEC>(is_call_or_staticcall, is_new, transfers_value)
+        + new_cost::<S>(is_call_or_staticcall, is_new, transfers_value)
 }
 
 #[inline(always)]
-pub fn hot_cold_cost<SPEC: Spec>(is_cold: bool, regular_value: u64) -> u64 {
-    if SPEC::enabled(BERLIN) {
+pub fn hot_cold_cost<S: Spec>(is_cold: bool, regular_value: u64) -> u64 {
+    if S::enabled(BERLIN) {
         if is_cold {
             ACCOUNT_ACCESS_COLD
         } else {
@@ -331,9 +331,9 @@ fn xfer_cost(is_call_or_callcode: bool, transfers_value: bool) -> u64 {
     }
 }
 
-fn new_cost<SPEC: Spec>(is_call_or_staticcall: bool, is_new: bool, transfers_value: bool) -> u64 {
+fn new_cost<S: Spec>(is_call_or_staticcall: bool, is_new: bool, transfers_value: bool) -> u64 {
     if is_call_or_staticcall {
-        if SPEC::enabled(ISTANBUL) {
+        if S::enabled(ISTANBUL) {
             if transfers_value && is_new {
                 NEWACCOUNT
             } else {

@@ -252,7 +252,7 @@ impl OpCode {
         OpCode::try_from(opcode).ok()
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn is_push(opcode: u8) -> Option<u8> {
         if (0x60..=0x7f).contains(&opcode) {
             Some(opcode - 0x60 + 1)
@@ -261,12 +261,12 @@ impl OpCode {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn as_u8(&self) -> u8 {
         *self as u8
     }
 
-    #[inline]
+    #[inline(always)]
     pub const fn as_usize(&self) -> usize {
         *self as usize
     }

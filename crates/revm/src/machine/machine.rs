@@ -1,4 +1,4 @@
-use crate::{alloc::vec::Vec, opcode::eval, ExitError};
+use crate::{alloc::vec::Vec, opcode::eval};
 use bytes::Bytes;
 use core::{cmp::max, ops::Range};
 use primitive_types::U256;
@@ -103,6 +103,7 @@ impl Gas {
     }
 
     /// used in memory_resize! macro
+    #[inline(always)]
     pub fn record_memory(&mut self, gas_memory: u64) -> bool {
         let max_memory = max(self.memory, gas_memory);
         let all_used_gas: u128 = self.used as u128 + gas_memory as u128;
@@ -111,14 +112,6 @@ impl Gas {
         }
         self.memory = max_memory;
         true
-    }
-
-    #[inline(always)]
-    pub fn record_cost_control(&mut self, cost: u64) -> Control {
-        if !self.record_cost(cost) {
-            return Control::Exit(ExitReason::Error(ExitError::OutOfGas));
-        }
-        Control::Continue
     }
 
     /// used in gas_refund! macro
