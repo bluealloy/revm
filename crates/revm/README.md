@@ -17,10 +17,10 @@ All ethereum state tests can be found `bins/revm-ethereum-tests` and can be run 
 Example with creating simple set/get smartcontract and calling create and two calls:
 ```rust
     let caller = H160::from_str("0x1000000000000000000000000000000000000000").unwrap();
-    // StateDB is dummy state that implements Database trait.
+    // InMemoryDB is db that implements Database trait.
     // add one account and some eth for testing.
     let mut evm = revm::new();
-    evm.database(DummyStateDB::new());
+    evm.database(InMemoryDB::new());
     evm.db().unwrap().insert_cache(
         caller.clone(),
         AccountInfo {

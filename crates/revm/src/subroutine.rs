@@ -222,7 +222,6 @@ impl SubRoutine {
         // check from balance and substract value
         let from = self.log_dirty(from, |_| {});
         if from.info.balance < value {
-            // TODO shold we remove it from log_dirty
             return Err(ExitRevert::OutOfFund);
         }
         from.info.balance -= value;

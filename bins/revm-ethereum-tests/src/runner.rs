@@ -117,7 +117,7 @@ pub fn execute_test_suit(
             continue;
         }
         // Create database and insert cache
-        let mut database = revm::DummyStateDB::new();
+        let mut database = revm::InMemoryDB::new();
         for (address, info) in unit.pre.iter() {
             let acc_info = revm::AccountInfo {
                 balance: info.balance,

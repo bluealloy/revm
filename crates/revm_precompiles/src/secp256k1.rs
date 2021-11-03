@@ -74,12 +74,10 @@ fn ec_recover_run(i: &[u8], target_gas: u64) -> PrecompileResult {
     sig[0..32].copy_from_slice(&input[64..96]);
     sig[32..64].copy_from_slice(&input[96..128]);
 
-    // TODO do this correctly: return if there is junk in V.
     if input[32..63] != [0u8; 31] || !matches!(input[63], 27 | 28) {
         return Ok(PrecompileOutput::without_logs(cost, Vec::new()));
     }
 
-    // TODO hm it will fail for chainId that are more then one byte;
     sig[64] = input[63];
 
     let out = match secp256k1_ecdsa_recover(&mut sig, &msg) {

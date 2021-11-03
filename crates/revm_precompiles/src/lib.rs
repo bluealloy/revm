@@ -103,10 +103,8 @@ impl Precompiles {
             fun.push(hash::RIPED160);
             #[cfg(feature = "secp256k1")]
             fun.push(secp256k1::ECRECOVER);
-            // TODO check if this goes here
             fun.push(identity::FUN);
         }
-        if SpecId::BYZANTINE.enabled(SPEC_ID) {}
 
         if SpecId::ISTANBUL.enabled(SPEC_ID) {
             // EIP-152: Add BLAKE2 compression function `F` precompile

@@ -16,7 +16,9 @@ mod util;
 
 use evm_impl::Handler;
 
-pub use db::{Database, DatabaseCommit, DummyStateDB};
+pub type DummyStateDB = InMemoryDB;
+
+pub use db::{Database, DatabaseCommit, InMemoryDB};
 pub use error::*;
 pub use evm::{new, EVM};
 pub use inspector::{Inspector, NoOpInspector};

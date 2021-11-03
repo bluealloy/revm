@@ -52,7 +52,7 @@ impl Contract {
                 let opcode = OpCode::try_from_u8(*opcode_byte);
                 // if there is no opcode in code or OpCode is invalid, return error.
                 if opcode.is_none() {
-                    return Err(ExitError::OpcodeNotFound.into()); // TODO this not seems right, for invalid opcode
+                    return Err(ExitError::OpcodeNotFound.into());
                 }
                 opcode.unwrap()
             } else {

@@ -13,7 +13,7 @@ use super::DatabaseCommit;
 
 /// Memory backend, storing all state values in a `Map` in memory.
 #[derive(Debug, Clone)]
-pub struct DummyStateDB {
+pub struct InMemoryDB {
     /// dummy account info where code is allways None. Code bytes can be found in `contracts`
     cache: Map<H160, AccountInfo>,
     storage: Map<H160, Map<H256, H256>>,
@@ -21,7 +21,7 @@ pub struct DummyStateDB {
     logs: Vec<Log>,
 }
 
-impl DummyStateDB {
+impl InMemoryDB {
     pub fn cache(&self) -> &Map<H160, AccountInfo> {
         &self.cache
     }
@@ -38,8 +38,6 @@ impl DummyStateDB {
                 self.contracts.insert(code_hash, code);
             }
         }
-        // TODO see to remove zero from revm so that we dont need to do this.
-        // it fails with selfdestruct
         if account.code_hash == H256::zero() {
             account.code_hash = KECCAK_EMPTY;
         }
@@ -71,19 +69,10 @@ impl DummyStateDB {
             }
         }
         false
-
-        // let (acc, exists) = if let Some(acc) = self.db.account(&ethH160::from_slice(&address.0)) {
-        //     println!("FETCHING ACC");
-        //     (CachedAccount::from(acc), true)
-        // } else {
-        //     (CachedAccount::default(), false)
-        // };
-        // self.cache.insert(address.clone(), acc);
-        // exists
     }
 }
 
-impl DatabaseCommit for DummyStateDB {
+impl DatabaseCommit for InMemoryDB {
     fn commit(&mut self, changes: Map<H160, Account>) {
         for (add, acc) in changes {
             if acc.is_empty() || matches!(acc.filth, Filth::Destroyed) {
@@ -110,18 +99,8 @@ impl DatabaseCommit for DummyStateDB {
     }
 }
 
-impl Database for DummyStateDB {
+impl Database for InMemoryDB {
     fn block_hash(&mut self, _number: U256) -> H256 {
-        // if number >= self.vicinity.block_number
-        // 	|| self.vicinity.block_number - number - U256::one()
-        // 		>= U256::from(self.vicinity.block_hashes.len())
-        // {
-        // 	H256::default()
-        // } else {
-        // 	let index = (self.vicinity.block_number - number - U256::one()).as_usize();
-        // 	self.vicinity.block_hashes[index]
-        // }
-        // TODO change to tx hash
         H256::zero()
     }
 
@@ -151,19 +130,6 @@ impl Database for DummyStateDB {
                 }
             }
             H256::zero()
-            /*
-            if let Some((_, storage)) = acc..get(&index) {
-                return *storage;
-            }
-            let eth_address = H160::from(address.0);
-            let eth_index = H256::from(index.0);
-            let storage = self
-                .db
-                .storage(&eth_address, acc.incarnation, &eth_index)
-                .map(|storage| H256::from(storage.0))
-                .unwrap_or_default();
-            acc.storage.insert(index, (false, storage));
-            storage*/
         } else {
             H256::zero()
         }
@@ -173,7 +139,6 @@ impl Database for DummyStateDB {
         match self.contracts.entry(code_hash) {
             Entry::Occupied(entry) => entry.get().clone(),
             Entry::Vacant(_entry) => {
-                // TODO fetch from db
                 Bytes::new()
             }
         }

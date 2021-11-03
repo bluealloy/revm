@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use bytes::Bytes;
 use primitive_types::{H160, U256};
-use revm::{AccountInfo, DummyStateDB, NoOpInspector, TransactOut, TransactTo, KECCAK_EMPTY};
+use revm::{AccountInfo, InMemoryDB, NoOpInspector, TransactOut, TransactTo, KECCAK_EMPTY};
 
 extern crate alloc;
 
@@ -11,7 +11,7 @@ pub fn simple_example() {
     // StateDB is dummy state that implements Database trait.
     // add one account and some eth for testing.
     let mut evm = revm::new();
-    evm.database(DummyStateDB::new());
+    evm.database(InMemoryDB::new());
     evm.db().unwrap().insert_cache(
         caller.clone(),
         AccountInfo {

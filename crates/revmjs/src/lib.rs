@@ -1,6 +1,6 @@
 use bytes::{Bytes, BytesMut};
 use primitive_types::{H160, H256, U256};
-use revm::{AccountInfo, DatabaseCommit, DummyStateDB, SpecId, TransactTo, EVM as rEVM};
+use revm::{AccountInfo, DatabaseCommit, EVM as rEVM, InMemoryDB, SpecId, TransactTo};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -21,10 +21,10 @@ macro_rules! console_log {
     ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
 }
 
-/// Wrapper arround revm with DummyStateDB
+/// Wrapper arround revm with InMemoryDB
 #[wasm_bindgen]
 pub struct EVM {
-    revm: rEVM<DummyStateDB>,
+    revm: rEVM<InMemoryDB>,
 }
 
 #[wasm_bindgen]
@@ -32,7 +32,7 @@ impl EVM {
     pub fn new() -> EVM {
         console_log!("EVM created");
         let mut evm = EVM { revm: rEVM::new() };
-        evm.revm.database(DummyStateDB::new());
+        evm.revm.database(InMemoryDB::new());
         evm
     }
 
