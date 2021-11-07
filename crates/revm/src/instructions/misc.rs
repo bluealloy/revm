@@ -164,7 +164,7 @@ pub fn jumpi(machine: &mut Machine) -> Control {
 
 #[inline(always)]
 pub fn jumpdest(machine: &mut Machine) -> Control {
-    gas!(machine,gas::JUMPDEST);
+    gas!(machine, gas::JUMPDEST);
     Control::Continue
 }
 

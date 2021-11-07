@@ -138,9 +138,7 @@ impl Database for InMemoryDB {
     fn code_by_hash(&mut self, code_hash: H256) -> Bytes {
         match self.contracts.entry(code_hash) {
             Entry::Occupied(entry) => entry.get().clone(),
-            Entry::Vacant(_entry) => {
-                Bytes::new()
-            }
+            Entry::Vacant(_entry) => Bytes::new(),
         }
     }
 }

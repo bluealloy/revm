@@ -2,10 +2,10 @@
 mod macros;
 mod arithmetic;
 mod bitwise;
-pub mod opcode;
 pub(crate) mod gas;
 mod i256;
 mod misc;
+pub mod opcode;
 mod system;
 
 pub use opcode::OpCode;
@@ -91,9 +91,13 @@ pub fn eval<H: Handler, S: Spec>(
         opcode::PC => misc::pc(machine, position),
         opcode::MSIZE => misc::msize(machine),
         opcode::JUMPDEST => misc::jumpdest(machine),
-        opcode::PUSH1..=opcode::PUSH32 => misc::push(machine, (1+opcode-opcode::PUSH1) as usize, position),
-        opcode::DUP1..=opcode::DUP16 => misc::dup(machine, (1+opcode-opcode::DUP1) as usize),
-        opcode::SWAP1..=opcode::SWAP16 => misc::swap(machine, (1+opcode-opcode::SWAP1) as usize),
+        opcode::PUSH1..=opcode::PUSH32 => {
+            misc::push(machine, (1 + opcode - opcode::PUSH1) as usize, position)
+        }
+        opcode::DUP1..=opcode::DUP16 => misc::dup(machine, (1 + opcode - opcode::DUP1) as usize),
+        opcode::SWAP1..=opcode::SWAP16 => {
+            misc::swap(machine, (1 + opcode - opcode::SWAP1) as usize)
+        }
         opcode::RETURN => misc::ret(machine),
         opcode::REVERT => misc::revert::<S>(machine),
         opcode::INVALID => Control::Exit(ExitError::DesignatedInvalid.into()),

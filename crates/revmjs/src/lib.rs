@@ -75,10 +75,10 @@ impl EVM {
 
     /****** ALL BLOCK ENV SETTERS ********/
 
-    pub fn block_gas_limit(&mut self, gas_limit:  BN) {
+    pub fn block_gas_limit(&mut self, gas_limit: BN) {
         self.revm.env.block.gas_limit = gas_limit.try_into().unwrap();
     }
-    pub fn block_number(&mut self, number:  BN) {
+    pub fn block_number(&mut self, number: BN) {
         self.revm.env.block.number = number.try_into().unwrap();
     }
     pub fn block_coinbase(&mut self, coinbase: BN) {

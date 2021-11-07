@@ -29,9 +29,7 @@ macro_rules! spec {
 
             impl NotStaticSpec for SpecImpl {}
 
-            impl<const IS_STATIC_CALL: bool> Spec
-                for SpecInner<IS_STATIC_CALL>
-            {
+            impl<const IS_STATIC_CALL: bool> Spec for SpecInner<IS_STATIC_CALL> {
                 type STATIC = SpecInner<true>;
 
                 //specification id

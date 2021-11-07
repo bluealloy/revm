@@ -1,5 +1,5 @@
 mod db;
-mod dummy_db_impl;
+mod in_memory_db;
 
 pub use db::*;
-pub use dummy_db_impl::InMemoryDB;
+pub use in_memory_db::InMemoryDB;

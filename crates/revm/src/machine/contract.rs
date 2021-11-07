@@ -2,7 +2,7 @@ use crate::{alloc::vec::Vec, CallContext, ExitError, ExitReason, ExitSucceed};
 use bytes::Bytes;
 use primitive_types::{H160, U256};
 
-use crate::instructions::opcode::{self,OpCode};
+use crate::instructions::opcode::{self, OpCode};
 
 pub struct Contract {
     /// Contracts data

@@ -1,10 +1,10 @@
 use crate::{
     db::Database,
     error::{ExitError, ExitReason, ExitSucceed},
+    instructions::gas,
     machine,
     machine::{Contract, Gas, Machine},
     models::SelfDestructResult,
-    instructions::gas,
     spec::{Spec, SpecId::*},
     subroutine::{Account, State, SubRoutine},
     util, CallContext, CreateScheme, Env, ExitRevert, Inspector, Log, TransactOut, TransactTo,
@@ -17,7 +17,6 @@ use hashbrown::HashMap as Map;
 use primitive_types::{H160, H256, U256};
 use revm_precompiles::{Precompile, PrecompileOutput, Precompiles};
 use sha3::{Digest, Keccak256};
-
 
 pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
     db: &'a mut DB,
