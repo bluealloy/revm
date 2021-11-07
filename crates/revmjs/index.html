@@ -5,7 +5,7 @@
   <!-- so if I include ethereumjs-util.js in repo, github mark it as javascript, and i dont want that
   so if you want to use ethereumjs-util.js here is tutorial on it:
   https://www.mobilefish.com/developer/nodejs/nodejs_quickguide_browserify_ethereumjs_util.html-->
-  <script type="text/javascript" src="scripts/ethereumjs-util.js"></script>
+  <script type="text/javascript" src="ethereumjs-util.js"></script>
 </head>
 
 <body>
@@ -75,17 +75,17 @@
 
       await init();
       var revm = EVM.new();
-      revm.insert_account(address.toArray("be", 20), BigInt(1), balance.toArray("be", 32), new Uint8Array());
+      revm.insert_account(address, BigInt(1), balance, new Uint8Array());
 
 
-      revm.tx_caller(address.toArray("be", 20));
+      revm.tx_caller(address);
       revm.tx_data(create_data)
       revm.tx_transact_to_create();
       var res = revm.transact();
 
       //set contract variable to 15
       var data = hexToBytes("6057361d0000000000000000000000000000000000000000000000000000000000000015");
-      revm.tx_transact_to_call(contract.toArray("be", 20));
+      revm.tx_transact_to_call(contract);
       revm.tx_data(data);
       revm.transact();
       // get variable
