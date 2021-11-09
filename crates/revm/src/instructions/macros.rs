@@ -71,25 +71,53 @@ macro_rules! memory_resize {
 }
 
 macro_rules! pop {
-	( $machine:expr, $( $x:ident ),* ) => (
-		$(
-			let $x = match $machine.stack.pop() {
-				Ok(value) => value,
-				Err(e) => return Control::Exit(e.into()),
-			};
-		)*
-	);
+    ( $machine:expr, $x1:ident) => {
+        if $machine.stack.len() < 1 {
+            return Control::Exit(ExitError::StackUnderflow.into());
+        }
+        let $x1 = unsafe { $machine.stack.pop_unsafe() };
+    };
+    ( $machine:expr, $x1:ident, $x2:ident) => {
+        if $machine.stack.len() < 2 {
+            return Control::Exit(ExitError::StackUnderflow.into());
+        }
+        let $x1 = unsafe { $machine.stack.pop_unsafe() };
+        let $x2 = unsafe { $machine.stack.pop_unsafe() };
+    };
 }
 
 macro_rules! pop_u256 {
-	( $machine:expr, $( $x:ident ),* ) => (
-		$(
-			let $x = match $machine.stack.pop() {
-				Ok(value) => U256::from_big_endian(&value[..]),
-				Err(e) => return Control::Exit(e.into()),
-			};
-		)*
-	);
+    ( $machine:expr, $x1:ident) => {
+        if $machine.stack.len() < 1 {
+            return Control::Exit(ExitError::StackUnderflow.into());
+        }
+        let $x1 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
+    };
+    ( $machine:expr, $x1:ident, $x2:ident) => {
+        if $machine.stack.len() < 2 {
+            return Control::Exit(ExitError::StackUnderflow.into());
+        }
+        let $x1 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
+        let $x2 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
+    };
+    ( $machine:expr, $x1:ident, $x2:ident, $x3:ident) => {
+        if $machine.stack.len() < 3 {
+            return Control::Exit(ExitError::StackUnderflow.into());
+        }
+        let $x1 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
+        let $x2 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
+        let $x3 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
+    };
+
+    ( $machine:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident) => {
+        if $machine.stack.len() < 4 {
+            return Control::Exit(ExitError::StackUnderflow.into());
+        }
+        let $x1 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
+        let $x2 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
+        let $x3 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
+        let $x4 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
+    };
 }
 
 macro_rules! push {

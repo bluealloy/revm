@@ -24,7 +24,7 @@ pub fn sha3(machine: &mut Machine) -> Control {
         let from = as_usize_or_fail!(from);
         let len = as_usize_or_fail!(len);
 
-        machine.memory_mut().get(from, len)
+        machine.memory.get(from, len)
     };
 
     let ret = Keccak256::digest(data.as_ref());
@@ -167,7 +167,7 @@ pub fn extcodecopy<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
 
     memory_resize!(machine, memory_offset, len);
     match machine
-        .memory_mut()
+        .memory
         .copy_large(memory_offset, code_offset, len, &code)
     {
         Ok(()) => (),
@@ -310,17 +310,17 @@ pub fn log<H: Handler, SPEC: Spec>(machine: &mut Machine, n: u8, handler: &mut H
         let offset = as_usize_or_fail!(offset);
         let len = as_usize_or_fail!(len);
 
-        Bytes::from(machine.memory().get(offset, len))
+        Bytes::from(machine.memory.get(offset, len))
     };
+    let n = n as usize;
+    if machine.stack.len() < n {
+        return Control::Exit(ExitError::StackUnderflow.into());
+    }
 
-    let mut topics = Vec::new();
-    for _ in 0..(n as usize) {
-        match machine.stack_mut().pop() {
-            Ok(value) => {
-                topics.push(value);
-            }
-            Err(e) => return Control::Exit(e.into()),
-        }
+    let mut topics = Vec::with_capacity(n);
+    for _ in 0..(n) {
+        /*** SAFETY stack bounds already checked few lines above */
+        topics.push(unsafe { machine.stack.pop_unsafe() });
     }
 
     handler.log(machine.contract.address, topics, data);
@@ -375,7 +375,7 @@ pub fn create<H: Handler, SPEC: Spec>(
         let code_offset = as_usize_or_fail!(code_offset);
         let len = as_usize_or_fail!(len);
 
-        machine.memory().get(code_offset, len)
+        machine.memory.get(code_offset, len)
     };
     let scheme = if is_create2 {
         pop!(machine, salt);
@@ -464,7 +464,7 @@ pub fn call<H: Handler, SPEC: Spec>(
         let in_offset = as_usize_or_fail!(in_offset);
         let in_len = as_usize_or_fail!(in_len);
 
-        machine.memory().get(in_offset, in_len)
+        machine.memory.get(in_offset, in_len)
     };
 
     let context = match scheme {

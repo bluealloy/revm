@@ -22,7 +22,7 @@ impl Memory {
     /// Create a new memory with the given limit.
     pub fn new(limit: usize) -> Self {
         Self {
-            data: Vec::new(),
+            data: Vec::with_capacity(1024),
             effective_len: U256::zero(),
             limit,
         }

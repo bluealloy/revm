@@ -145,18 +145,7 @@ impl Machine {
     pub fn stack(&self) -> &Stack {
         &self.stack
     }
-    /// Mutable reference of machine stack.
-    pub fn stack_mut(&mut self) -> &mut Stack {
-        &mut self.stack
-    }
-    /// Reference of machine memory.
-    pub fn memory(&self) -> &Memory {
-        &self.memory
-    }
-    /// Mutable reference of machine memory.
-    pub fn memory_mut(&mut self) -> &mut Memory {
-        &mut self.memory
-    }
+
     /// Return a reference of the program counter.
     pub fn program_counter(&self) -> usize {
         self.program_counter
@@ -164,11 +153,15 @@ impl Machine {
 
     /// loop steps until we are finished with execution
     pub fn run<H: Handler, SPEC: Spec>(&mut self, handler: &mut H) -> ExitReason {
+        
+        let timer = std::time::Instant::now();
         loop {
             if let Err(reason) = self.step::<H, SPEC>(handler) {
                 if H::INSPECT {
                     handler.inspect().call_return(reason.clone());
                 }
+                let elapsed = timer.elapsed();
+                println!("run took:{:?}",elapsed);
                 return reason;
             }
         }
@@ -181,7 +174,6 @@ impl Machine {
             handler.inspect().step(self);
         }
         // extract next opcode from code
-        let _program_counter = self.program_counter;
         let opcode = self.contract.opcode(self.program_counter)?;
 
         // evaluate opcode/execute instruction

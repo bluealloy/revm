@@ -12,7 +12,7 @@ impl Stack {
     /// Create a new stack with given limit.
     pub fn new(limit: usize) -> Self {
         Self {
-            data: Vec::new(),
+            data: Vec::with_capacity(1024),
             limit,
         }
     }
@@ -46,6 +46,17 @@ impl Stack {
     /// `StackUnderflow` error.
     pub fn pop(&mut self) -> Result<H256, ExitError> {
         self.data.pop().ok_or(ExitError::StackUnderflow)
+    }
+
+    #[inline(always)]
+    /**** SAFETY ********
+     * caller is responsible to check length of array
+     */ 
+    pub unsafe fn pop_unsafe(&mut self) -> H256 {
+        let mut len = self.data.len();
+        len -= 1;
+        self.data.set_len(len);
+        self.data.get_unchecked(len).clone()
     }
 
     #[inline]

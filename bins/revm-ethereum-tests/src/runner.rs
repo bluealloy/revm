@@ -94,11 +94,6 @@ pub fn execute_test_suit(
             H160::from_str("0x82a978b3f5962a5b0957d9ee9eef472ee55b42f1").unwrap(),
         ),
         (
-            H256::from_str("0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8")
-                .unwrap(),
-            H160::from_str("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b").unwrap(),
-        ),
-        (
             H256::from_str("0x6a7eeac5f12b409d42028f66b0b2132535ee158cfda439e3bfdd4558e8f4bf6c")
                 .unwrap(),
             H160::from_str("0xc9c5a15a403e41498b6f69f6f89dd9f5892d21f7").unwrap(),
@@ -221,14 +216,16 @@ pub fn execute_test_suit(
                 // do the deed
 
                 let timer = Instant::now();
-                let (_ret, _out, _gas) = evm.inspect_commit(&mut *inspector);
+                let (ret, _out, gas) = evm.transact_commit();//&mut *inspector);
                 let timer = timer.elapsed();
 
                 *elapsed.lock().unwrap() += timer;
                 let db = evm.db().unwrap();
                 let state_root = merkle_trie_root(db.cache(), db.storage());
                 if test.hash != state_root {
+                    
                     println!("{:?} UNIT_TEST:{}\n", path, name);
+                    println!("fail reson: {:?} {:?} UNIT_TEST:{}\n gas:{:?}", ret, path, name, gas);
                     //break;
                     println!("\nApplied state:{:?}\n", db);
                     println!("\nStateroot: {:?}\n", state_root);
