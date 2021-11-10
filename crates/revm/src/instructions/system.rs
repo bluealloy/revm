@@ -310,7 +310,7 @@ pub fn log<H: Handler, SPEC: Spec>(machine: &mut Machine, n: u8, handler: &mut H
         let offset = as_usize_or_fail!(offset);
         let len = as_usize_or_fail!(len);
 
-        Bytes::from(machine.memory.get(offset, len))
+        machine.memory.get(offset, len)
     };
     let n = n as usize;
     if machine.stack.len() < n {

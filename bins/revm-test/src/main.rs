@@ -40,18 +40,16 @@ pub fn simple_example() {
     evm.env.tx.data = Bytes::from(hex::decode("30627b7c").unwrap());
 
     let timer = Instant::now();
-    let (a,b,c,_) = evm.transact();
+    let (a, b, c, _) = evm.transact();
     let elapsed = timer.elapsed();
-    println!("first call({:?}): {:?}\n", elapsed, (a,b,c));
+    println!("first call({:?}): {:?}\n", elapsed, (a, b, c));
 
     evm.env.tx.data = Bytes::from(hex::decode("190000000000000000000000000000000000000000000000000000000000000018000000000000000000000000000000000000000000000000000000000000006300000000000000000000000000000000000000000000000000000000000000").unwrap());
 
-    
     let timer = Instant::now();
-    let (a,b,c,_)= evm.transact();
+    let (a, b, c, _) = evm.transact();
     let elapsed = timer.elapsed();
-    println!("second call({:?}): {:?}\n",elapsed, (a,b,c));
-
+    println!("second call({:?}): {:?}\n", elapsed, (a, b, c));
 }
 
 fn main() {

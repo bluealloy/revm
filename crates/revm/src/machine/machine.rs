@@ -153,7 +153,6 @@ impl Machine {
 
     /// loop steps until we are finished with execution
     pub fn run<H: Handler, SPEC: Spec>(&mut self, handler: &mut H) -> ExitReason {
-        
         let timer = std::time::Instant::now();
         loop {
             if let Err(reason) = self.step::<H, SPEC>(handler) {
@@ -161,7 +160,7 @@ impl Machine {
                     handler.inspect().call_return(reason.clone());
                 }
                 let elapsed = timer.elapsed();
-                println!("run took:{:?}",elapsed);
+                println!("run took:{:?}", elapsed);
                 return reason;
             }
         }

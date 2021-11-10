@@ -163,7 +163,7 @@ impl SubRoutine {
             acc.info.balance = balance;
             return true;
         }
-        return false;
+        false
     }
 
     pub fn balance_sub(&mut self, address: H160, payment: U256) -> bool {
@@ -172,7 +172,7 @@ impl SubRoutine {
             acc.info.balance = balance;
             return true;
         }
-        return false;
+        false
     }
 
     // log dirty change and return account back
@@ -457,7 +457,7 @@ impl SubRoutine {
 
     /// load account into memory. return if it is cold or hot accessed
     pub fn load_account<'a, DB: Database>(&'a mut self, address: H160, db: &mut DB) -> bool {
-        let is_cold = match self.state.entry(address.clone()) {
+        let is_cold = match self.state.entry(address) {
             Entry::Occupied::<'a>(ref mut _entry) => false,
             Entry::Vacant::<'a>(vac) => {
                 let acc: Account = db.basic(address).into();
@@ -465,8 +465,8 @@ impl SubRoutine {
                 self.changelog
                     .last_mut()
                     .unwrap()
-                    .insert(address.clone(), ChangeLog::ColdLoaded);
-                vac.insert(acc.clone());
+                    .insert(address, ChangeLog::ColdLoaded);
+                vac.insert(acc);
                 true
             }
         };
@@ -482,7 +482,7 @@ impl SubRoutine {
     }
 
     pub fn load_code<DB: Database>(&mut self, address: H160, db: &mut DB) -> (&mut Account, bool) {
-        let is_cold = self.load_account(address.clone(), db);
+        let is_cold = self.load_account(address, db);
         let acc = self.state.get_mut(&address).unwrap();
         let dont_load_from_db = matches!(
             acc.filth,
@@ -503,7 +503,7 @@ impl SubRoutine {
     pub fn sload<DB: Database>(&mut self, address: H160, index: H256, db: &mut DB) -> (H256, bool) {
         let acc = self.state.get_mut(&address).unwrap(); // asume acc is hot
         let load = match acc.storage.entry(index) {
-            Entry::Occupied(occ) => (occ.get().clone(), false),
+            Entry::Occupied(occ) => (*occ.get(), false),
             // add slot to ColdLoaded in changelog
             Entry::Vacant(vac) => {
                 // if storage was destroyed, we dont need to ping db.

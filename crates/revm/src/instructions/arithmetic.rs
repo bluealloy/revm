@@ -58,7 +58,6 @@ pub fn addmod(op1: U256, op2: U256, op3: U256) -> U256 {
 
 #[inline(always)]
 pub fn mulmod(op1: U256, op2: U256, op3: U256) -> U256 {
-
     if op3 == U256::zero() {
         U256::zero()
     } else {

@@ -61,9 +61,10 @@ impl AccountInfo {
     }
 
     pub fn from_balance(balance: U256) -> Self {
-        let mut def = Self::default();
-        def.balance = balance;
-        def
+        AccountInfo {
+            balance,
+            ..Default::default()
+        }
     }
 }
 

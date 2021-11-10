@@ -216,16 +216,18 @@ pub fn execute_test_suit(
                 // do the deed
 
                 let timer = Instant::now();
-                let (ret, _out, gas) = evm.transact_commit();//&mut *inspector);
+                let (ret, _out, gas) = evm.transact_commit(); //&mut *inspector);
                 let timer = timer.elapsed();
 
                 *elapsed.lock().unwrap() += timer;
                 let db = evm.db().unwrap();
                 let state_root = merkle_trie_root(db.cache(), db.storage());
                 if test.hash != state_root {
-                    
                     println!("{:?} UNIT_TEST:{}\n", path, name);
-                    println!("fail reson: {:?} {:?} UNIT_TEST:{}\n gas:{:?}", ret, path, name, gas);
+                    println!(
+                        "fail reson: {:?} {:?} UNIT_TEST:{}\n gas:{:?}",
+                        ret, path, name, gas
+                    );
                     //break;
                     println!("\nApplied state:{:?}\n", db);
                     println!("\nStateroot: {:?}\n", state_root);
