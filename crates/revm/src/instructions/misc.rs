@@ -168,9 +168,9 @@ pub fn jumpdest(machine: &mut Machine) -> Control {
 }
 
 #[inline(always)]
-pub fn pc(machine: &mut Machine, position: usize) -> Control {
+pub fn pc(machine: &mut Machine) -> Control {
     gas!(machine, gas::BASE);
-    push_u256!(machine, U256::from(position));
+    push_u256!(machine, U256::from(machine.program_counter));
     Control::Continue
 }
 
@@ -183,9 +183,10 @@ pub fn msize(machine: &mut Machine) -> Control {
 
 // code padding is needed for contracts
 #[inline(always)]
-pub fn push<const N: usize>(machine: &mut Machine, position: usize) -> Control {
+pub fn push<const N: usize>(machine: &mut Machine) -> Control {
     gas!(machine, gas::VERYLOW);
-    let slice = &machine.contract.code[position + 1..position + 1 + N];
+    let position = machine.program_counter+1;
+    let slice = &machine.contract.code[position..position + N];
 
     try_or_fail!(machine.stack.push_slice::<N>(slice));
     Control::ContinueN(N + 1)

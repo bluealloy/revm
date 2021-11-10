@@ -187,7 +187,7 @@ impl Machine {
         }
     }
 
-    #[inline]
+    #[inline(always)]
     /// Step the machine, executing one opcode. It then returns.
     pub fn step<H: Handler, SPEC: Spec>(&mut self, handler: &mut H) -> Result<(), ExitReason> {
         if H::INSPECT {
@@ -197,7 +197,7 @@ impl Machine {
         let opcode = self.contract.opcode(self.program_counter)?;
 
         // evaluate opcode/execute instruction
-        let mut eval = eval::<H, SPEC>(self, opcode, self.program_counter, handler);
+        let mut eval = eval::<H, SPEC>(self, opcode, handler);
         if H::INSPECT {
             handler.inspect().eval(&mut eval, self);
         }

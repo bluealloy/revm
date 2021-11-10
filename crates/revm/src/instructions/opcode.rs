@@ -164,7 +164,7 @@ impl OpCode {
         if let Some(str) = OPCODE_JUMPMAP[self.0 as usize] {
             str
         } else {
-            "unreachable!()"
+            "unknown"
         }
     }
 
