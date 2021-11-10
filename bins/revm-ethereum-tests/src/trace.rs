@@ -21,7 +21,7 @@ impl Inspector for CustomPrintTracer {
             machine.gas.remaining(),
             machine.gas.remaining(),
             //opcode,
-            opcode.as_u8(),
+            opcode.u8(),
             machine.gas.refunded(),
             machine.gas.refunded(),
             machine.stack.data(),

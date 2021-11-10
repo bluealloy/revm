@@ -1,9 +1,9 @@
-mod spec;
+mod spec_impl;
 
 use core::convert::TryFrom;
 use num_enum::TryFromPrimitive;
 use revm_precompiles::SpecId as PrecompileId;
-pub use spec::*;
+pub use spec_impl::*;
 
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, TryFromPrimitive)]

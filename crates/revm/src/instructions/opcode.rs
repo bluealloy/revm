@@ -164,12 +164,12 @@ impl OpCode {
         if let Some(str) = OPCODE_JUMPMAP[self.0 as usize] {
             str
         } else {
-            &"unreachable!()"
+            "unreachable!()"
         }
     }
 
     #[inline(always)]
-    pub const fn as_u8(self) -> u8 {
+    pub const fn u8(self) -> u8 {
         self.0
     }
 }

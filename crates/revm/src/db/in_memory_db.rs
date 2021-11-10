@@ -21,6 +21,17 @@ pub struct InMemoryDB {
     logs: Vec<Log>,
 }
 
+impl Default for InMemoryDB {
+    fn default() -> Self {
+        Self {
+            cache: Map::new(),
+            storage: Map::new(),
+            contracts: Map::new(),
+            logs: Vec::default(),
+        }
+    }
+}
+
 impl InMemoryDB {
     pub fn cache(&self) -> &Map<H160, AccountInfo> {
         &self.cache
@@ -54,10 +65,8 @@ impl InMemoryDB {
         contracts.insert(KECCAK_EMPTY, Bytes::new());
         contracts.insert(H256::zero(), Bytes::new());
         Self {
-            cache: Map::new(),
-            storage: Map::new(),
             contracts,
-            logs: Vec::new(),
+            ..core::default::Default::default()
         }
     }
 

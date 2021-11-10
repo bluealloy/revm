@@ -216,7 +216,7 @@ pub fn execute_test_suit(
                 // do the deed
 
                 let timer = Instant::now();
-                let (ret, _out, gas) = evm.transact_commit(); //&mut *inspector);
+                let (ret, _out, gas) = evm.inspect_commit(&mut *inspector);
                 let timer = timer.elapsed();
 
                 *elapsed.lock().unwrap() += timer;

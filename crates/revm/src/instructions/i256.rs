@@ -144,9 +144,6 @@ mod tests {
         assert_eq!(Wrapping(i8::MIN) / Wrapping(-1), Wrapping(i8::MIN));
         assert_eq!(i8::MAX / -1, -i8::MAX);
 
-        assert_eq!(100i8 / -1, -100i8);
-        assert_eq!(100i8 / 2, 50i8);
-
         // Now the same calculations based on i256
         let one = I256(Sign::Zero, U256::from(1));
         let one_hundred = I256(Sign::Zero, U256::from(100));

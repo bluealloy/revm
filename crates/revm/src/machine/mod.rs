@@ -1,5 +1,7 @@
-mod contract;
+#[allow(clippy::module_inception)]
 mod machine;
+
+mod contract;
 mod memory;
 mod stack;
 

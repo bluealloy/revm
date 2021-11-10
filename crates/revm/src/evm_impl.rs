@@ -105,8 +105,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
             gas.record_cost(gas_limit);
         }
 
-        let timer = std::time::Instant::now();
-
         // call inner handling of call/create
         let (exit_reason, ret_gas, out) = match self.env.tx.transact_to {
             TransactTo::Call(address) => {
@@ -135,9 +133,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
                 (exit, ret_gas, TransactOut::Create(bytes, address))
             }
         };
-
-        let elapsed = timer.elapsed();
-        println!("Elapsed inside:{:?}", elapsed);
 
         if crate::USE_GAS {
             gas.reimburse_unspend(&exit_reason, ret_gas);

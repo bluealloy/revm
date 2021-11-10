@@ -34,9 +34,14 @@ pub fn eval<H: Handler, S: Spec>(
     position: usize,
     handler: &mut H,
 ) -> Control {
-    let opcode = opcode.as_u8();
+    let opcode = opcode.u8();
     // let time = std::time::Instant::now();
-    let out = match opcode {
+
+    // let times = &mut machine.times[opcode as usize];
+    // times.0 += time.elapsed();
+    // times.1 += 1;
+
+    match opcode {
         opcode::STOP => Control::Exit(ExitSucceed::Stopped.into()),
         opcode::ADD => op2_u256_tuple!(machine, overflowing_add, gas::VERYLOW),
         opcode::MUL => op2_u256_tuple!(machine, overflowing_mul, gas::LOW),
@@ -198,10 +203,5 @@ pub fn eval<H: Handler, S: Spec>(
         opcode::STATICCALL => system::call::<H, S>(machine, CallScheme::StaticCall, handler), //check
         opcode::CHAINID => system::chainid::<H, S>(machine, handler),
         _ => Control::Exit(ExitReason::Error(ExitError::OpcodeNotFound)),
-    };
-    // let times = &mut machine.times[opcode as usize];
-    // times.0 += time.elapsed();
-    // times.1 += 1;
-
-    out
+    }
 }

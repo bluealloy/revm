@@ -33,6 +33,12 @@ pub fn new<DB>() -> EVM<DB> {
     EVM::new()
 }
 
+impl<DB> Default for EVM<DB> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<DB: Database + DatabaseCommit> EVM<DB> {
     /// Execute transaction and apply result to database
     pub fn transact_commit(&mut self) -> (ExitReason, TransactOut, u64) {

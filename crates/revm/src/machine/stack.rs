@@ -9,6 +9,12 @@ pub struct Stack {
     data: Vec<H256>,
 }
 
+impl Default for Stack {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Stack {
     /// Create a new stack with given limit.
     pub fn new() -> Self {
@@ -87,7 +93,7 @@ impl Stack {
             unsafe {
                 let new_len = len + 1;
                 self.data.set_len(new_len);
-                *self.data.get_unchecked_mut(len) = self.data.get_unchecked(len - N).clone();
+                *self.data.get_unchecked_mut(len) = *self.data.get_unchecked(len - N);
             }
             Ok(())
         }
