@@ -1,6 +1,6 @@
 use crate::{alloc::vec::Vec, instructions::eval};
 use bytes::Bytes;
-use core::{cmp::max, ops::Range};
+use core::ops::Range;
 use primitive_types::U256;
 
 use super::{contract::Contract, memory::Memory, stack::Stack};
@@ -26,6 +26,7 @@ pub struct Machine {
     pub gas: Gas,
     /// used only for inspector.
     pub call_depth: u64,
+    pub times: [(std::time::Duration, usize); 256],
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -34,6 +35,7 @@ pub struct Gas {
     used: u64,
     memory: u64,
     refunded: i64,
+    all_used_gas: u64,
 }
 impl Gas {
     pub fn new(limit: u64) -> Self {
@@ -42,6 +44,7 @@ impl Gas {
             used: 0,
             memory: 0,
             refunded: 0,
+            all_used_gas: 0,
         }
     }
 
@@ -58,10 +61,6 @@ impl Gas {
         }
     }
 
-    pub fn limit_mut(&mut self) -> &mut u64 {
-        &mut self.limit
-    }
-
     pub fn limit(&self) -> u64 {
         self.limit
     }
@@ -75,15 +74,16 @@ impl Gas {
     }
 
     pub fn spend(&self) -> u64 {
-        self.used + self.memory
+        self.all_used_gas
     }
 
     pub fn remaining(&self) -> u64 {
-        (self.limit - self.used) - self.memory
+        self.limit - self.all_used_gas
     }
 
     pub fn erase_cost(&mut self, returned: u64) {
         self.used -= returned;
+        self.all_used_gas -= returned;
     }
 
     pub fn record_refund(&mut self, refund: i64) {
@@ -93,24 +93,27 @@ impl Gas {
     /// Record an explict cost.
     #[inline(always)]
     pub fn record_cost(&mut self, cost: u64) -> bool {
-        let all_used_gas: u128 = self.used as u128 + self.memory as u128 + cost as u128;
-        if (self.limit as u128) < all_used_gas {
+        let (all_used_gas, overflow) = self.all_used_gas.overflowing_add(cost);
+        if overflow || self.limit < all_used_gas {
             return false;
         }
 
         self.used += cost;
+        self.all_used_gas = all_used_gas;
         true
     }
 
     /// used in memory_resize! macro
     #[inline(always)]
     pub fn record_memory(&mut self, gas_memory: u64) -> bool {
-        let max_memory = max(self.memory, gas_memory);
-        let all_used_gas: u128 = self.used as u128 + gas_memory as u128;
-        if (self.limit as u128) < all_used_gas {
-            return false;
+        if gas_memory > self.memory {
+            let (all_used_gas, overflow) = self.used.overflowing_add(gas_memory);
+            if overflow || self.limit < all_used_gas {
+                return false;
+            }
+            self.memory = gas_memory;
+            self.all_used_gas = all_used_gas;
         }
-        self.memory = max_memory;
         true
     }
 
@@ -126,11 +129,12 @@ impl Machine {
             program_counter: 0,
             return_range: Range::default(),
             memory: Memory::new(usize::MAX),
-            stack: Stack::new(STACK_LIMIT as usize),
+            stack: Stack::new(),
             return_data_buffer: Bytes::new(),
             contract,
             gas: Gas::new(gas_limit),
             call_depth,
+            times: [(std::time::Duration::ZERO, 0); 256],
         }
     }
     pub fn contract(&self) -> &Contract {
@@ -153,14 +157,31 @@ impl Machine {
 
     /// loop steps until we are finished with execution
     pub fn run<H: Handler, SPEC: Spec>(&mut self, handler: &mut H) -> ExitReason {
-        let timer = std::time::Instant::now();
+        //let timer = std::time::Instant::now();
         loop {
             if let Err(reason) = self.step::<H, SPEC>(handler) {
                 if H::INSPECT {
                     handler.inspect().call_return(reason.clone());
                 }
-                let elapsed = timer.elapsed();
-                println!("run took:{:?}", elapsed);
+                // let elapsed = timer.elapsed();
+                // println!("run took:{:?}", elapsed);
+                // let mut it = self
+                //     .times
+                //     .iter()
+                //     .zip(OPCODE_JUMPMAP.iter())
+                //     .filter(|((time, _), opcode)| opcode.is_some() && !time.is_zero())
+                //     .map(|((dur, num), code)| (code.unwrap(), dur, num, *dur / *num as u32))
+                //     .collect::<Vec<_>>();
+                // it.sort_by(|a, b| a.3.cmp(&b.3));
+                // for i in it {
+                //     println!(
+                //         "code:{:?}   called:{:?}   time:{:?}   avrg:{:?}",
+                //         i.0,
+                //         i.2,
+                //         i.1,
+                //         i.3,
+                //     );
+                // }
                 return reason;
             }
         }

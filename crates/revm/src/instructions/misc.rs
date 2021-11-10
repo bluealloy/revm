@@ -5,7 +5,6 @@ use crate::{
     Spec,
     SpecId::*,
 };
-use core::cmp::min;
 use primitive_types::{H256, U256};
 
 #[inline(always)]
@@ -182,35 +181,28 @@ pub fn msize(machine: &mut Machine) -> Control {
     Control::Continue
 }
 
+// code padding is needed for contracts
 #[inline(always)]
-pub fn push(machine: &mut Machine, n: usize, position: usize) -> Control {
+pub fn push<const N: usize>(machine: &mut Machine, position: usize) -> Control {
     gas!(machine, gas::VERYLOW);
-    let end = min(position + 1 + n, machine.contract.code.len());
-    let slice = &machine.contract.code[(position + 1)..end];
-    let mut val = [0u8; 32];
-    val[(32 - slice.len())..32].copy_from_slice(slice);
+    let slice = &machine.contract.code[position + 1..position + 1 + N];
 
-    push!(machine, H256(val));
-    Control::ContinueN(1 + n)
+    try_or_fail!(machine.stack.push_slice::<N>(slice));
+    Control::ContinueN(N + 1)
 }
 
 #[inline(always)]
-pub fn dup(machine: &mut Machine, n: usize) -> Control {
+pub fn dup<const N: usize>(machine: &mut Machine) -> Control {
     gas!(machine, gas::VERYLOW);
 
-    let value = try_or_fail!(machine.stack.peek(n - 1));
-    push!(machine, value);
+    try_or_fail!(machine.stack.dup::<N>());
     Control::Continue
 }
 
 #[inline(always)]
-pub fn swap(machine: &mut Machine, n: usize) -> Control {
+pub fn swap<const N: usize>(machine: &mut Machine) -> Control {
     gas!(machine, gas::VERYLOW);
-
-    let val1 = try_or_fail!(machine.stack.peek(0));
-    let val2 = try_or_fail!(machine.stack.peek(n));
-    try_or_fail!(machine.stack.set(0, val2));
-    try_or_fail!(machine.stack.set(n, val1));
+    try_or_fail!(machine.stack.swap::<N>());
     Control::Continue
 }
 

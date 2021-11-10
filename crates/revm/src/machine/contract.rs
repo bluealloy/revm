@@ -21,7 +21,15 @@ pub struct Contract {
 
 impl Contract {
     pub fn new(input: Bytes, code: Bytes, address: H160, caller: H160, value: U256) -> Self {
-        let jumpdest = ValidJumpAddress::new(code.as_ref());
+        let (jumpdest, padding) = Self::analize(code.as_ref());
+
+        let code = if padding != 0 {
+            let mut code = code.to_vec();
+            code.resize(code.len() + padding, 0);
+            code.into()
+        } else {
+            code
+        };
         Self {
             input,
             code,
@@ -30,6 +38,32 @@ impl Contract {
             value,
             jumpdest,
         }
+    }
+
+    /// Create a new valid mapping from given code bytes.
+    /// it gives back ValidJumpAddress and size od needed paddings.
+    fn analize(code: &[u8]) -> (ValidJumpAddress, usize) {
+        let mut jumps: Vec<bool> = Vec::with_capacity(code.len());
+        jumps.resize(code.len(), false);
+        let mut is_push_last = false;
+        let mut i = 0;
+        while i < code.len() {
+            let opcode = code[i] as u8;
+            if opcode == opcode::JUMPDEST as u8 {
+                is_push_last = false;
+                jumps[i] = true;
+                i += 1;
+            } else if let Some(v) = OpCode::is_push(opcode) {
+                is_push_last = true;
+                i += v as usize + 1;
+            } else {
+                is_push_last = false;
+                i += 1;
+            }
+        }
+        let padding = if is_push_last { i - code.len() } else { 0 };
+
+        (ValidJumpAddress(jumps), padding)
     }
 
     pub fn is_valid_jump(&self, possition: usize) -> bool {
@@ -68,27 +102,6 @@ impl Contract {
 pub struct ValidJumpAddress(Vec<bool>);
 
 impl ValidJumpAddress {
-    /// Create a new valid mapping from given code bytes.
-    pub fn new(code: &[u8]) -> Self {
-        let mut jumps: Vec<bool> = Vec::with_capacity(code.len());
-        jumps.resize(code.len(), false);
-
-        let mut i = 0;
-        while i < code.len() {
-            let opcode = code[i] as u8;
-            if opcode == opcode::JUMPDEST as u8 {
-                jumps[i] = true;
-                i += 1;
-            } else if let Some(v) = OpCode::is_push(opcode) {
-                i += v as usize + 1;
-            } else {
-                i += 1;
-            }
-        }
-
-        Self(jumps)
-    }
-
     /// Get the length of the valid mapping. This is the same as the
     /// code bytes.
     #[inline]
@@ -110,5 +123,21 @@ impl ValidJumpAddress {
         }
 
         self.0[position]
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn analize_padding_dummy() {
+        let (_, padding) = Contract::analize(&[opcode::CODESIZE, opcode::PUSH1, 0x00]);
+        assert_eq!(padding, 0, "Padding should be zero");
+    }
+    #[test]
+    fn analize_padding_two_missing() {
+        let (_, padding) = Contract::analize(&[opcode::CODESIZE, opcode::PUSH3, 0x00]);
+        assert_eq!(padding, 2, "Padding should be zero");
     }
 }

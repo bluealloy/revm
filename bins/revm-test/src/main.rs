@@ -2,7 +2,7 @@ use std::{str::FromStr, time::Instant};
 
 use bytes::Bytes;
 use primitive_types::{H160, U256};
-use revm::{AccountInfo, InMemoryDB, TransactOut, TransactTo, KECCAK_EMPTY};
+use revm::{AccountInfo, InMemoryDB, TransactTo, KECCAK_EMPTY};
 
 extern crate alloc;
 
@@ -15,7 +15,7 @@ pub fn simple_example() {
     let mut evm = revm::new();
     evm.database(InMemoryDB::new());
     evm.db().unwrap().insert_cache(
-        caller.clone(),
+        caller,
         AccountInfo {
             nonce: 1,
             balance: U256::from(10000000),
@@ -24,7 +24,7 @@ pub fn simple_example() {
         },
     );
     evm.db().unwrap().insert_cache(
-        contract.clone(),
+        contract,
         AccountInfo {
             nonce: 1,
             balance: U256::from(10000000),
@@ -34,7 +34,7 @@ pub fn simple_example() {
     );
 
     // execution globals block hash/gas_limit/coinbase/timestamp..
-    evm.env.tx.caller = caller.clone();
+    evm.env.tx.caller = caller;
 
     evm.env.tx.transact_to = TransactTo::Call(contract);
     evm.env.tx.data = Bytes::from(hex::decode("30627b7c").unwrap());
@@ -44,16 +44,17 @@ pub fn simple_example() {
     let elapsed = timer.elapsed();
     println!("first call({:?}): {:?}\n", elapsed, (a, b, c));
 
+    /*
     evm.env.tx.data = Bytes::from(hex::decode("190000000000000000000000000000000000000000000000000000000000000018000000000000000000000000000000000000000000000000000000000000006300000000000000000000000000000000000000000000000000000000000000").unwrap());
 
     let timer = Instant::now();
     let (a, b, c, _) = evm.transact();
     let elapsed = timer.elapsed();
     println!("second call({:?}): {:?}\n", elapsed, (a, b, c));
+    */
 }
 
 fn main() {
     println!("Hello, world!");
     simple_example();
-    return;
 }

@@ -35,7 +35,8 @@ pub fn eval<H: Handler, S: Spec>(
     handler: &mut H,
 ) -> Control {
     let opcode = opcode.as_u8();
-    match opcode {
+    // let time = std::time::Instant::now();
+    let out = match opcode {
         opcode::STOP => Control::Exit(ExitSucceed::Stopped.into()),
         opcode::ADD => op2_u256_tuple!(machine, overflowing_add, gas::VERYLOW),
         opcode::MUL => op2_u256_tuple!(machine, overflowing_mul, gas::LOW),
@@ -91,13 +92,72 @@ pub fn eval<H: Handler, S: Spec>(
         opcode::PC => misc::pc(machine, position),
         opcode::MSIZE => misc::msize(machine),
         opcode::JUMPDEST => misc::jumpdest(machine),
-        opcode::PUSH1..=opcode::PUSH32 => {
-            misc::push(machine, (1 + opcode - opcode::PUSH1) as usize, position)
-        }
-        opcode::DUP1..=opcode::DUP16 => misc::dup(machine, (1 + opcode - opcode::DUP1) as usize),
-        opcode::SWAP1..=opcode::SWAP16 => {
-            misc::swap(machine, (1 + opcode - opcode::SWAP1) as usize)
-        }
+        opcode::PUSH1 => misc::push::<1>(machine, position),
+        opcode::PUSH2 => misc::push::<2>(machine, position),
+        opcode::PUSH3 => misc::push::<3>(machine, position),
+        opcode::PUSH4 => misc::push::<4>(machine, position),
+        opcode::PUSH5 => misc::push::<5>(machine, position),
+        opcode::PUSH6 => misc::push::<6>(machine, position),
+        opcode::PUSH7 => misc::push::<7>(machine, position),
+        opcode::PUSH8 => misc::push::<8>(machine, position),
+        opcode::PUSH9 => misc::push::<9>(machine, position),
+        opcode::PUSH10 => misc::push::<10>(machine, position),
+        opcode::PUSH11 => misc::push::<11>(machine, position),
+        opcode::PUSH12 => misc::push::<12>(machine, position),
+        opcode::PUSH13 => misc::push::<13>(machine, position),
+        opcode::PUSH14 => misc::push::<14>(machine, position),
+        opcode::PUSH15 => misc::push::<15>(machine, position),
+        opcode::PUSH16 => misc::push::<16>(machine, position),
+        opcode::PUSH17 => misc::push::<17>(machine, position),
+        opcode::PUSH18 => misc::push::<18>(machine, position),
+        opcode::PUSH19 => misc::push::<19>(machine, position),
+        opcode::PUSH20 => misc::push::<20>(machine, position),
+        opcode::PUSH21 => misc::push::<21>(machine, position),
+        opcode::PUSH22 => misc::push::<22>(machine, position),
+        opcode::PUSH23 => misc::push::<23>(machine, position),
+        opcode::PUSH24 => misc::push::<24>(machine, position),
+        opcode::PUSH25 => misc::push::<25>(machine, position),
+        opcode::PUSH26 => misc::push::<26>(machine, position),
+        opcode::PUSH27 => misc::push::<27>(machine, position),
+        opcode::PUSH28 => misc::push::<28>(machine, position),
+        opcode::PUSH29 => misc::push::<29>(machine, position),
+        opcode::PUSH30 => misc::push::<30>(machine, position),
+        opcode::PUSH31 => misc::push::<31>(machine, position),
+        opcode::PUSH32 => misc::push::<32>(machine, position),
+        opcode::DUP1 => misc::dup::<1>(machine),
+        opcode::DUP2 => misc::dup::<2>(machine),
+        opcode::DUP3 => misc::dup::<3>(machine),
+        opcode::DUP4 => misc::dup::<4>(machine),
+        opcode::DUP5 => misc::dup::<5>(machine),
+        opcode::DUP6 => misc::dup::<6>(machine),
+        opcode::DUP7 => misc::dup::<7>(machine),
+        opcode::DUP8 => misc::dup::<8>(machine),
+        opcode::DUP9 => misc::dup::<9>(machine),
+        opcode::DUP10 => misc::dup::<10>(machine),
+        opcode::DUP11 => misc::dup::<11>(machine),
+        opcode::DUP12 => misc::dup::<12>(machine),
+        opcode::DUP13 => misc::dup::<13>(machine),
+        opcode::DUP14 => misc::dup::<14>(machine),
+        opcode::DUP15 => misc::dup::<15>(machine),
+        opcode::DUP16 => misc::dup::<16>(machine),
+
+        opcode::SWAP1 => misc::swap::<1>(machine),
+        opcode::SWAP2 => misc::swap::<2>(machine),
+        opcode::SWAP3 => misc::swap::<3>(machine),
+        opcode::SWAP4 => misc::swap::<4>(machine),
+        opcode::SWAP5 => misc::swap::<5>(machine),
+        opcode::SWAP6 => misc::swap::<6>(machine),
+        opcode::SWAP7 => misc::swap::<7>(machine),
+        opcode::SWAP8 => misc::swap::<8>(machine),
+        opcode::SWAP9 => misc::swap::<9>(machine),
+        opcode::SWAP10 => misc::swap::<10>(machine),
+        opcode::SWAP11 => misc::swap::<11>(machine),
+        opcode::SWAP12 => misc::swap::<12>(machine),
+        opcode::SWAP13 => misc::swap::<13>(machine),
+        opcode::SWAP14 => misc::swap::<14>(machine),
+        opcode::SWAP15 => misc::swap::<15>(machine),
+        opcode::SWAP16 => misc::swap::<16>(machine),
+
         opcode::RETURN => misc::ret(machine),
         opcode::REVERT => misc::revert::<S>(machine),
         opcode::INVALID => Control::Exit(ExitError::DesignatedInvalid.into()),
@@ -138,5 +198,10 @@ pub fn eval<H: Handler, S: Spec>(
         opcode::STATICCALL => system::call::<H, S>(machine, CallScheme::StaticCall, handler), //check
         opcode::CHAINID => system::chainid::<H, S>(machine, handler),
         _ => Control::Exit(ExitReason::Error(ExitError::OpcodeNotFound)),
-    }
+    };
+    // let times = &mut machine.times[opcode as usize];
+    // times.0 += time.elapsed();
+    // times.1 += 1;
+
+    out
 }
