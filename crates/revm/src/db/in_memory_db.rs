@@ -80,7 +80,7 @@ impl DatabaseCommit for InMemoryDB {
                 self.storage.remove(&add);
             } else {
                 self.insert_cache(add, acc.info);
-                let storage = self.storage.entry(add.clone()).or_default();
+                let storage = self.storage.entry(add).or_default();
                 if acc.filth.abandon_old_storage() {
                     storage.clear();
                 }
@@ -126,7 +126,7 @@ impl Database for InMemoryDB {
         if self.fetch_account(&address) {
             if let Some(storage) = self.storage.get(&address) {
                 if let Some(slot) = storage.get(&index) {
-                    return slot.clone();
+                    return *slot;
                 }
             }
             H256::zero()

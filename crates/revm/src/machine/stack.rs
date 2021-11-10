@@ -51,12 +51,12 @@ impl Stack {
     #[inline(always)]
     /**** SAFETY ********
      * caller is responsible to check length of array
-     */ 
+     */
     pub unsafe fn pop_unsafe(&mut self) -> H256 {
         let mut len = self.data.len();
         len -= 1;
         self.data.set_len(len);
-        self.data.get_unchecked(len).clone()
+        *self.data.get_unchecked(len)
     }
 
     #[inline]

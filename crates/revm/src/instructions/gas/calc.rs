@@ -129,15 +129,13 @@ pub fn extcodecopy_cost<SPEC: Spec>(len: U256, is_cold: bool) -> Option<u64> {
     } else {
         20
     };
-    let gas = U256::from(
-        U256::from(base_gas).checked_add(U256::from(COPY).checked_mul(
-            if wordr == U256::zero() {
-                wordd
-            } else {
-                wordd + U256::one()
-            },
-        )?)?,
-    );
+    let gas = U256::from(base_gas).checked_add(U256::from(COPY).checked_mul(
+        if wordr == U256::zero() {
+            wordd
+        } else {
+            wordd + U256::one()
+        },
+    )?)?;
 
     if gas > U256::from(u64::MAX) {
         return None;

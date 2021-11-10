@@ -104,7 +104,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
         if crate::USE_GAS {
             gas.record_cost(gas_limit);
         }
-        
+
         let timer = std::time::Instant::now();
 
         // call inner handling of call/create
@@ -136,7 +136,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
             }
         };
         let elapsed = timer.elapsed();
-        println!("Elapsed inside:{:?}",elapsed);
+        println!("Elapsed inside:{:?}", elapsed);
         if crate::USE_GAS {
             gas.reimburse_unspend(&exit_reason, ret_gas);
         }
@@ -156,7 +156,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     ) -> Self {
         let mut precompile_acc = Map::new();
         for (add, _) in precompiles.as_slice() {
-            precompile_acc.insert(add.clone(), db.basic(add.clone()));
+            precompile_acc.insert(*add, db.basic(*add));
         }
         Self {
             db,
@@ -214,7 +214,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let access_list = self.env.tx.access_list.clone();
         for (ward_acc, _) in self.precompiles.as_slice() {
             //TODO trace load precompiles?
-            self.subroutine.load_account(ward_acc.clone(), self.db);
+            self.subroutine.load_account(*ward_acc, self.db);
         }
 
         if crate::USE_GAS {
@@ -222,7 +222,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             let non_zero_data_len = (input.len() as u64 - zero_data_len) as u64;
             let (accessed_accounts, accessed_slots) = {
                 if SPEC::enabled(BERLIN) {
-                    let mut accessed_slots = 0 as u64;
+                    let mut accessed_slots = 0_u64;
                     let accessed_accounts = access_list.len() as u64;
 
                     for (address, slots) in access_list {
@@ -459,7 +459,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Handler
     const INSPECT: bool = INSPECT;
 
     fn env(&self) -> &Env {
-        &self.env
+        self.env
     }
 
     fn inspect(&mut self) -> &mut dyn Inspector {

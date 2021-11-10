@@ -142,8 +142,6 @@ mod tests {
         // Sanity checks based on i8. Notice that we need to use `Wrapping` here because
         // Rust will prevent the overflow by default whereas the EVM does not.
         assert_eq!(Wrapping(i8::MIN) / Wrapping(-1), Wrapping(i8::MIN));
-        assert_eq!(i8::MIN / 1, i8::MIN);
-        assert_eq!(i8::MAX / 1, i8::MAX);
         assert_eq!(i8::MAX / -1, -i8::MAX);
 
         assert_eq!(100i8 / -1, -100i8);
