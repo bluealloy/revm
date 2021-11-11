@@ -1,4 +1,4 @@
-use crate::{alloc::vec::Vec, error::ExitError};
+use crate::{Return, alloc::vec::Vec, error::ExitError};
 use primitive_types::H256;
 
 pub const STACK_LIMIT: usize = 1024;
@@ -83,27 +83,27 @@ impl Stack {
     }
 
     #[inline(always)]
-    pub fn dup<const N: usize>(&mut self) -> Result<(), ExitError> {
+    pub fn dup<const N: usize>(&mut self) -> Return {
         let len = self.data.len();
         if len < N {
-            Err(ExitError::StackUnderflow)
+            Return::StackUnderflow
         } else if len + 1 > STACK_LIMIT {
-            Err(ExitError::StackOverflow)
+            Return::StackOverflow
         } else {
             unsafe {
                 let new_len = len + 1;
                 self.data.set_len(new_len);
                 *self.data.get_unchecked_mut(len) = *self.data.get_unchecked(len - N);
             }
-            Ok(())
+            Return::OK
         }
     }
 
     #[inline(always)]
-    pub fn swap<const N: usize>(&mut self) -> Result<(), ExitError> {
+    pub fn swap<const N: usize>(&mut self) -> Return {
         let len = self.data.len();
         if len <= N {
-            return Err(ExitError::StackUnderflow);
+            return Return::StackUnderflow;
         }
         // SAFETY: length is checked before so we are okay to switch bytes in unsafe way.
         unsafe {
@@ -111,15 +111,15 @@ impl Stack {
             let pb: *mut H256 = self.data.get_unchecked_mut(len - 1 - N);
             core::ptr::swap(pa, pb);
         }
-        Ok(())
+        Return::OK
     }
 
     /// push slice onto memory it is expected to be max 32 bytes and be contains inside H256
     #[inline(always)]
-    pub fn push_slice<const N: usize>(&mut self, slice: &[u8]) -> Result<(), ExitError> {
+    pub fn push_slice<const N: usize>(&mut self, slice: &[u8]) -> Result<(), Return> {
         let new_len = self.data.len() + 1;
         if new_len > STACK_LIMIT {
-            return Err(ExitError::StackOverflow);
+            return Err(Return::StackOverflow);
         }
         unsafe {
             self.data.set_len(new_len);

@@ -1,6 +1,6 @@
 use primitive_types::{H160, H256, U256};
 use revm::ExitReason;
-pub use revm::{Control, Inspector};
+pub use revm::Inspector;
 
 #[derive(Clone)]
 pub struct CustomPrintTracer {}
@@ -33,7 +33,7 @@ impl Inspector for CustomPrintTracer {
         println!("ACCOUNT LOADED:{:?}", address);
     }
 
-    fn eval(&mut self, _eval: &mut Control, _machine: &mut revm::Machine) {}
+    fn eval(&mut self, _eval: &Result<(),ExitReason>, _machine: &mut revm::Machine) {}
 
     fn sload(&mut self, address: &H160, slot: &H256, value: &H256, is_cold: bool) {
         println!(

@@ -1,15 +1,4 @@
-use crate::{
-    db::Database,
-    error::{ExitError, ExitReason, ExitSucceed},
-    instructions::gas,
-    machine,
-    machine::{Contract, Gas, Machine},
-    models::SelfDestructResult,
-    spec::{Spec, SpecId::*},
-    subroutine::{Account, State, SubRoutine},
-    util, CallContext, CreateScheme, Env, ExitRevert, Inspector, Log, TransactOut, TransactTo,
-    Transfer, KECCAK_EMPTY,
-};
+use crate::{CallContext, CreateScheme, Env, Inspector, KECCAK_EMPTY, Log, Return, TransactOut, TransactTo, Transfer, db::Database, instructions::gas, machine, machine::{Contract, Gas, Machine}, models::SelfDestructResult, spec::{Spec, SpecId::*}, subroutine::{Account, State, SubRoutine}, util};
 use alloc::vec::Vec;
 use bytes::Bytes;
 use core::{cmp::min, marker::PhantomData};
@@ -29,19 +18,19 @@ pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
 
 pub trait Transact {
     /// Do transaction.
-    /// Return ExitReason, Output for call or Address if we are creating contract, gas spend, State that needs to be applied.
-    fn transact(&mut self) -> (ExitReason, TransactOut, u64, State);
+    /// Return Return, Output for call or Address if we are creating contract, gas spend, State that needs to be applied.
+    fn transact(&mut self) -> (Return, TransactOut, u64, State);
 }
 
 impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
     for EVMImpl<'a, GSPEC, DB, INSPECT>
 {
-    fn transact(&mut self) -> (ExitReason, TransactOut, u64, State) {
+    fn transact(&mut self) -> (Return, TransactOut, u64, State) {
         let caller = self.env.tx.caller;
         let value = self.env.tx.value;
         let data = self.env.tx.data.clone();
         let gas_limit = self.env.tx.gas_limit;
-        let exit_error = |reason: ExitReason| (reason, TransactOut::None, 0, State::new());
+        let exit_error = |reason: Return| (reason, TransactOut::None, 0, State::new());
 
         if GSPEC::enabled(LONDON) {
             if let Some(priority_fee) = self.env.tx.gas_priority_fee {
@@ -169,7 +158,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         &mut self,
         caller: H160,
         gas: &Gas,
-    ) -> Result<Map<H160, Account>, ExitReason> {
+    ) -> Result<Map<H160, Account>, Return> {
         let coinbase = self.env.block.coinbase;
         if crate::USE_GAS {
             let effective_gas_price = self.env.effective_gas_price();
@@ -267,7 +256,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         value: U256,
         init_code: Bytes,
         gas_limit: u64,
-    ) -> (ExitReason, Option<H160>, Gas, Bytes) {
+    ) -> (Return, Option<H160>, Gas, Bytes) {
         let gas = Gas::new(gas_limit);
         self.load_account(caller);
 
@@ -324,7 +313,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let exit_reason = machine.run::<Self, SPEC>(self);
         // handler error if present on execution\
         match exit_reason {
-            ExitReason::Succeed(_) => {
+            Return::OK => {
                 let b = Bytes::new();
                 // if ok, check contract creation limit and calculate gas deduction on output len.
                 let code = machine.return_value();
@@ -369,7 +358,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         input: Bytes,
         gas_limit: u64,
         context: CallContext,
-    ) -> (ExitReason, Gas, Bytes) {
+    ) -> (Return, Gas, Bytes) {
         let mut gas = Gas::new(gas_limit);
         // Load account and get code. Account is now hot.
         let (code, _) = self.code(code_address);
@@ -439,7 +428,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             let contract = Contract::new_with_context(input, code, &context);
             let mut machine = Machine::new::<SPEC>(contract, gas_limit, self.subroutine.depth());
             let exit_reason = machine.run::<Self, SPEC>(self);
-            if matches!(exit_reason, ExitReason::Succeed(_)) {
+            if matches!(exit_reason, Return::OK) {
                 self.subroutine.checkpoint_commit();
             } else {
                 self.subroutine.checkpoint_revert(checkpoint);
@@ -538,7 +527,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Handler
         value: U256,
         init_code: Bytes,
         gas: u64,
-    ) -> (ExitReason, Option<H160>, Gas, Bytes) {
+    ) -> (Return, Option<H160>, Gas, Bytes) {
         self.create_inner::<SPEC>(caller, scheme, value, init_code, gas)
     }
 
@@ -549,7 +538,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Handler
         input: Bytes,
         gas: u64,
         context: CallContext,
-    ) -> (ExitReason, Gas, Bytes) {
+    ) -> (Return, Gas, Bytes) {
         self.call_inner::<SPEC>(code_address, transfer, input, gas, context)
     }
 }
@@ -588,7 +577,7 @@ pub trait Handler {
         value: U256,
         init_code: Bytes,
         gas: u64,
-    ) -> (ExitReason, Option<H160>, Gas, Bytes);
+    ) -> (Return, Option<H160>, Gas, Bytes);
 
     /// Invoke a call operation.
     fn call<SPEC: Spec>(
@@ -598,5 +587,5 @@ pub trait Handler {
         input: Bytes,
         gas: u64,
         context: CallContext,
-    ) -> (ExitReason, Gas, Bytes);
+    ) -> (Return, Gas, Bytes);
 }

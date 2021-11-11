@@ -1,4 +1,4 @@
-use crate::{alloc::vec::Vec, CallContext, ExitReason, ExitSucceed};
+use crate::{alloc::vec::Vec, CallContext, Return, ExitSucceed};
 use bytes::Bytes;
 use primitive_types::{H160, U256};
 
@@ -23,12 +23,13 @@ impl Contract {
     pub fn new(input: Bytes, code: Bytes, address: H160, caller: H160, value: U256) -> Self {
         let (jumpdest, padding) = Self::analize(code.as_ref());
 
+        let mut code = code.to_vec();
         let code = if padding != 0 {
-            let mut code = code.to_vec();
-            code.resize(code.len() + padding, 0);
+            code.resize(code.len() + padding+1, 0);
             code.into()
         } else {
-            code
+            code.resize(code.len()+1, 0);
+            code.into()
         };
         Self {
             input,
@@ -78,14 +79,6 @@ impl Contract {
             call_context.caller,
             call_context.apparent_value,
         )
-    }
-
-    pub fn opcode(&self, program_counter: usize) -> Result<u8, ExitReason> {
-        if let Some(opcode_byte) = self.code.get(program_counter) {
-            return Ok(*opcode_byte);
-        } else {
-            return Err(ExitSucceed::Stopped.into());
-        }
     }
 }
 

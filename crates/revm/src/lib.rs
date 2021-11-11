@@ -22,7 +22,7 @@ pub use db::{Database, DatabaseCommit, InMemoryDB};
 pub use error::*;
 pub use evm::{new, EVM};
 pub use inspector::{Inspector, NoOpInspector};
-pub use instructions::Control;
+pub use instructions::Return;
 pub use machine::Machine;
 pub use models::*;
 pub use spec::*;

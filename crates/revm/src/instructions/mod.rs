@@ -11,7 +11,7 @@ mod system;
 pub use opcode::OpCode;
 
 use crate::{
-    error::{ExitError, ExitReason, ExitSucceed},
+    error::{ExitError, Return},
     machine::Machine,
     spec::{Spec, SpecId::*},
     CallScheme, Handler,
@@ -19,20 +19,42 @@ use crate::{
 use core::ops::{BitAnd, BitOr, BitXor};
 use primitive_types::{H256, U256};
 
-#[derive(Clone, Eq, PartialEq, Debug)]
-pub enum Control {
-    Continue,
-    ContinueN(usize),
-    Exit(ExitReason),
-    Jump(usize),
+#[repr(u8)]
+#[derive(Debug, PartialEq, Eq)]
+pub enum Return {
+    //success codes
+    OK = 0x00,
+    Stop = 0x01,
+    Exit = 0x02,   // return opcode
+
+    // revert code
+    Revert = 0x20, // revert opcode
+
+    // error codes
+    
+    OutOfGas = 0x50,
+    OpcodeNotFound,
+    CallNotAllowedInsideStatic,
+    InvalidOpcode,
+    InvalidJump,
+    InvalidMemoryRange,
+    NotActivated,
+    StackUnderflow,
+    StackOverflow,
+    SelfDestructed,
+    OutOfOffset,       //whatt
+    FatalNotSupported, //checkkk
+
+    /// Create init code exceeds limit (runtime).
+    CreateContractLimit,
+    /// Create contract that begins with EF
+    CreateContractWithEF,
+
+    GasMaxFeeGreaterThanPriorityFee
 }
 
 #[inline(always)]
-pub fn eval<H: Handler, S: Spec>(
-    machine: &mut Machine,
-    opcode: u8,
-    handler: &mut H,
-) -> Control {
+pub fn eval<H: Handler, S: Spec>(machine: &mut Machine, opcode: u8, handler: &mut H) -> Return {
     // let time = std::time::Instant::now();
 
     // let times = &mut machine.times[opcode as usize];
@@ -40,7 +62,7 @@ pub fn eval<H: Handler, S: Spec>(
     // times.1 += 1;
 
     match opcode {
-        opcode::STOP => Control::Exit(ExitSucceed::Stopped.into()),
+        opcode::STOP => Return::Stop,
         opcode::ADD => op2_u256_tuple!(machine, overflowing_add, gas::VERYLOW),
         opcode::MUL => op2_u256_tuple!(machine, overflowing_mul, gas::LOW),
         opcode::SUB => op2_u256_tuple!(machine, overflowing_sub, gas::VERYLOW),
@@ -163,7 +185,7 @@ pub fn eval<H: Handler, S: Spec>(
 
         opcode::RETURN => misc::ret(machine),
         opcode::REVERT => misc::revert::<S>(machine),
-        opcode::INVALID => Control::Exit(ExitError::DesignatedInvalid.into()),
+        opcode::INVALID => Return::InvalidOpcode,
         opcode::SHA3 => system::sha3(machine),
         opcode::ADDRESS => system::address(machine),
         opcode::BALANCE => system::balance::<H, S>(machine, handler),
@@ -200,6 +222,6 @@ pub fn eval<H: Handler, S: Spec>(
         opcode::DELEGATECALL => system::call::<H, S>(machine, CallScheme::DelegateCall, handler), //check
         opcode::STATICCALL => system::call::<H, S>(machine, CallScheme::StaticCall, handler), //check
         opcode::CHAINID => system::chainid::<H, S>(machine, handler),
-        _ => Control::Exit(ExitReason::Error(ExitError::OpcodeNotFound)),
+        _ => Return::OpcodeNotFound,
     }
 }
