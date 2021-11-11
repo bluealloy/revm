@@ -5,8 +5,6 @@ mod trace;
 
 use std::{env, path::PathBuf};
 
-use crate::trace::CustomPrintTracer;
-use revm::NoOpInspector;
 
 pub fn main() {
     let args: Vec<String> = env::args().collect();
@@ -23,9 +21,5 @@ pub fn main() {
     };
     let test_files = runner::find_all_json_tests(PathBuf::from(folder_path));
     println!("Start running tests on: {:?}", folder_path);
-    if args.len() == 1 {
-        runner::run(test_files, CustomPrintTracer {})
-    } else {
-        runner::run(test_files, NoOpInspector())
-    }
+    runner::run(test_files);
 }

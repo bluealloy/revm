@@ -1,13 +1,13 @@
 use crate::{
     db::Database,
-    error::{ExitError, ExitReason, ExitSucceed},
     instructions::gas,
     machine,
     machine::{Contract, Gas, Machine},
     models::SelfDestructResult,
+    return_ok,
     spec::{Spec, SpecId::*},
     subroutine::{Account, State, SubRoutine},
-    util, CallContext, CreateScheme, Env, ExitRevert, Inspector, Log, TransactOut, TransactTo,
+    util, CallContext, CreateScheme, Env, Inspector, Log, Return, TransactOut, TransactTo,
     Transfer, KECCAK_EMPTY,
 };
 use alloc::vec::Vec;
@@ -29,25 +29,25 @@ pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
 
 pub trait Transact {
     /// Do transaction.
-    /// Return ExitReason, Output for call or Address if we are creating contract, gas spend, State that needs to be applied.
-    fn transact(&mut self) -> (ExitReason, TransactOut, u64, State);
+    /// Return Return, Output for call or Address if we are creating contract, gas spend, State that needs to be applied.
+    fn transact(&mut self) -> (Return, TransactOut, u64, State);
 }
 
 impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
     for EVMImpl<'a, GSPEC, DB, INSPECT>
 {
-    fn transact(&mut self) -> (ExitReason, TransactOut, u64, State) {
+    fn transact(&mut self) -> (Return, TransactOut, u64, State) {
         let caller = self.env.tx.caller;
         let value = self.env.tx.value;
         let data = self.env.tx.data.clone();
         let gas_limit = self.env.tx.gas_limit;
-        let exit_error = |reason: ExitReason| (reason, TransactOut::None, 0, State::new());
+        let exit = |reason: Return| (reason, TransactOut::None, 0, State::new());
 
         if GSPEC::enabled(LONDON) {
             if let Some(priority_fee) = self.env.tx.gas_priority_fee {
                 if priority_fee > self.env.tx.gas_price {
                     // or gas_max_fee for eip1559
-                    return exit_error(ExitError::GasMaxFeeGreaterThanPriorityFee.into());
+                    return exit(Return::GasMaxFeeGreaterThanPriorityFee);
                 }
             }
             let effective_gas_price = self.env.effective_gas_price();
@@ -57,19 +57,19 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
             // TODO maybe do this checks when creating evm. We already have all data there
             // or should be move effective_gas_price inside transact fn
             if effective_gas_price < basefee {
-                return exit_error(ExitError::GasPriceLessThenBasefee.into());
+                return exit(Return::GasPriceLessThenBasefee.into());
             }
             // check if priority fee is lower then max fee
         }
         // unusual to be found here, but check if gas_limit is more then block_gas_limit
         if U256::from(gas_limit) > self.env.block.gas_limit {
-            return exit_error(ExitError::CallerGasLimitMoreThenBlock.into());
+            return exit(Return::CallerGasLimitMoreThenBlock.into());
         }
 
         let mut gas = Gas::new(gas_limit);
         // record initial gas cost. if not using gas metering init will return 0
         if !gas.record_cost(self.initialization::<GSPEC>()) {
-            return exit_error(ExitError::OutOfGas.into());
+            return exit(Return::OutOfGas.into());
         }
 
         // load acc
@@ -79,7 +79,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
         // This EIP is introduced after london but there was no colision in past
         // so we can leave it enabled always
         if self.subroutine.account(caller).info.code_hash != KECCAK_EMPTY {
-            return exit_error(ExitError::RejectCallerWithCode.into());
+            return exit(Return::RejectCallerWithCode.into());
         }
 
         // substract gas_limit*gas_price from current account.
@@ -87,16 +87,16 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
             U256::from(gas_limit).checked_mul(self.env.effective_gas_price())
         {
             if !self.subroutine.balance_sub(caller, payment_value) {
-                return exit_error(ExitError::LackOfFundForGasLimit.into());
+                return exit(Return::LackOfFundForGasLimit.into());
             }
         } else {
-            return exit_error(ExitError::OverflowPayment.into());
+            return exit(Return::OverflowPayment.into());
         }
 
         // check if we have enought balance for value transfer.
         let difference = self.env.tx.gas_price - self.env.effective_gas_price();
         if difference + value > self.subroutine.account(caller).info.balance {
-            return exit_error(ExitError::OutOfFund.into());
+            return exit(Return::OutOfFund.into());
         }
 
         // record all as cost;
@@ -169,7 +169,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         &mut self,
         caller: H160,
         gas: &Gas,
-    ) -> Result<Map<H160, Account>, ExitReason> {
+    ) -> Result<Map<H160, Account>, Return> {
         let coinbase = self.env.block.coinbase;
         if crate::USE_GAS {
             let effective_gas_price = self.env.effective_gas_price();
@@ -267,17 +267,17 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         value: U256,
         init_code: Bytes,
         gas_limit: u64,
-    ) -> (ExitReason, Option<H160>, Gas, Bytes) {
+    ) -> (Return, Option<H160>, Gas, Bytes) {
         let gas = Gas::new(gas_limit);
         self.load_account(caller);
 
         // check depth of calls
         if self.subroutine.depth() > machine::CALL_STACK_LIMIT {
-            return (ExitRevert::CallTooDeep.into(), None, gas, Bytes::new());
+            return (Return::CallTooDeep, None, gas, Bytes::new());
         }
         // check balance of caller and value. Do this before increasing nonce
         if self.balance(caller).0 < value {
-            return (ExitRevert::OutOfFund.into(), None, gas, Bytes::new());
+            return (Return::OutOfFund, None, gas, Bytes::new());
         }
 
         // inc nonce of caller
@@ -303,7 +303,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             self.db,
         ) {
             self.subroutine.checkpoint_revert(checkpoint);
-            return (ExitError::CreateCollision.into(), ret, gas, Bytes::new());
+            return (Return::CreateCollision.into(), ret, gas, Bytes::new());
         }
 
         // transfer value to contract address
@@ -324,7 +324,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let exit_reason = machine.run::<Self, SPEC>(self);
         // handler error if present on execution\
         match exit_reason {
-            ExitReason::Succeed(_) => {
+            return_ok!() => {
                 let b = Bytes::new();
                 // if ok, check contract creation limit and calculate gas deduction on output len.
                 let code = machine.return_value();
@@ -332,27 +332,27 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 // EIP-3541: Reject new contract code starting with the 0xEF byte
                 if SPEC::enabled(LONDON) && !code.is_empty() && code.get(0) == Some(&0xEF) {
                     self.subroutine.checkpoint_revert(checkpoint);
-                    return (ExitError::CreateContractWithEF.into(), ret, machine.gas, b);
+                    return (Return::CreateContractWithEF.into(), ret, machine.gas, b);
                 }
 
                 // EIP-170: Contract code size limit
                 if SPEC::enabled(SPURIOUS_DRAGON) && code.len() > 0x6000 {
                     self.subroutine.checkpoint_revert(checkpoint);
-                    return (ExitError::CreateContractLimit.into(), ret, machine.gas, b);
+                    return (Return::CreateContractLimit.into(), ret, machine.gas, b);
                 }
                 if crate::USE_GAS {
                     let gas_for_code = code.len() as u64 * crate::instructions::gas::CODEDEPOSIT;
                     // record code deposit gas cost and check if we are out of gas.
                     if !machine.gas.record_cost(gas_for_code) {
                         self.subroutine.checkpoint_revert(checkpoint);
-                        return (ExitError::OutOfGas.into(), ret, machine.gas, b);
+                        return (Return::OutOfGas.into(), ret, machine.gas, b);
                     }
                 }
                 // if we have enought gas
                 self.subroutine.checkpoint_commit();
                 let code_hash = H256::from_slice(Keccak256::digest(&code).as_slice());
                 self.subroutine.set_code(created_address, code, code_hash);
-                (ExitSucceed::Returned.into(), ret, machine.gas, b)
+                (Return::Continue, ret, machine.gas, b)
             }
             _ => {
                 self.subroutine.checkpoint_revert(checkpoint);
@@ -369,14 +369,14 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         input: Bytes,
         gas_limit: u64,
         context: CallContext,
-    ) -> (ExitReason, Gas, Bytes) {
+    ) -> (Return, Gas, Bytes) {
         let mut gas = Gas::new(gas_limit);
         // Load account and get code. Account is now hot.
         let (code, _) = self.code(code_address);
 
         // check depth
         if self.subroutine.depth() > machine::CALL_STACK_LIMIT {
-            return (ExitRevert::CallTooDeep.into(), gas, Bytes::new());
+            return (Return::CallTooDeep, gas, Bytes::new());
         }
 
         // Create subroutine checkpoint
@@ -423,15 +423,15 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                             })
                         });
                         self.subroutine.checkpoint_commit();
-                        (ExitSucceed::Returned.into(), gas, Bytes::from(output))
+                        (Return::Continue, gas, Bytes::from(output))
                     } else {
                         self.subroutine.checkpoint_revert(checkpoint);
-                        (ExitError::OutOfGas.into(), gas, Bytes::new())
+                        (Return::OutOfGas, gas, Bytes::new())
                     }
                 }
-                Err(e) => {
+                Err(_e) => {
                     self.subroutine.checkpoint_revert(checkpoint); //TODO check if we are discarding or reverting
-                    (ExitError::Precompile(e).into(), gas, Bytes::new())
+                    (Return::Precompile, gas, Bytes::new())
                 }
             }
         } else {
@@ -439,7 +439,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             let contract = Contract::new_with_context(input, code, &context);
             let mut machine = Machine::new::<SPEC>(contract, gas_limit, self.subroutine.depth());
             let exit_reason = machine.run::<Self, SPEC>(self);
-            if matches!(exit_reason, ExitReason::Succeed(_)) {
+            if matches!(exit_reason, return_ok!()) {
                 self.subroutine.checkpoint_commit();
             } else {
                 self.subroutine.checkpoint_revert(checkpoint);
@@ -538,7 +538,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Handler
         value: U256,
         init_code: Bytes,
         gas: u64,
-    ) -> (ExitReason, Option<H160>, Gas, Bytes) {
+    ) -> (Return, Option<H160>, Gas, Bytes) {
         self.create_inner::<SPEC>(caller, scheme, value, init_code, gas)
     }
 
@@ -549,7 +549,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Handler
         input: Bytes,
         gas: u64,
         context: CallContext,
-    ) -> (ExitReason, Gas, Bytes) {
+    ) -> (Return, Gas, Bytes) {
         self.call_inner::<SPEC>(code_address, transfer, input, gas, context)
     }
 }
@@ -588,7 +588,7 @@ pub trait Handler {
         value: U256,
         init_code: Bytes,
         gas: u64,
-    ) -> (ExitReason, Option<H160>, Gas, Bytes);
+    ) -> (Return, Option<H160>, Gas, Bytes);
 
     /// Invoke a call operation.
     fn call<SPEC: Spec>(
@@ -598,5 +598,5 @@ pub trait Handler {
         input: Bytes,
         gas: u64,
         context: CallContext,
-    ) -> (ExitReason, Gas, Bytes);
+    ) -> (Return, Gas, Bytes);
 }

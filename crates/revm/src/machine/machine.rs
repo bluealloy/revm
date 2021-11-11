@@ -1,10 +1,10 @@
-use crate::{alloc::vec::Vec, instructions::eval};
+use crate::{alloc::vec::Vec, instructions::{Return, eval}, return_ok, return_revert};
 use bytes::Bytes;
 use core::ops::Range;
 use primitive_types::U256;
 
 use super::{contract::Contract, memory::Memory, stack::Stack};
-use crate::{error::ExitReason, instructions::Control, spec::Spec, Handler};
+use crate::{spec::Spec, Handler};
 
 pub const STACK_LIMIT: u64 = 1024;
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -47,14 +47,16 @@ impl Gas {
             all_used_gas: 0,
         }
     }
+    
 
-    pub fn reimburse_unspend(&mut self, exit: &ExitReason, other: Gas) {
-        match exit {
-            ExitReason::Succeed(_) => {
+    pub fn reimburse_unspend(&mut self, exit: &Return, other: Gas) {
+        
+        match *exit {
+            return_ok!() => {
                 self.erase_cost(other.remaining());
                 self.record_refund(other.refunded());
             }
-            ExitReason::Revert(_) => {
+            return_revert!() => {
                 self.erase_cost(other.remaining());
             }
             _ => {}
@@ -156,12 +158,13 @@ impl Machine {
     }
 
     /// loop steps until we are finished with execution
-    pub fn run<H: Handler, SPEC: Spec>(&mut self, handler: &mut H) -> ExitReason {
+    pub fn run<H: Handler, SPEC: Spec>(&mut self, handler: &mut H) -> Return {
         //let timer = std::time::Instant::now();
         loop {
-            if let Err(reason) = self.step::<H, SPEC>(handler) {
+            let ret = self.step::<H, SPEC>(handler);
+            if Return::Continue != ret {
                 if H::INSPECT {
-                    handler.inspect().call_return(reason.clone());
+                    handler.inspect().call_return(ret);
                 }
                 // let elapsed = timer.elapsed();
                 // println!("run took:{:?}", elapsed);
@@ -182,41 +185,28 @@ impl Machine {
                 //         i.3,
                 //     );
                 // }
-                return reason;
+                //TODO cast to reason
+                return ret;
             }
         }
     }
 
     #[inline(always)]
     /// Step the machine, executing one opcode. It then returns.
-    pub fn step<H: Handler, SPEC: Spec>(&mut self, handler: &mut H) -> Result<(), ExitReason> {
+    pub fn step<H: Handler, SPEC: Spec>(&mut self, handler: &mut H) -> Return {
         if H::INSPECT {
             handler.inspect().step(self);
         }
         // extract next opcode from code
-        let opcode = self.contract.opcode(self.program_counter)?;
+        let opcode = unsafe { *self.contract.code.get_unchecked(self.program_counter)};
 
         // evaluate opcode/execute instruction
+        self.program_counter += 1;
         let mut eval = eval::<H, SPEC>(self, opcode, handler);
         if H::INSPECT {
             handler.inspect().eval(&mut eval, self);
         }
-        match eval {
-            Control::Continue => {
-                self.program_counter += 1;
-            }
-            Control::ContinueN(p) => {
-                self.program_counter += p;
-            }
-            Control::Exit(e) => {
-                return Err(e);
-            }
-            Control::Jump(p) => {
-                self.program_counter = p;
-            }
-        }
-
-        Ok(())
+        eval
     }
 
     /// Copy and get the return value of the machine, if any.

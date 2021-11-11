@@ -1,9 +1,8 @@
-use super::{gas, Control};
+use super::gas;
 use crate::{
-    error::{ExitError, ExitFatal, ExitReason, ExitSucceed},
-    machine::Machine,
-    CallContext, CallScheme, CreateScheme, Handler, Spec, Transfer,
+    machine::Machine, CallContext, CallScheme, CreateScheme, Handler, Return, Spec, Transfer,
 };
+use crate::{return_ok, return_revert};
 // 	CallScheme, Capture, CallContext, CreateScheme, ,
 // 	, Runtime, Transfer,
 // };
@@ -13,7 +12,7 @@ use core::cmp::min;
 use primitive_types::{H256, U256};
 use sha3::{Digest, Keccak256};
 
-pub fn sha3(machine: &mut Machine) -> Control {
+pub fn sha3(machine: &mut Machine) -> Return {
     pop_u256!(machine, from, len);
     gas_or_fail!(machine, gas::sha3_cost(len));
 
@@ -30,28 +29,28 @@ pub fn sha3(machine: &mut Machine) -> Control {
     let ret = Keccak256::digest(data.as_ref());
     push!(machine, H256::from_slice(ret.as_slice()));
 
-    Control::Continue
+    Return::Continue
 }
 
-pub fn chainid<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn chainid<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
     check!(SPEC::enabled(ISTANBUL)); // EIP-1344: ChainID opcode
     gas!(machine, gas::BASE);
 
     push_u256!(machine, handler.env().cfg.chain_id);
 
-    Control::Continue
+    Return::Continue
 }
 
-pub fn address(machine: &mut Machine) -> Control {
+pub fn address(machine: &mut Machine) -> Return {
     gas!(machine, gas::BASE);
 
     let ret = H256::from(machine.contract.address);
     push!(machine, ret);
 
-    Control::Continue
+    Return::Continue
 }
 
-pub fn balance<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn balance<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
     pop!(machine, address);
     let (balance, is_cold) = handler.balance(address.into());
     gas!(
@@ -67,56 +66,56 @@ pub fn balance<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -
     );
     push_u256!(machine, balance);
 
-    Control::Continue
+    Return::Continue
 }
 
-pub fn selfbalance<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn selfbalance<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
     check!(SPEC::enabled(ISTANBUL)); // EIP-1884: Repricing for trie-size-dependent opcodes
     let (balance, _) = handler.balance(machine.contract.address);
     gas!(machine, gas::LOW);
     push_u256!(machine, balance);
 
-    Control::Continue
+    Return::Continue
 }
 
-pub fn basefee<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn basefee<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
     check!(SPEC::enabled(LONDON)); // EIP-3198: BASEFEE opcode
     let basefee = handler.env().block.basefee;
     gas!(machine, gas::BASE);
     push_u256!(machine, basefee);
 
-    Control::Continue
+    Return::Continue
 }
 
-pub fn origin<H: Handler>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn origin<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
     gas!(machine, gas::BASE);
 
     let ret = H256::from(handler.env().tx.caller);
     push!(machine, ret);
 
-    Control::Continue
+    Return::Continue
 }
 
-pub fn caller(machine: &mut Machine) -> Control {
+pub fn caller(machine: &mut Machine) -> Return {
     gas!(machine, gas::BASE);
 
     let ret = H256::from(machine.contract.caller);
     push!(machine, ret);
 
-    Control::Continue
+    Return::Continue
 }
 
-pub fn callvalue(machine: &mut Machine) -> Control {
+pub fn callvalue(machine: &mut Machine) -> Return {
     gas!(machine, gas::BASE);
 
     let mut ret = H256::default();
     machine.contract.value.to_big_endian(&mut ret[..]);
     push!(machine, ret);
 
-    Control::Continue
+    Return::Continue
 }
 
-pub fn gasprice<H: Handler>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn gasprice<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
     gas!(machine, gas::BASE);
 
     let mut ret = H256::default();
@@ -126,10 +125,10 @@ pub fn gasprice<H: Handler>(machine: &mut Machine, handler: &mut H) -> Control {
         .to_big_endian(&mut ret[..]);
     push!(machine, ret);
 
-    Control::Continue
+    Return::Continue
 }
 
-pub fn extcodesize<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn extcodesize<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
     pop!(machine, address);
 
     let (code, is_cold) = handler.code(address.into());
@@ -137,10 +136,10 @@ pub fn extcodesize<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
 
     push_u256!(machine, U256::from(code.len()));
 
-    Control::Continue
+    Return::Continue
 }
 
-pub fn extcodehash<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn extcodehash<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
     check!(SPEC::enabled(CONSTANTINOPLE)); // EIP-1052: EXTCODEHASH opcode
     pop!(machine, address);
     let (code_hash, is_cold) = handler.code_hash(address.into());
@@ -155,10 +154,10 @@ pub fn extcodehash<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
     );
     push!(machine, code_hash);
 
-    Control::Continue
+    Return::Continue
 }
 
-pub fn extcodecopy<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn extcodecopy<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
     pop!(machine, address);
     pop_u256!(machine, memory_offset, code_offset, len);
 
@@ -166,28 +165,22 @@ pub fn extcodecopy<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
     gas_or_fail!(machine, gas::extcodecopy_cost::<SPEC>(len, is_cold));
 
     memory_resize!(machine, memory_offset, len);
-    match machine
+    machine
         .memory
         .copy_large(memory_offset, code_offset, len, &code)
-    {
-        Ok(()) => (),
-        Err(e) => return Control::Exit(e.into()),
-    };
-
-    Control::Continue
 }
 
-pub fn returndatasize<SPEC: Spec>(machine: &mut Machine) -> Control {
+pub fn returndatasize<SPEC: Spec>(machine: &mut Machine) -> Return {
     check!(SPEC::enabled(BYZANTINE)); // EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
     gas!(machine, gas::BASE);
 
     let size = U256::from(machine.return_data_buffer.len());
     push_u256!(machine, size);
 
-    Control::Continue
+    Return::Continue
 }
 
-pub fn returndatacopy<SPEC: Spec>(machine: &mut Machine) -> Control {
+pub fn returndatacopy<SPEC: Spec>(machine: &mut Machine) -> Return {
     check!(SPEC::enabled(BYZANTINE)); // EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
     pop_u256!(machine, memory_offset, data_offset, len);
     gas_or_fail!(machine, gas::verylowcopy_cost(len));
@@ -197,62 +190,58 @@ pub fn returndatacopy<SPEC: Spec>(machine: &mut Machine) -> Control {
         .map(|l| l > U256::from(machine.return_data_buffer.len()))
         .unwrap_or(true)
     {
-        return Control::Exit(ExitError::OutOfOffset.into());
+        return Return::OutOfOffset;
     }
 
-    match machine
+    machine
         .memory
         .copy_large(memory_offset, data_offset, len, &machine.return_data_buffer)
-    {
-        Ok(()) => Control::Continue,
-        Err(e) => Control::Exit(e.into()),
-    }
 }
 
-pub fn blockhash<H: Handler>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn blockhash<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
     gas!(machine, gas::BLOCKHASH);
 
     pop_u256!(machine, number);
     push!(machine, handler.block_hash(number));
 
-    Control::Continue
+    Return::Continue
 }
 
-pub fn coinbase<H: Handler>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn coinbase<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
     gas!(machine, gas::BASE);
 
     push!(machine, handler.env().block.coinbase.into());
-    Control::Continue
+    Return::Continue
 }
 
-pub fn timestamp<H: Handler>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn timestamp<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
     gas!(machine, gas::BASE);
     push_u256!(machine, handler.env().block.timestamp);
-    Control::Continue
+    Return::Continue
 }
 
-pub fn number<H: Handler>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn number<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
     gas!(machine, gas::BASE);
 
     push_u256!(machine, handler.env().block.number);
-    Control::Continue
+    Return::Continue
 }
 
-pub fn difficulty<H: Handler>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn difficulty<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
     gas!(machine, gas::BASE);
 
     push_u256!(machine, handler.env().block.difficulty);
-    Control::Continue
+    Return::Continue
 }
 
-pub fn gaslimit<H: Handler>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn gaslimit<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
     gas!(machine, gas::BASE);
 
     push_u256!(machine, handler.env().block.gas_limit);
-    Control::Continue
+    Return::Continue
 }
 
-pub fn sload<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn sload<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
     pop!(machine, index);
     let (value, is_cold) = handler.sload(machine.contract.address, index);
     inspect!(
@@ -265,10 +254,10 @@ pub fn sload<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> 
     );
     gas!(machine, gas::sload_cost::<SPEC>(is_cold));
     push!(machine, value);
-    Control::Continue
+    Return::Continue
 }
 
-pub fn sstore<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn sstore<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
     check!(!SPEC::IS_STATIC_CALL);
 
     pop!(machine, index, value);
@@ -288,17 +277,17 @@ pub fn sstore<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) ->
         gas::sstore_cost::<SPEC>(original, old, new, remaining_gas, is_cold)
     });
     refund!(machine, gas::sstore_refund::<SPEC>(original, old, new));
-    Control::Continue
+    Return::Continue
 }
 
-pub fn gas(machine: &mut Machine) -> Control {
+pub fn gas(machine: &mut Machine) -> Return {
     gas!(machine, gas::BASE);
 
     push_u256!(machine, U256::from(machine.gas.remaining()));
-    Control::Continue
+    Return::Continue
 }
 
-pub fn log<H: Handler, SPEC: Spec>(machine: &mut Machine, n: u8, handler: &mut H) -> Control {
+pub fn log<H: Handler, SPEC: Spec>(machine: &mut Machine, n: u8, handler: &mut H) -> Return {
     check!(!SPEC::IS_STATIC_CALL);
 
     pop_u256!(machine, offset, len);
@@ -314,7 +303,7 @@ pub fn log<H: Handler, SPEC: Spec>(machine: &mut Machine, n: u8, handler: &mut H
     };
     let n = n as usize;
     if machine.stack.len() < n {
-        return Control::Exit(ExitError::StackUnderflow.into());
+        return Return::StackUnderflow;
     }
 
     let mut topics = Vec::with_capacity(n);
@@ -324,10 +313,10 @@ pub fn log<H: Handler, SPEC: Spec>(machine: &mut Machine, n: u8, handler: &mut H
     }
 
     handler.log(machine.contract.address, topics, data);
-    Control::Continue
+    Return::Continue
 }
 
-pub fn selfdestruct<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Control {
+pub fn selfdestruct<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
     check!(!SPEC::IS_STATIC_CALL);
     pop!(machine, target);
 
@@ -340,11 +329,11 @@ pub fn selfdestruct<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut
     }
     gas!(machine, gas::selfdestruct_cost::<SPEC>(res));
 
-    Control::Exit(ExitSucceed::SelfDestructed.into())
+    Return::SelfDestruct
 }
 
 #[inline(always)]
-fn gas_call_l64_after<SPEC: Spec>(machine: &mut Machine) -> Result<u64, ExitReason> {
+fn gas_call_l64_after<SPEC: Spec>(machine: &mut Machine) -> Result<u64, Return> {
     if SPEC::enabled(TANGERINE) {
         //EIP-150: Gas cost changes for IO-heavy operations
         let gas = machine.gas().remaining();
@@ -358,7 +347,7 @@ pub fn create<H: Handler, SPEC: Spec>(
     machine: &mut Machine,
     is_create2: bool,
     handler: &mut H,
-) -> Control {
+) -> Return {
     check!(!SPEC::IS_STATIC_CALL);
     if is_create2 {
         check!(SPEC::enabled(CONSTANTINOPLE)); // EIP-1014: Skinny CREATE2
@@ -403,7 +392,7 @@ pub fn create<H: Handler, SPEC: Spec>(
     let (reason, address, gas, return_data) =
         handler.create::<SPEC>(machine.contract.address, scheme, value, code, gas_limit);
     machine.return_data_buffer = return_data;
-    let created_address: H256 = if matches!(reason, ExitReason::Succeed(_)) {
+    let created_address: H256 = if matches!(reason, return_ok!()) {
         address.map(|a| a.into()).unwrap_or_default()
     } else {
         H256::default()
@@ -413,8 +402,8 @@ pub fn create<H: Handler, SPEC: Spec>(
     // reimburse gas that is not spend
     machine.gas.reimburse_unspend(&reason, gas);
     match reason {
-        ExitReason::Fatal(e) => Control::Exit(e.into()),
-        _ => Control::Continue,
+        Return::FatalNotSupported => Return::FatalNotSupported,
+        _ => Return::Continue,
     }
 }
 
@@ -422,7 +411,7 @@ pub fn call<H: Handler, SPEC: Spec>(
     machine: &mut Machine,
     scheme: CallScheme,
     handler: &mut H,
-) -> Control {
+) -> Return {
     match scheme {
         CallScheme::DelegateCall => check!(SPEC::enabled(HOMESTEAD)), // EIP-7: DELEGATECALL
         CallScheme::StaticCall => check!(SPEC::enabled(BYZANTINE)), // EIP-214: New opcode STATICCALL
@@ -446,7 +435,7 @@ pub fn call<H: Handler, SPEC: Spec>(
         CallScheme::Call => {
             pop_u256!(machine, value);
             if SPEC::IS_STATIC_CALL && value != U256::zero() {
-                return Control::Exit(ExitReason::Error(ExitError::CallNotAllowedInsideStatic));
+                return Return::CallNotAllowedInsideStatic;
             }
             value
         }
@@ -543,29 +532,26 @@ pub fn call<H: Handler, SPEC: Spec>(
     };
     machine.return_data_buffer = return_data;
 
-    inspect!(handler, call_return, reason.clone());
     let target_len = min(out_len, U256::from(machine.return_data_buffer.len()));
     // return unspend gas.
     machine.gas.reimburse_unspend(&reason, gas);
     match reason {
-        ExitReason::Succeed(_) => {
-            match machine.memory.copy_large(
+        return_ok!() => {
+            if machine.memory.copy_large(
                 out_offset,
                 U256::zero(),
                 target_len,
                 &machine.return_data_buffer,
-            ) {
-                Ok(()) => {
-                    push_u256!(machine, U256::one());
-                    Control::Continue
-                }
-                Err(_) => {
-                    push_u256!(machine, U256::zero());
-                    Control::Continue
-                }
+            ) == Return::Continue
+            {
+                push_u256!(machine, U256::one());
+                Return::Continue
+            } else {
+                push_u256!(machine, U256::zero());
+                Return::Continue
             }
         }
-        ExitReason::Revert(_) => {
+        return_revert!() => {
             push_u256!(machine, U256::zero());
             let _ = machine.memory.copy_large(
                 out_offset,
@@ -573,15 +559,11 @@ pub fn call<H: Handler, SPEC: Spec>(
                 target_len,
                 &machine.return_data_buffer,
             );
-            Control::Continue
+            Return::Continue
         }
-        ExitReason::Error(_) => {
+        _ => {
             push_u256!(machine, U256::zero());
-            Control::Continue
-        }
-        ExitReason::Fatal(e) => {
-            push_u256!(machine, U256::zero());
-            Control::Exit(e.into())
+            Return::Continue
         }
     }
 }

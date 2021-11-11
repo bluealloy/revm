@@ -1,4 +1,4 @@
-use crate::{alloc::vec::Vec, error::ExitError};
+use crate::{Return, alloc::vec::Vec};
 use primitive_types::H256;
 
 pub const STACK_LIMIT: usize = 1024;
@@ -44,8 +44,8 @@ impl Stack {
     #[inline]
     /// Pop a value from the stack. If the stack is already empty, returns the
     /// `StackUnderflow` error.
-    pub fn pop(&mut self) -> Result<H256, ExitError> {
-        self.data.pop().ok_or(ExitError::StackUnderflow)
+    pub fn pop(&mut self) -> Result<H256, Return> {
+        self.data.pop().ok_or(Return::StackUnderflow)
     }
 
     #[inline(always)]
@@ -62,9 +62,9 @@ impl Stack {
     #[inline]
     /// Push a new value into the stack. If it will exceed the stack limit,
     /// returns `StackOverflow` error and leaves the stack unchanged.
-    pub fn push(&mut self, value: H256) -> Result<(), ExitError> {
+    pub fn push(&mut self, value: H256) -> Result<(), Return> {
         if self.data.len() + 1 > STACK_LIMIT {
-            return Err(ExitError::StackOverflow);
+            return Err(Return::StackOverflow);
         }
         self.data.push(value);
         Ok(())
@@ -74,36 +74,36 @@ impl Stack {
     /// Peek a value at given index for the stack, where the top of
     /// the stack is at index `0`. If the index is too large,
     /// `StackError::Underflow` is returned.
-    pub fn peek(&self, no_from_top: usize) -> Result<H256, ExitError> {
+    pub fn peek(&self, no_from_top: usize) -> Result<H256, Return> {
         if self.data.len() > no_from_top {
             Ok(self.data[self.data.len() - no_from_top - 1])
         } else {
-            Err(ExitError::StackUnderflow)
+            Err(Return::StackUnderflow)
         }
     }
 
     #[inline(always)]
-    pub fn dup<const N: usize>(&mut self) -> Result<(), ExitError> {
+    pub fn dup<const N: usize>(&mut self) -> Return {
         let len = self.data.len();
         if len < N {
-            Err(ExitError::StackUnderflow)
+            Return::StackUnderflow
         } else if len + 1 > STACK_LIMIT {
-            Err(ExitError::StackOverflow)
+            Return::StackOverflow
         } else {
             unsafe {
                 let new_len = len + 1;
                 self.data.set_len(new_len);
                 *self.data.get_unchecked_mut(len) = *self.data.get_unchecked(len - N);
             }
-            Ok(())
+            Return::Continue
         }
     }
 
     #[inline(always)]
-    pub fn swap<const N: usize>(&mut self) -> Result<(), ExitError> {
+    pub fn swap<const N: usize>(&mut self) -> Return {
         let len = self.data.len();
         if len <= N {
-            return Err(ExitError::StackUnderflow);
+            return Return::StackUnderflow;
         }
         // SAFETY: length is checked before so we are okay to switch bytes in unsafe way.
         unsafe {
@@ -111,15 +111,15 @@ impl Stack {
             let pb: *mut H256 = self.data.get_unchecked_mut(len - 1 - N);
             core::ptr::swap(pa, pb);
         }
-        Ok(())
+        Return::Continue
     }
 
     /// push slice onto memory it is expected to be max 32 bytes and be contains inside H256
     #[inline(always)]
-    pub fn push_slice<const N: usize>(&mut self, slice: &[u8]) -> Result<(), ExitError> {
+    pub fn push_slice<const N: usize>(&mut self, slice: &[u8]) -> Result<(), Return> {
         let new_len = self.data.len() + 1;
         if new_len > STACK_LIMIT {
-            return Err(ExitError::StackOverflow);
+            return Err(Return::StackOverflow);
         }
         unsafe {
             self.data.set_len(new_len);
@@ -134,13 +134,13 @@ impl Stack {
     /// Set a value at given index for the stack, where the top of the
     /// stack is at index `0`. If the index is too large,
     /// `StackError::Underflow` is returned.
-    pub fn set(&mut self, no_from_top: usize, val: H256) -> Result<(), ExitError> {
+    pub fn set(&mut self, no_from_top: usize, val: H256) -> Result<(), Return> {
         if self.data.len() > no_from_top {
             let len = self.data.len();
             self.data[len - no_from_top - 1] = val;
             Ok(())
         } else {
-            Err(ExitError::StackUnderflow)
+            Err(Return::StackUnderflow)
         }
     }
 }

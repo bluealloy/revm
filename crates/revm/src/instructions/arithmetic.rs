@@ -1,6 +1,6 @@
-use crate::{error::*, instructions::gas, Machine, Spec};
+use crate::{Machine, Return, Spec, instructions::gas};
 
-use super::{i256::I256, Control};
+use super::i256::I256;
 use core::{convert::TryInto, ops::Rem};
 use primitive_types::{H256, U256, U512};
 
@@ -87,13 +87,13 @@ pub fn exp(op1: U256, op2: U256) -> U256 {
 }
 
 #[inline(always)]
-pub fn eval_exp<SPEC: Spec>(machine: &mut Machine) -> Control {
+pub fn eval_exp<SPEC: Spec>(machine: &mut Machine) -> Return {
     pop_u256!(machine, op1, op2);
     gas_or_fail!(machine, gas::exp_cost::<SPEC>(op2));
     let ret = exp(op1, op2);
     push_u256!(machine, ret);
 
-    Control::Continue
+    Return::Continue
 }
 
 /// In the yellow paper `SIGNEXTEND` is defined to take two inputs, we will call them

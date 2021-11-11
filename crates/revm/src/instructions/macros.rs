@@ -1,10 +1,10 @@
-pub use crate::error::{ExitError, ExitReason};
+pub use crate::Return;
 
 macro_rules! try_or_fail {
     ( $e:expr ) => {
         match $e {
             Ok(v) => v,
-            Err(e) => return Control::Exit(e.into()),
+            Err(e) => return e,
         }
     };
 }
@@ -25,7 +25,7 @@ macro_rules! inspect {
 macro_rules! check {
     ($expresion:expr) => {
         if !$expresion {
-            return Control::Exit(ExitReason::Error(ExitError::OpcodeNotFound));
+            return Return::NotActivated;
         }
     };
 }
@@ -34,7 +34,7 @@ macro_rules! gas {
     ($machine:expr, $gas:expr) => {
         if crate::USE_GAS {
             if !$machine.gas.record_cost(($gas)) {
-                return Control::Exit(ExitReason::Error(ExitError::OutOfGas));
+                return Return::OutOfGas;
             }
         }
     };
@@ -53,7 +53,7 @@ macro_rules! gas_or_fail {
         if crate::USE_GAS {
             match $gas {
                 Some(gas_used) => gas!($machine, gas_used),
-                None => return Control::Exit(ExitReason::Error(ExitError::OutOfGas)),
+                None => return Return::OutOfGas,
             }
         }
     };
@@ -64,7 +64,7 @@ macro_rules! memory_resize {
         let new_gas_memory = try_or_fail!($machine.memory.resize_offset($start, $len));
         if crate::USE_GAS {
             if !$machine.gas.record_memory(new_gas_memory) {
-                return Control::Exit(ExitReason::Error(ExitError::OutOfGas));
+                return Return::OutOfGas;
             }
         }
     }};
@@ -73,13 +73,13 @@ macro_rules! memory_resize {
 macro_rules! pop {
     ( $machine:expr, $x1:ident) => {
         if $machine.stack.len() < 1 {
-            return Control::Exit(ExitError::StackUnderflow.into());
+            return Return::StackUnderflow;
         }
         let $x1 = unsafe { $machine.stack.pop_unsafe() };
     };
     ( $machine:expr, $x1:ident, $x2:ident) => {
         if $machine.stack.len() < 2 {
-            return Control::Exit(ExitError::StackUnderflow.into());
+            return Return::StackUnderflow;
         }
         let $x1 = unsafe { $machine.stack.pop_unsafe() };
         let $x2 = unsafe { $machine.stack.pop_unsafe() };
@@ -89,20 +89,20 @@ macro_rules! pop {
 macro_rules! pop_u256 {
     ( $machine:expr, $x1:ident) => {
         if $machine.stack.len() < 1 {
-            return Control::Exit(ExitError::StackUnderflow.into());
+            return Return::StackUnderflow;
         }
         let $x1 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
     };
     ( $machine:expr, $x1:ident, $x2:ident) => {
         if $machine.stack.len() < 2 {
-            return Control::Exit(ExitError::StackUnderflow.into());
+            return Return::StackUnderflow;
         }
         let $x1 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
         let $x2 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
     };
     ( $machine:expr, $x1:ident, $x2:ident, $x3:ident) => {
         if $machine.stack.len() < 3 {
-            return Control::Exit(ExitError::StackUnderflow.into());
+            return Return::StackUnderflow;
         }
         let $x1 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
         let $x2 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
@@ -111,7 +111,7 @@ macro_rules! pop_u256 {
 
     ( $machine:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident) => {
         if $machine.stack.len() < 4 {
-            return Control::Exit(ExitError::StackUnderflow.into());
+            return Return::StackUnderflow;
         }
         let $x1 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
         let $x2 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
@@ -125,7 +125,7 @@ macro_rules! push {
 		$(
 			match $machine.stack.push($x) {
 				Ok(()) => (),
-				Err(e) => return Control::Exit(e.into()),
+				Err(e) => return e,
 			}
 		)*
 	)
@@ -138,7 +138,7 @@ macro_rules! push_u256 {
 			$x.to_big_endian(&mut value[..]);
 			match $machine.stack.push(value) {
 				Ok(()) => (),
-				Err(e) => return Control::Exit(e.into()),
+				Err(e) => return e,
 			}
 		)*
 	)
@@ -151,7 +151,7 @@ macro_rules! op1_u256_fn {
         let ret = $op(op1);
         push_u256!($machine, ret);
 
-        Control::Continue
+        Return::Continue
     }};
 }
 
@@ -162,7 +162,7 @@ macro_rules! op2_u256_bool_ref {
         let ret = op1.$op(&op2);
         push_u256!($machine, if ret { U256::one() } else { U256::zero() });
 
-        Control::Continue
+        Return::Continue
     }};
 }
 
@@ -173,7 +173,7 @@ macro_rules! op2_u256 {
         let ret = op1.$op(op2);
         push_u256!($machine, ret);
 
-        Control::Continue
+        Return::Continue
     }};
 }
 
@@ -185,7 +185,7 @@ macro_rules! op2_u256_tuple {
         let (ret, ..) = op1.$op(op2);
         push_u256!($machine, ret);
 
-        Control::Continue
+        Return::Continue
     }};
 }
 
@@ -197,7 +197,7 @@ macro_rules! op2_u256_fn {
         let ret = $op(op1, op2);
         push_u256!($machine, ret);
 
-        Control::Continue
+        Return::Continue
     }};
     ( $machine:expr, $op:path, $gas:expr, $enabled:expr) => {{
         check!(($enabled));
@@ -213,7 +213,7 @@ macro_rules! op3_u256_fn {
         let ret = $op(op1, op2, op3);
         push_u256!($machine, ret);
 
-        Control::Continue
+        Return::Continue
     }};
     ( $machine:expr, $op:path, $gas:expr, $spec:ident :: $enabled:ident) => {{
         check!($spec::$enabled);
@@ -224,7 +224,7 @@ macro_rules! op3_u256_fn {
 macro_rules! as_usize_or_fail {
     ( $v:expr ) => {{
         if $v > U256::from(usize::MAX) {
-            return Control::Exit(ExitFatal::NotSupported.into());
+            return Return::FatalNotSupported;
         }
 
         $v.as_usize()
@@ -232,7 +232,7 @@ macro_rules! as_usize_or_fail {
 
     ( $v:expr, $reason:expr ) => {{
         if $v > U256::from(usize::MAX) {
-            return Control::Exit($reason.into());
+            return $reason;
         }
 
         $v.as_usize()

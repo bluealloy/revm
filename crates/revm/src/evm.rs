@@ -1,6 +1,6 @@
 use crate::{
     db::{Database, DatabaseCommit, DatabaseRef, RefDBWrapper},
-    error::ExitReason,
+    Return,
     evm_impl::{EVMImpl, Transact},
     subroutine::State,
     BerlinSpec, ByzantineSpec, Env, Inspector, IstanbulSpec, LatestSpec, LondonSpec, NoOpInspector,
@@ -41,7 +41,7 @@ impl<DB> Default for EVM<DB> {
 
 impl<DB: Database + DatabaseCommit> EVM<DB> {
     /// Execute transaction and apply result to database
-    pub fn transact_commit(&mut self) -> (ExitReason, TransactOut, u64) {
+    pub fn transact_commit(&mut self) -> (Return, TransactOut, u64) {
         let (exit, out, gas, state) = self.transact();
         self.db.as_mut().unwrap().commit(state);
         (exit, out, gas)
@@ -50,7 +50,7 @@ impl<DB: Database + DatabaseCommit> EVM<DB> {
     pub fn inspect_commit<INSP: Inspector>(
         &mut self,
         inspector: INSP,
-    ) -> (ExitReason, TransactOut, u64) {
+    ) -> (Return, TransactOut, u64) {
         let (exit, out, gas, state) = self.inspect(inspector);
         self.db.as_mut().unwrap().commit(state);
         (exit, out, gas)
@@ -59,7 +59,7 @@ impl<DB: Database + DatabaseCommit> EVM<DB> {
 
 impl<DB: Database> EVM<DB> {
     /// Execute transaction without writing to DB, return change state.
-    pub fn transact(&mut self) -> (ExitReason, TransactOut, u64, State) {
+    pub fn transact(&mut self) -> (Return, TransactOut, u64, State) {
         if let Some(db) = self.db.as_mut() {
             let mut noop = NoOpInspector {};
             let out = evm_inner::<DB, false>(&self.env, db, &mut noop).transact();
@@ -73,7 +73,7 @@ impl<DB: Database> EVM<DB> {
     pub fn inspect<INSP: Inspector>(
         &mut self,
         mut inspector: INSP,
-    ) -> (ExitReason, TransactOut, u64, State) {
+    ) -> (Return, TransactOut, u64, State) {
         if let Some(db) = self.db.as_mut() {
             evm_inner::<DB, true>(&self.env, db, &mut inspector).transact()
         } else {
@@ -84,7 +84,7 @@ impl<DB: Database> EVM<DB> {
 
 impl<DB: DatabaseRef> EVM<DB> {
     /// Execute transaction without writing to DB, return change state.
-    pub fn transact_ref(&self) -> (ExitReason, TransactOut, u64, State) {
+    pub fn transact_ref(&self) -> (Return, TransactOut, u64, State) {
         if let Some(db) = self.db.as_ref() {
             let mut noop = NoOpInspector {};
             let mut db = RefDBWrapper::new(db);
@@ -100,7 +100,7 @@ impl<DB: DatabaseRef> EVM<DB> {
     pub fn inspect_ref<INSP: Inspector>(
         &self,
         mut inspector: INSP,
-    ) -> (ExitReason, TransactOut, u64, State) {
+    ) -> (Return, TransactOut, u64, State) {
         if let Some(db) = self.db.as_ref() {
             let mut db = RefDBWrapper::new(db);
             let db = &mut db;

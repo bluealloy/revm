@@ -1,7 +1,7 @@
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
 
-use crate::{instructions::Control, CallContext, CreateScheme, ExitReason, Machine, Transfer};
+use crate::{CallContext, CreateScheme, Return, Machine, Transfer};
 use auto_impl::auto_impl;
 
 #[auto_impl(&mut, Box)]
@@ -9,7 +9,7 @@ pub trait Inspector {
     // get opcode by calling `machine.contract.opcode(machine.program_counter())`.
     // all other information can be obtained from machine.
     fn step(&mut self, machine: &mut Machine);
-    fn eval(&mut self, eval: &mut Control, machine: &mut Machine);
+    fn eval(&mut self, eval: &Return, machine: &mut Machine);
 
     fn load_account(&mut self, address: &H160);
 
@@ -35,7 +35,7 @@ pub trait Inspector {
         is_static: bool,
     );
 
-    fn call_return(&mut self, exit: ExitReason);
+    fn call_return(&mut self, exit: Return);
 
     fn create(
         &mut self,
@@ -57,7 +57,7 @@ pub struct NoOpInspector();
 impl Inspector for NoOpInspector {
     fn step(&mut self, _machine: &mut Machine) {}
 
-    fn eval(&mut self, _eval: &mut Control, _machine: &mut Machine) {}
+    fn eval(&mut self, _eval: &Return, _machine: &mut Machine) {}
 
     fn load_account(&mut self, _address: &H160) {}
 
@@ -85,7 +85,7 @@ impl Inspector for NoOpInspector {
     ) {
     }
 
-    fn call_return(&mut self, _exit: ExitReason) {}
+    fn call_return(&mut self, _exit: Return) {}
 
     fn create(
         &mut self,

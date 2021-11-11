@@ -1,6 +1,6 @@
 use primitive_types::{H160, H256, U256};
-use revm::ExitReason;
-pub use revm::{Control, Inspector};
+pub use revm::Inspector;
+use revm::{opcode, Return};
 
 #[derive(Clone)]
 pub struct CustomPrintTracer {}
@@ -9,18 +9,19 @@ impl Inspector for CustomPrintTracer {
     // get opcode by calling `machine.contract.opcode(machine.program_counter())`.
     // all other information can be obtained from machine.
     fn step(&mut self, machine: &mut revm::Machine) {
-        let opcode = match machine.contract.opcode(machine.program_counter()) {
-            Ok(opcode) => opcode,
-            Err(_) => return,
+        let opcode = match machine.contract.code.get(machine.program_counter()) {
+            Some(opcode) => opcode,
+            None => return,
         };
+        let opcode_str = opcode::OPCODE_JUMPMAP[*opcode as usize];
         //if self.
         println!(
-            "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: ({:?})  refund:{:#x}({}) Stack:{:?}, Data:{:?}",
+            "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data:{:?}",
             machine.call_depth,
             machine.program_counter(),
             machine.gas.remaining(),
             machine.gas.remaining(),
-            //opcode,
+            opcode_str.unwrap(),
             opcode,
             machine.gas.refunded(),
             machine.gas.refunded(),
@@ -33,7 +34,7 @@ impl Inspector for CustomPrintTracer {
         println!("ACCOUNT LOADED:{:?}", address);
     }
 
-    fn eval(&mut self, _eval: &mut Control, _machine: &mut revm::Machine) {}
+    fn eval(&mut self, _eval: &revm::Return, _machine: &mut revm::Machine) {}
 
     fn sload(&mut self, address: &H160, slot: &H256, value: &H256, is_cold: bool) {
         println!(
@@ -76,7 +77,7 @@ impl Inspector for CustomPrintTracer {
         );
     }
 
-    fn call_return(&mut self, exit: ExitReason) {
+    fn call_return(&mut self, exit: Return) {
         println!("\nSM EXIT:{:?}\n", exit);
     }
 

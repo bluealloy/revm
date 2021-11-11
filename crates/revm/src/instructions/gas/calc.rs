@@ -1,9 +1,5 @@
 use super::constants::*;
-use crate::{
-    error::ExitError,
-    models::SelfDestructResult,
-    spec::{Spec, SpecId::*},
-};
+use crate::{Return, models::SelfDestructResult, spec::{Spec, SpecId::*}};
 use primitive_types::{H256, U256};
 
 #[allow(clippy::collapsible_else_if)]
@@ -347,11 +343,11 @@ fn new_cost<SPEC: Spec>(is_call_or_staticcall: bool, is_new: bool, transfers_val
     }
 }
 
-pub fn memory_gas(a: usize) -> Result<u64, ExitError> {
+pub fn memory_gas(a: usize) -> Result<u64, Return> {
     let a = a as u64;
     MEMORY
         .checked_mul(a)
-        .ok_or(ExitError::OutOfGas)?
-        .checked_add(a.checked_mul(a).ok_or(ExitError::OutOfGas)? / 512)
-        .ok_or(ExitError::OutOfGas)
+        .ok_or(Return::OutOfGas)?
+        .checked_add(a.checked_mul(a).ok_or(Return::OutOfGas)? / 512)
+        .ok_or(Return::OutOfGas)
 }

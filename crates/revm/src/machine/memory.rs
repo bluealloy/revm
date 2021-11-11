@@ -1,7 +1,4 @@
-use crate::{
-    alloc::vec::Vec,
-    error::{ExitError, ExitFatal},
-};
+use crate::{Return, alloc::vec::Vec};
 use bytes::Bytes;
 use core::{
     cmp::min,
@@ -56,7 +53,7 @@ impl Memory {
     /// Resize the memory, making it cover the memory region of `offset..(offset
     /// + len)`, with 32 bytes as the step. If the length is zero, this function
     /// does nothing.
-    pub fn resize_offset(&mut self, offset: U256, len: U256) -> Result<u64, ExitError> {
+    pub fn resize_offset(&mut self, offset: U256, len: U256) -> Result<u64, Return> {
         if len == U256::zero() {
             return Ok(0);
         }
@@ -64,25 +61,25 @@ impl Memory {
         if let Some(end) = offset.checked_add(len) {
             // Resize the memory, making it cover to `end`, with 32 bytes as the step.
             if end > self.effective_len {
-                let new_end = next_multiple_of_32(end).ok_or(ExitError::InvalidRange)?;
+                let new_end = next_multiple_of_32(end).ok_or(Return::InvalidMemoryRange)?;
                 self.effective_len = new_end;
             }
             self.memory_gas(offset, len)
         } else {
-            Err(ExitError::InvalidRange)
+            Err(Return::InvalidMemoryRange)
         }
     }
 
     // TODO proably can omit some checks but do this later.
-    fn memory_gas(&self, from: U256, len: U256) -> Result<u64, ExitError> {
+    fn memory_gas(&self, from: U256, len: U256) -> Result<u64, Return> {
         if len == U256::zero() {
             return Ok(0);
         }
 
-        let end = from.checked_add(len).ok_or(ExitError::OutOfGas)?;
+        let end = from.checked_add(len).ok_or(Return::OutOfGas)?;
 
         if end > U256::from(usize::MAX) {
-            return Err(ExitError::OutOfGas);
+            return Err(Return::OutOfGas);
         }
         let end = end.as_usize();
 
@@ -122,10 +119,10 @@ impl Memory {
         offset: usize,
         value: &[u8],
         target_size: Option<usize>,
-    ) -> Result<(), ExitFatal> {
+    ) -> Return {
         let target_size = target_size.unwrap_or(value.len());
         if target_size == 0 {
-            return Ok(());
+            return Return::Continue;
         }
 
         if offset
@@ -133,7 +130,7 @@ impl Memory {
             .map(|pos| pos > self.limit)
             .unwrap_or(true)
         {
-            return Err(ExitFatal::NotSupported);
+            return Return::InvalidMemoryRange;
         }
 
         if self.data.len() < offset + target_size {
@@ -149,7 +146,7 @@ impl Memory {
             self.data[offset..(target_size + offset)].clone_from_slice(&value[..target_size]);
         }
 
-        Ok(())
+        Return::Continue
     }
 
     /// Copy `data` into the memory, of given `len`.
@@ -159,24 +156,24 @@ impl Memory {
         data_offset: U256,
         len: U256,
         data: &[u8],
-    ) -> Result<(), ExitFatal> {
+    ) -> Return {
         // Needed to pass ethereum test defined in
         // https://github.com/ethereum/tests/commit/17f7e7a6c64bb878c1b6af9dc8371b46c133e46d
         // (regardless of other inputs, a zero-length copy is defined to be a no-op).
         // TODO: refactor `set` and `copy_large` (see
         // https://github.com/rust-blockchain/evm/pull/40#discussion_r677180794)
         if len.is_zero() {
-            return Ok(());
+            return Return::Continue;
         }
 
         let memory_offset = if memory_offset > U256::from(usize::MAX) {
-            return Err(ExitFatal::NotSupported);
+            return Return::InvalidMemoryRange;
         } else {
             memory_offset.as_usize()
         };
 
         let ulen = if len > U256::from(usize::MAX) {
-            return Err(ExitFatal::NotSupported);
+            return Return::InvalidMemoryRange;
         } else {
             len.as_usize()
         };

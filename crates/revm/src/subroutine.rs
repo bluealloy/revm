@@ -1,4 +1,4 @@
-use crate::{models::SelfDestructResult, ExitRevert, KECCAK_EMPTY};
+use crate::{KECCAK_EMPTY, Return, models::SelfDestructResult};
 use alloc::{vec, vec::Vec};
 use hashbrown::{hash_map::Entry, HashMap as Map};
 
@@ -215,14 +215,14 @@ impl SubRoutine {
         to: H160,
         value: U256,
         db: &mut DB,
-    ) -> Result<(bool, bool), ExitRevert> {
+    ) -> Result<(bool, bool), Return> {
         // load accounts
         let from_is_cold = self.load_account(from, db);
         let to_is_cold = self.load_account(to, db);
         // check from balance and substract value
         let from = self.log_dirty(from, |_| {});
         if from.info.balance < value {
-            return Err(ExitRevert::OutOfFund);
+            return Err(Return::OutOfFund);
         }
         from.info.balance -= value;
 
