@@ -416,7 +416,7 @@ impl SubRoutine {
         let (had_value, previously_destroyed) = {
             let acc = self.state.get_mut(&address).unwrap();
             let value = acc.info.balance;
-            let had_value = value != U256::zero();
+            let had_value = !value.is_zero();
             let previously_destroyed = matches!(acc.filth, Filth::Destroyed);
             let target = self.log_dirty(target, |_| {});
             target.info.balance += value;

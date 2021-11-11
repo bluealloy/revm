@@ -63,7 +63,7 @@ pub fn calldatacopy(machine: &mut Machine) -> Return {
     gas_or_fail!(machine, gas::verylowcopy_cost(len));
     memory_resize!(machine, memory_offset, len);
 
-    if len == U256::zero() {
+    if len.is_zero() {
         return Return::Continue;
     }
 
@@ -139,7 +139,7 @@ pub fn jumpi(machine: &mut Machine) -> Return {
     pop_u256!(machine, dest);
     pop!(machine, value);
 
-    if value != H256::zero() {
+    if !value.is_zero() {
         let dest = as_usize_or_fail!(dest, Return::InvalidJump);
         if machine.contract.is_valid_jump(dest) {
             machine.program_counter = dest;

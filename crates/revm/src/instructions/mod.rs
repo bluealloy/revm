@@ -8,7 +8,7 @@ mod misc;
 pub mod opcode;
 mod system;
 
-pub use opcode::{OpCode,OPCODE_JUMPMAP};
+pub use opcode::{OpCode, OPCODE_JUMPMAP};
 
 use crate::{
     machine::Machine,
@@ -72,101 +72,6 @@ pub enum Return {
     /// Create contract that begins with EF
     CreateContractWithEF,
 }
-
-/*
-pub enum ExitSucceed {
-    /// Machine encountered an explict stop.
-    Stopped,
-    /// Machine encountered an explict return.
-    Returned,
-    /// Machine encountered an explict selfdestruct.
-    SelfDestructed,
-}
-
-impl From<ExitSucceed> for ExitReason {
-    fn from(s: ExitSucceed) -> Self {
-        Self::Succeed(s)
-    }
-}
-
-/// Exit revert reason.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "with-codec", derive(codec::Encode, codec::Decode))]
-#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum ExitRevert {
-    /// Machine encountered an explict revert.
-    Reverted,
-    /// Account does not have balance, revert it.
-    OutOfFund,
-    /// Hit call stack limit
-    CallTooDeep,
-}
-
-impl From<ExitRevert> for ExitReason {
-    fn from(s: ExitRevert) -> Self {
-        Self::Revert(s)
-    }
-}
-
-/// Exit error reason.
-#[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "with-codec", derive(codec::Encode, codec::Decode))]
-#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum ExitError {
-    /// Trying to pop from an empty stack.
-    StackUnderflow,
-    /// Trying to push into a stack over stack limit.
-    StackOverflow,
-    /// Jump destination is invalid.
-    InvalidJump,
-    /// An opcode accesses memory region, but the region is invalid.
-    InvalidRange,
-    /// Encountered the designated invalid opcode.
-    DesignatedInvalid,
-    /// Create opcode encountered collision (runtime).
-    CreateCollision,
-    /// Create init code exceeds limit (runtime).
-    CreateContractLimit,
-    /// Create contract that begins with EF
-    CreateContractWithEF,
-
-    /// An opcode accesses external information, but the request is off offset
-    /// limit (runtime).
-    OutOfOffset,
-    /// Execution runs out of gas (runtime).
-    OutOfGas,
-    /// Not enough fund to start the execution (runtime).
-    OutOfFund,
-    /// Effective gas price is less then basefee
-    GasPriceLessThenBasefee,
-    /// Caller does not have enought funds to cover full spending of gas_limit
-    LackOfFundForGasLimit,
-    /// Caller gas_limit is greater then block gas limit
-    CallerGasLimitMoreThenBlock,
-    /// GasMaxFee greater than priority fee
-    GasMaxFeeGreaterThanPriorityFee,
-    /// EIP-3607: Reject transactions from senders with deployed code
-    RejectCallerWithCode,
-    /// gas_limit*effective gas oveflows
-    OverflowPayment,
-
-    /// PC underflowed (unused).
-    PCUnderflow,
-    /// Attempt to create an empty account (runtime, unused).
-    CreateEmpty,
-
-    /// opcode not found,
-    OpcodeNotFound,
-
-    /// calling CALL inside static call
-    CallNotAllowedInsideStatic,
-
-    /// Other normal errors.
-    Other(Cow<'static, str>),
-
-    Precompile(PrecompileError),
-}
-*/
 
 #[inline(always)]
 pub fn eval<H: Handler, S: Spec>(machine: &mut Machine, opcode: u8, handler: &mut H) -> Return {

@@ -52,8 +52,8 @@ impl AccountInfo {
     }
 
     pub fn is_empty(&self) -> bool {
-        let code_empty = self.code_hash == KECCAK_EMPTY || self.code_hash == H256::zero();
-        self.balance == U256::zero() && self.nonce == 0 && code_empty
+        let code_empty = self.code_hash == KECCAK_EMPTY || self.code_hash.is_zero();
+        self.balance.is_zero() && self.nonce == 0 && code_empty
     }
 
     pub fn exists(&self) -> bool {

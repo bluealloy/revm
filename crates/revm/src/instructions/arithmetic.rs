@@ -6,7 +6,7 @@ use primitive_types::{H256, U256, U512};
 
 #[inline(always)]
 pub fn div(op1: U256, op2: U256) -> U256 {
-    if op2 == U256::zero() {
+    if op2.is_zero() {
         U256::zero()
     } else {
         op1 / op2
@@ -23,7 +23,7 @@ pub fn sdiv(op1: U256, op2: U256) -> U256 {
 
 #[inline(always)]
 pub fn rem(op1: U256, op2: U256) -> U256 {
-    if op2 == U256::zero() {
+    if op2.is_zero() {
         U256::zero()
     } else {
         op1.rem(op2)
@@ -32,7 +32,7 @@ pub fn rem(op1: U256, op2: U256) -> U256 {
 
 #[inline(always)]
 pub fn srem(op1: U256, op2: U256) -> U256 {
-    if op2 == U256::zero() {
+    if op2.is_zero() {
         U256::zero()
     } else {
         let op1: I256 = op1.into();
@@ -44,7 +44,7 @@ pub fn srem(op1: U256, op2: U256) -> U256 {
 
 #[inline(always)]
 pub fn addmod(op1: U256, op2: U256, op3: U256) -> U256 {
-    if op3 == U256::zero() {
+    if op3.is_zero() {
         U256::zero()
     } else {
         let op1: U512 = op1.into();
@@ -58,7 +58,7 @@ pub fn addmod(op1: U256, op2: U256, op3: U256) -> U256 {
 
 #[inline(always)]
 pub fn mulmod(op1: U256, op2: U256, op3: U256) -> U256 {
-    if op3 == U256::zero() {
+    if op3.is_zero() {
         U256::zero()
     } else {
         let op1: U512 = op1.into();

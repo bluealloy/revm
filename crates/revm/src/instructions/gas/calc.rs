@@ -56,7 +56,7 @@ pub fn create2_cost(len: U256) -> Option<u64> {
     let base = U256::from(CREATE);
     // ceil(len / 32.0)
     let sha_addup_base = len / U256::from(32)
-        + if len % U256::from(32) == U256::zero() {
+        + if (len % U256::from(32)).is_zero() {
             U256::zero()
         } else {
             U256::one()
@@ -72,7 +72,7 @@ pub fn create2_cost(len: U256) -> Option<u64> {
 }
 
 pub fn exp_cost<SPEC: Spec>(power: U256) -> Option<u64> {
-    if power == U256::zero() {
+    if power.is_zero() {
         Some(EXP)
     } else {
         let gas_byte = U256::from(if SPEC::enabled(SPURIOUS_DRAGON) {
@@ -97,7 +97,7 @@ pub fn verylowcopy_cost(len: U256) -> Option<u64> {
     let wordr = len % U256::from(32);
 
     let gas = U256::from(VERYLOW).checked_add(U256::from(COPY).checked_mul(
-        if wordr == U256::zero() {
+        if wordr.is_zero() {
             wordd
         } else {
             wordd + U256::one()
@@ -126,7 +126,7 @@ pub fn extcodecopy_cost<SPEC: Spec>(len: U256, is_cold: bool) -> Option<u64> {
         20
     };
     let gas = U256::from(base_gas).checked_add(U256::from(COPY).checked_mul(
-        if wordr == U256::zero() {
+        if wordr.is_zero() {
             wordd
         } else {
             wordd + U256::one()
@@ -171,7 +171,7 @@ pub fn sha3_cost(len: U256) -> Option<u64> {
     let wordr = len % U256::from(32);
 
     let gas = U256::from(SHA3).checked_add(U256::from(SHA3WORD).checked_mul(
-        if wordr == U256::zero() {
+        if wordr.is_zero() {
             wordd
         } else {
             wordd + U256::one()
@@ -226,7 +226,7 @@ pub fn sstore_cost<SPEC: Spec>(
             gas_sload
         } else {
             if original == current {
-                if original == H256::zero() {
+                if original.is_zero() {
                     SSTORE_SET
                 } else {
                     gas_sstore_reset
@@ -236,7 +236,7 @@ pub fn sstore_cost<SPEC: Spec>(
             }
         }
     } else {
-        if current == H256::zero() && new != H256::zero() {
+        if current.is_zero() && !new.is_zero() {
             SSTORE_SET
         } else {
             gas_sstore_reset

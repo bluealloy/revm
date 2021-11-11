@@ -17,7 +17,7 @@ pub fn sha3(machine: &mut Machine) -> Return {
     gas_or_fail!(machine, gas::sha3_cost(len));
 
     memory_resize!(machine, from, len);
-    let data = if len == U256::zero() {
+    let data = if len.is_zero() {
         Bytes::new()
     } else {
         let from = as_usize_or_fail!(from);
@@ -293,7 +293,7 @@ pub fn log<H: Handler, SPEC: Spec>(machine: &mut Machine, n: u8, handler: &mut H
     pop_u256!(machine, offset, len);
     gas_or_fail!(machine, gas::log_cost(n, len));
     memory_resize!(machine, offset, len);
-    let data = if len == U256::zero() {
+    let data = if len.is_zero() {
         Bytes::new()
     } else {
         let offset = as_usize_or_fail!(offset);
@@ -358,7 +358,7 @@ pub fn create<H: Handler, SPEC: Spec>(
     pop_u256!(machine, value, code_offset, len);
 
     memory_resize!(machine, code_offset, len);
-    let code = if len == U256::zero() {
+    let code = if len.is_zero() {
         Bytes::new()
     } else {
         let code_offset = as_usize_or_fail!(code_offset);
@@ -434,7 +434,7 @@ pub fn call<H: Handler, SPEC: Spec>(
         }
         CallScheme::Call => {
             pop_u256!(machine, value);
-            if SPEC::IS_STATIC_CALL && value != U256::zero() {
+            if SPEC::IS_STATIC_CALL && !value.is_zero() {
                 return Return::CallNotAllowedInsideStatic;
             }
             value
@@ -447,7 +447,7 @@ pub fn call<H: Handler, SPEC: Spec>(
     memory_resize!(machine, in_offset, in_len);
     memory_resize!(machine, out_offset, out_len);
 
-    let input = if in_len == U256::zero() {
+    let input = if in_len.is_zero() {
         Bytes::new()
     } else {
         let in_offset = as_usize_or_fail!(in_offset);
@@ -518,7 +518,7 @@ pub fn call<H: Handler, SPEC: Spec>(
     gas!(machine, gas_limit);
 
     // add call stipend if there is value to be transfered.
-    if matches!(scheme, CallScheme::Call | CallScheme::CallCode) && transfer.value != U256::zero() {
+    if matches!(scheme, CallScheme::Call | CallScheme::CallCode) && !transfer.value.is_zero() {
         gas_limit = gas_limit.saturating_add(gas::CALL_STIPEND);
     }
     let is_static = matches!(scheme, CallScheme::StaticCall);

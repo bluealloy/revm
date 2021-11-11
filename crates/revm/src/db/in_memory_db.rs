@@ -49,7 +49,7 @@ impl InMemoryDB {
                 self.contracts.insert(code_hash, code);
             }
         }
-        if account.code_hash == H256::zero() {
+        if account.code_hash.is_zero() {
             account.code_hash = KECCAK_EMPTY;
         }
         self.cache.insert(address, account);
@@ -94,7 +94,7 @@ impl DatabaseCommit for InMemoryDB {
                     storage.clear();
                 }
                 for (index, value) in acc.storage {
-                    if value == H256::zero() {
+                    if value.is_zero() {
                         storage.remove(&index);
                     } else {
                         storage.insert(index, value);

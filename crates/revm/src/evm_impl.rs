@@ -382,7 +382,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         // Create subroutine checkpoint
         let checkpoint = self.subroutine.create_checkpoint();
         // touch address. For "EIP-158 State Clear" this will erase empty accounts.
-        if transfer.value == U256::zero() {
+        if transfer.value.is_zero() {
             self.load_account(context.address);
             self.subroutine.balance_add(context.address, U256::zero()); // touch the acc
         }
