@@ -95,7 +95,7 @@ impl Stack {
                 self.data.set_len(new_len);
                 *self.data.get_unchecked_mut(len) = *self.data.get_unchecked(len - N);
             }
-            Return::OK
+            Return::Continue
         }
     }
 
@@ -111,7 +111,7 @@ impl Stack {
             let pb: *mut H256 = self.data.get_unchecked_mut(len - 1 - N);
             core::ptr::swap(pa, pb);
         }
-        Return::OK
+        Return::Continue
     }
 
     /// push slice onto memory it is expected to be max 32 bytes and be contains inside H256

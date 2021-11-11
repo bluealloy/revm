@@ -122,7 +122,7 @@ impl Memory {
     ) -> Return {
         let target_size = target_size.unwrap_or(value.len());
         if target_size == 0 {
-            return Return::OK;
+            return Return::Continue;
         }
 
         if offset
@@ -146,7 +146,7 @@ impl Memory {
             self.data[offset..(target_size + offset)].clone_from_slice(&value[..target_size]);
         }
 
-        Return::OK
+        Return::Continue
     }
 
     /// Copy `data` into the memory, of given `len`.
@@ -163,7 +163,7 @@ impl Memory {
         // TODO: refactor `set` and `copy_large` (see
         // https://github.com/rust-blockchain/evm/pull/40#discussion_r677180794)
         if len.is_zero() {
-            return Return::OK;
+            return Return::Continue;
         }
 
         let memory_offset = if memory_offset > U256::from(usize::MAX) {

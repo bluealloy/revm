@@ -11,13 +11,14 @@ use sha3::{Digest, Keccak256};
 
 use indicatif::ProgressBar;
 use primitive_types::{H160, H256, U256};
-use revm::{CreateScheme, Env, Inspector, SpecId, TransactTo};
+use revm::{CreateScheme, Env, SpecId, TransactTo};
 use std::sync::atomic::Ordering;
 use walkdir::{DirEntry, WalkDir};
 
 use crate::{
     merkle_trie::merkle_trie_root,
     models::{SpecName, TestSuit},
+    trace::CustomPrintTracer,
 };
 use thiserror::Error;
 
@@ -43,11 +44,7 @@ pub fn find_all_json_tests(path: PathBuf) -> Vec<PathBuf> {
         .collect::<Vec<PathBuf>>()
 }
 
-pub fn execute_test_suit(
-    path: &PathBuf,
-    elapsed: &Arc<Mutex<Duration>>,
-    inspector: &mut dyn Inspector,
-) -> Result<(), TestError> {
+pub fn execute_test_suit(path: &PathBuf, elapsed: &Arc<Mutex<Duration>>) -> Result<(), TestError> {
     if path.file_name() == Some(OsStr::new("ValueOverflow.json")) {
         return Ok(());
     }
@@ -209,20 +206,25 @@ pub fn execute_test_suit(
                 };
                 env.tx.transact_to = to;
 
-                let mut database = database.clone();
+                let mut database_cloned = database.clone();
                 let mut evm = revm::new();
-                evm.database(&mut database);
+                evm.database(&mut database_cloned);
                 evm.env = env.clone();
                 // do the deed
 
                 let timer = Instant::now();
-                let (ret, _out, gas) = evm.inspect_commit(&mut *inspector);
+                let (ret, _out, gas) = evm.transact_commit();
                 let timer = timer.elapsed();
 
                 *elapsed.lock().unwrap() += timer;
                 let db = evm.db().unwrap();
                 let state_root = merkle_trie_root(db.cache(), db.storage());
                 if test.hash != state_root {
+                    println!("TEST FAILED, RERUN IT:");
+                    let mut database_cloned = database.clone();
+                    evm.database(&mut database_cloned);
+                    evm.inspect_commit(CustomPrintTracer {});
+                    let db = evm.db().unwrap();
                     println!("{:?} UNIT_TEST:{}\n", path, name);
                     println!(
                         "fail reson: {:?} {:?} UNIT_TEST:{}\n gas:{:?}",
@@ -244,7 +246,7 @@ pub fn execute_test_suit(
     Ok(())
 }
 
-pub fn run<INSP: 'static + Inspector + Clone + Send>(test_files: Vec<PathBuf>, inspector: INSP) {
+pub fn run(test_files: Vec<PathBuf>) {
     let endjob = Arc::new(AtomicBool::new(false));
     let console_bar = Arc::new(ProgressBar::new(test_files.len() as u64));
     let mut joins = Vec::new();
@@ -255,7 +257,6 @@ pub fn run<INSP: 'static + Inspector + Clone + Send>(test_files: Vec<PathBuf>, i
         let endjob = endjob.clone();
         let console_bar = console_bar.clone();
         let elapsed = elapsed.clone();
-        let mut insp = inspector.clone();
 
         joins.push(
             std::thread::Builder::new()
@@ -274,9 +275,7 @@ pub fn run<INSP: 'static + Inspector + Clone + Send>(test_files: Vec<PathBuf>, i
                         return;
                     }
                     //println!("Test:{:?}\n",test_path);
-                    if let Err(err) =
-                        execute_test_suit(&test_path, &elapsed, &mut insp as &mut dyn Inspector)
-                    {
+                    if let Err(err) = execute_test_suit(&test_path, &elapsed) {
                         endjob.store(true, Ordering::SeqCst);
                         println!("\n{:?} failed: {}\n", test_path, err);
                         return;

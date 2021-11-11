@@ -8,7 +8,7 @@ mod misc;
 pub mod opcode;
 mod system;
 
-pub use opcode::OpCode;
+pub use opcode::{OpCode,OPCODE_JUMPMAP};
 
 use crate::{
     machine::Machine,
@@ -21,7 +21,7 @@ use primitive_types::{H256, U256};
 #[macro_export]
 macro_rules! return_ok {
     () => {
-        Return::OK | Return::Stop | Return::Return | Return::SelfDestruct
+        Return::Continue | Return::Stop | Return::Return | Return::SelfDestruct
     };
 }
 
@@ -36,7 +36,7 @@ macro_rules! return_revert {
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Return {
     //success codes
-    OK = 0x00,
+    Continue = 0x00,
     Stop = 0x01,
     Return = 0x02,
     SelfDestruct = 0x03,
@@ -112,7 +112,7 @@ impl From<ExitRevert> for ExitReason {
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "with-codec", derive(codec::Encode, codec::Decode))]
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum Return {
+pub enum ExitError {
     /// Trying to pop from an empty stack.
     StackUnderflow,
     /// Trying to push into a stack over stack limit.

@@ -9,9 +9,9 @@ use primitive_types::{H256, U256};
 #[inline(always)]
 pub fn codesize(machine: &mut Machine) -> Return {
     gas!(machine, gas::BASE);
-    let size = U256::from(machine.contract.code.len());
+    let size = U256::from(machine.contract.code_size);
     push_u256!(machine, size);
-    Return::OK
+    Return::Continue
 }
 
 #[inline(always)]
@@ -45,7 +45,7 @@ pub fn calldataload(machine: &mut Machine) -> Return {
     }
 
     push!(machine, H256::from(load));
-    Return::OK
+    Return::Continue
 }
 
 #[inline(always)]
@@ -54,7 +54,7 @@ pub fn calldatasize(machine: &mut Machine) -> Return {
 
     let len = U256::from(machine.contract.input.len());
     push_u256!(machine, len);
-    Return::OK
+    Return::Continue
 }
 
 #[inline(always)]
@@ -64,7 +64,7 @@ pub fn calldatacopy(machine: &mut Machine) -> Return {
     memory_resize!(machine, memory_offset, len);
 
     if len == U256::zero() {
-        return Return::OK;
+        return Return::Continue;
     }
 
     machine
@@ -76,7 +76,7 @@ pub fn calldatacopy(machine: &mut Machine) -> Return {
 pub fn pop(machine: &mut Machine) -> Return {
     gas!(machine, gas::BASE);
     pop!(machine, _val);
-    Return::OK
+    Return::Continue
 }
 
 #[inline(always)]
@@ -89,7 +89,7 @@ pub fn mload(machine: &mut Machine) -> Return {
     let index = as_usize_or_fail!(index);
     let value = H256::from_slice(&machine.memory.get(index, 32)[..]);
     push!(machine, value);
-    Return::OK
+    Return::Continue
 }
 
 #[inline(always)]
@@ -126,7 +126,7 @@ pub fn jump(machine: &mut Machine) -> Return {
 
     if machine.contract.is_valid_jump(dest) {
         machine.program_counter = dest;
-        Return::OK
+        Return::Continue
     } else {
         Return::InvalidJump
     }
@@ -143,33 +143,33 @@ pub fn jumpi(machine: &mut Machine) -> Return {
         let dest = as_usize_or_fail!(dest, Return::InvalidJump);
         if machine.contract.is_valid_jump(dest) {
             machine.program_counter = dest;
-            Return::OK
+            Return::Continue
         } else {
             Return::InvalidJump
         }
     } else {
-        Return::OK
+        Return::Continue
     }
 }
 
 #[inline(always)]
 pub fn jumpdest(machine: &mut Machine) -> Return {
     gas!(machine, gas::JUMPDEST);
-    Return::OK
+    Return::Continue
 }
 
 #[inline(always)]
 pub fn pc(machine: &mut Machine) -> Return {
     gas!(machine, gas::BASE);
     push_u256!(machine, U256::from(machine.program_counter - 1));
-    Return::OK
+    Return::Continue
 }
 
 #[inline(always)]
 pub fn msize(machine: &mut Machine) -> Return {
     gas!(machine, gas::BASE);
     push_u256!(machine, machine.memory.effective_len());
-    Return::OK
+    Return::Continue
 }
 
 // code padding is needed for contracts
@@ -180,7 +180,7 @@ pub fn push<const N: usize>(machine: &mut Machine) -> Return {
 
     try_or_fail!(machine.stack.push_slice::<N>(slice));
     machine.program_counter += N;
-    Return::OK
+    Return::Continue
 }
 
 #[inline(always)]
@@ -202,7 +202,7 @@ pub fn ret(machine: &mut Machine) -> Return {
     pop_u256!(machine, start, len);
     memory_resize!(machine, start, len);
     machine.return_range = start..(start + len);
-    Return::OK
+    Return::Return
 }
 
 #[inline(always)]

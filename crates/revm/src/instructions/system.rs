@@ -29,7 +29,7 @@ pub fn sha3(machine: &mut Machine) -> Return {
     let ret = Keccak256::digest(data.as_ref());
     push!(machine, H256::from_slice(ret.as_slice()));
 
-    Return::OK
+    Return::Continue
 }
 
 pub fn chainid<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
@@ -38,7 +38,7 @@ pub fn chainid<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -
 
     push_u256!(machine, handler.env().cfg.chain_id);
 
-    Return::OK
+    Return::Continue
 }
 
 pub fn address(machine: &mut Machine) -> Return {
@@ -47,7 +47,7 @@ pub fn address(machine: &mut Machine) -> Return {
     let ret = H256::from(machine.contract.address);
     push!(machine, ret);
 
-    Return::OK
+    Return::Continue
 }
 
 pub fn balance<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
@@ -66,7 +66,7 @@ pub fn balance<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -
     );
     push_u256!(machine, balance);
 
-    Return::OK
+    Return::Continue
 }
 
 pub fn selfbalance<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
@@ -75,7 +75,7 @@ pub fn selfbalance<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
     gas!(machine, gas::LOW);
     push_u256!(machine, balance);
 
-    Return::OK
+    Return::Continue
 }
 
 pub fn basefee<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
@@ -84,7 +84,7 @@ pub fn basefee<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -
     gas!(machine, gas::BASE);
     push_u256!(machine, basefee);
 
-    Return::OK
+    Return::Continue
 }
 
 pub fn origin<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
@@ -93,7 +93,7 @@ pub fn origin<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
     let ret = H256::from(handler.env().tx.caller);
     push!(machine, ret);
 
-    Return::OK
+    Return::Continue
 }
 
 pub fn caller(machine: &mut Machine) -> Return {
@@ -102,7 +102,7 @@ pub fn caller(machine: &mut Machine) -> Return {
     let ret = H256::from(machine.contract.caller);
     push!(machine, ret);
 
-    Return::OK
+    Return::Continue
 }
 
 pub fn callvalue(machine: &mut Machine) -> Return {
@@ -112,7 +112,7 @@ pub fn callvalue(machine: &mut Machine) -> Return {
     machine.contract.value.to_big_endian(&mut ret[..]);
     push!(machine, ret);
 
-    Return::OK
+    Return::Continue
 }
 
 pub fn gasprice<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
@@ -125,7 +125,7 @@ pub fn gasprice<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
         .to_big_endian(&mut ret[..]);
     push!(machine, ret);
 
-    Return::OK
+    Return::Continue
 }
 
 pub fn extcodesize<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
@@ -136,7 +136,7 @@ pub fn extcodesize<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
 
     push_u256!(machine, U256::from(code.len()));
 
-    Return::OK
+    Return::Continue
 }
 
 pub fn extcodehash<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
@@ -154,7 +154,7 @@ pub fn extcodehash<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
     );
     push!(machine, code_hash);
 
-    Return::OK
+    Return::Continue
 }
 
 pub fn extcodecopy<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
@@ -177,7 +177,7 @@ pub fn returndatasize<SPEC: Spec>(machine: &mut Machine) -> Return {
     let size = U256::from(machine.return_data_buffer.len());
     push_u256!(machine, size);
 
-    Return::OK
+    Return::Continue
 }
 
 pub fn returndatacopy<SPEC: Spec>(machine: &mut Machine) -> Return {
@@ -204,41 +204,41 @@ pub fn blockhash<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
     pop_u256!(machine, number);
     push!(machine, handler.block_hash(number));
 
-    Return::OK
+    Return::Continue
 }
 
 pub fn coinbase<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
     gas!(machine, gas::BASE);
 
     push!(machine, handler.env().block.coinbase.into());
-    Return::OK
+    Return::Continue
 }
 
 pub fn timestamp<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
     gas!(machine, gas::BASE);
     push_u256!(machine, handler.env().block.timestamp);
-    Return::OK
+    Return::Continue
 }
 
 pub fn number<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
     gas!(machine, gas::BASE);
 
     push_u256!(machine, handler.env().block.number);
-    Return::OK
+    Return::Continue
 }
 
 pub fn difficulty<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
     gas!(machine, gas::BASE);
 
     push_u256!(machine, handler.env().block.difficulty);
-    Return::OK
+    Return::Continue
 }
 
 pub fn gaslimit<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
     gas!(machine, gas::BASE);
 
     push_u256!(machine, handler.env().block.gas_limit);
-    Return::OK
+    Return::Continue
 }
 
 pub fn sload<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
@@ -254,7 +254,7 @@ pub fn sload<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> 
     );
     gas!(machine, gas::sload_cost::<SPEC>(is_cold));
     push!(machine, value);
-    Return::OK
+    Return::Continue
 }
 
 pub fn sstore<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
@@ -277,14 +277,14 @@ pub fn sstore<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) ->
         gas::sstore_cost::<SPEC>(original, old, new, remaining_gas, is_cold)
     });
     refund!(machine, gas::sstore_refund::<SPEC>(original, old, new));
-    Return::OK
+    Return::Continue
 }
 
 pub fn gas(machine: &mut Machine) -> Return {
     gas!(machine, gas::BASE);
 
     push_u256!(machine, U256::from(machine.gas.remaining()));
-    Return::OK
+    Return::Continue
 }
 
 pub fn log<H: Handler, SPEC: Spec>(machine: &mut Machine, n: u8, handler: &mut H) -> Return {
@@ -313,7 +313,7 @@ pub fn log<H: Handler, SPEC: Spec>(machine: &mut Machine, n: u8, handler: &mut H
     }
 
     handler.log(machine.contract.address, topics, data);
-    Return::OK
+    Return::Continue
 }
 
 pub fn selfdestruct<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
@@ -403,7 +403,7 @@ pub fn create<H: Handler, SPEC: Spec>(
     machine.gas.reimburse_unspend(&reason, gas);
     match reason {
         Return::FatalNotSupported => Return::FatalNotSupported,
-        _ => Return::OK,
+        _ => Return::Continue,
     }
 }
 
@@ -537,19 +537,18 @@ pub fn call<H: Handler, SPEC: Spec>(
     machine.gas.reimburse_unspend(&reason, gas);
     match reason {
         return_ok!() => {
-            if Return::OK
-                == machine.memory.copy_large(
-                    out_offset,
-                    U256::zero(),
-                    target_len,
-                    &machine.return_data_buffer,
-                )
+            if machine.memory.copy_large(
+                out_offset,
+                U256::zero(),
+                target_len,
+                &machine.return_data_buffer,
+            ) == Return::Continue
             {
                 push_u256!(machine, U256::one());
-                Return::OK
+                Return::Continue
             } else {
                 push_u256!(machine, U256::zero());
-                Return::OK
+                Return::Continue
             }
         }
         return_revert!() => {
@@ -560,15 +559,11 @@ pub fn call<H: Handler, SPEC: Spec>(
                 target_len,
                 &machine.return_data_buffer,
             );
-            Return::OK
-        }
-        Return::FatalNotSupported => {
-            push_u256!(machine, U256::zero());
-            Return::FatalNotSupported
+            Return::Continue
         }
         _ => {
             push_u256!(machine, U256::zero());
-            Return::OK
+            Return::Continue
         }
     }
 }

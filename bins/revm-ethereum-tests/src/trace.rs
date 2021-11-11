@@ -1,6 +1,6 @@
 use primitive_types::{H160, H256, U256};
 pub use revm::Inspector;
-use revm::Return;
+use revm::{opcode, Return};
 
 #[derive(Clone)]
 pub struct CustomPrintTracer {}
@@ -13,14 +13,15 @@ impl Inspector for CustomPrintTracer {
             Some(opcode) => opcode,
             None => return,
         };
+        let opcode_str = opcode::OPCODE_JUMPMAP[*opcode as usize];
         //if self.
         println!(
-            "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: ({:?})  refund:{:#x}({}) Stack:{:?}, Data:{:?}",
+            "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data:{:?}",
             machine.call_depth,
             machine.program_counter(),
             machine.gas.remaining(),
             machine.gas.remaining(),
-            //opcode,
+            opcode_str.unwrap(),
             opcode,
             machine.gas.refunded(),
             machine.gas.refunded(),

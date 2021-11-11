@@ -93,7 +93,7 @@ pub fn eval_exp<SPEC: Spec>(machine: &mut Machine) -> Return {
     let ret = exp(op1, op2);
     push_u256!(machine, ret);
 
-    Return::OK
+    Return::Continue
 }
 
 /// In the yellow paper `SIGNEXTEND` is defined to take two inputs, we will call them

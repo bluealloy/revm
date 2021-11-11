@@ -20,7 +20,10 @@ pub type DummyStateDB = InMemoryDB;
 pub use db::{Database, DatabaseCommit, InMemoryDB};
 pub use evm::{new, EVM};
 pub use inspector::{Inspector, NoOpInspector};
-pub use instructions::Return;
+pub use instructions::{
+    opcode::{self, OpCode, OPCODE_JUMPMAP},
+    Return,
+};
 pub use machine::Machine;
 pub use models::*;
 pub use spec::*;

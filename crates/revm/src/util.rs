@@ -5,11 +5,13 @@ pub fn l64(gas: u64) -> u64 {
     gas - gas / 64
 }
 
+
 pub fn create_address(caller: H160, nonce: u64) -> H160 {
     let mut stream = rlp::RlpStream::new_list(2);
     stream.append(&caller);
     stream.append(&nonce);
-    H256::from_slice(Keccak256::digest(&stream.out()).as_slice()).into()
+    let out : H256 = H256::from_slice(Keccak256::digest(&stream.out()).as_slice()).into();
+    out.into()
 }
 
 /// Get the create address from given scheme.

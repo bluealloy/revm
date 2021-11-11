@@ -162,7 +162,7 @@ impl Machine {
         //let timer = std::time::Instant::now();
         loop {
             let ret = self.step::<H, SPEC>(handler);
-            if Return::OK != ret {
+            if Return::Continue != ret {
                 if H::INSPECT {
                     handler.inspect().call_return(ret);
                 }

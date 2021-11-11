@@ -1,4 +1,15 @@
-use crate::{CallContext, CreateScheme, Env, Inspector, KECCAK_EMPTY, Log, Return, TransactOut, TransactTo, Transfer, db::Database, instructions::gas, machine, machine::{Contract, Gas, Machine}, models::SelfDestructResult, spec::{Spec, SpecId::*}, subroutine::{Account, State, SubRoutine}, util};
+use crate::{
+    db::Database,
+    instructions::gas,
+    machine,
+    machine::{Contract, Gas, Machine},
+    models::SelfDestructResult,
+    return_ok,
+    spec::{Spec, SpecId::*},
+    subroutine::{Account, State, SubRoutine},
+    util, CallContext, CreateScheme, Env, Inspector, Log, Return, TransactOut, TransactTo,
+    Transfer, KECCAK_EMPTY,
+};
 use alloc::vec::Vec;
 use bytes::Bytes;
 use core::{cmp::min, marker::PhantomData};
@@ -36,7 +47,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
             if let Some(priority_fee) = self.env.tx.gas_priority_fee {
                 if priority_fee > self.env.tx.gas_price {
                     // or gas_max_fee for eip1559
-                    return exit(Return::GasMaxFeeGreaterThanPriorityFee)
+                    return exit(Return::GasMaxFeeGreaterThanPriorityFee);
                 }
             }
             let effective_gas_price = self.env.effective_gas_price();
@@ -313,7 +324,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let exit_reason = machine.run::<Self, SPEC>(self);
         // handler error if present on execution\
         match exit_reason {
-            Return::OK => {
+            return_ok!() => {
                 let b = Bytes::new();
                 // if ok, check contract creation limit and calculate gas deduction on output len.
                 let code = machine.return_value();
@@ -341,7 +352,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 self.subroutine.checkpoint_commit();
                 let code_hash = H256::from_slice(Keccak256::digest(&code).as_slice());
                 self.subroutine.set_code(created_address, code, code_hash);
-                (Return::OK,  ret, machine.gas, b)
+                (Return::Continue, ret, machine.gas, b)
             }
             _ => {
                 self.subroutine.checkpoint_revert(checkpoint);
@@ -412,7 +423,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                             })
                         });
                         self.subroutine.checkpoint_commit();
-                        (Return::OK, gas, Bytes::from(output))
+                        (Return::Continue, gas, Bytes::from(output))
                     } else {
                         self.subroutine.checkpoint_revert(checkpoint);
                         (Return::OutOfGas, gas, Bytes::new())
@@ -428,7 +439,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             let contract = Contract::new_with_context(input, code, &context);
             let mut machine = Machine::new::<SPEC>(contract, gas_limit, self.subroutine.depth());
             let exit_reason = machine.run::<Self, SPEC>(self);
-            if matches!(exit_reason, Return::OK) {
+            if matches!(exit_reason, return_ok!()) {
                 self.subroutine.checkpoint_commit();
             } else {
                 self.subroutine.checkpoint_revert(checkpoint);
