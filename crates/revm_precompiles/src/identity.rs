@@ -28,7 +28,7 @@ fn identity_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
 
 #[cfg(test)]
 mod tests {
-    use evm::ExitError;
+    use evm::Return;
 
     use crate::test_utils::new_context;
 
@@ -53,7 +53,7 @@ mod tests {
         // gas fail
         let res = Identity::run(&input[0..2], 17, &new_context(), false);
 
-        assert!(matches!(res, Err(ExitError::OutOfGas)));
+        assert!(matches!(res, Err(Return::OutOfGas)));
 
         // larger input
         let input = [

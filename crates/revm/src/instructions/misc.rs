@@ -1,6 +1,5 @@
 use super::gas;
 use crate::{
-    error::{ExitError, ExitFatal, Return, ExitRevert, ExitSucceed},
     machine::Machine,
     Return, Spec,
     SpecId::*,
@@ -203,7 +202,7 @@ pub fn ret(machine: &mut Machine) -> Return {
     pop_u256!(machine, start, len);
     memory_resize!(machine, start, len);
     machine.return_range = start..(start + len);
-    Return::Exit
+    Return::OK
 }
 
 #[inline(always)]

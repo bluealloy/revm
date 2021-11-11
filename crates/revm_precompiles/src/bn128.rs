@@ -1,4 +1,4 @@
-use crate::{gas_query, ExitError, Precompile, PrecompileOutput, PrecompileResult};
+use crate::{gas_query, Return, Precompile, PrecompileOutput, PrecompileResult};
 
 use alloc::{borrow::Cow, vec::Vec};
 use primitive_types::{H160 as Address, U256};
@@ -83,24 +83,24 @@ const MUL_INPUT_LEN: usize = 128;
 const PAIR_ELEMENT_LEN: usize = 192;
 
 /// Reads the `x` and `y` points from an input at a given position.
-fn read_point(input: &[u8], pos: usize) -> Result<bn::G1, ExitError> {
+fn read_point(input: &[u8], pos: usize) -> Result<bn::G1, Return> {
     use bn::{AffineG1, Fq, Group, G1};
 
     let mut px_buf = [0u8; 32];
     px_buf.copy_from_slice(&input[pos..(pos + 32)]);
     let px = Fq::from_slice(&px_buf)
-        .map_err(|_e| ExitError::Other(Cow::Borrowed("ERR_BN128_INVALID_X")))?;
+        .map_err(|_e| Return::Other(Cow::Borrowed("ERR_BN128_INVALID_X")))?;
 
     let mut py_buf = [0u8; 32];
     py_buf.copy_from_slice(&input[(pos + 32)..(pos + 64)]);
     let py = Fq::from_slice(&py_buf)
-        .map_err(|_e| ExitError::Other(Cow::Borrowed("ERR_BN128_INVALID_Y")))?;
+        .map_err(|_e| Return::Other(Cow::Borrowed("ERR_BN128_INVALID_Y")))?;
 
     Ok(if px == Fq::zero() && py == bn::Fq::zero() {
         G1::zero()
     } else {
         AffineG1::new(px, py)
-            .map_err(|_| ExitError::Other(Cow::Borrowed("ERR_BN128_INVALID_POINT")))?
+            .map_err(|_| Return::Other(Cow::Borrowed("ERR_BN128_INVALID_POINT")))?
             .into()
     })
 }
@@ -143,7 +143,7 @@ fn run_mul(input: &[u8], cost: u64, target_gas: u64) -> PrecompileResult {
     let mut fr_buf = [0u8; 32];
     fr_buf.copy_from_slice(&input[64..96]);
     let fr = bn::Fr::from_slice(&fr_buf[..])
-        .map_err(|_| ExitError::Other(Cow::Borrowed("Invalid field element")))?;
+        .map_err(|_| Return::Other(Cow::Borrowed("Invalid field element")))?;
 
     let mut out = [0u8; 64];
     if let Some(mul) = AffineG1::from_jacobian(p * fr) {
@@ -166,7 +166,7 @@ fn run_pair(
     use bn::{AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
 
     if input.len() % PAIR_ELEMENT_LEN != 0 {
-        return Err(ExitError::Other(Cow::Borrowed("ERR_BN128_INVALID_LEN")));
+        return Err(Return::Other(Cow::Borrowed("ERR_BN128_INVALID_LEN")));
     }
 
     let output = if input.is_empty() {
@@ -180,32 +180,32 @@ fn run_pair(
 
             buf.copy_from_slice(&input[(idx * PAIR_ELEMENT_LEN)..(idx * PAIR_ELEMENT_LEN + 32)]);
             let ax = Fq::from_slice(&buf)
-                .map_err(|_e| ExitError::Other(Cow::Borrowed("ERR_BN128_INVALID_AX")))?;
+                .map_err(|_e| Return::Other(Cow::Borrowed("ERR_BN128_INVALID_AX")))?;
             buf.copy_from_slice(
                 &input[(idx * PAIR_ELEMENT_LEN + 32)..(idx * PAIR_ELEMENT_LEN + 64)],
             );
             let ay = Fq::from_slice(&buf)
-                .map_err(|_e| ExitError::Other(Cow::Borrowed("ERR_BN128_INVALID_AY")))?;
+                .map_err(|_e| Return::Other(Cow::Borrowed("ERR_BN128_INVALID_AY")))?;
             buf.copy_from_slice(
                 &input[(idx * PAIR_ELEMENT_LEN + 64)..(idx * PAIR_ELEMENT_LEN + 96)],
             );
             let bay = Fq::from_slice(&buf)
-                .map_err(|_e| ExitError::Other(Cow::Borrowed("ERR_BN128_INVALID_B_AY")))?;
+                .map_err(|_e| Return::Other(Cow::Borrowed("ERR_BN128_INVALID_B_AY")))?;
             buf.copy_from_slice(
                 &input[(idx * PAIR_ELEMENT_LEN + 96)..(idx * PAIR_ELEMENT_LEN + 128)],
             );
             let bax = Fq::from_slice(&buf)
-                .map_err(|_e| ExitError::Other(Cow::Borrowed("ERR_BN128_INVALID_B_AX")))?;
+                .map_err(|_e| Return::Other(Cow::Borrowed("ERR_BN128_INVALID_B_AX")))?;
             buf.copy_from_slice(
                 &input[(idx * PAIR_ELEMENT_LEN + 128)..(idx * PAIR_ELEMENT_LEN + 160)],
             );
             let bby = Fq::from_slice(&buf)
-                .map_err(|_e| ExitError::Other(Cow::Borrowed("ERR_BN128_INVALID_B_BY")))?;
+                .map_err(|_e| Return::Other(Cow::Borrowed("ERR_BN128_INVALID_B_BY")))?;
             buf.copy_from_slice(
                 &input[(idx * PAIR_ELEMENT_LEN + 160)..(idx * PAIR_ELEMENT_LEN + 192)],
             );
             let bbx = Fq::from_slice(&buf)
-                .map_err(|_e| ExitError::Other(Cow::Borrowed("ERR_BN128_INVALID_B_BX")))?;
+                .map_err(|_e| Return::Other(Cow::Borrowed("ERR_BN128_INVALID_B_BX")))?;
 
             let a = {
                 if ax.is_zero() && ay.is_zero() {
@@ -213,7 +213,7 @@ fn run_pair(
                 } else {
                     G1::from(
                         AffineG1::new(ax, ay)
-                            .map_err(|_e| ExitError::Other(Cow::Borrowed("ERR_BN128_INVALID_A")))?,
+                            .map_err(|_e| Return::Other(Cow::Borrowed("ERR_BN128_INVALID_A")))?,
                     )
                 }
             };
@@ -226,7 +226,7 @@ fn run_pair(
                 } else {
                     G2::from(
                         AffineG2::new(ba, bb)
-                            .map_err(|_e| ExitError::Other(Cow::Borrowed("ERR_BN128_INVALID_B")))?,
+                            .map_err(|_e| Return::Other(Cow::Borrowed("ERR_BN128_INVALID_B")))?,
                     )
                 }
             };
@@ -310,7 +310,7 @@ mod tests {
         )
         .unwrap();
         let res = Bn128Add::<Byzantium>::run(&input, 499, &new_context(), false);
-        assert!(matches!(res, Err(ExitError::OutOfGas)));
+        assert!(matches!(res, Err(Return::OutOfGas)));
 
         // no input test
         let input = [0u8; 0];
@@ -339,7 +339,7 @@ mod tests {
         let res = Bn128Add::<Byzantium>::run(&input, 500, &new_context(), false);
         assert!(matches!(
             res,
-            Err(ExitError::Other(Cow::Borrowed("ERR_BN128_INVALID_POINT")))
+            Err(Return::Other(Cow::Borrowed("ERR_BN128_INVALID_POINT")))
         ));
     }
 
@@ -373,7 +373,7 @@ mod tests {
         )
         .unwrap();
         let res = Bn128Mul::<Byzantium>::run(&input, 39_999, &new_context(), false);
-        assert!(matches!(res, Err(ExitError::OutOfGas)));
+        assert!(matches!(res, Err(Return::OutOfGas)));
 
         // zero multiplication test
         let input = hex::decode(
@@ -421,7 +421,7 @@ mod tests {
         let res = Bn128Mul::<Byzantium>::run(&input, 40_000, &new_context(), false);
         assert!(matches!(
             res,
-            Err(ExitError::Other(Cow::Borrowed("ERR_BN128_INVALID_POINT")))
+            Err(Return::Other(Cow::Borrowed("ERR_BN128_INVALID_POINT")))
         ));
     }
 
@@ -470,7 +470,7 @@ mod tests {
         )
         .unwrap();
         let res = Bn128Pair::<Byzantium>::run(&input, 259_999, &new_context(), false);
-        assert!(matches!(res, Err(ExitError::OutOfGas)));
+        assert!(matches!(res, Err(Return::OutOfGas)));
 
         // no input test
         let input = [0u8; 0];
@@ -498,7 +498,7 @@ mod tests {
         let res = Bn128Pair::<Byzantium>::run(&input, 260_000, &new_context(), false);
         assert!(matches!(
             res,
-            Err(ExitError::Other(Cow::Borrowed("ERR_BN128_INVALID_A")))
+            Err(Return::Other(Cow::Borrowed("ERR_BN128_INVALID_A")))
         ));
 
         // invalid input length
@@ -514,7 +514,7 @@ mod tests {
         let res = Bn128Pair::<Byzantium>::run(&input, 260_000, &new_context(), false);
         assert!(matches!(
             res,
-            Err(ExitError::Other(Cow::Borrowed("ERR_BN128_INVALID_LEN",)))
+            Err(Return::Other(Cow::Borrowed("ERR_BN128_INVALID_LEN",)))
         ));
     }
 }

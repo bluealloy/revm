@@ -3,7 +3,6 @@
 //#![no_std] only blocker in auto_impl check: https://github.com/bluealloy/revm/issues/4
 
 mod db;
-mod error;
 mod evm;
 mod evm_impl;
 mod inspector;
@@ -19,7 +18,6 @@ use evm_impl::Handler;
 pub type DummyStateDB = InMemoryDB;
 
 pub use db::{Database, DatabaseCommit, InMemoryDB};
-pub use error::*;
 pub use evm::{new, EVM};
 pub use inspector::{Inspector, NoOpInspector};
 pub use instructions::Return;

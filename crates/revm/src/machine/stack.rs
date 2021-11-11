@@ -1,4 +1,4 @@
-use crate::{Return, alloc::vec::Vec, error::ExitError};
+use crate::{Return, alloc::vec::Vec};
 use primitive_types::H256;
 
 pub const STACK_LIMIT: usize = 1024;
@@ -44,8 +44,8 @@ impl Stack {
     #[inline]
     /// Pop a value from the stack. If the stack is already empty, returns the
     /// `StackUnderflow` error.
-    pub fn pop(&mut self) -> Result<H256, ExitError> {
-        self.data.pop().ok_or(ExitError::StackUnderflow)
+    pub fn pop(&mut self) -> Result<H256, Return> {
+        self.data.pop().ok_or(Return::StackUnderflow)
     }
 
     #[inline(always)]
@@ -62,9 +62,9 @@ impl Stack {
     #[inline]
     /// Push a new value into the stack. If it will exceed the stack limit,
     /// returns `StackOverflow` error and leaves the stack unchanged.
-    pub fn push(&mut self, value: H256) -> Result<(), ExitError> {
+    pub fn push(&mut self, value: H256) -> Result<(), Return> {
         if self.data.len() + 1 > STACK_LIMIT {
-            return Err(ExitError::StackOverflow);
+            return Err(Return::StackOverflow);
         }
         self.data.push(value);
         Ok(())
@@ -74,11 +74,11 @@ impl Stack {
     /// Peek a value at given index for the stack, where the top of
     /// the stack is at index `0`. If the index is too large,
     /// `StackError::Underflow` is returned.
-    pub fn peek(&self, no_from_top: usize) -> Result<H256, ExitError> {
+    pub fn peek(&self, no_from_top: usize) -> Result<H256, Return> {
         if self.data.len() > no_from_top {
             Ok(self.data[self.data.len() - no_from_top - 1])
         } else {
-            Err(ExitError::StackUnderflow)
+            Err(Return::StackUnderflow)
         }
     }
 
@@ -134,13 +134,13 @@ impl Stack {
     /// Set a value at given index for the stack, where the top of the
     /// stack is at index `0`. If the index is too large,
     /// `StackError::Underflow` is returned.
-    pub fn set(&mut self, no_from_top: usize, val: H256) -> Result<(), ExitError> {
+    pub fn set(&mut self, no_from_top: usize, val: H256) -> Result<(), Return> {
         if self.data.len() > no_from_top {
             let len = self.data.len();
             self.data[len - no_from_top - 1] = val;
             Ok(())
         } else {
-            Err(ExitError::StackUnderflow)
+            Err(Return::StackUnderflow)
         }
     }
 }

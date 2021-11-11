@@ -1,9 +1,8 @@
 use super::gas;
 use crate::{
-    error::{ExitError, ExitFatal, Return, ExitSucceed},
-    machine::Machine,
-    CallContext, CallScheme, CreateScheme, Handler, Return, Spec, Transfer,
+    machine::Machine, CallContext, CallScheme, CreateScheme, Handler, Return, Spec, Transfer,
 };
+use crate::{return_ok, return_revert};
 // 	CallScheme, Capture, CallContext, CreateScheme, ,
 // 	, Runtime, Transfer,
 // };
@@ -330,7 +329,7 @@ pub fn selfdestruct<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut
     }
     gas!(machine, gas::selfdestruct_cost::<SPEC>(res));
 
-    Return::SelfDestructed
+    Return::SelfDestruct
 }
 
 #[inline(always)]
@@ -393,7 +392,7 @@ pub fn create<H: Handler, SPEC: Spec>(
     let (reason, address, gas, return_data) =
         handler.create::<SPEC>(machine.contract.address, scheme, value, code, gas_limit);
     machine.return_data_buffer = return_data;
-    let created_address: H256 = if matches!(reason, Return::Succeed(_)) {
+    let created_address: H256 = if matches!(reason, return_ok!()) {
         address.map(|a| a.into()).unwrap_or_default()
     } else {
         H256::default()
@@ -403,7 +402,7 @@ pub fn create<H: Handler, SPEC: Spec>(
     // reimburse gas that is not spend
     machine.gas.reimburse_unspend(&reason, gas);
     match reason {
-        Return::Fatal(e) => Return::FatalNotSupported,
+        Return::FatalNotSupported => Return::FatalNotSupported,
         _ => Return::OK,
     }
 }
@@ -537,7 +536,7 @@ pub fn call<H: Handler, SPEC: Spec>(
     // return unspend gas.
     machine.gas.reimburse_unspend(&reason, gas);
     match reason {
-        Return::Succeed(_) => {
+        return_ok!() => {
             if Return::OK
                 == machine.memory.copy_large(
                     out_offset,
@@ -553,7 +552,7 @@ pub fn call<H: Handler, SPEC: Spec>(
                 Return::OK
             }
         }
-        Return::Revert(_) => {
+        return_revert!() => {
             push_u256!(machine, U256::zero());
             let _ = machine.memory.copy_large(
                 out_offset,
@@ -563,13 +562,13 @@ pub fn call<H: Handler, SPEC: Spec>(
             );
             Return::OK
         }
-        Return::Error(_) => {
-            push_u256!(machine, U256::zero());
-            Return::OK
-        }
-        Return::Fatal(e) => {
+        Return::FatalNotSupported => {
             push_u256!(machine, U256::zero());
             Return::FatalNotSupported
+        }
+        _ => {
+            push_u256!(machine, U256::zero());
+            Return::OK
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::{alloc::vec::Vec, CallContext, Return, ExitSucceed};
+use crate::{alloc::vec::Vec, CallContext};
 use bytes::Bytes;
 use primitive_types::{H160, U256};
 

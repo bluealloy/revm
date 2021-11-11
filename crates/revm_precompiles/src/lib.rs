@@ -13,7 +13,7 @@ mod modexp;
 #[cfg(feature = "secp256k1")]
 mod secp256k1;
 
-pub use error::ExitError;
+pub use error::Return;
 
 /// libraries for no_std flag
 #[macro_use]
@@ -24,9 +24,9 @@ pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base
 }
 
-pub fn gas_query(gas_used: u64, gas_limit: u64) -> Result<u64, ExitError> {
+pub fn gas_query(gas_used: u64, gas_limit: u64) -> Result<u64, Return> {
     if gas_used > gas_limit {
-        return Err(ExitError::OutOfGas);
+        return Err(Return::OutOfGas);
     }
     Ok(gas_used)
 }
@@ -66,7 +66,7 @@ impl Default for PrecompileOutput {
 }
 
 /// A precompile operation result.
-pub type PrecompileResult = Result<PrecompileOutput, ExitError>;
+pub type PrecompileResult = Result<PrecompileOutput, Return>;
 
 pub type StandardPrecompileFn = fn(&[u8], u64) -> PrecompileResult;
 pub type CustomPrecompileFn = fn(&[u8], u64) -> PrecompileResult;
@@ -165,7 +165,7 @@ impl Precompiles {
 //     ) -> Option<EvmPrecompileResult> {
 //         let target_gas = match target_gas {
 //             Some(t) => t,
-//             None => return Some(EvmPrecompileResult::Err(ExitError::OutOfGas)),
+//             None => return Some(EvmPrecompileResult::Err(Return::OutOfGas)),
 //         };
 
 //         let output = self.get_fun(&address).map(|fun| {

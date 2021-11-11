@@ -1,4 +1,4 @@
-use crate::{Return, alloc::vec::Vec, error::{ExitError, ExitFatal}};
+use crate::{Return, alloc::vec::Vec};
 use bytes::Bytes;
 use core::{
     cmp::min,

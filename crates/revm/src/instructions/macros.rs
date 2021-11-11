@@ -1,4 +1,4 @@
-pub use crate::error::{ExitError, Return};
+pub use crate::Return;
 
 macro_rules! try_or_fail {
     ( $e:expr ) => {
@@ -34,7 +34,7 @@ macro_rules! gas {
     ($machine:expr, $gas:expr) => {
         if crate::USE_GAS {
             if !$machine.gas.record_cost(($gas)) {
-                Return::OutOfGas;
+                return Return::OutOfGas;
             }
         }
     };
@@ -125,7 +125,7 @@ macro_rules! push {
 		$(
 			match $machine.stack.push($x) {
 				Ok(()) => (),
-				Err(e) => return Return::StackOverflow,
+				Err(e) => return e,
 			}
 		)*
 	)
@@ -138,7 +138,7 @@ macro_rules! push_u256 {
 			$x.to_big_endian(&mut value[..]);
 			match $machine.stack.push(value) {
 				Ok(()) => (),
-				Err(e) => return Return::StackOverflow,
+				Err(e) => return e,
 			}
 		)*
 	)

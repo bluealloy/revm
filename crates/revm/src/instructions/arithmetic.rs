@@ -1,4 +1,4 @@
-use crate::{Machine, Return, Spec, error::*, instructions::gas};
+use crate::{Machine, Return, Spec, instructions::gas};
 
 use super::i256::I256;
 use core::{convert::TryInto, ops::Rem};
