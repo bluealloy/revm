@@ -309,7 +309,9 @@ pub fn log<H: Handler, SPEC: Spec>(machine: &mut Machine, n: u8, handler: &mut H
     let mut topics = Vec::with_capacity(n);
     for _ in 0..(n) {
         /*** SAFETY stack bounds already checked few lines above */
-        topics.push(unsafe { machine.stack.pop_unsafe() });
+        let mut t = H256::zero();
+        unsafe { machine.stack.pop_unsafe().to_big_endian(t.as_bytes_mut()) };
+        topics.push(t);
     }
 
     handler.log(machine.contract.address, topics, data);

@@ -101,7 +101,7 @@ pub fn mstore(machine: &mut Machine) -> Return {
 
     memory_resize!(machine, index, U256::from(32));
     let index = as_usize_or_fail!(index);
-    machine.memory.set(index, &value[..], Some(32))
+    machine.memory.set(index, value.as_ref(), Some(32))
 }
 
 #[inline(always)]

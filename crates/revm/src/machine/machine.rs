@@ -159,32 +159,32 @@ impl Machine {
 
     /// loop steps until we are finished with execution
     pub fn run<H: Handler, SPEC: Spec>(&mut self, handler: &mut H) -> Return {
-        //let timer = std::time::Instant::now();
+        let timer = std::time::Instant::now();
         loop {
             let ret = self.step::<H, SPEC>(handler);
             if Return::Continue != ret {
                 if H::INSPECT {
                     handler.inspect().call_return(ret);
                 }
-                // let elapsed = timer.elapsed();
-                // println!("run took:{:?}", elapsed);
-                // let mut it = self
-                //     .times
-                //     .iter()
-                //     .zip(OPCODE_JUMPMAP.iter())
-                //     .filter(|((time, _), opcode)| opcode.is_some() && !time.is_zero())
-                //     .map(|((dur, num), code)| (code.unwrap(), dur, num, *dur / *num as u32))
-                //     .collect::<Vec<_>>();
-                // it.sort_by(|a, b| a.3.cmp(&b.3));
-                // for i in it {
-                //     println!(
-                //         "code:{:?}   called:{:?}   time:{:?}   avrg:{:?}",
-                //         i.0,
-                //         i.2,
-                //         i.1,
-                //         i.3,
-                //     );
-                // }
+                let elapsed = timer.elapsed();
+                println!("run took:{:?}", elapsed);
+                let mut it = self
+                    .times
+                    .iter()
+                    .zip(crate::OPCODE_JUMPMAP.iter())
+                    .filter(|((time, _), opcode)| opcode.is_some() && !time.is_zero())
+                    .map(|((dur, num), code)| (code.unwrap(), dur, num, *dur / *num as u32))
+                    .collect::<Vec<_>>();
+                it.sort_by(|a, b| a.3.cmp(&b.3));
+                for i in it {
+                    println!(
+                        "code:{:?}   called:{:?}   time:{:?}   avrg:{:?}",
+                        i.0,
+                        i.2,
+                        i.1,
+                        i.3,
+                    );
+                }
                 //TODO cast to reason
                 return ret;
             }

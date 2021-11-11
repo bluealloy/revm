@@ -1,3 +1,5 @@
+use primitive_types::{H256, U256};
+
 pub use crate::Return;
 
 macro_rules! try_or_fail {
@@ -75,6 +77,41 @@ macro_rules! pop {
         if $machine.stack.len() < 1 {
             return Return::StackUnderflow;
         }
+
+        let mut $x1 = H256::zero();
+        unsafe {
+            $machine
+                .stack
+                .pop_unsafe()
+                .to_big_endian($x1.as_bytes_mut())
+        };
+    };
+    ( $machine:expr, $x1:ident, $x2:ident) => {
+        if $machine.stack.len() < 2 {
+            return Return::StackUnderflow;
+        }
+        let mut $x1 = H256::zero();
+        unsafe {
+            $machine
+                .stack
+                .pop_unsafe()
+                .to_big_endian($x1.as_bytes_mut())
+        };
+        let mut $x2 = H256::zero();
+        unsafe {
+            $machine
+                .stack
+                .pop_unsafe()
+                .to_big_endian($x2.as_bytes_mut())
+        };
+    };
+}
+
+macro_rules! pop_u256 {
+    ( $machine:expr, $x1:ident) => {
+        if $machine.stack.len() < 1 {
+            return Return::StackUnderflow;
+        }
         let $x1 = unsafe { $machine.stack.pop_unsafe() };
     };
     ( $machine:expr, $x1:ident, $x2:ident) => {
@@ -84,39 +121,23 @@ macro_rules! pop {
         let $x1 = unsafe { $machine.stack.pop_unsafe() };
         let $x2 = unsafe { $machine.stack.pop_unsafe() };
     };
-}
-
-macro_rules! pop_u256 {
-    ( $machine:expr, $x1:ident) => {
-        if $machine.stack.len() < 1 {
-            return Return::StackUnderflow;
-        }
-        let $x1 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
-    };
-    ( $machine:expr, $x1:ident, $x2:ident) => {
-        if $machine.stack.len() < 2 {
-            return Return::StackUnderflow;
-        }
-        let $x1 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
-        let $x2 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
-    };
     ( $machine:expr, $x1:ident, $x2:ident, $x3:ident) => {
         if $machine.stack.len() < 3 {
             return Return::StackUnderflow;
         }
-        let $x1 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
-        let $x2 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
-        let $x3 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
+        let $x1 = unsafe { $machine.stack.pop_unsafe() };
+        let $x2 = unsafe { $machine.stack.pop_unsafe() };
+        let $x3 = unsafe { $machine.stack.pop_unsafe() };
     };
 
     ( $machine:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident) => {
         if $machine.stack.len() < 4 {
             return Return::StackUnderflow;
         }
-        let $x1 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
-        let $x2 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
-        let $x3 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
-        let $x4 = unsafe { U256::from_big_endian(&$machine.stack.pop_unsafe()[..]) };
+        let $x1 = unsafe { $machine.stack.pop_unsafe() };
+        let $x2 = unsafe { $machine.stack.pop_unsafe() };
+        let $x3 = unsafe { $machine.stack.pop_unsafe() };
+        let $x4 = unsafe { $machine.stack.pop_unsafe() };
     };
 }
 
