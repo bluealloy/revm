@@ -9,7 +9,7 @@ use crate::{return_ok, return_revert};
 use crate::{alloc::vec::Vec, spec::SpecId::*};
 use bytes::Bytes;
 use core::cmp::min;
-use primitive_types::{H256, U256};
+use primitive_types::{H256, U256,H160};
 use sha3::{Digest, Keccak256};
 
 pub fn sha3(machine: &mut Machine) -> Return {
@@ -51,7 +51,7 @@ pub fn address(machine: &mut Machine) -> Return {
 }
 
 pub fn balance<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
-    pop!(machine, address);
+    pop_address!(machine, address);
     let (balance, is_cold) = handler.balance(address.into());
     gas!(
         machine,
@@ -129,7 +129,7 @@ pub fn gasprice<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
 }
 
 pub fn extcodesize<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
-    pop!(machine, address);
+    pop_address!(machine, address);
 
     let (code, is_cold) = handler.code(address.into());
     gas!(machine, gas::account_access_gas::<SPEC>(is_cold));
@@ -141,7 +141,7 @@ pub fn extcodesize<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
 
 pub fn extcodehash<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
     check!(SPEC::enabled(CONSTANTINOPLE)); // EIP-1052: EXTCODEHASH opcode
-    pop!(machine, address);
+    pop_address!(machine, address);
     let (code_hash, is_cold) = handler.code_hash(address.into());
     gas!(
         machine,
@@ -158,7 +158,7 @@ pub fn extcodehash<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
 }
 
 pub fn extcodecopy<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
-    pop!(machine, address);
+    pop_address!(machine, address);
     pop_u256!(machine, memory_offset, code_offset, len);
 
     let (code, is_cold) = handler.code(address.into());
@@ -242,7 +242,7 @@ pub fn gaslimit<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
 }
 
 pub fn sload<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
-    pop!(machine, index);
+    pop_u256!(machine, index);
     let (value, is_cold) = handler.sload(machine.contract.address, index);
     inspect!(
         handler,
@@ -253,14 +253,14 @@ pub fn sload<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> 
         is_cold
     );
     gas!(machine, gas::sload_cost::<SPEC>(is_cold));
-    push!(machine, value);
+    push_u256!(machine, value);
     Return::Continue
 }
 
 pub fn sstore<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
     check!(!SPEC::IS_STATIC_CALL);
 
-    pop!(machine, index, value);
+    pop_u256!(machine, index, value);
     let (original, old, new, is_cold) = handler.sstore(machine.contract.address, index, value);
     inspect!(
         handler,
@@ -320,9 +320,9 @@ pub fn log<H: Handler, SPEC: Spec>(machine: &mut Machine, n: u8, handler: &mut H
 
 pub fn selfdestruct<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
     check!(!SPEC::IS_STATIC_CALL);
-    pop!(machine, target);
+    pop_address!(machine, target);
 
-    let res = handler.selfdestruct(machine.contract.address, target.into());
+    let res = handler.selfdestruct(machine.contract.address, target);
     inspect!(handler, selfdestruct);
 
     // EIP-3529: Reduction in refunds
@@ -369,7 +369,7 @@ pub fn create<H: Handler, SPEC: Spec>(
         machine.memory.get(code_offset, len)
     };
     let scheme = if is_create2 {
-        pop!(machine, salt);
+        pop_u256!(machine, salt);
         gas_or_fail!(machine, gas::create2_cost(len));
         CreateScheme::Create2 { salt }
     } else {
@@ -422,7 +422,7 @@ pub fn call<H: Handler, SPEC: Spec>(
     machine.return_data_buffer = Bytes::new();
 
     pop_u256!(machine, local_gas_limit);
-    pop!(machine, to);
+    pop_address!(machine, to);
     let local_gas_limit = if local_gas_limit > U256::from(u64::MAX) {
         u64::MAX
     } else {

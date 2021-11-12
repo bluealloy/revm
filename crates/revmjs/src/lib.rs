@@ -2,7 +2,7 @@ use core::convert::TryInto;
 
 use bn_rs::BN;
 use bytes::{Bytes, BytesMut};
-use primitive_types::{H160, H256};
+use primitive_types::{H160, H256, U256};
 use revm::{AccountInfo, DatabaseCommit, InMemoryDB, SpecId, TransactTo, EVM as rEVM};
 use wasm_bindgen::prelude::*;
 
@@ -138,11 +138,11 @@ impl EVM {
 #[wasm_bindgen]
 pub struct AccessedAccount {
     account: H160,
-    slots: Vec<H256>,
+    slots: Vec<U256>,
 }
 
-impl Into<(H160, Vec<H256>)> for AccessedAccount {
-    fn into(self) -> (H160, Vec<H256>) {
+impl Into<(H160, Vec<U256>)> for AccessedAccount {
+    fn into(self) -> (H160, Vec<U256>) {
         (self.account, self.slots)
     }
 }

@@ -13,15 +13,15 @@ pub trait Inspector {
 
     fn load_account(&mut self, address: &H160);
 
-    fn sload(&mut self, address: &H160, slot: &H256, value: &H256, is_cold: bool);
+    fn sload(&mut self, address: &H160, slot: &U256, value: &U256, is_cold: bool);
 
     fn sstore(
         &mut self,
         address: H160,
-        slot: H256,
-        new_value: H256,
-        old_value: H256,
-        original_value: H256,
+        slot: U256,
+        new_value: U256,
+        old_value: U256,
+        original_value: U256,
         is_cold: bool,
     );
 
@@ -61,15 +61,15 @@ impl Inspector for NoOpInspector {
 
     fn load_account(&mut self, _address: &H160) {}
 
-    fn sload(&mut self, _address: &H160, _slot: &H256, _value: &H256, _is_cold: bool) {}
+    fn sload(&mut self, _address: &H160, _slot: &U256, _value: &U256, _is_cold: bool) {}
 
     fn sstore(
         &mut self,
         _address: H160,
-        _slot: H256,
-        _new_value: H256,
-        _old_value: H256,
-        _original_value: H256,
+        _slot: U256,
+        _new_value: U256,
+        _old_value: U256,
+        _original_value: U256,
         _is_cold: bool,
     ) {
     }

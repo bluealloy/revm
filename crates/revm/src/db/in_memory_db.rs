@@ -16,7 +16,7 @@ use super::DatabaseCommit;
 pub struct InMemoryDB {
     /// dummy account info where code is allways None. Code bytes can be found in `contracts`
     cache: Map<H160, AccountInfo>,
-    storage: Map<H160, Map<H256, H256>>,
+    storage: Map<H160, Map<U256, U256>>,
     contracts: Map<H256, Bytes>,
     logs: Vec<Log>,
 }
@@ -36,7 +36,7 @@ impl InMemoryDB {
     pub fn cache(&self) -> &Map<H160, AccountInfo> {
         &self.cache
     }
-    pub fn storage(&self) -> &Map<H160, Map<H256, H256>> {
+    pub fn storage(&self) -> &Map<H160, Map<U256, U256>> {
         &self.storage
     }
 
@@ -55,7 +55,7 @@ impl InMemoryDB {
         self.cache.insert(address, account);
     }
 
-    pub fn insert_cache_storage(&mut self, address: H160, slot: H256, value: H256) {
+    pub fn insert_cache_storage(&mut self, address: H160, slot: U256, value: U256) {
         self.storage.entry(address).or_default().insert(slot, value);
     }
 
@@ -131,16 +131,16 @@ impl Database for InMemoryDB {
         }
     }
 
-    fn storage(&mut self, address: H160, index: H256) -> H256 {
+    fn storage(&mut self, address: H160, index: U256) -> U256 {
         if self.fetch_account(&address) {
             if let Some(storage) = self.storage.get(&address) {
                 if let Some(slot) = storage.get(&index) {
                     return *slot;
                 }
             }
-            H256::zero()
+            U256::zero()
         } else {
-            H256::zero()
+            U256::zero()
         }
     }
 

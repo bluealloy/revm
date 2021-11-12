@@ -1,7 +1,4 @@
-use core::{
-    cmp::Ordering,
-    ops::{Div, Rem},
-};
+use core::cmp::Ordering;
 use primitive_types::U256;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -11,131 +8,118 @@ pub enum Sign {
     Zero,
 }
 
-const SIGN_BIT_MASK: U256 = U256([
+pub const SIGN_BIT_MASK: U256 = U256([
     0xffffffffffffffff,
     0xffffffffffffffff,
     0xffffffffffffffff,
     0x7fffffffffffffff,
 ]);
 
+pub const MIN_NEGATIVE_VALUE: U256 = U256([
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x8000000000000000,
+]);
+
+const SIGN_BITMASK_U64: u64 = 0x8000000000000000;
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct I256(pub Sign, pub U256);
 
-impl I256 {
-    /// Zero value of I256.
-    pub fn zero() -> I256 {
-        I256(Sign::Zero, U256::zero())
-    }
-    /// Minimum value of I256.
-    pub fn min_value() -> I256 {
-        I256(Sign::Minus, (U256::MAX & SIGN_BIT_MASK) + U256::from(1u64))
-    }
-}
-
-impl Ord for I256 {
-    fn cmp(&self, other: &I256) -> Ordering {
-        match (self.0, other.0) {
-            (Sign::Zero, Sign::Zero) => Ordering::Equal,
-            (Sign::Zero, Sign::Plus) => Ordering::Less,
-            (Sign::Zero, Sign::Minus) => Ordering::Greater,
-            (Sign::Minus, Sign::Zero) => Ordering::Less,
-            (Sign::Minus, Sign::Plus) => Ordering::Less,
-            (Sign::Minus, Sign::Minus) => self.1.cmp(&other.1).reverse(),
-            (Sign::Plus, Sign::Minus) => Ordering::Greater,
-            (Sign::Plus, Sign::Zero) => Ordering::Greater,
-            (Sign::Plus, Sign::Plus) => self.1.cmp(&other.1),
-        }
-    }
-}
-
-impl PartialOrd for I256 {
-    fn partial_cmp(&self, other: &I256) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Default for I256 {
-    fn default() -> I256 {
-        I256::zero()
-    }
-}
-
-impl From<U256> for I256 {
-    fn from(val: U256) -> I256 {
+#[inline(always)]
+pub fn i256_sign<const DO_TWO_COMPL: bool>(val: &mut U256) -> Sign {
+    if unsafe { val.0.get_unchecked(3) } & SIGN_BITMASK_U64 == 0 {
         if val.is_zero() {
-            I256::zero()
-        } else if val & SIGN_BIT_MASK == val {
-            I256(Sign::Plus, val)
+            Sign::Zero
         } else {
-            I256(Sign::Minus, !val + U256::from(1u64))
+            Sign::Plus
         }
+    } else {
+        if DO_TWO_COMPL {
+            two_compl_mut(val);
+        }
+        Sign::Minus
     }
 }
 
-impl From<I256> for U256 {
-    fn from(value: I256) -> U256 {
-        let sign = value.0;
-        if sign == Sign::Zero {
-            U256::zero()
-        } else if sign == Sign::Plus {
-            value.1
-        } else {
-            !value.1 + U256::from(1u64)
-        }
+#[inline(always)]
+pub fn two_compl_mut(op: &mut U256) {
+    *op = two_compl(*op);
+}
+
+pub fn two_compl(op: U256) -> U256 {
+    !op + U256::one()
+}
+
+#[inline(always)]
+pub fn i256_cmp(mut first: U256, mut second: U256) -> Ordering {
+    let first_sign = i256_sign::<false>(&mut first);
+    let second_sign = i256_sign::<false>(&mut second);
+    match (first_sign, second_sign) {
+        (Sign::Zero, Sign::Zero) => Ordering::Equal,
+        (Sign::Zero, Sign::Plus) => Ordering::Less,
+        (Sign::Zero, Sign::Minus) => Ordering::Greater,
+        (Sign::Minus, Sign::Zero) => Ordering::Less,
+        (Sign::Minus, Sign::Plus) => Ordering::Less,
+        (Sign::Minus, Sign::Minus) => first.cmp(&second).reverse(),
+        (Sign::Plus, Sign::Minus) => Ordering::Greater,
+        (Sign::Plus, Sign::Zero) => Ordering::Greater,
+        (Sign::Plus, Sign::Plus) => first.cmp(&second),
     }
 }
 
-impl Div for I256 {
-    type Output = I256;
+#[inline(always)]
+pub fn i256_div(mut first: U256, mut second: U256) -> U256 {
+    let second_sign = i256_sign::<true>(&mut second);
+    if second_sign == Sign::Zero {
+        return U256::zero();
+    }
+    let first_sign = i256_sign::<true>(&mut first);
+    if first_sign == Sign::Minus && first == MIN_NEGATIVE_VALUE && second == U256::one() {
+        return two_compl(MIN_NEGATIVE_VALUE);
+    }
 
-    #[inline(always)]
-    fn div(self, other: I256) -> I256 {
-        if other == I256::zero() {
-            return I256::zero();
-        }
+    let d = (first / second) & SIGN_BIT_MASK;
 
-        if self == I256::min_value() && other.1 == U256::from(1u64) {
-            return I256::min_value();
-        }
+    if d.is_zero() {
+        return U256::zero();
+    }
 
-        let d = (self.1 / other.1) & SIGN_BIT_MASK;
-
-        if d.is_zero() {
-            return I256::zero();
-        }
-
-        match (self.0, other.0) {
-            (Sign::Zero, Sign::Plus)
-            | (Sign::Plus, Sign::Zero)
-            | (Sign::Zero, Sign::Zero)
-            | (Sign::Plus, Sign::Plus)
-            | (Sign::Minus, Sign::Minus) => I256(Sign::Plus, d),
-            (Sign::Zero, Sign::Minus)
-            | (Sign::Plus, Sign::Minus)
-            | (Sign::Minus, Sign::Zero)
-            | (Sign::Minus, Sign::Plus) => I256(Sign::Minus, d),
-        }
+    match (first_sign, second_sign) {
+        (Sign::Zero, Sign::Plus)
+        | (Sign::Plus, Sign::Zero)
+        | (Sign::Zero, Sign::Zero)
+        | (Sign::Plus, Sign::Plus)
+        | (Sign::Minus, Sign::Minus) => d,
+        (Sign::Zero, Sign::Minus)
+        | (Sign::Plus, Sign::Minus)
+        | (Sign::Minus, Sign::Zero)
+        | (Sign::Minus, Sign::Plus) => two_compl(d),
     }
 }
 
-impl Rem for I256 {
-    type Output = I256;
+#[inline(always)]
+pub fn i256_mod(mut first: U256, mut second: U256) -> U256 {
+    let first_sign = i256_sign::<true>(&mut first);
+    if first_sign == Sign::Zero {
+        return U256::zero();
+    }
 
-    #[inline(always)]
-    fn rem(self, other: I256) -> I256 {
-        let r = (self.1 % other.1) & SIGN_BIT_MASK;
-
-        if r.is_zero() {
-            return I256::zero();
-        }
-
-        I256(self.0, r)
+    let _ = i256_sign::<true>(&mut second);
+    let r = (first % second) & SIGN_BIT_MASK;
+    if r.is_zero() {
+        return U256::zero();
+    }
+    if first_sign == Sign::Minus {
+        two_compl(r)
+    } else {
+        r
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Sign, I256};
+    use super::*;
     use core::num::Wrapping;
     use primitive_types::U256;
 
@@ -147,21 +131,22 @@ mod tests {
         assert_eq!(i8::MAX / -1, -i8::MAX);
 
         // Now the same calculations based on i256
-        let one = I256(Sign::Zero, U256::from(1));
-        let one_hundred = I256(Sign::Zero, U256::from(100));
-        let fifty = I256(Sign::Plus, U256::from(50));
-        let two = I256(Sign::Zero, U256::from(2));
-        let neg_one_hundred = I256(Sign::Minus, U256::from(100));
-        let minus_one = I256(Sign::Minus, U256::from(1));
-        let max_value = I256(Sign::Plus, U256::from(2).pow(U256::from(255)) - 1);
-        let neg_max_value = I256(Sign::Minus, U256::from(2).pow(U256::from(255)) - 1);
+        let one = U256::from(1);
+        let one_hundred = U256::from(100);
+        let fifty = U256::from(50);
+        let _fifty_sign = Sign::Plus;
+        let two = U256::from(2);
+        let neg_one_hundred = U256::from(100);
+        let _neg_one_hundred_sign = Sign::Minus;
+        let minus_one = U256::from(1);
+        let max_value = U256::from(2).pow(U256::from(255)) - 1;
+        let neg_max_value = U256::from(2).pow(U256::from(255)) - 1;
 
-        assert_eq!(I256::min_value() / minus_one, I256::min_value());
-        assert_eq!(I256::min_value() / one, I256::min_value());
-        assert_eq!(max_value / one, max_value);
-        assert_eq!(max_value / minus_one, neg_max_value);
-
-        assert_eq!(one_hundred / minus_one, neg_one_hundred);
-        assert_eq!(one_hundred / two, fifty);
+        assert_eq!(i256_div(MIN_NEGATIVE_VALUE, minus_one), MIN_NEGATIVE_VALUE);
+        assert_eq!(i256_div(MIN_NEGATIVE_VALUE, one), MIN_NEGATIVE_VALUE);
+        assert_eq!(i256_div(max_value, one), max_value);
+        assert_eq!(i256_div(max_value, minus_one), neg_max_value);
+        assert_eq!(i256_div(one_hundred, minus_one), neg_one_hundred);
+        assert_eq!(i256_div(one_hundred, two), fifty);
     }
 }

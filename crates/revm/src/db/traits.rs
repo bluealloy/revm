@@ -16,7 +16,7 @@ pub trait Database {
     /// Get account code by its hash
     fn code_by_hash(&mut self, code_hash: H256) -> Bytes;
     /// Get storage value of address at index.
-    fn storage(&mut self, address: H160, index: H256) -> H256;
+    fn storage(&mut self, address: H160, index: U256) -> U256;
 
     // History related
     fn block_hash(&mut self, number: U256) -> H256;
@@ -36,7 +36,7 @@ pub trait DatabaseRef {
     /// Get account code by its hash
     fn code_by_hash(&self, code_hash: H256) -> Bytes;
     /// Get storage value of address at index.
-    fn storage(&self, address: H160, index: H256) -> H256;
+    fn storage(&self, address: H160, index: U256) -> U256;
 
     // History related
     fn block_hash(&self, number: U256) -> H256;
@@ -66,7 +66,7 @@ impl<'a> Database for RefDBWrapper<'a> {
         self.db.code_by_hash(code_hash)
     }
     /// Get storage value of address at index.
-    fn storage(&mut self, address: H160, index: H256) -> H256 {
+    fn storage(&mut self, address: H160, index: U256) -> U256 {
         self.db.storage(address, index)
     }
 

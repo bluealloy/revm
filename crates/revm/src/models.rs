@@ -95,7 +95,7 @@ pub enum CreateScheme {
     /// Create scheme of `CREATE2`.
     Create2 {
         /// Salt.
-        salt: H256,
+        salt: U256,
     },
 }
 
@@ -155,7 +155,7 @@ pub struct TxEnv {
     pub data: Bytes,
     pub chain_id: Option<u64>,
     pub nonce: Option<u64>,
-    pub access_list: Vec<(H160, Vec<H256>)>,
+    pub access_list: Vec<(H160, Vec<U256>)>,
 }
 #[derive(Clone, Debug)]
 pub struct CfgEnv {

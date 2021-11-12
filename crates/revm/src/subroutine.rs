@@ -50,7 +50,7 @@ pub struct DirtyChangeLog {
     // contains previous values of slot.
     // If it is cold loaded in this subrutine SlotChangeLog will be COLD.
     // if it is hot and it gets changes somewhare in child subroutine, SlotChangeLog will contain old value OriginalDirty,
-    dirty_storage: Map<H256, SlotChangeLog>,
+    dirty_storage: Map<U256, SlotChangeLog>,
     // account info, when reverting just overrride state value.
     info: AccountInfo,
     was_clean: bool,
@@ -61,7 +61,7 @@ pub type State = Map<H160, Account>;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SlotChangeLog {
     Cold,
-    OriginalDirty(H256),
+    OriginalDirty(U256),
 }
 
 /// SubRoutine checkpoint that will help us to go back from this
@@ -500,7 +500,7 @@ impl SubRoutine {
     }
 
     // account is already present and loaded.
-    pub fn sload<DB: Database>(&mut self, address: H160, index: H256, db: &mut DB) -> (H256, bool) {
+    pub fn sload<DB: Database>(&mut self, address: H160, index: U256, db: &mut DB) -> (U256, bool) {
         let acc = self.state.get_mut(&address).unwrap(); // asume acc is hot
         let load = match acc.storage.entry(index) {
             Entry::Occupied(occ) => (*occ.get(), false),
@@ -508,7 +508,7 @@ impl SubRoutine {
             Entry::Vacant(vac) => {
                 // if storage was destroyed, we dont need to ping db.
                 let value = if matches!(acc.filth, Filth::NewlyCreated) {
-                    H256::zero()
+                    U256::zero()
                 } else {
                     db.storage(address, index)
                 };
@@ -548,10 +548,10 @@ impl SubRoutine {
     pub fn sstore<DB: Database>(
         &mut self,
         address: H160,
-        index: H256,
-        new: H256,
+        index: U256,
+        new: U256,
         db: &mut DB,
-    ) -> (H256, H256, H256, bool) {
+    ) -> (U256, U256, U256, bool) {
         // assume that acc exists and load the slot.
         let (present, is_cold) = self.sload(address, index, db);
         let acc = self.state.get_mut(&address).unwrap();
@@ -592,7 +592,7 @@ pub struct Account {
     /// Balance of the account.
     pub info: AccountInfo,
     /// storage cache
-    pub storage: Map<H256, H256>,
+    pub storage: Map<U256, U256>,
     /// is account info is dirty, destroyed or clean.
     /// if selfdestruct opcode is called, destroyed flag will be true. If true we dont need to fetch slot from DB.
     /// dirty flag contains list of original value and this is used to determent if slot was changed
@@ -621,7 +621,7 @@ pub enum Filth {
     /// clean load from db
     Clean,
     ///  original state, and contains slots with original values that we changed.
-    Dirty(Map<H256, H256>),
+    Dirty(Map<U256, U256>),
     /// destroyed by selfdestruct or it is newly
     ///  created by create/create2 opcode. Either way dont save original values
     Destroyed,
@@ -638,7 +638,7 @@ impl Filth {
     }
     /// insert into dirty flag and return if slot was already dirty or not.
     #[inline]
-    pub fn insert_dirty_original(&mut self, index: H256, present_value: H256) {
+    pub fn insert_dirty_original(&mut self, index: U256, present_value: U256) {
         match self {
             Self::Clean => {
                 let mut map = Map::new();
@@ -653,16 +653,16 @@ impl Filth {
             Self::Precompile(_) => panic!("Insert dirty for precompile is not possible"),
         }
     }
-    pub fn original_slot(&mut self, index: H256) -> Option<H256> {
+    pub fn original_slot(&mut self, index: U256) -> Option<U256> {
         match self {
             Self::Clean | Self::Precompile(_) => None,
             Self::Dirty(ref originals) => originals.get(&index).cloned(),
             Self::Destroyed => None,
-            Self::NewlyCreated => Some(H256::zero()),
+            Self::NewlyCreated => Some(U256::zero()),
         }
     }
 
-    pub fn clean(&mut self) -> Map<H256, H256> {
+    pub fn clean(&mut self) -> Map<U256, U256> {
         match self {
             Self::Dirty(out) => mem::replace(out, Map::new()),
             _ => Map::new(),

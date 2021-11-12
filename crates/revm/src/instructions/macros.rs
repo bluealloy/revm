@@ -1,5 +1,3 @@
-use primitive_types::{H256, U256};
-
 pub use crate::Return;
 
 macro_rules! try_or_fail {
@@ -72,37 +70,45 @@ macro_rules! memory_resize {
     }};
 }
 
-macro_rules! pop {
+macro_rules! pop_address {
     ( $machine:expr, $x1:ident) => {
         if $machine.stack.len() < 1 {
             return Return::StackUnderflow;
         }
-
-        let mut $x1 = H256::zero();
-        unsafe {
-            $machine
-                .stack
-                .pop_unsafe()
-                .to_big_endian($x1.as_bytes_mut())
+        let mut temp = H256::zero();
+        let $x1: H160 = {
+            unsafe {
+                $machine
+                    .stack
+                    .pop_unsafe()
+                    .to_big_endian(temp.as_bytes_mut())
+            };
+            temp.into()
         };
     };
     ( $machine:expr, $x1:ident, $x2:ident) => {
         if $machine.stack.len() < 2 {
             return Return::StackUnderflow;
         }
-        let mut $x1 = H256::zero();
-        unsafe {
-            $machine
-                .stack
-                .pop_unsafe()
-                .to_big_endian($x1.as_bytes_mut())
+        let mut temp = H256::zero();
+        $x1: H160 = {
+            unsafe {
+                $machine
+                    .stack
+                    .pop_unsafe()
+                    .to_big_endian(temp.as_bytes_mut())
+            };
+            temp.into()
         };
-        let mut $x2 = H256::zero();
-        unsafe {
-            $machine
-                .stack
-                .pop_unsafe()
-                .to_big_endian($x2.as_bytes_mut())
+        $x2: H160 ={
+            temp = H256::zero();
+            unsafe {
+                $machine
+                    .stack
+                    .pop_unsafe()
+                    .to_big_endian(temp.as_bytes_mut())
+            };
+            temp.into();
         };
     };
 }

@@ -1,6 +1,6 @@
-use crate::{Machine, Return, Spec, instructions::gas};
+use crate::{instructions::gas, Machine, Return, Spec};
 
-use super::i256::I256;
+use super::i256::{i256_div, i256_mod};
 use core::{convert::TryInto, ops::Rem};
 use primitive_types::{H256, U256, U512};
 
@@ -15,10 +15,7 @@ pub fn div(op1: U256, op2: U256) -> U256 {
 
 #[inline(always)]
 pub fn sdiv(op1: U256, op2: U256) -> U256 {
-    let op1: I256 = op1.into();
-    let op2: I256 = op2.into();
-    let ret = op1 / op2;
-    ret.into()
+    i256_div(op1, op2)
 }
 
 #[inline(always)]
@@ -31,14 +28,11 @@ pub fn rem(op1: U256, op2: U256) -> U256 {
 }
 
 #[inline(always)]
-pub fn srem(op1: U256, op2: U256) -> U256 {
+pub fn smod(op1: U256, op2: U256) -> U256 {
     if op2.is_zero() {
         U256::zero()
     } else {
-        let op1: I256 = op1.into();
-        let op2: I256 = op2.into();
-        let ret = op1.rem(op2);
-        ret.into()
+        i256_mod(op1,op2)
     }
 }
 

@@ -120,11 +120,7 @@ pub fn execute_test_suit(path: &PathBuf, elapsed: &Arc<Mutex<Duration>>) -> Resu
             database.insert_cache(*address, acc_info);
             // insert storage:
             for (&slot, &value) in info.storage.iter() {
-                database.insert_cache_storage(
-                    address.clone(),
-                    H256(slot.into()),
-                    H256(value.into()),
-                )
+                database.insert_cache_storage(address.clone(), slot, value)
             }
         }
         let mut env = Env::default();
@@ -194,7 +190,15 @@ pub fn execute_test_suit(path: &PathBuf, elapsed: &Arc<Mutex<Duration>>) -> Resu
                         .flatten()
                         .unwrap_or(Vec::new())
                         .into_iter()
-                        .map(|item| (item.address, item.storage_keys))
+                        .map(|item| {
+                            (
+                                item.address,
+                                item.storage_keys
+                                    .iter()
+                                    .map(|f| U256::from_big_endian(f.as_ref()))
+                                    .collect::<Vec<_>>(),
+                            )
+                        })
                         .collect(),
                     None => Vec::new(),
                 };

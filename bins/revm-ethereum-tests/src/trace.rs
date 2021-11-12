@@ -36,7 +36,7 @@ impl Inspector for CustomPrintTracer {
 
     fn eval(&mut self, _eval: &revm::Return, _machine: &mut revm::Machine) {}
 
-    fn sload(&mut self, address: &H160, slot: &H256, value: &H256, is_cold: bool) {
+    fn sload(&mut self, address: &H160, slot: &U256, value: &U256, is_cold: bool) {
         println!(
             "sload: is_cold({}) {}[{:?}]={:?}",
             is_cold, address, slot, value
@@ -46,10 +46,10 @@ impl Inspector for CustomPrintTracer {
     fn sstore(
         &mut self,
         address: H160,
-        slot: H256,
-        new_value: H256,
-        old_value: H256,
-        original_value: H256,
+        slot: U256,
+        new_value: U256,
+        old_value: U256,
+        original_value: U256,
         is_cold: bool,
     ) {
         println!(

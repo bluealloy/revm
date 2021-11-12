@@ -1,7 +1,7 @@
 use std::{str::FromStr, time::Instant};
 
 use bytes::Bytes;
-use primitive_types::{H160, U256,H256};
+use primitive_types::{H160, U256};
 use revm::{AccountInfo, InMemoryDB, TransactTo, KECCAK_EMPTY};
 
 extern crate alloc;

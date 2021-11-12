@@ -505,12 +505,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Handler
         )
     }
 
-    fn sload(&mut self, address: H160, index: H256) -> (H256, bool) {
+    fn sload(&mut self, address: H160, index: U256) -> (U256, bool) {
         // account is allways hot. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
         self.subroutine.sload(address, index, self.db)
     }
 
-    fn sstore(&mut self, address: H160, index: H256, value: H256) -> (H256, H256, H256, bool) {
+    fn sstore(&mut self, address: H160, index: U256, value: U256) -> (U256, U256, U256, bool) {
         self.subroutine.sstore(address, index, value, self.db)
     }
 
@@ -573,9 +573,9 @@ pub trait Handler {
     /// Get code hash of address.
     fn code_hash(&mut self, address: H160) -> (H256, bool);
     /// Get storage value of address at index.
-    fn sload(&mut self, address: H160, index: H256) -> (H256, bool);
+    fn sload(&mut self, address: H160, index: U256) -> (U256, bool);
     /// Set storage value of address at index. Return if slot is cold/hot access.
-    fn sstore(&mut self, address: H160, index: H256, value: H256) -> (H256, H256, H256, bool);
+    fn sstore(&mut self, address: H160, index: U256, value: U256) -> (U256, U256, U256, bool);
     /// Create a log owned by address with given topics and data.
     fn log(&mut self, address: H160, topics: Vec<H256>, data: Bytes);
     /// Mark an address to be deleted, with funds transferred to target.

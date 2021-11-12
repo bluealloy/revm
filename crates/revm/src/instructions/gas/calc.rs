@@ -1,9 +1,9 @@
 use super::constants::*;
 use crate::{Return, models::SelfDestructResult, spec::{Spec, SpecId::*}};
-use primitive_types::{H256, U256};
+use primitive_types::U256;
 
 #[allow(clippy::collapsible_else_if)]
-pub fn sstore_refund<SPEC: Spec>(original: H256, current: H256, new: H256) -> i64 {
+pub fn sstore_refund<SPEC: Spec>(original: U256, current: U256, new: U256) -> i64 {
     if SPEC::enabled(ISTANBUL) {
         // EIP-3529: Reduction in refunds
         let sstore_clears_schedule = if SPEC::enabled(LONDON) {
@@ -14,15 +14,15 @@ pub fn sstore_refund<SPEC: Spec>(original: H256, current: H256, new: H256) -> i6
         if current == new {
             0
         } else {
-            if original == current && new == H256::default() {
+            if original == current && new.is_zero() {
                 sstore_clears_schedule
             } else {
                 let mut refund = 0;
 
-                if original != H256::default() {
-                    if current == H256::default() {
+                if !original.is_zero() {
+                    if current.is_zero() {
                         refund -= sstore_clears_schedule;
-                    } else if new == H256::default() {
+                    } else if new.is_zero() {
                         refund += sstore_clears_schedule;
                     }
                 }
@@ -33,7 +33,7 @@ pub fn sstore_refund<SPEC: Spec>(original: H256, current: H256, new: H256) -> i6
                     } else {
                         (SSTORE_RESET, sload_cost::<SPEC>(false))
                     };
-                    if original == H256::default() {
+                    if original.is_zero() {
                         refund += (SSTORE_SET - gas_sload) as i64;
                     } else {
                         refund += (gas_sstore_reset - gas_sload) as i64;
@@ -44,7 +44,7 @@ pub fn sstore_refund<SPEC: Spec>(original: H256, current: H256, new: H256) -> i6
             }
         }
     } else {
-        if current != H256::default() && new == H256::default() {
+        if !current.is_zero() && new.is_zero() {
             REFUND_SSTORE_CLEARS
         } else {
             0
@@ -205,9 +205,9 @@ pub fn sload_cost<SPEC: Spec>(is_cold: bool) -> u64 {
 
 #[allow(clippy::collapsible_else_if)]
 pub fn sstore_cost<SPEC: Spec>(
-    original: H256,
-    current: H256,
-    new: H256,
+    original: U256,
+    current: U256,
+    new: U256,
     gas: u64,
     is_cold: bool,
 ) -> Option<u64> {

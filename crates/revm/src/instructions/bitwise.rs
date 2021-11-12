@@ -1,12 +1,11 @@
-use super::i256::{Sign, I256};
+use std::cmp::Ordering;
+
+use super::i256::{two_compl, i256_cmp, i256_sign, Sign};
 use primitive_types::U256;
 
 #[inline(always)]
 pub fn slt(op1: U256, op2: U256) -> U256 {
-    let op1: I256 = op1.into();
-    let op2: I256 = op2.into();
-
-    if op1.lt(&op2) {
+    if i256_cmp(op1, op2) == Ordering::Less {
         U256::one()
     } else {
         U256::zero()
@@ -15,10 +14,7 @@ pub fn slt(op1: U256, op2: U256) -> U256 {
 
 #[inline(always)]
 pub fn sgt(op1: U256, op2: U256) -> U256 {
-    let op1: I256 = op1.into();
-    let op2: I256 = op2.into();
-
-    if op1.gt(&op2) {
+    if i256_cmp(op1, op2) == Ordering::Greater {
         U256::one()
     } else {
         U256::zero()
@@ -77,27 +73,26 @@ pub fn shr(shift: U256, value: U256) -> U256 {
 }
 
 #[inline(always)]
-pub fn sar(shift: U256, value: U256) -> U256 {
-    let value = I256::from(value);
+pub fn sar(shift: U256, mut value: U256) -> U256 {
+    let value_sign = i256_sign::<true>(&mut value);
 
-    if value == I256::zero() || shift >= U256::from(256) {
-        let I256(sign, _) = value;
-        match sign {
+    if value.is_zero() || shift >= U256::from(256) {
+        match value_sign {
             // value is 0 or >=1, pushing 0
             Sign::Plus | Sign::Zero => U256::zero(),
             // value is <0, pushing -1
-            Sign::Minus => I256(Sign::Minus, U256::one()).into(),
+            Sign::Minus => two_compl(U256::one()),
         }
     } else {
         let shift: u64 = shift.as_u64();
 
-        match value.0 {
-            Sign::Plus | Sign::Zero => value.1 >> shift as usize,
+        match value_sign {
+            Sign::Plus | Sign::Zero => value >> shift as usize,
             Sign::Minus => {
-                let shifted = ((value.1.overflowing_sub(U256::one()).0) >> shift as usize)
+                let shifted = ((value.overflowing_sub(U256::one()).0) >> shift as usize)
                     .overflowing_add(U256::one())
                     .0;
-                I256(Sign::Minus, shifted).into()
+                two_compl(shifted)
             }
         }
     }

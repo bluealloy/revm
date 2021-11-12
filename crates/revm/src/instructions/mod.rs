@@ -75,7 +75,7 @@ pub enum Return {
 
 #[inline(always)]
 pub fn eval<H: Handler, S: Spec>(machine: &mut Machine, opcode: u8, handler: &mut H) -> Return {
-    let time = std::time::Instant::now();
+    //let time = std::time::Instant::now();
 
     let ret = match opcode {
         opcode::STOP => Return::Stop,
@@ -85,7 +85,7 @@ pub fn eval<H: Handler, S: Spec>(machine: &mut Machine, opcode: u8, handler: &mu
         opcode::DIV => op2_u256_fn!(machine, arithmetic::div, gas::LOW),
         opcode::SDIV => op2_u256_fn!(machine, arithmetic::sdiv, gas::LOW),
         opcode::MOD => op2_u256_fn!(machine, arithmetic::rem, gas::LOW),
-        opcode::SMOD => op2_u256_fn!(machine, arithmetic::srem, gas::LOW),
+        opcode::SMOD => op2_u256_fn!(machine, arithmetic::smod, gas::LOW),
         opcode::ADDMOD => op3_u256_fn!(machine, arithmetic::addmod, gas::MID),
         opcode::MULMOD => op3_u256_fn!(machine, arithmetic::mulmod, gas::MID),
         opcode::EXP => arithmetic::eval_exp::<S>(machine),
@@ -240,8 +240,8 @@ pub fn eval<H: Handler, S: Spec>(machine: &mut Machine, opcode: u8, handler: &mu
         opcode::CHAINID => system::chainid::<H, S>(machine, handler),
         _ => Return::OpcodeNotFound,
     };
-    let times = &mut machine.times[opcode as usize];
-    times.0 += time.elapsed();
-    times.1 += 1;
+    // let times = &mut machine.times[opcode as usize];
+    // times.0 += time.elapsed();
+    // times.1 += 1;
     ret
 }

@@ -4,7 +4,7 @@ use crate::{
     Return, Spec,
     SpecId::*,
 };
-use primitive_types::{H256, U256};
+use primitive_types::{H256, U256,H160};
 
 #[inline(always)]
 pub fn codesize(machine: &mut Machine) -> Return {
@@ -75,7 +75,7 @@ pub fn calldatacopy(machine: &mut Machine) -> Return {
 #[inline(always)]
 pub fn pop(machine: &mut Machine) -> Return {
     gas!(machine, gas::BASE);
-    pop!(machine, _val);
+    pop_u256!(machine, _val);
     Return::Continue
 }
 
@@ -97,11 +97,13 @@ pub fn mstore(machine: &mut Machine) -> Return {
     gas!(machine, gas::VERYLOW);
 
     pop_u256!(machine, index);
-    pop!(machine, value);
+    pop_u256!(machine, value);
 
     memory_resize!(machine, index, U256::from(32));
     let index = as_usize_or_fail!(index);
-    machine.memory.set(index, value.as_ref(), Some(32))
+    let mut temp : [u8;32] = [0;32];
+    value.to_big_endian(&mut temp);
+    machine.memory.set(index, &mut temp, Some(32))
 }
 
 #[inline(always)]
@@ -137,7 +139,7 @@ pub fn jumpi(machine: &mut Machine) -> Return {
     gas!(machine, gas::HIGH);
 
     pop_u256!(machine, dest);
-    pop!(machine, value);
+    pop_address!(machine, value);
 
     if !value.is_zero() {
         let dest = as_usize_or_fail!(dest, Return::InvalidJump);

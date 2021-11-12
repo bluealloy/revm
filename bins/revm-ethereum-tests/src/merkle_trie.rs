@@ -13,7 +13,7 @@ use revm::AccountInfo;
 
 pub fn merkle_trie_root(
     accounts: &Map<H160, AccountInfo>,
-    storage: &Map<H160, Map<H256, H256>>,
+    storage: &Map<H160, Map<U256, U256>>,
 ) -> H256 {
     let vec = accounts
         .iter()
@@ -28,7 +28,7 @@ pub fn merkle_trie_root(
 }
 
 /// Returns the RLP for this account.
-pub fn trie_account_rlp(info: &AccountInfo, storage: Map<H256, H256>) -> Bytes {
+pub fn trie_account_rlp(info: &AccountInfo, storage: Map<U256, U256>) -> Bytes {
     let mut stream = RlpStream::new_list(4);
     stream.append(&info.nonce);
     stream.append(&info.balance);
@@ -36,8 +36,12 @@ pub fn trie_account_rlp(info: &AccountInfo, storage: Map<H256, H256>) -> Bytes {
         let storage_root = sec_trie_root::<KeccakHasher, _, _, _>(
             storage
                 .into_iter()
-                .filter(|(_k, v)| v != &H256::zero())
-                .map(|(k, v)| (k, rlp::encode(&U256::from(v.as_ref() as &[u8])))),
+                .filter(|(_k, v)| v != &U256::zero())
+                .map(|(k, v)| {
+                    let mut temp : [u8;32] = [0;32];
+                    k.to_big_endian(&mut temp);
+                    (H256::from(temp), rlp::encode(&v))
+                }),
         );
         storage_root.clone()
     });
