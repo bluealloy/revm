@@ -57,19 +57,19 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
             // TODO maybe do this checks when creating evm. We already have all data there
             // or should be move effective_gas_price inside transact fn
             if effective_gas_price < basefee {
-                return exit(Return::GasPriceLessThenBasefee.into());
+                return exit(Return::GasPriceLessThenBasefee);
             }
             // check if priority fee is lower then max fee
         }
         // unusual to be found here, but check if gas_limit is more then block_gas_limit
         if U256::from(gas_limit) > self.env.block.gas_limit {
-            return exit(Return::CallerGasLimitMoreThenBlock.into());
+            return exit(Return::CallerGasLimitMoreThenBlock);
         }
 
         let mut gas = Gas::new(gas_limit);
         // record initial gas cost. if not using gas metering init will return 0
         if !gas.record_cost(self.initialization::<GSPEC>()) {
-            return exit(Return::OutOfGas.into());
+            return exit(Return::OutOfGas);
         }
 
         // load acc
@@ -79,7 +79,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
         // This EIP is introduced after london but there was no colision in past
         // so we can leave it enabled always
         if self.subroutine.account(caller).info.code_hash != KECCAK_EMPTY {
-            return exit(Return::RejectCallerWithCode.into());
+            return exit(Return::RejectCallerWithCode);
         }
 
         // substract gas_limit*gas_price from current account.
@@ -87,16 +87,16 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
             U256::from(gas_limit).checked_mul(self.env.effective_gas_price())
         {
             if !self.subroutine.balance_sub(caller, payment_value) {
-                return exit(Return::LackOfFundForGasLimit.into());
+                return exit(Return::LackOfFundForGasLimit);
             }
         } else {
-            return exit(Return::OverflowPayment.into());
+            return exit(Return::OverflowPayment);
         }
 
         // check if we have enought balance for value transfer.
         let difference = self.env.tx.gas_price - self.env.effective_gas_price();
         if difference + value > self.subroutine.account(caller).info.balance {
-            return exit(Return::OutOfFund.into());
+            return exit(Return::OutOfFund);
         }
 
         // record all as cost;
@@ -303,7 +303,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             self.db,
         ) {
             self.subroutine.checkpoint_revert(checkpoint);
-            return (Return::CreateCollision.into(), ret, gas, Bytes::new());
+            return (Return::CreateCollision, ret, gas, Bytes::new());
         }
 
         // transfer value to contract address
@@ -312,7 +312,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             .transfer(caller, created_address, value, self.db)
         {
             self.subroutine.checkpoint_revert(checkpoint);
-            return (e.into(), ret, gas, Bytes::new());
+            return (e, ret, gas, Bytes::new());
         }
         // inc nonce of contract
         if SPEC::enabled(ISTANBUL) {
@@ -332,20 +332,20 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 // EIP-3541: Reject new contract code starting with the 0xEF byte
                 if SPEC::enabled(LONDON) && !code.is_empty() && code.get(0) == Some(&0xEF) {
                     self.subroutine.checkpoint_revert(checkpoint);
-                    return (Return::CreateContractWithEF.into(), ret, machine.gas, b);
+                    return (Return::CreateContractWithEF, ret, machine.gas, b);
                 }
 
                 // EIP-170: Contract code size limit
                 if SPEC::enabled(SPURIOUS_DRAGON) && code.len() > 0x6000 {
                     self.subroutine.checkpoint_revert(checkpoint);
-                    return (Return::CreateContractLimit.into(), ret, machine.gas, b);
+                    return (Return::CreateContractLimit, ret, machine.gas, b);
                 }
                 if crate::USE_GAS {
                     let gas_for_code = code.len() as u64 * crate::instructions::gas::CODEDEPOSIT;
                     // record code deposit gas cost and check if we are out of gas.
                     if !machine.gas.record_cost(gas_for_code) {
                         self.subroutine.checkpoint_revert(checkpoint);
-                        return (Return::OutOfGas.into(), ret, machine.gas, b);
+                        return (Return::OutOfGas, ret, machine.gas, b);
                     }
                 }
                 // if we have enought gas
@@ -394,7 +394,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         {
             Err(e) => {
                 self.subroutine.checkpoint_revert(checkpoint);
-                return (e.into(), gas, Bytes::new());
+                return (e, gas, Bytes::new());
             }
             Ok((source_is_cold, target_is_cold)) => {
                 if INSPECT && source_is_cold {

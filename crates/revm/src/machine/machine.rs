@@ -1,4 +1,8 @@
-use crate::{alloc::vec::Vec, instructions::{Return, eval}, return_ok, return_revert};
+use crate::{
+    alloc::vec::Vec,
+    instructions::{eval, Return},
+    return_ok, return_revert,
+};
 use bytes::Bytes;
 use core::ops::Range;
 use primitive_types::U256;
@@ -47,10 +51,8 @@ impl Gas {
             all_used_gas: 0,
         }
     }
-    
 
     pub fn reimburse_unspend(&mut self, exit: &Return, other: Gas) {
-        
         match *exit {
             return_ok!() => {
                 self.erase_cost(other.remaining());
@@ -197,13 +199,13 @@ impl Machine {
             handler.inspect().step(self);
         }
         // extract next opcode from code
-        let opcode = unsafe { *self.contract.code.get_unchecked(self.program_counter)};
+        let opcode = unsafe { *self.contract.code.get_unchecked(self.program_counter) };
 
         // evaluate opcode/execute instruction
         self.program_counter += 1;
-        let mut eval = eval::<H, SPEC>(self, opcode, handler);
+        let eval = eval::<H, SPEC>(self, opcode, handler);
         if H::INSPECT {
-            handler.inspect().eval(&mut eval, self);
+            handler.inspect().eval(eval, self);
         }
         eval
     }

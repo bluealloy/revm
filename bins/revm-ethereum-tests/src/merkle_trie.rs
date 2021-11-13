@@ -38,7 +38,7 @@ pub fn trie_account_rlp(info: &AccountInfo, storage: Map<U256, U256>) -> Bytes {
                 .into_iter()
                 .filter(|(_k, v)| v != &U256::zero())
                 .map(|(k, v)| {
-                    let mut temp : [u8;32] = [0;32];
+                    let mut temp: [u8; 32] = [0; 32];
                     k.to_big_endian(&mut temp);
                     (H256::from(temp), rlp::encode(&v))
                 }),

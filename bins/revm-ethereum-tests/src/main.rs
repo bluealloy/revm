@@ -5,13 +5,12 @@ mod trace;
 
 use std::{env, path::PathBuf};
 
-
 pub fn main() {
     let args: Vec<String> = env::args().collect();
     println!("args:{:?}", args);
     let folder_path = if args.len() == 1 {
         //tests/GeneralStateTests/
-        //temp_folder" 
+        //temp_folder"
         "./bins/revm-ethereum-tests/temp_folder"
     } else {
         let second = &args[1];

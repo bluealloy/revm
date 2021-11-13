@@ -60,10 +60,22 @@ macro_rules! gas_or_fail {
 }
 
 macro_rules! memory_resize {
-    ($machine:expr, $start:expr, $len:expr) => {{
-        let new_gas_memory = try_or_fail!($machine.memory.resize_offset($start, $len));
-        if crate::USE_GAS {
-            if !$machine.gas.record_memory(new_gas_memory) {
+    ($machine:expr, $offset:expr, $len:expr) => {{
+        let len: usize = $len;
+        if len != 0 {
+            let offset: usize = $offset;
+            if let Some(new_size) =
+                crate::machine::memory::next_multiple_of_32(offset.saturating_add(len))
+            {
+                let num_bytes = new_size / 32;
+                if !$machine
+                    .gas
+                    .record_memory(crate::instructions::gas::memory_gas(num_bytes))
+                {
+                    return Return::OutOfGas;
+                }
+                $machine.memory.resize(new_size);
+            } else {
                 return Return::OutOfGas;
             }
         }
@@ -100,7 +112,7 @@ macro_rules! pop_address {
             };
             temp.into()
         };
-        $x2: H160 ={
+        $x2: H160 = {
             temp = H256::zero();
             unsafe {
                 $machine
@@ -113,7 +125,7 @@ macro_rules! pop_address {
     };
 }
 
-macro_rules! pop_u256 {
+macro_rules! pop {
     ( $machine:expr, $x1:ident) => {
         if $machine.stack.len() < 1 {
             return Return::StackUnderflow;
@@ -171,10 +183,22 @@ macro_rules! push_u256 {
 	)
 }
 
+macro_rules! push_u64 {
+    ( $machine:expr, $( $x:expr ),* ) => (
+		$(
+			let value = U256::from($x);
+			match $machine.stack.push_u256(value) {
+				Ok(()) => (),
+				Err(e) => return e,
+			}
+		)*
+	)
+}
+
 macro_rules! op1_u256_fn {
     ( $machine:expr, $op:path, $gas:expr ) => {{
         gas!($machine, $gas);
-        pop_u256!($machine, op1);
+        pop!($machine, op1);
         let ret = $op(op1);
         push_u256!($machine, ret);
 
@@ -185,7 +209,7 @@ macro_rules! op1_u256_fn {
 macro_rules! op2_u256_bool_ref {
     ( $machine:expr, $op:ident, $gas:expr ) => {{
         gas!($machine, $gas);
-        pop_u256!($machine, op1, op2);
+        pop!($machine, op1, op2);
         let ret = op1.$op(&op2);
         push_u256!($machine, if ret { U256::one() } else { U256::zero() });
 
@@ -196,7 +220,7 @@ macro_rules! op2_u256_bool_ref {
 macro_rules! op2_u256 {
     ( $machine:expr, $op:ident, $gas:expr ) => {{
         gas!($machine, $gas);
-        pop_u256!($machine, op1, op2);
+        pop!($machine, op1, op2);
         let ret = op1.$op(op2);
         push_u256!($machine, ret);
 
@@ -208,7 +232,7 @@ macro_rules! op2_u256_tuple {
     ( $machine:expr, $op:ident, $gas:expr ) => {{
         gas!($machine, $gas);
 
-        pop_u256!($machine, op1, op2);
+        pop!($machine, op1, op2);
         let (ret, ..) = op1.$op(op2);
         push_u256!($machine, ret);
 
@@ -220,7 +244,7 @@ macro_rules! op2_u256_fn {
     ( $machine:expr, $op:path, $gas:expr  ) => {{
         gas!($machine, $gas);
 
-        pop_u256!($machine, op1, op2);
+        pop!($machine, op1, op2);
         let ret = $op(op1, op2);
         push_u256!($machine, ret);
 
@@ -236,7 +260,7 @@ macro_rules! op3_u256_fn {
     ( $machine:expr, $op:path, $gas:expr  ) => {{
         gas!($machine, $gas);
 
-        pop_u256!($machine, op1, op2, op3);
+        pop!($machine, op1, op2, op3);
         let ret = $op(op1, op2, op3);
         push_u256!($machine, ret);
 
@@ -250,18 +274,18 @@ macro_rules! op3_u256_fn {
 
 macro_rules! as_usize_or_fail {
     ( $v:expr ) => {{
-        if $v > U256::from(usize::MAX) {
+        if $v.0[1] != 0 || $v.0[2] != 0 || $v.0[3] != 0 {
             return Return::FatalNotSupported;
         }
 
-        $v.as_usize()
+        $v.0[0] as usize
     }};
 
     ( $v:expr, $reason:expr ) => {{
-        if $v > U256::from(usize::MAX) {
+        if $v.0[1] != 0 || $v.0[2] != 0 || $v.0[3] != 0 {
             return $reason;
         }
 
-        $v.as_usize()
+        $v.0[0] as usize
     }};
 }

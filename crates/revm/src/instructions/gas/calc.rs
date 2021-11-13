@@ -1,5 +1,8 @@
 use super::constants::*;
-use crate::{Return, models::SelfDestructResult, spec::{Spec, SpecId::*}};
+use crate::{
+    models::SelfDestructResult,
+    spec::{Spec, SpecId::*},
+};
 use primitive_types::U256;
 
 #[allow(clippy::collapsible_else_if)]
@@ -52,23 +55,15 @@ pub fn sstore_refund<SPEC: Spec>(original: U256, current: U256, new: U256) -> i6
     }
 }
 
-pub fn create2_cost(len: U256) -> Option<u64> {
-    let base = U256::from(CREATE);
+pub fn create2_cost(len: usize) -> Option<u64> {
+    let base = CREATE;
     // ceil(len / 32.0)
-    let sha_addup_base = len / U256::from(32)
-        + if (len % U256::from(32)).is_zero() {
-            U256::zero()
-        } else {
-            U256::one()
-        };
-    let sha_addup = U256::from(SHA3WORD).checked_mul(sha_addup_base)?;
+    let len = len as u64;
+    let sha_addup_base = (len / 32) + if (len % 32) == 0 { 0 } else { 1 };
+    let sha_addup = SHA3WORD.checked_mul(sha_addup_base)?;
     let gas = base.checked_add(sha_addup)?;
 
-    if gas > U256::from(u64::MAX) {
-        return None;
-    }
-
-    Some(gas.as_u64())
+    Some(gas)
 }
 
 pub fn exp_cost<SPEC: Spec>(power: U256) -> Option<u64> {
@@ -96,13 +91,12 @@ pub fn verylowcopy_cost(len: U256) -> Option<u64> {
     let wordd = len / U256::from(32);
     let wordr = len % U256::from(32);
 
-    let gas = U256::from(VERYLOW).checked_add(U256::from(COPY).checked_mul(
-        if wordr.is_zero() {
+    let gas =
+        U256::from(VERYLOW).checked_add(U256::from(COPY).checked_mul(if wordr.is_zero() {
             wordd
         } else {
             wordd + U256::one()
-        },
-    )?)?;
+        })?)?;
 
     if gas > U256::from(u64::MAX) {
         return None;
@@ -125,13 +119,12 @@ pub fn extcodecopy_cost<SPEC: Spec>(len: U256, is_cold: bool) -> Option<u64> {
     } else {
         20
     };
-    let gas = U256::from(base_gas).checked_add(U256::from(COPY).checked_mul(
-        if wordr.is_zero() {
+    let gas =
+        U256::from(base_gas).checked_add(U256::from(COPY).checked_mul(if wordr.is_zero() {
             wordd
         } else {
             wordd + U256::one()
-        },
-    )?)?;
+        })?)?;
 
     if gas > U256::from(u64::MAX) {
         return None;
@@ -170,13 +163,12 @@ pub fn sha3_cost(len: U256) -> Option<u64> {
     let wordd = len / U256::from(32);
     let wordr = len % U256::from(32);
 
-    let gas = U256::from(SHA3).checked_add(U256::from(SHA3WORD).checked_mul(
-        if wordr.is_zero() {
+    let gas =
+        U256::from(SHA3).checked_add(U256::from(SHA3WORD).checked_mul(if wordr.is_zero() {
             wordd
         } else {
             wordd + U256::one()
-        },
-    )?)?;
+        })?)?;
 
     if gas > U256::from(u64::MAX) {
         return None;
@@ -343,11 +335,9 @@ fn new_cost<SPEC: Spec>(is_call_or_staticcall: bool, is_new: bool, transfers_val
     }
 }
 
-pub fn memory_gas(a: usize) -> Result<u64, Return> {
+pub fn memory_gas(a: usize) -> u64 {
     let a = a as u64;
     MEMORY
-        .checked_mul(a)
-        .ok_or(Return::OutOfGas)?
-        .checked_add(a.checked_mul(a).ok_or(Return::OutOfGas)? / 512)
-        .ok_or(Return::OutOfGas)
+        .saturating_mul(a)
+        .saturating_add(a.saturating_mul(a) / 512)
 }

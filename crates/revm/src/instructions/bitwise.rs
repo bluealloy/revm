@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use super::i256::{two_compl, i256_cmp, i256_sign, Sign};
+use super::i256::{i256_cmp, i256_sign, two_compl, Sign};
 use primitive_types::U256;
 
 #[inline(always)]

@@ -18,11 +18,11 @@ pub fn create_address(caller: H160, nonce: u64) -> H160 {
 pub fn create2_address(caller: H160, code_hash: H256, salt: U256) -> H160 {
     let mut temp: [u8; 32] = [0; 32];
     salt.to_big_endian(&mut temp);
-    
+
     let mut hasher = Keccak256::new();
     hasher.update(&[0xff]);
     hasher.update(&caller[..]);
     hasher.update(&temp);
     hasher.update(&code_hash[..]);
-    H160::from_slice(&hasher.finalize().as_slice()[12..]).into()
+    H160::from_slice(&hasher.finalize().as_slice()[12..])
 }

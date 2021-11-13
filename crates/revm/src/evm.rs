@@ -1,10 +1,9 @@
 use crate::{
     db::{Database, DatabaseCommit, DatabaseRef, RefDBWrapper},
-    Return,
     evm_impl::{EVMImpl, Transact},
     subroutine::State,
     BerlinSpec, ByzantineSpec, Env, Inspector, IstanbulSpec, LatestSpec, LondonSpec, NoOpInspector,
-    Spec, SpecId, TransactOut,
+    Return, Spec, SpecId, TransactOut,
 };
 use alloc::boxed::Box;
 use revm_precompiles::Precompiles;

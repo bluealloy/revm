@@ -32,7 +32,7 @@ pub fn smod(op1: U256, op2: U256) -> U256 {
     if op2.is_zero() {
         U256::zero()
     } else {
-        i256_mod(op1,op2)
+        i256_mod(op1, op2)
     }
 }
 
@@ -82,7 +82,7 @@ pub fn exp(op1: U256, op2: U256) -> U256 {
 
 #[inline(always)]
 pub fn eval_exp<SPEC: Spec>(machine: &mut Machine) -> Return {
-    pop_u256!(machine, op1, op2);
+    pop!(machine, op1, op2);
     gas_or_fail!(machine, gas::exp_cost::<SPEC>(op2));
     let ret = exp(op1, op2);
     push_u256!(machine, ret);

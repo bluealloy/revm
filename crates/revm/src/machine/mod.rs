@@ -2,7 +2,7 @@
 mod machine;
 
 mod contract;
-mod memory;
+pub(crate) mod memory;
 mod stack;
 
 pub use contract::Contract;

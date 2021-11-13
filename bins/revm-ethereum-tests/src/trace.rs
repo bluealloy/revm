@@ -34,7 +34,7 @@ impl Inspector for CustomPrintTracer {
         println!("ACCOUNT LOADED:{:?}", address);
     }
 
-    fn eval(&mut self, _eval: &revm::Return, _machine: &mut revm::Machine) {}
+    fn eval(&mut self, _eval: revm::Return, _machine: &mut revm::Machine) {}
 
     fn sload(&mut self, address: &H160, slot: &U256, value: &U256, is_cold: bool) {
         println!(

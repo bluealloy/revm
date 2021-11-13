@@ -9,7 +9,7 @@ pub struct Contract {
     pub input: Bytes,
     /// Contract code
     pub code: Bytes,
-    /// code size of original code. Note that current code is extended with push padding and STOP at end 
+    /// code size of original code. Note that current code is extended with push padding and STOP at end
     pub code_size: usize,
     /// Contract address
     pub address: H160,
@@ -28,10 +28,10 @@ impl Contract {
         let mut code = code.to_vec();
         let code_size = code.len();
         let code = if padding != 0 {
-            code.resize(code.len() + padding+1, 0);
+            code.resize(code.len() + padding + 1, 0);
             code.into()
         } else {
-            code.resize(code.len()+1, 0);
+            code.resize(code.len() + 1, 0);
             code.into()
         };
         Self {

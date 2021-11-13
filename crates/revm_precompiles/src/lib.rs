@@ -75,6 +75,12 @@ pub struct Precompiles {
     fun: Vec<(Address, Precompile)>,
 }
 
+impl Default for Precompiles {
+    fn default() -> Self {
+        Self::new::<3>() //berlin
+    }
+}
+
 #[derive(Clone)]
 pub enum Precompile {
     Standard(StandardPrecompileFn),

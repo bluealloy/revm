@@ -183,7 +183,7 @@ fn berlin_gas_calc(base_length: u64, exp_length: u64, mod_length: u64, exp_highp
     let iteration_count = calculate_iteration_count(exp_length, exp_highp);
     let gas = (multiplication_complexity * U256::from(iteration_count)) / 3;
     if gas > U256::from(u64::MAX) {
-        return u64::MAX;
+        u64::MAX
     } else {
         max(200, gas.as_u64())
     }
