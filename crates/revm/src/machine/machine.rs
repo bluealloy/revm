@@ -19,7 +19,7 @@ pub struct Machine {
     /// Program counter.
     pub program_counter: usize,
     /// Return value.
-    pub return_range: Range<U256>,
+    pub return_range: Range<usize>,
     /// Memory.
     pub memory: Memory,
     /// Stack.
@@ -212,30 +212,14 @@ impl Machine {
 
     /// Copy and get the return value of the machine, if any.
     pub fn return_value(&self) -> Bytes {
-        if self.return_range.start > U256::from(usize::MAX) {
-            let mut ret = Vec::new();
-            ret.resize(
-                (self.return_range.end - self.return_range.start).as_usize(),
-                0,
-            );
-            Bytes::from(ret)
-        } else if self.return_range.end > U256::from(usize::MAX) {
-            let mut ret = self
-                .memory
-                .get(
-                    self.return_range.start.as_usize(),
-                    usize::MAX - self.return_range.start.as_usize(),
-                )
-                .to_vec();
-            while ret.len() < (self.return_range.end - self.return_range.start).as_usize() {
-                ret.push(0);
-            }
-            Bytes::from(ret)
+        // if start is usize max it means that our return len is zero and we need to return empty
+        if self.return_range.start == usize::MAX {
+            Bytes::new()
         } else {
-            self.memory.get(
-                self.return_range.start.as_usize(),
-                (self.return_range.end - self.return_range.start).as_usize(),
-            )
+            Bytes::copy_from_slice(self.memory.get_slice(
+                self.return_range.start,
+                self.return_range.end - self.return_range.start,
+            ))
         }
     }
 }

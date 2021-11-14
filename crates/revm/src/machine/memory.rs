@@ -54,24 +54,10 @@ impl Memory {
         }
     }
 
-    /// Get memory region at given offset.
-    ///
-    /// ## Panics
-    ///
-    /// Value of `size` is considered trusted. If they're too large,
-    /// the program can run out of memory, or it can overflow.
-    pub fn get(&self, offset: usize, size: usize) -> Bytes {
-        let start = min(self.data.len(), offset);
-        let end = min(self.data.len(), size + offset);
-        let len = end - start;
-        let mut ret = Vec::with_capacity(len);
-        unsafe {
-            ret.set_len(len);
-        }
-        ret[..len].copy_from_slice(&self.data[start..end]);
-        ret.resize(size, 0);
-
-        ret.into()
+    /// Get memory region at given offset. Dont check offset and size
+    #[inline(always)]
+    pub fn get_slice(&self, offset: usize, size: usize) -> &[u8] {
+        &self.data[offset..offset+size]
     }
 
     /// Set memory region at given offset. The offset and value is considered

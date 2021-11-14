@@ -90,7 +90,7 @@ pub fn mload(machine: &mut Machine) -> Return {
 
     let index = as_usize_or_fail!(index, Return::OutOfGas);
     memory_resize!(machine, index, 32);
-    let value = U256::from_big_endian(&machine.memory.get(index, 32)[..]);
+    let value = U256::from_big_endian(machine.memory.get_slice(index, 32));
     push!(machine, value);
     Return::Continue
 }
@@ -204,13 +204,13 @@ pub fn swap<const N: usize>(machine: &mut Machine) -> Return {
 pub fn ret(machine: &mut Machine) -> Return {
     // zero gas cost gas!(machine,gas::ZERO);
     pop!(machine, start, len);
-    let len_usize = as_usize_or_fail!(len, Return::OutOfGas);
-    if len_usize == 0 {
-        machine.return_range = start..start;
+    let len = as_usize_or_fail!(len, Return::OutOfGas);
+    if len == 0 {
+        machine.return_range = usize::MAX..usize::MAX;
     } else {
-        let start_usize = as_usize_or_fail!(start, Return::OutOfGas);
-        memory_resize!(machine, start_usize, len_usize);
-        machine.return_range = start..(start + len);
+        let offset = as_usize_or_fail!(start, Return::OutOfGas);
+        memory_resize!(machine, offset, len);
+        machine.return_range = offset..(offset + len);
     }
     Return::Return
 }
@@ -220,13 +220,13 @@ pub fn revert<SPEC: Spec>(machine: &mut Machine) -> Return {
     check!(SPEC::enabled(BYZANTINE)); // EIP-140: REVERT instruction
                                       // zero gas cost gas!(machine,gas::ZERO);
     pop!(machine, start, len);
-    let len_usize = as_usize_or_fail!(len, Return::OutOfGas);
-    if len_usize == 0 {
-        machine.return_range = start..start;
+    let len = as_usize_or_fail!(len, Return::OutOfGas);
+    if len == 0 {
+        machine.return_range =  usize::MAX.. usize::MAX;
     } else {
-        let start_usize = as_usize_or_fail!(start, Return::OutOfGas);
-        memory_resize!(machine, start_usize, len_usize);
-        machine.return_range = start..(start + len);
+        let offset = as_usize_or_fail!(start, Return::OutOfGas);
+        memory_resize!(machine, offset, len);
+        machine.return_range = offset..(offset + len);
     }
     Return::Revert
 }

@@ -12,7 +12,7 @@ pub const SIGN_BIT_MASK: U256 = U256([
     0xffffffffffffffff,
     0xffffffffffffffff,
     0xffffffffffffffff,
-    0x7fffffffffffffff,
+    FLIPH_BITMASK_U64,
 ]);
 
 pub const MIN_NEGATIVE_VALUE: U256 = U256([
@@ -23,6 +23,7 @@ pub const MIN_NEGATIVE_VALUE: U256 = U256([
 ]);
 
 const SIGN_BITMASK_U64: u64 = 0x8000000000000000;
+const FLIPH_BITMASK_U64: u64 = 0x7FFFFFFFFFFFFFFF;
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct I256(pub Sign, pub U256);
 
@@ -39,6 +40,13 @@ pub fn i256_sign<const DO_TWO_COMPL: bool>(val: &mut U256) -> Sign {
             two_compl_mut(val);
         }
         Sign::Minus
+    }
+}
+
+#[inline(always)]
+fn u256_remove_sign(val: &mut U256) {
+    unsafe {
+        *val.0.get_unchecked_mut(3) = val.0.get_unchecked(3) & FLIPH_BITMASK_U64;
     }
 }
 
@@ -79,7 +87,9 @@ pub fn i256_div(mut first: U256, mut second: U256) -> U256 {
         return two_compl(MIN_NEGATIVE_VALUE);
     }
 
-    let d = (first / second) & SIGN_BIT_MASK;
+    let mut d = first / second;
+    u256_remove_sign(&mut d);
+    //set sign bit to zero
 
     if d.is_zero() {
         return U256::zero();
@@ -106,7 +116,8 @@ pub fn i256_mod(mut first: U256, mut second: U256) -> U256 {
     }
 
     let _ = i256_sign::<true>(&mut second);
-    let r = (first % second) & SIGN_BIT_MASK;
+    let mut r = first % second;
+    u256_remove_sign(&mut r);
     if r.is_zero() {
         return U256::zero();
     }

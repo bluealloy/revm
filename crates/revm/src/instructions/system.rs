@@ -22,7 +22,7 @@ pub fn sha3(machine: &mut Machine) -> Return {
     } else {
         let from = as_usize_or_fail!(from, Return::OutOfGas);
         memory_resize!(machine, from, len);
-        machine.memory.get(from, len)
+        Bytes::copy_from_slice(machine.memory.get_slice(from, len))
     };
 
     let ret = Keccak256::digest(data.as_ref());
@@ -306,7 +306,7 @@ pub fn log<H: Handler, SPEC: Spec>(machine: &mut Machine, n: u8, handler: &mut H
     } else {
         let offset = as_usize_or_fail!(offset, Return::OutOfGas);
         memory_resize!(machine, offset, len);
-        machine.memory.get(offset, len)
+        Bytes::copy_from_slice(machine.memory.get_slice(offset, len))
     };
     let n = n as usize;
     if machine.stack.len() < n {
@@ -372,7 +372,7 @@ pub fn create<H: Handler, SPEC: Spec>(
     } else {
         let code_offset = as_usize_or_fail!(code_offset, Return::OutOfGas);
         memory_resize!(machine, code_offset, len);
-        machine.memory.get(code_offset, len)
+        Bytes::copy_from_slice(machine.memory.get_slice(code_offset, len))
     };
 
     let scheme = if is_create2 {
@@ -457,7 +457,7 @@ pub fn call<H: Handler, SPEC: Spec>(
     let input = if in_len != 0 {
         let in_offset = as_usize_or_fail!(in_offset, Return::OutOfGas);
         memory_resize!(machine, in_offset, in_len);
-        machine.memory.get(in_offset, in_len)
+        Bytes::copy_from_slice(machine.memory.get_slice(in_offset, in_len))
     } else {
         Bytes::new()
     };
