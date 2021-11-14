@@ -16,7 +16,7 @@ use crate::{
     CallScheme, Handler,
 };
 use core::ops::{BitAnd, BitOr, BitXor};
-use primitive_types::{H256, U256};
+use primitive_types::U256;
 
 #[macro_export]
 macro_rules! return_ok {
@@ -77,7 +77,8 @@ pub enum Return {
 pub fn eval<H: Handler, S: Spec>(machine: &mut Machine, opcode: u8, handler: &mut H) -> Return {
     //let time = std::time::Instant::now();
 
-    let ret = match opcode {
+    //let ret = 
+    match opcode {
         opcode::STOP => Return::Stop,
         opcode::ADD => op2_u256_tuple!(machine, overflowing_add, gas::VERYLOW),
         opcode::MUL => op2_u256_tuple!(machine, overflowing_mul, gas::LOW),
@@ -239,9 +240,9 @@ pub fn eval<H: Handler, S: Spec>(machine: &mut Machine, opcode: u8, handler: &mu
         opcode::STATICCALL => system::call::<H, S>(machine, CallScheme::StaticCall, handler), //check
         opcode::CHAINID => system::chainid::<H, S>(machine, handler),
         _ => Return::OpcodeNotFound,
-    };
+    }
     // let times = &mut machine.times[opcode as usize];
     // times.0 += time.elapsed();
     // times.1 += 1;
-    ret
+    //ret
 }

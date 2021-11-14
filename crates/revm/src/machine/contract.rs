@@ -27,13 +27,12 @@ impl Contract {
 
         let mut code = code.to_vec();
         let code_size = code.len();
-        let code = if padding != 0 {
+        if padding != 0 {
             code.resize(code.len() + padding + 1, 0);
-            code.into()
         } else {
             code.resize(code.len() + 1, 0);
-            code.into()
         };
+        let code = code.into();
         Self {
             input,
             code,

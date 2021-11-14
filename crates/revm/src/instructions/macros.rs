@@ -159,35 +159,21 @@ macro_rules! pop {
     };
 }
 
+macro_rules! push_h256 {
+	( $machine:expr, $( $x:expr ),* ) => (
+		$(
+			match $machine.stack.push_h256($x) {
+				Ok(()) => (),
+				Err(e) => return e,
+			}
+		)*
+	)
+}
+
 macro_rules! push {
-	( $machine:expr, $( $x:expr ),* ) => (
-		$(
-			match $machine.stack.push($x) {
-				Ok(()) => (),
-				Err(e) => return e,
-			}
-		)*
-	)
-}
-
-macro_rules! push_u256 {
-	( $machine:expr, $( $x:expr ),* ) => (
-		$(
-			let mut value = H256::default();
-			$x.to_big_endian(&mut value[..]);
-			match $machine.stack.push(value) {
-				Ok(()) => (),
-				Err(e) => return e,
-			}
-		)*
-	)
-}
-
-macro_rules! push_u64 {
     ( $machine:expr, $( $x:expr ),* ) => (
 		$(
-			let value = U256::from($x);
-			match $machine.stack.push_u256(value) {
+			match $machine.stack.push($x) {
 				Ok(()) => (),
 				Err(e) => return e,
 			}
@@ -200,7 +186,7 @@ macro_rules! op1_u256_fn {
         gas!($machine, $gas);
         pop!($machine, op1);
         let ret = $op(op1);
-        push_u256!($machine, ret);
+        push!($machine, ret);
 
         Return::Continue
     }};
@@ -211,7 +197,7 @@ macro_rules! op2_u256_bool_ref {
         gas!($machine, $gas);
         pop!($machine, op1, op2);
         let ret = op1.$op(&op2);
-        push_u256!($machine, if ret { U256::one() } else { U256::zero() });
+        push!($machine, if ret { U256::one() } else { U256::zero() });
 
         Return::Continue
     }};
@@ -222,7 +208,7 @@ macro_rules! op2_u256 {
         gas!($machine, $gas);
         pop!($machine, op1, op2);
         let ret = op1.$op(op2);
-        push_u256!($machine, ret);
+        push!($machine, ret);
 
         Return::Continue
     }};
@@ -234,7 +220,7 @@ macro_rules! op2_u256_tuple {
 
         pop!($machine, op1, op2);
         let (ret, ..) = op1.$op(op2);
-        push_u256!($machine, ret);
+        push!($machine, ret);
 
         Return::Continue
     }};
@@ -246,7 +232,7 @@ macro_rules! op2_u256_fn {
 
         pop!($machine, op1, op2);
         let ret = $op(op1, op2);
-        push_u256!($machine, ret);
+        push!($machine, ret);
 
         Return::Continue
     }};
@@ -262,7 +248,7 @@ macro_rules! op3_u256_fn {
 
         pop!($machine, op1, op2, op3);
         let ret = $op(op1, op2, op3);
-        push_u256!($machine, ret);
+        push!($machine, ret);
 
         Return::Continue
     }};
@@ -272,10 +258,20 @@ macro_rules! op3_u256_fn {
     }};
 }
 
+macro_rules! as_usize_saturated {
+    ( $v:expr ) => {{
+        if $v.0[1] != 0 || $v.0[2] != 0 || $v.0[3] != 0 {
+            usize::MAX
+        } else {
+            $v.0[0] as usize
+        }
+    }};
+}
+
 macro_rules! as_usize_or_fail {
     ( $v:expr ) => {{
         if $v.0[1] != 0 || $v.0[2] != 0 || $v.0[3] != 0 {
-            return Return::FatalNotSupported;
+            return Return::OutOfGas;
         }
 
         $v.0[0] as usize

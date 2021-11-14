@@ -62,7 +62,7 @@ impl Stack {
     #[inline]
     /// Push a new value into the stack. If it will exceed the stack limit,
     /// returns `StackOverflow` error and leaves the stack unchanged.
-    pub fn push(&mut self, value: H256) -> Result<(), Return> {
+    pub fn push_h256(&mut self, value: H256) -> Result<(), Return> {
         if self.data.len() + 1 > STACK_LIMIT {
             return Err(Return::StackOverflow);
         }
@@ -73,7 +73,7 @@ impl Stack {
     #[inline]
     /// Push a new value into the stack. If it will exceed the stack limit,
     /// returns `StackOverflow` error and leaves the stack unchanged.
-    pub fn push_u256(&mut self, value: U256) -> Result<(), Return> {
+    pub fn push(&mut self, value: U256) -> Result<(), Return> {
         if self.data.len() + 1 > STACK_LIMIT {
             return Err(Return::StackOverflow);
         }

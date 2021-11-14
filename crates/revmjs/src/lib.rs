@@ -2,7 +2,7 @@ use core::convert::TryInto;
 
 use bn_rs::BN;
 use bytes::{Bytes, BytesMut};
-use primitive_types::{H160, H256, U256};
+use primitive_types::{H160, U256};
 use revm::{AccountInfo, DatabaseCommit, InMemoryDB, SpecId, TransactTo, EVM as rEVM};
 use wasm_bindgen::prelude::*;
 

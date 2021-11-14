@@ -61,7 +61,7 @@ pub fn i256_cmp(mut first: U256, mut second: U256) -> Ordering {
         (Sign::Zero, Sign::Minus) => Ordering::Greater,
         (Sign::Minus, Sign::Zero) => Ordering::Less,
         (Sign::Minus, Sign::Plus) => Ordering::Less,
-        (Sign::Minus, Sign::Minus) => first.cmp(&second).reverse(),
+        (Sign::Minus, Sign::Minus) => first.cmp(&second),
         (Sign::Plus, Sign::Minus) => Ordering::Greater,
         (Sign::Plus, Sign::Zero) => Ordering::Greater,
         (Sign::Plus, Sign::Plus) => first.cmp(&second),

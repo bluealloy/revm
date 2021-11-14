@@ -207,7 +207,7 @@ pub const OPCODE_JUMPMAP: [Option<&'static str>; 256] = [
     /* 0x1d */ Some("SAR"),
     /* 0x1e */ None,
     /* 0x1f */ None,
-    /* 0x20 */ Some("KECCAK256"),
+    /* 0x20 */ Some("SHA3"),
     /* 0x21 */ None,
     /* 0x22 */ None,
     /* 0x23 */ None,

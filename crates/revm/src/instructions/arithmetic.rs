@@ -2,7 +2,7 @@ use crate::{instructions::gas, Machine, Return, Spec};
 
 use super::i256::{i256_div, i256_mod};
 use core::{convert::TryInto, ops::Rem};
-use primitive_types::{H256, U256, U512};
+use primitive_types::{U256, U512};
 
 #[inline(always)]
 pub fn div(op1: U256, op2: U256) -> U256 {
@@ -85,7 +85,7 @@ pub fn eval_exp<SPEC: Spec>(machine: &mut Machine) -> Return {
     pop!(machine, op1, op2);
     gas_or_fail!(machine, gas::exp_cost::<SPEC>(op2));
     let ret = exp(op1, op2);
-    push_u256!(machine, ret);
+    push!(machine, ret);
 
     Return::Continue
 }

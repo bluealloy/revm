@@ -177,7 +177,7 @@ impl Machine {
                 //     .filter(|((time, _), opcode)| opcode.is_some() && !time.is_zero())
                 //     .map(|((dur, num), code)| (code.unwrap(), dur, num, *dur / *num as u32))
                 //     .collect::<Vec<_>>();
-                // it.sort_by(|a, b| a.3.cmp(&b.3));
+                // it.sort_by(|a, b| a.2.cmp(&b.2));
                 // for i in it {
                 //     println!(
                 //         "code:{:?}   called:{:?}   time:{:?}   avrg:{:?}",

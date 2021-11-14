@@ -16,16 +16,17 @@ pub fn sha3(machine: &mut Machine) -> Return {
     pop!(machine, from, len);
     gas_or_fail!(machine, gas::sha3_cost(len));
     let len = as_usize_or_fail!(len, Return::OutOfGas);
-    let from = as_usize_or_fail!(from, Return::OutOfGas);
-    memory_resize!(machine, from, len);
     let data = if len == 0 {
         Bytes::new()
+        // TODO optimization, we can return hadrcoded value of keccak256:digest(&[])
     } else {
+        let from = as_usize_or_fail!(from, Return::OutOfGas);
+        memory_resize!(machine, from, len);
         machine.memory.get(from, len)
     };
 
     let ret = Keccak256::digest(data.as_ref());
-    push!(machine, H256::from_slice(ret.as_slice()));
+    push_h256!(machine, H256::from_slice(ret.as_slice()));
 
     Return::Continue
 }
@@ -34,7 +35,7 @@ pub fn chainid<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -
     check!(SPEC::enabled(ISTANBUL)); // EIP-1344: ChainID opcode
     gas!(machine, gas::BASE);
 
-    push_u256!(machine, handler.env().cfg.chain_id);
+    push!(machine, handler.env().cfg.chain_id);
 
     Return::Continue
 }
@@ -43,7 +44,7 @@ pub fn address(machine: &mut Machine) -> Return {
     gas!(machine, gas::BASE);
 
     let ret = H256::from(machine.contract.address);
-    push!(machine, ret);
+    push_h256!(machine, ret);
 
     Return::Continue
 }
@@ -62,7 +63,7 @@ pub fn balance<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -
             20
         }
     );
-    push_u256!(machine, balance);
+    push!(machine, balance);
 
     Return::Continue
 }
@@ -71,7 +72,7 @@ pub fn selfbalance<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
     check!(SPEC::enabled(ISTANBUL)); // EIP-1884: Repricing for trie-size-dependent opcodes
     let (balance, _) = handler.balance(machine.contract.address);
     gas!(machine, gas::LOW);
-    push_u256!(machine, balance);
+    push!(machine, balance);
 
     Return::Continue
 }
@@ -80,7 +81,7 @@ pub fn basefee<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -
     check!(SPEC::enabled(LONDON)); // EIP-3198: BASEFEE opcode
     let basefee = handler.env().block.basefee;
     gas!(machine, gas::BASE);
-    push_u256!(machine, basefee);
+    push!(machine, basefee);
 
     Return::Continue
 }
@@ -89,7 +90,7 @@ pub fn origin<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
     gas!(machine, gas::BASE);
 
     let ret = H256::from(handler.env().tx.caller);
-    push!(machine, ret);
+    push_h256!(machine, ret);
 
     Return::Continue
 }
@@ -98,7 +99,7 @@ pub fn caller(machine: &mut Machine) -> Return {
     gas!(machine, gas::BASE);
 
     let ret = H256::from(machine.contract.caller);
-    push!(machine, ret);
+    push_h256!(machine, ret);
 
     Return::Continue
 }
@@ -108,7 +109,7 @@ pub fn callvalue(machine: &mut Machine) -> Return {
 
     let mut ret = H256::default();
     machine.contract.value.to_big_endian(&mut ret[..]);
-    push!(machine, ret);
+    push_h256!(machine, ret);
 
     Return::Continue
 }
@@ -121,7 +122,7 @@ pub fn gasprice<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
         .env()
         .effective_gas_price()
         .to_big_endian(&mut ret[..]);
-    push!(machine, ret);
+    push_h256!(machine, ret);
 
     Return::Continue
 }
@@ -132,7 +133,7 @@ pub fn extcodesize<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
     let (code, is_cold) = handler.code(address);
     gas!(machine, gas::account_access_gas::<SPEC>(is_cold));
 
-    push_u256!(machine, U256::from(code.len()));
+    push!(machine, U256::from(code.len()));
 
     Return::Continue
 }
@@ -150,7 +151,7 @@ pub fn extcodehash<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
             400
         }
     );
-    push!(machine, code_hash);
+    push_h256!(machine, code_hash);
 
     Return::Continue
 }
@@ -158,15 +159,15 @@ pub fn extcodehash<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
 pub fn extcodecopy<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
     pop_address!(machine, address);
     pop!(machine, memory_offset, code_offset, len_u256);
+
+    let (code, is_cold) = handler.code(address);
+    gas_or_fail!(machine, gas::extcodecopy_cost::<SPEC>(len_u256, is_cold));
     let len = as_usize_or_fail!(len_u256, Return::OutOfGas);
     if len == 0 {
         return Return::Continue;
     }
     let memory_offset = as_usize_or_fail!(memory_offset, Return::OutOfGas);
-    let code_offset = as_usize_or_fail!(code_offset, Return::OutOfGas);
-
-    let (code, is_cold) = handler.code(address);
-    gas_or_fail!(machine, gas::extcodecopy_cost::<SPEC>(len_u256, is_cold));
+    let code_offset = as_usize_saturated!(code_offset);
 
     memory_resize!(machine, memory_offset, len);
     machine
@@ -179,7 +180,7 @@ pub fn returndatasize<SPEC: Spec>(machine: &mut Machine) -> Return {
     gas!(machine, gas::BASE);
 
     let size = U256::from(machine.return_data_buffer.len());
-    push_u256!(machine, size);
+    push!(machine, size);
 
     Return::Continue
 }
@@ -189,11 +190,8 @@ pub fn returndatacopy<SPEC: Spec>(machine: &mut Machine) -> Return {
     pop!(machine, memory_offset, offset, len);
     gas_or_fail!(machine, gas::verylowcopy_cost(len));
     let len = as_usize_or_fail!(len, Return::OutOfGas);
-    if len == 0 {
-        return Return::Continue;
-    }
     let memory_offset = as_usize_or_fail!(memory_offset, Return::OutOfGas);
-    let offset = as_usize_or_fail!(offset, Return::OutOfGas);
+    let offset = as_usize_saturated!(offset);
     memory_resize!(machine, memory_offset, len);
     if offset
         .checked_add(len)
@@ -212,7 +210,7 @@ pub fn blockhash<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
     gas!(machine, gas::BLOCKHASH);
 
     pop!(machine, number);
-    push!(machine, handler.block_hash(number));
+    push_h256!(machine, handler.block_hash(number));
 
     Return::Continue
 }
@@ -220,34 +218,34 @@ pub fn blockhash<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
 pub fn coinbase<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
     gas!(machine, gas::BASE);
 
-    push!(machine, handler.env().block.coinbase.into());
+    push_h256!(machine, handler.env().block.coinbase.into());
     Return::Continue
 }
 
 pub fn timestamp<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
     gas!(machine, gas::BASE);
-    push_u256!(machine, handler.env().block.timestamp);
+    push!(machine, handler.env().block.timestamp);
     Return::Continue
 }
 
 pub fn number<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
     gas!(machine, gas::BASE);
 
-    push_u256!(machine, handler.env().block.number);
+    push!(machine, handler.env().block.number);
     Return::Continue
 }
 
 pub fn difficulty<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
     gas!(machine, gas::BASE);
 
-    push_u256!(machine, handler.env().block.difficulty);
+    push!(machine, handler.env().block.difficulty);
     Return::Continue
 }
 
 pub fn gaslimit<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
     gas!(machine, gas::BASE);
 
-    push_u256!(machine, handler.env().block.gas_limit);
+    push!(machine, handler.env().block.gas_limit);
     Return::Continue
 }
 
@@ -263,7 +261,7 @@ pub fn sload<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> 
         is_cold
     );
     gas!(machine, gas::sload_cost::<SPEC>(is_cold));
-    push_u256!(machine, value);
+    push!(machine, value);
     Return::Continue
 }
 
@@ -293,7 +291,7 @@ pub fn sstore<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) ->
 pub fn gas(machine: &mut Machine) -> Return {
     gas!(machine, gas::BASE);
 
-    push_u256!(machine, U256::from(machine.gas.remaining()));
+    push!(machine, U256::from(machine.gas.remaining()));
     Return::Continue
 }
 
@@ -302,12 +300,12 @@ pub fn log<H: Handler, SPEC: Spec>(machine: &mut Machine, n: u8, handler: &mut H
 
     pop!(machine, offset, len);
     gas_or_fail!(machine, gas::log_cost(n, len));
-    let offset = as_usize_or_fail!(offset);
-    let len = as_usize_or_fail!(len);
-    memory_resize!(machine, offset, len);
+    let len = as_usize_or_fail!(len, Return::OutOfGas);
     let data = if len == 0 {
         Bytes::new()
     } else {
+        let offset = as_usize_or_fail!(offset, Return::OutOfGas);
+        memory_resize!(machine, offset, len);
         machine.memory.get(offset, len)
     };
     let n = n as usize;
@@ -367,15 +365,16 @@ pub fn create<H: Handler, SPEC: Spec>(
     machine.return_data_buffer = Bytes::new();
 
     pop!(machine, value, code_offset, len);
-    let code_offset = as_usize_or_fail!(code_offset);
-    let len = as_usize_or_fail!(len);
+    let len = as_usize_or_fail!(len, Return::OutOfGas);
 
-    memory_resize!(machine, code_offset, len);
     let code = if len == 0 {
         Bytes::new()
     } else {
+        let code_offset = as_usize_or_fail!(code_offset, Return::OutOfGas);
+        memory_resize!(machine, code_offset, len);
         machine.memory.get(code_offset, len)
     };
+
     let scheme = if is_create2 {
         pop!(machine, salt);
         gas_or_fail!(machine, gas::create2_cost(len));
@@ -408,7 +407,7 @@ pub fn create<H: Handler, SPEC: Spec>(
         H256::default()
     };
     inspect!(handler, create_return, created_address);
-    push!(machine, created_address);
+    push_h256!(machine, created_address);
     // reimburse gas that is not spend
     machine.gas.reimburse_unspend(&reason, gas);
     match reason {
@@ -422,7 +421,6 @@ pub fn call<H: Handler, SPEC: Spec>(
     scheme: CallScheme,
     handler: &mut H,
 ) -> Return {
-    println!("CALL_CODE");
     match scheme {
         CallScheme::DelegateCall => check!(SPEC::enabled(HOMESTEAD)), // EIP-7: DELEGATECALL
         CallScheme::StaticCall => check!(SPEC::enabled(BYZANTINE)), // EIP-214: New opcode STATICCALL
@@ -455,18 +453,22 @@ pub fn call<H: Handler, SPEC: Spec>(
 
     pop!(machine, in_offset, in_len, out_offset, out_len);
 
-    let in_offset = as_usize_or_fail!(in_offset);
-    let in_len = as_usize_or_fail!(in_len);
-    let out_offset = as_usize_or_fail!(out_offset);
-    let out_len = as_usize_or_fail!(out_len);
-
-    memory_resize!(machine, in_offset, in_len);
-    memory_resize!(machine, out_offset, out_len);
-
-    let input = if in_len == 0 {
-        Bytes::new()
-    } else {
+    let in_len = as_usize_or_fail!(in_len, Return::OutOfGas);
+    let input = if in_len != 0 {
+        let in_offset = as_usize_or_fail!(in_offset, Return::OutOfGas);
+        memory_resize!(machine, in_offset, in_len);
         machine.memory.get(in_offset, in_len)
+    } else {
+        Bytes::new()
+    };
+
+    let out_len = as_usize_or_fail!(out_len, Return::OutOfGas);
+    let out_offset = if out_len != 0 {
+        let out_offset = as_usize_or_fail!(out_offset, Return::OutOfGas);
+        memory_resize!(machine, out_offset, out_len);
+        out_offset
+    } else {
+        usize::MAX //unrealistic value so we are sure it is not used
     };
 
     let context = match scheme {
@@ -508,7 +510,6 @@ pub fn call<H: Handler, SPEC: Spec>(
         }
     };
 
-    let to = to.into();
     // load account and calculate gas cost.
     let (is_cold, exist) = handler.load_account(to);
     let is_new = !exist;
@@ -555,15 +556,15 @@ pub fn call<H: Handler, SPEC: Spec>(
                 .copy_large(out_offset, 0, target_len, &machine.return_data_buffer)
                 == Return::Continue
             {
-                push_u256!(machine, U256::one());
+                push!(machine, U256::one());
                 Return::Continue
             } else {
-                push_u256!(machine, U256::zero());
+                push!(machine, U256::zero());
                 Return::Continue
             }
         }
         return_revert!() => {
-            push_u256!(machine, U256::zero());
+            push!(machine, U256::zero());
             let _ =
                 machine
                     .memory
@@ -571,7 +572,7 @@ pub fn call<H: Handler, SPEC: Spec>(
             Return::Continue
         }
         _ => {
-            push_u256!(machine, U256::zero());
+            push!(machine, U256::zero());
             Return::Continue
         }
     }

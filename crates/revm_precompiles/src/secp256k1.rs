@@ -80,7 +80,7 @@ fn ec_recover_run(i: &[u8], target_gas: u64) -> PrecompileResult {
 
     sig[64] = input[63];
 
-    let out = match secp256k1_ecdsa_recover(&mut sig, &msg) {
+    let out = match secp256k1_ecdsa_recover(&sig, &msg) {
         Ok(out) => H256::from(out).as_bytes().to_vec(),
         Err(_) => Vec::new(),
     };

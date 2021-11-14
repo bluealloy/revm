@@ -2,7 +2,7 @@ use super::gas_query;
 use crate::{Precompile, PrecompileOutput, PrecompileResult, StandardPrecompileFn};
 use alloc::vec::Vec;
 use core::{
-    cmp::{max, min},
+    cmp::{max, min, Ordering},
     mem::size_of,
 };
 use num::{BigUint, One, Zero};
@@ -127,15 +127,15 @@ where
     let bytes = r.to_bytes_be();
     // always true except in the case of zero-length modulus, which leads to
     // output of length and value 1.
-    if bytes.len() == mod_len {
-        Ok(PrecompileOutput::without_logs(gas_cost, bytes.to_vec()))
-    } else if bytes.len() < mod_len {
-        let mut ret = Vec::with_capacity(mod_len);
-        ret.extend(core::iter::repeat(0).take(mod_len - bytes.len()));
-        ret.extend_from_slice(&bytes[..]);
-        Ok(PrecompileOutput::without_logs(gas_cost, ret.to_vec()))
-    } else {
-        Ok(PrecompileOutput::without_logs(gas_cost, Vec::new()))
+    match bytes.len().cmp(&mod_len) {
+        Ordering::Equal => Ok(PrecompileOutput::without_logs(gas_cost, bytes.to_vec())),
+        Ordering::Less => {
+            let mut ret = Vec::with_capacity(mod_len);
+            ret.extend(core::iter::repeat(0).take(mod_len - bytes.len()));
+            ret.extend_from_slice(&bytes[..]);
+            Ok(PrecompileOutput::without_logs(gas_cost, ret.to_vec()))
+        }
+        Ordering::Greater => Ok(PrecompileOutput::without_logs(gas_cost, Vec::new())),
     }
 }
 

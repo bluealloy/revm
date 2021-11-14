@@ -61,18 +61,15 @@ impl Memory {
     /// Value of `size` is considered trusted. If they're too large,
     /// the program can run out of memory, or it can overflow.
     pub fn get(&self, offset: usize, size: usize) -> Bytes {
-        let mut ret = Vec::new();
-        ret.resize(size, 0);
-
-        #[allow(clippy::needless_range_loop)]
-        for index in 0..size {
-            let position = offset + index;
-            if position >= self.data.len() {
-                break;
-            }
-
-            ret[index] = self.data[position];
+        let start = min(self.data.len(), offset);
+        let end = min(self.data.len(), size + offset);
+        let len = end - start;
+        let mut ret = Vec::with_capacity(len);
+        unsafe {
+            ret.set_len(len);
         }
+        ret[..len].copy_from_slice(&self.data[start..end]);
+        ret.resize(size, 0);
 
         ret.into()
     }
@@ -139,7 +136,7 @@ impl Memory {
 #[inline]
 pub(crate) fn next_multiple_of_32(x: usize) -> Option<usize> {
     let r = x.bitand(31).not().wrapping_add(1).bitand(31);
-    x.checked_add(r.into())
+    x.checked_add(r)
 }
 
 #[cfg(test)]

@@ -83,6 +83,7 @@ mod algo {
     ];
 
     #[inline(always)]
+    #[allow(clippy::many_single_char_names)]
     /// G function: https://tools.ietf.org/html/rfc7693#section-3.1
     fn g(v: &mut [u64], a: usize, b: usize, c: usize, d: usize, x: u64, y: u64) {
         v[a] = v[a].wrapping_add(v[b]).wrapping_add(x);
@@ -101,6 +102,7 @@ mod algo {
     // indicator flag "f".  Local vector v[0..15] is used in processing.  F
     // returns a new state vector.  The number of rounds, "r", is 12 for
     // BLAKE2b and 10 for BLAKE2s.  Rounds are numbered from 0 to r - 1.
+    #[allow(clippy::many_single_char_names)]
     pub fn compress(rounds: usize, h: &mut [u64; 8], m: [u64; 16], t: [u64; 2], f: bool) {
         let mut v = [0u64; 16];
         v[..h.len()].copy_from_slice(h); // First half from state.

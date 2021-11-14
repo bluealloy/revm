@@ -6,7 +6,7 @@ use primitive_types::{H256, U256};
 pub fn codesize(machine: &mut Machine) -> Return {
     gas!(machine, gas::BASE);
     let size = U256::from(machine.contract.code_size);
-    push_u256!(machine, size);
+    push!(machine, size);
     Return::Continue
 }
 
@@ -19,7 +19,7 @@ pub fn codecopy(machine: &mut Machine) -> Return {
         return Return::Continue;
     }
     let memory_offset = as_usize_or_fail!(memory_offset, Return::OutOfGas);
-    let code_offset = as_usize_or_fail!(code_offset, Return::OutOfGas);
+    let code_offset = as_usize_saturated!(code_offset);
     memory_resize!(machine, memory_offset, len);
 
     machine
@@ -46,7 +46,7 @@ pub fn calldataload(machine: &mut Machine) -> Return {
         }
     }
 
-    push!(machine, H256::from(load));
+    push_h256!(machine, H256::from(load));
     Return::Continue
 }
 
@@ -55,7 +55,7 @@ pub fn calldatasize(machine: &mut Machine) -> Return {
     gas!(machine, gas::BASE);
 
     let len = U256::from(machine.contract.input.len());
-    push_u256!(machine, len);
+    push!(machine, len);
     Return::Continue
 }
 
@@ -68,7 +68,7 @@ pub fn calldatacopy(machine: &mut Machine) -> Return {
         return Return::Continue;
     }
     let memory_offset = as_usize_or_fail!(memory_offset, Return::OutOfGas);
-    let data_offset = as_usize_or_fail!(data_offset, Return::OutOfGas);
+    let data_offset = as_usize_saturated!(data_offset);
     memory_resize!(machine, memory_offset, len);
 
     machine
@@ -88,9 +88,9 @@ pub fn mload(machine: &mut Machine) -> Return {
     gas!(machine, gas::VERYLOW);
     pop!(machine, index);
 
-    let index = as_usize_or_fail!(index);
+    let index = as_usize_or_fail!(index, Return::OutOfGas);
     memory_resize!(machine, index, 32);
-    let value = H256::from_slice(&machine.memory.get(index, 32)[..]);
+    let value = U256::from_big_endian(&machine.memory.get(index, 32)[..]);
     push!(machine, value);
     Return::Continue
 }
@@ -102,11 +102,11 @@ pub fn mstore(machine: &mut Machine) -> Return {
     pop!(machine, index);
     pop!(machine, value);
 
-    let index = as_usize_or_fail!(index);
+    let index = as_usize_or_fail!(index, Return::OutOfGas);
     memory_resize!(machine, index, 32);
     let mut temp: [u8; 32] = [0; 32];
     value.to_big_endian(&mut temp);
-    machine.memory.set(index, &mut temp, Some(32))
+    machine.memory.set(index, &temp, Some(32))
 }
 
 #[inline(always)]
@@ -115,7 +115,7 @@ pub fn mstore8(machine: &mut Machine) -> Return {
 
     pop!(machine, index, value);
 
-    let index = as_usize_or_fail!(index);
+    let index = as_usize_or_fail!(index, Return::OutOfGas);
     // memory aditional gas checked here
     memory_resize!(machine, index, 1);
     let value = (value.low_u32() & 0xff) as u8;
@@ -165,14 +165,14 @@ pub fn jumpdest(machine: &mut Machine) -> Return {
 #[inline(always)]
 pub fn pc(machine: &mut Machine) -> Return {
     gas!(machine, gas::BASE);
-    push_u256!(machine, U256::from(machine.program_counter - 1));
+    push!(machine, U256::from(machine.program_counter - 1));
     Return::Continue
 }
 
 #[inline(always)]
 pub fn msize(machine: &mut Machine) -> Return {
     gas!(machine, gas::BASE);
-    push_u64!(machine, machine.memory.effective_len());
+    push!(machine, U256::from(machine.memory.effective_len()));
     Return::Continue
 }
 
@@ -204,10 +204,14 @@ pub fn swap<const N: usize>(machine: &mut Machine) -> Return {
 pub fn ret(machine: &mut Machine) -> Return {
     // zero gas cost gas!(machine,gas::ZERO);
     pop!(machine, start, len);
-    let start_usize = as_usize_or_fail!(start, Return::OutOfGas);
     let len_usize = as_usize_or_fail!(len, Return::OutOfGas);
-    memory_resize!(machine, start_usize, len_usize);
-    machine.return_range = start..(start + len);
+    if len_usize == 0 {
+        machine.return_range = start..start;
+    } else {
+        let start_usize = as_usize_or_fail!(start, Return::OutOfGas);
+        memory_resize!(machine, start_usize, len_usize);
+        machine.return_range = start..(start + len);
+    }
     Return::Return
 }
 
@@ -216,9 +220,13 @@ pub fn revert<SPEC: Spec>(machine: &mut Machine) -> Return {
     check!(SPEC::enabled(BYZANTINE)); // EIP-140: REVERT instruction
                                       // zero gas cost gas!(machine,gas::ZERO);
     pop!(machine, start, len);
-    let start_usize = as_usize_or_fail!(start, Return::OutOfGas);
     let len_usize = as_usize_or_fail!(len, Return::OutOfGas);
-    memory_resize!(machine, start_usize, len_usize);
-    machine.return_range = start..(start + len);
+    if len_usize == 0 {
+        machine.return_range = start..start;
+    } else {
+        let start_usize = as_usize_or_fail!(start, Return::OutOfGas);
+        memory_resize!(machine, start_usize, len_usize);
+        machine.return_range = start..(start + len);
+    }
     Return::Revert
 }
