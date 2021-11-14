@@ -1,11 +1,9 @@
 use crate::{
-    alloc::vec::Vec,
     instructions::{eval, Return},
     return_ok, return_revert,
 };
 use bytes::Bytes;
 use core::ops::Range;
-use primitive_types::U256;
 
 use super::{contract::Contract, memory::Memory, stack::Stack};
 use crate::{spec::Spec, Handler};

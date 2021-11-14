@@ -1,9 +1,9 @@
-use crate::{alloc::vec::Vec, Return};
-use bytes::Bytes;
+use crate::alloc::vec::Vec;
 use core::{
     cmp::min,
     ops::{BitAnd, Not},
 };
+use primitive_types::U256;
 
 /// A sequencial memory. It uses Rust's `Vec` for internal
 /// representation.
@@ -57,64 +57,52 @@ impl Memory {
     /// Get memory region at given offset. Dont check offset and size
     #[inline(always)]
     pub fn get_slice(&self, offset: usize, size: usize) -> &[u8] {
-        &self.data[offset..offset+size]
+        &self.data[offset..offset + size]
     }
 
-    /// Set memory region at given offset. The offset and value is considered
-    /// untrusted.
-    pub fn set(&mut self, offset: usize, value: &[u8], target_size: Option<usize>) -> Return {
-        let target_size = target_size.unwrap_or(value.len());
-        if target_size == 0 {
-            return Return::Continue;
-        }
-
-        if offset
-            .checked_add(target_size)
-            .map(|pos| pos > self.limit)
-            .unwrap_or(true)
-        {
-            return Return::InvalidMemoryRange;
-        }
-
-        if self.data.len() < offset + target_size {
-            self.data.resize(offset + target_size, 0);
-        }
-
-        if target_size > value.len() {
-            self.data[offset..((value.len()) + offset)].clone_from_slice(value);
-            for index in (value.len())..target_size {
-                self.data[offset + index] = 0;
-            }
-        } else {
-            self.data[offset..(target_size + offset)].clone_from_slice(&value[..target_size]);
-        }
-
-        Return::Continue
+    /// Set memory region at given offset. The offset and value are already checked
+    ///
+    #[inline(always)]
+    pub unsafe fn set_byte(&mut self, index: usize, byte: u8) {
+        *self.data.get_unchecked_mut(index) = byte;
     }
 
-    /// Copy `data` into the memory, of given `len`.
-    pub fn copy_large(
-        &mut self,
-        memory_offset: usize,
-        data_offset: usize,
-        len: usize,
-        data: &[u8],
-    ) -> Return {
-        if len == 0 {
-            return Return::Continue;
+    #[inline(always)]
+    pub fn set_u256(&mut self, index: usize, value: U256) {
+        value.to_big_endian(&mut self.data[index..index + 32])
+    }
+
+    /// Set memory region at given offset. The offset and value are already checked
+    #[inline(always)]
+    pub fn set(&mut self, offset: usize, value: &[u8]) {
+        if !value.is_empty() {
+            self.data[offset..(value.len() + offset)].copy_from_slice(value);
         }
+    }
 
-        let data = if let Some(end) = data_offset.checked_add(len) {
-            if data_offset > data.len() {
-                &[]
-            } else {
-                &data[data_offset..min(end, data.len())]
+    /// Set memory from data. Our memory offset+len is expected to be correct but we
+    /// are doing bound checks on data/data_offeset/len and zeroing parts that is not copied.
+    #[inline(always)]
+    pub fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]) {
+        if data_offset >= data.len() {
+            // nulify all memory slots
+            for i in memory_offset..memory_offset + len {
+                unsafe {
+                    *self.data.get_unchecked_mut(i) = 0;
+                }
             }
-        } else {
-            &[]
-        };
+            return;
+        }
+        let data_end = min(data_offset + len, data.len());
+        let memory_data_end = memory_offset + (data_end - data_offset);
+        self.data[memory_offset..memory_data_end].copy_from_slice(&data[data_offset..data_end]);
 
-        self.set(memory_offset, data, Some(len))
+        // nulify rest of memory slots
+        for i in memory_data_end..memory_offset + len {
+            unsafe {
+                *self.data.get_unchecked_mut(i) = 0;
+            }
+        }
     }
 }
 

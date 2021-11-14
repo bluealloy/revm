@@ -167,12 +167,13 @@ pub fn extcodecopy<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut 
         return Return::Continue;
     }
     let memory_offset = as_usize_or_fail!(memory_offset, Return::OutOfGas);
-    let code_offset = as_usize_saturated!(code_offset);
-
+    let code_offset = min(as_usize_saturated!(code_offset), code.len());
     memory_resize!(machine, memory_offset, len);
+
     machine
         .memory
-        .copy_large(memory_offset, code_offset, len, &code)
+        .set_data(memory_offset, code_offset, len, &code);
+    Return::Continue
 }
 
 pub fn returndatasize<SPEC: Spec>(machine: &mut Machine) -> Return {
@@ -191,19 +192,18 @@ pub fn returndatacopy<SPEC: Spec>(machine: &mut Machine) -> Return {
     gas_or_fail!(machine, gas::verylowcopy_cost(len));
     let len = as_usize_or_fail!(len, Return::OutOfGas);
     let memory_offset = as_usize_or_fail!(memory_offset, Return::OutOfGas);
-    let offset = as_usize_saturated!(offset);
+    let data_offset = as_usize_saturated!(offset);
     memory_resize!(machine, memory_offset, len);
-    if offset
-        .checked_add(len)
-        .map(|l| l > machine.return_data_buffer.len())
-        .unwrap_or(true)
-    {
+    let (data_end, overflow) = data_offset.overflowing_add(len);
+    if overflow || data_end > machine.return_data_buffer.len() {
         return Return::OutOfOffset;
     }
 
-    machine
-        .memory
-        .copy_large(memory_offset, offset, len, &machine.return_data_buffer)
+    machine.memory.set(
+        memory_offset,
+        &machine.return_data_buffer[data_offset..data_end],
+    );
+    Return::Continue
 }
 
 pub fn blockhash<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
@@ -551,29 +551,20 @@ pub fn call<H: Handler, SPEC: Spec>(
     machine.gas.reimburse_unspend(&reason, gas);
     match reason {
         return_ok!() => {
-            if machine
+            machine
                 .memory
-                .copy_large(out_offset, 0, target_len, &machine.return_data_buffer)
-                == Return::Continue
-            {
-                push!(machine, U256::one());
-                Return::Continue
-            } else {
-                push!(machine, U256::zero());
-                Return::Continue
-            }
+                .set(out_offset, &machine.return_data_buffer[..target_len]);
+            push!(machine, U256::one());
         }
         return_revert!() => {
             push!(machine, U256::zero());
-            let _ =
-                machine
-                    .memory
-                    .copy_large(out_offset, 0, target_len, &machine.return_data_buffer);
-            Return::Continue
+            machine
+                .memory
+                .set(out_offset, &machine.return_data_buffer[..target_len]);
         }
         _ => {
             push!(machine, U256::zero());
-            Return::Continue
         }
     }
+    Return::Continue
 }

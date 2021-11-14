@@ -24,7 +24,9 @@ pub fn codecopy(machine: &mut Machine) -> Return {
 
     machine
         .memory
-        .copy_large(memory_offset, code_offset, len, &machine.contract.code)
+        .set_data(memory_offset, code_offset, len, &machine.contract.code);
+
+    Return::Continue
 }
 
 #[inline(always)]
@@ -73,7 +75,8 @@ pub fn calldatacopy(machine: &mut Machine) -> Return {
 
     machine
         .memory
-        .copy_large(memory_offset, data_offset, len, &machine.contract.input)
+        .set_data(memory_offset, data_offset, len, &machine.contract.input);
+    Return::Continue
 }
 
 #[inline(always)]
@@ -104,9 +107,8 @@ pub fn mstore(machine: &mut Machine) -> Return {
 
     let index = as_usize_or_fail!(index, Return::OutOfGas);
     memory_resize!(machine, index, 32);
-    let mut temp: [u8; 32] = [0; 32];
-    value.to_big_endian(&mut temp);
-    machine.memory.set(index, &temp, Some(32))
+    machine.memory.set_u256(index, value);
+    Return::Continue
 }
 
 #[inline(always)]
@@ -116,10 +118,11 @@ pub fn mstore8(machine: &mut Machine) -> Return {
     pop!(machine, index, value);
 
     let index = as_usize_or_fail!(index, Return::OutOfGas);
-    // memory aditional gas checked here
     memory_resize!(machine, index, 1);
     let value = (value.low_u32() & 0xff) as u8;
-    machine.memory.set(index, &[value], Some(1))
+    // SAFETY: we resized our memory two lines above.
+    unsafe { machine.memory.set_byte(index, value) }
+    Return::Continue
 }
 
 #[inline(always)]
@@ -222,7 +225,7 @@ pub fn revert<SPEC: Spec>(machine: &mut Machine) -> Return {
     pop!(machine, start, len);
     let len = as_usize_or_fail!(len, Return::OutOfGas);
     if len == 0 {
-        machine.return_range =  usize::MAX.. usize::MAX;
+        machine.return_range = usize::MAX..usize::MAX;
     } else {
         let offset = as_usize_or_fail!(start, Return::OutOfGas);
         memory_resize!(machine, offset, len);
