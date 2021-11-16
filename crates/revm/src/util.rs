@@ -1,6 +1,17 @@
 use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
 
+#[inline]
+pub fn be_to_u256(slice: &[u8]) -> U256 {
+    arrayref::array_ref!(slice, 24, 8);
+    U256([
+        u64::from_be_bytes(*arrayref::array_ref!(slice, 24, 8)),
+        u64::from_be_bytes(*arrayref::array_ref!(slice, 16, 8)),
+        u64::from_be_bytes(*arrayref::array_ref!(slice, 8, 8)),
+        u64::from_be_bytes(*arrayref::array_ref!(slice, 0, 8)),
+    ])
+}
+
 pub fn l64(gas: u64) -> u64 {
     gas - gas / 64
 }

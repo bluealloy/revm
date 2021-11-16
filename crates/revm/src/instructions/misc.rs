@@ -1,5 +1,5 @@
 use super::gas;
-use crate::{machine::Machine, Return, Spec, SpecId::*};
+use crate::{machine::Machine, util, Return, Spec, SpecId::*};
 use primitive_types::{H256, U256};
 
 #[inline(always)]
@@ -93,8 +93,10 @@ pub fn mload(machine: &mut Machine) -> Return {
 
     let index = as_usize_or_fail!(index, Return::OutOfGas);
     memory_resize!(machine, index, 32);
-    let value = U256::from_big_endian(machine.memory.get_slice(index, 32));
-    push!(machine, value);
+    push!(
+        machine,
+        util::be_to_u256(machine.memory.get_slice(index, 32))
+    );
     Return::Continue
 }
 
@@ -185,9 +187,8 @@ pub fn push<const N: usize>(machine: &mut Machine) -> Return {
     gas!(machine, gas::VERYLOW);
     let slice = &machine.contract.code[machine.program_counter..machine.program_counter + N];
 
-    try_or_fail!(machine.stack.push_slice::<N>(slice));
     machine.program_counter += N;
-    Return::Continue
+    machine.stack.push_slice::<N>(slice)
 }
 
 #[inline(always)]

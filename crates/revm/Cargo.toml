@@ -17,6 +17,7 @@ primitive-types = {version = "0.10", default-features = false, features = ["rlp"
 revm_precompiles = {path = "../revm_precompiles", version = "0.2", default-features = false}
 rlp = {version = "0.5", default-features = false}#used for create2 address calculation 
 sha3 = {version = "0.9", default-features = false}
+arrayref  = "0.3"
 
 [dev-dependencies]
 hex = "0.4"
