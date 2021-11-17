@@ -1,3 +1,19 @@
+# v0.5.0
+date: 17.11.2021
+
+A lot of optimization on machine(interpreter) part, it is now at least 3x faster. On interface side, Error enum was renamed to Return and it is simplified. Additionally if needed gas measuring can be removed with rust feature.
+
+* push instruction optimized.
+* mload/mstore and memory optimized
+* Gas calculation optimized
+* optimize i256
+* switch stacks from H256 with U256
+* Error's refactor to Return
+* clippy/warnings/fmt cleanup
+* Bump auto_impl to v0.5
+* opcode renaming
+* Gas measurment can be removed with rust features.
+
 # v0.4.1
 date: 02.11.2021
 
