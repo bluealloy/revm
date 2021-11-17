@@ -677,7 +677,7 @@ checksum = "f497285884f3fcff424ffc933e56d7cbca511def0c9831a7f9b5f6153e3cc89b"
 
 [[package]]
 name = "revm"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "arrayref",
  "auto_impl",
@@ -742,7 +742,7 @@ dependencies = [
 
 [[package]]
 name = "revm_precompiles"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "borsh",
  "bytes",

@@ -1,4 +1,4 @@
-use std::cmp::Ordering;
+use core::cmp::Ordering;
 
 use super::i256::{i256_cmp, i256_sign, two_compl, Sign};
 use primitive_types::U256;

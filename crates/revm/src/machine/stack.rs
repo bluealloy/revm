@@ -124,34 +124,6 @@ impl Stack {
         }
         Return::Continue
     }
-    /*
-        /// Converts from big endian representation bytes in memory.
-    pub fn from_big_endian(slice: &[u8]) -> Self {
-        use $crate::byteorder::{ByteOrder, BigEndian};
-        assert!($n_words * 8 >= slice.len());
-
-        let mut padded = [0u8; $n_words * 8];
-        padded[$n_words * 8 - slice.len() .. $n_words * 8].copy_from_slice(&slice);
-
-        let mut ret = [0; $n_words];
-        for i in 0..$n_words {
-            ret[$n_words - i - 1] = BigEndian::read_u64(&padded[8 * i..]);
-        }
-
-        0 <- 24..32  _______...
-        1 <- 16..24  __________
-        2 <- 8..16
-        3 <- 0..8
-
-
-        0 <- 24..32  .........
-        1 <- 16..24  _____....
-        2 <- 8..16
-        3 <- 0..8
-
-        $name(ret)
-    }
-     */
 
     /// push slice onto memory it is expected to be max 32 bytes and be contains inside H256
     #[inline(always)]

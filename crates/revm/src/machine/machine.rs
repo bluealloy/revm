@@ -28,7 +28,7 @@ pub struct Machine {
     pub gas: Gas,
     /// used only for inspector.
     pub call_depth: u64,
-    pub times: [(std::time::Duration, usize); 256],
+    //pub times: [(std::time::Duration, usize); 256],
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -136,7 +136,7 @@ impl Machine {
             contract,
             gas: Gas::new(gas_limit),
             call_depth,
-            times: [(std::time::Duration::ZERO, 0); 256],
+            //times: [(std::time::Duration::ZERO, 0); 256],
         }
     }
     pub fn contract(&self) -> &Contract {
