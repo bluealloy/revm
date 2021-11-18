@@ -46,7 +46,7 @@ impl<DB: Database + DatabaseCommit> EVM<DB> {
         (exit, out, gas)
     }
     /// Inspect transaction and commit changes to database.
-    pub fn inspect_commit<INSP: Inspector>(
+    pub fn inspect_commit<INSP: Inspector<DB>>(
         &mut self,
         inspector: INSP,
     ) -> (Return, TransactOut, u64) {
@@ -61,7 +61,7 @@ impl<DB: Database> EVM<DB> {
     pub fn transact(&mut self) -> (Return, TransactOut, u64, State) {
         if let Some(db) = self.db.as_mut() {
             let mut noop = NoOpInspector {};
-            let out = evm_inner::<DB, false>(&self.env, db, &mut noop).transact();
+            let out = evm_inner::<DB, false>(&mut self.env, db, &mut noop).transact();
             out
         } else {
             panic!("Database needs to be set");
@@ -69,26 +69,26 @@ impl<DB: Database> EVM<DB> {
     }
 
     /// Execute transaction with given inspector, without wring to DB. Return change state.
-    pub fn inspect<INSP: Inspector>(
+    pub fn inspect<INSP: Inspector<DB>>(
         &mut self,
         mut inspector: INSP,
     ) -> (Return, TransactOut, u64, State) {
         if let Some(db) = self.db.as_mut() {
-            evm_inner::<DB, true>(&self.env, db, &mut inspector).transact()
+            evm_inner::<DB, true>(&mut self.env, db, &mut inspector).transact()
         } else {
             panic!("Database needs to be set");
         }
     }
 }
 
-impl<DB: DatabaseRef> EVM<DB> {
+impl<'a, DB: DatabaseRef> EVM<DB> {
     /// Execute transaction without writing to DB, return change state.
-    pub fn transact_ref(&self) -> (Return, TransactOut, u64, State) {
+    pub fn transact_ref(&mut self) -> (Return, TransactOut, u64, State) {
         if let Some(db) = self.db.as_ref() {
             let mut noop = NoOpInspector {};
             let mut db = RefDBWrapper::new(db);
             let db = &mut db;
-            let out = evm_inner::<RefDBWrapper, false>(&self.env, db, &mut noop).transact();
+            let out = evm_inner::<RefDBWrapper, false>(&mut self.env, db, &mut noop).transact();
             out
         } else {
             panic!("Database needs to be set");
@@ -96,14 +96,14 @@ impl<DB: DatabaseRef> EVM<DB> {
     }
 
     /// Execute transaction with given inspector, without wring to DB. Return change state.
-    pub fn inspect_ref<INSP: Inspector>(
-        &self,
+    pub fn inspect_ref<INSP: Inspector<RefDBWrapper<'a>>>(
+        &'a mut self,
         mut inspector: INSP,
     ) -> (Return, TransactOut, u64, State) {
         if let Some(db) = self.db.as_ref() {
             let mut db = RefDBWrapper::new(db);
             let db = &mut db;
-            let out = evm_inner::<RefDBWrapper, true>(&self.env, db, &mut inspector).transact();
+            let out = evm_inner::<RefDBWrapper, true>(&mut self.env, db, &mut inspector).transact();
             out
         } else {
             panic!("Database needs to be set");
@@ -144,9 +144,9 @@ macro_rules! create_evm {
 }
 
 pub fn evm_inner<'a, DB: Database, const INSPECT: bool>(
-    env: &'a Env,
+    env: &'a mut Env,
     db: &'a mut DB,
-    insp: &'a mut dyn Inspector,
+    insp: &'a mut dyn Inspector<DB>,
 ) -> Box<dyn Transact + 'a> {
     match env.cfg.spec_id {
         SpecId::LATEST => create_evm!(LatestSpec, db, env, insp),

@@ -1,11 +1,12 @@
+use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
 pub use revm::Inspector;
-use revm::{opcode, Return};
+use revm::{opcode, Env, Gas, Return, SubRoutine};
 
 #[derive(Clone)]
 pub struct CustomPrintTracer {}
 
-impl Inspector for CustomPrintTracer {
+impl<DB> Inspector<DB> for CustomPrintTracer {
     // get opcode by calling `machine.contract.opcode(machine.program_counter())`.
     // all other information can be obtained from machine.
     fn step(&mut self, machine: &mut revm::Machine) {
@@ -60,13 +61,16 @@ impl Inspector for CustomPrintTracer {
 
     fn call(
         &mut self,
+        _env: &mut Env,
+        _subroutine: &mut SubRoutine,
+        _db: &mut DB,
         call: H160,
         context: &revm::CallContext,
         transfer: &revm::Transfer,
         input: &bytes::Bytes,
         _gas_limit: u64,
         is_static: bool,
-    ) {
+    ) -> (Return, Gas, Bytes) {
         println!(
             "SM CALL:   {:?},context:{:?}, is_static:{:?}, transfer:{:?}, input:{:?}",
             call,
@@ -75,6 +79,7 @@ impl Inspector for CustomPrintTracer {
             transfer,
             hex::encode(input),
         );
+        (Return::Continue, Gas::new(0), Bytes::new())
     }
 
     fn call_return(&mut self, exit: Return) {

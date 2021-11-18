@@ -136,6 +136,7 @@ impl Stack {
         unsafe {
             self.data.set_len(new_len);
         }
+
         let slot = self.data.get_mut(new_len - 1).unwrap();
         slot.0 = [0u64; 4];
         let mut dangling = [0u8; 8];

@@ -536,7 +536,6 @@ pub fn call<H: Handler, SPEC: Spec>(
         gas_limit = gas_limit.saturating_add(gas::CALL_STIPEND);
     }
     let is_static = matches!(scheme, CallScheme::StaticCall);
-    inspect!(handler, call, to, &context, &transfer, &input, gas_limit, is_static);
 
     // CALL CONTRACT, with static or ordinary spec.
     let (reason, gas, return_data) = if is_static {

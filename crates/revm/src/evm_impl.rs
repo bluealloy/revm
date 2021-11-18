@@ -20,10 +20,10 @@ use sha3::{Digest, Keccak256};
 
 pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
     db: &'a mut DB,
-    env: &'a Env,
+    env: &'a mut Env,
     subroutine: SubRoutine,
     precompiles: Precompiles,
-    inspector: &'a mut dyn Inspector,
+    inspector: &'a mut dyn Inspector<DB>,
     _phantomdata: PhantomData<GSPEC>,
 }
 
@@ -147,8 +147,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
 impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, INSPECT> {
     pub fn new(
         db: &'a mut DB,
-        env: &'a Env,
-        inspector: &'a mut dyn Inspector,
+        env: &'a mut Env,
+        inspector: &'a mut dyn Inspector<DB>,
         precompiles: Precompiles,
     ) -> Self {
         let mut precompile_acc = Map::new();
@@ -335,8 +335,16 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     return (Return::CreateContractWithEF, ret, machine.gas, b);
                 }
 
+                // TODO maybe create some macro to hide this `if`
+                let mut contract_code_size_limit = 0x6000;
+                if INSPECT {
+                    contract_code_size_limit = self
+                        .inspector
+                        .override_spec()
+                        .eip170_contract_code_size_limit;
+                }
                 // EIP-170: Contract code size limit
-                if SPEC::enabled(SPURIOUS_DRAGON) && code.len() > 0x6000 {
+                if SPEC::enabled(SPURIOUS_DRAGON) && code.len() > contract_code_size_limit {
                     self.subroutine.checkpoint_revert(checkpoint);
                     return (Return::CreateContractLimit, ret, machine.gas, b);
                 }
@@ -371,6 +379,23 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         context: CallContext,
     ) -> (Return, Gas, Bytes) {
         let mut gas = Gas::new(gas_limit);
+
+        if INSPECT {
+            let (ret, gas, bytes) = self.inspector.call(
+                self.env,
+                &mut self.subroutine,
+                self.db,
+                code_address,
+                &context,
+                &transfer,
+                &input,
+                gas_limit,
+                SPEC::IS_STATIC_CALL,
+            );
+            if ret != Return::Continue {
+                return (ret, gas, bytes);
+            }
+        }
         // Load account and get code. Account is now hot.
         let (code, _) = self.code(code_address);
 
@@ -450,16 +475,17 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     }
 }
 
-impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Handler
+impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Handler
     for EVMImpl<'a, GSPEC, DB, INSPECT>
 {
     const INSPECT: bool = INSPECT;
+    type DB = DB;
 
     fn env(&self) -> &Env {
         self.env
     }
 
-    fn inspect(&mut self) -> &mut dyn Inspector {
+    fn inspect(&mut self) -> &mut dyn Inspector<DB> {
         self.inspector
     }
 
@@ -557,10 +583,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Handler
 /// EVM context handler.
 pub trait Handler {
     const INSPECT: bool;
+
+    type DB: Database;
     /// Get global const context of evm execution
     fn env(&self) -> &Env;
 
-    fn inspect(&mut self) -> &mut dyn Inspector;
+    fn inspect(&mut self) -> &mut dyn Inspector<Self::DB>;
 
     /// load account. Returns (is_cold,is_new_account)
     fn load_account(&mut self, address: H160) -> (bool, bool);

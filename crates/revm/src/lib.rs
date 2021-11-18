@@ -19,15 +19,15 @@ pub type DummyStateDB = InMemoryDB;
 
 pub use db::{Database, DatabaseCommit, InMemoryDB};
 pub use evm::{new, EVM};
-pub use inspector::{Inspector, NoOpInspector};
+pub use inspector::{Inspector, NoOpInspector,OverrideSpec};
 pub use instructions::{
     opcode::{self, OpCode, OPCODE_JUMPMAP},
     Return,
 };
-pub use machine::Machine;
+pub use machine::{Gas, Machine};
 pub use models::*;
 pub use spec::*;
-pub use subroutine::Account;
+pub use subroutine::{Account, SubRoutine};
 
 extern crate alloc;
 
