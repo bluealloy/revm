@@ -7,4 +7,5 @@ pkg/
 
 
 bins/revm-ethereum-tests/temp_folder
+bins/revm-ethereum-tests/tests
 ethereumjs-util.js

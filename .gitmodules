@@ -1,3 +1,0 @@
-[submodule "bins/revm-ethereum-tests/tests"]
-	path = bins/revm-ethereum-tests/tests
-	url = git@github.com:ethereum/tests.git
