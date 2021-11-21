@@ -71,9 +71,24 @@ pub struct SubRoutineCheckpoint {
     depth: usize,
 }
 
+impl Default for SubRoutine {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SubRoutine {
-    pub fn new(precompiles: Map<H160, AccountInfo>) -> SubRoutine {
-        let state = precompiles
+    pub fn new() -> SubRoutine {
+        Self {
+            state: Map::new(),
+            logs: Vec::new(),
+            changelog: vec![Map::new(); 1],
+            depth: 0,
+        }
+    }
+
+    pub fn load_precompiles(&mut self, precompiles: Map<H160, AccountInfo>) {
+        let state: Map<H160, Account> = precompiles
             .into_iter()
             .map(|(k, value)| {
                 let mut acc = Account::from(value);
@@ -81,13 +96,19 @@ impl SubRoutine {
                 (k, acc)
             })
             .collect();
+        self.state.extend(state);
+    }
 
-        Self {
-            state,
-            logs: Vec::new(),
-            changelog: vec![Map::new(); 1],
-            depth: 0,
-        }
+    pub fn load_precompiles_default(&mut self, precompiles: &[H160]) {
+        let state: State = precompiles
+            .into_iter()
+            .map(|&k| {
+                let mut acc = Account::from(AccountInfo::default());
+                acc.filth = Filth::Precompile(false);
+                (k, acc)
+            })
+            .collect();
+        self.state.extend(state);
     }
 
     /// do cleanup and return modified state
@@ -456,10 +477,10 @@ impl SubRoutine {
     }
 
     /// load account into memory. return if it is cold or hot accessed
-    pub fn load_account<'a, DB: Database>(&'a mut self, address: H160, db: &mut DB) -> bool {
+    pub fn load_account<DB: Database>(&mut self, address: H160, db: &mut DB) -> bool {
         let is_cold = match self.state.entry(address) {
-            Entry::Occupied::<'a>(ref mut _entry) => false,
-            Entry::Vacant::<'a>(vac) => {
+            Entry::Occupied(ref mut _entry) => false,
+            Entry::Vacant(vac) => {
                 let acc: Account = db.basic(address).into();
                 // insert none in changelog that represent that we just loaded this acc in this subroutine
                 self.changelog
@@ -635,6 +656,10 @@ pub enum Filth {
 impl Filth {
     pub fn abandon_old_storage(&self) -> bool {
         matches!(self, Self::Destroyed | Self::NewlyCreated)
+    }
+
+    pub fn is_precompile(&self) -> bool {
+        matches!(self, Self::Precompile(_))
     }
     /// insert into dirty flag and return if slot was already dirty or not.
     #[inline]

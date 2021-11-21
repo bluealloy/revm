@@ -13,6 +13,8 @@ pub trait Spec {
     const SPEC_ID: SpecId;
     /// static flag used in STATIC type;
     const IS_STATIC_CALL: bool;
+
+    const ASSUME_PRECOMPILE_HAS_BALANCE: bool;
 }
 
 macro_rules! spec {
@@ -22,20 +24,22 @@ macro_rules! spec {
             use super::{NotStaticSpec, Spec};
             use crate::SpecId;
 
-            pub struct SpecInner<const STATIC_CALL: bool>;
+            pub struct SpecInner<const STATIC_CALL: bool, const ASSUME_PRECOMPILE_HAS_BALANCE: bool>;
 
-            pub type SpecImpl = SpecInner<false>;
-            pub type SpecStaticImpl = SpecInner<true>;
+            pub type SpecImpl = SpecInner<false,true>;
+            pub type SpecStaticImpl = SpecInner<true,true>;
 
             impl NotStaticSpec for SpecImpl {}
 
-            impl<const IS_STATIC_CALL: bool> Spec for SpecInner<IS_STATIC_CALL> {
-                type STATIC = SpecInner<true>;
+            impl<const IS_STATIC_CALL: bool,const ASSUME_PRECOMPILE_HAS_BALANCE: bool> Spec for SpecInner<IS_STATIC_CALL,ASSUME_PRECOMPILE_HAS_BALANCE> {
+                type STATIC = SpecInner<true,ASSUME_PRECOMPILE_HAS_BALANCE>;
 
                 //specification id
                 const SPEC_ID: SpecId = SpecId::$spec_id;
 
                 const IS_STATIC_CALL: bool = IS_STATIC_CALL;
+
+                const ASSUME_PRECOMPILE_HAS_BALANCE: bool = ASSUME_PRECOMPILE_HAS_BALANCE;
             }
         }
     };

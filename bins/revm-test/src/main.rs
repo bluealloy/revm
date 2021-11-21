@@ -13,7 +13,7 @@ pub fn simple_example() {
     // StateDB is dummy state that implements Database trait.
     // add one account and some eth for testing.
     let mut evm = revm::new();
-    evm.database(InMemoryDB::new());
+    evm.database(InMemoryDB::default());
     evm.db().unwrap().insert_cache(
         caller,
         AccountInfo {

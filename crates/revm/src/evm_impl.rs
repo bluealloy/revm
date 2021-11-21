@@ -6,7 +6,7 @@ use crate::{
     models::SelfDestructResult,
     return_ok,
     spec::{Spec, SpecId::*},
-    subroutine::{Account, State, SubRoutine},
+    subroutine::{self, Account, State, SubRoutine},
     util, CallContext, CreateScheme, Env, Inspector, Log, Return, TransactOut, TransactTo,
     Transfer, KECCAK_EMPTY,
 };
@@ -151,14 +151,25 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         inspector: &'a mut dyn Inspector<DB>,
         precompiles: Precompiles,
     ) -> Self {
-        let mut precompile_acc = Map::new();
-        for (add, _) in precompiles.as_slice() {
-            precompile_acc.insert(*add, db.basic(*add));
+        let mut subroutine = SubRoutine::default();
+        if env.cfg.perf_all_precompiles_have_balance {
+            // load precompiles without asking db.
+            let mut precompile_acc = Vec::new();
+            for (add, _) in precompiles.as_slice() {
+                precompile_acc.push(*add);
+            }
+            subroutine.load_precompiles_default(&precompile_acc);
+        } else {
+            let mut precompile_acc = Map::new();
+            for (add, _) in precompiles.as_slice() {
+                precompile_acc.insert(*add, db.basic(*add));
+            }
+            subroutine.load_precompiles(precompile_acc);
         }
         Self {
             db,
             env,
-            subroutine: SubRoutine::new(precompile_acc),
+            subroutine,
             precompiles,
             inspector,
             _phantomdata: PhantomData {},
@@ -194,7 +205,20 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             self.subroutine.load_account(coinbase, self.db);
             self.subroutine.balance_add(coinbase, U256::zero());
         }
-        Ok(self.subroutine.finalize())
+        let mut finalized = self.subroutine.finalize();
+        // precompiles are special case. If there is precompiles in finalized Map that means some balance is
+        // added to it, we need now to load precompile address from db and add this amount to it so that we
+        // will have sum.
+        if self.env.cfg.perf_all_precompiles_have_balance {
+            for (address, _) in self.precompiles.as_slice() {
+                if let Some(precompile) = finalized.get_mut(address) {
+                    // we found it.
+                    precompile.info.balance += self.db.basic(*address).balance;
+                }
+            }
+        }
+
+        Ok(finalized)
     }
 
     fn inner_load_account(&mut self, caller: H160) -> bool {
@@ -209,10 +233,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let is_create = matches!(self.env.tx.transact_to, TransactTo::Create(_));
         let input = &self.env.tx.data;
         let access_list = self.env.tx.access_list.clone();
-        for (ward_acc, _) in self.precompiles.as_slice() {
-            //TODO trace load precompiles?
-            self.subroutine.load_account(*ward_acc, self.db);
-        }
 
         if crate::USE_GAS {
             let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
@@ -521,14 +541,15 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Handler
         if INSPECT && is_cold {
             self.inspector.load_account(&address);
         }
+        //asume that all precompiles have some balance
+        if acc.filth.is_precompile() && self.env.cfg.perf_all_precompiles_have_balance {
+            return (KECCAK_EMPTY, is_cold);
+        }
         if acc.is_empty() {
             return (H256::zero(), is_cold);
         }
 
-        (
-            H256::from_slice(Keccak256::digest(&acc.info.code.clone().unwrap()).as_slice()),
-            is_cold,
-        )
+        (acc.info.code_hash, is_cold)
     }
 
     fn sload(&mut self, address: H160, index: U256) -> (U256, bool) {

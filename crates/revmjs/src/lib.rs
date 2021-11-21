@@ -35,7 +35,7 @@ impl EVM {
     pub fn new() -> EVM {
         console_log!("EVM created");
         let mut evm = EVM { revm: rEVM::new() };
-        evm.revm.database(InMemoryDB::new());
+        evm.revm.database(InMemoryDB::default());
         evm
     }
 

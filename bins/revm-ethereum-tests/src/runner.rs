@@ -70,6 +70,8 @@ pub fn execute_test_suit(path: &PathBuf, elapsed: &Arc<Mutex<Duration>>) -> Resu
     let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
     let skip_test_unit: HashSet<_> = vec![
         "typeTwoBerlin", //txbyte is of type 02 and we dont parse bytes for this test to fail as it
+        "CREATE2_HighNonce", //testing nonce > u64::MAX not really possible on mainnet.
+        "CREATE_HighNonce", //testing nonce > u64::MAX not really possible on mainnet.
     ]
     .into_iter()
     .collect();
@@ -109,7 +111,7 @@ pub fn execute_test_suit(path: &PathBuf, elapsed: &Arc<Mutex<Duration>>) -> Resu
             continue;
         }
         // Create database and insert cache
-        let mut database = revm::InMemoryDB::new();
+        let mut database = revm::InMemoryDB::default();
         for (address, info) in unit.pre.iter() {
             let acc_info = revm::AccountInfo {
                 balance: info.balance,

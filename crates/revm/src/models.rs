@@ -30,7 +30,7 @@ impl Default for AccountInfo {
         Self {
             balance: U256::zero(),
             code_hash: KECCAK_EMPTY,
-            code: None,
+            code: Some(Bytes::new()),
             nonce: 0,
         }
     }
@@ -161,7 +161,10 @@ pub struct TxEnv {
 pub struct CfgEnv {
     pub chain_id: U256,
     pub spec_id: SpecId,
-    pub use_gas: bool,
+    /// if all precompiles have some balance we can ignore initial fetching them from db.
+    /// this is clear some noice if we use debugger and it is not really needed on mainnet.
+    /// this is not set by default because eth/tests.
+    pub perf_all_precompiles_have_balance: bool,
 }
 
 impl Default for CfgEnv {
@@ -169,7 +172,7 @@ impl Default for CfgEnv {
         CfgEnv {
             chain_id: 1.into(), //mainnet is 1
             spec_id: SpecId::LATEST,
-            use_gas: true,
+            perf_all_precompiles_have_balance: false,
         }
     }
 }

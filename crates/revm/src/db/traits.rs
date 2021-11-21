@@ -10,7 +10,7 @@ use bytes::Bytes;
 #[auto_impl(& mut, Box)]
 pub trait Database {
     /// Whether account at address exists.
-    fn exists(&mut self, address: H160) -> Option<AccountInfo>;
+    //fn exists(&mut self, address: H160) -> Option<AccountInfo>;
     /// Get basic account information.
     fn basic(&mut self, address: H160) -> AccountInfo;
     /// Get account code by its hash
@@ -30,7 +30,7 @@ pub trait DatabaseCommit {
 #[auto_impl(&, Box)]
 pub trait DatabaseRef {
     /// Whether account at address exists.
-    fn exists(&self, address: H160) -> Option<AccountInfo>;
+    //fn exists(&self, address: H160) -> Option<AccountInfo>;
     /// Get basic account information.
     fn basic(&self, address: H160) -> AccountInfo;
     /// Get account code by its hash
@@ -54,9 +54,9 @@ impl<'a> RefDBWrapper<'a> {
 
 impl<'a> Database for RefDBWrapper<'a> {
     /// Whether account at address exists.
-    fn exists(&mut self, address: H160) -> Option<AccountInfo> {
-        self.db.exists(address)
-    }
+    // fn exists(&mut self, address: H160) -> Option<AccountInfo> {
+    //     self.db.exists(address)
+    // }
     /// Get basic account information.
     fn basic(&mut self, address: H160) -> AccountInfo {
         self.db.basic(address)
