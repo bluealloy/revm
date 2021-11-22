@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use super::runner::{find_all_json_tests, run, TestError};
-use structopt::{clap::AppSettings, StructOpt};
+use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
 pub struct Cmd {

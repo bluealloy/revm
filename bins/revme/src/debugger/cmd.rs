@@ -1,4 +1,6 @@
-pub enum Command {
+
+
+pub enum Control {
     Exit,
     Step,
     Continue,
@@ -17,8 +19,8 @@ pub enum Command {
     // StorageSet,
 }
 
-impl Command {
-    pub fn parse(cmd: &[&str]) -> Result<Command, String> {
+impl Control {
+    pub fn parse(cmd: &[&str]) -> Result<Control, String> {
         let mut len = cmd.len();
         let mut check = |pop: usize, err: &str| -> Result<(), String> {
             if pop > len {
@@ -29,11 +31,11 @@ impl Command {
         };
         check(1, "Command not found")?;
         let cmd = match cmd[0] {
-            "exit" => Command::Exit,
-            "step" => Command::Step,
-            "continue" => Command::Continue,
-            "breakpoint" => Command::Breakpoint,
-            "insert" => Command::InsertAccount,
+            "exit" => Control::Exit,
+            "step" => Control::Step,
+            "continue" => Control::Continue,
+            "breakpoint" => Control::Breakpoint,
+            "insert" => Control::InsertAccount,
             t => return Err(format!("Command {:?} not found",t)),
         };
 

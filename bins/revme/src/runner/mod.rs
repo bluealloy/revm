@@ -1,8 +1,4 @@
-
-
-use structopt::{clap::AppSettings,StructOpt};
+use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
-pub struct Cmd {
-
-}
+pub struct Cmd {}
