@@ -162,8 +162,8 @@ pub struct CfgEnv {
     pub chain_id: U256,
     pub spec_id: SpecId,
     /// if all precompiles have some balance we can ignore initial fetching them from db.
-    /// this is clear some noice if we use debugger and it is not really needed on mainnet.
-    /// this is not set by default because eth/tests.
+    /// this is clearly making noice if we use debugger and it is not really needed on mainnet.
+    /// default is false in most cases it is safe to be set to true, it depends on chain.
     pub perf_all_precompiles_have_balance: bool,
 }
 

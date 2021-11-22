@@ -1,12 +1,12 @@
 use bytes::Bytes;
 use revm::{Gas, Inspector, Return};
 
-pub struct Debugger {
+pub struct Controller {
     
     pub pc: usize,
 }
 
-impl<DB> Inspector<DB> for Debugger {
+impl<DB> Inspector<DB> for Controller {
     fn step(&mut self, machine: &mut revm::Machine) {
         
     }
