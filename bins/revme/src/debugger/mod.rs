@@ -5,9 +5,9 @@ use revm::{db::Web3DB, TransactTo, EVM};
 use structopt::StructOpt;
 
 mod cmd;
-mod controller;
+mod ctrl;
 
-use controller::Controller;
+use ctrl::Controller;
 
 #[derive(StructOpt, Debug)]
 pub struct Cmd {

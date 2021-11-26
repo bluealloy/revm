@@ -2,7 +2,7 @@
 mod debugger;
 mod exec;
 mod runner;
-//mod statetest;
+mod statetest;
 mod cmd;
 use structopt::StructOpt;
 
