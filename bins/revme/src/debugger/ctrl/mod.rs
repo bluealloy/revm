@@ -1,5 +1,5 @@
-mod cmd;
+mod cli;
 mod ctrl;
+mod history;
 
-pub use cmd::Cmd;
 pub use ctrl::Controller;

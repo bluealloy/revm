@@ -1,6 +1,6 @@
 use structopt::{clap::AppSettings, StructOpt};
 
-use crate::{debugger, runner,statetest};
+use crate::{debugger, runner, statetest};
 
 #[derive(StructOpt, Debug)]
 #[structopt(setting = AppSettings::InferSubcommands)]
