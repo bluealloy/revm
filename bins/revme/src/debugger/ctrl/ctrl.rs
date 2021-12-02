@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use bytes::Bytes;
 
 use primitive_types::H160;
-use revm::{Gas, Inspector, Return};
+use revm::{Database, EVMData, Gas, Inspector, Return};
 
 use termwiz::lineedit::*;
 
@@ -12,10 +12,12 @@ use super::cli::CtrlCli;
 #[derive(Debug)]
 pub enum Ctrl {
     Exit,
+    None,
     Step,
     Continue,
     Breakpoint(H160, usize),
-    InsertAccount,
+    AccountPrint(H160),
+    AccountPrintOriginal(H160),
     // RewindCall,
     // RewindOpcode,
     // Stack,
@@ -29,98 +31,44 @@ pub enum Ctrl {
     // StorageSet,
 }
 
-macro_rules! check_word {
-    ($len:ident, $pop:expr,$error:expr) => {
-        if $pop > $len {
-            println!("{}", $error);
-            continue;
-        }
-        $len -= $pop;
-    };
-}
-
-pub fn parse_address(add: &str, info: &str) -> Option<H160> {
-    if add.len() < 40 {
-        println!("Error: :{} not big enough. Expect 20bytes hex ", &info);
-        return None;
-    }
-    let add = if &add[0..2] == "0x" { &add[2..] } else { add };
-    let add = match hex::decode(add) {
-        Ok(hex) => H160::from_slice(&hex),
-        Err(_) => {
-            println!("Error: {} not in hex format", &info);
-
-            return None;
-        }
-    };
-    Some(add)
-}
-
 impl Ctrl {
     fn next(state: StateMachine, history_path: &Option<PathBuf>) -> Self {
+        println!("NEXT LINE");
         match state {
             StateMachine::TriggerBreakpoint | StateMachine::TriggerStep => {
-                Self::parse_inside_trigger(history_path)
+                Self::parse_cli(history_path)
             }
+            _ => Ctrl::None,
         }
     }
 
-    pub fn parse_inside_trigger(history_path: &Option<PathBuf>) -> Ctrl {
+    pub fn parse_cli(history_path: &Option<PathBuf>) -> Ctrl {
         let mut terminal = line_editor_terminal().unwrap();
         let mut editor = LineEditor::new(&mut terminal);
 
         let mut host = CtrlCli::new(history_path.clone());
-        loop {
+        println!("PARSE_CLI");
+        let out = loop {
             if let Some(line) = editor.read_line(&mut host).unwrap() {
+                println!("PARSE_CLI2");
                 if line == "exit" {
                     break Ctrl::Exit;
                 }
 
                 host.history().add(&line);
-                let words: Vec<&str> = line.split_whitespace().collect();
-                let mut len = words.len();
-                check_word!(len, 1, "Command empty. Use help");
-                return match words[0] {
-                    "exit" => Ctrl::Exit,
-                    "step" => Ctrl::Step,
-                    "continue" => Ctrl::Continue,
-                    "breakpoint" => {
-                        check_word!(len,2,"Error: Not enought args for breakpoint. expected breakpoint <address> <program counter>");
-                        let add = match parse_address(words[1], "First argument of breakpoint") {
-                            Some(add) => add,
-                            None => continue,
-                        };
-                        let pc = match words[2].parse::<usize>() {
-                            Ok(t) => t,
-                            Err(e) => {
-                                println!(
-                                "Error: Second argument of breakpoint is not usize. std_errror:{}",
-                                e
-                            );
-                                continue;
-                            }
-                        };
-
-                        if len != 0 {
-                            let ignored = &words[(words.len() - len)..];
-                            println!("Ignoring:{:?}", ignored);
-                        }
-
-                        Ctrl::Breakpoint(add, pc)
-                    }
-                    //"insert" => Ctrl::InsertAccount,
-                    t => {
-                        println!("Command {:?} not found. Use help", t);
-                        continue;
-                    }
-                };
+                if let Some(ctrl) = host.ctrl(&line) {
+                    return ctrl;
+                }
             }
-        }
+        };
+        println!("PARSE_CLI00");
+        out
     }
 }
 
 #[derive(Clone, Copy, Debug)]
 pub enum StateMachine {
+    Exit,
     TriggerStep,
     TriggerBreakpoint,
 }
@@ -141,49 +89,41 @@ impl Controller {
     }
 }
 
-impl<DB> Inspector<DB> for Controller {
-    fn step(&mut self, _machine: &mut revm::Machine) {
-        match Ctrl::next(self.machine, &self.history_path) {
-            Ctrl::Exit => todo!(),
-            Ctrl::Step => self.machine = StateMachine::TriggerStep,
-            Ctrl::Continue => self.machine = StateMachine::TriggerBreakpoint,
-            Ctrl::Breakpoint(add, pc) => println!(
-                "Setting breakpoint for contract {} on program counter:{}",
-                add, pc
-            ),
-            Ctrl::InsertAccount => (),
+impl<DB: Database> Inspector<DB> for Controller {
+    fn step(&mut self, _machine: &mut revm::Machine, data: &mut EVMData<'_,DB>, is_static: bool) {
+        println!("STEP INSIDE");
+        loop {
+            match Ctrl::next(self.machine, &self.history_path) {
+                Ctrl::Exit => {
+                    self.machine = StateMachine::Exit;
+                    break;
+                }
+                Ctrl::Step => {
+                    self.machine = StateMachine::TriggerStep;
+                    break;
+                }
+                Ctrl::Continue => {
+                    self.machine = StateMachine::TriggerBreakpoint;
+                    break;
+                }
+                Ctrl::Breakpoint(add, pc) => println!(
+                    "Setting breakpoint for contract {} on program counter:{}",
+                    add, pc
+                ),
+                Ctrl::AccountPrint(address) => {
+                    println!("print:{:?}", data.subroutine.state().get(&address))
+                }
+                Ctrl::AccountPrintOriginal(address) => (),
+                Ctrl::None => (),
+            }
         }
     }
 
-    fn eval(&mut self, _eval: revm::Return, _machine: &mut revm::Machine) {}
-
-    fn load_account(&mut self, _address: &primitive_types::H160) {}
-
-    fn sload(
-        &mut self,
-        _address: &primitive_types::H160,
-        _slot: &primitive_types::U256,
-        _value: &primitive_types::U256,
-        _is_cold: bool,
-    ) {
-    }
-
-    fn sstore(
-        &mut self,
-        _address: primitive_types::H160,
-        _slot: primitive_types::U256,
-        _new_value: primitive_types::U256,
-        _old_value: primitive_types::U256,
-        _original_value: primitive_types::U256,
-        _is_cold: bool,
-    ) {
-    }
+    fn step_end(&mut self, _eval: revm::Return, _machine: &mut revm::Machine) {}
 
     fn call(
         &mut self,
-        _env: &mut revm::Env,
-        _subroutine: &mut revm::SubRoutine,
-        _: &mut DB,
+        _data: &mut revm::EVMData<'_,DB>,
         _call: primitive_types::H160,
         _context: &revm::CallContext,
         _transfer: &revm::Transfer,
@@ -194,19 +134,17 @@ impl<DB> Inspector<DB> for Controller {
         (Return::Continue, Gas::new(0), Bytes::new())
     }
 
-    fn call_return(&mut self, _exit: revm::Return) {}
-
     fn create(
         &mut self,
+        _data: &mut revm::EVMData<'_,DB>,
         _caller: primitive_types::H160,
         _scheme: &revm::CreateScheme,
         _value: primitive_types::U256,
         _init_code: &bytes::Bytes,
         _gas: u64,
-    ) {
+    )-> (Return,Option<H160>, Gas, Bytes) {
+        (Return::Continue,None, Gas::new(0), Bytes::new())
     }
-
-    fn create_return(&mut self, _address: primitive_types::H256) {}
 
     fn selfdestruct(&mut self) {}
 }

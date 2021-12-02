@@ -252,14 +252,14 @@ pub fn gaslimit<H: Handler>(machine: &mut Machine, handler: &mut H) -> Return {
 pub fn sload<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) -> Return {
     pop!(machine, index);
     let (value, is_cold) = handler.sload(machine.contract.address, index);
-    inspect!(
-        handler,
-        sload,
-        &machine.contract.address,
-        &index,
-        &value,
-        is_cold
-    );
+    // inspect!(
+    //     handler,
+    //     sload,
+    //     &machine.contract.address,
+    //     &index,
+    //     &value,
+    //     is_cold
+    // );
     gas!(machine, gas::sload_cost::<SPEC>(is_cold));
     push!(machine, value);
     Return::Continue
@@ -270,16 +270,16 @@ pub fn sstore<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut H) ->
 
     pop!(machine, index, value);
     let (original, old, new, is_cold) = handler.sstore(machine.contract.address, index, value);
-    inspect!(
-        handler,
-        sstore,
-        machine.contract.address,
-        index,
-        new,
-        old,
-        original,
-        is_cold
-    );
+    // inspect!(
+    //     handler,
+    //     sstore,
+    //     machine.contract.address,
+    //     index,
+    //     new,
+    //     old,
+    //     original,
+    //     is_cold
+    // );
     gas_or_fail!(machine, {
         let remaining_gas = machine.gas.remaining();
         gas::sstore_cost::<SPEC>(original, old, new, remaining_gas, is_cold)
@@ -330,7 +330,7 @@ pub fn selfdestruct<H: Handler, SPEC: Spec>(machine: &mut Machine, handler: &mut
     pop_address!(machine, target);
 
     let res = handler.selfdestruct(machine.contract.address, target);
-    inspect!(handler, selfdestruct);
+    //inspect!(handler, selfdestruct);
 
     // EIP-3529: Reduction in refunds
     if !SPEC::enabled(LONDON) && !res.previously_destroyed {
@@ -388,15 +388,15 @@ pub fn create<H: Handler, SPEC: Spec>(
     let gas_limit = try_or_fail!(gas_call_l64_after::<SPEC>(machine));
     gas!(machine, gas_limit);
 
-    inspect!(
-        handler,
-        create,
-        machine.contract.address,
-        &scheme,
-        value,
-        &code,
-        gas_limit
-    );
+    // inspect!(
+    //     handler,
+    //     create,
+    //     machine.contract.address,
+    //     &scheme,
+    //     value,
+    //     &code,
+    //     gas_limit
+    // );
 
     let (reason, address, gas, return_data) =
         handler.create::<SPEC>(machine.contract.address, scheme, value, code, gas_limit);
@@ -406,7 +406,7 @@ pub fn create<H: Handler, SPEC: Spec>(
     } else {
         H256::default()
     };
-    inspect!(handler, create_return, created_address);
+    //inspect!(handler, create_return, created_address);
     push_h256!(machine, created_address);
     // reimburse gas that is not spend
     machine.gas.reimburse_unspend(&reason, gas);

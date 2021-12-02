@@ -87,6 +87,10 @@ impl SubRoutine {
         }
     }
 
+    pub fn state(&mut self) -> &mut State {
+        &mut self.state
+    }
+
     pub fn load_precompiles(&mut self, precompiles: Map<H160, AccountInfo>) {
         let state: Map<H160, Account> = precompiles
             .into_iter()

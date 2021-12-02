@@ -163,9 +163,6 @@ impl Machine {
         loop {
             let ret = self.step::<H, SPEC>(handler);
             if Return::Continue != ret {
-                if H::INSPECT {
-                    handler.inspect().call_return(ret);
-                }
                 // let elapsed = timer.elapsed();
                 // println!("run took:{:?}", elapsed);
                 // let mut it = self
@@ -194,7 +191,7 @@ impl Machine {
     /// Step the machine, executing one opcode. It then returns.
     pub fn step<H: Handler, SPEC: Spec>(&mut self, handler: &mut H) -> Return {
         if H::INSPECT {
-            handler.inspect().step(self);
+            handler.step(self, SPEC::IS_STATIC_CALL);
         }
         // extract next opcode from code
         let opcode = unsafe { *self.contract.code.get_unchecked(self.program_counter) };
@@ -203,7 +200,7 @@ impl Machine {
         self.program_counter += 1;
         let eval = eval::<H, SPEC>(self, opcode, handler);
         if H::INSPECT {
-            handler.inspect().eval(eval, self);
+            handler.step_end(eval, self);
         }
         eval
     }

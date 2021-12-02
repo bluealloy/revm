@@ -17,11 +17,16 @@ use hashbrown::HashMap as Map;
 use primitive_types::{H160, H256, U256};
 use revm_precompiles::{Precompile, PrecompileOutput, Precompiles};
 use sha3::{Digest, Keccak256};
+use std::ops::{Deref, DerefMut, Sub};
+
+pub struct EVMData<'a,DB> {
+    pub env: &'a mut Env,
+    pub subroutine: SubRoutine,
+    pub db: &'a mut DB,
+}
 
 pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
-    db: &'a mut DB,
-    env: &'a mut Env,
-    subroutine: SubRoutine,
+    data: EVMData<'a,DB>,
     precompiles: Precompiles,
     inspector: &'a mut dyn Inspector<DB>,
     _phantomdata: PhantomData<GSPEC>,
@@ -37,21 +42,21 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
     for EVMImpl<'a, GSPEC, DB, INSPECT>
 {
     fn transact(&mut self) -> (Return, TransactOut, u64, State) {
-        let caller = self.env.tx.caller;
-        let value = self.env.tx.value;
-        let data = self.env.tx.data.clone();
-        let gas_limit = self.env.tx.gas_limit;
+        let caller = self.data.env.tx.caller;
+        let value = self.data.env.tx.value;
+        let data = self.data.env.tx.data.clone();
+        let gas_limit = self.data.env.tx.gas_limit;
         let exit = |reason: Return| (reason, TransactOut::None, 0, State::new());
 
         if GSPEC::enabled(LONDON) {
-            if let Some(priority_fee) = self.env.tx.gas_priority_fee {
-                if priority_fee > self.env.tx.gas_price {
+            if let Some(priority_fee) = self.data.env.tx.gas_priority_fee {
+                if priority_fee > self.data.env.tx.gas_price {
                     // or gas_max_fee for eip1559
                     return exit(Return::GasMaxFeeGreaterThanPriorityFee);
                 }
             }
-            let effective_gas_price = self.env.effective_gas_price();
-            let basefee = self.env.block.basefee;
+            let effective_gas_price = self.data.env.effective_gas_price();
+            let basefee = self.data.env.block.basefee;
 
             // check minimal cost against basefee
             // TODO maybe do this checks when creating evm. We already have all data there
@@ -62,7 +67,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
             // check if priority fee is lower then max fee
         }
         // unusual to be found here, but check if gas_limit is more then block_gas_limit
-        if U256::from(gas_limit) > self.env.block.gas_limit {
+        if U256::from(gas_limit) > self.data.env.block.gas_limit {
             return exit(Return::CallerGasLimitMoreThenBlock);
         }
 
@@ -78,15 +83,15 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
         // EIP-3607: Reject transactions from senders with deployed code
         // This EIP is introduced after london but there was no colision in past
         // so we can leave it enabled always
-        if self.subroutine.account(caller).info.code_hash != KECCAK_EMPTY {
+        if self.data.subroutine.account(caller).info.code_hash != KECCAK_EMPTY {
             return exit(Return::RejectCallerWithCode);
         }
 
         // substract gas_limit*gas_price from current account.
         if let Some(payment_value) =
-            U256::from(gas_limit).checked_mul(self.env.effective_gas_price())
+            U256::from(gas_limit).checked_mul(self.data.env.effective_gas_price())
         {
-            if !self.subroutine.balance_sub(caller, payment_value) {
+            if !self.data.subroutine.balance_sub(caller, payment_value) {
                 return exit(Return::LackOfFundForGasLimit);
             }
         } else {
@@ -94,8 +99,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
         }
 
         // check if we have enought balance for value transfer.
-        let difference = self.env.tx.gas_price - self.env.effective_gas_price();
-        if difference + value > self.subroutine.account(caller).info.balance {
+        let difference = self.data.env.tx.gas_price - self.data.env.effective_gas_price();
+        if difference + value > self.data.subroutine.account(caller).info.balance {
             return exit(Return::OutOfFund);
         }
 
@@ -106,9 +111,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
         }
 
         // call inner handling of call/create
-        let (exit_reason, ret_gas, out) = match self.env.tx.transact_to {
+        let (exit_reason, ret_gas, out) = match self.data.env.tx.transact_to {
             TransactTo::Call(address) => {
-                self.subroutine.inc_nonce(caller);
+                self.data.subroutine.inc_nonce(caller);
                 let context = CallContext {
                     caller,
                     address,
@@ -167,9 +172,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             subroutine.load_precompiles(precompile_acc);
         }
         Self {
-            db,
-            env,
-            subroutine,
+            data: EVMData { env, subroutine, db },
             precompiles,
             inspector,
             _phantomdata: PhantomData {},
@@ -181,13 +184,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         caller: H160,
         gas: &Gas,
     ) -> Result<Map<H160, Account>, Return> {
-        let coinbase = self.env.block.coinbase;
+        let coinbase = self.data.env.block.coinbase;
         if crate::USE_GAS {
-            let effective_gas_price = self.env.effective_gas_price();
-            let basefee = self.env.block.basefee;
+            let effective_gas_price = self.data.env.effective_gas_price();
+            let basefee = self.data.env.block.basefee;
             let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 }; // EIP-3529: Reduction in refunds
             let gas_refunded = min(gas.refunded() as u64, gas.spend() / max_refund_quotient);
-            self.subroutine.balance_add(
+            self.data.subroutine.balance_add(
                 caller,
                 effective_gas_price * (gas.remaining() + gas_refunded),
             );
@@ -197,23 +200,24 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 effective_gas_price
             };
 
-            self.subroutine.load_account(coinbase, self.db);
-            self.subroutine
+            self.data.subroutine.load_account(coinbase, self.data.db);
+            self.data
+                .subroutine
                 .balance_add(coinbase, coinbase_gas_price * (gas.spend() - gas_refunded));
         } else {
             // touch coinbase
-            self.subroutine.load_account(coinbase, self.db);
-            self.subroutine.balance_add(coinbase, U256::zero());
+            self.data.subroutine.load_account(coinbase, self.data.db);
+            self.data.subroutine.balance_add(coinbase, U256::zero());
         }
-        let mut finalized = self.subroutine.finalize();
+        let mut finalized = self.data.subroutine.finalize();
         // precompiles are special case. If there is precompiles in finalized Map that means some balance is
         // added to it, we need now to load precompile address from db and add this amount to it so that we
         // will have sum.
-        if self.env.cfg.perf_all_precompiles_have_balance {
+        if self.data.env.cfg.perf_all_precompiles_have_balance {
             for (address, _) in self.precompiles.as_slice() {
                 if let Some(precompile) = finalized.get_mut(address) {
                     // we found it.
-                    precompile.info.balance += self.db.basic(*address).balance;
+                    precompile.info.balance += self.data.db.basic(*address).balance;
                 }
             }
         }
@@ -222,17 +226,17 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     }
 
     fn inner_load_account(&mut self, caller: H160) -> bool {
-        let is_cold = self.subroutine.load_account(caller, self.db);
-        if INSPECT && is_cold {
-            self.inspector.load_account(&caller);
-        }
+        let is_cold = self.data.subroutine.load_account(caller, self.data.db);
+        // if INSPECT && is_cold {
+        //     self.inspector.load_account(&caller);
+        // }
         is_cold
     }
 
     fn initialization<SPEC: Spec>(&mut self) -> u64 {
-        let is_create = matches!(self.env.tx.transact_to, TransactTo::Create(_));
-        let input = &self.env.tx.data;
-        let access_list = self.env.tx.access_list.clone();
+        let is_create = matches!(self.data.env.tx.transact_to, TransactTo::Create(_));
+        let input = &self.data.env.tx.data;
+        let access_list = self.data.env.tx.access_list.clone();
 
         if crate::USE_GAS {
             let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
@@ -244,10 +248,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
                     for (address, slots) in access_list {
                         //TODO trace load access_list?
-                        self.subroutine.load_account(address, self.db);
+                        self.data.subroutine.load_account(address, self.data.db);
                         accessed_slots += slots.len() as u64;
                         for slot in slots {
-                            self.subroutine.sload(address, slot, self.db);
+                            self.data.subroutine.sload(address, slot, self.data.db);
                         }
                     }
                     (accessed_accounts, accessed_slots)
@@ -292,7 +296,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         self.load_account(caller);
 
         // check depth of calls
-        if self.subroutine.depth() > machine::CALL_STACK_LIMIT {
+        if self.data.subroutine.depth() > machine::CALL_STACK_LIMIT {
             return (Return::CallTooDeep, None, gas, Bytes::new());
         }
         // check balance of caller and value. Do this before increasing nonce
@@ -301,7 +305,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
 
         // inc nonce of caller
-        let old_nonce = self.subroutine.inc_nonce(caller);
+        let old_nonce = self.data.subroutine.inc_nonce(caller);
         // create address
         let code_hash = H256::from_slice(Keccak256::digest(&init_code).as_slice());
         let created_address = match scheme {
@@ -314,33 +318,34 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         self.load_account(created_address);
 
         // enter into subroutine
-        let checkpoint = self.subroutine.create_checkpoint();
+        let checkpoint = self.data.subroutine.create_checkpoint();
 
         // create contract account and check for collision
-        if !self.subroutine.new_contract_acc(
+        if !self.data.subroutine.new_contract_acc(
             created_address,
             self.precompiles.contains(&created_address),
-            self.db,
+            self.data.db,
         ) {
-            self.subroutine.checkpoint_revert(checkpoint);
+            self.data.subroutine.checkpoint_revert(checkpoint);
             return (Return::CreateCollision, ret, gas, Bytes::new());
         }
 
         // transfer value to contract address
         if let Err(e) = self
+            .data
             .subroutine
-            .transfer(caller, created_address, value, self.db)
+            .transfer(caller, created_address, value, self.data.db)
         {
-            self.subroutine.checkpoint_revert(checkpoint);
+            self.data.subroutine.checkpoint_revert(checkpoint);
             return (e, ret, gas, Bytes::new());
         }
         // inc nonce of contract
         if SPEC::enabled(ISTANBUL) {
-            self.subroutine.inc_nonce(created_address);
+            self.data.subroutine.inc_nonce(created_address);
         }
         // create new machine and execute init function
         let contract = Contract::new(Bytes::new(), init_code, created_address, caller, value);
-        let mut machine = Machine::new::<SPEC>(contract, gas.limit(), self.subroutine.depth());
+        let mut machine = Machine::new::<SPEC>(contract, gas.limit(), self.data.subroutine.depth());
         let exit_reason = machine.run::<Self, SPEC>(self);
         // handler error if present on execution\
         match exit_reason {
@@ -351,7 +356,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
                 // EIP-3541: Reject new contract code starting with the 0xEF byte
                 if SPEC::enabled(LONDON) && !code.is_empty() && code.get(0) == Some(&0xEF) {
-                    self.subroutine.checkpoint_revert(checkpoint);
+                    self.data.subroutine.checkpoint_revert(checkpoint);
                     return (Return::CreateContractWithEF, ret, machine.gas, b);
                 }
 
@@ -365,25 +370,27 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 }
                 // EIP-170: Contract code size limit
                 if SPEC::enabled(SPURIOUS_DRAGON) && code.len() > contract_code_size_limit {
-                    self.subroutine.checkpoint_revert(checkpoint);
+                    self.data.subroutine.checkpoint_revert(checkpoint);
                     return (Return::CreateContractLimit, ret, machine.gas, b);
                 }
                 if crate::USE_GAS {
                     let gas_for_code = code.len() as u64 * crate::instructions::gas::CODEDEPOSIT;
                     // record code deposit gas cost and check if we are out of gas.
                     if !machine.gas.record_cost(gas_for_code) {
-                        self.subroutine.checkpoint_revert(checkpoint);
+                        self.data.subroutine.checkpoint_revert(checkpoint);
                         return (Return::OutOfGas, ret, machine.gas, b);
                     }
                 }
                 // if we have enought gas
-                self.subroutine.checkpoint_commit();
+                self.data.subroutine.checkpoint_commit();
                 let code_hash = H256::from_slice(Keccak256::digest(&code).as_slice());
-                self.subroutine.set_code(created_address, code, code_hash);
+                self.data
+                    .subroutine
+                    .set_code(created_address, code, code_hash);
                 (Return::Continue, ret, machine.gas, b)
             }
             _ => {
-                self.subroutine.checkpoint_revert(checkpoint);
+                self.data.subroutine.checkpoint_revert(checkpoint);
                 (exit_reason, ret, machine.gas, machine.return_value())
             }
         }
@@ -399,55 +406,42 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         context: CallContext,
     ) -> (Return, Gas, Bytes) {
         let mut gas = Gas::new(gas_limit);
-
-        if INSPECT {
-            let (ret, gas, bytes) = self.inspector.call(
-                self.env,
-                &mut self.subroutine,
-                self.db,
-                code_address,
-                &context,
-                &transfer,
-                &input,
-                gas_limit,
-                SPEC::IS_STATIC_CALL,
-            );
-            if ret != Return::Continue {
-                return (ret, gas, bytes);
-            }
-        }
         // Load account and get code. Account is now hot.
         let (code, _) = self.code(code_address);
 
         // check depth
-        if self.subroutine.depth() > machine::CALL_STACK_LIMIT {
+        if self.data.subroutine.depth() > machine::CALL_STACK_LIMIT {
             return (Return::CallTooDeep, gas, Bytes::new());
         }
 
         // Create subroutine checkpoint
-        let checkpoint = self.subroutine.create_checkpoint();
+        let checkpoint = self.data.subroutine.create_checkpoint();
         // touch address. For "EIP-158 State Clear" this will erase empty accounts.
         if transfer.value.is_zero() {
             self.load_account(context.address);
-            self.subroutine.balance_add(context.address, U256::zero()); // touch the acc
+            self.data
+                .subroutine
+                .balance_add(context.address, U256::zero()); // touch the acc
         }
 
         // transfer value from caller to called account;
-        match self
-            .subroutine
-            .transfer(transfer.source, transfer.target, transfer.value, self.db)
-        {
+        match self.data.subroutine.transfer(
+            transfer.source,
+            transfer.target,
+            transfer.value,
+            self.data.db,
+        ) {
             Err(e) => {
-                self.subroutine.checkpoint_revert(checkpoint);
+                self.data.subroutine.checkpoint_revert(checkpoint);
                 return (e, gas, Bytes::new());
             }
             Ok((source_is_cold, target_is_cold)) => {
-                if INSPECT && source_is_cold {
-                    self.inspector.load_account(&transfer.source);
-                }
-                if INSPECT && target_is_cold {
-                    self.inspector.load_account(&transfer.target);
-                }
+                // if INSPECT && source_is_cold {
+                //     self.inspector.load_account(&transfer.source);
+                // }
+                // if INSPECT && target_is_cold {
+                //     self.inspector.load_account(&transfer.target);
+                // }
             }
         }
 
@@ -461,33 +455,34 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 Ok(PrecompileOutput { output, cost, logs }) => {
                     if !crate::USE_GAS || gas.record_cost(cost) {
                         logs.into_iter().for_each(|l| {
-                            self.subroutine.log(Log {
+                            self.data.subroutine.log(Log {
                                 address: l.address,
                                 topics: l.topics,
                                 data: l.data,
                             })
                         });
-                        self.subroutine.checkpoint_commit();
+                        self.data.subroutine.checkpoint_commit();
                         (Return::Continue, gas, Bytes::from(output))
                     } else {
-                        self.subroutine.checkpoint_revert(checkpoint);
+                        self.data.subroutine.checkpoint_revert(checkpoint);
                         (Return::OutOfGas, gas, Bytes::new())
                     }
                 }
                 Err(_e) => {
-                    self.subroutine.checkpoint_revert(checkpoint); //TODO check if we are discarding or reverting
+                    self.data.subroutine.checkpoint_revert(checkpoint); //TODO check if we are discarding or reverting
                     (Return::Precompile, gas, Bytes::new())
                 }
             }
         } else {
             // create machine and execute subcall
             let contract = Contract::new_with_context(input, code, &context);
-            let mut machine = Machine::new::<SPEC>(contract, gas_limit, self.subroutine.depth());
+            let mut machine =
+                Machine::new::<SPEC>(contract, gas_limit, self.data.subroutine.depth());
             let exit_reason = machine.run::<Self, SPEC>(self);
             if matches!(exit_reason, return_ok!()) {
-                self.subroutine.checkpoint_commit();
+                self.data.subroutine.checkpoint_commit();
             } else {
-                self.subroutine.checkpoint_revert(checkpoint);
+                self.data.subroutine.checkpoint_revert(checkpoint);
             }
 
             (exit_reason, machine.gas, machine.return_value())
@@ -501,48 +496,59 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Handler
     const INSPECT: bool = INSPECT;
     type DB = DB;
 
-    fn env(&self) -> &Env {
-        self.env
+
+
+    fn step(&mut self, machine: &mut Machine, is_static: bool) -> Return {
+        self.inspector.step(machine, &mut self.data, is_static);
+        Return::Continue
     }
 
-    fn inspect(&mut self) -> &mut dyn Inspector<DB> {
-        self.inspector
+    fn step_end(&mut self, ret: Return, machine: &mut Machine) -> Return {
+        Return::Continue
     }
+
+    fn env(&mut self) -> &mut Env {
+        &mut self.data.env
+    }
+
+    // fn inspect(&mut self) -> &mut dyn Inspector<DB> {
+    //     self.inspector
+    // }
 
     fn block_hash(&mut self, number: U256) -> H256 {
-        self.db.block_hash(number)
+        self.data.db.block_hash(number)
     }
 
     fn load_account(&mut self, address: H160) -> (bool, bool) {
-        let (is_cold, exists) = self.subroutine.load_account_exist(address, self.db);
-        if INSPECT && is_cold {
-            self.inspector.load_account(&address);
-        }
+        let (is_cold, exists) = self.data.subroutine.load_account_exist(address, self.data.db);
+        // if INSPECT && is_cold {
+        //     self.inspector.load_account(&address);
+        // }
         (is_cold, exists)
     }
 
     fn balance(&mut self, address: H160) -> (U256, bool) {
         let is_cold = self.inner_load_account(address);
-        let balance = self.subroutine.account(address).info.balance;
+        let balance = self.data.subroutine.account(address).info.balance;
         (balance, is_cold)
     }
 
     fn code(&mut self, address: H160) -> (Bytes, bool) {
-        let (acc, is_cold) = self.subroutine.load_code(address, self.db);
-        if INSPECT && is_cold {
-            self.inspector.load_account(&address);
-        }
+        let (acc, is_cold) = self.data.subroutine.load_code(address, self.data.db);
+        // if INSPECT && is_cold {
+        //     self.inspector.load_account(&address);
+        // }
         (acc.info.code.clone().unwrap(), is_cold)
     }
 
     /// Get code hash of address.
     fn code_hash(&mut self, address: H160) -> (H256, bool) {
-        let (acc, is_cold) = self.subroutine.load_code(address, self.db);
-        if INSPECT && is_cold {
-            self.inspector.load_account(&address);
-        }
+        let (acc, is_cold) = self.data.subroutine.load_code(address, self.data.db);
+        // if INSPECT && is_cold {
+        //     self.inspector.load_account(&address);
+        // }
         //asume that all precompiles have some balance
-        if acc.filth.is_precompile() && self.env.cfg.perf_all_precompiles_have_balance {
+        if acc.filth.is_precompile() && self.data.env.cfg.perf_all_precompiles_have_balance {
             return (KECCAK_EMPTY, is_cold);
         }
         if acc.is_empty() {
@@ -554,11 +560,11 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Handler
 
     fn sload(&mut self, address: H160, index: U256) -> (U256, bool) {
         // account is allways hot. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
-        self.subroutine.sload(address, index, self.db)
+        self.data.subroutine.sload(address, index, self.data.db)
     }
 
     fn sstore(&mut self, address: H160, index: U256, value: U256) -> (U256, U256, U256, bool) {
-        self.subroutine.sstore(address, index, value, self.db)
+        self.data.subroutine.sstore(address, index, value, self.data.db)
     }
 
     fn log(&mut self, address: H160, topics: Vec<H256>, data: Bytes) {
@@ -567,14 +573,17 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Handler
             topics,
             data,
         };
-        self.subroutine.log(log);
+        self.data.subroutine.log(log);
     }
 
     fn selfdestruct(&mut self, address: H160, target: H160) -> SelfDestructResult {
-        let res = self.subroutine.selfdestruct(address, target, self.db);
-        if INSPECT && res.is_cold {
-            self.inspector.load_account(&target);
+        if INSPECT {
+            self.inspector.selfdestruct();
         }
+        let res = self.data.subroutine.selfdestruct(address, target, self.data.db);
+        // if INSPECT && res.is_cold {
+        //     self.inspector.load_account(&target);
+        // }
         res
     }
 
@@ -586,6 +595,19 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Handler
         init_code: Bytes,
         gas: u64,
     ) -> (Return, Option<H160>, Gas, Bytes) {
+        if INSPECT {
+            let (ret, gas, bytes, out) = self.inspector.create(
+                &mut self.data,
+                caller,
+                &scheme,
+                value,
+                &init_code,
+                gas,
+            );
+            if ret != Return::Continue {
+                return (ret, gas, bytes, out);
+            }
+        }
         self.create_inner::<SPEC>(caller, scheme, value, init_code, gas)
     }
 
@@ -597,6 +619,20 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Handler
         gas: u64,
         context: CallContext,
     ) -> (Return, Gas, Bytes) {
+        if INSPECT {
+            let (ret, gas, bytes) = self.inspector.call(
+                &mut self.data,
+                code_address,
+                &context,
+                &transfer,
+                &input,
+                gas,
+                SPEC::IS_STATIC_CALL,
+            );
+            if ret != Return::Continue {
+                return (ret, gas, bytes);
+            }
+        }
         self.call_inner::<SPEC>(code_address, transfer, input, gas, context)
     }
 }
@@ -606,10 +642,11 @@ pub trait Handler {
     const INSPECT: bool;
 
     type DB: Database;
-    /// Get global const context of evm execution
-    fn env(&self) -> &Env;
 
-    fn inspect(&mut self) -> &mut dyn Inspector<Self::DB>;
+    fn step(&mut self, machine: &mut Machine, is_static: bool) -> Return;
+    fn step_end(&mut self, ret: Return, machine: &mut Machine) -> Return;
+
+    fn env(&mut self) -> &mut Env;
 
     /// load account. Returns (is_cold,is_new_account)
     fn load_account(&mut self, address: H160) -> (bool, bool);

@@ -13,7 +13,7 @@ mod spec;
 mod subroutine;
 mod util;
 
-use evm_impl::Handler;
+pub use evm_impl::{Handler,EVMData};
 
 pub type DummyStateDB = InMemoryDB;
 

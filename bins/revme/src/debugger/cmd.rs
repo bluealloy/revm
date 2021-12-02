@@ -25,10 +25,12 @@ impl Cmd {
         let mut revm = EVM::new();
         revm.database(db);
         revm.env.cfg.perf_all_precompiles_have_balance = true;
-        revm.env.tx.caller = H160::from_str("0x393616975ff5A88AAB4568983C1dcE96FBb5b67a").unwrap();
+        // ordinary transfer from 0x00..00 to transact_to
+        revm.env.tx.caller = H160::from_str("0x0000000000000000000000000000000000000000").unwrap();
         revm.env.tx.value = U256::from(11234);
         revm.env.tx.transact_to =
             TransactTo::Call(H160::from_str("0x393616975ff5A88AAB4568983C1dcE96FBb5b67b").unwrap());
+            
         // touch history file
         if let Some(ref history) = self.history {
             match OpenOptions::new().create(true).write(true).open(history) {
