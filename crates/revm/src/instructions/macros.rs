@@ -10,14 +10,14 @@ macro_rules! try_or_fail {
 }
 
 macro_rules! inspect {
-    ($handler:ident, $inspect_fn:ident) => {
+    ($Host:ident, $inspect_fn:ident) => {
         if H::INSPECT {
-            $handler.inspect().$inspect_fn();
+            $Host.inspect().$inspect_fn();
         }
     };
-    ($handler:ident, $inspect_fn:ident, $($args:expr),*) => {
+    ($Host:ident, $inspect_fn:ident, $($args:expr),*) => {
         if H::INSPECT {
-            $handler.inspect().$inspect_fn( $($args),* );
+            $Host.inspect().$inspect_fn( $($args),* );
         }
     };
 }

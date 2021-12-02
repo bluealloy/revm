@@ -347,7 +347,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let contract = Contract::new(Bytes::new(), init_code, created_address, caller, value);
         let mut machine = Machine::new::<SPEC>(contract, gas.limit(), self.data.subroutine.depth());
         let exit_reason = machine.run::<Self, SPEC>(self);
-        // handler error if present on execution\
+        // Host error if present on execution\
         match exit_reason {
             return_ok!() => {
                 let b = Bytes::new();
@@ -490,7 +490,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     }
 }
 
-impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Handler
+impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     for EVMImpl<'a, GSPEC, DB, INSPECT>
 {
     const INSPECT: bool = INSPECT;
@@ -637,8 +637,8 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Handler
     }
 }
 
-/// EVM context handler.
-pub trait Handler {
+/// EVM context Host.
+pub trait Host {
     const INSPECT: bool;
 
     type DB: Database;

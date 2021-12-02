@@ -6,7 +6,7 @@ use bytes::Bytes;
 use core::ops::Range;
 
 use super::{contract::Contract, memory::Memory, stack::Stack};
-use crate::{spec::Spec, Handler};
+use crate::{spec::Spec, Host};
 
 pub const STACK_LIMIT: u64 = 1024;
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -158,10 +158,10 @@ impl Machine {
     }
 
     /// loop steps until we are finished with execution
-    pub fn run<H: Handler, SPEC: Spec>(&mut self, handler: &mut H) -> Return {
+    pub fn run<H: Host, SPEC: Spec>(&mut self, Host: &mut H) -> Return {
         //let timer = std::time::Instant::now();
         loop {
-            let ret = self.step::<H, SPEC>(handler);
+            let ret = self.step::<H, SPEC>(Host);
             if Return::Continue != ret {
                 // let elapsed = timer.elapsed();
                 // println!("run took:{:?}", elapsed);
@@ -189,18 +189,18 @@ impl Machine {
 
     #[inline(always)]
     /// Step the machine, executing one opcode. It then returns.
-    pub fn step<H: Handler, SPEC: Spec>(&mut self, handler: &mut H) -> Return {
+    pub fn step<H: Host, SPEC: Spec>(&mut self, Host: &mut H) -> Return {
         if H::INSPECT {
-            handler.step(self, SPEC::IS_STATIC_CALL);
+            Host.step(self, SPEC::IS_STATIC_CALL);
         }
         // extract next opcode from code
         let opcode = unsafe { *self.contract.code.get_unchecked(self.program_counter) };
 
         // evaluate opcode/execute instruction
         self.program_counter += 1;
-        let eval = eval::<H, SPEC>(self, opcode, handler);
+        let eval = eval::<H, SPEC>(self, opcode, Host);
         if H::INSPECT {
-            handler.step_end(eval, self);
+            Host.step_end(eval, self);
         }
         eval
     }

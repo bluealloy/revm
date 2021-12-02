@@ -293,8 +293,8 @@ pub fn run(test_files: Vec<PathBuf>) {
                 .unwrap(),
         );
     }
-    for handler in joins {
-        let _ = handler.join();
+    for Host in joins {
+        let _ = Host.join();
     }
     console_bar.finish_at_current_pos();
     println!("Finished execution. Time:{:?}", elapsed.lock().unwrap());

@@ -2,7 +2,7 @@ use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
 
 use crate::{
-    evm_impl::{EVMData, Handler},
+    evm_impl::{EVMData, Host},
     machine::Gas,
     subroutine::SubRoutine,
     CallContext, CreateScheme, Database, Env, Machine, Return, Transfer,
