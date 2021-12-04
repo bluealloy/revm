@@ -27,7 +27,7 @@ const CTREE: &'static [&'static [(usize, &'static str)]] = &[
     ],
     &[(N, "original"), (N, "0x00000000000000000000")],
     &[(N, "0x00000000000000000000")],
-    &[(N, "all"),(N,"stack"),(N,"opcode")],
+    &[(N, "all"), (N, "stack"), (N, "opcode"), (N, "memory")],
 ];
 
 pub fn parse_address(add: &str, info: &str) -> Option<H160> {
@@ -78,7 +78,7 @@ impl CtrlCli {
                 let w1 = words[0];
                 let w2 = words[1];
                 let (_, account) = CTREE[0][3];
-                let (printn,print) = CTREE[0][7];
+                let (printn, print) = CTREE[0][7];
                 if w1 == account {
                     if let Some(address) = parse_address(w2, "Account address not valid") {
                         return Some(Ctrl::AccountPrint(address));
@@ -88,12 +88,15 @@ impl CtrlCli {
                     let all = CTREE[printn][0].1;
                     let stack = CTREE[printn][1].1;
                     let opcode = CTREE[printn][2].1;
+                    let memory = CTREE[printn][3].1;
                     if w2 == all {
                         Some(Ctrl::Print(CtrlPrint::All))
                     } else if w2 == stack {
                         Some(Ctrl::Print(CtrlPrint::Stack))
                     } else if w2 == opcode {
                         Some(Ctrl::Print(CtrlPrint::Opcode))
+                    } else if w2 == memory {
+                        Some(Ctrl::Print(CtrlPrint::Memory))
                     } else {
                         None
                     }
@@ -104,7 +107,7 @@ impl CtrlCli {
             3 => {
                 let w1 = words[0];
                 let w2 = words[1];
-                let w3 = words[3];
+                let w3 = words[2];
                 //account
                 let account = CTREE[0][3].1;
                 //let breakpoint = CTREE[0][4].1;

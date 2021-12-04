@@ -74,7 +74,7 @@ pub enum Return {
 }
 
 #[inline(always)]
-pub fn eval<H: Host, S: Spec>(machine: &mut Machine, opcode: u8, host : &mut H) -> Return {
+pub fn eval<H: Host, S: Spec>(machine: &mut Machine, opcode: u8, host: &mut H) -> Return {
     // let time = std::time::Instant::now();
 
     // let ret =

@@ -22,18 +22,17 @@ pub enum Ctrl {
     Breakpoint(H160, usize),
     AccountPrint(H160),
     AccountPrintOriginal(H160),
-    Print(CtrlPrint)
-    // RewindCall,
-    // RewindOpcode,
-    // Stack,
-    // StackSet,
-    // Memory,
-    // MemorySet,
-    // Account,
-    // AccountSetBalance,
-    // AccountSetNonce,
-    // Storage,
-    // StorageSet,
+    Print(CtrlPrint), // RewindCall,
+                      // RewindOpcode,
+                      // Stack,
+                      // StackSet,
+                      // Memory,
+                      // MemorySet,
+                      // Account,
+                      // AccountSetBalance,
+                      // AccountSetNonce,
+                      // Storage,
+                      // StorageSet
 }
 
 #[derive(Debug)]
@@ -41,6 +40,7 @@ pub enum CtrlPrint {
     All,
     Stack,
     Opcode,
+    Memory,
 }
 
 impl Ctrl {
@@ -106,13 +106,11 @@ impl<DB: Database> Inspector<DB> for Controller {
         &mut self,
         machine: &mut revm::Machine,
         data: &mut EVMData<'_, DB>,
-        is_static: bool,
+        _is_static: bool,
     ) -> Return {
         loop {
             match Ctrl::next(self.state_machine, &self.history_path) {
-                Ctrl::Help => {
-                    
-                }
+                Ctrl::Help => {}
                 Ctrl::Exit => {
                     self.state_machine = StateMachine::Exit;
                     break;
@@ -121,28 +119,51 @@ impl<DB: Database> Inspector<DB> for Controller {
                     self.state_machine = StateMachine::TriggerStep;
                     break;
                 }
-                Ctrl::StepIn => {
-
-                }
+                Ctrl::StepIn => {}
                 Ctrl::StepOut => {
                     self.state_machine = StateMachine::StepOut;
                 }
 
-                Ctrl::Print(print) => {
-                    match print {
-                        CtrlPrint::All => {
-                            println!("PRINT ALL");
-                        },
-                        CtrlPrint::Opcode => {
-                            let opcode = *machine.contract.code.get(machine.program_counter()).unwrap();
-                            println!("PC:{} OpCode: {:#x} {:?}",machine.program_counter, opcode,OPCODE_JUMPMAP[opcode as usize])
-                        },
-                        CtrlPrint::Stack => {
-                            println!("PC:{} stack:{:?}",machine.program_counter,machine.stack())
-
-                        },
+                Ctrl::Print(print) => match print {
+                    CtrlPrint::All => {
+                        let opcode = machine
+                            .contract
+                            .code
+                            .get(machine.program_counter())
+                            .cloned()
+                            .unwrap();
+                        let gas_spend = machine.gas().spend();
+                        let gas_remaining = machine.gas().remaining();
+                        println!(
+                            "call_depth:{} PC:{} Opcode: {:#x} {:?} gas(spend,remaining):({},{})\n\
+                            {:?}",
+                            machine.call_depth,
+                            machine.program_counter,
+                            opcode,
+                            OPCODE_JUMPMAP[opcode as usize].unwrap_or("Invalid"),
+                            gas_spend,
+                            gas_remaining,
+                            machine.stack(),
+                        );
                     }
-                }
+                    CtrlPrint::Opcode => {
+                        let opcode = *machine
+                            .contract
+                            .code
+                            .get(machine.program_counter())
+                            .unwrap();
+                        println!(
+                            "PC:{} OpCode: {:#x} {:?}",
+                            machine.program_counter, opcode, OPCODE_JUMPMAP[opcode as usize]
+                        )
+                    }
+                    CtrlPrint::Stack => {
+                        println!("PC:{} stack:{:?}", machine.program_counter, machine.stack())
+                    }
+                    CtrlPrint::Memory => {
+                        println!("memory:{}", hex::encode(&machine.memory.data()))
+                    }
+                },
                 Ctrl::Continue => {
                     self.state_machine = StateMachine::TriggerBreakpoint;
                     break;

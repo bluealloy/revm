@@ -6,7 +6,7 @@ use crate::{
     models::SelfDestructResult,
     return_ok,
     spec::{Spec, SpecId::*},
-    subroutine::{self, Account, State, SubRoutine},
+    subroutine::{Account, State, SubRoutine},
     util, CallContext, CreateScheme, Env, Inspector, Log, Return, TransactOut, TransactTo,
     Transfer, KECCAK_EMPTY,
 };
@@ -17,16 +17,15 @@ use hashbrown::HashMap as Map;
 use primitive_types::{H160, H256, U256};
 use revm_precompiles::{Precompile, PrecompileOutput, Precompiles};
 use sha3::{Digest, Keccak256};
-use std::ops::{Deref, DerefMut, Sub};
 
-pub struct EVMData<'a,DB> {
+pub struct EVMData<'a, DB> {
     pub env: &'a mut Env,
     pub subroutine: SubRoutine,
     pub db: &'a mut DB,
 }
 
 pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
-    data: EVMData<'a,DB>,
+    data: EVMData<'a, DB>,
     precompiles: Precompiles,
     inspector: &'a mut dyn Inspector<DB>,
     _phantomdata: PhantomData<GSPEC>,
@@ -172,7 +171,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             subroutine.load_precompiles(precompile_acc);
         }
         Self {
-            data: EVMData { env, subroutine, db },
+            data: EVMData {
+                env,
+                subroutine,
+                db,
+            },
             precompiles,
             inspector,
             _phantomdata: PhantomData {},
@@ -439,7 +442,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 self.data.subroutine.checkpoint_revert(checkpoint);
                 return (e, gas, Bytes::new());
             }
-            Ok((source_is_cold, target_is_cold)) => {
+            Ok((_source_is_cold, _target_is_cold)) => {
                 // if INSPECT && source_is_cold {
                 //     self.inspector.load_account(&transfer.source);
                 // }
@@ -500,14 +503,12 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     const INSPECT: bool = INSPECT;
     type DB = DB;
 
-
-
     fn step(&mut self, machine: &mut Machine, is_static: bool) -> Return {
         self.inspector.step(machine, &mut self.data, is_static);
         Return::Continue
     }
 
-    fn step_end(&mut self, ret: Return, machine: &mut Machine) -> Return {
+    fn step_end(&mut self, _ret: Return, _machine: &mut Machine) -> Return {
         Return::Continue
     }
 
@@ -524,7 +525,10 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     }
 
     fn load_account(&mut self, address: H160) -> (bool, bool) {
-        let (is_cold, exists) = self.data.subroutine.load_account_exist(address, self.data.db);
+        let (is_cold, exists) = self
+            .data
+            .subroutine
+            .load_account_exist(address, self.data.db);
         // if INSPECT && is_cold {
         //     self.inspector.load_account(&address);
         // }
@@ -568,7 +572,9 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     }
 
     fn sstore(&mut self, address: H160, index: U256, value: U256) -> (U256, U256, U256, bool) {
-        self.data.subroutine.sstore(address, index, value, self.data.db)
+        self.data
+            .subroutine
+            .sstore(address, index, value, self.data.db)
     }
 
     fn log(&mut self, address: H160, topics: Vec<H256>, data: Bytes) {
@@ -584,7 +590,10 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         if INSPECT {
             self.inspector.selfdestruct();
         }
-        let res = self.data.subroutine.selfdestruct(address, target, self.data.db);
+        let res = self
+            .data
+            .subroutine
+            .selfdestruct(address, target, self.data.db);
         // if INSPECT && res.is_cold {
         //     self.inspector.load_account(&target);
         // }
@@ -600,14 +609,9 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         gas: u64,
     ) -> (Return, Option<H160>, Gas, Bytes) {
         if INSPECT {
-            let (ret, gas, bytes, out) = self.inspector.create(
-                &mut self.data,
-                caller,
-                &scheme,
-                value,
-                &init_code,
-                gas,
-            );
+            let (ret, gas, bytes, out) =
+                self.inspector
+                    .create(&mut self.data, caller, &scheme, value, &init_code, gas);
             if ret != Return::Continue {
                 return (ret, gas, bytes, out);
             }

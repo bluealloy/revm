@@ -1,11 +1,8 @@
 use bytes::Bytes;
-use primitive_types::{H160, H256, U256};
+use primitive_types::{H160, U256};
 
 use crate::{
-    evm_impl::{EVMData, Host},
-    machine::Gas,
-    subroutine::SubRoutine,
-    CallContext, CreateScheme, Database, Env, Machine, Return, Transfer,
+    evm_impl::EVMData, machine::Gas, CallContext, CreateScheme, Database, Machine, Return, Transfer,
 };
 use auto_impl::auto_impl;
 
@@ -51,7 +48,6 @@ pub trait Inspector<DB: Database> {
         gas: u64,
     ) -> (Return, Option<H160>, Gas, Bytes);
 
-    
     //TODO add all field
     fn create_end(&mut self);
 
@@ -108,7 +104,6 @@ impl<DB: Database> Inspector<DB> for NoOpInspector {
         (Return::Continue, Gas::new(0), Bytes::new())
     }
 
-    
     fn call_end(&mut self) {}
 
     fn create(
@@ -123,7 +118,6 @@ impl<DB: Database> Inspector<DB> for NoOpInspector {
         (Return::Continue, None, Gas::new(0), Bytes::new())
     }
 
-    
     fn create_end(&mut self) {}
 
     fn selfdestruct(&mut self) {}

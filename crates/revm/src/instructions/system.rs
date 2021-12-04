@@ -31,7 +31,7 @@ pub fn sha3(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-pub fn chainid<H: Host, SPEC: Spec>(machine: &mut Machine, host : &mut H) -> Return {
+pub fn chainid<H: Host, SPEC: Spec>(machine: &mut Machine, host: &mut H) -> Return {
     check!(SPEC::enabled(ISTANBUL)); // EIP-1344: ChainID opcode
     gas!(machine, gas::BASE);
 
@@ -49,7 +49,7 @@ pub fn address(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-pub fn balance<H: Host, SPEC: Spec>(machine: &mut Machine, host : &mut H) -> Return {
+pub fn balance<H: Host, SPEC: Spec>(machine: &mut Machine, host: &mut H) -> Return {
     pop_address!(machine, address);
     let (balance, is_cold) = host.balance(address);
     gas!(
@@ -68,7 +68,7 @@ pub fn balance<H: Host, SPEC: Spec>(machine: &mut Machine, host : &mut H) -> Ret
     Return::Continue
 }
 
-pub fn selfbalance<H: Host, SPEC: Spec>(machine: &mut Machine, host : &mut H) -> Return {
+pub fn selfbalance<H: Host, SPEC: Spec>(machine: &mut Machine, host: &mut H) -> Return {
     check!(SPEC::enabled(ISTANBUL)); // EIP-1884: Repricing for trie-size-dependent opcodes
     let (balance, _) = host.balance(machine.contract.address);
     gas!(machine, gas::LOW);
@@ -77,7 +77,7 @@ pub fn selfbalance<H: Host, SPEC: Spec>(machine: &mut Machine, host : &mut H) ->
     Return::Continue
 }
 
-pub fn basefee<H: Host, SPEC: Spec>(machine: &mut Machine, host : &mut H) -> Return {
+pub fn basefee<H: Host, SPEC: Spec>(machine: &mut Machine, host: &mut H) -> Return {
     check!(SPEC::enabled(LONDON)); // EIP-3198: BASEFEE opcode
     let basefee = host.env().block.basefee;
     gas!(machine, gas::BASE);
@@ -86,7 +86,7 @@ pub fn basefee<H: Host, SPEC: Spec>(machine: &mut Machine, host : &mut H) -> Ret
     Return::Continue
 }
 
-pub fn origin<H: Host>(machine: &mut Machine, host : &mut H) -> Return {
+pub fn origin<H: Host>(machine: &mut Machine, host: &mut H) -> Return {
     gas!(machine, gas::BASE);
 
     let ret = H256::from(host.env().tx.caller);
@@ -114,20 +114,17 @@ pub fn callvalue(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-pub fn gasprice<H: Host>(machine: &mut Machine, host : &mut H) -> Return {
+pub fn gasprice<H: Host>(machine: &mut Machine, host: &mut H) -> Return {
     gas!(machine, gas::BASE);
 
     let mut ret = H256::default();
-    host
-        .env()
-        .effective_gas_price()
-        .to_big_endian(&mut ret[..]);
+    host.env().effective_gas_price().to_big_endian(&mut ret[..]);
     push_h256!(machine, ret);
 
     Return::Continue
 }
 
-pub fn extcodesize<H: Host, SPEC: Spec>(machine: &mut Machine, host : &mut H) -> Return {
+pub fn extcodesize<H: Host, SPEC: Spec>(machine: &mut Machine, host: &mut H) -> Return {
     pop_address!(machine, address);
 
     let (code, is_cold) = host.code(address);
@@ -138,7 +135,7 @@ pub fn extcodesize<H: Host, SPEC: Spec>(machine: &mut Machine, host : &mut H) ->
     Return::Continue
 }
 
-pub fn extcodehash<H: Host, SPEC: Spec>(machine: &mut Machine, host : &mut H) -> Return {
+pub fn extcodehash<H: Host, SPEC: Spec>(machine: &mut Machine, host: &mut H) -> Return {
     check!(SPEC::enabled(CONSTANTINOPLE)); // EIP-1052: EXTCODEHASH opcode
     pop_address!(machine, address);
     let (code_hash, is_cold) = host.code_hash(address);
@@ -156,7 +153,7 @@ pub fn extcodehash<H: Host, SPEC: Spec>(machine: &mut Machine, host : &mut H) ->
     Return::Continue
 }
 
-pub fn extcodecopy<H: Host, SPEC: Spec>(machine: &mut Machine, host : &mut H) -> Return {
+pub fn extcodecopy<H: Host, SPEC: Spec>(machine: &mut Machine, host: &mut H) -> Return {
     pop_address!(machine, address);
     pop!(machine, memory_offset, code_offset, len_u256);
 
@@ -206,7 +203,7 @@ pub fn returndatacopy<SPEC: Spec>(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-pub fn blockhash<H: Host>(machine: &mut Machine, host : &mut H) -> Return {
+pub fn blockhash<H: Host>(machine: &mut Machine, host: &mut H) -> Return {
     gas!(machine, gas::BLOCKHASH);
 
     pop!(machine, number);
@@ -215,41 +212,41 @@ pub fn blockhash<H: Host>(machine: &mut Machine, host : &mut H) -> Return {
     Return::Continue
 }
 
-pub fn coinbase<H: Host>(machine: &mut Machine, host : &mut H) -> Return {
+pub fn coinbase<H: Host>(machine: &mut Machine, host: &mut H) -> Return {
     gas!(machine, gas::BASE);
 
     push_h256!(machine, host.env().block.coinbase.into());
     Return::Continue
 }
 
-pub fn timestamp<H: Host>(machine: &mut Machine, host : &mut H) -> Return {
+pub fn timestamp<H: Host>(machine: &mut Machine, host: &mut H) -> Return {
     gas!(machine, gas::BASE);
     push!(machine, host.env().block.timestamp);
     Return::Continue
 }
 
-pub fn number<H: Host>(machine: &mut Machine, host : &mut H) -> Return {
+pub fn number<H: Host>(machine: &mut Machine, host: &mut H) -> Return {
     gas!(machine, gas::BASE);
 
     push!(machine, host.env().block.number);
     Return::Continue
 }
 
-pub fn difficulty<H: Host>(machine: &mut Machine, host : &mut H) -> Return {
+pub fn difficulty<H: Host>(machine: &mut Machine, host: &mut H) -> Return {
     gas!(machine, gas::BASE);
 
     push!(machine, host.env().block.difficulty);
     Return::Continue
 }
 
-pub fn gaslimit<H: Host>(machine: &mut Machine, host : &mut H) -> Return {
+pub fn gaslimit<H: Host>(machine: &mut Machine, host: &mut H) -> Return {
     gas!(machine, gas::BASE);
 
     push!(machine, host.env().block.gas_limit);
     Return::Continue
 }
 
-pub fn sload<H: Host, SPEC: Spec>(machine: &mut Machine, host : &mut H) -> Return {
+pub fn sload<H: Host, SPEC: Spec>(machine: &mut Machine, host: &mut H) -> Return {
     pop!(machine, index);
     let (value, is_cold) = host.sload(machine.contract.address, index);
     // inspect!(
@@ -265,7 +262,7 @@ pub fn sload<H: Host, SPEC: Spec>(machine: &mut Machine, host : &mut H) -> Retur
     Return::Continue
 }
 
-pub fn sstore<H: Host, SPEC: Spec>(machine: &mut Machine, host : &mut H) -> Return {
+pub fn sstore<H: Host, SPEC: Spec>(machine: &mut Machine, host: &mut H) -> Return {
     check!(!SPEC::IS_STATIC_CALL);
 
     pop!(machine, index, value);
@@ -295,7 +292,7 @@ pub fn gas(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-pub fn log<H: Host, SPEC: Spec>(machine: &mut Machine, n: u8, host : &mut H) -> Return {
+pub fn log<H: Host, SPEC: Spec>(machine: &mut Machine, n: u8, host: &mut H) -> Return {
     check!(!SPEC::IS_STATIC_CALL);
 
     pop!(machine, offset, len);
@@ -325,7 +322,7 @@ pub fn log<H: Host, SPEC: Spec>(machine: &mut Machine, n: u8, host : &mut H) -> 
     Return::Continue
 }
 
-pub fn selfdestruct<H: Host, SPEC: Spec>(machine: &mut Machine, host : &mut H) -> Return {
+pub fn selfdestruct<H: Host, SPEC: Spec>(machine: &mut Machine, host: &mut H) -> Return {
     check!(!SPEC::IS_STATIC_CALL);
     pop_address!(machine, target);
 
@@ -355,7 +352,7 @@ fn gas_call_l64_after<SPEC: Spec>(machine: &mut Machine) -> Result<u64, Return> 
 pub fn create<H: Host, SPEC: Spec>(
     machine: &mut Machine,
     is_create2: bool,
-    host : &mut H,
+    host: &mut H,
 ) -> Return {
     check!(!SPEC::IS_STATIC_CALL);
     if is_create2 {
@@ -419,7 +416,7 @@ pub fn create<H: Host, SPEC: Spec>(
 pub fn call<H: Host, SPEC: Spec>(
     machine: &mut Machine,
     scheme: CallScheme,
-    host : &mut H,
+    host: &mut H,
 ) -> Return {
     match scheme {
         CallScheme::DelegateCall => check!(SPEC::enabled(HOMESTEAD)), // EIP-7: DELEGATECALL

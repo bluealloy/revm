@@ -1,6 +1,6 @@
 use crate::{
     db::{Database, DatabaseCommit, DatabaseRef, RefDBWrapper},
-    evm_impl::{EVMImpl, Host, Transact},
+    evm_impl::{EVMImpl, Transact},
     subroutine::State,
     BerlinSpec, ByzantineSpec, Env, Inspector, IstanbulSpec, LatestSpec, LondonSpec, NoOpInspector,
     Return, Spec, SpecId, TransactOut,

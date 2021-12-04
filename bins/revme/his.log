@@ -89,3 +89,91 @@ print stack
 step
 print stack
 help
+
+
+step
+print opcode
+print stack
+step
+print stack
+print stack
+print opcode
+step
+print opcode
+print stack
+step
+print opcode
+print stack
+step
+ls
+print stack
+step
+print stack
+print opcode
+step
+print stack
+print opcode
+step
+print opcode
+print stack
+step
+print stack
+print opcode
+step
+print opcode
+print stack
+step
+print stack
+print opcode
+step
+print stack
+help
+print all
+exi
+print all
+step
+step
+print all
+step
+print all
+step
+step
+print all
+
+
+ls
+print all
+step
+print all
+step
+print all
+print memory
+step
+step
+print all
+print memory
+step
+print
+print all
+step
+print all
+step, print all
+step
+prin tall
+print all
+step
+print all
+step print all
+
+step
+step
+print all
+
+step
+print all
+step
+step
+print all
+step
+step
+print all

@@ -1,7 +1,7 @@
 use bytes::Bytes;
-use primitive_types::{H160, H256, U256};
+use primitive_types::{H160, U256};
 pub use revm::Inspector;
-use revm::{Database, EVMData, Env, Gas, Return, SubRoutine, opcode};
+use revm::{opcode, Database, EVMData, Gas, Return};
 
 #[derive(Clone)]
 pub struct CustomPrintTracer {}
@@ -9,7 +9,12 @@ pub struct CustomPrintTracer {}
 impl<DB: Database> Inspector<DB> for CustomPrintTracer {
     // get opcode by calling `machine.contract.opcode(machine.program_counter())`.
     // all other information can be obtained from machine.
-    fn step(&mut self, machine: &mut revm::Machine, data: &mut EVMData<'_,DB>, is_static: bool) -> Return {
+    fn step(
+        &mut self,
+        machine: &mut revm::Machine,
+        _data: &mut EVMData<'_, DB>,
+        _is_static: bool,
+    ) -> Return {
         let opcode = match machine.contract.code.get(machine.program_counter()) {
             Some(opcode) => opcode,
             None => return Return::Continue,
@@ -64,7 +69,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
 
     fn call(
         &mut self,
-        data: &mut EVMData<'_,DB>,
+        _data: &mut EVMData<'_, DB>,
         call: H160,
         context: &revm::CallContext,
         transfer: &revm::Transfer,
@@ -83,12 +88,11 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         (Return::Continue, Gas::new(0), Bytes::new())
     }
 
-    
     fn call_end(&mut self) {}
 
     fn create(
         &mut self,
-        data: &mut EVMData<'_,DB>,
+        _data: &mut EVMData<'_, DB>,
         caller: H160,
         scheme: &revm::CreateScheme,
         value: U256,
@@ -106,7 +110,6 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         (Return::Continue, None, Gas::new(0), Bytes::new())
     }
 
-    
     fn create_end(&mut self) {}
 
     fn selfdestruct(&mut self) {

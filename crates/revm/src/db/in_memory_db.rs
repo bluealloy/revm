@@ -131,7 +131,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
             Entry::Vacant(entry) => {
                 let mut storage = Map::new();
                 let slot = self.db.storage(address, index);
-                storage.insert(index,slot);
+                storage.insert(index, slot);
                 entry.insert(storage);
                 slot
             }

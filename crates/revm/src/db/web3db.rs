@@ -1,6 +1,6 @@
+use crate::{AccountInfo, Database, KECCAK_EMPTY};
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
-use crate::{AccountInfo, Database, KECCAK_EMPTY};
 use tokio::runtime::{Handle, Runtime};
 use web3::{
     transports::Http,
@@ -58,9 +58,18 @@ impl Database for Web3DB {
         let (nonce, balance, code) = self.block_on(f);
         // panic on not getting data?
         let acc = AccountInfo::new(
-            U256(balance.unwrap_or_else(|e| panic!("web3 get balance error:{:?}",e)).0),
-            nonce.unwrap_or_else(|e| panic!("web3 get nonce error:{:?}",e)).as_u64(),
-            Bytes::from(code.unwrap_or_else(|e| panic!("web3 get node error:{:?}",e)).0),
+            U256(
+                balance
+                    .unwrap_or_else(|e| panic!("web3 get balance error:{:?}", e))
+                    .0,
+            ),
+            nonce
+                .unwrap_or_else(|e| panic!("web3 get nonce error:{:?}", e))
+                .as_u64(),
+            Bytes::from(
+                code.unwrap_or_else(|e| panic!("web3 get node error:{:?}", e))
+                    .0,
+            ),
         );
         acc
     }

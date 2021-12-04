@@ -9,19 +9,6 @@ macro_rules! try_or_fail {
     };
 }
 
-macro_rules! inspect {
-    ($host :ident, $inspect_fn:ident) => {
-        if H::INSPECT {
-            $host.inspect().$inspect_fn();
-        }
-    };
-    ($host :ident, $inspect_fn:ident, $($args:expr),*) => {
-        if H::INSPECT {
-            $host.inspect().$inspect_fn( $($args),* );
-        }
-    };
-}
-
 macro_rules! check {
     ($expresion:expr) => {
         if !$expresion {

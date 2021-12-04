@@ -52,6 +52,10 @@ impl History for CliHistory {
     }
 
     fn add(&mut self, line: &str) {
+        if self.entries.back().map(String::as_str) == Some(line) {
+            return;
+        }
+        self.entries.push_back(line.to_owned());
         if let Some(ref file_name) = self.file_name {
             let mut file = OpenOptions::new()
                 .write(true)
@@ -63,12 +67,6 @@ impl History for CliHistory {
                 eprintln!("Couldn't write to history file: {}", e);
             }
         }
-
-        if self.entries.back().map(String::as_str) == Some(line) {
-            // Ignore duplicates
-            return;
-        }
-        self.entries.push_back(line.to_owned());
     }
 
     fn search(
