@@ -11,14 +11,19 @@ use auto_impl::auto_impl;
 
 #[auto_impl(&mut, Box)]
 pub trait Inspector<DB: Database> {
-    fn initialize(&mut self, _data: &mut EVMData<'_,DB>) {}
+    fn initialize(&mut self, _data: &mut EVMData<'_, DB>) {}
 
     /// get opcode by calling `machine.contract.opcode(machine.program_counter())`.
     /// all other information can be obtained from machine.
-    fn step(&mut self, machine: &mut Machine, data: &mut EVMData<'_, DB>, is_static: bool);
+    fn step(
+        &mut self,
+        machine: &mut Machine,
+        data: &mut EVMData<'_, DB>,
+        is_static: bool,
+    ) -> Return;
 
     /// Called after `step` when instruction is executed.
-    fn step_end(&mut self, eval: Return, machine: &mut Machine);
+    fn step_end(&mut self, eval: Return, machine: &mut Machine) -> Return;
 
     /// Called inside call_inner with `Return` you can dictate if you want to continue execution of
     /// this call `Return::Continue` or you want to override that and return from call.
@@ -33,6 +38,9 @@ pub trait Inspector<DB: Database> {
         is_static: bool,
     ) -> (Return, Gas, Bytes);
 
+    //TODO add all field
+    fn call_end(&mut self);
+
     fn create(
         &mut self,
         data: &mut EVMData<'_, DB>,
@@ -42,6 +50,10 @@ pub trait Inspector<DB: Database> {
         init_code: &Bytes,
         gas: u64,
     ) -> (Return, Option<H160>, Gas, Bytes);
+
+    
+    //TODO add all field
+    fn create_end(&mut self);
 
     fn selfdestruct(&mut self);
 
@@ -68,11 +80,20 @@ impl Default for OverrideSpec {
 pub struct NoOpInspector();
 
 impl<DB: Database> Inspector<DB> for NoOpInspector {
-    fn initialize(&mut self, _data: &mut EVMData<'_,DB>) {}
+    fn initialize(&mut self, _data: &mut EVMData<'_, DB>) {}
 
-    fn step(&mut self, _machine: &mut Machine, _data: &mut EVMData<'_, DB>, _is_static: bool) {}
+    fn step(
+        &mut self,
+        _machine: &mut Machine,
+        _data: &mut EVMData<'_, DB>,
+        _is_static: bool,
+    ) -> Return {
+        Return::Continue
+    }
 
-    fn step_end(&mut self, _eval: Return, _machine: &mut Machine) {}
+    fn step_end(&mut self, _eval: Return, _machine: &mut Machine) -> Return {
+        Return::Continue
+    }
 
     fn call(
         &mut self,
@@ -87,6 +108,9 @@ impl<DB: Database> Inspector<DB> for NoOpInspector {
         (Return::Continue, Gas::new(0), Bytes::new())
     }
 
+    
+    fn call_end(&mut self) {}
+
     fn create(
         &mut self,
         _data: &mut EVMData<'_, DB>,
@@ -98,6 +122,9 @@ impl<DB: Database> Inspector<DB> for NoOpInspector {
     ) -> (Return, Option<H160>, Gas, Bytes) {
         (Return::Continue, None, Gas::new(0), Bytes::new())
     }
+
+    
+    fn create_end(&mut self) {}
 
     fn selfdestruct(&mut self) {}
 }

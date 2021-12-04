@@ -58,9 +58,9 @@ impl Database for Web3DB {
         let (nonce, balance, code) = self.block_on(f);
         // panic on not getting data?
         let acc = AccountInfo::new(
-            U256(balance.unwrap().0),
-            nonce.unwrap().as_u64(),
-            Bytes::from(code.unwrap_or_default().0),
+            U256(balance.unwrap_or_else(|e| panic!("web3 get balance error:{:?}",e)).0),
+            nonce.unwrap_or_else(|e| panic!("web3 get nonce error:{:?}",e)).as_u64(),
+            Bytes::from(code.unwrap_or_else(|e| panic!("web3 get node error:{:?}",e)).0),
         );
         acc
     }

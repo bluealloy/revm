@@ -9,10 +9,10 @@ pub struct CustomPrintTracer {}
 impl<DB: Database> Inspector<DB> for CustomPrintTracer {
     // get opcode by calling `machine.contract.opcode(machine.program_counter())`.
     // all other information can be obtained from machine.
-    fn step(&mut self, machine: &mut revm::Machine, data: &mut EVMData<'_,DB>, is_static: bool) {
+    fn step(&mut self, machine: &mut revm::Machine, data: &mut EVMData<'_,DB>, is_static: bool) -> Return {
         let opcode = match machine.contract.code.get(machine.program_counter()) {
             Some(opcode) => opcode,
-            None => return,
+            None => return Return::Continue,
         };
         let opcode_str = opcode::OPCODE_JUMPMAP[*opcode as usize];
         //if self.
@@ -29,13 +29,16 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
             machine.stack.data(),
             //hex::encode(machine.memory.data()),
         );
+        Return::Continue
     }
 
     // fn load_account(&mut self, address: &H160) {
     //     println!("ACCOUNT LOADED:{:?}", address);
     // }
 
-    fn step_end(&mut self, _eval: revm::Return, _machine: &mut revm::Machine) {}
+    fn step_end(&mut self, _eval: revm::Return, _machine: &mut revm::Machine) -> Return {
+        Return::Continue
+    }
 
     // fn sload(&mut self, address: &H160, slot: &U256, value: &U256, is_cold: bool) {
     //     println!(
@@ -80,6 +83,9 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         (Return::Continue, Gas::new(0), Bytes::new())
     }
 
+    
+    fn call_end(&mut self) {}
+
     fn create(
         &mut self,
         data: &mut EVMData<'_,DB>,
@@ -99,6 +105,9 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         );
         (Return::Continue, None, Gas::new(0), Bytes::new())
     }
+
+    
+    fn create_end(&mut self) {}
 
     fn selfdestruct(&mut self) {
         //, address: H160, target: H160) {

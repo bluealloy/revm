@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use bytes::Bytes;
 
 use primitive_types::H160;
-use revm::{Database, EVMData, Gas, Inspector, Return};
+use revm::{Database, EVMData, Gas, Inspector, Return, OPCODE_JUMPMAP};
 
 use termwiz::lineedit::*;
 
@@ -14,10 +14,15 @@ pub enum Ctrl {
     Exit,
     None,
     Step,
+    StepIn,
+    StepOut,
     Continue,
+    Restart,
+    Help,
     Breakpoint(H160, usize),
     AccountPrint(H160),
     AccountPrintOriginal(H160),
+    Print(CtrlPrint)
     // RewindCall,
     // RewindOpcode,
     // Stack,
@@ -31,12 +36,22 @@ pub enum Ctrl {
     // StorageSet,
 }
 
+#[derive(Debug)]
+pub enum CtrlPrint {
+    All,
+    Stack,
+    Opcode,
+}
+
 impl Ctrl {
     fn next(state: StateMachine, history_path: &Option<PathBuf>) -> Self {
-        println!("NEXT LINE");
         match state {
             StateMachine::TriggerBreakpoint | StateMachine::TriggerStep => {
                 Self::parse_cli(history_path)
+            }
+            StateMachine::StepOut => {
+                //if it is step_out we skip any command and want to return
+                Ctrl::None
             }
             _ => Ctrl::None,
         }
@@ -47,10 +62,8 @@ impl Ctrl {
         let mut editor = LineEditor::new(&mut terminal);
 
         let mut host = CtrlCli::new(history_path.clone());
-        println!("PARSE_CLI");
         let out = loop {
             if let Some(line) = editor.read_line(&mut host).unwrap() {
-                println!("PARSE_CLI2");
                 if line == "exit" {
                     break Ctrl::Exit;
                 }
@@ -61,7 +74,6 @@ impl Ctrl {
                 }
             }
         };
-        println!("PARSE_CLI00");
         out
     }
 }
@@ -71,40 +83,72 @@ pub enum StateMachine {
     Exit,
     TriggerStep,
     TriggerBreakpoint,
+    StepOut,
 }
 
 pub struct Controller {
-    pc: usize,
-    machine: StateMachine,
+    state_machine: StateMachine,
     history_path: Option<PathBuf>,
+    //call_stack: Vec<>,
 }
 
 impl Controller {
     pub fn new(history_path: Option<PathBuf>) -> Self {
         Self {
-            pc: 0,
-            machine: StateMachine::TriggerStep,
+            state_machine: StateMachine::TriggerStep,
             history_path,
         }
     }
 }
-
+///
 impl<DB: Database> Inspector<DB> for Controller {
-    fn step(&mut self, _machine: &mut revm::Machine, data: &mut EVMData<'_,DB>, is_static: bool) {
-        println!("STEP INSIDE");
+    fn step(
+        &mut self,
+        machine: &mut revm::Machine,
+        data: &mut EVMData<'_, DB>,
+        is_static: bool,
+    ) -> Return {
         loop {
-            match Ctrl::next(self.machine, &self.history_path) {
+            match Ctrl::next(self.state_machine, &self.history_path) {
+                Ctrl::Help => {
+                    
+                }
                 Ctrl::Exit => {
-                    self.machine = StateMachine::Exit;
+                    self.state_machine = StateMachine::Exit;
                     break;
                 }
                 Ctrl::Step => {
-                    self.machine = StateMachine::TriggerStep;
+                    self.state_machine = StateMachine::TriggerStep;
                     break;
                 }
+                Ctrl::StepIn => {
+
+                }
+                Ctrl::StepOut => {
+                    self.state_machine = StateMachine::StepOut;
+                }
+
+                Ctrl::Print(print) => {
+                    match print {
+                        CtrlPrint::All => {
+                            println!("PRINT ALL");
+                        },
+                        CtrlPrint::Opcode => {
+                            let opcode = *machine.contract.code.get(machine.program_counter()).unwrap();
+                            println!("PC:{} OpCode: {:#x} {:?}",machine.program_counter, opcode,OPCODE_JUMPMAP[opcode as usize])
+                        },
+                        CtrlPrint::Stack => {
+                            println!("PC:{} stack:{:?}",machine.program_counter,machine.stack())
+
+                        },
+                    }
+                }
                 Ctrl::Continue => {
-                    self.machine = StateMachine::TriggerBreakpoint;
+                    self.state_machine = StateMachine::TriggerBreakpoint;
                     break;
+                }
+                Ctrl::Restart => {
+                    //data.subroutine.checkpoint_revert(checkpoint)
                 }
                 Ctrl::Breakpoint(add, pc) => println!(
                     "Setting breakpoint for contract {} on program counter:{}",
@@ -114,16 +158,19 @@ impl<DB: Database> Inspector<DB> for Controller {
                     println!("print:{:?}", data.subroutine.state().get(&address))
                 }
                 Ctrl::AccountPrintOriginal(address) => (),
-                Ctrl::None => (),
+                Ctrl::None => break,
             }
         }
+        Return::Continue
     }
 
-    fn step_end(&mut self, _eval: revm::Return, _machine: &mut revm::Machine) {}
+    fn step_end(&mut self, _eval: revm::Return, _machine: &mut revm::Machine) -> Return {
+        Return::Continue
+    }
 
     fn call(
         &mut self,
-        _data: &mut revm::EVMData<'_,DB>,
+        _data: &mut revm::EVMData<'_, DB>,
         _call: primitive_types::H160,
         _context: &revm::CallContext,
         _transfer: &revm::Transfer,
@@ -134,16 +181,30 @@ impl<DB: Database> Inspector<DB> for Controller {
         (Return::Continue, Gas::new(0), Bytes::new())
     }
 
+    fn call_end(&mut self) {
+        match self.state_machine {
+            StateMachine::StepOut => self.state_machine = StateMachine::TriggerStep,
+            _ => (),
+        }
+    }
+
     fn create(
         &mut self,
-        _data: &mut revm::EVMData<'_,DB>,
+        _data: &mut revm::EVMData<'_, DB>,
         _caller: primitive_types::H160,
         _scheme: &revm::CreateScheme,
         _value: primitive_types::U256,
         _init_code: &bytes::Bytes,
         _gas: u64,
-    )-> (Return,Option<H160>, Gas, Bytes) {
-        (Return::Continue,None, Gas::new(0), Bytes::new())
+    ) -> (Return, Option<H160>, Gas, Bytes) {
+        (Return::Continue, None, Gas::new(0), Bytes::new())
+    }
+
+    fn create_end(&mut self) {
+        match self.state_machine {
+            StateMachine::StepOut => self.state_machine = StateMachine::TriggerStep,
+            _ => (),
+        }
     }
 
     fn selfdestruct(&mut self) {}

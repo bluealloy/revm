@@ -6,6 +6,6 @@ target
 pkg/
 
 
-bins/revm-ethereum-tests/temp_folder
-bins/revm-ethereum-tests/tests
+bins/revme/temp_folder
+bins/revme/tests
 ethereumjs-util.js

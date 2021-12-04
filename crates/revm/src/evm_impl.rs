@@ -348,7 +348,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let mut machine = Machine::new::<SPEC>(contract, gas.limit(), self.data.subroutine.depth());
         let exit_reason = machine.run::<Self, SPEC>(self);
         // Host error if present on execution\
-        match exit_reason {
+        let ret = match exit_reason {
             return_ok!() => {
                 let b = Bytes::new();
                 // if ok, check contract creation limit and calculate gas deduction on output len.
@@ -393,7 +393,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 self.data.subroutine.checkpoint_revert(checkpoint);
                 (exit_reason, ret, machine.gas, machine.return_value())
             }
+        };
+        if INSPECT {
+            self.inspector.call_end();
         }
+        ret
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -637,7 +641,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     }
 }
 
-/// EVM context Host.
+/// EVM context host.
 pub trait Host {
     const INSPECT: bool;
 

@@ -68,7 +68,6 @@ pub enum SlotChangeLog {
 pub struct SubRoutineCheckpoint {
     log_i: usize,
     changelog_i: usize,
-    depth: usize,
 }
 
 impl Default for SubRoutine {
@@ -403,7 +402,6 @@ impl SubRoutine {
         let checkpoint = SubRoutineCheckpoint {
             log_i: self.logs.len(),
             changelog_i: self.changelog.len(),
-            depth: self.depth,
         };
         self.depth += 1;
         self.changelog.push(Default::default());

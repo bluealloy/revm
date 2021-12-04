@@ -74,7 +74,7 @@ pub enum Return {
 }
 
 #[inline(always)]
-pub fn eval<H: Host, S: Spec>(machine: &mut Machine, opcode: u8, Host: &mut H) -> Return {
+pub fn eval<H: Host, S: Spec>(machine: &mut Machine, opcode: u8, host : &mut H) -> Return {
     // let time = std::time::Instant::now();
 
     // let ret =
@@ -205,40 +205,40 @@ pub fn eval<H: Host, S: Spec>(machine: &mut Machine, opcode: u8, Host: &mut H) -
         opcode::INVALID => Return::InvalidOpcode,
         opcode::SHA3 => system::sha3(machine),
         opcode::ADDRESS => system::address(machine),
-        opcode::BALANCE => system::balance::<H, S>(machine, Host),
-        opcode::SELFBALANCE => system::selfbalance::<H, S>(machine, Host),
-        opcode::BASEFEE => system::basefee::<H, S>(machine, Host),
-        opcode::ORIGIN => system::origin(machine, Host),
+        opcode::BALANCE => system::balance::<H, S>(machine, host),
+        opcode::SELFBALANCE => system::selfbalance::<H, S>(machine, host),
+        opcode::BASEFEE => system::basefee::<H, S>(machine, host),
+        opcode::ORIGIN => system::origin(machine, host),
         opcode::CALLER => system::caller(machine),
         opcode::CALLVALUE => system::callvalue(machine),
-        opcode::GASPRICE => system::gasprice(machine, Host),
-        opcode::EXTCODESIZE => system::extcodesize::<H, S>(machine, Host),
-        opcode::EXTCODEHASH => system::extcodehash::<H, S>(machine, Host),
-        opcode::EXTCODECOPY => system::extcodecopy::<H, S>(machine, Host),
+        opcode::GASPRICE => system::gasprice(machine, host),
+        opcode::EXTCODESIZE => system::extcodesize::<H, S>(machine, host),
+        opcode::EXTCODEHASH => system::extcodehash::<H, S>(machine, host),
+        opcode::EXTCODECOPY => system::extcodecopy::<H, S>(machine, host),
         opcode::RETURNDATASIZE => system::returndatasize::<S>(machine),
         opcode::RETURNDATACOPY => system::returndatacopy::<S>(machine),
-        opcode::BLOCKHASH => system::blockhash(machine, Host),
-        opcode::COINBASE => system::coinbase(machine, Host),
-        opcode::TIMESTAMP => system::timestamp(machine, Host),
-        opcode::NUMBER => system::number(machine, Host),
-        opcode::DIFFICULTY => system::difficulty(machine, Host),
-        opcode::GASLIMIT => system::gaslimit(machine, Host),
-        opcode::SLOAD => system::sload::<H, S>(machine, Host),
-        opcode::SSTORE => system::sstore::<H, S>(machine, Host),
+        opcode::BLOCKHASH => system::blockhash(machine, host),
+        opcode::COINBASE => system::coinbase(machine, host),
+        opcode::TIMESTAMP => system::timestamp(machine, host),
+        opcode::NUMBER => system::number(machine, host),
+        opcode::DIFFICULTY => system::difficulty(machine, host),
+        opcode::GASLIMIT => system::gaslimit(machine, host),
+        opcode::SLOAD => system::sload::<H, S>(machine, host),
+        opcode::SSTORE => system::sstore::<H, S>(machine, host),
         opcode::GAS => system::gas(machine),
-        opcode::LOG0 => system::log::<H, S>(machine, 0, Host),
-        opcode::LOG1 => system::log::<H, S>(machine, 1, Host),
-        opcode::LOG2 => system::log::<H, S>(machine, 2, Host),
-        opcode::LOG3 => system::log::<H, S>(machine, 3, Host),
-        opcode::LOG4 => system::log::<H, S>(machine, 4, Host),
-        opcode::SELFDESTRUCT => system::selfdestruct::<H, S>(machine, Host),
-        opcode::CREATE => system::create::<H, S>(machine, false, Host), //check
-        opcode::CREATE2 => system::create::<H, S>(machine, true, Host), //check
-        opcode::CALL => system::call::<H, S>(machine, CallScheme::Call, Host), //check
-        opcode::CALLCODE => system::call::<H, S>(machine, CallScheme::CallCode, Host), //check
-        opcode::DELEGATECALL => system::call::<H, S>(machine, CallScheme::DelegateCall, Host), //check
-        opcode::STATICCALL => system::call::<H, S>(machine, CallScheme::StaticCall, Host), //check
-        opcode::CHAINID => system::chainid::<H, S>(machine, Host),
+        opcode::LOG0 => system::log::<H, S>(machine, 0, host),
+        opcode::LOG1 => system::log::<H, S>(machine, 1, host),
+        opcode::LOG2 => system::log::<H, S>(machine, 2, host),
+        opcode::LOG3 => system::log::<H, S>(machine, 3, host),
+        opcode::LOG4 => system::log::<H, S>(machine, 4, host),
+        opcode::SELFDESTRUCT => system::selfdestruct::<H, S>(machine, host),
+        opcode::CREATE => system::create::<H, S>(machine, false, host), //check
+        opcode::CREATE2 => system::create::<H, S>(machine, true, host), //check
+        opcode::CALL => system::call::<H, S>(machine, CallScheme::Call, host), //check
+        opcode::CALLCODE => system::call::<H, S>(machine, CallScheme::CallCode, host), //check
+        opcode::DELEGATECALL => system::call::<H, S>(machine, CallScheme::DelegateCall, host), //check
+        opcode::STATICCALL => system::call::<H, S>(machine, CallScheme::StaticCall, host), //check
+        opcode::CHAINID => system::chainid::<H, S>(machine, host),
         _ => Return::OpcodeNotFound,
     } //;
       // let times = &mut machine.times[opcode as usize];

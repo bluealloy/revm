@@ -1,13 +1,11 @@
 use std::path::PathBuf;
 
-use hashbrown::HashMap;
-
 use primitive_types::H160;
 use termwiz::cell::AttributeChange;
 use termwiz::color::{AnsiColor, ColorAttribute, RgbColor};
 use termwiz::lineedit::*;
 
-use super::ctrl::Ctrl;
+use super::ctrl::{Ctrl, CtrlPrint};
 use super::history::CliHistory;
 
 pub struct CtrlCli {
@@ -23,9 +21,13 @@ const CTREE: &'static [&'static [(usize, &'static str)]] = &[
         (N, "continue"),
         (1, "account"),
         (2, "breakpoint"),
+        (N, "restart"),
+        (N, "help"),
+        (3, "print"),
     ],
     &[(N, "original"), (N, "0x00000000000000000000")],
     &[(N, "0x00000000000000000000")],
+    &[(N, "all"),(N,"stack"),(N,"opcode")],
 ];
 
 pub fn parse_address(add: &str, info: &str) -> Option<H160> {
@@ -56,12 +58,18 @@ impl CtrlCli {
                 let exit = CTREE[0][0].1;
                 let step = CTREE[0][1].1;
                 let continu = CTREE[0][2].1;
+                let restart = CTREE[0][5].1;
+                let help = CTREE[0][6].1;
                 if w1 == exit {
                     Some(Ctrl::Exit)
                 } else if w1 == step {
                     Some(Ctrl::Step)
                 } else if w1 == continu {
                     Some(Ctrl::Continue)
+                } else if w1 == restart {
+                    Some(Ctrl::Restart)
+                } else if w1 == help {
+                    Some(Ctrl::Help)
                 } else {
                     None
                 }
@@ -69,13 +77,29 @@ impl CtrlCli {
             2 => {
                 let w1 = words[0];
                 let w2 = words[1];
-                let account = CTREE[0][3].1;
+                let (_, account) = CTREE[0][3];
+                let (printn,print) = CTREE[0][7];
                 if w1 == account {
                     if let Some(address) = parse_address(w2, "Account address not valid") {
                         return Some(Ctrl::AccountPrint(address));
                     }
+                    None
+                } else if w1 == print {
+                    let all = CTREE[printn][0].1;
+                    let stack = CTREE[printn][1].1;
+                    let opcode = CTREE[printn][2].1;
+                    if w2 == all {
+                        Some(Ctrl::Print(CtrlPrint::All))
+                    } else if w2 == stack {
+                        Some(Ctrl::Print(CtrlPrint::Stack))
+                    } else if w2 == opcode {
+                        Some(Ctrl::Print(CtrlPrint::Opcode))
+                    } else {
+                        None
+                    }
+                } else {
+                    None
                 }
-                None
             }
             3 => {
                 let w1 = words[0];
