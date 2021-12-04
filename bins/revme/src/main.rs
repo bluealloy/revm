@@ -4,12 +4,9 @@ mod exec;
 mod runner;
 mod statetest;
 use structopt::StructOpt;
+mod cli_env;
 
 pub fn main() {
-    // TODO
-    // full env should be cfg
-
     let cmd = cmd::MainCmd::from_args();
-    println!("args:{:?}", cmd);
     cmd.run()
 }
