@@ -196,3 +196,86 @@ step
 print all
 print memory
 print all
+step
+step
+print all
+
+step
+step
+print all
+help
+print memory
+continue
+stepout
+
+step
+step
+step
+step
+step
+step
+print all
+print memory
+step
+step
+step
+step
+step
+step
+step
+step
+step
+step
+print memory
+print all
+step
+print all
+print memory
+step
+print all
+step
+print all
+step
+print all
+step
+print all
+step
+ls
+print all
+step
+step
+step
+print all
+stack pop
+stack put 128
+stack push 128
+stack push 64
+print al
+print all
+step
+print all
+print all
+step
+step
+print all
+stack pop
+stack push 64
+print all
+stack push 64
+
+step
+step
+stack
+stack pop
+stack push 64
+stack pop
+stack push 64
+
+l
+step
+step
+print all
+stack pop
+step
+print all
+step

@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use bytes::Bytes;
 
-use primitive_types::H160;
+use primitive_types::{H160, U256};
 use revm::{Database, EVMData, Gas, Inspector, Return, OPCODE_JUMPMAP};
 
 use termwiz::lineedit::*;
@@ -22,17 +22,20 @@ pub enum Ctrl {
     Breakpoint(H160, usize),
     AccountPrint(H160),
     AccountPrintOriginal(H160),
-    Print(CtrlPrint), // RewindCall,
-                      // RewindOpcode,
-                      // Stack,
-                      // StackSet,
-                      // Memory,
-                      // MemorySet,
-                      // Account,
-                      // AccountSetBalance,
-                      // AccountSetNonce,
-                      // Storage,
-                      // StorageSet
+    Print(CtrlPrint),
+    StackPop,
+    StackPush(U256),
+    // RewindCall,
+    // RewindOpcode,
+    // Stack,
+    // StackSet,
+    // Memory,
+    // MemorySet,
+    // Account,
+    // AccountSetBalance,
+    // AccountSetNonce,
+    // Storage,
+    // StorageSet
 }
 
 #[derive(Debug)]
@@ -136,7 +139,7 @@ impl<DB: Database> Inspector<DB> for Controller {
                         let gas_remaining = machine.gas().remaining();
                         println!(
                             "call_depth:{} PC:{} Opcode: {:#x} {:?} gas(spend,remaining):({},{})\n\
-                            {:?}",
+                            Stack:{}",
                             machine.call_depth,
                             machine.program_counter,
                             opcode,
@@ -158,7 +161,7 @@ impl<DB: Database> Inspector<DB> for Controller {
                         )
                     }
                     CtrlPrint::Stack => {
-                        println!("PC:{} stack:{:?}", machine.program_counter, machine.stack())
+                        println!("PC:{} stack:{}", machine.program_counter, machine.stack())
                     }
                     CtrlPrint::Memory => {
                         println!("memory:{}", hex::encode(&machine.memory.data()))
@@ -178,7 +181,14 @@ impl<DB: Database> Inspector<DB> for Controller {
                 Ctrl::AccountPrint(address) => {
                     println!("print:{:?}", data.subroutine.state().get(&address))
                 }
-                Ctrl::AccountPrintOriginal(address) => (),
+                Ctrl::AccountPrintOriginal(_address) => (),
+                Ctrl::StackPop => {
+                    println!("pop:{:?}", machine.stack.pop());
+                }
+                Ctrl::StackPush(value) => match machine.stack.push(value) {
+                    Ok(()) => println!("stack:{}", machine.stack()),
+                    Err(e) => println!("push error:{:?}", e),
+                },
                 Ctrl::None => break,
             }
         }

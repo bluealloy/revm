@@ -1,6 +1,7 @@
 use std::path::PathBuf;
+use std::str::FromStr;
 
-use primitive_types::H160;
+use primitive_types::{H160, U256};
 use termwiz::cell::AttributeChange;
 use termwiz::color::{AnsiColor, ColorAttribute, RgbColor};
 use termwiz::lineedit::*;
@@ -16,27 +17,41 @@ const N: usize = usize::MAX;
 
 const CTREE: &'static [&'static [(usize, &'static str)]] = &[
     &[
-        (N, "exit"),
-        (N, "step"),
-        (N, "continue"),
-        (1, "account"),
-        (2, "breakpoint"),
-        (N, "restart"),
-        (N, "help"),
-        (3, "print"),
+        (N, "exit"),       //0
+        (N, "step"),       //1
+        (N, "continue"),   //2
+        (1, "account"),    //3
+        (2, "breakpoint"), //4
+        (N, "restart"),    //5
+        (N, "help"),       //6
+        (3, "print"),      //7
+        (4, "stack"),      //8
     ],
-    &[(N, "original"), (N, "0x00000000000000000000")],
-    &[(N, "0x00000000000000000000")],
-    &[(N, "all"), (N, "stack"), (N, "opcode"), (N, "memory")],
+    /*1*/ &[(N, "original"), (N, "0x00000000000000000000")],
+    /*2*/ &[(N, "0x00000000000000000000")],
+    /*3*/ &[(N, "all"), (N, "stack"), (N, "opcode"), (N, "memory")],
+    /*4*/ &[(N, "pop"), (2, "push")],
 ];
 
-pub fn parse_address(add: &str, info: &str) -> Option<H160> {
-    if add.len() < 40 {
+pub fn parse_u256(str: &str) -> Option<U256> {
+    if str.len() > 2 && &str[..2] == "0x" {
+        U256::from_str(&str[2..]).ok()
+    } else {
+        U256::from_dec_str(str).ok()
+    }
+}
+
+pub fn parse_address(addr: &str, info: &str) -> Option<H160> {
+    if addr.len() < 40 {
         println!("Error: :{} not big enough. Expect 20bytes hex ", &info);
         return None;
     }
-    let add = if &add[0..2] == "0x" { &add[2..] } else { add };
-    let add = match hex::decode(add) {
+    let addr = if &addr[0..2] == "0x" {
+        &addr[2..]
+    } else {
+        addr
+    };
+    let addr = match hex::decode(addr) {
         Ok(hex) => H160::from_slice(&hex),
         Err(_) => {
             println!("Error: {} not in hex format", &info);
@@ -44,7 +59,7 @@ pub fn parse_address(add: &str, info: &str) -> Option<H160> {
             return None;
         }
     };
-    Some(add)
+    Some(addr)
 }
 
 impl CtrlCli {
@@ -79,6 +94,7 @@ impl CtrlCli {
                 let w2 = words[1];
                 let (_, account) = CTREE[0][3];
                 let (printn, print) = CTREE[0][7];
+                let stack = CTREE[0][8];
                 if w1 == account {
                     if let Some(address) = parse_address(w2, "Account address not valid") {
                         return Some(Ctrl::AccountPrint(address));
@@ -90,16 +106,21 @@ impl CtrlCli {
                     let opcode = CTREE[printn][2].1;
                     let memory = CTREE[printn][3].1;
                     if w2 == all {
-                        Some(Ctrl::Print(CtrlPrint::All))
+                        return Some(Ctrl::Print(CtrlPrint::All));
                     } else if w2 == stack {
-                        Some(Ctrl::Print(CtrlPrint::Stack))
+                        return Some(Ctrl::Print(CtrlPrint::Stack));
                     } else if w2 == opcode {
-                        Some(Ctrl::Print(CtrlPrint::Opcode))
+                        return Some(Ctrl::Print(CtrlPrint::Opcode));
                     } else if w2 == memory {
-                        Some(Ctrl::Print(CtrlPrint::Memory))
-                    } else {
-                        None
+                        return Some(Ctrl::Print(CtrlPrint::Memory));
                     }
+                    None
+                } else if w1 == stack.1 {
+                    let pop = CTREE[stack.0][0].1;
+                    if w2 == pop {
+                        return Some(Ctrl::StackPop);
+                    }
+                    None
                 } else {
                     None
                 }
@@ -110,13 +131,22 @@ impl CtrlCli {
                 let w3 = words[2];
                 //account
                 let account = CTREE[0][3].1;
-                //let breakpoint = CTREE[0][4].1;
+                let stack = CTREE[0][8];
 
                 if w1 == account {
                     let original = CTREE[1][0].1;
                     let address = parse_address(w3, "Account address not valid")?;
                     if w2 == original {
                         return Some(Ctrl::AccountPrintOriginal(address));
+                    }
+                } else if w1 == stack.1 {
+                    let pop = CTREE[stack.0][1].1;
+                    if w2 == pop {
+                        if let Some(stack_item) = parse_u256(w3) {
+                            return Some(Ctrl::StackPush(stack_item));
+                        } else {
+                            println!("stack values not valid");
+                        }
                     }
                 }
                 None

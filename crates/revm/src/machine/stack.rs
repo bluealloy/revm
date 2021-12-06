@@ -4,9 +4,27 @@ use primitive_types::{H256, U256};
 pub const STACK_LIMIT: usize = 1024;
 
 /// EVM stack.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct Stack {
     data: Vec<U256>,
+}
+
+use std::fmt::{Display, Error, Formatter};
+impl Display for Stack {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        if self.data.is_empty() {
+            f.write_str("[]")?;
+        } else {
+            f.write_str("[")?;
+            for i in self.data[..self.data.len() - 1].iter() {
+                f.write_str(&i.to_string())?;
+                f.write_str(", ")?;
+            }
+            f.write_str(&self.data.last().unwrap().to_string())?;
+            f.write_str("]")?;
+        }
+        Ok(())
+    }
 }
 
 impl Default for Stack {
