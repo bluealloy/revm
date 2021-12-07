@@ -279,3 +279,36 @@ stack pop
 step
 print all
 step
+exi
+
+step
+step
+print all
+step
+print all
+step
+print all
+stack push 5
+step
+print all
+step
+print all
+stack push 10
+step
+print all
+step
+step
+print all
+step
+print all
+step
+print all
+stack push 0x00
+git status
+stack push 0x0001111000
+stack push 0x1110000001111000
+print all
+step
+step
+print all
+help

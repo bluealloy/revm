@@ -14,12 +14,12 @@ pub enum Ctrl {
     Exit,
     None,
     Step,
-    StepIn,
-    StepOut,
+    //StepIn,
+    //StepOut,
     Continue,
     Restart,
     Help,
-    Breakpoint(H160, usize),
+    //Breakpoint(H160, usize),
     AccountPrint(H160),
     AccountPrintOriginal(H160),
     Print(CtrlPrint),
@@ -113,7 +113,9 @@ impl<DB: Database> Inspector<DB> for Controller {
     ) -> Return {
         loop {
             match Ctrl::next(self.state_machine, &self.history_path) {
-                Ctrl::Help => {}
+                Ctrl::Help => {
+                    println!("available controls: \nstep\nexit\nprint all\nstack pop\nstack push 10\n")
+                }
                 Ctrl::Exit => {
                     self.state_machine = StateMachine::Exit;
                     break;
@@ -122,10 +124,10 @@ impl<DB: Database> Inspector<DB> for Controller {
                     self.state_machine = StateMachine::TriggerStep;
                     break;
                 }
-                Ctrl::StepIn => {}
-                Ctrl::StepOut => {
-                    self.state_machine = StateMachine::StepOut;
-                }
+                //Ctrl::StepIn => {}
+                //Ctrl::StepOut => {
+                //    self.state_machine = StateMachine::StepOut;
+                //}
 
                 Ctrl::Print(print) => match print {
                     CtrlPrint::All => {
@@ -173,11 +175,12 @@ impl<DB: Database> Inspector<DB> for Controller {
                 }
                 Ctrl::Restart => {
                     //data.subroutine.checkpoint_revert(checkpoint)
+                    println!("t:{:?}",StateMachine::StepOut);
                 }
-                Ctrl::Breakpoint(add, pc) => println!(
-                    "Setting breakpoint for contract {} on program counter:{}",
-                    add, pc
-                ),
+                //Ctrl::Breakpoint(add, pc) => println!(
+                //    "Setting breakpoint for contract {} on program counter:{}",
+                //    add, pc
+                //),
                 Ctrl::AccountPrint(address) => {
                     println!("print:{:?}", data.subroutine.state().get(&address))
                 }
