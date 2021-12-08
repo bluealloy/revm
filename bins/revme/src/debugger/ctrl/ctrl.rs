@@ -143,7 +143,7 @@ impl<DB: Database> Inspector<DB> for Controller {
                             "call_depth:{} PC:{} Opcode: {:#x} {:?} gas(spend,remaining):({},{})\n\
                             Stack:{}",
                             machine.call_depth,
-                            machine.program_counter,
+                            machine.program_counter(),
                             opcode,
                             OPCODE_JUMPMAP[opcode as usize].unwrap_or("Invalid"),
                             gas_spend,
@@ -159,11 +159,11 @@ impl<DB: Database> Inspector<DB> for Controller {
                             .unwrap();
                         println!(
                             "PC:{} OpCode: {:#x} {:?}",
-                            machine.program_counter, opcode, OPCODE_JUMPMAP[opcode as usize]
+                            machine.program_counter(), opcode, OPCODE_JUMPMAP[opcode as usize]
                         )
                     }
                     CtrlPrint::Stack => {
-                        println!("PC:{} stack:{}", machine.program_counter, machine.stack())
+                        println!("PC:{} stack:{}", machine.program_counter(), machine.stack())
                     }
                     CtrlPrint::Memory => {
                         println!("memory:{}", hex::encode(&machine.memory.data()))

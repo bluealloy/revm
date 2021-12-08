@@ -75,10 +75,15 @@ pub enum Return {
 
 #[inline(always)]
 pub fn eval<H: Host, S: Spec>(machine: &mut Machine, opcode: u8, host: &mut H) -> Return {
-    // let time = std::time::Instant::now();
-
-    // let ret =
     match opcode {
+        /*12_u8..=15_u8 => Return::OpcodeNotFound,
+        30_u8..=31_u8 => Return::OpcodeNotFound,
+        33_u8..=47_u8 => Return::OpcodeNotFound,
+        73_u8..=79_u8 => Return::OpcodeNotFound,
+        92_u8..=95_u8 => Return::OpcodeNotFound,
+        165_u8..=239_u8 => Return::OpcodeNotFound,
+        246_u8..=249_u8 => Return::OpcodeNotFound,
+        251_u8..=252_u8 => Return::OpcodeNotFound,*/
         opcode::STOP => Return::Stop,
         opcode::ADD => op2_u256_tuple!(machine, overflowing_add, gas::VERYLOW),
         opcode::MUL => op2_u256_tuple!(machine, overflowing_mul, gas::LOW),
@@ -240,9 +245,5 @@ pub fn eval<H: Host, S: Spec>(machine: &mut Machine, opcode: u8, host: &mut H) -
         opcode::STATICCALL => system::call::<H, S>(machine, CallScheme::StaticCall, host), //check
         opcode::CHAINID => system::chainid::<H, S>(machine, host),
         _ => Return::OpcodeNotFound,
-    } //;
-      // let times = &mut machine.times[opcode as usize];
-      // times.0 += time.elapsed();
-      // times.1 += 1;
-      // ret
+    }
 }

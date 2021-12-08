@@ -15,7 +15,7 @@ pub struct Machine {
     /// Contract information and invoking data
     pub contract: Contract,
     /// Program counter.
-    pub program_counter: usize,
+    pub program_counter: *const u8,
     /// Return value.
     pub return_range: Range<usize>,
     /// Memory.
@@ -28,7 +28,6 @@ pub struct Machine {
     pub gas: Gas,
     /// used only for inspector.
     pub call_depth: u64,
-    //pub times: [(std::time::Duration, usize); 256],
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -128,7 +127,7 @@ impl Gas {
 impl Machine {
     pub fn new<SPEC: Spec>(contract: Contract, gas_limit: u64, call_depth: u64) -> Self {
         Self {
-            program_counter: 0,
+            program_counter: contract.code.as_ptr(),
             return_range: Range::default(),
             memory: Memory::new(usize::MAX),
             stack: Stack::new(),
@@ -136,7 +135,6 @@ impl Machine {
             contract,
             gas: Gas::new(gas_limit),
             call_depth,
-            //times: [(std::time::Duration::ZERO, 0); 256],
         }
     }
     pub fn contract(&self) -> &Contract {
@@ -154,37 +152,16 @@ impl Machine {
 
     /// Return a reference of the program counter.
     pub fn program_counter(&self) -> usize {
-        self.program_counter
+        unsafe { self.program_counter.offset_from(self.contract.code.as_ptr()) as usize}
     }
 
     /// loop steps until we are finished with execution
     pub fn run<H: Host, SPEC: Spec>(&mut self, host: &mut H) -> Return {
-        //let timer = std::time::Instant::now();
-        loop {
-            let ret = self.step::<H, SPEC>(host);
-            if Return::Continue != ret {
-                // let elapsed = timer.elapsed();
-                // println!("run took:{:?}", elapsed);
-                // let mut it = self
-                //     .times
-                //     .iter()
-                //     .zip(crate::OPCODE_JUMPMAP.iter())
-                //     .filter(|((time, _), opcode)| opcode.is_some() && !time.is_zero())
-                //     .map(|((dur, num), code)| (code.unwrap(), dur, num, *dur / *num as u32))
-                //     .collect::<Vec<_>>();
-                // it.sort_by(|a, b| a.2.cmp(&b.2));
-                // for i in it {
-                //     println!(
-                //         "code:{:?}   called:{:?}   time:{:?}   avrg:{:?}",
-                //         i.0,
-                //         i.2,
-                //         i.1,
-                //         i.3,
-                //     );
-                // }
-                return ret;
-            }
+        let mut ret = Return::Continue;
+        while ret == Return::Continue {
+            ret = self.step::<H, SPEC>(host);
         }
+        ret
     }
 
     #[inline(always)]
@@ -196,18 +173,17 @@ impl Machine {
                 return ret;
             }
         }
-        // extract next opcode from code
-        let opcode = unsafe { *self.contract.code.get_unchecked(self.program_counter) };
-
-        // evaluate opcode/execute instruction
-        self.program_counter += 1;
+        let opcode = unsafe {*self.program_counter};
+        self.program_counter = unsafe { self.program_counter.offset(1)};
         let eval = eval::<H, SPEC>(self, opcode, host);
+        
         if H::INSPECT {
             let ret = host.step_end(eval, self);
             if ret != Return::Continue {
                 return ret;
             }
         }
+
         eval
     }
 

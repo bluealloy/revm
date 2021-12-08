@@ -77,6 +77,42 @@ impl Stack {
         *self.data.get_unchecked(len)
     }
 
+    #[inline(always)]
+    pub unsafe fn pop2_unsafe(&mut self) -> (U256, U256) {
+        let mut len = self.data.len();
+        len -= 2;
+        self.data.set_len(len);
+        (
+            *self.data.get_unchecked(len + 1),
+            *self.data.get_unchecked(len),
+        )
+    }
+
+    #[inline(always)]
+    pub unsafe fn pop3_unsafe(&mut self) -> (U256, U256, U256) {
+        let mut len = self.data.len();
+        len -= 3;
+        self.data.set_len(len);
+        (
+            *self.data.get_unchecked(len + 2),
+            *self.data.get_unchecked(len + 1),
+            *self.data.get_unchecked(len),
+        )
+    }
+
+    #[inline(always)]
+    pub unsafe fn pop4_unsafe(&mut self) -> (U256, U256, U256, U256) {
+        let mut len = self.data.len();
+        len -= 4;
+        self.data.set_len(len);
+        (
+            *self.data.get_unchecked(len + 3),
+            *self.data.get_unchecked(len + 2),
+            *self.data.get_unchecked(len + 1),
+            *self.data.get_unchecked(len ),
+        )
+    }
+
     #[inline]
     /// Push a new value into the stack. If it will exceed the stack limit,
     /// returns `StackOverflow` error and leaves the stack unchanged.
@@ -120,9 +156,9 @@ impl Stack {
             Return::StackOverflow
         } else {
             unsafe {
+                *self.data.get_unchecked_mut(len) = *self.data.get_unchecked(len - N);
                 let new_len = len + 1;
                 self.data.set_len(new_len);
-                *self.data.get_unchecked_mut(len) = *self.data.get_unchecked(len - N);
             }
             Return::Continue
         }

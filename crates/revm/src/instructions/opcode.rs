@@ -13,6 +13,7 @@ pub const MULMOD: u8 = 0x09;
 pub const EXP: u8 = 0x0a;
 pub const SIGNEXTEND: u8 = 0x0b;
 
+
 pub const LT: u8 = 0x10;
 pub const GT: u8 = 0x11;
 pub const SLT: u8 = 0x12;
@@ -30,6 +31,7 @@ pub const CALLDATASIZE: u8 = 0x36;
 pub const CALLDATACOPY: u8 = 0x37;
 pub const CODESIZE: u8 = 0x38;
 pub const CODECOPY: u8 = 0x39;
+
 pub const SHL: u8 = 0x1b;
 pub const SHR: u8 = 0x1c;
 pub const SAR: u8 = 0x1d;

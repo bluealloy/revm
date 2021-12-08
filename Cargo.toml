@@ -7,3 +7,7 @@ members = [
     "bins/*",
 ]
 default-members = ["crates/revm"]
+
+
+[profile.release]
+debug = true

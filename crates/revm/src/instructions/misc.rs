@@ -135,7 +135,7 @@ pub fn jump(machine: &mut Machine) -> Return {
     let dest = as_usize_or_fail!(dest, Return::InvalidJump);
 
     if machine.contract.is_valid_jump(dest) {
-        machine.program_counter = dest;
+        machine.program_counter = unsafe {machine.contract.code.as_ptr().offset(dest as isize)};
         Return::Continue
     } else {
         Return::InvalidJump
@@ -151,7 +151,7 @@ pub fn jumpi(machine: &mut Machine) -> Return {
     if !value.is_zero() {
         let dest = as_usize_or_fail!(dest, Return::InvalidJump);
         if machine.contract.is_valid_jump(dest) {
-            machine.program_counter = dest;
+            machine.program_counter = unsafe {machine.contract.code.as_ptr().offset(dest as isize)};
             Return::Continue
         } else {
             Return::InvalidJump
@@ -170,7 +170,7 @@ pub fn jumpdest(machine: &mut Machine) -> Return {
 #[inline(always)]
 pub fn pc(machine: &mut Machine) -> Return {
     gas!(machine, gas::BASE);
-    push!(machine, U256::from(machine.program_counter - 1));
+    push!(machine, U256::from(unsafe {*machine.program_counter as u8}));
     Return::Continue
 }
 
@@ -185,10 +185,12 @@ pub fn msize(machine: &mut Machine) -> Return {
 #[inline(always)]
 pub fn push<const N: usize>(machine: &mut Machine) -> Return {
     gas!(machine, gas::VERYLOW);
-    let slice = &machine.contract.code[machine.program_counter..machine.program_counter + N];
 
-    machine.program_counter += N;
-    machine.stack.push_slice::<N>(slice)
+    // increment by one to get start of push data
+    let start = machine.program_counter;
+
+    machine.program_counter = unsafe {machine.program_counter.offset(N as isize)};
+    machine.stack.push_slice::<N>(unsafe {core::slice::from_raw_parts(start,N)})
 }
 
 #[inline(always)]

@@ -123,26 +123,20 @@ macro_rules! pop {
         if $machine.stack.len() < 2 {
             return Return::StackUnderflow;
         }
-        let $x1 = unsafe { $machine.stack.pop_unsafe() };
-        let $x2 = unsafe { $machine.stack.pop_unsafe() };
+        let ($x1, $x2) = unsafe { $machine.stack.pop2_unsafe() };
     };
     ( $machine:expr, $x1:ident, $x2:ident, $x3:ident) => {
         if $machine.stack.len() < 3 {
             return Return::StackUnderflow;
         }
-        let $x1 = unsafe { $machine.stack.pop_unsafe() };
-        let $x2 = unsafe { $machine.stack.pop_unsafe() };
-        let $x3 = unsafe { $machine.stack.pop_unsafe() };
+        let ($x1, $x2, $x3) = unsafe { $machine.stack.pop3_unsafe() };
     };
 
     ( $machine:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident) => {
         if $machine.stack.len() < 4 {
             return Return::StackUnderflow;
         }
-        let $x1 = unsafe { $machine.stack.pop_unsafe() };
-        let $x2 = unsafe { $machine.stack.pop_unsafe() };
-        let $x3 = unsafe { $machine.stack.pop_unsafe() };
-        let $x4 = unsafe { $machine.stack.pop_unsafe() };
+        let ($x1, $x2, $x3, $x4) = unsafe { $machine.stack.pop4_unsafe() };
     };
 }
 
