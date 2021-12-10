@@ -1,6 +1,6 @@
 use crate::{
     instructions::{eval, Return},
-    return_ok, return_revert,
+    return_ok, return_revert, USE_GAS,
 };
 use bytes::Bytes;
 use core::ops::Range;
@@ -150,14 +150,31 @@ impl Machine {
         &self.stack
     }
 
+    #[inline(always)]
+    pub fn add_next_gas_block(&mut self) -> Return {
+        if USE_GAS {
+            if !self
+                .gas
+                .record_cost(self.contract.gas_block(self.program_counter()))
+            {
+                return Return::OutOfGas;
+            }
+        }
+        Return::Continue
+    }
+
     /// Return a reference of the program counter.
     pub fn program_counter(&self) -> usize {
-        unsafe { self.program_counter.offset_from(self.contract.code.as_ptr()) as usize}
+        unsafe {
+            self.program_counter
+                .offset_from(self.contract.code.as_ptr()) as usize
+        }
     }
 
     /// loop steps until we are finished with execution
     pub fn run<H: Host, SPEC: Spec>(&mut self, host: &mut H) -> Return {
         let mut ret = Return::Continue;
+        self.add_next_gas_block();
         while ret == Return::Continue {
             ret = self.step::<H, SPEC>(host);
         }
@@ -173,10 +190,10 @@ impl Machine {
                 return ret;
             }
         }
-        let opcode = unsafe {*self.program_counter};
-        self.program_counter = unsafe { self.program_counter.offset(1)};
+        let opcode = unsafe { *self.program_counter };
+        self.program_counter = unsafe { self.program_counter.offset(1) };
         let eval = eval::<H, SPEC>(self, opcode, host);
-        
+
         if H::INSPECT {
             let ret = host.step_end(eval, self);
             if ret != Return::Continue {
