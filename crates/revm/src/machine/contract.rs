@@ -117,6 +117,10 @@ impl Contract {
         }
         let padding = if is_push_last { i - code.len() } else { 0 };
         jumps.resize(jumps.len() + padding, AnalazisData::none());
+        if jumps.len() == 0 {
+            // for usecase when contract is empty
+            jumps.resize(1,AnalazisData::none());
+        }
         (ValidJumpAddress::new(jumps), padding)
     }
 
