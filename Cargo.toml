@@ -11,3 +11,6 @@ default-members = ["crates/revm"]
 
 [profile.release]
 debug = true
+# codegen-units = 1
+# lto = "fat"
+# panic = "abort" 

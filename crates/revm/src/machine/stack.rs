@@ -59,6 +59,17 @@ impl Stack {
         &self.data
     }
 
+    pub fn reduce_one(&mut self) -> Return {
+        let len = self.data.len();
+        if len < 1 {
+            return Return::StackUnderflow;
+        }
+        unsafe {
+            self.data.set_len(len - 1);
+        }
+        Return::Continue
+    }
+
     #[inline]
     /// Pop a value from the stack. If the stack is already empty, returns the
     /// `StackUnderflow` error.
@@ -109,7 +120,7 @@ impl Stack {
             *self.data.get_unchecked(len + 3),
             *self.data.get_unchecked(len + 2),
             *self.data.get_unchecked(len + 1),
-            *self.data.get_unchecked(len ),
+            *self.data.get_unchecked(len),
         )
     }
 

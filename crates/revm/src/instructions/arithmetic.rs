@@ -9,7 +9,10 @@ pub fn div(op1: U256, op2: U256) -> U256 {
     if op2.is_zero() {
         U256::zero()
     } else {
-        op1 / op2
+        //op1 / op2
+        let first = zkp_u256::U256::from_limbs(op1.0);
+        let second = zkp_u256::U256::from_limbs(op2.0);
+        U256(*(first/second).as_limbs())
     }
 }
 

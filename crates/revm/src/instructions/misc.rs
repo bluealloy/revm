@@ -2,7 +2,7 @@ use super::gas;
 use crate::{machine::Machine, util, Return, Spec, SpecId::*};
 use primitive_types::{H256, U256};
 
-#[inline(always)]
+#[inline]
 pub fn codesize(machine: &mut Machine) -> Return {
     //gas!(machine, gas::BASE);
     let size = U256::from(machine.contract.code_size);
@@ -10,7 +10,7 @@ pub fn codesize(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-#[inline(always)]
+#[inline]
 pub fn codecopy(machine: &mut Machine) -> Return {
     pop!(machine, memory_offset, code_offset, len);
     gas_or_fail!(machine, gas::verylowcopy_cost(len));
@@ -29,7 +29,7 @@ pub fn codecopy(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-#[inline(always)]
+#[inline]
 pub fn calldataload(machine: &mut Machine) -> Return {
     //gas!(machine, gas::VERYLOW);
 
@@ -52,7 +52,7 @@ pub fn calldataload(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-#[inline(always)]
+#[inline]
 pub fn calldatasize(machine: &mut Machine) -> Return {
     //gas!(machine, gas::BASE);
 
@@ -61,7 +61,7 @@ pub fn calldatasize(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-#[inline(always)]
+#[inline]
 pub fn calldatacopy(machine: &mut Machine) -> Return {
     pop!(machine, memory_offset, data_offset, len);
     gas_or_fail!(machine, gas::verylowcopy_cost(len));
@@ -82,11 +82,9 @@ pub fn calldatacopy(machine: &mut Machine) -> Return {
 #[inline(always)]
 pub fn pop(machine: &mut Machine) -> Return {
     //gas!(machine, gas::BASE);
-    pop!(machine, _val);
-    Return::Continue
+    machine.stack.reduce_one()
 }
 
-#[inline(always)]
 pub fn mload(machine: &mut Machine) -> Return {
     //gas!(machine, gas::VERYLOW);
     pop!(machine, index);
@@ -100,12 +98,11 @@ pub fn mload(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-#[inline(always)]
+#[inline]
 pub fn mstore(machine: &mut Machine) -> Return {
     //gas!(machine, gas::VERYLOW);
 
-    pop!(machine, index);
-    pop!(machine, value);
+    pop!(machine, index,value);
 
     let index = as_usize_or_fail!(index, Return::OutOfGas);
     memory_resize!(machine, index, 32);
@@ -113,7 +110,7 @@ pub fn mstore(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-#[inline(always)]
+#[inline]
 pub fn mstore8(machine: &mut Machine) -> Return {
     //gas!(machine, gas::VERYLOW);
 
@@ -127,7 +124,7 @@ pub fn mstore8(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-#[inline(always)]
+#[inline]
 pub fn jump(machine: &mut Machine) -> Return {
     //gas!(machine, gas::MID);
 
@@ -142,7 +139,7 @@ pub fn jump(machine: &mut Machine) -> Return {
     }
 }
 
-#[inline(always)]
+#[inline]
 pub fn jumpi(machine: &mut Machine) -> Return {
     //gas!(machine, gas::HIGH);
 
@@ -161,20 +158,20 @@ pub fn jumpi(machine: &mut Machine) -> Return {
     }
 }
 
-#[inline(always)]
+#[inline]
 pub fn jumpdest(machine: &mut Machine) -> Return {
     gas!(machine, gas::JUMPDEST);
     machine.add_next_gas_block()
 }
 
-#[inline(always)]
+#[inline]
 pub fn pc(machine: &mut Machine) -> Return {
     //gas!(machine, gas::BASE);
     push!(machine, U256::from(machine.program_counter()-1));
     Return::Continue
 }
 
-#[inline(always)]
+#[inline]
 pub fn msize(machine: &mut Machine) -> Return {
     //gas!(machine, gas::BASE);
     push!(machine, U256::from(machine.memory.effective_len()));
@@ -182,7 +179,7 @@ pub fn msize(machine: &mut Machine) -> Return {
 }
 
 // code padding is needed for contracts
-#[inline(always)]
+#[inline]
 pub fn push<const N: usize>(machine: &mut Machine) -> Return {
     //gas!(machine, gas::VERYLOW);
 
@@ -191,20 +188,19 @@ pub fn push<const N: usize>(machine: &mut Machine) -> Return {
     machine.stack.push_slice::<N>(unsafe {core::slice::from_raw_parts(start,N)})
 }
 
-#[inline(always)]
+#[inline]
 pub fn dup<const N: usize>(machine: &mut Machine) -> Return {
-    gas!(machine, gas::VERYLOW);
-
+    //gas!(machine, gas::VERYLOW);
     machine.stack.dup::<N>()
 }
 
-#[inline(always)]
+#[inline]
 pub fn swap<const N: usize>(machine: &mut Machine) -> Return {
-    gas!(machine, gas::VERYLOW);
+    //gas!(machine, gas::VERYLOW);
     machine.stack.swap::<N>()
 }
 
-#[inline(always)]
+#[inline]
 pub fn ret(machine: &mut Machine) -> Return {
     // zero gas cost gas!(machine,gas::ZERO);
     pop!(machine, start, len);
@@ -219,7 +215,7 @@ pub fn ret(machine: &mut Machine) -> Return {
     Return::Return
 }
 
-#[inline(always)]
+
 pub fn revert<SPEC: Spec>(machine: &mut Machine) -> Return {
     check!(SPEC::enabled(BYZANTINE)); // EIP-140: REVERT instruction
                                       // zero gas cost gas!(machine,gas::ZERO);

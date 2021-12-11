@@ -49,22 +49,24 @@ macro_rules! gas_or_fail {
 macro_rules! memory_resize {
     ($machine:expr, $offset:expr, $len:expr) => {{
         let len: usize = $len;
-        if len != 0 {
-            let offset: usize = $offset;
-            if let Some(new_size) =
-                crate::machine::memory::next_multiple_of_32(offset.saturating_add(len))
-            {
-                let num_bytes = new_size / 32;
-                if !$machine
-                    .gas
-                    .record_memory(crate::instructions::gas::memory_gas(num_bytes))
-                {
-                    return Return::OutOfGas;
+        let offset: usize = $offset;
+        if let Some(new_size) =
+            crate::machine::memory::next_multiple_of_32(offset.saturating_add(len))
+        {
+            if new_size > $machine.memory.len() {
+                if crate::USE_GAS {
+                    let num_bytes = new_size / 32;
+                    if !$machine
+                        .gas
+                        .record_memory(crate::instructions::gas::memory_gas(num_bytes))
+                    {
+                        return Return::OutOfGas;
+                    }
                 }
                 $machine.memory.resize(new_size);
-            } else {
-                return Return::OutOfGas;
             }
+        } else {
+            return Return::OutOfGas;
         }
     }};
 }

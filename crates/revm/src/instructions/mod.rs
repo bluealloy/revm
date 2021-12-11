@@ -75,6 +75,8 @@ pub enum Return {
 
 #[inline(always)]
 pub fn eval<H: Host, S: Spec>(machine: &mut Machine, opcode: u8, host: &mut H) -> Return {
+    // let times = &mut machine.times[opcode as usize];
+    // times.1 += 1;
     match opcode {
         /*12_u8..=15_u8 => Return::OpcodeNotFound,
         30_u8..=31_u8 => Return::OpcodeNotFound,
@@ -123,7 +125,7 @@ pub fn eval<H: Host, S: Spec>(machine: &mut Machine, opcode: u8, host: &mut H) -
             S::enabled(CONSTANTINOPLE) // EIP-145: Bitwise shifting instructions in EVM
         ),
         opcode::SHA3 => system::sha3(machine),
-        
+
         opcode::ADDRESS => system::address(machine),
         opcode::BALANCE => system::balance::<H, S>(machine, host),
         opcode::SELFBALANCE => system::selfbalance::<H, S>(machine, host),
