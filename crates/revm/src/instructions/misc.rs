@@ -170,7 +170,7 @@ pub fn jumpdest(machine: &mut Machine) -> Return {
 #[inline(always)]
 pub fn pc(machine: &mut Machine) -> Return {
     gas!(machine, gas::BASE);
-    push!(machine, U256::from(unsafe {*machine.program_counter as u8}));
+    push!(machine, U256::from(machine.program_counter()-1));
     Return::Continue
 }
 
