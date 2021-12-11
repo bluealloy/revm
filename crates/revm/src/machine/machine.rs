@@ -28,7 +28,7 @@ pub struct Machine {
     pub gas: Gas,
     /// used only for inspector.
     pub call_depth: u64,
-    pub times: [(std::time::Duration, usize); 256],
+    //pub times: [(std::time::Duration, usize); 256],
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -136,7 +136,7 @@ impl Machine {
             contract,
             gas: Gas::new(gas_limit),
             call_depth,
-            times: [(std::time::Duration::ZERO, 0); 256],
+            //times: [(std::time::Duration::ZERO, 0); 256],
         }
     }
     pub fn contract(&self) -> &Contract {
@@ -153,12 +153,10 @@ impl Machine {
     }
 
     #[inline(always)]
-    pub fn add_next_gas_block(&mut self) -> Return {
+    pub fn add_next_gas_block(&mut self, pc: usize) -> Return {
         if USE_GAS {
-            if !self
-                .gas
-                .record_cost(self.contract.gas_block(self.program_counter()))
-            {
+            let gas_block = self.contract.gas_block(pc);
+            if !self.gas.record_cost(gas_block) {
                 return Return::OutOfGas;
             }
         }
@@ -175,9 +173,14 @@ impl Machine {
 
     /// loop steps until we are finished with execution
     pub fn run<H: Host, SPEC: Spec>(&mut self, host: &mut H) -> Return {
-        let timer = std::time::Instant::now();
+        //let timer = std::time::Instant::now();
         let mut ret = Return::Continue;
-        self.add_next_gas_block();
+        // add first gas_block
+        if USE_GAS {
+            if !self.gas.record_cost(self.contract.first_gas_block()) {
+                return Return::OutOfGas;
+            }
+        }
         while ret == Return::Continue {
             // step
             if H::INSPECT {
@@ -189,7 +192,7 @@ impl Machine {
             let opcode = unsafe { *self.program_counter };
             self.program_counter = unsafe { self.program_counter.offset(1) };
             ret = eval::<H, SPEC>(self, opcode, host);
-    
+
             if H::INSPECT {
                 let ret = host.step_end(ret, self);
                 if ret != Return::Continue {
@@ -197,22 +200,22 @@ impl Machine {
                 }
             }
         }
-        let elapsed = timer.elapsed();
-        println!("run took:{:?}", elapsed);
-        let mut it = self
-            .times
-            .iter()
-            .zip(crate::OPCODE_JUMPMAP.iter())
-            .filter(|((_, num), opcode)| opcode.is_some() && *num != 0)
-            .map(|((dur, num), code)| (code.unwrap(), dur, num, *dur / *num as u32))
-            .collect::<Vec<_>>();
-        it.sort_by(|a, b| a.2.cmp(&b.2));
-        for i in it {
-            println!(
-                "code:{:?}   called:{:?}   time:{:?}   avrg:{:?}",
-                i.0, i.2, i.1, i.3,
-            );
-        }
+        // let elapsed = timer.elapsed();
+        // println!("run took:{:?}", elapsed);
+        // let mut it = self
+        //     .times
+        //     .iter()
+        //     .zip(crate::OPCODE_JUMPMAP.iter())
+        //     .filter(|((_, num), opcode)| opcode.is_some() && *num != 0)
+        //     .map(|((dur, num), code)| (code.unwrap(), dur, num, *dur / *num as u32))
+        //     .collect::<Vec<_>>();
+        // it.sort_by(|a, b| a.2.cmp(&b.2));
+        // for i in it {
+        //     println!(
+        //         "code:{:?}   called:{:?}   time:{:?}   avrg:{:?}",
+        //         i.0, i.2, i.1, i.3,
+        //     );
+        // }
         ret
     }
 

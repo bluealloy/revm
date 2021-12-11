@@ -300,7 +300,7 @@ pub fn gas(machine: &mut Machine) -> Return {
     //gas!(machine, gas::BASE);
 
     push!(machine, U256::from(machine.gas.remaining()));
-    machine.add_next_gas_block()
+    machine.add_next_gas_block(machine.program_counter()-1)
 }
 
 #[inline]
@@ -398,16 +398,6 @@ pub fn create<H: Host, SPEC: Spec>(
     let gas_limit = try_or_fail!(gas_call_l64_after::<SPEC>(machine));
     gas!(machine, gas_limit);
 
-    // inspect!(
-    //     Host,
-    //     create,
-    //     machine.contract.address,
-    //     &scheme,
-    //     value,
-    //     &code,
-    //     gas_limit
-    // );
-
     let (reason, address, gas, return_data) =
         host.create::<SPEC>(machine.contract.address, scheme, value, code, gas_limit);
     machine.return_data_buffer = return_data;
@@ -422,7 +412,7 @@ pub fn create<H: Host, SPEC: Spec>(
     machine.gas.reimburse_unspend(&reason, gas);
     match reason {
         Return::FatalNotSupported => Return::FatalNotSupported,
-        _ => machine.add_next_gas_block(),
+        _ => machine.add_next_gas_block(machine.program_counter()-1),
     }
 }
 
@@ -576,5 +566,5 @@ pub fn call<H: Host, SPEC: Spec>(
             push!(machine, U256::zero());
         }
     }
-    machine.add_next_gas_block()
+    machine.add_next_gas_block(machine.program_counter()-1)
 }

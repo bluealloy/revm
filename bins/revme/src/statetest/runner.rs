@@ -152,7 +152,7 @@ pub fn execute_test_suit(path: &PathBuf, elapsed: &Arc<Mutex<Duration>>) -> Resu
         for (spec_name, tests) in unit.post {
             if !matches!(
                 spec_name,
-                SpecName::London | SpecName::Berlin | SpecName::Istanbul
+                SpecName::London// | SpecName::Berlin | SpecName::Istanbul
             ) {
                 continue;
             }

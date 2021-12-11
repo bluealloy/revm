@@ -154,14 +154,15 @@ pub fn jumpi(machine: &mut Machine) -> Return {
             Return::InvalidJump
         }
     } else {
-        machine.add_next_gas_block()
+        // if we are not doing jump, add next gas block.
+        machine.add_next_gas_block(machine.program_counter()-1)
     }
 }
 
 #[inline]
 pub fn jumpdest(machine: &mut Machine) -> Return {
-    gas!(machine, gas::JUMPDEST);
-    machine.add_next_gas_block()
+    //gas!(machine, gas::JUMPDEST);
+    machine.add_next_gas_block(machine.program_counter()-1)
 }
 
 #[inline]

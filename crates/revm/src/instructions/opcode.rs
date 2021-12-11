@@ -210,7 +210,7 @@ impl OpInfo {
     }
 }
 
-pub fn OPCODE_INFO/*<SPEC: Spec>*/() -> &'static [OpInfo; 256] {
+pub fn opcode_info/*<SPEC: Spec>*/() -> &'static [OpInfo; 256] {
     const OUT : [OpInfo;256] = [
         /* 0x00  STOP */ OpInfo::gas_block_end(0),
         /* 0x01  ADD */ OpInfo::gas(gas::VERYLOW),
@@ -333,7 +333,7 @@ pub fn OPCODE_INFO/*<SPEC: Spec>*/() -> &'static [OpInfo; 256] {
         /* 0x58  PC */ OpInfo::gas(gas::BASE),
         /* 0x59  MSIZE */ OpInfo::gas(gas::BASE),
         /* 0x5a  GAS */ OpInfo::gas_block_end(gas::BASE),
-        /* 0x5b  JUMPDEST */ OpInfo::gas_block_end(0),//gas::JUMPDEST),
+        /* 0x5b  JUMPDEST */ OpInfo::gas_block_end(gas::JUMPDEST),//gas::JUMPDEST gas is calculated in function call,
         /* 0x5c */ OpInfo::none(),
         /* 0x5d */ OpInfo::none(),
         /* 0x5e */ OpInfo::none(),
