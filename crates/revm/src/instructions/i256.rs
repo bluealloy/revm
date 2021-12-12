@@ -76,8 +76,49 @@ pub fn i256_cmp(mut first: U256, mut second: U256) -> Ordering {
     }
 }
 
+mod zkp_u256 {
+    use core::convert::TryFrom;
+
+    #[inline]
+    const fn val_2(lo: u64, hi: u64) -> u128 {
+        ((hi as u128) << 64) | (lo as u128)
+    }
+
+    #[inline]
+    const fn mul_2(a: u64, b: u64) -> u128 {
+        (a as u128) * (b as u128)
+    }
+
+    /// Compute <hi, lo> / d, returning the quotient and the remainder.
+    // TODO: Make sure it uses divq on x86_64.
+    // See http://lists.llvm.org/pipermail/llvm-dev/2017-October/118323.html
+    // (Note that we require d > hi for this)
+    // TODO: If divq is not supported, use a fast software implementation:
+    // See https://gmplib.org/~tege/division-paper.pdf
+    #[inline]
+    pub fn divrem_2by1(lo: u64, hi: u64, d: u64) -> (u64, u64) {
+        debug_assert!(d > 0);
+        debug_assert!(d > hi);
+        let d = u128::from(d);
+        let n = val_2(lo, hi);
+        let q = n / d;
+        let r = n % d;
+        debug_assert!(q < val_2(0, 1));
+        debug_assert!(
+            mul_2(u64::try_from(q).unwrap(), u64::try_from(d).unwrap())
+                + val_2(u64::try_from(r).unwrap(), 0)
+                == val_2(lo, hi)
+        );
+        debug_assert!(r < d);
+        // There should not be any truncation.
+        #[allow(clippy::cast_possible_truncation)]
+        (q as u64, r as u64)
+    }
+}
+
 mod div_u256 {
     use super::*;
+    use super::zkp_u256::divrem_2by1;
 
     const WORD_BITS: usize = 64;
     /// Returns a pair `(self / other, self % other)`.
@@ -87,7 +128,6 @@ mod div_u256 {
     /// Panics if `other` is zero.
     #[inline(always)]
     pub fn div_mod(me: U256, other: U256) -> (U256, U256) {
-
         let my_bits = me.bits();
         let your_bits = other.bits();
 
@@ -331,7 +371,8 @@ mod div_u256 {
 
     #[inline(always)]
     fn div_mod_word(hi: u64, lo: u64, y: u64) -> (u64, u64) {
-        debug_assert!(hi < y);
+        divrem_2by1(lo,hi,y)
+        /*debug_assert!(hi < y);
         // NOTE: this is slow (__udivti3)
         // let x = (u128::from(hi) << 64) + u128::from(lo);
         // let d = u128::from(d);
@@ -375,6 +416,7 @@ mod div_u256 {
             .wrapping_add(un0)
             .wrapping_sub(y.wrapping_mul(q0));
         (q1 * TWO32 + q0, rem >> s)
+        */
     }
 }
 
@@ -390,18 +432,18 @@ pub fn i256_div(mut first: U256, mut second: U256) -> U256 {
     }
 
     //use crypto_bigint::U256 as fastU256;
-   // let ff = fastU256::from(first.0);
+    // let ff = fastU256::from(first.0);
     //let sf = fastU256::from(second.0);
 
     //let d = ff.checked_div(&sf).unwrap();
     //let mut d: U256 = U256(d.to_uint_array());
 
     //let mut d = first/second;
-    //let mut d = div_u256::div_mod(first,second).0;
+    let mut d = div_u256::div_mod(first, second).0;
 
-    let first = zkp_u256::U256::from_limbs(first.0);
-    let second = zkp_u256::U256::from_limbs(second.0);
-    let mut d = U256(*(first/second).as_limbs());
+    //let first = zkp_u256::U256::from_limbs(first.0);
+    //let second = zkp_u256::U256::from_limbs(second.0);
+    //let mut d = U256(*(first/second).as_limbs());
 
     u256_remove_sign(&mut d);
     //set sign bit to zero
@@ -476,20 +518,18 @@ mod tests {
         assert_eq!(i256_div(one_hundred, two), fifty);
     }
 
-
     #[test]
     fn benchmark_div() {
         use super::*;
 
-        let mut f = U256([1,100,1,1]);
-        let mut s = U256([0,0,10,0]);
+        let mut f = U256([1, 100, 1, 1]);
+        let mut s = U256([0, 0, 10, 0]);
 
         let time = std::time::Instant::now();
         for i in 0..1_000_000 {
             f.0[1] = i;
-            s.0[3] = div_u256::div_mod(f,s).0.0[3];
+            s.0[3] = div_u256::div_mod(f, s).0 .0[3];
         }
-        println!("TIME:{:?}",time.elapsed());
-
+        println!("TIME:{:?}", time.elapsed());
     }
 }
