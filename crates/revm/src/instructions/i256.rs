@@ -76,8 +76,9 @@ pub fn i256_cmp(mut first: U256, mut second: U256) -> Ordering {
     }
 }
 
-mod zkp_u256 {
+pub mod inner_zkp_u256 {
     use core::convert::TryFrom;
+    use zkp_u256::U256;
 
     #[inline]
     const fn val_2(lo: u64, hi: u64) -> u128 {
@@ -114,11 +115,184 @@ mod zkp_u256 {
         #[allow(clippy::cast_possible_truncation)]
         (q as u64, r as u64)
     }
+
+    #[inline]
+    pub fn div_rem(lhs: &[u64;4], rhs: &[u64;4]) -> [u64;4] {
+        let mut numerator = [lhs[0], lhs[1], lhs[2], lhs[3], 0];
+        if rhs[3] > 0 {
+            // divrem_nby4
+            divrem_nbym(&mut numerator, &mut [
+                rhs[0],
+                rhs[1],
+                rhs[2],
+                rhs[3],
+            ]);
+            [numerator[0], numerator[1], numerator[2], numerator[3]]
+        } else if rhs[2] > 0 {
+            // divrem_nby3
+            divrem_nbym(&mut numerator, &mut [rhs[0], rhs[1], rhs[2]]);
+            [numerator[0], numerator[1], numerator[2], 0]
+        } else if rhs[1] > 0 {
+            // divrem_nby2
+            divrem_nbym(&mut numerator, &mut [rhs[0], rhs[1]]);
+            [numerator[2], numerator[3], numerator[4], 0]
+        } else  { //if rhs[0] > 0
+            divrem_nby1(&mut numerator, rhs[0]);
+            [numerator[0], numerator[1], numerator[2], numerator[3]]
+        }
+    }
+
+    pub(crate) fn divrem_nby1(numerator: &mut [u64], divisor: u64) -> u64 {
+        debug_assert!(divisor > 0);
+        let mut remainder = 0;
+        for i in (0..numerator.len()).rev() {
+            let (ni, ri) = divrem_2by1(numerator[i], remainder, divisor);
+            numerator[i] = ni;
+            remainder = ri;
+        }
+        remainder
+    }
+
+    //      |  n2 n1 n0  |
+    //  q = |  --------  |
+    //      |_    d1 d0 _|
+    fn div_3by2(n: &[u64; 3], d: &[u64; 2]) -> u64 {
+        // The highest bit of d needs to be set
+        debug_assert!(d[1] >> 63 == 1);
+
+        // The quotient needs to fit u64. For this we need [n2 n1] < [d1 d0]
+        debug_assert!(val_2(n[1], n[2]) < val_2(d[0], d[1]));
+
+        if n[2] == d[1] {
+            // From [n2 n1] < [d1 d0] and n2 = d1 it follows that n[1] < d[0].
+            debug_assert!(n[1] < d[0]);
+            // We start by subtracting 2^64 times the divisor, resulting in a
+            // negative remainder. Depending on the result, we need to add back
+            // in one or two times the divisor to make the remainder positive.
+            // (It can not be more since the divisor is > 2^127 and the negated
+            // remainder is < 2^128.)
+            let neg_remainder = val_2(0, d[0]) - val_2(n[0], n[1]);
+            if neg_remainder > val_2(d[0], d[1]) {
+                0xffff_ffff_ffff_fffe_u64
+            } else {
+                0xffff_ffff_ffff_ffff_u64
+            }
+        } else {
+            // Compute quotient and remainder
+            let (mut q, mut r) = divrem_2by1(n[1], n[2], d[1]);
+
+            if mul_2(q, d[0]) > val_2(n[0], r) {
+                q -= 1;
+                r = r.wrapping_add(d[1]);
+                let overflow = r < d[1];
+                if !overflow && mul_2(q, d[0]) > val_2(n[0], r) {
+                    q -= 1;
+                    // UNUSED: r += d[1];
+                }
+            }
+            q
+        }
+    }
+
+    pub(crate) fn divrem_nbym(numerator: &mut [u64], divisor: &mut [u64]) {
+        debug_assert!(divisor.len() >= 2);
+        debug_assert!(numerator.len() > divisor.len());
+        debug_assert!(*divisor.last().unwrap() > 0);
+        debug_assert!(*numerator.last().unwrap() == 0);
+        // OPT: Once const generics are in, unroll for lengths.
+        // OPT: We can use macro generated specializations till then.
+        let n = divisor.len();
+        let m = numerator.len() - n - 1;
+    
+        // D1. Normalize.
+        let shift = divisor[n - 1].leading_zeros();
+        if shift > 0 {
+            numerator[n + m] = numerator[n + m - 1] >> (64 - shift);
+            for i in (1..n + m).rev() {
+                numerator[i] <<= shift;
+                numerator[i] |= numerator[i - 1] >> (64 - shift);
+            }
+            numerator[0] <<= shift;
+            for i in (1..n).rev() {
+                divisor[i] <<= shift;
+                divisor[i] |= divisor[i - 1] >> (64 - shift);
+            }
+            divisor[0] <<= shift;
+        }
+    
+        // D2. Loop over quotient digits
+        for j in (0..=m).rev() {
+            // D3. Calculate approximate quotient word
+            let mut qhat = div_3by2(
+                &[numerator[j + n - 2], numerator[j + n - 1], numerator[j + n]],
+                &[divisor[n - 2], divisor[n - 1]],
+            );
+    
+            // D4. Multiply and subtract.
+            let mut borrow = 0;
+            for i in 0..n {
+                let (a, b) = msb(numerator[j + i], qhat, divisor[i], borrow);
+                numerator[j + i] = a;
+                borrow = b;
+            }
+    
+            // D5. Test remainder for negative result.
+            if numerator[j + n] < borrow {
+                // D6. Add back. (happens rarely)
+                let mut carry = 0;
+                for i in 0..n {
+                    let (a, b) = adc(numerator[j + i], divisor[i], carry);
+                    numerator[j + i] = a;
+                    carry = b;
+                }
+                qhat -= 1;
+                // The updated value of numerator[j + n] would be 0. But since we're going to
+                // overwrite it below, we only check that the result would be 0.
+                debug_assert_eq!(numerator[j + n].wrapping_sub(borrow).wrapping_add(carry), 0);
+            } else {
+                // This the would be the updated value when the remainder is non-negative.
+                debug_assert_eq!(numerator[j + n].wrapping_sub(borrow), 0);
+            }
+    
+            // Store remainder in the unused bits of numerator
+            numerator[j + n] = qhat;
+        }
+    
+        // D8. Unnormalize.
+        if shift > 0 {
+            // Make sure to only normalize the remainder part, the quotient
+            // is already normalized.
+            for i in 0..(n - 1) {
+                numerator[i] >>= shift;
+                numerator[i] |= numerator[i + 1] << (64 - shift);
+            }
+            numerator[n - 1] >>= shift;
+        }
+    }
+
+    /// Compute a + b + carry, returning the result and the new carry over.
+    #[inline(always)]
+    pub const fn adc(a: u64, b: u64, carry: u64) -> (u64, u64) {
+        let ret = (a as u128) + (b as u128) + (carry as u128);
+        // We want truncation here
+        #[allow(clippy::cast_possible_truncation)]
+        (ret as u64, (ret >> 64) as u64)
+    }
+
+    /// Compute a - (b * c + borrow), returning the result and the new borrow.
+    #[inline(always)]
+    pub const fn msb(a: u64, b: u64, c: u64, borrow: u64) -> (u64, u64) {
+        let ret = (a as u128).wrapping_sub((b as u128) * (c as u128) + (borrow as u128));
+        // TODO: Why is this wrapping_sub required?
+        // We want truncation here
+        #[allow(clippy::cast_possible_truncation)]
+        (ret as u64, 0_u64.wrapping_sub((ret >> 64) as u64))
+    }
 }
 
-mod div_u256 {
+pub mod div_u256 {
+    use super::inner_zkp_u256::divrem_2by1;
     use super::*;
-    use super::zkp_u256::divrem_2by1;
 
     const WORD_BITS: usize = 64;
     /// Returns a pair `(self / other, self % other)`.
@@ -371,12 +545,13 @@ mod div_u256 {
 
     #[inline(always)]
     fn div_mod_word(hi: u64, lo: u64, y: u64) -> (u64, u64) {
-        divrem_2by1(lo,hi,y)
-        /*debug_assert!(hi < y);
-        // NOTE: this is slow (__udivti3)
-        // let x = (u128::from(hi) << 64) + u128::from(lo);
-        // let d = u128::from(d);
-        // ((x / d) as u64, (x % d) as u64)
+        //divrem_2by1(lo,hi,y)
+        debug_assert!(hi < y);
+        //NOTE: this is slow (__udivti3)
+        let x = (u128::from(hi) << 64) + u128::from(lo);
+        let d = u128::from(y);
+        ((x / d) as u64, (x % d) as u64)
+        /*
         // TODO: look at https://gmplib.org/~tege/division-paper.pdf
         const TWO32: u64 = 1 << 32;
         let s = y.leading_zeros();
@@ -440,10 +615,11 @@ pub fn i256_div(mut first: U256, mut second: U256) -> U256 {
 
     //let mut d = first/second;
     let mut d = div_u256::div_mod(first, second).0;
+    //let mut d = U256(inner_zkp_u256::div_rem(&first.0, &second.0));
 
     //let first = zkp_u256::U256::from_limbs(first.0);
     //let second = zkp_u256::U256::from_limbs(second.0);
-    //let mut d = U256(*(first/second).as_limbs());
+    //let mut d = U256(*(first / second).as_limbs());
 
     u256_remove_sign(&mut d);
     //set sign bit to zero
