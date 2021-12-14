@@ -102,7 +102,7 @@ pub fn mload(machine: &mut Machine) -> Return {
 pub fn mstore(machine: &mut Machine) -> Return {
     //gas!(machine, gas::VERYLOW);
 
-    pop!(machine, index,value);
+    pop!(machine, index, value);
 
     let index = as_usize_or_fail!(index, Return::OutOfGas);
     memory_resize!(machine, index, 32);
@@ -132,7 +132,7 @@ pub fn jump(machine: &mut Machine) -> Return {
     let dest = as_usize_or_fail!(dest, Return::InvalidJump);
 
     if machine.contract.is_valid_jump(dest) {
-        machine.program_counter = unsafe {machine.contract.code.as_ptr().offset(dest as isize)};
+        machine.program_counter = unsafe { machine.contract.code.as_ptr().offset(dest as isize) };
         Return::Continue
     } else {
         Return::InvalidJump
@@ -148,27 +148,28 @@ pub fn jumpi(machine: &mut Machine) -> Return {
     if !value.is_zero() {
         let dest = as_usize_or_fail!(dest, Return::InvalidJump);
         if machine.contract.is_valid_jump(dest) {
-            machine.program_counter = unsafe {machine.contract.code.as_ptr().offset(dest as isize)};
+            machine.program_counter =
+                unsafe { machine.contract.code.as_ptr().offset(dest as isize) };
             Return::Continue
         } else {
             Return::InvalidJump
         }
     } else {
         // if we are not doing jump, add next gas block.
-        machine.add_next_gas_block(machine.program_counter()-1)
+        machine.add_next_gas_block(machine.program_counter() - 1)
     }
 }
 
 #[inline]
 pub fn jumpdest(machine: &mut Machine) -> Return {
     //gas!(machine, gas::JUMPDEST);
-    machine.add_next_gas_block(machine.program_counter()-1)
+    machine.add_next_gas_block(machine.program_counter() - 1)
 }
 
 #[inline]
 pub fn pc(machine: &mut Machine) -> Return {
     //gas!(machine, gas::BASE);
-    push!(machine, U256::from(machine.program_counter()-1));
+    push!(machine, U256::from(machine.program_counter() - 1));
     Return::Continue
 }
 
@@ -185,8 +186,11 @@ pub fn push<const N: usize>(machine: &mut Machine) -> Return {
     //gas!(machine, gas::VERYLOW);
 
     let start = machine.program_counter;
-    machine.program_counter = unsafe {machine.program_counter.offset(N as isize)};
-    machine.stack.push_slice::<N>(unsafe {core::slice::from_raw_parts(start,N)})
+    let ret = machine
+        .stack
+        .push_slice::<N>(unsafe { core::slice::from_raw_parts(start, N) });
+    machine.program_counter = unsafe { machine.program_counter.offset(N as isize) };
+    ret
 }
 
 #[inline]
@@ -215,7 +219,6 @@ pub fn ret(machine: &mut Machine) -> Return {
     }
     Return::Return
 }
-
 
 pub fn revert<SPEC: Spec>(machine: &mut Machine) -> Return {
     check!(SPEC::enabled(BYZANTINE)); // EIP-140: REVERT instruction

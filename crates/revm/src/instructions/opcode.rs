@@ -15,7 +15,6 @@ pub const MULMOD: u8 = 0x09;
 pub const EXP: u8 = 0x0a;
 pub const SIGNEXTEND: u8 = 0x0b;
 
-
 pub const LT: u8 = 0x10;
 pub const GT: u8 = 0x11;
 pub const SLT: u8 = 0x12;
@@ -210,8 +209,8 @@ impl OpInfo {
     }
 }
 
-pub fn opcode_info/*<SPEC: Spec>*/() -> &'static [OpInfo; 256] {
-    const OUT : [OpInfo;256] = [
+pub fn opcode_info() -> &'static [OpInfo; 256] {
+    const OUT: [OpInfo; 256] = [
         /* 0x00  STOP */ OpInfo::gas_block_end(0),
         /* 0x01  ADD */ OpInfo::gas(gas::VERYLOW),
         /* 0x02  MUL */ OpInfo::gas(gas::LOW),
@@ -240,23 +239,26 @@ pub fn opcode_info/*<SPEC: Spec>*/() -> &'static [OpInfo; 256] {
         /* 0x19  NOT */ OpInfo::gas(gas::VERYLOW),
         /* 0x1a  BYTE */ OpInfo::gas(gas::VERYLOW),
         /* 0x1b  SHL */
-        OpInfo::gas(/*if SPEC::enabled(SpecId::CONSTANTINOPLE) {*/
-            gas::VERYLOW
-        /*} else {
-            0
-        }*/),
+        OpInfo::gas(
+            /*if SPEC::enabled(SpecId::CONSTANTINOPLE) {*/
+            gas::VERYLOW, /*} else {
+                              0
+                          }*/
+        ),
         /* 0x1c  SHR */
-        OpInfo::gas(/*if SPEC::enabled(SpecId::CONSTANTINOPLE) {*/
-            gas::VERYLOW
-        /* } else {
-            0
-        }*/),
+        OpInfo::gas(
+            /*if SPEC::enabled(SpecId::CONSTANTINOPLE) {*/
+            gas::VERYLOW, /* } else {
+                              0
+                          }*/
+        ),
         /* 0x1d  SAR */
-        OpInfo::gas(/*if SPEC::enabled(SpecId::CONSTANTINOPLE) {*/
-            gas::VERYLOW
-        /*} else {
-            0
-        }*/),
+        OpInfo::gas(
+            /*if SPEC::enabled(SpecId::CONSTANTINOPLE) {*/
+            gas::VERYLOW, /*} else {
+                              0
+                          }*/
+        ),
         /* 0x1e */ OpInfo::none(),
         /* 0x1f */ OpInfo::none(),
         /* 0x20  SHA3 */ OpInfo::dynamic_gas(),
@@ -289,11 +291,12 @@ pub fn opcode_info/*<SPEC: Spec>*/() -> &'static [OpInfo; 256] {
         /* 0x3b  EXTCODESIZE */ OpInfo::dynamic_gas(),
         /* 0x3c  EXTCODECOPY */ OpInfo::dynamic_gas(),
         /* 0x3d  RETURNDATASIZE */
-        OpInfo::gas(/*if SPEC::enabled(SpecId::BYZANTINE) {*/
-            gas::BASE
-        /*} else {
-            0
-        }*/),
+        OpInfo::gas(
+            /*if SPEC::enabled(SpecId::BYZANTINE) {*/
+            gas::BASE, /*} else {
+                           0
+                       }*/
+        ),
         /* 0x3e  RETURNDATACOPY */ OpInfo::dynamic_gas(),
         /* 0x3f  EXTCODEHASH */ OpInfo::dynamic_gas(),
         /* 0x40  BLOCKHASH */ OpInfo::gas(gas::BLOCKHASH),
@@ -303,18 +306,23 @@ pub fn opcode_info/*<SPEC: Spec>*/() -> &'static [OpInfo; 256] {
         /* 0x44  DIFFICULTY */ OpInfo::gas(gas::BASE),
         /* 0x45  GASLIMIT */ OpInfo::gas(gas::BASE),
         /* 0x46  CHAINID */
-        OpInfo::gas(/*if SPEC::enabled(SpecId::ISTANBUL) {*/
-            gas::BASE
-        /*} else {
-            0
-        }*/),
+        OpInfo::gas(
+            /*if SPEC::enabled(SpecId::ISTANBUL) {*/
+            gas::BASE, /*} else {
+                           0
+                       }*/
+        ),
         /* 0x47  SELFBALANCE */
-        OpInfo::gas(/*if SPEC::enabled(SpecId::ISTANBUL) {*/
-            gas::LOW
-        /*} else {
-            0
-        }*/),
-    /* 0x48  BASEFEE */ OpInfo::gas(/*if SPEC::enabled(SpecId::LONDON) {*/gas::BASE/*} else {0}*/),
+        OpInfo::gas(
+            /*if SPEC::enabled(SpecId::ISTANBUL) {*/
+            gas::LOW, /*} else {
+                          0
+                      }*/
+        ),
+        /* 0x48  BASEFEE */
+        OpInfo::gas(
+            /*if SPEC::enabled(SpecId::LONDON) {*/ gas::BASE, /*} else {0}*/
+        ),
         /* 0x49 */ OpInfo::none(),
         /* 0x4a */ OpInfo::none(),
         /* 0x4b */ OpInfo::none(),
@@ -333,7 +341,8 @@ pub fn opcode_info/*<SPEC: Spec>*/() -> &'static [OpInfo; 256] {
         /* 0x58  PC */ OpInfo::gas(gas::BASE),
         /* 0x59  MSIZE */ OpInfo::gas(gas::BASE),
         /* 0x5a  GAS */ OpInfo::gas_block_end(gas::BASE),
-        /* 0x5b  JUMPDEST */ OpInfo::gas_block_end(gas::JUMPDEST),//gas::JUMPDEST gas is calculated in function call,
+        /* 0x5b  JUMPDEST */
+        OpInfo::gas_block_end(gas::JUMPDEST), //gas::JUMPDEST gas is calculated in function call,
         /* 0x5c */ OpInfo::none(),
         /* 0x5d */ OpInfo::none(),
         /* 0x5e */ OpInfo::none(),

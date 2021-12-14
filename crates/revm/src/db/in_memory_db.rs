@@ -149,7 +149,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct EmptyDB();
 
 impl DatabaseRef for EmptyDB {
@@ -170,6 +170,40 @@ impl DatabaseRef for EmptyDB {
 
     // History related
     fn block_hash(&self, _number: U256) -> H256 {
+        H256::default()
+    }
+}
+
+/// Very custom and dumm struct that will return accoun on address 0x0
+#[derive(Debug, Default, Clone)]
+pub struct BenchmarkDB(pub Bytes);
+
+impl Database for BenchmarkDB {
+    /// Whether account at address exists.
+    //fn exists(&self, address: H160) -> Option<AccountInfo>;
+    /// Get basic account information.
+    fn basic(&mut self, address: H160) -> AccountInfo {
+        if address == H160::zero() {
+            return AccountInfo {
+                nonce: 1,
+                balance: U256::from(10000000),
+                code: Some(self.0.clone()),
+                code_hash: KECCAK_EMPTY,
+            };
+        }
+        AccountInfo::default()
+    }
+    /// Get account code by its hash
+    fn code_by_hash(&mut self, _code_hash: H256) -> Bytes {
+        Bytes::default()
+    }
+    /// Get storage value of address at index.
+    fn storage(&mut self, _address: H160, _index: U256) -> U256 {
+        U256::default()
+    }
+
+    // History related
+    fn block_hash(&mut self, _number: U256) -> H256 {
         H256::default()
     }
 }

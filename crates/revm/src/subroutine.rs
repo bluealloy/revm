@@ -1,8 +1,7 @@
 use crate::{models::SelfDestructResult, Return, KECCAK_EMPTY};
 use alloc::{vec, vec::Vec};
-use hashbrown::{hash_map::Entry, HashMap as Map};
-
 use core::mem::{self};
+use hashbrown::{hash_map::Entry, HashMap as Map};
 
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};

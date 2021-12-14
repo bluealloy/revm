@@ -117,16 +117,11 @@ pub mod inner_zkp_u256 {
     }
 
     #[inline]
-    pub fn div_rem(lhs: &[u64;4], rhs: &[u64;4]) -> [u64;4] {
+    pub fn div_rem(lhs: &[u64; 4], rhs: &[u64; 4]) -> [u64; 4] {
         let mut numerator = [lhs[0], lhs[1], lhs[2], lhs[3], 0];
         if rhs[3] > 0 {
             // divrem_nby4
-            divrem_nbym(&mut numerator, &mut [
-                rhs[0],
-                rhs[1],
-                rhs[2],
-                rhs[3],
-            ]);
+            divrem_nbym(&mut numerator, &mut [rhs[0], rhs[1], rhs[2], rhs[3]]);
             [numerator[0], numerator[1], numerator[2], numerator[3]]
         } else if rhs[2] > 0 {
             // divrem_nby3
@@ -136,7 +131,8 @@ pub mod inner_zkp_u256 {
             // divrem_nby2
             divrem_nbym(&mut numerator, &mut [rhs[0], rhs[1]]);
             [numerator[2], numerator[3], numerator[4], 0]
-        } else  { //if rhs[0] > 0
+        } else {
+            //if rhs[0] > 0
             divrem_nby1(&mut numerator, rhs[0]);
             [numerator[0], numerator[1], numerator[2], numerator[3]]
         }
@@ -203,7 +199,7 @@ pub mod inner_zkp_u256 {
         // OPT: We can use macro generated specializations till then.
         let n = divisor.len();
         let m = numerator.len() - n - 1;
-    
+
         // D1. Normalize.
         let shift = divisor[n - 1].leading_zeros();
         if shift > 0 {
@@ -219,7 +215,7 @@ pub mod inner_zkp_u256 {
             }
             divisor[0] <<= shift;
         }
-    
+
         // D2. Loop over quotient digits
         for j in (0..=m).rev() {
             // D3. Calculate approximate quotient word
@@ -227,7 +223,7 @@ pub mod inner_zkp_u256 {
                 &[numerator[j + n - 2], numerator[j + n - 1], numerator[j + n]],
                 &[divisor[n - 2], divisor[n - 1]],
             );
-    
+
             // D4. Multiply and subtract.
             let mut borrow = 0;
             for i in 0..n {
@@ -235,7 +231,7 @@ pub mod inner_zkp_u256 {
                 numerator[j + i] = a;
                 borrow = b;
             }
-    
+
             // D5. Test remainder for negative result.
             if numerator[j + n] < borrow {
                 // D6. Add back. (happens rarely)
@@ -253,11 +249,11 @@ pub mod inner_zkp_u256 {
                 // This the would be the updated value when the remainder is non-negative.
                 debug_assert_eq!(numerator[j + n].wrapping_sub(borrow), 0);
             }
-    
+
             // Store remainder in the unused bits of numerator
             numerator[j + n] = qhat;
         }
-    
+
         // D8. Unnormalize.
         if shift > 0 {
             // Make sure to only normalize the remainder part, the quotient

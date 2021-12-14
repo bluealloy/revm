@@ -74,7 +74,7 @@ pub enum Return {
 }
 
 #[inline(always)]
-pub fn eval<H: Host, S: Spec>(machine: &mut Machine, opcode: u8, host: &mut H) -> Return {
+pub fn eval<H: Host, S: Spec>(opcode: u8, machine: &mut Machine, host: &mut H) -> Return {
     // let times = &mut machine.times[opcode as usize];
     // times.1 += 1;
     match opcode {

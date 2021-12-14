@@ -130,7 +130,7 @@ impl Machine {
         Self {
             program_counter: contract.code.as_ptr(),
             return_range: Range::default(),
-            memory: Memory::new(usize::MAX),
+            memory: Memory::new(),
             stack: Stack::new(),
             return_data_buffer: Bytes::new(),
             contract,
@@ -191,7 +191,7 @@ impl Machine {
             }
             let opcode = unsafe { *self.program_counter };
             self.program_counter = unsafe { self.program_counter.offset(1) };
-            ret = eval::<H, SPEC>(self, opcode, host);
+            ret = eval::<H, SPEC>(opcode, self, host);
 
             if H::INSPECT {
                 let ret = host.step_end(ret, self);

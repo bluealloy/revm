@@ -114,7 +114,9 @@ impl<DB: Database> Inspector<DB> for Controller {
         loop {
             match Ctrl::next(self.state_machine, &self.history_path) {
                 Ctrl::Help => {
-                    println!("available controls: \nstep\nexit\nprint all\nstack pop\nstack push 10\n")
+                    println!(
+                        "available controls: \nstep\nexit\nprint all\nstack pop\nstack push 10\n"
+                    )
                 }
                 Ctrl::Exit => {
                     self.state_machine = StateMachine::Exit;
@@ -128,7 +130,6 @@ impl<DB: Database> Inspector<DB> for Controller {
                 //Ctrl::StepOut => {
                 //    self.state_machine = StateMachine::StepOut;
                 //}
-
                 Ctrl::Print(print) => match print {
                     CtrlPrint::All => {
                         let opcode = machine
@@ -159,7 +160,9 @@ impl<DB: Database> Inspector<DB> for Controller {
                             .unwrap();
                         println!(
                             "PC:{} OpCode: {:#x} {:?}",
-                            machine.program_counter(), opcode, OPCODE_JUMPMAP[opcode as usize]
+                            machine.program_counter(),
+                            opcode,
+                            OPCODE_JUMPMAP[opcode as usize]
                         )
                     }
                     CtrlPrint::Stack => {
@@ -175,7 +178,7 @@ impl<DB: Database> Inspector<DB> for Controller {
                 }
                 Ctrl::Restart => {
                     //data.subroutine.checkpoint_revert(checkpoint)
-                    println!("t:{:?}",StateMachine::StepOut);
+                    println!("t:{:?}", StateMachine::StepOut);
                 }
                 //Ctrl::Breakpoint(add, pc) => println!(
                 //    "Setting breakpoint for contract {} on program counter:{}",

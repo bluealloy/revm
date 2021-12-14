@@ -10,25 +10,18 @@ use primitive_types::U256;
 #[derive(Clone, Debug)]
 pub struct Memory {
     data: Vec<u8>,
-    limit: usize,
 }
 
 impl Memory {
     /// Create a new memory with the given limit.
-    pub fn new(limit: usize) -> Self {
+    pub fn new() -> Self {
         Self {
             data: Vec::with_capacity(4 * 1024), // took it from evmone
-            limit,
         }
     }
 
     pub fn effective_len(&self) -> usize {
         self.data.len()
-    }
-
-    /// Memory limit.
-    pub fn limit(&self) -> usize {
-        self.limit
     }
 
     /// Get the length of the current memory range.

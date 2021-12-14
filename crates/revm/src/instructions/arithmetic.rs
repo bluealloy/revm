@@ -14,7 +14,7 @@ pub fn div(op1: U256, op2: U256) -> U256 {
         //let first = zkp_u256::U256::from_limbs(op1.0);
         //let second = zkp_u256::U256::from_limbs(op2.0);
         //U256(*(first/second).as_limbs())
-        
+
         //U256(super::i256::inner_zkp_u256::div_rem(&op1.0, &op2.0))
 
         super::i256::div_u256::div_mod(op1, op2).0

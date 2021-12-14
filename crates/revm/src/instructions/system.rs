@@ -300,7 +300,7 @@ pub fn gas(machine: &mut Machine) -> Return {
     //gas!(machine, gas::BASE);
 
     push!(machine, U256::from(machine.gas.remaining()));
-    machine.add_next_gas_block(machine.program_counter()-1)
+    machine.add_next_gas_block(machine.program_counter() - 1)
 }
 
 #[inline]
@@ -412,7 +412,7 @@ pub fn create<H: Host, SPEC: Spec>(
     machine.gas.reimburse_unspend(&reason, gas);
     match reason {
         Return::FatalNotSupported => Return::FatalNotSupported,
-        _ => machine.add_next_gas_block(machine.program_counter()-1),
+        _ => machine.add_next_gas_block(machine.program_counter() - 1),
     }
 }
 
@@ -566,5 +566,5 @@ pub fn call<H: Host, SPEC: Spec>(
             push!(machine, U256::zero());
         }
     }
-    machine.add_next_gas_block(machine.program_counter()-1)
+    machine.add_next_gas_block(machine.program_counter() - 1)
 }
