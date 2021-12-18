@@ -136,12 +136,10 @@ impl Contract {
         )
     }
 
-    
     pub fn is_valid_jump(&self, possition: usize) -> bool {
         self.jumpdest.is_valid(possition)
     }
 
-    
     pub fn gas_block(&self, possition: usize) -> u64 {
         self.jumpdest.gas_block(possition)
     }
@@ -180,20 +178,20 @@ impl ValidJumpAddress {
     }
     /// Get the length of the valid mapping. This is the same as the
     /// code bytes.
-    
+
     pub fn len(&self) -> usize {
         self.analazis.len()
     }
 
     /// Returns true if the valids list is empty
-    
+
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
     /// Returns `true` if the position is a valid jump destination. If
     /// not, returns `false`.
-    
+
     pub fn is_valid(&self, position: usize) -> bool {
         if position >= self.analazis.len() {
             return false;
@@ -202,7 +200,6 @@ impl ValidJumpAddress {
         self.analazis[position].is_jump_dest()
     }
 
-    
     pub fn gas_block(&self, position: usize) -> u64 {
         self.analazis[position].gas_block
     }

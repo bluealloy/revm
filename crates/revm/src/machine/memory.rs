@@ -12,6 +12,12 @@ pub struct Memory {
     data: Vec<u8>,
 }
 
+impl Default for Memory {
+    fn default() -> Self {
+        Memory::new()
+    }
+}
+
 impl Memory {
     /// Create a new memory with the given limit.
     pub fn new() -> Self {

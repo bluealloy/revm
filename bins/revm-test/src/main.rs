@@ -1,10 +1,10 @@
 use std::{str::FromStr, time::Instant};
 
 use bytes::Bytes;
-use primitive_types::{H160, U256};
+use primitive_types::H160;
 use revm::{
-    db::{BenchmarkDB, EmptyDB},
-    AccountInfo, InMemoryDB, TransactTo, KECCAK_EMPTY,
+    db::{BenchmarkDB},
+    TransactTo,
 };
 
 extern crate alloc;

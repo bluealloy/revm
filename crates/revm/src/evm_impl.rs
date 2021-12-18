@@ -229,11 +229,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     }
 
     fn inner_load_account(&mut self, caller: H160) -> bool {
-        let is_cold = self.data.subroutine.load_account(caller, self.data.db);
-        // if INSPECT && is_cold {
-        //     self.inspector.load_account(&caller);
-        // }
-        is_cold
+        self.data.subroutine.load_account(caller, self.data.db)
     }
 
     fn initialization<SPEC: Spec>(&mut self) -> u64 {
@@ -514,7 +510,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     }
 
     fn env(&mut self) -> &mut Env {
-        &mut self.data.env
+        self.data.env
     }
 
     // fn inspect(&mut self) -> &mut dyn Inspector<DB> {
@@ -591,14 +587,9 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         if INSPECT {
             self.inspector.selfdestruct();
         }
-        let res = self
-            .data
+        self.data
             .subroutine
-            .selfdestruct(address, target, self.data.db);
-        // if INSPECT && res.is_cold {
-        //     self.inspector.load_account(&target);
-        // }
-        res
+            .selfdestruct(address, target, self.data.db)
     }
 
     fn create<SPEC: Spec>(

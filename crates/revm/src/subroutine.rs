@@ -103,7 +103,7 @@ impl SubRoutine {
 
     pub fn load_precompiles_default(&mut self, precompiles: &[H160]) {
         let state: State = precompiles
-            .into_iter()
+            .iter()
             .map(|&k| {
                 let mut acc = Account::from(AccountInfo::default());
                 acc.filth = Filth::Precompile(false);

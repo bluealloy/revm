@@ -1,8 +1,24 @@
+# v1.0.0
+date: 18.12.2021
+
+It feel's like that the lib is in the state that is okay to promote it to the v1 version. Other that that, a lot of optimizations are done and the inspector trait was rewritten.
+
+Changes: 
+*  web3 db
+*  precalculated gas blocks. Optimization
+*  PC opcode as pointer. Optimization
+*  U256 div_rem optimization
+*  Inspector refactored and it is now closer to Host interface.
+
+Optimization thread: https://github.com/bluealloy/revm/issues/7
+
+
 # v0.5.0
 date: 17.11.2021
 
 A lot of optimization on machine(interpreter) part, it is now at least 3x faster. On interface side, Error enum was renamed to Return and it is simplified. Additionally if needed gas measuring can be removed with rust feature.
 
+Changes: 
 * push instruction optimized.
 * mload/mstore and memory optimized
 * Gas calculation optimized

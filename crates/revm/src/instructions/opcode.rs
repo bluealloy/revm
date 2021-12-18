@@ -1,4 +1,4 @@
-use crate::{Spec, SpecId};
+use crate::SpecId;
 
 use super::gas;
 
@@ -511,7 +511,7 @@ macro_rules! gas_opcodee {
 }
 
 pub const fn spec_opcode_gas(spec_id: SpecId) -> &'static [OpInfo; 256] {
-    return match spec_id {
+    match spec_id {
         SpecId::FRONTIER => {
             gas_opcodee!(O, SpecId::FRONTIER);
             O
@@ -560,7 +560,7 @@ pub const fn spec_opcode_gas(spec_id: SpecId) -> &'static [OpInfo; 256] {
             gas_opcodee!(O, SpecId::LATEST);
             O
         }
-    };
+    }
 }
 
 pub const OPCODE_JUMPMAP: [Option<&'static str>; 256] = [

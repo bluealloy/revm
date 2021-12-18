@@ -121,7 +121,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
     fn storage(&mut self, address: H160, index: U256) -> U256 {
         match self.storage.entry(address) {
             Entry::Occupied(mut entry) => match entry.get_mut().entry(index) {
-                Entry::Occupied(entry) => entry.get().clone(),
+                Entry::Occupied(entry) => *entry.get(),
                 Entry::Vacant(entry) => {
                     let slot = self.db.storage(address, index);
                     entry.insert(slot);

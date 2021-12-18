@@ -22,8 +22,10 @@ pub trait Inspector<DB: Database> {
     /// Called after `step` when instruction is executed.
     fn step_end(&mut self, eval: Return, machine: &mut Machine) -> Return;
 
+    // TODO introduce some struct
     /// Called inside call_inner with `Return` you can dictate if you want to continue execution of
     /// this call `Return::Continue` or you want to override that and return from call.
+    #[allow(clippy::too_many_arguments)]
     fn call(
         &mut self,
         data: &mut EVMData<'_, DB>,

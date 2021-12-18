@@ -4,7 +4,6 @@ use super::i256::{i256_div, i256_mod};
 use core::{convert::TryInto, ops::Rem};
 use primitive_types::{U256, U512};
 
-
 pub fn div(op1: U256, op2: U256) -> U256 {
     if op2.is_zero() {
         U256::zero()
@@ -21,11 +20,9 @@ pub fn div(op1: U256, op2: U256) -> U256 {
     }
 }
 
-
 pub fn sdiv(op1: U256, op2: U256) -> U256 {
     i256_div(op1, op2)
 }
-
 
 pub fn rem(op1: U256, op2: U256) -> U256 {
     if op2.is_zero() {
@@ -35,7 +32,6 @@ pub fn rem(op1: U256, op2: U256) -> U256 {
     }
 }
 
-
 pub fn smod(op1: U256, op2: U256) -> U256 {
     if op2.is_zero() {
         U256::zero()
@@ -43,7 +39,6 @@ pub fn smod(op1: U256, op2: U256) -> U256 {
         i256_mod(op1, op2)
     }
 }
-
 
 pub fn addmod(op1: U256, op2: U256, op3: U256) -> U256 {
     if op3.is_zero() {
@@ -58,7 +53,6 @@ pub fn addmod(op1: U256, op2: U256, op3: U256) -> U256 {
     }
 }
 
-
 pub fn mulmod(op1: U256, op2: U256, op3: U256) -> U256 {
     if op3.is_zero() {
         U256::zero()
@@ -71,7 +65,6 @@ pub fn mulmod(op1: U256, op2: U256, op3: U256) -> U256 {
             .expect("op3 is less than U256::MAX, thus it never overflows; qed")
     }
 }
-
 
 pub fn exp(op1: U256, op2: U256) -> U256 {
     let mut op1 = op1;
@@ -87,7 +80,6 @@ pub fn exp(op1: U256, op2: U256) -> U256 {
     }
     r
 }
-
 
 pub fn eval_exp<SPEC: Spec>(machine: &mut Machine) -> Return {
     pop!(machine, op1, op2);

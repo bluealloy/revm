@@ -45,7 +45,7 @@ pub fn find_all_json_tests(path: &PathBuf) -> Vec<PathBuf> {
 }
 
 pub fn execute_test_suit(path: &PathBuf, elapsed: &Arc<Mutex<Duration>>) -> Result<(), TestError> {
-    // funky test with bigint value in json :)  
+    // funky test with bigint value in json :)
     if path.file_name() == Some(OsStr::new("ValueOverflow.json")) {
         return Ok(());
     }

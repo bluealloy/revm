@@ -21,7 +21,7 @@ pub use db::{Database, DatabaseCommit, InMemoryDB};
 pub use evm::{new, EVM};
 pub use inspector::{Inspector, NoOpInspector, OverrideSpec};
 pub use instructions::{
-    opcode::{self, OpCode, OPCODE_JUMPMAP},
+    opcode::{self, spec_opcode_gas, OpCode, OPCODE_JUMPMAP},
     Return,
 };
 pub use machine::{Gas, Machine};

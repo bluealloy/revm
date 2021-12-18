@@ -38,7 +38,7 @@ pub struct PrecompileOutput {
     pub logs: Vec<Log>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Log {
     pub address: Address,
     pub topics: Vec<H256>,
@@ -50,16 +50,6 @@ impl PrecompileOutput {
         Self {
             cost,
             output,
-            logs: Vec::new(),
-        }
-    }
-}
-
-impl Default for PrecompileOutput {
-    fn default() -> Self {
-        PrecompileOutput {
-            cost: 0,
-            output: Vec::new(),
             logs: Vec::new(),
         }
     }

@@ -93,7 +93,7 @@ impl Gas {
     }
 
     /// Record an explict cost.
-    
+    #[inline(always)]
     pub fn record_cost(&mut self, cost: u64) -> bool {
         let (all_used_gas, overflow) = self.all_used_gas.overflowing_add(cost);
         if overflow || self.limit < all_used_gas {
@@ -106,7 +106,7 @@ impl Gas {
     }
 
     /// used in memory_resize! macro
-    
+
     pub fn record_memory(&mut self, gas_memory: u64) -> bool {
         if gas_memory > self.memory {
             let (all_used_gas, overflow) = self.used.overflowing_add(gas_memory);
@@ -152,7 +152,6 @@ impl Machine {
         &self.stack
     }
 
-    
     pub fn add_next_gas_block(&mut self, pc: usize) -> Return {
         if USE_GAS {
             let gas_block = self.contract.gas_block(pc);
@@ -176,10 +175,8 @@ impl Machine {
         //let timer = std::time::Instant::now();
         let mut ret = Return::Continue;
         // add first gas_block
-        if USE_GAS {
-            if !self.gas.record_cost(self.contract.first_gas_block()) {
-                return Return::OutOfGas;
-            }
+        if USE_GAS && !self.gas.record_cost(self.contract.first_gas_block()) {
+            return Return::OutOfGas;
         }
         while ret == Return::Continue {
             // step

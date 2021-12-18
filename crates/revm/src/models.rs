@@ -122,7 +122,7 @@ pub struct CallContext {
     pub apparent_value: U256,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Env {
     pub cfg: CfgEnv,
     pub block: BlockEnv,
@@ -217,16 +217,6 @@ impl Env {
                 self.tx.gas_price,
                 self.block.basefee + self.tx.gas_priority_fee.unwrap(),
             )
-        }
-    }
-}
-
-impl Default for Env {
-    fn default() -> Env {
-        Env {
-            cfg: CfgEnv::default(),
-            block: BlockEnv::default(),
-            tx: TxEnv::default(),
         }
     }
 }

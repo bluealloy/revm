@@ -18,6 +18,6 @@ hex = "0.4"
 js-sys = "0.3"
 primitive-types = {version = "0.10", default-features = false, features = ["rlp", "rustc-hex"]}
 # for windows build remove ecrecover features. see more here: https://github.com/bluealloy/revm/issues/3
-revm = {path = "../revm", version = "0.5", default-features = false}#, features = ["ecrecover"]}
+revm = {path = "../revm", version = "1.0", default-features = false}#, features = ["ecrecover"]}
 wasm-bindgen = "0.2"
 bn-rs = "0.2"

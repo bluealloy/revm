@@ -76,6 +76,7 @@ pub fn i256_cmp(mut first: U256, mut second: U256) -> Ordering {
     }
 }
 
+/*
 pub mod inner_zkp_u256 {
     use core::convert::TryFrom;
     use zkp_u256::U256;
@@ -284,10 +285,9 @@ pub mod inner_zkp_u256 {
         #[allow(clippy::cast_possible_truncation)]
         (ret as u64, 0_u64.wrapping_sub((ret >> 64) as u64))
     }
-}
+} */
 
 pub mod div_u256 {
-    use super::inner_zkp_u256::divrem_2by1;
     use super::*;
 
     const WORD_BITS: usize = 64;
@@ -336,12 +336,12 @@ pub mod div_u256 {
     #[inline(always)]
     fn fits_word(me: &U256) -> bool {
         let U256(ref arr) = me;
-        for i in 1..4 {
-            if arr[i] != 0 {
+        for i in arr.iter().take(4).skip(1) {
+            if *i != 0 {
                 return false;
             }
         }
-        return true;
+        true
     }
 
     // See Knuth, TAOCP, Volume 2, section 4.3.1, Algorithm D.
@@ -480,13 +480,13 @@ pub mod div_u256 {
     fn full_shr(u: [u64; 4 + 1], shift: u32) -> U256 {
         debug_assert!(shift < WORD_BITS as u32);
         let mut res = U256::zero();
-        for i in 0..4 {
-            res.0[i] = u[i] >> shift;
+        for (i, item) in u.iter().enumerate().take(4) {
+            res.0[i] = item >> shift;
         }
         // carry
         if shift > 0 {
-            for i in 1..=4 {
-                res.0[i - 1] |= u[i] << (WORD_BITS as u32 - shift);
+            for (i, item) in u.iter().enumerate().skip(1) {
+                res.0[i - 1] |= item << (WORD_BITS as u32 - shift);
             }
         }
         res
@@ -541,9 +541,7 @@ pub mod div_u256 {
 
     #[inline(always)]
     fn div_mod_word(hi: u64, lo: u64, y: u64) -> (u64, u64) {
-        //divrem_2by1(lo,hi,y)
         debug_assert!(hi < y);
-        //NOTE: this is slow (__udivti3)
         let x = (u128::from(hi) << 64) + u128::from(lo);
         let d = u128::from(y);
         ((x / d) as u64, (x % d) as u64)

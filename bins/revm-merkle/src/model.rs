@@ -9,8 +9,6 @@ use serde::{
 
 use std::collections::HashMap;
 
-use serde_derive::*;
-
 #[derive(Clone, Debug, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]
 #[serde(rename_all = "camelCase")]

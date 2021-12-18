@@ -2,14 +2,12 @@ use super::gas;
 use crate::{machine::Machine, util, Return, Spec, SpecId::*};
 use primitive_types::{H256, U256};
 
-
 pub fn codesize(machine: &mut Machine) -> Return {
     //gas!(machine, gas::BASE);
     let size = U256::from(machine.contract.code_size);
     push!(machine, size);
     Return::Continue
 }
-
 
 pub fn codecopy(machine: &mut Machine) -> Return {
     pop!(machine, memory_offset, code_offset, len);
@@ -28,7 +26,6 @@ pub fn codecopy(machine: &mut Machine) -> Return {
 
     Return::Continue
 }
-
 
 pub fn calldataload(machine: &mut Machine) -> Return {
     //gas!(machine, gas::VERYLOW);
@@ -52,7 +49,6 @@ pub fn calldataload(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-
 pub fn calldatasize(machine: &mut Machine) -> Return {
     //gas!(machine, gas::BASE);
 
@@ -60,7 +56,6 @@ pub fn calldatasize(machine: &mut Machine) -> Return {
     push!(machine, len);
     Return::Continue
 }
-
 
 pub fn calldatacopy(machine: &mut Machine) -> Return {
     pop!(machine, memory_offset, data_offset, len);
@@ -78,7 +73,6 @@ pub fn calldatacopy(machine: &mut Machine) -> Return {
         .set_data(memory_offset, data_offset, len, &machine.contract.input);
     Return::Continue
 }
-
 
 pub fn pop(machine: &mut Machine) -> Return {
     //gas!(machine, gas::BASE);
@@ -98,7 +92,6 @@ pub fn mload(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-
 pub fn mstore(machine: &mut Machine) -> Return {
     //gas!(machine, gas::VERYLOW);
 
@@ -109,7 +102,6 @@ pub fn mstore(machine: &mut Machine) -> Return {
     machine.memory.set_u256(index, value);
     Return::Continue
 }
-
 
 pub fn mstore8(machine: &mut Machine) -> Return {
     //gas!(machine, gas::VERYLOW);
@@ -124,7 +116,6 @@ pub fn mstore8(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-
 pub fn jump(machine: &mut Machine) -> Return {
     //gas!(machine, gas::MID);
 
@@ -132,13 +123,12 @@ pub fn jump(machine: &mut Machine) -> Return {
     let dest = as_usize_or_fail!(dest, Return::InvalidJump);
 
     if machine.contract.is_valid_jump(dest) {
-        machine.program_counter = unsafe { machine.contract.code.as_ptr().offset(dest as isize) };
+        machine.program_counter = unsafe { machine.contract.code.as_ptr().add(dest) };
         Return::Continue
     } else {
         Return::InvalidJump
     }
 }
-
 
 pub fn jumpi(machine: &mut Machine) -> Return {
     //gas!(machine, gas::HIGH);
@@ -148,8 +138,7 @@ pub fn jumpi(machine: &mut Machine) -> Return {
     if !value.is_zero() {
         let dest = as_usize_or_fail!(dest, Return::InvalidJump);
         if machine.contract.is_valid_jump(dest) {
-            machine.program_counter =
-                unsafe { machine.contract.code.as_ptr().offset(dest as isize) };
+            machine.program_counter = unsafe { machine.contract.code.as_ptr().add(dest) };
             Return::Continue
         } else {
             Return::InvalidJump
@@ -160,19 +149,16 @@ pub fn jumpi(machine: &mut Machine) -> Return {
     }
 }
 
-
 pub fn jumpdest(machine: &mut Machine) -> Return {
     gas!(machine, gas::JUMPDEST);
     machine.add_next_gas_block(machine.program_counter() - 1)
 }
-
 
 pub fn pc(machine: &mut Machine) -> Return {
     //gas!(machine, gas::BASE);
     push!(machine, U256::from(machine.program_counter() - 1));
     Return::Continue
 }
-
 
 pub fn msize(machine: &mut Machine) -> Return {
     //gas!(machine, gas::BASE);
@@ -189,22 +175,19 @@ pub fn push<const N: usize>(machine: &mut Machine) -> Return {
     let ret = machine
         .stack
         .push_slice::<N>(unsafe { core::slice::from_raw_parts(start, N) });
-    machine.program_counter = unsafe { machine.program_counter.offset(N as isize) };
+    machine.program_counter = unsafe { machine.program_counter.add(N) };
     ret
 }
-
 
 pub fn dup<const N: usize>(machine: &mut Machine) -> Return {
     //gas!(machine, gas::VERYLOW);
     machine.stack.dup::<N>()
 }
 
-
 pub fn swap<const N: usize>(machine: &mut Machine) -> Return {
     //gas!(machine, gas::VERYLOW);
     machine.stack.swap::<N>()
 }
-
 
 pub fn ret(machine: &mut Machine) -> Return {
     // zero gas cost gas!(machine,gas::ZERO);
