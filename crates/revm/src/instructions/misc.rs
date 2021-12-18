@@ -162,7 +162,7 @@ pub fn jumpi(machine: &mut Machine) -> Return {
 
 
 pub fn jumpdest(machine: &mut Machine) -> Return {
-    //gas!(machine, gas::JUMPDEST);
+    gas!(machine, gas::JUMPDEST);
     machine.add_next_gas_block(machine.program_counter() - 1)
 }
 

@@ -341,7 +341,7 @@ macro_rules! gas_opcodee {
             /* 0x59  MSIZE */ OpInfo::gas(gas::BASE),
             /* 0x5a  GAS */ OpInfo::gas_block_end(gas::BASE),
             /* 0x5b  JUMPDEST */
-            OpInfo::gas_block_end(gas::JUMPDEST), //gas::JUMPDEST gas is calculated in function call,
+            OpInfo::gas_block_end(0), //gas::JUMPDEST gas is calculated in function call,
             /* 0x5c */ OpInfo::none(),
             /* 0x5d */ OpInfo::none(),
             /* 0x5e */ OpInfo::none(),
