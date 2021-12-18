@@ -3,7 +3,7 @@ use core::cmp::Ordering;
 use super::i256::{i256_cmp, i256_sign, two_compl, Sign};
 use primitive_types::U256;
 
-#[inline(always)]
+
 pub fn slt(op1: U256, op2: U256) -> U256 {
     if i256_cmp(op1, op2) == Ordering::Less {
         U256::one()
@@ -12,7 +12,7 @@ pub fn slt(op1: U256, op2: U256) -> U256 {
     }
 }
 
-#[inline(always)]
+
 pub fn sgt(op1: U256, op2: U256) -> U256 {
     if i256_cmp(op1, op2) == Ordering::Greater {
         U256::one()
@@ -21,7 +21,7 @@ pub fn sgt(op1: U256, op2: U256) -> U256 {
     }
 }
 
-#[inline(always)]
+
 pub fn iszero(op1: U256) -> U256 {
     if op1.is_zero() {
         U256::one()
@@ -30,12 +30,12 @@ pub fn iszero(op1: U256) -> U256 {
     }
 }
 
-#[inline(always)]
+
 pub fn not(op1: U256) -> U256 {
     !op1
 }
 
-#[inline(always)]
+
 pub fn byte(op1: U256, op2: U256) -> U256 {
     let mut ret = U256::zero();
 
@@ -52,7 +52,7 @@ pub fn byte(op1: U256, op2: U256) -> U256 {
     ret
 }
 
-#[inline(always)]
+
 pub fn shl(shift: U256, value: U256) -> U256 {
     if value.is_zero() || shift >= U256::from(256) {
         U256::zero()
@@ -62,7 +62,7 @@ pub fn shl(shift: U256, value: U256) -> U256 {
     }
 }
 
-#[inline(always)]
+
 pub fn shr(shift: U256, value: U256) -> U256 {
     if value.is_zero() || shift >= U256::from(256) {
         U256::zero()
@@ -72,7 +72,7 @@ pub fn shr(shift: U256, value: U256) -> U256 {
     }
 }
 
-#[inline(always)]
+
 pub fn sar(shift: U256, mut value: U256) -> U256 {
     let value_sign = i256_sign::<true>(&mut value);
 

@@ -87,7 +87,7 @@ pub fn exp_cost<SPEC: Spec>(power: U256) -> Option<u64> {
     }
 }
 
-#[inline(always)]
+
 pub fn verylowcopy_cost(len: U256) -> Option<u64> {
     let wordd = len / U256::from(32);
     let wordr = len % U256::from(32);
@@ -134,7 +134,7 @@ pub fn extcodecopy_cost<SPEC: Spec>(len: U256, is_cold: bool) -> Option<u64> {
     Some(gas.as_u64())
 }
 
-#[inline(always)]
+
 pub fn account_access_gas<SPEC: Spec>(is_cold: bool) -> u64 {
     if SPEC::enabled(BERLIN) {
         if is_cold {
@@ -298,7 +298,7 @@ pub fn call_cost<SPEC: Spec>(
         + new_cost::<SPEC>(is_call_or_staticcall, is_new, transfers_value)
 }
 
-#[inline(always)]
+
 pub fn hot_cold_cost<SPEC: Spec>(is_cold: bool, regular_value: u64) -> u64 {
     if SPEC::enabled(BERLIN) {
         if is_cold {

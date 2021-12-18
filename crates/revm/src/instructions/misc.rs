@@ -2,7 +2,7 @@ use super::gas;
 use crate::{machine::Machine, util, Return, Spec, SpecId::*};
 use primitive_types::{H256, U256};
 
-#[inline]
+
 pub fn codesize(machine: &mut Machine) -> Return {
     //gas!(machine, gas::BASE);
     let size = U256::from(machine.contract.code_size);
@@ -10,7 +10,7 @@ pub fn codesize(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-#[inline]
+
 pub fn codecopy(machine: &mut Machine) -> Return {
     pop!(machine, memory_offset, code_offset, len);
     gas_or_fail!(machine, gas::verylowcopy_cost(len));
@@ -29,7 +29,7 @@ pub fn codecopy(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-#[inline]
+
 pub fn calldataload(machine: &mut Machine) -> Return {
     //gas!(machine, gas::VERYLOW);
 
@@ -52,7 +52,7 @@ pub fn calldataload(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-#[inline]
+
 pub fn calldatasize(machine: &mut Machine) -> Return {
     //gas!(machine, gas::BASE);
 
@@ -61,7 +61,7 @@ pub fn calldatasize(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-#[inline]
+
 pub fn calldatacopy(machine: &mut Machine) -> Return {
     pop!(machine, memory_offset, data_offset, len);
     gas_or_fail!(machine, gas::verylowcopy_cost(len));
@@ -79,7 +79,7 @@ pub fn calldatacopy(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-#[inline(always)]
+
 pub fn pop(machine: &mut Machine) -> Return {
     //gas!(machine, gas::BASE);
     machine.stack.reduce_one()
@@ -98,7 +98,7 @@ pub fn mload(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-#[inline]
+
 pub fn mstore(machine: &mut Machine) -> Return {
     //gas!(machine, gas::VERYLOW);
 
@@ -110,7 +110,7 @@ pub fn mstore(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-#[inline]
+
 pub fn mstore8(machine: &mut Machine) -> Return {
     //gas!(machine, gas::VERYLOW);
 
@@ -124,7 +124,7 @@ pub fn mstore8(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-#[inline]
+
 pub fn jump(machine: &mut Machine) -> Return {
     //gas!(machine, gas::MID);
 
@@ -139,7 +139,7 @@ pub fn jump(machine: &mut Machine) -> Return {
     }
 }
 
-#[inline]
+
 pub fn jumpi(machine: &mut Machine) -> Return {
     //gas!(machine, gas::HIGH);
 
@@ -160,20 +160,20 @@ pub fn jumpi(machine: &mut Machine) -> Return {
     }
 }
 
-#[inline]
+
 pub fn jumpdest(machine: &mut Machine) -> Return {
     //gas!(machine, gas::JUMPDEST);
     machine.add_next_gas_block(machine.program_counter() - 1)
 }
 
-#[inline]
+
 pub fn pc(machine: &mut Machine) -> Return {
     //gas!(machine, gas::BASE);
     push!(machine, U256::from(machine.program_counter() - 1));
     Return::Continue
 }
 
-#[inline]
+
 pub fn msize(machine: &mut Machine) -> Return {
     //gas!(machine, gas::BASE);
     push!(machine, U256::from(machine.memory.effective_len()));
@@ -181,7 +181,7 @@ pub fn msize(machine: &mut Machine) -> Return {
 }
 
 // code padding is needed for contracts
-#[inline]
+
 pub fn push<const N: usize>(machine: &mut Machine) -> Return {
     //gas!(machine, gas::VERYLOW);
 
@@ -193,19 +193,19 @@ pub fn push<const N: usize>(machine: &mut Machine) -> Return {
     ret
 }
 
-#[inline]
+
 pub fn dup<const N: usize>(machine: &mut Machine) -> Return {
     //gas!(machine, gas::VERYLOW);
     machine.stack.dup::<N>()
 }
 
-#[inline]
+
 pub fn swap<const N: usize>(machine: &mut Machine) -> Return {
     //gas!(machine, gas::VERYLOW);
     machine.stack.swap::<N>()
 }
 
-#[inline]
+
 pub fn ret(machine: &mut Machine) -> Return {
     // zero gas cost gas!(machine,gas::ZERO);
     pop!(machine, start, len);
