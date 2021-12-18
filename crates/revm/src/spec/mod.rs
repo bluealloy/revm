@@ -61,7 +61,7 @@ impl From<&str> for SpecId {
 
 impl SpecId {
     #[inline]
-    pub fn enabled(self, current_id: u8) -> bool {
-        self as u8 > current_id
+    pub const fn enabled(our: SpecId, other: SpecId) -> bool {
+        our as u8 >= other as u8
     }
 }

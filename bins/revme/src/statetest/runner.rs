@@ -45,11 +45,12 @@ pub fn find_all_json_tests(path: &PathBuf) -> Vec<PathBuf> {
 }
 
 pub fn execute_test_suit(path: &PathBuf, elapsed: &Arc<Mutex<Duration>>) -> Result<(), TestError> {
+    // funky test with bigint value in json :)  
     if path.file_name() == Some(OsStr::new("ValueOverflow.json")) {
         return Ok(());
     }
     // /*
-
+    // Test that take a lot of time so we are going to skip them
     if path.file_name() == Some(OsStr::new("loopExp.json")) {
         return Ok(());
     }
@@ -65,7 +66,7 @@ pub fn execute_test_suit(path: &PathBuf, elapsed: &Arc<Mutex<Duration>>) -> Resu
     if path.file_name() == Some(OsStr::new("CALLBlake2f_MaxRounds.json")) {
         return Ok(());
     }
-    // */
+    //*/
     let json_reader = std::fs::read(&path).unwrap();
     let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
     let skip_test_unit: HashSet<_> = vec![

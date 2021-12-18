@@ -2,7 +2,7 @@ use crate::SpecId;
 
 pub(crate) trait NotStaticSpec {}
 
-pub trait Spec {
+pub trait Spec: Sized {
     /// litle bit of magic. We can have child version of Spec that contains static flag enabled
     type STATIC: Spec;
 

@@ -1,4 +1,4 @@
-use crate::{alloc::vec::Vec, opcode::opcode_info, CallContext};
+use crate::{alloc::vec::Vec, opcode::spec_opcode_gas, CallContext, Spec};
 use bytes::Bytes;
 use primitive_types::{H160, U256};
 
@@ -62,9 +62,15 @@ impl AnalazisData {
 }
 
 impl Contract {
-    pub fn new(input: Bytes, code: Bytes, address: H160, caller: H160, value: U256) -> Self {
+    pub fn new<SPEC: Spec>(
+        input: Bytes,
+        code: Bytes,
+        address: H160,
+        caller: H160,
+        value: U256,
+    ) -> Self {
         let code_size = code.len();
-        let (jumpdest, code) = Self::analize(code.as_ref());
+        let (jumpdest, code) = Self::analize::<SPEC>(code.as_ref());
 
         let code = code.into();
         Self {
@@ -80,17 +86,18 @@ impl Contract {
 
     /// Create a new valid mapping from given code bytes.
     /// it gives back ValidJumpAddress and size od needed paddings.
-    fn analize(code: &[u8]) -> (ValidJumpAddress, Vec<u8>) {
+    fn analize<SPEC: Spec>(code: &[u8]) -> (ValidJumpAddress, Vec<u8>) {
         let mut jumps: Vec<AnalazisData> = Vec::with_capacity(code.len());
         jumps.resize(code.len(), AnalazisData::none());
-        let opcode_info = opcode_info();
+        //let opcode_gas = LONDON_OPCODES;
+        let opcode_gas = spec_opcode_gas(SPEC::SPEC_ID);
         let mut i = 0;
         let mut first_gas_block: Option<u64> = None;
         let mut block_start: usize = 0;
         let mut gas_in_block: u64 = 0;
         while i < code.len() {
             let opcode = code[i] as u8;
-            let info = &opcode_info[opcode as usize];
+            let info = &opcode_gas[opcode as usize];
             gas_in_block += info.gas;
 
             if info.gas_block_end {
@@ -142,8 +149,12 @@ impl Contract {
         self.jumpdest.first_gas_block
     }
 
-    pub fn new_with_context(input: Bytes, code: Bytes, call_context: &CallContext) -> Self {
-        Self::new(
+    pub fn new_with_context<SPEC: Spec>(
+        input: Bytes,
+        code: Bytes,
+        call_context: &CallContext,
+    ) -> Self {
+        Self::new::<SPEC>(
             input,
             code,
             call_context.address,
@@ -194,21 +205,5 @@ impl ValidJumpAddress {
     #[inline(always)]
     pub fn gas_block(&self, position: usize) -> u64 {
         self.analazis[position].gas_block
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn analize_padding_dummy() {
-        //let (_, padding) = Contract::analize(&[opcode::CODESIZE, opcode::PUSH1, 0x00]);
-        //assert_eq!(padding.len(), 0, "Padding should be zero");
-    }
-    #[test]
-    fn analize_padding_two_missing() {
-        //let (_, padding) = Contract::analize(&[opcode::CODESIZE, opcode::PUSH3, 0x00]);
-        //assert_eq!(padding, 2, "Padding should be zero");
     }
 }

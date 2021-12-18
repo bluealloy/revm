@@ -347,7 +347,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             self.data.subroutine.inc_nonce(created_address);
         }
         // create new machine and execute init function
-        let contract = Contract::new(Bytes::new(), init_code, created_address, caller, value);
+        let contract =
+            Contract::new::<SPEC>(Bytes::new(), init_code, created_address, caller, value);
         let mut machine = Machine::new::<SPEC>(contract, gas.limit(), self.data.subroutine.depth());
         let exit_reason = machine.run::<Self, SPEC>(self);
         // Host error if present on execution\
@@ -482,7 +483,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             }
         } else {
             // create machine and execute subcall
-            let contract = Contract::new_with_context(input, code, &context);
+            let contract = Contract::new_with_context::<SPEC>(input, code, &context);
             let mut machine =
                 Machine::new::<SPEC>(contract, gas_limit, self.data.subroutine.depth());
             let exit_reason = machine.run::<Self, SPEC>(self);
