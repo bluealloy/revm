@@ -34,18 +34,18 @@ pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
 pub trait Transact {
     /// Do transaction.
     /// Return Return, Output for call or Address if we are creating contract, gas spend, State that needs to be applied.
-    fn transact(&mut self) -> (Return, TransactOut, u64, State);
+    fn transact(&mut self) -> (Return, TransactOut, u64, State, Vec<Log>);
 }
 
 impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
     for EVMImpl<'a, GSPEC, DB, INSPECT>
 {
-    fn transact(&mut self) -> (Return, TransactOut, u64, State) {
+    fn transact(&mut self) -> (Return, TransactOut, u64, State, Vec<Log>) {
         let caller = self.data.env.tx.caller;
         let value = self.data.env.tx.value;
         let data = self.data.env.tx.data.clone();
         let gas_limit = self.data.env.tx.gas_limit;
-        let exit = |reason: Return| (reason, TransactOut::None, 0, State::new());
+        let exit = |reason: Return| (reason, TransactOut::None, 0, State::new(), Vec::new());
 
         if GSPEC::enabled(LONDON) {
             if let Some(priority_fee) = self.data.env.tx.gas_priority_fee {
@@ -142,8 +142,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
             gas.reimburse_unspend(&exit_reason, ret_gas);
         }
         match self.finalize::<GSPEC>(caller, &gas) {
-            Err(e) => (e, out, gas.spend(), Map::new()),
-            Ok(state) => (exit_reason, out, gas.spend(), state),
+            Err(e) => (e, out, gas.spend(), Map::new(), Vec::new()),
+            Ok((state, logs)) => (exit_reason, out, gas.spend(), state, logs),
         }
     }
 }
@@ -186,7 +186,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         &mut self,
         caller: H160,
         gas: &Gas,
-    ) -> Result<Map<H160, Account>, Return> {
+    ) -> Result<(Map<H160, Account>, Vec<Log>), Return> {
         let coinbase = self.data.env.block.coinbase;
         if crate::USE_GAS {
             let effective_gas_price = self.data.env.effective_gas_price();
@@ -212,20 +212,20 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             self.data.subroutine.load_account(coinbase, self.data.db);
             self.data.subroutine.balance_add(coinbase, U256::zero());
         }
-        let mut finalized = self.data.subroutine.finalize();
+        let (mut new_state, logs) = self.data.subroutine.finalize();
         // precompiles are special case. If there is precompiles in finalized Map that means some balance is
         // added to it, we need now to load precompile address from db and add this amount to it so that we
         // will have sum.
         if self.data.env.cfg.perf_all_precompiles_have_balance {
             for (address, _) in self.precompiles.as_slice() {
-                if let Some(precompile) = finalized.get_mut(address) {
+                if let Some(precompile) = new_state.get_mut(address) {
                     // we found it.
                     precompile.info.balance += self.data.db.basic(*address).balance;
                 }
             }
         }
 
-        Ok(finalized)
+        Ok((new_state, logs))
     }
 
     fn inner_load_account(&mut self, caller: H160) -> bool {
@@ -346,6 +346,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let contract =
             Contract::new::<SPEC>(Bytes::new(), init_code, created_address, caller, value);
         let mut machine = Machine::new::<SPEC>(contract, gas.limit(), self.data.subroutine.depth());
+        if Self::INSPECT {
+            self.inspector
+                .initialize_machine(&mut machine, &mut self.data, false); // TODO fix is_static
+        }
         let exit_reason = machine.run::<Self, SPEC>(self);
         // Host error if present on execution\
         let ret = match exit_reason {
@@ -482,6 +486,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             let contract = Contract::new_with_context::<SPEC>(input, code, &context);
             let mut machine =
                 Machine::new::<SPEC>(contract, gas_limit, self.data.subroutine.depth());
+            if Self::INSPECT {
+                self.inspector
+                    .initialize_machine(&mut machine, &mut self.data, false); // TODO fix is_static
+            }
             let exit_reason = machine.run::<Self, SPEC>(self);
             if matches!(exit_reason, return_ok!()) {
                 self.data.subroutine.checkpoint_commit();

@@ -178,7 +178,7 @@ impl OpCode {
         self.0
     }
 }
-
+#[derive(Debug)]
 pub struct OpInfo {
     pub gas: u64,
     pub gas_block_end: bool,

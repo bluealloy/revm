@@ -9,9 +9,26 @@ use rlp::RlpStream;
 use sha3::{Digest, Keccak256};
 
 use hashbrown::HashMap as Map;
-use revm::AccountInfo;
+use revm::{AccountInfo, Log};
 
-pub fn merkle_trie_root(
+pub fn log_rlp_hash(logs: Vec<Log>) -> H256 {
+    //https://github.com/ethereum/go-ethereum/blob/356bbe343a30789e77bb38f25983c8f2f2bfbb47/cmd/evm/internal/t8ntool/execution.go#L255
+    let mut stream = RlpStream::new();
+    stream.begin_unbounded_list();
+    for log in logs {
+        stream.begin_list(3);
+        stream.append(&log.address);
+        stream.append_list(&log.topics);
+        stream.append(&log.data);
+    }
+    stream.finalize_unbounded_list();
+    let out = stream.out().freeze();
+
+    let out = Keccak256::digest(out);
+    H256::from_slice(out.as_slice())
+}
+
+pub fn state_merkle_trie_root(
     accounts: &Map<H160, AccountInfo>,
     storage: &Map<H160, Map<U256, U256>>,
 ) -> H256 {

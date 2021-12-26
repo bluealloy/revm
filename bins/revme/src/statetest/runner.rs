@@ -16,7 +16,7 @@ use std::sync::atomic::Ordering;
 use walkdir::{DirEntry, WalkDir};
 
 use super::{
-    merkle_trie::merkle_trie_root,
+    merkle_trie::{log_rlp_hash, state_merkle_trie_root},
     models::{SpecName, TestSuit},
     trace::CustomPrintTracer,
 };
@@ -220,24 +220,27 @@ pub fn execute_test_suit(path: &PathBuf, elapsed: &Arc<Mutex<Duration>>) -> Resu
                 // do the deed
 
                 let timer = Instant::now();
-                let (ret, _out, gas) = evm.transact_commit();
+                let (ret, _out, gas, logs) = evm.transact_commit();
                 let timer = timer.elapsed();
 
                 *elapsed.lock().unwrap() += timer;
                 let db = evm.db().unwrap();
-                let state_root = merkle_trie_root(db.cache(), db.storage());
-                if test.hash != state_root {
-                    println!("TEST FAILED, RERUN IT:");
+                let state_root = state_merkle_trie_root(db.cache(), db.storage());
+                let logs_root = log_rlp_hash(logs);
+                if test.hash != state_root || test.logs != logs_root {
+                    println!(
+                        "ROOTS mismath:\nstate_root:{:?}:{:?}\nlogs_root:{:?}:{:?}",
+                        test.hash, state_root, test.logs, logs_root
+                    );
                     let mut database_cloned = database.clone();
                     evm.database(&mut database_cloned);
-                    evm.inspect_commit(CustomPrintTracer {});
+                    evm.inspect_commit(CustomPrintTracer::new());
                     let db = evm.db().unwrap();
                     println!("{:?} UNIT_TEST:{}\n", path, name);
                     println!(
                         "fail reson: {:?} {:?} UNIT_TEST:{}\n gas:{:?}",
                         ret, path, name, gas
                     );
-                    //break;
                     println!("\nApplied state:{:?}\n", db);
                     println!("\nStateroot: {:?}\n", state_root);
                     return Err(TestError::RootMissmatch {

@@ -40,13 +40,14 @@ impl EVM {
     }
 
     pub fn transact(&mut self) -> u64 {
-        let (exit, data, gas, state) = self.revm.transact();
+        let (exit, data, gas, state, logs) = self.revm.transact();
         console_log!(
-            "Transact done, exit:{:?}, gas:{:?}, data:{:?}\nstate_chage:{:?}",
+            "Transact done, exit:{:?}, gas:{:?}, data:{:?}\nstate_chage:{:?}\nlogs:{:?}",
             exit,
             gas,
             data,
-            state
+            state,
+            logs,
         );
         self.revm.db().unwrap().commit(state);
         gas

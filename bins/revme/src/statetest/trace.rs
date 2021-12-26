@@ -1,32 +1,58 @@
 use bytes::Bytes;
 use primitive_types::{H160, U256};
 pub use revm::Inspector;
-use revm::{opcode, Database, EVMData, Gas, Return};
+use revm::{opcode, spec_opcode_gas, Database, EVMData, Gas, Return};
 
 #[derive(Clone)]
-pub struct CustomPrintTracer {}
+pub struct CustomPrintTracer {
+    /// We now batch continual gas_block in one go, that means we need to reduce it ifwe want to get
+    /// correct gas remaining. Check revm/machine/contract/analize for more information
+    reduced_gas_block: u64,
+    full_gas_block: u64,
+}
+
+impl CustomPrintTracer {
+    pub fn new() -> Self {
+        Self {
+            reduced_gas_block: 0,
+            full_gas_block: 0,
+        }
+    }
+}
 
 impl<DB: Database> Inspector<DB> for CustomPrintTracer {
-    // get opcode by calling `machine.contract.opcode(machine.program_counter())`.
-    // all other information can be obtained from machine.
-    fn step(
+    fn initialize_machine(
         &mut self,
         machine: &mut revm::Machine,
         _data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> Return {
-        let opcode = match machine.contract.code.get(machine.program_counter()) {
-            Some(opcode) => opcode,
-            None => return Return::Continue,
-        };
-        let opcode_str = opcode::OPCODE_JUMPMAP[*opcode as usize];
-        //if self.
+        self.full_gas_block = machine.contract.first_gas_block();
+        Return::Continue
+    }
+
+    // get opcode by calling `machine.contract.opcode(machine.program_counter())`.
+    // all other information can be obtained from machine.
+    fn step(
+        &mut self,
+        machine: &mut revm::Machine,
+        data: &mut EVMData<'_, DB>,
+        _is_static: bool,
+    ) -> Return {
+        let opcode = unsafe { *machine.program_counter };
+        let opcode_str = opcode::OPCODE_JUMPMAP[opcode as usize];
+
+        // calculate gas_block
+        let infos = spec_opcode_gas(data.env.cfg.spec_id);
+        let info = &infos[opcode as usize];
+        println!("Gas info:{:?}", info);
+
         println!(
             "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data:",
             machine.call_depth,
             machine.program_counter(),
-            machine.gas.remaining(),
-            machine.gas.remaining(),
+            machine.gas.remaining()+self.full_gas_block-self.reduced_gas_block,
+            machine.gas.remaining()+self.full_gas_block-self.reduced_gas_block,
             opcode_str.unwrap(),
             opcode,
             machine.gas.refunded(),
@@ -34,6 +60,12 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
             machine.stack.data(),
             //hex::encode(machine.memory.data()),
         );
+
+        self.reduced_gas_block += info.gas;
+        if info.gas_block_end {
+            self.full_gas_block = machine.contract.gas_block(machine.program_counter());
+        }
+
         Return::Continue
     }
 

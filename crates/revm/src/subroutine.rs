@@ -118,7 +118,7 @@ impl SubRoutine {
     /// Some states of Filth enum are internaly used but in output it can only be:
     /// 1. Dirty with empty Map (Map is internaly used). Only changed slots are returned in `storage` or
     /// 2. Destroyed if selfdestruct was called.
-    pub fn finalize(&mut self) -> State {
+    pub fn finalize(&mut self) -> (State, Vec<Log>) {
         let mut out = Map::new();
         let state = mem::take(&mut self.state);
         for (add, mut acc) in state.into_iter() {
@@ -148,12 +148,13 @@ impl SubRoutine {
             }
         }
         // state cleanup
+        let logs = self.logs.clone();
         self.logs.clear();
         //assert!(self.changelog.len() == 1, "Changeset ");
         self.changelog = vec![Map::new(); 1];
         self.depth = 0;
         self.state = Map::new();
-        out
+        (out, logs)
     }
 
     /// Use it with load_account function.

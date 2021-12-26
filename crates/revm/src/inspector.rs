@@ -10,17 +10,32 @@ use auto_impl::auto_impl;
 pub trait Inspector<DB: Database> {
     fn initialize(&mut self, _data: &mut EVMData<'_, DB>) {}
 
+    /// before machine get initialized this function is called. If returning something other them Return::Continue
+    /// we are skipping execution of machine.
+    fn initialize_machine(
+        &mut self,
+        _machine: &mut Machine,
+        _data: &mut EVMData<'_, DB>,
+        _is_static: bool,
+    ) -> Return {
+        Return::Continue
+    }
+
     /// get opcode by calling `machine.contract.opcode(machine.program_counter())`.
     /// all other information can be obtained from machine.
     fn step(
         &mut self,
-        machine: &mut Machine,
-        data: &mut EVMData<'_, DB>,
-        is_static: bool,
-    ) -> Return;
+        _machine: &mut Machine,
+        _data: &mut EVMData<'_, DB>,
+        _is_static: bool,
+    ) -> Return {
+        Return::Continue
+    }
 
     /// Called after `step` when instruction is executed.
-    fn step_end(&mut self, eval: Return, machine: &mut Machine) -> Return;
+    fn step_end(&mut self, _eval: Return, _machine: &mut Machine) -> Return {
+        Return::Continue
+    }
 
     // TODO introduce some struct
     /// Called inside call_inner with `Return` you can dictate if you want to continue execution of
@@ -79,6 +94,15 @@ pub struct NoOpInspector();
 
 impl<DB: Database> Inspector<DB> for NoOpInspector {
     fn initialize(&mut self, _data: &mut EVMData<'_, DB>) {}
+
+    fn initialize_machine(
+        &mut self,
+        _machine: &mut Machine,
+        _data: &mut EVMData<'_, DB>,
+        _is_static: bool,
+    ) -> Return {
+        Return::Continue
+    }
 
     fn step(
         &mut self,

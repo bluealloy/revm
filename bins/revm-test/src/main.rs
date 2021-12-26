@@ -2,10 +2,7 @@ use std::{str::FromStr, time::Instant};
 
 use bytes::Bytes;
 use primitive_types::H160;
-use revm::{
-    db::{BenchmarkDB},
-    TransactTo,
-};
+use revm::{db::BenchmarkDB, TransactTo};
 
 extern crate alloc;
 
@@ -26,7 +23,7 @@ pub fn simple_example() {
     let mut times = Vec::new();
     for _ in 0..10 {
         let timer = Instant::now();
-        let (_, _, _, _) = evm.transact();
+        let (_, _, _, _, _) = evm.transact();
         let i = timer.elapsed();
         times.push(i);
         elapsed += i;
