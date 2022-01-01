@@ -8,8 +8,6 @@ use bytes::Bytes;
 
 #[auto_impl(& mut, Box)]
 pub trait Database {
-    /// Whether account at address exists.
-    //fn exists(&mut self, address: H160) -> Option<AccountInfo>;
     /// Get basic account information.
     fn basic(&mut self, address: H160) -> AccountInfo;
     /// Get account code by its hash
