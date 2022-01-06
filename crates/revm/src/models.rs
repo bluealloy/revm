@@ -130,8 +130,6 @@ pub struct Env {
 }
 #[derive(Clone, Debug)]
 pub struct BlockEnv {
-    pub gas_limit: U256,
-    /// somebody call it nonce
     pub number: U256,
     /// Coinbase or miner or address that created and signed the block.
     /// Address where we are going to send gas spend
@@ -140,8 +138,7 @@ pub struct BlockEnv {
     pub difficulty: U256,
     /// basefee is added in EIP1559 London upgrade
     pub basefee: U256,
-    /// incrementaly added on every transaction. It can be cleared if needed
-    pub gas_used: U256,
+    pub gas_limit: U256,
 }
 #[derive(Clone, Debug)]
 pub struct TxEnv {
@@ -186,7 +183,6 @@ impl Default for BlockEnv {
             timestamp: U256::one(),
             difficulty: U256::zero(),
             basefee: U256::zero(),
-            gas_used: U256::zero(),
         }
     }
 }

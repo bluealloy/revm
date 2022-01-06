@@ -94,9 +94,6 @@ impl EVM {
     pub fn block_basefee(&mut self, basefee: BN) {
         self.revm.env.block.basefee = basefee.try_into().unwrap();
     }
-    pub fn block_gas_used(&mut self, gas_used: BN) {
-        self.revm.env.block.gas_used = gas_used.try_into().unwrap();
-    }
 
     /****** ALL TX ENV SETTERS ********/
 

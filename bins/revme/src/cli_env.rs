@@ -35,7 +35,6 @@ impl Into<Env> for CliEnv {
         local_fill!(env.block.timestamp, self.block.timestamp, U256::from);
         local_fill!(env.block.difficulty, self.block.difficulty, U256::from);
         local_fill!(env.block.basefee, self.block.basefee, U256::from);
-        local_fill!(env.block.gas_used, self.block.gas_used, U256::from);
 
         local_fill!(env.tx.caller, self.tx.caller);
         local_fill!(env.tx.gas_limit, self.tx.tx_gas_limit);
@@ -74,9 +73,6 @@ pub struct CliEnvBlock {
     /// basefee is added in EIP1559 London upgrade
     #[structopt(long = "env.block.basefee")]
     pub basefee: Option<u64>,
-    /// incrementaly added on every transaction. It can be cleared if needed
-    #[structopt(long = "env.block.gas_used")]
-    pub gas_used: Option<u64>,
 }
 
 #[derive(StructOpt, Clone, Debug)]

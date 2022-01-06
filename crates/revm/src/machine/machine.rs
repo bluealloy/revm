@@ -16,19 +16,18 @@ pub struct Machine {
     pub contract: Contract,
     /// Program counter.
     pub program_counter: *const u8,
-    /// Return value.
-    pub return_range: Range<usize>,
     /// Memory.
     pub memory: Memory,
     /// Stack.
     pub stack: Stack,
-    /// After call returns, its return data is saved here.
-    pub return_data_buffer: Bytes,
     /// left gas. Memory gas can be found in Memory field.
     pub gas: Gas,
+    /// After call returns, its return data is saved here.
+    pub return_data_buffer: Bytes,
+    /// Return value.
+    pub return_range: Range<usize>,
     /// used only for inspector.
     pub call_depth: u64,
-    //pub times: [(std::time::Duration, usize); 256],
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -197,22 +196,6 @@ impl Machine {
                 }
             }
         }
-        // let elapsed = timer.elapsed();
-        // println!("run took:{:?}", elapsed);
-        // let mut it = self
-        //     .times
-        //     .iter()
-        //     .zip(crate::OPCODE_JUMPMAP.iter())
-        //     .filter(|((_, num), opcode)| opcode.is_some() && *num != 0)
-        //     .map(|((dur, num), code)| (code.unwrap(), dur, num, *dur / *num as u32))
-        //     .collect::<Vec<_>>();
-        // it.sort_by(|a, b| a.2.cmp(&b.2));
-        // for i in it {
-        //     println!(
-        //         "code:{:?}   called:{:?}   time:{:?}   avrg:{:?}",
-        //         i.0, i.2, i.1, i.3,
-        //     );
-        // }
         ret
     }
 

@@ -56,8 +56,8 @@ pub enum Return {
     NotActivated,
     StackUnderflow,
     StackOverflow,
-    OutOfOffset,       //whatt
-    FatalNotSupported, //checkkk
+    OutOfOffset,
+    FatalNotSupported,
     GasMaxFeeGreaterThanPriorityFee,
     GasPriceLessThenBasefee,
     CallerGasLimitMoreThenBlock,
@@ -65,7 +65,7 @@ pub enum Return {
     LackOfFundForGasLimit,
     CreateCollision,
     OverflowPayment,
-    Precompile, // TODO DEFINE IT
+    Precompile,
 
     /// Create init code exceeds limit (runtime).
     CreateContractLimit,
@@ -75,8 +75,6 @@ pub enum Return {
 
 #[inline(always)]
 pub fn eval<H: Host, S: Spec>(opcode: u8, machine: &mut Machine, host: &mut H) -> Return {
-    // let times = &mut machine.times[opcode as usize];
-    // times.1 += 1;
     match opcode {
         /*12_u8..=15_u8 => Return::OpcodeNotFound,
         30_u8..=31_u8 => Return::OpcodeNotFound,

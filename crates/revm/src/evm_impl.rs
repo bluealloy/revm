@@ -443,14 +443,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 self.data.subroutine.checkpoint_revert(checkpoint);
                 return (e, gas, Bytes::new());
             }
-            Ok((_source_is_cold, _target_is_cold)) => {
-                // if INSPECT && source_is_cold {
-                //     self.inspector.load_account(&transfer.source);
-                // }
-                // if INSPECT && target_is_cold {
-                //     self.inspector.load_account(&transfer.target);
-                // }
-            }
+            Ok((_source_is_cold, _target_is_cold)) => {}
         }
 
         // call precompiles
@@ -521,10 +514,6 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         self.data.env
     }
 
-    // fn inspect(&mut self) -> &mut dyn Inspector<DB> {
-    //     self.inspector
-    // }
-
     fn block_hash(&mut self, number: U256) -> H256 {
         self.data.db.block_hash(number)
     }
@@ -534,9 +523,6 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .data
             .subroutine
             .load_account_exist(address, self.data.db);
-        // if INSPECT && is_cold {
-        //     self.inspector.load_account(&address);
-        // }
         (is_cold, exists)
     }
 
@@ -548,18 +534,12 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
 
     fn code(&mut self, address: H160) -> (Bytes, bool) {
         let (acc, is_cold) = self.data.subroutine.load_code(address, self.data.db);
-        // if INSPECT && is_cold {
-        //     self.inspector.load_account(&address);
-        // }
         (acc.info.code.clone().unwrap(), is_cold)
     }
 
     /// Get code hash of address.
     fn code_hash(&mut self, address: H160) -> (H256, bool) {
         let (acc, is_cold) = self.data.subroutine.load_code(address, self.data.db);
-        // if INSPECT && is_cold {
-        //     self.inspector.load_account(&address);
-        // }
         //asume that all precompiles have some balance
         if acc.filth.is_precompile() && self.data.env.cfg.perf_all_precompiles_have_balance {
             return (KECCAK_EMPTY, is_cold);
