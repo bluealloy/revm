@@ -187,7 +187,7 @@ pub struct OpInfo {
 impl OpInfo {
     pub const fn none() -> Self {
         Self {
-            gas: u64::MAX,
+            gas: 0,
             gas_block_end: true,
         }
     }

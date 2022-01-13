@@ -45,7 +45,6 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         // calculate gas_block
         let infos = spec_opcode_gas(data.env.cfg.spec_id);
         let info = &infos[opcode as usize];
-        println!("Gas info:{:?}", info);
 
         println!(
             "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data:",
