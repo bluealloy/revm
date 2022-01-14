@@ -1,3 +1,13 @@
+# v1.1.0
+date: 14.12.2021
+
+There is bug introduced in last release with gas blco koptimization, it will crash revm if anywhere in contract is unknown OpCode. And now returning log after execution (ups) included them in eth/tests verification.
+
+Changes:
+* Bug fix for unknown OpCode
+* Omit edgecase high nonce test. tracer gas fix 
+* Some internal cleanup
+
 # v1.0.0
 date: 18.12.2021
 
