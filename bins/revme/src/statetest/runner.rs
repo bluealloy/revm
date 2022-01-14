@@ -49,6 +49,11 @@ pub fn execute_test_suit(path: &PathBuf, elapsed: &Arc<Mutex<Duration>>) -> Resu
     if path.file_name() == Some(OsStr::new("ValueOverflow.json")) {
         return Ok(());
     }
+    // test with very high nonce that in revm overflows. Impossible to happen.
+    // https://github.com/bluealloy/revm/issues/28
+    if path.file_name() == Some(OsStr::new("CREATE2_HighNonceDelegatecall.json")) {
+        return Ok(());
+    }
     // /*
     // Test that take a lot of time so we are going to skip them
     if path.file_name() == Some(OsStr::new("loopExp.json")) {
