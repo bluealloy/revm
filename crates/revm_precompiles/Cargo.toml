@@ -6,7 +6,7 @@ keywords = ["no_std", "ethereum", "evm", "precompiles"]
 license = "MIT"
 name = "revm_precompiles"
 repository = "https://github.com/bluealloy/revm"
-version = "0.3.0"
+version = "0.4.0"
 
 [dependencies]
 bn = {package = "substrate-bn", version = "0.6", default-features = false}
@@ -18,11 +18,12 @@ ripemd160 = {version = "0.9.1", default-features = false}
 secp256k1 = {version = "0.20", default-features = false, features = ["alloc", "recovery"], optional = true}
 sha2 = {version = "0.9.3", default-features = false}
 sha3 = {version = "0.9.1", default-features = false}
-#k256 = { version="0.9", default-features = false, features = ["ecdsa","keccak256"]}
+k256 = { version="0.9", default-features = false, features = ["ecdsa","keccak256"], optional = true }
 
 [dev-dependencies]
 hex = "0.4"
 
 [features]
-default = ["ecrecover"]
-ecrecover = ["secp256k1"]
+default = ["secp256k1"]
+k256_ecrecover = ["k256"]
+

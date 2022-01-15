@@ -9,8 +9,6 @@ mod error;
 mod hash;
 mod identity;
 mod modexp;
-
-#[cfg(feature = "secp256k1")]
 mod secp256k1;
 
 pub use error::Return;
@@ -97,7 +95,6 @@ impl Precompiles {
         if SpecId::HOMESTEAD.enabled(SPEC_ID) {
             fun.push(hash::SHA256);
             fun.push(hash::RIPED160);
-            #[cfg(feature = "secp256k1")]
             fun.push(secp256k1::ECRECOVER);
             fun.push(identity::FUN);
         }
