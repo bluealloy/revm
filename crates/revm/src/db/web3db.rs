@@ -28,11 +28,12 @@ impl Web3DB {
             runtime,
             block_number: None,
         };
-        let bnum = if block_number.is_none() {
-            out.block_on(out.web3.eth().block_number()).ok()?
+        let bnum = if let Some(block_number) = block_number {
+            block_number.into()
         } else {
-            block_number.unwrap().into()
+            out.block_on(out.web3.eth().block_number()).ok()?
         };
+
         out.block_number = Some(BlockNumber::Number(bnum));
         Some(out)
     }
@@ -57,7 +58,7 @@ impl Database for Web3DB {
         };
         let (nonce, balance, code) = self.block_on(f);
         // panic on not getting data?
-        let acc = AccountInfo::new(
+        AccountInfo::new(
             U256(
                 balance
                     .unwrap_or_else(|e| panic!("web3 get balance error:{:?}", e))
@@ -70,8 +71,7 @@ impl Database for Web3DB {
                 code.unwrap_or_else(|e| panic!("web3 get node error:{:?}", e))
                     .0,
             ),
-        );
-        acc
+        )
     }
 
     fn code_by_hash(&mut self, _code_hash: primitive_types::H256) -> bytes::Bytes {
@@ -95,8 +95,7 @@ impl Database for Web3DB {
                 .unwrap();
             U256::from_big_endian(storage.as_bytes())
         };
-        let storage = self.block_on(f);
-        storage
+        self.block_on(f)
     }
 
     fn block_hash(&mut self, number: primitive_types::U256) -> primitive_types::H256 {

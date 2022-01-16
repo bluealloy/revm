@@ -12,6 +12,7 @@ pub const ECRECOVER: (Address, Precompile) = (
 );
 
 #[cfg(feature = "k256_ecrecover")]
+#[allow(clippy::module_inception)]
 mod secp256k1 {
     use core::convert::TryFrom;
     use k256::{
@@ -36,6 +37,7 @@ mod secp256k1 {
 }
 
 #[cfg(all(not(feature = "k256_ecrecover"), feature = "secp256k1"))]
+#[allow(clippy::module_inception)]
 mod secp256k1 {
     use primitive_types::H160 as Address;
     use secp256k1::{
