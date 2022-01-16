@@ -28,6 +28,6 @@ fn sha256_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
 fn ripemd160_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let gas_used = gas_query(calc_linear_cost_u32(input.len(), 600, 120), gas_limit)?;
     let mut ret = [0u8; 32];
-    ret[12..32].copy_from_slice(&ripemd160::Ripemd160::digest(input));
+    ret[12..32].copy_from_slice(&ripemd::Ripemd160::digest(input));
     Ok(PrecompileOutput::without_logs(gas_used, ret.to_vec()))
 }

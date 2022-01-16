@@ -12,12 +12,12 @@ version = "0.2.0"
 crate-type = ["cdylib"]
 
 [dependencies]
+bn-rs = "0.2"
 bytes = "1.1"
-getrandom = {version = "0.2", features = ["js"]}
+getrandom = { version = "0.2", features = ["js"] }
 hex = "0.4"
 js-sys = "0.3"
-primitive-types = {version = "0.10", default-features = false, features = ["rlp", "rustc-hex"]}
+primitive-types = { version = "0.10", default-features = false, features = ["rlp", "rustc-hex"] }
 # for windows build remove ecrecover features. see more here: https://github.com/bluealloy/revm/issues/3
-revm = {path = "../revm", version = "1.1", default-features = false, features = ["k256"]}
+revm = { path = "../revm", version = "1.1", default-features = false, features = ["k256"] }
 wasm-bindgen = "0.2"
-bn-rs = "0.2"
