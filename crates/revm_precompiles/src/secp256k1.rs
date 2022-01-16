@@ -16,8 +16,8 @@ pub const ECRECOVER: (Address, Precompile) = (
 mod secp256k1 {
     use core::convert::TryFrom;
     use k256::{
-        elliptic_curve::sec1::ToEncodedPoint,
         ecdsa::{recoverable, Error},
+        elliptic_curve::sec1::ToEncodedPoint,
         PublicKey as K256PublicKey,
     };
     use primitive_types::H160 as Address;
@@ -41,7 +41,7 @@ mod secp256k1 {
 mod secp256k1 {
     use primitive_types::H160 as Address;
     use secp256k1::{
-        recovery::{RecoverableSignature, RecoveryId},
+        ecdsa::{RecoverableSignature, RecoveryId},
         Message, Secp256k1,
     };
     use sha3::{Digest, Keccak256};
@@ -51,7 +51,7 @@ mod secp256k1 {
             RecoverableSignature::from_compact(&sig[0..64], RecoveryId::from_i32(sig[64] as i32)?)?;
 
         let secp = Secp256k1::new();
-        let public = secp.recover(&Message::from_slice(&msg[..32])?, &sig)?;
+        let public = secp.recover_ecdsa(&Message::from_slice(&msg[..32])?, &sig)?;
 
         let mut out = vec![0; 20];
         out.copy_from_slice(&Keccak256::digest(&public.serialize_uncompressed()[1..])[12..]);

@@ -2,11 +2,10 @@
 name = "revm-test"
 version = "0.1.0"
 edition = "2018"
-
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-revm = {path="../../crates/revm"}
-primitive-types = {version ="0.10", features = ["rlp"]}
 bytes = "1.1"
 hex = "0.4"
+primitive-types = { version = "0.10", features = ["rlp"] }
+revm = { path = "../../crates/revm" }

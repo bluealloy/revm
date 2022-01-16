@@ -9,30 +9,30 @@ repository = "https://github.com/bluealloy/revm"
 version = "1.2.0"
 
 [dependencies]
-auto_impl = {version = "0.5", default-features = false}
-bytes = {version = "1.1", default-features = false}
-hashbrown = {version = "0.11"}
-num_enum = {version = "0.5", default-features = false}#used for SpecId from u8 cast
-primitive-types = {version = "0.10", default-features = false, features = ["rlp"]}
-revm_precompiles = {path = "../revm_precompiles", version = "0.4", default-features = false}
-rlp = {version = "0.5", default-features = false}#used for create2 address calculation 
-sha3 = {version = "0.10", default-features = false}
 arrayref  = "0.3"
+auto_impl = { version = "0.5", default-features = false }
+bytes = { version = "1.1", default-features = false }
+#needed for web3 db connector
+futures = { version = "0.3.17", optional = true }
+hashbrown = { version = "0.11" }
+num_enum = { version = "0.5", default-features = false }#used for SpecId from u8 cast
+parking_lot = { version = "0.11.2", optional = true }
+primitive-types = { version = "0.10", default-features = false, features = ["rlp"] }
+revm_precompiles = { path = "../revm_precompiles", version = "0.4", default-features = false }
+rlp = { version = "0.5", default-features = false }#used for create2 address calculation 
+sha3 = { version = "0.10", default-features = false }
+tokio = { version = "1.14", features = ["rt-multi-thread", "macros"], optional = true }
+web3 = { version = "0.17", optional = true }
 #crypto-bigint = "0.3"
 zkp-u256 = "0.2.1"
-#needed for web3 db connector
-futures = {version="0.3.17", optional=true}
-parking_lot = {version="0.11.2", optional=true}
-tokio = {version = "1.14", features = ["rt-multi-thread", "macros"], optional=true}
-web3 = {version="0.17", optional=true}
 
 [dev-dependencies]
 hex = "0.4"
 
 [features]
-default = ["std","secp256k1"]
+default = ["std", "secp256k1"]
 no_gas_measuring = []
 std = ["bytes/std", "num_enum/std", "primitive-types/std", "sha3/std", "rlp/std"]
 secp256k1 = ["revm_precompiles/secp256k1"]
 k256 = ["revm_precompiles/k256_ecrecover"]
-web3db = ["futures","tokio","parking_lot","web3"]
+web3db = ["futures", "tokio", "parking_lot", "web3"]

@@ -9,16 +9,16 @@ repository = "https://github.com/bluealloy/revm"
 version = "0.4.0"
 
 [dependencies]
-bn = {package = "substrate-bn", version = "0.6", default-features = false}
-borsh = {version = "0.9", default-features = false}
-bytes = {version = "1.1", default-features = false}
-num = {version = "0.4.0", default-features = false, features = ["alloc"]}
-primitive-types = {version = "0.10", default-features = false, features = ["rlp"]}
-ripemd160 = {version = "0.9.1", default-features = false}
-secp256k1 = {version = "0.20", default-features = false, features = ["alloc", "recovery"], optional = true}
-sha2 = {version = "0.9.3", default-features = false}
-sha3 = {version = "0.9.1", default-features = false}
-k256 = { version="0.10.1", default-features = false, features = ["ecdsa", "keccak256"], optional = true }
+bn = { package = "substrate-bn", version = "0.6", default-features = false }
+borsh = { version = "0.9", default-features = false }
+bytes = { version = "1.1", default-features = false }
+k256 = { version = "0.10.1", default-features = false, features = ["ecdsa", "keccak256"], optional = true }
+num = { version = "0.4.0", default-features = false, features = ["alloc"] }
+primitive-types = { version = "0.10", default-features = false, features = ["rlp"] }
+ripemd = { version = "0.1", default-features = false }
+secp256k1 = { version = "0.21.2", default-features = false, features = ["alloc", "recovery"], optional = true }
+sha2 = { version = "0.10.1", default-features = false }
+sha3 = { version = "0.10.0", default-features = false }
 
 [dev-dependencies]
 hex = "0.4"

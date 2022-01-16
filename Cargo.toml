@@ -1,13 +1,11 @@
 
-
 [workspace]
 resolver = "2"
 members = [
-    "crates/*",
     "bins/*",
+    "crates/*",
 ]
 default-members = ["crates/revm"]
-
 
 [profile.release]
 debug = true
