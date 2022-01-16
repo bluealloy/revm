@@ -219,9 +219,8 @@ impl<DB: Database> Inspector<DB> for Controller {
     }
 
     fn call_end(&mut self) {
-        match self.state_machine {
-            StateMachine::StepOut => self.state_machine = StateMachine::TriggerStep,
-            _ => (),
+        if let StateMachine::StepOut = self.state_machine {
+            self.state_machine = StateMachine::TriggerStep
         }
     }
 
@@ -238,9 +237,8 @@ impl<DB: Database> Inspector<DB> for Controller {
     }
 
     fn create_end(&mut self) {
-        match self.state_machine {
-            StateMachine::StepOut => self.state_machine = StateMachine::TriggerStep,
-            _ => (),
+        if let StateMachine::StepOut = self.state_machine {
+            self.state_machine = StateMachine::TriggerStep
         }
     }
 

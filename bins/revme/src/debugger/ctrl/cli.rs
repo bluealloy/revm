@@ -18,7 +18,7 @@ pub struct CtrlCli {
 
 const N: usize = usize::MAX;
 
-const CTREE: &'static [&'static [(usize, &'static str)]] = &[
+const CTREE: &[&[(usize, &str)]] = &[
     &[
         (N, "exit"),       //0
         (N, "step"),       //1
@@ -230,10 +230,7 @@ impl LineEditorHost for CtrlCli {
 /// This function is sufficient for example purposes; in a real application
 /// the equivalent function would need to be aware of quoting and other
 /// application specific context.
-fn word_at_cursor<'a>(
-    line: &'a str,
-    cursor_position: usize,
-) -> Option<(std::ops::Range<usize>, &'a str)> {
+fn word_at_cursor(line: &str, cursor_position: usize) -> Option<(std::ops::Range<usize>, &str)> {
     let char_indices: Vec<(usize, char)> = line.char_indices().collect();
     if char_indices.is_empty() {
         return None;

@@ -4,6 +4,7 @@ use crate::{debugger, runner, statetest};
 
 #[derive(StructOpt, Debug)]
 #[structopt(setting = AppSettings::InferSubcommands)]
+#[allow(clippy::large_enum_variant)]
 pub enum MainCmd {
     Statetest(statetest::Cmd),
     Debug(debugger::Cmd),
