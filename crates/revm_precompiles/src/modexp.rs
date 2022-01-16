@@ -194,11 +194,6 @@ mod tests {
 
     use super::*;
 
-    // Byzantium tests: https://github.com/holiman/go-ethereum/blob/master/core/vm/testdata/precompiles/modexp.json
-    // Berlin tests:https://github.com/holiman/go-ethereum/blob/master/core/vm/testdata/precompiles/modexp_eip2565.json
-
-    //0x0000000000000000000000000000000000000000000000000000000000000064000000000000000000000000000000000000000000000000000000000000006400000000000000000000000000000000000000000000000000000000000000645442ddc2b70f66c1f6d2b296c0a875be7eddd0a80958cbc7425f1899ccf90511a5c318226e48ee23f130b44dc17a691ce66be5da18b85ed7943535b205aa125e9f59294a00f05155c23e97dac6b3a00b0c63c8411bf815fc183b420b4d9dc5f715040d5c60957f52d334b843197adec58c131c907cd96059fc5adce9dda351b5df3d666fcf3eb63c46851c1816e323f2119ebdf5ef35
-
     struct Test {
         input: &'static str,
         expected: &'static str,
@@ -365,7 +360,7 @@ mod tests {
     ];
 
     const BYZANTIUM_GAS: [u64; 19] = [
-        0, 13_056, 13_056, 13_056, 204, 204, 3_276, 665, 665, 10_649, 1_894, 1_894, 30_310, 5_580,
+        360_217, 13_056, 13_056, 13_056, 204, 204, 3_276, 665, 665, 10_649, 1_894, 1_894, 30_310, 5_580,
         5_580, 89_292, 17_868, 17_868, 285_900,
     ];
 
@@ -375,81 +370,27 @@ mod tests {
     ];
 
     #[test]
-    fn test_modexp() {
-        for (test, test_gas) in TESTS.iter().zip(BYZANTIUM_GAS.iter()) {
+    fn test_byzantium_modexp_gas() {
+        for (test, &test_gas) in TESTS.iter().zip(BYZANTIUM_GAS.iter()) {
             let input = hex::decode(&test.input).unwrap();
 
-            let res = berlin_run(&input, *test_gas).unwrap().output;
+            let res = byzantium_run(&input, 100_000_000).unwrap();
             let expected = hex::decode(&test.expected).unwrap();
-            assert_eq!(res, expected, "test:{}", test.name);
+            assert_eq!(res.cost,test_gas,"used gas not maching for test: {}",test.name);
+            assert_eq!(res.output, expected, "test:{}", test.name);
         }
     }
-
-    // #[test]
-    // fn test_byzantium_modexp_gas() {
-    //     for (test, test_gas) in TESTS.iter().zip(BYZANTIUM_GAS.iter()) {
-    //         let input = hex::decode(&test.input).unwrap();
-
-    //         let gas = ModExp::<Byzantium>::required_gas(&input).unwrap();
-    //         assert_eq!(gas, *test_gas, "test:{} gas", test.name);
-    //     }
-    // }
 
     #[test]
     fn test_berlin_modexp_gas() {
-        for ((i, test), test_gas) in TESTS.iter().enumerate().zip(BERLIN_GAS.iter()) {
+        for (test, &test_gas) in TESTS.iter().zip(BERLIN_GAS.iter()) {
             let input = hex::decode(&test.input).unwrap();
-
-            let gas_limit = 100_000;
-            let out = berlin_run(&input, gas_limit).unwrap();
-
-            assert_eq!(
-                hex::encode(out.output),
-                test.expected,
-                "{} expected",
-                test.name
-            );
-            assert_eq!(out.cost, *test_gas, "{} gas, index:{}", test.name, i);
+            let res = berlin_run(&input, 100_000_000).unwrap();
+            let expected = hex::decode(&test.expected).unwrap();
+            assert_eq!(res.cost,test_gas,"used gas not maching for test: {}",test.name);
+            assert_eq!(res.output, expected, "test:{}", test.name);
         }
     }
-
-    // #[test]
-    // fn test_berlin_modexp_big_input() {
-    //     let base_len = U256::from(4);
-    //     let exp_len = U256::from(u64::MAX);
-    //     let mod_len = U256::from(4);
-    //     let base: u32 = 1;
-    //     let exp = U256::MAX;
-
-    //     let mut input: Vec<u8> = Vec::new();
-    //     input.extend_from_slice(&crate::precompiles::u256_to_arr(&base_len));
-    //     input.extend_from_slice(&crate::precompiles::u256_to_arr(&exp_len));
-    //     input.extend_from_slice(&crate::precompiles::u256_to_arr(&mod_len));
-    //     input.extend_from_slice(&base.to_be_bytes());
-    //     input.extend_from_slice(&crate::precompiles::u256_to_arr(&exp));
-
-    //     // completes without any overflow
-    //     ModExp::<Berlin>::required_gas(&input).unwrap();
-    // }
-
-    // #[test]
-    // fn test_berlin_modexp_bigger_input() {
-    //     let base_len = U256::MAX;
-    //     let exp_len = U256::MAX;
-    //     let mod_len = U256::MAX;
-    //     let base: u32 = 1;
-    //     let exp = U256::MAX;
-
-    //     let mut input: Vec<u8> = Vec::new();
-    //     input.extend_from_slice(&crate::precompiles::u256_to_arr(&base_len));
-    //     input.extend_from_slice(&crate::precompiles::u256_to_arr(&exp_len));
-    //     input.extend_from_slice(&crate::precompiles::u256_to_arr(&mod_len));
-    //     input.extend_from_slice(&base.to_be_bytes());
-    //     input.extend_from_slice(&crate::precompiles::u256_to_arr(&exp));
-
-    //     // completes without any overflow
-    //     ModExp::<Berlin>::required_gas(&input).unwrap();
-    // }
 
     #[test]
     fn test_berlin_modexp_empty_input() {
