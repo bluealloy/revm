@@ -360,8 +360,8 @@ mod tests {
     ];
 
     const BYZANTIUM_GAS: [u64; 19] = [
-        360_217, 13_056, 13_056, 13_056, 204, 204, 3_276, 665, 665, 10_649, 1_894, 1_894, 30_310, 5_580,
-        5_580, 89_292, 17_868, 17_868, 285_900,
+        360_217, 13_056, 13_056, 13_056, 204, 204, 3_276, 665, 665, 10_649, 1_894, 1_894, 30_310,
+        5_580, 5_580, 89_292, 17_868, 17_868, 285_900,
     ];
 
     const BERLIN_GAS: [u64; 19] = [
@@ -376,7 +376,11 @@ mod tests {
 
             let res = byzantium_run(&input, 100_000_000).unwrap();
             let expected = hex::decode(&test.expected).unwrap();
-            assert_eq!(res.cost,test_gas,"used gas not maching for test: {}",test.name);
+            assert_eq!(
+                res.cost, test_gas,
+                "used gas not maching for test: {}",
+                test.name
+            );
             assert_eq!(res.output, expected, "test:{}", test.name);
         }
     }
@@ -387,7 +391,11 @@ mod tests {
             let input = hex::decode(&test.input).unwrap();
             let res = berlin_run(&input, 100_000_000).unwrap();
             let expected = hex::decode(&test.expected).unwrap();
-            assert_eq!(res.cost,test_gas,"used gas not maching for test: {}",test.name);
+            assert_eq!(
+                res.cost, test_gas,
+                "used gas not maching for test: {}",
+                test.name
+            );
             assert_eq!(res.output, expected, "test:{}", test.name);
         }
     }
