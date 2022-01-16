@@ -4,7 +4,6 @@ use core::cmp::min;
 
 use primitive_types::{H160 as Address, H256};
 
-
 const ECRECOVER_BASE: u64 = 3_000;
 
 pub const ECRECOVER: (Address, Precompile) = (
@@ -20,8 +19,8 @@ mod secp256k1 {
         ecdsa::{recoverable, Error},
         PublicKey as K256PublicKey,
     };
+    use primitive_types::H160 as Address;
     use sha3::{Digest, Keccak256};
-    use primitive_types::{H160 as Address};
 
     pub fn ecrecover(sig: &[u8; 65], msg: &[u8; 32]) -> Result<Address, Error> {
         let sig = recoverable::Signature::try_from(sig.as_ref()).unwrap();
@@ -38,21 +37,16 @@ mod secp256k1 {
 
 #[cfg(all(not(feature = "k256_ecrecover"), feature = "secp256k1"))]
 mod secp256k1 {
+    use primitive_types::H160 as Address;
     use secp256k1::{
         recovery::{RecoverableSignature, RecoveryId},
         Message, Secp256k1,
     };
     use sha3::{Digest, Keccak256};
-    use primitive_types::{H160 as Address};
 
-    pub fn ecrecover(
-        sig: &[u8; 65],
-        msg: &[u8; 32],
-    ) -> Result<Address, secp256k1::Error> {
-        let sig = RecoverableSignature::from_compact(
-            &sig[0..64],
-            RecoveryId::from_i32(sig[64] as i32)?,
-        )?;
+    pub fn ecrecover(sig: &[u8; 65], msg: &[u8; 32]) -> Result<Address, secp256k1::Error> {
+        let sig =
+            RecoverableSignature::from_compact(&sig[0..64], RecoveryId::from_i32(sig[64] as i32)?)?;
 
         let secp = Secp256k1::new();
         let public = secp.recover(&Message::from_slice(&msg[..32])?, &sig)?;
@@ -79,7 +73,7 @@ fn ec_recover_run(i: &[u8], target_gas: u64) -> PrecompileResult {
         return Ok(PrecompileOutput::without_logs(cost, Vec::new()));
     }
 
-    sig[64] = input[63]-27;
+    sig[64] = input[63] - 27;
 
     let out = match secp256k1::ecrecover(&sig, &msg) {
         Ok(out) => H256::from(out).as_bytes().to_vec(),

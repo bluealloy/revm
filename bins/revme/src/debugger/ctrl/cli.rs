@@ -1,13 +1,16 @@
-use std::path::PathBuf;
-use std::str::FromStr;
+use std::{path::PathBuf, str::FromStr};
 
 use primitive_types::{H160, U256};
-use termwiz::cell::AttributeChange;
-use termwiz::color::{AnsiColor, ColorAttribute, RgbColor};
-use termwiz::lineedit::*;
+use termwiz::{
+    cell::AttributeChange,
+    color::{AnsiColor, ColorAttribute, RgbColor},
+    lineedit::*,
+};
 
-use super::ctrl::{Ctrl, CtrlPrint};
-use super::history::CliHistory;
+use super::{
+    ctrl::{Ctrl, CtrlPrint},
+    history::CliHistory,
+};
 
 pub struct CtrlCli {
     history: CliHistory,
