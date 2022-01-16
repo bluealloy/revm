@@ -1,8 +1,10 @@
 use std::{borrow::Cow, collections::VecDeque, path::PathBuf};
 
 use hashbrown::HashMap;
-use std::fs::{File, OpenOptions};
-use std::io::{prelude::*, BufReader};
+use std::{
+    fs::{File, OpenOptions},
+    io::{prelude::*, BufReader},
+};
 use termwiz::lineedit::{History, HistoryIndex, SearchDirection, SearchResult, SearchStyle};
 
 pub struct CliHistory {

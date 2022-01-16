@@ -1,8 +1,8 @@
 use super::gas;
 use crate::{
-    machine::Machine, CallContext, CallScheme, CreateScheme, Host, Return, Spec, Transfer,
+    machine::Machine, return_ok, return_revert, CallContext, CallScheme, CreateScheme, Host,
+    Return, Spec, Transfer,
 };
-use crate::{return_ok, return_revert};
 // 	CallScheme, Capture, CallContext, CreateScheme, ,
 // 	, Runtime, Transfer,
 // };
