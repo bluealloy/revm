@@ -26,25 +26,25 @@ macro_rules! local_fill {
     };
 }
 
-impl Into<Env> for CliEnv {
-    fn into(self) -> Env {
+impl From<CliEnv> for Env {
+    fn from(from: CliEnv) -> Self {
         let mut env = Env::default();
-        local_fill!(env.block.gas_limit, self.block.block_gas_limit, U256::from);
-        local_fill!(env.block.number, self.block.number, U256::from);
-        local_fill!(env.block.coinbase, self.block.coinbase);
-        local_fill!(env.block.timestamp, self.block.timestamp, U256::from);
-        local_fill!(env.block.difficulty, self.block.difficulty, U256::from);
-        local_fill!(env.block.basefee, self.block.basefee, U256::from);
+        local_fill!(env.block.gas_limit, from.block.block_gas_limit, U256::from);
+        local_fill!(env.block.number, from.block.number, U256::from);
+        local_fill!(env.block.coinbase, from.block.coinbase);
+        local_fill!(env.block.timestamp, from.block.timestamp, U256::from);
+        local_fill!(env.block.difficulty, from.block.difficulty, U256::from);
+        local_fill!(env.block.basefee, from.block.basefee, U256::from);
 
-        local_fill!(env.tx.caller, self.tx.caller);
-        local_fill!(env.tx.gas_limit, self.tx.tx_gas_limit);
-        local_fill!(env.tx.value, self.tx.value, U256::from);
-        local_fill!(env.tx.data, self.tx.data);
-        env.tx.gas_priority_fee = self.tx.gas_priority_fee.map(U256::from);
-        env.tx.chain_id = self.tx.chain_id;
-        env.tx.nonce = self.tx.nonce;
+        local_fill!(env.tx.caller, from.tx.caller);
+        local_fill!(env.tx.gas_limit, from.tx.tx_gas_limit);
+        local_fill!(env.tx.value, from.tx.value, U256::from);
+        local_fill!(env.tx.data, from.tx.data);
+        env.tx.gas_priority_fee = from.tx.gas_priority_fee.map(U256::from);
+        env.tx.chain_id = from.tx.chain_id;
+        env.tx.nonce = from.tx.nonce;
 
-        env.tx.transact_to = if let Some(to) = self.tx.transact_to {
+        env.tx.transact_to = if let Some(to) = from.tx.transact_to {
             TransactTo::Call(to)
         } else {
             TransactTo::create()

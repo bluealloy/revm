@@ -1,7 +1,7 @@
 use std::{
     collections::{HashMap, HashSet},
     ffi::OsStr,
-    path::PathBuf,
+    path::{Path, PathBuf},
     str::FromStr,
     sync::{atomic::AtomicBool, Arc, Mutex},
     time::{Duration, Instant},
@@ -35,7 +35,7 @@ pub enum TestError {
     SerdeDeserialize(#[from] serde_json::Error),
 }
 
-pub fn find_all_json_tests(path: &PathBuf) -> Vec<PathBuf> {
+pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
     WalkDir::new(path)
         .into_iter()
         .filter_map(|e| e.ok())
@@ -44,7 +44,7 @@ pub fn find_all_json_tests(path: &PathBuf) -> Vec<PathBuf> {
         .collect::<Vec<PathBuf>>()
 }
 
-pub fn execute_test_suit(path: &PathBuf, elapsed: &Arc<Mutex<Duration>>) -> Result<(), TestError> {
+pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<(), TestError> {
     // funky test with bigint value in json :)
     if path.file_name() == Some(OsStr::new("ValueOverflow.json")) {
         return Ok(());
@@ -128,7 +128,7 @@ pub fn execute_test_suit(path: &PathBuf, elapsed: &Arc<Mutex<Duration>>) -> Resu
             database.insert_cache(*address, acc_info);
             // insert storage:
             for (&slot, &value) in info.storage.iter() {
-                database.insert_cache_storage(address.clone(), slot, value)
+                database.insert_cache_storage(*address, slot, value)
             }
         }
         let mut env = Env::default();
@@ -144,14 +144,13 @@ pub fn execute_test_suit(path: &PathBuf, elapsed: &Arc<Mutex<Duration>>) -> Resu
         env.block.difficulty = unit.env.current_difficulty;
 
         //tx env
-        env.tx.caller = map_caller_keys
+        env.tx.caller = *map_caller_keys
             .get(&unit.transaction.secret_key.unwrap())
-            .unwrap()
-            .clone();
+            .unwrap();
         env.tx.gas_price = unit
             .transaction
             .gas_price
-            .unwrap_or(unit.transaction.max_fee_per_gas.unwrap_or_default());
+            .unwrap_or_else(|| unit.transaction.max_fee_per_gas.unwrap_or_default());
         env.tx.gas_priority_fee = unit.transaction.max_priority_fee_per_gas;
 
         // post and execution
@@ -166,12 +165,7 @@ pub fn execute_test_suit(path: &PathBuf, elapsed: &Arc<Mutex<Duration>>) -> Resu
             env.cfg.spec_id = spec_name.to_spec_id();
 
             for (id, test) in tests.into_iter().enumerate() {
-                let gas_limit = unit
-                    .transaction
-                    .gas_limit
-                    .get(test.indexes.gas)
-                    .unwrap()
-                    .clone();
+                let gas_limit = *unit.transaction.gas_limit.get(test.indexes.gas).unwrap();
                 let gas_limit = if gas_limit > U256::from(u64::MAX) {
                     u64::MAX
                 } else {
@@ -184,19 +178,14 @@ pub fn execute_test_suit(path: &PathBuf, elapsed: &Arc<Mutex<Duration>>) -> Resu
                     .get(test.indexes.data)
                     .unwrap()
                     .clone();
-                env.tx.value = unit
-                    .transaction
-                    .value
-                    .get(test.indexes.value)
-                    .unwrap()
-                    .clone();
+                env.tx.value = *unit.transaction.value.get(test.indexes.value).unwrap();
 
                 let access_list = match unit.transaction.access_lists {
                     Some(ref access_list) => access_list
                         .get(test.indexes.data)
                         .cloned()
                         .flatten()
-                        .unwrap_or(Vec::new())
+                        .unwrap_or_default()
                         .into_iter()
                         .map(|item| {
                             (

@@ -37,7 +37,7 @@ pub fn state_merkle_trie_root(
         .map(|(address, info)| {
             let storage = storage.get(address).cloned().unwrap_or_default();
             let storage_root = trie_account_rlp(info, storage);
-            (address.clone(), storage_root)
+            (*address, storage_root)
         })
         .collect();
 
@@ -50,7 +50,7 @@ pub fn trie_account_rlp(info: &AccountInfo, storage: Map<U256, U256>) -> Bytes {
     stream.append(&info.nonce);
     stream.append(&info.balance);
     stream.append(&{
-        let storage_root = sec_trie_root::<KeccakHasher, _, _, _>(
+        sec_trie_root::<KeccakHasher, _, _, _>(
             storage
                 .into_iter()
                 .filter(|(_k, v)| v != &U256::zero())
@@ -59,8 +59,7 @@ pub fn trie_account_rlp(info: &AccountInfo, storage: Map<U256, U256>) -> Bytes {
                     k.to_big_endian(&mut temp);
                     (H256::from(temp), rlp::encode(&v))
                 }),
-        );
-        storage_root.clone()
+        )
     });
     stream.append(&info.code_hash.as_bytes());
     stream.out().freeze()

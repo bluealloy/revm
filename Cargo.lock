@@ -1822,23 +1822,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "revm-merkle"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "hash-db",
- "hex",
- "plain_hasher",
- "primitive-types 0.10.1",
- "rlp",
- "serde",
- "serde_derive",
- "serde_json",
- "sha3 0.10.0",
- "triehash",
-]
-
-[[package]]
 name = "revm-test"
 version = "0.1.0"
 dependencies = [

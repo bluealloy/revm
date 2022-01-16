@@ -30,6 +30,12 @@ pub struct EVM {
     revm: rEVM<InMemoryDB>,
 }
 
+impl Default for EVM {
+    fn default() -> Self {
+        EVM::new()
+    }
+}
+
 #[wasm_bindgen]
 impl EVM {
     pub fn new() -> EVM {
@@ -71,7 +77,7 @@ impl EVM {
         self.revm.env.cfg.chain_id = gas_limit.try_into().unwrap();
     }
     pub fn cfg_spec_id(&mut self, spec_id: u8) {
-        self.revm.env.cfg.spec_id = SpecId::try_from_u8(spec_id).unwrap_or_else(|| SpecId::LATEST);
+        self.revm.env.cfg.spec_id = SpecId::try_from_u8(spec_id).unwrap_or(SpecId::LATEST);
     }
 
     /****** ALL BLOCK ENV SETTERS ********/
@@ -139,9 +145,9 @@ pub struct AccessedAccount {
     slots: Vec<U256>,
 }
 
-impl Into<(H160, Vec<U256>)> for AccessedAccount {
-    fn into(self) -> (H160, Vec<U256>) {
-        (self.account, self.slots)
+impl From<AccessedAccount> for (H160, Vec<U256>) {
+    fn from(from: AccessedAccount) -> Self {
+        (from.account, from.slots)
     }
 }
 
