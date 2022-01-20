@@ -545,12 +545,12 @@ dependencies = [
 
 [[package]]
 name = "filedescriptor"
-version = "0.7.3"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e70cb4dda2f343f3b7a98a6536559d04a700136cada190822e5d6a99e4184c06"
+checksum = "9ed3d8a5e20435ff00469e51a0d82049bae66504b5c429920dadf9bb54d47b3f"
 dependencies = [
- "anyhow",
  "libc",
+ "thiserror",
  "winapi",
 ]
 
@@ -1843,7 +1843,7 @@ dependencies = [
  "primitive-types 0.10.1",
  "ripemd",
  "secp256k1 0.21.2",
- "sha2",
+ "sha2 0.10.1",
  "sha3 0.10.0",
  "substrate-bn",
 ]
@@ -2100,6 +2100,19 @@ dependencies = [
 
 [[package]]
 name = "sha2"
+version = "0.9.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4d58a1e1bf39749807d89cf2d98ac2dfa0ff1cb3faa38fbb64dd88ac8013d800"
+dependencies = [
+ "block-buffer 0.9.0",
+ "cfg-if 1.0.0",
+ "cpufeatures",
+ "digest 0.9.0",
+ "opaque-debug",
+]
+
+[[package]]
+name = "sha2"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "99c3bd8169c58782adad9290a9af5939994036b76187f7b4f0e6de91dbbfc0ec"
@@ -2329,15 +2342,16 @@ dependencies = [
 
 [[package]]
 name = "termwiz"
-version = "0.13.0"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12b348dd979d43d0082d232b0e7ff03b95a3eca71a96b230aba855ad86273c33"
+checksum = "31ef6892cc0348a9b3b8c377addba91e0f6365863d92354bf27559dca81ee8c5"
 dependencies = [
  "anyhow",
  "base64",
  "bitflags",
  "cfg-if 1.0.0",
  "filedescriptor",
+ "hex",
  "lazy_static",
  "libc",
  "log",
@@ -2347,15 +2361,15 @@ dependencies = [
  "ordered-float",
  "regex",
  "semver",
+ "sha2 0.9.9",
  "signal-hook",
  "terminfo",
  "termios",
  "thiserror",
+ "ucd-trie",
  "unicode-segmentation",
- "unicode-width",
  "vtparse",
  "winapi",
- "xi-unicode",
 ]
 
 [[package]]
@@ -2624,9 +2638,9 @@ checksum = "5fecdca9a5291cc2b8dcf7dc02453fee791a280f3743cb0905f8822ae463b3fe"
 
 [[package]]
 name = "vtparse"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "78a0bebf506b5405df1bc773d1b7bfa5d2fb11011b8c95b7d0a6dfd0f8f37142"
+checksum = "8f41c9314c4dde1f43dd0c46c67bb5ae73850ce11eebaf7d8b912e178bda5401"
 dependencies = [
  "utf8parse",
 ]
@@ -2831,12 +2845,6 @@ name = "wyz"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "85e60b0d1b5f99db2556934e21937020776a5d31520bf169e851ac44e6420214"
-
-[[package]]
-name = "xi-unicode"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a67300977d3dc3f8034dae89778f502b6ba20b269527b3223ba59c0cf393bb8a"
 
 [[package]]
 name = "zeroize"
