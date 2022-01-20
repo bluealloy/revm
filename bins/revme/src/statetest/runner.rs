@@ -33,6 +33,8 @@ pub enum TestError {
     },
     #[error("Serde json error")]
     SerdeDeserialize(#[from] serde_json::Error),
+    #[error("Internal system error")]
+    SystemError,
 }
 
 pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
@@ -250,13 +252,13 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
     Ok(())
 }
 
-pub fn run(test_files: Vec<PathBuf>) {
+pub fn run(test_files: Vec<PathBuf>) -> Result<(), TestError> {
     let endjob = Arc::new(AtomicBool::new(false));
     let console_bar = Arc::new(ProgressBar::new(test_files.len() as u64));
     let mut joins = Vec::new();
     let queue = Arc::new(Mutex::new((0, test_files)));
     let elapsed = Arc::new(Mutex::new(std::time::Duration::ZERO));
-    for _ in 0..1 {
+    for _ in 0..5 {
         let queue = queue.clone();
         let endjob = endjob.clone();
         let console_bar = console_bar.clone();
@@ -269,20 +271,20 @@ pub fn run(test_files: Vec<PathBuf>) {
                     let test_path = {
                         let mut queue = queue.lock().unwrap();
                         if queue.1.len() <= queue.0 {
-                            break;
+                            return Ok(());
                         }
                         let test_path = queue.1[queue.0].clone();
                         queue.0 += 1;
                         test_path
                     };
                     if endjob.load(Ordering::SeqCst) {
-                        return;
+                        return Ok(());
                     }
                     //println!("Test:{:?}\n",test_path);
                     if let Err(err) = execute_test_suit(&test_path, &elapsed) {
                         endjob.store(true, Ordering::SeqCst);
                         println!("\n{:?} failed: {}\n", test_path, err);
-                        return;
+                        return Err(err);
                     }
 
                     //println!("TestDone:{:?}\n",test_path);
@@ -292,8 +294,9 @@ pub fn run(test_files: Vec<PathBuf>) {
         );
     }
     for handler in joins {
-        let _ = handler.join();
+        handler.join().map_err(|_| TestError::SystemError)??;
     }
     console_bar.finish_at_current_pos();
     println!("Finished execution. Time:{:?}", elapsed.lock().unwrap());
+    Ok(())
 }

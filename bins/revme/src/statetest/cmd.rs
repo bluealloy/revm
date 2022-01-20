@@ -13,7 +13,6 @@ impl Cmd {
     pub fn run(&self) -> Result<(), TestError> {
         let test_files = find_all_json_tests(&self.path);
         println!("Start running tests on: {:?}", self.path);
-        run(test_files);
-        Ok(())
+        run(test_files)
     }
 }
