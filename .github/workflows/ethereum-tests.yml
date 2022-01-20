@@ -1,0 +1,37 @@
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+name: Ethereum Tests
+
+jobs:
+  tests-stable:
+    name: Ethereum Tests (Stable)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Checkout ethereum/tests
+        uses: actions/checkout@v2
+        with:
+          repository: ethereum/tests
+          path: ethtests
+
+      - name: Install toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - uses: Swatinem/rust-cache@v1
+        with:
+          cache-on-failure: true
+
+      - name: Run Ethereum tests
+        run: cargo run --release -p revme -- statetest ethtests/GeneralStateTests
