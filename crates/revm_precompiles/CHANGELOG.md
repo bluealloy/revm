@@ -1,4 +1,9 @@
 
+# v0.4.0
+date: 20.1.2022
+
+* Added feature for k256 lib. We now have choise to use bitcoin c lib and k256 for ecrecovery.
+
 # v0.3.0
 
 * switch stacks H256 with U256 

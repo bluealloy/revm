@@ -1,7 +1,13 @@
-# v1.1.0
-date: 14.12.2021
+# v1.2.0
+date 20.1.2022
 
-There is bug introduced in last release with gas blco koptimization, it will crash revm if anywhere in contract is unknown OpCode. And now returning log after execution (ups) included them in eth/tests verification.
+Changes:
+* Bump revm_precompile and added new feature for k256 lib.
+
+# v1.1.0
+date: 14.1.2022
+
+There is bug introduced in last release with gas blcok optimization, it will crash revm if anywhere in contract is unknown OpCode. And now returning log after execution (ups) included them in eth/tests verification.
 
 Changes:
 * Bug fix for unknown OpCode
