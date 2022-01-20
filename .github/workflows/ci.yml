@@ -1,10 +1,10 @@
+name: Tests
+
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-
-name: Tests
+    branches: [main]
 
 jobs:
   tests-stable:
