@@ -10,7 +10,6 @@ version = "0.4.0"
 
 [dependencies]
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
-borsh = { version = "0.9", default-features = false }
 bytes = { version = "1.1", default-features = false }
 k256 = { version = "0.10.1", default-features = false, features = ["ecdsa", "keccak256"], optional = true }
 num = { version = "0.4.0", default-features = false, features = ["alloc"] }
