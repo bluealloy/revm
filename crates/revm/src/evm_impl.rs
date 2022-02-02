@@ -398,9 +398,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 (exit_reason, ret, machine.gas, machine.return_value())
             }
         };
-        if INSPECT {
-            self.inspector.call_end();
-        }
         ret
     }
 
@@ -586,17 +583,38 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         scheme: CreateScheme,
         value: U256,
         init_code: Bytes,
-        gas: u64,
+        gas_limit: u64,
     ) -> (Return, Option<H160>, Gas, Bytes) {
         if INSPECT {
-            let (ret, gas, bytes, out) =
-                self.inspector
-                    .create(&mut self.data, caller, &scheme, value, &init_code, gas);
+            let (ret, address, gas, out) = self.inspector.create(
+                &mut self.data,
+                caller,
+                &scheme,
+                value,
+                &init_code,
+                gas_limit,
+            );
             if ret != Return::Continue {
-                return (ret, gas, bytes, out);
+                return (ret, address, gas, out);
             }
         }
-        self.create_inner::<SPEC>(caller, scheme, value, init_code, gas)
+        let (ret, address, gas, out) =
+            self.create_inner::<SPEC>(caller, scheme, value, init_code.clone(), gas_limit);
+        if INSPECT {
+            self.inspector.create_end(
+                &mut self.data,
+                caller,
+                &scheme,
+                value,
+                &init_code,
+                ret,
+                address,
+                gas_limit,
+                gas.remaining(),
+                &out,
+            );
+        }
+        (ret, address, gas, out)
     }
 
     fn call<SPEC: Spec>(
@@ -604,24 +622,45 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         code_address: H160,
         transfer: Transfer,
         input: Bytes,
-        gas: u64,
+        gas_limit: u64,
         context: CallContext,
     ) -> (Return, Gas, Bytes) {
         if INSPECT {
-            let (ret, gas, bytes) = self.inspector.call(
+            let (ret, gas, out) = self.inspector.call(
                 &mut self.data,
                 code_address,
                 &context,
                 &transfer,
                 &input,
-                gas,
+                gas_limit,
                 SPEC::IS_STATIC_CALL,
             );
             if ret != Return::Continue {
-                return (ret, gas, bytes);
+                return (ret, gas, out);
             }
         }
-        self.call_inner::<SPEC>(code_address, transfer, input, gas, context)
+        let (ret, gas, out) = self.call_inner::<SPEC>(
+            code_address,
+            transfer.clone(),
+            input.clone(),
+            gas_limit,
+            context.clone(),
+        );
+        if INSPECT {
+            self.inspector.call_end(
+                &mut self.data,
+                code_address,
+                &context,
+                &transfer,
+                &input,
+                gas_limit,
+                gas.remaining(),
+                ret,
+                &out,
+                SPEC::IS_STATIC_CALL,
+            );
+        }
+        (ret, gas, out)
     }
 }
 
