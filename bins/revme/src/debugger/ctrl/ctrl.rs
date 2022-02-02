@@ -218,7 +218,19 @@ impl<DB: Database> Inspector<DB> for Controller {
         (Return::Continue, Gas::new(0), Bytes::new())
     }
 
-    fn call_end(&mut self) {
+    fn call_end(
+        &mut self,
+        _data: &mut EVMData<'_, DB>,
+        _call: H160,
+        _context: &revm::CallContext,
+        _transfer: &revm::Transfer,
+        _input: &Bytes,
+        _gas_limit: u64,
+        _remaining_gas: u64,
+        _ret: Return,
+        _out: &Bytes,
+        _is_static: bool,
+    ) {
         if let StateMachine::StepOut = self.state_machine {
             self.state_machine = StateMachine::TriggerStep
         }
@@ -236,7 +248,19 @@ impl<DB: Database> Inspector<DB> for Controller {
         (Return::Continue, None, Gas::new(0), Bytes::new())
     }
 
-    fn create_end(&mut self) {
+    fn create_end(
+        &mut self,
+        _data: &mut EVMData<'_, DB>,
+        _caller: H160,
+        _scheme: &revm::CreateScheme,
+        _value: U256,
+        _init_code: &Bytes,
+        _ret: Return,
+        _address: Option<H160>,
+        _gas_limit: u64,
+        _remaining_gas: u64,
+        _out: &Bytes,
+    ) {
         if let StateMachine::StepOut = self.state_machine {
             self.state_machine = StateMachine::TriggerStep
         }

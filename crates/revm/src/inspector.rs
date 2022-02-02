@@ -52,8 +52,19 @@ pub trait Inspector<DB: Database> {
         is_static: bool,
     ) -> (Return, Gas, Bytes);
 
-    //TODO add all field
-    fn call_end(&mut self);
+    fn call_end(
+        &mut self,
+        data: &mut EVMData<'_, DB>,
+        call: H160,
+        context: &CallContext,
+        transfer: &Transfer,
+        input: &Bytes,
+        gas_limit: u64,
+        remaining_gas: u64,
+        ret: Return,
+        out: &Bytes,
+        is_static: bool,
+    );
 
     fn create(
         &mut self,
@@ -62,11 +73,22 @@ pub trait Inspector<DB: Database> {
         scheme: &CreateScheme,
         value: U256,
         init_code: &Bytes,
-        gas: u64,
+        gas_limit: u64,
     ) -> (Return, Option<H160>, Gas, Bytes);
 
-    //TODO add all field
-    fn create_end(&mut self);
+    fn create_end(
+        &mut self,
+        data: &mut EVMData<'_, DB>,
+        caller: H160,
+        scheme: &CreateScheme,
+        value: U256,
+        init_code: &Bytes,
+        ret: Return,
+        address: Option<H160>,
+        gas_limit: u64,
+        remaining_gas: u64,
+        out: &Bytes,
+    );
 
     fn selfdestruct(&mut self);
 
@@ -130,7 +152,20 @@ impl<DB: Database> Inspector<DB> for NoOpInspector {
         (Return::Continue, Gas::new(0), Bytes::new())
     }
 
-    fn call_end(&mut self) {}
+    fn call_end(
+        &mut self,
+        _data: &mut EVMData<'_, DB>,
+        _call: H160,
+        _context: &CallContext,
+        _transfer: &Transfer,
+        _input: &Bytes,
+        _gas_limit: u64,
+        _remaining_gas: u64,
+        _ret: Return,
+        _out: &Bytes,
+        _is_static: bool,
+    ) {
+    }
 
     fn create(
         &mut self,
@@ -139,12 +174,25 @@ impl<DB: Database> Inspector<DB> for NoOpInspector {
         _scheme: &CreateScheme,
         _value: U256,
         _init_code: &Bytes,
-        _gas: u64,
+        _gas_limit: u64,
     ) -> (Return, Option<H160>, Gas, Bytes) {
         (Return::Continue, None, Gas::new(0), Bytes::new())
     }
 
-    fn create_end(&mut self) {}
+    fn create_end(
+        &mut self,
+        _data: &mut EVMData<'_, DB>,
+        _caller: H160,
+        _scheme: &CreateScheme,
+        _value: U256,
+        _init_code: &Bytes,
+        _ret: Return,
+        _address: Option<H160>,
+        _gas_limit: u64,
+        _remaining_gas: u64,
+        _out: &Bytes,
+    ) {
+    }
 
     fn selfdestruct(&mut self) {}
 }
