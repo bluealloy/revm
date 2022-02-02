@@ -39,7 +39,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> Return {
-        let opcode = unsafe { *machine.program_counter };
+        let opcode = machine.current_opcode();
         let opcode_str = opcode::OPCODE_JUMPMAP[opcode as usize];
 
         // calculate gas_block

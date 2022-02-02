@@ -60,14 +60,10 @@ impl Stack {
     }
 
     pub fn reduce_one(&mut self) -> Return {
-        let len = self.data.len();
-        if len < 1 {
-            return Return::StackUnderflow;
+        match self.data.pop() {
+            None => Return::StackUnderflow,
+            Some(_) => Return::Continue,
         }
-        unsafe {
-            self.data.set_len(len - 1);
-        }
-        Return::Continue
     }
 
     #[inline]
@@ -81,46 +77,31 @@ impl Stack {
     /**** SAFETY ********
      * caller is responsible to check length of array
      */
-    pub unsafe fn pop_unsafe(&mut self) -> U256 {
-        let mut len = self.data.len();
-        len -= 1;
-        self.data.set_len(len);
-        *self.data.get_unchecked(len)
+    pub fn pop_unsafe(&mut self) -> U256 {
+        self.data.pop().unwrap()
     }
 
     #[inline(always)]
-    pub unsafe fn pop2_unsafe(&mut self) -> (U256, U256) {
-        let mut len = self.data.len();
-        len -= 2;
-        self.data.set_len(len);
+    pub fn pop2_unsafe(&mut self) -> (U256, U256) {
+        (self.data.pop().unwrap(), self.data.pop().unwrap())
+    }
+
+    #[inline(always)]
+    pub fn pop3_unsafe(&mut self) -> (U256, U256, U256) {
         (
-            *self.data.get_unchecked(len + 1),
-            *self.data.get_unchecked(len),
+            self.data.pop().unwrap(),
+            self.data.pop().unwrap(),
+            self.data.pop().unwrap(),
         )
     }
 
     #[inline(always)]
-    pub unsafe fn pop3_unsafe(&mut self) -> (U256, U256, U256) {
-        let mut len = self.data.len();
-        len -= 3;
-        self.data.set_len(len);
+    pub fn pop4_unsafe(&mut self) -> (U256, U256, U256, U256) {
         (
-            *self.data.get_unchecked(len + 2),
-            *self.data.get_unchecked(len + 1),
-            *self.data.get_unchecked(len),
-        )
-    }
-
-    #[inline(always)]
-    pub unsafe fn pop4_unsafe(&mut self) -> (U256, U256, U256, U256) {
-        let mut len = self.data.len();
-        len -= 4;
-        self.data.set_len(len);
-        (
-            *self.data.get_unchecked(len + 3),
-            *self.data.get_unchecked(len + 2),
-            *self.data.get_unchecked(len + 1),
-            *self.data.get_unchecked(len),
+            self.data.pop().unwrap(),
+            self.data.pop().unwrap(),
+            self.data.pop().unwrap(),
+            self.data.pop().unwrap(),
         )
     }
 
@@ -166,11 +147,7 @@ impl Stack {
         } else if len + 1 > STACK_LIMIT {
             Return::StackOverflow
         } else {
-            unsafe {
-                *self.data.get_unchecked_mut(len) = *self.data.get_unchecked(len - N);
-                let new_len = len + 1;
-                self.data.set_len(new_len);
-            }
+            self.data.push(self.data[len - N]);
             Return::Continue
         }
     }
@@ -181,12 +158,7 @@ impl Stack {
         if len <= N {
             return Return::StackUnderflow;
         }
-        // SAFETY: length is checked before so we are okay to switch bytes in unsafe way.
-        unsafe {
-            let pa: *mut U256 = self.data.get_unchecked_mut(len - 1);
-            let pb: *mut U256 = self.data.get_unchecked_mut(len - 1 - N);
-            core::ptr::swap(pa, pb);
-        }
+        self.data.swap(len - 1, len - 1 - N);
         Return::Continue
     }
 
@@ -198,12 +170,7 @@ impl Stack {
             return Return::StackOverflow;
         }
 
-        unsafe {
-            self.data.set_len(new_len);
-        }
-
-        let slot = self.data.get_mut(new_len - 1).unwrap();
-        slot.0 = [0u64; 4];
+        let mut slot = U256::zero();
         let mut dangling = [0u8; 8];
         if N < 8 {
             dangling[8 - N..].copy_from_slice(slice);
@@ -233,6 +200,7 @@ impl Stack {
                 slot.0[3] = u64::from_be_bytes(dangling);
             }
         }
+        self.data.push(slot);
         Return::Continue
     }
 

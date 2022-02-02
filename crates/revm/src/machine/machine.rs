@@ -15,7 +15,7 @@ pub struct Machine {
     /// Contract information and invoking data
     pub contract: Contract,
     /// Program counter.
-    pub program_counter: *const u8,
+    pub program_counter: usize,
     /// Memory.
     pub memory: Memory,
     /// Stack.
@@ -127,7 +127,7 @@ impl Gas {
 impl Machine {
     pub fn new<SPEC: Spec>(contract: Contract, gas_limit: u64, call_depth: u64) -> Self {
         Self {
-            program_counter: contract.code.as_ptr(),
+            program_counter: 0,
             return_range: Range::default(),
             memory: Memory::new(),
             stack: Stack::new(),
@@ -163,10 +163,12 @@ impl Machine {
 
     /// Return a reference of the program counter.
     pub fn program_counter(&self) -> usize {
-        unsafe {
-            self.program_counter
-                .offset_from(self.contract.code.as_ptr()) as usize
-        }
+        self.program_counter
+    }
+
+    #[inline(always)]
+    pub fn current_opcode(&self) -> u8 {
+        self.contract.code[self.program_counter]
     }
 
     /// loop steps until we are finished with execution
@@ -185,8 +187,8 @@ impl Machine {
                     return ret;
                 }
             }
-            let opcode = unsafe { *self.program_counter };
-            self.program_counter = unsafe { self.program_counter.offset(1) };
+            let opcode = self.current_opcode();
+            self.program_counter += 1;
             ret = eval::<H, SPEC>(opcode, self, host);
 
             if H::INSPECT {

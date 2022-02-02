@@ -60,8 +60,9 @@ impl Memory {
     /// Set memory region at given offset. The offset and value are already checked
     ///
     #[inline(always)]
-    pub unsafe fn set_byte(&mut self, index: usize, byte: u8) {
-        *self.data.get_unchecked_mut(index) = byte;
+    pub fn set_byte(&mut self, index: usize, byte: u8) {
+        self.data[index] = byte;
+        // *self.data.get_unchecked_mut(index) = byte;
     }
 
     #[inline(always)]
@@ -83,11 +84,7 @@ impl Memory {
     pub fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]) {
         if data_offset >= data.len() {
             // nulify all memory slots
-            for i in memory_offset..memory_offset + len {
-                unsafe {
-                    *self.data.get_unchecked_mut(i) = 0;
-                }
-            }
+            self.data[memory_offset..memory_offset + len].fill(0);
             return;
         }
         let data_end = min(data_offset + len, data.len());
@@ -95,11 +92,7 @@ impl Memory {
         self.data[memory_offset..memory_data_end].copy_from_slice(&data[data_offset..data_end]);
 
         // nulify rest of memory slots
-        for i in memory_data_end..memory_offset + len {
-            unsafe {
-                *self.data.get_unchecked_mut(i) = 0;
-            }
-        }
+        self.data[memory_data_end..memory_offset + len].fill(0);
     }
 }
 

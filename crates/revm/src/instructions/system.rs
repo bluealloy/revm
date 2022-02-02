@@ -289,9 +289,8 @@ pub fn log<H: Host, SPEC: Spec>(machine: &mut Machine, n: u8, host: &mut H) -> R
 
     let mut topics = Vec::with_capacity(n);
     for _ in 0..(n) {
-        /*** SAFETY stack bounds already checked few lines above */
         let mut t = H256::zero();
-        unsafe { machine.stack.pop_unsafe().to_big_endian(t.as_bytes_mut()) };
+        machine.stack.pop_unsafe().to_big_endian(t.as_bytes_mut());
         topics.push(t);
     }
 

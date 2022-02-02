@@ -111,8 +111,7 @@ pub fn mstore8(machine: &mut Machine) -> Return {
     let index = as_usize_or_fail!(index, Return::OutOfGas);
     memory_resize!(machine, index, 1);
     let value = (value.low_u32() & 0xff) as u8;
-    // SAFETY: we resized our memory two lines above.
-    unsafe { machine.memory.set_byte(index, value) }
+    machine.memory.set_byte(index, value);
     Return::Continue
 }
 
@@ -123,7 +122,7 @@ pub fn jump(machine: &mut Machine) -> Return {
     let dest = as_usize_or_fail!(dest, Return::InvalidJump);
 
     if machine.contract.is_valid_jump(dest) {
-        machine.program_counter = unsafe { machine.contract.code.as_ptr().add(dest) };
+        machine.program_counter = dest;
         Return::Continue
     } else {
         Return::InvalidJump
@@ -138,7 +137,7 @@ pub fn jumpi(machine: &mut Machine) -> Return {
     if !value.is_zero() {
         let dest = as_usize_or_fail!(dest, Return::InvalidJump);
         if machine.contract.is_valid_jump(dest) {
-            machine.program_counter = unsafe { machine.contract.code.as_ptr().add(dest) };
+            machine.program_counter = dest;
             Return::Continue
         } else {
             Return::InvalidJump
@@ -170,12 +169,11 @@ pub fn msize(machine: &mut Machine) -> Return {
 
 pub fn push<const N: usize>(machine: &mut Machine) -> Return {
     //gas!(machine, gas::VERYLOW);
-
     let start = machine.program_counter;
     let ret = machine
         .stack
-        .push_slice::<N>(unsafe { core::slice::from_raw_parts(start, N) });
-    machine.program_counter = unsafe { machine.program_counter.add(N) };
+        .push_slice::<N>(&machine.contract.code[start..start + N]);
+    machine.program_counter += N;
     ret
 }
 
