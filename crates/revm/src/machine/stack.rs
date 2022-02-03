@@ -66,6 +66,11 @@ impl Stack {
         }
     }
 
+    #[inline(always)]
+    pub fn top_mut(&mut self) -> Option<&mut U256> {
+        self.data.last_mut()
+    }
+
     #[inline]
     /// Pop a value from the stack. If the stack is already empty, returns the
     /// `StackUnderflow` error.

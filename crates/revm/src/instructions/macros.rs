@@ -108,12 +108,22 @@ macro_rules! pop_address {
     };
 }
 
+macro_rules! top2 {
+    ( $machine:expr, $x1:ident, $x2:ident) => {
+        if $machine.stack.len() < 2 {
+            return Return::StackUnderflow;
+        }
+        let $x1 = $machine.stack.pop_unsafe();
+        let $x2 = $machine.stack.top_mut().unwrap();
+    };
+}
+
 macro_rules! pop {
     ( $machine:expr, $x1:ident) => {
-        let $x1 = match $machine.stack.pop() {
-            Ok(x) => x,
-            Err(err) => return err,
-        };
+        if $machine.stack.len() < 1 {
+            return Return::StackUnderflow;
+        }
+        let $x1 = $machine.stack.pop_unsafe();
     };
     ( $machine:expr, $x1:ident, $x2:ident) => {
         if $machine.stack.len() < 2 {
@@ -161,20 +171,22 @@ macro_rules! push {
 macro_rules! op1_u256_fn {
     ( $machine:expr, $op:path ) => {{
         //gas!($machine, $gas);
-        pop!($machine, op1);
-        let ret = $op(op1);
-        push!($machine, ret);
-
-        Return::Continue
+        if let Some(op1) = $machine.stack.top_mut() {
+            *op1 = $op(*op1);
+            Return::Continue
+        } else {
+            Return::StackUnderflow
+        }
     }};
 }
 
 macro_rules! op2_u256_bool_ref {
     ( $machine:expr, $op:ident) => {{
         //gas!($machine, $gas);
-        pop!($machine, op1, op2);
-        let ret = op1.$op(&op2);
-        push!($machine, if ret { U256::one() } else { U256::zero() });
+
+        top2!($machine, op1, op2);
+        let ret = op1.$op(op2);
+        *op2 = if ret { U256::one() } else { U256::zero() };
 
         Return::Continue
     }};
@@ -183,9 +195,9 @@ macro_rules! op2_u256_bool_ref {
 macro_rules! op2_u256 {
     ( $machine:expr, $op:ident) => {{
         //gas!($machine, $gas);
-        pop!($machine, op1, op2);
-        let ret = op1.$op(op2);
-        push!($machine, ret);
+
+        top2!($machine, op1, op2);
+        *op2 = op1.$op(*op2);
 
         Return::Continue
     }};
@@ -195,16 +207,9 @@ macro_rules! op2_u256_tuple {
     ( $machine:expr, $op:ident) => {{
         //gas!($machine, $gas);
 
-        pop!($machine, op1, op2);
-        let (ret, ..) = op1.$op(op2);
-        push!($machine, ret);
-
-        Return::Continue
-    }};
-    ( $machine:expr, $op:ident ) => {{
-        pop!($machine, op1, op2);
-        let (ret, ..) = op1.$op(op2);
-        push!($machine, ret);
+        top2!($machine, op1, op2);
+        let (ret, ..) = op1.$op(*op2);
+        *op2 = ret;
 
         Return::Continue
     }};
@@ -214,9 +219,8 @@ macro_rules! op2_u256_fn {
     ( $machine:expr, $op:path ) => {{
         //gas!($machine, $gas);
 
-        pop!($machine, op1, op2);
-        let ret = $op(op1, op2);
-        push!($machine, ret);
+        top2!($machine, op1, op2);
+        *op2 = $op(op1, *op2);
 
         Return::Continue
     }};

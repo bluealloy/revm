@@ -81,14 +81,14 @@ pub fn pop(machine: &mut Machine) -> Return {
 
 pub fn mload(machine: &mut Machine) -> Return {
     //gas!(machine, gas::VERYLOW);
-    pop!(machine, index);
 
-    let index = as_usize_or_fail!(index, Return::OutOfGas);
+    let top = match machine.stack.top_mut() {
+        Some(top) => top,
+        None => return Return::StackUnderflow,
+    };
+    let index = as_usize_or_fail!(top, Return::OutOfGas);
     memory_resize!(machine, index, 32);
-    push!(
-        machine,
-        util::be_to_u256(machine.memory.get_slice(index, 32))
-    );
+    *top = util::be_to_u256(machine.memory.get_slice(index, 32));
     Return::Continue
 }
 
