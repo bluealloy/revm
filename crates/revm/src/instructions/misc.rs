@@ -144,18 +144,18 @@ pub fn jumpi(machine: &mut Machine) -> Return {
         }
     } else {
         // if we are not doing jump, add next gas block.
-        machine.add_next_gas_block(machine.program_counter() - 1)
+        machine.add_next_gas_block(machine.program_counter - 1)
     }
 }
 
 pub fn jumpdest(machine: &mut Machine) -> Return {
     gas!(machine, gas::JUMPDEST);
-    machine.add_next_gas_block(machine.program_counter() - 1)
+    machine.add_next_gas_block(machine.program_counter - 1)
 }
 
 pub fn pc(machine: &mut Machine) -> Return {
     //gas!(machine, gas::BASE);
-    push!(machine, U256::from(machine.program_counter() - 1));
+    push!(machine, U256::from(machine.program_counter - 1));
     Return::Continue
 }
 

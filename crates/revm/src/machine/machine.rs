@@ -161,11 +161,6 @@ impl Machine {
         Return::Continue
     }
 
-    /// Return a reference of the program counter.
-    pub fn program_counter(&self) -> usize {
-        self.program_counter
-    }
-
     #[inline(always)]
     pub fn current_opcode(&self) -> u8 {
         self.contract.code[self.program_counter]

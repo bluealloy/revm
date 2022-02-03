@@ -31,7 +31,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         Return::Continue
     }
 
-    // get opcode by calling `machine.contract.opcode(machine.program_counter())`.
+    // get opcode by calling `machine.contract.opcode(machine.program_counter)`.
     // all other information can be obtained from machine.
     fn step(
         &mut self,
@@ -49,7 +49,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         println!(
             "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data:",
             machine.call_depth,
-            machine.program_counter(),
+            machine.program_counter,
             machine.gas.remaining()+self.full_gas_block-self.reduced_gas_block,
             machine.gas.remaining()+self.full_gas_block-self.reduced_gas_block,
             opcode_str.unwrap(),
@@ -62,7 +62,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
 
         if info.gas_block_end {
             self.reduced_gas_block = 0;
-            self.full_gas_block = machine.contract.gas_block(machine.program_counter());
+            self.full_gas_block = machine.contract.gas_block(machine.program_counter);
         } else {
             self.reduced_gas_block += info.gas;
         }

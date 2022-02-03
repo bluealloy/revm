@@ -21,7 +21,7 @@ pub trait Inspector<DB: Database> {
         Return::Continue
     }
 
-    /// get opcode by calling `machine.contract.opcode(machine.program_counter())`.
+    /// get opcode by calling `machine.contract.opcode(machine.program_counter)`.
     /// all other information can be obtained from machine.
     fn step(
         &mut self,

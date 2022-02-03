@@ -135,7 +135,7 @@ impl<DB: Database> Inspector<DB> for Controller {
                         let opcode = machine
                             .contract
                             .code
-                            .get(machine.program_counter())
+                            .get(machine.program_counter)
                             .cloned()
                             .unwrap();
                         let gas_spend = machine.gas().spend();
@@ -144,7 +144,7 @@ impl<DB: Database> Inspector<DB> for Controller {
                             "call_depth:{} PC:{} Opcode: {:#x} {:?} gas(spend,remaining):({},{})\n\
                             Stack:{}",
                             machine.call_depth,
-                            machine.program_counter(),
+                            machine.program_counter,
                             opcode,
                             OPCODE_JUMPMAP[opcode as usize].unwrap_or("Invalid"),
                             gas_spend,
@@ -153,20 +153,14 @@ impl<DB: Database> Inspector<DB> for Controller {
                         );
                     }
                     CtrlPrint::Opcode => {
-                        let opcode = *machine
-                            .contract
-                            .code
-                            .get(machine.program_counter())
-                            .unwrap();
+                        let opcode = *machine.contract.code.get(machine.program_counter).unwrap();
                         println!(
                             "PC:{} OpCode: {:#x} {:?}",
-                            machine.program_counter(),
-                            opcode,
-                            OPCODE_JUMPMAP[opcode as usize]
+                            machine.program_counter, opcode, OPCODE_JUMPMAP[opcode as usize]
                         )
                     }
                     CtrlPrint::Stack => {
-                        println!("PC:{} stack:{}", machine.program_counter(), machine.stack())
+                        println!("PC:{} stack:{}", machine.program_counter, machine.stack())
                     }
                     CtrlPrint::Memory => {
                         println!("memory:{}", hex::encode(&machine.memory.data()))
