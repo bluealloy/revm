@@ -1,4 +1,4 @@
-use crate::SpecId;
+use crate::{Return, SpecId};
 
 pub(crate) trait NotStaticSpec {}
 
@@ -10,6 +10,24 @@ pub trait Spec: Sized {
     fn enabled(spec_id: SpecId) -> bool {
         Self::SPEC_ID as u8 >= spec_id as u8
     }
+    #[inline(always)]
+    fn require(spec_id: SpecId) -> Result<(), Return> {
+        if Self::enabled(spec_id) {
+            Ok(())
+        } else {
+            Err(Return::NotActivated)
+        }
+    }
+
+    #[inline(always)]
+    fn err_if_static_call() -> Result<(), Return> {
+        if Self::IS_STATIC_CALL {
+            Err(Return::NotActivated)
+        } else {
+            Ok(())
+        }
+    }
+
     const SPEC_ID: SpecId;
     /// static flag used in STATIC type;
     const IS_STATIC_CALL: bool;

@@ -1,6 +1,6 @@
 use crate::{
     instructions::{eval, Return},
-    return_ok, return_revert, USE_GAS,
+    USE_GAS,
 };
 use bytes::Bytes;
 use core::ops::Range;
@@ -50,15 +50,11 @@ impl Gas {
     }
 
     pub fn reimburse_unspend(&mut self, exit: &Return, other: Gas) {
-        match *exit {
-            return_ok!() => {
-                self.erase_cost(other.remaining());
-                self.record_refund(other.refunded());
-            }
-            return_revert!() => {
-                self.erase_cost(other.remaining());
-            }
-            _ => {}
+        if exit.is_normal() {
+            self.erase_cost(other.remaining());
+            self.record_refund(other.refunded());
+        } else if exit.is_revert() {
+            self.erase_cost(other.remaining());
         }
     }
 
@@ -151,14 +147,14 @@ impl Machine {
         &self.stack
     }
 
-    pub fn add_next_gas_block(&mut self, pc: usize) -> Return {
+    pub fn add_next_gas_block(&mut self, pc: usize) -> Result<(), Return> {
         if USE_GAS {
             let gas_block = self.contract.gas_block(pc);
             if !self.gas.record_cost(gas_block) {
-                return Return::OutOfGas;
+                return Err(Return::OutOfGas);
             }
         }
-        Return::Continue
+        Ok(())
     }
 
     #[inline(always)]
@@ -167,33 +163,26 @@ impl Machine {
     }
 
     /// loop steps until we are finished with execution
-    pub fn run<H: Host, SPEC: Spec>(&mut self, host: &mut H) -> Return {
+    pub fn run<H: Host, SPEC: Spec>(&mut self, host: &mut H) -> Result<(), Return> {
         //let timer = std::time::Instant::now();
-        let mut ret = Return::Continue;
         // add first gas_block
         if USE_GAS && !self.gas.record_cost(self.contract.first_gas_block()) {
-            return Return::OutOfGas;
+            return Err(Return::OutOfGas);
         }
-        while ret == Return::Continue {
+        loop {
             // step
             if H::INSPECT {
-                let ret = host.step(self, SPEC::IS_STATIC_CALL);
-                if ret != Return::Continue {
-                    return ret;
-                }
+                host.step(self, SPEC::IS_STATIC_CALL)?;
             }
             let opcode = self.current_opcode();
             self.program_counter += 1;
-            ret = eval::<H, SPEC>(opcode, self, host);
+            let ret = eval::<H, SPEC>(opcode, self, host);
 
             if H::INSPECT {
-                let ret = host.step_end(ret, self);
-                if ret != Return::Continue {
-                    return ret;
-                }
+                host.step_end(ret, self)?;
             }
+            ret?;
         }
-        ret
     }
 
     /// Copy and get the return value of the machine, if any.

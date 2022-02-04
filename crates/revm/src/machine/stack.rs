@@ -1,5 +1,5 @@
 use crate::{alloc::vec::Vec, util, Return};
-use primitive_types::{H256, U256};
+use primitive_types::{H160, H256, U256};
 
 pub const STACK_LIMIT: usize = 1024;
 
@@ -59,19 +59,18 @@ impl Stack {
         &self.data
     }
 
-    pub fn reduce_one(&mut self) -> Return {
-        match self.data.pop() {
-            None => Return::StackUnderflow,
-            Some(_) => Return::Continue,
-        }
+    #[inline(always)]
+    pub fn reduce_one(&mut self) -> Result<(), Return> {
+        self.pop().map(|_| ())
     }
 
+    // XXX remove?
     #[inline(always)]
     pub fn top_mut(&mut self) -> Option<&mut U256> {
         self.data.last_mut()
     }
 
-    #[inline]
+    #[inline(always)]
     /// Pop a value from the stack. If the stack is already empty, returns the
     /// `StackUnderflow` error.
     pub fn pop(&mut self) -> Result<U256, Return> {
@@ -79,35 +78,42 @@ impl Stack {
     }
 
     #[inline(always)]
-    /**** SAFETY ********
-     * caller is responsible to check length of array
-     */
-    pub fn pop_unsafe(&mut self) -> U256 {
-        self.data.pop().unwrap()
+    pub fn pop2(&mut self) -> Result<(U256, U256), Return> {
+        if let [.., b, a] = self.data[..] {
+            self.data.truncate(self.data.len() - 2);
+            Ok((a, b))
+        } else {
+            Err(Return::StackUnderflow)
+        }
     }
 
     #[inline(always)]
-    pub fn pop2_unsafe(&mut self) -> (U256, U256) {
-        (self.data.pop().unwrap(), self.data.pop().unwrap())
+    pub fn pop3(&mut self) -> Result<(U256, U256, U256), Return> {
+        if let [.., c, b, a] = self.data[..] {
+            self.data.truncate(self.data.len() - 3);
+            Ok((a, b, c))
+        } else {
+            Err(Return::StackUnderflow)
+        }
     }
 
     #[inline(always)]
-    pub fn pop3_unsafe(&mut self) -> (U256, U256, U256) {
-        (
-            self.data.pop().unwrap(),
-            self.data.pop().unwrap(),
-            self.data.pop().unwrap(),
-        )
+    pub fn pop4(&mut self) -> Result<(U256, U256, U256, U256), Return> {
+        if let [.., d, c, b, a] = self.data[..] {
+            self.data.truncate(self.data.len() - 4);
+            Ok((a, b, c, d))
+        } else {
+            Err(Return::StackUnderflow)
+        }
     }
 
     #[inline(always)]
-    pub fn pop4_unsafe(&mut self) -> (U256, U256, U256, U256) {
-        (
-            self.data.pop().unwrap(),
-            self.data.pop().unwrap(),
-            self.data.pop().unwrap(),
-            self.data.pop().unwrap(),
-        )
+    /// Pop a value from the stack. If the stack is already empty, returns the
+    /// `StackUnderflow` error.
+    pub fn pop_address(&mut self) -> Result<H160, Return> {
+        let mut temp = H256::zero();
+        self.pop()?.to_big_endian(temp.as_bytes_mut());
+        Ok(temp.into())
     }
 
     #[inline]
@@ -121,7 +127,7 @@ impl Stack {
         Ok(())
     }
 
-    #[inline]
+    #[inline(always)]
     /// Push a new value into the stack. If it will exceed the stack limit,
     /// returns `StackOverflow` error and leaves the stack unchanged.
     pub fn push(&mut self, value: U256) -> Result<(), Return> {
@@ -130,6 +136,11 @@ impl Stack {
         }
         self.data.push(value);
         Ok(())
+    }
+
+    #[inline(always)]
+    pub fn push_unchecked(&mut self, value: U256) {
+        self.data.push(value);
     }
 
     #[inline]
@@ -145,34 +156,34 @@ impl Stack {
     }
 
     #[inline(always)]
-    pub fn dup<const N: usize>(&mut self) -> Return {
+    pub fn dup<const N: usize>(&mut self) -> Result<(), Return> {
         let len = self.data.len();
         if len < N {
-            Return::StackUnderflow
+            Err(Return::StackUnderflow)
         } else if len + 1 > STACK_LIMIT {
-            Return::StackOverflow
+            Err(Return::StackOverflow)
         } else {
             self.data.push(self.data[len - N]);
-            Return::Continue
+            Ok(())
         }
     }
 
     #[inline(always)]
-    pub fn swap<const N: usize>(&mut self) -> Return {
+    pub fn swap<const N: usize>(&mut self) -> Result<(), Return> {
         let len = self.data.len();
         if len <= N {
-            return Return::StackUnderflow;
+            return Err(Return::StackUnderflow);
         }
         self.data.swap(len - 1, len - 1 - N);
-        Return::Continue
+        Ok(())
     }
 
     /// push slice onto memory it is expected to be max 32 bytes and be contains inside H256
     #[inline(always)]
-    pub fn push_slice<const N: usize>(&mut self, slice: &[u8]) -> Return {
+    pub fn push_slice<const N: usize>(&mut self, slice: &[u8]) -> Result<(), Return> {
         let new_len = self.data.len() + 1;
         if new_len > STACK_LIMIT {
-            return Return::StackOverflow;
+            return Err(Return::StackOverflow);
         }
 
         let mut slot = U256::zero();
@@ -206,7 +217,7 @@ impl Stack {
             }
         }
         self.data.push(slot);
-        Return::Continue
+        Ok(())
     }
 
     #[inline]

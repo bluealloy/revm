@@ -110,7 +110,7 @@ impl<DB: Database> Inspector<DB> for Controller {
         machine: &mut revm::Machine,
         data: &mut EVMData<'_, DB>,
         _is_static: bool,
-    ) -> Return {
+    ) -> Result<(), Return> {
         loop {
             match Ctrl::next(self.state_machine, &self.history_path) {
                 Ctrl::Help => {
@@ -192,11 +192,15 @@ impl<DB: Database> Inspector<DB> for Controller {
                 Ctrl::None => break,
             }
         }
-        Return::Continue
+        Ok(())
     }
 
-    fn step_end(&mut self, _eval: revm::Return, _machine: &mut revm::Machine) -> Return {
-        Return::Continue
+    fn step_end(
+        &mut self,
+        _eval: Result<(), revm::Return>,
+        _machine: &mut revm::Machine,
+    ) -> Result<(), Return> {
+        Ok(())
     }
 
     fn call(

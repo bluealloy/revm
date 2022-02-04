@@ -1,22 +1,24 @@
 use super::gas;
-use crate::{machine::Machine, util, Return, Spec, SpecId::*};
+use crate::{
+    instructions::macros::as_usize_or_fail, machine::Machine, util, Return, Spec, SpecId::*,
+};
 use primitive_types::{H256, U256};
 
-pub fn codesize(machine: &mut Machine) -> Return {
+pub fn codesize(machine: &mut Machine) -> Result<(), Return> {
     //gas!(machine, gas::BASE);
     let size = U256::from(machine.contract.code_size);
-    push!(machine, size);
-    Return::Continue
+    machine.stack.push(size)?;
+    Ok(())
 }
 
-pub fn codecopy(machine: &mut Machine) -> Return {
-    pop!(machine, memory_offset, code_offset, len);
+pub fn codecopy(machine: &mut Machine) -> Result<(), Return> {
+    let (memory_offset, code_offset, len) = machine.stack.pop3()?;
     gas_or_fail!(machine, gas::verylowcopy_cost(len));
-    let len = as_usize_or_fail!(len, Return::OutOfGas);
+    let len = as_usize_or_fail(&len, Return::OutOfGas)?;
     if len == 0 {
-        return Return::Continue;
+        return Ok(());
     }
-    let memory_offset = as_usize_or_fail!(memory_offset, Return::OutOfGas);
+    let memory_offset = as_usize_or_fail(&memory_offset, Return::OutOfGas)?;
     let code_offset = as_usize_saturated!(code_offset);
     memory_resize!(machine, memory_offset, len);
 
@@ -24,13 +26,13 @@ pub fn codecopy(machine: &mut Machine) -> Return {
         .memory
         .set_data(memory_offset, code_offset, len, &machine.contract.code);
 
-    Return::Continue
+    Ok(())
 }
 
-pub fn calldataload(machine: &mut Machine) -> Return {
+pub fn calldataload(machine: &mut Machine) -> Result<(), Return> {
     //gas!(machine, gas::VERYLOW);
 
-    pop!(machine, index);
+    let index = machine.stack.pop()?;
 
     let mut load = [0u8; 32];
     #[allow(clippy::needless_range_loop)]
@@ -45,102 +47,101 @@ pub fn calldataload(machine: &mut Machine) -> Return {
         }
     }
 
-    push_h256!(machine, H256::from(load));
-    Return::Continue
+    machine.stack.push_h256(H256::from(load))?;
+    Ok(())
 }
 
-pub fn calldatasize(machine: &mut Machine) -> Return {
+pub fn calldatasize(machine: &mut Machine) -> Result<(), Return> {
     //gas!(machine, gas::BASE);
 
     let len = U256::from(machine.contract.input.len());
-    push!(machine, len);
-    Return::Continue
+    machine.stack.push(len)?;
+    Ok(())
 }
 
-pub fn calldatacopy(machine: &mut Machine) -> Return {
-    pop!(machine, memory_offset, data_offset, len);
+pub fn calldatacopy(machine: &mut Machine) -> Result<(), Return> {
+    let (memory_offset, data_offset, len) = machine.stack.pop3()?;
     gas_or_fail!(machine, gas::verylowcopy_cost(len));
-    let len = as_usize_or_fail!(len, Return::OutOfGas);
+    let len = as_usize_or_fail(&len, Return::OutOfGas)?;
     if len == 0 {
-        return Return::Continue;
+        return Ok(());
     }
-    let memory_offset = as_usize_or_fail!(memory_offset, Return::OutOfGas);
+    let memory_offset = as_usize_or_fail(&memory_offset, Return::OutOfGas)?;
     let data_offset = as_usize_saturated!(data_offset);
     memory_resize!(machine, memory_offset, len);
 
     machine
         .memory
         .set_data(memory_offset, data_offset, len, &machine.contract.input);
-    Return::Continue
+    Ok(())
 }
 
-pub fn pop(machine: &mut Machine) -> Return {
+#[inline(always)]
+pub fn pop(machine: &mut Machine) -> Result<(), Return> {
     //gas!(machine, gas::BASE);
     machine.stack.reduce_one()
 }
 
-pub fn mload(machine: &mut Machine) -> Return {
+pub fn mload(machine: &mut Machine) -> Result<(), Return> {
     //gas!(machine, gas::VERYLOW);
 
-    let top = match machine.stack.top_mut() {
-        Some(top) => top,
-        None => return Return::StackUnderflow,
-    };
-    let index = as_usize_or_fail!(top, Return::OutOfGas);
+    let index = machine.stack.pop()?;
+    let index = as_usize_or_fail(&index, Return::OutOfGas)?;
     memory_resize!(machine, index, 32);
-    *top = util::be_to_u256(machine.memory.get_slice(index, 32));
-    Return::Continue
+    let ret = util::be_to_u256(machine.memory.get_slice(index, 32));
+    machine.stack.push_unchecked(ret);
+    Ok(())
 }
 
-pub fn mstore(machine: &mut Machine) -> Return {
+pub fn mstore(machine: &mut Machine) -> Result<(), Return> {
     //gas!(machine, gas::VERYLOW);
 
-    pop!(machine, index, value);
+    let (index, value) = machine.stack.pop2()?;
 
-    let index = as_usize_or_fail!(index, Return::OutOfGas);
+    let index = as_usize_or_fail(&index, Return::OutOfGas)?;
     memory_resize!(machine, index, 32);
     machine.memory.set_u256(index, value);
-    Return::Continue
+    Ok(())
 }
 
-pub fn mstore8(machine: &mut Machine) -> Return {
+pub fn mstore8(machine: &mut Machine) -> Result<(), Return> {
     //gas!(machine, gas::VERYLOW);
 
-    pop!(machine, index, value);
+    let (index, value) = machine.stack.pop2()?;
 
-    let index = as_usize_or_fail!(index, Return::OutOfGas);
+    let index = as_usize_or_fail(&index, Return::OutOfGas)?;
     memory_resize!(machine, index, 1);
     let value = (value.low_u32() & 0xff) as u8;
     machine.memory.set_byte(index, value);
-    Return::Continue
+    Ok(())
 }
 
-pub fn jump(machine: &mut Machine) -> Return {
+pub fn jump(machine: &mut Machine) -> Result<(), Return> {
     //gas!(machine, gas::MID);
 
-    pop!(machine, dest);
-    let dest = as_usize_or_fail!(dest, Return::InvalidJump);
+    let dest = machine.stack.pop()?;
+    let dest = as_usize_or_fail(&dest, Return::InvalidJump)?;
 
     if machine.contract.is_valid_jump(dest) {
         machine.program_counter = dest;
-        Return::Continue
+        Ok(())
     } else {
-        Return::InvalidJump
+        Err(Return::InvalidJump)
     }
 }
 
-pub fn jumpi(machine: &mut Machine) -> Return {
+pub fn jumpi(machine: &mut Machine) -> Result<(), Return> {
     //gas!(machine, gas::HIGH);
 
-    pop!(machine, dest, value);
+    let (dest, value) = machine.stack.pop2()?;
 
     if !value.is_zero() {
-        let dest = as_usize_or_fail!(dest, Return::InvalidJump);
+        let dest = as_usize_or_fail(&dest, Return::InvalidJump)?;
         if machine.contract.is_valid_jump(dest) {
             machine.program_counter = dest;
-            Return::Continue
+            Ok(())
         } else {
-            Return::InvalidJump
+            Err(Return::InvalidJump)
         }
     } else {
         // if we are not doing jump, add next gas block.
@@ -148,26 +149,30 @@ pub fn jumpi(machine: &mut Machine) -> Return {
     }
 }
 
-pub fn jumpdest(machine: &mut Machine) -> Return {
+pub fn jumpdest(machine: &mut Machine) -> Result<(), Return> {
     gas!(machine, gas::JUMPDEST);
     machine.add_next_gas_block(machine.program_counter - 1)
 }
 
-pub fn pc(machine: &mut Machine) -> Return {
+pub fn pc(machine: &mut Machine) -> Result<(), Return> {
     //gas!(machine, gas::BASE);
-    push!(machine, U256::from(machine.program_counter - 1));
-    Return::Continue
+    machine
+        .stack
+        .push(U256::from(machine.program_counter - 1))?;
+    Ok(())
 }
 
-pub fn msize(machine: &mut Machine) -> Return {
+pub fn msize(machine: &mut Machine) -> Result<(), Return> {
     //gas!(machine, gas::BASE);
-    push!(machine, U256::from(machine.memory.effective_len()));
-    Return::Continue
+    machine
+        .stack
+        .push(U256::from(machine.memory.effective_len()))?;
+    Ok(())
 }
 
 // code padding is needed for contracts
 
-pub fn push<const N: usize>(machine: &mut Machine) -> Return {
+pub fn push<const N: usize>(machine: &mut Machine) -> Result<(), Return> {
     //gas!(machine, gas::VERYLOW);
     let start = machine.program_counter;
     let ret = machine
@@ -177,41 +182,41 @@ pub fn push<const N: usize>(machine: &mut Machine) -> Return {
     ret
 }
 
-pub fn dup<const N: usize>(machine: &mut Machine) -> Return {
+pub fn dup<const N: usize>(machine: &mut Machine) -> Result<(), Return> {
     //gas!(machine, gas::VERYLOW);
     machine.stack.dup::<N>()
 }
 
-pub fn swap<const N: usize>(machine: &mut Machine) -> Return {
+pub fn swap<const N: usize>(machine: &mut Machine) -> Result<(), Return> {
     //gas!(machine, gas::VERYLOW);
     machine.stack.swap::<N>()
 }
 
-pub fn ret(machine: &mut Machine) -> Return {
+pub fn ret(machine: &mut Machine) -> Result<(), Return> {
     // zero gas cost gas!(machine,gas::ZERO);
-    pop!(machine, start, len);
-    let len = as_usize_or_fail!(len, Return::OutOfGas);
+    let (start, len) = machine.stack.pop2()?;
+    let len = as_usize_or_fail(&len, Return::OutOfGas)?;
     if len == 0 {
         machine.return_range = usize::MAX..usize::MAX;
     } else {
-        let offset = as_usize_or_fail!(start, Return::OutOfGas);
+        let offset = as_usize_or_fail(&start, Return::OutOfGas)?;
         memory_resize!(machine, offset, len);
         machine.return_range = offset..(offset + len);
     }
-    Return::Return
+    Err(Return::Return)
 }
 
-pub fn revert<SPEC: Spec>(machine: &mut Machine) -> Return {
-    check!(SPEC::enabled(BYZANTINE)); // EIP-140: REVERT instruction
-                                      // zero gas cost gas!(machine,gas::ZERO);
-    pop!(machine, start, len);
-    let len = as_usize_or_fail!(len, Return::OutOfGas);
+pub fn revert<SPEC: Spec>(machine: &mut Machine) -> Result<(), Return> {
+    SPEC::require(BYZANTINE)?; // EIP-140: REVERT instruction
+                               // zero gas cost gas!(machine,gas::ZERO);
+    let (start, len) = machine.stack.pop2()?;
+    let len = as_usize_or_fail(&len, Return::OutOfGas)?;
     if len == 0 {
         machine.return_range = usize::MAX..usize::MAX;
     } else {
-        let offset = as_usize_or_fail!(start, Return::OutOfGas);
+        let offset = as_usize_or_fail(&start, Return::OutOfGas)?;
         memory_resize!(machine, offset, len);
         machine.return_range = offset..(offset + len);
     }
-    Return::Revert
+    Err(Return::Revert)
 }

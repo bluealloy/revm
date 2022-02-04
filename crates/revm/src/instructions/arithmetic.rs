@@ -74,13 +74,13 @@ pub fn exp(op1: U256, op2: U256) -> U256 {
     r
 }
 
-pub fn eval_exp<SPEC: Spec>(machine: &mut Machine) -> Return {
-    pop!(machine, op1, op2);
+pub fn eval_exp<SPEC: Spec>(machine: &mut Machine) -> Result<(), Return> {
+    let (op1, op2) = machine.stack.pop2()?;
     gas_or_fail!(machine, gas::exp_cost::<SPEC>(op2));
     let ret = exp(op1, op2);
-    push!(machine, ret);
+    machine.stack.push_unchecked(ret);
 
-    Return::Continue
+    Ok(())
 }
 
 /// In the yellow paper `SIGNEXTEND` is defined to take two inputs, we will call them

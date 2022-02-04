@@ -19,13 +19,6 @@ use core::ops::{BitAnd, BitOr, BitXor};
 use primitive_types::U256;
 
 #[macro_export]
-macro_rules! return_ok {
-    () => {
-        Return::Continue | Return::Stop | Return::Return | Return::SelfDestruct
-    };
-}
-
-#[macro_export]
 macro_rules! return_revert {
     () => {
         Return::Revert | Return::CallTooDeep | Return::OutOfFund
@@ -36,7 +29,7 @@ macro_rules! return_revert {
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Return {
     //success codes
-    Continue = 0x00,
+    Continue = 0x00, // XXX remove?
     Stop = 0x01,
     Return = 0x02,
     SelfDestruct = 0x03,
@@ -73,8 +66,34 @@ pub enum Return {
     CreateContractWithEF,
 }
 
+impl Return {
+    pub fn is_normal(&self) -> bool {
+        matches!(
+            self,
+            Return::Continue | Return::Stop | Return::Return | Return::SelfDestruct
+        )
+    }
+    pub fn is_revert(&self) -> bool {
+        matches!(
+            self,
+            Return::Revert | Return::CallTooDeep | Return::OutOfFund
+        )
+    }
+}
+
+pub fn is_normal(res: &Result<(), Return>) -> bool {
+    match res {
+        Ok(()) => true,
+        Err(ret) => ret.is_normal(),
+    }
+}
+
 #[inline(always)]
-pub fn eval<H: Host, S: Spec>(opcode: u8, machine: &mut Machine, host: &mut H) -> Return {
+pub fn eval<H: Host, S: Spec>(
+    opcode: u8,
+    machine: &mut Machine,
+    host: &mut H,
+) -> Result<(), Return> {
     match opcode {
         /*12_u8..=15_u8 => Return::OpcodeNotFound,
         30_u8..=31_u8 => Return::OpcodeNotFound,
@@ -84,7 +103,7 @@ pub fn eval<H: Host, S: Spec>(opcode: u8, machine: &mut Machine, host: &mut H) -
         165_u8..=239_u8 => Return::OpcodeNotFound,
         246_u8..=249_u8 => Return::OpcodeNotFound,
         251_u8..=252_u8 => Return::OpcodeNotFound,*/
-        opcode::STOP => Return::Stop,
+        opcode::STOP => Err(Return::Stop),
         opcode::ADD => op2_u256_tuple!(machine, overflowing_add),
         opcode::MUL => op2_u256_tuple!(machine, overflowing_mul),
         opcode::SUB => op2_u256_tuple!(machine, overflowing_sub),
@@ -107,21 +126,18 @@ pub fn eval<H: Host, S: Spec>(opcode: u8, machine: &mut Machine, host: &mut H) -
         opcode::XOR => op2_u256!(machine, bitxor),
         opcode::NOT => op1_u256_fn!(machine, bitwise::not),
         opcode::BYTE => op2_u256_fn!(machine, bitwise::byte),
-        opcode::SHL => op2_u256_fn!(
-            machine,
-            bitwise::shl,
-            S::enabled(CONSTANTINOPLE) // EIP-145: Bitwise shifting instructions in EVM
-        ),
-        opcode::SHR => op2_u256_fn!(
-            machine,
-            bitwise::shr,
-            S::enabled(CONSTANTINOPLE) // EIP-145: Bitwise shifting instructions in EVM
-        ),
-        opcode::SAR => op2_u256_fn!(
-            machine,
-            bitwise::sar,
-            S::enabled(CONSTANTINOPLE) // EIP-145: Bitwise shifting instructions in EVM
-        ),
+        opcode::SHL => {
+            S::require(CONSTANTINOPLE)?; // EIP-145: Bitwise shifting instructions in EVM
+            op2_u256_fn!(machine, bitwise::shl)
+        }
+        opcode::SHR => {
+            S::require(CONSTANTINOPLE)?; // EIP-145: Bitwise shifting instructions in EVM
+            op2_u256_fn!(machine, bitwise::shr)
+        }
+        opcode::SAR => {
+            S::require(CONSTANTINOPLE)?; // EIP-145: Bitwise shifting instructions in EVM
+            op2_u256_fn!(machine, bitwise::sar)
+        }
         opcode::SHA3 => system::sha3(machine),
 
         opcode::ADDRESS => system::address(machine),
@@ -209,7 +225,7 @@ pub fn eval<H: Host, S: Spec>(opcode: u8, machine: &mut Machine, host: &mut H) -
 
         opcode::RETURN => misc::ret(machine),
         opcode::REVERT => misc::revert::<S>(machine),
-        opcode::INVALID => Return::InvalidOpcode,
+        opcode::INVALID => Err(Return::InvalidOpcode),
         opcode::BASEFEE => system::basefee::<H, S>(machine, host),
         opcode::ORIGIN => system::origin(machine, host),
         opcode::CALLER => system::caller(machine),
@@ -242,6 +258,6 @@ pub fn eval<H: Host, S: Spec>(opcode: u8, machine: &mut Machine, host: &mut H) -
         opcode::DELEGATECALL => system::call::<H, S>(machine, CallScheme::DelegateCall, host), //check
         opcode::STATICCALL => system::call::<H, S>(machine, CallScheme::StaticCall, host), //check
         opcode::CHAINID => system::chainid::<H, S>(machine, host),
-        _ => Return::OpcodeNotFound,
+        _ => Err(Return::OpcodeNotFound),
     }
 }

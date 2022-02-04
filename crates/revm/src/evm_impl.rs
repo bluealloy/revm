@@ -1,10 +1,9 @@
 use crate::{
     db::Database,
-    instructions::gas,
+    instructions::{gas, is_normal},
     machine,
     machine::{Contract, Gas, Machine},
     models::SelfDestructResult,
-    return_ok,
     spec::{Spec, SpecId::*},
     subroutine::{Account, State, SubRoutine},
     util, CallContext, CreateScheme, Env, Inspector, Log, Return, TransactOut, TransactTo,
@@ -351,52 +350,54 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 .initialize_machine(&mut machine, &mut self.data, false); // TODO fix is_static
         }
         let exit_reason = machine.run::<Self, SPEC>(self);
-        // Host error if present on execution\
-        let ret = match exit_reason {
-            return_ok!() => {
-                let b = Bytes::new();
-                // if ok, check contract creation limit and calculate gas deduction on output len.
-                let code = machine.return_value();
+        // Host error if present on execution\n
+        let ret = if is_normal(&exit_reason) {
+            let b = Bytes::new();
+            // if ok, check contract creation limit and calculate gas deduction on output len.
+            let code = machine.return_value();
 
-                // EIP-3541: Reject new contract code starting with the 0xEF byte
-                if SPEC::enabled(LONDON) && !code.is_empty() && code.get(0) == Some(&0xEF) {
-                    self.data.subroutine.checkpoint_revert(checkpoint);
-                    return (Return::CreateContractWithEF, ret, machine.gas, b);
-                }
-
-                // TODO maybe create some macro to hide this `if`
-                let mut contract_code_size_limit = 0x6000;
-                if INSPECT {
-                    contract_code_size_limit = self
-                        .inspector
-                        .override_spec()
-                        .eip170_contract_code_size_limit;
-                }
-                // EIP-170: Contract code size limit
-                if SPEC::enabled(SPURIOUS_DRAGON) && code.len() > contract_code_size_limit {
-                    self.data.subroutine.checkpoint_revert(checkpoint);
-                    return (Return::CreateContractLimit, ret, machine.gas, b);
-                }
-                if crate::USE_GAS {
-                    let gas_for_code = code.len() as u64 * crate::instructions::gas::CODEDEPOSIT;
-                    // record code deposit gas cost and check if we are out of gas.
-                    if !machine.gas.record_cost(gas_for_code) {
-                        self.data.subroutine.checkpoint_revert(checkpoint);
-                        return (Return::OutOfGas, ret, machine.gas, b);
-                    }
-                }
-                // if we have enought gas
-                self.data.subroutine.checkpoint_commit();
-                let code_hash = H256::from_slice(Keccak256::digest(&code).as_slice());
-                self.data
-                    .subroutine
-                    .set_code(created_address, code, code_hash);
-                (Return::Continue, ret, machine.gas, b)
-            }
-            _ => {
+            // EIP-3541: Reject new contract code starting with the 0xEF byte
+            if SPEC::enabled(LONDON) && !code.is_empty() && code.get(0) == Some(&0xEF) {
                 self.data.subroutine.checkpoint_revert(checkpoint);
-                (exit_reason, ret, machine.gas, machine.return_value())
+                return (Return::CreateContractWithEF, ret, machine.gas, b);
             }
+
+            // TODO maybe create some macro to hide this `if`
+            let mut contract_code_size_limit = 0x6000;
+            if INSPECT {
+                contract_code_size_limit = self
+                    .inspector
+                    .override_spec()
+                    .eip170_contract_code_size_limit;
+            }
+            // EIP-170: Contract code size limit
+            if SPEC::enabled(SPURIOUS_DRAGON) && code.len() > contract_code_size_limit {
+                self.data.subroutine.checkpoint_revert(checkpoint);
+                return (Return::CreateContractLimit, ret, machine.gas, b);
+            }
+            if crate::USE_GAS {
+                let gas_for_code = code.len() as u64 * crate::instructions::gas::CODEDEPOSIT;
+                // record code deposit gas cost and check if we are out of gas.
+                if !machine.gas.record_cost(gas_for_code) {
+                    self.data.subroutine.checkpoint_revert(checkpoint);
+                    return (Return::OutOfGas, ret, machine.gas, b);
+                }
+            }
+            // if we have enought gas
+            self.data.subroutine.checkpoint_commit();
+            let code_hash = H256::from_slice(Keccak256::digest(&code).as_slice());
+            self.data
+                .subroutine
+                .set_code(created_address, code, code_hash);
+            (Return::Continue, ret, machine.gas, b)
+        } else {
+            self.data.subroutine.checkpoint_revert(checkpoint);
+            (
+                exit_reason.unwrap_err(),
+                ret,
+                machine.gas,
+                machine.return_value(),
+            )
         };
         if INSPECT {
             self.inspector.call_end();
@@ -483,14 +484,16 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 self.inspector
                     .initialize_machine(&mut machine, &mut self.data, false); // TODO fix is_static
             }
-            let exit_reason = machine.run::<Self, SPEC>(self);
-            if matches!(exit_reason, return_ok!()) {
+            let reason = match machine.run::<Self, SPEC>(self) {
+                Ok(()) => Return::Continue,
+                Err(reason) => reason,
+            };
+            if reason.is_normal() {
                 self.data.subroutine.checkpoint_commit();
             } else {
                 self.data.subroutine.checkpoint_revert(checkpoint);
             }
-
-            (exit_reason, machine.gas, machine.return_value())
+            (reason, machine.gas, machine.return_value())
         }
     }
 }
@@ -501,13 +504,12 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     const INSPECT: bool = INSPECT;
     type DB = DB;
 
-    fn step(&mut self, machine: &mut Machine, is_static: bool) -> Return {
-        self.inspector.step(machine, &mut self.data, is_static);
-        Return::Continue
+    fn step(&mut self, machine: &mut Machine, is_static: bool) -> Result<(), Return> {
+        self.inspector.step(machine, &mut self.data, is_static)
     }
 
-    fn step_end(&mut self, _ret: Return, _machine: &mut Machine) -> Return {
-        Return::Continue
+    fn step_end(&mut self, _ret: Result<(), Return>, _machine: &mut Machine) -> Result<(), Return> {
+        Ok(())
     }
 
     fn env(&mut self) -> &mut Env {
@@ -631,8 +633,8 @@ pub trait Host {
 
     type DB: Database;
 
-    fn step(&mut self, machine: &mut Machine, is_static: bool) -> Return;
-    fn step_end(&mut self, ret: Return, machine: &mut Machine) -> Return;
+    fn step(&mut self, machine: &mut Machine, is_static: bool) -> Result<(), Return>;
+    fn step_end(&mut self, ret: Result<(), Return>, machine: &mut Machine) -> Result<(), Return>;
 
     fn env(&mut self) -> &mut Env;
 

@@ -26,9 +26,9 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         machine: &mut revm::Machine,
         _data: &mut EVMData<'_, DB>,
         _is_static: bool,
-    ) -> Return {
+    ) -> Result<(), Return> {
         self.full_gas_block = machine.contract.first_gas_block();
-        Return::Continue
+        Ok(())
     }
 
     // get opcode by calling `machine.contract.opcode(machine.program_counter)`.
@@ -38,7 +38,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         machine: &mut revm::Machine,
         data: &mut EVMData<'_, DB>,
         _is_static: bool,
-    ) -> Return {
+    ) -> Result<(), Return> {
         let opcode = machine.current_opcode();
         let opcode_str = opcode::OPCODE_JUMPMAP[opcode as usize];
 
@@ -67,15 +67,19 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
             self.reduced_gas_block += info.gas;
         }
 
-        Return::Continue
+        Ok(())
     }
 
     // fn load_account(&mut self, address: &H160) {
     //     println!("ACCOUNT LOADED:{:?}", address);
     // }
 
-    fn step_end(&mut self, _eval: revm::Return, _machine: &mut revm::Machine) -> Return {
-        Return::Continue
+    fn step_end(
+        &mut self,
+        _eval: Result<(), revm::Return>,
+        _machine: &mut revm::Machine,
+    ) -> Result<(), Return> {
+        Ok(())
     }
 
     // fn sload(&mut self, address: &H160, slot: &U256, value: &U256, is_cold: bool) {

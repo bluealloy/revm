@@ -17,8 +17,8 @@ pub trait Inspector<DB: Database> {
         _machine: &mut Machine,
         _data: &mut EVMData<'_, DB>,
         _is_static: bool,
-    ) -> Return {
-        Return::Continue
+    ) -> Result<(), Return> {
+        Ok(())
     }
 
     /// get opcode by calling `machine.contract.opcode(machine.program_counter)`.
@@ -28,13 +28,17 @@ pub trait Inspector<DB: Database> {
         _machine: &mut Machine,
         _data: &mut EVMData<'_, DB>,
         _is_static: bool,
-    ) -> Return {
-        Return::Continue
+    ) -> Result<(), Return> {
+        Ok(())
     }
 
     /// Called after `step` when instruction is executed.
-    fn step_end(&mut self, _eval: Return, _machine: &mut Machine) -> Return {
-        Return::Continue
+    fn step_end(
+        &mut self,
+        _eval: Result<(), Return>,
+        _machine: &mut Machine,
+    ) -> Result<(), Return> {
+        Ok(())
     }
 
     // TODO introduce some struct
@@ -100,8 +104,8 @@ impl<DB: Database> Inspector<DB> for NoOpInspector {
         _machine: &mut Machine,
         _data: &mut EVMData<'_, DB>,
         _is_static: bool,
-    ) -> Return {
-        Return::Continue
+    ) -> Result<(), Return> {
+        Ok(())
     }
 
     fn step(
@@ -109,12 +113,16 @@ impl<DB: Database> Inspector<DB> for NoOpInspector {
         _machine: &mut Machine,
         _data: &mut EVMData<'_, DB>,
         _is_static: bool,
-    ) -> Return {
-        Return::Continue
+    ) -> Result<(), Return> {
+        Ok(())
     }
 
-    fn step_end(&mut self, _eval: Return, _machine: &mut Machine) -> Return {
-        Return::Continue
+    fn step_end(
+        &mut self,
+        _eval: Result<(), Return>,
+        _machine: &mut Machine,
+    ) -> Result<(), Return> {
+        Ok(())
     }
 
     fn call(
