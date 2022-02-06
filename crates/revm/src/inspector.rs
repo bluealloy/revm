@@ -52,6 +52,7 @@ pub trait Inspector<DB: Database> {
         is_static: bool,
     ) -> (Return, Gas, Bytes);
 
+    #[allow(clippy::too_many_arguments)]
     fn call_end(
         &mut self,
         data: &mut EVMData<'_, DB>,
@@ -76,6 +77,7 @@ pub trait Inspector<DB: Database> {
         gas_limit: u64,
     ) -> (Return, Option<H160>, Gas, Bytes);
 
+    #[allow(clippy::too_many_arguments)]
     fn create_end(
         &mut self,
         data: &mut EVMData<'_, DB>,
