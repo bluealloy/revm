@@ -24,7 +24,7 @@ mod secp256k1 {
     use sha3::{Digest, Keccak256};
 
     pub fn ecrecover(sig: &[u8; 65], msg: &[u8; 32]) -> Result<Address, Error> {
-        let sig = recoverable::Signature::try_from(sig.as_ref()).unwrap();
+        let sig = recoverable::Signature::try_from(sig.as_ref())?;
         let verify_key = sig.recover_verify_key_from_digest_bytes(msg.into())?;
         let public_key = K256PublicKey::from(&verify_key);
         let public_key = public_key.to_encoded_point(/* compress = */ false);
