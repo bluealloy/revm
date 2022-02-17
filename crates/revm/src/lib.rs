@@ -1,6 +1,5 @@
 #![allow(dead_code)]
-//#![forbid(unsafe_code, unused_variables, unused_imports)]
-//#![no_std] only blocker in auto_impl check: https://github.com/bluealloy/revm/issues/4
+//#![no_std]
 
 pub mod db;
 mod evm;

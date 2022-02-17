@@ -58,7 +58,6 @@ impl Memory {
     }
 
     /// Set memory region at given offset. The offset and value are already checked
-    ///
     #[inline(always)]
     pub unsafe fn set_byte(&mut self, index: usize, byte: u8) {
         *self.data.get_unchecked_mut(index) = byte;
@@ -84,6 +83,7 @@ impl Memory {
         if data_offset >= data.len() {
             // nulify all memory slots
             for i in memory_offset..memory_offset + len {
+                // Safety: Memory is assumed to be valid. And it is commented where that assumption is made
                 unsafe {
                     *self.data.get_unchecked_mut(i) = 0;
                 }
@@ -96,6 +96,7 @@ impl Memory {
 
         // nulify rest of memory slots
         for i in memory_data_end..memory_offset + len {
+            // Safety: Memory is assumed to be valid. And it is commented where that assumption is made
             unsafe {
                 *self.data.get_unchecked_mut(i) = 0;
             }

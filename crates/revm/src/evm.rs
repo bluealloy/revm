@@ -5,7 +5,7 @@ use crate::{
     BerlinSpec, ByzantineSpec, Env, Inspector, IstanbulSpec, LatestSpec, Log, LondonSpec,
     NoOpInspector, Return, Spec, SpecId, TransactOut,
 };
-use alloc::boxed::Box;
+use alloc::{boxed::Box, vec::Vec};
 use revm_precompiles::Precompiles;
 /// Struct that takes Database and enabled transact to update state dirrectly to database.
 /// additionaly it allows user to set all environment parameters.
@@ -23,6 +23,8 @@ use revm_precompiles::Precompiles;
 /// want to update anything on it. It enabled `transact_ref` and `inspect_ref` functions
 /// * Database+DatabaseCommit allow's dirrectly commiting changes of transaction. it enabled `transact_commit`
 /// and `inspect_commit`
+
+#[derive(Clone)]
 pub struct EVM<DB> {
     pub env: Env,
     pub db: Option<DB>,

@@ -29,7 +29,7 @@ pub struct I256(pub Sign, pub U256);
 
 #[inline(always)]
 pub fn i256_sign<const DO_TWO_COMPL: bool>(val: &mut U256) -> Sign {
-    if unsafe { val.0.get_unchecked(3) } & SIGN_BITMASK_U64 == 0 {
+    if val.0[3] & SIGN_BITMASK_U64 == 0 {
         if val.is_zero() {
             Sign::Zero
         } else {
@@ -45,9 +45,7 @@ pub fn i256_sign<const DO_TWO_COMPL: bool>(val: &mut U256) -> Sign {
 
 #[inline(always)]
 fn u256_remove_sign(val: &mut U256) {
-    unsafe {
-        *val.0.get_unchecked_mut(3) = val.0.get_unchecked(3) & FLIPH_BITMASK_U64;
-    }
+    val.0[3] &= FLIPH_BITMASK_U64;
 }
 
 #[inline(always)]
@@ -438,11 +436,11 @@ mod tests {
         let mut f = U256([1, 100, 1, 1]);
         let mut s = U256([0, 0, 10, 0]);
 
-        let time = std::time::Instant::now();
+        //let time = std::time::Instant::now();
         for i in 0..1_000_000 {
             f.0[1] = i;
             s.0[3] = div_u256::div_mod(f, s).0 .0[3];
         }
-        println!("TIME:{:?}", time.elapsed());
+        //println!("TIME:{:?}", time.elapsed());
     }
 }

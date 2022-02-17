@@ -163,6 +163,7 @@ impl Machine {
 
     /// Return a reference of the program counter.
     pub fn program_counter(&self) -> usize {
+        // Sefety: this is just substraction of pointers, it is safe to do.
         unsafe {
             self.program_counter
                 .offset_from(self.contract.code.as_ptr()) as usize
@@ -186,6 +187,9 @@ impl Machine {
                 }
             }
             let opcode = unsafe { *self.program_counter };
+            // Safety: In analazis we are doing padding of bytecode so that we are sure that last.
+            // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
+            // it will do noop and just stop execution of this contract
             self.program_counter = unsafe { self.program_counter.offset(1) };
             ret = eval::<H, SPEC>(opcode, self, host);
 

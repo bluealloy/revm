@@ -39,6 +39,8 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> Return {
+        // Safety: casting. In analazis we are making this clame true that program counter will always
+        // point to bytecode of the contract.
         let opcode = unsafe { *machine.program_counter };
         let opcode_str = opcode::OPCODE_JUMPMAP[opcode as usize];
 

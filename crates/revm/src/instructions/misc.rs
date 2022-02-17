@@ -20,6 +20,7 @@ pub fn codecopy(machine: &mut Machine) -> Return {
     let code_offset = as_usize_saturated!(code_offset);
     memory_resize!(machine, memory_offset, len);
 
+    // Safety: set_data is unsafe function and memory_resize ensures us that it is safe to call it
     machine
         .memory
         .set_data(memory_offset, code_offset, len, &machine.contract.code);
@@ -68,6 +69,7 @@ pub fn calldatacopy(machine: &mut Machine) -> Return {
     let data_offset = as_usize_saturated!(data_offset);
     memory_resize!(machine, memory_offset, len);
 
+    // Safety: set_data is unsafe function and memory_resize ensures us that it is safe to call it
     machine
         .memory
         .set_data(memory_offset, data_offset, len, &machine.contract.input);
@@ -111,7 +113,7 @@ pub fn mstore8(machine: &mut Machine) -> Return {
     let index = as_usize_or_fail!(index, Return::OutOfGas);
     memory_resize!(machine, index, 1);
     let value = (value.low_u32() & 0xff) as u8;
-    // SAFETY: we resized our memory two lines above.
+    // Safety: we resized our memory two lines above.
     unsafe { machine.memory.set_byte(index, value) }
     Return::Continue
 }
@@ -123,6 +125,8 @@ pub fn jump(machine: &mut Machine) -> Return {
     let dest = as_usize_or_fail!(dest, Return::InvalidJump);
 
     if machine.contract.is_valid_jump(dest) {
+        // Safety: In analazis we are checking create our jump table and we do check above to be
+        // sure that jump is safe to execute.
         machine.program_counter = unsafe { machine.contract.code.as_ptr().add(dest) };
         Return::Continue
     } else {
@@ -138,6 +142,8 @@ pub fn jumpi(machine: &mut Machine) -> Return {
     if !value.is_zero() {
         let dest = as_usize_or_fail!(dest, Return::InvalidJump);
         if machine.contract.is_valid_jump(dest) {
+            // Safety: In analazis we are checking if jump is valid destination and this if.
+            // make this unsafe block safe.
             machine.program_counter = unsafe { machine.contract.code.as_ptr().add(dest) };
             Return::Continue
         } else {
@@ -172,6 +178,8 @@ pub fn push<const N: usize>(machine: &mut Machine) -> Return {
     //gas!(machine, gas::VERYLOW);
 
     let start = machine.program_counter;
+    // Safety: In Analazis we appended needed bytes for bytecode so that we are safe to just add without
+    // checking if it is out of bound. This makes both of our unsafes block safe to do.
     let ret = machine
         .stack
         .push_slice::<N>(unsafe { core::slice::from_raw_parts(start, N) });

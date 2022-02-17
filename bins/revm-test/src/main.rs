@@ -37,4 +37,5 @@ pub fn simple_example() {
 fn main() {
     println!("Hello, world!");
     simple_example();
+    println!("end!");
 }
