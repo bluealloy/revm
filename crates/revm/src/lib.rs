@@ -6,7 +6,7 @@ mod evm;
 mod evm_impl;
 mod inspector;
 mod instructions;
-mod machine;
+mod interpreter;
 mod models;
 mod spec;
 mod subroutine;
@@ -23,7 +23,7 @@ pub use instructions::{
     opcode::{self, spec_opcode_gas, OpCode, OPCODE_JUMPMAP},
     Return,
 };
-pub use machine::{Gas, Machine};
+pub use interpreter::{Gas, Machine};
 pub use models::*;
 pub use spec::*;
 pub use subroutine::{Account, SubRoutine};

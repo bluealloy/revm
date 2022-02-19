@@ -11,7 +11,7 @@ mod system;
 pub use opcode::{OpCode, OPCODE_JUMPMAP};
 
 use crate::{
-    machine::Machine,
+    interpreter::Machine,
     spec::{Spec, SpecId::*},
     CallScheme, Host,
 };

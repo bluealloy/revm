@@ -51,7 +51,7 @@ macro_rules! memory_resize {
         let len: usize = $len;
         let offset: usize = $offset;
         if let Some(new_size) =
-            crate::machine::memory::next_multiple_of_32(offset.saturating_add(len))
+            crate::interpreter::memory::next_multiple_of_32(offset.saturating_add(len))
         {
             if new_size > $machine.memory.len() {
                 if crate::USE_GAS {

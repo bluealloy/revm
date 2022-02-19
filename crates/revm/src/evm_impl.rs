@@ -1,8 +1,8 @@
 use crate::{
     db::Database,
     instructions::gas,
-    machine,
-    machine::{Contract, Gas, Machine},
+    interpreter,
+    interpreter::{Contract, Gas, Machine},
     models::SelfDestructResult,
     return_ok,
     spec::{Spec, SpecId::*},
@@ -295,7 +295,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         self.load_account(caller);
 
         // check depth of calls
-        if self.data.subroutine.depth() > machine::CALL_STACK_LIMIT {
+        if self.data.subroutine.depth() > interpreter::CALL_STACK_LIMIT {
             return (Return::CallTooDeep, None, gas, Bytes::new());
         }
         // check balance of caller and value. Do this before increasing nonce
@@ -415,7 +415,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let (code, _) = self.code(code_address);
 
         // check depth
-        if self.data.subroutine.depth() > machine::CALL_STACK_LIMIT {
+        if self.data.subroutine.depth() > interpreter::CALL_STACK_LIMIT {
             return (Return::CallTooDeep, gas, Bytes::new());
         }
 
