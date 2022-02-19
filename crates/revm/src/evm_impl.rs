@@ -2,13 +2,13 @@ use crate::{
     db::Database,
     instructions::gas,
     interpreter,
-    interpreter::{Contract, Gas, Machine},
+    interpreter::{Contract, Gas, Interpreter},
     models::SelfDestructResult,
     return_ok,
-    spec::{Spec, SpecId::*},
     subroutine::{Account, State, SubRoutine},
-    util, CallContext, CreateScheme, Env, Inspector, Log, Return, TransactOut, TransactTo,
-    Transfer, KECCAK_EMPTY,
+    CallContext, CreateScheme, Env, Inspector, Log, Return, Spec,
+    SpecId::*,
+    TransactOut, TransactTo, Transfer, KECCAK_EMPTY,
 };
 use alloc::vec::Vec;
 use bytes::Bytes;
@@ -308,8 +308,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         // create address
         let code_hash = H256::from_slice(Keccak256::digest(&init_code).as_slice());
         let created_address = match scheme {
-            CreateScheme::Create => util::create_address(caller, old_nonce),
-            CreateScheme::Create2 { salt } => util::create2_address(caller, code_hash, salt),
+            CreateScheme::Create => create_address(caller, old_nonce),
+            CreateScheme::Create2 { salt } => create2_address(caller, code_hash, salt),
         };
         let ret = Some(created_address);
 
@@ -345,7 +345,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         // create new machine and execute init function
         let contract =
             Contract::new::<SPEC>(Bytes::new(), init_code, created_address, caller, value);
-        let mut machine = Machine::new::<SPEC>(contract, gas.limit(), self.data.subroutine.depth());
+        let mut machine =
+            Interpreter::new::<SPEC>(contract, gas.limit(), self.data.subroutine.depth());
         if Self::INSPECT {
             self.inspector
                 .initialize_machine(&mut machine, &mut self.data, false); // TODO fix is_static
@@ -475,7 +476,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             // create machine and execute subcall
             let contract = Contract::new_with_context::<SPEC>(input, code, &context);
             let mut machine =
-                Machine::new::<SPEC>(contract, gas_limit, self.data.subroutine.depth());
+                Interpreter::new::<SPEC>(contract, gas_limit, self.data.subroutine.depth());
             if Self::INSPECT {
                 self.inspector
                     .initialize_machine(&mut machine, &mut self.data, false); // TODO fix is_static
@@ -498,12 +499,12 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     const INSPECT: bool = INSPECT;
     type DB = DB;
 
-    fn step(&mut self, machine: &mut Machine, is_static: bool) -> Return {
+    fn step(&mut self, machine: &mut Interpreter, is_static: bool) -> Return {
         self.inspector.step(machine, &mut self.data, is_static);
         Return::Continue
     }
 
-    fn step_end(&mut self, _ret: Return, _machine: &mut Machine) -> Return {
+    fn step_end(&mut self, _ret: Return, _machine: &mut Interpreter) -> Return {
         Return::Continue
     }
 
@@ -664,14 +665,36 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     }
 }
 
+pub fn create_address(caller: H160, nonce: u64) -> H160 {
+    let mut stream = rlp::RlpStream::new_list(2);
+    stream.append(&caller);
+    stream.append(&nonce);
+    let out = H256::from_slice(Keccak256::digest(&stream.out()).as_slice());
+    let out = H160::from_slice(&out.as_bytes()[12..]);
+    out
+}
+
+/// Get the create address from given scheme.
+pub fn create2_address(caller: H160, code_hash: H256, salt: U256) -> H160 {
+    let mut temp: [u8; 32] = [0; 32];
+    salt.to_big_endian(&mut temp);
+
+    let mut hasher = Keccak256::new();
+    hasher.update(&[0xff]);
+    hasher.update(&caller[..]);
+    hasher.update(&temp);
+    hasher.update(&code_hash[..]);
+    H160::from_slice(&hasher.finalize().as_slice()[12..])
+}
+
 /// EVM context host.
 pub trait Host {
     const INSPECT: bool;
 
     type DB: Database;
 
-    fn step(&mut self, machine: &mut Machine, is_static: bool) -> Return;
-    fn step_end(&mut self, ret: Return, machine: &mut Machine) -> Return;
+    fn step(&mut self, machine: &mut Interpreter, is_static: bool) -> Return;
+    fn step_end(&mut self, ret: Return, machine: &mut Interpreter) -> Return;
 
     fn env(&mut self) -> &mut Env;
 

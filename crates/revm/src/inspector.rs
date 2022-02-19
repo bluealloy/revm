@@ -2,7 +2,7 @@ use bytes::Bytes;
 use primitive_types::{H160, U256};
 
 use crate::{
-    evm_impl::EVMData, interpreter::Gas, CallContext, CreateScheme, Database, Machine, Return, Transfer,
+    evm_impl::EVMData, interpreter::Gas, CallContext, CreateScheme, Database, Interpreter, Return, Transfer,
 };
 use auto_impl::auto_impl;
 
@@ -14,7 +14,7 @@ pub trait Inspector<DB: Database> {
     /// we are skipping execution of machine.
     fn initialize_machine(
         &mut self,
-        _machine: &mut Machine,
+        _machine: &mut Interpreter,
         _data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> Return {
@@ -25,7 +25,7 @@ pub trait Inspector<DB: Database> {
     /// all other information can be obtained from machine.
     fn step(
         &mut self,
-        _machine: &mut Machine,
+        _machine: &mut Interpreter,
         _data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> Return {
@@ -33,7 +33,7 @@ pub trait Inspector<DB: Database> {
     }
 
     /// Called after `step` when instruction is executed.
-    fn step_end(&mut self, _eval: Return, _machine: &mut Machine) -> Return {
+    fn step_end(&mut self, _eval: Return, _machine: &mut Interpreter) -> Return {
         Return::Continue
     }
 
@@ -121,7 +121,7 @@ impl<DB: Database> Inspector<DB> for NoOpInspector {
 
     fn initialize_machine(
         &mut self,
-        _machine: &mut Machine,
+        _machine: &mut Interpreter,
         _data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> Return {
@@ -130,14 +130,14 @@ impl<DB: Database> Inspector<DB> for NoOpInspector {
 
     fn step(
         &mut self,
-        _machine: &mut Machine,
+        _machine: &mut Interpreter,
         _data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> Return {
         Return::Continue
     }
 
-    fn step_end(&mut self, _eval: Return, _machine: &mut Machine) -> Return {
+    fn step_end(&mut self, _eval: Return, _machine: &mut Interpreter) -> Return {
         Return::Continue
     }
 

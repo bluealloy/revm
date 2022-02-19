@@ -1,25 +1,24 @@
 mod contract;
-mod gas;
 pub(crate) mod memory;
 mod stack;
+mod gas;
 
 pub use contract::Contract;
-pub use gas::Gas;
 pub use memory::Memory;
 pub use stack::Stack;
+pub use gas::Gas;
 
 use crate::{
-    instructions::{eval, Return},
-    USE_GAS,
+    instructions::{eval, Return}, USE_GAS,
 };
-use crate::{spec::Spec, Host};
 use bytes::Bytes;
 use core::ops::Range;
+use crate::{Spec, Host};
 
 pub const STACK_LIMIT: u64 = 1024;
 pub const CALL_STACK_LIMIT: u64 = 1024;
 
-pub struct Machine {
+pub struct Interpreter {
     /// Contract information and invoking data
     pub contract: Contract,
     /// Program counter.
@@ -38,7 +37,8 @@ pub struct Machine {
     pub call_depth: u64,
 }
 
-impl Machine {
+
+impl Interpreter {
     pub fn new<SPEC: Spec>(contract: Contract, gas_limit: u64, call_depth: u64) -> Self {
         Self {
             program_counter: contract.code.as_ptr(),

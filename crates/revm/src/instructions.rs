@@ -11,8 +11,8 @@ mod system;
 pub use opcode::{OpCode, OPCODE_JUMPMAP};
 
 use crate::{
-    interpreter::Machine,
-    spec::{Spec, SpecId::*},
+    interpreter::Interpreter,
+    Spec, SpecId::*,
     CallScheme, Host,
 };
 use core::ops::{BitAnd, BitOr, BitXor};
@@ -74,7 +74,7 @@ pub enum Return {
 }
 
 #[inline(always)]
-pub fn eval<H: Host, S: Spec>(opcode: u8, machine: &mut Machine, host: &mut H) -> Return {
+pub fn eval<H: Host, S: Spec>(opcode: u8, machine: &mut Interpreter, host: &mut H) -> Return {
     match opcode {
         /*12_u8..=15_u8 => Return::OpcodeNotFound,
         30_u8..=31_u8 => Return::OpcodeNotFound,

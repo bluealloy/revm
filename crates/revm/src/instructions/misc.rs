@@ -1,15 +1,15 @@
 use super::gas;
-use crate::{interpreter::Machine, util, Return, Spec, SpecId::*};
+use crate::{interpreter::Interpreter, Return, Spec, SpecId::*};
 use primitive_types::{H256, U256};
 
-pub fn codesize(machine: &mut Machine) -> Return {
+pub fn codesize(machine: &mut Interpreter) -> Return {
     //gas!(machine, gas::BASE);
     let size = U256::from(machine.contract.code_size);
     push!(machine, size);
     Return::Continue
 }
 
-pub fn codecopy(machine: &mut Machine) -> Return {
+pub fn codecopy(machine: &mut Interpreter) -> Return {
     pop!(machine, memory_offset, code_offset, len);
     gas_or_fail!(machine, gas::verylowcopy_cost(len));
     let len = as_usize_or_fail!(len, Return::OutOfGas);
@@ -28,7 +28,7 @@ pub fn codecopy(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-pub fn calldataload(machine: &mut Machine) -> Return {
+pub fn calldataload(machine: &mut Interpreter) -> Return {
     //gas!(machine, gas::VERYLOW);
 
     pop!(machine, index);
@@ -50,7 +50,7 @@ pub fn calldataload(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-pub fn calldatasize(machine: &mut Machine) -> Return {
+pub fn calldatasize(machine: &mut Interpreter) -> Return {
     //gas!(machine, gas::BASE);
 
     let len = U256::from(machine.contract.input.len());
@@ -58,7 +58,7 @@ pub fn calldatasize(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-pub fn calldatacopy(machine: &mut Machine) -> Return {
+pub fn calldatacopy(machine: &mut Interpreter) -> Return {
     pop!(machine, memory_offset, data_offset, len);
     gas_or_fail!(machine, gas::verylowcopy_cost(len));
     let len = as_usize_or_fail!(len, Return::OutOfGas);
@@ -76,12 +76,12 @@ pub fn calldatacopy(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-pub fn pop(machine: &mut Machine) -> Return {
+pub fn pop(machine: &mut Interpreter) -> Return {
     //gas!(machine, gas::BASE);
     machine.stack.reduce_one()
 }
 
-pub fn mload(machine: &mut Machine) -> Return {
+pub fn mload(machine: &mut Interpreter) -> Return {
     //gas!(machine, gas::VERYLOW);
     pop!(machine, index);
 
@@ -89,12 +89,12 @@ pub fn mload(machine: &mut Machine) -> Return {
     memory_resize!(machine, index, 32);
     push!(
         machine,
-        util::be_to_u256(machine.memory.get_slice(index, 32))
+        U256::from_big_endian(machine.memory.get_slice(index, 32).as_ref())
     );
     Return::Continue
 }
 
-pub fn mstore(machine: &mut Machine) -> Return {
+pub fn mstore(machine: &mut Interpreter) -> Return {
     //gas!(machine, gas::VERYLOW);
 
     pop!(machine, index, value);
@@ -105,7 +105,7 @@ pub fn mstore(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-pub fn mstore8(machine: &mut Machine) -> Return {
+pub fn mstore8(machine: &mut Interpreter) -> Return {
     //gas!(machine, gas::VERYLOW);
 
     pop!(machine, index, value);
@@ -118,7 +118,7 @@ pub fn mstore8(machine: &mut Machine) -> Return {
     Return::Continue
 }
 
-pub fn jump(machine: &mut Machine) -> Return {
+pub fn jump(machine: &mut Interpreter) -> Return {
     //gas!(machine, gas::MID);
 
     pop!(machine, dest);
@@ -134,7 +134,7 @@ pub fn jump(machine: &mut Machine) -> Return {
     }
 }
 
-pub fn jumpi(machine: &mut Machine) -> Return {
+pub fn jumpi(machine: &mut Interpreter) -> Return {
     //gas!(machine, gas::HIGH);
 
     pop!(machine, dest, value);
@@ -155,18 +155,18 @@ pub fn jumpi(machine: &mut Machine) -> Return {
     }
 }
 
-pub fn jumpdest(machine: &mut Machine) -> Return {
+pub fn jumpdest(machine: &mut Interpreter) -> Return {
     gas!(machine, gas::JUMPDEST);
     machine.add_next_gas_block(machine.program_counter() - 1)
 }
 
-pub fn pc(machine: &mut Machine) -> Return {
+pub fn pc(machine: &mut Interpreter) -> Return {
     //gas!(machine, gas::BASE);
     push!(machine, U256::from(machine.program_counter() - 1));
     Return::Continue
 }
 
-pub fn msize(machine: &mut Machine) -> Return {
+pub fn msize(machine: &mut Interpreter) -> Return {
     //gas!(machine, gas::BASE);
     push!(machine, U256::from(machine.memory.effective_len()));
     Return::Continue
@@ -174,7 +174,7 @@ pub fn msize(machine: &mut Machine) -> Return {
 
 // code padding is needed for contracts
 
-pub fn push<const N: usize>(machine: &mut Machine) -> Return {
+pub fn push<const N: usize>(machine: &mut Interpreter) -> Return {
     //gas!(machine, gas::VERYLOW);
 
     let start = machine.program_counter;
@@ -187,17 +187,17 @@ pub fn push<const N: usize>(machine: &mut Machine) -> Return {
     ret
 }
 
-pub fn dup<const N: usize>(machine: &mut Machine) -> Return {
+pub fn dup<const N: usize>(machine: &mut Interpreter) -> Return {
     //gas!(machine, gas::VERYLOW);
     machine.stack.dup::<N>()
 }
 
-pub fn swap<const N: usize>(machine: &mut Machine) -> Return {
+pub fn swap<const N: usize>(machine: &mut Interpreter) -> Return {
     //gas!(machine, gas::VERYLOW);
     machine.stack.swap::<N>()
 }
 
-pub fn ret(machine: &mut Machine) -> Return {
+pub fn ret(machine: &mut Interpreter) -> Return {
     // zero gas cost gas!(machine,gas::ZERO);
     pop!(machine, start, len);
     let len = as_usize_or_fail!(len, Return::OutOfGas);
@@ -211,7 +211,7 @@ pub fn ret(machine: &mut Machine) -> Return {
     Return::Return
 }
 
-pub fn revert<SPEC: Spec>(machine: &mut Machine) -> Return {
+pub fn revert<SPEC: Spec>(machine: &mut Interpreter) -> Return {
     check!(SPEC::enabled(BYZANTINE)); // EIP-140: REVERT instruction
                                       // zero gas cost gas!(machine,gas::ZERO);
     pop!(machine, start, len);

@@ -8,9 +8,8 @@ mod inspector;
 mod instructions;
 mod interpreter;
 mod models;
-mod spec;
+mod specification;
 mod subroutine;
-mod util;
 
 pub use evm_impl::{EVMData, Host};
 
@@ -23,9 +22,9 @@ pub use instructions::{
     opcode::{self, spec_opcode_gas, OpCode, OPCODE_JUMPMAP},
     Return,
 };
-pub use interpreter::{Gas, Machine};
+pub use interpreter::{Gas, Interpreter};
 pub use models::*;
-pub use spec::*;
+pub use specification::*;
 pub use subroutine::{Account, SubRoutine};
 
 extern crate alloc;

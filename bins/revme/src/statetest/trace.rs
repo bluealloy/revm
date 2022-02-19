@@ -23,7 +23,7 @@ impl CustomPrintTracer {
 impl<DB: Database> Inspector<DB> for CustomPrintTracer {
     fn initialize_machine(
         &mut self,
-        machine: &mut revm::Machine,
+        machine: &mut revm::Interpreter,
         _data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> Return {
@@ -35,7 +35,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
     // all other information can be obtained from machine.
     fn step(
         &mut self,
-        machine: &mut revm::Machine,
+        machine: &mut revm::Interpreter,
         data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> Return {
@@ -76,7 +76,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
     //     println!("ACCOUNT LOADED:{:?}", address);
     // }
 
-    fn step_end(&mut self, _eval: revm::Return, _machine: &mut revm::Machine) -> Return {
+    fn step_end(&mut self, _eval: revm::Return, _machine: &mut revm::Interpreter) -> Return {
         Return::Continue
     }
 

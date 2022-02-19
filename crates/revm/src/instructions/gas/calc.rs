@@ -1,8 +1,5 @@
 use super::constants::*;
-use crate::{
-    models::SelfDestructResult,
-    spec::{Spec, SpecId::*},
-};
+use crate::{models::SelfDestructResult, Spec, SpecId::*};
 use primitive_types::U256;
 
 #[allow(clippy::collapsible_else_if)]

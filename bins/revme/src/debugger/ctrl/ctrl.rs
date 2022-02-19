@@ -108,7 +108,7 @@ impl Controller {
 impl<DB: Database> Inspector<DB> for Controller {
     fn step(
         &mut self,
-        machine: &mut revm::Machine,
+        machine: &mut revm::Interpreter,
         data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> Return {
@@ -202,7 +202,7 @@ impl<DB: Database> Inspector<DB> for Controller {
         Return::Continue
     }
 
-    fn step_end(&mut self, _eval: revm::Return, _machine: &mut revm::Machine) -> Return {
+    fn step_end(&mut self, _eval: revm::Return, _machine: &mut revm::Interpreter) -> Return {
         Return::Continue
     }
 
