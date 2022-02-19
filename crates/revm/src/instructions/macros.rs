@@ -77,6 +77,7 @@ macro_rules! pop_address {
             return Return::StackUnderflow;
         }
         let mut temp = H256::zero();
+        // Safety: Length is checked above.
         let $x1: H160 = {
             unsafe {
                 $machine
@@ -93,6 +94,7 @@ macro_rules! pop_address {
         }
         let mut temp = H256::zero();
         $x1: H160 = {
+            // Safety: Length is checked above.
             unsafe {
                 $machine
                     .stack
@@ -103,6 +105,7 @@ macro_rules! pop_address {
         };
         $x2: H160 = {
             temp = H256::zero();
+            // Safety: Length is checked above.
             unsafe {
                 $machine
                     .stack
@@ -119,18 +122,21 @@ macro_rules! pop {
         if $machine.stack.len() < 1 {
             return Return::StackUnderflow;
         }
+        // Safety: Length is checked above.
         let $x1 = unsafe { $machine.stack.pop_unsafe() };
     };
     ( $machine:expr, $x1:ident, $x2:ident) => {
         if $machine.stack.len() < 2 {
             return Return::StackUnderflow;
         }
+        // Safety: Length is checked above.
         let ($x1, $x2) = unsafe { $machine.stack.pop2_unsafe() };
     };
     ( $machine:expr, $x1:ident, $x2:ident, $x3:ident) => {
         if $machine.stack.len() < 3 {
             return Return::StackUnderflow;
         }
+        // Safety: Length is checked above.
         let ($x1, $x2, $x3) = unsafe { $machine.stack.pop3_unsafe() };
     };
 
@@ -138,7 +144,32 @@ macro_rules! pop {
         if $machine.stack.len() < 4 {
             return Return::StackUnderflow;
         }
+        // Safety: Length is checked above.
         let ($x1, $x2, $x3, $x4) = unsafe { $machine.stack.pop4_unsafe() };
+    };
+}
+
+macro_rules! pop_top {
+    ( $machine:expr, $x1:ident) => {
+        if $machine.stack.len() < 1 {
+            return Return::StackUnderflow;
+        }
+        // Safety: Length is checked above.
+        let $x1 = unsafe { $machine.stack.top_unsafe() };
+    };
+    ( $machine:expr, $x1:ident, $x2:ident) => {
+        if $machine.stack.len() < 2 {
+            return Return::StackUnderflow;
+        }
+        // Safety: Length is checked above.
+        let ($x1, $x2) = unsafe { $machine.stack.pop_top_unsafe() };
+    };
+    ( $machine:expr, $x1:ident, $x2:ident, $x3:ident) => {
+        if $machine.stack.len() < 3 {
+            return Return::StackUnderflow;
+        }
+        // Safety: Length is checked above.
+        let ($x1, $x2, $x3) = unsafe { $machine.stack.pop2_top_unsafe() };
     };
 }
 
@@ -167,9 +198,8 @@ macro_rules! push {
 macro_rules! op1_u256_fn {
     ( $machine:expr, $op:path ) => {{
         //gas!($machine, $gas);
-        pop!($machine, op1);
-        let ret = $op(op1);
-        push!($machine, ret);
+        pop_top!($machine, op1);
+        *op1 = $op(*op1);
 
         Return::Continue
     }};
@@ -178,9 +208,9 @@ macro_rules! op1_u256_fn {
 macro_rules! op2_u256_bool_ref {
     ( $machine:expr, $op:ident) => {{
         //gas!($machine, $gas);
-        pop!($machine, op1, op2);
+        pop_top!($machine, op1, op2);
         let ret = op1.$op(&op2);
-        push!($machine, if ret { U256::one() } else { U256::zero() });
+        *op2 = if ret { U256::one() } else { U256::zero() };
 
         Return::Continue
     }};
@@ -189,10 +219,8 @@ macro_rules! op2_u256_bool_ref {
 macro_rules! op2_u256 {
     ( $machine:expr, $op:ident) => {{
         //gas!($machine, $gas);
-        pop!($machine, op1, op2);
-        let ret = op1.$op(op2);
-        push!($machine, ret);
-
+        pop_top!($machine, op1, op2);
+        *op2 = op1.$op(*op2);
         Return::Continue
     }};
 }
@@ -201,16 +229,16 @@ macro_rules! op2_u256_tuple {
     ( $machine:expr, $op:ident) => {{
         //gas!($machine, $gas);
 
-        pop!($machine, op1, op2);
-        let (ret, ..) = op1.$op(op2);
-        push!($machine, ret);
+        pop_top!($machine, op1, op2);
+        let (ret, ..) = op1.$op(*op2);
+        *op2 = ret;
 
         Return::Continue
     }};
     ( $machine:expr, $op:ident ) => {{
-        pop!($machine, op1, op2);
+        pop_top!($machine, op1, op2);
         let (ret, ..) = op1.$op(op2);
-        push!($machine, ret);
+        *op2 = ret;
 
         Return::Continue
     }};
@@ -220,9 +248,8 @@ macro_rules! op2_u256_fn {
     ( $machine:expr, $op:path ) => {{
         //gas!($machine, $gas);
 
-        pop!($machine, op1, op2);
-        let ret = $op(op1, op2);
-        push!($machine, ret);
+        pop_top!($machine, op1, op2);
+        *op2 = $op(op1, *op2);
 
         Return::Continue
     }};
@@ -236,9 +263,8 @@ macro_rules! op3_u256_fn {
     ( $machine:expr, $op:path) => {{
         //gas!($machine, $gas);
 
-        pop!($machine, op1, op2, op3);
-        let ret = $op(op1, op2, op3);
-        push!($machine, ret);
+        pop_top!($machine, op1, op2, op3);
+        *op3 = $op(op1, op2, *op3);
 
         Return::Continue
     }};
@@ -250,40 +276,28 @@ macro_rules! op3_u256_fn {
 
 macro_rules! as_usize_saturated {
     ( $v:expr ) => {{
-        if unsafe {
-            *$v.0.get_unchecked(1) != 0
-                || *$v.0.get_unchecked(2) != 0
-                || *$v.0.get_unchecked(3) != 0
-        } {
+        if $v.0[1] != 0 || $v.0[2] != 0 || $v.0[3] != 0 {
             usize::MAX
         } else {
-            unsafe { *$v.0.get_unchecked(0) as usize }
+            $v.0[0] as usize
         }
     }};
 }
 
 macro_rules! as_usize_or_fail {
     ( $v:expr ) => {{
-        if unsafe {
-            *$v.0.get_unchecked(1) != 0
-                || *$v.0.get_unchecked(2) != 0
-                || *$v.0.get_unchecked(3) != 0
-        } {
+        if $v.0[1] != 0 || $v.0[2] != 0 || $v.0[3] != 0 {
             return Return::OutOfGas;
         }
 
-        unsafe { *$v.0.get_unchecked(0) as usize }
+        $v.0[0] as usize
     }};
 
     ( $v:expr, $reason:expr ) => {{
-        if unsafe {
-            *$v.0.get_unchecked(1) != 0
-                || *$v.0.get_unchecked(2) != 0
-                || *$v.0.get_unchecked(3) != 0
-        } {
+        if $v.0[1] != 0 || $v.0[2] != 0 || $v.0[3] != 0 {
             return $reason;
         }
 
-        unsafe { *$v.0.get_unchecked(0) as usize }
+        $v.0[0] as usize
     }};
 }

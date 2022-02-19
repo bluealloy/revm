@@ -162,6 +162,7 @@ pub fn extcodecopy<H: Host, SPEC: Spec>(machine: &mut Machine, host: &mut H) -> 
     let code_offset = min(as_usize_saturated!(code_offset), code.len());
     memory_resize!(machine, memory_offset, len);
 
+    // Safety: set_data is unsafe function and memory_resize ensures us that it is safe to call it
     machine
         .memory
         .set_data(memory_offset, code_offset, len, &code);
@@ -289,8 +290,8 @@ pub fn log<H: Host, SPEC: Spec>(machine: &mut Machine, n: u8, host: &mut H) -> R
 
     let mut topics = Vec::with_capacity(n);
     for _ in 0..(n) {
-        /*** SAFETY stack bounds already checked few lines above */
         let mut t = H256::zero();
+        // Sefety: stack bounds already checked few lines above
         unsafe { machine.stack.pop_unsafe().to_big_endian(t.as_bytes_mut()) };
         topics.push(t);
     }

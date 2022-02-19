@@ -39,7 +39,7 @@ impl Web3DB {
     }
 
     /// internal utility function to call tokio feature and wait for output
-    fn block_on<F: std::future::Future>(&self, f: F) -> F::Output {
+    fn block_on<F: core::future::Future>(&self, f: F) -> F::Output {
         match &self.runtime {
             Some(runtime) => runtime.block_on(f),
             None => futures::executor::block_on(f),

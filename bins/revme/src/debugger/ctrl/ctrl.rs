@@ -103,6 +103,7 @@ impl Controller {
         }
     }
 }
+
 ///
 impl<DB: Database> Inspector<DB> for Controller {
     fn step(
