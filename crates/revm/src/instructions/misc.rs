@@ -1,5 +1,4 @@
-use super::gas;
-use crate::{interpreter::Interpreter, Return, Spec, SpecId::*};
+use crate::{interpreter::Interpreter,gas, Return, Spec, SpecId::*};
 use primitive_types::{H256, U256};
 
 pub fn codesize(machine: &mut Interpreter) -> Return {

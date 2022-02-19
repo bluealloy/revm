@@ -58,7 +58,7 @@ macro_rules! memory_resize {
                     let num_bytes = new_size / 32;
                     if !$machine
                         .gas
-                        .record_memory(crate::instructions::gas::memory_gas(num_bytes))
+                        .record_memory(crate::gas::memory_gas(num_bytes))
                     {
                         return Return::OutOfGas;
                     }

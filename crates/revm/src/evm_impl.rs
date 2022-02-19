@@ -1,8 +1,9 @@
 use crate::{
     db::Database,
-    instructions::gas,
+    gas,
     interpreter,
-    interpreter::{Contract, Gas, Interpreter},
+    Gas,
+    interpreter::{Contract, Interpreter},
     models::SelfDestructResult,
     return_ok,
     subroutine::{Account, State, SubRoutine},
@@ -379,7 +380,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     return (Return::CreateContractLimit, ret, machine.gas, b);
                 }
                 if crate::USE_GAS {
-                    let gas_for_code = code.len() as u64 * crate::instructions::gas::CODEDEPOSIT;
+                    let gas_for_code = code.len() as u64 * crate::gas::CODEDEPOSIT;
                     // record code deposit gas cost and check if we are out of gas.
                     if !machine.gas.record_cost(gas_for_code) {
                         self.data.subroutine.checkpoint_revert(checkpoint);

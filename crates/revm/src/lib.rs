@@ -10,6 +10,7 @@ mod interpreter;
 mod models;
 mod specification;
 mod subroutine;
+pub(crate) mod gas;
 
 pub use evm_impl::{EVMData, Host};
 
@@ -22,7 +23,8 @@ pub use instructions::{
     opcode::{self, spec_opcode_gas, OpCode, OPCODE_JUMPMAP},
     Return,
 };
-pub use interpreter::{Gas, Interpreter};
+pub use interpreter::Interpreter;
+pub use gas::Gas;
 pub use models::*;
 pub use specification::*;
 pub use subroutine::{Account, SubRoutine};

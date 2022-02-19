@@ -1,4 +1,4 @@
-use crate::{instructions::gas, Interpreter, Return, Spec};
+use crate::{gas, Interpreter, Return, Spec};
 
 use super::i256::{i256_div, i256_mod};
 use core::{convert::TryInto, ops::Rem};

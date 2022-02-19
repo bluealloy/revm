@@ -1,15 +1,13 @@
 mod contract;
 pub(crate) mod memory;
 mod stack;
-mod gas;
 
 pub use contract::Contract;
 pub use memory::Memory;
 pub use stack::Stack;
-pub use gas::Gas;
 
 use crate::{
-    instructions::{eval, Return}, USE_GAS,
+    instructions::{eval, Return}, USE_GAS, Gas,
 };
 use bytes::Bytes;
 use core::ops::Range;

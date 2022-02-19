@@ -1,6 +1,5 @@
-use super::gas;
 use crate::{
-    interpreter::Interpreter, return_ok, return_revert, CallContext, CallScheme, CreateScheme,
+    interpreter::Interpreter,gas, return_ok, return_revert, CallContext, CallScheme, CreateScheme,
     Host, Return, Spec, Transfer,
 };
 // 	CallScheme, Capture, CallContext, CreateScheme, ,

@@ -2,7 +2,6 @@
 mod macros;
 mod arithmetic;
 mod bitwise;
-pub(crate) mod gas;
 mod i256;
 mod misc;
 pub mod opcode;

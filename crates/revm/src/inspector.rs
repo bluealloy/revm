@@ -2,7 +2,7 @@ use bytes::Bytes;
 use primitive_types::{H160, U256};
 
 use crate::{
-    evm_impl::EVMData, interpreter::Gas, CallContext, CreateScheme, Database, Interpreter, Return, Transfer,
+    evm_impl::EVMData, Gas, CallContext, CreateScheme, Database, Interpreter, Return, Transfer,
 };
 use auto_impl::auto_impl;
 
