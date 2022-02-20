@@ -7,5 +7,5 @@ edition = "2018"
 [dependencies]
 bytes = "1.1"
 hex = "0.4"
-primitive-types = { version = "0.10", features = ["rlp"] }
+primitive-types = { version = "0.11", features = ["rlp"] }
 revm = { path = "../../crates/revm" }

@@ -197,7 +197,7 @@ macro_rules! push {
 
 macro_rules! op1_u256_fn {
     ( $machine:expr, $op:path ) => {{
-        //gas!($machine, $gas);
+        // gas!($machine, $gas);
         pop_top!($machine, op1);
         *op1 = $op(*op1);
 
@@ -207,7 +207,7 @@ macro_rules! op1_u256_fn {
 
 macro_rules! op2_u256_bool_ref {
     ( $machine:expr, $op:ident) => {{
-        //gas!($machine, $gas);
+        // gas!($machine, $gas);
         pop_top!($machine, op1, op2);
         let ret = op1.$op(&op2);
         *op2 = if ret { U256::one() } else { U256::zero() };
@@ -218,7 +218,7 @@ macro_rules! op2_u256_bool_ref {
 
 macro_rules! op2_u256 {
     ( $machine:expr, $op:ident) => {{
-        //gas!($machine, $gas);
+        // gas!($machine, $gas);
         pop_top!($machine, op1, op2);
         *op2 = op1.$op(*op2);
         Return::Continue
@@ -227,7 +227,7 @@ macro_rules! op2_u256 {
 
 macro_rules! op2_u256_tuple {
     ( $machine:expr, $op:ident) => {{
-        //gas!($machine, $gas);
+        // gas!($machine, $gas);
 
         pop_top!($machine, op1, op2);
         let (ret, ..) = op1.$op(*op2);
@@ -246,7 +246,7 @@ macro_rules! op2_u256_tuple {
 
 macro_rules! op2_u256_fn {
     ( $machine:expr, $op:path ) => {{
-        //gas!($machine, $gas);
+        // gas!($machine, $gas);
 
         pop_top!($machine, op1, op2);
         *op2 = $op(op1, *op2);
@@ -261,7 +261,7 @@ macro_rules! op2_u256_fn {
 
 macro_rules! op3_u256_fn {
     ( $machine:expr, $op:path) => {{
-        //gas!($machine, $gas);
+        // gas!($machine, $gas);
 
         pop_top!($machine, op1, op2, op3);
         *op3 = $op(op1, op2, *op3);
