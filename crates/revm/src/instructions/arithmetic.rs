@@ -8,7 +8,8 @@ pub fn div(op1: U256, op2: U256) -> U256 {
     if op2.is_zero() {
         U256::zero()
     } else {
-        op1 / op2
+        //op1 / op2
+        super::i256::div_u256::div_mod(op1, op2).0
     }
 }
 
