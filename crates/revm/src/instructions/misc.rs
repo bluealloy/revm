@@ -1,4 +1,4 @@
-use crate::{interpreter::Interpreter,gas, Return, Spec, SpecId::*};
+use crate::{gas, interpreter::Interpreter, Return, Spec, SpecId::*};
 use primitive_types::{H256, U256};
 
 pub fn codesize(machine: &mut Interpreter) -> Return {
@@ -88,7 +88,7 @@ pub fn mload(machine: &mut Interpreter) -> Return {
     memory_resize!(machine, index, 32);
     push!(
         machine,
-        U256::from_big_endian(machine.memory.get_slice(index, 32).as_ref())
+        U256::from_big_endian(machine.memory.get_slice(index, 32))
     );
     Return::Continue
 }

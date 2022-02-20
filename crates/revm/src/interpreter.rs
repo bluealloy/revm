@@ -7,11 +7,12 @@ pub use memory::Memory;
 pub use stack::Stack;
 
 use crate::{
-    instructions::{eval, Return}, USE_GAS, Gas,
+    instructions::{eval, Return},
+    Gas, USE_GAS,
 };
+use crate::{Host, Spec};
 use bytes::Bytes;
 use core::ops::Range;
-use crate::{Spec, Host};
 
 pub const STACK_LIMIT: u64 = 1024;
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -34,7 +35,6 @@ pub struct Interpreter {
     /// used only for inspector.
     pub call_depth: u64,
 }
-
 
 impl Interpreter {
     pub fn new<SPEC: Spec>(contract: Contract, gas_limit: u64, call_depth: u64) -> Self {

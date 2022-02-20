@@ -9,11 +9,7 @@ mod system;
 
 pub use opcode::{OpCode, OPCODE_JUMPMAP};
 
-use crate::{
-    interpreter::Interpreter,
-    Spec, SpecId::*,
-    CallScheme, Host,
-};
+use crate::{interpreter::Interpreter, CallScheme, Host, Spec, SpecId::*};
 use core::ops::{BitAnd, BitOr, BitXor};
 use primitive_types::U256;
 

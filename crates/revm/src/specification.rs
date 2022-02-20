@@ -81,7 +81,7 @@ pub trait Spec: Sized {
 }
 
 mod spec_impl {
-    use super::{NotStaticSpec,Spec};
+    use super::{NotStaticSpec, Spec};
 
     macro_rules! spec {
         ($spec_id:tt) => {
