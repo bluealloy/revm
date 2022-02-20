@@ -5,7 +5,7 @@ use crate::{
     models::SelfDestructResult,
     return_ok,
     subroutine::{Account, State, SubRoutine},
-    CallContext, CreateScheme, Env, Gas, Inspector, Log, Return, Spec,
+    CallContext, CallInputs, CreateScheme, Env, Gas, Inspector, Log, Return, Spec,
     SpecId::*,
     TransactOut, TransactTo, Transfer, KECCAK_EMPTY,
 };
@@ -117,17 +117,18 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
                     address,
                     apparent_value: value,
                 };
-                let (exit, gas, bytes) = self.call_inner::<GSPEC>(
-                    address,
-                    Transfer {
+                let call_input = CallInputs {
+                    code_address: address,
+                    transfer: Transfer {
                         source: caller,
                         target: address,
                         value,
                     },
-                    data,
+                    input: data,
                     gas_limit,
                     context,
-                );
+                };
+                let (exit, gas, bytes) = self.call_inner::<GSPEC>(&call_input);
                 (exit, gas, TransactOut::Call(bytes))
             }
             TransactTo::Create(scheme) => {
@@ -404,15 +405,16 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     #[allow(clippy::too_many_arguments)]
     fn call_inner<SPEC: Spec>(
         &mut self,
-        code_address: H160,
+        inputs: &CallInputs,
+        /*code_address: H160,
         transfer: Transfer,
         input: Bytes,
         gas_limit: u64,
-        context: CallContext,
+        context: CallContext,*/
     ) -> (Return, Gas, Bytes) {
-        let mut gas = Gas::new(gas_limit);
+        let mut gas = Gas::new(inputs.gas_limit);
         // Load account and get code. Account is now hot.
-        let (code, _) = self.code(code_address);
+        let (code, _) = self.code(inputs.code_address);
 
         // check depth
         if self.data.subroutine.depth() > interpreter::CALL_STACK_LIMIT {
@@ -422,18 +424,18 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         // Create subroutine checkpoint
         let checkpoint = self.data.subroutine.create_checkpoint();
         // touch address. For "EIP-158 State Clear" this will erase empty accounts.
-        if transfer.value.is_zero() {
-            self.load_account(context.address);
+        if inputs.transfer.value.is_zero() {
+            self.load_account(inputs.context.address);
             self.data
                 .subroutine
-                .balance_add(context.address, U256::zero()); // touch the acc
+                .balance_add(inputs.context.address, U256::zero()); // touch the acc
         }
 
         // transfer value from caller to called account;
         match self.data.subroutine.transfer(
-            transfer.source,
-            transfer.target,
-            transfer.value,
+            inputs.transfer.source,
+            inputs.transfer.target,
+            inputs.transfer.value,
             self.data.db,
         ) {
             Err(e) => {
@@ -444,10 +446,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
 
         // call precompiles
-        if let Some(precompile) = self.precompiles.get(&code_address) {
+        if let Some(precompile) = self.precompiles.get(&inputs.code_address) {
             let out = match precompile {
-                Precompile::Standard(fun) => fun(input.as_ref(), gas_limit),
-                Precompile::Custom(fun) => fun(input.as_ref(), gas_limit),
+                Precompile::Standard(fun) => fun(inputs.input.as_ref(), inputs.gas_limit),
+                Precompile::Custom(fun) => fun(inputs.input.as_ref(), inputs.gas_limit),
             };
             match out {
                 Ok(PrecompileOutput { output, cost, logs }) => {
@@ -473,9 +475,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             }
         } else {
             // create interp and execute subcall
-            let contract = Contract::new_with_context::<SPEC>(input, code, &context);
+            let contract =
+                Contract::new_with_context::<SPEC>(inputs.input.clone(), code, &inputs.context);
             let mut interp =
-                Interpreter::new::<SPEC>(contract, gas_limit, self.data.subroutine.depth());
+                Interpreter::new::<SPEC>(contract, inputs.gas_limit, self.data.subroutine.depth());
             if Self::INSPECT {
                 self.inspector
                     .initialize_interp(&mut interp, &mut self.data, false); // TODO fix is_static
@@ -503,7 +506,9 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         Return::Continue
     }
 
-    fn step_end(&mut self, _ret: Return, _interp: &mut Interpreter) -> Return {
+    fn step_end(&mut self, interp: &mut Interpreter, is_static: bool, ret: Return) -> Return {
+        self.inspector
+            .step_end(interp, &mut self.data, is_static, ret);
         Return::Continue
     }
 
@@ -617,48 +622,19 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         (ret, address, gas, out)
     }
 
-    fn call<SPEC: Spec>(
-        &mut self,
-        code_address: H160,
-        transfer: Transfer,
-        input: Bytes,
-        gas_limit: u64,
-        context: CallContext,
-    ) -> (Return, Gas, Bytes) {
+    fn call<SPEC: Spec>(&mut self, inputs: &CallInputs) -> (Return, Gas, Bytes) {
         if INSPECT {
-            let (ret, gas, out) = self.inspector.call(
-                &mut self.data,
-                code_address,
-                &context,
-                &transfer,
-                &input,
-                gas_limit,
-                SPEC::IS_STATIC_CALL,
-            );
+            let (ret, gas, out) = self
+                .inspector
+                .call(&mut self.data, inputs, SPEC::IS_STATIC_CALL);
             if ret != Return::Continue {
                 return (ret, gas, out);
             }
         }
-        let (ret, gas, out) = self.call_inner::<SPEC>(
-            code_address,
-            transfer.clone(),
-            input.clone(),
-            gas_limit,
-            context.clone(),
-        );
+        let (ret, gas, out) = self.call_inner::<SPEC>(inputs);
         if INSPECT {
-            self.inspector.call_end(
-                &mut self.data,
-                code_address,
-                &context,
-                &transfer,
-                &input,
-                gas_limit,
-                gas.remaining(),
-                ret,
-                &out,
-                SPEC::IS_STATIC_CALL,
-            );
+            self.inspector
+                .call_end(&mut self.data, inputs, gas, ret, &out, SPEC::IS_STATIC_CALL);
         }
         (ret, gas, out)
     }
@@ -693,7 +669,7 @@ pub trait Host {
     type DB: Database;
 
     fn step(&mut self, interp: &mut Interpreter, is_static: bool) -> Return;
-    fn step_end(&mut self, ret: Return, interp: &mut Interpreter) -> Return;
+    fn step_end(&mut self, interp: &mut Interpreter, is_static: bool, ret: Return) -> Return;
 
     fn env(&mut self) -> &mut Env;
 
@@ -726,12 +702,5 @@ pub trait Host {
     ) -> (Return, Option<H160>, Gas, Bytes);
 
     /// Invoke a call operation.
-    fn call<SPEC: Spec>(
-        &mut self,
-        code_address: H160,
-        transfer: Transfer,
-        input: Bytes,
-        gas: u64,
-        context: CallContext,
-    ) -> (Return, Gas, Bytes);
+    fn call<SPEC: Spec>(&mut self, input: &CallInputs) -> (Return, Gas, Bytes);
 }

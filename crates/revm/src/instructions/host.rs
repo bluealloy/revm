@@ -1,3 +1,4 @@
+use crate::CallInputs;
 use crate::{alloc::vec::Vec, SpecId::*};
 use crate::{
     gas, interpreter::Interpreter, return_ok, return_revert, CallContext, CallScheme, CreateScheme,
@@ -346,11 +347,18 @@ pub fn call<H: Host, SPEC: Spec>(
     }
     let is_static = matches!(scheme, CallScheme::StaticCall);
 
+    let call_input = CallInputs {
+        code_address: to,
+        transfer,
+        input,
+        gas_limit,
+        context,
+    };
     // CALL CONTRACT, with static or ordinary spec.
     let (reason, gas, return_data) = if is_static {
-        host.call::<SPEC::STATIC>(to, transfer, input, gas_limit, context)
+        host.call::<SPEC::STATIC>(&call_input)
     } else {
-        host.call::<SPEC>(to, transfer, input, gas_limit, context)
+        host.call::<SPEC>(&call_input)
     };
     interp.return_data_buffer = return_data;
 

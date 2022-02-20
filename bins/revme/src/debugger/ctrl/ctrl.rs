@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use bytes::Bytes;
 
 use primitive_types::{H160, U256};
-use revm::{Database, EVMData, Gas, Inspector, Return, OPCODE_JUMPMAP};
+use revm::{Database, EVMData, Gas, Inspector, Return, OPCODE_JUMPMAP, CallInputs};
 
 use termwiz::lineedit::*;
 
@@ -198,18 +198,20 @@ impl<DB: Database> Inspector<DB> for Controller {
         Return::Continue
     }
 
-    fn step_end(&mut self, _eval: revm::Return, _interp: &mut revm::Interpreter) -> Return {
+    fn step_end(
+        &mut self,
+        _interp: &mut revm::Interpreter,
+        _data: &mut EVMData<'_, DB>,
+        _is_static: bool,
+        _eval: revm::Return,
+    ) -> Return {
         Return::Continue
     }
 
     fn call(
         &mut self,
         _data: &mut revm::EVMData<'_, DB>,
-        _call: primitive_types::H160,
-        _context: &revm::CallContext,
-        _transfer: &revm::Transfer,
-        _input: &bytes::Bytes,
-        _gas_limit: u64,
+        _inputs: &CallInputs,
         _is_static: bool,
     ) -> (Return, Gas, Bytes) {
         (Return::Continue, Gas::new(0), Bytes::new())
@@ -218,12 +220,8 @@ impl<DB: Database> Inspector<DB> for Controller {
     fn call_end(
         &mut self,
         _data: &mut EVMData<'_, DB>,
-        _call: H160,
-        _context: &revm::CallContext,
-        _transfer: &revm::Transfer,
-        _input: &Bytes,
-        _gas_limit: u64,
-        _remaining_gas: u64,
+        _inputs: &CallInputs,
+        _remaining_gas: Gas,
         _ret: Return,
         _out: &Bytes,
         _is_static: bool,

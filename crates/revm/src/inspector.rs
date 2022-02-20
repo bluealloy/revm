@@ -2,7 +2,7 @@ use bytes::Bytes;
 use primitive_types::{H160, U256};
 
 use crate::{
-    evm_impl::EVMData, CallContext, CreateScheme, Database, Gas, Interpreter, Return, Transfer,
+    evm_impl::EVMData, CreateScheme, Database, Gas, Interpreter, Return, CallInputs,
 };
 use auto_impl::auto_impl;
 
@@ -33,7 +33,13 @@ pub trait Inspector<DB: Database> {
     }
 
     /// Called after `step` when instruction is executed.
-    fn step_end(&mut self, _eval: Return, _interp: &mut Interpreter) -> Return {
+    fn step_end(
+        &mut self,
+        _interp: &mut Interpreter,
+        _data: &mut EVMData<'_, DB>,
+        _is_static: bool,
+        _eval: Return,
+    ) -> Return {
         Return::Continue
     }
 
@@ -44,11 +50,7 @@ pub trait Inspector<DB: Database> {
     fn call(
         &mut self,
         data: &mut EVMData<'_, DB>,
-        call: H160,
-        context: &CallContext,
-        transfer: &Transfer,
-        input: &Bytes,
-        gas_limit: u64,
+        inputs: &CallInputs,
         is_static: bool,
     ) -> (Return, Gas, Bytes);
 
@@ -56,12 +58,8 @@ pub trait Inspector<DB: Database> {
     fn call_end(
         &mut self,
         data: &mut EVMData<'_, DB>,
-        call: H160,
-        context: &CallContext,
-        transfer: &Transfer,
-        input: &Bytes,
-        gas_limit: u64,
-        remaining_gas: u64,
+        inputs: &CallInputs,
+        remaining_gas: Gas,
         ret: Return,
         out: &Bytes,
         is_static: bool,
@@ -137,18 +135,20 @@ impl<DB: Database> Inspector<DB> for NoOpInspector {
         Return::Continue
     }
 
-    fn step_end(&mut self, _eval: Return, _interp: &mut Interpreter) -> Return {
+    fn step_end(
+        &mut self,
+        _interp: &mut Interpreter,
+        _data: &mut EVMData<'_, DB>,
+        _is_static: bool,
+        _eval: Return,
+    ) -> Return {
         Return::Continue
     }
 
     fn call(
         &mut self,
         _data: &mut EVMData<'_, DB>,
-        _call: H160,
-        _context: &CallContext,
-        _transfer: &Transfer,
-        _input: &Bytes,
-        _gas_limit: u64,
+        _inputs: &CallInputs,
         _is_static: bool,
     ) -> (Return, Gas, Bytes) {
         (Return::Continue, Gas::new(0), Bytes::new())
@@ -157,12 +157,8 @@ impl<DB: Database> Inspector<DB> for NoOpInspector {
     fn call_end(
         &mut self,
         _data: &mut EVMData<'_, DB>,
-        _call: H160,
-        _context: &CallContext,
-        _transfer: &Transfer,
-        _input: &Bytes,
-        _gas_limit: u64,
-        _remaining_gas: u64,
+        _inputs: &CallInputs,
+        _remaining_gas: Gas,
         _ret: Return,
         _out: &Bytes,
         _is_static: bool,

@@ -106,7 +106,7 @@ impl Interpreter {
             ret = eval::<H, SPEC>(opcode, self, host);
 
             if H::INSPECT {
-                let ret = host.step_end(ret, self);
+                let ret = host.step_end(self, SPEC::IS_STATIC_CALL, ret);
                 if ret != Return::Continue {
                     return ret;
                 }

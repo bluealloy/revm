@@ -68,6 +68,18 @@ impl AccountInfo {
     }
 }
 
+pub struct CallInputs {
+    pub code_address: H160,
+    pub transfer: Transfer,
+    pub input: Bytes,
+    pub gas_limit: u64,
+    pub context: CallContext,
+}
+
+pub struct CreateData {
+
+}
+
 #[derive(Clone, Debug)]
 pub enum TransactTo {
     Call(H160),

@@ -1,7 +1,7 @@
 use bytes::Bytes;
 use primitive_types::{H160, U256};
 pub use revm::Inspector;
-use revm::{opcode, spec_opcode_gas, Database, EVMData, Gas, Return};
+use revm::{opcode, spec_opcode_gas, Database, EVMData, Gas, Return, CallInputs};
 
 #[derive(Clone)]
 pub struct CustomPrintTracer {
@@ -72,53 +72,29 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         Return::Continue
     }
 
-    // fn load_account(&mut self, address: &H160) {
-    //     println!("ACCOUNT LOADED:{:?}", address);
-    // }
-
-    fn step_end(&mut self, _eval: revm::Return, _interp: &mut revm::Interpreter) -> Return {
+    fn step_end(
+        &mut self,
+        _interp: &mut revm::Interpreter,
+        _data: &mut EVMData<'_, DB>,
+        _is_static: bool,
+        _eval: revm::Return,
+    ) -> Return {
         Return::Continue
     }
-
-    // fn sload(&mut self, address: &H160, slot: &U256, value: &U256, is_cold: bool) {
-    //     println!(
-    //         "sload: is_cold({}) {}[{:?}]={:?}",
-    //         is_cold, address, slot, value
-    //     );
-    // }
-
-    // fn sstore(
-    //     &mut self,
-    //     address: H160,
-    //     slot: U256,
-    //     new_value: U256,
-    //     old_value: U256,
-    //     original_value: U256,
-    //     is_cold: bool,
-    // ) {
-    //     println!(
-    //         "sstore: is_cold({}) {}[{:?}] {:?}(original:{:?}) => {:?}",
-    //         is_cold, address, slot, old_value, original_value, new_value
-    //     );
-    // }
 
     fn call(
         &mut self,
         _data: &mut EVMData<'_, DB>,
-        call: H160,
-        context: &revm::CallContext,
-        transfer: &revm::Transfer,
-        input: &bytes::Bytes,
-        _gas_limit: u64,
+        inputs: &CallInputs,
         is_static: bool,
     ) -> (Return, Gas, Bytes) {
         println!(
             "SM CALL:   {:?},context:{:?}, is_static:{:?}, transfer:{:?}, input:{:?}",
-            call,
-            context,
+            inputs.code_address,
+            inputs.context,
             is_static,
-            transfer,
-            hex::encode(input),
+            inputs.transfer,
+            hex::encode(&inputs.input),
         );
         (Return::Continue, Gas::new(0), Bytes::new())
     }
@@ -126,12 +102,8 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
     fn call_end(
         &mut self,
         _data: &mut EVMData<'_, DB>,
-        _call: H160,
-        _context: &revm::CallContext,
-        _transfer: &revm::Transfer,
-        _input: &Bytes,
-        _gas_limit: u64,
-        _remaining_gas: u64,
+        _inputs: &CallInputs,
+        _remaining_gas: Gas,
         _ret: Return,
         _out: &Bytes,
         _is_static: bool,
