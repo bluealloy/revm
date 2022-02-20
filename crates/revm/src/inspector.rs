@@ -1,9 +1,7 @@
 use bytes::Bytes;
 use primitive_types::H160;
 
-use crate::{
-    evm_impl::EVMData, Database, Gas, Interpreter, Return, CallInputs, CreateInputs,
-};
+use crate::{evm_impl::EVMData, CallInputs, CreateInputs, Database, Gas, Interpreter, Return};
 use auto_impl::auto_impl;
 
 #[auto_impl(&mut, Box)]

@@ -84,9 +84,7 @@ pub struct CreateInputs {
     pub gas_limit: u64,
 }
 
-pub struct CreateData {
-
-}
+pub struct CreateData {}
 
 #[derive(Clone, Debug)]
 pub enum TransactTo {
