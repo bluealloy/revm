@@ -1,8 +1,8 @@
 use bytes::Bytes;
-use primitive_types::{H160, U256};
+use primitive_types::H160;
 
 use crate::{
-    evm_impl::EVMData, CreateScheme, Database, Gas, Interpreter, Return, CallInputs,
+    evm_impl::EVMData, Database, Gas, Interpreter, Return, CallInputs, CreateInputs,
 };
 use auto_impl::auto_impl;
 
@@ -68,25 +68,17 @@ pub trait Inspector<DB: Database> {
     fn create(
         &mut self,
         data: &mut EVMData<'_, DB>,
-        caller: H160,
-        scheme: &CreateScheme,
-        value: U256,
-        init_code: &Bytes,
-        gas_limit: u64,
+        inputs: &CreateInputs,
     ) -> (Return, Option<H160>, Gas, Bytes);
 
     #[allow(clippy::too_many_arguments)]
     fn create_end(
         &mut self,
         data: &mut EVMData<'_, DB>,
-        caller: H160,
-        scheme: &CreateScheme,
-        value: U256,
-        init_code: &Bytes,
+        inputs: &CreateInputs,
         ret: Return,
         address: Option<H160>,
-        gas_limit: u64,
-        remaining_gas: u64,
+        remaining_gas: Gas,
         out: &Bytes,
     );
 
@@ -168,11 +160,7 @@ impl<DB: Database> Inspector<DB> for NoOpInspector {
     fn create(
         &mut self,
         _data: &mut EVMData<'_, DB>,
-        _caller: H160,
-        _scheme: &CreateScheme,
-        _value: U256,
-        _init_code: &Bytes,
-        _gas_limit: u64,
+        _inputs: &CreateInputs,
     ) -> (Return, Option<H160>, Gas, Bytes) {
         (Return::Continue, None, Gas::new(0), Bytes::new())
     }
@@ -180,14 +168,10 @@ impl<DB: Database> Inspector<DB> for NoOpInspector {
     fn create_end(
         &mut self,
         _data: &mut EVMData<'_, DB>,
-        _caller: H160,
-        _scheme: &CreateScheme,
-        _value: U256,
-        _init_code: &Bytes,
+        _inputs: &CreateInputs,
         _ret: Return,
         _address: Option<H160>,
-        _gas_limit: u64,
-        _remaining_gas: u64,
+        _remaining_gas: Gas,
         _out: &Bytes,
     ) {
     }

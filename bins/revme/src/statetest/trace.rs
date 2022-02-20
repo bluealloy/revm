@@ -1,7 +1,7 @@
 use bytes::Bytes;
-use primitive_types::{H160, U256};
+use primitive_types::H160;
 pub use revm::Inspector;
-use revm::{opcode, spec_opcode_gas, Database, EVMData, Gas, Return, CallInputs};
+use revm::{opcode, spec_opcode_gas, Database, EVMData, Gas, Return, CallInputs, CreateInputs};
 
 #[derive(Clone)]
 pub struct CustomPrintTracer {
@@ -90,7 +90,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
     ) -> (Return, Gas, Bytes) {
         println!(
             "SM CALL:   {:?},context:{:?}, is_static:{:?}, transfer:{:?}, input:{:?}",
-            inputs.code_address,
+            inputs.contract,
             inputs.context,
             is_static,
             inputs.transfer,
@@ -113,19 +113,15 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
     fn create(
         &mut self,
         _data: &mut EVMData<'_, DB>,
-        caller: H160,
-        scheme: &revm::CreateScheme,
-        value: U256,
-        init_code: &bytes::Bytes,
-        gas: u64,
+        inputs: &CreateInputs,
     ) -> (Return, Option<H160>, Gas, Bytes) {
         println!(
             "CREATE CALL: caller:{:?}, scheme:{:?}, value:{:?}, init_code:{:?}, gas:{:?}",
-            caller,
-            scheme,
-            value,
-            hex::encode(init_code),
-            gas
+            inputs.caller,
+            inputs.scheme,
+            inputs.value,
+            hex::encode(&inputs.init_code),
+            inputs.gas_limit
         );
         (Return::Continue, None, Gas::new(0), Bytes::new())
     }
@@ -133,14 +129,10 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
     fn create_end(
         &mut self,
         _data: &mut EVMData<'_, DB>,
-        _caller: H160,
-        _scheme: &revm::CreateScheme,
-        _value: U256,
-        _init_code: &Bytes,
+        _inputs: &CreateInputs,
         _ret: Return,
         _address: Option<H160>,
-        _gas_limit: u64,
-        _remaining_gas: u64,
+        _remaining_gas: Gas,
         _out: &Bytes,
     ) {
     }

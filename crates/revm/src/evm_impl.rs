@@ -5,7 +5,7 @@ use crate::{
     models::SelfDestructResult,
     return_ok,
     subroutine::{Account, State, SubRoutine},
-    CallContext, CallInputs, CreateScheme, Env, Gas, Inspector, Log, Return, Spec,
+    CallContext, CallInputs, CreateInputs, CreateScheme, Env, Gas, Inspector, Log, Return, Spec,
     SpecId::*,
     TransactOut, TransactTo, Transfer, KECCAK_EMPTY,
 };
@@ -118,7 +118,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
                     apparent_value: value,
                 };
                 let call_input = CallInputs {
-                    code_address: address,
+                    contract: address,
                     transfer: Transfer {
                         source: caller,
                         target: address,
@@ -132,8 +132,14 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
                 (exit, gas, TransactOut::Call(bytes))
             }
             TransactTo::Create(scheme) => {
-                let (exit, address, ret_gas, bytes) =
-                    self.create_inner::<GSPEC>(caller, scheme, value, data, gas_limit);
+                let create_input = CreateInputs {
+                    caller,
+                    scheme,
+                    value,
+                    init_code: data,
+                    gas_limit,
+                };
+                let (exit, address, ret_gas, bytes) = self.create_inner::<GSPEC>(&create_input);
                 (exit, ret_gas, TransactOut::Create(bytes, address))
             }
         };
@@ -285,31 +291,27 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
     fn create_inner<SPEC: Spec>(
         &mut self,
-        caller: H160,
-        scheme: CreateScheme,
-        value: U256,
-        init_code: Bytes,
-        gas_limit: u64,
+        inputs: &CreateInputs,
     ) -> (Return, Option<H160>, Gas, Bytes) {
-        let gas = Gas::new(gas_limit);
-        self.load_account(caller);
+        let gas = Gas::new(inputs.gas_limit);
+        self.load_account(inputs.caller);
 
         // check depth of calls
         if self.data.subroutine.depth() > interpreter::CALL_STACK_LIMIT {
             return (Return::CallTooDeep, None, gas, Bytes::new());
         }
         // check balance of caller and value. Do this before increasing nonce
-        if self.balance(caller).0 < value {
+        if self.balance(inputs.caller).0 < inputs.value {
             return (Return::OutOfFund, None, gas, Bytes::new());
         }
 
         // inc nonce of caller
-        let old_nonce = self.data.subroutine.inc_nonce(caller);
+        let old_nonce = self.data.subroutine.inc_nonce(inputs.caller);
         // create address
-        let code_hash = H256::from_slice(Keccak256::digest(&init_code).as_slice());
-        let created_address = match scheme {
-            CreateScheme::Create => create_address(caller, old_nonce),
-            CreateScheme::Create2 { salt } => create2_address(caller, code_hash, salt),
+        let code_hash = H256::from_slice(Keccak256::digest(&inputs.init_code).as_slice());
+        let created_address = match inputs.scheme {
+            CreateScheme::Create => create_address(inputs.caller, old_nonce),
+            CreateScheme::Create2 { salt } => create2_address(inputs.caller, code_hash, salt),
         };
         let ret = Some(created_address);
 
@@ -330,11 +332,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
 
         // transfer value to contract address
-        if let Err(e) = self
-            .data
-            .subroutine
-            .transfer(caller, created_address, value, self.data.db)
-        {
+        if let Err(e) = self.data.subroutine.transfer(
+            inputs.caller,
+            created_address,
+            inputs.value,
+            self.data.db,
+        ) {
             self.data.subroutine.checkpoint_revert(checkpoint);
             return (e, ret, gas, Bytes::new());
         }
@@ -343,8 +346,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             self.data.subroutine.inc_nonce(created_address);
         }
         // create new interp and execute init function
-        let contract =
-            Contract::new::<SPEC>(Bytes::new(), init_code, created_address, caller, value);
+        let contract = Contract::new::<SPEC>(
+            Bytes::new(),
+            inputs.init_code.clone(),
+            created_address,
+            inputs.caller,
+            inputs.value,
+        );
         let mut interp =
             Interpreter::new::<SPEC>(contract, gas.limit(), self.data.subroutine.depth());
         if Self::INSPECT {
@@ -403,18 +411,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     }
 
     #[allow(clippy::too_many_arguments)]
-    fn call_inner<SPEC: Spec>(
-        &mut self,
-        inputs: &CallInputs,
-        /*code_address: H160,
-        transfer: Transfer,
-        input: Bytes,
-        gas_limit: u64,
-        context: CallContext,*/
-    ) -> (Return, Gas, Bytes) {
+    fn call_inner<SPEC: Spec>(&mut self, inputs: &CallInputs) -> (Return, Gas, Bytes) {
         let mut gas = Gas::new(inputs.gas_limit);
         // Load account and get code. Account is now hot.
-        let (code, _) = self.code(inputs.code_address);
+        let (code, _) = self.code(inputs.contract);
 
         // check depth
         if self.data.subroutine.depth() > interpreter::CALL_STACK_LIMIT {
@@ -446,7 +446,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
 
         // call precompiles
-        if let Some(precompile) = self.precompiles.get(&inputs.code_address) {
+        if let Some(precompile) = self.precompiles.get(&inputs.contract) {
             let out = match precompile {
                 Precompile::Standard(fun) => fun(inputs.input.as_ref(), inputs.gas_limit),
                 Precompile::Custom(fun) => fun(inputs.input.as_ref(), inputs.gas_limit),
@@ -582,42 +582,17 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .selfdestruct(address, target, self.data.db)
     }
 
-    fn create<SPEC: Spec>(
-        &mut self,
-        caller: H160,
-        scheme: CreateScheme,
-        value: U256,
-        init_code: Bytes,
-        gas_limit: u64,
-    ) -> (Return, Option<H160>, Gas, Bytes) {
+    fn create<SPEC: Spec>(&mut self, inputs: &CreateInputs) -> (Return, Option<H160>, Gas, Bytes) {
         if INSPECT {
-            let (ret, address, gas, out) = self.inspector.create(
-                &mut self.data,
-                caller,
-                &scheme,
-                value,
-                &init_code,
-                gas_limit,
-            );
+            let (ret, address, gas, out) = self.inspector.create(&mut self.data, inputs);
             if ret != Return::Continue {
                 return (ret, address, gas, out);
             }
         }
-        let (ret, address, gas, out) =
-            self.create_inner::<SPEC>(caller, scheme, value, init_code.clone(), gas_limit);
+        let (ret, address, gas, out) = self.create_inner::<SPEC>(inputs);
         if INSPECT {
-            self.inspector.create_end(
-                &mut self.data,
-                caller,
-                &scheme,
-                value,
-                &init_code,
-                ret,
-                address,
-                gas_limit,
-                gas.remaining(),
-                &out,
-            );
+            self.inspector
+                .create_end(&mut self.data, inputs, ret, address, gas, &out);
         }
         (ret, address, gas, out)
     }
@@ -692,15 +667,7 @@ pub trait Host {
     /// Mark an address to be deleted, with funds transferred to target.
     fn selfdestruct(&mut self, address: H160, target: H160) -> SelfDestructResult;
     /// Invoke a create operation.
-    fn create<SPEC: Spec>(
-        &mut self,
-        caller: H160,
-        scheme: CreateScheme,
-        value: U256,
-        init_code: Bytes,
-        gas: u64,
-    ) -> (Return, Option<H160>, Gas, Bytes);
-
+    fn create<SPEC: Spec>(&mut self, inputs: &CreateInputs) -> (Return, Option<H160>, Gas, Bytes);
     /// Invoke a call operation.
     fn call<SPEC: Spec>(&mut self, input: &CallInputs) -> (Return, Gas, Bytes);
 }

@@ -1,9 +1,9 @@
-use crate::CallInputs;
 use crate::{alloc::vec::Vec, SpecId::*};
 use crate::{
     gas, interpreter::Interpreter, return_ok, return_revert, CallContext, CallScheme, CreateScheme,
     Host, Return, Spec, Transfer,
 };
+use crate::{CallInputs, CreateInputs};
 use bytes::Bytes;
 use core::cmp::min;
 use primitive_types::{H160, H256, U256};
@@ -209,8 +209,15 @@ pub fn create<H: Host, SPEC: Spec>(
     let gas_limit = try_or_fail!(gas_call_l64_after::<SPEC>(interp));
     gas!(interp, gas_limit);
 
-    let (reason, address, gas, return_data) =
-        host.create::<SPEC>(interp.contract.address, scheme, value, code, gas_limit);
+    let create_input = CreateInputs {
+        caller: interp.contract.address,
+        scheme,
+        value,
+        init_code: code,
+        gas_limit,
+    };
+
+    let (reason, address, gas, return_data) = host.create::<SPEC>(&create_input);
     interp.return_data_buffer = return_data;
     let created_address: H256 = if matches!(reason, return_ok!()) {
         address.map(|a| a.into()).unwrap_or_default()
@@ -348,7 +355,7 @@ pub fn call<H: Host, SPEC: Spec>(
     let is_static = matches!(scheme, CallScheme::StaticCall);
 
     let call_input = CallInputs {
-        code_address: to,
+        contract: to,
         transfer,
         input,
         gas_limit,
