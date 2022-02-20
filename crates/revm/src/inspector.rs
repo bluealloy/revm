@@ -10,22 +10,22 @@ use auto_impl::auto_impl;
 pub trait Inspector<DB: Database> {
     fn initialize(&mut self, _data: &mut EVMData<'_, DB>) {}
 
-    /// before machine get initialized this function is called. If returning something other them Return::Continue
-    /// we are skipping execution of machine.
-    fn initialize_machine(
+    /// before interp get initialized this function is called. If returning something other them Return::Continue
+    /// we are skipping execution of interp.
+    fn initialize_interp(
         &mut self,
-        _machine: &mut Interpreter,
+        _interp: &mut Interpreter,
         _data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> Return {
         Return::Continue
     }
 
-    /// get opcode by calling `machine.contract.opcode(machine.program_counter())`.
-    /// all other information can be obtained from machine.
+    /// get opcode by calling `interp.contract.opcode(interp.program_counter())`.
+    /// all other information can be obtained from interp.
     fn step(
         &mut self,
-        _machine: &mut Interpreter,
+        _interp: &mut Interpreter,
         _data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> Return {
@@ -33,7 +33,7 @@ pub trait Inspector<DB: Database> {
     }
 
     /// Called after `step` when instruction is executed.
-    fn step_end(&mut self, _eval: Return, _machine: &mut Interpreter) -> Return {
+    fn step_end(&mut self, _eval: Return, _interp: &mut Interpreter) -> Return {
         Return::Continue
     }
 
@@ -119,9 +119,9 @@ pub struct NoOpInspector();
 impl<DB: Database> Inspector<DB> for NoOpInspector {
     fn initialize(&mut self, _data: &mut EVMData<'_, DB>) {}
 
-    fn initialize_machine(
+    fn initialize_interp(
         &mut self,
-        _machine: &mut Interpreter,
+        _interp: &mut Interpreter,
         _data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> Return {
@@ -130,14 +130,14 @@ impl<DB: Database> Inspector<DB> for NoOpInspector {
 
     fn step(
         &mut self,
-        _machine: &mut Interpreter,
+        _interp: &mut Interpreter,
         _data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> Return {
         Return::Continue
     }
 
-    fn step_end(&mut self, _eval: Return, _machine: &mut Interpreter) -> Return {
+    fn step_end(&mut self, _eval: Return, _interp: &mut Interpreter) -> Return {
         Return::Continue
     }
 

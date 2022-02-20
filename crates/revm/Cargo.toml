@@ -1,6 +1,6 @@
 [package]
 authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
-description = "REVM - Rust Ethereum virtual machine"
+description = "REVM - Rust Ethereum virtual interp"
 edition = "2018"
 keywords = ["no_std", "ethereum", "evm"]
 license = "MIT"

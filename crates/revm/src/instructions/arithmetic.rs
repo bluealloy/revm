@@ -73,11 +73,11 @@ pub fn exp(op1: U256, op2: U256) -> U256 {
     r
 }
 
-pub fn eval_exp<SPEC: Spec>(machine: &mut Interpreter) -> Return {
-    pop!(machine, op1, op2);
-    gas_or_fail!(machine, gas::exp_cost::<SPEC>(op2));
+pub fn eval_exp<SPEC: Spec>(interp: &mut Interpreter) -> Return {
+    pop!(interp, op1, op2);
+    gas_or_fail!(interp, gas::exp_cost::<SPEC>(op2));
     let ret = exp(op1, op2);
-    push!(machine, ret);
+    push!(interp, ret);
 
     Return::Continue
 }

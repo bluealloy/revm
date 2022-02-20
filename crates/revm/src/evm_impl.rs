@@ -341,27 +341,27 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         if SPEC::enabled(ISTANBUL) {
             self.data.subroutine.inc_nonce(created_address);
         }
-        // create new machine and execute init function
+        // create new interp and execute init function
         let contract =
             Contract::new::<SPEC>(Bytes::new(), init_code, created_address, caller, value);
-        let mut machine =
+        let mut interp =
             Interpreter::new::<SPEC>(contract, gas.limit(), self.data.subroutine.depth());
         if Self::INSPECT {
             self.inspector
-                .initialize_machine(&mut machine, &mut self.data, false); // TODO fix is_static
+                .initialize_interp(&mut interp, &mut self.data, false); // TODO fix is_static
         }
-        let exit_reason = machine.run::<Self, SPEC>(self);
+        let exit_reason = interp.run::<Self, SPEC>(self);
         // Host error if present on execution\
         let ret = match exit_reason {
             return_ok!() => {
                 let b = Bytes::new();
                 // if ok, check contract creation limit and calculate gas deduction on output len.
-                let code = machine.return_value();
+                let code = interp.return_value();
 
                 // EIP-3541: Reject new contract code starting with the 0xEF byte
                 if SPEC::enabled(LONDON) && !code.is_empty() && code.get(0) == Some(&0xEF) {
                     self.data.subroutine.checkpoint_revert(checkpoint);
-                    return (Return::CreateContractWithEF, ret, machine.gas, b);
+                    return (Return::CreateContractWithEF, ret, interp.gas, b);
                 }
 
                 // TODO maybe create some macro to hide this `if`
@@ -375,14 +375,14 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 // EIP-170: Contract code size limit
                 if SPEC::enabled(SPURIOUS_DRAGON) && code.len() > contract_code_size_limit {
                     self.data.subroutine.checkpoint_revert(checkpoint);
-                    return (Return::CreateContractLimit, ret, machine.gas, b);
+                    return (Return::CreateContractLimit, ret, interp.gas, b);
                 }
                 if crate::USE_GAS {
                     let gas_for_code = code.len() as u64 * crate::gas::CODEDEPOSIT;
                     // record code deposit gas cost and check if we are out of gas.
-                    if !machine.gas.record_cost(gas_for_code) {
+                    if !interp.gas.record_cost(gas_for_code) {
                         self.data.subroutine.checkpoint_revert(checkpoint);
-                        return (Return::OutOfGas, ret, machine.gas, b);
+                        return (Return::OutOfGas, ret, interp.gas, b);
                     }
                 }
                 // if we have enought gas
@@ -391,11 +391,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 self.data
                     .subroutine
                     .set_code(created_address, code, code_hash);
-                (Return::Continue, ret, machine.gas, b)
+                (Return::Continue, ret, interp.gas, b)
             }
             _ => {
                 self.data.subroutine.checkpoint_revert(checkpoint);
-                (exit_reason, ret, machine.gas, machine.return_value())
+                (exit_reason, ret, interp.gas, interp.return_value())
             }
         };
         ret
@@ -472,22 +472,22 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 }
             }
         } else {
-            // create machine and execute subcall
+            // create interp and execute subcall
             let contract = Contract::new_with_context::<SPEC>(input, code, &context);
-            let mut machine =
+            let mut interp =
                 Interpreter::new::<SPEC>(contract, gas_limit, self.data.subroutine.depth());
             if Self::INSPECT {
                 self.inspector
-                    .initialize_machine(&mut machine, &mut self.data, false); // TODO fix is_static
+                    .initialize_interp(&mut interp, &mut self.data, false); // TODO fix is_static
             }
-            let exit_reason = machine.run::<Self, SPEC>(self);
+            let exit_reason = interp.run::<Self, SPEC>(self);
             if matches!(exit_reason, return_ok!()) {
                 self.data.subroutine.checkpoint_commit();
             } else {
                 self.data.subroutine.checkpoint_revert(checkpoint);
             }
 
-            (exit_reason, machine.gas, machine.return_value())
+            (exit_reason, interp.gas, interp.return_value())
         }
     }
 }
@@ -498,12 +498,12 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     const INSPECT: bool = INSPECT;
     type DB = DB;
 
-    fn step(&mut self, machine: &mut Interpreter, is_static: bool) -> Return {
-        self.inspector.step(machine, &mut self.data, is_static);
+    fn step(&mut self, interp: &mut Interpreter, is_static: bool) -> Return {
+        self.inspector.step(interp, &mut self.data, is_static);
         Return::Continue
     }
 
-    fn step_end(&mut self, _ret: Return, _machine: &mut Interpreter) -> Return {
+    fn step_end(&mut self, _ret: Return, _interp: &mut Interpreter) -> Return {
         Return::Continue
     }
 
@@ -692,8 +692,8 @@ pub trait Host {
 
     type DB: Database;
 
-    fn step(&mut self, machine: &mut Interpreter, is_static: bool) -> Return;
-    fn step_end(&mut self, ret: Return, machine: &mut Interpreter) -> Return;
+    fn step(&mut self, interp: &mut Interpreter, is_static: bool) -> Return;
+    fn step_end(&mut self, ret: Return, interp: &mut Interpreter) -> Return;
 
     fn env(&mut self) -> &mut Env;
 

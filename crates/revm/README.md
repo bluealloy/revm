@@ -1,6 +1,6 @@
 # revm - Revolutionary Machine
 
-Is **Rust Ethereum Virtual Machine** with great name that is focused on **speed** and **simplicity**. It gets ispiration from `SputnikVM` (got opcodes/machine from here), `OpenEthereum` and `Geth` with a help from [wolflo/evm-opcodes](https://github.com/wolflo/evm-opcodes). This is probably one of the fastest implementation of EVM, from const EVM Spec to optimistic changelogs for subroutines to merging `eip2929` in EVM state so that it can be accesses only once are some of the things that are improving the speed of execution. 
+Is **Rust Ethereum Virtual Machine** with great name that is focused on **speed** and **simplicity**. It gets ispiration from `SputnikVM` (got opcodes/interp from here), `OpenEthereum` and `Geth` with a help from [wolflo/evm-opcodes](https://github.com/wolflo/evm-opcodes). This is probably one of the fastest implementation of EVM, from const EVM Spec to optimistic changelogs for subroutines to merging `eip2929` in EVM state so that it can be accesses only once are some of the things that are improving the speed of execution. 
 
 Here is list of things that i would like to use as guide in this project:
 - **EVM compatibility and stability** - this goes without saying but it is nice to put it here. In blockchain industry, stability is most desired attribute of any system.
@@ -73,9 +73,9 @@ I just started this project as a hobby to kill some time. Presenty it has good s
 The structure of the project is getting crystallized and we can see few parts that are worthy to write about:
 - `Spec` contains a specification of Ethereum standard. It is made as a trait so that it can be optimized away by the compiler
 - `instructions` have one main function `eval` and takes `Machine`, `EVM Host`, `Spec` and `opcode` and depending on opcode it does calculation or for various opcodes it call `Host` for subroutine handling. This is where execution happens and where we cancluate gas consumption.
-- `machine` contains memory and execution stack of smart contracts. It calls opcode for execution and contains `step` function. It reads the contract, extracts opcodes and handles memory.
-- `subroutine` for various calls/creates we need to have separate `machine` and separate accessed locations. This is place where all of this is done, additionaly, it contains all caches of accessed accounts/slots/code. EIP2929 related access is integrated into state memory. Getting inside new call `subroutine` creates checkpoint that contain needed information that can revert state if subcall reverts or needs to be discardet. Changeset is made so it is optimistic that means that we dont do any work if call is finished successfully and only do something when it fials. 
-- `EVMImpl`- Is main entry to the lib,it implements `Host` and connects `subroutine` and `machine` and does `subroutine checkpoint` switches.
+- `interp` contains memory and execution stack of smart contracts. It calls opcode for execution and contains `step` function. It reads the contract, extracts opcodes and handles memory.
+- `subroutine` for various calls/creates we need to have separate `interp` and separate accessed locations. This is place where all of this is done, additionaly, it contains all caches of accessed accounts/slots/code. EIP2929 related access is integrated into state memory. Getting inside new call `subroutine` creates checkpoint that contain needed information that can revert state if subcall reverts or needs to be discardet. Changeset is made so it is optimistic that means that we dont do any work if call is finished successfully and only do something when it fials. 
+- `EVMImpl`- Is main entry to the lib,it implements `Host` and connects `subroutine` and `interp` and does `subroutine checkpoint` switches.
 
 
 ### Subroutine

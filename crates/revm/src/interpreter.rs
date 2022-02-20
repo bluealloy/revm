@@ -58,7 +58,7 @@ impl Interpreter {
         &self.gas
     }
 
-    /// Reference of machine stack.
+    /// Reference of interp stack.
     pub fn stack(&self) -> &Stack {
         &self.stack
     }
@@ -115,7 +115,7 @@ impl Interpreter {
         ret
     }
 
-    /// Copy and get the return value of the machine, if any.
+    /// Copy and get the return value of the interp, if any.
     pub fn return_value(&self) -> Bytes {
         // if start is usize max it means that our return len is zero and we need to return empty
         if self.return_range.start == usize::MAX {

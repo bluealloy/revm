@@ -90,7 +90,7 @@ pub enum StateMachine {
 }
 
 pub struct Controller {
-    state_machine: StateMachine,
+    state_interp: StateMachine,
     history_path: Option<PathBuf>,
     //call_stack: Vec<>,
 }
@@ -98,7 +98,7 @@ pub struct Controller {
 impl Controller {
     pub fn new(history_path: Option<PathBuf>) -> Self {
         Self {
-            state_machine: StateMachine::TriggerStep,
+            state_interp: StateMachine::TriggerStep,
             history_path,
         }
     }
@@ -108,73 +108,69 @@ impl Controller {
 impl<DB: Database> Inspector<DB> for Controller {
     fn step(
         &mut self,
-        machine: &mut revm::Interpreter,
+        interp: &mut revm::Interpreter,
         data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> Return {
         loop {
-            match Ctrl::next(self.state_machine, &self.history_path) {
+            match Ctrl::next(self.state_interp, &self.history_path) {
                 Ctrl::Help => {
                     println!(
                         "available controls: \nstep\nexit\nprint all\nstack pop\nstack push 10\n"
                     )
                 }
                 Ctrl::Exit => {
-                    self.state_machine = StateMachine::Exit;
+                    self.state_interp = StateMachine::Exit;
                     break;
                 }
                 Ctrl::Step => {
-                    self.state_machine = StateMachine::TriggerStep;
+                    self.state_interp = StateMachine::TriggerStep;
                     break;
                 }
                 //Ctrl::StepIn => {}
                 //Ctrl::StepOut => {
-                //    self.state_machine = StateMachine::StepOut;
+                //    self.state_interp = StateMachine::StepOut;
                 //}
                 Ctrl::Print(print) => match print {
                     CtrlPrint::All => {
-                        let opcode = machine
+                        let opcode = interp
                             .contract
                             .code
-                            .get(machine.program_counter())
+                            .get(interp.program_counter())
                             .cloned()
                             .unwrap();
-                        let gas_spend = machine.gas().spend();
-                        let gas_remaining = machine.gas().remaining();
+                        let gas_spend = interp.gas().spend();
+                        let gas_remaining = interp.gas().remaining();
                         println!(
                             "call_depth:{} PC:{} Opcode: {:#x} {:?} gas(spend,remaining):({},{})\n\
                             Stack:{}",
-                            machine.call_depth,
-                            machine.program_counter(),
+                            interp.call_depth,
+                            interp.program_counter(),
                             opcode,
                             OPCODE_JUMPMAP[opcode as usize].unwrap_or("Invalid"),
                             gas_spend,
                             gas_remaining,
-                            machine.stack(),
+                            interp.stack(),
                         );
                     }
                     CtrlPrint::Opcode => {
-                        let opcode = *machine
-                            .contract
-                            .code
-                            .get(machine.program_counter())
-                            .unwrap();
+                        let opcode = *interp.contract.code.get(interp.program_counter()).unwrap();
                         println!(
                             "PC:{} OpCode: {:#x} {:?}",
-                            machine.program_counter(),
+                            interp.program_counter(),
                             opcode,
                             OPCODE_JUMPMAP[opcode as usize]
                         )
                     }
                     CtrlPrint::Stack => {
-                        println!("PC:{} stack:{}", machine.program_counter(), machine.stack())
+                        println!("PC:{} stack:{}", interp.program_counter(), interp.stack())
                     }
                     CtrlPrint::Memory => {
-                        println!("memory:{}", hex::encode(&machine.memory.data()))
+                        println!("memory:{}", hex::encode(&interp.memory.data()))
                     }
                 },
                 Ctrl::Continue => {
-                    self.state_machine = StateMachine::TriggerBreakpoint;
+                    self.state_interp = StateMachine::TriggerBreakpoint;
                     break;
                 }
                 Ctrl::Restart => {
@@ -190,10 +186,10 @@ impl<DB: Database> Inspector<DB> for Controller {
                 }
                 Ctrl::AccountPrintOriginal(_address) => (),
                 Ctrl::StackPop => {
-                    println!("pop:{:?}", machine.stack.pop());
+                    println!("pop:{:?}", interp.stack.pop());
                 }
-                Ctrl::StackPush(value) => match machine.stack.push(value) {
-                    Ok(()) => println!("stack:{}", machine.stack()),
+                Ctrl::StackPush(value) => match interp.stack.push(value) {
+                    Ok(()) => println!("stack:{}", interp.stack()),
                     Err(e) => println!("push error:{:?}", e),
                 },
                 Ctrl::None => break,
@@ -202,7 +198,7 @@ impl<DB: Database> Inspector<DB> for Controller {
         Return::Continue
     }
 
-    fn step_end(&mut self, _eval: revm::Return, _machine: &mut revm::Interpreter) -> Return {
+    fn step_end(&mut self, _eval: revm::Return, _interp: &mut revm::Interpreter) -> Return {
         Return::Continue
     }
 
@@ -232,8 +228,8 @@ impl<DB: Database> Inspector<DB> for Controller {
         _out: &Bytes,
         _is_static: bool,
     ) {
-        if let StateMachine::StepOut = self.state_machine {
-            self.state_machine = StateMachine::TriggerStep
+        if let StateMachine::StepOut = self.state_interp {
+            self.state_interp = StateMachine::TriggerStep
         }
     }
 
@@ -262,8 +258,8 @@ impl<DB: Database> Inspector<DB> for Controller {
         _remaining_gas: u64,
         _out: &Bytes,
     ) {
-        if let StateMachine::StepOut = self.state_machine {
-            self.state_machine = StateMachine::TriggerStep
+        if let StateMachine::StepOut = self.state_interp {
+            self.state_interp = StateMachine::TriggerStep
         }
     }
 

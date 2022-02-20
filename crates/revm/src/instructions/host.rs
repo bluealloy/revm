@@ -7,11 +7,11 @@ use bytes::Bytes;
 use core::cmp::min;
 use primitive_types::{H160, H256, U256};
 
-pub fn balance<H: Host, SPEC: Spec>(machine: &mut Interpreter, host: &mut H) -> Return {
-    pop_address!(machine, address);
+pub fn balance<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
+    pop_address!(interp, address);
     let (balance, is_cold) = host.balance(address);
     gas!(
-        machine,
+        interp,
         if SPEC::enabled(ISTANBUL) {
             // EIP-1884: Repricing for trie-size-dependent opcodes
             gas::account_access_gas::<SPEC>(is_cold)
@@ -21,39 +21,39 @@ pub fn balance<H: Host, SPEC: Spec>(machine: &mut Interpreter, host: &mut H) -> 
             20
         }
     );
-    push!(machine, balance);
+    push!(interp, balance);
 
     Return::Continue
 }
 
-pub fn selfbalance<H: Host, SPEC: Spec>(machine: &mut Interpreter, host: &mut H) -> Return {
-    // gas!(machine, gas::LOW);
+pub fn selfbalance<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
+    // gas!(interp, gas::LOW);
     // EIP-1884: Repricing for trie-size-dependent opcodes
     check!(SPEC::enabled(ISTANBUL));
 
-    let (balance, _) = host.balance(machine.contract.address);
-    push!(machine, balance);
+    let (balance, _) = host.balance(interp.contract.address);
+    push!(interp, balance);
 
     Return::Continue
 }
 
-pub fn extcodesize<H: Host, SPEC: Spec>(machine: &mut Interpreter, host: &mut H) -> Return {
-    pop_address!(machine, address);
+pub fn extcodesize<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
+    pop_address!(interp, address);
 
     let (code, is_cold) = host.code(address);
-    gas!(machine, gas::account_access_gas::<SPEC>(is_cold));
+    gas!(interp, gas::account_access_gas::<SPEC>(is_cold));
 
-    push!(machine, U256::from(code.len()));
+    push!(interp, U256::from(code.len()));
 
     Return::Continue
 }
 
-pub fn extcodehash<H: Host, SPEC: Spec>(machine: &mut Interpreter, host: &mut H) -> Return {
+pub fn extcodehash<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
     check!(SPEC::enabled(CONSTANTINOPLE)); // EIP-1052: EXTCODEHASH opcode
-    pop_address!(machine, address);
+    pop_address!(interp, address);
     let (code_hash, is_cold) = host.code_hash(address);
     gas!(
-        machine,
+        interp,
         if SPEC::enabled(ISTANBUL) {
             // EIP-1884: Repricing for trie-size-dependent opcodes
             gas::account_access_gas::<SPEC>(is_cold)
@@ -61,77 +61,77 @@ pub fn extcodehash<H: Host, SPEC: Spec>(machine: &mut Interpreter, host: &mut H)
             400
         }
     );
-    push_h256!(machine, code_hash);
+    push_h256!(interp, code_hash);
 
     Return::Continue
 }
 
-pub fn extcodecopy<H: Host, SPEC: Spec>(machine: &mut Interpreter, host: &mut H) -> Return {
-    pop_address!(machine, address);
-    pop!(machine, memory_offset, code_offset, len_u256);
+pub fn extcodecopy<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
+    pop_address!(interp, address);
+    pop!(interp, memory_offset, code_offset, len_u256);
 
     let (code, is_cold) = host.code(address);
-    gas_or_fail!(machine, gas::extcodecopy_cost::<SPEC>(len_u256, is_cold));
+    gas_or_fail!(interp, gas::extcodecopy_cost::<SPEC>(len_u256, is_cold));
     let len = as_usize_or_fail!(len_u256, Return::OutOfGas);
     if len == 0 {
         return Return::Continue;
     }
     let memory_offset = as_usize_or_fail!(memory_offset, Return::OutOfGas);
     let code_offset = min(as_usize_saturated!(code_offset), code.len());
-    memory_resize!(machine, memory_offset, len);
+    memory_resize!(interp, memory_offset, len);
 
     // Safety: set_data is unsafe function and memory_resize ensures us that it is safe to call it
-    machine
+    interp
         .memory
         .set_data(memory_offset, code_offset, len, &code);
     Return::Continue
 }
 
-pub fn blockhash<H: Host>(machine: &mut Interpreter, host: &mut H) -> Return {
-    // gas!(machine, gas::BLOCKHASH);
+pub fn blockhash<H: Host>(interp: &mut Interpreter, host: &mut H) -> Return {
+    // gas!(interp, gas::BLOCKHASH);
 
-    pop!(machine, number);
-    push_h256!(machine, host.block_hash(number));
+    pop!(interp, number);
+    push_h256!(interp, host.block_hash(number));
 
     Return::Continue
 }
 
-pub fn sload<H: Host, SPEC: Spec>(machine: &mut Interpreter, host: &mut H) -> Return {
-    pop!(machine, index);
-    let (value, is_cold) = host.sload(machine.contract.address, index);
-    gas!(machine, gas::sload_cost::<SPEC>(is_cold));
-    push!(machine, value);
+pub fn sload<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
+    pop!(interp, index);
+    let (value, is_cold) = host.sload(interp.contract.address, index);
+    gas!(interp, gas::sload_cost::<SPEC>(is_cold));
+    push!(interp, value);
     Return::Continue
 }
 
-pub fn sstore<H: Host, SPEC: Spec>(machine: &mut Interpreter, host: &mut H) -> Return {
+pub fn sstore<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
     check!(!SPEC::IS_STATIC_CALL);
 
-    pop!(machine, index, value);
-    let (original, old, new, is_cold) = host.sstore(machine.contract.address, index, value);
-    gas_or_fail!(machine, {
-        let remaining_gas = machine.gas.remaining();
+    pop!(interp, index, value);
+    let (original, old, new, is_cold) = host.sstore(interp.contract.address, index, value);
+    gas_or_fail!(interp, {
+        let remaining_gas = interp.gas.remaining();
         gas::sstore_cost::<SPEC>(original, old, new, remaining_gas, is_cold)
     });
-    refund!(machine, gas::sstore_refund::<SPEC>(original, old, new));
+    refund!(interp, gas::sstore_refund::<SPEC>(original, old, new));
     Return::Continue
 }
 
-pub fn log<H: Host, SPEC: Spec>(machine: &mut Interpreter, n: u8, host: &mut H) -> Return {
+pub fn log<H: Host, SPEC: Spec>(interp: &mut Interpreter, n: u8, host: &mut H) -> Return {
     check!(!SPEC::IS_STATIC_CALL);
 
-    pop!(machine, offset, len);
-    gas_or_fail!(machine, gas::log_cost(n, len));
+    pop!(interp, offset, len);
+    gas_or_fail!(interp, gas::log_cost(n, len));
     let len = as_usize_or_fail!(len, Return::OutOfGas);
     let data = if len == 0 {
         Bytes::new()
     } else {
         let offset = as_usize_or_fail!(offset, Return::OutOfGas);
-        memory_resize!(machine, offset, len);
-        Bytes::copy_from_slice(machine.memory.get_slice(offset, len))
+        memory_resize!(interp, offset, len);
+        Bytes::copy_from_slice(interp.memory.get_slice(offset, len))
     };
     let n = n as usize;
-    if machine.stack.len() < n {
+    if interp.stack.len() < n {
         return Return::StackUnderflow;
     }
 
@@ -139,41 +139,41 @@ pub fn log<H: Host, SPEC: Spec>(machine: &mut Interpreter, n: u8, host: &mut H) 
     for _ in 0..(n) {
         let mut t = H256::zero();
         // Sefety: stack bounds already checked few lines above
-        unsafe { machine.stack.pop_unsafe().to_big_endian(t.as_bytes_mut()) };
+        unsafe { interp.stack.pop_unsafe().to_big_endian(t.as_bytes_mut()) };
         topics.push(t);
     }
 
-    host.log(machine.contract.address, topics, data);
+    host.log(interp.contract.address, topics, data);
     Return::Continue
 }
 
-pub fn selfdestruct<H: Host, SPEC: Spec>(machine: &mut Interpreter, host: &mut H) -> Return {
+pub fn selfdestruct<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
     check!(!SPEC::IS_STATIC_CALL);
-    pop_address!(machine, target);
+    pop_address!(interp, target);
 
-    let res = host.selfdestruct(machine.contract.address, target);
+    let res = host.selfdestruct(interp.contract.address, target);
 
     // EIP-3529: Reduction in refunds
     if !SPEC::enabled(LONDON) && !res.previously_destroyed {
-        refund!(machine, gas::SELFDESTRUCT)
+        refund!(interp, gas::SELFDESTRUCT)
     }
-    gas!(machine, gas::selfdestruct_cost::<SPEC>(res));
+    gas!(interp, gas::selfdestruct_cost::<SPEC>(res));
 
     Return::SelfDestruct
 }
 
-fn gas_call_l64_after<SPEC: Spec>(machine: &mut Interpreter) -> Result<u64, Return> {
+fn gas_call_l64_after<SPEC: Spec>(interp: &mut Interpreter) -> Result<u64, Return> {
     if SPEC::enabled(TANGERINE) {
         //EIP-150: Gas cost changes for IO-heavy operations
-        let gas = machine.gas().remaining();
+        let gas = interp.gas().remaining();
         Ok(gas - gas / 64)
     } else {
-        Ok(machine.gas().remaining())
+        Ok(interp.gas().remaining())
     }
 }
 
 pub fn create<H: Host, SPEC: Spec>(
-    machine: &mut Interpreter,
+    interp: &mut Interpreter,
     is_create2: bool,
     host: &mut H,
 ) -> Return {
@@ -182,51 +182,51 @@ pub fn create<H: Host, SPEC: Spec>(
         check!(SPEC::enabled(CONSTANTINOPLE)); // EIP-1014: Skinny CREATE2
     }
 
-    machine.return_data_buffer = Bytes::new();
+    interp.return_data_buffer = Bytes::new();
 
-    pop!(machine, value, code_offset, len);
+    pop!(interp, value, code_offset, len);
     let len = as_usize_or_fail!(len, Return::OutOfGas);
 
     let code = if len == 0 {
         Bytes::new()
     } else {
         let code_offset = as_usize_or_fail!(code_offset, Return::OutOfGas);
-        memory_resize!(machine, code_offset, len);
-        Bytes::copy_from_slice(machine.memory.get_slice(code_offset, len))
+        memory_resize!(interp, code_offset, len);
+        Bytes::copy_from_slice(interp.memory.get_slice(code_offset, len))
     };
 
     let scheme = if is_create2 {
-        pop!(machine, salt);
-        gas_or_fail!(machine, gas::create2_cost(len));
+        pop!(interp, salt);
+        gas_or_fail!(interp, gas::create2_cost(len));
         CreateScheme::Create2 { salt }
     } else {
-        gas!(machine, gas::CREATE);
+        gas!(interp, gas::CREATE);
         CreateScheme::Create
     };
 
     // take remaining gas and deduce l64 part of it.
-    let gas_limit = try_or_fail!(gas_call_l64_after::<SPEC>(machine));
-    gas!(machine, gas_limit);
+    let gas_limit = try_or_fail!(gas_call_l64_after::<SPEC>(interp));
+    gas!(interp, gas_limit);
 
     let (reason, address, gas, return_data) =
-        host.create::<SPEC>(machine.contract.address, scheme, value, code, gas_limit);
-    machine.return_data_buffer = return_data;
+        host.create::<SPEC>(interp.contract.address, scheme, value, code, gas_limit);
+    interp.return_data_buffer = return_data;
     let created_address: H256 = if matches!(reason, return_ok!()) {
         address.map(|a| a.into()).unwrap_or_default()
     } else {
         H256::default()
     };
-    push_h256!(machine, created_address);
+    push_h256!(interp, created_address);
     // reimburse gas that is not spend
-    machine.gas.reimburse_unspend(&reason, gas);
+    interp.gas.reimburse_unspend(&reason, gas);
     match reason {
         Return::FatalNotSupported => Return::FatalNotSupported,
-        _ => machine.add_next_gas_block(machine.program_counter() - 1),
+        _ => interp.add_next_gas_block(interp.program_counter() - 1),
     }
 }
 
 pub fn call<H: Host, SPEC: Spec>(
-    machine: &mut Interpreter,
+    interp: &mut Interpreter,
     scheme: CallScheme,
     host: &mut H,
 ) -> Return {
@@ -235,10 +235,10 @@ pub fn call<H: Host, SPEC: Spec>(
         CallScheme::StaticCall => check!(SPEC::enabled(BYZANTINE)), // EIP-214: New opcode STATICCALL
         _ => (),
     }
-    machine.return_data_buffer = Bytes::new();
+    interp.return_data_buffer = Bytes::new();
 
-    pop!(machine, local_gas_limit);
-    pop_address!(machine, to);
+    pop!(interp, local_gas_limit);
+    pop_address!(interp, to);
     let local_gas_limit = if local_gas_limit > U256::from(u64::MAX) {
         u64::MAX
     } else {
@@ -247,11 +247,11 @@ pub fn call<H: Host, SPEC: Spec>(
 
     let value = match scheme {
         CallScheme::CallCode => {
-            pop!(machine, value);
+            pop!(interp, value);
             value
         }
         CallScheme::Call => {
-            pop!(machine, value);
+            pop!(interp, value);
             if SPEC::IS_STATIC_CALL && !value.is_zero() {
                 return Return::CallNotAllowedInsideStatic;
             }
@@ -260,13 +260,13 @@ pub fn call<H: Host, SPEC: Spec>(
         CallScheme::DelegateCall | CallScheme::StaticCall => U256::zero(),
     };
 
-    pop!(machine, in_offset, in_len, out_offset, out_len);
+    pop!(interp, in_offset, in_len, out_offset, out_len);
 
     let in_len = as_usize_or_fail!(in_len, Return::OutOfGas);
     let input = if in_len != 0 {
         let in_offset = as_usize_or_fail!(in_offset, Return::OutOfGas);
-        memory_resize!(machine, in_offset, in_len);
-        Bytes::copy_from_slice(machine.memory.get_slice(in_offset, in_len))
+        memory_resize!(interp, in_offset, in_len);
+        Bytes::copy_from_slice(interp.memory.get_slice(in_offset, in_len))
     } else {
         Bytes::new()
     };
@@ -274,7 +274,7 @@ pub fn call<H: Host, SPEC: Spec>(
     let out_len = as_usize_or_fail!(out_len, Return::OutOfGas);
     let out_offset = if out_len != 0 {
         let out_offset = as_usize_or_fail!(out_offset, Return::OutOfGas);
-        memory_resize!(machine, out_offset, out_len);
+        memory_resize!(interp, out_offset, out_len);
         out_offset
     } else {
         usize::MAX //unrealistic value so we are sure it is not used
@@ -283,38 +283,38 @@ pub fn call<H: Host, SPEC: Spec>(
     let context = match scheme {
         CallScheme::Call | CallScheme::StaticCall => CallContext {
             address: to,
-            caller: machine.contract.address,
+            caller: interp.contract.address,
             apparent_value: value,
         },
         CallScheme::CallCode => CallContext {
-            address: machine.contract.address,
-            caller: machine.contract.address,
+            address: interp.contract.address,
+            caller: interp.contract.address,
             apparent_value: value,
         },
         CallScheme::DelegateCall => CallContext {
-            address: machine.contract.address,
-            caller: machine.contract.caller,
-            apparent_value: machine.contract.value,
+            address: interp.contract.address,
+            caller: interp.contract.caller,
+            apparent_value: interp.contract.value,
         },
     };
 
     let transfer = if scheme == CallScheme::Call {
         Transfer {
-            source: machine.contract.address,
+            source: interp.contract.address,
             target: to,
             value,
         }
     } else if scheme == CallScheme::CallCode {
         Transfer {
-            source: machine.contract.address,
-            target: machine.contract.address,
+            source: interp.contract.address,
+            target: interp.contract.address,
             value,
         }
     } else {
         //this is dummy send for StaticCall and DelegateCall, it should do nothing and dont touch anything.
         Transfer {
-            source: machine.contract.address,
-            target: machine.contract.address,
+            source: interp.contract.address,
+            target: interp.contract.address,
             value: U256::zero(),
         }
     };
@@ -324,7 +324,7 @@ pub fn call<H: Host, SPEC: Spec>(
     let is_new = !exist;
     //let is_cold = false;
     gas!(
-        machine,
+        interp,
         gas::call_cost::<SPEC>(
             value,
             is_new,
@@ -335,10 +335,10 @@ pub fn call<H: Host, SPEC: Spec>(
     );
 
     // take l64 part of gas_limit
-    let global_gas_limit = try_or_fail!(gas_call_l64_after::<SPEC>(machine));
+    let global_gas_limit = try_or_fail!(gas_call_l64_after::<SPEC>(interp));
     let mut gas_limit = min(global_gas_limit, local_gas_limit);
 
-    gas!(machine, gas_limit);
+    gas!(interp, gas_limit);
 
     // add call stipend if there is value to be transfered.
     if matches!(scheme, CallScheme::Call | CallScheme::CallCode) && !transfer.value.is_zero() {
@@ -352,27 +352,27 @@ pub fn call<H: Host, SPEC: Spec>(
     } else {
         host.call::<SPEC>(to, transfer, input, gas_limit, context)
     };
-    machine.return_data_buffer = return_data;
+    interp.return_data_buffer = return_data;
 
-    let target_len = min(out_len, machine.return_data_buffer.len());
+    let target_len = min(out_len, interp.return_data_buffer.len());
     // return unspend gas.
-    machine.gas.reimburse_unspend(&reason, gas);
+    interp.gas.reimburse_unspend(&reason, gas);
     match reason {
         return_ok!() => {
-            machine
+            interp
                 .memory
-                .set(out_offset, &machine.return_data_buffer[..target_len]);
-            push!(machine, U256::one());
+                .set(out_offset, &interp.return_data_buffer[..target_len]);
+            push!(interp, U256::one());
         }
         return_revert!() => {
-            push!(machine, U256::zero());
-            machine
+            push!(interp, U256::zero());
+            interp
                 .memory
-                .set(out_offset, &machine.return_data_buffer[..target_len]);
+                .set(out_offset, &interp.return_data_buffer[..target_len]);
         }
         _ => {
-            push!(machine, U256::zero());
+            push!(interp, U256::zero());
         }
     }
-    machine.add_next_gas_block(machine.program_counter() - 1)
+    interp.add_next_gas_block(interp.program_counter() - 1)
 }
