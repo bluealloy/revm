@@ -26,7 +26,7 @@ pub use instructions::{
 pub use machine::{Gas, Machine};
 pub use models::*;
 pub use spec::*;
-pub use subroutine::{Account, SubRoutine};
+pub use subroutine::{Account, Filth, SubRoutine};
 
 extern crate alloc;
 
