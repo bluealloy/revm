@@ -23,7 +23,7 @@ pub use instructions::{
     opcode::{self, spec_opcode_gas, OpCode, OPCODE_JUMPMAP},
     Return,
 };
-pub use machine::{Gas, Machine};
+pub use machine::{Contract, Gas, Machine, Memory, Stack};
 pub use models::*;
 pub use spec::*;
 pub use subroutine::{Account, Filth, SubRoutine};
