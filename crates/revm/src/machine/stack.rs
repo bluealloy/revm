@@ -79,7 +79,10 @@ impl Stack {
     }
 
     #[inline(always)]
-    /// Safety: caller is responsible to check length of array
+    /// Pops a value from the stack, returning it.
+    ///
+    /// # Safety
+    /// The caller is responsible to check length of array
     pub unsafe fn pop_unsafe(&mut self) -> U256 {
         let mut len = self.data.len();
         len -= 1;
@@ -88,14 +91,20 @@ impl Stack {
     }
 
     #[inline(always)]
-    /// Safety: caller is responsible to check length of array
+    /// Peeks the top of the stack.
+    ///
+    /// # Safety
+    /// The caller is responsible to check length of array
     pub unsafe fn top_unsafe(&mut self) -> &mut U256 {
         let len = self.data.len();
         self.data.get_unchecked_mut(len - 1)
     }
 
     #[inline(always)]
-    /// Safety: caller is responsible to check length of array
+    /// Pop the topmost value, returning the value and the new topmost value.
+    ///
+    /// # Safety
+    /// The caller is responsible to check length of array
     pub unsafe fn pop_top_unsafe(&mut self) -> (U256, &mut U256) {
         let mut len = self.data.len();
         let pop = *self.data.get_unchecked(len - 1);
@@ -106,7 +115,10 @@ impl Stack {
     }
 
     #[inline(always)]
-    /// Safety: caller is responsible to check length of array
+    /// Pops 2 values from the stack and returns them, in addition to the new topmost value.
+    ///
+    /// # Safety
+    /// The caller is responsible to check length of array
     pub unsafe fn pop2_top_unsafe(&mut self) -> (U256, U256, &mut U256) {
         let mut len = self.data.len();
         let pop1 = *self.data.get_unchecked(len - 1);
@@ -118,7 +130,10 @@ impl Stack {
     }
 
     #[inline(always)]
-    /// Safety: caller is responsible to check length of array
+    /// Pops 2 alues from the stack.
+    ///
+    /// # Safety
+    /// The caller is responsible to check length of array
     pub unsafe fn pop2_unsafe(&mut self) -> (U256, U256) {
         let mut len = self.data.len();
         len -= 2;
@@ -130,7 +145,10 @@ impl Stack {
     }
 
     #[inline(always)]
-    /// Safety: caller is responsible to check length of array
+    /// Pops 3 values from the stack.
+    ///
+    /// # Safety
+    /// The caller is responsible to check length of array
     pub unsafe fn pop3_unsafe(&mut self) -> (U256, U256, U256) {
         let mut len = self.data.len();
         len -= 3;
@@ -143,7 +161,10 @@ impl Stack {
     }
 
     #[inline(always)]
-    /// Safety: caller is responsible to check length of array
+    /// Pops 4 values from the stack.
+    ///
+    /// # Safety
+    /// The caller is responsible to check length of array
     pub unsafe fn pop4_unsafe(&mut self) -> (U256, U256, U256, U256) {
         let mut len = self.data.len();
         len -= 4;
