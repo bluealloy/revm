@@ -22,7 +22,8 @@ impl InMemoryDB {
 /// Memory backend, storing all state values in a `Map` in memory.
 #[derive(Debug, Clone)]
 pub struct CacheDB<ExtDB: DatabaseRef> {
-    /// dummy account info where code is allways None. Code bytes can be found in `contracts`
+    /// Dummy account info where `code` is always `None`.
+    /// Code bytes can be found in `contracts`.
     cache: Map<H160, AccountInfo>,
     storage: Map<H160, Map<U256, U256>>,
     contracts: Map<H256, Bytes>,
@@ -47,6 +48,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     pub fn cache(&self) -> &Map<H160, AccountInfo> {
         &self.cache
     }
+
     pub fn storage(&self) -> &Map<H160, Map<U256, U256>> {
         &self.storage
     }
@@ -71,7 +73,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     }
 }
 
-/// TODO it is currently only commiting to cached in memory db
+// TODO It is currently only commiting to cached in-memory DB
 impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
     fn commit(&mut self, changes: Map<H160, Account>) {
         for (add, acc) in changes {
@@ -117,7 +119,9 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
         }
     }
 
-    /// Account is assumed that is already loaded, just get storage slot from db.
+    /// Get the value in an account's storage slot.
+    ///
+    /// It is assumed that account is already loaded.
     fn storage(&mut self, address: H160, index: U256) -> U256 {
         match self.storage.entry(address) {
             Entry::Occupied(mut entry) => match entry.get_mut().entry(index) {
@@ -153,8 +157,6 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
 pub struct EmptyDB();
 
 impl DatabaseRef for EmptyDB {
-    /// Whether account at address exists.
-    //fn exists(&self, address: H160) -> Option<AccountInfo>;
     /// Get basic account information.
     fn basic(&self, _address: H160) -> AccountInfo {
         AccountInfo::default()
@@ -174,13 +176,13 @@ impl DatabaseRef for EmptyDB {
     }
 }
 
-/// Very custom and dumm struct that will return accoun on address 0x0
+/// Custom benchmarking DB that only has account info for the zero address.
+///
+/// Any other address will return an empty account.
 #[derive(Debug, Default, Clone)]
 pub struct BenchmarkDB(pub Bytes);
 
 impl Database for BenchmarkDB {
-    /// Whether account at address exists.
-    //fn exists(&self, address: H160) -> Option<AccountInfo>;
     /// Get basic account information.
     fn basic(&mut self, address: H160) -> AccountInfo {
         if address == H160::zero() {
@@ -193,10 +195,12 @@ impl Database for BenchmarkDB {
         }
         AccountInfo::default()
     }
+
     /// Get account code by its hash
     fn code_by_hash(&mut self, _code_hash: H256) -> Bytes {
         Bytes::default()
     }
+
     /// Get storage value of address at index.
     fn storage(&mut self, _address: H160, _index: U256) -> U256 {
         U256::default()
