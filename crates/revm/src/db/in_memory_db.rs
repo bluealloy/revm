@@ -153,6 +153,37 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
     }
 }
 
+impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
+    fn block_hash(&self, number: U256) -> H256 {
+        self.db.block_hash(number)
+    }
+
+    fn basic(&self, address: H160) -> AccountInfo {
+        match self.cache.get(&address) {
+            Some(info) => info.clone(),
+            None => self.db.basic(address),
+        }
+    }
+
+    fn storage(&self, address: H160, index: U256) -> U256 {
+        match self.storage.get(&address) {
+            Some(entry) => match entry.get(&index) {
+                Some(entry) => *entry,
+                None => self.db.storage(address, index),
+            },
+            None => self.db.storage(address, index),
+        }
+    }
+
+    fn code_by_hash(&self, code_hash: H256) -> Bytes {
+        match self.contracts.get(&code_hash) {
+            Some(entry) => entry.clone(),
+            None => self.db.code_by_hash(code_hash),
+        }
+    }
+}
+
+/// An empty database that always returns default values when queried.
 #[derive(Debug, Default, Clone)]
 pub struct EmptyDB();
 
