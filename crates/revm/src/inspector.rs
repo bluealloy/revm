@@ -43,106 +43,6 @@ pub trait Inspector<DB: Database> {
     #[allow(clippy::too_many_arguments)]
     fn call(
         &mut self,
-        data: &mut EVMData<'_, DB>,
-        call: H160,
-        context: &CallContext,
-        transfer: &Transfer,
-        input: &Bytes,
-        gas_limit: u64,
-        is_static: bool,
-    ) -> (Return, Gas, Bytes);
-
-    #[allow(clippy::too_many_arguments)]
-    fn call_end(
-        &mut self,
-        data: &mut EVMData<'_, DB>,
-        call: H160,
-        context: &CallContext,
-        transfer: &Transfer,
-        input: &Bytes,
-        gas_limit: u64,
-        remaining_gas: u64,
-        ret: Return,
-        out: &Bytes,
-        is_static: bool,
-    );
-
-    fn create(
-        &mut self,
-        data: &mut EVMData<'_, DB>,
-        caller: H160,
-        scheme: &CreateScheme,
-        value: U256,
-        init_code: &Bytes,
-        gas_limit: u64,
-    ) -> (Return, Option<H160>, Gas, Bytes);
-
-    #[allow(clippy::too_many_arguments)]
-    fn create_end(
-        &mut self,
-        data: &mut EVMData<'_, DB>,
-        caller: H160,
-        scheme: &CreateScheme,
-        value: U256,
-        init_code: &Bytes,
-        ret: Return,
-        address: Option<H160>,
-        gas_limit: u64,
-        remaining_gas: u64,
-        out: &Bytes,
-    );
-
-    fn selfdestruct(&mut self);
-
-    /// If needed you can override some of the spec configurations when running with inspector
-    fn override_spec(&self) -> &OverrideSpec {
-        &OVERRIDE_SPEC_DEFAULT
-    }
-}
-
-const OVERRIDE_SPEC_DEFAULT: OverrideSpec = OverrideSpec {
-    eip170_contract_code_size_limit: usize::MAX,
-};
-pub struct OverrideSpec {
-    pub eip170_contract_code_size_limit: usize,
-}
-
-impl Default for OverrideSpec {
-    fn default() -> Self {
-        OVERRIDE_SPEC_DEFAULT
-    }
-}
-
-#[derive(Clone, Copy)]
-pub struct NoOpInspector();
-
-impl<DB: Database> Inspector<DB> for NoOpInspector {
-    fn initialize(&mut self, _data: &mut EVMData<'_, DB>) {}
-
-    fn initialize_machine(
-        &mut self,
-        _machine: &mut Machine,
-        _data: &mut EVMData<'_, DB>,
-        _is_static: bool,
-    ) -> Return {
-        Return::Continue
-    }
-
-    fn step(
-        &mut self,
-        _machine: &mut Machine,
-        _data: &mut EVMData<'_, DB>,
-        _is_static: bool,
-    ) -> Return {
-        Return::Continue
-    }
-
-    fn step_end(&mut self, _eval: Return, _machine: &mut Machine) -> Return {
-        Return::Continue
-    }
-
-    fn call(
-        &mut self,
         _data: &mut EVMData<'_, DB>,
         _call: H160,
         _context: &CallContext,
@@ -154,6 +54,7 @@ impl<DB: Database> Inspector<DB> for NoOpInspector {
         (Return::Continue, Gas::new(0), Bytes::new())
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn call_end(
         &mut self,
         _data: &mut EVMData<'_, DB>,
@@ -178,9 +79,10 @@ impl<DB: Database> Inspector<DB> for NoOpInspector {
         _init_code: &Bytes,
         _gas_limit: u64,
     ) -> (Return, Option<H160>, Gas, Bytes) {
-        (Return::Continue, None, Gas::new(0), Bytes::new())
+        (Return::Continue, None, Gas::new(0), Bytes::default())
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn create_end(
         &mut self,
         _data: &mut EVMData<'_, DB>,
@@ -197,4 +99,27 @@ impl<DB: Database> Inspector<DB> for NoOpInspector {
     }
 
     fn selfdestruct(&mut self) {}
+
+    /// If needed you can override some of the spec configurations when running with inspector
+    fn override_spec(&self) -> &OverrideSpec {
+        &OVERRIDE_SPEC_DEFAULT
+    }
 }
+
+const OVERRIDE_SPEC_DEFAULT: OverrideSpec = OverrideSpec {
+    eip170_contract_code_size_limit: usize::MAX,
+};
+pub struct OverrideSpec {
+    pub eip170_contract_code_size_limit: usize,
+}
+
+impl Default for OverrideSpec {
+    fn default() -> Self {
+        OVERRIDE_SPEC_DEFAULT
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct NoOpInspector();
+
+impl<DB: Database> Inspector<DB> for NoOpInspector {}
