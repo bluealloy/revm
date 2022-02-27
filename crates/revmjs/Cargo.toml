@@ -12,7 +12,7 @@ version = "0.2.0"
 crate-type = ["cdylib"]
 
 [dependencies]
-bn-rs = { git = "https://github.com/rakita/bn.rs", branch="bump_types" }
+bn-rs = "0.2.3"
 bytes = "1.1"
 getrandom = { version = "0.2", features = ["js"] }
 hex = "0.4"

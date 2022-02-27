@@ -163,8 +163,9 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 
 [[package]]
 name = "bn-rs"
-version = "0.2.2"
-source = "git+https://github.com/rakita/bn.rs?branch=bump_types#722f2fc169f63edcb8373f9a4a0734ffae791c6d"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "55f9480d25c1283e8806b280f65e885b4fb840e8e8d72b784401233c9bd83202"
 dependencies = [
  "getrandom 0.2.3",
  "js-sys",
