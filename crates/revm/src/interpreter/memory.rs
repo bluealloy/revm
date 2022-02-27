@@ -57,7 +57,10 @@ impl Memory {
         &self.data[offset..offset + size]
     }
 
-    /// Set memory region at given offset. The offset and value are already checked
+    /// Set memory region at given offset
+    ///
+    /// # Safety
+    /// The caller is responsible for checking the offset and value
     #[inline(always)]
     pub unsafe fn set_byte(&mut self, index: usize, byte: u8) {
         *self.data.get_unchecked_mut(index) = byte;

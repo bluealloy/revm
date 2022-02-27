@@ -24,10 +24,10 @@ pub use instructions::{
     opcode::{self, spec_opcode_gas, OpCode, OPCODE_JUMPMAP},
     Return,
 };
-pub use interpreter::Interpreter;
+pub use interpreter::{Contract, Interpreter, Memory, Stack};
 pub use models::*;
 pub use specification::*;
-pub use subroutine::{Account, SubRoutine};
+pub use subroutine::{Account, Filth, SubRoutine};
 
 extern crate alloc;
 

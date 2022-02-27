@@ -502,14 +502,11 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     type DB = DB;
 
     fn step(&mut self, interp: &mut Interpreter, is_static: bool) -> Return {
-        self.inspector.step(interp, &mut self.data, is_static);
-        Return::Continue
+        self.inspector.step(interp, &mut self.data, is_static)
     }
 
     fn step_end(&mut self, interp: &mut Interpreter, is_static: bool, ret: Return) -> Return {
-        self.inspector
-            .step_end(interp, &mut self.data, is_static, ret);
-        Return::Continue
+        self.inspector.step_end(interp,&mut self.data, is_static, ret)
     }
 
     fn env(&mut self) -> &mut Env {
