@@ -36,7 +36,6 @@ impl Default for EVM {
     }
 }
 
-#[wasm_bindgen]
 impl EVM {
     pub fn new() -> EVM {
         console_log!("EVM created");
@@ -151,7 +150,6 @@ impl From<AccessedAccount> for (H160, Vec<U256>) {
     }
 }
 
-#[wasm_bindgen]
 impl AccessedAccount {
     pub fn new(account: BN) -> Self {
         Self {
