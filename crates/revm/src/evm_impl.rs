@@ -506,7 +506,8 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     }
 
     fn step_end(&mut self, interp: &mut Interpreter, is_static: bool, ret: Return) -> Return {
-        self.inspector.step_end(interp,&mut self.data, is_static, ret)
+        self.inspector
+            .step_end(interp, &mut self.data, is_static, ret)
     }
 
     fn env(&mut self) -> &mut Env {
