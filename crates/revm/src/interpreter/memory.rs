@@ -134,16 +134,5 @@ mod tests {
             let next_multiple = x + 32 - (x % 32);
             assert_eq!(Some(next_multiple), next_multiple_of_32(x.into()));
         }
-
-        // // next_multiple_of_32 returns None when the next multiple of 32 is too big
-        // let last_multiple_of_32 = U256::MAX & !U256::from(31);
-        // for i in 0..63 {
-        //     let x = U256::MAX - U256::from(i);
-        //     if x > last_multiple_of_32 {
-        //         assert_eq!(None, next_multiple_of_32(x));
-        //     } else {
-        //         assert_eq!(Some(last_multiple_of_32), next_multiple_of_32(x));
-        //     }
-        // }
     }
 }

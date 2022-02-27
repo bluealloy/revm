@@ -1,6 +1,6 @@
 [package]
 authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
-description = "REVM - Rust Ethereum virtual machine"
+description = "REVM - Rust Ethereum virtual interp"
 edition = "2018"
 keywords = ["no_std", "ethereum", "evm"]
 license = "MIT"
@@ -16,13 +16,13 @@ bytes = { version = "1.1", default-features = false }
 futures = { version = "0.3.17", optional = true }
 hashbrown = { version = "0.12" }
 num_enum = { version = "0.5", default-features = false }#used for SpecId from u8 cast
-parking_lot = { version = "0.11.2", optional = true }
-primitive-types = { version = "0.10", default-features = false, features = ["rlp"] }
+parking_lot = { version = "0.12", optional = true }
+primitive-types = { version = "0.11", default-features = false, features = ["rlp"] }
 revm_precompiles = { path = "../revm_precompiles", version = "0.4", default-features = false }
 rlp = { version = "0.5", default-features = false }#used for create2 address calculation 
 sha3 = { version = "0.10", default-features = false }
 tokio = { version = "1.14", features = ["rt-multi-thread", "macros"], optional = true }
-web3 = { version = "0.17", optional = true }
+web3 = { version = "0.18", optional = true }
 #crypto-bigint = "0.3"
 zkp-u256 = "0.2.1"
 

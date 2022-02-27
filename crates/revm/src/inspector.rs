@@ -1,31 +1,29 @@
 use bytes::Bytes;
-use primitive_types::{H160, U256};
+use primitive_types::H160;
 
-use crate::{
-    evm_impl::EVMData, machine::Gas, CallContext, CreateScheme, Database, Machine, Return, Transfer,
-};
+use crate::{evm_impl::EVMData, CallInputs, CreateInputs, Database, Gas, Interpreter, Return};
 use auto_impl::auto_impl;
 
 #[auto_impl(&mut, Box)]
 pub trait Inspector<DB: Database> {
     fn initialize(&mut self, _data: &mut EVMData<'_, DB>) {}
 
-    /// before machine get initialized this function is called. If returning something other them Return::Continue
-    /// we are skipping execution of machine.
-    fn initialize_machine(
+    /// before interp get initialized this function is called. If returning something other them Return::Continue
+    /// we are skipping execution of interp.
+    fn initialize_interp(
         &mut self,
-        _machine: &mut Machine,
+        _interp: &mut Interpreter,
         _data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> Return {
         Return::Continue
     }
 
-    /// get opcode by calling `machine.contract.opcode(machine.program_counter())`.
-    /// all other information can be obtained from machine.
+    /// get opcode by calling `interp.contract.opcode(interp.program_counter())`.
+    /// all other information can be obtained from interp.
     fn step(
         &mut self,
-        _machine: &mut Machine,
+        _interp: &mut Interpreter,
         _data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> Return {
@@ -33,7 +31,13 @@ pub trait Inspector<DB: Database> {
     }
 
     /// Called after `step` when instruction is executed.
-    fn step_end(&mut self, _eval: Return, _machine: &mut Machine) -> Return {
+    fn step_end(
+        &mut self,
+        _interp: &mut Interpreter,
+        _data: &mut EVMData<'_, DB>,
+        _is_static: bool,
+        _eval: Return,
+    ) -> Return {
         Return::Continue
     }
 
@@ -44,11 +48,7 @@ pub trait Inspector<DB: Database> {
     fn call(
         &mut self,
         _data: &mut EVMData<'_, DB>,
-        _call: H160,
-        _context: &CallContext,
-        _transfer: &Transfer,
-        _input: &Bytes,
-        _gas_limit: u64,
+        _inputs: &CallInputs,
         _is_static: bool,
     ) -> (Return, Gas, Bytes) {
         (Return::Continue, Gas::new(0), Bytes::new())
@@ -58,12 +58,8 @@ pub trait Inspector<DB: Database> {
     fn call_end(
         &mut self,
         _data: &mut EVMData<'_, DB>,
-        _call: H160,
-        _context: &CallContext,
-        _transfer: &Transfer,
-        _input: &Bytes,
-        _gas_limit: u64,
-        _remaining_gas: u64,
+        _inputs: &CallInputs,
+        _remaining_gas: Gas,
         _ret: Return,
         _out: &Bytes,
         _is_static: bool,
@@ -73,11 +69,7 @@ pub trait Inspector<DB: Database> {
     fn create(
         &mut self,
         _data: &mut EVMData<'_, DB>,
-        _caller: H160,
-        _scheme: &CreateScheme,
-        _value: U256,
-        _init_code: &Bytes,
-        _gas_limit: u64,
+        _inputs: &CreateInputs,
     ) -> (Return, Option<H160>, Gas, Bytes) {
         (Return::Continue, None, Gas::new(0), Bytes::default())
     }
@@ -86,14 +78,10 @@ pub trait Inspector<DB: Database> {
     fn create_end(
         &mut self,
         _data: &mut EVMData<'_, DB>,
-        _caller: H160,
-        _scheme: &CreateScheme,
-        _value: U256,
-        _init_code: &Bytes,
+        _inputs: &CreateInputs,
         _ret: Return,
         _address: Option<H160>,
-        _gas_limit: u64,
-        _remaining_gas: u64,
+        _remaining_gas: Gas,
         _out: &Bytes,
     ) {
     }

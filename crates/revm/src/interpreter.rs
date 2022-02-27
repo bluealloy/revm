@@ -1,17 +1,23 @@
+mod contract;
+pub(crate) mod memory;
+mod stack;
+
+pub use contract::Contract;
+pub use memory::Memory;
+pub use stack::Stack;
+
 use crate::{
     instructions::{eval, Return},
-    return_ok, return_revert, USE_GAS,
+    Gas, USE_GAS,
 };
+use crate::{Host, Spec};
 use bytes::Bytes;
 use core::ops::Range;
-
-use super::{contract::Contract, memory::Memory, stack::Stack};
-use crate::{spec::Spec, Host};
 
 pub const STACK_LIMIT: u64 = 1024;
 pub const CALL_STACK_LIMIT: u64 = 1024;
 
-pub struct Machine {
+pub struct Interpreter {
     /// Contract information and invoking data
     pub contract: Contract,
     /// Program counter.
@@ -30,101 +36,7 @@ pub struct Machine {
     pub call_depth: u64,
 }
 
-#[derive(Clone, Copy, Debug)]
-pub struct Gas {
-    limit: u64,
-    used: u64,
-    memory: u64,
-    refunded: i64,
-    all_used_gas: u64,
-}
-impl Gas {
-    pub fn new(limit: u64) -> Self {
-        Self {
-            limit,
-            used: 0,
-            memory: 0,
-            refunded: 0,
-            all_used_gas: 0,
-        }
-    }
-
-    pub fn reimburse_unspend(&mut self, exit: &Return, other: Gas) {
-        match *exit {
-            return_ok!() => {
-                self.erase_cost(other.remaining());
-                self.record_refund(other.refunded());
-            }
-            return_revert!() => {
-                self.erase_cost(other.remaining());
-            }
-            _ => {}
-        }
-    }
-
-    pub fn limit(&self) -> u64 {
-        self.limit
-    }
-
-    pub fn memory(&self) -> u64 {
-        self.memory
-    }
-
-    pub fn refunded(&self) -> i64 {
-        self.refunded
-    }
-
-    pub fn spend(&self) -> u64 {
-        self.all_used_gas
-    }
-
-    pub fn remaining(&self) -> u64 {
-        self.limit - self.all_used_gas
-    }
-
-    pub fn erase_cost(&mut self, returned: u64) {
-        self.used -= returned;
-        self.all_used_gas -= returned;
-    }
-
-    pub fn record_refund(&mut self, refund: i64) {
-        self.refunded += refund;
-    }
-
-    /// Record an explict cost.
-    #[inline(always)]
-    pub fn record_cost(&mut self, cost: u64) -> bool {
-        let (all_used_gas, overflow) = self.all_used_gas.overflowing_add(cost);
-        if overflow || self.limit < all_used_gas {
-            return false;
-        }
-
-        self.used += cost;
-        self.all_used_gas = all_used_gas;
-        true
-    }
-
-    /// used in memory_resize! macro
-
-    pub fn record_memory(&mut self, gas_memory: u64) -> bool {
-        if gas_memory > self.memory {
-            let (all_used_gas, overflow) = self.used.overflowing_add(gas_memory);
-            if overflow || self.limit < all_used_gas {
-                return false;
-            }
-            self.memory = gas_memory;
-            self.all_used_gas = all_used_gas;
-        }
-        true
-    }
-
-    /// used in gas_refund! macro
-    pub fn gas_refund(&mut self, refund: i64) {
-        self.refunded += refund;
-    }
-}
-
-impl Machine {
+impl Interpreter {
     pub fn new<SPEC: Spec>(contract: Contract, gas_limit: u64, call_depth: u64) -> Self {
         Self {
             program_counter: contract.code.as_ptr(),
@@ -146,7 +58,7 @@ impl Machine {
         &self.gas
     }
 
-    /// Reference of machine stack.
+    /// Reference of interp stack.
     pub fn stack(&self) -> &Stack {
         &self.stack
     }
@@ -194,7 +106,7 @@ impl Machine {
             ret = eval::<H, SPEC>(opcode, self, host);
 
             if H::INSPECT {
-                let ret = host.step_end(ret, self);
+                let ret = host.step_end(self, SPEC::IS_STATIC_CALL, ret);
                 if ret != Return::Continue {
                     return ret;
                 }
@@ -203,7 +115,7 @@ impl Machine {
         ret
     }
 
-    /// Copy and get the return value of the machine, if any.
+    /// Copy and get the return value of the interp, if any.
     pub fn return_value(&self) -> Bytes {
         // if start is usize max it means that our return len is zero and we need to return empty
         if self.return_range.start == usize::MAX {

@@ -68,6 +68,24 @@ impl AccountInfo {
     }
 }
 
+pub struct CallInputs {
+    pub contract: H160,
+    pub transfer: Transfer,
+    pub input: Bytes,
+    pub gas_limit: u64,
+    pub context: CallContext,
+}
+
+pub struct CreateInputs {
+    pub caller: H160,
+    pub scheme: CreateScheme,
+    pub value: U256,
+    pub init_code: Bytes,
+    pub gas_limit: u64,
+}
+
+pub struct CreateData {}
+
 #[derive(Clone, Debug)]
 pub enum TransactTo {
     Call(H160),

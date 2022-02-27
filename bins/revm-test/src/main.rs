@@ -21,14 +21,14 @@ pub fn simple_example() {
 
     let mut elapsed = std::time::Duration::ZERO;
     let mut times = Vec::new();
-    for _ in 0..10 {
+    for _ in 0..30 {
         let timer = Instant::now();
         let (_, _, _, _, _) = evm.transact();
         let i = timer.elapsed();
         times.push(i);
         elapsed += i;
     }
-    println!("elapsed: {:?}", elapsed / 10);
+    println!("elapsed: {:?}", elapsed / 30);
     for (i, time) in times.iter().enumerate() {
         println!("{}: {:?}", i, time);
     }

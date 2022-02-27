@@ -1,4 +1,4 @@
-use crate::{alloc::vec::Vec, util, Return};
+use crate::{alloc::vec::Vec, Return};
 use primitive_types::{H256, U256};
 
 pub const STACK_LIMIT: usize = 1024;
@@ -184,7 +184,7 @@ impl Stack {
         if self.data.len() + 1 > STACK_LIMIT {
             return Err(Return::StackOverflow);
         }
-        self.data.push(util::be_to_u256(&value[..]));
+        self.data.push(U256::from_big_endian(value.as_ref()));
         Ok(())
     }
 

@@ -1,14 +1,13 @@
 use crate::{
     db::Database,
-    instructions::gas,
-    machine,
-    machine::{Contract, Gas, Machine},
+    gas, interpreter,
+    interpreter::{Contract, Interpreter},
     models::SelfDestructResult,
     return_ok,
-    spec::{Spec, SpecId::*},
     subroutine::{Account, State, SubRoutine},
-    util, CallContext, CreateScheme, Env, Inspector, Log, Return, TransactOut, TransactTo,
-    Transfer, KECCAK_EMPTY,
+    CallContext, CallInputs, CreateInputs, CreateScheme, Env, Gas, Inspector, Log, Return, Spec,
+    SpecId::*,
+    TransactOut, TransactTo, Transfer, KECCAK_EMPTY,
 };
 use alloc::vec::Vec;
 use bytes::Bytes;
@@ -118,22 +117,29 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
                     address,
                     apparent_value: value,
                 };
-                let (exit, gas, bytes) = self.call_inner::<GSPEC>(
-                    address,
-                    Transfer {
+                let call_input = CallInputs {
+                    contract: address,
+                    transfer: Transfer {
                         source: caller,
                         target: address,
                         value,
                     },
-                    data,
+                    input: data,
                     gas_limit,
                     context,
-                );
+                };
+                let (exit, gas, bytes) = self.call_inner::<GSPEC>(&call_input);
                 (exit, gas, TransactOut::Call(bytes))
             }
             TransactTo::Create(scheme) => {
-                let (exit, address, ret_gas, bytes) =
-                    self.create_inner::<GSPEC>(caller, scheme, value, data, gas_limit);
+                let create_input = CreateInputs {
+                    caller,
+                    scheme,
+                    value,
+                    init_code: data,
+                    gas_limit,
+                };
+                let (exit, address, ret_gas, bytes) = self.create_inner::<GSPEC>(&create_input);
                 (exit, ret_gas, TransactOut::Create(bytes, address))
             }
         };
@@ -285,31 +291,27 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
     fn create_inner<SPEC: Spec>(
         &mut self,
-        caller: H160,
-        scheme: CreateScheme,
-        value: U256,
-        init_code: Bytes,
-        gas_limit: u64,
+        inputs: &CreateInputs,
     ) -> (Return, Option<H160>, Gas, Bytes) {
-        let gas = Gas::new(gas_limit);
-        self.load_account(caller);
+        let gas = Gas::new(inputs.gas_limit);
+        self.load_account(inputs.caller);
 
         // check depth of calls
-        if self.data.subroutine.depth() > machine::CALL_STACK_LIMIT {
+        if self.data.subroutine.depth() > interpreter::CALL_STACK_LIMIT {
             return (Return::CallTooDeep, None, gas, Bytes::new());
         }
         // check balance of caller and value. Do this before increasing nonce
-        if self.balance(caller).0 < value {
+        if self.balance(inputs.caller).0 < inputs.value {
             return (Return::OutOfFund, None, gas, Bytes::new());
         }
 
         // inc nonce of caller
-        let old_nonce = self.data.subroutine.inc_nonce(caller);
+        let old_nonce = self.data.subroutine.inc_nonce(inputs.caller);
         // create address
-        let code_hash = H256::from_slice(Keccak256::digest(&init_code).as_slice());
-        let created_address = match scheme {
-            CreateScheme::Create => util::create_address(caller, old_nonce),
-            CreateScheme::Create2 { salt } => util::create2_address(caller, code_hash, salt),
+        let code_hash = H256::from_slice(Keccak256::digest(&inputs.init_code).as_slice());
+        let created_address = match inputs.scheme {
+            CreateScheme::Create => create_address(inputs.caller, old_nonce),
+            CreateScheme::Create2 { salt } => create2_address(inputs.caller, code_hash, salt),
         };
         let ret = Some(created_address);
 
@@ -330,11 +332,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
 
         // transfer value to contract address
-        if let Err(e) = self
-            .data
-            .subroutine
-            .transfer(caller, created_address, value, self.data.db)
-        {
+        if let Err(e) = self.data.subroutine.transfer(
+            inputs.caller,
+            created_address,
+            inputs.value,
+            self.data.db,
+        ) {
             self.data.subroutine.checkpoint_revert(checkpoint);
             return (e, ret, gas, Bytes::new());
         }
@@ -342,26 +345,32 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         if SPEC::enabled(ISTANBUL) {
             self.data.subroutine.inc_nonce(created_address);
         }
-        // create new machine and execute init function
-        let contract =
-            Contract::new::<SPEC>(Bytes::new(), init_code, created_address, caller, value);
-        let mut machine = Machine::new::<SPEC>(contract, gas.limit(), self.data.subroutine.depth());
+        // create new interp and execute init function
+        let contract = Contract::new::<SPEC>(
+            Bytes::new(),
+            inputs.init_code.clone(),
+            created_address,
+            inputs.caller,
+            inputs.value,
+        );
+        let mut interp =
+            Interpreter::new::<SPEC>(contract, gas.limit(), self.data.subroutine.depth());
         if Self::INSPECT {
             self.inspector
-                .initialize_machine(&mut machine, &mut self.data, false); // TODO fix is_static
+                .initialize_interp(&mut interp, &mut self.data, false); // TODO fix is_static
         }
-        let exit_reason = machine.run::<Self, SPEC>(self);
+        let exit_reason = interp.run::<Self, SPEC>(self);
         // Host error if present on execution\
         let ret = match exit_reason {
             return_ok!() => {
                 let b = Bytes::new();
                 // if ok, check contract creation limit and calculate gas deduction on output len.
-                let code = machine.return_value();
+                let code = interp.return_value();
 
                 // EIP-3541: Reject new contract code starting with the 0xEF byte
                 if SPEC::enabled(LONDON) && !code.is_empty() && code.get(0) == Some(&0xEF) {
                     self.data.subroutine.checkpoint_revert(checkpoint);
-                    return (Return::CreateContractWithEF, ret, machine.gas, b);
+                    return (Return::CreateContractWithEF, ret, interp.gas, b);
                 }
 
                 // TODO maybe create some macro to hide this `if`
@@ -375,14 +384,14 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 // EIP-170: Contract code size limit
                 if SPEC::enabled(SPURIOUS_DRAGON) && code.len() > contract_code_size_limit {
                     self.data.subroutine.checkpoint_revert(checkpoint);
-                    return (Return::CreateContractLimit, ret, machine.gas, b);
+                    return (Return::CreateContractLimit, ret, interp.gas, b);
                 }
                 if crate::USE_GAS {
-                    let gas_for_code = code.len() as u64 * crate::instructions::gas::CODEDEPOSIT;
+                    let gas_for_code = code.len() as u64 * crate::gas::CODEDEPOSIT;
                     // record code deposit gas cost and check if we are out of gas.
-                    if !machine.gas.record_cost(gas_for_code) {
+                    if !interp.gas.record_cost(gas_for_code) {
                         self.data.subroutine.checkpoint_revert(checkpoint);
-                        return (Return::OutOfGas, ret, machine.gas, b);
+                        return (Return::OutOfGas, ret, interp.gas, b);
                     }
                 }
                 // if we have enought gas
@@ -391,49 +400,42 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 self.data
                     .subroutine
                     .set_code(created_address, code, code_hash);
-                (Return::Continue, ret, machine.gas, b)
+                (Return::Continue, ret, interp.gas, b)
             }
             _ => {
                 self.data.subroutine.checkpoint_revert(checkpoint);
-                (exit_reason, ret, machine.gas, machine.return_value())
+                (exit_reason, ret, interp.gas, interp.return_value())
             }
         };
         ret
     }
 
     #[allow(clippy::too_many_arguments)]
-    fn call_inner<SPEC: Spec>(
-        &mut self,
-        code_address: H160,
-        transfer: Transfer,
-        input: Bytes,
-        gas_limit: u64,
-        context: CallContext,
-    ) -> (Return, Gas, Bytes) {
-        let mut gas = Gas::new(gas_limit);
+    fn call_inner<SPEC: Spec>(&mut self, inputs: &CallInputs) -> (Return, Gas, Bytes) {
+        let mut gas = Gas::new(inputs.gas_limit);
         // Load account and get code. Account is now hot.
-        let (code, _) = self.code(code_address);
+        let (code, _) = self.code(inputs.contract);
 
         // check depth
-        if self.data.subroutine.depth() > machine::CALL_STACK_LIMIT {
+        if self.data.subroutine.depth() > interpreter::CALL_STACK_LIMIT {
             return (Return::CallTooDeep, gas, Bytes::new());
         }
 
         // Create subroutine checkpoint
         let checkpoint = self.data.subroutine.create_checkpoint();
         // touch address. For "EIP-158 State Clear" this will erase empty accounts.
-        if transfer.value.is_zero() {
-            self.load_account(context.address);
+        if inputs.transfer.value.is_zero() {
+            self.load_account(inputs.context.address);
             self.data
                 .subroutine
-                .balance_add(context.address, U256::zero()); // touch the acc
+                .balance_add(inputs.context.address, U256::zero()); // touch the acc
         }
 
         // transfer value from caller to called account;
         match self.data.subroutine.transfer(
-            transfer.source,
-            transfer.target,
-            transfer.value,
+            inputs.transfer.source,
+            inputs.transfer.target,
+            inputs.transfer.value,
             self.data.db,
         ) {
             Err(e) => {
@@ -444,10 +446,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
 
         // call precompiles
-        if let Some(precompile) = self.precompiles.get(&code_address) {
+        if let Some(precompile) = self.precompiles.get(&inputs.contract) {
             let out = match precompile {
-                Precompile::Standard(fun) => fun(input.as_ref(), gas_limit),
-                Precompile::Custom(fun) => fun(input.as_ref(), gas_limit),
+                Precompile::Standard(fun) => fun(inputs.input.as_ref(), inputs.gas_limit),
+                Precompile::Custom(fun) => fun(inputs.input.as_ref(), inputs.gas_limit),
             };
             match out {
                 Ok(PrecompileOutput { output, cost, logs }) => {
@@ -472,22 +474,23 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 }
             }
         } else {
-            // create machine and execute subcall
-            let contract = Contract::new_with_context::<SPEC>(input, code, &context);
-            let mut machine =
-                Machine::new::<SPEC>(contract, gas_limit, self.data.subroutine.depth());
+            // create interp and execute subcall
+            let contract =
+                Contract::new_with_context::<SPEC>(inputs.input.clone(), code, &inputs.context);
+            let mut interp =
+                Interpreter::new::<SPEC>(contract, inputs.gas_limit, self.data.subroutine.depth());
             if Self::INSPECT {
                 self.inspector
-                    .initialize_machine(&mut machine, &mut self.data, false); // TODO fix is_static
+                    .initialize_interp(&mut interp, &mut self.data, false); // TODO fix is_static
             }
-            let exit_reason = machine.run::<Self, SPEC>(self);
+            let exit_reason = interp.run::<Self, SPEC>(self);
             if matches!(exit_reason, return_ok!()) {
                 self.data.subroutine.checkpoint_commit();
             } else {
                 self.data.subroutine.checkpoint_revert(checkpoint);
             }
 
-            (exit_reason, machine.gas, machine.return_value())
+            (exit_reason, interp.gas, interp.return_value())
         }
     }
 }
@@ -498,12 +501,13 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     const INSPECT: bool = INSPECT;
     type DB = DB;
 
-    fn step(&mut self, machine: &mut Machine, is_static: bool) -> Return {
-        self.inspector.step(machine, &mut self.data, is_static)
+    fn step(&mut self, interp: &mut Interpreter, is_static: bool) -> Return {
+        self.inspector.step(interp, &mut self.data, is_static)
     }
 
-    fn step_end(&mut self, ret: Return, machine: &mut Machine) -> Return {
-        self.inspector.step_end(ret, machine)
+    fn step_end(&mut self, interp: &mut Interpreter, is_static: bool, ret: Return) -> Return {
+        self.inspector
+            .step_end(interp, &mut self.data, is_static, ret)
     }
 
     fn env(&mut self) -> &mut Env {
@@ -576,91 +580,59 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .selfdestruct(address, target, self.data.db)
     }
 
-    fn create<SPEC: Spec>(
-        &mut self,
-        caller: H160,
-        scheme: CreateScheme,
-        value: U256,
-        init_code: Bytes,
-        gas_limit: u64,
-    ) -> (Return, Option<H160>, Gas, Bytes) {
+    fn create<SPEC: Spec>(&mut self, inputs: &CreateInputs) -> (Return, Option<H160>, Gas, Bytes) {
         if INSPECT {
-            let (ret, address, gas, out) = self.inspector.create(
-                &mut self.data,
-                caller,
-                &scheme,
-                value,
-                &init_code,
-                gas_limit,
-            );
+            let (ret, address, gas, out) = self.inspector.create(&mut self.data, inputs);
             if ret != Return::Continue {
                 return (ret, address, gas, out);
             }
         }
-        let (ret, address, gas, out) =
-            self.create_inner::<SPEC>(caller, scheme, value, init_code.clone(), gas_limit);
+        let (ret, address, gas, out) = self.create_inner::<SPEC>(inputs);
         if INSPECT {
-            self.inspector.create_end(
-                &mut self.data,
-                caller,
-                &scheme,
-                value,
-                &init_code,
-                ret,
-                address,
-                gas_limit,
-                gas.remaining(),
-                &out,
-            );
+            self.inspector
+                .create_end(&mut self.data, inputs, ret, address, gas, &out);
         }
         (ret, address, gas, out)
     }
 
-    fn call<SPEC: Spec>(
-        &mut self,
-        code_address: H160,
-        transfer: Transfer,
-        input: Bytes,
-        gas_limit: u64,
-        context: CallContext,
-    ) -> (Return, Gas, Bytes) {
+    fn call<SPEC: Spec>(&mut self, inputs: &CallInputs) -> (Return, Gas, Bytes) {
         if INSPECT {
-            let (ret, gas, out) = self.inspector.call(
-                &mut self.data,
-                code_address,
-                &context,
-                &transfer,
-                &input,
-                gas_limit,
-                SPEC::IS_STATIC_CALL,
-            );
+            let (ret, gas, out) = self
+                .inspector
+                .call(&mut self.data, inputs, SPEC::IS_STATIC_CALL);
             if ret != Return::Continue {
                 return (ret, gas, out);
             }
         }
-        let (ret, gas, out) = self.call_inner::<SPEC>(
-            code_address,
-            transfer.clone(),
-            input.clone(),
-            gas_limit,
-            context.clone(),
-        );
+        let (ret, gas, out) = self.call_inner::<SPEC>(inputs);
         if INSPECT {
-            self.inspector.call_end(
-                &mut self.data,
-                code_address,
-                &context,
-                &transfer,
-                &input,
-                gas_limit,
-                gas.remaining(),
-                ret,
-                &out,
-                SPEC::IS_STATIC_CALL,
-            );
+            self.inspector
+                .call_end(&mut self.data, inputs, gas, ret, &out, SPEC::IS_STATIC_CALL);
         }
         (ret, gas, out)
     }
+}
+
+pub fn create_address(caller: H160, nonce: u64) -> H160 {
+    let mut stream = rlp::RlpStream::new_list(2);
+    stream.append(&caller);
+    stream.append(&nonce);
+    let out = H256::from_slice(Keccak256::digest(&stream.out()).as_slice());
+    let out = H160::from_slice(&out.as_bytes()[12..]);
+    out
+}
+
+/// Get the create address from given scheme.
+pub fn create2_address(caller: H160, code_hash: H256, salt: U256) -> H160 {
+    let mut temp: [u8; 32] = [0; 32];
+    salt.to_big_endian(&mut temp);
+
+    let mut hasher = Keccak256::new();
+    hasher.update(&[0xff]);
+    hasher.update(&caller[..]);
+    hasher.update(&temp);
+    hasher.update(&code_hash[..]);
+    H160::from_slice(&hasher.finalize().as_slice()[12..])
 }
 
 /// EVM context host.
@@ -669,8 +641,8 @@ pub trait Host {
 
     type DB: Database;
 
-    fn step(&mut self, machine: &mut Machine, is_static: bool) -> Return;
-    fn step_end(&mut self, ret: Return, machine: &mut Machine) -> Return;
+    fn step(&mut self, interp: &mut Interpreter, is_static: bool) -> Return;
+    fn step_end(&mut self, interp: &mut Interpreter, is_static: bool, ret: Return) -> Return;
 
     fn env(&mut self) -> &mut Env;
 
@@ -693,22 +665,7 @@ pub trait Host {
     /// Mark an address to be deleted, with funds transferred to target.
     fn selfdestruct(&mut self, address: H160, target: H160) -> SelfDestructResult;
     /// Invoke a create operation.
-    fn create<SPEC: Spec>(
-        &mut self,
-        caller: H160,
-        scheme: CreateScheme,
-        value: U256,
-        init_code: Bytes,
-        gas: u64,
-    ) -> (Return, Option<H160>, Gas, Bytes);
-
+    fn create<SPEC: Spec>(&mut self, inputs: &CreateInputs) -> (Return, Option<H160>, Gas, Bytes);
     /// Invoke a call operation.
-    fn call<SPEC: Spec>(
-        &mut self,
-        code_address: H160,
-        transfer: Transfer,
-        input: Bytes,
-        gas: u64,
-        context: CallContext,
-    ) -> (Return, Gas, Bytes);
+    fn call<SPEC: Spec>(&mut self, input: &CallInputs) -> (Return, Gas, Bytes);
 }

@@ -32,7 +32,7 @@ Optimization thread: https://github.com/bluealloy/revm/issues/7
 # v0.5.0
 date: 17.11.2021
 
-A lot of optimization on machine(interpreter) part, it is now at least 3x faster. On interface side, Error enum was renamed to Return and it is simplified. Additionally if needed gas measuring can be removed with rust feature.
+A lot of optimization on machine(Interpreter) part, it is now at least 3x faster. On interface side, Error enum was renamed to Return and it is simplified. Additionally if needed gas measuring can be removed with rust feature.
 
 Changes: 
 * push instruction optimized.

@@ -18,9 +18,9 @@ macro_rules! check {
 }
 
 macro_rules! gas {
-    ($machine:expr, $gas:expr) => {
+    ($interp:expr, $gas:expr) => {
         if crate::USE_GAS {
-            if !$machine.gas.record_cost(($gas)) {
+            if !$interp.gas.record_cost(($gas)) {
                 return Return::OutOfGas;
             }
         }
@@ -28,18 +28,18 @@ macro_rules! gas {
 }
 
 macro_rules! refund {
-    ($machine:expr, $gas:expr) => {{
+    ($interp:expr, $gas:expr) => {{
         if crate::USE_GAS {
-            $machine.gas.gas_refund($gas);
+            $interp.gas.gas_refund($gas);
         }
     }};
 }
 
 macro_rules! gas_or_fail {
-    ($machine:expr, $gas:expr) => {
+    ($interp:expr, $gas:expr) => {
         if crate::USE_GAS {
             match $gas {
-                Some(gas_used) => gas!($machine, gas_used),
+                Some(gas_used) => gas!($interp, gas_used),
                 None => return Return::OutOfGas,
             }
         }
@@ -47,23 +47,20 @@ macro_rules! gas_or_fail {
 }
 
 macro_rules! memory_resize {
-    ($machine:expr, $offset:expr, $len:expr) => {{
+    ($interp:expr, $offset:expr, $len:expr) => {{
         let len: usize = $len;
         let offset: usize = $offset;
         if let Some(new_size) =
-            crate::machine::memory::next_multiple_of_32(offset.saturating_add(len))
+            crate::interpreter::memory::next_multiple_of_32(offset.saturating_add(len))
         {
-            if new_size > $machine.memory.len() {
+            if new_size > $interp.memory.len() {
                 if crate::USE_GAS {
                     let num_bytes = new_size / 32;
-                    if !$machine
-                        .gas
-                        .record_memory(crate::instructions::gas::memory_gas(num_bytes))
-                    {
+                    if !$interp.gas.record_memory(crate::gas::memory_gas(num_bytes)) {
                         return Return::OutOfGas;
                     }
                 }
-                $machine.memory.resize(new_size);
+                $interp.memory.resize(new_size);
             }
         } else {
             return Return::OutOfGas;
@@ -72,15 +69,15 @@ macro_rules! memory_resize {
 }
 
 macro_rules! pop_address {
-    ( $machine:expr, $x1:ident) => {
-        if $machine.stack.len() < 1 {
+    ( $interp:expr, $x1:ident) => {
+        if $interp.stack.len() < 1 {
             return Return::StackUnderflow;
         }
         let mut temp = H256::zero();
         // Safety: Length is checked above.
         let $x1: H160 = {
             unsafe {
-                $machine
+                $interp
                     .stack
                     .pop_unsafe()
                     .to_big_endian(temp.as_bytes_mut())
@@ -88,15 +85,15 @@ macro_rules! pop_address {
             temp.into()
         };
     };
-    ( $machine:expr, $x1:ident, $x2:ident) => {
-        if $machine.stack.len() < 2 {
+    ( $interp:expr, $x1:ident, $x2:ident) => {
+        if $interp.stack.len() < 2 {
             return Return::StackUnderflow;
         }
         let mut temp = H256::zero();
         $x1: H160 = {
             // Safety: Length is checked above.
             unsafe {
-                $machine
+                $interp
                     .stack
                     .pop_unsafe()
                     .to_big_endian(temp.as_bytes_mut())
@@ -107,7 +104,7 @@ macro_rules! pop_address {
             temp = H256::zero();
             // Safety: Length is checked above.
             unsafe {
-                $machine
+                $interp
                     .stack
                     .pop_unsafe()
                     .to_big_endian(temp.as_bytes_mut())
@@ -118,65 +115,65 @@ macro_rules! pop_address {
 }
 
 macro_rules! pop {
-    ( $machine:expr, $x1:ident) => {
-        if $machine.stack.len() < 1 {
+    ( $interp:expr, $x1:ident) => {
+        if $interp.stack.len() < 1 {
             return Return::StackUnderflow;
         }
         // Safety: Length is checked above.
-        let $x1 = unsafe { $machine.stack.pop_unsafe() };
+        let $x1 = unsafe { $interp.stack.pop_unsafe() };
     };
-    ( $machine:expr, $x1:ident, $x2:ident) => {
-        if $machine.stack.len() < 2 {
+    ( $interp:expr, $x1:ident, $x2:ident) => {
+        if $interp.stack.len() < 2 {
             return Return::StackUnderflow;
         }
         // Safety: Length is checked above.
-        let ($x1, $x2) = unsafe { $machine.stack.pop2_unsafe() };
+        let ($x1, $x2) = unsafe { $interp.stack.pop2_unsafe() };
     };
-    ( $machine:expr, $x1:ident, $x2:ident, $x3:ident) => {
-        if $machine.stack.len() < 3 {
+    ( $interp:expr, $x1:ident, $x2:ident, $x3:ident) => {
+        if $interp.stack.len() < 3 {
             return Return::StackUnderflow;
         }
         // Safety: Length is checked above.
-        let ($x1, $x2, $x3) = unsafe { $machine.stack.pop3_unsafe() };
+        let ($x1, $x2, $x3) = unsafe { $interp.stack.pop3_unsafe() };
     };
 
-    ( $machine:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident) => {
-        if $machine.stack.len() < 4 {
+    ( $interp:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident) => {
+        if $interp.stack.len() < 4 {
             return Return::StackUnderflow;
         }
         // Safety: Length is checked above.
-        let ($x1, $x2, $x3, $x4) = unsafe { $machine.stack.pop4_unsafe() };
+        let ($x1, $x2, $x3, $x4) = unsafe { $interp.stack.pop4_unsafe() };
     };
 }
 
 macro_rules! pop_top {
-    ( $machine:expr, $x1:ident) => {
-        if $machine.stack.len() < 1 {
+    ( $interp:expr, $x1:ident) => {
+        if $interp.stack.len() < 1 {
             return Return::StackUnderflow;
         }
         // Safety: Length is checked above.
-        let $x1 = unsafe { $machine.stack.top_unsafe() };
+        let $x1 = unsafe { $interp.stack.top_unsafe() };
     };
-    ( $machine:expr, $x1:ident, $x2:ident) => {
-        if $machine.stack.len() < 2 {
+    ( $interp:expr, $x1:ident, $x2:ident) => {
+        if $interp.stack.len() < 2 {
             return Return::StackUnderflow;
         }
         // Safety: Length is checked above.
-        let ($x1, $x2) = unsafe { $machine.stack.pop_top_unsafe() };
+        let ($x1, $x2) = unsafe { $interp.stack.pop_top_unsafe() };
     };
-    ( $machine:expr, $x1:ident, $x2:ident, $x3:ident) => {
-        if $machine.stack.len() < 3 {
+    ( $interp:expr, $x1:ident, $x2:ident, $x3:ident) => {
+        if $interp.stack.len() < 3 {
             return Return::StackUnderflow;
         }
         // Safety: Length is checked above.
-        let ($x1, $x2, $x3) = unsafe { $machine.stack.pop2_top_unsafe() };
+        let ($x1, $x2, $x3) = unsafe { $interp.stack.pop2_top_unsafe() };
     };
 }
 
 macro_rules! push_h256 {
-	( $machine:expr, $( $x:expr ),* ) => (
+	( $interp:expr, $( $x:expr ),* ) => (
 		$(
-			match $machine.stack.push_h256($x) {
+			match $interp.stack.push_h256($x) {
 				Ok(()) => (),
 				Err(e) => return e,
 			}
@@ -185,9 +182,9 @@ macro_rules! push_h256 {
 }
 
 macro_rules! push {
-    ( $machine:expr, $( $x:expr ),* ) => (
+    ( $interp:expr, $( $x:expr ),* ) => (
 		$(
-			match $machine.stack.push($x) {
+			match $interp.stack.push($x) {
 				Ok(()) => (),
 				Err(e) => return e,
 			}
@@ -196,9 +193,9 @@ macro_rules! push {
 }
 
 macro_rules! op1_u256_fn {
-    ( $machine:expr, $op:path ) => {{
-        //gas!($machine, $gas);
-        pop_top!($machine, op1);
+    ( $interp:expr, $op:path ) => {{
+        // gas!($interp, $gas);
+        pop_top!($interp, op1);
         *op1 = $op(*op1);
 
         Return::Continue
@@ -206,9 +203,9 @@ macro_rules! op1_u256_fn {
 }
 
 macro_rules! op2_u256_bool_ref {
-    ( $machine:expr, $op:ident) => {{
-        //gas!($machine, $gas);
-        pop_top!($machine, op1, op2);
+    ( $interp:expr, $op:ident) => {{
+        // gas!($interp, $gas);
+        pop_top!($interp, op1, op2);
         let ret = op1.$op(&op2);
         *op2 = if ret { U256::one() } else { U256::zero() };
 
@@ -217,26 +214,26 @@ macro_rules! op2_u256_bool_ref {
 }
 
 macro_rules! op2_u256 {
-    ( $machine:expr, $op:ident) => {{
-        //gas!($machine, $gas);
-        pop_top!($machine, op1, op2);
+    ( $interp:expr, $op:ident) => {{
+        // gas!($interp, $gas);
+        pop_top!($interp, op1, op2);
         *op2 = op1.$op(*op2);
         Return::Continue
     }};
 }
 
 macro_rules! op2_u256_tuple {
-    ( $machine:expr, $op:ident) => {{
-        //gas!($machine, $gas);
+    ( $interp:expr, $op:ident) => {{
+        // gas!($interp, $gas);
 
-        pop_top!($machine, op1, op2);
+        pop_top!($interp, op1, op2);
         let (ret, ..) = op1.$op(*op2);
         *op2 = ret;
 
         Return::Continue
     }};
-    ( $machine:expr, $op:ident ) => {{
-        pop_top!($machine, op1, op2);
+    ( $interp:expr, $op:ident ) => {{
+        pop_top!($interp, op1, op2);
         let (ret, ..) = op1.$op(op2);
         *op2 = ret;
 
@@ -245,32 +242,32 @@ macro_rules! op2_u256_tuple {
 }
 
 macro_rules! op2_u256_fn {
-    ( $machine:expr, $op:path ) => {{
-        //gas!($machine, $gas);
+    ( $interp:expr, $op:path ) => {{
+        // gas!($interp, $gas);
 
-        pop_top!($machine, op1, op2);
+        pop_top!($interp, op1, op2);
         *op2 = $op(op1, *op2);
 
         Return::Continue
     }};
-    ( $machine:expr, $op:path, $enabled:expr) => {{
+    ( $interp:expr, $op:path, $enabled:expr) => {{
         check!(($enabled));
-        op2_u256_fn!($machine, $op)
+        op2_u256_fn!($interp, $op)
     }};
 }
 
 macro_rules! op3_u256_fn {
-    ( $machine:expr, $op:path) => {{
-        //gas!($machine, $gas);
+    ( $interp:expr, $op:path) => {{
+        // gas!($interp, $gas);
 
-        pop_top!($machine, op1, op2, op3);
+        pop_top!($interp, op1, op2, op3);
         *op3 = $op(op1, op2, *op3);
 
         Return::Continue
     }};
-    ( $machine:expr, $op:path, $spec:ident :: $enabled:ident) => {{
+    ( $interp:expr, $op:path, $spec:ident :: $enabled:ident) => {{
         check!($spec::$enabled);
-        op3_u256_fn!($machine, $op)
+        op3_u256_fn!($interp, $op)
     }};
 }
 

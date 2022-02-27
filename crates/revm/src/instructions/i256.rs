@@ -73,6 +73,61 @@ pub fn i256_cmp(mut first: U256, mut second: U256) -> Ordering {
         (Sign::Plus, Sign::Plus) => first.cmp(&second),
     }
 }
+
+#[inline(always)]
+pub fn i256_div(mut first: U256, mut second: U256) -> U256 {
+    let second_sign = i256_sign::<true>(&mut second);
+    if second_sign == Sign::Zero {
+        return U256::zero();
+    }
+    let first_sign = i256_sign::<true>(&mut first);
+    if first_sign == Sign::Minus && first == MIN_NEGATIVE_VALUE && second == U256::one() {
+        return two_compl(MIN_NEGATIVE_VALUE);
+    }
+
+    //let mut d = first / second;
+    let mut d = div_u256::div_mod(first, second).0;
+
+    u256_remove_sign(&mut d);
+    //set sign bit to zero
+
+    if d.is_zero() {
+        return U256::zero();
+    }
+
+    match (first_sign, second_sign) {
+        (Sign::Zero, Sign::Plus)
+        | (Sign::Plus, Sign::Zero)
+        | (Sign::Zero, Sign::Zero)
+        | (Sign::Plus, Sign::Plus)
+        | (Sign::Minus, Sign::Minus) => d,
+        (Sign::Zero, Sign::Minus)
+        | (Sign::Plus, Sign::Minus)
+        | (Sign::Minus, Sign::Zero)
+        | (Sign::Minus, Sign::Plus) => two_compl(d),
+    }
+}
+
+#[inline(always)]
+pub fn i256_mod(mut first: U256, mut second: U256) -> U256 {
+    let first_sign = i256_sign::<true>(&mut first);
+    if first_sign == Sign::Zero {
+        return U256::zero();
+    }
+
+    let _ = i256_sign::<true>(&mut second);
+    let mut r = first % second;
+    u256_remove_sign(&mut r);
+    if r.is_zero() {
+        return U256::zero();
+    }
+    if first_sign == Sign::Minus {
+        two_compl(r)
+    } else {
+        r
+    }
+}
+
 pub mod div_u256 {
     use super::*;
 
@@ -334,68 +389,6 @@ pub mod div_u256 {
     }
 }
 
-#[inline(always)]
-pub fn i256_div(mut first: U256, mut second: U256) -> U256 {
-    let second_sign = i256_sign::<true>(&mut second);
-    if second_sign == Sign::Zero {
-        return U256::zero();
-    }
-    let first_sign = i256_sign::<true>(&mut first);
-    if first_sign == Sign::Minus && first == MIN_NEGATIVE_VALUE && second == U256::one() {
-        return two_compl(MIN_NEGATIVE_VALUE);
-    }
-
-    //use crypto_bigint::U256 as fastU256;
-    // let ff = fastU256::from(first.0);
-    //let sf = fastU256::from(second.0);
-
-    //let d = ff.checked_div(&sf).unwrap();
-    //let mut d: U256 = U256(d.to_uint_array());
-
-    //let mut d = first/second;
-    let mut d = div_u256::div_mod(first, second).0;
-    //let mut d = U256(inner_zkp_u256::div_rem(&first.0, &second.0));
-
-    u256_remove_sign(&mut d);
-    //set sign bit to zero
-
-    if d.is_zero() {
-        return U256::zero();
-    }
-
-    match (first_sign, second_sign) {
-        (Sign::Zero, Sign::Plus)
-        | (Sign::Plus, Sign::Zero)
-        | (Sign::Zero, Sign::Zero)
-        | (Sign::Plus, Sign::Plus)
-        | (Sign::Minus, Sign::Minus) => d,
-        (Sign::Zero, Sign::Minus)
-        | (Sign::Plus, Sign::Minus)
-        | (Sign::Minus, Sign::Zero)
-        | (Sign::Minus, Sign::Plus) => two_compl(d),
-    }
-}
-
-#[inline(always)]
-pub fn i256_mod(mut first: U256, mut second: U256) -> U256 {
-    let first_sign = i256_sign::<true>(&mut first);
-    if first_sign == Sign::Zero {
-        return U256::zero();
-    }
-
-    let _ = i256_sign::<true>(&mut second);
-    let mut r = first % second;
-    u256_remove_sign(&mut r);
-    if r.is_zero() {
-        return U256::zero();
-    }
-    if first_sign == Sign::Minus {
-        two_compl(r)
-    } else {
-        r
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -427,20 +420,5 @@ mod tests {
         assert_eq!(i256_div(max_value, minus_one), neg_max_value);
         assert_eq!(i256_div(one_hundred, minus_one), neg_one_hundred);
         assert_eq!(i256_div(one_hundred, two), fifty);
-    }
-
-    #[test]
-    fn benchmark_div() {
-        use super::*;
-
-        let mut f = U256([1, 100, 1, 1]);
-        let mut s = U256([0, 0, 10, 0]);
-
-        //let time = std::time::Instant::now();
-        for i in 0..1_000_000 {
-            f.0[1] = i;
-            s.0[3] = div_u256::div_mod(f, s).0 .0[3];
-        }
-        //println!("TIME:{:?}", time.elapsed());
     }
 }

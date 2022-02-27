@@ -4,13 +4,13 @@
 pub mod db;
 mod evm;
 mod evm_impl;
+pub(crate) mod gas;
 mod inspector;
 mod instructions;
-mod machine;
+mod interpreter;
 mod models;
-mod spec;
+mod specification;
 mod subroutine;
-mod util;
 
 pub use evm_impl::{EVMData, Host};
 
@@ -18,14 +18,15 @@ pub type DummyStateDB = InMemoryDB;
 
 pub use db::{Database, DatabaseCommit, InMemoryDB};
 pub use evm::{new, EVM};
+pub use gas::Gas;
 pub use inspector::{Inspector, NoOpInspector, OverrideSpec};
 pub use instructions::{
     opcode::{self, spec_opcode_gas, OpCode, OPCODE_JUMPMAP},
     Return,
 };
-pub use machine::{Contract, Gas, Machine, Memory, Stack};
+pub use interpreter::{Contract, Interpreter, Memory, Stack};
 pub use models::*;
-pub use spec::*;
+pub use specification::*;
 pub use subroutine::{Account, Filth, SubRoutine};
 
 extern crate alloc;
