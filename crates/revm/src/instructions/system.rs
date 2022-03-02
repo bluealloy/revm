@@ -1,5 +1,4 @@
-use crate::{gas, interpreter::Interpreter, Return};
-use crate::{Spec, SpecId::*};
+use crate::{gas, interpreter::Interpreter, Return, Spec, SpecId::*};
 use bytes::Bytes;
 use primitive_types::{H256, U256};
 

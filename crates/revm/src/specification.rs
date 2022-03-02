@@ -124,9 +124,8 @@ mod spec_impl {
     spec!(FRONTIER);
 }
 
-pub use spec_impl::BERLIN::SpecImpl as BerlinSpec;
-pub use spec_impl::BYZANTINE::SpecImpl as ByzantineSpec;
-pub use spec_impl::FRONTIER::SpecImpl as FrontierSpec;
-pub use spec_impl::ISTANBUL::SpecImpl as IstanbulSpec;
-pub use spec_impl::LATEST::SpecImpl as LatestSpec;
-pub use spec_impl::LONDON::SpecImpl as LondonSpec;
+pub use spec_impl::{
+    BERLIN::SpecImpl as BerlinSpec, BYZANTINE::SpecImpl as ByzantineSpec,
+    FRONTIER::SpecImpl as FrontierSpec, ISTANBUL::SpecImpl as IstanbulSpec,
+    LATEST::SpecImpl as LatestSpec, LONDON::SpecImpl as LondonSpec,
+};

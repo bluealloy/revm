@@ -1,9 +1,7 @@
-use crate::{alloc::vec::Vec, SpecId::*};
 use crate::{
-    gas, interpreter::Interpreter, return_ok, return_revert, CallContext, CallScheme, CreateScheme,
-    Host, Return, Spec, Transfer,
+    alloc::vec::Vec, gas, interpreter::Interpreter, return_ok, return_revert, CallContext,
+    CallInputs, CallScheme, CreateInputs, CreateScheme, Host, Return, Spec, SpecId::*, Transfer,
 };
-use crate::{CallInputs, CreateInputs};
 use bytes::Bytes;
 use core::cmp::min;
 use primitive_types::{H160, H256, U256};
