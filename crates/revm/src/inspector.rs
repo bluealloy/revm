@@ -37,6 +37,8 @@ pub trait Inspector<DB: Database> {
     }
 
     /// Called after `step` when the instruction has been executed.
+    ///
+    /// Returning anything other than [Return::Continue] alters the execution of the interpreter.
     fn step_end(
         &mut self,
         _interp: &mut Interpreter,
@@ -60,15 +62,19 @@ pub trait Inspector<DB: Database> {
     }
 
     /// Called when a call to a contract has concluded.
+    ///
+    /// Returning anything other than the values passed to this function (`(ret, remaining_gas,
+    /// out)`) will alter the result of the call.
     fn call_end(
         &mut self,
         _data: &mut EVMData<'_, DB>,
         _inputs: &CallInputs,
-        _remaining_gas: Gas,
-        _ret: Return,
-        _out: &Bytes,
+        remaining_gas: Gas,
+        ret: Return,
+        out: Bytes,
         _is_static: bool,
-    ) {
+    ) -> (Return, Gas, Bytes) {
+        (ret, remaining_gas, out)
     }
 
     /// Called when a contract is about to be created.

@@ -607,9 +607,10 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         let (ret, gas, out) = self.call_inner::<SPEC>(inputs);
         if INSPECT {
             self.inspector
-                .call_end(&mut self.data, inputs, gas, ret, &out, SPEC::IS_STATIC_CALL);
+                .call_end(&mut self.data, inputs, gas, ret, out, SPEC::IS_STATIC_CALL)
+        } else {
+            (ret, gas, out)
         }
-        (ret, gas, out)
     }
 }
 
