@@ -6,10 +6,10 @@ use auto_impl::auto_impl;
 
 #[auto_impl(&mut, Box)]
 pub trait Inspector<DB: Database> {
-    fn initialize(&mut self, _data: &mut EVMData<'_, DB>) {}
-
-    /// before interp get initialized this function is called. If returning something other them Return::Continue
-    /// we are skipping execution of interp.
+    /// Called Before the interpreter is initialized.
+    ///
+    /// If anything other than [Return::Continue] is returned then execution of the interpreter is
+    /// skipped.
     fn initialize_interp(
         &mut self,
         _interp: &mut Interpreter,
@@ -19,8 +19,14 @@ pub trait Inspector<DB: Database> {
         Return::Continue
     }
 
-    /// get opcode by calling `interp.contract.opcode(interp.program_counter())`.
-    /// all other information can be obtained from interp.
+    /// Called on each step of the interpreter.
+    ///
+    /// Information about the current execution, including the memory, stack and more is available
+    /// on `interp` (see [Interpreter]).
+    ///
+    /// # Example
+    ///
+    /// To get the current opcode, use `interp.contract.code[interp.program_counter()]`.
     fn step(
         &mut self,
         _interp: &mut Interpreter,
@@ -30,7 +36,7 @@ pub trait Inspector<DB: Database> {
         Return::Continue
     }
 
-    /// Called after `step` when instruction is executed.
+    /// Called after `step` when the instruction has been executed.
     fn step_end(
         &mut self,
         _interp: &mut Interpreter,
@@ -41,10 +47,9 @@ pub trait Inspector<DB: Database> {
         Return::Continue
     }
 
-    // TODO introduce some struct
-    /// Called inside call_inner with `Return` you can dictate if you want to continue execution of
-    /// this call `Return::Continue` or you want to override that and return from call.
-    #[allow(clippy::too_many_arguments)]
+    /// Called whenever a call to a contract is about to start.
+    ///
+    /// Returning anything other than [Return::Continue] overrides the result of the call.
     fn call(
         &mut self,
         _data: &mut EVMData<'_, DB>,
@@ -54,7 +59,7 @@ pub trait Inspector<DB: Database> {
         (Return::Continue, Gas::new(0), Bytes::new())
     }
 
-    #[allow(clippy::too_many_arguments)]
+    /// Called when a call to a contract has concluded.
     fn call_end(
         &mut self,
         _data: &mut EVMData<'_, DB>,
@@ -66,6 +71,9 @@ pub trait Inspector<DB: Database> {
     ) {
     }
 
+    /// Called when a contract is about to be created.
+    ///
+    /// Returning anything other than [Return::Continue] overrides the result of the creation.
     fn create(
         &mut self,
         _data: &mut EVMData<'_, DB>,
@@ -74,7 +82,7 @@ pub trait Inspector<DB: Database> {
         (Return::Continue, None, Gas::new(0), Bytes::default())
     }
 
-    #[allow(clippy::too_many_arguments)]
+    /// Called when a contract has been created.
     fn create_end(
         &mut self,
         _data: &mut EVMData<'_, DB>,
@@ -86,9 +94,10 @@ pub trait Inspector<DB: Database> {
     ) {
     }
 
+    /// Called when a contract has been self-destructed.
     fn selfdestruct(&mut self) {}
 
-    /// If needed you can override some of the spec configurations when running with inspector
+    /// Override some of the spec.
     fn override_spec(&self) -> &OverrideSpec {
         &OVERRIDE_SPEC_DEFAULT
     }
