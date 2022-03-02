@@ -99,17 +99,6 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         (Return::Continue, Gas::new(0), Bytes::new())
     }
 
-    fn call_end(
-        &mut self,
-        _data: &mut EVMData<'_, DB>,
-        _inputs: &CallInputs,
-        _remaining_gas: Gas,
-        _ret: Return,
-        _out: &Bytes,
-        _is_static: bool,
-    ) {
-    }
-
     fn create(
         &mut self,
         _data: &mut EVMData<'_, DB>,
