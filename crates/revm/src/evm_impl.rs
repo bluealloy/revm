@@ -422,9 +422,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
         if INSPECT {
             self.inspector
-                .create_end(&mut self.data, inputs, ret, address, gas, &out);
+                .create_end(&mut self.data, inputs, ret, address, gas, out)
+        } else {
+            (ret, address, gas, out)
         }
-        (ret, address, gas, out)
     }
 
     fn call_inner<SPEC: Spec>(&mut self, inputs: &CallInputs) -> (Return, Gas, Bytes) {

@@ -89,15 +89,19 @@ pub trait Inspector<DB: Database> {
     }
 
     /// Called when a contract has been created.
+    ///
+    /// Returning anything other than the values passed to this function (`(ret, remaining_gas,
+    /// address, out)`) will alter the result of the create.
     fn create_end(
         &mut self,
         _data: &mut EVMData<'_, DB>,
         _inputs: &CreateInputs,
-        _ret: Return,
-        _address: Option<H160>,
-        _remaining_gas: Gas,
-        _out: &Bytes,
-    ) {
+        ret: Return,
+        address: Option<H160>,
+        remaining_gas: Gas,
+        out: Bytes,
+    ) -> (Return, Option<H160>, Gas, Bytes) {
+        (ret, address, remaining_gas, out)
     }
 
     /// Called when a contract has been self-destructed.
