@@ -106,7 +106,7 @@ impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
 impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
     fn block_hash(&mut self, number: U256) -> H256 {
         match self.block_hashes.entry(number) {
-            Entry::Occupied(entry) => entry.get().clone(),
+            Entry::Occupied(entry) => *entry.get(),
             Entry::Vacant(entry) => {
                 let mut hash = self.db.block_hash(number);
                 if hash == H256::zero() {
@@ -116,7 +116,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
                     hash = H256::from_slice(&Keccak256::digest(&buffer));
                     entry.insert(hash);
                 } else {
-                    entry.insert(hash.clone());
+                    entry.insert(hash);
                 }
                 hash
             }
