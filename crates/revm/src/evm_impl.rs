@@ -293,21 +293,30 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         &mut self,
         inputs: &CreateInputs,
     ) -> (Return, Option<H160>, Gas, Bytes) {
+        // Call inspector
+        if INSPECT {
+            let (ret, address, gas, out) = self.inspector.create(&mut self.data, inputs);
+            if ret != Return::Continue {
+                return (ret, address, gas, out);
+            }
+        }
+
         let gas = Gas::new(inputs.gas_limit);
         self.load_account(inputs.caller);
 
-        // check depth of calls
+        // Check depth of calls
         if self.data.subroutine.depth() > interpreter::CALL_STACK_LIMIT {
             return (Return::CallTooDeep, None, gas, Bytes::new());
         }
-        // check balance of caller and value. Do this before increasing nonce
+        // Check balance of caller and value. Do this before increasing nonce
         if self.balance(inputs.caller).0 < inputs.value {
             return (Return::OutOfFund, None, gas, Bytes::new());
         }
 
-        // inc nonce of caller
+        // Increase nonce of caller
         let old_nonce = self.data.subroutine.inc_nonce(inputs.caller);
-        // create address
+
+        // Create address
         let code_hash = H256::from_slice(Keccak256::digest(&inputs.init_code).as_slice());
         let created_address = match inputs.scheme {
             CreateScheme::Create => create_address(inputs.caller, old_nonce),
@@ -315,13 +324,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         };
         let ret = Some(created_address);
 
-        // load account so that it will be hot
+        // Load account so that it will be hot
         self.load_account(created_address);
 
-        // enter into subroutine
+        // Enter subroutine
         let checkpoint = self.data.subroutine.create_checkpoint();
 
-        // create contract account and check for collision
+        // Create contract account and check for collision
         if !self.data.subroutine.new_contract_acc(
             created_address,
             self.precompiles.contains(&created_address),
@@ -331,7 +340,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             return (Return::CreateCollision, ret, gas, Bytes::new());
         }
 
-        // transfer value to contract address
+        // Transfer value to contract address
         if let Err(e) = self.data.subroutine.transfer(
             inputs.caller,
             created_address,
@@ -341,11 +350,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             self.data.subroutine.checkpoint_revert(checkpoint);
             return (e, ret, gas, Bytes::new());
         }
-        // inc nonce of contract
+
+        // Increase nonce of the contract
         if SPEC::enabled(ISTANBUL) {
             self.data.subroutine.inc_nonce(created_address);
         }
-        // create new interp and execute init function
+
+        // Create new interpreter and execute initcode
         let contract = Contract::new::<SPEC>(
             Bytes::new(),
             inputs.init_code.clone(),
@@ -360,8 +371,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 .initialize_interp(&mut interp, &mut self.data, false); // TODO fix is_static
         }
         let exit_reason = interp.run::<Self, SPEC>(self);
+
         // Host error if present on execution\
-        let ret = match exit_reason {
+        let (ret, address, gas, out) = match exit_reason {
             return_ok!() => {
                 let b = Bytes::new();
                 // if ok, check contract creation limit and calculate gas deduction on output len.
@@ -407,31 +419,47 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 (exit_reason, ret, interp.gas, interp.return_value())
             }
         };
-        ret
+
+        if INSPECT {
+            self.inspector
+                .create_end(&mut self.data, inputs, ret, address, gas, out)
+        } else {
+            (ret, address, gas, out)
+        }
     }
 
-    #[allow(clippy::too_many_arguments)]
     fn call_inner<SPEC: Spec>(&mut self, inputs: &CallInputs) -> (Return, Gas, Bytes) {
+        // Call the inspector
+        if INSPECT {
+            let (ret, gas, out) = self
+                .inspector
+                .call(&mut self.data, inputs, SPEC::IS_STATIC_CALL);
+            if ret != Return::Continue {
+                return (ret, gas, out);
+            }
+        }
+
         let mut gas = Gas::new(inputs.gas_limit);
         // Load account and get code. Account is now hot.
         let (code, _) = self.code(inputs.contract);
 
-        // check depth
+        // Check depth
         if self.data.subroutine.depth() > interpreter::CALL_STACK_LIMIT {
             return (Return::CallTooDeep, gas, Bytes::new());
         }
 
         // Create subroutine checkpoint
         let checkpoint = self.data.subroutine.create_checkpoint();
-        // touch address. For "EIP-158 State Clear" this will erase empty accounts.
+
+        // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
         if inputs.transfer.value.is_zero() {
             self.load_account(inputs.context.address);
             self.data
                 .subroutine
-                .balance_add(inputs.context.address, U256::zero()); // touch the acc
+                .balance_add(inputs.context.address, U256::zero());
         }
 
-        // transfer value from caller to called account;
+        // Transfer value from caller to called account
         match self.data.subroutine.transfer(
             inputs.transfer.source,
             inputs.transfer.target,
@@ -445,8 +473,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             Ok((_source_is_cold, _target_is_cold)) => {}
         }
 
-        // call precompiles
-        if let Some(precompile) = self.precompiles.get(&inputs.contract) {
+        // Call precompiles
+        let (ret, gas, out) = if let Some(precompile) = self.precompiles.get(&inputs.contract) {
             let out = match precompile {
                 Precompile::Standard(fun) => fun(inputs.input.as_ref(), inputs.gas_limit),
                 Precompile::Custom(fun) => fun(inputs.input.as_ref(), inputs.gas_limit),
@@ -474,7 +502,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 }
             }
         } else {
-            // create interp and execute subcall
+            // Create interpreter and execute subcall
             let contract =
                 Contract::new_with_context::<SPEC>(inputs.input.clone(), code, &inputs.context);
             let mut interp =
@@ -491,6 +519,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             }
 
             (exit_reason, interp.gas, interp.return_value())
+        };
+
+        if INSPECT {
+            self.inspector
+                .call_end(&mut self.data, inputs, gas, ret, out, SPEC::IS_STATIC_CALL)
+        } else {
+            (ret, gas, out)
         }
     }
 }
@@ -581,35 +616,11 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     }
 
     fn create<SPEC: Spec>(&mut self, inputs: &CreateInputs) -> (Return, Option<H160>, Gas, Bytes) {
-        if INSPECT {
-            let (ret, address, gas, out) = self.inspector.create(&mut self.data, inputs);
-            if ret != Return::Continue {
-                return (ret, address, gas, out);
-            }
-        }
-        let (ret, address, gas, out) = self.create_inner::<SPEC>(inputs);
-        if INSPECT {
-            self.inspector
-                .create_end(&mut self.data, inputs, ret, address, gas, &out);
-        }
-        (ret, address, gas, out)
+        self.create_inner::<SPEC>(inputs)
     }
 
     fn call<SPEC: Spec>(&mut self, inputs: &CallInputs) -> (Return, Gas, Bytes) {
-        if INSPECT {
-            let (ret, gas, out) = self
-                .inspector
-                .call(&mut self.data, inputs, SPEC::IS_STATIC_CALL);
-            if ret != Return::Continue {
-                return (ret, gas, out);
-            }
-        }
-        let (ret, gas, out) = self.call_inner::<SPEC>(inputs);
-        if INSPECT {
-            self.inspector
-                .call_end(&mut self.data, inputs, gas, ret, &out, SPEC::IS_STATIC_CALL);
-        }
-        (ret, gas, out)
+        self.call_inner::<SPEC>(inputs)
     }
 }
 

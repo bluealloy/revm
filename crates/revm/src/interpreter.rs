@@ -8,9 +8,8 @@ pub use stack::Stack;
 
 use crate::{
     instructions::{eval, Return},
-    Gas, USE_GAS,
+    Gas, Host, Spec, USE_GAS,
 };
-use crate::{Host, Spec};
 use bytes::Bytes;
 use core::ops::Range;
 

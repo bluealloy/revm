@@ -221,14 +221,16 @@ impl<DB: Database> Inspector<DB> for Controller {
         &mut self,
         _data: &mut EVMData<'_, DB>,
         _inputs: &CallInputs,
-        _remaining_gas: Gas,
-        _ret: Return,
-        _out: &Bytes,
+        remaining_gas: Gas,
+        ret: Return,
+        out: Bytes,
         _is_static: bool,
-    ) {
+    ) -> (Return, Gas, Bytes) {
         if let StateMachine::StepOut = self.state_interp {
             self.state_interp = StateMachine::TriggerStep
         }
+
+        (ret, remaining_gas, out)
     }
 
     fn create(
@@ -243,14 +245,16 @@ impl<DB: Database> Inspector<DB> for Controller {
         &mut self,
         _data: &mut EVMData<'_, DB>,
         _inputs: &CreateInputs,
-        _ret: Return,
-        _address: Option<H160>,
-        _remaining_gas: Gas,
-        _out: &Bytes,
-    ) {
+        ret: Return,
+        address: Option<H160>,
+        remaining_gas: Gas,
+        out: Bytes,
+    ) -> (Return, Option<H160>, Gas, Bytes) {
         if let StateMachine::StepOut = self.state_interp {
             self.state_interp = StateMachine::TriggerStep
         }
+
+        (ret, address, remaining_gas, out)
     }
 
     fn selfdestruct(&mut self) {}
