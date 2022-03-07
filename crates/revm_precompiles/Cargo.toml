@@ -15,7 +15,7 @@ k256 = { version = "0.10.1", default-features = false, features = ["ecdsa", "kec
 num = { version = "0.4.0", default-features = false, features = ["alloc"] }
 primitive-types = { version = "0.11", default-features = false, features = ["rlp"] }
 ripemd = { version = "0.1", default-features = false }
-secp256k1 = { version = "0.21.2", default-features = false, features = ["alloc", "recovery"], optional = true }
+secp256k1 = { version = "0.21.3", default-features = false, features = ["alloc", "recovery"], optional = true }
 sha2 = { version = "0.10.2", default-features = false }
 sha3 = { version = "0.10.1", default-features = false }
 
