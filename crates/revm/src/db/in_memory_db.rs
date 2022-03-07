@@ -28,6 +28,7 @@ pub struct CacheDB<ExtDB: DatabaseRef> {
     storage: Map<H160, Map<U256, U256>>,
     contracts: Map<H256, Bytes>,
     logs: Vec<Log>,
+    block_hashes: Map<U256, H256>,
     db: ExtDB,
 }
 
@@ -41,6 +42,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
             storage: Map::new(),
             contracts,
             logs: Vec::default(),
+            block_hashes: Map::new(),
             db,
         }
     }
@@ -103,7 +105,22 @@ impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
 
 impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
     fn block_hash(&mut self, number: U256) -> H256 {
-        self.db.block_hash(number)
+        match self.block_hashes.entry(number) {
+            Entry::Occupied(entry) => entry.get().clone(),
+            Entry::Vacant(entry) => {
+                let mut hash = self.db.block_hash(number);
+                if hash == H256::zero() {
+                    // No block hash, so we compute our own based on the block number
+                    let mut buffer: [u8; 4 * 8] = [0; 4 * 8];
+                    number.to_big_endian(&mut buffer);
+                    hash = H256::from_slice(&Keccak256::digest(&buffer));
+                    entry.insert(hash);
+                } else {
+                    entry.insert(hash.clone());
+                }
+                hash
+            }
+        }
     }
 
     fn basic(&mut self, address: H160) -> AccountInfo {
@@ -155,7 +172,19 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
 
 impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
     fn block_hash(&self, number: U256) -> H256 {
-        self.db.block_hash(number)
+        match self.block_hashes.get(&number) {
+            Some(entry) => *entry,
+            None => {
+                let mut hash = self.db.block_hash(number);
+                if hash == H256::zero() {
+                    // No block hash, so we compute our own based on the block number
+                    let mut buffer: [u8; 4 * 8] = [0; 4 * 8];
+                    number.to_big_endian(&mut buffer);
+                    hash = H256::from_slice(&Keccak256::digest(&buffer));
+                }
+                hash
+            }
+        }
     }
 
     fn basic(&self, address: H160) -> AccountInfo {
