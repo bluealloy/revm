@@ -297,7 +297,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         if INSPECT {
             let (ret, address, gas, out) = self.inspector.create(&mut self.data, inputs);
             if ret != Return::Continue {
-                return (ret, address, gas, out);
+                return self
+                    .inspector
+                    .create_end(&mut self.data, inputs, ret, address, gas, out);
             }
         }
 
@@ -435,7 +437,14 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 .inspector
                 .call(&mut self.data, inputs, SPEC::IS_STATIC_CALL);
             if ret != Return::Continue {
-                return (ret, gas, out);
+                return self.inspector.call_end(
+                    &mut self.data,
+                    inputs,
+                    gas,
+                    ret,
+                    out,
+                    SPEC::IS_STATIC_CALL,
+                );
             }
         }
 
