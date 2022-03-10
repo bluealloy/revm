@@ -108,16 +108,8 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
         match self.block_hashes.entry(number) {
             Entry::Occupied(entry) => *entry.get(),
             Entry::Vacant(entry) => {
-                let mut hash = self.db.block_hash(number);
-                if hash == H256::zero() {
-                    // No block hash, so we compute our own based on the block number
-                    let mut buffer: [u8; 4 * 8] = [0; 4 * 8];
-                    number.to_big_endian(&mut buffer);
-                    hash = H256::from_slice(&Keccak256::digest(&buffer));
-                    entry.insert(hash);
-                } else {
-                    entry.insert(hash);
-                }
+                let hash = self.db.block_hash(number);
+                entry.insert(hash);
                 hash
             }
         }
@@ -174,16 +166,7 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
     fn block_hash(&self, number: U256) -> H256 {
         match self.block_hashes.get(&number) {
             Some(entry) => *entry,
-            None => {
-                let mut hash = self.db.block_hash(number);
-                if hash == H256::zero() {
-                    // No block hash, so we compute our own based on the block number
-                    let mut buffer: [u8; 4 * 8] = [0; 4 * 8];
-                    number.to_big_endian(&mut buffer);
-                    hash = H256::from_slice(&Keccak256::digest(&buffer));
-                }
-                hash
-            }
+            None => self.db.block_hash(number),
         }
     }
 
@@ -231,8 +214,10 @@ impl DatabaseRef for EmptyDB {
     }
 
     // History related
-    fn block_hash(&self, _number: U256) -> H256 {
-        H256::default()
+    fn block_hash(&self, number: U256) -> H256 {
+        let mut buffer: [u8; 4 * 8] = [0; 4 * 8];
+        number.to_big_endian(&mut buffer);
+        H256::from_slice(&Keccak256::digest(&buffer))
     }
 }
 
