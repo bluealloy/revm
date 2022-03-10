@@ -1791,7 +1791,7 @@ dependencies = [
  "num",
  "primitive-types 0.11.1",
  "ripemd",
- "secp256k1",
+ "secp256k1 0.22.0",
  "sha2 0.10.2",
  "sha3 0.10.1",
  "substrate-bn",
@@ -1929,7 +1929,16 @@ version = "0.21.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c42e6f1735c5f00f51e43e28d6634141f2bcad10931b2609ddd74a86d751260"
 dependencies = [
- "secp256k1-sys",
+ "secp256k1-sys 0.4.2",
+]
+
+[[package]]
+name = "secp256k1"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "613d0261dbb8c778d6ce1b410490ca09fa3d1f5ee260f42eef9a9f0cf05ce1d4"
+dependencies = [
+ "secp256k1-sys 0.5.0",
 ]
 
 [[package]]
@@ -1937,6 +1946,15 @@ name = "secp256k1-sys"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "957da2573cde917463ece3570eab4a0b3f19de6f1646cde62e6fd3868f566036"
+dependencies = [
+ "cc",
+]
+
+[[package]]
+name = "secp256k1-sys"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "07b5b9d7322572e1f3aeed208668ce87789b3645dbb73082c5ce99a004103a35"
 dependencies = [
  "cc",
 ]
@@ -2717,7 +2735,7 @@ dependencies = [
  "pin-project",
  "reqwest",
  "rlp",
- "secp256k1",
+ "secp256k1 0.21.3",
  "serde",
  "serde_json",
  "soketto",
