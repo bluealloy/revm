@@ -1,6 +1,7 @@
 use crate::SpecId;
 
 use crate::gas;
+use crate::gas::VERYLOW;
 
 pub struct OpCode(u8);
 
@@ -156,15 +157,6 @@ impl OpCode {
         OPCODE_JUMPMAP[opcode as usize].map(|_| OpCode(opcode))
     }
 
-    #[inline(always)]
-    pub fn is_push(opcode: u8) -> Option<u8> {
-        if (0x60..=0x7f).contains(&opcode) {
-            Some(opcode - 0x60 + 1)
-        } else {
-            None
-        }
-    }
-
     pub const fn as_str(&self) -> &'static str {
         if let Some(str) = OPCODE_JUMPMAP[self.0 as usize] {
             str
@@ -182,6 +174,7 @@ impl OpCode {
 pub struct OpInfo {
     pub gas: u64,
     pub gas_block_end: bool,
+    pub is_push: bool,
 }
 
 impl OpInfo {
@@ -189,24 +182,35 @@ impl OpInfo {
         Self {
             gas: 0,
             gas_block_end: true,
+            is_push: false,
         }
     }
     pub const fn gas_block_end(gas: u64) -> Self {
         Self {
             gas,
             gas_block_end: true,
+            is_push: false,
         }
     }
     pub const fn dynamic_gas() -> Self {
         Self {
             gas: 0,
             gas_block_end: false,
+            is_push: false,
         }
     }
     pub const fn gas(gas: u64) -> Self {
         Self {
             gas,
             gas_block_end: false,
+            is_push: false,
+        }
+    }
+    pub const fn push_opcode() -> Self {
+        Self {
+            gas: VERYLOW,
+            gas_block_end: false,
+            is_push: true,
         }
     }
 }
@@ -346,38 +350,38 @@ macro_rules! gas_opcodee {
             /* 0x5d */ OpInfo::none(),
             /* 0x5e */ OpInfo::none(),
             /* 0x5f */ OpInfo::none(),
-            /* 0x60  PUSH1 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x61  PUSH2 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x62  PUSH3 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x63  PUSH4 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x64  PUSH5 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x65  PUSH6 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x66  PUSH7 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x67  PUSH8 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x68  PUSH9 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x69  PUSH10 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x6a  PUSH11 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x6b  PUSH12 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x6c  PUSH13 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x6d  PUSH14 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x6e  PUSH15 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x6f  PUSH16 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x70  PUSH17 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x71  PUSH18 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x72  PUSH19 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x73  PUSH20 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x74  PUSH21 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x75  PUSH22 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x76  PUSH23 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x77  PUSH24 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x78  PUSH25 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x79  PUSH26 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x7a  PUSH27 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x7b  PUSH28 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x7c  PUSH29 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x7d  PUSH30 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x7e  PUSH31 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x7f  PUSH32 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x60  PUSH1 */ OpInfo::push_opcode(),
+            /* 0x61  PUSH2 */ OpInfo::push_opcode(),
+            /* 0x62  PUSH3 */ OpInfo::push_opcode(),
+            /* 0x63  PUSH4 */ OpInfo::push_opcode(),
+            /* 0x64  PUSH5 */ OpInfo::push_opcode(),
+            /* 0x65  PUSH6 */ OpInfo::push_opcode(),
+            /* 0x66  PUSH7 */ OpInfo::push_opcode(),
+            /* 0x67  PUSH8 */ OpInfo::push_opcode(),
+            /* 0x68  PUSH9 */ OpInfo::push_opcode(),
+            /* 0x69  PUSH10 */ OpInfo::push_opcode(),
+            /* 0x6a  PUSH11 */ OpInfo::push_opcode(),
+            /* 0x6b  PUSH12 */ OpInfo::push_opcode(),
+            /* 0x6c  PUSH13 */ OpInfo::push_opcode(),
+            /* 0x6d  PUSH14 */ OpInfo::push_opcode(),
+            /* 0x6e  PUSH15 */ OpInfo::push_opcode(),
+            /* 0x6f  PUSH16 */ OpInfo::push_opcode(),
+            /* 0x70  PUSH17 */ OpInfo::push_opcode(),
+            /* 0x71  PUSH18 */ OpInfo::push_opcode(),
+            /* 0x72  PUSH19 */ OpInfo::push_opcode(),
+            /* 0x73  PUSH20 */ OpInfo::push_opcode(),
+            /* 0x74  PUSH21 */ OpInfo::push_opcode(),
+            /* 0x75  PUSH22 */ OpInfo::push_opcode(),
+            /* 0x76  PUSH23 */ OpInfo::push_opcode(),
+            /* 0x77  PUSH24 */ OpInfo::push_opcode(),
+            /* 0x78  PUSH25 */ OpInfo::push_opcode(),
+            /* 0x79  PUSH26 */ OpInfo::push_opcode(),
+            /* 0x7a  PUSH27 */ OpInfo::push_opcode(),
+            /* 0x7b  PUSH28 */ OpInfo::push_opcode(),
+            /* 0x7c  PUSH29 */ OpInfo::push_opcode(),
+            /* 0x7d  PUSH30 */ OpInfo::push_opcode(),
+            /* 0x7e  PUSH31 */ OpInfo::push_opcode(),
+            /* 0x7f  PUSH32 */ OpInfo::push_opcode(),
             /* 0x80  DUP1 */ OpInfo::gas(gas::VERYLOW),
             /* 0x81  DUP2 */ OpInfo::gas(gas::VERYLOW),
             /* 0x82  DUP3 */ OpInfo::gas(gas::VERYLOW),
