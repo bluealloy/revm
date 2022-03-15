@@ -2,7 +2,7 @@ use crate::{alloc::vec::Vec, opcode::spec_opcode_gas, CallContext, Spec};
 use bytes::Bytes;
 use primitive_types::{H160, U256};
 
-use crate::instructions::opcode::{self, OpCode};
+use crate::instructions::opcode;
 
 pub struct Contract {
     /// Contracts data
@@ -111,8 +111,8 @@ impl Contract {
             }
             if opcode == opcode::JUMPDEST as u8 {
                 jumps[i].analazis = Analazis::JumpDest;
-            } else if let Some(v) = OpCode::is_push(opcode) {
-                i += v as usize;
+            } else if info.is_push {
+                i += (opcode - opcode::PUSH1 + 1) as usize;
             }
             i += 1;
         }
