@@ -1,5 +1,5 @@
-use crate::SpecId;
 use crate::gas;
+use crate::SpecId;
 
 pub struct OpCode(u8);
 
