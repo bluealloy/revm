@@ -1,7 +1,5 @@
 use crate::SpecId;
-
 use crate::gas;
-use crate::gas::VERYLOW;
 
 pub struct OpCode(u8);
 
@@ -208,7 +206,7 @@ impl OpInfo {
     }
     pub const fn push_opcode() -> Self {
         Self {
-            gas: VERYLOW,
+            gas: gas::VERYLOW,
             gas_block_end: false,
             is_push: true,
         }
