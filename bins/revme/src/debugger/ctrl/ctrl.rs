@@ -211,7 +211,7 @@ impl<DB: Database> Inspector<DB> for Controller {
     fn call(
         &mut self,
         _data: &mut revm::EVMData<'_, DB>,
-        _inputs: &CallInputs,
+        _inputs: &mut CallInputs,
         _is_static: bool,
     ) -> (Return, Gas, Bytes) {
         (Return::Continue, Gas::new(0), Bytes::new())
@@ -236,7 +236,7 @@ impl<DB: Database> Inspector<DB> for Controller {
     fn create(
         &mut self,
         _data: &mut revm::EVMData<'_, DB>,
-        _inputs: &CreateInputs,
+        _inputs: &mut CreateInputs,
     ) -> (Return, Option<H160>, Gas, Bytes) {
         (Return::Continue, None, Gas::new(0), Bytes::new())
     }

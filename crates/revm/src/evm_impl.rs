@@ -117,7 +117,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
                     address,
                     apparent_value: value,
                 };
-                let call_input = CallInputs {
+                let mut call_input = CallInputs {
                     contract: address,
                     transfer: Transfer {
                         source: caller,
@@ -128,18 +128,18 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
                     gas_limit,
                     context,
                 };
-                let (exit, gas, bytes) = self.call_inner::<GSPEC>(&call_input);
+                let (exit, gas, bytes) = self.call_inner::<GSPEC>(&mut call_input);
                 (exit, gas, TransactOut::Call(bytes))
             }
             TransactTo::Create(scheme) => {
-                let create_input = CreateInputs {
+                let mut create_input = CreateInputs {
                     caller,
                     scheme,
                     value,
                     init_code: data,
                     gas_limit,
                 };
-                let (exit, address, ret_gas, bytes) = self.create_inner::<GSPEC>(&create_input);
+                let (exit, address, ret_gas, bytes) = self.create_inner::<GSPEC>(&mut create_input);
                 (exit, ret_gas, TransactOut::Create(bytes, address))
             }
         };
@@ -292,7 +292,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
     fn create_inner<SPEC: Spec>(
         &mut self,
-        inputs: &CreateInputs,
+        inputs: &mut CreateInputs,
     ) -> (Return, Option<H160>, Gas, Bytes) {
         // Call inspector
         if INSPECT {
@@ -431,7 +431,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
     }
 
-    fn call_inner<SPEC: Spec>(&mut self, inputs: &CallInputs) -> (Return, Gas, Bytes) {
+    fn call_inner<SPEC: Spec>(&mut self, inputs: &mut CallInputs) -> (Return, Gas, Bytes) {
         // Call the inspector
         if INSPECT {
             let (ret, gas, out) = self
@@ -625,11 +625,14 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .selfdestruct(address, target, self.data.db)
     }
 
-    fn create<SPEC: Spec>(&mut self, inputs: &CreateInputs) -> (Return, Option<H160>, Gas, Bytes) {
+    fn create<SPEC: Spec>(
+        &mut self,
+        inputs: &mut CreateInputs,
+    ) -> (Return, Option<H160>, Gas, Bytes) {
         self.create_inner::<SPEC>(inputs)
     }
 
-    fn call<SPEC: Spec>(&mut self, inputs: &CallInputs) -> (Return, Gas, Bytes) {
+    fn call<SPEC: Spec>(&mut self, inputs: &mut CallInputs) -> (Return, Gas, Bytes) {
         self.call_inner::<SPEC>(inputs)
     }
 }
@@ -686,7 +689,10 @@ pub trait Host {
     /// Mark an address to be deleted, with funds transferred to target.
     fn selfdestruct(&mut self, address: H160, target: H160) -> SelfDestructResult;
     /// Invoke a create operation.
-    fn create<SPEC: Spec>(&mut self, inputs: &CreateInputs) -> (Return, Option<H160>, Gas, Bytes);
+    fn create<SPEC: Spec>(
+        &mut self,
+        inputs: &mut CreateInputs,
+    ) -> (Return, Option<H160>, Gas, Bytes);
     /// Invoke a call operation.
-    fn call<SPEC: Spec>(&mut self, input: &CallInputs) -> (Return, Gas, Bytes);
+    fn call<SPEC: Spec>(&mut self, input: &mut CallInputs) -> (Return, Gas, Bytes);
 }
