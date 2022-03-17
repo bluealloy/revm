@@ -207,7 +207,7 @@ pub fn create<H: Host, SPEC: Spec>(
     let gas_limit = try_or_fail!(gas_call_l64_after::<SPEC>(interp));
     gas!(interp, gas_limit);
 
-    let create_input = CreateInputs {
+    let mut create_input = CreateInputs {
         caller: interp.contract.address,
         scheme,
         value,
@@ -215,7 +215,7 @@ pub fn create<H: Host, SPEC: Spec>(
         gas_limit,
     };
 
-    let (reason, address, gas, return_data) = host.create::<SPEC>(&create_input);
+    let (reason, address, gas, return_data) = host.create::<SPEC>(&mut create_input);
     interp.return_data_buffer = return_data;
     let created_address: H256 = if matches!(reason, return_ok!()) {
         address.map(|a| a.into()).unwrap_or_default()
@@ -352,7 +352,7 @@ pub fn call<H: Host, SPEC: Spec>(
     }
     let is_static = matches!(scheme, CallScheme::StaticCall);
 
-    let call_input = CallInputs {
+    let mut call_input = CallInputs {
         contract: to,
         transfer,
         input,
@@ -361,9 +361,9 @@ pub fn call<H: Host, SPEC: Spec>(
     };
     // CALL CONTRACT, with static or ordinary spec.
     let (reason, gas, return_data) = if is_static {
-        host.call::<SPEC::STATIC>(&call_input)
+        host.call::<SPEC::STATIC>(&mut call_input)
     } else {
-        host.call::<SPEC>(&call_input)
+        host.call::<SPEC>(&mut call_input)
     };
     interp.return_data_buffer = return_data;
 

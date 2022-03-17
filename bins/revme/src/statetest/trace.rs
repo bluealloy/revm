@@ -85,7 +85,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
     fn call(
         &mut self,
         _data: &mut EVMData<'_, DB>,
-        inputs: &CallInputs,
+        inputs: &mut CallInputs,
         is_static: bool,
     ) -> (Return, Gas, Bytes) {
         println!(
@@ -102,7 +102,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
     fn create(
         &mut self,
         _data: &mut EVMData<'_, DB>,
-        inputs: &CreateInputs,
+        inputs: &mut CreateInputs,
     ) -> (Return, Option<H160>, Gas, Bytes) {
         println!(
             "CREATE CALL: caller:{:?}, scheme:{:?}, value:{:?}, init_code:{:?}, gas:{:?}",

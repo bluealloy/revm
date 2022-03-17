@@ -55,7 +55,7 @@ pub trait Inspector<DB: Database> {
     fn call(
         &mut self,
         _data: &mut EVMData<'_, DB>,
-        _inputs: &CallInputs,
+        _inputs: &mut CallInputs,
         _is_static: bool,
     ) -> (Return, Gas, Bytes) {
         (Return::Continue, Gas::new(0), Bytes::new())
@@ -83,7 +83,7 @@ pub trait Inspector<DB: Database> {
     fn create(
         &mut self,
         _data: &mut EVMData<'_, DB>,
-        _inputs: &CreateInputs,
+        _inputs: &mut CreateInputs,
     ) -> (Return, Option<H160>, Gas, Bytes) {
         (Return::Continue, None, Gas::new(0), Bytes::default())
     }
