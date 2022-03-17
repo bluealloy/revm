@@ -53,7 +53,7 @@ impl Interpreter {
         &self.contract
     }
 
-    pub fn gas(&mut self) -> &Gas {
+    pub fn gas(&self) -> &Gas {
         &self.gas
     }
 
