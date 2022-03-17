@@ -147,10 +147,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
         if crate::USE_GAS {
             gas.reimburse_unspend(&exit_reason, ret_gas);
         }
-        match self.finalize::<GSPEC>(caller, &gas) {
-            Err(e) => (e, out, gas.spend(), Map::new(), Vec::new()),
-            Ok((state, logs)) => (exit_reason, out, gas.spend(), state, logs),
-        }
+
+        let (state, logs, gas_used) = self.finalize::<GSPEC>(caller, &gas);
+        (exit_reason, out, gas_used, state, logs)
     }
 }
 
@@ -192,9 +191,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         &mut self,
         caller: H160,
         gas: &Gas,
-    ) -> Result<(Map<H160, Account>, Vec<Log>), Return> {
+    ) -> (Map<H160, Account>, Vec<Log>, u64) {
         let coinbase = self.data.env.block.coinbase;
-        if crate::USE_GAS {
+        let gas_used = if crate::USE_GAS {
             let effective_gas_price = self.data.env.effective_gas_price();
             let basefee = self.data.env.block.basefee;
             let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 }; // EIP-3529: Reduction in refunds
@@ -213,11 +212,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             self.data
                 .subroutine
                 .balance_add(coinbase, coinbase_gas_price * (gas.spend() - gas_refunded));
+            gas.spend() - gas_refunded
         } else {
             // touch coinbase
             self.data.subroutine.load_account(coinbase, self.data.db);
             self.data.subroutine.balance_add(coinbase, U256::zero());
-        }
+            0
+        };
         let (mut new_state, logs) = self.data.subroutine.finalize();
         // precompiles are special case. If there is precompiles in finalized Map that means some balance is
         // added to it, we need now to load precompile address from db and add this amount to it so that we
@@ -231,7 +232,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             }
         }
 
-        Ok((new_state, logs))
+        (new_state, logs, gas_used)
     }
 
     fn inner_load_account(&mut self, caller: H160) -> bool {
