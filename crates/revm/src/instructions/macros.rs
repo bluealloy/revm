@@ -53,6 +53,10 @@ macro_rules! memory_resize {
         if let Some(new_size) =
             crate::interpreter::memory::next_multiple_of_32(offset.saturating_add(len))
         {
+            if new_size > crate::interpreter::memory::MEMORY_LIMIT {
+                return Return::FatalNotSupported;
+            }
+
             if new_size > $interp.memory.len() {
                 if crate::USE_GAS {
                     let num_bytes = new_size / 32;
