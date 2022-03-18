@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use primitive_types::H160;
+use primitive_types::{H160, H256};
 
 use crate::{evm_impl::EVMData, CallInputs, CreateInputs, Database, Gas, Interpreter, Return};
 use auto_impl::auto_impl;
@@ -34,6 +34,16 @@ pub trait Inspector<DB: Database> {
         _is_static: bool,
     ) -> Return {
         Return::Continue
+    }
+
+    /// Called when a log is emitted.
+    fn log(
+        &mut self,
+        _evm_data: &mut EVMData<'_, DB>,
+        _address: &H160,
+        _topics: &[H256],
+        _data: &Bytes,
+    ) {
     }
 
     /// Called after `step` when the instruction has been executed.
