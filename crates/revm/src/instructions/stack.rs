@@ -8,7 +8,7 @@ pub fn pop(interp: &mut Interpreter) -> Return {
 pub fn push<const N: usize>(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::VERYLOW);
     let start = interp.program_counter;
-    // Safety: In Analazis we appended needed bytes for bytecode so that we are safe to just add without
+    // Safety: In Analysis we appended needed bytes for bytecode so that we are safe to just add without
     // checking if it is out of bound. This makes both of our unsafes block safe to do.
     let ret = interp
         .stack

@@ -6,7 +6,7 @@ use revm::{opcode, spec_opcode_gas, CallInputs, CreateInputs, Database, EVMData,
 #[derive(Clone)]
 pub struct CustomPrintTracer {
     /// We now batch continual gas_block in one go, that means we need to reduce it ifwe want to get
-    /// correct gas remaining. Check revm/interp/contract/analize for more information
+    /// correct gas remaining. Check revm/interp/contract/analyze for more information
     reduced_gas_block: u64,
     full_gas_block: u64,
 }
@@ -39,7 +39,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> Return {
-        // Safety: casting. In analazis we are making this clame true that program counter will always
+        // Safety: casting. In analysis we are making this clame true that program counter will always
         // point to bytecode of the contract.
         let opcode = unsafe { *interp.program_counter };
         let opcode_str = opcode::OPCODE_JUMPMAP[opcode as usize];
