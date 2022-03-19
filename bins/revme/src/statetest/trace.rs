@@ -1,7 +1,7 @@
 use bytes::Bytes;
 use primitive_types::H160;
 pub use revm::Inspector;
-use revm::{opcode, spec_opcode_gas, CallInputs, CreateInputs, Database, EVMData, Gas, Return};
+use revm::{opcode::{self, OpType}, spec_opcode_gas, CallInputs, CreateInputs, Database, EVMData, Gas, Return};
 
 #[derive(Clone)]
 pub struct CustomPrintTracer {
@@ -62,7 +62,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
             //hex::encode(interp.memory.data()),
         );
 
-        if info.gas_block_end {
+        if matches!(info.optype, OpType::GasBlockEnd) {
             self.reduced_gas_block = 0;
             self.full_gas_block = interp.contract.gas_block(interp.program_counter());
         } else {
