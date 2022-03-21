@@ -1,11 +1,17 @@
 use bytes::Bytes;
 use primitive_types::{H160, H256};
 
-use crate::{evm_impl::EVMData, CallInputs, CreateInputs, Database, Gas, Interpreter, Return};
+use crate::{
+    evm_impl::EVMData, BlockEnv, CallInputs, CreateInputs, Database, Gas, Interpreter, Return,
+};
 use auto_impl::auto_impl;
 
 #[auto_impl(&mut, Box)]
 pub trait Inspector<DB: Database> {
+    fn block_env(&self) -> Option<&BlockEnv> {
+        None
+    }
+
     /// Called Before the interpreter is initialized.
     ///
     /// If anything other than [Return::Continue] is returned then execution of the interpreter is

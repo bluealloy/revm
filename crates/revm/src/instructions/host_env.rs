@@ -11,31 +11,31 @@ pub fn chainid<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> R
 
 pub fn coinbase<H: Host>(interp: &mut Interpreter, host: &mut H) -> Return {
     // gas!(interp, gas::BASE);
-    push_h256!(interp, host.env().block.coinbase.into());
+    push_h256!(interp, host.block_env().coinbase.into());
     Return::Continue
 }
 
 pub fn timestamp<H: Host>(interp: &mut Interpreter, host: &mut H) -> Return {
     // gas!(interp, gas::BASE);
-    push!(interp, host.env().block.timestamp);
+    push!(interp, host.block_env().timestamp);
     Return::Continue
 }
 
 pub fn number<H: Host>(interp: &mut Interpreter, host: &mut H) -> Return {
     // gas!(interp, gas::BASE);
-    push!(interp, host.env().block.number);
+    push!(interp, host.block_env().number);
     Return::Continue
 }
 
 pub fn difficulty<H: Host>(interp: &mut Interpreter, host: &mut H) -> Return {
     // gas!(interp, gas::BASE);
-    push!(interp, host.env().block.difficulty);
+    push!(interp, host.block_env().difficulty);
     Return::Continue
 }
 
 pub fn gaslimit<H: Host>(interp: &mut Interpreter, host: &mut H) -> Return {
     // gas!(interp, gas::BASE);
-    push!(interp, host.env().block.gas_limit);
+    push!(interp, host.block_env().gas_limit);
     Return::Continue
 }
 
@@ -49,7 +49,7 @@ pub fn basefee<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> R
     // gas!(interp, gas::BASE);
     // EIP-3198: BASEFEE opcode
     check!(SPEC::enabled(LONDON));
-    push!(interp, host.env().block.basefee);
+    push!(interp, host.block_env().basefee);
     Return::Continue
 }
 

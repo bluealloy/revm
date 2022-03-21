@@ -5,7 +5,8 @@ use crate::{
     models::SelfDestructResult,
     return_ok,
     subroutine::{Account, State, SubRoutine},
-    CallContext, CallInputs, CreateInputs, CreateScheme, Env, Gas, Inspector, Log, Return, Spec,
+    BlockEnv, CallContext, CallInputs, CreateInputs, CreateScheme, Env, Gas, Inspector, Log,
+    Return, Spec,
     SpecId::*,
     TransactOut, TransactTo, Transfer, KECCAK_EMPTY,
 };
@@ -559,6 +560,14 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         self.data.env
     }
 
+    fn block_env(&self) -> &BlockEnv {
+        if let Some(env) = self.inspector.block_env() {
+            env
+        } else {
+            &self.data.env.block
+        }
+    }
+
     fn block_hash(&mut self, number: U256) -> H256 {
         self.data.db.block_hash(number)
     }
@@ -672,6 +681,7 @@ pub trait Host {
     fn step_end(&mut self, interp: &mut Interpreter, is_static: bool, ret: Return) -> Return;
 
     fn env(&mut self) -> &mut Env;
+    fn block_env(&self) -> &BlockEnv;
 
     /// load account. Returns (is_cold,is_new_account)
     fn load_account(&mut self, address: H160) -> (bool, bool);
