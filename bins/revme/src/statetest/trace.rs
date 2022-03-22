@@ -1,7 +1,10 @@
 use bytes::Bytes;
 use primitive_types::H160;
 pub use revm::Inspector;
-use revm::{opcode::{self, OpType}, spec_opcode_gas, CallInputs, CreateInputs, Database, EVMData, Gas, Return};
+use revm::{
+    opcode::{self, OpType},
+    spec_opcode_gas, CallInputs, CreateInputs, Database, EVMData, Gas, Return,
+};
 
 #[derive(Clone)]
 pub struct CustomPrintTracer {

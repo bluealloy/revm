@@ -86,7 +86,7 @@ impl Contract {
     fn analyze<SPEC: Spec>(code: &[u8]) -> (ValidJumpAddress, Vec<u8>) {
         let mut jumps: Vec<AnalysisData> = Vec::with_capacity(code.len());
         // as in PUSH32 plus one
-        jumps.resize(code.len()+33, AnalysisData::none());
+        jumps.resize(code.len() + 50, AnalysisData::none());
         //let opcode_gas = LONDON_OPCODES;
         let opcode_gas = spec_opcode_gas(SPEC::SPEC_ID);
         let mut index = 0;
@@ -99,13 +99,8 @@ impl Contract {
             first_gas_block += info.gas;
 
             match info.optype {
-                OpType::JumpDest => {
-                    unsafe {
-                        jumps.get_unchecked_mut(index).is_jumpdest = true;
-                    }
-                    block_start = index;
+                OpType::Ordinary => {
                     index += 1;
-                    break;
                 }
                 OpType::GasBlockEnd => {
                     block_start = index;
@@ -113,10 +108,15 @@ impl Contract {
                     break;
                 }
                 OpType::Push => {
-                    index += (opcode - opcode::PUSH1 + 2) as usize;
+                    index += ((opcode - opcode::PUSH1) + 2) as usize;
                 }
-                OpType::Ordinary => {
+                OpType::JumpDest => {
+                    unsafe {
+                        jumps.get_unchecked_mut(index).is_jumpdest = true;
+                    }
+                    block_start = index;
                     index += 1;
+                    break;
                 }
             }
         }
@@ -125,34 +125,33 @@ impl Contract {
         while index < code.len() {
             let opcode = unsafe { *code.get_unchecked(index) };
             let info = unsafe { opcode_gas.get_unchecked(opcode as usize) };
-
             gas_in_block += info.gas;
 
             match info.optype {
+                OpType::Ordinary => {
+                    index += 1;
+                }
+                OpType::GasBlockEnd => {
+                    unsafe {
+                        jumps.get_unchecked_mut(block_start).gas_block = gas_in_block;
+                    }
+                    block_start = index;
+                    gas_in_block = 0;
+                    index += 1;
+                }
                 OpType::JumpDest => {
                     unsafe {
                         jumps.get_unchecked_mut(index).is_jumpdest = true;
                     }
-                    block_start = index;
                     unsafe {
-                        jumps.get_unchecked_mut(index).gas_block = gas_in_block;
+                        jumps.get_unchecked_mut(block_start).gas_block = gas_in_block;
                     }
-                    gas_in_block = 0;
-                    index += 1;
-                }
-                OpType::GasBlockEnd => {
                     block_start = index;
-                    unsafe {
-                        jumps.get_unchecked_mut(index).gas_block = gas_in_block;
-                    }
                     gas_in_block = 0;
                     index += 1;
                 }
                 OpType::Push => {
-                    index += (opcode - opcode::PUSH1 + 2) as usize;
-                }
-                OpType::Ordinary => {
-                    index += 1;
+                    index += ((opcode - opcode::PUSH1) + 2) as usize;
                 }
             }
         }
