@@ -85,8 +85,8 @@ impl Contract {
     /// it gives back ValidJumpAddress and size od needed paddings.
     fn analyze<SPEC: Spec>(code: &[u8]) -> (ValidJumpAddress, Vec<u8>) {
         let mut jumps: Vec<AnalysisData> = Vec::with_capacity(code.len());
-        // as in PUSH32 plus one
-        jumps.resize(code.len() + 50, AnalysisData::none());
+        // padding of PUSH32 size plus one for stop
+        jumps.resize(code.len() + 33, AnalysisData::none());
         //let opcode_gas = LONDON_OPCODES;
         let opcode_gas = spec_opcode_gas(SPEC::SPEC_ID);
         let mut index = 0;

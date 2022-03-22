@@ -608,6 +608,9 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     }
 
     fn log(&mut self, address: H160, topics: Vec<H256>, data: Bytes) {
+        if INSPECT {
+            self.inspector.log(&mut self.data, &address, &topics, &data);
+        }
         let log = Log {
             address,
             topics,
