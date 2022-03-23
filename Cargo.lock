@@ -758,6 +758,9 @@ name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "hmac"
@@ -1766,6 +1769,7 @@ dependencies = [
  "primitive-types 0.11.1",
  "revm_precompiles",
  "rlp",
+ "serde",
  "sha3 0.10.1",
  "tokio",
  "web3",

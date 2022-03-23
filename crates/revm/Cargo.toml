@@ -12,21 +12,18 @@ version = "1.2.0"
 arrayref  = "0.3"
 auto_impl = { version = "0.5", default-features = false }
 bytes = { version = "1.1", default-features = false }
-#needed for web3 db connector
 futures = { version = "0.3.21", optional = true }
 hashbrown = { version = "0.12" }
+hex = { version = "0.4", optional = true }
 num_enum = { version = "0.5", default-features = false }#used for SpecId from u8 cast
 parking_lot = { version = "0.12", optional = true }
 primitive-types = { version = "0.11", default-features = false, features = ["rlp"] }
 revm_precompiles = { path = "../revm_precompiles", version = "0.4", default-features = false }
 rlp = { version = "0.5", default-features = false }#used for create2 address calculation
+serde = { version = "1.0", features = ["derive"], optional = true }
 sha3 = { version = "0.10", default-features = false }
 tokio = { version = "1.14", features = ["rt-multi-thread", "macros"], optional = true }
 web3 = { version = "0.18", optional = true }
-#crypto-bigint = "0.3"
-
-[dev-dependencies]
-hex = "0.4"
 
 [features]
 default = ["std", "secp256k1"]
@@ -35,3 +32,4 @@ std = ["bytes/std", "num_enum/std", "primitive-types/std", "sha3/std", "rlp/std"
 secp256k1 = ["revm_precompiles/secp256k1"]
 k256 = ["revm_precompiles/k256_ecrecover"]
 web3db = ["futures", "tokio", "parking_lot", "web3"]
+with-serde = ["serde", "primitive-types/serde", "hex", "hex/serde"]

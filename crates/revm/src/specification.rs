@@ -4,6 +4,7 @@ use revm_precompiles::SpecId as PrecompileId;
 
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, TryFromPrimitive, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 #[allow(non_camel_case_types)]
 pub enum SpecId {
     FRONTIER = 1,
