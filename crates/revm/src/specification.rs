@@ -3,7 +3,7 @@ use num_enum::TryFromPrimitive;
 use revm_precompiles::SpecId as PrecompileId;
 
 #[repr(u8)]
-#[derive(Debug, Copy, Clone, TryFromPrimitive)]
+#[derive(Debug, Copy, Clone, TryFromPrimitive, Eq, PartialEq, Hash)]
 #[allow(non_camel_case_types)]
 pub enum SpecId {
     FRONTIER = 1,

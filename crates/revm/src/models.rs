@@ -146,7 +146,7 @@ pub struct Env {
     pub block: BlockEnv,
     pub tx: TxEnv,
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct BlockEnv {
     pub number: U256,
     /// Coinbase or miner or address that created and signed the block.
@@ -172,7 +172,7 @@ pub struct TxEnv {
     pub nonce: Option<u64>,
     pub access_list: Vec<(H160, Vec<U256>)>,
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CfgEnv {
     pub chain_id: U256,
     pub spec_id: SpecId,
