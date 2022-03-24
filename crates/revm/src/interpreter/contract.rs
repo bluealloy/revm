@@ -1,8 +1,4 @@
-use crate::{
-    alloc::vec::Vec,
-    opcode::{spec_opcode_gas, OpType},
-    CallContext, Spec,
-};
+use crate::{alloc::vec::Vec, opcode::spec_opcode_gas, CallContext, Spec};
 use bytes::Bytes;
 use primitive_types::{H160, U256};
 
@@ -98,26 +94,21 @@ impl Contract {
             let info = unsafe { opcode_gas.get_unchecked(opcode as usize) };
             first_gas_block += info.gas;
 
-            match info.optype {
-                OpType::Ordinary => {
-                    index += 1;
-                }
-                OpType::GasBlockEnd => {
-                    block_start = index;
-                    index += 1;
-                    break;
-                }
-                OpType::Push => {
-                    index += ((opcode - opcode::PUSH1) + 2) as usize;
-                }
-                OpType::JumpDest => {
+            index += if info.is_push {
+                ((opcode - opcode::PUSH1) + 2) as usize
+            } else {
+                1
+            };
+
+            if info.is_gas_block_end {
+                // -1 to offset set index. we are sure it is not is_push and it is allways one.
+                block_start = index - 1;
+                if info.is_jump {
                     unsafe {
-                        jumps.get_unchecked_mut(index).is_jumpdest = true;
+                        jumps.get_unchecked_mut(block_start).is_jumpdest = true;
                     }
-                    block_start = index;
-                    index += 1;
-                    break;
                 }
+                break;
             }
         }
 
@@ -127,36 +118,29 @@ impl Contract {
             let info = unsafe { opcode_gas.get_unchecked(opcode as usize) };
             gas_in_block += info.gas;
 
-            match info.optype {
-                OpType::Ordinary => {
-                    index += 1;
-                }
-                OpType::GasBlockEnd => {
-                    unsafe {
-                        jumps.get_unchecked_mut(block_start).gas_block = gas_in_block;
-                    }
-                    block_start = index;
-                    gas_in_block = 0;
-                    index += 1;
-                }
-                OpType::JumpDest => {
+            if info.is_gas_block_end {
+                if info.is_jump {
                     unsafe {
                         jumps.get_unchecked_mut(index).is_jumpdest = true;
                     }
-                    unsafe {
-                        jumps.get_unchecked_mut(block_start).gas_block = gas_in_block;
-                    }
-                    block_start = index;
-                    gas_in_block = 0;
-                    index += 1;
                 }
-                OpType::Push => {
-                    index += ((opcode - opcode::PUSH1) + 2) as usize;
+                unsafe {
+                    jumps.get_unchecked_mut(block_start).gas_block = gas_in_block;
                 }
+                block_start = index;
+                gas_in_block = 0;
             }
+
+            index += if info.is_push {
+                ((opcode - opcode::PUSH1) + 2) as usize
+            } else {
+                1
+            };
         }
         if gas_in_block != 0 {
-            jumps[block_start].gas_block = gas_in_block;
+            unsafe {
+                jumps.get_unchecked_mut(block_start).gas_block = gas_in_block;
+            }
         }
         let padding = index - code.len();
         // +1 is for forced STOP opcode at the end of contract, it is precausion
@@ -236,3 +220,33 @@ impl ValidJumpAddress {
         self.analysis[position].gas_block
     }
 }
+
+
+/*
+#[cfg(test)]
+mod tests {
+
+    use std::time::Instant;
+
+    use super::*;
+    use crate::LondonSpec;
+
+    #[test]
+    pub fn analyze() {
+        let bytes = hex::decode("3dcd25e7dac7413679ca4b860b371699db4a3c06cc8086e35490de6810b5510e792551b0049bc91b54aec6a82b00a85f998982b99dac982fb6f7acf67032fe9f23491f6c29a96be377f44ece4b89ab835bb2d36e387533e9b36e1c47b85c09175488dec63aca38f96d78cf8e468b54486b83c1d8db5931b5579a56bd1aa05d6526251556bfabac7c244c41e6a78f581aded59e297f6af196279d246b99a8670b5edddb646ed751417b70f1066f19dfea1c06e91e0beeb3a2511603d32092a0189f820ea97eb234a42ed8b513144971c4166e48b209d74b1d85e79f93094e901376e964bc2a8141f189f13edc69c97467a09b43c19140df1399a4740c6dfcced5b3d3d08abd97b3c71cfd1c2b95dd4b8ce7951bf9e17bdf35e0fd706e89551a1e7b79cfeedf3037eb1e99537da2c65f3acd7c3c1f47343f536566cd4976002870267f87d1b5066e158fb794185a0ec8a786bca89412bab10a167ba4e2087e37b7c7d4ab98f6c86abc59135bbb07d5c19f028724031be46e69fc1215fe5a8743f8ffb57294989cc3fa6dd9d38a2317ba6de811b9d135ea03b4ab5a2fd034454d2a0a59ec85deb5b05bcf3b6408e0a1d2d6a8b259510b49e2ea7479b9770f42fef2805a4a7cfea63714e0fd00929e293648ee5a57df894ab7cb46e331d120ba83c9e51ccab2c1ec8afe2809e0c3184c607e57045f95062abd78b1974192f542b12300000000000000").unwrap();
+        let mut t = Vec::new();
+        for _ in 0..40 {
+            let time = Instant::now();
+            for _ in 0..1_000 {
+                let t = Contract::analyze::<LondonSpec>(&bytes);
+            }
+            t.push(time.elapsed());
+        }
+        t.sort();
+
+        for i in t {
+            println!("Elapsed: {:?}", i);
+        }
+    }
+}
+*/

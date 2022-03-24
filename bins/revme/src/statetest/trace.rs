@@ -2,7 +2,7 @@ use bytes::Bytes;
 use primitive_types::H160;
 pub use revm::Inspector;
 use revm::{
-    opcode::{self, OpType},
+    opcode::{self},
     spec_opcode_gas, CallInputs, CreateInputs, Database, EVMData, Gas, Return,
 };
 
@@ -65,7 +65,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
             //hex::encode(interp.memory.data()),
         );
 
-        if matches!(info.optype, OpType::GasBlockEnd) {
+        if info.is_gas_block_end() {
             self.reduced_gas_block = 0;
             self.full_gas_block = interp.contract.gas_block(interp.program_counter());
         } else {
