@@ -5,7 +5,8 @@ use crate::{
     models::SelfDestructResult,
     return_ok,
     subroutine::{Account, State, SubRoutine},
-    CallContext, CallInputs, CreateInputs, CreateScheme, Env, Gas, Inspector, Log, Return, Spec,
+    CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, Env, Gas, Inspector, Log,
+    Return, Spec,
     SpecId::*,
     TransactOut, TransactTo, Transfer, KECCAK_EMPTY,
 };
@@ -115,7 +116,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
                 let context = CallContext {
                     caller,
                     address,
+                    code_address: address,
                     apparent_value: value,
+                    scheme: CallScheme::Call,
                 };
                 let mut call_input = CallInputs {
                     contract: address,

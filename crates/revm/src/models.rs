@@ -68,13 +68,19 @@ impl AccountInfo {
     }
 }
 
+/// Inputs for a call.
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallInputs {
+    /// The target of the call.
     pub contract: H160,
+    /// The transfer, if any, in this call.
     pub transfer: Transfer,
+    /// The call data of the call.
     #[cfg_attr(feature = "with-serde", serde(with = "serde_hex_bytes"))]
     pub input: Bytes,
+    /// The gas limit of the call.
     pub gas_limit: u64,
+    /// The context of the call.
     pub context: CallContext,
 }
 
@@ -128,6 +134,7 @@ pub enum CreateScheme {
     },
 }
 
+/// Call schemes.
 #[derive(Clone, Copy, Eq, PartialEq, Debug)]
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum CallScheme {
@@ -142,15 +149,31 @@ pub enum CallScheme {
 }
 
 /// CallContext of the runtime.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallContext {
     /// Execution address.
     pub address: H160,
     /// Caller of the EVM.
     pub caller: H160,
+    /// The address the contract code was loaded from, if any.
+    pub code_address: H160,
     /// Apparent value of the EVM.
     pub apparent_value: U256,
+    /// The scheme used for the call.
+    pub scheme: CallScheme,
+}
+
+impl Default for CallContext {
+    fn default() -> Self {
+        CallContext {
+            address: H160::default(),
+            caller: H160::default(),
+            code_address: H160::default(),
+            apparent_value: U256::default(),
+            scheme: CallScheme::Call,
+        }
+    }
 }
 
 #[derive(Clone, Debug, Default)]
