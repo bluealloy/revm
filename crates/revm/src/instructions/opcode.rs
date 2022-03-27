@@ -189,7 +189,6 @@ impl OpInfo {
         self.is_push
     }
 
-
     pub const fn none() -> Self {
         Self {
             gas: 0,
