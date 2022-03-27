@@ -161,8 +161,6 @@ pub struct CallContext {
     /// Apparent value of the EVM.
     pub apparent_value: U256,
     /// The scheme used for the call.
-    ///
-    /// Defaults to [CallScheme::Call].
     pub scheme: CallScheme,
 }
 
