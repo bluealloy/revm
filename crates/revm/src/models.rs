@@ -218,18 +218,27 @@ pub struct TxEnv {
 pub struct CfgEnv {
     pub chain_id: U256,
     pub spec_id: SpecId,
-    /// if all precompiles have some balance we can ignore initial fetching them from db.
-    /// this is clearly making noice if we use debugger and it is not really needed on mainnet.
-    /// default is false in most cases it is safe to be set to true, it depends on chain.
+    /// If all precompiles have some balance we can skip initially fetching them from the database.
+    /// This is is not really needed on mainnet, and defaults to false, but in most cases it is
+    /// safe to be set to `true`, depending on the chain.
     pub perf_all_precompiles_have_balance: bool,
+    /// A hard memory limit in bytes beyond which [Memory] cannot be resized.
+    ///
+    /// In cases where the gas limit may be extraordinarily high, it is recommended to set this to
+    /// a sane value to prevent memory allocation panics. Defaults to `2^32 - 1` bytes per
+    /// EIP-1985.
+    #[cfg(feature = "memory_limit")]
+    pub memory_limit: u64,
 }
 
 impl Default for CfgEnv {
     fn default() -> CfgEnv {
         CfgEnv {
-            chain_id: 1.into(), //mainnet is 1
+            chain_id: 1.into(),
             spec_id: SpecId::LATEST,
             perf_all_precompiles_have_balance: false,
+            #[cfg(feature = "memory_limit")]
+            memory_limit: 2u64.pow(32) - 1,
         }
     }
 }
@@ -239,7 +248,7 @@ impl Default for BlockEnv {
         BlockEnv {
             gas_limit: U256::MAX,
             number: 0.into(),
-            coinbase: H160::zero(), //zero address
+            coinbase: H160::zero(),
             timestamp: U256::one(),
             difficulty: U256::zero(),
             basefee: U256::zero(),

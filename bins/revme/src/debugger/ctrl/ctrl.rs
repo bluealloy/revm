@@ -144,7 +144,7 @@ impl<DB: Database> Inspector<DB> for Controller {
                         println!(
                             "call_depth:{} PC:{} Opcode: {:#x} {:?} gas(spend,remaining):({},{})\n\
                             Stack:{}",
-                            interp.call_depth,
+                            data.subroutine.depth(),
                             interp.program_counter(),
                             opcode,
                             OPCODE_JUMPMAP[opcode as usize].unwrap_or("Invalid"),
