@@ -5,12 +5,6 @@ use core::{
 };
 use primitive_types::U256;
 
-/// The absolute memory limit (16 megabytes).
-///
-/// Prevents panicks if the gas limit is really high and memory access/stores that are otherwise
-/// not realistic in a live environment become possible.
-pub static MEMORY_LIMIT: usize = 2usize.pow(24);
-
 /// A sequencial memory. It uses Rust's `Vec` for internal
 /// representation.
 #[derive(Clone, Debug)]
