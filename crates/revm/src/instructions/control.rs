@@ -21,8 +21,8 @@ pub fn jumpi(interp: &mut Interpreter) -> Return {
     if !value.is_zero() {
         let dest = as_usize_or_fail!(dest, Return::InvalidJump);
         if interp.contract.is_valid_jump(dest) {
-            // Safety: In analysis we are checking if jump is valid destination and this if.
-            // make this unsafe block safe.
+            // Safety: In analysis we are checking if jump is valid destination and
+            // this `if` makes this unsafe block safe.
             interp.program_counter = unsafe { interp.contract.code.as_ptr().add(dest) };
             Return::Continue
         } else {

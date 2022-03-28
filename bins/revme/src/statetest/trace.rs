@@ -12,7 +12,8 @@ pub struct CustomPrintTracer {
     /// correct gas remaining. Check revm/interp/contract/analyze for more information
     reduced_gas_block: u64,
     full_gas_block: u64,
-    is_return: bool,
+    was_return: bool,
+    was_jumpi: Option<usize>,
 }
 
 impl CustomPrintTracer {
@@ -20,7 +21,8 @@ impl CustomPrintTracer {
         Self {
             reduced_gas_block: 0,
             full_gas_block: 0,
-            is_return: false,
+            was_return: false,
+            was_jumpi: None,
         }
     }
 }
@@ -53,7 +55,10 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         let infos = spec_opcode_gas(data.env.cfg.spec_id);
         let info = &infos[opcode as usize];
 
-        println!("block_end:{} full_block:{:?} reduced_block:{:?}",info.is_gas_block_end(),self.full_gas_block,self.reduced_gas_block);
+        let gas = interp.gas();
+        let total_gas_spent = gas.spend() - self.full_gas_block + self.reduced_gas_block;
+
+        println!("gas_spend:{} block_end:{} full_block:{:?} reduced_block:{:?}",total_gas_spent, info.is_gas_block_end(),self.full_gas_block,self.reduced_gas_block);
         println!(
             "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:, Data:",
             interp.call_depth,
@@ -68,9 +73,12 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
             //hex::encode(interp.memory.data()),
         );
 
-        if info.is_gas_block_end() {
+        let pc = interp.program_counter();
+        if opcode == opcode::JUMPI {
+            self.was_jumpi = Some(pc);
+        } else if info.is_gas_block_end() {
             self.reduced_gas_block = 0;
-            self.full_gas_block = interp.contract.gas_block(interp.program_counter());
+            self.full_gas_block = interp.contract.gas_block(pc);
         } else {
             self.reduced_gas_block += info.gas;
         }
@@ -85,12 +93,20 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         _is_static: bool,
         _eval: revm::Return,
     ) -> Return {
-        if self.is_return {
-
+        let pc = interp.program_counter();
+        if let Some(was_pc) = self.was_jumpi {
+            if let Some(new_pc) = pc.checked_sub(1) {
+                if was_pc == new_pc {
+                    self.reduced_gas_block = 0;
+                    self.full_gas_block = interp.contract.gas_block(pc);
+                }
+            }
+            self.was_jumpi = None;
+        } else if self.was_return {
             // we are okey to decrement PC by one as it is return of call
-            let previous_pc = interp.program_counter()-1;
+            let previous_pc = pc-1;
             self.full_gas_block = interp.contract.gas_block(previous_pc);
-            self.is_return = false;
+            self.was_return = false;
         }
         Return::Continue
     }
@@ -104,7 +120,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         out: Bytes,
         _is_static: bool,
     ) -> (Return, Gas, Bytes) {
-        self.is_return = true;
+        self.was_return = true;
         (ret, remaining_gas, out)
     }
 
@@ -117,7 +133,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         remaining_gas: Gas,
         out: Bytes,
     ) -> (Return, Option<H160>, Gas, Bytes) {
-        self.is_return = true;
+        self.was_return = true;
         (ret, address, remaining_gas, out)
     }
     fn call(
