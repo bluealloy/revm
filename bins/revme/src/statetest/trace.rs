@@ -96,7 +96,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
             if let Some(new_pc) = pc.checked_sub(1) {
                 if was_pc == new_pc {
                     self.reduced_gas_block = 0;
-                    self.full_gas_block = interp.contract.gas_block(pc);
+                    self.full_gas_block = interp.contract.gas_block(was_pc);
                 }
             }
             self.was_jumpi = None;
