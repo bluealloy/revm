@@ -290,17 +290,23 @@ pub fn call<H: Host, SPEC: Spec>(
         CallScheme::Call | CallScheme::StaticCall => CallContext {
             address: to,
             caller: interp.contract.address,
+            code_address: to,
             apparent_value: value,
+            scheme,
         },
         CallScheme::CallCode => CallContext {
             address: interp.contract.address,
             caller: interp.contract.address,
+            code_address: to,
             apparent_value: value,
+            scheme,
         },
         CallScheme::DelegateCall => CallContext {
             address: interp.contract.address,
             caller: interp.contract.caller,
+            code_address: to,
             apparent_value: interp.contract.value,
+            scheme,
         },
     };
 

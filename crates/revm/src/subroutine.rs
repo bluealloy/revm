@@ -251,7 +251,11 @@ impl SubRoutine {
         from.info.balance -= value;
 
         let to = self.log_dirty(to, |_| {});
-        to.info.balance += value;
+        to.info.balance = to
+            .info
+            .balance
+            .checked_add(value)
+            .ok_or(Return::OverflowPayment)?;
 
         Ok((from_is_cold, to_is_cold))
     }

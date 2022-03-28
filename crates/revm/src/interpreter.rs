@@ -31,12 +31,14 @@ pub struct Interpreter {
     pub return_data_buffer: Bytes,
     /// Return value.
     pub return_range: Range<usize>,
-    /// used only for inspector.
-    pub call_depth: u64,
+    /// Memory limit. See [`crate::CfgEnv`].
+    #[cfg(feature = "memory_limit")]
+    pub memory_limit: u64,
 }
 
 impl Interpreter {
-    pub fn new<SPEC: Spec>(contract: Contract, gas_limit: u64, call_depth: u64) -> Self {
+    #[cfg(not(feature = "memory_limit"))]
+    pub fn new<SPEC: Spec>(contract: Contract, gas_limit: u64) -> Self {
         Self {
             program_counter: contract.code.as_ptr(),
             return_range: Range::default(),
@@ -45,10 +47,27 @@ impl Interpreter {
             return_data_buffer: Bytes::new(),
             contract,
             gas: Gas::new(gas_limit),
-            call_depth,
-            //times: [(std::time::Duration::ZERO, 0); 256],
         }
     }
+
+    #[cfg(feature = "memory_limit")]
+    pub fn new_with_memory_limit<SPEC: Spec>(
+        contract: Contract,
+        gas_limit: u64,
+        memory_limit: u64,
+    ) -> Self {
+        Self {
+            program_counter: contract.code.as_ptr(),
+            return_range: Range::default(),
+            memory: Memory::new(),
+            stack: Stack::new(),
+            return_data_buffer: Bytes::new(),
+            contract,
+            gas: Gas::new(gas_limit),
+            memory_limit,
+        }
+    }
+
     pub fn contract(&self) -> &Contract {
         &self.contract
     }

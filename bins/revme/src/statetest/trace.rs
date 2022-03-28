@@ -55,21 +55,19 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         let infos = spec_opcode_gas(data.env.cfg.spec_id);
         let info = &infos[opcode as usize];
 
-        let gas = interp.gas();
-        let total_gas_spent = gas.spend() - self.full_gas_block + self.reduced_gas_block;
+        let gas_remaining = interp.gas.remaining() + self.full_gas_block - self.reduced_gas_block;
 
-        println!("gas_spend:{} block_end:{} full_block:{:?} reduced_block:{:?}",total_gas_spent, info.is_gas_block_end(),self.full_gas_block,self.reduced_gas_block);
         println!(
-            "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:, Data:",
-            interp.call_depth,
+            "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data:",
+            data.subroutine.depth(),
             interp.program_counter(),
-            interp.gas.remaining()+self.full_gas_block-self.reduced_gas_block,
-            interp.gas.remaining()+self.full_gas_block-self.reduced_gas_block,
+            gas_remaining,
+            gas_remaining,
             opcode_str.unwrap(),
             opcode,
             interp.gas.refunded(),
             interp.gas.refunded(),
-            //interp.stack.data(),
+            interp.stack.data(),
             //hex::encode(interp.memory.data()),
         );
 
@@ -104,7 +102,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
             self.was_jumpi = None;
         } else if self.was_return {
             // we are okey to decrement PC by one as it is return of call
-            let previous_pc = pc-1;
+            let previous_pc = pc - 1;
             self.full_gas_block = interp.contract.gas_block(previous_pc);
             self.was_return = false;
         }

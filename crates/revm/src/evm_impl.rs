@@ -5,7 +5,8 @@ use crate::{
     models::SelfDestructResult,
     return_ok,
     subroutine::{Account, State, SubRoutine},
-    CallContext, CallInputs, CreateInputs, CreateScheme, Env, Gas, Inspector, Log, Return, Spec,
+    CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, Env, Gas, Inspector, Log,
+    Return, Spec,
     SpecId::*,
     TransactOut, TransactTo, Transfer, KECCAK_EMPTY,
 };
@@ -115,7 +116,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
                 let context = CallContext {
                     caller,
                     address,
+                    code_address: address,
                     apparent_value: value,
+                    scheme: CallScheme::Call,
                 };
                 let mut call_input = CallInputs {
                     contract: address,
@@ -367,8 +370,17 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             inputs.caller,
             inputs.value,
         );
-        let mut interp =
-            Interpreter::new::<SPEC>(contract, gas.limit(), self.data.subroutine.depth());
+
+        #[cfg(feature = "memory_limit")]
+        let mut interp = Interpreter::new_with_memory_limit::<SPEC>(
+            contract,
+            gas.limit(),
+            self.data.env.cfg.memory_limit,
+        );
+
+        #[cfg(not(feature = "memory_limit"))]
+        let mut interp = Interpreter::new::<SPEC>(contract, gas.limit());
+
         if Self::INSPECT {
             self.inspector
                 .initialize_interp(&mut interp, &mut self.data, false); // TODO fix is_static
@@ -515,8 +527,17 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             // Create interpreter and execute subcall
             let contract =
                 Contract::new_with_context::<SPEC>(inputs.input.clone(), code, &inputs.context);
-            let mut interp =
-                Interpreter::new::<SPEC>(contract, inputs.gas_limit, self.data.subroutine.depth());
+
+            #[cfg(feature = "memory_limit")]
+            let mut interp = Interpreter::new_with_memory_limit::<SPEC>(
+                contract,
+                gas.limit(),
+                self.data.env.cfg.memory_limit,
+            );
+
+            #[cfg(not(feature = "memory_limit"))]
+            let mut interp = Interpreter::new::<SPEC>(contract, gas.limit());
+
             if Self::INSPECT {
                 self.inspector
                     .initialize_interp(&mut interp, &mut self.data, false); // TODO fix is_static
