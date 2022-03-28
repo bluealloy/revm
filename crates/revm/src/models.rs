@@ -18,7 +18,7 @@ pub struct AccountInfo {
     pub balance: U256,
     /// code hash,
     pub code_hash: H256,
-    /// code
+    /// code: if None, `code_by_hash` will be used to fetch it if code needs to be loaded from inside of revm.
     #[cfg_attr(feature = "with-serde", serde(with = "serde_hex_bytes_opt"))]
     pub code: Option<Bytes>,
     /// Account nonce.
