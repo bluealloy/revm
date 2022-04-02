@@ -137,11 +137,10 @@ impl Precompiles {
 
     pub fn get(&self, address: &Address) -> Option<Precompile> {
         //return None;
-        if let Some((_, precompile)) = self.fun.iter().find(|(t, _)| t == address) {
-            Some(precompile.clone())
-        } else {
-            None
-        }
+        self.fun
+            .iter()
+            .find(|(t, _)| t == address)
+            .map(|(_, precompile)| precompile.clone())
     }
 }
 
