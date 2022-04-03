@@ -66,7 +66,7 @@ impl History for CliHistory {
                 .unwrap();
 
             if let Err(e) = writeln!(file, "{}", line) {
-                eprintln!("Couldn't write to history file: {}", e);
+                eprintln!("Couldn't write to history file: {e}");
             }
         }
     }
@@ -81,10 +81,7 @@ impl History for CliHistory {
         let mut idx = idx;
 
         loop {
-            let line = match self.entries.get(idx) {
-                Some(line) => line,
-                None => return None,
-            };
+            let line = self.entries.get(idx)?;
 
             if let Some(cursor) = style.match_against(pattern, line) {
                 return Some(SearchResult {
@@ -94,10 +91,7 @@ impl History for CliHistory {
                 });
             }
 
-            idx = match direction.next(idx) {
-                None => return None,
-                Some(idx) => idx,
-            };
+            idx = direction.next(idx)?;
         }
     }
 }
