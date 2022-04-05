@@ -80,7 +80,7 @@ impl Contract {
     /// Create a new valid mapping from given code bytes.
     /// it gives back ValidJumpAddress and size od needed paddings.
     fn analyze<SPEC: Spec>(code: &[u8]) -> (ValidJumpAddress, Vec<u8>) {
-        let mut jumps: Vec<AnalysisData> = Vec::with_capacity(code.len());
+        let mut jumps: Vec<AnalysisData> = Vec::with_capacity(code.len() + 33);
         // padding of PUSH32 size plus one for stop
         jumps.resize(code.len() + 33, AnalysisData::none());
         //let opcode_gas = LONDON_OPCODES;
@@ -89,6 +89,7 @@ impl Contract {
         let mut first_gas_block: u64 = 0;
         let mut block_start: usize = 0;
         // first gas block
+
         while index < code.len() {
             let opcode = unsafe { *code.get_unchecked(index) };
             let info = unsafe { opcode_gas.get_unchecked(opcode as usize) };
@@ -101,7 +102,6 @@ impl Contract {
             };
 
             if info.is_gas_block_end {
-                // -1 to offset set index. we are sure it is not is_push and it is allways one.
                 block_start = index - 1;
                 if info.is_jump {
                     unsafe {
@@ -236,7 +236,7 @@ mod tests {
         let mut t = Vec::new();
         for _ in 0..40 {
             let time = Instant::now();
-            for _ in 0..1_000 {
+            for _ in 0..30_000 {
                 let t = Contract::analyze::<LondonSpec>(&bytes);
             }
             t.push(time.elapsed());
