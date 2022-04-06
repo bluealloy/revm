@@ -117,7 +117,7 @@ impl Interpreter {
                 }
             }
             let opcode = unsafe { *self.program_counter };
-            // Safety: In analazis we are doing padding of bytecode so that we are sure that last.
+            // Safety: In analysis we are doing padding of bytecode so that we are sure that last.
             // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
             // it will do noop and just stop execution of this contract
             self.program_counter = unsafe { self.program_counter.offset(1) };

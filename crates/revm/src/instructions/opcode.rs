@@ -171,44 +171,71 @@ impl OpCode {
 #[derive(Debug)]
 pub struct OpInfo {
     pub gas: u64,
-    pub gas_block_end: bool,
+    pub is_jump: bool,
+    pub is_gas_block_end: bool,
     pub is_push: bool,
 }
 
 impl OpInfo {
+    pub fn is_jump(&self) -> bool {
+        self.is_jump
+    }
+
+    pub fn is_gas_block_end(&self) -> bool {
+        self.is_gas_block_end
+    }
+
+    pub fn is_push(&self) -> bool {
+        self.is_push
+    }
+
     pub const fn none() -> Self {
         Self {
             gas: 0,
-            gas_block_end: true,
+            is_jump: false,
+            is_gas_block_end: false,
             is_push: false,
         }
     }
     pub const fn gas_block_end(gas: u64) -> Self {
         Self {
             gas,
-            gas_block_end: true,
+            is_jump: false,
+            is_gas_block_end: true,
             is_push: false,
         }
     }
     pub const fn dynamic_gas() -> Self {
         Self {
             gas: 0,
-            gas_block_end: false,
+            is_jump: false,
+            is_gas_block_end: false,
             is_push: false,
         }
     }
     pub const fn gas(gas: u64) -> Self {
         Self {
             gas,
-            gas_block_end: false,
+            is_jump: false,
+            is_gas_block_end: false,
             is_push: false,
         }
     }
     pub const fn push_opcode() -> Self {
         Self {
             gas: gas::VERYLOW,
-            gas_block_end: false,
+            is_jump: false,
+            is_gas_block_end: false,
             is_push: true,
+        }
+    }
+
+    pub const fn jumpdest() -> Self {
+        Self {
+            gas: 0,
+            is_jump: true,
+            is_gas_block_end: true,
+            is_push: false,
         }
     }
 }
@@ -343,7 +370,8 @@ macro_rules! gas_opcodee {
             /* 0x59  MSIZE */ OpInfo::gas(gas::BASE),
             /* 0x5a  GAS */ OpInfo::gas_block_end(gas::BASE),
             /* 0x5b  JUMPDEST */
-            OpInfo::gas_block_end(0), // gas::JUMPDEST gas is calculated in function call,
+            // gas::JUMPDEST gas is calculated in function call,
+            OpInfo::jumpdest(),
             /* 0x5c */ OpInfo::none(),
             /* 0x5d */ OpInfo::none(),
             /* 0x5e */ OpInfo::none(),

@@ -6,7 +6,7 @@ pub fn jump(interp: &mut Interpreter) -> Return {
     pop!(interp, dest);
     let dest = as_usize_or_fail!(dest, Return::InvalidJump);
     if interp.contract.is_valid_jump(dest) {
-        // Safety: In analazis we are checking create our jump table and we do check above to be
+        // Safety: In analysis we are checking create our jump table and we do check above to be
         // sure that jump is safe to execute.
         interp.program_counter = unsafe { interp.contract.code.as_ptr().add(dest) };
         Return::Continue
@@ -21,8 +21,8 @@ pub fn jumpi(interp: &mut Interpreter) -> Return {
     if !value.is_zero() {
         let dest = as_usize_or_fail!(dest, Return::InvalidJump);
         if interp.contract.is_valid_jump(dest) {
-            // Safety: In analazis we are checking if jump is valid destination and this if.
-            // make this unsafe block safe.
+            // Safety: In analysis we are checking if jump is valid destination and
+            // this `if` makes this unsafe block safe.
             interp.program_counter = unsafe { interp.contract.code.as_ptr().add(dest) };
             Return::Continue
         } else {
