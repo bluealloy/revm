@@ -74,7 +74,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
     if path.file_name() == Some(OsStr::new("CALLBlake2f_MaxRounds.json")) {
         return Ok(());
     }
-    // failed tests
+    // failed tests they are missing some arguments
     if path.file_name() == Some(OsStr::new("accessListExample.json")) {
         return Ok(());
     }
@@ -154,11 +154,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
         env.block.coinbase = unit.env.current_coinbase;
         env.block.timestamp = unit.env.current_timestamp;
         env.block.gas_limit = unit.env.current_gas_limit;
-        env.block.basefee = if env.cfg.spec_id as u8 >= SpecId::LONDON as u8 {
-            unit.env.current_base_fee.unwrap_or_default()
-        } else {
-            U256::zero()
-        };
+        env.block.basefee = unit.env.current_base_fee.unwrap_or_default();
         env.block.difficulty = unit.env.current_difficulty;
 
         //tx env
@@ -198,30 +194,26 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                     .clone();
                 env.tx.value = *unit.transaction.value.get(test.indexes.value).unwrap();
 
-                if env.cfg.spec_id as u8 >= SpecId::BERLIN as u8 {
-                    let access_list = match unit.transaction.access_lists {
-                        Some(ref access_list) => access_list
-                            .get(test.indexes.data)
-                            .cloned()
-                            .flatten()
-                            .unwrap_or_default()
-                            .into_iter()
-                            .map(|item| {
-                                (
-                                    item.address,
-                                    item.storage_keys
-                                        .iter()
-                                        .map(|f| U256::from_big_endian(f.as_ref()))
-                                        .collect::<Vec<_>>(),
-                                )
-                            })
-                            .collect(),
-                        None => Vec::new(),
-                    };
-                    env.tx.access_list = access_list;
-                } else {
-                    env.tx.access_list.clear();
-                }
+                let access_list = match unit.transaction.access_lists {
+                    Some(ref access_list) => access_list
+                        .get(test.indexes.data)
+                        .cloned()
+                        .flatten()
+                        .unwrap_or_default()
+                        .into_iter()
+                        .map(|item| {
+                            (
+                                item.address,
+                                item.storage_keys
+                                    .iter()
+                                    .map(|f| U256::from_big_endian(f.as_ref()))
+                                    .collect::<Vec<_>>(),
+                            )
+                        })
+                        .collect(),
+                    None => Vec::new(),
+                };
+                env.tx.access_list = access_list;
 
                 let to = match unit.transaction.to {
                     Some(add) => TransactTo::Call(add),
