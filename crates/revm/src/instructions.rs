@@ -33,6 +33,7 @@ macro_rules! return_revert {
 
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Return {
     //success codes
     Continue = 0x00,
