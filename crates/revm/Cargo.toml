@@ -6,7 +6,7 @@ keywords = ["no_std", "ethereum", "evm"]
 license = "MIT"
 name = "revm"
 repository = "https://github.com/bluealloy/revm"
-version = "1.2.0"
+version = "1.3.0"
 
 [dependencies]
 arrayref  = "0.3"
@@ -18,7 +18,7 @@ hex = { version = "0.4", optional = true }
 num_enum = { version = "0.5", default-features = false }#used for SpecId from u8 cast
 parking_lot = { version = "0.12", optional = true }
 primitive-types = { version = "0.11", default-features = false, features = ["rlp"] }
-revm_precompiles = { path = "../revm_precompiles", version = "0.4", default-features = false }
+revm_precompiles = { path = "../revm_precompiles", version = "1.0", default-features = false }
 rlp = { version = "0.5", default-features = false }#used for create2 address calculation
 serde = { version = "1.0", features = ["derive"], optional = true }
 sha3 = { version = "0.10", default-features = false }

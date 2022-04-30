@@ -1,3 +1,14 @@
+# v1.3.0
+date: 30.4.2022
+
+There are a lot of big changes that are included in this release as revm was integrated inside foundry.
+
+* A lot of changed on Inspector, added new calls and flushed out how it should be called. Big effort mostly driven by Oliver Nordbjerg
+* Big internal refactor and renaming: Machine->Inspector, call/create info are now in structs.
+* feat: add serde support to model types. Thank you Matthias Seitz
+* Added rust feature that sets memory limit on interpreter that is configurable with env.cfg. by Oliver Nordbjerg.
+* Library bumped to higher version.
+
 # v1.2.0
 date 20.1.2022
 
