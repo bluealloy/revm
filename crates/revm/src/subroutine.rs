@@ -159,7 +159,7 @@ impl SubRoutine {
 
     /// Use it with load_account function.
     pub fn account(&self, address: H160) -> &Account {
-        self.state.get(&address).unwrap() // Allways assume that acc is already loaded
+        self.state.get(&address).unwrap() // Always assume that acc is already loaded
     }
 
     pub fn depth(&self) -> u64 {
