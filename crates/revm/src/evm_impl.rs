@@ -383,7 +383,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
         if Self::INSPECT {
             self.inspector
-                .initialize_interp(&mut interp, &mut self.data, false); // TODO fix is_static
+                .initialize_interp(&mut interp, &mut self.data, SPEC::IS_STATIC_CALL);
         }
         let exit_reason = interp.run::<Self, SPEC>(self);
 
@@ -482,17 +482,14 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
 
         // Transfer value from caller to called account
-        match self.data.subroutine.transfer(
+        if let Err(e) = self.data.subroutine.transfer(
             inputs.transfer.source,
             inputs.transfer.target,
             inputs.transfer.value,
             self.data.db,
         ) {
-            Err(e) => {
-                self.data.subroutine.checkpoint_revert(checkpoint);
-                return (e, gas, Bytes::new());
-            }
-            Ok((_source_is_cold, _target_is_cold)) => {}
+            self.data.subroutine.checkpoint_revert(checkpoint);
+            return (e, gas, Bytes::new());
         }
 
         // Call precompiles
@@ -539,8 +536,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             let mut interp = Interpreter::new::<SPEC>(contract, gas.limit());
 
             if Self::INSPECT {
+                // create is always no static call.
                 self.inspector
-                    .initialize_interp(&mut interp, &mut self.data, false); // TODO fix is_static
+                    .initialize_interp(&mut interp, &mut self.data, false);
             }
             let exit_reason = interp.run::<Self, SPEC>(self);
             if matches!(exit_reason, return_ok!()) {
@@ -618,7 +616,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     }
 
     fn sload(&mut self, address: H160, index: U256) -> (U256, bool) {
-        // account is allways hot. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
+        // account is always hot. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
         self.data.subroutine.sload(address, index, self.data.db)
     }
 
