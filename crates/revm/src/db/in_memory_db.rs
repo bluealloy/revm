@@ -75,7 +75,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     }
 }
 
-// TODO It is currently only commiting to cached in-memory DB
+// TODO It is currently only committing to cached in-memory DB
 impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
     fn commit(&mut self, changes: Map<H160, Account>) {
         for (add, acc) in changes {

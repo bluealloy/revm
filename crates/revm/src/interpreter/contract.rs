@@ -199,7 +199,7 @@ impl ValidJumpAddress {
         self.analysis.len()
     }
 
-    /// Returns true if the valids list is empty
+    /// Returns true if the valid list is empty
 
     pub fn is_empty(&self) -> bool {
         self.len() == 0

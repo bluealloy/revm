@@ -93,7 +93,7 @@ impl Interpreter {
 
     /// Return a reference of the program counter.
     pub fn program_counter(&self) -> usize {
-        // Sefety: this is just substraction of pointers, it is safe to do.
+        // Safety: this is just subtraction of pointers, it is safe to do.
         unsafe {
             self.program_counter
                 .offset_from(self.contract.code.as_ptr()) as usize

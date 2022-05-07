@@ -2,7 +2,7 @@
 
 Is **Rust Ethereum Virtual Machine** with great name that is focused on **speed** and **simplicity**. It gets ispiration from `SputnikVM` (got opcodes/interp from here), `OpenEthereum` and `Geth` with a help from [wolflo/evm-opcodes](https://github.com/wolflo/evm-opcodes). 
 
-It is fast and flexible implementation of EVM with simple interface and embeded Host, there are multiple things done on Host part from const EVM Spec to optimistic changelogs for subroutines to merging `eip2929` in EVM state so that it can be accesses only once that are improving the speed of execution. There are still some improvements on Interpreter part that needs to be done so that we can be comparable with evmone, for more info track [this issue](https://github.com/bluealloy/revm/issues/7).
+It is fast and flexible implementation of EVM with simple interface and embedded Host, there are multiple things done on Host part from const EVM Spec to optimistic changelogs for subroutines to merging `eip2929` in EVM state so that it can be accesses only once that are improving the speed of execution. There are still some improvements on Interpreter part that needs to be done so that we can be comparable with evmone, for more info track [this issue](https://github.com/bluealloy/revm/issues/7).
 
 Here is list of things that i would like to use as guide in this project:
 - **EVM compatibility and stability** - this goes without saying but it is nice to put it here. In blockchain industry, stability is most desired attribute of any system.

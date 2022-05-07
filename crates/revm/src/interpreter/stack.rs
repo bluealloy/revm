@@ -130,7 +130,7 @@ impl Stack {
     }
 
     #[inline(always)]
-    /// Pops 2 alues from the stack.
+    /// Pops 2 values from the stack.
     ///
     /// # Safety
     /// The caller is responsible to check length of array

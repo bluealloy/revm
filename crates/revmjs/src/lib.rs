@@ -24,7 +24,7 @@ macro_rules! console_log {
     ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
 }
 
-/// Wrapper arround revm with InMemoryDB
+/// Wrapper around revm with InMemoryDB
 #[wasm_bindgen]
 pub struct EVM {
     revm: rEVM<InMemoryDB>,
