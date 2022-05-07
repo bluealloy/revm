@@ -8,17 +8,19 @@ pub fn sha3(interp: &mut Interpreter) -> Return {
     pop!(interp, from, len);
     gas_or_fail!(interp, gas::sha3_cost(len));
     let len = as_usize_or_fail!(len, Return::OutOfGas);
-    let data = if len == 0 {
-        Bytes::new()
-        // TODO optimization, we can return hardcoded value of keccak256:digest(&[])
+    let h256 = if len == 0 {
+        H256([
+            0xc5, 0xd2, 0x46, 0x01, 0x86, 0xf7, 0x23, 0x3c, 0x92, 0x7e, 0x7d, 0xb2, 0xdc, 0xc7,
+            0x03, 0xc0, 0xe5, 0x00, 0xb6, 0x53, 0xca, 0x82, 0x27, 0x3b, 0x7b, 0xfa, 0xd8, 0x04,
+            0x5d, 0x85, 0xa4, 0x70,
+        ])
     } else {
         let from = as_usize_or_fail!(from, Return::OutOfGas);
         memory_resize!(interp, from, len);
-        Bytes::copy_from_slice(interp.memory.get_slice(from, len))
+        H256::from_slice(Keccak256::digest(interp.memory.get_slice(from, len)).as_slice())
     };
 
-    let ret = Keccak256::digest(data.as_ref());
-    push_h256!(interp, H256::from_slice(ret.as_slice()));
+    push_h256!(interp, h256);
     Return::Continue
 }
 
