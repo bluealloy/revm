@@ -16,7 +16,7 @@ pub struct SubRoutine {
     /// It contains original values before they were changes.
     /// it is made like this so that we can revert to previous state in case of
     /// exit or revert
-    /// if account is none it means that account was cold in previoud changelog
+    /// if account is none it means that account was cold in previous changelog
     /// Additional HashSet represent cold storage slots.
     changelog: Vec<Map<H160, ChangeLog>>,
     /// how deep are we in call stack.
@@ -47,10 +47,10 @@ pub enum ChangeLog {
 #[derive(Debug, Clone)]
 pub struct DirtyChangeLog {
     // contains previous values of slot.
-    // If it is cold loaded in this subrutine SlotChangeLog will be COLD.
-    // if it is hot and it gets changes somewhare in child subroutine, SlotChangeLog will contain old value OriginalDirty,
+    // If it is cold loaded in this subroutine SlotChangeLog will be COLD.
+    // if it is hot and it gets changes somewhere in child subroutine, SlotChangeLog will contain old value OriginalDirty,
     dirty_storage: Map<U256, SlotChangeLog>,
-    // account info, when reverting just overrride state value.
+    // account info, when reverting just override state value.
     info: AccountInfo,
     was_clean: bool,
 }
@@ -115,8 +115,8 @@ impl SubRoutine {
 
     /// do cleanup and return modified state
     /// Do take that filthy stuff and return it back.
-    /// Some states of Filth enum are internaly used but in output it can only be:
-    /// 1. Dirty with empty Map (Map is internaly used). Only changed slots are returned in `storage` or
+    /// Some states of Filth enum are internally used but in output it can only be:
+    /// 1. Dirty with empty Map (Map is internally used). Only changed slots are returned in `storage` or
     /// 2. Destroyed if selfdestruct was called.
     pub fn finalize(&mut self) -> (State, Vec<Log>) {
         let mut out = Map::new();
@@ -174,7 +174,7 @@ impl SubRoutine {
     }
 
     pub fn inc_nonce(&mut self, address: H160) -> u64 {
-        // asume account is hot and loaded
+        // assume account is hot and loaded
         let acc = self.log_dirty(address, |_| {});
         let old_nonce = acc.info.nonce;
         acc.info.nonce += 1;

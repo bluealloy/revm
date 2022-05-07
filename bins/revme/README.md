@@ -3,9 +3,9 @@
 It is still work in progress and it is published for only reason to take cargo name.
 
 This is binary crate that executed evm multiple ways. Currently there are three parts:
-* statetest: takes path to folder where ethereum statetest json can be found. It recursivly search for all json files and execute them. This is how i run all https://github.com/ethereum/tests to check if revm is compliant. Example `revme statests test/GenericEvmTest/`
+* statetest: takes path to folder where ethereum statetest json can be found. It recursively searches for all json files and execute them. This is how i run all https://github.com/ethereum/tests to check if revm is compliant. Example `revme statests test/GenericEvmTest/`
 * debug (WIP): 
-    * (WIP) Interactive debugger with ability to change any parametar of EVM in runtime, specify breakpoints and do everything what you expect from debugger.
+    * (WIP) Interactive debugger with ability to change any parameter of EVM in runtime, specify breakpoints and do everything what you expect from debugger.
     * (WIP) Allow inserting accounts,balances,storages.
     * Specify web3 interface to bind database, for example use infura with option `--web infura_link`.
     * (WIP) revert opcode implemented in EVM we can enable `rewind` of contract call so that you can go to start of contract call and start debugging again. We could even add `rewind opcode` besically rewind call and rerun it until program counter matches.

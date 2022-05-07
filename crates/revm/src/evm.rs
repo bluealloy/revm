@@ -7,21 +7,21 @@ use crate::{
 };
 use alloc::{boxed::Box, vec::Vec};
 use revm_precompiles::Precompiles;
-/// Struct that takes Database and enabled transact to update state dirrectly to database.
-/// additionaly it allows user to set all environment parameters.
+/// Struct that takes Database and enabled transact to update state directly to database.
+/// additionally it allows user to set all environment parameters.
 ///
-/// Parameters that can be set are devided between Config, Block and Transaction(tx)
+/// Parameters that can be set are divided between Config, Block and Transaction(tx)
 ///
 /// For transacting on EVM you can call transact_commit that will automatically apply changes to db.
 ///
 /// You can do a lot with rust and traits. For Database abstractions that we need you can implement,
 /// Database, DatabaseRef or Database+DatabaseCommit and they enable functionality depending on what kind of
 /// handling of struct you want.
-/// * Database trait has mutable self in its functions. It is usefull if on get calls you want to modify
+/// * Database trait has mutable self in its functions. It is usefully if on get calls you want to modify
 /// your cache or update some statistics. They enable `transact` and `inspect` functions
 /// * DatabaseRef takes reference on object, this is useful if you only have reference on state and dont
 /// want to update anything on it. It enabled `transact_ref` and `inspect_ref` functions
-/// * Database+DatabaseCommit allow's dirrectly commiting changes of transaction. it enabled `transact_commit`
+/// * Database+DatabaseCommit allow directly committing changes of transaction. it enabled `transact_commit`
 /// and `inspect_commit`
 
 #[derive(Clone)]

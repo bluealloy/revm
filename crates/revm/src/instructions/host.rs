@@ -137,7 +137,7 @@ pub fn log<H: Host, SPEC: Spec>(interp: &mut Interpreter, n: u8, host: &mut H) -
     let mut topics = Vec::with_capacity(n);
     for _ in 0..(n) {
         let mut t = H256::zero();
-        // Sefety: stack bounds already checked few lines above
+        // Safety: stack bounds already checked few lines above
         unsafe { interp.stack.pop_unsafe().to_big_endian(t.as_bytes_mut()) };
         topics.push(t);
     }
@@ -352,7 +352,7 @@ pub fn call<H: Host, SPEC: Spec>(
 
     gas!(interp, gas_limit);
 
-    // add call stipend if there is value to be transfered.
+    // add call stipend if there is value to be transferred.
     if matches!(scheme, CallScheme::Call | CallScheme::CallCode) && !transfer.value.is_zero() {
         gas_limit = gas_limit.saturating_add(gas::CALL_STIPEND);
     }
