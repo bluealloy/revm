@@ -245,7 +245,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     fn initialization<SPEC: Spec>(&mut self) -> u64 {
         let is_create = matches!(self.data.env.tx.transact_to, TransactTo::Create(_));
         let input = &self.data.env.tx.data;
-        let access_list = self.data.env.tx.access_list.clone();
 
         if crate::USE_GAS {
             let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
@@ -253,17 +252,16 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             let (accessed_accounts, accessed_slots) = {
                 if SPEC::enabled(BERLIN) {
                     let mut accessed_slots = 0_u64;
-                    let accessed_accounts = access_list.len() as u64;
 
-                    for (address, slots) in access_list {
+                    for (address, slots) in self.data.env.tx.access_list.iter() {
                         //TODO trace load access_list?
-                        self.data.subroutine.load_account(address, self.data.db);
+                        self.data.subroutine.load_account(*address, self.data.db);
                         accessed_slots += slots.len() as u64;
                         for slot in slots {
-                            self.data.subroutine.sload(address, slot, self.data.db);
+                            self.data.subroutine.sload(*address, *slot, self.data.db);
                         }
                     }
-                    (accessed_accounts, accessed_slots)
+                    (self.data.env.tx.access_list.len() as u64, accessed_slots)
                 } else {
                     (0, 0)
                 }
