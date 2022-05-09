@@ -1,5 +1,4 @@
-use crate::{gas, interpreter::Interpreter, Return, Spec, SpecId::*};
-use bytes::Bytes;
+use crate::{gas, interpreter::Interpreter, Return, Spec, SpecId::*, KECCAK_EMPTY};
 use primitive_types::{H256, U256};
 
 use sha3::{Digest, Keccak256};
@@ -8,17 +7,15 @@ pub fn sha3(interp: &mut Interpreter) -> Return {
     pop!(interp, from, len);
     gas_or_fail!(interp, gas::sha3_cost(len));
     let len = as_usize_or_fail!(len, Return::OutOfGas);
-    let data = if len == 0 {
-        Bytes::new()
-        // TODO optimization, we can return hardcoded value of keccak256:digest(&[])
+    let h256 = if len == 0 {
+        KECCAK_EMPTY
     } else {
         let from = as_usize_or_fail!(from, Return::OutOfGas);
         memory_resize!(interp, from, len);
-        Bytes::copy_from_slice(interp.memory.get_slice(from, len))
+        H256::from_slice(Keccak256::digest(interp.memory.get_slice(from, len)).as_slice())
     };
 
-    let ret = Keccak256::digest(data.as_ref());
-    push_h256!(interp, H256::from_slice(ret.as_slice()));
+    push_h256!(interp, h256);
     Return::Continue
 }
 
