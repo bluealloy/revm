@@ -1,3 +1,13 @@
+
+# v1.3.1
+date: 11.4.2022
+
+Small fixes release.
+
+* Empty keccak constant and remove access_list.clone (#111)
+* chore: typo fixes
+* fix is_static for Inspector initialize_interp
+
 # v1.3.0
 date: 30.4.2022
 
