@@ -10,7 +10,6 @@ pub const KECCAK_EMPTY: H256 = H256([
     0xe5, 0x00, 0xb6, 0x53, 0xca, 0x82, 0x27, 0x3b, 0x7b, 0xfa, 0xd8, 0x04, 0x5d, 0x85, 0xa4, 0x70,
 ]);
 
-
 /// AccountInfo account information.
 #[derive(Clone, Eq, PartialEq, Debug)]
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
