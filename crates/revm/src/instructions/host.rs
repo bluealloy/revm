@@ -103,7 +103,7 @@ pub fn blockhash<H: Host>(interp: &mut Interpreter, host: &mut H) -> Return {
     if number >= lower && number < upper {
         push_h256!(interp, host.block_hash(number));
     } else {
-        push_h256!(interp, KECCAK_EMPTY);
+        push_h256!(interp, H256::zero());
     }
 
     Return::Continue
