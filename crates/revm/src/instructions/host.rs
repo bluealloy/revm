@@ -1,9 +1,11 @@
 use crate::{
     alloc::vec::Vec, gas, interpreter::Interpreter, return_ok, return_revert, CallContext,
     CallInputs, CallScheme, CreateInputs, CreateScheme, Host, Return, Spec, SpecId::*, Transfer,
+    KECCAK_EMPTY
 };
 use bytes::Bytes;
 use core::cmp::min;
+use std::ops::{Add, Sub};
 use primitive_types::{H160, H256, U256};
 
 pub fn balance<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
@@ -90,7 +92,19 @@ pub fn blockhash<H: Host>(interp: &mut Interpreter, host: &mut H) -> Return {
     // gas!(interp, gas::BLOCKHASH);
 
     pop!(interp, number);
-    push_h256!(interp, host.block_hash(number));
+
+    let upper = U256::min(host.env().block.number,
+                          U256::from(u64::MAX).add(U256::one()));
+    let lower = if upper <= U256::from(256u64) {
+        U256::zero()
+    } else {
+        upper.sub(U256::from(256u64))
+    };
+    if number >= lower && number < upper {
+        push_h256!(interp, host.block_hash(number));
+    } else {
+        push_h256!(interp, KECCAK_EMPTY);
+    }
 
     Return::Continue
 }
