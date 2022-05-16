@@ -1,7 +1,6 @@
 use crate::{
     alloc::vec::Vec, gas, interpreter::Interpreter, return_ok, return_revert, CallContext,
     CallInputs, CallScheme, CreateInputs, CreateScheme, Host, Return, Spec, SpecId::*, Transfer,
-    KECCAK_EMPTY
 };
 use bytes::Bytes;
 use core::cmp::min;
