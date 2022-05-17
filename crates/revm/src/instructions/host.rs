@@ -88,10 +88,17 @@ pub fn extcodecopy<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) 
 
 pub fn blockhash<H: Host>(interp: &mut Interpreter, host: &mut H) -> Return {
     // gas!(interp, gas::BLOCKHASH);
+    pop_top!(interp, number);
 
-    pop!(interp, number);
-    push_h256!(interp, host.block_hash(number));
-
+    if let Some(diff) = host.env().block.number.checked_sub(*number) {
+        let diff = as_usize_saturated!(diff);
+        // blockhash should push zero if number is same as current block number.
+        if diff <= 256 && diff != 0 {
+            *number = U256::from_big_endian(host.block_hash(*number).as_ref());
+            return Return::Continue;
+        }
+    }
+    *number = U256::zero();
     Return::Continue
 }
 
