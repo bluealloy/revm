@@ -4,7 +4,6 @@ use crate::{
 };
 use bytes::Bytes;
 use core::cmp::min;
-use std::ops::{Add, Sub};
 use primitive_types::{H160, H256, U256};
 
 pub fn balance<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
@@ -89,22 +88,17 @@ pub fn extcodecopy<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) 
 
 pub fn blockhash<H: Host>(interp: &mut Interpreter, host: &mut H) -> Return {
     // gas!(interp, gas::BLOCKHASH);
+    pop_top!(interp, number);
 
-    pop!(interp, number);
-
-    let upper = U256::min(host.env().block.number,
-                          U256::from(u64::MAX).add(U256::one()));
-    let lower = if upper <= U256::from(256u64) {
-        U256::zero()
-    } else {
-        upper.sub(U256::from(256u64))
-    };
-    if number >= lower && number < upper {
-        push_h256!(interp, host.block_hash(number));
-    } else {
-        push_h256!(interp, H256::zero());
+    if let Some(diff) = host.env().block.number.checked_sub(*number) {
+        let diff = as_usize_saturated!(diff);
+        // blockhash should push zero if number is same as current block number.
+        if diff <= 256 && diff != 0 {
+            *number = U256::from_big_endian(host.block_hash(*number).as_ref());
+            return Return::Continue;
+        }
     }
-
+    *number = U256::zero();
     Return::Continue
 }
 
