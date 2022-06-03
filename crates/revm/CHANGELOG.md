@@ -1,4 +1,13 @@
 
+# v1.4.0
+date: 03.06.2022
+
+Small release:
+
+* fix: BLOCKHASH should return 0 if number not in last 256 blocks (#112)
+* feat: add getters for cachedb (#119)
+* bump some lib versions.
+
 # v1.3.1
 date: 11.4.2022
 
