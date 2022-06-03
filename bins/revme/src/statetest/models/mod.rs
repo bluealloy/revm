@@ -10,10 +10,10 @@ use serde_derive::*;
 
 pub use self::spec::SpecName;
 
-#[derive(Debug, PartialEq, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Deserialize)]
 pub struct TestSuit(pub BTreeMap<String, TestUnit>);
 
-#[derive(Debug, PartialEq, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Deserialize)]
 pub struct TestUnit {
     pub env: Env,
     pub pre: HashMap<H160, AccountInfo>,
@@ -22,7 +22,7 @@ pub struct TestUnit {
 }
 
 /// State test indexed state result deserialization.
-#[derive(Debug, PartialEq, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Deserialize)]
 pub struct Test {
     /// Post state hash
     pub hash: H256,
@@ -34,14 +34,14 @@ pub struct Test {
     pub txbytes: Bytes,
 }
 
-#[derive(Debug, PartialEq, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Deserialize)]
 pub struct TxPartIndices {
     pub data: usize,
     pub gas: usize,
     pub value: usize,
 }
 
-#[derive(Clone, Debug, PartialEq, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
 #[serde(deny_unknown_fields)]
 #[serde(rename_all = "camelCase")]
 pub struct AccountInfo {
@@ -53,7 +53,7 @@ pub struct AccountInfo {
     pub storage: HashMap<U256, U256>,
 }
 
-#[derive(Debug, PartialEq, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Env {
     pub current_coinbase: H160,
@@ -69,7 +69,7 @@ pub struct Env {
     pub previous_hash: H256,
 }
 
-#[derive(Debug, PartialEq, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TransactionParts {
     #[serde(deserialize_with = "deserialize_vec_as_vec_bytes")]
@@ -86,7 +86,7 @@ pub struct TransactionParts {
     pub max_priority_fee_per_gas: Option<U256>,
 }
 
-#[derive(Debug, PartialEq, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Eq, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct AccessListItem {
     pub address: H160,

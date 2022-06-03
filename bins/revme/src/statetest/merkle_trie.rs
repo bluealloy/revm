@@ -69,7 +69,7 @@ pub fn trie_root(acc_data: Vec<(H160, Bytes)>) -> H256 {
     sec_trie_root::<KeccakHasher, _, _, _>(acc_data.into_iter())
 }
 
-#[derive(Default, Debug, Clone, PartialEq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct KeccakHasher;
 impl Hasher for KeccakHasher {
     type Out = H256;
