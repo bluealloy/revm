@@ -73,6 +73,14 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     pub fn insert_cache_storage(&mut self, address: H160, slot: U256, value: U256) {
         self.storage.entry(address).or_default().insert(slot, value);
     }
+
+    pub fn db(&self) -> &ExtDB {
+        &self.db
+    }
+
+    pub fn db_mut(&mut self) -> &mut ExtDB {
+        &mut self.db
+    }
 }
 
 // TODO It is currently only committing to cached in-memory DB
