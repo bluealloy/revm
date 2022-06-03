@@ -132,7 +132,7 @@ mod tests {
                 continue;
             }
             let next_multiple = x + 32 - (x % 32);
-            assert_eq!(Some(next_multiple), next_multiple_of_32(x.into()));
+            assert_eq!(Some(next_multiple), next_multiple_of_32(x));
         }
     }
 }

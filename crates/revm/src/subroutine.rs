@@ -643,7 +643,7 @@ impl From<AccountInfo> for Account {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Filth {
     /// clean load from db
     Clean,
