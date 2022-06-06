@@ -17,7 +17,7 @@ pub use evm_impl::{EVMData, Host};
 pub type DummyStateDB = InMemoryDB;
 
 pub use db::{Database, DatabaseCommit, InMemoryDB};
-pub use evm::{new, EVM};
+pub use evm::{evm_inner, new, EVM};
 pub use gas::Gas;
 pub use inspector::{Inspector, NoOpInspector, OverrideSpec};
 pub use instructions::{
