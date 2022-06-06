@@ -1,9 +1,14 @@
 
+# v1.4.1
+date: 06.06.2022
+
+Small release:
+* chore: export evm_inner (#122)
+
 # v1.4.0
 date: 03.06.2022
 
 Small release:
-
 * fix: BLOCKHASH should return 0 if number not in last 256 blocks (#112)
 * feat: add getters for cachedb (#119)
 * bump some lib versions.
@@ -12,7 +17,6 @@ Small release:
 date: 11.4.2022
 
 Small fixes release.
-
 * Empty keccak constant and remove access_list.clone (#111)
 * chore: typo fixes
 * fix is_static for Inspector initialize_interp
