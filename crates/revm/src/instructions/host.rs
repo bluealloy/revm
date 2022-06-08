@@ -115,10 +115,7 @@ pub fn sstore<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Re
 
     pop!(interp, index, value);
     let (original, old, new, is_cold) = host.sstore(interp.contract.address, index, value);
-    gas_or_fail!(interp, {
-        let remaining_gas = interp.gas.remaining();
-        gas::sstore_cost::<SPEC>(original, old, new, remaining_gas, is_cold)
-    });
+    gas!(interp, gas::sstore_cost::<SPEC>(original, old, new, is_cold));
     refund!(interp, gas::sstore_refund::<SPEC>(original, old, new));
     Return::Continue
 }

@@ -215,9 +215,8 @@ pub fn sstore_cost<SPEC: Spec>(
     original: U256,
     current: U256,
     new: U256,
-    gas: u64,
     is_cold: bool,
-) -> Option<u64> {
+) -> u64 {
     // TODO untangle this mess and make it more elegant
     let (gas_sload, gas_sstore_reset) = if SPEC::enabled(BERLIN) {
         (STORAGE_READ_WARM, SSTORE_RESET - SLOAD_COLD)
@@ -225,10 +224,6 @@ pub fn sstore_cost<SPEC: Spec>(
         (sload_cost::<SPEC>(is_cold), SSTORE_RESET)
     };
     let gas_cost = if SPEC::enabled(CONSTANTINOPLE) {
-        if SPEC::enabled(CONSTANTINOPLE) && gas <= CALL_STIPEND {
-            return None;
-        }
-
         if new == current {
             gas_sload
         } else {
@@ -251,9 +246,9 @@ pub fn sstore_cost<SPEC: Spec>(
     };
     // In EIP-2929 we charge extra if the slot has not been used yet in this transaction
     if SPEC::enabled(BERLIN) && is_cold {
-        Some(gas_cost + SLOAD_COLD)
+        gas_cost + SLOAD_COLD
     } else {
-        Some(gas_cost)
+        gas_cost
     }
 }
 
