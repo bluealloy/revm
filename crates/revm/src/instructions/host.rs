@@ -120,7 +120,7 @@ pub fn sstore<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Re
         gas::sstore_cost::<SPEC>(original, old, new, remaining_gas, is_cold)
     });
     refund!(interp, gas::sstore_refund::<SPEC>(original, old, new));
-    Return::Continue
+    interp.add_next_gas_block(interp.program_counter() - 1)
 }
 
 pub fn log<H: Host, SPEC: Spec>(interp: &mut Interpreter, n: u8, host: &mut H) -> Return {

@@ -363,7 +363,7 @@ macro_rules! gas_opcodee {
             /* 0x52  MSTORE */ OpInfo::gas(gas::VERYLOW),
             /* 0x53  MSTORE8 */ OpInfo::gas(gas::VERYLOW),
             /* 0x54  SLOAD */ OpInfo::dynamic_gas(),
-            /* 0x55  SSTORE */ OpInfo::dynamic_gas(),
+            /* 0x55  SSTORE */ OpInfo::gas_block_end(0),
             /* 0x56  JUMP */ OpInfo::gas_block_end(gas::MID),
             /* 0x57  JUMPI */ OpInfo::gas_block_end(gas::HIGH),
             /* 0x58  PC */ OpInfo::gas(gas::BASE),
