@@ -1,4 +1,12 @@
 
+# v1.5.0
+date: 09.06.2022
+
+Consensus error related to gas block optimization and `sstore` min stipend. Solution is to make `sstore` instruction as `gas_block_end` as to not spend future instruction gas when checking min stipend condition introduced in EIP-2200.
+
+* Consensus error with gas block for SSTORE stipend check (#124)
+* enable EIP2200 in Istanbul (#125)
+
 # v1.4.1
 date: 06.06.2022
 

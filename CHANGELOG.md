@@ -1,5 +1,10 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag. 
 
+# v10 tag
+date: 09.06.2022
+
+* revm: v1.5.0: consensus bug fix
+
 # v9 tag [small release]
 date 06.06.2022
 
