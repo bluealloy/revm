@@ -393,7 +393,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 let code = interp.return_value();
 
                 // EIP-3541: Reject new contract code starting with the 0xEF byte
-                if SPEC::enabled(LONDON) && !code.is_empty() && code.get(0) == Some(&0xEF) {
+                if SPEC::enabled(LONDON) && !code.is_empty() && code.first() == Some(&0xEF) {
                     self.data.subroutine.checkpoint_revert(checkpoint);
                     return (Return::CreateContractWithEF, ret, interp.gas, b);
                 }
