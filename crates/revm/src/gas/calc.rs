@@ -224,11 +224,16 @@ pub fn sstore_cost<SPEC: Spec>(
     } else {
         (sload_cost::<SPEC>(is_cold), SSTORE_RESET)
     };
-    let gas_cost = if SPEC::enabled(CONSTANTINOPLE) {
-        if SPEC::enabled(CONSTANTINOPLE) && gas <= CALL_STIPEND {
+
+    // https://eips.ethereum.org/EIPS/eip-2200
+    // It’s a combined version of EIP-1283 and EIP-1706
+    let gas_cost = if SPEC::enabled(ISTANBUL) {
+        // EIP-1706
+        if gas <= CALL_STIPEND {
             return None;
         }
 
+        // EIP-1283
         if new == current {
             gas_sload
         } else {
