@@ -1,4 +1,4 @@
-use crate::{subroutine::Filth, Database, KECCAK_EMPTY};
+use crate::{Database, KECCAK_EMPTY};
 
 use alloc::vec::Vec;
 use hashbrown::{hash_map::Entry, HashMap as Map};
@@ -87,26 +87,12 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
 impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
     fn commit(&mut self, changes: Map<H160, Account>) {
         for (add, acc) in changes {
-            if acc.is_empty() || matches!(acc.filth, Filth::Destroyed) {
-                self.cache.remove(&add);
-                self.storage.remove(&add);
-            } else {
-                self.insert_cache(add, acc.info);
-                let storage = self.storage.entry(add).or_default();
-                if acc.filth.abandon_old_storage() {
-                    storage.clear();
-                }
-                for (index, value) in acc.storage {
-                    if value.is_zero() {
-                        storage.remove(&index);
-                    } else {
-                        storage.insert(index, value);
-                    }
-                }
-                if storage.is_empty() {
-                    self.storage.remove(&add);
-                }
+            self.insert_cache(add, acc.info);
+            let storage = self.storage.entry(add).or_default();
+            if acc.filth.abandon_old_storage() {
+                storage.clear();
             }
+            storage.extend(acc.storage);
         }
     }
 }
