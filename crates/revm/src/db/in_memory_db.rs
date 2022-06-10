@@ -1,7 +1,7 @@
-use crate::{Database, KECCAK_EMPTY};
+use crate::{Database, Filth, KECCAK_EMPTY};
 
 use alloc::vec::Vec;
-use hashbrown::{hash_map::Entry, HashMap as Map};
+use hashbrown::{hash_map::Entry, HashMap as Map, HashMap};
 
 use primitive_types::{H160, H256, U256};
 
@@ -86,13 +86,26 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
 // TODO It is currently only committing to cached in-memory DB
 impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
     fn commit(&mut self, changes: Map<H160, Account>) {
+        // clear storage by setting all values to `0`
+        fn clear_storage(storage: &mut HashMap<U256, U256>) {
+            storage.values_mut().for_each(|val| {
+                *val = U256::zero();
+            })
+        }
+
         for (add, acc) in changes {
-            self.insert_cache(add, acc.info);
-            let storage = self.storage.entry(add).or_default();
-            if acc.filth.abandon_old_storage() {
-                storage.clear();
+            if acc.is_empty() || matches!(acc.filth, Filth::Destroyed) {
+                // clear account data, but don't remove entry
+                self.cache.insert(add, Default::default());
+                self.storage.get_mut(&add).map(clear_storage);
+            } else {
+                self.insert_cache(add, acc.info);
+                let storage = self.storage.entry(add).or_default();
+                if acc.filth.abandon_old_storage() {
+                    clear_storage(storage);
+                }
+                storage.extend(acc.storage);
             }
-            storage.extend(acc.storage);
         }
     }
 }
