@@ -34,7 +34,6 @@ pub fn state_merkle_trie_root(
 ) -> H256 {
     let vec = accounts
         .iter()
-        .filter(|(_, info)| !info.is_empty())
         .map(|(address, info)| {
             let storage = storage.get(address).cloned().unwrap_or_default();
             let storage_root = trie_account_rlp(info, storage);
