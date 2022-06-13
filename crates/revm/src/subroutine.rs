@@ -8,6 +8,7 @@ use primitive_types::{H160, H256, U256};
 
 use crate::{db::Database, AccountInfo, Log};
 
+#[derive(Debug, Clone)]
 pub struct SubRoutine {
     /// Applied changes to our state
     state: State,
