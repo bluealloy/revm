@@ -8,19 +8,20 @@ use primitive_types::{H160, H256, U256};
 
 use crate::{db::Database, AccountInfo, Log};
 
+#[derive(Debug, Clone)]
 pub struct SubRoutine {
     /// Applied changes to our state
-    state: State,
+    pub state: State,
     /// logs
-    logs: Vec<Log>,
+    pub logs: Vec<Log>,
     /// It contains original values before they were changes.
     /// it is made like this so that we can revert to previous state in case of
     /// exit or revert
     /// if account is none it means that account was cold in previous changelog
     /// Additional HashSet represent cold storage slots.
-    changelog: Vec<Map<H160, ChangeLog>>,
+    pub changelog: Vec<Map<H160, ChangeLog>>,
     /// how deep are we in call stack.
-    depth: usize,
+    pub depth: usize,
 }
 
 // contains old account changes and cold sload
