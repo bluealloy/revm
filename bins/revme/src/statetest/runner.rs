@@ -232,8 +232,19 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                 let timer = timer.elapsed();
 
                 *elapsed.lock().unwrap() += timer;
+
+                // apply changes to cached state
                 let db = evm.db().unwrap();
-                let state_root = state_merkle_trie_root(db.cache(), db.storage());
+                let mut state = db.cache().clone();
+                for (change_add, change_acc) in db.changes() {
+                    if change_acc.is_empty() {
+                        state.remove(change_add);
+                    } else {
+                        state.insert(*change_add, change_acc.clone());
+                    }
+                }
+
+                let state_root = state_merkle_trie_root(&state, db.storage());
                 let logs_root = log_rlp_hash(logs);
                 if test.hash != state_root || test.logs != logs_root {
                     println!(

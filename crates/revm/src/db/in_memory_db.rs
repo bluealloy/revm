@@ -1,7 +1,7 @@
-use crate::{subroutine::Filth, Database, KECCAK_EMPTY};
+use crate::{Database, Filth, KECCAK_EMPTY};
 
 use alloc::vec::Vec;
-use hashbrown::{hash_map::Entry, HashMap as Map};
+use hashbrown::{hash_map::Entry, HashMap as Map, HashMap};
 
 use primitive_types::{H160, H256, U256};
 
@@ -24,6 +24,7 @@ impl InMemoryDB {
 pub struct CacheDB<ExtDB: DatabaseRef> {
     /// Dummy account info where `code` is always `None`.
     /// Code bytes can be found in `contracts`.
+    changes: Map<H160, AccountInfo>,
     cache: Map<H160, AccountInfo>,
     storage: Map<H160, Map<U256, U256>>,
     contracts: Map<H256, Bytes>,
@@ -38,6 +39,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         contracts.insert(KECCAK_EMPTY, Bytes::new());
         contracts.insert(H256::zero(), Bytes::new());
         Self {
+            changes: Map::new(),
             cache: Map::new(),
             storage: Map::new(),
             contracts,
@@ -45,6 +47,9 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
             block_hashes: Map::new(),
             db,
         }
+    }
+    pub fn changes(&self) -> &Map<H160, AccountInfo> {
+        &self.changes
     }
 
     pub fn cache(&self) -> &Map<H160, AccountInfo> {
@@ -55,7 +60,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         &self.storage
     }
 
-    pub fn insert_cache(&mut self, address: H160, mut account: AccountInfo) {
+    fn insert_contract(&mut self, account: &mut AccountInfo) {
         let code = core::mem::take(&mut account.code);
         if let Some(code) = code {
             if !code.is_empty() {
@@ -67,6 +72,15 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         if account.code_hash.is_zero() {
             account.code_hash = KECCAK_EMPTY;
         }
+    }
+
+    pub fn insert_change(&mut self, address: H160, mut account: AccountInfo) {
+        self.insert_contract(&mut account);
+        self.changes.insert(address, account);
+    }
+
+    pub fn insert_cache(&mut self, address: H160, mut account: AccountInfo) {
+        self.insert_contract(&mut account);
         self.cache.insert(address, account);
     }
 
@@ -86,26 +100,25 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
 // TODO It is currently only committing to cached in-memory DB
 impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
     fn commit(&mut self, changes: Map<H160, Account>) {
+        // clear storage by setting all values to `0`
+        fn clear_storage(storage: &mut HashMap<U256, U256>) {
+            storage.values_mut().for_each(|val| {
+                *val = U256::zero();
+            })
+        }
+
         for (add, acc) in changes {
             if acc.is_empty() || matches!(acc.filth, Filth::Destroyed) {
-                self.cache.remove(&add);
-                self.storage.remove(&add);
+                // clear account data, but don't remove entry
+                self.changes.insert(add, Default::default());
+                self.storage.get_mut(&add).map(clear_storage);
             } else {
-                self.insert_cache(add, acc.info);
+                self.insert_change(add, acc.info);
                 let storage = self.storage.entry(add).or_default();
                 if acc.filth.abandon_old_storage() {
-                    storage.clear();
+                    clear_storage(storage);
                 }
-                for (index, value) in acc.storage {
-                    if value.is_zero() {
-                        storage.remove(&index);
-                    } else {
-                        storage.insert(index, value);
-                    }
-                }
-                if storage.is_empty() {
-                    self.storage.remove(&add);
-                }
+                storage.extend(acc.storage);
             }
         }
     }
@@ -124,14 +137,18 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
     }
 
     fn basic(&mut self, address: H160) -> AccountInfo {
-        match self.cache.entry(address) {
-            Entry::Occupied(entry) => entry.get().clone(),
-            Entry::Vacant(entry) => {
-                let acc = self.db.basic(address);
-                if !acc.is_empty() {
-                    entry.insert(acc.clone());
+        if let Some(changed) = self.changes.get(&address) {
+            changed.clone()
+        } else {
+            match self.cache.entry(address) {
+                Entry::Occupied(entry) => entry.get().clone(),
+                Entry::Vacant(entry) => {
+                    let acc = self.db.basic(address);
+                    if !acc.is_empty() {
+                        entry.insert(acc.clone());
+                    }
+                    acc
                 }
-                acc
             }
         }
     }
