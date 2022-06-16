@@ -20,6 +20,7 @@ pub enum SpecName {
     Berlin,
     London,
     BerlinToLondonAt5,
+    Merge,
 }
 
 impl SpecName {

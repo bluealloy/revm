@@ -57,7 +57,7 @@ pub struct AccountInfo {
 #[serde(rename_all = "camelCase")]
 pub struct Env {
     pub current_coinbase: H160,
-    #[serde(deserialize_with = "deserialize_str_as_u256")]
+    #[serde(default, deserialize_with = "deserialize_str_as_u256")]
     pub current_difficulty: U256,
     #[serde(deserialize_with = "deserialize_str_as_u256")]
     pub current_gas_limit: U256,
