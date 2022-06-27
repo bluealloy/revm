@@ -400,5 +400,11 @@ pub fn call<H: Host, SPEC: Spec>(
             push!(interp, U256::zero());
         }
     }
-    interp.add_next_gas_block(interp.program_counter() - 1)
+    let ret = interp.add_next_gas_block(interp.program_counter() - 1);
+
+    if !matches!(reason, return_ok!()) {
+        reason
+    } else {
+        ret
+    }
 }
