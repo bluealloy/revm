@@ -8,7 +8,7 @@ pub use stack::Stack;
 
 use crate::{
     instructions::{eval, Return},
-    return_ok, Gas, Host, Spec, USE_GAS,
+    Gas, Host, Spec, USE_GAS,
 };
 use bytes::Bytes;
 use core::ops::Range;
@@ -122,18 +122,6 @@ impl Interpreter {
             // it will do noop and just stop execution of this contract
             self.program_counter = unsafe { self.program_counter.offset(1) };
             ret = eval::<H, SPEC>(opcode, self, host);
-
-            // CALL failures don't fail current call by themselves.
-            if matches!(
-                opcode,
-                super::instructions::opcode::CALL
-                    | super::instructions::opcode::STATICCALL
-                    | super::instructions::opcode::DELEGATECALL
-            ) {
-                if !matches!(ret, return_ok!() | Return::OutOfGas) {
-                    ret = Return::Continue
-                }
-            }
 
             if H::INSPECT {
                 let ret = host.step_end(self, SPEC::IS_STATIC_CALL, ret);
