@@ -1,6 +1,9 @@
 use crate::{Database, Filth, KECCAK_EMPTY};
 
-use alloc::{vec::Vec,collections::btree_map::{BTreeMap, self}};
+use alloc::{
+    collections::btree_map::{self, BTreeMap},
+    vec::Vec,
+};
 use hashbrown::{hash_map::Entry, HashMap as Map};
 
 use primitive_types::{H160, H256, U256};
@@ -42,7 +45,7 @@ pub struct DbAccount {
 
 #[derive(Debug, Clone)]
 pub enum AccountState {
-    /// EVM touched this account 
+    /// EVM touched this account
     EVMTouched,
     /// EVM cleared storage of this account, mostly by selfdestruct
     EVMStorageCleared,

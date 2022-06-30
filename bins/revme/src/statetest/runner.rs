@@ -233,22 +233,13 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
 
                 *elapsed.lock().unwrap() += timer;
 
-                // // apply changes to cached state
                 let db = evm.db().unwrap();
-                // let mut state = db.cache().clone();
-                // for (change_add, change_acc) in db.changes() {
-                //     if change_acc.is_empty() {
-                //         state.remove(change_add);
-                //     } else {
-                //         state.insert(*change_add, change_acc.clone());
-                //     }
-                // }
-
                 let state_root = state_merkle_trie_root(
                     db.changeset()
                         .iter()
                         .filter(|(_, acc)| {
-                            !acc.info.is_empty() || matches!(acc.storage_cleared, AccountState::None)
+                            !acc.info.is_empty()
+                                || matches!(acc.storage_cleared, AccountState::None)
                         })
                         .map(|(k, v)| (*k, v.clone()))
                         .into_iter(),
@@ -289,7 +280,7 @@ pub fn run(test_files: Vec<PathBuf>) -> Result<(), TestError> {
     let mut joins = Vec::new();
     let queue = Arc::new(Mutex::new((0, test_files)));
     let elapsed = Arc::new(Mutex::new(std::time::Duration::ZERO));
-    for _ in 0..1 {
+    for _ in 0..10 {
         let queue = queue.clone();
         let endjob = endjob.clone();
         let console_bar = console_bar.clone();
@@ -299,14 +290,14 @@ pub fn run(test_files: Vec<PathBuf>) -> Result<(), TestError> {
             std::thread::Builder::new()
                 .stack_size(50 * 1024 * 1024)
                 .spawn(move || loop {
-                    let (index,test_path) = {
+                    let (index, test_path) = {
                         let mut queue = queue.lock().unwrap();
                         if queue.1.len() <= queue.0 {
                             return Ok(());
                         }
                         let test_path = queue.1[queue.0].clone();
                         queue.0 += 1;
-                        (queue.0-1,test_path)
+                        (queue.0 - 1, test_path)
                     };
                     if endjob.load(Ordering::SeqCst) {
                         return Ok(());
