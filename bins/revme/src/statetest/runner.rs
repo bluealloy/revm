@@ -235,11 +235,10 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
 
                 let db = evm.db().unwrap();
                 let state_root = state_merkle_trie_root(
-                    db.changeset()
+                    db.accounts()
                         .iter()
                         .filter(|(_, acc)| {
-                            !acc.info.is_empty()
-                                || matches!(acc.account_state, AccountState::None)
+                            !acc.info.is_empty() || matches!(acc.account_state, AccountState::None)
                         })
                         .map(|(k, v)| (*k, v.clone()))
                         .into_iter(),

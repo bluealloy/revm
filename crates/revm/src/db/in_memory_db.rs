@@ -27,7 +27,7 @@ impl InMemoryDB {
 pub struct CacheDB<ExtDB: DatabaseRef> {
     /// Dummy account info where `code` is always `None`.
     /// Code bytes can be found in `contracts`.
-    changeset: BTreeMap<H160, DbAccount>,
+    accounts: BTreeMap<H160, DbAccount>,
     contracts: Map<H256, Bytes>,
     logs: Vec<Log>,
     block_hashes: Map<U256, H256>,
@@ -37,7 +37,7 @@ pub struct CacheDB<ExtDB: DatabaseRef> {
 #[derive(Debug, Clone)]
 pub struct DbAccount {
     pub info: AccountInfo,
-    /// If account is selfdestructed or newly created storage will be cleared.
+    /// If account is selfdestructed or newly created, storage will be cleared.
     pub account_state: AccountState,
     /// storage slots
     pub storage: BTreeMap<U256, U256>,
@@ -59,15 +59,15 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         contracts.insert(KECCAK_EMPTY, Bytes::new());
         contracts.insert(H256::zero(), Bytes::new());
         Self {
-            changeset: BTreeMap::new(),
+            accounts: BTreeMap::new(),
             contracts,
             logs: Vec::default(),
             block_hashes: Map::new(),
             db,
         }
     }
-    pub fn changeset(&self) -> &BTreeMap<H160, DbAccount> {
-        &self.changeset
+    pub fn accounts(&self) -> &BTreeMap<H160, DbAccount> {
+        &self.accounts
     }
 
     fn insert_contract(&mut self, account: &mut AccountInfo) {
@@ -86,7 +86,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
 
     pub fn insert_cache(&mut self, address: H160, mut info: AccountInfo) {
         self.insert_contract(&mut info);
-        self.changeset.insert(
+        self.accounts.insert(
             address,
             DbAccount {
                 info,
@@ -97,7 +97,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     }
 
     pub fn insert_cache_storage(&mut self, address: H160, slot: U256, value: U256) {
-        self.changeset
+        self.accounts
             .entry(address)
             .or_insert(DbAccount {
                 info: AccountInfo::default(),
@@ -122,7 +122,7 @@ impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
         for (add, acc) in changes {
             if acc.is_empty() || matches!(acc.filth, Filth::Destroyed) {
                 // clear account data, and increate its incarnation.
-                let acc = self.changeset.entry(add).or_insert(DbAccount {
+                let acc = self.accounts.entry(add).or_insert(DbAccount {
                     info: AccountInfo::default(),
                     storage: BTreeMap::new(),
                     account_state: AccountState::EVMStorageCleared,
@@ -131,7 +131,7 @@ impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
                 acc.storage = BTreeMap::new();
                 acc.info = AccountInfo::default();
             } else {
-                match self.changeset.entry(add) {
+                match self.accounts.entry(add) {
                     btree_map::Entry::Vacant(entry) => {
                         // can happend if new account is created
                         entry.insert(DbAccount {
@@ -172,7 +172,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
     }
 
     fn basic(&mut self, address: H160) -> AccountInfo {
-        match self.changeset.entry(address) {
+        match self.accounts.entry(address) {
             btree_map::Entry::Occupied(entry) => entry.get().info.clone(),
             btree_map::Entry::Vacant(entry) => {
                 let info = self.db.basic(address);
@@ -190,7 +190,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
     ///
     /// It is assumed that account is already loaded.
     fn storage(&mut self, address: H160, index: U256) -> U256 {
-        match self.changeset.entry(address) {
+        match self.accounts.entry(address) {
             btree_map::Entry::Occupied(mut acc_entry) => {
                 let acc_entry = acc_entry.get_mut();
                 match acc_entry.storage.entry(index) {
@@ -240,14 +240,14 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
     }
 
     fn basic(&self, address: H160) -> AccountInfo {
-        match self.changeset.get(&address) {
+        match self.accounts.get(&address) {
             Some(acc) => acc.info.clone(),
             None => self.db.basic(address),
         }
     }
 
     fn storage(&self, address: H160, index: U256) -> U256 {
-        match self.changeset.get(&address) {
+        match self.accounts.get(&address) {
             Some(acc_entry) => match acc_entry.storage.get(&index) {
                 Some(entry) => *entry,
                 None => {
