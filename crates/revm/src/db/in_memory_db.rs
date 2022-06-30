@@ -38,7 +38,7 @@ pub struct CacheDB<ExtDB: DatabaseRef> {
 pub struct DbAccount {
     pub info: AccountInfo,
     /// If account is selfdestructed or newly created storage will be cleared.
-    pub storage_cleared: AccountState,
+    pub account_state: AccountState,
     /// storage slots
     pub storage: BTreeMap<U256, U256>,
 }
@@ -90,7 +90,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
             address,
             DbAccount {
                 info,
-                storage_cleared: AccountState::None,
+                account_state: AccountState::None,
                 storage: BTreeMap::new(),
             },
         );
@@ -101,7 +101,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
             .entry(address)
             .or_insert(DbAccount {
                 info: AccountInfo::default(),
-                storage_cleared: AccountState::None,
+                account_state: AccountState::None,
                 storage: BTreeMap::new(),
             })
             .storage
@@ -125,9 +125,9 @@ impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
                 let acc = self.changeset.entry(add).or_insert(DbAccount {
                     info: AccountInfo::default(),
                     storage: BTreeMap::new(),
-                    storage_cleared: AccountState::EVMStorageCleared,
+                    account_state: AccountState::EVMStorageCleared,
                 });
-                acc.storage_cleared = AccountState::EVMStorageCleared;
+                acc.account_state = AccountState::EVMStorageCleared;
                 acc.storage = BTreeMap::new();
                 acc.info = AccountInfo::default();
             } else {
@@ -136,7 +136,7 @@ impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
                         // can happend if new account is created
                         entry.insert(DbAccount {
                             info: acc.info,
-                            storage_cleared: AccountState::EVMTouched,
+                            account_state: AccountState::EVMTouched,
                             storage: acc.storage.into_iter().collect(),
                         });
                     }
@@ -144,11 +144,11 @@ impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
                         let db_acc = entry.get_mut();
                         db_acc.info = acc.info;
                         if matches!(acc.filth, Filth::NewlyCreated) {
-                            db_acc.storage_cleared = AccountState::EVMStorageCleared;
+                            db_acc.account_state = AccountState::EVMStorageCleared;
                             db_acc.storage = acc.storage.into_iter().collect();
                         } else {
-                            if matches!(db_acc.storage_cleared, AccountState::None) {
-                                db_acc.storage_cleared = AccountState::EVMTouched;
+                            if matches!(db_acc.account_state, AccountState::None) {
+                                db_acc.account_state = AccountState::EVMTouched;
                             }
                             db_acc.storage.extend(acc.storage);
                         }
@@ -178,7 +178,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
                 let info = self.db.basic(address);
                 entry.insert(DbAccount {
                     info: info.clone(),
-                    storage_cleared: AccountState::EVMTouched,
+                    account_state: AccountState::EVMTouched,
                     storage: BTreeMap::new(),
                 });
                 info
@@ -196,7 +196,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
                 match acc_entry.storage.entry(index) {
                     btree_map::Entry::Occupied(entry) => *entry.get(),
                     btree_map::Entry::Vacant(entry) => {
-                        if matches!(acc_entry.storage_cleared, AccountState::EVMStorageCleared) {
+                        if matches!(acc_entry.account_state, AccountState::EVMStorageCleared) {
                             U256::zero()
                         } else {
                             let slot = self.db.storage(address, index);
@@ -212,7 +212,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
                 let value = self.db.storage(address, index);
                 acc_entry.insert(DbAccount {
                     info,
-                    storage_cleared: AccountState::EVMTouched,
+                    account_state: AccountState::EVMTouched,
                     storage: BTreeMap::from([(index, value)]),
                 });
                 value
@@ -251,7 +251,7 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
             Some(acc_entry) => match acc_entry.storage.get(&index) {
                 Some(entry) => *entry,
                 None => {
-                    if matches!(acc_entry.storage_cleared, AccountState::EVMStorageCleared) {
+                    if matches!(acc_entry.account_state, AccountState::EVMStorageCleared) {
                         U256::zero()
                     } else {
                         self.db.storage(address, index)

@@ -239,7 +239,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                         .iter()
                         .filter(|(_, acc)| {
                             !acc.info.is_empty()
-                                || matches!(acc.storage_cleared, AccountState::None)
+                                || matches!(acc.account_state, AccountState::None)
                         })
                         .map(|(k, v)| (*k, v.clone()))
                         .into_iter(),
