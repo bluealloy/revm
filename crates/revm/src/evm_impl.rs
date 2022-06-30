@@ -465,7 +465,19 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
         // Check depth
         if self.data.subroutine.depth() > interpreter::CALL_STACK_LIMIT {
-            return (Return::CallTooDeep, gas, Bytes::new());
+            let (ret, gas, out) = (Return::CallTooDeep, gas, Bytes::new());
+            if Self::INSPECT {
+                return self.inspector.call_end(
+                    &mut self.data,
+                    inputs,
+                    gas,
+                    ret,
+                    out,
+                    SPEC::IS_STATIC_CALL,
+                );
+            } else {
+                return (ret, gas, out);
+            }
         }
 
         // Create subroutine checkpoint
@@ -487,7 +499,19 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             self.data.db,
         ) {
             self.data.subroutine.checkpoint_revert(checkpoint);
-            return (e, gas, Bytes::new());
+            let (ret, gas, out) = (e, gas, Bytes::new());
+            if Self::INSPECT {
+                return self.inspector.call_end(
+                    &mut self.data,
+                    inputs,
+                    gas,
+                    ret,
+                    out,
+                    SPEC::IS_STATIC_CALL,
+                );
+            } else {
+                return (ret, gas, out);
+            }
         }
 
         // Call precompiles
