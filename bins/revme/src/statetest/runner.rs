@@ -240,8 +240,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                         .filter(|(_, acc)| {
                             !acc.info.is_empty() || matches!(acc.account_state, AccountState::None)
                         })
-                        .map(|(k, v)| (*k, v.clone()))
-                        .into_iter(),
+                        .map(|(k, v)| (*k, v.clone())),
                 );
                 let logs_root = log_rlp_hash(logs);
                 if test.hash != state_root || test.logs != logs_root {

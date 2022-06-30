@@ -24,7 +24,7 @@ pub fn log_rlp_hash(logs: Vec<Log>) -> H256 {
     H256::from_slice(out.as_slice())
 }
 
-pub fn state_merkle_trie_root<'a>(accounts: impl Iterator<Item = (H160, DbAccount)>) -> H256 {
+pub fn state_merkle_trie_root(accounts: impl Iterator<Item = (H160, DbAccount)>) -> H256 {
     let vec = accounts
         .map(|(address, info)| {
             let acc_root = trie_account_rlp(&info);
