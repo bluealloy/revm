@@ -1,7 +1,10 @@
 use crate::{Database, Filth, KECCAK_EMPTY};
 
-use alloc::vec::Vec;
-use hashbrown::{hash_map::Entry, HashMap as Map, HashMap};
+use alloc::{
+    collections::btree_map::{self, BTreeMap},
+    vec::Vec,
+};
+use hashbrown::{hash_map::Entry, HashMap as Map};
 
 use primitive_types::{H160, H256, U256};
 
@@ -24,13 +27,30 @@ impl InMemoryDB {
 pub struct CacheDB<ExtDB: DatabaseRef> {
     /// Dummy account info where `code` is always `None`.
     /// Code bytes can be found in `contracts`.
-    changes: Map<H160, AccountInfo>,
-    cache: Map<H160, AccountInfo>,
-    storage: Map<H160, Map<U256, U256>>,
+    accounts: BTreeMap<H160, DbAccount>,
     contracts: Map<H256, Bytes>,
     logs: Vec<Log>,
     block_hashes: Map<U256, H256>,
     db: ExtDB,
+}
+
+#[derive(Debug, Clone)]
+pub struct DbAccount {
+    pub info: AccountInfo,
+    /// If account is selfdestructed or newly created, storage will be cleared.
+    pub account_state: AccountState,
+    /// storage slots
+    pub storage: BTreeMap<U256, U256>,
+}
+
+#[derive(Debug, Clone)]
+pub enum AccountState {
+    /// EVM touched this account
+    EVMTouched,
+    /// EVM cleared storage of this account, mostly by selfdestruct
+    EVMStorageCleared,
+    /// EVM didnt interacted with this account
+    None,
 }
 
 impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
@@ -39,25 +59,15 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         contracts.insert(KECCAK_EMPTY, Bytes::new());
         contracts.insert(H256::zero(), Bytes::new());
         Self {
-            changes: Map::new(),
-            cache: Map::new(),
-            storage: Map::new(),
+            accounts: BTreeMap::new(),
             contracts,
             logs: Vec::default(),
             block_hashes: Map::new(),
             db,
         }
     }
-    pub fn changes(&self) -> &Map<H160, AccountInfo> {
-        &self.changes
-    }
-
-    pub fn cache(&self) -> &Map<H160, AccountInfo> {
-        &self.cache
-    }
-
-    pub fn storage(&self) -> &Map<H160, Map<U256, U256>> {
-        &self.storage
+    pub fn accounts(&self) -> &BTreeMap<H160, DbAccount> {
+        &self.accounts
     }
 
     fn insert_contract(&mut self, account: &mut AccountInfo) {
@@ -74,18 +84,28 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         }
     }
 
-    pub fn insert_change(&mut self, address: H160, mut account: AccountInfo) {
-        self.insert_contract(&mut account);
-        self.changes.insert(address, account);
-    }
-
-    pub fn insert_cache(&mut self, address: H160, mut account: AccountInfo) {
-        self.insert_contract(&mut account);
-        self.cache.insert(address, account);
+    pub fn insert_cache(&mut self, address: H160, mut info: AccountInfo) {
+        self.insert_contract(&mut info);
+        self.accounts.insert(
+            address,
+            DbAccount {
+                info,
+                account_state: AccountState::None,
+                storage: BTreeMap::new(),
+            },
+        );
     }
 
     pub fn insert_cache_storage(&mut self, address: H160, slot: U256, value: U256) {
-        self.storage.entry(address).or_default().insert(slot, value);
+        self.accounts
+            .entry(address)
+            .or_insert(DbAccount {
+                info: AccountInfo::default(),
+                account_state: AccountState::None,
+                storage: BTreeMap::new(),
+            })
+            .storage
+            .insert(slot, value);
     }
 
     pub fn db(&self) -> &ExtDB {
@@ -97,28 +117,43 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     }
 }
 
-// TODO It is currently only committing to cached in-memory DB
 impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
     fn commit(&mut self, changes: Map<H160, Account>) {
-        // clear storage by setting all values to `0`
-        fn clear_storage(storage: &mut HashMap<U256, U256>) {
-            storage.values_mut().for_each(|val| {
-                *val = U256::zero();
-            })
-        }
-
         for (add, acc) in changes {
             if acc.is_empty() || matches!(acc.filth, Filth::Destroyed) {
-                // clear account data, but don't remove entry
-                self.changes.insert(add, Default::default());
-                self.storage.get_mut(&add).map(clear_storage);
+                // clear account data, and increate its incarnation.
+                let acc = self.accounts.entry(add).or_insert(DbAccount {
+                    info: AccountInfo::default(),
+                    storage: BTreeMap::new(),
+                    account_state: AccountState::EVMStorageCleared,
+                });
+                acc.account_state = AccountState::EVMStorageCleared;
+                acc.storage = BTreeMap::new();
+                acc.info = AccountInfo::default();
             } else {
-                self.insert_change(add, acc.info);
-                let storage = self.storage.entry(add).or_default();
-                if acc.filth.abandon_old_storage() {
-                    clear_storage(storage);
+                match self.accounts.entry(add) {
+                    btree_map::Entry::Vacant(entry) => {
+                        // can happend if new account is created
+                        entry.insert(DbAccount {
+                            info: acc.info,
+                            account_state: AccountState::EVMTouched,
+                            storage: acc.storage.into_iter().collect(),
+                        });
+                    }
+                    btree_map::Entry::Occupied(mut entry) => {
+                        let db_acc = entry.get_mut();
+                        db_acc.info = acc.info;
+                        if matches!(acc.filth, Filth::NewlyCreated) {
+                            db_acc.account_state = AccountState::EVMStorageCleared;
+                            db_acc.storage = acc.storage.into_iter().collect();
+                        } else {
+                            if matches!(db_acc.account_state, AccountState::None) {
+                                db_acc.account_state = AccountState::EVMTouched;
+                            }
+                            db_acc.storage.extend(acc.storage);
+                        }
+                    }
                 }
-                storage.extend(acc.storage);
             }
         }
     }
@@ -137,18 +172,16 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
     }
 
     fn basic(&mut self, address: H160) -> AccountInfo {
-        if let Some(changed) = self.changes.get(&address) {
-            changed.clone()
-        } else {
-            match self.cache.entry(address) {
-                Entry::Occupied(entry) => entry.get().clone(),
-                Entry::Vacant(entry) => {
-                    let acc = self.db.basic(address);
-                    if !acc.is_empty() {
-                        entry.insert(acc.clone());
-                    }
-                    acc
-                }
+        match self.accounts.entry(address) {
+            btree_map::Entry::Occupied(entry) => entry.get().info.clone(),
+            btree_map::Entry::Vacant(entry) => {
+                let info = self.db.basic(address);
+                entry.insert(DbAccount {
+                    info: info.clone(),
+                    account_state: AccountState::EVMTouched,
+                    storage: BTreeMap::new(),
+                });
+                info
             }
         }
     }
@@ -157,21 +190,32 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
     ///
     /// It is assumed that account is already loaded.
     fn storage(&mut self, address: H160, index: U256) -> U256 {
-        match self.storage.entry(address) {
-            Entry::Occupied(mut entry) => match entry.get_mut().entry(index) {
-                Entry::Occupied(entry) => *entry.get(),
-                Entry::Vacant(entry) => {
-                    let slot = self.db.storage(address, index);
-                    entry.insert(slot);
-                    slot
+        match self.accounts.entry(address) {
+            btree_map::Entry::Occupied(mut acc_entry) => {
+                let acc_entry = acc_entry.get_mut();
+                match acc_entry.storage.entry(index) {
+                    btree_map::Entry::Occupied(entry) => *entry.get(),
+                    btree_map::Entry::Vacant(entry) => {
+                        if matches!(acc_entry.account_state, AccountState::EVMStorageCleared) {
+                            U256::zero()
+                        } else {
+                            let slot = self.db.storage(address, index);
+                            entry.insert(slot);
+                            slot
+                        }
+                    }
                 }
-            },
-            Entry::Vacant(entry) => {
-                let mut storage = Map::new();
-                let slot = self.db.storage(address, index);
-                storage.insert(index, slot);
-                entry.insert(storage);
-                slot
+            }
+            btree_map::Entry::Vacant(acc_entry) => {
+                // acc needs to be loaded for us to access slots.
+                let info = self.db.basic(address);
+                let value = self.db.storage(address, index);
+                acc_entry.insert(DbAccount {
+                    info,
+                    account_state: AccountState::EVMTouched,
+                    storage: BTreeMap::from([(index, value)]),
+                });
+                value
             }
         }
     }
@@ -196,17 +240,23 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
     }
 
     fn basic(&self, address: H160) -> AccountInfo {
-        match self.cache.get(&address) {
-            Some(info) => info.clone(),
+        match self.accounts.get(&address) {
+            Some(acc) => acc.info.clone(),
             None => self.db.basic(address),
         }
     }
 
     fn storage(&self, address: H160, index: U256) -> U256 {
-        match self.storage.get(&address) {
-            Some(entry) => match entry.get(&index) {
+        match self.accounts.get(&address) {
+            Some(acc_entry) => match acc_entry.storage.get(&index) {
                 Some(entry) => *entry,
-                None => self.db.storage(address, index),
+                None => {
+                    if matches!(acc_entry.account_state, AccountState::EVMStorageCleared) {
+                        U256::zero()
+                    } else {
+                        self.db.storage(address, index)
+                    }
+                }
             },
             None => self.db.storage(address, index),
         }

@@ -11,7 +11,7 @@ use sha3::{Digest, Keccak256};
 
 use indicatif::ProgressBar;
 use primitive_types::{H160, H256, U256};
-use revm::{CreateScheme, Env, SpecId, TransactTo};
+use revm::{db::AccountState, CreateScheme, Env, SpecId, TransactTo};
 use std::sync::atomic::Ordering;
 use walkdir::{DirEntry, WalkDir};
 
@@ -147,7 +147,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
         }
         let mut env = Env::default();
         // cfg env. SpecId is set down the road
-        env.cfg.chain_id = 1.into(); // for mainnet
+        env.cfg.chain_id = 1i32.into(); // for mainnet
 
         // block env
         env.block.number = unit.env.current_number;
@@ -233,18 +233,15 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
 
                 *elapsed.lock().unwrap() += timer;
 
-                // apply changes to cached state
                 let db = evm.db().unwrap();
-                let mut state = db.cache().clone();
-                for (change_add, change_acc) in db.changes() {
-                    if change_acc.is_empty() {
-                        state.remove(change_add);
-                    } else {
-                        state.insert(*change_add, change_acc.clone());
-                    }
-                }
-
-                let state_root = state_merkle_trie_root(&state, db.storage());
+                let state_root = state_merkle_trie_root(
+                    db.accounts()
+                        .iter()
+                        .filter(|(_, acc)| {
+                            !acc.info.is_empty() || matches!(acc.account_state, AccountState::None)
+                        })
+                        .map(|(k, v)| (*k, v.clone())),
+                );
                 let logs_root = log_rlp_hash(logs);
                 if test.hash != state_root || test.logs != logs_root {
                     println!(
@@ -281,7 +278,7 @@ pub fn run(test_files: Vec<PathBuf>) -> Result<(), TestError> {
     let mut joins = Vec::new();
     let queue = Arc::new(Mutex::new((0, test_files)));
     let elapsed = Arc::new(Mutex::new(std::time::Duration::ZERO));
-    for _ in 0..5 {
+    for _ in 0..10 {
         let queue = queue.clone();
         let endjob = endjob.clone();
         let console_bar = console_bar.clone();
@@ -291,14 +288,14 @@ pub fn run(test_files: Vec<PathBuf>) -> Result<(), TestError> {
             std::thread::Builder::new()
                 .stack_size(50 * 1024 * 1024)
                 .spawn(move || loop {
-                    let test_path = {
+                    let (index, test_path) = {
                         let mut queue = queue.lock().unwrap();
                         if queue.1.len() <= queue.0 {
                             return Ok(());
                         }
                         let test_path = queue.1[queue.0].clone();
                         queue.0 += 1;
-                        test_path
+                        (queue.0 - 1, test_path)
                     };
                     if endjob.load(Ordering::SeqCst) {
                         return Ok(());
@@ -306,7 +303,7 @@ pub fn run(test_files: Vec<PathBuf>) -> Result<(), TestError> {
                     //println!("Test:{:?}\n",test_path);
                     if let Err(err) = execute_test_suit(&test_path, &elapsed) {
                         endjob.store(true, Ordering::SeqCst);
-                        println!("\n{:?} failed: {}\n", test_path, err);
+                        println!("Test[{}] named:\n{:?} failed: {}\n", index, test_path, err);
                         return Err(err);
                     }
 

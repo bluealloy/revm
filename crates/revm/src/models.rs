@@ -16,14 +16,14 @@ pub const KECCAK_EMPTY: H256 = H256([
 pub struct AccountInfo {
     /// Account balance.
     pub balance: U256,
+    /// Account nonce.
+    pub nonce: u64,
     /// code hash,
     pub code_hash: H256,
     /// code: if None, `code_by_hash` will be used to fetch it if code needs to be loaded from
     /// inside of revm.
     #[cfg_attr(feature = "with-serde", serde(with = "serde_hex_bytes_opt"))]
     pub code: Option<Bytes>,
-    /// Account nonce.
-    pub nonce: u64,
 }
 
 impl Default for AccountInfo {

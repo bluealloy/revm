@@ -7,6 +7,7 @@ use crate::{
 };
 use alloc::{boxed::Box, vec::Vec};
 use revm_precompiles::Precompiles;
+
 /// Struct that takes Database and enabled transact to update state directly to database.
 /// additionally it allows user to set all environment parameters.
 ///
