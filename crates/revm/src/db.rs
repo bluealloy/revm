@@ -1,3 +1,12 @@
+mod in_memory_db;
+
+#[cfg(feature = "web3db")]
+pub mod web3db;
+#[cfg(feature = "web3db")]
+pub use web3db::Web3DB;
+
+pub use in_memory_db::{AccountState, BenchmarkDB, CacheDB, DbAccount, EmptyDB, InMemoryDB};
+
 use crate::Account;
 use hashbrown::HashMap as Map;
 use primitive_types::{H160, H256, U256};

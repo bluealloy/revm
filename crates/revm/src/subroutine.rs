@@ -128,7 +128,7 @@ impl SubRoutine {
                 // acc was destroyed or if it is changed precompile, just add it to output.
                 Filth::Destroyed | Filth::Precompile(true) => {
                     acc.info.code = None;
-                    acc.info.code_hash = H256::zero();
+                    acc.info.code_hash = KECCAK_EMPTY;
                     out.insert(add, acc);
                 }
                 // acc is newly created.
