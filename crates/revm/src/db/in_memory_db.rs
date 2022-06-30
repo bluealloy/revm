@@ -113,7 +113,7 @@ impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
                 self.changes.insert(add, Default::default());
                 self.storage.get_mut(&add).map(clear_storage);
             } else {
-                self.insert_cache(add, acc.info);
+                self.insert_change(add, acc.info);
                 let storage = self.storage.entry(add).or_default();
                 if acc.filth.abandon_old_storage() {
                     clear_storage(storage);
