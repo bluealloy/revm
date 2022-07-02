@@ -1,3 +1,11 @@
+# v1.6.0
+date: 02.06.2022
+
+Most changes are relayed to CacheDB and how it saved accounts.
+
+* Introduce account `Touched/Cleared/None` state in CacheDB
+* Add missing inspectors `call_end` calls
+* bump dependencies and few standard derives.
 
 # v1.5.0
 date: 09.06.2022
