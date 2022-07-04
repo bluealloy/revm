@@ -61,7 +61,7 @@ Example with creating simple set/get smartcontract and calling create and two ca
 
 I just started this project as a hobby to kill some time. Presenty it has good structure and I would like to finish it and make it functional but we will see how far we will go. If you want to use this project be free to contact me and we can talk. There are a lot of things that still needs to be done, here are some of TODO's that could be added:
 
-- integrate ethereum state tests: 98% Berlin test passed.
+- integrate ethereum state tests: it is passing Instanbul, Berlin, London tests.
 - Need to cleanup code and do some refactoring
 - Write a lot of comments and explanations.
 - Add MemoryCache for Database interface.
