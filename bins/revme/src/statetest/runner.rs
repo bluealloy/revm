@@ -139,10 +139,10 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                 code: Some(info.code.clone()),
                 nonce: info.nonce,
             };
-            database.insert_cache(*address, acc_info);
+            database.insert_account_info(*address, acc_info);
             // insert storage:
             for (&slot, &value) in info.storage.iter() {
-                database.insert_cache_storage(*address, slot, value)
+                database.insert_account_storage(*address, slot, value)
             }
         }
         let mut env = Env::default();
@@ -235,7 +235,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
 
                 let db = evm.db().unwrap();
                 let state_root = state_merkle_trie_root(
-                    db.accounts()
+                    db.accounts
                         .iter()
                         .filter(|(_, acc)| {
                             !acc.info.is_empty() || matches!(acc.account_state, AccountState::None)

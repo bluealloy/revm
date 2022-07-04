@@ -27,14 +27,14 @@ impl InMemoryDB {
 pub struct CacheDB<ExtDB: DatabaseRef> {
     /// Dummy account info where `code` is always `None`.
     /// Code bytes can be found in `contracts`.
-    accounts: BTreeMap<H160, DbAccount>,
-    contracts: Map<H256, Bytes>,
-    logs: Vec<Log>,
-    block_hashes: Map<U256, H256>,
-    db: ExtDB,
+    pub accounts: BTreeMap<H160, DbAccount>,
+    pub contracts: Map<H256, Bytes>,
+    pub logs: Vec<Log>,
+    pub block_hashes: Map<U256, H256>,
+    pub db: ExtDB,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct DbAccount {
     pub info: AccountInfo,
     /// If account is selfdestructed or newly created, storage will be cleared.
@@ -43,13 +43,14 @@ pub struct DbAccount {
     pub storage: BTreeMap<U256, U256>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub enum AccountState {
     /// EVM touched this account
     EVMTouched,
     /// EVM cleared storage of this account, mostly by selfdestruct
     EVMStorageCleared,
     /// EVM didnt interacted with this account
+    #[default]
     None,
 }
 
@@ -66,11 +67,8 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
             db,
         }
     }
-    pub fn accounts(&self) -> &BTreeMap<H160, DbAccount> {
-        &self.accounts
-    }
 
-    fn insert_contract(&mut self, account: &mut AccountInfo) {
+    pub fn insert_contract(&mut self, account: &mut AccountInfo) {
         let code = core::mem::take(&mut account.code);
         if let Some(code) = code {
             if !code.is_empty() {
@@ -84,36 +82,19 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         }
     }
 
-    pub fn insert_cache(&mut self, address: H160, mut info: AccountInfo) {
+    /// Insert account info but not override storage
+    pub fn insert_account_info(&mut self, address: H160, mut info: AccountInfo) {
         self.insert_contract(&mut info);
-        self.accounts.insert(
-            address,
-            DbAccount {
-                info,
-                account_state: AccountState::None,
-                storage: BTreeMap::new(),
-            },
-        );
+        self.accounts.entry(address).or_default().info = info;
     }
 
-    pub fn insert_cache_storage(&mut self, address: H160, slot: U256, value: U256) {
+    /// insert account storage if account is not present it will be created with default account information
+    pub fn insert_account_storage(&mut self, address: H160, slot: U256, value: U256) {
         self.accounts
             .entry(address)
-            .or_insert(DbAccount {
-                info: AccountInfo::default(),
-                account_state: AccountState::None,
-                storage: BTreeMap::new(),
-            })
+            .or_default()
             .storage
             .insert(slot, value);
-    }
-
-    pub fn db(&self) -> &ExtDB {
-        &self.db
-    }
-
-    pub fn db_mut(&mut self) -> &mut ExtDB {
-        &mut self.db
     }
 }
 
@@ -122,11 +103,7 @@ impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
         for (add, acc) in changes {
             if acc.is_empty() || matches!(acc.filth, Filth::Destroyed) {
                 // clear account data, and increate its incarnation.
-                let acc = self.accounts.entry(add).or_insert(DbAccount {
-                    info: AccountInfo::default(),
-                    storage: BTreeMap::new(),
-                    account_state: AccountState::EVMStorageCleared,
-                });
+                let acc = self.accounts.entry(add).or_default();
                 acc.account_state = AccountState::EVMStorageCleared;
                 acc.storage = BTreeMap::new();
                 acc.info = AccountInfo::default();
@@ -212,7 +189,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
                 let value = self.db.storage(address, index);
                 acc_entry.insert(DbAccount {
                     info,
-                    account_state: AccountState::EVMTouched,
+                    account_state: AccountState::None,
                     storage: BTreeMap::from([(index, value)]),
                 });
                 value
