@@ -67,7 +67,10 @@ impl EVM {
             Bytes::copy_from_slice(code),
         );
         console_log!("Added account:{:?} info:{:?}", address, acc_info);
-        self.revm.db().unwrap().insert_cache(address, acc_info);
+        self.revm
+            .db()
+            .unwrap()
+            .insert_account_info(address, acc_info);
     }
 
     /****** ALL CFG ENV SETTERS ********/
