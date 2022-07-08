@@ -245,7 +245,7 @@ pub fn call<H: Host, SPEC: Spec>(
 ) -> Return {
     match scheme {
         CallScheme::DelegateCall => check!(SPEC::enabled(HOMESTEAD)), // EIP-7: DELEGATECALL
-        CallScheme::StaticCall => check!(SPEC::enabled(BYZANTINE)), // EIP-214: New opcode STATICCALL
+        CallScheme::StaticCall => check!(SPEC::enabled(BYZANTIUM)), // EIP-214: New opcode STATICCALL
         _ => (),
     }
     interp.return_data_buffer = Bytes::new();

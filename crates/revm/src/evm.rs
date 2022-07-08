@@ -2,7 +2,7 @@ use crate::{
     db::{Database, DatabaseCommit, DatabaseRef, RefDBWrapper},
     evm_impl::{EVMImpl, Transact},
     subroutine::State,
-    BerlinSpec, ByzantineSpec, Env, Inspector, IstanbulSpec, LatestSpec, Log, LondonSpec,
+    BerlinSpec, ByzantiumSpec, Env, Inspector, IstanbulSpec, LatestSpec, Log, LondonSpec,
     NoOpInspector, Return, Spec, SpecId, TransactOut,
 };
 use alloc::{boxed::Box, vec::Vec};
@@ -158,7 +158,7 @@ pub fn evm_inner<'a, DB: Database, const INSPECT: bool>(
         SpecId::LONDON => create_evm!(LondonSpec, db, env, insp),
         SpecId::BERLIN => create_evm!(BerlinSpec, db, env, insp),
         SpecId::ISTANBUL => create_evm!(IstanbulSpec, db, env, insp),
-        SpecId::BYZANTINE => create_evm!(ByzantineSpec, db, env, insp),
+        SpecId::BYZANTIUM => create_evm!(ByzantiumSpec, db, env, insp),
         _ => panic!("Spec Not supported"),
     }
 }

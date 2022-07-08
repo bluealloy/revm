@@ -62,7 +62,7 @@ pub fn ret(interp: &mut Interpreter) -> Return {
 pub fn revert<SPEC: Spec>(interp: &mut Interpreter) -> Return {
     // zero gas cost gas!(interp,gas::ZERO);
     // EIP-140: REVERT instruction
-    check!(SPEC::enabled(BYZANTINE));
+    check!(SPEC::enabled(BYZANTIUM));
     pop!(interp, start, len);
     let len = as_usize_or_fail!(len, Return::OutOfGas);
     if len == 0 {

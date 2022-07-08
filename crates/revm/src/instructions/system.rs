@@ -113,7 +113,7 @@ pub fn calldatacopy(interp: &mut Interpreter) -> Return {
 pub fn returndatasize<SPEC: Spec>(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::BASE);
     // EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
-    check!(SPEC::enabled(BYZANTINE));
+    check!(SPEC::enabled(BYZANTIUM));
     let size = U256::from(interp.return_data_buffer.len());
     push!(interp, size);
     Return::Continue
@@ -121,7 +121,7 @@ pub fn returndatasize<SPEC: Spec>(interp: &mut Interpreter) -> Return {
 
 pub fn returndatacopy<SPEC: Spec>(interp: &mut Interpreter) -> Return {
     // EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
-    check!(SPEC::enabled(BYZANTINE));
+    check!(SPEC::enabled(BYZANTIUM));
     pop!(interp, memory_offset, offset, len);
     gas_or_fail!(interp, gas::verylowcopy_cost(len));
     let len = as_usize_or_fail!(len, Return::OutOfGas);

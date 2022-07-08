@@ -77,7 +77,7 @@ pub enum Precompile {
 
 pub enum SpecId {
     HOMESTEAD = 0,
-    BYZANTINE = 1,
+    BYZANTIUM = 1,
     ISTANBUL = 2,
     BERLIN = 3,
 }
@@ -109,7 +109,7 @@ impl Precompiles {
             fun.push(bn128::add::ISTANBUL);
             fun.push(bn128::mul::ISTANBUL);
             fun.push(bn128::pair::ISTANBUL);
-        } else if SpecId::BYZANTINE.enabled(SPEC_ID) {
+        } else if SpecId::BYZANTIUM.enabled(SPEC_ID) {
             // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128
             // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128
             fun.push(bn128::add::BYZANTIUM);
@@ -119,7 +119,7 @@ impl Precompiles {
 
         if SpecId::BERLIN.enabled(SPEC_ID) {
             fun.push(modexp::BERLIN);
-        } else if SpecId::BYZANTINE.enabled(SPEC_ID) {
+        } else if SpecId::BYZANTIUM.enabled(SPEC_ID) {
             //EIP-198: Big integer modular exponentiation
             fun.push(modexp::BYZANTIUM);
         }
