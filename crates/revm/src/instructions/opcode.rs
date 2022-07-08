@@ -320,7 +320,7 @@ macro_rules! gas_opcodee {
             /* 0x3b  EXTCODESIZE */ OpInfo::dynamic_gas(),
             /* 0x3c  EXTCODECOPY */ OpInfo::dynamic_gas(),
             /* 0x3d  RETURNDATASIZE */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::BYZANTINE) {
+            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::BYZANTIUM) {
                 gas::BASE
             } else {
                 0
@@ -558,8 +558,8 @@ pub const fn spec_opcode_gas(spec_id: SpecId) -> &'static [OpInfo; 256] {
             gas_opcodee!(O, SpecId::SPURIOUS_DRAGON);
             O
         }
-        SpecId::BYZANTINE => {
-            gas_opcodee!(O, SpecId::BYZANTINE);
+        SpecId::BYZANTIUM => {
+            gas_opcodee!(O, SpecId::BYZANTIUM);
             O
         }
         SpecId::CONSTANTINOPLE => {

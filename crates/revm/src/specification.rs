@@ -11,7 +11,7 @@ pub enum SpecId {
     HOMESTEAD = 2,
     TANGERINE = 3,
     SPURIOUS_DRAGON = 4,
-    BYZANTINE = 5,
+    BYZANTIUM = 5,
     CONSTANTINOPLE = 6,
     PETERSBURG = 7,
     ISTANBUL = 8,
@@ -25,7 +25,7 @@ impl SpecId {
     pub const fn to_precompile_id(self) -> u8 {
         match self {
             FRONTIER | HOMESTEAD | TANGERINE | SPURIOUS_DRAGON => PrecompileId::HOMESTEAD as u8,
-            BYZANTINE | CONSTANTINOPLE | PETERSBURG => PrecompileId::BYZANTINE as u8,
+            BYZANTIUM | CONSTANTINOPLE | PETERSBURG => PrecompileId::BYZANTIUM as u8,
             ISTANBUL | MUIRGLACIER => PrecompileId::ISTANBUL as u8,
             BERLIN | LONDON | LATEST => PrecompileId::BERLIN as u8,
         }
@@ -45,7 +45,7 @@ impl From<&str> for SpecId {
             "Homestead" => SpecId::HOMESTEAD,
             "Tangerine" => SpecId::TANGERINE,
             "Spurious" => SpecId::SPURIOUS_DRAGON,
-            "Byzantium" => SpecId::BYZANTINE,
+            "Byzantium" => SpecId::BYZANTIUM,
             "Constantinople" => SpecId::CONSTANTINOPLE,
             "Petersburg" => SpecId::PETERSBURG,
             "Istanbul" => SpecId::ISTANBUL,
@@ -121,12 +121,12 @@ mod spec_impl {
     spec!(LONDON);
     spec!(BERLIN);
     spec!(ISTANBUL);
-    spec!(BYZANTINE);
+    spec!(BYZANTIUM);
     spec!(FRONTIER);
 }
 
 pub use spec_impl::{
-    BERLIN::SpecImpl as BerlinSpec, BYZANTINE::SpecImpl as ByzantineSpec,
+    BERLIN::SpecImpl as BerlinSpec, BYZANTIUM::SpecImpl as ByzantiumSpec,
     FRONTIER::SpecImpl as FrontierSpec, ISTANBUL::SpecImpl as IstanbulSpec,
     LATEST::SpecImpl as LatestSpec, LONDON::SpecImpl as LondonSpec,
 };
