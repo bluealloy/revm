@@ -755,9 +755,9 @@ checksum = "ab5ef0d4909ef3724cc8cce6ccc8572c5c817592e9285f5464f8e86f8bd3726e"
 
 [[package]]
 name = "hashbrown"
-version = "0.12.1"
+version = "0.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db0d4cf898abf0081f964436dc980e96670a0f36863e4b83aaacdb65c9d7ccc3"
+checksum = "607c8a29735385251a339424dd462993c0fed8fa09d378f259377df08c126022"
 dependencies = [
  "ahash",
 ]
@@ -1903,7 +1903,7 @@ dependencies = [
  "auto_impl",
  "bytes",
  "futures",
- "hashbrown 0.12.1",
+ "hashbrown 0.12.2",
  "hex",
  "num_enum",
  "parking_lot 0.12.1",
@@ -1948,7 +1948,7 @@ version = "0.2.0"
 dependencies = [
  "bytes",
  "hash-db",
- "hashbrown 0.12.1",
+ "hashbrown 0.12.2",
  "hex",
  "indicatif",
  "plain_hasher",
