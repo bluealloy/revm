@@ -4,6 +4,7 @@ Because this is workspace with multi libraries, tags will be simplified, and wit
 date: 11.06.2022
 
 * revm: v1.7.0
+* revm_precompiles: v1.1.0
 
 # v11 tag
 date: 02.06.2022

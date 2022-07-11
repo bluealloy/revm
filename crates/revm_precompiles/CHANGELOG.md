@@ -1,4 +1,11 @@
 
+# v1.1.0
+date: 11.06.2022
+
+Small release:
+* Bump k256,secp256 libs
+* rename Byzantine to Byzantium
+
 # v1.0.0
 date: 30.04.2022
 
