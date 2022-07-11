@@ -6,7 +6,7 @@ keywords = ["no_std", "ethereum", "evm", "revm"]
 license = "MIT"
 name = "revm"
 repository = "https://github.com/bluealloy/revm"
-version = "1.6.0"
+version = "1.7.0"
 
 [dependencies]
 arrayref  = "0.3"

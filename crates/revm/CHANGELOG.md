@@ -1,3 +1,11 @@
+
+# v1.7.0
+date: 11.06.2022
+
+small release:
+* Make CacheDB field pub and add few utility functions
+* Rename Byzantine to Byzantium
+
 # v1.6.0
 date: 02.06.2022
 
