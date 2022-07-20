@@ -10,7 +10,7 @@ version = "0.2.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bytes = "1.1"
+bytes = "1.2"
 hash-db = "0.15"
 hashbrown = "0.12"
 hex = "0.4"
