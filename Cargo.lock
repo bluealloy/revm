@@ -1936,7 +1936,7 @@ dependencies = [
  "num",
  "primitive-types 0.11.1",
  "ripemd",
- "secp256k1 0.23.3",
+ "secp256k1 0.24.0",
  "sha2 0.10.2",
  "sha3 0.10.1",
  "substrate-bn",
@@ -2080,9 +2080,9 @@ dependencies = [
 
 [[package]]
 name = "secp256k1"
-version = "0.23.3"
+version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77cb4e47e3ccff9a1e168471c11e026c067f50ea7c11bf5e877cae505fb743a0"
+checksum = "b7649a0b3ffb32636e60c7ce0d70511eda9c52c658cd0634e194d5a19943aeff"
 dependencies = [
  "secp256k1-sys 0.6.0",
 ]
