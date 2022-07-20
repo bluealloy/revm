@@ -5,7 +5,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bytes = "1.1"
+bytes = "1.2"
 hex = "0.4"
 primitive-types = { version = "0.11", features = ["rlp"] }
 revm = { path = "../../crates/revm", version="1.3" }
