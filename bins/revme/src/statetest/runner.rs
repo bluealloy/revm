@@ -11,7 +11,7 @@ use sha3::{Digest, Keccak256};
 
 use indicatif::ProgressBar;
 use primitive_types::{H160, H256, U256};
-use revm::{db::AccountState, CreateScheme, Env, SpecId, TransactTo};
+use revm::{db::AccountState, CreateScheme, Env, SpecId, TransactTo, Bytecode};
 use std::sync::atomic::Ordering;
 use walkdir::{DirEntry, WalkDir};
 
@@ -136,7 +136,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
             let acc_info = revm::AccountInfo {
                 balance: info.balance,
                 code_hash: H256::from_slice(Keccak256::digest(&info.code).as_slice()), //try with dummy hash.
-                code: Some(info.code.clone()),
+                code: Some(Bytecode::new_raw(info.code.clone())),
                 nonce: info.nonce,
             };
             database.insert_account_info(*address, acc_info);

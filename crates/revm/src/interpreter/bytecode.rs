@@ -1,22 +1,45 @@
-use bytes::Bytes;
-use crate::{Spec, spec_opcode_gas, opcode};
 use super::contract::{AnalysisData, ValidJumpAddress};
+use crate::{opcode, spec_opcode_gas, Spec, KECCAK_EMPTY};
+use bytes::Bytes;
+use primitive_types::H256;
+use sha3::{Keccak256, Digest};
 
-
-#[derive(Clone,Debug)]
+#[derive(Clone, Debug)]
 pub enum BytecodeState {
     Raw,
-    Checked { len: usize },
-    Analysed { len: usize, jumptable: ValidJumpAddress },
+    Checked {
+        len: usize,
+    },
+    Analysed {
+        len: usize,
+        jumptable: ValidJumpAddress,
+    },
 }
 
-#[derive(Clone,Debug)]
+#[derive(Clone, Debug)]
 pub struct Bytecode {
     bytecode: Bytes,
     state: BytecodeState,
 }
 
+impl Default for Bytecode {
+    fn default() -> Self {
+        Bytecode::new()
+    }
+}
+
 impl Bytecode {
+    pub fn new() -> Self {
+        // bytecode with one STOP opcode
+        Bytecode {
+            bytecode: vec![0].into(),
+            state: BytecodeState::Analysed {
+                len: 0,
+                jumptable: ValidJumpAddress::new(Vec::new(), 0),
+            },
+        }
+    }
+
     pub fn new_raw(bytecode: Bytes) -> Self {
         Self {
             bytecode,
@@ -35,6 +58,31 @@ impl Bytecode {
         Self {
             bytecode,
             state: BytecodeState::Analysed { len, jumptable },
+        }
+    }
+
+    pub fn bytes(&self) -> &Bytes {
+        &self.bytecode
+    } 
+
+    pub fn hash(&self) -> H256 {
+        let to_hash = match self.state {
+            BytecodeState::Raw => self.bytecode.as_ref(),
+            BytecodeState::Checked { len } => &self.bytecode[..len],
+            BytecodeState::Analysed { len, .. } => &self.bytecode[..len],
+        };
+        if to_hash.is_empty() {
+            KECCAK_EMPTY
+        } else {
+            H256::from_slice(Keccak256::digest(&to_hash).as_slice())
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        match self.state {
+            BytecodeState::Raw => self.bytecode.is_empty(),
+            BytecodeState::Checked { len } => len == 0,
+            BytecodeState::Analysed { len,.. } => len == 0, 
         }
     }
 
@@ -76,7 +124,7 @@ impl Bytecode {
             _ => return self,
         };
 
-        let (jumptable,bytecode) = Self::analyze::<SPEC>(bytecode.as_ref());
+        let (jumptable, bytecode) = Self::analyze::<SPEC>(bytecode.as_ref());
 
         Self {
             bytecode: bytecode.into(),
@@ -84,9 +132,8 @@ impl Bytecode {
         }
     }
 
-    pub fn lock<SPEC: Spec>(&self) -> BytecodeLocked {
-        let locked = self.clone();
-        let Bytecode{bytecode, state} = locked.to_analyzed::<SPEC>();
+    pub fn lock<SPEC: Spec>(mut self) -> BytecodeLocked {
+        let Bytecode { bytecode, state } = self.to_analyzed::<SPEC>();
         if let BytecodeState::Analysed { len, jumptable } = state {
             BytecodeLocked {
                 bytecode,
@@ -98,7 +145,7 @@ impl Bytecode {
         }
     }
 
-        /// Create a new valid mapping from given code bytes.
+    /// Create a new valid mapping from given code bytes.
     /// it gives back ValidJumpAddress and size od needed paddings.
     fn analyze<SPEC: Spec>(code: &[u8]) -> (ValidJumpAddress, Vec<u8>) {
         let mut jumps: Vec<AnalysisData> = Vec::with_capacity(code.len() + 33);
@@ -191,8 +238,14 @@ impl BytecodeLocked {
     pub fn unlock(self) -> Bytecode {
         Bytecode {
             bytecode: self.bytecode,
-            state: BytecodeState::Analysed { len: self.len, jumptable: self.jumptable }
+            state: BytecodeState::Analysed {
+                len: self.len,
+                jumptable: self.jumptable,
+            },
         }
+    }
+    pub fn bytecode(&self) -> &[u8] {
+        self.bytecode.as_ref()
     }
 
     pub fn original_bytecode_slice(&self) -> &[u8] {

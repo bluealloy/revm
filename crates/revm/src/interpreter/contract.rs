@@ -57,7 +57,7 @@ impl AnalysisData {
 impl Contract {
     pub fn new<SPEC: Spec>(
         input: Bytes,
-        bytecode: &Bytecode,
+        mut bytecode: Bytecode,
         address: H160,
         caller: H160,
         value: U256,
@@ -161,7 +161,7 @@ impl Contract {
 
     pub fn new_with_context<SPEC: Spec>(
         input: Bytes,
-        bytecode: &Bytecode,
+        bytecode: Bytecode,
         call_context: &CallContext,
     ) -> Self {
         Self::new::<SPEC>(

@@ -3,7 +3,7 @@ use core::convert::TryInto;
 use bn_rs::BN;
 use bytes::{Bytes, BytesMut};
 use primitive_types::{H160, U256};
-use revm::{AccountInfo, DatabaseCommit, InMemoryDB, SpecId, TransactTo, EVM as rEVM};
+use revm::{AccountInfo, Bytecode, DatabaseCommit, InMemoryDB, SpecId, TransactTo, EVM as rEVM};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -64,7 +64,7 @@ impl EVM {
         let acc_info = AccountInfo::new(
             balance.try_into().unwrap(),
             nonce,
-            Bytes::copy_from_slice(code),
+            Bytecode::new_raw(Bytes::copy_from_slice(code)),
         );
         console_log!("Added account:{:?} info:{:?}", address, acc_info);
         self.revm

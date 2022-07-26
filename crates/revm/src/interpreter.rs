@@ -6,6 +6,7 @@ mod stack;
 pub use contract::Contract;
 pub use memory::Memory;
 pub use stack::Stack;
+pub use bytecode::{Bytecode,BytecodeState,BytecodeLocked};
 
 use crate::{
     instructions::{eval, Return},
