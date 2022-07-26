@@ -4,21 +4,21 @@ use primitive_types::{H160, U256};
 
 use crate::instructions::opcode;
 
+use super::bytecode::{Bytecode, BytecodeLocked};
+
 pub struct Contract {
     /// Contracts data
     pub input: Bytes,
     /// Contract code
-    pub code: Bytes,
     /// code size of original code. Note that current code is extended with push padding and STOP at end
-    pub code_size: usize,
+    /// Precomputed valid jump addresses
+    pub bytecode: BytecodeLocked,
     /// Contract address
     pub address: H160,
     /// Caller of the EVM.
     pub caller: H160,
     /// Value send to contract.
     pub value: U256,
-    /// Precomputed valid jump addresses
-    jumpdest: ValidJumpAddress,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -57,23 +57,19 @@ impl AnalysisData {
 impl Contract {
     pub fn new<SPEC: Spec>(
         input: Bytes,
-        code: Bytes,
+        bytecode: &Bytecode,
         address: H160,
         caller: H160,
         value: U256,
     ) -> Self {
-        let code_size = code.len();
-        let (jumpdest, code) = Self::analyze::<SPEC>(code.as_ref());
 
-        let code = code.into();
+        let bytecode = bytecode.lock::<SPEC>();
         Self {
             input,
-            code,
-            code_size,
+            bytecode,
             address,
             caller,
             value,
-            jumpdest,
         }
     }
 
@@ -153,24 +149,24 @@ impl Contract {
     }
 
     pub fn is_valid_jump(&self, possition: usize) -> bool {
-        self.jumpdest.is_valid(possition)
+        self.bytecode.jumptable().is_valid(possition)
     }
 
     pub fn gas_block(&self, possition: usize) -> u64 {
-        self.jumpdest.gas_block(possition)
+        self.bytecode.jumptable().gas_block(possition)
     }
     pub fn first_gas_block(&self) -> u64 {
-        self.jumpdest.first_gas_block
+        self.bytecode.jumptable().first_gas_block
     }
 
     pub fn new_with_context<SPEC: Spec>(
         input: Bytes,
-        code: Bytes,
+        bytecode: &Bytecode,
         call_context: &CallContext,
     ) -> Self {
         Self::new::<SPEC>(
             input,
-            code,
+            bytecode,
             call_context.address,
             call_context.caller,
             call_context.apparent_value,
@@ -207,7 +203,6 @@ impl ValidJumpAddress {
 
     /// Returns `true` if the position is a valid jump destination. If
     /// not, returns `false`.
-
     pub fn is_valid(&self, position: usize) -> bool {
         if position >= self.analysis.len() {
             return false;
