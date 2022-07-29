@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::{alloc::vec::Vec, CallContext, Spec};
 use bytes::Bytes;
 use primitive_types::{H160, U256};
@@ -25,29 +27,37 @@ pub enum Analysis {
     None,
 }
 
+const JUMP_MASK : u32 = 0x80000000;
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct AnalysisData {
-    pub is_jumpdest: bool,
-    pub gas_block: u64,
+    //is_jumpdest: bool,
+    is_jump_and_gas_block: u32,
 }
 
 impl AnalysisData {
     pub fn none() -> Self {
         AnalysisData {
-            is_jumpdest: false,
-            gas_block: 0,
+            is_jump_and_gas_block: 0,
+            //gas_block: 0,
         }
     }
 
-    pub fn jump_dest() -> Self {
-        AnalysisData {
-            is_jumpdest: true,
-            gas_block: 0,
-        }
+    pub fn set_is_jump(&mut self) {
+        self.is_jump_and_gas_block |= JUMP_MASK;
     }
 
-    pub fn is_jump_dest(&self) -> bool {
-        self.is_jumpdest
+    pub fn set_gas_block(&mut self, gas_block: u32) {
+        let jump = self.is_jump_and_gas_block & JUMP_MASK;
+        self.is_jump_and_gas_block = gas_block | jump;
+    }
+
+    pub fn is_jump(&self) -> bool {
+        self.is_jump_and_gas_block & JUMP_MASK == JUMP_MASK
+    }
+
+    pub fn gas_block(&self) -> u64 {
+        (self.is_jump_and_gas_block & (!JUMP_MASK)) as u64
     }
 }
 
@@ -78,7 +88,7 @@ impl Contract {
         self.bytecode.jumptable().gas_block(possition)
     }
     pub fn first_gas_block(&self) -> u64 {
-        self.bytecode.jumptable().first_gas_block
+        self.bytecode.jumptable().first_gas_block as u64
     }
 
     pub fn new_with_context<SPEC: Spec>(
@@ -99,12 +109,14 @@ impl Contract {
 /// Mapping of valid jump destination from code.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ValidJumpAddress {
-    first_gas_block: u64,
-    analysis: Vec<AnalysisData>,
+    pub first_gas_block: u32,
+    /// Rc is used here so that we dont need to copy vector. We can move it to more suitable more accessable structure
+    /// without copying underlying vec.
+    pub analysis: Rc<Vec<AnalysisData>>,
 }
 
 impl ValidJumpAddress {
-    pub fn new(analysis: Vec<AnalysisData>, first_gas_block: u64) -> Self {
+    pub fn new(analysis: Rc<Vec<AnalysisData>>, first_gas_block: u32) -> Self {
         Self {
             analysis,
             first_gas_block,
@@ -129,12 +141,43 @@ impl ValidJumpAddress {
         if position >= self.analysis.len() {
             return false;
         }
-
-        self.analysis[position].is_jump_dest()
+        self.analysis[position].is_jump()
     }
 
     pub fn gas_block(&self, position: usize) -> u64 {
-        self.analysis[position].gas_block
+        self.analysis[position].gas_block()
+    }
+}
+
+
+
+#[cfg(test)]
+mod tests {
+    use super::AnalysisData;
+
+
+    #[test]
+    pub fn test_jump_set() {
+        let mut jump = AnalysisData::none();
+        assert!(!jump.is_jump());
+        assert_eq!(jump.gas_block(),0);
+
+
+        jump.set_gas_block(2350);
+        assert!(!jump.is_jump());
+        assert_eq!(jump.gas_block(),2350);
+
+        jump.set_is_jump();
+        assert!(jump.is_jump());
+        assert_eq!(jump.gas_block(),2350);
+
+        jump.set_gas_block(10);
+        assert!(jump.is_jump());
+        assert_eq!(jump.gas_block(),10);
+
+        jump.set_gas_block(350);
+        assert!(jump.is_jump());
+        assert_eq!(jump.gas_block(),350);
     }
 }
 

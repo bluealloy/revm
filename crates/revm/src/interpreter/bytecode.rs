@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use super::contract::{AnalysisData, ValidJumpAddress};
 use crate::{opcode, spec_opcode_gas, Spec, KECCAK_EMPTY};
 use bytes::Bytes;
@@ -35,7 +37,7 @@ impl Bytecode {
             bytecode: vec![0].into(),
             state: BytecodeState::Analysed {
                 len: 0,
-                jumptable: ValidJumpAddress::new(Vec::new(), 0),
+                jumptable: ValidJumpAddress::new(Rc::new(Vec::new()), 0),
             },
         }
     }
@@ -102,10 +104,8 @@ impl Bytecode {
         match self.state {
             BytecodeState::Raw => {
                 let len = self.bytecode.len();
-                let mut bytecode = Vec::with_capacity(len + 33);
-                bytecode.extend(self.bytecode);
+                let mut bytecode: Vec<u8> = Vec::from(self.bytecode.as_ref());
                 bytecode.resize(len + 33, 0);
-
                 Self {
                     bytecode: bytecode.into(),
                     state: BytecodeState::Checked { len },
@@ -146,70 +146,74 @@ impl Bytecode {
         }
     }
 
-    /// Create a new valid mapping from given code bytes.
-    /// it gives back ValidJumpAddress and size od needed paddings.
+    /// Analyze bytecode to get jumptable and gas blocks.
     fn analyze<SPEC: Spec>(code: &[u8]) -> ValidJumpAddress {
-        let mut jumps: Vec<AnalysisData> = vec![AnalysisData::none(); code.len()];
-        //let opcode_gas = LONDON_OPCODES;
         let opcode_gas = spec_opcode_gas(SPEC::SPEC_ID);
-        let mut index = 0;
-        let mut first_gas_block: u64 = 0;
-        let mut block_start: usize = 0;
-        // first gas block
 
+        let mut analysis = ValidJumpAddress {
+            first_gas_block: 0,
+            analysis: Rc::new(vec![AnalysisData::none(); code.len()]),
+        };
+        let jumps = Rc::get_mut(&mut analysis.analysis).unwrap();
+
+        let mut index = 0;
+        let mut gas_in_block: u32 = 0;
+        let mut block_start: usize = 0;
+
+        // first gas block
         while index < code.len() {
             let opcode = unsafe { *code.get_unchecked(index) };
             let info = unsafe { opcode_gas.get_unchecked(opcode as usize) };
-            first_gas_block += info.gas;
+            analysis.first_gas_block += info.get_gas();
 
-            index += if info.is_push {
+            index += if info.is_push() {
                 ((opcode - opcode::PUSH1) + 2) as usize
             } else {
                 1
             };
 
-            if info.is_gas_block_end {
+            if info.is_gas_block_end() {
                 block_start = index - 1;
-                if info.is_jump {
+                if info.is_jump() {
                     unsafe {
-                        jumps.get_unchecked_mut(block_start).is_jumpdest = true;
+                        jumps.get_unchecked_mut(block_start).set_is_jump();
                     }
                 }
                 break;
             }
         }
 
-        let mut gas_in_block: u64 = 0;
         while index < code.len() {
             let opcode = unsafe { *code.get_unchecked(index) };
             let info = unsafe { opcode_gas.get_unchecked(opcode as usize) };
-            gas_in_block += info.gas;
+            gas_in_block += info.get_gas();
 
-            if info.is_gas_block_end {
-                if info.is_jump {
+            if info.is_gas_block_end() {
+                if info.is_jump() {
                     unsafe {
-                        jumps.get_unchecked_mut(index).is_jumpdest = true;
+                        jumps.get_unchecked_mut(index).set_is_jump();
                     }
                 }
                 unsafe {
-                    jumps.get_unchecked_mut(block_start).gas_block = gas_in_block;
+                    jumps.get_unchecked_mut(block_start).set_gas_block(gas_in_block);
                 }
                 block_start = index;
                 gas_in_block = 0;
-            }
-
-            index += if info.is_push {
-                ((opcode - opcode::PUSH1) + 2) as usize
+                index += 1;
             } else {
-                1
-            };
+                index += if info.is_push() {
+                    ((opcode - opcode::PUSH1) + 2) as usize
+                } else {
+                    1
+                };
+            }
         }
         if gas_in_block != 0 {
             unsafe {
-                jumps.get_unchecked_mut(block_start).gas_block = gas_in_block;
+                jumps.get_unchecked_mut(block_start).set_gas_block(gas_in_block);
             }
         }
-        ValidJumpAddress::new(jumps, first_gas_block)
+        analysis
     }
 }
 

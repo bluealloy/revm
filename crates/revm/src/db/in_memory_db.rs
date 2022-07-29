@@ -271,7 +271,14 @@ impl DatabaseRef for EmptyDB {
 ///
 /// Any other address will return an empty account.
 #[derive(Debug, Default, Clone)]
-pub struct BenchmarkDB(pub Bytecode);
+pub struct BenchmarkDB(pub Bytecode, H256);
+
+impl BenchmarkDB {
+    pub fn new_bytecode(bytecode: Bytecode) -> Self {
+        let hash = bytecode.hash();
+        Self(bytecode,hash)
+    }
+}
 
 impl Database for BenchmarkDB {
     /// Get basic account information.
@@ -281,7 +288,7 @@ impl Database for BenchmarkDB {
                 nonce: 1,
                 balance: U256::from(10000000),
                 code: Some(self.0.clone()),
-                code_hash: self.0.hash(),
+                code_hash: self.1,
             };
         }
         AccountInfo::default()

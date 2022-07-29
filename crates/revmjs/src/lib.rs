@@ -127,7 +127,7 @@ impl EVM {
         self.revm.env.tx.nonce = nonce;
     }
     pub fn tx_data(&mut self, data: &[u8]) {
-        self.revm.env.tx.data = BytesMut::from(data).freeze();
+        self.revm.env.tx.data = data.to_vec().into();
     }
     pub fn tx_transact_to_create(&mut self) {
         self.revm.env.tx.transact_to = TransactTo::create();
