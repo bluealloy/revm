@@ -1,9 +1,6 @@
-use crate::{alloc::vec::Vec, opcode::spec_opcode_gas, CallContext, Spec};
+use crate::{alloc::vec::Vec, CallContext, Spec};
 use bytes::Bytes;
 use primitive_types::{H160, U256};
-
-use crate::instructions::opcode;
-
 use super::bytecode::{Bytecode, BytecodeLocked};
 
 pub struct Contract {
@@ -57,7 +54,7 @@ impl AnalysisData {
 impl Contract {
     pub fn new<SPEC: Spec>(
         input: Bytes,
-        mut bytecode: Bytecode,
+        bytecode: Bytecode,
         address: H160,
         caller: H160,
         value: U256,
@@ -71,81 +68,6 @@ impl Contract {
             caller,
             value,
         }
-    }
-
-    /// Create a new valid mapping from given code bytes.
-    /// it gives back ValidJumpAddress and size od needed paddings.
-    fn analyze<SPEC: Spec>(code: &[u8]) -> (ValidJumpAddress, Vec<u8>) {
-        let mut jumps: Vec<AnalysisData> = Vec::with_capacity(code.len() + 33);
-        // padding of PUSH32 size plus one for stop
-        jumps.resize(code.len() + 33, AnalysisData::none());
-        //let opcode_gas = LONDON_OPCODES;
-        let opcode_gas = spec_opcode_gas(SPEC::SPEC_ID);
-        let mut index = 0;
-        let mut first_gas_block: u64 = 0;
-        let mut block_start: usize = 0;
-        // first gas block
-
-        while index < code.len() {
-            let opcode = unsafe { *code.get_unchecked(index) };
-            let info = unsafe { opcode_gas.get_unchecked(opcode as usize) };
-            first_gas_block += info.gas;
-
-            index += if info.is_push {
-                ((opcode - opcode::PUSH1) + 2) as usize
-            } else {
-                1
-            };
-
-            if info.is_gas_block_end {
-                block_start = index - 1;
-                if info.is_jump {
-                    unsafe {
-                        jumps.get_unchecked_mut(block_start).is_jumpdest = true;
-                    }
-                }
-                break;
-            }
-        }
-
-        let mut gas_in_block: u64 = 0;
-        while index < code.len() {
-            let opcode = unsafe { *code.get_unchecked(index) };
-            let info = unsafe { opcode_gas.get_unchecked(opcode as usize) };
-            gas_in_block += info.gas;
-
-            if info.is_gas_block_end {
-                if info.is_jump {
-                    unsafe {
-                        jumps.get_unchecked_mut(index).is_jumpdest = true;
-                    }
-                }
-                unsafe {
-                    jumps.get_unchecked_mut(block_start).gas_block = gas_in_block;
-                }
-                block_start = index;
-                gas_in_block = 0;
-            }
-
-            index += if info.is_push {
-                ((opcode - opcode::PUSH1) + 2) as usize
-            } else {
-                1
-            };
-        }
-        if gas_in_block != 0 {
-            unsafe {
-                jumps.get_unchecked_mut(block_start).gas_block = gas_in_block;
-            }
-        }
-        let padding = index - code.len();
-        // +1 is for forced STOP opcode at the end of contract, it is precausion
-        // if there is none, and if there is STOP our additional opcode will do nothing.
-        //jumps.resize(jumps.len() + padding + 1, AnalysisData::none());
-        let mut code = code.to_vec();
-        code.resize(code.len() + padding + 1, 0);
-
-        (ValidJumpAddress::new(jumps, first_gas_block), code)
     }
 
     pub fn is_valid_jump(&self, possition: usize) -> bool {

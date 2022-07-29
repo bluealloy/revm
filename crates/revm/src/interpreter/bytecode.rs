@@ -2,7 +2,7 @@ use super::contract::{AnalysisData, ValidJumpAddress};
 use crate::{opcode, spec_opcode_gas, Spec, KECCAK_EMPTY};
 use bytes::Bytes;
 use primitive_types::H256;
-use sha3::{Keccak256, Digest};
+use sha3::{Digest, Keccak256};
 
 #[derive(Clone, Debug)]
 pub enum BytecodeState {
@@ -47,14 +47,18 @@ impl Bytecode {
         }
     }
 
-    pub fn new_checked(bytecode: Bytes, len: usize) -> Self {
+    /// Safety: Bytecode need to end with STOP (0x00) opcode as checked bytecode assumes that
+    /// that it is safe to iterate over bytecode without checking lengths
+    pub unsafe fn new_checked(bytecode: Bytes, len: usize) -> Self {
         Self {
             bytecode,
             state: BytecodeState::Checked { len },
         }
     }
 
-    pub fn new_analysed(bytecode: Bytes, len: usize, jumptable: ValidJumpAddress) -> Self {
+    /// Safety: Same as new_checked, bytecode needs to end with STOP (0x00) opcode as checked bytecode assumes
+    /// that it is safe to iterate over bytecode without checking length
+    pub unsafe fn new_analysed(bytecode: Bytes, len: usize, jumptable: ValidJumpAddress) -> Self {
         Self {
             bytecode,
             state: BytecodeState::Analysed { len, jumptable },
@@ -63,7 +67,7 @@ impl Bytecode {
 
     pub fn bytes(&self) -> &Bytes {
         &self.bytecode
-    } 
+    }
 
     pub fn hash(&self) -> H256 {
         let to_hash = match self.state {
@@ -82,7 +86,7 @@ impl Bytecode {
         match self.state {
             BytecodeState::Raw => self.bytecode.is_empty(),
             BytecodeState::Checked { len } => len == 0,
-            BytecodeState::Analysed { len,.. } => len == 0, 
+            BytecodeState::Analysed { len, .. } => len == 0,
         }
     }
 
@@ -94,7 +98,7 @@ impl Bytecode {
         }
     }
 
-    pub fn to_checked(mut self) -> Self {
+    pub fn to_checked(self) -> Self {
         match self.state {
             BytecodeState::Raw => {
                 let len = self.bytecode.len();
@@ -111,20 +115,17 @@ impl Bytecode {
         }
     }
 
-    pub fn to_analyzed<SPEC: Spec>(mut self) -> Self {
+    pub fn to_analyzed<SPEC: Spec>(self) -> Self {
         let (bytecode, len) = match self.state {
             BytecodeState::Raw => {
                 let len = self.bytecode.len();
-                let mut bytecode = Vec::with_capacity(len + 33);
-                bytecode.extend(self.bytecode);
-                bytecode.resize(len + 33, 0);
-                (bytecode.into(), len)
+                let checked = self.to_checked();
+                (checked.bytecode.into(), len)
             }
             BytecodeState::Checked { len } => (self.bytecode, len),
             _ => return self,
         };
-
-        let (jumptable, bytecode) = Self::analyze::<SPEC>(bytecode.as_ref());
+        let jumptable = Self::analyze::<SPEC>(bytecode.as_ref());
 
         Self {
             bytecode: bytecode.into(),
@@ -132,7 +133,7 @@ impl Bytecode {
         }
     }
 
-    pub fn lock<SPEC: Spec>(mut self) -> BytecodeLocked {
+    pub fn lock<SPEC: Spec>(self) -> BytecodeLocked {
         let Bytecode { bytecode, state } = self.to_analyzed::<SPEC>();
         if let BytecodeState::Analysed { len, jumptable } = state {
             BytecodeLocked {
@@ -147,10 +148,8 @@ impl Bytecode {
 
     /// Create a new valid mapping from given code bytes.
     /// it gives back ValidJumpAddress and size od needed paddings.
-    fn analyze<SPEC: Spec>(code: &[u8]) -> (ValidJumpAddress, Vec<u8>) {
-        let mut jumps: Vec<AnalysisData> = Vec::with_capacity(code.len() + 33);
-        // padding of PUSH32 size plus one for stop
-        jumps.resize(code.len() + 33, AnalysisData::none());
+    fn analyze<SPEC: Spec>(code: &[u8]) -> ValidJumpAddress {
+        let mut jumps: Vec<AnalysisData> = vec![AnalysisData::none(); code.len()];
         //let opcode_gas = LONDON_OPCODES;
         let opcode_gas = spec_opcode_gas(SPEC::SPEC_ID);
         let mut index = 0;
@@ -210,14 +209,7 @@ impl Bytecode {
                 jumps.get_unchecked_mut(block_start).gas_block = gas_in_block;
             }
         }
-        let padding = index - code.len();
-        // +1 is for forced STOP opcode at the end of contract, it is precausion
-        // if there is none, and if there is STOP our additional opcode will do nothing.
-        //jumps.resize(jumps.len() + padding + 1, AnalysisData::none());
-        let mut code = code.to_vec();
-        code.resize(code.len() + padding + 1, 0);
-
-        (ValidJumpAddress::new(jumps, first_gas_block), code)
+        ValidJumpAddress::new(jumps, first_gas_block)
     }
 }
 
