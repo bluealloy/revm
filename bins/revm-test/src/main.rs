@@ -29,7 +29,8 @@ pub fn simple_example() {
         elapsed += i;
     }
     println!("elapsed: {:?}", elapsed / 30);
-    for (i, time) in times.iter().enumerate() {
+    times.sort();
+    for (i, time) in times.iter().rev().enumerate() {
         println!("{}: {:?}", i, time);
     }
 }
