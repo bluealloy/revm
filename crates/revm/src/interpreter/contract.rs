@@ -30,6 +30,7 @@ pub enum Analysis {
 const JUMP_MASK: u32 = 0x80000000;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AnalysisData {
     /// This variable packs two informations:
     /// IS_JUMP (1bit) | gas block ( 31bits)
@@ -108,6 +109,7 @@ impl Contract {
 
 /// Mapping of valid jump destination from code.
 #[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ValidJumpAddress {
     pub first_gas_block: u32,
     /// Rc is used here so that we dont need to copy vector. We can move it to more suitable more accessable structure

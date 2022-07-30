@@ -59,7 +59,7 @@ impl Interpreter {
         memory_limit: u64,
     ) -> Self {
         Self {
-            program_counter: contract.code.as_ptr(),
+            program_counter: contract.bytecode.as_ptr(),
             return_range: Range::default(),
             memory: Memory::new(),
             stack: Stack::new(),

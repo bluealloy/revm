@@ -21,7 +21,6 @@ pub struct AccountInfo {
     pub code_hash: H256,
     /// code: if None, `code_by_hash` will be used to fetch it if code needs to be loaded from
     /// inside of revm.
-    #[cfg_attr(feature = "with-serde", serde(with = "serde_hex_bytes_opt"))]
     pub code: Option<Bytecode>,
 }
 
@@ -311,10 +310,9 @@ pub struct SelfDestructResult {
     pub is_cold: bool,
     pub previously_destroyed: bool,
 }
-
 /// Serde functions to serde as [bytes::Bytes] hex string
 #[cfg(feature = "with-serde")]
-mod serde_hex_bytes {
+pub(crate) mod serde_hex_bytes {
     use serde::{Deserialize, Deserializer, Serializer};
 
     pub fn serialize<S, T>(x: T, s: S) -> Result<S::Ok, S::Error>
@@ -341,7 +339,7 @@ mod serde_hex_bytes {
 }
 /// Serde functions to serde an Option [bytes::Bytes] hex string
 #[cfg(feature = "with-serde")]
-mod serde_hex_bytes_opt {
+pub(crate) mod serde_hex_bytes_opt {
     use super::serde_hex_bytes;
     use serde::{Deserialize, Deserializer, Serializer};
 

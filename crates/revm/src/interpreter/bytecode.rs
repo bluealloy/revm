@@ -7,6 +7,7 @@ use primitive_types::H256;
 use sha3::{Digest, Keccak256};
 
 #[derive(Clone, Debug)]
+#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum BytecodeState {
     Raw,
     Checked {
@@ -19,7 +20,9 @@ pub enum BytecodeState {
 }
 
 #[derive(Clone, Debug)]
+#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Bytecode {
+    #[cfg_attr(feature = "with-serde", serde(with = "crate::models::serde_hex_bytes"))]
     bytecode: Bytes,
     state: BytecodeState,
 }
