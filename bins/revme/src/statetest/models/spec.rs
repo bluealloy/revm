@@ -26,6 +26,7 @@ pub enum SpecName {
 impl SpecName {
     pub fn to_spec_id(&self) -> SpecId {
         match self {
+            Self::Merge => SpecId::MERGE,
             Self::London => SpecId::LONDON,
             Self::Berlin => SpecId::BERLIN,
             Self::Istanbul => SpecId::ISTANBUL,

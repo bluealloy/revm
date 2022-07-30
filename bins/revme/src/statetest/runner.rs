@@ -73,9 +73,9 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
     // */
 
     // /*
-    // Skip test where basefee/accesslist is present but it shoulnd not be supported :)
+    // Skip test where basefee/accesslist is present but it shoulnd not be supported.
     // https://github.com/ethereum/tests/blob/5b7e1ab3ffaf026d99d20b17bb30f533a2c80c8b/GeneralStateTests/stExample/eip1559.json#L130
-    // test should be skipped
+    // It is expected to skip these tests.
     if path.file_name() == Some(OsStr::new("accessListExample.json")) {
         return Ok(());
     }
@@ -95,7 +95,8 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
         "CREATE_HighNonce", //testing nonce > u64::MAX not really possible on mainnet.
         "CreateTransactionHighNonce", // testing nonce >u64::MAX not really possible on mainnet. code: https://github.com/ethereum/tests/blob/5b7e1ab3ffaf026d99d20b17bb30f533a2c80c8b/BlockchainTests/GeneralStateTests/stCreateTest/CreateTransactionHighNonce.json#L74
         "CREATE2_HighNonceDelegatecall", // test with very high nonce that in revm overflows. Impossible to happen. https://github.com/bluealloy/revm/issues/28
-        "doubleSelfdestructTouch" // CHECK THIS
+        "doubleSelfdestructTouch", // CHECK THIS
+        "mergeTest" // CHECK THIS
         ]
     .into_iter()
     .collect();
@@ -175,7 +176,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
         for (spec_name, tests) in unit.post {
             if !matches!(
                 spec_name,
-                SpecName::London | SpecName::Berlin | SpecName::Istanbul
+                SpecName::Merge | SpecName::London | SpecName::Berlin | SpecName::Istanbul
             ) {
                 continue;
             }

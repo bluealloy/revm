@@ -575,6 +575,10 @@ pub const fn spec_opcode_gas(spec_id: SpecId) -> &'static [OpInfo; 256] {
             gas_opcodee!(LONDON, SpecId::LONDON);
             LONDON
         }
+        SpecId::MERGE => {
+            gas_opcodee!(MERGE, SpecId::MERGE);
+            MERGE
+        }
         SpecId::LATEST => {
             gas_opcodee!(LATEST, SpecId::LATEST);
             LATEST
