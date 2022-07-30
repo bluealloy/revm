@@ -131,5 +131,5 @@ mod spec_impl {
 pub use spec_impl::{
     BERLIN::SpecImpl as BerlinSpec, BYZANTIUM::SpecImpl as ByzantiumSpec,
     FRONTIER::SpecImpl as FrontierSpec, ISTANBUL::SpecImpl as IstanbulSpec,
-    LATEST::SpecImpl as LatestSpec, LONDON::SpecImpl as LondonSpec, MERGE::SpecImpl as MergeSpec
+    LATEST::SpecImpl as LatestSpec, LONDON::SpecImpl as LondonSpec, MERGE::SpecImpl as MergeSpec,
 };

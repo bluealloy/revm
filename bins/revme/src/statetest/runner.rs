@@ -71,7 +71,6 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
         return Ok(());
     }
     // */
-
     // /*
     // Skip test where basefee/accesslist is present but it shoulnd not be supported.
     // https://github.com/ethereum/tests/blob/5b7e1ab3ffaf026d99d20b17bb30f533a2c80c8b/GeneralStateTests/stExample/eip1559.json#L130
@@ -86,7 +85,6 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
         return Ok(());
     }
     //*/
-
     let json_reader = std::fs::read(&path).unwrap();
     let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
     let skip_test_unit: HashSet<_> = vec![
@@ -95,9 +93,9 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
         "CREATE_HighNonce", //testing nonce > u64::MAX not really possible on mainnet.
         "CreateTransactionHighNonce", // testing nonce >u64::MAX not really possible on mainnet. code: https://github.com/ethereum/tests/blob/5b7e1ab3ffaf026d99d20b17bb30f533a2c80c8b/BlockchainTests/GeneralStateTests/stCreateTest/CreateTransactionHighNonce.json#L74
         "CREATE2_HighNonceDelegatecall", // test with very high nonce that in revm overflows. Impossible to happen. https://github.com/bluealloy/revm/issues/28
-        "doubleSelfdestructTouch", // CHECK THIS
-        "mergeTest" // CHECK THIS
-        ]
+        "doubleSelfdestructTouch",       // CHECK THIS
+        "mergeTest",                     // CHECK THIS
+    ]
     .into_iter()
     .collect();
 
