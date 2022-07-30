@@ -31,7 +31,8 @@ const JUMP_MASK: u32 = 0x80000000;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct AnalysisData {
-    //is_jumpdest: bool,
+    /// This variable packs two informations:
+    /// IS_JUMP (1bit) | gas block ( 31bits)
     is_jump_and_gas_block: u32,
 }
 
