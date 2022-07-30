@@ -276,7 +276,7 @@ pub struct BenchmarkDB(pub Bytecode, H256);
 impl BenchmarkDB {
     pub fn new_bytecode(bytecode: Bytecode) -> Self {
         let hash = bytecode.hash();
-        Self(bytecode,hash)
+        Self(bytecode, hash)
     }
 }
 

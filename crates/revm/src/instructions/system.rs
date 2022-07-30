@@ -52,9 +52,12 @@ pub fn codecopy(interp: &mut Interpreter) -> Return {
     memory_resize!(interp, memory_offset, len);
 
     // Safety: set_data is unsafe function and memory_resize ensures us that it is safe to call it
-    interp
-        .memory
-        .set_data(memory_offset, code_offset, len, interp.contract.bytecode.original_bytecode_slice());
+    interp.memory.set_data(
+        memory_offset,
+        code_offset,
+        len,
+        interp.contract.bytecode.original_bytecode_slice(),
+    );
     Return::Continue
 }
 

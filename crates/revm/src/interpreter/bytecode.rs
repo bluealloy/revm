@@ -49,7 +49,10 @@ impl Bytecode {
         }
     }
 
-    /// Safety: Bytecode need to end with STOP (0x00) opcode as checked bytecode assumes that
+    /// Create new checked bytecode
+    ///
+    /// # Safety
+    /// Bytecode need to end with STOP (0x00) opcode as checked bytecode assumes that
     /// that it is safe to iterate over bytecode without checking lengths
     pub unsafe fn new_checked(bytecode: Bytes, len: usize) -> Self {
         Self {
@@ -58,7 +61,10 @@ impl Bytecode {
         }
     }
 
-    /// Safety: Same as new_checked, bytecode needs to end with STOP (0x00) opcode as checked bytecode assumes
+    /// Create new analysed bytecode
+    ///
+    /// # Safety
+    /// Same as new_checked, bytecode needs to end with STOP (0x00) opcode as checked bytecode assumes
     /// that it is safe to iterate over bytecode without checking length
     pub unsafe fn new_analysed(bytecode: Bytes, len: usize, jumptable: ValidJumpAddress) -> Self {
         Self {
@@ -120,7 +126,7 @@ impl Bytecode {
             BytecodeState::Raw => {
                 let len = self.bytecode.len();
                 let checked = self.to_checked();
-                (checked.bytecode.into(), len)
+                (checked.bytecode, len)
             }
             BytecodeState::Checked { len } => (self.bytecode, len),
             _ => return self,
@@ -128,7 +134,7 @@ impl Bytecode {
         let jumptable = Self::analyze::<SPEC>(bytecode.as_ref());
 
         Self {
-            bytecode: bytecode.into(),
+            bytecode,
             state: BytecodeState::Analysed { len, jumptable },
         }
     }
@@ -195,7 +201,9 @@ impl Bytecode {
                     }
                 }
                 unsafe {
-                    jumps.get_unchecked_mut(block_start).set_gas_block(gas_in_block);
+                    jumps
+                        .get_unchecked_mut(block_start)
+                        .set_gas_block(gas_in_block);
                 }
                 block_start = index;
                 gas_in_block = 0;
@@ -210,7 +218,9 @@ impl Bytecode {
         }
         if gas_in_block != 0 {
             unsafe {
-                jumps.get_unchecked_mut(block_start).set_gas_block(gas_in_block);
+                jumps
+                    .get_unchecked_mut(block_start)
+                    .set_gas_block(gas_in_block);
             }
         }
         analysis
@@ -229,6 +239,10 @@ impl BytecodeLocked {
     }
     pub fn len(&self) -> usize {
         self.len
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len == 0
     }
 
     pub fn unlock(self) -> Bytecode {

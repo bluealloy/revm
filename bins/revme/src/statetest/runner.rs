@@ -11,7 +11,7 @@ use sha3::{Digest, Keccak256};
 
 use indicatif::ProgressBar;
 use primitive_types::{H160, H256, U256};
-use revm::{db::AccountState, CreateScheme, Env, SpecId, TransactTo, Bytecode};
+use revm::{db::AccountState, Bytecode, CreateScheme, Env, SpecId, TransactTo};
 use std::sync::atomic::Ordering;
 use walkdir::{DirEntry, WalkDir};
 

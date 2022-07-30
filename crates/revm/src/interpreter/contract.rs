@@ -1,9 +1,9 @@
 use std::rc::Rc;
 
+use super::bytecode::{Bytecode, BytecodeLocked};
 use crate::{alloc::vec::Vec, CallContext, Spec};
 use bytes::Bytes;
 use primitive_types::{H160, U256};
-use super::bytecode::{Bytecode, BytecodeLocked};
 
 pub struct Contract {
     /// Contracts data
@@ -27,7 +27,7 @@ pub enum Analysis {
     None,
 }
 
-const JUMP_MASK : u32 = 0x80000000;
+const JUMP_MASK: u32 = 0x80000000;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct AnalysisData {
@@ -69,7 +69,6 @@ impl Contract {
         caller: H160,
         value: U256,
     ) -> Self {
-
         let bytecode = bytecode.lock::<SPEC>();
         Self {
             input,
@@ -149,35 +148,31 @@ impl ValidJumpAddress {
     }
 }
 
-
-
 #[cfg(test)]
 mod tests {
     use super::AnalysisData;
-
 
     #[test]
     pub fn test_jump_set() {
         let mut jump = AnalysisData::none();
         assert!(!jump.is_jump());
-        assert_eq!(jump.gas_block(),0);
-
+        assert_eq!(jump.gas_block(), 0);
 
         jump.set_gas_block(2350);
         assert!(!jump.is_jump());
-        assert_eq!(jump.gas_block(),2350);
+        assert_eq!(jump.gas_block(), 2350);
 
         jump.set_is_jump();
         assert!(jump.is_jump());
-        assert_eq!(jump.gas_block(),2350);
+        assert_eq!(jump.gas_block(), 2350);
 
         jump.set_gas_block(10);
         assert!(jump.is_jump());
-        assert_eq!(jump.gas_block(),10);
+        assert_eq!(jump.gas_block(), 10);
 
         jump.set_gas_block(350);
         assert!(jump.is_jump());
-        assert_eq!(jump.gas_block(),350);
+        assert_eq!(jump.gas_block(), 350);
     }
 }
 

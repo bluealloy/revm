@@ -1,4 +1,4 @@
-use crate::{AccountInfo, Database, KECCAK_EMPTY, interpreter::bytecode::Bytecode};
+use crate::{interpreter::bytecode::Bytecode, AccountInfo, Database, KECCAK_EMPTY};
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
 use tokio::runtime::{Handle, Runtime};

@@ -1,6 +1,7 @@
 use crate::{
     db::Database,
-    gas, interpreter::{self, bytecode::Bytecode},
+    gas,
+    interpreter::{self, bytecode::Bytecode},
     interpreter::{Contract, Interpreter},
     models::SelfDestructResult,
     return_ok,

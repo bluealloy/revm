@@ -1,4 +1,4 @@
-use crate::{models::SelfDestructResult, Return, KECCAK_EMPTY, interpreter::bytecode::Bytecode};
+use crate::{interpreter::bytecode::Bytecode, models::SelfDestructResult, Return, KECCAK_EMPTY};
 use alloc::{vec, vec::Vec};
 use core::mem::{self};
 use hashbrown::{hash_map::Entry, HashMap as Map};
