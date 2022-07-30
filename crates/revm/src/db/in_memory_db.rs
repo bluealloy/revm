@@ -1,18 +1,13 @@
-use crate::{Database, Filth, KECCAK_EMPTY};
-
+use super::{DatabaseCommit, DatabaseRef};
+use crate::{interpreter::bytecode::Bytecode, Database, Filth, KECCAK_EMPTY};
+use crate::{Account, AccountInfo, Log};
 use alloc::{
     collections::btree_map::{self, BTreeMap},
     vec::Vec,
 };
 use hashbrown::{hash_map::Entry, HashMap as Map};
-
 use primitive_types::{H160, H256, U256};
-
-use crate::{Account, AccountInfo, Log};
-use bytes::Bytes;
 use sha3::{Digest, Keccak256};
-
-use super::{DatabaseCommit, DatabaseRef};
 
 pub type InMemoryDB = CacheDB<EmptyDB>;
 
@@ -28,7 +23,7 @@ pub struct CacheDB<ExtDB: DatabaseRef> {
     /// Dummy account info where `code` is always `None`.
     /// Code bytes can be found in `contracts`.
     pub accounts: BTreeMap<H160, DbAccount>,
-    pub contracts: Map<H256, Bytes>,
+    pub contracts: Map<H256, Bytecode>,
     pub logs: Vec<Log>,
     pub block_hashes: Map<U256, H256>,
     pub db: ExtDB,
@@ -57,8 +52,8 @@ pub enum AccountState {
 impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     pub fn new(db: ExtDB) -> Self {
         let mut contracts = Map::new();
-        contracts.insert(KECCAK_EMPTY, Bytes::new());
-        contracts.insert(H256::zero(), Bytes::new());
+        contracts.insert(KECCAK_EMPTY, Bytecode::new());
+        contracts.insert(H256::zero(), Bytecode::new());
         Self {
             accounts: BTreeMap::new(),
             contracts,
@@ -72,9 +67,8 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         let code = core::mem::take(&mut account.code);
         if let Some(code) = code {
             if !code.is_empty() {
-                let code_hash = H256::from_slice(&Keccak256::digest(&code));
-                account.code_hash = code_hash;
-                self.contracts.insert(code_hash, code);
+                account.code_hash = code.hash();
+                self.contracts.insert(account.code_hash, code);
             }
         }
         if account.code_hash.is_zero() {
@@ -197,7 +191,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
         }
     }
 
-    fn code_by_hash(&mut self, code_hash: H256) -> Bytes {
+    fn code_by_hash(&mut self, code_hash: H256) -> Bytecode {
         match self.contracts.entry(code_hash) {
             Entry::Occupied(entry) => entry.get().clone(),
             Entry::Vacant(entry) => {
@@ -239,7 +233,7 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
         }
     }
 
-    fn code_by_hash(&self, code_hash: H256) -> Bytes {
+    fn code_by_hash(&self, code_hash: H256) -> Bytecode {
         match self.contracts.get(&code_hash) {
             Some(entry) => entry.clone(),
             None => self.db.code_by_hash(code_hash),
@@ -257,8 +251,8 @@ impl DatabaseRef for EmptyDB {
         AccountInfo::default()
     }
     /// Get account code by its hash
-    fn code_by_hash(&self, _code_hash: H256) -> Bytes {
-        Bytes::default()
+    fn code_by_hash(&self, _code_hash: H256) -> Bytecode {
+        Bytecode::new()
     }
     /// Get storage value of address at index.
     fn storage(&self, _address: H160, _index: U256) -> U256 {
@@ -277,7 +271,14 @@ impl DatabaseRef for EmptyDB {
 ///
 /// Any other address will return an empty account.
 #[derive(Debug, Default, Clone)]
-pub struct BenchmarkDB(pub Bytes);
+pub struct BenchmarkDB(pub Bytecode, H256);
+
+impl BenchmarkDB {
+    pub fn new_bytecode(bytecode: Bytecode) -> Self {
+        let hash = bytecode.hash();
+        Self(bytecode, hash)
+    }
+}
 
 impl Database for BenchmarkDB {
     /// Get basic account information.
@@ -287,15 +288,15 @@ impl Database for BenchmarkDB {
                 nonce: 1,
                 balance: U256::from(10000000),
                 code: Some(self.0.clone()),
-                code_hash: KECCAK_EMPTY,
+                code_hash: self.1,
             };
         }
         AccountInfo::default()
     }
 
     /// Get account code by its hash
-    fn code_by_hash(&mut self, _code_hash: H256) -> Bytes {
-        Bytes::default()
+    fn code_by_hash(&mut self, _code_hash: H256) -> Bytecode {
+        Bytecode::default()
     }
 
     /// Get storage value of address at index.

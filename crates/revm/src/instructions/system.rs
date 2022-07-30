@@ -35,7 +35,7 @@ pub fn caller(interp: &mut Interpreter) -> Return {
 
 pub fn codesize(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::BASE);
-    let size = U256::from(interp.contract.code_size);
+    let size = U256::from(interp.contract.bytecode.len());
     push!(interp, size);
     Return::Continue
 }
@@ -52,9 +52,12 @@ pub fn codecopy(interp: &mut Interpreter) -> Return {
     memory_resize!(interp, memory_offset, len);
 
     // Safety: set_data is unsafe function and memory_resize ensures us that it is safe to call it
-    interp
-        .memory
-        .set_data(memory_offset, code_offset, len, &interp.contract.code);
+    interp.memory.set_data(
+        memory_offset,
+        code_offset,
+        len,
+        interp.contract.bytecode.original_bytecode_slice(),
+    );
     Return::Continue
 }
 

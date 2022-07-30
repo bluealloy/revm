@@ -11,7 +11,7 @@ use sha3::{Digest, Keccak256};
 
 use indicatif::ProgressBar;
 use primitive_types::{H160, H256, U256};
-use revm::{db::AccountState, CreateScheme, Env, SpecId, TransactTo};
+use revm::{db::AccountState, Bytecode, CreateScheme, Env, SpecId, TransactTo};
 use std::sync::atomic::Ordering;
 use walkdir::{DirEntry, WalkDir};
 
@@ -47,17 +47,13 @@ pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
 }
 
 pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<(), TestError> {
-    // funky test with bigint value in json :)
+    // funky test with `bigint` value in json :) not possible to happen on mainnet and hard to parse.
+    // https://github.com/ethereum/tests/issues/971
     if path.file_name() == Some(OsStr::new("ValueOverflow.json")) {
         return Ok(());
     }
-    // test with very high nonce that in revm overflows. Impossible to happen.
-    // https://github.com/bluealloy/revm/issues/28
-    if path.file_name() == Some(OsStr::new("CREATE2_HighNonceDelegatecall.json")) {
-        return Ok(());
-    }
     /*
-    Test that take a lot of time so we are going to skip them
+    These tests are passing, but they take a lot of time to execute so we are going to skip them.
     */
     if path.file_name() == Some(OsStr::new("loopExp.json")) {
         return Ok(());
@@ -74,7 +70,11 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
     if path.file_name() == Some(OsStr::new("CALLBlake2f_MaxRounds.json")) {
         return Ok(());
     }
-    // failed tests they are missing some arguments
+    // */
+    // /*
+    // Skip test where basefee/accesslist is present but it shoulnd not be supported.
+    // https://github.com/ethereum/tests/blob/5b7e1ab3ffaf026d99d20b17bb30f533a2c80c8b/GeneralStateTests/stExample/eip1559.json#L130
+    // It is expected to skip these tests.
     if path.file_name() == Some(OsStr::new("accessListExample.json")) {
         return Ok(());
     }
@@ -84,14 +84,17 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
     if path.file_name() == Some(OsStr::new("eip1559.json")) {
         return Ok(());
     }
-
     //*/
     let json_reader = std::fs::read(&path).unwrap();
     let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
     let skip_test_unit: HashSet<_> = vec![
-        "typeTwoBerlin", //txbyte is of type 02 and we dont parse bytes for this test to fail as it
+        "typeTwoBerlin", //txbyte is of type 02 and we dont parse bytes for this test to fail.
         "CREATE2_HighNonce", //testing nonce > u64::MAX not really possible on mainnet.
         "CREATE_HighNonce", //testing nonce > u64::MAX not really possible on mainnet.
+        "CreateTransactionHighNonce", // testing nonce >u64::MAX not really possible on mainnet. code: https://github.com/ethereum/tests/blob/5b7e1ab3ffaf026d99d20b17bb30f533a2c80c8b/BlockchainTests/GeneralStateTests/stCreateTest/CreateTransactionHighNonce.json#L74
+        "CREATE2_HighNonceDelegatecall", // test with very high nonce that in revm overflows. Impossible to happen. https://github.com/bluealloy/revm/issues/28
+        "doubleSelfdestructTouch",       // CHECK THIS
+        "mergeTest",                     // CHECK THIS
     ]
     .into_iter()
     .collect();
@@ -136,7 +139,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
             let acc_info = revm::AccountInfo {
                 balance: info.balance,
                 code_hash: H256::from_slice(Keccak256::digest(&info.code).as_slice()), //try with dummy hash.
-                code: Some(info.code.clone()),
+                code: Some(Bytecode::new_raw(info.code.clone())),
                 nonce: info.nonce,
             };
             database.insert_account_info(*address, acc_info);
@@ -171,7 +174,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
         for (spec_name, tests) in unit.post {
             if !matches!(
                 spec_name,
-                SpecName::London | SpecName::Berlin | SpecName::Istanbul
+                SpecName::Merge | SpecName::London | SpecName::Berlin | SpecName::Istanbul
             ) {
                 continue;
             }

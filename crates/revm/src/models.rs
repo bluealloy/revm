@@ -1,9 +1,8 @@
 use core::cmp::min;
 
-use crate::{alloc::vec::Vec, SpecId};
+use crate::{alloc::vec::Vec, interpreter::bytecode::Bytecode, SpecId};
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
-use sha3::{Digest, Keccak256};
 
 pub const KECCAK_EMPTY: H256 = H256([
     0xc5, 0xd2, 0x46, 0x01, 0x86, 0xf7, 0x23, 0x3c, 0x92, 0x7e, 0x7d, 0xb2, 0xdc, 0xc7, 0x03, 0xc0,
@@ -11,7 +10,7 @@ pub const KECCAK_EMPTY: H256 = H256([
 ]);
 
 /// AccountInfo account information.
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Debug)]
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AccountInfo {
     /// Account balance.
@@ -22,8 +21,7 @@ pub struct AccountInfo {
     pub code_hash: H256,
     /// code: if None, `code_by_hash` will be used to fetch it if code needs to be loaded from
     /// inside of revm.
-    #[cfg_attr(feature = "with-serde", serde(with = "serde_hex_bytes_opt"))]
-    pub code: Option<Bytes>,
+    pub code: Option<Bytecode>,
 }
 
 impl Default for AccountInfo {
@@ -31,19 +29,15 @@ impl Default for AccountInfo {
         Self {
             balance: U256::zero(),
             code_hash: KECCAK_EMPTY,
-            code: Some(Bytes::new()),
+            code: Some(Bytecode::new()),
             nonce: 0,
         }
     }
 }
 
 impl AccountInfo {
-    pub fn new(balance: U256, nonce: u64, code: Bytes) -> Self {
-        let code_hash = if code.is_empty() {
-            KECCAK_EMPTY
-        } else {
-            H256::from_slice(Keccak256::digest(&code).as_slice())
-        };
+    pub fn new(balance: U256, nonce: u64, code: Bytecode) -> Self {
+        let code_hash = code.hash();
         Self {
             balance,
             nonce,
@@ -316,10 +310,9 @@ pub struct SelfDestructResult {
     pub is_cold: bool,
     pub previously_destroyed: bool,
 }
-
 /// Serde functions to serde as [bytes::Bytes] hex string
 #[cfg(feature = "with-serde")]
-mod serde_hex_bytes {
+pub(crate) mod serde_hex_bytes {
     use serde::{Deserialize, Deserializer, Serializer};
 
     pub fn serialize<S, T>(x: T, s: S) -> Result<S::Ok, S::Error>
@@ -346,7 +339,7 @@ mod serde_hex_bytes {
 }
 /// Serde functions to serde an Option [bytes::Bytes] hex string
 #[cfg(feature = "with-serde")]
-mod serde_hex_bytes_opt {
+pub(crate) mod serde_hex_bytes_opt {
     use super::serde_hex_bytes;
     use serde::{Deserialize, Deserializer, Serializer};
 

@@ -82,7 +82,7 @@ pub fn extcodecopy<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) 
     // Safety: set_data is unsafe function and memory_resize ensures us that it is safe to call it
     interp
         .memory
-        .set_data(memory_offset, code_offset, len, &code);
+        .set_data(memory_offset, code_offset, len, code.bytes());
     Return::Continue
 }
 

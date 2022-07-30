@@ -168,74 +168,63 @@ impl OpCode {
         self.0
     }
 }
+
+const JUMP_MASK: u32 = 0x80000000;
+const GAS_BLOCK_END_MASK: u32 = 0x40000000;
+const IS_PUSH_MASK: u32 = 0x20000000;
+const GAS_MASK: u32 = 0x1FFFFFFF;
+
 #[derive(Debug)]
 pub struct OpInfo {
-    pub gas: u64,
-    pub is_jump: bool,
-    pub is_gas_block_end: bool,
-    pub is_push: bool,
+    /// Data contains few information packed inside u32:
+    /// IS_JUMP (1bit) | IS_GAS_BLOCK_END (1bit) | IS_PUSH (1bit) | gas (29bits)
+    data: u32,
 }
 
 impl OpInfo {
+    #[inline(always)]
     pub fn is_jump(&self) -> bool {
-        self.is_jump
+        self.data & JUMP_MASK == JUMP_MASK
     }
-
+    #[inline(always)]
     pub fn is_gas_block_end(&self) -> bool {
-        self.is_gas_block_end
+        self.data & GAS_BLOCK_END_MASK == GAS_BLOCK_END_MASK
+    }
+    #[inline(always)]
+    pub fn is_push(&self) -> bool {
+        self.data & IS_PUSH_MASK == IS_PUSH_MASK
     }
 
-    pub fn is_push(&self) -> bool {
-        self.is_push
+    #[inline(always)]
+    pub fn get_gas(&self) -> u32 {
+        self.data & GAS_MASK
     }
 
     pub const fn none() -> Self {
-        Self {
-            gas: 0,
-            is_jump: false,
-            is_gas_block_end: false,
-            is_push: false,
-        }
+        Self { data: 0 }
     }
+
     pub const fn gas_block_end(gas: u64) -> Self {
         Self {
-            gas,
-            is_jump: false,
-            is_gas_block_end: true,
-            is_push: false,
+            data: gas as u32 | GAS_BLOCK_END_MASK,
         }
     }
     pub const fn dynamic_gas() -> Self {
-        Self {
-            gas: 0,
-            is_jump: false,
-            is_gas_block_end: false,
-            is_push: false,
-        }
+        Self { data: 0 }
     }
+
     pub const fn gas(gas: u64) -> Self {
-        Self {
-            gas,
-            is_jump: false,
-            is_gas_block_end: false,
-            is_push: false,
-        }
+        Self { data: gas as u32 }
     }
     pub const fn push_opcode() -> Self {
         Self {
-            gas: gas::VERYLOW,
-            is_jump: false,
-            is_gas_block_end: false,
-            is_push: true,
+            data: gas::VERYLOW as u32 | IS_PUSH_MASK,
         }
     }
 
     pub const fn jumpdest() -> Self {
         Self {
-            gas: 0,
-            is_jump: true,
-            is_gas_block_end: true,
-            is_push: false,
+            data: JUMP_MASK | GAS_BLOCK_END_MASK,
         }
     }
 }
@@ -543,52 +532,56 @@ macro_rules! gas_opcodee {
 pub const fn spec_opcode_gas(spec_id: SpecId) -> &'static [OpInfo; 256] {
     match spec_id {
         SpecId::FRONTIER => {
-            gas_opcodee!(O, SpecId::FRONTIER);
-            O
+            gas_opcodee!(FRONTIER, SpecId::FRONTIER);
+            FRONTIER
         }
         SpecId::HOMESTEAD => {
-            gas_opcodee!(O, SpecId::HOMESTEAD);
-            O
+            gas_opcodee!(HOMESTEAD, SpecId::HOMESTEAD);
+            HOMESTEAD
         }
         SpecId::TANGERINE => {
-            gas_opcodee!(O, SpecId::TANGERINE);
-            O
+            gas_opcodee!(TANGERINE, SpecId::TANGERINE);
+            TANGERINE
         }
         SpecId::SPURIOUS_DRAGON => {
-            gas_opcodee!(O, SpecId::SPURIOUS_DRAGON);
-            O
+            gas_opcodee!(SPURIOUS_DRAGON, SpecId::SPURIOUS_DRAGON);
+            SPURIOUS_DRAGON
         }
         SpecId::BYZANTIUM => {
-            gas_opcodee!(O, SpecId::BYZANTIUM);
-            O
+            gas_opcodee!(BYZANTIUM, SpecId::BYZANTIUM);
+            BYZANTIUM
         }
         SpecId::CONSTANTINOPLE => {
-            gas_opcodee!(O, SpecId::CONSTANTINOPLE);
-            O
+            gas_opcodee!(CONSTANTINOPLE, SpecId::CONSTANTINOPLE);
+            CONSTANTINOPLE
         }
         SpecId::PETERSBURG => {
-            gas_opcodee!(O, SpecId::PETERSBURG);
-            O
+            gas_opcodee!(PETERSBURG, SpecId::PETERSBURG);
+            PETERSBURG
         }
         SpecId::ISTANBUL => {
-            gas_opcodee!(O, SpecId::ISTANBUL);
-            O
+            gas_opcodee!(ISTANBUL, SpecId::ISTANBUL);
+            ISTANBUL
         }
         SpecId::MUIRGLACIER => {
-            gas_opcodee!(O, SpecId::MUIRGLACIER);
-            O
+            gas_opcodee!(MUIRGLACIER, SpecId::MUIRGLACIER);
+            MUIRGLACIER
         }
         SpecId::BERLIN => {
-            gas_opcodee!(O, SpecId::BERLIN);
-            O
+            gas_opcodee!(BERLIN, SpecId::BERLIN);
+            BERLIN
         }
         SpecId::LONDON => {
-            gas_opcodee!(O, SpecId::LONDON);
-            O
+            gas_opcodee!(LONDON, SpecId::LONDON);
+            LONDON
+        }
+        SpecId::MERGE => {
+            gas_opcodee!(MERGE, SpecId::MERGE);
+            MERGE
         }
         SpecId::LATEST => {
-            gas_opcodee!(O, SpecId::LATEST);
-            O
+            gas_opcodee!(LATEST, SpecId::LATEST);
+            LATEST
         }
     }
 }
