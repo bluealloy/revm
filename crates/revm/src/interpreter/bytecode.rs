@@ -115,7 +115,7 @@ impl Bytecode {
         }
     }
 
-    pub fn to_analyzed<SPEC: Spec>(self) -> Self {
+    pub fn to_analysed<SPEC: Spec>(self) -> Self {
         let (bytecode, len) = match self.state {
             BytecodeState::Raw => {
                 let len = self.bytecode.len();
@@ -134,7 +134,7 @@ impl Bytecode {
     }
 
     pub fn lock<SPEC: Spec>(self) -> BytecodeLocked {
-        let Bytecode { bytecode, state } = self.to_analyzed::<SPEC>();
+        let Bytecode { bytecode, state } = self.to_analysed::<SPEC>();
         if let BytecodeState::Analysed { len, jumptable } = state {
             BytecodeLocked {
                 bytecode,
@@ -142,7 +142,7 @@ impl Bytecode {
                 jumptable,
             }
         } else {
-            unreachable!("to_analyzed transforms state to analysed");
+            unreachable!("to_analysed transforms state to analysed");
         }
     }
 

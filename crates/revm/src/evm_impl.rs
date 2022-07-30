@@ -422,7 +422,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 // if we have enought gas
                 self.data.subroutine.checkpoint_commit();
                 // Do analasis of bytecode streight away.
-                let bytecode = Bytecode::new_raw(bytes).to_analyzed::<SPEC>();
+                let bytecode = Bytecode::new_raw(bytes).to_analysed::<SPEC>();
                 let code_hash = bytecode.hash();
                 self.data
                     .subroutine

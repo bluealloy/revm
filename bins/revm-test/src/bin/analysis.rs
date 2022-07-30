@@ -29,6 +29,7 @@ fn main() {
     
     evm.database(BenchmarkDB::new_bytecode(Bytecode::new_raw(contract_data.clone())));
 
+    // just to spead up processor.
     for _ in 0..10000 {
         let (_, _, _, _, _) = evm.transact();
     }
@@ -40,22 +41,22 @@ fn main() {
     println!("Raw elapsed time: {:?}", timer.elapsed());
 
 
-    // evm.database(BenchmarkDB::new_bytecode(Bytecode::new_raw(contract_data.clone()).to_checked()));
+    evm.database(BenchmarkDB::new_bytecode(Bytecode::new_raw(contract_data.clone()).to_checked()));
 
-    // let timer = Instant::now();
-    // for _ in 0..30000 {
-    //     let (_, _, _, _, _) = evm.transact();
-    // }
-    // println!("Checked elapsed time: {:?}", timer.elapsed());
+    let timer = Instant::now();
+    for _ in 0..30000 {
+        let (_, _, _, _, _) = evm.transact();
+    }
+    println!("Checked elapsed time: {:?}", timer.elapsed());
 
 
-    // evm.database(BenchmarkDB::new_bytecode(Bytecode::new_raw(contract_data).to_analyzed::<revm::LondonSpec>()));
+    evm.database(BenchmarkDB::new_bytecode(Bytecode::new_raw(contract_data).to_analysed::<revm::LondonSpec>()));
 
-    // let timer = Instant::now();
-    // for _ in 0..30000 {
-    //     let (_, _, _, _, _) = evm.transact();
-    // }
-    // println!("Analyzed elapsed time: {:?}", timer.elapsed());
+    let timer = Instant::now();
+    for _ in 0..30000 {
+        let (_, _, _, _, _) = evm.transact();
+    }
+    println!("Analysed elapsed time: {:?}", timer.elapsed());
 
 
 
