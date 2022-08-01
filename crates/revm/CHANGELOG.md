@@ -1,3 +1,11 @@
+# v1.8.0
+date: 1.8.2022
+
+Medium release, good performance boost. Database trait has changed to support Bytecode.
+
+* Introduce Bytecode format (#156)
+* Update readme files.
+* Merge eth/tests supported.
 
 # v1.7.0
 date: 11.06.2022

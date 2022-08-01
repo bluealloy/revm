@@ -8,8 +8,10 @@ Here is list of things that i would like to use as guide in this project:
 - **Simplicity** - simplification of internals so that it can be easily understood and extended, and interface that can be easily used or integrated into other project.
 - **interfacing** - `[no_std]` so that it can be used as wasm lib and integrate with JavaScript and cpp binding if needed.
 
-# Project structure
 
+# Project
+
+structure:
 * crates
     * revm -> main EVM library
     * revm_precompiles -> EVM precompiles are standalone
@@ -17,6 +19,11 @@ Here is list of things that i would like to use as guide in this project:
 * bins:
     * revme: cli binary, used for running state test json
     * revm-test: test binaries with contracts, used mostly to checke performance (will proably merge it inside revme).
+
+There were some big efforts on optimization of revm:
+* Optimizing interpreter loop: https://github.com/bluealloy/revm/issues/7
+* Introducing Bytecode format (and better bytecode analysis): https://github.com/bluealloy/revm/issues/121
+
 # Running eth tests
 
 go to `cd bins/revme/`
@@ -29,7 +36,7 @@ run tests with command: `cargo run --release -- statetest tests/GeneralStateTest
 
 # Used by
 
-* Foundry: https://github.com/foundry-rs/foundry
+* Foundry project (as their main EVM): https://github.com/foundry-rs/foundry
 
 (If you want to add your project to the list, ping me or open the PR)
 
