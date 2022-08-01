@@ -13,3 +13,7 @@ revm = { path = "../../crates/revm", version="1.3" }
 
 [[bin]]
 name = "analysis"
+
+
+[[bin]]
+name = "snailtracer"
