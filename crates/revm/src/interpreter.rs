@@ -1,7 +1,9 @@
+pub mod bytecode;
 mod contract;
 pub(crate) mod memory;
 mod stack;
 
+pub use bytecode::{Bytecode, BytecodeLocked, BytecodeState};
 pub use contract::Contract;
 pub use memory::Memory;
 pub use stack::Stack;
@@ -40,7 +42,7 @@ impl Interpreter {
     #[cfg(not(feature = "memory_limit"))]
     pub fn new<SPEC: Spec>(contract: Contract, gas_limit: u64) -> Self {
         Self {
-            program_counter: contract.code.as_ptr(),
+            program_counter: contract.bytecode.as_ptr(),
             return_range: Range::default(),
             memory: Memory::new(),
             stack: Stack::new(),
@@ -57,7 +59,7 @@ impl Interpreter {
         memory_limit: u64,
     ) -> Self {
         Self {
-            program_counter: contract.code.as_ptr(),
+            program_counter: contract.bytecode.as_ptr(),
             return_range: Range::default(),
             memory: Memory::new(),
             stack: Stack::new(),
@@ -96,7 +98,7 @@ impl Interpreter {
         // Safety: this is just subtraction of pointers, it is safe to do.
         unsafe {
             self.program_counter
-                .offset_from(self.contract.code.as_ptr()) as usize
+                .offset_from(self.contract.bytecode.as_ptr()) as usize
         }
     }
 

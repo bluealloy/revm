@@ -2,7 +2,7 @@ use std::{str::FromStr, time::Instant};
 
 use bytes::Bytes;
 use primitive_types::H160;
-use revm::{db::BenchmarkDB, TransactTo};
+use revm::{db::BenchmarkDB, Bytecode, TransactTo};
 
 extern crate alloc;
 
@@ -11,7 +11,7 @@ pub fn simple_example() {
 
     // BenchmarkDB is dummy state that implements Database trait.
     let mut evm = revm::new();
-    evm.database(BenchmarkDB(contract_data));
+    evm.database(BenchmarkDB::new_bytecode(Bytecode::new_raw(contract_data)));
 
     // execution globals block hash/gas_limit/coinbase/timestamp..
     evm.env.tx.caller = H160::from_str("0x1000000000000000000000000000000000000000").unwrap();
@@ -29,7 +29,9 @@ pub fn simple_example() {
         elapsed += i;
     }
     println!("elapsed: {:?}", elapsed / 30);
-    for (i, time) in times.iter().enumerate() {
+    let mut times = times[5..].to_vec();
+    times.sort();
+    for (i, time) in times.iter().rev().enumerate() {
         println!("{}: {:?}", i, time);
     }
 }

@@ -78,7 +78,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
             self.reduced_gas_block = 0;
             self.full_gas_block = interp.contract.gas_block(pc);
         } else {
-            self.reduced_gas_block += info.gas;
+            self.reduced_gas_block += info.get_gas() as u64;
         }
 
         Return::Continue

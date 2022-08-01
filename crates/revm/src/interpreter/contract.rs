@@ -1,24 +1,22 @@
-use crate::{alloc::vec::Vec, opcode::spec_opcode_gas, CallContext, Spec};
+use super::bytecode::{Bytecode, BytecodeLocked};
+use crate::{alloc::vec::Vec, CallContext, Spec};
 use bytes::Bytes;
 use primitive_types::{H160, U256};
-
-use crate::instructions::opcode;
+use std::sync::Arc;
 
 pub struct Contract {
     /// Contracts data
     pub input: Bytes,
     /// Contract code
-    pub code: Bytes,
     /// code size of original code. Note that current code is extended with push padding and STOP at end
-    pub code_size: usize,
+    /// Precomputed valid jump addresses
+    pub bytecode: BytecodeLocked,
     /// Contract address
     pub address: H160,
     /// Caller of the EVM.
     pub caller: H160,
     /// Value send to contract.
     pub value: U256,
-    /// Precomputed valid jump addresses
-    jumpdest: ValidJumpAddress,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -28,149 +26,79 @@ pub enum Analysis {
     None,
 }
 
+const JUMP_MASK: u32 = 0x80000000;
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AnalysisData {
-    pub is_jumpdest: bool,
-    pub gas_block: u64,
+    /// This variable packs two informations:
+    /// IS_JUMP (1bit) | gas block ( 31bits)
+    is_jump_and_gas_block: u32,
 }
 
 impl AnalysisData {
     pub fn none() -> Self {
         AnalysisData {
-            is_jumpdest: false,
-            gas_block: 0,
+            is_jump_and_gas_block: 0,
+            //gas_block: 0,
         }
     }
 
-    pub fn jump_dest() -> Self {
-        AnalysisData {
-            is_jumpdest: true,
-            gas_block: 0,
-        }
+    pub fn set_is_jump(&mut self) {
+        self.is_jump_and_gas_block |= JUMP_MASK;
     }
 
-    pub fn is_jump_dest(&self) -> bool {
-        self.is_jumpdest
+    pub fn set_gas_block(&mut self, gas_block: u32) {
+        let jump = self.is_jump_and_gas_block & JUMP_MASK;
+        self.is_jump_and_gas_block = gas_block | jump;
+    }
+
+    pub fn is_jump(&self) -> bool {
+        self.is_jump_and_gas_block & JUMP_MASK == JUMP_MASK
+    }
+
+    pub fn gas_block(&self) -> u64 {
+        (self.is_jump_and_gas_block & (!JUMP_MASK)) as u64
     }
 }
 
 impl Contract {
     pub fn new<SPEC: Spec>(
         input: Bytes,
-        code: Bytes,
+        bytecode: Bytecode,
         address: H160,
         caller: H160,
         value: U256,
     ) -> Self {
-        let code_size = code.len();
-        let (jumpdest, code) = Self::analyze::<SPEC>(code.as_ref());
-
-        let code = code.into();
+        let bytecode = bytecode.lock::<SPEC>();
         Self {
             input,
-            code,
-            code_size,
+            bytecode,
             address,
             caller,
             value,
-            jumpdest,
         }
-    }
-
-    /// Create a new valid mapping from given code bytes.
-    /// it gives back ValidJumpAddress and size od needed paddings.
-    fn analyze<SPEC: Spec>(code: &[u8]) -> (ValidJumpAddress, Vec<u8>) {
-        let mut jumps: Vec<AnalysisData> = Vec::with_capacity(code.len() + 33);
-        // padding of PUSH32 size plus one for stop
-        jumps.resize(code.len() + 33, AnalysisData::none());
-        //let opcode_gas = LONDON_OPCODES;
-        let opcode_gas = spec_opcode_gas(SPEC::SPEC_ID);
-        let mut index = 0;
-        let mut first_gas_block: u64 = 0;
-        let mut block_start: usize = 0;
-        // first gas block
-
-        while index < code.len() {
-            let opcode = unsafe { *code.get_unchecked(index) };
-            let info = unsafe { opcode_gas.get_unchecked(opcode as usize) };
-            first_gas_block += info.gas;
-
-            index += if info.is_push {
-                ((opcode - opcode::PUSH1) + 2) as usize
-            } else {
-                1
-            };
-
-            if info.is_gas_block_end {
-                block_start = index - 1;
-                if info.is_jump {
-                    unsafe {
-                        jumps.get_unchecked_mut(block_start).is_jumpdest = true;
-                    }
-                }
-                break;
-            }
-        }
-
-        let mut gas_in_block: u64 = 0;
-        while index < code.len() {
-            let opcode = unsafe { *code.get_unchecked(index) };
-            let info = unsafe { opcode_gas.get_unchecked(opcode as usize) };
-            gas_in_block += info.gas;
-
-            if info.is_gas_block_end {
-                if info.is_jump {
-                    unsafe {
-                        jumps.get_unchecked_mut(index).is_jumpdest = true;
-                    }
-                }
-                unsafe {
-                    jumps.get_unchecked_mut(block_start).gas_block = gas_in_block;
-                }
-                block_start = index;
-                gas_in_block = 0;
-            }
-
-            index += if info.is_push {
-                ((opcode - opcode::PUSH1) + 2) as usize
-            } else {
-                1
-            };
-        }
-        if gas_in_block != 0 {
-            unsafe {
-                jumps.get_unchecked_mut(block_start).gas_block = gas_in_block;
-            }
-        }
-        let padding = index - code.len();
-        // +1 is for forced STOP opcode at the end of contract, it is precausion
-        // if there is none, and if there is STOP our additional opcode will do nothing.
-        //jumps.resize(jumps.len() + padding + 1, AnalysisData::none());
-        let mut code = code.to_vec();
-        code.resize(code.len() + padding + 1, 0);
-
-        (ValidJumpAddress::new(jumps, first_gas_block), code)
     }
 
     pub fn is_valid_jump(&self, possition: usize) -> bool {
-        self.jumpdest.is_valid(possition)
+        self.bytecode.jumptable().is_valid(possition)
     }
 
     pub fn gas_block(&self, possition: usize) -> u64 {
-        self.jumpdest.gas_block(possition)
+        self.bytecode.jumptable().gas_block(possition)
     }
     pub fn first_gas_block(&self) -> u64 {
-        self.jumpdest.first_gas_block
+        self.bytecode.jumptable().first_gas_block as u64
     }
 
     pub fn new_with_context<SPEC: Spec>(
         input: Bytes,
-        code: Bytes,
+        bytecode: Bytecode,
         call_context: &CallContext,
     ) -> Self {
         Self::new::<SPEC>(
             input,
-            code,
+            bytecode,
             call_context.address,
             call_context.caller,
             call_context.apparent_value,
@@ -180,13 +108,16 @@ impl Contract {
 
 /// Mapping of valid jump destination from code.
 #[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ValidJumpAddress {
-    first_gas_block: u64,
-    analysis: Vec<AnalysisData>,
+    pub first_gas_block: u32,
+    /// Rc is used here so that we dont need to copy vector. We can move it to more suitable more accessable structure
+    /// without copying underlying vec.
+    pub analysis: Arc<Vec<AnalysisData>>,
 }
 
 impl ValidJumpAddress {
-    pub fn new(analysis: Vec<AnalysisData>, first_gas_block: u64) -> Self {
+    pub fn new(analysis: Arc<Vec<AnalysisData>>, first_gas_block: u32) -> Self {
         Self {
             analysis,
             first_gas_block,
@@ -207,17 +138,43 @@ impl ValidJumpAddress {
 
     /// Returns `true` if the position is a valid jump destination. If
     /// not, returns `false`.
-
     pub fn is_valid(&self, position: usize) -> bool {
         if position >= self.analysis.len() {
             return false;
         }
-
-        self.analysis[position].is_jump_dest()
+        self.analysis[position].is_jump()
     }
 
     pub fn gas_block(&self, position: usize) -> u64 {
-        self.analysis[position].gas_block
+        self.analysis[position].gas_block()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::AnalysisData;
+
+    #[test]
+    pub fn test_jump_set() {
+        let mut jump = AnalysisData::none();
+        assert!(!jump.is_jump());
+        assert_eq!(jump.gas_block(), 0);
+
+        jump.set_gas_block(2350);
+        assert!(!jump.is_jump());
+        assert_eq!(jump.gas_block(), 2350);
+
+        jump.set_is_jump();
+        assert!(jump.is_jump());
+        assert_eq!(jump.gas_block(), 2350);
+
+        jump.set_gas_block(10);
+        assert!(jump.is_jump());
+        assert_eq!(jump.gas_block(), 10);
+
+        jump.set_gas_block(350);
+        assert!(jump.is_jump());
+        assert_eq!(jump.gas_block(), 350);
     }
 }
 

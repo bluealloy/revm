@@ -1,9 +1,7 @@
-use crate::{models::SelfDestructResult, Return, KECCAK_EMPTY};
+use crate::{interpreter::bytecode::Bytecode, models::SelfDestructResult, Return, KECCAK_EMPTY};
 use alloc::{vec, vec::Vec};
 use core::mem::{self};
 use hashbrown::{hash_map::Entry, HashMap as Map};
-
-use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
 
 use crate::{db::Database, AccountInfo, Log};
@@ -168,7 +166,7 @@ impl SubRoutine {
     }
 
     /// use it only if you know that acc is hot
-    pub fn set_code(&mut self, address: H160, code: Bytes, code_hash: H256) {
+    pub fn set_code(&mut self, address: H160, code: Bytecode, code_hash: H256) {
         let acc = self.log_dirty(address, |_| {});
         acc.info.code = Some(code);
         acc.info.code_hash = code_hash;
@@ -330,7 +328,7 @@ impl SubRoutine {
             }
             ChangeLog::Created(balance, orig_filth) => {
                 let acc = state.get_mut(&add).unwrap();
-                acc.info.code = Some(Bytes::new());
+                acc.info.code = Some(Bytecode::new());
                 acc.info.code_hash = KECCAK_EMPTY;
                 acc.info.nonce = 0;
                 acc.info.balance = balance;
@@ -518,7 +516,7 @@ impl SubRoutine {
         );
         if acc.info.code.is_none() {
             let code = if dont_load_from_db {
-                Bytes::new()
+                Bytecode::new()
             } else {
                 db.code_by_hash(acc.info.code_hash)
             };

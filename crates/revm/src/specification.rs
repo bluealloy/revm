@@ -18,7 +18,8 @@ pub enum SpecId {
     MUIRGLACIER = 9,
     BERLIN = 10,
     LONDON = 11,
-    LATEST = 12,
+    MERGE = 12,
+    LATEST = 13,
 }
 
 impl SpecId {
@@ -27,7 +28,7 @@ impl SpecId {
             FRONTIER | HOMESTEAD | TANGERINE | SPURIOUS_DRAGON => PrecompileId::HOMESTEAD as u8,
             BYZANTIUM | CONSTANTINOPLE | PETERSBURG => PrecompileId::BYZANTIUM as u8,
             ISTANBUL | MUIRGLACIER => PrecompileId::ISTANBUL as u8,
-            BERLIN | LONDON | LATEST => PrecompileId::BERLIN as u8,
+            BERLIN | LONDON | MERGE | LATEST => PrecompileId::BERLIN as u8,
         }
     }
 
@@ -52,6 +53,7 @@ impl From<&str> for SpecId {
             "MuirGlacier" => SpecId::MUIRGLACIER,
             "Berlin" => SpecId::BERLIN,
             "London" => SpecId::LONDON,
+            "Merge" => SpecId::MERGE,
             _ => SpecId::LATEST,
         }
     }
@@ -81,7 +83,7 @@ pub trait Spec: Sized {
     const ASSUME_PRECOMPILE_HAS_BALANCE: bool;
 }
 
-mod spec_impl {
+pub(crate) mod spec_impl {
     use super::{NotStaticSpec, Spec};
 
     macro_rules! spec {
@@ -118,6 +120,7 @@ mod spec_impl {
     }
 
     spec!(LATEST);
+    spec!(MERGE);
     spec!(LONDON);
     spec!(BERLIN);
     spec!(ISTANBUL);
@@ -128,5 +131,5 @@ mod spec_impl {
 pub use spec_impl::{
     BERLIN::SpecImpl as BerlinSpec, BYZANTIUM::SpecImpl as ByzantiumSpec,
     FRONTIER::SpecImpl as FrontierSpec, ISTANBUL::SpecImpl as IstanbulSpec,
-    LATEST::SpecImpl as LatestSpec, LONDON::SpecImpl as LondonSpec,
+    LATEST::SpecImpl as LatestSpec, LONDON::SpecImpl as LondonSpec, MERGE::SpecImpl as MergeSpec,
 };

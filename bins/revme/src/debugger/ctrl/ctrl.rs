@@ -135,7 +135,8 @@ impl<DB: Database> Inspector<DB> for Controller {
                     CtrlPrint::All => {
                         let opcode = interp
                             .contract
-                            .code
+                            .bytecode
+                            .bytecode()
                             .get(interp.program_counter())
                             .cloned()
                             .unwrap();
@@ -154,7 +155,12 @@ impl<DB: Database> Inspector<DB> for Controller {
                         );
                     }
                     CtrlPrint::Opcode => {
-                        let opcode = *interp.contract.code.get(interp.program_counter()).unwrap();
+                        let opcode = *interp
+                            .contract
+                            .bytecode
+                            .bytecode()
+                            .get(interp.program_counter())
+                            .unwrap();
                         println!(
                             "PC:{} OpCode: {:#x} {:?}",
                             interp.program_counter(),

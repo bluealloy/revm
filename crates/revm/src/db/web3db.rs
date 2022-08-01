@@ -1,4 +1,4 @@
-use crate::{AccountInfo, Database, KECCAK_EMPTY};
+use crate::{interpreter::bytecode::Bytecode, AccountInfo, Database, KECCAK_EMPTY};
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
 use tokio::runtime::{Handle, Runtime};
@@ -67,14 +67,14 @@ impl Database for Web3DB {
             nonce
                 .unwrap_or_else(|e| panic!("web3 get nonce error:{:?}", e))
                 .as_u64(),
-            Bytes::from(
+            Bytecode::new_raw(Bytes::from(
                 code.unwrap_or_else(|e| panic!("web3 get node error:{:?}", e))
                     .0,
-            ),
+            )),
         )
     }
 
-    fn code_by_hash(&mut self, _code_hash: primitive_types::H256) -> bytes::Bytes {
+    fn code_by_hash(&mut self, _code_hash: primitive_types::H256) -> Bytecode {
         panic!("Should not be called. Code is already loaded");
         // not needed because we already load code with basic info
     }

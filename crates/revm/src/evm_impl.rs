@@ -1,6 +1,7 @@
 use crate::{
     db::Database,
-    gas, interpreter,
+    gas,
+    interpreter::{self, bytecode::Bytecode},
     interpreter::{Contract, Interpreter},
     models::SelfDestructResult,
     return_ok,
@@ -363,7 +364,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         // Create new interpreter and execute initcode
         let contract = Contract::new::<SPEC>(
             Bytes::new(),
-            inputs.init_code.clone(),
+            Bytecode::new_raw(inputs.init_code.clone()),
             created_address,
             inputs.caller,
             inputs.value,
@@ -390,10 +391,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             return_ok!() => {
                 let b = Bytes::new();
                 // if ok, check contract creation limit and calculate gas deduction on output len.
-                let code = interp.return_value();
+                let bytes = interp.return_value();
 
                 // EIP-3541: Reject new contract code starting with the 0xEF byte
-                if SPEC::enabled(LONDON) && !code.is_empty() && code.first() == Some(&0xEF) {
+                if SPEC::enabled(LONDON) && !bytes.is_empty() && bytes.first() == Some(&0xEF) {
                     self.data.subroutine.checkpoint_revert(checkpoint);
                     return (Return::CreateContractWithEF, ret, interp.gas, b);
                 }
@@ -407,12 +408,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                         .eip170_contract_code_size_limit;
                 }
                 // EIP-170: Contract code size limit
-                if SPEC::enabled(SPURIOUS_DRAGON) && code.len() > contract_code_size_limit {
+                if SPEC::enabled(SPURIOUS_DRAGON) && bytes.len() > contract_code_size_limit {
                     self.data.subroutine.checkpoint_revert(checkpoint);
                     return (Return::CreateContractLimit, ret, interp.gas, b);
                 }
                 if crate::USE_GAS {
-                    let gas_for_code = code.len() as u64 * crate::gas::CODEDEPOSIT;
+                    let gas_for_code = bytes.len() as u64 * crate::gas::CODEDEPOSIT;
                     // record code deposit gas cost and check if we are out of gas.
                     if !interp.gas.record_cost(gas_for_code) {
                         self.data.subroutine.checkpoint_revert(checkpoint);
@@ -421,10 +422,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 }
                 // if we have enought gas
                 self.data.subroutine.checkpoint_commit();
-                let code_hash = H256::from_slice(Keccak256::digest(&code).as_slice());
+                // Do analasis of bytecode streight away.
+                let bytecode = Bytecode::new_raw(bytes).to_analysed::<SPEC>();
+                let code_hash = bytecode.hash();
                 self.data
                     .subroutine
-                    .set_code(created_address, code, code_hash);
+                    .set_code(created_address, bytecode, code_hash);
                 (Return::Continue, ret, interp.gas, b)
             }
             _ => {
@@ -461,7 +464,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
         let mut gas = Gas::new(inputs.gas_limit);
         // Load account and get code. Account is now hot.
-        let (code, _) = self.code(inputs.contract);
+        let (bytecode, _) = self.code(inputs.contract);
 
         // Check depth
         if self.data.subroutine.depth() > interpreter::CALL_STACK_LIMIT {
@@ -545,7 +548,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         } else {
             // Create interpreter and execute subcall
             let contract =
-                Contract::new_with_context::<SPEC>(inputs.input.clone(), code, &inputs.context);
+                Contract::new_with_context::<SPEC>(inputs.input.clone(), bytecode, &inputs.context);
 
             #[cfg(feature = "memory_limit")]
             let mut interp = Interpreter::new_with_memory_limit::<SPEC>(
@@ -618,7 +621,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         (balance, is_cold)
     }
 
-    fn code(&mut self, address: H160) -> (Bytes, bool) {
+    fn code(&mut self, address: H160) -> (Bytecode, bool) {
         let (acc, is_cold) = self.data.subroutine.load_code(address, self.data.db);
         (acc.info.code.clone().unwrap(), is_cold)
     }
@@ -721,7 +724,7 @@ pub trait Host {
     /// Get balance of address.
     fn balance(&mut self, address: H160) -> (U256, bool);
     /// Get code of address.
-    fn code(&mut self, address: H160) -> (Bytes, bool);
+    fn code(&mut self, address: H160) -> (Bytecode, bool);
     /// Get code hash of address.
     fn code_hash(&mut self, address: H160) -> (H256, bool);
     /// Get storage value of address at index.

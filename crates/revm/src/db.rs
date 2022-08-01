@@ -7,20 +7,19 @@ pub use web3db::Web3DB;
 
 pub use in_memory_db::{AccountState, BenchmarkDB, CacheDB, DbAccount, EmptyDB, InMemoryDB};
 
-use crate::Account;
+use crate::{interpreter::bytecode::Bytecode, Account};
 use hashbrown::HashMap as Map;
 use primitive_types::{H160, H256, U256};
 
 use crate::AccountInfo;
 use auto_impl::auto_impl;
-use bytes::Bytes;
 
 #[auto_impl(& mut, Box)]
 pub trait Database {
     /// Get basic account information.
     fn basic(&mut self, address: H160) -> AccountInfo;
     /// Get account code by its hash
-    fn code_by_hash(&mut self, code_hash: H256) -> Bytes;
+    fn code_by_hash(&mut self, code_hash: H256) -> Bytecode;
     /// Get storage value of address at index.
     fn storage(&mut self, address: H160, index: U256) -> U256;
 
@@ -40,7 +39,7 @@ pub trait DatabaseRef {
     /// Get basic account information.
     fn basic(&self, address: H160) -> AccountInfo;
     /// Get account code by its hash
-    fn code_by_hash(&self, code_hash: H256) -> Bytes;
+    fn code_by_hash(&self, code_hash: H256) -> Bytecode;
     /// Get storage value of address at index.
     fn storage(&self, address: H160, index: U256) -> U256;
 
@@ -68,7 +67,7 @@ impl<'a> Database for RefDBWrapper<'a> {
         self.db.basic(address)
     }
     /// Get account code by its hash
-    fn code_by_hash(&mut self, code_hash: H256) -> Bytes {
+    fn code_by_hash(&mut self, code_hash: H256) -> Bytecode {
         self.db.code_by_hash(code_hash)
     }
     /// Get storage value of address at index.
