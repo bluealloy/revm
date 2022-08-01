@@ -83,7 +83,7 @@ pub trait Spec: Sized {
     const ASSUME_PRECOMPILE_HAS_BALANCE: bool;
 }
 
-mod spec_impl {
+pub(crate) mod spec_impl {
     use super::{NotStaticSpec, Spec};
 
     macro_rules! spec {

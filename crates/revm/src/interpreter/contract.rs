@@ -1,9 +1,8 @@
-use std::rc::Rc;
-
 use super::bytecode::{Bytecode, BytecodeLocked};
 use crate::{alloc::vec::Vec, CallContext, Spec};
 use bytes::Bytes;
 use primitive_types::{H160, U256};
+use std::sync::Arc;
 
 pub struct Contract {
     /// Contracts data
@@ -114,11 +113,11 @@ pub struct ValidJumpAddress {
     pub first_gas_block: u32,
     /// Rc is used here so that we dont need to copy vector. We can move it to more suitable more accessable structure
     /// without copying underlying vec.
-    pub analysis: Rc<Vec<AnalysisData>>,
+    pub analysis: Arc<Vec<AnalysisData>>,
 }
 
 impl ValidJumpAddress {
-    pub fn new(analysis: Rc<Vec<AnalysisData>>, first_gas_block: u32) -> Self {
+    pub fn new(analysis: Arc<Vec<AnalysisData>>, first_gas_block: u32) -> Self {
         Self {
             analysis,
             first_gas_block,

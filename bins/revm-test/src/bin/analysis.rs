@@ -24,9 +24,11 @@ fn main() {
     evm.env.tx.data = Bytes::from(hex::decode("8035F0CE").unwrap());
     evm.env.cfg.perf_all_precompiles_have_balance = true;
 
-    evm.database(BenchmarkDB::new_bytecode(Bytecode::new_raw(
-        contract_data.clone(),
-    )));
+    let bytecode_raw = Bytecode::new_raw(contract_data.clone());
+    let bytecode_checked = Bytecode::new_raw(contract_data.clone()).to_checked();
+    let bytecode_analysed = Bytecode::new_raw(contract_data).to_analysed::<revm::LondonSpec>();
+
+    evm.database(BenchmarkDB::new_bytecode(bytecode_raw));
 
     // just to spead up processor.
     for _ in 0..10000 {
@@ -39,9 +41,7 @@ fn main() {
     }
     println!("Raw elapsed time: {:?}", timer.elapsed());
 
-    evm.database(BenchmarkDB::new_bytecode(
-        Bytecode::new_raw(contract_data.clone()).to_checked(),
-    ));
+    evm.database(BenchmarkDB::new_bytecode(bytecode_checked));
 
     let timer = Instant::now();
     for _ in 0..30000 {
@@ -49,9 +49,7 @@ fn main() {
     }
     println!("Checked elapsed time: {:?}", timer.elapsed());
 
-    evm.database(BenchmarkDB::new_bytecode(
-        Bytecode::new_raw(contract_data).to_analysed::<revm::LondonSpec>(),
-    ));
+    evm.database(BenchmarkDB::new_bytecode(bytecode_analysed));
 
     let timer = Instant::now();
     for _ in 0..30000 {

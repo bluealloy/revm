@@ -1,12 +1,11 @@
-use std::rc::Rc;
-
 use super::contract::{AnalysisData, ValidJumpAddress};
 use crate::{opcode, spec_opcode_gas, Spec, KECCAK_EMPTY};
 use bytes::Bytes;
 use primitive_types::H256;
 use sha3::{Digest, Keccak256};
+use std::sync::Arc;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum BytecodeState {
     Raw,
@@ -19,7 +18,7 @@ pub enum BytecodeState {
     },
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Bytecode {
     #[cfg_attr(feature = "with-serde", serde(with = "crate::models::serde_hex_bytes"))]
@@ -40,7 +39,7 @@ impl Bytecode {
             bytecode: vec![0].into(),
             state: BytecodeState::Analysed {
                 len: 0,
-                jumptable: ValidJumpAddress::new(Rc::new(Vec::new()), 0),
+                jumptable: ValidJumpAddress::new(Arc::new(Vec::new()), 0),
             },
         }
     }
@@ -161,9 +160,9 @@ impl Bytecode {
 
         let mut analysis = ValidJumpAddress {
             first_gas_block: 0,
-            analysis: Rc::new(vec![AnalysisData::none(); code.len()]),
+            analysis: Arc::new(vec![AnalysisData::none(); code.len()]),
         };
-        let jumps = Rc::get_mut(&mut analysis.analysis).unwrap();
+        let jumps = Arc::get_mut(&mut analysis.analysis).unwrap();
 
         let mut index = 0;
         let mut gas_in_block: u32 = 0;
