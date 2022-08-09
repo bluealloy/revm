@@ -217,6 +217,12 @@ pub struct CfgEnv {
     /// This is is not really needed on mainnet, and defaults to false, but in most cases it is
     /// safe to be set to `true`, depending on the chain.
     pub perf_all_precompiles_have_balance: bool,
+    /// Bytecode that is created with CREATE/CREATE2 is by default analysed and jumptable is created.
+    /// This is very benefitial for testing and speeds up execution of that bytecode when
+    pub perf_analyse_created_bytecodes: bool,
+    /// Effects EIP-170: Contract code size limit. Usefull to increase this because of tests.
+    /// By default it is 0x6000 (~25kb).
+    pub limit_contract_code_size: usize,
     /// A hard memory limit in bytes beyond which [Memory] cannot be resized.
     ///
     /// In cases where the gas limit may be extraordinarily high, it is recommended to set this to
@@ -232,6 +238,8 @@ impl Default for CfgEnv {
             chain_id: 1.into(),
             spec_id: SpecId::LATEST,
             perf_all_precompiles_have_balance: false,
+            perf_analyse_created_bytecodes: true,
+            limit_contract_code_size: 0x6000,
             #[cfg(feature = "memory_limit")]
             memory_limit: 2u64.pow(32) - 1,
         }

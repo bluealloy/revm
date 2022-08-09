@@ -116,24 +116,6 @@ pub trait Inspector<DB: Database> {
 
     /// Called when a contract has been self-destructed.
     fn selfdestruct(&mut self) {}
-
-    /// Override some of the spec.
-    fn override_spec(&self) -> &OverrideSpec {
-        &OVERRIDE_SPEC_DEFAULT
-    }
-}
-
-const OVERRIDE_SPEC_DEFAULT: OverrideSpec = OverrideSpec {
-    eip170_contract_code_size_limit: usize::MAX,
-};
-pub struct OverrideSpec {
-    pub eip170_contract_code_size_limit: usize,
-}
-
-impl Default for OverrideSpec {
-    fn default() -> Self {
-        OVERRIDE_SPEC_DEFAULT
-    }
 }
 
 #[derive(Clone, Copy)]

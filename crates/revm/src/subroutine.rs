@@ -2,7 +2,7 @@ use crate::{interpreter::bytecode::Bytecode, models::SelfDestructResult, Return,
 use alloc::{vec, vec::Vec};
 use core::mem::{self};
 use hashbrown::{hash_map::Entry, HashMap as Map};
-use primitive_types::{H160, H256, U256};
+use primitive_types::{H160, U256};
 
 use crate::{db::Database, AccountInfo, Log};
 
@@ -166,10 +166,10 @@ impl SubRoutine {
     }
 
     /// use it only if you know that acc is hot
-    pub fn set_code(&mut self, address: H160, code: Bytecode, code_hash: H256) {
+    pub fn set_code(&mut self, address: H160, code: Bytecode) {
         let acc = self.log_dirty(address, |_| {});
+        acc.info.code_hash = code.hash();
         acc.info.code = Some(code);
-        acc.info.code_hash = code_hash;
     }
 
     pub fn inc_nonce(&mut self, address: H160) -> u64 {
