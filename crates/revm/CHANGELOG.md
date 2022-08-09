@@ -1,5 +1,13 @@
+# v1.9.0
+date: 09.08.2022
+
+Small release. Optimizations
+
+* Cache bytecode hash
+* Move override_spec config from Inspector to cfg
+
 # v1.8.0
-date: 1.8.2022
+date: 01.08.2022
 
 Medium release, good performance boost. Database trait has changed to support Bytecode.
 
