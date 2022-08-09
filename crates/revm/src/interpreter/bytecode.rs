@@ -23,6 +23,7 @@ pub enum BytecodeState {
 pub struct Bytecode {
     #[cfg_attr(feature = "with-serde", serde(with = "crate::models::serde_hex_bytes"))]
     bytecode: Bytes,
+    hash: H256,
     state: BytecodeState,
 }
 
@@ -37,6 +38,7 @@ impl Bytecode {
         // bytecode with one STOP opcode
         Bytecode {
             bytecode: vec![0].into(),
+            hash: KECCAK_EMPTY,
             state: BytecodeState::Analysed {
                 len: 0,
                 jumptable: ValidJumpAddress::new(Arc::new(Vec::new()), 0),
@@ -45,8 +47,26 @@ impl Bytecode {
     }
 
     pub fn new_raw(bytecode: Bytes) -> Self {
+        let hash = if bytecode.is_empty() {
+            KECCAK_EMPTY
+        } else {
+            H256::from_slice(Keccak256::digest(&bytecode).as_slice())
+        };
         Self {
             bytecode,
+            hash,
+            state: BytecodeState::Raw,
+        }
+    }
+
+    /// Create new raw Bytecode with hash
+    ///
+    /// # Safety
+    /// Hash need to be appropriate keccak256 over bytecode.
+    pub unsafe fn new_raw_with_hash(bytecode: Bytes, hash: H256) -> Self {
+        Self {
+            bytecode,
+            hash,
             state: BytecodeState::Raw,
         }
     }
@@ -56,9 +76,15 @@ impl Bytecode {
     /// # Safety
     /// Bytecode need to end with STOP (0x00) opcode as checked bytecode assumes that
     /// that it is safe to iterate over bytecode without checking lengths
-    pub unsafe fn new_checked(bytecode: Bytes, len: usize) -> Self {
+    pub unsafe fn new_checked(bytecode: Bytes, len: usize, hash: Option<H256>) -> Self {
+        let hash = match hash {
+            None if len == 0 => KECCAK_EMPTY,
+            None => H256::from_slice(Keccak256::digest(&bytecode).as_slice()),
+            Some(hash) => hash,
+        };
         Self {
             bytecode,
+            hash,
             state: BytecodeState::Checked { len },
         }
     }
@@ -68,9 +94,20 @@ impl Bytecode {
     /// # Safety
     /// Same as new_checked, bytecode needs to end with STOP (0x00) opcode as checked bytecode assumes
     /// that it is safe to iterate over bytecode without checking length
-    pub unsafe fn new_analysed(bytecode: Bytes, len: usize, jumptable: ValidJumpAddress) -> Self {
+    pub unsafe fn new_analysed(
+        bytecode: Bytes,
+        len: usize,
+        jumptable: ValidJumpAddress,
+        hash: Option<H256>,
+    ) -> Self {
+        let hash = match hash {
+            None if len == 0 => KECCAK_EMPTY,
+            None => H256::from_slice(Keccak256::digest(&bytecode).as_slice()),
+            Some(hash) => hash,
+        };
         Self {
             bytecode,
+            hash,
             state: BytecodeState::Analysed { len, jumptable },
         }
     }
@@ -80,16 +117,7 @@ impl Bytecode {
     }
 
     pub fn hash(&self) -> H256 {
-        let to_hash = match self.state {
-            BytecodeState::Raw => self.bytecode.as_ref(),
-            BytecodeState::Checked { len } => &self.bytecode[..len],
-            BytecodeState::Analysed { len, .. } => &self.bytecode[..len],
-        };
-        if to_hash.is_empty() {
-            KECCAK_EMPTY
-        } else {
-            H256::from_slice(Keccak256::digest(&to_hash).as_slice())
-        }
+        self.hash
     }
 
     pub fn is_empty(&self) -> bool {
@@ -116,6 +144,7 @@ impl Bytecode {
                 bytecode.resize(len + 33, 0);
                 Self {
                     bytecode: bytecode.into(),
+                    hash: self.hash,
                     state: BytecodeState::Checked { len },
                 }
             }
@@ -124,6 +153,7 @@ impl Bytecode {
     }
 
     pub fn to_analysed<SPEC: Spec>(self) -> Self {
+        let hash = self.hash;
         let (bytecode, len) = match self.state {
             BytecodeState::Raw => {
                 let len = self.bytecode.len();
@@ -137,16 +167,22 @@ impl Bytecode {
 
         Self {
             bytecode,
+            hash,
             state: BytecodeState::Analysed { len, jumptable },
         }
     }
 
     pub fn lock<SPEC: Spec>(self) -> BytecodeLocked {
-        let Bytecode { bytecode, state } = self.to_analysed::<SPEC>();
+        let Bytecode {
+            bytecode,
+            hash,
+            state,
+        } = self.to_analysed::<SPEC>();
         if let BytecodeState::Analysed { len, jumptable } = state {
             BytecodeLocked {
                 bytecode,
                 len,
+                hash,
                 jumptable,
             }
         } else {
@@ -232,6 +268,7 @@ impl Bytecode {
 pub struct BytecodeLocked {
     bytecode: Bytes,
     len: usize,
+    hash: H256,
     jumptable: ValidJumpAddress,
 }
 
@@ -250,6 +287,7 @@ impl BytecodeLocked {
     pub fn unlock(self) -> Bytecode {
         Bytecode {
             bytecode: self.bytecode,
+            hash: self.hash,
             state: BytecodeState::Analysed {
                 len: self.len,
                 jumptable: self.jumptable,

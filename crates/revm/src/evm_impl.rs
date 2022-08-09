@@ -399,16 +399,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     return (Return::CreateContractWithEF, ret, interp.gas, b);
                 }
 
-                // TODO maybe create some macro to hide this `if`
-                let mut contract_code_size_limit = 0x6000;
-                if INSPECT {
-                    contract_code_size_limit = self
-                        .inspector
-                        .override_spec()
-                        .eip170_contract_code_size_limit;
-                }
                 // EIP-170: Contract code size limit
-                if SPEC::enabled(SPURIOUS_DRAGON) && bytes.len() > contract_code_size_limit {
+                // By default limit is 0x6000 (~25kb)
+                if SPEC::enabled(SPURIOUS_DRAGON)
+                    && bytes.len() > self.data.env.cfg.limit_contract_code_size
+                {
                     self.data.subroutine.checkpoint_revert(checkpoint);
                     return (Return::CreateContractLimit, ret, interp.gas, b);
                 }
@@ -424,10 +419,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 self.data.subroutine.checkpoint_commit();
                 // Do analasis of bytecode streight away.
                 let bytecode = Bytecode::new_raw(bytes).to_analysed::<SPEC>();
-                let code_hash = bytecode.hash();
-                self.data
-                    .subroutine
-                    .set_code(created_address, bytecode, code_hash);
+                self.data.subroutine.set_code(created_address, bytecode);
                 (Return::Continue, ret, interp.gas, b)
             }
             _ => {
