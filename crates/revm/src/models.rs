@@ -1,6 +1,6 @@
 use core::cmp::min;
 
-use crate::{alloc::vec::Vec, interpreter::bytecode::Bytecode, SpecId};
+use crate::{alloc::vec::Vec, interpreter::bytecode::Bytecode, Return, SpecId};
 use bytes::Bytes;
 use primitive_types::{H160, H256, U256};
 
@@ -104,7 +104,7 @@ impl TransactTo {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TransactOut {
     None,
@@ -386,5 +386,26 @@ pub(crate) mod serde_hex_bytes_opt {
 
         let value = OptionalBytes::deserialize(deserializer)?;
         Ok(value.0.map(|b| b.0))
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct ExecutionResult {
+    pub exit_reason: Return,
+    pub out: TransactOut,
+    pub gas_used: u64,
+    pub gas_refunded: u64,
+    pub logs: Vec<Log>,
+}
+
+impl ExecutionResult {
+    pub fn new_with_reason(reason: Return) -> ExecutionResult {
+        ExecutionResult {
+            exit_reason: reason,
+            out: TransactOut::None,
+            gas_used: 0,
+            gas_refunded: 0,
+            logs: Vec::new(),
+        }
     }
 }

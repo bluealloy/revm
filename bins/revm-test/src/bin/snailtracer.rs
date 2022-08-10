@@ -23,7 +23,7 @@ pub fn simple_example() {
     let mut times = Vec::new();
     for _ in 0..30 {
         let timer = Instant::now();
-        let (_, _, _, _, _) = evm.transact();
+        let (_, _) = evm.transact();
         let i = timer.elapsed();
         times.push(i);
         elapsed += i;

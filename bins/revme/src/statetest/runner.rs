@@ -11,7 +11,7 @@ use sha3::{Digest, Keccak256};
 
 use indicatif::ProgressBar;
 use primitive_types::{H160, H256, U256};
-use revm::{db::AccountState, Bytecode, CreateScheme, Env, SpecId, TransactTo};
+use revm::{db::AccountState, Bytecode, CreateScheme, Env, ExecutionResult, SpecId, TransactTo};
 use std::sync::atomic::Ordering;
 use walkdir::{DirEntry, WalkDir};
 
@@ -231,7 +231,13 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                 // do the deed
 
                 let timer = Instant::now();
-                let (ret, _out, gas, logs) = evm.transact_commit();
+                let ExecutionResult {
+                    exit_reason,
+                    gas_used,
+                    gas_refunded,
+                    logs,
+                    ..
+                } = evm.transact_commit();
                 let timer = timer.elapsed();
 
                 *elapsed.lock().unwrap() += timer;
@@ -257,8 +263,8 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                     let db = evm.db().unwrap();
                     println!("{:?} UNIT_TEST:{}\n", path, name);
                     println!(
-                        "fail reson: {:?} {:?} UNIT_TEST:{}\n gas:{:?}",
-                        ret, path, name, gas
+                        "fail reson: {:?} {:?} UNIT_TEST:{}\n gas:{:?} ({:?} refunded)",
+                        exit_reason, path, name, gas_used, gas_refunded,
                     );
                     println!("\nApplied state:{:?}\n", db);
                     println!("\nStateroot: {:?}\n", state_root);
