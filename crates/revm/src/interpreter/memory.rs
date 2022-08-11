@@ -63,7 +63,7 @@ impl Memory {
     /// The caller is responsible for checking the offset and value
     #[inline(always)]
     pub unsafe fn set_byte(&mut self, index: usize, byte: u8) {
-        *self.data.get_unchecked_mut(index) = byte;
+        *self.data.get_mut(index).unwrap() = byte;
     }
 
     #[inline(always)]
@@ -85,11 +85,8 @@ impl Memory {
     pub fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]) {
         if data_offset >= data.len() {
             // nulify all memory slots
-            for i in memory_offset..memory_offset + len {
-                // Safety: Memory is assumed to be valid. And it is commented where that assumption is made
-                unsafe {
-                    *self.data.get_unchecked_mut(i) = 0;
-                }
+            for i in &mut self.data[memory_offset..memory_offset + len] {
+                *i = 0;
             }
             return;
         }
@@ -98,11 +95,9 @@ impl Memory {
         self.data[memory_offset..memory_data_end].copy_from_slice(&data[data_offset..data_end]);
 
         // nulify rest of memory slots
-        for i in memory_data_end..memory_offset + len {
-            // Safety: Memory is assumed to be valid. And it is commented where that assumption is made
-            unsafe {
-                *self.data.get_unchecked_mut(i) = 0;
-            }
+        // Safety: Memory is assumed to be valid. And it is commented where that assumption is made
+        for i in &mut self.data[memory_data_end..memory_offset + len] {
+            *i = 0;
         }
     }
 }
