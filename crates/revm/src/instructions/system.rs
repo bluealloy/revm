@@ -1,3 +1,5 @@
+use std::cmp::min;
+
 use crate::{gas, interpreter::Interpreter, Return, Spec, SpecId::*, KECCAK_EMPTY};
 use primitive_types::{H256, U256};
 
@@ -64,19 +66,18 @@ pub fn codecopy(interp: &mut Interpreter) -> Return {
 pub fn calldataload(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::VERYLOW);
     pop!(interp, index);
-    let mut load = [0u8; 32];
-    #[allow(clippy::needless_range_loop)]
-    for i in 0..32 {
-        if let Some(p) = index.checked_add(U256::from(i)) {
-            if p <= U256::from(usize::MAX) {
-                let p = p.as_usize();
-                if p < interp.contract.input.len() {
-                    load[i] = interp.contract.input[p];
-                }
-            }
-        }
-    }
-    push_h256!(interp, H256::from(load));
+    let index = as_usize_saturated!(index);
+
+    let load = if index < interp.contract.input.len() {
+        let mut load = H256::zero();
+        let have_bytes = min(interp.contract.input.len() - index, 32);
+        load.0[..have_bytes].copy_from_slice(&interp.contract.input[index..index + have_bytes]);
+        load
+    } else {
+        H256::zero()
+    };
+
+    push_h256!(interp, load);
     Return::Continue
 }
 

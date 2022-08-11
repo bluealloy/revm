@@ -74,7 +74,7 @@ impl Bytecode {
     /// Create new checked bytecode
     ///
     /// # Safety
-    /// Bytecode need to end with STOP (0x00) opcode as checked bytecode assumes that
+    /// Bytecode need to end with STOP (0x00) opcode as checked bytecode assumes
     /// that it is safe to iterate over bytecode without checking lengths
     pub unsafe fn new_checked(bytecode: Bytes, len: usize, hash: Option<H256>) -> Self {
         let hash = match hash {
@@ -93,7 +93,8 @@ impl Bytecode {
     ///
     /// # Safety
     /// Same as new_checked, bytecode needs to end with STOP (0x00) opcode as checked bytecode assumes
-    /// that it is safe to iterate over bytecode without checking length
+    /// that it is safe to iterate over bytecode without checking length.
+    /// And that ValidJumpAddress is valid.
     pub unsafe fn new_analysed(
         bytecode: Bytes,
         len: usize,
@@ -118,6 +119,10 @@ impl Bytecode {
 
     pub fn hash(&self) -> H256 {
         self.hash
+    }
+
+    pub fn state(&self) -> &BytecodeState {
+        &self.state
     }
 
     pub fn is_empty(&self) -> bool {
@@ -206,8 +211,8 @@ impl Bytecode {
 
         // first gas block
         while index < code.len() {
-            let opcode = unsafe { *code.get_unchecked(index) };
-            let info = unsafe { opcode_gas.get_unchecked(opcode as usize) };
+            let opcode = *code.get(index).unwrap();
+            let info = opcode_gas.get(opcode as usize).unwrap();
             analysis.first_gas_block += info.get_gas();
 
             index += if info.is_push() {
@@ -219,30 +224,25 @@ impl Bytecode {
             if info.is_gas_block_end() {
                 block_start = index - 1;
                 if info.is_jump() {
-                    unsafe {
-                        jumps.get_unchecked_mut(block_start).set_is_jump();
-                    }
+                    jumps.get_mut(block_start).unwrap().set_is_jump();
                 }
                 break;
             }
         }
 
         while index < code.len() {
-            let opcode = unsafe { *code.get_unchecked(index) };
-            let info = unsafe { opcode_gas.get_unchecked(opcode as usize) };
+            let opcode = *code.get(index).unwrap();
+            let info = opcode_gas.get(opcode as usize).unwrap();
             gas_in_block += info.get_gas();
 
             if info.is_gas_block_end() {
                 if info.is_jump() {
-                    unsafe {
-                        jumps.get_unchecked_mut(index).set_is_jump();
-                    }
+                    jumps.get_mut(index).unwrap().set_is_jump();
                 }
-                unsafe {
-                    jumps
-                        .get_unchecked_mut(block_start)
-                        .set_gas_block(gas_in_block);
-                }
+                jumps
+                    .get_mut(block_start)
+                    .unwrap()
+                    .set_gas_block(gas_in_block);
                 block_start = index;
                 gas_in_block = 0;
                 index += 1;
@@ -255,11 +255,10 @@ impl Bytecode {
             }
         }
         if gas_in_block != 0 {
-            unsafe {
-                jumps
-                    .get_unchecked_mut(block_start)
-                    .set_gas_block(gas_in_block);
-            }
+            jumps
+                .get_mut(block_start)
+                .unwrap()
+                .set_gas_block(gas_in_block);
         }
         analysis
     }
