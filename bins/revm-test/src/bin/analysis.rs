@@ -28,12 +28,12 @@ fn main() {
 
     // just to spead up processor.
     for _ in 0..10000 {
-        let (_, _, _, _, _) = evm.transact();
+        let (_, _) = evm.transact();
     }
 
     let timer = Instant::now();
     for _ in 0..30000 {
-        let (_, _, _, _, _) = evm.transact();
+        let (_, _) = evm.transact();
     }
     println!("Raw elapsed time: {:?}", timer.elapsed());
 
@@ -41,7 +41,7 @@ fn main() {
 
     let timer = Instant::now();
     for _ in 0..30000 {
-        let (_, _, _, _, _) = evm.transact();
+        let (_, _) = evm.transact();
     }
     println!("Checked elapsed time: {:?}", timer.elapsed());
 
@@ -49,7 +49,7 @@ fn main() {
 
     let timer = Instant::now();
     for _ in 0..30000 {
-        let (_, _, _, _, _) = evm.transact();
+        let (_, _) = evm.transact();
     }
     println!("Analysed elapsed time: {:?}", timer.elapsed());
 }
