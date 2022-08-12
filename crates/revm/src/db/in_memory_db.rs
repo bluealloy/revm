@@ -82,11 +82,15 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         self.accounts.entry(address).or_default().info = info;
     }
 
-    /// insert account storage if account is not present it will be created with default account information
+    /// insert account storage without overriding account info
     pub fn insert_account_storage(&mut self, address: H160, slot: U256, value: U256) {
+        let db = &self.db;
         self.accounts
             .entry(address)
-            .or_default()
+            .or_insert_with(|| DbAccount {
+                info: db.basic(address),
+                ..Default::default()
+            })
             .storage
             .insert(slot, value);
     }
@@ -307,5 +311,35 @@ impl Database for BenchmarkDB {
     // History related
     fn block_hash(&mut self, _number: U256) -> H256 {
         H256::default()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use primitive_types::H160;
+
+    use crate::{AccountInfo, Database};
+
+    use super::{CacheDB, EmptyDB};
+
+    #[test]
+    pub fn test_insert_account_storage() {
+        let account = H160::from_low_u64_be(42);
+        let nonce = 42;
+        let mut init_state = CacheDB::new(EmptyDB::default());
+        init_state.insert_account_info(
+            account,
+            AccountInfo {
+                nonce,
+                ..Default::default()
+            },
+        );
+
+        let (key, value) = (123u64.into(), 456u64.into());
+        let mut new_state = CacheDB::new(init_state);
+        new_state.insert_account_storage(account, key, value);
+
+        assert_eq!(new_state.basic(account).nonce, nonce);
+        assert_eq!(new_state.storage(account, key), value);
     }
 }
