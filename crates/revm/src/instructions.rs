@@ -57,7 +57,7 @@ pub enum Return {
     StackUnderflow,
     StackOverflow,
     OutOfOffset,
-    FatalNotSupported,
+    FatalNotSupported, // Think this is not needed.
     GasMaxFeeGreaterThanPriorityFee,
     GasPriceLessThenBasefee,
     CallerGasLimitMoreThenBlock,
@@ -65,7 +65,8 @@ pub enum Return {
     LackOfFundForGasLimit,
     CreateCollision,
     OverflowPayment,
-    Precompile,
+    PrecompileError,
+    NonceOverflow,
 
     /// Create init code exceeds limit (runtime).
     CreateContractLimit,

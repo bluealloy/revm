@@ -59,7 +59,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
 
         println!(
             "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data:",
-            data.subroutine.depth(),
+            data.journaled_state.depth(),
             interp.program_counter(),
             gas_remaining,
             gas_remaining,

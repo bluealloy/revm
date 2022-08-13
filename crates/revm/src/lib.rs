@@ -10,7 +10,7 @@ mod instructions;
 mod interpreter;
 mod models;
 mod specification;
-mod subroutine;
+mod journaled_state;
 
 pub use evm_impl::{EVMData, Host};
 
@@ -29,7 +29,7 @@ pub use interpreter::{
 };
 pub use models::*;
 pub use specification::*;
-pub use subroutine::{Account, Filth, SubRoutine};
+pub use journaled_state::{Account, JournaledState};
 
 extern crate alloc;
 
