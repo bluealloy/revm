@@ -41,7 +41,7 @@ impl Bytecode {
             hash: KECCAK_EMPTY,
             state: BytecodeState::Analysed {
                 len: 0,
-                jumptable: ValidJumpAddress::new(Arc::new(Vec::new()), 0),
+                jumptable: ValidJumpAddress::new(Arc::new(vec![AnalysisData::none()]), 0),
             },
         }
     }
