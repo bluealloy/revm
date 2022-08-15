@@ -3,7 +3,10 @@ use core::convert::TryInto;
 use bn_rs::BN;
 use bytes::Bytes;
 use primitive_types::{H160, U256};
-use revm::{AccountInfo, Bytecode, DatabaseCommit, InMemoryDB, SpecId, TransactTo, EVM as rEVM};
+use revm::{
+    AccountInfo, Bytecode, DatabaseCommit, ExecutionResult, InMemoryDB, SpecId, TransactTo,
+    EVM as rEVM,
+};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -45,17 +48,28 @@ impl EVM {
     }
 
     pub fn transact(&mut self) -> u64 {
-        let (exit, data, gas, state, logs) = self.revm.transact();
+        let (
+            ExecutionResult {
+                exit_reason,
+                out,
+                gas_used,
+                gas_refunded,
+                logs,
+                ..
+            },
+            state,
+        ) = self.revm.transact();
         console_log!(
-            "Transact done, exit:{:?}, gas:{:?}, data:{:?}\nstate_chage:{:?}\nlogs:{:?}",
-            exit,
-            gas,
-            data,
+            "Transact done, exit:{:?}, gas:{:?} ({:?} refunded), data:{:?}\nstate_chage:{:?}\nlogs:{:?}",
+            exit_reason,
+            gas_used,
+            gas_refunded,
+            out,
             state,
             logs,
         );
         self.revm.db().unwrap().commit(state);
-        gas
+        gas_used
     }
 
     /****** DATABASE RELATED ********/

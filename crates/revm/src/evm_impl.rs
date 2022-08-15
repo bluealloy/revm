@@ -3,11 +3,10 @@ use crate::{
     gas,
     interpreter::{self, bytecode::Bytecode},
     interpreter::{Contract, Interpreter},
+    journaled_state::{Account, JournaledState, State},
     models::SelfDestructResult,
-    return_ok,
-    journaled_state::{Account, State, JournaledState},
-    CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, Env, Gas, Inspector, Log,
-    Return, Spec,
+    return_ok, CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, Env,
+    ExecutionResult, Gas, Inspector, Log, Return, Spec,
     SpecId::*,
     TransactOut, TransactTo, Transfer, KECCAK_EMPTY,
 };
@@ -34,19 +33,19 @@ pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
 
 pub trait Transact {
     /// Do transaction.
-    /// Return Return, Output for call or Address if we are creating contract, gas spend, State that needs to be applied.
-    fn transact(&mut self) -> (Return, TransactOut, u64, State, Vec<Log>);
+    /// Return Return, Output for call or Address if we are creating contract, gas spend, gas refunded, State that needs to be applied.
+    fn transact(&mut self) -> (ExecutionResult, State);
 }
 
 impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
     for EVMImpl<'a, GSPEC, DB, INSPECT>
 {
-    fn transact(&mut self) -> (Return, TransactOut, u64, State, Vec<Log>) {
+    fn transact(&mut self) -> (ExecutionResult, State) {
         let caller = self.data.env.tx.caller;
         let value = self.data.env.tx.value;
         let data = self.data.env.tx.data.clone();
         let gas_limit = self.data.env.tx.gas_limit;
-        let exit = |reason: Return| (reason, TransactOut::None, 0, State::new(), Vec::new());
+        let exit = |reason: Return| (ExecutionResult::new_with_reason(reason), State::new());
 
         if GSPEC::enabled(LONDON) {
             if let Some(priority_fee) = self.data.env.tx.gas_priority_fee {
@@ -164,8 +163,17 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
             gas.reimburse_unspend(&exit_reason, ret_gas);
         }
 
-        let (state, logs, gas_used) = self.finalize::<GSPEC>(caller, &gas);
-        (exit_reason, out, gas_used, state, logs)
+        let (state, logs, gas_used, gas_refunded) = self.finalize::<GSPEC>(caller, &gas);
+        (
+            ExecutionResult {
+                exit_reason,
+                out,
+                gas_used,
+                gas_refunded,
+                logs,
+            },
+            state,
+        )
     }
 }
 
@@ -207,9 +215,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         &mut self,
         caller: H160,
         gas: &Gas,
-    ) -> (Map<H160, Account>, Vec<Log>, u64) {
+    ) -> (Map<H160, Account>, Vec<Log>, u64, u64) {
         let coinbase = self.data.env.block.coinbase;
-        let gas_used = if crate::USE_GAS {
+        let (gas_used, gas_refunded) = if crate::USE_GAS {
             let effective_gas_price = self.data.env.effective_gas_price();
             let basefee = self.data.env.block.basefee;
             let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 }; // EIP-3529: Reduction in refunds
@@ -230,7 +238,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 effective_gas_price
             };
 
-            self.data.journaled_state.load_account(coinbase, self.data.db);
+            self.data
+                .journaled_state
+                .load_account(coinbase, self.data.db);
             self.data.journaled_state.touch(&coinbase);
             self.data
                 .journaled_state
@@ -239,12 +249,14 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 .unwrap()
                 .info
                 .balance += coinbase_gas_price * (gas.spend() - gas_refunded);
-            gas.spend() - gas_refunded
+            (gas.spend() - gas_refunded, gas_refunded)
         } else {
             // touch coinbase
-            self.data.journaled_state.load_account(coinbase, self.data.db);
+            self.data
+                .journaled_state
+                .load_account(coinbase, self.data.db);
             self.data.journaled_state.touch(&coinbase);
-            0
+            (0, 0)
         };
         let (mut new_state, logs) = self.data.journaled_state.finalize();
         // precompiles are special case. If there is precompiles in finalized Map that means some balance is
@@ -259,7 +271,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             }
         }
 
-        (new_state, logs, gas_used)
+        (new_state, logs, gas_used, gas_refunded)
     }
 
     fn inner_load_account(&mut self, caller: H160) -> bool {
@@ -278,10 +290,14 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     let mut accessed_slots = 0_u64;
 
                     for (address, slots) in self.data.env.tx.access_list.iter() {
-                        self.data.journaled_state.load_account(*address, self.data.db);
+                        self.data
+                            .journaled_state
+                            .load_account(*address, self.data.db);
                         accessed_slots += slots.len() as u64;
                         for slot in slots {
-                            self.data.journaled_state.sload(*address, *slot, self.data.db);
+                            self.data
+                                .journaled_state
+                                .sload(*address, *slot, self.data.db);
                         }
                     }
                     (self.data.env.tx.access_list.len() as u64, accessed_slots)
@@ -385,7 +401,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
         // Increase nonce of the contract
         if SPEC::enabled(ISTANBUL) {
-            if self.data.journaled_state.inc_nonce(created_address).is_none() {
+            if self
+                .data
+                .journaled_state
+                .inc_nonce(created_address)
+                .is_none()
+            {
                 // overflow
                 self.data.journaled_state.checkpoint_revert(checkpoint);
                 return (Return::NonceOverflow, None, gas, Bytes::new());
@@ -450,7 +471,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 self.data.journaled_state.checkpoint_commit();
                 // Do analasis of bytecode streight away.
                 let bytecode = Bytecode::new_raw(bytes).to_analysed::<SPEC>();
-                self.data.journaled_state.set_code(created_address, bytecode);
+                self.data
+                    .journaled_state
+                    .set_code(created_address, bytecode);
                 (Return::Continue, ret, interp.gas, b)
             }
             _ => {
@@ -664,7 +687,9 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
 
     fn sload(&mut self, address: H160, index: U256) -> (U256, bool) {
         // account is always hot. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
-        self.data.journaled_state.sload(address, index, self.data.db)
+        self.data
+            .journaled_state
+            .sload(address, index, self.data.db)
     }
 
     fn sstore(&mut self, address: H160, index: U256, value: U256) -> (U256, U256, U256, bool) {
