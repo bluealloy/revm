@@ -94,7 +94,6 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
         "CreateTransactionHighNonce", // testing nonce >u64::MAX not really possible on mainnet. code: https://github.com/ethereum/tests/blob/5b7e1ab3ffaf026d99d20b17bb30f533a2c80c8b/BlockchainTests/GeneralStateTests/stCreateTest/CreateTransactionHighNonce.json#L74
         "CREATE2_HighNonceDelegatecall", // test with very high nonce that in revm overflows. Impossible to happen. https://github.com/bluealloy/revm/issues/28
         "mergeTest",
-
     ]
     .into_iter()
     .collect();
@@ -288,7 +287,7 @@ pub fn run(test_files: Vec<PathBuf>) -> Result<(), TestError> {
     let mut joins = Vec::new();
     let queue = Arc::new(Mutex::new((0, test_files)));
     let elapsed = Arc::new(Mutex::new(std::time::Duration::ZERO));
-    for _ in 0..1 {
+    for _ in 0..10 {
         let queue = queue.clone();
         let endjob = endjob.clone();
         let console_bar = console_bar.clone();

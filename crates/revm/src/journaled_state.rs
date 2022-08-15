@@ -270,7 +270,6 @@ impl JournaledState {
         Ok((from_is_cold, to_is_cold))
     }
 
-
     /// return if it has collision of addresses
     pub fn create_account<DB: Database>(
         &mut self,
@@ -312,7 +311,6 @@ impl JournaledState {
         true
     }
 
-
     fn journal_revert(state: &mut State, journal_entries: Vec<JournalEntry>) {
         for entry in journal_entries.into_iter().rev() {
             match entry {
@@ -320,7 +318,8 @@ impl JournaledState {
                     state.remove(&address);
                 }
                 JournalEntry::AccountTouched { address } => {
-                    const PRECOMPILE3: H160 = H160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]);
+                    const PRECOMPILE3: H160 =
+                        H160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]);
 
                     if address != PRECOMPILE3 {
                         state.get_mut(&address).unwrap().is_touched = false;

@@ -400,17 +400,16 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
 
         // Increase nonce of the contract
-        if SPEC::enabled(ISTANBUL) {
-            if self
+        if SPEC::enabled(ISTANBUL)
+            && self
                 .data
                 .journaled_state
                 .inc_nonce(created_address)
                 .is_none()
-            {
-                // overflow
-                self.data.journaled_state.checkpoint_revert(checkpoint);
-                return (Return::NonceOverflow, None, gas, Bytes::new());
-            }
+        {
+            // overflow
+            self.data.journaled_state.checkpoint_revert(checkpoint);
+            return (Return::NonceOverflow, None, gas, Bytes::new());
         }
 
         // Create new interpreter and execute initcode
