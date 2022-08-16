@@ -361,7 +361,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         if let Some(nonce) = self.data.journaled_state.inc_nonce(inputs.caller) {
             old_nonce = nonce - 1;
         } else {
-            return (Return::NonceOverflow, None, gas, Bytes::new());
+            return (Return::Return, None, gas, Bytes::new());
         }
 
         // Create address
@@ -409,7 +409,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         {
             // overflow
             self.data.journaled_state.checkpoint_revert(checkpoint);
-            return (Return::NonceOverflow, None, gas, Bytes::new());
+            return (Return::Return, None, gas, Bytes::new());
         }
 
         // Create new interpreter and execute initcode
