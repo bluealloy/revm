@@ -535,9 +535,18 @@ pub const fn spec_opcode_gas(spec_id: SpecId) -> &'static [OpInfo; 256] {
             gas_opcodee!(FRONTIER, SpecId::FRONTIER);
             FRONTIER
         }
+        SpecId::FRONTIER_THAWING => {
+            gas_opcodee!(FRONTIER_THAWING, SpecId::FRONTIER_THAWING);
+            FRONTIER_THAWING
+
+        }
         SpecId::HOMESTEAD => {
             gas_opcodee!(HOMESTEAD, SpecId::HOMESTEAD);
             HOMESTEAD
+        }
+        SpecId::DAO_FORK => {
+            gas_opcodee!(DAO_FORK, SpecId::DAO_FORK);
+            DAO_FORK
         }
         SpecId::TANGERINE => {
             gas_opcodee!(TANGERINE, SpecId::TANGERINE);
@@ -563,8 +572,8 @@ pub const fn spec_opcode_gas(spec_id: SpecId) -> &'static [OpInfo; 256] {
             gas_opcodee!(ISTANBUL, SpecId::ISTANBUL);
             ISTANBUL
         }
-        SpecId::MUIRGLACIER => {
-            gas_opcodee!(MUIRGLACIER, SpecId::MUIRGLACIER);
+        SpecId::MUIR_GLACIER => {
+            gas_opcodee!(MUIRGLACIER, SpecId::MUIR_GLACIER);
             MUIRGLACIER
         }
         SpecId::BERLIN => {
@@ -574,6 +583,14 @@ pub const fn spec_opcode_gas(spec_id: SpecId) -> &'static [OpInfo; 256] {
         SpecId::LONDON => {
             gas_opcodee!(LONDON, SpecId::LONDON);
             LONDON
+        }
+        SpecId::ARROW_GLACIER => {
+            gas_opcodee!(ARROW_GLACIER, SpecId::ARROW_GLACIER);
+            ARROW_GLACIER
+        }
+        SpecId::GRAY_GLACIER => {
+            gas_opcodee!(GRAY_GLACIER, SpecId::GRAY_GLACIER);
+            GRAY_GLACIER
         }
         SpecId::MERGE => {
             gas_opcodee!(MERGE, SpecId::MERGE);
