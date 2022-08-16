@@ -57,20 +57,20 @@ pub enum Return {
     StackUnderflow,
     StackOverflow,
     OutOfOffset,
-    FatalNotSupported, // Think this is not needed.
+    FatalNotSupported,
     GasMaxFeeGreaterThanPriorityFee,
     GasPriceLessThenBasefee,
     CallerGasLimitMoreThenBlock,
-    RejectCallerWithCode, //new eip included in london
+    /// EIP-3607 Reject transactions from senders with deployed code
+    RejectCallerWithCode,
     LackOfFundForGasLimit,
     CreateCollision,
     OverflowPayment,
     PrecompileError,
     NonceOverflow,
-
     /// Create init code exceeds limit (runtime).
     CreateContractLimit,
-    /// Create contract that begins with EF
+    /// Error on created contract that begins with EF
     CreateContractWithEF,
 }
 

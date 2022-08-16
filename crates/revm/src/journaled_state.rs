@@ -77,38 +77,47 @@ impl StorageSlot {
 
 #[derive(Debug, Clone)]
 pub enum JournalEntry {
-    AccountLoaded {
-        address: H160,
-    },
-    AccountCreated {
-        address: H160,
-    },
+    /// Used to mark account that is hot inside EVM in regards to EIP-2929 AccessList.
+    /// Action: We will add Account to state.
+    /// Revert: we will remove account from state.
+    AccountLoaded { address: H160 },
+    /// Mark account to be destroyed and journal balance to be reverted
+    /// Action: Mark account and transfer the balance
+    /// Revert: Unmark the account and transfer balance back
     AccountDestroyed {
         address: H160,
         target: H160,
         was_destroyed: bool, // if account had already been destroyed before this journal entry
         had_balance: U256,
     },
-    AccountTouched {
-        address: H160,
-    },
-    BalanceTransfer {
-        from: H160,
-        to: H160,
-        balance: U256,
-    },
+    /// Loading account does not mean that account will need to be added to MerkleTree (touched).
+    /// Only when account is called (to execute contract or transfer balance) only then account is made touched.
+    /// Action: Mark account touched
+    /// Revert: Unmark account touched
+    AccountTouched { address: H160 },
+    /// Transfer balance between two accounts
+    /// Action: Transfer balance
+    /// Revert: Transfer balance back
+    BalanceTransfer { from: H160, to: H160, balance: U256 },
+    /// Increment nonce
+    /// Action: Increment nonce by one
+    /// Revert: Decrement nonce by one
     NonceChange {
         address: H160, //geth has nonce value,
     },
+    /// It is used to track both storage change and hot load of storage slot. For hot load in regards
+    /// to EIP-2929 AccessList had_value will be None
+    /// Action: Storage change or hot load
+    /// Revert: Revert to previous value or remove slot from storage
     StorageChage {
         address: H160,
         key: U256,
         had_value: Option<U256>, //if none, storage slot was cold loaded from db and needs to be removed
     },
-    CodeChange {
-        address: H160,
-        had_code: Bytecode,
-    },
+    /// Code changed
+    /// Action: Account code changed
+    /// Revert: Revert to previous bytecode.
+    CodeChange { address: H160, had_code: Bytecode },
 }
 
 /// SubRoutine checkpoint that will help us to go back from this
@@ -279,6 +288,7 @@ impl JournaledState {
     ) -> bool {
         let (acc, _) = self.load_code(address, db);
 
+        // Check collision. Bytecode needs to be empty.
         if let Some(ref code) = acc.info.code {
             if !code.is_empty() {
                 return false;
@@ -293,21 +303,23 @@ impl JournaledState {
         if is_precompile {
             return false;
         }
-
         acc.storage_cleared = true;
 
-        // set all storages to default value. They need to be present to act as accessed slots in access list.
+        // Set all storages to default value. They need to be present to act as accessed slots in access list.
+        // it shouldn't be possible for them to have different values then zero as code is not existing for this account
+        // , but because tests can change that assumption we are doing it.
         let empty = StorageSlot::default();
         acc.storage
             .iter_mut()
             .for_each(|(_, slot)| *slot = empty.clone());
+
         acc.info.code_hash = KECCAK_EMPTY;
         acc.info.code = None;
 
         self.journal
             .last_mut()
             .unwrap()
-            .push(JournalEntry::AccountCreated { address });
+            .push(JournalEntry::AccountTouched { address });
         true
     }
 
@@ -324,9 +336,6 @@ impl JournaledState {
                     if address != PRECOMPILE3 {
                         state.get_mut(&address).unwrap().is_touched = false;
                     }
-                }
-                JournalEntry::AccountCreated { address } => {
-                    state.remove(&address);
                 }
                 JournalEntry::AccountDestroyed {
                     address,
@@ -443,11 +452,11 @@ impl JournaledState {
 
     /// load account into memory. return if it is cold or hot accessed
     pub fn load_account<DB: Database>(&mut self, address: H160, db: &mut DB) -> bool {
-        let is_cold = match self.state.entry(address) {
+        match self.state.entry(address) {
             Entry::Occupied(ref mut _entry) => false,
             Entry::Vacant(vac) => {
                 let acc: Account = db.basic(address).into();
-                // insert none in changelog that represent that we just loaded this acc in this subroutine
+                // journal loading of account. AccessList touch.
                 self.journal
                     .last_mut()
                     .unwrap()
@@ -456,8 +465,7 @@ impl JournaledState {
                 vac.insert(acc);
                 true
             }
-        };
-        is_cold
+        }
     }
 
     // first is is_cold second bool is exists.
