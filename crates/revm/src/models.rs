@@ -35,6 +35,14 @@ impl Default for AccountInfo {
     }
 }
 
+impl PartialEq for AccountInfo {
+    fn eq(&self, other: &Self) -> bool {
+        self.balance == other.balance
+            && self.nonce == other.nonce
+            && self.code_hash == other.code_hash
+    }
+}
+
 impl AccountInfo {
     pub fn new(balance: U256, nonce: u64, code: Bytecode) -> Self {
         let code_hash = code.hash();

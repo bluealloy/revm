@@ -1,5 +1,5 @@
 use super::{DatabaseCommit, DatabaseRef};
-use crate::{interpreter::bytecode::Bytecode, Database, Filth, KECCAK_EMPTY};
+use crate::{interpreter::bytecode::Bytecode, Database, KECCAK_EMPTY};
 use crate::{Account, AccountInfo, Log};
 use alloc::{
     collections::btree_map::{self, BTreeMap},
@@ -64,11 +64,12 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     }
 
     pub fn insert_contract(&mut self, account: &mut AccountInfo) {
-        let code = core::mem::take(&mut account.code);
-        if let Some(code) = code {
+        if let Some(code) = &account.code {
             if !code.is_empty() {
                 account.code_hash = code.hash();
-                self.contracts.insert(account.code_hash, code);
+                self.contracts
+                    .entry(account.code_hash)
+                    .or_insert_with(|| code.clone());
             }
         }
         if account.code_hash.is_zero() {
@@ -109,38 +110,31 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
 
 impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
     fn commit(&mut self, changes: Map<H160, Account>) {
-        for (add, acc) in changes {
-            if acc.is_empty() || matches!(acc.filth, Filth::Destroyed) {
-                // clear account data, and increate its incarnation.
-                let acc = self.accounts.entry(add).or_default();
-                acc.account_state = AccountState::EVMStorageCleared;
-                acc.storage = BTreeMap::new();
-                acc.info = AccountInfo::default();
-            } else {
-                match self.accounts.entry(add) {
-                    btree_map::Entry::Vacant(entry) => {
-                        // can happend if new account is created
-                        entry.insert(DbAccount {
-                            info: acc.info,
-                            account_state: AccountState::EVMTouched,
-                            storage: acc.storage.into_iter().collect(),
-                        });
-                    }
-                    btree_map::Entry::Occupied(mut entry) => {
-                        let db_acc = entry.get_mut();
-                        db_acc.info = acc.info;
-                        if matches!(acc.filth, Filth::NewlyCreated) {
-                            db_acc.account_state = AccountState::EVMStorageCleared;
-                            db_acc.storage = acc.storage.into_iter().collect();
-                        } else {
-                            if matches!(db_acc.account_state, AccountState::None) {
-                                db_acc.account_state = AccountState::EVMTouched;
-                            }
-                            db_acc.storage.extend(acc.storage);
-                        }
-                    }
-                }
+        for (address, mut account) in changes {
+            if account.is_destroyed {
+                let db_account = self.accounts.entry(address).or_default();
+                db_account.storage.clear();
+                db_account.account_state = AccountState::EVMStorageCleared;
+                db_account.info = AccountInfo::default();
+                continue;
             }
+            self.insert_contract(&mut account.info);
+
+            let db_account = self.accounts.entry(address).or_default();
+            db_account.info = account.info;
+
+            db_account.account_state = if account.storage_cleared {
+                db_account.storage.clear();
+                AccountState::EVMStorageCleared
+            } else {
+                AccountState::EVMTouched
+            };
+            db_account.storage.extend(
+                account
+                    .storage
+                    .into_iter()
+                    .map(|(key, value)| (key, value.present_value())),
+            );
         }
     }
 }

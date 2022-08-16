@@ -8,9 +8,9 @@ pub(crate) mod gas;
 mod inspector;
 mod instructions;
 mod interpreter;
+mod journaled_state;
 mod models;
 mod specification;
-mod subroutine;
 
 pub use evm_impl::{EVMData, Host};
 
@@ -27,9 +27,9 @@ pub use instructions::{
 pub use interpreter::{
     Bytecode, BytecodeLocked, BytecodeState, Contract, Interpreter, Memory, Stack,
 };
+pub use journaled_state::{Account, JournaledState};
 pub use models::*;
 pub use specification::*;
-pub use subroutine::{Account, Filth, SubRoutine};
 
 extern crate alloc;
 

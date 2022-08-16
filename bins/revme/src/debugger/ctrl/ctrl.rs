@@ -145,7 +145,7 @@ impl<DB: Database> Inspector<DB> for Controller {
                         println!(
                             "call_depth:{} PC:{} Opcode: {:#x} {:?} gas(spend,remaining):({},{})\n\
                             Stack:{}",
-                            data.subroutine.depth(),
+                            data.journaled_state.depth(),
                             interp.program_counter(),
                             opcode,
                             OPCODE_JUMPMAP[opcode as usize].unwrap_or("Invalid"),
@@ -188,7 +188,7 @@ impl<DB: Database> Inspector<DB> for Controller {
                 //    add, pc
                 //),
                 Ctrl::AccountPrint(address) => {
-                    println!("print:{:?}", data.subroutine.state().get(&address))
+                    println!("print:{:?}", data.journaled_state.state().get(&address))
                 }
                 Ctrl::AccountPrintOriginal(_address) => (),
                 Ctrl::StackPop => {

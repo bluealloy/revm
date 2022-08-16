@@ -341,7 +341,7 @@ pub fn call<H: Host, SPEC: Spec>(
     // load account and calculate gas cost.
     let (is_cold, exist) = host.load_account(to);
     let is_new = !exist;
-    //let is_cold = false;
+
     gas!(
         interp,
         gas::call_cost::<SPEC>(

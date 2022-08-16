@@ -61,15 +61,16 @@ pub enum Return {
     GasMaxFeeGreaterThanPriorityFee,
     GasPriceLessThenBasefee,
     CallerGasLimitMoreThenBlock,
-    RejectCallerWithCode, //new eip included in london
+    /// EIP-3607 Reject transactions from senders with deployed code
+    RejectCallerWithCode,
     LackOfFundForGasLimit,
     CreateCollision,
     OverflowPayment,
-    Precompile,
-
+    PrecompileError,
+    NonceOverflow,
     /// Create init code exceeds limit (runtime).
     CreateContractLimit,
-    /// Create contract that begins with EF
+    /// Error on created contract that begins with EF
     CreateContractWithEF,
 }
 
