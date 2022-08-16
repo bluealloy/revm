@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashMap,
     ffi::OsStr,
     path::{Path, PathBuf},
     str::FromStr,
@@ -47,56 +47,44 @@ pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
 }
 
 pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<(), TestError> {
-    // funky test with `bigint` value in json :) not possible to happen on mainnet and hard to parse.
+    // funky test with `bigint 0x00` value in json :) not possible to happen on mainnet and require custom json parser.
     // https://github.com/ethereum/tests/issues/971
     if path.file_name() == Some(OsStr::new("ValueOverflow.json")) {
         return Ok(());
     }
-    /*
-    These tests are passing, but they take a lot of time to execute so we are going to skip them.
-    */
-    if path.file_name() == Some(OsStr::new("loopExp.json")) {
+    // txbyte is of type 02 and we dont parse tx bytes for this test to fail.
+    if path.file_name() == Some(OsStr::new("typeTwoBerlin.json")) {
         return Ok(());
     }
-    if path.file_name() == Some(OsStr::new("Call50000_sha256.json")) {
+    // Test checks if nonce overflows. We are handling this correctly but we are not parsing exception in testsuite
+    // There are more nonce overflow tests that are in internal call/create, and those tests are passing and are enabled.
+    if path.file_name() == Some(OsStr::new("CreateTransactionHighNonce.json")) {
         return Ok(());
     }
-    if path.file_name() == Some(OsStr::new("static_Call50000_sha256.json")) {
-        return Ok(());
-    }
-    if path.file_name() == Some(OsStr::new("loopMul.json")) {
-        return Ok(());
-    }
-    if path.file_name() == Some(OsStr::new("CALLBlake2f_MaxRounds.json")) {
-        return Ok(());
-    }
-    // */
-    // /*
-    // Skip test where basefee/accesslist is present but it shouldn't be supported.
+
+    // Skip test where basefee/accesslist/diffuculty is present but it shouldn't be supported in London/Berlin/TheMerge.
     // https://github.com/ethereum/tests/blob/5b7e1ab3ffaf026d99d20b17bb30f533a2c80c8b/GeneralStateTests/stExample/eip1559.json#L130
-    // It is expected to skip these tests.
-    if path.file_name() == Some(OsStr::new("accessListExample.json")) {
+    // It is expected to not execute these tests.
+    if path.file_name() == Some(OsStr::new("accessListExample.json"))
+        || path.file_name() == Some(OsStr::new("basefeeExample.json"))
+        || path.file_name() == Some(OsStr::new("eip1559.json"))
+        || path.file_name() == Some(OsStr::new("mergeTest.json"))
+    {
         return Ok(());
     }
-    if path.file_name() == Some(OsStr::new("basefeeExample.json")) {
+
+    // These tests are passing, but they take a lot of time to execute so we are going to skip them.
+    if path.file_name() == Some(OsStr::new("loopExp.json"))
+        || path.file_name() == Some(OsStr::new("Call50000_sha256.json"))
+        || path.file_name() == Some(OsStr::new("static_Call50000_sha256.json"))
+        || path.file_name() == Some(OsStr::new("loopMul.json"))
+        || path.file_name() == Some(OsStr::new("CALLBlake2f_MaxRounds.json"))
+    {
         return Ok(());
     }
-    if path.file_name() == Some(OsStr::new("eip1559.json")) {
-        return Ok(());
-    }
-    //*/
+
     let json_reader = std::fs::read(&path).unwrap();
     let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
-    let skip_test_unit: HashSet<_> = vec![
-        "typeTwoBerlin", //txbyte is of type 02 and we dont parse bytes for this test to fail.
-        "CREATE2_HighNonce", //testing nonce > u64::MAX not really possible on mainnet.
-        "CREATE_HighNonce", //testing nonce > u64::MAX not really possible on mainnet.
-        "CreateTransactionHighNonce", // testing nonce >u64::MAX not really possible on mainnet. code: https://github.com/ethereum/tests/blob/5b7e1ab3ffaf026d99d20b17bb30f533a2c80c8b/BlockchainTests/GeneralStateTests/stCreateTest/CreateTransactionHighNonce.json#L74
-        "CREATE2_HighNonceDelegatecall", // test with very high nonce that in revm overflows. Impossible to happen. https://github.com/bluealloy/revm/issues/28
-        "mergeTest",
-    ]
-    .into_iter()
-    .collect();
 
     let map_caller_keys: HashMap<_, _> = vec![
         (
@@ -129,9 +117,6 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
     .collect();
 
     for (name, unit) in suit.0.into_iter() {
-        if skip_test_unit.contains(&name.as_ref()) {
-            continue;
-        }
         // Create database and insert cache
         let mut database = revm::InMemoryDB::default();
         for (address, info) in unit.pre.iter() {
