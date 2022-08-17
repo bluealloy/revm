@@ -1,6 +1,11 @@
 use crate::{
-    alloc::vec::Vec, gas, interpreter::Interpreter, return_ok, return_revert, CallContext,
-    CallInputs, CallScheme, CreateInputs, CreateScheme, Host, Return, Spec, SpecId::*, Transfer,
+    alloc::vec::Vec,
+    gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
+    interpreter::Interpreter,
+    return_ok, return_revert, CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme,
+    Host, Return, Spec,
+    SpecId::*,
+    Transfer,
 };
 use bytes::Bytes;
 use core::cmp::min;
@@ -40,7 +45,10 @@ pub fn extcodesize<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) 
     pop_address!(interp, address);
 
     let (code, is_cold) = host.code(address);
-    gas!(interp, gas::account_access_gas::<SPEC>(is_cold));
+    if SPEC::enabled(BERLIN) && is_cold {
+        // WARM_STORAGE_READ_COST is already calculated in gas block
+        gas!(interp, COLD_ACCOUNT_ACCESS_COST - WARM_STORAGE_READ_COST);
+    }
 
     push!(interp, U256::from(code.len()));
 
@@ -51,15 +59,10 @@ pub fn extcodehash<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) 
     check!(SPEC::enabled(CONSTANTINOPLE)); // EIP-1052: EXTCODEHASH opcode
     pop_address!(interp, address);
     let (code_hash, is_cold) = host.code_hash(address);
-    gas!(
-        interp,
-        if SPEC::enabled(ISTANBUL) {
-            // EIP-1884: Repricing for trie-size-dependent opcodes
-            gas::account_access_gas::<SPEC>(is_cold)
-        } else {
-            400
-        }
-    );
+    if SPEC::enabled(BERLIN) && is_cold {
+        // WARM_STORAGE_READ_COST is already calculated in gas block
+        gas!(interp, COLD_ACCOUNT_ACCESS_COST - WARM_STORAGE_READ_COST);
+    }
     push_h256!(interp, code_hash);
 
     Return::Continue

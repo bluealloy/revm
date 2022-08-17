@@ -306,7 +306,14 @@ macro_rules! gas_opcodee {
             /* 0x38  CODESIZE */ OpInfo::gas(gas::BASE),
             /* 0x39  CODECOPY */ OpInfo::dynamic_gas(),
             /* 0x3a  GASPRICE */ OpInfo::gas(gas::BASE),
-            /* 0x3b  EXTCODESIZE */ OpInfo::dynamic_gas(),
+            /* 0x3b  EXTCODESIZE */
+            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::BERLIN) {
+                gas::WARM_STORAGE_READ_COST // add only part of gas
+            } else if SpecId::enabled($spec_id, SpecId::TANGERINE) {
+                700
+            } else {
+                20
+            }),
             /* 0x3c  EXTCODECOPY */ OpInfo::dynamic_gas(),
             /* 0x3d  RETURNDATASIZE */
             OpInfo::gas(if SpecId::enabled($spec_id, SpecId::BYZANTIUM) {
@@ -315,7 +322,17 @@ macro_rules! gas_opcodee {
                 0
             }),
             /* 0x3e  RETURNDATACOPY */ OpInfo::dynamic_gas(),
-            /* 0x3f  EXTCODEHASH */ OpInfo::dynamic_gas(),
+            /* 0x3f  EXTCODEHASH */
+            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::BERLIN) {
+                gas::WARM_STORAGE_READ_COST // add only part of gas
+            } else if SpecId::enabled($spec_id, SpecId::ISTANBUL) {
+                700
+            } else if SpecId::enabled($spec_id, SpecId::PETERSBURG) {
+                // constantinople
+                400
+            } else {
+                0 // not enabled
+            }),
             /* 0x40  BLOCKHASH */ OpInfo::gas(gas::BLOCKHASH),
             /* 0x41  COINBASE */ OpInfo::gas(gas::BASE),
             /* 0x42  TIMESTAMP */ OpInfo::gas(gas::BASE),
@@ -538,7 +555,6 @@ pub const fn spec_opcode_gas(spec_id: SpecId) -> &'static [OpInfo; 256] {
         SpecId::FRONTIER_THAWING => {
             gas_opcodee!(FRONTIER_THAWING, SpecId::FRONTIER_THAWING);
             FRONTIER_THAWING
-
         }
         SpecId::HOMESTEAD => {
             gas_opcodee!(HOMESTEAD, SpecId::HOMESTEAD);

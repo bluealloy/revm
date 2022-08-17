@@ -75,3 +75,14 @@ where
         .map_err(D::Error::custom)?
         .into())
 }
+
+pub fn deserialize_opt_str_as_bytes<'de, D>(deserializer: D) -> Result<Option<Bytes>, D::Error>
+where
+    D: de::Deserializer<'de>,
+{
+    #[derive(Debug, Deserialize)]
+    struct WrappedValue(#[serde(deserialize_with = "deserialize_str_as_bytes")] Bytes);
+
+    Option::<WrappedValue>::deserialize(deserializer)
+        .map(|opt_wrapped: Option<WrappedValue>| opt_wrapped.map(|wrapped: WrappedValue| wrapped.0))
+}
