@@ -130,8 +130,9 @@ impl Precompiles {
         Self { fun }
     }
 
-    pub fn as_slice(&self) -> Vec<(&Address, &Precompile)> {
-        self.fun.iter().collect::<Vec<_>>()
+    // TODO: implement Iterator for Precompiles
+    pub fn iter(&self) -> impl IntoIterator<Item = (&Address, &Precompile)> {
+        self.fun.iter()
     }
 
     pub fn contains(&self, address: &Address) -> bool {
