@@ -314,7 +314,14 @@ macro_rules! gas_opcodee {
             } else {
                 20
             }),
-            /* 0x3c  EXTCODECOPY */ OpInfo::dynamic_gas(),
+            /* 0x3c  EXTCODECOPY */
+            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::BERLIN) {
+                gas::WARM_STORAGE_READ_COST // add only part of gas
+            } else if SpecId::enabled($spec_id, SpecId::TANGERINE) {
+                700
+            } else {
+                20
+            }),
             /* 0x3d  RETURNDATASIZE */
             OpInfo::gas(if SpecId::enabled($spec_id, SpecId::BYZANTIUM) {
                 gas::BASE

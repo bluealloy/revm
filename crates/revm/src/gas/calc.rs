@@ -123,17 +123,14 @@ pub fn verylowcopy_cost(len: U256) -> Option<u64> {
 pub fn extcodecopy_cost<SPEC: Spec>(len: U256, is_cold: bool) -> Option<u64> {
     let wordd = len / U256::from(32);
     let wordr = len % U256::from(32);
-    let base_gas: u64 = if SPEC::enabled(BERLIN) {
-        if is_cold {
-            COLD_ACCOUNT_ACCESS_COST
-        } else {
-            WARM_STORAGE_READ_COST
-        }
-    } else if SPEC::enabled(ISTANBUL) {
-        700
+    
+    let base_gas: u64 = if SPEC::enabled(BERLIN) && is_cold {
+        // WARM_STORAGE_READ_COST is already calculated
+        COLD_ACCOUNT_ACCESS_COST - WARM_STORAGE_READ_COST
     } else {
-        20
+        0
     };
+    // TODO make this u64 friendly, U256 does not make sense.
     let gas =
         U256::from(base_gas).checked_add(U256::from(COPY).checked_mul(if wordr.is_zero() {
             wordd
