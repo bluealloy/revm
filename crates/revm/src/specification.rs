@@ -129,17 +129,33 @@ pub(crate) mod spec_impl {
         };
     }
 
-    spec!(LATEST);
-    spec!(MERGE);
-    spec!(LONDON);
-    spec!(BERLIN);
-    spec!(ISTANBUL);
-    spec!(BYZANTIUM);
     spec!(FRONTIER);
+    // FRONTIER_THAWING no EVM spec change
+    spec!(HOMESTEAD);
+    // DAO_FORK no EVM spec change
+    spec!(TANGERINE);
+    spec!(SPURIOUS_DRAGON);
+    spec!(BYZANTIUM);
+    // CONSTANTINOPLE was overriden with PETERSBURG
+    spec!(PETERSBURG);
+    spec!(ISTANBUL);
+    // MUIR_GLACIER no EVM spec change
+    spec!(BERLIN);
+    spec!(LONDON);
+    // ARROW_GLACIER no EVM spec change
+    // GRAT_GLACIER no EVM spec change
+    spec!(MERGE);
+    spec!(LATEST);
 }
 
-pub use spec_impl::{
-    BERLIN::SpecImpl as BerlinSpec, BYZANTIUM::SpecImpl as ByzantiumSpec,
-    FRONTIER::SpecImpl as FrontierSpec, ISTANBUL::SpecImpl as IstanbulSpec,
-    LATEST::SpecImpl as LatestSpec, LONDON::SpecImpl as LondonSpec, MERGE::SpecImpl as MergeSpec,
-};
+pub use spec_impl::BERLIN::SpecImpl as BerlinSpec;
+pub use spec_impl::BYZANTIUM::SpecImpl as ByzantiumSpec;
+pub use spec_impl::FRONTIER::SpecImpl as FrontierSpec;
+pub use spec_impl::HOMESTEAD::SpecImpl as HomesteadSpec;
+pub use spec_impl::ISTANBUL::SpecImpl as IstanbulSpec;
+pub use spec_impl::LATEST::SpecImpl as LatestSpec;
+pub use spec_impl::LONDON::SpecImpl as LondonSpec;
+pub use spec_impl::MERGE::SpecImpl as MergeSpec;
+pub use spec_impl::PETERSBURG::SpecImpl as PetersburgSpec;
+pub use spec_impl::SPURIOUS_DRAGON::SpecImpl as SpuriousDragonSpec;
+pub use spec_impl::TANGERINE::SpecImpl as TangerineSpec;
