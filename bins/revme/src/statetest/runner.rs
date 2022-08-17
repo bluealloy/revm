@@ -193,17 +193,16 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                     | SpecName::BerlinToLondonAt5
                     | SpecName::Berlin
                     | SpecName::Istanbul
-                    | SpecName::ConstantinopleFix
-                    //| SpecName::ByzantiumToConstantinopleFixAt5
-                    //| SpecName::Byzantium
-                    //| SpecName::EIP158ToByzantiumAt5
-                    //| SpecName::EIP158 // SPURIOUS_DRAGON
-                    //| SpecName::EIP150 // TANGERINE
-                    //| SpecName::HomesteadToEIP150At5
-                    //| SpecName::HomesteadToDaoAt5
-                    //| SpecName::Homestead
-                    //| SpecName::FrontierToHomesteadAt5
-                    //| SpecName::Frontier
+                    | SpecName::ConstantinopleFix //| SpecName::ByzantiumToConstantinopleFixAt5
+                                                  //| SpecName::Byzantium
+                                                  //| SpecName::EIP158ToByzantiumAt5
+                                                  //| SpecName::EIP158 // SPURIOUS_DRAGON
+                                                  //| SpecName::EIP150 // TANGERINE
+                                                  //| SpecName::HomesteadToEIP150At5
+                                                  //| SpecName::HomesteadToDaoAt5
+                                                  //| SpecName::Homestead
+                                                  //| SpecName::FrontierToHomesteadAt5
+                                                  //| SpecName::Frontier
             ) {
                 continue;
             }

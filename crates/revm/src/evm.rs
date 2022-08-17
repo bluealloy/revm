@@ -159,7 +159,9 @@ pub fn evm_inner<'a, DB: Database, const INSPECT: bool>(
         SpecId::PETERSBURG | SpecId::CONSTANTINOPLE => create_evm!(PetersburgSpec, db, env, insp),
         SpecId::ISTANBUL | SpecId::MUIR_GLACIER => create_evm!(IstanbulSpec, db, env, insp),
         SpecId::BERLIN => create_evm!(BerlinSpec, db, env, insp),
-        SpecId::LONDON | SpecId::ARROW_GLACIER | SpecId::GRAY_GLACIER => create_evm!(LondonSpec, db, env, insp),
+        SpecId::LONDON | SpecId::ARROW_GLACIER | SpecId::GRAY_GLACIER => {
+            create_evm!(LondonSpec, db, env, insp)
+        }
         SpecId::MERGE => create_evm!(MergeSpec, db, env, insp),
         SpecId::LATEST => create_evm!(LatestSpec, db, env, insp),
     }
