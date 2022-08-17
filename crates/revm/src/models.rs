@@ -322,7 +322,7 @@ pub struct Log {
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SelfDestructResult {
     pub had_value: bool,
-    pub exists: bool,
+    pub target_exists: bool,
     pub is_cold: bool,
     pub previously_destroyed: bool,
 }

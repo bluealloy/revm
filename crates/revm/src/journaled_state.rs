@@ -417,7 +417,7 @@ impl JournaledState {
         target: H160,
         db: &mut DB,
     ) -> SelfDestructResult {
-        let (is_cold, exists) = self.load_account_exist(target, db);
+        let (is_cold, target_exists) = self.load_account_exist(target, db);
         // transfer all the balance
         let acc = self.state.get_mut(&address).unwrap();
         let balance = mem::take(&mut acc.info.balance);
@@ -445,7 +445,7 @@ impl JournaledState {
         SelfDestructResult {
             had_value: !balance.is_zero(),
             is_cold,
-            exists,
+            target_exists,
             previously_destroyed,
         }
     }
@@ -474,8 +474,13 @@ impl JournaledState {
         if acc.is_existing_precompile {
             (false, true)
         } else {
-            let exists = !acc.is_empty();
-            (is_cold, exists)
+            // check
+            //if address == H160::zero() {
+            //    (is_cold, true)
+            //} else {
+                let exists = !acc.is_empty();
+                (is_cold, exists)
+            //}
         }
     }
 

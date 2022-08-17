@@ -261,18 +261,14 @@ pub fn sstore_cost<SPEC: Spec>(
 
 pub fn selfdestruct_cost<SPEC: Spec>(res: SelfDestructResult) -> u64 {
     let should_charge_topup = if SPEC::enabled(ISTANBUL) {
-        res.had_value && !res.exists
+        res.had_value && !res.target_exists
     } else {
-        !res.exists
+        !res.target_exists
     };
 
-    let selfdestruct_gas_topup = if should_charge_topup {
-        if SPEC::enabled(TANGERINE) {
-            //EIP-150: Gas cost changes for IO-heavy operations
-            25000
-        } else {
-            0
-        }
+    let selfdestruct_gas_topup = if SPEC::enabled(TANGERINE) && should_charge_topup {
+        //EIP-150: Gas cost changes for IO-heavy operations
+        25000
     } else {
         0
     };
