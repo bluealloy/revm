@@ -130,9 +130,8 @@ impl Precompiles {
         Self { fun }
     }
 
-    // TODO: implement Iterator for Precompiles
-    pub fn iter(&self) -> impl IntoIterator<Item = (&Address, &Precompile)> {
-        self.fun.iter()
+    pub fn addresses(&self) -> impl IntoIterator<Item = &Address> {
+        self.fun.keys()
     }
 
     pub fn contains(&self, address: &Address) -> bool {
