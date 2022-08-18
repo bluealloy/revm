@@ -17,14 +17,14 @@ use auto_impl::auto_impl;
 #[auto_impl(& mut, Box)]
 pub trait Database {
     /// Get basic account information.
-    fn basic(&mut self, address: H160) -> AccountInfo;
+    fn basic(&mut self, address: H160) -> Result<Option<AccountInfo>, &'static str>;
     /// Get account code by its hash
-    fn code_by_hash(&mut self, code_hash: H256) -> Bytecode;
+    fn code_by_hash(&mut self, code_hash: H256) -> Result<Bytecode, &'static str>;
     /// Get storage value of address at index.
-    fn storage(&mut self, address: H160, index: U256) -> U256;
+    fn storage(&mut self, address: H160, index: U256) -> Result<U256, &'static str>;
 
     // History related
-    fn block_hash(&mut self, number: U256) -> H256;
+    fn block_hash(&mut self, number: U256) -> Result<H256, &'static str>;
 }
 
 #[auto_impl(& mut, Box)]
@@ -37,14 +37,14 @@ pub trait DatabaseRef {
     /// Whether account at address exists.
     //fn exists(&self, address: H160) -> Option<AccountInfo>;
     /// Get basic account information.
-    fn basic(&self, address: H160) -> AccountInfo;
+    fn basic(&self, address: H160) -> Result<Option<AccountInfo>, &'static str>;
     /// Get account code by its hash
-    fn code_by_hash(&self, code_hash: H256) -> Bytecode;
+    fn code_by_hash(&self, code_hash: H256) -> Result<Bytecode, &'static str>;
     /// Get storage value of address at index.
-    fn storage(&self, address: H160, index: U256) -> U256;
+    fn storage(&self, address: H160, index: U256) -> Result<U256, &'static str>;
 
     // History related
-    fn block_hash(&self, number: U256) -> H256;
+    fn block_hash(&self, number: U256) -> Result<H256, &'static str>;
 }
 
 pub struct RefDBWrapper<'a> {
@@ -63,20 +63,20 @@ impl<'a> Database for RefDBWrapper<'a> {
     //     self.db.exists(address)
     // }
     /// Get basic account information.
-    fn basic(&mut self, address: H160) -> AccountInfo {
+    fn basic(&mut self, address: H160) -> Result<Option<AccountInfo>, &'static str> {
         self.db.basic(address)
     }
     /// Get account code by its hash
-    fn code_by_hash(&mut self, code_hash: H256) -> Bytecode {
+    fn code_by_hash(&mut self, code_hash: H256) -> Result<Bytecode, &'static str> {
         self.db.code_by_hash(code_hash)
     }
     /// Get storage value of address at index.
-    fn storage(&mut self, address: H160, index: U256) -> U256 {
+    fn storage(&mut self, address: H160, index: U256) -> Result<U256, &'static str> {
         self.db.storage(address, index)
     }
 
     // History related
-    fn block_hash(&mut self, number: U256) -> H256 {
+    fn block_hash(&mut self, number: U256) -> Result<H256, &'static str> {
         self.db.block_hash(number)
     }
 }

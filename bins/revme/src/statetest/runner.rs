@@ -198,7 +198,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                     | SpecName::Byzantium
                     | SpecName::EIP158ToByzantiumAt5
                     | SpecName::EIP158 // SPURIOUS_DRAGON
-                    //| SpecName::EIP150 // TANGERINE
+                    | SpecName::EIP150 // TANGERINE
                                                   //| SpecName::HomesteadToEIP150At5
                                                   //| SpecName::HomesteadToDaoAt5
                                                   //| SpecName::Homestead
