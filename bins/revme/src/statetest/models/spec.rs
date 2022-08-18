@@ -40,8 +40,7 @@ impl SpecName {
             Self::Merge => SpecId::MERGE,
             Self::ByzantiumToConstantinopleAt5 | Self::Constantinople => {
                 panic!("Overriden with PETERSBURG")
-            }
-            //_ => panic!("Conversion failed"),
+            } //_ => panic!("Conversion failed"),
         }
     }
 }

@@ -478,8 +478,8 @@ impl JournaledState {
             //if address == H160::zero() {
             //    (is_cold, true)
             //} else {
-                let exists = !acc.is_empty();
-                (is_cold, exists)
+            let exists = !acc.is_empty();
+            (is_cold, exists)
             //}
         }
     }

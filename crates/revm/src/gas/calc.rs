@@ -260,7 +260,8 @@ pub fn sstore_cost<SPEC: Spec>(
 }
 
 pub fn selfdestruct_cost<SPEC: Spec>(res: SelfDestructResult) -> u64 {
-    let should_charge_topup = if SPEC::enabled(ISTANBUL) {
+    // EIP-161: State trie clearing (invariant-preserving alternative)
+    let should_charge_topup = if SPEC::enabled(SPURIOUS_DRAGON) {
         res.had_value && !res.target_exists
     } else {
         !res.target_exists
@@ -331,7 +332,8 @@ fn xfer_cost(is_call_or_callcode: bool, transfers_value: bool) -> u64 {
 
 fn new_cost<SPEC: Spec>(is_call_or_staticcall: bool, is_new: bool, transfers_value: bool) -> u64 {
     if is_call_or_staticcall {
-        if SPEC::enabled(ISTANBUL) {
+        // EIP-161: State trie clearing (invariant-preserving alternative)
+        if SPEC::enabled(SPURIOUS_DRAGON) {
             if transfers_value && is_new {
                 NEWACCOUNT
             } else {
