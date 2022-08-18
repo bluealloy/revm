@@ -188,7 +188,8 @@ pub fn create<H: Host, SPEC: Spec>(
 ) -> Return {
     check!(!SPEC::IS_STATIC_CALL);
     if is_create2 {
-        check!(SPEC::enabled(CONSTANTINOPLE)); // EIP-1014: Skinny CREATE2
+        // EIP-1014: Skinny CREATE2
+        check!(SPEC::enabled(PETERSBURG)); 
     }
 
     interp.return_data_buffer = Bytes::new();

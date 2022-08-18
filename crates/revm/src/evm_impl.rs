@@ -399,8 +399,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             return (e, ret, gas, Bytes::new());
         }
 
-        // Increase nonce of the contract
-        if SPEC::enabled(ISTANBUL)
+       // EIP-161: State trie clearing (invariant-preserving alternative) 
+        if SPEC::enabled(SPURIOUS_DRAGON)
             && self
                 .data
                 .journaled_state
