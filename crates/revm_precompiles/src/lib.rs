@@ -140,7 +140,7 @@ impl Precompiles {
 
     pub fn get(&self, address: &Address) -> Option<Precompile> {
         //return None;
-        self.fun.get(address).map(|precompile| precompile.clone())
+        self.fun.get(address).cloned()
     }
 }
 
