@@ -188,13 +188,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         if env.cfg.perf_all_precompiles_have_balance {
             // load precompiles without asking db.
             let mut precompile_acc = Vec::new();
-            for (add, _) in precompiles.as_slice() {
+            for add in precompiles.addresses() {
                 precompile_acc.push(*add);
             }
             journaled_state.load_precompiles_default(&precompile_acc);
         } else {
             let mut precompile_acc = Map::new();
-            for (add, _) in precompiles.as_slice() {
+            for add in precompiles.addresses() {
                 precompile_acc.insert(*add, db.basic(*add));
             }
             journaled_state.load_precompiles(precompile_acc);
@@ -263,7 +263,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         // added to it, we need now to load precompile address from db and add this amount to it so that we
         // will have sum.
         if self.data.env.cfg.perf_all_precompiles_have_balance {
-            for (address, _) in self.precompiles.as_slice() {
+            for address in self.precompiles.addresses() {
                 if let Some(precompile) = new_state.get_mut(address) {
                     // we found it.
                     precompile.info.balance += self.data.db.basic(*address).balance;
