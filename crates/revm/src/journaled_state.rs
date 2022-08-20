@@ -16,6 +16,10 @@ pub struct JournaledState {
     pub depth: usize,
     /// journal with changes that happened between calls.
     pub journal: Vec<Vec<JournalEntry>>,
+    /// Ethereum before EIP-161 differently defined empty and not-existing account
+    /// so we need to take care of that difference. Set this to false if you are handling
+    /// legacy transactions
+    pub is_spurious_dragon_enabled: bool,
 }
 
 pub type State = Map<H160, Account>;
@@ -139,7 +143,14 @@ impl JournaledState {
             logs: Vec::new(),
             journal: vec![vec![]],
             depth: 0,
+            is_spurious_dragon_enabled: true,
         }
+    }
+
+    pub fn new_legacy() -> JournaledState {
+        let mut journal = Self::new();
+        journal.is_spurious_dragon_enabled = false;
+        journal
     }
 
     pub fn state(&mut self) -> &mut State {
@@ -249,8 +260,9 @@ impl JournaledState {
         db: &mut DB,
     ) -> Result<(bool, bool), Return> {
         // load accounts
-        let from_is_cold = self.load_account(*from, db);
-        let to_is_cold = self.load_account(*to, db);
+        // TODO handle error casting
+        let from_is_cold = self.load_account(*from, db).unwrap();
+        let to_is_cold = self.load_account(*to, db).unwrap();
 
         // sub balance from
         let from_account = &mut self.state.get_mut(from).unwrap();
@@ -285,23 +297,23 @@ impl JournaledState {
         address: H160,
         is_precompile: bool,
         db: &mut DB,
-    ) -> bool {
-        let (acc, _) = self.load_code(address, db);
+    ) -> Result<bool,&'static str> {
+        let (acc, _) = self.load_code(address, db)?;
 
         // Check collision. Bytecode needs to be empty.
         if let Some(ref code) = acc.info.code {
             if !code.is_empty() {
-                return false;
+                return Ok(false);
             }
         }
         // Check collision. Nonce is not zero
         if acc.info.nonce != 0 {
-            return false;
+            return Ok(false);
         }
 
         // Check collision. New account address is precompile.
         if is_precompile {
-            return false;
+            return Ok(false);
         }
         acc.storage_cleared = true;
 
@@ -320,7 +332,7 @@ impl JournaledState {
             .last_mut()
             .unwrap()
             .push(JournalEntry::AccountTouched { address });
-        true
+        Ok(true)
     }
 
     fn journal_revert(state: &mut State, journal_entries: Vec<JournalEntry>) {
@@ -416,8 +428,8 @@ impl JournaledState {
         address: H160,
         target: H160,
         db: &mut DB,
-    ) -> SelfDestructResult {
-        let (is_cold, target_exists) = self.load_account_exist(target, db);
+    ) -> Result<SelfDestructResult, &'static str> {
+        let (is_cold, target_exists) = self.load_account_exist(target, db)?;
         // transfer all the balance
         let acc = self.state.get_mut(&address).unwrap();
         let balance = mem::take(&mut acc.info.balance);
@@ -442,65 +454,62 @@ impl JournaledState {
                 had_balance: balance,
             });
 
-        SelfDestructResult {
+        Ok(SelfDestructResult {
             had_value: !balance.is_zero(),
             is_cold,
             target_exists,
             previously_destroyed,
-        }
+        })
     }
 
     /// load account into memory. return if it is cold or hot accessed
-    pub fn load_account<DB: Database>(&mut self, address: H160, db: &mut DB) -> bool {
-        match self.state.entry(address) {
+    pub fn load_account<DB: Database>(&mut self, address: H160, db: &mut DB) -> Result<bool,&'static str> {
+        let is_cold = match self.state.entry(address) {
             Entry::Occupied(ref mut _entry) => false,
             Entry::Vacant(vac) => {
-                let acc: Account = db.basic(address).into();
+                let account = db.basic(address)?.unwrap_or_default();
                 // journal loading of account. AccessList touch.
                 self.journal
                     .last_mut()
                     .unwrap()
                     .push(JournalEntry::AccountLoaded { address });
 
-                vac.insert(acc);
+                vac.insert(account.into());
                 true
             }
-        }
+        };
+        Ok(is_cold)
     }
 
     // first is is_cold second bool is exists.
-    pub fn load_account_exist<DB: Database>(&mut self, address: H160, db: &mut DB) -> (bool, bool) {
-        let (acc, is_cold) = self.load_code(address, db);
+    pub fn load_account_exist<DB: Database>(&mut self, address: H160, db: &mut DB) -> Result<(bool, bool),&'static str> {
+        let (acc, is_cold) = self.load_code(address, db)?;
+        // TODO
         if acc.is_existing_precompile {
-            (false, true)
+            Ok((false, true))
         } else {
-            // check
-            //if address == H160::zero() {
-            //    (is_cold, true)
-            //} else {
             let exists = !acc.is_empty();
-            (is_cold, exists)
-            //}
+            Ok((is_cold, exists))
         }
     }
 
-    pub fn load_code<DB: Database>(&mut self, address: H160, db: &mut DB) -> (&mut Account, bool) {
-        let is_cold = self.load_account(address, db);
+    pub fn load_code<DB: Database>(&mut self, address: H160, db: &mut DB) -> Result<(&mut Account, bool),&'static str> {
+        let is_cold = self.load_account(address, db)?;
         let acc = self.state.get_mut(&address).unwrap();
         if acc.info.code.is_none() {
             if acc.info.code_hash == KECCAK_EMPTY {
                 let empty = Bytecode::new();
                 acc.info.code = Some(empty);
             } else {
-                let code = db.code_by_hash(acc.info.code_hash);
+                let code = db.code_by_hash(acc.info.code_hash)?;
                 acc.info.code = Some(code);
             }
         }
-        (acc, is_cold)
+        Ok((acc, is_cold))
     }
 
     // account is already present and loaded.
-    pub fn sload<DB: Database>(&mut self, address: H160, key: U256, db: &mut DB) -> (U256, bool) {
+    pub fn sload<DB: Database>(&mut self, address: H160, key: U256, db: &mut DB) -> Result<(U256, bool),&'static str> {
         let account = self.state.get_mut(&address).unwrap(); // asume acc is hot
         let load = match account.storage.entry(key) {
             Entry::Occupied(occ) => (occ.get().present_value, false),
@@ -509,7 +518,7 @@ impl JournaledState {
                 let value = if account.storage_cleared {
                     U256::zero()
                 } else {
-                    db.storage(address, key)
+                    db.storage(address, key)?
                 };
                 // add it to journal as cold loaded.
                 self.journal
@@ -526,7 +535,7 @@ impl JournaledState {
                 (value, true)
             }
         };
-        load
+        Ok(load)
     }
 
     /// account should already be present in our state.
@@ -537,9 +546,9 @@ impl JournaledState {
         key: U256,
         new: U256,
         db: &mut DB,
-    ) -> (U256, U256, U256, bool) {
+    ) -> Result<(U256, U256, U256, bool),&'static str> {
         // assume that acc exists and load the slot.
-        let (present, is_cold) = self.sload(address, key, db);
+        let (present, is_cold) = self.sload(address, key, db)?;
         let acc = self.state.get_mut(&address).unwrap();
 
         // if there is no original value in dirty return present value, that is our original.
@@ -547,7 +556,7 @@ impl JournaledState {
 
         // new value is same as present, we dont need to do anything
         if present == new {
-            return (slot.original_value, present, new, is_cold);
+            return Ok((slot.original_value, present, new, is_cold));
         }
 
         self.journal
@@ -560,7 +569,7 @@ impl JournaledState {
             });
         // insert value into present state.
         slot.present_value = new;
-        (slot.original_value, present, new, is_cold)
+        Ok((slot.original_value, present, new, is_cold))
     }
 
     /// push log into subroutine

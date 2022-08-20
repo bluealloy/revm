@@ -20,8 +20,8 @@ impl InMemoryDB {
 /// Memory backend, storing all state values in a `Map` in memory.
 #[derive(Debug, Clone)]
 pub struct CacheDB<ExtDB: DatabaseRef> {
-    /// Dummy account info where `code` is always `None`.
-    /// Code bytes can be found in `contracts`.
+    /// Account info where None means it is not existing. None existing state is needed for Pre TANGERINE forks.
+    /// `code` is always `None`, and bytecode can be found in `contracts`.
     pub accounts: BTreeMap<H160, DbAccount>,
     pub contracts: Map<H256, Bytecode>,
     pub logs: Vec<Log>,
@@ -40,6 +40,8 @@ pub struct DbAccount {
 
 #[derive(Debug, Clone, Default)]
 pub enum AccountState {
+    /// Before Spurious Dragon hardfork there were a difference between empty and not existing.
+    NotExisting, 
     /// EVM touched this account
     EVMTouched,
     /// EVM cleared storage of this account, mostly by selfdestruct
@@ -83,28 +85,41 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         self.accounts.entry(address).or_default().info = info;
     }
 
-    /// insert account storage without overriding account info
-    pub fn insert_account_storage(&mut self, address: H160, slot: U256, value: U256) {
+    fn load_account(&mut self, address: H160) -> Result<&mut DbAccount, &'static str> {
         let db = &self.db;
-        self.accounts
-            .entry(address)
-            .or_insert_with(|| DbAccount {
-                info: db.basic(address),
-                ..Default::default()
-            })
-            .storage
-            .insert(slot, value);
+        match self.accounts.entry(address) {
+            btree_map::Entry::Occupied(mut entry) => Ok(entry.get_mut()),
+            btree_map::Entry::Vacant(entry) => {
+                Ok(entry.insert(db.basic(address)?.map(|info| DbAccount {
+                    info,
+                    ..Default::default()
+                })));
+            }
+        }
+    }
+
+    /// insert account storage without overriding account info
+    pub fn insert_account_storage(
+        &mut self,
+        address: H160,
+        slot: U256,
+        value: U256,
+    ) -> Result<(), &'static str> {
+        let account = self.load_account(address)?;
+        account.storage.insert(slot, value);
+        Ok(())
     }
 
     /// replace account storage without overriding account info
-    pub fn replace_account_storage(&mut self, address: H160, storage: Map<U256, U256>) {
-        let db = &self.db;
-        let mut account = self.accounts.entry(address).or_insert_with(|| DbAccount {
-            info: db.basic(address),
-            ..Default::default()
-        });
+    pub fn replace_account_storage(
+        &mut self,
+        address: H160,
+        storage: Map<U256, U256>,
+    ) -> Result<(), &'static str> {
+        let account = self.load_account(address)?;
         account.account_state = AccountState::EVMStorageCleared;
         account.storage = storage.into_iter().collect();
+        Ok(())
     }
 }
 
@@ -140,36 +155,33 @@ impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
 }
 
 impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
-    fn block_hash(&mut self, number: U256) -> H256 {
+    fn block_hash(&mut self, number: U256) -> Result<H256, &'static str> {
         match self.block_hashes.entry(number) {
-            Entry::Occupied(entry) => *entry.get(),
+            Entry::Occupied(entry) => Ok(*entry.get()),
             Entry::Vacant(entry) => {
-                let hash = self.db.block_hash(number);
+                let hash = self.db.block_hash(number)?;
                 entry.insert(hash);
-                hash
+                Ok(hash)
             }
         }
     }
 
-    fn basic(&mut self, address: H160) -> AccountInfo {
+    fn basic(&mut self, address: H160) -> Result<Option<AccountInfo>, &'static str> {
         match self.accounts.entry(address) {
-            btree_map::Entry::Occupied(entry) => entry.get().info.clone(),
-            btree_map::Entry::Vacant(entry) => {
-                let info = self.db.basic(address);
-                entry.insert(DbAccount {
-                    info: info.clone(),
-                    account_state: AccountState::EVMTouched,
-                    storage: BTreeMap::new(),
-                });
-                info
-            }
+            btree_map::Entry::Occupied(entry) => Ok(entry.get().map(|acc| acc.info.clone())),
+            btree_map::Entry::Vacant(entry) => Ok(entry
+                .insert(self.db.basic(address)?.map(|info| DbAccount {
+                    info,
+                    ..Default::default()
+                }))
+                .map(|acc| acc.info.clone())),
         }
     }
 
     /// Get the value in an account's storage slot.
     ///
     /// It is assumed that account is already loaded.
-    fn storage(&mut self, address: H160, index: U256) -> U256 {
+    fn storage(&mut self, address: H160, index: U256) -> Result<U256,&'static str> {
         match self.accounts.entry(address) {
             btree_map::Entry::Occupied(mut acc_entry) => {
                 let acc_entry = acc_entry.get_mut();
@@ -177,19 +189,19 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
                     btree_map::Entry::Occupied(entry) => *entry.get(),
                     btree_map::Entry::Vacant(entry) => {
                         if matches!(acc_entry.account_state, AccountState::EVMStorageCleared) {
-                            U256::zero()
+                            Ok(U256::zero())
                         } else {
-                            let slot = self.db.storage(address, index);
+                            let slot = self.db.storage(address, index)?;
                             entry.insert(slot);
-                            slot
+                            Ok(slot)
                         }
                     }
                 }
             }
             btree_map::Entry::Vacant(acc_entry) => {
                 // acc needs to be loaded for us to access slots.
-                let info = self.db.basic(address);
-                let value = self.db.storage(address, index);
+                let info = self.db.basic(address)?;
+                let value = self.db.storage(address, index)?;
                 acc_entry.insert(DbAccount {
                     info,
                     account_state: AccountState::None,
@@ -212,13 +224,6 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
 }
 
 impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
-    fn block_hash(&self, number: U256) -> H256 {
-        match self.block_hashes.get(&number) {
-            Some(entry) => *entry,
-            None => self.db.block_hash(number),
-        }
-    }
-
     fn basic(&self, address: H160) -> AccountInfo {
         match self.accounts.get(&address) {
             Some(acc) => acc.info.clone(),
@@ -248,6 +253,13 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
             None => self.db.code_by_hash(code_hash),
         }
     }
+
+    fn block_hash(&self, number: U256) -> H256 {
+        match self.block_hashes.get(&number) {
+            Some(entry) => *entry,
+            None => self.db.block_hash(number),
+        }
+    }
 }
 
 /// An empty database that always returns default values when queried.
@@ -256,23 +268,23 @@ pub struct EmptyDB();
 
 impl DatabaseRef for EmptyDB {
     /// Get basic account information.
-    fn basic(&self, _address: H160) -> AccountInfo {
-        AccountInfo::default()
+    fn basic(&self, _address: H160) -> Result<Option<AccountInfo>, &'static str> {
+        Ok(None) //AccountInfo::default()
     }
     /// Get account code by its hash
-    fn code_by_hash(&self, _code_hash: H256) -> Bytecode {
-        Bytecode::new()
+    fn code_by_hash(&self, _code_hash: H256) -> Result<Bytecode, &'static str> {
+        Ok(Bytecode::new())
     }
     /// Get storage value of address at index.
-    fn storage(&self, _address: H160, _index: U256) -> U256 {
-        U256::default()
+    fn storage(&self, _address: H160, _index: U256) -> Result<U256, &'static str> {
+        Ok(U256::default())
     }
 
     // History related
-    fn block_hash(&self, number: U256) -> H256 {
+    fn block_hash(&self, number: U256) -> Result<H256, &'static str> {
         let mut buffer: [u8; 4 * 8] = [0; 4 * 8];
         number.to_big_endian(&mut buffer);
-        H256::from_slice(&Keccak256::digest(&buffer))
+        Ok(H256::from_slice(&Keccak256::digest(&buffer)))
     }
 }
 
@@ -291,31 +303,31 @@ impl BenchmarkDB {
 
 impl Database for BenchmarkDB {
     /// Get basic account information.
-    fn basic(&mut self, address: H160) -> AccountInfo {
+    fn basic(&mut self, address: H160) -> Result<Option<AccountInfo>, &'static str> {
         if address == H160::zero() {
-            return AccountInfo {
+            return Ok(Some(AccountInfo {
                 nonce: 1,
                 balance: U256::from(10000000),
                 code: Some(self.0.clone()),
                 code_hash: self.1,
-            };
+            }));
         }
-        AccountInfo::default()
+        Ok(None) //AccountInfo::default()
     }
 
     /// Get account code by its hash
-    fn code_by_hash(&mut self, _code_hash: H256) -> Bytecode {
-        Bytecode::default()
+    fn code_by_hash(&mut self, _code_hash: H256) -> Result<Bytecode, &'static str> {
+        Ok(Bytecode::default())
     }
 
     /// Get storage value of address at index.
-    fn storage(&mut self, _address: H160, _index: U256) -> U256 {
-        U256::default()
+    fn storage(&mut self, _address: H160, _index: U256) -> Result<U256, &'static str> {
+        Ok(U256::default())
     }
 
     // History related
-    fn block_hash(&mut self, _number: U256) -> H256 {
-        H256::default()
+    fn block_hash(&mut self, _number: U256) -> Result<H256, &'static str> {
+        Ok(H256::default())
     }
 }
 
