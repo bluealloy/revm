@@ -13,7 +13,11 @@ use primitive_types::{H160, H256, U256};
 
 pub fn balance<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
     pop_address!(interp, address);
-    let (balance, is_cold) = host.balance(address);
+    let ret = host.balance(address);
+    if ret.is_none() {
+        return Return::FatalNotSupported;
+    }
+    let (balance, is_cold) = ret.unwrap();
     gas!(
         interp,
         if SPEC::enabled(ISTANBUL) {
@@ -34,8 +38,11 @@ pub fn selfbalance<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) 
     // gas!(interp, gas::LOW);
     // EIP-1884: Repricing for trie-size-dependent opcodes
     check!(SPEC::enabled(ISTANBUL));
-
-    let (balance, _) = host.balance(interp.contract.address);
+    let ret = host.balance(interp.contract.address);
+    if ret.is_none() {
+        return Return::FatalNotSupported;
+    }
+    let (balance, _) = ret.unwrap();
     push!(interp, balance);
 
     Return::Continue
@@ -43,8 +50,11 @@ pub fn selfbalance<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) 
 
 pub fn extcodesize<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
     pop_address!(interp, address);
-
-    let (code, is_cold) = host.code(address);
+    let ret = host.code(address);
+    if ret.is_none() {
+        return Return::FatalNotSupported;
+    }
+    let (code, is_cold) = ret.unwrap();
     if SPEC::enabled(BERLIN) && is_cold {
         // WARM_STORAGE_READ_COST is already calculated in gas block
         gas!(interp, COLD_ACCOUNT_ACCESS_COST - WARM_STORAGE_READ_COST);
@@ -58,7 +68,11 @@ pub fn extcodesize<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) 
 pub fn extcodehash<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
     check!(SPEC::enabled(CONSTANTINOPLE)); // EIP-1052: EXTCODEHASH opcode
     pop_address!(interp, address);
-    let (code_hash, is_cold) = host.code_hash(address);
+    let ret = host.code_hash(address);
+    if ret.is_none() {
+        return Return::FatalNotSupported;
+    }
+    let (code_hash, is_cold) = ret.unwrap();
     if SPEC::enabled(BERLIN) && is_cold {
         // WARM_STORAGE_READ_COST is already calculated in gas block
         gas!(interp, COLD_ACCOUNT_ACCESS_COST - WARM_STORAGE_READ_COST);
@@ -72,7 +86,12 @@ pub fn extcodecopy<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) 
     pop_address!(interp, address);
     pop!(interp, memory_offset, code_offset, len_u256);
 
-    let (code, is_cold) = host.code(address);
+    let ret = host.code(address);
+    if ret.is_none() {
+        return Return::FatalNotSupported;
+    }
+    let (code, is_cold) = ret.unwrap();
+
     gas_or_fail!(interp, gas::extcodecopy_cost::<SPEC>(len_u256, is_cold));
     let len = as_usize_or_fail!(len_u256, Return::OutOfGas);
     if len == 0 {
@@ -97,7 +116,11 @@ pub fn blockhash<H: Host>(interp: &mut Interpreter, host: &mut H) -> Return {
         let diff = as_usize_saturated!(diff);
         // blockhash should push zero if number is same as current block number.
         if diff <= 256 && diff != 0 {
-            *number = U256::from_big_endian(host.block_hash(*number).as_ref());
+            let ret = host.block_hash(*number);
+            if ret.is_none() {
+                return Return::FatalNotSupported;
+            }
+            *number = U256::from_big_endian(ret.unwrap().as_ref());
             return Return::Continue;
         }
     }
@@ -107,7 +130,12 @@ pub fn blockhash<H: Host>(interp: &mut Interpreter, host: &mut H) -> Return {
 
 pub fn sload<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
     pop!(interp, index);
-    let (value, is_cold) = host.sload(interp.contract.address, index);
+
+    let ret = host.sload(interp.contract.address, index);
+    if ret.is_none() {
+        return Return::FatalNotSupported;
+    }
+    let (value, is_cold) = ret.unwrap();
     gas!(interp, gas::sload_cost::<SPEC>(is_cold));
     push!(interp, value);
     Return::Continue
@@ -117,7 +145,11 @@ pub fn sstore<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Re
     check!(!SPEC::IS_STATIC_CALL);
 
     pop!(interp, index, value);
-    let (original, old, new, is_cold) = host.sstore(interp.contract.address, index, value);
+    let ret = host.sstore(interp.contract.address, index, value);
+    if ret.is_none() {
+        return Return::FatalNotSupported;
+    }
+    let (original, old, new, is_cold) = ret.unwrap();
     gas_or_fail!(interp, {
         let remaining_gas = interp.gas.remaining();
         gas::sstore_cost::<SPEC>(original, old, new, remaining_gas, is_cold)
@@ -161,6 +193,10 @@ pub fn selfdestruct<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H)
     pop_address!(interp, target);
 
     let res = host.selfdestruct(interp.contract.address, target);
+    if res.is_none() {
+        return Return::FatalNotSupported;
+    }
+    let res = res.unwrap();
 
     // EIP-3529: Reduction in refunds
     if !SPEC::enabled(LONDON) && !res.previously_destroyed {
@@ -189,7 +225,7 @@ pub fn create<H: Host, SPEC: Spec>(
     check!(!SPEC::IS_STATIC_CALL);
     if is_create2 {
         // EIP-1014: Skinny CREATE2
-        check!(SPEC::enabled(PETERSBURG)); 
+        check!(SPEC::enabled(PETERSBURG));
     }
 
     interp.return_data_buffer = Bytes::new();
@@ -343,7 +379,11 @@ pub fn call<H: Host, SPEC: Spec>(
     };
 
     // load account and calculate gas cost.
-    let (is_cold, exist) = host.load_account(to);
+    let res = host.load_account(to);
+    if res.is_none() {
+        return Return::FatalNotSupported;
+    }
+    let (is_cold, exist) = res.unwrap();
     let is_new = !exist;
 
     gas!(

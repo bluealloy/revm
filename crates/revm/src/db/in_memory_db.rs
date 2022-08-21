@@ -38,14 +38,56 @@ pub struct DbAccount {
     pub storage: BTreeMap<U256, U256>,
 }
 
+impl DbAccount {
+    pub fn new_not_existing() -> Self {
+        Self {
+            account_state: AccountState::NotExisting,
+            ..Default::default()
+        }
+    }
+    pub fn info(&self) -> Option<AccountInfo> {
+        if matches!(self.account_state, AccountState::NotExisting) {
+            None
+        } else {
+            Some(self.info.clone())
+        }
+    }
+}
+
+impl From<Option<AccountInfo>> for DbAccount {
+    fn from(from: Option<AccountInfo>) -> Self {
+        if let Some(info) = from {
+            Self {
+                info,
+                account_state: AccountState::None,
+                ..Default::default()
+            }
+        } else {
+            Self::new_not_existing()
+        }
+    }
+}
+
+impl From<AccountInfo> for DbAccount {
+    fn from(info: AccountInfo) -> Self {
+        Self {
+            info,
+            account_state: AccountState::None,
+            ..Default::default()
+        }
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub enum AccountState {
     /// Before Spurious Dragon hardfork there were a difference between empty and not existing.
-    NotExisting, 
-    /// EVM touched this account
-    EVMTouched,
-    /// EVM cleared storage of this account, mostly by selfdestruct
-    EVMStorageCleared,
+    /// And we are flaging it here.
+    NotExisting,
+    /// EVM touched this account. For newer hardfork this means it can be clearead/removed from state.
+    Touched,
+    /// EVM cleared storage of this account, mostly by selfdestruct, we dont ask database for storage slots
+    /// and asume they are U256::zero()
+    StorageCleared,
     /// EVM didnt interacted with this account
     #[default]
     None,
@@ -88,13 +130,15 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     fn load_account(&mut self, address: H160) -> Result<&mut DbAccount, &'static str> {
         let db = &self.db;
         match self.accounts.entry(address) {
-            btree_map::Entry::Occupied(mut entry) => Ok(entry.get_mut()),
-            btree_map::Entry::Vacant(entry) => {
-                Ok(entry.insert(db.basic(address)?.map(|info| DbAccount {
-                    info,
-                    ..Default::default()
-                })));
-            }
+            btree_map::Entry::Occupied(entry) => Ok(entry.into_mut()),
+            btree_map::Entry::Vacant(entry) => Ok(entry.insert(
+                db.basic(address)?
+                    .map(|info| DbAccount {
+                        info,
+                        ..Default::default()
+                    })
+                    .unwrap_or(DbAccount::new_not_existing()),
+            )),
         }
     }
 
@@ -117,7 +161,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         storage: Map<U256, U256>,
     ) -> Result<(), &'static str> {
         let account = self.load_account(address)?;
-        account.account_state = AccountState::EVMStorageCleared;
+        account.account_state = AccountState::StorageCleared;
         account.storage = storage.into_iter().collect();
         Ok(())
     }
@@ -129,7 +173,7 @@ impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
             if account.is_destroyed {
                 let db_account = self.accounts.entry(address).or_default();
                 db_account.storage.clear();
-                db_account.account_state = AccountState::EVMStorageCleared;
+                db_account.account_state = AccountState::StorageCleared;
                 db_account.info = AccountInfo::default();
                 continue;
             }
@@ -140,9 +184,9 @@ impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
 
             db_account.account_state = if account.storage_cleared {
                 db_account.storage.clear();
-                AccountState::EVMStorageCleared
+                AccountState::StorageCleared
             } else {
-                AccountState::EVMTouched
+                AccountState::Touched
             };
             db_account.storage.extend(
                 account
@@ -167,28 +211,32 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
     }
 
     fn basic(&mut self, address: H160) -> Result<Option<AccountInfo>, &'static str> {
-        match self.accounts.entry(address) {
-            btree_map::Entry::Occupied(entry) => Ok(entry.get().map(|acc| acc.info.clone())),
-            btree_map::Entry::Vacant(entry) => Ok(entry
-                .insert(self.db.basic(address)?.map(|info| DbAccount {
-                    info,
-                    ..Default::default()
-                }))
-                .map(|acc| acc.info.clone())),
-        }
+        let basic = match self.accounts.entry(address) {
+            btree_map::Entry::Occupied(entry) => entry.into_mut(),
+            btree_map::Entry::Vacant(entry) => entry.insert(
+                self.db
+                    .basic(address)?
+                    .map(|info| DbAccount {
+                        info,
+                        ..Default::default()
+                    })
+                    .unwrap_or(DbAccount::new_not_existing()),
+            ),
+        };
+        Ok(basic.info())
     }
 
     /// Get the value in an account's storage slot.
     ///
     /// It is assumed that account is already loaded.
-    fn storage(&mut self, address: H160, index: U256) -> Result<U256,&'static str> {
+    fn storage(&mut self, address: H160, index: U256) -> Result<U256, &'static str> {
         match self.accounts.entry(address) {
             btree_map::Entry::Occupied(mut acc_entry) => {
                 let acc_entry = acc_entry.get_mut();
                 match acc_entry.storage.entry(index) {
-                    btree_map::Entry::Occupied(entry) => *entry.get(),
+                    btree_map::Entry::Occupied(entry) => Ok(*entry.get()),
                     btree_map::Entry::Vacant(entry) => {
-                        if matches!(acc_entry.account_state, AccountState::EVMStorageCleared) {
+                        if matches!(acc_entry.account_state, AccountState::StorageCleared) {
                             Ok(U256::zero())
                         } else {
                             let slot = self.db.storage(address, index)?;
@@ -201,43 +249,46 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
             btree_map::Entry::Vacant(acc_entry) => {
                 // acc needs to be loaded for us to access slots.
                 let info = self.db.basic(address)?;
-                let value = self.db.storage(address, index)?;
-                acc_entry.insert(DbAccount {
-                    info,
-                    account_state: AccountState::None,
-                    storage: BTreeMap::from([(index, value)]),
-                });
-                value
+                let (account, value) = if info.is_some() {
+                    let value = self.db.storage(address, index)?;
+                    let mut account: DbAccount = info.into();
+                    account.storage.insert(index, value);
+                    (account, value)
+                } else {
+                    (info.into(), U256::zero())
+                };
+                acc_entry.insert(account);
+                Ok(value)
             }
         }
     }
 
-    fn code_by_hash(&mut self, code_hash: H256) -> Bytecode {
+    fn code_by_hash(&mut self, code_hash: H256) -> Result<Bytecode, &'static str> {
         match self.contracts.entry(code_hash) {
-            Entry::Occupied(entry) => entry.get().clone(),
+            Entry::Occupied(entry) => Ok(entry.get().clone()),
             Entry::Vacant(entry) => {
                 // if you return code bytes when basic fn is called this function is not needed.
-                entry.insert(self.db.code_by_hash(code_hash)).clone()
+                Ok(entry.insert(self.db.code_by_hash(code_hash)?).clone())
             }
         }
     }
 }
 
 impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
-    fn basic(&self, address: H160) -> AccountInfo {
+    fn basic(&self, address: H160) -> Result<Option<AccountInfo>, &'static str> {
         match self.accounts.get(&address) {
-            Some(acc) => acc.info.clone(),
+            Some(acc) => Ok(Some(acc.info.clone())),
             None => self.db.basic(address),
         }
     }
 
-    fn storage(&self, address: H160, index: U256) -> U256 {
+    fn storage(&self, address: H160, index: U256) -> Result<U256, &'static str> {
         match self.accounts.get(&address) {
             Some(acc_entry) => match acc_entry.storage.get(&index) {
-                Some(entry) => *entry,
+                Some(entry) => Ok(*entry),
                 None => {
-                    if matches!(acc_entry.account_state, AccountState::EVMStorageCleared) {
-                        U256::zero()
+                    if matches!(acc_entry.account_state, AccountState::StorageCleared) {
+                        Ok(U256::zero())
                     } else {
                         self.db.storage(address, index)
                     }
@@ -247,16 +298,16 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
         }
     }
 
-    fn code_by_hash(&self, code_hash: H256) -> Bytecode {
+    fn code_by_hash(&self, code_hash: H256) -> Result<Bytecode, &'static str> {
         match self.contracts.get(&code_hash) {
-            Some(entry) => entry.clone(),
+            Some(entry) => Ok(entry.clone()),
             None => self.db.code_by_hash(code_hash),
         }
     }
 
-    fn block_hash(&self, number: U256) -> H256 {
+    fn block_hash(&self, number: U256) -> Result<H256, &'static str> {
         match self.block_hashes.get(&number) {
-            Some(entry) => *entry,
+            Some(entry) => Ok(*entry),
             None => self.db.block_hash(number),
         }
     }
@@ -356,8 +407,8 @@ mod tests {
         let mut new_state = CacheDB::new(init_state);
         new_state.insert_account_storage(account, key, value);
 
-        assert_eq!(new_state.basic(account).nonce, nonce);
-        assert_eq!(new_state.storage(account, key), value);
+        assert_eq!(new_state.basic(account).unwrap().unwrap().nonce, nonce);
+        assert_eq!(new_state.storage(account, key), Ok(value));
     }
 
     #[test]
@@ -380,8 +431,8 @@ mod tests {
         let mut new_state = CacheDB::new(init_state);
         new_state.replace_account_storage(account, [(key1, value1)].into());
 
-        assert_eq!(new_state.basic(account).nonce, nonce);
-        assert_eq!(new_state.storage(account, key0), 0.into());
-        assert_eq!(new_state.storage(account, key1), value1);
+        assert_eq!(new_state.basic(account).unwrap().unwrap().nonce, nonce);
+        assert_eq!(new_state.storage(account, key0), Ok(0.into()));
+        assert_eq!(new_state.storage(account, key1), Ok(value1));
     }
 }

@@ -22,6 +22,7 @@ pub struct EVMData<'a, DB> {
     pub env: &'a mut Env,
     pub journaled_state: JournaledState,
     pub db: &'a mut DB,
+    pub error: Option<&'static str>,
 }
 
 pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
@@ -77,7 +78,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
         }
 
         // load acc
-        self.inner_load_account(caller);
+        self.data.journaled_state.load_account(caller, self.data.db);
 
         // EIP-3607: Reject transactions from senders with deployed code
         // This EIP is introduced after london but there was no colision in past
@@ -194,8 +195,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             journaled_state.load_precompiles_default(&precompile_acc);
         } else {
             let mut precompile_acc = Map::new();
+            // TODO
             for (add, _) in precompiles.as_slice() {
-                precompile_acc.insert(*add, db.basic(*add));
+                precompile_acc.insert(*add, db.basic(*add).ok().flatten().unwrap_or_default());
             }
             journaled_state.load_precompiles(precompile_acc);
         }
@@ -204,6 +206,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 env,
                 journaled_state,
                 db,
+                error: None,
             },
             precompiles,
             inspector,
@@ -266,16 +269,19 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             for (address, _) in self.precompiles.as_slice() {
                 if let Some(precompile) = new_state.get_mut(address) {
                     // we found it.
-                    precompile.info.balance += self.data.db.basic(*address).balance;
+                    precompile.info.balance += self
+                        .data
+                        .db
+                        .basic(*address)
+                        .ok()
+                        .flatten()
+                        .map(|acc| acc.balance)
+                        .unwrap_or_default();
                 }
             }
         }
 
         (new_state, logs, gas_used, gas_refunded)
-    }
-
-    fn inner_load_account(&mut self, caller: H160) -> bool {
-        self.data.journaled_state.load_account(caller, self.data.db)
     }
 
     fn initialization<SPEC: Spec>(&mut self) -> u64 {
@@ -352,8 +358,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             return (Return::CallTooDeep, None, gas, Bytes::new());
         }
         // Check balance of caller and value. Do this before increasing nonce
-        if self.balance(inputs.caller).0 < inputs.value {
-            return (Return::OutOfFund, None, gas, Bytes::new());
+        match self.balance(inputs.caller) {
+            Some(i) if i.0 < inputs.value => return (Return::OutOfFund, None, gas, Bytes::new()),
+            Some(_) => (),
+            _ => return (Return::FatalNotSupported, None, gas, Bytes::new()),
         }
 
         // Increase nonce of caller and check if it overflows
@@ -379,13 +387,20 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let checkpoint = self.data.journaled_state.checkpoint();
 
         // Create contract account and check for collision
-        if !self.data.journaled_state.create_account(
+        match self.data.journaled_state.create_account(
             created_address,
             self.precompiles.contains(&created_address),
             self.data.db,
         ) {
-            self.data.journaled_state.checkpoint_revert(checkpoint);
-            return (Return::CreateCollision, ret, gas, Bytes::new());
+            Ok(false) => {
+                self.data.journaled_state.checkpoint_revert(checkpoint);
+                return (Return::CreateCollision, ret, gas, Bytes::new());
+            }
+            Err(err) => {
+                self.data.error = Some(err);
+                return (Return::FatalNotSupported, ret, gas, Bytes::new());
+            }
+            Ok(true) => (),
         }
 
         // Transfer value to contract address
@@ -399,7 +414,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             return (e, ret, gas, Bytes::new());
         }
 
-       // EIP-161: State trie clearing (invariant-preserving alternative) 
+        // EIP-161: State trie clearing (invariant-preserving alternative)
         if SPEC::enabled(SPURIOUS_DRAGON)
             && self
                 .data
@@ -509,7 +524,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
         let mut gas = Gas::new(inputs.gas_limit);
         // Load account and get code. Account is now hot.
-        let (bytecode, _) = self.code(inputs.contract);
+        let bytecode = if let Some((bytecode, _)) = self.code(inputs.contract) {
+            bytecode
+        } else {
+            return (Return::FatalNotSupported, gas, Bytes::new());
+        };
 
         // Check depth
         if self.data.journaled_state.depth() > interpreter::CALL_STACK_LIMIT {
@@ -646,55 +665,88 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         self.data.env
     }
 
-    fn block_hash(&mut self, number: U256) -> H256 {
-        self.data.db.block_hash(number)
+    fn block_hash(&mut self, number: U256) -> Option<H256> {
+        self.data
+            .db
+            .block_hash(number)
+            .map_err(|e| self.data.error = Some(e))
+            .ok()
     }
 
-    fn load_account(&mut self, address: H160) -> (bool, bool) {
-        let (is_cold, exists) = self
+    fn load_account(&mut self, address: H160) -> Option<(bool, bool)> {
+        self.data
+            .journaled_state
+            .load_account_exist(address, self.data.db)
+            .map_err(|e| self.data.error = Some(e))
+            .ok()
+    }
+
+    fn balance(&mut self, address: H160) -> Option<(U256, bool)> {
+        let is_cold = self
             .data
             .journaled_state
-            .load_account_exist(address, self.data.db);
-        (is_cold, exists)
-    }
-
-    fn balance(&mut self, address: H160) -> (U256, bool) {
-        let is_cold = self.inner_load_account(address);
+            .load_account(address, self.data.db)
+            .map_err(|e| self.data.error = Some(e))
+            .ok()?;
         let balance = self.data.journaled_state.account(address).info.balance;
-        (balance, is_cold)
+        Some((balance, is_cold))
     }
 
-    fn code(&mut self, address: H160) -> (Bytecode, bool) {
-        let (acc, is_cold) = self.data.journaled_state.load_code(address, self.data.db);
-        (acc.info.code.clone().unwrap(), is_cold)
+    fn code(&mut self, address: H160) -> Option<(Bytecode, bool)> {
+        let journal = &mut self.data.journaled_state;
+        let db = &mut self.data.db;
+        let error = &mut self.data.error;
+
+        let (acc, is_cold) = journal
+            .load_code(address, db)
+            .map_err(|e| *error = Some(e))
+            .ok()?;
+        Some((acc.info.code.clone().unwrap(), is_cold))
     }
 
     /// Get code hash of address.
-    fn code_hash(&mut self, address: H160) -> (H256, bool) {
-        let (acc, is_cold) = self.data.journaled_state.load_code(address, self.data.db);
+    fn code_hash(&mut self, address: H160) -> Option<(H256, bool)> {
+        let journal = &mut self.data.journaled_state;
+        let db = &mut self.data.db;
+        let error = &mut self.data.error;
+
+        let (acc, is_cold) = journal
+            .load_code(address, db)
+            .map_err(|e| *error = Some(e))
+            .ok()?;
         //asume that all precompiles have some balance
         let is_precompile = self.precompiles.contains(&address);
         if is_precompile && self.data.env.cfg.perf_all_precompiles_have_balance {
-            return (KECCAK_EMPTY, is_cold);
+            return Some((KECCAK_EMPTY, is_cold));
         }
         if acc.is_empty() {
-            return (H256::zero(), is_cold);
+            // TODO check this for pre tangerine fork
+            return Some((H256::zero(), is_cold));
         }
 
-        (acc.info.code_hash, is_cold)
+        Some((acc.info.code_hash, is_cold))
     }
 
-    fn sload(&mut self, address: H160, index: U256) -> (U256, bool) {
+    fn sload(&mut self, address: H160, index: U256) -> Option<(U256, bool)> {
         // account is always hot. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
         self.data
             .journaled_state
             .sload(address, index, self.data.db)
+            .map_err(|e| self.data.error = Some(e))
+            .ok()
     }
 
-    fn sstore(&mut self, address: H160, index: U256, value: U256) -> (U256, U256, U256, bool) {
+    fn sstore(
+        &mut self,
+        address: H160,
+        index: U256,
+        value: U256,
+    ) -> Option<(U256, U256, U256, bool)> {
         self.data
             .journaled_state
             .sstore(address, index, value, self.data.db)
+            .map_err(|e| self.data.error = Some(e))
+            .ok()
     }
 
     fn log(&mut self, address: H160, topics: Vec<H256>, data: Bytes) {
@@ -709,13 +761,15 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         self.data.journaled_state.log(log);
     }
 
-    fn selfdestruct(&mut self, address: H160, target: H160) -> SelfDestructResult {
+    fn selfdestruct(&mut self, address: H160, target: H160) -> Option<SelfDestructResult> {
         if INSPECT {
             self.inspector.selfdestruct();
         }
         self.data
             .journaled_state
             .selfdestruct(address, target, self.data.db)
+            .map_err(|e| self.data.error = Some(e))
+            .ok()
     }
 
     fn create<SPEC: Spec>(
@@ -764,23 +818,28 @@ pub trait Host {
     fn env(&mut self) -> &mut Env;
 
     /// load account. Returns (is_cold,is_new_account)
-    fn load_account(&mut self, address: H160) -> (bool, bool);
+    fn load_account(&mut self, address: H160) -> Option<(bool, bool)>;
     /// Get environmental block hash.
-    fn block_hash(&mut self, number: U256) -> H256;
+    fn block_hash(&mut self, number: U256) -> Option<H256>;
     /// Get balance of address.
-    fn balance(&mut self, address: H160) -> (U256, bool);
+    fn balance(&mut self, address: H160) -> Option<(U256, bool)>;
     /// Get code of address.
-    fn code(&mut self, address: H160) -> (Bytecode, bool);
+    fn code(&mut self, address: H160) -> Option<(Bytecode, bool)>;
     /// Get code hash of address.
-    fn code_hash(&mut self, address: H160) -> (H256, bool);
+    fn code_hash(&mut self, address: H160) -> Option<(H256, bool)>;
     /// Get storage value of address at index.
-    fn sload(&mut self, address: H160, index: U256) -> (U256, bool);
+    fn sload(&mut self, address: H160, index: U256) -> Option<(U256, bool)>;
     /// Set storage value of address at index. Return if slot is cold/hot access.
-    fn sstore(&mut self, address: H160, index: U256, value: U256) -> (U256, U256, U256, bool);
+    fn sstore(
+        &mut self,
+        address: H160,
+        index: U256,
+        value: U256,
+    ) -> Option<(U256, U256, U256, bool)>;
     /// Create a log owned by address with given topics and data.
     fn log(&mut self, address: H160, topics: Vec<H256>, data: Bytes);
     /// Mark an address to be deleted, with funds transferred to target.
-    fn selfdestruct(&mut self, address: H160, target: H160) -> SelfDestructResult;
+    fn selfdestruct(&mut self, address: H160, target: H160) -> Option<SelfDestructResult>;
     /// Invoke a create operation.
     fn create<SPEC: Spec>(
         &mut self,

@@ -149,7 +149,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
             database.insert_account_info(*address, acc_info);
             // insert storage:
             for (&slot, &value) in info.storage.iter() {
-                database.insert_account_storage(*address, slot, value)
+                let _ = database.insert_account_storage(*address, slot, value);
             }
         }
         let mut env = Env::default();
