@@ -222,7 +222,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             let basefee = self.data.env.block.basefee;
             let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 }; // EIP-3529: Reduction in refunds
 
-            let gas_refunded = min(gas.refunded() as u64, gas.spend() / max_refund_quotient);
+            let gas_refunded = min(gas.refunded(), gas.spend() / max_refund_quotient);
             self.data
                 .journaled_state
                 .state()
