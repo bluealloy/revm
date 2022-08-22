@@ -85,15 +85,10 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
         return Ok(());
     }
 
-    if path.file_name() == Some(OsStr::new("CallRipemd160_5.json"))
-    || path.file_name() == Some(OsStr::new("CallRipemd160_4_gas719.json"))
-    || path.file_name() == Some(OsStr::new("CallRipemd160_0.json"))
-    || path.file_name() == Some(OsStr::new("ContractCreationSpam.json"))
-    || path.file_name() == Some(OsStr::new("RevertOpcodeMultipleSubCalls.json")) // HOMESTEAD
-    || path.file_name() == Some(OsStr::new("LoopDelegateCallsDepthThenRevert.json")) // HOMESTEAD
-    || path.file_name() == Some(OsStr::new("randomStatetest645.json")) // HOMESTEAD
-    || path.file_name() == Some(OsStr::new("Call50000_rip160.json")) // HOMESTEAD
-    || path.file_name() == Some(OsStr::new("CREATE_ContractRETURNBigOffset.json")) // FRONTIER
+    if 
+    //path.file_name() == Some(OsStr::new("randomStatetest645.json")) // HOMESTEAD
+    //|| path.file_name() == Some(OsStr::new("Call50000_rip160.json")) // HOMESTEAD
+    path.file_name() == Some(OsStr::new("CREATE_ContractRETURNBigOffset.json")) // FRONTIER
     || path.file_name() == Some(OsStr::new("dayLimitConstructionOOG.json")) // FRONTIERR
     || path.file_name() == Some(OsStr::new("walletConstructionOOG.json")) // FRONTIER
     {

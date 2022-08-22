@@ -321,20 +321,26 @@ impl JournaledState {
         Ok(true)
     }
 
-    fn journal_revert(state: &mut State, journal_entries: Vec<JournalEntry>) {
+    fn journal_revert(
+        state: &mut State,
+        journal_entries: Vec<JournalEntry>,
+        is_spurious_dragon_enabled: bool,
+    ) {
         const PRECOMPILE3: H160 =
             H160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]);
         for entry in journal_entries.into_iter().rev() {
             match entry {
                 JournalEntry::AccountLoaded { address } => {
-                    if address != PRECOMPILE3 {
-                        state.remove(&address);
+                    if is_spurious_dragon_enabled && address == PRECOMPILE3 {
+                        continue;
                     }
+                    state.remove(&address);
                 }
                 JournalEntry::AccountTouched { address } => {
-                    if address != PRECOMPILE3 {
-                        state.get_mut(&address).unwrap().is_touched = false;
+                    if is_spurious_dragon_enabled && address == PRECOMPILE3 {
+                        continue;
                     }
+                    state.get_mut(&address).unwrap().is_touched = false;
                 }
                 JournalEntry::AccountDestroyed {
                     address,
@@ -395,6 +401,7 @@ impl JournaledState {
     }
 
     pub fn checkpoint_revert(&mut self, checkpoint: JournalCheckpoint) {
+        let is_spurious_dragon_enabled = !self.is_before_spurious_dragon;
         let state = &mut self.state;
         self.depth -= 1;
         // iterate over last N journals sets and revert our global state
@@ -403,7 +410,7 @@ impl JournaledState {
             .iter_mut()
             .rev()
             .take(leng - checkpoint.journal_i)
-            .for_each(|cs| Self::journal_revert(state, mem::take(cs)));
+            .for_each(|cs| Self::journal_revert(state, mem::take(cs), is_spurious_dragon_enabled));
 
         self.logs.truncate(checkpoint.log_i);
         self.journal.truncate(checkpoint.journal_i);
