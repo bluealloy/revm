@@ -173,7 +173,7 @@ impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
             if account.is_destroyed {
                 let db_account = self.accounts.entry(address).or_default();
                 db_account.storage.clear();
-                db_account.account_state = AccountState::StorageCleared;
+                db_account.account_state = AccountState::NotExisting;
                 db_account.info = AccountInfo::default();
                 continue;
             }
@@ -236,7 +236,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
                 match acc_entry.storage.entry(index) {
                     btree_map::Entry::Occupied(entry) => Ok(*entry.get()),
                     btree_map::Entry::Vacant(entry) => {
-                        if matches!(acc_entry.account_state, AccountState::StorageCleared) {
+                        if matches!(acc_entry.account_state, AccountState::StorageCleared | AccountState::NotExisting) {
                             Ok(U256::zero())
                         } else {
                             let slot = self.db.storage(address, index)?;
@@ -287,7 +287,7 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
             Some(acc_entry) => match acc_entry.storage.get(&index) {
                 Some(entry) => Ok(*entry),
                 None => {
-                    if matches!(acc_entry.account_state, AccountState::StorageCleared) {
+                    if matches!(acc_entry.account_state, AccountState::StorageCleared | AccountState::NotExisting) {
                         Ok(U256::zero())
                     } else {
                         self.db.storage(address, index)

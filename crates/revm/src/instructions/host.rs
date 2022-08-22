@@ -207,16 +207,6 @@ pub fn selfdestruct<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H)
     Return::SelfDestruct
 }
 
-fn gas_call_l64_after<SPEC: Spec>(interp: &mut Interpreter) -> Result<u64, Return> {
-    if SPEC::enabled(TANGERINE) {
-        //EIP-150: Gas cost changes for IO-heavy operations
-        let gas = interp.gas().remaining();
-        Ok(gas - gas / 64)
-    } else {
-        Ok(interp.gas().remaining())
-    }
-}
-
 pub fn create<H: Host, SPEC: Spec>(
     interp: &mut Interpreter,
     is_create2: bool,
@@ -250,8 +240,13 @@ pub fn create<H: Host, SPEC: Spec>(
         CreateScheme::Create
     };
 
-    // take remaining gas and deduce l64 part of it.
-    let gas_limit = try_or_fail!(gas_call_l64_after::<SPEC>(interp));
+    let mut gas_limit = interp.gas().remaining();
+
+    // EIP-150: Gas cost changes for IO-heavy operations
+    if SPEC::enabled(TANGERINE) {
+        // take remaining gas and deduce l64 part of it.
+        gas_limit -= gas_limit / 64
+    }
     gas!(interp, gas_limit);
 
     let mut create_input = CreateInputs {
@@ -398,8 +393,13 @@ pub fn call<H: Host, SPEC: Spec>(
     );
 
     // take l64 part of gas_limit
-    let global_gas_limit = try_or_fail!(gas_call_l64_after::<SPEC>(interp));
-    let mut gas_limit = min(global_gas_limit, local_gas_limit);
+    let mut gas_limit = if SPEC::enabled(TANGERINE) {
+        //EIP-150: Gas cost changes for IO-heavy operations
+        let gas = interp.gas().remaining();
+        min(gas - gas / 64, local_gas_limit)
+    } else {
+        local_gas_limit
+    };
 
     gas!(interp, gas_limit);
 

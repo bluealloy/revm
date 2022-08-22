@@ -85,15 +85,17 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
         return Ok(());
     }
 
-    if path.file_name() == Some(OsStr::new("CREATE2_HighNonceDelegatecall.json")) // Fails in Byzantium
-    || path.file_name() == Some(OsStr::new("CREATE_HighNonceMinus1.json"))  // fails in Byzantium
-    || path.file_name() == Some(OsStr::new("CREATE2_HighNonceMinus1.json")) // fails in PETERSBURG
-    || path.file_name() == Some(OsStr::new("touchAndGo.json")) // TANGERINE
-    || path.file_name() == Some(OsStr::new("CallEcrecover_Overflow.json"))
-    //FRONTIER
-    || path.file_name() == Some(OsStr::new("NonZeroValue_CALL_ToOneStorageKey.json")) // LEGACY tests TANGERINE 
-    || path.file_name() == Some(OsStr::new("NonZeroValue_SUICIDE_ToEmpty.json"))
-    // LEGACY tests TANGERINE
+    if path.file_name() == Some(OsStr::new("CallRipemd160_5.json"))
+    || path.file_name() == Some(OsStr::new("CallRipemd160_4_gas719.json"))
+    || path.file_name() == Some(OsStr::new("CallRipemd160_0.json"))
+    || path.file_name() == Some(OsStr::new("ContractCreationSpam.json"))
+    || path.file_name() == Some(OsStr::new("RevertOpcodeMultipleSubCalls.json")) // HOMESTEAD
+    || path.file_name() == Some(OsStr::new("LoopDelegateCallsDepthThenRevert.json")) // HOMESTEAD
+    || path.file_name() == Some(OsStr::new("randomStatetest645.json")) // HOMESTEAD
+    || path.file_name() == Some(OsStr::new("Call50000_rip160.json")) // HOMESTEAD
+    || path.file_name() == Some(OsStr::new("CREATE_ContractRETURNBigOffset.json")) // FRONTIER
+    || path.file_name() == Some(OsStr::new("dayLimitConstructionOOG.json")) // FRONTIERR
+    || path.file_name() == Some(OsStr::new("walletConstructionOOG.json")) // FRONTIER
     {
         return Ok(());
     }
@@ -180,33 +182,33 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
 
         // post and execution
         for (spec_name, tests) in unit.post {
-            // if matches!(
-            //     spec_name,
-            //     SpecName::ByzantiumToConstantinopleAt5 | SpecName::Constantinople
-            // ) {
-            //     continue;
-            // }
-            if !matches!(
+            if matches!(
                 spec_name,
-                SpecName::Merge
-                    | SpecName::London
-                    | SpecName::BerlinToLondonAt5
-                    | SpecName::Berlin
-                    | SpecName::Istanbul
-                    | SpecName::ConstantinopleFix
-                    | SpecName::ByzantiumToConstantinopleFixAt5
-                    | SpecName::Byzantium
-                    | SpecName::EIP158ToByzantiumAt5
-                    | SpecName::EIP158 // SPURIOUS_DRAGON
-                    | SpecName::EIP150 // TANGERINE
-                                                  //| SpecName::HomesteadToEIP150At5
-                                                  //| SpecName::HomesteadToDaoAt5
-                                                  //| SpecName::Homestead
-                                                  //| SpecName::FrontierToHomesteadAt5
-                                                  //| SpecName::Frontier
+                SpecName::ByzantiumToConstantinopleAt5 | SpecName::Constantinople
             ) {
                 continue;
             }
+            // if !matches!(
+            //     spec_name,
+            //     SpecName::Merge
+            //         | SpecName::London
+            //         | SpecName::BerlinToLondonAt5
+            //         | SpecName::Berlin
+            //         | SpecName::Istanbul
+            //         | SpecName::ConstantinopleFix
+            //         | SpecName::ByzantiumToConstantinopleFixAt5
+            //         | SpecName::Byzantium
+            //         | SpecName::EIP158ToByzantiumAt5
+            //         | SpecName::EIP158 // SPURIOUS_DRAGON
+            //         | SpecName::EIP150 // TANGERINE
+            //         | SpecName::HomesteadToEIP150At5
+            //         | SpecName::HomesteadToDaoAt5
+            //         | SpecName::Homestead
+            //                            | SpecName::FrontierToHomesteadAt5
+            //                            | SpecName::Frontier
+            // ) {
+            //     continue;
+            // }
 
             env.cfg.spec_id = spec_name.to_spec_id();
 
@@ -271,13 +273,15 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
 
                 *elapsed.lock().unwrap() += timer;
 
+                let is_legacy = !SpecId::enabled(evm.env.cfg.spec_id, SpecId::SPURIOUS_DRAGON);
                 let db = evm.db().unwrap();
                 let state_root = state_merkle_trie_root(
                     db.accounts
                         .iter()
                         .filter(|(_address, acc)| {
-                            !(acc.info.is_empty())
-                                || matches!(acc.account_state, AccountState::None)
+                            (is_legacy && !matches!(acc.account_state, AccountState::NotExisting))
+                                || (!is_legacy && (!(acc.info.is_empty())
+                                    || matches!(acc.account_state, AccountState::None)))
                         })
                         .map(|(k, v)| (*k, v.clone())),
                 );

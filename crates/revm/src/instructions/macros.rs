@@ -1,14 +1,5 @@
 pub use crate::Return;
 
-macro_rules! try_or_fail {
-    ( $e:expr ) => {
-        match $e {
-            Ok(v) => v,
-            Err(e) => return e,
-        }
-    };
-}
-
 macro_rules! check {
     ($expresion:expr) => {
         if !$expresion {
