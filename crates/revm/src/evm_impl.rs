@@ -224,13 +224,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
             let gas_refunded = min(gas.refunded(), gas.spend() / max_refund_quotient);
             let acc_caller = self.data.journaled_state.state().get_mut(&caller).unwrap();
-            if let Some(balance) = acc_caller
+            acc_caller.info.balance = acc_caller
                 .info
                 .balance
-                .checked_add(effective_gas_price * (gas.remaining() + gas_refunded))
-            {
-                acc_caller.info.balance = balance
-            }
+                .saturating_add(effective_gas_price * (gas.remaining() + gas_refunded));
 
             // EIP-1559
             let coinbase_gas_price = if SPEC::enabled(LONDON) {
@@ -249,13 +246,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 .state()
                 .get_mut(&coinbase)
                 .unwrap();
-            if let Some(balance) = acc_coinbase
+            acc_coinbase.info.balance = acc_coinbase
                 .info
                 .balance
-                .checked_add(coinbase_gas_price * (gas.spend() - gas_refunded))
-            {
-                acc_coinbase.info.balance = balance;
-            }
+                .saturating_add(coinbase_gas_price * (gas.spend() - gas_refunded));
             (gas.spend() - gas_refunded, gas_refunded)
         } else {
             // touch coinbase
