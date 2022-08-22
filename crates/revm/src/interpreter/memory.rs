@@ -7,7 +7,8 @@ use primitive_types::U256;
 
 /// A sequencial memory. It uses Rust's `Vec` for internal
 /// representation.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Memory {
     data: Vec<u8>,
 }

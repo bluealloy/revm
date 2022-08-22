@@ -4,7 +4,8 @@ use primitive_types::{H256, U256};
 pub const STACK_LIMIT: usize = 1024;
 
 /// EVM stack.
-#[derive(Clone)]
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Stack {
     data: Vec<U256>,
 }
