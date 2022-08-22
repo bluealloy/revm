@@ -487,12 +487,12 @@ impl JournaledState {
     ) -> Result<(bool, bool), &'static str> {
         let is_before_spurious_dragon = self.is_before_spurious_dragon;
         let (acc, is_cold) = self.load_code(address, db)?;
-        // TODO
+
         let exist = if is_before_spurious_dragon {
             if acc.is_not_existing && !acc.is_touched {
-                true
-            } else {
                 false
+            } else {
+                true
             }
         } else {
             !acc.is_empty()
