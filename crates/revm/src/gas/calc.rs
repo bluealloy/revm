@@ -3,11 +3,11 @@ use crate::{models::SelfDestructResult, Spec, SpecId::*};
 use primitive_types::U256;
 
 #[allow(clippy::collapsible_else_if)]
-pub fn sstore_refund<SPEC: Spec>(original: U256, current: U256, new: U256) -> i64 {
+pub fn sstore_refund<SPEC: Spec>(original: U256, current: U256, new: U256) -> u64 {
     if SPEC::enabled(ISTANBUL) {
         // EIP-3529: Reduction in refunds
         let sstore_clears_schedule = if SPEC::enabled(LONDON) {
-            (SSTORE_RESET - SLOAD_COLD + ACCESS_LIST_STORAGE_KEY) as i64
+            SSTORE_RESET - SLOAD_COLD + ACCESS_LIST_STORAGE_KEY
         } else {
             REFUND_SSTORE_CLEARS
         };
@@ -34,9 +34,9 @@ pub fn sstore_refund<SPEC: Spec>(original: U256, current: U256, new: U256) -> i6
                         (SSTORE_RESET, sload_cost::<SPEC>(false))
                     };
                     if original.is_zero() {
-                        refund += (SSTORE_SET - gas_sload) as i64;
+                        refund += SSTORE_SET - gas_sload;
                     } else {
-                        refund += (gas_sstore_reset - gas_sload) as i64;
+                        refund += gas_sstore_reset - gas_sload;
                     }
                 }
 
