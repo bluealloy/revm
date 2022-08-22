@@ -320,7 +320,7 @@ pub struct EmptyDB();
 impl DatabaseRef for EmptyDB {
     /// Get basic account information.
     fn basic(&self, _address: H160) -> Result<Option<AccountInfo>, &'static str> {
-        Ok(None) //AccountInfo::default()
+        Ok(None)
     }
     /// Get account code by its hash
     fn code_by_hash(&self, _code_hash: H256) -> Result<Bytecode, &'static str> {
@@ -363,7 +363,7 @@ impl Database for BenchmarkDB {
                 code_hash: self.1,
             }));
         }
-        Ok(None) //AccountInfo::default()
+        Ok(None)
     }
 
     /// Get account code by its hash
@@ -405,7 +405,7 @@ mod tests {
 
         let (key, value) = (123u64.into(), 456u64.into());
         let mut new_state = CacheDB::new(init_state);
-        new_state.insert_account_storage(account, key, value);
+        let _ = new_state.insert_account_storage(account, key, value);
 
         assert_eq!(new_state.basic(account).unwrap().unwrap().nonce, nonce);
         assert_eq!(new_state.storage(account, key), Ok(value));
@@ -426,10 +426,10 @@ mod tests {
 
         let (key0, value0) = (123u64.into(), 456u64.into());
         let (key1, value1) = (789u64.into(), 999u64.into());
-        init_state.insert_account_storage(account, key0, value0);
+        let _ = init_state.insert_account_storage(account, key0, value0);
 
         let mut new_state = CacheDB::new(init_state);
-        new_state.replace_account_storage(account, [(key1, value1)].into());
+        let _ = new_state.replace_account_storage(account, [(key1, value1)].into());
 
         assert_eq!(new_state.basic(account).unwrap().unwrap().nonce, nonce);
         assert_eq!(new_state.storage(account, key0), Ok(0.into()));

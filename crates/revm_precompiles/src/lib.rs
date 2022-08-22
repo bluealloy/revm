@@ -141,6 +141,10 @@ impl Precompiles {
             .find(|(t, _)| t == address)
             .map(|(_, precompile)| precompile.clone())
     }
+    
+    pub fn len(&self) -> usize {
+        self.fun.len()
+    }
 }
 
 /// const fn for making an address by concatenating the bytes from two given numbers,

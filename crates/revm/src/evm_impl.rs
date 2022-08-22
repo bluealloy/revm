@@ -7,7 +7,7 @@ use crate::{
     models::SelfDestructResult,
     return_ok, CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, Env,
     ExecutionResult, Gas, Inspector, Log, Return, Spec,
-    SpecId::*,
+    SpecId::{*, self},
     TransactOut, TransactTo, Transfer, KECCAK_EMPTY,
 };
 use alloc::vec::Vec;
@@ -78,7 +78,14 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
         }
 
         // load acc
-        self.data.journaled_state.load_account(caller, self.data.db);
+        if self
+            .data
+            .journaled_state
+            .load_account(caller, self.data.db)
+            .is_err()
+        {
+            return exit(Return::FatalNotSupported);
+        }
 
         // EIP-3607: Reject transactions from senders with deployed code
         // This EIP is introduced after london but there was no colision in past
@@ -185,22 +192,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         inspector: &'a mut dyn Inspector<DB>,
         precompiles: Precompiles,
     ) -> Self {
-        let mut journaled_state = JournaledState::default();
-        if env.cfg.perf_all_precompiles_have_balance {
-            // load precompiles without asking db.
-            let mut precompile_acc = Vec::new();
-            for (add, _) in precompiles.as_slice() {
-                precompile_acc.push(*add);
-            }
-            journaled_state.load_precompiles_default(&precompile_acc);
+        let journaled_state = if GSPEC::enabled(SpecId::SPURIOUS_DRAGON) {
+            JournaledState::new(precompiles.len())
         } else {
-            let mut precompile_acc = Map::new();
-            // TODO
-            for (add, _) in precompiles.as_slice() {
-                precompile_acc.insert(*add, db.basic(*add).ok().flatten().unwrap_or_default());
-            }
-            journaled_state.load_precompiles(precompile_acc);
-        }
+            JournaledState::new_legacy(precompiles.len())
+        };
         Self {
             data: EVMData {
                 env,
@@ -241,7 +237,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 effective_gas_price
             };
 
-            self.data
+            // TODO
+            let _ = self
+                .data
                 .journaled_state
                 .load_account(coinbase, self.data.db);
             self.data.journaled_state.touch(&coinbase);
@@ -255,7 +253,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             (gas.spend() - gas_refunded, gas_refunded)
         } else {
             // touch coinbase
-            self.data
+            // TODO return
+            let _ = self
+                .data
                 .journaled_state
                 .load_account(coinbase, self.data.db);
             self.data.journaled_state.touch(&coinbase);
@@ -296,12 +296,16 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     let mut accessed_slots = 0_u64;
 
                     for (address, slots) in self.data.env.tx.access_list.iter() {
-                        self.data
+                        // TODO return
+                        let _ = self
+                            .data
                             .journaled_state
                             .load_account(*address, self.data.db);
                         accessed_slots += slots.len() as u64;
+                        // TODO return
                         for slot in slots {
-                            self.data
+                            let _ = self
+                                .data
                                 .journaled_state
                                 .sload(*address, *slot, self.data.db);
                         }
@@ -682,14 +686,14 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     }
 
     fn balance(&mut self, address: H160) -> Option<(U256, bool)> {
-        let is_cold = self
-            .data
-            .journaled_state
-            .load_account(address, self.data.db)
-            .map_err(|e| self.data.error = Some(e))
-            .ok()?;
-        let balance = self.data.journaled_state.account(address).info.balance;
-        Some((balance, is_cold))
+        let db = &mut self.data.db;
+        let journal = &mut self.data.journaled_state;
+        let error = &mut self.data.error;
+        journal
+            .load_account(address, db)
+            .map_err(|e| *error = Some(e))
+            .ok()
+            .map(|(acc, is_cold)| (acc.info.balance, is_cold))
     }
 
     fn code(&mut self, address: H160) -> Option<(Bytecode, bool)> {

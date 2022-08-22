@@ -2,7 +2,7 @@ use crate::{interpreter::bytecode::Bytecode, models::SelfDestructResult, Return,
 use alloc::{vec, vec::Vec};
 use core::mem::{self};
 use hashbrown::{hash_map::Entry, HashMap as Map};
-use primitive_types::{H160, U256};
+use primitive_types::{H160, H256, U256};
 
 use crate::{db::Database, AccountInfo, Log};
 
@@ -19,13 +19,16 @@ pub struct JournaledState {
     /// Ethereum before EIP-161 differently defined empty and not-existing account
     /// so we need to take care of that difference. Set this to false if you are handling
     /// legacy transactions
-    pub is_spurious_dragon_enabled: bool,
+    pub is_before_spurious_dragon: bool,
+    /// It is assumed that precompiles start from 0x1 address and spand next N addresses.
+    /// we are using that assumption here
+    pub num_of_precompiles: usize,
 }
 
 pub type State = Map<H160, Account>;
 pub type Storage = Map<U256, StorageSlot>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Account {
     /// Balance of the account.
     pub info: AccountInfo,
@@ -37,13 +40,20 @@ pub struct Account {
     pub is_destroyed: bool,
     /// if account is touched
     pub is_touched: bool,
-    /// is precompile
-    pub is_existing_precompile: bool,
+    /// used only for pre spurious dragon hardforks where exisnting and empty was two saparate states.
+    /// it became same state after EIP-161: State trie clearing
+    pub is_not_existing: bool,
 }
 
 impl Account {
     pub fn is_empty(&self) -> bool {
         self.info.is_empty()
+    }
+    pub fn new_not_existing() -> Self {
+        Self {
+            is_not_existing: true,
+            ..Default::default()
+        }
     }
 }
 
@@ -55,7 +65,7 @@ impl From<AccountInfo> for Account {
             storage_cleared: false,
             is_destroyed: false,
             is_touched: false,
-            is_existing_precompile: false,
+            is_not_existing: false,
         }
     }
 }
@@ -130,26 +140,21 @@ pub struct JournalCheckpoint {
     journal_i: usize,
 }
 
-impl Default for JournaledState {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl JournaledState {
-    pub fn new() -> JournaledState {
+    pub fn new(num_of_precompiles: usize) -> JournaledState {
         Self {
             state: Map::new(),
             logs: Vec::new(),
             journal: vec![vec![]],
             depth: 0,
-            is_spurious_dragon_enabled: true,
+            is_before_spurious_dragon: false,
+            num_of_precompiles,
         }
     }
 
-    pub fn new_legacy() -> JournaledState {
-        let mut journal = Self::new();
-        journal.is_spurious_dragon_enabled = false;
+    pub fn new_legacy(num_of_precompiles: usize) -> JournaledState {
+        let mut journal = Self::new(num_of_precompiles);
+        journal.is_before_spurious_dragon = true;
         journal
     }
 
@@ -168,29 +173,6 @@ impl JournaledState {
             journal.push(JournalEntry::AccountTouched { address: *address });
             account.is_touched = true;
         }
-    }
-
-    pub fn load_precompiles(&mut self, precompiles: Map<H160, AccountInfo>) {
-        let state: Map<H160, Account> = precompiles
-            .into_iter()
-            .map(|(k, value)| {
-                let acc = Account::from(value);
-                (k, acc)
-            })
-            .collect();
-        self.state.extend(state);
-    }
-
-    pub fn load_precompiles_default(&mut self, precompiles: &[H160]) {
-        let state: State = precompiles
-            .iter()
-            .map(|&k| {
-                let mut acc = Account::from(AccountInfo::default());
-                acc.is_existing_precompile = true;
-                (k, acc)
-            })
-            .collect();
-        self.state.extend(state);
     }
 
     /// do cleanup and return modified state
@@ -260,9 +242,13 @@ impl JournaledState {
         db: &mut DB,
     ) -> Result<(bool, bool), Return> {
         // load accounts
-        // TODO handle error casting
-        let from_is_cold = self.load_account(*from, db).unwrap();
-        let to_is_cold = self.load_account(*to, db).unwrap();
+        let (_, from_is_cold) = self
+            .load_account(*from, db)
+            .map_err(|_| Return::FatalNotSupported)?;
+
+        let (_, to_is_cold) = self
+            .load_account(*to, db)
+            .map_err(|_| Return::FatalNotSupported)?;
 
         // sub balance from
         let from_account = &mut self.state.get_mut(from).unwrap();
@@ -297,7 +283,7 @@ impl JournaledState {
         address: H160,
         is_precompile: bool,
         db: &mut DB,
-    ) -> Result<bool,&'static str> {
+    ) -> Result<bool, &'static str> {
         let (acc, _) = self.load_code(address, db)?;
 
         // Check collision. Bytecode needs to be empty.
@@ -336,15 +322,16 @@ impl JournaledState {
     }
 
     fn journal_revert(state: &mut State, journal_entries: Vec<JournalEntry>) {
+        const PRECOMPILE3: H160 =
+            H160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]);
         for entry in journal_entries.into_iter().rev() {
             match entry {
                 JournalEntry::AccountLoaded { address } => {
-                    state.remove(&address);
+                    if address != PRECOMPILE3 {
+                        state.remove(&address);
+                    }
                 }
                 JournalEntry::AccountTouched { address } => {
-                    const PRECOMPILE3: H160 =
-                        H160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]);
-
                     if address != PRECOMPILE3 {
                         state.get_mut(&address).unwrap().is_touched = false;
                     }
@@ -463,39 +450,62 @@ impl JournaledState {
     }
 
     /// load account into memory. return if it is cold or hot accessed
-    pub fn load_account<DB: Database>(&mut self, address: H160, db: &mut DB) -> Result<bool,&'static str> {
-        let is_cold = match self.state.entry(address) {
-            Entry::Occupied(ref mut _entry) => false,
+    pub fn load_account<DB: Database>(
+        &mut self,
+        address: H160,
+        db: &mut DB,
+    ) -> Result<(&mut Account, bool), &'static str> {
+        Ok(match self.state.entry(address) {
+            Entry::Occupied(entry) => (entry.into_mut(), false),
             Entry::Vacant(vac) => {
-                let account = db.basic(address)?.unwrap_or_default();
+                let account = if let Some(account) = db.basic(address)? {
+                    account.into()
+                } else {
+                    Account::new_not_existing()
+                };
+
                 // journal loading of account. AccessList touch.
                 self.journal
                     .last_mut()
                     .unwrap()
                     .push(JournalEntry::AccountLoaded { address });
 
-                vac.insert(account.into());
-                true
+                // precompiles are hot loaded so we need to take that into account
+                let is_precompile = is_precompile(address, self.num_of_precompiles);
+                let is_cold = if is_precompile { false } else { true };
+
+                (vac.insert(account), is_cold)
             }
-        };
-        Ok(is_cold)
+        })
     }
 
     // first is is_cold second bool is exists.
-    pub fn load_account_exist<DB: Database>(&mut self, address: H160, db: &mut DB) -> Result<(bool, bool),&'static str> {
+    pub fn load_account_exist<DB: Database>(
+        &mut self,
+        address: H160,
+        db: &mut DB,
+    ) -> Result<(bool, bool), &'static str> {
+        let is_before_spurious_dragon = self.is_before_spurious_dragon;
         let (acc, is_cold) = self.load_code(address, db)?;
         // TODO
-        if acc.is_existing_precompile {
-            Ok((false, true))
+        let exist = if is_before_spurious_dragon {
+            if acc.is_not_existing && !acc.is_touched {
+                true
+            } else {
+                false
+            }
         } else {
-            let exists = !acc.is_empty();
-            Ok((is_cold, exists))
-        }
+            !acc.is_empty()
+        };
+        Ok((is_cold, exist))
     }
 
-    pub fn load_code<DB: Database>(&mut self, address: H160, db: &mut DB) -> Result<(&mut Account, bool),&'static str> {
-        let is_cold = self.load_account(address, db)?;
-        let acc = self.state.get_mut(&address).unwrap();
+    pub fn load_code<DB: Database>(
+        &mut self,
+        address: H160,
+        db: &mut DB,
+    ) -> Result<(&mut Account, bool), &'static str> {
+        let (acc, is_cold) = self.load_account(address, db)?;
         if acc.info.code.is_none() {
             if acc.info.code_hash == KECCAK_EMPTY {
                 let empty = Bytecode::new();
@@ -509,7 +519,12 @@ impl JournaledState {
     }
 
     // account is already present and loaded.
-    pub fn sload<DB: Database>(&mut self, address: H160, key: U256, db: &mut DB) -> Result<(U256, bool),&'static str> {
+    pub fn sload<DB: Database>(
+        &mut self,
+        address: H160,
+        key: U256,
+        db: &mut DB,
+    ) -> Result<(U256, bool), &'static str> {
         let account = self.state.get_mut(&address).unwrap(); // asume acc is hot
         let load = match account.storage.entry(key) {
             Entry::Occupied(occ) => (occ.get().present_value, false),
@@ -546,7 +561,7 @@ impl JournaledState {
         key: U256,
         new: U256,
         db: &mut DB,
-    ) -> Result<(U256, U256, U256, bool),&'static str> {
+    ) -> Result<(U256, U256, U256, bool), &'static str> {
         // assume that acc exists and load the slot.
         let (present, is_cold) = self.sload(address, key, db)?;
         let acc = self.state.get_mut(&address).unwrap();
@@ -575,5 +590,17 @@ impl JournaledState {
     /// push log into subroutine
     pub fn log(&mut self, log: Log) {
         self.logs.push(log);
+    }
+}
+
+fn is_precompile(address: H160, num_of_precompiles: usize) -> bool {
+    let u256: H256 = address.into();
+    let u256: U256 = U256::from_big_endian(u256.as_bytes());
+
+    let first = u256.0[0].wrapping_sub(1);
+    if u256.0[3] == 0 && u256.0[2] == 0 && u256.0[1] == 0 && first < num_of_precompiles as u64 {
+        true
+    } else {
+        false
     }
 }
