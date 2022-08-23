@@ -5,7 +5,7 @@ pub const LOW: u64 = 5;
 pub const MID: u64 = 8;
 pub const HIGH: u64 = 10;
 pub const JUMPDEST: u64 = 1;
-pub const SELFDESTRUCT: u64 = 24000;
+pub const SELFDESTRUCT: i64 = 24000;
 pub const CREATE: u64 = 32000;
 pub const CALLVALUE: u64 = 9000;
 pub const NEWACCOUNT: u64 = 25000;
@@ -22,7 +22,7 @@ pub const CODEDEPOSIT: u64 = 200;
 
 pub const SSTORE_SET: u64 = 20000;
 pub const SSTORE_RESET: u64 = 5000;
-pub const REFUND_SSTORE_CLEARS: u64 = 15000;
+pub const REFUND_SSTORE_CLEARS: i64 = 15000;
 
 pub const TRANSACTION_ZERO_DATA: u64 = 4;
 pub const TRANSACTION_NON_ZERO_DATA_INIT: u64 = 16;

@@ -11,7 +11,7 @@ pub struct Gas {
     limit: u64,
     used: u64,
     memory: u64,
-    refunded: u64,
+    refunded: i64,
     all_used_gas: u64,
 }
 impl Gas {
@@ -46,7 +46,7 @@ impl Gas {
         self.memory
     }
 
-    pub fn refunded(&self) -> u64 {
+    pub fn refunded(&self) -> i64 {
         self.refunded
     }
 
@@ -63,7 +63,7 @@ impl Gas {
         self.all_used_gas -= returned;
     }
 
-    pub fn record_refund(&mut self, refund: u64) {
+    pub fn record_refund(&mut self, refund: i64) {
         self.refunded += refund;
     }
 
@@ -94,7 +94,7 @@ impl Gas {
     }
 
     /// used in gas_refund! macro
-    pub fn gas_refund(&mut self, refund: u64) {
+    pub fn gas_refund(&mut self, refund: i64) {
         self.refunded += refund;
     }
 }
