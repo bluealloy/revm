@@ -85,16 +85,6 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
         return Ok(());
     }
 
-    if 
-    //path.file_name() == Some(OsStr::new("randomStatetest645.json")) // HOMESTEAD
-    //|| path.file_name() == Some(OsStr::new("Call50000_rip160.json")) // HOMESTEAD
-    path.file_name() == Some(OsStr::new("CREATE_ContractRETURNBigOffset.json")) // FRONTIER
-    || path.file_name() == Some(OsStr::new("dayLimitConstructionOOG.json")) // FRONTIERR
-    || path.file_name() == Some(OsStr::new("walletConstructionOOG.json")) // FRONTIER
-    {
-        return Ok(());
-    }
-
     let json_reader = std::fs::read(&path).unwrap();
     let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
 
@@ -183,27 +173,6 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
             ) {
                 continue;
             }
-            // if !matches!(
-            //     spec_name,
-            //     SpecName::Merge
-            //         | SpecName::London
-            //         | SpecName::BerlinToLondonAt5
-            //         | SpecName::Berlin
-            //         | SpecName::Istanbul
-            //         | SpecName::ConstantinopleFix
-            //         | SpecName::ByzantiumToConstantinopleFixAt5
-            //         | SpecName::Byzantium
-            //         | SpecName::EIP158ToByzantiumAt5
-            //         | SpecName::EIP158 // SPURIOUS_DRAGON
-            //         | SpecName::EIP150 // TANGERINE
-            //         | SpecName::HomesteadToEIP150At5
-            //         | SpecName::HomesteadToDaoAt5
-            //         | SpecName::Homestead
-            //                            | SpecName::FrontierToHomesteadAt5
-            //                            | SpecName::Frontier
-            // ) {
-            //     continue;
-            // }
 
             env.cfg.spec_id = spec_name.to_spec_id();
 

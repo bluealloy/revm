@@ -7,7 +7,7 @@ use crate::{
     models::SelfDestructResult,
     return_ok, CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, Env,
     ExecutionResult, Gas, Inspector, Log, Return, Spec,
-    SpecId::{*, self},
+    SpecId::{self, *},
     TransactOut, TransactTo, Transfer, KECCAK_EMPTY,
 };
 use alloc::vec::Vec;
@@ -461,7 +461,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             return_ok!() => {
                 let b = Bytes::new();
                 // if ok, check contract creation limit and calculate gas deduction on output len.
-                let bytes = interp.return_value();
+                let mut bytes = interp.return_value();
 
                 // EIP-3541: Reject new contract code starting with the 0xEF byte
                 if SPEC::enabled(LONDON) && !bytes.is_empty() && bytes.first() == Some(&0xEF) {
@@ -479,10 +479,17 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 }
                 if crate::USE_GAS {
                     let gas_for_code = bytes.len() as u64 * crate::gas::CODEDEPOSIT;
-                    // record code deposit gas cost and check if we are out of gas.
                     if !interp.gas.record_cost(gas_for_code) {
-                        self.data.journaled_state.checkpoint_revert(checkpoint);
-                        return (Return::OutOfGas, ret, interp.gas, b);
+                        // record code deposit gas cost and check if we are out of gas.
+                        // EIP-2 point 3: If contract creation does not have enough gas to pay for the
+                        // final gas fee for adding the contract code to the state, the contract
+                        //  creation fails (i.e. goes out-of-gas) rather than leaving an empty contract.
+                        if SPEC::enabled(HOMESTEAD) {
+                            self.data.journaled_state.checkpoint_revert(checkpoint);
+                            return (Return::OutOfGas, ret, interp.gas, b);
+                        } else {
+                            bytes = Bytes::new();
+                        }
                     }
                 }
                 // if we have enought gas
