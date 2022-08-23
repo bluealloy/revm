@@ -1,6 +1,6 @@
 mod cmd;
-mod merkle_trie;
-mod models;
+pub mod merkle_trie;
+pub mod models;
 mod runner;
 mod trace;
 
