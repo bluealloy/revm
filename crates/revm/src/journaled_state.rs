@@ -608,6 +608,6 @@ fn is_precompile(address: H160, num_of_precompiles: usize) -> bool {
     let u256: U256 = U256::from_big_endian(u256.as_bytes());
 
     let first = u256.0[0].wrapping_sub(1);
-    
+
     u256.0[3] == 0 && u256.0[2] == 0 && u256.0[1] == 0 && first < num_of_precompiles as u64
 }
