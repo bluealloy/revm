@@ -5,7 +5,7 @@ use crate::{
     interpreter::{Contract, Interpreter},
     journaled_state::{Account, JournaledState, State},
     models::SelfDestructResult,
-    return_ok, CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, Env,
+    return_ok, return_revert, CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, Env,
     ExecutionResult, Gas, Inspector, Log, Return, Spec,
     SpecId::{self, *},
     TransactOut, TransactTo, Transfer, KECCAK_EMPTY,
@@ -84,7 +84,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
             .load_account(caller, self.data.db)
             .is_err()
         {
-            return exit(Return::FatalNotSupported);
+            return exit(Return::FatalExternalError);
         }
 
         // EIP-3607: Reject transactions from senders with deployed code
@@ -168,7 +168,16 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
         };
 
         if crate::USE_GAS {
-            gas.reimburse_unspend(&exit_reason, ret_gas);
+            match exit_reason {
+                return_ok!() => {
+                    gas.erase_cost(ret_gas.remaining());
+                    gas.record_refund(ret_gas.refunded());
+                }
+                return_revert!() => {
+                    gas.erase_cost(ret_gas.remaining());
+                }
+                _ => {}
+            }
         }
 
         let (state, logs, gas_used, gas_refunded) = self.finalize::<GSPEC>(caller, &gas);
@@ -366,7 +375,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         match self.balance(inputs.caller) {
             Some(i) if i.0 < inputs.value => return (Return::OutOfFund, None, gas, Bytes::new()),
             Some(_) => (),
-            _ => return (Return::FatalNotSupported, None, gas, Bytes::new()),
+            _ => return (Return::FatalExternalError, None, gas, Bytes::new()),
         }
 
         // Increase nonce of caller and check if it overflows
@@ -403,7 +412,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             }
             Err(err) => {
                 self.data.error = Some(err);
-                return (Return::FatalNotSupported, ret, gas, Bytes::new());
+                return (Return::FatalExternalError, ret, gas, Bytes::new());
             }
             Ok(true) => (),
         }
@@ -539,7 +548,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let bytecode = if let Some((bytecode, _)) = self.code(inputs.contract) {
             bytecode
         } else {
-            return (Return::FatalNotSupported, gas, Bytes::new());
+            return (Return::FatalExternalError, gas, Bytes::new());
         };
 
         // Check depth

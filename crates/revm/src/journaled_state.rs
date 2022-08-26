@@ -252,11 +252,11 @@ impl JournaledState {
         // load accounts
         let (_, from_is_cold) = self
             .load_account(*from, db)
-            .map_err(|_| Return::FatalNotSupported)?;
+            .map_err(|_| Return::FatalExternalError)?;
 
         let (_, to_is_cold) = self
             .load_account(*to, db)
-            .map_err(|_| Return::FatalNotSupported)?;
+            .map_err(|_| Return::FatalExternalError)?;
 
         // sub balance from
         let from_account = &mut self.state.get_mut(from).unwrap();

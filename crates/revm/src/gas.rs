@@ -3,9 +3,6 @@ mod constants;
 
 pub use calc::*;
 pub use constants::*;
-
-use crate::{instructions::Return, return_ok, return_revert};
-
 #[derive(Clone, Copy, Debug)]
 pub struct Gas {
     limit: u64,
@@ -22,19 +19,6 @@ impl Gas {
             memory: 0,
             refunded: 0,
             all_used_gas: 0,
-        }
-    }
-
-    pub fn reimburse_unspend(&mut self, exit: &Return, other: Gas) {
-        match *exit {
-            return_ok!() => {
-                self.erase_cost(other.remaining());
-                self.record_refund(other.refunded());
-            }
-            return_revert!() => {
-                self.erase_cost(other.remaining());
-            }
-            _ => {}
         }
     }
 
