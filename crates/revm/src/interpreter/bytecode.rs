@@ -279,6 +279,10 @@ impl BytecodeLocked {
         self.len
     }
 
+    pub fn hash(&self) -> H256 {
+        self.hash
+    }
+
     pub fn is_empty(&self) -> bool {
         self.len == 0
     }
