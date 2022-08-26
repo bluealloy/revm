@@ -6,7 +6,8 @@ use primitive_types::{H160, H256, U256};
 
 use crate::{db::Database, AccountInfo, Log};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
+#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JournaledState {
     /// Current state.
     pub state: State,
@@ -28,7 +29,8 @@ pub struct JournaledState {
 pub type State = Map<H160, Account>;
 pub type Storage = Map<U256, StorageSlot>;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Eq, PartialEq)]
+#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Account {
     /// Balance of the account.
     pub info: AccountInfo,
@@ -51,8 +53,12 @@ impl Account {
     }
     pub fn new_not_existing() -> Self {
         Self {
+            info: AccountInfo::default(),
+            storage: Map::new(),
+            storage_cleared: false,
+            is_destroyed: false,
+            is_touched: false,
             is_not_existing: true,
-            ..Default::default()
         }
     }
 }
@@ -70,7 +76,8 @@ impl From<AccountInfo> for Account {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Eq, PartialEq)]
+#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct StorageSlot {
     original_value: U256,
     /// When loaded with sload present value is set to original value
@@ -89,7 +96,8 @@ impl StorageSlot {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
+#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum JournalEntry {
     /// Used to mark account that is hot inside EVM in regards to EIP-2929 AccessList.
     /// Action: We will add Account to state.

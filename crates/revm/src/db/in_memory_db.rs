@@ -1,10 +1,7 @@
 use super::{DatabaseCommit, DatabaseRef};
 use crate::{interpreter::bytecode::Bytecode, Database, KECCAK_EMPTY};
 use crate::{Account, AccountInfo, Log};
-use alloc::{
-    collections::btree_map::{self, BTreeMap},
-    vec::Vec,
-};
+use alloc::vec::Vec;
 use hashbrown::{hash_map::Entry, HashMap as Map};
 use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
@@ -22,7 +19,7 @@ impl InMemoryDB {
 pub struct CacheDB<ExtDB: DatabaseRef> {
     /// Account info where None means it is not existing. None existing state is needed for Pre TANGERINE forks.
     /// `code` is always `None`, and bytecode can be found in `contracts`.
-    pub accounts: BTreeMap<H160, DbAccount>,
+    pub accounts: Map<H160, DbAccount>,
     pub contracts: Map<H256, Bytecode>,
     pub logs: Vec<Log>,
     pub block_hashes: Map<U256, H256>,
@@ -35,7 +32,7 @@ pub struct DbAccount {
     /// If account is selfdestructed or newly created, storage will be cleared.
     pub account_state: AccountState,
     /// storage slots
-    pub storage: BTreeMap<U256, U256>,
+    pub storage: Map<U256, U256>,
 }
 
 impl DbAccount {
@@ -99,7 +96,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         contracts.insert(KECCAK_EMPTY, Bytecode::new());
         contracts.insert(H256::zero(), Bytecode::new());
         Self {
-            accounts: BTreeMap::new(),
+            accounts: Map::new(),
             contracts,
             logs: Vec::default(),
             block_hashes: Map::new(),
@@ -130,8 +127,8 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     fn load_account(&mut self, address: H160) -> Result<&mut DbAccount, &'static str> {
         let db = &self.db;
         match self.accounts.entry(address) {
-            btree_map::Entry::Occupied(entry) => Ok(entry.into_mut()),
-            btree_map::Entry::Vacant(entry) => Ok(entry.insert(
+            Entry::Occupied(entry) => Ok(entry.into_mut()),
+            Entry::Vacant(entry) => Ok(entry.insert(
                 db.basic(address)?
                     .map(|info| DbAccount {
                         info,
@@ -212,8 +209,8 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
 
     fn basic(&mut self, address: H160) -> Result<Option<AccountInfo>, &'static str> {
         let basic = match self.accounts.entry(address) {
-            btree_map::Entry::Occupied(entry) => entry.into_mut(),
-            btree_map::Entry::Vacant(entry) => entry.insert(
+            Entry::Occupied(entry) => entry.into_mut(),
+            Entry::Vacant(entry) => entry.insert(
                 self.db
                     .basic(address)?
                     .map(|info| DbAccount {
@@ -231,12 +228,15 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
     /// It is assumed that account is already loaded.
     fn storage(&mut self, address: H160, index: U256) -> Result<U256, &'static str> {
         match self.accounts.entry(address) {
-            btree_map::Entry::Occupied(mut acc_entry) => {
+            Entry::Occupied(mut acc_entry) => {
                 let acc_entry = acc_entry.get_mut();
                 match acc_entry.storage.entry(index) {
-                    btree_map::Entry::Occupied(entry) => Ok(*entry.get()),
-                    btree_map::Entry::Vacant(entry) => {
-                        if matches!(acc_entry.account_state, AccountState::StorageCleared | AccountState::NotExisting) {
+                    Entry::Occupied(entry) => Ok(*entry.get()),
+                    Entry::Vacant(entry) => {
+                        if matches!(
+                            acc_entry.account_state,
+                            AccountState::StorageCleared | AccountState::NotExisting
+                        ) {
                             Ok(U256::zero())
                         } else {
                             let slot = self.db.storage(address, index)?;
@@ -246,7 +246,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
                     }
                 }
             }
-            btree_map::Entry::Vacant(acc_entry) => {
+            Entry::Vacant(acc_entry) => {
                 // acc needs to be loaded for us to access slots.
                 let info = self.db.basic(address)?;
                 let (account, value) = if info.is_some() {
@@ -287,7 +287,10 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
             Some(acc_entry) => match acc_entry.storage.get(&index) {
                 Some(entry) => Ok(*entry),
                 None => {
-                    if matches!(acc_entry.account_state, AccountState::StorageCleared | AccountState::NotExisting) {
+                    if matches!(
+                        acc_entry.account_state,
+                        AccountState::StorageCleared | AccountState::NotExisting
+                    ) {
                         Ok(U256::zero())
                     } else {
                         self.db.storage(address, index)

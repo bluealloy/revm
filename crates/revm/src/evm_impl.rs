@@ -222,13 +222,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 }; // EIP-3529: Reduction in refunds
 
             let gas_refunded = min(gas.refunded() as u64, gas.spend() / max_refund_quotient);
-            self.data
-                .journaled_state
-                .state()
-                .get_mut(&caller)
-                .unwrap()
+            let acc_caller = self.data.journaled_state.state().get_mut(&caller).unwrap();
+            acc_caller.info.balance = acc_caller
                 .info
-                .balance += effective_gas_price * (gas.remaining() + gas_refunded);
+                .balance
+                .saturating_add(effective_gas_price * (gas.remaining() + gas_refunded));
 
             // EIP-1559
             let coinbase_gas_price = if SPEC::enabled(LONDON) {
@@ -243,13 +241,16 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 .journaled_state
                 .load_account(coinbase, self.data.db);
             self.data.journaled_state.touch(&coinbase);
-            self.data
+            let acc_coinbase = self
+                .data
                 .journaled_state
                 .state()
                 .get_mut(&coinbase)
-                .unwrap()
+                .unwrap();
+            acc_coinbase.info.balance = acc_coinbase
                 .info
-                .balance += coinbase_gas_price * (gas.spend() - gas_refunded);
+                .balance
+                .saturating_add(coinbase_gas_price * (gas.spend() - gas_refunded));
             (gas.spend() - gas_refunded, gas_refunded)
         } else {
             // touch coinbase
@@ -266,7 +267,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         // added to it, we need now to load precompile address from db and add this amount to it so that we
         // will have sum.
         if self.data.env.cfg.perf_all_precompiles_have_balance {
-            for (address, _) in self.precompiles.as_slice() {
+            for address in self.precompiles.addresses() {
                 if let Some(precompile) = new_state.get_mut(address) {
                     // we found it.
                     precompile.info.balance += self

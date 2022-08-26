@@ -33,5 +33,5 @@ std = ["bytes/std", "num_enum/std", "primitive-types/std", "sha3/std", "rlp/std"
 secp256k1 = ["revm_precompiles/secp256k1"]
 k256 = ["revm_precompiles/k256_ecrecover"]
 web3db = ["futures", "tokio", "parking_lot", "web3"]
-with-serde = ["serde", "primitive-types/serde", "hex", "hex/serde"]
+with-serde = ["serde", "primitive-types/serde", "hex", "hex/serde", "hashbrown/serde"]
 memory_limit = []

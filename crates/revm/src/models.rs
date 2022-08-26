@@ -10,7 +10,7 @@ pub const KECCAK_EMPTY: H256 = H256([
 ]);
 
 /// AccountInfo account information.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq)]
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AccountInfo {
     /// Account balance.

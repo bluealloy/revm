@@ -9,3 +9,7 @@ default-members = ["crates/revm"]
 
 [profile.release]
 # debug = true
+
+[profile.ethtests]
+inherits = "test"
+opt-level = 3

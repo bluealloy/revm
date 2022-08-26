@@ -18,6 +18,8 @@ pub use error::Return;
 extern crate alloc;
 use alloc::vec::Vec;
 
+use hashbrown::HashMap;
+
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base
 }
@@ -60,7 +62,7 @@ pub type StandardPrecompileFn = fn(&[u8], u64) -> PrecompileResult;
 pub type CustomPrecompileFn = fn(&[u8], u64) -> PrecompileResult;
 
 pub struct Precompiles {
-    fun: Vec<(Address, Precompile)>,
+    fun: HashMap<Address, Precompile>,
 }
 
 impl Default for Precompiles {
@@ -90,56 +92,57 @@ impl SpecId {
 
 impl Precompiles {
     pub fn new<const SPEC_ID: u8>() -> Self {
-        let mut fun: Vec<(Address, Precompile)> = Vec::new();
+        let mut fun: HashMap<Address, Precompile> = HashMap::new();
+        let mut insert_fun =
+            |precompile: (Address, Precompile)| fun.insert(precompile.0, precompile.1);
+
         if SpecId::HOMESTEAD.enabled(SPEC_ID) {
-            fun.push(secp256k1::ECRECOVER);
-            fun.push(hash::SHA256);
-            fun.push(hash::RIPED160);
-            fun.push(identity::FUN);
+            insert_fun(secp256k1::ECRECOVER);
+            insert_fun(hash::SHA256);
+            insert_fun(hash::RIPEMD160);
+            insert_fun(identity::FUN);
         }
 
         if SpecId::ISTANBUL.enabled(SPEC_ID) {
-            // EIP-152: Add BLAKE2 compression function `F` precompile
-            fun.push(blake2::FUN);
+            // EIP-152: Add BLAKE2 compression function `F` precompile.
+            insert_fun(blake2::FUN);
         }
 
         if SpecId::ISTANBUL.enabled(SPEC_ID) {
-            // EIP-1108: Reduce alt_bn128 precompile gas costs
-            fun.push(bn128::add::ISTANBUL);
-            fun.push(bn128::mul::ISTANBUL);
-            fun.push(bn128::pair::ISTANBUL);
+            // EIP-1108: Reduce alt_bn128 precompile gas costs.
+            insert_fun(bn128::add::ISTANBUL);
+            insert_fun(bn128::mul::ISTANBUL);
+            insert_fun(bn128::pair::ISTANBUL);
         } else if SpecId::BYZANTIUM.enabled(SPEC_ID) {
-            // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128
-            // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128
-            fun.push(bn128::add::BYZANTIUM);
-            fun.push(bn128::mul::BYZANTIUM);
-            fun.push(bn128::pair::BYZANTIUM);
+            // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
+            // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
+            insert_fun(bn128::add::BYZANTIUM);
+            insert_fun(bn128::mul::BYZANTIUM);
+            insert_fun(bn128::pair::BYZANTIUM);
         }
 
         if SpecId::BERLIN.enabled(SPEC_ID) {
-            fun.push(modexp::BERLIN);
+            // EIP-2565: ModExp Gas Cost.
+            insert_fun(modexp::BERLIN);
         } else if SpecId::BYZANTIUM.enabled(SPEC_ID) {
-            //EIP-198: Big integer modular exponentiation
-            fun.push(modexp::BYZANTIUM);
+            // EIP-198: Big integer modular exponentiation.
+            insert_fun(modexp::BYZANTIUM);
         }
 
         Self { fun }
     }
 
-    pub fn as_slice(&self) -> &[(Address, Precompile)] {
-        &self.fun
+    pub fn addresses(&self) -> impl IntoIterator<Item = &Address> {
+        self.fun.keys()
     }
 
     pub fn contains(&self, address: &Address) -> bool {
-        matches!(self.get(address), Some(_))
+        self.fun.contains_key(address)
     }
 
     pub fn get(&self, address: &Address) -> Option<Precompile> {
         //return None;
-        self.fun
-            .iter()
-            .find(|(t, _)| t == address)
-            .map(|(_, precompile)| precompile.clone())
+        self.fun.get(address).cloned()
     }
     
     pub fn len(&self) -> usize {

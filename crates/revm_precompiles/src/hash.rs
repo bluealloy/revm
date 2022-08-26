@@ -8,7 +8,7 @@ pub const SHA256: (Address, Precompile) = (
     super::make_address(0, 2),
     Precompile::Standard(sha256_run as StandardPrecompileFn),
 );
-pub const RIPED160: (Address, Precompile) = (
+pub const RIPEMD160: (Address, Precompile) = (
     super::make_address(0, 3),
     Precompile::Standard(ripemd160_run as StandardPrecompileFn),
 );
