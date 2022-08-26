@@ -144,7 +144,11 @@ impl Precompiles {
         //return None;
         self.fun.get(address).cloned()
     }
-    
+
+    pub fn is_empty(&self) -> bool {
+        self.fun.len() == 0
+    }
+
     pub fn len(&self) -> usize {
         self.fun.len()
     }

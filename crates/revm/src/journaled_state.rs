@@ -486,8 +486,7 @@ impl JournaledState {
                     .push(JournalEntry::AccountLoaded { address });
 
                 // precompiles are hot loaded so we need to take that into account
-                let is_precompile = is_precompile(address, self.num_of_precompiles);
-                let is_cold = if is_precompile { false } else { true };
+                let is_cold = !is_precompile(address, self.num_of_precompiles);
 
                 (vac.insert(account), is_cold)
             }
@@ -504,11 +503,7 @@ impl JournaledState {
         let (acc, is_cold) = self.load_code(address, db)?;
 
         let exist = if is_before_spurious_dragon {
-            if acc.is_not_existing && !acc.is_touched {
-                false
-            } else {
-                true
-            }
+            !acc.is_not_existing || acc.is_touched
         } else {
             !acc.is_empty()
         };
@@ -613,9 +608,6 @@ fn is_precompile(address: H160, num_of_precompiles: usize) -> bool {
     let u256: U256 = U256::from_big_endian(u256.as_bytes());
 
     let first = u256.0[0].wrapping_sub(1);
-    if u256.0[3] == 0 && u256.0[2] == 0 && u256.0[1] == 0 && first < num_of_precompiles as u64 {
-        true
-    } else {
-        false
-    }
+    
+    u256.0[3] == 0 && u256.0[2] == 0 && u256.0[1] == 0 && first < num_of_precompiles as u64
 }

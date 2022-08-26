@@ -244,8 +244,9 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                         .iter()
                         .filter(|(_address, acc)| {
                             (is_legacy && !matches!(acc.account_state, AccountState::NotExisting))
-                                || (!is_legacy && (!(acc.info.is_empty())
-                                    || matches!(acc.account_state, AccountState::None)))
+                                || (!is_legacy
+                                    && (!(acc.info.is_empty())
+                                        || matches!(acc.account_state, AccountState::None)))
                         })
                         .map(|(k, v)| (*k, v.clone())),
                 );

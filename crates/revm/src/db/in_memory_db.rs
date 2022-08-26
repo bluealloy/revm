@@ -134,7 +134,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
                         info,
                         ..Default::default()
                     })
-                    .unwrap_or(DbAccount::new_not_existing()),
+                    .unwrap_or_else(DbAccount::new_not_existing),
             )),
         }
     }
@@ -217,7 +217,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
                         info,
                         ..Default::default()
                     })
-                    .unwrap_or(DbAccount::new_not_existing()),
+                    .unwrap_or_else(DbAccount::new_not_existing),
             ),
         };
         Ok(basic.info())

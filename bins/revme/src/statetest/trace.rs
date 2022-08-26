@@ -141,7 +141,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         is_static: bool,
     ) -> (Return, Gas, Bytes) {
         println!(
-            "SM CALL:   {:?},context:{:?}, is_static:{:?}, transfer:{:?}, input:",//{:?}",
+            "SM CALL:   {:?},context:{:?}, is_static:{:?}, transfer:{:?}, input:", //{:?}",
             inputs.contract,
             inputs.context,
             is_static,
