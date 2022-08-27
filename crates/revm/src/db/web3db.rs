@@ -48,7 +48,9 @@ impl Web3DB {
 }
 
 impl Database for Web3DB {
-    fn basic(&mut self, address: H160) -> Result<Option<AccountInfo>, &'static str> {
+    type Error = ();
+
+    fn basic(&mut self, address: H160) -> Result<Option<AccountInfo>, Self::Error> {
         let add = wH160(address.0);
         let f = async {
             let nonce = self.web3.eth().transaction_count(add, self.block_number);
@@ -74,10 +76,7 @@ impl Database for Web3DB {
         )))
     }
 
-    fn code_by_hash(
-        &mut self,
-        _code_hash: primitive_types::H256,
-    ) -> Result<Bytecode, &'static str> {
+    fn code_by_hash(&mut self, _code_hash: primitive_types::H256) -> Result<Bytecode, Self::Error> {
         panic!("Should not be called. Code is already loaded");
         // not needed because we already load code with basic info
     }
@@ -86,7 +85,7 @@ impl Database for Web3DB {
         &mut self,
         address: primitive_types::H160,
         index: primitive_types::U256,
-    ) -> Result<primitive_types::U256, &'static str> {
+    ) -> Result<primitive_types::U256, Self::Error> {
         let add = wH160(address.0);
         let index = wU256(index.0);
         let f = async {
@@ -104,7 +103,7 @@ impl Database for Web3DB {
     fn block_hash(
         &mut self,
         number: primitive_types::U256,
-    ) -> Result<primitive_types::H256, &'static str> {
+    ) -> Result<primitive_types::H256, Self::Error> {
         if number > U256::from(u64::MAX) {
             return Ok(KECCAK_EMPTY);
         }

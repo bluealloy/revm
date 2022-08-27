@@ -88,7 +88,8 @@ impl<'a, DB: DatabaseRef> EVM<DB> {
             let mut db = RefDBWrapper::new(db);
             let db = &mut db;
             let out =
-                evm_inner::<RefDBWrapper, false>(&mut self.env.clone(), db, &mut noop).transact();
+                evm_inner::<RefDBWrapper<DB::Error>, false>(&mut self.env.clone(), db, &mut noop)
+                    .transact();
             out
         } else {
             panic!("Database needs to be set");
@@ -96,15 +97,19 @@ impl<'a, DB: DatabaseRef> EVM<DB> {
     }
 
     /// Execute transaction with given inspector, without wring to DB. Return change state.
-    pub fn inspect_ref<INSP: Inspector<RefDBWrapper<'a>>>(
+    pub fn inspect_ref<INSP: Inspector<RefDBWrapper<'a, DB::Error>>>(
         &'a self,
         mut inspector: INSP,
     ) -> (ExecutionResult, State) {
         if let Some(db) = self.db.as_ref() {
             let mut db = RefDBWrapper::new(db);
             let db = &mut db;
-            let out = evm_inner::<RefDBWrapper, true>(&mut self.env.clone(), db, &mut inspector)
-                .transact();
+            let out = evm_inner::<RefDBWrapper<DB::Error>, true>(
+                &mut self.env.clone(),
+                db,
+                &mut inspector,
+            )
+            .transact();
             out
         } else {
             panic!("Database needs to be set");

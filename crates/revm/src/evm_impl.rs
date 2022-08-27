@@ -18,11 +18,11 @@ use primitive_types::{H160, H256, U256};
 use revm_precompiles::{Precompile, PrecompileOutput, Precompiles};
 use sha3::{Digest, Keccak256};
 
-pub struct EVMData<'a, DB> {
+pub struct EVMData<'a, DB: Database> {
     pub env: &'a mut Env,
     pub journaled_state: JournaledState,
     pub db: &'a mut DB,
-    pub error: Option<&'static str>,
+    pub error: Option<DB::Error>,
 }
 
 pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {

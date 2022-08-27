@@ -124,7 +124,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         self.accounts.entry(address).or_default().info = info;
     }
 
-    fn load_account(&mut self, address: H160) -> Result<&mut DbAccount, &'static str> {
+    fn load_account(&mut self, address: H160) -> Result<&mut DbAccount, ExtDB::Error> {
         let db = &self.db;
         match self.accounts.entry(address) {
             Entry::Occupied(entry) => Ok(entry.into_mut()),
@@ -145,7 +145,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         address: H160,
         slot: U256,
         value: U256,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ExtDB::Error> {
         let account = self.load_account(address)?;
         account.storage.insert(slot, value);
         Ok(())
@@ -156,7 +156,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         &mut self,
         address: H160,
         storage: Map<U256, U256>,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), ExtDB::Error> {
         let account = self.load_account(address)?;
         account.account_state = AccountState::StorageCleared;
         account.storage = storage.into_iter().collect();
@@ -196,7 +196,9 @@ impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
 }
 
 impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
-    fn block_hash(&mut self, number: U256) -> Result<H256, &'static str> {
+    type Error = ExtDB::Error;
+
+    fn block_hash(&mut self, number: U256) -> Result<H256, Self::Error> {
         match self.block_hashes.entry(number) {
             Entry::Occupied(entry) => Ok(*entry.get()),
             Entry::Vacant(entry) => {
@@ -207,7 +209,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
         }
     }
 
-    fn basic(&mut self, address: H160) -> Result<Option<AccountInfo>, &'static str> {
+    fn basic(&mut self, address: H160) -> Result<Option<AccountInfo>, Self::Error> {
         let basic = match self.accounts.entry(address) {
             Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(entry) => entry.insert(
@@ -226,7 +228,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
     /// Get the value in an account's storage slot.
     ///
     /// It is assumed that account is already loaded.
-    fn storage(&mut self, address: H160, index: U256) -> Result<U256, &'static str> {
+    fn storage(&mut self, address: H160, index: U256) -> Result<U256, Self::Error> {
         match self.accounts.entry(address) {
             Entry::Occupied(mut acc_entry) => {
                 let acc_entry = acc_entry.get_mut();
@@ -263,7 +265,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
         }
     }
 
-    fn code_by_hash(&mut self, code_hash: H256) -> Result<Bytecode, &'static str> {
+    fn code_by_hash(&mut self, code_hash: H256) -> Result<Bytecode, Self::Error> {
         match self.contracts.entry(code_hash) {
             Entry::Occupied(entry) => Ok(entry.get().clone()),
             Entry::Vacant(entry) => {
@@ -275,14 +277,16 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
 }
 
 impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
-    fn basic(&self, address: H160) -> Result<Option<AccountInfo>, &'static str> {
+    type Error = ExtDB::Error;
+
+    fn basic(&self, address: H160) -> Result<Option<AccountInfo>, Self::Error> {
         match self.accounts.get(&address) {
             Some(acc) => Ok(Some(acc.info.clone())),
             None => self.db.basic(address),
         }
     }
 
-    fn storage(&self, address: H160, index: U256) -> Result<U256, &'static str> {
+    fn storage(&self, address: H160, index: U256) -> Result<U256, Self::Error> {
         match self.accounts.get(&address) {
             Some(acc_entry) => match acc_entry.storage.get(&index) {
                 Some(entry) => Ok(*entry),
@@ -301,14 +305,14 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
         }
     }
 
-    fn code_by_hash(&self, code_hash: H256) -> Result<Bytecode, &'static str> {
+    fn code_by_hash(&self, code_hash: H256) -> Result<Bytecode, Self::Error> {
         match self.contracts.get(&code_hash) {
             Some(entry) => Ok(entry.clone()),
             None => self.db.code_by_hash(code_hash),
         }
     }
 
-    fn block_hash(&self, number: U256) -> Result<H256, &'static str> {
+    fn block_hash(&self, number: U256) -> Result<H256, Self::Error> {
         match self.block_hashes.get(&number) {
             Some(entry) => Ok(*entry),
             None => self.db.block_hash(number),
@@ -321,21 +325,22 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
 pub struct EmptyDB();
 
 impl DatabaseRef for EmptyDB {
+    type Error = ();
     /// Get basic account information.
-    fn basic(&self, _address: H160) -> Result<Option<AccountInfo>, &'static str> {
+    fn basic(&self, _address: H160) -> Result<Option<AccountInfo>, Self::Error> {
         Ok(None)
     }
     /// Get account code by its hash
-    fn code_by_hash(&self, _code_hash: H256) -> Result<Bytecode, &'static str> {
+    fn code_by_hash(&self, _code_hash: H256) -> Result<Bytecode, Self::Error> {
         Ok(Bytecode::new())
     }
     /// Get storage value of address at index.
-    fn storage(&self, _address: H160, _index: U256) -> Result<U256, &'static str> {
+    fn storage(&self, _address: H160, _index: U256) -> Result<U256, Self::Error> {
         Ok(U256::default())
     }
 
     // History related
-    fn block_hash(&self, number: U256) -> Result<H256, &'static str> {
+    fn block_hash(&self, number: U256) -> Result<H256, Self::Error> {
         let mut buffer: [u8; 4 * 8] = [0; 4 * 8];
         number.to_big_endian(&mut buffer);
         Ok(H256::from_slice(&Keccak256::digest(&buffer)))
@@ -356,8 +361,9 @@ impl BenchmarkDB {
 }
 
 impl Database for BenchmarkDB {
+    type Error = ();
     /// Get basic account information.
-    fn basic(&mut self, address: H160) -> Result<Option<AccountInfo>, &'static str> {
+    fn basic(&mut self, address: H160) -> Result<Option<AccountInfo>, Self::Error> {
         if address == H160::zero() {
             return Ok(Some(AccountInfo {
                 nonce: 1,
@@ -370,17 +376,17 @@ impl Database for BenchmarkDB {
     }
 
     /// Get account code by its hash
-    fn code_by_hash(&mut self, _code_hash: H256) -> Result<Bytecode, &'static str> {
+    fn code_by_hash(&mut self, _code_hash: H256) -> Result<Bytecode, Self::Error> {
         Ok(Bytecode::default())
     }
 
     /// Get storage value of address at index.
-    fn storage(&mut self, _address: H160, _index: U256) -> Result<U256, &'static str> {
+    fn storage(&mut self, _address: H160, _index: U256) -> Result<U256, Self::Error> {
         Ok(U256::default())
     }
 
     // History related
-    fn block_hash(&mut self, _number: U256) -> Result<H256, &'static str> {
+    fn block_hash(&mut self, _number: U256) -> Result<H256, Self::Error> {
         Ok(H256::default())
     }
 }
