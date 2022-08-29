@@ -29,16 +29,14 @@ pub enum SpecId {
 }
 
 impl SpecId {
-    pub const fn to_precompile_id(self) -> u8 {
+    pub const fn to_precompile_id(self) -> PrecompileId {
         match self {
             FRONTIER | FRONTIER_THAWING | HOMESTEAD | DAO_FORK | TANGERINE | SPURIOUS_DRAGON => {
-                PrecompileId::HOMESTEAD as u8
+                PrecompileId::HOMESTEAD
             }
-            BYZANTIUM | CONSTANTINOPLE | PETERSBURG => PrecompileId::BYZANTIUM as u8,
-            ISTANBUL | MUIR_GLACIER => PrecompileId::ISTANBUL as u8,
-            BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | LATEST => {
-                PrecompileId::BERLIN as u8
-            }
+            BYZANTIUM | CONSTANTINOPLE | PETERSBURG => PrecompileId::BYZANTIUM,
+            ISTANBUL | MUIR_GLACIER => PrecompileId::ISTANBUL,
+            BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | LATEST => PrecompileId::BERLIN,
         }
     }
 

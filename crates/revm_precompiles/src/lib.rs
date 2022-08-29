@@ -1,6 +1,7 @@
 #![no_std]
 
 use bytes::Bytes;
+use once_cell::sync::OnceCell;
 use primitive_types::{H160 as Address, H256, U256};
 
 mod blake2;
@@ -61,13 +62,14 @@ pub type PrecompileResult = Result<PrecompileOutput, Return>;
 pub type StandardPrecompileFn = fn(&[u8], u64) -> PrecompileResult;
 pub type CustomPrecompileFn = fn(&[u8], u64) -> PrecompileResult;
 
+#[derive(Clone)]
 pub struct Precompiles {
     fun: HashMap<Address, Precompile>,
 }
 
 impl Default for Precompiles {
     fn default() -> Self {
-        Self::new::<3>() //berlin
+        Self::new(SpecId::LATEST).clone() //berlin
     }
 }
 
@@ -82,6 +84,7 @@ pub enum SpecId {
     BYZANTIUM = 1,
     ISTANBUL = 2,
     BERLIN = 3,
+    LATEST = 4,
 }
 
 impl SpecId {
@@ -91,45 +94,87 @@ impl SpecId {
 }
 
 impl Precompiles {
-    pub fn new<const SPEC_ID: u8>() -> Self {
-        let mut fun: HashMap<Address, Precompile> = HashMap::new();
-        let mut insert_fun =
-            |precompile: (Address, Precompile)| fun.insert(precompile.0, precompile.1);
+    pub fn homestead() -> &'static Self {
+        static INSTANCE: OnceCell<Precompiles> = OnceCell::new();
+        INSTANCE.get_or_init(|| {
+            let fun = vec![
+                secp256k1::ECRECOVER,
+                hash::SHA256,
+                hash::RIPEMD160,
+                identity::FUN,
+            ]
+            .into_iter()
+            .collect();
+            Self { fun }
+        })
+    }
 
-        if SpecId::HOMESTEAD.enabled(SPEC_ID) {
-            insert_fun(secp256k1::ECRECOVER);
-            insert_fun(hash::SHA256);
-            insert_fun(hash::RIPEMD160);
-            insert_fun(identity::FUN);
+    pub fn byzantium() -> &'static Self {
+        static INSTANCE: OnceCell<Precompiles> = OnceCell::new();
+        INSTANCE.get_or_init(|| {
+            let mut precompiles = Self::homestead().clone();
+            precompiles.fun.extend(
+                vec![
+                    // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
+                    // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
+                    bn128::add::BYZANTIUM,
+                    bn128::mul::BYZANTIUM,
+                    bn128::pair::BYZANTIUM,
+                    // EIP-198: Big integer modular exponentiation.
+                    modexp::BYZANTIUM,
+                ]
+                .into_iter(),
+            );
+            precompiles
+        })
+    }
+
+    pub fn istanbul() -> &'static Self {
+        static INSTANCE: OnceCell<Precompiles> = OnceCell::new();
+        INSTANCE.get_or_init(|| {
+            let mut precompiles = Self::byzantium().clone();
+            precompiles.fun.extend(
+                vec![
+                    // EIP-152: Add BLAKE2 compression function `F` precompile.
+                    blake2::FUN,
+                    // EIP-1108: Reduce alt_bn128 precompile gas costs.
+                    bn128::add::ISTANBUL,
+                    bn128::mul::ISTANBUL,
+                    bn128::pair::ISTANBUL,
+                ]
+                .into_iter(),
+            );
+            precompiles
+        })
+    }
+
+    pub fn berlin() -> &'static Self {
+        static INSTANCE: OnceCell<Precompiles> = OnceCell::new();
+        INSTANCE.get_or_init(|| {
+            let mut precompiles = Self::istanbul().clone();
+            precompiles.fun.extend(
+                vec![
+                    // EIP-2565: ModExp Gas Cost.
+                    modexp::BERLIN,
+                ]
+                .into_iter(),
+            );
+            precompiles
+        })
+    }
+
+    pub fn latest() -> &'static Self {
+        Self::berlin()
+    }
+
+    pub fn new(spec: SpecId) -> &'static Self {
+        match spec {
+            SpecId::HOMESTEAD => Self::homestead(),
+            SpecId::BYZANTIUM => Self::byzantium(),
+            SpecId::ISTANBUL => Self::istanbul(),
+            SpecId::BERLIN => Self::berlin(),
+            SpecId::LATEST => Self::latest(),
         }
-
-        if SpecId::ISTANBUL.enabled(SPEC_ID) {
-            // EIP-152: Add BLAKE2 compression function `F` precompile.
-            insert_fun(blake2::FUN);
-        }
-
-        if SpecId::ISTANBUL.enabled(SPEC_ID) {
-            // EIP-1108: Reduce alt_bn128 precompile gas costs.
-            insert_fun(bn128::add::ISTANBUL);
-            insert_fun(bn128::mul::ISTANBUL);
-            insert_fun(bn128::pair::ISTANBUL);
-        } else if SpecId::BYZANTIUM.enabled(SPEC_ID) {
-            // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
-            // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
-            insert_fun(bn128::add::BYZANTIUM);
-            insert_fun(bn128::mul::BYZANTIUM);
-            insert_fun(bn128::pair::BYZANTIUM);
-        }
-
-        if SpecId::BERLIN.enabled(SPEC_ID) {
-            // EIP-2565: ModExp Gas Cost.
-            insert_fun(modexp::BERLIN);
-        } else if SpecId::BYZANTIUM.enabled(SPEC_ID) {
-            // EIP-198: Big integer modular exponentiation.
-            insert_fun(modexp::BYZANTIUM);
-        }
-
-        Self { fun }
     }
 
     pub fn addresses(&self) -> impl IntoIterator<Item = &Address> {
