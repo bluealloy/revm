@@ -286,7 +286,7 @@ pub fn run(test_files: Vec<PathBuf>) -> Result<(), TestError> {
     let mut joins: Vec<std::thread::JoinHandle<Result<(), TestError>>> = Vec::new();
     let queue = Arc::new(Mutex::new((0, test_files)));
     let elapsed = Arc::new(Mutex::new(std::time::Duration::ZERO));
-    for _ in 0..1 {
+    for _ in 0..10 {
         let queue = queue.clone();
         let endjob = endjob.clone();
         let console_bar = console_bar.clone();

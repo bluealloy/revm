@@ -17,7 +17,7 @@ impl InMemoryDB {
 /// Memory backend, storing all state values in a `Map` in memory.
 #[derive(Debug, Clone)]
 pub struct CacheDB<ExtDB: DatabaseRef> {
-    /// Account info where None means it is not existing. None existing state is needed for Pre TANGERINE forks.
+    /// Account info where None means it is not existing. Not existing state is needed for Pre TANGERINE forks.
     /// `code` is always `None`, and bytecode can be found in `contracts`.
     pub accounts: Map<H160, DbAccount>,
     pub contracts: Map<H256, Bytecode>,

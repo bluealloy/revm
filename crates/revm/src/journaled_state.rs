@@ -2,7 +2,7 @@ use crate::{interpreter::bytecode::Bytecode, models::SelfDestructResult, Return,
 use alloc::{vec, vec::Vec};
 use core::mem::{self};
 use hashbrown::{hash_map::Entry, HashMap as Map};
-use primitive_types::{H160, H256, U256};
+use primitive_types::{H160, U256};
 
 use crate::{db::Database, AccountInfo, Log};
 
@@ -604,10 +604,62 @@ impl JournaledState {
 }
 
 fn is_precompile(address: H160, num_of_precompiles: usize) -> bool {
-    let u256: H256 = address.into();
-    let u256: U256 = U256::from_big_endian(u256.as_bytes());
+    if !address[..18].iter().all(|i| *i == 0) {
+        return false;
+    }
+    let num = u16::from_be_bytes([address[18], address[19]]);
+    num.wrapping_sub(1) < num_of_precompiles as u16
+}
 
-    let first = u256.0[0].wrapping_sub(1);
+#[cfg(test)]
+mod test {
+    use super::*;
 
-    u256.0[3] == 0 && u256.0[2] == 0 && u256.0[1] == 0 && first < num_of_precompiles as u64
+    #[test]
+    fn test_is_precompile() {
+        assert_eq!(
+            is_precompile(
+                H160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+                3
+            ),
+            false,
+            "Zero is not precompile"
+        );
+
+        assert_eq!(
+            is_precompile(
+                H160([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9]),
+                3
+            ),
+            false,
+            "0x100..0 is not precompile"
+        );
+
+        assert_eq!(
+            is_precompile(
+                H160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]),
+                3
+            ),
+            false,
+            "0x000..4 is not precompile"
+        );
+
+        assert_eq!(
+            is_precompile(
+                H160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                3
+            ),
+            true,
+            "0x00..01 is precompile"
+        );
+
+        assert_eq!(
+            is_precompile(
+                H160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]),
+                3
+            ),
+            true,
+            "0x000..3 is precompile"
+        );
+    }
 }

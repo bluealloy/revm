@@ -44,23 +44,3 @@ impl SpecName {
         }
     }
 }
-
-/*
-    spec!(FRONTIER);
-    // FRONTIER_THAWING no EVM spec change
-    spec!(HOMESTEAD);
-    // DAO_FORK no EVM spec change
-    spec!(TANGERINE);
-    spec!(SPURIOUS_DRAGON);
-    spec!(BYZANTIUM);
-    // CONSTANTINOPLE was overriden with PETERSBURG
-    spec!(PETERSBURG);
-    spec!(ISTANBUL);
-    // MUIR_GLACIER no EVM spec change
-    spec!(BERLIN);
-    spec!(LONDON);
-    // ARROW_GLACIER no EVM spec change
-    // GRAT_GLACIER no EVM spec change
-    spec!(MERGE);
-    spec!(LATEST);
-*/
