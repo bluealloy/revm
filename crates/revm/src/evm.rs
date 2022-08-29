@@ -144,7 +144,7 @@ macro_rules! create_evm {
             $db,
             $env,
             $inspector,
-            Precompiles::new::<{ SpecId::to_precompile_id($spec::SPEC_ID) }>(),
+            Precompiles::new(SpecId::to_precompile_id($spec::SPEC_ID)).clone(),
         )) as Box<dyn Transact + 'a>
     };
 }

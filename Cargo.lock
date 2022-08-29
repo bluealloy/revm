@@ -1833,6 +1833,7 @@ dependencies = [
  "hex",
  "k256",
  "num",
+ "once_cell",
  "primitive-types 0.11.1",
  "ripemd",
  "secp256k1 0.24.0",
