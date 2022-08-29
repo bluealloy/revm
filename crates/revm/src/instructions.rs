@@ -57,7 +57,7 @@ pub enum Return {
     StackUnderflow,
     StackOverflow,
     OutOfOffset,
-    FatalNotSupported,
+    FatalExternalError,
     GasMaxFeeGreaterThanPriorityFee,
     GasPriceLessThenBasefee,
     CallerGasLimitMoreThenBlock,

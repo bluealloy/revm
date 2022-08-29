@@ -2,33 +2,43 @@ use core::convert::TryFrom;
 use num_enum::TryFromPrimitive;
 use revm_precompiles::SpecId as PrecompileId;
 
+/// SpecId and their activation block
+/// Information was obtained from: https://github.com/ethereum/execution-specs
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, TryFromPrimitive, Eq, PartialEq, Hash, Ord, PartialOrd)]
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 #[allow(non_camel_case_types)]
 pub enum SpecId {
-    FRONTIER = 1,
-    HOMESTEAD = 2,
-    TANGERINE = 3,
-    SPURIOUS_DRAGON = 4,
-    BYZANTIUM = 5,
-    CONSTANTINOPLE = 6,
-    PETERSBURG = 7,
-    ISTANBUL = 8,
-    MUIRGLACIER = 9,
-    BERLIN = 10,
-    LONDON = 11,
-    MERGE = 12,
-    LATEST = 13,
+    FRONTIER = 0,         // Frontier	            0
+    FRONTIER_THAWING = 1, // Frontier Thawing       200000
+    HOMESTEAD = 2,        // Homestead	            1150000
+    DAO_FORK = 3,         // DAO Fork	            1920000
+    TANGERINE = 4,        // Tangerine Whistle	    2463000
+    SPURIOUS_DRAGON = 5,  // Spurious Dragon        2675000
+    BYZANTIUM = 6,        // Byzantium	            4370000
+    CONSTANTINOPLE = 7,   // Constantinople         7280000 is overwriten with PETERSBURG
+    PETERSBURG = 8,       // Petersburg             7280000
+    ISTANBUL = 9,         // Istanbul	            9069000
+    MUIR_GLACIER = 10,    // Muir Glacier	        9200000
+    BERLIN = 11,          // Berlin	                12244000
+    LONDON = 12,          // London	                12965000
+    ARROW_GLACIER = 13,   // Arrow Glacier	        13773000
+    GRAY_GLACIER = 14,    // Gray Glacier	        15050000
+    MERGE = 15,           // Paris/Merge	        TBD (Depends on difficulty)
+    LATEST = 16,
 }
 
 impl SpecId {
     pub const fn to_precompile_id(self) -> u8 {
         match self {
-            FRONTIER | HOMESTEAD | TANGERINE | SPURIOUS_DRAGON => PrecompileId::HOMESTEAD as u8,
+            FRONTIER | FRONTIER_THAWING | HOMESTEAD | DAO_FORK | TANGERINE | SPURIOUS_DRAGON => {
+                PrecompileId::HOMESTEAD as u8
+            }
             BYZANTIUM | CONSTANTINOPLE | PETERSBURG => PrecompileId::BYZANTIUM as u8,
-            ISTANBUL | MUIRGLACIER => PrecompileId::ISTANBUL as u8,
-            BERLIN | LONDON | MERGE | LATEST => PrecompileId::BERLIN as u8,
+            ISTANBUL | MUIR_GLACIER => PrecompileId::ISTANBUL as u8,
+            BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | LATEST => {
+                PrecompileId::BERLIN as u8
+            }
         }
     }
 
@@ -50,7 +60,7 @@ impl From<&str> for SpecId {
             "Constantinople" => SpecId::CONSTANTINOPLE,
             "Petersburg" => SpecId::PETERSBURG,
             "Istanbul" => SpecId::ISTANBUL,
-            "MuirGlacier" => SpecId::MUIRGLACIER,
+            "MuirGlacier" => SpecId::MUIR_GLACIER,
             "Berlin" => SpecId::BERLIN,
             "London" => SpecId::LONDON,
             "Merge" => SpecId::MERGE,
@@ -119,17 +129,33 @@ pub(crate) mod spec_impl {
         };
     }
 
-    spec!(LATEST);
-    spec!(MERGE);
-    spec!(LONDON);
-    spec!(BERLIN);
-    spec!(ISTANBUL);
-    spec!(BYZANTIUM);
     spec!(FRONTIER);
+    // FRONTIER_THAWING no EVM spec change
+    spec!(HOMESTEAD);
+    // DAO_FORK no EVM spec change
+    spec!(TANGERINE);
+    spec!(SPURIOUS_DRAGON);
+    spec!(BYZANTIUM);
+    // CONSTANTINOPLE was overriden with PETERSBURG
+    spec!(PETERSBURG);
+    spec!(ISTANBUL);
+    // MUIR_GLACIER no EVM spec change
+    spec!(BERLIN);
+    spec!(LONDON);
+    // ARROW_GLACIER no EVM spec change
+    // GRAT_GLACIER no EVM spec change
+    spec!(MERGE);
+    spec!(LATEST);
 }
 
-pub use spec_impl::{
-    BERLIN::SpecImpl as BerlinSpec, BYZANTIUM::SpecImpl as ByzantiumSpec,
-    FRONTIER::SpecImpl as FrontierSpec, ISTANBUL::SpecImpl as IstanbulSpec,
-    LATEST::SpecImpl as LatestSpec, LONDON::SpecImpl as LondonSpec, MERGE::SpecImpl as MergeSpec,
-};
+pub use spec_impl::BERLIN::SpecImpl as BerlinSpec;
+pub use spec_impl::BYZANTIUM::SpecImpl as ByzantiumSpec;
+pub use spec_impl::FRONTIER::SpecImpl as FrontierSpec;
+pub use spec_impl::HOMESTEAD::SpecImpl as HomesteadSpec;
+pub use spec_impl::ISTANBUL::SpecImpl as IstanbulSpec;
+pub use spec_impl::LATEST::SpecImpl as LatestSpec;
+pub use spec_impl::LONDON::SpecImpl as LondonSpec;
+pub use spec_impl::MERGE::SpecImpl as MergeSpec;
+pub use spec_impl::PETERSBURG::SpecImpl as PetersburgSpec;
+pub use spec_impl::SPURIOUS_DRAGON::SpecImpl as SpuriousDragonSpec;
+pub use spec_impl::TANGERINE::SpecImpl as TangerineSpec;

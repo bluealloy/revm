@@ -31,8 +31,8 @@ pub const TRANSACTION_NON_ZERO_DATA_FRONTIER: u64 = 68;
 // berlin eip2929 constants
 pub const ACCESS_LIST_ADDRESS: u64 = 2400;
 pub const ACCESS_LIST_STORAGE_KEY: u64 = 1900;
-pub const ACCOUNT_ACCESS_COLD: u64 = 2600;
-pub const STORAGE_READ_WARM: u64 = 100;
-pub const SLOAD_COLD: u64 = 2100;
+pub const COLD_SLOAD_COST: u64 = 2100;
+pub const COLD_ACCOUNT_ACCESS_COST: u64 = 2600;
+pub const WARM_STORAGE_READ_COST: u64 = 100;
 
 pub const CALL_STIPEND: u64 = 2300;

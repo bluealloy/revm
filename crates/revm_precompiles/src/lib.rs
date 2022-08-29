@@ -16,8 +16,9 @@ pub use error::Return;
 /// libraries for no_std flag
 #[macro_use]
 extern crate alloc;
-use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
+
+use hashbrown::HashMap;
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base
@@ -61,7 +62,7 @@ pub type StandardPrecompileFn = fn(&[u8], u64) -> PrecompileResult;
 pub type CustomPrecompileFn = fn(&[u8], u64) -> PrecompileResult;
 
 pub struct Precompiles {
-    fun: BTreeMap<Address, Precompile>,
+    fun: HashMap<Address, Precompile>,
 }
 
 impl Default for Precompiles {
@@ -91,39 +92,40 @@ impl SpecId {
 
 impl Precompiles {
     pub fn new<const SPEC_ID: u8>() -> Self {
-        let mut fun: BTreeMap<Address, Precompile> = BTreeMap::new();
+        let mut fun: HashMap<Address, Precompile> = HashMap::new();
         let mut insert_fun =
             |precompile: (Address, Precompile)| fun.insert(precompile.0, precompile.1);
 
         if SpecId::HOMESTEAD.enabled(SPEC_ID) {
+            insert_fun(secp256k1::ECRECOVER);
             insert_fun(hash::SHA256);
             insert_fun(hash::RIPEMD160);
-            insert_fun(secp256k1::ECRECOVER);
             insert_fun(identity::FUN);
         }
 
         if SpecId::ISTANBUL.enabled(SPEC_ID) {
-            // EIP-152: Add BLAKE2 compression function `F` precompile
+            // EIP-152: Add BLAKE2 compression function `F` precompile.
             insert_fun(blake2::FUN);
         }
 
         if SpecId::ISTANBUL.enabled(SPEC_ID) {
-            // EIP-1108: Reduce alt_bn128 precompile gas costs
+            // EIP-1108: Reduce alt_bn128 precompile gas costs.
             insert_fun(bn128::add::ISTANBUL);
             insert_fun(bn128::mul::ISTANBUL);
             insert_fun(bn128::pair::ISTANBUL);
         } else if SpecId::BYZANTIUM.enabled(SPEC_ID) {
-            // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128
-            // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128
+            // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
+            // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
             insert_fun(bn128::add::BYZANTIUM);
             insert_fun(bn128::mul::BYZANTIUM);
             insert_fun(bn128::pair::BYZANTIUM);
         }
 
         if SpecId::BERLIN.enabled(SPEC_ID) {
+            // EIP-2565: ModExp Gas Cost.
             insert_fun(modexp::BERLIN);
         } else if SpecId::BYZANTIUM.enabled(SPEC_ID) {
-            //EIP-198: Big integer modular exponentiation
+            // EIP-198: Big integer modular exponentiation.
             insert_fun(modexp::BYZANTIUM);
         }
 
@@ -142,41 +144,15 @@ impl Precompiles {
         //return None;
         self.fun.get(address).cloned()
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.fun.len() == 0
+    }
+
+    pub fn len(&self) -> usize {
+        self.fun.len()
+    }
 }
-
-/// Matches the address given to Homestead precompiles.
-// impl<'backend, 'config> executor::Precompiles<AuroraStackState<'backend, 'config>> for Precompiles {
-//     fn run(
-//         &self,
-//         address: Address,
-//         input: &[u8],
-//         target_gas: Option<u64>,
-//         context: &CallContext,
-//         state: &mut AuroraStackState,
-//         is_static: bool,
-//     ) -> Option<EvmPrecompileResult> {
-//         let target_gas = match target_gas {
-//             Some(t) => t,
-//             None => return Some(EvmPrecompileResult::Err(Return::OutOfGas)),
-//         };
-
-//         let output = self.get_fun(&address).map(|fun| {
-//             let mut res = (fun)(input, target_gas, context, is_static);
-//             if let Ok(output) = &mut res {
-//                 if let Some(promise) = output.promise.take() {
-//                     state.add_promise(promise)
-//                 }
-//             }
-//             res
-//         });
-
-//         output.map(|res| res.map(Into::into))
-//     }
-
-//     fn addresses(&self) -> &[Address] {
-//         &self.addresses
-//     }
-// }
 
 /// const fn for making an address by concatenating the bytes from two given numbers,
 /// Note that 32 + 128 = 160 = 20 bytes (the length of an address). This function is used
@@ -214,56 +190,3 @@ pub fn u256_to_arr(value: &U256) -> [u8; 32] {
     value.to_big_endian(&mut result);
     result
 }
-
-/*
-#[cfg(test)]
-mod tests {
-    use crate::precompiles::{Byzantium, Istanbul};
-    use crate::prelude::Address;
-    use rand::Rng;
-
-    #[test]
-    fn test_precompile_addresses() {
-        assert_eq!(super::secp256k1::ECRecover::ADDRESS, u8_to_address(1));
-        assert_eq!(super::hash::SHA256::ADDRESS, u8_to_address(2));
-        assert_eq!(super::hash::RIPEMD160::ADDRESS, u8_to_address(3));
-        assert_eq!(super::identity::Identity::ADDRESS, u8_to_address(4));
-        assert_eq!(super::ModExp::<Byzantium>::ADDRESS, u8_to_address(5));
-        assert_eq!(super::Bn128Add::<Istanbul>::ADDRESS, u8_to_address(6));
-        assert_eq!(super::Bn128Mul::<Istanbul>::ADDRESS, u8_to_address(7));
-        assert_eq!(super::Bn128Pair::<Istanbul>::ADDRESS, u8_to_address(8));
-        assert_eq!(super::blake2::Blake2F::ADDRESS, u8_to_address(9));
-    }
-
-    #[test]
-    fn test_make_address() {
-        for i in 0..u8::MAX {
-            assert_eq!(super::make_address(0, i as u128), u8_to_address(i));
-        }
-
-        let mut rng = rand::thread_rng();
-        for _ in 0..u8::MAX {
-            let address: Address = Address(rng.gen());
-            let (x, y) = split_address(address);
-            assert_eq!(address, super::make_address(x, y))
-        }
-    }
-
-    fn u8_to_address(x: u8) -> Address {
-        let mut bytes = [0u8; 20];
-        bytes[19] = x;
-        Address(bytes)
-    }
-
-    // Inverse function of `super::make_address`.
-    fn split_address(a: Address) -> (u32, u128) {
-        let mut x_bytes = [0u8; 4];
-        let mut y_bytes = [0u8; 16];
-
-        x_bytes.copy_from_slice(&a[0..4]);
-        y_bytes.copy_from_slice(&a[4..20]);
-
-        (u32::from_be_bytes(x_bytes), u128::from_be_bytes(y_bytes))
-    }
-}
-*/

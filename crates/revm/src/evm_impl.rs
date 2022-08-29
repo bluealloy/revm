@@ -5,9 +5,9 @@ use crate::{
     interpreter::{Contract, Interpreter},
     journaled_state::{Account, JournaledState, State},
     models::SelfDestructResult,
-    return_ok, CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, Env,
+    return_ok, return_revert, CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, Env,
     ExecutionResult, Gas, Inspector, Log, Return, Spec,
-    SpecId::*,
+    SpecId::{self, *},
     TransactOut, TransactTo, Transfer, KECCAK_EMPTY,
 };
 use alloc::vec::Vec;
@@ -18,10 +18,11 @@ use primitive_types::{H160, H256, U256};
 use revm_precompiles::{Precompile, PrecompileOutput, Precompiles};
 use sha3::{Digest, Keccak256};
 
-pub struct EVMData<'a, DB> {
+pub struct EVMData<'a, DB: Database> {
     pub env: &'a mut Env,
     pub journaled_state: JournaledState,
     pub db: &'a mut DB,
+    pub error: Option<DB::Error>,
 }
 
 pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
@@ -77,7 +78,14 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
         }
 
         // load acc
-        self.inner_load_account(caller);
+        if self
+            .data
+            .journaled_state
+            .load_account(caller, self.data.db)
+            .is_err()
+        {
+            return exit(Return::FatalExternalError);
+        }
 
         // EIP-3607: Reject transactions from senders with deployed code
         // This EIP is introduced after london but there was no colision in past
@@ -160,7 +168,16 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
         };
 
         if crate::USE_GAS {
-            gas.reimburse_unspend(&exit_reason, ret_gas);
+            match exit_reason {
+                return_ok!() => {
+                    gas.erase_cost(ret_gas.remaining());
+                    gas.record_refund(ret_gas.refunded());
+                }
+                return_revert!() => {
+                    gas.erase_cost(ret_gas.remaining());
+                }
+                _ => {}
+            }
         }
 
         let (state, logs, gas_used, gas_refunded) = self.finalize::<GSPEC>(caller, &gas);
@@ -184,26 +201,17 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         inspector: &'a mut dyn Inspector<DB>,
         precompiles: Precompiles,
     ) -> Self {
-        let mut journaled_state = JournaledState::default();
-        if env.cfg.perf_all_precompiles_have_balance {
-            // load precompiles without asking db.
-            let mut precompile_acc = Vec::new();
-            for add in precompiles.addresses() {
-                precompile_acc.push(*add);
-            }
-            journaled_state.load_precompiles_default(&precompile_acc);
+        let journaled_state = if GSPEC::enabled(SpecId::SPURIOUS_DRAGON) {
+            JournaledState::new(precompiles.len())
         } else {
-            let mut precompile_acc = Map::new();
-            for add in precompiles.addresses() {
-                precompile_acc.insert(*add, db.basic(*add));
-            }
-            journaled_state.load_precompiles(precompile_acc);
-        }
+            JournaledState::new_legacy(precompiles.len())
+        };
         Self {
             data: EVMData {
                 env,
                 journaled_state,
                 db,
+                error: None,
             },
             precompiles,
             inspector,
@@ -236,7 +244,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 effective_gas_price
             };
 
-            self.data
+            // TODO
+            let _ = self
+                .data
                 .journaled_state
                 .load_account(coinbase, self.data.db);
             self.data.journaled_state.touch(&coinbase);
@@ -253,7 +263,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             (gas.spend() - gas_refunded, gas_refunded)
         } else {
             // touch coinbase
-            self.data
+            // TODO return
+            let _ = self
+                .data
                 .journaled_state
                 .load_account(coinbase, self.data.db);
             self.data.journaled_state.touch(&coinbase);
@@ -267,16 +279,19 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             for address in self.precompiles.addresses() {
                 if let Some(precompile) = new_state.get_mut(address) {
                     // we found it.
-                    precompile.info.balance += self.data.db.basic(*address).balance;
+                    precompile.info.balance += self
+                        .data
+                        .db
+                        .basic(*address)
+                        .ok()
+                        .flatten()
+                        .map(|acc| acc.balance)
+                        .unwrap_or_default();
                 }
             }
         }
 
         (new_state, logs, gas_used, gas_refunded)
-    }
-
-    fn inner_load_account(&mut self, caller: H160) -> bool {
-        self.data.journaled_state.load_account(caller, self.data.db)
     }
 
     fn initialization<SPEC: Spec>(&mut self) -> u64 {
@@ -291,12 +306,16 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     let mut accessed_slots = 0_u64;
 
                     for (address, slots) in self.data.env.tx.access_list.iter() {
-                        self.data
+                        // TODO return
+                        let _ = self
+                            .data
                             .journaled_state
                             .load_account(*address, self.data.db);
                         accessed_slots += slots.len() as u64;
+                        // TODO return
                         for slot in slots {
-                            self.data
+                            let _ = self
+                                .data
                                 .journaled_state
                                 .sload(*address, *slot, self.data.db);
                         }
@@ -353,8 +372,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             return (Return::CallTooDeep, None, gas, Bytes::new());
         }
         // Check balance of caller and value. Do this before increasing nonce
-        if self.balance(inputs.caller).0 < inputs.value {
-            return (Return::OutOfFund, None, gas, Bytes::new());
+        match self.balance(inputs.caller) {
+            Some(i) if i.0 < inputs.value => return (Return::OutOfFund, None, gas, Bytes::new()),
+            Some(_) => (),
+            _ => return (Return::FatalExternalError, None, gas, Bytes::new()),
         }
 
         // Increase nonce of caller and check if it overflows
@@ -380,13 +401,20 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let checkpoint = self.data.journaled_state.checkpoint();
 
         // Create contract account and check for collision
-        if !self.data.journaled_state.create_account(
+        match self.data.journaled_state.create_account(
             created_address,
             self.precompiles.contains(&created_address),
             self.data.db,
         ) {
-            self.data.journaled_state.checkpoint_revert(checkpoint);
-            return (Return::CreateCollision, ret, gas, Bytes::new());
+            Ok(false) => {
+                self.data.journaled_state.checkpoint_revert(checkpoint);
+                return (Return::CreateCollision, ret, gas, Bytes::new());
+            }
+            Err(err) => {
+                self.data.error = Some(err);
+                return (Return::FatalExternalError, ret, gas, Bytes::new());
+            }
+            Ok(true) => (),
         }
 
         // Transfer value to contract address
@@ -400,8 +428,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             return (e, ret, gas, Bytes::new());
         }
 
-        // Increase nonce of the contract
-        if SPEC::enabled(ISTANBUL)
+        // EIP-161: State trie clearing (invariant-preserving alternative)
+        if SPEC::enabled(SPURIOUS_DRAGON)
             && self
                 .data
                 .journaled_state
@@ -443,7 +471,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             return_ok!() => {
                 let b = Bytes::new();
                 // if ok, check contract creation limit and calculate gas deduction on output len.
-                let bytes = interp.return_value();
+                let mut bytes = interp.return_value();
 
                 // EIP-3541: Reject new contract code starting with the 0xEF byte
                 if SPEC::enabled(LONDON) && !bytes.is_empty() && bytes.first() == Some(&0xEF) {
@@ -461,10 +489,17 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 }
                 if crate::USE_GAS {
                     let gas_for_code = bytes.len() as u64 * crate::gas::CODEDEPOSIT;
-                    // record code deposit gas cost and check if we are out of gas.
                     if !interp.gas.record_cost(gas_for_code) {
-                        self.data.journaled_state.checkpoint_revert(checkpoint);
-                        return (Return::OutOfGas, ret, interp.gas, b);
+                        // record code deposit gas cost and check if we are out of gas.
+                        // EIP-2 point 3: If contract creation does not have enough gas to pay for the
+                        // final gas fee for adding the contract code to the state, the contract
+                        //  creation fails (i.e. goes out-of-gas) rather than leaving an empty contract.
+                        if SPEC::enabled(HOMESTEAD) {
+                            self.data.journaled_state.checkpoint_revert(checkpoint);
+                            return (Return::OutOfGas, ret, interp.gas, b);
+                        } else {
+                            bytes = Bytes::new();
+                        }
                     }
                 }
                 // if we have enought gas
@@ -510,7 +545,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
         let mut gas = Gas::new(inputs.gas_limit);
         // Load account and get code. Account is now hot.
-        let (bytecode, _) = self.code(inputs.contract);
+        let bytecode = if let Some((bytecode, _)) = self.code(inputs.contract) {
+            bytecode
+        } else {
+            return (Return::FatalExternalError, gas, Bytes::new());
+        };
 
         // Check depth
         if self.data.journaled_state.depth() > interpreter::CALL_STACK_LIMIT {
@@ -647,55 +686,88 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         self.data.env
     }
 
-    fn block_hash(&mut self, number: U256) -> H256 {
-        self.data.db.block_hash(number)
+    fn block_hash(&mut self, number: U256) -> Option<H256> {
+        self.data
+            .db
+            .block_hash(number)
+            .map_err(|e| self.data.error = Some(e))
+            .ok()
     }
 
-    fn load_account(&mut self, address: H160) -> (bool, bool) {
-        let (is_cold, exists) = self
-            .data
+    fn load_account(&mut self, address: H160) -> Option<(bool, bool)> {
+        self.data
             .journaled_state
-            .load_account_exist(address, self.data.db);
-        (is_cold, exists)
+            .load_account_exist(address, self.data.db)
+            .map_err(|e| self.data.error = Some(e))
+            .ok()
     }
 
-    fn balance(&mut self, address: H160) -> (U256, bool) {
-        let is_cold = self.inner_load_account(address);
-        let balance = self.data.journaled_state.account(address).info.balance;
-        (balance, is_cold)
+    fn balance(&mut self, address: H160) -> Option<(U256, bool)> {
+        let db = &mut self.data.db;
+        let journal = &mut self.data.journaled_state;
+        let error = &mut self.data.error;
+        journal
+            .load_account(address, db)
+            .map_err(|e| *error = Some(e))
+            .ok()
+            .map(|(acc, is_cold)| (acc.info.balance, is_cold))
     }
 
-    fn code(&mut self, address: H160) -> (Bytecode, bool) {
-        let (acc, is_cold) = self.data.journaled_state.load_code(address, self.data.db);
-        (acc.info.code.clone().unwrap(), is_cold)
+    fn code(&mut self, address: H160) -> Option<(Bytecode, bool)> {
+        let journal = &mut self.data.journaled_state;
+        let db = &mut self.data.db;
+        let error = &mut self.data.error;
+
+        let (acc, is_cold) = journal
+            .load_code(address, db)
+            .map_err(|e| *error = Some(e))
+            .ok()?;
+        Some((acc.info.code.clone().unwrap(), is_cold))
     }
 
     /// Get code hash of address.
-    fn code_hash(&mut self, address: H160) -> (H256, bool) {
-        let (acc, is_cold) = self.data.journaled_state.load_code(address, self.data.db);
+    fn code_hash(&mut self, address: H160) -> Option<(H256, bool)> {
+        let journal = &mut self.data.journaled_state;
+        let db = &mut self.data.db;
+        let error = &mut self.data.error;
+
+        let (acc, is_cold) = journal
+            .load_code(address, db)
+            .map_err(|e| *error = Some(e))
+            .ok()?;
         //asume that all precompiles have some balance
         let is_precompile = self.precompiles.contains(&address);
         if is_precompile && self.data.env.cfg.perf_all_precompiles_have_balance {
-            return (KECCAK_EMPTY, is_cold);
+            return Some((KECCAK_EMPTY, is_cold));
         }
         if acc.is_empty() {
-            return (H256::zero(), is_cold);
+            // TODO check this for pre tangerine fork
+            return Some((H256::zero(), is_cold));
         }
 
-        (acc.info.code_hash, is_cold)
+        Some((acc.info.code_hash, is_cold))
     }
 
-    fn sload(&mut self, address: H160, index: U256) -> (U256, bool) {
+    fn sload(&mut self, address: H160, index: U256) -> Option<(U256, bool)> {
         // account is always hot. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
         self.data
             .journaled_state
             .sload(address, index, self.data.db)
+            .map_err(|e| self.data.error = Some(e))
+            .ok()
     }
 
-    fn sstore(&mut self, address: H160, index: U256, value: U256) -> (U256, U256, U256, bool) {
+    fn sstore(
+        &mut self,
+        address: H160,
+        index: U256,
+        value: U256,
+    ) -> Option<(U256, U256, U256, bool)> {
         self.data
             .journaled_state
             .sstore(address, index, value, self.data.db)
+            .map_err(|e| self.data.error = Some(e))
+            .ok()
     }
 
     fn log(&mut self, address: H160, topics: Vec<H256>, data: Bytes) {
@@ -710,13 +782,15 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         self.data.journaled_state.log(log);
     }
 
-    fn selfdestruct(&mut self, address: H160, target: H160) -> SelfDestructResult {
+    fn selfdestruct(&mut self, address: H160, target: H160) -> Option<SelfDestructResult> {
         if INSPECT {
             self.inspector.selfdestruct();
         }
         self.data
             .journaled_state
             .selfdestruct(address, target, self.data.db)
+            .map_err(|e| self.data.error = Some(e))
+            .ok()
     }
 
     fn create<SPEC: Spec>(
@@ -765,23 +839,28 @@ pub trait Host {
     fn env(&mut self) -> &mut Env;
 
     /// load account. Returns (is_cold,is_new_account)
-    fn load_account(&mut self, address: H160) -> (bool, bool);
+    fn load_account(&mut self, address: H160) -> Option<(bool, bool)>;
     /// Get environmental block hash.
-    fn block_hash(&mut self, number: U256) -> H256;
+    fn block_hash(&mut self, number: U256) -> Option<H256>;
     /// Get balance of address.
-    fn balance(&mut self, address: H160) -> (U256, bool);
+    fn balance(&mut self, address: H160) -> Option<(U256, bool)>;
     /// Get code of address.
-    fn code(&mut self, address: H160) -> (Bytecode, bool);
+    fn code(&mut self, address: H160) -> Option<(Bytecode, bool)>;
     /// Get code hash of address.
-    fn code_hash(&mut self, address: H160) -> (H256, bool);
+    fn code_hash(&mut self, address: H160) -> Option<(H256, bool)>;
     /// Get storage value of address at index.
-    fn sload(&mut self, address: H160, index: U256) -> (U256, bool);
+    fn sload(&mut self, address: H160, index: U256) -> Option<(U256, bool)>;
     /// Set storage value of address at index. Return if slot is cold/hot access.
-    fn sstore(&mut self, address: H160, index: U256, value: U256) -> (U256, U256, U256, bool);
+    fn sstore(
+        &mut self,
+        address: H160,
+        index: U256,
+        value: U256,
+    ) -> Option<(U256, U256, U256, bool)>;
     /// Create a log owned by address with given topics and data.
     fn log(&mut self, address: H160, topics: Vec<H256>, data: Bytes);
     /// Mark an address to be deleted, with funds transferred to target.
-    fn selfdestruct(&mut self, address: H160, target: H160) -> SelfDestructResult;
+    fn selfdestruct(&mut self, address: H160, target: H160) -> Option<SelfDestructResult>;
     /// Invoke a create operation.
     fn create<SPEC: Spec>(
         &mut self,

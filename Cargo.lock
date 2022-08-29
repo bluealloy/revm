@@ -1829,6 +1829,7 @@ name = "revm_precompiles"
 version = "1.1.0"
 dependencies = [
  "bytes",
+ "hashbrown",
  "hex",
  "k256",
  "num",

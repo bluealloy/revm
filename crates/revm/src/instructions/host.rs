@@ -1,6 +1,11 @@
 use crate::{
-    alloc::vec::Vec, gas, interpreter::Interpreter, return_ok, return_revert, CallContext,
-    CallInputs, CallScheme, CreateInputs, CreateScheme, Host, Return, Spec, SpecId::*, Transfer,
+    alloc::vec::Vec,
+    gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
+    interpreter::Interpreter,
+    return_ok, return_revert, CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme,
+    Host, Return, Spec,
+    SpecId::*,
+    Transfer,
 };
 use bytes::Bytes;
 use core::cmp::min;
@@ -8,7 +13,11 @@ use primitive_types::{H160, H256, U256};
 
 pub fn balance<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
     pop_address!(interp, address);
-    let (balance, is_cold) = host.balance(address);
+    let ret = host.balance(address);
+    if ret.is_none() {
+        return Return::FatalExternalError;
+    }
+    let (balance, is_cold) = ret.unwrap();
     gas!(
         interp,
         if SPEC::enabled(ISTANBUL) {
@@ -29,8 +38,11 @@ pub fn selfbalance<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) 
     // gas!(interp, gas::LOW);
     // EIP-1884: Repricing for trie-size-dependent opcodes
     check!(SPEC::enabled(ISTANBUL));
-
-    let (balance, _) = host.balance(interp.contract.address);
+    let ret = host.balance(interp.contract.address);
+    if ret.is_none() {
+        return Return::FatalExternalError;
+    }
+    let (balance, _) = ret.unwrap();
     push!(interp, balance);
 
     Return::Continue
@@ -38,9 +50,15 @@ pub fn selfbalance<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) 
 
 pub fn extcodesize<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
     pop_address!(interp, address);
-
-    let (code, is_cold) = host.code(address);
-    gas!(interp, gas::account_access_gas::<SPEC>(is_cold));
+    let ret = host.code(address);
+    if ret.is_none() {
+        return Return::FatalExternalError;
+    }
+    let (code, is_cold) = ret.unwrap();
+    if SPEC::enabled(BERLIN) && is_cold {
+        // WARM_STORAGE_READ_COST is already calculated in gas block
+        gas!(interp, COLD_ACCOUNT_ACCESS_COST - WARM_STORAGE_READ_COST);
+    }
 
     push!(interp, U256::from(code.len()));
 
@@ -50,16 +68,15 @@ pub fn extcodesize<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) 
 pub fn extcodehash<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
     check!(SPEC::enabled(CONSTANTINOPLE)); // EIP-1052: EXTCODEHASH opcode
     pop_address!(interp, address);
-    let (code_hash, is_cold) = host.code_hash(address);
-    gas!(
-        interp,
-        if SPEC::enabled(ISTANBUL) {
-            // EIP-1884: Repricing for trie-size-dependent opcodes
-            gas::account_access_gas::<SPEC>(is_cold)
-        } else {
-            400
-        }
-    );
+    let ret = host.code_hash(address);
+    if ret.is_none() {
+        return Return::FatalExternalError;
+    }
+    let (code_hash, is_cold) = ret.unwrap();
+    if SPEC::enabled(BERLIN) && is_cold {
+        // WARM_STORAGE_READ_COST is already calculated in gas block
+        gas!(interp, COLD_ACCOUNT_ACCESS_COST - WARM_STORAGE_READ_COST);
+    }
     push_h256!(interp, code_hash);
 
     Return::Continue
@@ -69,7 +86,12 @@ pub fn extcodecopy<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) 
     pop_address!(interp, address);
     pop!(interp, memory_offset, code_offset, len_u256);
 
-    let (code, is_cold) = host.code(address);
+    let ret = host.code(address);
+    if ret.is_none() {
+        return Return::FatalExternalError;
+    }
+    let (code, is_cold) = ret.unwrap();
+
     gas_or_fail!(interp, gas::extcodecopy_cost::<SPEC>(len_u256, is_cold));
     let len = as_usize_or_fail!(len_u256, Return::OutOfGas);
     if len == 0 {
@@ -94,7 +116,11 @@ pub fn blockhash<H: Host>(interp: &mut Interpreter, host: &mut H) -> Return {
         let diff = as_usize_saturated!(diff);
         // blockhash should push zero if number is same as current block number.
         if diff <= 256 && diff != 0 {
-            *number = U256::from_big_endian(host.block_hash(*number).as_ref());
+            let ret = host.block_hash(*number);
+            if ret.is_none() {
+                return Return::FatalExternalError;
+            }
+            *number = U256::from_big_endian(ret.unwrap().as_ref());
             return Return::Continue;
         }
     }
@@ -104,7 +130,12 @@ pub fn blockhash<H: Host>(interp: &mut Interpreter, host: &mut H) -> Return {
 
 pub fn sload<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
     pop!(interp, index);
-    let (value, is_cold) = host.sload(interp.contract.address, index);
+
+    let ret = host.sload(interp.contract.address, index);
+    if ret.is_none() {
+        return Return::FatalExternalError;
+    }
+    let (value, is_cold) = ret.unwrap();
     gas!(interp, gas::sload_cost::<SPEC>(is_cold));
     push!(interp, value);
     Return::Continue
@@ -114,7 +145,11 @@ pub fn sstore<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Re
     check!(!SPEC::IS_STATIC_CALL);
 
     pop!(interp, index, value);
-    let (original, old, new, is_cold) = host.sstore(interp.contract.address, index, value);
+    let ret = host.sstore(interp.contract.address, index, value);
+    if ret.is_none() {
+        return Return::FatalExternalError;
+    }
+    let (original, old, new, is_cold) = ret.unwrap();
     gas_or_fail!(interp, {
         let remaining_gas = interp.gas.remaining();
         gas::sstore_cost::<SPEC>(original, old, new, remaining_gas, is_cold)
@@ -158,6 +193,10 @@ pub fn selfdestruct<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H)
     pop_address!(interp, target);
 
     let res = host.selfdestruct(interp.contract.address, target);
+    if res.is_none() {
+        return Return::FatalExternalError;
+    }
+    let res = res.unwrap();
 
     // EIP-3529: Reduction in refunds
     if !SPEC::enabled(LONDON) && !res.previously_destroyed {
@@ -168,16 +207,6 @@ pub fn selfdestruct<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H)
     Return::SelfDestruct
 }
 
-fn gas_call_l64_after<SPEC: Spec>(interp: &mut Interpreter) -> Result<u64, Return> {
-    if SPEC::enabled(TANGERINE) {
-        //EIP-150: Gas cost changes for IO-heavy operations
-        let gas = interp.gas().remaining();
-        Ok(gas - gas / 64)
-    } else {
-        Ok(interp.gas().remaining())
-    }
-}
-
 pub fn create<H: Host, SPEC: Spec>(
     interp: &mut Interpreter,
     is_create2: bool,
@@ -185,7 +214,8 @@ pub fn create<H: Host, SPEC: Spec>(
 ) -> Return {
     check!(!SPEC::IS_STATIC_CALL);
     if is_create2 {
-        check!(SPEC::enabled(CONSTANTINOPLE)); // EIP-1014: Skinny CREATE2
+        // EIP-1014: Skinny CREATE2
+        check!(SPEC::enabled(PETERSBURG));
     }
 
     interp.return_data_buffer = Bytes::new();
@@ -210,8 +240,13 @@ pub fn create<H: Host, SPEC: Spec>(
         CreateScheme::Create
     };
 
-    // take remaining gas and deduce l64 part of it.
-    let gas_limit = try_or_fail!(gas_call_l64_after::<SPEC>(interp));
+    let mut gas_limit = interp.gas().remaining();
+
+    // EIP-150: Gas cost changes for IO-heavy operations
+    if SPEC::enabled(TANGERINE) {
+        // take remaining gas and deduce l64 part of it.
+        gas_limit -= gas_limit / 64
+    }
     gas!(interp, gas_limit);
 
     let mut create_input = CreateInputs {
@@ -222,20 +257,25 @@ pub fn create<H: Host, SPEC: Spec>(
         gas_limit,
     };
 
-    let (reason, address, gas, return_data) = host.create::<SPEC>(&mut create_input);
+    let (return_reason, address, gas, return_data) = host.create::<SPEC>(&mut create_input);
     interp.return_data_buffer = return_data;
-    let created_address: H256 = if matches!(reason, return_ok!()) {
-        address.map(|a| a.into()).unwrap_or_default()
-    } else {
-        H256::default()
-    };
-    push_h256!(interp, created_address);
-    // reimburse gas that is not spend
-    interp.gas.reimburse_unspend(&reason, gas);
-    match reason {
-        Return::FatalNotSupported => Return::FatalNotSupported,
-        _ => interp.add_next_gas_block(interp.program_counter() - 1),
+
+    match return_reason {
+        return_ok!() => {
+            push_h256!(interp, address.map(|a| a.into()).unwrap_or_default());
+            interp.gas.erase_cost(gas.remaining());
+            interp.gas.record_refund(gas.refunded());
+        }
+        return_revert!() => {
+            push_h256!(interp, H256::default());
+            interp.gas.erase_cost(gas.remaining());
+        }
+        Return::FatalExternalError => return Return::FatalExternalError,
+        _ => {
+            push_h256!(interp, H256::default());
+        }
     }
+    interp.add_next_gas_block(interp.program_counter() - 1)
 }
 
 pub fn call<H: Host, SPEC: Spec>(
@@ -339,7 +379,11 @@ pub fn call<H: Host, SPEC: Spec>(
     };
 
     // load account and calculate gas cost.
-    let (is_cold, exist) = host.load_account(to);
+    let res = host.load_account(to);
+    if res.is_none() {
+        return Return::FatalExternalError;
+    }
+    let (is_cold, exist) = res.unwrap();
     let is_new = !exist;
 
     gas!(
@@ -354,8 +398,13 @@ pub fn call<H: Host, SPEC: Spec>(
     );
 
     // take l64 part of gas_limit
-    let global_gas_limit = try_or_fail!(gas_call_l64_after::<SPEC>(interp));
-    let mut gas_limit = min(global_gas_limit, local_gas_limit);
+    let mut gas_limit = if SPEC::enabled(TANGERINE) {
+        //EIP-150: Gas cost changes for IO-heavy operations
+        let gas = interp.gas().remaining();
+        min(gas - gas / 64, local_gas_limit)
+    } else {
+        local_gas_limit
+    };
 
     gas!(interp, gas_limit);
 
@@ -381,21 +430,25 @@ pub fn call<H: Host, SPEC: Spec>(
     interp.return_data_buffer = return_data;
 
     let target_len = min(out_len, interp.return_data_buffer.len());
-    // return unspend gas.
-    interp.gas.reimburse_unspend(&reason, gas);
+
     match reason {
         return_ok!() => {
+            // return unspend gas.
+            interp.gas.erase_cost(gas.remaining());
+            interp.gas.record_refund(gas.refunded());
             interp
                 .memory
                 .set(out_offset, &interp.return_data_buffer[..target_len]);
             push!(interp, U256::one());
         }
         return_revert!() => {
-            push!(interp, U256::zero());
+            interp.gas.erase_cost(gas.remaining());
             interp
                 .memory
                 .set(out_offset, &interp.return_data_buffer[..target_len]);
+            push!(interp, U256::zero());
         }
+        Return::FatalExternalError => return Return::FatalExternalError,
         _ => {
             push!(interp, U256::zero());
         }

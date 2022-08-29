@@ -2,8 +2,7 @@ use crate::{
     db::{Database, DatabaseCommit, DatabaseRef, RefDBWrapper},
     evm_impl::{EVMImpl, Transact},
     journaled_state::State,
-    BerlinSpec, ByzantiumSpec, Env, ExecutionResult, Inspector, IstanbulSpec, LatestSpec,
-    LondonSpec, MergeSpec, NoOpInspector, Spec, SpecId,
+    specification, Env, ExecutionResult, Inspector, NoOpInspector,
 };
 use alloc::boxed::Box;
 use revm_precompiles::Precompiles;
@@ -89,7 +88,8 @@ impl<'a, DB: DatabaseRef> EVM<DB> {
             let mut db = RefDBWrapper::new(db);
             let db = &mut db;
             let out =
-                evm_inner::<RefDBWrapper, false>(&mut self.env.clone(), db, &mut noop).transact();
+                evm_inner::<RefDBWrapper<DB::Error>, false>(&mut self.env.clone(), db, &mut noop)
+                    .transact();
             out
         } else {
             panic!("Database needs to be set");
@@ -97,15 +97,19 @@ impl<'a, DB: DatabaseRef> EVM<DB> {
     }
 
     /// Execute transaction with given inspector, without wring to DB. Return change state.
-    pub fn inspect_ref<INSP: Inspector<RefDBWrapper<'a>>>(
+    pub fn inspect_ref<INSP: Inspector<RefDBWrapper<'a, DB::Error>>>(
         &'a self,
         mut inspector: INSP,
     ) -> (ExecutionResult, State) {
         if let Some(db) = self.db.as_ref() {
             let mut db = RefDBWrapper::new(db);
             let db = &mut db;
-            let out = evm_inner::<RefDBWrapper, true>(&mut self.env.clone(), db, &mut inspector)
-                .transact();
+            let out = evm_inner::<RefDBWrapper<DB::Error>, true>(
+                &mut self.env.clone(),
+                db,
+                &mut inspector,
+            )
+            .transact();
             out
         } else {
             panic!("Database needs to be set");
@@ -150,13 +154,20 @@ pub fn evm_inner<'a, DB: Database, const INSPECT: bool>(
     db: &'a mut DB,
     insp: &'a mut dyn Inspector<DB>,
 ) -> Box<dyn Transact + 'a> {
+    use specification::*;
     match env.cfg.spec_id {
-        SpecId::LATEST => create_evm!(LatestSpec, db, env, insp),
-        SpecId::MERGE => create_evm!(MergeSpec, db, env, insp),
-        SpecId::LONDON => create_evm!(LondonSpec, db, env, insp),
-        SpecId::BERLIN => create_evm!(BerlinSpec, db, env, insp),
-        SpecId::ISTANBUL => create_evm!(IstanbulSpec, db, env, insp),
+        SpecId::FRONTIER | SpecId::FRONTIER_THAWING => create_evm!(FrontierSpec, db, env, insp),
+        SpecId::HOMESTEAD | SpecId::DAO_FORK => create_evm!(HomesteadSpec, db, env, insp),
+        SpecId::TANGERINE => create_evm!(TangerineSpec, db, env, insp),
+        SpecId::SPURIOUS_DRAGON => create_evm!(SpuriousDragonSpec, db, env, insp),
         SpecId::BYZANTIUM => create_evm!(ByzantiumSpec, db, env, insp),
-        _ => panic!("Spec Not supported"),
+        SpecId::PETERSBURG | SpecId::CONSTANTINOPLE => create_evm!(PetersburgSpec, db, env, insp),
+        SpecId::ISTANBUL | SpecId::MUIR_GLACIER => create_evm!(IstanbulSpec, db, env, insp),
+        SpecId::BERLIN => create_evm!(BerlinSpec, db, env, insp),
+        SpecId::LONDON | SpecId::ARROW_GLACIER | SpecId::GRAY_GLACIER => {
+            create_evm!(LondonSpec, db, env, insp)
+        }
+        SpecId::MERGE => create_evm!(MergeSpec, db, env, insp),
+        SpecId::LATEST => create_evm!(LatestSpec, db, env, insp),
     }
 }

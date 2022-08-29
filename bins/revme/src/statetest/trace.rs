@@ -58,7 +58,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         let gas_remaining = interp.gas.remaining() + self.full_gas_block - self.reduced_gas_block;
 
         println!(
-            "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data:",
+            "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data size:{}",
             data.journaled_state.depth(),
             interp.program_counter(),
             gas_remaining,
@@ -68,7 +68,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
             interp.gas.refunded(),
             interp.gas.refunded(),
             interp.stack.data(),
-            //hex::encode(interp.memory.data()),
+            interp.memory.data().len(),
         );
 
         let pc = interp.program_counter();
@@ -141,12 +141,12 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         is_static: bool,
     ) -> (Return, Gas, Bytes) {
         println!(
-            "SM CALL:   {:?},context:{:?}, is_static:{:?}, transfer:{:?}, input:{:?}",
+            "SM CALL:   {:?},context:{:?}, is_static:{:?}, transfer:{:?}, input_size:{:?}",
             inputs.contract,
             inputs.context,
             is_static,
             inputs.transfer,
-            hex::encode(&inputs.input),
+            inputs.input.len(),
         );
         (Return::Continue, Gas::new(0), Bytes::new())
     }

@@ -21,6 +21,7 @@ jobs:
         with:
           repository: ethereum/tests
           path: ethtests
+          submodules: recursive,
 
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
@@ -34,4 +35,4 @@ jobs:
           cache-on-failure: true
 
       - name: Run Ethereum tests
-        run: cargo run --profile ethtests -p revme -- statetest ethtests/GeneralStateTests
+        run: cargo run --profile ethtests -p revme -- statetest ethtests/GeneralStateTests ethtests/LegacyTests/Constantinople/GeneralStateTests/

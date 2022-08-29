@@ -48,7 +48,9 @@ impl Web3DB {
 }
 
 impl Database for Web3DB {
-    fn basic(&mut self, address: H160) -> AccountInfo {
+    type Error = ();
+
+    fn basic(&mut self, address: H160) -> Result<Option<AccountInfo>, Self::Error> {
         let add = wH160(address.0);
         let f = async {
             let nonce = self.web3.eth().transaction_count(add, self.block_number);
@@ -58,7 +60,7 @@ impl Database for Web3DB {
         };
         let (nonce, balance, code) = self.block_on(f);
         // panic on not getting data?
-        AccountInfo::new(
+        Ok(Some(AccountInfo::new(
             U256(
                 balance
                     .unwrap_or_else(|e| panic!("web3 get balance error:{:?}", e))
@@ -71,10 +73,10 @@ impl Database for Web3DB {
                 code.unwrap_or_else(|e| panic!("web3 get node error:{:?}", e))
                     .0,
             )),
-        )
+        )))
     }
 
-    fn code_by_hash(&mut self, _code_hash: primitive_types::H256) -> Bytecode {
+    fn code_by_hash(&mut self, _code_hash: primitive_types::H256) -> Result<Bytecode, Self::Error> {
         panic!("Should not be called. Code is already loaded");
         // not needed because we already load code with basic info
     }
@@ -83,7 +85,7 @@ impl Database for Web3DB {
         &mut self,
         address: primitive_types::H160,
         index: primitive_types::U256,
-    ) -> primitive_types::U256 {
+    ) -> Result<primitive_types::U256, Self::Error> {
         let add = wH160(address.0);
         let index = wU256(index.0);
         let f = async {
@@ -95,17 +97,20 @@ impl Database for Web3DB {
                 .unwrap();
             U256::from_big_endian(storage.as_bytes())
         };
-        self.block_on(f)
+        Ok(self.block_on(f))
     }
 
-    fn block_hash(&mut self, number: primitive_types::U256) -> primitive_types::H256 {
+    fn block_hash(
+        &mut self,
+        number: primitive_types::U256,
+    ) -> Result<primitive_types::H256, Self::Error> {
         if number > U256::from(u64::MAX) {
-            return KECCAK_EMPTY;
+            return Ok(KECCAK_EMPTY);
         }
         let number = number.as_u64();
         if let Some(block_num) = self.block_number {
             match block_num {
-                BlockNumber::Number(t) if t.as_u64() > number => return KECCAK_EMPTY,
+                BlockNumber::Number(t) if t.as_u64() > number => return Ok(KECCAK_EMPTY),
                 _ => (),
             }
         }
@@ -118,6 +123,6 @@ impl Database for Web3DB {
                 .ok()
                 .flatten()
         };
-        H256(self.block_on(f).unwrap().hash.unwrap().0)
+        Ok(H256(self.block_on(f).unwrap().hash.unwrap().0))
     }
 }

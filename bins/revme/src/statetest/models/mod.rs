@@ -30,8 +30,9 @@ pub struct Test {
     pub indexes: TxPartIndices,
     // logs
     pub logs: H256,
-    #[serde(deserialize_with = "deserialize_str_as_bytes")]
-    pub txbytes: Bytes,
+    #[serde(default)]
+    #[serde(deserialize_with = "deserialize_opt_str_as_bytes")]
+    pub txbytes: Option<Bytes>,
 }
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]

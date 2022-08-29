@@ -35,6 +35,8 @@ pub enum TestError {
     SerdeDeserialize(#[from] serde_json::Error),
     #[error("Internal system error")]
     SystemError,
+    #[error("Unknown private key: {private_key:?}")]
+    UnknownPrivateKey { private_key: H256 },
 }
 
 pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
@@ -112,6 +114,11 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                 .unwrap(),
             H160::from_str("0x3fb1cd2cd96c6d5c0b5eb3322d807b34482481d4").unwrap(),
         ),
+        (
+            H256::from_str("0xfe13266ff57000135fb9aa854bbfe455d8da85b21f626307bf3263a0c2a8e7fe")
+                .unwrap(),
+            H160::from_str("0xdcc5ba93a1ed7e045690d722f2bf460a51c61415").unwrap(),
+        ),
     ]
     .into_iter()
     .collect();
@@ -129,7 +136,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
             database.insert_account_info(*address, acc_info);
             // insert storage:
             for (&slot, &value) in info.storage.iter() {
-                database.insert_account_storage(*address, slot, value)
+                let _ = database.insert_account_storage(*address, slot, value);
             }
         }
         let mut env = Env::default();
@@ -145,9 +152,13 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
         env.block.difficulty = unit.env.current_difficulty;
 
         //tx env
-        env.tx.caller = *map_caller_keys
-            .get(&unit.transaction.secret_key.unwrap())
-            .unwrap();
+        env.tx.caller =
+            if let Some(caller) = map_caller_keys.get(&unit.transaction.secret_key.unwrap()) {
+                *caller
+            } else {
+                let private_key = unit.transaction.secret_key.unwrap();
+                return Err(TestError::UnknownPrivateKey { private_key });
+            };
         env.tx.gas_price = unit
             .transaction
             .gas_price
@@ -156,9 +167,9 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
 
         // post and execution
         for (spec_name, tests) in unit.post {
-            if !matches!(
+            if matches!(
                 spec_name,
-                SpecName::Merge | SpecName::London | SpecName::Berlin | SpecName::Istanbul
+                SpecName::ByzantiumToConstantinopleAt5 | SpecName::Constantinople
             ) {
                 continue;
             }
@@ -226,13 +237,16 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
 
                 *elapsed.lock().unwrap() += timer;
 
+                let is_legacy = !SpecId::enabled(evm.env.cfg.spec_id, SpecId::SPURIOUS_DRAGON);
                 let db = evm.db().unwrap();
                 let state_root = state_merkle_trie_root(
                     db.accounts
                         .iter()
                         .filter(|(_address, acc)| {
-                            !(acc.info.is_empty())
-                                || matches!(acc.account_state, AccountState::None)
+                            (is_legacy && !matches!(acc.account_state, AccountState::NotExisting))
+                                || (!is_legacy
+                                    && (!(acc.info.is_empty())
+                                        || matches!(acc.account_state, AccountState::None)))
                         })
                         .map(|(k, v)| (*k, v.clone())),
                 );
@@ -269,7 +283,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
 pub fn run(test_files: Vec<PathBuf>) -> Result<(), TestError> {
     let endjob = Arc::new(AtomicBool::new(false));
     let console_bar = Arc::new(ProgressBar::new(test_files.len() as u64));
-    let mut joins = Vec::new();
+    let mut joins: Vec<std::thread::JoinHandle<Result<(), TestError>>> = Vec::new();
     let queue = Arc::new(Mutex::new((0, test_files)));
     let elapsed = Arc::new(Mutex::new(std::time::Duration::ZERO));
     for _ in 0..10 {

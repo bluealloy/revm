@@ -7,7 +7,7 @@ pub fn sstore_refund<SPEC: Spec>(original: U256, current: U256, new: U256) -> i6
     if SPEC::enabled(ISTANBUL) {
         // EIP-3529: Reduction in refunds
         let sstore_clears_schedule = if SPEC::enabled(LONDON) {
-            (SSTORE_RESET - SLOAD_COLD + ACCESS_LIST_STORAGE_KEY) as i64
+            (SSTORE_RESET - COLD_SLOAD_COST + ACCESS_LIST_STORAGE_KEY) as i64
         } else {
             REFUND_SSTORE_CLEARS
         };
@@ -29,7 +29,7 @@ pub fn sstore_refund<SPEC: Spec>(original: U256, current: U256, new: U256) -> i6
 
                 if original == new {
                     let (gas_sstore_reset, gas_sload) = if SPEC::enabled(BERLIN) {
-                        (SSTORE_RESET - SLOAD_COLD, STORAGE_READ_WARM)
+                        (SSTORE_RESET - COLD_SLOAD_COST, WARM_STORAGE_READ_COST)
                     } else {
                         (SSTORE_RESET, sload_cost::<SPEC>(false))
                     };
@@ -123,17 +123,14 @@ pub fn verylowcopy_cost(len: U256) -> Option<u64> {
 pub fn extcodecopy_cost<SPEC: Spec>(len: U256, is_cold: bool) -> Option<u64> {
     let wordd = len / U256::from(32);
     let wordr = len % U256::from(32);
-    let base_gas: u64 = if SPEC::enabled(BERLIN) {
-        if is_cold {
-            ACCOUNT_ACCESS_COLD
-        } else {
-            STORAGE_READ_WARM
-        }
-    } else if SPEC::enabled(ISTANBUL) {
-        700
+
+    let base_gas: u64 = if SPEC::enabled(BERLIN) && is_cold {
+        // WARM_STORAGE_READ_COST is already calculated
+        COLD_ACCOUNT_ACCESS_COST - WARM_STORAGE_READ_COST
     } else {
-        20
+        0
     };
+    // TODO make this u64 friendly, U256 does not make sense.
     let gas =
         U256::from(base_gas).checked_add(U256::from(COPY).checked_mul(if wordr.is_zero() {
             wordd
@@ -151,9 +148,9 @@ pub fn extcodecopy_cost<SPEC: Spec>(len: U256, is_cold: bool) -> Option<u64> {
 pub fn account_access_gas<SPEC: Spec>(is_cold: bool) -> u64 {
     if SPEC::enabled(BERLIN) {
         if is_cold {
-            ACCOUNT_ACCESS_COLD
+            COLD_ACCOUNT_ACCESS_COST
         } else {
-            STORAGE_READ_WARM
+            WARM_STORAGE_READ_COST
         }
     } else if SPEC::enabled(ISTANBUL) {
         700
@@ -195,9 +192,9 @@ pub fn sha3_cost(len: U256) -> Option<u64> {
 pub fn sload_cost<SPEC: Spec>(is_cold: bool) -> u64 {
     if SPEC::enabled(BERLIN) {
         if is_cold {
-            SLOAD_COLD
+            COLD_SLOAD_COST
         } else {
-            STORAGE_READ_WARM
+            WARM_STORAGE_READ_COST
         }
     } else if SPEC::enabled(ISTANBUL) {
         // EIP-1884: Repricing for trie-size-dependent opcodes
@@ -220,7 +217,7 @@ pub fn sstore_cost<SPEC: Spec>(
 ) -> Option<u64> {
     // TODO untangle this mess and make it more elegant
     let (gas_sload, gas_sstore_reset) = if SPEC::enabled(BERLIN) {
-        (STORAGE_READ_WARM, SSTORE_RESET - SLOAD_COLD)
+        (WARM_STORAGE_READ_COST, SSTORE_RESET - COLD_SLOAD_COST)
     } else {
         (sload_cost::<SPEC>(is_cold), SSTORE_RESET)
     };
@@ -256,26 +253,23 @@ pub fn sstore_cost<SPEC: Spec>(
     };
     // In EIP-2929 we charge extra if the slot has not been used yet in this transaction
     if SPEC::enabled(BERLIN) && is_cold {
-        Some(gas_cost + SLOAD_COLD)
+        Some(gas_cost + COLD_SLOAD_COST)
     } else {
         Some(gas_cost)
     }
 }
 
 pub fn selfdestruct_cost<SPEC: Spec>(res: SelfDestructResult) -> u64 {
-    let should_charge_topup = if SPEC::enabled(ISTANBUL) {
-        res.had_value && !res.exists
+    // EIP-161: State trie clearing (invariant-preserving alternative)
+    let should_charge_topup = if SPEC::enabled(SPURIOUS_DRAGON) {
+        res.had_value && !res.target_exists
     } else {
-        !res.exists
+        !res.target_exists
     };
 
-    let selfdestruct_gas_topup = if should_charge_topup {
-        if SPEC::enabled(TANGERINE) {
-            //EIP-150: Gas cost changes for IO-heavy operations
-            25000
-        } else {
-            0
-        }
+    let selfdestruct_gas_topup = if SPEC::enabled(TANGERINE) && should_charge_topup {
+        //EIP-150: Gas cost changes for IO-heavy operations
+        25000
     } else {
         0
     };
@@ -284,7 +278,7 @@ pub fn selfdestruct_cost<SPEC: Spec>(res: SelfDestructResult) -> u64 {
 
     let mut gas = selfdestruct_gas + selfdestruct_gas_topup;
     if SPEC::enabled(BERLIN) && res.is_cold {
-        gas += ACCOUNT_ACCESS_COLD
+        gas += COLD_ACCOUNT_ACCESS_COST
     }
     gas
 }
@@ -300,9 +294,9 @@ pub fn call_cost<SPEC: Spec>(
 
     let call_gas = if SPEC::enabled(BERLIN) {
         if is_cold {
-            ACCOUNT_ACCESS_COLD
+            COLD_ACCOUNT_ACCESS_COST
         } else {
-            STORAGE_READ_WARM
+            WARM_STORAGE_READ_COST
         }
     } else if SPEC::enabled(TANGERINE) {
         // EIP-150: Gas cost changes for IO-heavy operations
@@ -319,9 +313,9 @@ pub fn call_cost<SPEC: Spec>(
 pub fn hot_cold_cost<SPEC: Spec>(is_cold: bool, regular_value: u64) -> u64 {
     if SPEC::enabled(BERLIN) {
         if is_cold {
-            ACCOUNT_ACCESS_COLD
+            COLD_ACCOUNT_ACCESS_COST
         } else {
-            STORAGE_READ_WARM
+            WARM_STORAGE_READ_COST
         }
     } else {
         regular_value
@@ -338,7 +332,8 @@ fn xfer_cost(is_call_or_callcode: bool, transfers_value: bool) -> u64 {
 
 fn new_cost<SPEC: Spec>(is_call_or_staticcall: bool, is_new: bool, transfers_value: bool) -> u64 {
     if is_call_or_staticcall {
-        if SPEC::enabled(ISTANBUL) {
+        // EIP-161: State trie clearing (invariant-preserving alternative)
+        if SPEC::enabled(SPURIOUS_DRAGON) {
             if transfers_value && is_new {
                 NEWACCOUNT
             } else {
