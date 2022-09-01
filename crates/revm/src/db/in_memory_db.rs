@@ -5,6 +5,7 @@ use alloc::vec::Vec;
 use hashbrown::{hash_map::Entry, HashMap as Map};
 use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
+use std::convert::Infallible;
 
 pub type InMemoryDB = CacheDB<EmptyDB>;
 
@@ -325,7 +326,7 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
 pub struct EmptyDB();
 
 impl DatabaseRef for EmptyDB {
-    type Error = ();
+    type Error = Infallible;
     /// Get basic account information.
     fn basic(&self, _address: H160) -> Result<Option<AccountInfo>, Self::Error> {
         Ok(None)
@@ -361,7 +362,7 @@ impl BenchmarkDB {
 }
 
 impl Database for BenchmarkDB {
-    type Error = ();
+    type Error = Infallible;
     /// Get basic account information.
     fn basic(&mut self, address: H160) -> Result<Option<AccountInfo>, Self::Error> {
         if address == H160::zero() {
