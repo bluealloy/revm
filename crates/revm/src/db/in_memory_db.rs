@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 use hashbrown::{hash_map::Entry, HashMap as Map};
 use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
-use std::convert::Infallible;
+use core::convert::Infallible;
 
 pub type InMemoryDB = CacheDB<EmptyDB>;
 
