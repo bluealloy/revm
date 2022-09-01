@@ -18,6 +18,7 @@ pub use error::Return;
 #[macro_use]
 extern crate alloc;
 use alloc::vec::Vec;
+use core::fmt;
 
 use hashbrown::HashMap;
 
@@ -62,7 +63,7 @@ pub type PrecompileResult = Result<PrecompileOutput, Return>;
 pub type StandardPrecompileFn = fn(&[u8], u64) -> PrecompileResult;
 pub type CustomPrecompileFn = fn(&[u8], u64) -> PrecompileResult;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Precompiles {
     fun: HashMap<Address, Precompile>,
 }
@@ -79,6 +80,16 @@ pub enum Precompile {
     Custom(CustomPrecompileFn),
 }
 
+impl fmt::Debug for Precompile {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Precompile::Standard(_) => f.write_str("Standard"),
+            Precompile::Custom(_) => f.write_str("Custom"),
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub enum SpecId {
     HOMESTEAD = 0,
     BYZANTIUM = 1,
