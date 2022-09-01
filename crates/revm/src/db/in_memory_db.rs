@@ -2,10 +2,10 @@ use super::{DatabaseCommit, DatabaseRef};
 use crate::{interpreter::bytecode::Bytecode, Database, KECCAK_EMPTY};
 use crate::{Account, AccountInfo, Log};
 use alloc::vec::Vec;
+use core::convert::Infallible;
 use hashbrown::{hash_map::Entry, HashMap as Map};
 use primitive_types::{H160, H256, U256};
 use sha3::{Digest, Keccak256};
-use core::convert::Infallible;
 
 pub type InMemoryDB = CacheDB<EmptyDB>;
 
