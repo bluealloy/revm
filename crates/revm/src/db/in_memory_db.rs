@@ -282,7 +282,7 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
 
     fn basic(&self, address: H160) -> Result<Option<AccountInfo>, Self::Error> {
         match self.accounts.get(&address) {
-            Some(acc) => Ok(Some(acc.info.clone())),
+            Some(acc) => Ok(acc.info()),
             None => self.db.basic(address),
         }
     }
