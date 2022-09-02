@@ -172,7 +172,7 @@ impl<DB: Database> Inspector<DB> for Controller {
                         println!("PC:{} stack:{}", interp.program_counter(), interp.stack())
                     }
                     CtrlPrint::Memory => {
-                        println!("memory:{}", hex::encode(&interp.memory.data()))
+                        println!("memory:{}", hex::encode(interp.memory.data()))
                     }
                 },
                 Ctrl::Continue => {
