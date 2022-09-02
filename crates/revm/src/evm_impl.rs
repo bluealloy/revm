@@ -820,9 +820,9 @@ pub fn create2_address(caller: H160, code_hash: H256, salt: U256) -> H160 {
     salt.to_big_endian(&mut temp);
 
     let mut hasher = Keccak256::new();
-    hasher.update(&[0xff]);
+    hasher.update([0xff]);
     hasher.update(&caller[..]);
-    hasher.update(&temp);
+    hasher.update(temp);
     hasher.update(&code_hash[..]);
     H160::from_slice(&hasher.finalize().as_slice()[12..])
 }

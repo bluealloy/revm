@@ -282,7 +282,7 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
 
     fn basic(&self, address: H160) -> Result<Option<AccountInfo>, Self::Error> {
         match self.accounts.get(&address) {
-            Some(acc) => Ok(Some(acc.info.clone())),
+            Some(acc) => Ok(acc.info()),
             None => self.db.basic(address),
         }
     }
@@ -344,7 +344,7 @@ impl DatabaseRef for EmptyDB {
     fn block_hash(&self, number: U256) -> Result<H256, Self::Error> {
         let mut buffer: [u8; 4 * 8] = [0; 4 * 8];
         number.to_big_endian(&mut buffer);
-        Ok(H256::from_slice(&Keccak256::digest(&buffer)))
+        Ok(H256::from_slice(&Keccak256::digest(buffer)))
     }
 }
 

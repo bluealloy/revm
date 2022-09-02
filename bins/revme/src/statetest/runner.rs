@@ -85,7 +85,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
         return Ok(());
     }
 
-    let json_reader = std::fs::read(&path).unwrap();
+    let json_reader = std::fs::read(path).unwrap();
     let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
 
     let map_caller_keys: HashMap<_, _> = vec![
