@@ -324,7 +324,7 @@ pub fn run(test_files: Vec<PathBuf>) -> Result<(), TestError> {
     for handler in joins {
         handler.join().map_err(|_| TestError::SystemError)??;
     }
-    console_bar.finish_at_current_pos();
+    console_bar.finish();
     println!("Finished execution. Time:{:?}", elapsed.lock().unwrap());
     Ok(())
 }

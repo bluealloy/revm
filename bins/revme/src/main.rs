@@ -1,5 +1,4 @@
 mod cmd;
-mod debugger;
 mod exec;
 mod runner;
 mod statetest;
