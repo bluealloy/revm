@@ -8,12 +8,10 @@ edition = "2018"
 bytes = "1.1"
 hex = "0.4"
 primitive-types = { version = "0.11", features = ["rlp"] }
-revm = { path = "../../crates/revm", version="1.3" }
-
+revm = { path = "../../crates/revm", version = "1.3" }
 
 [[bin]]
 name = "analysis"
-
 
 [[bin]]
 name = "snailtracer"
