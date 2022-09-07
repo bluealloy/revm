@@ -805,6 +805,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     }
 }
 
+/// Returns the address for the legacy `CREATE` scheme: [`CreateScheme::Create`]
 pub fn create_address(caller: H160, nonce: u64) -> H160 {
     let mut stream = rlp::RlpStream::new_list(2);
     stream.append(&caller);
@@ -814,7 +815,7 @@ pub fn create_address(caller: H160, nonce: u64) -> H160 {
     out
 }
 
-/// Get the create address from given scheme.
+/// Returns the address for the `CREATE2` scheme: [`CreateScheme::Create2`]
 pub fn create2_address(caller: H160, code_hash: H256, salt: U256) -> H160 {
     let mut temp: [u8; 32] = [0; 32];
     salt.to_big_endian(&mut temp);
