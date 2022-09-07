@@ -12,7 +12,7 @@ mod journaled_state;
 mod models;
 mod specification;
 
-pub use evm_impl::{EVMData, Host};
+pub use evm_impl::{create2_address, create_address, EVMData, Host};
 
 pub type DummyStateDB = InMemoryDB;
 
