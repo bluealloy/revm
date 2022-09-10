@@ -1,7 +1,7 @@
 [package]
 authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
 description = "REVM Precompiles - Ethereum compatible precompiled contracts"
-edition = "2018"
+edition = "2021"
 keywords = ["no_std", "ethereum", "evm", "precompiles"]
 license = "MIT"
 name = "revm_precompiles"
