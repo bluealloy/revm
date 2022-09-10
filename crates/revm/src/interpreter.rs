@@ -39,6 +39,9 @@ pub struct Interpreter {
 }
 
 impl Interpreter {
+    pub fn current_opcode(&self) -> u8 {
+        unsafe { *self.instruction_pointer }
+    }
     #[cfg(not(feature = "memory_limit"))]
     pub fn new<SPEC: Spec>(contract: Contract, gas_limit: u64) -> Self {
         Self {

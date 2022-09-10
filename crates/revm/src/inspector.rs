@@ -26,7 +26,7 @@ pub trait Inspector<DB: Database> {
     ///
     /// # Example
     ///
-    /// To get the current opcode, use `interp.contract.code[interp.program_counter()]`.
+    /// To get the current opcode, use `interp.current_opcode()`.
     fn step(
         &mut self,
         _interp: &mut Interpreter,
