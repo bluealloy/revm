@@ -1,3 +1,29 @@
+# v2.0.0
+date: 10.09.2022
+
+Release with `Database` interface changed, execution result, consensus bug fixes and support for all past forks. Additional optimizations on evm initialization.
+
+Main changes:
+* Add support for old forks. (#191) (9 days ago)
+* revm/evm: Return `ExecutionResult`, which includes `gas_refunded` (#169) (4 weeks ago) <Nicolas Gotchac>
+* JournaledState (#175)
+    * Optimize handling of precompiles. Initialization and account loading.
+    * Fixes SELFDESTRUCT bug.
+* Optimize calldataload. Some cleanup (#168)
+* Handle HighNonce tests (#176)
+* feat: expose hash on `BytecodeLocked` (#189) (12 days ago) <Bjerg>
+* revm: Update account storage methods in CacheDB (#171) (4 weeks ago) <Nicolas Gotchac>
+* reexport revm_precompiles as precompiles (#197) (6 days ago) <Matthias Seitz>
+* chore(ci): use ethtests profile for CI tests (#188) (2 weeks ago) <Alexey Shekhirin>
+* Bump dependencies version
+* current_opcode fn and rename program_counter to instruction_pointer (#211)
+* Cfg choose create analysis, option on bytecode size limit (#210)
+* Cleanup remove U256 and use u64 for gas calculation (#213)
+
+Consensus bugs:
+* SELFDESTRUCT was not handled correctly. It would remove account/storage but it should just mark it for removal. This bug was here from earlier version of revm. (#175)
+* fix: set gas_block to empty bytecode (#172). Introduced in v1.8.0 with bytecode format.
+
 # v1.9.0
 date: 09.08.2022
 

@@ -1,3 +1,10 @@
+# v1.1.1
+date: 06.09.2022
+
+Small release:
+* refactor(precompiles): Vec -> BTreeMap (#177) (3 weeks ago) <Alexey Shekhirin>
+* Cache precompile map with once_cell
+* Bump dependencies version
 
 # v1.1.0
 date: 11.06.2022
