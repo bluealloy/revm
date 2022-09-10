@@ -226,11 +226,13 @@ pub struct CfgEnv {
     /// safe to be set to `true`, depending on the chain.
     pub perf_all_precompiles_have_balance: bool,
     /// Bytecode that is created with CREATE/CREATE2 is by default analysed and jumptable is created.
-    /// This is very benefitial for testing and speeds up execution of that bytecode when
-    pub perf_analyse_created_bytecodes: bool,
-    /// Effects EIP-170: Contract code size limit. Usefull to increase this because of tests.
+    /// This is very benefitial for testing and speeds up execution of that bytecode when.
+    /// It will have side effect if it is enabled in client that switches between forks.
+    /// Default: Analyse
+    pub perf_analyse_created_bytecodes: AnalysisKind,
+    /// If some it will effects EIP-170: Contract code size limit. Usefull to increase this because of tests.
     /// By default it is 0x6000 (~25kb).
-    pub limit_contract_code_size: usize,
+    pub limit_contract_code_size: Option<usize>,
     /// A hard memory limit in bytes beyond which [Memory] cannot be resized.
     ///
     /// In cases where the gas limit may be extraordinarily high, it is recommended to set this to
@@ -240,14 +242,23 @@ pub struct CfgEnv {
     pub memory_limit: u64,
 }
 
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum AnalysisKind {
+    Raw,
+    Check,
+    #[default]
+    Analyse,
+}
+
 impl Default for CfgEnv {
     fn default() -> CfgEnv {
         CfgEnv {
             chain_id: 1.into(),
             spec_id: SpecId::LATEST,
             perf_all_precompiles_have_balance: false,
-            perf_analyse_created_bytecodes: true,
-            limit_contract_code_size: 0x6000,
+            perf_analyse_created_bytecodes: Default::default(),
+            limit_contract_code_size: None,
             #[cfg(feature = "memory_limit")]
             memory_limit: 2u64.pow(32) - 1,
         }

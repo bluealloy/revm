@@ -1,6 +1,6 @@
 [package]
 authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
-edition = "2018"
+edition = "2021"
 name = "revme"
 keywords = ["ethereum", "evm"]
 license = "MIT"

@@ -5,8 +5,8 @@ use crate::{
     interpreter::{Contract, Interpreter},
     journaled_state::{Account, JournaledState, State},
     models::SelfDestructResult,
-    return_ok, return_revert, CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, Env,
-    ExecutionResult, Gas, Inspector, Log, Return, Spec,
+    return_ok, return_revert, AnalysisKind, CallContext, CallInputs, CallScheme, CreateInputs,
+    CreateScheme, Env, ExecutionResult, Gas, Inspector, Log, Return, Spec,
     SpecId::{self, *},
     TransactOut, TransactTo, Transfer, KECCAK_EMPTY,
 };
@@ -482,7 +482,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 // EIP-170: Contract code size limit
                 // By default limit is 0x6000 (~25kb)
                 if SPEC::enabled(SPURIOUS_DRAGON)
-                    && bytes.len() > self.data.env.cfg.limit_contract_code_size
+                    && bytes.len() > self.data.env.cfg.limit_contract_code_size.unwrap_or(0x6000)
                 {
                     self.data.journaled_state.checkpoint_revert(checkpoint);
                     return (Return::CreateContractLimit, ret, interp.gas, b);
@@ -505,7 +505,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 // if we have enought gas
                 self.data.journaled_state.checkpoint_commit();
                 // Do analasis of bytecode streight away.
-                let bytecode = Bytecode::new_raw(bytes).to_analysed::<SPEC>();
+                let bytecode = match self.data.env.cfg.perf_analyse_created_bytecodes {
+                    AnalysisKind::Raw => Bytecode::new_raw(bytes),
+                    AnalysisKind::Check => Bytecode::new_raw(bytes).to_checked(),
+                    AnalysisKind::Analyse => Bytecode::new_raw(bytes).to_analysed::<SPEC>(),
+                };
+
                 self.data
                     .journaled_state
                     .set_code(created_address, bytecode);
