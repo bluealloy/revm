@@ -21,8 +21,8 @@ pub const CALL_STACK_LIMIT: u64 = 1024;
 pub struct Interpreter {
     /// Contract information and invoking data
     pub contract: Contract,
-    /// Program counter.
-    pub program_counter: *const u8,
+    /// Instruction pointer.
+    pub instruction_pointer: *const u8,
     /// Memory.
     pub memory: Memory,
     /// Stack.
@@ -42,7 +42,7 @@ impl Interpreter {
     #[cfg(not(feature = "memory_limit"))]
     pub fn new<SPEC: Spec>(contract: Contract, gas_limit: u64) -> Self {
         Self {
-            program_counter: contract.bytecode.as_ptr(),
+            instruction_pointer: contract.bytecode.as_ptr(),
             return_range: Range::default(),
             memory: Memory::new(),
             stack: Stack::new(),
@@ -97,7 +97,7 @@ impl Interpreter {
     pub fn program_counter(&self) -> usize {
         // Safety: this is just subtraction of pointers, it is safe to do.
         unsafe {
-            self.program_counter
+            self.instruction_pointer
                 .offset_from(self.contract.bytecode.as_ptr()) as usize
         }
     }
@@ -118,11 +118,11 @@ impl Interpreter {
                     return ret;
                 }
             }
-            let opcode = unsafe { *self.program_counter };
+            let opcode = unsafe { *self.instruction_pointer };
             // Safety: In analysis we are doing padding of bytecode so that we are sure that last.
             // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
             // it will do noop and just stop execution of this contract
-            self.program_counter = unsafe { self.program_counter.offset(1) };
+            self.instruction_pointer = unsafe { self.instruction_pointer.offset(1) };
             ret = eval::<H, SPEC>(opcode, self, host);
 
             if H::INSPECT {

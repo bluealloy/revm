@@ -8,7 +8,7 @@ pub fn jump(interp: &mut Interpreter) -> Return {
     if interp.contract.is_valid_jump(dest) {
         // Safety: In analysis we are checking create our jump table and we do check above to be
         // sure that jump is safe to execute.
-        interp.program_counter = unsafe { interp.contract.bytecode.as_ptr().add(dest) };
+        interp.instruction_pointer = unsafe { interp.contract.bytecode.as_ptr().add(dest) };
         Return::Continue
     } else {
         Return::InvalidJump
@@ -23,7 +23,7 @@ pub fn jumpi(interp: &mut Interpreter) -> Return {
         if interp.contract.is_valid_jump(dest) {
             // Safety: In analysis we are checking if jump is valid destination and
             // this `if` makes this unsafe block safe.
-            interp.program_counter = unsafe { interp.contract.bytecode.as_ptr().add(dest) };
+            interp.instruction_pointer = unsafe { interp.contract.bytecode.as_ptr().add(dest) };
             Return::Continue
         } else {
             Return::InvalidJump

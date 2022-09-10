@@ -48,7 +48,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
     ) -> Return {
         // Safety: casting. In analysis we are making this clame true that program counter will always
         // point to bytecode of the contract.
-        let opcode = unsafe { *interp.program_counter };
+        let opcode = unsafe { *interp.instruction_pointer };
         let opcode_str = opcode::OPCODE_JUMPMAP[opcode as usize];
 
         // calculate gas_block

@@ -7,13 +7,13 @@ pub fn pop(interp: &mut Interpreter) -> Return {
 
 pub fn push<const N: usize>(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::VERYLOW);
-    let start = interp.program_counter;
+    let start = interp.instruction_pointer;
     // Safety: In Analysis we appended needed bytes for bytecode so that we are safe to just add without
     // checking if it is out of bound. This makes both of our unsafes block safe to do.
     let ret = interp
         .stack
         .push_slice::<N>(unsafe { core::slice::from_raw_parts(start, N) });
-    interp.program_counter = unsafe { interp.program_counter.add(N) };
+    interp.instruction_pointer = unsafe { interp.instruction_pointer.add(N) };
     ret
 }
 

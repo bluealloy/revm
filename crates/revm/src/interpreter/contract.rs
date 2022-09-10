@@ -7,9 +7,8 @@ use std::sync::Arc;
 pub struct Contract {
     /// Contracts data
     pub input: Bytes,
-    /// Contract code
-    /// code size of original code. Note that current code is extended with push padding and STOP at end
-    /// Precomputed valid jump addresses
+    /// Bytecode contains contract code, size of original code, analysis with gas block and jump table.
+    /// Note that current code is extended with push padding and STOP at end.
     pub bytecode: BytecodeLocked,
     /// Contract address
     pub address: H160,
