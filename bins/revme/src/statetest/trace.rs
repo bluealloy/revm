@@ -46,7 +46,6 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> Return {
-        
         let opcode = interp.current_opcode();
         let opcode_str = opcode::OPCODE_JUMPMAP[opcode as usize];
 
