@@ -7,8 +7,8 @@ use sha3::{Digest, Keccak256};
 
 pub fn sha3(interp: &mut Interpreter) -> Return {
     pop!(interp, from, len);
-    gas_or_fail!(interp, gas::sha3_cost(len));
     let len = as_usize_or_fail!(len, Return::OutOfGas);
+    gas_or_fail!(interp, gas::sha3_cost(len as u64));
     let h256 = if len == 0 {
         KECCAK_EMPTY
     } else {
@@ -44,8 +44,8 @@ pub fn codesize(interp: &mut Interpreter) -> Return {
 
 pub fn codecopy(interp: &mut Interpreter) -> Return {
     pop!(interp, memory_offset, code_offset, len);
-    gas_or_fail!(interp, gas::verylowcopy_cost(len));
     let len = as_usize_or_fail!(len, Return::OutOfGas);
+    gas_or_fail!(interp, gas::verylowcopy_cost(len as u64));
     if len == 0 {
         return Return::Continue;
     }
@@ -98,8 +98,8 @@ pub fn callvalue(interp: &mut Interpreter) -> Return {
 
 pub fn calldatacopy(interp: &mut Interpreter) -> Return {
     pop!(interp, memory_offset, data_offset, len);
-    gas_or_fail!(interp, gas::verylowcopy_cost(len));
     let len = as_usize_or_fail!(len, Return::OutOfGas);
+    gas_or_fail!(interp, gas::verylowcopy_cost(len as u64));
     if len == 0 {
         return Return::Continue;
     }
@@ -127,8 +127,8 @@ pub fn returndatacopy<SPEC: Spec>(interp: &mut Interpreter) -> Return {
     // EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
     check!(SPEC::enabled(BYZANTIUM));
     pop!(interp, memory_offset, offset, len);
-    gas_or_fail!(interp, gas::verylowcopy_cost(len));
     let len = as_usize_or_fail!(len, Return::OutOfGas);
+    gas_or_fail!(interp, gas::verylowcopy_cost(len as u64));
     let memory_offset = as_usize_or_fail!(memory_offset, Return::OutOfGas);
     let data_offset = as_usize_saturated!(offset);
     memory_resize!(interp, memory_offset, len);

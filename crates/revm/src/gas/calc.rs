@@ -102,27 +102,15 @@ pub fn exp_cost<SPEC: Spec>(power: U256) -> Option<u64> {
     }
 }
 
-pub fn verylowcopy_cost(len: U256) -> Option<u64> {
-    let wordd = len / U256::from(32);
-    let wordr = len % U256::from(32);
-
-    let gas =
-        U256::from(VERYLOW).checked_add(U256::from(COPY).checked_mul(if wordr.is_zero() {
-            wordd
-        } else {
-            wordd + U256::one()
-        })?)?;
-
-    if gas > U256::from(u64::MAX) {
-        return None;
-    }
-
-    Some(gas.as_u64())
+pub fn verylowcopy_cost(len: u64) -> Option<u64> {
+    let wordd = len / 32;
+    let wordr = len % 32;
+    VERYLOW.checked_add(COPY.checked_mul(if wordr == 0 { wordd } else { wordd + 1 })?)
 }
 
-pub fn extcodecopy_cost<SPEC: Spec>(len: U256, is_cold: bool) -> Option<u64> {
-    let wordd = len / U256::from(32);
-    let wordr = len % U256::from(32);
+pub fn extcodecopy_cost<SPEC: Spec>(len: u64, is_cold: bool) -> Option<u64> {
+    let wordd = len / 32;
+    let wordr = len % 32;
 
     let base_gas: u64 = if SPEC::enabled(BERLIN) && is_cold {
         // WARM_STORAGE_READ_COST is already calculated
@@ -130,19 +118,7 @@ pub fn extcodecopy_cost<SPEC: Spec>(len: U256, is_cold: bool) -> Option<u64> {
     } else {
         0
     };
-    // TODO make this u64 friendly, U256 does not make sense.
-    let gas =
-        U256::from(base_gas).checked_add(U256::from(COPY).checked_mul(if wordr.is_zero() {
-            wordd
-        } else {
-            wordd + U256::one()
-        })?)?;
-
-    if gas > U256::from(u64::MAX) {
-        return None;
-    }
-
-    Some(gas.as_u64())
+    base_gas.checked_add(COPY.checked_mul(if wordr == 0 { wordd } else { wordd + 1 })?)
 }
 
 pub fn account_access_gas<SPEC: Spec>(is_cold: bool) -> u64 {
@@ -159,34 +135,15 @@ pub fn account_access_gas<SPEC: Spec>(is_cold: bool) -> u64 {
     }
 }
 
-pub fn log_cost(n: u8, len: U256) -> Option<u64> {
-    let gas = U256::from(LOG)
-        .checked_add(U256::from(LOGDATA).checked_mul(len)?)?
-        .checked_add(U256::from(LOGTOPIC * n as u64))?;
-
-    if gas > U256::from(u64::MAX) {
-        return None;
-    }
-
-    Some(gas.as_u64())
+pub fn log_cost(n: u8, len: u64) -> Option<u64> {
+    LOG.checked_add(LOGDATA.checked_mul(len)?)?
+        .checked_add(LOGTOPIC * n as u64)
 }
 
-pub fn sha3_cost(len: U256) -> Option<u64> {
-    let wordd = len / U256::from(32);
-    let wordr = len % U256::from(32);
-
-    let gas =
-        U256::from(SHA3).checked_add(U256::from(SHA3WORD).checked_mul(if wordr.is_zero() {
-            wordd
-        } else {
-            wordd + U256::one()
-        })?)?;
-
-    if gas > U256::from(u64::MAX) {
-        return None;
-    }
-
-    Some(gas.as_u64())
+pub fn sha3_cost(len: u64) -> Option<u64> {
+    let wordd = len / 32;
+    let wordr = len % 32;
+    SHA3.checked_add(SHA3WORD.checked_mul(if wordr == 0 { wordd } else { wordd + 1 })?)
 }
 
 pub fn sload_cost<SPEC: Spec>(is_cold: bool) -> u64 {

@@ -92,8 +92,8 @@ pub fn extcodecopy<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) 
     }
     let (code, is_cold) = ret.unwrap();
 
-    gas_or_fail!(interp, gas::extcodecopy_cost::<SPEC>(len_u256, is_cold));
     let len = as_usize_or_fail!(len_u256, Return::OutOfGas);
+    gas_or_fail!(interp, gas::extcodecopy_cost::<SPEC>(len as u64, is_cold));
     if len == 0 {
         return Return::Continue;
     }
@@ -162,8 +162,8 @@ pub fn log<H: Host, SPEC: Spec>(interp: &mut Interpreter, n: u8, host: &mut H) -
     check!(!SPEC::IS_STATIC_CALL);
 
     pop!(interp, offset, len);
-    gas_or_fail!(interp, gas::log_cost(n, len));
     let len = as_usize_or_fail!(len, Return::OutOfGas);
+    gas_or_fail!(interp, gas::log_cost(n, len as u64));
     let data = if len == 0 {
         Bytes::new()
     } else {
