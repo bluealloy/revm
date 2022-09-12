@@ -91,6 +91,16 @@ impl StorageSlot {
             present_value: original,
         }
     }
+
+    /// Returns true if the present value differs from the original value
+    pub fn is_changed(&self) -> bool {
+        self.original_value != self.present_value
+    }
+
+    pub fn original_value(&self) -> U256 {
+        self.original_value
+    }
+
     pub fn present_value(&self) -> U256 {
         self.present_value
     }
