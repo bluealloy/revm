@@ -46,6 +46,11 @@ impl Memory {
         &self.data
     }
 
+    /// Shrinks the capacity of the data buffer as much as possible.
+    pub fn shrink_to_fit(&mut self) {
+        self.data.shrink_to_fit()
+    }
+
     /// Resize the memory. asume that we already checked if
     /// we have enought gas to resize this vector and that we made new_size as multiply of 32
     pub fn resize(&mut self, new_size: usize) {
