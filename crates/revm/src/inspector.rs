@@ -237,3 +237,161 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         (ret, address, remaining_gas, out)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::db::BenchmarkDB;
+    use crate::{
+        opcode, Bytecode, CallInputs, CreateInputs, Database, EVMData, Gas, GasInspector,
+        Inspector, Interpreter, OpCode, Return, TransactTo,
+    };
+    use bytes::Bytes;
+    use core::str::FromStr;
+    use primitive_types::{H160, H256};
+
+    #[derive(Default, Debug)]
+    struct StackInspector {
+        pc: usize,
+        gas_inspector: GasInspector,
+        gas_remaining_steps: Vec<(usize, u64)>,
+    }
+
+    impl<DB: Database> Inspector<DB> for StackInspector {
+        fn initialize_interp(
+            &mut self,
+            interp: &mut Interpreter,
+            data: &mut EVMData<'_, DB>,
+            is_static: bool,
+        ) -> Return {
+            self.gas_inspector
+                .initialize_interp(interp, data, is_static);
+            Return::Continue
+        }
+
+        fn step(
+            &mut self,
+            interp: &mut Interpreter,
+            data: &mut EVMData<'_, DB>,
+            is_static: bool,
+        ) -> Return {
+            self.pc = interp.program_counter();
+            self.gas_inspector.step(interp, data, is_static);
+            Return::Continue
+        }
+
+        fn log(
+            &mut self,
+            evm_data: &mut EVMData<'_, DB>,
+            address: &H160,
+            topics: &[H256],
+            data: &Bytes,
+        ) {
+            self.gas_inspector.log(evm_data, address, topics, data);
+        }
+
+        fn step_end(
+            &mut self,
+            interp: &mut Interpreter,
+            data: &mut EVMData<'_, DB>,
+            is_static: bool,
+            eval: Return,
+        ) -> Return {
+            self.gas_inspector.step_end(interp, data, is_static, eval);
+            self.gas_remaining_steps
+                .push((self.pc, self.gas_inspector.gas_remaining()));
+            eval
+        }
+
+        fn call(
+            &mut self,
+            data: &mut EVMData<'_, DB>,
+            call: &mut CallInputs,
+            is_static: bool,
+        ) -> (Return, Gas, Bytes) {
+            self.gas_inspector.call(data, call, is_static);
+
+            (Return::Continue, Gas::new(call.gas_limit), Bytes::new())
+        }
+
+        fn call_end(
+            &mut self,
+            data: &mut EVMData<'_, DB>,
+            inputs: &CallInputs,
+            remaining_gas: Gas,
+            ret: Return,
+            out: Bytes,
+            is_static: bool,
+        ) -> (Return, Gas, Bytes) {
+            self.gas_inspector
+                .call_end(data, inputs, remaining_gas, ret, out.clone(), is_static);
+            (ret, remaining_gas, out)
+        }
+
+        fn create(
+            &mut self,
+            data: &mut EVMData<'_, DB>,
+            call: &mut CreateInputs,
+        ) -> (Return, Option<H160>, Gas, Bytes) {
+            self.gas_inspector.create(data, call);
+
+            (
+                Return::Continue,
+                None,
+                Gas::new(call.gas_limit),
+                Bytes::new(),
+            )
+        }
+
+        fn create_end(
+            &mut self,
+            data: &mut EVMData<'_, DB>,
+            inputs: &CreateInputs,
+            status: Return,
+            address: Option<H160>,
+            gas: Gas,
+            retdata: Bytes,
+        ) -> (Return, Option<H160>, Gas, Bytes) {
+            self.gas_inspector
+                .create_end(data, inputs, status, address, gas, retdata.clone());
+            (status, address, gas, retdata)
+        }
+    }
+
+    #[test]
+    fn test_gas_inspector() {
+        let contract_data: Bytes = Bytes::from(vec![
+            opcode::PUSH1,
+            0x1,
+            opcode::PUSH1,
+            0xb,
+            opcode::JUMPI,
+            opcode::PUSH1,
+            0x1,
+            opcode::PUSH1,
+            0x1,
+            opcode::PUSH1,
+            0x1,
+            opcode::JUMPDEST,
+            opcode::STOP,
+        ]);
+        let bytecode = Bytecode::new_raw(contract_data);
+
+        let mut evm = crate::new();
+        evm.database(BenchmarkDB::new_bytecode(bytecode.clone()));
+        evm.env.tx.caller = H160::from_str("0x1000000000000000000000000000000000000000").unwrap();
+        evm.env.tx.transact_to =
+            TransactTo::Call(H160::from_str("0x0000000000000000000000000000000000000000").unwrap());
+        evm.env.tx.gas_limit = 21100;
+
+        let mut inspector = StackInspector::default();
+        let (result, state) = evm.inspect(&mut inspector);
+        println!("{result:?} {state:?} {inspector:?}");
+
+        for (pc, gas) in inspector.gas_remaining_steps {
+            println!(
+                "{pc} {} {gas:?}",
+                OpCode::try_from_u8(bytecode.bytes()[pc]).unwrap().as_str(),
+            );
+        }
+    }
+}
