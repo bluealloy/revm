@@ -128,8 +128,8 @@ impl<DB: Database> Inspector<DB> for NoOpInspector {}
 
 #[derive(Clone, Copy, Debug, Default)]
 pub struct GasInspector {
-    /// We now batch continual gas_block in one go, that means we need to reduce it ifwe want to get
-    /// correct gas remaining. Check revm/interp/contract/analyze for more information
+    /// We now batch continual gas_block in one go, that means we need to reduce it if we want
+    /// to get correct gas remaining. Check revm/interp/contract/analyze for more information
     reduced_gas_block: u64,
     full_gas_block: u64,
     was_return: bool,
@@ -200,7 +200,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
             }
             self.was_jumpi = None;
         } else if self.was_return {
-            // we are okey to decrement PC by one as it is return of call
+            // we are ok to decrement PC by one as it is return of call
             let previous_pc = pc - 1;
             self.full_gas_block = interp.contract.gas_block(previous_pc);
             self.was_return = false;
