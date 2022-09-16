@@ -357,23 +357,7 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_gas_inspector() {
-        let contract_data: Bytes = Bytes::from(vec![
-            opcode::PUSH1,
-            0x1,
-            opcode::PUSH1,
-            0xb,
-            opcode::JUMPI,
-            opcode::PUSH1,
-            0x1,
-            opcode::PUSH1,
-            0x1,
-            opcode::PUSH1,
-            0x1,
-            opcode::JUMPDEST,
-            opcode::STOP,
-        ]);
+    fn gas_inspector(contract_data: Bytes) {
         let bytecode = Bytecode::new_raw(contract_data);
 
         let mut evm = crate::new();
@@ -393,5 +377,34 @@ mod tests {
                 OpCode::try_from_u8(bytecode.bytes()[pc]).unwrap().as_str(),
             );
         }
+    }
+
+    #[test]
+    fn test_gas_inspector() {
+        gas_inspector(Bytes::from(vec![
+            opcode::PUSH1,
+            0x1,
+            opcode::PUSH1,
+            0xb,
+            opcode::JUMPI,
+            opcode::PUSH1,
+            0x1,
+            opcode::PUSH1,
+            0x1,
+            opcode::PUSH1,
+            0x1,
+            opcode::JUMPDEST,
+            opcode::STOP,
+        ]));
+        println!("\n");
+        gas_inspector(Bytes::from(vec![
+            opcode::PUSH1,
+            0x1,
+            opcode::PUSH1,
+            0x5,
+            opcode::JUMPI,
+            opcode::JUMPDEST,
+            opcode::STOP,
+        ]));
     }
 }
