@@ -172,6 +172,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 
         let pc = interp.program_counter();
         if op == opcode::JUMPI {
+            self.reduced_gas_block += info.get_gas() as u64;
             self.was_jumpi = Some(pc);
         } else if info.is_gas_block_end() {
             self.reduced_gas_block = 0;
