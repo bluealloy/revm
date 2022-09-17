@@ -142,7 +142,7 @@ pub fn sload<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Ret
 }
 
 pub fn sstore<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
-    check!(!SPEC::IS_STATIC_CALL);
+    staticcall!(!SPEC::IS_STATIC_CALL);
 
     pop!(interp, index, value);
     let ret = host.sstore(interp.contract.address, index, value);
@@ -159,7 +159,7 @@ pub fn sstore<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Re
 }
 
 pub fn log<H: Host, SPEC: Spec>(interp: &mut Interpreter, n: u8, host: &mut H) -> Return {
-    check!(!SPEC::IS_STATIC_CALL);
+    staticcall!(!SPEC::IS_STATIC_CALL);
 
     pop!(interp, offset, len);
     let len = as_usize_or_fail!(len, Return::OutOfGas);
@@ -189,7 +189,7 @@ pub fn log<H: Host, SPEC: Spec>(interp: &mut Interpreter, n: u8, host: &mut H) -
 }
 
 pub fn selfdestruct<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
-    check!(!SPEC::IS_STATIC_CALL);
+    staticcall!(!SPEC::IS_STATIC_CALL);
     pop_address!(interp, target);
 
     let res = host.selfdestruct(interp.contract.address, target);
@@ -212,7 +212,7 @@ pub fn create<H: Host, SPEC: Spec>(
     is_create2: bool,
     host: &mut H,
 ) -> Return {
-    check!(!SPEC::IS_STATIC_CALL);
+    staticcall!(!SPEC::IS_STATIC_CALL);
     if is_create2 {
         // EIP-1014: Skinny CREATE2
         check!(SPEC::enabled(PETERSBURG));
