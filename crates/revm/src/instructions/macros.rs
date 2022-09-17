@@ -8,6 +8,14 @@ macro_rules! check {
     };
 }
 
+macro_rules! staticcall {
+    ($expresion:expr) => {
+        if !$expresion {
+            return Return::StateChangeDuringStaticCall;
+        }
+    };
+}
+
 macro_rules! gas {
     ($interp:expr, $gas:expr) => {
         if crate::USE_GAS {
