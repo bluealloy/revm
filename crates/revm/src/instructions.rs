@@ -54,6 +54,7 @@ pub enum Return {
     InvalidJump,
     InvalidMemoryRange,
     NotActivated,
+    StateChangeDuringStaticCall,
     StackUnderflow,
     StackOverflow,
     OutOfOffset,
