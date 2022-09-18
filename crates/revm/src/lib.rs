@@ -19,7 +19,7 @@ pub type DummyStateDB = InMemoryDB;
 pub use db::{Database, DatabaseCommit, InMemoryDB};
 pub use evm::{evm_inner, new, EVM};
 pub use gas::Gas;
-pub use inspector::{Inspector, NoOpInspector};
+pub use inspector::{GasInspector, Inspector, NoOpInspector};
 pub use instructions::{
     opcode::{self, spec_opcode_gas, OpCode, OPCODE_JUMPMAP},
     Return,

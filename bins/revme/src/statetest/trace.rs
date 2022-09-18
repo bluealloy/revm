@@ -3,26 +3,18 @@ use primitive_types::H160;
 pub use revm::Inspector;
 use revm::{
     opcode::{self},
-    spec_opcode_gas, CallInputs, CreateInputs, Database, EVMData, Gas, Return,
+    CallInputs, CreateInputs, Database, EVMData, Gas, GasInspector, Return,
 };
 
 #[derive(Clone)]
 pub struct CustomPrintTracer {
-    /// We now batch continual gas_block in one go, that means we need to reduce it ifwe want to get
-    /// correct gas remaining. Check revm/interp/contract/analyze for more information
-    reduced_gas_block: u64,
-    full_gas_block: u64,
-    was_return: bool,
-    was_jumpi: Option<usize>,
+    gas_inspector: GasInspector,
 }
 
 impl CustomPrintTracer {
     pub fn new() -> Self {
         Self {
-            reduced_gas_block: 0,
-            full_gas_block: 0,
-            was_return: false,
-            was_jumpi: None,
+            gas_inspector: GasInspector::default(),
         }
     }
 }
@@ -31,10 +23,11 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
     fn initialize_interp(
         &mut self,
         interp: &mut revm::Interpreter,
-        _data: &mut EVMData<'_, DB>,
-        _is_static: bool,
+        data: &mut EVMData<'_, DB>,
+        is_static: bool,
     ) -> Return {
-        self.full_gas_block = interp.contract.first_gas_block();
+        self.gas_inspector
+            .initialize_interp(interp, data, is_static);
         Return::Continue
     }
 
@@ -44,16 +37,12 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         &mut self,
         interp: &mut revm::Interpreter,
         data: &mut EVMData<'_, DB>,
-        _is_static: bool,
+        is_static: bool,
     ) -> Return {
         let opcode = interp.current_opcode();
         let opcode_str = opcode::OPCODE_JUMPMAP[opcode as usize];
 
-        // calculate gas_block
-        let infos = spec_opcode_gas(data.env.cfg.spec_id);
-        let info = &infos[opcode as usize];
-
-        let gas_remaining = interp.gas.remaining() + self.full_gas_block - self.reduced_gas_block;
+        let gas_remaining = self.gas_inspector.gas_remaining();
 
         println!(
             "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data size:{}",
@@ -69,15 +58,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
             interp.memory.data().len(),
         );
 
-        let pc = interp.program_counter();
-        if opcode == opcode::JUMPI {
-            self.was_jumpi = Some(pc);
-        } else if info.is_gas_block_end() {
-            self.reduced_gas_block = 0;
-            self.full_gas_block = interp.contract.gas_block(pc);
-        } else {
-            self.reduced_gas_block += info.get_gas() as u64;
-        }
+        self.gas_inspector.step(interp, data, is_static);
 
         Return::Continue
     }
@@ -85,53 +66,42 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
     fn step_end(
         &mut self,
         interp: &mut revm::Interpreter,
-        _data: &mut EVMData<'_, DB>,
-        _is_static: bool,
-        _eval: revm::Return,
+        data: &mut EVMData<'_, DB>,
+        is_static: bool,
+        eval: revm::Return,
     ) -> Return {
-        let pc = interp.program_counter();
-        if let Some(was_pc) = self.was_jumpi {
-            if let Some(new_pc) = pc.checked_sub(1) {
-                if was_pc == new_pc {
-                    self.reduced_gas_block = 0;
-                    self.full_gas_block = interp.contract.gas_block(was_pc);
-                }
-            }
-            self.was_jumpi = None;
-        } else if self.was_return {
-            // we are okey to decrement PC by one as it is return of call
-            let previous_pc = pc - 1;
-            self.full_gas_block = interp.contract.gas_block(previous_pc);
-            self.was_return = false;
-        }
+        self.gas_inspector.step_end(interp, data, is_static, eval);
         Return::Continue
     }
 
     fn call_end(
         &mut self,
-        _data: &mut EVMData<'_, DB>,
-        _inputs: &CallInputs,
+        data: &mut EVMData<'_, DB>,
+        inputs: &CallInputs,
         remaining_gas: Gas,
         ret: Return,
         out: Bytes,
-        _is_static: bool,
+        is_static: bool,
     ) -> (Return, Gas, Bytes) {
-        self.was_return = true;
+        self.gas_inspector
+            .call_end(data, inputs, remaining_gas, ret, out.clone(), is_static);
         (ret, remaining_gas, out)
     }
 
     fn create_end(
         &mut self,
-        _data: &mut EVMData<'_, DB>,
-        _inputs: &CreateInputs,
+        data: &mut EVMData<'_, DB>,
+        inputs: &CreateInputs,
         ret: Return,
         address: Option<H160>,
         remaining_gas: Gas,
         out: Bytes,
     ) -> (Return, Option<H160>, Gas, Bytes) {
-        self.was_return = true;
+        self.gas_inspector
+            .create_end(data, inputs, ret, address, remaining_gas, out.clone());
         (ret, address, remaining_gas, out)
     }
+
     fn call(
         &mut self,
         _data: &mut EVMData<'_, DB>,
