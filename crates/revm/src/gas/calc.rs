@@ -56,7 +56,7 @@ pub fn create2_cost(len: usize) -> Option<u64> {
     let base = CREATE;
     // ceil(len / 32.0)
     let len = len as u64;
-    let sha_addup_base = (len / 32) + if (len % 32) == 0 { 0 } else { 1 };
+    let sha_addup_base = (len / 32) + u64::from((len % 32) != 0);
     let sha_addup = SHA3WORD.checked_mul(sha_addup_base)?;
     let gas = base.checked_add(sha_addup)?;
 

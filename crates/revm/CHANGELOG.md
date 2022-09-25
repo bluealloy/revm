@@ -1,3 +1,13 @@
+# v2.1.0
+date: 25.09.2022
+
+GasInspector added by Alexey Shekhirin and some helper functions.
+Changes:
+
+* ca14d61 - gas inspector (#222) (7 days ago) <Alexey Shekhirin>
+* 1e25c99 - chore: expose original value on storageslot (#216) (13 days ago) <Matthias Seitz>
+* aa39d64 - feat: add Memory::shrink_to_fit (#215) (13 days ago) <Matthias Seitz
+
 # v2.0.0
 date: 10.09.2022
 
