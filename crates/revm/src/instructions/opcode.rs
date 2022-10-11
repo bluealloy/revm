@@ -1,6 +1,7 @@
 use crate::gas;
 use crate::SpecId;
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct OpCode(u8);
 
 pub const STOP: u8 = 0x00;
@@ -164,7 +165,7 @@ impl OpCode {
     }
 
     #[inline(always)]
-    pub const fn u8(self) -> u8 {
+    pub const fn u8(&self) -> u8 {
         self.0
     }
 }
