@@ -9,8 +9,8 @@ use sha3::{Digest, Keccak256};
 
 pub type InMemoryDB = CacheDB<EmptyDB>;
 
-impl InMemoryDB {
-    pub fn default() -> Self {
+impl Default for InMemoryDB {
+    fn default() -> Self {
         CacheDB::new(EmptyDB {})
     }
 }

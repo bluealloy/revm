@@ -100,7 +100,7 @@ pub enum SpecId {
 
 impl SpecId {
     pub const fn enabled(self, spec_id: u8) -> bool {
-        spec_id as u8 >= self as u8
+        spec_id >= self as u8
     }
 }
 
