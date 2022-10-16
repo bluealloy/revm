@@ -300,7 +300,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
         if crate::USE_GAS {
             let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
-            let non_zero_data_len = (input.len() as u64 - zero_data_len) as u64;
+            let non_zero_data_len = input.len() as u64 - zero_data_len;
             let (accessed_accounts, accessed_slots) = {
                 if SPEC::enabled(BERLIN) {
                     let mut accessed_slots = 0_u64;
