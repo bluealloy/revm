@@ -4,8 +4,8 @@ Is EVM written in rust that is focused on **speed** and **simplicity**. It has f
 
 Here is list of things that i would like to use as guide in this project:
 - **EVM compatibility and stability** - this goes without saying but it is nice to put it here. In blockchain industry, stability is most desired attribute of any system.
-- **Speed** - is one of the most important things and most decision are made to complement this.
-- **Simplicity** - simplification of internals so that it can be easily understood and extended, and interface that can be easily used or integrated into other project.
+- **Speed** - is one of the most important things and most decisions are made to complement this.
+- **Simplicity** - simplification of internals so that it can be easily understood and extended, and interface that can be easily used or integrated into other projects.
 - **interfacing** - `[no_std]` so that it can be used as wasm lib and integrate with JavaScript and cpp binding if needed.
 
 
@@ -18,7 +18,7 @@ structure:
     * revmjs -> Binding for js. (in not finished state)
 * bins:
     * revme: cli binary, used for running state test json
-    * revm-test: test binaries with contracts, used mostly to checke performance (will proably merge it inside revme).
+    * revm-test: test binaries with contracts, used mostly to check performance (will probably merge it inside revme).
 
 There were some big efforts on optimization of revm:
 * Optimizing interpreter loop: https://github.com/bluealloy/revm/issues/7
