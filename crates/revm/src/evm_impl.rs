@@ -5,8 +5,8 @@ use crate::{
     interpreter::{Contract, Interpreter},
     journaled_state::{Account, JournaledState, State},
     models::SelfDestructResult,
-    return_ok, return_revert, AnalysisKind, CallContext, CallInputs, CallScheme, CreateInputs,
-    CreateScheme, Env, ExecutionResult, Gas, Inspector, Log, Return, Spec,
+    precompiles, return_ok, return_revert, AnalysisKind, CallContext, CallInputs, CallScheme,
+    CreateInputs, CreateScheme, Env, ExecutionResult, Gas, Inspector, Log, Return, Spec,
     SpecId::{self, *},
     TransactOut, TransactTo, Transfer, KECCAK_EMPTY,
 };
@@ -628,9 +628,14 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                         (Return::OutOfGas, gas, Bytes::new())
                     }
                 }
-                Err(_e) => {
+                Err(e) => {
+                    let ret = if let precompiles::Return::OutOfGas = e {
+                        Return::OutOfGas
+                    } else {
+                        Return::PrecompileError
+                    };
                     self.data.journaled_state.checkpoint_revert(checkpoint); //TODO check if we are discarding or reverting
-                    (Return::PrecompileError, gas, Bytes::new())
+                    (ret, gas, Bytes::new())
                 }
             }
         } else {
