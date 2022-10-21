@@ -240,6 +240,11 @@ pub struct CfgEnv {
     /// EIP-1985.
     #[cfg(feature = "memory_limit")]
     pub memory_limit: u64,
+    /// EIP-3607 rejects transactions from senders with deployed code. In development, it can be desirable to simulate
+    /// calls from contracts, which this setting allows.
+    /// By default, it is set to `false`.
+    #[cfg(feature = "optional_eip3607")]
+    pub disable_eip3607: bool,
 }
 
 #[derive(Clone, Default, Debug, Eq, PartialEq)]
@@ -261,6 +266,8 @@ impl Default for CfgEnv {
             limit_contract_code_size: None,
             #[cfg(feature = "memory_limit")]
             memory_limit: 2u64.pow(32) - 1,
+            #[cfg(feature = "optional_eip3607")]
+            disable_eip3607: false,
         }
     }
 }

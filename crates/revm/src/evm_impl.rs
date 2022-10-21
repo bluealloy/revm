@@ -87,10 +87,17 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
             return exit(Return::FatalExternalError);
         }
 
+        #[cfg(feature = "optional_eip3607")]
+        let disable_eip3607 = self.env().cfg.disable_eip3607;
+        #[cfg(not(feature = "optional_eip3607"))]
+        let disable_eip3607 = false;
+
         // EIP-3607: Reject transactions from senders with deployed code
         // This EIP is introduced after london but there was no colision in past
         // so we can leave it enabled always
-        if self.data.journaled_state.account(caller).info.code_hash != KECCAK_EMPTY {
+        if !disable_eip3607
+            && self.data.journaled_state.account(caller).info.code_hash != KECCAK_EMPTY
+        {
             return exit(Return::RejectCallerWithCode);
         }
 
