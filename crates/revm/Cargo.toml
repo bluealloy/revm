@@ -28,9 +28,10 @@ web3 = { version = "0.18", optional = true }
 
 [features]
 default = ["std", "secp256k1"]
-dev = ["memory_limit", "optional_eip3607"]
+dev = ["memory_limit", "optional_block_gas_limit", "optional_eip3607"]
 memory_limit = []
 no_gas_measuring = []
+optional_block_gas_limit = []
 optional_eip3607 = []
 std = ["bytes/std", "num_enum/std", "primitive-types/std", "sha3/std", "rlp/std"]
 secp256k1 = ["revm_precompiles/secp256k1"]

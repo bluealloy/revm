@@ -240,6 +240,11 @@ pub struct CfgEnv {
     /// EIP-1985.
     #[cfg(feature = "memory_limit")]
     pub memory_limit: u64,
+    /// There are use cases where it's allowed to provide a gas limit that's higher than a block's gas limit. To that
+    /// end, you can disable the block gas limit validation.
+    /// By default, it is set to `false`.
+    #[cfg(feature = "optional_block_gas_limit")]
+    pub disable_block_gas_limit: bool,
     /// EIP-3607 rejects transactions from senders with deployed code. In development, it can be desirable to simulate
     /// calls from contracts, which this setting allows.
     /// By default, it is set to `false`.
@@ -266,6 +271,8 @@ impl Default for CfgEnv {
             limit_contract_code_size: None,
             #[cfg(feature = "memory_limit")]
             memory_limit: 2u64.pow(32) - 1,
+            #[cfg(feature = "optional_block_gas_limit")]
+            disable_block_gas_limit: false,
             #[cfg(feature = "optional_eip3607")]
             disable_eip3607: false,
         }

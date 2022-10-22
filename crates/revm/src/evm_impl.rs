@@ -66,8 +66,14 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
             }
             // check if priority fee is lower then max fee
         }
+
+        #[cfg(feature = "optional_block_gas_limit")]
+        let disable_block_gas_limit = self.env().cfg.disable_block_gas_limit;
+        #[cfg(not(feature = "optional_block_gas_limit"))]
+        let disable_block_gas_limit = false;
+
         // unusual to be found here, but check if gas_limit is more then block_gas_limit
-        if U256::from(gas_limit) > self.data.env.block.gas_limit {
+        if !disable_block_gas_limit && U256::from(gas_limit) > self.data.env.block.gas_limit {
             return exit(Return::CallerGasLimitMoreThenBlock);
         }
 
