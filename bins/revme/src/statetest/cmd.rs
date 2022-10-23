@@ -17,8 +17,7 @@ impl Cmd {
         //     run(test_files)?
         // }
         run(vec![PathBuf::from(
-            "../../tests/GeneralStateTests/stTimeConsuming/sstore_combinations_initial00_2.json"
-                .to_string(),
+            "../../tests/GeneralStateTests/stMemoryTest/buffer.json".to_string(),
         )])?;
         Ok(())
     }
