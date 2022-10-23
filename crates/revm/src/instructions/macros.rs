@@ -71,7 +71,7 @@ macro_rules! pop_address {
         }
         // Safety: Length is checked above.
         let $x1: H160 =
-            H160::from_slice(&unsafe { $interp.stack.pop_unsafe() }.to_be_bytes::<32>()[..20]);
+            H160::from_slice(&unsafe { $interp.stack.pop_unsafe() }.to_be_bytes::<32>()[12..]);
     };
     ( $interp:expr, $x1:ident, $x2:ident) => {
         if $interp.stack.len() < 2 {

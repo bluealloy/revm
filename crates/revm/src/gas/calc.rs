@@ -19,7 +19,7 @@ pub fn sstore_refund<SPEC: Spec>(original: U256, current: U256, new: U256) -> i6
             } else {
                 let mut refund = 0;
 
-                if !original == U256::ZERO {
+                if original != U256::ZERO {
                     if current == U256::ZERO {
                         refund -= sstore_clears_schedule;
                     } else if new == U256::ZERO {
@@ -44,7 +44,7 @@ pub fn sstore_refund<SPEC: Spec>(original: U256, current: U256, new: U256) -> i6
             }
         }
     } else {
-        if !current == U256::ZERO && new == U256::ZERO {
+        if current != U256::ZERO && new == U256::ZERO {
             REFUND_SSTORE_CLEARS
         } else {
             0
@@ -198,7 +198,7 @@ pub fn sstore_cost<SPEC: Spec>(
             }
         }
     } else {
-        if current == U256::ZERO && !new == U256::ZERO {
+        if current == U256::ZERO && new != U256::ZERO {
             SSTORE_SET
         } else {
             gas_sstore_reset
