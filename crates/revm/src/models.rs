@@ -274,7 +274,7 @@ impl Default for BlockEnv {
             coinbase: H160::zero(),
             timestamp: U256::from(1),
             difficulty: U256::ZERO,
-            basefee: U256::from(1),
+            basefee: U256::ZERO,
         }
     }
 }
