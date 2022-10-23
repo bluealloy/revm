@@ -74,8 +74,7 @@ impl Memory {
 
     #[inline(always)]
     pub fn set_u256(&mut self, index: usize, value: U256) {
-        self.data
-            .splice(index..index + 32, value.to_be_bytes::<32>());
+        self.data[index..index + 32].copy_from_slice(&value.to_be_bytes::<32>());
     }
 
     /// Set memory region at given offset. The offset and value are already checked
