@@ -1,5 +1,5 @@
 use core::cmp::Ordering;
-use primitive_types::U256;
+use ruint::aliases::U256;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum Sign {
@@ -8,14 +8,14 @@ pub enum Sign {
     Zero,
 }
 
-pub const SIGN_BIT_MASK: U256 = U256([
+pub const SIGN_BIT_MASK: U256 = U256::from_limbs([
     0xffffffffffffffff,
     0xffffffffffffffff,
     0xffffffffffffffff,
     FLIPH_BITMASK_U64,
 ]);
 
-pub const MIN_NEGATIVE_VALUE: U256 = U256([
+pub const MIN_NEGATIVE_VALUE: U256 = U256::from_limbs([
     0x0000000000000000,
     0x0000000000000000,
     0x0000000000000000,
@@ -29,8 +29,8 @@ pub struct I256(pub Sign, pub U256);
 
 #[inline(always)]
 pub fn i256_sign<const DO_TWO_COMPL: bool>(val: &mut U256) -> Sign {
-    if val.0[3] & SIGN_BITMASK_U64 == 0 {
-        if val.is_zero() {
+    if val.as_limbs()[3] & SIGN_BITMASK_U64 == 0 {
+        if *val == U256::ZERO {
             Sign::Zero
         } else {
             Sign::Plus
@@ -45,7 +45,9 @@ pub fn i256_sign<const DO_TWO_COMPL: bool>(val: &mut U256) -> Sign {
 
 #[inline(always)]
 fn u256_remove_sign(val: &mut U256) {
-    val.0[3] &= FLIPH_BITMASK_U64;
+    unsafe {
+        val.as_limbs_mut()[3] &= FLIPH_BITMASK_U64;
+    }
 }
 
 #[inline(always)]
@@ -54,7 +56,7 @@ pub fn two_compl_mut(op: &mut U256) {
 }
 
 pub fn two_compl(op: U256) -> U256 {
-    !op + U256::one()
+    !op + U256::from(1)
 }
 
 #[inline(always)]
@@ -78,10 +80,10 @@ pub fn i256_cmp(mut first: U256, mut second: U256) -> Ordering {
 pub fn i256_div(mut first: U256, mut second: U256) -> U256 {
     let second_sign = i256_sign::<true>(&mut second);
     if second_sign == Sign::Zero {
-        return U256::zero();
+        return U256::ZERO;
     }
     let first_sign = i256_sign::<true>(&mut first);
-    if first_sign == Sign::Minus && first == MIN_NEGATIVE_VALUE && second == U256::one() {
+    if first_sign == Sign::Minus && first == MIN_NEGATIVE_VALUE && second == U256::from(1) {
         return two_compl(MIN_NEGATIVE_VALUE);
     }
 
@@ -91,8 +93,8 @@ pub fn i256_div(mut first: U256, mut second: U256) -> U256 {
     u256_remove_sign(&mut d);
     //set sign bit to zero
 
-    if d.is_zero() {
-        return U256::zero();
+    if d == U256::ZERO {
+        return U256::ZERO;
     }
 
     match (first_sign, second_sign) {
@@ -112,14 +114,14 @@ pub fn i256_div(mut first: U256, mut second: U256) -> U256 {
 pub fn i256_mod(mut first: U256, mut second: U256) -> U256 {
     let first_sign = i256_sign::<true>(&mut first);
     if first_sign == Sign::Zero {
-        return U256::zero();
+        return U256::ZERO;
     }
 
     let _ = i256_sign::<true>(&mut second);
     let mut r = first % second;
     u256_remove_sign(&mut r);
-    if r.is_zero() {
-        return U256::zero();
+    if r == U256::ZERO {
+        return U256::ZERO;
     }
     if first_sign == Sign::Minus {
         two_compl(r)
@@ -139,18 +141,18 @@ pub mod div_u256 {
     /// Panics if `other` is zero.
     #[inline(always)]
     pub fn div_mod(me: U256, other: U256) -> (U256, U256) {
-        let my_bits = me.bits();
-        let your_bits = other.bits();
+        let my_bits = me.bit_len();
+        let your_bits = other.bit_len();
 
         assert!(your_bits != 0, "division by zero");
 
         // Early return in case we are dividing by a larger number than us
         if my_bits < your_bits {
-            return (U256::zero(), me);
+            return (U256::ZERO, me);
         }
 
         if your_bits <= WORD_BITS {
-            return div_mod_small(me, other.low_u64());
+            return div_mod_small(me, other.as_limbs()[0]);
         }
 
         let (n, m) = {
@@ -165,19 +167,20 @@ pub mod div_u256 {
     #[inline(always)]
     fn div_mod_small(mut me: U256, other: u64) -> (U256, U256) {
         let mut rem = 0u64;
-        for d in me.0.iter_mut().rev() {
-            let (q, r) = div_mod_word(rem, *d, other);
-            *d = q;
-            rem = r;
+        unsafe {
+            for d in me.as_limbs_mut().iter_mut().rev() {
+                let (q, r) = div_mod_word(rem, *d, other);
+                *d = q;
+                rem = r;
+            }
         }
-        (me, rem.into())
+        (me, U256::from(rem))
     }
 
     // Whether this fits u64.
     #[inline(always)]
     fn fits_word(me: &U256) -> bool {
-        let U256(ref arr) = me;
-        for i in arr.iter().take(4).skip(1) {
+        for i in me.as_limbs().iter().take(4).skip(1) {
             if *i != 0 {
                 return false;
             }
@@ -188,21 +191,21 @@ pub mod div_u256 {
     // See Knuth, TAOCP, Volume 2, section 4.3.1, Algorithm D.
     #[inline(always)]
     fn div_mod_knuth(me: U256, mut v: U256, n: usize, m: usize) -> (U256, U256) {
-        debug_assert!(me.bits() >= v.bits() && !fits_word(&v));
+        debug_assert!(me.bit_len() >= v.bit_len() && !fits_word(&v));
         debug_assert!(n + m <= 4);
         // D1.
         // Make sure 64th bit in v's highest word is set.
         // If we shift both self and v, it won't affect the quotient
         // and the remainder will only need to be shifted back.
-        let shift = v.0[n - 1].leading_zeros();
-        v <<= shift;
+        let shift = v.as_limbs()[n - 1].leading_zeros();
+        v <<= shift as usize;
         // u will store the remainder (shifted)
         let mut u = full_shl(me, shift);
 
         // quotient
-        let mut q = U256::zero();
-        let v_n_1 = v.0[n - 1];
-        let v_n_2 = v.0[n - 2];
+        let mut q = U256::ZERO;
+        let v_n_1 = v.as_limbs()[n - 1];
+        let v_n_2 = v.as_limbs()[n - 2];
 
         // D2. D7.
         // iterate from m downto 0
@@ -255,12 +258,14 @@ pub mod div_u256 {
             if c {
                 q_hat -= 1;
                 // add v to u[j..]
-                let c = add_slice(&mut u[j..], &v.0[..n]);
+                let c = add_slice(&mut u[j..], &v.as_limbs()[..n]);
                 u[j + n] = u[j + n].wrapping_add(u64::from(c));
             }
 
             // D5.
-            q.0[j] = q_hat;
+            unsafe {
+                q.as_limbs_mut()[j] = q_hat;
+            }
         }
 
         // D8.
@@ -310,24 +315,28 @@ pub mod div_u256 {
     fn full_shl(me: U256, shift: u32) -> [u64; 4 + 1] {
         debug_assert!(shift < WORD_BITS as u32);
         let mut u = [0u64; 4 + 1];
-        let u_lo = me.0[0] << shift;
-        let u_hi = me >> (WORD_BITS as u32 - shift);
+        let u_lo = me.as_limbs()[0] << shift;
+        let u_hi = me >> (WORD_BITS - shift as usize);
         u[0] = u_lo;
-        u[1..].copy_from_slice(&u_hi.0[..]);
+        u[1..].copy_from_slice(&u_hi.as_limbs()[..]);
         u
     }
 
     #[inline(always)]
     fn full_shr(u: [u64; 4 + 1], shift: u32) -> U256 {
         debug_assert!(shift < WORD_BITS as u32);
-        let mut res = U256::zero();
+        let mut res = U256::ZERO;
         for (i, item) in u.iter().enumerate().take(4) {
-            res.0[i] = item >> shift;
+            unsafe {
+                res.as_limbs_mut()[i] = item >> shift;
+            }
         }
         // carry
         if shift > 0 {
             for (i, item) in u.iter().enumerate().skip(1) {
-                res.0[i - 1] |= item << (WORD_BITS as u32 - shift);
+                unsafe {
+                    res.as_limbs_mut()[i - 1] |= item << (WORD_BITS - shift as usize);
+                }
             }
         }
         res
@@ -337,7 +346,7 @@ pub mod div_u256 {
     fn full_mul_u64(me: U256, by: u64) -> [u64; 4 + 1] {
         let (prod, carry) = overflowing_mul_u64(me, by);
         let mut res = [0u64; 4 + 1];
-        res[..4].copy_from_slice(&prod.0[..]);
+        res[..4].copy_from_slice(&prod.as_limbs()[..]);
         res[4] = carry;
         res
     }
@@ -348,10 +357,12 @@ pub mod div_u256 {
     fn overflowing_mul_u64(mut me: U256, other: u64) -> (U256, u64) {
         let mut carry = 0u64;
 
-        for d in me.0.iter_mut() {
-            let (res, c) = mul_u64(*d, other, carry);
-            *d = res;
-            carry = c;
+        unsafe {
+            for d in me.as_limbs_mut().iter_mut() {
+                let (res, c) = mul_u64(*d, other, carry);
+                *d = res;
+                carry = c;
+            }
         }
 
         (me, carry)
@@ -393,7 +404,7 @@ pub mod div_u256 {
 mod tests {
     use super::*;
     use core::num::Wrapping;
-    use primitive_types::U256;
+    use ruint::aliases::U256;
 
     #[test]
     fn div_i256() {
@@ -411,8 +422,8 @@ mod tests {
         let neg_one_hundred = U256::from(100);
         let _neg_one_hundred_sign = Sign::Minus;
         let minus_one = U256::from(1);
-        let max_value = U256::from(2).pow(U256::from(255)) - 1;
-        let neg_max_value = U256::from(2).pow(U256::from(255)) - 1;
+        let max_value = U256::from(2).pow(255) - U256::from(1);
+        let neg_max_value = U256::from(2).pow(255) - U256::from(1);
 
         assert_eq!(i256_div(MIN_NEGATIVE_VALUE, minus_one), MIN_NEGATIVE_VALUE);
         assert_eq!(i256_div(MIN_NEGATIVE_VALUE, one), MIN_NEGATIVE_VALUE);

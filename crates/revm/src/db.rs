@@ -9,7 +9,8 @@ pub use in_memory_db::{AccountState, BenchmarkDB, CacheDB, DbAccount, EmptyDB, I
 
 use crate::{interpreter::bytecode::Bytecode, Account};
 use hashbrown::HashMap as Map;
-use primitive_types::{H160, H256, U256};
+use primitive_types::{H160, H256};
+use ruint::aliases::U256;
 
 use crate::AccountInfo;
 use auto_impl::auto_impl;

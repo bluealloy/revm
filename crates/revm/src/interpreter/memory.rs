@@ -3,7 +3,7 @@ use core::{
     cmp::min,
     ops::{BitAnd, Not},
 };
-use primitive_types::U256;
+use ruint::aliases::U256;
 
 /// A sequencial memory. It uses Rust's `Vec` for internal
 /// representation.
@@ -74,7 +74,8 @@ impl Memory {
 
     #[inline(always)]
     pub fn set_u256(&mut self, index: usize, value: U256) {
-        value.to_big_endian(&mut self.data[index..index + 32])
+        self.data
+            .splice(index..index + 32, value.to_be_bytes::<32>());
     }
 
     /// Set memory region at given offset. The offset and value are already checked

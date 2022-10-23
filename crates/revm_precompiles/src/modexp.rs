@@ -6,7 +6,8 @@ use core::{
     mem::size_of,
 };
 use num::{BigUint, One, Zero};
-use primitive_types::{H160 as Address, U256};
+use primitive_types::H160 as Address;
+use ruint::aliases::U256;
 
 pub const BYZANTIUM: (Address, Precompile) = (
     super::make_address(0, 5),
@@ -159,10 +160,10 @@ fn byzantium_gas_calc(base_len: u64, exp_len: u64, mod_len: u64, exp_highp: &Big
     // mul * iter_count bounded by 2^195 < 2^256 (no overflow)
     let gas = (mul * iter_count) / U256::from(20);
 
-    if gas.bits() > 64 {
+    if gas.bit_len() > 64 {
         u64::MAX
     } else {
-        gas.as_u64()
+        u128::try_from(gas).unwrap() as u64
     }
 }
 
@@ -181,11 +182,11 @@ fn berlin_gas_calc(base_length: u64, exp_length: u64, mod_length: u64, exp_highp
 
     let multiplication_complexity = calculate_multiplication_complexity(base_length, mod_length);
     let iteration_count = calculate_iteration_count(exp_length, exp_highp);
-    let gas = (multiplication_complexity * U256::from(iteration_count)) / 3;
+    let gas = (multiplication_complexity * U256::from(iteration_count)) / U256::from(3);
     if gas > U256::from(u64::MAX) {
         u64::MAX
     } else {
-        max(200, gas.as_u64())
+        max(200, u128::try_from(gas).unwrap() as u64)
     }
 }
 

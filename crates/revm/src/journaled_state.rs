@@ -2,7 +2,8 @@ use crate::{interpreter::bytecode::Bytecode, models::SelfDestructResult, Return,
 use alloc::{vec, vec::Vec};
 use core::mem::{self};
 use hashbrown::{hash_map::Entry, HashMap as Map};
-use primitive_types::{H160, U256};
+use primitive_types::H160;
+use ruint::aliases::U256;
 
 use crate::{db::Database, AccountInfo, Log};
 
@@ -467,7 +468,7 @@ impl JournaledState {
             });
 
         Ok(SelfDestructResult {
-            had_value: !balance.is_zero(),
+            had_value: balance != U256::ZERO,
             is_cold,
             target_exists,
             previously_destroyed,
@@ -551,7 +552,7 @@ impl JournaledState {
             Entry::Vacant(vac) => {
                 // if storage was cleared, we dont need to ping db.
                 let value = if account.storage_cleared {
-                    U256::zero()
+                    U256::ZERO
                 } else {
                     db.storage(address, key)?
                 };

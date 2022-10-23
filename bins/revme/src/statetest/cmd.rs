@@ -11,11 +11,15 @@ pub struct Cmd {
 
 impl Cmd {
     pub fn run(&self) -> Result<(), TestError> {
-        for path in &self.path {
-            println!("Start running tests on: {:?}", path);
-            let test_files = find_all_json_tests(path);
-            run(test_files)?
-        }
+        // for path in &self.path {
+        //     println!("Start running tests on: {:?}", path);
+        //     let test_files = find_all_json_tests(path);
+        //     run(test_files)?
+        // }
+        run(vec![PathBuf::from(
+            "../../tests/GeneralStateTests/stTimeConsuming/sstore_combinations_initial00_2.json"
+                .to_string(),
+        )])?;
         Ok(())
     }
 }

@@ -10,8 +10,9 @@ use std::{
 use sha3::{Digest, Keccak256};
 
 use indicatif::ProgressBar;
-use primitive_types::{H160, H256, U256};
+use primitive_types::{H160, H256};
 use revm::{db::AccountState, Bytecode, CreateScheme, Env, ExecutionResult, SpecId, TransactTo};
+use ruint::aliases::U256;
 use std::sync::atomic::Ordering;
 use walkdir::{DirEntry, WalkDir};
 
@@ -141,7 +142,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
         }
         let mut env = Env::default();
         // cfg env. SpecId is set down the road
-        env.cfg.chain_id = 1i32.into(); // for mainnet
+        env.cfg.chain_id = U256::from(1); // for mainnet
 
         // block env
         env.block.number = unit.env.current_number;
@@ -178,11 +179,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
 
             for (id, test) in tests.into_iter().enumerate() {
                 let gas_limit = *unit.transaction.gas_limit.get(test.indexes.gas).unwrap();
-                let gas_limit = if gas_limit > U256::from(u64::MAX) {
-                    u64::MAX
-                } else {
-                    gas_limit.as_u64()
-                };
+                let gas_limit = u64::try_from(gas_limit).unwrap_or(u64::MAX);
                 env.tx.gas_limit = gas_limit;
                 env.tx.data = unit
                     .transaction
@@ -204,7 +201,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                                 item.address,
                                 item.storage_keys
                                     .iter()
-                                    .map(|f| U256::from_big_endian(f.as_ref()))
+                                    .map(|f| U256::from_be_bytes(f.0))
                                     .collect::<Vec<_>>(),
                             )
                         })

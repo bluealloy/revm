@@ -1495,6 +1495,7 @@ dependencies = [
  "primitive-types 0.11.1",
  "revm_precompiles",
  "rlp",
+ "ruint",
  "serde",
  "sha3 0.10.4",
  "tokio",
@@ -1523,6 +1524,7 @@ dependencies = [
  "once_cell",
  "primitive-types 0.11.1",
  "ripemd",
+ "ruint",
  "secp256k1 0.24.0",
  "sha2",
  "sha3 0.10.4",
@@ -1542,6 +1544,7 @@ dependencies = [
  "primitive-types 0.11.1",
  "revm",
  "rlp",
+ "ruint",
  "serde",
  "serde_derive",
  "serde_json",
@@ -1595,6 +1598,25 @@ dependencies = [
  "bytes",
  "rustc-hex",
 ]
+
+[[package]]
+name = "ruint"
+version = "1.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4e4fee36a0681b5ca7a3a5509ed6c7580325440603f8984c929403e7c004e0fb"
+dependencies = [
+ "rlp",
+ "ruint-macro",
+ "rustc_version",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "ruint-macro"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a4bb0fa2c9df745e5ebf08fb033655b5fba6511a3e6e82b68f5053963e267755"
 
 [[package]]
 name = "rustc-hex"

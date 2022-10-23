@@ -2,7 +2,7 @@
 
 use bytes::Bytes;
 use once_cell::sync::OnceCell;
-use primitive_types::{H160 as Address, H256, U256};
+use primitive_types::{H160 as Address, H256};
 
 mod blake2;
 mod bn128;
@@ -238,11 +238,4 @@ const fn make_address(x: u32, y: u128) -> Address {
         y_bytes[14],
         y_bytes[15],
     ])
-}
-
-//use for test
-pub fn u256_to_arr(value: &U256) -> [u8; 32] {
-    let mut result = [0u8; 32];
-    value.to_big_endian(&mut result);
-    result
 }
