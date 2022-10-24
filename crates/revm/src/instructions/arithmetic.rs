@@ -3,18 +3,53 @@ use crate::{gas, Interpreter, Return, Spec};
 use super::i256::{i256_div, i256_mod};
 use core::{convert::TryInto, ops::Rem};
 use primitive_types::{U256, U512};
+use ruint::aliases::U256 as RU256;
 
 pub fn div(op1: U256, op2: U256) -> U256 {
     if op2.is_zero() {
         U256::zero()
     } else {
-        //op1 / op2
-        super::i256::div_u256::div_mod(op1, op2).0
+        let op1: RU256 = op1.into();
+        let op2: RU256 = op2.into();
+        let res = op1 / op2;
+        res.into()
     }
 }
 
+#[inline(never)]
 pub fn sdiv(op1: U256, op2: U256) -> U256 {
-    i256_div(op1, op2)
+    // return i256_div(op1, op2);
+
+    let first: RU256 = op1.into();
+    let second: RU256 = op2.into();
+
+    // Zero-division case
+    if second == RU256::ZERO {
+        return RU256::ZERO.into();
+    }
+
+    // Compute result sign and take absolute values of operands
+    let sign = first.bit(255) ^ second.bit(255);
+    let first = if first.bit(255) {
+        first.overflowing_neg().0
+    } else {
+        first
+    };
+    let second = if second.bit(255) {
+        second.overflowing_neg().0
+    } else {
+        second
+    };
+
+    // Compute result
+    let result = first / second;
+    let result = if sign {
+        result.overflowing_neg().0
+    } else {
+        result
+    };
+
+    result.into()
 }
 
 pub fn rem(op1: U256, op2: U256) -> U256 {

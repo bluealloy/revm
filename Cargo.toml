@@ -9,6 +9,7 @@ default-members = ["crates/revm"]
 
 [profile.release]
 # debug = true
+lto = true
 
 [profile.ethtests]
 inherits = "test"
