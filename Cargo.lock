@@ -1566,6 +1566,7 @@ dependencies = [
  "js-sys",
  "primitive-types 0.11.1",
  "revm",
+ "ruint",
  "wasm-bindgen",
 ]
 
@@ -1605,6 +1606,7 @@ version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4e92ffeb2358f4d0ada2906530800ee2dce75d2a45aafa621f9033fd762aed6"
 dependencies = [
+ "primitive-types 0.10.1",
  "rlp",
  "ruint-macro",
  "rustc_version",
