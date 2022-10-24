@@ -2,15 +2,15 @@ use crate::{gas, Interpreter, Return, Spec};
 
 use super::i256::{i256_div, i256_mod};
 use core::ops::Rem;
-use ruint::aliases::{U256, U512};
-use ruint::UintTryFrom;
+use ruint::aliases::U256;
+use std::ops::{Div, Mul};
 
 pub fn div(op1: U256, op2: U256) -> U256 {
     if op2 == U256::ZERO {
         U256::ZERO
     } else {
         //op1 / op2
-        op1.div_rem(op2).0
+        op1.div(op2)
     }
 }
 
@@ -35,42 +35,29 @@ pub fn smod(op1: U256, op2: U256) -> U256 {
 }
 
 pub fn addmod(op1: U256, op2: U256, op3: U256) -> U256 {
-    if op3 == U256::ZERO {
-        U256::ZERO
-    } else {
-        let op1: U512 = U512::from(op1);
-        let op2: U512 = U512::from(op2);
-        let op3: U512 = U512::from(op3);
-        let v = (op1 + op2) % op3;
-        U256::uint_try_from(v).expect("op3 is less than U256::MAX, thus it never overflows; qed")
-    }
+    op1.add_mod(op2, op3)
 }
 
 pub fn mulmod(op1: U256, op2: U256, op3: U256) -> U256 {
-    if op3 == U256::ZERO {
-        U256::ZERO
-    } else {
-        let op1: U512 = U512::from(op1);
-        let op2: U512 = U512::from(op2);
-        let op3: U512 = U512::from(op3);
-        let v = (op1 * op2) % op3;
-        U256::uint_try_from(v).expect("op3 is less than U256::MAX, thus it never overflows; qed")
-    }
+    op1.mul_mod(op2, op3)
 }
 
 pub fn exp(op1: U256, op2: U256) -> U256 {
+    let mut result = U256::from(1);
     let mut op1 = op1;
     let mut op2 = op2;
-    let mut r: U256 = U256::from(1);
-
-    while op2 != U256::ZERO {
-        if op2 & U256::from(1) != U256::ZERO {
-            r = r.overflowing_mul(op1).0;
+    // Exponentiation by squaring
+    while op2 > U256::ZERO {
+        // Multiply by base
+        if op2.as_limbs()[0] & 1 == 1 {
+            result = result.mul(op1);
         }
+
+        // Square base
+        op1 = op1.mul(op1);
         op2 >>= 1;
-        op1 = op1.overflowing_mul(op1).0;
     }
-    r
+    result
 }
 
 pub fn eval_exp<SPEC: Spec>(interp: &mut Interpreter) -> Return {

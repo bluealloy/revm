@@ -88,7 +88,7 @@ pub fn i256_div(mut first: U256, mut second: U256) -> U256 {
     }
 
     //let mut d = first / second;
-    let mut d = div_u256::div_mod(first, second).0;
+    let mut d = first.div_rem(second).0;
 
     u256_remove_sign(&mut d);
     //set sign bit to zero
