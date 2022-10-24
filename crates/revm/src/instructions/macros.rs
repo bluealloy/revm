@@ -215,9 +215,8 @@ macro_rules! op2_u256_tuple {
         // gas!($interp, $gas);
 
         pop_top!($interp, op1, op2);
-        let (ret, ..) =
-            primitive_types::U256(op1.into_limbs()).$op(primitive_types::U256(op2.into_limbs()));
-        *op2 = U256::from_limbs(ret.0);
+        let (ret, ..) = op1.$op(*op2);
+        *op2 = ret;
 
         Return::Continue
     }};
