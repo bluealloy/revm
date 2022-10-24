@@ -344,7 +344,7 @@ impl DatabaseRef for EmptyDB {
     // History related
     fn block_hash(&self, number: U256) -> Result<H256, Self::Error> {
         Ok(H256::from_slice(&Keccak256::digest(
-            number.to_be_bytes::<{ 4 * 8 }>(),
+            number.to_be_bytes::<32>(),
         )))
     }
 }
