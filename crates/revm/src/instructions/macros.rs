@@ -210,25 +210,6 @@ macro_rules! op2_u256 {
     }};
 }
 
-macro_rules! op2_u256_tuple {
-    ( $interp:expr, $op:ident) => {{
-        // gas!($interp, $gas);
-
-        pop_top!($interp, op1, op2);
-        let (ret, ..) = op1.$op(*op2);
-        *op2 = ret;
-
-        Return::Continue
-    }};
-    ( $interp:expr, $op:ident ) => {{
-        pop_top!($interp, op1, op2);
-        let (ret, ..) = op1.$op(op2);
-        *op2 = ret;
-
-        Return::Continue
-    }};
-}
-
 macro_rules! op2_u256_fn {
     ( $interp:expr, $op:path ) => {{
         // gas!($interp, $gas);

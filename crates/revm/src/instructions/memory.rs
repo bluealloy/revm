@@ -8,7 +8,7 @@ pub fn mload(interp: &mut Interpreter) -> Return {
     memory_resize!(interp, index, 32);
     push!(
         interp,
-        U256::try_from_be_slice(interp.memory.get_slice(index, 32)).unwrap()
+        U256::from_be_bytes::<32>(interp.memory.get_slice(index, 32).try_into().unwrap())
     );
     Return::Continue
 }
