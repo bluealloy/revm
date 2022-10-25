@@ -64,14 +64,14 @@ impl Database for Web3DB {
         Ok(Some(AccountInfo::new(
             U256::from_limbs(
                 balance
-                    .unwrap_or_else(|e| panic!("web3 get balance error:{:?}", e))
+                    .unwrap_or_else(|e| panic!("web3 get balance error:{e:?}"))
                     .0,
             ),
             nonce
-                .unwrap_or_else(|e| panic!("web3 get nonce error:{:?}", e))
+                .unwrap_or_else(|e| panic!("web3 get nonce error:{e:?}"))
                 .as_u64(),
             Bytecode::new_raw(Bytes::from(
-                code.unwrap_or_else(|e| panic!("web3 get node error:{:?}", e))
+                code.unwrap_or_else(|e| panic!("web3 get node error:{e:?}"))
                     .0,
             )),
         )))

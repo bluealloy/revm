@@ -628,48 +628,43 @@ mod test {
 
     #[test]
     fn test_is_precompile() {
-        assert_eq!(
-            is_precompile(
+        assert!(
+            !is_precompile(
                 H160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
                 3
             ),
-            false,
             "Zero is not precompile"
         );
 
-        assert_eq!(
-            is_precompile(
+        assert!(
+            !is_precompile(
                 H160([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9]),
                 3
             ),
-            false,
             "0x100..0 is not precompile"
         );
 
-        assert_eq!(
-            is_precompile(
+        assert!(
+            !is_precompile(
                 H160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]),
                 3
             ),
-            false,
             "0x000..4 is not precompile"
         );
 
-        assert_eq!(
+        assert!(
             is_precompile(
                 H160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
                 3
             ),
-            true,
             "0x00..01 is precompile"
         );
 
-        assert_eq!(
+        assert!(
             is_precompile(
                 H160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]),
                 3
             ),
-            true,
             "0x000..3 is precompile"
         );
     }

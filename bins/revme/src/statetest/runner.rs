@@ -250,20 +250,20 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                 let logs_root = log_rlp_hash(logs);
                 if test.hash != state_root || test.logs != logs_root {
                     println!(
-                        "ROOTS mismath:\nstate_root:{:?}:{:?}\nlogs_root:{:?}:{:?}",
-                        test.hash, state_root, test.logs, logs_root
+                        "ROOTS mismath:\nstate_root:{:?}:{state_root:?}\nlogs_root:{:?}:{logs_root:?}",
+                        test.hash, test.logs
                     );
                     let mut database_cloned = database.clone();
                     evm.database(&mut database_cloned);
                     evm.inspect_commit(CustomPrintTracer::new());
                     let db = evm.db().unwrap();
-                    println!("{:?} UNIT_TEST:{}\n", path, name);
+                    println!("{path:?} UNIT_TEST:{name}\n");
                     println!(
                         "fail reson: {:?} {:?} UNIT_TEST:{}\n gas:{:?} ({:?} refunded)",
                         exit_reason, path, name, gas_used, gas_refunded,
                     );
-                    println!("\nApplied state:{:?}\n", db);
-                    println!("\nStateroot: {:?}\n", state_root);
+                    println!("\nApplied state:{db:?}\n");
+                    println!("\nStateroot: {state_root:?}\n");
                     return Err(TestError::RootMissmatch {
                         spec_id: env.cfg.spec_id,
                         id,
@@ -308,7 +308,7 @@ pub fn run(test_files: Vec<PathBuf>) -> Result<(), TestError> {
                     //println!("Test:{:?}\n",test_path);
                     if let Err(err) = execute_test_suit(&test_path, &elapsed) {
                         endjob.store(true, Ordering::SeqCst);
-                        println!("Test[{}] named:\n{:?} failed: {}\n", index, test_path, err);
+                        println!("Test[{index}] named:\n{test_path:?} failed: {err}\n");
                         return Err(err);
                     }
 

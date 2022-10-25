@@ -113,7 +113,7 @@ mod tests {
         }
 
         let out: Test = serde_json::from_str(json)?;
-        println!("out:{:?}", out);
+        println!("out:{out:?}");
         Ok(())
     }
 }
