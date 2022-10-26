@@ -1,17 +1,11 @@
 use crate::{gas, Interpreter, Return, Spec};
 
 use super::i256::{i256_div, i256_mod};
-use core::ops::Rem;
 use ruint::aliases::U256;
-use std::ops::{Div, Mul};
+use std::ops::Mul;
 
 pub fn div(op1: U256, op2: U256) -> U256 {
-    if op2 == U256::ZERO {
-        U256::ZERO
-    } else {
-        //op1 / op2
-        op1.div(op2)
-    }
+    op1.checked_div(op2).unwrap_or_default()
 }
 
 pub fn sdiv(op1: U256, op2: U256) -> U256 {
@@ -19,11 +13,7 @@ pub fn sdiv(op1: U256, op2: U256) -> U256 {
 }
 
 pub fn rem(op1: U256, op2: U256) -> U256 {
-    if op2 == U256::ZERO {
-        U256::ZERO
-    } else {
-        op1.rem(op2)
-    }
+    op1.checked_rem(op2).unwrap_or_default()
 }
 
 pub fn smod(op1: U256, op2: U256) -> U256 {
@@ -143,7 +133,7 @@ mod tests {
             op2
         } else {
             let mut ret = U256::ZERO;
-            let len = u128::try_from(op1).unwrap() as usize;
+            let len = usize::try_from(op1).unwrap();
             let t: usize = 8 * (len + 1) - 1;
             let t_bit_mask = U256::from(1) << t;
             let t_value = (op2 & t_bit_mask) >> t;

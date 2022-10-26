@@ -28,12 +28,7 @@ where
     D: de::Deserializer<'de>,
 {
     let string = String::deserialize(deserializer)?;
-
-    let output = if let Some(stripped) = string.strip_prefix("0x") {
-        U256::from_str_radix(stripped, 16).unwrap()
-    } else {
-        U256::from_str(&string).unwrap()
-    };
+    let output = string.parse().unwrap();
 
     Ok(output)
 }

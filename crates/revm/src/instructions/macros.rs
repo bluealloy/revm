@@ -70,8 +70,9 @@ macro_rules! pop_address {
             return Return::StackUnderflow;
         }
         // Safety: Length is checked above.
-        let $x1: H160 =
-            H160::from_slice(&unsafe { $interp.stack.pop_unsafe() }.to_be_bytes::<32>()[12..]);
+        let $x1: H160 = H160::from_slice(
+            &unsafe { $interp.stack.pop_unsafe() }.to_be_bytes::<{ U256::BYTES }>()[12..],
+        );
     };
     ( $interp:expr, $x1:ident, $x2:ident) => {
         if $interp.stack.len() < 2 {
@@ -241,29 +242,20 @@ macro_rules! op3_u256_fn {
 }
 
 macro_rules! as_usize_saturated {
-    ( $v:expr ) => {{
-        if $v.as_limbs()[1] != 0 || $v.as_limbs()[2] != 0 || $v.as_limbs()[3] != 0 {
-            usize::MAX
-        } else {
-            $v.as_limbs()[0] as usize
-        }
-    }};
+    ( $v:expr ) => {
+        $v.saturating_to::<usize>()
+    };
 }
 
 macro_rules! as_usize_or_fail {
     ( $v:expr ) => {{
-        if $v.as_limbs()[1] != 0 || $v.as_limbs()[2] != 0 || $v.as_limbs()[3] != 0 {
-            return Return::OutOfGas;
-        }
-
-        $v.as_limbs()[0] as usize
+        as_usize_or_fail!($v, Return::OutOfGas)
     }};
 
-    ( $v:expr, $reason:expr ) => {{
-        if $v.as_limbs()[1] != 0 || $v.as_limbs()[2] != 0 || $v.as_limbs()[3] != 0 {
-            return $reason;
+    ( $v:expr, $reason:expr ) => {
+        match usize::try_from($v) {
+            Ok(value) => value,
+            Err(_) => return $reason,
         }
-
-        $v.as_limbs()[0] as usize
-    }};
+    };
 }

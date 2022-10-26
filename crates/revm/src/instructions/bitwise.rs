@@ -48,21 +48,11 @@ pub fn byte(op1: U256, op2: U256) -> U256 {
 }
 
 pub fn shl(shift: U256, value: U256) -> U256 {
-    if value == U256::ZERO || shift >= U256::from(256) {
-        U256::ZERO
-    } else {
-        let shift = u64::try_from(shift).unwrap();
-        value << shift as usize
-    }
+    value << usize::try_from(shift).unwrap_or(256)
 }
 
 pub fn shr(shift: U256, value: U256) -> U256 {
-    if value == U256::ZERO || shift >= U256::from(256) {
-        U256::ZERO
-    } else {
-        let shift = u64::try_from(shift).unwrap();
-        value >> shift as usize
-    }
+    value >> usize::try_from(shift).unwrap_or(256)
 }
 
 pub fn sar(shift: U256, mut value: U256) -> U256 {
@@ -76,12 +66,12 @@ pub fn sar(shift: U256, mut value: U256) -> U256 {
             Sign::Minus => two_compl(U256::from(1)),
         }
     } else {
-        let shift = u64::try_from(shift).unwrap();
+        let shift = usize::try_from(shift).unwrap();
 
         match value_sign {
-            Sign::Plus | Sign::Zero => value >> shift as usize,
+            Sign::Plus | Sign::Zero => value >> shift,
             Sign::Minus => {
-                let shifted = ((value.overflowing_sub(U256::from(1)).0) >> shift as usize)
+                let shifted = ((value.overflowing_sub(U256::from(1)).0) >> shift)
                     .overflowing_add(U256::from(1))
                     .0;
                 two_compl(shifted)

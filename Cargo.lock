@@ -1603,8 +1603,7 @@ dependencies = [
 [[package]]
 name = "ruint"
 version = "1.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8e3fd8b28f406396b65269b36de0fba1c1c8b9cd8b2c2eae3733aed700000f7"
+source = "git+https://github.com/shekhirin/uint?branch=try-into-usize#bdc0ca35e30eefab227d64cfa5006d362c886712"
 dependencies = [
  "primitive-types 0.11.1",
  "rlp",
@@ -1616,9 +1615,8 @@ dependencies = [
 
 [[package]]
 name = "ruint-macro"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4bb0fa2c9df745e5ebf08fb033655b5fba6511a3e6e82b68f5053963e267755"
+version = "1.0.1"
+source = "git+https://github.com/shekhirin/uint?branch=try-into-usize#bdc0ca35e30eefab227d64cfa5006d362c886712"
 
 [[package]]
 name = "rustc-hex"
