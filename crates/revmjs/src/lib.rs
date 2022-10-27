@@ -2,12 +2,11 @@ use core::convert::TryInto;
 
 use bn_rs::BN;
 use bytes::Bytes;
-use primitive_types::H160;
 use revm::{
     AccountInfo, Bytecode, DatabaseCommit, ExecutionResult, InMemoryDB, SpecId, TransactTo,
     EVM as rEVM,
 };
-use ruint::aliases::U256;
+use ruint::aliases::{B160, U160, U256};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -40,6 +39,7 @@ impl Default for EVM {
     }
 }
 
+#[wasm_bindgen]
 impl EVM {
     pub fn new() -> EVM {
         console_log!("EVM created");
@@ -77,7 +77,7 @@ impl EVM {
     pub fn insert_account(&mut self, address: BN, nonce: u64, balance: BN, code: &[u8]) {
         let address = address.try_into().unwrap();
         let acc_info = AccountInfo::new(
-            U256::from_limbs(primitive_types::U256::try_from(balance).unwrap().0),
+            balance.try_into().unwrap(),
             nonce,
             Bytecode::new_raw(Bytes::copy_from_slice(code)),
         );
@@ -91,8 +91,7 @@ impl EVM {
     /****** ALL CFG ENV SETTERS ********/
 
     pub fn cfg_chain_id(&mut self, gas_limit: BN) {
-        self.revm.env.cfg.chain_id =
-            U256::from_limbs(primitive_types::U256::try_from(gas_limit).unwrap().0);
+        self.revm.env.cfg.chain_id = gas_limit.try_into().unwrap();
     }
     pub fn cfg_spec_id(&mut self, spec_id: u8) {
         self.revm.env.cfg.spec_id = SpecId::try_from_u8(spec_id).unwrap_or(SpecId::LATEST);
@@ -101,27 +100,22 @@ impl EVM {
     /****** ALL BLOCK ENV SETTERS ********/
 
     pub fn block_gas_limit(&mut self, gas_limit: BN) {
-        self.revm.env.block.gas_limit =
-            U256::from_limbs(primitive_types::U256::try_from(gas_limit).unwrap().0);
+        self.revm.env.block.gas_limit = gas_limit.try_into().unwrap();
     }
     pub fn block_number(&mut self, number: BN) {
-        self.revm.env.block.number =
-            U256::from_limbs(primitive_types::U256::try_from(number).unwrap().0);
+        self.revm.env.block.number = number.try_into().unwrap();
     }
     pub fn block_coinbase(&mut self, coinbase: BN) {
         self.revm.env.block.coinbase = coinbase.try_into().unwrap();
     }
     pub fn block_timestamp(&mut self, timestamp: BN) {
-        self.revm.env.block.timestamp =
-            U256::from_limbs(primitive_types::U256::try_from(timestamp).unwrap().0);
+        self.revm.env.block.timestamp = timestamp.try_into().unwrap();
     }
     pub fn block_difficulty(&mut self, difficulty: BN) {
-        self.revm.env.block.difficulty =
-            U256::from_limbs(primitive_types::U256::try_from(difficulty).unwrap().0);
+        self.revm.env.block.difficulty = difficulty.try_into().unwrap();
     }
     pub fn block_basefee(&mut self, basefee: BN) {
-        self.revm.env.block.basefee =
-            U256::from_limbs(primitive_types::U256::try_from(basefee).unwrap().0);
+        self.revm.env.block.basefee = basefee.try_into().unwrap();
     }
 
     /****** ALL TX ENV SETTERS ********/
@@ -133,16 +127,13 @@ impl EVM {
         self.revm.env.tx.gas_limit = gas_limit;
     }
     pub fn tx_gas_price(&mut self, gas_price: BN) {
-        self.revm.env.tx.gas_price =
-            U256::from_limbs(primitive_types::U256::try_from(gas_price).unwrap().0);
+        self.revm.env.tx.gas_price = gas_price.try_into().unwrap();
     }
     pub fn tx_gas_priority_fee(&mut self, gas_priority_fee: Option<BN>) {
-        self.revm.env.tx.gas_priority_fee = gas_priority_fee
-            .map(|v| U256::from_limbs(primitive_types::U256::try_from(v).unwrap().0));
+        self.revm.env.tx.gas_priority_fee = gas_priority_fee.map(|v| v.try_into().unwrap());
     }
     pub fn tx_value(&mut self, value: BN) {
-        self.revm.env.tx.value =
-            U256::from_limbs(primitive_types::U256::try_from(value).unwrap().0);
+        self.revm.env.tx.value = value.try_into().unwrap();
     }
     pub fn tx_chain_id(&mut self, chain_id: Option<u64>) {
         self.revm.env.tx.chain_id = chain_id;
@@ -167,26 +158,25 @@ impl EVM {
 /// Struct that allows setting AccessList for transaction.
 #[wasm_bindgen]
 pub struct AccessedAccount {
-    account: H160,
+    account: B160,
     slots: Vec<U256>,
 }
 
-impl From<AccessedAccount> for (H160, Vec<U256>) {
+impl From<AccessedAccount> for (primitive_types::H160, Vec<U256>) {
     fn from(from: AccessedAccount) -> Self {
-        (from.account, from.slots)
+        (from.account.into(), from.slots)
     }
 }
 
+#[wasm_bindgen]
 impl AccessedAccount {
     pub fn new(account: BN) -> Self {
         Self {
-            account: account.try_into().unwrap(),
+            account: U160::try_from(account).unwrap().into(),
             slots: Vec::new(),
         }
     }
     pub fn slot(&mut self, slot: BN) {
-        self.slots.push(U256::from_limbs(
-            primitive_types::U256::try_from(slot).unwrap().0,
-        ))
+        self.slots.push(slot.try_into().unwrap())
     }
 }
