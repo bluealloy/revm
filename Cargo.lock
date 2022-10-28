@@ -1612,10 +1612,10 @@ dependencies = [
 [[package]]
 name = "ruint"
 version = "1.5.1"
-source = "git+https://github.com/recmo/uint?branch=main#be79dd33b9ec4ee0f0f6052de018c7db7d6117e3"
+source = "git+https://github.com/shekhirin/uint?branch=bits-default#b1afc1da5a09029742a4634eaae3b0145fd6e313"
 dependencies = [
  "bn-rs",
- "primitive-types 0.11.1",
+ "primitive-types 0.10.1",
  "rlp",
  "ruint-macro",
  "rustc_version",
@@ -1626,7 +1626,7 @@ dependencies = [
 [[package]]
 name = "ruint-macro"
 version = "1.0.1"
-source = "git+https://github.com/recmo/uint?branch=main#be79dd33b9ec4ee0f0f6052de018c7db7d6117e3"
+source = "git+https://github.com/shekhirin/uint?branch=bits-default#b1afc1da5a09029742a4634eaae3b0145fd6e313"
 
 [[package]]
 name = "rustc-hex"

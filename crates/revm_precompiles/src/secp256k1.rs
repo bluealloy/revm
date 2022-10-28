@@ -2,7 +2,7 @@ use crate::{gas_query, Precompile, PrecompileOutput, PrecompileResult, StandardP
 use alloc::vec::Vec;
 use core::cmp::min;
 
-use primitive_types::{H160 as Address, H256};
+use ruint::aliases::{B160 as Address, B256, U256};
 
 const ECRECOVER_BASE: u64 = 3_000;
 
@@ -20,7 +20,7 @@ mod secp256k1 {
         elliptic_curve::sec1::ToEncodedPoint,
         PublicKey as K256PublicKey,
     };
-    use primitive_types::H160 as Address;
+    use ruint::aliases::B160 as Address;
     use sha3::{Digest, Keccak256};
 
     pub fn ecrecover(sig: &[u8; 65], msg: &[u8; 32]) -> Result<Address, Error> {
@@ -39,7 +39,7 @@ mod secp256k1 {
 #[cfg(all(not(feature = "k256_ecrecover"), feature = "secp256k1"))]
 #[allow(clippy::module_inception)]
 mod secp256k1 {
-    use primitive_types::H160 as Address;
+    use ruint::aliases::B160 as Address;
     use secp256k1::{
         ecdsa::{RecoverableSignature, RecoveryId},
         Message, Secp256k1,
@@ -53,9 +53,9 @@ mod secp256k1 {
         let secp = Secp256k1::new();
         let public = secp.recover_ecdsa(&Message::from_slice(&msg[..32])?, &sig)?;
 
-        let mut out = vec![0; 20];
+        let mut out = [0u8; 20];
         out.copy_from_slice(&Keccak256::digest(&public.serialize_uncompressed()[1..])[12..]);
-        Ok(Address::from_slice(&out))
+        Ok(Address::from_be_bytes(out))
     }
 }
 
@@ -78,7 +78,9 @@ fn ec_recover_run(i: &[u8], target_gas: u64) -> PrecompileResult {
     sig[64] = input[63] - 27;
 
     let out = match secp256k1::ecrecover(&sig, &msg) {
-        Ok(out) => H256::from(out).as_bytes().to_vec(),
+        Ok(out) => B256::from(U256::from(out.into_inner()))
+            .to_be_bytes::<{ B256::BYTES }>()
+            .to_vec(), // TODO: replace with `B256::from(out).to_be_bytes_vec()`
         Err(_) => Vec::new(),
     };
 

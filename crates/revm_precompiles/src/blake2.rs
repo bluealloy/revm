@@ -3,7 +3,7 @@ use crate::{gas_query, Return, StandardPrecompileFn};
 use crate::{Precompile, PrecompileOutput, PrecompileResult};
 use alloc::borrow::Cow;
 use core::convert::TryInto;
-use primitive_types::H160 as Address;
+use ruint::aliases::B160 as Address;
 
 const F_ROUND: u64 = 1;
 const INPUT_LENGTH: usize = 213;

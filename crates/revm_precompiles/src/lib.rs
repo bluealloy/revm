@@ -2,7 +2,7 @@
 
 use bytes::Bytes;
 use once_cell::sync::OnceCell;
-use primitive_types::{H160 as Address, H256};
+use ruint::aliases::{B160 as Address, B256 as H256, U160};
 
 mod blake2;
 mod bn128;
@@ -216,26 +216,27 @@ impl Precompiles {
 const fn make_address(x: u32, y: u128) -> Address {
     let x_bytes = x.to_be_bytes();
     let y_bytes = y.to_be_bytes();
-    Address([
-        x_bytes[0],
-        x_bytes[1],
-        x_bytes[2],
-        x_bytes[3],
-        y_bytes[0],
-        y_bytes[1],
-        y_bytes[2],
-        y_bytes[3],
-        y_bytes[4],
-        y_bytes[5],
-        y_bytes[6],
-        y_bytes[7],
-        y_bytes[8],
-        y_bytes[9],
-        y_bytes[10],
-        y_bytes[11],
-        y_bytes[12],
-        y_bytes[13],
-        y_bytes[14],
-        y_bytes[15],
-    ])
+
+    // TODO: replace with `Address:from_bytes()` which:
+    //  a) should exist lol
+    //  b) needs to be a `const fn`
+    Address::from(U160::from_limbs([
+        x_bytes[0] as u64
+            + x_bytes[1] as u64
+            + x_bytes[2] as u64
+            + x_bytes[3] as u64
+            + y_bytes[0] as u64
+            + y_bytes[1] as u64
+            + y_bytes[2] as u64
+            + y_bytes[3] as u64,
+        y_bytes[4] as u64
+            + y_bytes[5] as u64
+            + y_bytes[6] as u64
+            + y_bytes[7] as u64
+            + y_bytes[8] as u64
+            + y_bytes[9] as u64
+            + y_bytes[10] as u64
+            + y_bytes[11] as u64,
+        y_bytes[12] as u64 + y_bytes[13] as u64 + y_bytes[14] as u64 + y_bytes[15] as u64,
+    ]))
 }

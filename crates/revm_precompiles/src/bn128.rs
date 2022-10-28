@@ -1,8 +1,7 @@
 use crate::{gas_query, Precompile, PrecompileOutput, PrecompileResult, Return};
 
 use alloc::{borrow::Cow, vec::Vec};
-use primitive_types::H160 as Address;
-use ruint::aliases::U256;
+use ruint::aliases::{B160 as Address, U256};
 
 pub mod add {
     use super::*;

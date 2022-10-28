@@ -1,7 +1,7 @@
 use super::{calc_linear_cost_u32, gas_query};
 
 use crate::{Precompile, PrecompileOutput, PrecompileResult, StandardPrecompileFn};
-use primitive_types::H160 as Address;
+use ruint::aliases::B160 as Address;
 use sha2::*;
 
 pub const SHA256: (Address, Precompile) = (

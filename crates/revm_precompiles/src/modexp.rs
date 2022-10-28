@@ -6,7 +6,7 @@ use core::{
     mem::size_of,
 };
 use num::{BigUint, One, Zero};
-use primitive_types::H160 as Address;
+use ruint::aliases::B160 as Address;
 use ruint::aliases::U256;
 
 pub const BYZANTIUM: (Address, Precompile) = (
