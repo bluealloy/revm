@@ -1,8 +1,7 @@
 use super::contract::{AnalysisData, ValidJumpAddress};
-use crate::{opcode, spec_opcode_gas, Spec, KECCAK_EMPTY};
+use crate::{common::keccak256, opcode, spec_opcode_gas, Spec, KECCAK_EMPTY};
 use bytes::Bytes;
 use primitive_types::H256;
-use sha3::{Digest, Keccak256};
 use std::sync::Arc;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -50,7 +49,7 @@ impl Bytecode {
         let hash = if bytecode.is_empty() {
             KECCAK_EMPTY
         } else {
-            H256::from_slice(Keccak256::digest(&bytecode).as_slice())
+            keccak256(&bytecode)
         };
         Self {
             bytecode,
@@ -79,7 +78,7 @@ impl Bytecode {
     pub unsafe fn new_checked(bytecode: Bytes, len: usize, hash: Option<H256>) -> Self {
         let hash = match hash {
             None if len == 0 => KECCAK_EMPTY,
-            None => H256::from_slice(Keccak256::digest(&bytecode).as_slice()),
+            None => keccak256(&bytecode),
             Some(hash) => hash,
         };
         Self {
@@ -103,7 +102,7 @@ impl Bytecode {
     ) -> Self {
         let hash = match hash {
             None if len == 0 => KECCAK_EMPTY,
-            None => H256::from_slice(Keccak256::digest(&bytecode).as_slice()),
+            None => keccak256(&bytecode),
             Some(hash) => hash,
         };
         Self {
