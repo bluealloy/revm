@@ -14,7 +14,15 @@ pub fn sha3(interp: &mut Interpreter) -> Return {
     } else {
         let from = as_usize_or_fail!(from, Return::OutOfGas);
         memory_resize!(interp, from, len);
-        H256::from_slice(Keccak256::digest(interp.memory.get_slice(from, len)).as_slice())
+        let bytes = interp.memory.get_slice(from, len);
+
+        #[cfg(not(all(target_arch = "aarch64", target_feature = "sha3")))]
+        let hash = H256::from_slice(Keccak256::digest(bytes).as_slice());
+
+        #[cfg(all(target_arch = "aarch64", target_feature = "sha3"))]
+        let hash = H256::from_slice(crate::keccak::keccak256(bytes).as_slice());
+
+        hash
     };
 
     push_h256!(interp, h256);
