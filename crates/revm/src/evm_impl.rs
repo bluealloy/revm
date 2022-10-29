@@ -67,8 +67,14 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
             }
             // check if priority fee is lower then max fee
         }
+
+        #[cfg(feature = "optional_block_gas_limit")]
+        let disable_block_gas_limit = self.env().cfg.disable_block_gas_limit;
+        #[cfg(not(feature = "optional_block_gas_limit"))]
+        let disable_block_gas_limit = false;
+
         // unusual to be found here, but check if gas_limit is more then block_gas_limit
-        if U256::from(gas_limit) > self.data.env.block.gas_limit {
+        if !disable_block_gas_limit && U256::from(gas_limit) > self.data.env.block.gas_limit {
             return exit(Return::CallerGasLimitMoreThenBlock);
         }
 
@@ -88,10 +94,17 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
             return exit(Return::FatalExternalError);
         }
 
+        #[cfg(feature = "optional_eip3607")]
+        let disable_eip3607 = self.env().cfg.disable_eip3607;
+        #[cfg(not(feature = "optional_eip3607"))]
+        let disable_eip3607 = false;
+
         // EIP-3607: Reject transactions from senders with deployed code
         // This EIP is introduced after london but there was no colision in past
         // so we can leave it enabled always
-        if self.data.journaled_state.account(caller).info.code_hash != KECCAK_EMPTY {
+        if !disable_eip3607
+            && self.data.journaled_state.account(caller).info.code_hash != KECCAK_EMPTY
+        {
             return exit(Return::RejectCallerWithCode);
         }
 
