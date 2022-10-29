@@ -1,8 +1,9 @@
 use std::str::FromStr;
 
 use bytes::Bytes;
-use primitive_types::{H160, U256};
+use primitive_types::H160;
 use revm::{Env, TransactTo};
+use ruint::aliases::U256;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Clone, Debug)]

@@ -1,5 +1,5 @@
 use crate::{gas, interpreter::Interpreter, Return, Spec, SpecId::*};
-use primitive_types::U256;
+use ruint::aliases::U256;
 
 pub fn jump(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::MID);
@@ -18,7 +18,7 @@ pub fn jump(interp: &mut Interpreter) -> Return {
 pub fn jumpi(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::HIGH);
     pop!(interp, dest, value);
-    if !value.is_zero() {
+    if value != U256::ZERO {
         let dest = as_usize_or_fail!(dest, Return::InvalidJump);
         if interp.contract.is_valid_jump(dest) {
             // Safety: In analysis we are checking if jump is valid destination and

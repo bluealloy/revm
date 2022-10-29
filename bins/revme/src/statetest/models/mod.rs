@@ -1,5 +1,6 @@
 use bytes::Bytes;
-use primitive_types::{H160, H256, U256};
+use primitive_types::{H160, H256};
+use ruint::aliases::U256;
 use std::collections::{BTreeMap, HashMap};
 mod deserializer;
 mod spec;
@@ -17,7 +18,7 @@ pub struct TestSuit(pub BTreeMap<String, TestUnit>);
 pub struct TestUnit {
     pub env: Env,
     pub pre: HashMap<H160, AccountInfo>,
-    pub post: HashMap<SpecName, Vec<Test>>,
+    pub post: BTreeMap<SpecName, Vec<Test>>,
     pub transaction: TransactionParts,
 }
 
@@ -112,7 +113,7 @@ mod tests {
         }
 
         let out: Test = serde_json::from_str(json)?;
-        println!("out:{:?}", out);
+        println!("out:{out:?}");
         Ok(())
     }
 }

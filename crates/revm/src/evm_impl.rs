@@ -14,8 +14,9 @@ use alloc::vec::Vec;
 use bytes::Bytes;
 use core::{cmp::min, marker::PhantomData};
 use hashbrown::HashMap as Map;
-use primitive_types::{H160, H256, U256};
+use primitive_types::{H160, H256};
 use revm_precompiles::{Precompile, PrecompileOutput, Precompiles};
+use ruint::aliases::U256;
 use sha3::{Digest, Keccak256};
 
 pub struct EVMData<'a, DB: Database> {
@@ -248,7 +249,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             acc_caller.info.balance = acc_caller
                 .info
                 .balance
-                .saturating_add(effective_gas_price * (gas.remaining() + gas_refunded));
+                .saturating_add(effective_gas_price * U256::from(gas.remaining() + gas_refunded));
 
             // EIP-1559
             let coinbase_gas_price = if SPEC::enabled(LONDON) {
@@ -272,7 +273,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             acc_coinbase.info.balance = acc_coinbase
                 .info
                 .balance
-                .saturating_add(coinbase_gas_price * (gas.spend() - gas_refunded));
+                .saturating_add(coinbase_gas_price * U256::from(gas.spend() - gas_refunded));
             (gas.spend() - gas_refunded, gas_refunded)
         } else {
             // touch coinbase
@@ -590,7 +591,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let checkpoint = self.data.journaled_state.checkpoint();
 
         // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
-        if inputs.transfer.value.is_zero() {
+        if inputs.transfer.value == U256::ZERO {
             self.load_account(inputs.context.address);
             self.data.journaled_state.touch(&inputs.context.address);
         }
@@ -840,13 +841,10 @@ pub fn create_address(caller: H160, nonce: u64) -> H160 {
 
 /// Returns the address for the `CREATE2` scheme: [`CreateScheme::Create2`]
 pub fn create2_address(caller: H160, code_hash: H256, salt: U256) -> H160 {
-    let mut temp: [u8; 32] = [0; 32];
-    salt.to_big_endian(&mut temp);
-
     let mut hasher = Keccak256::new();
     hasher.update([0xff]);
     hasher.update(&caller[..]);
-    hasher.update(temp);
+    hasher.update(salt.to_be_bytes::<{ U256::BYTES }>());
     hasher.update(&code_hash[..]);
     H160::from_slice(&hasher.finalize().as_slice()[12..])
 }

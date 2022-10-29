@@ -12,7 +12,7 @@ pub struct Cmd {
 impl Cmd {
     pub fn run(&self) -> Result<(), TestError> {
         for path in &self.path {
-            println!("Start running tests on: {:?}", path);
+            println!("Start running tests on: {path:?}");
             let test_files = find_all_json_tests(path);
             run(test_files)?
         }

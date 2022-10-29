@@ -15,7 +15,7 @@ pub use opcode::{OpCode, OPCODE_JUMPMAP};
 
 use crate::{interpreter::Interpreter, CallScheme, Host, Spec, SpecId::*};
 use core::ops::{BitAnd, BitOr, BitXor};
-use primitive_types::U256;
+use ruint::aliases::U256;
 
 #[macro_export]
 macro_rules! return_ok {
@@ -86,9 +86,9 @@ pub fn eval<H: Host, S: Spec>(opcode: u8, interp: &mut Interpreter, host: &mut H
         246_u8..=249_u8 => Return::OpcodeNotFound,
         251_u8..=252_u8 => Return::OpcodeNotFound,*/
         opcode::STOP => Return::Stop,
-        opcode::ADD => op2_u256_tuple!(interp, overflowing_add),
-        opcode::MUL => op2_u256_tuple!(interp, overflowing_mul),
-        opcode::SUB => op2_u256_tuple!(interp, overflowing_sub),
+        opcode::ADD => op2_u256!(interp, wrapping_add),
+        opcode::MUL => op2_u256!(interp, wrapping_mul),
+        opcode::SUB => op2_u256!(interp, wrapping_sub),
         opcode::DIV => op2_u256_fn!(interp, arithmetic::div),
         opcode::SDIV => op2_u256_fn!(interp, arithmetic::sdiv),
         opcode::MOD => op2_u256_fn!(interp, arithmetic::rem),

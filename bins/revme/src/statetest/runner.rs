@@ -10,8 +10,9 @@ use std::{
 use sha3::{Digest, Keccak256};
 
 use indicatif::ProgressBar;
-use primitive_types::{H160, H256, U256};
+use primitive_types::{H160, H256};
 use revm::{db::AccountState, Bytecode, CreateScheme, Env, ExecutionResult, SpecId, TransactTo};
+use ruint::aliases::U256;
 use std::sync::atomic::Ordering;
 use walkdir::{DirEntry, WalkDir};
 
@@ -141,7 +142,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
         }
         let mut env = Env::default();
         // cfg env. SpecId is set down the road
-        env.cfg.chain_id = 1i32.into(); // for mainnet
+        env.cfg.chain_id = U256::from(1); // for mainnet
 
         // block env
         env.block.number = unit.env.current_number;
@@ -178,11 +179,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
 
             for (id, test) in tests.into_iter().enumerate() {
                 let gas_limit = *unit.transaction.gas_limit.get(test.indexes.gas).unwrap();
-                let gas_limit = if gas_limit > U256::from(u64::MAX) {
-                    u64::MAX
-                } else {
-                    gas_limit.as_u64()
-                };
+                let gas_limit = u64::try_from(gas_limit).unwrap_or(u64::MAX);
                 env.tx.gas_limit = gas_limit;
                 env.tx.data = unit
                     .transaction
@@ -204,7 +201,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                                 item.address,
                                 item.storage_keys
                                     .iter()
-                                    .map(|f| U256::from_big_endian(f.as_ref()))
+                                    .map(|f| U256::from_be_bytes(f.0))
                                     .collect::<Vec<_>>(),
                             )
                         })
@@ -253,20 +250,20 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                 let logs_root = log_rlp_hash(logs);
                 if test.hash != state_root || test.logs != logs_root {
                     println!(
-                        "ROOTS mismath:\nstate_root:{:?}:{:?}\nlogs_root:{:?}:{:?}",
-                        test.hash, state_root, test.logs, logs_root
+                        "ROOTS mismath:\nstate_root:{:?}:{state_root:?}\nlogs_root:{:?}:{logs_root:?}",
+                        test.hash, test.logs
                     );
                     let mut database_cloned = database.clone();
                     evm.database(&mut database_cloned);
                     evm.inspect_commit(CustomPrintTracer::new());
                     let db = evm.db().unwrap();
-                    println!("{:?} UNIT_TEST:{}\n", path, name);
+                    println!("{path:?} UNIT_TEST:{name}\n");
                     println!(
                         "fail reson: {:?} {:?} UNIT_TEST:{}\n gas:{:?} ({:?} refunded)",
                         exit_reason, path, name, gas_used, gas_refunded,
                     );
-                    println!("\nApplied state:{:?}\n", db);
-                    println!("\nStateroot: {:?}\n", state_root);
+                    println!("\nApplied state:{db:?}\n");
+                    println!("\nStateroot: {state_root:?}\n");
                     return Err(TestError::RootMissmatch {
                         spec_id: env.cfg.spec_id,
                         id,
@@ -311,7 +308,7 @@ pub fn run(test_files: Vec<PathBuf>) -> Result<(), TestError> {
                     //println!("Test:{:?}\n",test_path);
                     if let Err(err) = execute_test_suit(&test_path, &elapsed) {
                         endjob.store(true, Ordering::SeqCst);
-                        println!("Test[{}] named:\n{:?} failed: {}\n", index, test_path, err);
+                        println!("Test[{index}] named:\n{test_path:?} failed: {err}\n");
                         return Err(err);
                     }
 

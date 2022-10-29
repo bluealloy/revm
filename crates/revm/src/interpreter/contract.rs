@@ -1,7 +1,8 @@
 use super::bytecode::{Bytecode, BytecodeLocked};
 use crate::{alloc::vec::Vec, CallContext, Spec};
 use bytes::Bytes;
-use primitive_types::{H160, U256};
+use primitive_types::H160;
+use ruint::aliases::U256;
 use std::sync::Arc;
 
 pub struct Contract {

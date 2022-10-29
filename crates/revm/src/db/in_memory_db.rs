@@ -4,7 +4,8 @@ use crate::{Account, AccountInfo, Log};
 use alloc::vec::Vec;
 use core::convert::Infallible;
 use hashbrown::{hash_map::Entry, HashMap as Map};
-use primitive_types::{H160, H256, U256};
+use primitive_types::{H160, H256};
+use ruint::aliases::U256;
 use sha3::{Digest, Keccak256};
 
 pub type InMemoryDB = CacheDB<EmptyDB>;
@@ -84,7 +85,7 @@ pub enum AccountState {
     /// EVM touched this account. For newer hardfork this means it can be clearead/removed from state.
     Touched,
     /// EVM cleared storage of this account, mostly by selfdestruct, we dont ask database for storage slots
-    /// and asume they are U256::zero()
+    /// and asume they are U256::ZERO
     StorageCleared,
     /// EVM didnt interacted with this account
     #[default]
@@ -240,7 +241,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
                             acc_entry.account_state,
                             AccountState::StorageCleared | AccountState::NotExisting
                         ) {
-                            Ok(U256::zero())
+                            Ok(U256::ZERO)
                         } else {
                             let slot = self.db.storage(address, index)?;
                             entry.insert(slot);
@@ -258,7 +259,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
                     account.storage.insert(index, value);
                     (account, value)
                 } else {
-                    (info.into(), U256::zero())
+                    (info.into(), U256::ZERO)
                 };
                 acc_entry.insert(account);
                 Ok(value)
@@ -296,7 +297,7 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
                         acc_entry.account_state,
                         AccountState::StorageCleared | AccountState::NotExisting
                     ) {
-                        Ok(U256::zero())
+                        Ok(U256::ZERO)
                     } else {
                         self.db.storage(address, index)
                     }
@@ -342,9 +343,9 @@ impl DatabaseRef for EmptyDB {
 
     // History related
     fn block_hash(&self, number: U256) -> Result<H256, Self::Error> {
-        let mut buffer: [u8; 4 * 8] = [0; 4 * 8];
-        number.to_big_endian(&mut buffer);
-        Ok(H256::from_slice(&Keccak256::digest(buffer)))
+        Ok(H256::from_slice(&Keccak256::digest(
+            number.to_be_bytes::<{ U256::BYTES }>(),
+        )))
     }
 }
 
@@ -395,6 +396,7 @@ impl Database for BenchmarkDB {
 #[cfg(test)]
 mod tests {
     use primitive_types::H160;
+    use ruint::aliases::U256;
 
     use crate::{AccountInfo, Database};
 
@@ -413,7 +415,7 @@ mod tests {
             },
         );
 
-        let (key, value) = (123u64.into(), 456u64.into());
+        let (key, value) = (U256::from(123), U256::from(456));
         let mut new_state = CacheDB::new(init_state);
         let _ = new_state.insert_account_storage(account, key, value);
 
@@ -434,15 +436,15 @@ mod tests {
             },
         );
 
-        let (key0, value0) = (123u64.into(), 456u64.into());
-        let (key1, value1) = (789u64.into(), 999u64.into());
+        let (key0, value0) = (U256::from(123), U256::from(456));
+        let (key1, value1) = (U256::from(789), U256::from(999));
         let _ = init_state.insert_account_storage(account, key0, value0);
 
         let mut new_state = CacheDB::new(init_state);
         let _ = new_state.replace_account_storage(account, [(key1, value1)].into());
 
         assert_eq!(new_state.basic(account).unwrap().unwrap().nonce, nonce);
-        assert_eq!(new_state.storage(account, key0), Ok(0.into()));
+        assert_eq!(new_state.storage(account, key0), Ok(U256::ZERO));
         assert_eq!(new_state.storage(account, key1), Ok(value1));
     }
 }
