@@ -1,5 +1,5 @@
 use super::contract::{AnalysisData, ValidJumpAddress};
-use crate::{opcode, spec_opcode_gas, Spec, KECCAK_EMPTY, common::keccak256};
+use crate::{common::keccak256, opcode, spec_opcode_gas, Spec, KECCAK_EMPTY};
 use bytes::Bytes;
 use primitive_types::H256;
 use std::sync::Arc;

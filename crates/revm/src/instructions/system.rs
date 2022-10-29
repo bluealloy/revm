@@ -1,9 +1,9 @@
-use std::cmp::min;
 use crate::{
     common::keccak256, gas, interpreter::Interpreter, Return, Spec, SpecId::*, KECCAK_EMPTY,
 };
 use primitive_types::H256;
 use ruint::aliases::U256;
+use std::cmp::min;
 
 pub fn sha3(interp: &mut Interpreter) -> Return {
     pop!(interp, from, len);

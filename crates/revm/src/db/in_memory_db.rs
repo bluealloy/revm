@@ -1,7 +1,7 @@
 use super::{DatabaseCommit, DatabaseRef};
+use crate::common::keccak256;
 use crate::{interpreter::bytecode::Bytecode, Database, KECCAK_EMPTY};
 use crate::{Account, AccountInfo, Log};
-use crate::common::keccak256;
 use alloc::vec::Vec;
 use core::convert::Infallible;
 use hashbrown::{hash_map::Entry, HashMap as Map};

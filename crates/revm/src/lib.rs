@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 //#![no_std]
 
+pub mod common;
 pub mod db;
 mod evm;
 mod evm_impl;
@@ -11,7 +12,6 @@ mod interpreter;
 mod journaled_state;
 mod models;
 mod specification;
-pub mod common;
 
 pub use evm_impl::{create2_address, create_address, EVMData, Host};
 

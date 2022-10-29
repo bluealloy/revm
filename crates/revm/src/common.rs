@@ -1,6 +1,5 @@
-
-use sha3::{Digest, Keccak256};
 use primitive_types::H256;
+use sha3::{Digest, Keccak256};
 
 #[inline(always)]
 pub fn keccak256(input: &[u8]) -> H256 {
