@@ -16,7 +16,8 @@ use core::{cmp::min, marker::PhantomData};
 use hashbrown::HashMap as Map;
 use primitive_types::{H160, H256, U256};
 use revm_precompiles::{Precompile, PrecompileOutput, Precompiles};
-use sha3::{Digest, Keccak256};
+//use sha3::{Digest, Keccak256};
+use crate::common::keccak256;
 
 pub struct EVMData<'a, DB: Database> {
     pub env: &'a mut Env,
@@ -400,7 +401,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
 
         // Create address
-        let code_hash = H256::from_slice(Keccak256::digest(&inputs.init_code).as_slice());
+        let code_hash = keccak256(&inputs.init_code);
         let created_address = match inputs.scheme {
             CreateScheme::Create => create_address(inputs.caller, old_nonce),
             CreateScheme::Create2 { salt } => create2_address(inputs.caller, code_hash, salt),
@@ -833,7 +834,7 @@ pub fn create_address(caller: H160, nonce: u64) -> H160 {
     let mut stream = rlp::RlpStream::new_list(2);
     stream.append(&caller);
     stream.append(&nonce);
-    let out = H256::from_slice(Keccak256::digest(&stream.out()).as_slice());
+    let out = keccak256(&stream.out());
     let out = H160::from_slice(&out.as_bytes()[12..]);
     out
 }
@@ -843,12 +844,15 @@ pub fn create2_address(caller: H160, code_hash: H256, salt: U256) -> H160 {
     let mut temp: [u8; 32] = [0; 32];
     salt.to_big_endian(&mut temp);
 
-    let mut hasher = Keccak256::new();
-    hasher.update([0xff]);
+    use tiny_keccak::{Hasher, Keccak};
+    let mut hasher = Keccak::v256();
+    hasher.update(&[0xff]);
     hasher.update(&caller[..]);
-    hasher.update(temp);
+    hasher.update(&temp);
     hasher.update(&code_hash[..]);
-    H160::from_slice(&hasher.finalize().as_slice()[12..])
+    let mut zero = H256::zero();
+    hasher.finalize(&mut zero.0);
+    zero.into()
 }
 
 /// EVM context host.

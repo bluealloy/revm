@@ -1496,7 +1496,7 @@ dependencies = [
  "revm_precompiles",
  "rlp",
  "serde",
- "sha3 0.10.4",
+ "tiny-keccak",
  "tokio",
  "web3",
 ]
