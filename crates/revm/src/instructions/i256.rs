@@ -143,8 +143,8 @@ mod tests {
         let neg_one_hundred = U256::from(100);
         let _neg_one_hundred_sign = Sign::Minus;
         let minus_one = U256::from(1);
-        let max_value = U256::from(2).pow(255) - U256::from(1);
-        let neg_max_value = U256::from(2).pow(255) - U256::from(1);
+        let max_value = U256::from(2).pow(U256::from(255)) - U256::from(1);
+        let neg_max_value = U256::from(2).pow(U256::from(255)) - U256::from(1);
 
         assert_eq!(i256_div(MIN_NEGATIVE_VALUE, minus_one), MIN_NEGATIVE_VALUE);
         assert_eq!(i256_div(MIN_NEGATIVE_VALUE, one), MIN_NEGATIVE_VALUE);

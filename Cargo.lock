@@ -1611,8 +1611,9 @@ dependencies = [
 
 [[package]]
 name = "ruint"
-version = "1.5.1"
-source = "git+https://github.com/shekhirin/uint?branch=bits-default#b1afc1da5a09029742a4634eaae3b0145fd6e313"
+version = "1.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "74b92a24f662eff8808c3ae2959bdc9bc53b5a086d3a2ff7fead2eac347b3dce"
 dependencies = [
  "bn-rs",
  "primitive-types 0.10.1",
@@ -1626,7 +1627,8 @@ dependencies = [
 [[package]]
 name = "ruint-macro"
 version = "1.0.1"
-source = "git+https://github.com/shekhirin/uint?branch=bits-default#b1afc1da5a09029742a4634eaae3b0145fd6e313"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c827ed98ab2233b4647e6e783d6238f4646a16680fe527a599b3d56f6ea73e2d"
 
 [[package]]
 name = "rustc-hex"

@@ -2,7 +2,6 @@ use crate::{gas, Interpreter, Return, Spec};
 
 use super::i256::{i256_div, i256_mod};
 use ruint::aliases::U256;
-use std::ops::Mul;
 
 pub fn div(op1: U256, op2: U256) -> U256 {
     op1.checked_div(op2).unwrap_or_default()
@@ -33,21 +32,7 @@ pub fn mulmod(op1: U256, op2: U256, op3: U256) -> U256 {
 }
 
 pub fn exp(op1: U256, op2: U256) -> U256 {
-    let mut result = U256::from(1);
-    let mut op1 = op1;
-    let mut op2 = op2;
-    // Exponentiation by squaring
-    while op2 > U256::ZERO {
-        // Multiply by base
-        if op2.as_limbs()[0] & 1 == 1 {
-            result = result.mul(op1);
-        }
-
-        // Square base
-        op1 = op1.mul(op1);
-        op2 >>= 1;
-    }
-    result
+    op1.pow(op2)
 }
 
 pub fn eval_exp<SPEC: Spec>(interp: &mut Interpreter) -> Return {
