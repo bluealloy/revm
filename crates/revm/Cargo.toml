@@ -27,7 +27,7 @@ tokio = { version = "1.21", features = ["rt-multi-thread", "macros"], optional =
 web3 = { version = "0.18", optional = true }
 
 # sha3 keccak hasher
-tiny-keccak = {version="2.0", features= ["sha3","keccak"]}
+sha3 = { version = "0.10", default-features = false, features = []}
 
 [features]
 default = ["std", "secp256k1"]

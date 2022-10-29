@@ -1506,7 +1506,7 @@ dependencies = [
  "rlp",
  "ruint",
  "serde",
- "tiny-keccak",
+ "sha3 0.10.6",
  "tokio",
  "web3",
 ]

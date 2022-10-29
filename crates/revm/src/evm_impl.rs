@@ -1,7 +1,7 @@
 use crate::{
+    common::keccak256,
     db::Database,
     gas,
-    common::keccak256,
     interpreter::{self, bytecode::Bytecode},
     interpreter::{Contract, Interpreter},
     journaled_state::{Account, JournaledState, State},
@@ -841,15 +841,14 @@ pub fn create_address(caller: H160, nonce: u64) -> H160 {
 
 /// Returns the address for the `CREATE2` scheme: [`CreateScheme::Create2`]
 pub fn create2_address(caller: H160, code_hash: H256, salt: U256) -> H160 {
-    use tiny_keccak::{Hasher, Keccak};
-    let mut hasher = Keccak::v256();
+    use sha3::{Digest, Keccak256};
+    let mut hasher = Keccak256::new();
     hasher.update(&[0xff]);
     hasher.update(&caller[..]);
     hasher.update(&salt.to_be_bytes::<{ U256::BYTES }>());
     hasher.update(&code_hash[..]);
-    let mut zero = H256::zero();
-    hasher.finalize(&mut zero.0);
-    zero.into()
+
+    H160::from_slice(&hasher.finalize().as_slice()[12..])
 }
 
 /// EVM context host.
