@@ -9,6 +9,7 @@ mod inspector;
 mod instructions;
 mod interpreter;
 mod journaled_state;
+mod keccak;
 mod models;
 mod specification;
 
