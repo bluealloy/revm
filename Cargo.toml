@@ -9,6 +9,8 @@ default-members = ["crates/revm"]
 
 [profile.release]
 # debug = true
+lto = true
+codegen-units = 1
 
 [profile.ethtests]
 inherits = "test"

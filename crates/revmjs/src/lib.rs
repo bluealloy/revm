@@ -2,11 +2,12 @@ use core::convert::TryInto;
 
 use bn_rs::BN;
 use bytes::Bytes;
-use primitive_types::{H160, U256};
+use primitive_types::H160;
 use revm::{
     AccountInfo, Bytecode, DatabaseCommit, ExecutionResult, InMemoryDB, SpecId, TransactTo,
     EVM as rEVM,
 };
+use ruint::aliases::U256;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -39,6 +40,7 @@ impl Default for EVM {
     }
 }
 
+#[wasm_bindgen]
 impl EVM {
     pub fn new() -> EVM {
         console_log!("EVM created");
@@ -161,16 +163,17 @@ pub struct AccessedAccount {
     slots: Vec<U256>,
 }
 
-impl From<AccessedAccount> for (H160, Vec<U256>) {
+impl From<AccessedAccount> for (primitive_types::H160, Vec<U256>) {
     fn from(from: AccessedAccount) -> Self {
         (from.account, from.slots)
     }
 }
 
+#[wasm_bindgen]
 impl AccessedAccount {
     pub fn new(account: BN) -> Self {
         Self {
-            account: account.try_into().unwrap(),
+            account: H160::try_from(account).unwrap(),
             slots: Vec::new(),
         }
     }

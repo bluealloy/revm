@@ -34,6 +34,16 @@ run tests with command: `cargo run --release -- statetest tests/GeneralStateTest
 
 `GeneralStateTests` contains all tests related to EVM.
 
+## Running benchmarks
+
+```shell
+cargo run --package revm-test --release --bin snailtracer
+```
+
+```shell
+cargo flamegraph --root --freq 4000 --min-width 0.001 --package revm-test --bin snailtracer
+```
+
 # Used by
 
 * Foundry project (as their main EVM): https://github.com/foundry-rs/foundry
@@ -46,5 +56,3 @@ run tests with command: `cargo run --release -- statetest tests/GeneralStateTest
 There is public telegram group: https://t.me/+Ig4WDWOzikA3MzA0
 
 Or if you want to hire me or contact me directly, here is my email: dragan0rakita@gmail.com and telegram: https://t.me/draganrakita
-
-

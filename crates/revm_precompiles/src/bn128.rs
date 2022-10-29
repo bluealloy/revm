@@ -1,7 +1,8 @@
 use crate::{gas_query, Precompile, PrecompileOutput, PrecompileResult, Return};
 
 use alloc::{borrow::Cow, vec::Vec};
-use primitive_types::{H160 as Address, U256};
+use primitive_types::H160 as Address;
+use ruint::aliases::U256;
 
 pub mod add {
     use super::*;
@@ -170,7 +171,7 @@ fn run_pair(
     }
 
     let output = if input.is_empty() {
-        U256::one()
+        U256::from(1)
     } else {
         let elements = input.len() / PAIR_ELEMENT_LEN;
         let mut vals = Vec::with_capacity(elements);
@@ -238,16 +239,16 @@ fn run_pair(
             .fold(Gt::one(), |s, (a, b)| s * bn::pairing(a, b));
 
         if mul == Gt::one() {
-            U256::one()
+            U256::from(1)
         } else {
-            U256::zero()
+            U256::ZERO
         }
     };
 
-    let mut buf = [0u8; 32];
-    output.to_big_endian(&mut buf);
-
-    Ok(PrecompileOutput::without_logs(cost, buf.to_vec()))
+    Ok(PrecompileOutput::without_logs(
+        cost,
+        output.to_be_bytes_vec(),
+    ))
 }
 
 /*

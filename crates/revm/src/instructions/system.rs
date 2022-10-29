@@ -1,9 +1,9 @@
 use std::cmp::min;
-
 use crate::{
     common::keccak256, gas, interpreter::Interpreter, Return, Spec, SpecId::*, KECCAK_EMPTY,
 };
-use primitive_types::{H256, U256};
+use primitive_types::H256;
+use ruint::aliases::U256;
 
 pub fn sha3(interp: &mut Interpreter) -> Return {
     pop!(interp, from, len);
@@ -90,9 +90,7 @@ pub fn calldatasize(interp: &mut Interpreter) -> Return {
 
 pub fn callvalue(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::BASE);
-    let mut ret = H256::default();
-    interp.contract.value.to_big_endian(&mut ret[..]);
-    push_h256!(interp, ret);
+    push_h256!(interp, interp.contract.value.to_be_bytes().into());
     Return::Continue
 }
 

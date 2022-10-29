@@ -1,6 +1,7 @@
 use crate::{interpreter::bytecode::Bytecode, AccountInfo, Database, KECCAK_EMPTY};
 use bytes::Bytes;
-use primitive_types::{H160, H256, U256};
+use primitive_types::{H160, H256};
+use ruint::aliases::U256;
 use tokio::runtime::{Handle, Runtime};
 use web3::{
     transports::Http,
@@ -61,16 +62,16 @@ impl Database for Web3DB {
         let (nonce, balance, code) = self.block_on(f);
         // panic on not getting data?
         Ok(Some(AccountInfo::new(
-            U256(
+            U256::from_limbs(
                 balance
-                    .unwrap_or_else(|e| panic!("web3 get balance error:{:?}", e))
+                    .unwrap_or_else(|e| panic!("web3 get balance error:{e:?}"))
                     .0,
             ),
             nonce
-                .unwrap_or_else(|e| panic!("web3 get nonce error:{:?}", e))
+                .unwrap_or_else(|e| panic!("web3 get nonce error:{e:?}"))
                 .as_u64(),
             Bytecode::new_raw(Bytes::from(
-                code.unwrap_or_else(|e| panic!("web3 get node error:{:?}", e))
+                code.unwrap_or_else(|e| panic!("web3 get node error:{e:?}"))
                     .0,
             )),
         )))
@@ -84,10 +85,10 @@ impl Database for Web3DB {
     fn storage(
         &mut self,
         address: primitive_types::H160,
-        index: primitive_types::U256,
-    ) -> Result<primitive_types::U256, Self::Error> {
+        index: U256,
+    ) -> Result<U256, Self::Error> {
         let add = wH160(address.0);
-        let index = wU256(index.0);
+        let index = wU256(index.into_limbs());
         let f = async {
             let storage = self
                 .web3
@@ -95,19 +96,16 @@ impl Database for Web3DB {
                 .storage(add, index, self.block_number)
                 .await
                 .unwrap();
-            U256::from_big_endian(storage.as_bytes())
+            U256::from_be_bytes(storage.to_fixed_bytes())
         };
         Ok(self.block_on(f))
     }
 
-    fn block_hash(
-        &mut self,
-        number: primitive_types::U256,
-    ) -> Result<primitive_types::H256, Self::Error> {
+    fn block_hash(&mut self, number: U256) -> Result<primitive_types::H256, Self::Error> {
         if number > U256::from(u64::MAX) {
             return Ok(KECCAK_EMPTY);
         }
-        let number = number.as_u64();
+        let number = u64::try_from(number).unwrap();
         if let Some(block_num) = self.block_number {
             match block_num {
                 BlockNumber::Number(t) if t.as_u64() > number => return Ok(KECCAK_EMPTY),
