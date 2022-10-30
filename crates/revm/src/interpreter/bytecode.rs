@@ -1,8 +1,7 @@
 use super::contract::{AnalysisData, ValidJumpAddress};
-use crate::{opcode, spec_opcode_gas, Spec, KECCAK_EMPTY};
+use crate::{common::keccak256, opcode, spec_opcode_gas, Spec, KECCAK_EMPTY};
 use bytes::Bytes;
-use ruint::aliases::{B256, U256};
-use sha3::{Digest, Keccak256};
+use ruint::aliases::B256;
 use std::sync::Arc;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -50,10 +49,7 @@ impl Bytecode {
         let hash = if bytecode.is_empty() {
             KECCAK_EMPTY
         } else {
-            // TODO(shekhirin): replace with `B256::try_from_be_slice`
-            U256::try_from_be_slice(Keccak256::digest(&bytecode).as_slice())
-                .unwrap()
-                .into()
+            keccak256(&bytecode)
         };
         Self {
             bytecode,
@@ -82,10 +78,7 @@ impl Bytecode {
     pub unsafe fn new_checked(bytecode: Bytes, len: usize, hash: Option<B256>) -> Self {
         let hash = match hash {
             None if len == 0 => KECCAK_EMPTY,
-            // TODO(shekhirin): replace with `B256::try_from_be_slice`
-            None => U256::try_from_be_slice(Keccak256::digest(&bytecode).as_slice())
-                .unwrap()
-                .into(),
+            None => keccak256(&bytecode),
             Some(hash) => hash,
         };
         Self {
@@ -109,10 +102,7 @@ impl Bytecode {
     ) -> Self {
         let hash = match hash {
             None if len == 0 => KECCAK_EMPTY,
-            // TODO(shekhirin): replace with `B256::try_from_be_slice`
-            None => U256::try_from_be_slice(Keccak256::digest(&bytecode).as_slice())
-                .unwrap()
-                .into(),
+            None => keccak256(&bytecode),
             Some(hash) => hash,
         };
         Self {

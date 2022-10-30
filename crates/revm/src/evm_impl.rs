@@ -1,4 +1,5 @@
 use crate::{
+    common::keccak256,
     db::Database,
     gas,
     interpreter::{self, bytecode::Bytecode},
@@ -16,7 +17,6 @@ use core::{cmp::min, marker::PhantomData};
 use hashbrown::HashMap as Map;
 use revm_precompiles::{Precompile, PrecompileOutput, Precompiles};
 use ruint::aliases::{B160, B256, U160, U256};
-use sha3::{Digest, Keccak256};
 
 pub struct EVMData<'a, DB: Database> {
     pub env: &'a mut Env,
@@ -400,9 +400,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
 
         // Create address
-        let code_hash = U256::try_from_be_slice(Keccak256::digest(&inputs.init_code).as_slice())
-            .unwrap()
-            .into();
+        let code_hash = keccak256(&inputs.init_code);
         let created_address = match inputs.scheme {
             CreateScheme::Create => create_address(inputs.caller, old_nonce),
             CreateScheme::Create2 { salt } => create2_address(inputs.caller, code_hash, salt),
@@ -835,20 +833,19 @@ pub fn create_address(caller: B160, nonce: u64) -> B160 {
     let mut stream = rlp::RlpStream::new_list(2);
     stream.append(&caller);
     stream.append(&nonce);
-    // TODO(shekhirin): replace with `B160::try_from_be_slice`
-    U160::try_from_be_slice(&Keccak256::digest(&stream.out()).as_slice()[12..])
-        .unwrap()
-        .into()
+    U160::from(keccak256(&stream.out()).into_inner()).into()
 }
 
 /// Returns the address for the `CREATE2` scheme: [`CreateScheme::Create2`]
 pub fn create2_address(caller: B160, code_hash: B256, salt: U256) -> B160 {
+    use sha3::{Digest, Keccak256};
     let mut hasher = Keccak256::new();
     hasher.update([0xff]);
     hasher.update(&caller.to_be_bytes()[..]);
     hasher.update(salt.to_be_bytes::<{ U256::BYTES }>());
     hasher.update(&code_hash.to_be_bytes()[..]);
     // TODO(shekhirin): replace with `B160::try_from_be_slice`
+
     U160::try_from_be_slice(&hasher.finalize().as_slice()[12..])
         .unwrap()
         .into()

@@ -1,11 +1,11 @@
 use super::{DatabaseCommit, DatabaseRef};
+use crate::common::keccak256;
 use crate::{interpreter::bytecode::Bytecode, Database, KECCAK_EMPTY};
 use crate::{Account, AccountInfo, Log};
 use alloc::vec::Vec;
 use core::convert::Infallible;
 use hashbrown::{hash_map::Entry, HashMap as Map};
 use ruint::aliases::{B160, B256, U256};
-use sha3::{Digest, Keccak256};
 
 pub type InMemoryDB = CacheDB<EmptyDB>;
 
@@ -342,12 +342,7 @@ impl DatabaseRef for EmptyDB {
 
     // History related
     fn block_hash(&self, number: U256) -> Result<B256, Self::Error> {
-        // TODO(shekhirin): replace with `B256::try_from_be_slice`
-        Ok(U256::try_from_be_slice(
-            Keccak256::digest(number.to_be_bytes::<{ U256::BYTES }>()).as_slice(),
-        )
-        .unwrap()
-        .into())
+        Ok(keccak256(&number.to_be_bytes::<{ U256::BYTES }>()))
     }
 }
 

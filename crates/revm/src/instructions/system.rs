@@ -1,9 +1,8 @@
-use std::cmp::min;
-
-use crate::{gas, interpreter::Interpreter, Return, Spec, SpecId::*, KECCAK_EMPTY};
+use crate::{
+    common::keccak256, gas, interpreter::Interpreter, Return, Spec, SpecId::*, KECCAK_EMPTY,
+};
 use ruint::aliases::{B256, U256};
-
-use sha3::{Digest, Keccak256};
+use std::cmp::min;
 
 pub fn sha3(interp: &mut Interpreter) -> Return {
     pop!(interp, from, len);
@@ -14,10 +13,7 @@ pub fn sha3(interp: &mut Interpreter) -> Return {
     } else {
         let from = as_usize_or_fail!(from, Return::OutOfGas);
         memory_resize!(interp, from, len);
-        // TODO(shekhirin): replace with `B256::try_from_be_slice`
-        U256::try_from_be_slice(Keccak256::digest(interp.memory.get_slice(from, len)).as_slice())
-            .unwrap()
-            .into()
+        keccak256(interp.memory.get_slice(from, len))
     };
 
     push_b256!(interp, B256);
