@@ -1,20 +1,21 @@
-use crate::{gas_query, Precompile, PrecompileOutput, PrecompileResult, Return};
+use crate::{gas_query, Precompile, PrecompileAddress, PrecompileOutput, PrecompileResult, Return};
 
 use alloc::{borrow::Cow, vec::Vec};
-use ruint::aliases::{B160 as Address, U256};
+use primitive_types::H160 as Address;
+use ruint::aliases::U256;
 
 pub mod add {
     use super::*;
     const ADDRESS: Address = crate::make_address(0, 6);
 
-    pub const ISTANBUL: (Address, Precompile) = (
+    pub const ISTANBUL: PrecompileAddress = PrecompileAddress(
         ADDRESS,
         Precompile::Standard(|input: &[u8], target_gas: u64| -> PrecompileResult {
             super::run_add(input, 150, target_gas)
         }),
     );
 
-    pub const BYZANTIUM: (Address, Precompile) = (
+    pub const BYZANTIUM: PrecompileAddress = PrecompileAddress(
         ADDRESS,
         Precompile::Standard(|input: &[u8], target_gas: u64| -> PrecompileResult {
             super::run_add(input, 500, target_gas)
@@ -25,14 +26,14 @@ pub mod add {
 pub mod mul {
     use super::*;
     const ADDRESS: Address = crate::make_address(0, 7);
-    pub const ISTANBUL: (Address, Precompile) = (
+    pub const ISTANBUL: PrecompileAddress = PrecompileAddress(
         ADDRESS,
         Precompile::Standard(|input: &[u8], target_gas: u64| -> PrecompileResult {
             super::run_mul(input, 6_000, target_gas)
         }),
     );
 
-    pub const BYZANTIUM: (Address, Precompile) = (
+    pub const BYZANTIUM: PrecompileAddress = PrecompileAddress(
         ADDRESS,
         Precompile::Standard(|input: &[u8], target_gas: u64| -> PrecompileResult {
             super::run_mul(input, 40_000, target_gas)
@@ -46,7 +47,7 @@ pub mod pair {
 
     const ISTANBUL_PAIR_PER_POINT: u64 = 34_000;
     const ISTANBUL_PAIR_BASE: u64 = 45_000;
-    pub const ISTANBUL: (Address, Precompile) = (
+    pub const ISTANBUL: PrecompileAddress = PrecompileAddress(
         ADDRESS,
         Precompile::Standard(|input: &[u8], target_gas: u64| -> PrecompileResult {
             super::run_pair(
@@ -60,7 +61,7 @@ pub mod pair {
 
     const BYZANTIUM_PAIR_PER_POINT: u64 = 80_000;
     const BYZANTIUM_PAIR_BASE: u64 = 100_000;
-    pub const BYZANTIUM: (Address, Precompile) = (
+    pub const BYZANTIUM: PrecompileAddress = PrecompileAddress(
         ADDRESS,
         Precompile::Standard(|input: &[u8], target_gas: u64| -> PrecompileResult {
             super::run_pair(

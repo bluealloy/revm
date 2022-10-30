@@ -1616,7 +1616,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "74b92a24f662eff8808c3ae2959bdc9bc53b5a086d3a2ff7fead2eac347b3dce"
 dependencies = [
  "bn-rs",
- "primitive-types 0.10.1",
+ "primitive-types 0.11.1",
  "rlp",
  "ruint-macro",
  "rustc_version",

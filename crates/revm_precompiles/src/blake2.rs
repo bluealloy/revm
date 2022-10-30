@@ -1,14 +1,13 @@
-use crate::{gas_query, Return, StandardPrecompileFn};
+use crate::{gas_query, PrecompileAddress, Return, StandardPrecompileFn};
 
 use crate::{Precompile, PrecompileOutput, PrecompileResult};
 use alloc::borrow::Cow;
 use core::convert::TryInto;
-use ruint::aliases::B160 as Address;
 
 const F_ROUND: u64 = 1;
 const INPUT_LENGTH: usize = 213;
 
-pub const FUN: (Address, Precompile) = (
+pub const FUN: PrecompileAddress = PrecompileAddress(
     super::make_address(0, 9),
     Precompile::Standard(run as StandardPrecompileFn),
 );

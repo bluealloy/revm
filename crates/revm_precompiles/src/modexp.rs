@@ -1,19 +1,21 @@
 use super::gas_query;
-use crate::{Precompile, PrecompileOutput, PrecompileResult, StandardPrecompileFn};
+use crate::{
+    Precompile, PrecompileAddress, PrecompileOutput, PrecompileResult, StandardPrecompileFn,
+};
 use alloc::vec::Vec;
 use core::{
     cmp::{max, min, Ordering},
     mem::size_of,
 };
 use num::{BigUint, One, Zero};
-use ruint::aliases::{B160 as Address, U256};
+use ruint::aliases::U256;
 
-pub const BYZANTIUM: (Address, Precompile) = (
+pub const BYZANTIUM: PrecompileAddress = PrecompileAddress(
     super::make_address(0, 5),
     Precompile::Standard(byzantium_run as StandardPrecompileFn),
 );
 
-pub const BERLIN: (Address, Precompile) = (
+pub const BERLIN: PrecompileAddress = PrecompileAddress(
     super::make_address(0, 5),
     Precompile::Standard(berlin_run as StandardPrecompileFn),
 );

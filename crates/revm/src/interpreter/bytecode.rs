@@ -1,7 +1,7 @@
 use super::contract::{AnalysisData, ValidJumpAddress};
 use crate::{opcode, spec_opcode_gas, Spec, KECCAK_EMPTY};
 use bytes::Bytes;
-use primitive_types::H256;
+use ruint::aliases::{B256, U256};
 use sha3::{Digest, Keccak256};
 use std::sync::Arc;
 
@@ -23,7 +23,7 @@ pub enum BytecodeState {
 pub struct Bytecode {
     #[cfg_attr(feature = "with-serde", serde(with = "crate::models::serde_hex_bytes"))]
     bytecode: Bytes,
-    hash: H256,
+    hash: B256,
     state: BytecodeState,
 }
 
@@ -50,7 +50,10 @@ impl Bytecode {
         let hash = if bytecode.is_empty() {
             KECCAK_EMPTY
         } else {
-            H256::from_slice(Keccak256::digest(&bytecode).as_slice())
+            // TODO(shekhirin): replace with `B256::try_from_be_slice`
+            U256::try_from_be_slice(Keccak256::digest(&bytecode).as_slice())
+                .unwrap()
+                .into()
         };
         Self {
             bytecode,
@@ -63,7 +66,7 @@ impl Bytecode {
     ///
     /// # Safety
     /// Hash need to be appropriate keccak256 over bytecode.
-    pub unsafe fn new_raw_with_hash(bytecode: Bytes, hash: H256) -> Self {
+    pub unsafe fn new_raw_with_hash(bytecode: Bytes, hash: B256) -> Self {
         Self {
             bytecode,
             hash,
@@ -76,10 +79,13 @@ impl Bytecode {
     /// # Safety
     /// Bytecode need to end with STOP (0x00) opcode as checked bytecode assumes
     /// that it is safe to iterate over bytecode without checking lengths
-    pub unsafe fn new_checked(bytecode: Bytes, len: usize, hash: Option<H256>) -> Self {
+    pub unsafe fn new_checked(bytecode: Bytes, len: usize, hash: Option<B256>) -> Self {
         let hash = match hash {
             None if len == 0 => KECCAK_EMPTY,
-            None => H256::from_slice(Keccak256::digest(&bytecode).as_slice()),
+            // TODO(shekhirin): replace with `B256::try_from_be_slice`
+            None => U256::try_from_be_slice(Keccak256::digest(&bytecode).as_slice())
+                .unwrap()
+                .into(),
             Some(hash) => hash,
         };
         Self {
@@ -99,11 +105,14 @@ impl Bytecode {
         bytecode: Bytes,
         len: usize,
         jumptable: ValidJumpAddress,
-        hash: Option<H256>,
+        hash: Option<B256>,
     ) -> Self {
         let hash = match hash {
             None if len == 0 => KECCAK_EMPTY,
-            None => H256::from_slice(Keccak256::digest(&bytecode).as_slice()),
+            // TODO(shekhirin): replace with `B256::try_from_be_slice`
+            None => U256::try_from_be_slice(Keccak256::digest(&bytecode).as_slice())
+                .unwrap()
+                .into(),
             Some(hash) => hash,
         };
         Self {
@@ -117,7 +126,7 @@ impl Bytecode {
         &self.bytecode
     }
 
-    pub fn hash(&self) -> H256 {
+    pub fn hash(&self) -> B256 {
         self.hash
     }
 
@@ -267,7 +276,7 @@ impl Bytecode {
 pub struct BytecodeLocked {
     bytecode: Bytes,
     len: usize,
-    hash: H256,
+    hash: B256,
     jumptable: ValidJumpAddress,
 }
 
@@ -279,7 +288,7 @@ impl BytecodeLocked {
         self.len
     }
 
-    pub fn hash(&self) -> H256 {
+    pub fn hash(&self) -> B256 {
         self.hash
     }
 

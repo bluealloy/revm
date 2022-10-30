@@ -1,9 +1,10 @@
-use crate::{Precompile, PrecompileOutput, PrecompileResult, StandardPrecompileFn};
-use ruint::aliases::B160 as Address;
+use crate::{
+    Precompile, PrecompileAddress, PrecompileOutput, PrecompileResult, StandardPrecompileFn,
+};
 
 use super::{calc_linear_cost_u32, gas_query};
 
-pub const FUN: (Address, Precompile) = (
+pub const FUN: PrecompileAddress = PrecompileAddress(
     super::make_address(0, 4),
     Precompile::Standard(identity_run as StandardPrecompileFn),
 );

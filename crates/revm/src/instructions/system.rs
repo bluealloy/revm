@@ -1,8 +1,7 @@
 use std::cmp::min;
 
 use crate::{gas, interpreter::Interpreter, Return, Spec, SpecId::*, KECCAK_EMPTY};
-use primitive_types::H256;
-use ruint::aliases::U256;
+use ruint::aliases::{B256, U256};
 
 use sha3::{Digest, Keccak256};
 
@@ -10,36 +9,44 @@ pub fn sha3(interp: &mut Interpreter) -> Return {
     pop!(interp, from, len);
     let len = as_usize_or_fail!(len, Return::OutOfGas);
     gas_or_fail!(interp, gas::sha3_cost(len as u64));
-    let h256 = if len == 0 {
+    let B256 = if len == 0 {
         KECCAK_EMPTY
     } else {
         let from = as_usize_or_fail!(from, Return::OutOfGas);
         memory_resize!(interp, from, len);
-        H256::from_slice(Keccak256::digest(interp.memory.get_slice(from, len)).as_slice())
+        // TODO(shekhirin): replace with `B256::try_from_be_slice`
+        U256::try_from_be_slice(Keccak256::digest(interp.memory.get_slice(from, len)).as_slice())
+            .unwrap()
+            .into()
     };
 
-    push_h256!(interp, h256);
+    push_b256!(interp, B256);
     Return::Continue
 }
 
 pub fn address(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::BASE);
-    let ret = H256::from(interp.contract.address);
-    push_h256!(interp, ret);
+    push_b256!(
+        interp,
+        // TODO(shekhirin): replace with `B256::from(bits: Bits)`
+        B256::from(U256::from(interp.contract.address.into_inner()))
+    );
     Return::Continue
 }
 
 pub fn caller(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::BASE);
-    let ret = H256::from(interp.contract.caller);
-    push_h256!(interp, ret);
+    push_b256!(
+        interp,
+        // TODO(shekhirin): replace with `B256::from(bits: Bits)`
+        B256::from(U256::from(interp.contract.caller.into_inner()))
+    );
     Return::Continue
 }
 
 pub fn codesize(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::BASE);
-    let size = U256::from(interp.contract.bytecode.len());
-    push!(interp, size);
+    push!(interp, U256::from(interp.contract.bytecode.len()));
     Return::Continue
 }
 
@@ -70,28 +77,28 @@ pub fn calldataload(interp: &mut Interpreter) -> Return {
     let index = as_usize_saturated!(index);
 
     let load = if index < interp.contract.input.len() {
-        let mut load = H256::zero();
         let have_bytes = min(interp.contract.input.len() - index, 32);
-        load.0[..have_bytes].copy_from_slice(&interp.contract.input[index..index + have_bytes]);
-        load
+        // TODO(shekhirin): replace with `B256::try_from_be_slice`
+        U256::try_from_be_slice(&interp.contract.input[index..index + have_bytes])
+            .unwrap()
+            .into()
     } else {
-        H256::zero()
+        B256::ZERO
     };
 
-    push_h256!(interp, load);
+    push_b256!(interp, load);
     Return::Continue
 }
 
 pub fn calldatasize(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::BASE);
-    let len = U256::from(interp.contract.input.len());
-    push!(interp, len);
+    push!(interp, U256::from(interp.contract.input.len()));
     Return::Continue
 }
 
 pub fn callvalue(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::BASE);
-    push_h256!(interp, interp.contract.value.to_be_bytes().into());
+    push_b256!(interp, interp.contract.value.into());
     Return::Continue
 }
 
@@ -117,8 +124,7 @@ pub fn returndatasize<SPEC: Spec>(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::BASE);
     // EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
     check!(SPEC::enabled(BYZANTIUM));
-    let size = U256::from(interp.return_data_buffer.len());
-    push!(interp, size);
+    push!(interp, U256::from(interp.return_data_buffer.len()));
     Return::Continue
 }
 

@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use primitive_types::{H160, H256};
+use ruint::aliases::{B160, B256};
 
 use crate::{
     evm_impl::EVMData, opcode, spec_opcode_gas, CallInputs, CreateInputs, Database, Gas,
@@ -43,8 +43,8 @@ pub trait Inspector<DB: Database> {
     fn log(
         &mut self,
         _evm_data: &mut EVMData<'_, DB>,
-        _address: &H160,
-        _topics: &[H256],
+        _address: &B160,
+        _topics: &[B256],
         _data: &Bytes,
     ) {
     }
@@ -97,7 +97,7 @@ pub trait Inspector<DB: Database> {
         &mut self,
         _data: &mut EVMData<'_, DB>,
         _inputs: &mut CreateInputs,
-    ) -> (Return, Option<H160>, Gas, Bytes) {
+    ) -> (Return, Option<B160>, Gas, Bytes) {
         (Return::Continue, None, Gas::new(0), Bytes::default())
     }
 
@@ -110,10 +110,10 @@ pub trait Inspector<DB: Database> {
         _data: &mut EVMData<'_, DB>,
         _inputs: &CreateInputs,
         ret: Return,
-        address: Option<H160>,
+        address: Option<B160>,
         remaining_gas: Gas,
         out: Bytes,
-    ) -> (Return, Option<H160>, Gas, Bytes) {
+    ) -> (Return, Option<B160>, Gas, Bytes) {
         (ret, address, remaining_gas, out)
     }
 
@@ -230,10 +230,10 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         _data: &mut EVMData<'_, DB>,
         _inputs: &CreateInputs,
         ret: Return,
-        address: Option<H160>,
+        address: Option<B160>,
         remaining_gas: Gas,
         out: Bytes,
-    ) -> (Return, Option<H160>, Gas, Bytes) {
+    ) -> (Return, Option<B160>, Gas, Bytes) {
         self.was_return = true;
         (ret, address, remaining_gas, out)
     }
@@ -248,7 +248,7 @@ mod tests {
     };
     use bytes::Bytes;
     use core::str::FromStr;
-    use primitive_types::{H160, H256};
+    use ruint::aliases::{B160, B256};
 
     #[derive(Default, Debug)]
     struct StackInspector {
@@ -283,8 +283,8 @@ mod tests {
         fn log(
             &mut self,
             evm_data: &mut EVMData<'_, DB>,
-            address: &H160,
-            topics: &[H256],
+            address: &B160,
+            topics: &[B256],
             data: &Bytes,
         ) {
             self.gas_inspector.log(evm_data, address, topics, data);
@@ -332,7 +332,7 @@ mod tests {
             &mut self,
             data: &mut EVMData<'_, DB>,
             call: &mut CreateInputs,
-        ) -> (Return, Option<H160>, Gas, Bytes) {
+        ) -> (Return, Option<B160>, Gas, Bytes) {
             self.gas_inspector.create(data, call);
 
             (
@@ -348,10 +348,10 @@ mod tests {
             data: &mut EVMData<'_, DB>,
             inputs: &CreateInputs,
             status: Return,
-            address: Option<H160>,
+            address: Option<B160>,
             gas: Gas,
             retdata: Bytes,
-        ) -> (Return, Option<H160>, Gas, Bytes) {
+        ) -> (Return, Option<B160>, Gas, Bytes) {
             self.gas_inspector
                 .create_end(data, inputs, status, address, gas, retdata.clone());
             (status, address, gas, retdata)
@@ -379,9 +379,14 @@ mod tests {
 
         let mut evm = crate::new();
         evm.database(BenchmarkDB::new_bytecode(bytecode.clone()));
-        evm.env.tx.caller = H160::from_str("0x1000000000000000000000000000000000000000").unwrap();
-        evm.env.tx.transact_to =
-            TransactTo::Call(H160::from_str("0x0000000000000000000000000000000000000000").unwrap());
+        evm.env.tx.caller = "0x1000000000000000000000000000000000000000"
+            .parse()
+            .unwrap();
+        evm.env.tx.transact_to = TransactTo::Call(
+            "0x0000000000000000000000000000000000000000"
+                .parse()
+                .unwrap(),
+        );
         evm.env.tx.gas_limit = 21100;
 
         let mut inspector = StackInspector::default();

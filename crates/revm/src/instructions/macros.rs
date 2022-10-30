@@ -70,9 +70,12 @@ macro_rules! pop_address {
             return Return::StackUnderflow;
         }
         // Safety: Length is checked above.
-        let $x1: H160 = H160::from_slice(
+        // TODO(shekhirin): replace with `B160::try_from_be_slice`
+        let $x1: B160 = ruint::aliases::U160::try_from_be_slice(
             &unsafe { $interp.stack.pop_unsafe() }.to_be_bytes::<{ U256::BYTES }>()[12..],
-        );
+        )
+        .unwrap()
+        .into();
     };
     ( $interp:expr, $x1:ident, $x2:ident) => {
         if $interp.stack.len() < 2 {
@@ -159,10 +162,10 @@ macro_rules! pop_top {
     };
 }
 
-macro_rules! push_h256 {
+macro_rules! push_b256 {
 	( $interp:expr, $( $x:expr ),* ) => (
 		$(
-			match $interp.stack.push_h256($x) {
+			match $interp.stack.push_b256($x) {
 				Ok(()) => (),
 				Err(e) => return e,
 			}

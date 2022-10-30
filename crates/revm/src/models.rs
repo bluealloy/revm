@@ -2,10 +2,10 @@ use core::cmp::min;
 
 use crate::{alloc::vec::Vec, interpreter::bytecode::Bytecode, Return, SpecId};
 use bytes::Bytes;
-use primitive_types::{H160, H256};
-use ruint::aliases::U256;
+use ruint::aliases::{B160, B256, U256};
 
-pub const KECCAK_EMPTY: H256 = H256([
+// TODO(shekhirin): use `bits!` macro
+pub const KECCAK_EMPTY: B256 = B256([
     0xc5, 0xd2, 0x46, 0x01, 0x86, 0xf7, 0x23, 0x3c, 0x92, 0x7e, 0x7d, 0xb2, 0xdc, 0xc7, 0x03, 0xc0,
     0xe5, 0x00, 0xb6, 0x53, 0xca, 0x82, 0x27, 0x3b, 0x7b, 0xfa, 0xd8, 0x04, 0x5d, 0x85, 0xa4, 0x70,
 ]);
@@ -19,7 +19,7 @@ pub struct AccountInfo {
     /// Account nonce.
     pub nonce: u64,
     /// code hash,
-    pub code_hash: H256,
+    pub code_hash: B256,
     /// code: if None, `code_by_hash` will be used to fetch it if code needs to be loaded from
     /// inside of revm.
     pub code: Option<Bytecode>,
@@ -56,7 +56,7 @@ impl AccountInfo {
     }
 
     pub fn is_empty(&self) -> bool {
-        let code_empty = self.code_hash == KECCAK_EMPTY || self.code_hash.is_zero();
+        let code_empty = self.code_hash == KECCAK_EMPTY || self.code_hash == B256::ZERO;
         self.balance == U256::ZERO && self.nonce == 0 && code_empty
     }
 
@@ -76,7 +76,7 @@ impl AccountInfo {
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallInputs {
     /// The target of the call.
-    pub contract: H160,
+    pub contract: B160,
     /// The transfer, if any, in this call.
     pub transfer: Transfer,
     /// The call data of the call.
@@ -90,7 +90,7 @@ pub struct CallInputs {
 
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CreateInputs {
-    pub caller: H160,
+    pub caller: B160,
     pub scheme: CreateScheme,
     pub value: U256,
     #[cfg_attr(feature = "with-serde", serde(with = "serde_hex_bytes"))]
@@ -103,7 +103,7 @@ pub struct CreateData {}
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TransactTo {
-    Call(H160),
+    Call(B160),
     Create(CreateScheme),
 }
 
@@ -121,7 +121,7 @@ pub enum TransactOut {
     Call(Bytes),
     Create(
         #[cfg_attr(feature = "with-serde", serde(with = "serde_hex_bytes"))] Bytes,
-        Option<H160>,
+        Option<B160>,
     ),
 }
 
@@ -157,11 +157,11 @@ pub enum CallScheme {
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallContext {
     /// Execution address.
-    pub address: H160,
+    pub address: B160,
     /// Caller of the EVM.
-    pub caller: H160,
+    pub caller: B160,
     /// The address the contract code was loaded from, if any.
-    pub code_address: H160,
+    pub code_address: B160,
     /// Apparent value of the EVM.
     pub apparent_value: U256,
     /// The scheme used for the call.
@@ -171,9 +171,9 @@ pub struct CallContext {
 impl Default for CallContext {
     fn default() -> Self {
         CallContext {
-            address: H160::default(),
-            caller: H160::default(),
-            code_address: H160::default(),
+            address: B160::default(),
+            caller: B160::default(),
+            code_address: B160::default(),
             apparent_value: U256::default(),
             scheme: CallScheme::Call,
         }
@@ -193,7 +193,7 @@ pub struct BlockEnv {
     pub number: U256,
     /// Coinbase or miner or address that created and signed the block.
     /// Address where we are going to send gas spend
-    pub coinbase: H160,
+    pub coinbase: B160,
     pub timestamp: U256,
     pub difficulty: U256,
     /// basefee is added in EIP1559 London upgrade
@@ -205,7 +205,7 @@ pub struct BlockEnv {
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxEnv {
     /// Caller or Author or tx signer
-    pub caller: H160,
+    pub caller: B160,
     pub gas_limit: u64,
     pub gas_price: U256,
     pub gas_priority_fee: Option<U256>,
@@ -215,7 +215,7 @@ pub struct TxEnv {
     pub data: Bytes,
     pub chain_id: Option<u64>,
     pub nonce: Option<u64>,
-    pub access_list: Vec<(H160, Vec<U256>)>,
+    pub access_list: Vec<(B160, Vec<U256>)>,
 }
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
@@ -285,7 +285,7 @@ impl Default for BlockEnv {
         BlockEnv {
             gas_limit: U256::MAX,
             number: U256::ZERO,
-            coinbase: H160::zero(),
+            coinbase: B160::ZERO,
             timestamp: U256::from(1),
             difficulty: U256::ZERO,
             basefee: U256::ZERO,
@@ -296,11 +296,11 @@ impl Default for BlockEnv {
 impl Default for TxEnv {
     fn default() -> TxEnv {
         TxEnv {
-            caller: H160::zero(),
+            caller: B160::ZERO,
             gas_limit: u64::MAX,
             gas_price: U256::ZERO,
             gas_priority_fee: None,
-            transact_to: TransactTo::Call(H160::zero()), //will do nothing
+            transact_to: TransactTo::Call(B160::ZERO), //will do nothing
             value: U256::ZERO,
             data: Bytes::new(),
             chain_id: None,
@@ -328,9 +328,9 @@ impl Env {
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Transfer {
     /// Source address.
-    pub source: H160,
+    pub source: B160,
     /// Target address.
-    pub target: H160,
+    pub target: B160,
     /// Transfer value.
     pub value: U256,
 }
@@ -338,8 +338,8 @@ pub struct Transfer {
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Log {
-    pub address: H160,
-    pub topics: Vec<H256>,
+    pub address: B160,
+    pub topics: Vec<B256>,
     #[cfg_attr(feature = "with-serde", serde(with = "serde_hex_bytes"))]
     pub data: Bytes,
 }

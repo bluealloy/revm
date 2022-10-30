@@ -1,12 +1,15 @@
-use crate::{gas_query, Precompile, PrecompileOutput, PrecompileResult, StandardPrecompileFn};
+use crate::{
+    gas_query, Precompile, PrecompileAddress, PrecompileOutput, PrecompileResult,
+    StandardPrecompileFn,
+};
 use alloc::vec::Vec;
 use core::cmp::min;
 
-use ruint::aliases::{B160 as Address, B256, U256};
+use ruint::aliases::{B256, U256};
 
 const ECRECOVER_BASE: u64 = 3_000;
 
-pub const ECRECOVER: (Address, Precompile) = (
+pub const ECRECOVER: PrecompileAddress = PrecompileAddress(
     super::make_address(0, 1),
     Precompile::Standard(ec_recover_run as StandardPrecompileFn),
 );
@@ -80,7 +83,7 @@ fn ec_recover_run(i: &[u8], target_gas: u64) -> PrecompileResult {
     let out = match secp256k1::ecrecover(&sig, &msg) {
         Ok(out) => B256::from(U256::from(out.into_inner()))
             .to_be_bytes::<{ B256::BYTES }>()
-            .to_vec(), // TODO: replace with `B256::from(out).to_be_bytes_vec()`
+            .to_vec(), // TODO(shekhirin): replace with `B256::from(out).to_be_bytes_vec()`
         Err(_) => Vec::new(),
     };
 
