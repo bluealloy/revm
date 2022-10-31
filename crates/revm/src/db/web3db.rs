@@ -105,7 +105,6 @@ impl Database for Web3DB {
         if number > U256::from(u64::MAX) {
             return Ok(KECCAK_EMPTY);
         }
-        
         let number = wU64::from(u64::try_from(number).unwrap());
         let f = async {
             self.web3
