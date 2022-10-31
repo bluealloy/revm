@@ -105,14 +105,7 @@ impl Database for Web3DB {
         if number > U256::from(u64::MAX) {
             return Ok(KECCAK_EMPTY);
         }
-        let number = u64::try_from(number).unwrap();
-        if let Some(block_num) = self.block_number {
-            match block_num {
-                BlockNumber::Number(t) if t.as_u64() > number => return Ok(KECCAK_EMPTY),
-                _ => (),
-            }
-        }
-        let number = wU64::from(number);
+        let number = wU64::from(u64::try_from(number).unwrap());
         let f = async {
             self.web3
                 .eth()
