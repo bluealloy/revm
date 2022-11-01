@@ -6,11 +6,12 @@ use alloc::vec::Vec;
 use core::cmp::min;
 
 use ruint::aliases::{B256, U256};
+use ruint::bits;
 
 const ECRECOVER_BASE: u64 = 3_000;
 
 pub const ECRECOVER: PrecompileAddress = PrecompileAddress(
-    super::make_address(0, 1),
+    bits!(1_B160),
     Precompile::Standard(ec_recover_run as StandardPrecompileFn),
 );
 

@@ -70,12 +70,10 @@ macro_rules! pop_address {
             return Return::StackUnderflow;
         }
         // Safety: Length is checked above.
-        // TODO(shekhirin): replace with `B160::try_from_be_slice`
-        let $x1: B160 = ruint::aliases::U160::try_from_be_slice(
+        let $x1: B160 = ruint::aliases::B160::try_from_be_slice(
             &unsafe { $interp.stack.pop_unsafe() }.to_be_bytes_vec()[12..],
         )
-        .unwrap()
-        .into();
+        .unwrap();
     };
     ( $interp:expr, $x1:ident, $x2:ident) => {
         if $interp.stack.len() < 2 {

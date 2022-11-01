@@ -9,14 +9,15 @@ use core::{
 };
 use num::{BigUint, One, Zero};
 use ruint::aliases::U256;
+use ruint::bits;
 
 pub const BYZANTIUM: PrecompileAddress = PrecompileAddress(
-    super::make_address(0, 5),
+    bits!(5_B160),
     Precompile::Standard(byzantium_run as StandardPrecompileFn),
 );
 
 pub const BERLIN: PrecompileAddress = PrecompileAddress(
-    super::make_address(0, 5),
+    bits!(5_B160),
     Precompile::Standard(berlin_run as StandardPrecompileFn),
 );
 

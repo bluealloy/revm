@@ -1,11 +1,12 @@
 use crate::{
     Precompile, PrecompileAddress, PrecompileOutput, PrecompileResult, StandardPrecompileFn,
 };
+use ruint::bits;
 
 use super::{calc_linear_cost_u32, gas_query};
 
 pub const FUN: PrecompileAddress = PrecompileAddress(
-    super::make_address(0, 4),
+    bits!(4_B160),
     Precompile::Standard(identity_run as StandardPrecompileFn),
 );
 

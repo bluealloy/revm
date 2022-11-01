@@ -74,10 +74,9 @@ pub fn calldataload(interp: &mut Interpreter) -> Return {
 
     let load = if index < interp.contract.input.len() {
         let have_bytes = min(interp.contract.input.len() - index, 32);
-        // TODO(shekhirin): replace with `B256::try_from_be_slice`
-        U256::try_from_be_slice(&interp.contract.input[index..index + have_bytes])
-            .unwrap()
-            .into()
+        let mut bytes = [0u8; U256::BYTES];
+        bytes[..have_bytes].copy_from_slice(&interp.contract.input[index..index + have_bytes]);
+        B256::from_be_bytes(bytes)
     } else {
         B256::ZERO
     };

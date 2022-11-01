@@ -848,10 +848,7 @@ pub fn create2_address(caller: B160, code_hash: B256, salt: U256) -> B160 {
     hasher.update(salt.to_be_bytes_vec());
     hasher.update(&code_hash.to_be_bytes_vec()[..]);
 
-    // TODO(shekhirin): replace with `B160::try_from_be_slice`
-    U160::try_from_be_slice(&hasher.finalize().as_slice()[12..])
-        .unwrap()
-        .into()
+    B160::try_from_be_slice(&hasher.finalize().as_slice()[12..]).unwrap()
 }
 
 /// EVM context host.

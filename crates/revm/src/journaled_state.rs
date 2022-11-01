@@ -615,7 +615,6 @@ impl JournaledState {
     }
 }
 
-// TODO(shekhirin): improve
 fn is_precompile(address: B160, num_of_precompiles: usize) -> bool {
     let bytes = address.to_be_bytes_vec();
 

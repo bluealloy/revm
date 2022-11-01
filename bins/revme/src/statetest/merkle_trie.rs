@@ -2,6 +2,7 @@ use bytes::Bytes;
 use hash_db::Hasher;
 use plain_hasher::PlainHasher;
 use primitive_types::{H160, H256};
+use revm::common::keccak256;
 use revm::{db::DbAccount, Log};
 use rlp::RlpStream;
 use ruint::aliases::{B160, B256, U256};
@@ -21,8 +22,7 @@ pub fn log_rlp_hash(logs: Vec<Log>) -> B256 {
     stream.finalize_unbounded_list();
     let out = stream.out().freeze();
 
-    let out = Keccak256::digest(out);
-    B256::try_from_be_slice(out.as_slice()).unwrap()
+    keccak256(&out)
 }
 
 pub fn state_merkle_trie_root(accounts: impl Iterator<Item = (B160, DbAccount)>) -> B256 {

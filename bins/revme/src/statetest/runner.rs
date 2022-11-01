@@ -7,8 +7,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-use sha3::{Digest, Keccak256};
-
 use indicatif::ProgressBar;
 use revm::{db::AccountState, Bytecode, CreateScheme, Env, ExecutionResult, SpecId, TransactTo};
 use ruint::aliases::{B160, B256, U256};
@@ -20,6 +18,7 @@ use super::{
     models::{SpecName, TestSuit},
     trace::CustomPrintTracer,
 };
+use revm::common::keccak256;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -129,8 +128,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
         for (address, info) in unit.pre.iter() {
             let acc_info = revm::AccountInfo {
                 balance: info.balance,
-                code_hash: B256::try_from_be_slice(Keccak256::digest(&info.code).as_slice())
-                    .unwrap(), //try with dummy hash.
+                code_hash: keccak256(&info.code), // try with dummy hash.
                 code: Some(Bytecode::new_raw(info.code.clone())),
                 nonce: info.nonce,
             };

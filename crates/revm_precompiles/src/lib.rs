@@ -89,7 +89,7 @@ impl fmt::Debug for Precompile {
     }
 }
 
-pub struct PrecompileAddress(primitive_types::H160, Precompile);
+pub struct PrecompileAddress(Address, Precompile);
 
 impl From<PrecompileAddress> for (Address, Precompile) {
     fn from(value: PrecompileAddress) -> Self {
@@ -220,35 +220,4 @@ impl Precompiles {
     pub fn len(&self) -> usize {
         self.fun.len()
     }
-}
-
-/// const fn for making an address by concatenating the bytes from two given numbers,
-/// Note that 32 + 128 = 160 = 20 bytes (the length of an address). This function is used
-/// as a convenience for specifying the addresses of the various precompiles.
-// TODO(shekhirin): use `bits!` macro instead of this function
-const fn make_address(x: u32, y: u128) -> primitive_types::H160 {
-    let x_bytes = x.to_be_bytes();
-    let y_bytes = y.to_be_bytes();
-    primitive_types::H160([
-        x_bytes[0],
-        x_bytes[1],
-        x_bytes[2],
-        x_bytes[3],
-        y_bytes[0],
-        y_bytes[1],
-        y_bytes[2],
-        y_bytes[3],
-        y_bytes[4],
-        y_bytes[5],
-        y_bytes[6],
-        y_bytes[7],
-        y_bytes[8],
-        y_bytes[9],
-        y_bytes[10],
-        y_bytes[11],
-        y_bytes[12],
-        y_bytes[13],
-        y_bytes[14],
-        y_bytes[15],
-    ])
 }
