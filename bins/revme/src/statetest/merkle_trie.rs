@@ -1,6 +1,7 @@
 use bytes::Bytes;
 use hash_db::Hasher;
 use plain_hasher::PlainHasher;
+use primitive_types::{H160, H256};
 use revm::{db::DbAccount, Log};
 use rlp::RlpStream;
 use ruint::aliases::{B160, B256, U256};
@@ -28,7 +29,7 @@ pub fn state_merkle_trie_root(accounts: impl Iterator<Item = (B160, DbAccount)>)
     let vec = accounts
         .map(|(address, info)| {
             let acc_root = trie_account_rlp(&info);
-            (address, acc_root)
+            (H160::from(address), acc_root)
         })
         .collect();
 
@@ -43,28 +44,28 @@ pub fn trie_account_rlp(acc: &DbAccount) -> Bytes {
     stream.append(&{
         sec_trie_root::<KeccakHasher, _, _, _>(
             acc.storage
-                .iter()
-                .filter(|(_k, &v)| v != U256::ZERO)
-                .map(|(k, v)| (B256::from(k.to_be_bytes()), rlp::encode(v))),
+                .into_iter()
+                .filter(|(_k, v)| v != &U256::ZERO)
+                .map(|(k, v)| (H256::from(B256::from(k)), rlp::encode(&v))),
         )
     });
     stream.append(&acc.info.code_hash.to_be_bytes_vec());
     stream.out().freeze()
 }
 
-pub fn trie_root(acc_data: Vec<(B160, Bytes)>) -> B256 {
-    sec_trie_root::<KeccakHasher, _, _, _>(acc_data.into_iter())
+pub fn trie_root(acc_data: Vec<(H160, Bytes)>) -> B256 {
+    sec_trie_root::<KeccakHasher, _, _, _>(acc_data.into_iter()).into()
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct KeccakHasher;
 
 impl Hasher for KeccakHasher {
-    type Out = B256;
+    type Out = H256;
     type StdHasher = PlainHasher;
     const LENGTH: usize = 32;
     fn hash(x: &[u8]) -> Self::Out {
         let out = Keccak256::digest(x);
-        B256::try_from_be_slice(out.as_slice()).unwrap()
+        H256::from_slice(out.as_slice())
     }
 }
