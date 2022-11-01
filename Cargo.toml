@@ -17,4 +17,4 @@ inherits = "test"
 opt-level = 3
 
 [patch.crates-io]
-ruint = { git = "https://github.com/shekhirin/uint", branch = "bits-macro" }
+ruint = { path = "../uint" }

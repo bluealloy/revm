@@ -833,7 +833,10 @@ pub fn create_address(caller: B160, nonce: u64) -> B160 {
     let mut stream = rlp::RlpStream::new_list(2);
     stream.append(&caller);
     stream.append(&nonce);
-    U160::from(keccak256(&stream.out()).into_inner()).into()
+    let out = keccak256(&stream.out());
+    U160::try_from_be_slice(&out.to_be_bytes_vec()[12..])
+        .unwrap()
+        .into()
 }
 
 /// Returns the address for the `CREATE2` scheme: [`CreateScheme::Create2`]

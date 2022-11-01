@@ -44,9 +44,9 @@ pub fn trie_account_rlp(acc: &DbAccount) -> Bytes {
     stream.append(&{
         sec_trie_root::<KeccakHasher, _, _, _>(
             acc.storage
-                .into_iter()
-                .filter(|(_k, v)| v != &U256::ZERO)
-                .map(|(k, v)| (H256::from(B256::from(k)), rlp::encode(&v))),
+                .iter()
+                .filter(|(_k, &v)| v != U256::ZERO)
+                .map(|(&k, v)| (H256::from(B256::from(k)), rlp::encode(v))),
         )
     });
     stream.append(&acc.info.code_hash.to_be_bytes_vec());
