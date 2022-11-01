@@ -2,12 +2,11 @@ use core::convert::TryInto;
 
 use bn_rs::BN;
 use bytes::Bytes;
-use primitive_types::H160;
 use revm::{
     AccountInfo, Bytecode, DatabaseCommit, ExecutionResult, InMemoryDB, SpecId, TransactTo,
     EVM as rEVM,
 };
-use ruint::aliases::U256;
+use ruint::aliases::{B160, U256};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -159,11 +158,11 @@ impl EVM {
 /// Struct that allows setting AccessList for transaction.
 #[wasm_bindgen]
 pub struct AccessedAccount {
-    account: H160,
+    account: B160,
     slots: Vec<U256>,
 }
 
-impl From<AccessedAccount> for (primitive_types::H160, Vec<U256>) {
+impl From<AccessedAccount> for (B160, Vec<U256>) {
     fn from(from: AccessedAccount) -> Self {
         (from.account, from.slots)
     }
@@ -173,7 +172,7 @@ impl From<AccessedAccount> for (primitive_types::H160, Vec<U256>) {
 impl AccessedAccount {
     pub fn new(account: BN) -> Self {
         Self {
-            account: H160::try_from(account).unwrap(),
+            account: account.try_into().unwrap(),
             slots: Vec::new(),
         }
     }

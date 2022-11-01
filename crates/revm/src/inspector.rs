@@ -247,7 +247,6 @@ mod tests {
         Inspector, Interpreter, OpCode, Return, TransactTo,
     };
     use bytes::Bytes;
-    use core::str::FromStr;
     use ruint::aliases::{B160, B256};
 
     #[derive(Default, Debug)]

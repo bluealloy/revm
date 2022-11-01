@@ -347,7 +347,7 @@ impl JournaledState {
         journal_entries: Vec<JournalEntry>,
         is_spurious_dragon_enabled: bool,
     ) {
-        const PRECOMPILE3: B160 = bits!(0o00000000000000000003_B160);
+        const PRECOMPILE3: B160 = bits!(3_B160);
         for entry in journal_entries.into_iter().rev() {
             match entry {
                 JournalEntry::AccountLoaded { address } => {
@@ -631,44 +631,20 @@ mod test {
 
     #[test]
     fn test_is_precompile() {
-        assert!(
-            !is_precompile(
-                B160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
-                3
-            ),
-            "Zero is not precompile"
-        );
+        assert!(!is_precompile(bits!(0_B160), 3), "Zero is not precompile");
 
         assert!(
-            !is_precompile(
-                B160([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9]),
-                3
-            ),
+            !is_precompile(bits!(9_B160), 3),
             "0x100..0 is not precompile"
         );
 
         assert!(
-            !is_precompile(
-                B160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]),
-                3
-            ),
+            !is_precompile(bits!(4_B160), 3),
             "0x000..4 is not precompile"
         );
 
-        assert!(
-            is_precompile(
-                B160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-                3
-            ),
-            "0x00..01 is precompile"
-        );
+        assert!(is_precompile(bits!(1_B160), 3), "0x00..01 is precompile");
 
-        assert!(
-            is_precompile(
-                B160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]),
-                3
-            ),
-            "0x000..3 is precompile"
-        );
+        assert!(is_precompile(bits!(3_B160), 3), "0x000..3 is precompile");
     }
 }

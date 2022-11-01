@@ -392,8 +392,7 @@ impl Database for BenchmarkDB {
 
 #[cfg(test)]
 mod tests {
-    use primitive_types::B160;
-    use ruint::aliases::U256;
+    use ruint::{aliases::U256, bits};
 
     use crate::{AccountInfo, Database};
 
@@ -401,7 +400,7 @@ mod tests {
 
     #[test]
     pub fn test_insert_account_storage() {
-        let account = B160::from_low_u64_be(42);
+        let account = bits!(42_B160);
         let nonce = 42;
         let mut init_state = CacheDB::new(EmptyDB::default());
         init_state.insert_account_info(
@@ -422,7 +421,7 @@ mod tests {
 
     #[test]
     pub fn test_replace_account_storage() {
-        let account = B160::from_low_u64_be(42);
+        let account = bits!(42_B160);
         let nonce = 42;
         let mut init_state = CacheDB::new(EmptyDB::default());
         init_state.insert_account_info(
