@@ -1,10 +1,10 @@
 use bytes::Bytes;
-use primitive_types::H160;
 pub use revm::Inspector;
 use revm::{
     opcode::{self},
     CallInputs, CreateInputs, Database, EVMData, Gas, GasInspector, Return,
 };
+use ruint::aliases::B160;
 
 #[derive(Clone)]
 pub struct CustomPrintTracer {
@@ -93,10 +93,10 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         data: &mut EVMData<'_, DB>,
         inputs: &CreateInputs,
         ret: Return,
-        address: Option<H160>,
+        address: Option<B160>,
         remaining_gas: Gas,
         out: Bytes,
-    ) -> (Return, Option<H160>, Gas, Bytes) {
+    ) -> (Return, Option<B160>, Gas, Bytes) {
         self.gas_inspector
             .create_end(data, inputs, ret, address, remaining_gas, out.clone());
         (ret, address, remaining_gas, out)
@@ -123,7 +123,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         &mut self,
         _data: &mut EVMData<'_, DB>,
         inputs: &mut CreateInputs,
-    ) -> (Return, Option<H160>, Gas, Bytes) {
+    ) -> (Return, Option<B160>, Gas, Bytes) {
         println!(
             "CREATE CALL: caller:{:?}, scheme:{:?}, value:{:?}, init_code:{:?}, gas:{:?}",
             inputs.caller,
@@ -136,7 +136,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
     }
 
     fn selfdestruct(&mut self) {
-        //, address: H160, target: H160) {
+        //, address: B160, target: B160) {
         println!("SELFDESTRUCT on "); //{:?} target: {:?}", address, target);
     }
 }

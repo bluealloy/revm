@@ -2,7 +2,10 @@ use crate::{interpreter::bytecode::Bytecode, models::SelfDestructResult, Return,
 use alloc::{vec, vec::Vec};
 use core::mem::{self};
 use hashbrown::{hash_map::Entry, HashMap as Map};
-use ruint::aliases::{B160, U256};
+use ruint::{
+    aliases::{B160, U256},
+    bits,
+};
 
 use crate::{db::Database, AccountInfo, Log};
 
@@ -344,9 +347,7 @@ impl JournaledState {
         journal_entries: Vec<JournalEntry>,
         is_spurious_dragon_enabled: bool,
     ) {
-        // TODO(shekhirin): use `bits!` macro
-        const PRECOMPILE3: B160 =
-            B160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]);
+        const PRECOMPILE3: B160 = bits!(0o00000000000000000003_B160);
         for entry in journal_entries.into_iter().rev() {
             match entry {
                 JournalEntry::AccountLoaded { address } => {
@@ -616,10 +617,12 @@ impl JournaledState {
 
 // TODO(shekhirin): improve
 fn is_precompile(address: B160, num_of_precompiles: usize) -> bool {
-    if !address.to_be_bytes()[..18].iter().all(|i| *i == 0) {
+    let bytes = address.to_be_bytes_vec();
+
+    if !bytes[..18].iter().all(|i| *i == 0) {
         return false;
     }
-    let num = u16::from_be_bytes([address.to_be_bytes()[18], address.to_be_bytes()[19]]);
+    let num = u16::from_be_bytes([bytes[18], bytes[19]]);
     num.wrapping_sub(1) < num_of_precompiles as u16
 }
 

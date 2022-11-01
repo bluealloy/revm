@@ -264,7 +264,9 @@ pub fn create<H: Host, SPEC: Spec>(
                 interp,
                 address
                     // TODO(shekhirin): replace with `B256::try_from_be_slice`
-                    .map(|a| U256::try_from_be_slice(&a.to_be_bytes()).unwrap().into())
+                    .map(|a| U256::try_from_be_slice(&a.to_be_bytes_vec())
+                        .unwrap()
+                        .into())
                     .unwrap_or_default()
             );
             interp.gas.erase_cost(gas.remaining());

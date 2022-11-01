@@ -33,9 +33,7 @@ mod secp256k1 {
         let public_key = public_key.to_encoded_point(/* compress = */ false);
         let public_key = public_key.as_bytes();
         let hash = Keccak256::digest(&public_key[1..]);
-        let mut address = Address::zero();
-        address.as_bytes_mut().copy_from_slice(&hash[12..]);
-        Ok(address)
+        Ok(Address::try_from_be_slice(&hash[12..]).unwrap())
     }
 }
 
@@ -81,9 +79,7 @@ fn ec_recover_run(i: &[u8], target_gas: u64) -> PrecompileResult {
     sig[64] = input[63] - 27;
 
     let out = match secp256k1::ecrecover(&sig, &msg) {
-        Ok(out) => B256::from(U256::from(out.into_inner()))
-            .to_be_bytes::<{ B256::BYTES }>()
-            .to_vec(), // TODO(shekhirin): replace with `B256::from(out).to_be_bytes_vec()`
+        Ok(out) => B256::from(U256::from(out.into_inner())).to_be_bytes_vec(), // TODO(shekhirin): replace with `B256::from(out).to_be_bytes_vec()`
         Err(_) => Vec::new(),
     };
 

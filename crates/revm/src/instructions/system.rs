@@ -8,7 +8,7 @@ pub fn sha3(interp: &mut Interpreter) -> Return {
     pop!(interp, from, len);
     let len = as_usize_or_fail!(len, Return::OutOfGas);
     gas_or_fail!(interp, gas::sha3_cost(len as u64));
-    let B256 = if len == 0 {
+    let hash = if len == 0 {
         KECCAK_EMPTY
     } else {
         let from = as_usize_or_fail!(from, Return::OutOfGas);
@@ -16,7 +16,7 @@ pub fn sha3(interp: &mut Interpreter) -> Return {
         keccak256(interp.memory.get_slice(from, len))
     };
 
-    push_b256!(interp, B256);
+    push_b256!(interp, hash);
     Return::Continue
 }
 
