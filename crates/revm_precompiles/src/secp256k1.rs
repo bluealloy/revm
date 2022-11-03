@@ -5,13 +5,15 @@ use crate::{
 use alloc::vec::Vec;
 use core::cmp::min;
 
-use ruint::aliases::{B256, U256};
-use ruint::bits;
+use ruint::{
+    aliases::{B256, U256},
+    uint,
+};
 
 const ECRECOVER_BASE: u64 = 3_000;
 
 pub const ECRECOVER: PrecompileAddress = PrecompileAddress(
-    bits!(1_B160),
+    uint!(1_B160),
     Precompile::Standard(ec_recover_run as StandardPrecompileFn),
 );
 

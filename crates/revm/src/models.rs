@@ -4,11 +4,11 @@ use crate::{alloc::vec::Vec, interpreter::bytecode::Bytecode, Return, SpecId};
 use bytes::Bytes;
 use ruint::{
     aliases::{B160, B256, U256},
-    bits,
+    uint,
 };
 
 pub const KECCAK_EMPTY: B256 =
-    bits!(0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470_B256);
+    uint!(0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470_B256);
 
 /// AccountInfo account information.
 #[derive(Clone, Debug, Eq)]

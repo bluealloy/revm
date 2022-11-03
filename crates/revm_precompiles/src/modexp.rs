@@ -8,16 +8,15 @@ use core::{
     mem::size_of,
 };
 use num::{BigUint, One, Zero};
-use ruint::aliases::U256;
-use ruint::bits;
+use ruint::{aliases::U256, uint};
 
 pub const BYZANTIUM: PrecompileAddress = PrecompileAddress(
-    bits!(5_B160),
+    uint!(5_B160),
     Precompile::Standard(byzantium_run as StandardPrecompileFn),
 );
 
 pub const BERLIN: PrecompileAddress = PrecompileAddress(
-    bits!(5_B160),
+    uint!(5_B160),
     Precompile::Standard(berlin_run as StandardPrecompileFn),
 );
 

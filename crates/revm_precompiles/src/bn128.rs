@@ -3,12 +3,12 @@ use crate::{gas_query, Precompile, PrecompileAddress, PrecompileOutput, Precompi
 use alloc::{borrow::Cow, vec::Vec};
 use ruint::{
     aliases::{B160 as Address, U256},
-    bits,
+    uint,
 };
 
 pub mod add {
     use super::*;
-    const ADDRESS: Address = bits!(6_B160);
+    const ADDRESS: Address = uint!(6_B160);
 
     pub const ISTANBUL: PrecompileAddress = PrecompileAddress(
         ADDRESS,
@@ -27,7 +27,7 @@ pub mod add {
 
 pub mod mul {
     use super::*;
-    const ADDRESS: Address = bits!(7_B160);
+    const ADDRESS: Address = uint!(7_B160);
     pub const ISTANBUL: PrecompileAddress = PrecompileAddress(
         ADDRESS,
         Precompile::Standard(|input: &[u8], target_gas: u64| -> PrecompileResult {
@@ -45,7 +45,7 @@ pub mod mul {
 
 pub mod pair {
     use super::*;
-    const ADDRESS: Address = bits!(8_B160);
+    const ADDRESS: Address = uint!(8_B160);
 
     const ISTANBUL_PAIR_PER_POINT: u64 = 34_000;
     const ISTANBUL_PAIR_BASE: u64 = 45_000;

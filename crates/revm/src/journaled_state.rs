@@ -4,7 +4,7 @@ use core::mem::{self};
 use hashbrown::{hash_map::Entry, HashMap as Map};
 use ruint::{
     aliases::{B160, U256},
-    bits,
+    uint,
 };
 
 use crate::{db::Database, AccountInfo, Log};
@@ -347,7 +347,7 @@ impl JournaledState {
         journal_entries: Vec<JournalEntry>,
         is_spurious_dragon_enabled: bool,
     ) {
-        const PRECOMPILE3: B160 = bits!(3_B160);
+        const PRECOMPILE3: B160 = uint!(3_B160);
         for entry in journal_entries.into_iter().rev() {
             match entry {
                 JournalEntry::AccountLoaded { address } => {
@@ -631,20 +631,20 @@ mod test {
 
     #[test]
     fn test_is_precompile() {
-        assert!(!is_precompile(bits!(0_B160), 3), "Zero is not precompile");
+        assert!(!is_precompile(uint!(0_B160), 3), "Zero is not precompile");
 
         assert!(
-            !is_precompile(bits!(9_B160), 3),
+            !is_precompile(uint!(9_B160), 3),
             "0x100..0 is not precompile"
         );
 
         assert!(
-            !is_precompile(bits!(4_B160), 3),
+            !is_precompile(uint!(4_B160), 3),
             "0x000..4 is not precompile"
         );
 
-        assert!(is_precompile(bits!(1_B160), 3), "0x00..01 is precompile");
+        assert!(is_precompile(uint!(1_B160), 3), "0x00..01 is precompile");
 
-        assert!(is_precompile(bits!(3_B160), 3), "0x000..3 is precompile");
+        assert!(is_precompile(uint!(3_B160), 3), "0x000..3 is precompile");
     }
 }

@@ -1,5 +1,5 @@
 use super::{calc_linear_cost_u32, gas_query};
-use ruint::bits;
+use ruint::uint;
 
 use crate::{
     Precompile, PrecompileAddress, PrecompileOutput, PrecompileResult, StandardPrecompileFn,
@@ -7,11 +7,11 @@ use crate::{
 use sha2::*;
 
 pub const SHA256: PrecompileAddress = PrecompileAddress(
-    bits!(2_B160),
+    uint!(2_B160),
     Precompile::Standard(sha256_run as StandardPrecompileFn),
 );
 pub const RIPEMD160: PrecompileAddress = PrecompileAddress(
-    bits!(3_B160),
+    uint!(3_B160),
     Precompile::Standard(ripemd160_run as StandardPrecompileFn),
 );
 

@@ -400,7 +400,7 @@ mod tests {
 
     #[test]
     pub fn test_insert_account_storage() {
-        let account = bits!(42_B160);
+        let account = uint!(42_B160);
         let nonce = 42;
         let mut init_state = CacheDB::new(EmptyDB::default());
         init_state.insert_account_info(
@@ -421,7 +421,7 @@ mod tests {
 
     #[test]
     pub fn test_replace_account_storage() {
-        let account = bits!(42_B160);
+        let account = uint!(42_B160);
         let nonce = 42;
         let mut init_state = CacheDB::new(EmptyDB::default());
         init_state.insert_account_info(

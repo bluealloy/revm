@@ -3,13 +3,13 @@ use crate::{gas_query, PrecompileAddress, Return, StandardPrecompileFn};
 use crate::{Precompile, PrecompileOutput, PrecompileResult};
 use alloc::borrow::Cow;
 use core::convert::TryInto;
-use ruint::bits;
+use ruint::uint;
 
 const F_ROUND: u64 = 1;
 const INPUT_LENGTH: usize = 213;
 
 pub const FUN: PrecompileAddress = PrecompileAddress(
-    bits!(9_B160),
+    uint!(9_B160),
     Precompile::Standard(run as StandardPrecompileFn),
 );
 
