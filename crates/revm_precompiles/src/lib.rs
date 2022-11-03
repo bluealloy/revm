@@ -112,6 +112,7 @@ impl Precompiles {
         static INSTANCE: OnceCell<Precompiles> = OnceCell::new();
         INSTANCE.get_or_init(|| {
             let fun = vec![
+                #[cfg(any(feature = "k256_ecrecover", feature = "secp256k1"))]
                 secp256k1::ECRECOVER,
                 hash::SHA256,
                 hash::RIPEMD160,
