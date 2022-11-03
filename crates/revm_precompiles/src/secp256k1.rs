@@ -1,15 +1,46 @@
-use crate::{gas_query, Precompile, PrecompileOutput, PrecompileResult, StandardPrecompileFn};
-use alloc::vec::Vec;
-use core::cmp::min;
-
+#[cfg(feature = "secp256k1")]
 use primitive_types::{H160 as Address, H256};
 
-const ECRECOVER_BASE: u64 = 3_000;
+#[cfg(feature = "secp256k1")]
+use crate::{gas_query, Precompile, PrecompileOutput, PrecompileResult, StandardPrecompileFn};
 
+#[cfg(feature = "secp256k1")]
 pub const ECRECOVER: (Address, Precompile) = (
     super::make_address(0, 1),
     Precompile::Standard(ec_recover_run as StandardPrecompileFn),
 );
+
+#[cfg(feature = "secp256k1")]
+fn ec_recover_run(i: &[u8], target_gas: u64) -> PrecompileResult {
+    use alloc::vec::Vec;
+    use core::cmp::min;
+
+    const ECRECOVER_BASE: u64 = 3_000;
+
+    let cost = gas_query(ECRECOVER_BASE, target_gas)?;
+    let mut input = [0u8; 128];
+    input[..min(i.len(), 128)].copy_from_slice(&i[..min(i.len(), 128)]);
+
+    let mut msg = [0u8; 32];
+    let mut sig = [0u8; 65];
+
+    msg[0..32].copy_from_slice(&input[0..32]);
+    sig[0..32].copy_from_slice(&input[64..96]);
+    sig[32..64].copy_from_slice(&input[96..128]);
+
+    if input[32..63] != [0u8; 31] || !matches!(input[63], 27 | 28) {
+        return Ok(PrecompileOutput::without_logs(cost, Vec::new()));
+    }
+
+    sig[64] = input[63] - 27;
+
+    let out = match secp256k1::ecrecover(&sig, &msg) {
+        Ok(out) => H256::from(out).as_bytes().to_vec(),
+        Err(_) => Vec::new(),
+    };
+
+    Ok(PrecompileOutput::without_logs(cost, out))
+}
 
 #[cfg(feature = "k256_ecrecover")]
 #[allow(clippy::module_inception)]
@@ -57,30 +88,4 @@ mod secp256k1 {
         out.copy_from_slice(&Keccak256::digest(&public.serialize_uncompressed()[1..])[12..]);
         Ok(Address::from_slice(&out))
     }
-}
-
-fn ec_recover_run(i: &[u8], target_gas: u64) -> PrecompileResult {
-    let cost = gas_query(ECRECOVER_BASE, target_gas)?;
-    let mut input = [0u8; 128];
-    input[..min(i.len(), 128)].copy_from_slice(&i[..min(i.len(), 128)]);
-
-    let mut msg = [0u8; 32];
-    let mut sig = [0u8; 65];
-
-    msg[0..32].copy_from_slice(&input[0..32]);
-    sig[0..32].copy_from_slice(&input[64..96]);
-    sig[32..64].copy_from_slice(&input[96..128]);
-
-    if input[32..63] != [0u8; 31] || !matches!(input[63], 27 | 28) {
-        return Ok(PrecompileOutput::without_logs(cost, Vec::new()));
-    }
-
-    sig[64] = input[63] - 27;
-
-    let out = match secp256k1::ecrecover(&sig, &msg) {
-        Ok(out) => H256::from(out).as_bytes().to_vec(),
-        Err(_) => Vec::new(),
-    };
-
-    Ok(PrecompileOutput::without_logs(cost, out))
 }
