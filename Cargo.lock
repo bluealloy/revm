@@ -1557,7 +1557,7 @@ dependencies = [
 [[package]]
 name = "ruint"
 version = "1.7.0"
-source = "git+https://github.com/shekhirin/uint?branch=bits-macro#c99ca7b407ef4b1e756027305afa55eaa7034b05"
+source = "git+https://github.com/recmo/uint#da0489b40dd06a5141be37bfdba2dab8fc836a41"
 dependencies = [
  "bn-rs",
  "derive_more",
@@ -1572,7 +1572,7 @@ dependencies = [
 [[package]]
 name = "ruint-macro"
 version = "1.0.2"
-source = "git+https://github.com/shekhirin/uint?branch=bits-macro#c99ca7b407ef4b1e756027305afa55eaa7034b05"
+source = "git+https://github.com/recmo/uint#da0489b40dd06a5141be37bfdba2dab8fc836a41"
 
 [[package]]
 name = "rustc-hex"
