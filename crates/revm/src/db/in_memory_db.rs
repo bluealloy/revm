@@ -392,7 +392,7 @@ impl Database for BenchmarkDB {
 
 #[cfg(test)]
 mod tests {
-    use ruint::{aliases::U256, bits};
+    use ruint::{aliases::U256, uint};
 
     use crate::{AccountInfo, Database};
 
