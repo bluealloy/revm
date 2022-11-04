@@ -93,7 +93,7 @@ pub struct PrecompileAddress(Address, Precompile);
 
 impl From<PrecompileAddress> for (Address, Precompile) {
     fn from(value: PrecompileAddress) -> Self {
-        (value.0.into(), value.1)
+        (value.0, value.1)
     }
 }
 
