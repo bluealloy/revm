@@ -127,6 +127,9 @@ pub fn returndatacopy<SPEC: Spec>(interp: &mut Interpreter) -> Return {
     pop!(interp, memory_offset, offset, len);
     let len = as_usize_or_fail!(len, Return::OutOfGas);
     gas_or_fail!(interp, gas::verylowcopy_cost(len as u64));
+    if len == 0 {
+        return Return::Continue;
+    }
     let memory_offset = as_usize_or_fail!(memory_offset, Return::OutOfGas);
     let data_offset = as_usize_saturated!(offset);
     memory_resize!(interp, memory_offset, len);
