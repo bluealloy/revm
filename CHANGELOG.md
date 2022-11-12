@@ -1,4 +1,10 @@
-Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag. 
+Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
+
+# v17 tag
+date: 12.11.2022
+code with the tag can be found in `release/v17` branch, reason is that `ruint` commit merged in `main` isn't going in this release.
+
+* revm: v2.2.0 consensus bug fix
 
 # v16 tag
 date: 25.09.2022
@@ -8,7 +14,7 @@ date: 25.09.2022
 # v15 tag
 date: 10.09.2022
 
-* revm: v2.0.0
+* revm: v2.0.0 consensus bug fix
 * revm_precompiles: v1.1.1
 # v14 tag
 date: 09.08.2022
