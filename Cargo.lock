@@ -1500,7 +1500,6 @@ dependencies = [
  "hashbrown",
  "hex",
  "num_enum",
- "parking_lot",
  "primitive-types 0.11.1",
  "revm_precompiles",
  "rlp",
