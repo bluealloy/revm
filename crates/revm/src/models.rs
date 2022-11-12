@@ -2,7 +2,8 @@ use core::cmp::min;
 
 use crate::{alloc::vec::Vec, interpreter::bytecode::Bytecode, Return, SpecId};
 use bytes::Bytes;
-use primitive_types::{H160, H256, U256};
+use primitive_types::{H160, H256};
+use ruint::aliases::U256;
 
 pub const KECCAK_EMPTY: H256 = H256([
     0xc5, 0xd2, 0x46, 0x01, 0x86, 0xf7, 0x23, 0x3c, 0x92, 0x7e, 0x7d, 0xb2, 0xdc, 0xc7, 0x03, 0xc0,
@@ -27,7 +28,7 @@ pub struct AccountInfo {
 impl Default for AccountInfo {
     fn default() -> Self {
         Self {
-            balance: U256::zero(),
+            balance: U256::ZERO,
             code_hash: KECCAK_EMPTY,
             code: Some(Bytecode::new()),
             nonce: 0,
@@ -56,7 +57,7 @@ impl AccountInfo {
 
     pub fn is_empty(&self) -> bool {
         let code_empty = self.code_hash == KECCAK_EMPTY || self.code_hash.is_zero();
-        self.balance.is_zero() && self.nonce == 0 && code_empty
+        self.balance == U256::ZERO && self.nonce == 0 && code_empty
     }
 
     pub fn exists(&self) -> bool {
@@ -264,7 +265,7 @@ pub enum AnalysisKind {
 impl Default for CfgEnv {
     fn default() -> CfgEnv {
         CfgEnv {
-            chain_id: 1.into(),
+            chain_id: U256::from(1),
             spec_id: SpecId::LATEST,
             perf_all_precompiles_have_balance: false,
             perf_analyse_created_bytecodes: Default::default(),
@@ -283,11 +284,11 @@ impl Default for BlockEnv {
     fn default() -> BlockEnv {
         BlockEnv {
             gas_limit: U256::MAX,
-            number: 0.into(),
+            number: U256::ZERO,
             coinbase: H160::zero(),
-            timestamp: U256::one(),
-            difficulty: U256::zero(),
-            basefee: U256::zero(),
+            timestamp: U256::from(1),
+            difficulty: U256::ZERO,
+            basefee: U256::ZERO,
         }
     }
 }
@@ -297,10 +298,10 @@ impl Default for TxEnv {
         TxEnv {
             caller: H160::zero(),
             gas_limit: u64::MAX,
-            gas_price: U256::zero(),
+            gas_price: U256::ZERO,
             gas_priority_fee: None,
             transact_to: TransactTo::Call(H160::zero()), //will do nothing
-            value: U256::zero(),
+            value: U256::ZERO,
             data: Bytes::new(),
             chain_id: None,
             nonce: None,

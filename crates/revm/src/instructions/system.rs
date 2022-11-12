@@ -1,9 +1,9 @@
+use crate::{
+    common::keccak256, gas, interpreter::Interpreter, Return, Spec, SpecId::*, KECCAK_EMPTY,
+};
+use primitive_types::H256;
+use ruint::aliases::U256;
 use std::cmp::min;
-
-use crate::{gas, interpreter::Interpreter, Return, Spec, SpecId::*, KECCAK_EMPTY};
-use primitive_types::{H256, U256};
-
-use sha3::{Digest, Keccak256};
 
 pub fn sha3(interp: &mut Interpreter) -> Return {
     pop!(interp, from, len);
@@ -14,7 +14,7 @@ pub fn sha3(interp: &mut Interpreter) -> Return {
     } else {
         let from = as_usize_or_fail!(from, Return::OutOfGas);
         memory_resize!(interp, from, len);
-        H256::from_slice(Keccak256::digest(interp.memory.get_slice(from, len)).as_slice())
+        keccak256(interp.memory.get_slice(from, len))
     };
 
     push_h256!(interp, h256);
@@ -90,9 +90,7 @@ pub fn calldatasize(interp: &mut Interpreter) -> Return {
 
 pub fn callvalue(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::BASE);
-    let mut ret = H256::default();
-    interp.contract.value.to_big_endian(&mut ret[..]);
-    push_h256!(interp, ret);
+    push_h256!(interp, interp.contract.value.to_be_bytes().into());
     Return::Continue
 }
 
@@ -129,17 +127,19 @@ pub fn returndatacopy<SPEC: Spec>(interp: &mut Interpreter) -> Return {
     pop!(interp, memory_offset, offset, len);
     let len = as_usize_or_fail!(len, Return::OutOfGas);
     gas_or_fail!(interp, gas::verylowcopy_cost(len as u64));
-    let memory_offset = as_usize_or_fail!(memory_offset, Return::OutOfGas);
     let data_offset = as_usize_saturated!(offset);
-    memory_resize!(interp, memory_offset, len);
     let (data_end, overflow) = data_offset.overflowing_add(len);
     if overflow || data_end > interp.return_data_buffer.len() {
         return Return::OutOfOffset;
     }
-    interp.memory.set(
-        memory_offset,
-        &interp.return_data_buffer[data_offset..data_end],
-    );
+    if len != 0 {
+        let memory_offset = as_usize_or_fail!(memory_offset, Return::OutOfGas);
+        memory_resize!(interp, memory_offset, len);
+        interp.memory.set(
+            memory_offset,
+            &interp.return_data_buffer[data_offset..data_end],
+        );
+    }
     Return::Continue
 }
 

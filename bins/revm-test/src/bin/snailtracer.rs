@@ -32,7 +32,7 @@ pub fn simple_example() {
     let mut times = times[5..].to_vec();
     times.sort();
     for (i, time) in times.iter().rev().enumerate() {
-        println!("{}: {:?}", i, time);
+        println!("{i}: {time:?}");
     }
 }
 

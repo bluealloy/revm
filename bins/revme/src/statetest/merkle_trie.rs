@@ -1,9 +1,10 @@
 use bytes::Bytes;
 use hash_db::Hasher;
 use plain_hasher::PlainHasher;
-use primitive_types::{H160, H256, U256};
+use primitive_types::{H160, H256};
 use revm::{db::DbAccount, Log};
 use rlp::RlpStream;
+use ruint::aliases::U256;
 use sha3::{Digest, Keccak256};
 use triehash::sec_trie_root;
 
@@ -44,12 +45,8 @@ pub fn trie_account_rlp(acc: &DbAccount) -> Bytes {
         sec_trie_root::<KeccakHasher, _, _, _>(
             acc.storage
                 .iter()
-                .filter(|(_k, &v)| v != U256::zero())
-                .map(|(k, v)| {
-                    let mut temp: [u8; 32] = [0; 32];
-                    k.to_big_endian(&mut temp);
-                    (H256::from(temp), rlp::encode(v))
-                }),
+                .filter(|(_k, &v)| v != U256::ZERO)
+                .map(|(k, v)| (H256::from(k.to_be_bytes()), rlp::encode(v))),
         )
     });
     stream.append(&acc.info.code_hash.as_bytes());

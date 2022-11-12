@@ -9,7 +9,8 @@ use crate::{
 };
 use bytes::Bytes;
 use core::cmp::min;
-use primitive_types::{H160, H256, U256};
+use primitive_types::{H160, H256};
+use ruint::aliases::U256;
 
 pub fn balance<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
     pop_address!(interp, address);
@@ -120,11 +121,11 @@ pub fn blockhash<H: Host>(interp: &mut Interpreter, host: &mut H) -> Return {
             if ret.is_none() {
                 return Return::FatalExternalError;
             }
-            *number = U256::from_big_endian(ret.unwrap().as_ref());
+            *number = U256::from_be_bytes(ret.unwrap().0);
             return Return::Continue;
         }
     }
-    *number = U256::zero();
+    *number = U256::ZERO;
     Return::Continue
 }
 
@@ -178,10 +179,8 @@ pub fn log<H: Host, SPEC: Spec>(interp: &mut Interpreter, n: u8, host: &mut H) -
 
     let mut topics = Vec::with_capacity(n);
     for _ in 0..(n) {
-        let mut t = H256::zero();
         // Safety: stack bounds already checked few lines above
-        unsafe { interp.stack.pop_unsafe().to_big_endian(t.as_bytes_mut()) };
-        topics.push(t);
+        topics.push(unsafe { interp.stack.pop_unsafe() }.to_be_bytes().into());
     }
 
     host.log(interp.contract.address, topics, data);
@@ -292,11 +291,7 @@ pub fn call<H: Host, SPEC: Spec>(
 
     pop!(interp, local_gas_limit);
     pop_address!(interp, to);
-    let local_gas_limit = if local_gas_limit > U256::from(u64::MAX) {
-        u64::MAX
-    } else {
-        local_gas_limit.as_u64()
-    };
+    let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
     let value = match scheme {
         CallScheme::CallCode => {
@@ -305,12 +300,12 @@ pub fn call<H: Host, SPEC: Spec>(
         }
         CallScheme::Call => {
             pop!(interp, value);
-            if SPEC::IS_STATIC_CALL && !value.is_zero() {
+            if SPEC::IS_STATIC_CALL && value != U256::ZERO {
                 return Return::CallNotAllowedInsideStatic;
             }
             value
         }
-        CallScheme::DelegateCall | CallScheme::StaticCall => U256::zero(),
+        CallScheme::DelegateCall | CallScheme::StaticCall => U256::ZERO,
     };
 
     pop!(interp, in_offset, in_len, out_offset, out_len);
@@ -374,7 +369,7 @@ pub fn call<H: Host, SPEC: Spec>(
         Transfer {
             source: interp.contract.address,
             target: interp.contract.address,
-            value: U256::zero(),
+            value: U256::ZERO,
         }
     };
 
@@ -409,7 +404,7 @@ pub fn call<H: Host, SPEC: Spec>(
     gas!(interp, gas_limit);
 
     // add call stipend if there is value to be transferred.
-    if matches!(scheme, CallScheme::Call | CallScheme::CallCode) && !transfer.value.is_zero() {
+    if matches!(scheme, CallScheme::Call | CallScheme::CallCode) && transfer.value != U256::ZERO {
         gas_limit = gas_limit.saturating_add(gas::CALL_STIPEND);
     }
     let is_static = matches!(scheme, CallScheme::StaticCall);
@@ -439,18 +434,18 @@ pub fn call<H: Host, SPEC: Spec>(
             interp
                 .memory
                 .set(out_offset, &interp.return_data_buffer[..target_len]);
-            push!(interp, U256::one());
+            push!(interp, U256::from(1));
         }
         return_revert!() => {
             interp.gas.erase_cost(gas.remaining());
             interp
                 .memory
                 .set(out_offset, &interp.return_data_buffer[..target_len]);
-            push!(interp, U256::zero());
+            push!(interp, U256::ZERO);
         }
         Return::FatalExternalError => return Return::FatalExternalError,
         _ => {
-            push!(interp, U256::zero());
+            push!(interp, U256::ZERO);
         }
     }
     interp.add_next_gas_block(interp.program_counter() - 1)

@@ -25,7 +25,8 @@ pub enum SpecId {
     ARROW_GLACIER = 13,   // Arrow Glacier	        13773000
     GRAY_GLACIER = 14,    // Gray Glacier	        15050000
     MERGE = 15,           // Paris/Merge	        TBD (Depends on difficulty)
-    LATEST = 16,
+    MERGE_EOF = 16,       // Merge+EOF	            TBD
+    LATEST = 17,
 }
 
 impl SpecId {
@@ -36,7 +37,9 @@ impl SpecId {
             }
             BYZANTIUM | CONSTANTINOPLE | PETERSBURG => PrecompileId::BYZANTIUM,
             ISTANBUL | MUIR_GLACIER => PrecompileId::ISTANBUL,
-            BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | LATEST => PrecompileId::BERLIN,
+            BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | MERGE_EOF | LATEST => {
+                PrecompileId::BERLIN
+            }
         }
     }
 
@@ -62,6 +65,7 @@ impl From<&str> for SpecId {
             "Berlin" => SpecId::BERLIN,
             "London" => SpecId::LONDON,
             "Merge" => SpecId::MERGE,
+            "MergeEOF" => SpecId::MERGE_EOF,
             _ => SpecId::LATEST,
         }
     }

@@ -1,7 +1,8 @@
 use std::str::FromStr;
 
 use bytes::Bytes;
-use primitive_types::{H160, U256};
+use primitive_types::H160;
+use ruint::aliases::U256;
 use serde::{
     de::{self, Error},
     Deserialize,
@@ -27,12 +28,7 @@ where
     D: de::Deserializer<'de>,
 {
     let string = String::deserialize(deserializer)?;
-
-    let output = if let Some(stripped) = string.strip_prefix("0x") {
-        U256::from_str_radix(stripped, 16).unwrap()
-    } else {
-        U256::from_dec_str(&string).unwrap()
-    };
+    let output = string.parse().unwrap();
 
     Ok(output)
 }

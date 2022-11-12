@@ -69,17 +69,10 @@ macro_rules! pop_address {
         if $interp.stack.len() < 1 {
             return Return::StackUnderflow;
         }
-        let mut temp = H256::zero();
         // Safety: Length is checked above.
-        let $x1: H160 = {
-            unsafe {
-                $interp
-                    .stack
-                    .pop_unsafe()
-                    .to_big_endian(temp.as_bytes_mut())
-            };
-            temp.into()
-        };
+        let $x1: H160 = H160::from_slice(
+            &unsafe { $interp.stack.pop_unsafe() }.to_be_bytes::<{ U256::BYTES }>()[12..],
+        );
     };
     ( $interp:expr, $x1:ident, $x2:ident) => {
         if $interp.stack.len() < 2 {
@@ -203,7 +196,7 @@ macro_rules! op2_u256_bool_ref {
         // gas!($interp, $gas);
         pop_top!($interp, op1, op2);
         let ret = op1.$op(&op2);
-        *op2 = if ret { U256::one() } else { U256::zero() };
+        *op2 = if ret { U256::from(1) } else { U256::ZERO };
 
         Return::Continue
     }};
@@ -214,25 +207,6 @@ macro_rules! op2_u256 {
         // gas!($interp, $gas);
         pop_top!($interp, op1, op2);
         *op2 = op1.$op(*op2);
-        Return::Continue
-    }};
-}
-
-macro_rules! op2_u256_tuple {
-    ( $interp:expr, $op:ident) => {{
-        // gas!($interp, $gas);
-
-        pop_top!($interp, op1, op2);
-        let (ret, ..) = op1.$op(*op2);
-        *op2 = ret;
-
-        Return::Continue
-    }};
-    ( $interp:expr, $op:ident ) => {{
-        pop_top!($interp, op1, op2);
-        let (ret, ..) = op1.$op(op2);
-        *op2 = ret;
-
         Return::Continue
     }};
 }
@@ -268,29 +242,20 @@ macro_rules! op3_u256_fn {
 }
 
 macro_rules! as_usize_saturated {
-    ( $v:expr ) => {{
-        if $v.0[1] != 0 || $v.0[2] != 0 || $v.0[3] != 0 {
-            usize::MAX
-        } else {
-            $v.0[0] as usize
-        }
-    }};
+    ( $v:expr ) => {
+        $v.saturating_to::<usize>()
+    };
 }
 
 macro_rules! as_usize_or_fail {
     ( $v:expr ) => {{
-        if $v.0[1] != 0 || $v.0[2] != 0 || $v.0[3] != 0 {
-            return Return::OutOfGas;
-        }
-
-        $v.0[0] as usize
+        as_usize_or_fail!($v, Return::OutOfGas)
     }};
 
-    ( $v:expr, $reason:expr ) => {{
-        if $v.0[1] != 0 || $v.0[2] != 0 || $v.0[3] != 0 {
-            return $reason;
+    ( $v:expr, $reason:expr ) => {
+        match usize::try_from($v) {
+            Ok(value) => value,
+            Err(_) => return $reason,
         }
-
-        $v.0[0] as usize
-    }};
+    };
 }
