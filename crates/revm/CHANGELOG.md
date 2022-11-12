@@ -1,3 +1,17 @@
+# v2.2.0
+date: 12.11.2022
+
+Small release that contains consensus bug fix. Additionaly added few small feature flags needed for hardhat, opcode utility function and removal of web3db block number check. 
+
+* dc3414a - Added OEF spec for tests. Skip HighGasPrice (4 minutes ago) <rakita>
+* f462f9d - Bugfix: if returndatacopy is len 0 return after initial cost (#259) (4 minutes ago) <gd>
+* ea2f2a2 - fix web3db sanity check (#245) (12 days ago) <Wulder>
+* 9f8cdbd - feat: allow block gas limit to be toggled off (#238) (3 weeks ago) <Wodann>
+* efd9afc - feat: allow eip3607 to be toggled off (#237) (3 weeks ago) <Wodann>
+* 88c72a7 - fix: return out of gas code for precompiled contracts (#234) (3 weeks ago) <Wodann>
+* 30462a3 - Fix: typos (#232) (3 weeks ago) <omahs>
+* 9f513c1 - Borrow self and add derive traits for OpCode (#231) (4 weeks ago) <Franfran>
+
 # v2.1.0
 date: 25.09.2022
 
