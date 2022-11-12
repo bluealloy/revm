@@ -21,6 +21,8 @@ pub enum SpecName {
     BerlinToLondonAt5, // done
     London,            // done
     Merge,             //done
+    #[serde(alias = "Merge+3540+3670")]
+    MergeEOF,
 }
 
 impl SpecName {
@@ -38,6 +40,7 @@ impl SpecName {
             Self::Berlin => SpecId::BERLIN,
             Self::London | Self::BerlinToLondonAt5 => SpecId::LONDON,
             Self::Merge => SpecId::MERGE,
+            Self::MergeEOF => SpecId::MERGE_EOF,
             Self::ByzantiumToConstantinopleAt5 | Self::Constantinople => {
                 panic!("Overriden with PETERSBURG")
             } //_ => panic!("Conversion failed"),

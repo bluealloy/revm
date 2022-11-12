@@ -620,6 +620,10 @@ pub const fn spec_opcode_gas(spec_id: SpecId) -> &'static [OpInfo; 256] {
             gas_opcodee!(MERGE, SpecId::MERGE);
             MERGE
         }
+        SpecId::MERGE_EOF => {
+            gas_opcodee!(MERGE_EOF, SpecId::MERGE_EOF);
+            MERGE_EOF
+        }
         SpecId::LATEST => {
             gas_opcodee!(LATEST, SpecId::LATEST);
             LATEST
