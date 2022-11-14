@@ -28,7 +28,7 @@ pub use instructions::{
 pub use interpreter::{
     Bytecode, BytecodeLocked, BytecodeState, Contract, Interpreter, Memory, Stack,
 };
-pub use journaled_state::{Account, JournalEntry, JournaledState};
+pub use journaled_state::{Account, JournalEntry, JournaledState, StorageSlot};
 pub use models::*;
 pub use specification::*;
 
