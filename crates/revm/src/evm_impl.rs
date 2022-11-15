@@ -249,7 +249,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             #[cfg(not(feature = "optional_gas_refund"))]
             let disable_gas_refund = false;
 
-            let gas_refunded = if disable_gas_refund { 0 } else {
+            let gas_refunded = if disable_gas_refund { 
+                0 
+            } else {
                 min(gas.refunded() as u64, gas.spend() / max_refund_quotient)
             };
             let acc_caller = self.data.journaled_state.state().get_mut(&caller).unwrap();
