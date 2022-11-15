@@ -185,7 +185,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
             match exit_reason {
                 return_ok!() => {
                     gas.erase_cost(ret_gas.remaining());
-                    #[cfg(not(feature = "optional_gas_refund"))]
                     gas.record_refund(ret_gas.refunded());
                 }
                 return_revert!() => {
@@ -245,7 +244,14 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             let basefee = self.data.env.block.basefee;
             let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 }; // EIP-3529: Reduction in refunds
 
-            let gas_refunded = min(gas.refunded() as u64, gas.spend() / max_refund_quotient);
+            #[cfg(feature = "optional_gas_refund")]
+            let disable_gas_refund = self.env().cfg.disable_gas_refund;
+            #[cfg(not(feature = "optional_gas_refund"))]
+            let disable_gas_refund = false;
+
+            let gas_refunded = if disable_gas_refund { 0 } else {
+                min(gas.refunded() as u64, gas.spend() / max_refund_quotient)
+            };
             let acc_caller = self.data.journaled_state.state().get_mut(&caller).unwrap();
             acc_caller.info.balance = acc_caller
                 .info
