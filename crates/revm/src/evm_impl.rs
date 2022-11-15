@@ -185,6 +185,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
             match exit_reason {
                 return_ok!() => {
                     gas.erase_cost(ret_gas.remaining());
+                    #[cfg(not(feature = "optional_gas_refund"))]
                     gas.record_refund(ret_gas.refunded());
                 }
                 return_revert!() => {
