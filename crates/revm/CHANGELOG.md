@@ -1,3 +1,12 @@
+
+# v2.3.0
+date: 16.11.2022
+Very small release. Exposes one field and added prevrandao to remove footgun of forgeting to set difficulty.
+
+* 927d16c - disable gas refunds with env flag (#267) (14 minutes ago) <gd>
+* 47a8310 - Add prevrandao field to EnvBlock (3 minutes ago) <rakita>
+* 2c45b04 - Export StorageSlot (#265) (23 minutes ago) <Francesco Cinà>
+
 # v2.2.0
 date: 12.11.2022
 
