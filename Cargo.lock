@@ -1482,7 +1482,7 @@ dependencies = [
 
 [[package]]
 name = "revm"
-version = "2.2.0"
+version = "2.3.0"
 dependencies = [
  "arrayref",
  "auto_impl",
