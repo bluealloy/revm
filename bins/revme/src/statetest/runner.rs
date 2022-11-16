@@ -156,6 +156,8 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
         env.block.gas_limit = unit.env.current_gas_limit;
         env.block.basefee = unit.env.current_base_fee.unwrap_or_default();
         env.block.difficulty = unit.env.current_difficulty;
+        // after the Merge prevrandao replaces mix_hash field in block and replaced difficulty opcode in EVM.
+        env.block.prevrandao = Some(unit.env.current_difficulty.to_be_bytes().into());
 
         //tx env
         env.tx.caller =

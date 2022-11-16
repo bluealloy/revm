@@ -49,6 +49,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
         let gas_limit = self.data.env.tx.gas_limit;
         let exit = |reason: Return| (ExecutionResult::new_with_reason(reason), State::new());
 
+        if GSPEC::enabled(MERGE) && self.data.env.block.prevrandao.is_none() {
+            return exit(Return::PrevrandaoNotSet);
+        }
+
         if GSPEC::enabled(LONDON) {
             if let Some(priority_fee) = self.data.env.tx.gas_priority_fee {
                 if priority_fee > self.data.env.tx.gas_price {
