@@ -155,6 +155,10 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
         env.block.gas_limit = unit.env.current_gas_limit;
         env.block.basefee = unit.env.current_base_fee.unwrap_or_default();
         env.block.difficulty = unit.env.current_difficulty;
+        env.block.prevrandao = Some(H256::zero());
+        unit.env
+            .current_difficulty
+            .to_big_endian(&mut env.block.prevrandao.as_mut().unwrap().0);
 
         //tx env
         env.tx.caller =
