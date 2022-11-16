@@ -2,7 +2,12 @@
 
 use bytes::Bytes;
 use once_cell::sync::OnceCell;
-use ruint::aliases::{B160 as Address, B256 as H256};
+
+#[derive(Debug, Hash, Clone, Default, Eq, PartialEq)]
+pub struct B160([u8; 20]);
+
+#[derive(Debug, Hash, Clone, Default, Eq, PartialEq)]
+pub struct B256([u8; 32]);
 
 mod blake2;
 mod bn128;
@@ -26,11 +31,11 @@ pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base
 }
 
-pub fn gas_query(gas_used: u64, gas_limit: u64) -> Result<u64, Return> {
+pub fn gas_query(gas_used: u64, gas_limit: u64) -> Option<u64> {
     if gas_used > gas_limit {
-        return Err(Return::OutOfGas);
+        return None;
     }
-    Ok(gas_used)
+    Some(gas_used)
 }
 
 #[derive(Debug)]
@@ -42,8 +47,8 @@ pub struct PrecompileOutput {
 
 #[derive(Debug, Default)]
 pub struct Log {
-    pub address: Address,
-    pub topics: Vec<H256>,
+    pub address: B160,
+    pub topics: Vec<B256>,
     pub data: Bytes,
 }
 
@@ -58,14 +63,14 @@ impl PrecompileOutput {
 }
 
 /// A precompile operation result.
-pub type PrecompileResult = Result<PrecompileOutput, Return>;
+pub type PrecompileResult = Result<(u64, Vec<u8>), ()>;
 
-pub type StandardPrecompileFn = fn(&[u8], u64) -> PrecompileResult;
+pub type StandardPrecompileFn = fn(&[u8], u64) -> Result<(u64, Vec<u8>), ()>;
 pub type CustomPrecompileFn = fn(&[u8], u64) -> PrecompileResult;
 
 #[derive(Clone, Debug)]
 pub struct Precompiles {
-    fun: HashMap<Address, Precompile>,
+    fun: HashMap<B160, Precompile>,
 }
 
 impl Default for Precompiles {
@@ -89,9 +94,9 @@ impl fmt::Debug for Precompile {
     }
 }
 
-pub struct PrecompileAddress(Address, Precompile);
+pub struct PrecompileAddress(B160, Precompile);
 
-impl From<PrecompileAddress> for (Address, Precompile) {
+impl From<PrecompileAddress> for (B160, Precompile) {
     fn from(value: PrecompileAddress) -> Self {
         (value.0, value.1)
     }
@@ -200,15 +205,15 @@ impl Precompiles {
         }
     }
 
-    pub fn addresses(&self) -> impl IntoIterator<Item = &Address> {
+    pub fn addresses(&self) -> impl IntoIterator<Item = &B160> {
         self.fun.keys()
     }
 
-    pub fn contains(&self, address: &Address) -> bool {
+    pub fn contains(&self, address: &B160) -> bool {
         self.fun.contains_key(address)
     }
 
-    pub fn get(&self, address: &Address) -> Option<Precompile> {
+    pub fn get(&self, address: &B160) -> Option<Precompile> {
         //return None;
         self.fun.get(address).cloned()
     }
@@ -220,4 +225,34 @@ impl Precompiles {
     pub fn len(&self) -> usize {
         self.fun.len()
     }
+}
+
+/// const fn for making an address by concatenating the bytes from two given numbers,
+/// Note that 32 + 128 = 160 = 20 bytes (the length of an address). This function is used
+/// as a convenience for specifying the addresses of the various precompiles.
+const fn u64_to_b160(x: u64) -> B160 {
+    let x_bytes = x.to_be_bytes();
+    let y_bytes = 0u64.to_be_bytes();
+    B160([
+        x_bytes[0],
+        x_bytes[1],
+        x_bytes[2],
+        x_bytes[3],
+        x_bytes[4],
+        x_bytes[5],
+        x_bytes[6],
+        x_bytes[7],
+        x_bytes[8],
+        y_bytes[5],
+        y_bytes[6],
+        y_bytes[7],
+        y_bytes[8],
+        y_bytes[9],
+        y_bytes[10],
+        y_bytes[11],
+        y_bytes[12],
+        y_bytes[13],
+        y_bytes[14],
+        y_bytes[15],
+    ])
 }

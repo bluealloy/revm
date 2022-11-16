@@ -4,9 +4,8 @@ use bn_rs::BN;
 use bytes::Bytes;
 use revm::{
     AccountInfo, Bytecode, DatabaseCommit, ExecutionResult, InMemoryDB, SpecId, TransactTo,
-    EVM as rEVM,
+    EVM as rEVM, B160, U256
 };
-use ruint::aliases::{B160, U256};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]

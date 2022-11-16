@@ -1,5 +1,4 @@
-use crate::{alloc::vec::Vec, Return};
-use ruint::aliases::{B256, U256};
+use crate::{alloc::vec::Vec, Return,U256,B256};
 
 pub const STACK_LIMIT: usize = 1024;
 

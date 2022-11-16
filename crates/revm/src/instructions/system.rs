@@ -1,7 +1,7 @@
 use crate::{
-    common::keccak256, gas, interpreter::Interpreter, Return, Spec, SpecId::*, KECCAK_EMPTY,
+    bits::B256, common::keccak256, gas, interpreter::Interpreter, Return, Spec, SpecId::*,
+    KECCAK_EMPTY,U256,
 };
-use ruint::aliases::{B256, U256};
 use std::cmp::min;
 
 pub fn sha3(interp: &mut Interpreter) -> Return {
@@ -24,8 +24,7 @@ pub fn address(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::BASE);
     push_b256!(
         interp,
-        // TODO(shekhirin): replace with `B256::from(bits: Bits)`
-        B256::from(U256::from(interp.contract.address.into_inner()))
+        B256::from(interp.contract.address)
     );
     Return::Continue
 }
@@ -34,8 +33,7 @@ pub fn caller(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::BASE);
     push_b256!(
         interp,
-        // TODO(shekhirin): replace with `B256::from(bits: Bits)`
-        B256::from(U256::from(interp.contract.caller.into_inner()))
+        B256::from(interp.contract.caller)
     );
     Return::Continue
 }
@@ -76,9 +74,9 @@ pub fn calldataload(interp: &mut Interpreter) -> Return {
         let have_bytes = min(interp.contract.input.len() - index, 32);
         let mut bytes = [0u8; U256::BYTES];
         bytes[..have_bytes].copy_from_slice(&interp.contract.input[index..index + have_bytes]);
-        B256::from_be_bytes(bytes)
+        B256(bytes)
     } else {
-        B256::ZERO
+        B256::zero()
     };
 
     push_b256!(interp, load);
@@ -93,7 +91,7 @@ pub fn calldatasize(interp: &mut Interpreter) -> Return {
 
 pub fn callvalue(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::BASE);
-    push_b256!(interp, interp.contract.value.into());
+    push!(interp, interp.contract.value);
     Return::Continue
 }
 

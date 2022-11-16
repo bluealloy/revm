@@ -1,22 +1,19 @@
-use super::gas_query;
-use crate::{
-    Precompile, PrecompileAddress, PrecompileOutput, PrecompileResult, StandardPrecompileFn,
-};
+use crate::{Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn};
 use alloc::vec::Vec;
 use core::{
     cmp::{max, min, Ordering},
     mem::size_of,
 };
 use num::{BigUint, One, Zero};
-use ruint::{aliases::U256, uint};
+use ruint::aliases::U256;
 
 pub const BYZANTIUM: PrecompileAddress = PrecompileAddress(
-    uint!(5_B160),
+    crate::u64_to_b160(5),
     Precompile::Standard(byzantium_run as StandardPrecompileFn),
 );
 
 pub const BERLIN: PrecompileAddress = PrecompileAddress(
-    uint!(5_B160),
+    crate::u64_to_b160(5),
     Precompile::Standard(berlin_run as StandardPrecompileFn),
 );
 
@@ -75,7 +72,7 @@ where
     let (mod_len, mod_overflow) = read_u64_with_overflow!(input, 64, 96, u32::MAX as usize);
 
     if base_overflow || mod_overflow {
-        return Ok(PrecompileOutput::without_logs(u64::MAX, Vec::new()));
+        return Err(());
     }
 
     let (r, gas_cost) = if base_len == 0 && mod_len == 0 {
@@ -83,7 +80,7 @@ where
     } else {
         // set limit for exp overflow
         if exp_overflow {
-            return Ok(PrecompileOutput::without_logs(u64::MAX, Vec::new()));
+            return Err(());
         }
         let base_start = 96;
         let base_end = base_start + base_len;
@@ -101,10 +98,10 @@ where
             BigUint::from_bytes_be(&out)
         };
 
-        let gas_cost = gas_query(
-            calc_gas(base_len as u64, exp_len as u64, mod_len as u64, &exp_highp),
-            gas_limit,
-        )?;
+        let gas_cost = calc_gas(base_len as u64, exp_len as u64, mod_len as u64, &exp_highp);
+        if gas_cost > gas_limit {
+            return Err(());
+        }
 
         let read_big = |from: usize, to: usize| {
             let mut out = vec![0; to - from];
@@ -130,14 +127,14 @@ where
     // always true except in the case of zero-length modulus, which leads to
     // output of length and value 1.
     match bytes.len().cmp(&mod_len) {
-        Ordering::Equal => Ok(PrecompileOutput::without_logs(gas_cost, bytes.to_vec())),
+        Ordering::Equal => Ok((gas_cost, bytes)),
         Ordering::Less => {
             let mut ret = Vec::with_capacity(mod_len);
             ret.extend(core::iter::repeat(0).take(mod_len - bytes.len()));
             ret.extend_from_slice(&bytes[..]);
-            Ok(PrecompileOutput::without_logs(gas_cost, ret.to_vec()))
+            Ok((gas_cost, ret))
         }
-        Ordering::Greater => Ok(PrecompileOutput::without_logs(gas_cost, Vec::new())),
+        Ordering::Greater => Ok((gas_cost, Vec::new())),
     }
 }
 
@@ -379,11 +376,11 @@ mod tests {
             let res = byzantium_run(&input, 100_000_000).unwrap();
             let expected = hex::decode(test.expected).unwrap();
             assert_eq!(
-                res.cost, test_gas,
+                res.0, test_gas,
                 "used gas not maching for test: {}",
                 test.name
             );
-            assert_eq!(res.output, expected, "test:{}", test.name);
+            assert_eq!(res.1, expected, "test:{}", test.name);
         }
     }
 
@@ -394,11 +391,11 @@ mod tests {
             let res = berlin_run(&input, 100_000_000).unwrap();
             let expected = hex::decode(test.expected).unwrap();
             assert_eq!(
-                res.cost, test_gas,
+                res.0, test_gas,
                 "used gas not maching for test: {}",
                 test.name
             );
-            assert_eq!(res.output, expected, "test:{}", test.name);
+            assert_eq!(res.1, expected, "test:{}", test.name);
         }
     }
 
@@ -406,6 +403,6 @@ mod tests {
     fn test_berlin_modexp_empty_input() {
         let res = berlin_run(&[], 100_000).unwrap();
         let expected: Vec<u8> = Vec::new();
-        assert_eq!(res.output, expected)
+        assert_eq!(res.1, expected)
     }
 }

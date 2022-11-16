@@ -3,9 +3,8 @@ pub use revm::Inspector;
 use revm::{
     opcode::{self},
     CallInputs, CreateInputs, Database, EVMData, Gas, GasInspector, Return,
-};
-use ruint::aliases::B160;
-
+    bits::B160,
+}; 
 #[derive(Clone)]
 pub struct CustomPrintTracer {
     gas_inspector: GasInspector,

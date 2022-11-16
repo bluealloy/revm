@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use ruint::aliases::{B160, B256, U256};
+use revm::{B160, B256, U256};
 use std::collections::{BTreeMap, HashMap};
 mod deserializer;
 mod spec;

@@ -5,15 +5,12 @@ use crate::{
 use alloc::vec::Vec;
 use core::cmp::min;
 
-use ruint::{
-    aliases::{B256, U256},
-    uint,
-};
+use ruint::uint;
 
 const ECRECOVER_BASE: u64 = 3_000;
 
 pub const ECRECOVER: PrecompileAddress = PrecompileAddress(
-    uint!(1_B160),
+    crate::u64_to_b160(1),
     Precompile::Standard(ec_recover_run as StandardPrecompileFn),
 );
 
@@ -26,17 +23,16 @@ mod secp256k1 {
         elliptic_curve::sec1::ToEncodedPoint,
         PublicKey as K256PublicKey,
     };
-    use ruint::aliases::B160 as Address;
     use sha3::{Digest, Keccak256};
 
-    pub fn ecrecover(sig: &[u8; 65], msg: &[u8; 32]) -> Result<Address, Error> {
+    pub fn ecrecover(sig: &[u8; 65], msg: &[u8; 32]) -> Result<[u8; 20], Error> {
         let sig = recoverable::Signature::try_from(sig.as_ref())?;
         let verify_key = sig.recover_verifying_key_from_digest_bytes(msg.into())?;
         let public_key = K256PublicKey::from(&verify_key);
         let public_key = public_key.to_encoded_point(/* compress = */ false);
         let public_key = public_key.as_bytes();
         let hash = Keccak256::digest(&public_key[1..]);
-        Ok(Address::try_from_be_slice(&hash[12..]).unwrap())
+        Ok(hash[12..].try_into().unwrap())
     }
 }
 
@@ -64,7 +60,9 @@ mod secp256k1 {
 }
 
 fn ec_recover_run(i: &[u8], target_gas: u64) -> PrecompileResult {
-    let cost = gas_query(ECRECOVER_BASE, target_gas)?;
+    if ECRECOVER_BASE > target_gas {
+        return Err(());
+    }
     let mut input = [0u8; 128];
     input[..min(i.len(), 128)].copy_from_slice(&i[..min(i.len(), 128)]);
 
@@ -76,15 +74,14 @@ fn ec_recover_run(i: &[u8], target_gas: u64) -> PrecompileResult {
     sig[32..64].copy_from_slice(&input[96..128]);
 
     if input[32..63] != [0u8; 31] || !matches!(input[63], 27 | 28) {
-        return Ok(PrecompileOutput::without_logs(cost, Vec::new()));
+        return Ok((ECRECOVER_BASE,Vec::new()));
     }
 
     sig[64] = input[63] - 27;
 
-    let out = match secp256k1::ecrecover(&sig, &msg) {
-        Ok(out) => B256::from(U256::from(out.into_inner())).to_be_bytes_vec(), // TODO(shekhirin): replace with `B256::from(out).to_be_bytes_vec()`
-        Err(_) => Vec::new(),
-    };
+    let out = secp256k1::ecrecover(&sig, &msg)
+        .map(|t| Vec::from(t))
+        .unwrap_or_default();
 
-    Ok(PrecompileOutput::without_logs(cost, out))
+    Ok((ECRECOVER_BASE,out))
 }

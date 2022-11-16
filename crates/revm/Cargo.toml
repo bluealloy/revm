@@ -25,6 +25,11 @@ serde = { version = "1.0", features = ["derive","rc"], optional = true }
 tokio = { version = "1.21", features = ["rt-multi-thread", "macros"], optional = true }
 web3 = { git = "https://github.com/tomusdrw/rust-web3", version = "0.19", optional = true }
 
+# bits B256 B160 crate
+fixed-hash = { version = "0.8", default-features = false }
+hex-literal = "0.3"
+derive_more = "0.99"
+
 # sha3 keccak hasher
 sha3 = { version = "0.10", default-features = false, features = []}
 

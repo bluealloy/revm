@@ -1,5 +1,4 @@
-use crate::{interpreter::Interpreter, Host, Return, Spec, SpecId::*};
-use ruint::aliases::{B256, U256};
+use crate::{interpreter::Interpreter,U256,bits::B256, Host, Return, Spec, SpecId::*};
 
 pub fn chainid<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
     // gas!(interp, gas::BASE);

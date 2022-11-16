@@ -1,6 +1,7 @@
-use crate::{interpreter::bytecode::Bytecode, AccountInfo, Database, KECCAK_EMPTY};
+use crate::{
+    interpreter::bytecode::Bytecode, AccountInfo, Database, B160, B256, KECCAK_EMPTY, U256,
+};
 use bytes::Bytes;
-use ruint::aliases::{B160, B256, U256};
 use tokio::runtime::{Handle, Runtime};
 use web3::{
     transports::Http,
@@ -51,7 +52,7 @@ impl Database for Web3DB {
     type Error = ();
 
     fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
-        let add = wH160::from(address);
+        let add = wH160::from(address.0);
         let f = async {
             let nonce = self.web3.eth().transaction_count(add, self.block_number);
             let balance = self.web3.eth().balance(add, self.block_number);
@@ -82,7 +83,7 @@ impl Database for Web3DB {
     }
 
     fn storage(&mut self, address: B160, index: U256) -> Result<U256, Self::Error> {
-        let add = wH160::from(address);
+        let add = wH160::from(address.0);
         let index = wU256::from(index);
         let f = async {
             let storage = self
@@ -116,6 +117,6 @@ impl Database for Web3DB {
                 .ok()
                 .flatten()
         };
-        Ok(self.block_on(f).unwrap().hash.unwrap().into())
+        Ok(B256(self.block_on(f).unwrap().hash.unwrap().0))
     }
 }

@@ -1,14 +1,15 @@
 use core::cmp::min;
 
-use crate::{alloc::vec::Vec, interpreter::bytecode::Bytecode, Return, SpecId};
-use bytes::Bytes;
-use ruint::{
-    aliases::{B160, B256, U256},
-    uint,
+use crate::{
+    alloc::vec::Vec,
+    bits::{B160, B256},
+    interpreter::bytecode::Bytecode,
+    Return, SpecId,U256,
 };
+use bytes::Bytes;
+use hex_literal::hex;
 
-pub const KECCAK_EMPTY: B256 =
-    uint!(0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470_B256);
+pub const KECCAK_EMPTY: B256 = B256(hex!("c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"));
 
 /// AccountInfo account information.
 #[derive(Clone, Debug, Eq)]
@@ -56,7 +57,7 @@ impl AccountInfo {
     }
 
     pub fn is_empty(&self) -> bool {
-        let code_empty = self.code_hash == KECCAK_EMPTY || self.code_hash == B256::ZERO;
+        let code_empty = self.code_hash == KECCAK_EMPTY || self.code_hash == B256::zero();
         self.balance == U256::ZERO && self.nonce == 0 && code_empty
     }
 
@@ -285,7 +286,7 @@ impl Default for BlockEnv {
         BlockEnv {
             gas_limit: U256::MAX,
             number: U256::ZERO,
-            coinbase: B160::ZERO,
+            coinbase: B160::zero(),
             timestamp: U256::from(1),
             difficulty: U256::ZERO,
             basefee: U256::ZERO,
@@ -296,11 +297,11 @@ impl Default for BlockEnv {
 impl Default for TxEnv {
     fn default() -> TxEnv {
         TxEnv {
-            caller: B160::ZERO,
+            caller: B160::zero(),
             gas_limit: u64::MAX,
             gas_price: U256::ZERO,
             gas_priority_fee: None,
-            transact_to: TransactTo::Call(B160::ZERO), //will do nothing
+            transact_to: TransactTo::Call(B160::zero()), //will do nothing
             value: U256::ZERO,
             data: Bytes::new(),
             chain_id: None,

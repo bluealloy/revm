@@ -6,10 +6,10 @@ use crate::{
     Host, Return, Spec,
     SpecId::*,
     Transfer,
+    bits::{B160, B256}, U256,
 };
 use bytes::Bytes;
 use core::cmp::min;
-use ruint::aliases::{B160, B256, U256};
 
 pub fn balance<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
     pop_address!(interp, address);
@@ -270,12 +270,12 @@ pub fn create<H: Host, SPEC: Spec>(
             interp.gas.record_refund(gas.refunded());
         }
         return_revert!() => {
-            push_b256!(interp, B256::ZERO);
+            push_b256!(interp, B256::zero());
             interp.gas.erase_cost(gas.remaining());
         }
         Return::FatalExternalError => return Return::FatalExternalError,
         _ => {
-            push_b256!(interp, B256::ZERO);
+            push_b256!(interp, B256::zero());
         }
     }
     interp.add_next_gas_block(interp.program_counter() - 1)

@@ -1,9 +1,9 @@
 use bytes::Bytes;
-use ruint::aliases::{B160, U256};
 use serde::{
     de::{self, Error},
     Deserialize,
 };
+use revm::{U256,B160};
 
 pub fn deserialize_str_as_u64<'de, D>(deserializer: D) -> Result<u64, D::Error>
 where

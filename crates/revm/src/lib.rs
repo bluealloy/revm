@@ -12,6 +12,10 @@ mod interpreter;
 mod journaled_state;
 mod models;
 mod specification;
+pub mod bits;
+
+pub use bits::{B160,B256};
+pub use ruint::aliases::U256;
 
 pub use evm_impl::{create2_address, create_address, EVMData, Host};
 

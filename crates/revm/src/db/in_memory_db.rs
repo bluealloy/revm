@@ -2,10 +2,10 @@ use super::{DatabaseCommit, DatabaseRef};
 use crate::common::keccak256;
 use crate::{interpreter::bytecode::Bytecode, Database, KECCAK_EMPTY};
 use crate::{Account, AccountInfo, Log};
+use crate::{U256,B160,B256};
 use alloc::vec::Vec;
 use core::convert::Infallible;
 use hashbrown::{hash_map::Entry, HashMap as Map};
-use ruint::aliases::{B160, B256, U256};
 
 pub type InMemoryDB = CacheDB<EmptyDB>;
 
@@ -95,7 +95,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     pub fn new(db: ExtDB) -> Self {
         let mut contracts = Map::new();
         contracts.insert(KECCAK_EMPTY, Bytecode::new());
-        contracts.insert(B256::ZERO, Bytecode::new());
+        contracts.insert(B256::zero(), Bytecode::new());
         Self {
             accounts: Map::new(),
             contracts,
@@ -114,7 +114,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
                     .or_insert_with(|| code.clone());
             }
         }
-        if account.code_hash == B256::ZERO {
+        if account.code_hash == B256::zero() {
             account.code_hash = KECCAK_EMPTY;
         }
     }
@@ -363,7 +363,7 @@ impl Database for BenchmarkDB {
     type Error = Infallible;
     /// Get basic account information.
     fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
-        if address == B160::ZERO {
+        if address == B160::zero() {
             return Ok(Some(AccountInfo {
                 nonce: 1,
                 balance: U256::from(10000000),

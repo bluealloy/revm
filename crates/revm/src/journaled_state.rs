@@ -2,12 +2,9 @@ use crate::{interpreter::bytecode::Bytecode, models::SelfDestructResult, Return,
 use alloc::{vec, vec::Vec};
 use core::mem::{self};
 use hashbrown::{hash_map::Entry, HashMap as Map};
-use ruint::{
-    aliases::{B160, U256},
-    uint,
-};
+use ruint::{aliases::U256, uint};
 
-use crate::{db::Database, AccountInfo, Log};
+use crate::{bits::B160, db::Database, AccountInfo, Log};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
@@ -347,7 +344,7 @@ impl JournaledState {
         journal_entries: Vec<JournalEntry>,
         is_spurious_dragon_enabled: bool,
     ) {
-        const PRECOMPILE3: B160 = uint!(3_B160);
+        const PRECOMPILE3: B160 = B160::zero()(); // TODO uint!(3_B160);
         for entry in journal_entries.into_iter().rev() {
             match entry {
                 JournalEntry::AccountLoaded { address } => {

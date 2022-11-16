@@ -70,7 +70,7 @@ macro_rules! pop_address {
             return Return::StackUnderflow;
         }
         // Safety: Length is checked above.
-        let $x1: B160 = ruint::aliases::B160::try_from_be_slice(
+        let $x1: B160 = B160::from_slice(
             &unsafe { $interp.stack.pop_unsafe() }.to_be_bytes_vec()[12..],
         )
         .unwrap();

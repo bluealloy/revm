@@ -2,10 +2,8 @@ use bytes::Bytes;
 use hash_db::Hasher;
 use plain_hasher::PlainHasher;
 use primitive_types::{H160, H256};
-use revm::common::keccak256;
-use revm::{db::DbAccount, Log};
+use revm::{db::DbAccount, Log ,U256,B160,B256,common::keccak256,};
 use rlp::RlpStream;
-use ruint::aliases::{B160, B256, U256};
 use sha3::{Digest, Keccak256};
 use triehash::sec_trie_root;
 

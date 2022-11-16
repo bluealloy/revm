@@ -5,14 +5,13 @@ pub mod web3db;
 #[cfg(feature = "web3db")]
 pub use web3db::Web3DB;
 
-pub use in_memory_db::{AccountState, BenchmarkDB, CacheDB, DbAccount, EmptyDB, InMemoryDB};
-
-use crate::{interpreter::bytecode::Bytecode, Account};
-use hashbrown::HashMap as Map;
-use ruint::aliases::{B160, B256, U256};
-
+use crate::bits::{B160, B256};
 use crate::AccountInfo;
+use crate::U256;
+use crate::{interpreter::bytecode::Bytecode, Account};
 use auto_impl::auto_impl;
+use hashbrown::HashMap as Map;
+pub use in_memory_db::{AccountState, BenchmarkDB, CacheDB, DbAccount, EmptyDB, InMemoryDB};
 
 #[auto_impl(& mut, Box)]
 pub trait Database {

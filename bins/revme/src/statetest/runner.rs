@@ -8,8 +8,7 @@ use std::{
 };
 
 use indicatif::ProgressBar;
-use revm::{db::AccountState, Bytecode, CreateScheme, Env, ExecutionResult, SpecId, TransactTo};
-use ruint::aliases::{B160, B256, U256};
+use revm::{db::AccountState, U256,Bytecode, bits::{B160,B256},CreateScheme, Env, ExecutionResult, SpecId, TransactTo};
 use std::sync::atomic::Ordering;
 use walkdir::{DirEntry, WalkDir};
 

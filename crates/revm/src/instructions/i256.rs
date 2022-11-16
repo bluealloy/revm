@@ -1,6 +1,6 @@
 use core::cmp::Ordering;
-use ruint::aliases::U256;
 use ruint::uint;
+use crate::U256;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum Sign {
@@ -125,7 +125,7 @@ pub fn i256_mod(mut first: U256, mut second: U256) -> U256 {
 mod tests {
     use super::*;
     use core::num::Wrapping;
-    use ruint::aliases::U256;
+    use crate::U256;
 
     #[test]
     fn div_i256() {

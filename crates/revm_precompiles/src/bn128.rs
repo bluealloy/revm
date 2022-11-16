@@ -1,5 +1,6 @@
 use crate::{gas_query, Precompile, PrecompileAddress, PrecompileOutput, PrecompileResult, Return};
 
+use crate::B160;
 use alloc::{borrow::Cow, vec::Vec};
 use ruint::{
     aliases::{B160 as Address, U256},
@@ -8,29 +9,38 @@ use ruint::{
 
 pub mod add {
     use super::*;
-    const ADDRESS: Address = uint!(6_B160);
+    const ADDRESS: B160 = crate::u64_to_b160(6);
 
     pub const ISTANBUL: PrecompileAddress = PrecompileAddress(
         ADDRESS,
         Precompile::Standard(|input: &[u8], target_gas: u64| -> PrecompileResult {
-            super::run_add(input, 150, target_gas)
+            if 150 > target_gas {
+                return Err(());
+            }
+            Ok((150, super::run_add(input).unwrap_or_default()))
         }),
     );
 
     pub const BYZANTIUM: PrecompileAddress = PrecompileAddress(
         ADDRESS,
         Precompile::Standard(|input: &[u8], target_gas: u64| -> PrecompileResult {
-            super::run_add(input, 500, target_gas)
+            if 500 > target_gas {
+                return Err(());
+            }
+            Ok((500, super::run_add(input).unwrap_or_default()))
         }),
     );
 }
 
 pub mod mul {
     use super::*;
-    const ADDRESS: Address = uint!(7_B160);
+    const ADDRESS: B160 = crate::u64_to_b160(7);
     pub const ISTANBUL: PrecompileAddress = PrecompileAddress(
         ADDRESS,
         Precompile::Standard(|input: &[u8], target_gas: u64| -> PrecompileResult {
+            if 150 > target_gas {
+                return Err(());
+            }
             super::run_mul(input, 6_000, target_gas)
         }),
     );
@@ -38,6 +48,9 @@ pub mod mul {
     pub const BYZANTIUM: PrecompileAddress = PrecompileAddress(
         ADDRESS,
         Precompile::Standard(|input: &[u8], target_gas: u64| -> PrecompileResult {
+            if 150 > target_gas {
+                return Err(());
+            }
             super::run_mul(input, 40_000, target_gas)
         }),
     );
@@ -45,7 +58,7 @@ pub mod mul {
 
 pub mod pair {
     use super::*;
-    const ADDRESS: Address = uint!(8_B160);
+    const ADDRESS: B160 = crate::u64_to_b160(8);
 
     const ISTANBUL_PAIR_PER_POINT: u64 = 34_000;
     const ISTANBUL_PAIR_BASE: u64 = 45_000;
@@ -86,31 +99,25 @@ const MUL_INPUT_LEN: usize = 128;
 const PAIR_ELEMENT_LEN: usize = 192;
 
 /// Reads the `x` and `y` points from an input at a given position.
-fn read_point(input: &[u8], pos: usize) -> Result<bn::G1, Return> {
+fn read_point(input: &[u8], pos: usize) -> Option<bn::G1> {
     use bn::{AffineG1, Fq, Group, G1};
 
     let mut px_buf = [0u8; 32];
     px_buf.copy_from_slice(&input[pos..(pos + 32)]);
-    let px = Fq::from_slice(&px_buf)
-        .map_err(|_e| Return::Other(Cow::Borrowed("ERR_BN128_INVALID_X")))?;
+    let px = Fq::from_slice(&px_buf).ok()?;
 
     let mut py_buf = [0u8; 32];
     py_buf.copy_from_slice(&input[(pos + 32)..(pos + 64)]);
-    let py = Fq::from_slice(&py_buf)
-        .map_err(|_e| Return::Other(Cow::Borrowed("ERR_BN128_INVALID_Y")))?;
+    let py = Fq::from_slice(&py_buf).ok()?;
 
-    Ok(if px == Fq::zero() && py == bn::Fq::zero() {
-        G1::zero()
+    if px == Fq::zero() && py == bn::Fq::zero() {
+        Some(G1::zero())
     } else {
-        AffineG1::new(px, py)
-            .map_err(|_| Return::Other(Cow::Borrowed("ERR_BN128_INVALID_POINT")))?
-            .into()
-    })
+        AffineG1::new(px, py).ok().map(Into::into)
+    }
 }
 
-fn run_add(input: &[u8], cost: u64, target_gas: u64) -> PrecompileResult {
-    let cost = gas_query(cost, target_gas)?;
-
+fn run_add(input: &[u8]) -> Option<Vec<u8>> {
     use bn::AffineG1;
 
     let mut input = input.to_vec();
@@ -131,7 +138,7 @@ fn run_add(input: &[u8], cost: u64, target_gas: u64) -> PrecompileResult {
             .unwrap();
     }
 
-    Ok(PrecompileOutput::without_logs(cost, output.to_vec()))
+    Some(output.into())
 }
 
 fn run_mul(input: &[u8], cost: u64, target_gas: u64) -> PrecompileResult {

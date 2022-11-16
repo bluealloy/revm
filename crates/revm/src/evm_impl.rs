@@ -10,13 +10,14 @@ use crate::{
     CreateInputs, CreateScheme, Env, ExecutionResult, Gas, Inspector, Log, Return, Spec,
     SpecId::{self, *},
     TransactOut, TransactTo, Transfer, KECCAK_EMPTY,
+    bits::{B160,B256},
+    U256,
 };
 use alloc::vec::Vec;
 use bytes::Bytes;
 use core::{cmp::min, marker::PhantomData};
 use hashbrown::HashMap as Map;
 use revm_precompiles::{Precompile, PrecompileOutput, Precompiles};
-use ruint::aliases::{B160, B256, U160, U256};
 
 pub struct EVMData<'a, DB: Database> {
     pub env: &'a mut Env,
@@ -647,7 +648,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     } else {
                         Return::PrecompileError
                     };
-                    self.data.journaled_state.checkpoint_revert(checkpoint); //TODO check if we are discarding or reverting
+                    self.data.journaled_state.checkpoint_revert(checkpoint);
                     (ret, gas, Bytes::new())
                 }
             }
@@ -765,7 +766,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         }
         if acc.is_empty() {
             // TODO check this for pre tangerine fork
-            return Some((B256::ZERO, is_cold));
+            return Some((B256::zero(), is_cold));
         }
 
         Some((acc.info.code_hash, is_cold))
@@ -834,9 +835,7 @@ pub fn create_address(caller: B160, nonce: u64) -> B160 {
     stream.append(&caller);
     stream.append(&nonce);
     let out = keccak256(&stream.out());
-    U160::try_from_be_slice(&out.to_be_bytes_vec()[12..])
-        .unwrap()
-        .into()
+    B160::from_slice(&out.to_be_bytes_vec()[12..])
 }
 
 /// Returns the address for the `CREATE2` scheme: [`CreateScheme::Create2`]

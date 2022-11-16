@@ -1,11 +1,10 @@
-use bytes::Bytes;
-use ruint::aliases::{B160, B256};
-
 use crate::{
-    evm_impl::EVMData, opcode, spec_opcode_gas, CallInputs, CreateInputs, Database, Gas,
-    Interpreter, Return,
+    bits::{B160, B256},
+    evm_impl::EVMData,
+    opcode, spec_opcode_gas, CallInputs, CreateInputs, Database, Gas, Interpreter, Return,
 };
 use auto_impl::auto_impl;
+use bytes::Bytes;
 
 #[auto_impl(&mut, Box)]
 pub trait Inspector<DB: Database> {
@@ -244,10 +243,9 @@ mod tests {
     use crate::db::BenchmarkDB;
     use crate::{
         opcode, Bytecode, CallInputs, CreateInputs, Database, EVMData, Gas, GasInspector,
-        Inspector, Interpreter, OpCode, Return, TransactTo,
+        Inspector, Interpreter, OpCode, Return, TransactTo,B160, B256,
     };
     use bytes::Bytes;
-    use ruint::aliases::{B160, B256};
 
     #[derive(Default, Debug)]
     struct StackInspector {
