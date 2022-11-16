@@ -17,7 +17,7 @@ bytes = "1.2"
 getrandom = { version = "0.2", features = ["js"] }
 hex = "0.4"
 js-sys = "0.3"
-primitive-types = { version = "0.11", default-features = false }
+primitive-types = { version = "0.12", default-features = false }
 revm = { path = "../revm", version = "2.0", default-features = false, features = ["k256"] }
 ruint = { version = "1.6.0", features = ["primitive-types", "bn-rs"] }
 wasm-bindgen = "0.2"
