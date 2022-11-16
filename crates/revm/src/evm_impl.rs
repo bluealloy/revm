@@ -246,9 +246,19 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let (gas_used, gas_refunded) = if crate::USE_GAS {
             let effective_gas_price = self.data.env.effective_gas_price();
             let basefee = self.data.env.block.basefee;
-            let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 }; // EIP-3529: Reduction in refunds
 
-            let gas_refunded = min(gas.refunded() as u64, gas.spend() / max_refund_quotient);
+            #[cfg(feature = "optional_gas_refund")]
+            let disable_gas_refund = self.env().cfg.disable_gas_refund;
+            #[cfg(not(feature = "optional_gas_refund"))]
+            let disable_gas_refund = false;
+
+            let gas_refunded = if disable_gas_refund {
+                0
+            } else {
+                // EIP-3529: Reduction in refunds
+                let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 };
+                min(gas.refunded() as u64, gas.spend() / max_refund_quotient)
+            };
             let acc_caller = self.data.journaled_state.state().get_mut(&caller).unwrap();
             acc_caller.info.balance = acc_caller
                 .info
