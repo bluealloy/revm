@@ -194,7 +194,11 @@ pub struct BlockEnv {
     /// Address where we are going to send gas spend
     pub coinbase: H160,
     pub timestamp: U256,
+    /// Difficulty is removed and not used after Paris (aka TheMerge). Value is replaced with prevrandao.
     pub difficulty: U256,
+    /// Prevrandao is used after Paris (aka TheMerge) instead of the difficulty value.
+    /// NOTE: prevrandao can be found in block in place of mix_hash.
+    pub prevrandao: Option<H256>,
     /// basefee is added in EIP1559 London upgrade
     pub basefee: U256,
     pub gas_limit: U256,
@@ -287,6 +291,7 @@ impl Default for BlockEnv {
             coinbase: H160::zero(),
             timestamp: U256::one(),
             difficulty: U256::zero(),
+            prevrandao: Some(H256::zero()),
             basefee: U256::zero(),
         }
     }
