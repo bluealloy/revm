@@ -1,12 +1,12 @@
 use crate::{
     alloc::vec::Vec,
+    bits::{B160, B256},
     gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
     interpreter::Interpreter,
     return_ok, return_revert, CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme,
     Host, Return, Spec,
     SpecId::*,
-    Transfer,
-    bits::{B160, B256}, U256,
+    Transfer, U256,
 };
 use bytes::Bytes;
 use core::cmp::min;
@@ -120,7 +120,7 @@ pub fn blockhash<H: Host>(interp: &mut Interpreter, host: &mut H) -> Return {
             if ret.is_none() {
                 return Return::FatalExternalError;
             }
-            *number = ret.unwrap().into();
+            *number = U256::from_be_bytes(*ret.unwrap());
             return Return::Continue;
         }
     }
@@ -179,7 +179,7 @@ pub fn log<H: Host, SPEC: Spec>(interp: &mut Interpreter, n: u8, host: &mut H) -
     let mut topics = Vec::with_capacity(n);
     for _ in 0..(n) {
         // Safety: stack bounds already checked few lines above
-        topics.push(unsafe { interp.stack.pop_unsafe() }.into());
+        topics.push(B256(unsafe { interp.stack.pop_unsafe().to_be_bytes() }));
     }
 
     host.log(interp.contract.address, topics, data);
@@ -260,12 +260,7 @@ pub fn create<H: Host, SPEC: Spec>(
 
     match return_reason {
         return_ok!() => {
-            push_b256!(
-                interp,
-                address
-                    .map(|a| B256::try_from_be_slice(&a.to_be_bytes_vec()).unwrap())
-                    .unwrap_or_default()
-            );
+            push_b256!(interp, address.unwrap_or_default().into());
             interp.gas.erase_cost(gas.remaining());
             interp.gas.record_refund(gas.refunded());
         }

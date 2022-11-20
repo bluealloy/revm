@@ -2,7 +2,7 @@ use bytes::Bytes;
 use hash_db::Hasher;
 use plain_hasher::PlainHasher;
 use primitive_types::{H160, H256};
-use revm::{db::DbAccount, Log ,U256,B160,B256,common::keccak256,};
+use revm::{common::keccak256, db::DbAccount, Log, B160, B256, U256};
 use rlp::RlpStream;
 use sha3::{Digest, Keccak256};
 use triehash::sec_trie_root;
@@ -13,8 +13,12 @@ pub fn log_rlp_hash(logs: Vec<Log>) -> B256 {
     stream.begin_unbounded_list();
     for log in logs {
         stream.begin_list(3);
-        stream.append(&log.address);
-        stream.append_list(&log.topics);
+        stream.append(&log.address.0.as_ref());
+        stream.begin_unbounded_list();
+        for topic in log.topics {
+            stream.append(&topic.0.as_ref());
+        }
+        stream.finalize_unbounded_list();
         stream.append(&log.data);
     }
     stream.finalize_unbounded_list();
@@ -27,7 +31,7 @@ pub fn state_merkle_trie_root(accounts: impl Iterator<Item = (B160, DbAccount)>)
     let vec = accounts
         .map(|(address, info)| {
             let acc_root = trie_account_rlp(&info);
-            (H160::from(address), acc_root)
+            (H160::from(address.0), acc_root)
         })
         .collect();
 
@@ -44,15 +48,15 @@ pub fn trie_account_rlp(acc: &DbAccount) -> Bytes {
             acc.storage
                 .iter()
                 .filter(|(_k, &v)| v != U256::ZERO)
-                .map(|(&k, v)| (H256::from(B256::from(k)), rlp::encode(v))),
+                .map(|(&k, v)| (H256::from(k.to_be_bytes()), rlp::encode(v))),
         )
     });
-    stream.append(&acc.info.code_hash.to_be_bytes_vec());
+    stream.append(&acc.info.code_hash.0.as_ref());
     stream.out().freeze()
 }
 
 pub fn trie_root(acc_data: Vec<(H160, Bytes)>) -> B256 {
-    sec_trie_root::<KeccakHasher, _, _, _>(acc_data.into_iter()).into()
+    B256(sec_trie_root::<KeccakHasher, _, _, _>(acc_data.into_iter()).0)
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]

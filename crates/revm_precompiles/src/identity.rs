@@ -1,5 +1,5 @@
 use super::calc_linear_cost_u32;
-use crate::{Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn};
+use crate::{Error, Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn};
 
 pub const FUN: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(4),
@@ -18,7 +18,7 @@ const IDENTITY_PER_WORD: u64 = 3;
 fn identity_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let gas_used = calc_linear_cost_u32(input.len(), IDENTITY_BASE, IDENTITY_PER_WORD);
     if gas_used > gas_limit {
-        return Err(());
+        return Err(Error::OutOfGas);
     }
     Ok((gas_used, input.to_vec()))
 }

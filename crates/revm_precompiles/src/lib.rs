@@ -3,11 +3,8 @@
 use bytes::Bytes;
 use once_cell::sync::OnceCell;
 
-#[derive(Debug, Hash, Clone, Default, Eq, PartialEq)]
-pub struct B160([u8; 20]);
-
-#[derive(Debug, Hash, Clone, Default, Eq, PartialEq)]
-pub struct B256([u8; 32]);
+pub type B160 = [u8; 20];
+pub type B256 = [u8; 32];
 
 mod blake2;
 mod bn128;
@@ -17,7 +14,7 @@ mod identity;
 mod modexp;
 mod secp256k1;
 
-pub use error::Return;
+pub use error::Error;
 
 /// libraries for no_std flag
 #[macro_use]
@@ -63,9 +60,9 @@ impl PrecompileOutput {
 }
 
 /// A precompile operation result.
-pub type PrecompileResult = Result<(u64, Vec<u8>), ()>;
+pub type PrecompileResult = Result<(u64, Vec<u8>), Error>;
 
-pub type StandardPrecompileFn = fn(&[u8], u64) -> Result<(u64, Vec<u8>), ()>;
+pub type StandardPrecompileFn = fn(&[u8], u64) -> PrecompileResult;
 pub type CustomPrecompileFn = fn(&[u8], u64) -> PrecompileResult;
 
 #[derive(Clone, Debug)]
@@ -232,8 +229,8 @@ impl Precompiles {
 /// as a convenience for specifying the addresses of the various precompiles.
 const fn u64_to_b160(x: u64) -> B160 {
     let x_bytes = x.to_be_bytes();
-    let y_bytes = 0u64.to_be_bytes();
-    B160([
+    let y_bytes = 0u128.to_be_bytes();
+    [
         x_bytes[0],
         x_bytes[1],
         x_bytes[2],
@@ -242,7 +239,7 @@ const fn u64_to_b160(x: u64) -> B160 {
         x_bytes[5],
         x_bytes[6],
         x_bytes[7],
-        x_bytes[8],
+        x_bytes[4],
         y_bytes[5],
         y_bytes[6],
         y_bytes[7],
@@ -254,5 +251,5 @@ const fn u64_to_b160(x: u64) -> B160 {
         y_bytes[13],
         y_bytes[14],
         y_bytes[15],
-    ])
+    ]
 }

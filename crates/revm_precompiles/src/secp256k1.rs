@@ -1,11 +1,6 @@
-use crate::{
-    gas_query, Precompile, PrecompileAddress, PrecompileOutput, PrecompileResult,
-    StandardPrecompileFn,
-};
+use crate::{Error, Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn};
 use alloc::vec::Vec;
 use core::cmp::min;
-
-use ruint::uint;
 
 const ECRECOVER_BASE: u64 = 3_000;
 
@@ -61,7 +56,7 @@ mod secp256k1 {
 
 fn ec_recover_run(i: &[u8], target_gas: u64) -> PrecompileResult {
     if ECRECOVER_BASE > target_gas {
-        return Err(());
+        return Err(Error::OutOfGas);
     }
     let mut input = [0u8; 128];
     input[..min(i.len(), 128)].copy_from_slice(&i[..min(i.len(), 128)]);
@@ -74,7 +69,7 @@ fn ec_recover_run(i: &[u8], target_gas: u64) -> PrecompileResult {
     sig[32..64].copy_from_slice(&input[96..128]);
 
     if input[32..63] != [0u8; 31] || !matches!(input[63], 27 | 28) {
-        return Ok((ECRECOVER_BASE,Vec::new()));
+        return Ok((ECRECOVER_BASE, Vec::new()));
     }
 
     sig[64] = input[63] - 27;
@@ -83,5 +78,5 @@ fn ec_recover_run(i: &[u8], target_gas: u64) -> PrecompileResult {
         .map(|t| Vec::from(t))
         .unwrap_or_default();
 
-    Ok((ECRECOVER_BASE,out))
+    Ok((ECRECOVER_BASE, out))
 }

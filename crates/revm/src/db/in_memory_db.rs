@@ -2,7 +2,7 @@ use super::{DatabaseCommit, DatabaseRef};
 use crate::common::keccak256;
 use crate::{interpreter::bytecode::Bytecode, Database, KECCAK_EMPTY};
 use crate::{Account, AccountInfo, Log};
-use crate::{U256,B160,B256};
+use crate::{B160, B256, U256};
 use alloc::vec::Vec;
 use core::convert::Infallible;
 use hashbrown::{hash_map::Entry, HashMap as Map};
@@ -392,15 +392,13 @@ impl Database for BenchmarkDB {
 
 #[cfg(test)]
 mod tests {
-    use ruint::{aliases::U256, uint};
-
-    use crate::{AccountInfo, Database};
-
     use super::{CacheDB, EmptyDB};
+    use crate::{AccountInfo, Database};
+    use ruint::aliases::U256;
 
     #[test]
     pub fn test_insert_account_storage() {
-        let account = uint!(42_B160);
+        let account = 42.into();
         let nonce = 42;
         let mut init_state = CacheDB::new(EmptyDB::default());
         init_state.insert_account_info(
@@ -421,7 +419,7 @@ mod tests {
 
     #[test]
     pub fn test_replace_account_storage() {
-        let account = uint!(42_B160);
+        let account = 42.into();
         let nonce = 42;
         let mut init_state = CacheDB::new(EmptyDB::default());
         init_state.insert_account_info(

@@ -70,37 +70,28 @@ macro_rules! pop_address {
             return Return::StackUnderflow;
         }
         // Safety: Length is checked above.
-        let $x1: B160 = B160::from_slice(
-            &unsafe { $interp.stack.pop_unsafe() }.to_be_bytes_vec()[12..],
-        )
-        .unwrap();
+        let $x1: B160 = B160(
+            unsafe { $interp.stack.pop_unsafe() }.to_be_bytes_vec()[12..]
+                .try_into()
+                .unwrap(),
+        );
     };
     ( $interp:expr, $x1:ident, $x2:ident) => {
         if $interp.stack.len() < 2 {
             return Return::StackUnderflow;
         }
         let mut temp = H256::zero();
-        $x1: H160 = {
-            // Safety: Length is checked above.
-            unsafe {
-                $interp
-                    .stack
-                    .pop_unsafe()
-                    .to_big_endian(temp.as_bytes_mut())
-            };
-            temp.into()
-        };
-        $x2: H160 = {
-            temp = H256::zero();
-            // Safety: Length is checked above.
-            unsafe {
-                $interp
-                    .stack
-                    .pop_unsafe()
-                    .to_big_endian(temp.as_bytes_mut())
-            };
-            temp.into();
-        };
+
+        let $x1: B160 = B160(
+            unsafe { $interp.stack.pop_unsafe() }.to_be_bytes_vec()[12..]
+                .try_into()
+                .unwrap(),
+        );
+        let $x2: B160 = B160(
+            unsafe { $interp.stack.pop_unsafe() }.to_be_bytes_vec()[12..]
+                .try_into()
+                .unwrap(),
+        );
     };
 }
 

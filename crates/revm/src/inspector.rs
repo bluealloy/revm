@@ -243,9 +243,10 @@ mod tests {
     use crate::db::BenchmarkDB;
     use crate::{
         opcode, Bytecode, CallInputs, CreateInputs, Database, EVMData, Gas, GasInspector,
-        Inspector, Interpreter, OpCode, Return, TransactTo,B160, B256,
+        Inspector, Interpreter, OpCode, Return, TransactTo, B160, B256,
     };
     use bytes::Bytes;
+    use hex_literal::hex;
 
     #[derive(Default, Debug)]
     struct StackInspector {
@@ -376,14 +377,9 @@ mod tests {
 
         let mut evm = crate::new();
         evm.database(BenchmarkDB::new_bytecode(bytecode.clone()));
-        evm.env.tx.caller = "0x1000000000000000000000000000000000000000"
-            .parse()
-            .unwrap();
-        evm.env.tx.transact_to = TransactTo::Call(
-            "0x0000000000000000000000000000000000000000"
-                .parse()
-                .unwrap(),
-        );
+        evm.env.tx.caller = B160(hex!("1000000000000000000000000000000000000000"));
+        evm.env.tx.transact_to =
+            TransactTo::Call(B160(hex!("0000000000000000000000000000000000000000")));
         evm.env.tx.gas_limit = 21100;
 
         let mut inspector = StackInspector::default();

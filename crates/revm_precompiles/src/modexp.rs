@@ -1,4 +1,4 @@
-use crate::{Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn};
+use crate::{Precompile, PrecompileAddress, Error, PrecompileResult, StandardPrecompileFn};
 use alloc::vec::Vec;
 use core::{
     cmp::{max, min, Ordering},
@@ -72,7 +72,11 @@ where
     let (mod_len, mod_overflow) = read_u64_with_overflow!(input, 64, 96, u32::MAX as usize);
 
     if base_overflow || mod_overflow {
-        return Err(());
+        return Err(Error::ModexpBaseOverflow);
+    }
+
+    if mod_overflow {
+        return Err(Error::ModexpModOverflow)
     }
 
     let (r, gas_cost) = if base_len == 0 && mod_len == 0 {
@@ -80,7 +84,7 @@ where
     } else {
         // set limit for exp overflow
         if exp_overflow {
-            return Err(());
+            return Err(Error::ModexpExpOverflow);
         }
         let base_start = 96;
         let base_end = base_start + base_len;
@@ -100,7 +104,7 @@ where
 
         let gas_cost = calc_gas(base_len as u64, exp_len as u64, mod_len as u64, &exp_highp);
         if gas_cost > gas_limit {
-            return Err(());
+            return Err(Error::OutOfGas);
         }
 
         let read_big = |from: usize, to: usize| {

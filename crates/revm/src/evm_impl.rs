@@ -1,4 +1,5 @@
 use crate::{
+    bits::{B160, B256},
     common::keccak256,
     db::Database,
     gas,
@@ -9,15 +10,13 @@ use crate::{
     precompiles, return_ok, return_revert, AnalysisKind, CallContext, CallInputs, CallScheme,
     CreateInputs, CreateScheme, Env, ExecutionResult, Gas, Inspector, Log, Return, Spec,
     SpecId::{self, *},
-    TransactOut, TransactTo, Transfer, KECCAK_EMPTY,
-    bits::{B160,B256},
-    U256,
+    TransactOut, TransactTo, Transfer, KECCAK_EMPTY, U256,
 };
 use alloc::vec::Vec;
 use bytes::Bytes;
 use core::{cmp::min, marker::PhantomData};
 use hashbrown::HashMap as Map;
-use revm_precompiles::{Precompile, PrecompileOutput, Precompiles};
+use revm_precompiles::{Precompile, Precompiles};
 
 pub struct EVMData<'a, DB: Database> {
     pub env: &'a mut Env,
@@ -291,12 +290,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         // will have sum.
         if self.data.env.cfg.perf_all_precompiles_have_balance {
             for address in self.precompiles.addresses() {
-                if let Some(precompile) = new_state.get_mut(address) {
+                let address = B160(address.clone().into());
+                if let Some(precompile) = new_state.get_mut(&address) {
                     // we found it.
                     precompile.info.balance += self
                         .data
                         .db
-                        .basic(*address)
+                        .basic(address)
                         .ok()
                         .flatten()
                         .map(|acc| acc.balance)
@@ -626,26 +626,22 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 Precompile::Custom(fun) => fun(inputs.input.as_ref(), inputs.gas_limit),
             };
             match out {
-                Ok(PrecompileOutput { output, cost, logs }) => {
-                    if !crate::USE_GAS || gas.record_cost(cost) {
-                        logs.into_iter().for_each(|l| {
-                            self.data.journaled_state.log(Log {
-                                address: l.address,
-                                topics: l.topics,
-                                data: l.data,
-                            })
-                        });
+                Ok((gas_used, data)) => {
+                    if !crate::USE_GAS || gas.record_cost(gas_used) {
                         self.data.journaled_state.checkpoint_commit();
-                        (Return::Continue, gas, Bytes::from(output))
+                        (Return::Continue, gas, Bytes::from(data))
                     } else {
                         self.data.journaled_state.checkpoint_revert(checkpoint);
                         (Return::OutOfGas, gas, Bytes::new())
                     }
                 }
                 Err(e) => {
-                    let ret = if let precompiles::Return::OutOfGas = e {
+                    let ret = if let precompiles::Error::OutOfGas = e {
                         Return::OutOfGas
                     } else {
+                        // TODO Consider using precompile errors.
+                        // This would make Return be a litlle bit fatter, but with removal
+                        // of return in instruction this shouldn't be a problem.
                         Return::PrecompileError
                     };
                     self.data.journaled_state.checkpoint_revert(checkpoint);
@@ -832,10 +828,10 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
 /// Returns the address for the legacy `CREATE` scheme: [`CreateScheme::Create`]
 pub fn create_address(caller: B160, nonce: u64) -> B160 {
     let mut stream = rlp::RlpStream::new_list(2);
-    stream.append(&caller);
+    stream.append(&caller.0.as_ref());
     stream.append(&nonce);
     let out = keccak256(&stream.out());
-    B160::from_slice(&out.to_be_bytes_vec()[12..])
+    B160(out[12..].try_into().unwrap())
 }
 
 /// Returns the address for the `CREATE2` scheme: [`CreateScheme::Create2`]
@@ -843,11 +839,11 @@ pub fn create2_address(caller: B160, code_hash: B256, salt: U256) -> B160 {
     use sha3::{Digest, Keccak256};
     let mut hasher = Keccak256::new();
     hasher.update([0xff]);
-    hasher.update(&caller.to_be_bytes_vec()[..]);
+    hasher.update(&caller[..]);
     hasher.update(salt.to_be_bytes_vec());
-    hasher.update(&code_hash.to_be_bytes_vec()[..]);
+    hasher.update(&code_hash[..]);
 
-    B160::try_from_be_slice(&hasher.finalize().as_slice()[12..]).unwrap()
+    B160(hasher.finalize().as_slice()[12..].try_into().unwrap())
 }
 
 /// EVM context host.

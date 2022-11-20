@@ -1,4 +1,4 @@
-use crate::{interpreter::Interpreter,U256,bits::B256, Host, Return, Spec, SpecId::*};
+use crate::{interpreter::Interpreter, Host, Return, Spec, SpecId::*};
 
 pub fn chainid<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
     // gas!(interp, gas::BASE);
@@ -10,11 +10,7 @@ pub fn chainid<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> R
 
 pub fn coinbase<H: Host>(interp: &mut Interpreter, host: &mut H) -> Return {
     // gas!(interp, gas::BASE);
-    push_b256!(
-        interp,
-        // TODO(shekhirin): replace with `B256::from(bits: Bits)`
-        B256::from(U256::from(host.env().block.coinbase.into_inner()))
-    );
+    push_b256!(interp, host.env().block.coinbase.into());
     Return::Continue
 }
 
@@ -58,10 +54,6 @@ pub fn basefee<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> R
 
 pub fn origin<H: Host>(interp: &mut Interpreter, host: &mut H) -> Return {
     // gas!(interp, gas::BASE);
-    push_b256!(
-        interp,
-        // TODO(shekhirin): replace with `B256::from(bits: Bits)`
-        B256::from(U256::from(host.env().tx.caller.into_inner()))
-    );
+    push_b256!(interp, host.env().tx.caller.into());
     Return::Continue
 }

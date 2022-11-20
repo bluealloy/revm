@@ -1,4 +1,4 @@
-use crate::{alloc::vec::Vec, Return,U256,B256};
+use crate::{alloc::vec::Vec, Return, B256, U256};
 
 pub const STACK_LIMIT: usize = 1024;
 
@@ -184,7 +184,7 @@ impl Stack {
         if self.data.len() + 1 > STACK_LIMIT {
             return Err(Return::StackOverflow);
         }
-        self.data.push(value.into());
+        self.data.push(U256::from_be_bytes(value.0));
         Ok(())
     }
 
