@@ -14,10 +14,10 @@ arrayref  = "0.3"
 auto_impl = { version = "1.0", default-features = false }
 bytes = { version = "1.1", default-features = false }
 futures = { version = "0.3.24", optional = true }
-hashbrown = { version = "0.12" }
+hashbrown = { version = "0.13" }
 hex = { version = "0.4", optional = true }
 num_enum = { version = "0.5", default-features = false } # used for SpecId from u8 cast
-primitive-types = { version = "0.11", default-features = false, features = ["rlp"] }
+primitive-types = { version = "0.12", default-features = false, features = ["rlp"] }
 revm_precompiles = { path = "../revm_precompiles", version = "1.1.1", default-features = false }
 rlp = { version = "0.5", default-features = false } # used for create2 address calculation
 ruint = { version = "1.6.0", features = ["rlp"] }
