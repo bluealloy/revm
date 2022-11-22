@@ -11,16 +11,16 @@ pub enum SpecName {
     EIP150,
     EIP158, // EIP-161: State trie clearing
     EIP158ToByzantiumAt5,
-    Byzantium, 
+    Byzantium,
     ByzantiumToConstantinopleAt5, // SKIPPED
     ByzantiumToConstantinopleFixAt5,
     Constantinople, // SKIPPED
     ConstantinopleFix,
     Istanbul,
-    Berlin, 
-    BerlinToLondonAt5, 
-    London, 
-    Merge, 
+    Berlin,
+    BerlinToLondonAt5,
+    London,
+    Merge,
     #[serde(alias = "Merge+3540+3670")]
     MergeEOF,
     #[serde(alias = "Merge+3860")]
