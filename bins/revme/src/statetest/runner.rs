@@ -180,6 +180,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                 SpecName::ByzantiumToConstantinopleAt5
                     | SpecName::Constantinople
                     | SpecName::MergeEOF
+                    | SpecName::MergeMeterInitCode
             ) {
                 continue;
             }
