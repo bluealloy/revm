@@ -1,3 +1,8 @@
+# v2.3.1
+date: 22.11.2022
+
+Bump dependency versions.
+
 
 # v2.3.0
 date: 16.11.2022
