@@ -6,7 +6,7 @@ keywords = ["no_std", "ethereum", "evm", "precompiles"]
 license = "MIT"
 name = "revm_precompiles"
 repository = "https://github.com/bluealloy/revm"
-version = "1.1.1"
+version = "1.1.2"
 
 [dependencies]
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
