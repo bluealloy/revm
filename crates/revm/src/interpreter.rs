@@ -2,11 +2,13 @@ pub mod bytecode;
 mod contract;
 pub(crate) mod memory;
 mod stack;
+mod transient;
 
 pub use bytecode::{Bytecode, BytecodeLocked, BytecodeState};
 pub use contract::Contract;
 pub use memory::Memory;
 pub use stack::Stack;
+pub use transient::TransientStorage;
 
 use crate::{
     instructions::{eval, Return},

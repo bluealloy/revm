@@ -794,6 +794,22 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .ok()
     }
 
+    fn tload(
+        &mut self,
+        address: H160,
+        index: U256,
+    ) -> U256 {
+        self.data
+            .journaled_state
+            .tload(address, index)
+    }
+
+    fn tstore(&mut self, address: H160, index: U256, value: U256) {
+        self.data
+            .journaled_state
+            .tstore(address, index, value)
+    }
+
     fn log(&mut self, address: H160, topics: Vec<H256>, data: Bytes) {
         if INSPECT {
             self.inspector.log(&mut self.data, &address, &topics, &data);
@@ -881,6 +897,10 @@ pub trait Host {
         index: U256,
         value: U256,
     ) -> Option<(U256, U256, U256, bool)>;
+
+    fn tload(&mut self, address: H160, index: U256) -> U256;
+    fn tstore(&mut self, address: H160, index: U256, value: U256);
+
     /// Create a log owned by address with given topics and data.
     fn log(&mut self, address: H160, topics: Vec<H256>, data: Bytes);
     /// Mark an address to be deleted, with funds transferred to target.

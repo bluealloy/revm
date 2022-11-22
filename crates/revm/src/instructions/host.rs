@@ -159,6 +159,26 @@ pub fn sstore<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Re
     interp.add_next_gas_block(interp.program_counter() - 1)
 }
 
+pub fn tstore<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
+    check!(!SPEC::IS_STATIC_CALL);
+    gas!(interp, gas::WARM_STORAGE_READ_COST);
+
+    pop!(interp, index, value);
+
+    host.tstore(interp.contract.address, index, value);
+    Return::Continue
+}
+
+pub fn tload<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
+    gas!(interp, gas::WARM_STORAGE_READ_COST);
+
+    pop!(interp, index);
+
+    let value = host.tload(interp.contract.address, index);
+    push!(interp, value);
+    Return::Continue
+}
+
 pub fn log<H: Host, SPEC: Spec>(interp: &mut Interpreter, n: u8, host: &mut H) -> Return {
     check!(!SPEC::IS_STATIC_CALL);
 

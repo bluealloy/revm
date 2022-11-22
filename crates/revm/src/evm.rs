@@ -169,6 +169,7 @@ pub fn evm_inner<'a, DB: Database, const INSPECT: bool>(
         }
         SpecId::MERGE => create_evm!(MergeSpec, db, env, insp),
         SpecId::MERGE_EOF => create_evm!(MergeSpec, db, env, insp),
+        SpecId::SHANGHAI => create_evm!(ShanghaiSpec, db, env, insp),
         SpecId::LATEST => create_evm!(LatestSpec, db, env, insp),
     }
 }

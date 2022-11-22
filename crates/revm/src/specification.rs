@@ -26,7 +26,8 @@ pub enum SpecId {
     GRAY_GLACIER = 14,    // Gray Glacier	        15050000
     MERGE = 15,           // Paris/Merge	        TBD (Depends on difficulty)
     MERGE_EOF = 16,       // Merge+EOF	            TBD
-    LATEST = 17,
+    SHANGHAI = 17,        // Shanghai               TBD
+    LATEST = 18,
 }
 
 impl SpecId {
@@ -37,7 +38,7 @@ impl SpecId {
             }
             BYZANTIUM | CONSTANTINOPLE | PETERSBURG => PrecompileId::BYZANTIUM,
             ISTANBUL | MUIR_GLACIER => PrecompileId::ISTANBUL,
-            BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | MERGE_EOF | LATEST => {
+            BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | MERGE_EOF | SHANGHAI | LATEST => {
                 PrecompileId::BERLIN
             }
         }
@@ -66,6 +67,7 @@ impl From<&str> for SpecId {
             "London" => SpecId::LONDON,
             "Merge" => SpecId::MERGE,
             "MergeEOF" => SpecId::MERGE_EOF,
+            "Shanghai" => SpecId::SHANGHAI,
             _ => SpecId::LATEST,
         }
     }
@@ -147,6 +149,7 @@ pub(crate) mod spec_impl {
     // ARROW_GLACIER no EVM spec change
     // GRAT_GLACIER no EVM spec change
     spec!(MERGE);
+    spec!(SHANGHAI);
     spec!(LATEST);
 }
 
@@ -158,6 +161,7 @@ pub use spec_impl::ISTANBUL::SpecImpl as IstanbulSpec;
 pub use spec_impl::LATEST::SpecImpl as LatestSpec;
 pub use spec_impl::LONDON::SpecImpl as LondonSpec;
 pub use spec_impl::MERGE::SpecImpl as MergeSpec;
+pub use spec_impl::SHANGHAI::SpecImpl as ShanghaiSpec;
 pub use spec_impl::PETERSBURG::SpecImpl as PetersburgSpec;
 pub use spec_impl::SPURIOUS_DRAGON::SpecImpl as SpuriousDragonSpec;
 pub use spec_impl::TANGERINE::SpecImpl as TangerineSpec;
