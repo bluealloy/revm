@@ -50,6 +50,7 @@ impl From<&str> for SpecId {
             "London" => SpecId::LONDON,
             "Merge" => SpecId::MERGE,
             "Shanghai" => SpecId::SHANGHAI,
+            "Cancun" => SpecId::CANCUN,
             _ => SpecId::LATEST,
         }
     }

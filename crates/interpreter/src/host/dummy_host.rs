@@ -89,6 +89,14 @@ impl Host for DummyHost {
         Some((U256::ZERO, present, value, is_cold))
     }
 
+    fn tload(&mut self, _address: B160, _index: U256) -> U256 {
+        panic!("Tload is not supported for this host")
+    }
+
+    fn tstore(&mut self, _address: B160, _index: U256, _value: U256) -> () {
+        panic!("Tstore is not supported for this host")
+    }
+
     fn log(&mut self, address: B160, topics: Vec<B256>, data: Bytes) {
         self.log.push(Log {
             address,

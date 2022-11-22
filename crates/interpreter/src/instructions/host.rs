@@ -179,6 +179,24 @@ pub fn sstore<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     refund!(interpreter, gas::sstore_refund::<SPEC>(original, old, new));
 }
 
+pub fn tstore<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+    check_staticcall!(interpreter);
+    gas!(interpreter, gas::WARM_STORAGE_READ_COST);
+
+    pop!(interpreter, index, value);
+
+    host.tstore(interpreter.contract.address, index, value);
+}
+
+pub fn tload<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+    gas!(interpreter, gas::WARM_STORAGE_READ_COST);
+
+    pop!(interpreter, index);
+
+    let value = host.tload(interpreter.contract.address, index);
+    push!(interpreter, value);
+}
+
 pub fn log<const N: u8>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     check_staticcall!(interpreter);
 

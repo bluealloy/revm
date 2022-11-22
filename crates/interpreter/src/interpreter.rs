@@ -2,6 +2,7 @@ pub mod analysis;
 mod contract;
 pub(crate) mod memory;
 mod stack;
+pub mod transient;
 
 pub use analysis::BytecodeLocked;
 pub use contract::Contract;

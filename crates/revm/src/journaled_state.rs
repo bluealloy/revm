@@ -1,4 +1,6 @@
-use crate::interpreter::{inner_models::SelfDestructResult, InstructionResult};
+use crate::interpreter::{
+    inner_models::SelfDestructResult, transient::TransientStorage, InstructionResult,
+};
 use crate::primitives::{
     db::Database, hash_map::Entry, Account, Bytecode, HashMap, Log, State, StorageSlot, B160,
     KECCAK_EMPTY, U256,
@@ -13,6 +15,8 @@ use revm_interpreter::primitives::SpecId::SPURIOUS_DRAGON;
 pub struct JournaledState {
     /// Current state.
     pub state: State,
+    /// EIP 1153 transient storage
+    pub transient_storage: TransientStorage,
     /// logs
     pub logs: Vec<Log>,
     /// how deep are we in call stack.
@@ -68,6 +72,14 @@ pub enum JournalEntry {
         key: U256,
         had_value: Option<U256>, //if none, storage slot was cold loaded from db and needs to be removed
     },
+    /// It is used to track an EIP-1153 transient storage change.
+    /// Action: Transient storage changed.
+    /// Revert: Revert to previous value.
+    TransientStorageChange {
+        address: B160,
+        key: U256,
+        had_value: Option<U256>,
+    },
     /// Code changed
     /// Action: Account code changed
     /// Revert: Revert to previous bytecode.
@@ -91,6 +103,7 @@ impl JournaledState {
     pub fn new(num_of_precompiles: usize) -> JournaledState {
         Self {
             state: HashMap::new(),
+            transient_storage: TransientStorage::new(),
             logs: Vec::new(),
             journal: vec![vec![]],
             depth: 0,
@@ -328,6 +341,7 @@ impl JournaledState {
 
     fn journal_revert(
         state: &mut State,
+        transient_storage: &mut TransientStorage,
         journal_entries: Vec<JournalEntry>,
         is_spurious_dragon_enabled: bool,
     ) {
@@ -393,6 +407,13 @@ impl JournaledState {
                         storage.remove(&key);
                     }
                 }
+                JournalEntry::TransientStorageChange {
+                    address,
+                    key,
+                    had_value,
+                } => {
+                    transient_storage.set(address, key, had_value.unwrap());
+                }
                 JournalEntry::CodeChange { address, had_code } => {
                     let acc = state.get_mut(&address).unwrap();
                     acc.info.code_hash = had_code.hash();
@@ -419,6 +440,7 @@ impl JournaledState {
     pub fn checkpoint_revert(&mut self, checkpoint: JournalCheckpoint) {
         let is_spurious_dragon_enabled = !self.is_before_spurious_dragon;
         let state = &mut self.state;
+        let transient_storage = &mut self.transient_storage;
         self.depth -= 1;
         // iterate over last N journals sets and revert our global state
         let leng = self.journal.len();
@@ -426,7 +448,14 @@ impl JournaledState {
             .iter_mut()
             .rev()
             .take(leng - checkpoint.journal_i)
-            .for_each(|cs| Self::journal_revert(state, mem::take(cs), is_spurious_dragon_enabled));
+            .for_each(|cs| {
+                Self::journal_revert(
+                    state,
+                    transient_storage,
+                    mem::take(cs),
+                    is_spurious_dragon_enabled,
+                )
+            });
 
         self.logs.truncate(checkpoint.log_i);
         self.journal.truncate(checkpoint.journal_i);
@@ -623,6 +652,10 @@ impl JournaledState {
         Ok(load)
     }
 
+    pub fn tload(&mut self, address: B160, key: U256) -> U256 {
+        self.transient_storage.get(address, key)
+    }
+
     /// account should already be present in our state.
     /// returns (original,present,new) slot
     pub fn sstore<DB: Database>(
@@ -655,6 +688,23 @@ impl JournaledState {
         // insert value into present state.
         slot.present_value = new;
         Ok((slot.original_value, present, new, is_cold))
+    }
+
+    pub fn tstore(&mut self, address: B160, key: U256, new: U256) {
+        let present = self.tload(address, key);
+
+        if present == new {
+            return;
+        }
+
+        self.journal
+            .last_mut()
+            .unwrap()
+            .push(JournalEntry::TransientStorageChange {
+                address,
+                key,
+                had_value: Some(present),
+            })
     }
 
     /// push log into subroutine
