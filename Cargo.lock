@@ -132,13 +132,13 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 
 [[package]]
 name = "bn-rs"
-version = "0.2.3"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "55f9480d25c1283e8806b280f65e885b4fb840e8e8d72b784401233c9bd83202"
+checksum = "c34e20109dce74b02019885a01edc8ca485380a297ed8d6eb9e63e657774074b"
 dependencies = [
  "getrandom",
  "js-sys",
- "primitive-types 0.11.1",
+ "primitive-types 0.12.1",
  "rustc-hex",
  "thiserror",
  "uint",
@@ -1349,17 +1349,6 @@ dependencies = [
 
 [[package]]
 name = "primitive-types"
-version = "0.11.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e28720988bff275df1f51b171e1b2a18c30d194c4d2b61defdacecd625a5d94a"
-dependencies = [
- "fixed-hash 0.7.0",
- "impl-codec 0.6.0",
- "uint",
-]
-
-[[package]]
-name = "primitive-types"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f3486ccba82358b11a77516035647c34ba167dfa53312630de83b12bd4f3d66"
@@ -1647,7 +1636,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "74b92a24f662eff8808c3ae2959bdc9bc53b5a086d3a2ff7fead2eac347b3dce"
 dependencies = [
  "bn-rs",
- "primitive-types 0.11.1",
+ "primitive-types 0.12.1",
  "rlp",
  "ruint-macro",
  "rustc_version",

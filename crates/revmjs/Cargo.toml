@@ -12,7 +12,7 @@ version = "0.2.0"
 crate-type = ["cdylib"]
 
 [dependencies]
-bn-rs = "0.2.3"
+bn-rs = "0.2"
 bytes = "1.2"
 getrandom = { version = "0.2", features = ["js"] }
 hex = "0.4"
