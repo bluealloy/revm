@@ -11,18 +11,20 @@ pub enum SpecName {
     EIP150,
     EIP158, // EIP-161: State trie clearing
     EIP158ToByzantiumAt5,
-    Byzantium,                    // done
+    Byzantium, 
     ByzantiumToConstantinopleAt5, // SKIPPED
     ByzantiumToConstantinopleFixAt5,
     Constantinople, // SKIPPED
     ConstantinopleFix,
     Istanbul,
-    Berlin,            //done
-    BerlinToLondonAt5, // done
-    London,            // done
-    Merge,             //done
+    Berlin, 
+    BerlinToLondonAt5, 
+    London, 
+    Merge, 
     #[serde(alias = "Merge+3540+3670")]
     MergeEOF,
+    #[serde(alias = "Merge+3860")]
+    MergeMeterInitCode,
 }
 
 impl SpecName {
@@ -41,6 +43,7 @@ impl SpecName {
             Self::London | Self::BerlinToLondonAt5 => SpecId::LONDON,
             Self::Merge => SpecId::MERGE,
             Self::MergeEOF => SpecId::MERGE_EOF,
+            Self::MergeMeterInitCode => SpecId::MERGE_EOF,
             Self::ByzantiumToConstantinopleAt5 | Self::Constantinople => {
                 panic!("Overriden with PETERSBURG")
             } //_ => panic!("Conversion failed"),
