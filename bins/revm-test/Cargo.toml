@@ -8,7 +8,7 @@ edition = "2021"
 bytes = "1.1"
 hex = "0.4"
 primitive-types = { version = "0.12", features = ["rlp"] }
-revm = { path = "../../crates/revm", version = "2.1" }
+revm = { path = "../../crates/revm", version = "2.3.1" }
 
 [[bin]]
 name = "analysis"

@@ -1,5 +1,12 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v19 tag
+data 22.11.2022
+Bump dependency in revm and precompiles
+
+* revm: v2.3.1
+* revm_precompiles: v1.1.2
+
 # v18 tag
 date: 16.11.2022
 Found on same branch as v17 tag.
