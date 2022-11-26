@@ -1,10 +1,10 @@
 use bytes::Bytes;
 pub use revm::Inspector;
 use revm::{
+    bits::B160,
     opcode::{self},
     CallInputs, CreateInputs, Database, EVMData, Gas, GasInspector, Return,
-    bits::B160,
-}; 
+};
 #[derive(Clone)]
 pub struct CustomPrintTracer {
     gas_inspector: GasInspector,

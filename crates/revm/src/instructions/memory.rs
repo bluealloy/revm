@@ -1,4 +1,4 @@
-use crate::{interpreter::Interpreter, Return,U256};
+use crate::{interpreter::Interpreter, Return, U256};
 
 pub fn mload(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::VERYLOW);

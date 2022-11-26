@@ -6,7 +6,7 @@ keywords = ["no_std", "ethereum", "evm", "revm"]
 license = "MIT"
 name = "revm"
 repository = "https://github.com/bluealloy/revm"
-version = "2.1.0"
+version = "2.3.0"
 readme = "../../README.md"
 
 [dependencies]
@@ -17,10 +17,10 @@ futures = { version = "0.3.24", optional = true }
 hashbrown = { version = "0.13" }
 hex = { version = "0.4", optional = true }
 num_enum = { version = "0.5", default-features = false } # used for SpecId from u8 cast
-parking_lot = { version = "0.12", optional = true }
+primitive-types = { version = "0.11", default-features = false, features = ["rlp"] }
 revm_precompiles = { path = "../revm_precompiles", version = "1.2.0", default-features = false }
-rlp = { version = "0.5", default-features = false , features=["derive"]} # used for create2 address calculation
-ruint = { version = "1.7.0", features = ["primitive-types", "rlp"] }
+rlp = { version = "0.5", default-features = false } # used for create2 address calculation
+ruint = { version = "1.7.0", features = ["primitive-types", "rlp",]  }
 serde = { version = "1.0", features = ["derive","rc"], optional = true }
 tokio = { version = "1.21", features = ["rt-multi-thread", "macros"], optional = true }
 web3 = { git = "https://github.com/tomusdrw/rust-web3", version = "0.19", optional = true }
@@ -35,13 +35,14 @@ sha3 = { version = "0.10", default-features = false, features = []}
 
 [features]
 default = ["std", "secp256k1"]
-dev = ["memory_limit", "optional_block_gas_limit", "optional_eip3607"]
+dev = ["memory_limit", "optional_block_gas_limit", "optional_eip3607", "optional_gas_refund"]
 memory_limit = []
 no_gas_measuring = []
 optional_block_gas_limit = []
 optional_eip3607 = []
+optional_gas_refund = []
 std = ["bytes/std", "num_enum/std", "rlp/std"]
 secp256k1 = ["revm_precompiles/secp256k1"]
 k256 = ["revm_precompiles/k256_ecrecover"]
-web3db = ["futures", "tokio", "parking_lot", "web3"]
+web3db = ["futures", "tokio", "web3"]
 with-serde = ["serde", "hex", "hex/serde", "hashbrown/serde"]

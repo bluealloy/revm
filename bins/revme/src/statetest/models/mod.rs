@@ -100,8 +100,8 @@ pub type AccessList = Vec<AccessListItem>;
 mod tests {
 
     use super::*;
-    use serde_json::Error;
     use revm::B160;
+    use serde_json::Error;
 
     #[test]
     pub fn serialize_u256() -> Result<(), Error> {

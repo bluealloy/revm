@@ -1,4 +1,3 @@
-
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Error {
     /// out of gas is the main error. Other are just here for completness

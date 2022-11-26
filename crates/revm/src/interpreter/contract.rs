@@ -1,5 +1,5 @@
 use super::bytecode::{Bytecode, BytecodeLocked};
-use crate::{alloc::vec::Vec, CallContext, Spec,U256,B160};
+use crate::{alloc::vec::Vec, CallContext, Spec, B160, U256};
 use bytes::Bytes;
 use std::sync::Arc;
 

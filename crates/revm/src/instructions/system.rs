@@ -1,6 +1,6 @@
 use crate::{
     bits::B256, common::keccak256, gas, interpreter::Interpreter, Return, Spec, SpecId::*,
-    KECCAK_EMPTY,U256,
+    KECCAK_EMPTY, U256,
 };
 use std::cmp::min;
 
@@ -22,19 +22,13 @@ pub fn sha3(interp: &mut Interpreter) -> Return {
 
 pub fn address(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::BASE);
-    push_b256!(
-        interp,
-        B256::from(interp.contract.address)
-    );
+    push_b256!(interp, B256::from(interp.contract.address));
     Return::Continue
 }
 
 pub fn caller(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::BASE);
-    push_b256!(
-        interp,
-        B256::from(interp.contract.caller)
-    );
+    push_b256!(interp, B256::from(interp.contract.caller));
     Return::Continue
 }
 
@@ -127,17 +121,19 @@ pub fn returndatacopy<SPEC: Spec>(interp: &mut Interpreter) -> Return {
     pop!(interp, memory_offset, offset, len);
     let len = as_usize_or_fail!(len, Return::OutOfGas);
     gas_or_fail!(interp, gas::verylowcopy_cost(len as u64));
-    let memory_offset = as_usize_or_fail!(memory_offset, Return::OutOfGas);
     let data_offset = as_usize_saturated!(offset);
-    memory_resize!(interp, memory_offset, len);
     let (data_end, overflow) = data_offset.overflowing_add(len);
     if overflow || data_end > interp.return_data_buffer.len() {
         return Return::OutOfOffset;
     }
-    interp.memory.set(
-        memory_offset,
-        &interp.return_data_buffer[data_offset..data_end],
-    );
+    if len != 0 {
+        let memory_offset = as_usize_or_fail!(memory_offset, Return::OutOfGas);
+        memory_resize!(interp, memory_offset, len);
+        interp.memory.set(
+            memory_offset,
+            &interp.return_data_buffer[data_offset..data_end],
+        );
+    }
     Return::Continue
 }
 

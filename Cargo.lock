@@ -1476,7 +1476,7 @@ dependencies = [
 
 [[package]]
 name = "revm"
-version = "2.1.0"
+version = "2.3.0"
 dependencies = [
  "arrayref",
  "auto_impl",
@@ -1488,7 +1488,7 @@ dependencies = [
  "hex",
  "hex-literal",
  "num_enum",
- "parking_lot",
+ "primitive-types",
  "revm_precompiles",
  "rlp",
  "ruint",
@@ -1592,19 +1592,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bb919243f34364b6bd2fc10ef797edbfa75f33c252e7998527479c6d6b47e1ec"
 dependencies = [
  "bytes",
- "rlp-derive",
  "rustc-hex",
-]
-
-[[package]]
-name = "rlp-derive"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e33d7b2abe0c340d8797fe2907d3f20d3b5ea5908683618bfe80df7f621f672a"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]

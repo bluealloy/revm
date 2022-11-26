@@ -26,9 +26,13 @@ pub fn number<H: Host>(interp: &mut Interpreter, host: &mut H) -> Return {
     Return::Continue
 }
 
-pub fn difficulty<H: Host>(interp: &mut Interpreter, host: &mut H) -> Return {
+pub fn difficulty<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
     // gas!(interp, gas::BASE);
-    push!(interp, host.env().block.difficulty);
+    if SPEC::enabled(MERGE) {
+        push_b256!(interp, host.env().block.prevrandao.unwrap());
+    } else {
+        push!(interp, host.env().block.difficulty);
+    }
     Return::Continue
 }
 

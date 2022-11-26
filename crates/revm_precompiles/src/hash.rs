@@ -1,7 +1,5 @@
 use super::calc_linear_cost_u32;
-use crate::{
-    Error, Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn,
-};
+use crate::{Error, Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn};
 use sha2::*;
 
 pub const SHA256: PrecompileAddress = PrecompileAddress(

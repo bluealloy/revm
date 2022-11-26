@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 //#![no_std]
 
+pub mod bits;
 pub mod common;
 pub mod db;
 mod evm;
@@ -12,9 +13,8 @@ mod interpreter;
 mod journaled_state;
 mod models;
 mod specification;
-pub mod bits;
 
-pub use bits::{B160,B256};
+pub use bits::{B160, B256};
 pub use ruint::aliases::U256;
 
 pub use evm_impl::{create2_address, create_address, EVMData, Host};
@@ -32,7 +32,7 @@ pub use instructions::{
 pub use interpreter::{
     Bytecode, BytecodeLocked, BytecodeState, Contract, Interpreter, Memory, Stack,
 };
-pub use journaled_state::{Account, JournalEntry, JournaledState};
+pub use journaled_state::{Account, JournalEntry, JournaledState, StorageSlot};
 pub use models::*;
 pub use specification::*;
 

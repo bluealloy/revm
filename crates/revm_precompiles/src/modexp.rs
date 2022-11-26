@@ -1,4 +1,4 @@
-use crate::{Precompile, PrecompileAddress, Error, PrecompileResult, StandardPrecompileFn};
+use crate::{Error, Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn};
 use alloc::vec::Vec;
 use core::{
     cmp::{max, min, Ordering},
@@ -76,7 +76,7 @@ where
     }
 
     if mod_overflow {
-        return Err(Error::ModexpModOverflow)
+        return Err(Error::ModexpModOverflow);
     }
 
     let (r, gas_cost) = if base_len == 0 && mod_len == 0 {
