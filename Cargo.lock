@@ -1508,7 +1508,6 @@ dependencies = [
  "hex",
  "hex-literal",
  "num_enum",
- "primitive-types 0.12.1",
  "revm_precompiles",
  "rlp",
  "ruint",
