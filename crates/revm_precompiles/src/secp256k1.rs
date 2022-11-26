@@ -34,14 +34,13 @@ mod secp256k1 {
 #[cfg(all(not(feature = "k256_ecrecover"), feature = "secp256k1"))]
 #[allow(clippy::module_inception)]
 mod secp256k1 {
-    use ruint::aliases::B160 as Address;
     use secp256k1::{
         ecdsa::{RecoverableSignature, RecoveryId},
         Message, Secp256k1,
     };
     use sha3::{Digest, Keccak256};
 
-    pub fn ecrecover(sig: &[u8; 65], msg: &[u8; 32]) -> Result<Address, secp256k1::Error> {
+    pub fn ecrecover(sig: &[u8; 65], msg: &[u8; 32]) -> Result<[u8; 20], secp256k1::Error> {
         let sig =
             RecoverableSignature::from_compact(&sig[0..64], RecoveryId::from_i32(sig[64] as i32)?)?;
 
@@ -50,7 +49,7 @@ mod secp256k1 {
 
         let mut out = [0u8; 20];
         out.copy_from_slice(&Keccak256::digest(&public.serialize_uncompressed()[1..])[12..]);
-        Ok(Address::from_be_bytes(out))
+        Ok(out)
     }
 }
 

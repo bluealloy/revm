@@ -2,7 +2,7 @@ use crate::{interpreter::bytecode::Bytecode, models::SelfDestructResult, Return,
 use alloc::{vec, vec::Vec};
 use core::mem::{self};
 use hashbrown::{hash_map::Entry, HashMap as Map};
-use ruint::{aliases::U256, uint};
+use ruint::aliases::U256;
 
 use crate::{bits::B160, db::Database, AccountInfo, Log};
 

@@ -26,7 +26,7 @@ tokio = { version = "1.21", features = ["rt-multi-thread", "macros"], optional =
 web3 = { git = "https://github.com/tomusdrw/rust-web3", version = "0.19", optional = true }
 
 # bits B256 B160 crate
-fixed-hash = { version = "0.8", default-features = false }
+fixed-hash = { version = "0.8", default-features = false, features = ["rustc-hex"]}
 hex-literal = "0.3"
 derive_more = "0.99"
 

@@ -2,13 +2,16 @@ use std::{
     collections::HashMap,
     ffi::OsStr,
     path::{Path, PathBuf},
-    str::FromStr,
     sync::{atomic::AtomicBool, Arc, Mutex},
     time::{Duration, Instant},
 };
 
 use indicatif::ProgressBar;
-use revm::{db::AccountState, U256,Bytecode, bits::{B160,B256},CreateScheme, Env, ExecutionResult, SpecId, TransactTo};
+use revm::{
+    bits::{B160, B256},
+    db::AccountState,
+    Bytecode, CreateScheme, Env, ExecutionResult, SpecId, TransactTo, U256,
+};
 use std::sync::atomic::Ordering;
 use walkdir::{DirEntry, WalkDir};
 
@@ -17,6 +20,7 @@ use super::{
     models::{SpecName, TestSuit},
     trace::CustomPrintTracer,
 };
+use hex_literal::hex;
 use revm::common::keccak256;
 use thiserror::Error;
 
@@ -88,34 +92,40 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
 
     let map_caller_keys: HashMap<_, _> = vec![
         (
-            B256::from_str("0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8")
-                .unwrap(),
-            B160::from_str("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b").unwrap(),
+            B256(hex!(
+                "45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+            )),
+            B160(hex!("a94f5374fce5edbc8e2a8697c15331677e6ebf0b")),
         ),
         (
-            B256::from_str("0xc85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4")
-                .unwrap(),
-            B160::from_str("0xcd2a3d9f938e13cd947ec05abc7fe734df8dd826").unwrap(),
+            B256(hex!(
+                "c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4"
+            )),
+            B160(hex!("cd2a3d9f938e13cd947ec05abc7fe734df8dd826")),
         ),
         (
-            B256::from_str("0x044852b2a670ade5407e78fb2863c51de9fcb96542a07186fe3aeda6bb8a116d")
-                .unwrap(),
-            B160::from_str("0x82a978b3f5962a5b0957d9ee9eef472ee55b42f1").unwrap(),
+            B256(hex!(
+                "044852b2a670ade5407e78fb2863c51de9fcb96542a07186fe3aeda6bb8a116d"
+            )),
+            B160(hex!("82a978b3f5962a5b0957d9ee9eef472ee55b42f1")),
         ),
         (
-            B256::from_str("0x6a7eeac5f12b409d42028f66b0b2132535ee158cfda439e3bfdd4558e8f4bf6c")
-                .unwrap(),
-            B160::from_str("0xc9c5a15a403e41498b6f69f6f89dd9f5892d21f7").unwrap(),
+            B256(hex!(
+                "6a7eeac5f12b409d42028f66b0b2132535ee158cfda439e3bfdd4558e8f4bf6c"
+            )),
+            B160(hex!("c9c5a15a403e41498b6f69f6f89dd9f5892d21f7")),
         ),
         (
-            B256::from_str("0xa95defe70ebea7804f9c3be42d20d24375e2a92b9d9666b832069c5f3cd423dd")
-                .unwrap(),
-            B160::from_str("0x3fb1cd2cd96c6d5c0b5eb3322d807b34482481d4").unwrap(),
+            B256(hex!(
+                "a95defe70ebea7804f9c3be42d20d24375e2a92b9d9666b832069c5f3cd423dd"
+            )),
+            B160(hex!("3fb1cd2cd96c6d5c0b5eb3322d807b34482481d4")),
         ),
         (
-            B256::from_str("0xfe13266ff57000135fb9aa854bbfe455d8da85b21f626307bf3263a0c2a8e7fe")
-                .unwrap(),
-            B160::from_str("0xdcc5ba93a1ed7e045690d722f2bf460a51c61415").unwrap(),
+            B256(hex!(
+                "fe13266ff57000135fb9aa854bbfe455d8da85b21f626307bf3263a0c2a8e7fe"
+            )),
+            B160(hex!("dcc5ba93a1ed7e045690d722f2bf460a51c61415")),
         ),
     ]
     .into_iter()
@@ -198,7 +208,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                                 item.address,
                                 item.storage_keys
                                     .into_iter()
-                                    .map(|key| key.into())
+                                    .map(|key| U256::from_be_bytes(key.0))
                                     .collect::<Vec<_>>(),
                             )
                         })

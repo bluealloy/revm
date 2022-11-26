@@ -101,6 +101,7 @@ mod tests {
 
     use super::*;
     use serde_json::Error;
+    use revm::B160;
 
     #[test]
     pub fn serialize_u256() -> Result<(), Error> {
@@ -109,6 +110,20 @@ mod tests {
         #[derive(Deserialize, Debug)]
         pub struct Test {
             _item: Option<U256>,
+        }
+
+        let out: Test = serde_json::from_str(json)?;
+        println!("out:{out:?}");
+        Ok(())
+    }
+
+    #[test]
+    pub fn serialize_b160() -> Result<(), Error> {
+        let json = r#"{"_item":"0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba"}"#;
+
+        #[derive(Deserialize, Debug)]
+        pub struct Test {
+            _item: B160,
         }
 
         let out: Test = serde_json::from_str(json)?;

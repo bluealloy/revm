@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use bytes::Bytes;
 use serde::{
     de::{self, Error},
@@ -55,7 +57,7 @@ where
     if string.is_empty() {
         return Ok(None);
     }
-    Ok(Some(string.parse().map_err(D::Error::custom)?))
+    Ok(Some(B160::from_str(&string).map_err(D::Error::custom)?))
 }
 
 pub fn deserialize_str_as_bytes<'de, D>(deserializer: D) -> Result<Bytes, D::Error>
