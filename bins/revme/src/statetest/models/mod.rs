@@ -6,7 +6,7 @@ mod spec;
 
 use deserializer::*;
 
-use serde_derive::*;
+use serde::Deserialize;
 
 pub use self::spec::SpecName;
 

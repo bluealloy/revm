@@ -84,7 +84,7 @@ impl Database for Web3DB {
 
     fn storage(&mut self, address: B160, index: U256) -> Result<U256, Self::Error> {
         let add = wH160::from(address.0);
-        let index = wU256::from(index);
+        let index = wU256(*index.as_limbs());
         let f = async {
             let storage = self
                 .web3

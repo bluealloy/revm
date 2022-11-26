@@ -2,16 +2,13 @@ use derive_more::{AsRef, Deref};
 use fixed_hash::{construct_fixed_hash, impl_fixed_hash_conversions};
 
 construct_fixed_hash! {
-    /// My 256 bit hash type.
-    //#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
-    //#[derive(RlpDecodable, RlpEncodable)]
+    /// revm 256 bits type.
     #[derive(AsRef,Deref)]
     pub struct B256(32);
 }
 
 construct_fixed_hash! {
-    /// My 160 bit hash type.
-    //#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
+    /// revm 160 bits type.
     #[derive(AsRef,Deref)]
     pub struct B160(20);
 }
@@ -28,6 +25,7 @@ impl From<u64> for B160 {
 
 impl_fixed_hash_conversions!(B256, B160);
 
+#[cfg(feature = "with-serde")]
 impl serde::Serialize for B256 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -37,7 +35,7 @@ impl serde::Serialize for B256 {
         serialize::serialize_raw(&mut slice, &self.0, serializer)
     }
 }
-
+#[cfg(feature = "with-serde")]
 impl<'de> serde::Deserialize<'de> for B256 {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -48,7 +46,7 @@ impl<'de> serde::Deserialize<'de> for B256 {
         Ok(B256(bytes))
     }
 }
-
+#[cfg(feature = "with-serde")]
 impl serde::Serialize for B160 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -59,6 +57,7 @@ impl serde::Serialize for B160 {
     }
 }
 
+#[cfg(feature = "with-serde")]
 impl<'de> serde::Deserialize<'de> for B160 {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -70,6 +69,7 @@ impl<'de> serde::Deserialize<'de> for B160 {
     }
 }
 
+#[cfg(feature = "with-serde")]
 mod serialize {
 
     use alloc::{string::String, vec::Vec};
