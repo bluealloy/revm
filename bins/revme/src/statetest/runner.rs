@@ -293,13 +293,14 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
     Ok(())
 }
 
-pub fn run(test_files: Vec<PathBuf>) -> Result<(), TestError> {
+pub fn run(test_files: Vec<PathBuf>, single_thread: bool) -> Result<(), TestError> {
     let endjob = Arc::new(AtomicBool::new(false));
     let console_bar = Arc::new(ProgressBar::new(test_files.len() as u64));
     let mut joins: Vec<std::thread::JoinHandle<Result<(), TestError>>> = Vec::new();
     let queue = Arc::new(Mutex::new((0, test_files)));
     let elapsed = Arc::new(Mutex::new(std::time::Duration::ZERO));
-    for _ in 0..10 {
+    let num_threads = if single_thread { 1 } else { 10 };
+    for _ in 0..num_threads {
         let queue = queue.clone();
         let endjob = endjob.clone();
         let console_bar = console_bar.clone();

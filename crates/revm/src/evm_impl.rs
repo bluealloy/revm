@@ -304,7 +304,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         // will have sum.
         if self.data.env.cfg.perf_all_precompiles_have_balance {
             for address in self.precompiles.addresses() {
-                let address = B160(address.clone().into());
+                let address = B160(*address);
                 if let Some(precompile) = new_state.get_mut(&address) {
                     // we found it.
                     precompile.info.balance += self
@@ -854,7 +854,7 @@ pub fn create2_address(caller: B160, code_hash: B256, salt: U256) -> B160 {
     let mut hasher = Keccak256::new();
     hasher.update([0xff]);
     hasher.update(&caller[..]);
-    hasher.update(salt.to_be_bytes_vec());
+    hasher.update(salt.to_be_bytes::<{ U256::BYTES }>());
     hasher.update(&code_hash[..]);
 
     B160(hasher.finalize().as_slice()[12..].try_into().unwrap())

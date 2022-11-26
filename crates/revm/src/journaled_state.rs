@@ -344,7 +344,8 @@ impl JournaledState {
         journal_entries: Vec<JournalEntry>,
         is_spurious_dragon_enabled: bool,
     ) {
-        const PRECOMPILE3: B160 = B160::zero(); // TODO uint!(3_B160);
+        const PRECOMPILE3: B160 =
+            B160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]);
         for entry in journal_entries.into_iter().rev() {
             match entry {
                 JournalEntry::AccountLoaded { address } => {
@@ -622,7 +623,7 @@ fn is_precompile(address: B160, num_of_precompiles: usize) -> bool {
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    //use super::*;
 
     // #[test]
     // fn test_is_precompile() {

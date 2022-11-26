@@ -342,7 +342,7 @@ impl DatabaseRef for EmptyDB {
 
     // History related
     fn block_hash(&self, number: U256) -> Result<B256, Self::Error> {
-        Ok(keccak256(&number.to_be_bytes_vec()))
+        Ok(keccak256(&number.to_be_bytes::<{ U256::BYTES }>()))
     }
 }
 

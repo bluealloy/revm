@@ -28,13 +28,6 @@ pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base
 }
 
-pub fn gas_query(gas_used: u64, gas_limit: u64) -> Option<u64> {
-    if gas_used > gas_limit {
-        return None;
-    }
-    Some(gas_used)
-}
-
 #[derive(Debug)]
 pub struct PrecompileOutput {
     pub cost: u64,
@@ -229,27 +222,8 @@ impl Precompiles {
 /// as a convenience for specifying the addresses of the various precompiles.
 const fn u64_to_b160(x: u64) -> B160 {
     let x_bytes = x.to_be_bytes();
-    let y_bytes = 0u128.to_be_bytes();
     [
-        x_bytes[0],
-        x_bytes[1],
-        x_bytes[2],
-        x_bytes[3],
-        x_bytes[4],
-        x_bytes[5],
-        x_bytes[6],
-        x_bytes[7],
-        x_bytes[4],
-        y_bytes[5],
-        y_bytes[6],
-        y_bytes[7],
-        y_bytes[8],
-        y_bytes[9],
-        y_bytes[10],
-        y_bytes[11],
-        y_bytes[12],
-        y_bytes[13],
-        y_bytes[14],
-        y_bytes[15],
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x_bytes[0], x_bytes[1], x_bytes[2], x_bytes[3],
+        x_bytes[4], x_bytes[5], x_bytes[6], x_bytes[7],
     ]
 }
