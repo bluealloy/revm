@@ -599,14 +599,6 @@ impl JournaledState {
         Ok(load)
     }
 
-    pub fn tload(
-        &mut self,
-        address: H160,
-        key: U256,
-    ) -> U256 {
-        self.transient_storage.get(address, key)
-    }
-
     /// account should already be present in our state.
     /// returns (original,present,new) slot
     pub fn sstore<DB: Database>(
@@ -641,6 +633,14 @@ impl JournaledState {
         Ok((slot.original_value, present, new, is_cold))
     }
 
+    pub fn tload(
+        &mut self,
+        address: H160,
+        key: U256,
+    ) -> U256 {
+        self.transient_storage.get(address, key)
+    }
+
     pub fn tstore(
         &mut self,
         address: H160,
@@ -660,7 +660,9 @@ impl JournaledState {
                 address,
                 key,
                 had_value: Some(present),
-            })
+            });
+
+        self.transient_storage.set(address, key, new)
     }
 
     /// push log into subroutine
