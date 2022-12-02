@@ -1,5 +1,4 @@
 use crate::{interpreter::Interpreter, Host, Return, Spec, SpecId::*};
-use primitive_types::H256;
 
 pub fn chainid<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
     // gas!(interp, gas::BASE);
@@ -11,7 +10,7 @@ pub fn chainid<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> R
 
 pub fn coinbase<H: Host>(interp: &mut Interpreter, host: &mut H) -> Return {
     // gas!(interp, gas::BASE);
-    push_h256!(interp, host.env().block.coinbase.into());
+    push_b256!(interp, host.env().block.coinbase.into());
     Return::Continue
 }
 
@@ -30,7 +29,7 @@ pub fn number<H: Host>(interp: &mut Interpreter, host: &mut H) -> Return {
 pub fn difficulty<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
     // gas!(interp, gas::BASE);
     if SPEC::enabled(MERGE) {
-        push_h256!(interp, host.env().block.prevrandao.unwrap());
+        push_b256!(interp, host.env().block.prevrandao.unwrap());
     } else {
         push!(interp, host.env().block.difficulty);
     }
@@ -59,7 +58,6 @@ pub fn basefee<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> R
 
 pub fn origin<H: Host>(interp: &mut Interpreter, host: &mut H) -> Return {
     // gas!(interp, gas::BASE);
-    let ret = H256::from(host.env().tx.caller);
-    push_h256!(interp, ret);
+    push_b256!(interp, host.env().tx.caller.into());
     Return::Continue
 }

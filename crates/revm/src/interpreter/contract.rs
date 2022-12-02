@@ -1,8 +1,6 @@
 use super::bytecode::{Bytecode, BytecodeLocked};
-use crate::{alloc::vec::Vec, CallContext, Spec};
+use crate::{alloc::vec::Vec, CallContext, Spec, B160, U256};
 use bytes::Bytes;
-use primitive_types::H160;
-use ruint::aliases::U256;
 use std::sync::Arc;
 
 pub struct Contract {
@@ -12,9 +10,9 @@ pub struct Contract {
     /// Note that current code is extended with push padding and STOP at end.
     pub bytecode: BytecodeLocked,
     /// Contract address
-    pub address: H160,
+    pub address: B160,
     /// Caller of the EVM.
-    pub caller: H160,
+    pub caller: B160,
     /// Value send to contract.
     pub value: U256,
 }
@@ -65,8 +63,8 @@ impl Contract {
     pub fn new<SPEC: Spec>(
         input: Bytes,
         bytecode: Bytecode,
-        address: H160,
-        caller: H160,
+        address: B160,
+        caller: B160,
         value: U256,
     ) -> Self {
         let bytecode = bytecode.lock::<SPEC>();

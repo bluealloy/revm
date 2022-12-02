@@ -13,9 +13,8 @@ mod system;
 
 pub use opcode::{OpCode, OPCODE_JUMPMAP};
 
-use crate::{interpreter::Interpreter, CallScheme, Host, Spec, SpecId::*};
+use crate::{interpreter::Interpreter, CallScheme, Host, Spec, SpecId::*, U256};
 use core::ops::{BitAnd, BitOr, BitXor};
-use ruint::aliases::U256;
 
 #[macro_export]
 macro_rules! return_ok {

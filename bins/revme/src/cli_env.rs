@@ -1,9 +1,7 @@
 use std::str::FromStr;
 
 use bytes::Bytes;
-use primitive_types::H160;
-use revm::{Env, TransactTo};
-use ruint::aliases::U256;
+use revm::{Env, TransactTo, B160, U256};
 use structopt::StructOpt;
 
 #[derive(StructOpt, Clone, Debug)]
@@ -65,8 +63,8 @@ pub struct CliEnvBlock {
     pub number: Option<u64>,
     /// Coinbase or miner or address that created and signed the block.
     /// Address where we are going to send gas spend
-    #[structopt(long = "env.block.coinbase", parse(try_from_str = parse_h160))]
-    pub coinbase: Option<H160>,
+    #[structopt(long = "env.block.coinbase", parse(try_from_str = parse_b160))]
+    pub coinbase: Option<B160>,
     #[structopt(long = "env.block.timestamp")]
     pub timestamp: Option<u64>,
     #[structopt(long = "env.block.difficulty")]
@@ -79,16 +77,16 @@ pub struct CliEnvBlock {
 #[derive(StructOpt, Clone, Debug)]
 pub struct CliEnvTx {
     /// Caller or Author or tx signer
-    #[structopt(long = "env.tx.caller", parse(try_from_str = parse_h160))]
-    pub caller: Option<H160>,
+    #[structopt(long = "env.tx.caller", parse(try_from_str = parse_b160))]
+    pub caller: Option<B160>,
     #[structopt(long = "env.tx.gas_limit")]
     pub tx_gas_limit: Option<u64>,
     #[structopt(long = "env.tx.gas_price")]
     pub gas_price: Option<u64>,
     #[structopt(long = "env.tx.gas_priority_fee")]
     pub gas_priority_fee: Option<u64>,
-    #[structopt(long = "env.tx.to", parse(try_from_str = parse_h160))]
-    pub transact_to: Option<H160>,
+    #[structopt(long = "env.tx.to", parse(try_from_str = parse_b160))]
+    pub transact_to: Option<B160>,
     #[structopt(long = "env.tx.value")]
     pub value: Option<u64>,
     #[structopt(long = "env.tx.data", parse(try_from_str = parse_hex))]
@@ -98,13 +96,13 @@ pub struct CliEnvTx {
     #[structopt(long = "env.tx.nonce")]
     pub nonce: Option<u64>,
     //#[structopt(long = "env.")]
-    //TODO pub access_list: Vec<(H160, Vec<U256>)>,
+    //TODO pub access_list: Vec<(B160, Vec<U256>)>,
 }
 
 fn parse_hex(src: &str) -> Result<Bytes, hex::FromHexError> {
     Ok(Bytes::from(hex::decode(src)?))
 }
 
-pub fn parse_h160(input: &str) -> Result<H160, <H160 as FromStr>::Err> {
-    H160::from_str(input)
+pub fn parse_b160(input: &str) -> Result<B160, <B160 as FromStr>::Err> {
+    B160::from_str(input)
 }

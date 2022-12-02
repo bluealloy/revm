@@ -1,5 +1,4 @@
-use crate::{interpreter::Interpreter, Return};
-use ruint::aliases::U256;
+use crate::{interpreter::Interpreter, Return, U256};
 
 pub fn mload(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::VERYLOW);

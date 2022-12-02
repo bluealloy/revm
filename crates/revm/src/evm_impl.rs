@@ -1,4 +1,5 @@
 use crate::{
+    bits::{B160, B256},
     common::keccak256,
     db::Database,
     gas,
@@ -9,15 +10,13 @@ use crate::{
     precompiles, return_ok, return_revert, AnalysisKind, CallContext, CallInputs, CallScheme,
     CreateInputs, CreateScheme, Env, ExecutionResult, Gas, Inspector, Log, Return, Spec,
     SpecId::{self, *},
-    TransactOut, TransactTo, Transfer, KECCAK_EMPTY,
+    TransactOut, TransactTo, Transfer, KECCAK_EMPTY, U256,
 };
 use alloc::vec::Vec;
 use bytes::Bytes;
 use core::{cmp::min, marker::PhantomData};
 use hashbrown::HashMap as Map;
-use primitive_types::{H160, H256};
-use revm_precompiles::{Precompile, PrecompileOutput, Precompiles};
-use ruint::aliases::U256;
+use revm_precompiles::{Precompile, Precompiles};
 
 pub struct EVMData<'a, DB: Database> {
     pub env: &'a mut Env,
@@ -239,9 +238,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
     fn finalize<SPEC: Spec>(
         &mut self,
-        caller: H160,
+        caller: B160,
         gas: &Gas,
-    ) -> (Map<H160, Account>, Vec<Log>, u64, u64) {
+    ) -> (Map<B160, Account>, Vec<Log>, u64, u64) {
         let coinbase = self.data.env.block.coinbase;
         let (gas_used, gas_refunded) = if crate::USE_GAS {
             let effective_gas_price = self.data.env.effective_gas_price();
@@ -305,12 +304,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         // will have sum.
         if self.data.env.cfg.perf_all_precompiles_have_balance {
             for address in self.precompiles.addresses() {
-                if let Some(precompile) = new_state.get_mut(address) {
+                let address = B160(*address);
+                if let Some(precompile) = new_state.get_mut(&address) {
                     // we found it.
                     precompile.info.balance += self
                         .data
                         .db
-                        .basic(*address)
+                        .basic(address)
                         .ok()
                         .flatten()
                         .map(|acc| acc.balance)
@@ -381,7 +381,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     fn create_inner<SPEC: Spec>(
         &mut self,
         inputs: &mut CreateInputs,
-    ) -> (Return, Option<H160>, Gas, Bytes) {
+    ) -> (Return, Option<B160>, Gas, Bytes) {
         // Call inspector
         if INSPECT {
             let (ret, address, gas, out) = self.inspector.create(&mut self.data, inputs);
@@ -640,29 +640,25 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 Precompile::Custom(fun) => fun(inputs.input.as_ref(), inputs.gas_limit),
             };
             match out {
-                Ok(PrecompileOutput { output, cost, logs }) => {
-                    if !crate::USE_GAS || gas.record_cost(cost) {
-                        logs.into_iter().for_each(|l| {
-                            self.data.journaled_state.log(Log {
-                                address: l.address,
-                                topics: l.topics,
-                                data: l.data,
-                            })
-                        });
+                Ok((gas_used, data)) => {
+                    if !crate::USE_GAS || gas.record_cost(gas_used) {
                         self.data.journaled_state.checkpoint_commit();
-                        (Return::Continue, gas, Bytes::from(output))
+                        (Return::Continue, gas, Bytes::from(data))
                     } else {
                         self.data.journaled_state.checkpoint_revert(checkpoint);
                         (Return::OutOfGas, gas, Bytes::new())
                     }
                 }
                 Err(e) => {
-                    let ret = if let precompiles::Return::OutOfGas = e {
+                    let ret = if let precompiles::Error::OutOfGas = e {
                         Return::OutOfGas
                     } else {
+                        // TODO Consider using precompile errors.
+                        // This would make Return be a litlle bit fatter, but with removal
+                        // of return in instruction this shouldn't be a problem.
                         Return::PrecompileError
                     };
-                    self.data.journaled_state.checkpoint_revert(checkpoint); //TODO check if we are discarding or reverting
+                    self.data.journaled_state.checkpoint_revert(checkpoint);
                     (ret, gas, Bytes::new())
                 }
             }
@@ -724,7 +720,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         self.data.env
     }
 
-    fn block_hash(&mut self, number: U256) -> Option<H256> {
+    fn block_hash(&mut self, number: U256) -> Option<B256> {
         self.data
             .db
             .block_hash(number)
@@ -732,7 +728,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .ok()
     }
 
-    fn load_account(&mut self, address: H160) -> Option<(bool, bool)> {
+    fn load_account(&mut self, address: B160) -> Option<(bool, bool)> {
         self.data
             .journaled_state
             .load_account_exist(address, self.data.db)
@@ -740,7 +736,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .ok()
     }
 
-    fn balance(&mut self, address: H160) -> Option<(U256, bool)> {
+    fn balance(&mut self, address: B160) -> Option<(U256, bool)> {
         let db = &mut self.data.db;
         let journal = &mut self.data.journaled_state;
         let error = &mut self.data.error;
@@ -751,7 +747,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .map(|(acc, is_cold)| (acc.info.balance, is_cold))
     }
 
-    fn code(&mut self, address: H160) -> Option<(Bytecode, bool)> {
+    fn code(&mut self, address: B160) -> Option<(Bytecode, bool)> {
         let journal = &mut self.data.journaled_state;
         let db = &mut self.data.db;
         let error = &mut self.data.error;
@@ -764,7 +760,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     }
 
     /// Get code hash of address.
-    fn code_hash(&mut self, address: H160) -> Option<(H256, bool)> {
+    fn code_hash(&mut self, address: B160) -> Option<(B256, bool)> {
         let journal = &mut self.data.journaled_state;
         let db = &mut self.data.db;
         let error = &mut self.data.error;
@@ -780,13 +776,13 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         }
         if acc.is_empty() {
             // TODO check this for pre tangerine fork
-            return Some((H256::zero(), is_cold));
+            return Some((B256::zero(), is_cold));
         }
 
         Some((acc.info.code_hash, is_cold))
     }
 
-    fn sload(&mut self, address: H160, index: U256) -> Option<(U256, bool)> {
+    fn sload(&mut self, address: B160, index: U256) -> Option<(U256, bool)> {
         // account is always hot. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
         self.data
             .journaled_state
@@ -797,7 +793,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
 
     fn sstore(
         &mut self,
-        address: H160,
+        address: B160,
         index: U256,
         value: U256,
     ) -> Option<(U256, U256, U256, bool)> {
@@ -808,7 +804,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .ok()
     }
 
-    fn log(&mut self, address: H160, topics: Vec<H256>, data: Bytes) {
+    fn log(&mut self, address: B160, topics: Vec<B256>, data: Bytes) {
         if INSPECT {
             self.inspector.log(&mut self.data, &address, &topics, &data);
         }
@@ -820,7 +816,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         self.data.journaled_state.log(log);
     }
 
-    fn selfdestruct(&mut self, address: H160, target: H160) -> Option<SelfDestructResult> {
+    fn selfdestruct(&mut self, address: B160, target: B160) -> Option<SelfDestructResult> {
         if INSPECT {
             self.inspector.selfdestruct();
         }
@@ -834,7 +830,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     fn create<SPEC: Spec>(
         &mut self,
         inputs: &mut CreateInputs,
-    ) -> (Return, Option<H160>, Gas, Bytes) {
+    ) -> (Return, Option<B160>, Gas, Bytes) {
         self.create_inner::<SPEC>(inputs)
     }
 
@@ -844,17 +840,16 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
 }
 
 /// Returns the address for the legacy `CREATE` scheme: [`CreateScheme::Create`]
-pub fn create_address(caller: H160, nonce: u64) -> H160 {
+pub fn create_address(caller: B160, nonce: u64) -> B160 {
     let mut stream = rlp::RlpStream::new_list(2);
-    stream.append(&caller);
+    stream.append(&caller.0.as_ref());
     stream.append(&nonce);
     let out = keccak256(&stream.out());
-    let out = H160::from_slice(&out.as_bytes()[12..]);
-    out
+    B160(out[12..].try_into().unwrap())
 }
 
 /// Returns the address for the `CREATE2` scheme: [`CreateScheme::Create2`]
-pub fn create2_address(caller: H160, code_hash: H256, salt: U256) -> H160 {
+pub fn create2_address(caller: B160, code_hash: B256, salt: U256) -> B160 {
     use sha3::{Digest, Keccak256};
     let mut hasher = Keccak256::new();
     hasher.update([0xff]);
@@ -862,7 +857,7 @@ pub fn create2_address(caller: H160, code_hash: H256, salt: U256) -> H160 {
     hasher.update(salt.to_be_bytes::<{ U256::BYTES }>());
     hasher.update(&code_hash[..]);
 
-    H160::from_slice(&hasher.finalize().as_slice()[12..])
+    B160(hasher.finalize().as_slice()[12..].try_into().unwrap())
 }
 
 /// EVM context host.
@@ -877,33 +872,33 @@ pub trait Host {
     fn env(&mut self) -> &mut Env;
 
     /// load account. Returns (is_cold,is_new_account)
-    fn load_account(&mut self, address: H160) -> Option<(bool, bool)>;
+    fn load_account(&mut self, address: B160) -> Option<(bool, bool)>;
     /// Get environmental block hash.
-    fn block_hash(&mut self, number: U256) -> Option<H256>;
+    fn block_hash(&mut self, number: U256) -> Option<B256>;
     /// Get balance of address.
-    fn balance(&mut self, address: H160) -> Option<(U256, bool)>;
+    fn balance(&mut self, address: B160) -> Option<(U256, bool)>;
     /// Get code of address.
-    fn code(&mut self, address: H160) -> Option<(Bytecode, bool)>;
+    fn code(&mut self, address: B160) -> Option<(Bytecode, bool)>;
     /// Get code hash of address.
-    fn code_hash(&mut self, address: H160) -> Option<(H256, bool)>;
+    fn code_hash(&mut self, address: B160) -> Option<(B256, bool)>;
     /// Get storage value of address at index.
-    fn sload(&mut self, address: H160, index: U256) -> Option<(U256, bool)>;
+    fn sload(&mut self, address: B160, index: U256) -> Option<(U256, bool)>;
     /// Set storage value of address at index. Return if slot is cold/hot access.
     fn sstore(
         &mut self,
-        address: H160,
+        address: B160,
         index: U256,
         value: U256,
     ) -> Option<(U256, U256, U256, bool)>;
     /// Create a log owned by address with given topics and data.
-    fn log(&mut self, address: H160, topics: Vec<H256>, data: Bytes);
+    fn log(&mut self, address: B160, topics: Vec<B256>, data: Bytes);
     /// Mark an address to be deleted, with funds transferred to target.
-    fn selfdestruct(&mut self, address: H160, target: H160) -> Option<SelfDestructResult>;
+    fn selfdestruct(&mut self, address: B160, target: B160) -> Option<SelfDestructResult>;
     /// Invoke a create operation.
     fn create<SPEC: Spec>(
         &mut self,
         inputs: &mut CreateInputs,
-    ) -> (Return, Option<H160>, Gas, Bytes);
+    ) -> (Return, Option<B160>, Gas, Bytes);
     /// Invoke a call operation.
     fn call<SPEC: Spec>(&mut self, input: &mut CallInputs) -> (Return, Gas, Bytes);
 }

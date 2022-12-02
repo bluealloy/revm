@@ -70,8 +70,10 @@ macro_rules! pop_address {
             return Return::StackUnderflow;
         }
         // Safety: Length is checked above.
-        let $x1: H160 = H160::from_slice(
-            &unsafe { $interp.stack.pop_unsafe() }.to_be_bytes::<{ U256::BYTES }>()[12..],
+        let $x1: B160 = B160(
+            unsafe { $interp.stack.pop_unsafe() }.to_be_bytes::<{ U256::BYTES }>()[12..]
+                .try_into()
+                .unwrap(),
         );
     };
     ( $interp:expr, $x1:ident, $x2:ident) => {
@@ -79,27 +81,17 @@ macro_rules! pop_address {
             return Return::StackUnderflow;
         }
         let mut temp = H256::zero();
-        $x1: H160 = {
-            // Safety: Length is checked above.
-            unsafe {
-                $interp
-                    .stack
-                    .pop_unsafe()
-                    .to_big_endian(temp.as_bytes_mut())
-            };
-            temp.into()
-        };
-        $x2: H160 = {
-            temp = H256::zero();
-            // Safety: Length is checked above.
-            unsafe {
-                $interp
-                    .stack
-                    .pop_unsafe()
-                    .to_big_endian(temp.as_bytes_mut())
-            };
-            temp.into();
-        };
+
+        let $x1: B160 = B160(
+            unsafe { $interp.stack.pop_unsafe() }.to_be_bytes::<{ U256::BYTES }>()[12..]
+                .try_into()
+                .unwrap(),
+        );
+        let $x2: B160 = B160(
+            unsafe { $interp.stack.pop_unsafe() }.to_be_bytes::<{ U256::BYTES }>()[12..]
+                .try_into()
+                .unwrap(),
+        );
     };
 }
 
@@ -159,10 +151,10 @@ macro_rules! pop_top {
     };
 }
 
-macro_rules! push_h256 {
+macro_rules! push_b256 {
 	( $interp:expr, $( $x:expr ),* ) => (
 		$(
-			match $interp.stack.push_h256($x) {
+			match $interp.stack.push_b256($x) {
 				Ok(()) => (),
 				Err(e) => return e,
 			}

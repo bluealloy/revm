@@ -4,10 +4,9 @@ use bn_rs::BN;
 use bytes::Bytes;
 use primitive_types::H160;
 use revm::{
-    AccountInfo, Bytecode, DatabaseCommit, ExecutionResult, InMemoryDB, SpecId, TransactTo,
-    EVM as rEVM,
+    AccountInfo, Bytecode, DatabaseCommit, ExecutionResult, InMemoryDB, SpecId, TransactTo, B160,
+    EVM as rEVM, U256,
 };
-use ruint::aliases::U256;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -76,7 +75,7 @@ impl EVM {
 
     /****** DATABASE RELATED ********/
     pub fn insert_account(&mut self, address: BN, nonce: u64, balance: BN, code: &[u8]) {
-        let address = address.try_into().unwrap();
+        let address = B160(<BN as TryInto<H160>>::try_into(address).unwrap().0);
         let acc_info = AccountInfo::new(
             balance.try_into().unwrap(),
             nonce,
@@ -107,7 +106,7 @@ impl EVM {
         self.revm.env.block.number = number.try_into().unwrap();
     }
     pub fn block_coinbase(&mut self, coinbase: BN) {
-        self.revm.env.block.coinbase = coinbase.try_into().unwrap();
+        self.revm.env.block.coinbase = B160(<BN as TryInto<H160>>::try_into(coinbase).unwrap().0);
     }
     pub fn block_timestamp(&mut self, timestamp: BN) {
         self.revm.env.block.timestamp = timestamp.try_into().unwrap();
@@ -122,7 +121,7 @@ impl EVM {
     /****** ALL TX ENV SETTERS ********/
 
     pub fn tx_caller(&mut self, tx_caller: BN) {
-        self.revm.env.tx.caller = tx_caller.try_into().unwrap();
+        self.revm.env.tx.caller = B160(<BN as TryInto<H160>>::try_into(tx_caller).unwrap().0);
     }
     pub fn tx_gas_limit(&mut self, gas_limit: u64) {
         self.revm.env.tx.gas_limit = gas_limit;
@@ -149,7 +148,8 @@ impl EVM {
         self.revm.env.tx.transact_to = TransactTo::create();
     }
     pub fn tx_transact_to_call(&mut self, to: BN) {
-        self.revm.env.tx.transact_to = TransactTo::Call(to.try_into().unwrap());
+        self.revm.env.tx.transact_to =
+            TransactTo::Call(B160(<BN as TryInto<H160>>::try_into(to).unwrap().0));
     }
     pub fn tx_accessed_account(&mut self, account: AccessedAccount) {
         self.revm.env.tx.access_list.push(account.into())
@@ -159,11 +159,11 @@ impl EVM {
 /// Struct that allows setting AccessList for transaction.
 #[wasm_bindgen]
 pub struct AccessedAccount {
-    account: H160,
+    account: B160,
     slots: Vec<U256>,
 }
 
-impl From<AccessedAccount> for (primitive_types::H160, Vec<U256>) {
+impl From<AccessedAccount> for (B160, Vec<U256>) {
     fn from(from: AccessedAccount) -> Self {
         (from.account, from.slots)
     }
@@ -173,7 +173,7 @@ impl From<AccessedAccount> for (primitive_types::H160, Vec<U256>) {
 impl AccessedAccount {
     pub fn new(account: BN) -> Self {
         Self {
-            account: H160::try_from(account).unwrap(),
+            account: B160(<BN as TryInto<H160>>::try_into(account).unwrap().0),
             slots: Vec::new(),
         }
     }

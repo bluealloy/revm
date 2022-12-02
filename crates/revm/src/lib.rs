@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 //#![no_std]
 
+pub mod bits;
 pub mod common;
 pub mod db;
 mod evm;
@@ -12,6 +13,9 @@ mod interpreter;
 mod journaled_state;
 mod models;
 mod specification;
+
+pub use bits::{B160, B256};
+pub use ruint::aliases::U256;
 
 pub use evm_impl::{create2_address, create_address, EVMData, Host};
 

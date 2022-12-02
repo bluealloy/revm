@@ -1,7 +1,6 @@
-use core::cmp::Ordering;
-
 use super::i256::{i256_cmp, i256_sign, two_compl, Sign};
-use ruint::aliases::U256;
+use crate::U256;
+use core::cmp::Ordering;
 
 pub fn slt(op1: U256, op2: U256) -> U256 {
     if i256_cmp(op1, op2) == Ordering::Less {

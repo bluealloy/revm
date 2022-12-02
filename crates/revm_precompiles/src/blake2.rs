@@ -1,29 +1,35 @@
-use crate::{gas_query, Return, StandardPrecompileFn};
-
-use crate::{Precompile, PrecompileOutput, PrecompileResult};
-use alloc::borrow::Cow;
+use crate::{Error, PrecompileAddress, StandardPrecompileFn};
+use crate::{Precompile, PrecompileResult};
 use core::convert::TryInto;
-use primitive_types::H160 as Address;
 
 const F_ROUND: u64 = 1;
 const INPUT_LENGTH: usize = 213;
 
-pub const FUN: (Address, Precompile) = (
-    super::make_address(0, 9),
+pub const FUN: PrecompileAddress = PrecompileAddress(
+    crate::u64_to_b160(9),
     Precompile::Standard(run as StandardPrecompileFn),
 );
 
 /// reference: https://eips.ethereum.org/EIPS/eip-152
 /// input format:
 /// [4 bytes for rounds][64 bytes for h][128 bytes for m][8 bytes for t_0][8 bytes for t_1][1 byte for f]
-fn run(input: &[u8], target_gas: u64) -> PrecompileResult {
+fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     if input.len() != INPUT_LENGTH {
-        return Err(Return::Other(Cow::Borrowed("Invalid last flag for blake2")));
+        return Err(Error::Blake2WrongLength);
     }
+
+    let f = match input[212] {
+        1 => true,
+        0 => false,
+        _ => return Err(Error::Blake2WrongFinalIndicatorFlag),
+    };
 
     // rounds 4 bytes
     let rounds = u32::from_be_bytes(input[..4].try_into().unwrap()) as usize;
-    let cost = gas_query(rounds as u64 * F_ROUND, target_gas)?;
+    let gas_used = rounds as u64 * F_ROUND;
+    if gas_used > gas_limit {
+        return Err(Error::OutOfGas);
+    }
 
     let mut h = [0u64; 8];
     let mut m = [0u64; 16];
@@ -39,12 +45,6 @@ fn run(input: &[u8], target_gas: u64) -> PrecompileResult {
         u64::from_le_bytes(input[204..204 + 8].try_into().unwrap()),
     ];
 
-    let f = match input[212] {
-        1 => true,
-        0 => false,
-        _ => return Err(Return::Other(Cow::Borrowed("Invalid last flag for blake2"))),
-    };
-
     algo::compress(rounds, &mut h, m, t, f);
 
     let mut out = [0u8; 64];
@@ -52,7 +52,7 @@ fn run(input: &[u8], target_gas: u64) -> PrecompileResult {
         out[i..i + 8].copy_from_slice(&h.to_le_bytes());
     }
 
-    Ok(PrecompileOutput::without_logs(cost, out.to_vec()))
+    Ok((gas_used, out.to_vec()))
 }
 
 mod algo {

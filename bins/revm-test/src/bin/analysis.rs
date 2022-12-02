@@ -1,7 +1,6 @@
-use std::{str::FromStr, time::Instant};
+use std::time::Instant;
 
 use bytes::Bytes;
-use primitive_types::H160;
 use revm::{db::BenchmarkDB, Bytecode, TransactTo};
 
 extern crate alloc;
@@ -13,9 +12,14 @@ fn main() {
     let mut evm = revm::new();
 
     // execution globals block hash/gas_limit/coinbase/timestamp..
-    evm.env.tx.caller = H160::from_str("0x1000000000000000000000000000000000000000").unwrap();
-    evm.env.tx.transact_to =
-        TransactTo::Call(H160::from_str("0x0000000000000000000000000000000000000000").unwrap());
+    evm.env.tx.caller = "0x1000000000000000000000000000000000000000"
+        .parse()
+        .unwrap();
+    evm.env.tx.transact_to = TransactTo::Call(
+        "0x0000000000000000000000000000000000000000"
+            .parse()
+            .unwrap(),
+    );
     //evm.env.tx.data = Bytes::from(hex::decode("30627b7c").unwrap());
     evm.env.tx.data = Bytes::from(hex::decode("8035F0CE").unwrap());
     evm.env.cfg.perf_all_precompiles_have_balance = true;

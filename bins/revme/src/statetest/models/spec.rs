@@ -1,5 +1,5 @@
 use revm::SpecId;
-use serde_derive::*;
+use serde::Deserialize;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Hash, Ord, Deserialize)]
 pub enum SpecName {
@@ -25,6 +25,8 @@ pub enum SpecName {
     MergeEOF,
     #[serde(alias = "Merge+3860")]
     MergeMeterInitCode,
+    #[serde(alias = "Merge+3855")]
+    MergePush0,
 }
 
 impl SpecName {
@@ -44,6 +46,7 @@ impl SpecName {
             Self::Merge => SpecId::MERGE,
             Self::MergeEOF => SpecId::MERGE_EOF,
             Self::MergeMeterInitCode => SpecId::MERGE_EOF,
+            Self::MergePush0 => SpecId::MERGE_EOF,
             Self::ByzantiumToConstantinopleAt5 | Self::Constantinople => {
                 panic!("Overriden with PETERSBURG")
             } //_ => panic!("Conversion failed"),

@@ -1,6 +1,5 @@
 use super::constants::*;
-use crate::{models::SelfDestructResult, Spec, SpecId::*};
-use ruint::aliases::U256;
+use crate::{models::SelfDestructResult, Spec, SpecId::*, U256};
 
 #[allow(clippy::collapsible_else_if)]
 pub fn sstore_refund<SPEC: Spec>(original: U256, current: U256, new: U256) -> i64 {

@@ -1,7 +1,5 @@
-use crate::{gas, Interpreter, Return, Spec};
-
 use super::i256::{i256_div, i256_mod};
-use ruint::aliases::U256;
+use crate::{gas, Interpreter, Return, Spec, U256};
 
 pub fn div(op1: U256, op2: U256) -> U256 {
     op1.checked_div(op2).unwrap_or_default()

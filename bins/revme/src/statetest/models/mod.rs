@@ -1,13 +1,12 @@
 use bytes::Bytes;
-use primitive_types::{H160, H256};
-use ruint::aliases::U256;
+use revm::{B160, B256, U256};
 use std::collections::{BTreeMap, HashMap};
 mod deserializer;
 mod spec;
 
 use deserializer::*;
 
-use serde_derive::*;
+use serde::Deserialize;
 
 pub use self::spec::SpecName;
 
@@ -17,7 +16,7 @@ pub struct TestSuit(pub BTreeMap<String, TestUnit>);
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 pub struct TestUnit {
     pub env: Env,
-    pub pre: HashMap<H160, AccountInfo>,
+    pub pre: HashMap<B160, AccountInfo>,
     pub post: BTreeMap<SpecName, Vec<Test>>,
     pub transaction: TransactionParts,
 }
@@ -26,11 +25,11 @@ pub struct TestUnit {
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 pub struct Test {
     /// Post state hash
-    pub hash: H256,
+    pub hash: B256,
     /// Indexes
     pub indexes: TxPartIndices,
     // logs
-    pub logs: H256,
+    pub logs: B256,
     #[serde(default)]
     #[serde(deserialize_with = "deserialize_opt_str_as_bytes")]
     pub txbytes: Option<Bytes>,
@@ -58,7 +57,7 @@ pub struct AccountInfo {
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Env {
-    pub current_coinbase: H160,
+    pub current_coinbase: B160,
     #[serde(default, deserialize_with = "deserialize_str_as_u256")]
     pub current_difficulty: U256,
     #[serde(deserialize_with = "deserialize_str_as_u256")]
@@ -68,7 +67,7 @@ pub struct Env {
     #[serde(deserialize_with = "deserialize_str_as_u256")]
     pub current_timestamp: U256,
     pub current_base_fee: Option<U256>,
-    pub previous_hash: H256,
+    pub previous_hash: B256,
 }
 
 #[derive(Debug, PartialEq, Eq, Deserialize)]
@@ -80,9 +79,9 @@ pub struct TransactionParts {
     pub gas_limit: Vec<U256>,
     pub gas_price: Option<U256>,
     pub nonce: U256,
-    pub secret_key: Option<H256>,
+    pub secret_key: Option<B256>,
     #[serde(deserialize_with = "deserialize_maybe_empty")]
-    pub to: Option<H160>,
+    pub to: Option<B160>,
     pub value: Vec<U256>,
     pub max_fee_per_gas: Option<U256>,
     pub max_priority_fee_per_gas: Option<U256>,
@@ -91,8 +90,8 @@ pub struct TransactionParts {
 #[derive(Debug, PartialEq, Eq, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct AccessListItem {
-    pub address: H160,
-    pub storage_keys: Vec<H256>,
+    pub address: B160,
+    pub storage_keys: Vec<B256>,
 }
 
 pub type AccessList = Vec<AccessListItem>;
@@ -101,6 +100,7 @@ pub type AccessList = Vec<AccessListItem>;
 mod tests {
 
     use super::*;
+    use revm::B160;
     use serde_json::Error;
 
     #[test]
@@ -110,6 +110,20 @@ mod tests {
         #[derive(Deserialize, Debug)]
         pub struct Test {
             _item: Option<U256>,
+        }
+
+        let out: Test = serde_json::from_str(json)?;
+        println!("out:{out:?}");
+        Ok(())
+    }
+
+    #[test]
+    pub fn serialize_b160() -> Result<(), Error> {
+        let json = r#"{"_item":"0x2adc25665018aa1fe0e6bc666dac8fc2697ff9ba"}"#;
+
+        #[derive(Deserialize, Debug)]
+        pub struct Test {
+            _item: B160,
         }
 
         let out: Test = serde_json::from_str(json)?;

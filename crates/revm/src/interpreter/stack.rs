@@ -1,6 +1,4 @@
-use crate::{alloc::vec::Vec, Return};
-use primitive_types::H256;
-use ruint::aliases::U256;
+use crate::{alloc::vec::Vec, Return, B256, U256};
 
 pub const STACK_LIMIT: usize = 1024;
 
@@ -182,7 +180,7 @@ impl Stack {
     #[inline]
     /// Push a new value into the stack. If it will exceed the stack limit,
     /// returns `StackOverflow` error and leaves the stack unchanged.
-    pub fn push_h256(&mut self, value: H256) -> Result<(), Return> {
+    pub fn push_b256(&mut self, value: B256) -> Result<(), Return> {
         if self.data.len() + 1 > STACK_LIMIT {
             return Err(Return::StackOverflow);
         }
@@ -245,7 +243,7 @@ impl Stack {
         Return::Continue
     }
 
-    /// push slice onto memory it is expected to be max 32 bytes and be contains inside H256
+    /// push slice onto memory it is expected to be max 32 bytes and be contains inside B256
     #[inline(always)]
     pub fn push_slice<const N: usize>(&mut self, slice: &[u8]) -> Return {
         let new_len = self.data.len() + 1;

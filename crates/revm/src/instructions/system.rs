@@ -1,15 +1,14 @@
 use crate::{
-    common::keccak256, gas, interpreter::Interpreter, Return, Spec, SpecId::*, KECCAK_EMPTY,
+    bits::B256, common::keccak256, gas, interpreter::Interpreter, Return, Spec, SpecId::*,
+    KECCAK_EMPTY, U256,
 };
-use primitive_types::H256;
-use ruint::aliases::U256;
 use std::cmp::min;
 
 pub fn sha3(interp: &mut Interpreter) -> Return {
     pop!(interp, from, len);
     let len = as_usize_or_fail!(len, Return::OutOfGas);
     gas_or_fail!(interp, gas::sha3_cost(len as u64));
-    let h256 = if len == 0 {
+    let hash = if len == 0 {
         KECCAK_EMPTY
     } else {
         let from = as_usize_or_fail!(from, Return::OutOfGas);
@@ -17,28 +16,25 @@ pub fn sha3(interp: &mut Interpreter) -> Return {
         keccak256(interp.memory.get_slice(from, len))
     };
 
-    push_h256!(interp, h256);
+    push_b256!(interp, hash);
     Return::Continue
 }
 
 pub fn address(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::BASE);
-    let ret = H256::from(interp.contract.address);
-    push_h256!(interp, ret);
+    push_b256!(interp, B256::from(interp.contract.address));
     Return::Continue
 }
 
 pub fn caller(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::BASE);
-    let ret = H256::from(interp.contract.caller);
-    push_h256!(interp, ret);
+    push_b256!(interp, B256::from(interp.contract.caller));
     Return::Continue
 }
 
 pub fn codesize(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::BASE);
-    let size = U256::from(interp.contract.bytecode.len());
-    push!(interp, size);
+    push!(interp, U256::from(interp.contract.bytecode.len()));
     Return::Continue
 }
 
@@ -69,28 +65,27 @@ pub fn calldataload(interp: &mut Interpreter) -> Return {
     let index = as_usize_saturated!(index);
 
     let load = if index < interp.contract.input.len() {
-        let mut load = H256::zero();
         let have_bytes = min(interp.contract.input.len() - index, 32);
-        load.0[..have_bytes].copy_from_slice(&interp.contract.input[index..index + have_bytes]);
-        load
+        let mut bytes = [0u8; U256::BYTES];
+        bytes[..have_bytes].copy_from_slice(&interp.contract.input[index..index + have_bytes]);
+        B256(bytes)
     } else {
-        H256::zero()
+        B256::zero()
     };
 
-    push_h256!(interp, load);
+    push_b256!(interp, load);
     Return::Continue
 }
 
 pub fn calldatasize(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::BASE);
-    let len = U256::from(interp.contract.input.len());
-    push!(interp, len);
+    push!(interp, U256::from(interp.contract.input.len()));
     Return::Continue
 }
 
 pub fn callvalue(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::BASE);
-    push_h256!(interp, interp.contract.value.to_be_bytes().into());
+    push!(interp, interp.contract.value);
     Return::Continue
 }
 
@@ -116,8 +111,7 @@ pub fn returndatasize<SPEC: Spec>(interp: &mut Interpreter) -> Return {
     // gas!(interp, gas::BASE);
     // EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
     check!(SPEC::enabled(BYZANTIUM));
-    let size = U256::from(interp.return_data_buffer.len());
-    push!(interp, size);
+    push!(interp, U256::from(interp.return_data_buffer.len()));
     Return::Continue
 }
 

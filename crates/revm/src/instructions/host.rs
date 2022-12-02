@@ -1,16 +1,15 @@
 use crate::{
     alloc::vec::Vec,
+    bits::{B160, B256},
     gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
     interpreter::Interpreter,
     return_ok, return_revert, CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme,
     Host, Return, Spec,
     SpecId::*,
-    Transfer,
+    Transfer, U256,
 };
 use bytes::Bytes;
 use core::cmp::min;
-use primitive_types::{H160, H256};
-use ruint::aliases::U256;
 
 pub fn balance<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) -> Return {
     pop_address!(interp, address);
@@ -78,7 +77,7 @@ pub fn extcodehash<H: Host, SPEC: Spec>(interp: &mut Interpreter, host: &mut H) 
         // WARM_STORAGE_READ_COST is already calculated in gas block
         gas!(interp, COLD_ACCOUNT_ACCESS_COST - WARM_STORAGE_READ_COST);
     }
-    push_h256!(interp, code_hash);
+    push_b256!(interp, code_hash);
 
     Return::Continue
 }
@@ -121,7 +120,7 @@ pub fn blockhash<H: Host>(interp: &mut Interpreter, host: &mut H) -> Return {
             if ret.is_none() {
                 return Return::FatalExternalError;
             }
-            *number = U256::from_be_bytes(ret.unwrap().0);
+            *number = U256::from_be_bytes(*ret.unwrap());
             return Return::Continue;
         }
     }
@@ -180,7 +179,7 @@ pub fn log<H: Host, SPEC: Spec>(interp: &mut Interpreter, n: u8, host: &mut H) -
     let mut topics = Vec::with_capacity(n);
     for _ in 0..(n) {
         // Safety: stack bounds already checked few lines above
-        topics.push(unsafe { interp.stack.pop_unsafe() }.to_be_bytes().into());
+        topics.push(B256(unsafe { interp.stack.pop_unsafe().to_be_bytes() }));
     }
 
     host.log(interp.contract.address, topics, data);
@@ -261,17 +260,17 @@ pub fn create<H: Host, SPEC: Spec>(
 
     match return_reason {
         return_ok!() => {
-            push_h256!(interp, address.map(|a| a.into()).unwrap_or_default());
+            push_b256!(interp, address.unwrap_or_default().into());
             interp.gas.erase_cost(gas.remaining());
             interp.gas.record_refund(gas.refunded());
         }
         return_revert!() => {
-            push_h256!(interp, H256::default());
+            push_b256!(interp, B256::zero());
             interp.gas.erase_cost(gas.remaining());
         }
         Return::FatalExternalError => return Return::FatalExternalError,
         _ => {
-            push_h256!(interp, H256::default());
+            push_b256!(interp, B256::zero());
         }
     }
     interp.add_next_gas_block(interp.program_counter() - 1)

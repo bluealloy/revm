@@ -1,9 +1,8 @@
-use crate::alloc::vec::Vec;
+use crate::{alloc::vec::Vec, U256};
 use core::{
     cmp::min,
     ops::{BitAnd, Not},
 };
-use ruint::aliases::U256;
 
 /// A sequencial memory. It uses Rust's `Vec` for internal
 /// representation.

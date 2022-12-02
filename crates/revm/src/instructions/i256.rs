@@ -1,5 +1,5 @@
+use crate::U256;
 use core::cmp::Ordering;
-use ruint::aliases::U256;
 use ruint::uint;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -124,8 +124,8 @@ pub fn i256_mod(mut first: U256, mut second: U256) -> U256 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::U256;
     use core::num::Wrapping;
-    use ruint::aliases::U256;
 
     #[test]
     fn div_i256() {

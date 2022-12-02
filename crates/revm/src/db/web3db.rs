@@ -1,7 +1,7 @@
-use crate::{interpreter::bytecode::Bytecode, AccountInfo, Database, KECCAK_EMPTY};
+use crate::{
+    interpreter::bytecode::Bytecode, AccountInfo, Database, B160, B256, KECCAK_EMPTY, U256,
+};
 use bytes::Bytes;
-use primitive_types::{H160, H256};
-use ruint::aliases::U256;
 use tokio::runtime::{Handle, Runtime};
 use web3::{
     transports::Http,
@@ -51,8 +51,8 @@ impl Web3DB {
 impl Database for Web3DB {
     type Error = ();
 
-    fn basic(&mut self, address: H160) -> Result<Option<AccountInfo>, Self::Error> {
-        let add = wH160(address.0);
+    fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
+        let add = wH160::from(address.0);
         let f = async {
             let nonce = self.web3.eth().transaction_count(add, self.block_number);
             let balance = self.web3.eth().balance(add, self.block_number);
@@ -77,18 +77,14 @@ impl Database for Web3DB {
         )))
     }
 
-    fn code_by_hash(&mut self, _code_hash: primitive_types::H256) -> Result<Bytecode, Self::Error> {
+    fn code_by_hash(&mut self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
         panic!("Should not be called. Code is already loaded");
         // not needed because we already load code with basic info
     }
 
-    fn storage(
-        &mut self,
-        address: primitive_types::H160,
-        index: U256,
-    ) -> Result<U256, Self::Error> {
-        let add = wH160(address.0);
-        let index = wU256(index.into_limbs());
+    fn storage(&mut self, address: B160, index: U256) -> Result<U256, Self::Error> {
+        let add = wH160::from(address.0);
+        let index = wU256(*index.as_limbs());
         let f = async {
             let storage = self
                 .web3
@@ -101,7 +97,7 @@ impl Database for Web3DB {
         Ok(self.block_on(f))
     }
 
-    fn block_hash(&mut self, number: U256) -> Result<primitive_types::H256, Self::Error> {
+    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
         if number > U256::from(u64::MAX) {
             return Ok(KECCAK_EMPTY);
         }
@@ -114,6 +110,6 @@ impl Database for Web3DB {
                 .ok()
                 .flatten()
         };
-        Ok(H256(self.block_on(f).unwrap().hash.unwrap().0))
+        Ok(B256(self.block_on(f).unwrap().hash.unwrap().0))
     }
 }
