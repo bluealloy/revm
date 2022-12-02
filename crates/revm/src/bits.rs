@@ -69,6 +69,7 @@ impl<'de> serde::Deserialize<'de> for B160 {
     }
 }
 
+// code optained from: https://docs.rs/impl-serde/0.4.0/impl_serde/
 #[cfg(feature = "with-serde")]
 mod serialize {
 
@@ -131,9 +132,6 @@ mod serialize {
     /// Decoding bytes from hex string error.
     #[derive(Debug, PartialEq, Eq)]
     pub enum FromHexError {
-        /// The `0x` prefix is missing.
-        #[deprecated(since = "0.3.2", note = "We support non 0x-prefixed hex strings")]
-        MissingPrefix,
         /// Invalid (non-hex) character encountered.
         InvalidHex {
             /// The unexpected character.
@@ -149,8 +147,6 @@ mod serialize {
     impl fmt::Display for FromHexError {
         fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
             match *self {
-                #[allow(deprecated)]
-                Self::MissingPrefix => write!(fmt, "0x prefix is missing"),
                 Self::InvalidHex { character, index } => {
                     write!(fmt, "invalid hex character: {}, at {}", character, index)
                 }
@@ -225,35 +221,6 @@ mod serialize {
         }
     }
 
-    /// Serializes a slice of bytes.
-    pub fn serialize<S>(bytes: &[u8], serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut slice = vec![0u8; (bytes.len() + 1) * 2];
-        serialize_raw(&mut slice, bytes, serializer)
-    }
-
-    /// Serialize a slice of bytes as uint.
-    ///
-    /// The representation will have all leading zeros trimmed.
-    pub fn serialize_uint<S>(
-        slice: &mut [u8],
-        bytes: &[u8],
-        serializer: S,
-    ) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let non_zero = bytes.iter().take_while(|b| **b == 0).count();
-        let bytes = &bytes[non_zero..];
-        if bytes.is_empty() {
-            serializer.serialize_str("0x0")
-        } else {
-            serializer.serialize_str(to_hex_raw(slice, bytes, true))
-        }
-    }
-
     /// Expected length of bytes vector.
     #[derive(Debug, PartialEq, Eq)]
     pub enum ExpectedLen<'a> {
@@ -272,33 +239,6 @@ mod serialize {
                 }
             }
         }
-    }
-
-    /// Deserialize into vector of bytes.  This will allocate an O(n) intermediate
-    /// string.
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        struct Visitor;
-
-        impl<'b> de::Visitor<'b> for Visitor {
-            type Value = Vec<u8>;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                write!(formatter, "a (both 0x-prefixed or not) hex string")
-            }
-
-            fn visit_str<E: de::Error>(self, v: &str) -> Result<Self::Value, E> {
-                from_hex(v).map_err(E::custom)
-            }
-
-            fn visit_string<E: de::Error>(self, v: String) -> Result<Self::Value, E> {
-                self.visit_str(&v)
-            }
-        }
-
-        deserializer.deserialize_str(Visitor)
     }
 
     /// Deserialize into vector of bytes with additional size check.

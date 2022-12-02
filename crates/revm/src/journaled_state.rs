@@ -623,24 +623,48 @@ fn is_precompile(address: B160, num_of_precompiles: usize) -> bool {
 
 #[cfg(test)]
 mod test {
-    //use super::*;
+    use super::*;
 
-    // #[test]
-    // fn test_is_precompile() {
-    //     assert!(!is_precompile(uint!(0_B160), 3), "Zero is not precompile");
+    #[test]
+    fn test_is_precompile() {
+        assert!(
+            !is_precompile(
+                B160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+                3
+            ),
+            "Zero is not precompile"
+        );
 
-    //     assert!(
-    //         !is_precompile(uint!(9_B160), 3),
-    //         "0x100..0 is not precompile"
-    //     );
+        assert!(
+            !is_precompile(
+                B160([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9]),
+                3
+            ),
+            "0x100..0 is not precompile"
+        );
 
-    //     assert!(
-    //         !is_precompile(uint!(4_B160), 3),
-    //         "0x000..4 is not precompile"
-    //     );
+        assert!(
+            !is_precompile(
+                B160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]),
+                3
+            ),
+            "0x000..4 is not precompile"
+        );
 
-    //     assert!(is_precompile(uint!(1_B160), 3), "0x00..01 is precompile");
+        assert!(
+            is_precompile(
+                B160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                3
+            ),
+            "0x00..01 is precompile"
+        );
 
-    //     assert!(is_precompile(uint!(3_B160), 3), "0x000..3 is precompile");
-    // }
+        assert!(
+            is_precompile(
+                B160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]),
+                3
+            ),
+            "0x000..3 is precompile"
+        );
+    }
 }
