@@ -2,7 +2,6 @@ use std::time::Instant;
 
 use bytes::Bytes;
 use revm::{db::BenchmarkDB, Bytecode, TransactTo};
-
 extern crate alloc;
 
 fn main() {
