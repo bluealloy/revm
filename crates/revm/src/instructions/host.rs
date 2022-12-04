@@ -127,7 +127,7 @@ pub fn blockhash(interpreter: &mut Interpreter, host: &mut dyn Host) {
                 return;
             }
             *number = U256::from_be_bytes(*ret.unwrap());
-            return
+            return;
         }
     }
     *number = U256::ZERO;
@@ -188,7 +188,9 @@ pub fn log<const N: u8, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dy
     let mut topics = Vec::with_capacity(n);
     for _ in 0..(n) {
         // Safety: stack bounds already checked few lines above
-        topics.push(B256(unsafe { interpreter.stack.pop_unsafe().to_be_bytes() }));
+        topics.push(B256(unsafe {
+            interpreter.stack.pop_unsafe().to_be_bytes()
+        }));
     }
 
     host.log(interpreter.contract.address, topics, data);

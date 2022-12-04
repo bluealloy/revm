@@ -195,35 +195,19 @@ macro_rules! push {
 	)
 }
 
-// macro_rules! as_usize_saturated {
-//     ( $v:expr ) => {
-//         $v.saturating_to::<usize>()
-//     };
-// }
-
-// macro_rules! as_usize_or_fail {
-//     ( $interp:expr, $v:expr ) => {{
-//         as_usize_or_fail!($interp, $v, Return::OutOfGas)
-//     }};
-
-//     ( $interp:expr, $v:expr, $reason:expr ) => {
-//         match $v[0] == 0 {
-//             Ok(value) => value,
-//             Err(_) => {
-//                 $interp.instruction_result = $reason;
-//                 return;
-//             }
-//         }
-//     };
-// }
+macro_rules! as_u64_saturated {
+    ( $v:expr ) => {{
+        if $v.as_limbs()[1] != 0 || $v.as_limbs()[2] != 0 || $v.as_limbs()[3] != 0 {
+            u64::MAX
+        } else {
+            $v.as_limbs()[0]
+        }
+    }};
+}
 
 macro_rules! as_usize_saturated {
     ( $v:expr ) => {{
-        if $v.as_limbs()[1] != 0 || $v.as_limbs()[2] != 0 || $v.as_limbs()[3] != 0 {
-            usize::MAX
-        } else {
-            $v.as_limbs()[0] as usize
-        }
+        as_u64_saturated!($v) as usize
     }};
 }
 

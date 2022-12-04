@@ -10,7 +10,7 @@ pub use stack::Stack;
 
 use crate::{
     instructions::{eval, Return},
-    Gas, Host, USE_GAS,Spec
+    Gas, Host, Spec, USE_GAS,
 };
 use bytes::Bytes;
 use core::ops::Range;
@@ -47,8 +47,7 @@ impl Interpreter {
         unsafe { *self.instruction_pointer }
     }
     #[cfg(not(feature = "memory_limit"))]
-    pub fn new<SPEC: Spec>(contract: Contract, gas_limit: u64,is_static:bool) -> Self {
-
+    pub fn new<SPEC: Spec>(contract: Contract, gas_limit: u64, is_static: bool) -> Self {
         Self {
             instruction_pointer: contract.bytecode.as_ptr(),
             return_range: Range::default(),
@@ -66,6 +65,7 @@ impl Interpreter {
     pub fn new_with_memory_limit<SPEC: Spec>(
         contract: Contract,
         gas_limit: u64,
+        is_static: bool,
         memory_limit: u64,
     ) -> Self {
         Self {
@@ -75,6 +75,8 @@ impl Interpreter {
             stack: Stack::new(),
             return_data_buffer: Bytes::new(),
             contract,
+            instruction_result: Return::Continue,
+            is_static,
             gas: Gas::new(gas_limit),
             memory_limit,
         }

@@ -476,32 +476,33 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         );
 
         #[cfg(feature = "memory_limit")]
-        let mut interp = Interpreter::new_with_memory_limit::<SPEC>(
+        let mut interpreter = Interpreter::new_with_memory_limit::<GSPEC>(
             contract,
             gas.limit(),
+            false,
             self.data.env.cfg.memory_limit,
         );
 
         #[cfg(not(feature = "memory_limit"))]
-        let mut interp = Interpreter::new::<GSPEC>(contract, gas.limit(), false);
+        let mut interpreter = Interpreter::new::<GSPEC>(contract, gas.limit(), false);
 
         if INSPECT {
             self.inspector
-                .initialize_interp(&mut interp, &mut self.data, false);
+                .initialize_interp(&mut interpreter, &mut self.data, false);
         }
-        let exit_reason = interp.run::<Self, GSPEC>(self, INSPECT);
+        let exit_reason = interpreter.run::<Self, GSPEC>(self, INSPECT);
 
         // Host error if present on execution\
         let (ret, address, gas, out) = match exit_reason {
             return_ok!() => {
                 let b = Bytes::new();
                 // if ok, check contract creation limit and calculate gas deduction on output len.
-                let mut bytes = interp.return_value();
+                let mut bytes = interpreter.return_value();
 
                 // EIP-3541: Reject new contract code starting with the 0xEF byte
                 if GSPEC::enabled(LONDON) && !bytes.is_empty() && bytes.first() == Some(&0xEF) {
                     self.data.journaled_state.checkpoint_revert(checkpoint);
-                    return (Return::CreateContractWithEF, ret, interp.gas, b);
+                    return (Return::CreateContractWithEF, ret, interpreter.gas, b);
                 }
 
                 // EIP-170: Contract code size limit
@@ -510,18 +511,18 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     && bytes.len() > self.data.env.cfg.limit_contract_code_size.unwrap_or(0x6000)
                 {
                     self.data.journaled_state.checkpoint_revert(checkpoint);
-                    return (Return::CreateContractLimit, ret, interp.gas, b);
+                    return (Return::CreateContractLimit, ret, interpreter.gas, b);
                 }
                 if crate::USE_GAS {
                     let gas_for_code = bytes.len() as u64 * crate::gas::CODEDEPOSIT;
-                    if !interp.gas.record_cost(gas_for_code) {
+                    if !interpreter.gas.record_cost(gas_for_code) {
                         // record code deposit gas cost and check if we are out of gas.
                         // EIP-2 point 3: If contract creation does not have enough gas to pay for the
                         // final gas fee for adding the contract code to the state, the contract
                         //  creation fails (i.e. goes out-of-gas) rather than leaving an empty contract.
                         if GSPEC::enabled(HOMESTEAD) {
                             self.data.journaled_state.checkpoint_revert(checkpoint);
-                            return (Return::OutOfGas, ret, interp.gas, b);
+                            return (Return::OutOfGas, ret, interpreter.gas, b);
                         } else {
                             bytes = Bytes::new();
                         }
@@ -539,11 +540,16 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 self.data
                     .journaled_state
                     .set_code(created_address, bytecode);
-                (Return::Continue, ret, interp.gas, b)
+                (Return::Continue, ret, interpreter.gas, b)
             }
             _ => {
                 self.data.journaled_state.checkpoint_revert(checkpoint);
-                (exit_reason, ret, interp.gas, interp.return_value())
+                (
+                    exit_reason,
+                    ret,
+                    interpreter.gas,
+                    interpreter.return_value(),
+                )
             }
         };
 
@@ -668,28 +674,30 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             );
 
             #[cfg(feature = "memory_limit")]
-            let mut interp = Interpreter::new_with_memory_limit::<SPEC>(
+            let mut interpreter = Interpreter::new_with_memory_limit::<GSPEC>(
                 contract,
                 gas.limit(),
+                inputs.is_static,
                 self.data.env.cfg.memory_limit,
             );
 
             #[cfg(not(feature = "memory_limit"))]
-            let mut interp = Interpreter::new::<GSPEC>(contract, gas.limit(), inputs.is_static);
+            let mut interpreter =
+                Interpreter::new::<GSPEC>(contract, gas.limit(), inputs.is_static);
 
             if INSPECT {
                 // create is always no static call.
                 self.inspector
-                    .initialize_interp(&mut interp, &mut self.data, false);
+                    .initialize_interp(&mut interpreter, &mut self.data, false);
             }
-            let exit_reason = interp.run::<Self, GSPEC>(self, INSPECT);
+            let exit_reason = interpreter.run::<Self, GSPEC>(self, INSPECT);
             if matches!(exit_reason, return_ok!()) {
                 self.data.journaled_state.checkpoint_commit();
             } else {
                 self.data.journaled_state.checkpoint_revert(checkpoint);
             }
 
-            (exit_reason, interp.gas, interp.return_value())
+            (exit_reason, interpreter.gas, interpreter.return_value())
         };
 
         if INSPECT {

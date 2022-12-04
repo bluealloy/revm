@@ -26,13 +26,9 @@ pub fn simple_example() {
     // Microbenchmark
     let bench_options = microbench::Options::default().time(Duration::from_secs(3));
 
-    microbench::bench(
-        &bench_options,
-        "Snailtracer benchmark",
-        || {
-            let (_, _) = evm.transact();
-        },
-    );
+    microbench::bench(&bench_options, "Snailtracer benchmark", || {
+        let (_, _) = evm.transact();
+    });
 }
 
 fn main() {

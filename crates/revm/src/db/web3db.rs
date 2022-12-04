@@ -98,6 +98,7 @@ impl Database for Web3DB {
     }
 
     fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
+        // saturate usize
         if number > U256::from(u64::MAX) {
             return Ok(KECCAK_EMPTY);
         }

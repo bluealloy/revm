@@ -1,5 +1,6 @@
 use crate::{
-    B256, U256, common::keccak256, gas, interpreter::Interpreter, Host, Return, Spec, SpecId::*, KECCAK_EMPTY,
+    common::keccak256, gas, interpreter::Interpreter, Host, Return, Spec, SpecId::*, B256,
+    KECCAK_EMPTY, U256,
 };
 use std::cmp::min;
 
@@ -26,7 +27,6 @@ pub fn address(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 pub fn caller(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     // gas!(interp, gas::BASE);
     push_b256!(interpreter, B256::from(interpreter.contract.caller));
-
 }
 
 pub fn codesize(interpreter: &mut Interpreter, _host: &mut dyn Host) {
@@ -112,7 +112,7 @@ pub fn returndatacopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn
     // EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
     check!(interpreter, SPEC::enabled(BYZANTIUM));
     pop!(interpreter, memory_offset, offset, len);
-    let len = as_usize_or_fail!(interpreter,len, Return::OutOfGas);
+    let len = as_usize_or_fail!(interpreter, len, Return::OutOfGas);
     gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
     let data_offset = as_usize_saturated!(offset);
     let (data_end, overflow) = data_offset.overflowing_add(len);
@@ -121,7 +121,7 @@ pub fn returndatacopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn
         return;
     }
     if len != 0 {
-        let memory_offset = as_usize_or_fail!(interpreter,memory_offset, Return::OutOfGas);
+        let memory_offset = as_usize_or_fail!(interpreter, memory_offset, Return::OutOfGas);
         memory_resize!(interpreter, memory_offset, len);
         interpreter.memory.set(
             memory_offset,

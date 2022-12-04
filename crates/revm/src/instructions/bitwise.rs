@@ -80,7 +80,7 @@ pub fn byte(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 
     for i in 0..256 {
         if i < 8 && op1 < U256::from(32) {
-            let o = u128::try_from(op1).unwrap() as usize;
+            let o = as_usize_saturated!(op1);
             let t = 255 - (7 - i + 8 * o);
             let bit_mask = U256::from(1) << t;
             let value = (*op2 & bit_mask) >> t;
@@ -95,14 +95,14 @@ pub fn shl<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     // EIP-145: Bitwise shifting instructions in EVM
     check!(interpreter, SPEC::enabled(CONSTANTINOPLE));
     pop_top!(interpreter, op1, op2);
-    *op2 = *op2 << usize::try_from(op1).unwrap_or(256)
+    *op2 <<= as_usize_saturated!(op1);
 }
 
 pub fn shr<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     // EIP-145: Bitwise shifting instructions in EVM
     check!(interpreter, SPEC::enabled(CONSTANTINOPLE));
     pop_top!(interpreter, op1, op2);
-    *op2 = *op2 >> usize::try_from(op1).unwrap_or(256)
+    *op2 >>= as_usize_saturated!(op1);
 }
 
 pub fn sar<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {

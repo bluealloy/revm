@@ -162,10 +162,10 @@ fn byzantium_gas_calc(base_len: u64, exp_len: u64, mod_len: u64, exp_highp: &Big
     // mul * iter_count bounded by 2^195 < 2^256 (no overflow)
     let gas = (mul * iter_count) / U256::from(20);
 
-    if gas.bit_len() > 64 {
+    if gas.as_limbs()[1] != 0 || gas.as_limbs()[2] != 0 || gas.as_limbs()[3] != 0 {
         u64::MAX
     } else {
-        u128::try_from(gas).unwrap() as u64
+        gas.as_limbs()[0]
     }
 }
 
@@ -185,10 +185,11 @@ fn berlin_gas_calc(base_length: u64, exp_length: u64, mod_length: u64, exp_highp
     let multiplication_complexity = calculate_multiplication_complexity(base_length, mod_length);
     let iteration_count = calculate_iteration_count(exp_length, exp_highp);
     let gas = (multiplication_complexity * U256::from(iteration_count)) / U256::from(3);
-    if gas > U256::from(u64::MAX) {
+
+    if gas.as_limbs()[1] != 0 || gas.as_limbs()[2] != 0 || gas.as_limbs()[3] != 0 {
         u64::MAX
     } else {
-        max(200, u128::try_from(gas).unwrap() as u64)
+        max(200, gas.as_limbs()[0])
     }
 }
 
