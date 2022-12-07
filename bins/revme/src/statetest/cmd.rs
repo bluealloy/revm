@@ -9,6 +9,8 @@ pub struct Cmd {
     path: Vec<PathBuf>,
     #[structopt(short = "s", long)]
     single_thread: bool,
+    #[structopt(long)]
+    json: bool,
 }
 
 impl Cmd {
@@ -16,7 +18,7 @@ impl Cmd {
         for path in &self.path {
             println!("Start running tests on: {path:?}");
             let test_files = find_all_json_tests(path);
-            run(test_files, self.single_thread)?
+            run(test_files, self.single_thread, self.json)?
         }
         Ok(())
     }

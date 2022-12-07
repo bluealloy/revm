@@ -1,3 +1,5 @@
+use std::io::stdout;
+use std::sync::atomic::Ordering;
 use std::{
     collections::HashMap,
     ffi::OsStr,
@@ -6,23 +8,25 @@ use std::{
     time::{Duration, Instant},
 };
 
+use hex_literal::hex;
 use indicatif::ProgressBar;
+use thiserror::Error;
+use walkdir::{DirEntry, WalkDir};
+
+use revm::common::keccak256;
 use revm::{
     bits::{B160, B256},
     db::AccountState,
     Bytecode, CreateScheme, Env, ExecutionResult, SpecId, TransactTo, U256,
 };
-use std::sync::atomic::Ordering;
-use walkdir::{DirEntry, WalkDir};
+use tracer_eip3155::TracerEip3155;
+
+use crate::tracer_eip3155;
 
 use super::{
     merkle_trie::{log_rlp_hash, state_merkle_trie_root},
     models::{SpecName, TestSuit},
-    trace::CustomPrintTracer,
 };
-use hex_literal::hex;
-use revm::common::keccak256;
-use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum TestError {
@@ -50,7 +54,11 @@ pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
         .collect::<Vec<PathBuf>>()
 }
 
-pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<(), TestError> {
+pub fn execute_test_suit(
+    path: &Path,
+    elapsed: &Arc<Mutex<Duration>>,
+    trace: bool,
+) -> Result<(), TestError> {
     // funky test with `bigint 0x00` value in json :) not possible to happen on mainnet and require custom json parser.
     // https://github.com/ethereum/tests/issues/971
     if path.file_name() == Some(OsStr::new("ValueOverflow.json")) {
@@ -241,13 +249,20 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                 // do the deed
 
                 let timer = Instant::now();
+                let mut exec_result: ExecutionResult;
+                if trace {
+                    exec_result =
+                        evm.inspect_commit(TracerEip3155::new(Box::new(stdout()), false, false));
+                } else {
+                    exec_result = evm.transact_commit();
+                };
                 let ExecutionResult {
                     exit_reason,
                     gas_used,
                     gas_refunded,
                     logs,
                     ..
-                } = evm.transact_commit();
+                } = exec_result;
                 let timer = timer.elapsed();
 
                 *elapsed.lock().unwrap() += timer;
@@ -273,7 +288,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                     );
                     let mut database_cloned = database.clone();
                     evm.database(&mut database_cloned);
-                    evm.inspect_commit(CustomPrintTracer::new());
+                    evm.inspect_commit(TracerEip3155::new(Box::new(stdout()), false, false));
                     let db = evm.db().unwrap();
                     println!("{path:?} UNIT_TEST:{name}\n");
                     println!(
@@ -295,7 +310,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
     Ok(())
 }
 
-pub fn run(test_files: Vec<PathBuf>, single_thread: bool) -> Result<(), TestError> {
+pub fn run(test_files: Vec<PathBuf>, single_thread: bool, trace: bool) -> Result<(), TestError> {
     let endjob = Arc::new(AtomicBool::new(false));
     let console_bar = Arc::new(ProgressBar::new(test_files.len() as u64));
     let mut joins: Vec<std::thread::JoinHandle<Result<(), TestError>>> = Vec::new();
@@ -325,7 +340,7 @@ pub fn run(test_files: Vec<PathBuf>, single_thread: bool) -> Result<(), TestErro
                         return Ok(());
                     }
                     //println!("Test:{:?}\n",test_path);
-                    if let Err(err) = execute_test_suit(&test_path, &elapsed) {
+                    if let Err(err) = execute_test_suit(&test_path, &elapsed, trace) {
                         endjob.store(true, Ordering::SeqCst);
                         println!("Test[{index}] named:\n{test_path:?} failed: {err}\n");
                         return Err(err);

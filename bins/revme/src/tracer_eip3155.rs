@@ -1,0 +1,188 @@
+// https://eips.ethereum.org/EIPS/eip-3155
+
+use std::io::Write;
+
+use bytes::Bytes;
+use ruint::aliases::U256;
+use serde_json::json;
+
+pub use revm::Inspector;
+use revm::{
+    opcode::{self},
+    CallInputs, CreateInputs, Database, EVMData, Gas, GasInspector, Interpreter, Memory, Return,
+    Stack, B160,
+};
+
+pub struct TracerEip3155 {
+    output: Box<dyn Write>,
+    gas_inspector: GasInspector,
+
+    trace_mem: bool,
+    trace_return_data: bool,
+
+    stack: Stack,
+    pc: usize,
+    opcode: u8,
+    gas: u64,
+    mem_size: usize,
+    memory: Option<Memory>,
+    skip: bool,
+}
+
+impl TracerEip3155 {
+    pub fn new(output: Box<dyn Write>, trace_mem: bool, trace_return_data: bool) -> Self {
+        Self {
+            output,
+            gas_inspector: GasInspector::default(),
+            trace_mem,
+            trace_return_data,
+            stack: Stack::new(),
+            pc: 0,
+            opcode: 0,
+            gas: 0,
+            mem_size: 0,
+            memory: None,
+            skip: false,
+        }
+    }
+}
+
+impl<DB: Database> Inspector<DB> for TracerEip3155 {
+    fn initialize_interp(
+        &mut self,
+        interp: &mut Interpreter,
+        data: &mut EVMData<'_, DB>,
+        is_static: bool,
+    ) -> Return {
+        self.gas_inspector
+            .initialize_interp(interp, data, is_static);
+        Return::Continue
+    }
+
+    // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
+    // all other information can be obtained from interp.
+    fn step(
+        &mut self,
+        interp: &mut Interpreter,
+        data: &mut EVMData<'_, DB>,
+        is_static: bool,
+    ) -> Return {
+        self.gas_inspector.step(interp, data, is_static);
+        self.stack = interp.stack.clone();
+        self.pc = interp.program_counter();
+        self.opcode = interp.current_opcode();
+        self.mem_size = interp.memory.len();
+        self.gas = self.gas_inspector.gas_remaining();
+        //
+        Return::Continue
+    }
+
+    fn step_end(
+        &mut self,
+        interp: &mut Interpreter,
+        data: &mut EVMData<'_, DB>,
+        is_static: bool,
+        eval: Return,
+    ) -> Return {
+        self.gas_inspector.step_end(interp, data, is_static, eval);
+        if self.skip {
+            self.skip = false;
+            return Return::Continue;
+        };
+
+        self.print_log_line(data.journaled_state.depth());
+        Return::Continue
+    }
+
+    fn call(
+        &mut self,
+        data: &mut EVMData<'_, DB>,
+        _inputs: &mut CallInputs,
+        _is_static: bool,
+    ) -> (Return, Gas, Bytes) {
+        self.print_log_line(data.journaled_state.depth());
+        (Return::Continue, Gas::new(0), Bytes::new())
+    }
+
+    fn call_end(
+        &mut self,
+        data: &mut EVMData<'_, DB>,
+        inputs: &CallInputs,
+        remaining_gas: Gas,
+        ret: Return,
+        out: Bytes,
+        is_static: bool,
+    ) -> (Return, Gas, Bytes) {
+        self.gas_inspector
+            .call_end(data, inputs, remaining_gas, ret, out.clone(), is_static);
+        // self.log_step(interp, data, is_static, eval);
+        self.skip = true;
+        if data.journaled_state.depth() == 0 {
+            let log_line = json!({
+                //stateroot
+                "output": format!("{:?}", out),
+                "gasUser": format!("0x{:x}", self.gas_inspector.gas_remaining()),
+                //time
+                //fork
+            });
+
+            writeln!(
+                self.output,
+                "{:?}",
+                serde_json::to_string(&log_line).unwrap()
+            )
+            .expect("If output fails we can ignore the logging");
+        }
+        (ret, remaining_gas, out)
+    }
+
+    fn create_end(
+        &mut self,
+        data: &mut EVMData<'_, DB>,
+        inputs: &CreateInputs,
+        ret: Return,
+        address: Option<B160>,
+        remaining_gas: Gas,
+        out: Bytes,
+    ) -> (Return, Option<B160>, Gas, Bytes) {
+        self.gas_inspector
+            .create_end(data, inputs, ret, address, remaining_gas, out.clone());
+        (ret, address, remaining_gas, out)
+    }
+}
+
+impl TracerEip3155 {
+    fn print_log_line(&mut self, depth: u64) {
+        let short_stack: Vec<String> = self.stack.data().iter().map(|&b| short_hex(b)).collect();
+        let log_line = json!({
+            "pc": self.pc,
+            "op": self.opcode,
+            "gas": format!("0x{:x}", self.gas),
+            "gasCost": format!("0x{:x}", self.gas_inspector.last_gas_cost()),
+            //memory?
+            "memSize": self.mem_size,
+            "stack": short_stack,
+            "depth": depth,
+            //returnData
+            //refund
+            "opName": opcode::OPCODE_JUMPMAP[self.opcode as usize],
+            //error
+            //storage
+            //returnStack
+        });
+
+        writeln!(self.output, "{}", serde_json::to_string(&log_line).unwrap())
+            .expect("If output fails we can ignore the logging");
+    }
+}
+
+fn short_hex(b: U256) -> String {
+    let s = hex::encode(b.to_be_bytes_vec())
+        .trim_start_matches('0')
+        .to_string();
+    if s.len() == 0 {
+        "0x0".to_string()
+    } else {
+        format!("0x{}", s)
+    }
+}
