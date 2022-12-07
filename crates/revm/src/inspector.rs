@@ -202,11 +202,12 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         } else if self.was_return {
             // we are ok to decrement PC by one as it is return of call
             let previous_pc = pc - 1;
+            self.reduced_gas_block = 0;
             self.full_gas_block = interp.contract.gas_block(previous_pc);
             self.was_return = false;
         }
-
-        self.gas_remaining = interp.gas.remaining() + self.full_gas_block - self.reduced_gas_block;
+        self.gas_remaining =
+            interp.gas.remaining() + (self.full_gas_block - self.reduced_gas_block);
 
         Return::Continue
     }
