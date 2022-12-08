@@ -208,7 +208,6 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         }
         self.gas_remaining =
             interp.gas.remaining() + (self.full_gas_block - self.reduced_gas_block);
-
         Return::Continue
     }
 
