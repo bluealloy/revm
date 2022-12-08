@@ -26,7 +26,7 @@ jobs:
           cache-on-failure: true
 
       - name: cargo test
-        run: cargo test --all --all-features
+        run: cargo test --all
 
   lint:
     runs-on: ubuntu-latest
