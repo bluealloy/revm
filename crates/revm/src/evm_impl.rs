@@ -495,14 +495,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         // Host error if present on execution\
         let (ret, address, gas, out) = match exit_reason {
             return_ok!() => {
-                let b = Bytes::new();
                 // if ok, check contract creation limit and calculate gas deduction on output len.
                 let mut bytes = interpreter.return_value();
 
                 // EIP-3541: Reject new contract code starting with the 0xEF byte
                 if GSPEC::enabled(LONDON) && !bytes.is_empty() && bytes.first() == Some(&0xEF) {
                     self.data.journaled_state.checkpoint_revert(checkpoint);
-                    return (Return::CreateContractWithEF, ret, interpreter.gas, b);
+                    return (Return::CreateContractWithEF, ret, interpreter.gas, bytes);
                 }
 
                 // EIP-170: Contract code size limit
@@ -511,7 +510,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     && bytes.len() > self.data.env.cfg.limit_contract_code_size.unwrap_or(0x6000)
                 {
                     self.data.journaled_state.checkpoint_revert(checkpoint);
-                    return (Return::CreateContractLimit, ret, interpreter.gas, b);
+                    return (Return::CreateContractLimit, ret, interpreter.gas, bytes);
                 }
                 if crate::USE_GAS {
                     let gas_for_code = bytes.len() as u64 * crate::gas::CODEDEPOSIT;
@@ -522,7 +521,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                         //  creation fails (i.e. goes out-of-gas) rather than leaving an empty contract.
                         if GSPEC::enabled(HOMESTEAD) {
                             self.data.journaled_state.checkpoint_revert(checkpoint);
-                            return (Return::OutOfGas, ret, interpreter.gas, b);
+                            return (Return::OutOfGas, ret, interpreter.gas, bytes);
                         } else {
                             bytes = Bytes::new();
                         }
@@ -532,15 +531,17 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 self.data.journaled_state.checkpoint_commit();
                 // Do analasis of bytecode streight away.
                 let bytecode = match self.data.env.cfg.perf_analyse_created_bytecodes {
-                    AnalysisKind::Raw => Bytecode::new_raw(bytes),
-                    AnalysisKind::Check => Bytecode::new_raw(bytes).to_checked(),
-                    AnalysisKind::Analyse => Bytecode::new_raw(bytes).to_analysed::<GSPEC>(),
+                    AnalysisKind::Raw => Bytecode::new_raw(bytes.clone()),
+                    AnalysisKind::Check => Bytecode::new_raw(bytes.clone()).to_checked(),
+                    AnalysisKind::Analyse => {
+                        Bytecode::new_raw(bytes.clone()).to_analysed::<GSPEC>()
+                    }
                 };
 
                 self.data
                     .journaled_state
                     .set_code(created_address, bytecode);
-                (Return::Continue, ret, interpreter.gas, b)
+                (Return::Continue, ret, interpreter.gas, bytes)
             }
             _ => {
                 self.data.journaled_state.checkpoint_revert(checkpoint);

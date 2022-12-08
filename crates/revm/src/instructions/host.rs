@@ -266,7 +266,12 @@ pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
     };
 
     let (return_reason, address, gas, return_data) = host.create(&mut create_input);
-    interpreter.return_data_buffer = return_data;
+    interpreter.return_data_buffer = match return_reason {
+        // Save data to return data buffer if the create reverted
+        return_revert!() => return_data,
+        // Otherwise clear it
+        _ => Bytes::new(),
+    };
 
     match return_reason {
         return_ok!() => {
