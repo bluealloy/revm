@@ -277,7 +277,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                     let db = evm.db().unwrap();
                     println!("{path:?} UNIT_TEST:{name}\n");
                     println!(
-                        "failed reason: {exit_reason:?} {path:?} UNIT_TEST:{name}\n gas:{gas_used:?} ({gas_refunded:?} refunded)"
+                        "failed reason: {exit_reason:?} {path:?} UNIT_TEST:{name}\n gas:{gas_used:?} ({gas_refunded:?} refunded)",
                     );
                     println!("\nApplied state:{db:?}\n");
                     println!("\nStateroot: {state_root:?}\n");

@@ -1,4 +1,4 @@
-use std::time::Instant;
+use std::time::Duration;
 
 use bytes::Bytes;
 use revm::{db::BenchmarkDB, Bytecode, TransactTo};
@@ -23,21 +23,12 @@ pub fn simple_example() {
     );
     evm.env.tx.data = Bytes::from(hex::decode("30627b7c").unwrap());
 
-    let mut elapsed = std::time::Duration::ZERO;
-    let mut times = Vec::new();
-    for _ in 0..30 {
-        let timer = Instant::now();
+    // Microbenchmark
+    let bench_options = microbench::Options::default().time(Duration::from_secs(3));
+
+    microbench::bench(&bench_options, "Snailtracer benchmark", || {
         let (_, _) = evm.transact();
-        let i = timer.elapsed();
-        times.push(i);
-        elapsed += i;
-    }
-    println!("elapsed: {:?}", elapsed / 30);
-    let mut times = times[5..].to_vec();
-    times.sort();
-    for (i, time) in times.iter().rev().enumerate() {
-        println!("{i}: {time:?}");
-    }
+    });
 }
 
 fn main() {

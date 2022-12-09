@@ -60,15 +60,16 @@ impl Stack {
         &self.data
     }
 
-    pub fn reduce_one(&mut self) -> Return {
+    #[inline(always)]
+    pub fn reduce_one(&mut self) -> Option<Return> {
         let len = self.data.len();
         if len < 1 {
-            return Return::StackUnderflow;
+            return Some(Return::StackUnderflow);
         }
         unsafe {
             self.data.set_len(len - 1);
         }
-        Return::Continue
+        None
     }
 
     #[inline]
@@ -212,27 +213,27 @@ impl Stack {
     }
 
     #[inline(always)]
-    pub fn dup<const N: usize>(&mut self) -> Return {
+    pub fn dup<const N: usize>(&mut self) -> Option<Return> {
         let len = self.data.len();
         if len < N {
-            Return::StackUnderflow
+            Some(Return::StackUnderflow)
         } else if len + 1 > STACK_LIMIT {
-            Return::StackOverflow
+            Some(Return::StackOverflow)
         } else {
             // Safety: check for out of bounds is done above and it makes this safe to do.
             unsafe {
                 *self.data.get_unchecked_mut(len) = *self.data.get_unchecked(len - N);
                 self.data.set_len(len + 1);
             }
-            Return::Continue
+            None
         }
     }
 
     #[inline(always)]
-    pub fn swap<const N: usize>(&mut self) -> Return {
+    pub fn swap<const N: usize>(&mut self) -> Option<Return> {
         let len = self.data.len();
         if len <= N {
-            return Return::StackUnderflow;
+            return Some(Return::StackUnderflow);
         }
         // Safety: length is checked before so we are okay to switch bytes in unsafe way.
         unsafe {
@@ -240,15 +241,15 @@ impl Stack {
             let pb: *mut U256 = self.data.get_unchecked_mut(len - 1 - N);
             core::ptr::swap(pa, pb);
         }
-        Return::Continue
+        None
     }
 
     /// push slice onto memory it is expected to be max 32 bytes and be contains inside B256
     #[inline(always)]
-    pub fn push_slice<const N: usize>(&mut self, slice: &[u8]) -> Return {
+    pub fn push_slice<const N: usize>(&mut self, slice: &[u8]) -> Option<Return> {
         let new_len = self.data.len() + 1;
         if new_len > STACK_LIMIT {
-            return Return::StackOverflow;
+            return Some(Return::StackOverflow);
         }
 
         let slot;
@@ -293,7 +294,7 @@ impl Stack {
                 }
             }
         }
-        Return::Continue
+        None
     }
 
     #[inline]

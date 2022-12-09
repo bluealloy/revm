@@ -8,13 +8,10 @@ members = [
 default-members = ["crates/revm"]
 
 [profile.release]
-# debug = true
+debug = true
 lto = true
 codegen-units = 1
 
 [profile.ethtests]
 inherits = "test"
 opt-level = 3
-
-[patch.crates-io]
-ruint = { git = "https://github.com/recmo/uint" }

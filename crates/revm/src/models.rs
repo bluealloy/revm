@@ -89,6 +89,8 @@ pub struct CallInputs {
     pub gas_limit: u64,
     /// The context of the call.
     pub context: CallContext,
+    /// Is static call
+    pub is_static: bool,
 }
 
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]

@@ -1,144 +1,139 @@
 use crate::{
-    bits::B256, common::keccak256, gas, interpreter::Interpreter, Return, Spec, SpecId::*,
+    common::keccak256, gas, interpreter::Interpreter, Host, Return, Spec, SpecId::*, B256,
     KECCAK_EMPTY, U256,
 };
 use std::cmp::min;
 
-pub fn sha3(interp: &mut Interpreter) -> Return {
-    pop!(interp, from, len);
-    let len = as_usize_or_fail!(len, Return::OutOfGas);
-    gas_or_fail!(interp, gas::sha3_cost(len as u64));
+pub fn sha3(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+    pop!(interpreter, from, len);
+    let len = as_usize_or_fail!(interpreter, len, Return::OutOfGas);
+    gas_or_fail!(interpreter, gas::sha3_cost(len as u64));
     let hash = if len == 0 {
         KECCAK_EMPTY
     } else {
-        let from = as_usize_or_fail!(from, Return::OutOfGas);
-        memory_resize!(interp, from, len);
-        keccak256(interp.memory.get_slice(from, len))
+        let from = as_usize_or_fail!(interpreter, from, Return::OutOfGas);
+        memory_resize!(interpreter, from, len);
+        keccak256(interpreter.memory.get_slice(from, len))
     };
 
-    push_b256!(interp, hash);
-    Return::Continue
+    push_b256!(interpreter, hash);
 }
 
-pub fn address(interp: &mut Interpreter) -> Return {
+pub fn address(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     // gas!(interp, gas::BASE);
-    push_b256!(interp, B256::from(interp.contract.address));
-    Return::Continue
+    push_b256!(interpreter, B256::from(interpreter.contract.address));
 }
 
-pub fn caller(interp: &mut Interpreter) -> Return {
+pub fn caller(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     // gas!(interp, gas::BASE);
-    push_b256!(interp, B256::from(interp.contract.caller));
-    Return::Continue
+    push_b256!(interpreter, B256::from(interpreter.contract.caller));
 }
 
-pub fn codesize(interp: &mut Interpreter) -> Return {
+pub fn codesize(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     // gas!(interp, gas::BASE);
-    push!(interp, U256::from(interp.contract.bytecode.len()));
-    Return::Continue
+    push!(interpreter, U256::from(interpreter.contract.bytecode.len()));
 }
 
-pub fn codecopy(interp: &mut Interpreter) -> Return {
-    pop!(interp, memory_offset, code_offset, len);
-    let len = as_usize_or_fail!(len, Return::OutOfGas);
-    gas_or_fail!(interp, gas::verylowcopy_cost(len as u64));
+pub fn codecopy(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+    pop!(interpreter, memory_offset, code_offset, len);
+    let len = as_usize_or_fail!(interpreter, len, Return::OutOfGas);
+    gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
     if len == 0 {
-        return Return::Continue;
+        return;
     }
-    let memory_offset = as_usize_or_fail!(memory_offset, Return::OutOfGas);
+    let memory_offset = as_usize_or_fail!(interpreter, memory_offset, Return::OutOfGas);
     let code_offset = as_usize_saturated!(code_offset);
-    memory_resize!(interp, memory_offset, len);
+    memory_resize!(interpreter, memory_offset, len);
 
     // Safety: set_data is unsafe function and memory_resize ensures us that it is safe to call it
-    interp.memory.set_data(
+    interpreter.memory.set_data(
         memory_offset,
         code_offset,
         len,
-        interp.contract.bytecode.original_bytecode_slice(),
+        interpreter.contract.bytecode.original_bytecode_slice(),
     );
-    Return::Continue
 }
 
-pub fn calldataload(interp: &mut Interpreter) -> Return {
+pub fn calldataload(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     // gas!(interp, gas::VERYLOW);
-    pop!(interp, index);
+    pop!(interpreter, index);
     let index = as_usize_saturated!(index);
 
-    let load = if index < interp.contract.input.len() {
-        let have_bytes = min(interp.contract.input.len() - index, 32);
-        let mut bytes = [0u8; U256::BYTES];
-        bytes[..have_bytes].copy_from_slice(&interp.contract.input[index..index + have_bytes]);
+    let load = if index < interpreter.contract.input.len() {
+        let have_bytes = min(interpreter.contract.input.len() - index, 32);
+        let mut bytes = [0u8; 32];
+        bytes[..have_bytes].copy_from_slice(&interpreter.contract.input[index..index + have_bytes]);
         B256(bytes)
     } else {
         B256::zero()
     };
 
-    push_b256!(interp, load);
-    Return::Continue
+    push_b256!(interpreter, load);
 }
 
-pub fn calldatasize(interp: &mut Interpreter) -> Return {
+pub fn calldatasize(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     // gas!(interp, gas::BASE);
-    push!(interp, U256::from(interp.contract.input.len()));
-    Return::Continue
+    push!(interpreter, U256::from(interpreter.contract.input.len()));
 }
 
-pub fn callvalue(interp: &mut Interpreter) -> Return {
+pub fn callvalue(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     // gas!(interp, gas::BASE);
-    push!(interp, interp.contract.value);
-    Return::Continue
+    push!(interpreter, interpreter.contract.value);
 }
 
-pub fn calldatacopy(interp: &mut Interpreter) -> Return {
-    pop!(interp, memory_offset, data_offset, len);
-    let len = as_usize_or_fail!(len, Return::OutOfGas);
-    gas_or_fail!(interp, gas::verylowcopy_cost(len as u64));
+pub fn calldatacopy(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+    pop!(interpreter, memory_offset, data_offset, len);
+    let len = as_usize_or_fail!(interpreter, len, Return::OutOfGas);
+    gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
     if len == 0 {
-        return Return::Continue;
+        return;
     }
-    let memory_offset = as_usize_or_fail!(memory_offset, Return::OutOfGas);
+    let memory_offset = as_usize_or_fail!(interpreter, memory_offset, Return::OutOfGas);
     let data_offset = as_usize_saturated!(data_offset);
-    memory_resize!(interp, memory_offset, len);
+    memory_resize!(interpreter, memory_offset, len);
 
     // Safety: set_data is unsafe function and memory_resize ensures us that it is safe to call it
-    interp
+    interpreter
         .memory
-        .set_data(memory_offset, data_offset, len, &interp.contract.input);
-    Return::Continue
+        .set_data(memory_offset, data_offset, len, &interpreter.contract.input);
 }
 
-pub fn returndatasize<SPEC: Spec>(interp: &mut Interpreter) -> Return {
+pub fn returndatasize<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     // gas!(interp, gas::BASE);
     // EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
-    check!(SPEC::enabled(BYZANTIUM));
-    push!(interp, U256::from(interp.return_data_buffer.len()));
-    Return::Continue
+    check!(interpreter, SPEC::enabled(BYZANTIUM));
+    push!(
+        interpreter,
+        U256::from(interpreter.return_data_buffer.len())
+    );
 }
 
-pub fn returndatacopy<SPEC: Spec>(interp: &mut Interpreter) -> Return {
+pub fn returndatacopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     // EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
-    check!(SPEC::enabled(BYZANTIUM));
-    pop!(interp, memory_offset, offset, len);
-    let len = as_usize_or_fail!(len, Return::OutOfGas);
-    gas_or_fail!(interp, gas::verylowcopy_cost(len as u64));
+    check!(interpreter, SPEC::enabled(BYZANTIUM));
+    pop!(interpreter, memory_offset, offset, len);
+    let len = as_usize_or_fail!(interpreter, len, Return::OutOfGas);
+    gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
     let data_offset = as_usize_saturated!(offset);
     let (data_end, overflow) = data_offset.overflowing_add(len);
-    if overflow || data_end > interp.return_data_buffer.len() {
-        return Return::OutOfOffset;
+    if overflow || data_end > interpreter.return_data_buffer.len() {
+        interpreter.instruction_result = Return::OutOfOffset;
+        return;
     }
     if len != 0 {
-        let memory_offset = as_usize_or_fail!(memory_offset, Return::OutOfGas);
-        memory_resize!(interp, memory_offset, len);
-        interp.memory.set(
+        let memory_offset = as_usize_or_fail!(interpreter, memory_offset, Return::OutOfGas);
+        memory_resize!(interpreter, memory_offset, len);
+        interpreter.memory.set(
             memory_offset,
-            &interp.return_data_buffer[data_offset..data_end],
+            &interpreter.return_data_buffer[data_offset..data_end],
         );
     }
-    Return::Continue
 }
 
-pub fn gas(interp: &mut Interpreter) -> Return {
+pub fn gas(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     // gas!(interp, gas::BASE);
-    push!(interp, U256::from(interp.gas.remaining()));
-    interp.add_next_gas_block(interp.program_counter() - 1)
+    push!(interpreter, U256::from(interpreter.gas.remaining()));
+    if let Some(ret) = interpreter.add_next_gas_block(interpreter.program_counter() - 1) {
+        interpreter.instruction_result = ret;
+    }
 }
