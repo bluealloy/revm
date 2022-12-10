@@ -1,9 +1,9 @@
 mod in_memory_db;
 
-#[cfg(feature = "web3db")]
-pub mod web3db;
-#[cfg(feature = "web3db")]
-pub use web3db::Web3DB;
+#[cfg(feature = "ethersdb")]
+pub mod ethersdb;
+#[cfg(feature = "ethersdb")]
+pub use ethersdb::EthersDB;
 
 use crate::bits::{B160, B256};
 use crate::AccountInfo;
