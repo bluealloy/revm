@@ -5,10 +5,9 @@ use crate::{
 };
 
 use bytes::Bytes;
-use ethers::{
-    providers::Middleware,
-    types::{BlockId, H160 as eH160, H256, U64 as eU64},
-};
+
+use ethers_core::types::{BlockId, H160 as eH160, H256, U64 as eU64};
+use ethers_providers::Middleware;
 use tokio::runtime::{Handle, Runtime};
 
 pub struct EthersDB<M>
@@ -131,10 +130,8 @@ mod tests {
     use std::str::FromStr;
 
     use super::*;
-    use ethers::{
-        providers::{Http, Provider},
-        types::U256 as eU256,
-    };
+    use ethers_core::types::U256 as eU256;
+    use ethers_providers::{Http, Provider};
 
     #[test]
     fn can_get_basic() {

@@ -25,7 +25,8 @@ tokio = { version = "1.21", features = [
     "rt-multi-thread",
     "macros",
 ], optional = true }
-ethers = { version = "1.0.2", optional = true }
+ethers-providers = { version = "1.0.2", optional = true }
+ethers-core = { version = "1.0.2", optional = true }
 
 # bits B256 B160 crate
 fixed-hash = { version = "0.8", default-features = false, features = [
@@ -53,5 +54,5 @@ optional_gas_refund = []
 std = ["bytes/std", "num_enum/std", "rlp/std"]
 secp256k1 = ["revm_precompiles/secp256k1"]
 k256 = ["revm_precompiles/k256_ecrecover"]
-ethersdb = ["tokio", "futures", "ethers", "hex"]
+ethersdb = ["tokio", "futures", "ethers-providers", "ethers-core", "hex"]
 with-serde = ["serde", "hex", "hex/serde", "hashbrown/serde"]
