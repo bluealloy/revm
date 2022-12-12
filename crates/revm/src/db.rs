@@ -5,6 +5,11 @@ pub mod ethersdb;
 #[cfg(feature = "ethersdb")]
 pub use ethersdb::EthersDB;
 
+#[cfg(feature = "web3db")]
+compile_error!(
+    "`web3db` feature is deprecated, drop-in replacement can be found with feature `ethersdb`"
+);
+
 use crate::bits::{B160, B256};
 use crate::AccountInfo;
 use crate::U256;
