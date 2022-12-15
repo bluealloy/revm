@@ -4,8 +4,6 @@ use crate::{
     interpreter::bytecode::Bytecode, AccountInfo, Database, B160, B256, KECCAK_EMPTY, U256,
 };
 
-use bytes::Bytes;
-
 use ethers_core::types::{BlockId, H160 as eH160, H256, U64 as eU64};
 use ethers_providers::Middleware;
 use tokio::runtime::{Handle, Runtime};
@@ -81,10 +79,10 @@ where
             nonce
                 .unwrap_or_else(|e| panic!("ethers get nonce error: {e:?}"))
                 .as_u64(),
-            Bytecode::new_raw(Bytes::from(
+            Bytecode::new_raw(
                 code.unwrap_or_else(|e| panic!("ethers get code error: {e:?}"))
                     .0,
-            )),
+            ),
         )))
     }
 
