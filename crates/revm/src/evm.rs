@@ -23,7 +23,6 @@ use revm_precompiles::Precompiles;
 /// want to update anything on it. It enabled `transact_ref` and `inspect_ref` functions
 /// * Database+DatabaseCommit allow directly committing changes of transaction. it enabled `transact_commit`
 /// and `inspect_commit`
-
 #[derive(Clone)]
 pub struct EVM<DB> {
     pub env: Env,
