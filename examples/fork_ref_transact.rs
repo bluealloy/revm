@@ -5,8 +5,7 @@ use bytes::Bytes;
 use ethers::{
     abi::parse_abi,
     prelude::BaseContract,
-    providers::{Http, Middleware, Provider},
-    types::{H160, H256, U256},
+    providers::{Http, Provider},
 };
 use revm::{
     db::{CacheDB, EmptyDB, EthersDB},
@@ -22,36 +21,22 @@ async fn main() -> Result<()> {
     let client = Arc::new(client);
 
     // ----------------------------------------------------------- //
-    //         Storage slots of a UniV2Pair like contract          //
-    // *********************************************************** //
-    // location[5] = factory: address                              //
-    // location[6] = token0: address                               //
-    // location[7] = token1: address                               //
-    // location[8] = (res0, res1, ts): (uint112, uint112, uint32)  //
-    // location[9] = price0CumulativeLast: uint256                 //
-    // location[10] = price1CumulativeLast: uint256                //
-    // location[11] = kLast: uint256                               //
-    // *********************************************************** //
+    //             Storage slots of UniV2Pair contract             //
+    // =========================================================== //
+    // storage[5] = factory: address                               //
+    // storage[6] = token0: address                                //
+    // storage[7] = token1: address                                //
+    // storage[8] = (res0, res1, ts): (uint112, uint112, uint32)   //
+    // storage[9] = price0CumulativeLast: uint256                  //
+    // storage[10] = price1CumulativeLast: uint256                 //
+    // storage[11] = kLast: uint256                                //
+    // =========================================================== //
 
-    // choose index of storage that you would like to transact with
-    let index = 8;
-    let location = H256::from_low_u64_be(index);
+    // choose slot of storage that you would like to transact with
+    let slot = rU256::from(8);
 
     // ETH/USDT pair on Uniswap V2
     let pool_address = B160::from_str("0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852")?;
-
-    // load the reserve slot via ethers-rs
-    let reserves_slot = client
-        // first, parse address (B160) into H160 that ethers can understand
-        .get_storage_at(H160::from(pool_address.0), location, None)
-        .await?;
-
-    let mem = U256::from(reserves_slot.as_bytes());
-
-    // bitshitOoor to extract uint112, uint112, uint32 from uint256
-    let ts_raw = (mem >> (2 * 112)).as_u32();
-    let reserve1_raw = ((mem >> 112) & ((U256::from(1u8) << 112) - 1u8)).as_u128();
-    let reserve0_raw = (mem & ((U256::from(1u8) << 112) - 1u8)).as_u128();
 
     // generate abi for the calldata from the human readable interface
     let abi = BaseContract::from(
@@ -69,6 +54,9 @@ async fn main() -> Result<()> {
     // query basic properties of an account incl bytecode
     let acc_info = ethersdb.basic(pool_address).unwrap().unwrap();
 
+    // query value of storage slot at account address
+    let value = ethersdb.storage(pool_address, slot).unwrap();
+
     // initialise empty in-memory-db
     let mut cache_db = CacheDB::new(EmptyDB::default());
 
@@ -77,11 +65,7 @@ async fn main() -> Result<()> {
 
     // insert our pre-loaded storage slot to the corresponding contract key (address) in the DB
     cache_db
-        .insert_account_storage(
-            pool_address,
-            rU256::from(index),
-            rU256::from_be_bytes(reserves_slot.0),
-        )
+        .insert_account_storage(pool_address, slot, value)
         .unwrap();
 
     // initialise an empty (default) EVM
@@ -120,11 +104,5 @@ async fn main() -> Result<()> {
     println!("Reserve1: {:#?}", reserve1);
     println!("Timestamp: {:#?}", ts);
 
-    // make sure that the emulator's call is exactly the same as the raw call
-    assert_eq!(reserve0_raw, reserve0);
-    assert_eq!(reserve1_raw, reserve1);
-    assert_eq!(ts_raw, ts);
-
-    // GG if you are here with no errors
     Ok(())
 }
