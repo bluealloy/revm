@@ -10,7 +10,7 @@ version = "2.3.1"
 readme = "../../README.md"
 
 [dependencies]
-arrayref  = "0.3"
+arrayref = "0.3"
 auto_impl = { version = "1.0", default-features = false }
 bytes = { version = "1.1", default-features = false }
 futures = { version = "0.3.24", optional = true }
@@ -19,22 +19,33 @@ hex = { version = "0.4", optional = true }
 num_enum = { version = "0.5", default-features = false } # used for SpecId from u8 cast
 revm_precompiles = { path = "../revm_precompiles", version = "1.1.2", default-features = false }
 rlp = { version = "0.5", default-features = false } # used for create2 address calculation
-ruint = { version = "1.7.0", features = ["primitive-types", "rlp",]  }
-serde = { version = "1.0", features = ["derive","rc"], optional = true }
-tokio = { version = "1.21", features = ["rt-multi-thread", "macros"], optional = true }
-web3 = { git = "https://github.com/tomusdrw/rust-web3", version = "0.19", optional = true }
+ruint = { version = "1.7.0", features = ["primitive-types", "rlp"] }
+serde = { version = "1.0", features = ["derive", "rc"], optional = true }
+tokio = { version = "1.21", features = [
+    "rt-multi-thread",
+    "macros",
+], optional = true }
+ethers-providers = { version = "1.0.2", optional = true }
+ethers-core = { version = "1.0.2", optional = true }
 
 # bits B256 B160 crate
-fixed-hash = { version = "0.8", default-features = false, features = ["rustc-hex"]}
+fixed-hash = { version = "0.8", default-features = false, features = [
+    "rustc-hex",
+] }
 hex-literal = "0.3"
 derive_more = "0.99"
 
 # sha3 keccak hasher
-sha3 = { version = "0.10", default-features = false, features = []}
+sha3 = { version = "0.10", default-features = false, features = [] }
 
 [features]
 default = ["std", "secp256k1"]
-dev = ["memory_limit", "optional_block_gas_limit", "optional_eip3607", "optional_gas_refund"]
+dev = [
+    "memory_limit",
+    "optional_block_gas_limit",
+    "optional_eip3607",
+    "optional_gas_refund",
+]
 memory_limit = []
 no_gas_measuring = []
 optional_block_gas_limit = []
@@ -43,5 +54,6 @@ optional_gas_refund = []
 std = ["bytes/std", "num_enum/std", "rlp/std"]
 secp256k1 = ["revm_precompiles/secp256k1"]
 k256 = ["revm_precompiles/k256_ecrecover"]
-web3db = ["futures", "tokio", "web3"]
+web3db = []
+ethersdb = ["tokio", "futures", "ethers-providers", "ethers-core", "hex"]
 with-serde = ["serde", "hex", "hex/serde", "hashbrown/serde"]
