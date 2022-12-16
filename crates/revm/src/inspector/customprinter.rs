@@ -4,6 +4,7 @@ use crate::{
     Bytes, CallInputs, CreateInputs, Database, EVMData, Gas, GasInspector, Inspector, Interpreter,
     Return,
 };
+use hex;
 #[derive(Clone)]
 pub struct CustomPrintTracer {
     gas_inspector: GasInspector,
