@@ -39,7 +39,7 @@ derive_more = "0.99"
 sha3 = { version = "0.10", default-features = false, features = [] }
 
 [features]
-default = ["std", "secp256k1"]
+default = ["std", "secp256k1","inspectors"]
 dev = [
     "memory_limit",
     "optional_block_gas_limit",
@@ -57,3 +57,4 @@ k256 = ["revm_precompiles/k256_ecrecover"]
 web3db = []
 ethersdb = ["tokio", "futures", "ethers-providers", "ethers-core", "hex"]
 with-serde = ["serde", "hex", "hex/serde", "hashbrown/serde"]
+inspectors = []

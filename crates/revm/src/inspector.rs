@@ -6,6 +6,16 @@ use crate::{
 use auto_impl::auto_impl;
 use bytes::Bytes;
 
+
+#[cfg(feature = "inspectors")]
+pub mod customprinter;
+
+
+#[cfg(feature = "inspectors")]
+pub mod inspectors {
+    pub use super::customprinter::CustomPrintTracer;
+}
+
 #[auto_impl(&mut, Box)]
 pub trait Inspector<DB: Database> {
     /// Called Before the interpreter is initialized.
