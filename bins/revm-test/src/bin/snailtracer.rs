@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use bytes::Bytes;
-use revm::{db::BenchmarkDB, Bytecode, TransactTo};
+use revm::{blockchain::EmptyBlockchain, db::BenchmarkDB, Bytecode, TransactTo};
 
 extern crate alloc;
 
@@ -11,6 +11,7 @@ pub fn simple_example() {
     // BenchmarkDB is dummy state that implements Database trait.
     let mut evm = revm::new();
     evm.database(BenchmarkDB::new_bytecode(Bytecode::new_raw(contract_data)));
+    evm.set_blockchain(EmptyBlockchain);
 
     // execution globals block hash/gas_limit/coinbase/timestamp..
     evm.env.tx.caller = "0x1000000000000000000000000000000000000000"

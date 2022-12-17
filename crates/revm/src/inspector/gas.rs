@@ -1,7 +1,8 @@
 //! GasIspector. Helper Inspector to calculte gas for others.
 //!
 use crate::{
-    bits::B160, evm_impl::EVMData, CallInputs, CreateInputs, Database, Gas, Inspector, Return,
+    bits::B160, blockchain::Blockchain, evm_impl::EVMData, CallInputs, CreateInputs, Database, Gas,
+    Inspector, Return,
 };
 use bytes::Bytes;
 
@@ -23,12 +24,12 @@ impl GasInspector {
     }
 }
 
-impl<DB: Database> Inspector<DB> for GasInspector {
+impl<DB: Database, BC: Blockchain<Error = DB::Error>> Inspector<DB, BC> for GasInspector {
     #[cfg(not(feature = "no_gas_measuring"))]
     fn initialize_interp(
         &mut self,
         interp: &mut crate::Interpreter,
-        _data: &mut EVMData<'_, DB>,
+        _data: &mut EVMData<'_, DB, BC>,
         _is_static: bool,
     ) -> Return {
         self.full_gas_block = interp.contract.first_gas_block();
@@ -43,7 +44,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
     fn step(
         &mut self,
         interp: &mut crate::Interpreter,
-        data: &mut EVMData<'_, DB>,
+        data: &mut EVMData<'_, DB, BC>,
         _is_static: bool,
     ) -> Return {
         let op = interp.current_opcode();
@@ -70,7 +71,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
     fn step_end(
         &mut self,
         interp: &mut crate::Interpreter,
-        _data: &mut EVMData<'_, DB>,
+        _data: &mut EVMData<'_, DB, BC>,
         _is_static: bool,
         _eval: Return,
     ) -> Return {
@@ -97,7 +98,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 
     fn call_end(
         &mut self,
-        _data: &mut EVMData<'_, DB>,
+        _data: &mut EVMData<'_, DB, BC>,
         _inputs: &CallInputs,
         remaining_gas: Gas,
         ret: Return,
@@ -110,7 +111,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 
     fn create_end(
         &mut self,
-        _data: &mut EVMData<'_, DB>,
+        _data: &mut EVMData<'_, DB, BC>,
         _inputs: &CreateInputs,
         ret: Return,
         address: Option<B160>,
@@ -124,6 +125,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 
 #[cfg(test)]
 mod tests {
+    use crate::blockchain::{Blockchain, EmptyBlockchain};
     use crate::db::BenchmarkDB;
     use crate::{
         inspectors::GasInspector, opcode, Bytecode, CallInputs, CreateInputs, Database, EVMData,
@@ -139,11 +141,11 @@ mod tests {
         gas_remaining_steps: Vec<(usize, u64)>,
     }
 
-    impl<DB: Database> Inspector<DB> for StackInspector {
+    impl<DB: Database, BC: Blockchain<Error = DB::Error>> Inspector<DB, BC> for StackInspector {
         fn initialize_interp(
             &mut self,
             interp: &mut Interpreter,
-            data: &mut EVMData<'_, DB>,
+            data: &mut EVMData<'_, DB, BC>,
             is_static: bool,
         ) -> Return {
             self.gas_inspector
@@ -154,7 +156,7 @@ mod tests {
         fn step(
             &mut self,
             interp: &mut Interpreter,
-            data: &mut EVMData<'_, DB>,
+            data: &mut EVMData<'_, DB, BC>,
             is_static: bool,
         ) -> Return {
             self.pc = interp.program_counter();
@@ -164,7 +166,7 @@ mod tests {
 
         fn log(
             &mut self,
-            evm_data: &mut EVMData<'_, DB>,
+            evm_data: &mut EVMData<'_, DB, BC>,
             address: &B160,
             topics: &[B256],
             data: &Bytes,
@@ -175,7 +177,7 @@ mod tests {
         fn step_end(
             &mut self,
             interp: &mut Interpreter,
-            data: &mut EVMData<'_, DB>,
+            data: &mut EVMData<'_, DB, BC>,
             is_static: bool,
             eval: Return,
         ) -> Return {
@@ -187,7 +189,7 @@ mod tests {
 
         fn call(
             &mut self,
-            data: &mut EVMData<'_, DB>,
+            data: &mut EVMData<'_, DB, BC>,
             call: &mut CallInputs,
             is_static: bool,
         ) -> (Return, Gas, Bytes) {
@@ -198,7 +200,7 @@ mod tests {
 
         fn call_end(
             &mut self,
-            data: &mut EVMData<'_, DB>,
+            data: &mut EVMData<'_, DB, BC>,
             inputs: &CallInputs,
             remaining_gas: Gas,
             ret: Return,
@@ -212,7 +214,7 @@ mod tests {
 
         fn create(
             &mut self,
-            data: &mut EVMData<'_, DB>,
+            data: &mut EVMData<'_, DB, BC>,
             call: &mut CreateInputs,
         ) -> (Return, Option<B160>, Gas, Bytes) {
             self.gas_inspector.create(data, call);
@@ -227,7 +229,7 @@ mod tests {
 
         fn create_end(
             &mut self,
-            data: &mut EVMData<'_, DB>,
+            data: &mut EVMData<'_, DB, BC>,
             inputs: &CreateInputs,
             status: Return,
             address: Option<B160>,
@@ -260,6 +262,7 @@ mod tests {
         let bytecode = Bytecode::new_raw(contract_data);
 
         let mut evm = crate::new();
+        evm.set_blockchain(EmptyBlockchain);
         evm.database(BenchmarkDB::new_bytecode(bytecode.clone()));
         evm.env.tx.caller = B160(hex!("1000000000000000000000000000000000000000"));
         evm.env.tx.transact_to =

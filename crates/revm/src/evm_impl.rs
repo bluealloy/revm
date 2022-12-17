@@ -1,4 +1,5 @@
 use crate::{
+    blockchain::Blockchain,
     common::keccak256,
     db::Database,
     gas,
@@ -17,17 +18,24 @@ use core::{cmp::min, marker::PhantomData};
 use hashbrown::HashMap as Map;
 use revm_precompiles::{Precompile, Precompiles};
 
-pub struct EVMData<'a, DB: Database> {
+pub struct EVMData<'a, DB: Database, BC: Blockchain<Error = DB::Error>> {
     pub env: &'a mut Env,
     pub journaled_state: JournaledState,
     pub db: &'a mut DB,
+    pub blockchain: &'a mut BC,
     pub error: Option<DB::Error>,
 }
 
-pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
-    data: EVMData<'a, DB>,
+pub struct EVMImpl<
+    'a,
+    GSPEC: Spec,
+    DB: Database,
+    BC: Blockchain<Error = DB::Error>,
+    const INSPECT: bool,
+> {
+    data: EVMData<'a, DB, BC>,
     precompiles: Precompiles,
-    inspector: &'a mut dyn Inspector<DB>,
+    inspector: &'a mut dyn Inspector<DB, BC>,
     _phantomdata: PhantomData<GSPEC>,
 }
 
@@ -37,8 +45,8 @@ pub trait Transact {
     fn transact(&mut self) -> (ExecutionResult, State);
 }
 
-impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
-    for EVMImpl<'a, GSPEC, DB, INSPECT>
+impl<'a, GSPEC: Spec, DB: Database, BC: Blockchain<Error = DB::Error>, const INSPECT: bool> Transact
+    for EVMImpl<'a, GSPEC, DB, BC, INSPECT>
 {
     fn transact(&mut self) -> (ExecutionResult, State) {
         let caller = self.data.env.tx.caller;
@@ -211,11 +219,14 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
     }
 }
 
-impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, INSPECT> {
+impl<'a, GSPEC: Spec, DB: Database, BC: Blockchain<Error = DB::Error>, const INSPECT: bool>
+    EVMImpl<'a, GSPEC, DB, BC, INSPECT>
+{
     pub fn new(
         db: &'a mut DB,
+        blockchain: &'a mut BC,
         env: &'a mut Env,
-        inspector: &'a mut dyn Inspector<DB>,
+        inspector: &'a mut dyn Inspector<DB, BC>,
         precompiles: Precompiles,
     ) -> Self {
         let journaled_state = if GSPEC::enabled(SpecId::SPURIOUS_DRAGON) {
@@ -228,6 +239,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 env,
                 journaled_state,
                 db,
+                blockchain,
                 error: None,
             },
             precompiles,
@@ -710,8 +722,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     }
 }
 
-impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
-    for EVMImpl<'a, GSPEC, DB, INSPECT>
+impl<
+        'a,
+        GSPEC: Spec,
+        DB: Database + 'a,
+        BC: Blockchain<Error = DB::Error> + 'a,
+        const INSPECT: bool,
+    > Host for EVMImpl<'a, GSPEC, DB, BC, INSPECT>
 {
     fn step(&mut self, interp: &mut Interpreter, is_static: bool) -> Return {
         self.inspector.step(interp, &mut self.data, is_static)
@@ -728,7 +745,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
 
     fn block_hash(&mut self, number: U256) -> Option<B256> {
         self.data
-            .db
+            .blockchain
             .block_hash(number)
             .map_err(|e| self.data.error = Some(e))
             .ok()

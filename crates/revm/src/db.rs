@@ -27,9 +27,6 @@ pub trait Database {
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error>;
     /// Get storage value of address at index.
     fn storage(&mut self, address: B160, index: U256) -> Result<U256, Self::Error>;
-
-    // History related
-    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error>;
 }
 
 #[auto_impl(& mut, Box)]
@@ -48,9 +45,6 @@ pub trait DatabaseRef {
     fn code_by_hash(&self, code_hash: B256) -> Result<Bytecode, Self::Error>;
     /// Get storage value of address at index.
     fn storage(&self, address: B160, index: U256) -> Result<U256, Self::Error>;
-
-    // History related
-    fn block_hash(&self, number: U256) -> Result<B256, Self::Error>;
 }
 
 pub struct RefDBWrapper<'a, Error> {
@@ -76,10 +70,5 @@ impl<'a, Error> Database for RefDBWrapper<'a, Error> {
     /// Get storage value of address at index.
     fn storage(&mut self, address: B160, index: U256) -> Result<U256, Self::Error> {
         self.db.storage(address, index)
-    }
-
-    // History related
-    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
-        self.db.block_hash(number)
     }
 }

@@ -237,6 +237,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                 let mut database_cloned = database.clone();
                 let mut evm = revm::new();
                 evm.database(&mut database_cloned);
+                evm.set_blockchain(revm::blockchain::InMemoryBlockchain::default());
                 evm.env = env.clone();
                 // do the deed
 

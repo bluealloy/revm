@@ -1,5 +1,4 @@
 use super::{DatabaseCommit, DatabaseRef};
-use crate::common::keccak256;
 use crate::{interpreter::bytecode::Bytecode, Database, KECCAK_EMPTY};
 use crate::{Account, AccountInfo, Log};
 use crate::{B160, B256, U256};
@@ -23,7 +22,6 @@ pub struct CacheDB<ExtDB: DatabaseRef> {
     pub accounts: Map<B160, DbAccount>,
     pub contracts: Map<B256, Bytecode>,
     pub logs: Vec<Log>,
-    pub block_hashes: Map<U256, B256>,
     pub db: ExtDB,
 }
 
@@ -100,7 +98,6 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
             accounts: Map::new(),
             contracts,
             logs: Vec::default(),
-            block_hashes: Map::new(),
             db,
         }
     }
@@ -198,17 +195,6 @@ impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
 
 impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
     type Error = ExtDB::Error;
-
-    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
-        match self.block_hashes.entry(number) {
-            Entry::Occupied(entry) => Ok(*entry.get()),
-            Entry::Vacant(entry) => {
-                let hash = self.db.block_hash(number)?;
-                entry.insert(hash);
-                Ok(hash)
-            }
-        }
-    }
 
     fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
         let basic = match self.accounts.entry(address) {
@@ -312,13 +298,6 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
             None => self.db.code_by_hash(code_hash),
         }
     }
-
-    fn block_hash(&self, number: U256) -> Result<B256, Self::Error> {
-        match self.block_hashes.get(&number) {
-            Some(entry) => Ok(*entry),
-            None => self.db.block_hash(number),
-        }
-    }
 }
 
 /// An empty database that always returns default values when queried.
@@ -338,11 +317,6 @@ impl DatabaseRef for EmptyDB {
     /// Get storage value of address at index.
     fn storage(&self, _address: B160, _index: U256) -> Result<U256, Self::Error> {
         Ok(U256::default())
-    }
-
-    // History related
-    fn block_hash(&self, number: U256) -> Result<B256, Self::Error> {
-        Ok(keccak256(&number.to_be_bytes::<{ U256::BYTES }>()))
     }
 }
 
@@ -382,11 +356,6 @@ impl Database for BenchmarkDB {
     /// Get storage value of address at index.
     fn storage(&mut self, _address: B160, _index: U256) -> Result<U256, Self::Error> {
         Ok(U256::default())
-    }
-
-    // History related
-    fn block_hash(&mut self, _number: U256) -> Result<B256, Self::Error> {
-        Ok(B256::default())
     }
 }
 

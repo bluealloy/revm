@@ -1,7 +1,7 @@
 use std::time::Instant;
 
 use bytes::Bytes;
-use revm::{db::BenchmarkDB, Bytecode, TransactTo};
+use revm::{blockchain::EmptyBlockchain, db::BenchmarkDB, Bytecode, TransactTo};
 extern crate alloc;
 
 fn main() {
@@ -28,6 +28,7 @@ fn main() {
     let bytecode_analysed = Bytecode::new_raw(contract_data).to_analysed::<revm::LondonSpec>();
 
     evm.database(BenchmarkDB::new_bytecode(bytecode_raw));
+    evm.set_blockchain(EmptyBlockchain);
 
     // just to spead up processor.
     for _ in 0..10000 {

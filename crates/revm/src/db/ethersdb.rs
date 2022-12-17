@@ -1,10 +1,8 @@
 use std::sync::Arc;
 
-use crate::{
-    interpreter::bytecode::Bytecode, AccountInfo, Database, B160, B256, KECCAK_EMPTY, U256,
-};
+use crate::{interpreter::bytecode::Bytecode, AccountInfo, Database, B160, B256, U256};
 
-use ethers_core::types::{BlockId, H160 as eH160, H256, U64 as eU64};
+use ethers_core::types::{BlockId, H160 as eH160, H256};
 use ethers_providers::Middleware;
 use tokio::runtime::{Handle, Runtime};
 
@@ -104,29 +102,11 @@ where
         };
         Ok(self.block_on(f))
     }
-
-    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
-        // saturate usize
-        if number > U256::from(u64::MAX) {
-            return Ok(KECCAK_EMPTY);
-        }
-        let number = eU64::from(u64::try_from(number).unwrap());
-        let f = async {
-            self.client
-                .get_block(BlockId::from(number))
-                .await
-                .ok()
-                .flatten()
-        };
-        Ok(B256(self.block_on(f).unwrap().hash.unwrap().0))
-    }
 }
 
 /// Run tests with `cargo test -- --nocapture` to see print statements
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
-
     use super::*;
     use ethers_core::types::U256 as eU256;
     use ethers_providers::{Http, Provider};
@@ -186,31 +166,5 @@ mod tests {
         let actual = U256::from_limbs(eU256::from("0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f").0);
 
         assert_eq!(storage, actual);
-    }
-
-    #[test]
-    fn can_get_block_hash() {
-        let client = Provider::<Http>::try_from(
-            "https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27",
-        )
-        .unwrap();
-        let client = Arc::new(client);
-
-        let mut ethersdb = EthersDB::new(
-            Arc::clone(&client), // public infura mainnet
-            None,
-        )
-        .unwrap();
-
-        // block number to test
-        let block_num = U256::from(16148323);
-        let block_hash = ethersdb.block_hash(block_num).unwrap();
-
-        // https://etherscan.io/block/16148323
-        let actual =
-            B256::from_str("0xc133a5a4ceef2a6b5cd6fc682e49ca0f8fce3f18da85098c6a15f8e0f6f4c2cf")
-                .unwrap();
-
-        assert_eq!(block_hash, actual);
     }
 }

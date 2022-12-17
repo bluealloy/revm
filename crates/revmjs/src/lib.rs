@@ -4,8 +4,8 @@ use bn_rs::BN;
 use bytes::Bytes;
 use primitive_types::H160;
 use revm::{
-    AccountInfo, Bytecode, DatabaseCommit, ExecutionResult, InMemoryDB, SpecId, TransactTo, B160,
-    EVM as rEVM, U256,
+    blockchain::InMemoryBlockchain, AccountInfo, Bytecode, DatabaseCommit, ExecutionResult,
+    InMemoryDB, SpecId, TransactTo, B160, EVM as rEVM, U256,
 };
 use wasm_bindgen::prelude::*;
 
@@ -30,7 +30,7 @@ macro_rules! console_log {
 /// Wrapper around revm with InMemoryDB
 #[wasm_bindgen]
 pub struct EVM {
-    revm: rEVM<InMemoryDB>,
+    revm: rEVM<InMemoryDB, InMemoryBlockchain>,
 }
 
 impl Default for EVM {

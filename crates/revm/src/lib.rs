@@ -2,6 +2,7 @@
 //#![no_std]
 
 pub mod bits;
+pub mod blockchain;
 pub mod common;
 pub mod db;
 mod evm;

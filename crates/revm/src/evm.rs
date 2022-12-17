@@ -1,4 +1,5 @@
 use crate::{
+    blockchain::{Blockchain, BlockchainRef},
     db::{Database, DatabaseCommit, DatabaseRef, RefDBWrapper},
     evm_impl::{EVMImpl, Transact},
     inspectors::NoOpInspector,
@@ -25,22 +26,23 @@ use revm_precompiles::Precompiles;
 /// * Database+DatabaseCommit allow directly committing changes of transaction. it enabled `transact_commit`
 /// and `inspect_commit`
 #[derive(Clone)]
-pub struct EVM<DB> {
+pub struct EVM<DB, BC> {
     pub env: Env,
     pub db: Option<DB>,
+    pub blockchain: Option<BC>,
 }
 
-pub fn new<DB>() -> EVM<DB> {
+pub fn new<DB, BC>() -> EVM<DB, BC> {
     EVM::new()
 }
 
-impl<DB> Default for EVM<DB> {
+impl<DB, BC> Default for EVM<DB, BC> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<DB: Database + DatabaseCommit> EVM<DB> {
+impl<DB: Database + DatabaseCommit, BC: Blockchain<Error = DB::Error>> EVM<DB, BC> {
     /// Execute transaction and apply result to database
     pub fn transact_commit(&mut self) -> ExecutionResult {
         let (exec_result, state) = self.transact();
@@ -48,80 +50,103 @@ impl<DB: Database + DatabaseCommit> EVM<DB> {
         exec_result
     }
     /// Inspect transaction and commit changes to database.
-    pub fn inspect_commit<INSP: Inspector<DB>>(&mut self, inspector: INSP) -> ExecutionResult {
+    pub fn inspect_commit<INSP: Inspector<DB, BC>>(&mut self, inspector: INSP) -> ExecutionResult {
         let (exec_result, state) = self.inspect(inspector);
         self.db.as_mut().unwrap().commit(state);
         exec_result
     }
 }
 
-impl<DB: Database> EVM<DB> {
+impl<DB: Database, BC: Blockchain<Error = DB::Error>> EVM<DB, BC> {
     /// Execute transaction without writing to DB, return change state.
     pub fn transact(&mut self) -> (ExecutionResult, State) {
         if let Some(db) = self.db.as_mut() {
-            let mut noop = NoOpInspector {};
-            let out = evm_inner::<DB, false>(&mut self.env, db, &mut noop).transact();
-            out
+            if let Some(blockchain) = self.blockchain.as_mut() {
+                let mut noop = NoOpInspector {};
+                let out =
+                    evm_inner::<DB, BC, false>(&mut self.env, db, blockchain, &mut noop).transact();
+                out
+            } else {
+                panic!("Blockchain needs to be set");
+            }
         } else {
             panic!("Database needs to be set");
         }
     }
 
     /// Execute transaction with given inspector, without wring to DB. Return change state.
-    pub fn inspect<INSP: Inspector<DB>>(
+    pub fn inspect<INSP: Inspector<DB, BC>>(
         &mut self,
         mut inspector: INSP,
     ) -> (ExecutionResult, State) {
         if let Some(db) = self.db.as_mut() {
-            evm_inner::<DB, true>(&mut self.env, db, &mut inspector).transact()
+            if let Some(blockchain) = self.blockchain.as_mut() {
+                evm_inner::<DB, BC, true>(&mut self.env, db, blockchain, &mut inspector).transact()
+            } else {
+                panic!("Blockchain needs to be set");
+            }
         } else {
             panic!("Database needs to be set");
         }
     }
 }
 
-impl<'a, DB: DatabaseRef> EVM<DB> {
+impl<'a, DB: DatabaseRef, BC: BlockchainRef<Error = DB::Error>> EVM<DB, BC> {
     /// Execute transaction without writing to DB, return change state.
     pub fn transact_ref(&self) -> (ExecutionResult, State) {
         if let Some(db) = self.db.as_ref() {
-            let mut noop = NoOpInspector {};
-            let mut db = RefDBWrapper::new(db);
-            let db = &mut db;
-            let out =
-                evm_inner::<RefDBWrapper<DB::Error>, false>(&mut self.env.clone(), db, &mut noop)
-                    .transact();
-            out
+            if let Some(mut blockchain) = self.blockchain.as_ref() {
+                let mut noop = NoOpInspector {};
+                let mut db = RefDBWrapper::new(db);
+                let db = &mut db;
+                let out = evm_inner::<RefDBWrapper<DB::Error>, &BC, false>(
+                    &mut self.env.clone(),
+                    db,
+                    &mut blockchain,
+                    &mut noop,
+                )
+                .transact();
+                out
+            } else {
+                panic!("Blockchain needs to be set");
+            }
         } else {
             panic!("Database needs to be set");
         }
     }
 
     /// Execute transaction with given inspector, without wring to DB. Return change state.
-    pub fn inspect_ref<INSP: Inspector<RefDBWrapper<'a, DB::Error>>>(
+    pub fn inspect_ref<INSP: Inspector<RefDBWrapper<'a, DB::Error>, &'a BC>>(
         &'a self,
         mut inspector: INSP,
     ) -> (ExecutionResult, State) {
         if let Some(db) = self.db.as_ref() {
-            let mut db = RefDBWrapper::new(db);
-            let db = &mut db;
-            let out = evm_inner::<RefDBWrapper<DB::Error>, true>(
-                &mut self.env.clone(),
-                db,
-                &mut inspector,
-            )
-            .transact();
-            out
+            if let Some(mut blockchain) = self.blockchain.as_ref() {
+                let mut db = RefDBWrapper::new(db);
+                let db = &mut db;
+                let out = evm_inner::<RefDBWrapper<DB::Error>, &BC, true>(
+                    &mut self.env.clone(),
+                    db,
+                    &mut blockchain,
+                    &mut inspector,
+                )
+                .transact();
+                out
+            } else {
+                panic!("Blockchain needs to be set");
+            }
         } else {
             panic!("Database needs to be set");
         }
     }
 }
 
-impl<DB> EVM<DB> {
+impl<DB, BC> EVM<DB, BC> {
     pub fn new() -> Self {
         Self {
             env: Env::default(),
             db: None,
+            blockchain: None,
         }
     }
 
@@ -136,12 +161,25 @@ impl<DB> EVM<DB> {
     pub fn take_db(&mut self) -> DB {
         core::mem::take(&mut self.db).unwrap()
     }
+
+    pub fn set_blockchain(&mut self, blockchain: BC) {
+        self.blockchain = Some(blockchain);
+    }
+
+    pub fn blockchain_mut(&mut self) -> Option<&mut BC> {
+        self.blockchain.as_mut()
+    }
+
+    pub fn take_blockchain(&mut self) -> BC {
+        self.blockchain.take().unwrap()
+    }
 }
 
 macro_rules! create_evm {
-    ($spec:ident, $db:ident,$env:ident,$inspector:ident) => {
-        Box::new(EVMImpl::<'a, $spec, DB, INSPECT>::new(
+    ($spec:ident, $db:ident,$blockchain:ident,$env:ident,$inspector:ident) => {
+        Box::new(EVMImpl::<'a, $spec, DB, BC, INSPECT>::new(
             $db,
+            $blockchain,
             $env,
             $inspector,
             Precompiles::new(SpecId::to_precompile_id($spec::SPEC_ID)).clone(),
@@ -149,26 +187,35 @@ macro_rules! create_evm {
     };
 }
 
-pub fn evm_inner<'a, DB: Database, const INSPECT: bool>(
+pub fn evm_inner<'a, DB: Database, BC: Blockchain<Error = DB::Error>, const INSPECT: bool>(
     env: &'a mut Env,
     db: &'a mut DB,
-    insp: &'a mut dyn Inspector<DB>,
+    blockchain: &'a mut BC,
+    insp: &'a mut dyn Inspector<DB, BC>,
 ) -> Box<dyn Transact + 'a> {
     use specification::*;
     match env.cfg.spec_id {
-        SpecId::FRONTIER | SpecId::FRONTIER_THAWING => create_evm!(FrontierSpec, db, env, insp),
-        SpecId::HOMESTEAD | SpecId::DAO_FORK => create_evm!(HomesteadSpec, db, env, insp),
-        SpecId::TANGERINE => create_evm!(TangerineSpec, db, env, insp),
-        SpecId::SPURIOUS_DRAGON => create_evm!(SpuriousDragonSpec, db, env, insp),
-        SpecId::BYZANTIUM => create_evm!(ByzantiumSpec, db, env, insp),
-        SpecId::PETERSBURG | SpecId::CONSTANTINOPLE => create_evm!(PetersburgSpec, db, env, insp),
-        SpecId::ISTANBUL | SpecId::MUIR_GLACIER => create_evm!(IstanbulSpec, db, env, insp),
-        SpecId::BERLIN => create_evm!(BerlinSpec, db, env, insp),
-        SpecId::LONDON | SpecId::ARROW_GLACIER | SpecId::GRAY_GLACIER => {
-            create_evm!(LondonSpec, db, env, insp)
+        SpecId::FRONTIER | SpecId::FRONTIER_THAWING => {
+            create_evm!(FrontierSpec, db, blockchain, env, insp)
         }
-        SpecId::MERGE => create_evm!(MergeSpec, db, env, insp),
-        SpecId::MERGE_EOF => create_evm!(MergeSpec, db, env, insp),
-        SpecId::LATEST => create_evm!(LatestSpec, db, env, insp),
+        SpecId::HOMESTEAD | SpecId::DAO_FORK => {
+            create_evm!(HomesteadSpec, db, blockchain, env, insp)
+        }
+        SpecId::TANGERINE => create_evm!(TangerineSpec, db, blockchain, env, insp),
+        SpecId::SPURIOUS_DRAGON => create_evm!(SpuriousDragonSpec, db, blockchain, env, insp),
+        SpecId::BYZANTIUM => create_evm!(ByzantiumSpec, db, blockchain, env, insp),
+        SpecId::PETERSBURG | SpecId::CONSTANTINOPLE => {
+            create_evm!(PetersburgSpec, db, blockchain, env, insp)
+        }
+        SpecId::ISTANBUL | SpecId::MUIR_GLACIER => {
+            create_evm!(IstanbulSpec, db, blockchain, env, insp)
+        }
+        SpecId::BERLIN => create_evm!(BerlinSpec, db, blockchain, env, insp),
+        SpecId::LONDON | SpecId::ARROW_GLACIER | SpecId::GRAY_GLACIER => {
+            create_evm!(LondonSpec, db, blockchain, env, insp)
+        }
+        SpecId::MERGE => create_evm!(MergeSpec, db, blockchain, env, insp),
+        SpecId::MERGE_EOF => create_evm!(MergeSpec, db, blockchain, env, insp),
+        SpecId::LATEST => create_evm!(LatestSpec, db, blockchain, env, insp),
     }
 }
