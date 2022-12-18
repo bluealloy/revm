@@ -3,9 +3,9 @@
 //!
 use crate::{
     bits::B160,
+    inspectors::GasInspector,
     opcode::{self},
-    Bytes, CallInputs, CreateInputs, Database, EVMData, Gas, GasInspector, Inspector, Interpreter,
-    Return,
+    Bytes, CallInputs, CreateInputs, Database, EVMData, Gas, Inspector, Interpreter, Return,
 };
 use hex;
 #[derive(Clone, Default)]

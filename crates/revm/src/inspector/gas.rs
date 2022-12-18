@@ -1,12 +1,9 @@
-
 //! GasIspector. Helper Inspector to calculte gas for others.
-//! 
+//!
 use crate::{
-    bits::{B160, B256},
-    evm_impl::EVMData,
-    opcode, spec_opcode_gas, CallInputs, CreateInputs, Database, Gas, Interpreter, Return,
+    bits::B160, evm_impl::EVMData, opcode, spec_opcode_gas, CallInputs, CreateInputs, Database,
+    Gas, Inspector, Interpreter, Return,
 };
-use auto_impl::auto_impl;
 use bytes::Bytes;
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -126,8 +123,8 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 mod tests {
     use crate::db::BenchmarkDB;
     use crate::{
-        opcode, Bytecode, CallInputs, CreateInputs, Database, EVMData, Gas, GasInspector,
-        Inspector, Interpreter, OpCode, Return, TransactTo, B160, B256,
+        inspectors::GasInspector, opcode, Bytecode, CallInputs, CreateInputs, Database, EVMData,
+        Gas, Inspector, Interpreter, OpCode, Return, TransactTo, B160, B256,
     };
     use bytes::Bytes;
     use hex_literal::hex;

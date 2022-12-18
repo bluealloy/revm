@@ -1,4 +1,6 @@
-//! Dummy NoOp Inspector, helpful as standalone replacment.
+//! Dummy NoOp Inspector, helpful as standalone replacemnt.
+
+use crate::{Database, Inspector};
 
 #[derive(Clone, Copy)]
 pub struct NoOpInspector();

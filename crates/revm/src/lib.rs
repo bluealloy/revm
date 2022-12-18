@@ -46,8 +46,6 @@ pub mod precompiles {
     pub use revm_precompiles::*;
 }
 
-/// Inspector implementations
-#[cfg(feature = "inspectors")]
+/// Reexport Inspector implementations
 pub use inspector::inspectors;
-
-pub use inspector::{GasInspector, Inspector, NoOpInspector};
+pub use inspector::Inspector;

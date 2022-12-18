@@ -10,6 +10,7 @@ use indicatif::ProgressBar;
 use revm::{
     bits::{B160, B256},
     db::AccountState,
+    inspectors::CustomPrintTracer,
     Bytecode, CreateScheme, Env, ExecutionResult, SpecId, TransactTo, U256,
 };
 use std::sync::atomic::Ordering;
@@ -18,7 +19,6 @@ use walkdir::{DirEntry, WalkDir};
 use super::{
     merkle_trie::{log_rlp_hash, state_merkle_trie_root},
     models::{SpecName, TestSuit},
-    trace::CustomPrintTracer,
 };
 use hex_literal::hex;
 use revm::common::keccak256;
@@ -273,7 +273,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                     );
                     let mut database_cloned = database.clone();
                     evm.database(&mut database_cloned);
-                    evm.inspect_commit(CustomPrintTracer::new());
+                    evm.inspect_commit(CustomPrintTracer::default());
                     let db = evm.db().unwrap();
                     println!("{path:?} UNIT_TEST:{name}\n");
                     println!(
