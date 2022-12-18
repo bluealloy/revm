@@ -1,3 +1,6 @@
+//! Custom print inspector, it has step level information of execution.
+//! It is great tool if some debugging is needed.
+//!
 use crate::{
     bits::B160,
     opcode::{self},
@@ -5,17 +8,9 @@ use crate::{
     Return,
 };
 use hex;
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct CustomPrintTracer {
     gas_inspector: GasInspector,
-}
-
-impl CustomPrintTracer {
-    pub fn new() -> Self {
-        Self {
-            gas_inspector: GasInspector::default(),
-        }
-    }
 }
 
 impl<DB: Database> Inspector<DB> for CustomPrintTracer {
@@ -170,6 +165,6 @@ mod test {
         evm.env.tx.transact_to = TransactTo::Call(B160(callee));
         evm.env.tx.data = Bytes::from(hex::decode("").unwrap());
         evm.env.tx.value = U256::ZERO;
-        evm.inspect_commit(CustomPrintTracer::new());
+        evm.inspect_commit(CustomPrintTracer::default());
     }
 }
