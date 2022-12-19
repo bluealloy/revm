@@ -1,15 +1,14 @@
 //! GasIspector. Helper Inspector to calculte gas for others.
 //!
 use crate::{
-    bits::B160, evm_impl::EVMData, opcode, spec_opcode_gas, CallInputs, CreateInputs, Database,
-    Gas, Inspector, Interpreter, Return,
+    bits::B160, evm_impl::EVMData, CallInputs, CreateInputs, Database, Gas, Inspector, Return,
 };
 use bytes::Bytes;
 
 #[derive(Clone, Copy, Debug, Default)]
 pub struct GasInspector {
     /// We now batch continual gas_block in one go, that means we need to reduce it if we want
-    /// to get correct gas remaining. Check revm/interp/contract/analyze for more information
+    /// to get correct gas remaining. Check revm/interpreter/contract/analyze for more information
     reduced_gas_block: u64,
     full_gas_block: u64,
     was_return: bool,
@@ -25,9 +24,10 @@ impl GasInspector {
 }
 
 impl<DB: Database> Inspector<DB> for GasInspector {
+    #[cfg(not(feature = "no_gas_measuring"))]
     fn initialize_interp(
         &mut self,
-        interp: &mut Interpreter,
+        interp: &mut crate::Interpreter,
         _data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> Return {
@@ -38,20 +38,22 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 
     // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
     // all other information can be obtained from interp.
+
+    #[cfg(not(feature = "no_gas_measuring"))]
     fn step(
         &mut self,
-        interp: &mut Interpreter,
+        interp: &mut crate::Interpreter,
         data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> Return {
         let op = interp.current_opcode();
 
         // calculate gas_block
-        let infos = spec_opcode_gas(data.env.cfg.spec_id);
+        let infos = crate::spec_opcode_gas(data.env.cfg.spec_id);
         let info = &infos[op as usize];
 
         let pc = interp.program_counter();
-        if op == opcode::JUMPI {
+        if op == crate::opcode::JUMPI {
             self.reduced_gas_block += info.get_gas() as u64;
             self.was_jumpi = Some(pc);
         } else if info.is_gas_block_end() {
@@ -64,9 +66,10 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         Return::Continue
     }
 
+    #[cfg(not(feature = "no_gas_measuring"))]
     fn step_end(
         &mut self,
-        interp: &mut Interpreter,
+        interp: &mut crate::Interpreter,
         _data: &mut EVMData<'_, DB>,
         _is_static: bool,
         _eval: Return,
