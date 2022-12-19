@@ -5,7 +5,7 @@ pub mod ethersdb;
 #[cfg(feature = "ethersdb")]
 pub use ethersdb::EthersDB;
 
-#[cfg(feature = "web3db")]
+#[cfg(all(not(feature = "ethersdb"), feature = "web3db"))]
 compile_error!(
     "`web3db` feature is deprecated, drop-in replacement can be found with feature `ethersdb`"
 );
