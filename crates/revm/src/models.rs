@@ -250,6 +250,9 @@ pub struct CfgEnv {
     /// EIP-1985.
     #[cfg(feature = "memory_limit")]
     pub memory_limit: u64,
+    /// Skip balance checks if true. Adds transaction cost to balance to ensure execution doesn't fail.
+    #[cfg(feature = "optional_balance_check")]
+    pub disable_balance_check: bool,
     /// There are use cases where it's allowed to provide a gas limit that's higher than a block's gas limit. To that
     /// end, you can disable the block gas limit validation.
     /// By default, it is set to `false`.
@@ -286,6 +289,8 @@ impl Default for CfgEnv {
             limit_contract_code_size: None,
             #[cfg(feature = "memory_limit")]
             memory_limit: 2u64.pow(32) - 1,
+            #[cfg(feature = "optional_balance_check")]
+            disable_balance_check: false,
             #[cfg(feature = "optional_block_gas_limit")]
             disable_block_gas_limit: false,
             #[cfg(feature = "optional_eip3607")]

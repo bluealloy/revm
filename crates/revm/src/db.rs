@@ -37,7 +37,7 @@ pub trait DatabaseCommit {
     fn commit(&mut self, changes: Map<B160, Account>);
 }
 
-#[auto_impl(&, Box)]
+#[auto_impl(&, Box, Arc)]
 pub trait DatabaseRef {
     type Error;
     /// Whether account at address exists.
