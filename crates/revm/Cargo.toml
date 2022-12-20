@@ -50,7 +50,6 @@ dev = [
 ethersdb = ["tokio", "futures", "ethers-providers", "ethers-core"]
 # deprecated feature
 web3db = []
-k256 = ["revm_precompiles/k256_ecrecover"]
 secp256k1 = ["revm_precompiles/secp256k1"]
 memory_limit = []
 no_gas_measuring = []
