@@ -1,8 +1,9 @@
 use crate::{
     db::{Database, DatabaseCommit, DatabaseRef, RefDBWrapper},
     evm_impl::{EVMImpl, Transact},
+    inspectors::NoOpInspector,
     journaled_state::State,
-    specification, Env, ExecutionResult, Inspector, NoOpInspector,
+    specification, Env, ExecutionResult, Inspector,
 };
 use alloc::boxed::Box;
 use revm_precompiles::Precompiles;

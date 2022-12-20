@@ -48,12 +48,12 @@ pub fn mulmod(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     *op3 = op1.mul_mod(op2, *op3)
 }
 
-pub fn eval_exp<SPEC: Spec>(interp: &mut Interpreter, _host: &mut dyn Host) {
-    pop!(interp, op1, op2);
-    gas_or_fail!(interp, gas::exp_cost::<SPEC>(op2));
+pub fn eval_exp<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+    pop!(interpreter, op1, op2);
+    gas_or_fail!(interpreter, gas::exp_cost::<SPEC>(op2));
     // TODO see if we can use pop_top
     let ret = op1.pow(op2);
-    push!(interp, ret);
+    push!(interpreter, ret);
 }
 
 /// In the yellow paper `SIGNEXTEND` is defined to take two inputs, we will call them

@@ -5,7 +5,7 @@ pub mod ethersdb;
 #[cfg(feature = "ethersdb")]
 pub use ethersdb::EthersDB;
 
-#[cfg(feature = "web3db")]
+#[cfg(all(not(feature = "ethersdb"), feature = "web3db"))]
 compile_error!(
     "`web3db` feature is deprecated, drop-in replacement can be found with feature `ethersdb`"
 );
@@ -37,7 +37,7 @@ pub trait DatabaseCommit {
     fn commit(&mut self, changes: Map<B160, Account>);
 }
 
-#[auto_impl(&, Box)]
+#[auto_impl(&, Box, Arc)]
 pub trait DatabaseRef {
     type Error;
     /// Whether account at address exists.

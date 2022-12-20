@@ -110,6 +110,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
             return exit(Return::RejectCallerWithCode);
         }
 
+        #[cfg(feature = "optional_balance_check")]
+        let disable_balance_check = self.env().cfg.disable_balance_check;
+        #[cfg(not(feature = "optional_balance_check"))]
+        let disable_balance_check = false;
+
         // substract gas_limit*gas_price from current account.
         if let Some(payment_value) =
             U256::from(gas_limit).checked_mul(self.data.env.effective_gas_price())
@@ -122,17 +127,25 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
                 .unwrap()
                 .info
                 .balance;
+
             if payment_value > *balance {
-                return exit(Return::LackOfFundForGasLimit);
+                if disable_balance_check {
+                    *balance = U256::ZERO;
+                } else {
+                    return exit(Return::LackOfFundForGasLimit);
+                }
+            } else {
+                *balance -= payment_value;
             }
-            *balance -= payment_value;
         } else {
             return exit(Return::OverflowPayment);
         }
 
         // check if we have enought balance for value transfer.
         let difference = self.data.env.tx.gas_price - self.data.env.effective_gas_price();
-        if difference + value > self.data.journaled_state.account(caller).info.balance {
+        if !disable_balance_check
+            && difference + value > self.data.journaled_state.account(caller).info.balance
+        {
             return exit(Return::OutOfFund);
         }
 
