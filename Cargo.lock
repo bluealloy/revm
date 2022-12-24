@@ -1469,7 +1469,31 @@ dependencies = [
  "hex",
  "hex-literal",
  "num_enum",
+ "revm-interpreter",
  "revm_precompiles",
+ "rlp",
+ "ruint",
+ "serde",
+ "sha3",
+ "tokio",
+]
+
+[[package]]
+name = "revm-interpreter"
+version = "0.1.0"
+dependencies = [
+ "arrayref",
+ "auto_impl",
+ "bytes",
+ "derive_more",
+ "ethers-core",
+ "ethers-providers",
+ "fixed-hash",
+ "futures",
+ "hashbrown 0.13.1",
+ "hex",
+ "hex-literal",
+ "num_enum",
  "rlp",
  "ruint",
  "serde",

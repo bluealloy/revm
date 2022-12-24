@@ -1,17 +1,90 @@
 use core::cmp::min;
 
-use crate::{
-    alloc::vec::Vec,
-    bits::{B160, B256},
-    interpreter::bytecode::Bytecode,
-    Return, SpecId, U256,
-};
+use crate::{alloc::vec::Vec, interpreter::bytecode::Bytecode, Return, SpecId, B160, B256, U256};
 use bytes::Bytes;
+use hashbrown::HashMap as Map;
 use hex_literal::hex;
 
 pub const KECCAK_EMPTY: B256 = B256(hex!(
     "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
 ));
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct Account {
+    /// Balance of the account.
+    pub info: AccountInfo,
+    /// storage cache
+    pub storage: Map<U256, StorageSlot>,
+    /// If account is newly created, we will not ask database for storage values
+    pub storage_cleared: bool,
+    /// if account is destroyed it will be scheduled for removal.
+    pub is_destroyed: bool,
+    /// if account is touched
+    pub is_touched: bool,
+    /// used only for pre spurious dragon hardforks where exisnting and empty was two saparate states.
+    /// it became same state after EIP-161: State trie clearing
+    pub is_not_existing: bool,
+}
+
+impl Account {
+    pub fn is_empty(&self) -> bool {
+        self.info.is_empty()
+    }
+    pub fn new_not_existing() -> Self {
+        Self {
+            info: AccountInfo::default(),
+            storage: Map::new(),
+            storage_cleared: false,
+            is_destroyed: false,
+            is_touched: false,
+            is_not_existing: true,
+        }
+    }
+}
+
+impl From<AccountInfo> for Account {
+    fn from(info: AccountInfo) -> Self {
+        Self {
+            info,
+            storage: Map::new(),
+            storage_cleared: false,
+            is_destroyed: false,
+            is_touched: false,
+            is_not_existing: false,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Eq, PartialEq)]
+#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct StorageSlot {
+    pub original_value: U256,
+    /// When loaded with sload present value is set to original value
+    pub present_value: U256,
+}
+
+impl StorageSlot {
+    pub fn new(original: U256) -> Self {
+        Self {
+            original_value: original,
+            present_value: original,
+        }
+    }
+
+    /// Returns true if the present value differs from the original value
+    pub fn is_changed(&self) -> bool {
+        self.original_value != self.present_value
+    }
+
+    pub fn original_value(&self) -> U256 {
+        self.original_value
+    }
+
+    pub fn present_value(&self) -> U256 {
+        self.present_value
+    }
+}
 
 /// AccountInfo account information.
 #[derive(Clone, Debug, Eq)]
