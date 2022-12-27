@@ -1,14 +1,14 @@
 use crate::{
     alloc::vec::Vec,
-    bits::{B160, B256},
     gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
     interpreter::Interpreter,
+    primitives::{B160, B256, U256},
     return_ok, return_revert, CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme,
     Host, Return, Spec,
     SpecId::*,
-    Transfer, U256,
+    Transfer,
 };
-use bytes::Bytes;
+use crate::primitives::Bytes;
 use core::cmp::min;
 
 pub fn balance<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {

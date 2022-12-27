@@ -6,13 +6,15 @@ use crate::{
     interpreter::{Contract, Interpreter},
     journaled_state::{Account, JournaledState, State},
     models::SelfDestructResult,
-    precompiles, return_ok, return_revert, AnalysisKind, CallContext, CallInputs, CallScheme,
-    CreateInputs, CreateScheme, Env, ExecutionResult, Gas, Inspector, Log, Return, Spec,
+    precompiles,
+    primitives::{B160, B256, U256},
+    return_ok, return_revert, AnalysisKind, CallContext, CallInputs, CallScheme, CreateInputs,
+    CreateScheme, Env, ExecutionResult, Gas, Inspector, Log, Return, Spec,
     SpecId::{self, *},
-    TransactOut, TransactTo, Transfer, B160, B256, KECCAK_EMPTY, U256,
+    TransactOut, TransactTo, Transfer, KECCAK_EMPTY,
 };
 use alloc::vec::Vec;
-use bytes::Bytes;
+use crate::primitives::Bytes;
 use core::{cmp::min, marker::PhantomData};
 use hashbrown::HashMap as Map;
 use revm_precompiles::{Precompile, Precompiles};

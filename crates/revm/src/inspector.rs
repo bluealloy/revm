@@ -1,10 +1,10 @@
 use crate::{
-    bits::{B160, B256},
     evm_impl::EVMData,
+    primitives::{B160, B256},
     CallInputs, CreateInputs, Database, Gas, Interpreter, Return,
 };
 use auto_impl::auto_impl;
-use bytes::Bytes;
+use crate::primitives::Bytes;
 
 #[cfg(feature = "std")]
 pub mod customprinter;

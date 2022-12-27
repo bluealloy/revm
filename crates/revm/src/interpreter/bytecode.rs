@@ -1,6 +1,6 @@
 use super::contract::{AnalysisData, ValidJumpAddress};
-use crate::{common::keccak256, opcode, spec_opcode_gas, Spec, B256, KECCAK_EMPTY};
-use bytes::Bytes;
+use crate::{common::keccak256, opcode, primitives::B256, spec_opcode_gas, Spec, KECCAK_EMPTY};
+use crate::primitives::Bytes;
 use std::sync::Arc;
 
 #[derive(Clone, Debug, Eq, PartialEq)]

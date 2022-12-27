@@ -1,4 +1,4 @@
-use crate::bits::B256;
+use crate::primitives::B256;
 use sha3::{Digest, Keccak256};
 
 #[inline(always)]

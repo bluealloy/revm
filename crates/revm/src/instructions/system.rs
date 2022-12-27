@@ -1,6 +1,11 @@
 use crate::{
-    common::keccak256, gas, interpreter::Interpreter, Host, Return, Spec, SpecId::*, B256,
-    KECCAK_EMPTY, U256,
+    common::keccak256,
+    gas,
+    interpreter::Interpreter,
+    primitives::{B256, U256},
+    Host, Return, Spec,
+    SpecId::*,
+    KECCAK_EMPTY,
 };
 use std::cmp::min;
 

@@ -12,7 +12,7 @@ use crate::{
     instructions::{eval, Return},
     Gas, Host, Spec, USE_GAS,
 };
-use bytes::Bytes;
+use crate::primitives::Bytes;
 use core::ops::Range;
 
 pub const STACK_LIMIT: u64 = 1024;

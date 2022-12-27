@@ -1,6 +1,10 @@
 use super::bytecode::{Bytecode, BytecodeLocked};
-use crate::{alloc::vec::Vec, CallContext, Spec, B160, U256};
-use bytes::Bytes;
+use crate::{
+    alloc::vec::Vec,
+    primitives::{B160, U256},
+    CallContext, Spec,
+};
+use crate::primitives::Bytes;
 use std::sync::Arc;
 
 pub struct Contract {

@@ -1463,18 +1463,30 @@ dependencies = [
  "derive_more",
  "ethers-core",
  "ethers-providers",
- "fixed-hash",
  "futures",
  "hashbrown 0.13.1",
  "hex",
  "hex-literal",
  "num_enum",
+ "revm-primitives",
  "revm_precompiles",
  "rlp",
  "ruint",
  "serde",
  "sha3",
  "tokio",
+]
+
+[[package]]
+name = "revm-primitives"
+version = "0.2.0"
+dependencies = [
+ "bytes",
+ "derive_more",
+ "fixed-hash",
+ "hex-literal",
+ "ruint",
+ "serde",
 ]
 
 [[package]]

@@ -1,10 +1,12 @@
+use crate::{
+    db::Database,
+    primitives::{B160, U256},
+    AccountInfo, Log,
+};
 use crate::{interpreter::bytecode::Bytecode, models::SelfDestructResult, Return, KECCAK_EMPTY};
 use alloc::{vec, vec::Vec};
 use core::mem::{self};
 use hashbrown::{hash_map::Entry, HashMap as Map};
-use ruint::aliases::U256;
-
-use crate::{bits::B160, db::Database, AccountInfo, Log};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]

@@ -1,7 +1,9 @@
 use std::sync::Arc;
 
 use crate::{
-    interpreter::bytecode::Bytecode, AccountInfo, Database, B160, B256, KECCAK_EMPTY, U256,
+    interpreter::bytecode::Bytecode,
+    primitives::{B160, B256, U256},
+    AccountInfo, Database, KECCAK_EMPTY,
 };
 
 use ethers_core::types::{BlockId, H160 as eH160, H256, U64 as eU64};

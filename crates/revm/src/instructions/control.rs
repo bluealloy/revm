@@ -1,4 +1,4 @@
-use crate::{gas, interpreter::Interpreter, Host, Return, Spec, SpecId::*, U256};
+use crate::{gas, interpreter::Interpreter, primitives::U256, Host, Return, Spec, SpecId::*};
 
 pub fn jump(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     // gas!(interp, gas::MID);

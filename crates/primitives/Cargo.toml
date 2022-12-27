@@ -1,0 +1,26 @@
+[package]
+authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
+description = "REVM WASM - Rust Ethereum Virtual Machine Web Assembly lib"
+edition = "2021"
+keywords = ["ethereum", "evm", "rust"]
+license = "MIT"
+name = "revm-primitives"
+repository = "https://github.com/bluealloy/revm"
+version = "0.2.0"
+
+[dependencies]
+bytes = { version = "1.1", default-features = false }
+
+# bits B256 B160 crate
+fixed-hash = { version = "0.8", default-features = false, features = [
+    "rustc-hex",
+] }
+hex-literal = "0.3"
+derive_more = "0.99"
+
+ruint = { version = "1.7.0", features = ["primitive-types", "rlp"] }
+serde = { version = "1.0", features = ["derive", "rc"], optional = true }
+
+[features]
+default = []
+serde = ["dep:serde", "ruint/serde"]
