@@ -1,15 +1,11 @@
 use crate::{Error, Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn};
-use alloc::vec::Vec;
-use core::cmp::min;
-
-const ECRECOVER_BASE: u64 = 3_000;
 
 pub const ECRECOVER: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(1),
     Precompile::Standard(ec_recover_run as StandardPrecompileFn),
 );
 
-#[cfg(feature = "k256_ecrecover")]
+#[cfg(feature = "secp256k1")]
 #[allow(clippy::module_inception)]
 mod secp256k1 {
     use core::convert::TryFrom;
@@ -35,7 +31,7 @@ mod secp256k1 {
     }
 }
 
-#[cfg(all(not(feature = "k256_ecrecover"), feature = "secp256k1"))]
+#[cfg(not(feature = "secp256k1"))]
 #[allow(clippy::module_inception)]
 mod secp256k1 {
     use crate::B256;
@@ -60,6 +56,11 @@ mod secp256k1 {
 }
 
 fn ec_recover_run(i: &[u8], target_gas: u64) -> PrecompileResult {
+    use alloc::vec::Vec;
+    use core::cmp::min;
+
+    const ECRECOVER_BASE: u64 = 3_000;
+
     if ECRECOVER_BASE > target_gas {
         return Err(Error::OutOfGas);
     }

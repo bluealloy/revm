@@ -12,7 +12,7 @@ version = "1.1.2"
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
 bytes = { version = "1.1", default-features = false }
 hashbrown = { version = "0.13" }
-k256 = { version = "0.11", default-features = false, features = ["ecdsa", "keccak256"], optional = true }
+k256 = { version = "0.11", default-features = false, features = ["ecdsa", "keccak256"] }
 num = { version = "0.4.0", default-features = false, features = ["alloc"] }
 once_cell = "1.14"
 ripemd = { version = "0.1", default-features = false }
@@ -26,5 +26,8 @@ hex = "0.4"
 
 [features]
 default = ["secp256k1"]
-k256_ecrecover = ["k256"]
+# secp256k1 is used as faster alternative to k256 lib. And in most cases should be default.
+# Only problem that it has, it fails to build for wasm target on windows and mac as it is c lib.
+# If you dont require wasm on win/mac, i would recommend its usage.
+secp256k1 = ["dep:secp256k1"]
 
