@@ -1,5 +1,12 @@
-use crate::primitives::{MIN_NEGATIVE_VALUE, U256};
+use crate::U256;
 use core::cmp::Ordering;
+use ruint::uint;
+
+pub const SIGN_BIT_MASK: U256 =
+    uint!(0x7FFFFFFFFFFFFFFF_FFFFFFFFFFFFFFFF_FFFFFFFFFFFFFFFF_FFFFFFFFFFFFFFFF_U256);
+
+pub const MIN_NEGATIVE_VALUE: U256 =
+    uint!(0x8000000000000000_0000000000000000_0000000000000000_0000000000000000_U256);
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum Sign {

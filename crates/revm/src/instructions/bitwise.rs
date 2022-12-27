@@ -1,5 +1,11 @@
-use super::i256::{i256_cmp, i256_sign, two_compl, Sign};
-use crate::{primitives::U256, Host, Interpreter, Return, Spec, SpecId::CONSTANTINOPLE};
+use crate::{
+    primitives::{
+        i256::{i256_cmp, i256_sign, two_compl, Sign},
+        U256,
+    },
+    Host, Interpreter, Return, Spec,
+    SpecId::CONSTANTINOPLE,
+};
 use core::cmp::Ordering;
 use std::ops::{BitAnd, BitOr, BitXor};
 
