@@ -1,6 +1,6 @@
 [package]
 authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
-description = "REVM WASM - Rust Ethereum Virtual Machine Web Assembly lib"
+description = "REVM Primitives - Rust Primitives lib"
 edition = "2021"
 keywords = ["ethereum", "evm", "rust"]
 license = "MIT"
