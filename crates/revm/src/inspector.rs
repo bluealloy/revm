@@ -1,7 +1,6 @@
-use crate::primitives::Bytes;
 use crate::{
     evm_impl::EVMData,
-    primitives::{B160, B256},
+    primitives::{Bytes, B160, B256},
     CallInputs, CreateInputs, Database, Gas, Interpreter, Return,
 };
 use auto_impl::auto_impl;

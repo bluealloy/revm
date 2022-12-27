@@ -1,8 +1,7 @@
 use super::bytecode::{Bytecode, BytecodeLocked};
-use crate::primitives::Bytes;
 use crate::{
     alloc::vec::Vec,
-    primitives::{B160, U256},
+    primitives::{Bytes, B160, U256},
     CallContext, Spec,
 };
 use std::sync::Arc;

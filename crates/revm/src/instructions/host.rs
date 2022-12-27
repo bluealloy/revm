@@ -1,9 +1,8 @@
-use crate::primitives::Bytes;
 use crate::{
     alloc::vec::Vec,
     gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
     interpreter::Interpreter,
-    primitives::{B160, B256, U256},
+    primitives::{Bytes, B160, B256, U256},
     return_ok, return_revert, CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme,
     Host, Return, Spec,
     SpecId::*,

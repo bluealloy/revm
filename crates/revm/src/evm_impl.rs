@@ -1,4 +1,3 @@
-use crate::primitives::Bytes;
 use crate::{
     common::keccak256,
     db::Database,
@@ -8,7 +7,7 @@ use crate::{
     journaled_state::{Account, JournaledState, State},
     models::SelfDestructResult,
     precompiles,
-    primitives::{B160, B256, U256},
+    primitives::{Bytes, B160, B256, U256},
     return_ok, return_revert, AnalysisKind, CallContext, CallInputs, CallScheme, CreateInputs,
     CreateScheme, Env, ExecutionResult, Gas, Inspector, Log, Return, Spec,
     SpecId::{self, *},

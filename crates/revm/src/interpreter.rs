@@ -8,9 +8,9 @@ pub use contract::Contract;
 pub use memory::Memory;
 pub use stack::Stack;
 
-use crate::primitives::Bytes;
 use crate::{
     instructions::{eval, Return},
+    primitives::Bytes,
     Gas, Host, Spec, USE_GAS,
 };
 use core::ops::Range;
