@@ -1471,7 +1471,6 @@ dependencies = [
  "revm-primitives",
  "revm_precompiles",
  "rlp",
- "ruint",
  "serde",
  "sha3",
  "tokio",

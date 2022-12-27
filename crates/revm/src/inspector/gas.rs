@@ -1,9 +1,9 @@
 //! GasIspector. Helper Inspector to calculte gas for others.
 //!
+use crate::primitives::Bytes;
 use crate::{
     evm_impl::EVMData, primitives::B160, CallInputs, CreateInputs, Database, Gas, Inspector, Return,
 };
-use crate::primitives::Bytes;
 
 #[derive(Clone, Copy, Debug, Default)]
 pub struct GasInspector {
@@ -125,6 +125,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 #[cfg(test)]
 mod tests {
     use crate::db::BenchmarkDB;
+    use crate::primitives::Bytes;
     use crate::{
         inspectors::GasInspector,
         opcode,
@@ -132,7 +133,6 @@ mod tests {
         Bytecode, CallInputs, CreateInputs, Database, EVMData, Gas, Inspector, Interpreter, OpCode,
         Return, TransactTo,
     };
-    use crate::primitives::Bytes;
     use hex_literal::hex;
 
     #[derive(Default, Debug)]

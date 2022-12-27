@@ -8,11 +8,11 @@ pub use contract::Contract;
 pub use memory::Memory;
 pub use stack::Stack;
 
+use crate::primitives::Bytes;
 use crate::{
     instructions::{eval, Return},
     Gas, Host, Spec, USE_GAS,
 };
-use crate::primitives::Bytes;
 use core::ops::Range;
 
 pub const STACK_LIMIT: u64 = 1024;

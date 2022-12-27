@@ -1,3 +1,4 @@
+use crate::primitives::Bytes;
 use crate::{
     alloc::vec::Vec,
     gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
@@ -8,7 +9,6 @@ use crate::{
     SpecId::*,
     Transfer,
 };
-use crate::primitives::Bytes;
 use core::cmp::min;
 
 pub fn balance<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {

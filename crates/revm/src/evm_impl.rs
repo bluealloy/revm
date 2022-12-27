@@ -1,3 +1,4 @@
+use crate::primitives::Bytes;
 use crate::{
     common::keccak256,
     db::Database,
@@ -14,7 +15,6 @@ use crate::{
     TransactOut, TransactTo, Transfer, KECCAK_EMPTY,
 };
 use alloc::vec::Vec;
-use crate::primitives::Bytes;
 use core::{cmp::min, marker::PhantomData};
 use hashbrown::HashMap as Map;
 use revm_precompiles::{Precompile, Precompiles};

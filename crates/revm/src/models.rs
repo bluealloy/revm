@@ -2,12 +2,10 @@ use core::cmp::min;
 
 use crate::{
     alloc::vec::Vec,
-    primitives::{B160, B256, 
-        U256},
     interpreter::bytecode::Bytecode,
+    primitives::{Bytes, B160, B256, U256},
     Return, SpecId,
 };
-use crate::primitives::Bytes;
 use hex_literal::hex;
 
 pub const KECCAK_EMPTY: B256 = B256(hex!(
