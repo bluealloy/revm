@@ -11,11 +11,10 @@ version = "0.2.0"
 [dependencies]
 bytes = { version = "1.1", default-features = false }
 
-# bits B256 B160 crate
+# bits B256 B160
 fixed-hash = { version = "0.8", default-features = false, features = [
     "rustc-hex",
 ] }
-hex-literal = "0.3"
 derive_more = "0.99"
 
 ruint = { version = "1.7.0", features = ["primitive-types", "rlp"] }

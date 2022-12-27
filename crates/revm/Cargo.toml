@@ -28,7 +28,6 @@ tokio = { version = "1.23", features = [
 ethers-providers = { version = "1.0.2", optional = true }
 ethers-core = { version = "1.0.2", optional = true }
 hex-literal = "0.3"
-derive_more = "0.99"
 
 # sha3 keccak hasher
 sha3 = { version = "0.10", default-features = false, features = [] }

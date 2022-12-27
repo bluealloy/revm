@@ -1460,7 +1460,6 @@ dependencies = [
  "arrayref",
  "auto_impl",
  "bytes",
- "derive_more",
  "ethers-core",
  "ethers-providers",
  "futures",
@@ -1483,7 +1482,6 @@ dependencies = [
  "bytes",
  "derive_more",
  "fixed-hash",
- "hex-literal",
  "ruint",
  "serde",
 ]
