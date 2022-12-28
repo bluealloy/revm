@@ -2,7 +2,10 @@ use crate::U256;
 use core::cmp::Ordering;
 use ruint::uint;
 
-#[cfg(feature = "arbitrary")]
+#[cfg(test)]
+use proptest_derive::Arbitrary as PropTestArbitrary;
+
+#[cfg(any(test, feature = "arbitrary"))]
 use arbitrary::Arbitrary;
 
 pub const SIGN_BIT_MASK: U256 =
@@ -11,7 +14,8 @@ pub const SIGN_BIT_MASK: U256 =
 pub const MIN_NEGATIVE_VALUE: U256 =
     uint!(0x8000000000000000_0000000000000000_0000000000000000_0000000000000000_U256);
 
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(test, derive(PropTestArbitrary))]
+#[cfg_attr(any(test, feature = "arbitrary"), derive(Arbitrary))]
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum Sign {
     Plus,
@@ -21,7 +25,8 @@ pub enum Sign {
 
 const FLIPH_BITMASK_U64: u64 = 0x7FFFFFFFFFFFFFFF;
 
-#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+#[cfg_attr(test, derive(PropTestArbitrary))]
+#[cfg_attr(any(test, feature = "arbitrary"), derive(Arbitrary))]
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct I256(pub Sign, pub U256);
 
@@ -158,5 +163,10 @@ mod tests {
         assert_eq!(i256_div(max_value, minus_one), neg_max_value);
         assert_eq!(i256_div(one_hundred, minus_one), neg_one_hundred);
         assert_eq!(i256_div(one_hundred, two), fifty);
+    }
+
+    #[test]
+    fn arbitrary() {
+        proptest::proptest!(|(_value: I256)| { })
     }
 }

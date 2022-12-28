@@ -20,8 +20,11 @@ arbitrary = { version = "1.2", features = ["derive"], optional = true }
 
 [dev-dependencies]
 arbitrary = { version = "1.2", features = ["derive"]}
+ruint = { version = "1.7.0", features = ["primitive-types", "rlp", "proptest", "arbitrary"] }
+proptest = { version = "1.0" }
+proptest-derive = "0.2.0"
 
 [features]
 default = []
 serde = ["dep:serde", "ruint/serde"]
-arbitrary = ["dep:arbitrary", "ruint/arbitrary"]
+arbitrary = ["dep:arbitrary", "ruint/arbitrary", "ruint/proptest"]

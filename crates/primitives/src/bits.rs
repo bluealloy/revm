@@ -1,19 +1,24 @@
 use derive_more::{AsRef, Deref};
 use fixed_hash::{construct_fixed_hash, impl_fixed_hash_conversions};
 
-#[cfg(feature = "arbitrary")]
+#[cfg(test)]
+use proptest_derive::Arbitrary as PropTestArbitrary;
+
+#[cfg(any(test, feature = "arbitrary"))]
 use arbitrary::Arbitrary;
 
 construct_fixed_hash! {
     /// revm 256 bits type.
-    #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+    #[cfg_attr(test, derive(PropTestArbitrary))]
+    #[cfg_attr(any(test, feature = "arbitrary"), derive(Arbitrary))]
     #[derive(AsRef,Deref)]
     pub struct B256(32);
 }
 
 construct_fixed_hash! {
     /// revm 160 bits type.
-    #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
+    #[cfg_attr(test, derive(PropTestArbitrary))]
+    #[cfg_attr(any(test, feature = "arbitrary"), derive(Arbitrary))]
     #[derive(AsRef,Deref)]
     pub struct B160(20);
 }
@@ -297,5 +302,15 @@ mod serialize {
         }
 
         deserializer.deserialize_str(Visitor { len })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn arbitrary() {
+        proptest::proptest!(|(_v1: B160, _v2: B256)| {});
     }
 }
