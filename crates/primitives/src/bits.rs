@@ -13,6 +13,20 @@ construct_fixed_hash! {
     pub struct B160(20);
 }
 
+#[cfg(feature = "arbitrary")]
+impl<'a> arbitrary::Arbitrary<'a> for B256 {
+    fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+        <[u8; 32] as arbitrary::Arbitrary>::arbitrary(u).map(|o| B256(o))
+    }
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> arbitrary::Arbitrary<'a> for B160 {
+    fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+        <[u8; 20] as arbitrary::Arbitrary>::arbitrary(u).map(|o| B160(o))
+    }
+}
+
 impl From<u64> for B160 {
     fn from(fr: u64) -> Self {
         let x_bytes = fr.to_be_bytes();

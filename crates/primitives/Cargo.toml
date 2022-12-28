@@ -10,15 +10,16 @@ version = "0.2.0"
 
 [dependencies]
 bytes = { version = "1.1", default-features = false }
-
-# bits B256 B160
 fixed-hash = { version = "0.8", default-features = false, features = [
     "rustc-hex",
 ] }
 derive_more = "0.99"
-
 ruint = { version = "1.7.0", features = ["primitive-types", "rlp"] }
 serde = { version = "1.0", features = ["derive", "rc"], optional = true }
+arbitrary = { version = "1.2", optional = true }
+
+[dev-dependencies]
+arbitrary = { version = "1.2" }
 
 [features]
 default = []
