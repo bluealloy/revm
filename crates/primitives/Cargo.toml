@@ -26,5 +26,5 @@ proptest-derive = "0.2.0"
 
 [features]
 default = []
-serde = ["dep:serde", "ruint/serde"]
+with-serde = ["dep:serde", "ruint/serde"]
 arbitrary = ["dep:arbitrary", "ruint/arbitrary", "ruint/proptest"]

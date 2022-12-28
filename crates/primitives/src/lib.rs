@@ -1,3 +1,5 @@
+extern crate alloc;
+
 mod bits;
 pub mod i256;
 

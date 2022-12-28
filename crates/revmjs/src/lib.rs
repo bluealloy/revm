@@ -4,8 +4,9 @@ use bn_rs::BN;
 use bytes::Bytes;
 use primitive_types::H160;
 use revm::{
-    AccountInfo, Bytecode, DatabaseCommit, ExecutionResult, InMemoryDB, SpecId, TransactTo, B160,
-    EVM as rEVM, U256,
+    primitives::{B160, U256},
+    AccountInfo, Bytecode, DatabaseCommit, ExecutionResult, InMemoryDB, SpecId, TransactTo,
+    EVM as rEVM,
 };
 use wasm_bindgen::prelude::*;
 

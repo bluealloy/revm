@@ -56,5 +56,5 @@ with-serde = [
   "serde",
   "hex/serde",
   "hashbrown/serde",
-  "revm-primitives/serde",
+  "revm-primitives/with-serde",
 ]
