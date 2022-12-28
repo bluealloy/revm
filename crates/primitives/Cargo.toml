@@ -16,11 +16,12 @@ fixed-hash = { version = "0.8", default-features = false, features = [
 derive_more = "0.99"
 ruint = { version = "1.7.0", features = ["primitive-types", "rlp"] }
 serde = { version = "1.0", features = ["derive", "rc"], optional = true }
-arbitrary = { version = "1.2", optional = true }
+arbitrary = { version = "1.2", features = ["derive"], optional = true }
 
 [dev-dependencies]
-arbitrary = { version = "1.2" }
+arbitrary = { version = "1.2", features = ["derive"]}
 
 [features]
 default = []
 serde = ["dep:serde", "ruint/serde"]
+arbitrary = ["dep:arbitrary", "ruint/arbitrary"]

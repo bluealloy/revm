@@ -2,12 +2,16 @@ use crate::U256;
 use core::cmp::Ordering;
 use ruint::uint;
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::Arbitrary;
+
 pub const SIGN_BIT_MASK: U256 =
     uint!(0x7FFFFFFFFFFFFFFF_FFFFFFFFFFFFFFFF_FFFFFFFFFFFFFFFF_FFFFFFFFFFFFFFFF_U256);
 
 pub const MIN_NEGATIVE_VALUE: U256 =
     uint!(0x8000000000000000_0000000000000000_0000000000000000_0000000000000000_U256);
 
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub enum Sign {
     Plus,
@@ -16,6 +20,8 @@ pub enum Sign {
 }
 
 const FLIPH_BITMASK_U64: u64 = 0x7FFFFFFFFFFFFFFF;
+
+#[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct I256(pub Sign, pub U256);
 
@@ -125,7 +131,6 @@ pub fn i256_mod(mut first: U256, mut second: U256) -> U256 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::primitives::U256;
     use core::num::Wrapping;
 
     #[test]

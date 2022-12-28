@@ -1,30 +1,21 @@
 use derive_more::{AsRef, Deref};
 use fixed_hash::{construct_fixed_hash, impl_fixed_hash_conversions};
 
+#[cfg(feature = "arbitrary")]
+use arbitrary::Arbitrary;
+
 construct_fixed_hash! {
     /// revm 256 bits type.
+    #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
     #[derive(AsRef,Deref)]
     pub struct B256(32);
 }
 
 construct_fixed_hash! {
     /// revm 160 bits type.
+    #[cfg_attr(feature = "arbitrary", derive(Arbitrary))]
     #[derive(AsRef,Deref)]
     pub struct B160(20);
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> arbitrary::Arbitrary<'a> for B256 {
-    fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        <[u8; 32] as arbitrary::Arbitrary>::arbitrary(u).map(|o| B256(o))
-    }
-}
-
-#[cfg(feature = "arbitrary")]
-impl<'a> arbitrary::Arbitrary<'a> for B160 {
-    fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
-        <[u8; 20] as arbitrary::Arbitrary>::arbitrary(u).map(|o| B160(o))
-    }
 }
 
 impl From<u64> for B160 {
