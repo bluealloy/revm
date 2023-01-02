@@ -27,5 +27,6 @@ pub use interpreter::{
     Bytecode, BytecodeLocked, BytecodeState, Contract, Interpreter, Memory, Stack,
 };
 pub use models::*;
+pub use ruint;
 pub use ruint::aliases::U256;
 pub use specification::*;
