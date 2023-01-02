@@ -37,6 +37,14 @@ derive_more = "0.99"
 # sha3 keccak hasher
 sha3 = { version = "0.10", default-features = false, features = [] }
 
+arbitrary = { version = "1.2", features = ["derive"], optional = true }
+
+[dev-dependencies]
+arbitrary = { version = "1.2", features = ["derive"]}
+proptest = { version = "1.0" }
+proptest-derive = "0.2.0"
+ruint = { version = "1.7.0", features = ["primitive-types", "rlp", "proptest", "arbitrary"] }
+
 [features]
 default = ["std"]
 dev = [
@@ -54,3 +62,4 @@ optional_eip3607 = []
 optional_gas_refund = []
 std = ["bytes/std", "num_enum/std", "rlp/std", "hex/std"]
 with-serde = ["serde", "hex/serde", "hashbrown/serde", "ruint/serde"]
+arbitrary = ["dep:arbitrary", "ruint/arbitrary", "ruint/proptest"]
