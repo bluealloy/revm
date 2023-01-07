@@ -5,7 +5,7 @@ pub const ECRECOVER: PrecompileAddress = PrecompileAddress(
     Precompile::Standard(ec_recover_run as StandardPrecompileFn),
 );
 
-#[cfg(feature = "secp256k1")]
+#[cfg(not(feature = "secp256k1"))]
 #[allow(clippy::module_inception)]
 mod secp256k1 {
     use core::convert::TryFrom;
@@ -31,7 +31,7 @@ mod secp256k1 {
     }
 }
 
-#[cfg(not(feature = "secp256k1"))]
+#[cfg(feature = "secp256k1")]
 #[allow(clippy::module_inception)]
 mod secp256k1 {
     use crate::B256;
