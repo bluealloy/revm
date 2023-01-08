@@ -2,10 +2,9 @@
 //! It is great tool if some debugging is needed.
 //!
 use crate::{
-    bits::B160,
     inspectors::GasInspector,
     opcode::{self},
-    Bytes, CallInputs, CreateInputs, Database, EVMData, Gas, Inspector, Interpreter, Return,
+    Bytes, CallInputs, CreateInputs, Database, EVMData, Gas, Inspector, Interpreter, Return, B160,
 };
 use hex;
 #[derive(Clone, Default)]

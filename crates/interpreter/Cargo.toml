@@ -1,0 +1,71 @@
+[package]
+authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
+description = "REVM Interpreter"
+edition = "2021"
+keywords = ["no_std", "ethereum", "vm", "evm", "revm", "interpreter"]
+license = "MIT"
+name = "revm-interpreter"
+repository = "https://github.com/bluealloy/revm"
+version = "3.0.0"
+readme = "../../README.md"
+
+[dependencies]
+bytes = { version = "1.1", default-features = false }
+hashbrown = { version = "0.13" }
+hex = { version = "0.4", default-features = false }
+rlp = { version = "0.5", default-features = false }                  # used for create2 address calculation
+ruint = { version = "1.7.0", features = ["primitive-types", "rlp"] }
+
+
+# bits B256 B160 crate
+fixed-hash = { version = "0.8", default-features = false, features = [
+    "rustc-hex",
+] }
+
+#utility
+hex-literal = "0.3"
+derive_more = "0.99"
+enumn = "0.1"
+
+# sha3 keccak hasher
+sha3 = { version = "0.10", default-features = false, features = [] }
+
+# optional
+serde = { version = "1.0", features = ["derive", "rc"], optional = true }
+arbitrary = { version = "1.2", features = ["derive"], optional = true }
+
+[dev-dependencies]
+arbitrary = { version = "1.2", features = ["derive"] }
+proptest = { version = "1.0" }
+proptest-derive = "0.2.0"
+ruint = { version = "1.7.0", features = [
+    "primitive-types",
+    "rlp",
+    "proptest",
+    "arbitrary",
+] }
+
+[features]
+default = ["std"]
+dev = [
+    "memory_limit",
+    "optional_balance_check",
+    "optional_block_gas_limit",
+    "optional_eip3607",
+    "optional_gas_refund",
+]
+memory_limit = []
+no_gas_measuring = []
+optional_balance_check = []
+optional_block_gas_limit = []
+optional_eip3607 = []
+optional_gas_refund = []
+std = ["bytes/std", "rlp/std", "hex/std"]
+serde = [
+    "dep:serde",
+    "hex/serde",
+    "hashbrown/serde",
+    "ruint/serde",
+    "bytes/serde",
+]
+arbitrary = ["dep:arbitrary", "ruint/arbitrary", "ruint/proptest"]

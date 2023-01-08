@@ -10,10 +10,10 @@ compile_error!(
     "`web3db` feature is deprecated, drop-in replacement can be found with feature `ethersdb`"
 );
 
-use crate::bits::{B160, B256};
 use crate::AccountInfo;
 use crate::U256;
 use crate::{interpreter::bytecode::Bytecode, Account};
+use crate::{B160, B256};
 use auto_impl::auto_impl;
 use hashbrown::HashMap as Map;
 pub use in_memory_db::{AccountState, BenchmarkDB, CacheDB, DbAccount, EmptyDB, InMemoryDB};

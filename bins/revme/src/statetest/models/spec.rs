@@ -27,6 +27,8 @@ pub enum SpecName {
     MergeMeterInitCode,
     #[serde(alias = "Merge+3855")]
     MergePush0,
+    #[serde(other)]
+    Unknown,
 }
 
 impl SpecName {
@@ -49,7 +51,8 @@ impl SpecName {
             Self::MergePush0 => SpecId::MERGE_EOF,
             Self::ByzantiumToConstantinopleAt5 | Self::Constantinople => {
                 panic!("Overriden with PETERSBURG")
-            } //_ => panic!("Conversion failed"),
+            }
+            Self::Unknown => panic!("Unknown spec"),
         }
     }
 }

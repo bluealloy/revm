@@ -21,7 +21,7 @@ revm = { path = "../../crates/revm", version = "2.3.1", default-features = false
     "ethersdb",
     "std",
     "secp256k1",
-    "with-serde",
+    "serde",
 ] }
 rlp = { version = "0.5", default-features = false }
 ruint = { version = "1.7.0", features = ["rlp", "serde"] }

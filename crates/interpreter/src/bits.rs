@@ -1,14 +1,24 @@
 use derive_more::{AsRef, Deref};
 use fixed_hash::{construct_fixed_hash, impl_fixed_hash_conversions};
 
+#[cfg(test)]
+use proptest_derive::Arbitrary as PropTestArbitrary;
+
+#[cfg(any(test, feature = "arbitrary"))]
+use arbitrary::Arbitrary;
+
 construct_fixed_hash! {
     /// revm 256 bits type.
+    #[cfg_attr(test, derive(PropTestArbitrary))]
+    #[cfg_attr(any(test, feature = "arbitrary"), derive(Arbitrary))]
     #[derive(AsRef,Deref)]
     pub struct B256(32);
 }
 
 construct_fixed_hash! {
     /// revm 160 bits type.
+    #[cfg_attr(test, derive(PropTestArbitrary))]
+    #[cfg_attr(any(test, feature = "arbitrary"), derive(Arbitrary))]
     #[derive(AsRef,Deref)]
     pub struct B160(20);
 }
@@ -25,7 +35,7 @@ impl From<u64> for B160 {
 
 impl_fixed_hash_conversions!(B256, B160);
 
-#[cfg(feature = "with-serde")]
+#[cfg(feature = "serde")]
 impl serde::Serialize for B256 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -35,7 +45,7 @@ impl serde::Serialize for B256 {
         serialize::serialize_raw(&mut slice, &self.0, serializer)
     }
 }
-#[cfg(feature = "with-serde")]
+#[cfg(feature = "serde")]
 impl<'de> serde::Deserialize<'de> for B256 {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -46,7 +56,7 @@ impl<'de> serde::Deserialize<'de> for B256 {
         Ok(B256(bytes))
     }
 }
-#[cfg(feature = "with-serde")]
+#[cfg(feature = "serde")]
 impl serde::Serialize for B160 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -57,7 +67,7 @@ impl serde::Serialize for B160 {
     }
 }
 
-#[cfg(feature = "with-serde")]
+#[cfg(feature = "serde")]
 impl<'de> serde::Deserialize<'de> for B160 {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -70,7 +80,7 @@ impl<'de> serde::Deserialize<'de> for B160 {
 }
 
 // code optained from: https://docs.rs/impl-serde/0.4.0/impl_serde/
-#[cfg(feature = "with-serde")]
+#[cfg(feature = "serde")]
 mod serialize {
 
     use alloc::{string::String, vec::Vec};
@@ -292,5 +302,15 @@ mod serialize {
         }
 
         deserializer.deserialize_str(Visitor { len })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn arbitrary() {
+        proptest::proptest!(|(_v1: B160, _v2: B256)| {});
     }
 }

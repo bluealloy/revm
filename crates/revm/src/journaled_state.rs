@@ -1,10 +1,11 @@
-use crate::{interpreter::bytecode::Bytecode, models::SelfDestructResult, Return, KECCAK_EMPTY};
+use crate::{db::Database, Log, B160};
+use crate::{
+    interpreter::{models::SelfDestructResult, Account, Bytecode, Return, StorageSlot, U256},
+    KECCAK_EMPTY,
+};
 use alloc::{vec, vec::Vec};
 use core::mem::{self};
 use hashbrown::{hash_map::Entry, HashMap as Map};
-use ruint::aliases::U256;
-
-use crate::{bits::B160, db::Database, AccountInfo, Log};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
@@ -28,83 +29,6 @@ pub struct JournaledState {
 
 pub type State = Map<B160, Account>;
 pub type Storage = Map<U256, StorageSlot>;
-
-#[derive(Debug, Clone, Eq, PartialEq)]
-#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Account {
-    /// Balance of the account.
-    pub info: AccountInfo,
-    /// storage cache
-    pub storage: Map<U256, StorageSlot>,
-    /// If account is newly created, we will not ask database for storage values
-    pub storage_cleared: bool,
-    /// if account is destroyed it will be scheduled for removal.
-    pub is_destroyed: bool,
-    /// if account is touched
-    pub is_touched: bool,
-    /// used only for pre spurious dragon hardforks where exisnting and empty was two saparate states.
-    /// it became same state after EIP-161: State trie clearing
-    pub is_not_existing: bool,
-}
-
-impl Account {
-    pub fn is_empty(&self) -> bool {
-        self.info.is_empty()
-    }
-    pub fn new_not_existing() -> Self {
-        Self {
-            info: AccountInfo::default(),
-            storage: Map::new(),
-            storage_cleared: false,
-            is_destroyed: false,
-            is_touched: false,
-            is_not_existing: true,
-        }
-    }
-}
-
-impl From<AccountInfo> for Account {
-    fn from(info: AccountInfo) -> Self {
-        Self {
-            info,
-            storage: Map::new(),
-            storage_cleared: false,
-            is_destroyed: false,
-            is_touched: false,
-            is_not_existing: false,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Default, Eq, PartialEq)]
-#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct StorageSlot {
-    original_value: U256,
-    /// When loaded with sload present value is set to original value
-    present_value: U256,
-}
-
-impl StorageSlot {
-    pub fn new(original: U256) -> Self {
-        Self {
-            original_value: original,
-            present_value: original,
-        }
-    }
-
-    /// Returns true if the present value differs from the original value
-    pub fn is_changed(&self) -> bool {
-        self.original_value != self.present_value
-    }
-
-    pub fn original_value(&self) -> U256 {
-        self.original_value
-    }
-
-    pub fn present_value(&self) -> U256 {
-        self.present_value
-    }
-}
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]

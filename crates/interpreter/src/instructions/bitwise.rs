@@ -1,7 +1,7 @@
 use super::i256::{i256_cmp, i256_sign, two_compl, Sign};
 use crate::{Host, Interpreter, Return, Spec, SpecId::CONSTANTINOPLE, U256};
 use core::cmp::Ordering;
-use std::ops::{BitAnd, BitOr, BitXor};
+use core::ops::{BitAnd, BitOr, BitXor};
 
 pub fn lt(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     pop_top!(interpreter, op1, op2);

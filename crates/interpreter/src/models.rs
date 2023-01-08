@@ -1,21 +1,94 @@
 use core::cmp::min;
 
-use crate::{
-    alloc::vec::Vec,
-    bits::{B160, B256},
-    interpreter::bytecode::Bytecode,
-    Return, SpecId, U256,
-};
+use crate::{alloc::vec::Vec, interpreter::bytecode::Bytecode, Return, SpecId, B160, B256, U256};
 use bytes::Bytes;
+use hashbrown::HashMap as Map;
 use hex_literal::hex;
 
 pub const KECCAK_EMPTY: B256 = B256(hex!(
     "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
 ));
 
+#[derive(Debug, Clone, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct Account {
+    /// Balance of the account.
+    pub info: AccountInfo,
+    /// storage cache
+    pub storage: Map<U256, StorageSlot>,
+    /// If account is newly created, we will not ask database for storage values
+    pub storage_cleared: bool,
+    /// if account is destroyed it will be scheduled for removal.
+    pub is_destroyed: bool,
+    /// if account is touched
+    pub is_touched: bool,
+    /// used only for pre spurious dragon hardforks where exisnting and empty was two saparate states.
+    /// it became same state after EIP-161: State trie clearing
+    pub is_not_existing: bool,
+}
+
+impl Account {
+    pub fn is_empty(&self) -> bool {
+        self.info.is_empty()
+    }
+    pub fn new_not_existing() -> Self {
+        Self {
+            info: AccountInfo::default(),
+            storage: Map::new(),
+            storage_cleared: false,
+            is_destroyed: false,
+            is_touched: false,
+            is_not_existing: true,
+        }
+    }
+}
+
+impl From<AccountInfo> for Account {
+    fn from(info: AccountInfo) -> Self {
+        Self {
+            info,
+            storage: Map::new(),
+            storage_cleared: false,
+            is_destroyed: false,
+            is_touched: false,
+            is_not_existing: false,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct StorageSlot {
+    pub original_value: U256,
+    /// When loaded with sload present value is set to original value
+    pub present_value: U256,
+}
+
+impl StorageSlot {
+    pub fn new(original: U256) -> Self {
+        Self {
+            original_value: original,
+            present_value: original,
+        }
+    }
+
+    /// Returns true if the present value differs from the original value
+    pub fn is_changed(&self) -> bool {
+        self.original_value != self.present_value
+    }
+
+    pub fn original_value(&self) -> U256 {
+        self.original_value
+    }
+
+    pub fn present_value(&self) -> U256 {
+        self.present_value
+    }
+}
+
 /// AccountInfo account information.
 #[derive(Clone, Debug, Eq)]
-#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct AccountInfo {
     /// Account balance.
     pub balance: U256,
@@ -76,14 +149,14 @@ impl AccountInfo {
 }
 
 /// Inputs for a call.
-#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallInputs {
     /// The target of the call.
     pub contract: B160,
     /// The transfer, if any, in this call.
     pub transfer: Transfer,
     /// The call data of the call.
-    #[cfg_attr(feature = "with-serde", serde(with = "serde_hex_bytes"))]
+    #[cfg_attr(feature = "serde", serde(with = "crate::common::serde_hex_bytes"))]
     pub input: Bytes,
     /// The gas limit of the call.
     pub gas_limit: u64,
@@ -93,12 +166,12 @@ pub struct CallInputs {
     pub is_static: bool,
 }
 
-#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CreateInputs {
     pub caller: B160,
     pub scheme: CreateScheme,
     pub value: U256,
-    #[cfg_attr(feature = "with-serde", serde(with = "serde_hex_bytes"))]
+    #[cfg_attr(feature = "serde", serde(with = "crate::common::serde_hex_bytes"))]
     pub init_code: Bytes,
     pub gas_limit: u64,
 }
@@ -106,7 +179,7 @@ pub struct CreateInputs {
 pub struct CreateData {}
 
 #[derive(Clone, Debug)]
-#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TransactTo {
     Call(B160),
     Create(CreateScheme),
@@ -119,20 +192,20 @@ impl TransactTo {
 }
 
 #[derive(Clone, Debug)]
-#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TransactOut {
     None,
-    #[cfg_attr(feature = "with-serde", serde(with = "serde_hex_bytes"))]
+    #[cfg_attr(feature = "serde", serde(with = "crate::common::serde_hex_bytes"))]
     Call(Bytes),
     Create(
-        #[cfg_attr(feature = "with-serde", serde(with = "serde_hex_bytes"))] Bytes,
+        #[cfg_attr(feature = "serde", serde(with = "crate::common::serde_hex_bytes"))] Bytes,
         Option<B160>,
     ),
 }
 
 /// Create scheme.
 #[derive(Clone, Copy, Eq, PartialEq, Debug)]
-#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum CreateScheme {
     /// Legacy create scheme of `CREATE`.
     Create,
@@ -145,7 +218,7 @@ pub enum CreateScheme {
 
 /// Call schemes.
 #[derive(Clone, Copy, Eq, PartialEq, Debug)]
-#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum CallScheme {
     /// `CALL`
     Call,
@@ -159,7 +232,7 @@ pub enum CallScheme {
 
 /// CallContext of the runtime.
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallContext {
     /// Execution address.
     pub address: B160,
@@ -186,14 +259,14 @@ impl Default for CallContext {
 }
 
 #[derive(Clone, Debug, Default)]
-#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Env {
     pub cfg: CfgEnv,
     pub block: BlockEnv,
     pub tx: TxEnv,
 }
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlockEnv {
     pub number: U256,
     /// Coinbase or miner or address that created and signed the block.
@@ -211,7 +284,7 @@ pub struct BlockEnv {
 }
 
 #[derive(Clone, Debug)]
-#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxEnv {
     /// Caller or Author or tx signer
     pub caller: B160,
@@ -220,14 +293,14 @@ pub struct TxEnv {
     pub gas_priority_fee: Option<U256>,
     pub transact_to: TransactTo,
     pub value: U256,
-    #[cfg_attr(feature = "with-serde", serde(with = "serde_hex_bytes"))]
+    #[cfg_attr(feature = "serde", serde(with = "crate::common::serde_hex_bytes"))]
     pub data: Bytes,
     pub chain_id: Option<u64>,
     pub nonce: Option<u64>,
     pub access_list: Vec<(B160, Vec<U256>)>,
 }
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CfgEnv {
     pub chain_id: U256,
     pub spec_id: SpecId,
@@ -271,7 +344,7 @@ pub struct CfgEnv {
 }
 
 #[derive(Clone, Default, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AnalysisKind {
     Raw,
     Check,
@@ -347,7 +420,7 @@ impl Env {
 
 /// Transfer from source to target, with given value.
 #[derive(Clone, Debug)]
-#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Transfer {
     /// Source address.
     pub source: B160,
@@ -358,91 +431,21 @@ pub struct Transfer {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Log {
     pub address: B160,
     pub topics: Vec<B256>,
-    #[cfg_attr(feature = "with-serde", serde(with = "serde_hex_bytes"))]
+    #[cfg_attr(feature = "serde", serde(with = "crate::common::serde_hex_bytes"))]
     pub data: Bytes,
 }
 
 #[derive(Default)]
-#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SelfDestructResult {
     pub had_value: bool,
     pub target_exists: bool,
     pub is_cold: bool,
     pub previously_destroyed: bool,
-}
-/// Serde functions to serde as [bytes::Bytes] hex string
-#[cfg(feature = "with-serde")]
-pub(crate) mod serde_hex_bytes {
-    use serde::{Deserialize, Deserializer, Serializer};
-
-    pub fn serialize<S, T>(x: T, s: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-        T: AsRef<[u8]>,
-    {
-        s.serialize_str(&format!("0x{}", hex::encode(x.as_ref())))
-    }
-
-    pub fn deserialize<'de, D>(d: D) -> Result<bytes::Bytes, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let value = String::deserialize(d)?;
-        if let Some(value) = value.strip_prefix("0x") {
-            hex::decode(value)
-        } else {
-            hex::decode(&value)
-        }
-        .map(Into::into)
-        .map_err(|e| serde::de::Error::custom(e.to_string()))
-    }
-}
-/// Serde functions to serde an Option [bytes::Bytes] hex string
-#[cfg(feature = "with-serde")]
-pub(crate) mod serde_hex_bytes_opt {
-    use super::serde_hex_bytes;
-    use serde::{Deserialize, Deserializer, Serializer};
-
-    pub fn serialize<T, S>(value: &Option<T>, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-        T: AsRef<[u8]>,
-    {
-        if let Some(value) = value {
-            serde_hex_bytes::serialize(value, serializer)
-        } else {
-            serializer.serialize_none()
-        }
-    }
-
-    pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<bytes::Bytes>, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        #[derive(Deserialize)]
-        #[serde(transparent)]
-        struct OptionalBytes(Option<DeserializeBytes>);
-
-        struct DeserializeBytes(bytes::Bytes);
-
-        impl<'de> Deserialize<'de> for DeserializeBytes {
-            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-            where
-                D: Deserializer<'de>,
-            {
-                Ok(DeserializeBytes(serde_hex_bytes::deserialize(
-                    deserializer,
-                )?))
-            }
-        }
-
-        let value = OptionalBytes::deserialize(deserializer)?;
-        Ok(value.0.map(|b| b.0))
-    }
 }
 
 #[derive(Clone, Debug)]

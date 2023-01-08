@@ -1,8 +1,9 @@
 use std::time::Duration;
 
 use bytes::Bytes;
-use revm::{db::BenchmarkDB, Bytecode, TransactTo};
+use revm::{db::BenchmarkDB, Bytecode, CallContext, TransactTo, B160, U256};
 
+use revm_interpreter::{specification::BerlinSpec, DummyHost};
 extern crate alloc;
 
 pub fn simple_example() {
@@ -10,7 +11,8 @@ pub fn simple_example() {
 
     // BenchmarkDB is dummy state that implements Database trait.
     let mut evm = revm::new();
-    evm.database(BenchmarkDB::new_bytecode(Bytecode::new_raw(contract_data)));
+    let bytecode = Bytecode::new_raw(contract_data);
+    evm.database(BenchmarkDB::new_bytecode(bytecode.clone()));
 
     // execution globals block hash/gas_limit/coinbase/timestamp..
     evm.env.tx.caller = "0x1000000000000000000000000000000000000000"
@@ -24,15 +26,42 @@ pub fn simple_example() {
     evm.env.tx.data = Bytes::from(hex::decode("30627b7c").unwrap());
 
     // Microbenchmark
-    let bench_options = microbench::Options::default().time(Duration::from_secs(3));
+    let bench_options = microbench::Options::default().time(Duration::from_secs(2));
 
-    microbench::bench(&bench_options, "Snailtracer benchmark", || {
-        let (_, _) = evm.transact();
+    let env = evm.env.clone();
+    microbench::bench(
+        &bench_options,
+        "Snailtracer Host+Interpreter benchmark",
+        || {
+            let (_, _) = evm.transact();
+        },
+    );
+
+    // revm interpreter
+
+    let contract = revm_interpreter::Contract::new_with_context::<BerlinSpec>(
+        evm.env.tx.data,
+        bytecode,
+        &CallContext {
+            address: B160::zero(),
+            caller: evm.env.tx.caller,
+            code_address: B160::zero(),
+            apparent_value: U256::from(0),
+            scheme: revm::CallScheme::Call,
+        },
+    );
+
+    let mut host = DummyHost::new(env);
+    microbench::bench(&bench_options, "Snailtracer Interpreter benchmark", || {
+        let mut interpreter =
+            revm_interpreter::Interpreter::new::<BerlinSpec>(contract.clone(), u64::MAX, false);
+        interpreter.run::<_, BerlinSpec>(&mut host);
+        host.clear()
     });
 }
 
 fn main() {
-    println!("Hello, world!");
+    println!("Running snailtracer bench!");
     simple_example();
     println!("end!");
 }

@@ -4,7 +4,7 @@ use bytes::Bytes;
 use std::sync::Arc;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum BytecodeState {
     Raw,
     Checked {
@@ -17,9 +17,9 @@ pub enum BytecodeState {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Bytecode {
-    #[cfg_attr(feature = "with-serde", serde(with = "crate::models::serde_hex_bytes"))]
+    #[cfg_attr(feature = "serde", serde(with = "crate::common::serde_hex_bytes"))]
     bytecode: Bytes,
     hash: B256,
     state: BytecodeState,
@@ -262,6 +262,7 @@ impl Bytecode {
     }
 }
 
+#[derive(Clone)]
 pub struct BytecodeLocked {
     bytecode: Bytes,
     len: usize,
