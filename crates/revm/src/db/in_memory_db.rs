@@ -393,8 +393,7 @@ impl Database for BenchmarkDB {
 #[cfg(test)]
 mod tests {
     use super::{CacheDB, EmptyDB};
-    use crate::{AccountInfo, Database};
-    use ruint::aliases::U256;
+    use crate::{AccountInfo, Database, U256};
 
     #[test]
     pub fn test_insert_account_storage() {

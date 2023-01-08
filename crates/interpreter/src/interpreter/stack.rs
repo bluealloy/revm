@@ -266,28 +266,32 @@ impl Stack {
                 dangling[8 - N..].copy_from_slice(slice);
                 slot.as_limbs_mut()[0] = u64::from_be_bytes(dangling);
             } else if N < 16 {
-                slot.as_limbs_mut()[0] = u64::from_be_bytes(*arrayref::array_ref!(slice, N - 8, 8));
+                slot.as_limbs_mut()[0] =
+                    u64::from_be_bytes(slice[N - 8..N].try_into().expect("Infallible"));
                 if N != 8 {
                     dangling[8 * 2 - N..].copy_from_slice(&slice[..N - 8]);
                     slot.as_limbs_mut()[1] = u64::from_be_bytes(dangling);
                 }
             } else if N < 24 {
-                slot.as_limbs_mut()[0] = u64::from_be_bytes(*arrayref::array_ref!(slice, N - 8, 8));
+                slot.as_limbs_mut()[0] =
+                    u64::from_be_bytes(slice[N - 8..N].try_into().expect("Infallible"));
                 slot.as_limbs_mut()[1] =
-                    u64::from_be_bytes(*arrayref::array_ref!(slice, N - 16, 8));
+                    u64::from_be_bytes(slice[N - 16..N - 8].try_into().expect("Infallible"));
                 if N != 16 {
                     dangling[8 * 3 - N..].copy_from_slice(&slice[..N - 16]);
                     slot.as_limbs_mut()[2] = u64::from_be_bytes(dangling);
                 }
             } else {
                 // M<32
-                slot.as_limbs_mut()[0] = u64::from_be_bytes(*arrayref::array_ref!(slice, N - 8, 8));
+                slot.as_limbs_mut()[0] =
+                    u64::from_be_bytes(slice[N - 8..N].try_into().expect("Infallible"));
                 slot.as_limbs_mut()[1] =
-                    u64::from_be_bytes(*arrayref::array_ref!(slice, N - 16, 8));
+                    u64::from_be_bytes(slice[N - 16..N - 8].try_into().expect("Infallible"));
                 slot.as_limbs_mut()[2] =
-                    u64::from_be_bytes(*arrayref::array_ref!(slice, N - 24, 8));
+                    u64::from_be_bytes(slice[N - 24..N - 16].try_into().expect("Infallible"));
                 if N == 32 {
-                    slot.as_limbs_mut()[3] = u64::from_be_bytes(*arrayref::array_ref!(slice, 0, 8));
+                    slot.as_limbs_mut()[3] =
+                        u64::from_be_bytes(slice[..N - 24].try_into().expect("Infallible"));
                 } else if N != 24 {
                     dangling[8 * 4 - N..].copy_from_slice(&slice[..N - 24]);
                     slot.as_limbs_mut()[3] = u64::from_be_bytes(dangling);

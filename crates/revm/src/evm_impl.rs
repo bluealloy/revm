@@ -2,9 +2,9 @@ use crate::{
     common::keccak256,
     db::Database,
     gas,
-    interpreter::{self, bytecode::Bytecode},
-    interpreter::{Contract, Interpreter},
-    journaled_state::{Account, JournaledState, State},
+    interpreter::{self, Bytecode, Host},
+    interpreter::{Account, Contract, Interpreter},
+    journaled_state::{JournaledState, State},
     models::SelfDestructResult,
     precompiles, return_ok, return_revert, AnalysisKind, CallContext, CallInputs, CallScheme,
     CreateInputs, CreateScheme, Env, ExecutionResult, Gas, Inspector, Log, Return, Spec,
@@ -15,6 +15,7 @@ use alloc::vec::Vec;
 use bytes::Bytes;
 use core::{cmp::min, marker::PhantomData};
 use hashbrown::HashMap as Map;
+use revm_interpreter::common::{create2_address, create_address};
 use revm_precompiles::{Precompile, Precompiles};
 
 pub struct EVMData<'a, DB: Database> {
@@ -503,8 +504,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             self.inspector
                 .initialize_interp(&mut interpreter, &mut self.data, false);
         }
-        let exit_reason = interpreter.run::<Self, GSPEC>(self, INSPECT);
-
+        let exit_reason = if INSPECT {
+            interpreter.run_inspect::<Self, GSPEC>(self)
+        } else {
+            interpreter.run::<Self, GSPEC>(self)
+        };
         // Host error if present on execution\
         let (ret, address, gas, out) = match exit_reason {
             return_ok!() => {
@@ -704,7 +708,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 self.inspector
                     .initialize_interp(&mut interpreter, &mut self.data, false);
             }
-            let exit_reason = interpreter.run::<Self, GSPEC>(self, INSPECT);
+            let exit_reason = if INSPECT {
+                interpreter.run_inspect::<Self, GSPEC>(self)
+            } else {
+                interpreter.run::<Self, GSPEC>(self)
+            };
+
             if matches!(exit_reason, return_ok!()) {
                 self.data.journaled_state.checkpoint_commit();
             } else {
@@ -853,61 +862,4 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     fn call(&mut self, inputs: &mut CallInputs) -> (Return, Gas, Bytes) {
         self.call_inner(inputs)
     }
-}
-
-/// Returns the address for the legacy `CREATE` scheme: [`CreateScheme::Create`]
-pub fn create_address(caller: B160, nonce: u64) -> B160 {
-    let mut stream = rlp::RlpStream::new_list(2);
-    stream.append(&caller.0.as_ref());
-    stream.append(&nonce);
-    let out = keccak256(&stream.out());
-    B160(out[12..].try_into().unwrap())
-}
-
-/// Returns the address for the `CREATE2` scheme: [`CreateScheme::Create2`]
-pub fn create2_address(caller: B160, code_hash: B256, salt: U256) -> B160 {
-    use sha3::{Digest, Keccak256};
-    let mut hasher = Keccak256::new();
-    hasher.update([0xff]);
-    hasher.update(&caller[..]);
-    hasher.update(salt.to_be_bytes::<{ U256::BYTES }>());
-    hasher.update(&code_hash[..]);
-
-    B160(hasher.finalize().as_slice()[12..].try_into().unwrap())
-}
-
-/// EVM context host.
-pub trait Host {
-    fn step(&mut self, interp: &mut Interpreter, is_static: bool) -> Return;
-    fn step_end(&mut self, interp: &mut Interpreter, is_static: bool, ret: Return) -> Return;
-
-    fn env(&mut self) -> &mut Env;
-
-    /// load account. Returns (is_cold,is_new_account)
-    fn load_account(&mut self, address: B160) -> Option<(bool, bool)>;
-    /// Get environmental block hash.
-    fn block_hash(&mut self, number: U256) -> Option<B256>;
-    /// Get balance of address.
-    fn balance(&mut self, address: B160) -> Option<(U256, bool)>;
-    /// Get code of address.
-    fn code(&mut self, address: B160) -> Option<(Bytecode, bool)>;
-    /// Get code hash of address.
-    fn code_hash(&mut self, address: B160) -> Option<(B256, bool)>;
-    /// Get storage value of address at index.
-    fn sload(&mut self, address: B160, index: U256) -> Option<(U256, bool)>;
-    /// Set storage value of address at index. Return if slot is cold/hot access.
-    fn sstore(
-        &mut self,
-        address: B160,
-        index: U256,
-        value: U256,
-    ) -> Option<(U256, U256, U256, bool)>;
-    /// Create a log owned by address with given topics and data.
-    fn log(&mut self, address: B160, topics: Vec<B256>, data: Bytes);
-    /// Mark an address to be deleted, with funds transferred to target.
-    fn selfdestruct(&mut self, address: B160, target: B160) -> Option<SelfDestructResult>;
-    /// Invoke a create operation.
-    fn create(&mut self, inputs: &mut CreateInputs) -> (Return, Option<B160>, Gas, Bytes);
-    /// Invoke a call operation.
-    fn call(&mut self, input: &mut CallInputs) -> (Return, Gas, Bytes);
 }

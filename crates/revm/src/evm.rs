@@ -3,9 +3,10 @@ use crate::{
     evm_impl::{EVMImpl, Transact},
     inspectors::NoOpInspector,
     journaled_state::State,
-    specification, Env, ExecutionResult, Inspector,
+    Env, ExecutionResult, Inspector,
 };
 use alloc::boxed::Box;
+use revm_interpreter::{specification, SpecId};
 use revm_precompiles::Precompiles;
 
 /// Struct that takes Database and enabled transact to update state directly to database.
@@ -144,9 +145,31 @@ macro_rules! create_evm {
             $db,
             $env,
             $inspector,
-            Precompiles::new(SpecId::to_precompile_id($spec::SPEC_ID)).clone(),
+            Precompiles::new(to_precompile_id($spec::SPEC_ID)).clone(),
         )) as Box<dyn Transact + 'a>
     };
+}
+
+pub fn to_precompile_id(spec_id: SpecId) -> revm_precompiles::SpecId {
+    match spec_id {
+        SpecId::FRONTIER
+        | SpecId::FRONTIER_THAWING
+        | SpecId::HOMESTEAD
+        | SpecId::DAO_FORK
+        | SpecId::TANGERINE
+        | SpecId::SPURIOUS_DRAGON => revm_precompiles::SpecId::HOMESTEAD,
+        SpecId::BYZANTIUM | SpecId::CONSTANTINOPLE | SpecId::PETERSBURG => {
+            revm_precompiles::SpecId::BYZANTIUM
+        }
+        SpecId::ISTANBUL | SpecId::MUIR_GLACIER => revm_precompiles::SpecId::ISTANBUL,
+        SpecId::BERLIN
+        | SpecId::LONDON
+        | SpecId::ARROW_GLACIER
+        | SpecId::GRAY_GLACIER
+        | SpecId::MERGE
+        | SpecId::MERGE_EOF
+        | SpecId::LATEST => revm_precompiles::SpecId::BERLIN,
+    }
 }
 
 pub fn evm_inner<'a, DB: Database, const INSPECT: bool>(

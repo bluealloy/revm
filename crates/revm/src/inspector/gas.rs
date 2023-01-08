@@ -1,8 +1,6 @@
 //! GasIspector. Helper Inspector to calculte gas for others.
 //!
-use crate::{
-    bits::B160, evm_impl::EVMData, CallInputs, CreateInputs, Database, Gas, Inspector, Return,
-};
+use crate::{evm_impl::EVMData, CallInputs, CreateInputs, Database, Gas, Inspector, Return, B160};
 use bytes::Bytes;
 
 #[derive(Clone, Copy, Debug, Default)]

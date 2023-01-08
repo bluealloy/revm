@@ -1,7 +1,5 @@
 use crate::{
-    bits::{B160, B256},
-    evm_impl::EVMData,
-    CallInputs, CreateInputs, Database, Gas, Interpreter, Return,
+    evm_impl::EVMData, CallInputs, CreateInputs, Database, Gas, Interpreter, Return, B160, B256,
 };
 use auto_impl::auto_impl;
 use bytes::Bytes;
