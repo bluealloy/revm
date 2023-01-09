@@ -37,7 +37,7 @@ arbitrary = { version = "1.2", features = ["derive"], optional = true }
 [dev-dependencies]
 arbitrary = { version = "1.2", features = ["derive"] }
 proptest = { version = "1.0" }
-proptest-derive = "0.2.0"
+proptest-derive = "0.3.0"
 ruint = { version = "1.7.0", features = [
     "primitive-types",
     "rlp",
