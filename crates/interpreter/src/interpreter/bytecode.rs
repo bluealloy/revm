@@ -175,22 +175,22 @@ impl Bytecode {
         }
     }
 
-    pub fn lock<SPEC: Spec>(self) -> BytecodeLocked {
-        let Bytecode {
-            bytecode,
-            hash,
-            state,
-        } = self.to_analysed::<SPEC>();
-        if let BytecodeState::Analysed { len, jumptable } = state {
-            BytecodeLocked {
-                bytecode,
+    pub fn lock_analysed(self) -> Option<BytecodeLocked> {
+        if let BytecodeState::Analysed { len, jumptable } = self.state {
+            Some(BytecodeLocked {
+                bytecode: self.bytecode,
                 len,
-                hash,
+                hash: self.hash,
                 jumptable,
-            }
+            })
         } else {
-            unreachable!("to_analysed transforms state to analysed");
+            None
         }
+    }
+
+    pub fn lock<SPEC: Spec>(self) -> BytecodeLocked {
+        let bytecode = self.to_analysed::<SPEC>();
+        bytecode.lock_analysed().expect("We have analysed bytecode")
     }
 
     /// Analyze bytecode to get jumptable and gas blocks.
@@ -268,6 +268,14 @@ pub struct BytecodeLocked {
     len: usize,
     hash: B256,
     jumptable: ValidJumpAddress,
+}
+
+impl Default for BytecodeLocked {
+    fn default() -> Self {
+        Bytecode::default()
+            .lock_analysed()
+            .expect("Bytecode default is analysed code")
+    }
 }
 
 impl BytecodeLocked {

@@ -3,7 +3,7 @@ use crate::{alloc::vec::Vec, CallContext, Spec, B160, U256};
 use bytes::Bytes;
 use std::sync::Arc;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct Contract {
     /// Contracts data
     pub input: Bytes,

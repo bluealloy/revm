@@ -5,11 +5,16 @@ pub use calc::*;
 pub use constants::*;
 #[derive(Clone, Copy, Debug)]
 pub struct Gas {
+    /// Gas Limit
     limit: u64,
-    used: u64,
-    memory: u64,
-    refunded: i64,
+    /// used+memory gas.
     all_used_gas: u64,
+    /// Used gas without memory
+    used: u64,
+    /// Used gas for memory expansion
+    memory: u64,
+    /// Refunded gas. This gas is used only at the end of execution.
+    refunded: i64,
 }
 impl Gas {
     pub fn new(limit: u64) -> Self {
@@ -51,7 +56,7 @@ impl Gas {
         self.refunded += refund;
     }
 
-    /// Record an explict cost.
+    /// Record an explicit cost.
     #[inline(always)]
     pub fn record_cost(&mut self, cost: u64) -> bool {
         let (all_used_gas, overflow) = self.all_used_gas.overflowing_add(cost);
@@ -64,7 +69,7 @@ impl Gas {
         true
     }
 
-    /// used in memory_resize! macro
+    /// used in memory_resize! macro to record gas used for memory expansion.
     pub fn record_memory(&mut self, gas_memory: u64) -> bool {
         if gas_memory > self.memory {
             let (all_used_gas, overflow) = self.used.overflowing_add(gas_memory);
@@ -77,7 +82,8 @@ impl Gas {
         true
     }
 
-    /// used in gas_refund! macro
+    /// used in gas_refund! macro to record refund value.
+    /// Refund can be negative but self.refunded is always positive.
     pub fn gas_refund(&mut self, refund: i64) {
         self.refunded += refund;
     }
