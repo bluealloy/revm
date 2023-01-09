@@ -490,7 +490,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         );
 
         #[cfg(feature = "memory_limit")]
-        let mut interpreter = Interpreter::new_with_memory_limit::<GSPEC>(
+        let mut interpreter = Interpreter::new_with_memory_limit(
             contract,
             gas.limit(),
             false,
@@ -498,7 +498,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         );
 
         #[cfg(not(feature = "memory_limit"))]
-        let mut interpreter = Interpreter::new::<GSPEC>(contract, gas.limit(), false);
+        let mut interpreter = Interpreter::new(contract, gas.limit(), false);
 
         if INSPECT {
             self.inspector
@@ -546,7 +546,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 }
                 // if we have enought gas
                 self.data.journaled_state.checkpoint_commit();
-                // Do analasis of bytecode streight away.
+                // Do analysis of bytecode streight away.
                 let bytecode = match self.data.env.cfg.perf_analyse_created_bytecodes {
                     AnalysisKind::Raw => Bytecode::new_raw(bytes.clone()),
                     AnalysisKind::Check => Bytecode::new_raw(bytes.clone()).to_checked(),
@@ -692,7 +692,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             );
 
             #[cfg(feature = "memory_limit")]
-            let mut interpreter = Interpreter::new_with_memory_limit::<GSPEC>(
+            let mut interpreter = Interpreter::new_with_memory_limit(
                 contract,
                 gas.limit(),
                 inputs.is_static,
@@ -700,8 +700,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             );
 
             #[cfg(not(feature = "memory_limit"))]
-            let mut interpreter =
-                Interpreter::new::<GSPEC>(contract, gas.limit(), inputs.is_static);
+            let mut interpreter = Interpreter::new(contract, gas.limit(), inputs.is_static);
 
             if INSPECT {
                 // create is always no static call.

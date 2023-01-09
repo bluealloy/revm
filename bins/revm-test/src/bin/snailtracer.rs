@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use bytes::Bytes;
-use revm::{db::BenchmarkDB, Bytecode, CallContext, TransactTo, B160, U256};
+use revm::{db::BenchmarkDB, Bytecode, TransactTo};
 
 use revm_interpreter::{specification::BerlinSpec, DummyHost};
 extern crate alloc;
@@ -11,7 +11,7 @@ pub fn simple_example() {
 
     // BenchmarkDB is dummy state that implements Database trait.
     let mut evm = revm::new();
-    let bytecode = Bytecode::new_raw(contract_data);
+    let bytecode = Bytecode::new_raw(contract_data).to_analysed::<BerlinSpec>();
     evm.database(BenchmarkDB::new_bytecode(bytecode.clone()));
 
     // execution globals block hash/gas_limit/coinbase/timestamp..
@@ -38,23 +38,15 @@ pub fn simple_example() {
     );
 
     // revm interpreter
-
-    let contract = revm_interpreter::Contract::new_with_context::<BerlinSpec>(
-        evm.env.tx.data,
-        bytecode,
-        &CallContext {
-            address: B160::zero(),
-            caller: evm.env.tx.caller,
-            code_address: B160::zero(),
-            apparent_value: U256::from(0),
-            scheme: revm::CallScheme::Call,
-        },
-    );
+    let contract = revm_interpreter::Contract {
+        input: evm.env.tx.data,
+        bytecode: bytecode.lock_analysed().unwrap(),
+        ..Default::default()
+    };
 
     let mut host = DummyHost::new(env);
     microbench::bench(&bench_options, "Snailtracer Interpreter benchmark", || {
-        let mut interpreter =
-            revm_interpreter::Interpreter::new::<BerlinSpec>(contract.clone(), u64::MAX, false);
+        let mut interpreter = revm_interpreter::Interpreter::new(contract.clone(), u64::MAX, false);
         interpreter.run::<_, BerlinSpec>(&mut host);
         host.clear()
     });
