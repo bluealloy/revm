@@ -1,24 +1,21 @@
 use derive_more::{AsRef, Deref};
 use fixed_hash::{construct_fixed_hash, impl_fixed_hash_conversions};
 
-#[cfg(test)]
-use proptest_derive::Arbitrary as PropTestArbitrary;
-
 #[cfg(any(test, feature = "arbitrary"))]
 use arbitrary::Arbitrary;
+#[cfg(any(test, feature = "arbitrary"))]
+use proptest_derive::Arbitrary as PropTestArbitrary;
 
 construct_fixed_hash! {
     /// revm 256 bits type.
-    #[cfg_attr(test, derive(PropTestArbitrary))]
-    #[cfg_attr(any(test, feature = "arbitrary"), derive(Arbitrary))]
+    #[cfg_attr(any(test, feature = "arbitrary"), derive(Arbitrary, PropTestArbitrary))]
     #[derive(AsRef,Deref)]
     pub struct B256(32);
 }
 
 construct_fixed_hash! {
     /// revm 160 bits type.
-    #[cfg_attr(test, derive(PropTestArbitrary))]
-    #[cfg_attr(any(test, feature = "arbitrary"), derive(Arbitrary))]
+    #[cfg_attr(any(test, feature = "arbitrary"), derive(Arbitrary, PropTestArbitrary))]
     #[derive(AsRef,Deref)]
     pub struct B160(20);
 }
