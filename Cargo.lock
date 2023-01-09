@@ -1583,6 +1583,7 @@ dependencies = [
  "revm-interpreter",
  "revm-precompiles",
  "serde",
+ "thiserror",
  "tokio",
 ]
 

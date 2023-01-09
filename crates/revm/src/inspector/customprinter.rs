@@ -161,6 +161,7 @@ mod test {
         evm.env.tx.transact_to = crate::TransactTo::Call(crate::B160(callee));
         evm.env.tx.data = crate::Bytes::from(hex::decode("").unwrap());
         evm.env.tx.value = crate::U256::ZERO;
-        evm.inspect_commit(super::CustomPrintTracer::default());
+        evm.inspect_commit(super::CustomPrintTracer::default())
+            .expect("Transaction should succeed");
     }
 }

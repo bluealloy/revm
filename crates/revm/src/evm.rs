@@ -1,6 +1,6 @@
 use crate::{
     db::{Database, DatabaseCommit, DatabaseRef, RefDBWrapper},
-    evm_impl::{EVMImpl, Transact},
+    evm_impl::{EVMImpl, Transact, TransactError},
     inspectors::NoOpInspector,
     journaled_state::State,
     Env, ExecutionResult, Inspector,
@@ -43,22 +43,27 @@ impl<DB> Default for EVM<DB> {
 
 impl<DB: Database + DatabaseCommit> EVM<DB> {
     /// Execute transaction and apply result to database
-    pub fn transact_commit(&mut self) -> ExecutionResult {
-        let (exec_result, state) = self.transact();
-        self.db.as_mut().unwrap().commit(state);
-        exec_result
+    pub fn transact_commit(&mut self) -> Result<ExecutionResult, TransactError<DB::Error>> {
+        self.transact().map(|(exec_result, state)| {
+            self.db.as_mut().unwrap().commit(state);
+            exec_result
+        })
     }
     /// Inspect transaction and commit changes to database.
-    pub fn inspect_commit<INSP: Inspector<DB>>(&mut self, inspector: INSP) -> ExecutionResult {
-        let (exec_result, state) = self.inspect(inspector);
-        self.db.as_mut().unwrap().commit(state);
-        exec_result
+    pub fn inspect_commit<INSP: Inspector<DB>>(
+        &mut self,
+        inspector: INSP,
+    ) -> Result<ExecutionResult, TransactError<DB::Error>> {
+        self.inspect(inspector).map(|(exec_result, state)| {
+            self.db.as_mut().unwrap().commit(state);
+            exec_result
+        })
     }
 }
 
 impl<DB: Database> EVM<DB> {
     /// Execute transaction without writing to DB, return change state.
-    pub fn transact(&mut self) -> (ExecutionResult, State) {
+    pub fn transact(&mut self) -> Result<(ExecutionResult, State), TransactError<DB::Error>> {
         if let Some(db) = self.db.as_mut() {
             let mut noop = NoOpInspector {};
             let out = evm_inner::<DB, false>(&mut self.env, db, &mut noop).transact();
@@ -72,7 +77,7 @@ impl<DB: Database> EVM<DB> {
     pub fn inspect<INSP: Inspector<DB>>(
         &mut self,
         mut inspector: INSP,
-    ) -> (ExecutionResult, State) {
+    ) -> Result<(ExecutionResult, State), TransactError<DB::Error>> {
         if let Some(db) = self.db.as_mut() {
             evm_inner::<DB, true>(&mut self.env, db, &mut inspector).transact()
         } else {
@@ -83,7 +88,7 @@ impl<DB: Database> EVM<DB> {
 
 impl<'a, DB: DatabaseRef> EVM<DB> {
     /// Execute transaction without writing to DB, return change state.
-    pub fn transact_ref(&self) -> (ExecutionResult, State) {
+    pub fn transact_ref(&self) -> Result<(ExecutionResult, State), TransactError<DB::Error>> {
         if let Some(db) = self.db.as_ref() {
             let mut noop = NoOpInspector {};
             let mut db = RefDBWrapper::new(db);
@@ -101,7 +106,7 @@ impl<'a, DB: DatabaseRef> EVM<DB> {
     pub fn inspect_ref<INSP: Inspector<RefDBWrapper<'a, DB::Error>>>(
         &'a self,
         mut inspector: INSP,
-    ) -> (ExecutionResult, State) {
+    ) -> Result<(ExecutionResult, State), TransactError<DB::Error>> {
         if let Some(db) = self.db.as_ref() {
             let mut db = RefDBWrapper::new(db);
             let db = &mut db;
@@ -146,7 +151,7 @@ macro_rules! create_evm {
             $env,
             $inspector,
             Precompiles::new(to_precompile_id($spec::SPEC_ID)).clone(),
-        )) as Box<dyn Transact + 'a>
+        )) as Box<dyn Transact<DatabaseError = DB::Error> + 'a>
     };
 }
 
@@ -176,7 +181,7 @@ pub fn evm_inner<'a, DB: Database, const INSPECT: bool>(
     env: &'a mut Env,
     db: &'a mut DB,
     insp: &'a mut dyn Inspector<DB>,
-) -> Box<dyn Transact + 'a> {
+) -> Box<dyn Transact<DatabaseError = DB::Error> + 'a> {
     use specification::*;
     match env.cfg.spec_id {
         SpecId::FRONTIER | SpecId::FRONTIER_THAWING => create_evm!(FrontierSpec, db, env, insp),

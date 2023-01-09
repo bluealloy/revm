@@ -33,7 +33,7 @@ pub fn simple_example() {
         &bench_options,
         "Snailtracer Host+Interpreter benchmark",
         || {
-            let (_, _) = evm.transact();
+            let (_, _) = evm.transact().expect("Transaction should succeed");
         },
     );
 

@@ -265,7 +265,9 @@ mod tests {
         evm.env.tx.gas_limit = 21100;
 
         let mut inspector = StackInspector::default();
-        let (result, state) = evm.inspect(&mut inspector);
+        let (result, state) = evm
+            .inspect(&mut inspector)
+            .expect("Transaction should succeed");
         println!("{result:?} {state:?} {inspector:?}");
 
         for (pc, gas) in inspector.gas_remaining_steps {

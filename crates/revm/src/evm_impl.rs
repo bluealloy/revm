@@ -13,7 +13,7 @@ use crate::{
 };
 use alloc::vec::Vec;
 use bytes::Bytes;
-use core::{cmp::min, marker::PhantomData};
+use core::{cmp::min, fmt::Debug, marker::PhantomData};
 use hashbrown::HashMap as Map;
 use revm_interpreter::common::{create2_address, create_address};
 use revm_precompiles::{Precompile, Precompiles};
@@ -32,31 +32,60 @@ pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
     _phantomdata: PhantomData<GSPEC>,
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum TransactError<DE: Debug> {
+    #[error("Transaction's gas limit is more than block's gas limit")]
+    CallerGasLimitMoreThanBlock,
+    #[error("A contract already exists for the provided create address")]
+    CreateCollision,
+    #[error("The database returned an error")]
+    DatabaseFailure(#[from] DE),
+    #[error("Transaction's priority fee is greater than max fee")]
+    GasMaxFeeGreaterThanPriorityFee,
+    #[error("Transaction's effective gas price is less than block's base fee")]
+    GasPriceLessThanBasefee,
+    #[error("Account does not have enough funds to be able to afford transaction's gas limit")]
+    LackOfFundForGasLimit,
+    #[error("Incrementing nonce causes arithmetic overflow")]
+    NonceOverflow(B160),
+    #[error("Caller is out of funds")]
+    OutOfFund,
+    #[error("Transaction's payment calculation causes arithmetic overflow")]
+    OverflowPayment,
+    #[error("Prevrando was not set for a post-merge spec")]
+    PrevrandaoNotSet,
+    #[error("Transaction originated from sender with deployed code (EIP-3607)")]
+    RejectCallerWithCode,
+}
+
 pub trait Transact {
+    type DatabaseError: Debug;
+
     /// Do transaction.
     /// Return Return, Output for call or Address if we are creating contract, gas spend, gas refunded, State that needs to be applied.
-    fn transact(&mut self) -> (ExecutionResult, State);
+    fn transact(&mut self) -> Result<(ExecutionResult, State), TransactError<Self::DatabaseError>>;
 }
 
 impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
     for EVMImpl<'a, GSPEC, DB, INSPECT>
 {
-    fn transact(&mut self) -> (ExecutionResult, State) {
+    type DatabaseError = DB::Error;
+
+    fn transact(&mut self) -> Result<(ExecutionResult, State), TransactError<Self::DatabaseError>> {
         let caller = self.data.env.tx.caller;
         let value = self.data.env.tx.value;
         let data = self.data.env.tx.data.clone();
         let gas_limit = self.data.env.tx.gas_limit;
-        let exit = |reason: Return| (ExecutionResult::new_with_reason(reason), State::new());
 
         if GSPEC::enabled(MERGE) && self.data.env.block.prevrandao.is_none() {
-            return exit(Return::PrevrandaoNotSet);
+            return Err(TransactError::PrevrandaoNotSet);
         }
 
         if GSPEC::enabled(LONDON) {
             if let Some(priority_fee) = self.data.env.tx.gas_priority_fee {
                 if priority_fee > self.data.env.tx.gas_price {
                     // or gas_max_fee for eip1559
-                    return exit(Return::GasMaxFeeGreaterThanPriorityFee);
+                    return Err(TransactError::GasMaxFeeGreaterThanPriorityFee);
                 }
             }
             let effective_gas_price = self.data.env.effective_gas_price();
@@ -66,7 +95,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
             // TODO maybe do this checks when creating evm. We already have all data there
             // or should be move effective_gas_price inside transact fn
             if effective_gas_price < basefee {
-                return exit(Return::GasPriceLessThenBasefee);
+                return Err(TransactError::GasPriceLessThanBasefee);
             }
             // check if priority fee is lower then max fee
         }
@@ -78,24 +107,28 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
 
         // unusual to be found here, but check if gas_limit is more then block_gas_limit
         if !disable_block_gas_limit && U256::from(gas_limit) > self.data.env.block.gas_limit {
-            return exit(Return::CallerGasLimitMoreThenBlock);
+            return Err(TransactError::CallerGasLimitMoreThanBlock);
         }
 
         let mut gas = Gas::new(gas_limit);
+
         // record initial gas cost. if not using gas metering init will return 0
-        if !gas.record_cost(self.initialization::<GSPEC>()) {
-            return exit(Return::OutOfGas);
+        let initialization_cost = self
+            .initialization::<GSPEC>()
+            .map_err(TransactError::DatabaseFailure)?;
+
+        if !gas.record_cost(initialization_cost) {
+            return Ok((
+                ExecutionResult::new_with_reason(Return::OutOfGas),
+                State::new(),
+            ));
         }
 
         // load acc
-        if self
-            .data
+        self.data
             .journaled_state
             .load_account(caller, self.data.db)
-            .is_err()
-        {
-            return exit(Return::FatalExternalError);
-        }
+            .map_err(TransactError::DatabaseFailure)?;
 
         #[cfg(feature = "optional_eip3607")]
         let disable_eip3607 = self.env().cfg.disable_eip3607;
@@ -108,7 +141,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
         if !disable_eip3607
             && self.data.journaled_state.account(caller).info.code_hash != KECCAK_EMPTY
         {
-            return exit(Return::RejectCallerWithCode);
+            return Err(TransactError::RejectCallerWithCode);
         }
 
         #[cfg(feature = "optional_balance_check")]
@@ -133,13 +166,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
                 if disable_balance_check {
                     *balance = U256::ZERO;
                 } else {
-                    return exit(Return::LackOfFundForGasLimit);
+                    return Err(TransactError::LackOfFundForGasLimit);
                 }
             } else {
                 *balance -= payment_value;
             }
         } else {
-            return exit(Return::OverflowPayment);
+            return Err(TransactError::OverflowPayment);
         }
 
         // check if we have enought balance for value transfer.
@@ -147,7 +180,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
         if !disable_balance_check
             && difference + value > self.data.journaled_state.account(caller).info.balance
         {
-            return exit(Return::OutOfFund);
+            return Err(TransactError::OutOfFund);
         }
 
         // record all as cost;
@@ -161,7 +194,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
             TransactTo::Call(address) => {
                 if self.data.journaled_state.inc_nonce(caller).is_none() {
                     // overflow
-                    return exit(Return::NonceOverflow);
+                    return Err(TransactError::NonceOverflow(caller));
                 }
                 let context = CallContext {
                     caller,
@@ -211,8 +244,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
             }
         }
 
-        let (state, logs, gas_used, gas_refunded) = self.finalize::<GSPEC>(caller, &gas);
-        (
+        let (state, logs, gas_used, gas_refunded) = self
+            .finalize::<GSPEC>(caller, &gas)
+            .map_err(TransactError::DatabaseFailure)?;
+
+        Ok((
             ExecutionResult {
                 exit_reason,
                 out,
@@ -221,7 +257,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
                 logs,
             },
             state,
-        )
+        ))
     }
 }
 
@@ -250,11 +286,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
     }
 
+    #[allow(clippy::type_complexity)]
     fn finalize<SPEC: Spec>(
         &mut self,
         caller: B160,
         gas: &Gas,
-    ) -> (Map<B160, Account>, Vec<Log>, u64, u64) {
+    ) -> Result<(Map<B160, Account>, Vec<Log>, u64, u64), DB::Error> {
         let coinbase = self.data.env.block.coinbase;
         let (gas_used, gas_refunded) = if crate::USE_GAS {
             let effective_gas_price = self.data.env.effective_gas_price();
@@ -285,11 +322,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 effective_gas_price
             };
 
-            // TODO
-            let _ = self
-                .data
+            self.data
                 .journaled_state
-                .load_account(coinbase, self.data.db);
+                .load_account(coinbase, self.data.db)?;
+
             self.data.journaled_state.touch(&coinbase);
             let acc_coinbase = self
                 .data
@@ -304,11 +340,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             (gas.spend() - gas_refunded, gas_refunded)
         } else {
             // touch coinbase
-            // TODO return
-            let _ = self
-                .data
+            self.data
                 .journaled_state
-                .load_account(coinbase, self.data.db);
+                .load_account(coinbase, self.data.db)?;
             self.data.journaled_state.touch(&coinbase);
             (0, 0)
         };
@@ -333,10 +367,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             }
         }
 
-        (new_state, logs, gas_used, gas_refunded)
+        Ok((new_state, logs, gas_used, gas_refunded))
     }
 
-    fn initialization<SPEC: Spec>(&mut self) -> u64 {
+    fn initialization<SPEC: Spec>(&mut self) -> Result<u64, DB::Error> {
         let is_create = matches!(self.data.env.tx.transact_to, TransactTo::Create(_));
         let input = &self.data.env.tx.data;
 
@@ -348,18 +382,16 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     let mut accessed_slots = 0_u64;
 
                     for (address, slots) in self.data.env.tx.access_list.iter() {
-                        // TODO return
-                        let _ = self
-                            .data
+                        self.data
                             .journaled_state
-                            .load_account(*address, self.data.db);
+                            .load_account(*address, self.data.db)?;
+
                         accessed_slots += slots.len() as u64;
-                        // TODO return
+
                         for slot in slots {
-                            let _ = self
-                                .data
+                            self.data
                                 .journaled_state
-                                .sload(*address, *slot, self.data.db);
+                                .sload(*address, *slot, self.data.db)?;
                         }
                     }
                     (self.data.env.tx.access_list.len() as u64, accessed_slots)
@@ -382,13 +414,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             // EIP-2028: Transaction data gas cost reduction
             let gas_transaction_non_zero_data = if SPEC::enabled(ISTANBUL) { 16 } else { 68 };
 
-            transact
+            Ok(transact
                 + zero_data_len * gas::TRANSACTION_ZERO_DATA
                 + non_zero_data_len * gas_transaction_non_zero_data
                 + accessed_accounts * gas::ACCESS_LIST_ADDRESS
-                + accessed_slots * gas::ACCESS_LIST_STORAGE_KEY
+                + accessed_slots * gas::ACCESS_LIST_STORAGE_KEY)
         } else {
-            0
+            Ok(0)
         }
     }
 

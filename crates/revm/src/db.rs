@@ -2,6 +2,7 @@ mod in_memory_db;
 
 #[cfg(feature = "ethersdb")]
 pub mod ethersdb;
+
 #[cfg(feature = "ethersdb")]
 pub use ethersdb::EthersDB;
 
@@ -9,6 +10,8 @@ pub use ethersdb::EthersDB;
 compile_error!(
     "`web3db` feature is deprecated, drop-in replacement can be found with feature `ethersdb`"
 );
+
+use core::fmt::Debug;
 
 use crate::AccountInfo;
 use crate::U256;
@@ -20,7 +23,8 @@ pub use in_memory_db::{AccountState, BenchmarkDB, CacheDB, DbAccount, EmptyDB, I
 
 #[auto_impl(& mut, Box)]
 pub trait Database {
-    type Error;
+    type Error: Debug;
+
     /// Get basic account information.
     fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error>;
     /// Get account code by its hash
@@ -39,7 +43,8 @@ pub trait DatabaseCommit {
 
 #[auto_impl(&, Box, Arc)]
 pub trait DatabaseRef {
-    type Error;
+    type Error: Debug;
+
     /// Whether account at address exists.
     //fn exists(&self, address: B160) -> Option<AccountInfo>;
     /// Get basic account information.
@@ -63,8 +68,9 @@ impl<'a, Error> RefDBWrapper<'a, Error> {
     }
 }
 
-impl<'a, Error> Database for RefDBWrapper<'a, Error> {
+impl<'a, Error: Debug> Database for RefDBWrapper<'a, Error> {
     type Error = Error;
+
     /// Get basic account information.
     fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
         self.db.basic(address)

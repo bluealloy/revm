@@ -246,7 +246,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                     gas_refunded,
                     logs,
                     ..
-                } = evm.transact_commit();
+                } = evm.transact_commit().expect("Transaction should succeed");
                 let timer = timer.elapsed();
 
                 *elapsed.lock().unwrap() += timer;
@@ -272,7 +272,8 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                     );
                     let mut database_cloned = database.clone();
                     evm.database(&mut database_cloned);
-                    evm.inspect_commit(CustomPrintTracer::default());
+                    evm.inspect_commit(CustomPrintTracer::default())
+                        .expect("Transaction should succeed");
                     let db = evm.db().unwrap();
                     println!("{path:?} UNIT_TEST:{name}\n");
                     println!(

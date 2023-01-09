@@ -59,7 +59,7 @@ impl EVM {
                 ..
             },
             state,
-        ) = self.revm.transact();
+        ) = self.revm.transact().expect("Transaction should succeed");
         console_log!(
             "Transact done, exit:{:?}, gas:{:?} ({:?} refunded), data:{:?}\nstate_chage:{:?}\nlogs:{:?}",
             exit_reason,
