@@ -14,6 +14,7 @@ auto_impl = { version = "1.0", default-features = false }
 bytes = { version = "1.1", default-features = false }
 hashbrown = { version = "0.13" }
 hex = { version = "0.4", default-features = false }
+impl-tools = { version = "0.6.2", default-features = false }
 revm-precompiles = { path = "../precompiles", version = "1.1.2", default-features = false }
 revm-interpreter = { path = "../interpreter", default-features = false }
 

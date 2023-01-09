@@ -1,9 +1,9 @@
 use crate::{
-    db::{Database, DatabaseCommit, DatabaseRef, RefDBWrapper},
+    db::{Database, DatabaseRef},
     evm_impl::{EVMImpl, Transact},
     inspectors::NoOpInspector,
     journaled_state::State,
-    Env, ExecutionResult, Inspector,
+    Env, ExecutionResult, Inspector, StateCommit,
 };
 use alloc::boxed::Box;
 use revm_interpreter::{specification, SpecId};
@@ -41,7 +41,7 @@ impl<DB> Default for EVM<DB> {
     }
 }
 
-impl<DB: Database + DatabaseCommit> EVM<DB> {
+impl<DB: Database + StateCommit> EVM<DB> {
     /// Execute transaction and apply result to database
     pub fn transact_commit(&mut self) -> ExecutionResult {
         let (exec_result, state) = self.transact();
@@ -84,13 +84,10 @@ impl<DB: Database> EVM<DB> {
 impl<'a, DB: DatabaseRef> EVM<DB> {
     /// Execute transaction without writing to DB, return change state.
     pub fn transact_ref(&self) -> (ExecutionResult, State) {
-        if let Some(db) = self.db.as_ref() {
+        if let Some(mut db) = self.db.as_ref() {
             let mut noop = NoOpInspector {};
-            let mut db = RefDBWrapper::new(db);
             let db = &mut db;
-            let out =
-                evm_inner::<RefDBWrapper<DB::Error>, false>(&mut self.env.clone(), db, &mut noop)
-                    .transact();
+            let out = evm_inner::<&DB, false>(&mut self.env.clone(), db, &mut noop).transact();
             out
         } else {
             panic!("Database needs to be set");
@@ -98,19 +95,13 @@ impl<'a, DB: DatabaseRef> EVM<DB> {
     }
 
     /// Execute transaction with given inspector, without wring to DB. Return change state.
-    pub fn inspect_ref<INSP: Inspector<RefDBWrapper<'a, DB::Error>>>(
+    pub fn inspect_ref<INSP: Inspector<&'a DB>>(
         &'a self,
         mut inspector: INSP,
     ) -> (ExecutionResult, State) {
-        if let Some(db) = self.db.as_ref() {
-            let mut db = RefDBWrapper::new(db);
+        if let Some(mut db) = self.db.as_ref() {
             let db = &mut db;
-            let out = evm_inner::<RefDBWrapper<DB::Error>, true>(
-                &mut self.env.clone(),
-                db,
-                &mut inspector,
-            )
-            .transact();
+            let out = evm_inner::<&DB, true>(&mut self.env.clone(), db, &mut inspector).transact();
             out
         } else {
             panic!("Database needs to be set");

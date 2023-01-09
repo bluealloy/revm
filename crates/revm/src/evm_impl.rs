@@ -22,7 +22,7 @@ pub struct EVMData<'a, DB: Database> {
     pub env: &'a mut Env,
     pub journaled_state: JournaledState,
     pub db: &'a mut DB,
-    pub error: Option<DB::Error>,
+    pub error: Option<DB::DatabaseError>,
 }
 
 pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
@@ -751,7 +751,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         self.data
             .db
             .block_hash(number)
-            .map_err(|e| self.data.error = Some(e))
+            .map_err(|e| self.data.error = Some(DB::DatabaseError::from(e)))
             .ok()
     }
 

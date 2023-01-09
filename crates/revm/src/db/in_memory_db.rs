@@ -1,8 +1,8 @@
-use super::{DatabaseCommit, DatabaseRef};
-use crate::common::keccak256;
-use crate::{interpreter::bytecode::Bytecode, Database, KECCAK_EMPTY};
-use crate::{Account, AccountInfo, Log};
-use crate::{B160, B256, U256};
+use super::DatabaseRef;
+use crate::{
+    common::keccak256, interpreter::bytecode::Bytecode, Account, AccountInfo, BlockHash,
+    BlockHashRef, Database, Log, State, StateCommit, StateRef, B160, B256, KECCAK_EMPTY, U256,
+};
 use alloc::vec::Vec;
 use core::convert::Infallible;
 use hashbrown::{hash_map::Entry, HashMap as Map};
@@ -125,7 +125,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         self.accounts.entry(address).or_default().info = info;
     }
 
-    pub fn load_account(&mut self, address: B160) -> Result<&mut DbAccount, ExtDB::Error> {
+    pub fn load_account(&mut self, address: B160) -> Result<&mut DbAccount, ExtDB::DatabaseError> {
         let db = &self.db;
         match self.accounts.entry(address) {
             Entry::Occupied(entry) => Ok(entry.into_mut()),
@@ -146,7 +146,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         address: B160,
         slot: U256,
         value: U256,
-    ) -> Result<(), ExtDB::Error> {
+    ) -> Result<(), ExtDB::DatabaseError> {
         let account = self.load_account(address)?;
         account.storage.insert(slot, value);
         Ok(())
@@ -157,7 +157,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         &mut self,
         address: B160,
         storage: Map<U256, U256>,
-    ) -> Result<(), ExtDB::Error> {
+    ) -> Result<(), ExtDB::DatabaseError> {
         let account = self.load_account(address)?;
         account.account_state = AccountState::StorageCleared;
         account.storage = storage.into_iter().collect();
@@ -165,7 +165,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     }
 }
 
-impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
+impl<ExtDB: DatabaseRef> StateCommit for CacheDB<ExtDB> {
     fn commit(&mut self, changes: Map<B160, Account>) {
         for (address, mut account) in changes {
             if account.is_destroyed {
@@ -196,19 +196,8 @@ impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
     }
 }
 
-impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
-    type Error = ExtDB::Error;
-
-    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
-        match self.block_hashes.entry(number) {
-            Entry::Occupied(entry) => Ok(*entry.get()),
-            Entry::Vacant(entry) => {
-                let hash = self.db.block_hash(number)?;
-                entry.insert(hash);
-                Ok(hash)
-            }
-        }
-    }
+impl<ExtDB: DatabaseRef> State for CacheDB<ExtDB> {
+    type Error = ExtDB::DatabaseError;
 
     fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
         let basic = match self.accounts.entry(address) {
@@ -277,8 +266,27 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
     }
 }
 
-impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
-    type Error = ExtDB::Error;
+impl<ExtDB: DatabaseRef> BlockHash for CacheDB<ExtDB> {
+    type Error = <ExtDB as BlockHashRef>::Error;
+
+    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
+        match self.block_hashes.entry(number) {
+            Entry::Occupied(entry) => Ok(*entry.get()),
+            Entry::Vacant(entry) => {
+                let hash = self.db.block_hash(number)?;
+                entry.insert(hash);
+                Ok(hash)
+            }
+        }
+    }
+}
+
+impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
+    type DatabaseError = ExtDB::DatabaseError;
+}
+
+impl<ExtDB: DatabaseRef> StateRef for CacheDB<ExtDB> {
+    type Error = <ExtDB as StateRef>::Error;
 
     fn basic(&self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
         match self.accounts.get(&address) {
@@ -312,6 +320,10 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
             None => self.db.code_by_hash(code_hash),
         }
     }
+}
+
+impl<ExtDB: DatabaseRef> BlockHashRef for CacheDB<ExtDB> {
+    type Error = <ExtDB as BlockHashRef>::Error;
 
     fn block_hash(&self, number: U256) -> Result<B256, Self::Error> {
         match self.block_hashes.get(&number) {
@@ -321,29 +333,38 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
     }
 }
 
+impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
+    type DatabaseError = ExtDB::DatabaseError;
+}
+
 /// An empty database that always returns default values when queried.
 #[derive(Debug, Default, Clone)]
 pub struct EmptyDB();
 
-impl DatabaseRef for EmptyDB {
+impl StateRef for EmptyDB {
     type Error = Infallible;
-    /// Get basic account information.
+
     fn basic(&self, _address: B160) -> Result<Option<AccountInfo>, Self::Error> {
         Ok(None)
     }
-    /// Get account code by its hash
     fn code_by_hash(&self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
         Ok(Bytecode::new())
     }
-    /// Get storage value of address at index.
     fn storage(&self, _address: B160, _index: U256) -> Result<U256, Self::Error> {
         Ok(U256::default())
     }
+}
 
-    // History related
+impl BlockHashRef for EmptyDB {
+    type Error = Infallible;
+
     fn block_hash(&self, number: U256) -> Result<B256, Self::Error> {
         Ok(keccak256(&number.to_be_bytes::<{ U256::BYTES }>()))
     }
+}
+
+impl DatabaseRef for EmptyDB {
+    type DatabaseError = Infallible;
 }
 
 /// Custom benchmarking DB that only has account info for the zero address.
@@ -359,10 +380,10 @@ impl BenchmarkDB {
     }
 }
 
-impl Database for BenchmarkDB {
+impl StateRef for BenchmarkDB {
     type Error = Infallible;
-    /// Get basic account information.
-    fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
+
+    fn basic(&self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
         if address == B160::zero() {
             return Ok(Some(AccountInfo {
                 nonce: 1,
@@ -374,26 +395,32 @@ impl Database for BenchmarkDB {
         Ok(None)
     }
 
-    /// Get account code by its hash
-    fn code_by_hash(&mut self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
+    fn code_by_hash(&self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
         Ok(Bytecode::default())
     }
 
     /// Get storage value of address at index.
-    fn storage(&mut self, _address: B160, _index: U256) -> Result<U256, Self::Error> {
+    fn storage(&self, _address: B160, _index: U256) -> Result<U256, Self::Error> {
         Ok(U256::default())
     }
+}
 
-    // History related
-    fn block_hash(&mut self, _number: U256) -> Result<B256, Self::Error> {
+impl BlockHashRef for BenchmarkDB {
+    type Error = Infallible;
+
+    fn block_hash(&self, _number: U256) -> Result<B256, Self::Error> {
         Ok(B256::default())
     }
+}
+
+impl DatabaseRef for BenchmarkDB {
+    type DatabaseError = Infallible;
 }
 
 #[cfg(test)]
 mod tests {
     use super::{CacheDB, EmptyDB};
-    use crate::{AccountInfo, Database, U256};
+    use crate::{AccountInfo, StateRef, U256};
 
     #[test]
     pub fn test_insert_account_storage() {

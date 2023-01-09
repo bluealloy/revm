@@ -1,7 +1,7 @@
-use std::sync::Arc;
+use std::{convert::Infallible, sync::Arc};
 
 use crate::{
-    interpreter::bytecode::Bytecode, AccountInfo, Database, B160, B256, KECCAK_EMPTY, U256,
+    interpreter::bytecode::Bytecode, AccountInfo, BlockHash, State, B160, B256, KECCAK_EMPTY, U256,
 };
 
 use ethers_core::types::{BlockId, H160 as eH160, H256, U64 as eU64};
@@ -53,11 +53,11 @@ where
     }
 }
 
-impl<M> Database for EthersDB<M>
+impl<M> State for EthersDB<M>
 where
     M: Middleware,
 {
-    type Error = ();
+    type Error = Infallible;
 
     fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
         let add = eH160::from(address.0);
@@ -104,6 +104,13 @@ where
         };
         Ok(self.block_on(f))
     }
+}
+
+impl<M> BlockHash for EthersDB<M>
+where
+    M: Middleware,
+{
+    type Error = Infallible;
 
     fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
         // saturate usize

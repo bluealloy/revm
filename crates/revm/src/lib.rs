@@ -1,10 +1,12 @@
 #![allow(dead_code)]
 //#![no_std]
+mod blockchain;
 pub mod db;
 mod evm;
 mod evm_impl;
 mod inspector;
 mod journaled_state;
+mod state;
 
 #[cfg(all(feature = "with-serde", not(feature = "serde")))]
 compile_error!("`with-serde` feature has been renamed to `serde`.");
@@ -12,11 +14,13 @@ compile_error!("`with-serde` feature has been renamed to `serde`.");
 pub(crate) const USE_GAS: bool = !cfg!(feature = "no_gas_measuring");
 pub type DummyStateDB = InMemoryDB;
 
-pub use db::{Database, DatabaseCommit, InMemoryDB};
+pub use blockchain::{BlockHash, BlockHashRef};
+pub use db::{Database, InMemoryDB};
 pub use evm::{evm_inner, new, EVM};
 pub use evm_impl::EVMData;
 pub use journaled_state::{JournalEntry, JournaledState};
 pub use revm_interpreter::*;
+pub use state::{State, StateCommit, StateRef};
 
 extern crate alloc;
 

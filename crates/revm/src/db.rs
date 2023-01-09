@@ -2,84 +2,91 @@ mod in_memory_db;
 
 #[cfg(feature = "ethersdb")]
 pub mod ethersdb;
-#[cfg(feature = "ethersdb")]
-pub use ethersdb::EthersDB;
 
 #[cfg(all(not(feature = "ethersdb"), feature = "web3db"))]
 compile_error!(
     "`web3db` feature is deprecated, drop-in replacement can be found with feature `ethersdb`"
 );
 
-use crate::AccountInfo;
-use crate::U256;
-use crate::{interpreter::bytecode::Bytecode, Account};
-use crate::{B160, B256};
-use auto_impl::auto_impl;
+#[cfg(feature = "ethersdb")]
+pub use ethersdb::EthersDB;
 use hashbrown::HashMap as Map;
-pub use in_memory_db::{AccountState, BenchmarkDB, CacheDB, DbAccount, EmptyDB, InMemoryDB};
+use revm_interpreter::{Account, AccountInfo, Bytecode, B160, B256, U256};
 
-#[auto_impl(& mut, Box)]
-pub trait Database {
-    type Error;
-    /// Get basic account information.
-    fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error>;
-    /// Get account code by its hash
-    fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error>;
-    /// Get storage value of address at index.
-    fn storage(&mut self, address: B160, index: U256) -> Result<U256, Self::Error>;
+use crate::{
+    blockchain::{BlockHash, BlockHashRef},
+    state::{State, StateRef},
+    StateCommit,
+};
 
-    // History related
-    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error>;
+pub use self::in_memory_db::{AccountState, BenchmarkDB, CacheDB, DbAccount, EmptyDB, InMemoryDB};
+
+#[impl_tools::autoimpl(for<T: trait> &mut T, Box<T>)]
+pub trait Database: BlockHash + State {
+    type DatabaseError: From<<Self as BlockHash>::Error> + From<<Self as State>::Error>;
 }
 
-#[auto_impl(& mut, Box)]
-pub trait DatabaseCommit {
-    fn commit(&mut self, changes: Map<B160, Account>);
+#[impl_tools::autoimpl(for<T: trait> &T, Box<T>)]
+#[cfg_attr(feature = "std", impl_tools::autoimpl(for<T: trait> std::sync::Arc<T>))]
+pub trait DatabaseRef: BlockHashRef + StateRef {
+    type DatabaseError: From<<Self as BlockHashRef>::Error> + From<<Self as StateRef>::Error>;
 }
 
-#[auto_impl(&, Box, Arc)]
-pub trait DatabaseRef {
-    type Error;
-    /// Whether account at address exists.
-    //fn exists(&self, address: B160) -> Option<AccountInfo>;
-    /// Get basic account information.
-    fn basic(&self, address: B160) -> Result<Option<AccountInfo>, Self::Error>;
-    /// Get account code by its hash
-    fn code_by_hash(&self, code_hash: B256) -> Result<Bytecode, Self::Error>;
-    /// Get storage value of address at index.
-    fn storage(&self, address: B160, index: U256) -> Result<U256, Self::Error>;
-
-    // History related
-    fn block_hash(&self, number: U256) -> Result<B256, Self::Error>;
+impl<T> Database for &T
+where
+    T: DatabaseRef,
+{
+    type DatabaseError = <T as DatabaseRef>::DatabaseError;
 }
 
-pub struct RefDBWrapper<'a, Error> {
-    pub db: &'a dyn DatabaseRef<Error = Error>,
+pub struct DatabaseComponents<BH: BlockHash, S: State> {
+    block_hash: BH,
+    state: S,
 }
 
-impl<'a, Error> RefDBWrapper<'a, Error> {
-    pub fn new(db: &'a dyn DatabaseRef<Error = Error>) -> Self {
-        Self { db }
-    }
+pub enum ComponentError<BHE, SE> {
+    BlockHashError(BHE),
+    StateError(SE),
 }
 
-impl<'a, Error> Database for RefDBWrapper<'a, Error> {
-    type Error = Error;
-    /// Get basic account information.
-    fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
-        self.db.basic(address)
-    }
-    /// Get account code by its hash
-    fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
-        self.db.code_by_hash(code_hash)
-    }
-    /// Get storage value of address at index.
-    fn storage(&mut self, address: B160, index: U256) -> Result<U256, Self::Error> {
-        self.db.storage(address, index)
-    }
+impl<BH: BlockHash, S: State> Database for DatabaseComponents<BH, S> {
+    type DatabaseError = ComponentError<BH::Error, S::Error>;
+}
 
-    // History related
+impl<BH: BlockHash, S: State> BlockHash for DatabaseComponents<BH, S> {
+    type Error = ComponentError<BH::Error, S::Error>;
+
     fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
-        self.db.block_hash(number)
+        self.block_hash
+            .block_hash(number)
+            .map_err(ComponentError::BlockHashError)
+    }
+}
+
+impl<BH: BlockHash, S: State> State for DatabaseComponents<BH, S> {
+    type Error = ComponentError<BH::Error, S::Error>;
+
+    fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
+        self.state
+            .basic(address)
+            .map_err(ComponentError::StateError)
+    }
+
+    fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
+        self.state
+            .code_by_hash(code_hash)
+            .map_err(ComponentError::StateError)
+    }
+
+    fn storage(&mut self, address: B160, index: U256) -> Result<U256, Self::Error> {
+        self.state
+            .storage(address, index)
+            .map_err(ComponentError::StateError)
+    }
+}
+
+impl<BH: BlockHash, S: State + StateCommit> StateCommit for DatabaseComponents<BH, S> {
+    fn commit(&mut self, changes: Map<B160, Account>) {
+        self.state.commit(changes)
     }
 }

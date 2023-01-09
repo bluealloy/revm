@@ -225,7 +225,7 @@ impl JournaledState {
         address: B160,
         is_precompile: bool,
         db: &mut DB,
-    ) -> Result<bool, DB::Error> {
+    ) -> Result<bool, DB::DatabaseError> {
         let (acc, _) = self.load_code(address, db)?;
 
         // Check collision. Bytecode needs to be empty.
@@ -364,7 +364,7 @@ impl JournaledState {
         address: B160,
         target: B160,
         db: &mut DB,
-    ) -> Result<SelfDestructResult, DB::Error> {
+    ) -> Result<SelfDestructResult, DB::DatabaseError> {
         let (is_cold, target_exists) = self.load_account_exist(target, db)?;
         // transfer all the balance
         let acc = self.state.get_mut(&address).unwrap();
@@ -403,7 +403,7 @@ impl JournaledState {
         &mut self,
         address: B160,
         db: &mut DB,
-    ) -> Result<(&mut Account, bool), DB::Error> {
+    ) -> Result<(&mut Account, bool), DB::DatabaseError> {
         Ok(match self.state.entry(address) {
             Entry::Occupied(entry) => (entry.into_mut(), false),
             Entry::Vacant(vac) => {
@@ -432,7 +432,7 @@ impl JournaledState {
         &mut self,
         address: B160,
         db: &mut DB,
-    ) -> Result<(bool, bool), DB::Error> {
+    ) -> Result<(bool, bool), DB::DatabaseError> {
         let is_before_spurious_dragon = self.is_before_spurious_dragon;
         let (acc, is_cold) = self.load_code(address, db)?;
 
@@ -448,7 +448,7 @@ impl JournaledState {
         &mut self,
         address: B160,
         db: &mut DB,
-    ) -> Result<(&mut Account, bool), DB::Error> {
+    ) -> Result<(&mut Account, bool), DB::DatabaseError> {
         let (acc, is_cold) = self.load_account(address, db)?;
         if acc.info.code.is_none() {
             if acc.info.code_hash == KECCAK_EMPTY {
@@ -468,7 +468,7 @@ impl JournaledState {
         address: B160,
         key: U256,
         db: &mut DB,
-    ) -> Result<(U256, bool), DB::Error> {
+    ) -> Result<(U256, bool), DB::DatabaseError> {
         let account = self.state.get_mut(&address).unwrap(); // asume acc is hot
         let load = match account.storage.entry(key) {
             Entry::Occupied(occ) => (occ.get().present_value, false),
@@ -505,7 +505,7 @@ impl JournaledState {
         key: U256,
         new: U256,
         db: &mut DB,
-    ) -> Result<(U256, U256, U256, bool), DB::Error> {
+    ) -> Result<(U256, U256, U256, bool), DB::DatabaseError> {
         // assume that acc exists and load the slot.
         let (present, is_cold) = self.sload(address, key, db)?;
         let acc = self.state.get_mut(&address).unwrap();
