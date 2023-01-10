@@ -76,7 +76,7 @@ impl From<AccountInfo> for DbAccount {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub enum AccountState {
     /// Before Spurious Dragon hardfork there were a difference between empty and not existing.
     /// And we are flaging it here.
