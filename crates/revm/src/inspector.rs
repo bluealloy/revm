@@ -11,6 +11,7 @@ pub mod noop;
 
 /// All Inspectors implementations that revm has.
 pub mod inspectors {
+    #[cfg(feature = "std")]
     pub use super::customprinter::CustomPrintTracer;
     pub use super::gas::GasInspector;
     pub use super::noop::NoOpInspector;
