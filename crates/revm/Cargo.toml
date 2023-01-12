@@ -54,3 +54,4 @@ ethersdb = ["tokio", "futures", "ethers-providers", "ethers-core"]
 serde = ["dep:serde", "hex/serde", "hashbrown/serde", "revm-interpreter/serde"]
 # deprecated feature
 web3db = []
+with-serde = []
