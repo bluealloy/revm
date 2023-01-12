@@ -6,7 +6,7 @@ mod evm_impl;
 mod inspector;
 mod journaled_state;
 
-#[cfg(feature = "with-serde")]
+#[cfg(all(feature = "with-serde", not("serde" )]
 compile_error!("`with-serde` feature has been renamed to `serde`.");
 
 pub(crate) const USE_GAS: bool = !cfg!(feature = "no_gas_measuring");
