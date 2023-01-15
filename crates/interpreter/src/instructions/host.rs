@@ -1,12 +1,10 @@
+use crate::primitives::{Spec, SpecId::*, B160, B256, U256};
 use crate::{
     alloc::vec::Vec,
-    bits::{B160, B256},
     gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
     interpreter::Interpreter,
     return_ok, return_revert, CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme,
-    Host, Return, Spec,
-    SpecId::*,
-    Transfer, U256,
+    Host, InstructionResult, Transfer,
 };
 use bytes::Bytes;
 use core::cmp::min;
@@ -15,7 +13,7 @@ pub fn balance<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     pop_address!(interpreter, address);
     let ret = host.balance(address);
     if ret.is_none() {
-        interpreter.instruction_result = Return::FatalExternalError;
+        interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     }
     let (balance, is_cold) = ret.unwrap();
@@ -39,7 +37,7 @@ pub fn selfbalance<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Hos
     check!(interpreter, SPEC::enabled(ISTANBUL));
     let ret = host.balance(interpreter.contract.address);
     if ret.is_none() {
-        interpreter.instruction_result = Return::FatalExternalError;
+        interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     }
     let (balance, _) = ret.unwrap();
@@ -50,7 +48,7 @@ pub fn extcodesize<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Hos
     pop_address!(interpreter, address);
     let ret = host.code(address);
     if ret.is_none() {
-        interpreter.instruction_result = Return::FatalExternalError;
+        interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     }
     let (code, is_cold) = ret.unwrap();
@@ -70,7 +68,7 @@ pub fn extcodehash<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Hos
     pop_address!(interpreter, address);
     let ret = host.code_hash(address);
     if ret.is_none() {
-        interpreter.instruction_result = Return::FatalExternalError;
+        interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     }
     let (code_hash, is_cold) = ret.unwrap();
@@ -90,12 +88,12 @@ pub fn extcodecopy<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Hos
 
     let ret = host.code(address);
     if ret.is_none() {
-        interpreter.instruction_result = Return::FatalExternalError;
+        interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     }
     let (code, is_cold) = ret.unwrap();
 
-    let len = as_usize_or_fail!(interpreter, len_u256, Return::OutOfGas);
+    let len = as_usize_or_fail!(interpreter, len_u256, InstructionResult::OutOfGas);
     gas_or_fail!(
         interpreter,
         gas::extcodecopy_cost::<SPEC>(len as u64, is_cold)
@@ -103,7 +101,7 @@ pub fn extcodecopy<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Hos
     if len == 0 {
         return;
     }
-    let memory_offset = as_usize_or_fail!(interpreter, memory_offset, Return::OutOfGas);
+    let memory_offset = as_usize_or_fail!(interpreter, memory_offset, InstructionResult::OutOfGas);
     let code_offset = min(as_usize_saturated!(code_offset), code.len());
     memory_resize!(interpreter, memory_offset, len);
 
@@ -123,7 +121,7 @@ pub fn blockhash(interpreter: &mut Interpreter, host: &mut dyn Host) {
         if diff <= 256 && diff != 0 {
             let ret = host.block_hash(*number);
             if ret.is_none() {
-                interpreter.instruction_result = Return::FatalExternalError;
+                interpreter.instruction_result = InstructionResult::FatalExternalError;
                 return;
             }
             *number = U256::from_be_bytes(*ret.unwrap());
@@ -138,7 +136,7 @@ pub fn sload<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
 
     let ret = host.sload(interpreter.contract.address, index);
     if ret.is_none() {
-        interpreter.instruction_result = Return::FatalExternalError;
+        interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     }
     let (value, is_cold) = ret.unwrap();
@@ -152,7 +150,7 @@ pub fn sstore<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     pop!(interpreter, index, value);
     let ret = host.sstore(interpreter.contract.address, index, value);
     if ret.is_none() {
-        interpreter.instruction_result = Return::FatalExternalError;
+        interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     }
     let (original, old, new, is_cold) = ret.unwrap();
@@ -170,18 +168,18 @@ pub fn log<const N: u8, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dy
     check!(interpreter, !interpreter.is_static);
 
     pop!(interpreter, offset, len);
-    let len = as_usize_or_fail!(interpreter, len, Return::OutOfGas);
+    let len = as_usize_or_fail!(interpreter, len, InstructionResult::OutOfGas);
     gas_or_fail!(interpreter, gas::log_cost(N, len as u64));
     let data = if len == 0 {
         Bytes::new()
     } else {
-        let offset = as_usize_or_fail!(interpreter, offset, Return::OutOfGas);
+        let offset = as_usize_or_fail!(interpreter, offset, InstructionResult::OutOfGas);
         memory_resize!(interpreter, offset, len);
         Bytes::copy_from_slice(interpreter.memory.get_slice(offset, len))
     };
     let n = N as usize;
     if interpreter.stack.len() < n {
-        interpreter.instruction_result = Return::StackUnderflow;
+        interpreter.instruction_result = InstructionResult::StackUnderflow;
         return;
     }
 
@@ -202,7 +200,7 @@ pub fn selfdestruct<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Ho
 
     let res = host.selfdestruct(interpreter.contract.address, target);
     if res.is_none() {
-        interpreter.instruction_result = Return::FatalExternalError;
+        interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     }
     let res = res.unwrap();
@@ -213,7 +211,7 @@ pub fn selfdestruct<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Ho
     }
     gas!(interpreter, gas::selfdestruct_cost::<SPEC>(res));
 
-    interpreter.instruction_result = Return::SelfDestruct;
+    interpreter.instruction_result = InstructionResult::SelfDestruct;
 }
 
 pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
@@ -229,12 +227,12 @@ pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
     interpreter.return_data_buffer = Bytes::new();
 
     pop!(interpreter, value, code_offset, len);
-    let len = as_usize_or_fail!(interpreter, len, Return::OutOfGas);
+    let len = as_usize_or_fail!(interpreter, len, InstructionResult::OutOfGas);
 
     let code = if len == 0 {
         Bytes::new()
     } else {
-        let code_offset = as_usize_or_fail!(interpreter, code_offset, Return::OutOfGas);
+        let code_offset = as_usize_or_fail!(interpreter, code_offset, InstructionResult::OutOfGas);
         memory_resize!(interpreter, code_offset, len);
         Bytes::copy_from_slice(interpreter.memory.get_slice(code_offset, len))
     };
@@ -283,8 +281,8 @@ pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
             push_b256!(interpreter, B256::zero());
             interpreter.gas.erase_cost(gas.remaining());
         }
-        Return::FatalExternalError => {
-            interpreter.instruction_result = Return::FatalExternalError;
+        InstructionResult::FatalExternalError => {
+            interpreter.instruction_result = InstructionResult::FatalExternalError;
             return;
         }
         _ => {
@@ -336,7 +334,7 @@ pub fn call_inner<SPEC: Spec>(
         CallScheme::Call => {
             pop!(interpreter, value);
             if interpreter.is_static && value != U256::ZERO {
-                interpreter.instruction_result = Return::CallNotAllowedInsideStatic;
+                interpreter.instruction_result = InstructionResult::CallNotAllowedInsideStatic;
                 return;
             }
             value
@@ -346,18 +344,18 @@ pub fn call_inner<SPEC: Spec>(
 
     pop!(interpreter, in_offset, in_len, out_offset, out_len);
 
-    let in_len = as_usize_or_fail!(interpreter, in_len, Return::OutOfGas);
+    let in_len = as_usize_or_fail!(interpreter, in_len, InstructionResult::OutOfGas);
     let input = if in_len != 0 {
-        let in_offset = as_usize_or_fail!(interpreter, in_offset, Return::OutOfGas);
+        let in_offset = as_usize_or_fail!(interpreter, in_offset, InstructionResult::OutOfGas);
         memory_resize!(interpreter, in_offset, in_len);
         Bytes::copy_from_slice(interpreter.memory.get_slice(in_offset, in_len))
     } else {
         Bytes::new()
     };
 
-    let out_len = as_usize_or_fail!(interpreter, out_len, Return::OutOfGas);
+    let out_len = as_usize_or_fail!(interpreter, out_len, InstructionResult::OutOfGas);
     let out_offset = if out_len != 0 {
-        let out_offset = as_usize_or_fail!(interpreter, out_offset, Return::OutOfGas);
+        let out_offset = as_usize_or_fail!(interpreter, out_offset, InstructionResult::OutOfGas);
         memory_resize!(interpreter, out_offset, out_len);
         out_offset
     } else {
@@ -412,7 +410,7 @@ pub fn call_inner<SPEC: Spec>(
     // load account and calculate gas cost.
     let res = host.load_account(to);
     if res.is_none() {
-        interpreter.instruction_result = Return::FatalExternalError;
+        interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     }
     let (is_cold, exist) = res.unwrap();
@@ -479,8 +477,8 @@ pub fn call_inner<SPEC: Spec>(
                 .set(out_offset, &interpreter.return_data_buffer[..target_len]);
             push!(interpreter, U256::ZERO);
         }
-        Return::FatalExternalError => {
-            interpreter.instruction_result = Return::FatalExternalError;
+        InstructionResult::FatalExternalError => {
+            interpreter.instruction_result = InstructionResult::FatalExternalError;
             return;
         }
         _ => {

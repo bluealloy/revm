@@ -1,5 +1,10 @@
 use crate::{B160, B256, U256};
+use hex_literal::hex;
 use sha3::{Digest, Keccak256};
+
+pub const KECCAK_EMPTY: B256 = B256(hex!(
+    "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+));
 
 #[inline(always)]
 pub fn keccak256(input: &[u8]) -> B256 {
@@ -28,7 +33,7 @@ pub fn create2_address(caller: B160, code_hash: B256, salt: U256) -> B160 {
 
 /// Serde functions to serde as [bytes::Bytes] hex string
 #[cfg(feature = "serde")]
-pub(crate) mod serde_hex_bytes {
+pub mod serde_hex_bytes {
     use serde::{Deserialize, Deserializer, Serializer};
 
     pub fn serialize<S, T>(x: T, s: S) -> Result<S::Ok, S::Error>

@@ -1,9 +1,9 @@
-pub use crate::Return;
+pub use crate::InstructionResult;
 
 macro_rules! check {
     ($interp:expr, $expresion:expr) => {
         if !$expresion {
-            $interp.instruction_result = Return::NotActivated;
+            $interp.instruction_result = InstructionResult::NotActivated;
             return;
         }
     };
@@ -13,7 +13,7 @@ macro_rules! gas {
     ($interp:expr, $gas:expr) => {
         if crate::USE_GAS {
             if !$interp.gas.record_cost(($gas)) {
-                $interp.instruction_result = Return::OutOfGas;
+                $interp.instruction_result = InstructionResult::OutOfGas;
                 return;
             }
         }
@@ -34,7 +34,7 @@ macro_rules! gas_or_fail {
             match $gas {
                 Some(gas_used) => gas!($interp, gas_used),
                 None => {
-                    $interp.instruction_result = Return::OutOfGas;
+                    $interp.instruction_result = InstructionResult::OutOfGas;
                     return;
                 }
             }
@@ -51,7 +51,7 @@ macro_rules! memory_resize {
         {
             #[cfg(feature = "memory_limit")]
             if new_size > ($interp.memory_limit as usize) {
-                $interp.instruction_result = Return::OutOfGas;
+                $interp.instruction_result = InstructionResult::OutOfGas;
                 return;
             }
 
@@ -59,14 +59,14 @@ macro_rules! memory_resize {
                 if crate::USE_GAS {
                     let num_bytes = new_size / 32;
                     if !$interp.gas.record_memory(crate::gas::memory_gas(num_bytes)) {
-                        $interp.instruction_result = Return::OutOfGas;
+                        $interp.instruction_result = InstructionResult::OutOfGas;
                         return;
                     }
                 }
                 $interp.memory.resize(new_size);
             }
         } else {
-            $interp.instruction_result = Return::OutOfGas;
+            $interp.instruction_result = InstructionResult::OutOfGas;
             return;
         }
     }};
@@ -75,7 +75,7 @@ macro_rules! memory_resize {
 macro_rules! pop_address {
     ( $interp:expr, $x1:ident) => {
         if $interp.stack.len() < 1 {
-            $interp.instruction_result = Return::StackUnderflow;
+            $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
         // Safety: Length is checked above.
@@ -87,7 +87,7 @@ macro_rules! pop_address {
     };
     ( $interp:expr, $x1:ident, $x2:ident) => {
         if $interp.stack.len() < 2 {
-            $interp.instruction_result = Return::StackUnderflow;
+            $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
         let mut temp = H256::zero();
@@ -108,7 +108,7 @@ macro_rules! pop_address {
 macro_rules! pop {
     ( $interp:expr, $x1:ident) => {
         if $interp.stack.len() < 1 {
-            $interp.instruction_result = Return::StackUnderflow;
+            $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
         // Safety: Length is checked above.
@@ -116,7 +116,7 @@ macro_rules! pop {
     };
     ( $interp:expr, $x1:ident, $x2:ident) => {
         if $interp.stack.len() < 2 {
-            $interp.instruction_result = Return::StackUnderflow;
+            $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
         // Safety: Length is checked above.
@@ -124,7 +124,7 @@ macro_rules! pop {
     };
     ( $interp:expr, $x1:ident, $x2:ident, $x3:ident) => {
         if $interp.stack.len() < 3 {
-            $interp.instruction_result = Return::StackUnderflow;
+            $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
         // Safety: Length is checked above.
@@ -133,7 +133,7 @@ macro_rules! pop {
 
     ( $interp:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident) => {
         if $interp.stack.len() < 4 {
-            $interp.instruction_result = Return::StackUnderflow;
+            $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
         // Safety: Length is checked above.
@@ -144,7 +144,7 @@ macro_rules! pop {
 macro_rules! pop_top {
     ( $interp:expr, $x1:ident) => {
         if $interp.stack.len() < 1 {
-            $interp.instruction_result = Return::StackUnderflow;
+            $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
         // Safety: Length is checked above.
@@ -152,7 +152,7 @@ macro_rules! pop_top {
     };
     ( $interp:expr, $x1:ident, $x2:ident) => {
         if $interp.stack.len() < 2 {
-            $interp.instruction_result = Return::StackUnderflow;
+            $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
         // Safety: Length is checked above.
@@ -160,7 +160,7 @@ macro_rules! pop_top {
     };
     ( $interp:expr, $x1:ident, $x2:ident, $x3:ident) => {
         if $interp.stack.len() < 3 {
-            $interp.instruction_result = Return::StackUnderflow;
+            $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
         // Safety: Length is checked above.
@@ -213,7 +213,7 @@ macro_rules! as_usize_saturated {
 
 macro_rules! as_usize_or_fail {
     (  $interp:expr, $v:expr ) => {{
-        as_usize_or_fail!($interp, $v, Return::OutOfGas)
+        as_usize_or_fail!($interp, $v, InstructionResult::OutOfGas)
     }};
 
     (  $interp:expr, $v:expr, $reason:expr ) => {{

@@ -1,9 +1,6 @@
 use std::sync::Arc;
-
-use crate::{
-    interpreter::bytecode::Bytecode, AccountInfo, Database, B160, B256, KECCAK_EMPTY, U256,
-};
-
+use crate::Database;
+use crate::primitives::{AccountInfo, Bytecode, B160, B256, U256,KECCAK_EMPTY};
 use ethers_core::types::{BlockId, H160 as eH160, H256, U64 as eU64};
 use ethers_providers::Middleware;
 use tokio::runtime::{Handle, Runtime};

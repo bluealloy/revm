@@ -1,5 +1,5 @@
 use crate::gas;
-use crate::SpecId;
+use crate::primitives::SpecId;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct OpCode(u8);

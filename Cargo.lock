@@ -158,21 +158,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bn-rs"
-version = "0.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c34e20109dce74b02019885a01edc8ca485380a297ed8d6eb9e63e657774074b"
-dependencies = [
- "getrandom",
- "js-sys",
- "primitive-types",
- "rustc-hex",
- "thiserror",
- "uint",
- "wasm-bindgen",
-]
-
-[[package]]
 name = "bumpalo"
 version = "3.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1600,6 +1585,7 @@ dependencies = [
  "hex-literal",
  "proptest",
  "proptest-derive",
+ "revm-primitives",
  "rlp",
  "ruint",
  "serde",
@@ -1622,6 +1608,27 @@ dependencies = [
  "sha2",
  "sha3",
  "substrate-bn",
+]
+
+[[package]]
+name = "revm-primitives"
+version = "3.0.0"
+dependencies = [
+ "arbitrary",
+ "auto_impl",
+ "bytes",
+ "derive_more",
+ "enumn",
+ "fixed-hash",
+ "hashbrown 0.13.2",
+ "hex",
+ "hex-literal",
+ "proptest",
+ "proptest-derive",
+ "rlp",
+ "ruint",
+ "serde",
+ "sha3",
 ]
 
 [[package]]
@@ -1657,21 +1664,6 @@ dependencies = [
  "thiserror",
  "triehash",
  "walkdir",
-]
-
-[[package]]
-name = "revmjs"
-version = "0.2.0"
-dependencies = [
- "bn-rs",
- "bytes",
- "getrandom",
- "hex",
- "js-sys",
- "primitive-types",
- "revm",
- "ruint",
- "wasm-bindgen",
 ]
 
 [[package]]
@@ -1737,7 +1729,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ad3a104dc8c3867f653b0fec89c65e00b0ceb752718ad282177a7e0f33257ac"
 dependencies = [
  "arbitrary",
- "bn-rs",
  "derive_more",
  "primitive-types",
  "proptest",

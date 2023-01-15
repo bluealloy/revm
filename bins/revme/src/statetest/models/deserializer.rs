@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use bytes::Bytes;
-use revm::{B160, U256};
+use revm::primitives::{B160, U256};
 use serde::{
     de::{self, Error},
     Deserialize,
