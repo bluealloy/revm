@@ -40,8 +40,8 @@ where
 }
 
 pub struct DatabaseComponents<BH: BlockHash, S: State> {
-    block_hash: BH,
-    state: S,
+    pub block_hash: BH,
+    pub state: S,
 }
 
 pub enum ComponentError<BHE, SE> {
