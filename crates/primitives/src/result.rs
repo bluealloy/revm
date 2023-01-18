@@ -15,6 +15,7 @@ pub struct ResultAndState {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ExecutionResult {
+    /// Returned successfully
     Success {
         reason: Eval,
         gas_used: u64,
@@ -22,11 +23,39 @@ pub enum ExecutionResult {
         logs: Vec<Log>,
         output: Output,
     },
+    /// Reverted by `REVERT` opcode that doesn't spend all gas.
+    Revert { gas_used: u64 },
+    /// Reverted for various reasons and spend all gas.
     Halt {
         reason: Halt,
         /// Halting will spend all the gas, and will be equal to gas_limit.
         gas_used: u64,
     },
+}
+
+impl ExecutionResult {
+    /// Returns if transaction execution is successful.
+    /// 1 indicates success, 0 indicates revert.
+    /// https://eips.ethereum.org/EIPS/eip-658
+    pub fn is_success(&self) -> bool {
+        matches!(self, Self::Success { .. })
+    }
+
+    /// Return logs, if execution is not successful, function will return empty vec.
+    pub fn logs(&self) -> Vec<Log> {
+        match self {
+            Self::Success { logs, .. } => logs.clone(),
+            _ => Vec::new(),
+        }
+    }
+
+    pub fn gas_used(&self) -> u64 {
+        let (Self::Success { gas_used, .. }
+        | Self::Revert { gas_used }
+        | Self::Halt { gas_used, .. }) = self;
+
+        *gas_used
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -79,10 +108,6 @@ pub enum Eval {
     Stop,
     Return,
     SelfDestruct,
-    /// Raised by the `REVERT` opcode.
-    ///
-    /// Unlike other EVM exceptions this does not result in the consumption of all gas.
-    Revert,
 }
 
 /// Indicates that the EVM has experienced an exceptional halt. This causes execution to

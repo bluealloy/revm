@@ -268,7 +268,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                 );
                 let logs = match &out {
                     Ok(ExecutionResult::Success { logs, .. }) => logs.clone(),
-                    Err(_) | Ok(ExecutionResult::Halt { .. }) => Vec::new(),
+                    _ => Vec::new(),
                 };
                 let logs_root = log_rlp_hash(logs);
                 if test.hash != state_root || test.logs != logs_root {

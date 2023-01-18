@@ -40,6 +40,7 @@ pub enum InstructionResult {
 
 pub enum SuccessOrHalt {
     Success(Eval),
+    Revert,
     Halt(Halt),
     FatalExternalError,
     // this is internal opcode.
@@ -53,7 +54,7 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::Stop => Self::Success(Eval::Stop),
             InstructionResult::Return => Self::Success(Eval::Return),
             InstructionResult::SelfDestruct => Self::Success(Eval::SelfDestruct),
-            InstructionResult::Revert => Self::Success(Eval::Revert),
+            InstructionResult::Revert => Self::Revert,
             InstructionResult::CallTooDeep => Self::Internal, // not gonna happen for first call
             InstructionResult::OutOfFund => Self::Internal, // Check for first call is done separately.
             InstructionResult::OutOfGas => Self::Halt(Halt::OutOfGas),
