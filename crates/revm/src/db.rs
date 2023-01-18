@@ -1,5 +1,5 @@
-pub mod in_memory_db;
 pub mod components;
+pub mod in_memory_db;
 
 #[cfg(feature = "ethersdb")]
 pub mod ethersdb;

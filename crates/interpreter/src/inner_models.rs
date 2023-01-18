@@ -1,5 +1,5 @@
-use crate::primitives::{Bytes, B160, U256};
 pub use crate::primitives::CreateScheme;
+use crate::primitives::{Bytes, B160, U256};
 
 /// Inputs for a call.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

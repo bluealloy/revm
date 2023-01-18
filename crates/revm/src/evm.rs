@@ -101,7 +101,7 @@ impl<'a, DB: DatabaseRef> EVM<DB> {
     pub fn inspect_ref<INSP: Inspector<RefDBWrapper<'a, DB::Error>>>(
         &'a self,
         mut inspector: INSP,
-    )  -> EVMResult<DB::Error> {
+    ) -> EVMResult<DB::Error> {
         if let Some(db) = self.db.as_ref() {
             let mut db = RefDBWrapper::new(db);
             let db = &mut db;

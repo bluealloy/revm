@@ -1,8 +1,8 @@
 //! BlockHash database component from [`crate::Database`]
 //! it is used inside [crate::DatabaseComponents`]
 
-use auto_impl::auto_impl;
 use crate::primitives::{B256, U256};
+use auto_impl::auto_impl;
 
 #[auto_impl(& mut, Box)]
 pub trait BlockHash {

@@ -4,7 +4,7 @@ use ruint::aliases::U256;
 use crate::primitives::Bytecode;
 use crate::{
     primitives::{Env, Gas, Log, B160, B256, KECCAK_EMPTY},
-    CallInputs, CreateInputs, Host, Interpreter, InstructionResult, SelfDestructResult,
+    CallInputs, CreateInputs, Host, InstructionResult, Interpreter, SelfDestructResult,
 };
 
 pub struct DummyHost {
@@ -32,7 +32,12 @@ impl Host for DummyHost {
         InstructionResult::Continue
     }
 
-    fn step_end(&mut self, _interp: &mut Interpreter, _is_static: bool, _ret: InstructionResult) -> InstructionResult {
+    fn step_end(
+        &mut self,
+        _interp: &mut Interpreter,
+        _is_static: bool,
+        _ret: InstructionResult,
+    ) -> InstructionResult {
         InstructionResult::Continue
     }
 
@@ -108,7 +113,10 @@ impl Host for DummyHost {
         panic!("Create is not supported for this host")
     }
 
-    fn create(&mut self, _inputs: &mut CreateInputs) -> (InstructionResult, Option<B160>, Gas, bytes::Bytes) {
+    fn create(
+        &mut self,
+        _inputs: &mut CreateInputs,
+    ) -> (InstructionResult, Option<B160>, Gas, bytes::Bytes) {
         panic!("Create is not supported for this host")
     }
 

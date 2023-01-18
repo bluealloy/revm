@@ -2,6 +2,7 @@ use super::analysis::{to_analysed, BytecodeLocked};
 use crate::primitives::{Bytecode, Spec, B160, U256};
 use crate::CallContext;
 use bytes::Bytes;
+use revm_primitives::{Env, TransactTo};
 
 #[derive(Clone, Default)]
 pub struct Contract {
@@ -79,6 +80,22 @@ impl Contract {
             caller,
             value,
         }
+    }
+
+    /// Create new contract from environment
+    /// TODO: Add spec related match to analyze bytecode by env.cfg.spec_id variable
+    pub fn new_env<SPEC: Spec>(env: &Env, bytecode: Bytecode) -> Self {
+        let contract_address = match env.tx.transact_to {
+            TransactTo::Call(caller) => caller,
+            TransactTo::Create(..) => B160::zero(),
+        };
+        Self::new::<SPEC>(
+            env.tx.data.clone(),
+            bytecode,
+            contract_address,
+            env.tx.caller,
+            env.tx.value,
+        )
     }
 
     pub fn is_valid_jump(&self, possition: usize) -> bool {

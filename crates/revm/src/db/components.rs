@@ -3,8 +3,8 @@ pub mod block_hash;
 pub mod state;
 
 use super::DatabaseRef;
-use crate::Database;
 use crate::primitives::{AccountInfo, Bytecode, B160, B256, U256};
+use crate::Database;
 
 pub use block_hash::{BlockHash, BlockHashRef};
 pub use state::{State, StateCommit, StateRef};

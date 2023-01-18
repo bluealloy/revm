@@ -1,11 +1,11 @@
 //! Custom print inspector, it has step level information of execution.
 //! It is great tool if some debugging is needed.
 //!
+use crate::primitives::{Bytes, Gas, B160};
 use crate::{
-    inspectors::GasInspector, opcode, CallInputs, CreateInputs, Database, EVMData ,
-    Inspector, Interpreter, InstructionResult 
+    inspectors::GasInspector, opcode, CallInputs, CreateInputs, Database, EVMData, Inspector,
+    InstructionResult, Interpreter,
 };
-use crate::primitives::{B160,Bytes,Gas};
 use hex;
 #[derive(Clone, Default)]
 pub struct CustomPrintTracer {

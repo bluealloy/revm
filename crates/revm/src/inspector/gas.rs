@@ -1,9 +1,7 @@
 //! GasIspector. Helper Inspector to calculte gas for others.
 //!
 use crate::primitives::{Gas, B160};
-use crate::{
-    evm_impl::EVMData, InstructionResult, CallInputs, CreateInputs, Database, Inspector,
-};
+use crate::{evm_impl::EVMData, CallInputs, CreateInputs, Database, Inspector, InstructionResult};
 use bytes::Bytes;
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -128,8 +126,8 @@ mod tests {
     use crate::db::BenchmarkDB;
     use crate::primitives::{Bytecode, Gas, B160, B256};
     use crate::{
-        inspectors::GasInspector, opcode, InstructionResult, CallInputs, CreateInputs,
-        Database, EVMData, Inspector, Interpreter, OpCode, TransactTo,
+        inspectors::GasInspector, opcode, CallInputs, CreateInputs, Database, EVMData, Inspector,
+        InstructionResult, Interpreter, OpCode, TransactTo,
     };
     use bytes::Bytes;
     use hex_literal::hex;
@@ -196,7 +194,11 @@ mod tests {
         ) -> (InstructionResult, Gas, Bytes) {
             self.gas_inspector.call(data, call, is_static);
 
-            (InstructionResult::Continue, Gas::new(call.gas_limit), Bytes::new())
+            (
+                InstructionResult::Continue,
+                Gas::new(call.gas_limit),
+                Bytes::new(),
+            )
         }
 
         fn call_end(

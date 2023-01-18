@@ -1,4 +1,6 @@
-use crate::{interpreter::Interpreter, primitives::Spec, primitives::SpecId::*, Host, InstructionResult};
+use crate::{
+    interpreter::Interpreter, primitives::Spec, primitives::SpecId::*, Host, InstructionResult,
+};
 
 pub fn chainid<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     // gas!(interp, gas::BASE);

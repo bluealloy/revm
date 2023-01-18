@@ -193,7 +193,9 @@ impl JournaledState {
         let from_account = &mut self.state.get_mut(from).unwrap();
         Self::touch_account(self.journal.last_mut().unwrap(), from, from_account);
         let from_balance = &mut from_account.info.balance;
-        *from_balance = from_balance.checked_sub(balance).ok_or(InstructionResult::OutOfFund)?;
+        *from_balance = from_balance
+            .checked_sub(balance)
+            .ok_or(InstructionResult::OutOfFund)?;
 
         // add balance to
         let to_account = &mut self.state.get_mut(to).unwrap();

@@ -1,7 +1,5 @@
-use crate::{
-    evm_impl::EVMData, CallInputs, CreateInputs, Interpreter, InstructionResult,
-};
-use crate::primitives::{Gas,B160,B256,db::Database};
+use crate::primitives::{db::Database, Gas, B160, B256};
+use crate::{evm_impl::EVMData, CallInputs, CreateInputs, InstructionResult, Interpreter};
 use auto_impl::auto_impl;
 use bytes::Bytes;
 
@@ -109,7 +107,12 @@ pub trait Inspector<DB: Database> {
         _data: &mut EVMData<'_, DB>,
         _inputs: &mut CreateInputs,
     ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
-        (InstructionResult::Continue, None, Gas::new(0), Bytes::default())
+        (
+            InstructionResult::Continue,
+            None,
+            Gas::new(0),
+            Bytes::default(),
+        )
     }
 
     /// Called when a contract has been created.

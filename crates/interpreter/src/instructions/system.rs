@@ -123,7 +123,8 @@ pub fn returndatacopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn
         return;
     }
     if len != 0 {
-        let memory_offset = as_usize_or_fail!(interpreter, memory_offset, InstructionResult::OutOfGas);
+        let memory_offset =
+            as_usize_or_fail!(interpreter, memory_offset, InstructionResult::OutOfGas);
         memory_resize!(interpreter, memory_offset, len);
         interpreter.memory.set(
             memory_offset,
