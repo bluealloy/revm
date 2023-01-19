@@ -1,8 +1,8 @@
 use super::{DatabaseCommit, DatabaseRef};
-use crate::common::keccak256;
-use crate::{interpreter::bytecode::Bytecode, Database, KECCAK_EMPTY};
-use crate::{Account, AccountInfo, Log};
-use crate::{B160, B256, U256};
+use crate::primitives::{
+    keccak256, Account, AccountInfo, Bytecode, Log, B160, B256, KECCAK_EMPTY, U256,
+};
+use crate::Database;
 use alloc::vec::Vec;
 use core::convert::Infallible;
 use hashbrown::{hash_map::Entry, HashMap as Map};
@@ -393,7 +393,7 @@ impl Database for BenchmarkDB {
 #[cfg(test)]
 mod tests {
     use super::{CacheDB, EmptyDB};
-    use crate::{AccountInfo, Database, U256};
+    use crate::primitives::{db::Database, AccountInfo, U256};
 
     #[test]
     pub fn test_insert_account_storage() {

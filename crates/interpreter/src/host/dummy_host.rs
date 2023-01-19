@@ -1,9 +1,10 @@
 use hashbrown::{hash_map::Entry, HashMap};
 use ruint::aliases::U256;
 
+use crate::primitives::Bytecode;
 use crate::{
-    Bytecode, CallInputs, CreateInputs, Env, Gas, Host, Interpreter, Log, Return,
-    SelfDestructResult, B160, B256, KECCAK_EMPTY,
+    primitives::{Env, Gas, Log, B160, B256, KECCAK_EMPTY},
+    CallInputs, CreateInputs, Host, InstructionResult, Interpreter, SelfDestructResult,
 };
 
 pub struct DummyHost {
@@ -27,12 +28,17 @@ impl DummyHost {
 }
 
 impl Host for DummyHost {
-    fn step(&mut self, _interp: &mut Interpreter, _is_static: bool) -> Return {
-        Return::Continue
+    fn step(&mut self, _interp: &mut Interpreter, _is_static: bool) -> InstructionResult {
+        InstructionResult::Continue
     }
 
-    fn step_end(&mut self, _interp: &mut Interpreter, _is_static: bool, _ret: Return) -> Return {
-        Return::Continue
+    fn step_end(
+        &mut self,
+        _interp: &mut Interpreter,
+        _is_static: bool,
+        _ret: InstructionResult,
+    ) -> InstructionResult {
+        InstructionResult::Continue
     }
 
     fn env(&mut self) -> &mut Env {
@@ -107,11 +113,14 @@ impl Host for DummyHost {
         panic!("Create is not supported for this host")
     }
 
-    fn create(&mut self, _inputs: &mut CreateInputs) -> (Return, Option<B160>, Gas, bytes::Bytes) {
+    fn create(
+        &mut self,
+        _inputs: &mut CreateInputs,
+    ) -> (InstructionResult, Option<B160>, Gas, bytes::Bytes) {
         panic!("Create is not supported for this host")
     }
 
-    fn call(&mut self, _input: &mut CallInputs) -> (Return, Gas, bytes::Bytes) {
+    fn call(&mut self, _input: &mut CallInputs) -> (InstructionResult, Gas, bytes::Bytes) {
         panic!("Call is not supported for this host")
     }
 }

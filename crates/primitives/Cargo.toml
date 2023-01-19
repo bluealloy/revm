@@ -1,23 +1,21 @@
 [package]
 authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
-description = "REVM Interpreter"
+description = "REVM primitives"
 edition = "2021"
-keywords = ["no_std", "ethereum", "vm", "evm", "revm", "interpreter"]
+keywords = ["no_std", "ethereum", "vm", "evm", "revm", "primitives", "types"]
 license = "MIT"
-name = "revm-interpreter"
+name = "revm-primitives"
 repository = "https://github.com/bluealloy/revm"
 version = "3.0.0"
 readme = "../../README.md"
 
 [dependencies]
-revm-primitives = { path = "../primitives", default-features = false }
-
 bytes = { version = "1.1", default-features = false }
 hashbrown = { version = "0.13" }
 hex = { version = "0.4", default-features = false }
-rlp = { version = "0.5", default-features = false }                  # used for create2 address calculation
+rlp = { version = "0.5", default-features = false } # used for create2 address calculation
 ruint = { version = "1.7.0", features = ["primitive-types", "rlp"] }
-
+auto_impl = "1.0"
 
 # bits B256 B160 crate
 fixed-hash = { version = "0.8", default-features = false, features = [
@@ -58,12 +56,12 @@ dev = [
     "optional_eip3607",
     "optional_gas_refund",
 ]
-memory_limit = ["revm-primitives/memory_limit"]
-no_gas_measuring = ["revm-primitives/no_gas_measuring"]
-optional_balance_check = ["revm-primitives/optional_balance_check"]
-optional_block_gas_limit = ["revm-primitives/optional_block_gas_limit"]
-optional_eip3607 = ["revm-primitives/optional_eip3607"]
-optional_gas_refund = ["revm-primitives/optional_gas_refund"]
+memory_limit = []
+no_gas_measuring = []
+optional_balance_check = []
+optional_block_gas_limit = []
+optional_eip3607 = []
+optional_gas_refund = []
 std = ["bytes/std", "rlp/std", "hex/std"]
 serde = [
     "dep:serde",
@@ -71,7 +69,6 @@ serde = [
     "hashbrown/serde",
     "ruint/serde",
     "bytes/serde",
-    "revm-primitives/serde"
 ]
 arbitrary = [
     "ruint/arbitrary",
@@ -79,5 +76,4 @@ arbitrary = [
     "dep:arbitrary",
     "dep:proptest",
     "dep:proptest-derive",
-    "revm-primitives/arbitrary"
 ]

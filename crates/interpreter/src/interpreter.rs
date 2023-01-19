@@ -1,16 +1,17 @@
-pub mod bytecode;
+pub mod analysis;
 mod contract;
 pub(crate) mod memory;
 mod stack;
 
-pub use bytecode::{Bytecode, BytecodeLocked, BytecodeState};
+pub use analysis::BytecodeLocked;
 pub use contract::Contract;
 pub use memory::Memory;
 pub use stack::Stack;
 
+use crate::primitives::{Gas, Spec};
 use crate::{
-    instructions::{eval, Return},
-    Gas, Host, Spec, USE_GAS,
+    instructions::{eval, InstructionResult},
+    Host, USE_GAS,
 };
 use bytes::Bytes;
 use core::ops::Range;
@@ -22,7 +23,7 @@ pub struct Interpreter {
     /// Instruction pointer.
     pub instruction_pointer: *const u8,
     /// Return is main control flag, it tell us if we should continue interpreter or break from it
-    pub instruction_result: Return,
+    pub instruction_result: InstructionResult,
     /// left gas. Memory gas can be found in Memory field.
     pub gas: Gas,
     /// Memory.
@@ -59,7 +60,7 @@ impl Interpreter {
                 stack: Stack::new(),
                 return_data_buffer: Bytes::new(),
                 contract,
-                instruction_result: Return::Continue,
+                instruction_result: InstructionResult::Continue,
                 is_static,
                 gas: Gas::new(gas_limit),
             }
@@ -85,7 +86,7 @@ impl Interpreter {
             stack: Stack::new(),
             return_data_buffer: Bytes::new(),
             contract,
-            instruction_result: Return::Continue,
+            instruction_result: InstructionResult::Continue,
             is_static,
             gas: Gas::new(gas_limit),
             memory_limit,
@@ -111,11 +112,11 @@ impl Interpreter {
     }
 
     #[inline(always)]
-    pub fn add_next_gas_block(&mut self, pc: usize) -> Option<Return> {
+    pub fn add_next_gas_block(&mut self, pc: usize) -> Option<InstructionResult> {
         if USE_GAS {
             let gas_block = self.contract.gas_block(pc);
             if !self.gas.record_cost(gas_block) {
-                return Some(Return::OutOfGas);
+                return Some(InstructionResult::OutOfGas);
             }
         }
         None
@@ -143,34 +144,34 @@ impl Interpreter {
     }
 
     /// loop steps until we are finished with execution
-    pub fn run<H: Host, SPEC: Spec>(&mut self, host: &mut H) -> Return {
+    pub fn run<H: Host, SPEC: Spec>(&mut self, host: &mut H) -> InstructionResult {
         // add first gas_block
         if USE_GAS && !self.gas.record_cost(self.contract.first_gas_block()) {
-            return Return::OutOfGas;
+            return InstructionResult::OutOfGas;
         }
-        while self.instruction_result == Return::Continue {
+        while self.instruction_result == InstructionResult::Continue {
             self.step::<H, SPEC>(host)
         }
         self.instruction_result
     }
 
     /// loop steps until we are finished with execution
-    pub fn run_inspect<H: Host, SPEC: Spec>(&mut self, host: &mut H) -> Return {
+    pub fn run_inspect<H: Host, SPEC: Spec>(&mut self, host: &mut H) -> InstructionResult {
         // add first gas_block
         if USE_GAS && !self.gas.record_cost(self.contract.first_gas_block()) {
-            return Return::OutOfGas;
+            return InstructionResult::OutOfGas;
         }
-        while self.instruction_result == Return::Continue {
+        while self.instruction_result == InstructionResult::Continue {
             // step
             let ret = host.step(self, self.is_static);
-            if ret != Return::Continue {
+            if ret != InstructionResult::Continue {
                 return ret;
             }
             self.step::<H, SPEC>(host);
 
             // step ends
             let ret = host.step_end(self, self.is_static, self.instruction_result);
-            if ret != Return::Continue {
+            if ret != InstructionResult::Continue {
                 return ret;
             }
         }

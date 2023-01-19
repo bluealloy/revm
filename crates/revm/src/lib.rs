@@ -16,18 +16,19 @@ pub use db::{Database, DatabaseCommit, InMemoryDB};
 pub use evm::{evm_inner, new, EVM};
 pub use evm_impl::EVMData;
 pub use journaled_state::{JournalEntry, JournaledState};
+pub use revm_interpreter::primitives::*;
 pub use revm_interpreter::*;
 
 extern crate alloc;
 
 /// reexport `revm_precompiles`
-pub mod precompiles {
-    pub use revm_precompiles::*;
-}
+pub use revm_precompiles as precompiles;
+
 // reexport `revm_interpreter`
-pub mod interpreter {
-    pub use revm_interpreter::*;
-}
+pub use revm_interpreter as interpreter;
+
+// reexport `revm_primitives`
+pub use revm_interpreter::primitives;
 
 /// Reexport Inspector implementations
 pub use inspector::inspectors;

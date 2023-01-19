@@ -80,36 +80,11 @@ impl<'de> serde::Deserialize<'de> for B160 {
 #[cfg(feature = "serde")]
 mod serialize {
 
-    use alloc::{string::String, vec::Vec};
+    use alloc::string::String;
     use core::{fmt, result::Result};
     use serde::{de, Deserializer, Serializer};
 
     static CHARS: &[u8] = b"0123456789abcdef";
-
-    /// Serialize given bytes to a 0x-prefixed hex string.
-    ///
-    /// If `skip_leading_zero` initial 0s will not be printed out,
-    /// unless the byte string is empty, in which case `0x0` will be returned.
-    /// The results are consistent with `serialize_uint` output if the flag is
-    /// on and `serialize_raw` if the flag is off.
-    pub fn to_hex(bytes: &[u8], skip_leading_zero: bool) -> String {
-        let bytes = if skip_leading_zero {
-            let non_zero = bytes.iter().take_while(|b| **b == 0).count();
-            let bytes = &bytes[non_zero..];
-            if bytes.is_empty() {
-                return "0x0".into();
-            } else {
-                bytes
-            }
-        } else if bytes.is_empty() {
-            return "0x".into();
-        } else {
-            bytes
-        };
-
-        let mut slice = vec![0u8; (bytes.len() + 1) * 2];
-        to_hex_raw(&mut slice, bytes, skip_leading_zero).into()
-    }
 
     fn to_hex_raw<'a>(v: &'a mut [u8], bytes: &[u8], skip_leading_zero: bool) -> &'a str {
         assert!(v.len() > 1 + bytes.len() * 2);
@@ -159,17 +134,6 @@ mod serialize {
                 }
             }
         }
-    }
-
-    /// Decode given (both 0x-prefixed or not) hex string into a vector of bytes.
-    ///
-    /// Returns an error if non-hex characters are present.
-    pub fn from_hex(v: &str) -> Result<Vec<u8>, FromHexError> {
-        let (v, stripped) = v.strip_prefix("0x").map_or((v, false), |v| (v, true));
-
-        let mut bytes = vec![0u8; (v.len() + 1) / 2];
-        from_hex_raw(v, &mut bytes, stripped)?;
-        Ok(bytes)
     }
 
     /// Decode given 0x-prefix-stripped hex string into provided slice.
@@ -234,6 +198,7 @@ mod serialize {
         /// Exact length in bytes.
         Exact(&'a mut [u8]),
         /// A bytes length between (min; slice.len()].
+        #[allow(dead_code)]
         Between(usize, &'a mut [u8]),
     }
 

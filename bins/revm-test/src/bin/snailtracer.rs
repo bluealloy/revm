@@ -1,9 +1,12 @@
 use std::time::Duration;
 
 use bytes::Bytes;
-use revm::{db::BenchmarkDB, Bytecode, TransactTo};
-
-use revm_interpreter::{specification::BerlinSpec, DummyHost};
+use revm::{
+    analysis::to_analysed,
+    db::BenchmarkDB,
+    primitives::{BerlinSpec, Bytecode},
+    BytecodeLocked, DummyHost, TransactTo,
+};
 extern crate alloc;
 
 pub fn simple_example() {
@@ -11,7 +14,7 @@ pub fn simple_example() {
 
     // BenchmarkDB is dummy state that implements Database trait.
     let mut evm = revm::new();
-    let bytecode = Bytecode::new_raw(contract_data).to_analysed::<BerlinSpec>();
+    let bytecode = to_analysed::<BerlinSpec>(Bytecode::new_raw(contract_data));
     evm.database(BenchmarkDB::new_bytecode(bytecode.clone()));
 
     // execution globals block hash/gas_limit/coinbase/timestamp..
@@ -33,14 +36,14 @@ pub fn simple_example() {
         &bench_options,
         "Snailtracer Host+Interpreter benchmark",
         || {
-            let (_, _) = evm.transact();
+            let _ = evm.transact().unwrap();
         },
     );
 
     // revm interpreter
     let contract = revm_interpreter::Contract {
         input: evm.env.tx.data,
-        bytecode: bytecode.lock_analysed().unwrap(),
+        bytecode: BytecodeLocked::try_from(bytecode).unwrap(),
         ..Default::default()
     };
 

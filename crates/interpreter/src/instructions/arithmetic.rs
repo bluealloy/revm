@@ -1,5 +1,5 @@
 use super::i256::{i256_div, i256_mod};
-use crate::{gas, Host, Interpreter, Return, Spec, U256};
+use crate::{gas, primitives::Spec, Host, InstructionResult, Interpreter, U256};
 
 pub fn wrapped_add(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     pop_top!(interpreter, op1, op2);

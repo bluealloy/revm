@@ -1,15 +1,21 @@
 mod dummy_host;
 
+use crate::primitives::Bytecode;
 use crate::{
-    Bytecode, Bytes, CallInputs, CreateInputs, Env, Gas, Interpreter, Return, SelfDestructResult,
-    B160, B256, U256,
+    primitives::{Bytes, Env, Gas, B160, B256, U256},
+    CallInputs, CreateInputs, InstructionResult, Interpreter, SelfDestructResult,
 };
 pub use dummy_host::DummyHost;
 
 /// EVM context host.
 pub trait Host {
-    fn step(&mut self, interpreter: &mut Interpreter, is_static: bool) -> Return;
-    fn step_end(&mut self, interpreter: &mut Interpreter, is_static: bool, ret: Return) -> Return;
+    fn step(&mut self, interpreter: &mut Interpreter, is_static: bool) -> InstructionResult;
+    fn step_end(
+        &mut self,
+        interpreter: &mut Interpreter,
+        is_static: bool,
+        ret: InstructionResult,
+    ) -> InstructionResult;
 
     fn env(&mut self) -> &mut Env;
 
@@ -38,7 +44,10 @@ pub trait Host {
     /// Mark an address to be deleted, with funds transferred to target.
     fn selfdestruct(&mut self, address: B160, target: B160) -> Option<SelfDestructResult>;
     /// Invoke a create operation.
-    fn create(&mut self, inputs: &mut CreateInputs) -> (Return, Option<B160>, Gas, Bytes);
+    fn create(
+        &mut self,
+        inputs: &mut CreateInputs,
+    ) -> (InstructionResult, Option<B160>, Gas, Bytes);
     /// Invoke a call operation.
-    fn call(&mut self, input: &mut CallInputs) -> (Return, Gas, Bytes);
+    fn call(&mut self, input: &mut CallInputs) -> (InstructionResult, Gas, Bytes);
 }

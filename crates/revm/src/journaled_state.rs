@@ -1,14 +1,11 @@
-use crate::{db::Database, Log, B160};
-use crate::{
-    interpreter::{models::SelfDestructResult, Account, Bytecode, Return, StorageSlot, U256},
-    KECCAK_EMPTY,
-};
+use crate::interpreter::{inner_models::SelfDestructResult, InstructionResult, U256};
+use crate::primitives::{db::Database, Account, Bytecode, Log, StorageSlot, B160, KECCAK_EMPTY};
 use alloc::{vec, vec::Vec};
 use core::mem::{self};
 use hashbrown::{hash_map::Entry, HashMap as Map};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
-#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JournaledState {
     /// Current state.
     pub state: State,
@@ -31,7 +28,7 @@ pub type State = Map<B160, Account>;
 pub type Storage = Map<U256, StorageSlot>;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
-#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum JournalEntry {
     /// Used to mark account that is hot inside EVM in regards to EIP-2929 AccessList.
     /// Action: We will add Account to state.
@@ -182,21 +179,23 @@ impl JournaledState {
         to: &B160,
         balance: U256,
         db: &mut DB,
-    ) -> Result<(bool, bool), Return> {
+    ) -> Result<(bool, bool), InstructionResult> {
         // load accounts
         let (_, from_is_cold) = self
             .load_account(*from, db)
-            .map_err(|_| Return::FatalExternalError)?;
+            .map_err(|_| InstructionResult::FatalExternalError)?;
 
         let (_, to_is_cold) = self
             .load_account(*to, db)
-            .map_err(|_| Return::FatalExternalError)?;
+            .map_err(|_| InstructionResult::FatalExternalError)?;
 
         // sub balance from
         let from_account = &mut self.state.get_mut(from).unwrap();
         Self::touch_account(self.journal.last_mut().unwrap(), from, from_account);
         let from_balance = &mut from_account.info.balance;
-        *from_balance = from_balance.checked_sub(balance).ok_or(Return::OutOfFund)?;
+        *from_balance = from_balance
+            .checked_sub(balance)
+            .ok_or(InstructionResult::OutOfFund)?;
 
         // add balance to
         let to_account = &mut self.state.get_mut(to).unwrap();
@@ -204,7 +203,7 @@ impl JournaledState {
         let to_balance = &mut to_account.info.balance;
         *to_balance = to_balance
             .checked_add(balance)
-            .ok_or(Return::OverflowPayment)?;
+            .ok_or(InstructionResult::OverflowPayment)?;
         // Overflow of U256 balance is not possible to happen on mainnet. We dont bother to return funds from from_acc.
 
         self.journal

@@ -11,76 +11,19 @@ pub mod opcode;
 mod stack;
 mod system;
 
-use crate::{interpreter::Interpreter, Host, Spec};
+use crate::{interpreter::Interpreter, primitives::Spec, Host};
 pub use opcode::{OpCode, OPCODE_JUMPMAP};
 
-#[macro_export]
-macro_rules! return_ok {
-    () => {
-        Return::Continue | Return::Stop | Return::Return | Return::SelfDestruct
-    };
-}
-
-#[macro_export]
-macro_rules! return_revert {
-    () => {
-        Return::Revert | Return::CallTooDeep | Return::OutOfFund
-    };
-}
-
-#[repr(u8)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "with-serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum Return {
-    //success codes
-    Continue = 0x00,
-    Stop = 0x01,
-    Return = 0x02,
-    SelfDestruct = 0x03,
-
-    // revert code
-    Revert = 0x20, // revert opcode
-    CallTooDeep = 0x21,
-    OutOfFund = 0x22,
-
-    // error codes
-    OutOfGas = 0x50,
-    OpcodeNotFound,
-    CallNotAllowedInsideStatic,
-    InvalidOpcode,
-    InvalidJump,
-    InvalidMemoryRange,
-    NotActivated,
-    StackUnderflow,
-    StackOverflow,
-    OutOfOffset,
-    FatalExternalError,
-    GasMaxFeeGreaterThanPriorityFee,
-    PrevrandaoNotSet,
-    GasPriceLessThenBasefee,
-    CallerGasLimitMoreThenBlock,
-    /// EIP-3607 Reject transactions from senders with deployed code
-    RejectCallerWithCode,
-    LackOfFundForGasLimit,
-    CreateCollision,
-    OverflowPayment,
-    PrecompileError,
-    NonceOverflow,
-    /// Create init code exceeds limit (runtime).
-    CreateContractLimit,
-    /// Error on created contract that begins with EF
-    CreateContractWithEF,
-}
-
+pub use crate::{return_ok, return_revert, InstructionResult};
 pub fn return_stop(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    interpreter.instruction_result = Return::Stop;
+    interpreter.instruction_result = InstructionResult::Stop;
 }
 pub fn return_invalid(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    interpreter.instruction_result = Return::InvalidOpcode;
+    interpreter.instruction_result = InstructionResult::InvalidFEOpcode;
 }
 
 pub fn return_not_found(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    interpreter.instruction_result = Return::OpcodeNotFound;
+    interpreter.instruction_result = InstructionResult::OpcodeNotFound;
 }
 
 #[inline(always)]

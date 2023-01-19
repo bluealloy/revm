@@ -10,12 +10,13 @@ version = "2.3.1"
 readme = "../../README.md"
 
 [dependencies]
+revm-precompiles = { path = "../precompiles", version = "1.1.2", default-features = false }
+revm-interpreter = { path = "../interpreter", default-features = false }
+
 auto_impl = { version = "1.0", default-features = false }
 bytes = { version = "1.1", default-features = false }
 hashbrown = { version = "0.13" }
 hex = { version = "0.4", default-features = false }
-revm-precompiles = { path = "../precompiles", version = "1.1.2", default-features = false }
-revm-interpreter = { path = "../interpreter", default-features = false }
 
 # Optional
 serde = { version = "1.0", features = ["derive", "rc"], optional = true }

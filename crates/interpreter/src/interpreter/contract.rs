@@ -1,7 +1,8 @@
-use super::bytecode::{Bytecode, BytecodeLocked};
-use crate::{alloc::vec::Vec, CallContext, Spec, B160, U256};
+use super::analysis::{to_analysed, BytecodeLocked};
+use crate::primitives::{Bytecode, Spec, B160, U256};
+use crate::CallContext;
 use bytes::Bytes;
-use std::sync::Arc;
+use revm_primitives::{Env, TransactTo};
 
 #[derive(Clone, Default)]
 pub struct Contract {
@@ -68,7 +69,10 @@ impl Contract {
         caller: B160,
         value: U256,
     ) -> Self {
-        let bytecode = bytecode.lock::<SPEC>();
+        let bytecode = to_analysed::<SPEC>(bytecode)
+            .try_into()
+            .expect("it is analyzed");
+
         Self {
             input,
             bytecode,
@@ -76,6 +80,22 @@ impl Contract {
             caller,
             value,
         }
+    }
+
+    /// Create new contract from environment
+    /// TODO: Add spec related match to analyze bytecode by env.cfg.spec_id variable
+    pub fn new_env<SPEC: Spec>(env: &Env, bytecode: Bytecode) -> Self {
+        let contract_address = match env.tx.transact_to {
+            TransactTo::Call(caller) => caller,
+            TransactTo::Create(..) => B160::zero(),
+        };
+        Self::new::<SPEC>(
+            env.tx.data.clone(),
+            bytecode,
+            contract_address,
+            env.tx.caller,
+            env.tx.value,
+        )
     }
 
     pub fn is_valid_jump(&self, possition: usize) -> bool {
@@ -103,51 +123,6 @@ impl Contract {
         )
     }
 }
-
-/// Mapping of valid jump destination from code.
-#[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct ValidJumpAddress {
-    pub first_gas_block: u32,
-    /// Rc is used here so that we dont need to copy vector. We can move it to more suitable more accessable structure
-    /// without copying underlying vec.
-    pub analysis: Arc<Vec<AnalysisData>>,
-}
-
-impl ValidJumpAddress {
-    pub fn new(analysis: Arc<Vec<AnalysisData>>, first_gas_block: u32) -> Self {
-        Self {
-            analysis,
-            first_gas_block,
-        }
-    }
-    /// Get the length of the valid mapping. This is the same as the
-    /// code bytes.
-
-    pub fn len(&self) -> usize {
-        self.analysis.len()
-    }
-
-    /// Returns true if the valid list is empty
-
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-
-    /// Returns `true` if the position is a valid jump destination. If
-    /// not, returns `false`.
-    pub fn is_valid(&self, position: usize) -> bool {
-        if position >= self.analysis.len() {
-            return false;
-        }
-        self.analysis[position].is_jump()
-    }
-
-    pub fn gas_block(&self, position: usize) -> u64 {
-        self.analysis[position].gas_block()
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::AnalysisData;

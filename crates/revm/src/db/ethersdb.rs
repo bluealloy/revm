@@ -1,11 +1,8 @@
-use std::sync::Arc;
-
-use crate::{
-    interpreter::bytecode::Bytecode, AccountInfo, Database, B160, B256, KECCAK_EMPTY, U256,
-};
-
+use crate::primitives::{AccountInfo, Bytecode, B160, B256, KECCAK_EMPTY, U256};
+use crate::Database;
 use ethers_core::types::{BlockId, H160 as eH160, H256, U64 as eU64};
 use ethers_providers::Middleware;
+use std::sync::Arc;
 use tokio::runtime::{Handle, Runtime};
 
 pub struct EthersDB<M>
