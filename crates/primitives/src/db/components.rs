@@ -2,12 +2,13 @@
 pub mod block_hash;
 pub mod state;
 
-use super::DatabaseRef;
-use crate::primitives::{AccountInfo, Bytecode, B160, B256, U256};
-use crate::Database;
-
 pub use block_hash::{BlockHash, BlockHashRef};
-pub use state::{State, StateCommit, StateRef};
+pub use state::{State, StateRef};
+
+use crate::{
+    db::{Database, DatabaseRef},
+    AccountInfo, Bytecode, B160, B256, U256,
+};
 
 pub struct DatabaseComponents<S, BH> {
     state: S,

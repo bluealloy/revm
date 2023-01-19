@@ -1,9 +1,8 @@
-//! State database component from [`crate::Database`]
-//! it is used inside [crate::DatabaseComponents`]
+//! State database component from [`crate::db::Database`]
+//! it is used inside [crate::db::DatabaseComponents`]
 
-use crate::primitives::{Account, AccountInfo, Bytecode, B160, B256, U256};
+use crate::{AccountInfo, Bytecode, B160, B256, U256};
 use auto_impl::auto_impl;
-use hashbrown::HashMap;
 
 #[auto_impl(& mut, Box)]
 pub trait State {
@@ -15,11 +14,6 @@ pub trait State {
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error>;
     /// Get storage value of address at index.
     fn storage(&mut self, address: B160, index: U256) -> Result<U256, Self::Error>;
-}
-
-#[auto_impl(& mut, Box)]
-pub trait StateCommit {
-    fn commit(&mut self, changes: HashMap<B160, Account>);
 }
 
 #[auto_impl(&, Box, Arc)]

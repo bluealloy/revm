@@ -1,4 +1,3 @@
-pub mod components;
 pub mod in_memory_db;
 
 #[cfg(feature = "ethersdb")]

@@ -1,9 +1,16 @@
+pub mod components;
+
 use crate::AccountInfo;
 use crate::U256;
 use crate::{Account, Bytecode};
 use crate::{B160, B256};
 use auto_impl::auto_impl;
 use hashbrown::HashMap as Map;
+
+pub use components::{
+    BlockHash, BlockHashRef, DatabaseComponentError, DatabaseComponentRefError, DatabaseComponents,
+    State, StateRef,
+};
 
 #[auto_impl(& mut, Box)]
 pub trait Database {

@@ -1,7 +1,7 @@
-//! BlockHash database component from [`crate::Database`]
-//! it is used inside [crate::DatabaseComponents`]
+//! BlockHash database component from [`crate::db::Database`]
+//! it is used inside [crate::db::DatabaseComponents`]
 
-use crate::primitives::{B256, U256};
+use crate::{B256, U256};
 use auto_impl::auto_impl;
 
 #[auto_impl(& mut, Box)]
