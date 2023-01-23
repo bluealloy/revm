@@ -11,8 +11,8 @@ use crate::{
 };
 
 pub struct DatabaseComponents<S, BH> {
-    state: S,
-    block_hash: BH,
+    pub state: S,
+    pub block_hash: BH,
 }
 
 pub enum DatabaseComponentError<SE, BHE> {
