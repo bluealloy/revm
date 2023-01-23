@@ -8,10 +8,10 @@ pub use contract::Contract;
 pub use memory::Memory;
 pub use stack::Stack;
 
-use crate::primitives::{Gas, Spec};
+use crate::primitives::Spec;
 use crate::{
     instructions::{eval, InstructionResult},
-    Host, USE_GAS,
+    Gas, Host, USE_GAS,
 };
 use bytes::Bytes;
 use core::ops::Range;

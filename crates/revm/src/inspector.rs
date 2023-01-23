@@ -1,5 +1,7 @@
-use crate::primitives::{db::Database, Gas, B160, B256};
-use crate::{evm_impl::EVMData, CallInputs, CreateInputs, InstructionResult, Interpreter};
+use crate::evm_impl::EVMData;
+use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult, Interpreter};
+use crate::primitives::{db::Database, B160, B256};
+
 use auto_impl::auto_impl;
 use bytes::Bytes;
 

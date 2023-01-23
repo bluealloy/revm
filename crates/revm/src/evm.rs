@@ -1,9 +1,9 @@
-use crate::primitives::{specification, EVMError, EVMResult, ExecutionResult, SpecId};
+use crate::primitives::{specification, EVMError, EVMResult, Env, ExecutionResult, SpecId};
 use crate::{
     db::{Database, DatabaseCommit, DatabaseRef, RefDBWrapper},
     evm_impl::{EVMImpl, Transact},
     inspectors::NoOpInspector,
-    Env, Inspector,
+    Inspector,
 };
 use alloc::boxed::Box;
 use revm_interpreter::primitives::ResultAndState;

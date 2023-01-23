@@ -1,28 +1,19 @@
-use crate::interpreter::gas;
+use crate::interpreter::{
+    analysis::to_analysed, gas, instruction_result::SuccessOrHalt, return_ok, return_revert,
+    CallContext, CallInputs, CallScheme, Contract, CreateInputs, CreateScheme, Gas, Host,
+    InstructionResult, Interpreter, SelfDestructResult, Transfer, CALL_STACK_LIMIT,
+};
 use crate::primitives::{
-    create2_address, create_address, keccak256, Account, Bytecode, EVMError, EVMResult,
-    ExecutionResult, Gas, Output,
+    create2_address, create_address, keccak256, Account, AnalysisKind, Bytecode, EVMError,
+    EVMResult, Env, ExecutionResult, InvalidTransaction, Log, Output, ResultAndState, Spec,
     SpecId::{self, *},
-    B160, B256, KECCAK_EMPTY, U256,
+    TransactTo, B160, B256, KECCAK_EMPTY, U256,
 };
-use crate::{
-    db::Database,
-    inner_models::SelfDestructResult,
-    interpreter::{self, Host},
-    interpreter::{Contract, Interpreter},
-    journaled_state::JournaledState,
-    precompiles,
-    primitives::Spec,
-    return_ok, return_revert, AnalysisKind, CallContext, CallInputs, CallScheme, CreateInputs,
-    CreateScheme, Env, Inspector, InstructionResult, Log, TransactTo, Transfer,
-};
+use crate::{db::Database, journaled_state::JournaledState, precompiles, Inspector};
 use alloc::vec::Vec;
 use bytes::Bytes;
 use core::{cmp::min, marker::PhantomData};
 use hashbrown::HashMap as Map;
-use interpreter::analysis::to_analysed;
-use interpreter::instruction_result::SuccessOrHalt;
-use interpreter::primitives::{InvalidTransaction, ResultAndState};
 use revm_precompiles::{Precompile, Precompiles};
 
 pub struct EVMData<'a, DB: Database> {
@@ -423,7 +414,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         self.load_account(inputs.caller);
 
         // Check depth of calls
-        if self.data.journaled_state.depth() > interpreter::CALL_STACK_LIMIT {
+        if self.data.journaled_state.depth() > CALL_STACK_LIMIT {
             return (InstructionResult::CallTooDeep, None, gas, Bytes::new());
         }
         // Check balance of caller and value. Do this before increasing nonce
@@ -570,7 +561,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     );
                 }
                 if crate::USE_GAS {
-                    let gas_for_code = bytes.len() as u64 * crate::gas::CODEDEPOSIT;
+                    let gas_for_code = bytes.len() as u64 * gas::CODEDEPOSIT;
                     if !interpreter.gas.record_cost(gas_for_code) {
                         // record code deposit gas cost and check if we are out of gas.
                         // EIP-2 point 3: If contract creation does not have enough gas to pay for the
@@ -644,7 +635,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         };
 
         // Check depth
-        if self.data.journaled_state.depth() > interpreter::CALL_STACK_LIMIT {
+        if self.data.journaled_state.depth() > CALL_STACK_LIMIT {
             let (ret, gas, out) = (InstructionResult::CallTooDeep, gas, Bytes::new());
             if INSPECT {
                 return self.inspector.call_end(

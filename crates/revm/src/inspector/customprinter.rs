@@ -1,11 +1,9 @@
 //! Custom print inspector, it has step level information of execution.
 //! It is great tool if some debugging is needed.
 //!
-use crate::primitives::{Bytes, Gas, B160};
-use crate::{
-    inspectors::GasInspector, opcode, CallInputs, CreateInputs, Database, EVMData, Inspector,
-    InstructionResult, Interpreter,
-};
+use crate::interpreter::{opcode, CallInputs, CreateInputs, Gas, InstructionResult, Interpreter};
+use crate::primitives::{Bytes, B160};
+use crate::{inspectors::GasInspector, Database, EVMData, Inspector};
 use hex;
 #[derive(Clone, Default)]
 pub struct CustomPrintTracer {
@@ -158,7 +156,8 @@ mod test {
         evm.env.tx.caller = crate::primitives::B160(hex_literal::hex!(
             "5fdcca53617f4d2b9134b29090c87d01058e27e0"
         ));
-        evm.env.tx.transact_to = crate::TransactTo::Call(crate::primitives::B160(callee));
+        evm.env.tx.transact_to =
+            crate::primitives::TransactTo::Call(crate::primitives::B160(callee));
         evm.env.tx.data = crate::primitives::Bytes::from(hex::decode("").unwrap());
         evm.env.tx.value = crate::primitives::U256::ZERO;
         let _ = evm.inspect_commit(super::CustomPrintTracer::default());

@@ -1,5 +1,7 @@
-use crate::interpreter::{inner_models::SelfDestructResult, InstructionResult, U256};
-use crate::primitives::{db::Database, Account, Bytecode, Log, StorageSlot, B160, KECCAK_EMPTY};
+use crate::interpreter::{inner_models::SelfDestructResult, InstructionResult};
+use crate::primitives::{
+    db::Database, Account, Bytecode, Log, StorageSlot, B160, KECCAK_EMPTY, U256,
+};
 use alloc::{vec, vec::Vec};
 use core::mem::{self};
 use hashbrown::{hash_map::Entry, HashMap as Map};

@@ -2,10 +2,9 @@ use std::time::Duration;
 
 use bytes::Bytes;
 use revm::{
-    analysis::to_analysed,
     db::BenchmarkDB,
-    primitives::{BerlinSpec, Bytecode},
-    BytecodeLocked, DummyHost, TransactTo,
+    interpreter::{analysis::to_analysed, BytecodeLocked, DummyHost},
+    primitives::{BerlinSpec, Bytecode, TransactTo},
 };
 extern crate alloc;
 

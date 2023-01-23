@@ -1,7 +1,8 @@
 use super::i256::{i256_cmp, i256_sign, two_compl, Sign};
 use crate::{
-    primitives::Spec, primitives::SpecId::CONSTANTINOPLE, Host, InstructionResult, Interpreter,
-    U256,
+    primitives::SpecId::CONSTANTINOPLE,
+    primitives::{Spec, U256},
+    Host, InstructionResult, Interpreter,
 };
 use core::cmp::Ordering;
 use core::ops::{BitAnd, BitOr, BitXor};

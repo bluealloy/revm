@@ -1608,6 +1608,7 @@ dependencies = [
  "k256",
  "num",
  "once_cell",
+ "revm-primitives",
  "ripemd",
  "ruint",
  "secp256k1",

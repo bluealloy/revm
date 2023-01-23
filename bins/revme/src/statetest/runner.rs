@@ -8,8 +8,10 @@ use std::{
 
 use indicatif::ProgressBar;
 use revm::{
-    db::AccountState, inspectors::CustomPrintTracer, Bytecode, CreateScheme, Env, ExecutionResult,
-    SpecId, TransactTo, B160, B256, U256,
+    db::AccountState,
+    inspectors::CustomPrintTracer,
+    interpreter::CreateScheme,
+    primitives::{Bytecode, Env, ExecutionResult, SpecId, TransactTo, B160, B256, U256},
 };
 use std::sync::atomic::Ordering;
 use walkdir::{DirEntry, WalkDir};

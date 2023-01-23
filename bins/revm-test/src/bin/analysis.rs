@@ -2,10 +2,9 @@ use std::time::Instant;
 
 use bytes::Bytes;
 use revm::{
-    analysis::to_analysed,
     db::BenchmarkDB,
-    primitives::{Bytecode, LondonSpec},
-    TransactTo,
+    interpreter::analysis::to_analysed,
+    primitives::{Bytecode, LondonSpec, TransactTo},
 };
 extern crate alloc;
 
