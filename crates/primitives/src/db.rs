@@ -8,8 +8,7 @@ use auto_impl::auto_impl;
 use hashbrown::HashMap as Map;
 
 pub use components::{
-    BlockHash, BlockHashRef, DatabaseComponentError, DatabaseComponentRefError, DatabaseComponents,
-    State, StateRef,
+    BlockHash, BlockHashRef, DatabaseComponentError, DatabaseComponents, State, StateRef,
 };
 
 #[auto_impl(& mut, Box)]

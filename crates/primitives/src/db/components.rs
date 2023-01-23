@@ -11,22 +11,17 @@ use crate::{
 };
 
 pub struct DatabaseComponents<S, BH> {
-    state: S,
-    block_hash: BH,
+    pub state: S,
+    pub block_hash: BH,
 }
 
-pub enum DatabaseComponentError<S: State, BH: BlockHash> {
-    State(S::Error),
-    BlockHash(BH::Error),
-}
-
-pub enum DatabaseComponentRefError<S: StateRef, BH: BlockHashRef> {
-    State(S::Error),
-    BlockHash(BH::Error),
+pub enum DatabaseComponentError<SE, BHE> {
+    State(SE),
+    BlockHash(BHE),
 }
 
 impl<S: State, BH: BlockHash> Database for DatabaseComponents<S, BH> {
-    type Error = DatabaseComponentError<S, BH>;
+    type Error = DatabaseComponentError<S::Error, BH::Error>;
 
     fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
         self.state.basic(address).map_err(Self::Error::State)
@@ -52,7 +47,7 @@ impl<S: State, BH: BlockHash> Database for DatabaseComponents<S, BH> {
 }
 
 impl<S: StateRef, BH: BlockHashRef> DatabaseRef for DatabaseComponents<S, BH> {
-    type Error = DatabaseComponentRefError<S, BH>;
+    type Error = DatabaseComponentError<S::Error, BH::Error>;
 
     fn basic(&self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
         self.state.basic(address).map_err(Self::Error::State)
