@@ -1,7 +1,8 @@
 //! GasIspector. Helper Inspector to calculte gas for others.
 //!
-use crate::primitives::{Gas, B160};
-use crate::{evm_impl::EVMData, CallInputs, CreateInputs, Database, Inspector, InstructionResult};
+use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult};
+use crate::primitives::{db::Database, B160};
+use crate::{evm_impl::EVMData, Inspector};
 use bytes::Bytes;
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -26,7 +27,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
     #[cfg(not(feature = "no_gas_measuring"))]
     fn initialize_interp(
         &mut self,
-        interp: &mut crate::Interpreter,
+        interp: &mut crate::interpreter::Interpreter,
         _data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> InstructionResult {
@@ -41,18 +42,18 @@ impl<DB: Database> Inspector<DB> for GasInspector {
     #[cfg(not(feature = "no_gas_measuring"))]
     fn step(
         &mut self,
-        interp: &mut crate::Interpreter,
+        interp: &mut crate::interpreter::Interpreter,
         data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> InstructionResult {
         let op = interp.current_opcode();
 
         // calculate gas_block
-        let infos = crate::spec_opcode_gas(data.env.cfg.spec_id);
+        let infos = crate::interpreter::spec_opcode_gas(data.env.cfg.spec_id);
         let info = &infos[op as usize];
 
         let pc = interp.program_counter();
-        if op == crate::opcode::JUMPI {
+        if op == crate::interpreter::opcode::JUMPI {
             self.reduced_gas_block += info.get_gas() as u64;
             self.was_jumpi = Some(pc);
         } else if info.is_gas_block_end() {
@@ -68,7 +69,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
     #[cfg(not(feature = "no_gas_measuring"))]
     fn step_end(
         &mut self,
-        interp: &mut crate::Interpreter,
+        interp: &mut crate::interpreter::Interpreter,
         _data: &mut EVMData<'_, DB>,
         _is_static: bool,
         _eval: InstructionResult,
@@ -124,14 +125,13 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 #[cfg(test)]
 mod tests {
     use crate::db::BenchmarkDB;
-    use crate::primitives::{Bytecode, Gas, B160, B256};
-    use crate::{
-        inspectors::GasInspector, opcode, CallInputs, CreateInputs, Database, EVMData, Inspector,
-        InstructionResult, Interpreter, OpCode, TransactTo,
+    use crate::interpreter::{
+        opcode, CallInputs, CreateInputs, Gas, InstructionResult, Interpreter, OpCode,
     };
+    use crate::primitives::{Bytecode, ResultAndState, TransactTo, B160, B256};
+    use crate::{inspectors::GasInspector, Database, EVMData, Inspector};
     use bytes::Bytes;
     use hex_literal::hex;
-    use revm_interpreter::primitives::ResultAndState;
 
     #[derive(Default, Debug)]
     struct StackInspector {

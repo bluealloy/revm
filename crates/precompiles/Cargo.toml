@@ -9,6 +9,7 @@ repository = "https://github.com/bluealloy/revm"
 version = "1.1.2"
 
 [dependencies]
+revm-primitives = { path = "../primitives", default-features = false }
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
 bytes = { version = "1.1", default-features = false }
 hashbrown = { version = "0.13" }

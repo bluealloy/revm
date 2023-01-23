@@ -1,20 +1,18 @@
 #![no_std]
 
-use bytes::Bytes;
-use once_cell::sync::OnceCell;
-
-pub type B160 = [u8; 20];
-pub type B256 = [u8; 32];
-
 mod blake2;
 mod bn128;
-mod error;
 mod hash;
 mod identity;
 mod modexp;
 mod secp256k1;
 
-pub use error::Error;
+use bytes::Bytes;
+use once_cell::sync::OnceCell;
+pub use revm_primitives::precompile::{PrecompileError as Error, *};
+
+pub type B160 = [u8; 20];
+pub type B256 = [u8; 32];
 
 /// libraries for no_std flag
 #[macro_use]
@@ -52,15 +50,9 @@ impl PrecompileOutput {
     }
 }
 
-/// A precompile operation result.
-pub type PrecompileResult = Result<(u64, Vec<u8>), Error>;
-
-pub type StandardPrecompileFn = fn(&[u8], u64) -> PrecompileResult;
-pub type CustomPrecompileFn = fn(&[u8], u64) -> PrecompileResult;
-
 #[derive(Clone, Debug)]
 pub struct Precompiles {
-    fun: HashMap<B160, Precompile>,
+    pub fun: HashMap<B160, Precompile>,
 }
 
 impl Default for Precompiles {

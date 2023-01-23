@@ -3,8 +3,8 @@ use ruint::aliases::U256;
 
 use crate::primitives::Bytecode;
 use crate::{
-    primitives::{Env, Gas, Log, B160, B256, KECCAK_EMPTY},
-    CallInputs, CreateInputs, Host, InstructionResult, Interpreter, SelfDestructResult,
+    primitives::{Env, Log, B160, B256, KECCAK_EMPTY},
+    CallInputs, CreateInputs, Gas, Host, InstructionResult, Interpreter, SelfDestructResult,
 };
 
 pub struct DummyHost {

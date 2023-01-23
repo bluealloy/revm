@@ -2,8 +2,8 @@ mod dummy_host;
 
 use crate::primitives::Bytecode;
 use crate::{
-    primitives::{Bytes, Env, Gas, B160, B256, U256},
-    CallInputs, CreateInputs, InstructionResult, Interpreter, SelfDestructResult,
+    primitives::{Bytes, Env, B160, B256, U256},
+    CallInputs, CreateInputs, Gas, InstructionResult, Interpreter, SelfDestructResult,
 };
 pub use dummy_host::DummyHost;
 

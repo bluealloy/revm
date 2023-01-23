@@ -1,6 +1,6 @@
 use crate::{
-    gas, interpreter::Interpreter, primitives::Spec, primitives::SpecId::*, Host,
-    InstructionResult, U256,
+    gas, interpreter::Interpreter, primitives::Spec, primitives::SpecId::*, primitives::U256, Host,
+    InstructionResult,
 };
 
 pub fn jump(interpreter: &mut Interpreter, _host: &mut dyn Host) {

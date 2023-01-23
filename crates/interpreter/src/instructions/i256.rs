@@ -1,4 +1,4 @@
-use crate::U256;
+use crate::primitives::U256;
 use core::cmp::Ordering;
 use ruint::uint;
 
@@ -135,7 +135,7 @@ pub fn i256_mod(mut first: U256, mut second: U256) -> U256 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::U256;
+    use crate::primitives::U256;
     use core::num::Wrapping;
 
     #[test]
