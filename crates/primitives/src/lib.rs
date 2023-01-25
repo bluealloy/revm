@@ -30,4 +30,4 @@ pub use ruint::aliases::U256;
 pub use specification::*;
 pub use state::*;
 pub use utilities::*;
-pub use hashbrown::HashMap;
+pub use hashbrown::{hash_map, HashMap};
