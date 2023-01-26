@@ -24,7 +24,7 @@ pub enum ExecutionResult {
         output: Output,
     },
     /// Reverted by `REVERT` opcode that doesn't spend all gas.
-    Revert { gas_used: u64 },
+    Revert { gas_used: u64, output: Bytes },
     /// Reverted for various reasons and spend all gas.
     Halt {
         reason: Halt,
@@ -51,7 +51,7 @@ impl ExecutionResult {
 
     pub fn gas_used(&self) -> u64 {
         let (Self::Success { gas_used, .. }
-        | Self::Revert { gas_used }
+        | Self::Revert { gas_used, .. }
         | Self::Halt { gas_used, .. }) = self;
 
         *gas_used
