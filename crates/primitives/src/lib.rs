@@ -22,6 +22,7 @@ pub type Hash = B256;
 
 pub use bytecode::*;
 pub use env::*;
+pub use hashbrown::{hash_map, HashMap};
 pub use log::Log;
 pub use precompile::*;
 pub use result::*;
