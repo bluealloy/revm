@@ -227,8 +227,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             },
             SuccessOrHalt::Revert => ExecutionResult::Revert {
                 gas_used,
-                logs,
-                return_value: match output {
+                output: match output {
                     Output::Call(return_value) => return_value,
                     Output::Create(return_value, _) => return_value,
                 },
