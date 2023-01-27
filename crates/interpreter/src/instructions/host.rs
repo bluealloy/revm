@@ -274,12 +274,16 @@ pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
     match return_reason {
         return_ok!() => {
             push_b256!(interpreter, address.unwrap_or_default().into());
-            interpreter.gas.erase_cost(gas.remaining());
-            interpreter.gas.record_refund(gas.refunded());
+            if crate::USE_GAS {
+                interpreter.gas.erase_cost(gas.remaining());
+                interpreter.gas.record_refund(gas.refunded());
+            }
         }
         return_revert!() => {
             push_b256!(interpreter, B256::zero());
-            interpreter.gas.erase_cost(gas.remaining());
+            if crate::USE_GAS {
+                interpreter.gas.erase_cost(gas.remaining());
+            }
         }
         InstructionResult::FatalExternalError => {
             interpreter.instruction_result = InstructionResult::FatalExternalError;
@@ -463,15 +467,19 @@ pub fn call_inner<SPEC: Spec>(
     match reason {
         return_ok!() => {
             // return unspend gas.
-            interpreter.gas.erase_cost(gas.remaining());
-            interpreter.gas.record_refund(gas.refunded());
+            if crate::USE_GAS {
+                interpreter.gas.erase_cost(gas.remaining());
+                interpreter.gas.record_refund(gas.refunded());
+            }
             interpreter
                 .memory
                 .set(out_offset, &interpreter.return_data_buffer[..target_len]);
             push!(interpreter, U256::from(1));
         }
         return_revert!() => {
-            interpreter.gas.erase_cost(gas.remaining());
+            if crate::USE_GAS {
+                interpreter.gas.erase_cost(gas.remaining());
+            }
             interpreter
                 .memory
                 .set(out_offset, &interpreter.return_data_buffer[..target_len]);
