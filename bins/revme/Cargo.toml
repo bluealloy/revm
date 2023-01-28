@@ -17,7 +17,7 @@ hex = "0.4"
 indicatif = "0.17"
 plain_hasher = "0.2"
 primitive-types = { version = "0.12", features = ["rlp", "serde"] }
-revm = { path = "../../crates/revm", version = "2.3.1", default-features = false, features = [
+revm = { path = "../../crates/revm", version = "3.0.0", default-features = false, features = [
     "ethersdb",
     "std",
     "secp256k1",
