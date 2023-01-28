@@ -554,12 +554,23 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     && bytes.len() > self.data.env.cfg.limit_contract_code_size.unwrap_or(0x6000)
                 {
                     self.data.journaled_state.checkpoint_revert(checkpoint);
-                    return (
-                        InstructionResult::CreateContractSizeLimit,
-                        ret,
-                        interpreter.gas,
-                        bytes,
-                    );
+                    return if INSPECT {
+                        self.inspector.create_end(
+                            &mut self.data,
+                            inputs,
+                            InstructionResult::CreateContractSizeLimit,
+                            ret,
+                            interpreter.gas,
+                            bytes,
+                        )
+                    } else {
+                        (
+                            InstructionResult::CreateContractSizeLimit,
+                            ret,
+                            interpreter.gas,
+                            bytes,
+                        )
+                    };
                 }
                 if crate::USE_GAS {
                     let gas_for_code = bytes.len() as u64 * gas::CODEDEPOSIT;
