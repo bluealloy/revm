@@ -8,7 +8,8 @@ use ethers::{
 };
 use revm::{
     db::{CacheDB, EmptyDB, EthersDB},
-    Database, TransactOut, TransactTo, B160, EVM, U256 as rU256,
+    primitives::{ExecutionResult, Output, TransactTo, B160, U256 as rU256},
+    Database, EVM,
 };
 
 #[tokio::main]
@@ -84,13 +85,16 @@ async fn main() -> Result<()> {
     evm.env.tx.value = rU256::try_from(0)?;
 
     // execute transaction without writing to the DB
-    let ref_tx = evm.transact_ref();
+    let ref_tx = evm.transact_ref().unwrap();
     // select ExecutionResult struct
-    let result = ref_tx.0;
+    let result = ref_tx.result;
 
     // unpack output call enum into raw bytes
-    let value = match result.out {
-        TransactOut::Call(value) => Some(value),
+    let value = match result {
+        ExecutionResult::Success { output, .. } => match output {
+            Output::Call(value) => Some(value),
+            _ => None,
+        },
         _ => None,
     };
 
