@@ -3,7 +3,7 @@ Because this is workspace with multi libraries, tags will be simplified, and wit
 # v20 tag
 date 23.01.2023
 Big release. primitives and interpreter libs and optimizations.
-Renaming of revm_precompile to revm-precompile
+This tag can be found in `main`
 
 * revm: v3.0.0
 * revm-precompile: v2.0.0

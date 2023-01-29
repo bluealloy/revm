@@ -19,7 +19,7 @@ structure:
     * revm-precompiles -> EVM precompiles
 * bins:
     * revme: cli binary, used for running state test json
-    * revm-test: test binaries with contracts, used mostly to check performance (will probably merge it inside revme).
+    * revm-test: test binaries with contracts, used mostly to check performance
 
 There were some big efforts on optimization of revm:
 * Optimizing interpreter loop: https://github.com/bluealloy/revm/issues/7
@@ -49,8 +49,8 @@ cargo flamegraph --root --freq 4000 --min-width 0.001 --package revm-test --bin 
 # Used by:
 
 * Foundry: https://github.com/foundry-rs/foundry
-* Helious: https://github.com/a16z/helios
-* Hardhat: https://github.com/NomicFoundation/hardhat/tree/rethnet/main
+* Helios: https://github.com/a16z/helios
+* Hardhat (transitioning to it): https://github.com/NomicFoundation/hardhat/tree/rethnet/main
 * Reth: https://github.com/paradigmxyz/reth
 
 (If you want to add your project to the list, ping me or open the PR)
