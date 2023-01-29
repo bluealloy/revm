@@ -1,5 +1,14 @@
 pub use crate::InstructionResult;
 
+macro_rules! check_staticcall {
+    ($interp:expr) => {
+        if $interp.is_static {
+            $interp.instruction_result = InstructionResult::StateChangeDuringStaticCall;
+            return;
+        }
+    };
+}
+
 macro_rules! check {
     ($interp:expr, $expresion:expr) => {
         if !$expresion {

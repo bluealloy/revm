@@ -19,6 +19,7 @@ pub enum InstructionResult {
     OutOfGas = 0x50,
     OpcodeNotFound,
     CallNotAllowedInsideStatic,
+    StateChangeDuringStaticCall,
     InvalidFEOpcode,
     InvalidJump,
     NotActivated,
@@ -60,6 +61,7 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::OutOfGas => Self::Halt(Halt::OutOfGas),
             InstructionResult::OpcodeNotFound => Self::Halt(Halt::OpcodeNotFound),
             InstructionResult::CallNotAllowedInsideStatic => Self::Internal, // first call is not static call
+            InstructionResult::StateChangeDuringStaticCall => Self::Internal,
             InstructionResult::InvalidFEOpcode => Self::Halt(Halt::InvalidFEOpcode),
             InstructionResult::InvalidJump => Self::Halt(Halt::InvalidJump),
             InstructionResult::NotActivated => Self::Halt(Halt::NotActivated),
