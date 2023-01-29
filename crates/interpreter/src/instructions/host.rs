@@ -144,7 +144,7 @@ pub fn sload<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
 }
 
 pub fn sstore<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
-    check!(interpreter, !interpreter.is_static);
+    check_staticcall!(interpreter);
 
     pop!(interpreter, index, value);
     let ret = host.sstore(interpreter.contract.address, index, value);
@@ -164,7 +164,7 @@ pub fn sstore<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
 }
 
 pub fn log<const N: u8, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
-    check!(interpreter, !interpreter.is_static);
+    check_staticcall!(interpreter);
 
     pop!(interpreter, offset, len);
     let len = as_usize_or_fail!(interpreter, len, InstructionResult::OutOfGas);
@@ -194,7 +194,7 @@ pub fn log<const N: u8, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dy
 }
 
 pub fn selfdestruct<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
-    check!(interpreter, !interpreter.is_static);
+    check_staticcall!(interpreter);
     pop_address!(interpreter, target);
 
     let res = host.selfdestruct(interpreter.contract.address, target);
@@ -217,7 +217,7 @@ pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
     interpreter: &mut Interpreter,
     host: &mut dyn Host,
 ) {
-    check!(interpreter, !interpreter.is_static);
+    check_staticcall!(interpreter);
     if IS_CREATE2 {
         // EIP-1014: Skinny CREATE2
         check!(interpreter, SPEC::enabled(PETERSBURG));
