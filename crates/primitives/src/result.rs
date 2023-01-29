@@ -1,7 +1,7 @@
 use crate::{Log, State, B160};
 use bytes::Bytes;
 
-pub type EVMResult<DB> = std::result::Result<ResultAndState, EVMError<DB>>;
+pub type EVMResult<DB> = core::result::Result<ResultAndState, EVMError<DB>>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

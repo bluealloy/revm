@@ -1,9 +1,9 @@
 mod jump_table;
 
 use crate::{keccak256, B256, KECCAK_EMPTY};
+use alloc::sync::Arc;
 use bytes::Bytes;
 pub use jump_table::{Analysis, AnalysisData, ValidJumpAddress};
-use std::sync::Arc;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

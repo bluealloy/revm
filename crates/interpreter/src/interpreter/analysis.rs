@@ -2,7 +2,7 @@ use crate::primitives::{
     AnalysisData, Bytecode, BytecodeState, Bytes, Spec, ValidJumpAddress, B256,
 };
 use crate::{opcode, spec_opcode_gas};
-use std::sync::Arc;
+use alloc::sync::Arc;
 
 pub fn to_analysed<SPEC: Spec>(bytecode: Bytecode) -> Bytecode {
     let hash = bytecode.hash;

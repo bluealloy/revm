@@ -4,7 +4,7 @@ use crate::{
     primitives::{keccak256, Spec, SpecId::*, B256, KECCAK_EMPTY, U256},
     Host, InstructionResult,
 };
-use std::cmp::min;
+use core::cmp::min;
 
 pub fn sha3(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     pop!(interpreter, from, len);

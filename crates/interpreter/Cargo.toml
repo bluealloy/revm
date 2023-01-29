@@ -2,7 +2,7 @@
 authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
 description = "REVM Interpreter"
 edition = "2021"
-keywords = ["no_std", "ethereum", "vm", "evm", "revm", "interpreter"]
+keywords = ["no_std", "ethereum", "evm", "revm", "interpreter"]
 license = "MIT"
 name = "revm-interpreter"
 repository = "https://github.com/bluealloy/revm"
