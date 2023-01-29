@@ -9,7 +9,7 @@ repository = "https://github.com/bluealloy/revm"
 version = "2.0.0"
 
 [dependencies]
-revm-primitives = { path = "../primitives", default-features = false }
+revm-primitives = { path = "../primitives", version="1.0.0", default-features = false }
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
 k256 = { version = "0.11", default-features = false, features = ["ecdsa", "keccak256"] }
 num = { version = "0.4.0", default-features = false, features = ["alloc"] }

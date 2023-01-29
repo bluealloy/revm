@@ -10,7 +10,7 @@ version = "1.0.0"
 readme = "../../README.md"
 
 [dependencies]
-revm-primitives = { path = "../primitives", default-features = false }
+revm-primitives = { path = "../primitives", version="1.0.0", default-features = false }
 
 #utility
 derive_more = "0.99"
