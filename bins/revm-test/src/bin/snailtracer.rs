@@ -3,7 +3,7 @@ use std::time::Duration;
 use bytes::Bytes;
 use revm::{
     db::BenchmarkDB,
-    interpreter::{analysis::to_analysed, BytecodeLocked, DummyHost},
+    interpreter::{analysis::to_analysed, BytecodeLocked, Contract, DummyHost, Interpreter},
     primitives::{BerlinSpec, Bytecode, TransactTo},
 };
 extern crate alloc;
@@ -40,7 +40,7 @@ pub fn simple_example() {
     );
 
     // revm interpreter
-    let contract = revm_interpreter::Contract {
+    let contract = Contract {
         input: evm.env.tx.data,
         bytecode: BytecodeLocked::try_from(bytecode).unwrap(),
         ..Default::default()
@@ -48,7 +48,7 @@ pub fn simple_example() {
 
     let mut host = DummyHost::new(env);
     microbench::bench(&bench_options, "Snailtracer Interpreter benchmark", || {
-        let mut interpreter = revm_interpreter::Interpreter::new(contract.clone(), u64::MAX, false);
+        let mut interpreter = Interpreter::new(contract.clone(), u64::MAX, false);
         interpreter.run::<_, BerlinSpec>(&mut host);
         host.clear()
     });

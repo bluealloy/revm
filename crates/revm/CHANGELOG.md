@@ -1,3 +1,53 @@
+# v3.0.0
+date 29.01.2022
+
+This is big release that has core changes that breaks compatibility. In summary:
+*  Project is refactored into `revm-primitives`,`revm-precompiles`,`revm-interpreter` and `revm` to have more flexibility and separation of concerns. And include paths in revm reflect that. So try to find include as `revm::primitives` or `revm::interpreter`
+* Parity `primitive-types` was replaced with `ruint` for big numbers and subset of macros are used for native `B160`/`B256` types. 
+* Interpreter instructions are unified and now all of them have same signature.
+* web3 db was replaces with ethers alternative.
+* revmjs lib was removed from crates.
+* `revm_precompile` was renamed to `revm-precompile.`
+
+* Return types are made to have more insight of what have happened inside revm.
+* Snailtracer benchmark got around 20% faster.
+
+Github Changelog:
+* dc9818f - (HEAD -> o/bump, origin/bump_v20) Bump v20 (13 hours ago) <rakita>
+* 75ef0f1 - (origin/main, origin/HEAD) feat: Staticcall internal return (#349) (13 hours ago) <rakita>
+* 0194b37 - (t) fix bug introduced in last commit (13 hours ago) <rakita>
+* 7b00f32 - Cleanup imports (#348) (14 hours ago) <rakita>
+* c14d7ea - fix: enable the examples to run with the current revm (#347) (16 hours ago) <flyq>
+* 329fd94 - Wrap all calls to interpreter.gas.erase_cost with checks if USE_GAS is enabled (#346) (2 days ago) <christn>
+* 72355f4 - improvement: add logs & return value to revert (#343) (3 days ago) <Wodann>
+* 142a1c9 - expose hashbrown::HashMap in primitives (#345) (3 days ago) <Andy Thomson>
+* ba393d7 - fix: disable balance check (#342) (4 days ago) <Wodann>
+* 876fad1 - refactor: simplify DatabaseComponentError (#339) (6 days ago) <Wodann>
+* 81534ad - chore: includes to libs (#338) (7 days ago) <rakita>
+* e2f4d32 - Creating revm-primitives, revm better errors and db components  (#334) (10 days ago) <rakita>
+* de83db6 - fix: feature flags (#330) (2 weeks ago) <Wodann>
+* b60269c - `revm`: mark `with-serde` feature as deprecated (#328) (2 weeks ago) <Enrique Ortiz>
+* 63bf475 - make load_account pub (#325) (3 weeks ago) <rakita>
+* 0ef0197 - Cleanup, move hot fields toggether in Interpreter (#321) (3 weeks ago) <rakita>
+* 81942d6 - enable proptest with arbitrary feature (#323) (3 weeks ago) <joshieDo>
+* 2be3798 - feat: revm-interpreter created (#320) (3 weeks ago) <rakita>
+* 7e98fef - fix: feature flag compiler errors (#256) (5 weeks ago) <Wodann>
+* 488ef8a - Add example for fork + ref_transact impl (#296) (6 weeks ago) <0xDmtri>
+* 56e6c22 - feat: allow disabling of balance checks (#297) (6 weeks ago) <Wodann>
+* 8661467 - feat: Export CustomPrinter insector from revm (#300) (6 weeks ago) <rakita>
+* 222b8e9 - feature: substitute web3db to ethersdb (#293) (6 weeks ago) <0xDmtri>
+* fd01083 - feature(revm): Return `bytes` in Create calls (#289) (7 weeks ago) <Nicolas Gotchac>
+* 2fb0933 - docs: Correct typo (#282) (7 weeks ago) <Przemyslaw Rzad>
+* 90fe01e - feat(interpreter): Unify instruction fn signature (#283) (7 weeks ago) <rakita>
+* 54e0333 - bug: Integer overflow while calculating the remaining gas in GasInspector (#287) (8 weeks ago) <rakita>
+* acdbaac - native bits (#278) (8 weeks ago) <rakita>
+* 69e302b - feat(revm): Add prevrandao field to EnvBlock (#271) (2 months ago) <rakita>
+* d1703cd - Export StorageSlot (#265) (3 months ago) <Francesco Cinà>
+* 560bb03 - Fix: typos (#263) (3 months ago) <HAPPY>
+* 369244e - feat(refactor): make keccak in one place. (#247) (3 months ago) <rakita>
+* c96c878 - feat: Migrate `primitive_types::U256` to `ruint::Uint<256, 4>` (#239) (3 months ago) <Alexey Shekhirin>
+
+
 # v2.3.1
 date: 22.11.2022
 

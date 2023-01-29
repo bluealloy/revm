@@ -1,8 +1,19 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v20 tag
+date 23.01.2023
+Big release. primitives and interpreter libs and optimizations.
+This tag can be found in `main`
+
+* revm: v3.0.0
+* revm-precompile: v2.0.0
+* revm-primitives: v1.0.0
+* revm-interpreter: v1.0.0
+
 # v19 tag
 data 22.11.2022
 Bump dependency in revm and precompiles
+Found on same branch as v17 tag.
 
 * revm: v2.3.1
 * revm_precompiles: v1.1.2
