@@ -1,6 +1,5 @@
 use crate::primitives::U256;
 use core::cmp::Ordering;
-use ruint::uint;
 
 #[cfg(test)]
 use proptest_derive::Arbitrary as PropTestArbitrary;
@@ -17,10 +16,18 @@ pub enum Sign {
     Zero,
 }
 
-pub const SIGN_BIT_MASK: U256 =
-    uint!(0x7FFFFFFFFFFFFFFF_FFFFFFFFFFFFFFFF_FFFFFFFFFFFFFFFF_FFFFFFFFFFFFFFFF_U256);
-pub const MIN_NEGATIVE_VALUE: U256 =
-    uint!(0x8000000000000000_0000000000000000_0000000000000000_0000000000000000_U256);
+pub const SIGN_BIT_MASK: U256 = U256::from_limbs([
+    0x7FFFFFFFFFFFFFFF,
+    0xFFFFFFFFFFFFFFFF,
+    0xFFFFFFFFFFFFFFFF,
+    0xFFFFFFFFFFFFFFFF,
+]);
+pub const MIN_NEGATIVE_VALUE: U256 = U256::from_limbs([
+    0x8000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+    0x0000000000000000,
+]);
 
 const FLIPH_BITMASK_U64: u64 = 0x7FFFFFFFFFFFFFFF;
 

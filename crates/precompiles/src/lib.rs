@@ -7,9 +7,12 @@ mod identity;
 mod modexp;
 mod secp256k1;
 
-use bytes::Bytes;
 use once_cell::sync::OnceCell;
-pub use revm_primitives::precompile::{PrecompileError as Error, *};
+pub use primitives::{
+    precompile::{PrecompileError as Error, *},
+    Bytes, HashMap,
+};
+pub use revm_primitives as primitives;
 
 pub type B160 = [u8; 20];
 pub type B256 = [u8; 32];
@@ -19,8 +22,6 @@ pub type B256 = [u8; 32];
 extern crate alloc;
 use alloc::vec::Vec;
 use core::fmt;
-
-use hashbrown::HashMap;
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base

@@ -1,11 +1,11 @@
 use super::{DatabaseCommit, DatabaseRef};
 use crate::primitives::{
-    keccak256, Account, AccountInfo, Bytecode, Log, B160, B256, KECCAK_EMPTY, U256,
+    hash_map::Entry, keccak256, Account, AccountInfo, Bytecode, HashMap, Log, B160, B256,
+    KECCAK_EMPTY, U256,
 };
 use crate::Database;
 use alloc::vec::Vec;
 use core::convert::Infallible;
-use hashbrown::{hash_map::Entry, HashMap as Map};
 
 pub type InMemoryDB = CacheDB<EmptyDB>;
 
@@ -20,10 +20,10 @@ impl Default for InMemoryDB {
 pub struct CacheDB<ExtDB: DatabaseRef> {
     /// Account info where None means it is not existing. Not existing state is needed for Pre TANGERINE forks.
     /// `code` is always `None`, and bytecode can be found in `contracts`.
-    pub accounts: Map<B160, DbAccount>,
-    pub contracts: Map<B256, Bytecode>,
+    pub accounts: HashMap<B160, DbAccount>,
+    pub contracts: HashMap<B256, Bytecode>,
     pub logs: Vec<Log>,
-    pub block_hashes: Map<U256, B256>,
+    pub block_hashes: HashMap<U256, B256>,
     pub db: ExtDB,
 }
 
@@ -33,7 +33,7 @@ pub struct DbAccount {
     /// If account is selfdestructed or newly created, storage will be cleared.
     pub account_state: AccountState,
     /// storage slots
-    pub storage: Map<U256, U256>,
+    pub storage: HashMap<U256, U256>,
 }
 
 impl DbAccount {
@@ -93,14 +93,14 @@ pub enum AccountState {
 
 impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     pub fn new(db: ExtDB) -> Self {
-        let mut contracts = Map::new();
+        let mut contracts = HashMap::new();
         contracts.insert(KECCAK_EMPTY, Bytecode::new());
         contracts.insert(B256::zero(), Bytecode::new());
         Self {
-            accounts: Map::new(),
+            accounts: HashMap::new(),
             contracts,
             logs: Vec::default(),
-            block_hashes: Map::new(),
+            block_hashes: HashMap::new(),
             db,
         }
     }
@@ -156,7 +156,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     pub fn replace_account_storage(
         &mut self,
         address: B160,
-        storage: Map<U256, U256>,
+        storage: HashMap<U256, U256>,
     ) -> Result<(), ExtDB::Error> {
         let account = self.load_account(address)?;
         account.account_state = AccountState::StorageCleared;
@@ -166,7 +166,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
 }
 
 impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
-    fn commit(&mut self, changes: Map<B160, Account>) {
+    fn commit(&mut self, changes: HashMap<B160, Account>) {
         for (address, mut account) in changes {
             if account.is_destroyed {
                 let db_account = self.accounts.entry(address).or_default();
