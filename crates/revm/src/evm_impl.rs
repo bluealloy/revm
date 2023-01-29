@@ -4,16 +4,15 @@ use crate::interpreter::{
     InstructionResult, Interpreter, SelfDestructResult, Transfer, CALL_STACK_LIMIT,
 };
 use crate::primitives::{
-    create2_address, create_address, keccak256, Account, AnalysisKind, Bytecode, EVMError,
-    EVMResult, Env, ExecutionResult, InvalidTransaction, Log, Output, ResultAndState, Spec,
+    create2_address, create_address, keccak256, Account, AnalysisKind, Bytecode, Bytes, EVMError,
+    EVMResult, Env, ExecutionResult, HashMap, InvalidTransaction, Log, Output, ResultAndState,
+    Spec,
     SpecId::{self, *},
     TransactTo, B160, B256, KECCAK_EMPTY, U256,
 };
 use crate::{db::Database, journaled_state::JournaledState, precompiles, Inspector};
 use alloc::vec::Vec;
-use bytes::Bytes;
 use core::{cmp::min, marker::PhantomData};
-use hashbrown::HashMap as Map;
 use revm_precompiles::{Precompile, Precompiles};
 
 pub struct EVMData<'a, DB: Database> {
@@ -261,7 +260,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         &mut self,
         caller: B160,
         gas: &Gas,
-    ) -> (Map<B160, Account>, Vec<Log>, u64, u64) {
+    ) -> (HashMap<B160, Account>, Vec<Log>, u64, u64) {
         let coinbase = self.data.env.block.coinbase;
         let (gas_used, gas_refunded) = if crate::USE_GAS {
             let effective_gas_price = self.data.env.effective_gas_price();

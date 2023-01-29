@@ -12,20 +12,7 @@ readme = "../../README.md"
 [dependencies]
 revm-primitives = { path = "../primitives", default-features = false }
 
-bytes = { version = "1.1", default-features = false }
-hashbrown = { version = "0.13" }
-hex = { version = "0.4", default-features = false }
-rlp = { version = "0.5", default-features = false }                  # used for create2 address calculation
-ruint = { version = "1.7.0", features = ["primitive-types", "rlp"] }
-
-
-# bits B256 B160 crate
-fixed-hash = { version = "0.8", default-features = false, features = [
-    "rustc-hex",
-] }
-
 #utility
-hex-literal = "0.3"
 derive_more = "0.99"
 enumn = "0.1"
 
@@ -42,12 +29,6 @@ proptest-derive = { version = "0.3", optional = true }
 arbitrary = { version = "1.2", features = ["derive"] }
 proptest = { version = "1.0" }
 proptest-derive = "0.3"
-ruint = { version = "1.7.0", features = [
-    "primitive-types",
-    "rlp",
-    "proptest",
-    "arbitrary",
-] }
 
 [features]
 default = ["std"]
@@ -64,20 +45,14 @@ optional_balance_check = ["revm-primitives/optional_balance_check"]
 optional_block_gas_limit = ["revm-primitives/optional_block_gas_limit"]
 optional_eip3607 = ["revm-primitives/optional_eip3607"]
 optional_gas_refund = ["revm-primitives/optional_gas_refund"]
-std = ["bytes/std", "rlp/std", "hex/std"]
+std = ["revm-primitives/std"]
 serde = [
     "dep:serde",
-    "hex/serde",
-    "hashbrown/serde",
-    "ruint/serde",
-    "bytes/serde",
-    "revm-primitives/serde"
+    "revm-primitives/serde",
 ]
 arbitrary = [
-    "ruint/arbitrary",
-    "ruint/proptest",
     "dep:arbitrary",
     "dep:proptest",
     "dep:proptest-derive",
-    "revm-primitives/arbitrary"
+    "revm-primitives/arbitrary",
 ]

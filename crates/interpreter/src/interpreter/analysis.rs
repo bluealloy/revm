@@ -1,6 +1,7 @@
-use crate::primitives::{AnalysisData, Bytecode, BytecodeState, Spec, ValidJumpAddress, B256};
+use crate::primitives::{
+    AnalysisData, Bytecode, BytecodeState, Bytes, Spec, ValidJumpAddress, B256,
+};
 use crate::{opcode, spec_opcode_gas};
-use bytes::Bytes;
 use std::sync::Arc;
 
 pub fn to_analysed<SPEC: Spec>(bytecode: Bytecode) -> Bytecode {
