@@ -10,7 +10,7 @@ version = "3.0.0"
 readme = "../../README.md"
 
 [dependencies]
-revm-precompiles = { path = "../precompiles", version = "2.0.0", default-features = false }
+revm-precompile = { path = "../precompile", version = "2.0.0", default-features = false }
 revm-interpreter = { path = "../interpreter", version = "1.0.0", default-features = false }
 
 auto_impl = { version = "1.0", default-features = false }
@@ -40,7 +40,7 @@ dev = [
     "optional_eip3607",
     "optional_gas_refund",
 ]
-secp256k1 = ["revm-precompiles/secp256k1"]
+secp256k1 = ["revm-precompile/secp256k1"]
 memory_limit = ["revm-interpreter/memory_limit"]
 no_gas_measuring = ["revm-interpreter/no_gas_measuring"]
 optional_balance_check = ["revm-interpreter/optional_balance_check"]

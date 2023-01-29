@@ -16,7 +16,7 @@ structure:
     * revm -> main EVM library.
     * revm-primitives -> Primitive data types.
     * revm-interpreter -> Execution loop with instructions
-    * revm-precompiles -> EVM precompiles
+    * revm-precompile -> EVM precompiles
 * bins:
     * revme: cli binary, used for running state test json
     * revm-test: test binaries with contracts, used mostly to check performance

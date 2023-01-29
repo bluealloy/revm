@@ -4,7 +4,7 @@ description = "REVM Precompiles - Ethereum compatible precompiled contracts"
 edition = "2021"
 keywords = ["no_std", "ethereum", "evm", "revm", "precompiles"]
 license = "MIT"
-name = "revm-precompiles"
+name = "revm-precompile"
 repository = "https://github.com/bluealloy/revm"
 version = "2.0.0"
 

@@ -2,12 +2,12 @@
 date 29.01.2022
 
 This is big release that has core changes that breaks compatibility. In summary:
-*  Project is refactored into `revm-primitives`,`revm-precompiles`,`revm-interpreter` and `revm` to have more flexibility and separation of concerns. And include paths in revm reflect that. So try to find include as `revm::primitives` or `revm::interpreter`
+*  Project is refactored into `revm-primitives`,`revm-precompile`,`revm-interpreter` and `revm` to have more flexibility and separation of concerns. And include paths in revm reflect that. So try to find include as `revm::primitives` or `revm::interpreter`
 * Parity `primitive-types` was replaced with `ruint` for big numbers and subset of macros are used for native `B160`/`B256` types. 
 * Interpreter instructions are unified and now all of them have same signature.
 * web3 db was replaces with ethers alternative.
 * revmjs lib was removed from crates.
-* `revm_precompile` was renamed to `revm-precompile.`
+* `revm_precompiles` was renamed to `revm-precompile.`
 
 * Return types are made to have more insight of what have happened inside revm.
 * Snailtracer benchmark got around 20% faster.

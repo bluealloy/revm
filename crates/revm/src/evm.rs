@@ -7,7 +7,7 @@ use crate::{
 };
 use alloc::boxed::Box;
 use revm_interpreter::primitives::ResultAndState;
-use revm_precompiles::Precompiles;
+use revm_precompile::Precompiles;
 
 /// Struct that takes Database and enabled transact to update state directly to database.
 /// additionally it allows user to set all environment parameters.
@@ -150,25 +150,25 @@ macro_rules! create_evm {
     };
 }
 
-pub fn to_precompile_id(spec_id: SpecId) -> revm_precompiles::SpecId {
+pub fn to_precompile_id(spec_id: SpecId) -> revm_precompile::SpecId {
     match spec_id {
         SpecId::FRONTIER
         | SpecId::FRONTIER_THAWING
         | SpecId::HOMESTEAD
         | SpecId::DAO_FORK
         | SpecId::TANGERINE
-        | SpecId::SPURIOUS_DRAGON => revm_precompiles::SpecId::HOMESTEAD,
+        | SpecId::SPURIOUS_DRAGON => revm_precompile::SpecId::HOMESTEAD,
         SpecId::BYZANTIUM | SpecId::CONSTANTINOPLE | SpecId::PETERSBURG => {
-            revm_precompiles::SpecId::BYZANTIUM
+            revm_precompile::SpecId::BYZANTIUM
         }
-        SpecId::ISTANBUL | SpecId::MUIR_GLACIER => revm_precompiles::SpecId::ISTANBUL,
+        SpecId::ISTANBUL | SpecId::MUIR_GLACIER => revm_precompile::SpecId::ISTANBUL,
         SpecId::BERLIN
         | SpecId::LONDON
         | SpecId::ARROW_GLACIER
         | SpecId::GRAY_GLACIER
         | SpecId::MERGE
         | SpecId::MERGE_EOF
-        | SpecId::LATEST => revm_precompiles::SpecId::BERLIN,
+        | SpecId::LATEST => revm_precompile::SpecId::BERLIN,
     }
 }
 

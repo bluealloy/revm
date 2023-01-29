@@ -1577,7 +1577,7 @@ dependencies = [
  "futures",
  "hex-literal",
  "revm-interpreter",
- "revm-precompiles",
+ "revm-precompile",
  "serde",
  "tokio",
 ]
@@ -1597,7 +1597,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "revm-precompiles"
+name = "revm-precompile"
 version = "2.0.0"
 dependencies = [
  "hex",

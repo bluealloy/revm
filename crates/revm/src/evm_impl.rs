@@ -10,10 +10,10 @@ use crate::primitives::{
     SpecId::{self, *},
     TransactTo, B160, B256, KECCAK_EMPTY, U256,
 };
-use crate::{db::Database, journaled_state::JournaledState, precompiles, Inspector};
+use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector};
 use alloc::vec::Vec;
 use core::{cmp::min, marker::PhantomData};
-use revm_precompiles::{Precompile, Precompiles};
+use revm_precompile::{Precompile, Precompiles};
 
 pub struct EVMData<'a, DB: Database> {
     pub env: &'a mut Env,
@@ -701,7 +701,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     }
                 }
                 Err(e) => {
-                    let ret = if let precompiles::Error::OutOfGas = e {
+                    let ret = if let precompile::Error::OutOfGas = e {
                         InstructionResult::OutOfGas
                     } else {
                         InstructionResult::PrecompileError
