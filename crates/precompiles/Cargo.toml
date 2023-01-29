@@ -2,7 +2,7 @@
 authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
 description = "REVM Precompiles - Ethereum compatible precompiled contracts"
 edition = "2021"
-keywords = ["no_std", "ethereum", "evm", "precompiles"]
+keywords = ["no_std", "ethereum", "evm", "revm", "precompiles"]
 license = "MIT"
 name = "revm-precompiles"
 repository = "https://github.com/bluealloy/revm"
