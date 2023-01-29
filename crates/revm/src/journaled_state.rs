@@ -1,10 +1,10 @@
 use crate::interpreter::{inner_models::SelfDestructResult, InstructionResult};
 use crate::primitives::{
-    db::Database, Account, Bytecode, Log, StorageSlot, B160, KECCAK_EMPTY, U256,
+    db::Database, hash_map::Entry, Account, Bytecode, HashMap, Log, StorageSlot, B160,
+    KECCAK_EMPTY, U256,
 };
 use alloc::{vec, vec::Vec};
 use core::mem::{self};
-use hashbrown::{hash_map::Entry, HashMap as Map};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -26,8 +26,8 @@ pub struct JournaledState {
     pub num_of_precompiles: usize,
 }
 
-pub type State = Map<B160, Account>;
-pub type Storage = Map<U256, StorageSlot>;
+pub type State = HashMap<B160, Account>;
+pub type Storage = HashMap<U256, StorageSlot>;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -84,7 +84,7 @@ pub struct JournalCheckpoint {
 impl JournaledState {
     pub fn new(num_of_precompiles: usize) -> JournaledState {
         Self {
-            state: Map::new(),
+            state: HashMap::new(),
             logs: Vec::new(),
             journal: vec![vec![]],
             depth: 0,

@@ -1,9 +1,8 @@
 use crate::evm_impl::EVMData;
 use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult, Interpreter};
-use crate::primitives::{db::Database, B160, B256};
+use crate::primitives::{db::Database, Bytes, B160, B256};
 
 use auto_impl::auto_impl;
-use bytes::Bytes;
 
 #[cfg(feature = "std")]
 pub mod customprinter;

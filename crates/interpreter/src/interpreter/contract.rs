@@ -1,7 +1,6 @@
 use super::analysis::{to_analysed, BytecodeLocked};
-use crate::primitives::{Bytecode, Spec, B160, U256};
+use crate::primitives::{Bytecode, Bytes, Spec, B160, U256};
 use crate::CallContext;
-use bytes::Bytes;
 use revm_primitives::{Env, TransactTo};
 
 #[derive(Clone, Default)]

@@ -1,11 +1,12 @@
-use crate::{Error, Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn};
+use crate::{
+    primitives::U256, Error, Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn,
+};
 use alloc::vec::Vec;
 use core::{
     cmp::{max, min, Ordering},
     mem::size_of,
 };
 use num::{BigUint, One, Zero};
-use ruint::aliases::U256;
 
 pub const BYZANTIUM: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(5),

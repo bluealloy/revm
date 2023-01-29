@@ -1,7 +1,4 @@
-use hashbrown::{hash_map::Entry, HashMap};
-use ruint::aliases::U256;
-
-use crate::primitives::Bytecode;
+use crate::primitives::{hash_map::Entry, Bytecode, Bytes, HashMap, U256};
 use crate::{
     primitives::{Env, Log, B160, B256, KECCAK_EMPTY},
     CallInputs, CreateInputs, Gas, Host, InstructionResult, Interpreter, SelfDestructResult,
@@ -49,11 +46,11 @@ impl Host for DummyHost {
         Some((true, true))
     }
 
-    fn block_hash(&mut self, _number: ruint::aliases::U256) -> Option<B256> {
+    fn block_hash(&mut self, _number: U256) -> Option<B256> {
         Some(B256::zero())
     }
 
-    fn balance(&mut self, _address: B160) -> Option<(ruint::aliases::U256, bool)> {
+    fn balance(&mut self, _address: B160) -> Option<(U256, bool)> {
         Some((U256::ZERO, false))
     }
 
@@ -65,11 +62,7 @@ impl Host for DummyHost {
         Some((KECCAK_EMPTY, false))
     }
 
-    fn sload(
-        &mut self,
-        __address: B160,
-        index: ruint::aliases::U256,
-    ) -> Option<(ruint::aliases::U256, bool)> {
+    fn sload(&mut self, __address: B160, index: U256) -> Option<(U256, bool)> {
         match self.storage.entry(index) {
             Entry::Occupied(entry) => Some((*entry.get(), false)),
             Entry::Vacant(entry) => {
@@ -82,14 +75,9 @@ impl Host for DummyHost {
     fn sstore(
         &mut self,
         _address: B160,
-        index: ruint::aliases::U256,
-        value: ruint::aliases::U256,
-    ) -> Option<(
-        ruint::aliases::U256,
-        ruint::aliases::U256,
-        ruint::aliases::U256,
-        bool,
-    )> {
+        index: U256,
+        value: U256,
+    ) -> Option<(U256, U256, U256, bool)> {
         let (present, is_cold) = match self.storage.entry(index) {
             Entry::Occupied(mut entry) => (entry.insert(value), false),
             Entry::Vacant(entry) => {
@@ -101,7 +89,7 @@ impl Host for DummyHost {
         Some((U256::ZERO, present, value, is_cold))
     }
 
-    fn log(&mut self, address: B160, topics: Vec<B256>, data: bytes::Bytes) {
+    fn log(&mut self, address: B160, topics: Vec<B256>, data: Bytes) {
         self.log.push(Log {
             address,
             topics,
@@ -116,11 +104,11 @@ impl Host for DummyHost {
     fn create(
         &mut self,
         _inputs: &mut CreateInputs,
-    ) -> (InstructionResult, Option<B160>, Gas, bytes::Bytes) {
+    ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
         panic!("Create is not supported for this host")
     }
 
-    fn call(&mut self, _input: &mut CallInputs) -> (InstructionResult, Gas, bytes::Bytes) {
+    fn call(&mut self, _input: &mut CallInputs) -> (InstructionResult, Gas, Bytes) {
         panic!("Call is not supported for this host")
     }
 }

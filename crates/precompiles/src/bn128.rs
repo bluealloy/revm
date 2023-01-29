@@ -1,6 +1,5 @@
-use crate::{Error, Precompile, PrecompileAddress, PrecompileResult, B160};
+use crate::{primitives::U256, Error, Precompile, PrecompileAddress, PrecompileResult, B160};
 use alloc::vec::Vec;
-use ruint::aliases::U256;
 
 pub mod add {
     use super::*;
