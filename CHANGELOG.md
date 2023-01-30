@@ -1,7 +1,7 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
 # v20 tag
-date 23.01.2023
+date 29.01.2023
 Big release. primitives and interpreter libs and optimizations.
 This tag can be found in `main`
 
