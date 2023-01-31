@@ -115,7 +115,7 @@ pub enum Eval {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Halt {
-    OutOfGas,
+    OutOfGas(OutOfGasError),
     OpcodeNotFound,
     InvalidFEOpcode,
     InvalidJump,
@@ -131,4 +131,19 @@ pub enum Halt {
     CreateContractSizeLimit,
     /// Error on created contract that begins with EF
     CreateContractStartingWithEF,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum OutOfGasError {
+    // Basic OOG error
+    BasicOutOfGas,
+    // Tried to expand past REVM limit
+    MemoryLimit,
+    // Basic OOG error from memory expansion
+    Memory,
+    // Precompile threw OOG error
+    Precompile,
+    // When performing something that takes a U256 and casts down to a u64, if its too large this would fire
+    // i.e. in `as_usize_or_fail`
+    InvalidOperand,
 }
