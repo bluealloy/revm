@@ -62,11 +62,21 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::Revert => Self::Revert,
             InstructionResult::CallTooDeep => Self::Internal, // not gonna happen for first call
             InstructionResult::OutOfFund => Self::Internal, // Check for first call is done separately.
-            InstructionResult::OutOfGas => Self::Halt(Halt::OutOfGas(revm_primitives::OutOfGasError::BasicOutOfGas)),
-            InstructionResult::MemoryLimitOOG => Self::Halt(Halt::OutOfGas(revm_primitives::OutOfGasError::MemoryLimit,)),
-            InstructionResult::MemoryOOG => Self::Halt(Halt::OutOfGas(revm_primitives::OutOfGasError::Memory)),
-            InstructionResult::PrecompileOOG => Self::Halt(Halt::OutOfGas(revm_primitives::OutOfGasError::Precompile,)),
-            InstructionResult::InvalidOperandOOG => Self::Halt(Halt::OutOfGas(revm_primitives::OutOfGasError::InvalidOperand,)),
+            InstructionResult::OutOfGas => Self::Halt(Halt::OutOfGas(
+                revm_primitives::OutOfGasError::BasicOutOfGas,
+            )),
+            InstructionResult::MemoryLimitOOG => {
+                Self::Halt(Halt::OutOfGas(revm_primitives::OutOfGasError::MemoryLimit))
+            }
+            InstructionResult::MemoryOOG => {
+                Self::Halt(Halt::OutOfGas(revm_primitives::OutOfGasError::Memory))
+            }
+            InstructionResult::PrecompileOOG => {
+                Self::Halt(Halt::OutOfGas(revm_primitives::OutOfGasError::Precompile))
+            }
+            InstructionResult::InvalidOperandOOG => Self::Halt(Halt::OutOfGas(
+                revm_primitives::OutOfGasError::InvalidOperand,
+            )),
             InstructionResult::OpcodeNotFound => Self::Halt(Halt::OpcodeNotFound),
             InstructionResult::CallNotAllowedInsideStatic => Self::Internal, // first call is not static call
             InstructionResult::StateChangeDuringStaticCall => Self::Internal,
@@ -81,7 +91,9 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::PrecompileError => Self::Halt(Halt::PrecompileError),
             InstructionResult::NonceOverflow => Self::Halt(Halt::NonceOverflow),
             InstructionResult::CreateContractSizeLimit => Self::Halt(Halt::CreateContractSizeLimit),
-            InstructionResult::CreateContractStartingWithEF => Self::Halt(Halt::CreateContractSizeLimit),
+            InstructionResult::CreateContractStartingWithEF => {
+                Self::Halt(Halt::CreateContractSizeLimit)
+            }
             InstructionResult::FatalExternalError => Self::FatalExternalError,
         }
     }
