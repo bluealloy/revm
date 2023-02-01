@@ -60,7 +60,7 @@ macro_rules! memory_resize {
         {
             #[cfg(feature = "memory_limit")]
             if new_size > ($interp.memory_limit as usize) {
-                $interp.instruction_result = InstructionResult::OutOfGas;
+                $interp.instruction_result = InstructionResult::MemoryLimitOOG;
                 return;
             }
 
@@ -68,14 +68,14 @@ macro_rules! memory_resize {
                 if crate::USE_GAS {
                     let num_bytes = new_size / 32;
                     if !$interp.gas.record_memory(crate::gas::memory_gas(num_bytes)) {
-                        $interp.instruction_result = InstructionResult::OutOfGas;
+                        $interp.instruction_result = InstructionResult::MemoryLimitOOG;
                         return;
                     }
                 }
                 $interp.memory.resize(new_size);
             }
         } else {
-            $interp.instruction_result = InstructionResult::OutOfGas;
+            $interp.instruction_result = InstructionResult::MemoryOOG;
             return;
         }
     }};
@@ -222,7 +222,7 @@ macro_rules! as_usize_saturated {
 
 macro_rules! as_usize_or_fail {
     (  $interp:expr, $v:expr ) => {{
-        as_usize_or_fail!($interp, $v, InstructionResult::OutOfGas)
+        as_usize_or_fail!($interp, $v, InstructionResult::InvalidOperandOOG)
     }};
 
     (  $interp:expr, $v:expr, $reason:expr ) => {{

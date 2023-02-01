@@ -92,7 +92,7 @@ pub fn extcodecopy<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Hos
     }
     let (code, is_cold) = ret.unwrap();
 
-    let len = as_usize_or_fail!(interpreter, len_u256, InstructionResult::OutOfGas);
+    let len = as_usize_or_fail!(interpreter, len_u256, InstructionResult::InvalidOperandOOG);
     gas_or_fail!(
         interpreter,
         gas::extcodecopy_cost::<SPEC>(len as u64, is_cold)
@@ -100,7 +100,11 @@ pub fn extcodecopy<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Hos
     if len == 0 {
         return;
     }
-    let memory_offset = as_usize_or_fail!(interpreter, memory_offset, InstructionResult::OutOfGas);
+    let memory_offset = as_usize_or_fail!(
+        interpreter,
+        memory_offset,
+        InstructionResult::InvalidOperandOOG
+    );
     let code_offset = min(as_usize_saturated!(code_offset), code.len());
     memory_resize!(interpreter, memory_offset, len);
 
@@ -167,12 +171,12 @@ pub fn log<const N: u8, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dy
     check_staticcall!(interpreter);
 
     pop!(interpreter, offset, len);
-    let len = as_usize_or_fail!(interpreter, len, InstructionResult::OutOfGas);
+    let len = as_usize_or_fail!(interpreter, len, InstructionResult::InvalidOperandOOG);
     gas_or_fail!(interpreter, gas::log_cost(N, len as u64));
     let data = if len == 0 {
         Bytes::new()
     } else {
-        let offset = as_usize_or_fail!(interpreter, offset, InstructionResult::OutOfGas);
+        let offset = as_usize_or_fail!(interpreter, offset, InstructionResult::InvalidOperandOOG);
         memory_resize!(interpreter, offset, len);
         Bytes::copy_from_slice(interpreter.memory.get_slice(offset, len))
     };
@@ -226,12 +230,16 @@ pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
     interpreter.return_data_buffer = Bytes::new();
 
     pop!(interpreter, value, code_offset, len);
-    let len = as_usize_or_fail!(interpreter, len, InstructionResult::OutOfGas);
+    let len = as_usize_or_fail!(interpreter, len, InstructionResult::InvalidOperandOOG);
 
     let code = if len == 0 {
         Bytes::new()
     } else {
-        let code_offset = as_usize_or_fail!(interpreter, code_offset, InstructionResult::OutOfGas);
+        let code_offset = as_usize_or_fail!(
+            interpreter,
+            code_offset,
+            InstructionResult::InvalidOperandOOG
+        );
         memory_resize!(interpreter, code_offset, len);
         Bytes::copy_from_slice(interpreter.memory.get_slice(code_offset, len))
     };
@@ -347,18 +355,23 @@ pub fn call_inner<SPEC: Spec>(
 
     pop!(interpreter, in_offset, in_len, out_offset, out_len);
 
-    let in_len = as_usize_or_fail!(interpreter, in_len, InstructionResult::OutOfGas);
+    let in_len = as_usize_or_fail!(interpreter, in_len, InstructionResult::InvalidOperandOOG);
     let input = if in_len != 0 {
-        let in_offset = as_usize_or_fail!(interpreter, in_offset, InstructionResult::OutOfGas);
+        let in_offset =
+            as_usize_or_fail!(interpreter, in_offset, InstructionResult::InvalidOperandOOG);
         memory_resize!(interpreter, in_offset, in_len);
         Bytes::copy_from_slice(interpreter.memory.get_slice(in_offset, in_len))
     } else {
         Bytes::new()
     };
 
-    let out_len = as_usize_or_fail!(interpreter, out_len, InstructionResult::OutOfGas);
+    let out_len = as_usize_or_fail!(interpreter, out_len, InstructionResult::InvalidOperandOOG);
     let out_offset = if out_len != 0 {
-        let out_offset = as_usize_or_fail!(interpreter, out_offset, InstructionResult::OutOfGas);
+        let out_offset = as_usize_or_fail!(
+            interpreter,
+            out_offset,
+            InstructionResult::InvalidOperandOOG
+        );
         memory_resize!(interpreter, out_offset, out_len);
         out_offset
     } else {

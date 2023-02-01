@@ -3,7 +3,7 @@ use crate::{interpreter::Interpreter, primitives::U256, Host, InstructionResult}
 pub fn mload(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     // gas!(interp, gas::VERYLOW);
     pop!(interpreter, index);
-    let index = as_usize_or_fail!(interpreter, index, InstructionResult::OutOfGas);
+    let index = as_usize_or_fail!(interpreter, index, InstructionResult::InvalidOperandOOG);
     memory_resize!(interpreter, index, 32);
     push!(
         interpreter,
@@ -16,7 +16,7 @@ pub fn mload(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 pub fn mstore(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     // gas!(interp, gas::VERYLOW);
     pop!(interpreter, index, value);
-    let index = as_usize_or_fail!(interpreter, index, InstructionResult::OutOfGas);
+    let index = as_usize_or_fail!(interpreter, index, InstructionResult::InvalidOperandOOG);
     memory_resize!(interpreter, index, 32);
     interpreter.memory.set_u256(index, value);
 }
@@ -24,7 +24,7 @@ pub fn mstore(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 pub fn mstore8(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     // gas!(interp, gas::VERYLOW);
     pop!(interpreter, index, value);
-    let index = as_usize_or_fail!(interpreter, index, InstructionResult::OutOfGas);
+    let index = as_usize_or_fail!(interpreter, index, InstructionResult::InvalidOperandOOG);
     memory_resize!(interpreter, index, 1);
     let value = value.as_le_bytes()[0];
     // Safety: we resized our memory two lines above.
