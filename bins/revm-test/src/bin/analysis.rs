@@ -1,8 +1,11 @@
 use std::time::Instant;
 
 use bytes::Bytes;
-use revm::{db::BenchmarkDB, Bytecode, TransactTo};
-
+use revm::{
+    db::BenchmarkDB,
+    interpreter::analysis::to_analysed,
+    primitives::{Bytecode, LondonSpec, TransactTo},
+};
 extern crate alloc;
 
 fn main() {
@@ -26,18 +29,18 @@ fn main() {
 
     let bytecode_raw = Bytecode::new_raw(contract_data.clone());
     let bytecode_checked = Bytecode::new_raw(contract_data.clone()).to_checked();
-    let bytecode_analysed = Bytecode::new_raw(contract_data).to_analysed::<revm::LondonSpec>();
+    let bytecode_analysed = to_analysed::<LondonSpec>(Bytecode::new_raw(contract_data));
 
     evm.database(BenchmarkDB::new_bytecode(bytecode_raw));
 
     // just to spead up processor.
     for _ in 0..10000 {
-        let (_, _) = evm.transact();
+        let _ = evm.transact().unwrap();
     }
 
     let timer = Instant::now();
     for _ in 0..30000 {
-        let (_, _) = evm.transact();
+        let _ = evm.transact().unwrap();
     }
     println!("Raw elapsed time: {:?}", timer.elapsed());
 
@@ -45,7 +48,7 @@ fn main() {
 
     let timer = Instant::now();
     for _ in 0..30000 {
-        let (_, _) = evm.transact();
+        let _ = evm.transact().unwrap();
     }
     println!("Checked elapsed time: {:?}", timer.elapsed());
 
@@ -53,7 +56,7 @@ fn main() {
 
     let timer = Instant::now();
     for _ in 0..30000 {
-        let (_, _) = evm.transact();
+        let _ = evm.transact().unwrap();
     }
     println!("Analysed elapsed time: {:?}", timer.elapsed());
 }

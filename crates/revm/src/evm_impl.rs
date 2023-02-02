@@ -1,22 +1,19 @@
-use crate::{
-    bits::{B160, B256},
-    common::keccak256,
-    db::Database,
-    gas,
-    interpreter::{self, bytecode::Bytecode},
-    interpreter::{Contract, Interpreter},
-    journaled_state::{Account, JournaledState, State},
-    models::SelfDestructResult,
-    precompiles, return_ok, return_revert, AnalysisKind, CallContext, CallInputs, CallScheme,
-    CreateInputs, CreateScheme, Env, ExecutionResult, Gas, Inspector, Log, Return, Spec,
-    SpecId::{self, *},
-    TransactOut, TransactTo, Transfer, KECCAK_EMPTY, U256,
+use crate::interpreter::{
+    analysis::to_analysed, gas, instruction_result::SuccessOrHalt, return_ok, return_revert,
+    CallContext, CallInputs, CallScheme, Contract, CreateInputs, CreateScheme, Gas, Host,
+    InstructionResult, Interpreter, SelfDestructResult, Transfer, CALL_STACK_LIMIT,
 };
+use crate::primitives::{
+    create2_address, create_address, keccak256, Account, AnalysisKind, Bytecode, Bytes, EVMError,
+    EVMResult, Env, ExecutionResult, HashMap, InvalidTransaction, Log, Output, ResultAndState,
+    Spec,
+    SpecId::{self, *},
+    TransactTo, B160, B256, KECCAK_EMPTY, U256,
+};
+use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector};
 use alloc::vec::Vec;
-use bytes::Bytes;
 use core::{cmp::min, marker::PhantomData};
-use hashbrown::HashMap as Map;
-use revm_precompiles::{Precompile, Precompiles};
+use revm_precompile::{Precompile, Precompiles};
 
 pub struct EVMData<'a, DB: Database> {
     pub env: &'a mut Env,
@@ -32,41 +29,40 @@ pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
     _phantomdata: PhantomData<GSPEC>,
 }
 
-pub trait Transact {
+pub trait Transact<DBError> {
     /// Do transaction.
-    /// Return Return, Output for call or Address if we are creating contract, gas spend, gas refunded, State that needs to be applied.
-    fn transact(&mut self) -> (ExecutionResult, State);
+    /// InstructionResult InstructionResult, Output for call or Address if we are creating contract, gas spend, gas refunded, State that needs to be applied.
+    fn transact(&mut self) -> EVMResult<DBError>;
 }
 
-impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
+impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
     for EVMImpl<'a, GSPEC, DB, INSPECT>
 {
-    fn transact(&mut self) -> (ExecutionResult, State) {
+    fn transact(&mut self) -> EVMResult<DB::Error> {
         let caller = self.data.env.tx.caller;
         let value = self.data.env.tx.value;
         let data = self.data.env.tx.data.clone();
         let gas_limit = self.data.env.tx.gas_limit;
-        let exit = |reason: Return| (ExecutionResult::new_with_reason(reason), State::new());
+        let effective_gas_price = self.data.env.effective_gas_price();
 
         if GSPEC::enabled(MERGE) && self.data.env.block.prevrandao.is_none() {
-            return exit(Return::PrevrandaoNotSet);
+            return Err(EVMError::PrevrandaoNotSet);
         }
 
         if GSPEC::enabled(LONDON) {
             if let Some(priority_fee) = self.data.env.tx.gas_priority_fee {
                 if priority_fee > self.data.env.tx.gas_price {
                     // or gas_max_fee for eip1559
-                    return exit(Return::GasMaxFeeGreaterThanPriorityFee);
+                    return Err(InvalidTransaction::GasMaxFeeGreaterThanPriorityFee.into());
                 }
             }
-            let effective_gas_price = self.data.env.effective_gas_price();
             let basefee = self.data.env.block.basefee;
 
             // check minimal cost against basefee
             // TODO maybe do this checks when creating evm. We already have all data there
             // or should be move effective_gas_price inside transact fn
             if effective_gas_price < basefee {
-                return exit(Return::GasPriceLessThenBasefee);
+                return Err(InvalidTransaction::GasPriceLessThenBasefee.into());
             }
             // check if priority fee is lower then max fee
         }
@@ -78,24 +74,14 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
 
         // unusual to be found here, but check if gas_limit is more then block_gas_limit
         if !disable_block_gas_limit && U256::from(gas_limit) > self.data.env.block.gas_limit {
-            return exit(Return::CallerGasLimitMoreThenBlock);
-        }
-
-        let mut gas = Gas::new(gas_limit);
-        // record initial gas cost. if not using gas metering init will return 0
-        if !gas.record_cost(self.initialization::<GSPEC>()) {
-            return exit(Return::OutOfGas);
+            return Err(InvalidTransaction::CallerGasLimitMoreThenBlock.into());
         }
 
         // load acc
-        if self
-            .data
+        self.data
             .journaled_state
             .load_account(caller, self.data.db)
-            .is_err()
-        {
-            return exit(Return::FatalExternalError);
-        }
+            .map_err(EVMError::Database)?;
 
         #[cfg(feature = "optional_eip3607")]
         let disable_eip3607 = self.env().cfg.disable_eip3607;
@@ -108,68 +94,86 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
         if !disable_eip3607
             && self.data.journaled_state.account(caller).info.code_hash != KECCAK_EMPTY
         {
-            return exit(Return::RejectCallerWithCode);
+            return Err(InvalidTransaction::RejectCallerWithCode.into());
         }
 
-        // substract gas_limit*gas_price from current account.
-        if let Some(payment_value) =
-            U256::from(gas_limit).checked_mul(self.data.env.effective_gas_price())
-        {
-            let balance = &mut self
-                .data
-                .journaled_state
-                .state
-                .get_mut(&caller)
-                .unwrap()
-                .info
-                .balance;
-            if payment_value > *balance {
-                return exit(Return::LackOfFundForGasLimit);
-            }
-            *balance -= payment_value;
-        } else {
-            return exit(Return::OverflowPayment);
+        #[cfg(feature = "optional_balance_check")]
+        let disable_balance_check = self.env().cfg.disable_balance_check;
+        #[cfg(not(feature = "optional_balance_check"))]
+        let disable_balance_check = false;
+
+        let caller_balance = &mut self
+            .data
+            .journaled_state
+            .state
+            .get_mut(&caller)
+            .unwrap()
+            .info
+            .balance;
+
+        let payment_value = U256::from(gas_limit)
+            .checked_mul(effective_gas_price)
+            .ok_or(EVMError::Transaction(
+                InvalidTransaction::OverflowPaymentInTransaction,
+            ))?;
+
+        // Check if account has enough balance for gas_limit*gas_price and value transfer.
+        // Transfer will be done inside `*_inner` functions.
+        if payment_value + value > *caller_balance && !disable_balance_check {
+            return Err(InvalidTransaction::LackOfFundForGasLimit.into());
         }
 
-        // check if we have enought balance for value transfer.
-        let difference = self.data.env.tx.gas_price - self.data.env.effective_gas_price();
-        if difference + value > self.data.journaled_state.account(caller).info.balance {
-            return exit(Return::OutOfFund);
+        // Reduce gas_limit*gas_price amount of caller account.
+        // unwrap_or can only occur if disable_balance_check is enabled
+        *caller_balance = caller_balance
+            .checked_sub(payment_value)
+            .unwrap_or(U256::ZERO);
+
+        let mut gas = Gas::new(gas_limit);
+        // record initial gas cost. if not using gas metering init will return.
+        if !gas.record_cost(self.initialization::<GSPEC>()?) {
+            return Err(InvalidTransaction::CallGasCostMoreThenGasLimit.into());
         }
 
-        // record all as cost;
+        // record all as cost. Gas limit here is reduced by init cost of bytes and access lists.
         let gas_limit = gas.remaining();
         if crate::USE_GAS {
             gas.record_cost(gas_limit);
         }
 
         // call inner handling of call/create
-        let (exit_reason, ret_gas, out) = match self.data.env.tx.transact_to {
+        // TODO can probably be refactored to look nicer.
+        let (exit_reason, ret_gas, output) = match self.data.env.tx.transact_to {
             TransactTo::Call(address) => {
-                if self.data.journaled_state.inc_nonce(caller).is_none() {
-                    // overflow
-                    return exit(Return::NonceOverflow);
+                if self.data.journaled_state.inc_nonce(caller).is_some() {
+                    let context = CallContext {
+                        caller,
+                        address,
+                        code_address: address,
+                        apparent_value: value,
+                        scheme: CallScheme::Call,
+                    };
+                    let mut call_input = CallInputs {
+                        contract: address,
+                        transfer: Transfer {
+                            source: caller,
+                            target: address,
+                            value,
+                        },
+                        input: data,
+                        gas_limit,
+                        context,
+                        is_static: false,
+                    };
+                    let (exit, gas, bytes) = self.call_inner(&mut call_input);
+                    (exit, gas, Output::Call(bytes))
+                } else {
+                    (
+                        InstructionResult::NonceOverflow,
+                        gas,
+                        Output::Call(Bytes::new()),
+                    )
                 }
-                let context = CallContext {
-                    caller,
-                    address,
-                    code_address: address,
-                    apparent_value: value,
-                    scheme: CallScheme::Call,
-                };
-                let mut call_input = CallInputs {
-                    contract: address,
-                    transfer: Transfer {
-                        source: caller,
-                        target: address,
-                        value,
-                    },
-                    input: data,
-                    gas_limit,
-                    context,
-                };
-                let (exit, gas, bytes) = self.call_inner::<GSPEC>(&mut call_input);
-                (exit, gas, TransactOut::Call(bytes))
             }
             TransactTo::Create(scheme) => {
                 let mut create_input = CreateInputs {
@@ -179,8 +183,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
                     init_code: data,
                     gas_limit,
                 };
-                let (exit, address, ret_gas, bytes) = self.create_inner::<GSPEC>(&mut create_input);
-                (exit, ret_gas, TransactOut::Create(bytes, address))
+                let (exit, address, ret_gas, bytes) = self.create_inner(&mut create_input);
+                (exit, ret_gas, Output::Create(bytes, address))
             }
         };
 
@@ -198,16 +202,32 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact
         }
 
         let (state, logs, gas_used, gas_refunded) = self.finalize::<GSPEC>(caller, &gas);
-        (
-            ExecutionResult {
-                exit_reason,
-                out,
+
+        let result = match exit_reason.into() {
+            SuccessOrHalt::Success(reason) => ExecutionResult::Success {
+                reason,
                 gas_used,
                 gas_refunded,
                 logs,
+                output,
             },
-            state,
-        )
+            SuccessOrHalt::Revert => ExecutionResult::Revert {
+                gas_used,
+                output: match output {
+                    Output::Call(return_value) => return_value,
+                    Output::Create(return_value, _) => return_value,
+                },
+            },
+            SuccessOrHalt::Halt(reason) => ExecutionResult::Halt { reason, gas_used },
+            SuccessOrHalt::FatalExternalError => {
+                return Err(EVMError::Database(self.data.error.take().unwrap()))
+            }
+            SuccessOrHalt::Internal => {
+                panic!("Internal return flags should remain internal {exit_reason:?}")
+            }
+        };
+
+        Ok(ResultAndState { result, state })
     }
 }
 
@@ -240,7 +260,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         &mut self,
         caller: B160,
         gas: &Gas,
-    ) -> (Map<B160, Account>, Vec<Log>, u64, u64) {
+    ) -> (HashMap<B160, Account>, Vec<Log>, u64, u64) {
         let coinbase = self.data.env.block.coinbase;
         let (gas_used, gas_refunded) = if crate::USE_GAS {
             let effective_gas_price = self.data.env.effective_gas_price();
@@ -322,7 +342,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         (new_state, logs, gas_used, gas_refunded)
     }
 
-    fn initialization<SPEC: Spec>(&mut self) -> u64 {
+    fn initialization<SPEC: Spec>(&mut self) -> Result<u64, EVMError<DB::Error>> {
         let is_create = matches!(self.data.env.tx.transact_to, TransactTo::Create(_));
         let input = &self.data.env.tx.data;
 
@@ -334,18 +354,17 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     let mut accessed_slots = 0_u64;
 
                     for (address, slots) in self.data.env.tx.access_list.iter() {
-                        // TODO return
-                        let _ = self
-                            .data
+                        self.data
                             .journaled_state
-                            .load_account(*address, self.data.db);
+                            .load_account(*address, self.data.db)
+                            .map_err(EVMError::Database)?;
                         accessed_slots += slots.len() as u64;
-                        // TODO return
+
                         for slot in slots {
-                            let _ = self
-                                .data
+                            self.data
                                 .journaled_state
-                                .sload(*address, *slot, self.data.db);
+                                .sload(*address, *slot, self.data.db)
+                                .map_err(EVMError::Database)?;
                         }
                     }
                     (self.data.env.tx.access_list.len() as u64, accessed_slots)
@@ -368,24 +387,24 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             // EIP-2028: Transaction data gas cost reduction
             let gas_transaction_non_zero_data = if SPEC::enabled(ISTANBUL) { 16 } else { 68 };
 
-            transact
+            Ok(transact
                 + zero_data_len * gas::TRANSACTION_ZERO_DATA
                 + non_zero_data_len * gas_transaction_non_zero_data
                 + accessed_accounts * gas::ACCESS_LIST_ADDRESS
-                + accessed_slots * gas::ACCESS_LIST_STORAGE_KEY
+                + accessed_slots * gas::ACCESS_LIST_STORAGE_KEY)
         } else {
-            0
+            Ok(0)
         }
     }
 
-    fn create_inner<SPEC: Spec>(
+    fn create_inner(
         &mut self,
         inputs: &mut CreateInputs,
-    ) -> (Return, Option<B160>, Gas, Bytes) {
+    ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
         // Call inspector
         if INSPECT {
             let (ret, address, gas, out) = self.inspector.create(&mut self.data, inputs);
-            if ret != Return::Continue {
+            if ret != InstructionResult::Continue {
                 return self
                     .inspector
                     .create_end(&mut self.data, inputs, ret, address, gas, out);
@@ -396,14 +415,23 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         self.load_account(inputs.caller);
 
         // Check depth of calls
-        if self.data.journaled_state.depth() > interpreter::CALL_STACK_LIMIT {
-            return (Return::CallTooDeep, None, gas, Bytes::new());
+        if self.data.journaled_state.depth() > CALL_STACK_LIMIT {
+            return (InstructionResult::CallTooDeep, None, gas, Bytes::new());
         }
         // Check balance of caller and value. Do this before increasing nonce
         match self.balance(inputs.caller) {
-            Some(i) if i.0 < inputs.value => return (Return::OutOfFund, None, gas, Bytes::new()),
+            Some(i) if i.0 < inputs.value => {
+                return (InstructionResult::OutOfFund, None, gas, Bytes::new())
+            }
             Some(_) => (),
-            _ => return (Return::FatalExternalError, None, gas, Bytes::new()),
+            _ => {
+                return (
+                    InstructionResult::FatalExternalError,
+                    None,
+                    gas,
+                    Bytes::new(),
+                )
+            }
         }
 
         // Increase nonce of caller and check if it overflows
@@ -411,7 +439,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         if let Some(nonce) = self.data.journaled_state.inc_nonce(inputs.caller) {
             old_nonce = nonce - 1;
         } else {
-            return (Return::Return, None, gas, Bytes::new());
+            return (InstructionResult::Return, None, gas, Bytes::new());
         }
 
         // Create address
@@ -436,11 +464,16 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         ) {
             Ok(false) => {
                 self.data.journaled_state.checkpoint_revert(checkpoint);
-                return (Return::CreateCollision, ret, gas, Bytes::new());
+                return (InstructionResult::CreateCollision, ret, gas, Bytes::new());
             }
             Err(err) => {
                 self.data.error = Some(err);
-                return (Return::FatalExternalError, ret, gas, Bytes::new());
+                return (
+                    InstructionResult::FatalExternalError,
+                    ret,
+                    gas,
+                    Bytes::new(),
+                );
             }
             Ok(true) => (),
         }
@@ -457,7 +490,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
 
         // EIP-161: State trie clearing (invariant-preserving alternative)
-        if SPEC::enabled(SPURIOUS_DRAGON)
+        if GSPEC::enabled(SPURIOUS_DRAGON)
             && self
                 .data
                 .journaled_state
@@ -466,11 +499,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         {
             // overflow
             self.data.journaled_state.checkpoint_revert(checkpoint);
-            return (Return::Return, None, gas, Bytes::new());
+            return (InstructionResult::Return, None, gas, Bytes::new());
         }
 
         // Create new interpreter and execute initcode
-        let contract = Contract::new::<SPEC>(
+        let contract = Contract::new::<GSPEC>(
             Bytes::new(),
             Bytecode::new_raw(inputs.init_code.clone()),
             created_address,
@@ -479,74 +512,92 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         );
 
         #[cfg(feature = "memory_limit")]
-        let mut interp = Interpreter::new_with_memory_limit::<SPEC>(
+        let mut interpreter = Interpreter::new_with_memory_limit(
             contract,
             gas.limit(),
+            false,
             self.data.env.cfg.memory_limit,
         );
 
         #[cfg(not(feature = "memory_limit"))]
-        let mut interp = Interpreter::new::<SPEC>(contract, gas.limit());
+        let mut interpreter = Interpreter::new(contract, gas.limit(), false);
 
-        if Self::INSPECT {
+        if INSPECT {
             self.inspector
-                .initialize_interp(&mut interp, &mut self.data, SPEC::IS_STATIC_CALL);
+                .initialize_interp(&mut interpreter, &mut self.data, false);
         }
-        let exit_reason = interp.run::<Self, SPEC>(self);
-
+        let exit_reason = if INSPECT {
+            interpreter.run_inspect::<Self, GSPEC>(self)
+        } else {
+            interpreter.run::<Self, GSPEC>(self)
+        };
         // Host error if present on execution\
         let (ret, address, gas, out) = match exit_reason {
             return_ok!() => {
-                let b = Bytes::new();
                 // if ok, check contract creation limit and calculate gas deduction on output len.
-                let mut bytes = interp.return_value();
+                let mut bytes = interpreter.return_value();
 
                 // EIP-3541: Reject new contract code starting with the 0xEF byte
-                if SPEC::enabled(LONDON) && !bytes.is_empty() && bytes.first() == Some(&0xEF) {
+                if GSPEC::enabled(LONDON) && !bytes.is_empty() && bytes.first() == Some(&0xEF) {
                     self.data.journaled_state.checkpoint_revert(checkpoint);
-                    return (Return::CreateContractWithEF, ret, interp.gas, b);
+                    return (
+                        InstructionResult::CreateContractStartingWithEF,
+                        ret,
+                        interpreter.gas,
+                        bytes,
+                    );
                 }
 
                 // EIP-170: Contract code size limit
                 // By default limit is 0x6000 (~25kb)
-                if SPEC::enabled(SPURIOUS_DRAGON)
+                if GSPEC::enabled(SPURIOUS_DRAGON)
                     && bytes.len() > self.data.env.cfg.limit_contract_code_size.unwrap_or(0x6000)
                 {
                     self.data.journaled_state.checkpoint_revert(checkpoint);
-                    return (Return::CreateContractLimit, ret, interp.gas, b);
+                    return (
+                        InstructionResult::CreateContractSizeLimit,
+                        ret,
+                        interpreter.gas,
+                        bytes,
+                    );
                 }
                 if crate::USE_GAS {
-                    let gas_for_code = bytes.len() as u64 * crate::gas::CODEDEPOSIT;
-                    if !interp.gas.record_cost(gas_for_code) {
+                    let gas_for_code = bytes.len() as u64 * gas::CODEDEPOSIT;
+                    if !interpreter.gas.record_cost(gas_for_code) {
                         // record code deposit gas cost and check if we are out of gas.
                         // EIP-2 point 3: If contract creation does not have enough gas to pay for the
                         // final gas fee for adding the contract code to the state, the contract
                         //  creation fails (i.e. goes out-of-gas) rather than leaving an empty contract.
-                        if SPEC::enabled(HOMESTEAD) {
+                        if GSPEC::enabled(HOMESTEAD) {
                             self.data.journaled_state.checkpoint_revert(checkpoint);
-                            return (Return::OutOfGas, ret, interp.gas, b);
+                            return (InstructionResult::OutOfGas, ret, interpreter.gas, bytes);
                         } else {
                             bytes = Bytes::new();
                         }
                     }
                 }
-                // if we have enought gas
+                // if we have enough gas
                 self.data.journaled_state.checkpoint_commit();
-                // Do analasis of bytecode streight away.
+                // Do analysis of bytecode straight away.
                 let bytecode = match self.data.env.cfg.perf_analyse_created_bytecodes {
-                    AnalysisKind::Raw => Bytecode::new_raw(bytes),
-                    AnalysisKind::Check => Bytecode::new_raw(bytes).to_checked(),
-                    AnalysisKind::Analyse => Bytecode::new_raw(bytes).to_analysed::<SPEC>(),
+                    AnalysisKind::Raw => Bytecode::new_raw(bytes.clone()),
+                    AnalysisKind::Check => Bytecode::new_raw(bytes.clone()).to_checked(),
+                    AnalysisKind::Analyse => to_analysed::<GSPEC>(Bytecode::new_raw(bytes.clone())),
                 };
 
                 self.data
                     .journaled_state
                     .set_code(created_address, bytecode);
-                (Return::Continue, ret, interp.gas, b)
+                (InstructionResult::Return, ret, interpreter.gas, bytes)
             }
             _ => {
                 self.data.journaled_state.checkpoint_revert(checkpoint);
-                (exit_reason, ret, interp.gas, interp.return_value())
+                (
+                    exit_reason,
+                    ret,
+                    interpreter.gas,
+                    interpreter.return_value(),
+                )
             }
         };
 
@@ -558,20 +609,20 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
     }
 
-    fn call_inner<SPEC: Spec>(&mut self, inputs: &mut CallInputs) -> (Return, Gas, Bytes) {
+    fn call_inner(&mut self, inputs: &mut CallInputs) -> (InstructionResult, Gas, Bytes) {
         // Call the inspector
         if INSPECT {
             let (ret, gas, out) = self
                 .inspector
-                .call(&mut self.data, inputs, SPEC::IS_STATIC_CALL);
-            if ret != Return::Continue {
+                .call(&mut self.data, inputs, inputs.is_static);
+            if ret != InstructionResult::Continue {
                 return self.inspector.call_end(
                     &mut self.data,
                     inputs,
                     gas,
                     ret,
                     out,
-                    SPEC::IS_STATIC_CALL,
+                    inputs.is_static,
                 );
             }
         }
@@ -581,20 +632,20 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let bytecode = if let Some((bytecode, _)) = self.code(inputs.contract) {
             bytecode
         } else {
-            return (Return::FatalExternalError, gas, Bytes::new());
+            return (InstructionResult::FatalExternalError, gas, Bytes::new());
         };
 
         // Check depth
-        if self.data.journaled_state.depth() > interpreter::CALL_STACK_LIMIT {
-            let (ret, gas, out) = (Return::CallTooDeep, gas, Bytes::new());
-            if Self::INSPECT {
+        if self.data.journaled_state.depth() > CALL_STACK_LIMIT {
+            let (ret, gas, out) = (InstructionResult::CallTooDeep, gas, Bytes::new());
+            if INSPECT {
                 return self.inspector.call_end(
                     &mut self.data,
                     inputs,
                     gas,
                     ret,
                     out,
-                    SPEC::IS_STATIC_CALL,
+                    inputs.is_static,
                 );
             } else {
                 return (ret, gas, out);
@@ -619,14 +670,14 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         ) {
             self.data.journaled_state.checkpoint_revert(checkpoint);
             let (ret, gas, out) = (e, gas, Bytes::new());
-            if Self::INSPECT {
+            if INSPECT {
                 return self.inspector.call_end(
                     &mut self.data,
                     inputs,
                     gas,
                     ret,
                     out,
-                    SPEC::IS_STATIC_CALL,
+                    inputs.is_static,
                 );
             } else {
                 return (ret, gas, out);
@@ -643,20 +694,17 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 Ok((gas_used, data)) => {
                     if !crate::USE_GAS || gas.record_cost(gas_used) {
                         self.data.journaled_state.checkpoint_commit();
-                        (Return::Continue, gas, Bytes::from(data))
+                        (InstructionResult::Return, gas, Bytes::from(data))
                     } else {
                         self.data.journaled_state.checkpoint_revert(checkpoint);
-                        (Return::OutOfGas, gas, Bytes::new())
+                        (InstructionResult::PrecompileOOG, gas, Bytes::new())
                     }
                 }
                 Err(e) => {
-                    let ret = if let precompiles::Error::OutOfGas = e {
-                        Return::OutOfGas
+                    let ret = if let precompile::Error::OutOfGas = e {
+                        InstructionResult::PrecompileOOG
                     } else {
-                        // TODO Consider using precompile errors.
-                        // This would make Return be a litlle bit fatter, but with removal
-                        // of return in instruction this shouldn't be a problem.
-                        Return::PrecompileError
+                        InstructionResult::PrecompileError
                     };
                     self.data.journaled_state.checkpoint_revert(checkpoint);
                     (ret, gas, Bytes::new())
@@ -664,37 +712,46 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             }
         } else {
             // Create interpreter and execute subcall
-            let contract =
-                Contract::new_with_context::<SPEC>(inputs.input.clone(), bytecode, &inputs.context);
+            let contract = Contract::new_with_context::<GSPEC>(
+                inputs.input.clone(),
+                bytecode,
+                &inputs.context,
+            );
 
             #[cfg(feature = "memory_limit")]
-            let mut interp = Interpreter::new_with_memory_limit::<SPEC>(
+            let mut interpreter = Interpreter::new_with_memory_limit(
                 contract,
                 gas.limit(),
+                inputs.is_static,
                 self.data.env.cfg.memory_limit,
             );
 
             #[cfg(not(feature = "memory_limit"))]
-            let mut interp = Interpreter::new::<SPEC>(contract, gas.limit());
+            let mut interpreter = Interpreter::new(contract, gas.limit(), inputs.is_static);
 
-            if Self::INSPECT {
+            if INSPECT {
                 // create is always no static call.
                 self.inspector
-                    .initialize_interp(&mut interp, &mut self.data, false);
+                    .initialize_interp(&mut interpreter, &mut self.data, false);
             }
-            let exit_reason = interp.run::<Self, SPEC>(self);
+            let exit_reason = if INSPECT {
+                interpreter.run_inspect::<Self, GSPEC>(self)
+            } else {
+                interpreter.run::<Self, GSPEC>(self)
+            };
+
             if matches!(exit_reason, return_ok!()) {
                 self.data.journaled_state.checkpoint_commit();
             } else {
                 self.data.journaled_state.checkpoint_revert(checkpoint);
             }
 
-            (exit_reason, interp.gas, interp.return_value())
+            (exit_reason, interpreter.gas, interpreter.return_value())
         };
 
         if INSPECT {
             self.inspector
-                .call_end(&mut self.data, inputs, gas, ret, out, SPEC::IS_STATIC_CALL)
+                .call_end(&mut self.data, inputs, gas, ret, out, inputs.is_static)
         } else {
             (ret, gas, out)
         }
@@ -704,14 +761,16 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     for EVMImpl<'a, GSPEC, DB, INSPECT>
 {
-    const INSPECT: bool = INSPECT;
-    type DB = DB;
-
-    fn step(&mut self, interp: &mut Interpreter, is_static: bool) -> Return {
+    fn step(&mut self, interp: &mut Interpreter, is_static: bool) -> InstructionResult {
         self.inspector.step(interp, &mut self.data, is_static)
     }
 
-    fn step_end(&mut self, interp: &mut Interpreter, is_static: bool, ret: Return) -> Return {
+    fn step_end(
+        &mut self,
+        interp: &mut Interpreter,
+        is_static: bool,
+        ret: InstructionResult,
+    ) -> InstructionResult {
         self.inspector
             .step_end(interp, &mut self.data, is_static, ret)
     }
@@ -827,78 +886,14 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .ok()
     }
 
-    fn create<SPEC: Spec>(
+    fn create(
         &mut self,
         inputs: &mut CreateInputs,
-    ) -> (Return, Option<B160>, Gas, Bytes) {
-        self.create_inner::<SPEC>(inputs)
+    ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
+        self.create_inner(inputs)
     }
 
-    fn call<SPEC: Spec>(&mut self, inputs: &mut CallInputs) -> (Return, Gas, Bytes) {
-        self.call_inner::<SPEC>(inputs)
+    fn call(&mut self, inputs: &mut CallInputs) -> (InstructionResult, Gas, Bytes) {
+        self.call_inner(inputs)
     }
-}
-
-/// Returns the address for the legacy `CREATE` scheme: [`CreateScheme::Create`]
-pub fn create_address(caller: B160, nonce: u64) -> B160 {
-    let mut stream = rlp::RlpStream::new_list(2);
-    stream.append(&caller.0.as_ref());
-    stream.append(&nonce);
-    let out = keccak256(&stream.out());
-    B160(out[12..].try_into().unwrap())
-}
-
-/// Returns the address for the `CREATE2` scheme: [`CreateScheme::Create2`]
-pub fn create2_address(caller: B160, code_hash: B256, salt: U256) -> B160 {
-    use sha3::{Digest, Keccak256};
-    let mut hasher = Keccak256::new();
-    hasher.update([0xff]);
-    hasher.update(&caller[..]);
-    hasher.update(salt.to_be_bytes::<{ U256::BYTES }>());
-    hasher.update(&code_hash[..]);
-
-    B160(hasher.finalize().as_slice()[12..].try_into().unwrap())
-}
-
-/// EVM context host.
-pub trait Host {
-    const INSPECT: bool;
-
-    type DB: Database;
-
-    fn step(&mut self, interp: &mut Interpreter, is_static: bool) -> Return;
-    fn step_end(&mut self, interp: &mut Interpreter, is_static: bool, ret: Return) -> Return;
-
-    fn env(&mut self) -> &mut Env;
-
-    /// load account. Returns (is_cold,is_new_account)
-    fn load_account(&mut self, address: B160) -> Option<(bool, bool)>;
-    /// Get environmental block hash.
-    fn block_hash(&mut self, number: U256) -> Option<B256>;
-    /// Get balance of address.
-    fn balance(&mut self, address: B160) -> Option<(U256, bool)>;
-    /// Get code of address.
-    fn code(&mut self, address: B160) -> Option<(Bytecode, bool)>;
-    /// Get code hash of address.
-    fn code_hash(&mut self, address: B160) -> Option<(B256, bool)>;
-    /// Get storage value of address at index.
-    fn sload(&mut self, address: B160, index: U256) -> Option<(U256, bool)>;
-    /// Set storage value of address at index. Return if slot is cold/hot access.
-    fn sstore(
-        &mut self,
-        address: B160,
-        index: U256,
-        value: U256,
-    ) -> Option<(U256, U256, U256, bool)>;
-    /// Create a log owned by address with given topics and data.
-    fn log(&mut self, address: B160, topics: Vec<B256>, data: Bytes);
-    /// Mark an address to be deleted, with funds transferred to target.
-    fn selfdestruct(&mut self, address: B160, target: B160) -> Option<SelfDestructResult>;
-    /// Invoke a create operation.
-    fn create<SPEC: Spec>(
-        &mut self,
-        inputs: &mut CreateInputs,
-    ) -> (Return, Option<B160>, Gas, Bytes);
-    /// Invoke a call operation.
-    fn call<SPEC: Spec>(&mut self, input: &mut CallInputs) -> (Return, Gas, Bytes);
 }

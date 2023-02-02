@@ -1,11 +1,11 @@
 use super::{DatabaseCommit, DatabaseRef};
-use crate::common::keccak256;
-use crate::{interpreter::bytecode::Bytecode, Database, KECCAK_EMPTY};
-use crate::{Account, AccountInfo, Log};
-use crate::{B160, B256, U256};
+use crate::primitives::{
+    hash_map::Entry, keccak256, Account, AccountInfo, Bytecode, HashMap, Log, B160, B256,
+    KECCAK_EMPTY, U256,
+};
+use crate::Database;
 use alloc::vec::Vec;
 use core::convert::Infallible;
-use hashbrown::{hash_map::Entry, HashMap as Map};
 
 pub type InMemoryDB = CacheDB<EmptyDB>;
 
@@ -20,10 +20,10 @@ impl Default for InMemoryDB {
 pub struct CacheDB<ExtDB: DatabaseRef> {
     /// Account info where None means it is not existing. Not existing state is needed for Pre TANGERINE forks.
     /// `code` is always `None`, and bytecode can be found in `contracts`.
-    pub accounts: Map<B160, DbAccount>,
-    pub contracts: Map<B256, Bytecode>,
+    pub accounts: HashMap<B160, DbAccount>,
+    pub contracts: HashMap<B256, Bytecode>,
     pub logs: Vec<Log>,
-    pub block_hashes: Map<U256, B256>,
+    pub block_hashes: HashMap<U256, B256>,
     pub db: ExtDB,
 }
 
@@ -33,7 +33,7 @@ pub struct DbAccount {
     /// If account is selfdestructed or newly created, storage will be cleared.
     pub account_state: AccountState,
     /// storage slots
-    pub storage: Map<U256, U256>,
+    pub storage: HashMap<U256, U256>,
 }
 
 impl DbAccount {
@@ -76,7 +76,7 @@ impl From<AccountInfo> for DbAccount {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub enum AccountState {
     /// Before Spurious Dragon hardfork there were a difference between empty and not existing.
     /// And we are flaging it here.
@@ -93,14 +93,14 @@ pub enum AccountState {
 
 impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     pub fn new(db: ExtDB) -> Self {
-        let mut contracts = Map::new();
+        let mut contracts = HashMap::new();
         contracts.insert(KECCAK_EMPTY, Bytecode::new());
         contracts.insert(B256::zero(), Bytecode::new());
         Self {
-            accounts: Map::new(),
+            accounts: HashMap::new(),
             contracts,
             logs: Vec::default(),
-            block_hashes: Map::new(),
+            block_hashes: HashMap::new(),
             db,
         }
     }
@@ -125,7 +125,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         self.accounts.entry(address).or_default().info = info;
     }
 
-    fn load_account(&mut self, address: B160) -> Result<&mut DbAccount, ExtDB::Error> {
+    pub fn load_account(&mut self, address: B160) -> Result<&mut DbAccount, ExtDB::Error> {
         let db = &self.db;
         match self.accounts.entry(address) {
             Entry::Occupied(entry) => Ok(entry.into_mut()),
@@ -156,7 +156,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     pub fn replace_account_storage(
         &mut self,
         address: B160,
-        storage: Map<U256, U256>,
+        storage: HashMap<U256, U256>,
     ) -> Result<(), ExtDB::Error> {
         let account = self.load_account(address)?;
         account.account_state = AccountState::StorageCleared;
@@ -166,7 +166,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
 }
 
 impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
-    fn commit(&mut self, changes: Map<B160, Account>) {
+    fn commit(&mut self, changes: HashMap<B160, Account>) {
         for (address, mut account) in changes {
             if account.is_destroyed {
                 let db_account = self.accounts.entry(address).or_default();
@@ -393,8 +393,7 @@ impl Database for BenchmarkDB {
 #[cfg(test)]
 mod tests {
     use super::{CacheDB, EmptyDB};
-    use crate::{AccountInfo, Database};
-    use ruint::aliases::U256;
+    use crate::primitives::{db::Database, AccountInfo, U256};
 
     #[test]
     pub fn test_insert_account_storage() {

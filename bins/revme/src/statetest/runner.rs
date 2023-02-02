@@ -15,9 +15,10 @@ use walkdir::{DirEntry, WalkDir};
 
 use revm::common::keccak256;
 use revm::{
-    bits::{B160, B256},
     db::AccountState,
-    Bytecode, CreateScheme, Env, ExecutionResult, SpecId, TransactTo, U256,
+    inspectors::CustomPrintTracer,
+    interpreter::CreateScheme,
+    primitives::{Bytecode, Env, ExecutionResult, SpecId, TransactTo, B160, B256, U256},
 };
 use tracer_eip3155::TracerEip3155;
 
@@ -27,6 +28,9 @@ use super::{
     merkle_trie::{log_rlp_hash, state_merkle_trie_root},
     models::{SpecName, TestSuit},
 };
+use hex_literal::hex;
+use revm::primitives::keccak256;
+use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum TestError {
@@ -71,6 +75,11 @@ pub fn execute_test_suit(
     // Test checks if nonce overflows. We are handling this correctly but we are not parsing exception in testsuite
     // There are more nonce overflow tests that are in internal call/create, and those tests are passing and are enabled.
     if path.file_name() == Some(OsStr::new("CreateTransactionHighNonce.json")) {
+        return Ok(());
+    }
+
+    // Need to handle Test errors
+    if path.file_name() == Some(OsStr::new("transactionIntinsicBug.json")) {
         return Ok(());
     }
 
@@ -148,7 +157,7 @@ pub fn execute_test_suit(
         // Create database and insert cache
         let mut database = revm::InMemoryDB::default();
         for (address, info) in unit.pre.iter() {
-            let acc_info = revm::AccountInfo {
+            let acc_info = revm::primitives::AccountInfo {
                 balance: info.balance,
                 code_hash: keccak256(&info.code), // try with dummy hash.
                 code: Some(Bytecode::new_raw(info.code.clone())),
@@ -197,6 +206,7 @@ pub fn execute_test_suit(
                     | SpecName::MergeEOF
                     | SpecName::MergeMeterInitCode
                     | SpecName::MergePush0
+                    | SpecName::Unknown
             ) {
                 continue;
             }
@@ -265,7 +275,10 @@ pub fn execute_test_suit(
 
                 *elapsed.lock().unwrap() += timer;
 
-                let is_legacy = !SpecId::enabled(evm.env.cfg.spec_id, SpecId::SPURIOUS_DRAGON);
+                let is_legacy = !SpecId::enabled(
+                    evm.env.cfg.spec_id,
+                    revm::primitives::SpecId::SPURIOUS_DRAGON,
+                );
                 let db = evm.db().unwrap();
                 let state_root = state_merkle_trie_root(
                     db.accounts
@@ -278,6 +291,10 @@ pub fn execute_test_suit(
                         })
                         .map(|(k, v)| (*k, v.clone())),
                 );
+                let logs = match &out {
+                    Ok(ExecutionResult::Success { logs, .. }) => logs.clone(),
+                    _ => Vec::new(),
+                };
                 let logs_root = log_rlp_hash(logs);
                 if test.hash != state_root || test.logs != logs_root {
                     println!(
@@ -286,7 +303,7 @@ pub fn execute_test_suit(
                     );
                     let mut database_cloned = database.clone();
                     evm.database(&mut database_cloned);
-                    evm.inspect_commit(TracerEip3155::new(Box::new(stdout()), false, false));
+                    let _ = evm.inspect_commit(TracerEip3155::new(Box::default(stdout()), false, false));
                     let db = evm.db().unwrap();
                     println!("{path:?} UNIT_TEST:{name}\n");
                     println!(

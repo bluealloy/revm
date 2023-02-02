@@ -1,0 +1,58 @@
+[package]
+authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
+description = "REVM Interpreter"
+edition = "2021"
+keywords = ["no_std", "ethereum", "evm", "revm", "interpreter"]
+license = "MIT"
+name = "revm-interpreter"
+repository = "https://github.com/bluealloy/revm"
+version = "1.0.0"
+readme = "../../README.md"
+
+[dependencies]
+revm-primitives = { path = "../primitives", version="1.0.0", default-features = false }
+
+#utility
+derive_more = "0.99"
+enumn = "0.1"
+
+# sha3 keccak hasher
+sha3 = { version = "0.10", default-features = false, features = [] }
+
+# optional
+serde = { version = "1.0", features = ["derive", "rc"], optional = true }
+arbitrary = { version = "1.2", features = ["derive"], optional = true }
+proptest = { version = "1.0", optional = true }
+proptest-derive = { version = "0.3", optional = true }
+
+[dev-dependencies]
+arbitrary = { version = "1.2", features = ["derive"] }
+proptest = { version = "1.0" }
+proptest-derive = "0.3"
+
+[features]
+default = ["std"]
+dev = [
+    "memory_limit",
+    "optional_balance_check",
+    "optional_block_gas_limit",
+    "optional_eip3607",
+    "optional_gas_refund",
+]
+memory_limit = ["revm-primitives/memory_limit"]
+no_gas_measuring = ["revm-primitives/no_gas_measuring"]
+optional_balance_check = ["revm-primitives/optional_balance_check"]
+optional_block_gas_limit = ["revm-primitives/optional_block_gas_limit"]
+optional_eip3607 = ["revm-primitives/optional_eip3607"]
+optional_gas_refund = ["revm-primitives/optional_gas_refund"]
+std = ["revm-primitives/std"]
+serde = [
+    "dep:serde",
+    "revm-primitives/serde",
+]
+arbitrary = [
+    "dep:arbitrary",
+    "dep:proptest",
+    "dep:proptest-derive",
+    "revm-primitives/arbitrary",
+]

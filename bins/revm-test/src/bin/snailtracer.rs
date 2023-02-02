@@ -1,8 +1,11 @@
-use std::time::Instant;
+use std::time::Duration;
 
 use bytes::Bytes;
-use revm::{db::BenchmarkDB, Bytecode, TransactTo};
-
+use revm::{
+    db::BenchmarkDB,
+    interpreter::{analysis::to_analysed, BytecodeLocked, Contract, DummyHost, Interpreter},
+    primitives::{BerlinSpec, Bytecode, TransactTo},
+};
 extern crate alloc;
 
 pub fn simple_example() {
@@ -10,7 +13,8 @@ pub fn simple_example() {
 
     // BenchmarkDB is dummy state that implements Database trait.
     let mut evm = revm::new();
-    evm.database(BenchmarkDB::new_bytecode(Bytecode::new_raw(contract_data)));
+    let bytecode = to_analysed::<BerlinSpec>(Bytecode::new_raw(contract_data));
+    evm.database(BenchmarkDB::new_bytecode(bytecode.clone()));
 
     // execution globals block hash/gas_limit/coinbase/timestamp..
     evm.env.tx.caller = "0x1000000000000000000000000000000000000000"
@@ -23,25 +27,35 @@ pub fn simple_example() {
     );
     evm.env.tx.data = Bytes::from(hex::decode("30627b7c").unwrap());
 
-    let mut elapsed = std::time::Duration::ZERO;
-    let mut times = Vec::new();
-    for _ in 0..30 {
-        let timer = Instant::now();
-        let (_, _) = evm.transact();
-        let i = timer.elapsed();
-        times.push(i);
-        elapsed += i;
-    }
-    println!("elapsed: {:?}", elapsed / 30);
-    let mut times = times[5..].to_vec();
-    times.sort();
-    for (i, time) in times.iter().rev().enumerate() {
-        println!("{i}: {time:?}");
-    }
+    // Microbenchmark
+    let bench_options = microbench::Options::default().time(Duration::from_secs(2));
+
+    let env = evm.env.clone();
+    microbench::bench(
+        &bench_options,
+        "Snailtracer Host+Interpreter benchmark",
+        || {
+            let _ = evm.transact().unwrap();
+        },
+    );
+
+    // revm interpreter
+    let contract = Contract {
+        input: evm.env.tx.data,
+        bytecode: BytecodeLocked::try_from(bytecode).unwrap(),
+        ..Default::default()
+    };
+
+    let mut host = DummyHost::new(env);
+    microbench::bench(&bench_options, "Snailtracer Interpreter benchmark", || {
+        let mut interpreter = Interpreter::new(contract.clone(), u64::MAX, false);
+        interpreter.run::<_, BerlinSpec>(&mut host);
+        host.clear()
+    });
 }
 
 fn main() {
-    println!("Hello, world!");
+    println!("Running snailtracer bench!");
     simple_example();
     println!("end!");
 }
