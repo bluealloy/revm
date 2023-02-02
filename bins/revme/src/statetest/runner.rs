@@ -249,12 +249,10 @@ pub fn execute_test_suit(
                 // do the deed
 
                 let timer = Instant::now();
-                let mut exec_result: ExecutionResult;
-                if trace {
-                    exec_result =
-                        evm.inspect_commit(TracerEip3155::new(Box::new(stdout()), false, false));
+                let exec_result: ExecutionResult = if trace {
+                    evm.inspect_commit(TracerEip3155::new(Box::new(stdout()), false, false))
                 } else {
-                    exec_result = evm.transact_commit();
+                    evm.transact_commit()
                 };
                 let ExecutionResult {
                     exit_reason,
@@ -292,8 +290,7 @@ pub fn execute_test_suit(
                     let db = evm.db().unwrap();
                     println!("{path:?} UNIT_TEST:{name}\n");
                     println!(
-                        "failed reason: {:?} {:?} UNIT_TEST:{}\n gas:{:?} ({:?} refunded)",
-                        exit_reason, path, name, gas_used, gas_refunded,
+                        "failed reason: {exit_reason:?} {path:?} UNIT_TEST:{name}\n gas:{gas_used:?} ({gas_refunded:?} refunded)",
                     );
                     println!("\nApplied state:{db:?}\n");
                     println!("\nStateroot: {state_root:?}\n");

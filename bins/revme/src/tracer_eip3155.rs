@@ -17,7 +17,9 @@ pub struct TracerEip3155 {
     output: Box<dyn Write>,
     gas_inspector: GasInspector,
 
+    #[allow(dead_code)]
     trace_mem: bool,
+    #[allow(dead_code)]
     trace_return_data: bool,
 
     stack: Stack,
@@ -25,6 +27,7 @@ pub struct TracerEip3155 {
     opcode: u8,
     gas: u64,
     mem_size: usize,
+    #[allow(dead_code)]
     memory: Option<Memory>,
     skip: bool,
 }
@@ -120,7 +123,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         if data.journaled_state.depth() == 0 {
             let log_line = json!({
                 //stateroot
-                "output": format!("{:?}", out),
+                "output": format!("{out:?}"),
                 "gasUser": format!("0x{:x}", self.gas_inspector.gas_remaining()),
                 //time
                 //fork
@@ -180,9 +183,9 @@ fn short_hex(b: U256) -> String {
     let s = hex::encode(b.to_be_bytes_vec())
         .trim_start_matches('0')
         .to_string();
-    if s.len() == 0 {
+    if s.is_empty() {
         "0x0".to_string()
     } else {
-        format!("0x{}", s)
+        format!("0x{s}")
     }
 }

@@ -148,7 +148,7 @@ mod serialize {
         fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
             match *self {
                 Self::InvalidHex { character, index } => {
-                    write!(fmt, "invalid hex character: {}, at {}", character, index)
+                    write!(fmt, "invalid hex character: {character}, at {index}")
                 }
             }
         }
