@@ -51,11 +51,11 @@ pub fn pc(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 pub fn ret(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     // zero gas cost gas!(interp,gas::ZERO);
     pop!(interpreter, start, len);
-    let len = as_usize_or_fail!(interpreter, len, InstructionResult::OutOfGas);
+    let len = as_usize_or_fail!(interpreter, len, InstructionResult::InvalidOperandOOG);
     if len == 0 {
         interpreter.return_range = usize::MAX..usize::MAX;
     } else {
-        let offset = as_usize_or_fail!(interpreter, start, InstructionResult::OutOfGas);
+        let offset = as_usize_or_fail!(interpreter, start, InstructionResult::InvalidOperandOOG);
         memory_resize!(interpreter, offset, len);
         interpreter.return_range = offset..(offset + len);
     }
@@ -67,11 +67,11 @@ pub fn revert<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     // EIP-140: REVERT instruction
     check!(interpreter, SPEC::enabled(BYZANTIUM));
     pop!(interpreter, start, len);
-    let len = as_usize_or_fail!(interpreter, len, InstructionResult::OutOfGas);
+    let len = as_usize_or_fail!(interpreter, len, InstructionResult::InvalidOperandOOG);
     if len == 0 {
         interpreter.return_range = usize::MAX..usize::MAX;
     } else {
-        let offset = as_usize_or_fail!(interpreter, start, InstructionResult::OutOfGas);
+        let offset = as_usize_or_fail!(interpreter, start, InstructionResult::InvalidOperandOOG);
         memory_resize!(interpreter, offset, len);
         interpreter.return_range = offset..(offset + len);
     }

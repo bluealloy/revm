@@ -576,9 +576,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                         }
                     }
                 }
-                // if we have enought gas
+                // if we have enough gas
                 self.data.journaled_state.checkpoint_commit();
-                // Do analysis of bytecode streight away.
+                // Do analysis of bytecode straight away.
                 let bytecode = match self.data.env.cfg.perf_analyse_created_bytecodes {
                     AnalysisKind::Raw => Bytecode::new_raw(bytes.clone()),
                     AnalysisKind::Check => Bytecode::new_raw(bytes.clone()).to_checked(),
@@ -697,12 +697,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                         (InstructionResult::Return, gas, Bytes::from(data))
                     } else {
                         self.data.journaled_state.checkpoint_revert(checkpoint);
-                        (InstructionResult::OutOfGas, gas, Bytes::new())
+                        (InstructionResult::PrecompileOOG, gas, Bytes::new())
                     }
                 }
                 Err(e) => {
                     let ret = if let precompile::Error::OutOfGas = e {
-                        InstructionResult::OutOfGas
+                        InstructionResult::PrecompileOOG
                     } else {
                         InstructionResult::PrecompileError
                     };

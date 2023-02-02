@@ -17,6 +17,10 @@ pub enum InstructionResult {
 
     // error codes
     OutOfGas = 0x50,
+    MemoryOOG = 0x51,
+    MemoryLimitOOG = 0x52,
+    PrecompileOOG = 0x53,
+    InvalidOperandOOG = 0x54,
     OpcodeNotFound,
     CallNotAllowedInsideStatic,
     StateChangeDuringStaticCall,
@@ -58,7 +62,21 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::Revert => Self::Revert,
             InstructionResult::CallTooDeep => Self::Internal, // not gonna happen for first call
             InstructionResult::OutOfFund => Self::Internal, // Check for first call is done separately.
-            InstructionResult::OutOfGas => Self::Halt(Halt::OutOfGas),
+            InstructionResult::OutOfGas => Self::Halt(Halt::OutOfGas(
+                revm_primitives::OutOfGasError::BasicOutOfGas,
+            )),
+            InstructionResult::MemoryLimitOOG => {
+                Self::Halt(Halt::OutOfGas(revm_primitives::OutOfGasError::MemoryLimit))
+            }
+            InstructionResult::MemoryOOG => {
+                Self::Halt(Halt::OutOfGas(revm_primitives::OutOfGasError::Memory))
+            }
+            InstructionResult::PrecompileOOG => {
+                Self::Halt(Halt::OutOfGas(revm_primitives::OutOfGasError::Precompile))
+            }
+            InstructionResult::InvalidOperandOOG => Self::Halt(Halt::OutOfGas(
+                revm_primitives::OutOfGasError::InvalidOperand,
+            )),
             InstructionResult::OpcodeNotFound => Self::Halt(Halt::OpcodeNotFound),
             InstructionResult::CallNotAllowedInsideStatic => Self::Internal, // first call is not static call
             InstructionResult::StateChangeDuringStaticCall => Self::Internal,

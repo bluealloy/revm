@@ -8,12 +8,12 @@ use core::cmp::min;
 
 pub fn sha3(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     pop!(interpreter, from, len);
-    let len = as_usize_or_fail!(interpreter, len, InstructionResult::OutOfGas);
+    let len = as_usize_or_fail!(interpreter, len, InstructionResult::InvalidOperandOOG);
     gas_or_fail!(interpreter, gas::sha3_cost(len as u64));
     let hash = if len == 0 {
         KECCAK_EMPTY
     } else {
-        let from = as_usize_or_fail!(interpreter, from, InstructionResult::OutOfGas);
+        let from = as_usize_or_fail!(interpreter, from, InstructionResult::InvalidOperandOOG);
         memory_resize!(interpreter, from, len);
         keccak256(interpreter.memory.get_slice(from, len))
     };
@@ -38,12 +38,16 @@ pub fn codesize(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 
 pub fn codecopy(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     pop!(interpreter, memory_offset, code_offset, len);
-    let len = as_usize_or_fail!(interpreter, len, InstructionResult::OutOfGas);
+    let len = as_usize_or_fail!(interpreter, len, InstructionResult::InvalidOperandOOG);
     gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
     if len == 0 {
         return;
     }
-    let memory_offset = as_usize_or_fail!(interpreter, memory_offset, InstructionResult::OutOfGas);
+    let memory_offset = as_usize_or_fail!(
+        interpreter,
+        memory_offset,
+        InstructionResult::InvalidOperandOOG
+    );
     let code_offset = as_usize_saturated!(code_offset);
     memory_resize!(interpreter, memory_offset, len);
 
@@ -85,12 +89,16 @@ pub fn callvalue(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 
 pub fn calldatacopy(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     pop!(interpreter, memory_offset, data_offset, len);
-    let len = as_usize_or_fail!(interpreter, len, InstructionResult::OutOfGas);
+    let len = as_usize_or_fail!(interpreter, len, InstructionResult::InvalidOperandOOG);
     gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
     if len == 0 {
         return;
     }
-    let memory_offset = as_usize_or_fail!(interpreter, memory_offset, InstructionResult::OutOfGas);
+    let memory_offset = as_usize_or_fail!(
+        interpreter,
+        memory_offset,
+        InstructionResult::InvalidOperandOOG
+    );
     let data_offset = as_usize_saturated!(data_offset);
     memory_resize!(interpreter, memory_offset, len);
 
@@ -114,7 +122,7 @@ pub fn returndatacopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn
     // EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
     check!(interpreter, SPEC::enabled(BYZANTIUM));
     pop!(interpreter, memory_offset, offset, len);
-    let len = as_usize_or_fail!(interpreter, len, InstructionResult::OutOfGas);
+    let len = as_usize_or_fail!(interpreter, len, InstructionResult::InvalidOperandOOG);
     gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
     let data_offset = as_usize_saturated!(offset);
     let (data_end, overflow) = data_offset.overflowing_add(len);
@@ -123,8 +131,11 @@ pub fn returndatacopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn
         return;
     }
     if len != 0 {
-        let memory_offset =
-            as_usize_or_fail!(interpreter, memory_offset, InstructionResult::OutOfGas);
+        let memory_offset = as_usize_or_fail!(
+            interpreter,
+            memory_offset,
+            InstructionResult::InvalidOperandOOG
+        );
         memory_resize!(interpreter, memory_offset, len);
         interpreter.memory.set(
             memory_offset,
