@@ -2,16 +2,25 @@
 
 use std::io::Write;
 
-use bytes::Bytes;
-use ruint::aliases::U256;
+use revm_interpreter::primitives::U256;
+use revm_interpreter::{opcode, Interpreter, Memory, Stack};
+
+use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult};
+use crate::primitives::{db::Database, hex, Bytes, B160};
+use crate::{evm_impl::EVMData, Inspector};
+
+use crate::inspectors::GasInspector;
+
+// use bytes::Bytes;
+// use ruint::aliases::U256;
 use serde_json::json;
 
-pub use revm::Inspector;
-use revm::{
-    opcode::{self},
-    CallInputs, CreateInputs, Database, EVMData, Gas, GasInspector, Interpreter, Memory, Return,
-    Stack, B160,
-};
+// pub use revm::Inspector;
+// use revm::{
+//     opcode::{self},
+//     CallInputs, CreateInputs, Database, EVMData, Gas, GasInspector, Interpreter, Memory, Return,
+//     Stack, B160,
+// };
 
 pub struct TracerEip3155 {
     output: Box<dyn Write>,
@@ -56,10 +65,10 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         interp: &mut Interpreter,
         data: &mut EVMData<'_, DB>,
         is_static: bool,
-    ) -> Return {
+    ) -> InstructionResult {
         self.gas_inspector
             .initialize_interp(interp, data, is_static);
-        Return::Continue
+        InstructionResult::Continue
     }
 
     // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
@@ -69,7 +78,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         interp: &mut Interpreter,
         data: &mut EVMData<'_, DB>,
         is_static: bool,
-    ) -> Return {
+    ) -> InstructionResult {
         self.gas_inspector.step(interp, data, is_static);
         self.stack = interp.stack.clone();
         self.pc = interp.program_counter();
@@ -77,7 +86,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         self.mem_size = interp.memory.len();
         self.gas = self.gas_inspector.gas_remaining();
         //
-        Return::Continue
+        InstructionResult::Continue
     }
 
     fn step_end(
@@ -85,16 +94,16 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         interp: &mut Interpreter,
         data: &mut EVMData<'_, DB>,
         is_static: bool,
-        eval: Return,
-    ) -> Return {
+        eval: InstructionResult,
+    ) -> InstructionResult {
         self.gas_inspector.step_end(interp, data, is_static, eval);
         if self.skip {
             self.skip = false;
-            return Return::Continue;
+            return InstructionResult::Continue;
         };
 
         self.print_log_line(data.journaled_state.depth());
-        Return::Continue
+        InstructionResult::Continue
     }
 
     fn call(
@@ -102,9 +111,9 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         data: &mut EVMData<'_, DB>,
         _inputs: &mut CallInputs,
         _is_static: bool,
-    ) -> (Return, Gas, Bytes) {
+    ) -> (InstructionResult, Gas, Bytes) {
         self.print_log_line(data.journaled_state.depth());
-        (Return::Continue, Gas::new(0), Bytes::new())
+        (InstructionResult::Continue, Gas::new(0), Bytes::new())
     }
 
     fn call_end(
@@ -112,10 +121,10 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         data: &mut EVMData<'_, DB>,
         inputs: &CallInputs,
         remaining_gas: Gas,
-        ret: Return,
+        ret: InstructionResult,
         out: Bytes,
         is_static: bool,
-    ) -> (Return, Gas, Bytes) {
+    ) -> (InstructionResult, Gas, Bytes) {
         self.gas_inspector
             .call_end(data, inputs, remaining_gas, ret, out.clone(), is_static);
         // self.log_step(interp, data, is_static, eval);
@@ -143,11 +152,11 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         &mut self,
         data: &mut EVMData<'_, DB>,
         inputs: &CreateInputs,
-        ret: Return,
+        ret: InstructionResult,
         address: Option<B160>,
         remaining_gas: Gas,
         out: Bytes,
-    ) -> (Return, Option<B160>, Gas, Bytes) {
+    ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
         self.gas_inspector
             .create_end(data, inputs, ret, address, remaining_gas, out.clone());
         (ret, address, remaining_gas, out)

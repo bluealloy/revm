@@ -1,5 +1,4 @@
 use std::io::stdout;
-use std::sync::atomic::Ordering;
 use std::{
     collections::HashMap,
     ffi::OsStr,
@@ -8,21 +7,16 @@ use std::{
     time::{Duration, Instant},
 };
 
-use hex_literal::hex;
 use indicatif::ProgressBar;
-use thiserror::Error;
-use walkdir::{DirEntry, WalkDir};
 
-use revm::common::keccak256;
+use revm::inspectors::TracerEip3155;
 use revm::{
     db::AccountState,
-    inspectors::CustomPrintTracer,
     interpreter::CreateScheme,
     primitives::{Bytecode, Env, ExecutionResult, SpecId, TransactTo, B160, B256, U256},
 };
-use tracer_eip3155::TracerEip3155;
-
-use crate::tracer_eip3155;
+use std::sync::atomic::Ordering;
+use walkdir::{DirEntry, WalkDir};
 
 use super::{
     merkle_trie::{log_rlp_hash, state_merkle_trie_root},
@@ -259,18 +253,12 @@ pub fn execute_test_suit(
                 // do the deed
 
                 let timer = Instant::now();
-                let exec_result: ExecutionResult = if trace {
+
+                let exec_result = if trace {
                     evm.inspect_commit(TracerEip3155::new(Box::new(stdout()), false, false))
                 } else {
                     evm.transact_commit()
                 };
-                let ExecutionResult {
-                    exit_reason,
-                    gas_used,
-                    gas_refunded,
-                    logs,
-                    ..
-                } = exec_result;
                 let timer = timer.elapsed();
 
                 *elapsed.lock().unwrap() += timer;
@@ -291,7 +279,7 @@ pub fn execute_test_suit(
                         })
                         .map(|(k, v)| (*k, v.clone())),
                 );
-                let logs = match &out {
+                let logs = match &exec_result {
                     Ok(ExecutionResult::Success { logs, .. }) => logs.clone(),
                     _ => Vec::new(),
                 };
@@ -303,12 +291,33 @@ pub fn execute_test_suit(
                     );
                     let mut database_cloned = database.clone();
                     evm.database(&mut database_cloned);
-                    let _ = evm.inspect_commit(TracerEip3155::new(Box::default(stdout()), false, false));
+                    let _ =
+                        evm.inspect_commit(TracerEip3155::new(Box::new(stdout()), false, false));
                     let db = evm.db().unwrap();
                     println!("{path:?} UNIT_TEST:{name}\n");
-                    println!(
-                        "failed reason: {exit_reason:?} {path:?} UNIT_TEST:{name}\n gas:{gas_used:?} ({gas_refunded:?} refunded)",
-                    );
+                    match &exec_result {
+                        Ok(ExecutionResult::Success {
+                            reason,
+                            gas_used,
+                            gas_refunded,
+                            ..
+                        }) => {
+                            println!("Failed reason: {reason:?} {path:?} UNIT_TEST:{name}\n gas:{gas_used:?} ({gas_refunded:?} refunded)");
+                        }
+                        Ok(ExecutionResult::Revert { gas_used, output }) => {
+                            println!(
+                                "Reverted: {output:?} {path:?} UNIT_TEST:{name}\n gas:{gas_used:?}"
+                            );
+                        }
+                        Ok(ExecutionResult::Halt { reason, gas_used }) => {
+                            println!(
+                                "Halted: {reason:?} {path:?} UNIT_TEST:{name}\n gas:{gas_used:?}"
+                            );
+                        }
+                        Err(out) => {
+                            println!("Output: {out:?} {path:?} UNIT_TEST:{name}\n");
+                        }
+                    }
                     println!("\nApplied state:{db:?}\n");
                     println!("\nStateroot: {state_root:?}\n");
                     return Err(TestError::RootMissmatch {
