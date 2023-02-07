@@ -112,7 +112,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             .balance;
 
         let payment_value = U256::from(gas_limit)
-            .checked_mul(effective_gas_price)
+            .checked_mul(self.data.env.tx.gas_price)
             .ok_or(EVMError::Transaction(
                 InvalidTransaction::OverflowPaymentInTransaction,
             ))?;
