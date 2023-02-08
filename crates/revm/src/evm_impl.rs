@@ -111,7 +111,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             .info
             .balance;
 
-        let payment_value = U256::from(gas_limit)
+        let balance_check = U256::from(gas_limit)
             .checked_mul(self.data.env.tx.gas_price)
             .ok_or(EVMError::Transaction(
                 InvalidTransaction::OverflowPaymentInTransaction,
@@ -119,14 +119,14 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
 
         // Check if account has enough balance for gas_limit*gas_price and value transfer.
         // Transfer will be done inside `*_inner` functions.
-        if payment_value + value > *caller_balance && !disable_balance_check {
+        if balance_check + value > *caller_balance && !disable_balance_check {
             return Err(InvalidTransaction::LackOfFundForGasLimit.into());
         }
 
         // Reduce gas_limit*gas_price amount of caller account.
         // unwrap_or can only occur if disable_balance_check is enabled
         *caller_balance = caller_balance
-            .checked_sub(payment_value)
+            .checked_sub(U256::from(gas_limit) * effective_gas_price)
             .unwrap_or(U256::ZERO);
 
         let mut gas = Gas::new(gas_limit);
@@ -282,7 +282,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             acc_caller.info.balance = acc_caller
                 .info
                 .balance
-                .saturating_add(self.data.env.tx.gas_price * U256::from(gas.remaining() + gas_refunded));
+                .saturating_add(effective_gas_price * U256::from(gas.remaining() + gas_refunded));
 
             // EIP-1559
             let coinbase_gas_price = if SPEC::enabled(LONDON) {
