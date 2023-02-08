@@ -282,7 +282,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             acc_caller.info.balance = acc_caller
                 .info
                 .balance
-                .saturating_add(effective_gas_price * U256::from(gas.remaining() + gas_refunded));
+                .saturating_add(self.data.env.tx.gas_price * U256::from(gas.remaining() + gas_refunded));
 
             // EIP-1559
             let coinbase_gas_price = if SPEC::enabled(LONDON) {
