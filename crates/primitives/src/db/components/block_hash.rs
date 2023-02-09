@@ -2,7 +2,9 @@
 //! it is used inside [crate::db::DatabaseComponents`]
 
 use crate::{B256, U256};
+use alloc::sync::Arc;
 use auto_impl::auto_impl;
+use core::ops::Deref;
 
 #[auto_impl(& mut, Box)]
 pub trait BlockHash {
@@ -31,15 +33,13 @@ where
     }
 }
 
-#[cfg(feature = "std")]
-impl<T> BlockHash for std::sync::Arc<T>
+impl<T> BlockHash for Arc<T>
 where
     T: BlockHashRef,
 {
     type Error = <T as BlockHashRef>::Error;
 
     fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
-        use std::ops::Deref;
         self.deref().block_hash(number)
     }
 }
