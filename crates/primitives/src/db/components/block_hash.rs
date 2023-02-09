@@ -30,3 +30,16 @@ where
         BlockHashRef::block_hash(*self, number)
     }
 }
+
+#[cfg(feature = "std")]
+impl<T> BlockHash for std::sync::Arc<T>
+where
+    T: BlockHashRef,
+{
+    type Error = <T as BlockHashRef>::Error;
+
+    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
+        use std::ops::Deref;
+        self.deref().block_hash(number)
+    }
+}
