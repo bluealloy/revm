@@ -2,8 +2,6 @@
 pub mod block_hash;
 pub mod state;
 
-use core::fmt::Debug;
-
 pub use block_hash::{BlockHash, BlockHashRef};
 pub use state::{State, StateRef};
 
@@ -12,6 +10,7 @@ use crate::{
     AccountInfo, Bytecode, B160, B256, U256,
 };
 
+#[derive(Debug)]
 pub struct DatabaseComponents<S, BH> {
     pub state: S,
     pub block_hash: BH,
@@ -71,14 +70,5 @@ impl<S: StateRef, BH: BlockHashRef> DatabaseRef for DatabaseComponents<S, BH> {
         self.block_hash
             .block_hash(number)
             .map_err(Self::Error::BlockHash)
-    }
-}
-
-impl<SE: Debug, BHE: Debug> Debug for DatabaseComponentError<SE, BHE> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        match self {
-            Self::State(arg0) => f.debug_tuple("State").field(arg0).finish(),
-            Self::BlockHash(arg0) => f.debug_tuple("BlockHash").field(arg0).finish(),
-        }
     }
 }
