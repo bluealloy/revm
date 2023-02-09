@@ -2,7 +2,7 @@
 pub mod block_hash;
 pub mod state;
 
-use std::fmt::Debug;
+use core::fmt::Debug;
 
 pub use block_hash::{BlockHash, BlockHashRef};
 pub use state::{State, StateRef};
@@ -75,7 +75,7 @@ impl<S: StateRef, BH: BlockHashRef> DatabaseRef for DatabaseComponents<S, BH> {
 }
 
 impl<SE: Debug, BHE: Debug> Debug for DatabaseComponentError<SE, BHE> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::State(arg0) => f.debug_tuple("State").field(arg0).finish(),
             Self::BlockHash(arg0) => f.debug_tuple("BlockHash").field(arg0).finish(),
