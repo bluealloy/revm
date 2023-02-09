@@ -48,3 +48,26 @@ where
         StateRef::storage(*self, address, index)
     }
 }
+
+#[cfg(feature = "std")]
+impl<T> State for std::sync::Arc<T>
+where
+    T: StateRef,
+{
+    type Error = <T as StateRef>::Error;
+
+    fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
+        use std::ops::Deref;
+        self.deref().basic(address)
+    }
+
+    fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
+        use std::ops::Deref;
+        self.deref().code_by_hash(code_hash)
+    }
+
+    fn storage(&mut self, address: B160, index: U256) -> Result<U256, Self::Error> {
+        use std::ops::Deref;
+        self.deref().storage(address, index)
+    }
+}
