@@ -111,22 +111,23 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             .info
             .balance;
 
-        let payment_value = U256::from(gas_limit)
-            .checked_mul(effective_gas_price)
+        let balance_check = U256::from(gas_limit)
+            .checked_mul(self.data.env.tx.gas_price)
+            .and_then(|gas_cost| gas_cost.checked_add(value))
             .ok_or(EVMError::Transaction(
                 InvalidTransaction::OverflowPaymentInTransaction,
             ))?;
 
         // Check if account has enough balance for gas_limit*gas_price and value transfer.
         // Transfer will be done inside `*_inner` functions.
-        if payment_value + value > *caller_balance && !disable_balance_check {
+        if balance_check > *caller_balance && !disable_balance_check {
             return Err(InvalidTransaction::LackOfFundForGasLimit.into());
         }
 
         // Reduce gas_limit*gas_price amount of caller account.
         // unwrap_or can only occur if disable_balance_check is enabled
         *caller_balance = caller_balance
-            .checked_sub(payment_value)
+            .checked_sub(U256::from(gas_limit) * effective_gas_price)
             .unwrap_or(U256::ZERO);
 
         let mut gas = Gas::new(gas_limit);
