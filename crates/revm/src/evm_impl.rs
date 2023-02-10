@@ -416,16 +416,29 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
         // Check depth of calls
         if self.data.journaled_state.depth() > CALL_STACK_LIMIT {
-            return (InstructionResult::CallTooDeep, None, gas, Bytes::new());
+            return self.create_end(
+                inputs,
+                InstructionResult::CallTooDeep,
+                None,
+                gas,
+                Bytes::new(),
+            );
         }
         // Check balance of caller and value. Do this before increasing nonce
         match self.balance(inputs.caller) {
             Some(i) if i.0 < inputs.value => {
-                return (InstructionResult::OutOfFund, None, gas, Bytes::new())
+                return self.create_end(
+                    inputs,
+                    InstructionResult::OutOfFund,
+                    None,
+                    gas,
+                    Bytes::new(),
+                )
             }
             Some(_) => (),
             _ => {
-                return (
+                return self.create_end(
+                    inputs,
                     InstructionResult::FatalExternalError,
                     None,
                     gas,
@@ -439,7 +452,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         if let Some(nonce) = self.data.journaled_state.inc_nonce(inputs.caller) {
             old_nonce = nonce - 1;
         } else {
-            return (InstructionResult::Return, None, gas, Bytes::new());
+            return self.create_end(inputs, InstructionResult::Return, None, gas, Bytes::new());
         }
 
         // Create address
@@ -464,11 +477,18 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         ) {
             Ok(false) => {
                 self.data.journaled_state.checkpoint_revert(checkpoint);
-                return (InstructionResult::CreateCollision, ret, gas, Bytes::new());
+                return self.create_end(
+                    inputs,
+                    InstructionResult::CreateCollision,
+                    ret,
+                    gas,
+                    Bytes::new(),
+                );
             }
             Err(err) => {
                 self.data.error = Some(err);
-                return (
+                return self.create_end(
+                    inputs,
                     InstructionResult::FatalExternalError,
                     ret,
                     gas,
@@ -486,7 +506,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             self.data.db,
         ) {
             self.data.journaled_state.checkpoint_revert(checkpoint);
-            return (e, ret, gas, Bytes::new());
+            return self.create_end(inputs, e, ret, gas, Bytes::new());
         }
 
         // EIP-161: State trie clearing (invariant-preserving alternative)
@@ -499,7 +519,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         {
             // overflow
             self.data.journaled_state.checkpoint_revert(checkpoint);
-            return (InstructionResult::Return, None, gas, Bytes::new());
+            return self.create_end(inputs, InstructionResult::Return, None, gas, Bytes::new());
         }
 
         // Create new interpreter and execute initcode
@@ -540,7 +560,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 // EIP-3541: Reject new contract code starting with the 0xEF byte
                 if GSPEC::enabled(LONDON) && !bytes.is_empty() && bytes.first() == Some(&0xEF) {
                     self.data.journaled_state.checkpoint_revert(checkpoint);
-                    return (
+                    return self.create_end(
+                        inputs,
                         InstructionResult::CreateContractStartingWithEF,
                         ret,
                         interpreter.gas,
@@ -554,23 +575,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     && bytes.len() > self.data.env.cfg.limit_contract_code_size.unwrap_or(0x6000)
                 {
                     self.data.journaled_state.checkpoint_revert(checkpoint);
-                    return if INSPECT {
-                        self.inspector.create_end(
-                            &mut self.data,
-                            inputs,
-                            InstructionResult::CreateContractSizeLimit,
-                            ret,
-                            interpreter.gas,
-                            bytes,
-                        )
-                    } else {
-                        (
-                            InstructionResult::CreateContractSizeLimit,
-                            ret,
-                            interpreter.gas,
-                            bytes,
-                        )
-                    };
+                    return self.create_end(
+                        inputs,
+                        InstructionResult::CreateContractSizeLimit,
+                        ret,
+                        interpreter.gas,
+                        bytes,
+                    );
                 }
                 if crate::USE_GAS {
                     let gas_for_code = bytes.len() as u64 * gas::CODEDEPOSIT;
@@ -581,7 +592,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                         //  creation fails (i.e. goes out-of-gas) rather than leaving an empty contract.
                         if GSPEC::enabled(HOMESTEAD) {
                             self.data.journaled_state.checkpoint_revert(checkpoint);
-                            return (InstructionResult::OutOfGas, ret, interpreter.gas, bytes);
+                            return self.create_end(
+                                inputs,
+                                InstructionResult::OutOfGas,
+                                ret,
+                                interpreter.gas,
+                                bytes,
+                            );
                         } else {
                             bytes = Bytes::new();
                         }
@@ -612,6 +629,17 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             }
         };
 
+        self.create_end(inputs, ret, address, gas, out)
+    }
+
+    fn create_end(
+        &mut self,
+        inputs: &CreateInputs,
+        ret: InstructionResult,
+        address: Option<B160>,
+        gas: Gas,
+        out: Bytes,
+    ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
         if INSPECT {
             self.inspector
                 .create_end(&mut self.data, inputs, ret, address, gas, out)
