@@ -1,5 +1,6 @@
 use crate::{Log, State, B160};
 use bytes::Bytes;
+use ruint::aliases::U256;
 
 pub type EVMResult<DB> = core::result::Result<ResultAndState, EVMError<DB>>;
 
@@ -94,7 +95,10 @@ pub enum InvalidTransaction {
     /// EIP-3607 Reject transactions from senders with deployed code
     RejectCallerWithCode,
     /// Transaction account does not have enough amount of ether to cover transferred value and gas_limit*gas_price.
-    LackOfFundForGasLimit,
+    LackOfFundForGasLimit {
+        gas_limit: U256,
+        balance: U256,
+    },
     /// Overflow payment in transaction.
     OverflowPaymentInTransaction,
     /// Nonce overflows in transaction,
