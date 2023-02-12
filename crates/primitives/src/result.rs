@@ -89,9 +89,9 @@ impl<DB> From<InvalidTransaction> for EVMError<DB> {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InvalidTransaction {
     GasMaxFeeGreaterThanPriorityFee,
-    GasPriceLessThenBasefee,
-    CallerGasLimitMoreThenBlock,
-    CallGasCostMoreThenGasLimit,
+    GasPriceLessThanBasefee,
+    CallerGasLimitMoreThanBlock,
+    CallGasCostMoreThanGasLimit,
     /// EIP-3607 Reject transactions from senders with deployed code
     RejectCallerWithCode,
     /// Transaction account does not have enough amount of ether to cover transferred value and gas_limit*gas_price.

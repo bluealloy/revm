@@ -62,7 +62,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             // TODO maybe do this checks when creating evm. We already have all data there
             // or should be move effective_gas_price inside transact fn
             if effective_gas_price < basefee {
-                return Err(InvalidTransaction::GasPriceLessThenBasefee.into());
+                return Err(InvalidTransaction::GasPriceLessThanBasefee.into());
             }
             // check if priority fee is lower then max fee
         }
@@ -72,9 +72,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         #[cfg(not(feature = "optional_block_gas_limit"))]
         let disable_block_gas_limit = false;
 
-        // unusual to be found here, but check if gas_limit is more then block_gas_limit
+        // unusual to be found here, but check if gas_limit is more than block_gas_limit
         if !disable_block_gas_limit && U256::from(gas_limit) > self.data.env.block.gas_limit {
-            return Err(InvalidTransaction::CallerGasLimitMoreThenBlock.into());
+            return Err(InvalidTransaction::CallerGasLimitMoreThanBlock.into());
         }
 
         // load acc
@@ -137,7 +137,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let mut gas = Gas::new(gas_limit);
         // record initial gas cost. if not using gas metering init will return.
         if !gas.record_cost(self.initialization::<GSPEC>()?) {
-            return Err(InvalidTransaction::CallGasCostMoreThenGasLimit.into());
+            return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
         }
 
         // record all as cost. Gas limit here is reduced by init cost of bytes and access lists.
