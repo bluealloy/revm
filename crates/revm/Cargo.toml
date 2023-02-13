@@ -25,7 +25,7 @@ tokio = { version = "1.23", features = [
 ], optional = true }
 ethers-providers = { version = "1.0.2", optional = true }
 ethers-core = { version = "1.0.2", optional = true }
-futures = { version = "0.3.24", optional = true }
+futures = { version = "0.3.26", optional = true }
 
 
 [dev-dependencies]
