@@ -19,7 +19,7 @@ auto_impl = { version = "1.0", default-features = false }
 serde = { version = "1.0", features = ["derive", "rc"], optional = true }
 
 # ethersdb
-tokio = { version = "1.23", features = [
+tokio = { version = "1.25", features = [
     "rt-multi-thread",
     "macros",
 ], optional = true }
