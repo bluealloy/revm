@@ -161,11 +161,11 @@ pub fn eval<H: Host, S: Spec>(opcode: u8, interp: &mut Interpreter, host: &mut H
         opcode::SLOAD => host::sload::<S>(interp, host),
         opcode::SSTORE => host::sstore::<S>(interp, host),
         opcode::GAS => system::gas(interp, host),
-        opcode::LOG0 => host::log::<0, S>(interp, host),
-        opcode::LOG1 => host::log::<1, S>(interp, host),
-        opcode::LOG2 => host::log::<2, S>(interp, host),
-        opcode::LOG3 => host::log::<3, S>(interp, host),
-        opcode::LOG4 => host::log::<4, S>(interp, host),
+        opcode::LOG0 => host::log::<0>(interp, host),
+        opcode::LOG1 => host::log::<1>(interp, host),
+        opcode::LOG2 => host::log::<2>(interp, host),
+        opcode::LOG3 => host::log::<3>(interp, host),
+        opcode::LOG4 => host::log::<4>(interp, host),
         opcode::SELFDESTRUCT => host::selfdestruct::<S>(interp, host),
         opcode::CREATE => host::create::<false, S>(interp, host), //check
         opcode::CREATE2 => host::create::<true, S>(interp, host), //check
