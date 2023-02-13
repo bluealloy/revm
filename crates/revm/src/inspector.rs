@@ -17,6 +17,7 @@ pub mod inspectors {
     pub use super::customprinter::CustomPrintTracer;
     pub use super::gas::GasInspector;
     pub use super::noop::NoOpInspector;
+    #[cfg(feature = "std")]
     pub use super::tracer_eip3155::TracerEip3155;
 }
 

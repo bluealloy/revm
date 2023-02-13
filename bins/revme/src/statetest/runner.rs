@@ -333,7 +333,11 @@ pub fn execute_test_suit(
     Ok(())
 }
 
-pub fn run(test_files: Vec<PathBuf>, single_thread: bool, trace: bool) -> Result<(), TestError> {
+pub fn run(test_files: Vec<PathBuf>, mut single_thread: bool, trace: bool) -> Result<(), TestError> {
+    if trace {
+        single_thread = true;
+    }
+
     let endjob = Arc::new(AtomicBool::new(false));
     let console_bar = Arc::new(ProgressBar::new(test_files.len() as u64));
     let mut joins: Vec<std::thread::JoinHandle<Result<(), TestError>>> = Vec::new();
