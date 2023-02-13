@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-//#![no_std]
 pub mod db;
 mod evm;
 mod evm_impl;

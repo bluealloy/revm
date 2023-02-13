@@ -34,6 +34,7 @@ pub fn create2_address(caller: B160, code_hash: B256, salt: U256) -> B160 {
 /// Serde functions to serde as [bytes::Bytes] hex string
 #[cfg(feature = "serde")]
 pub mod serde_hex_bytes {
+    use alloc::string::String;
     use serde::{Deserialize, Deserializer, Serializer};
 
     pub fn serialize<S, T>(x: T, s: S) -> Result<S::Ok, S::Error>
@@ -41,7 +42,7 @@ pub mod serde_hex_bytes {
         S: Serializer,
         T: AsRef<[u8]>,
     {
-        s.serialize_str(&format!("0x{}", hex::encode(x.as_ref())))
+        s.serialize_str(&alloc::format!("0x{}", hex::encode(x.as_ref())))
     }
 
     pub fn deserialize<'de, D>(d: D) -> Result<bytes::Bytes, D::Error>

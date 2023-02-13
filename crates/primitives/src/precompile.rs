@@ -1,3 +1,5 @@
+use alloc::vec::Vec;
+
 /// A precompile operation result.
 pub type PrecompileResult = Result<(u64, Vec<u8>), PrecompileError>;
 

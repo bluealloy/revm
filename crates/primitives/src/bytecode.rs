@@ -1,7 +1,7 @@
 mod jump_table;
 
 use crate::{keccak256, B256, KECCAK_EMPTY};
-use alloc::sync::Arc;
+use alloc::{sync::Arc, vec, vec::Vec};
 use bytes::Bytes;
 pub use jump_table::{Analysis, AnalysisData, ValidJumpAddress};
 
