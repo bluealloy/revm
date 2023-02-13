@@ -1,4 +1,4 @@
-use alloc::sync::Arc;
+use alloc::{sync::Arc, vec::Vec};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Analysis {

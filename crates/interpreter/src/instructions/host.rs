@@ -167,7 +167,7 @@ pub fn sstore<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     }
 }
 
-pub fn log<const N: u8, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+pub fn log<const N: u8>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     check_staticcall!(interpreter);
 
     pop!(interpreter, offset, len);

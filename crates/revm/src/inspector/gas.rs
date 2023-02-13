@@ -4,6 +4,7 @@ use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult};
 use crate::primitives::{db::Database, Bytes, B160};
 use crate::{evm_impl::EVMData, Inspector};
 
+#[allow(dead_code)]
 #[derive(Clone, Copy, Debug, Default)]
 pub struct GasInspector {
     /// We now batch continual gas_block in one go, that means we need to reduce it if we want

@@ -21,6 +21,8 @@ structure:
     * revme: cli binary, used for running state test json
     * revm-test: test binaries with contracts, used mostly to check performance
 
+Last checked revm requires rust v1.65 or higher for `core::error::Error`
+
 There were some big efforts on optimization of revm:
 * Optimizing interpreter loop: https://github.com/bluealloy/revm/issues/7
 * Introducing Bytecode format (and better bytecode analysis): https://github.com/bluealloy/revm/issues/121
