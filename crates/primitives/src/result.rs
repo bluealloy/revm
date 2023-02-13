@@ -104,6 +104,8 @@ pub enum InvalidTransaction {
     OverflowPaymentInTransaction,
     /// Nonce overflows in transaction,
     NonceOverflowInTransaction,
+    /// EIP-3860: Limit and meter initcode
+    CreateInitcodeSizeLimit,
 }
 
 /// When transaction return successfully without halts.

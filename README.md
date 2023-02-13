@@ -34,7 +34,7 @@ go to `cd bins/revme/`
 
 Download eth tests from (this will take some time): `git clone https://github.com/ethereum/tests`
 
-run tests with command: `cargo run --release -- statetest tests/GeneralStateTests/`
+run tests with command: `cargo run --release -- statetest tests/GeneralStateTests/ tests/LegacyTests/Constantinople/GeneralStateTests`
 
 `GeneralStateTests` contains all tests related to EVM.
 

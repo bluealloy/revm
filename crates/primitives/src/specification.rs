@@ -21,8 +21,9 @@ pub enum SpecId {
     ARROW_GLACIER = 13,   // Arrow Glacier	        13773000
     GRAY_GLACIER = 14,    // Gray Glacier	        15050000
     MERGE = 15,           // Paris/Merge	        TBD (Depends on difficulty)
-    MERGE_EOF = 16,       // Merge+EOF	            TBD
-    LATEST = 17,
+    SHANGHAI = 16,
+    CANCUN = 17,
+    LATEST = 18,
 }
 
 impl SpecId {
@@ -48,7 +49,7 @@ impl From<&str> for SpecId {
             "Berlin" => SpecId::BERLIN,
             "London" => SpecId::LONDON,
             "Merge" => SpecId::MERGE,
-            "MergeEOF" => SpecId::MERGE_EOF,
+            "Shanghai" => SpecId::SHANGHAI,
             _ => SpecId::LATEST,
         }
     }
@@ -97,4 +98,5 @@ spec!(LONDON, LondonSpec);
 // GRAY_GLACIER no EVM spec change
 spec!(MERGE, MergeSpec);
 // MERGE_EOF is pending EVM change
+spec!(SHANGHAI, ShanghaiSpec);
 spec!(LATEST, LatestSpec);

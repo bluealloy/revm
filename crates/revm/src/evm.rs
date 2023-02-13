@@ -167,7 +167,8 @@ pub fn to_precompile_id(spec_id: SpecId) -> revm_precompile::SpecId {
         | SpecId::ARROW_GLACIER
         | SpecId::GRAY_GLACIER
         | SpecId::MERGE
-        | SpecId::MERGE_EOF
+        | SpecId::SHANGHAI
+        | SpecId::CANCUN
         | SpecId::LATEST => revm_precompile::SpecId::BERLIN,
     }
 }
@@ -191,7 +192,8 @@ pub fn evm_inner<'a, DB: Database, const INSPECT: bool>(
             create_evm!(LondonSpec, db, env, insp)
         }
         SpecId::MERGE => create_evm!(MergeSpec, db, env, insp),
-        SpecId::MERGE_EOF => create_evm!(MergeSpec, db, env, insp),
+        SpecId::SHANGHAI => create_evm!(ShanghaiSpec, db, env, insp),
+        SpecId::CANCUN => create_evm!(LatestSpec, db, env, insp),
         SpecId::LATEST => create_evm!(LatestSpec, db, env, insp),
     }
 }

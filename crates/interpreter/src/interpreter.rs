@@ -18,6 +18,12 @@ use core::ops::Range;
 pub const STACK_LIMIT: u64 = 1024;
 pub const CALL_STACK_LIMIT: u64 = 1024;
 
+/// EIP-170: Contract code size limit
+/// By default limit is 0x6000 (~25kb)
+pub const MAX_CODE_SIZE: usize = 0x6000;
+/// EIP-3860: Limit and meter initcode
+pub const MAX_INITCODE_SIZE: usize = 2 * MAX_CODE_SIZE;
+
 pub struct Interpreter {
     /// Instruction pointer.
     pub instruction_pointer: *const u8,

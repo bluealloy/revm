@@ -97,6 +97,10 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
         return Ok(());
     }
 
+    if path.to_str().unwrap().contains("stEOF") {
+        return Ok(());
+    }
+
     let json_reader = std::fs::read(path).unwrap();
     let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
 
@@ -191,9 +195,6 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                 spec_name,
                 SpecName::ByzantiumToConstantinopleAt5
                     | SpecName::Constantinople
-                    | SpecName::MergeEOF
-                    | SpecName::MergeMeterInitCode
-                    | SpecName::MergePush0
                     | SpecName::Unknown
             ) {
                 continue;
