@@ -1,4 +1,5 @@
 use crate::primitives::{Bytes, Spec, SpecId::*, B160, B256, U256};
+use crate::MAX_INITCODE_SIZE;
 use crate::{
     alloc::vec::Vec,
     gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
@@ -240,6 +241,14 @@ pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
             code_offset,
             InstructionResult::InvalidOperandOOG
         );
+        // EIP-3860: Limit and meter initcode
+        if SPEC::enabled(SHANGHAI) {
+            if len > MAX_INITCODE_SIZE {
+                interpreter.instruction_result = InstructionResult::CreateInitcodeSizeLimit;
+                return;
+            }
+            gas!(interpreter, gas::initcode_cost(len as u64));
+        }
         memory_resize!(interpreter, code_offset, len);
         Bytes::copy_from_slice(interpreter.memory.get_slice(code_offset, len))
     };

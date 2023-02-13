@@ -35,4 +35,7 @@ pub const COLD_SLOAD_COST: u64 = 2100;
 pub const COLD_ACCOUNT_ACCESS_COST: u64 = 2600;
 pub const WARM_STORAGE_READ_COST: u64 = 100;
 
+/// EIP-3860 : Limit and meter initcode
+pub const INITCODE_WORD_COST: u64 = 2;
+
 pub const CALL_STIPEND: u64 = 2300;

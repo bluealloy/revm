@@ -13,6 +13,7 @@ use crate::primitives::{
 use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector};
 use alloc::vec::Vec;
 use core::{cmp::min, marker::PhantomData};
+use revm_interpreter::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
 use revm_precompile::{Precompile, Precompiles};
 
 pub struct EVMData<'a, DB: Database> {
@@ -144,6 +145,15 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let gas_limit = gas.remaining();
         if crate::USE_GAS {
             gas.record_cost(gas_limit);
+        }
+
+        // load coinbase
+        // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
+        if GSPEC::enabled(SHANGHAI) {
+            self.data
+                .journaled_state
+                .load_account(self.data.env.block.coinbase, self.data.db)
+                .map_err(EVMError::Database)?;
         }
 
         // call inner handling of call/create
@@ -351,6 +361,21 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let is_create = matches!(self.data.env.tx.transact_to, TransactTo::Create(_));
         let input = &self.data.env.tx.data;
 
+        // EIP-3860: Limit and meter initcode
+        let initcode_cost = if SPEC::enabled(SHANGHAI) && self.data.env.tx.transact_to.is_create() {
+            let initcode_len = self.data.env.tx.data.len();
+            if initcode_len > MAX_INITCODE_SIZE {
+                return Err(InvalidTransaction::CreateInitcodeSizeLimit.into());
+            }
+            if crate::USE_GAS {
+                gas::initcode_cost(initcode_len as u64)
+            } else {
+                0
+            }
+        } else {
+            0
+        };
+
         if crate::USE_GAS {
             let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
             let non_zero_data_len = input.len() as u64 - zero_data_len;
@@ -393,6 +418,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             let gas_transaction_non_zero_data = if SPEC::enabled(ISTANBUL) { 16 } else { 68 };
 
             Ok(transact
+                + initcode_cost
                 + zero_data_len * gas::TRANSACTION_ZERO_DATA
                 + non_zero_data_len * gas_transaction_non_zero_data
                 + accessed_accounts * gas::ACCESS_LIST_ADDRESS
@@ -577,7 +603,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 // EIP-170: Contract code size limit
                 // By default limit is 0x6000 (~25kb)
                 if GSPEC::enabled(SPURIOUS_DRAGON)
-                    && bytes.len() > self.data.env.cfg.limit_contract_code_size.unwrap_or(0x6000)
+                    && bytes.len()
+                        > self
+                            .data
+                            .env
+                            .cfg
+                            .limit_contract_code_size
+                            .unwrap_or(MAX_CODE_SIZE)
                 {
                     self.data.journaled_state.checkpoint_revert(checkpoint);
                     return self.create_end(

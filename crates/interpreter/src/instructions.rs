@@ -73,6 +73,7 @@ pub fn eval<H: Host, S: Spec>(opcode: u8, interp: &mut Interpreter, host: &mut H
         opcode::PC => control::pc(interp, host),
         opcode::MSIZE => memory::msize(interp, host),
         opcode::JUMPDEST => control::jumpdest(interp, host),
+        opcode::PUSH0 => stack::push0::<S>(interp, host),
         opcode::PUSH1 => stack::push::<1>(interp, host),
         opcode::PUSH2 => stack::push::<2>(interp, host),
         opcode::PUSH3 => stack::push::<3>(interp, host),
