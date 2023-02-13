@@ -16,6 +16,7 @@ pub struct DatabaseComponents<S, BH> {
     pub block_hash: BH,
 }
 
+#[derive(Debug)]
 pub enum DatabaseComponentError<SE, BHE> {
     State(SE),
     BlockHash(BHE),
