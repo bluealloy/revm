@@ -308,7 +308,6 @@ mod tests {
         assert_eq!(h160, new_h160)
     }
 
-
     #[test]
     fn should_convert_to_primitive_types_h160() {
         let b160 = B160::random();
@@ -332,5 +331,4 @@ mod tests {
         let new_b256: B256 = h256.into();
         assert_eq!(b256, new_b256)
     }
-
 }
