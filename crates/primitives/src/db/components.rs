@@ -10,6 +10,7 @@ use crate::{
     AccountInfo, Bytecode, B160, B256, U256,
 };
 
+#[derive(Debug)]
 pub struct DatabaseComponents<S, BH> {
     pub state: S,
     pub block_hash: BH,

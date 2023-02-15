@@ -1,7 +1,9 @@
 use crate::{Log, State, B160};
+use alloc::vec::Vec;
 use bytes::Bytes;
+use ruint::aliases::U256;
 
-pub type EVMResult<DB> = std::result::Result<ResultAndState, EVMError<DB>>;
+pub type EVMResult<DB> = core::result::Result<ResultAndState, EVMError<DB>>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -88,17 +90,22 @@ impl<DB> From<InvalidTransaction> for EVMError<DB> {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InvalidTransaction {
     GasMaxFeeGreaterThanPriorityFee,
-    GasPriceLessThenBasefee,
-    CallerGasLimitMoreThenBlock,
-    CallGasCostMoreThenGasLimit,
+    GasPriceLessThanBasefee,
+    CallerGasLimitMoreThanBlock,
+    CallGasCostMoreThanGasLimit,
     /// EIP-3607 Reject transactions from senders with deployed code
     RejectCallerWithCode,
     /// Transaction account does not have enough amount of ether to cover transferred value and gas_limit*gas_price.
-    LackOfFundForGasLimit,
+    LackOfFundForGasLimit {
+        gas_limit: U256,
+        balance: U256,
+    },
     /// Overflow payment in transaction.
     OverflowPaymentInTransaction,
     /// Nonce overflows in transaction,
     NonceOverflowInTransaction,
+    /// EIP-3860: Limit and meter initcode
+    CreateInitcodeSizeLimit,
 }
 
 /// When transaction return successfully without halts.
@@ -115,7 +122,7 @@ pub enum Eval {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Halt {
-    OutOfGas,
+    OutOfGas(OutOfGasError),
     OpcodeNotFound,
     InvalidFEOpcode,
     InvalidJump,
@@ -131,4 +138,20 @@ pub enum Halt {
     CreateContractSizeLimit,
     /// Error on created contract that begins with EF
     CreateContractStartingWithEF,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum OutOfGasError {
+    // Basic OOG error
+    BasicOutOfGas,
+    // Tried to expand past REVM limit
+    MemoryLimit,
+    // Basic OOG error from memory expansion
+    Memory,
+    // Precompile threw OOG error
+    Precompile,
+    // When performing something that takes a U256 and casts down to a u64, if its too large this would fire
+    // i.e. in `as_usize_or_fail`
+    InvalidOperand,
 }

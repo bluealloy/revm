@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-//#![no_std]
 pub mod db;
 mod evm;
 mod evm_impl;
@@ -20,7 +18,7 @@ pub use journaled_state::{JournalEntry, JournaledState};
 extern crate alloc;
 
 /// reexport `revm_precompiles`
-pub use revm_precompiles as precompiles;
+pub use revm_precompile as precompile;
 
 // reexport `revm_interpreter`
 pub use revm_interpreter as interpreter;

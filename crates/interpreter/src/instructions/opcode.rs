@@ -48,6 +48,7 @@ pub const JUMPI: u8 = 0x57;
 pub const PC: u8 = 0x58;
 pub const MSIZE: u8 = 0x59;
 pub const JUMPDEST: u8 = 0x5b;
+pub const PUSH0: u8 = 0x5f;
 pub const PUSH1: u8 = 0x60;
 pub const PUSH2: u8 = 0x61;
 pub const PUSH3: u8 = 0x62;
@@ -389,7 +390,7 @@ macro_rules! gas_opcodee {
             /* 0x5c */ OpInfo::none(),
             /* 0x5d */ OpInfo::none(),
             /* 0x5e */ OpInfo::none(),
-            /* 0x5f */ OpInfo::none(),
+            /* 0x5f  PUSH0 */ OpInfo::gas(gas::BASE),
             /* 0x60  PUSH1 */ OpInfo::push_opcode(),
             /* 0x61  PUSH2 */ OpInfo::push_opcode(),
             /* 0x62  PUSH3 */ OpInfo::push_opcode(),
@@ -620,9 +621,13 @@ pub const fn spec_opcode_gas(spec_id: SpecId) -> &'static [OpInfo; 256] {
             gas_opcodee!(MERGE, SpecId::MERGE);
             MERGE
         }
-        SpecId::MERGE_EOF => {
-            gas_opcodee!(MERGE_EOF, SpecId::MERGE_EOF);
-            MERGE_EOF
+        SpecId::SHANGHAI => {
+            gas_opcodee!(SHANGHAI, SpecId::SHANGHAI);
+            SHANGHAI
+        }
+        SpecId::CANCUN => {
+            gas_opcodee!(CANCUN, SpecId::CANCUN);
+            CANCUN
         }
         SpecId::LATEST => {
             gas_opcodee!(LATEST, SpecId::LATEST);
@@ -727,7 +732,7 @@ pub const OPCODE_JUMPMAP: [Option<&'static str>; 256] = [
     /* 0x5c */ None,
     /* 0x5d */ None,
     /* 0x5e */ None,
-    /* 0x5f */ None,
+    /* 0x5f */ Some("PUSH0"),
     /* 0x60 */ Some("PUSH1"),
     /* 0x61 */ Some("PUSH2"),
     /* 0x62 */ Some("PUSH3"),

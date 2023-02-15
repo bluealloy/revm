@@ -1,3 +1,8 @@
+# v2.0.0
+date: 29.01.2023
+
+Renamed to `revm-precompiles` from `revm_precompiles`
+
 # v1.1.2
 date: 22.11.2022
 

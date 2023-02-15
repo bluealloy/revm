@@ -17,8 +17,13 @@ pub enum InstructionResult {
 
     // error codes
     OutOfGas = 0x50,
+    MemoryOOG = 0x51,
+    MemoryLimitOOG = 0x52,
+    PrecompileOOG = 0x53,
+    InvalidOperandOOG = 0x54,
     OpcodeNotFound,
     CallNotAllowedInsideStatic,
+    StateChangeDuringStaticCall,
     InvalidFEOpcode,
     InvalidJump,
     NotActivated,
@@ -33,6 +38,8 @@ pub enum InstructionResult {
     CreateContractSizeLimit,
     /// Error on created contract that begins with EF
     CreateContractStartingWithEF,
+    /// EIP-3860: Limit and meter initcode. Initcode size limit exceeded.
+    CreateInitcodeSizeLimit,
 
     // Fatal external error. Returned by database.
     FatalExternalError,
@@ -57,9 +64,24 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::Revert => Self::Revert,
             InstructionResult::CallTooDeep => Self::Internal, // not gonna happen for first call
             InstructionResult::OutOfFund => Self::Internal, // Check for first call is done separately.
-            InstructionResult::OutOfGas => Self::Halt(Halt::OutOfGas),
+            InstructionResult::OutOfGas => Self::Halt(Halt::OutOfGas(
+                revm_primitives::OutOfGasError::BasicOutOfGas,
+            )),
+            InstructionResult::MemoryLimitOOG => {
+                Self::Halt(Halt::OutOfGas(revm_primitives::OutOfGasError::MemoryLimit))
+            }
+            InstructionResult::MemoryOOG => {
+                Self::Halt(Halt::OutOfGas(revm_primitives::OutOfGasError::Memory))
+            }
+            InstructionResult::PrecompileOOG => {
+                Self::Halt(Halt::OutOfGas(revm_primitives::OutOfGasError::Precompile))
+            }
+            InstructionResult::InvalidOperandOOG => Self::Halt(Halt::OutOfGas(
+                revm_primitives::OutOfGasError::InvalidOperand,
+            )),
             InstructionResult::OpcodeNotFound => Self::Halt(Halt::OpcodeNotFound),
             InstructionResult::CallNotAllowedInsideStatic => Self::Internal, // first call is not static call
+            InstructionResult::StateChangeDuringStaticCall => Self::Internal,
             InstructionResult::InvalidFEOpcode => Self::Halt(Halt::InvalidFEOpcode),
             InstructionResult::InvalidJump => Self::Halt(Halt::InvalidJump),
             InstructionResult::NotActivated => Self::Halt(Halt::NotActivated),
@@ -74,6 +96,7 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::CreateContractStartingWithEF => {
                 Self::Halt(Halt::CreateContractSizeLimit)
             }
+            InstructionResult::CreateInitcodeSizeLimit => Self::Internal,
             InstructionResult::FatalExternalError => Self::FatalExternalError,
         }
     }

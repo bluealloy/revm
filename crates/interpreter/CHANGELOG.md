@@ -1,3 +1,4 @@
-# v3.0.0
+# v1.0.0
+date: 29.01.2023
 
-Interpreter was extracted from main REVM crate. Before v3.0.0 version, this code was part of REVM.
+Interpreter was extracted from main revm crate at the revm v3.0.0 version.

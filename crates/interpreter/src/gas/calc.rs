@@ -145,6 +145,15 @@ pub fn sha3_cost(len: u64) -> Option<u64> {
     SHA3.checked_add(SHA3WORD.checked_mul(if wordr == 0 { wordd } else { wordd + 1 })?)
 }
 
+/// EIP-3860: Limit and meter initcode
+/// apply extra gas cost of 2 for every 32-byte chunk of initcode
+/// Can't overflow as initcode length is assumed to be checked
+pub fn initcode_cost(len: u64) -> u64 {
+    let wordd = len / 32;
+    let wordr = len % 32;
+    INITCODE_WORD_COST * if wordr == 0 { wordd } else { wordd + 1 }
+}
+
 pub fn sload_cost<SPEC: Spec>(is_cold: bool) -> u64 {
     if SPEC::enabled(BERLIN) {
         if is_cold {
