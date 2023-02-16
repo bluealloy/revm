@@ -589,7 +589,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 let mut bytes = interpreter.return_value();
 
                 // EIP-3541: Reject new contract code starting with the 0xEF byte
-                if GSPEC::enabled(LONDON) && !bytes.is_empty() && bytes.first() == Some(&0xEF) {
+                let should_check_first_byte = GSPEC::enabled(LONDON) && !GSPEC::enabled(SHANGHAI);
+                if should_check_first_byte && !bytes.is_empty() && bytes.first() == Some(&0xEF) {
                     self.data.journaled_state.checkpoint_revert(checkpoint);
                     return self.create_end(
                         inputs,
