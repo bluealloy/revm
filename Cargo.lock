@@ -1633,6 +1633,7 @@ dependencies = [
  "hashbrown 0.13.2",
  "hex",
  "hex-literal",
+ "primitive-types",
  "proptest",
  "proptest-derive",
  "rlp",
