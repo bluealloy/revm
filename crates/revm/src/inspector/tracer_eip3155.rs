@@ -1,17 +1,13 @@
-// https://eips.ethereum.org/EIPS/eip-3155
+//! Inspector that support tracing of EIP-3155 https://eips.ethereum.org/EIPS/eip-3155
 
-use std::io::Write;
-
-use revm_interpreter::primitives::U256;
-use revm_interpreter::{opcode, Interpreter, Memory, Stack};
-
+use crate::inspectors::GasInspector;
 use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult};
 use crate::primitives::{db::Database, hex, Bytes, B160};
 use crate::{evm_impl::EVMData, Inspector};
-
-use crate::inspectors::GasInspector;
-
+use revm_interpreter::primitives::U256;
+use revm_interpreter::{opcode, Interpreter, Memory, Stack};
 use serde_json::json;
+use std::io::Write;
 
 pub struct TracerEip3155 {
     output: Box<dyn Write>,

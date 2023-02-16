@@ -333,7 +333,11 @@ pub fn execute_test_suit(
     Ok(())
 }
 
-pub fn run(test_files: Vec<PathBuf>, mut single_thread: bool, trace: bool) -> Result<(), TestError> {
+pub fn run(
+    test_files: Vec<PathBuf>,
+    mut single_thread: bool,
+    trace: bool,
+) -> Result<(), TestError> {
     if trace {
         single_thread = true;
     }
