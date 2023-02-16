@@ -11,16 +11,7 @@ use crate::{evm_impl::EVMData, Inspector};
 
 use crate::inspectors::GasInspector;
 
-// use bytes::Bytes;
-// use ruint::aliases::U256;
 use serde_json::json;
-
-// pub use revm::Inspector;
-// use revm::{
-//     opcode::{self},
-//     CallInputs, CreateInputs, Database, EVMData, Gas, GasInspector, Interpreter, Memory, Return,
-//     Stack, B160,
-// };
 
 pub struct TracerEip3155 {
     output: Box<dyn Write>,
