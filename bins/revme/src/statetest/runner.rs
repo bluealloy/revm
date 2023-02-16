@@ -1,3 +1,4 @@
+use std::io::stdout;
 use std::{
     collections::HashMap,
     ffi::OsStr,
@@ -7,9 +8,10 @@ use std::{
 };
 
 use indicatif::ProgressBar;
+
+use revm::inspectors::TracerEip3155;
 use revm::{
     db::AccountState,
-    inspectors::CustomPrintTracer,
     interpreter::CreateScheme,
     primitives::{Bytecode, Env, ExecutionResult, SpecId, TransactTo, B160, B256, U256},
 };
@@ -50,7 +52,11 @@ pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
         .collect::<Vec<PathBuf>>()
 }
 
-pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<(), TestError> {
+pub fn execute_test_suit(
+    path: &Path,
+    elapsed: &Arc<Mutex<Duration>>,
+    trace: bool,
+) -> Result<(), TestError> {
     // funky test with `bigint 0x00` value in json :) not possible to happen on mainnet and require custom json parser.
     // https://github.com/ethereum/tests/issues/971
     if path.file_name() == Some(OsStr::new("ValueOverflow.json")) {
@@ -248,7 +254,12 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                 // do the deed
 
                 let timer = Instant::now();
-                let out = evm.transact_commit();
+
+                let exec_result = if trace {
+                    evm.inspect_commit(TracerEip3155::new(Box::new(stdout()), false, false))
+                } else {
+                    evm.transact_commit()
+                };
                 let timer = timer.elapsed();
 
                 *elapsed.lock().unwrap() += timer;
@@ -269,7 +280,7 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                         })
                         .map(|(k, v)| (*k, v.clone())),
                 );
-                let logs = match &out {
+                let logs = match &exec_result {
                     Ok(ExecutionResult::Success { logs, .. }) => logs.clone(),
                     _ => Vec::new(),
                 };
@@ -281,10 +292,33 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
                     );
                     let mut database_cloned = database.clone();
                     evm.database(&mut database_cloned);
-                    let _ = evm.inspect_commit(CustomPrintTracer::default());
+                    let _ =
+                        evm.inspect_commit(TracerEip3155::new(Box::new(stdout()), false, false));
                     let db = evm.db().unwrap();
                     println!("{path:?} UNIT_TEST:{name}\n");
-                    println!("Output: {out:?}");
+                    match &exec_result {
+                        Ok(ExecutionResult::Success {
+                            reason,
+                            gas_used,
+                            gas_refunded,
+                            ..
+                        }) => {
+                            println!("Failed reason: {reason:?} {path:?} UNIT_TEST:{name}\n gas:{gas_used:?} ({gas_refunded:?} refunded)");
+                        }
+                        Ok(ExecutionResult::Revert { gas_used, output }) => {
+                            println!(
+                                "Reverted: {output:?} {path:?} UNIT_TEST:{name}\n gas:{gas_used:?}"
+                            );
+                        }
+                        Ok(ExecutionResult::Halt { reason, gas_used }) => {
+                            println!(
+                                "Halted: {reason:?} {path:?} UNIT_TEST:{name}\n gas:{gas_used:?}"
+                            );
+                        }
+                        Err(out) => {
+                            println!("Output: {out:?} {path:?} UNIT_TEST:{name}\n");
+                        }
+                    }
                     println!("\nApplied state:{db:?}\n");
                     println!("\nStateroot: {state_root:?}\n");
                     return Err(TestError::RootMissmatch {
@@ -300,7 +334,15 @@ pub fn execute_test_suit(path: &Path, elapsed: &Arc<Mutex<Duration>>) -> Result<
     Ok(())
 }
 
-pub fn run(test_files: Vec<PathBuf>, single_thread: bool) -> Result<(), TestError> {
+pub fn run(
+    test_files: Vec<PathBuf>,
+    mut single_thread: bool,
+    trace: bool,
+) -> Result<(), TestError> {
+    if trace {
+        single_thread = true;
+    }
+
     let endjob = Arc::new(AtomicBool::new(false));
     let console_bar = Arc::new(ProgressBar::new(test_files.len() as u64));
     let mut joins: Vec<std::thread::JoinHandle<Result<(), TestError>>> = Vec::new();
@@ -330,7 +372,7 @@ pub fn run(test_files: Vec<PathBuf>, single_thread: bool) -> Result<(), TestErro
                         return Ok(());
                     }
                     //println!("Test:{:?}\n",test_path);
-                    if let Err(err) = execute_test_suit(&test_path, &elapsed) {
+                    if let Err(err) = execute_test_suit(&test_path, &elapsed, trace) {
                         endjob.store(true, Ordering::SeqCst);
                         println!("Test[{index}] named:\n{test_path:?} failed: {err}\n");
                         return Err(err);

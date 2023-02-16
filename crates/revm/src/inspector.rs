@@ -8,6 +8,8 @@ use auto_impl::auto_impl;
 pub mod customprinter;
 pub mod gas;
 pub mod noop;
+#[cfg(feature = "std")]
+pub mod tracer_eip3155;
 
 /// All Inspectors implementations that revm has.
 pub mod inspectors {
@@ -15,6 +17,8 @@ pub mod inspectors {
     pub use super::customprinter::CustomPrintTracer;
     pub use super::gas::GasInspector;
     pub use super::noop::NoOpInspector;
+    #[cfg(feature = "std")]
+    pub use super::tracer_eip3155::TracerEip3155;
 }
 
 #[auto_impl(&mut, Box)]

@@ -17,6 +17,7 @@ auto_impl = { version = "1.0", default-features = false }
 
 # Optional
 serde = { version = "1.0", features = ["derive", "rc"], optional = true }
+serde_json = { version = "1.0", features = ["preserve_order"], optional = true }
 
 # ethersdb
 tokio = { version = "1.25", features = [
@@ -49,7 +50,7 @@ optional_eip3607 = ["revm-interpreter/optional_eip3607"]
 optional_gas_refund = ["revm-interpreter/optional_gas_refund"]
 std = ["revm-interpreter/std"]
 ethersdb = ["tokio", "futures", "ethers-providers", "ethers-core"]
-serde = ["dep:serde", "revm-interpreter/serde"]
+serde = ["dep:serde","dep:serde_json", "revm-interpreter/serde"]
 # deprecated feature
 web3db = []
 with-serde = []
