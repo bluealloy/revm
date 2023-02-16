@@ -53,11 +53,9 @@ pub fn mulmod(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 }
 
 pub fn eval_exp<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    pop!(interpreter, op1, op2);
-    gas_or_fail!(interpreter, gas::exp_cost::<SPEC>(op2));
-    // TODO see if we can use pop_top
-    let ret = op1.pow(op2);
-    push!(interpreter, ret);
+    pop_top!(interpreter, op1, op2);
+    gas_or_fail!(interpreter, gas::exp_cost::<SPEC>(*op2));
+    *op2 = op1.pow(*op2);
 }
 
 /// In the yellow paper `SIGNEXTEND` is defined to take two inputs, we will call them
