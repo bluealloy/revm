@@ -98,6 +98,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             return Err(InvalidTransaction::RejectCallerWithCode.into());
         }
 
+        // Check that the transaction's nonce is correct
         if self.data.env.tx.nonce.is_some() {
             let state_nonce = self.data.journaled_state.state.get(&caller).unwrap().info.nonce;
             let tx_nonce = self.data.env.tx.nonce.unwrap();
