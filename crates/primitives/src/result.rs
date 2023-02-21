@@ -102,8 +102,16 @@ pub enum InvalidTransaction {
     },
     /// Overflow payment in transaction.
     OverflowPaymentInTransaction,
-    /// Nonce overflows in transaction,
+    /// Nonce overflows in transaction.
     NonceOverflowInTransaction,
+    NonceTooHigh {
+        tx: u64,
+        state: u64,
+    },
+    NonceTooLow {
+        tx: u64,
+        state: u64,
+    },
     /// EIP-3860: Limit and meter initcode
     CreateInitcodeSizeLimit,
 }

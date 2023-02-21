@@ -98,6 +98,24 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             return Err(InvalidTransaction::RejectCallerWithCode.into());
         }
 
+        if self.data.env.tx.nonce.is_some() {
+            let state_nonce = self.data.journaled_state.state.get(&caller).unwrap().info.nonce;
+            let tx_nonce = self.data.env.tx.nonce.unwrap();
+            if state_nonce < tx_nonce {
+                return Err(InvalidTransaction::NonceTooHigh {
+                    tx: tx_nonce,
+                    state: state_nonce,
+                }
+                .into());
+            } else if state_nonce > tx_nonce {
+                return Err(InvalidTransaction::NonceTooLow {
+                    tx: tx_nonce,
+                    state: state_nonce,
+                }
+                .into());
+            }
+        }
+
         #[cfg(feature = "optional_balance_check")]
         let disable_balance_check = self.env().cfg.disable_balance_check;
         #[cfg(not(feature = "optional_balance_check"))]
