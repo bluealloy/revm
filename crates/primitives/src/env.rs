@@ -9,6 +9,13 @@ pub struct Env {
     pub block: BlockEnv,
     pub tx: TxEnv,
 }
+#[derive(Clone, Debug, Default)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct QosEnv {
+    pub cfg: CfgEnv,
+    pub block: BlockEnv,
+    pub tx: QosTxEnv,
+}
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlockEnv {
@@ -42,6 +49,23 @@ pub struct TxEnv {
     pub chain_id: Option<u64>,
     pub nonce: Option<u64>,
     pub access_list: Vec<(B160, Vec<U256>)>,
+}
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct QosTxEnv {
+    /// Caller or Author or tx signer
+    pub caller: B160,
+    pub gas_limit: u64,
+    pub gas_price: U256,
+    pub gas_priority_fee: Option<U256>,
+    pub transact_to: TransactTo,
+    pub value: U256,
+    #[cfg_attr(feature = "serde", serde(with = "crate::utilities::serde_hex_bytes"))]
+    pub data: Bytes,
+    pub chain_id: Option<u64>,
+    pub nonce: Option<u64>,
+    pub access_list: Vec<(B160, Vec<U256>)>,
+    pub fee_multiplier: Option<U256>,
 }
 
 #[derive(Clone, Debug)]
@@ -179,6 +203,24 @@ impl Default for TxEnv {
     }
 }
 
+impl Default for QosTxEnv {
+    fn default() -> QosTxEnv {
+        QosTxEnv {
+            caller: B160::zero(),
+            gas_limit: u64::MAX,
+            gas_price: U256::ZERO,
+            gas_priority_fee: None,
+            transact_to: TransactTo::Call(B160::zero()), //will do nothing
+            value: U256::ZERO,
+            data: Bytes::new(),
+            chain_id: None,
+            nonce: None,
+            access_list: Vec::new(),
+            fee_multiplier: None,
+        }
+    }
+}
+
 impl Env {
     pub fn effective_gas_price(&self) -> U256 {
         if self.tx.gas_priority_fee.is_none() {
@@ -187,6 +229,21 @@ impl Env {
             min(
                 self.tx.gas_price,
                 self.block.basefee + self.tx.gas_priority_fee.unwrap(),
+            )
+        }
+    }
+}
+
+impl QosEnv {
+    pub fn effective_gas_price(&self) -> U256 {
+        if self.tx.gas_priority_fee.is_none() {
+            self.tx.gas_price
+        } else {
+            let unit = U256::from(1);
+            let fee_multiplier = self.tx.fee_multiplier.unwrap_or(unit);
+            min(
+                self.tx.gas_price,
+                (self.block.basefee + self.tx.gas_priority_fee.unwrap()) * fee_multiplier
             )
         }
     }
