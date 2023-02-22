@@ -15,6 +15,7 @@ use alloc::vec::Vec;
 use core::{cmp::min, marker::PhantomData};
 use revm_interpreter::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
 use revm_precompile::{Precompile, Precompiles};
+use std::cmp::Ordering;
 
 pub struct EVMData<'a, DB: Database> {
     pub env: &'a mut Env,
@@ -109,18 +110,22 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                 .info
                 .nonce;
             let tx_nonce = self.data.env.tx.nonce.unwrap();
-            if state_nonce < tx_nonce {
-                return Err(InvalidTransaction::NonceTooHigh {
-                    tx: tx_nonce,
-                    state: state_nonce,
-                }
-                .into());
-            } else if state_nonce > tx_nonce {
-                return Err(InvalidTransaction::NonceTooLow {
-                    tx: tx_nonce,
-                    state: state_nonce,
-                }
-                .into());
+            match tx_nonce.cmp(&state_nonce) {
+                Ordering::Greater => {
+                    return Err(InvalidTransaction::NonceTooHigh {
+                        tx: tx_nonce,
+                        state: state_nonce,
+                    }
+                    .into());
+                },
+                Ordering::Less => {
+                    return Err(InvalidTransaction::NonceTooLow {
+                        tx: tx_nonce,
+                        state: state_nonce,
+                    }
+                    .into());
+                },
+                _ => {},
             }
         }
 
