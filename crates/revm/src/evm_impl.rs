@@ -15,6 +15,7 @@ use alloc::vec::Vec;
 use core::{cmp::min, marker::PhantomData};
 use revm_interpreter::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
 use revm_precompile::{Precompile, Precompiles};
+use std::cmp::Ordering;
 
 pub struct EVMData<'a, DB: Database> {
     pub env: &'a mut Env,
@@ -96,6 +97,36 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             && self.data.journaled_state.account(caller).info.code_hash != KECCAK_EMPTY
         {
             return Err(InvalidTransaction::RejectCallerWithCode.into());
+        }
+
+        // Check that the transaction's nonce is correct
+        if self.data.env.tx.nonce.is_some() {
+            let state_nonce = self
+                .data
+                .journaled_state
+                .state
+                .get(&caller)
+                .unwrap()
+                .info
+                .nonce;
+            let tx_nonce = self.data.env.tx.nonce.unwrap();
+            match tx_nonce.cmp(&state_nonce) {
+                Ordering::Greater => {
+                    return Err(InvalidTransaction::NonceTooHigh {
+                        tx: tx_nonce,
+                        state: state_nonce,
+                    }
+                    .into());
+                }
+                Ordering::Less => {
+                    return Err(InvalidTransaction::NonceTooLow {
+                        tx: tx_nonce,
+                        state: state_nonce,
+                    }
+                    .into());
+                }
+                _ => {}
+            }
         }
 
         #[cfg(feature = "optional_balance_check")]
