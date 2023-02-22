@@ -117,15 +117,15 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                         state: state_nonce,
                     }
                     .into());
-                },
+                }
                 Ordering::Less => {
                     return Err(InvalidTransaction::NonceTooLow {
                         tx: tx_nonce,
                         state: state_nonce,
                     }
                     .into());
-                },
-                _ => {},
+                }
+                _ => {}
             }
         }
 
