@@ -119,11 +119,14 @@ impl<'a, DB: DatabaseRef> EVM<DB> {
 }
 
 impl<DB> EVM<DB> {
+    /// Creates a new [EVM] instance with the default environment,
     pub fn new() -> Self {
-        Self {
-            env: Env::default(),
-            db: None,
-        }
+        Self::with_env(Default::default())
+    }
+
+    /// Creates a new [EVM] instance with the given environment.
+    pub fn with_env(env: Env) -> Self {
+        Self { env, db: None }
     }
 
     pub fn database(&mut self, db: DB) {
