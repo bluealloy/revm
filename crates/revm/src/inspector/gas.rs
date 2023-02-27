@@ -7,9 +7,6 @@ use crate::{evm_impl::EVMData, Inspector};
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug, Default)]
 pub struct GasInspector {
-    was_return: bool,
-    was_jumpi: Option<usize>,
-
     gas_remaining: u64,
     last_gas_cost: u64,
 }
@@ -46,11 +43,6 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> InstructionResult {
-        let op = interp.current_opcode();
-        if op == crate::interpreter::opcode::JUMPI {
-            self.was_jumpi = Some(interp.program_counter());
-        }
-
         InstructionResult::Continue
     }
 
@@ -82,7 +74,6 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         out: Bytes,
         _is_static: bool,
     ) -> (InstructionResult, Gas, Bytes) {
-        self.was_return = true;
         (ret, remaining_gas, out)
     }
 
@@ -95,7 +86,6 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         remaining_gas: Gas,
         out: Bytes,
     ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
-        self.was_return = true;
         (ret, address, remaining_gas, out)
     }
 }
