@@ -7,10 +7,6 @@ use crate::{evm_impl::EVMData, Inspector};
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug, Default)]
 pub struct GasInspector {
-    /// We now batch continual gas_block in one go, that means we need to reduce it if we want
-    /// to get correct gas remaining. Check revm/interpreter/contract/analyze for more information
-    reduced_gas_block: u64,
-    full_gas_block: u64,
     was_return: bool,
     was_jumpi: Option<usize>,
 
@@ -36,7 +32,6 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         _data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> InstructionResult {
-        self.full_gas_block = interp.contract.first_gas_block();
         self.gas_remaining = interp.gas.limit();
         InstructionResult::Continue
     }
@@ -52,20 +47,8 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         _is_static: bool,
     ) -> InstructionResult {
         let op = interp.current_opcode();
-
-        // calculate gas_block
-        let infos = crate::interpreter::spec_opcode_gas(data.env.cfg.spec_id);
-        let info = &infos[op as usize];
-
-        let pc = interp.program_counter();
         if op == crate::interpreter::opcode::JUMPI {
-            self.reduced_gas_block += info.get_gas() as u64;
-            self.was_jumpi = Some(pc);
-        } else if info.is_gas_block_end() {
-            self.reduced_gas_block = 0;
-            self.full_gas_block = interp.contract.gas_block(pc);
-        } else {
-            self.reduced_gas_block += info.get_gas() as u64;
+            self.was_jumpi = Some(interp.program_counter());
         }
 
         InstructionResult::Continue
@@ -80,25 +63,8 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         _eval: InstructionResult,
     ) -> InstructionResult {
         let pc = interp.program_counter();
-        if let Some(was_pc) = self.was_jumpi {
-            if let Some(new_pc) = pc.checked_sub(1) {
-                if was_pc == new_pc {
-                    self.reduced_gas_block = 0;
-                    self.full_gas_block = interp.contract.gas_block(was_pc);
-                }
-            }
-            self.was_jumpi = None;
-        } else if self.was_return {
-            // we are ok to decrement PC by one as it is return of call
-            let previous_pc = pc - 1;
-            self.reduced_gas_block = 0;
-            self.full_gas_block = interp.contract.gas_block(previous_pc);
-            self.was_return = false;
-        }
-
         let last_gas = self.gas_remaining;
-        self.gas_remaining =
-            interp.gas.remaining() + (self.full_gas_block - self.reduced_gas_block);
+        self.gas_remaining = interp.gas.remaining();
         if last_gas > self.gas_remaining {
             self.last_gas_cost = last_gas - self.gas_remaining;
         } else {

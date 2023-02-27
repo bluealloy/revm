@@ -11,7 +11,7 @@ pub use stack::Stack;
 use crate::primitives::{Bytes, Spec};
 use crate::{
     instructions::{eval, InstructionResult},
-    Gas, Host, USE_GAS,
+    Gas, Host,
 };
 use core::ops::Range;
 
@@ -116,17 +116,6 @@ impl Interpreter {
         &self.stack
     }
 
-    #[inline(always)]
-    pub fn add_next_gas_block(&mut self, pc: usize) -> Option<InstructionResult> {
-        if USE_GAS {
-            let gas_block = self.contract.gas_block(pc);
-            if !self.gas.record_cost(gas_block) {
-                return Some(InstructionResult::OutOfGas);
-            }
-        }
-        None
-    }
-
     /// Return a reference of the program counter.
     pub fn program_counter(&self) -> usize {
         // Safety: this is just subtraction of pointers, it is safe to do.
@@ -150,10 +139,6 @@ impl Interpreter {
 
     /// loop steps until we are finished with execution
     pub fn run<H: Host, SPEC: Spec>(&mut self, host: &mut H) -> InstructionResult {
-        // add first gas_block
-        if USE_GAS && !self.gas.record_cost(self.contract.first_gas_block()) {
-            return InstructionResult::OutOfGas;
-        }
         while self.instruction_result == InstructionResult::Continue {
             self.step::<H, SPEC>(host)
         }
@@ -162,10 +147,6 @@ impl Interpreter {
 
     /// loop steps until we are finished with execution
     pub fn run_inspect<H: Host, SPEC: Spec>(&mut self, host: &mut H) -> InstructionResult {
-        // add first gas_block
-        if USE_GAS && !self.gas.record_cost(self.contract.first_gas_block()) {
-            return InstructionResult::OutOfGas;
-        }
         while self.instruction_result == InstructionResult::Continue {
             // step
             let ret = host.step(self, self.is_static);

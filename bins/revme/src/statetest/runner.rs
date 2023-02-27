@@ -28,8 +28,8 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum TestError {
-    #[error(" Test:{spec_id:?}:{id}, Root missmatched, Expected: {expect:?} got:{got:?}")]
-    RootMissmatch {
+    #[error("Test: {id} ({spec_id:?}), root mismatched, expected: {expect:?} got: {got:?}")]
+    RootMismatch {
         spec_id: SpecId,
         id: usize,
         got: B256,
@@ -287,7 +287,7 @@ pub fn execute_test_suit(
                 let logs_root = log_rlp_hash(logs);
                 if test.hash != state_root || test.logs != logs_root {
                     println!(
-                        "ROOTS mismath:\nstate_root:{:?}:{state_root:?}\nlogs_root:{:?}:{logs_root:?}",
+                        "Roots did not match:\nState root: wanted {:?}, got {state_root:?}\nLogs root: wanted {:?}, got {logs_root:?}",
                         test.hash, test.logs
                     );
                     let mut database_cloned = database.clone();
@@ -319,9 +319,9 @@ pub fn execute_test_suit(
                             println!("Output: {out:?} {path:?} UNIT_TEST:{name}\n");
                         }
                     }
-                    println!("\nApplied state:{db:?}\n");
-                    println!("\nStateroot: {state_root:?}\n");
-                    return Err(TestError::RootMissmatch {
+                    println!("\nApplied state:\n{db:#?}\n");
+                    println!("\nState root: {state_root:?}\n");
+                    return Err(TestError::RootMismatch {
                         spec_id: env.cfg.spec_id,
                         id,
                         got: state_root,

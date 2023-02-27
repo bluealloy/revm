@@ -22,17 +22,17 @@ pub fn sha3(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 }
 
 pub fn address(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    // gas!(interp, gas::BASE);
+    gas!(interpreter, gas::BASE);
     push_b256!(interpreter, B256::from(interpreter.contract.address));
 }
 
 pub fn caller(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    // gas!(interp, gas::BASE);
+    gas!(interpreter, gas::BASE);
     push_b256!(interpreter, B256::from(interpreter.contract.caller));
 }
 
 pub fn codesize(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    // gas!(interp, gas::BASE);
+    gas!(interpreter, gas::BASE);
     push!(interpreter, U256::from(interpreter.contract.bytecode.len()));
 }
 
@@ -61,7 +61,7 @@ pub fn codecopy(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 }
 
 pub fn calldataload(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    // gas!(interp, gas::VERYLOW);
+    gas!(interpreter, gas::VERYLOW);
     pop!(interpreter, index);
     let index = as_usize_saturated!(index);
 
@@ -78,12 +78,12 @@ pub fn calldataload(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 }
 
 pub fn calldatasize(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    // gas!(interp, gas::BASE);
+    gas!(interpreter, gas::BASE);
     push!(interpreter, U256::from(interpreter.contract.input.len()));
 }
 
 pub fn callvalue(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    // gas!(interp, gas::BASE);
+    gas!(interpreter, gas::BASE);
     push!(interpreter, interpreter.contract.value);
 }
 
@@ -109,7 +109,7 @@ pub fn calldatacopy(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 }
 
 pub fn returndatasize<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    // gas!(interp, gas::BASE);
+    gas!(interpreter, gas::BASE);
     // EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
     check!(interpreter, SPEC::enabled(BYZANTIUM));
     push!(
@@ -145,9 +145,6 @@ pub fn returndatacopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn
 }
 
 pub fn gas(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    // gas!(interp, gas::BASE);
+    gas!(interpreter, gas::BASE);
     push!(interpreter, U256::from(interpreter.gas.remaining()));
-    if let Some(ret) = interpreter.add_next_gas_block(interpreter.program_counter() - 1) {
-        interpreter.instruction_result = ret;
-    }
 }

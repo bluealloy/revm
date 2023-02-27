@@ -4,7 +4,7 @@ use bytes::Bytes;
 use revm::{
     db::BenchmarkDB,
     interpreter::analysis::to_analysed,
-    primitives::{Bytecode, LondonSpec, TransactTo},
+    primitives::{Bytecode, TransactTo},
 };
 extern crate alloc;
 
@@ -29,7 +29,7 @@ fn main() {
 
     let bytecode_raw = Bytecode::new_raw(contract_data.clone());
     let bytecode_checked = Bytecode::new_raw(contract_data.clone()).to_checked();
-    let bytecode_analysed = to_analysed::<LondonSpec>(Bytecode::new_raw(contract_data));
+    let bytecode_analysed = to_analysed(Bytecode::new_raw(contract_data));
 
     evm.database(BenchmarkDB::new_bytecode(bytecode_raw));
 

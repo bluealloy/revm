@@ -4,7 +4,7 @@ use crate::{
 };
 
 pub fn jump(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    // gas!(interp, gas::MID);
+    gas!(interpreter, gas::MID);
     pop!(interpreter, dest);
     let dest = as_usize_or_fail!(interpreter, dest, InstructionResult::InvalidJump);
     if interpreter.contract.is_valid_jump(dest) {
@@ -18,7 +18,7 @@ pub fn jump(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 }
 
 pub fn jumpi(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    // gas!(interp, gas::HIGH);
+    gas!(interpreter, gas::HIGH);
     pop!(interpreter, dest, value);
     if value != U256::ZERO {
         let dest = as_usize_or_fail!(interpreter, dest, InstructionResult::InvalidJump);
@@ -30,21 +30,15 @@ pub fn jumpi(interpreter: &mut Interpreter, _host: &mut dyn Host) {
         } else {
             interpreter.instruction_result = InstructionResult::InvalidJump
         }
-    } else if let Some(ret) = interpreter.add_next_gas_block(interpreter.program_counter() - 1) {
-        // if we are not doing jump, add next gas block.
-        interpreter.instruction_result = ret;
     }
 }
 
 pub fn jumpdest(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::JUMPDEST);
-    if let Some(ret) = interpreter.add_next_gas_block(interpreter.program_counter() - 1) {
-        interpreter.instruction_result = ret;
-    }
 }
 
 pub fn pc(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    // gas!(interp, gas::BASE);
+    gas!(interpreter, gas::BASE);
     push!(interpreter, U256::from(interpreter.program_counter() - 1));
 }
 
