@@ -819,11 +819,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             }
         } else {
             // Create interpreter and execute subcall
-            let contract = Contract::new_with_context(
-                inputs.input.clone(),
-                bytecode,
-                &inputs.context,
-            );
+            let contract =
+                Contract::new_with_context(inputs.input.clone(), bytecode, &inputs.context);
 
             #[cfg(feature = "memory_limit")]
             let mut interpreter = Interpreter::new_with_memory_limit(

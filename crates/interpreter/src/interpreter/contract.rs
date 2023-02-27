@@ -61,13 +61,7 @@ impl AnalysisData {
 }
 
 impl Contract {
-    pub fn new(
-        input: Bytes,
-        bytecode: Bytecode,
-        address: B160,
-        caller: B160,
-        value: U256,
-    ) -> Self {
+    pub fn new(input: Bytes, bytecode: Bytecode, address: B160, caller: B160, value: U256) -> Self {
         let bytecode = to_analysed(bytecode).try_into().expect("it is analyzed");
 
         Self {
@@ -98,11 +92,7 @@ impl Contract {
         self.bytecode.jump_map().is_valid(possition)
     }
 
-    pub fn new_with_context(
-        input: Bytes,
-        bytecode: Bytecode,
-        call_context: &CallContext,
-    ) -> Self {
+    pub fn new_with_context(input: Bytes, bytecode: Bytecode, call_context: &CallContext) -> Self {
         Self::new(
             input,
             bytecode,
