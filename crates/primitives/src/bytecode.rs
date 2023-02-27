@@ -1,8 +1,8 @@
 use crate::{keccak256, B256, KECCAK_EMPTY};
 use alloc::{sync::Arc, vec, vec::Vec};
+use bitvec::prelude::{bitvec, Lsb0};
 use bitvec::vec::BitVec;
 use bytes::Bytes;
-use bitvec::prelude::{bitvec, Lsb0};
 
 /// A map of valid `jump` destinations.
 #[derive(Clone, Debug, Eq, PartialEq)]

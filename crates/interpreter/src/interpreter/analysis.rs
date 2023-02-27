@@ -1,8 +1,8 @@
 use crate::opcode;
 use crate::primitives::{Bytecode, BytecodeState, Bytes, B256};
-use revm_primitives::JumpMap;
-use bitvec::prelude::{bitvec};
 use alloc::sync::Arc;
+use bitvec::prelude::bitvec;
+use revm_primitives::JumpMap;
 
 /// Perform bytecode analysis.
 ///
