@@ -52,10 +52,15 @@ pub fn extcodesize<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Hos
         return;
     }
     let (code, is_cold) = ret.unwrap();
-    if SPEC::enabled(BERLIN) && is_cold {
-        gas!(interpreter, COLD_ACCOUNT_ACCESS_COST);
-    } else if SPEC::enabled(BERLIN) {
-        gas!(interpreter, WARM_STORAGE_READ_COST);
+    if SPEC::enabled(BERLIN) {
+        gas!(
+            interpreter,
+            if is_cold {
+                COLD_ACCOUNT_ACCESS_COST
+            } else {
+                WARM_STORAGE_READ_COST
+            }
+        );
     } else if SPEC::enabled(TANGERINE) {
         gas!(interpreter, 700);
     } else {
@@ -74,10 +79,15 @@ pub fn extcodehash<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Hos
         return;
     }
     let (code_hash, is_cold) = ret.unwrap();
-    if SPEC::enabled(BERLIN) && is_cold {
-        gas!(interpreter, COLD_ACCOUNT_ACCESS_COST);
-    } else if SPEC::enabled(BERLIN) {
-        gas!(interpreter, WARM_STORAGE_READ_COST);
+    if SPEC::enabled(BERLIN) {
+        gas!(
+            interpreter,
+            if is_cold {
+                COLD_ACCOUNT_ACCESS_COST
+            } else {
+                WARM_STORAGE_READ_COST
+            }
+        );
     } else if SPEC::enabled(ISTANBUL) {
         gas!(interpreter, 700);
     } else {
