@@ -39,8 +39,8 @@ impl<DB: Database> Inspector<DB> for GasInspector {
     #[cfg(not(feature = "no_gas_measuring"))]
     fn step(
         &mut self,
-        interp: &mut crate::interpreter::Interpreter,
-        data: &mut EVMData<'_, DB>,
+        _interp: &mut crate::interpreter::Interpreter,
+        _data: &mut EVMData<'_, DB>,
         _is_static: bool,
     ) -> InstructionResult {
         InstructionResult::Continue
@@ -54,7 +54,6 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         _is_static: bool,
         _eval: InstructionResult,
     ) -> InstructionResult {
-        let pc = interp.program_counter();
         let last_gas = self.gas_remaining;
         self.gas_remaining = interp.gas.remaining();
         if last_gas > self.gas_remaining {

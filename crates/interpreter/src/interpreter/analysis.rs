@@ -1,6 +1,8 @@
 use crate::opcode;
 use crate::primitives::{Bytecode, BytecodeState, Bytes, B256};
 use revm_primitives::JumpMap;
+use bitvec::prelude::{bitvec};
+use alloc::sync::Arc;
 
 /// Perform bytecode analysis.
 ///
@@ -29,7 +31,7 @@ pub fn to_analysed(bytecode: Bytecode) -> Bytecode {
 
 /// Analyzs bytecode to build a jump map.
 fn analyze(code: &[u8]) -> JumpMap {
-    let mut jumps = vec![false; code.len()];
+    let mut jumps = bitvec![0; code.len()];
 
     let mut index = 0;
     while index < code.len() {
@@ -38,14 +40,14 @@ fn analyze(code: &[u8]) -> JumpMap {
         index += match opcode {
             opcode::PUSH1..=opcode::PUSH32 => ((opcode - opcode::PUSH1) + 2) as usize,
             opcode::JUMPDEST => {
-                jumps[index] = true;
+                jumps.set(index, true);
                 1
             }
             _ => 1,
         };
     }
 
-    JumpMap(jumps.into())
+    JumpMap(Arc::new(jumps))
 }
 
 #[derive(Clone)]
