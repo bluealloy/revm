@@ -4,6 +4,7 @@ use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult};
 use crate::primitives::{db::Database, Bytes, B160};
 use crate::{evm_impl::EVMData, Inspector};
 
+#[allow(dead_code)]
 #[derive(Clone, Copy, Debug, Default)]
 pub struct GasInspector {
     /// We now batch continual gas_block in one go, that means we need to reduce it if we want
@@ -14,11 +15,16 @@ pub struct GasInspector {
     was_jumpi: Option<usize>,
 
     gas_remaining: u64,
+    last_gas_cost: u64,
 }
 
 impl GasInspector {
     pub fn gas_remaining(&self) -> u64 {
         self.gas_remaining
+    }
+
+    pub fn last_gas_cost(&self) -> u64 {
+        self.last_gas_cost
     }
 }
 
@@ -89,8 +95,15 @@ impl<DB: Database> Inspector<DB> for GasInspector {
             self.full_gas_block = interp.contract.gas_block(previous_pc);
             self.was_return = false;
         }
+
+        let last_gas = self.gas_remaining;
         self.gas_remaining =
             interp.gas.remaining() + (self.full_gas_block - self.reduced_gas_block);
+        if last_gas > self.gas_remaining {
+            self.last_gas_cost = last_gas - self.gas_remaining;
+        } else {
+            self.last_gas_cost = 0;
+        }
         InstructionResult::Continue
     }
 

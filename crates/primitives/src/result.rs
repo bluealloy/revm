@@ -1,5 +1,7 @@
 use crate::{Log, State, B160};
+use alloc::vec::Vec;
 use bytes::Bytes;
+use ruint::aliases::U256;
 
 pub type EVMResult<DB> = core::result::Result<ResultAndState, EVMError<DB>>;
 
@@ -88,17 +90,30 @@ impl<DB> From<InvalidTransaction> for EVMError<DB> {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InvalidTransaction {
     GasMaxFeeGreaterThanPriorityFee,
-    GasPriceLessThenBasefee,
-    CallerGasLimitMoreThenBlock,
-    CallGasCostMoreThenGasLimit,
+    GasPriceLessThanBasefee,
+    CallerGasLimitMoreThanBlock,
+    CallGasCostMoreThanGasLimit,
     /// EIP-3607 Reject transactions from senders with deployed code
     RejectCallerWithCode,
     /// Transaction account does not have enough amount of ether to cover transferred value and gas_limit*gas_price.
-    LackOfFundForGasLimit,
+    LackOfFundForGasLimit {
+        gas_limit: U256,
+        balance: U256,
+    },
     /// Overflow payment in transaction.
     OverflowPaymentInTransaction,
-    /// Nonce overflows in transaction,
+    /// Nonce overflows in transaction.
     NonceOverflowInTransaction,
+    NonceTooHigh {
+        tx: u64,
+        state: u64,
+    },
+    NonceTooLow {
+        tx: u64,
+        state: u64,
+    },
+    /// EIP-3860: Limit and meter initcode
+    CreateInitcodeSizeLimit,
 }
 
 /// When transaction return successfully without halts.

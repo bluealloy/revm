@@ -119,11 +119,14 @@ impl<'a, DB: DatabaseRef> EVM<DB> {
 }
 
 impl<DB> EVM<DB> {
+    /// Creates a new [EVM] instance with the default environment,
     pub fn new() -> Self {
-        Self {
-            env: Env::default(),
-            db: None,
-        }
+        Self::with_env(Default::default())
+    }
+
+    /// Creates a new [EVM] instance with the given environment.
+    pub fn with_env(env: Env) -> Self {
+        Self { env, db: None }
     }
 
     pub fn database(&mut self, db: DB) {
@@ -167,7 +170,8 @@ pub fn to_precompile_id(spec_id: SpecId) -> revm_precompile::SpecId {
         | SpecId::ARROW_GLACIER
         | SpecId::GRAY_GLACIER
         | SpecId::MERGE
-        | SpecId::MERGE_EOF
+        | SpecId::SHANGHAI
+        | SpecId::CANCUN
         | SpecId::LATEST => revm_precompile::SpecId::BERLIN,
     }
 }
@@ -191,7 +195,8 @@ pub fn evm_inner<'a, DB: Database, const INSPECT: bool>(
             create_evm!(LondonSpec, db, env, insp)
         }
         SpecId::MERGE => create_evm!(MergeSpec, db, env, insp),
-        SpecId::MERGE_EOF => create_evm!(MergeSpec, db, env, insp),
+        SpecId::SHANGHAI => create_evm!(ShanghaiSpec, db, env, insp),
+        SpecId::CANCUN => create_evm!(LatestSpec, db, env, insp),
         SpecId::LATEST => create_evm!(LatestSpec, db, env, insp),
     }
 }

@@ -30,6 +30,30 @@ impl From<u64> for B160 {
     }
 }
 
+impl From<primitive_types::H160> for B160 {
+    fn from(fr: primitive_types::H160) -> Self {
+        B160(fr.0)
+    }
+}
+
+impl From<primitive_types::H256> for B256 {
+    fn from(fr: primitive_types::H256) -> Self {
+        B256(fr.0)
+    }
+}
+
+impl From<B160> for primitive_types::H160 {
+    fn from(fr: B160) -> Self {
+        primitive_types::H160(fr.0)
+    }
+}
+
+impl From<B256> for primitive_types::H256 {
+    fn from(fr: B256) -> Self {
+        primitive_types::H256(fr.0)
+    }
+}
+
 impl_fixed_hash_conversions!(B256, B160);
 
 #[cfg(feature = "serde")]
@@ -274,5 +298,37 @@ mod tests {
     #[test]
     fn arbitrary() {
         proptest::proptest!(|(_v1: B160, _v2: B256)| {});
+    }
+
+    #[test]
+    fn should_convert_from_primitive_types_h160() {
+        let h160 = primitive_types::H160::random();
+        let b160: B160 = h160.into();
+        let new_h160: primitive_types::H160 = b160.into();
+        assert_eq!(h160, new_h160)
+    }
+
+    #[test]
+    fn should_convert_to_primitive_types_h160() {
+        let b160 = B160::random();
+        let h160: primitive_types::H160 = b160.into();
+        let new_b160: B160 = h160.into();
+        assert_eq!(b160, new_b160)
+    }
+
+    #[test]
+    fn should_convert_from_primitive_types_h256() {
+        let h256 = primitive_types::H256::random();
+        let b256: B256 = h256.into();
+        let new_h256: primitive_types::H256 = b256.into();
+        assert_eq!(h256, new_h256)
+    }
+
+    #[test]
+    fn should_convert_to_primitive_types_h256() {
+        let b256 = B256::random();
+        let h256: primitive_types::H256 = b256.into();
+        let new_b256: B256 = h256.into();
+        assert_eq!(b256, new_b256)
     }
 }

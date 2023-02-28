@@ -55,6 +55,9 @@ impl TransactTo {
     pub fn create() -> Self {
         Self::Create(CreateScheme::Create)
     }
+    pub fn is_create(&self) -> bool {
+        matches!(self, Self::Create(_))
+    }
 }
 
 /// Create scheme.

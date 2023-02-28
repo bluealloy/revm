@@ -21,6 +21,8 @@ structure:
     * revme: cli binary, used for running state test json
     * revm-test: test binaries with contracts, used mostly to check performance
 
+Last checked revm requires rust v1.65 or higher for `core::error::Error`
+
 There were some big efforts on optimization of revm:
 * Optimizing interpreter loop: https://github.com/bluealloy/revm/issues/7
 * Introducing Bytecode format (and better bytecode analysis): https://github.com/bluealloy/revm/issues/121
@@ -32,7 +34,7 @@ go to `cd bins/revme/`
 
 Download eth tests from (this will take some time): `git clone https://github.com/ethereum/tests`
 
-run tests with command: `cargo run --release -- statetest tests/GeneralStateTests/`
+run tests with command: `cargo run --release -- statetest tests/GeneralStateTests/ tests/LegacyTests/Constantinople/GeneralStateTests`
 
 `GeneralStateTests` contains all tests related to EVM.
 

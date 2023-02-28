@@ -1,6 +1,6 @@
 use crate::interpreter::{inner_models::SelfDestructResult, InstructionResult};
 use crate::primitives::{
-    db::Database, hash_map::Entry, Account, Bytecode, HashMap, Log, StorageSlot, B160,
+    db::Database, hash_map::Entry, Account, Bytecode, HashMap, Log, State, StorageSlot, B160,
     KECCAK_EMPTY, U256,
 };
 use alloc::{vec, vec::Vec};
@@ -25,9 +25,6 @@ pub struct JournaledState {
     /// we are using that assumption here
     pub num_of_precompiles: usize,
 }
-
-pub type State = HashMap<B160, Account>;
-pub type Storage = HashMap<U256, StorageSlot>;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
