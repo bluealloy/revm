@@ -282,6 +282,7 @@ mod tests {
         evm.env.tx.transact_to =
             TransactTo::Call(B160(hex!("0000000000000000000000000000000000000000")));
         evm.env.tx.gas_limit = 21100;
+        evm.env.tx.chain_id = Some(1);
 
         let mut inspector = StackInspector::default();
         let ResultAndState { result, state } = evm.inspect(&mut inspector).unwrap();
