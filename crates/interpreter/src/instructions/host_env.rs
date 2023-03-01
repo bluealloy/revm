@@ -3,9 +3,9 @@ use crate::{
 };
 
 pub fn chainid<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
-    gas!(interpreter, gas::BASE);
     // EIP-1344: ChainID opcode
     check!(interpreter, SPEC::enabled(ISTANBUL));
+    gas!(interpreter, gas::BASE);
     push!(interpreter, host.env().cfg.chain_id);
 }
 
