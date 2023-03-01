@@ -23,11 +23,7 @@ pub fn push0<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 }
 
 pub fn push<const N: usize>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    if N == 0 {
-        gas!(interpreter, gas::BASE);
-    } else {
-        gas!(interpreter, gas::VERYLOW);
-    }
+    gas!(interpreter, gas::VERYLOW);
     let start = interpreter.instruction_pointer;
     // Safety: In Analysis we appended needed bytes for bytecode so that we are safe to just add without
     // checking if it is out of bound. This makes both of our unsafes block safe to do.
