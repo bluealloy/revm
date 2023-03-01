@@ -33,18 +33,26 @@ pub fn to_analysed(bytecode: Bytecode) -> Bytecode {
 fn analyze(code: &[u8]) -> JumpMap {
     let mut jumps = bitvec![0; code.len()];
 
-    let mut index = 0;
-    while index < code.len() {
-        let opcode = *code.get(index).unwrap();
-
-        index += match opcode {
-            opcode::PUSH1..=opcode::PUSH32 => ((opcode - opcode::PUSH1) + 2) as usize,
-            opcode::JUMPDEST => {
-                jumps.set(index, true);
-                1
+    let range = code.as_ptr_range();
+    let start = range.start;
+    let mut iterator = start;
+    let end = range.end;
+    while iterator < end {
+        let opcode = unsafe { *iterator };
+        if opcode::JUMPDEST == opcode {
+            // SAFETY: jumps are max length of the code
+            unsafe { jumps.set_unchecked(iterator.offset_from(start) as usize, true) }
+            iterator = unsafe { iterator.offset(1) };
+        } else {
+            let push_offset = opcode.wrapping_sub(opcode::PUSH1);
+            if push_offset < 32 {
+                // SAFETY: iterator access range is checked in the while loop
+                iterator = unsafe { iterator.offset((push_offset + 2) as isize) };
+            } else {
+                // SAFETY: iterator access range is checked in the while loop
+                iterator = unsafe { iterator.offset(1) };
             }
-            _ => 1,
-        };
+        }
     }
 
     JumpMap(Arc::new(jumps))
