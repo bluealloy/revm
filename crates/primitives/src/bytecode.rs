@@ -1,21 +1,27 @@
-mod jump_table;
-
 use crate::{keccak256, B256, KECCAK_EMPTY};
 use alloc::{sync::Arc, vec, vec::Vec};
+use bitvec::prelude::{bitvec, Lsb0};
+use bitvec::vec::BitVec;
 use bytes::Bytes;
-pub use jump_table::{Analysis, AnalysisData, ValidJumpAddress};
+
+/// A map of valid `jump` destinations.
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct JumpMap(pub Arc<BitVec>);
+
+impl JumpMap {
+    /// Check if `pc` is a valid jump destination.
+    pub fn is_valid(&self, pc: usize) -> bool {
+        pc < self.0.len() && self.0[pc]
+    }
+}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum BytecodeState {
     Raw,
-    Checked {
-        len: usize,
-    },
-    Analysed {
-        len: usize,
-        jumptable: ValidJumpAddress,
-    },
+    Checked { len: usize },
+    Analysed { len: usize, jump_map: JumpMap },
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -41,7 +47,7 @@ impl Bytecode {
             hash: KECCAK_EMPTY,
             state: BytecodeState::Analysed {
                 len: 0,
-                jumptable: ValidJumpAddress::new(Arc::new(vec![AnalysisData::none()]), 0),
+                jump_map: JumpMap(Arc::new(bitvec![0])),
             },
         }
     }

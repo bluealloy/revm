@@ -1,10 +1,15 @@
-use crate::primitives::{
-    AnalysisData, Bytecode, BytecodeState, Bytes, Spec, ValidJumpAddress, B256,
-};
-use crate::{opcode, spec_opcode_gas};
+use crate::opcode;
+use crate::primitives::{Bytecode, BytecodeState, Bytes, B256};
 use alloc::sync::Arc;
+use bitvec::prelude::bitvec;
+use revm_primitives::JumpMap;
 
-pub fn to_analysed<SPEC: Spec>(bytecode: Bytecode) -> Bytecode {
+/// Perform bytecode analysis.
+///
+/// The analysis finds and caches valid jump destinations for later execution as an optimization step.
+///
+/// If the bytecode is already analyzed, it is returned as-is.
+pub fn to_analysed(bytecode: Bytecode) -> Bytecode {
     let hash = bytecode.hash;
     let (bytecode, len) = match bytecode.state {
         BytecodeState::Raw => {
@@ -15,81 +20,42 @@ pub fn to_analysed<SPEC: Spec>(bytecode: Bytecode) -> Bytecode {
         BytecodeState::Checked { len } => (bytecode.bytecode, len),
         _ => return bytecode,
     };
-    let jumptable = analyze::<SPEC>(bytecode.as_ref());
+    let jump_map = analyze(bytecode.as_ref());
 
     Bytecode {
         bytecode,
         hash,
-        state: BytecodeState::Analysed { len, jumptable },
+        state: BytecodeState::Analysed { len, jump_map },
     }
 }
 
-/// Analyze bytecode to get jumptable and gas blocks.
-fn analyze<SPEC: Spec>(code: &[u8]) -> ValidJumpAddress {
-    let opcode_gas = spec_opcode_gas(SPEC::SPEC_ID);
+/// Analyzs bytecode to build a jump map.
+fn analyze(code: &[u8]) -> JumpMap {
+    let mut jumps = bitvec![0; code.len()];
 
-    let mut analysis = ValidJumpAddress {
-        first_gas_block: 0,
-        analysis: Arc::new(vec![AnalysisData::none(); code.len()]),
-    };
-    let jumps = Arc::get_mut(&mut analysis.analysis).unwrap();
-
-    let mut index = 0;
-    let mut gas_in_block: u32 = 0;
-    let mut block_start: usize = 0;
-
-    // first gas block
-    while index < code.len() {
-        let opcode = *code.get(index).unwrap();
-        let info = opcode_gas.get(opcode as usize).unwrap();
-        analysis.first_gas_block += info.get_gas();
-
-        index += if info.is_push() {
-            ((opcode - opcode::PUSH1) + 2) as usize
+    let range = code.as_ptr_range();
+    let start = range.start;
+    let mut iterator = start;
+    let end = range.end;
+    while iterator < end {
+        let opcode = unsafe { *iterator };
+        if opcode::JUMPDEST == opcode {
+            // SAFETY: jumps are max length of the code
+            unsafe { jumps.set_unchecked(iterator.offset_from(start) as usize, true) }
+            iterator = unsafe { iterator.offset(1) };
         } else {
-            1
-        };
-
-        if info.is_gas_block_end() {
-            block_start = index - 1;
-            if info.is_jump() {
-                jumps.get_mut(block_start).unwrap().set_is_jump();
-            }
-            break;
-        }
-    }
-
-    while index < code.len() {
-        let opcode = *code.get(index).unwrap();
-        let info = opcode_gas.get(opcode as usize).unwrap();
-        gas_in_block += info.get_gas();
-
-        if info.is_gas_block_end() {
-            if info.is_jump() {
-                jumps.get_mut(index).unwrap().set_is_jump();
-            }
-            jumps
-                .get_mut(block_start)
-                .unwrap()
-                .set_gas_block(gas_in_block);
-            block_start = index;
-            gas_in_block = 0;
-            index += 1;
-        } else {
-            index += if info.is_push() {
-                ((opcode - opcode::PUSH1) + 2) as usize
+            let push_offset = opcode.wrapping_sub(opcode::PUSH1);
+            if push_offset < 32 {
+                // SAFETY: iterator access range is checked in the while loop
+                iterator = unsafe { iterator.offset((push_offset + 2) as isize) };
             } else {
-                1
-            };
+                // SAFETY: iterator access range is checked in the while loop
+                iterator = unsafe { iterator.offset(1) };
+            }
         }
     }
-    if gas_in_block != 0 {
-        jumps
-            .get_mut(block_start)
-            .unwrap()
-            .set_gas_block(gas_in_block);
-    }
-    analysis
+
+    JumpMap(Arc::new(jumps))
 }
 
 #[derive(Clone)]
@@ -97,7 +63,7 @@ pub struct BytecodeLocked {
     bytecode: Bytes,
     len: usize,
     hash: B256,
-    jumptable: ValidJumpAddress,
+    jump_map: JumpMap,
 }
 
 impl Default for BytecodeLocked {
@@ -112,12 +78,12 @@ impl TryFrom<Bytecode> for BytecodeLocked {
     type Error = ();
 
     fn try_from(bytecode: Bytecode) -> Result<Self, Self::Error> {
-        if let BytecodeState::Analysed { len, jumptable } = bytecode.state {
+        if let BytecodeState::Analysed { len, jump_map } = bytecode.state {
             Ok(BytecodeLocked {
                 bytecode: bytecode.bytecode,
                 len,
                 hash: bytecode.hash,
-                jumptable,
+                jump_map,
             })
         } else {
             Err(())
@@ -147,7 +113,7 @@ impl BytecodeLocked {
             hash: self.hash,
             state: BytecodeState::Analysed {
                 len: self.len,
-                jumptable: self.jumptable,
+                jump_map: self.jump_map,
             },
         }
     }
@@ -159,7 +125,7 @@ impl BytecodeLocked {
         &self.bytecode.as_ref()[..self.len]
     }
 
-    pub fn jumptable(&self) -> &ValidJumpAddress {
-        &self.jumptable
+    pub fn jump_map(&self) -> &JumpMap {
+        &self.jump_map
     }
 }

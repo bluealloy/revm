@@ -32,9 +32,9 @@ pub fn balance<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
 }
 
 pub fn selfbalance<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
-    // gas!(interp, gas::LOW);
     // EIP-1884: Repricing for trie-size-dependent opcodes
     check!(interpreter, SPEC::enabled(ISTANBUL));
+    gas!(interpreter, gas::LOW);
     let ret = host.balance(interpreter.contract.address);
     if ret.is_none() {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
@@ -52,12 +52,19 @@ pub fn extcodesize<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Hos
         return;
     }
     let (code, is_cold) = ret.unwrap();
-    if SPEC::enabled(BERLIN) && is_cold {
-        // WARM_STORAGE_READ_COST is already calculated in gas block
+    if SPEC::enabled(BERLIN) {
         gas!(
             interpreter,
-            COLD_ACCOUNT_ACCESS_COST - WARM_STORAGE_READ_COST
+            if is_cold {
+                COLD_ACCOUNT_ACCESS_COST
+            } else {
+                WARM_STORAGE_READ_COST
+            }
         );
+    } else if SPEC::enabled(TANGERINE) {
+        gas!(interpreter, 700);
+    } else {
+        gas!(interpreter, 20);
     }
 
     push!(interpreter, U256::from(code.len()));
@@ -72,12 +79,19 @@ pub fn extcodehash<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Hos
         return;
     }
     let (code_hash, is_cold) = ret.unwrap();
-    if SPEC::enabled(BERLIN) && is_cold {
-        // WARM_STORAGE_READ_COST is already calculated in gas block
+    if SPEC::enabled(BERLIN) {
         gas!(
             interpreter,
-            COLD_ACCOUNT_ACCESS_COST - WARM_STORAGE_READ_COST
+            if is_cold {
+                COLD_ACCOUNT_ACCESS_COST
+            } else {
+                WARM_STORAGE_READ_COST
+            }
         );
+    } else if SPEC::enabled(ISTANBUL) {
+        gas!(interpreter, 700);
+    } else {
+        gas!(interpreter, 400);
     }
     push_b256!(interpreter, code_hash);
 }
@@ -116,7 +130,7 @@ pub fn extcodecopy<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Hos
 }
 
 pub fn blockhash(interpreter: &mut Interpreter, host: &mut dyn Host) {
-    // gas!(interp, gas::BLOCKHASH);
+    gas!(interpreter, gas::BLOCKHASH);
     pop_top!(interpreter, number);
 
     if let Some(diff) = host.env().block.number.checked_sub(*number) {
@@ -163,9 +177,6 @@ pub fn sstore<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
         gas::sstore_cost::<SPEC>(original, old, new, remaining_gas, is_cold)
     });
     refund!(interpreter, gas::sstore_refund::<SPEC>(original, old, new));
-    if let Some(ret) = interpreter.add_next_gas_block(interpreter.program_counter() - 1) {
-        interpreter.instruction_result = ret;
-    }
 }
 
 pub fn log<const N: u8>(interpreter: &mut Interpreter, host: &mut dyn Host) {
@@ -303,14 +314,10 @@ pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
         }
         InstructionResult::FatalExternalError => {
             interpreter.instruction_result = InstructionResult::FatalExternalError;
-            return;
         }
         _ => {
             push_b256!(interpreter, B256::zero());
         }
-    }
-    if let Some(ret) = interpreter.add_next_gas_block(interpreter.program_counter() - 1) {
-        interpreter.instruction_result = ret;
     }
 }
 
@@ -508,13 +515,9 @@ pub fn call_inner<SPEC: Spec>(
         }
         InstructionResult::FatalExternalError => {
             interpreter.instruction_result = InstructionResult::FatalExternalError;
-            return;
         }
         _ => {
             push!(interpreter, U256::ZERO);
         }
-    }
-    if let Some(ret) = interpreter.add_next_gas_block(interpreter.program_counter() - 1) {
-        interpreter.instruction_result = ret;
     }
 }

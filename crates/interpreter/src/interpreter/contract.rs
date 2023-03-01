@@ -1,5 +1,5 @@
 use super::analysis::{to_analysed, BytecodeLocked};
-use crate::primitives::{Bytecode, Bytes, Spec, B160, U256};
+use crate::primitives::{Bytecode, Bytes, B160, U256};
 use crate::CallContext;
 use revm_primitives::{Env, TransactTo};
 
@@ -61,16 +61,8 @@ impl AnalysisData {
 }
 
 impl Contract {
-    pub fn new<SPEC: Spec>(
-        input: Bytes,
-        bytecode: Bytecode,
-        address: B160,
-        caller: B160,
-        value: U256,
-    ) -> Self {
-        let bytecode = to_analysed::<SPEC>(bytecode)
-            .try_into()
-            .expect("it is analyzed");
+    pub fn new(input: Bytes, bytecode: Bytecode, address: B160, caller: B160, value: U256) -> Self {
+        let bytecode = to_analysed(bytecode).try_into().expect("it is analyzed");
 
         Self {
             input,
@@ -82,13 +74,12 @@ impl Contract {
     }
 
     /// Create new contract from environment
-    /// TODO: Add spec related match to analyze bytecode by env.cfg.spec_id variable
-    pub fn new_env<SPEC: Spec>(env: &Env, bytecode: Bytecode) -> Self {
+    pub fn new_env(env: &Env, bytecode: Bytecode) -> Self {
         let contract_address = match env.tx.transact_to {
             TransactTo::Call(caller) => caller,
             TransactTo::Create(..) => B160::zero(),
         };
-        Self::new::<SPEC>(
+        Self::new(
             env.tx.data.clone(),
             bytecode,
             contract_address,
@@ -98,22 +89,11 @@ impl Contract {
     }
 
     pub fn is_valid_jump(&self, possition: usize) -> bool {
-        self.bytecode.jumptable().is_valid(possition)
+        self.bytecode.jump_map().is_valid(possition)
     }
 
-    pub fn gas_block(&self, possition: usize) -> u64 {
-        self.bytecode.jumptable().gas_block(possition)
-    }
-    pub fn first_gas_block(&self) -> u64 {
-        self.bytecode.jumptable().first_gas_block as u64
-    }
-
-    pub fn new_with_context<SPEC: Spec>(
-        input: Bytes,
-        bytecode: Bytecode,
-        call_context: &CallContext,
-    ) -> Self {
-        Self::new::<SPEC>(
+    pub fn new_with_context(input: Bytes, bytecode: Bytecode, call_context: &CallContext) -> Self {
+        Self::new(
             input,
             bytecode,
             call_context.address,

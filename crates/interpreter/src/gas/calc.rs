@@ -111,11 +111,16 @@ pub fn extcodecopy_cost<SPEC: Spec>(len: u64, is_cold: bool) -> Option<u64> {
     let wordd = len / 32;
     let wordr = len % 32;
 
-    let base_gas: u64 = if SPEC::enabled(BERLIN) && is_cold {
-        // WARM_STORAGE_READ_COST is already calculated
-        COLD_ACCOUNT_ACCESS_COST - WARM_STORAGE_READ_COST
+    let base_gas: u64 = if SPEC::enabled(BERLIN) {
+        if is_cold {
+            COLD_ACCOUNT_ACCESS_COST
+        } else {
+            WARM_STORAGE_READ_COST
+        }
+    } else if SPEC::enabled(TANGERINE) {
+        700
     } else {
-        0
+        20
     };
     base_gas.checked_add(COPY.checked_mul(if wordr == 0 { wordd } else { wordd + 1 })?)
 }

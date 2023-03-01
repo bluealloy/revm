@@ -13,7 +13,7 @@ pub fn simple_example() {
 
     // BenchmarkDB is dummy state that implements Database trait.
     let mut evm = revm::new();
-    let bytecode = to_analysed::<BerlinSpec>(Bytecode::new_raw(contract_data));
+    let bytecode = to_analysed(Bytecode::new_raw(contract_data));
     evm.database(BenchmarkDB::new_bytecode(bytecode.clone()));
 
     // execution globals block hash/gas_limit/coinbase/timestamp..
