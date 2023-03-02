@@ -221,11 +221,19 @@ impl Env {
         }
     }
 
+    /// Use the category scalar to do fixed point multiplication and get adjusted base fee
     pub fn adjusted_basefee(&self) -> U256 {
         let category = self.tx.category;
         let scalar = self.block.categories.get(&category).expect("").scalar;
         let basefee = self.block.basefee;
-        let adjusted_basefee = (basefee*scalar)<<128;
+        let adjusted_basefee = fixed_point_mult(scalar, basefee, 128);
         adjusted_basefee
     }
+}
+
+/// Given a right shifted number 'a', a number 'b' and the num bits 'a' is shifted to the right
+/// Emulate a fixed point multiplication by multiplying the numbers and left shifting to normalize.
+pub fn fixed_point_mult(right_shifted_a: U256, b: U256, right_shift_amt: usize) -> U256 {
+    let multiplication_result = (right_shifted_a *b) << right_shift_amt;
+    multiplication_result
 }

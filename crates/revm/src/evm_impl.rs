@@ -311,7 +311,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let coinbase = self.data.env.block.coinbase;
         let (gas_used, gas_refunded) = if crate::USE_GAS {
             let effective_gas_price = self.data.env.effective_gas_price();
-            let basefee = self.data.env.block.basefee;
+            let basefee = self.data.env.adjusted_basefee();
+            // let basefee = self.data.env.block.basefee;
 
             #[cfg(feature = "optional_gas_refund")]
             let disable_gas_refund = self.env().cfg.disable_gas_refund;
