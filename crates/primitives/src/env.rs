@@ -64,6 +64,7 @@ pub struct TxEnv {
     pub chain_id: Option<u64>,
     pub nonce: Option<u64>,
     pub access_list: Vec<(B160, Vec<U256>)>,
+    pub category: U64,
 }
 
 #[derive(Clone, Debug)]
@@ -172,6 +173,10 @@ impl Default for CfgEnv {
 
 impl Default for BlockEnv {
     fn default() -> BlockEnv {
+        let mut categories = HashMap::new();
+        let category = U64::ZERO;
+        let info = Default::default();
+        categories.insert(category, info);
         BlockEnv {
             gas_limit: U256::MAX,
             number: U256::ZERO,
@@ -180,7 +185,7 @@ impl Default for BlockEnv {
             difficulty: U256::ZERO,
             prevrandao: Some(B256::zero()),
             basefee: U256::ZERO,
-            categories: Default::default()
+            categories,
         }
     }
 }
@@ -198,6 +203,7 @@ impl Default for TxEnv {
             chain_id: None,
             nonce: None,
             access_list: Vec::new(),
+            category: U64::ZERO
         }
     }
 }
@@ -207,10 +213,19 @@ impl Env {
         if self.tx.gas_priority_fee.is_none() {
             self.tx.gas_price
         } else {
+            let basefee = self.adjusted_basefee();
             min(
                 self.tx.gas_price,
-                self.block.basefee + self.tx.gas_priority_fee.unwrap(),
+                basefee + self.tx.gas_priority_fee.unwrap(),
             )
         }
+    }
+
+    pub fn adjusted_basefee(&self) -> U256 {
+        let category = self.tx.category;
+        let scalar = self.block.categories.get(&category).expect("").scalar;
+        let basefee = self.block.basefee;
+        let adjusted_basefee = (basefee*scalar)<<128;
+        adjusted_basefee
     }
 }

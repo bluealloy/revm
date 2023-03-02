@@ -47,7 +47,7 @@ pub fn basefee<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     gas!(interpreter, gas::BASE);
     // EIP-3198: BASEFEE opcode
     check!(interpreter, SPEC::enabled(LONDON));
-    push!(interpreter, host.env().block.basefee);
+    push!(interpreter, host.env().adjusted_basefee());
 }
 
 pub fn origin(interpreter: &mut Interpreter, host: &mut dyn Host) {

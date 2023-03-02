@@ -58,7 +58,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                     return Err(InvalidTransaction::GasMaxFeeGreaterThanPriorityFee.into());
                 }
             }
-            let basefee = self.data.env.block.basefee;
+            let basefee = self.data.env.adjusted_basefee();
+            // let basefee = self.data.env.block.basefee;
 
             // check minimal cost against basefee
             // TODO maybe do this checks when creating evm. We already have all data there
