@@ -16,6 +16,7 @@ use core::{cmp::min, marker::PhantomData};
 use revm_interpreter::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
 use revm_precompile::{Precompile, Precompiles};
 use std::cmp::Ordering;
+use crate::primitives::ruint::aliases::U64;
 
 pub struct EVMData<'a, DB: Database> {
     pub env: &'a mut Env,
@@ -46,6 +47,40 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let data = self.data.env.tx.data.clone();
         let gas_limit = self.data.env.tx.gas_limit;
         let effective_gas_price = self.data.env.effective_gas_price();
+
+        /// Set the category for this tx env
+        let c0 = U64::ZERO;
+        let c1 = U64::try_from(1).expect("Failed to init unit");
+        let category = match self.data.env.tx.transact_to {
+            TransactTo::Create(_) => {
+                if value.ne(&U256::ZERO) && data.is_empty() {
+                    c1
+                } else {
+                    c0
+                }
+            }
+            TransactTo::Call(dest) => {
+                let mut maybe_res: Option<U64> = None;
+                for (k, v) in self.data.env.block.categories.iter() {
+                    maybe_res = match &v.whitelist {
+                        None => { None }
+                        Some(whitelist) => {
+                            if whitelist.contains(&dest) {
+                                Some(k.clone())
+                            } else {
+                                None
+                            }
+                        }
+                    };
+                    if maybe_res.is_some() { break; }
+                }
+                match maybe_res {
+                    None => { c0 }
+                    Some(category) => { category }
+                }
+            }
+        };
+        self.data.env.tx.category = category;
 
         if GSPEC::enabled(MERGE) && self.data.env.block.prevrandao.is_none() {
             return Err(EVMError::PrevrandaoNotSet);
