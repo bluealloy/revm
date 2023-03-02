@@ -1,6 +1,8 @@
 use crate::{alloc::vec::Vec, SpecId, B160, B256, U256};
 use bytes::Bytes;
 use core::cmp::min;
+use std::collections::HashMap;
+use ruint::aliases::U64;
 
 #[derive(Clone, Debug, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -25,6 +27,14 @@ pub struct BlockEnv {
     /// basefee is added in EIP1559 London upgrade
     pub basefee: U256,
     pub gas_limit: U256,
+    // pub categories: HashMap<U64, CategoryInfo>
+}
+
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct CategoryInfo {
+    pub whitelist: Option<Vec<B160>>,
+    pub scalar: U256,
 }
 
 #[derive(Clone, Debug)]
