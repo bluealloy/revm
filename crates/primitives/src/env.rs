@@ -27,14 +27,26 @@ pub struct BlockEnv {
     /// basefee is added in EIP1559 London upgrade
     pub basefee: U256,
     pub gas_limit: U256,
-    // pub categories: HashMap<U64, CategoryInfo>
+    /// Look up category info by category number
+    pub categories: HashMap<U64, CategoryInfo>
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CategoryInfo {
     pub whitelist: Option<Vec<B160>>,
     pub scalar: U256,
+}
+
+impl Default for CategoryInfo {
+    fn default() -> Self {
+        let unit = U256::try_from(1).expect("Unable to create unit U256");
+        let p100 = unit >> 128;
+        Self {
+            whitelist: None,
+            scalar: p100
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -168,6 +180,7 @@ impl Default for BlockEnv {
             difficulty: U256::ZERO,
             prevrandao: Some(B256::zero()),
             basefee: U256::ZERO,
+            categories: Default::default()
         }
     }
 }
