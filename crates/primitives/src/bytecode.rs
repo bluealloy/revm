@@ -99,6 +99,15 @@ impl Bytecode {
         &self.bytecode
     }
 
+    pub fn original_bytes(&self) -> Bytes {
+        match self.state {
+            BytecodeState::Raw => self.bytecode.clone(),
+            BytecodeState::Checked { len } | BytecodeState::Analysed { len, .. } => {
+                self.bytecode.slice(0..len)
+            }
+        }
+    }
+
     pub fn hash(&self) -> B256 {
         self.hash
     }
