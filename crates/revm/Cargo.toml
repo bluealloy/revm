@@ -20,7 +20,7 @@ serde = { version = "1.0", features = ["derive", "rc"], optional = true }
 serde_json = { version = "1.0", features = ["preserve_order"], optional = true }
 
 # ethersdb
-tokio = { version = "1.25", features = [
+tokio = { version = "1.26", features = [
     "rt-multi-thread",
     "macros",
 ], optional = true }
