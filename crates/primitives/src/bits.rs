@@ -54,6 +54,32 @@ impl From<B256> for primitive_types::H256 {
     }
 }
 
+impl From<primitive_types::U256> for B256 {
+    fn from(fr: primitive_types::U256) -> Self {
+        let mut ret = B256::zero();
+        fr.to_big_endian(ret.as_bytes_mut());
+        ret
+    }
+}
+
+impl From<B256> for primitive_types::U256 {
+    fn from(fr: B256) -> Self {
+        primitive_types::U256::from(fr.as_ref() as &[u8])
+    }
+}
+
+impl From<ruint::aliases::U256> for B256 {
+    fn from(fr: ruint::aliases::U256) -> Self {
+        B256(fr.to_be_bytes())
+    }
+}
+
+impl From<B256> for ruint::aliases::U256 {
+    fn from(fr: B256) -> Self {
+        ruint::aliases::U256::from_be_bytes(fr.0)
+    }
+}
+
 impl_fixed_hash_conversions!(B256, B160);
 
 #[cfg(feature = "serde")]
@@ -329,6 +355,22 @@ mod tests {
         let b256 = B256::random();
         let h256: primitive_types::H256 = b256.into();
         let new_b256: B256 = h256.into();
+        assert_eq!(b256, new_b256)
+    }
+
+    #[test]
+    fn should_convert_to_primitive_types_h256_u256() {
+        let b256 = B256::random();
+        let u256: primitive_types::U256 = b256.into();
+        let new_b256: B256 = u256.into();
+        assert_eq!(b256, new_b256)
+    }
+
+    #[test]
+    fn should_convert_to_ruint_u256() {
+        let b256 = B256::random();
+        let u256: ruint::aliases::U256 = b256.into();
+        let new_b256: B256 = u256.into();
         assert_eq!(b256, new_b256)
     }
 }
