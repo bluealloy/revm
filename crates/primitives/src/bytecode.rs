@@ -5,11 +5,21 @@ use bitvec::vec::BitVec;
 use bytes::Bytes;
 
 /// A map of valid `jump` destinations.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct JumpMap(pub Arc<BitVec>);
+pub struct JumpMap(pub Arc<BitVec<u8>>);
 
 impl JumpMap {
+    /// Get the raw bytes of the jump map
+    pub fn as_slice(&self) -> &[u8] {
+        self.0.as_raw_slice()
+    }
+
+    /// Construct a jump map from raw bytes
+    pub fn from_slice(slice: &[u8]) -> Self {
+        Self(Arc::new(BitVec::from_slice(slice)))
+    }
+
     /// Check if `pc` is a valid jump destination.
     pub fn is_valid(&self, pc: usize) -> bool {
         pc < self.0.len() && self.0[pc]
@@ -47,7 +57,7 @@ impl Bytecode {
             hash: KECCAK_EMPTY,
             state: BytecodeState::Analysed {
                 len: 0,
-                jump_map: JumpMap(Arc::new(bitvec![0])),
+                jump_map: JumpMap(Arc::new(bitvec![u8, Lsb0; 0])),
             },
         }
     }
