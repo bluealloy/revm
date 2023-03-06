@@ -99,6 +99,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             return Err(InvalidTransaction::RejectCallerWithCode.into());
         }
 
+        // Check if the transaction's chain id is correct
+        if let Some(tx_chain_id) = self.data.env.tx.chain_id {
+            if U256::from(tx_chain_id) != self.data.env.cfg.chain_id {
+                return Err(InvalidTransaction::InvalidChainId.into());
+            }
+        }
+
         // Check that the transaction's nonce is correct
         if self.data.env.tx.nonce.is_some() {
             let state_nonce = self
