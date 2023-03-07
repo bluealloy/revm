@@ -168,6 +168,16 @@ impl OpCode {
     }
 }
 
+impl core::fmt::Display for OpCode {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        if let Some(val) = OPCODE_JUMPMAP[self.0 as usize] {
+            f.write_str(val)
+        } else {
+            write!(f, "UNKNOWN(0x{:02x})", self.0)
+        }
+    }
+}
+
 pub const OPCODE_JUMPMAP: [Option<&'static str>; 256] = [
     /* 0x00 */ Some("STOP"),
     /* 0x01 */ Some("ADD"),
