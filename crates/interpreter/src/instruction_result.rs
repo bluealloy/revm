@@ -45,6 +45,7 @@ pub enum InstructionResult {
     FatalExternalError,
 }
 
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum SuccessOrHalt {
     Success(Eval),
     Revert,
@@ -52,6 +53,39 @@ pub enum SuccessOrHalt {
     FatalExternalError,
     // this is internal opcode.
     Internal,
+}
+
+impl SuccessOrHalt {
+    /// Returns true if the transaction returned successfully without halts.
+    pub fn is_success(&self) -> bool {
+        matches!(self, SuccessOrHalt::Success(_))
+    }
+
+    /// Returns the [Eval] value if this a successful result
+    pub fn to_success(self) -> Option<Eval> {
+        match self {
+            SuccessOrHalt::Success(eval) => Some(eval),
+            _ => None,
+        }
+    }
+
+    /// Returns true if the transaction reverted.
+    pub fn is_revert(&self) -> bool {
+        matches!(self, SuccessOrHalt::Revert)
+    }
+
+    /// Returns true if the EVM has experienced an exceptional halt
+    pub fn is_halt(&self) -> bool {
+        matches!(self, SuccessOrHalt::Halt(_))
+    }
+
+    /// Returns the [Halt] value the EVM has experienced an exceptional halt
+    pub fn to_halt(self) -> Option<Halt> {
+        match self {
+            SuccessOrHalt::Halt(halt) => Some(halt),
+            _ => None,
+        }
+    }
 }
 
 impl From<InstructionResult> for SuccessOrHalt {
