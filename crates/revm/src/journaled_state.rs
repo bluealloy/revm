@@ -57,11 +57,11 @@ pub enum JournalEntry {
     NonceChange {
         address: B160, //geth has nonce value,
     },
-    /// It is used to track both storage change and hot load of storage slot. For hot load in regards
+    /// It is used to track both storage change and hot load of storage slot. For hot load in regard
     /// to EIP-2929 AccessList had_value will be None
     /// Action: Storage change or hot load
     /// Revert: Revert to previous value or remove slot from storage
-    StorageChage {
+    StorageChange {
         address: B160,
         key: U256,
         had_value: Option<U256>, //if none, storage slot was cold loaded from db and needs to be removed
@@ -305,7 +305,7 @@ impl JournaledState {
                 JournalEntry::NonceChange { address } => {
                     state.get_mut(&address).unwrap().info.nonce -= 1;
                 }
-                JournalEntry::StorageChage {
+                JournalEntry::StorageChange {
                     address,
                     key,
                     had_value,
@@ -481,7 +481,7 @@ impl JournaledState {
                 self.journal
                     .last_mut()
                     .unwrap()
-                    .push(JournalEntry::StorageChage {
+                    .push(JournalEntry::StorageChange {
                         address,
                         key,
                         had_value: None,
@@ -519,7 +519,7 @@ impl JournaledState {
         self.journal
             .last_mut()
             .unwrap()
-            .push(JournalEntry::StorageChage {
+            .push(JournalEntry::StorageChange {
                 address,
                 key,
                 had_value: Some(present),
