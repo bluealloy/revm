@@ -83,8 +83,8 @@ pub struct CfgEnv {
     /// safe to be set to `true`, depending on the chain.
     pub perf_all_precompiles_have_balance: bool,
     /// Bytecode that is created with CREATE/CREATE2 is by default analysed and jumptable is created.
-    /// This is very benefitial for testing and speeds up execution of that bytecode when.
-    /// It will have side effect if it is enabled in client that switches between forks.
+    /// This is very benefitial for testing and speeds up execution of that bytecode if called multiple times.
+    ///
     /// Default: Analyse
     pub perf_analyse_created_bytecodes: AnalysisKind,
     /// If some it will effects EIP-170: Contract code size limit. Usefull to increase this because of tests.
