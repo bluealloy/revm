@@ -17,7 +17,7 @@ primitive-types = { version = "0.12", default-features = false }
 rlp = { version = "0.5", default-features = false } # used for create2 address calculation
 ruint = { version = "1.7.0", features = ["primitive-types", "rlp"] }
 auto_impl = "1.0"
-bitvec = { version = "1", default-features = false }
+bitvec = { version = "1", default-features = false, features = ["alloc"] }
 
 # bits B256 B160 crate
 fixed-hash = { version = "0.8", default-features = false, features = [

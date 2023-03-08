@@ -16,7 +16,7 @@ pub enum Sign {
     Zero,
 }
 
-pub const SIGN_BIT_MASK: U256 = U256::from_limbs([
+pub const _SIGN_BIT_MASK: U256 = U256::from_limbs([
     0xFFFFFFFFFFFFFFFF,
     0xFFFFFFFFFFFFFFFF,
     0xFFFFFFFFFFFFFFFF,

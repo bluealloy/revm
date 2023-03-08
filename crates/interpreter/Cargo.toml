@@ -11,7 +11,6 @@ readme = "../../README.md"
 
 [dependencies]
 revm-primitives = { path = "../primitives", version="1.0.0", default-features = false }
-bitvec = { version = "1", default-features = false }
 
 #utility
 derive_more = "0.99"
@@ -46,11 +45,10 @@ optional_balance_check = ["revm-primitives/optional_balance_check"]
 optional_block_gas_limit = ["revm-primitives/optional_block_gas_limit"]
 optional_eip3607 = ["revm-primitives/optional_eip3607"]
 optional_gas_refund = ["revm-primitives/optional_gas_refund"]
-std = ["revm-primitives/std", "bitvec/std"]
+std = ["revm-primitives/std"]
 serde = [
     "dep:serde",
     "revm-primitives/serde",
-    "bitvec/serde",
 ]
 arbitrary = [
     "dep:arbitrary",

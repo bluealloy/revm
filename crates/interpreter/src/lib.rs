@@ -1,5 +1,4 @@
-#![allow(dead_code)]
-//#![no_std]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod gas;
 mod host;
