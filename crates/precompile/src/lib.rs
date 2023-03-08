@@ -95,6 +95,22 @@ pub enum SpecId {
 }
 
 impl SpecId {
+    /// Returns the appropriate precompile Spec for the primitive [SpecId](revm_primitives::SpecId)
+    pub const fn from_spec_id(spec_id: revm_primitives::SpecId) -> Self {
+        use revm_primitives::SpecId::*;
+        match spec_id {
+            FRONTIER | FRONTIER_THAWING | HOMESTEAD | DAO_FORK | TANGERINE | SPURIOUS_DRAGON => {
+                Self::HOMESTEAD
+            }
+            BYZANTIUM | CONSTANTINOPLE | PETERSBURG => Self::BYZANTIUM,
+            ISTANBUL | MUIR_GLACIER => Self::ISTANBUL,
+            BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | SHANGHAI | CANCUN => {
+                Self::BERLIN
+            }
+            LATEST => Self::LATEST,
+        }
+    }
+
     pub const fn enabled(self, spec_id: u8) -> bool {
         spec_id >= self as u8
     }
