@@ -988,7 +988,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
 
     fn selfdestruct(&mut self, address: B160, target: B160) -> Option<SelfDestructResult> {
         if INSPECT {
-            self.inspector.selfdestruct();
+            self.inspector.selfdestruct(address, target);
         }
         self.data
             .journaled_state
