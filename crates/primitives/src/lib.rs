@@ -24,6 +24,7 @@ pub type Address = B160;
 /// Hash, in Ethereum usually kecack256.
 pub type Hash = B256;
 
+pub use bitvec;
 pub use bytecode::*;
 pub use env::*;
 pub use hashbrown::{hash_map, HashMap};
@@ -36,4 +37,3 @@ pub use ruint::uint;
 pub use specification::*;
 pub use state::*;
 pub use utilities::*;
-pub use bitvec;
