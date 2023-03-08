@@ -18,48 +18,6 @@ pub struct Contract {
     pub value: U256,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Analysis {
-    JumpDest,
-    GasBlockEnd, //contains gas for next block
-    None,
-}
-
-const JUMP_MASK: u32 = 0x80000000;
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct AnalysisData {
-    /// This variable packs two informations:
-    /// IS_JUMP (1bit) | gas block ( 31bits)
-    is_jump_and_gas_block: u32,
-}
-
-impl AnalysisData {
-    pub fn none() -> Self {
-        AnalysisData {
-            is_jump_and_gas_block: 0,
-        }
-    }
-
-    pub fn set_is_jump(&mut self) {
-        self.is_jump_and_gas_block |= JUMP_MASK;
-    }
-
-    pub fn set_gas_block(&mut self, gas_block: u32) {
-        let jump = self.is_jump_and_gas_block & JUMP_MASK;
-        self.is_jump_and_gas_block = gas_block | jump;
-    }
-
-    pub fn is_jump(&self) -> bool {
-        self.is_jump_and_gas_block & JUMP_MASK == JUMP_MASK
-    }
-
-    pub fn gas_block(&self) -> u64 {
-        (self.is_jump_and_gas_block & (!JUMP_MASK)) as u64
-    }
-}
-
 impl Contract {
     pub fn new(input: Bytes, bytecode: Bytecode, address: B160, caller: B160, value: U256) -> Self {
         let bytecode = to_analysed(bytecode).try_into().expect("it is analyzed");
@@ -100,32 +58,5 @@ impl Contract {
             call_context.caller,
             call_context.apparent_value,
         )
-    }
-}
-#[cfg(test)]
-mod tests {
-    use super::AnalysisData;
-
-    #[test]
-    pub fn test_jump_set() {
-        let mut jump = AnalysisData::none();
-        assert!(!jump.is_jump());
-        assert_eq!(jump.gas_block(), 0);
-
-        jump.set_gas_block(2350);
-        assert!(!jump.is_jump());
-        assert_eq!(jump.gas_block(), 2350);
-
-        jump.set_is_jump();
-        assert!(jump.is_jump());
-        assert_eq!(jump.gas_block(), 2350);
-
-        jump.set_gas_block(10);
-        assert!(jump.is_jump());
-        assert_eq!(jump.gas_block(), 10);
-
-        jump.set_gas_block(350);
-        assert!(jump.is_jump());
-        assert_eq!(jump.gas_block(), 350);
     }
 }

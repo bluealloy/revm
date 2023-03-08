@@ -1,4 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+
 pub mod bits;
 pub mod bytecode;
 pub mod db;
@@ -23,6 +24,7 @@ pub type Address = B160;
 /// Hash, in Ethereum usually kecack256.
 pub type Hash = B256;
 
+pub use bitvec;
 pub use bytecode::*;
 pub use env::*;
 pub use hashbrown::{hash_map, HashMap};
