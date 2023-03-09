@@ -147,6 +147,8 @@ pub enum Halt {
     CreateContractSizeLimit,
     /// Error on created contract that begins with EF
     CreateContractStartingWithEF,
+    /// EIP-3860: Limit and meter initcode. Initcode size limit exceeded.
+    CreateInitcodeSizeLimit,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]

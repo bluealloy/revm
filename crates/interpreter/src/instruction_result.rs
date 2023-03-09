@@ -130,7 +130,7 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::CreateContractStartingWithEF => {
                 Self::Halt(Halt::CreateContractSizeLimit)
             }
-            InstructionResult::CreateInitcodeSizeLimit => Self::Internal,
+            InstructionResult::CreateInitcodeSizeLimit => Self::Halt(Halt::CreateInitcodeSizeLimit),
             InstructionResult::FatalExternalError => Self::FatalExternalError,
         }
     }
