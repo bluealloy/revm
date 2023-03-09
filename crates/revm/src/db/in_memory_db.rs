@@ -192,7 +192,7 @@ impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
                 AccountState::StorageCleared
             } else if !db_account.account_state.is_none() {
                 // Preserve old account state if it already exists
-                db_account.account_state
+                db_account.account_state.clone()
             } else {
                 AccountState::Touched
             };
