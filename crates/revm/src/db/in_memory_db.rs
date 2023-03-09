@@ -91,6 +91,13 @@ pub enum AccountState {
     None,
 }
 
+impl AccountState {
+    /// Returns `true` if EVM didn't interact with this account
+    pub fn is_none(&self) -> bool {
+        matches!(self, AccountState::None)
+    }
+}
+
 impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     pub fn new(db: ExtDB) -> Self {
         let mut contracts = HashMap::new();
@@ -183,6 +190,9 @@ impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
             db_account.account_state = if account.storage_cleared {
                 db_account.storage.clear();
                 AccountState::StorageCleared
+            } else if !db_account.account_state.is_none() {
+                // Preserve old account state if it already exists
+                db_account.account_state
             } else {
                 AccountState::Touched
             };
