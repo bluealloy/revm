@@ -140,7 +140,6 @@ pub enum Halt {
     StackOverflow,
     OutOfOffset,
     CreateCollision,
-    OverflowPayment,
     PrecompileError,
     NonceOverflow,
     /// Create init code size exceeds limit (runtime).
@@ -149,6 +148,13 @@ pub enum Halt {
     CreateContractStartingWithEF,
     /// EIP-3860: Limit and meter initcode. Initcode size limit exceeded.
     CreateInitcodeSizeLimit,
+
+    /* Internal Halts that can be only found inside Inspector */
+    OverflowPayment,
+    StateChangeDuringStaticCall,
+    CallNotAllowedInsideStatic,
+    OutOfFund,
+    CallTooDeep,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
