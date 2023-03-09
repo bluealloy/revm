@@ -52,7 +52,7 @@ pub enum SuccessOrHalt {
     Halt(Halt),
     FatalExternalError,
     // this is internal opcode.
-    Internal,
+    InternalContinue,
 }
 
 impl SuccessOrHalt {
@@ -91,13 +91,13 @@ impl SuccessOrHalt {
 impl From<InstructionResult> for SuccessOrHalt {
     fn from(result: InstructionResult) -> Self {
         match result {
-            InstructionResult::Continue => Self::Internal, // used only in interpreter loop
+            InstructionResult::Continue => Self::InternalContinue, // used only in interpreter loop
             InstructionResult::Stop => Self::Success(Eval::Stop),
             InstructionResult::Return => Self::Success(Eval::Return),
             InstructionResult::SelfDestruct => Self::Success(Eval::SelfDestruct),
             InstructionResult::Revert => Self::Revert,
-            InstructionResult::CallTooDeep => Self::Internal, // not gonna happen for first call
-            InstructionResult::OutOfFund => Self::Internal, // Check for first call is done separately.
+            InstructionResult::CallTooDeep => Self::Halt(Halt::CallTooDeep), // not gonna happen for first call
+            InstructionResult::OutOfFund => Self::Halt(Halt::OutOfFund), // Check for first call is done separately.
             InstructionResult::OutOfGas => Self::Halt(Halt::OutOfGas(
                 revm_primitives::OutOfGasError::BasicOutOfGas,
             )),
@@ -114,8 +114,12 @@ impl From<InstructionResult> for SuccessOrHalt {
                 revm_primitives::OutOfGasError::InvalidOperand,
             )),
             InstructionResult::OpcodeNotFound => Self::Halt(Halt::OpcodeNotFound),
-            InstructionResult::CallNotAllowedInsideStatic => Self::Internal, // first call is not static call
-            InstructionResult::StateChangeDuringStaticCall => Self::Internal,
+            InstructionResult::CallNotAllowedInsideStatic => {
+                Self::Halt(Halt::CallNotAllowedInsideStatic)
+            } // first call is not static call
+            InstructionResult::StateChangeDuringStaticCall => {
+                Self::Halt(Halt::StateChangeDuringStaticCall)
+            }
             InstructionResult::InvalidFEOpcode => Self::Halt(Halt::InvalidFEOpcode),
             InstructionResult::InvalidJump => Self::Halt(Halt::InvalidJump),
             InstructionResult::NotActivated => Self::Halt(Halt::NotActivated),
@@ -123,7 +127,7 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::StackOverflow => Self::Halt(Halt::StackOverflow),
             InstructionResult::OutOfOffset => Self::Halt(Halt::OutOfOffset),
             InstructionResult::CreateCollision => Self::Halt(Halt::CreateCollision),
-            InstructionResult::OverflowPayment => Self::Internal, // Check for first call is done separately.
+            InstructionResult::OverflowPayment => Self::Halt(Halt::OverflowPayment), // Check for first call is done separately.
             InstructionResult::PrecompileError => Self::Halt(Halt::PrecompileError),
             InstructionResult::NonceOverflow => Self::Halt(Halt::NonceOverflow),
             InstructionResult::CreateContractSizeLimit => Self::Halt(Halt::CreateContractSizeLimit),

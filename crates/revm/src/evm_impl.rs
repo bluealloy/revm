@@ -275,7 +275,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             SuccessOrHalt::FatalExternalError => {
                 return Err(EVMError::Database(self.data.error.take().unwrap()))
             }
-            SuccessOrHalt::Internal => {
+            SuccessOrHalt::InternalContinue => {
                 panic!("Internal return flags should remain internal {exit_reason:?}")
             }
         };
