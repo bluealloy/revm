@@ -92,9 +92,9 @@ pub enum AccountState {
 }
 
 impl AccountState {
-    /// Returns `true` if EVM didn't interact with this account
-    pub fn is_none(&self) -> bool {
-        matches!(self, AccountState::None)
+    /// Returns `true` if EVM cleared storage of this account
+    pub fn is_storage_cleared(&self) -> bool {
+        matches!(self, AccountState::StorageCleared)
     }
 }
 
@@ -190,9 +190,9 @@ impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
             db_account.account_state = if account.storage_cleared {
                 db_account.storage.clear();
                 AccountState::StorageCleared
-            } else if !db_account.account_state.is_none() {
+            } else if db_account.account_state.is_storage_cleared() {
                 // Preserve old account state if it already exists
-                db_account.account_state.clone()
+                AccountState::StorageCleared
             } else {
                 AccountState::Touched
             };
