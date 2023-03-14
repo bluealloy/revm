@@ -51,10 +51,11 @@ macro_rules! memory_resize {
 
             if new_size > $interp.memory.len() {
                 if crate::USE_GAS {
-                    let num_bytes = new_size / 32;
-                    if !$interp.gas.record_memory(crate::gas::memory_gas(num_bytes)) {
+                    let new_cost = crate::gas::memory_gas(new_size / 32);
+                    if !$interp.gas.record_memory(new_cost - $interp.memory_last_gas_cost) {
                         return Return::OutOfGas;
                     }
+                    $interp.memory_last_gas_cost = new_cost;
                 }
                 $interp.memory.resize(new_size);
             }

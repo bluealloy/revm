@@ -33,6 +33,8 @@ pub struct Interpreter {
     pub return_data_buffer: Bytes,
     /// Return value.
     pub return_range: Range<usize>,
+    /// Last absolute cost of expanded memory.
+    pub memory_last_gas_cost: u64,
     /// Memory limit. See [`crate::CfgEnv`].
     #[cfg(feature = "memory_limit")]
     pub memory_limit: u64,
@@ -52,6 +54,7 @@ impl Interpreter {
             return_data_buffer: Bytes::new(),
             contract,
             gas: Gas::new(gas_limit),
+            memory_last_gas_cost: 0,
         }
     }
 
@@ -69,6 +72,7 @@ impl Interpreter {
             return_data_buffer: Bytes::new(),
             contract,
             gas: Gas::new(gas_limit),
+            memory_last_gas_cost: 0,
             memory_limit,
         }
     }

@@ -65,15 +65,14 @@ impl Gas {
     }
 
     /// used in memory_resize! macro
-    pub fn record_memory(&mut self, gas_memory: u64) -> bool {
-        if gas_memory > self.memory {
-            let (all_used_gas, overflow) = self.used.overflowing_add(gas_memory);
-            if overflow || self.limit < all_used_gas {
-                return false;
-            }
-            self.memory = gas_memory;
-            self.all_used_gas = all_used_gas;
+    pub fn record_memory(&mut self, cost_delta: u64) -> bool {
+        let (all_used_gas, overflow) = self.all_used_gas.overflowing_add(cost_delta);
+        if overflow || self.limit < all_used_gas {
+            return false;
         }
+
+        self.memory += cost_delta;
+        self.all_used_gas = all_used_gas;
         true
     }
 
