@@ -71,6 +71,16 @@ pub enum Output {
     ),
 }
 
+impl Output {
+    /// Returns the output data of the execution output.
+    pub fn into_data(self) -> Bytes {
+        match self {
+            Output::Call(data) => data,
+            Output::Create(data, _) => data,
+        }
+    }
+}
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum EVMError<DB> {
