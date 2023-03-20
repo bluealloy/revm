@@ -54,6 +54,7 @@ cargo flamegraph --root --freq 4000 --min-width 0.001 --package revm-test --bin 
 * Helios: https://github.com/a16z/helios
 * Hardhat (transitioning to it): https://github.com/NomicFoundation/hardhat/tree/rethnet/main
 * Reth: https://github.com/paradigmxyz/reth
+* Arbiter: https://github.com/primitivefinance/arbiter
 
 (If you want to add your project to the list, ping me or open the PR)
 
