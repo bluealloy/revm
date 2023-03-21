@@ -19,7 +19,7 @@ pub use bytes;
 pub use bytes::Bytes;
 pub use hex;
 pub use hex_literal;
-/// Address type is first 20 bytes of hash of ethereum account
+/// Address type is last 20 bytes of hash of ethereum account
 pub type Address = B160;
 /// Hash, in Ethereum usually kecack256.
 pub type Hash = B256;
