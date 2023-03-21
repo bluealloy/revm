@@ -11,7 +11,7 @@ version = "0.2.0"
 
 [dependencies]
 bytes = "1.4"
-hash-db = "0.15"
+hash-db = "0.16"
 hashbrown = "0.13"
 hex = "0.4"
 indicatif = "0.17"
