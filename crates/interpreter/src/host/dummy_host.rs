@@ -98,7 +98,7 @@ impl Host for DummyHost {
     }
 
     fn selfdestruct(&mut self, _address: B160, _target: B160) -> Option<SelfDestructResult> {
-        panic!("Create is not supported for this host")
+        panic!("Selfdestruct is not supported for this host")
     }
 
     fn create(
