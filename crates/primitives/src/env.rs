@@ -115,6 +115,10 @@ pub struct CfgEnv {
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_gas_refund")]
     pub disable_gas_refund: bool,
+    /// Disables base fee checks for EIP-1559 transactions.
+    /// This is useful for testing method calls with zero gas price.
+    #[cfg(feature = "optional_no_base_fee")]
+    pub disable_base_fee: bool,
 }
 
 #[derive(Clone, Default, Debug, Eq, PartialEq)]
@@ -144,6 +148,8 @@ impl Default for CfgEnv {
             disable_eip3607: false,
             #[cfg(feature = "optional_gas_refund")]
             disable_gas_refund: false,
+            #[cfg(feature = "optional_no_base_fee")]
+            disable_base_fee: false,
         }
     }
 }
