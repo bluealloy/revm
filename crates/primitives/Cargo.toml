@@ -57,6 +57,7 @@ dev = [
     "optional_block_gas_limit",
     "optional_eip3607",
     "optional_gas_refund",
+    "optional_no_base_fee",
 ]
 memory_limit = []
 no_gas_measuring = []
@@ -64,6 +65,7 @@ optional_balance_check = []
 optional_block_gas_limit = []
 optional_eip3607 = []
 optional_gas_refund = []
+optional_no_base_fee = []
 std = ["bytes/std", "rlp/std", "hex/std", "bitvec/std"]
 serde = [
     "dep:serde",
