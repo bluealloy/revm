@@ -1,7 +1,8 @@
 use crate::primitives::{AccountInfo, Bytecode, B160, B256, KECCAK_EMPTY, U256};
 use crate::Database;
 use ethers_core::types::{BlockId, H160 as eH160, H256, U64 as eU64};
-use ethers_providers::Middleware;
+use ethers::prelude::*;
+//use ethers_providers::Middleware;
 use std::sync::Arc;
 use tokio::runtime::{Handle, Runtime};
 
@@ -42,7 +43,7 @@ where
     }
 
     /// internal utility function to call tokio feature and wait for output
-    fn block_on<F: core::future::Future>(&self, f: F) -> F::Output {
+    fn block_on<F: tokio::macros::support::Future>(&self, f: F) -> F::Output {
         match &self.runtime {
             Some(runtime) => runtime.block_on(f),
             None => futures::executor::block_on(f),
