@@ -32,8 +32,8 @@ where
             block_number: None,
         };
 
-        out.block_number = if let Some(block_number) = block_number {
-            Some(block_number)
+        out.block_number = if block_number.is_some() {
+            block_number
         } else {
             Some(BlockId::from(out.block_on(out.client.get_block_number()).ok()?))
         };
@@ -138,7 +138,7 @@ mod tests {
 
         let mut ethersdb = EthersDB::new(
             Arc::clone(&client), // public infura mainnet
-            Some(16148323),
+            Some(BlockId::from(16148323)),
         )
         .unwrap();
 
@@ -164,7 +164,7 @@ mod tests {
 
         let mut ethersdb = EthersDB::new(
             Arc::clone(&client), // public infura mainnet
-            Some(16148323),
+            Some(BlockId::from(16148323)),
         )
         .unwrap();
 
