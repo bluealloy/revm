@@ -19,7 +19,7 @@ where
     M: Middleware,
 {
     /// create ethers db connector inputs are url and block on what we are basing our database (None for latest)
-    pub fn new(client: Arc<M>, block_number: Option<u64>) -> Option<Self> {
+    pub fn new(client: Arc<M>, block_number: Option<BlockId>) -> Option<Self> {
         let runtime = Handle::try_current()
             .is_err()
             .then(|| Runtime::new().unwrap());
@@ -31,13 +31,13 @@ where
             runtime,
             block_number: None,
         };
-        let bnum = if let Some(block_number) = block_number {
-            block_number.into()
+
+        out.block_number = if let Some(block_number) = block_number {
+            Some(block_number)
         } else {
-            out.block_on(out.client.get_block_number()).ok()?
+            Some(BlockId::from(out.block_on(out.client.get_block_number()).ok()?))
         };
 
-        out.block_number = Some(BlockId::from(bnum));
         Some(out)
     }
 
