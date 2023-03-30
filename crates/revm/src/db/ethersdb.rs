@@ -35,7 +35,9 @@ where
         out.block_number = if block_number.is_some() {
             block_number
         } else {
-            Some(BlockId::from(out.block_on(out.client.get_block_number()).ok()?))
+            Some(BlockId::from(
+                out.block_on(out.client.get_block_number()).ok()?,
+            ))
         };
 
         Some(out)
