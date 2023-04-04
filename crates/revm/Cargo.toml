@@ -30,7 +30,7 @@ futures = { version = "0.3.27", optional = true }
 
 
 [dev-dependencies]
-hex-literal = "0.3"
+hex-literal = "0.4"
 
 [features]
 default = ["std", "secp256k1"]

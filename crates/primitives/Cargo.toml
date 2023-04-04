@@ -25,7 +25,7 @@ fixed-hash = { version = "0.8", default-features = false, features = [
 ] }
 
 #utility
-hex-literal = "0.3"
+hex-literal = "0.4"
 derive_more = "0.99"
 enumn = "0.1"
 
