@@ -1,4 +1,5 @@
 use crate::primitives::{specification, EVMError, EVMResult, Env, ExecutionResult, SpecId};
+use crate::JournaledState;
 use crate::{
     db::{Database, DatabaseCommit, DatabaseRef, RefDBWrapper},
     evm_impl::{EVMImpl, Transact},
@@ -61,7 +62,7 @@ impl<DB: Database + DatabaseCommit> EVM<DB> {
         Ok(result)
     }
     /// Inspect transaction and commit changes to database.
-    pub fn inspect_commit<INSP: Inspector<DB>>(
+    pub fn inspect_commit<INSP: Inspector<DB::Error>>(
         &mut self,
         inspector: INSP,
     ) -> Result<ExecutionResult, EVMError<DB::Error>> {
@@ -84,7 +85,10 @@ impl<DB: Database> EVM<DB> {
     }
 
     /// Execute transaction with given inspector, without wring to DB. Return change state.
-    pub fn inspect<INSP: Inspector<DB>>(&mut self, mut inspector: INSP) -> EVMResult<DB::Error> {
+    pub fn inspect<INSP: Inspector<DB::Error>>(
+        &mut self,
+        mut inspector: INSP,
+    ) -> EVMResult<DB::Error> {
         if let Some(db) = self.db.as_mut() {
             evm_inner::<DB, true>(&mut self.env, db, &mut inspector).transact()
         } else {
@@ -110,7 +114,7 @@ impl<'a, DB: DatabaseRef> EVM<DB> {
     }
 
     /// Execute transaction with given inspector, without wring to DB. Return change state.
-    pub fn inspect_ref<INSP: Inspector<RefDBWrapper<'a, DB::Error>>>(
+    pub fn inspect_ref<INSP: Inspector<DB::Error>>(
         &'a self,
         mut inspector: INSP,
     ) -> EVMResult<DB::Error> {
@@ -191,7 +195,7 @@ pub fn to_precompile_id(spec_id: SpecId) -> revm_precompile::SpecId {
 pub fn evm_inner<'a, DB: Database, const INSPECT: bool>(
     env: &'a mut Env,
     db: &'a mut DB,
-    insp: &'a mut dyn Inspector<DB>,
+    insp: &'a mut dyn Inspector<DB::Error>,
 ) -> Box<dyn Transact<DB::Error> + 'a> {
     use specification::*;
     match env.cfg.spec_id {
@@ -211,4 +215,19 @@ pub fn evm_inner<'a, DB: Database, const INSPECT: bool>(
         SpecId::CANCUN => create_evm!(CancunSpec, db, env, insp),
         SpecId::LATEST => create_evm!(LatestSpec, db, env, insp),
     }
+}
+
+/// Trait that exposes internal EVM data.
+pub trait EVMData<E> {
+    /// Returns a mutable reference to the EVM's environment.
+    fn env(&mut self) -> &mut Env;
+
+    /// Returns a mutable reference to the [`JournaledState`] of the evm.
+    fn journaled_state(&mut self) -> &mut JournaledState;
+
+    /// Returns a mutable reference to the [`Database`] of the evm.
+    fn database(&mut self) -> &mut dyn Database<Error = E>;
+
+    /// Returns a mutable reference to the last error, if one occured.
+    fn error(&mut self) -> &mut Option<E>;
 }

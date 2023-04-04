@@ -1,9 +1,10 @@
 //! Inspector that support tracing of EIP-3155 <https://eips.ethereum.org/EIPS/eip-3155>
 
+use crate::evm::EVMData;
 use crate::inspectors::GasInspector;
 use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult};
-use crate::primitives::{db::Database, hex, Bytes, B160};
-use crate::{evm_impl::EVMData, Inspector};
+use crate::primitives::{hex, Bytes, B160};
+use crate::Inspector;
 use revm_interpreter::primitives::U256;
 use revm_interpreter::{opcode, Interpreter, Memory, Stack};
 use serde_json::json;
@@ -46,11 +47,11 @@ impl TracerEip3155 {
     }
 }
 
-impl<DB: Database> Inspector<DB> for TracerEip3155 {
+impl<E> Inspector<E> for TracerEip3155 {
     fn initialize_interp(
         &mut self,
         interp: &mut Interpreter,
-        data: &mut EVMData<'_, DB>,
+        data: &mut dyn EVMData<E>,
     ) -> InstructionResult {
         self.gas_inspector.initialize_interp(interp, data);
         InstructionResult::Continue
@@ -58,7 +59,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 
     // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
     // all other information can be obtained from interp.
-    fn step(&mut self, interp: &mut Interpreter, data: &mut EVMData<'_, DB>) -> InstructionResult {
+    fn step(&mut self, interp: &mut Interpreter, data: &mut dyn EVMData<E>) -> InstructionResult {
         self.gas_inspector.step(interp, data);
         self.stack = interp.stack.clone();
         self.pc = interp.program_counter();
@@ -72,7 +73,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
     fn step_end(
         &mut self,
         interp: &mut Interpreter,
-        data: &mut EVMData<'_, DB>,
+        data: &mut dyn EVMData<E>,
         eval: InstructionResult,
     ) -> InstructionResult {
         self.gas_inspector.step_end(interp, data, eval);
@@ -81,22 +82,22 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
             return InstructionResult::Continue;
         };
 
-        self.print_log_line(data.journaled_state.depth());
+        self.print_log_line(data.journaled_state().depth());
         InstructionResult::Continue
     }
 
     fn call(
         &mut self,
-        data: &mut EVMData<'_, DB>,
+        data: &mut dyn EVMData<E>,
         _inputs: &mut CallInputs,
     ) -> (InstructionResult, Gas, Bytes) {
-        self.print_log_line(data.journaled_state.depth());
+        self.print_log_line(data.journaled_state().depth());
         (InstructionResult::Continue, Gas::new(0), Bytes::new())
     }
 
     fn call_end(
         &mut self,
-        data: &mut EVMData<'_, DB>,
+        data: &mut dyn EVMData<E>,
         inputs: &CallInputs,
         remaining_gas: Gas,
         ret: InstructionResult,
@@ -106,7 +107,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
             .call_end(data, inputs, remaining_gas, ret, out.clone());
         // self.log_step(interp, data, is_static, eval);
         self.skip = true;
-        if data.journaled_state.depth() == 0 {
+        if data.journaled_state().depth() == 0 {
             let log_line = json!({
                 //stateroot
                 "output": format!("0x{}", hex::encode(out.as_ref())),
@@ -123,10 +124,10 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 
     fn create(
         &mut self,
-        data: &mut EVMData<'_, DB>,
+        data: &mut dyn EVMData<E>,
         _inputs: &mut CreateInputs,
     ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
-        self.print_log_line(data.journaled_state.depth());
+        self.print_log_line(data.journaled_state().depth());
         (
             InstructionResult::Continue,
             None,
@@ -137,7 +138,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 
     fn create_end(
         &mut self,
-        data: &mut EVMData<'_, DB>,
+        data: &mut dyn EVMData<E>,
         inputs: &CreateInputs,
         ret: InstructionResult,
         address: Option<B160>,

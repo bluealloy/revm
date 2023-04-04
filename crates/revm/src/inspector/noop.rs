@@ -1,8 +1,8 @@
 //! Dummy NoOp Inspector, helpful as standalone replacement.
 
-use crate::{Database, Inspector};
+use crate::Inspector;
 
 #[derive(Clone, Copy)]
 pub struct NoOpInspector();
 
-impl<DB: Database> Inspector<DB> for NoOpInspector {}
+impl<E> Inspector<E> for NoOpInspector {}

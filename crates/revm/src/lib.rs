@@ -20,8 +20,8 @@ pub type DummyStateDB = InMemoryDB;
 pub use db::{CacheState, StateBuilder, TransitionAccount, TransitionState};
 
 pub use db::{Database, DatabaseCommit, InMemoryDB, State};
-pub use evm::{evm_inner, new, to_precompile_id, EVM};
-pub use evm_impl::{EVMData, EVMImpl, Transact};
+pub use evm::{evm_inner, new, to_precompile_id, EVMData, EVM};
+pub use evm_impl::{EVMImpl, Transact};
 pub use journaled_state::{is_precompile, JournalCheckpoint, JournalEntry, JournaledState};
 
 // reexport `revm_precompiles`
