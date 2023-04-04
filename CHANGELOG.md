@@ -1,5 +1,15 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v21 tag
+date 04.04.2023
+
+Shanghai supported and gas block optimization removed.
+
+* revm: v3.1.0
+* revm-precompile: v2.0.1
+* revm-primitives: v1.1.0
+* revm-interpreter: v1.1.0
+
 # v20 tag
 date 29.01.2023
 Big release. primitives and interpreter libs and optimizations.

@@ -1,3 +1,12 @@
+# v2.0.1
+date: 04.04.2023
+
+Small changes
+
+Changelog:
+* 992a11c - (HEAD -> v/310, origin/lib_versions) bump all (89 minutes ago) <rakita>
+* d935525 - chore(deps): bump secp256k1 from 0.26.0 to 0.27.0 (#429) (2 weeks ago) <dependabot[bot]>
+* f2656b7 - chore: add primitive SpecId to precompile SpecId conversion (#408) (4 weeks ago) <Matthias Seitz>
 # v2.0.0
 date: 29.01.2023
 

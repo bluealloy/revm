@@ -1,3 +1,79 @@
+# v3.1.0
+date: 04.04.2022
+
+Main changes can be summarizes in:
+* f91d5f9 - refactor: remove gas blocks (#391) (5 weeks ago) <Bjerg>
+    * removal of gas block allowed us to have more compact analysis data. Gas block from beginning didn't have big impact on performance but introduced not intuitive gas calculations that was
+    source of some bugs. 
+* 08ce847 - feat(Shanghai): All EIPs: push0, warm coinbase, limit/measure initcode (#376) (7 weeks ago) <rakita>
+    * revm is Shanghai ready
+* afc3066 - fix(db): preserve existing account state (#414) (4 weeks ago) <Roman Krasiuk>
+    * There wasone  bug inside CacheDB that was here for a long time, and would happen only if
+    selfdestruct/create2 is called in multiple transaction on same account on same cache data.
+* 92f08be - feat: json opcode traces EIP-3155 (#356) (7 weeks ago) <pistomat>
+
+
+Changelogs:
+* 9edb8f4 - (origin/main, origin/HEAD) Improve EthersDB::new (#440) (5 days ago) <lazymio>
+* c2ee8ff - add feature for ignoring base fee check (#436) (6 days ago) <Dan Cline>
+* 6b09caf - chore(deps): bump serde_json from 1.0.94 to 1.0.95 (#434) (6 days ago) <dependabot[bot]>
+* 77f1735 - chore(deps): bump walkdir from 2.3.2 to 2.3.3 (#426) (8 days ago) <dependabot[bot]>
+* ed981c3 - chore(deps): bump serde from 1.0.157 to 1.0.158 (#425) (8 days ago) <dependabot[bot]>
+* 0eff6a7 - Fix panic! message (#431) (2 weeks ago) <David Kulman>
+* 2d5b710 - Comment Fix (#430) (2 weeks ago) <David Kulman>
+* d0038e3 - chore(deps): bump arbitrary from 1.2.3 to 1.3.0 (#428) (2 weeks ago) <dependabot[bot]>
+* d935525 - chore(deps): bump secp256k1 from 0.26.0 to 0.27.0 (#429) (2 weeks ago) <dependabot[bot]>
+* a85ff79 - Update README.md (#424) (2 weeks ago) <Waylon Jepsen>
+* 9645015 - chore(deps): bump thiserror from 1.0.38 to 1.0.40 (#421) (2 weeks ago) <dependabot[bot]>
+* aa6519f - chore(deps): bump enumn from 0.1.6 to 0.1.8 (#422) (2 weeks ago) <dependabot[bot]>
+* d63146f - chore(deps): bump futures from 0.3.26 to 0.3.27 (#416) (2 weeks ago) <dependabot[bot]>
+* 52fe7c4 - chore(deps): bump serde_json from 1.0.93 to 1.0.94 (#401) (2 weeks ago) <dependabot[bot]>
+* b98d9c9 - chore(deps): bump serde from 1.0.152 to 1.0.157 (#423) (2 weeks ago) <dependabot[bot]>
+* 3d8ca66 - feat: add Output::into_data (#420) (3 weeks ago) <Matthias Seitz>
+* afc3066 - fix(db): preserve existing account state (#414) (4 weeks ago) <Roman Krasiuk>
+* dd0e227 - feat: Add all internals results to Halt (#413) (4 weeks ago) <rakita>
+* d8dc652 - fix(interpreter): halt on CreateInitcodeSizeLimit (#412) (4 weeks ago) <Roman Krasiuk>
+* b1208fe - feat: add contract+target to selfdestruct hook (#410) (4 weeks ago) <Matthias Seitz>
+* a193d79 - chore: enabled primtive default feature in precompile (#409) (4 weeks ago) <Matthias Seitz>
+* f2656b7 - chore: add primitive SpecId to precompile SpecId conversion (#408) (4 weeks ago) <Matthias Seitz>
+* 1720729 - chore: add display impl for Opcode (#406) (4 weeks ago) <Matthias Seitz>
+* 33bf8a8 - feat: use singular bytes for the jumpmap (#402) (4 weeks ago) <Bjerg>
+* 394e8e9 - feat: extend SuccessOrHalt (#405) (4 weeks ago) <Matthias Seitz>
+* cff1070 - Update readmdoc of `perf_analyse_created_bytecodes` (#404) (4 weeks ago) <rakita>
+* fbc62a3 - chore: fix typo StorageChange (#403) (4 weeks ago) <Matthias Seitz>
+* 7bb73da - feat: Add check for chainID (#393) (4 weeks ago) <chirag-bgh>
+* 3a17ca8 - feat: add b256<->u256 from impls (#398) (4 weeks ago) <Matthias Seitz>
+* 3789509 - feat: add API to retrieve unpadded bytecode (#397) (5 weeks ago) <Wodann>
+* 5ab154a - chore(deps): bump tokio from 1.25.0 to 1.26.0 (#395) (5 weeks ago) <dependabot[bot]>
+* f91d5f9 - refactor: remove gas blocks (#391) (5 weeks ago) <Bjerg>
+* 8dc024a - Add copyright start year (#387) (5 weeks ago) <Marius Kjærstad>
+* 4d2f074 - feat: add EVM::with_env (#385) (6 weeks ago) <Matthias Seitz>
+* 5efd9d1 - impl NonceTooHigh/ NonceTooLow checks (#383) (6 weeks ago) <gd>
+* 8e6f4f2 - chore: fix compilation if serde not enabled (#381) (7 weeks ago) <rakita>
+* 92f08be - feat: json opcode traces EIP-3155 (#356) (7 weeks ago) <pistomat>
+* ec582a8 - chore(deps): bump once_cell from 1.17.0 to 1.17.1 (#378) (7 weeks ago) <dependabot[bot]>
+* 188dacf - improvement: derive Debug for DatabaseComponentError (#377) (7 weeks ago) <Wodann>
+* 0401cfd - Add B160/B256 From primitive_types traits (#380) (7 weeks ago) <Francesco Cinà>
+* a8ae3f4 - fix: using pop_top instead of pop in eval_exp (#379) (7 weeks ago) <flyq>
+* 08ce847 - feat(Shanghai): All EIPs: push0, warm coinbase, limit/measure initcode (#376) (7 weeks ago) <rakita>
+* 6710511 - add no_std to primitives (#366) (7 weeks ago) <rakita>
+* d5ebdb0 - chore(deps): bump tokio from 1.24.2 to 1.25.0 (#352) (7 weeks ago) <dependabot[bot]>
+* ebaccca - chore(deps): bump futures from 0.3.25 to 0.3.26 (#353) (7 weeks ago) <dependabot[bot]>
+* 5788340 - chore(deps): bump bytes from 1.3.0 to 1.4.0 (#355) (7 weeks ago) <dependabot[bot]>
+* d3fba88 - chore(deps): bump serde_json from 1.0.92 to 1.0.93 (#365) (7 weeks ago) <dependabot[bot]>
+* e22c3f3 - fix: call create_end for all code paths (#362) (7 weeks ago) <Wodann>
+* b4c62e9 - chore: rename Then to Than (#368) (7 weeks ago) <Matthias Seitz>
+* 1c3e9e3 - improvement: use alloc & core for Arc impl (#367) (8 weeks ago) <Wodann>
+* 3158ce9 - feat: implement Debug for DatabaseComponentError if supported (#363) (8 weeks ago) <Wodann>
+* d9727c2 - improvement: add error details to InvalidTransaction::LackOfFundForGasLimit (#364) (8 weeks ago) <Wodann>
+* 6b170b4 - Use gas price in place of effective gas price for initial balance check (#359) (8 weeks ago) <gd>
+* 5d6ecd0 - improvement: implement BlockHash for Arc<BlockHashRef> (#361) (8 weeks ago) <Wodann>
+* ae9baba - improvement: implement State for Arc<StateRef> (#360) (8 weeks ago) <Wodann>
+* 2e4e800 - chore(deps): bump serde_json from 1.0.91 to 1.0.92 (#357) (8 weeks ago) <dependabot[bot]>
+* 1fca102 - chore(deps): bump proptest from 1.0.0 to 1.1.0 (#358) (8 weeks ago) <dependabot[bot]>
+* 9b663bb - feat: Different OutOfGas Error types (#354) (9 weeks ago) <Chirag Baghasingh>
+* 10187ed - data change (9 weeks ago) <rakita>
+
 # v3.0.0
 date 29.01.2022
 
