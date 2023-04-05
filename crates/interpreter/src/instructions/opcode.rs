@@ -1,3 +1,6 @@
+use crate::gas;
+use crate::primitives::SpecId;
+
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct OpCode(u8);
 
@@ -436,3 +439,473 @@ pub const OPCODE_JUMPMAP: [Option<&'static str>; 256] = [
     /* 0xfe */ Some("INVALID"),
     /* 0xff */ Some("SELFDESTRUCT"),
 ];
+
+#[derive(Debug)]
+pub struct OpInfo {
+    /// Data contains few information packed inside u32:
+    /// IS_JUMP (1bit) | IS_GAS_BLOCK_END (1bit) | IS_PUSH (1bit) | gas (29bits)
+    data: u32,
+}
+
+const JUMP_MASK: u32 = 0x80000000;
+const GAS_BLOCK_END_MASK: u32 = 0x40000000;
+const IS_PUSH_MASK: u32 = 0x20000000;
+const GAS_MASK: u32 = 0x1FFFFFFF;
+
+impl OpInfo {
+    #[inline(always)]
+    pub fn is_jump(&self) -> bool {
+        self.data & JUMP_MASK == JUMP_MASK
+    }
+    #[inline(always)]
+    pub fn is_gas_block_end(&self) -> bool {
+        self.data & GAS_BLOCK_END_MASK == GAS_BLOCK_END_MASK
+    }
+    #[inline(always)]
+    pub fn is_push(&self) -> bool {
+        self.data & IS_PUSH_MASK == IS_PUSH_MASK
+    }
+
+    #[inline(always)]
+    pub fn get_gas(&self) -> u32 {
+        self.data & GAS_MASK
+    }
+
+    pub const fn none() -> Self {
+        Self { data: 0 }
+    }
+
+    pub const fn gas_block_end(gas: u64) -> Self {
+        Self {
+            data: gas as u32 | GAS_BLOCK_END_MASK,
+        }
+    }
+    pub const fn dynamic_gas() -> Self {
+        Self { data: 0 }
+    }
+
+    pub const fn gas(gas: u64) -> Self {
+        Self { data: gas as u32 }
+    }
+    pub const fn push_opcode() -> Self {
+        Self {
+            data: gas::VERYLOW as u32 | IS_PUSH_MASK,
+        }
+    }
+
+    pub const fn jumpdest() -> Self {
+        Self {
+            data: JUMP_MASK | GAS_BLOCK_END_MASK,
+        }
+    }
+}
+
+macro_rules! gas_opcodee {
+    ($name:ident, $spec_id:expr) => {
+        const $name: &'static [OpInfo; 256] = &[
+            /* 0x00  STOP */ OpInfo::gas_block_end(0),
+            /* 0x01  ADD */ OpInfo::gas(gas::VERYLOW),
+            /* 0x02  MUL */ OpInfo::gas(gas::LOW),
+            /* 0x03  SUB */ OpInfo::gas(gas::VERYLOW),
+            /* 0x04  DIV */ OpInfo::gas(gas::LOW),
+            /* 0x05  SDIV */ OpInfo::gas(gas::LOW),
+            /* 0x06  MOD */ OpInfo::gas(gas::LOW),
+            /* 0x07  SMOD */ OpInfo::gas(gas::LOW),
+            /* 0x08  ADDMOD */ OpInfo::gas(gas::MID),
+            /* 0x09  MULMOD */ OpInfo::gas(gas::MID),
+            /* 0x0a  EXP */ OpInfo::dynamic_gas(),
+            /* 0x0b  SIGNEXTEND */ OpInfo::gas(gas::LOW),
+            /* 0x0c */ OpInfo::none(),
+            /* 0x0d */ OpInfo::none(),
+            /* 0x0e */ OpInfo::none(),
+            /* 0x0f */ OpInfo::none(),
+            /* 0x10  LT */ OpInfo::gas(gas::VERYLOW),
+            /* 0x11  GT */ OpInfo::gas(gas::VERYLOW),
+            /* 0x12  SLT */ OpInfo::gas(gas::VERYLOW),
+            /* 0x13  SGT */ OpInfo::gas(gas::VERYLOW),
+            /* 0x14  EQ */ OpInfo::gas(gas::VERYLOW),
+            /* 0x15  ISZERO */ OpInfo::gas(gas::VERYLOW),
+            /* 0x16  AND */ OpInfo::gas(gas::VERYLOW),
+            /* 0x17  OR */ OpInfo::gas(gas::VERYLOW),
+            /* 0x18  XOR */ OpInfo::gas(gas::VERYLOW),
+            /* 0x19  NOT */ OpInfo::gas(gas::VERYLOW),
+            /* 0x1a  BYTE */ OpInfo::gas(gas::VERYLOW),
+            /* 0x1b  SHL */
+            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::CONSTANTINOPLE) {
+                gas::VERYLOW
+            } else {
+                0
+            }),
+            /* 0x1c  SHR */
+            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::CONSTANTINOPLE) {
+                gas::VERYLOW
+            } else {
+                0
+            }),
+            /* 0x1d  SAR */
+            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::CONSTANTINOPLE) {
+                gas::VERYLOW
+            } else {
+                0
+            }),
+            /* 0x1e */ OpInfo::none(),
+            /* 0x1f */ OpInfo::none(),
+            /* 0x20  SHA3 */ OpInfo::dynamic_gas(),
+            /* 0x21 */ OpInfo::none(),
+            /* 0x22 */ OpInfo::none(),
+            /* 0x23 */ OpInfo::none(),
+            /* 0x24 */ OpInfo::none(),
+            /* 0x25 */ OpInfo::none(),
+            /* 0x26 */ OpInfo::none(),
+            /* 0x27 */ OpInfo::none(),
+            /* 0x28 */ OpInfo::none(),
+            /* 0x29 */ OpInfo::none(),
+            /* 0x2a */ OpInfo::none(),
+            /* 0x2b */ OpInfo::none(),
+            /* 0x2c */ OpInfo::none(),
+            /* 0x2d */ OpInfo::none(),
+            /* 0x2e */ OpInfo::none(),
+            /* 0x2f */ OpInfo::none(),
+            /* 0x30  ADDRESS */ OpInfo::gas(gas::BASE),
+            /* 0x31  BALANCE */ OpInfo::dynamic_gas(),
+            /* 0x32  ORIGIN */ OpInfo::gas(gas::BASE),
+            /* 0x33  CALLER */ OpInfo::gas(gas::BASE),
+            /* 0x34  CALLVALUE */ OpInfo::gas(gas::BASE),
+            /* 0x35  CALLDATALOAD */ OpInfo::gas(gas::VERYLOW),
+            /* 0x36  CALLDATASIZE */ OpInfo::gas(gas::BASE),
+            /* 0x37  CALLDATACOPY */ OpInfo::dynamic_gas(),
+            /* 0x38  CODESIZE */ OpInfo::gas(gas::BASE),
+            /* 0x39  CODECOPY */ OpInfo::dynamic_gas(),
+            /* 0x3a  GASPRICE */ OpInfo::gas(gas::BASE),
+            /* 0x3b  EXTCODESIZE */
+            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::BERLIN) {
+                gas::WARM_STORAGE_READ_COST // add only part of gas
+            } else if SpecId::enabled($spec_id, SpecId::TANGERINE) {
+                700
+            } else {
+                20
+            }),
+            /* 0x3c  EXTCODECOPY */
+            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::BERLIN) {
+                gas::WARM_STORAGE_READ_COST // add only part of gas
+            } else if SpecId::enabled($spec_id, SpecId::TANGERINE) {
+                700
+            } else {
+                20
+            }),
+            /* 0x3d  RETURNDATASIZE */
+            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::BYZANTIUM) {
+                gas::BASE
+            } else {
+                0
+            }),
+            /* 0x3e  RETURNDATACOPY */ OpInfo::dynamic_gas(),
+            /* 0x3f  EXTCODEHASH */
+            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::BERLIN) {
+                gas::WARM_STORAGE_READ_COST // add only part of gas
+            } else if SpecId::enabled($spec_id, SpecId::ISTANBUL) {
+                700
+            } else if SpecId::enabled($spec_id, SpecId::PETERSBURG) {
+                // constantinople
+                400
+            } else {
+                0 // not enabled
+            }),
+            /* 0x40  BLOCKHASH */ OpInfo::gas(gas::BLOCKHASH),
+            /* 0x41  COINBASE */ OpInfo::gas(gas::BASE),
+            /* 0x42  TIMESTAMP */ OpInfo::gas(gas::BASE),
+            /* 0x43  NUMBER */ OpInfo::gas(gas::BASE),
+            /* 0x44  DIFFICULTY */ OpInfo::gas(gas::BASE),
+            /* 0x45  GASLIMIT */ OpInfo::gas(gas::BASE),
+            /* 0x46  CHAINID */
+            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::ISTANBUL) {
+                gas::BASE
+            } else {
+                0
+            }),
+            /* 0x47  SELFBALANCE */
+            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::ISTANBUL) {
+                gas::LOW
+            } else {
+                0
+            }),
+            /* 0x48  BASEFEE */
+            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::LONDON) {
+                gas::BASE
+            } else {
+                0
+            }),
+            /* 0x49 */ OpInfo::none(),
+            /* 0x4a */ OpInfo::none(),
+            /* 0x4b */ OpInfo::none(),
+            /* 0x4c */ OpInfo::none(),
+            /* 0x4d */ OpInfo::none(),
+            /* 0x4e */ OpInfo::none(),
+            /* 0x4f */ OpInfo::none(),
+            /* 0x50  POP */ OpInfo::gas(gas::BASE),
+            /* 0x51  MLOAD */ OpInfo::gas(gas::VERYLOW),
+            /* 0x52  MSTORE */ OpInfo::gas(gas::VERYLOW),
+            /* 0x53  MSTORE8 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x54  SLOAD */ OpInfo::dynamic_gas(),
+            /* 0x55  SSTORE */ OpInfo::gas_block_end(0),
+            /* 0x56  JUMP */ OpInfo::gas_block_end(gas::MID),
+            /* 0x57  JUMPI */ OpInfo::gas_block_end(gas::HIGH),
+            /* 0x58  PC */ OpInfo::gas(gas::BASE),
+            /* 0x59  MSIZE */ OpInfo::gas(gas::BASE),
+            /* 0x5a  GAS */ OpInfo::gas_block_end(gas::BASE),
+            /* 0x5b  JUMPDEST */
+            // gas::JUMPDEST gas is calculated in function call,
+            OpInfo::jumpdest(),
+            /* 0x5c */ OpInfo::none(),
+            /* 0x5d */ OpInfo::none(),
+            /* 0x5e */ OpInfo::none(),
+            /* 0x5f PUSH0 */
+            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::SHANGHAI) {
+                gas::BASE
+            } else {
+                0
+            }),
+            /* 0x60  PUSH1 */ OpInfo::push_opcode(),
+            /* 0x61  PUSH2 */ OpInfo::push_opcode(),
+            /* 0x62  PUSH3 */ OpInfo::push_opcode(),
+            /* 0x63  PUSH4 */ OpInfo::push_opcode(),
+            /* 0x64  PUSH5 */ OpInfo::push_opcode(),
+            /* 0x65  PUSH6 */ OpInfo::push_opcode(),
+            /* 0x66  PUSH7 */ OpInfo::push_opcode(),
+            /* 0x67  PUSH8 */ OpInfo::push_opcode(),
+            /* 0x68  PUSH9 */ OpInfo::push_opcode(),
+            /* 0x69  PUSH10 */ OpInfo::push_opcode(),
+            /* 0x6a  PUSH11 */ OpInfo::push_opcode(),
+            /* 0x6b  PUSH12 */ OpInfo::push_opcode(),
+            /* 0x6c  PUSH13 */ OpInfo::push_opcode(),
+            /* 0x6d  PUSH14 */ OpInfo::push_opcode(),
+            /* 0x6e  PUSH15 */ OpInfo::push_opcode(),
+            /* 0x6f  PUSH16 */ OpInfo::push_opcode(),
+            /* 0x70  PUSH17 */ OpInfo::push_opcode(),
+            /* 0x71  PUSH18 */ OpInfo::push_opcode(),
+            /* 0x72  PUSH19 */ OpInfo::push_opcode(),
+            /* 0x73  PUSH20 */ OpInfo::push_opcode(),
+            /* 0x74  PUSH21 */ OpInfo::push_opcode(),
+            /* 0x75  PUSH22 */ OpInfo::push_opcode(),
+            /* 0x76  PUSH23 */ OpInfo::push_opcode(),
+            /* 0x77  PUSH24 */ OpInfo::push_opcode(),
+            /* 0x78  PUSH25 */ OpInfo::push_opcode(),
+            /* 0x79  PUSH26 */ OpInfo::push_opcode(),
+            /* 0x7a  PUSH27 */ OpInfo::push_opcode(),
+            /* 0x7b  PUSH28 */ OpInfo::push_opcode(),
+            /* 0x7c  PUSH29 */ OpInfo::push_opcode(),
+            /* 0x7d  PUSH30 */ OpInfo::push_opcode(),
+            /* 0x7e  PUSH31 */ OpInfo::push_opcode(),
+            /* 0x7f  PUSH32 */ OpInfo::push_opcode(),
+            /* 0x80  DUP1 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x81  DUP2 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x82  DUP3 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x83  DUP4 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x84  DUP5 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x85  DUP6 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x86  DUP7 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x87  DUP8 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x88  DUP9 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x89  DUP10 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x8a  DUP11 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x8b  DUP12 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x8c  DUP13 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x8d  DUP14 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x8e  DUP15 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x8f  DUP16 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x90  SWAP1 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x91  SWAP2 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x92  SWAP3 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x93  SWAP4 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x94  SWAP5 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x95  SWAP6 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x96  SWAP7 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x97  SWAP8 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x98  SWAP9 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x99  SWAP10 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x9a  SWAP11 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x9b  SWAP12 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x9c  SWAP13 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x9d  SWAP14 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x9e  SWAP15 */ OpInfo::gas(gas::VERYLOW),
+            /* 0x9f  SWAP16 */ OpInfo::gas(gas::VERYLOW),
+            /* 0xa0  LOG0 */ OpInfo::dynamic_gas(),
+            /* 0xa1  LOG1 */ OpInfo::dynamic_gas(),
+            /* 0xa2  LOG2 */ OpInfo::dynamic_gas(),
+            /* 0xa3  LOG3 */ OpInfo::dynamic_gas(),
+            /* 0xa4  LOG4 */ OpInfo::dynamic_gas(),
+            /* 0xa5 */ OpInfo::none(),
+            /* 0xa6 */ OpInfo::none(),
+            /* 0xa7 */ OpInfo::none(),
+            /* 0xa8 */ OpInfo::none(),
+            /* 0xa9 */ OpInfo::none(),
+            /* 0xaa */ OpInfo::none(),
+            /* 0xab */ OpInfo::none(),
+            /* 0xac */ OpInfo::none(),
+            /* 0xad */ OpInfo::none(),
+            /* 0xae */ OpInfo::none(),
+            /* 0xaf */ OpInfo::none(),
+            /* 0xb0 */ OpInfo::none(),
+            /* 0xb1 */ OpInfo::none(),
+            /* 0xb2 */ OpInfo::none(),
+            /* 0xb3 */ OpInfo::none(),
+            /* 0xb4 */ OpInfo::none(),
+            /* 0xb5 */ OpInfo::none(),
+            /* 0xb6 */ OpInfo::none(),
+            /* 0xb7 */ OpInfo::none(),
+            /* 0xb8 */ OpInfo::none(),
+            /* 0xb9 */ OpInfo::none(),
+            /* 0xba */ OpInfo::none(),
+            /* 0xbb */ OpInfo::none(),
+            /* 0xbc */ OpInfo::none(),
+            /* 0xbd */ OpInfo::none(),
+            /* 0xbe */ OpInfo::none(),
+            /* 0xbf */ OpInfo::none(),
+            /* 0xc0 */ OpInfo::none(),
+            /* 0xc1 */ OpInfo::none(),
+            /* 0xc2 */ OpInfo::none(),
+            /* 0xc3 */ OpInfo::none(),
+            /* 0xc4 */ OpInfo::none(),
+            /* 0xc5 */ OpInfo::none(),
+            /* 0xc6 */ OpInfo::none(),
+            /* 0xc7 */ OpInfo::none(),
+            /* 0xc8 */ OpInfo::none(),
+            /* 0xc9 */ OpInfo::none(),
+            /* 0xca */ OpInfo::none(),
+            /* 0xcb */ OpInfo::none(),
+            /* 0xcc */ OpInfo::none(),
+            /* 0xcd */ OpInfo::none(),
+            /* 0xce */ OpInfo::none(),
+            /* 0xcf */ OpInfo::none(),
+            /* 0xd0 */ OpInfo::none(),
+            /* 0xd1 */ OpInfo::none(),
+            /* 0xd2 */ OpInfo::none(),
+            /* 0xd3 */ OpInfo::none(),
+            /* 0xd4 */ OpInfo::none(),
+            /* 0xd5 */ OpInfo::none(),
+            /* 0xd6 */ OpInfo::none(),
+            /* 0xd7 */ OpInfo::none(),
+            /* 0xd8 */ OpInfo::none(),
+            /* 0xd9 */ OpInfo::none(),
+            /* 0xda */ OpInfo::none(),
+            /* 0xdb */ OpInfo::none(),
+            /* 0xdc */ OpInfo::none(),
+            /* 0xdd */ OpInfo::none(),
+            /* 0xde */ OpInfo::none(),
+            /* 0xdf */ OpInfo::none(),
+            /* 0xe0 */ OpInfo::none(),
+            /* 0xe1 */ OpInfo::none(),
+            /* 0xe2 */ OpInfo::none(),
+            /* 0xe3 */ OpInfo::none(),
+            /* 0xe4 */ OpInfo::none(),
+            /* 0xe5 */ OpInfo::none(),
+            /* 0xe6 */ OpInfo::none(),
+            /* 0xe7 */ OpInfo::none(),
+            /* 0xe8 */ OpInfo::none(),
+            /* 0xe9 */ OpInfo::none(),
+            /* 0xea */ OpInfo::none(),
+            /* 0xeb */ OpInfo::none(),
+            /* 0xec */ OpInfo::none(),
+            /* 0xed */ OpInfo::none(),
+            /* 0xee */ OpInfo::none(),
+            /* 0xef */ OpInfo::none(),
+            /* 0xf0  CREATE */ OpInfo::gas_block_end(0),
+            /* 0xf1  CALL */ OpInfo::gas_block_end(0),
+            /* 0xf2  CALLCODE */ OpInfo::gas_block_end(0),
+            /* 0xf3  RETURN */ OpInfo::gas_block_end(0),
+            /* 0xf4  DELEGATECALL */ OpInfo::gas_block_end(0),
+            /* 0xf5  CREATE2 */ OpInfo::gas_block_end(0),
+            /* 0xf6 */ OpInfo::none(),
+            /* 0xf7 */ OpInfo::none(),
+            /* 0xf8 */ OpInfo::none(),
+            /* 0xf9 */ OpInfo::none(),
+            /* 0xfa  STATICCALL */ OpInfo::gas_block_end(0),
+            /* 0xfb */ OpInfo::none(),
+            /* 0xfc */ OpInfo::none(),
+            /* 0xfd  REVERT */ OpInfo::gas_block_end(0),
+            /* 0xfe  INVALID */ OpInfo::gas_block_end(0),
+            /* 0xff  SELFDESTRUCT */ OpInfo::gas_block_end(0),
+        ];
+    };
+}
+
+pub const fn spec_opcode_gas(spec_id: SpecId) -> &'static [OpInfo; 256] {
+    match spec_id {
+        SpecId::FRONTIER => {
+            gas_opcodee!(FRONTIER, SpecId::FRONTIER);
+            FRONTIER
+        }
+        SpecId::FRONTIER_THAWING => {
+            gas_opcodee!(FRONTIER_THAWING, SpecId::FRONTIER_THAWING);
+            FRONTIER_THAWING
+        }
+        SpecId::HOMESTEAD => {
+            gas_opcodee!(HOMESTEAD, SpecId::HOMESTEAD);
+            HOMESTEAD
+        }
+        SpecId::DAO_FORK => {
+            gas_opcodee!(DAO_FORK, SpecId::DAO_FORK);
+            DAO_FORK
+        }
+        SpecId::TANGERINE => {
+            gas_opcodee!(TANGERINE, SpecId::TANGERINE);
+            TANGERINE
+        }
+        SpecId::SPURIOUS_DRAGON => {
+            gas_opcodee!(SPURIOUS_DRAGON, SpecId::SPURIOUS_DRAGON);
+            SPURIOUS_DRAGON
+        }
+        SpecId::BYZANTIUM => {
+            gas_opcodee!(BYZANTIUM, SpecId::BYZANTIUM);
+            BYZANTIUM
+        }
+        SpecId::CONSTANTINOPLE => {
+            gas_opcodee!(CONSTANTINOPLE, SpecId::CONSTANTINOPLE);
+            CONSTANTINOPLE
+        }
+        SpecId::PETERSBURG => {
+            gas_opcodee!(PETERSBURG, SpecId::PETERSBURG);
+            PETERSBURG
+        }
+        SpecId::ISTANBUL => {
+            gas_opcodee!(ISTANBUL, SpecId::ISTANBUL);
+            ISTANBUL
+        }
+        SpecId::MUIR_GLACIER => {
+            gas_opcodee!(MUIRGLACIER, SpecId::MUIR_GLACIER);
+            MUIRGLACIER
+        }
+        SpecId::BERLIN => {
+            gas_opcodee!(BERLIN, SpecId::BERLIN);
+            BERLIN
+        }
+        SpecId::LONDON => {
+            gas_opcodee!(LONDON, SpecId::LONDON);
+            LONDON
+        }
+        SpecId::ARROW_GLACIER => {
+            gas_opcodee!(ARROW_GLACIER, SpecId::ARROW_GLACIER);
+            ARROW_GLACIER
+        }
+        SpecId::GRAY_GLACIER => {
+            gas_opcodee!(GRAY_GLACIER, SpecId::GRAY_GLACIER);
+            GRAY_GLACIER
+        }
+        SpecId::MERGE => {
+            gas_opcodee!(MERGE, SpecId::MERGE);
+            MERGE
+        }
+        SpecId::SHANGHAI => {
+            gas_opcodee!(SHANGAI, SpecId::SHANGHAI);
+            SHANGAI
+        }
+        SpecId::CANCUN => {
+            gas_opcodee!(CANCUN, SpecId::CANCUN);
+            CANCUN
+        }
+        SpecId::LATEST => {
+            gas_opcodee!(LATEST, SpecId::LATEST);
+            LATEST
+        }
+    }
+}
