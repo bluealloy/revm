@@ -659,7 +659,12 @@ macro_rules! gas_opcodee {
             /* 0x5c */ OpInfo::none(),
             /* 0x5d */ OpInfo::none(),
             /* 0x5e */ OpInfo::none(),
-            /* 0x5f */ OpInfo::none(),
+            /* 0x5f PUSH0 */
+            OpInfo::gas(if SpecId::enabled($spec_id, SpecId:: SHANGHAI) {
+                gas::BASE
+            } else {
+                0
+            }),
             /* 0x60  PUSH1 */ OpInfo::push_opcode(),
             /* 0x61  PUSH2 */ OpInfo::push_opcode(),
             /* 0x62  PUSH3 */ OpInfo::push_opcode(),
