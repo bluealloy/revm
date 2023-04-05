@@ -660,7 +660,7 @@ macro_rules! gas_opcodee {
             /* 0x5d */ OpInfo::none(),
             /* 0x5e */ OpInfo::none(),
             /* 0x5f PUSH0 */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId:: SHANGHAI) {
+            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::SHANGHAI) {
                 gas::BASE
             } else {
                 0
