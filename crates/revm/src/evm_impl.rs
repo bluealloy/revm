@@ -13,7 +13,10 @@ use crate::primitives::{
 use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector};
 use alloc::vec::Vec;
 use core::{cmp::min, marker::PhantomData};
-use revm_interpreter::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
+use revm_interpreter::{
+    primitives::{Journal, Logs},
+    MAX_CODE_SIZE, MAX_INITCODE_SIZE,
+};
 use revm_precompile::{Precompile, Precompiles};
 use std::cmp::Ordering;
 
@@ -259,7 +262,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             }
         }
 
-        let (state, logs, gas_used, gas_refunded) = self.finalize::<GSPEC>(caller, &gas);
+        let (state, journal, logs, gas_used, gas_refunded) = self.finalize::<GSPEC>(caller, &gas);
 
         let result = match exit_reason.into() {
             SuccessOrHalt::Success(reason) => ExecutionResult::Success {
@@ -284,8 +287,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                 panic!("Internal return flags should remain internal {exit_reason:?}")
             }
         };
-
-        Ok(ResultAndState { result, state })
+        Ok(ResultAndState {
+            result,
+            state,
+            journal,
+        })
     }
 }
 
@@ -318,7 +324,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         &mut self,
         caller: B160,
         gas: &Gas,
-    ) -> (HashMap<B160, Account>, Vec<Log>, u64, u64) {
+    ) -> (HashMap<B160, Account>, Journal, Logs, u64, u64) {
         let coinbase = self.data.env.block.coinbase;
         let (gas_used, gas_refunded) = if crate::USE_GAS {
             let effective_gas_price = self.data.env.effective_gas_price();
@@ -376,7 +382,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             self.data.journaled_state.touch(&coinbase);
             (0, 0)
         };
-        let (mut new_state, logs) = self.data.journaled_state.finalize();
+        let (mut new_state, journal, logs) = self.data.journaled_state.finalize();
         // precompiles are special case. If there is precompiles in finalized Map that means some balance is
         // added to it, we need now to load precompile address from db and add this amount to it so that we
         // will have sum.
@@ -397,7 +403,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             }
         }
 
-        (new_state, logs, gas_used, gas_refunded)
+        (new_state, journal, logs, gas_used, gas_refunded)
     }
 
     fn initialization<SPEC: Spec>(&mut self) -> Result<u64, EVMError<DB::Error>> {

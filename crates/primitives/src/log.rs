@@ -1,6 +1,8 @@
 use crate::{bytes::Bytes, B160, B256};
 use alloc::vec::Vec;
 
+pub type Logs = Vec<Log>;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Log {

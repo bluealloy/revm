@@ -44,7 +44,7 @@ impl<DB> Default for EVM<DB> {
 impl<DB: Database + DatabaseCommit> EVM<DB> {
     /// Execute transaction and apply result to database
     pub fn transact_commit(&mut self) -> Result<ExecutionResult, EVMError<DB::Error>> {
-        let ResultAndState { result, state } = self.transact()?;
+        let ResultAndState { result, state, .. } = self.transact()?;
         self.db.as_mut().unwrap().commit(state);
         Ok(result)
     }
@@ -53,7 +53,7 @@ impl<DB: Database + DatabaseCommit> EVM<DB> {
         &mut self,
         inspector: INSP,
     ) -> Result<ExecutionResult, EVMError<DB::Error>> {
-        let ResultAndState { result, state } = self.inspect(inspector)?;
+        let ResultAndState { result, state, .. } = self.inspect(inspector)?;
         self.db.as_mut().unwrap().commit(state);
         Ok(result)
     }

@@ -1,10 +1,11 @@
 use crate::interpreter::{inner_models::SelfDestructResult, InstructionResult};
 use crate::primitives::{
-    db::Database, hash_map::Entry, Account, Bytecode, HashMap, Log, State, StorageSlot, B160,
-    KECCAK_EMPTY, U256,
+    db::Database, hash_map::Entry, Account, Bytecode, HashMap, JournalEntry, Log, State,
+    StorageSlot, B160, KECCAK_EMPTY, U256,
 };
 use alloc::{vec, vec::Vec};
 use core::mem::{self};
+use revm_interpreter::primitives::{Journal, Logs};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -16,7 +17,7 @@ pub struct JournaledState {
     /// how deep are we in call stack.
     pub depth: usize,
     /// journal with changes that happened between calls.
-    pub journal: Vec<Vec<JournalEntry>>,
+    pub journal: Journal,
     /// Ethereum before EIP-161 differently defined empty and not-existing account
     /// so we need to take care of that difference. Set this to false if you are handling
     /// legacy transactions
@@ -24,52 +25,6 @@ pub struct JournaledState {
     /// It is assumed that precompiles start from 0x1 address and spand next N addresses.
     /// we are using that assumption here
     pub num_of_precompiles: usize,
-}
-
-#[derive(Debug, Clone, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum JournalEntry {
-    /// Used to mark account that is hot inside EVM in regards to EIP-2929 AccessList.
-    /// Action: We will add Account to state.
-    /// Revert: we will remove account from state.
-    AccountLoaded { address: B160 },
-    /// Mark account to be destroyed and journal balance to be reverted
-    /// Action: Mark account and transfer the balance
-    /// Revert: Unmark the account and transfer balance back
-    AccountDestroyed {
-        address: B160,
-        target: B160,
-        was_destroyed: bool, // if account had already been destroyed before this journal entry
-        had_balance: U256,
-    },
-    /// Loading account does not mean that account will need to be added to MerkleTree (touched).
-    /// Only when account is called (to execute contract or transfer balance) only then account is made touched.
-    /// Action: Mark account touched
-    /// Revert: Unmark account touched
-    AccountTouched { address: B160 },
-    /// Transfer balance between two accounts
-    /// Action: Transfer balance
-    /// Revert: Transfer balance back
-    BalanceTransfer { from: B160, to: B160, balance: U256 },
-    /// Increment nonce
-    /// Action: Increment nonce by one
-    /// Revert: Decrement nonce by one
-    NonceChange {
-        address: B160, //geth has nonce value,
-    },
-    /// It is used to track both storage change and hot load of storage slot. For hot load in regard
-    /// to EIP-2929 AccessList had_value will be None
-    /// Action: Storage change or hot load
-    /// Revert: Revert to previous value or remove slot from storage
-    StorageChange {
-        address: B160,
-        key: U256,
-        had_value: Option<U256>, //if none, storage slot was cold loaded from db and needs to be removed
-    },
-    /// Code changed
-    /// Action: Account code changed
-    /// Revert: Revert to previous bytecode.
-    CodeChange { address: B160, had_code: Bytecode },
 }
 
 /// SubRoutine checkpoint that will help us to go back from this
@@ -114,7 +69,7 @@ impl JournaledState {
     }
 
     /// do cleanup and return modified state
-    pub fn finalize(&mut self) -> (State, Vec<Log>) {
+    pub fn finalize(&mut self) -> (State, Journal, Logs) {
         let state = mem::take(&mut self.state);
 
         let state = state
@@ -123,9 +78,9 @@ impl JournaledState {
             .collect();
 
         let logs = mem::take(&mut self.logs);
-        self.journal = vec![vec![]];
         self.depth = 0;
-        (state, logs)
+        let journal = mem::take(&mut self.journal);
+        (state, journal, logs)
     }
 
     /// Use it with load_account function.

@@ -239,7 +239,7 @@ mod tests {
         evm.env.tx.gas_limit = 21100;
 
         let mut inspector = StackInspector::default();
-        let ResultAndState { result, state } = evm.inspect(&mut inspector).unwrap();
+        let ResultAndState { result, state, .. } = evm.inspect(&mut inspector).unwrap();
         println!("{result:?} {state:?} {inspector:?}");
 
         for (pc, gas) in inspector.gas_remaining_steps {

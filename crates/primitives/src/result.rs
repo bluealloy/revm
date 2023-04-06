@@ -1,4 +1,4 @@
-use crate::{Log, State, B160};
+use crate::{Journal, Log, State, B160};
 use alloc::vec::Vec;
 use bytes::Bytes;
 use ruint::aliases::U256;
@@ -12,6 +12,8 @@ pub struct ResultAndState {
     pub result: ExecutionResult,
     /// State that got updated
     pub state: State,
+    /// Journal of state changes.
+    pub journal: Journal,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
