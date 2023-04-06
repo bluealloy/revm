@@ -102,7 +102,7 @@ async fn main() -> Result<()> {
     let (reserve0, reserve1, ts): (u128, u128, u32) =
         abi.decode_output("getReserves", value.unwrap())?;
 
-    // Print emualted getReserves() call output
+    // Print emulated getReserves() call output
     println!("Reserve0: {:#?}", reserve0);
     println!("Reserve1: {:#?}", reserve1);
     println!("Timestamp: {:#?}", ts);
