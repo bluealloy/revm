@@ -1,4 +1,4 @@
-//! GasIspector. Helper Inspector to calculte gas for others.
+//! GasIspector. Helper Inspector to calculate gas for others.
 //!
 use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult};
 use crate::primitives::{db::Database, Bytes, B160};

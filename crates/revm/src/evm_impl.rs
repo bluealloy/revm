@@ -71,7 +71,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             if !disable_base_fee && effective_gas_price < basefee {
                 return Err(InvalidTransaction::GasPriceLessThanBasefee.into());
             }
-            // check if priority fee is lower then max fee
+            // check if priority fee is lower than max fee
         }
 
         #[cfg(feature = "optional_block_gas_limit")]
@@ -96,7 +96,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let disable_eip3607 = false;
 
         // EIP-3607: Reject transactions from senders with deployed code
-        // This EIP is introduced after london but there was no colision in past
+        // This EIP is introduced after london but there was no collision in past
         // so we can leave it enabled always
         if !disable_eip3607
             && self.data.journaled_state.account(caller).info.code_hash != KECCAK_EMPTY
