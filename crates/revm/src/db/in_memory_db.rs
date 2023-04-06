@@ -78,15 +78,15 @@ impl From<AccountInfo> for DbAccount {
 
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub enum AccountState {
-    /// Before Spurious Dragon hardfork there were a difference between empty and not existing.
+    /// Before Spurious Dragon hardfork there was a difference between empty and not existing.
     /// And we are flaging it here.
     NotExisting,
     /// EVM touched this account. For newer hardfork this means it can be clearead/removed from state.
     Touched,
-    /// EVM cleared storage of this account, mostly by selfdestruct, we dont ask database for storage slots
-    /// and asume they are U256::ZERO
+    /// EVM cleared storage of this account, mostly by selfdestruct, we don't ask database for storage slots
+    /// and assume they are U256::ZERO
     StorageCleared,
-    /// EVM didnt interacted with this account
+    /// EVM didn't interacted with this account
     #[default]
     None,
 }
