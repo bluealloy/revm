@@ -58,6 +58,7 @@ mod secp256k1 {
 }
 
 fn ec_recover_run(i: &[u8], target_gas: u64) -> PrecompileResult {
+    use alloc::vec::Vec;
     use core::cmp::min;
 
     const ECRECOVER_BASE: u64 = 3_000;

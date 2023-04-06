@@ -1,4 +1,4 @@
-//#![no_std]
+#![no_std]
 
 mod blake2;
 mod bn128;
