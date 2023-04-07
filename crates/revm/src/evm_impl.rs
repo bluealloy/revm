@@ -12,10 +12,10 @@ use crate::primitives::{
 };
 use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector};
 use alloc::vec::Vec;
+use core::cmp::Ordering;
 use core::{cmp::min, marker::PhantomData};
 use revm_interpreter::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
 use revm_precompile::{Precompile, Precompiles};
-use std::cmp::Ordering;
 
 pub struct EVMData<'a, DB: Database> {
     pub env: &'a mut Env,

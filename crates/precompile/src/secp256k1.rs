@@ -14,8 +14,8 @@ mod secp256k1 {
     use crate::B256;
 
     pub fn ecrecover(sig: &[u8; 65], msg: &B256) -> Result<B256, Error> {
+        // parse signature
         let recid = RecoveryId::from_byte(sig[64]).expect("Recovery id is valid");
-
         let signature = Signature::from_slice(&sig[..64])?;
 
         // recover key
@@ -27,6 +27,8 @@ mod secp256k1 {
                 .to_encoded_point(/* compress = */ false)
                 .as_bytes()[1..],
         );
+
+        // truncate to 20 bytes
         let mut hash: B256 = hash[..].try_into().unwrap();
         hash.iter_mut().take(12).for_each(|i| *i = 0);
         Ok(hash)

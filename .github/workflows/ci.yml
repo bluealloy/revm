@@ -51,3 +51,6 @@ jobs:
 
       - name: cargo clippy
         run: cargo +nightly clippy --all --all-features -- -D warnings
+
+      - name: cargo check no-default-features
+        run: cargo check --no-default-features
