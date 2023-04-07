@@ -5,6 +5,7 @@ use crate::{
     primitives::{Bytes, Env, B160, B256, U256},
     CallInputs, CreateInputs, Gas, InstructionResult, Interpreter, SelfDestructResult,
 };
+pub use alloc::vec::Vec;
 pub use dummy_host::DummyHost;
 
 /// EVM context host.

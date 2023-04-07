@@ -20,7 +20,6 @@ primitive-types = { version = "0.12", features = ["rlp", "serde"] }
 revm = { path = "../../crates/revm", version = "3.1.0", default-features = false, features = [
     "ethersdb",
     "std",
-    "secp256k1",
     "serde",
 ] }
 rlp = { version = "0.5", default-features = false }

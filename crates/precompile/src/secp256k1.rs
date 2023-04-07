@@ -8,23 +8,27 @@ pub const ECRECOVER: PrecompileAddress = PrecompileAddress(
 #[cfg(not(feature = "secp256k1"))]
 #[allow(clippy::module_inception)]
 mod secp256k1 {
-    use core::convert::TryFrom;
-    use k256::{
-        ecdsa::{recoverable, Error},
-        elliptic_curve::sec1::ToEncodedPoint,
-        PublicKey as K256PublicKey,
-    };
+    use k256::ecdsa::{Error, RecoveryId, Signature, VerifyingKey};
     use sha3::{Digest, Keccak256};
 
     use crate::B256;
 
     pub fn ecrecover(sig: &[u8; 65], msg: &B256) -> Result<B256, Error> {
-        let sig = recoverable::Signature::try_from(sig.as_ref())?;
-        let verify_key = sig.recover_verifying_key_from_digest_bytes(msg.into())?;
-        let public_key = K256PublicKey::from(&verify_key);
-        let public_key = public_key.to_encoded_point(/* compress = */ false);
-        let public_key = public_key.as_bytes();
-        let hash = Keccak256::digest(&public_key[1..]);
+        // parse signature
+        let recid = RecoveryId::from_byte(sig[64]).expect("Recovery id is valid");
+        let signature = Signature::from_slice(&sig[..64])?;
+
+        // recover key
+        let recovered_key = VerifyingKey::recover_from_prehash(msg, &signature, recid)?;
+
+        // hash it
+        let hash = Keccak256::digest(
+            &recovered_key
+                .to_encoded_point(/* compress = */ false)
+                .as_bytes()[1..],
+        );
+
+        // truncate to 20 bytes
         let mut hash: B256 = hash[..].try_into().unwrap();
         hash.iter_mut().take(12).for_each(|i| *i = 0);
         Ok(hash)

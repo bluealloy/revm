@@ -3,6 +3,7 @@ use crate::{
     primitives::{Env, Log, B160, B256, KECCAK_EMPTY},
     CallInputs, CreateInputs, Gas, Host, InstructionResult, Interpreter, SelfDestructResult,
 };
+use alloc::vec::Vec;
 
 pub struct DummyHost {
     pub env: Env,
