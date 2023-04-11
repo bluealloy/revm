@@ -51,6 +51,14 @@ impl ExecutionResult {
         }
     }
 
+    /// Consumes the type and returns logs, if execution is not successful, function will return empty vec.
+    pub fn into_logs(self) -> Vec<Log> {
+        match self {
+            Self::Success { logs, .. } => logs,
+            _ => Vec::new(),
+        }
+    }
+
     pub fn gas_used(&self) -> u64 {
         let (Self::Success { gas_used, .. }
         | Self::Revert { gas_used, .. }
