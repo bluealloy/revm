@@ -1,3 +1,9 @@
+# v1.1.1
+date: 14.04.2023
+
+Added back utility function:
+* 7d9b38a - [Interpreter]: Add back `spec_gas_opcode` (#446) (9 days ago) <Enrique Ortiz>
+
 # v1.1.0
 date: 04.04.2023
 

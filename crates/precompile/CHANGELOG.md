@@ -1,3 +1,8 @@
+# v2.0.2
+date: 14.04.2023
+
+* b2c5262 - fix: k256 compile error (#451) (7 days ago) <rakita>
+
 # v2.0.1
 date: 04.04.2023
 
