@@ -1,5 +1,15 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v22 tag
+date: 14.04.2023
+
+Fix for k256 build
+
+* revm: v3.1.1
+* revm-precompile: v2.0.2
+* revm-primitives: v1.1.1
+* revm-interpreter: v1.1.1
+
 # v21 tag
 date 04.04.2023
 

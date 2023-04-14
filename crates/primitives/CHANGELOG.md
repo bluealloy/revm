@@ -1,3 +1,10 @@
+# v1.1.1
+date: 14.04.2023
+
+One change:
+* 4915bd1 - chore: add into_logs (#453) (3 days ago)
+
+
 # v1.1.0
 date: 04.04.2023
 
