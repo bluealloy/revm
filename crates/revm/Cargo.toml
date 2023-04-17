@@ -28,9 +28,12 @@ ethers-providers = { version = "2.0", optional = true }
 ethers-core = { version = "2.0", optional = true }
 futures = { version = "0.3.27", optional = true }
 
-
 [dev-dependencies]
 hex-literal = "0.4"
+ethers-contract = { version = "2.0.3", default-features = false }
+hex = "0.4.3"
+bytes = "1.4.0"
+anyhow = "1.0.70"
 
 [features]
 default = ["std", "secp256k1"]
@@ -57,3 +60,7 @@ arbitrary = ["revm-interpreter/arbitrary"]
 # deprecated feature
 web3db = []
 with-serde = []
+
+[[example]]
+name = "fork_ref_transact"
+path = "../../examples/fork_ref_transact.rs"
