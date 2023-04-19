@@ -254,10 +254,13 @@ impl JournaledState {
         acc.info.code_hash = KECCAK_EMPTY;
         acc.info.code = None;
 
-        self.journal
-            .last_mut()
-            .unwrap()
-            .push(JournalEntry::AccountTouched { address });
+        if !acc.is_touched {
+            acc.is_touched = true;
+            self.journal
+                .last_mut()
+                .unwrap()
+                .push(JournalEntry::AccountTouched { address });
+        }
         Ok(true)
     }
 
