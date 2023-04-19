@@ -1,5 +1,12 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v23 tag
+date: 19.04.2023
+
+consensus bug fix inside journal.
+
+* revm: v3.2.0
+
 # v22 tag
 date: 14.04.2023
 

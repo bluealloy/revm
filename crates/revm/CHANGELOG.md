@@ -1,3 +1,14 @@
+# v3.2.0
+date: 19.04.2023
+
+consensus bug:
+* fix: touched account on creation (#463) (2 hours ago) <Roman Krasiuk>
+
+# v3.1.1
+date: 14.04.2023
+
+bump revm dependency versions.
+
 # v3.1.0
 date: 04.04.2022
 
