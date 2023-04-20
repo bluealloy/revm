@@ -73,9 +73,10 @@ serde = [
     "hashbrown/serde",
     "ruint/serde",
     "bytes/serde",
-    "bitvec/serde",
+    "bitvec/serde"
 ]
 arbitrary = [
+    "std",
     "ruint/arbitrary",
     "ruint/proptest",
     "dep:arbitrary",

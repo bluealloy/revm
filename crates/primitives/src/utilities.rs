@@ -34,7 +34,7 @@ pub fn create2_address(caller: B160, code_hash: B256, salt: U256) -> B160 {
 /// Serde functions to serde as [bytes::Bytes] hex string
 #[cfg(feature = "serde")]
 pub mod serde_hex_bytes {
-    use alloc::string::String;
+    use alloc::string::{String, ToString};
     use serde::{Deserialize, Deserializer, Serializer};
 
     pub fn serialize<S, T>(x: T, s: S) -> Result<S::Ok, S::Error>

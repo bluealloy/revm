@@ -53,6 +53,7 @@ serde = [
     "revm-primitives/serde",
 ]
 arbitrary = [
+    "std",
     "dep:arbitrary",
     "dep:proptest",
     "dep:proptest-derive",
