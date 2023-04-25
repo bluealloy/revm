@@ -26,7 +26,7 @@ Last checked revm requires rust v1.65 or higher for `core::error::Error`
 There were some big efforts on optimization of revm:
 * Optimizing interpreter loop: https://github.com/bluealloy/revm/issues/7
 * Introducing Bytecode format (and better bytecode analysis): https://github.com/bluealloy/revm/issues/121
-* Unification of instruction signatures: https://github.com/bluealloy/revm/pull/283 
+* Unification of instruction signatures: https://github.com/bluealloy/revm/pull/283
 
 # Running eth tests
 
@@ -46,6 +46,12 @@ cargo run --package revm-test --release --bin snailtracer
 
 ```shell
 cargo flamegraph --root --freq 4000 --min-width 0.001 --package revm-test --bin snailtracer
+```
+
+## Running example
+
+```shell
+cargo run -p revm --features ethersdb --example fork_ref_transact
 ```
 
 # Used by:
