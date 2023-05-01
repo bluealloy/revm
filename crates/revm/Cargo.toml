@@ -33,7 +33,7 @@ hex-literal = "0.4"
 ethers-contract = { version = "2.0.3", default-features = false }
 hex = "0.4.3"
 bytes = "1.4.0"
-anyhow = "1.0.70"
+anyhow = "1.0.71"
 
 [features]
 default = ["std", "secp256k1"]
