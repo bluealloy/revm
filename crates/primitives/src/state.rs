@@ -14,7 +14,7 @@ pub struct Account {
     pub is_destroyed: bool,
     /// if account is touched
     pub is_touched: bool,
-    /// used only for pre spurious dragon hardforks where exisnting and empty was two saparate states.
+    /// used only for pre spurious dragon hardforks where existing and empty were two separate states.
     /// it became same state after EIP-161: State trie clearing
     pub is_not_existing: bool,
 }
