@@ -675,7 +675,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     AnalysisKind::Check => Bytecode::new_raw(bytes.clone()).to_checked(),
                     AnalysisKind::Analyse => to_analysed(Bytecode::new_raw(bytes.clone())),
                 };
-
                 self.data
                     .journaled_state
                     .set_code(created_address, bytecode);

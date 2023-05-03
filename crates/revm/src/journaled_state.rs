@@ -5,7 +5,6 @@ use crate::primitives::{
 };
 use alloc::{vec, vec::Vec};
 use core::mem::{self};
-use revm_interpreter::primitives::AccountStatus;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -124,13 +123,18 @@ impl JournaledState {
     fn touch_account(journal: &mut Vec<JournalEntry>, address: &B160, account: &mut Account) {
         if !account.is_touched() {
             journal.push(JournalEntry::AccountTouched { address: *address });
-            account.touch();
+            account.mark_touch();
         }
     }
 
     /// do cleanup and return modified state
     pub fn finalize(&mut self) -> (State, Vec<Log>) {
         let state = mem::take(&mut self.state);
+
+        let state = state
+            .into_iter()
+            .filter(|(_, account)| account.is_touched())
+            .collect();
 
         let logs = mem::take(&mut self.logs);
         self.journal = vec![vec![]];
@@ -236,7 +240,7 @@ impl JournaledState {
         let account = self.state.get_mut(&address).unwrap();
 
         // Check collision. Bytecode needs to be empty.
-        if account.info.code_hash == KECCAK_EMPTY {
+        if account.info.code_hash != KECCAK_EMPTY {
             return false;
         }
         // Check collision. Nonce is not zero
@@ -250,13 +254,20 @@ impl JournaledState {
         }
 
         // set account status to created.
-        account.status |= AccountStatus::Created;
+        account.mark_created();
 
         // Bytecode is initially empty and after constructor is executed and all checks pass
         // the bytecode will be set.
         account.info.code_hash = KECCAK_EMPTY;
         account.info.code = None;
-        account.storage.clear();
+        // Set all storages to default value. They need to be present to act as accessed slots in access list.
+        // it shouldn't be possible for them to have different values then zero as code is not existing for this account
+        // , but because tests can change that assumption we are doing it.
+        let empty = StorageSlot::default();
+        account
+            .storage
+            .iter_mut()
+            .for_each(|(_, slot)| *slot = empty.clone());
 
         // touch account. This is important as for pre SpuriousDragon there is possibility
         Self::touch_account(self.journal.last_mut().unwrap(), &address, account);
@@ -284,7 +295,7 @@ impl JournaledState {
                         continue;
                     }
                     // remove touched status
-                    state.get_mut(&address).unwrap().status -= AccountStatus::Touched;
+                    state.get_mut(&address).unwrap().unmark_touch();
                 }
                 JournalEntry::AccountDestroyed {
                     address,
@@ -297,10 +308,10 @@ impl JournaledState {
                     // selfdestructs in one transaction.
                     if was_destroyed {
                         // flag is still selfdestructed
-                        account.status |= AccountStatus::SelfDestructed;
+                        account.mark_selfdestruct();
                     } else {
                         // flag that is not selfdestructed
-                        account.status -= AccountStatus::SelfDestructed;
+                        account.unmark_selfdestruct();
                     }
                     account.info.balance += had_balance;
 
@@ -381,8 +392,8 @@ impl JournaledState {
         // transfer all the balance
         let acc = self.state.get_mut(&address).unwrap();
         let balance = mem::take(&mut acc.info.balance);
-        let previously_destroyed = acc.status == AccountStatus::SelfDestructed;
-        acc.status |= AccountStatus::SelfDestructed;
+        let previously_destroyed = acc.is_selfdestructed();
+        acc.mark_selfdestruct();
 
         // NOTE: In case that target and destroyed addresses are same, balance will be lost.
         // ref: https://github.com/ethereum/go-ethereum/blob/141cd425310b503c5678e674a8c3872cf46b7086/core/vm/instructions.go#L832-L833
@@ -451,9 +462,9 @@ impl JournaledState {
         let (acc, is_cold) = self.load_account(address, db)?;
 
         let exist = if is_before_spurious_dragon {
-            let was_existing = acc.status == AccountStatus::LoadedAsNotExisting;
-            let is_touched = acc.status == AccountStatus::Touched;
-            was_existing || is_touched
+            let is_existing = !acc.is_loaded_as_not_existing();
+            let is_touched = acc.is_touched();
+            is_existing || is_touched
         } else {
             !acc.is_empty()
         };
@@ -486,11 +497,12 @@ impl JournaledState {
         db: &mut DB,
     ) -> Result<(U256, bool), DB::Error> {
         let account = self.state.get_mut(&address).unwrap(); // asume acc is hot
+        let is_newly_created = account.is_newly_created();
         let load = match account.storage.entry(key) {
             Entry::Occupied(occ) => (occ.get().present_value, false),
             Entry::Vacant(vac) => {
                 // if storage was cleared, we dont need to ping db.
-                let value = if account.status == AccountStatus::Created {
+                let value = if is_newly_created {
                     U256::ZERO
                 } else {
                     db.storage(address, key)?

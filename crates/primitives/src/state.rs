@@ -2,7 +2,7 @@ use crate::{Bytecode, B160, B256, KECCAK_EMPTY, U256};
 use bitflags::bitflags;
 use hashbrown::HashMap;
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Account {
     /// Balance of the account.
@@ -34,38 +34,75 @@ bitflags! {
     }
 }
 
+impl Default for AccountStatus {
+    fn default() -> Self {
+        Self::Loaded
+    }
+}
+
 pub type State = HashMap<B160, Account>;
 pub type Storage = HashMap<U256, StorageSlot>;
 
 impl Account {
+    /// Mark account as self destructed.
+    pub fn mark_selfdestruct(&mut self) {
+        self.status |= AccountStatus::SelfDestructed;
+    }
+
+    /// Unmark account as self destructed.
+    pub fn unmark_selfdestruct(&mut self) {
+        self.status -= AccountStatus::SelfDestructed;
+    }
+
     /// Is account marked for self destruct.
     pub fn is_selfdestructed(&self) -> bool {
-        self.status == AccountStatus::SelfDestructed
+        self.status.contains(AccountStatus::SelfDestructed)
     }
 
-    /// Is account newwly created in this transaction.
+    /// Mark account as touched
+    pub fn mark_touch(&mut self) {
+        self.status |= AccountStatus::Touched;
+    }
+
+    /// Unmark the touch flag.
+    pub fn unmark_touch(&mut self) {
+        self.status -= AccountStatus::Touched;
+    }
+
+    /// If account status is marked as touched.
+    pub fn is_touched(&self) -> bool {
+        self.status.contains(AccountStatus::Touched)
+    }
+
+    /// Mark account as newly created.
+    pub fn mark_created(&mut self) {
+        self.status |= AccountStatus::Created;
+    }
+
+    /// Is account loaded as not existing from database
+    /// This is needed for pre spurious dragon hardforks where
+    /// existing and empty were two separate states.
+    pub fn is_loaded_as_not_existing(&self) -> bool {
+        self.status.contains(AccountStatus::LoadedAsNotExisting)
+    }
+
+    /// Is account newly created in this transaction.
     pub fn is_newly_created(&self) -> bool {
-        self.status == AccountStatus::Created
+        self.status.contains(AccountStatus::Created)
     }
 
+    /// Is account empty, check if nonce and balance are zero and code is empty.
     pub fn is_empty(&self) -> bool {
         self.info.is_empty()
     }
+
+    /// Create new account and mark it as non existing.
     pub fn new_not_existing() -> Self {
         Self {
             info: AccountInfo::default(),
             storage: HashMap::new(),
             status: AccountStatus::LoadedAsNotExisting,
         }
-    }
-
-    /// If account status is marked as touched.
-    pub fn is_touched(&self) -> bool {
-        self.status == AccountStatus::Touched
-    }
-
-    pub fn touch(&mut self) {
-        self.status |= AccountStatus::Touched;
     }
 }
 
@@ -168,5 +205,30 @@ impl AccountInfo {
             balance,
             ..Default::default()
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::Account;
+
+    #[test]
+    pub fn account_state() {
+        let mut account = Account::default();
+
+        assert!(!account.is_touched());
+        assert!(!account.is_selfdestructed());
+
+        account.mark_touch();
+        assert!(account.is_touched());
+        assert!(!account.is_selfdestructed());
+
+        account.mark_selfdestruct();
+        assert!(account.is_touched());
+        assert!(account.is_selfdestructed());
+
+        account.unmark_selfdestruct();
+        assert!(account.is_touched());
+        assert!(!account.is_selfdestructed());
     }
 }
