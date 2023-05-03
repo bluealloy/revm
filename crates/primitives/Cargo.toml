@@ -14,10 +14,12 @@ bytes = { version = "1.4", default-features = false }
 hashbrown = { version = "0.13" }
 hex = { version = "0.4", default-features = false }
 primitive-types = { version = "0.12", default-features = false }
-rlp = { version = "0.5", default-features = false } # used for create2 address calculation
+rlp = { version = "0.5", default-features = false }                        # used for create2 address calculation
 ruint = { version = "1.8.0", features = ["primitive-types", "rlp"] }
 auto_impl = "1.0"
 bitvec = { version = "1", default-features = false, features = ["alloc"] }
+
+bitflags = { version = "2.2.1", default-features = false}
 
 # bits B256 B160 crate
 fixed-hash = { version = "0.8", default-features = false, features = [
@@ -66,14 +68,15 @@ optional_block_gas_limit = []
 optional_eip3607 = []
 optional_gas_refund = []
 optional_no_base_fee = []
-std = ["bytes/std", "rlp/std", "hex/std", "bitvec/std"]
+std = ["bytes/std", "rlp/std", "hex/std", "bitvec/std", "bitflags/std"]
 serde = [
     "dep:serde",
     "hex/serde",
     "hashbrown/serde",
     "ruint/serde",
     "bytes/serde",
-    "bitvec/serde"
+    "bitvec/serde",
+    "bitflags/serde",
 ]
 arbitrary = [
     "std",
@@ -82,4 +85,5 @@ arbitrary = [
     "dep:arbitrary",
     "dep:proptest",
     "dep:proptest-derive",
+    "bitflags/arbitrary",
 ]

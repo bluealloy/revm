@@ -1,4 +1,5 @@
 use crate::{Bytecode, B160, B256, KECCAK_EMPTY, U256};
+use bitflags::bitflags;
 use hashbrown::HashMap;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -8,21 +9,45 @@ pub struct Account {
     pub info: AccountInfo,
     /// storage cache
     pub storage: HashMap<U256, StorageSlot>,
-    /// If account is newly created, we will not ask database for storage values
-    pub storage_cleared: bool,
-    /// if account is destroyed it will be scheduled for removal.
-    pub is_destroyed: bool,
-    /// if account is touched
-    pub is_touched: bool,
-    /// used only for pre spurious dragon hardforks where existing and empty were two separate states.
-    /// it became same state after EIP-161: State trie clearing
-    pub is_not_existing: bool,
+    // Account status flags.
+    pub status: AccountStatus,
+}
+
+// The `bitflags!` macro generates `struct`s that manage a set of flags.
+bitflags! {
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+    #[cfg_attr(feature = "serde", serde(transparent))]
+    pub struct AccountStatus: u8 {
+        /// When account is loaded but not touched or interacted with.
+        const Loaded = 0b00000000;
+        /// When account is newly created we will not access database
+        /// to fetch storage values
+        const Created = 0b00000001;
+        /// If account is marked for self destruct.
+        const SelfDestructed = 0b00000010;
+        /// Only when account is marked as touched we will save it to database.
+        const Touched = 0b00000100;
+        /// used only for pre spurious dragon hardforks where existing and empty were two separate states.
+        /// it became same state after EIP-161: State trie clearing
+        const LoadedAsNotExisting = 0b0001000;
+    }
 }
 
 pub type State = HashMap<B160, Account>;
 pub type Storage = HashMap<U256, StorageSlot>;
 
 impl Account {
+    /// Is account marked for self destruct.
+    pub fn is_selfdestructed(&self) -> bool {
+        self.status == AccountStatus::SelfDestructed
+    }
+
+    /// Is account newwly created in this transaction.
+    pub fn is_newly_created(&self) -> bool {
+        self.status == AccountStatus::Created
+    }
+
     pub fn is_empty(&self) -> bool {
         self.info.is_empty()
     }
@@ -30,11 +55,17 @@ impl Account {
         Self {
             info: AccountInfo::default(),
             storage: HashMap::new(),
-            storage_cleared: false,
-            is_destroyed: false,
-            is_touched: false,
-            is_not_existing: true,
+            status: AccountStatus::LoadedAsNotExisting,
         }
+    }
+
+    /// If account status is marked as touched.
+    pub fn is_touched(&self) -> bool {
+        self.status == AccountStatus::Touched
+    }
+
+    pub fn touch(&mut self) {
+        self.status |= AccountStatus::Touched;
     }
 }
 
@@ -43,10 +74,7 @@ impl From<AccountInfo> for Account {
         Self {
             info,
             storage: HashMap::new(),
-            storage_cleared: false,
-            is_destroyed: false,
-            is_touched: false,
-            is_not_existing: false,
+            status: AccountStatus::Loaded,
         }
     }
 }
