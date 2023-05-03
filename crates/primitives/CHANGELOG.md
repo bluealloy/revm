@@ -1,3 +1,10 @@
+# v1.1.2
+date: 03.05.2023
+
+small release:
+* ccefbca - chore(deps): bump ruint from 1.7.0 to 1.8.0 (#465) (50 minutes ago) <dependabot[bot]>
+* d7adfd5 - Fix typo in primitives/src/state.rs (#474) (50 minutes ago) <Udoagwa Franklin>
+* 08091e1 - fix: compile errors for features (#467) (13 days ago) <rakita>
 # v1.1.1
 date: 14.04.2023
 

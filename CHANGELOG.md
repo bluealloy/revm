@@ -1,5 +1,15 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v24 tag
+date: 03.05.2023
+
+Cosnensus bug inside journal and some small changes.
+
+* revm: v3.3.0
+* revm-precompile: v2.0.3
+* revm-primitives: v1.1.2
+* revm-interpreter: v1.1.2
+
 # v23 tag
 date: 19.04.2023
 
