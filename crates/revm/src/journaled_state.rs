@@ -295,8 +295,10 @@ impl JournaledState {
                     account.is_destroyed = was_destroyed;
                     account.info.balance += had_balance;
 
-                    let target = state.get_mut(&target).unwrap();
-                    target.info.balance -= had_balance;
+                    if address != target {
+                        let target = state.get_mut(&target).unwrap();
+                        target.info.balance -= had_balance;
+                    }
                 }
                 JournalEntry::BalanceTransfer { from, to, balance } => {
                     // we dont need to check overflow and underflow when adding sub subtracting the balance.
