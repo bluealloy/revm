@@ -1649,7 +1649,7 @@ dependencies = [
 
 [[package]]
 name = "revm"
-version = "3.2.0"
+version = "3.3.0"
 dependencies = [
  "anyhow",
  "auto_impl",
@@ -1669,7 +1669,7 @@ dependencies = [
 
 [[package]]
 name = "revm-interpreter"
-version = "1.1.1"
+version = "1.1.2"
 dependencies = [
  "arbitrary",
  "derive_more",
@@ -1683,7 +1683,7 @@ dependencies = [
 
 [[package]]
 name = "revm-precompile"
-version = "2.0.2"
+version = "2.0.3"
 dependencies = [
  "hex",
  "k256",
@@ -1699,7 +1699,7 @@ dependencies = [
 
 [[package]]
 name = "revm-primitives"
-version = "1.1.1"
+version = "1.1.2"
 dependencies = [
  "arbitrary",
  "auto_impl",

@@ -1,3 +1,8 @@
+# v2.0.3
+date: 03.05.2023
+
+Bump revm primitives.
+
 # v2.0.2
 date: 14.04.2023
 

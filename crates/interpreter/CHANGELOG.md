@@ -1,3 +1,8 @@
+# v1.1.2
+date: 03.05.2023
+
+* 08091e1 - fix: compile errors for features (#467) (13 days ago) <rakita>
+
 # v1.1.1
 date: 14.04.2023
 

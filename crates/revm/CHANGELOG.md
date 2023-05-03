@@ -1,3 +1,17 @@
+# v3.3.0
+date: 03.05.2023
+
+Consensus bug:
+* cde2f2d - fix: revert of selfdestruct with same target address (#475) (2 hours ago) <Roman Krasiuk>
+
+Other small changes:
+* bd0fad8 - (HEAD -> reles, origin/main, origin/HEAD) chore(deps): bump tokio from 1.27.0 to 1.28.0 (#470) (52 minutes ago) <dependabot[bot]>
+* ccefbca - chore(deps): bump ruint from 1.7.0 to 1.8.0 (#465) (52 minutes ago) <dependabot[bot]>
+* 7c2e0f5 - chore(deps): bump anyhow from 1.0.70 to 1.0.71 (#471) (53 minutes ago) <dependabot[bot]>
+* d7adfd5 - Fix typo in primitives/src/state.rs (#474) (53 minutes ago) <Udoagwa Franklin>
+* d0cd897 - add example to revm crate (#468) (8 days ago) <Sambhav>
+* 08091e1 - fix: compile errors for features (#467) (13 days ago) <rakita>
+
 # v3.2.0
 date: 19.04.2023
 
