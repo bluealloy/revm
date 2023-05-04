@@ -544,32 +544,15 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let checkpoint = self.data.journaled_state.checkpoint();
 
         // Create contract account and check for collision
-        match self.data.journaled_state.create_account(
-            created_address,
-            self.precompiles.contains(&created_address),
-            self.data.db,
-        ) {
-            Ok(false) => {
-                self.data.journaled_state.checkpoint_revert(checkpoint);
-                return self.create_end(
-                    inputs,
-                    InstructionResult::CreateCollision,
-                    ret,
-                    gas,
-                    Bytes::new(),
-                );
-            }
-            Err(err) => {
-                self.data.error = Some(err);
-                return self.create_end(
-                    inputs,
-                    InstructionResult::FatalExternalError,
-                    ret,
-                    gas,
-                    Bytes::new(),
-                );
-            }
-            Ok(true) => (),
+        if !self.data.journaled_state.create_account(created_address) {
+            self.data.journaled_state.checkpoint_revert(checkpoint);
+            return self.create_end(
+                inputs,
+                InstructionResult::CreateCollision,
+                ret,
+                gas,
+                Bytes::new(),
+            );
         }
 
         // Transfer value to contract address
@@ -692,7 +675,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     AnalysisKind::Check => Bytecode::new_raw(bytes.clone()).to_checked(),
                     AnalysisKind::Analyse => to_analysed(Bytecode::new_raw(bytes.clone())),
                 };
-
                 self.data
                     .journaled_state
                     .set_code(created_address, bytecode);

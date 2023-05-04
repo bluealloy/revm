@@ -175,19 +175,20 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
 impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
     fn commit(&mut self, changes: HashMap<B160, Account>) {
         for (address, mut account) in changes {
-            if account.is_destroyed {
+            if account.is_selfdestructed() {
                 let db_account = self.accounts.entry(address).or_default();
                 db_account.storage.clear();
                 db_account.account_state = AccountState::NotExisting;
                 db_account.info = AccountInfo::default();
                 continue;
             }
+            let is_newly_created = account.is_newly_created();
             self.insert_contract(&mut account.info);
 
             let db_account = self.accounts.entry(address).or_default();
             db_account.info = account.info;
 
-            db_account.account_state = if account.storage_cleared {
+            db_account.account_state = if is_newly_created {
                 db_account.storage.clear();
                 AccountState::StorageCleared
             } else if db_account.account_state.is_storage_cleared() {

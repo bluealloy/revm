@@ -79,6 +79,13 @@ pub struct JournalCheckpoint {
 }
 
 impl JournaledState {
+    /// Create new JournaledState.
+    ///
+    /// num_of_precompiles is used to determine how many precompiles are there.
+    /// Assumption is that number of N first addresses are precompiles (exclusing 0x00..00)
+    ///
+    /// Note: This function will journal state after Spurious Dragon fork.
+    /// And will not take into account if account is not existing or empty.
     pub fn new(num_of_precompiles: usize) -> JournaledState {
         Self {
             state: HashMap::new(),
@@ -90,16 +97,23 @@ impl JournaledState {
         }
     }
 
+    /// Same as [`Self::new`] but will journal state before Spurious Dragon fork.
+    ///
+    /// Note: Before Spurious Dragon fork empty and not existing accounts were treated differently.
     pub fn new_legacy(num_of_precompiles: usize) -> JournaledState {
         let mut journal = Self::new(num_of_precompiles);
         journal.is_before_spurious_dragon = true;
         journal
     }
 
+    /// Return reference to state.
     pub fn state(&mut self) -> &mut State {
         &mut self.state
     }
 
+    /// Mark account as touched as only touched accounts will be added to state.
+    /// This is expecially important for state clear where touched empty accounts needs to
+    /// be removed from state.
     pub fn touch(&mut self, address: &B160) {
         if let Some(account) = self.state.get_mut(address) {
             Self::touch_account(self.journal.last_mut().unwrap(), address, account);
@@ -107,9 +121,9 @@ impl JournaledState {
     }
 
     fn touch_account(journal: &mut Vec<JournalEntry>, address: &B160, account: &mut Account) {
-        if !account.is_touched {
+        if !account.is_touched() {
             journal.push(JournalEntry::AccountTouched { address: *address });
-            account.is_touched = true;
+            account.mark_touch();
         }
     }
 
@@ -119,7 +133,7 @@ impl JournaledState {
 
         let state = state
             .into_iter()
-            .filter(|(_, account)| account.is_touched)
+            .filter(|(_, account)| account.is_touched())
             .collect();
 
         let logs = mem::take(&mut self.logs);
@@ -217,51 +231,48 @@ impl JournaledState {
         Ok((from_is_cold, to_is_cold))
     }
 
-    /// return if it has collision of addresses
-    pub fn create_account<DB: Database>(
-        &mut self,
-        address: B160,
-        is_precompile: bool,
-        db: &mut DB,
-    ) -> Result<bool, DB::Error> {
-        let (acc, _) = self.load_code(address, db)?;
+    /// Check if new account has collision with existing account.
+    /// Return false if collision is detected.
+    pub fn create_account(&mut self, address: B160) -> bool {
+        // Safety: this function is called only from REVM::crate_inner
+        // and it load account before calling this function.
+
+        let account = self.state.get_mut(&address).unwrap();
 
         // Check collision. Bytecode needs to be empty.
-        if let Some(ref code) = acc.info.code {
-            if !code.is_empty() {
-                return Ok(false);
-            }
+        if account.info.code_hash != KECCAK_EMPTY {
+            return false;
         }
         // Check collision. Nonce is not zero
-        if acc.info.nonce != 0 {
-            return Ok(false);
+        if account.info.nonce != 0 {
+            return false;
         }
 
         // Check collision. New account address is precompile.
-        if is_precompile {
-            return Ok(false);
+        if is_precompile(address, self.num_of_precompiles) {
+            return false;
         }
-        acc.storage_cleared = true;
 
+        // set account status to created.
+        account.mark_created();
+
+        // Bytecode is initially empty and after constructor is executed and all checks pass
+        // the bytecode will be set.
+        account.info.code_hash = KECCAK_EMPTY;
+        account.info.code = None;
         // Set all storages to default value. They need to be present to act as accessed slots in access list.
         // it shouldn't be possible for them to have different values then zero as code is not existing for this account
         // , but because tests can change that assumption we are doing it.
         let empty = StorageSlot::default();
-        acc.storage
+        account
+            .storage
             .iter_mut()
             .for_each(|(_, slot)| *slot = empty.clone());
 
-        acc.info.code_hash = KECCAK_EMPTY;
-        acc.info.code = None;
+        // touch account. This is important as for pre SpuriousDragon there is possibility
+        Self::touch_account(self.journal.last_mut().unwrap(), &address, account);
 
-        if !acc.is_touched {
-            acc.is_touched = true;
-            self.journal
-                .last_mut()
-                .unwrap()
-                .push(JournalEntry::AccountTouched { address });
-        }
-        Ok(true)
+        true
     }
 
     fn journal_revert(
@@ -283,7 +294,8 @@ impl JournaledState {
                     if is_spurious_dragon_enabled && address == PRECOMPILE3 {
                         continue;
                     }
-                    state.get_mut(&address).unwrap().is_touched = false;
+                    // remove touched status
+                    state.get_mut(&address).unwrap().unmark_touch();
                 }
                 JournalEntry::AccountDestroyed {
                     address,
@@ -292,7 +304,15 @@ impl JournaledState {
                     had_balance,
                 } => {
                     let account = state.get_mut(&address).unwrap();
-                    account.is_destroyed = was_destroyed;
+                    // set previous ste of selfdestructed flag. as there could be multiple
+                    // selfdestructs in one transaction.
+                    if was_destroyed {
+                        // flag is still selfdestructed
+                        account.mark_selfdestruct();
+                    } else {
+                        // flag that is not selfdestructed
+                        account.unmark_selfdestruct();
+                    }
                     account.info.balance += had_balance;
 
                     if address != target {
@@ -372,13 +392,15 @@ impl JournaledState {
         // transfer all the balance
         let acc = self.state.get_mut(&address).unwrap();
         let balance = mem::take(&mut acc.info.balance);
-        let previously_destroyed = acc.is_destroyed;
-        acc.is_destroyed = true;
-        // In case that target and destroyed addresses are same, balance will be lost.
+        let previously_destroyed = acc.is_selfdestructed();
+        acc.mark_selfdestruct();
+
+        // NOTE: In case that target and destroyed addresses are same, balance will be lost.
         // ref: https://github.com/ethereum/go-ethereum/blob/141cd425310b503c5678e674a8c3872cf46b7086/core/vm/instructions.go#L832-L833
         // https://github.com/ethereum/go-ethereum/blob/141cd425310b503c5678e674a8c3872cf46b7086/core/state/statedb.go#L449
         if address != target {
             let target_account = self.state.get_mut(&target).unwrap();
+            // touch target account
             Self::touch_account(self.journal.last_mut().unwrap(), &target, target_account);
             target_account.info.balance += balance;
         }
@@ -437,10 +459,12 @@ impl JournaledState {
         db: &mut DB,
     ) -> Result<(bool, bool), DB::Error> {
         let is_before_spurious_dragon = self.is_before_spurious_dragon;
-        let (acc, is_cold) = self.load_code(address, db)?;
+        let (acc, is_cold) = self.load_account(address, db)?;
 
         let exist = if is_before_spurious_dragon {
-            !acc.is_not_existing || acc.is_touched
+            let is_existing = !acc.is_loaded_as_not_existing();
+            let is_touched = acc.is_touched();
+            is_existing || is_touched
         } else {
             !acc.is_empty()
         };
@@ -473,11 +497,12 @@ impl JournaledState {
         db: &mut DB,
     ) -> Result<(U256, bool), DB::Error> {
         let account = self.state.get_mut(&address).unwrap(); // asume acc is hot
+        let is_newly_created = account.is_newly_created();
         let load = match account.storage.entry(key) {
             Entry::Occupied(occ) => (occ.get().present_value, false),
             Entry::Vacant(vac) => {
                 // if storage was cleared, we dont need to ping db.
-                let value = if account.storage_cleared {
+                let value = if is_newly_created {
                     U256::ZERO
                 } else {
                     db.storage(address, key)?
@@ -540,6 +565,8 @@ impl JournaledState {
     }
 }
 
+/// Check if address is precompile by having assumption
+/// that precompiles are in range of 1 to N.
 fn is_precompile(address: B160, num_of_precompiles: usize) -> bool {
     if !address[..18].iter().all(|i| *i == 0) {
         return false;
