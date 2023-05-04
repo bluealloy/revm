@@ -83,7 +83,6 @@ pub trait Inspector<DB: Database> {
         &mut self,
         _data: &mut EVMData<'_, DB>,
         _inputs: &mut CallInputs,
-        _is_static: bool,
     ) -> (InstructionResult, Gas, Bytes) {
         (InstructionResult::Continue, Gas::new(0), Bytes::new())
     }
@@ -99,7 +98,6 @@ pub trait Inspector<DB: Database> {
         remaining_gas: Gas,
         ret: InstructionResult,
         out: Bytes,
-        _is_static: bool,
     ) -> (InstructionResult, Gas, Bytes) {
         (ret, remaining_gas, out)
     }

@@ -97,7 +97,6 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         &mut self,
         data: &mut EVMData<'_, DB>,
         _inputs: &mut CallInputs,
-        _is_static: bool,
     ) -> (InstructionResult, Gas, Bytes) {
         self.print_log_line(data.journaled_state.depth());
         (InstructionResult::Continue, Gas::new(0), Bytes::new())
@@ -110,10 +109,9 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         remaining_gas: Gas,
         ret: InstructionResult,
         out: Bytes,
-        is_static: bool,
     ) -> (InstructionResult, Gas, Bytes) {
         self.gas_inspector
-            .call_end(data, inputs, remaining_gas, ret, out.clone(), is_static);
+            .call_end(data, inputs, remaining_gas, ret, out.clone());
         // self.log_step(interp, data, is_static, eval);
         self.skip = true;
         if data.journaled_state.depth() == 0 {
