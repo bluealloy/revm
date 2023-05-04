@@ -30,7 +30,7 @@ futures = { version = "0.3.27", optional = true }
 
 [dev-dependencies]
 hex-literal = "0.4"
-ethers-contract = { version = "2.0.3", default-features = false }
+ethers-contract = { version = "2.0.4", default-features = false }
 hex = "0.4.3"
 bytes = "1.4.0"
 anyhow = "1.0.71"
