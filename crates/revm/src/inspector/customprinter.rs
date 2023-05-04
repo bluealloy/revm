@@ -14,21 +14,14 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         &mut self,
         interp: &mut Interpreter,
         data: &mut EVMData<'_, DB>,
-        is_static: bool,
     ) -> InstructionResult {
-        self.gas_inspector
-            .initialize_interp(interp, data, is_static);
+        self.gas_inspector.initialize_interp(interp, data);
         InstructionResult::Continue
     }
 
     // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
     // all other information can be obtained from interp.
-    fn step(
-        &mut self,
-        interp: &mut Interpreter,
-        data: &mut EVMData<'_, DB>,
-        is_static: bool,
-    ) -> InstructionResult {
+    fn step(&mut self, interp: &mut Interpreter, data: &mut EVMData<'_, DB>) -> InstructionResult {
         let opcode = interp.current_opcode();
         let opcode_str = opcode::OPCODE_JUMPMAP[opcode as usize];
 
@@ -48,7 +41,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
             interp.memory.data().len(),
         );
 
-        self.gas_inspector.step(interp, data, is_static);
+        self.gas_inspector.step(interp, data);
 
         InstructionResult::Continue
     }
@@ -57,10 +50,9 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         &mut self,
         interp: &mut Interpreter,
         data: &mut EVMData<'_, DB>,
-        is_static: bool,
         eval: InstructionResult,
     ) -> InstructionResult {
-        self.gas_inspector.step_end(interp, data, is_static, eval);
+        self.gas_inspector.step_end(interp, data, eval);
         InstructionResult::Continue
     }
 

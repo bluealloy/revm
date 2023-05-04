@@ -26,14 +26,13 @@ impl DummyHost {
 }
 
 impl Host for DummyHost {
-    fn step(&mut self, _interp: &mut Interpreter, _is_static: bool) -> InstructionResult {
+    fn step(&mut self, _interp: &mut Interpreter) -> InstructionResult {
         InstructionResult::Continue
     }
 
     fn step_end(
         &mut self,
         _interp: &mut Interpreter,
-        _is_static: bool,
         _ret: InstructionResult,
     ) -> InstructionResult {
         InstructionResult::Continue

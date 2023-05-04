@@ -51,22 +51,15 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         &mut self,
         interp: &mut Interpreter,
         data: &mut EVMData<'_, DB>,
-        is_static: bool,
     ) -> InstructionResult {
-        self.gas_inspector
-            .initialize_interp(interp, data, is_static);
+        self.gas_inspector.initialize_interp(interp, data);
         InstructionResult::Continue
     }
 
     // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
     // all other information can be obtained from interp.
-    fn step(
-        &mut self,
-        interp: &mut Interpreter,
-        data: &mut EVMData<'_, DB>,
-        is_static: bool,
-    ) -> InstructionResult {
-        self.gas_inspector.step(interp, data, is_static);
+    fn step(&mut self, interp: &mut Interpreter, data: &mut EVMData<'_, DB>) -> InstructionResult {
+        self.gas_inspector.step(interp, data);
         self.stack = interp.stack.clone();
         self.pc = interp.program_counter();
         self.opcode = interp.current_opcode();
@@ -80,10 +73,9 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         &mut self,
         interp: &mut Interpreter,
         data: &mut EVMData<'_, DB>,
-        is_static: bool,
         eval: InstructionResult,
     ) -> InstructionResult {
-        self.gas_inspector.step_end(interp, data, is_static, eval);
+        self.gas_inspector.step_end(interp, data, eval);
         if self.skip {
             self.skip = false;
             return InstructionResult::Continue;

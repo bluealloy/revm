@@ -31,7 +31,6 @@ pub trait Inspector<DB: Database> {
         &mut self,
         _interp: &mut Interpreter,
         _data: &mut EVMData<'_, DB>,
-        _is_static: bool,
     ) -> InstructionResult {
         InstructionResult::Continue
     }
@@ -48,7 +47,6 @@ pub trait Inspector<DB: Database> {
         &mut self,
         _interp: &mut Interpreter,
         _data: &mut EVMData<'_, DB>,
-        _is_static: bool,
     ) -> InstructionResult {
         InstructionResult::Continue
     }
@@ -70,7 +68,6 @@ pub trait Inspector<DB: Database> {
         &mut self,
         _interp: &mut Interpreter,
         _data: &mut EVMData<'_, DB>,
-        _is_static: bool,
         _eval: InstructionResult,
     ) -> InstructionResult {
         InstructionResult::Continue

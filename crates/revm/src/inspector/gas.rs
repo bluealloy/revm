@@ -27,7 +27,6 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         &mut self,
         interp: &mut crate::interpreter::Interpreter,
         _data: &mut EVMData<'_, DB>,
-        _is_static: bool,
     ) -> InstructionResult {
         self.gas_remaining = interp.gas.limit();
         InstructionResult::Continue
@@ -41,7 +40,6 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         &mut self,
         _interp: &mut crate::interpreter::Interpreter,
         _data: &mut EVMData<'_, DB>,
-        _is_static: bool,
     ) -> InstructionResult {
         InstructionResult::Continue
     }
@@ -51,7 +49,6 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         &mut self,
         interp: &mut crate::interpreter::Interpreter,
         _data: &mut EVMData<'_, DB>,
-        _is_static: bool,
         _eval: InstructionResult,
     ) -> InstructionResult {
         let last_gas = self.gas_remaining;
@@ -111,10 +108,8 @@ mod tests {
             &mut self,
             interp: &mut Interpreter,
             data: &mut EVMData<'_, DB>,
-            is_static: bool,
         ) -> InstructionResult {
-            self.gas_inspector
-                .initialize_interp(interp, data, is_static);
+            self.gas_inspector.initialize_interp(interp, data);
             InstructionResult::Continue
         }
 
@@ -122,10 +117,9 @@ mod tests {
             &mut self,
             interp: &mut Interpreter,
             data: &mut EVMData<'_, DB>,
-            is_static: bool,
         ) -> InstructionResult {
             self.pc = interp.program_counter();
-            self.gas_inspector.step(interp, data, is_static);
+            self.gas_inspector.step(interp, data);
             InstructionResult::Continue
         }
 
@@ -143,10 +137,9 @@ mod tests {
             &mut self,
             interp: &mut Interpreter,
             data: &mut EVMData<'_, DB>,
-            is_static: bool,
             eval: InstructionResult,
         ) -> InstructionResult {
-            self.gas_inspector.step_end(interp, data, is_static, eval);
+            self.gas_inspector.step_end(interp, data, eval);
             self.gas_remaining_steps
                 .push((self.pc, self.gas_inspector.gas_remaining()));
             eval

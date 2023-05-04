@@ -149,14 +149,14 @@ impl Interpreter {
     pub fn run_inspect<H: Host, SPEC: Spec>(&mut self, host: &mut H) -> InstructionResult {
         while self.instruction_result == InstructionResult::Continue {
             // step
-            let ret = host.step(self, self.is_static);
+            let ret = host.step(self);
             if ret != InstructionResult::Continue {
                 return ret;
             }
             self.step::<H, SPEC>(host);
 
             // step ends
-            let ret = host.step_end(self, self.is_static, self.instruction_result);
+            let ret = host.step_end(self, self.instruction_result);
             if ret != InstructionResult::Continue {
                 return ret;
             }
