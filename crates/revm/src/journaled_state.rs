@@ -5,6 +5,8 @@ use crate::primitives::{
 };
 use alloc::{vec, vec::Vec};
 use core::mem::{self};
+use revm_interpreter::primitives::Spec;
+use revm_interpreter::primitives::SpecId::SPURIOUS_DRAGON;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -192,14 +194,12 @@ impl JournaledState {
         to: &B160,
         balance: U256,
         db: &mut DB,
-    ) -> Result<(bool, bool), InstructionResult> {
+    ) -> Result<(), InstructionResult> {
         // load accounts
-        let (_, from_is_cold) = self
-            .load_account(*from, db)
+        self.load_account(*from, db)
             .map_err(|_| InstructionResult::FatalExternalError)?;
 
-        let (_, to_is_cold) = self
-            .load_account(*to, db)
+        self.load_account(*to, db)
             .map_err(|_| InstructionResult::FatalExternalError)?;
 
         // sub balance from
@@ -228,51 +228,107 @@ impl JournaledState {
                 balance,
             });
 
-        Ok((from_is_cold, to_is_cold))
+        Ok(())
     }
 
-    /// Check if new account has collision with existing account.
-    /// Return false if collision is detected.
-    pub fn create_account(&mut self, address: B160) -> bool {
-        // Safety: this function is called only from REVM::crate_inner
-        // and it load account before calling this function.
+    /// Create account or return false if collision is detected.
+    ///
+    /// There are few steps done:
+    /// 1. Make created account hot loaded (AccessList) and this should
+    ///     be done before subrouting checkpoint is created.
+    /// 2. Check if there is colission of newly created account with existing one.
+    /// 3. Mark created account as created.
+    /// 4. Add fund to created account
+    /// 5. Increment nonce of created account if SpuriousDragon is active
+    /// 6. Decrease balance of caller account.
+    ///  
+    /// Safety: It is assumed that caller balance is already checked and that
+    /// caller is already loaded inside evm. This is already done inside `create_inner`
+    pub fn create_account_checkpoint<SPEC: Spec>(
+        &mut self,
+        caller: B160,
+        address: B160,
+        balance: U256,
+    ) -> Result<JournalCheckpoint, InstructionResult> {
+        // Enter subroutine
+        let checkpoint = self.checkpoint();
 
+        // Newly created account is present, as we just loaded it.
         let account = self.state.get_mut(&address).unwrap();
+        let last_journal = self.journal.last_mut().unwrap();
 
-        // Check collision. Bytecode needs to be empty.
-        if account.info.code_hash != KECCAK_EMPTY {
-            return false;
-        }
-        // Check collision. Nonce is not zero
-        if account.info.nonce != 0 {
-            return false;
-        }
-
-        // Check collision. New account address is precompile.
-        if is_precompile(address, self.num_of_precompiles) {
-            return false;
+        // check if it is possible to create this account.
+        if Self::check_account_collision(address, account, self.num_of_precompiles) {
+            self.checkpoint_revert(checkpoint);
+            return Err(InstructionResult::CreateCollision);
         }
 
         // set account status to created.
         account.mark_created();
-
-        // Bytecode is initially empty and after constructor is executed and all checks pass
-        // the bytecode will be set.
-        account.info.code_hash = KECCAK_EMPTY;
         account.info.code = None;
+
         // Set all storages to default value. They need to be present to act as accessed slots in access list.
-        // it shouldn't be possible for them to have different values then zero as code is not existing for this account
-        // , but because tests can change that assumption we are doing it.
+        // it shouldn't be possible for them to have different values then zero as code is not existing for this account,
+        // but because tests can change that assumption we are doing it.
         let empty = StorageSlot::default();
         account
             .storage
             .iter_mut()
             .for_each(|(_, slot)| *slot = empty.clone());
 
-        // touch account. This is important as for pre SpuriousDragon there is possibility
-        Self::touch_account(self.journal.last_mut().unwrap(), &address, account);
+        // touch account. This is important as for pre SpuriousDragon account could be
+        // saved even empty.
+        Self::touch_account(last_journal, &address, account);
 
-        true
+        // Add balance to created account, as we already have target here.
+        let Some(new_balance) = account.info.balance.checked_add(balance) else {
+            self.checkpoint_revert(checkpoint);
+            return Err(InstructionResult::OverflowPayment);
+        };
+        account.info.balance = new_balance;
+
+        // EIP-161: State trie clearing (invariant-preserving alternative)
+        if SPEC::enabled(SPURIOUS_DRAGON) {
+            account.info.nonce = 1;
+            last_journal.push(JournalEntry::NonceChange { address });
+        }
+
+        // Sub balance from caller
+        let caller_account = self.state.get_mut(&caller).unwrap();
+        // Balance is already checked in `create_inner`, so it is safe to just substract.
+        caller_account.info.balance -= balance;
+
+        // add journal entry of transfered balance
+        last_journal.push(JournalEntry::BalanceTransfer {
+            from: caller,
+            to: address,
+            balance,
+        });
+
+        Ok(checkpoint)
+    }
+
+    #[inline(always)]
+    pub fn check_account_collision(
+        address: B160,
+        account: &mut Account,
+        num_of_precompiles: usize,
+    ) -> bool {
+        // Check collision. Bytecode needs to be empty.
+        if account.info.code_hash != KECCAK_EMPTY {
+            return true;
+        }
+        // Check collision. Nonce is not zero
+        if account.info.nonce != 0 {
+            return true;
+        }
+
+        // Check collision. New account address is precompile.
+        if is_precompile(address, num_of_precompiles) {
+            return true;
+        }
+
+        false
     }
 
     fn journal_revert(
@@ -567,6 +623,7 @@ impl JournaledState {
 
 /// Check if address is precompile by having assumption
 /// that precompiles are in range of 1 to N.
+#[inline(always)]
 fn is_precompile(address: B160, num_of_precompiles: usize) -> bool {
     if !address[..18].iter().all(|i| *i == 0) {
         return false;
