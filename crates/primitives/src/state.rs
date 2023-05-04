@@ -20,11 +20,12 @@ bitflags! {
     #[cfg_attr(feature = "serde", serde(transparent))]
     pub struct AccountStatus: u8 {
         /// When account is loaded but not touched or interacted with.
+        /// This is the default state.
         const Loaded = 0b00000000;
         /// When account is newly created we will not access database
         /// to fetch storage values
         const Created = 0b00000001;
-        /// If account is marked for self destruct.
+        /// If account is marked for self destruction.
         const SelfDestructed = 0b00000010;
         /// Only when account is marked as touched we will save it to database.
         const Touched = 0b00000100;

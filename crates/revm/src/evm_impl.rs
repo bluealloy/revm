@@ -223,7 +223,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                         context,
                         is_static: false,
                     };
-                    let (exit, gas, bytes) = self.call_inner(&mut call_input);
+                    let (exit, gas, bytes) = self.call(&mut call_input);
                     (exit, gas, Output::Call(bytes))
                 } else {
                     (
@@ -241,7 +241,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                     init_code: data,
                     gas_limit,
                 };
-                let (exit, address, ret_gas, bytes) = self.create_inner(&mut create_input);
+                let (exit, address, ret_gas, bytes) = self.create(&mut create_input);
                 (exit, ret_gas, Output::Create(bytes, address))
             }
         };
@@ -471,48 +471,27 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
     }
 
+    //fn call_with_inspector()
+
     fn create_inner(
         &mut self,
-        inputs: &mut CreateInputs,
+        inputs: &CreateInputs,
     ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
-        // Call inspector
-        if INSPECT {
-            let (ret, address, gas, out) = self.inspector.create(&mut self.data, inputs);
-            if ret != InstructionResult::Continue {
-                return self
-                    .inspector
-                    .create_end(&mut self.data, inputs, ret, address, gas, out);
-            }
-        }
-
         let gas = Gas::new(inputs.gas_limit);
         self.load_account(inputs.caller);
 
         // Check depth of calls
         if self.data.journaled_state.depth() > CALL_STACK_LIMIT {
-            return self.create_end(
-                inputs,
-                InstructionResult::CallTooDeep,
-                None,
-                gas,
-                Bytes::new(),
-            );
+            return (InstructionResult::CallTooDeep, None, gas, Bytes::new());
         }
         // Check balance of caller and value. Do this before increasing nonce
         match self.balance(inputs.caller) {
             Some(i) if i.0 < inputs.value => {
-                return self.create_end(
-                    inputs,
-                    InstructionResult::OutOfFund,
-                    None,
-                    gas,
-                    Bytes::new(),
-                )
+                return (InstructionResult::OutOfFund, None, gas, Bytes::new())
             }
             Some(_) => (),
             _ => {
-                return self.create_end(
-                    inputs,
+                return (
                     InstructionResult::FatalExternalError,
                     None,
                     gas,
@@ -526,7 +505,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         if let Some(nonce) = self.data.journaled_state.inc_nonce(inputs.caller) {
             old_nonce = nonce - 1;
         } else {
-            return self.create_end(inputs, InstructionResult::Return, None, gas, Bytes::new());
+            return (InstructionResult::Return, None, gas, Bytes::new());
         }
 
         // Create address
@@ -546,13 +525,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         // Create contract account and check for collision
         if !self.data.journaled_state.create_account(created_address) {
             self.data.journaled_state.checkpoint_revert(checkpoint);
-            return self.create_end(
-                inputs,
-                InstructionResult::CreateCollision,
-                ret,
-                gas,
-                Bytes::new(),
-            );
+            return (InstructionResult::CreateCollision, ret, gas, Bytes::new());
         }
 
         // Transfer value to contract address
@@ -563,7 +536,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             self.data.db,
         ) {
             self.data.journaled_state.checkpoint_revert(checkpoint);
-            return self.create_end(inputs, e, ret, gas, Bytes::new());
+            return (e, ret, gas, Bytes::new());
         }
 
         // EIP-161: State trie clearing (invariant-preserving alternative)
@@ -576,7 +549,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         {
             // overflow
             self.data.journaled_state.checkpoint_revert(checkpoint);
-            return self.create_end(inputs, InstructionResult::Return, None, gas, Bytes::new());
+            return (InstructionResult::Return, None, gas, Bytes::new());
         }
 
         // Create new interpreter and execute initcode
@@ -609,7 +582,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             interpreter.run::<Self, GSPEC>(self)
         };
         // Host error if present on execution\
-        let (ret, address, gas, out) = match exit_reason {
+        match exit_reason {
             return_ok!() => {
                 // if ok, check contract creation limit and calculate gas deduction on output len.
                 let mut bytes = interpreter.return_value();
@@ -617,8 +590,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 // EIP-3541: Reject new contract code starting with the 0xEF byte
                 if GSPEC::enabled(LONDON) && !bytes.is_empty() && bytes.first() == Some(&0xEF) {
                     self.data.journaled_state.checkpoint_revert(checkpoint);
-                    return self.create_end(
-                        inputs,
+                    return (
                         InstructionResult::CreateContractStartingWithEF,
                         ret,
                         interpreter.gas,
@@ -638,8 +610,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                             .unwrap_or(MAX_CODE_SIZE)
                 {
                     self.data.journaled_state.checkpoint_revert(checkpoint);
-                    return self.create_end(
-                        inputs,
+                    return (
                         InstructionResult::CreateContractSizeLimit,
                         ret,
                         interpreter.gas,
@@ -655,13 +626,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                         //  creation fails (i.e. goes out-of-gas) rather than leaving an empty contract.
                         if GSPEC::enabled(HOMESTEAD) {
                             self.data.journaled_state.checkpoint_revert(checkpoint);
-                            return self.create_end(
-                                inputs,
-                                InstructionResult::OutOfGas,
-                                ret,
-                                interpreter.gas,
-                                bytes,
-                            );
+                            return (InstructionResult::OutOfGas, ret, interpreter.gas, bytes);
                         } else {
                             bytes = Bytes::new();
                         }
@@ -689,45 +654,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     interpreter.return_value(),
                 )
             }
-        };
-
-        self.create_end(inputs, ret, address, gas, out)
-    }
-
-    fn create_end(
-        &mut self,
-        inputs: &CreateInputs,
-        ret: InstructionResult,
-        address: Option<B160>,
-        gas: Gas,
-        out: Bytes,
-    ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
-        if INSPECT {
-            self.inspector
-                .create_end(&mut self.data, inputs, ret, address, gas, out)
-        } else {
-            (ret, address, gas, out)
         }
     }
 
     fn call_inner(&mut self, inputs: &mut CallInputs) -> (InstructionResult, Gas, Bytes) {
-        // Call the inspector
-        if INSPECT {
-            let (ret, gas, out) = self
-                .inspector
-                .call(&mut self.data, inputs, inputs.is_static);
-            if ret != InstructionResult::Continue {
-                return self.inspector.call_end(
-                    &mut self.data,
-                    inputs,
-                    gas,
-                    ret,
-                    out,
-                    inputs.is_static,
-                );
-            }
-        }
-
         let mut gas = Gas::new(inputs.gas_limit);
         // Load account and get code. Account is now hot.
         let bytecode = if let Some((bytecode, _)) = self.code(inputs.contract) {
@@ -738,19 +668,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
         // Check depth
         if self.data.journaled_state.depth() > CALL_STACK_LIMIT {
-            let (ret, gas, out) = (InstructionResult::CallTooDeep, gas, Bytes::new());
-            if INSPECT {
-                return self.inspector.call_end(
-                    &mut self.data,
-                    inputs,
-                    gas,
-                    ret,
-                    out,
-                    inputs.is_static,
-                );
-            } else {
-                return (ret, gas, out);
-            }
+            return (InstructionResult::CallTooDeep, gas, Bytes::new());
         }
 
         // Create subroutine checkpoint
@@ -770,23 +688,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             self.data.db,
         ) {
             self.data.journaled_state.checkpoint_revert(checkpoint);
-            let (ret, gas, out) = (e, gas, Bytes::new());
-            if INSPECT {
-                return self.inspector.call_end(
-                    &mut self.data,
-                    inputs,
-                    gas,
-                    ret,
-                    out,
-                    inputs.is_static,
-                );
-            } else {
-                return (ret, gas, out);
-            }
+            return (e, gas, Bytes::new());
         }
 
         // Call precompiles
-        let (ret, gas, out) = if let Some(precompile) = self.precompiles.get(&inputs.contract) {
+        if let Some(precompile) = self.precompiles.get(&inputs.contract) {
             let out = match precompile {
                 Precompile::Standard(fun) => fun(inputs.input.as_ref(), inputs.gas_limit),
                 Precompile::Custom(fun) => fun(inputs.input.as_ref(), inputs.gas_limit),
@@ -845,13 +751,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             }
 
             (exit_reason, interpreter.gas, interpreter.return_value())
-        };
-
-        if INSPECT {
-            self.inspector
-                .call_end(&mut self.data, inputs, gas, ret, out, inputs.is_static)
-        } else {
-            (ret, gas, out)
         }
     }
 }
@@ -988,10 +887,35 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         &mut self,
         inputs: &mut CreateInputs,
     ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
-        self.create_inner(inputs)
+        // Call inspector
+        if INSPECT {
+            let (ret, address, gas, out) = self.inspector.create(&mut self.data, inputs);
+            if ret != InstructionResult::Continue {
+                return (ret, address, gas, out);
+            }
+        }
+        let ret = self.create_inner(inputs);
+        if INSPECT {
+            self.inspector
+                .create_end(&mut self.data, inputs, ret.0, ret.1, ret.2, ret.3)
+        } else {
+            ret
+        }
     }
 
     fn call(&mut self, inputs: &mut CallInputs) -> (InstructionResult, Gas, Bytes) {
-        self.call_inner(inputs)
+        if INSPECT {
+            let (ret, gas, out) = self.inspector.call(&mut self.data, inputs);
+            if ret != InstructionResult::Continue {
+                return (ret, gas, out);
+            }
+        }
+        let ret = self.call_inner(inputs);
+        if INSPECT {
+            self.inspector
+                .call_end(&mut self.data, inputs, ret.1, ret.0, ret.2)
+        } else {
+            ret
+        }
     }
 }

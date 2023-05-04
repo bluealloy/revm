@@ -71,10 +71,9 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         remaining_gas: Gas,
         ret: InstructionResult,
         out: Bytes,
-        is_static: bool,
     ) -> (InstructionResult, Gas, Bytes) {
         self.gas_inspector
-            .call_end(data, inputs, remaining_gas, ret, out.clone(), is_static);
+            .call_end(data, inputs, remaining_gas, ret, out.clone());
         (ret, remaining_gas, out)
     }
 
@@ -96,13 +95,12 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         &mut self,
         _data: &mut EVMData<'_, DB>,
         inputs: &mut CallInputs,
-        is_static: bool,
     ) -> (InstructionResult, Gas, Bytes) {
         println!(
             "SM CALL:   {:?},context:{:?}, is_static:{:?}, transfer:{:?}, input_size:{:?}",
             inputs.contract,
             inputs.context,
-            is_static,
+            inputs.is_static,
             inputs.transfer,
             inputs.input.len(),
         );

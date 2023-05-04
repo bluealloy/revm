@@ -71,7 +71,6 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         remaining_gas: Gas,
         ret: InstructionResult,
         out: Bytes,
-        _is_static: bool,
     ) -> (InstructionResult, Gas, Bytes) {
         (ret, remaining_gas, out)
     }
@@ -157,9 +156,8 @@ mod tests {
             &mut self,
             data: &mut EVMData<'_, DB>,
             call: &mut CallInputs,
-            is_static: bool,
         ) -> (InstructionResult, Gas, Bytes) {
-            self.gas_inspector.call(data, call, is_static);
+            self.gas_inspector.call(data, call);
 
             (
                 InstructionResult::Continue,
@@ -175,10 +173,9 @@ mod tests {
             remaining_gas: Gas,
             ret: InstructionResult,
             out: Bytes,
-            is_static: bool,
         ) -> (InstructionResult, Gas, Bytes) {
             self.gas_inspector
-                .call_end(data, inputs, remaining_gas, ret, out.clone(), is_static);
+                .call_end(data, inputs, remaining_gas, ret, out.clone());
             (ret, remaining_gas, out)
         }
 
