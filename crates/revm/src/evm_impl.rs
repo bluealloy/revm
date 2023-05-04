@@ -553,35 +553,19 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
 
         // Create new interpreter and execute initcode
-        let contract = Contract::new(
-            Bytes::new(),
-            Bytecode::new_raw(inputs.init_code.clone()),
-            created_address,
-            inputs.caller,
-            inputs.value,
-        );
-
-        #[cfg(feature = "memory_limit")]
-        let mut interpreter = Interpreter::new_with_memory_limit(
-            contract,
+        let (exit_reason, mut interpreter) = self.run_interpreter(
+            Contract::new(
+                Bytes::new(),
+                Bytecode::new_raw(inputs.init_code.clone()),
+                created_address,
+                inputs.caller,
+                inputs.value,
+            ),
             gas.limit(),
             false,
-            self.data.env.cfg.memory_limit,
         );
 
-        #[cfg(not(feature = "memory_limit"))]
-        let mut interpreter = Interpreter::new(contract, gas.limit(), false);
-
-        if INSPECT {
-            self.inspector
-                .initialize_interp(&mut interpreter, &mut self.data, false);
-        }
-        let exit_reason = if INSPECT {
-            interpreter.run_inspect::<Self, GSPEC>(self)
-        } else {
-            interpreter.run::<Self, GSPEC>(self)
-        };
-        // Host error if present on execution\
+        // Host error if present on execution
         match exit_reason {
             return_ok!() => {
                 // if ok, check contract creation limit and calculate gas deduction on output len.
@@ -657,6 +641,39 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
     }
 
+    /// Create a Interpreter and run it.
+    /// Returns the exit reason and created interpreter as it contains return values and gas spend.
+    pub fn run_interpreter(
+        &mut self,
+        contract: Contract,
+        gas_limit: u64,
+        is_static: bool,
+    ) -> (InstructionResult, Interpreter) {
+        // Create inspector
+        #[cfg(feature = "memory_limit")]
+        let mut interpreter = Interpreter::new_with_memory_limit(
+            contract,
+            gas_limit,
+            is_static,
+            self.data.env.cfg.memory_limit,
+        );
+
+        #[cfg(not(feature = "memory_limit"))]
+        let mut interpreter = Interpreter::new(contract, gas_limit, is_static);
+
+        if INSPECT {
+            self.inspector
+                .initialize_interp(&mut interpreter, &mut self.data);
+        }
+        let exit_reason = if INSPECT {
+            interpreter.run_inspect::<Self, GSPEC>(self)
+        } else {
+            interpreter.run::<Self, GSPEC>(self)
+        };
+
+        (exit_reason, interpreter)
+    }
+
     fn call_inner(&mut self, inputs: &mut CallInputs) -> (InstructionResult, Gas, Bytes) {
         let mut gas = Gas::new(inputs.gas_limit);
         // Load account and get code. Account is now hot.
@@ -719,30 +736,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             }
         } else {
             // Create interpreter and execute subcall
-            let contract =
-                Contract::new_with_context(inputs.input.clone(), bytecode, &inputs.context);
-
-            #[cfg(feature = "memory_limit")]
-            let mut interpreter = Interpreter::new_with_memory_limit(
-                contract,
+            let (exit_reason, interpreter) = self.run_interpreter(
+                Contract::new_with_context(inputs.input.clone(), bytecode, &inputs.context),
                 gas.limit(),
                 inputs.is_static,
-                self.data.env.cfg.memory_limit,
             );
-
-            #[cfg(not(feature = "memory_limit"))]
-            let mut interpreter = Interpreter::new(contract, gas.limit(), inputs.is_static);
-
-            if INSPECT {
-                // create is always no static call.
-                self.inspector
-                    .initialize_interp(&mut interpreter, &mut self.data, false);
-            }
-            let exit_reason = if INSPECT {
-                interpreter.run_inspect::<Self, GSPEC>(self)
-            } else {
-                interpreter.run::<Self, GSPEC>(self)
-            };
 
             if matches!(exit_reason, return_ok!()) {
                 self.data.journaled_state.checkpoint_commit();
@@ -758,18 +756,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     for EVMImpl<'a, GSPEC, DB, INSPECT>
 {
-    fn step(&mut self, interp: &mut Interpreter, is_static: bool) -> InstructionResult {
-        self.inspector.step(interp, &mut self.data, is_static)
+    fn step(&mut self, interp: &mut Interpreter) -> InstructionResult {
+        self.inspector.step(interp, &mut self.data)
     }
 
-    fn step_end(
-        &mut self,
-        interp: &mut Interpreter,
-        is_static: bool,
-        ret: InstructionResult,
-    ) -> InstructionResult {
-        self.inspector
-            .step_end(interp, &mut self.data, is_static, ret)
+    fn step_end(&mut self, interp: &mut Interpreter, ret: InstructionResult) -> InstructionResult {
+        self.inspector.step_end(interp, &mut self.data, ret)
     }
 
     fn env(&mut self) -> &mut Env {

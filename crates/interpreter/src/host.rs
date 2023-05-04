@@ -10,11 +10,10 @@ pub use dummy_host::DummyHost;
 
 /// EVM context host.
 pub trait Host {
-    fn step(&mut self, interpreter: &mut Interpreter, is_static: bool) -> InstructionResult;
+    fn step(&mut self, interpreter: &mut Interpreter) -> InstructionResult;
     fn step_end(
         &mut self,
         interpreter: &mut Interpreter,
-        is_static: bool,
         ret: InstructionResult,
     ) -> InstructionResult;
 
