@@ -471,33 +471,25 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
     }
 
-    //fn call_with_inspector()
-
     fn create_inner(
         &mut self,
         inputs: &CreateInputs,
     ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
         let gas = Gas::new(inputs.gas_limit);
-        self.load_account(inputs.caller);
 
         // Check depth of calls
         if self.data.journaled_state.depth() > CALL_STACK_LIMIT {
             return (InstructionResult::CallTooDeep, None, gas, Bytes::new());
         }
-        // Check balance of caller and value. Do this before increasing nonce
-        match self.balance(inputs.caller) {
-            Some(i) if i.0 < inputs.value => {
-                return (InstructionResult::OutOfFund, None, gas, Bytes::new())
-            }
-            Some(_) => (),
-            _ => {
-                return (
-                    InstructionResult::FatalExternalError,
-                    None,
-                    gas,
-                    Bytes::new(),
-                )
-            }
+
+        // Fetch balance of caller.
+        let Some((caller_balance,_)) = self.balance(inputs.caller) else {
+            return (InstructionResult::FatalExternalError, None, gas, Bytes::new())
+        };
+
+        // Check if caller has enough balance to send to the crated contract.
+        if caller_balance < inputs.value {
+            return (InstructionResult::OutOfFund, None, gas, Bytes::new());
         }
 
         // Increase nonce of caller and check if it overflows
@@ -516,41 +508,31 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         };
         let ret = Some(created_address);
 
-        // Load account so that it will be hot
-        self.load_account(created_address);
-
-        // Enter subroutine
-        let checkpoint = self.data.journaled_state.checkpoint();
-
-        // Create contract account and check for collision
-        if !self.data.journaled_state.create_account(created_address) {
-            self.data.journaled_state.checkpoint_revert(checkpoint);
-            return (InstructionResult::CreateCollision, ret, gas, Bytes::new());
-        }
-
-        // Transfer value to contract address
-        if let Err(e) = self.data.journaled_state.transfer(
-            &inputs.caller,
-            &created_address,
-            inputs.value,
-            self.data.db,
-        ) {
-            self.data.journaled_state.checkpoint_revert(checkpoint);
-            return (e, ret, gas, Bytes::new());
-        }
-
-        // EIP-161: State trie clearing (invariant-preserving alternative)
-        if GSPEC::enabled(SPURIOUS_DRAGON)
-            && self
-                .data
-                .journaled_state
-                .inc_nonce(created_address)
-                .is_none()
+        // Load account so it needs to be marked as hot for access list.
+        if self
+            .data
+            .journaled_state
+            .load_account(created_address, self.data.db)
+            .map_err(|e| self.data.error = Some(e))
+            .is_err()
         {
-            // overflow
-            self.data.journaled_state.checkpoint_revert(checkpoint);
-            return (InstructionResult::Return, None, gas, Bytes::new());
+            return (
+                InstructionResult::FatalExternalError,
+                None,
+                gas,
+                Bytes::new(),
+            );
         }
+
+        // create account, transfer funds and make the journal checkpoint.
+        let checkpoint = match self
+            .data
+            .journaled_state
+            .create_account_checkpoint::<GSPEC>(inputs.caller, created_address, inputs.value)
+        {
+            Ok(checkpoint) => checkpoint,
+            Err(e) => return (e, None, gas, Bytes::new()),
+        };
 
         // Create new interpreter and execute initcode
         let (exit_reason, mut interpreter) = self.run_interpreter(
