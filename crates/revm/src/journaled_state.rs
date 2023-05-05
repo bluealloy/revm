@@ -624,7 +624,7 @@ impl JournaledState {
 /// Check if address is precompile by having assumption
 /// that precompiles are in range of 1 to N.
 #[inline(always)]
-fn is_precompile(address: B160, num_of_precompiles: usize) -> bool {
+pub fn is_precompile(address: B160, num_of_precompiles: usize) -> bool {
     if !address[..18].iter().all(|i| *i == 0) {
         return false;
     }

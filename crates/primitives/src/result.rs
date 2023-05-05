@@ -3,7 +3,7 @@ use alloc::vec::Vec;
 use bytes::Bytes;
 use ruint::aliases::U256;
 
-pub type EVMResult<DB> = core::result::Result<ResultAndState, EVMError<DB>>;
+pub type EVMResult<DBError> = core::result::Result<ResultAndState, EVMError<DBError>>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -91,14 +91,14 @@ impl Output {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum EVMError<DB> {
+pub enum EVMError<DBError> {
     Transaction(InvalidTransaction),
     /// REVM specific and related to environment.
     PrevrandaoNotSet,
-    Database(DB),
+    Database(DBError),
 }
 
-impl<DB> From<InvalidTransaction> for EVMError<DB> {
+impl<DBError> From<InvalidTransaction> for EVMError<DBError> {
     fn from(invalid: InvalidTransaction) -> Self {
         EVMError::Transaction(invalid)
     }
