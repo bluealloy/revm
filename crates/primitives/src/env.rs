@@ -121,6 +121,28 @@ pub struct CfgEnv {
     pub disable_base_fee: bool,
 }
 
+impl CfgEnv {
+    #[cfg(feature = "optional_eip3607")]
+    pub fn is_eip3607_disabled(&self) -> bool {
+        self.disable_eip3607
+    }
+
+    #[cfg(not(feature = "optional_eip3607"))]
+    pub fn is_eip3607_disabled(&self) -> bool {
+        false
+    }
+
+    #[cfg(feature = "optional_balance_check")]
+    pub fn is_balance_check_disabled(&self) -> bool {
+        self.disable_balance_check
+    }
+
+    #[cfg(not(feature = "optional_balance_check"))]
+    pub fn is_balance_check_disabled(&self) -> bool {
+        false
+    }
+}
+
 #[derive(Clone, Default, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AnalysisKind {

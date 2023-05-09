@@ -118,10 +118,59 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     }
 
     /// Validate transaction agains state.
-    pub fn validate_tx_agains_state(&self, account: &Account) -> Result<(), EVMError<DB::Error>> {
-        // nonce can be checked beforehand
+    pub fn validate_tx_agains_state(
+        env: &Env,
+        account: &Account,
+        gas_limit: u64,
+        value: U256,
+    ) -> Result<(), EVMError<DB::Error>> {
+        // EIP-3607: Reject transactions from senders with deployed code
+        // This EIP is introduced after london but there was no collision in past
+        // so we can leave it enabled always
+        if !env.cfg.is_eip3607_disabled() && account.info.code_hash != KECCAK_EMPTY {
+            return Err(InvalidTransaction::RejectCallerWithCode.into());
+        }
 
-        // balance needs checking.
+        let state_nonce = account.info.nonce;
+
+        // Check that the transaction's nonce is correct
+        if env.tx.nonce.is_some() {
+            let tx_nonce = env.tx.nonce.unwrap();
+            match tx_nonce.cmp(&state_nonce) {
+                Ordering::Greater => {
+                    return Err(InvalidTransaction::NonceTooHigh {
+                        tx: tx_nonce,
+                        state: state_nonce,
+                    }
+                    .into());
+                }
+                Ordering::Less => {
+                    return Err(InvalidTransaction::NonceTooLow {
+                        tx: tx_nonce,
+                        state: state_nonce,
+                    }
+                    .into());
+                }
+                _ => {}
+            }
+        }
+
+        let balance_check = U256::from(gas_limit)
+            .checked_mul(env.tx.gas_price)
+            .and_then(|gas_cost| gas_cost.checked_add(value))
+            .ok_or(EVMError::Transaction(
+                InvalidTransaction::OverflowPaymentInTransaction,
+            ))?;
+
+        // Check if account has enough balance for gas_limit*gas_price and value transfer.
+        // Transfer will be done inside `*_inner` functions.
+        if !env.cfg.is_balance_check_disabled() && balance_check > account.info.balance {
+            return Err(InvalidTransaction::LackOfFundForGasLimit {
+                gas_limit: balance_check,
+                balance: account.info.balance,
+            }
+            .into());
+        }
 
         Ok(())
     }
@@ -176,71 +225,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let effective_gas_price = self.data.env.effective_gas_price();
         /**** MOVE THIS TO FIRST_CALL FUNCTION ******/
         // load acc
-        let (caller_account, _) = self
-            .data
-            .journaled_state
+        let journal = &mut self.data.journaled_state;
+        let env = &mut self.data.env;
+        let (caller_account, _) = journal
             .load_account(caller, self.data.db)
             .map_err(EVMError::Database)?;
 
-        #[cfg(feature = "optional_eip3607")]
-        let disable_eip3607 = self.env().cfg.disable_eip3607;
-        #[cfg(not(feature = "optional_eip3607"))]
-        let disable_eip3607 = false;
-
-        // EIP-3607: Reject transactions from senders with deployed code
-        // This EIP is introduced after london but there was no collision in past
-        // so we can leave it enabled always
-        if !disable_eip3607 && caller_account.info.code_hash != KECCAK_EMPTY {
-            return Err(InvalidTransaction::RejectCallerWithCode.into());
-        }
-
-        let state_nonce = caller_account.info.nonce;
-
-        // Check that the transaction's nonce is correct
-        if self.data.env.tx.nonce.is_some() {
-            let tx_nonce = self.data.env.tx.nonce.unwrap();
-            match tx_nonce.cmp(&state_nonce) {
-                Ordering::Greater => {
-                    return Err(InvalidTransaction::NonceTooHigh {
-                        tx: tx_nonce,
-                        state: state_nonce,
-                    }
-                    .into());
-                }
-                Ordering::Less => {
-                    return Err(InvalidTransaction::NonceTooLow {
-                        tx: tx_nonce,
-                        state: state_nonce,
-                    }
-                    .into());
-                }
-                _ => {}
-            }
-        }
-
-        #[cfg(feature = "optional_balance_check")]
-        let disable_balance_check = self.env().cfg.disable_balance_check;
-        #[cfg(not(feature = "optional_balance_check"))]
-        let disable_balance_check = false;
-
-        /***** MOVE TO FIRST_CALL  ******/
-
-        let balance_check = U256::from(gas_limit)
-            .checked_mul(self.data.env.tx.gas_price)
-            .and_then(|gas_cost| gas_cost.checked_add(value))
-            .ok_or(EVMError::Transaction(
-                InvalidTransaction::OverflowPaymentInTransaction,
-            ))?;
-
-        // Check if account has enough balance for gas_limit*gas_price and value transfer.
-        // Transfer will be done inside `*_inner` functions.
-        if balance_check > caller_account.info.balance && !disable_balance_check {
-            return Err(InvalidTransaction::LackOfFundForGasLimit {
-                gas_limit: balance_check,
-                balance: caller_account.info.balance,
-            }
-            .into());
-        }
+        Self::validate_tx_agains_state(env, caller_account, gas_limit, value)?;
 
         // Reduce gas_limit*gas_price amount of caller account.
         // unwrap_or can only occur if disable_balance_check is enabled
@@ -255,23 +246,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
 
         let transact_gas_limit = gas_limit - initial_gas_spend;
 
-        // set gas with gas limit and spend it all. Gas is going to be reimbursed when
-        // transaction is returned successfully.
-        let mut gas = Gas::new(gas_limit);
-        gas.record_cost(gas_limit);
-
-        // this is test related but return error if nonce is max.
-        if caller_account.info.nonce == u64::MAX {
-            println!("ERRRORRRRRR");
-            // TODO: create errror
-            // very low priority
-        }
-
         // call inner handling of call/create
         // TODO can probably be refactored to look nicer.
         let (exit_reason, ret_gas, output) = match self.data.env.tx.transact_to {
             TransactTo::Call(address) => {
-                caller_account.info.nonce += 1;
+                // Nonce is already checked
+                caller_account.info.nonce =
+                    caller_account.info.nonce.checked_add(1).unwrap_or(u64::MAX);
 
                 let (exit, gas, bytes) = self.call(&mut CallInputs {
                     contract: address,
@@ -304,6 +285,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                 (exit, ret_gas, Output::Create(bytes, address))
             }
         };
+
+        // set gas with gas limit and spend it all. Gas is going to be reimbursed when
+        // transaction is returned successfully.
+        let mut gas = Gas::new(gas_limit);
+        gas.record_cost(gas_limit);
 
         if crate::USE_GAS {
             match exit_reason {
