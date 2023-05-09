@@ -381,6 +381,14 @@ impl Database for BenchmarkDB {
                 code_hash: self.1,
             }));
         }
+        if address == B160::from(1) {
+            return Ok(Some(AccountInfo {
+                nonce: 0,
+                balance: U256::from(10000000),
+                code: None,
+                code_hash: KECCAK_EMPTY,
+            }));
+        }
         Ok(None)
     }
 
