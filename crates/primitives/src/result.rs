@@ -3,7 +3,7 @@ use alloc::vec::Vec;
 use bytes::Bytes;
 use ruint::aliases::U256;
 
-pub type EVMResult<DB> = core::result::Result<ResultAndState, EVMError<DB>>;
+pub type EVMResult<DBError> = core::result::Result<ResultAndState, EVMError<DBError>>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -91,14 +91,14 @@ impl Output {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum EVMError<DB> {
+pub enum EVMError<DBError> {
     Transaction(InvalidTransaction),
     /// REVM specific and related to environment.
     PrevrandaoNotSet,
-    Database(DB),
+    Database(DBError),
 }
 
-impl<DB> From<InvalidTransaction> for EVMError<DB> {
+impl<DBError> From<InvalidTransaction> for EVMError<DBError> {
     fn from(invalid: InvalidTransaction) -> Self {
         EVMError::Transaction(invalid)
     }
@@ -114,8 +114,8 @@ pub enum InvalidTransaction {
     /// EIP-3607 Reject transactions from senders with deployed code
     RejectCallerWithCode,
     /// Transaction account does not have enough amount of ether to cover transferred value and gas_limit*gas_price.
-    LackOfFundForGasLimit {
-        gas_limit: U256,
+    LackOfFundForMaxFee {
+        fee: u64,
         balance: U256,
     },
     /// Overflow payment in transaction.
@@ -133,6 +133,9 @@ pub enum InvalidTransaction {
     /// EIP-3860: Limit and meter initcode
     CreateInitcodeSizeLimit,
     InvalidChainId,
+    /// Access list is not supported is not supported
+    /// for blocks before Berlin hardfork.
+    AccessListNotSupported,
 }
 
 /// When transaction return successfully without halts.

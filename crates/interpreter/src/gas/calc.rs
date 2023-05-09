@@ -1,9 +1,11 @@
 use super::constants::*;
+use crate::alloc::vec::Vec;
 use crate::{
     inner_models::SelfDestructResult,
     primitives::Spec,
     primitives::{SpecId::*, U256},
 };
+use revm_primitives::{Bytes, B160};
 
 #[allow(clippy::collapsible_else_if)]
 pub fn sstore_refund<SPEC: Spec>(original: U256, current: U256, new: U256) -> i64 {
@@ -324,4 +326,50 @@ pub fn memory_gas(a: usize) -> u64 {
     MEMORY
         .saturating_mul(a)
         .saturating_add(a.saturating_mul(a) / 512)
+}
+
+/// Initial gas that is deducted for transaction to be included.
+/// Initial gas contains initial stipend gas, gas for access list and input data.
+pub fn initial_tx_gas<SPEC: Spec>(
+    input: &Bytes,
+    is_create: bool,
+    access_list: &[(B160, Vec<U256>)],
+) -> u64 {
+    let mut initial_gas = 0;
+    let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
+    let non_zero_data_len = input.len() as u64 - zero_data_len;
+
+    // initdate stipend
+    initial_gas += zero_data_len * TRANSACTION_ZERO_DATA;
+    // EIP-2028: Transaction data gas cost reduction
+    initial_gas += non_zero_data_len * if SPEC::enabled(ISTANBUL) { 16 } else { 68 };
+
+    // get number of access list account and storages.
+    if SPEC::enabled(BERLIN) {
+        let accessed_slots = access_list
+            .iter()
+            .fold(0, |slot_count, (_, slots)| slot_count + slots.len() as u64);
+        initial_gas += access_list.len() as u64 * ACCESS_LIST_ADDRESS;
+        initial_gas += accessed_slots * ACCESS_LIST_STORAGE_KEY;
+    }
+
+    // base stipend
+    initial_gas += if is_create {
+        if SPEC::enabled(HOMESTEAD) {
+            // EIP-2: Homestead Hard-fork Changes
+            53000
+        } else {
+            21000
+        }
+    } else {
+        21000
+    };
+
+    // EIP-3860: Limit and meter initcode
+    // Initcode stipend for bytecode analysis
+    if SPEC::enabled(SHANGHAI) && is_create {
+        initial_gas += initcode_cost(input.len() as u64)
+    }
+
+    initial_gas
 }

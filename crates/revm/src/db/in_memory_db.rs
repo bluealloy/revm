@@ -122,6 +122,9 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
 impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
     fn commit(&mut self, changes: HashMap<B160, Account>) {
         for (address, mut account) in changes {
+            if !account.is_touched() {
+                continue;
+            }
             if account.is_selfdestructed() {
                 let db_account = self.accounts.entry(address).or_default();
                 db_account.storage.clear();
@@ -398,6 +401,14 @@ impl Database for BenchmarkDB {
                 balance: U256::from(10000000),
                 code: Some(self.0.clone()),
                 code_hash: self.1,
+            }));
+        }
+        if address == B160::from(1) {
+            return Ok(Some(AccountInfo {
+                nonce: 0,
+                balance: U256::from(10000000),
+                code: None,
+                code_hash: KECCAK_EMPTY,
             }));
         }
         Ok(None)

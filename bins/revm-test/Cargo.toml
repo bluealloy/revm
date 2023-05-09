@@ -15,3 +15,6 @@ name = "analysis"
 
 [[bin]]
 name = "snailtracer"
+
+[[bin]]
+name = "transfer"

@@ -1,6 +1,9 @@
-use crate::{alloc::vec::Vec, SpecId, B160, B256, U256};
+use crate::{
+    alloc::vec::Vec, Account, EVMError, InvalidTransaction, Spec, SpecId, B160, B256, KECCAK_EMPTY,
+    MAX_INITCODE_SIZE, U256,
+};
 use bytes::Bytes;
-use core::cmp::min;
+use core::cmp::{min, Ordering};
 
 #[derive(Clone, Debug, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -78,10 +81,6 @@ pub enum CreateScheme {
 pub struct CfgEnv {
     pub chain_id: U256,
     pub spec_id: SpecId,
-    /// If all precompiles have some balance we can skip initially fetching them from the database.
-    /// This is is not really needed on mainnet, and defaults to false, but in most cases it is
-    /// safe to be set to `true`, depending on the chain.
-    pub perf_all_precompiles_have_balance: bool,
     /// Bytecode that is created with CREATE/CREATE2 is by default analysed and jumptable is created.
     /// This is very benefitial for testing and speeds up execution of that bytecode if called multiple times.
     ///
@@ -121,6 +120,58 @@ pub struct CfgEnv {
     pub disable_base_fee: bool,
 }
 
+impl CfgEnv {
+    #[cfg(feature = "optional_eip3607")]
+    pub fn is_eip3607_disabled(&self) -> bool {
+        self.disable_eip3607
+    }
+
+    #[cfg(not(feature = "optional_eip3607"))]
+    pub fn is_eip3607_disabled(&self) -> bool {
+        false
+    }
+
+    #[cfg(feature = "optional_balance_check")]
+    pub fn is_balance_check_disabled(&self) -> bool {
+        self.disable_balance_check
+    }
+
+    #[cfg(not(feature = "optional_balance_check"))]
+    pub fn is_balance_check_disabled(&self) -> bool {
+        false
+    }
+
+    #[cfg(feature = "optional_gas_refund")]
+    pub fn is_gas_refund_disabled(&self) -> bool {
+        self.disable_gas_refund
+    }
+
+    #[cfg(not(feature = "optional_gas_refund"))]
+    pub fn is_gas_refund_disabled(&self) -> bool {
+        false
+    }
+
+    #[cfg(feature = "optional_no_base_fee")]
+    pub fn is_base_fee_check_disabled(&self) -> bool {
+        self.disable_base_fee
+    }
+
+    #[cfg(not(feature = "optional_no_base_fee"))]
+    pub fn is_base_fee_check_disabled(&self) -> bool {
+        false
+    }
+
+    #[cfg(feature = "optional_block_gas_limit")]
+    pub fn is_block_gas_limit_disabled(&self) -> bool {
+        self.disable_block_gas_limit
+    }
+
+    #[cfg(not(feature = "optional_block_gas_limit"))]
+    pub fn is_block_gas_limit_disabled(&self) -> bool {
+        false
+    }
+}
+
 #[derive(Clone, Default, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AnalysisKind {
@@ -135,7 +186,6 @@ impl Default for CfgEnv {
         CfgEnv {
             chain_id: U256::from(1),
             spec_id: SpecId::LATEST,
-            perf_all_precompiles_have_balance: false,
             perf_analyse_created_bytecodes: Default::default(),
             limit_contract_code_size: None,
             #[cfg(feature = "memory_limit")]
@@ -195,5 +245,108 @@ impl Env {
                 self.block.basefee + self.tx.gas_priority_fee.unwrap(),
             )
         }
+    }
+
+    /// Validate ENV data of the block.
+    ///
+    /// It can be skip if you are sure that PREVRANDAO is set.
+    #[inline]
+    pub fn validate_block_env<SPEC: Spec, T>(&self) -> Result<(), EVMError<T>> {
+        // Prevrandao is required for merge
+        if SPEC::enabled(SpecId::MERGE) && self.block.prevrandao.is_none() {
+            return Err(EVMError::PrevrandaoNotSet);
+        }
+        Ok(())
+    }
+
+    /// Validate transaction data that is set inside ENV and return error if something is wrong.
+    ///
+    /// Return inital spend gas (Gas needed to execute transaction).
+    #[inline]
+    pub fn validate_tx<SPEC: Spec>(&self) -> Result<(), InvalidTransaction> {
+        let gas_limit = self.tx.gas_limit;
+        let effective_gas_price = self.effective_gas_price();
+        let is_create = self.tx.transact_to.is_create();
+
+        // BASEFEE tx check
+        if SPEC::enabled(SpecId::LONDON) {
+            if let Some(priority_fee) = self.tx.gas_priority_fee {
+                if priority_fee > self.tx.gas_price {
+                    // or gas_max_fee for eip1559
+                    return Err(InvalidTransaction::GasMaxFeeGreaterThanPriorityFee);
+                }
+            }
+            let basefee = self.block.basefee;
+
+            // check minimal cost against basefee
+            if !self.cfg.is_base_fee_check_disabled() && effective_gas_price < basefee {
+                return Err(InvalidTransaction::GasPriceLessThanBasefee);
+            }
+        }
+
+        // Check if gas_limit is more than block_gas_limit
+        if !self.cfg.is_block_gas_limit_disabled() && U256::from(gas_limit) > self.block.gas_limit {
+            return Err(InvalidTransaction::CallerGasLimitMoreThanBlock);
+        }
+
+        // EIP-3860: Limit and meter initcode
+        if SPEC::enabled(SpecId::SHANGHAI) && is_create && self.tx.data.len() > MAX_INITCODE_SIZE {
+            return Err(InvalidTransaction::CreateInitcodeSizeLimit);
+        }
+
+        // Check if the transaction's chain id is correct
+        if let Some(tx_chain_id) = self.tx.chain_id {
+            if U256::from(tx_chain_id) != self.cfg.chain_id {
+                return Err(InvalidTransaction::InvalidChainId);
+            }
+        }
+
+        // Check if the transaction's chain id is correct
+        if !SPEC::enabled(SpecId::BERLIN) && !self.tx.access_list.is_empty() {
+            return Err(InvalidTransaction::AccessListNotSupported);
+        }
+
+        Ok(())
+    }
+
+    /// Validate transaction agains state.
+    #[inline]
+    pub fn validate_tx_agains_state(&self, account: &Account) -> Result<(), InvalidTransaction> {
+        // EIP-3607: Reject transactions from senders with deployed code
+        // This EIP is introduced after london but there was no collision in past
+        // so we can leave it enabled always
+        if !self.cfg.is_eip3607_disabled() && account.info.code_hash != KECCAK_EMPTY {
+            return Err(InvalidTransaction::RejectCallerWithCode);
+        }
+
+        // Check that the transaction's nonce is correct
+        if let Some(tx) = self.tx.nonce {
+            let state = account.info.nonce;
+            match tx.cmp(&state) {
+                Ordering::Greater => {
+                    return Err(InvalidTransaction::NonceTooHigh { tx, state });
+                }
+                Ordering::Less => {
+                    return Err(InvalidTransaction::NonceTooLow { tx, state });
+                }
+                _ => {}
+            }
+        }
+
+        let balance_check = U256::from(self.tx.gas_limit)
+            .checked_mul(self.tx.gas_price)
+            .and_then(|gas_cost| gas_cost.checked_add(self.tx.value))
+            .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
+
+        // Check if account has enough balance for gas_limit*gas_price and value transfer.
+        // Transfer will be done inside `*_inner` functions.
+        if !self.cfg.is_balance_check_disabled() && balance_check > account.info.balance {
+            return Err(InvalidTransaction::LackOfFundForMaxFee {
+                fee: self.tx.gas_limit,
+                balance: account.info.balance,
+            });
+        }
+
+        Ok(())
     }
 }
