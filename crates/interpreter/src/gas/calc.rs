@@ -352,7 +352,6 @@ pub fn initial_tx_gas<SPEC: Spec>(
         initial_gas += access_list.len() as u64 * ACCESS_LIST_ADDRESS;
         initial_gas += accessed_slots * ACCESS_LIST_STORAGE_KEY;
     }
-    // access list stipend
 
     // base stipend
     initial_gas += if is_create {
