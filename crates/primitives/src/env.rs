@@ -250,8 +250,6 @@ impl Env {
     /// Validate ENV data of the block.
     ///
     /// It can be skip if you are sure that PREVRANDAO is set.
-    ///
-    /// TODO move to ENV.
     #[inline]
     pub fn validate_block_env<SPEC: Spec, T>(&self) -> Result<(), EVMError<T>> {
         // Prevrandao is required for merge
@@ -281,12 +279,9 @@ impl Env {
             let basefee = self.block.basefee;
 
             // check minimal cost against basefee
-            // TODO maybe do this checks when creating evm. We already have all data there
-            // or should be move effective_gas_price inside transact fn
             if !self.cfg.is_base_fee_check_disabled() && effective_gas_price < basefee {
                 return Err(InvalidTransaction::GasPriceLessThanBasefee);
             }
-            // check if priority fee is lower than max fee
         }
 
         // Check if gas_limit is more than block_gas_limit

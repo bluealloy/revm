@@ -1,5 +1,5 @@
 use revm_primitives::{Bytes, B160};
-
+use crate::alloc::vec::Vec;
 use super::constants::*;
 use crate::{
     inner_models::SelfDestructResult,
@@ -328,7 +328,7 @@ pub fn memory_gas(a: usize) -> u64 {
         .saturating_add(a.saturating_mul(a) / 512)
 }
 
-/// Initial gas that is deducted from the transaction gas limit.
+/// Initial gas that is deducted for transaction to be included.
 /// Initial gas contains initial stipend gas, gas for access list and input data.
 pub fn initial_tx_gas<SPEC: Spec>(
     input: &Bytes,
