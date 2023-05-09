@@ -17,6 +17,7 @@ use core::cmp::Ordering;
 use core::{cmp::min, marker::PhantomData};
 use revm_interpreter::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
 use revm_precompile::{Precompile, Precompiles};
+use std::time::Instant;
 
 pub struct EVMData<'a, DB: Database> {
     pub env: &'a mut Env,
@@ -206,7 +207,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         self.validate_block_env()?;
         let initial_gas_spend = self.validate_tx()?;
 
-        // OK
         // load coinbase
         // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
         if GSPEC::enabled(SHANGHAI) {
@@ -231,7 +231,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             .load_account(caller, self.data.db)
             .map_err(EVMError::Database)?;
 
-        Self::validate_tx_agains_state(env, caller_account, gas_limit, value)?;
+        //Self::validate_tx_agains_state(env, caller_account, gas_limit, value)?;
 
         // Reduce gas_limit*gas_price amount of caller account.
         // unwrap_or can only occur if disable_balance_check is enabled
