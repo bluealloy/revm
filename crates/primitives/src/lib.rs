@@ -2,6 +2,7 @@
 
 pub mod bits;
 pub mod bytecode;
+pub mod constants;
 pub mod db;
 pub mod env;
 pub mod log;
@@ -26,8 +27,9 @@ pub type Hash = B256;
 
 pub use bitvec;
 pub use bytecode::*;
+pub use constants::*;
 pub use env::*;
-pub use hashbrown::{hash_map, HashMap};
+pub use hashbrown::{hash_map, hash_set, HashMap, HashSet};
 pub use log::Log;
 pub use precompile::*;
 pub use result::*;

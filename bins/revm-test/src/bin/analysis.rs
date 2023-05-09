@@ -25,7 +25,6 @@ fn main() {
     );
     //evm.env.tx.data = Bytes::from(hex::decode("30627b7c").unwrap());
     evm.env.tx.data = Bytes::from(hex::decode("8035F0CE").unwrap());
-    evm.env.cfg.perf_all_precompiles_have_balance = true;
 
     let bytecode_raw = Bytecode::new_raw(contract_data.clone());
     let bytecode_checked = Bytecode::new_raw(contract_data.clone()).to_checked();

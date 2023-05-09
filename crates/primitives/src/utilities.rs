@@ -8,7 +8,7 @@ pub const KECCAK_EMPTY: B256 = B256(hex!(
 
 #[inline(always)]
 pub fn keccak256(input: &[u8]) -> B256 {
-    B256::from_slice(Keccak256::digest(input).as_slice())
+    B256(Keccak256::digest(input)[..].try_into().unwrap())
 }
 
 /// Returns the address for the legacy `CREATE` scheme: [`CreateScheme::Create`]

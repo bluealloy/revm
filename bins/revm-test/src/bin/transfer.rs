@@ -1,8 +1,8 @@
-use std::time::{Duration, Instant};
 use revm::{
     db::BenchmarkDB,
     primitives::{Bytecode, TransactTo, U256},
 };
+use std::time::{Duration, Instant};
 extern crate alloc;
 
 fn main() {
@@ -20,26 +20,20 @@ fn main() {
             .unwrap(),
     );
     //evm.env.tx.data = Bytes::from(hex::decode("30627b7c").unwrap());
-    evm.env.cfg.perf_all_precompiles_have_balance = true;
 
     evm.database(BenchmarkDB::new_bytecode(Bytecode::new()));
 
     // Microbenchmark
     let bench_options = microbench::Options::default().time(Duration::from_secs(1));
 
-    microbench::bench(
-        &bench_options,
-        "Simple value transfer",
-        || {
-            let _ = evm.transact().unwrap();
-        },
-    );
+    microbench::bench(&bench_options, "Simple value transfer", || {
+        let _ = evm.transact().unwrap();
+    });
 
     let time = Instant::now();
     for _ in 0..10000 {
         let _ = evm.transact().unwrap();
     }
     let elapsed = time.elapsed();
-    println!("10k runs in {:?}", elapsed.as_nanos()/10_000);
-
+    println!("10k runs in {:?}", elapsed.as_nanos() / 10_000);
 }

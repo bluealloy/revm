@@ -3,21 +3,20 @@ use crate::interpreter::{
     CallContext, CallInputs, CallScheme, Contract, CreateInputs, CreateScheme, Gas, Host,
     InstructionResult, Interpreter, SelfDestructResult, Transfer, CALL_STACK_LIMIT,
 };
-use crate::journaled_state::{is_precompile, JournalCheckpoint};
+use crate::journaled_state::is_precompile;
 use crate::primitives::{
     create2_address, create_address, keccak256, Account, AnalysisKind, Bytecode, Bytes, EVMError,
     EVMResult, Env, ExecutionResult, HashMap, InvalidTransaction, Log, Output, ResultAndState,
     Spec,
     SpecId::{self, *},
-    TransactTo, B160, B256, KECCAK_EMPTY, U256,
+    TransactTo, B160, B256, U256,
 };
 use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector};
 use alloc::vec::Vec;
-use core::cmp::Ordering;
 use core::{cmp::min, marker::PhantomData};
-use revm_interpreter::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
+use revm_interpreter::gas::initial_tx_gas;
+use revm_interpreter::MAX_CODE_SIZE;
 use revm_precompile::{Precompile, Precompiles};
-use std::time::Instant;
 
 pub struct EVMData<'a, DB: Database> {
     pub env: &'a mut Env,
@@ -35,165 +34,22 @@ pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
 
 pub trait Transact<DBError> {
     /// Do transaction.
-    /// InstructionResult InstructionResult, Output for call or Address if we are creating contract, gas spend, gas refunded, State that needs to be applied.
+    /// InstructionResult InstructionResult, Output for call or Address if we are creating
+    /// contract, gas spend, gas refunded, State that needs to be applied.
     fn transact(&mut self) -> EVMResult<DBError>;
 }
 
 impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, INSPECT> {
-    /// Validate ENV data of the block.
-    ///
-    /// It can be skip if you are sure that PREVRANDAO is set.
-    ///
-    /// TODO move to ENV.
-    pub fn validate_block_env(&self) -> Result<(), EVMError<DB::Error>> {
-        // Prevrandao is required for merge
-        if GSPEC::enabled(MERGE) && self.data.env.block.prevrandao.is_none() {
-            return Err(EVMError::PrevrandaoNotSet);
-        }
-        Ok(())
-    }
-
-    /// Validate transaction data that is set inside ENV and return error if something is wrong.
-    ///
-    /// Return inital spend gas (Gas needed to execute transaction).
-    pub fn validate_tx(&self) -> Result<u64, EVMError<DB::Error>> {
-        let gas_limit = self.data.env.tx.gas_limit;
-        let effective_gas_price = self.data.env.effective_gas_price();
-        let is_create = self.data.env.tx.transact_to.is_create();
-
-        // BASEFEE tx check
-        if GSPEC::enabled(LONDON) {
-            if let Some(priority_fee) = self.data.env.tx.gas_priority_fee {
-                if priority_fee > self.data.env.tx.gas_price {
-                    // or gas_max_fee for eip1559
-                    return Err(InvalidTransaction::GasMaxFeeGreaterThanPriorityFee.into());
-                }
-            }
-            let basefee = self.data.env.block.basefee;
-
-            #[cfg(feature = "optional_no_base_fee")]
-            let disable_base_fee = self.env().cfg.disable_base_fee;
-            #[cfg(not(feature = "optional_no_base_fee"))]
-            let disable_base_fee = false;
-
-            // check minimal cost against basefee
-            // TODO maybe do this checks when creating evm. We already have all data there
-            // or should be move effective_gas_price inside transact fn
-            if !disable_base_fee && effective_gas_price < basefee {
-                return Err(InvalidTransaction::GasPriceLessThanBasefee.into());
-            }
-            // check if priority fee is lower than max fee
-        }
-
-        #[cfg(feature = "optional_block_gas_limit")]
-        let disable_block_gas_limit = self.env().cfg.disable_block_gas_limit;
-        #[cfg(not(feature = "optional_block_gas_limit"))]
-        let disable_block_gas_limit = false;
-
-        // unusual to be found here, but check if gas_limit is more than block_gas_limit
-        if !disable_block_gas_limit && U256::from(gas_limit) > self.data.env.block.gas_limit {
-            return Err(InvalidTransaction::CallerGasLimitMoreThanBlock.into());
-        }
-
-        if GSPEC::enabled(SHANGHAI) && is_create {
-            if self.data.env.tx.data.len() > MAX_INITCODE_SIZE {
-                return Err(InvalidTransaction::CreateInitcodeSizeLimit.into());
-            }
-        }
-
-        // Check if the transaction's chain id is correct
-        if let Some(tx_chain_id) = self.data.env.tx.chain_id {
-            if U256::from(tx_chain_id) != self.data.env.cfg.chain_id {
-                return Err(InvalidTransaction::InvalidChainId.into());
-            }
-        }
-
-        let initial_gas = self.initialization_gas::<GSPEC>();
-
-        // record initial gas cost. if not using gas metering init will return.
-        if gas_limit < initial_gas {
-            return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
-        }
-
-        Ok(initial_gas)
-    }
-
-    /// Validate transaction agains state.
-    pub fn validate_tx_agains_state(
-        env: &Env,
-        account: &Account,
-        gas_limit: u64,
-        value: U256,
-    ) -> Result<(), EVMError<DB::Error>> {
-        // EIP-3607: Reject transactions from senders with deployed code
-        // This EIP is introduced after london but there was no collision in past
-        // so we can leave it enabled always
-        if !env.cfg.is_eip3607_disabled() && account.info.code_hash != KECCAK_EMPTY {
-            return Err(InvalidTransaction::RejectCallerWithCode.into());
-        }
-
-        let state_nonce = account.info.nonce;
-
-        // Check that the transaction's nonce is correct
-        if env.tx.nonce.is_some() {
-            let tx_nonce = env.tx.nonce.unwrap();
-            match tx_nonce.cmp(&state_nonce) {
-                Ordering::Greater => {
-                    return Err(InvalidTransaction::NonceTooHigh {
-                        tx: tx_nonce,
-                        state: state_nonce,
-                    }
-                    .into());
-                }
-                Ordering::Less => {
-                    return Err(InvalidTransaction::NonceTooLow {
-                        tx: tx_nonce,
-                        state: state_nonce,
-                    }
-                    .into());
-                }
-                _ => {}
-            }
-        }
-
-        let balance_check = U256::from(gas_limit)
-            .checked_mul(env.tx.gas_price)
-            .and_then(|gas_cost| gas_cost.checked_add(value))
-            .ok_or(EVMError::Transaction(
-                InvalidTransaction::OverflowPaymentInTransaction,
-            ))?;
-
-        // Check if account has enough balance for gas_limit*gas_price and value transfer.
-        // Transfer will be done inside `*_inner` functions.
-        if !env.cfg.is_balance_check_disabled() && balance_check > account.info.balance {
-            return Err(InvalidTransaction::LackOfFundForGasLimit {
-                gas_limit: balance_check,
-                balance: account.info.balance,
-            }
-            .into());
-        }
-
-        Ok(())
-    }
-
     /// Load access list for berlin hardfork.
     ///
     /// Loading of accounts/storages is needed to make them hot.
+    #[inline]
     fn load_access_list(&mut self) -> Result<(), EVMError<DB::Error>> {
-        // TODO move load of access list to saparate function.
-        //  let mut accessed_slots = 0_u64;
         for (address, slots) in self.data.env.tx.access_list.iter() {
             self.data
                 .journaled_state
-                .load_account(*address, self.data.db)
+                .initial_account_load(*address, slots, self.data.db)
                 .map_err(EVMError::Database)?;
-
-            for slot in slots {
-                self.data
-                    .journaled_state
-                    .sload(*address, *slot, self.data.db)
-                    .map_err(EVMError::Database)?;
-            }
         }
         Ok(())
     }
@@ -203,51 +59,57 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
     for EVMImpl<'a, GSPEC, DB, INSPECT>
 {
     fn transact(&mut self) -> EVMResult<DB::Error> {
-        // OK
-        self.validate_block_env()?;
-        let initial_gas_spend = self.validate_tx()?;
+        self.env().validate_block_env::<GSPEC, DB::Error>()?;
+        self.env().validate_tx::<GSPEC>()?;
+
+        let env = &self.data.env;
+        let tx_caller = env.tx.caller;
+        let tx_value = env.tx.value;
+        let tx_data = env.tx.data.clone();
+        let tx_gas_limit = env.tx.gas_limit;
+        let tx_is_create = env.tx.transact_to.is_create();
+        let effective_gas_price = env.effective_gas_price();
+
+        let initial_gas_spend =
+            initial_tx_gas::<GSPEC>(&tx_data, tx_is_create, &env.tx.access_list);
+
+        // check gas cost. if not using gas metering init will return.
+        if env.tx.gas_limit < initial_gas_spend {
+            return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
+        }
 
         // load coinbase
         // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
         if GSPEC::enabled(SHANGHAI) {
             self.data
                 .journaled_state
-                .load_account(self.data.env.block.coinbase, self.data.db)
+                .initial_account_load(self.data.env.block.coinbase, &[], self.data.db)
                 .map_err(EVMError::Database)?;
         }
-        // OK
         self.load_access_list()?;
 
-        let caller = self.data.env.tx.caller;
-        let value = self.data.env.tx.value;
-        let data = self.data.env.tx.data.clone();
-        let gas_limit = self.data.env.tx.gas_limit;
-        let effective_gas_price = self.data.env.effective_gas_price();
-        /**** MOVE THIS TO FIRST_CALL FUNCTION ******/
         // load acc
         let journal = &mut self.data.journaled_state;
-        let env = &mut self.data.env;
         let (caller_account, _) = journal
-            .load_account(caller, self.data.db)
+            .load_account(tx_caller, self.data.db)
             .map_err(EVMError::Database)?;
 
-        //Self::validate_tx_agains_state(env, caller_account, gas_limit, value)?;
+        self.data.env.validate_tx_agains_state(caller_account)?;
 
         // Reduce gas_limit*gas_price amount of caller account.
         // unwrap_or can only occur if disable_balance_check is enabled
         caller_account.info.balance = caller_account
             .info
             .balance
-            .checked_sub(U256::from(gas_limit) * effective_gas_price)
+            .checked_sub(U256::from(tx_gas_limit).saturating_mul(effective_gas_price))
             .unwrap_or(U256::ZERO);
 
         // touch account so we know it is changed.
         caller_account.mark_touch();
 
-        let transact_gas_limit = gas_limit - initial_gas_spend;
+        let transact_gas_limit = tx_gas_limit - initial_gas_spend;
 
         // call inner handling of call/create
-        // TODO can probably be refactored to look nicer.
         let (exit_reason, ret_gas, output) = match self.data.env.tx.transact_to {
             TransactTo::Call(address) => {
                 // Nonce is already checked
@@ -257,17 +119,17 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                 let (exit, gas, bytes) = self.call(&mut CallInputs {
                     contract: address,
                     transfer: Transfer {
-                        source: caller,
+                        source: tx_caller,
                         target: address,
-                        value,
+                        value: tx_value,
                     },
-                    input: data,
+                    input: tx_data,
                     gas_limit: transact_gas_limit,
                     context: CallContext {
-                        caller,
+                        caller: tx_caller,
                         address,
                         code_address: address,
-                        apparent_value: value,
+                        apparent_value: tx_value,
                         scheme: CallScheme::Call,
                     },
                     is_static: false,
@@ -276,10 +138,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             }
             TransactTo::Create(scheme) => {
                 let (exit, address, ret_gas, bytes) = self.create(&mut CreateInputs {
-                    caller,
+                    caller: tx_caller,
                     scheme,
-                    value,
-                    init_code: data,
+                    value: tx_value,
+                    init_code: tx_data,
                     gas_limit: transact_gas_limit,
                 });
                 (exit, ret_gas, Output::Create(bytes, address))
@@ -288,8 +150,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
 
         // set gas with gas limit and spend it all. Gas is going to be reimbursed when
         // transaction is returned successfully.
-        let mut gas = Gas::new(gas_limit);
-        gas.record_cost(gas_limit);
+        let mut gas = Gas::new(tx_gas_limit);
+        gas.record_cost(tx_gas_limit);
 
         if crate::USE_GAS {
             match exit_reason {
@@ -366,12 +228,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             let effective_gas_price = self.data.env.effective_gas_price();
             let basefee = self.data.env.block.basefee;
 
-            #[cfg(feature = "optional_gas_refund")]
-            let disable_gas_refund = self.env().cfg.disable_gas_refund;
-            #[cfg(not(feature = "optional_gas_refund"))]
-            let disable_gas_refund = false;
-
-            let gas_refunded = if disable_gas_refund {
+            let gas_refunded = if self.env().cfg.is_gas_refund_disabled() {
                 0
             } else {
                 // EIP-3529: Reduction in refunds
@@ -407,7 +264,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             (gas.spend() - gas_refunded, gas_refunded)
         } else {
             // touch coinbase
-            // TODO return
             let _ = self
                 .data
                 .journaled_state
@@ -415,93 +271,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             self.data.journaled_state.touch(&coinbase);
             (0, 0)
         };
-        let (mut new_state, logs) = self.data.journaled_state.finalize();
-        // precompiles are special case. If there is precompiles in finalized Map that means some balance is
-        // added to it, we need now to load precompile address from db and add this amount to it so that we
-        // will have sum.
-        if self.data.env.cfg.perf_all_precompiles_have_balance {
-            for address in self.precompiles.addresses() {
-                let address = B160(*address);
-                if let Some(precompile) = new_state.get_mut(&address) {
-                    // we found it.
-                    precompile.info.balance += self
-                        .data
-                        .db
-                        .basic(address)
-                        .ok()
-                        .flatten()
-                        .map(|acc| acc.balance)
-                        .unwrap_or_default();
-                }
-            }
-        }
-
+        let (new_state, logs) = self.data.journaled_state.finalize();
         (new_state, logs, gas_used, gas_refunded)
     }
 
-    fn initialization_gas<SPEC: Spec>(&self) -> u64 {
-        let is_create = self.data.env.tx.transact_to.is_create();
-        let input = &self.data.env.tx.data;
-
-        // EIP-3860: Limit and meter initcode
-        let initcode_cost = if SPEC::enabled(SHANGHAI) && is_create {
-            let initcode_len = self.data.env.tx.data.len();
-            // if initcode_len > MAX_INITCODE_SIZE {
-            //     return Err(InvalidTransaction::CreateInitcodeSizeLimit.into());
-            // }
-            if crate::USE_GAS {
-                gas::initcode_cost(initcode_len as u64)
-            } else {
-                0
-            }
-        } else {
-            0
-        };
-
-        if crate::USE_GAS {
-            let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
-            let non_zero_data_len = input.len() as u64 - zero_data_len;
-            let (accessed_accounts, accessed_slots) = {
-                if SPEC::enabled(BERLIN) {
-                    // ADDED NEW
-                    let accessed_slots = self
-                        .data
-                        .env
-                        .tx
-                        .access_list
-                        .iter()
-                        .fold(0, |slot_count, (_, slots)| slot_count + slots.len() as u64);
-                    (self.data.env.tx.access_list.len() as u64, accessed_slots)
-                } else {
-                    (0, 0)
-                }
-            };
-
-            let transact = if is_create {
-                if SPEC::enabled(HOMESTEAD) {
-                    // EIP-2: Homestead Hard-fork Changes
-                    53000
-                } else {
-                    21000
-                }
-            } else {
-                21000
-            };
-
-            // EIP-2028: Transaction data gas cost reduction
-            let gas_transaction_non_zero_data = if SPEC::enabled(ISTANBUL) { 16 } else { 68 };
-
-            transact
-                + initcode_cost
-                + zero_data_len * gas::TRANSACTION_ZERO_DATA
-                + non_zero_data_len * gas_transaction_non_zero_data
-                + accessed_accounts * gas::ACCESS_LIST_ADDRESS
-                + accessed_slots * gas::ACCESS_LIST_STORAGE_KEY
-        } else {
-            0
-        }
-    }
-
+    /// EVM create opcode for both initial crate and CREATE and CREATE2 opcodes.
     fn create_inner(
         &mut self,
         inputs: &CreateInputs,
@@ -687,51 +461,41 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         (exit_reason, interpreter)
     }
 
+    /// Call precompile contract
     fn call_precompile(
         &mut self,
         mut gas: Gas,
-        checkpoint: JournalCheckpoint,
-        inputs: &mut CallInputs,
+        contract: B160,
+        input_data: Bytes,
     ) -> (InstructionResult, Gas, Bytes) {
         let precompile = self
             .precompiles
-            .get(&inputs.contract)
+            .get(&contract)
             .expect("Check for precompile should be already done");
         let out = match precompile {
-            Precompile::Standard(fun) => fun(inputs.input.as_ref(), inputs.gas_limit),
-            Precompile::Custom(fun) => fun(inputs.input.as_ref(), inputs.gas_limit),
+            Precompile::Standard(fun) => fun(&input_data, gas.limit()),
+            Precompile::Custom(fun) => fun(&input_data, gas.limit()),
         };
         match out {
             Ok((gas_used, data)) => {
                 if !crate::USE_GAS || gas.record_cost(gas_used) {
-                    self.data.journaled_state.checkpoint_commit();
                     (InstructionResult::Return, gas, Bytes::from(data))
                 } else {
-                    self.data.journaled_state.checkpoint_revert(checkpoint);
                     (InstructionResult::PrecompileOOG, gas, Bytes::new())
                 }
             }
             Err(e) => {
-                let ret = if let precompile::Error::OutOfGas = e {
+                let ret = if precompile::Error::OutOfGas == e {
                     InstructionResult::PrecompileOOG
                 } else {
                     InstructionResult::PrecompileError
                 };
-                self.data.journaled_state.checkpoint_revert(checkpoint);
                 (ret, gas, Bytes::new())
             }
         }
     }
 
-    /*
-    fn first_call() {
-        // load from, one db load.
-        // load to, second db load.
-        // transfer value. value change
-        // call interpreter for to, one db code load.
-    }
-     */
-
+    /// Main contract call of the EVM.
     fn call_inner(&mut self, inputs: &mut CallInputs) -> (InstructionResult, Gas, Bytes) {
         let gas = Gas::new(inputs.gas_limit);
         // Load account and get code. Account is now hot.
@@ -764,25 +528,28 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             return (e, gas, Bytes::new());
         }
 
-        if is_precompile(inputs.contract, self.precompiles.len()) {
-            // Call precompiles
-            self.call_precompile(gas, checkpoint, inputs)
-        } else {
+        let ret = if is_precompile(inputs.contract, self.precompiles.len()) {
+            self.call_precompile(gas, inputs.contract, inputs.input.clone())
+        } else if !bytecode.is_empty() {
             // Create interpreter and execute subcall
             let (exit_reason, interpreter) = self.run_interpreter(
                 Contract::new_with_context(inputs.input.clone(), bytecode, &inputs.context),
                 gas.limit(),
                 inputs.is_static,
             );
-
-            if matches!(exit_reason, return_ok!()) {
-                self.data.journaled_state.checkpoint_commit();
-            } else {
-                self.data.journaled_state.checkpoint_revert(checkpoint);
-            }
-
             (exit_reason, interpreter.gas, interpreter.return_value())
+        } else {
+            (InstructionResult::Stop, gas, Bytes::new())
+        };
+
+        // revert changes or not.
+        if matches!(ret.0, return_ok!()) {
+            self.data.journaled_state.checkpoint_commit();
+        } else {
+            self.data.journaled_state.checkpoint_revert(checkpoint);
         }
+
+        ret
     }
 }
 
@@ -850,13 +617,8 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .load_code(address, db)
             .map_err(|e| *error = Some(e))
             .ok()?;
-        //asume that all precompiles have some balance
-        let is_precompile = self.precompiles.contains(&address);
-        if is_precompile && self.data.env.cfg.perf_all_precompiles_have_balance {
-            return Some((KECCAK_EMPTY, is_cold));
-        }
+
         if acc.is_empty() {
-            // TODO check this for pre tangerine fork
             return Some((B256::zero(), is_cold));
         }
 

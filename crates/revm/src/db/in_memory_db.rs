@@ -175,6 +175,9 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
 impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
     fn commit(&mut self, changes: HashMap<B160, Account>) {
         for (address, mut account) in changes {
+            if !account.is_touched() {
+                continue;
+            }
             if account.is_selfdestructed() {
                 let db_account = self.accounts.entry(address).or_default();
                 db_account.storage.clear();

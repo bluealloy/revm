@@ -114,8 +114,8 @@ pub enum InvalidTransaction {
     /// EIP-3607 Reject transactions from senders with deployed code
     RejectCallerWithCode,
     /// Transaction account does not have enough amount of ether to cover transferred value and gas_limit*gas_price.
-    LackOfFundForGasLimit {
-        gas_limit: U256,
+    LackOfFundForMaxFee {
+        fee: u64,
         balance: U256,
     },
     /// Overflow payment in transaction.
@@ -133,6 +133,9 @@ pub enum InvalidTransaction {
     /// EIP-3860: Limit and meter initcode
     CreateInitcodeSizeLimit,
     InvalidChainId,
+    /// Access list is not supported is not supported
+    /// for blocks before Berlin hardfork.
+    AccessListNotSupported,
 }
 
 /// When transaction return successfully without halts.

@@ -133,11 +133,6 @@ impl JournaledState {
     pub fn finalize(&mut self) -> (State, Vec<Log>) {
         let state = mem::take(&mut self.state);
 
-        let state = state
-            .into_iter()
-            .filter(|(_, account)| account.is_touched())
-            .collect();
-
         let logs = mem::take(&mut self.logs);
         self.journal = vec![vec![]];
         self.depth = 0;
@@ -477,6 +472,53 @@ impl JournaledState {
             target_exists,
             previously_destroyed,
         })
+    }
+
+    pub fn initial_account_and_code_load<DB: Database>(
+        &mut self,
+        address: B160,
+        db: &mut DB,
+    ) -> Result<&mut Account, DB::Error> {
+        let account = self.initial_account_load(address, &[], db)?;
+        if account.info.code.is_none() {
+            if account.info.code_hash == KECCAK_EMPTY {
+                account.info.code = Some(Bytecode::new());
+            } else {
+                // load code if requested
+                account.info.code = Some(db.code_by_hash(account.info.code_hash)?);
+            }
+        }
+
+        Ok(account)
+    }
+
+    /// Initial load of account. This load will not be tracked inside journal
+    pub fn initial_account_load<DB: Database>(
+        &mut self,
+        address: B160,
+        slots: &[U256],
+        db: &mut DB,
+    ) -> Result<&mut Account, DB::Error> {
+        match self.state.entry(address) {
+            Entry::Occupied(entry) => {
+                let account = entry.into_mut();
+
+                Ok(account)
+            }
+            Entry::Vacant(vac) => {
+                let mut account = db
+                    .basic(address)?
+                    .map(|i| i.into())
+                    .unwrap_or(Account::new_not_existing());
+
+                for slot in slots {
+                    let storage = db.storage(address, *slot)?;
+                    account.storage.insert(*slot, StorageSlot::new(storage));
+                }
+
+                Ok(vac.insert(account))
+            }
+        }
     }
 
     /// load account into memory. return if it is cold or hot accessed
