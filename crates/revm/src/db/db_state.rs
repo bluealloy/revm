@@ -30,6 +30,28 @@ pub enum GlobalAccountState {
     DestroyedAgain,
 }
 
+pub enum ChangedState {
+    NewChanged,
+    Changed,
+    DestroyedNewChanged,
+}
+
+pub enum Transitions {
+    LoadedEmpty,
+    LoadedNotExisting,
+    Loaded(ClotAccount),
+    New {
+        account: ClotAccount, // old state
+        is_destroyed: bool,
+    },
+    Changed {
+        account: ClotAccount, // old state
+        change_state: ChangedState,
+    },
+    Destroyed,
+    DestroyedAgain,
+}
+
 pub enum Change {
     AccountChange { old: AccountInfo },
     StorageChange { old: bool },
@@ -79,7 +101,7 @@ impl StateWithChange {
                             GlobalAccountState::LoadedNotExisting => {}
                             GlobalAccountState::Loaded(acc) => {}
                             GlobalAccountState::DestroyedAgain => {}
-                            GlobalAccountState::DestroyedNew(acc) => {},
+                            GlobalAccountState::DestroyedNew(acc) => {}
                             _ => unreachable!("Invalid state"),
                         },
                         GlobalAccountState::DestroyedNewChanged(acc) => match this_account {
