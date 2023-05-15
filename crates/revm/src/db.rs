@@ -12,4 +12,5 @@ compile_error!(
 );
 
 pub use crate::primitives::db::*;
+pub use db_state::{BlockState, PlainAccount, StateWithChange};
 pub use in_memory_db::*;

@@ -3,11 +3,22 @@ use alloc::{sync::Arc, vec, vec::Vec};
 use bitvec::prelude::{bitvec, Lsb0};
 use bitvec::vec::BitVec;
 use bytes::Bytes;
+use core::fmt::Debug;
+use fixed_hash::rustc_hex::ToHex;
+use to_binary::BinaryString;
 
 /// A map of valid `jump` destinations.
-#[derive(Clone, Debug, Eq, PartialEq, Default)]
+#[derive(Clone, Eq, PartialEq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JumpMap(pub Arc<BitVec<u8>>);
+
+impl Debug for JumpMap {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("JumpMap")
+            .field("map", &BinaryString::from(self.0.as_raw_slice()))
+            .finish()
+    }
+}
 
 impl JumpMap {
     /// Get the raw bytes of the jump map
@@ -34,13 +45,23 @@ pub enum BytecodeState {
     Analysed { len: usize, jump_map: JumpMap },
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Bytecode {
     #[cfg_attr(feature = "serde", serde(with = "crate::utilities::serde_hex_bytes"))]
     pub bytecode: Bytes,
     pub hash: B256,
     pub state: BytecodeState,
+}
+
+impl Debug for Bytecode {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("Bytecode")
+            .field("bytecode", &hex::encode(&self.bytecode[..]))
+            .field("hash", &self.hash)
+            .field("state", &self.state)
+            .finish()
+    }
 }
 
 impl Default for Bytecode {
