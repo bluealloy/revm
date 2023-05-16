@@ -2,14 +2,25 @@ use once_cell::sync::Lazy;
 use revm_interpreter::primitives::{
     db::{Database, DatabaseCommit},
     hash_map::{self, Entry},
-    Account, AccountInfo, Bytecode, HashMap, State, B160, B256, U256, PRECOMPILE3,
+    Account, AccountInfo, Bytecode, HashMap, State, B160, B256, PRECOMPILE3, U256,
 };
 
 #[derive(Clone, Debug, Default)]
 pub struct PlainAccount {
     pub info: AccountInfo,
-    pub storage: HashMap<U256, U256>,
+    pub storage: Storage,
 }
+
+impl PlainAccount {
+    pub fn new_empty_with_storage(storage: Storage) -> Self {
+        Self {
+            info: AccountInfo::default(),
+            storage,
+        }
+    }
+}
+
+pub type Storage = HashMap<U256, U256>;
 
 impl From<AccountInfo> for PlainAccount {
     fn from(info: AccountInfo) -> Self {
@@ -75,7 +86,7 @@ impl BlockState {
         let account = if !info.is_empty() {
             GlobalAccountState::Loaded(info.into())
         } else {
-            GlobalAccountState::LoadedEmptyEIP161
+            GlobalAccountState::LoadedEmptyEIP161(PlainAccount::default())
         };
         self.accounts.insert(address, account);
     }
@@ -84,18 +95,20 @@ impl BlockState {
         &mut self,
         address: B160,
         info: AccountInfo,
-        storage: HashMap<U256, U256>,
+        storage: Storage,
     ) {
         let account = if !info.is_empty() {
             GlobalAccountState::Loaded(PlainAccount { info, storage })
         } else {
-            GlobalAccountState::LoadedEmptyEIP161
+            GlobalAccountState::LoadedEmptyEIP161(PlainAccount::new_empty_with_storage(storage))
         };
         self.accounts.insert(address, account);
     }
 
     pub fn apply_evm_state(&mut self, evm_state: &State) {
+        //println!("PRINT STATE:");
         for (address, account) in evm_state {
+            //println!("\n------:{:?} -> {:?}", address, account);
             if !account.is_touched() {
                 continue;
             } else if account.is_selfdestructed() {
@@ -111,7 +124,7 @@ impl BlockState {
                         entry.insert(GlobalAccountState::Destroyed);
                     }
                 }
-                break;
+                continue;
             }
             let is_empty = account.is_empty();
             let storage = account
@@ -119,7 +132,7 @@ impl BlockState {
                 .iter()
                 .map(|(k, v)| (*k, v.present_value))
                 .collect::<HashMap<_, _>>();
-            if account.is_newly_created() {
+            if account.is_created() {
                 // Note: it can happen that created contract get selfdestructed in same block
                 // that is why is newly created is checked after selfdestructed
                 //
@@ -153,16 +166,14 @@ impl BlockState {
 
                 // And when empty account is touched it needs to be removed from database.
                 if self.has_state_clear && is_empty {
-                    if *address == PRECOMPILE3 {
-                        // Precompile3 is special case caused by the bug in one of testnets
-                        // so every time if it is empty and touched we need to leave it in db.
-                        
-                        continue;
-                    }
+                    // if *address == PRECOMPILE3 {
+                    //     // Precompile3 is special case caused by the bug in one of testnets
+                    //     // so every time if it is empty and touched we need to leave it in db.
+                    //     continue;
+                    // }
                     // touch empty account.
                     if let Entry::Occupied(mut entry) = self.accounts.entry(*address) {
                         entry.get_mut().touch_empty();
-                        println!("A touch empty {address:?} account: {:?}",entry.get());
                     }
                     // else do nothing as account is not existing
                     continue;
@@ -174,14 +185,11 @@ impl BlockState {
                         this.change(account.info.clone(), storage);
                     }
                     Entry::Vacant(entry) => {
-                        // if state clear is active we dont insert empty accounts.
-                        if self.has_state_clear && !is_empty {
-                            // It is assumed initial state is Loaded
-                            entry.insert(GlobalAccountState::Changed(PlainAccount {
-                                info: account.info.clone(),
-                                storage: storage,
-                            }));
-                        }
+                        // It is assumed initial state is Loaded
+                        entry.insert(GlobalAccountState::Changed(PlainAccount {
+                            info: account.info.clone(),
+                            storage: storage,
+                        }));
                     }
                 }
             }
@@ -240,7 +248,9 @@ pub enum GlobalAccountState {
     /// Creating empty account was only possible before SpurioudDragon hardfork
     /// And last of those account were touched (removed) from state in block 14049881.
     /// EIP-4747: Simplify EIP-161
-    LoadedEmptyEIP161,
+    /// Note: There is possibility that account is empty but its storage is not.
+    /// We are storing full account is it is easier to handle.
+    LoadedEmptyEIP161(PlainAccount),
     /// Account called selfdestruct and it is removed.
     /// Initial account is found in db, this would trigger removal of account from db.
     Destroyed,
@@ -277,7 +287,7 @@ impl GlobalAccountState {
             GlobalAccountState::NewChanged(account) => Some(account),
             GlobalAccountState::DestroyedNew(account) => Some(account),
             GlobalAccountState::DestroyedNewChanged(account) => Some(account),
-            GlobalAccountState::LoadedEmptyEIP161 => Some(&EMPTY_PLAIN_ACCOUNT),
+            GlobalAccountState::LoadedEmptyEIP161(account) => Some(account),
             GlobalAccountState::Destroyed
             | GlobalAccountState::DestroyedAgain
             | GlobalAccountState::LoadedNotExisting => None,
@@ -292,7 +302,7 @@ impl GlobalAccountState {
                 // Note: we can probably set it to LoadedNotExisting.
                 GlobalAccountState::Destroyed
             }
-            GlobalAccountState::LoadedEmptyEIP161 => GlobalAccountState::Destroyed,
+            GlobalAccountState::LoadedEmptyEIP161(_) => GlobalAccountState::Destroyed,
             _ => {
                 // do nothing
                 unreachable!("Touch empty is not possible on state: {self:?}");
@@ -325,10 +335,10 @@ impl GlobalAccountState {
                 })
             }
             // if account is loaded from db.
-            GlobalAccountState::LoadedEmptyEIP161 | GlobalAccountState::LoadedNotExisting => {
+            GlobalAccountState::LoadedNotExisting => {
                 GlobalAccountState::New(PlainAccount { info: new, storage })
             }
-            GlobalAccountState::Loaded(acc) => {
+            GlobalAccountState::LoadedEmptyEIP161(_) | GlobalAccountState::Loaded(_) => {
                 // if account is loaded and not empty this means that account has some balance
                 // this does not mean that accoun't can be created.
                 // We are assuming that EVM did necessary checks before allowing account to be created.
@@ -341,73 +351,53 @@ impl GlobalAccountState {
         };
     }
     pub fn change(&mut self, new: AccountInfo, storage: HashMap<U256, U256>) {
+        //println!("\nCHANGE:\n    FROM: {self:?}\n    TO: {new:?}");
+        let transfer = |this_account: &mut PlainAccount| -> PlainAccount {
+            let mut this_storage = core::mem::take(&mut this_account.storage);
+            this_storage.extend(storage.into_iter());
+            PlainAccount {
+                info: new,
+                storage: this_storage,
+            }
+        };
         *self = match self {
-            GlobalAccountState::Loaded(_) => {
+            GlobalAccountState::Loaded(this_account) => {
                 // If account was initially loaded we are just overwriting it.
                 // We are not checking if account is changed.
                 // as storage can be.
-                GlobalAccountState::Changed(PlainAccount {
-                    info: new,
-                    storage: storage,
-                })
+                GlobalAccountState::Changed(transfer(this_account))
             }
             GlobalAccountState::Changed(this_account) => {
                 // Update to new changed state.
-                let mut this_storage = core::mem::take(&mut this_account.storage);
-                this_storage.extend(storage.into_iter());
-                GlobalAccountState::Changed(PlainAccount {
-                    info: new,
-                    storage: this_storage,
-                })
+                GlobalAccountState::Changed(transfer(this_account))
             }
             GlobalAccountState::New(this_account) => {
                 // promote to NewChanged.
                 // If account is empty it can be destroyed.
-                let mut this_storage = core::mem::take(&mut this_account.storage);
-                this_storage.extend(storage.into_iter());
-                GlobalAccountState::NewChanged(PlainAccount {
-                    info: new,
-                    storage: this_storage,
-                })
+                GlobalAccountState::NewChanged(transfer(this_account))
             }
             GlobalAccountState::NewChanged(this_account) => {
                 // Update to new changed state.
-                let mut this_storage = core::mem::take(&mut this_account.storage);
-                this_storage.extend(storage.into_iter());
-                GlobalAccountState::NewChanged(PlainAccount {
-                    info: new,
-                    storage: this_storage,
-                })
+                GlobalAccountState::NewChanged(transfer(this_account))
             }
             GlobalAccountState::DestroyedNew(this_account) => {
                 // promote to DestroyedNewChanged.
                 // If account is empty it can be destroyed.
-                let mut this_storage = core::mem::take(&mut this_account.storage);
-                this_storage.extend(storage.into_iter());
-                GlobalAccountState::DestroyedNewChanged(PlainAccount {
-                    info: new,
-                    storage: this_storage,
-                })
+                GlobalAccountState::DestroyedNewChanged(transfer(this_account))
             }
             GlobalAccountState::DestroyedNewChanged(this_account) => {
                 // Update to new changed state.
-                let mut this_storage = core::mem::take(&mut this_account.storage);
-                this_storage.extend(storage.into_iter());
-                GlobalAccountState::DestroyedNewChanged(PlainAccount {
-                    info: new,
-                    storage: this_storage,
-                })
+                GlobalAccountState::DestroyedNewChanged(transfer(this_account))
             }
 
-            GlobalAccountState::LoadedEmptyEIP161 => {
-                // Touch of empty account, if this happens we should destroy account.
-                //if self
-                GlobalAccountState::Destroyed
+            GlobalAccountState::LoadedEmptyEIP161(this_account) => {
+                // Change on empty account, should transfer storage if there is any.
+                GlobalAccountState::Changed(transfer(this_account))
             }
             GlobalAccountState::LoadedNotExisting
             | GlobalAccountState::Destroyed
             | GlobalAccountState::DestroyedAgain => {
-                unreachable!("Can have this transition\nfrom:{self:?} \nto: {new:?}")
+                unreachable!("Can have this transition\nfrom:{self:?}")
             }
         }
     }
@@ -434,12 +424,12 @@ impl StateWithChange {
                             _ => unreachable!("Invalid state"),
                         },
                         GlobalAccountState::Destroyed => match this_account {
-                            GlobalAccountState::NewChanged(acc) => {}   // apply
-                            GlobalAccountState::New(acc) => {}          // apply
-                            GlobalAccountState::Changed(acc) => {}      // apply
-                            GlobalAccountState::LoadedEmptyEIP161 => {} // noop
-                            GlobalAccountState::LoadedNotExisting => {} // noop
-                            GlobalAccountState::Loaded(acc) => {}       //noop
+                            GlobalAccountState::NewChanged(acc) => {}        // apply
+                            GlobalAccountState::New(acc) => {}               // apply
+                            GlobalAccountState::Changed(acc) => {}           // apply
+                            GlobalAccountState::LoadedEmptyEIP161(acc) => {} // noop
+                            GlobalAccountState::LoadedNotExisting => {}      // noop
+                            GlobalAccountState::Loaded(acc) => {}            //noop
                             _ => unreachable!("Invalid state"),
                         },
                         GlobalAccountState::DestroyedNew(acc) => match this_account {
@@ -447,7 +437,7 @@ impl StateWithChange {
                             GlobalAccountState::New(acc) => {}
                             GlobalAccountState::Changed(acc) => {}
                             GlobalAccountState::Destroyed => {}
-                            GlobalAccountState::LoadedEmptyEIP161 => {}
+                            GlobalAccountState::LoadedEmptyEIP161(acc) => {}
                             GlobalAccountState::LoadedNotExisting => {}
                             GlobalAccountState::Loaded(acc) => {}
                             GlobalAccountState::DestroyedAgain => {}
@@ -459,7 +449,7 @@ impl StateWithChange {
                             GlobalAccountState::New(acc) => {}
                             GlobalAccountState::Changed(acc) => {}
                             GlobalAccountState::Destroyed => {}
-                            GlobalAccountState::LoadedEmptyEIP161 => {}
+                            GlobalAccountState::LoadedEmptyEIP161(acc) => {}
                             GlobalAccountState::LoadedNotExisting => {}
                             GlobalAccountState::Loaded(acc) => {}
                             _ => unreachable!("Invalid state"),
@@ -472,7 +462,7 @@ impl StateWithChange {
                             GlobalAccountState::DestroyedNew(acc) => {}
                             GlobalAccountState::DestroyedNewChanged(acc) => {}
                             GlobalAccountState::DestroyedAgain => {}
-                            GlobalAccountState::LoadedEmptyEIP161 => {}
+                            GlobalAccountState::LoadedEmptyEIP161(acc) => {}
                             GlobalAccountState::LoadedNotExisting => {}
                             GlobalAccountState::Loaded(acc) => {}
                             _ => unreachable!("Invalid state"),
@@ -480,7 +470,7 @@ impl StateWithChange {
                         GlobalAccountState::New(acc) => {
                             // this state need to be loaded from db
                             match this_account {
-                                GlobalAccountState::LoadedEmptyEIP161 => {}
+                                GlobalAccountState::LoadedEmptyEIP161(acc) => {}
                                 GlobalAccountState::LoadedNotExisting => {}
                                 _ => unreachable!("Invalid state"),
                             }
@@ -491,7 +481,7 @@ impl StateWithChange {
                         },
                         GlobalAccountState::Loaded(acc) => {}
                         GlobalAccountState::LoadedNotExisting => {}
-                        GlobalAccountState::LoadedEmptyEIP161 => {}
+                        GlobalAccountState::LoadedEmptyEIP161(acc) => {}
                     }
                 }
                 hash_map::Entry::Vacant(entry) => {}

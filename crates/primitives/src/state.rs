@@ -80,6 +80,11 @@ impl Account {
         self.status |= AccountStatus::Created;
     }
 
+    /// Unmark created flag.
+    pub fn unmark_created(&mut self) {
+        self.status -= AccountStatus::Created;
+    }
+
     /// Is account loaded as not existing from database
     /// This is needed for pre spurious dragon hardforks where
     /// existing and empty were two separate states.
@@ -88,7 +93,7 @@ impl Account {
     }
 
     /// Is account newly created in this transaction.
-    pub fn is_newly_created(&self) -> bool {
+    pub fn is_created(&self) -> bool {
         self.status.contains(AccountStatus::Created)
     }
 

@@ -132,7 +132,7 @@ impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
                 db_account.info = AccountInfo::default();
                 continue;
             }
-            let is_newly_created = account.is_newly_created();
+            let is_newly_created = account.is_created();
             self.insert_contract(&mut account.info);
 
             let db_account = self.accounts.entry(address).or_default();
