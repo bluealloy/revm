@@ -4,7 +4,6 @@ use bitvec::prelude::{bitvec, Lsb0};
 use bitvec::vec::BitVec;
 use bytes::Bytes;
 use core::fmt::Debug;
-use fixed_hash::rustc_hex::ToHex;
 use to_binary::BinaryString;
 
 /// A map of valid `jump` destinations.

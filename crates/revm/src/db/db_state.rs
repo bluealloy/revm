@@ -2,7 +2,7 @@ use once_cell::sync::Lazy;
 use revm_interpreter::primitives::{
     db::{Database, DatabaseCommit},
     hash_map::{self, Entry},
-    Account, AccountInfo, Bytecode, HashMap, State, B160, B256, KECCAK_EMPTY, U256,
+    Account, AccountInfo, Bytecode, HashMap, State, B160, B256, U256, PRECOMPILE3,
 };
 
 #[derive(Clone, Debug, Default)]
@@ -40,7 +40,7 @@ impl BlockState {
         Self {
             accounts: HashMap::new(),
             contracts: HashMap::new(),
-            has_state_clear: false,
+            has_state_clear: true,
         }
     }
     /// Legacy without state clear flag enabled
@@ -48,7 +48,7 @@ impl BlockState {
         Self {
             accounts: HashMap::new(),
             contracts: HashMap::new(),
-            has_state_clear: true,
+            has_state_clear: false,
         }
     }
     /// Used for tests only. When transitioned it is not recoverable
@@ -57,31 +57,12 @@ impl BlockState {
             return;
         }
 
-        // mark all empty accounts as not existing
-        // for (address, account) in self.accounts.iter_mut() {
-        //     // This would make LoadedEmptyEIP161 not used anymore.
-        //     if let GlobalAccountState::LoadedEmptyEIP161 = account {
-        //         *account = GlobalAccountState::LoadedNotExisting;
-        //     }
-        // }
-
         self.has_state_clear = true;
     }
 
     pub fn trie_account(&self) -> impl IntoIterator<Item = (B160, &PlainAccount)> {
         self.accounts.iter().filter_map(|(address, account)| {
-            if let GlobalAccountState::LoadedEmptyEIP161 = account {
-                if self.has_state_clear {
-                    return None;
-                } else {
-                    return Some((*address, &*EMPTY_PLAIN_ACCOUNT));
-                }
-            }
-            if let Some(plain_acc) = account.account() {
-                Some((*address, plain_acc))
-            } else {
-                None
-            }
+            account.account().map(|plain_acc| (*address, plain_acc))
         })
     }
 
@@ -89,21 +70,14 @@ impl BlockState {
         self.accounts
             .insert(address, GlobalAccountState::LoadedNotExisting);
     }
-    
-    pub fn insert_account(&mut self, address: B160, info: AccountInfo) {
-        if !info.is_empty() {
-            self.accounts
-                .insert(address, GlobalAccountState::Loaded(info.into()));
-            return;
-        }
 
-        if self.has_state_clear {
-            self.accounts
-                .insert(address, GlobalAccountState::LoadedNotExisting);
+    pub fn insert_account(&mut self, address: B160, info: AccountInfo) {
+        let account = if !info.is_empty() {
+            GlobalAccountState::Loaded(info.into())
         } else {
-            self.accounts
-                .insert(address, GlobalAccountState::LoadedEmptyEIP161);
-        }
+            GlobalAccountState::LoadedEmptyEIP161
+        };
+        self.accounts.insert(address, account);
     }
 
     pub fn insert_account_with_storage(
@@ -112,21 +86,12 @@ impl BlockState {
         info: AccountInfo,
         storage: HashMap<U256, U256>,
     ) {
-        if !info.is_empty() {
-            self.accounts.insert(
-                address,
-                GlobalAccountState::Loaded(PlainAccount { info, storage }),
-            );
-            return;
-        }
-
-        if self.has_state_clear {
-            self.accounts
-                .insert(address, GlobalAccountState::LoadedNotExisting);
+        let account = if !info.is_empty() {
+            GlobalAccountState::Loaded(PlainAccount { info, storage })
         } else {
-            self.accounts
-                .insert(address, GlobalAccountState::LoadedEmptyEIP161);
-        }
+            GlobalAccountState::LoadedEmptyEIP161
+        };
+        self.accounts.insert(address, account);
     }
 
     pub fn apply_evm_state(&mut self, evm_state: &State) {
@@ -183,9 +148,26 @@ impl BlockState {
                     }
                 }
             } else {
-                // account is touched, but not selfdestructed or newly created.
+                // Account is touched, but not selfdestructed or newly created.
                 // Account can be touched and not changed.
+
                 // And when empty account is touched it needs to be removed from database.
+                if self.has_state_clear && is_empty {
+                    if *address == PRECOMPILE3 {
+                        // Precompile3 is special case caused by the bug in one of testnets
+                        // so every time if it is empty and touched we need to leave it in db.
+                        
+                        continue;
+                    }
+                    // touch empty account.
+                    if let Entry::Occupied(mut entry) = self.accounts.entry(*address) {
+                        entry.get_mut().touch_empty();
+                        println!("A touch empty {address:?} account: {:?}",entry.get());
+                    }
+                    // else do nothing as account is not existing
+                    continue;
+                }
+
                 match self.accounts.entry(*address) {
                     Entry::Occupied(mut entry) => {
                         let this = entry.get_mut();
@@ -301,6 +283,22 @@ impl GlobalAccountState {
             | GlobalAccountState::LoadedNotExisting => None,
         }
     }
+
+    pub fn touch_empty(&mut self) {
+        *self = match self {
+            GlobalAccountState::DestroyedNew(_) => GlobalAccountState::DestroyedAgain,
+            GlobalAccountState::New(_) => {
+                // account can be created empty them touched.
+                // Note: we can probably set it to LoadedNotExisting.
+                GlobalAccountState::Destroyed
+            }
+            GlobalAccountState::LoadedEmptyEIP161 => GlobalAccountState::Destroyed,
+            _ => {
+                // do nothing
+                unreachable!("Touch empty is not possible on state: {self:?}");
+            }
+        }
+    }
     /// Consume self and make account as destroyed.
     pub fn selfdestruct(&mut self) {
         *self = match self {
@@ -400,11 +398,16 @@ impl GlobalAccountState {
                     storage: this_storage,
                 })
             }
+
+            GlobalAccountState::LoadedEmptyEIP161 => {
+                // Touch of empty account, if this happens we should destroy account.
+                //if self
+                GlobalAccountState::Destroyed
+            }
             GlobalAccountState::LoadedNotExisting
-            | GlobalAccountState::LoadedEmptyEIP161
             | GlobalAccountState::Destroyed
             | GlobalAccountState::DestroyedAgain => {
-                unreachable!("Can have this transition")
+                unreachable!("Can have this transition\nfrom:{self:?} \nto: {new:?}")
             }
         }
     }

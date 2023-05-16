@@ -5,7 +5,7 @@ use crate::primitives::{
 };
 use alloc::{vec, vec::Vec};
 use core::mem::{self};
-use revm_interpreter::primitives::Spec;
+use revm_interpreter::primitives::{Spec, PRECOMPILE3};
 use revm_interpreter::primitives::SpecId::SPURIOUS_DRAGON;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -331,14 +331,9 @@ impl JournaledState {
         journal_entries: Vec<JournalEntry>,
         is_spurious_dragon_enabled: bool,
     ) {
-        const PRECOMPILE3: B160 =
-            B160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]);
         for entry in journal_entries.into_iter().rev() {
             match entry {
                 JournalEntry::AccountLoaded { address } => {
-                    if is_spurious_dragon_enabled && address == PRECOMPILE3 {
-                        continue;
-                    }
                     state.remove(&address);
                 }
                 JournalEntry::AccountTouched { address } => {
