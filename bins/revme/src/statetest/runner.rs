@@ -332,6 +332,9 @@ pub fn execute_test_suit(
                     }
                     println!("\nApplied state:\n{db:#?}\n");
                     println!("\nState root: {state_root:?}\n");
+                    println!("env.tx: {:?}\n",env.tx);
+                    println!("env.block: {:?}\n",env.block);
+                    println!("env.cfg: {:?}\n",env.cfg);
                     return Err(TestError::RootMismatch {
                         spec_id: env.cfg.spec_id,
                         id,

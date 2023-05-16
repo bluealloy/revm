@@ -58,12 +58,12 @@ impl BlockState {
         }
 
         // mark all empty accounts as not existing
-        for (address, account) in self.accounts.iter_mut() {
-            // This would make LoadedEmptyEIP161 not used anymore.
-            if let GlobalAccountState::LoadedEmptyEIP161 = account {
-                *account = GlobalAccountState::LoadedNotExisting;
-            }
-        }
+        // for (address, account) in self.accounts.iter_mut() {
+        //     // This would make LoadedEmptyEIP161 not used anymore.
+        //     if let GlobalAccountState::LoadedEmptyEIP161 = account {
+        //         *account = GlobalAccountState::LoadedNotExisting;
+        //     }
+        // }
 
         self.has_state_clear = true;
     }
@@ -89,6 +89,7 @@ impl BlockState {
         self.accounts
             .insert(address, GlobalAccountState::LoadedNotExisting);
     }
+    
     pub fn insert_account(&mut self, address: B160, info: AccountInfo) {
         if !info.is_empty() {
             self.accounts
@@ -147,7 +148,7 @@ impl BlockState {
                 }
                 break;
             }
-
+            let is_empty = account.is_empty();
             let storage = account
                 .storage
                 .iter()
@@ -191,11 +192,14 @@ impl BlockState {
                         this.change(account.info.clone(), storage);
                     }
                     Entry::Vacant(entry) => {
-                        // It is assumed initial state is Loaded
-                        entry.insert(GlobalAccountState::Changed(PlainAccount {
-                            info: account.info.clone(),
-                            storage: storage,
-                        }));
+                        // if state clear is active we dont insert empty accounts.
+                        if self.has_state_clear && !is_empty {
+                            // It is assumed initial state is Loaded
+                            entry.insert(GlobalAccountState::Changed(PlainAccount {
+                                info: account.info.clone(),
+                                storage: storage,
+                            }));
+                        }
                     }
                 }
             }
@@ -324,6 +328,12 @@ impl GlobalAccountState {
             }
             // if account is loaded from db.
             GlobalAccountState::LoadedEmptyEIP161 | GlobalAccountState::LoadedNotExisting => {
+                GlobalAccountState::New(PlainAccount { info: new, storage })
+            }
+            GlobalAccountState::Loaded(acc) => {
+                // if account is loaded and not empty this means that account has some balance
+                // this does not mean that accoun't can be created.
+                // We are assuming that EVM did necessary checks before allowing account to be created.
                 GlobalAccountState::New(PlainAccount { info: new, storage })
             }
             _ => unreachable!(
