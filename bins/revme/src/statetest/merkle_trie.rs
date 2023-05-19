@@ -53,8 +53,8 @@ pub fn trie_account_rlp(acc: &PlainAccount) -> Bytes {
         sec_trie_root::<KeccakHasher, _, _, _>(
             acc.storage
                 .iter()
-                .filter(|(_k, &v)| v != U256::ZERO)
-                .map(|(&k, v)| (H256::from(k.to_be_bytes()), rlp::encode(v))),
+                .filter(|(_k, v)| v.present_value != U256::ZERO)
+                .map(|(&k, v)| (H256::from(k.to_be_bytes()), rlp::encode(&v.present_value))),
         )
     });
     stream.append(&acc.info.code_hash.0.as_ref());

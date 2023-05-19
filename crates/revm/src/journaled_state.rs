@@ -75,7 +75,7 @@ pub enum JournalEntry {
     /// Code changed
     /// Action: Account code changed
     /// Revert: Revert to previous bytecode.
-    CodeChange { address: B160, had_code: Bytecode },
+    CodeChange { address: B160 },
 }
 
 /// SubRoutine checkpoint that will help us to go back from this
@@ -161,12 +161,9 @@ impl JournaledState {
         self.journal
             .last_mut()
             .unwrap()
-            .push(JournalEntry::CodeChange {
-                address,
-                had_code: code.clone(),
-            });
+            .push(JournalEntry::CodeChange { address });
 
-        account.info.code_hash = code.hash();
+        account.info.code_hash = code.hash_slow();
         account.info.code = Some(code);
     }
 
@@ -400,10 +397,10 @@ impl JournaledState {
                         storage.remove(&key);
                     }
                 }
-                JournalEntry::CodeChange { address, had_code } => {
+                JournalEntry::CodeChange { address } => {
                     let acc = state.get_mut(&address).unwrap();
-                    acc.info.code_hash = had_code.hash();
-                    acc.info.code = Some(had_code);
+                    acc.info.code_hash = KECCAK_EMPTY;
+                    acc.info.code = None;
                 }
             }
         }

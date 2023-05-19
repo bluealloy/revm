@@ -23,7 +23,7 @@ use super::{
     models::{SpecName, TestSuit},
 };
 use hex_literal::hex;
-use revm::primitives::keccak256;
+use revm::primitives::{keccak256, StorageSlot};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -62,8 +62,11 @@ pub fn execute_test_suit(
     if path.file_name() == Some(OsStr::new("ValueOverflow.json")) {
         return Ok(());
     }
+
     // precompiles having storage is not possible
-    if path.file_name() == Some(OsStr::new("RevertPrecompiledTouch_storage.json")) {
+    if path.file_name() == Some(OsStr::new("RevertPrecompiledTouch_storage.json"))
+        || path.file_name() == Some(OsStr::new("RevertPrecompiledTouch.json"))
+    {
         return Ok(());
     }
 
@@ -71,6 +74,7 @@ pub fn execute_test_suit(
     if path.file_name() == Some(OsStr::new("typeTwoBerlin.json")) {
         return Ok(());
     }
+
     // Test checks if nonce overflows. We are handling this correctly but we are not parsing exception in testsuite
     // There are more nonce overflow tests that are in internal call/create, and those tests are passing and are enabled.
     if path.file_name() == Some(OsStr::new("CreateTransactionHighNonce.json")) {
@@ -117,11 +121,6 @@ pub fn execute_test_suit(
 
     // TODO temporary skip for tests that are failing
     if path.to_str().unwrap().contains("stTimeConsuming") {
-        return Ok(());
-    }
-
-    // TODO
-    if path.to_str().unwrap().contains("stRevertTest") {
         return Ok(());
     }
 
@@ -182,7 +181,10 @@ pub fn execute_test_suit(
             block_state.insert_account_with_storage(
                 address,
                 acc_info,
-                info.storage.into_iter().collect(),
+                info.storage
+                    .into_iter()
+                    .map(|(key, value)| (key, StorageSlot::new(value)))
+                    .collect(),
             );
         }
         let mut env = Env::default();

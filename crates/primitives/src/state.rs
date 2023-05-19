@@ -187,8 +187,7 @@ impl PartialEq for AccountInfo {
 }
 
 impl AccountInfo {
-    pub fn new(balance: U256, nonce: u64, code: Bytecode) -> Self {
-        let code_hash = code.hash();
+    pub fn new(balance: U256, nonce: u64, code_hash: B256, code: Bytecode) -> Self {
         Self {
             balance,
             nonce,

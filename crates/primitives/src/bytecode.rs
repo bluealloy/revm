@@ -49,7 +49,6 @@ pub enum BytecodeState {
 pub struct Bytecode {
     #[cfg_attr(feature = "serde", serde(with = "crate::utilities::serde_hex_bytes"))]
     pub bytecode: Bytes,
-    pub hash: B256,
     pub state: BytecodeState,
 }
 
@@ -57,7 +56,6 @@ impl Debug for Bytecode {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("Bytecode")
             .field("bytecode", &hex::encode(&self.bytecode[..]))
-            .field("hash", &self.hash)
             .field("state", &self.state)
             .finish()
     }
@@ -74,7 +72,6 @@ impl Bytecode {
     pub fn new() -> Self {
         Bytecode {
             bytecode: vec![0].into(),
-            hash: KECCAK_EMPTY,
             state: BytecodeState::Analysed {
                 len: 0,
                 jump_map: JumpMap(Arc::new(bitvec![u8, Lsb0; 0])),
@@ -82,15 +79,18 @@ impl Bytecode {
         }
     }
 
-    pub fn new_raw(bytecode: Bytes) -> Self {
-        let hash = if bytecode.is_empty() {
+    /// Calculate hash of the bytecode.
+    pub fn hash_slow(&self) -> B256 {
+        if self.is_empty() {
             KECCAK_EMPTY
         } else {
-            keccak256(&bytecode)
-        };
+            keccak256(&self.original_bytes())
+        }
+    }
+
+    pub fn new_raw(bytecode: Bytes) -> Self {
         Self {
             bytecode,
-            hash,
             state: BytecodeState::Raw,
         }
     }
@@ -99,10 +99,9 @@ impl Bytecode {
     ///
     /// # Safety
     /// Hash need to be appropriate keccak256 over bytecode.
-    pub unsafe fn new_raw_with_hash(bytecode: Bytes, hash: B256) -> Self {
+    pub unsafe fn new_raw_with_hash(bytecode: Bytes) -> Self {
         Self {
             bytecode,
-            hash,
             state: BytecodeState::Raw,
         }
     }
@@ -120,7 +119,6 @@ impl Bytecode {
         };
         Self {
             bytecode,
-            hash,
             state: BytecodeState::Checked { len },
         }
     }
@@ -136,10 +134,6 @@ impl Bytecode {
                 self.bytecode.slice(0..len)
             }
         }
-    }
-
-    pub fn hash(&self) -> B256 {
-        self.hash
     }
 
     pub fn state(&self) -> &BytecodeState {
@@ -170,7 +164,6 @@ impl Bytecode {
                 bytecode.resize(len + 33, 0);
                 Self {
                     bytecode: bytecode.into(),
-                    hash: self.hash,
                     state: BytecodeState::Checked { len },
                 }
             }

@@ -1,8 +1,7 @@
-use once_cell::sync::Lazy;
 use revm_interpreter::primitives::{
     db::{Database, DatabaseCommit},
     hash_map::{self, Entry},
-    Account, AccountInfo, Bytecode, HashMap, State, B160, B256, PRECOMPILE3, U256,
+    Account, AccountInfo, Bytecode, HashMap, State, StorageSlot, B160, B256, PRECOMPILE3, U256,
 };
 
 #[derive(Clone, Debug, Default)]
@@ -20,7 +19,7 @@ impl PlainAccount {
     }
 }
 
-pub type Storage = HashMap<U256, U256>;
+pub type Storage = HashMap<U256, StorageSlot>;
 
 impl From<AccountInfo> for PlainAccount {
     fn from(info: AccountInfo) -> Self {
@@ -30,8 +29,6 @@ impl From<AccountInfo> for PlainAccount {
         }
     }
 }
-
-static EMPTY_PLAIN_ACCOUNT: Lazy<PlainAccount> = Lazy::new(|| PlainAccount::default());
 
 #[derive(Clone, Debug, Default)]
 pub struct BlockState {
@@ -127,16 +124,9 @@ impl BlockState {
                 continue;
             }
             let is_empty = account.is_empty();
-            let storage = account
-                .storage
-                .iter()
-                .map(|(k, v)| (*k, v.present_value))
-                .collect::<HashMap<_, _>>();
             if account.is_created() {
                 // Note: it can happen that created contract get selfdestructed in same block
                 // that is why is newly created is checked after selfdestructed
-                //
-                // TODO take care of empty account but with some storage.
                 //
                 // Note: Create2 (Petersburg) was after state clear EIP (Spurious Dragon)
                 // so we dont need to clear
@@ -149,14 +139,14 @@ impl BlockState {
                     // if account is already present id db.
                     Entry::Occupied(mut entry) => {
                         let this = entry.get_mut();
-                        this.newly_created(account.info.clone(), storage)
+                        this.newly_created(account.info.clone(), &account.storage)
                     }
                     Entry::Vacant(entry) => {
                         // This means that account was not loaded through this state.
                         // and we trust that account is empty.
                         entry.insert(GlobalAccountState::New(PlainAccount {
                             info: account.info.clone(),
-                            storage,
+                            storage: account.storage.clone(),
                         }));
                     }
                 }
@@ -165,30 +155,35 @@ impl BlockState {
                 // Account can be touched and not changed.
 
                 // And when empty account is touched it needs to be removed from database.
+                // EIP-161 state clear
                 if self.has_state_clear && is_empty {
-                    // if *address == PRECOMPILE3 {
-                    //     // Precompile3 is special case caused by the bug in one of testnets
-                    //     // so every time if it is empty and touched we need to leave it in db.
-                    //     continue;
-                    // }
+                    if *address == PRECOMPILE3 {
+                        // Test related, this is considered bug that broke one of testsnets
+                        // but it didn't reach mainnet as on mainnet any precompile had some balance.
+                        continue;
+                    }
                     // touch empty account.
-                    if let Entry::Occupied(mut entry) = self.accounts.entry(*address) {
-                        entry.get_mut().touch_empty();
+                    match self.accounts.entry(*address) {
+                        Entry::Occupied(mut entry) => {
+                            entry.get_mut().touch_empty();
+                        }
+                        Entry::Vacant(entry) => {}
                     }
                     // else do nothing as account is not existing
                     continue;
                 }
 
+                // mark account as changed.
                 match self.accounts.entry(*address) {
                     Entry::Occupied(mut entry) => {
                         let this = entry.get_mut();
-                        this.change(account.info.clone(), storage);
+                        this.change(account.info.clone(), account.storage.clone());
                     }
                     Entry::Vacant(entry) => {
                         // It is assumed initial state is Loaded
                         entry.insert(GlobalAccountState::Changed(PlainAccount {
                             info: account.info.clone(),
-                            storage: storage,
+                            storage: account.storage.clone(),
                         }));
                     }
                 }
@@ -243,8 +238,6 @@ pub enum GlobalAccountState {
     DestroyedNew(PlainAccount),
     /// Account changed that was previously destroyed then created.
     DestroyedNewChanged(PlainAccount),
-    /// Loaded account from db.
-    LoadedNotExisting,
     /// Creating empty account was only possible before SpurioudDragon hardfork
     /// And last of those account were touched (removed) from state in block 14049881.
     /// EIP-4747: Simplify EIP-161
@@ -256,6 +249,8 @@ pub enum GlobalAccountState {
     Destroyed,
     /// Account called selfdestruct on already selfdestructed account.
     DestroyedAgain,
+    /// Loaded account from db.
+    LoadedNotExisting,
 }
 
 impl GlobalAccountState {
@@ -272,7 +267,7 @@ impl GlobalAccountState {
 
     pub fn storage_slot(&self, storage_key: U256) -> Option<U256> {
         self.account()
-            .and_then(|a| a.storage.get(&storage_key).cloned())
+            .and_then(|a| a.storage.get(&storage_key).map(|slot| slot.present_value))
     }
 
     pub fn account_info(&self) -> Option<AccountInfo> {
@@ -305,7 +300,7 @@ impl GlobalAccountState {
             GlobalAccountState::LoadedEmptyEIP161(_) => GlobalAccountState::Destroyed,
             _ => {
                 // do nothing
-                unreachable!("Touch empty is not possible on state: {self:?}");
+                unreachable!("Wrong state transition, touch empty is not possible from {self:?}");
             }
         }
     }
@@ -325,7 +320,7 @@ impl GlobalAccountState {
             _ => GlobalAccountState::Destroyed,
         };
     }
-    pub fn newly_created(&mut self, new: AccountInfo, storage: HashMap<U256, U256>) {
+    pub fn newly_created(&mut self, new: AccountInfo, storage: &Storage) {
         *self = match self {
             // if account was destroyed previously just copy new info to it.
             GlobalAccountState::DestroyedAgain | GlobalAccountState::Destroyed => {
@@ -335,25 +330,30 @@ impl GlobalAccountState {
                 })
             }
             // if account is loaded from db.
-            GlobalAccountState::LoadedNotExisting => {
-                GlobalAccountState::New(PlainAccount { info: new, storage })
-            }
+            GlobalAccountState::LoadedNotExisting => GlobalAccountState::New(PlainAccount {
+                info: new,
+                storage: storage.clone(),
+            }),
             GlobalAccountState::LoadedEmptyEIP161(_) | GlobalAccountState::Loaded(_) => {
                 // if account is loaded and not empty this means that account has some balance
                 // this does not mean that accoun't can be created.
                 // We are assuming that EVM did necessary checks before allowing account to be created.
-                GlobalAccountState::New(PlainAccount { info: new, storage })
+                GlobalAccountState::New(PlainAccount {
+                    info: new,
+                    storage: storage.clone(),
+                })
             }
             _ => unreachable!(
-                "Wrong state transition: initial state {:?}, new state {:?}",
+                "Wrong state transition to create:\nfrom: {:?}\nto: {:?}",
                 self, new
             ),
         };
     }
-    pub fn change(&mut self, new: AccountInfo, storage: HashMap<U256, U256>) {
+    pub fn change(&mut self, new: AccountInfo, storage: Storage) {
         //println!("\nCHANGE:\n    FROM: {self:?}\n    TO: {new:?}");
         let transfer = |this_account: &mut PlainAccount| -> PlainAccount {
             let mut this_storage = core::mem::take(&mut this_account.storage);
+            // TODO save original value and dont overwrite it.
             this_storage.extend(storage.into_iter());
             PlainAccount {
                 info: new,
@@ -364,7 +364,7 @@ impl GlobalAccountState {
             GlobalAccountState::Loaded(this_account) => {
                 // If account was initially loaded we are just overwriting it.
                 // We are not checking if account is changed.
-                // as storage can be.
+                // storage can be.
                 GlobalAccountState::Changed(transfer(this_account))
             }
             GlobalAccountState::Changed(this_account) => {
@@ -373,7 +373,7 @@ impl GlobalAccountState {
             }
             GlobalAccountState::New(this_account) => {
                 // promote to NewChanged.
-                // If account is empty it can be destroyed.
+                // Check if account is empty is done outside of this fn.
                 GlobalAccountState::NewChanged(transfer(this_account))
             }
             GlobalAccountState::NewChanged(this_account) => {
@@ -382,7 +382,6 @@ impl GlobalAccountState {
             }
             GlobalAccountState::DestroyedNew(this_account) => {
                 // promote to DestroyedNewChanged.
-                // If account is empty it can be destroyed.
                 GlobalAccountState::DestroyedNewChanged(transfer(this_account))
             }
             GlobalAccountState::DestroyedNewChanged(this_account) => {
@@ -397,8 +396,100 @@ impl GlobalAccountState {
             GlobalAccountState::LoadedNotExisting
             | GlobalAccountState::Destroyed
             | GlobalAccountState::DestroyedAgain => {
-                unreachable!("Can have this transition\nfrom:{self:?}")
+                unreachable!("Wronge state transition change: \nfrom:{self:?}")
             }
+        }
+    }
+
+    /// Create
+    pub fn update_and_create_revert(&mut self, other: &Self) -> RevertState {
+        match other {
+            GlobalAccountState::Changed(update) => match self {
+                GlobalAccountState::Changed(this) => {
+                    return RevertState {
+                        account: Some(this.info.clone()),
+                        storage: update
+                            .storage
+                            .clone()
+                            .iter()
+                            .map(|s| (*s.0, RevertToSlot::Some(s.1.original_value.clone())))
+                            .collect(),
+                        original_status: AccountStatus::Changed,
+                    }
+                }
+                GlobalAccountState::Loaded(this) => {
+                    return RevertState {
+                        account: Some(this.info.clone()),
+                        storage: update
+                            .storage
+                            .clone()
+                            .iter()
+                            .map(|s| (*s.0, RevertToSlot::Some(s.1.original_value.clone())))
+                            .collect(),
+                        original_status: AccountStatus::Loaded,
+                    }
+                } //discard changes
+                _ => unreachable!("Invalid state"),
+            },
+            GlobalAccountState::Destroyed => match self {
+                GlobalAccountState::NewChanged(acc) => {}        // apply
+                GlobalAccountState::New(acc) => {}               // apply
+                GlobalAccountState::Changed(acc) => {}           // apply
+                GlobalAccountState::LoadedEmptyEIP161(acc) => {} // noop
+                GlobalAccountState::LoadedNotExisting => {}      // noop
+                GlobalAccountState::Loaded(acc) => {}            //noop
+                _ => unreachable!("Invalid state"),
+            },
+            GlobalAccountState::DestroyedNew(acc) => match self {
+                GlobalAccountState::NewChanged(acc) => {}
+                GlobalAccountState::New(acc) => {}
+                GlobalAccountState::Changed(acc) => {}
+                GlobalAccountState::Destroyed => {}
+                GlobalAccountState::LoadedEmptyEIP161(acc) => {}
+                GlobalAccountState::LoadedNotExisting => {}
+                GlobalAccountState::Loaded(acc) => {}
+                GlobalAccountState::DestroyedAgain => {}
+                GlobalAccountState::DestroyedNew(acc) => {}
+                _ => unreachable!("Invalid state"),
+            },
+            GlobalAccountState::DestroyedNewChanged(acc) => match self {
+                GlobalAccountState::NewChanged(acc) => {}
+                GlobalAccountState::New(acc) => {}
+                GlobalAccountState::Changed(acc) => {}
+                GlobalAccountState::Destroyed => {}
+                GlobalAccountState::LoadedEmptyEIP161(acc) => {}
+                GlobalAccountState::LoadedNotExisting => {}
+                GlobalAccountState::Loaded(acc) => {}
+                _ => unreachable!("Invalid state"),
+            },
+            GlobalAccountState::DestroyedAgain => match self {
+                GlobalAccountState::NewChanged(acc) => {}
+                GlobalAccountState::New(acc) => {}
+                GlobalAccountState::Changed(acc) => {}
+                GlobalAccountState::Destroyed => {}
+                GlobalAccountState::DestroyedNew(acc) => {}
+                GlobalAccountState::DestroyedNewChanged(acc) => {}
+                GlobalAccountState::DestroyedAgain => {}
+                GlobalAccountState::LoadedEmptyEIP161(acc) => {}
+                GlobalAccountState::LoadedNotExisting => {}
+                GlobalAccountState::Loaded(acc) => {}
+                _ => unreachable!("Invalid state"),
+            },
+            GlobalAccountState::New(acc) => {
+                // this state need to be loaded from db
+                match self {
+                    GlobalAccountState::LoadedEmptyEIP161(acc) => {}
+                    GlobalAccountState::LoadedNotExisting => {}
+                    _ => unreachable!("Invalid state"),
+                }
+            }
+            GlobalAccountState::NewChanged(acc) => match self {
+                GlobalAccountState::New(acc) => {}
+                _ => unreachable!("Invalid state"),
+            },
+            GlobalAccountState::Loaded(acc) => {}
+            GlobalAccountState::LoadedNotExisting => {}
+            GlobalAccountState::LoadedEmptyEIP161(acc) => {}
         }
     }
 }
@@ -411,82 +502,239 @@ pub struct StateWithChange {
     pub change: Vec<Vec<GlobalAccountState>>,
 }
 
+/*
+This is three way comparison
+
+database storage, relevant only for selfdestruction.
+Original state (Before block): Account::new.
+Present state (Present world state): Account::NewChanged.
+New state (New world state inside same block): Account::NewChanged
+PreviousValue: All info that is needed to revert new state.
+
+We have first interaction when creating changeset.
+Then we need to update changeset, updating is crazy, should we just think about it
+as original -> new and ignore intermediate state?
+
+How should we think about this.
+* Revert to changed state is maybe most appropriate as it tell us what is original state.
+---* Revert from state can be bad as from state gets changed.
+
+
+* For every Revert we need to think how changeset is going to look like.
+
+Example if account gets destroyed but was changed, we need to make it as destroyed
+and we need to apply previous storage to it as storage can contains changed from new storage.
+
+Additionaly we should have additional storage from present state
+
+We want to revert to NEW this means rewriting info (easy) but for storage.
+
+
+If original state is new but it gets destroyed, what should we do.
+ */
+
+/*
+New one:
+
+Confusing think for me is to what to do when selfdestruct happen and little bit for
+how i should think about reverts.
+ */
+
+/*
+Example
+
+State:
+1: 02
+2: 10
+3: 50
+4: 1000 (some random value)
+5: 0 nothing.
+
+Block1:
+* Change1:
+    1: 02->03
+    2: 10->20
+
+World Change1:
+    1: 03
+    2: 20
+
+Block2:
+* Change2:
+    1: 03->04
+    2: 20->30
+RevertTo is Change1:
+    1: 03, 2: 20.
+* Change3:
+    3: 50->51
+RevertTo is Change1:
+    1: 03, 2: 20, 3: 50. Append changes
+* Destroyed:
+    RevertTo is same. Maybe we can remove zeroes from RevertTo
+    When applying selfdestruct to state, read all storage, and then additionaly
+    apply Change1 RevertTo.
+* DestroyedNew:
+    1: 0->5
+    3: 0->52
+    4: 0->100
+    5: 0->999
+    This is tricky, here we have slot 4 that potentially has some value in db.
+Generate state for old world to new world.
+
+RevertTo is simple when comparing old and new state. As we dont think about full database storage.
+Changeset is tricky.
+For changeset we want to have
+    1: 03
+    2: 20
+    3: 50
+    5: 1000
+
+We need old world state, and that is only thing we need.
+We use destroyed storage and apply only state on it, aftr that we need to append
+DestroyedNew storage zeroes.
+
+
+
+
+So it can be Some or destroyed.
+
+
+database has: [02,10,50,1000,0]
+
+WorldState:
+DestroyedNew:
+    1: 5
+    3: 52
+
+Original state Block1:
+    Change1:
+
+RevertTo Block2:
+    This is Change1 state we want to get:
+        1: 03
+        2: 20
+    We need to:
+        Change 1: 05->03
+        Change 2: 0->20
+        Change 3: 52->0
+ */
+
+/// Assumption is that Revert can return full state from any future state to any past state.
+///
+/// It is created when new account state is applied to old account state.
+/// And it is used to revert new account state to the old account state.
+pub struct RevertState {
+    account: Option<AccountInfo>,
+    storage: HashMap<U256, RevertToSlot>,
+    original_status: AccountStatus,
+}
+
+/// So storage can have multiple types:
+/// * Zero, on revert remove plain state.
+/// * Value, on revert set this value
+/// * Destroyed, IF it is not present already in changeset set it to zero.
+///     on remove it from plainstate.
+///
+/// BREAKTHROUGHT: It is completely different state if Storage is Zero or Some or if Storage is
+/// Destroyed.
+pub enum RevertToSlot {
+    Some(U256),
+    Destroyed,
+}
+
+pub enum AccountStatus {
+    Loaded,
+    LoadedNotExisting,
+    LoadedEmptyEIP161,
+    Changed,
+    New,
+    NewChanged,
+    Destroyed,
+    DestroyedNew,
+    DestroyedNewChanged,
+    DestroyedAgain,
+}
+
+/// Previous values needs to have all information needed to revert any plain account
+/// and storage changes. This means that we need to compare previous state with new state
+/// And if storage was first set to the state we need to put zero to cancel it on revert.
+///
+/// Additionaly we should have information on previous state enum of account, so we can set it.
+///
+pub enum RevertTo {
+    /// Revert to account info, and revert all set storages.
+    /// On any new state old storage is needed. Dont insert storage after selfdestruct.
+    Loaded(PlainAccount),
+    /// NOTE Loaded empty can still contains storage. Edgecase when crate returns empty account
+    /// but it sent storage on init
+    LoadedEmptyEIP161(Storage),
+    /// For revert, Delete account
+    LoadedNotExisting,
+
+    /// Account is marked as newly created and multiple NewChanges are aggregated into one.
+    /// Changeset will containd None, and storage will contains only zeroes.
+    ///
+    /// Previous values of account state is:
+    /// For account is Empty account
+    /// For storage is set of zeroes/empty to cancel any set storage.
+    ///
+    /// If it is loaded empty we need to mark is as such.
+    New {
+        // Should be HashSet
+        storage: Storage,
+        was_loaded_empty_eip161: bool,
+    },
+    /// Account is originaly changed.
+    /// Only if new state is. Changed
+    ///
+    /// Previous values of account state is:
+    /// For account is previous changed account.
+    /// For storage is set of zeroes/empty to cancel any set storage.
+    ///
+    /// `was_loaded_previosly` is set to true if account had Loaded state.
+    Changed {
+        account: PlainAccount, // old account and previous storage
+        was_loaded_previosly: bool,
+    },
+    /// Account is destroyed. All storages need to be removed from state
+    /// and inserted into changeset.
+    ///
+    /// if original bundle state is any of previous values
+    /// And new state is `Destroyed`.
+    ///
+    /// If original bundle state is changed we need to save change storage
+    Destroyed {
+        address: B160,
+        old_account: PlainAccount, // old storage that got updated.
+    },
+    /// If account is newly created but it was already destroyed earlier in the bundle.
+    DestroyedNew {
+        address: B160,
+        old_storage: Storage, // Set zeros for every plain storage entry
+    },
+    // DestroyedNewChanged {
+    //     address: B160,
+    //     old_storage: Storage, // Set zeros for every plain storage entry
+    // }
+}
+
 impl StateWithChange {
-    pub fn apply_substate(&mut self, sub_state: BlockState) {
-        for (address, account) in sub_state.accounts.into_iter() {
+    pub fn apply_block_substate_and_create_reverts(
+        &mut self,
+        block_state: BlockState,
+    ) -> Vec<RevertState> {
+        let reverts = Vec::new();
+        for (address, block_account) in block_state.accounts.into_iter() {
             match self.state.accounts.entry(address) {
                 hash_map::Entry::Occupied(entry) => {
                     let this_account = entry.get();
-                    match account {
-                        GlobalAccountState::Changed(acc) => match this_account {
-                            GlobalAccountState::Changed(this_acc) => {}
-                            GlobalAccountState::Loaded(acc) => {} //discard changes
-                            _ => unreachable!("Invalid state"),
-                        },
-                        GlobalAccountState::Destroyed => match this_account {
-                            GlobalAccountState::NewChanged(acc) => {}        // apply
-                            GlobalAccountState::New(acc) => {}               // apply
-                            GlobalAccountState::Changed(acc) => {}           // apply
-                            GlobalAccountState::LoadedEmptyEIP161(acc) => {} // noop
-                            GlobalAccountState::LoadedNotExisting => {}      // noop
-                            GlobalAccountState::Loaded(acc) => {}            //noop
-                            _ => unreachable!("Invalid state"),
-                        },
-                        GlobalAccountState::DestroyedNew(acc) => match this_account {
-                            GlobalAccountState::NewChanged(acc) => {}
-                            GlobalAccountState::New(acc) => {}
-                            GlobalAccountState::Changed(acc) => {}
-                            GlobalAccountState::Destroyed => {}
-                            GlobalAccountState::LoadedEmptyEIP161(acc) => {}
-                            GlobalAccountState::LoadedNotExisting => {}
-                            GlobalAccountState::Loaded(acc) => {}
-                            GlobalAccountState::DestroyedAgain => {}
-                            GlobalAccountState::DestroyedNew(acc) => {}
-                            _ => unreachable!("Invalid state"),
-                        },
-                        GlobalAccountState::DestroyedNewChanged(acc) => match this_account {
-                            GlobalAccountState::NewChanged(acc) => {}
-                            GlobalAccountState::New(acc) => {}
-                            GlobalAccountState::Changed(acc) => {}
-                            GlobalAccountState::Destroyed => {}
-                            GlobalAccountState::LoadedEmptyEIP161(acc) => {}
-                            GlobalAccountState::LoadedNotExisting => {}
-                            GlobalAccountState::Loaded(acc) => {}
-                            _ => unreachable!("Invalid state"),
-                        },
-                        GlobalAccountState::DestroyedAgain => match this_account {
-                            GlobalAccountState::NewChanged(acc) => {}
-                            GlobalAccountState::New(acc) => {}
-                            GlobalAccountState::Changed(acc) => {}
-                            GlobalAccountState::Destroyed => {}
-                            GlobalAccountState::DestroyedNew(acc) => {}
-                            GlobalAccountState::DestroyedNewChanged(acc) => {}
-                            GlobalAccountState::DestroyedAgain => {}
-                            GlobalAccountState::LoadedEmptyEIP161(acc) => {}
-                            GlobalAccountState::LoadedNotExisting => {}
-                            GlobalAccountState::Loaded(acc) => {}
-                            _ => unreachable!("Invalid state"),
-                        },
-                        GlobalAccountState::New(acc) => {
-                            // this state need to be loaded from db
-                            match this_account {
-                                GlobalAccountState::LoadedEmptyEIP161(acc) => {}
-                                GlobalAccountState::LoadedNotExisting => {}
-                                _ => unreachable!("Invalid state"),
-                            }
-                        }
-                        GlobalAccountState::NewChanged(acc) => match this_account {
-                            GlobalAccountState::New(acc) => {}
-                            _ => unreachable!("Invalid state"),
-                        },
-                        GlobalAccountState::Loaded(acc) => {}
-                        GlobalAccountState::LoadedNotExisting => {}
-                        GlobalAccountState::LoadedEmptyEIP161(acc) => {}
-                    }
                 }
-                hash_map::Entry::Vacant(entry) => {}
+                hash_map::Entry::Vacant(entry) => {
+                    // TODO what to set here, just update i guess
+                }
             }
         }
+        reverts
     }
 }
 

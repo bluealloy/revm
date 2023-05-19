@@ -59,7 +59,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     pub fn insert_contract(&mut self, account: &mut AccountInfo) {
         if let Some(code) = &account.code {
             if !code.is_empty() {
-                account.code_hash = code.hash();
+                account.code_hash = code.hash_slow();
                 self.contracts
                     .entry(account.code_hash)
                     .or_insert_with(|| code.clone());
@@ -386,7 +386,7 @@ pub struct BenchmarkDB(pub Bytecode, B256);
 
 impl BenchmarkDB {
     pub fn new_bytecode(bytecode: Bytecode) -> Self {
-        let hash = bytecode.hash();
+        let hash = bytecode.hash_slow();
         Self(bytecode, hash)
     }
 }
