@@ -157,6 +157,8 @@ impl BlockState {
                 // And when empty account is touched it needs to be removed from database.
                 // EIP-161 state clear
                 if self.has_state_clear && is_empty {
+                    // TODO Check if sending ZERO value created account pre state clear???
+
                     if *address == PRECOMPILE3 {
                         // Test related, this is considered bug that broke one of testsnets
                         // but it didn't reach mainnet as on mainnet any precompile had some balance.
@@ -401,96 +403,331 @@ impl GlobalAccountState {
         }
     }
 
-    /// Create
-    pub fn update_and_create_revert(&mut self, other: &Self) -> RevertState {
-        match other {
+    /// Update to new state and generate RevertState that if applied to new state will
+    /// revert it to previous state. If not revert is present, update is noop.
+    pub fn update_and_create_revert(&mut self, main_update: Self) -> Option<RevertState> {
+        // Helper function that exploads account and returns revert state.
+        let make_it_explode =
+            |original_status: AccountStatus, this: &mut PlainAccount| -> Option<RevertState> {
+                let previous_account = this.info.clone();
+                // Take present storage values as the storages that we are going to revert to.
+                // As those values got destroyed.
+                let previous_storage = this
+                    .storage
+                    .drain()
+                    .into_iter()
+                    .map(|(key, value)| (key, RevertToSlot::Some(value.present_value)))
+                    .collect();
+                let revert = Some(RevertState {
+                    account: Some(previous_account),
+                    storage: previous_storage,
+                    original_status,
+                });
+
+                revert
+            };
+        // Very similar to make_it_explode but it will add additional zeros (RevertToSlot::Destroyed)
+        // for the storage that are set if account is again created.
+        //
+        // Example is of going from New (state: 1: 10) -> DestroyedNew (2:10)
+        // Revert of that needs to be list of key previous values.
+        // [1:10,2:0]
+        let make_it_expload_with_aftereffect = |original_status: AccountStatus,
+                                                this: &mut PlainAccount,
+                                                destroyed_storage: HashMap<U256, RevertToSlot>|
+         -> Option<RevertState> {
+            let previous_account = this.info.clone();
+            // Take present storage values as the storages that we are going to revert to.
+            // As those values got destroyed.
+            let mut previous_storage: HashMap<U256, RevertToSlot> = this
+                .storage
+                .drain()
+                .into_iter()
+                .map(|(key, value)| (key, RevertToSlot::Some(value.present_value)))
+                .collect();
+            for (key, _) in destroyed_storage {
+                previous_storage
+                    .entry(key)
+                    .or_insert(RevertToSlot::Destroyed);
+            }
+            let revert = Some(RevertState {
+                account: Some(previous_account),
+                storage: previous_storage,
+                original_status,
+            });
+
+            revert
+        };
+
+        // Helper to extract storage from plain state and convert it to RevertToSlot::Destroyed.
+        let destroyed_storage = |account: &PlainAccount| -> HashMap<U256, RevertToSlot> {
+            account
+                .storage
+                .iter()
+                .map(|(key, value)| (*key, RevertToSlot::Destroyed))
+                .collect()
+        };
+
+        // handle it more optimal in future but for now be more flexible to set the logic.
+        let previous_storage_from_update = main_update
+            .account()
+            .map(|a| {
+                a.storage
+                    .iter()
+                    .filter(|s| s.1.original_value != s.1.present_value)
+                    .map(|(key, value)| (*key, RevertToSlot::Some(value.original_value.clone())))
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        match main_update {
             GlobalAccountState::Changed(update) => match self {
                 GlobalAccountState::Changed(this) => {
-                    return RevertState {
+                    // extend the storage. original values is not used inside bundle.
+                    this.storage.extend(update.storage);
+                    this.info = update.info;
+                    return Some(RevertState {
                         account: Some(this.info.clone()),
-                        storage: update
-                            .storage
-                            .clone()
-                            .iter()
-                            .map(|s| (*s.0, RevertToSlot::Some(s.1.original_value.clone())))
-                            .collect(),
+                        storage: previous_storage_from_update,
                         original_status: AccountStatus::Changed,
-                    }
+                    });
                 }
                 GlobalAccountState::Loaded(this) => {
-                    return RevertState {
-                        account: Some(this.info.clone()),
-                        storage: update
-                            .storage
-                            .clone()
-                            .iter()
-                            .map(|s| (*s.0, RevertToSlot::Some(s.1.original_value.clone())))
-                            .collect(),
+                    // extend the storage. original values is not used inside bundle.
+                    let mut storage = core::mem::take(&mut this.storage);
+                    storage.extend(update.storage);
+                    let previous_account = this.info.clone();
+                    *self = GlobalAccountState::Changed(PlainAccount {
+                        info: update.info,
+                        storage,
+                    });
+                    return Some(RevertState {
+                        account: Some(previous_account),
+                        storage: previous_storage_from_update,
                         original_status: AccountStatus::Loaded,
-                    }
+                    });
                 } //discard changes
                 _ => unreachable!("Invalid state"),
             },
-            GlobalAccountState::Destroyed => match self {
-                GlobalAccountState::NewChanged(acc) => {}        // apply
-                GlobalAccountState::New(acc) => {}               // apply
-                GlobalAccountState::Changed(acc) => {}           // apply
-                GlobalAccountState::LoadedEmptyEIP161(acc) => {} // noop
-                GlobalAccountState::LoadedNotExisting => {}      // noop
-                GlobalAccountState::Loaded(acc) => {}            //noop
-                _ => unreachable!("Invalid state"),
-            },
-            GlobalAccountState::DestroyedNew(acc) => match self {
-                GlobalAccountState::NewChanged(acc) => {}
-                GlobalAccountState::New(acc) => {}
-                GlobalAccountState::Changed(acc) => {}
-                GlobalAccountState::Destroyed => {}
-                GlobalAccountState::LoadedEmptyEIP161(acc) => {}
-                GlobalAccountState::LoadedNotExisting => {}
-                GlobalAccountState::Loaded(acc) => {}
-                GlobalAccountState::DestroyedAgain => {}
-                GlobalAccountState::DestroyedNew(acc) => {}
-                _ => unreachable!("Invalid state"),
-            },
-            GlobalAccountState::DestroyedNewChanged(acc) => match self {
-                GlobalAccountState::NewChanged(acc) => {}
-                GlobalAccountState::New(acc) => {}
-                GlobalAccountState::Changed(acc) => {}
-                GlobalAccountState::Destroyed => {}
-                GlobalAccountState::LoadedEmptyEIP161(acc) => {}
-                GlobalAccountState::LoadedNotExisting => {}
-                GlobalAccountState::Loaded(acc) => {}
-                _ => unreachable!("Invalid state"),
-            },
-            GlobalAccountState::DestroyedAgain => match self {
-                GlobalAccountState::NewChanged(acc) => {}
-                GlobalAccountState::New(acc) => {}
-                GlobalAccountState::Changed(acc) => {}
-                GlobalAccountState::Destroyed => {}
-                GlobalAccountState::DestroyedNew(acc) => {}
-                GlobalAccountState::DestroyedNewChanged(acc) => {}
-                GlobalAccountState::DestroyedAgain => {}
-                GlobalAccountState::LoadedEmptyEIP161(acc) => {}
-                GlobalAccountState::LoadedNotExisting => {}
-                GlobalAccountState::Loaded(acc) => {}
-                _ => unreachable!("Invalid state"),
-            },
-            GlobalAccountState::New(acc) => {
+            GlobalAccountState::New(update) => {
                 // this state need to be loaded from db
                 match self {
-                    GlobalAccountState::LoadedEmptyEIP161(acc) => {}
-                    GlobalAccountState::LoadedNotExisting => {}
+                    GlobalAccountState::LoadedEmptyEIP161(this) => {
+                        let mut storage = core::mem::take(&mut this.storage);
+                        storage.extend(update.storage);
+                        *self = GlobalAccountState::New(PlainAccount {
+                            info: update.info,
+                            storage: storage,
+                        });
+                        return Some(RevertState {
+                            account: Some(AccountInfo::default()),
+                            storage: previous_storage_from_update,
+                            original_status: AccountStatus::LoadedEmptyEIP161,
+                        });
+                    }
+                    GlobalAccountState::LoadedNotExisting => {
+                        *self = GlobalAccountState::New(update.clone());
+                        return Some(RevertState {
+                            account: None,
+                            storage: previous_storage_from_update,
+                            original_status: AccountStatus::LoadedNotExisting,
+                        });
+                    }
                     _ => unreachable!("Invalid state"),
                 }
             }
-            GlobalAccountState::NewChanged(acc) => match self {
-                GlobalAccountState::New(acc) => {}
+            GlobalAccountState::NewChanged(update) => match self {
+                GlobalAccountState::LoadedEmptyEIP161(this) => {
+                    let mut storage = core::mem::take(&mut this.storage);
+                    storage.extend(update.storage);
+                    // set as new as we didn't have that transition
+                    *self = GlobalAccountState::New(PlainAccount {
+                        info: update.info,
+                        storage: storage,
+                    });
+                    return Some(RevertState {
+                        account: Some(AccountInfo::default()),
+                        storage: previous_storage_from_update,
+                        original_status: AccountStatus::LoadedEmptyEIP161,
+                    });
+                }
+                GlobalAccountState::LoadedNotExisting => {
+                    // set as new as we didn't have that transition
+                    *self = GlobalAccountState::New(update.clone());
+                    return Some(RevertState {
+                        account: None,
+                        storage: previous_storage_from_update,
+                        original_status: AccountStatus::LoadedNotExisting,
+                    });
+                }
+                GlobalAccountState::New(this) => {
+                    let mut storage = core::mem::take(&mut this.storage);
+                    storage.extend(update.storage);
+
+                    let previous_account = this.info.clone();
+                    // set as new as we didn't have that transition
+                    *self = GlobalAccountState::NewChanged(PlainAccount {
+                        info: update.info,
+                        storage: storage,
+                    });
+                    return Some(RevertState {
+                        account: Some(previous_account),
+                        storage: previous_storage_from_update,
+                        original_status: AccountStatus::New,
+                    });
+                }
+                GlobalAccountState::NewChanged(this) => {
+                    let mut storage = core::mem::take(&mut this.storage);
+                    storage.extend(update.storage);
+
+                    let previous_account = this.info.clone();
+                    // set as new as we didn't have that transition
+                    *self = GlobalAccountState::NewChanged(PlainAccount {
+                        info: update.info,
+                        storage: storage,
+                    });
+                    return Some(RevertState {
+                        account: Some(previous_account),
+                        storage: previous_storage_from_update,
+                        original_status: AccountStatus::NewChanged,
+                    });
+                }
                 _ => unreachable!("Invalid state"),
             },
-            GlobalAccountState::Loaded(acc) => {}
-            GlobalAccountState::LoadedNotExisting => {}
-            GlobalAccountState::LoadedEmptyEIP161(acc) => {}
+            GlobalAccountState::Loaded(_update) => {
+                // No changeset, maybe just update data
+                // Do nothing for now.
+                return None;
+            }
+            GlobalAccountState::LoadedNotExisting => {
+                // Not changeset, maybe just update data.
+                // Do nothing for now.
+                return None;
+            }
+            GlobalAccountState::LoadedEmptyEIP161(_update) => {
+                // No changeset maybe just update data.
+                // Do nothing for now
+                return None;
+            }
+            GlobalAccountState::Destroyed => {
+                let ret = match self {
+                    GlobalAccountState::NewChanged(this) => {
+                        make_it_explode(AccountStatus::NewChanged, this)
+                    }
+                    GlobalAccountState::New(this) => make_it_explode(AccountStatus::New, this),
+                    GlobalAccountState::Changed(this) => {
+                        make_it_explode(AccountStatus::Changed, this)
+                    }
+                    GlobalAccountState::LoadedEmptyEIP161(this) => {
+                        make_it_explode(AccountStatus::LoadedEmptyEIP161, this)
+                    }
+                    GlobalAccountState::Loaded(this) => {
+                        make_it_explode(AccountStatus::LoadedEmptyEIP161, this)
+                    }
+                    GlobalAccountState::LoadedNotExisting => {
+                        // Do nothing as we have LoadedNotExisting -> Destroyed (It is noop)
+                        None
+                    }
+                    _ => unreachable!("Invalid state"),
+                };
+
+                // set present to destroyed.
+                *self = GlobalAccountState::Destroyed;
+                return ret;
+            }
+            GlobalAccountState::DestroyedNew(update) => {
+                // Previous block created account
+                // (It was destroyed on previous block or one before).
+                let ret = match self {
+                    GlobalAccountState::NewChanged(this) => make_it_expload_with_aftereffect(
+                        AccountStatus::NewChanged,
+                        this,
+                        destroyed_storage(&update),
+                    ),
+                    GlobalAccountState::New(this) => make_it_expload_with_aftereffect(
+                        // Previous block created account, this block destroyed it and created it again.
+                        // This means that bytecode get changed.
+                        AccountStatus::New,
+                        this,
+                        destroyed_storage(&update),
+                    ),
+                    GlobalAccountState::Changed(this) => make_it_expload_with_aftereffect(
+                        AccountStatus::Changed,
+                        this,
+                        destroyed_storage(&update),
+                    ),
+                    GlobalAccountState::Destroyed => Some(RevertState {
+                        account: None,
+                        storage: previous_storage_from_update,
+                        original_status: AccountStatus::Destroyed,
+                    }),
+                    GlobalAccountState::LoadedEmptyEIP161(this) => {
+                        make_it_expload_with_aftereffect(
+                            AccountStatus::LoadedEmptyEIP161,
+                            this,
+                            destroyed_storage(&update),
+                        )
+                    }
+                    GlobalAccountState::LoadedNotExisting => {
+                        // we can make self to be New
+                        // Example of loaded empty -> New -> destroyed -> New.
+                        // Is same as just empty -> New
+                        *self = GlobalAccountState::New(update.clone());
+                        return Some(RevertState {
+                            // empty account
+                            account: None,
+                            storage: previous_storage_from_update,
+                            original_status: AccountStatus::LoadedNotExisting,
+                        });
+                    }
+                    GlobalAccountState::Loaded(this) => make_it_expload_with_aftereffect(
+                        AccountStatus::Loaded,
+                        this,
+                        destroyed_storage(&update),
+                    ),
+                    GlobalAccountState::DestroyedAgain => make_it_expload_with_aftereffect(
+                        // destroyed again will set empty account.
+                        AccountStatus::DestroyedAgain,
+                        &mut PlainAccount::default(),
+                        destroyed_storage(&update),
+                    ),
+                    GlobalAccountState::DestroyedNew(_this) => {
+                        // From DestroyeNew -> DestroyedAgain -> DestroyedNew
+                        // Note: how to handle new bytecode changed?
+                        // TODO
+                        return None;
+                    }
+                    _ => unreachable!("Invalid state"),
+                };
+                *self = GlobalAccountState::DestroyedNew(update);
+                return ret;
+            }
+            GlobalAccountState::DestroyedNewChanged(update) => match self {
+                GlobalAccountState::NewChanged(this) => {}
+                GlobalAccountState::New(this) => {}
+                GlobalAccountState::Changed(this) => {}
+                GlobalAccountState::Destroyed => {}
+                GlobalAccountState::LoadedEmptyEIP161(this) => {}
+                GlobalAccountState::LoadedNotExisting => {}
+                GlobalAccountState::Loaded(this) => {}
+                _ => unreachable!("Invalid state"),
+            },
+            GlobalAccountState::DestroyedAgain => match self {
+                GlobalAccountState::NewChanged(this) => {}
+                GlobalAccountState::New(this) => {}
+                GlobalAccountState::Changed(this) => {}
+                GlobalAccountState::Destroyed => {}
+                GlobalAccountState::DestroyedNew(this) => {}
+                GlobalAccountState::DestroyedNewChanged(this) => {}
+                GlobalAccountState::DestroyedAgain => {}
+                GlobalAccountState::LoadedEmptyEIP161(this) => {}
+                GlobalAccountState::LoadedNotExisting => {}
+                GlobalAccountState::Loaded(this) => {}
+                _ => unreachable!("Invalid state"),
+            },
         }
+
+        None
     }
 }
 
@@ -623,6 +860,10 @@ RevertTo Block2:
 ///
 /// It is created when new account state is applied to old account state.
 /// And it is used to revert new account state to the old account state.
+///
+/// RevertState is structured in this way as we need to save it inside database.
+/// And we need to be able to read it from database.
+#[derive(Clone, Default)]
 pub struct RevertState {
     account: Option<AccountInfo>,
     storage: HashMap<U256, RevertToSlot>,
@@ -635,16 +876,19 @@ pub struct RevertState {
 /// * Destroyed, IF it is not present already in changeset set it to zero.
 ///     on remove it from plainstate.
 ///
-/// BREAKTHROUGHT: It is completely different state if Storage is Zero or Some or if Storage is
-/// Destroyed.
+/// BREAKTHROUGHT: It is completely different state if Storage is Zero or Some or if Storage was
+/// Destroyed. Because if it is destroyed, previous values can be found in database or can be zero.
+#[derive(Clone)]
 pub enum RevertToSlot {
     Some(U256),
     Destroyed,
 }
 
+#[derive(Clone, Default)]
 pub enum AccountStatus {
-    Loaded,
+    #[default]
     LoadedNotExisting,
+    Loaded,
     LoadedEmptyEIP161,
     Changed,
     New,
