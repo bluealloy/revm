@@ -103,7 +103,7 @@ impl BlockState {
         let account = if !info.is_empty() {
             BlockAccount::new_loaded(info, HashMap::default())
         } else {
-            BlockAccount::new_loaded_empty_eip161()
+            BlockAccount::new_loaded_empty_eip161(HashMap::default())
         };
         self.accounts.insert(address, account);
     }
@@ -117,7 +117,7 @@ impl BlockState {
         let account = if !info.is_empty() {
             BlockAccount::new_loaded(info, storage)
         } else {
-            BlockAccount::new_loaded_empty_eip161()
+            BlockAccount::new_loaded_empty_eip161(storage)
         };
         self.accounts.insert(address, account);
     }
@@ -179,11 +179,11 @@ impl BlockState {
                 if self.has_state_clear && is_empty {
                     // TODO Check if sending ZERO value created account pre state clear???
 
-                    if *address == PRECOMPILE3 {
-                        // Test related, this is considered bug that broke one of testsnets
-                        // but it didn't reach mainnet as on mainnet any precompile had some balance.
-                        continue;
-                    }
+                    // if *address == PRECOMPILE3 {
+                    //     // Test related, this is considered bug that broke one of testsnets
+                    //     // but it didn't reach mainnet as on mainnet any precompile had some balance.
+                    //     continue;
+                    // }
                     // touch empty account.
                     match self.accounts.entry(*address) {
                         Entry::Occupied(mut entry) => {
@@ -290,9 +290,9 @@ impl BlockAccount {
             status: AccountStatus::Loaded,
         }
     }
-    pub fn new_loaded_empty_eip161() -> Self {
+    pub fn new_loaded_empty_eip161(storage: Storage) -> Self {
         Self {
-            account: Some(PlainAccount::default()),
+            account: Some(PlainAccount::new_empty_with_storage(storage)),
             status: AccountStatus::LoadedEmptyEIP161,
         }
     }
@@ -363,7 +363,8 @@ impl BlockAccount {
                 // do nothing
                 unreachable!("Wrong state transition, touch empty is not possible from {self:?}");
             }
-        }
+        };
+        self.account = None;
     }
 
     /// Consume self and make account as destroyed.
