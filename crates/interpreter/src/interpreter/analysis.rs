@@ -1,5 +1,5 @@
 use crate::opcode;
-use crate::primitives::{Bytecode, BytecodeState, Bytes, B256};
+use crate::primitives::{Bytecode, BytecodeState, Bytes};
 use alloc::sync::Arc;
 // use bitvec::order::Lsb0;
 // use bitvec::prelude::bitvec;

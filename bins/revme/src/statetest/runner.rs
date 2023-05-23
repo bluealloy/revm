@@ -11,7 +11,6 @@ use indicatif::ProgressBar;
 
 use revm::inspectors::TracerEip3155;
 use revm::{
-    db::AccountState,
     interpreter::CreateScheme,
     primitives::{Bytecode, Env, ExecutionResult, SpecId, TransactTo, B160, B256, U256},
 };
@@ -287,22 +286,8 @@ pub fn execute_test_suit(
 
                 *elapsed.lock().unwrap() += timer;
 
-                let is_legacy = !SpecId::enabled(
-                    evm.env.cfg.spec_id,
-                    revm::primitives::SpecId::SPURIOUS_DRAGON,
-                );
                 let db = evm.db().unwrap();
-                let state_root = state_merkle_trie_root(
-                    db.trie_account(), // db.trie_account()
-                                       //     .iter()
-                                       //     .filter(|(_address, acc)| {
-                                       //         (is_legacy && !matches!(acc.account_state, AccountState::NotExisting))
-                                       //             || (!is_legacy
-                                       //                 && (!(acc.info.is_empty())
-                                       //                     || matches!(acc.account_state, AccountState::None)))
-                                       //     })
-                                       //     .map(|(k, v)| (*k, v.clone())),
-                );
+                let state_root = state_merkle_trie_root(db.trie_account());
                 let logs = match &exec_result {
                     Ok(ExecutionResult::Success { logs, .. }) => logs.clone(),
                     _ => Vec::new(),

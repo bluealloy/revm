@@ -25,7 +25,7 @@ pub trait Database {
     fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error>;
 }
 
-#[auto_impl(& mut, Box)]
+#[auto_impl(&mut, Box)]
 pub trait DatabaseCommit {
     fn commit(&mut self, changes: Map<B160, Account>);
 }

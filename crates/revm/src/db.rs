@@ -1,10 +1,16 @@
 pub mod in_memory_db;
 
-pub mod db_state;
 #[cfg(feature = "ethersdb")]
 pub mod ethersdb;
 #[cfg(feature = "ethersdb")]
 pub use ethersdb::EthersDB;
+
+pub mod states;
+
+pub use states::{
+    AccountStatus, BlockState, BundleAccount, BundleState, PlainAccount, RevertAccountState,
+    RevertToSlot, Storage,
+};
 
 #[cfg(all(not(feature = "ethersdb"), feature = "web3db"))]
 compile_error!(
@@ -12,5 +18,4 @@ compile_error!(
 );
 
 pub use crate::primitives::db::*;
-pub use db_state::{BlockState, PlainAccount, StateWithChange};
 pub use in_memory_db::*;

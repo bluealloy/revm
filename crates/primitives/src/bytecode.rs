@@ -111,12 +111,7 @@ impl Bytecode {
     /// # Safety
     /// Bytecode need to end with STOP (0x00) opcode as checked bytecode assumes
     /// that it is safe to iterate over bytecode without checking lengths
-    pub unsafe fn new_checked(bytecode: Bytes, len: usize, hash: Option<B256>) -> Self {
-        let hash = match hash {
-            None if len == 0 => KECCAK_EMPTY,
-            None => keccak256(&bytecode),
-            Some(hash) => hash,
-        };
+    pub unsafe fn new_checked(bytecode: Bytes, len: usize) -> Self {
         Self {
             bytecode,
             state: BytecodeState::Checked { len },
