@@ -1,4 +1,4 @@
-use super::{DatabaseCommit, DatabaseRef};
+use super::{DatabaseCommit, DatabaseRef, EmptyDB};
 use crate::primitives::{
     hash_map::Entry, keccak256, Account, AccountInfo, Bytecode, HashMap, Log, B160, B256,
     KECCAK_EMPTY, U256,
@@ -11,7 +11,9 @@ pub type InMemoryDB = CacheDB<EmptyDB>;
 
 impl Default for InMemoryDB {
     fn default() -> Self {
-        CacheDB::new(EmptyDB {})
+        CacheDB::new(EmptyDB {
+            keccak_block_hash: true,
+        })
     }
 }
 
@@ -350,31 +352,6 @@ impl AccountState {
     /// Returns `true` if EVM cleared storage of this account
     pub fn is_storage_cleared(&self) -> bool {
         matches!(self, AccountState::StorageCleared)
-    }
-}
-
-/// An empty database that always returns default values when queried.
-#[derive(Debug, Default, Clone)]
-pub struct EmptyDB();
-
-impl DatabaseRef for EmptyDB {
-    type Error = Infallible;
-    /// Get basic account information.
-    fn basic(&self, _address: B160) -> Result<Option<AccountInfo>, Self::Error> {
-        Ok(None)
-    }
-    /// Get account code by its hash
-    fn code_by_hash(&self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
-        Ok(Bytecode::new())
-    }
-    /// Get storage value of address at index.
-    fn storage(&self, _address: B160, _index: U256) -> Result<U256, Self::Error> {
-        Ok(U256::default())
-    }
-
-    // History related
-    fn block_hash(&self, number: U256) -> Result<B256, Self::Error> {
-        Ok(keccak256(&number.to_be_bytes::<{ U256::BYTES }>()))
     }
 }
 

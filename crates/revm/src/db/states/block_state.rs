@@ -1,10 +1,10 @@
 use revm_interpreter::primitives::{
     db::{Database, DatabaseCommit},
     hash_map::Entry,
-    AccountInfo, Bytecode, Account, HashMap, State, StorageSlot, B160, B256, U256,
+    Account, AccountInfo, Bytecode, HashMap, State, StorageSlot, B160, B256, U256,
 };
 
-use super::{block_account::BlockAccount, PlainAccount};
+use super::{block_account::BundleAccount, PlainAccount};
 
 /// TODO Rename this to become StorageWithOriginalValues or something like that.
 /// This is used inside EVM and for block state. It is needed for block state to
@@ -15,14 +15,25 @@ use super::{block_account::BlockAccount, PlainAccount};
 /// Note: Storage that we get EVM contains original values before t
 pub type Storage = HashMap<U256, StorageSlot>;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct BlockState {
     /// Block state account with account state
-    pub accounts: HashMap<B160, BlockAccount>,
+    pub accounts: HashMap<B160, BundleAccount>,
     /// created contracts
     pub contracts: HashMap<B256, Bytecode>,
     /// Has EIP-161 state clear enabled (Spurious Dragon hardfork).
     pub has_state_clear: bool,
+}
+
+impl Default for BlockState {
+    fn default() -> Self {
+        // be default make state clear EIP enabled
+        BlockState {
+            accounts: HashMap::new(),
+            contracts: HashMap::new(),
+            has_state_clear: true,
+        }
+    }
 }
 
 impl DatabaseCommit for BlockState {
@@ -32,21 +43,17 @@ impl DatabaseCommit for BlockState {
 }
 
 impl BlockState {
-    pub fn new() -> Self {
+    /// For newest fork this should be always `true`.
+    /// 
+    /// For blocks before SpuriousDragon set this to `false`.
+    pub fn new(has_state_clear: bool) -> Self {
         Self {
             accounts: HashMap::new(),
             contracts: HashMap::new(),
-            has_state_clear: true,
+            has_state_clear,
         }
     }
-    /// Legacy without state clear flag enabled
-    pub fn new_legacy() -> Self {
-        Self {
-            accounts: HashMap::new(),
-            contracts: HashMap::new(),
-            has_state_clear: false,
-        }
-    }
+    
     /// Used for tests only. When transitioned it is not recoverable
     pub fn set_state_clear(&mut self) {
         if self.has_state_clear == true {
@@ -67,14 +74,14 @@ impl BlockState {
 
     pub fn insert_not_existing(&mut self, address: B160) {
         self.accounts
-            .insert(address, BlockAccount::new_loaded_not_existing());
+            .insert(address, BundleAccount::new_loaded_not_existing());
     }
 
     pub fn insert_account(&mut self, address: B160, info: AccountInfo) {
         let account = if !info.is_empty() {
-            BlockAccount::new_loaded(info, HashMap::default())
+            BundleAccount::new_loaded(info, HashMap::default())
         } else {
-            BlockAccount::new_loaded_empty_eip161(HashMap::default())
+            BundleAccount::new_loaded_empty_eip161(HashMap::default())
         };
         self.accounts.insert(address, account);
     }
@@ -86,9 +93,9 @@ impl BlockState {
         storage: Storage,
     ) {
         let account = if !info.is_empty() {
-            BlockAccount::new_loaded(info, storage)
+            BundleAccount::new_loaded(info, storage)
         } else {
-            BlockAccount::new_loaded_empty_eip161(storage)
+            BundleAccount::new_loaded_empty_eip161(storage)
         };
         self.accounts.insert(address, account);
     }
@@ -109,7 +116,7 @@ impl BlockState {
                     Entry::Vacant(entry) => {
                         // if account is not present in db, we can just mark it as destroyed.
                         // This means that account was not loaded through this state.
-                        entry.insert(BlockAccount::new_destroyed());
+                        entry.insert(BundleAccount::new_destroyed());
                     }
                 }
                 continue;
@@ -135,7 +142,7 @@ impl BlockState {
                     Entry::Vacant(entry) => {
                         // This means that account was not loaded through this state.
                         // and we trust that account is empty.
-                        entry.insert(BlockAccount::new_newly_created(
+                        entry.insert(BundleAccount::new_newly_created(
                             account.info.clone(),
                             account.storage.clone(),
                         ));
@@ -169,7 +176,7 @@ impl BlockState {
                     }
                     Entry::Vacant(entry) => {
                         // It is assumed initial state is Loaded
-                        entry.insert(BlockAccount::new_changed(
+                        entry.insert(BundleAccount::new_changed(
                             account.info.clone(),
                             account.storage.clone(),
                         ));

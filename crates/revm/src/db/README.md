@@ -4,10 +4,11 @@
 We have four states (HashMaps of accounts) and have two channels.
 
 States are:
-* EVM State. Account and original/present storage
-* Cached state. Account and present values.
-* Block State. Account and original/present storage
+* EVM State. Account and old/present storage, 
+* Cached state. Account and present values, both changed and loaded.
+* Block State. Account and old/present storage. 
 * Bundle State. Account and present storage.
+* Database state. Original account and storage.
 
 Block and bundle state is used to generate reverts. While bundle and block are used to generate reverts for changesets.
 
@@ -19,23 +20,38 @@ Best way to think about it is that different states are different points of time
 * Bundle state contains state before block started and it is updated when blocks state
     gets merged.
 
+
+Algo can be:
+Everything is empty, we have four state.
+* EVM start execution.
+* EVM requests account1 from cached state.
+* Cached state requests account1 from db. and stores it as Loaded().
+* EVM finishes execution and returns changed state.
+* EVM state is used to update Cached state.
+* When updating cached state generated Old/New account values (old/new storage values are already set from EVM). Note: This is needed mostly to get Loaded/LoadedNotExisting accounts
+* EVM can start executing again while pairs of old/new accounts is send to BlockState
+* BlockState updated its account transition and saved oldest account it has.
+
 EVM State
 (It has both original/present storage and new account)
 (Should we have both original/present account? It is didferent as account is standalone
 while storage depends on account state.)
-|          \
-|           \
-|            [Block State] (It has original/present storage and new account).
-Original storage is needed to create changeset without asking plain storage.
-|            |
-[cachedb]    |
-|            v
-|            [Bundled state] (It has only changeset and plain state, Original storage is not needed)
-One of reason why this is the case is because on revert of canonical chain
-we can't get previous storage value. And it is not needed.
-|           /
-v          /
+|
+|
+V
+[Cache State] Fetched data from mdbx and get updated from EVM state.
+|        \
+|         \
+|          [Block State] contains changes related to block. It has original storage (Needed for Loaded acc)
+|          |
+|          V
+|          [Bundled state] (It has only changeset and plain state, Original storage is not needed) One of reason why this is the case, is because when reverting of canonical chain we can't get previous storage value. And it is not needed.
+|
+v
 database mdbx
+
+
+* Bundle state contains Reverts that can be used to revert current world state. Or in this case cache state.
 
 # Dump of my thoughts, removing in future.
 

@@ -1,3 +1,4 @@
+pub mod emptydb;
 pub mod in_memory_db;
 
 #[cfg(feature = "ethersdb")]
@@ -19,3 +20,5 @@ compile_error!(
 
 pub use crate::primitives::db::*;
 pub use in_memory_db::*;
+
+pub use emptydb::EmptyDB;

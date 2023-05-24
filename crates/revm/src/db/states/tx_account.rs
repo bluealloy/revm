@@ -1,6 +1,6 @@
-use revm_interpreter::primitives::{HashMap, AccountInfo, StorageSlot, U256};
+use revm_interpreter::primitives::{AccountInfo, HashMap, StorageSlot, U256};
 
-/// TODO rename this to BlockAccount. As for the block level we have original state.
+/// TODO rename this to BundleAccount. As for the block level we have original state.
 #[derive(Clone, Debug, Default)]
 pub struct PlainAccount {
     pub info: AccountInfo,

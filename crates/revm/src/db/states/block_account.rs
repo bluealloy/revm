@@ -1,23 +1,17 @@
 use revm_interpreter::primitives::{AccountInfo, U256};
 use revm_precompile::HashMap;
 
-use super::{AccountStatus,PlainAccount, Storage, RevertAccountState, RevertToSlot};
-
+use super::{AccountStatus, PlainAccount, RevertAccountState, RevertToSlot, Storage};
 
 /// Seems better, and more cleaner. But all informations is there.
 /// Should we extract storage...
 #[derive(Clone, Debug)]
-pub struct BlockAccount {
-    pub account: Option<PlainAccount>,
-    pub status: AccountStatus,
-}
-
 pub struct BundleAccount {
     pub account: Option<PlainAccount>,
     pub status: AccountStatus,
 }
 
-impl BlockAccount {
+impl BundleAccount {
     pub fn new_loaded(info: AccountInfo, storage: Storage) -> Self {
         Self {
             account: Some(PlainAccount { info, storage }),

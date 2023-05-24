@@ -3,7 +3,7 @@ use hash_db::Hasher;
 use plain_hasher::PlainHasher;
 use primitive_types::{H160, H256};
 use revm::{
-    db::{PlainAccount},
+    db::PlainAccount,
     primitives::{keccak256, Log, B160, B256, U256},
 };
 use rlp::RlpStream;

@@ -3,6 +3,7 @@ use crate::BlockState;
 use revm_interpreter::primitives::hash_map;
 
 // TODO
+#[derive(Clone, Debug, Default)]
 pub struct BundleState {
     /// State
     pub state: BlockState,
