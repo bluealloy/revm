@@ -407,7 +407,15 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         // EIP-3860: Limit and meter initcode
         let initcode_cost = if SPEC::enabled(SHANGHAI) && self.data.env.tx.transact_to.is_create() {
             let initcode_len = self.data.env.tx.data.len();
-            if initcode_len > MAX_INITCODE_SIZE {
+            // Limit is set as double of max contract bytecode size
+            let max_initcode_size = self
+                .data
+                .env
+                .cfg
+                .limit_contract_code_size
+                .map(|limit| limit.saturating_mul(2))
+                .unwrap_or(MAX_INITCODE_SIZE);
+            if initcode_len > max_initcode_size {
                 return Err(InvalidTransaction::CreateInitcodeSizeLimit.into());
             }
             if crate::USE_GAS {

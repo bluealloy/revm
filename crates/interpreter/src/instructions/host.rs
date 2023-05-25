@@ -254,7 +254,14 @@ pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
         );
         // EIP-3860: Limit and meter initcode
         if SPEC::enabled(SHANGHAI) {
-            if len > MAX_INITCODE_SIZE {
+            // Limit is set as double of max contract bytecode size
+            let max_initcode_size = host
+                .env()
+                .cfg
+                .limit_contract_code_size
+                .map(|limit| limit.saturating_mul(2))
+                .unwrap_or(MAX_INITCODE_SIZE);
+            if len > max_initcode_size {
                 interpreter.instruction_result = InstructionResult::CreateInitcodeSizeLimit;
                 return;
             }
