@@ -9,8 +9,8 @@ pub use ethersdb::EthersDB;
 pub mod states;
 
 pub use states::{
-    AccountRevert, AccountStatus, BundleAccount, BundleState, PlainAccount, RevertToSlot, Storage,
-    TransitionAccount, TransitionState,
+    AccountRevert, AccountStatus, BundleAccount, BundleState, CacheState, PlainAccount,
+    RevertToSlot, State, Storage, TransitionAccount, TransitionState,
 };
 
 #[cfg(all(not(feature = "ethersdb"), feature = "web3db"))]

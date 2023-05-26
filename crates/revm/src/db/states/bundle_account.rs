@@ -2,7 +2,7 @@ use super::{
     plain_account::PlainStorage, AccountRevert, AccountStatus, PlainAccount, RevertToSlot, Storage,
     TransitionAccount,
 };
-use revm_interpreter::primitives::{AccountInfo, U256};
+use revm_interpreter::primitives::{AccountInfo, StorageSlot, U256};
 use revm_precompile::HashMap;
 
 /// Seems better, and more cleaner. But all informations is there.
@@ -79,7 +79,26 @@ impl BundleAccount {
     }
 
     /// Touche empty account, related to EIP-161 state clear.
-    pub fn touch_empty(&mut self) {
+    pub fn touch_empty(&mut self) -> TransitionAccount {
+        let previous_status = self.status;
+
+        // zero all storage slot as they are removed now.
+        // This is effecting only for pre state clear accounts, as some of
+        // then can be empty but contan storage slots.
+        let storage = self
+            .account
+            .as_mut()
+            .map(|acc| {
+                acc.storage
+                    .drain()
+                    .into_iter()
+                    .map(|(k, v)| (k, StorageSlot::new_cleared_value(v)))
+                    .collect::<HashMap<_, _>>()
+            })
+            .unwrap_or_default();
+
+        // Set account to None.
+        let previous_info = self.account.take().map(|acc| acc.info);
         self.status = match self.status {
             AccountStatus::DestroyedNew => AccountStatus::DestroyedAgain,
             AccountStatus::New => {
@@ -93,13 +112,19 @@ impl BundleAccount {
                 unreachable!("Wrong state transition, touch empty is not possible from {self:?}");
             }
         };
-        self.account = None;
+        TransitionAccount {
+            info: None,
+            status: self.status,
+            previous_info,
+            previous_status,
+            storage,
+        }
     }
 
     /// Consume self and make account as destroyed.
     ///
     /// Set account as None and set status to Destroyer or DestroyedAgain.
-    pub fn selfdestruct(&mut self) -> TransitionAccount {
+    pub fn selfdestruct(&mut self) -> Option<TransitionAccount> {
         // account should be None after selfdestruct so we can take it.
         let previous_info = self.account.take().map(|a| a.info);
         let previous_status = self.status;
@@ -118,12 +143,17 @@ impl BundleAccount {
             _ => AccountStatus::Destroyed,
         };
 
-        TransitionAccount {
-            info: None,
-            status: self.status,
-            previous_info,
-            previous_status,
-            storage: HashMap::new(),
+        if previous_status == AccountStatus::LoadedNotExisting {
+            // not transitions for account loaded as not existing.
+            None
+        } else {
+            Some(TransitionAccount {
+                info: None,
+                status: self.status,
+                previous_info,
+                previous_status,
+                storage: HashMap::new(),
+            })
         }
     }
 
@@ -135,12 +165,24 @@ impl BundleAccount {
     ) -> TransitionAccount {
         let previous_status = self.status;
         let mut previous_info = self.account.take();
-        let mut storage = previous_info
-            .as_mut()
-            .map(|a| core::mem::take(&mut a.storage))
-            .unwrap_or_default();
 
-        storage.extend(new_storage.iter().map(|(k, s)| (*k, s.present_value)));
+        // For newly create accounts. Old storage needs to be discarded (set to zero).
+        let mut storage_diff = previous_info
+            .as_mut()
+            .map(|a| {
+                core::mem::take(&mut a.storage)
+                    .into_iter()
+                    .map(|(k, v)| (k, StorageSlot::new_cleared_value(v)))
+                    .collect::<HashMap<_, _>>()
+            })
+            .unwrap_or_default();
+        let new_bundle_storage = new_storage
+            .iter()
+            .map(|(k, s)| (*k, s.present_value))
+            .collect();
+
+        storage_diff.extend(new_storage.into_iter());
+
         self.status = match self.status {
             // if account was destroyed previously just copy new info to it.
             AccountStatus::DestroyedAgain | AccountStatus::Destroyed => AccountStatus::DestroyedNew,
@@ -162,11 +204,11 @@ impl BundleAccount {
             status: self.status,
             previous_status,
             previous_info: previous_info.map(|a| a.info),
-            storage: new_storage,
+            storage: storage_diff,
         };
         self.account = Some(PlainAccount {
             info: new_info,
-            storage,
+            storage: new_bundle_storage,
         });
         transition_account
     }

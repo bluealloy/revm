@@ -1,5 +1,6 @@
 use super::{
-    plain_account::PlainStorage, transition_account::TransitionAccount, BundleAccount, PlainAccount,
+    plain_account::PlainStorage, transition_account::TransitionAccount, AccountStatus,
+    BundleAccount, PlainAccount,
 };
 use revm_interpreter::primitives::{
     hash_map::Entry, AccountInfo, Bytecode, HashMap, State as EVMState, B160, B256,
@@ -11,7 +12,7 @@ use revm_interpreter::primitives::{
 ///
 /// Sharading data between bundle execution can be done with help of bundle id.
 /// That should help with unmarking account of old bundle and allowing them to be removed.
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct CacheState {
     /// Block state account with account state
     pub accounts: HashMap<B160, BundleAccount>,
@@ -23,6 +24,21 @@ pub struct CacheState {
 }
 
 impl CacheState {
+    pub fn new() -> Self {
+        Self {
+            accounts: HashMap::default(),
+            contracts: HashMap::default(),
+            has_state_clear: true,
+        }
+    }
+    pub fn new_legacy() -> Self {
+        Self {
+            accounts: HashMap::default(),
+            contracts: HashMap::default(),
+            has_state_clear: false,
+        }
+    }
+
     pub fn trie_account(&self) -> impl IntoIterator<Item = (B160, &PlainAccount)> {
         self.accounts.iter().filter_map(|(address, account)| {
             account
@@ -61,42 +77,36 @@ impl CacheState {
     }
 
     /// Make transitions.
+    ///
     pub fn apply_evm_state(&mut self, evm_state: EVMState) -> Vec<(B160, TransitionAccount)> {
-        let mut transitions = Vec::new();
-        //println!("PRINT STATE:");
+        let mut transitions = Vec::with_capacity(evm_state.len());
         for (address, account) in evm_state {
-            //println!("\n------:{:?} -> {:?}", address, account);
-
-            // TODO move plain_storage to place where it is needed
-            let plain_storage = account
-                .storage
-                .iter()
-                .map(|(k, v)| (*k, v.present_value))
-                .collect();
             if !account.is_touched() {
                 // not touched account are never changed.
                 continue;
             } else if account.is_selfdestructed() {
                 // If it is marked as selfdestructed we to changed state to destroyed.
-                let transition = match self.accounts.entry(address) {
+                match self.accounts.entry(address) {
                     Entry::Occupied(mut entry) => {
                         let this = entry.get_mut();
-                        this.selfdestruct()
+                        if let Some(transition) = this.selfdestruct() {
+                            transitions.push((address, transition));
+                        }
                     }
                     Entry::Vacant(entry) => {
-                        // if account is not present in db, we can just mark it as destroyed.
+                        // if account is not present in db, we can just mark it sa NotExisting.
                         // This means that account was not loaded through this state.
-                        entry.insert(BundleAccount::new_destroyed());
-                        // TODO
-                        TransitionAccount::default()
+                        entry.insert(BundleAccount::new_loaded_not_existing());
+                        // no transition. It is assumed tht all account get loaded
+                        // throught the CacheState so selfdestructed account means
+                        // that account is loaded created and selfdestructed in one tx.
                     }
                 };
-                transitions.push((address, transition));
                 continue;
             }
 
             let is_empty = account.is_empty();
-            let transition = if account.is_created() {
+            if account.is_created() {
                 // Note: it can happen that created contract get selfdestructed in same block
                 // that is why is newly created is checked after selfdestructed
                 //
@@ -111,17 +121,33 @@ impl CacheState {
                     // if account is already present id db.
                     Entry::Occupied(mut entry) => {
                         let this = entry.get_mut();
-                        this.newly_created(account.info, account.storage)
+                        transitions
+                            .push((address, this.newly_created(account.info, account.storage)))
                     }
                     Entry::Vacant(entry) => {
                         // This means that account was not loaded through this state.
-                        // and we trust that account is empty.
+                        // and we trust that account is not existing.
+                        // Note: This should not happen at usual execution.
                         entry.insert(BundleAccount::new_newly_created(
                             account.info.clone(),
-                            plain_storage,
+                            account
+                                .storage
+                                .iter()
+                                .map(|(k, v)| (*k, v.present_value))
+                                .collect(),
                         ));
-                        // TODO
-                        TransitionAccount::default()
+
+                        // push transition but assume original state is LoadedNotExisting.
+                        transitions.push((
+                            address,
+                            TransitionAccount {
+                                info: Some(account.info.clone()),
+                                status: AccountStatus::New,
+                                storage: account.storage,
+                                previous_info: None,
+                                previous_status: AccountStatus::LoadedNotExisting,
+                            },
+                        ));
                     }
                 }
             } else {
@@ -138,11 +164,12 @@ impl CacheState {
                         Entry::Occupied(mut entry) => {
                             entry.get_mut().touch_empty();
                         }
-                        Entry::Vacant(_entry) => {}
+                        Entry::Vacant(_entry) => {
+                            // else do nothing as account is not existings.
+                            // Assumption is that account should be present when applying
+                            // evm state.
+                        }
                     }
-                    // else do nothing as account is not existing
-
-                    // TODO do transition
                     continue;
                 }
 
@@ -150,20 +177,24 @@ impl CacheState {
                 match self.accounts.entry(address) {
                     Entry::Occupied(mut entry) => {
                         let this = entry.get_mut();
-                        this.change(account.info, account.storage)
+                        // make a change and create transition.
+                        transitions.push((address, this.change(account.info, account.storage)));
                     }
                     Entry::Vacant(entry) => {
                         // It is assumed initial state is Loaded
                         entry.insert(BundleAccount::new_changed(
                             account.info.clone(),
-                            plain_storage,
+                            account
+                                .storage
+                                .iter()
+                                .map(|(k, v)| (*k, v.present_value))
+                                .collect(),
                         ));
-                        // TODO
-                        TransitionAccount::default()
+                        // We will not insert anything as it is assumed that
+                        // account should already be loaded when we apply change to it.
                     }
                 }
             };
-            transitions.push((address, transition));
         }
         transitions
     }

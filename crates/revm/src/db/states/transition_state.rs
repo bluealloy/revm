@@ -13,7 +13,7 @@ pub type Storage = HashMap<U256, StorageSlot>;
 #[derive(Clone, Debug)]
 pub struct TransitionState {
     /// Block state account with account state
-    pub accounts: HashMap<B160, TransitionAccount>,
+    pub transitions: HashMap<B160, TransitionAccount>,
     /// Has EIP-161 state clear enabled (Spurious Dragon hardfork).
     pub has_state_clear: bool,
 }
@@ -22,7 +22,7 @@ impl Default for TransitionState {
     fn default() -> Self {
         // be default make state clear EIP enabled
         TransitionState {
-            accounts: HashMap::new(),
+            transitions: HashMap::new(),
             has_state_clear: true,
         }
     }
@@ -34,9 +34,14 @@ impl TransitionState {
     /// For blocks before SpuriousDragon set this to `false`.
     pub fn new(has_state_clear: bool) -> Self {
         Self {
-            accounts: HashMap::new(),
+            transitions: HashMap::new(),
             has_state_clear,
         }
+    }
+
+    /// Return transition id and all account transitions. Leave empty transition map.
+    pub fn take(&mut self) -> TransitionState {
+        core::mem::take(self)
     }
 
     /// Used for tests only. When transitioned it is not recoverable
@@ -50,7 +55,7 @@ impl TransitionState {
 
     pub fn add_transitions(&mut self, transitions: Vec<(B160, TransitionAccount)>) {
         for (address, account) in transitions {
-            match self.accounts.entry(address) {
+            match self.transitions.entry(address) {
                 Entry::Occupied(entry) => {
                     let entry = entry.into_mut();
                     entry.update(account);
@@ -61,32 +66,4 @@ impl TransitionState {
             }
         }
     }
-
-    // pub fn insert_not_existing(&mut self, address: B160) {
-    //     self.accounts
-    //         .insert(address, BundleAccount::new_loaded_not_existing());
-    // }
-
-    // pub fn insert_account(&mut self, address: B160, info: AccountInfo) {
-    //     let account = if !info.is_empty() {
-    //         BundleAccount::new_loaded(info, HashMap::default())
-    //     } else {
-    //         BundleAccount::new_loaded_empty_eip161(HashMap::default())
-    //     };
-    //     self.accounts.insert(address, account);
-    // }
-
-    // pub fn insert_account_with_storage(
-    //     &mut self,
-    //     address: B160,
-    //     info: AccountInfo,
-    //     storage: Storage,
-    // ) {
-    //     let account = if !info.is_empty() {
-    //         BundleAccount::new_loaded(info, storage)
-    //     } else {
-    //         BundleAccount::new_loaded_empty_eip161(storage)
-    //     };
-    //     self.accounts.insert(address, account);
-    // }
 }

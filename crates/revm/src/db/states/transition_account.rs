@@ -1,4 +1,4 @@
-use super::{BundleAccount, PlainAccount, Storage};
+use super::{AccountRevert, BundleAccount, PlainAccount, Storage};
 use crate::db::AccountStatus;
 use revm_interpreter::primitives::{AccountInfo, HashMap};
 
@@ -47,6 +47,30 @@ impl TransitionAccount {
         // update original value of storage.
         for (key, slot) in storage.into_iter() {
             self.storage.entry(key).or_insert(slot).original_value = slot.original_value;
+        }
+    }
+
+    /// Consume Self and create account revert from it.
+    pub fn create_revert(self) -> Option<AccountRevert> {
+        let mut previous_account = self.present_bundle_account();
+        previous_account.update_and_create_revert(self)
+    }
+
+    /// Present bundle account
+    pub fn present_bundle_account(&self) -> BundleAccount {
+        let present_storage = self
+            .storage
+            .iter()
+            .map(|(k, v)| (*k, v.present_value))
+            .collect();
+
+        let present_account = self.info.clone().map(|info: AccountInfo| PlainAccount {
+            info,
+            storage: present_storage,
+        });
+        BundleAccount {
+            account: present_account,
+            status: self.previous_status,
         }
     }
 

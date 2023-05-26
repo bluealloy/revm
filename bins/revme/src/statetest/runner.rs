@@ -1,29 +1,26 @@
 use std::io::stdout;
 use std::{
-    collections::HashMap,
     ffi::OsStr,
     path::{Path, PathBuf},
     sync::{atomic::AtomicBool, Arc, Mutex},
     time::{Duration, Instant},
 };
 
-use indicatif::ProgressBar;
-
-use revm::inspectors::TracerEip3155;
-use revm::{
-    interpreter::CreateScheme,
-    primitives::{Bytecode, Env, ExecutionResult, SpecId, TransactTo, B160, B256, U256},
-};
-use std::sync::atomic::Ordering;
-use walkdir::{DirEntry, WalkDir};
-
 use super::{
     merkle_trie::{log_rlp_hash, state_merkle_trie_root},
     models::{SpecName, TestSuit},
 };
 use hex_literal::hex;
-use revm::primitives::{keccak256, StorageSlot};
+use indicatif::ProgressBar;
+use revm::inspectors::TracerEip3155;
+use revm::primitives::keccak256;
+use revm::{
+    interpreter::CreateScheme,
+    primitives::{Bytecode, Env, ExecutionResult, HashMap, SpecId, TransactTo, B160, B256, U256},
+};
+use std::sync::atomic::Ordering;
 use thiserror::Error;
+use walkdir::{DirEntry, WalkDir};
 
 #[derive(Debug, Error)]
 pub enum TestError {
@@ -169,7 +166,7 @@ pub fn execute_test_suit(
 
     for (name, unit) in suit.0.into_iter() {
         // Create database and insert cache
-        let mut block_state = revm::BlockState::new_legacy();
+        let mut cache_state = revm::CacheState::new_legacy();
         for (address, info) in unit.pre.into_iter() {
             let acc_info = revm::primitives::AccountInfo {
                 balance: info.balance,
@@ -177,14 +174,7 @@ pub fn execute_test_suit(
                 code: Some(Bytecode::new_raw(info.code.clone())),
                 nonce: info.nonce,
             };
-            block_state.insert_account_with_storage(
-                address,
-                acc_info,
-                info.storage
-                    .into_iter()
-                    .map(|(key, value)| (key, StorageSlot::new(value)))
-                    .collect(),
-            );
+            cache_state.insert_account_with_storage(address, acc_info, info.storage.clone());
         }
         let mut env = Env::default();
         // cfg env. SpecId is set down the road
@@ -266,12 +256,12 @@ pub fn execute_test_suit(
                 };
                 env.tx.transact_to = to;
 
-                let mut block_state_cloned = block_state.clone();
-                if SpecId::enabled(env.cfg.spec_id, revm::primitives::SpecId::SPURIOUS_DRAGON) {
-                    block_state_cloned.set_state_clear();
-                }
+                let mut state = revm::db::State::new_with_cache(
+                    cache_state.clone(),
+                    SpecId::enabled(env.cfg.spec_id, revm::primitives::SpecId::SPURIOUS_DRAGON),
+                );
                 let mut evm = revm::new();
-                evm.database(&mut block_state_cloned);
+                evm.database(&mut state);
                 evm.env = env.clone();
                 // do the deed
 
@@ -287,7 +277,7 @@ pub fn execute_test_suit(
                 *elapsed.lock().unwrap() += timer;
 
                 let db = evm.db().unwrap();
-                let state_root = state_merkle_trie_root(db.trie_account());
+                let state_root = state_merkle_trie_root(db.cache.trie_account());
                 let logs = match &exec_result {
                     Ok(ExecutionResult::Success { logs, .. }) => logs.clone(),
                     _ => Vec::new(),
@@ -298,11 +288,11 @@ pub fn execute_test_suit(
                         "Roots did not match:\nState root: wanted {:?}, got {state_root:?}\nLogs root: wanted {:?}, got {logs_root:?}",
                         test.hash, test.logs
                     );
-                    let mut block_state_cloned = block_state.clone();
-                    if SpecId::enabled(env.cfg.spec_id, revm::primitives::SpecId::SPURIOUS_DRAGON) {
-                        block_state_cloned.set_state_clear();
-                    }
-                    evm.database(&mut block_state_cloned);
+                    let mut state = revm::State::new_with_cache(
+                        cache_state.clone(),
+                        SpecId::enabled(env.cfg.spec_id, revm::primitives::SpecId::SPURIOUS_DRAGON),
+                    );
+                    evm.database(&mut state);
                     let _ =
                         evm.inspect_commit(TracerEip3155::new(Box::new(stdout()), false, false));
                     let db = evm.db().unwrap();
@@ -331,7 +321,7 @@ pub fn execute_test_suit(
                         }
                     }
                     println!(" TEST NAME: {:?}", name);
-                    println!("\nApplied state:\n{db:#?}\n");
+                    println!("\nApplied state:\n{:#?}\n", db.cache);
                     println!("\nState root: {state_root:?}\n");
                     println!("env.tx: {:?}\n", env.tx);
                     println!("env.block: {:?}\n", env.block);

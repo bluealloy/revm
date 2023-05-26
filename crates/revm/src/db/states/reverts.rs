@@ -9,7 +9,7 @@ use super::AccountStatus;
 ///
 /// AccountRevert is structured in this way as we need to save it inside database.
 /// And we need to be able to read it from database.
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Debug)]
 pub struct AccountRevert {
     pub account: Option<AccountInfo>,
     pub storage: HashMap<U256, RevertToSlot>,
@@ -24,7 +24,7 @@ pub struct AccountRevert {
 ///
 /// BREAKTHROUGHT: It is completely different state if Storage is Zero or Some or if Storage was
 /// Destroyed. Because if it is destroyed, previous values can be found in database or can be zero.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum RevertToSlot {
     Some(U256),
     Destroyed,
