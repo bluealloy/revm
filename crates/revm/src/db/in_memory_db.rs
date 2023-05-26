@@ -1,7 +1,6 @@
 use super::{DatabaseCommit, DatabaseRef, EmptyDB};
 use crate::primitives::{
-    hash_map::Entry, keccak256, Account, AccountInfo, Bytecode, HashMap, Log, B160, B256,
-    KECCAK_EMPTY, U256,
+    hash_map::Entry, Account, AccountInfo, Bytecode, HashMap, Log, B160, B256, KECCAK_EMPTY, U256,
 };
 use crate::Database;
 use alloc::vec::Vec;

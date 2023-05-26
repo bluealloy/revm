@@ -39,7 +39,7 @@ while storage depends on account state.)
 |
 |
 V
-[Cache State] Fetched data from mdbx and get updated from EVM state.
+[Cache State] Fetched data from database and get updated from EVM state.
 |        \
 |         \
 |          [Block State] contains changes related to block. It has original storage (Needed for Loaded acc)
@@ -48,7 +48,28 @@ V
 |          [Bundled state] (It has only changeset and plain state, Original storage is not needed) One of reason why this is the case, is because when reverting of canonical chain we can't get previous storage value. And it is not needed.
 |
 v
-database mdbx
+database
+
+
+For Standalone execution.
+
+Bundled state is what is saved inside tree chain.
+
+EMV State
+|
+|
+V
+Cache state ---> Transition State
+|                       |
+|                       |
+V                       |
+Bundle state     <-------
+|
+|
+V
+database
+
+Cache is needed to save loaded account so that we can push them to transition state.
 
 
 * Bundle state contains Reverts that can be used to revert current world state. Or in this case cache state.
@@ -482,7 +503,7 @@ CAN WE GENERATE PREVIOUS ENTRY ONLY FROM OLD AND NEW STATE.
  |
  |
  v
-Database mdbx. Plain state
+Database. Plain state
 
 
 Insights:
@@ -517,6 +538,6 @@ What we presently have
  |
  |
  v
- database (mdbx)
+ database
 
  */

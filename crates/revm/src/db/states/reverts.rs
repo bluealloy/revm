@@ -1,17 +1,16 @@
-
 use revm_interpreter::primitives::{AccountInfo, HashMap, U256};
 
-use super::{AccountStatus, PlainAccount};
+use super::AccountStatus;
 
 /// Assumption is that Revert can return full state from any future state to any past state.
 ///
 /// It is created when new account state is applied to old account state.
 /// And it is used to revert new account state to the old account state.
 ///
-/// RevertAccountState is structured in this way as we need to save it inside database.
+/// AccountRevert is structured in this way as we need to save it inside database.
 /// And we need to be able to read it from database.
 #[derive(Clone, Default)]
-pub struct RevertAccountState {
+pub struct AccountRevert {
     pub account: Option<AccountInfo>,
     pub storage: HashMap<U256, RevertToSlot>,
     pub original_status: AccountStatus,

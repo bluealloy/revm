@@ -1,4 +1,6 @@
-use super::{BundleAccount, PlainAccount, Storage, transition_account::TransitionAccount};
+use super::{
+    plain_account::PlainStorage, transition_account::TransitionAccount, BundleAccount, PlainAccount,
+};
 use revm_interpreter::primitives::{
     hash_map::Entry, AccountInfo, Bytecode, HashMap, State as EVMState, B160, B256,
 };
@@ -14,6 +16,7 @@ pub struct CacheState {
     /// Block state account with account state
     pub accounts: HashMap<B160, BundleAccount>,
     /// created contracts
+    /// TODO add bytecode counter for number of bytecodes added/removed.
     pub contracts: HashMap<B256, Bytecode>,
     /// Has EIP-161 state clear enabled (Spurious Dragon hardfork).
     pub has_state_clear: bool,
@@ -47,7 +50,7 @@ impl CacheState {
         &mut self,
         address: B160,
         info: AccountInfo,
-        storage: Storage,
+        storage: PlainStorage,
     ) {
         let account = if !info.is_empty() {
             BundleAccount::new_loaded(info, storage)
@@ -57,30 +60,43 @@ impl CacheState {
         self.accounts.insert(address, account);
     }
 
-    pub fn apply_evm_state(&mut self, evm_state: &EVMState) -> Vec<TransitionAccount> {
-        let transitions = Vec::new();
+    /// Make transitions.
+    pub fn apply_evm_state(&mut self, evm_state: EVMState) -> Vec<(B160, TransitionAccount)> {
+        let mut transitions = Vec::new();
         //println!("PRINT STATE:");
         for (address, account) in evm_state {
             //println!("\n------:{:?} -> {:?}", address, account);
+
+            // TODO move plain_storage to place where it is needed
+            let plain_storage = account
+                .storage
+                .iter()
+                .map(|(k, v)| (*k, v.present_value))
+                .collect();
             if !account.is_touched() {
+                // not touched account are never changed.
                 continue;
             } else if account.is_selfdestructed() {
                 // If it is marked as selfdestructed we to changed state to destroyed.
-                match self.accounts.entry(*address) {
+                let transition = match self.accounts.entry(address) {
                     Entry::Occupied(mut entry) => {
                         let this = entry.get_mut();
-                        this.selfdestruct();
+                        this.selfdestruct()
                     }
                     Entry::Vacant(entry) => {
                         // if account is not present in db, we can just mark it as destroyed.
                         // This means that account was not loaded through this state.
                         entry.insert(BundleAccount::new_destroyed());
+                        // TODO
+                        TransitionAccount::default()
                     }
-                }
+                };
+                transitions.push((address, transition));
                 continue;
             }
+
             let is_empty = account.is_empty();
-            if account.is_created() {
+            let transition = if account.is_created() {
                 // Note: it can happen that created contract get selfdestructed in same block
                 // that is why is newly created is checked after selfdestructed
                 //
@@ -91,19 +107,21 @@ impl CacheState {
                 // by just setting storage inside CRATE contstructor. Overlap of those contracts
                 // is not possible because CREATE2 is introduced later.
                 //
-                match self.accounts.entry(*address) {
+                match self.accounts.entry(address) {
                     // if account is already present id db.
                     Entry::Occupied(mut entry) => {
                         let this = entry.get_mut();
-                        this.newly_created(account.info.clone(), &account.storage)
+                        this.newly_created(account.info, account.storage)
                     }
                     Entry::Vacant(entry) => {
                         // This means that account was not loaded through this state.
                         // and we trust that account is empty.
                         entry.insert(BundleAccount::new_newly_created(
                             account.info.clone(),
-                            account.storage.clone(),
+                            plain_storage,
                         ));
+                        // TODO
+                        TransitionAccount::default()
                     }
                 }
             } else {
@@ -116,31 +134,36 @@ impl CacheState {
                     // TODO Check if sending ZERO value created account pre state clear???
 
                     // touch empty account.
-                    match self.accounts.entry(*address) {
+                    match self.accounts.entry(address) {
                         Entry::Occupied(mut entry) => {
                             entry.get_mut().touch_empty();
                         }
                         Entry::Vacant(_entry) => {}
                     }
                     // else do nothing as account is not existing
+
+                    // TODO do transition
                     continue;
                 }
 
                 // mark account as changed.
-                match self.accounts.entry(*address) {
+                match self.accounts.entry(address) {
                     Entry::Occupied(mut entry) => {
                         let this = entry.get_mut();
-                        this.change(account.info.clone(), account.storage.clone());
+                        this.change(account.info, account.storage)
                     }
                     Entry::Vacant(entry) => {
                         // It is assumed initial state is Loaded
                         entry.insert(BundleAccount::new_changed(
                             account.info.clone(),
-                            account.storage.clone(),
+                            plain_storage,
                         ));
+                        // TODO
+                        TransitionAccount::default()
                     }
                 }
-            }
+            };
+            transitions.push((address, transition));
         }
         transitions
     }

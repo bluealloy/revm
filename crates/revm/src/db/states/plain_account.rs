@@ -4,11 +4,11 @@ use revm_interpreter::primitives::{AccountInfo, HashMap, StorageSlot, U256};
 #[derive(Clone, Debug, Default)]
 pub struct PlainAccount {
     pub info: AccountInfo,
-    pub storage: Storage,
+    pub storage: PlainStorage,
 }
 
 impl PlainAccount {
-    pub fn new_empty_with_storage(storage: Storage) -> Self {
+    pub fn new_empty_with_storage(storage: PlainStorage) -> Self {
         Self {
             info: AccountInfo::default(),
             storage,

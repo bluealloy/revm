@@ -22,19 +22,19 @@ impl Database for EmptyDB {
     type Error = Infallible;
 
     fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
-        self.basic(address)
+        <Self as DatabaseRef>::basic(self, address)
     }
 
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
-        self.code_by_hash(code_hash)
+        <Self as DatabaseRef>::code_by_hash(self, code_hash)
     }
 
     fn storage(&mut self, address: B160, index: U256) -> Result<U256, Self::Error> {
-        self.storage(address, index)
+        <Self as DatabaseRef>::storage(self, address, index)
     }
 
     fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
-        self.block_hash(number)
+        <Self as DatabaseRef>::block_hash(self, number)
     }
 }
 

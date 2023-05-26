@@ -1,4 +1,7 @@
-use super::{AccountStatus, PlainAccount, RevertAccountState, RevertToSlot, Storage};
+use super::{
+    plain_account::PlainStorage, AccountRevert, AccountStatus, PlainAccount, RevertToSlot, Storage,
+    TransitionAccount,
+};
 use revm_interpreter::primitives::{AccountInfo, U256};
 use revm_precompile::HashMap;
 
@@ -11,13 +14,13 @@ pub struct BundleAccount {
 }
 
 impl BundleAccount {
-    pub fn new_loaded(info: AccountInfo, storage: Storage) -> Self {
+    pub fn new_loaded(info: AccountInfo, storage: PlainStorage) -> Self {
         Self {
             account: Some(PlainAccount { info, storage }),
             status: AccountStatus::Loaded,
         }
     }
-    pub fn new_loaded_empty_eip161(storage: Storage) -> Self {
+    pub fn new_loaded_empty_eip161(storage: PlainStorage) -> Self {
         Self {
             account: Some(PlainAccount::new_empty_with_storage(storage)),
             status: AccountStatus::LoadedEmptyEIP161,
@@ -30,7 +33,7 @@ impl BundleAccount {
         }
     }
     /// Create new account that is newly created (State is AccountStatus::New)
-    pub fn new_newly_created(info: AccountInfo, storage: Storage) -> Self {
+    pub fn new_newly_created(info: AccountInfo, storage: PlainStorage) -> Self {
         Self {
             account: Some(PlainAccount { info, storage }),
             status: AccountStatus::New,
@@ -46,7 +49,7 @@ impl BundleAccount {
     }
 
     /// Create changed account
-    pub fn new_changed(info: AccountInfo, storage: Storage) -> Self {
+    pub fn new_changed(info: AccountInfo, storage: PlainStorage) -> Self {
         Self {
             account: Some(PlainAccount { info, storage }),
             status: AccountStatus::Changed,
@@ -64,11 +67,10 @@ impl BundleAccount {
         }
     }
 
-    /// Fetch storage slot if account and storage exist
-    pub fn storage_slot(&self, storage_key: U256) -> Option<U256> {
+    pub fn storage_slot(&self, slot: U256) -> Option<U256> {
         self.account
             .as_ref()
-            .and_then(|a| a.storage.get(&storage_key).map(|slot| slot.present_value))
+            .and_then(|a| a.storage.get(&slot).cloned())
     }
 
     /// Fetch account info if it exist.
@@ -97,7 +99,11 @@ impl BundleAccount {
     /// Consume self and make account as destroyed.
     ///
     /// Set account as None and set status to Destroyer or DestroyedAgain.
-    pub fn selfdestruct(&mut self) {
+    pub fn selfdestruct(&mut self) -> TransitionAccount {
+        // account should be None after selfdestruct so we can take it.
+        let previous_info = self.account.take().map(|a| a.info);
+        let previous_status = self.status;
+
         self.status = match self.status {
             AccountStatus::DestroyedNew | AccountStatus::DestroyedNewChanged => {
                 AccountStatus::DestroyedAgain
@@ -111,12 +117,30 @@ impl BundleAccount {
             }
             _ => AccountStatus::Destroyed,
         };
-        // make accoutn as None as it is destroyed.
-        self.account = None
+
+        TransitionAccount {
+            info: None,
+            status: self.status,
+            previous_info,
+            previous_status,
+            storage: HashMap::new(),
+        }
     }
 
     /// Newly created account.
-    pub fn newly_created(&mut self, new: AccountInfo, storage: &Storage) {
+    pub fn newly_created(
+        &mut self,
+        new_info: AccountInfo,
+        new_storage: Storage,
+    ) -> TransitionAccount {
+        let previous_status = self.status;
+        let mut previous_info = self.account.take();
+        let mut storage = previous_info
+            .as_mut()
+            .map(|a| core::mem::take(&mut a.storage))
+            .unwrap_or_default();
+
+        storage.extend(new_storage.iter().map(|(k, s)| (*k, s.present_value)));
         self.status = match self.status {
             // if account was destroyed previously just copy new info to it.
             AccountStatus::DestroyedAgain | AccountStatus::Destroyed => AccountStatus::DestroyedNew,
@@ -130,28 +154,39 @@ impl BundleAccount {
             }
             _ => unreachable!(
                 "Wrong state transition to create:\nfrom: {:?}\nto: {:?}",
-                self, new
+                self, new_info
             ),
         };
+        let transition_account = TransitionAccount {
+            info: Some(new_info.clone()),
+            status: self.status,
+            previous_status,
+            previous_info: previous_info.map(|a| a.info),
+            storage: new_storage,
+        };
         self.account = Some(PlainAccount {
-            info: new,
-            storage: storage.clone(),
+            info: new_info,
+            storage,
         });
+        transition_account
     }
 
-    pub fn change(&mut self, new: AccountInfo, storage: Storage) {
-        let transfer = |this_account: &mut PlainAccount| -> PlainAccount {
-            let mut this_storage = core::mem::take(&mut this_account.storage);
-            // TODO save original value and dont overwrite it.
-            this_storage.extend(storage.into_iter());
-            PlainAccount {
-                info: new,
-                storage: this_storage,
-            }
+    pub fn change(&mut self, new: AccountInfo, storage: Storage) -> TransitionAccount {
+        let previous_status = self.status;
+        let previous_info = self.account.as_ref().map(|a| a.info.clone());
+
+        let mut this_storage = self
+            .account
+            .take()
+            .map(|acc| acc.storage)
+            .unwrap_or_default();
+        let mut this_storage = core::mem::take(&mut this_storage);
+
+        this_storage.extend(storage.iter().map(|(k, s)| (*k, s.present_value)));
+        let changed_account = PlainAccount {
+            info: new,
+            storage: this_storage,
         };
-        // TODE remove helper `transfer`
-        // Account should always be Some but if wrong transition happens we will panic in last match arm.
-        let changed_account = transfer(&mut self.account.take().unwrap_or_default());
 
         self.status = match self.status {
             AccountStatus::Loaded => {
@@ -192,40 +227,56 @@ impl BundleAccount {
             }
         };
         self.account = Some(changed_account);
+
+        TransitionAccount {
+            info: self.account.as_ref().map(|a| a.info.clone()),
+            status: self.status,
+            previous_info,
+            previous_status,
+            storage,
+        }
     }
 
-    /// Update to new state and generate RevertAccountState that if applied to new state will
+    /// Update to new state and generate AccountRevert that if applied to new state will
     /// revert it to previous state. If not revert is present, update is noop.
     ///
-    /// TODO consume state and return it back with RevertAccountState. This would skip some bugs
+    /// TODO consume state and return it back with AccountRevert. This would skip some bugs
     /// of not setting the state.
     ///
-    /// TODO recheck if simple account state enum disrupts anything in bas way.
+    /// TODO recheck if change to simple account state enum disrupts anything.
     pub fn update_and_create_revert(
         &mut self,
-        mut main_update: Self,
-    ) -> Option<RevertAccountState> {
-        // Helper function that exploads account and returns revert state.
-        let make_it_explode = |original_status: AccountStatus,
-                               mut this: PlainAccount|
-         -> Option<RevertAccountState> {
-            let previous_account = this.info.clone();
-            // Take present storage values as the storages that we are going to revert to.
-            // As those values got destroyed.
-            let previous_storage = this
-                .storage
-                .drain()
-                .into_iter()
-                .map(|(key, value)| (key, RevertToSlot::Some(value.present_value)))
-                .collect();
-            let revert = Some(RevertAccountState {
-                account: Some(previous_account),
-                storage: previous_storage,
-                original_status,
-            });
+        transition: TransitionAccount,
+    ) -> Option<AccountRevert> {
+        let updated_info = transition.info.unwrap_or_default();
+        let updated_storage = transition.storage;
+        let updated_status = transition.status;
 
-            revert
-        };
+        let new_present_storage = updated_storage
+            .iter()
+            .map(|(k, s)| (*k, s.present_value))
+            .collect();
+
+        // Helper function that exploads account and returns revert state.
+        let make_it_explode =
+            |original_status: AccountStatus, mut this: PlainAccount| -> Option<AccountRevert> {
+                let previous_account = this.info.clone();
+                // Take present storage values as the storages that we are going to revert to.
+                // As those values got destroyed.
+                let previous_storage = this
+                    .storage
+                    .drain()
+                    .into_iter()
+                    .map(|(key, value)| (key, RevertToSlot::Some(value)))
+                    .collect();
+                let revert = Some(AccountRevert {
+                    account: Some(previous_account),
+                    storage: previous_storage,
+                    original_status,
+                });
+
+                revert
+            };
         // Very similar to make_it_explode but it will add additional zeros (RevertToSlot::Destroyed)
         // for the storage that are set if account is again created.
         //
@@ -235,7 +286,7 @@ impl BundleAccount {
         let make_it_expload_with_aftereffect = |original_status: AccountStatus,
                                                 mut this: PlainAccount,
                                                 destroyed_storage: HashMap<U256, RevertToSlot>|
-         -> Option<RevertAccountState> {
+         -> Option<AccountRevert> {
             let previous_account = this.info.clone();
             // Take present storage values as the storages that we are going to revert to.
             // As those values got destroyed.
@@ -243,14 +294,14 @@ impl BundleAccount {
                 .storage
                 .drain()
                 .into_iter()
-                .map(|(key, value)| (key, RevertToSlot::Some(value.present_value)))
+                .map(|(key, value)| (key, RevertToSlot::Some(value)))
                 .collect();
             for (key, _) in destroyed_storage {
                 previous_storage
                     .entry(key)
                     .or_insert(RevertToSlot::Destroyed);
             }
-            let revert = Some(RevertAccountState {
+            let revert = Some(AccountRevert {
                 account: Some(previous_account),
                 storage: previous_storage,
                 original_status,
@@ -260,71 +311,62 @@ impl BundleAccount {
         };
 
         // Helper to extract storage from plain state and convert it to RevertToSlot::Destroyed.
-        let destroyed_storage = |account: &PlainAccount| -> HashMap<U256, RevertToSlot> {
-            account
-                .storage
+        let destroyed_storage = |updated_storage: &Storage| -> HashMap<U256, RevertToSlot> {
+            updated_storage
                 .iter()
                 .map(|(key, _)| (*key, RevertToSlot::Destroyed))
                 .collect()
         };
 
         // handle it more optimal in future but for now be more flexible to set the logic.
-        let previous_storage_from_update = main_update
-            .account
-            .as_ref()
-            .map(|a| {
-                a.storage
-                    .iter()
-                    .filter(|s| s.1.original_value != s.1.present_value)
-                    .map(|(key, value)| (*key, RevertToSlot::Some(value.original_value.clone())))
-                    .collect()
-            })
-            .unwrap_or_default();
+        let previous_storage_from_update = updated_storage
+            .iter()
+            .filter(|s| s.1.original_value != s.1.present_value)
+            .map(|(key, value)| (*key, RevertToSlot::Some(value.original_value.clone())))
+            .collect();
 
         // Missing update is for Destroyed,DestroyedAgain,DestroyedNew,DestroyedChange.
         // as those update are different between each other.
         // It updated from state before destroyed. And that is NewChanged,New,Changed,LoadedEmptyEIP161.
         // take a note that is not updating LoadedNotExisting.
         let update_part_of_destroyed =
-            |this: &mut Self, update: &PlainAccount| -> Option<RevertAccountState> {
+            |this: &mut Self, updated_storage: &Storage| -> Option<AccountRevert> {
                 match this.status {
                     AccountStatus::NewChanged => make_it_expload_with_aftereffect(
                         AccountStatus::NewChanged,
                         this.account.clone().unwrap_or_default(),
-                        destroyed_storage(&update),
+                        destroyed_storage(&updated_storage),
                     ),
                     AccountStatus::New => make_it_expload_with_aftereffect(
                         // Previous block created account, this block destroyed it and created it again.
                         // This means that bytecode get changed.
                         AccountStatus::New,
                         this.account.clone().unwrap_or_default(),
-                        destroyed_storage(&update),
+                        destroyed_storage(&updated_storage),
                     ),
                     AccountStatus::Changed => make_it_expload_with_aftereffect(
                         AccountStatus::Changed,
                         this.account.clone().unwrap_or_default(),
-                        destroyed_storage(&update),
+                        destroyed_storage(&updated_storage),
                     ),
                     AccountStatus::LoadedEmptyEIP161 => make_it_expload_with_aftereffect(
                         AccountStatus::LoadedEmptyEIP161,
                         this.account.clone().unwrap_or_default(),
-                        destroyed_storage(&update),
+                        destroyed_storage(&updated_storage),
                     ),
                     _ => None,
                 }
             };
         // Assume this account is going to be overwritten.
         let mut this = self.account.take().unwrap_or_default();
-        // TODO CHECK WHERE MAIN_UPDATE IS USED AS WE JUST TOOK ITS ACCOUNT!!!
-        let update = main_update.account.take().unwrap_or_default();
-        match main_update.status {
+        match updated_status {
             AccountStatus::Changed => {
                 match self.status {
                     AccountStatus::Changed => {
                         // extend the storage. original values is not used inside bundle.
-                        this.storage.extend(update.storage);
-                        this.info = update.info;
-                        return Some(RevertAccountState {
+                        this.storage.extend(new_present_storage);
+                        this.info = updated_info;
+                        return Some(AccountRevert {
                             account: Some(this.info.clone()),
                             storage: previous_storage_from_update,
                             original_status: AccountStatus::Changed,
@@ -333,14 +375,14 @@ impl BundleAccount {
                     AccountStatus::Loaded => {
                         // extend the storage. original values is not used inside bundle.
                         let mut storage = core::mem::take(&mut this.storage);
-                        storage.extend(update.storage);
+                        storage.extend(new_present_storage);
                         let previous_account = this.info.clone();
                         self.status = AccountStatus::Changed;
                         self.account = Some(PlainAccount {
-                            info: update.info,
+                            info: updated_info,
                             storage,
                         });
-                        return Some(RevertAccountState {
+                        return Some(AccountRevert {
                             account: Some(previous_account),
                             storage: previous_storage_from_update,
                             original_status: AccountStatus::Loaded,
@@ -354,14 +396,14 @@ impl BundleAccount {
                 match self.status {
                     AccountStatus::LoadedEmptyEIP161 => {
                         let mut storage = core::mem::take(&mut this.storage);
-                        storage.extend(update.storage);
+                        storage.extend(new_present_storage);
                         self.status = AccountStatus::New;
                         self.account = Some(PlainAccount {
-                            info: update.info,
+                            info: updated_info,
                             storage: storage,
                         });
                         // old account is empty. And that is diffeerent from not existing.
-                        return Some(RevertAccountState {
+                        return Some(AccountRevert {
                             account: Some(AccountInfo::default()),
                             storage: previous_storage_from_update,
                             original_status: AccountStatus::LoadedEmptyEIP161,
@@ -369,29 +411,32 @@ impl BundleAccount {
                     }
                     AccountStatus::LoadedNotExisting => {
                         self.status = AccountStatus::New;
-                        self.account = Some(update.clone());
-                        return Some(RevertAccountState {
+                        self.account = Some(PlainAccount {
+                            info: updated_info,
+                            storage: new_present_storage,
+                        });
+                        return Some(AccountRevert {
                             account: None,
                             storage: previous_storage_from_update,
                             original_status: AccountStatus::LoadedNotExisting,
                         });
                     }
                     _ => unreachable!(
-                        "Invalid transition to New account from: {self:?} to {main_update:?}"
+                        "Invalid transition to New account from: {self:?} to {updated_info:?} {updated_status:?}"
                     ),
                 }
             }
             AccountStatus::NewChanged => match self.status {
                 AccountStatus::LoadedEmptyEIP161 => {
                     let mut storage = core::mem::take(&mut this.storage);
-                    storage.extend(update.storage);
+                    storage.extend(new_present_storage);
                     // set as new as we didn't have that transition
                     self.status = AccountStatus::New;
                     self.account = Some(PlainAccount {
-                        info: update.info,
+                        info: updated_info,
                         storage: storage,
                     });
-                    return Some(RevertAccountState {
+                    return Some(AccountRevert {
                         account: Some(AccountInfo::default()),
                         storage: previous_storage_from_update,
                         original_status: AccountStatus::LoadedEmptyEIP161,
@@ -400,8 +445,11 @@ impl BundleAccount {
                 AccountStatus::LoadedNotExisting => {
                     // set as new as we didn't have that transition
                     self.status = AccountStatus::New;
-                    self.account = Some(update.clone());
-                    return Some(RevertAccountState {
+                    self.account = Some(PlainAccount {
+                        info: updated_info,
+                        storage: new_present_storage,
+                    });
+                    return Some(AccountRevert {
                         account: None,
                         storage: previous_storage_from_update,
                         original_status: AccountStatus::LoadedNotExisting,
@@ -409,16 +457,16 @@ impl BundleAccount {
                 }
                 AccountStatus::New => {
                     let mut storage = core::mem::take(&mut this.storage);
-                    storage.extend(update.storage);
+                    storage.extend(new_present_storage);
 
                     let previous_account = this.info.clone();
                     // set as new as we didn't have that transition
                     self.status = AccountStatus::NewChanged;
                     self.account = Some(PlainAccount {
-                        info: update.info,
+                        info: updated_info,
                         storage: storage,
                     });
-                    return Some(RevertAccountState {
+                    return Some(AccountRevert {
                         account: Some(previous_account),
                         storage: previous_storage_from_update,
                         original_status: AccountStatus::New,
@@ -426,16 +474,16 @@ impl BundleAccount {
                 }
                 AccountStatus::NewChanged => {
                     let mut storage = core::mem::take(&mut this.storage);
-                    storage.extend(update.storage);
+                    storage.extend(new_present_storage);
 
                     let previous_account = this.info.clone();
                     // set as new as we didn't have that transition
                     self.status = AccountStatus::NewChanged;
                     self.account = Some(PlainAccount {
-                        info: update.info,
+                        info: updated_info,
                         storage: storage,
                     });
-                    return Some(RevertAccountState {
+                    return Some(AccountRevert {
                         account: Some(previous_account),
                         storage: previous_storage_from_update,
                         original_status: AccountStatus::NewChanged,
@@ -487,17 +535,20 @@ impl BundleAccount {
                 // (It was destroyed on previous block or one before).
 
                 // check common pre destroy paths.
-                if let Some(revert_state) = update_part_of_destroyed(self, &update) {
+                if let Some(revert_state) = update_part_of_destroyed(self, &updated_storage) {
                     // set to destroyed and revert state.
                     self.status = AccountStatus::DestroyedNew;
-                    self.account = Some(update);
+                    self.account = Some(PlainAccount {
+                        info: updated_info,
+                        storage: new_present_storage,
+                    });
                     return Some(revert_state);
                 }
 
                 let ret = match self.status {
                     AccountStatus::Destroyed => {
                         // from destroyed state new account is made
-                        Some(RevertAccountState {
+                        Some(AccountRevert {
                             account: None,
                             storage: previous_storage_from_update,
                             original_status: AccountStatus::Destroyed,
@@ -511,8 +562,11 @@ impl BundleAccount {
                         //
                         // This will devour the Selfdestruct as it is not needed.
                         self.status = AccountStatus::New;
-                        self.account = Some(update.clone());
-                        return Some(RevertAccountState {
+                        self.account = Some(PlainAccount {
+                            info: updated_info,
+                            storage: new_present_storage,
+                        });
+                        return Some(AccountRevert {
                             // empty account
                             account: None,
                             storage: previous_storage_from_update,
@@ -523,7 +577,7 @@ impl BundleAccount {
                         // destroyed again will set empty account.
                         AccountStatus::DestroyedAgain,
                         PlainAccount::default(),
-                        destroyed_storage(&update),
+                        destroyed_storage(&updated_storage),
                     ),
                     AccountStatus::DestroyedNew => {
                         // From DestroyeNew -> DestroyedAgain -> DestroyedNew
@@ -534,7 +588,10 @@ impl BundleAccount {
                     _ => unreachable!("Invalid state"),
                 };
                 self.status = AccountStatus::DestroyedNew;
-                self.account = Some(update);
+                self.account = Some(PlainAccount {
+                    info: updated_info,
+                    storage: new_present_storage,
+                });
                 return ret;
             }
             AccountStatus::DestroyedNewChanged => {
@@ -542,17 +599,20 @@ impl BundleAccount {
                 // (It was destroyed on previous block or one before).
 
                 // check common pre destroy paths.
-                if let Some(revert_state) = update_part_of_destroyed(self, &update) {
+                if let Some(revert_state) = update_part_of_destroyed(self, &updated_storage) {
                     // set it to destroyed changed and update account as it is newest best state.
                     self.status = AccountStatus::DestroyedNewChanged;
-                    self.account = Some(update);
+                    self.account = Some(PlainAccount {
+                        info: updated_info,
+                        storage: new_present_storage,
+                    });
                     return Some(revert_state);
                 }
 
                 let ret = match self.status {
                     AccountStatus::Destroyed => {
                         // Becomes DestroyedNew
-                        RevertAccountState {
+                        AccountRevert {
                             // empty account
                             account: None,
                             storage: previous_storage_from_update,
@@ -561,7 +621,7 @@ impl BundleAccount {
                     }
                     AccountStatus::DestroyedNew => {
                         // Becomes DestroyedNewChanged
-                        RevertAccountState {
+                        AccountRevert {
                             // empty account
                             account: Some(this.info.clone()),
                             storage: previous_storage_from_update,
@@ -570,7 +630,7 @@ impl BundleAccount {
                     }
                     AccountStatus::DestroyedNewChanged => {
                         // Stays same as DestroyedNewChanged
-                        RevertAccountState {
+                        AccountRevert {
                             // empty account
                             account: Some(this.info.clone()),
                             storage: previous_storage_from_update,
@@ -582,8 +642,11 @@ impl BundleAccount {
                         // Example of this happening is NotExisting -> New -> Destroyed -> New -> Changed.
                         // This is same as NotExisting -> New.
                         self.status = AccountStatus::New;
-                        self.account = Some(update.clone());
-                        return Some(RevertAccountState {
+                        self.account = Some(PlainAccount {
+                            info: updated_info,
+                            storage: new_present_storage,
+                        });
+                        return Some(AccountRevert {
                             // empty account
                             account: None,
                             storage: previous_storage_from_update,
@@ -594,7 +657,10 @@ impl BundleAccount {
                 };
 
                 self.status = AccountStatus::DestroyedNew;
-                self.account = Some(update.clone());
+                self.account = Some(PlainAccount {
+                    info: updated_info,
+                    storage: new_present_storage,
+                });
                 return Some(ret);
             }
             AccountStatus::DestroyedAgain => {
@@ -602,8 +668,7 @@ impl BundleAccount {
                 // (It was destroyed on previous block or one before).
 
                 // check common pre destroy paths.
-                if let Some(revert_state) = update_part_of_destroyed(self, &PlainAccount::default())
-                {
+                if let Some(revert_state) = update_part_of_destroyed(self, &HashMap::default()) {
                     // set to destroyed and revert state.
                     self.status = AccountStatus::DestroyedAgain;
                     self.account = None;
@@ -616,7 +681,7 @@ impl BundleAccount {
                     }
                     AccountStatus::DestroyedNew => {
                         // From destroyed new to destroyed again.
-                        let ret = RevertAccountState {
+                        let ret = AccountRevert {
                             // empty account
                             account: Some(this.info.clone()),
                             storage: previous_storage_from_update,
@@ -626,7 +691,7 @@ impl BundleAccount {
                     }
                     AccountStatus::DestroyedNewChanged => {
                         // From DestroyedNewChanged to DestroyedAgain
-                        let ret = RevertAccountState {
+                        let ret = AccountRevert {
                             // empty account
                             account: Some(this.info.clone()),
                             storage: previous_storage_from_update,
