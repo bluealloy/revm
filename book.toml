@@ -1,0 +1,6 @@
+[book]
+authors = ["Waylon Jepsen"]
+language = "en"
+multilingual = false
+src = "src"
+title = "Rust EVM"

@@ -10,3 +10,4 @@ pkg/
 bins/revme/temp_folder
 bins/revme/tests
 ethereumjs-util.js
+book
