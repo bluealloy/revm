@@ -514,9 +514,9 @@ dependencies = [
 
 [[package]]
 name = "ethers-core"
-version = "2.0.3"
+version = "2.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a5f8f85ba96698eab9a4782ed2215d0979b1981b99f1be0726c200ffdac22f5"
+checksum = "949df06c5bdc23361f12f58af748e62839d579fd650ce734bff2ccaedec992a9"
 dependencies = [
  "arrayvec",
  "bytes",
@@ -524,7 +524,6 @@ dependencies = [
  "elliptic-curve",
  "ethabi",
  "generic-array",
- "getrandom",
  "hex",
  "k256",
  "num_enum",
