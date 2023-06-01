@@ -1668,13 +1668,17 @@ dependencies = [
  "ethers-core",
  "ethers-providers",
  "futures",
+ "hash-db",
  "hex",
  "hex-literal",
+ "plain_hasher",
  "revm-interpreter",
  "revm-precompile",
  "serde",
  "serde_json",
+ "sha3",
  "tokio",
+ "triehash",
 ]
 
 [[package]]
