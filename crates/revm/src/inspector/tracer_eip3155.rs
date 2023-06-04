@@ -110,7 +110,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
             let log_line = json!({
                 //stateroot
                 "output": format!("{out:?}"),
-                "gasUser": format!("0x{:x}", self.gas_inspector.gas_remaining()),
+                "gasUsed": format!("0x{:x}", self.gas_inspector.gas_remaining()),
                 //time
                 //fork
             });
