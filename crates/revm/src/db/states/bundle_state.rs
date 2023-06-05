@@ -4,7 +4,9 @@ use revm_interpreter::primitives::{hash_map, HashMap, B160};
 // TODO
 #[derive(Clone, Debug)]
 pub struct BundleState {
-    /// State
+    /// State.
+    /// TODO to be even more precise we should saparate account from storage from bytecode.
+    /// As those are all saparate tables that we push data to.
     pub state: HashMap<B160, BundleAccount>,
     // TODO contracts etc.
     /// Changes to revert
@@ -37,7 +39,7 @@ impl BundleState {
                     transition.create_revert()
                 }
             };
-            /// append revert if present.
+            // append revert if present.
             if let Some(revert) = revert {
                 reverts.push((address, revert));
             }

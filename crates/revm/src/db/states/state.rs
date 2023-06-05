@@ -1,10 +1,12 @@
 use core::convert::Infallible;
 
-use super::{cache::CacheState, plain_account::PlainStorage, BundleState, TransitionState};
+use super::{
+    cache::CacheState, plain_account::PlainStorage, BundleAccount, BundleState, TransitionState,
+};
 use crate::{db::EmptyDB, TransitionAccount};
 use revm_interpreter::primitives::{
     db::{Database, DatabaseCommit},
-    Account, AccountInfo, Bytecode, HashMap, B160, B256, U256,
+    hash_map, Account, AccountInfo, Bytecode, HashMap, B160, B256, U256,
 };
 
 /// State of blockchain.
@@ -88,6 +90,30 @@ impl State<Infallible> {
 }
 
 impl<DBError> State<DBError> {
+    /// Itereate over received balances and increment all account balances.
+    /// If account is not found inside cache state it will be loaded from database.
+    ///
+    /// Update will create transitions for all accounts that are updated.
+    pub fn increment_balances(
+        &mut self,
+        balances: impl IntoIterator<Item = (B160, u64)>,
+    ) -> Result<(), DBError> {
+        // make transition and update cache state
+        let mut transitions = Vec::new();
+        for (address, balance) in balances {
+            let original_account = self.load_account(address)?;
+            transitions.push((address, original_account.increment_balance(balance)))
+        }
+        // append transition
+        if let Some(transition_builder) = self.transition_builder.as_mut() {
+            transition_builder
+                .transition_state
+                .add_transitions(transitions);
+        }
+
+        Ok(())
+    }
+
     /// State clear EIP-161 is enabled in Spurious Dragon hardfork.
     pub fn enable_state_clear_eip(&mut self) {
         self.has_state_clear = true;
@@ -128,7 +154,7 @@ impl<DBError> State<DBError> {
     }
 
     /// Apply evm transitions to transition state.
-    pub fn apply_transition(&mut self, transitions: Vec<(B160, TransitionAccount)>) {
+    fn apply_transition(&mut self, transitions: Vec<(B160, TransitionAccount)>) {
         // add transition to transition state.
         if let Some(transition_builder) = self.transition_builder.as_mut() {
             // NOTE: can be done in parallel
@@ -138,9 +164,27 @@ impl<DBError> State<DBError> {
         }
     }
 
+    /// Merge transitions to the bundle and crete reverts for it.
     pub fn merge_transitions(&mut self) {
         if let Some(builder) = self.transition_builder.as_mut() {
             builder.merge_transitions()
+        }
+    }
+
+    pub fn load_account(&mut self, address: B160) -> Result<&mut BundleAccount, DBError> {
+        match self.cache.accounts.entry(address) {
+            hash_map::Entry::Vacant(entry) => {
+                let info = self.database.basic(address)?;
+                let bundle_account = match info.clone() {
+                    None => BundleAccount::new_loaded_not_existing(),
+                    Some(acc) if acc.is_empty() => {
+                        BundleAccount::new_loaded_empty_eip161(HashMap::new())
+                    }
+                    Some(acc) => BundleAccount::new_loaded(acc, HashMap::new()),
+                };
+                Ok(entry.insert(bundle_account))
+            }
+            hash_map::Entry::Occupied(entry) => Ok(entry.into_mut()),
         }
     }
 }
@@ -149,31 +193,47 @@ impl<DBError> Database for State<DBError> {
     type Error = DBError;
 
     fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
-        // get from cache
-        if let Some(account) = self.cache.accounts.get(&address) {
-            return Ok(account.account_info());
-        }
-
-        self.database.basic(address)
+        self.load_account(address).map(|a| a.account_info())
     }
 
     fn code_by_hash(
         &mut self,
         code_hash: revm_interpreter::primitives::B256,
     ) -> Result<Bytecode, Self::Error> {
-        self.database.code_by_hash(code_hash)
+        match self.cache.contracts.entry(code_hash) {
+            hash_map::Entry::Occupied(entry) => Ok(entry.get().clone()),
+            hash_map::Entry::Vacant(entry) => {
+                let code = self.database.code_by_hash(code_hash)?;
+                entry.insert(code.clone());
+                Ok(code)
+            }
+        }
     }
 
     fn storage(&mut self, address: B160, index: U256) -> Result<U256, Self::Error> {
-        // get from cache
-        if let Some(account) = self.cache.accounts.get(&address) {
-            return Ok(account.storage_slot(index).unwrap_or_default());
+        // Account is guaranteed to be loaded.
+        if let Some(account) = self.cache.accounts.get_mut(&address) {
+            // account will always be some, but if it is not, U256::ZERO will be returned.
+            Ok(account
+                .account
+                .as_mut()
+                .map(|account| match account.storage.entry(index) {
+                    hash_map::Entry::Occupied(entry) => Ok(entry.get().clone()),
+                    hash_map::Entry::Vacant(entry) => {
+                        let value = self.database.storage(address, index)?;
+                        entry.insert(value);
+                        Ok(value)
+                    }
+                })
+                .transpose()?
+                .unwrap_or_default())
+        } else {
+            unreachable!("For accessing any storage account is guaranteed to be loaded beforehand")
         }
-
-        self.database.storage(address, index)
     }
 
     fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
+        // TODO maybe cache it.
         self.database.block_hash(number)
     }
 }

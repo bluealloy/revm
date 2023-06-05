@@ -11,9 +11,21 @@ use super::AccountStatus;
 /// And we need to be able to read it from database.
 #[derive(Clone, Default, Debug)]
 pub struct AccountRevert {
-    pub account: Option<AccountInfo>,
+    pub account: AccountInfoRevert,
     pub storage: HashMap<U256, RevertToSlot>,
     pub original_status: AccountStatus,
+}
+
+#[derive(Clone, Default, Debug)]
+
+pub enum AccountInfoRevert {
+    #[default]
+    /// Nothing changed
+    DoNothing,
+    /// Account was created and on revert we need to remove it.
+    DeleteIt,
+    /// Account was changed and on revert we need to put old state.
+    RevertTo(AccountInfo),
 }
 
 /// So storage can have multiple types:
