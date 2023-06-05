@@ -22,11 +22,11 @@ pub struct EVMData<'a, DB: Database> {
     pub journaled_state: JournaledState,
     pub db: &'a mut DB,
     pub error: Option<DB::Error>,
+    pub precompiles: Precompiles,
 }
 
 pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
     data: EVMData<'a, DB>,
-    precompiles: Precompiles,
     inspector: &'a mut dyn Inspector<DB>,
     _phantomdata: PhantomData<GSPEC>,
 }
@@ -307,8 +307,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 journaled_state,
                 db,
                 error: None,
+                precompiles,
             },
-            precompiles,
             inspector,
             _phantomdata: PhantomData {},
         }
@@ -381,7 +381,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         // added to it, we need now to load precompile address from db and add this amount to it so that we
         // will have sum.
         if self.data.env.cfg.perf_all_precompiles_have_balance {
-            for address in self.precompiles.addresses() {
+            for address in self.data.precompiles.addresses() {
                 let address = B160(*address);
                 if let Some(precompile) = new_state.get_mut(&address) {
                     // we found it.
@@ -554,7 +554,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         // Create contract account and check for collision
         match self.data.journaled_state.create_account(
             created_address,
-            self.precompiles.contains(&created_address),
+            self.data.precompiles.contains(&created_address),
             self.data.db,
         ) {
             Ok(false) => {
@@ -812,7 +812,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
 
         // Call precompiles
-        let (ret, gas, out) = if let Some(precompile) = self.precompiles.get(&inputs.contract) {
+        let (ret, gas, out) = if let Some(precompile) = self.data.precompiles.get(&inputs.contract)
+        {
             let out = match precompile {
                 Precompile::Standard(fun) => fun(inputs.input.as_ref(), inputs.gas_limit),
                 Precompile::Custom(fun) => fun(inputs.input.as_ref(), inputs.gas_limit),
@@ -953,7 +954,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .map_err(|e| *error = Some(e))
             .ok()?;
         //asume that all precompiles have some balance
-        let is_precompile = self.precompiles.contains(&address);
+        let is_precompile = self.data.precompiles.contains(&address);
         if is_precompile && self.data.env.cfg.perf_all_precompiles_have_balance {
             return Some((KECCAK_EMPTY, is_cold));
         }
