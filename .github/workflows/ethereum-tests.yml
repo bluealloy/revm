@@ -1,10 +1,8 @@
 on:
   push:
-    branches:
-      - main
+    branches: [main,'releases/**']
   pull_request:
-    branches:
-      - main
+    branches: [main,'releases/**']
 
 name: Ethereum Tests
 
