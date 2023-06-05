@@ -69,7 +69,15 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         ret: InstructionResult,
         out: Bytes,
     ) -> (InstructionResult, Gas, Bytes) {
-        (ret, remaining_gas, out)
+        match ret {
+            InstructionResult::InvalidFEOpcode | InstructionResult::OpcodeNotFound => {
+                let mut gas = remaining_gas.clone();
+                gas.record_cost(gas.remaining());
+                self.gas_remaining = 0;
+                (ret, gas, out)
+            }
+            _ => (ret, remaining_gas, out),
+        }
     }
 
     fn create_end(
