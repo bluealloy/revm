@@ -14,6 +14,10 @@ impl PlainAccount {
             storage,
         }
     }
+
+    pub fn into_components(self) -> (AccountInfo, PlainStorage) {
+        (self.info, self.storage)
+    }
 }
 
 /// TODO Rename this to become StorageWithOriginalValues or something like that.

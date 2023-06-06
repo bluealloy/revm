@@ -1,7 +1,7 @@
 use core::convert::Infallible;
 
 use super::{
-    cache::CacheState, plain_account::PlainStorage, BundleAccount, BundleState, TransitionState,
+    cache::CacheState, plain_account::PlainStorage, BundleState, CacheAccount, TransitionState,
 };
 use crate::{db::EmptyDB, TransitionAccount};
 use revm_interpreter::primitives::{
@@ -101,7 +101,7 @@ impl<DBError> State<DBError> {
         // make transition and update cache state
         let mut transitions = Vec::new();
         for (address, balance) in balances {
-            let original_account = self.load_account(address)?;
+            let original_account = self.load_cache_account(address)?;
             transitions.push((address, original_account.increment_balance(balance)))
         }
         // append transition
@@ -171,16 +171,16 @@ impl<DBError> State<DBError> {
         }
     }
 
-    pub fn load_account(&mut self, address: B160) -> Result<&mut BundleAccount, DBError> {
+    pub fn load_cache_account(&mut self, address: B160) -> Result<&mut CacheAccount, DBError> {
         match self.cache.accounts.entry(address) {
             hash_map::Entry::Vacant(entry) => {
                 let info = self.database.basic(address)?;
                 let bundle_account = match info.clone() {
-                    None => BundleAccount::new_loaded_not_existing(),
+                    None => CacheAccount::new_loaded_not_existing(),
                     Some(acc) if acc.is_empty() => {
-                        BundleAccount::new_loaded_empty_eip161(HashMap::new())
+                        CacheAccount::new_loaded_empty_eip161(HashMap::new())
                     }
-                    Some(acc) => BundleAccount::new_loaded(acc, HashMap::new()),
+                    Some(acc) => CacheAccount::new_loaded(acc, HashMap::new()),
                 };
                 Ok(entry.insert(bundle_account))
             }
@@ -193,7 +193,7 @@ impl<DBError> Database for State<DBError> {
     type Error = DBError;
 
     fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
-        self.load_account(address).map(|a| a.account_info())
+        self.load_cache_account(address).map(|a| a.account_info())
     }
 
     fn code_by_hash(

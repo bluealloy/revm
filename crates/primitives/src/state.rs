@@ -212,6 +212,17 @@ impl AccountInfo {
         !self.is_empty()
     }
 
+    /// Return bytecode hash associated with this account.
+    /// If account does not have code, it return's `KECCAK_EMPTY` hash.
+    pub fn code_hash(&self) -> B256 {
+        self.code_hash
+    }
+
+    /// Take bytecode from account. Code will be set to None.
+    pub fn take_bytecode(&mut self) -> Option<Bytecode> {
+        self.code.take()
+    }
+
     pub fn from_balance(balance: U256) -> Self {
         AccountInfo {
             balance,

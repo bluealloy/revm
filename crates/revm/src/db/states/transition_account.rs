@@ -1,6 +1,6 @@
-use super::{AccountRevert, BundleAccount, PlainAccount, Storage};
+use super::{AccountRevert, BundleAccount, Storage};
 use crate::db::AccountStatus;
-use revm_interpreter::primitives::{AccountInfo, HashMap};
+use revm_interpreter::primitives::AccountInfo;
 
 /// Account Created when EVM state is merged to cache state.
 /// And it is send to Block state.
@@ -35,52 +35,43 @@ impl TransitionAccount {
     }
 
     /// Set previous values of transition. Override old values.
-    pub fn update_previous(
-        &mut self,
-        info: Option<AccountInfo>,
-        status: AccountStatus,
-        storage: Storage,
-    ) {
-        self.previous_info = info;
-        self.previous_status = status;
+    // pub fn update_previous(
+    //     &mut self,
+    //     info: Option<AccountInfo>,
+    //     status: AccountStatus,
+    //     storage: Storage,
+    // ) {
+    //     self.previous_info = info;
+    //     self.previous_status = status;
 
-        // update original value of storage.
-        for (key, slot) in storage.into_iter() {
-            self.storage.entry(key).or_insert(slot).original_value = slot.original_value;
-        }
-    }
+    //     // update original value of storage.
+    //     for (key, slot) in storage.into_iter() {
+    //         self.storage.entry(key).or_insert(slot).original_value = slot.original_value;
+    //     }
+    // }
 
     /// Consume Self and create account revert from it.
     pub fn create_revert(self) -> Option<AccountRevert> {
-        let mut previous_account = self.present_bundle_account();
+        let mut previous_account = self.original_bundle_account();
         previous_account.update_and_create_revert(self)
     }
 
     /// Present bundle account
     pub fn present_bundle_account(&self) -> BundleAccount {
-        let present_storage = self
-            .storage
-            .iter()
-            .map(|(k, v)| (*k, v.present_value))
-            .collect();
-
-        let present_account = self.info.clone().map(|info: AccountInfo| PlainAccount {
-            info,
-            storage: present_storage,
-        });
         BundleAccount {
-            account: present_account,
-            status: self.previous_status,
+            info: self.info.clone(),
+            original_info: self.previous_info.clone(),
+            storage: self.storage.clone(),
+            status: self.status,
         }
     }
 
-    /// Return previous account without any storage set.
-    pub fn previous_bundle_account(&self) -> BundleAccount {
+    /// Original bundle account
+    pub fn original_bundle_account(&self) -> BundleAccount {
         BundleAccount {
-            account: self.previous_info.as_ref().map(|info| PlainAccount {
-                info: info.clone(),
-                storage: HashMap::new(),
-            }),
+            info: self.previous_info.clone(),
+            original_info: self.previous_info.clone(),
+            storage: Storage::new(),
             status: self.previous_status,
         }
     }

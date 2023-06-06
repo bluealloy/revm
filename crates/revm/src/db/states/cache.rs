@@ -1,6 +1,6 @@
 use super::{
     plain_account::PlainStorage, transition_account::TransitionAccount, AccountStatus,
-    BundleAccount, PlainAccount,
+    CacheAccount, PlainAccount,
 };
 use revm_interpreter::primitives::{
     hash_map::Entry, AccountInfo, Bytecode, HashMap, State as EVMState, B160, B256,
@@ -15,7 +15,7 @@ use revm_interpreter::primitives::{
 #[derive(Debug, Clone, Default)]
 pub struct CacheState {
     /// Block state account with account state
-    pub accounts: HashMap<B160, BundleAccount>,
+    pub accounts: HashMap<B160, CacheAccount>,
     /// created contracts
     /// TODO add bytecode counter for number of bytecodes added/removed.
     pub contracts: HashMap<B256, Bytecode>,
@@ -50,14 +50,14 @@ impl CacheState {
 
     pub fn insert_not_existing(&mut self, address: B160) {
         self.accounts
-            .insert(address, BundleAccount::new_loaded_not_existing());
+            .insert(address, CacheAccount::new_loaded_not_existing());
     }
 
     pub fn insert_account(&mut self, address: B160, info: AccountInfo) {
         let account = if !info.is_empty() {
-            BundleAccount::new_loaded(info, HashMap::default())
+            CacheAccount::new_loaded(info, HashMap::default())
         } else {
-            BundleAccount::new_loaded_empty_eip161(HashMap::default())
+            CacheAccount::new_loaded_empty_eip161(HashMap::default())
         };
         self.accounts.insert(address, account);
     }
@@ -69,9 +69,9 @@ impl CacheState {
         storage: PlainStorage,
     ) {
         let account = if !info.is_empty() {
-            BundleAccount::new_loaded(info, storage)
+            CacheAccount::new_loaded(info, storage)
         } else {
-            BundleAccount::new_loaded_empty_eip161(storage)
+            CacheAccount::new_loaded_empty_eip161(storage)
         };
         self.accounts.insert(address, account);
     }
@@ -96,7 +96,7 @@ impl CacheState {
                     Entry::Vacant(entry) => {
                         // if account is not present in db, we can just mark it sa NotExisting.
                         // This means that account was not loaded through this state.
-                        entry.insert(BundleAccount::new_loaded_not_existing());
+                        entry.insert(CacheAccount::new_loaded_not_existing());
                         // no transition. It is assumed tht all account get loaded
                         // throught the CacheState so selfdestructed account means
                         // that account is loaded created and selfdestructed in one tx.
@@ -128,7 +128,7 @@ impl CacheState {
                         // This means that account was not loaded through this state.
                         // and we trust that account is not existing.
                         // Note: This should not happen at usual execution.
-                        entry.insert(BundleAccount::new_newly_created(
+                        entry.insert(CacheAccount::new_newly_created(
                             account.info.clone(),
                             account
                                 .storage
@@ -182,7 +182,7 @@ impl CacheState {
                     }
                     Entry::Vacant(entry) => {
                         // It is assumed initial state is Loaded
-                        entry.insert(BundleAccount::new_changed(
+                        entry.insert(CacheAccount::new_changed(
                             account.info.clone(),
                             account
                                 .storage
