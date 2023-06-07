@@ -75,3 +75,23 @@ impl Interpreter {
     }
 }
 ```
+
+## Memory Model
+
+Revm, the Rust Virtual Machine, represents its memory as a vector of bytes (Vec<u8>), providing an abstraction for sequential memory operations. It allows you to perform common tasks like querying memory length, resizing memory, obtaining memory slices, and manipulating individual bytes or larger data chunks (e.g., 256-bit integers). The Memory object is initialized with a capacity of 4KiB.
+
+A key aspect of this memory model is the safe manipulation of memory blocks through various helper methods. The resize method, for example, adjusts the memory size and ensures that new memory regions are zero-filled. The set methods allow placing data into memory at specific offsets, with the set_data method even allowing for more complex memory setting scenarios involving multiple offsets and lengths. The get_slice method retrieves a specific chunk of memory. Additionally, a utility function next_multiple_of_32 is provided for rounding up memory sizes to the nearest multiple of 32. As a general safety rule, users are expected to ensure the validity of offsets when invoking certain methods, like set_byte.
+
+## Gas
+
+The interpreter includes a Gas struct that keeps track of various gas measurements for Revm. It includes fields for gas limit, used gas, memory gas, and refunded gas. Here's a quick example of how to use the API exposed by the Gas struct:
+
+```rust
+let mut gas = Gas::new(1000); // Initializing with a limit of 1000
+gas.record_cost(100); // Recording a cost of 100
+println!("Remaining gas: {}", gas.remaining()); // Prints "Remaining gas: 900"
+gas.record_refund(50); // Recording a refund of 50
+println!("Refunded gas: {}", gas.refunded()); // Prints "Refunded gas: 50"
+```
+
+The Gas struct has various methods to manipulate and query its state. For instance, record_cost and record_memory methods are used to account for used gas, with the latter focusing on gas used for memory expansion. The erase_cost method is used to remove a cost that was previously added. The record_refund and gas_refund methods handle refunded gas, with gas_refund allowing for negative values. The spend method gives the total used gas while remaining returns the remaining gas available. Through these operations, the Gas struct provides a comprehensive model for gas accounting within the Revm system.
