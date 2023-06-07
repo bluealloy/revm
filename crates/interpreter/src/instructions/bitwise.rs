@@ -94,8 +94,8 @@ pub fn byte(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     pop_top!(interpreter, op1, op2);
     let mut ret = U256::ZERO;
 
-    if op1 < U256::from(32) {
-        let o1 = as_usize_saturated!(op1);
+    let o1 = as_usize_saturated!(op1);
+    if o1 < 32 {
         let o2 = &*op2;
         ret = (o2 << (8 * o1)) >> (8 * 31);
     }
