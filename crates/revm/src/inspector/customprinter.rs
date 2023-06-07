@@ -26,10 +26,11 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         let opcode_str = opcode::OPCODE_JUMPMAP[opcode as usize];
 
         let gas_remaining = self.gas_inspector.gas_remaining();
+        let depth = data.journaled_state.depth();
 
         println!(
-            "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data size:{}",
-            data.journaled_state.depth(),
+            "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data size:{} Free stack:{}",
+            depth,
             interp.program_counter(),
             gas_remaining,
             gas_remaining,
@@ -39,6 +40,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
             interp.gas.refunded(),
             interp.stack.data(),
             interp.memory.data().len(),
+            stacker::remaining_stack().unwrap()
         );
 
         self.gas_inspector.step(interp, data);

@@ -14,6 +14,7 @@ revm-precompile = { path = "../precompile", version = "2.0.2", default-features 
 revm-interpreter = { path = "../interpreter", version = "1.1.2", default-features = false }
 
 auto_impl = { version = "1.0", default-features = false }
+stacker = { version = "0.1.15" }
 
 # Optional
 serde = { version = "1.0", features = ["derive", "rc"], optional = true }

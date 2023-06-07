@@ -16,6 +16,8 @@ revm-primitives = { path = "../primitives", version="1.1.2", default-features = 
 derive_more = "0.99"
 enumn = "0.1"
 
+stacker = "0.1.15"
+
 # sha3 keccak hasher
 sha3 = { version = "0.10", default-features = false, features = [] }
 
