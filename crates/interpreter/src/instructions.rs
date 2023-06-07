@@ -19,12 +19,10 @@ pub fn return_stop(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     interpreter.instruction_result = InstructionResult::Stop;
 }
 pub fn return_invalid(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    gas!(interpreter, interpreter.gas.remaining());
     interpreter.instruction_result = InstructionResult::InvalidFEOpcode;
 }
 
 pub fn return_not_found(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    gas!(interpreter, interpreter.gas.remaining());
     interpreter.instruction_result = InstructionResult::OpcodeNotFound;
 }
 
