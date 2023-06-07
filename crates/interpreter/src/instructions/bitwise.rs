@@ -94,14 +94,10 @@ pub fn byte(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     pop_top!(interpreter, op1, op2);
     let mut ret = U256::ZERO;
 
-    for i in 0..256 {
-        if i < 8 && op1 < U256::from(32) {
-            let o = as_usize_saturated!(op1);
-            let t = 255 - (7 - i + 8 * o);
-            let bit_mask = U256::from(1) << t;
-            let value = (*op2 & bit_mask) >> t;
-            ret = ret.overflowing_add(value << i).0;
-        }
+    let o1 = as_usize_saturated!(op1);
+    if o1 < 32 {
+        let o2 = &*op2;
+        ret = (o2 << (8 * o1)) >> (8 * 31);
     }
 
     *op2 = ret;
