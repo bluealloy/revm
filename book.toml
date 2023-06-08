@@ -1,6 +1,6 @@
 [book]
-authors = ["Waylon Jepsen"]
+authors = ["Colin, Waylon Jepsen"]
 language = "en"
 multilingual = false
-src = "src"
+src = "documentation"
 title = "Rust EVM"
