@@ -1,77 +1,23 @@
 # Interpreter
 
-The interpreter is concerned with the execution of the evm opcodes and serves as the event loop to step through the opcodes. The interpreter is concerned with attributes like gas, contracts, memory, stack, and returning execution results.
+The `interpreter` crate is concerned with the execution of the EVM opcodes and serves as the event loop to step through the opcodes. The interpreter is concerned with attributes like gas, contracts, memory, stack, and returning execution results. It's structured as follows:
 
-The interpreter struct is defined as:
+Modules:
+- gas: This module deals with handling the gas mechanics in the EVM, such as calculating gas costs for operations.
+- host: This module defines the `Host` trait, and any types or functions that the host machine (the machine running the EVM). 
+- inner_models: Based on the name, this module could contain the inner data structures or models used in the EVM implementation.
+- instruction_result: This module likely contains definitions related to the result of instruction execution.
+- instructions: This module is expected to include the definitions of the EVM opcodes (instructions).
+- interpreter: This module would contain the Interpreter struct and related functionality for executing EVM instructions.
 
-```rust
-pub struct Interpreter {
-    /// Instruction pointer.
-    pub instruction_pointer: *const u8,
-    /// Return is main control flag, it tell us if we should continue interpreter or break from it
-    pub instruction_result: InstructionResult,
-    /// left gas. Memory gas can be found in Memory field.
-    pub gas: Gas,
-    /// Memory.
-    pub memory: Memory,
-    /// Stack.
-    pub stack: Stack,
-    /// After call returns, its return data is saved here.
-    pub return_data_buffer: Bytes,
-    /// Return value.
-    pub return_range: Range<usize>,
-    /// Is interpreter call static.
-    pub is_static: bool,
-    /// Contract information and invoking data
-    pub contract: Contract,
-    /// Memory limit. See [`crate::CfgEnv`].
-    #[cfg(feature = "memory_limit")]
-    pub memory_limit: u64,
-}
-```
+External Crates:
+- alloc: The alloc crate is used to provide the ability to allocate memory on the heap. It's a part of Rust's standard library that can be used in environments without a full host OS.
+- core: The core crate is the dependency-free foundation of the Rust standard library. It includes fundamental types, macros, and traits.
 
-The interpreter implements the following core methods in addition to a number of getters and constructors. The primary methods are `step`, `run`, and `run_inspect`:
+Constants:
+- USE_GAS: This constant determines whether gas measurement should be used. It's set to false if the no_gas_measuring feature is enabled.
 
-```rust
-impl Interpreter {
-    ///...
-    /// Execute next instruction
-    #[inline(always)]
-    pub fn step<H: Host, SPEC: Spec>(&mut self, host: &mut H) {
-        // step.
-        let opcode = unsafe { *self.instruction_pointer };
-        // Safety: In analysis we are doing padding of bytecode so that we are sure that last
-        // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
-        // it will do noop and just stop execution of this contract
-        self.instruction_pointer = unsafe { self.instruction_pointer.offset(1) };
-        eval::<H, SPEC>(opcode, self, host);
-    }
-
-    /// loop steps until we are finished with execution
-    pub fn run<H: Host, SPEC: Spec>(&mut self, host: &mut H) -> InstructionResult {
-        while self.instruction_result == InstructionResult::Continue {
-            self.step::<H, SPEC>(host)
-        }
-        self.instruction_result
-    }
-
-    /// loop steps until we are finished with execution
-    pub fn run_inspect<H: Host, SPEC: Spec>(&mut self, host: &mut H) -> InstructionResult {
-        while self.instruction_result == InstructionResult::Continue {
-            // step
-            let ret = host.step(self);
-            if ret != InstructionResult::Continue {
-                return ret;
-            }
-            self.step::<H, SPEC>(host);
-
-            // step ends
-            let ret = host.step_end(self, self.instruction_result);
-            if ret != InstructionResult::Continue {
-                return ret;
-            }
-        }
-        self.instruction_result
-    }
-}
-```
+Re-exported Types:
+Several types and functions are re-exported for easier access by users of this library, such as Gas, Host, InstructionResult, OpCode, Interpreter, Memory, Stack, and others. This allows users to import these items directly from the library root instead of from their individual modules.
+Re-exported Crate:
+revm_primitives: This crate is re-exported, likely providing primitive types or functionality used in the EVM implementation.
