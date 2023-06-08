@@ -1,6 +1,6 @@
 use super::{AccountRevert, BundleAccount, Storage};
 use crate::db::AccountStatus;
-use revm_interpreter::primitives::AccountInfo;
+use revm_interpreter::primitives::{AccountInfo, Bytecode, B256};
 
 /// Account Created when EVM state is merged to cache state.
 /// And it is send to Block state.
@@ -22,6 +22,20 @@ pub struct TransitionAccount {
 }
 
 impl TransitionAccount {
+    /// Return new contract bytecode if it is changed or newly created.
+    pub fn has_new_contract(&self) -> Option<(B256, &Bytecode)> {
+        let present_new_codehash = self.info.as_ref().map(|info| &info.code_hash);
+        let previous_codehash = self.previous_info.as_ref().map(|info| &info.code_hash);
+        if present_new_codehash != previous_codehash {
+            return self
+                .info
+                .as_ref()
+                .map(|info| info.code.as_ref().map(|c| (info.code_hash, c)))
+                .flatten();
+        }
+        None
+    }
+
     /// Update new values of transition. Dont override old values
     /// both account info and old storages need to be left intact.
     pub fn update(&mut self, other: Self) {

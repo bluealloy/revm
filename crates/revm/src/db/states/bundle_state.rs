@@ -5,9 +5,9 @@ use revm_interpreter::primitives::{hash_map, AccountInfo, Bytecode, HashMap, B16
 #[derive(Clone, Debug)]
 pub struct BundleState {
     /// State.
-    /// TODO: Need to save original info as there is a case that is can be.
     pub state: HashMap<B160, BundleAccount>,
-    // TODO contracts etc.
+    /// All created contracts in this block.
+    pub contracts: HashMap<B256, Bytecode>,
     /// Changes to revert
     pub reverts: Vec<Vec<(B160, AccountRevert)>>,
 }
@@ -17,6 +17,7 @@ impl Default for BundleState {
         Self {
             state: HashMap::new(),
             reverts: Vec::new(),
+            contracts: HashMap::new(),
         }
     }
 }
@@ -26,6 +27,11 @@ impl BundleState {
     pub fn apply_block_substate_and_create_reverts(&mut self, mut transitions: TransitionState) {
         let mut reverts = Vec::new();
         for (address, transition) in transitions.take().transitions.into_iter() {
+            // add new contract if it was created/changed.
+            if let Some((hash, new_bytecode)) = transition.has_new_contract() {
+                self.contracts.insert(hash, new_bytecode.clone());
+            }
+            // update state and create revert.
             let revert = match self.state.entry(address) {
                 hash_map::Entry::Occupied(mut entry) => {
                     let this_account = entry.get_mut();
@@ -38,6 +44,7 @@ impl BundleState {
                     transition.create_revert()
                 }
             };
+
             // append revert if present.
             if let Some(revert) = revert {
                 reverts.push((address, revert));
@@ -55,32 +62,30 @@ impl BundleState {
     pub fn take_sorted_plain_change(&mut self) -> PlainStateChange {
         let mut accounts = Vec::new();
         let mut storage = Vec::new();
-        let mut contracts = Vec::new();
+
         for (address, account) in self.state.drain().into_iter() {
-            // let (account, status) = account.into_components();
+            // append account info if it is changed.
+            if account.is_info_changed() {
+                let mut info = account.info;
+                info.as_mut().map(|a| a.code = None);
+                accounts.push((address, info));
+            }
 
-            // if let Some((mut info, storage)) = account {
-            //     // how to be sure that info got changed.
-
-            //     // extract bytecode.
-            //     let bytecode = info.take_bytecode().map(|b| (info.code_hash, b));
-            //     if let Some(bytecode) = bytecode {
-            //         contracts.push(bytecode)
-            //     }
-
-            //     // let storage = storage
-            //     //     .into_iter()
-            //     //     .map(|(key, value)| (key, value))
-            // }
-
-            // push contracts
-            //accounts.push((address, info));
+            // append storage changes
+            let mut account_storage_changed = Vec::with_capacity(account.storage.len());
+            for (key, slot) in account.storage {
+                if slot.is_changed() {
+                    account_storage_changed.push((key, slot.present_value));
+                }
+            }
+            // append storage changes to account.
+            storage.push((address, account_storage_changed));
         }
 
         PlainStateChange {
             accounts,
             storage,
-            contracts,
+            contracts: self.contracts.drain().into_iter().collect::<Vec<_>>(),
         }
     }
 
