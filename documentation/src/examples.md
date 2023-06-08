@@ -3,16 +3,16 @@
 Currently there is an example `examples/fork_ref_transact.rs` that takes a fork of a UniswapV2 pair contract for the ETH/USDT pair from the Ethereum mainnet via an Infura endpoint (an HTTP Provider).
 It loads a specific storage slot of the contract. In this case, the slot corresponds to calling the contract's `getReserves()` function which returns a tuple of the quantity of reserves of token 0 and token 1 as well as the latest block timestamp.
 
-The fork of the mainnet state is initialized as an `EthersDB` via the call to `EthersDB::basic` which returns `AccountInfo` containing the account's nonce, balance, and code. 
+The fork of the mainnet state is initialized as an `EthersDB` via the call to `EthersDB::basic` which returns `AccountInfo` containing the account's nonce, balance, and code.
 Then, we also specify the storage slot (8) it wants to interact with, which holds the reserves and block timestamp.
 
-The code generates and encodes the Application Binary Interface (ABI) for a specific function, getReserves(), within the contract. 
+The code generates and encodes the Application Binary Interface (ABI) for a specific function, getReserves(), within the contract.
 Setting up Database for EVM: A database for the EVM is created using EthersDB and populated with the basic account info and storage slot value of the contract to be interacted with.
 An EVM is initialized and the environment is set up for making a reference transaction, specifying details like the caller address, the contract to transact with, the call data (the `getReserves()` function), and the transaction value.
 The reference transaction is executed, but it doesn't write the result to the database, but it captures the output of the call.
 `transact_commit` can be used instead to update the local database.
 
-The resulting data is extracted and decoded. 
+The resulting data is extracted and decoded.
 In the context of the Uniswap contract, this means getting the reserves for the two tokens and the last block timestamp.
 Finally, the code prints out the result of the `getReserves()` call from that point of the ETH/USDT pool history.
 This code is a demonstration of how one can interact with a smart contract's storage, generate call data, initialize an EVM, and execute a transaction to a contract function using Rust and `revm`.
