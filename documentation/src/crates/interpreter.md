@@ -18,7 +18,7 @@ External Crates:
 
 Constants:
 
-- USE_GAS: This constant determines whether gas measurement should be used. It's set to false if the no_gas_measuring feature is enabled.
+- `USE_GAS`: This constant determines whether gas measurement should be used. It's set to false if the no_gas_measuring feature is enabled.
 
 Re-exported Types:
 Several types and functions are re-exported for easier access by users of this library, such as Gas, Host, InstructionResult, OpCode, Interpreter, Memory, Stack, and others. This allows users to import these items directly from the library root instead of from their individual modules.

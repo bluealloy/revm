@@ -13,19 +13,19 @@ Modules:
 
 Types and Constants:
 
-- B160: A type alias for an array of 20 bytes. This is typically used to represent Ethereum addresses.
-- B256: A type alias for an array of 32 bytes, typically used to represent 256-bit hashes or integer values in Ethereum.
-- PrecompileOutput: Represents the output of a precompiled contract execution, including the gas cost, output data, and any logs generated.
-- Log: Represents an Ethereum log, with an address, a list of topics, and associated data.
-- Precompiles: A collection of precompiled contracts available in a particular hard fork of Ethereum.
-- Precompile: Represents a precompiled contract, which can either be a standard Ethereum precompile, or a custom precompile.
-- PrecompileAddress: Associates a precompiled contract with its address.
-- SpecId: An enumeration representing different hard fork specifications in Ethereum, such as Homestead, Byzantium, Istanbul, Berlin, and Latest.
+- `B160`: A type alias for an array of 20 bytes. This is typically used to represent Ethereum addresses.
+- `B256`: A type alias for an array of 32 bytes, typically used to represent 256-bit hashes or integer values in Ethereum.
+- `PrecompileOutput`: Represents the output of a precompiled contract execution, including the gas cost, output data, and any logs generated.
+- `Log`: Represents an Ethereum log, with an address, a list of topics, and associated data.
+- `Precompiles`: A collection of precompiled contracts available in a particular hard fork of Ethereum.
+- `Precompile`: Represents a precompiled contract, which can either be a standard Ethereum precompile, or a custom precompile.
+- `PrecompileAddress`: Associates a precompiled contract with its address.
+- `SpecId`: An enumeration representing different hard fork specifications in Ethereum, such as Homestead, Byzantium, Istanbul, Berlin, and Latest.
 
 Functions:
 
-- calc_linear_cost_u32: A utility function to calculate the gas cost for certain precompiles based on their input length.
-- u64_to_b160: A utility function for converting a 64-bit unsigned integer into a 20-byte Ethereum address.
+- `calc_linear_cost_u32`: A utility function to calculate the gas cost for certain precompiles based on their input length.
+- `u64_to_b160`: A utility function for converting a 64-bit unsigned integer into a 20-byte Ethereum address.
 
 External Crates:
 
@@ -34,8 +34,8 @@ External Crates:
 
 Re-exported Crates and Types:
 
-- revm_primitives: This crate is re-exported, indicating it provides some types used by the precompile crate.
-- primitives: Types from the `primitives` module of `revm_primitives` are re-exported, including `Bytes`, `HashMap`, and all types under `precompile`. The latter includes the `PrecompileError` type, which is aliased to `Error`.
+- `revm_primitives`: This crate is re-exported, indicating it provides some types used by the precompile crate.
+- `primitives`: Types from the `primitives` module of `revm_primitives` are re-exported, including `Bytes`, `HashMap`, and all types under `precompile`. The latter includes the `PrecompileError` type, which is aliased to `Error`.
 
 Re-exported Functionality:
 

@@ -2,5 +2,5 @@
 authors = ["Colin, Waylon Jepsen"]
 language = "en"
 multilingual = false
-src = "documentation"
+src = "documentation/src"
 title = "Rust EVM"
