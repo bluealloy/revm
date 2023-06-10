@@ -9,7 +9,7 @@ pub const ECRECOVER: PrecompileAddress = PrecompileAddress(
 #[allow(clippy::module_inception)]
 mod secp256k1 {
     use k256::ecdsa::{Error, RecoveryId, Signature, VerifyingKey};
-    use sha3::{Digest, Keccak256};
+    use keccak256::{Digest, Keccak256};
 
     use crate::B256;
 
@@ -43,7 +43,7 @@ mod secp256k1 {
         ecdsa::{RecoverableSignature, RecoveryId},
         Message, Secp256k1,
     };
-    use sha3::{Digest, Keccak256};
+    use keccak256::{Digest, Keccak256};
 
     pub fn ecrecover(sig: &[u8; 65], msg: &B256) -> Result<B256, secp256k1::Error> {
         let sig =

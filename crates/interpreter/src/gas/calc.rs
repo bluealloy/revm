@@ -146,7 +146,7 @@ pub fn log_cost(n: u8, len: u64) -> Option<u64> {
         .checked_add(LOGTOPIC * n as u64)
 }
 
-pub fn sha3_cost(len: u64) -> Option<u64> {
+pub fn keccak256_cost(len: u64) -> Option<u64> {
     let wordd = len / 32;
     let wordr = len % 32;
     SHA3.checked_add(SHA3WORD.checked_mul(if wordr == 0 { wordd } else { wordd + 1 })?)

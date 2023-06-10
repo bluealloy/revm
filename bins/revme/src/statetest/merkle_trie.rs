@@ -7,7 +7,7 @@ use revm::{
     primitives::{keccak256, Log, B160, B256, U256},
 };
 use rlp::RlpStream;
-use sha3::{Digest, Keccak256};
+use keccak256::{Digest, Keccak256};
 use triehash::sec_trie_root;
 
 pub fn log_rlp_hash(logs: Vec<Log>) -> B256 {

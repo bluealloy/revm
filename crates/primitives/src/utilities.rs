@@ -1,6 +1,6 @@
 use crate::{B160, B256, U256};
 use hex_literal::hex;
-use sha3::{Digest, Keccak256};
+use keccak256::{Digest, Keccak256};
 
 pub const KECCAK_EMPTY: B256 = B256(hex!(
     "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
