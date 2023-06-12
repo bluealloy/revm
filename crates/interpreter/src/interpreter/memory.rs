@@ -45,6 +45,11 @@ impl Memory {
         &self.data
     }
 
+    /// Consumes the type and returns the full memory.
+    pub fn into_data(self) -> Vec<u8> {
+        self.data
+    }
+
     /// Shrinks the capacity of the data buffer as much as possible.
     pub fn shrink_to_fit(&mut self) {
         self.data.shrink_to_fit()
