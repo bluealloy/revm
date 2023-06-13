@@ -411,7 +411,7 @@ dependencies = [
  "rand",
  "rlp",
  "serde",
- "keccak256",
+ "sha3",
  "zeroize",
 ]
 
@@ -459,7 +459,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "keccak256",
+ "sha3",
  "thiserror",
  "uint",
 ]
@@ -1688,7 +1688,7 @@ dependencies = [
  "proptest-derive",
  "revm-primitives",
  "serde",
- "keccak256",
+ "sha3",
 ]
 
 [[package]]
@@ -1703,7 +1703,7 @@ dependencies = [
  "ripemd",
  "secp256k1",
  "sha2",
- "keccak256",
+ "sha3",
  "substrate-bn",
 ]
 
@@ -1728,7 +1728,7 @@ dependencies = [
  "rlp",
  "ruint",
  "serde",
- "keccak256",
+ "sha3",
 ]
 
 [[package]]
@@ -1758,7 +1758,7 @@ dependencies = [
  "ruint",
  "serde",
  "serde_json",
- "keccak256",
+ "sha3",
  "structopt",
  "thiserror",
  "triehash",
@@ -2078,7 +2078,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "keccak256"
+name = "sha3"
 version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "54c2bb1a323307527314a36bfb73f24febb08ce2b8a554bf4ffd6f51ad15198c"
