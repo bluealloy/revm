@@ -31,7 +31,7 @@ hex-literal = "0.4"
 derive_more = "0.99"
 enumn = "0.1"
 
-# keccak256 keccak hasher
+# sha3 keccak hasher
 sha3 = { version = "0.10", default-features = false, features = [] }
 
 # optional
