@@ -29,6 +29,22 @@ use revm_precompile::Precompiles;
 pub struct EVM<DB> {
     pub env: Env,
     pub db: Option<DB>,
+    pub eval_times: ExecTimes,
+}
+
+#[derive(Debug, Default, Clone, Copy)]
+pub struct ExecTimes {
+    pub init: std::time::Duration,
+    pub exec: std::time::Duration,
+    pub finish: std::time::Duration,
+}
+
+impl ExecTimes {
+    pub fn print(&self) {
+        println!("  F - {:?} evm init", self.init);
+        println!("  F - {:?} evm exec", self.exec);
+        println!("  F - {:?} evm finish", self.finish);
+    }
 }
 
 pub fn new<DB>() -> EVM<DB> {
@@ -64,7 +80,8 @@ impl<DB: Database> EVM<DB> {
     pub fn transact(&mut self) -> EVMResult<DB::Error> {
         if let Some(db) = self.db.as_mut() {
             let mut noop = NoOpInspector {};
-            let out = evm_inner::<DB, false>(&mut self.env, db, &mut noop).transact();
+            let out =
+                evm_inner::<DB, false>(&mut self.env, db, &mut noop).transact(&mut self.eval_times);
             out
         } else {
             panic!("Database needs to be set");
@@ -74,7 +91,7 @@ impl<DB: Database> EVM<DB> {
     /// Execute transaction with given inspector, without wring to DB. Return change state.
     pub fn inspect<INSP: Inspector<DB>>(&mut self, mut inspector: INSP) -> EVMResult<DB::Error> {
         if let Some(db) = self.db.as_mut() {
-            evm_inner::<DB, true>(&mut self.env, db, &mut inspector).transact()
+            evm_inner::<DB, true>(&mut self.env, db, &mut inspector).transact(&mut self.eval_times)
         } else {
             panic!("Database needs to be set");
         }
@@ -88,9 +105,10 @@ impl<'a, DB: DatabaseRef> EVM<DB> {
             let mut noop = NoOpInspector {};
             let mut db = RefDBWrapper::new(db);
             let db = &mut db;
+            let mut times = ExecTimes::default();
             let out =
                 evm_inner::<RefDBWrapper<DB::Error>, false>(&mut self.env.clone(), db, &mut noop)
-                    .transact();
+                    .transact(&mut times);
             out
         } else {
             panic!("Database needs to be set");
@@ -105,12 +123,13 @@ impl<'a, DB: DatabaseRef> EVM<DB> {
         if let Some(db) = self.db.as_ref() {
             let mut db = RefDBWrapper::new(db);
             let db = &mut db;
+            let mut times = ExecTimes::default();
             let out = evm_inner::<RefDBWrapper<DB::Error>, true>(
                 &mut self.env.clone(),
                 db,
                 &mut inspector,
             )
-            .transact();
+            .transact(&mut times);
             out
         } else {
             panic!("Database needs to be set");
@@ -126,7 +145,11 @@ impl<DB> EVM<DB> {
 
     /// Creates a new [EVM] instance with the given environment.
     pub fn with_env(env: Env) -> Self {
-        Self { env, db: None }
+        Self {
+            env,
+            db: None,
+            eval_times: ExecTimes::default(),
+        }
     }
 
     pub fn database(&mut self, db: DB) {

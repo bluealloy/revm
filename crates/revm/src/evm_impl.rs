@@ -1,3 +1,4 @@
+use crate::evm::ExecTimes;
 use crate::interpreter::{
     analysis::to_analysed, gas, instruction_result::SuccessOrHalt, return_ok, return_revert,
     CallContext, CallInputs, CallScheme, Contract, CreateInputs, CreateScheme, Gas, Host,
@@ -36,7 +37,7 @@ pub trait Transact<DBError> {
     /// Do transaction.
     /// InstructionResult InstructionResult, Output for call or Address if we are creating
     /// contract, gas spend, gas refunded, State that needs to be applied.
-    fn transact(&mut self) -> EVMResult<DBError>;
+    fn transact(&mut self, times: &mut ExecTimes) -> EVMResult<DBError>;
 }
 
 impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, INSPECT> {
@@ -58,7 +59,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
     for EVMImpl<'a, GSPEC, DB, INSPECT>
 {
-    fn transact(&mut self) -> EVMResult<DB::Error> {
+    fn transact(&mut self, times: &mut ExecTimes) -> EVMResult<DB::Error> {
+        let time = std::time::Instant::now();
         self.env().validate_block_env::<GSPEC, DB::Error>()?;
         self.env().validate_tx::<GSPEC>()?;
 
@@ -109,6 +111,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
 
         let transact_gas_limit = tx_gas_limit - initial_gas_spend;
 
+        times.init += time.elapsed();
+        let time = std::time::Instant::now();
+
         // call inner handling of call/create
         let (exit_reason, ret_gas, output) = match self.data.env.tx.transact_to {
             TransactTo::Call(address) => {
@@ -147,6 +152,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                 (exit, ret_gas, Output::Create(bytes, address))
             }
         };
+
+        times.exec += time.elapsed();
+        let time = std::time::Instant::now();
 
         // set gas with gas limit and spend it all. Gas is going to be reimbursed when
         // transaction is returned successfully.
@@ -191,6 +199,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                 panic!("Internal return flags should remain internal {exit_reason:?}")
             }
         };
+        times.finish += time.elapsed();
 
         Ok(ResultAndState { result, state })
     }

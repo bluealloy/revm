@@ -1,6 +1,6 @@
 use super::{changes::StateChangeset, AccountRevert, BundleAccount, TransitionState};
 use rayon::slice::ParallelSliceMut;
-use revm_interpreter::primitives::{hash_map, hex_literal::hex, Bytecode, HashMap, B160, B256};
+use revm_interpreter::primitives::{hash_map, Bytecode, HashMap, B160, B256};
 
 // TODO
 #[derive(Clone, Debug)]
