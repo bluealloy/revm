@@ -1,5 +1,6 @@
-use super::{AccountRevert, BundleAccount, TransitionState};
-use revm_interpreter::primitives::{hash_map, AccountInfo, Bytecode, HashMap, B160, B256, U256};
+use super::{changes::StateChangeset, AccountRevert, BundleAccount, TransitionState};
+use rayon::slice::ParallelSliceMut;
+use revm_interpreter::primitives::{hash_map, hex_literal::hex, Bytecode, HashMap, B160, B256};
 
 // TODO
 #[derive(Clone, Debug)]
@@ -59,7 +60,7 @@ impl BundleState {
     }
 
     // Nuke the bundle state and return sorted plain state.
-    pub fn take_sorted_plain_change(&mut self) -> PlainStateChange {
+    pub fn take_sorted_plain_change(&mut self) -> StateChangeset {
         let mut accounts = Vec::new();
         let mut storage = Vec::new();
 
@@ -78,46 +79,29 @@ impl BundleState {
                     account_storage_changed.push((key, slot.present_value));
                 }
             }
+
+            account_storage_changed.sort_by(|a, b| a.0.cmp(&b.0));
             // append storage changes to account.
-            storage.push((address, account_storage_changed));
+            storage.push((
+                address,
+                (account.status.was_destroyed(), account_storage_changed),
+            ));
         }
 
-        PlainStateChange {
+        accounts.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
+        storage.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
+
+        let mut contracts = self.contracts.drain().into_iter().collect::<Vec<_>>();
+        contracts.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
+
+        StateChangeset {
             accounts,
             storage,
-            contracts: self.contracts.drain().into_iter().collect::<Vec<_>>(),
+            contracts,
         }
     }
 
     pub fn take_reverts(&mut self) -> Vec<Vec<(B160, AccountRevert)>> {
         core::mem::take(&mut self.reverts)
     }
-}
-
-/// Sorted accounts/storages/contracts for inclusion into database.
-/// Structure is made so it is easier to apply dirrectly to database
-/// that mostly have saparate tables to store account/storage/contract data.
-#[derive(Clone, Debug, Default)]
-pub struct PlainStateChange {
-    /// Vector of account presorted by address, with removed contracts bytecode
-    pub accounts: Vec<(B160, Option<AccountInfo>)>,
-    /// Vector of storage presorted by address
-    pub storage: Vec<(B160, Vec<(U256, U256)>)>,
-    /// Vector of contracts presorted by bytecode hash
-    pub contracts: Vec<(B256, Bytecode)>,
-}
-
-pub struct PlainRevert {
-    /// Vector of account presorted by anddress, with removed cotracts bytecode
-    ///
-    /// Note: AccountInfo None means that account needs to be removed.
-    pub accounts: Vec<(B160, Option<AccountInfo>)>,
-    /// Vector of storage presorted by address
-    /// U256::ZERO means that storage needs to be removed.
-    pub storage: Vec<(B160, Vec<(U256, U256)>)>,
-    /// Vector of contracts presorted by bytecode hash
-    ///
-    /// TODO: u64 counter is still not used. but represent number of times this contract was
-    /// created, as multiple accounts can create same contract bytes.
-    pub contracts: Vec<(B256, (u64, Bytecode))>,
 }

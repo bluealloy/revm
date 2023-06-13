@@ -142,7 +142,7 @@ impl CacheState {
                             address,
                             TransitionAccount {
                                 info: Some(account.info.clone()),
-                                status: AccountStatus::New,
+                                status: AccountStatus::InMemoryChange,
                                 storage: account.storage,
                                 previous_info: None,
                                 previous_status: AccountStatus::LoadedNotExisting,

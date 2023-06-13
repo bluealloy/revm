@@ -41,7 +41,10 @@ impl TransitionState {
 
     /// Return transition id and all account transitions. Leave empty transition map.
     pub fn take(&mut self) -> TransitionState {
-        core::mem::take(self)
+        let state_clear = self.has_state_clear;
+        let ret = core::mem::take(self);
+        self.has_state_clear = state_clear;
+        ret
     }
 
     /// Used for tests only. When transitioned it is not recoverable
@@ -58,6 +61,7 @@ impl TransitionState {
             match self.transitions.entry(address) {
                 Entry::Occupied(entry) => {
                     let entry = entry.into_mut();
+                    // TODO update current transition and dont override previous state.
                     entry.update(account);
                 }
                 Entry::Vacant(entry) => {

@@ -7,12 +7,10 @@ pub enum AccountStatus {
     LoadedNotExisting,
     Loaded,
     LoadedEmptyEIP161,
+    InMemoryChange,
     Changed,
-    New,
-    NewChanged,
     Destroyed,
-    DestroyedNew,
-    DestroyedNewChanged,
+    DestroyedChanged,
     DestroyedAgain,
 }
 
@@ -32,8 +30,7 @@ impl AccountStatus {
     pub fn was_destroyed(&self) -> bool {
         match self {
             AccountStatus::Destroyed
-            | AccountStatus::DestroyedNew
-            | AccountStatus::DestroyedNewChanged
+            | AccountStatus::DestroyedChanged
             | AccountStatus::DestroyedAgain => true,
             _ => false,
         }
@@ -44,7 +41,7 @@ impl AccountStatus {
     /// memory and database.
     pub fn modified_but_not_destroyed(&self) -> bool {
         match self {
-            AccountStatus::Changed | AccountStatus::New | AccountStatus::NewChanged => true,
+            AccountStatus::Changed | AccountStatus::InMemoryChange => true,
             _ => false,
         }
     }

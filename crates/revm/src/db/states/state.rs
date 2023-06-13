@@ -10,14 +10,14 @@ use revm_interpreter::primitives::{
 };
 
 /// State of blockchain.
-pub struct State<DBError> {
+pub struct State<'a, DBError> {
     /// Cached state contains both changed from evm executiong and cached/loaded account/storages
     /// from database. This allows us to have only one layer of cache where we can fetch data.
     /// Additionaly we can introuduce some preloading of data from database.
     pub cache: CacheState,
     /// Optional database that we use to fetch data from. If database is not present, we will
     /// return not existing account and storage.
-    pub database: Box<dyn Database<Error = DBError>>,
+    pub database: Box<dyn Database<Error = DBError> + 'a>,
     /// Build reverts and state that gets applied to the state.
     pub transition_builder: Option<TransitionBuilder>,
     /// Is state clear enabled
@@ -47,7 +47,7 @@ impl TransitionBuilder {
 }
 
 /// For State that does not have database.
-impl State<Infallible> {
+impl State<'_, Infallible> {
     pub fn new_with_cache(mut cache: CacheState, has_state_clear: bool) -> Self {
         cache.has_state_clear = has_state_clear;
         Self {
@@ -89,14 +89,14 @@ impl State<Infallible> {
     }
 }
 
-impl<DBError> State<DBError> {
+impl<'a, DBError> State<'a, DBError> {
     /// Itereate over received balances and increment all account balances.
     /// If account is not found inside cache state it will be loaded from database.
     ///
     /// Update will create transitions for all accounts that are updated.
     pub fn increment_balances(
         &mut self,
-        balances: impl IntoIterator<Item = (B160, u64)>,
+        balances: impl IntoIterator<Item = (B160, u128)>,
     ) -> Result<(), DBError> {
         // make transition and update cache state
         let mut transitions = Vec::new();
@@ -123,12 +123,12 @@ impl<DBError> State<DBError> {
             .map(|t| t.transition_state.set_state_clear());
     }
 
-    pub fn new_with_transtion(db: Box<dyn Database<Error = DBError>>) -> Self {
+    pub fn new_with_transtion(db: Box<dyn Database<Error = DBError> + 'a>) -> Self {
         Self {
             cache: CacheState::default(),
             database: db,
             transition_builder: Some(TransitionBuilder {
-                transition_state: TransitionState::new(false),
+                transition_state: TransitionState::new(true),
                 bundle_state: BundleState::default(),
             }),
             has_state_clear: true,
@@ -187,9 +187,24 @@ impl<DBError> State<DBError> {
             hash_map::Entry::Occupied(entry) => Ok(entry.into_mut()),
         }
     }
+
+    /// Takes changeset and reverts from state and replaces it with empty one.
+    /// This will trop pending Transition and any transitions would be lost.
+    ///
+    /// TODO make cache aware of transitions dropping by having global transition counter.
+    pub fn take_bundle(&mut self) -> BundleState {
+        std::mem::replace(
+            self.transition_builder.as_mut().unwrap(),
+            TransitionBuilder {
+                transition_state: TransitionState::new(self.has_state_clear),
+                bundle_state: BundleState::default(),
+            },
+        )
+        .bundle_state
+    }
 }
 
-impl<DBError> Database for State<DBError> {
+impl<'a, DBError> Database for State<'a, DBError> {
     type Error = DBError;
 
     fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
@@ -238,9 +253,13 @@ impl<DBError> Database for State<DBError> {
     }
 }
 
-impl<DBError> DatabaseCommit for State<DBError> {
+impl<'a, DBError> DatabaseCommit for State<'a, DBError> {
     fn commit(&mut self, evm_state: HashMap<B160, Account>) {
         let transitions = self.cache.apply_evm_state(evm_state);
+        // println!("\nTRANSITIONS:");
+        // for trans in transitions.iter() {
+        //     println!("    {trans:?}");
+        // }
         self.apply_transition(transitions);
     }
 }
