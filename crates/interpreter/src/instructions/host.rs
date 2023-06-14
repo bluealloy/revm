@@ -322,7 +322,6 @@ pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
 }
 
 pub fn call<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
-    println!("Stack in host::call: {}", stacker::remaining_stack().unwrap());
     call_inner::<SPEC>(interpreter, CallScheme::Call, host);
 }
 
@@ -523,7 +522,6 @@ pub fn call_inner<SPEC: Spec>(
     scheme: CallScheme,
     host: &mut dyn Host,
 ) {
-    println!("Stack in host::call_inner: {}", stacker::remaining_stack().unwrap());
     match scheme {
         CallScheme::DelegateCall => check!(interpreter, SPEC::enabled(HOMESTEAD)), // EIP-7: DELEGATECALL
         CallScheme::StaticCall => check!(interpreter, SPEC::enabled(BYZANTIUM)), // EIP-214: New opcode STATICCALL
