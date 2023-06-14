@@ -183,11 +183,11 @@ impl<'a, DBError> State<'a, DBError> {
 
     /// Merge transitions to the bundle and crete reverts for it.
     pub fn merge_transitions(&mut self) {
-        let time = std::time::Instant::now();
+        //let time = std::time::Instant::now();
         if let Some(builder) = self.transition_builder.as_mut() {
             builder.merge_transitions()
         }
-        self.eval_times.merge_time += time.elapsed();
+        //self.eval_times.merge_time += time.elapsed();
     }
 
     pub fn load_cache_account(&mut self, address: B160) -> Result<&mut CacheAccount, DBError> {
@@ -227,9 +227,9 @@ impl<'a, DBError> Database for State<'a, DBError> {
     type Error = DBError;
 
     fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
-        let time = std::time::Instant::now();
+        //let time = std::time::Instant::now();
         let res = self.load_cache_account(address).map(|a| a.account_info());
-        self.eval_times.get_account_time += time.elapsed();
+        //self.eval_times.get_account_time += time.elapsed();
         res
     }
 
@@ -237,7 +237,7 @@ impl<'a, DBError> Database for State<'a, DBError> {
         &mut self,
         code_hash: revm_interpreter::primitives::B256,
     ) -> Result<Bytecode, Self::Error> {
-        let time = std::time::Instant::now();
+        //let time = std::time::Instant::now();
         let res = match self.cache.contracts.entry(code_hash) {
             hash_map::Entry::Occupied(entry) => Ok(entry.get().clone()),
             hash_map::Entry::Vacant(entry) => {
@@ -246,12 +246,12 @@ impl<'a, DBError> Database for State<'a, DBError> {
                 Ok(code)
             }
         };
-        self.eval_times.get_code_time += time.elapsed();
+        //self.eval_times.get_code_time += time.elapsed();
         res
     }
 
     fn storage(&mut self, address: B160, index: U256) -> Result<U256, Self::Error> {
-        let time = std::time::Instant::now();
+        //let time = std::time::Instant::now();
         // Account is guaranteed to be loaded.
         let res = if let Some(account) = self.cache.accounts.get_mut(&address) {
             // account will always be some, but if it is not, U256::ZERO will be returned.
@@ -271,7 +271,7 @@ impl<'a, DBError> Database for State<'a, DBError> {
         } else {
             unreachable!("For accessing any storage account is guaranteed to be loaded beforehand")
         };
-        self.eval_times.get_storage_time += time.elapsed();
+        //self.eval_times.get_storage_time += time.elapsed();
         res
     }
 
@@ -283,11 +283,11 @@ impl<'a, DBError> Database for State<'a, DBError> {
 
 impl<'a, DBError> DatabaseCommit for State<'a, DBError> {
     fn commit(&mut self, evm_state: HashMap<B160, Account>) {
-        let time = std::time::Instant::now();
+        //let time = std::time::Instant::now();
         let transitions = self.cache.apply_evm_state(evm_state);
-        self.eval_times.apply_evm_time += time.elapsed();
-        let time = std::time::Instant::now();
+        //self.eval_times.apply_evm_time += time.elapsed();
+        //let time = std::time::Instant::now();
         self.apply_transition(transitions);
-        self.eval_times.apply_transition_time += time.elapsed();
+        //self.eval_times.apply_transition_time += time.elapsed();
     }
 }

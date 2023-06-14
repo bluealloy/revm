@@ -14,6 +14,7 @@ pub struct AccountRevert {
     pub account: AccountInfoRevert,
     pub storage: HashMap<U256, RevertToSlot>,
     pub original_status: AccountStatus,
+    pub wipe_storage: bool,
 }
 
 #[derive(Clone, Default, Debug)]
@@ -40,4 +41,13 @@ pub enum AccountInfoRevert {
 pub enum RevertToSlot {
     Some(U256),
     Destroyed,
+}
+
+impl RevertToSlot {
+    pub fn to_previous_value(self) -> U256 {
+        match self {
+            RevertToSlot::Some(value) => value,
+            RevertToSlot::Destroyed => U256::ZERO,
+        }
+    }
 }

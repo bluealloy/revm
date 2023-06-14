@@ -85,6 +85,7 @@ impl BundleAccount {
                 account: AccountInfoRevert::RevertTo(previous_account),
                 storage: previous_storage,
                 original_status,
+                wipe_storage: true,
             });
 
             revert
@@ -116,6 +117,7 @@ impl BundleAccount {
                 account: AccountInfoRevert::RevertTo(previous_info),
                 storage: previous_storage,
                 original_status,
+                wipe_storage: true,
             });
 
             revert
@@ -181,6 +183,7 @@ impl BundleAccount {
                             account: revert_info,
                             storage: previous_storage_from_update,
                             original_status: AccountStatus::Changed,
+                            wipe_storage: false,
                         });
                     }
                     AccountStatus::Loaded => {
@@ -197,6 +200,7 @@ impl BundleAccount {
                             account: info_revert,
                             storage: previous_storage_from_update,
                             original_status: AccountStatus::Loaded,
+                            wipe_storage: false,
                         });
                     }
                     AccountStatus::LoadedEmptyEIP161 => {
@@ -213,6 +217,7 @@ impl BundleAccount {
                             account: info_revert,
                             storage: HashMap::default(),
                             original_status: AccountStatus::Loaded,
+                            wipe_storage: false,
                         });
                     }
                     _ => unreachable!("Invalid state transfer to Changed from {self:?}"),
@@ -234,6 +239,7 @@ impl BundleAccount {
                         account: revert_info,
                         storage: previous_storage_from_update,
                         original_status: AccountStatus::LoadedEmptyEIP161,
+                        wipe_storage: false,
                     });
                 }
                 AccountStatus::Loaded => {
@@ -250,6 +256,7 @@ impl BundleAccount {
                         account: revert_info,
                         storage: previous_storage_from_update,
                         original_status: AccountStatus::Loaded,
+                        wipe_storage: false,
                     });
                 }
                 AccountStatus::LoadedNotExisting => {
@@ -262,6 +269,7 @@ impl BundleAccount {
                         account: AccountInfoRevert::DeleteIt,
                         storage: previous_storage_from_update,
                         original_status: AccountStatus::LoadedNotExisting,
+                        wipe_storage: false,
                     });
                 }
                 AccountStatus::InMemoryChange => {
@@ -279,6 +287,7 @@ impl BundleAccount {
                         account: revert_info,
                         storage: previous_storage_from_update,
                         original_status: AccountStatus::InMemoryChange,
+                        wipe_storage: false,
                     });
                 }
                 _ => unreachable!("Invalid change to InMemoryChange from {self:?}"),
@@ -345,6 +354,7 @@ impl BundleAccount {
                             account: AccountInfoRevert::DeleteIt,
                             storage: previous_storage_from_update,
                             original_status: AccountStatus::Destroyed,
+                            wipe_storage: false,
                         })
                     }
                     AccountStatus::DestroyedChanged => {
@@ -359,6 +369,7 @@ impl BundleAccount {
                             account: revert_info,
                             storage: previous_storage_from_update,
                             original_status: AccountStatus::DestroyedChanged,
+                            wipe_storage: false,
                         })
                     }
                     AccountStatus::LoadedNotExisting => {
@@ -375,6 +386,7 @@ impl BundleAccount {
                             account: AccountInfoRevert::DeleteIt,
                             storage: previous_storage_from_update,
                             original_status: AccountStatus::LoadedNotExisting,
+                            wipe_storage: false,
                         })
                     }
                     AccountStatus::DestroyedAgain => make_it_expload_with_aftereffect(
@@ -426,6 +438,7 @@ impl BundleAccount {
                             ),
                             storage: previous_storage_from_update,
                             original_status: AccountStatus::DestroyedChanged,
+                            wipe_storage: false,
                         };
                         self.info = None;
                         Some(ret)

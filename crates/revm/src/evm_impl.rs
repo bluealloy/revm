@@ -60,7 +60,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
     for EVMImpl<'a, GSPEC, DB, INSPECT>
 {
     fn transact(&mut self, times: &mut ExecTimes) -> EVMResult<DB::Error> {
-        let time = std::time::Instant::now();
+        //let time = std::time::Instant::now();
         self.env().validate_block_env::<GSPEC, DB::Error>()?;
         self.env().validate_tx::<GSPEC>()?;
 
@@ -111,8 +111,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
 
         let transact_gas_limit = tx_gas_limit - initial_gas_spend;
 
-        times.init += time.elapsed();
-        let time = std::time::Instant::now();
+        //times.init += time.elapsed();
+        //let time = std::time::Instant::now();
 
         // call inner handling of call/create
         let (exit_reason, ret_gas, output) = match self.data.env.tx.transact_to {
@@ -153,8 +153,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             }
         };
 
-        times.exec += time.elapsed();
-        let time = std::time::Instant::now();
+        //times.exec += time.elapsed();
+        //let time = std::time::Instant::now();
 
         // set gas with gas limit and spend it all. Gas is going to be reimbursed when
         // transaction is returned successfully.
@@ -199,7 +199,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                 panic!("Internal return flags should remain internal {exit_reason:?}")
             }
         };
-        times.finish += time.elapsed();
+        //times.finish += time.elapsed();
 
         Ok(ResultAndState { result, state })
     }

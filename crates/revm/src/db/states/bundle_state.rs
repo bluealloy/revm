@@ -1,4 +1,7 @@
-use super::{changes::StateChangeset, AccountRevert, BundleAccount, TransitionState};
+use super::{
+    changes::StateChangeset, reverts::AccountInfoRevert, AccountRevert, BundleAccount,
+    StateReverts, TransitionState,
+};
 use rayon::slice::ParallelSliceMut;
 use revm_interpreter::primitives::{hash_map, Bytecode, HashMap, B160, B256};
 
@@ -101,7 +104,31 @@ impl BundleState {
         }
     }
 
-    pub fn take_reverts(&mut self) -> Vec<Vec<(B160, AccountRevert)>> {
-        core::mem::take(&mut self.reverts)
+    pub fn take_reverts(&mut self) -> StateReverts {
+        let mut state_reverts = StateReverts::default();
+        for reverts in self.reverts.drain(..) {
+            let mut accounts = Vec::new();
+            let mut storage = Vec::new();
+            for (address, revert_account) in reverts.into_iter() {
+                match revert_account.account {
+                    AccountInfoRevert::RevertTo(acc) => accounts.push((address, Some(acc))),
+                    AccountInfoRevert::DeleteIt => accounts.push((address, None)),
+                    AccountInfoRevert::DoNothing => (),
+                }
+                if !revert_account.storage.is_empty() {
+                    let mut account_storage = Vec::new();
+                    for (key, revert_slot) in revert_account.storage {
+                        account_storage.push((key, revert_slot.to_previous_value()));
+                    }
+                    account_storage.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
+                    storage.push((address, revert_account.wipe_storage, account_storage));
+                }
+            }
+            accounts.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
+            state_reverts.accounts.push(accounts);
+            state_reverts.storage.push(storage);
+        }
+
+        state_reverts
     }
 }

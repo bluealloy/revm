@@ -14,17 +14,13 @@ pub struct StateChangeset {
     pub contracts: Vec<(B256, Bytecode)>,
 }
 
+#[derive(Clone, Debug, Default)]
 pub struct StateReverts {
     /// Vector of account presorted by anddress, with removed cotracts bytecode
     ///
     /// Note: AccountInfo None means that account needs to be removed.
-    pub accounts: Vec<(B160, Option<AccountInfo>)>,
+    pub accounts: Vec<Vec<(B160, Option<AccountInfo>)>>,
     /// Vector of storage presorted by address
     /// U256::ZERO means that storage needs to be removed.
-    pub storage: Vec<(B160, Vec<(U256, U256)>)>,
-    /// Vector of contracts presorted by bytecode hash
-    ///
-    /// TODO: u64 counter is still not used. but represent number of times this contract was
-    /// created, as multiple accounts can create same contract bytes.
-    pub contracts: Vec<(B256, (u64, Bytecode))>,
+    pub storage: Vec<Vec<(B160, bool, Vec<(U256, U256)>)>>,
 }
