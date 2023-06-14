@@ -1,5 +1,5 @@
 use crate::primitives::{Bytes, Spec, SpecId::*, B160, B256, U256};
-use crate::MAX_INITCODE_SIZE;
+use crate::{MAX_INITCODE_SIZE, Gas};
 use crate::{
     alloc::vec::Vec,
     gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
@@ -344,7 +344,7 @@ fn prepare_call_inputs<SPEC: Spec>(
     host: &mut dyn Host,
     result_len: &mut usize,
     result_offset: &mut usize,
-    result_call_inputs: &mut Option<*mut CallInputs>
+    result_call_inputs: &mut Option<Box<CallInputs>>
 ) {
     pop!(interpreter, local_gas_limit);
     pop_address!(interpreter, to);
@@ -473,50 +473,18 @@ fn prepare_call_inputs<SPEC: Spec>(
     }
     let is_static = matches!(scheme, CallScheme::StaticCall) || interpreter.is_static;
 
-    let call_inputs = Box::new(CallInputs {
+    *result_call_inputs = Some(Box::new(CallInputs {
         contract: to,
         transfer,
         input,
         gas_limit,
         context,
         is_static
-    });
-
-    // Return a pointer to the allocated struct, so that we can transfer the ownership
-    // in the parent function
-    *result_call_inputs = Some(Box::into_raw(call_inputs));
+    }));
 }
 
-pub fn call_inner<SPEC: Spec>(
-    interpreter: &mut Interpreter,
-    scheme: CallScheme,
-    host: &mut dyn Host,
-) {
-    println!("Stack in host::call_inner: {}", stacker::remaining_stack().unwrap());
-    match scheme {
-        CallScheme::DelegateCall => check!(interpreter, SPEC::enabled(HOMESTEAD)), // EIP-7: DELEGATECALL
-        CallScheme::StaticCall => check!(interpreter, SPEC::enabled(BYZANTIUM)), // EIP-214: New opcode STATICCALL
-        _ => (),
-    }
-    interpreter.return_data_buffer = Bytes::new();
-
-    let mut out_offset: usize = 0;
-    let mut out_len: usize = 0;
-    let mut call_input: Option<*mut CallInputs> = None;
-    prepare_call_inputs::<SPEC>(interpreter, scheme, host, &mut out_len, &mut out_offset, &mut call_input);
-
-    if call_input.is_none() {
-        return;
-    }
-
-    // Discard the Option, as it's not needed from this point on and
-    // instantiate the boxed call inputs created earlier
-    let mut call_input = unsafe { Box::from_raw(call_input.unwrap()) };
-
-    // Call host to interact with target contract
-    let (reason, gas, return_data) = host.call(&mut call_input);
-
-    interpreter.return_data_buffer = return_data;
+fn handle_call_result(interpreter: &mut Interpreter, out_offset: usize, out_len: usize, reason: &InstructionResult, gas: &Gas, return_data: &Bytes) {
+    interpreter.return_data_buffer = return_data.clone();
 
     let target_len = min(out_len, interpreter.return_data_buffer.len());
 
@@ -548,4 +516,35 @@ pub fn call_inner<SPEC: Spec>(
             push!(interpreter, U256::ZERO);
         }
     }
+}
+
+pub fn call_inner<SPEC: Spec>(
+    interpreter: &mut Interpreter,
+    scheme: CallScheme,
+    host: &mut dyn Host,
+) {
+    println!("Stack in host::call_inner: {}", stacker::remaining_stack().unwrap());
+    match scheme {
+        CallScheme::DelegateCall => check!(interpreter, SPEC::enabled(HOMESTEAD)), // EIP-7: DELEGATECALL
+        CallScheme::StaticCall => check!(interpreter, SPEC::enabled(BYZANTIUM)), // EIP-214: New opcode STATICCALL
+        _ => (),
+    }
+    interpreter.return_data_buffer = Bytes::new();
+
+    let mut out_offset: usize = 0;
+    let mut out_len: usize = 0;
+    let mut call_input: Option<Box<CallInputs>> = None;
+    prepare_call_inputs::<SPEC>(interpreter, scheme, host, &mut out_len, &mut out_offset, &mut call_input);
+
+    if call_input.is_none() {
+        return;
+    }
+
+    // The Option is not needed form this point
+    let mut call_input = call_input.unwrap();
+
+    // Call host to interact with target contract
+    let (reason, gas, return_data) = host.call(&mut call_input);
+
+    handle_call_result(interpreter, out_offset, out_len, &reason, &gas, &return_data);
 }
