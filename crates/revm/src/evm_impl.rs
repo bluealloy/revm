@@ -11,7 +11,6 @@ use crate::primitives::{
     SpecId::{self, *},
     TransactTo, B160, B256, U256,
 };
-use crate::journaled_state::JournalCheckpoint;
 use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector};
 use alloc::vec::Vec;
 use core::{cmp::min, marker::PhantomData};
