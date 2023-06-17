@@ -30,8 +30,7 @@ impl TransitionAccount {
             return self
                 .info
                 .as_ref()
-                .map(|info| info.code.as_ref().map(|c| (info.code_hash, c)))
-                .flatten();
+                .and_then(|info| info.code.as_ref().map(|c| (info.code_hash, c)));
         }
         None
     }
@@ -47,22 +46,6 @@ impl TransitionAccount {
             self.storage.entry(key).or_insert(slot).present_value = slot.present_value;
         }
     }
-
-    /// Set previous values of transition. Override old values.
-    // pub fn update_previous(
-    //     &mut self,
-    //     info: Option<AccountInfo>,
-    //     status: AccountStatus,
-    //     storage: Storage,
-    // ) {
-    //     self.previous_info = info;
-    //     self.previous_status = status;
-
-    //     // update original value of storage.
-    //     for (key, slot) in storage.into_iter() {
-    //         self.storage.entry(key).or_insert(slot).original_value = slot.original_value;
-    //     }
-    // }
 
     /// Consume Self and create account revert from it.
     pub fn create_revert(self) -> Option<AccountRevert> {

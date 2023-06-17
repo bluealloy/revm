@@ -14,7 +14,9 @@ pub struct Memory {
 
 impl Default for Memory {
     fn default() -> Self {
-        Memory::new()
+        Self {
+            data: Vec::with_capacity(4 * 1024), // took it from evmone
+        }
     }
 }
 

@@ -3,7 +3,10 @@ use super::{
     StateReverts, TransitionState,
 };
 use rayon::slice::ParallelSliceMut;
-use revm_interpreter::primitives::{hash_map, Bytecode, HashMap, B160, B256};
+use revm_interpreter::primitives::{
+    hash_map::{self, Entry},
+    Bytecode, HashMap, B160, B256, U256,
+};
 
 // TODO
 #[derive(Clone, Debug)]
@@ -57,29 +60,42 @@ impl BundleState {
         self.reverts.push(reverts);
     }
 
-    /// Return plain state update
-    pub fn take_plain_state(&mut self) -> HashMap<B160, BundleAccount> {
-        core::mem::take(&mut self.state)
-    }
-
     // Nuke the bundle state and return sorted plain state.
     pub fn take_sorted_plain_change(&mut self) -> StateChangeset {
         let mut accounts = Vec::new();
         let mut storage = Vec::new();
 
-        for (address, account) in self.state.drain().into_iter() {
+        for (address, account) in self.state.drain() {
             // append account info if it is changed.
+            let was_destroyed = account.was_destroyed();
             if account.is_info_changed() {
                 let mut info = account.info;
-                info.as_mut().map(|a| a.code = None);
+                if let Some(info) = info.as_mut() {
+                    info.code = None
+                }
                 accounts.push((address, info));
             }
 
             // append storage changes
+
+            // NOTE: Assumption is that revert is going to remova whole plain storage from
+            // database so we need to check if plain state was wiped or not.
             let mut account_storage_changed = Vec::with_capacity(account.storage.len());
-            for (key, slot) in account.storage {
-                if slot.is_changed() {
-                    account_storage_changed.push((key, slot.present_value));
+            if was_destroyed {
+                // If storage was destroyed that means that storage was wipped.
+                // In that case we need to check if present storage value is different then ZERO.
+                for (key, slot) in account.storage {
+                    if slot.present_value != U256::ZERO {
+                        account_storage_changed.push((key, slot.present_value));
+                    }
+                }
+            } else {
+                // if account is not destroyed check if original values was changed.
+                // so we can update it.
+                for (key, slot) in account.storage {
+                    if slot.is_changed() {
+                        account_storage_changed.push((key, slot.present_value));
+                    }
                 }
             }
 
@@ -94,7 +110,7 @@ impl BundleState {
         accounts.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
         storage.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
 
-        let mut contracts = self.contracts.drain().into_iter().collect::<Vec<_>>();
+        let mut contracts = self.contracts.drain().collect::<Vec<_>>();
         contracts.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
 
         StateChangeset {
@@ -130,5 +146,30 @@ impl BundleState {
         }
 
         state_reverts
+    }
+
+    /// Reverse the state changes by N transitions back
+    pub fn revert(&mut self, mut transition: usize) {
+        if transition == 0 {
+            return;
+        }
+
+        // revert the state.
+        while let Some(reverts) = self.reverts.pop() {
+            for (address, revert_account) in reverts.into_iter() {
+                if let Entry::Occupied(mut entry) = self.state.entry(address) {
+                    if entry.get_mut().revert(revert_account) {
+                        entry.remove();
+                    }
+                } else {
+                    unreachable!("Account {address:?} {revert_account:?} for revert should exist");
+                }
+            }
+            transition -= 1;
+            if transition == 0 {
+                // break the loop.
+                break;
+            }
+        }
     }
 }

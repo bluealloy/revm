@@ -54,13 +54,13 @@ impl CacheAccount {
     }
 
     pub fn is_some(&self) -> bool {
-        match self.status {
-            AccountStatus::Changed => true,
-            AccountStatus::InMemoryChange => true,
-            AccountStatus::DestroyedChanged => true,
-            AccountStatus::Loaded => true,
-            _ => false,
-        }
+        matches!(
+            self.status,
+            AccountStatus::Changed
+                | AccountStatus::InMemoryChange
+                | AccountStatus::DestroyedChanged
+                | AccountStatus::Loaded
+        )
     }
 
     pub fn storage_slot(&self, slot: U256) -> Option<U256> {
@@ -92,7 +92,6 @@ impl CacheAccount {
             .map(|acc| {
                 acc.storage
                     .drain()
-                    .into_iter()
                     .map(|(k, v)| (k, StorageSlot::new_cleared_value(v)))
                     .collect::<HashMap<_, _>>()
             })
@@ -221,10 +220,20 @@ impl CacheAccount {
     /// Note: to skip some edgecases we assume that additional balance is never zero.
     /// And as increment is always related to block fee/reward and withdrawals this is correct.
     pub fn increment_balance(&mut self, balance: u128) -> TransitionAccount {
+        self.account_info_change(|info| {
+            info.balance += U256::from(balance);
+        })
+        .1
+    }
+
+    fn account_info_change<T, F: FnOnce(&mut AccountInfo) -> T>(
+        &mut self,
+        change: F,
+    ) -> (T, TransitionAccount) {
         let previous_status = self.status;
         let previous_info = self.account_info();
         let mut account = self.account.take().unwrap_or_default();
-        account.info.balance += U256::from(balance);
+        let output = change(&mut account.info);
         self.account = Some(account);
 
         self.status = match self.status {
@@ -244,13 +253,27 @@ impl CacheAccount {
             AccountStatus::DestroyedAgain => AccountStatus::DestroyedChanged,
         };
 
-        TransitionAccount {
-            info: self.account_info(),
-            status: self.status,
-            previous_info,
-            previous_status,
-            storage: HashMap::new(),
-        }
+        (
+            output,
+            TransitionAccount {
+                info: self.account_info(),
+                status: self.status,
+                previous_info,
+                previous_status,
+                storage: HashMap::new(),
+            },
+        )
+    }
+
+    /// Drain balance from account and return transition and drained amount
+    ///
+    /// Used for DAO hardfork transition.
+    pub fn drain_balance(&mut self) -> (u128, TransitionAccount) {
+        self.account_info_change(|info| {
+            let output = info.balance;
+            info.balance = U256::ZERO;
+            output.try_into().unwrap()
+        })
     }
 
     pub fn change(&mut self, new: AccountInfo, storage: Storage) -> TransitionAccount {

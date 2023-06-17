@@ -17,32 +17,29 @@ pub enum AccountStatus {
 impl AccountStatus {
     /// Account is not midified and just loaded from database.
     pub fn not_modified(&self) -> bool {
-        match self {
+        matches!(
+            self,
             AccountStatus::LoadedNotExisting
-            | AccountStatus::Loaded
-            | AccountStatus::LoadedEmptyEIP161 => true,
-            _ => false,
-        }
+                | AccountStatus::Loaded
+                | AccountStatus::LoadedEmptyEIP161
+        )
     }
 
     /// Account was destroyed by calling SELFDESTRUCT.
     /// This means that full account and storage are inside memory.
     pub fn was_destroyed(&self) -> bool {
-        match self {
+        matches!(
+            self,
             AccountStatus::Destroyed
-            | AccountStatus::DestroyedChanged
-            | AccountStatus::DestroyedAgain => true,
-            _ => false,
-        }
+                | AccountStatus::DestroyedChanged
+                | AccountStatus::DestroyedAgain
+        )
     }
 
     /// Account is modified but not destroyed.
     /// This means that some of storage values can be found in both
     /// memory and database.
     pub fn modified_but_not_destroyed(&self) -> bool {
-        match self {
-            AccountStatus::Changed | AccountStatus::InMemoryChange => true,
-            _ => false,
-        }
+        matches!(self, AccountStatus::Changed | AccountStatus::InMemoryChange)
     }
 }

@@ -36,7 +36,7 @@ pub fn state_merkle_trie_root<'a>(
     let vec = accounts
         .into_iter()
         .map(|(address, info)| {
-            let acc_root = trie_account_rlp(&info);
+            let acc_root = trie_account_rlp(info);
             (H160::from(address.0), acc_root)
         })
         .collect();
