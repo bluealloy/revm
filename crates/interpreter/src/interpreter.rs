@@ -79,7 +79,7 @@ impl Interpreter {
 
     #[cfg(feature = "memory_limit")]
     pub fn new_with_memory_limit(
-        contract: Contract,
+        contract: Box<Contract>,
         gas_limit: u64,
         is_static: bool,
         memory_limit: u64,

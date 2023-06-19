@@ -464,12 +464,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     ) -> (InstructionResult, Box<Interpreter>) {
         // Create inspector
         #[cfg(feature = "memory_limit")]
-        let mut interpreter = Interpreter::new_with_memory_limit(
+        let mut interpreter = Box::new(Interpreter::new_with_memory_limit(
             contract,
             gas_limit,
             is_static,
             self.data.env.cfg.memory_limit,
-        );
+        ));
 
         #[cfg(not(feature = "memory_limit"))]
         let mut interpreter = Box::new(Interpreter::new(contract, gas_limit, is_static));
