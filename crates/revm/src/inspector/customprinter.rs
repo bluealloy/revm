@@ -28,7 +28,8 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         let gas_remaining = self.gas_inspector.gas_remaining();
 
         println!(
-            "PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data size:{}",
+            "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data size:{}",
+            data.journaled_state.depth(),
             interp.program_counter(),
             gas_remaining,
             gas_remaining,
