@@ -355,9 +355,14 @@ pub fn run(
         let console_bar = console_bar.clone();
         let elapsed = elapsed.clone();
 
-        joins.push(
-            std::thread::Builder::new()
-                .stack_size(50 * 1024 * 1024)
+        let mut thread = std::thread::Builder::new();
+
+        // Allow bigger stack in debug mode to prevent stack overflow errors
+        if cfg!(debug_assertions) {
+            thread = thread.stack_size(3 * 1024 * 1024);
+        }
+
+        joins.push(thread
                 .spawn(move || loop {
                     let (index, test_path) = {
                         let mut queue = queue.lock().unwrap();

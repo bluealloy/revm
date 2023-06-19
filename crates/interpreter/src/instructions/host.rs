@@ -229,9 +229,9 @@ pub fn selfdestruct<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Ho
     interpreter.instruction_result = InstructionResult::SelfDestruct;
 }
 
-pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
+pub fn prepare_create_inputs<const IS_CREATE2: bool, SPEC: Spec>(
     interpreter: &mut Interpreter,
-    host: &mut dyn Host,
+    create_inputs: &mut Option<Box<CreateInputs>>
 ) {
     check_staticcall!(interpreter);
     if IS_CREATE2 {
@@ -282,15 +282,18 @@ pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
     }
     gas!(interpreter, gas_limit);
 
-    let mut create_input = CreateInputs {
+    *create_inputs = Some(Box::new(CreateInputs {
         caller: interpreter.contract.address,
         scheme,
         value,
         init_code: code,
         gas_limit,
-    };
+    }));
+}
 
-    let (return_reason, address, gas, return_data) = host.create(&mut create_input);
+pub fn handle_create_result(interpreter: &mut Interpreter, result:  (InstructionResult, Option<B160>, Gas, Bytes)) {
+    let (return_reason, address, gas, return_data) = result;
+
     interpreter.return_data_buffer = match return_reason {
         // Save data to return data buffer if the create reverted
         return_revert!() => return_data,
@@ -319,6 +322,24 @@ pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
             push_b256!(interpreter, B256::zero());
         }
     }
+}
+
+pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
+    interpreter: &mut Interpreter,
+    host: &mut dyn Host,
+) {
+    let mut create_input: Option<Box<CreateInputs>> = None;
+    prepare_create_inputs::<IS_CREATE2, SPEC>(interpreter, &mut create_input);
+
+    if create_input.is_none() {
+        return;
+    }
+    
+    let mut create_input = create_input.unwrap();
+
+    let ret = host.create(&mut create_input);
+
+    handle_create_result(interpreter, ret);
 }
 
 pub fn call<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
