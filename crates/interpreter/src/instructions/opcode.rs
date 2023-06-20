@@ -48,6 +48,7 @@ pub const JUMPI: u8 = 0x57;
 pub const PC: u8 = 0x58;
 pub const MSIZE: u8 = 0x59;
 pub const JUMPDEST: u8 = 0x5b;
+pub const MCOPY: u8 = 0x5e;
 pub const PUSH0: u8 = 0x5f;
 pub const PUSH1: u8 = 0x60;
 pub const PUSH2: u8 = 0x61;
