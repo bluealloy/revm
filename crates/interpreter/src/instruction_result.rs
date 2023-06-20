@@ -47,31 +47,31 @@ pub enum InstructionResult {
 
 impl InstructionResult {
     pub fn is_error(&self) -> bool {
-        match self {
+        matches!(
+            self,
             Self::OutOfGas
-            | Self::MemoryOOG
-            | Self::MemoryLimitOOG
-            | Self::PrecompileOOG
-            | Self::InvalidOperandOOG
-            | Self::OpcodeNotFound
-            | Self::CallNotAllowedInsideStatic
-            | Self::StateChangeDuringStaticCall
-            | Self::InvalidFEOpcode
-            | Self::InvalidJump
-            | Self::NotActivated
-            | Self::StackUnderflow
-            | Self::StackOverflow
-            | Self::OutOfOffset
-            | Self::CreateCollision
-            | Self::OverflowPayment
-            | Self::PrecompileError
-            | Self::NonceOverflow
-            | Self::CreateContractSizeLimit
-            | Self::CreateContractStartingWithEF
-            | Self::CreateInitcodeSizeLimit
-            | Self::FatalExternalError => true,
-            _ => false,
-        }
+                | Self::MemoryOOG
+                | Self::MemoryLimitOOG
+                | Self::PrecompileOOG
+                | Self::InvalidOperandOOG
+                | Self::OpcodeNotFound
+                | Self::CallNotAllowedInsideStatic
+                | Self::StateChangeDuringStaticCall
+                | Self::InvalidFEOpcode
+                | Self::InvalidJump
+                | Self::NotActivated
+                | Self::StackUnderflow
+                | Self::StackOverflow
+                | Self::OutOfOffset
+                | Self::CreateCollision
+                | Self::OverflowPayment
+                | Self::PrecompileError
+                | Self::NonceOverflow
+                | Self::CreateContractSizeLimit
+                | Self::CreateContractStartingWithEF
+                | Self::CreateInitcodeSizeLimit
+                | Self::FatalExternalError
+        )
     }
 }
 

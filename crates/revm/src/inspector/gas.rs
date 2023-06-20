@@ -65,15 +65,14 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         &mut self,
         _data: &mut EVMData<'_, DB>,
         _inputs: &CallInputs,
-        remaining_gas: Gas,
+        mut remaining_gas: Gas,
         ret: InstructionResult,
         out: Bytes,
     ) -> (InstructionResult, Gas, Bytes) {
         if ret.is_error() {
-            let mut gas = remaining_gas.clone();
-            gas.record_cost(gas.remaining());
+            remaining_gas.record_cost(remaining_gas.remaining());
             self.gas_remaining = 0;
-            (ret, gas, out)
+            (ret, remaining_gas, out)
         } else {
             (ret, remaining_gas, out)
         }
