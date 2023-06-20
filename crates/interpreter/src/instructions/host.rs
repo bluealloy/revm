@@ -1,5 +1,4 @@
 use crate::primitives::{Bytes, Spec, SpecId::*, B160, B256, U256};
-use crate::{MAX_INITCODE_SIZE, Gas};
 use crate::{
     alloc::vec::Vec,
     gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
@@ -7,6 +6,7 @@ use crate::{
     return_ok, return_revert, CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme,
     Host, InstructionResult, Transfer,
 };
+use crate::{Gas, MAX_INITCODE_SIZE};
 use core::cmp::min;
 
 pub fn balance<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
@@ -231,7 +231,7 @@ pub fn selfdestruct<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Ho
 
 pub fn prepare_create_inputs<const IS_CREATE2: bool, SPEC: Spec>(
     interpreter: &mut Interpreter,
-    create_inputs: &mut Option<Box<CreateInputs>>
+    create_inputs: &mut Option<Box<CreateInputs>>,
 ) {
     check_staticcall!(interpreter);
     if IS_CREATE2 {
@@ -291,7 +291,10 @@ pub fn prepare_create_inputs<const IS_CREATE2: bool, SPEC: Spec>(
     }));
 }
 
-pub fn handle_create_result(interpreter: &mut Interpreter, result:  (InstructionResult, Option<B160>, Gas, Bytes)) {
+pub fn handle_create_result(
+    interpreter: &mut Interpreter,
+    result: (InstructionResult, Option<B160>, Gas, Bytes),
+) {
     let (return_reason, address, gas, return_data) = result;
 
     interpreter.return_data_buffer = match return_reason {
@@ -334,7 +337,7 @@ pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
     if create_input.is_none() {
         return;
     }
-    
+
     let mut create_input = create_input.unwrap();
 
     let ret = host.create(&mut create_input);
@@ -364,7 +367,7 @@ fn prepare_call_inputs<SPEC: Spec>(
     host: &mut dyn Host,
     result_len: &mut usize,
     result_offset: &mut usize,
-    result_call_inputs: &mut Option<Box<CallInputs>>
+    result_call_inputs: &mut Option<Box<CallInputs>>,
 ) {
     pop!(interpreter, local_gas_limit);
     pop_address!(interpreter, to);
@@ -499,11 +502,18 @@ fn prepare_call_inputs<SPEC: Spec>(
         input,
         gas_limit,
         context,
-        is_static
+        is_static,
     }));
 }
 
-fn handle_call_result(interpreter: &mut Interpreter, out_offset: usize, out_len: usize, reason: &InstructionResult, gas: &Gas, return_data: &Bytes) {
+fn handle_call_result(
+    interpreter: &mut Interpreter,
+    out_offset: usize,
+    out_len: usize,
+    reason: &InstructionResult,
+    gas: &Gas,
+    return_data: &Bytes,
+) {
     interpreter.return_data_buffer = return_data.clone();
 
     let target_len = min(out_len, interpreter.return_data_buffer.len());
@@ -553,7 +563,14 @@ pub fn call_inner<SPEC: Spec>(
     let mut out_offset: usize = 0;
     let mut out_len: usize = 0;
     let mut call_input: Option<Box<CallInputs>> = None;
-    prepare_call_inputs::<SPEC>(interpreter, scheme, host, &mut out_len, &mut out_offset, &mut call_input);
+    prepare_call_inputs::<SPEC>(
+        interpreter,
+        scheme,
+        host,
+        &mut out_len,
+        &mut out_offset,
+        &mut call_input,
+    );
 
     if call_input.is_none() {
         return;
@@ -565,5 +582,12 @@ pub fn call_inner<SPEC: Spec>(
     // Call host to interact with target contract
     let (reason, gas, return_data) = host.call(&mut call_input);
 
-    handle_call_result(interpreter, out_offset, out_len, &reason, &gas, &return_data);
+    handle_call_result(
+        interpreter,
+        out_offset,
+        out_len,
+        &reason,
+        &gas,
+        &return_data,
+    );
 }

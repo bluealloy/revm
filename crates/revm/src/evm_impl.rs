@@ -277,8 +277,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
     fn prepare_create(
         &mut self,
-        inputs: &CreateInputs
-    ) -> Result<(Gas, B160, JournalCheckpoint, Box<Contract>), (InstructionResult, Option<B160>, Gas, Bytes)> {
+        inputs: &CreateInputs,
+    ) -> Result<
+        (Gas, B160, JournalCheckpoint, Box<Contract>),
+        (InstructionResult, Option<B160>, Gas, Bytes),
+    > {
         let gas = Gas::new(inputs.gas_limit);
 
         // Check depth of calls
@@ -353,7 +356,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         created_address: B160,
         checkpoint: JournalCheckpoint,
         interpreter: &mut Box<Interpreter>,
-        exit_reason: InstructionResult
+        exit_reason: InstructionResult,
     ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
         // Host error if present on execution
         match exit_reason {
@@ -400,7 +403,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                         //  creation fails (i.e. goes out-of-gas) rather than leaving an empty contract.
                         if GSPEC::enabled(HOMESTEAD) {
                             self.data.journaled_state.checkpoint_revert(checkpoint);
-                            return (InstructionResult::OutOfGas, Some(created_address), interpreter.gas, bytes);
+                            return (
+                                InstructionResult::OutOfGas,
+                                Some(created_address),
+                                interpreter.gas,
+                                bytes,
+                            );
                         } else {
                             bytes = Bytes::new();
                         }
@@ -412,12 +420,19 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 let bytecode = match self.data.env.cfg.perf_analyse_created_bytecodes {
                     AnalysisKind::Raw => Box::new(Bytecode::new_raw(bytes.clone())),
                     AnalysisKind::Check => Box::new(Bytecode::new_raw(bytes.clone()).to_checked()),
-                    AnalysisKind::Analyse => Box::new(to_analysed(Bytecode::new_raw(bytes.clone()))),
+                    AnalysisKind::Analyse => {
+                        Box::new(to_analysed(Bytecode::new_raw(bytes.clone())))
+                    }
                 };
                 self.data
                     .journaled_state
                     .set_code(created_address, *bytecode);
-                (InstructionResult::Return, Some(created_address), interpreter.gas, bytes)
+                (
+                    InstructionResult::Return,
+                    Some(created_address),
+                    interpreter.gas,
+                    bytes,
+                )
             }
             _ => {
                 self.data.journaled_state.checkpoint_revert(checkpoint);
@@ -445,11 +460,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let (gas, created_address, checkpoint, contract) = res.unwrap();
 
         // Create new interpreter and execute initcode
-        let (exit_reason, mut interpreter) = self.run_interpreter(
-            contract,
-            gas.limit(),
-            false,
-        );
+        let (exit_reason, mut interpreter) = self.run_interpreter(contract, gas.limit(), false);
 
         self.handle_create_result(created_address, checkpoint, &mut interpreter, exit_reason)
     }
@@ -491,7 +502,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     fn call_precompile(
         &mut self,
         inputs: &CallInputs,
-        mut gas: Gas
+        mut gas: Gas,
     ) -> (InstructionResult, Gas, Bytes) {
         let input_data = inputs.input.clone();
         let contract = inputs.contract;
@@ -525,8 +536,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
     fn prepare_call(
         &mut self,
-        inputs: &mut CallInputs
-    ) -> Result<(Gas, Box<Bytecode>, JournalCheckpoint, Box<Contract>), (InstructionResult, Gas, Bytes)> {
+        inputs: &mut CallInputs,
+    ) -> Result<
+        (Gas, Box<Bytecode>, JournalCheckpoint, Box<Contract>),
+        (InstructionResult, Gas, Bytes),
+    > {
         let gas = Gas::new(inputs.gas_limit);
         // Load account and get code. Account is now hot.
         let Some((bytecode,_)) = self.code(inputs.contract) else {
@@ -559,11 +573,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             return Err((e, gas, Bytes::new()));
         }
 
-        let contract = Box::new(
-            Contract::new_with_context(
-                inputs.input.clone(), &bytecode, &inputs.context
-            )
-        );
+        let contract = Box::new(Contract::new_with_context(
+            inputs.input.clone(),
+            &bytecode,
+            &inputs.context,
+        ));
 
         Ok((gas, Box::new(bytecode), checkpoint, contract))
     }
@@ -581,11 +595,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             self.call_precompile(inputs, gas)
         } else if !bytecode.is_empty() {
             // Create interpreter and execute subcall
-            let (exit_reason, interpreter) = self.run_interpreter(
-                contract,
-                gas.limit(),
-                inputs.is_static,
-            );
+            let (exit_reason, interpreter) =
+                self.run_interpreter(contract, gas.limit(), inputs.is_static);
             (exit_reason, interpreter.gas, interpreter.return_value())
         } else {
             (InstructionResult::Stop, gas, Bytes::new())

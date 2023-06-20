@@ -362,7 +362,8 @@ pub fn run(
             thread = thread.stack_size(3 * 1024 * 1024);
         }
 
-        joins.push(thread
+        joins.push(
+            thread
                 .spawn(move || loop {
                     let (index, test_path) = {
                         let mut queue = queue.lock().unwrap();

@@ -19,8 +19,16 @@ pub struct Contract {
 }
 
 impl Contract {
-    pub fn new(input: Bytes, bytecode: &Bytecode, address: B160, caller: B160, value: U256) -> Self {
-        let bytecode = to_analysed(bytecode.clone()).try_into().expect("it is analyzed");
+    pub fn new(
+        input: Bytes,
+        bytecode: &Bytecode,
+        address: B160,
+        caller: B160,
+        value: U256,
+    ) -> Self {
+        let bytecode = to_analysed(bytecode.clone())
+            .try_into()
+            .expect("it is analyzed");
 
         Self {
             input,
