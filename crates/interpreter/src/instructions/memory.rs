@@ -1,4 +1,6 @@
-use crate::{gas, interpreter::Interpreter, primitives::U256, Host, InstructionResult};
+use revm_primitives::SpecId::CANCUN;
+
+use crate::{gas, interpreter::Interpreter, primitives::{U256, Spec}, Host, InstructionResult};
 
 pub fn mload(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::VERYLOW);
@@ -34,4 +36,27 @@ pub fn mstore8(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 pub fn msize(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::BASE);
     push!(interpreter, U256::from(interpreter.memory.effective_len()));
+}
+// From EIP-5656 MCOPY
+pub fn mcopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+    check!(interpreter, SPEC::enabled(CANCUN));           
+    pop!(interpreter, dest, src, len);
+    let len = as_usize_or_fail!(interpreter, len, InstructionResult::InvalidOperandOOG);
+    gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
+    let dest = as_usize_or_fail!(
+        interpreter,
+        dest,
+        InstructionResult::InvalidOperandOOG
+    );
+    let src = as_usize_or_fail!(
+        interpreter,
+        src,
+        InstructionResult::InvalidOperandOOG
+    );
+    let (data_end, overflow) = dest.overflowing_add(len);
+    if overflow || data_end > interpreter.return_data_buffer.len() {
+        interpreter.instruction_result = InstructionResult::OutOfOffset;
+        return;
+    }
+    interpreter.memory.set_data(src, dest, len, &interpreter.contract.input);
 }
