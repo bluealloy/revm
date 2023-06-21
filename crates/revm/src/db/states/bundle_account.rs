@@ -14,7 +14,7 @@ use revm_precompile::HashMap;
 /// Same thing for storage where original.
 ///
 /// On selfdestruct storage original value should be ignored.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BundleAccount {
     pub info: Option<AccountInfo>,
     pub original_info: Option<AccountInfo>,
@@ -58,13 +58,13 @@ impl BundleAccount {
             AccountInfoRevert::DoNothing => (),
             AccountInfoRevert::DeleteIt => {
                 self.info = None;
-                self.status = revert.original_status;
+                self.status = revert.previous_status;
                 self.storage = HashMap::new();
                 return true;
             }
             AccountInfoRevert::RevertTo(info) => self.info = Some(info),
         };
-        self.status = revert.original_status;
+        self.status = revert.previous_status;
         // revert stoarge
         for (key, slot) in revert.storage {
             match slot {
@@ -102,7 +102,7 @@ impl BundleAccount {
         };
 
         // Helper function that exploads account and returns revert state.
-        let make_it_explode = |original_status: AccountStatus,
+        let make_it_explode = |previous_status: AccountStatus,
                                info: AccountInfo,
                                mut storage: Storage|
          -> Option<AccountRevert> {
@@ -119,7 +119,7 @@ impl BundleAccount {
             Some(AccountRevert {
                 account: AccountInfoRevert::RevertTo(previous_account),
                 storage: previous_storage,
-                original_status,
+                previous_status,
                 wipe_storage: true,
             })
         };
@@ -129,7 +129,7 @@ impl BundleAccount {
         // Example is of going from New (state: 1: 10) -> DestroyedNew (2:10)
         // Revert of that needs to be list of key previous values.
         // [1:10,2:0]
-        let make_it_expload_with_aftereffect = |original_status: AccountStatus,
+        let make_it_expload_with_aftereffect = |previous_status: AccountStatus,
                                                 previous_info: AccountInfo,
                                                 mut previous_storage: Storage,
                                                 destroyed_storage: HashMap<U256, RevertToSlot>|
@@ -148,7 +148,7 @@ impl BundleAccount {
             Some(AccountRevert {
                 account: AccountInfoRevert::RevertTo(previous_info),
                 storage: previous_storage,
-                original_status,
+                previous_status,
                 wipe_storage: true,
             })
         };
@@ -212,7 +212,7 @@ impl BundleAccount {
                         Some(AccountRevert {
                             account: revert_info,
                             storage: previous_storage_from_update,
-                            original_status: AccountStatus::Changed,
+                            previous_status: AccountStatus::Changed,
                             wipe_storage: false,
                         })
                     }
@@ -229,7 +229,7 @@ impl BundleAccount {
                         Some(AccountRevert {
                             account: info_revert,
                             storage: previous_storage_from_update,
-                            original_status: AccountStatus::Loaded,
+                            previous_status: AccountStatus::Loaded,
                             wipe_storage: false,
                         })
                     }
@@ -246,7 +246,7 @@ impl BundleAccount {
                         Some(AccountRevert {
                             account: info_revert,
                             storage: HashMap::default(),
-                            original_status: AccountStatus::Loaded,
+                            previous_status: AccountStatus::Loaded,
                             wipe_storage: false,
                         })
                     }
@@ -268,7 +268,7 @@ impl BundleAccount {
                     Some(AccountRevert {
                         account: revert_info,
                         storage: previous_storage_from_update,
-                        original_status: AccountStatus::LoadedEmptyEIP161,
+                        previous_status: AccountStatus::LoadedEmptyEIP161,
                         wipe_storage: false,
                     })
                 }
@@ -285,7 +285,7 @@ impl BundleAccount {
                     Some(AccountRevert {
                         account: revert_info,
                         storage: previous_storage_from_update,
-                        original_status: AccountStatus::Loaded,
+                        previous_status: AccountStatus::Loaded,
                         wipe_storage: false,
                     })
                 }
@@ -298,7 +298,7 @@ impl BundleAccount {
                     Some(AccountRevert {
                         account: AccountInfoRevert::DeleteIt,
                         storage: previous_storage_from_update,
-                        original_status: AccountStatus::LoadedNotExisting,
+                        previous_status: AccountStatus::LoadedNotExisting,
                         wipe_storage: false,
                     })
                 }
@@ -316,7 +316,7 @@ impl BundleAccount {
                     Some(AccountRevert {
                         account: revert_info,
                         storage: previous_storage_from_update,
-                        original_status: AccountStatus::InMemoryChange,
+                        previous_status: AccountStatus::InMemoryChange,
                         wipe_storage: false,
                     })
                 }
@@ -383,7 +383,7 @@ impl BundleAccount {
                         Some(AccountRevert {
                             account: AccountInfoRevert::RevertTo(AccountInfo::default()),
                             storage: previous_storage_from_update,
-                            original_status: AccountStatus::Destroyed,
+                            previous_status: AccountStatus::Destroyed,
                             wipe_storage: false,
                         })
                     }
@@ -398,7 +398,7 @@ impl BundleAccount {
                             // empty account
                             account: revert_info,
                             storage: previous_storage_from_update,
-                            original_status: AccountStatus::DestroyedChanged,
+                            previous_status: AccountStatus::DestroyedChanged,
                             wipe_storage: false,
                         })
                     }
@@ -415,7 +415,7 @@ impl BundleAccount {
                             // empty account
                             account: AccountInfoRevert::DeleteIt,
                             storage: previous_storage_from_update,
-                            original_status: AccountStatus::LoadedNotExisting,
+                            previous_status: AccountStatus::LoadedNotExisting,
                             wipe_storage: false,
                         })
                     }
@@ -467,7 +467,7 @@ impl BundleAccount {
                                 self.info.clone().unwrap_or_default(),
                             ),
                             storage: previous_storage_from_update,
-                            original_status: AccountStatus::DestroyedChanged,
+                            previous_status: AccountStatus::DestroyedChanged,
                             wipe_storage: false,
                         };
                         self.info = None;

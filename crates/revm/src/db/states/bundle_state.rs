@@ -1,21 +1,29 @@
 use super::{
     changes::StateChangeset, reverts::AccountInfoRevert, AccountRevert, BundleAccount,
-    StateReverts, TransitionState,
+    StateReverts, Storage, TransitionState,
 };
 use rayon::slice::ParallelSliceMut;
 use revm_interpreter::primitives::{
     hash_map::{self, Entry},
-    Bytecode, HashMap, B160, B256, U256,
+    AccountInfo, Bytecode, HashMap, B160, B256, U256,
 };
 
-// TODO
-#[derive(Clone, Debug)]
+/// Bundle state contain only values that got changed
+///
+/// For every account it contains both original and present state.
+/// This is needed to decide if there were any changes to the account.
+///
+/// Reverts and created when TransitionState is applied to BundleState.
+/// And can be used to revert BundleState to the state before transition.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BundleState {
     /// State.
     pub state: HashMap<B160, BundleAccount>,
     /// All created contracts in this block.
     pub contracts: HashMap<B256, Bytecode>,
-    /// Changes to revert
+    /// Changes to revert.
+    ///
+    /// Note: Inside vector is *not* sorted by address.
     pub reverts: Vec<Vec<(B160, AccountRevert)>>,
 }
 
@@ -30,7 +38,28 @@ impl Default for BundleState {
 }
 
 impl BundleState {
-    // Consume `TransitionState` by applying the changes and creating the reverts
+    /// Create it with new and old values of both Storage and AccountInfo.
+    pub fn new(
+        _state: impl IntoIterator<
+            Item = (
+                B160,
+                Option<(Option<AccountInfo>, Option<AccountInfo>)>,
+                Storage,
+            ),
+        >,
+    ) -> Self {
+        // For state:
+        //  * We need present state.
+        //  * We need original state that is currently in db.
+        //  * TODO contract reverts
+
+        // For reverts:
+        // * We need previous account status.
+
+        Self::default()
+    }
+
+    /// Consume `TransitionState` by applying the changes and creating the reverts
     pub fn apply_block_substate_and_create_reverts(&mut self, mut transitions: TransitionState) {
         let mut reverts = Vec::new();
         for (address, transition) in transitions.take().transitions.into_iter() {
@@ -120,6 +149,7 @@ impl BundleState {
         }
     }
 
+    /// Return and clear all reverts from BundleState, sort them before returning.
     pub fn take_reverts(&mut self) -> StateReverts {
         let mut state_reverts = StateReverts::default();
         for reverts in self.reverts.drain(..) {
@@ -146,6 +176,41 @@ impl BundleState {
         }
 
         state_reverts
+    }
+
+    /// Extend the state with state that is build on top of it.
+    pub fn extend(&mut self, other: Self) {
+        // Overrides the state.
+        self.state.extend(other.state);
+        // Contract can be just extended, when counter is introduced we will take into account that.
+        self.contracts.extend(other.contracts);
+        // Reverts can be just extended
+        self.reverts.extend(other.reverts);
+    }
+
+    /// This will returnd detached lower part of reverts
+    ///
+    /// Note that plain state will stay the same and returned BundleState
+    /// will contain only reverts and will be considered broken.
+    ///
+    /// If given number is greater then number of reverts then None is returned.
+    /// Same if given transition number is zero.
+    pub fn detach_lower_part_reverts(&mut self, num_of_detachments: usize) -> Option<Self> {
+        if num_of_detachments == 0 {
+            return None;
+        }
+        if num_of_detachments > self.reverts.len() {
+            return None;
+        }
+        // split is done as [0, num) and [num, len].
+        let (detach, this) = self.reverts.split_at(num_of_detachments);
+
+        let detached_reverts = detach.to_vec();
+        self.reverts = this.to_vec();
+        Some(Self {
+            reverts: detached_reverts,
+            ..Default::default()
+        })
     }
 
     /// Reverse the state changes by N transitions back

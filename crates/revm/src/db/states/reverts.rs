@@ -9,15 +9,15 @@ use super::AccountStatus;
 ///
 /// AccountRevert is structured in this way as we need to save it inside database.
 /// And we need to be able to read it from database.
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, PartialEq, Eq)]
 pub struct AccountRevert {
     pub account: AccountInfoRevert,
     pub storage: HashMap<U256, RevertToSlot>,
-    pub original_status: AccountStatus,
+    pub previous_status: AccountStatus,
     pub wipe_storage: bool,
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, PartialEq, Eq)]
 
 pub enum AccountInfoRevert {
     #[default]
@@ -37,7 +37,7 @@ pub enum AccountInfoRevert {
 ///
 /// BREAKTHROUGHT: It is completely different state if Storage is Zero or Some or if Storage was
 /// Destroyed. Because if it is destroyed, previous values can be found in database or can be zero.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum RevertToSlot {
     Some(U256),
     Destroyed,
