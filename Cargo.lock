@@ -156,9 +156,9 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bitflags"
-version = "2.2.1"
+version = "2.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "24a6904aef64d73cf10ab17ebace7befb918b82164785cb89907993be7f83813"
+checksum = "6dbe3c979c178231552ecba20214a8272df4e09f232a87aef4320cf06539aded"
 dependencies = [
  "arbitrary",
  "serde",
@@ -1720,7 +1720,7 @@ version = "1.1.2"
 dependencies = [
  "arbitrary",
  "auto_impl",
- "bitflags 2.2.1",
+ "bitflags 2.3.2",
  "bitvec",
  "bytes",
  "derive_more",
