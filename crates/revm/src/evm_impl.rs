@@ -527,10 +527,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     fn prepare_call(
         &mut self,
         inputs: &mut CallInputs,
-    ) -> Result<
-        (Gas, Box<Bytecode>, JournalCheckpoint, Box<Contract>),
-        (InstructionResult, Gas, Bytes),
-    > {
+    ) -> Result<(Gas, JournalCheckpoint, Box<Contract>), (InstructionResult, Gas, Bytes)> {
         let gas = Gas::new(inputs.gas_limit);
         // Load account and get code. Account is now hot.
         let Some((bytecode,_)) = self.code(inputs.contract) else {
@@ -569,7 +566,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             &inputs.context,
         ));
 
-        Ok((gas, Box::new(bytecode), checkpoint, contract))
+        Ok((gas, checkpoint, contract))
     }
 
     /// Main contract call of the EVM.
@@ -579,11 +576,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             return ret;
         }
 
-        let (gas, bytecode, checkpoint, contract) = res.unwrap();
+        let (gas, checkpoint, contract) = res.unwrap();
 
         let ret = if is_precompile(inputs.contract, self.precompiles.len()) {
             self.call_precompile(inputs, gas)
-        } else if !bytecode.is_empty() {
+        } else if !contract.bytecode.is_empty() {
             // Create interpreter and execute subcall
             let (exit_reason, interpreter) =
                 self.run_interpreter(contract, gas.limit(), inputs.is_static);
