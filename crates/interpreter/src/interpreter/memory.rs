@@ -70,10 +70,10 @@ impl Memory {
     /// Memory copy
     /// Copies memory inplace to a returns a [u8]
     #[inline(always)]
-    pub fn copy(&self, offset: usize, size: usize) -> [u8; 32] {
-        let mut copy = [0u8; 32];
-        copy.copy_from_slice(&self.data[offset..size]);
-        copy
+    pub fn copy_to_vec(&self, offset: usize, size: usize) -> Vec<u8> {
+        let mut vec = vec![0u8; size];
+        vec.copy_from_slice(&self.data[offset..size]);
+        vec
     }
     /// Set memory region at given offset
     ///
