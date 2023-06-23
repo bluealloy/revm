@@ -1,4 +1,5 @@
 use crate::primitives::{Bytes, Spec, SpecId::*, B160, B256, U256};
+use crate::MAX_INITCODE_SIZE;
 use crate::{
     alloc::vec::Vec,
     gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
@@ -6,7 +7,6 @@ use crate::{
     return_ok, return_revert, CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme,
     Host, InstructionResult, Transfer,
 };
-use crate::{Gas, MAX_INITCODE_SIZE};
 use core::cmp::min;
 
 pub fn balance<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
@@ -291,11 +291,20 @@ pub fn prepare_create_inputs<const IS_CREATE2: bool, SPEC: Spec>(
     }));
 }
 
-pub fn handle_create_result(
+pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
     interpreter: &mut Interpreter,
-    result: (InstructionResult, Option<B160>, Gas, Bytes),
+    host: &mut dyn Host,
 ) {
-    let (return_reason, address, gas, return_data) = result;
+    let mut create_input: Option<Box<CreateInputs>> = None;
+    prepare_create_inputs::<IS_CREATE2, SPEC>(interpreter, &mut create_input);
+
+    if create_input.is_none() {
+        return;
+    }
+
+    let mut create_input = create_input.unwrap();
+
+    let (return_reason, address, gas, return_data) = host.create(&mut create_input);
 
     interpreter.return_data_buffer = match return_reason {
         // Save data to return data buffer if the create reverted
@@ -325,24 +334,6 @@ pub fn handle_create_result(
             push_b256!(interpreter, B256::zero());
         }
     }
-}
-
-pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
-    interpreter: &mut Interpreter,
-    host: &mut dyn Host,
-) {
-    let mut create_input: Option<Box<CreateInputs>> = None;
-    prepare_create_inputs::<IS_CREATE2, SPEC>(interpreter, &mut create_input);
-
-    if create_input.is_none() {
-        return;
-    }
-
-    let mut create_input = create_input.unwrap();
-
-    let ret = host.create(&mut create_input);
-
-    handle_create_result(interpreter, ret);
 }
 
 pub fn call<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
@@ -506,48 +497,6 @@ fn prepare_call_inputs<SPEC: Spec>(
     }));
 }
 
-fn handle_call_result(
-    interpreter: &mut Interpreter,
-    out_offset: usize,
-    out_len: usize,
-    reason: &InstructionResult,
-    gas: &Gas,
-    return_data: &Bytes,
-) {
-    interpreter.return_data_buffer = return_data.clone();
-
-    let target_len = min(out_len, interpreter.return_data_buffer.len());
-
-    match reason {
-        return_ok!() => {
-            // return unspend gas.
-            if crate::USE_GAS {
-                interpreter.gas.erase_cost(gas.remaining());
-                interpreter.gas.record_refund(gas.refunded());
-            }
-            interpreter
-                .memory
-                .set(out_offset, &interpreter.return_data_buffer[..target_len]);
-            push!(interpreter, U256::from(1));
-        }
-        return_revert!() => {
-            if crate::USE_GAS {
-                interpreter.gas.erase_cost(gas.remaining());
-            }
-            interpreter
-                .memory
-                .set(out_offset, &interpreter.return_data_buffer[..target_len]);
-            push!(interpreter, U256::ZERO);
-        }
-        InstructionResult::FatalExternalError => {
-            interpreter.instruction_result = InstructionResult::FatalExternalError;
-        }
-        _ => {
-            push!(interpreter, U256::ZERO);
-        }
-    }
-}
-
 pub fn call_inner<SPEC: Spec>(
     interpreter: &mut Interpreter,
     scheme: CallScheme,
@@ -582,12 +531,36 @@ pub fn call_inner<SPEC: Spec>(
     // Call host to interact with target contract
     let (reason, gas, return_data) = host.call(&mut call_input);
 
-    handle_call_result(
-        interpreter,
-        out_offset,
-        out_len,
-        &reason,
-        &gas,
-        &return_data,
-    );
+    interpreter.return_data_buffer = return_data.clone();
+
+    let target_len = min(out_len, interpreter.return_data_buffer.len());
+
+    match reason {
+        return_ok!() => {
+            // return unspend gas.
+            if crate::USE_GAS {
+                interpreter.gas.erase_cost(gas.remaining());
+                interpreter.gas.record_refund(gas.refunded());
+            }
+            interpreter
+                .memory
+                .set(out_offset, &interpreter.return_data_buffer[..target_len]);
+            push!(interpreter, U256::from(1));
+        }
+        return_revert!() => {
+            if crate::USE_GAS {
+                interpreter.gas.erase_cost(gas.remaining());
+            }
+            interpreter
+                .memory
+                .set(out_offset, &interpreter.return_data_buffer[..target_len]);
+            push!(interpreter, U256::ZERO);
+        }
+        InstructionResult::FatalExternalError => {
+            interpreter.instruction_result = InstructionResult::FatalExternalError;
+        }
+        _ => {
+            push!(interpreter, U256::ZERO);
+        }
+    }
 }

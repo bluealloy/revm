@@ -351,13 +351,22 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         Ok((gas, created_address, checkpoint, contract))
     }
 
-    fn handle_create_result(
+    /// EVM create opcode for both initial crate and CREATE and CREATE2 opcodes.
+    fn create_inner(
         &mut self,
-        created_address: B160,
-        checkpoint: JournalCheckpoint,
-        interpreter: &mut Box<Interpreter>,
-        exit_reason: InstructionResult,
+        inputs: &CreateInputs,
     ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
+        let res = self.prepare_create(inputs);
+
+        if let Err(ret) = res {
+            return ret;
+        }
+
+        let (gas, created_address, checkpoint, contract) = res.unwrap();
+
+        // Create new interpreter and execute initcode
+        let (exit_reason, mut interpreter) = self.run_interpreter(contract, gas.limit(), false);
+
         // Host error if present on execution
         match exit_reason {
             return_ok!() => {
@@ -444,25 +453,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 )
             }
         }
-    }
-
-    /// EVM create opcode for both initial crate and CREATE and CREATE2 opcodes.
-    fn create_inner(
-        &mut self,
-        inputs: &CreateInputs,
-    ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
-        let res = self.prepare_create(inputs);
-
-        if let Err(ret) = res {
-            return ret;
-        }
-
-        let (gas, created_address, checkpoint, contract) = res.unwrap();
-
-        // Create new interpreter and execute initcode
-        let (exit_reason, mut interpreter) = self.run_interpreter(contract, gas.limit(), false);
-
-        self.handle_create_result(created_address, checkpoint, &mut interpreter, exit_reason)
     }
 
     /// Create a Interpreter and run it.
