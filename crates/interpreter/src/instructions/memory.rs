@@ -1,6 +1,11 @@
 use revm_primitives::SpecId::CANCUN;
 
-use crate::{gas, interpreter::Interpreter, primitives::{U256, Spec}, Host, InstructionResult};
+use crate::{
+    gas,
+    interpreter::Interpreter,
+    primitives::{Spec, U256},
+    Host, InstructionResult,
+};
 
 pub fn mload(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::VERYLOW);
@@ -39,7 +44,7 @@ pub fn msize(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 }
 // From EIP-5656 MCOPY
 pub fn mcopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    check!(interpreter, SPEC::enabled(CANCUN));           
+    check!(interpreter, SPEC::enabled(CANCUN));
     pop!(interpreter, dest, src, len);
     if len == U256::ZERO {
         return;
@@ -47,22 +52,12 @@ pub fn mcopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     let len = as_usize_or_fail!(interpreter, len, InstructionResult::InvalidOperandOOG);
     gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
 
-
-    let dest = as_usize_or_fail!(
-        interpreter,
-        dest,
-        InstructionResult::InvalidOperandOOG
-    );
+    let dest = as_usize_or_fail!(interpreter, dest, InstructionResult::InvalidOperandOOG);
     memory_resize!(interpreter, dest, len);
 
-
-    let src = as_usize_or_fail!(
-        interpreter,
-        src,
-        InstructionResult::InvalidOperandOOG
-    );
+    let src = as_usize_or_fail!(interpreter, src, InstructionResult::InvalidOperandOOG);
     // Read data with length len from src
-    let data = interpreter.memory.clone();
+    let data = interpreter.memory.copy(src, len);
     // Write data to dest
-    interpreter.memory.set_data(src, dest, len, data.get_slice(src, len));
+    interpreter.memory.set_data(src, dest, len, &data);
 }

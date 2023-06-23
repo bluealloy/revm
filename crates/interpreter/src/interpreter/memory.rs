@@ -67,6 +67,14 @@ impl Memory {
         &self.data[offset..offset + size]
     }
 
+    /// Memory copy
+    /// Copies memory inplace to a returns a [u8]
+    #[inline(always)]
+    pub fn copy(&self, offset: usize, size: usize) -> [u8; 32] {
+        let mut copy = [0u8; 32];
+        copy.copy_from_slice(&self.data[offset..size]);
+        copy
+    }
     /// Set memory region at given offset
     ///
     /// # Safety
