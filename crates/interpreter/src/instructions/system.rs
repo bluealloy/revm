@@ -6,7 +6,7 @@ use crate::{
 };
 use core::cmp::min;
 
-pub fn keccak256(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn calculate_keccak256(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     pop!(interpreter, from, len);
     let len = as_usize_or_fail!(interpreter, len, InstructionResult::InvalidOperandOOG);
     gas_or_fail!(interpreter, gas::keccak256_cost(len as u64));
