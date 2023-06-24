@@ -45,6 +45,36 @@ pub enum InstructionResult {
     FatalExternalError,
 }
 
+impl InstructionResult {
+    pub fn is_error(&self) -> bool {
+        matches!(
+            self,
+            Self::OutOfGas
+                | Self::MemoryOOG
+                | Self::MemoryLimitOOG
+                | Self::PrecompileOOG
+                | Self::InvalidOperandOOG
+                | Self::OpcodeNotFound
+                | Self::CallNotAllowedInsideStatic
+                | Self::StateChangeDuringStaticCall
+                | Self::InvalidFEOpcode
+                | Self::InvalidJump
+                | Self::NotActivated
+                | Self::StackUnderflow
+                | Self::StackOverflow
+                | Self::OutOfOffset
+                | Self::CreateCollision
+                | Self::OverflowPayment
+                | Self::PrecompileError
+                | Self::NonceOverflow
+                | Self::CreateContractSizeLimit
+                | Self::CreateContractStartingWithEF
+                | Self::CreateInitcodeSizeLimit
+                | Self::FatalExternalError
+        )
+    }
+}
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum SuccessOrHalt {
     Success(Eval),

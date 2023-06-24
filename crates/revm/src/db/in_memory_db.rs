@@ -19,7 +19,9 @@ impl Default for InMemoryDB {
 ///
 /// This implementation wraps a [DatabaseRef] that is used to load data ([AccountInfo]).
 ///
-/// Accounts and code are stored in two separate maps, the `accounts` map maps addresses to [DbAccount], whereas contracts are identified by their code hash, and are stored in the `contracts` map. The [DbAccount] holds the code hash of the contract, which is used to look up the contract in the `contracts` map.
+/// Accounts and code are stored in two separate maps, the `accounts` map maps addresses to [DbAccount],
+/// whereas contracts are identified by their code hash, and are stored in the `contracts` map.
+/// The [DbAccount] holds the code hash of the contract, which is used to look up the contract in the `contracts` map.
 #[derive(Debug, Clone)]
 pub struct CacheDB<ExtDB: DatabaseRef> {
     /// Account info where None means it is not existing. Not existing state is needed for Pre TANGERINE forks.
@@ -336,7 +338,7 @@ pub enum AccountState {
     /// Before Spurious Dragon hardfork there was a difference between empty and not existing.
     /// And we are flaging it here.
     NotExisting,
-    /// EVM touched this account. For newer hardfork this means it can be clearead/removed from state.
+    /// EVM touched this account. For newer hardfork this means it can be cleared/removed from state.
     Touched,
     /// EVM cleared storage of this account, mostly by selfdestruct, we don't ask database for storage slots
     /// and assume they are U256::ZERO
