@@ -38,13 +38,22 @@ impl Default for BundleState {
 }
 
 impl BundleState {
+    pub fn state(&self) -> &HashMap<B160, BundleAccount> {
+        &self.state
+    }
+
+    /// Return number of changed accounts.
+    pub fn len(&self) -> usize {
+        self.state.len()
+    }
+
     /// Create it with new and old values of both Storage and AccountInfo.
     pub fn new(
         _state: impl IntoIterator<
             Item = (
                 B160,
                 Option<(Option<AccountInfo>, Option<AccountInfo>)>,
-                Storage,
+                HashMap<U256, (U256, U256)>,
             ),
         >,
     ) -> Self {
@@ -57,6 +66,16 @@ impl BundleState {
         // * We need previous account status.
 
         Self::default()
+    }
+
+    /// Get account from state
+    pub fn account(&self, addres: &B160) -> Option<&BundleAccount> {
+        self.state.get(addres)
+    }
+
+    /// Get bytecode from state
+    pub fn bytecode(&self, hash: &B256) -> Option<Bytecode> {
+        self.contracts.get(hash).cloned()
     }
 
     /// Consume `TransitionState` by applying the changes and creating the reverts
@@ -89,15 +108,19 @@ impl BundleState {
         self.reverts.push(reverts);
     }
 
-    // Nuke the bundle state and return sorted plain state.
-    pub fn take_sorted_plain_change(&mut self) -> StateChangeset {
+    /// Nuke the bundle state and return sorted plain state.
+    ///
+    /// `omit_changed_check` does not check If account is same as
+    /// original state, this assumption can't be made in cases when
+    /// we split the bundle state and commit part of it.
+    pub fn take_sorted_plain_change_inner(&mut self, omit_changed_check: bool) -> StateChangeset {
         let mut accounts = Vec::new();
         let mut storage = Vec::new();
 
         for (address, account) in self.state.drain() {
             // append account info if it is changed.
             let was_destroyed = account.was_destroyed();
-            if account.is_info_changed() {
+            if omit_changed_check || account.is_info_changed() {
                 let mut info = account.info;
                 if let Some(info) = info.as_mut() {
                     info.code = None
@@ -114,7 +137,7 @@ impl BundleState {
                 // If storage was destroyed that means that storage was wipped.
                 // In that case we need to check if present storage value is different then ZERO.
                 for (key, slot) in account.storage {
-                    if slot.present_value != U256::ZERO {
+                    if omit_changed_check || slot.present_value != U256::ZERO {
                         account_storage_changed.push((key, slot.present_value));
                     }
                 }
@@ -122,7 +145,7 @@ impl BundleState {
                 // if account is not destroyed check if original values was changed.
                 // so we can update it.
                 for (key, slot) in account.storage {
-                    if slot.is_changed() {
+                    if omit_changed_check || slot.is_changed() {
                         account_storage_changed.push((key, slot.present_value));
                     }
                 }
@@ -180,8 +203,18 @@ impl BundleState {
 
     /// Extend the state with state that is build on top of it.
     pub fn extend(&mut self, other: Self) {
-        // Overrides the state.
-        self.state.extend(other.state);
+        // Extend the state.
+        for (address, other) in other.state {
+            match self.state.entry(address) {
+                hash_map::Entry::Occupied(mut entry) => {
+                    entry.get_mut().extend(other);
+                }
+                hash_map::Entry::Vacant(entry) => {
+                    // just insert if empty
+                    entry.insert(other);
+                }
+            }
+        }
         // Contract can be just extended, when counter is introduced we will take into account that.
         self.contracts.extend(other.contracts);
         // Reverts can be just extended

@@ -28,8 +28,20 @@ pub struct BundleAccount {
 }
 
 impl BundleAccount {
+    /// Return storage slot if it exist.
+    ///
+    /// In case we know that account is destroyed return `Some(U256::ZERO)`
     pub fn storage_slot(&self, slot: U256) -> Option<U256> {
-        self.storage.get(&slot).map(|s| s.present_value)
+        let slot = self.storage.get(&slot).map(|s| s.present_value);
+        if slot.is_some() {
+            slot
+        } else {
+            if self.status.storage_known() {
+                Some(U256::ZERO)
+            } else {
+                None
+            }
+        }
     }
 
     /// Fetch account info if it exist.
@@ -83,6 +95,22 @@ impl BundleAccount {
             }
         }
         false
+    }
+
+    /// Extend account with another account.
+    ///
+    /// It is similar with the update but it is done with another BundleAccount.
+    pub(crate) fn extend(&mut self, other: Self) {
+        self.status = other.status;
+        self.info = other.info;
+        // extend storage
+        for (key, storage_slot) in other.storage {
+            // update present value or insert storage slot.
+            self.storage
+                .entry(key)
+                .or_insert(storage_slot)
+                .present_value = storage_slot.present_value;
+        }
     }
 
     /// Update to new state and generate AccountRevert that if applied to new state will

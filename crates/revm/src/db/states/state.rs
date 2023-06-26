@@ -5,7 +5,7 @@ use super::{
 };
 use crate::{db::EmptyDB, TransitionAccount};
 use revm_interpreter::primitives::{
-    db::{Database, DatabaseCommit},
+    db::{Database, DatabaseCommit, DatabaseRef},
     hash_map, Account, AccountInfo, Bytecode, HashMap, B160, B256, U256,
 };
 
@@ -17,7 +17,7 @@ pub struct State<'a, DBError> {
     pub cache: CacheState,
     /// Optional database that we use to fetch data from. If database is not present, we will
     /// return not existing account and storage.
-    pub database: Box<dyn Database<Error = DBError> + 'a>,
+    pub database: Box<dyn Database<Error = DBError> + Send + 'a>,
     /// Build reverts and state that gets applied to the state.
     pub transition_builder: Option<TransitionBuilder>,
     /// Is state clear enabled
@@ -155,7 +155,16 @@ impl<'a, DBError> State<'a, DBError> {
         //    .map(|t| t.transition_state.set_state_clear());
     }
 
-    pub fn new_with_transtion(db: Box<dyn Database<Error = DBError> + 'a>) -> Self {
+    pub fn new_without_transitions(db: Box<dyn Database<Error = DBError> + Send + 'a>) -> Self {
+        Self {
+            cache: CacheState::default(),
+            database: db,
+            transition_builder: None,
+            has_state_clear: true,
+        }
+    }
+
+    pub fn new_with_transition(db: Box<dyn Database<Error = DBError> + Send + 'a>) -> Self {
         Self {
             cache: CacheState::default(),
             database: db,

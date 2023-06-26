@@ -36,6 +36,18 @@ impl AccountStatus {
         )
     }
 
+    /// This means storage is known, it can be newly created or storage got destroyed.
+    pub fn storage_known(&self) -> bool {
+        matches!(
+            self,
+            AccountStatus::LoadedNotExisting
+                | AccountStatus::InMemoryChange
+                | AccountStatus::Destroyed
+                | AccountStatus::DestroyedChanged
+                | AccountStatus::DestroyedAgain
+        )
+    }
+
     /// Account is modified but not destroyed.
     /// This means that some of storage values can be found in both
     /// memory and database.
