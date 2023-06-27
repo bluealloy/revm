@@ -42,9 +42,11 @@ pub fn msize(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::BASE);
     push!(interpreter, U256::from(interpreter.memory.effective_len()));
 }
+
 // From EIP-5656 MCOPY
 pub fn mcopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    // check that Cancun spec is enabled
+    // Opcode enabled in Cancun.
+    // EIP-5656: MCOPY - Memory copying instruction
     check!(interpreter, SPEC::enabled(CANCUN));
     // get src and dest and length from stack
     pop!(interpreter, dest, src, len);
