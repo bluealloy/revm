@@ -298,11 +298,7 @@ pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
     let mut create_input: Option<Box<CreateInputs>> = None;
     prepare_create_inputs::<IS_CREATE2, SPEC>(interpreter, &mut create_input);
 
-    if create_input.is_none() {
-        return;
-    }
-
-    let mut create_input = create_input.unwrap();
+    let Some(mut create_input) = create_input else { return };
 
     let (return_reason, address, gas, return_data) = host.create(&mut create_input);
 
@@ -521,12 +517,7 @@ pub fn call_inner<SPEC: Spec>(
         &mut call_input,
     );
 
-    if call_input.is_none() {
-        return;
-    }
-
-    // The Option is not needed form this point
-    let mut call_input = call_input.unwrap();
+    let Some(mut call_input) = call_input else { return };
 
     // Call host to interact with target contract
     let (reason, gas, return_data) = host.call(&mut call_input);

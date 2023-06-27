@@ -358,11 +358,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
         let res = self.prepare_create(inputs);
 
-        if let Err(ret) = res {
-            return ret;
-        }
-
-        let (gas, created_address, checkpoint, contract) = res.unwrap();
+        let (gas, created_address, checkpoint, contract) = match res {
+            Ok(o) => o,
+            Err(e) => return e,
+        };
 
         // Create new interpreter and execute initcode
         let (exit_reason, mut interpreter) = self.run_interpreter(contract, gas.limit(), false);
@@ -572,11 +571,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     /// Main contract call of the EVM.
     fn call_inner(&mut self, inputs: &mut CallInputs) -> (InstructionResult, Gas, Bytes) {
         let res = self.prepare_call(inputs);
-        if let Err(ret) = res {
-            return ret;
-        }
 
-        let (gas, checkpoint, contract) = res.unwrap();
+        let (gas, checkpoint, contract) = match res {
+            Ok(o) => o,
+            Err(e) => return e,
+        };
 
         let ret = if is_precompile(inputs.contract, self.precompiles.len()) {
             self.call_precompile(inputs, gas)
