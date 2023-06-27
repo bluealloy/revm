@@ -109,14 +109,13 @@ impl Memory {
             *i = 0;
         }
     }
-    /// In memory copy given a src, dst, and offset
-    /// Assumes that we check that src + offset > self.data.len()
+    /// In memory copy given a src, dst, and length
+    ///
+    /// # Safety
+    /// The caller is responsible to check that we resized memory properly.
     #[inline(always)]
-    pub fn copy(&mut self, src: usize, dst: usize, offset: usize) {
-        if src + offset > self.data.len() {
-            return;
-        }
-        self.data.copy_within(src..src + offset, dst);
+    pub fn copy(&mut self, dst: usize, src: usize, length: usize) {
+        self.data.copy_within(src..src + length, dst);
     }
 }
 
