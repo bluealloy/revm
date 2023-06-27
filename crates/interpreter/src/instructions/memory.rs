@@ -38,14 +38,15 @@ pub fn msize(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     push!(interpreter, U256::from(interpreter.memory.effective_len()));
 }
 pub fn blob_hash(interpreter: &mut Interpreter, host: &mut dyn Host) {
-    let index = interpreter.stack.peek(0).unwrap();
-    let index = as_usize_or_fail!(interpreter, index, InstructionResult::InvalidOperandOOG);
 
+    pop!(interpreter, index);
+    let index = as_usize_or_fail!(interpreter, index, InstructionResult::InvalidOperandOOG);
     if index < host.env().tx.blob_versioned_hashes.len() {
         // need to replace the top of the stack with the hash here
-        host.env().tx.blob_versioned_hashes.index(index);
+        push!(interpreter, *host.env().tx.blob_versioned_hashes.index(index));    
     } else {
         // else write out a zerod out 32 bytes
         let bytes: [u8; 32] = [0; 32];
+        push!(interpreter, U256::from_be_bytes(bytes));
     }
 }
