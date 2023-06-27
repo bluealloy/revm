@@ -121,11 +121,11 @@ impl Memory {
     /// In memory copy given a src, dst, and offset
     /// Assumes that we check that src + offset > self.data.len()
     #[inline(always)]
-    pub fn copy (&mut self, src: usize, dst: usize, offset: usize) {
+    pub fn copy(&mut self, src: usize, dst: usize, offset: usize) {
         if src + offset > self.data.len() {
             return;
         }
-        self.data.copy_within(src..src+offset, dst);
+        self.data.copy_within(src..src + offset, dst);
     }
 }
 

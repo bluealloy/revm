@@ -62,15 +62,11 @@ pub fn mcopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     }
     // temporary value for memory resize
     let mut resize = dest;
-    if  src + len > dest {
+    if src + len > dest {
         resize = src + len;
     }
     // resize memory
-    memory_resize!(
-        interpreter,
-        src,
-        resize
-    );
+    memory_resize!(interpreter, src, resize);
     // copy memory in place
     interpreter.memory.copy(src, dest, len);
 }
