@@ -43,34 +43,34 @@ pub fn msize(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     push!(interpreter, U256::from(interpreter.memory.effective_len()));
 }
 // From EIP-5656 MCOPY
-pub fn mcopy<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+pub fn mcopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+    // check that Cancun spec is enabled
     check!(interpreter, SPEC::enabled(CANCUN));
+    // get src and dest and length from stack
     pop!(interpreter, dest, src, len);
-    if len == U256::ZERO {
-        return;
-    }
 
+    // into usize or fail
     let len = as_usize_or_fail!(interpreter, len, InstructionResult::InvalidOperandOOG);
+    let dest = as_usize_or_fail!(interpreter, dest, InstructionResult::InvalidOperandOOG);
+    let src = as_usize_or_fail!(interpreter, src, InstructionResult::InvalidOperandOOG);
+    // deduce gas
     gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
 
-    // memory_resize!(interpreter, dest, len);
-    memory_copy_resize(interpreter, host);
-    let dest = as_usize_or_fail!(interpreter, dest, InstructionResult::InvalidOperandOOG);
-
-
-    let src = as_usize_or_fail!(interpreter, src, InstructionResult::InvalidOperandOOG);
-    // Read data with length len from src
-    let binding = interpreter.memory.copy_to_vec(src, len);
-    let data = binding.as_slice()  ;
-    // Write data to dest
-    interpreter.memory.set_data(src, dest, len, data);
-}
-
-pub fn memory_copy_resize(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    let mut mstart = as_usize_or_fail!(interpreter, interpreter.stack.peek(0).unwrap()); // stack[0]: dst
-
-    if as_usize_or_fail!(interpreter, interpreter.stack.peek(1).unwrap()) > mstart {
-        mstart = as_usize_or_fail!(interpreter, interpreter.stack.peek(1).unwrap()); // stack[1]: source
+    // check if len is 0
+    if len == 0 {
+        return;
     }
-    memory_resize!(interpreter, mstart, as_usize_or_fail!(interpreter, interpreter.stack.peek(2).unwrap()));
+    // temporary value for memory resize
+    let mut resize = dest;
+    if  src + len > dest {
+        resize = src + len;
+    }
+    // resize memory
+    memory_resize!(
+        interpreter,
+        src,
+        resize
+    );
+    // copy memory in place
+    interpreter.memory.copy(src, dest, len);
 }

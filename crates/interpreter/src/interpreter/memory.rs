@@ -118,6 +118,15 @@ impl Memory {
             *i = 0;
         }
     }
+    /// In memory copy given a src, dst, and offset
+    /// Assumes that we check that src + offset > self.data.len()
+    #[inline(always)]
+    pub fn copy (&mut self, src: usize, dst: usize, offset: usize) {
+        if src + offset > self.data.len() {
+            return;
+        }
+        self.data.copy_within(src..src+offset, dst);
+    }
 }
 
 /// Rounds up `x` to the closest multiple of 32. If `x % 32 == 0` then `x` is returned.
