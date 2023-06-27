@@ -32,6 +32,20 @@ pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
     _phantomdata: PhantomData<GSPEC>,
 }
 
+pub struct PreparedCreateResult {
+    gas: Gas,
+    created_address: B160,
+    checkpoint: JournalCheckpoint,
+    contract: Box<Contract>,
+}
+
+pub struct CreateResult {
+    result: InstructionResult,
+    created_address: Option<B160>,
+    gas: Gas,
+    return_value: Bytes,
+}
+
 pub trait Transact<DBError> {
     /// Do transaction.
     /// InstructionResult InstructionResult, Output for call or Address if we are creating
@@ -278,25 +292,32 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     fn prepare_create(
         &mut self,
         inputs: &CreateInputs,
-    ) -> Result<
-        (Gas, B160, JournalCheckpoint, Box<Contract>),
-        (InstructionResult, Option<B160>, Gas, Bytes),
-    > {
+    ) -> Result<PreparedCreateResult, CreateResult> {
         let gas = Gas::new(inputs.gas_limit);
 
         // Check depth of calls
         if self.data.journaled_state.depth() > CALL_STACK_LIMIT {
-            return Err((InstructionResult::CallTooDeep, None, gas, Bytes::new()));
+            return Err(CreateResult {
+                result: InstructionResult::CallTooDeep,
+                created_address: None,
+                gas: gas,
+                return_value: Bytes::new(),
+            });
         }
 
         // Fetch balance of caller.
         let Some((caller_balance,_)) = self.balance(inputs.caller) else {
-            return Err((InstructionResult::FatalExternalError, None, gas, Bytes::new()));
+            return Err(CreateResult{result: InstructionResult::FatalExternalError, created_address: None, gas, return_value: Bytes::new()});
         };
 
         // Check if caller has enough balance to send to the crated contract.
         if caller_balance < inputs.value {
-            return Err((InstructionResult::OutOfFund, None, gas, Bytes::new()));
+            return Err(CreateResult {
+                result: InstructionResult::OutOfFund,
+                created_address: None,
+                gas,
+                return_value: Bytes::new(),
+            });
         }
 
         // Increase nonce of caller and check if it overflows
@@ -304,7 +325,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         if let Some(nonce) = self.data.journaled_state.inc_nonce(inputs.caller) {
             old_nonce = nonce - 1;
         } else {
-            return Err((InstructionResult::Return, None, gas, Bytes::new()));
+            return Err(CreateResult {
+                result: InstructionResult::Return,
+                created_address: None,
+                gas,
+                return_value: Bytes::new(),
+            });
         }
 
         // Create address
@@ -322,12 +348,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             .map_err(|e| self.data.error = Some(e))
             .is_err()
         {
-            return Err((
-                InstructionResult::FatalExternalError,
-                None,
+            return Err(CreateResult {
+                result: InstructionResult::FatalExternalError,
+                created_address: None,
                 gas,
-                Bytes::new(),
-            ));
+                return_value: Bytes::new(),
+            });
         }
 
         // create account, transfer funds and make the journal checkpoint.
@@ -337,7 +363,14 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             .create_account_checkpoint::<GSPEC>(inputs.caller, created_address, inputs.value)
         {
             Ok(checkpoint) => checkpoint,
-            Err(e) => return Err((e, None, gas, Bytes::new())),
+            Err(e) => {
+                return Err(CreateResult {
+                    result: e,
+                    created_address: None,
+                    gas,
+                    return_value: Bytes::new(),
+                })
+            }
         };
 
         let contract = Box::new(Contract::new(
@@ -348,23 +381,26 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             inputs.value,
         ));
 
-        Ok((gas, created_address, checkpoint, contract))
+        Ok(PreparedCreateResult {
+            gas,
+            created_address,
+            checkpoint,
+            contract,
+        })
     }
 
     /// EVM create opcode for both initial crate and CREATE and CREATE2 opcodes.
-    fn create_inner(
-        &mut self,
-        inputs: &CreateInputs,
-    ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
+    fn create_inner(&mut self, inputs: &CreateInputs) -> CreateResult {
         let res = self.prepare_create(inputs);
 
-        let (gas, created_address, checkpoint, contract) = match res {
+        let prepared_create = match res {
             Ok(o) => o,
             Err(e) => return e,
         };
 
         // Create new interpreter and execute initcode
-        let (exit_reason, mut interpreter) = self.run_interpreter(contract, gas.limit(), false);
+        let (exit_reason, mut interpreter) =
+            self.run_interpreter(prepared_create.contract, prepared_create.gas.limit(), false);
 
         // Host error if present on execution
         match exit_reason {
@@ -374,13 +410,15 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
                 // EIP-3541: Reject new contract code starting with the 0xEF byte
                 if GSPEC::enabled(LONDON) && !bytes.is_empty() && bytes.first() == Some(&0xEF) {
-                    self.data.journaled_state.checkpoint_revert(checkpoint);
-                    return (
-                        InstructionResult::CreateContractStartingWithEF,
-                        Some(created_address),
-                        interpreter.gas,
-                        bytes,
-                    );
+                    self.data
+                        .journaled_state
+                        .checkpoint_revert(prepared_create.checkpoint);
+                    return CreateResult {
+                        result: InstructionResult::CreateContractStartingWithEF,
+                        created_address: Some(prepared_create.created_address),
+                        gas: interpreter.gas,
+                        return_value: bytes,
+                    };
                 }
 
                 // EIP-170: Contract code size limit
@@ -394,13 +432,15 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                             .limit_contract_code_size
                             .unwrap_or(MAX_CODE_SIZE)
                 {
-                    self.data.journaled_state.checkpoint_revert(checkpoint);
-                    return (
-                        InstructionResult::CreateContractSizeLimit,
-                        Some(created_address),
-                        interpreter.gas,
-                        bytes,
-                    );
+                    self.data
+                        .journaled_state
+                        .checkpoint_revert(prepared_create.checkpoint);
+                    return CreateResult {
+                        result: InstructionResult::CreateContractSizeLimit,
+                        created_address: Some(prepared_create.created_address),
+                        gas: interpreter.gas,
+                        return_value: bytes,
+                    };
                 }
                 if crate::USE_GAS {
                     let gas_for_code = bytes.len() as u64 * gas::CODEDEPOSIT;
@@ -410,13 +450,15 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                         // final gas fee for adding the contract code to the state, the contract
                         //  creation fails (i.e. goes out-of-gas) rather than leaving an empty contract.
                         if GSPEC::enabled(HOMESTEAD) {
-                            self.data.journaled_state.checkpoint_revert(checkpoint);
-                            return (
-                                InstructionResult::OutOfGas,
-                                Some(created_address),
-                                interpreter.gas,
-                                bytes,
-                            );
+                            self.data
+                                .journaled_state
+                                .checkpoint_revert(prepared_create.checkpoint);
+                            return CreateResult {
+                                result: InstructionResult::OutOfGas,
+                                created_address: Some(prepared_create.created_address),
+                                gas: interpreter.gas,
+                                return_value: bytes,
+                            };
                         } else {
                             bytes = Bytes::new();
                         }
@@ -426,30 +468,30 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 self.data.journaled_state.checkpoint_commit();
                 // Do analysis of bytecode straight away.
                 let bytecode = match self.data.env.cfg.perf_analyse_created_bytecodes {
-                    AnalysisKind::Raw => Box::new(Bytecode::new_raw(bytes.clone())),
-                    AnalysisKind::Check => Box::new(Bytecode::new_raw(bytes.clone()).to_checked()),
-                    AnalysisKind::Analyse => {
-                        Box::new(to_analysed(Bytecode::new_raw(bytes.clone())))
-                    }
+                    AnalysisKind::Raw => Bytecode::new_raw(bytes.clone()),
+                    AnalysisKind::Check => Bytecode::new_raw(bytes.clone()).to_checked(),
+                    AnalysisKind::Analyse => to_analysed(Bytecode::new_raw(bytes.clone())),
                 };
                 self.data
                     .journaled_state
-                    .set_code(created_address, *bytecode);
-                (
-                    InstructionResult::Return,
-                    Some(created_address),
-                    interpreter.gas,
-                    bytes,
-                )
+                    .set_code(prepared_create.created_address, bytecode);
+                CreateResult {
+                    result: InstructionResult::Return,
+                    created_address: Some(prepared_create.created_address),
+                    gas: interpreter.gas,
+                    return_value: bytes,
+                }
             }
             _ => {
-                self.data.journaled_state.checkpoint_revert(checkpoint);
-                (
-                    exit_reason,
-                    Some(created_address),
-                    interpreter.gas,
-                    interpreter.return_value(),
-                )
+                self.data
+                    .journaled_state
+                    .checkpoint_revert(prepared_create.checkpoint);
+                CreateResult {
+                    result: exit_reason,
+                    created_address: Some(prepared_create.created_address),
+                    gas: interpreter.gas,
+                    return_value: interpreter.return_value(),
+                }
             }
         }
     }
@@ -729,10 +771,16 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         }
         let ret = self.create_inner(inputs);
         if INSPECT {
-            self.inspector
-                .create_end(&mut self.data, inputs, ret.0, ret.1, ret.2, ret.3)
+            self.inspector.create_end(
+                &mut self.data,
+                inputs,
+                ret.result,
+                ret.created_address,
+                ret.gas,
+                ret.return_value,
+            )
         } else {
-            ret
+            (ret.result, ret.created_address, ret.gas, ret.return_value)
         }
     }
 
