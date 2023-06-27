@@ -32,7 +32,7 @@ pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
     _phantomdata: PhantomData<GSPEC>,
 }
 
-pub struct PreparedCreateResult {
+pub struct PreparedCreate {
     gas: Gas,
     created_address: B160,
     checkpoint: JournalCheckpoint,
@@ -42,6 +42,18 @@ pub struct PreparedCreateResult {
 pub struct CreateResult {
     result: InstructionResult,
     created_address: Option<B160>,
+    gas: Gas,
+    return_value: Bytes,
+}
+
+pub struct PreparedCall {
+    gas: Gas,
+    checkpoint: JournalCheckpoint,
+    contract: Box<Contract>,
+}
+
+pub struct CallResult {
+    result: InstructionResult,
     gas: Gas,
     return_value: Bytes,
 }
@@ -289,10 +301,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         (new_state, logs, gas_used, gas_refunded)
     }
 
-    fn prepare_create(
-        &mut self,
-        inputs: &CreateInputs,
-    ) -> Result<PreparedCreateResult, CreateResult> {
+    fn prepare_create(&mut self, inputs: &CreateInputs) -> Result<PreparedCreate, CreateResult> {
         let gas = Gas::new(inputs.gas_limit);
 
         // Check depth of calls
@@ -381,7 +390,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             inputs.value,
         ));
 
-        Ok(PreparedCreateResult {
+        Ok(PreparedCreate {
             gas,
             created_address,
             checkpoint,
@@ -530,11 +539,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     }
 
     /// Call precompile contract
-    fn call_precompile(
-        &mut self,
-        inputs: &CallInputs,
-        mut gas: Gas,
-    ) -> (InstructionResult, Gas, Bytes) {
+    fn call_precompile(&mut self, inputs: &CallInputs, mut gas: Gas) -> CallResult {
         let input_data = inputs.input.clone();
         let contract = inputs.contract;
 
@@ -549,9 +554,17 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         match out {
             Ok((gas_used, data)) => {
                 if !crate::USE_GAS || gas.record_cost(gas_used) {
-                    (InstructionResult::Return, gas, Bytes::from(data))
+                    CallResult {
+                        result: InstructionResult::Return,
+                        gas,
+                        return_value: Bytes::from(data),
+                    }
                 } else {
-                    (InstructionResult::PrecompileOOG, gas, Bytes::new())
+                    CallResult {
+                        result: InstructionResult::PrecompileOOG,
+                        gas,
+                        return_value: Bytes::new(),
+                    }
                 }
             }
             Err(e) => {
@@ -560,25 +573,30 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 } else {
                     InstructionResult::PrecompileError
                 };
-                (ret, gas, Bytes::new())
+                CallResult {
+                    result: ret,
+                    gas,
+                    return_value: Bytes::new(),
+                }
             }
         }
     }
 
-    fn prepare_call(
-        &mut self,
-        inputs: &mut CallInputs,
-    ) -> Result<(Gas, JournalCheckpoint, Box<Contract>), (InstructionResult, Gas, Bytes)> {
+    fn prepare_call(&mut self, inputs: &mut CallInputs) -> Result<PreparedCall, CallResult> {
         let gas = Gas::new(inputs.gas_limit);
         // Load account and get code. Account is now hot.
         let Some((bytecode,_)) = self.code(inputs.contract) else {
-            return Err((InstructionResult::FatalExternalError, gas, Bytes::new()));
+            return Err(CallResult{result: InstructionResult::FatalExternalError, gas, return_value: Bytes::new()});
         };
 
         // Check depth
         // println!("Current call depth: {}", self.data.journaled_state.depth());
         if self.data.journaled_state.depth() > CALL_STACK_LIMIT {
-            return Err((InstructionResult::CallTooDeep, gas, Bytes::new()));
+            return Err(CallResult {
+                result: InstructionResult::CallTooDeep,
+                gas,
+                return_value: Bytes::new(),
+            });
         }
 
         // Create subroutine checkpoint
@@ -598,7 +616,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             self.data.db,
         ) {
             self.data.journaled_state.checkpoint_revert(checkpoint);
-            return Err((e, gas, Bytes::new()));
+            return Err(CallResult {
+                result: e,
+                gas,
+                return_value: Bytes::new(),
+            });
         }
 
         let contract = Box::new(Contract::new_with_context(
@@ -607,34 +629,51 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             &inputs.context,
         ));
 
-        Ok((gas, checkpoint, contract))
+        Ok(PreparedCall {
+            gas,
+            checkpoint,
+            contract,
+        })
     }
 
     /// Main contract call of the EVM.
-    fn call_inner(&mut self, inputs: &mut CallInputs) -> (InstructionResult, Gas, Bytes) {
+    fn call_inner(&mut self, inputs: &mut CallInputs) -> CallResult {
         let res = self.prepare_call(inputs);
 
-        let (gas, checkpoint, contract) = match res {
+        let prepared_call = match res {
             Ok(o) => o,
             Err(e) => return e,
         };
 
         let ret = if is_precompile(inputs.contract, self.precompiles.len()) {
-            self.call_precompile(inputs, gas)
-        } else if !contract.bytecode.is_empty() {
+            self.call_precompile(inputs, prepared_call.gas)
+        } else if !prepared_call.contract.bytecode.is_empty() {
             // Create interpreter and execute subcall
-            let (exit_reason, interpreter) =
-                self.run_interpreter(contract, gas.limit(), inputs.is_static);
-            (exit_reason, interpreter.gas, interpreter.return_value())
+            let (exit_reason, interpreter) = self.run_interpreter(
+                prepared_call.contract,
+                prepared_call.gas.limit(),
+                inputs.is_static,
+            );
+            CallResult {
+                result: exit_reason,
+                gas: interpreter.gas,
+                return_value: interpreter.return_value(),
+            }
         } else {
-            (InstructionResult::Stop, gas, Bytes::new())
+            CallResult {
+                result: InstructionResult::Stop,
+                gas: prepared_call.gas,
+                return_value: Bytes::new(),
+            }
         };
 
         // revert changes or not.
-        if matches!(ret.0, return_ok!()) {
+        if matches!(ret.result, return_ok!()) {
             self.data.journaled_state.checkpoint_commit();
         } else {
-            self.data.journaled_state.checkpoint_revert(checkpoint);
+            self.data
+                .journaled_state
+                .checkpoint_revert(prepared_call.checkpoint);
         }
 
         ret
@@ -793,10 +832,15 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         }
         let ret = self.call_inner(inputs);
         if INSPECT {
-            self.inspector
-                .call_end(&mut self.data, inputs, ret.1, ret.0, ret.2)
+            self.inspector.call_end(
+                &mut self.data,
+                inputs,
+                ret.gas,
+                ret.result,
+                ret.return_value,
+            )
         } else {
-            ret
+            (ret.result, ret.gas, ret.return_value)
         }
     }
 }
