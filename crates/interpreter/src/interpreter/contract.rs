@@ -19,16 +19,8 @@ pub struct Contract {
 }
 
 impl Contract {
-    pub fn new(
-        input: Bytes,
-        bytecode: &Bytecode,
-        address: B160,
-        caller: B160,
-        value: U256,
-    ) -> Self {
-        let bytecode = to_analysed(bytecode.clone())
-            .try_into()
-            .expect("it is analyzed");
+    pub fn new(input: Bytes, bytecode: Bytecode, address: B160, caller: B160, value: U256) -> Self {
+        let bytecode = to_analysed(bytecode).try_into().expect("it is analyzed");
 
         Self {
             input,
@@ -47,7 +39,7 @@ impl Contract {
         };
         Self::new(
             env.tx.data.clone(),
-            &bytecode,
+            bytecode,
             contract_address,
             env.tx.caller,
             env.tx.value,
@@ -58,7 +50,7 @@ impl Contract {
         self.bytecode.jump_map().is_valid(possition)
     }
 
-    pub fn new_with_context(input: Bytes, bytecode: &Bytecode, call_context: &CallContext) -> Self {
+    pub fn new_with_context(input: Bytes, bytecode: Bytecode, call_context: &CallContext) -> Self {
         Self::new(
             input,
             bytecode,
