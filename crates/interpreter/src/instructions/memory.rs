@@ -51,15 +51,14 @@ pub fn mcopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 
     // into usize or fail
     let len = as_usize_or_fail!(interpreter, len, InstructionResult::InvalidOperandOOG);
-    let dest = as_usize_or_fail!(interpreter, dest, InstructionResult::InvalidOperandOOG);
-    let src = as_usize_or_fail!(interpreter, src, InstructionResult::InvalidOperandOOG);
     // deduce gas
     gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
-
-    // check if len is 0
     if len == 0 {
         return;
     }
+    
+    let dest = as_usize_or_fail!(interpreter, dest, InstructionResult::InvalidOperandOOG);
+    let src = as_usize_or_fail!(interpreter, src, InstructionResult::InvalidOperandOOG);
     // temporary value for memory resize
     let mut resize = dest;
     if src + len > dest {
