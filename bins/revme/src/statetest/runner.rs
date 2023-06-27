@@ -359,7 +359,7 @@ pub fn run(
 
         // Allow bigger stack in debug mode to prevent stack overflow errors
         if cfg!(debug_assertions) {
-            thread = thread.stack_size(3 * 1024 * 1024);
+            thread = thread.stack_size(4 * 1024 * 1024);
         }
 
         joins.push(
