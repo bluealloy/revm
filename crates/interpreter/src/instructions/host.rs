@@ -522,7 +522,7 @@ pub fn call_inner<SPEC: Spec>(
     // Call host to interact with target contract
     let (reason, gas, return_data) = host.call(&mut call_input);
 
-    interpreter.return_data_buffer = return_data.clone();
+    interpreter.return_data_buffer = return_data;
 
     let target_len = min(out_len, interpreter.return_data_buffer.len());
 

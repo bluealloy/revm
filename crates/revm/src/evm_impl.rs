@@ -309,7 +309,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             return Err(CreateResult {
                 result: InstructionResult::CallTooDeep,
                 created_address: None,
-                gas: gas,
+                gas,
                 return_value: Bytes::new(),
             });
         }
