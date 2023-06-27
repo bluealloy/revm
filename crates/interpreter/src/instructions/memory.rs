@@ -1,3 +1,5 @@
+use core::cmp::max;
+
 use revm_primitives::SpecId::CANCUN;
 
 use crate::{
@@ -58,7 +60,7 @@ pub fn mcopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     if len == 0 {
         return;
     }
-    
+
     let dest = as_usize_or_fail!(interpreter, dest, InstructionResult::InvalidOperandOOG);
     let src = as_usize_or_fail!(interpreter, src, InstructionResult::InvalidOperandOOG);
     // temporary value for memory resize
