@@ -45,8 +45,14 @@ pub struct TxEnv {
     pub chain_id: Option<u64>,
     pub nonce: Option<u64>,
     pub access_list: Vec<(B160, Vec<U256>)>,
+    pub blob_versioned_hashes: Vec<VersionedHash>,
 }
-
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct VersionedHash {
+    pub version: u8,
+    pub hash: B256,
+}
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TransactTo {
@@ -231,6 +237,7 @@ impl Default for TxEnv {
             chain_id: None,
             nonce: None,
             access_list: Vec::new(),
+            blob_versioned_hashes: Vec::new(),
         }
     }
 }

@@ -175,6 +175,7 @@ pub fn eval<H: Host, S: Spec>(opcode: u8, interp: &mut Interpreter, host: &mut H
         opcode::DELEGATECALL => host::delegate_call::<S>(interp, host), //check
         opcode::STATICCALL => host::static_call::<S>(interp, host), //check
         opcode::CHAINID => host_env::chainid::<S>(interp, host),
+        opcode::BLOBHASH => memory::blob_hash(interp, host),
         _ => return_not_found(interp, host),
     }
 }

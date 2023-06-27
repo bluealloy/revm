@@ -119,6 +119,7 @@ pub const INVALID: u8 = 0xfe;
 pub const ADDRESS: u8 = 0x30;
 pub const BALANCE: u8 = 0x31;
 pub const BASEFEE: u8 = 0x48;
+pub const BLOBHASH: u8 = 0x49;
 pub const ORIGIN: u8 = 0x32;
 pub const CALLER: u8 = 0x33;
 pub const CALLVALUE: u8 = 0x34;
@@ -255,7 +256,7 @@ pub const OPCODE_JUMPMAP: [Option<&'static str>; 256] = [
     /* 0x46 */ Some("CHAINID"),
     /* 0x47 */ Some("SELFBALANCE"),
     /* 0x48 */ Some("BASEFEE"),
-    /* 0x49 */ None,
+    /* 0x49 */ Some("BLOBHASH"),
     /* 0x4a */ None,
     /* 0x4b */ None,
     /* 0x4c */ None,
@@ -635,7 +636,7 @@ macro_rules! gas_opcodee {
             } else {
                 0
             }),
-            /* 0x49 */ OpInfo::none(),
+            /* 0x49 */ OpInfo::gas(3),
             /* 0x4a */ OpInfo::none(),
             /* 0x4b */ OpInfo::none(),
             /* 0x4c */ OpInfo::none(),
