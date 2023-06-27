@@ -60,10 +60,8 @@ pub fn mcopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     let dest = as_usize_or_fail!(interpreter, dest, InstructionResult::InvalidOperandOOG);
     let src = as_usize_or_fail!(interpreter, src, InstructionResult::InvalidOperandOOG);
     // temporary value for memory resize
-    let mut resize = dest;
-    if src + len > dest {
-        resize = src + len;
-    }
+    // memory resize
+    let resize = max(dest, len).saturating_add(len);
     // resize memory
     memory_resize!(interpreter, src, resize);
     // copy memory in place
