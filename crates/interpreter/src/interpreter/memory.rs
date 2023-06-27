@@ -66,15 +66,6 @@ impl Memory {
     pub fn get_slice(&self, offset: usize, size: usize) -> &[u8] {
         &self.data[offset..offset + size]
     }
-
-    /// Memory copy
-    /// Copies memory inplace to a returns a [u8]
-    #[inline(always)]
-    pub fn copy_to_vec(&self, offset: usize, size: usize) -> Vec<u8> {
-        let mut vec = vec![0u8; size];
-        vec.copy_from_slice(&self.data[offset..size]);
-        vec
-    }
     /// Set memory region at given offset
     ///
     /// # Safety
