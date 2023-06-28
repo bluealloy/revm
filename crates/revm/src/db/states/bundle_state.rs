@@ -1,6 +1,6 @@
 use super::{
     changes::StateChangeset, reverts::AccountInfoRevert, AccountRevert, BundleAccount,
-    StateReverts, Storage, TransitionState,
+    StateReverts, TransitionState,
 };
 use rayon::slice::ParallelSliceMut;
 use revm_interpreter::primitives::{

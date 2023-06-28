@@ -21,4 +21,4 @@ compile_error!(
 pub use crate::primitives::db::*;
 pub use in_memory_db::*;
 
-pub use emptydb::EmptyDB;
+pub use emptydb::{EmptyDB, EmptyDBTyped};

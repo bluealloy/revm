@@ -12,6 +12,7 @@ impl Default for InMemoryDB {
     fn default() -> Self {
         CacheDB::new(EmptyDB {
             keccak_block_hash: true,
+            _phantom: core::marker::PhantomData,
         })
     }
 }

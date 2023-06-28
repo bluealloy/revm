@@ -25,6 +25,12 @@ pub trait Database {
     fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error>;
 }
 
+impl<F: DatabaseRef> From<F> for WrapDatabaseRef<F> {
+    fn from(f: F) -> Self {
+        WrapDatabaseRef(f)
+    }
+}
+
 #[auto_impl(&mut, Box)]
 pub trait DatabaseCommit {
     fn commit(&mut self, changes: Map<B160, Account>);
@@ -46,7 +52,7 @@ pub trait DatabaseRef {
     fn block_hash(&self, number: U256) -> Result<B256, Self::Error>;
 }
 
-pub struct WrapDatabaseRef<T: DatabaseRef>(T);
+pub struct WrapDatabaseRef<T: DatabaseRef>(pub T);
 
 impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
     type Error = T::Error;

@@ -5,7 +5,7 @@ use super::{
 };
 use crate::{db::EmptyDB, TransitionAccount};
 use revm_interpreter::primitives::{
-    db::{Database, DatabaseCommit, DatabaseRef},
+    db::{Database, DatabaseCommit},
     hash_map, Account, AccountInfo, Bytecode, HashMap, B160, B256, U256,
 };
 
@@ -17,6 +17,8 @@ pub struct State<'a, DBError> {
     pub cache: CacheState,
     /// Optional database that we use to fetch data from. If database is not present, we will
     /// return not existing account and storage.
+    ///
+    /// Note: It is marked as Send so database can be shared between threads.
     pub database: Box<dyn Database<Error = DBError> + Send + 'a>,
     /// Build reverts and state that gets applied to the state.
     pub transition_builder: Option<TransitionBuilder>,

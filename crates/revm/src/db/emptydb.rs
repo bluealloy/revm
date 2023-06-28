@@ -1,25 +1,45 @@
-use core::convert::Infallible;
+use core::{convert::Infallible, marker::PhantomData};
 use revm_interpreter::primitives::{
     db::{Database, DatabaseRef},
     keccak256, AccountInfo, Bytecode, B160, B256, U256,
 };
 
-/// An empty database that always returns default values when queried.
-#[derive(Debug, Default, Clone)]
-pub struct EmptyDB {
-    pub keccak_block_hash: bool,
-}
+pub type EmptyDB = EmptyDBTyped<Infallible>;
 
-impl EmptyDB {
-    pub fn new_keccak_block_hash() -> Self {
+impl Default for EmptyDB {
+    fn default() -> Self {
         Self {
-            keccak_block_hash: true,
+            keccak_block_hash: false,
+            _phantom: PhantomData::default(),
         }
     }
 }
 
-impl Database for EmptyDB {
-    type Error = Infallible;
+/// An empty database that always returns default values when queried.
+#[derive(Debug, Clone)]
+pub struct EmptyDBTyped<T> {
+    pub keccak_block_hash: bool,
+    pub _phantom: PhantomData<T>,
+}
+
+impl<T> EmptyDBTyped<T> {
+    pub fn new() -> Self {
+        Self {
+            keccak_block_hash: false,
+            _phantom: PhantomData::default(),
+        }
+    }
+
+    pub fn new_keccak_block_hash() -> Self {
+        Self {
+            keccak_block_hash: true,
+            _phantom: PhantomData::default(),
+        }
+    }
+}
+
+impl<T> Database for EmptyDBTyped<T> {
+    type Error = T;
 
     fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
         <Self as DatabaseRef>::basic(self, address)
@@ -38,8 +58,8 @@ impl Database for EmptyDB {
     }
 }
 
-impl DatabaseRef for EmptyDB {
-    type Error = Infallible;
+impl<T> DatabaseRef for EmptyDBTyped<T> {
+    type Error = T;
     /// Get basic account information.
     fn basic(&self, _address: B160) -> Result<Option<AccountInfo>, Self::Error> {
         Ok(None)
