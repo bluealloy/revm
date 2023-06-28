@@ -1,6 +1,7 @@
 use crate::primitives::{Bytes, Spec, SpecId::*, B160, B256, U256};
 use crate::MAX_INITCODE_SIZE;
 use crate::{
+    alloc::boxed::Box,
     alloc::vec::Vec,
     gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
     interpreter::Interpreter,

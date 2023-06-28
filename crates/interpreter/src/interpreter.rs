@@ -10,6 +10,7 @@ pub use stack::Stack;
 
 use crate::primitives::{Bytes, Spec};
 use crate::{
+    alloc::boxed::Box,
     instructions::{eval, InstructionResult},
     Gas, Host,
 };
