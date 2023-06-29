@@ -138,6 +138,13 @@ impl StorageSlot {
         }
     }
 
+    pub fn new_changed(original_value: U256, present_value: U256) -> Self {
+        Self {
+            original_value,
+            present_value,
+        }
+    }
+
     pub fn new_cleared_value(original: U256) -> Self {
         Self {
             original_value: original,

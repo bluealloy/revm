@@ -1,6 +1,6 @@
 use super::{
-    reverts::AccountInfoRevert, AccountRevert, AccountStatus, RevertToSlot, Storage,
-    TransitionAccount,
+    account_status, reverts::AccountInfoRevert, AccountRevert, AccountStatus, RevertToSlot,
+    Storage, TransitionAccount,
 };
 use revm_interpreter::primitives::{AccountInfo, StorageSlot, U256};
 use revm_precompile::HashMap;
@@ -28,6 +28,19 @@ pub struct BundleAccount {
 }
 
 impl BundleAccount {
+    pub fn new(
+        original_info: Option<AccountInfo>,
+        present_info: Option<AccountInfo>,
+        storage: Storage,
+        status: AccountStatus,
+    ) -> Self {
+        Self {
+            info: present_info,
+            original_info,
+            storage,
+            status,
+        }
+    }
     /// Return storage slot if it exist.
     ///
     /// In case we know that account is destroyed return `Some(U256::ZERO)`

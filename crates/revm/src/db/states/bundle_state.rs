@@ -1,11 +1,11 @@
 use super::{
-    changes::StateChangeset, reverts::AccountInfoRevert, AccountRevert, BundleAccount,
-    StateReverts, TransitionState,
+    changes::StateChangeset, reverts::AccountInfoRevert, AccountRevert, AccountStatus,
+    BundleAccount, RevertToSlot, StateReverts, TransitionState,
 };
 use rayon::slice::ParallelSliceMut;
 use revm_interpreter::primitives::{
     hash_map::{self, Entry},
-    AccountInfo, Bytecode, HashMap, B160, B256, U256,
+    AccountInfo, Bytecode, HashMap, StorageSlot, B160, B256, U256,
 };
 
 /// Bundle state contain only values that got changed
@@ -49,23 +49,80 @@ impl BundleState {
 
     /// Create it with new and old values of both Storage and AccountInfo.
     pub fn new(
-        _state: impl IntoIterator<
+        state: impl IntoIterator<
             Item = (
                 B160,
-                Option<(Option<AccountInfo>, Option<AccountInfo>)>,
+                Option<AccountInfo>,
+                Option<AccountInfo>,
                 HashMap<U256, (U256, U256)>,
             ),
         >,
+        reverts: impl IntoIterator<
+            Item = impl IntoIterator<
+                Item = (
+                    B160,
+                    Option<Option<AccountInfo>>,
+                    impl IntoIterator<Item = (U256, U256)>,
+                ),
+            >,
+        >,
+        contracts: impl IntoIterator<Item = (B256, Bytecode)>,
     ) -> Self {
-        // For state:
-        //  * We need present state.
-        //  * We need original state that is currently in db.
-        //  * TODO contract reverts
+        let state = state
+            .into_iter()
+            .map(|(address, old_account, new_account, storage)| {
+                (
+                    address,
+                    BundleAccount::new(
+                        old_account,
+                        new_account,
+                        storage
+                            .into_iter()
+                            .map(|(k, (o_val, p_val))| (k, StorageSlot::new_changed(o_val, p_val)))
+                            .collect(),
+                        AccountStatus::Changed,
+                    ),
+                )
+            })
+            .collect();
 
-        // For reverts:
-        // * We need previous account status.
+        let reverts = reverts
+            .into_iter()
+            .map(|block_reverts| {
+                block_reverts
+                    .into_iter()
+                    .map(|(address, account, storage)| {
+                        let account = if let Some(account) = account {
+                            if let Some(account) = account {
+                                AccountInfoRevert::RevertTo(account)
+                            } else {
+                                AccountInfoRevert::DeleteIt
+                            }
+                        } else {
+                            AccountInfoRevert::DoNothing
+                        };
+                        (
+                            address,
+                            AccountRevert {
+                                account,
+                                storage: storage
+                                    .into_iter()
+                                    .map(|(k, v)| (k, RevertToSlot::Some(v)))
+                                    .collect(),
+                                previous_status: AccountStatus::Changed,
+                                wipe_storage: false,
+                            },
+                        )
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
 
-        Self::default()
+        Self {
+            state,
+            contracts: contracts.into_iter().collect(),
+            reverts,
+        }
     }
 
     /// Get account from state
