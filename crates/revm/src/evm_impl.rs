@@ -591,7 +591,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         };
 
         // Check depth
-        // println!("Current call depth: {}", self.data.journaled_state.depth());
         if self.data.journaled_state.depth() > CALL_STACK_LIMIT {
             return Err(CallResult {
                 result: InstructionResult::CallTooDeep,
