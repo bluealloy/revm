@@ -5,7 +5,7 @@ use super::{
 use rayon::slice::ParallelSliceMut;
 use revm_interpreter::primitives::{
     hash_map::{self, Entry},
-    AccountInfo, Bytecode, HashMap, StorageSlot, B160, B256, U256,
+    AccountInfo, Address, Bytecode, HashMap, StorageSlot, B256, U256,
 };
 
 /// Bundle state contain only values that got changed
@@ -18,14 +18,14 @@ use revm_interpreter::primitives::{
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BundleState {
     /// Account state.
-    pub state: HashMap<B160, BundleAccount>,
+    pub state: HashMap<Address, BundleAccount>,
     /// All created contracts in this block.
     pub contracts: HashMap<B256, Bytecode>,
     /// Changes to revert.
     ///
     /// Note: Inside vector is *not* sorted by address.
     /// But it is unique by address.
-    pub reverts: Vec<Vec<(B160, AccountRevert)>>,
+    pub reverts: Vec<Vec<(Address, AccountRevert)>>,
 }
 
 impl Default for BundleState {
@@ -40,7 +40,7 @@ impl Default for BundleState {
 
 impl BundleState {
     /// Return reference to the state.
-    pub fn state(&self) -> &HashMap<B160, BundleAccount> {
+    pub fn state(&self) -> &HashMap<Address, BundleAccount> {
         &self.state
     }
 
@@ -58,7 +58,7 @@ impl BundleState {
     pub fn new(
         state: impl IntoIterator<
             Item = (
-                B160,
+                Address,
                 Option<AccountInfo>,
                 Option<AccountInfo>,
                 HashMap<U256, (U256, U256)>,
@@ -67,7 +67,7 @@ impl BundleState {
         reverts: impl IntoIterator<
             Item = impl IntoIterator<
                 Item = (
-                    B160,
+                    Address,
                     Option<Option<AccountInfo>>,
                     impl IntoIterator<Item = (U256, U256)>,
                 ),
@@ -135,7 +135,7 @@ impl BundleState {
     }
 
     /// Get account from state
-    pub fn account(&self, addres: &B160) -> Option<&BundleAccount> {
+    pub fn account(&self, addres: &Address) -> Option<&BundleAccount> {
         self.state.get(addres)
     }
 
@@ -356,7 +356,7 @@ mod tests {
     #[test]
     fn transition_all_states() {
         // dummy data
-        let address = B160([0x01; 20]);
+        let address = Address::new([0x01; 20]);
         let acc1 = AccountInfo {
             balance: U256::from(10),
             nonce: 1,

@@ -1,8 +1,8 @@
 use crate::{
-    alloc::vec::Vec, Account, EVMError, InvalidTransaction, Spec, SpecId, B160, B256, KECCAK_EMPTY,
+    Account, Address, Bytes, EVMError, InvalidTransaction, Spec, SpecId, B256, KECCAK_EMPTY,
     MAX_INITCODE_SIZE, U256,
 };
-use bytes::Bytes;
+use alloc::vec::Vec;
 use core::cmp::{min, Ordering};
 
 #[derive(Clone, Debug, Default)]
@@ -18,7 +18,7 @@ pub struct BlockEnv {
     pub number: U256,
     /// Coinbase or miner or address that created and signed the block.
     /// Address where we are going to send gas spend
-    pub coinbase: B160,
+    pub coinbase: Address,
     pub timestamp: U256,
     /// Difficulty is removed and not used after Paris (aka TheMerge). Value is replaced with prevrandao.
     pub difficulty: U256,
@@ -34,23 +34,22 @@ pub struct BlockEnv {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxEnv {
     /// Caller or Author or tx signer
-    pub caller: B160,
+    pub caller: Address,
     pub gas_limit: u64,
     pub gas_price: U256,
     pub gas_priority_fee: Option<U256>,
     pub transact_to: TransactTo,
     pub value: U256,
-    #[cfg_attr(feature = "serde", serde(with = "crate::utilities::serde_hex_bytes"))]
     pub data: Bytes,
     pub chain_id: Option<u64>,
     pub nonce: Option<u64>,
-    pub access_list: Vec<(B160, Vec<U256>)>,
+    pub access_list: Vec<(Address, Vec<U256>)>,
 }
 
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TransactTo {
-    Call(B160),
+    Call(Address),
     Create(CreateScheme),
 }
 
@@ -209,10 +208,10 @@ impl Default for BlockEnv {
         BlockEnv {
             gas_limit: U256::MAX,
             number: U256::ZERO,
-            coinbase: B160::zero(),
+            coinbase: Address::ZERO,
             timestamp: U256::from(1),
             difficulty: U256::ZERO,
-            prevrandao: Some(B256::zero()),
+            prevrandao: Some(B256::ZERO),
             basefee: U256::ZERO,
         }
     }
@@ -221,11 +220,11 @@ impl Default for BlockEnv {
 impl Default for TxEnv {
     fn default() -> TxEnv {
         TxEnv {
-            caller: B160::zero(),
+            caller: Address::ZERO,
             gas_limit: u64::MAX,
             gas_price: U256::ZERO,
             gas_priority_fee: None,
-            transact_to: TransactTo::Call(B160::zero()), //will do nothing
+            transact_to: TransactTo::Call(Address::ZERO), //will do nothing
             value: U256::ZERO,
             data: Bytes::new(),
             chain_id: None,
