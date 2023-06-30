@@ -66,6 +66,7 @@ impl Memory {
     pub fn get_slice(&self, offset: usize, size: usize) -> &[u8] {
         &self.data[offset..offset + size]
     }
+
     /// Set memory region at given offset
     ///
     /// # Safety
@@ -109,6 +110,7 @@ impl Memory {
             *i = 0;
         }
     }
+
     /// In memory copy given a src, dst, and length
     ///
     /// # Safety
