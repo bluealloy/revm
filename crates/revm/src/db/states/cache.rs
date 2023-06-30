@@ -12,7 +12,7 @@ use revm_interpreter::primitives::{
 ///
 /// Sharading data between bundle execution can be done with help of bundle id.
 /// That should help with unmarking account of old bundle and allowing them to be removed.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct CacheState {
     /// Block state account with account state
     pub accounts: HashMap<B160, CacheAccount>,
@@ -21,6 +21,12 @@ pub struct CacheState {
     pub contracts: HashMap<B256, Bytecode>,
     /// Has EIP-161 state clear enabled (Spurious Dragon hardfork).
     pub has_state_clear: bool,
+}
+
+impl Default for CacheState {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl CacheState {
@@ -162,12 +168,12 @@ impl CacheState {
                     // touch empty account.
                     match self.accounts.entry(address) {
                         Entry::Occupied(mut entry) => {
-                            entry.get_mut().touch_empty();
+                            if let Some(transition) = entry.get_mut().touch_empty() {
+                                transitions.push((address, transition));
+                            }
                         }
                         Entry::Vacant(_entry) => {
-                            // else do nothing as account is not existings.
-                            // Assumption is that account should be present when applying
-                            // evm state.
+                            unreachable!("Empty account should be loaded in cache")
                         }
                     }
                     continue;

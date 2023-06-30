@@ -80,7 +80,7 @@ impl CacheAccount {
     }
 
     /// Touche empty account, related to EIP-161 state clear.
-    pub fn touch_empty(&mut self) -> TransitionAccount {
+    pub fn touch_empty(&mut self) -> Option<TransitionAccount> {
         let previous_status = self.status;
 
         // zero all storage slot as they are removed now.
@@ -106,18 +106,40 @@ impl CacheAccount {
                 // Note: we can probably set it to LoadedNotExisting.
                 AccountStatus::Destroyed
             }
+            AccountStatus::LoadedNotExisting => {
+                // account can be touched but not existing.
+                // This is a noop.
+                AccountStatus::LoadedNotExisting
+            }
+            AccountStatus::Destroyed => {
+                // do nothing
+                AccountStatus::Destroyed
+            }
+            AccountStatus::DestroyedAgain => {
+                // do nothing
+                AccountStatus::DestroyedAgain
+            }
             AccountStatus::LoadedEmptyEIP161 => AccountStatus::Destroyed,
             _ => {
                 // do nothing
                 unreachable!("Wrong state transition, touch empty is not possible from {self:?}");
             }
         };
-        TransitionAccount {
-            info: None,
-            status: self.status,
-            previous_info,
-            previous_status,
-            storage,
+        if matches!(
+            self.status,
+            AccountStatus::LoadedNotExisting
+                | AccountStatus::Destroyed
+                | AccountStatus::DestroyedAgain
+        ) {
+            None
+        } else {
+            Some(TransitionAccount {
+                info: None,
+                status: self.status,
+                previous_info,
+                previous_status,
+                storage,
+            })
         }
     }
 
