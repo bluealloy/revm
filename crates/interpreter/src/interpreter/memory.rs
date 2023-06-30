@@ -128,7 +128,27 @@ pub(crate) fn next_multiple_of_32(x: usize) -> Option<usize> {
 
 #[cfg(test)]
 mod tests {
+    use crate::Memory;
+
     use super::next_multiple_of_32;
+
+    #[test]
+    fn test_copy() {
+        // Create a sample memory instance
+        let mut memory = Memory::new();
+
+        // Set up initial memory data
+        let data: Vec<u8> = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        memory.resize(data.len());
+        memory.set_data(0, 0, data.len(), &data);
+
+        // Perform a copy operation
+        memory.copy(5, 0, 4);
+
+        // Verify the copied data
+        let copied_data = memory.get_slice(5, 4);
+        assert_eq!(copied_data, &[1, 2, 3, 4]);
+    }
 
     #[test]
     fn test_next_multiple_of_32() {
