@@ -278,10 +278,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             };
 
             // transfer fee to coinbase/beneficiary.
-            let Ok((coinbase_account,_)) = self
+            let Ok((coinbase_account, _)) = self
                 .data
                 .journaled_state
-                .load_account(coinbase, self.data.db) else { panic!("coinbase account not found");};
+                .load_account(coinbase, self.data.db)
+            else {
+                panic!("coinbase account not found");
+            };
             coinbase_account.mark_touch();
             coinbase_account.info.balance = coinbase_account
                 .info
@@ -316,8 +319,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
 
         // Fetch balance of caller.
-        let Some((caller_balance,_)) = self.balance(inputs.caller) else {
-            return Err(CreateResult{result: InstructionResult::FatalExternalError, created_address: None, gas, return_value: Bytes::new()});
+        let Some((caller_balance, _)) = self.balance(inputs.caller) else {
+            return Err(CreateResult {
+                result: InstructionResult::FatalExternalError,
+                created_address: None,
+                gas,
+                return_value: Bytes::new(),
+            });
         };
 
         // Check if caller has enough balance to send to the crated contract.
@@ -586,8 +594,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     fn prepare_call(&mut self, inputs: &mut CallInputs) -> Result<PreparedCall, CallResult> {
         let gas = Gas::new(inputs.gas_limit);
         // Load account and get code. Account is now hot.
-        let Some((bytecode,_)) = self.code(inputs.contract) else {
-            return Err(CallResult{result: InstructionResult::FatalExternalError, gas, return_value: Bytes::new()});
+        let Some((bytecode, _)) = self.code(inputs.contract) else {
+            return Err(CallResult {
+                result: InstructionResult::FatalExternalError,
+                gas,
+                return_value: Bytes::new(),
+            });
         };
 
         // Check depth
