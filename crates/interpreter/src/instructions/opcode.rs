@@ -48,6 +48,7 @@ pub const JUMPI: u8 = 0x57;
 pub const PC: u8 = 0x58;
 pub const MSIZE: u8 = 0x59;
 pub const JUMPDEST: u8 = 0x5b;
+pub const MCOPY: u8 = 0x5e;
 pub const PUSH0: u8 = 0x5f;
 pub const PUSH1: u8 = 0x60;
 pub const PUSH2: u8 = 0x61;
@@ -276,7 +277,7 @@ pub const OPCODE_JUMPMAP: [Option<&'static str>; 256] = [
     /* 0x5b */ Some("JUMPDEST"),
     /* 0x5c */ None,
     /* 0x5d */ None,
-    /* 0x5e */ None,
+    /* 0x5e */ Some("MCOPY"),
     /* 0x5f */ Some("PUSH0"),
     /* 0x60 */ Some("PUSH1"),
     /* 0x61 */ Some("PUSH2"),
@@ -658,7 +659,7 @@ macro_rules! gas_opcodee {
             OpInfo::jumpdest(),
             /* 0x5c */ OpInfo::none(),
             /* 0x5d */ OpInfo::none(),
-            /* 0x5e */ OpInfo::none(),
+            /* 0x5e  MCOPY */ OpInfo::dynamic_gas(),
             /* 0x5f PUSH0 */
             OpInfo::gas(if SpecId::enabled($spec_id, SpecId::SHANGHAI) {
                 gas::BASE
