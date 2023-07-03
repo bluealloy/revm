@@ -9,7 +9,7 @@ Modules:
 - [inner_models](./interpreter/inner_models.md): Based on the name, this module could contain the inner data structures or models used in the EVM implementation.
 - [instruction_result](./interpreter/instruction_result.md): This module likely contains definitions related to the result of instruction execution.
 - [instructions](./interpreter/instructions.md): This module is expected to include the definitions of the EVM opcodes (instructions).
-- [interpreter](./interpreter/interpreter.md): This module would contain the Interpreter struct and related functionality for executing EVM instructions.
+
 
 External Crates:
 
