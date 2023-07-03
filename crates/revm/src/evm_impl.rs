@@ -3,7 +3,7 @@ use crate::interpreter::{
     CallContext, CallInputs, CallScheme, Contract, CreateInputs, CreateScheme, Gas, Host,
     InstructionResult, Interpreter, SelfDestructResult, Transfer, CALL_STACK_LIMIT,
 };
-use crate::journaled_state::is_precompile;
+use crate::journaled_state::{is_precompile, JournalCheckpoint};
 use crate::primitives::{
     create2_address, create_address, keccak256, Account, AnalysisKind, Bytecode, Bytes, EVMError,
     EVMResult, Env, ExecutionResult, HashMap, InvalidTransaction, Log, Output, ResultAndState,
@@ -12,6 +12,7 @@ use crate::primitives::{
     TransactTo, B160, B256, U256,
 };
 use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector};
+use alloc::boxed::Box;
 use alloc::vec::Vec;
 use core::{cmp::min, marker::PhantomData};
 use revm_interpreter::gas::initial_tx_gas;
@@ -30,6 +31,32 @@ pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
     precompiles: Precompiles,
     inspector: &'a mut dyn Inspector<DB>,
     _phantomdata: PhantomData<GSPEC>,
+}
+
+struct PreparedCreate {
+    gas: Gas,
+    created_address: B160,
+    checkpoint: JournalCheckpoint,
+    contract: Box<Contract>,
+}
+
+struct CreateResult {
+    result: InstructionResult,
+    created_address: Option<B160>,
+    gas: Gas,
+    return_value: Bytes,
+}
+
+struct PreparedCall {
+    gas: Gas,
+    checkpoint: JournalCheckpoint,
+    contract: Box<Contract>,
+}
+
+struct CallResult {
+    result: InstructionResult,
+    gas: Gas,
+    return_value: Bytes,
 }
 
 pub trait Transact<DBError> {
@@ -251,10 +278,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             };
 
             // transfer fee to coinbase/beneficiary.
-            let Ok((coinbase_account,_)) = self
+            let Ok((coinbase_account, _)) = self
                 .data
                 .journaled_state
-                .load_account(coinbase, self.data.db) else { panic!("coinbase account not found");};
+                .load_account(coinbase, self.data.db)
+            else {
+                panic!("coinbase account not found");
+            };
             coinbase_account.mark_touch();
             coinbase_account.info.balance = coinbase_account
                 .info
@@ -275,26 +305,37 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         (new_state, logs, gas_used, gas_refunded)
     }
 
-    /// EVM create opcode for both initial crate and CREATE and CREATE2 opcodes.
-    fn create_inner(
-        &mut self,
-        inputs: &CreateInputs,
-    ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
+    fn prepare_create(&mut self, inputs: &CreateInputs) -> Result<PreparedCreate, CreateResult> {
         let gas = Gas::new(inputs.gas_limit);
 
         // Check depth of calls
         if self.data.journaled_state.depth() > CALL_STACK_LIMIT {
-            return (InstructionResult::CallTooDeep, None, gas, Bytes::new());
+            return Err(CreateResult {
+                result: InstructionResult::CallTooDeep,
+                created_address: None,
+                gas,
+                return_value: Bytes::new(),
+            });
         }
 
         // Fetch balance of caller.
-        let Some((caller_balance,_)) = self.balance(inputs.caller) else {
-            return (InstructionResult::FatalExternalError, None, gas, Bytes::new())
+        let Some((caller_balance, _)) = self.balance(inputs.caller) else {
+            return Err(CreateResult {
+                result: InstructionResult::FatalExternalError,
+                created_address: None,
+                gas,
+                return_value: Bytes::new(),
+            });
         };
 
         // Check if caller has enough balance to send to the crated contract.
         if caller_balance < inputs.value {
-            return (InstructionResult::OutOfFund, None, gas, Bytes::new());
+            return Err(CreateResult {
+                result: InstructionResult::OutOfFund,
+                created_address: None,
+                gas,
+                return_value: Bytes::new(),
+            });
         }
 
         // Increase nonce of caller and check if it overflows
@@ -302,7 +343,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         if let Some(nonce) = self.data.journaled_state.inc_nonce(inputs.caller) {
             old_nonce = nonce - 1;
         } else {
-            return (InstructionResult::Return, None, gas, Bytes::new());
+            return Err(CreateResult {
+                result: InstructionResult::Return,
+                created_address: None,
+                gas,
+                return_value: Bytes::new(),
+            });
         }
 
         // Create address
@@ -311,7 +357,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             CreateScheme::Create => create_address(inputs.caller, old_nonce),
             CreateScheme::Create2 { salt } => create2_address(inputs.caller, code_hash, salt),
         };
-        let ret = Some(created_address);
 
         // Load account so it needs to be marked as hot for access list.
         if self
@@ -321,12 +366,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             .map_err(|e| self.data.error = Some(e))
             .is_err()
         {
-            return (
-                InstructionResult::FatalExternalError,
-                None,
+            return Err(CreateResult {
+                result: InstructionResult::FatalExternalError,
+                created_address: None,
                 gas,
-                Bytes::new(),
-            );
+                return_value: Bytes::new(),
+            });
         }
 
         // create account, transfer funds and make the journal checkpoint.
@@ -336,21 +381,44 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             .create_account_checkpoint::<GSPEC>(inputs.caller, created_address, inputs.value)
         {
             Ok(checkpoint) => checkpoint,
-            Err(e) => return (e, None, gas, Bytes::new()),
+            Err(e) => {
+                return Err(CreateResult {
+                    result: e,
+                    created_address: None,
+                    gas,
+                    return_value: Bytes::new(),
+                })
+            }
+        };
+
+        let contract = Box::new(Contract::new(
+            Bytes::new(),
+            Bytecode::new_raw(inputs.init_code.clone()),
+            created_address,
+            inputs.caller,
+            inputs.value,
+        ));
+
+        Ok(PreparedCreate {
+            gas,
+            created_address,
+            checkpoint,
+            contract,
+        })
+    }
+
+    /// EVM create opcode for both initial crate and CREATE and CREATE2 opcodes.
+    fn create_inner(&mut self, inputs: &CreateInputs) -> CreateResult {
+        let res = self.prepare_create(inputs);
+
+        let prepared_create = match res {
+            Ok(o) => o,
+            Err(e) => return e,
         };
 
         // Create new interpreter and execute initcode
-        let (exit_reason, mut interpreter) = self.run_interpreter(
-            Contract::new(
-                Bytes::new(),
-                Bytecode::new_raw(inputs.init_code.clone()),
-                created_address,
-                inputs.caller,
-                inputs.value,
-            ),
-            gas.limit(),
-            false,
-        );
+        let (exit_reason, mut interpreter) =
+            self.run_interpreter(prepared_create.contract, prepared_create.gas.limit(), false);
 
         // Host error if present on execution
         match exit_reason {
@@ -360,13 +428,15 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
                 // EIP-3541: Reject new contract code starting with the 0xEF byte
                 if GSPEC::enabled(LONDON) && !bytes.is_empty() && bytes.first() == Some(&0xEF) {
-                    self.data.journaled_state.checkpoint_revert(checkpoint);
-                    return (
-                        InstructionResult::CreateContractStartingWithEF,
-                        ret,
-                        interpreter.gas,
-                        bytes,
-                    );
+                    self.data
+                        .journaled_state
+                        .checkpoint_revert(prepared_create.checkpoint);
+                    return CreateResult {
+                        result: InstructionResult::CreateContractStartingWithEF,
+                        created_address: Some(prepared_create.created_address),
+                        gas: interpreter.gas,
+                        return_value: bytes,
+                    };
                 }
 
                 // EIP-170: Contract code size limit
@@ -380,13 +450,15 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                             .limit_contract_code_size
                             .unwrap_or(MAX_CODE_SIZE)
                 {
-                    self.data.journaled_state.checkpoint_revert(checkpoint);
-                    return (
-                        InstructionResult::CreateContractSizeLimit,
-                        ret,
-                        interpreter.gas,
-                        bytes,
-                    );
+                    self.data
+                        .journaled_state
+                        .checkpoint_revert(prepared_create.checkpoint);
+                    return CreateResult {
+                        result: InstructionResult::CreateContractSizeLimit,
+                        created_address: Some(prepared_create.created_address),
+                        gas: interpreter.gas,
+                        return_value: bytes,
+                    };
                 }
                 if crate::USE_GAS {
                     let gas_for_code = bytes.len() as u64 * gas::CODEDEPOSIT;
@@ -396,8 +468,15 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                         // final gas fee for adding the contract code to the state, the contract
                         //  creation fails (i.e. goes out-of-gas) rather than leaving an empty contract.
                         if GSPEC::enabled(HOMESTEAD) {
-                            self.data.journaled_state.checkpoint_revert(checkpoint);
-                            return (InstructionResult::OutOfGas, ret, interpreter.gas, bytes);
+                            self.data
+                                .journaled_state
+                                .checkpoint_revert(prepared_create.checkpoint);
+                            return CreateResult {
+                                result: InstructionResult::OutOfGas,
+                                created_address: Some(prepared_create.created_address),
+                                gas: interpreter.gas,
+                                return_value: bytes,
+                            };
                         } else {
                             bytes = Bytes::new();
                         }
@@ -413,17 +492,24 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 };
                 self.data
                     .journaled_state
-                    .set_code(created_address, bytecode);
-                (InstructionResult::Return, ret, interpreter.gas, bytes)
+                    .set_code(prepared_create.created_address, bytecode);
+                CreateResult {
+                    result: InstructionResult::Return,
+                    created_address: Some(prepared_create.created_address),
+                    gas: interpreter.gas,
+                    return_value: bytes,
+                }
             }
             _ => {
-                self.data.journaled_state.checkpoint_revert(checkpoint);
-                (
-                    exit_reason,
-                    ret,
-                    interpreter.gas,
-                    interpreter.return_value(),
-                )
+                self.data
+                    .journaled_state
+                    .checkpoint_revert(prepared_create.checkpoint);
+                CreateResult {
+                    result: exit_reason,
+                    created_address: Some(prepared_create.created_address),
+                    gas: interpreter.gas,
+                    return_value: interpreter.return_value(),
+                }
             }
         }
     }
@@ -432,21 +518,21 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     /// Returns the exit reason and created interpreter as it contains return values and gas spend.
     pub fn run_interpreter(
         &mut self,
-        contract: Contract,
+        contract: Box<Contract>,
         gas_limit: u64,
         is_static: bool,
-    ) -> (InstructionResult, Interpreter) {
+    ) -> (InstructionResult, Box<Interpreter>) {
         // Create inspector
         #[cfg(feature = "memory_limit")]
-        let mut interpreter = Interpreter::new_with_memory_limit(
+        let mut interpreter = Box::new(Interpreter::new_with_memory_limit(
             contract,
             gas_limit,
             is_static,
             self.data.env.cfg.memory_limit,
-        );
+        ));
 
         #[cfg(not(feature = "memory_limit"))]
-        let mut interpreter = Interpreter::new(contract, gas_limit, is_static);
+        let mut interpreter = Box::new(Interpreter::new(contract, gas_limit, is_static));
 
         if INSPECT {
             self.inspector
@@ -462,12 +548,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     }
 
     /// Call precompile contract
-    fn call_precompile(
-        &mut self,
-        mut gas: Gas,
-        contract: B160,
-        input_data: Bytes,
-    ) -> (InstructionResult, Gas, Bytes) {
+    fn call_precompile(&mut self, inputs: &CallInputs, mut gas: Gas) -> CallResult {
+        let input_data = inputs.input.clone();
+        let contract = inputs.contract;
+
         let precompile = self
             .precompiles
             .get(&contract)
@@ -479,9 +563,17 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         match out {
             Ok((gas_used, data)) => {
                 if !crate::USE_GAS || gas.record_cost(gas_used) {
-                    (InstructionResult::Return, gas, Bytes::from(data))
+                    CallResult {
+                        result: InstructionResult::Return,
+                        gas,
+                        return_value: Bytes::from(data),
+                    }
                 } else {
-                    (InstructionResult::PrecompileOOG, gas, Bytes::new())
+                    CallResult {
+                        result: InstructionResult::PrecompileOOG,
+                        gas,
+                        return_value: Bytes::new(),
+                    }
                 }
             }
             Err(e) => {
@@ -490,22 +582,33 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 } else {
                     InstructionResult::PrecompileError
                 };
-                (ret, gas, Bytes::new())
+                CallResult {
+                    result: ret,
+                    gas,
+                    return_value: Bytes::new(),
+                }
             }
         }
     }
 
-    /// Main contract call of the EVM.
-    fn call_inner(&mut self, inputs: &mut CallInputs) -> (InstructionResult, Gas, Bytes) {
+    fn prepare_call(&mut self, inputs: &mut CallInputs) -> Result<PreparedCall, CallResult> {
         let gas = Gas::new(inputs.gas_limit);
         // Load account and get code. Account is now hot.
-        let Some((bytecode,_)) = self.code(inputs.contract) else {
-            return (InstructionResult::FatalExternalError, gas, Bytes::new());
+        let Some((bytecode, _)) = self.code(inputs.contract) else {
+            return Err(CallResult {
+                result: InstructionResult::FatalExternalError,
+                gas,
+                return_value: Bytes::new(),
+            });
         };
 
         // Check depth
         if self.data.journaled_state.depth() > CALL_STACK_LIMIT {
-            return (InstructionResult::CallTooDeep, gas, Bytes::new());
+            return Err(CallResult {
+                result: InstructionResult::CallTooDeep,
+                gas,
+                return_value: Bytes::new(),
+            });
         }
 
         // Create subroutine checkpoint
@@ -525,28 +628,64 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             self.data.db,
         ) {
             self.data.journaled_state.checkpoint_revert(checkpoint);
-            return (e, gas, Bytes::new());
+            return Err(CallResult {
+                result: e,
+                gas,
+                return_value: Bytes::new(),
+            });
         }
 
+        let contract = Box::new(Contract::new_with_context(
+            inputs.input.clone(),
+            bytecode,
+            &inputs.context,
+        ));
+
+        Ok(PreparedCall {
+            gas,
+            checkpoint,
+            contract,
+        })
+    }
+
+    /// Main contract call of the EVM.
+    fn call_inner(&mut self, inputs: &mut CallInputs) -> CallResult {
+        let res = self.prepare_call(inputs);
+
+        let prepared_call = match res {
+            Ok(o) => o,
+            Err(e) => return e,
+        };
+
         let ret = if is_precompile(inputs.contract, self.precompiles.len()) {
-            self.call_precompile(gas, inputs.contract, inputs.input.clone())
-        } else if !bytecode.is_empty() {
+            self.call_precompile(inputs, prepared_call.gas)
+        } else if !prepared_call.contract.bytecode.is_empty() {
             // Create interpreter and execute subcall
             let (exit_reason, interpreter) = self.run_interpreter(
-                Contract::new_with_context(inputs.input.clone(), bytecode, &inputs.context),
-                gas.limit(),
+                prepared_call.contract,
+                prepared_call.gas.limit(),
                 inputs.is_static,
             );
-            (exit_reason, interpreter.gas, interpreter.return_value())
+            CallResult {
+                result: exit_reason,
+                gas: interpreter.gas,
+                return_value: interpreter.return_value(),
+            }
         } else {
-            (InstructionResult::Stop, gas, Bytes::new())
+            CallResult {
+                result: InstructionResult::Stop,
+                gas: prepared_call.gas,
+                return_value: Bytes::new(),
+            }
         };
 
         // revert changes or not.
-        if matches!(ret.0, return_ok!()) {
+        if matches!(ret.result, return_ok!()) {
             self.data.journaled_state.checkpoint_commit();
         } else {
-            self.data.journaled_state.checkpoint_revert(checkpoint);
+            self.data
+                .journaled_state
+                .checkpoint_revert(prepared_call.checkpoint);
         }
 
         ret
@@ -683,10 +822,16 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         }
         let ret = self.create_inner(inputs);
         if INSPECT {
-            self.inspector
-                .create_end(&mut self.data, inputs, ret.0, ret.1, ret.2, ret.3)
+            self.inspector.create_end(
+                &mut self.data,
+                inputs,
+                ret.result,
+                ret.created_address,
+                ret.gas,
+                ret.return_value,
+            )
         } else {
-            ret
+            (ret.result, ret.created_address, ret.gas, ret.return_value)
         }
     }
 
@@ -699,10 +844,15 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         }
         let ret = self.call_inner(inputs);
         if INSPECT {
-            self.inspector
-                .call_end(&mut self.data, inputs, ret.1, ret.0, ret.2)
+            self.inspector.call_end(
+                &mut self.data,
+                inputs,
+                ret.gas,
+                ret.result,
+                ret.return_value,
+            )
         } else {
-            ret
+            (ret.result, ret.gas, ret.return_value)
         }
     }
 }
