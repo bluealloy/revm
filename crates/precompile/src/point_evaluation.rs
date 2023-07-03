@@ -2,10 +2,10 @@ use core::str::FromStr;
 
 use alloc::vec::Vec;
 use num::{BigUint, FromPrimitive};
-use revm_primitives::{StandardPrecompileFn, PrecompileResult};
-use sha2::{Sha256, Digest};
+use revm_primitives::{PrecompileResult, StandardPrecompileFn};
+use sha2::{Digest, Sha256};
 
-use crate::{PrecompileAddress, Precompile};
+use crate::{Precompile, PrecompileAddress};
 
 pub const POINT_EVALUATION_PRECOMPILE: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(12),
@@ -14,12 +14,11 @@ pub const POINT_EVALUATION_PRECOMPILE: PrecompileAddress = PrecompileAddress(
 
 const FIELD_ELEMENTS_PER_BLOB: u32 = 4096;
 // Modulus is 381 bits which is greater than 256 bits so need to find better type
-const BLS_MODULUS: &str = "52435875175126190479447740508185965837690552500527637822603658699938581184513"; 
+const BLS_MODULUS: &str =
+    "52435875175126190479447740508185965837690552500527637822603658699938581184513";
 const BLOB_COMMITMENT_VERSION_KZG: u8 = 0x01;
 
-
 pub fn point_evaluation_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
-
     // The data is encoded as follows: versioned_hash | z | y | commitment | proof | with z and y being padded 32 byte big endian values
     assert!(input.len() == 192);
     let versioned_hash = &input[0..32];
@@ -50,13 +49,11 @@ pub fn point_evaluation_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let mut result = field_elements_bytes;
     result.extend(bls_modulus_bytes);
     Ok((gas_limit, result))
-
 }
-
 
 pub fn _kzg_to_versioned_hash(commitment: &[u8]) -> Vec<u8> {
     let mut hasher = Sha256::new();
-    hasher.update(commitment);  
+    hasher.update(commitment);
     let mut hash = hasher.finalize().to_vec();
 
     // Skip the first byte

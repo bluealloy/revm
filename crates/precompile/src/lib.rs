@@ -5,8 +5,8 @@ mod bn128;
 mod hash;
 mod identity;
 mod modexp;
-mod secp256k1;
 mod point_evaluation;
+mod secp256k1;
 
 use once_cell::sync::OnceCell;
 pub use primitives::{
