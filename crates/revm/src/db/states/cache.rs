@@ -8,10 +8,10 @@ use revm_interpreter::primitives::{
 
 /// Cache state contains both modified and original values.
 ///
-/// TODO add prunning of LRU read accounts. As we would like to keep only modifed data.
+/// Cache state is main state that revm uses to access state.
+/// It loads all accounts from database and applies revm output to it.
 ///
-/// Sharading data between bundle execution can be done with help of bundle id.
-/// That should help with unmarking account of old bundle and allowing them to be removed.
+/// It generates transitions that is used to build BundleState.
 #[derive(Debug, Clone)]
 pub struct CacheState {
     /// Block state account with account state
@@ -30,6 +30,7 @@ impl Default for CacheState {
 }
 
 impl CacheState {
+    /// New default state.
     pub fn new() -> Self {
         Self {
             accounts: HashMap::default(),
@@ -37,6 +38,8 @@ impl CacheState {
             has_state_clear: true,
         }
     }
+
+    /// New default state with state clear flag disabled.
     pub fn new_legacy() -> Self {
         Self {
             accounts: HashMap::default(),
@@ -45,6 +48,8 @@ impl CacheState {
         }
     }
 
+    /// Helper function that returns all accounts.
+    /// Used inside tests to generate merkle tree.
     pub fn trie_account(&self) -> impl IntoIterator<Item = (B160, &PlainAccount)> {
         self.accounts.iter().filter_map(|(address, account)| {
             account
@@ -54,11 +59,13 @@ impl CacheState {
         })
     }
 
+    /// Insert not existing account.
     pub fn insert_not_existing(&mut self, address: B160) {
         self.accounts
             .insert(address, CacheAccount::new_loaded_not_existing());
     }
 
+    /// Insert Loaded (Or LoadedEmptyEip161 if account is empty) account.
     pub fn insert_account(&mut self, address: B160, info: AccountInfo) {
         let account = if !info.is_empty() {
             CacheAccount::new_loaded(info, HashMap::default())
@@ -68,6 +75,7 @@ impl CacheState {
         self.accounts.insert(address, account);
     }
 
+    /// Similar to `insert_account` but with storage.
     pub fn insert_account_with_storage(
         &mut self,
         address: B160,
@@ -82,8 +90,8 @@ impl CacheState {
         self.accounts.insert(address, account);
     }
 
-    /// Make transitions.
-    ///
+    /// Apply output of revm execution and create TransactionAccount
+    /// that is used to build BundleState.
     pub fn apply_evm_state(&mut self, evm_state: EVMState) -> Vec<(B160, TransitionAccount)> {
         let mut transitions = Vec::with_capacity(evm_state.len());
         for (address, account) in evm_state {
@@ -91,7 +99,8 @@ impl CacheState {
                 // not touched account are never changed.
                 continue;
             } else if account.is_selfdestructed() {
-                // If it is marked as selfdestructed we to changed state to destroyed.
+                // If it is marked as selfdestructed inside revm
+                // we need to changed state to destroyed.
                 match self.accounts.entry(address) {
                     Entry::Occupied(mut entry) => {
                         let this = entry.get_mut();
@@ -101,11 +110,8 @@ impl CacheState {
                     }
                     Entry::Vacant(entry) => {
                         // if account is not present in db, we can just mark it sa NotExisting.
-                        // This means that account was not loaded through this state.
+                        // This should not happen as all account should be loaded through this state.
                         entry.insert(CacheAccount::new_loaded_not_existing());
-                        // no transition. It is assumed tht all account get loaded
-                        // throught the CacheState so selfdestructed account means
-                        // that account is loaded created and selfdestructed in one tx.
                     }
                 };
                 continue;
@@ -114,10 +120,9 @@ impl CacheState {
             let is_empty = account.is_empty();
             if account.is_created() {
                 // Note: it can happen that created contract get selfdestructed in same block
-                // that is why is newly created is checked after selfdestructed
+                // that is why is_created is checked after selfdestructed
                 //
-                // Note: Create2 (Petersburg) was after state clear EIP (Spurious Dragon)
-                // so we dont need to clear
+                // Note: Create2 opcode (Petersburg) was after state clear EIP (Spurious Dragon)
                 //
                 // Note: It is possibility to create KECCAK_EMPTY contract with some storage
                 // by just setting storage inside CRATE contstructor. Overlap of those contracts
@@ -131,9 +136,8 @@ impl CacheState {
                             .push((address, this.newly_created(account.info, account.storage)))
                     }
                     Entry::Vacant(entry) => {
-                        // This means that account was not loaded through this state.
-                        // and we trust that account is not existing.
-                        // Note: This should not happen at usual execution.
+                        // This means shold not happen as all accounts should be loaded through
+                        // this state.
                         entry.insert(CacheAccount::new_newly_created(
                             account.info.clone(),
                             account
@@ -162,19 +166,23 @@ impl CacheState {
 
                 // And when empty account is touched it needs to be removed from database.
                 // EIP-161 state clear
-                if self.has_state_clear && is_empty {
-                    // TODO Check if sending ZERO value created account pre state clear???
-
-                    // touch empty account.
-                    match self.accounts.entry(address) {
-                        Entry::Occupied(mut entry) => {
-                            if let Some(transition) = entry.get_mut().touch_empty() {
-                                transitions.push((address, transition));
+                if is_empty {
+                    if self.has_state_clear {
+                        // touch empty account.
+                        match self.accounts.entry(address) {
+                            Entry::Occupied(mut entry) => {
+                                if let Some(transition) = entry.get_mut().touch_empty() {
+                                    transitions.push((address, transition));
+                                }
+                            }
+                            Entry::Vacant(_entry) => {
+                                unreachable!("Empty account should be loaded in cache")
                             }
                         }
-                        Entry::Vacant(_entry) => {
-                            unreachable!("Empty account should be loaded in cache")
-                        }
+                    } else {
+                        // if state clear is not enabled, we can just remove account from database.
+                        // TODO what to do with empty account storage.
+                        //self.accounts.remove(&address);
                     }
                     continue;
                 }
@@ -187,7 +195,7 @@ impl CacheState {
                         transitions.push((address, this.change(account.info, account.storage)));
                     }
                     Entry::Vacant(entry) => {
-                        // It is assumed initial state is Loaded
+                        // It is assumed initial state is Loaded. Should not happen.
                         entry.insert(CacheAccount::new_changed(
                             account.info.clone(),
                             account
@@ -196,8 +204,6 @@ impl CacheState {
                                 .map(|(k, v)| (*k, v.present_value))
                                 .collect(),
                         ));
-                        // We will not insert anything as it is assumed that
-                        // account should already be loaded when we apply change to it.
                     }
                 }
             };

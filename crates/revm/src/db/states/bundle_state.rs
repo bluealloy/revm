@@ -17,13 +17,14 @@ use revm_interpreter::primitives::{
 /// And can be used to revert BundleState to the state before transition.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BundleState {
-    /// State.
+    /// Account state.
     pub state: HashMap<B160, BundleAccount>,
     /// All created contracts in this block.
     pub contracts: HashMap<B256, Bytecode>,
     /// Changes to revert.
     ///
     /// Note: Inside vector is *not* sorted by address.
+    /// But it is unique by address.
     pub reverts: Vec<Vec<(B160, AccountRevert)>>,
 }
 
@@ -38,6 +39,7 @@ impl Default for BundleState {
 }
 
 impl BundleState {
+    /// Return reference to the state.
     pub fn state(&self) -> &HashMap<B160, BundleAccount> {
         &self.state
     }
@@ -68,6 +70,7 @@ impl BundleState {
         >,
         contracts: impl IntoIterator<Item = (B256, Bytecode)>,
     ) -> Self {
+        // Create state from iterator.
         let state = state
             .into_iter()
             .map(|(address, old_account, new_account, storage)| {
@@ -86,6 +89,7 @@ impl BundleState {
             })
             .collect();
 
+        // Create reverts from iterator.
         let reverts = reverts
             .into_iter()
             .map(|block_reverts| {

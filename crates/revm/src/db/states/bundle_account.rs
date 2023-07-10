@@ -1,6 +1,6 @@
 use super::{
-    account_status, reverts::AccountInfoRevert, AccountRevert, AccountStatus, RevertToSlot,
-    Storage, TransitionAccount,
+    reverts::AccountInfoRevert, AccountRevert, AccountStatus, RevertToSlot, Storage,
+    TransitionAccount,
 };
 use revm_interpreter::primitives::{AccountInfo, StorageSlot, U256};
 use revm_precompile::HashMap;
@@ -8,12 +8,12 @@ use revm_precompile::HashMap;
 /// Account information focused on creating of database changesets
 /// and Reverts.
 ///
-/// Status is needed to know from what state we are applying the TransitionAccount.
+/// Status is needed as to know from what state we are applying the TransitionAccount.
 ///
 /// Original account info is needed to know if there was a change.
-/// Same thing for storage where original.
+/// Same thing for storage with original value.
 ///
-/// On selfdestruct storage original value should be ignored.
+/// On selfdestruct storage original value is ignored.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BundleAccount {
     pub info: Option<AccountInfo>,
@@ -24,10 +24,12 @@ pub struct BundleAccount {
     ///
     /// If Account was destroyed we ignore original value and comprate present state with U256::ZERO.
     pub storage: Storage,
+    /// Account status.
     pub status: AccountStatus,
 }
 
 impl BundleAccount {
+    /// Create new BundleAccount.
     pub fn new(
         original_info: Option<AccountInfo>,
         present_info: Option<AccountInfo>,
@@ -41,6 +43,7 @@ impl BundleAccount {
             status,
         }
     }
+
     /// Return storage slot if it exist.
     ///
     /// In case we know that account is destroyed return `Some(U256::ZERO)`
@@ -79,17 +82,17 @@ impl BundleAccount {
 
     /// Revert account to previous state and return true if account can be removed.
     pub fn revert(&mut self, revert: AccountRevert) -> bool {
+        self.status = revert.previous_status;
+
         match revert.account {
             AccountInfoRevert::DoNothing => (),
             AccountInfoRevert::DeleteIt => {
                 self.info = None;
-                self.status = revert.previous_status;
                 self.storage = HashMap::new();
                 return true;
             }
             AccountInfoRevert::RevertTo(info) => self.info = Some(info),
         };
-        self.status = revert.previous_status;
         // revert stoarge
         for (key, slot) in revert.storage {
             match slot {
@@ -113,6 +116,8 @@ impl BundleAccount {
     /// Extend account with another account.
     ///
     /// It is similar with the update but it is done with another BundleAccount.
+    ///
+    /// Original values of acccount and storage stay the same.
     pub(crate) fn extend(&mut self, other: Self) {
         self.status = other.status;
         self.info = other.info;
@@ -127,7 +132,7 @@ impl BundleAccount {
     }
 
     /// Update to new state and generate AccountRevert that if applied to new state will
-    /// revert it to previous state. If not revert is present, update is noop.
+    /// revert it to previous state. If no revert is present, update is noop.
     pub fn update_and_create_revert(
         &mut self,
         transition: TransitionAccount,

@@ -2,8 +2,9 @@ use super::{plain_account::PlainStorage, AccountStatus, PlainAccount, Storage, T
 use revm_interpreter::primitives::{AccountInfo, StorageSlot, KECCAK_EMPTY, U256};
 use revm_precompile::HashMap;
 
-/// Seems better, and more cleaner. But all informations is there.
-/// Should we extract storage...
+/// Cache account is to store account from database be able
+/// to be updated from output of revm and while doing that
+/// create TransitionAccount needed for BundleState.
 #[derive(Clone, Debug)]
 pub struct CacheAccount {
     pub account: Option<PlainAccount>,
@@ -11,24 +12,30 @@ pub struct CacheAccount {
 }
 
 impl CacheAccount {
+    /// Create new account that is loaded from database.
     pub fn new_loaded(info: AccountInfo, storage: PlainStorage) -> Self {
         Self {
             account: Some(PlainAccount { info, storage }),
             status: AccountStatus::Loaded,
         }
     }
+
+    /// Create new account that is loaded empty from database.
     pub fn new_loaded_empty_eip161(storage: PlainStorage) -> Self {
         Self {
             account: Some(PlainAccount::new_empty_with_storage(storage)),
             status: AccountStatus::LoadedEmptyEIP161,
         }
     }
+
+    /// Loaded not existing account.
     pub fn new_loaded_not_existing() -> Self {
         Self {
             account: None,
             status: AccountStatus::LoadedNotExisting,
         }
     }
+
     /// Create new account that is newly created (State is AccountStatus::New)
     pub fn new_newly_created(info: AccountInfo, storage: PlainStorage) -> Self {
         Self {
@@ -53,6 +60,7 @@ impl CacheAccount {
         }
     }
 
+    /// Return true if account is some
     pub fn is_some(&self) -> bool {
         matches!(
             self.status,
@@ -60,9 +68,11 @@ impl CacheAccount {
                 | AccountStatus::InMemoryChange
                 | AccountStatus::DestroyedChanged
                 | AccountStatus::Loaded
+                | AccountStatus::LoadedEmptyEIP161
         )
     }
 
+    /// Return storage slot if it exist.
     pub fn storage_slot(&self, slot: U256) -> Option<U256> {
         self.account
             .as_ref()
@@ -80,12 +90,15 @@ impl CacheAccount {
     }
 
     /// Touche empty account, related to EIP-161 state clear.
+    ///
+    /// This account returns Transition that is used to create the BundleState.
     pub fn touch_empty(&mut self) -> Option<TransitionAccount> {
         let previous_status = self.status;
 
         // zero all storage slot as they are removed now.
         // This is effecting only for pre state clear accounts, as some of
-        // then can be empty but contan storage slots.
+        // then can be empty but contain storage slots.
+
         let storage = self
             .account
             .as_mut()
@@ -99,7 +112,11 @@ impl CacheAccount {
 
         // Set account to None.
         let previous_info = self.account.take().map(|acc| acc.info);
+
+        // Set account state to Destroyed as we need to clear the storage if it exist.
+        let old_status = self.status;
         self.status = match self.status {
+            // mark account as destroyed again.
             AccountStatus::DestroyedChanged => AccountStatus::DestroyedAgain,
             AccountStatus::InMemoryChange => {
                 // account can be created empty them touched.
@@ -119,6 +136,7 @@ impl CacheAccount {
                 // do nothing
                 AccountStatus::DestroyedAgain
             }
+            // We need to clear the storage if there is any.
             AccountStatus::LoadedEmptyEIP161 => AccountStatus::Destroyed,
             _ => {
                 // do nothing
@@ -126,7 +144,7 @@ impl CacheAccount {
             }
         };
         if matches!(
-            self.status,
+            old_status,
             AccountStatus::LoadedNotExisting
                 | AccountStatus::Destroyed
                 | AccountStatus::DestroyedAgain
@@ -340,7 +358,7 @@ impl CacheAccount {
             AccountStatus::LoadedEmptyEIP161 => {
                 // Change on empty account, should transfer storage if there is any.
                 // There is posibility that there are storage inside db.
-                // That storage falls   n merkle tree calculation before state clear EIP
+                // That storage is used in merkle tree calculation before state clear EIP.
                 AccountStatus::InMemoryChange
             }
             AccountStatus::LoadedNotExisting => {

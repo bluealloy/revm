@@ -252,10 +252,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             };
 
             // transfer fee to coinbase/beneficiary.
-            let Ok((coinbase_account,_)) = self
+            let Ok((coinbase_account, _)) = self
                 .data
                 .journaled_state
-                .load_account(coinbase, self.data.db) else { panic!("coinbase account not found");};
+                .load_account(coinbase, self.data.db)
+            else {
+                panic!("coinbase account not found");
+            };
             coinbase_account.mark_touch();
             coinbase_account.info.balance = coinbase_account
                 .info
@@ -289,8 +292,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
 
         // Fetch balance of caller.
-        let Some((caller_balance,_)) = self.balance(inputs.caller) else {
-            return (InstructionResult::FatalExternalError, None, gas, Bytes::new())
+        let Some((caller_balance, _)) = self.balance(inputs.caller) else {
+            return (
+                InstructionResult::FatalExternalError,
+                None,
+                gas,
+                Bytes::new(),
+            );
         };
 
         // Check if caller has enough balance to send to the crated contract.
@@ -500,7 +508,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     fn call_inner(&mut self, inputs: &mut CallInputs) -> (InstructionResult, Gas, Bytes) {
         let gas = Gas::new(inputs.gas_limit);
         // Load account and get code. Account is now hot.
-        let Some((bytecode,_)) = self.code(inputs.contract) else {
+        let Some((bytecode, _)) = self.code(inputs.contract) else {
             return (InstructionResult::FatalExternalError, gas, Bytes::new());
         };
 

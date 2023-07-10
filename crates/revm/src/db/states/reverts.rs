@@ -23,7 +23,7 @@ pub enum AccountInfoRevert {
     #[default]
     /// Nothing changed
     DoNothing,
-    /// Account was created and on revert we need to remove it.
+    /// Account was created and on revert we need to remove it with all storage.
     DeleteIt,
     /// Account was changed and on revert we need to put old state.
     RevertTo(AccountInfo),
