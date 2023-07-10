@@ -38,7 +38,7 @@ pub const CODECOPY: u8 = 0x39;
 pub const SHL: u8 = 0x1b;
 pub const SHR: u8 = 0x1c;
 pub const SAR: u8 = 0x1d;
-pub const SHA3: u8 = 0x20;
+pub const KECCAK256: u8 = 0x20;
 pub const POP: u8 = 0x50;
 pub const MLOAD: u8 = 0x51;
 pub const MSTORE: u8 = 0x52;
@@ -551,7 +551,7 @@ macro_rules! gas_opcodee {
             }),
             /* 0x1e */ OpInfo::none(),
             /* 0x1f */ OpInfo::none(),
-            /* 0x20  SHA3 */ OpInfo::dynamic_gas(),
+            /* 0x20  KECCAK256 */ OpInfo::dynamic_gas(),
             /* 0x21 */ OpInfo::none(),
             /* 0x22 */ OpInfo::none(),
             /* 0x23 */ OpInfo::none(),
