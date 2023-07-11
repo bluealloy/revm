@@ -180,9 +180,25 @@ impl CacheState {
                             }
                         }
                     } else {
-                        // if state clear is not enabled, we can just remove account from database.
-                        // TODO what to do with empty account storage.
-                        //self.accounts.remove(&address);
+                        // if account is empty this means it is
+                        match self.accounts.entry(address) {
+                            Entry::Occupied(mut entry) => {
+                                entry.insert(CacheAccount::new_loaded_empty_eip161(
+                                    account
+                                        .storage
+                                        .iter()
+                                        .map(|(k, v)| (*k, v.present_value))
+                                        .collect(),
+                                ));
+                                transitions.push((
+                                    address,
+                                    TransitionAccount::new_empty_eip161(account.storage),
+                                ));
+                            }
+                            Entry::Vacant(_entry) => {
+                                unreachable!("Empty Account should be loaded in cache")
+                            }
+                        }
                     }
                     continue;
                 }

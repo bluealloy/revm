@@ -22,6 +22,17 @@ pub struct TransitionAccount {
 }
 
 impl TransitionAccount {
+    /// Create new LoadedEmpty account.
+    pub fn new_empty_eip161(storage: Storage) -> Self {
+        Self {
+            info: Some(AccountInfo::default()),
+            status: AccountStatus::LoadedEmptyEIP161,
+            previous_info: None,
+            previous_status: AccountStatus::LoadedNotExisting,
+            storage,
+        }
+    }
+
     /// Return new contract bytecode if it is changed or newly created.
     pub fn has_new_contract(&self) -> Option<(B256, &Bytecode)> {
         let present_new_codehash = self.info.as_ref().map(|info| &info.code_hash);

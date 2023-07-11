@@ -1,6 +1,6 @@
 use revm_interpreter::primitives::{AccountInfo, HashMap, U256};
 
-use super::AccountStatus;
+use super::{AccountStatus, BundleAccount, Storage};
 
 /// Assumption is that Revert can return full state from any future state to any past state.
 ///
@@ -17,8 +17,85 @@ pub struct AccountRevert {
     pub wipe_storage: bool,
 }
 
-#[derive(Clone, Default, Debug, PartialEq, Eq)]
+impl AccountRevert {
+    /// Very similar to new_selfdestructed but it will add additional zeros (RevertToSlot::Destroyed)
+    /// for the storage that are set if account is again created.
+    ///
+    /// Example is of going from New (state: 1: 10) -> DestroyedNew (2:10)
+    /// Revert of that needs to be list of key previous values.
+    /// [1:10,2:0]
+    pub fn new_selfdestructed_again(
+        status: AccountStatus,
+        account: AccountInfo,
+        mut previous_storage: Storage,
+        updated_storage: Storage,
+    ) -> Self {
+        // Take present storage values as the storages that we are going to revert to.
+        // As those values got destroyed.
+        let mut previous_storage: HashMap<U256, RevertToSlot> = previous_storage
+            .drain()
+            .map(|(key, value)| (key, RevertToSlot::Some(value.present_value)))
+            .collect();
+        for (key, _) in updated_storage {
+            previous_storage
+                .entry(key)
+                .or_insert(RevertToSlot::Destroyed);
+        }
+        AccountRevert {
+            account: AccountInfoRevert::RevertTo(account),
+            storage: previous_storage,
+            previous_status: status,
+            wipe_storage: true,
+        }
+    }
 
+    /// Missing update is for Destroyed,DestroyedAgain,DestroyedNew,DestroyedChange.
+    /// as those update are different between each other.
+    /// It updated from state before destroyed. And that is NewChanged,New,Changed,LoadedEmptyEIP161.
+    /// take a note that is not updating LoadedNotExisting.
+    pub fn new_selfdestructed_from_bundle(
+        bundle_account: &mut BundleAccount,
+        updated_storage: &Storage,
+    ) -> Option<Self> {
+        match bundle_account.status {
+            AccountStatus::InMemoryChange
+            | AccountStatus::Changed
+            | AccountStatus::LoadedEmptyEIP161 => Some(AccountRevert::new_selfdestructed_again(
+                bundle_account.status,
+                bundle_account.info.clone().unwrap_or_default(),
+                bundle_account.storage.drain().collect(),
+                updated_storage.clone(),
+            )),
+            _ => None,
+        }
+    }
+
+    /// Create new selfdestruct revert.
+    pub fn new_selfdestructed(
+        status: AccountStatus,
+        account: AccountInfo,
+        mut storage: Storage,
+    ) -> Self {
+        // Zero all present storage values and save present values to AccountRevert.
+        let previous_storage = storage
+            .iter_mut()
+            .map(|(key, value)| {
+                // take previous value and set ZERO as storage got destroyed.
+                let previous_value = core::mem::take(&mut value.present_value);
+                (*key, RevertToSlot::Some(previous_value))
+            })
+            .collect();
+
+        Self {
+            account: AccountInfoRevert::RevertTo(account),
+            storage: previous_storage,
+            previous_status: status,
+            wipe_storage: true,
+        }
+    }
+}
+
+#[derive(Clone, Default, Debug, PartialEq, Eq)]
 pub enum AccountInfoRevert {
     #[default]
     /// Nothing changed

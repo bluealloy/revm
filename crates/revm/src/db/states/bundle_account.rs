@@ -147,101 +147,12 @@ impl BundleAccount {
             }
         };
 
-        // Helper function that exploads account and returns revert state.
-        let make_it_explode = |previous_status: AccountStatus,
-                               info: AccountInfo,
-                               mut storage: Storage|
-         -> Option<AccountRevert> {
-            let previous_account = info;
-            // Zero all present storage values and save present values to AccountRevert.
-            let previous_storage = storage
-                .iter_mut()
-                .map(|(key, value)| {
-                    // take previous value and set ZERO as storage got destroyed.
-                    let previous_value = core::mem::take(&mut value.present_value);
-                    (*key, RevertToSlot::Some(previous_value))
-                })
-                .collect();
-            Some(AccountRevert {
-                account: AccountInfoRevert::RevertTo(previous_account),
-                storage: previous_storage,
-                previous_status,
-                wipe_storage: true,
-            })
-        };
-        // Very similar to make_it_explode but it will add additional zeros (RevertToSlot::Destroyed)
-        // for the storage that are set if account is again created.
-        //
-        // Example is of going from New (state: 1: 10) -> DestroyedNew (2:10)
-        // Revert of that needs to be list of key previous values.
-        // [1:10,2:0]
-        let make_it_expload_with_aftereffect = |previous_status: AccountStatus,
-                                                previous_info: AccountInfo,
-                                                mut previous_storage: Storage,
-                                                destroyed_storage: HashMap<U256, RevertToSlot>|
-         -> Option<AccountRevert> {
-            // Take present storage values as the storages that we are going to revert to.
-            // As those values got destroyed.
-            let mut previous_storage: HashMap<U256, RevertToSlot> = previous_storage
-                .drain()
-                .map(|(key, value)| (key, RevertToSlot::Some(value.present_value)))
-                .collect();
-            for (key, _) in destroyed_storage {
-                previous_storage
-                    .entry(key)
-                    .or_insert(RevertToSlot::Destroyed);
-            }
-            Some(AccountRevert {
-                account: AccountInfoRevert::RevertTo(previous_info),
-                storage: previous_storage,
-                previous_status,
-                wipe_storage: true,
-            })
-        };
-
-        // Helper to extract storage from plain state and convert it to RevertToSlot::Destroyed.
-        let destroyed_storage = |updated_storage: &Storage| -> HashMap<U256, RevertToSlot> {
-            updated_storage
-                .iter()
-                .map(|(key, _)| (*key, RevertToSlot::Destroyed))
-                .collect()
-        };
-
         // handle it more optimal in future but for now be more flexible to set the logic.
         let previous_storage_from_update = updated_storage
             .iter()
             .filter(|s| s.1.original_value != s.1.present_value)
             .map(|(key, value)| (*key, RevertToSlot::Some(value.original_value)))
             .collect();
-
-        // Missing update is for Destroyed,DestroyedAgain,DestroyedNew,DestroyedChange.
-        // as those update are different between each other.
-        // It updated from state before destroyed. And that is NewChanged,New,Changed,LoadedEmptyEIP161.
-        // take a note that is not updating LoadedNotExisting.
-        let update_part_of_destroyed =
-            |this: &mut Self, updated_storage: &Storage| -> Option<AccountRevert> {
-                match this.status {
-                    AccountStatus::InMemoryChange => make_it_expload_with_aftereffect(
-                        AccountStatus::InMemoryChange,
-                        this.info.clone().unwrap_or_default(),
-                        this.storage.drain().collect(),
-                        destroyed_storage(updated_storage),
-                    ),
-                    AccountStatus::Changed => make_it_expload_with_aftereffect(
-                        AccountStatus::Changed,
-                        this.info.clone().unwrap_or_default(),
-                        this.storage.drain().collect(),
-                        destroyed_storage(updated_storage),
-                    ),
-                    AccountStatus::LoadedEmptyEIP161 => make_it_expload_with_aftereffect(
-                        AccountStatus::LoadedEmptyEIP161,
-                        this.info.clone().unwrap_or_default(),
-                        this.storage.drain().collect(),
-                        destroyed_storage(updated_storage),
-                    ),
-                    _ => None,
-                }
-            };
 
         match updated_status {
             AccountStatus::Changed => {
@@ -387,17 +298,8 @@ impl BundleAccount {
                 let this_info = self.info.take().unwrap_or_default();
                 let this_storage = self.storage.drain().collect();
                 let ret = match self.status {
-                    AccountStatus::InMemoryChange => {
-                        make_it_explode(AccountStatus::InMemoryChange, this_info, this_storage)
-                    }
-                    AccountStatus::Changed => {
-                        make_it_explode(AccountStatus::Changed, this_info, this_storage)
-                    }
-                    AccountStatus::LoadedEmptyEIP161 => {
-                        make_it_explode(AccountStatus::LoadedEmptyEIP161, this_info, this_storage)
-                    }
-                    AccountStatus::Loaded => {
-                        make_it_explode(AccountStatus::Loaded, this_info, this_storage)
+                    AccountStatus::InMemoryChange | AccountStatus::Changed | AccountStatus::Loaded | AccountStatus::LoadedEmptyEIP161 => {
+                        AccountRevert::new_selfdestructed(self.status, this_info, this_storage)
                     }
                     AccountStatus::LoadedNotExisting => {
                         // Do nothing as we have LoadedNotExisting -> Destroyed (It is noop)
@@ -407,14 +309,16 @@ impl BundleAccount {
                 };
                 self.status = AccountStatus::Destroyed;
                 // set present to destroyed.
-                ret
+                Some(ret)
             }
             AccountStatus::DestroyedChanged => {
                 // Previous block created account
                 // (It was destroyed on previous block or one before).
 
                 // check common pre destroy paths.
-                if let Some(revert_state) = update_part_of_destroyed(self, &updated_storage) {
+                if let Some(revert_state) =
+                    AccountRevert::new_selfdestructed_from_bundle(self, &updated_storage)
+                {
                     // set to destroyed and revert state.
                     self.status = AccountStatus::DestroyedChanged;
                     self.info = updated_info;
@@ -465,13 +369,13 @@ impl BundleAccount {
                             wipe_storage: false,
                         })
                     }
-                    AccountStatus::DestroyedAgain => make_it_expload_with_aftereffect(
+                    AccountStatus::DestroyedAgain => Some(AccountRevert::new_selfdestructed_again(
                         // destroyed again will set empty account.
                         AccountStatus::DestroyedAgain,
                         AccountInfo::default(),
                         HashMap::default(),
-                        destroyed_storage(&updated_storage),
-                    ),
+                        updated_storage.clone(),
+                    )),
                     _ => unreachable!("Invalid state transfer to DestroyedNew from {self:?}"),
                 };
                 self.status = AccountStatus::DestroyedChanged;
@@ -485,7 +389,9 @@ impl BundleAccount {
                 // (It was destroyed on previous block or one before).
 
                 // check common pre destroy paths.
-                if let Some(revert_state) = update_part_of_destroyed(self, &HashMap::default()) {
+                if let Some(revert_state) =
+                    AccountRevert::new_selfdestructed_from_bundle(self, &HashMap::default())
+                {
                     // set to destroyed and revert state.
                     self.status = AccountStatus::DestroyedAgain;
                     self.info = None;

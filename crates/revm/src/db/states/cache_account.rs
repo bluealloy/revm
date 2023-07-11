@@ -230,6 +230,7 @@ impl CacheAccount {
             | AccountStatus::DestroyedChanged => AccountStatus::DestroyedChanged,
             // if account is loaded from db.
             AccountStatus::LoadedNotExisting
+            // Loaded empty eip161 to creates is not possible as CREATE2 was added after EIP-161
             | AccountStatus::LoadedEmptyEIP161
             | AccountStatus::Loaded
             | AccountStatus::Changed
@@ -278,6 +279,7 @@ impl CacheAccount {
 
         self.status = match self.status {
             AccountStatus::Loaded => {
+                // Account that have nonce zero are the ones that
                 if previous_info.as_ref().map(|a| a.code_hash) == Some(KECCAK_EMPTY) {
                     AccountStatus::InMemoryChange
                 } else {
