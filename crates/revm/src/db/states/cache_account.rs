@@ -1,4 +1,7 @@
-use super::{plain_account::PlainStorage, AccountStatus, PlainAccount, Storage, TransitionAccount};
+use super::{
+    plain_account::PlainStorage, AccountStatus, PlainAccount, StorageWithOriginalValues,
+    TransitionAccount,
+};
 use revm_interpreter::primitives::{AccountInfo, StorageSlot, KECCAK_EMPTY, U256};
 use revm_precompile::HashMap;
 
@@ -201,7 +204,7 @@ impl CacheAccount {
     pub fn newly_created(
         &mut self,
         new_info: AccountInfo,
-        new_storage: Storage,
+        new_storage: StorageWithOriginalValues,
     ) -> TransitionAccount {
         let previous_status = self.status;
         let mut previous_info = self.account.take();
@@ -221,7 +224,7 @@ impl CacheAccount {
             .map(|(k, s)| (*k, s.present_value))
             .collect();
 
-        storage_diff.extend(new_storage.into_iter());
+        storage_diff.extend(new_storage);
 
         self.status = match self.status {
             // if account was destroyed previously just copy new info to it.
@@ -318,7 +321,11 @@ impl CacheAccount {
         })
     }
 
-    pub fn change(&mut self, new: AccountInfo, storage: Storage) -> TransitionAccount {
+    pub fn change(
+        &mut self,
+        new: AccountInfo,
+        storage: StorageWithOriginalValues,
+    ) -> TransitionAccount {
         let previous_status = self.status;
         let previous_info = self.account.as_ref().map(|a| a.info.clone());
         let mut this_storage = self

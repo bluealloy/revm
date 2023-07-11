@@ -27,7 +27,7 @@ impl PlainAccount {
 /// This storage represent values that are before block changed.
 ///
 /// Note: Storage that we get EVM contains original values before t
-pub type Storage = HashMap<U256, StorageSlot>;
+pub type StorageWithOriginalValues = HashMap<U256, StorageSlot>;
 
 /// Simple plain storage that does not have previous value.
 /// This is used for loading from database, cache and for bundle state.

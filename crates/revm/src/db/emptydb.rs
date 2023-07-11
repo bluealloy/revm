@@ -10,7 +10,7 @@ impl Default for EmptyDB {
     fn default() -> Self {
         Self {
             keccak_block_hash: false,
-            _phantom: PhantomData::default(),
+            _phantom: PhantomData,
         }
     }
 }
@@ -26,14 +26,14 @@ impl<T> EmptyDBTyped<T> {
     pub fn new() -> Self {
         Self {
             keccak_block_hash: false,
-            _phantom: PhantomData::default(),
+            _phantom: PhantomData,
         }
     }
 
     pub fn new_keccak_block_hash() -> Self {
         Self {
             keccak_block_hash: true,
-            _phantom: PhantomData::default(),
+            _phantom: PhantomData,
         }
     }
 }

@@ -44,6 +44,11 @@ impl BundleState {
         &self.state
     }
 
+    /// Is bundle state empty.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     /// Return number of changed accounts.
     pub fn len(&self) -> usize {
         self.state.len()
@@ -156,8 +161,12 @@ impl BundleState {
                 }
                 hash_map::Entry::Vacant(entry) => {
                     // make revert from transition account
-                    entry.insert(transition.present_bundle_account());
-                    transition.create_revert()
+                    let present_bundle = transition.present_bundle_account();
+                    let revert = transition.create_revert();
+                    if revert.is_some() {
+                        entry.insert(present_bundle);
+                    }
+                    revert
                 }
             };
 
@@ -330,5 +339,44 @@ impl BundleState {
                 break;
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use revm_interpreter::primitives::KECCAK_EMPTY;
+
+    use crate::{db::StorageWithOriginalValues, TransitionAccount};
+
+    use super::*;
+
+    #[test]
+    fn transition_all_states() {
+        // dummy data
+        let address = B160([0x01; 20]);
+        let acc1 = AccountInfo {
+            balance: U256::from(10),
+            nonce: 1,
+            code_hash: KECCAK_EMPTY,
+            code: None,
+        };
+
+        let mut bundle_state = BundleState::default();
+
+        // have transition from loaded to all other states
+
+        let transition = TransitionAccount {
+            info: Some(acc1),
+            status: AccountStatus::InMemoryChange,
+            previous_info: None,
+            previous_status: AccountStatus::LoadedNotExisting,
+            storage: StorageWithOriginalValues::default(),
+        };
+
+        // apply first transition
+        bundle_state.apply_block_substate_and_create_reverts(TransitionState::with_capacity(
+            address,
+            transition.clone(),
+        ));
     }
 }

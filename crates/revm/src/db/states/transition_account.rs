@@ -1,4 +1,4 @@
-use super::{AccountRevert, BundleAccount, Storage};
+use super::{AccountRevert, BundleAccount, StorageWithOriginalValues};
 use crate::db::AccountStatus;
 use revm_interpreter::primitives::{AccountInfo, Bytecode, B256};
 
@@ -18,12 +18,12 @@ pub struct TransitionAccount {
     /// Mostly needed when previous status Loaded/LoadedEmpty.
     pub previous_status: AccountStatus,
     /// Storage contains both old and new account
-    pub storage: Storage,
+    pub storage: StorageWithOriginalValues,
 }
 
 impl TransitionAccount {
     /// Create new LoadedEmpty account.
-    pub fn new_empty_eip161(storage: Storage) -> Self {
+    pub fn new_empty_eip161(storage: StorageWithOriginalValues) -> Self {
         Self {
             info: Some(AccountInfo::default()),
             status: AccountStatus::LoadedEmptyEIP161,
@@ -79,7 +79,7 @@ impl TransitionAccount {
         BundleAccount {
             info: self.previous_info.clone(),
             original_info: self.previous_info.clone(),
-            storage: Storage::new(),
+            storage: StorageWithOriginalValues::new(),
             status: self.previous_status,
         }
     }
