@@ -38,7 +38,7 @@ pub const CODECOPY: u8 = 0x39;
 pub const SHL: u8 = 0x1b;
 pub const SHR: u8 = 0x1c;
 pub const SAR: u8 = 0x1d;
-pub const SHA3: u8 = 0x20;
+pub const KECCAK256: u8 = 0x20;
 pub const POP: u8 = 0x50;
 pub const MLOAD: u8 = 0x51;
 pub const MSTORE: u8 = 0x52;
@@ -48,6 +48,7 @@ pub const JUMPI: u8 = 0x57;
 pub const PC: u8 = 0x58;
 pub const MSIZE: u8 = 0x59;
 pub const JUMPDEST: u8 = 0x5b;
+pub const MCOPY: u8 = 0x5e;
 pub const PUSH0: u8 = 0x5f;
 pub const PUSH1: u8 = 0x60;
 pub const PUSH2: u8 = 0x61;
@@ -276,7 +277,7 @@ pub const OPCODE_JUMPMAP: [Option<&'static str>; 256] = [
     /* 0x5b */ Some("JUMPDEST"),
     /* 0x5c */ None,
     /* 0x5d */ None,
-    /* 0x5e */ None,
+    /* 0x5e */ Some("MCOPY"),
     /* 0x5f */ Some("PUSH0"),
     /* 0x60 */ Some("PUSH1"),
     /* 0x61 */ Some("PUSH2"),
@@ -550,7 +551,7 @@ macro_rules! gas_opcodee {
             }),
             /* 0x1e */ OpInfo::none(),
             /* 0x1f */ OpInfo::none(),
-            /* 0x20  SHA3 */ OpInfo::dynamic_gas(),
+            /* 0x20  KECCAK256 */ OpInfo::dynamic_gas(),
             /* 0x21 */ OpInfo::none(),
             /* 0x22 */ OpInfo::none(),
             /* 0x23 */ OpInfo::none(),
@@ -658,7 +659,7 @@ macro_rules! gas_opcodee {
             OpInfo::jumpdest(),
             /* 0x5c */ OpInfo::none(),
             /* 0x5d */ OpInfo::none(),
-            /* 0x5e */ OpInfo::none(),
+            /* 0x5e  MCOPY */ OpInfo::dynamic_gas(),
             /* 0x5f PUSH0 */
             OpInfo::gas(if SpecId::enabled($spec_id, SpecId::SHANGHAI) {
                 gas::BASE

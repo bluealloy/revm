@@ -10,6 +10,7 @@ pub use stack::Stack;
 
 use crate::primitives::{Bytes, Spec};
 use crate::{
+    alloc::boxed::Box,
     instructions::{eval, InstructionResult},
     Gas, Host,
 };
@@ -42,7 +43,7 @@ pub struct Interpreter {
     /// Is interpreter call static.
     pub is_static: bool,
     /// Contract information and invoking data
-    pub contract: Contract,
+    pub contract: Box<Contract>,
     /// Memory limit. See [`crate::CfgEnv`].
     #[cfg(feature = "memory_limit")]
     pub memory_limit: u64,
@@ -55,7 +56,7 @@ impl Interpreter {
     }
 
     /// Create new interpreter
-    pub fn new(contract: Contract, gas_limit: u64, is_static: bool) -> Self {
+    pub fn new(contract: Box<Contract>, gas_limit: u64, is_static: bool) -> Self {
         #[cfg(not(feature = "memory_limit"))]
         {
             Self {
@@ -79,7 +80,7 @@ impl Interpreter {
 
     #[cfg(feature = "memory_limit")]
     pub fn new_with_memory_limit(
-        contract: Contract,
+        contract: Box<Contract>,
         gas_limit: u64,
         is_static: bool,
         memory_limit: u64,
