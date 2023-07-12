@@ -22,9 +22,6 @@ pub struct State<'a, DBError> {
     pub database: Box<dyn Database<Error = DBError> + Send + 'a>,
     /// Build reverts and state that gets applied to the state.
     pub transition_builder: Option<TransitionBuilder>,
-    /// Is state clear enabled
-    /// TODO: should we do it as block number, it would be easier.
-    pub has_state_clear: bool,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -62,7 +59,6 @@ impl State<'_, Infallible> {
             cache,
             database: Box::<EmptyDB>::default(),
             transition_builder: None,
-            has_state_clear,
         }
     }
 
@@ -74,7 +70,6 @@ impl State<'_, Infallible> {
                 transition_state: TransitionState::default(),
                 bundle_state: BundleState::default(),
             }),
-            has_state_clear: true,
         }
     }
 
@@ -83,7 +78,6 @@ impl State<'_, Infallible> {
             cache: CacheState::default(),
             database: Box::<EmptyDB>::default(),
             transition_builder: None,
-            has_state_clear: true,
         }
     }
 
@@ -92,7 +86,6 @@ impl State<'_, Infallible> {
             cache: CacheState::default(),
             database: Box::<EmptyDB>::default(),
             transition_builder: None,
-            has_state_clear: false,
         }
     }
 }
@@ -149,12 +142,7 @@ impl<'a, DBError> State<'a, DBError> {
 
     /// State clear EIP-161 is enabled in Spurious Dragon hardfork.
     pub fn enable_state_clear_eip(&mut self) {
-        self.has_state_clear = true;
         self.cache.has_state_clear = true;
-        // TODO check if BundleState needs to have state clear flag.
-        //self.transition_builder
-        //    .as_mut()
-        //    .map(|t| t.transition_state.set_state_clear());
     }
 
     pub fn new_without_transitions(db: Box<dyn Database<Error = DBError> + Send + 'a>) -> Self {
@@ -162,7 +150,6 @@ impl<'a, DBError> State<'a, DBError> {
             cache: CacheState::default(),
             database: db,
             transition_builder: None,
-            has_state_clear: true,
         }
     }
 
@@ -174,7 +161,6 @@ impl<'a, DBError> State<'a, DBError> {
                 transition_state: TransitionState::default(),
                 bundle_state: BundleState::default(),
             }),
-            has_state_clear: true,
         }
     }
 

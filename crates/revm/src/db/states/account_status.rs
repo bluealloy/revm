@@ -55,3 +55,52 @@ impl AccountStatus {
         matches!(self, AccountStatus::Changed | AccountStatus::InMemoryChange)
     }
 }
+
+#[cfg(test)]
+mod test {
+
+    use super::*;
+
+    #[test]
+    fn test_account_status() {
+        // account not modified
+        assert!(AccountStatus::Loaded.not_modified());
+        assert!(AccountStatus::LoadedEmptyEIP161.not_modified());
+        assert!(AccountStatus::LoadedNotExisting.not_modified());
+        assert!(!AccountStatus::Changed.not_modified());
+        assert!(!AccountStatus::InMemoryChange.not_modified());
+        assert!(!AccountStatus::Destroyed.not_modified());
+        assert!(!AccountStatus::DestroyedChanged.not_modified());
+        assert!(!AccountStatus::DestroyedAgain.not_modified());
+
+        // we know full storage
+        assert!(!AccountStatus::LoadedEmptyEIP161.storage_known());
+        assert!(AccountStatus::LoadedNotExisting.storage_known());
+        assert!(AccountStatus::InMemoryChange.storage_known());
+        assert!(AccountStatus::Destroyed.storage_known());
+        assert!(AccountStatus::DestroyedChanged.storage_known());
+        assert!(AccountStatus::DestroyedAgain.storage_known());
+        assert!(!AccountStatus::Loaded.storage_known());
+        assert!(!AccountStatus::Changed.storage_known());
+
+        // account was destroyed
+        assert!(!AccountStatus::LoadedEmptyEIP161.was_destroyed());
+        assert!(!AccountStatus::LoadedNotExisting.was_destroyed());
+        assert!(!AccountStatus::InMemoryChange.was_destroyed());
+        assert!(AccountStatus::Destroyed.was_destroyed());
+        assert!(AccountStatus::DestroyedChanged.was_destroyed());
+        assert!(AccountStatus::DestroyedAgain.was_destroyed());
+        assert!(!AccountStatus::Loaded.was_destroyed());
+        assert!(!AccountStatus::Changed.was_destroyed());
+
+        // account modified but not destroyed
+        assert!(AccountStatus::Changed.modified_but_not_destroyed());
+        assert!(AccountStatus::InMemoryChange.modified_but_not_destroyed());
+        assert!(!AccountStatus::Loaded.modified_but_not_destroyed());
+        assert!(!AccountStatus::LoadedEmptyEIP161.modified_but_not_destroyed());
+        assert!(!AccountStatus::LoadedNotExisting.modified_but_not_destroyed());
+        assert!(!AccountStatus::Destroyed.modified_but_not_destroyed());
+        assert!(!AccountStatus::DestroyedChanged.modified_but_not_destroyed());
+        assert!(!AccountStatus::DestroyedAgain.modified_but_not_destroyed());
+    }
+}
