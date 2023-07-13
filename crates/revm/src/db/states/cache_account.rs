@@ -39,7 +39,7 @@ impl CacheAccount {
         }
     }
 
-    /// Create new account that is newly created (State is AccountStatus::New)
+    /// Create new account that is newly created
     pub fn new_newly_created(info: AccountInfo, storage: PlainStorage) -> Self {
         Self {
             account: Some(PlainAccount { info, storage }),
@@ -92,6 +92,33 @@ impl CacheAccount {
         (self.account.map(|a| a.into_components()), self.status)
     }
 
+    /// Account got touched and before EIP161 state clear this account is considered created.
+    pub fn touch_create_eip161(&mut self, storage: StorageWithOriginalValues) -> TransitionAccount {
+        let previous_status = self.status;
+        self.status = match self.status {
+            AccountStatus::DestroyedChanged
+            | AccountStatus::Destroyed
+            | AccountStatus::DestroyedAgain => AccountStatus::DestroyedChanged,
+            AccountStatus::LoadedEmptyEIP161
+            | AccountStatus::InMemoryChange
+            | AccountStatus::LoadedNotExisting => AccountStatus::InMemoryChange,
+            AccountStatus::Loaded | AccountStatus::Changed => {
+                unreachable!("Wrong state transition, touch crate is not possible from {self:?}")
+            }
+        };
+        let plain_storage = storage.iter().map(|(k, v)| (*k, v.present_value)).collect();
+
+        self.account = Some(PlainAccount::new_empty_with_storage(plain_storage));
+
+        TransitionAccount {
+            info: Some(AccountInfo::default()),
+            status: self.status,
+            previous_info: None,
+            previous_status,
+            storage,
+        }
+    }
+
     /// Touche empty account, related to EIP-161 state clear.
     ///
     /// This account returns Transition that is used to create the BundleState.
@@ -108,7 +135,7 @@ impl CacheAccount {
             .map(|acc| {
                 acc.storage
                     .drain()
-                    .map(|(k, v)| (k, StorageSlot::new_cleared_value(v)))
+                    .map(|(k, v)| (k, StorageSlot::new_changed(v, U256::ZERO)))
                     .collect::<HashMap<_, _>>()
             })
             .unwrap_or_default();
@@ -187,7 +214,8 @@ impl CacheAccount {
         };
 
         if previous_status == AccountStatus::LoadedNotExisting {
-            // not transitions for account loaded as not existing.
+            // transitions for account loaded as not existing.
+            self.status = AccountStatus::LoadedNotExisting;
             None
         } else {
             Some(TransitionAccount {
@@ -215,7 +243,7 @@ impl CacheAccount {
             .map(|a| {
                 core::mem::take(&mut a.storage)
                     .into_iter()
-                    .map(|(k, v)| (k, StorageSlot::new_cleared_value(v)))
+                    .map(|(k, v)| (k, StorageSlot::new_changed(U256::ZERO, v)))
                     .collect::<HashMap<_, _>>()
             })
             .unwrap_or_default();
@@ -282,8 +310,9 @@ impl CacheAccount {
 
         self.status = match self.status {
             AccountStatus::Loaded => {
-                // Account that have nonce zero are the ones that
-                if previous_info.as_ref().map(|a| a.code_hash) == Some(KECCAK_EMPTY) {
+                // Account that have nonce zero and empty code hash is considered to be fully in memory.
+                if previous_info.as_ref().map(|a| (a.code_hash, a.nonce)) == Some((KECCAK_EMPTY, 0))
+                {
                     AccountStatus::InMemoryChange
                 } else {
                     AccountStatus::Changed

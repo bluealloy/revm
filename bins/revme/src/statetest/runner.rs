@@ -166,7 +166,7 @@ pub fn execute_test_suit(
 
     for (name, unit) in suit.0.into_iter() {
         // Create database and insert cache
-        let mut cache_state = revm::CacheState::new_legacy();
+        let mut cache_state = revm::CacheState::new_without_state_clear();
         for (address, info) in unit.pre.into_iter() {
             let acc_info = revm::primitives::AccountInfo {
                 balance: info.balance,

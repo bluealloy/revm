@@ -10,6 +10,9 @@ use revm_interpreter::primitives::{
 };
 
 /// State of blockchain.
+///
+/// State clear flag is set inside CacheState and by default it is enabled.
+/// If you want to disable it use `set_state_clear_flag` function.
 pub struct State<'a, DBError> {
     /// Cached state contains both changed from evm executiong and cached/loaded account/storages
     /// from database. This allows us to have only one layer of cache where we can fetch data.
@@ -141,8 +144,8 @@ impl<'a, DBError> State<'a, DBError> {
     }
 
     /// State clear EIP-161 is enabled in Spurious Dragon hardfork.
-    pub fn enable_state_clear_eip(&mut self) {
-        self.cache.has_state_clear = true;
+    pub fn set_state_clear_flag(&mut self, has_state_clear: bool) {
+        self.cache.has_state_clear = has_state_clear;
     }
 
     pub fn new_without_transitions(db: Box<dyn Database<Error = DBError> + Send + 'a>) -> Self {

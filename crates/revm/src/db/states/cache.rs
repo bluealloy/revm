@@ -39,8 +39,7 @@ impl CacheState {
         }
     }
 
-    /// New default state with state clear flag disabled.
-    pub fn new_legacy() -> Self {
+    pub fn new_without_state_clear() -> Self {
         Self {
             accounts: HashMap::default(),
             contracts: HashMap::default(),
@@ -116,7 +115,6 @@ impl CacheState {
                 };
                 continue;
             }
-
             let is_empty = account.is_empty();
             if account.is_created() {
                 // Note: it can happen that created contract get selfdestructed in same block
@@ -180,20 +178,13 @@ impl CacheState {
                             }
                         }
                     } else {
-                        // if account is empty this means it is
+                        // if account is empty and state clear is not enabled we should save
+                        // empty account.
                         match self.accounts.entry(address) {
                             Entry::Occupied(mut entry) => {
-                                entry.insert(CacheAccount::new_loaded_empty_eip161(
-                                    account
-                                        .storage
-                                        .iter()
-                                        .map(|(k, v)| (*k, v.present_value))
-                                        .collect(),
-                                ));
-                                transitions.push((
-                                    address,
-                                    TransitionAccount::new_empty_eip161(account.storage),
-                                ));
+                                let transition =
+                                    entry.get_mut().touch_create_eip161(account.storage);
+                                transitions.push((address, transition));
                             }
                             Entry::Vacant(_entry) => {
                                 unreachable!("Empty Account should be loaded in cache")

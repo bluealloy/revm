@@ -26,7 +26,7 @@ impl TransitionAccount {
     pub fn new_empty_eip161(storage: StorageWithOriginalValues) -> Self {
         Self {
             info: Some(AccountInfo::default()),
-            status: AccountStatus::LoadedEmptyEIP161,
+            status: AccountStatus::InMemoryChange,
             previous_info: None,
             previous_status: AccountStatus::LoadedNotExisting,
             storage,
@@ -51,6 +51,16 @@ impl TransitionAccount {
     pub fn update(&mut self, other: Self) {
         self.info = other.info.clone();
         self.status = other.status;
+
+        // if transition is from some to destroyed drop the storage.
+        // This need to be done here as it is one increment of the state.
+
+        if matches!(
+            other.status,
+            AccountStatus::Destroyed | AccountStatus::DestroyedAgain
+        ) {
+            self.storage = StorageWithOriginalValues::new();
+        }
 
         // update changed values to this transition.
         for (key, slot) in other.storage.into_iter() {

@@ -254,7 +254,7 @@ impl BundleState {
                     AccountInfoRevert::DeleteIt => accounts.push((address, None)),
                     AccountInfoRevert::DoNothing => (),
                 }
-                if !revert_account.storage.is_empty() {
+                if revert_account.wipe_storage || !revert_account.storage.is_empty() {
                     let mut account_storage = Vec::new();
                     for (key, revert_slot) in revert_account.storage {
                         account_storage.push((key, revert_slot.to_previous_value()));

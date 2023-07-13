@@ -33,7 +33,6 @@ impl TransitionState {
             match self.transitions.entry(address) {
                 Entry::Occupied(entry) => {
                     let entry = entry.into_mut();
-                    // TODO update current transition and dont override previous state.
                     entry.update(account);
                 }
                 Entry::Vacant(entry) => {
