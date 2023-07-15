@@ -2,7 +2,7 @@ use core::str::FromStr;
 
 use alloc::vec::Vec;
 use num::{BigUint, FromPrimitive};
-use revm_primitives::{PrecompileResult, StandardPrecompileFn};
+use revm_primitives::{PrecompileResult, StandardPrecompileFn, uint};
 use sha2::{Digest, Sha256};
 
 use crate::{Precompile, PrecompileAddress};
@@ -14,6 +14,8 @@ pub const POINT_EVALUATION_PRECOMPILE: PrecompileAddress = PrecompileAddress(
 
 const FIELD_ELEMENTS_PER_BLOB: u32 = 4096;
 // Modulus is 381 bits which is greater than 256 bits so need to find better type
+// const BLS_MODULUS: uint<> =
+//     "52435875175126190479447740508185965837690552500527637822603658699938581184513";
 const BLS_MODULUS: &str =
     "52435875175126190479447740508185965837690552500527637822603658699938581184513";
 const BLOB_COMMITMENT_VERSION_KZG: u8 = 0x01;

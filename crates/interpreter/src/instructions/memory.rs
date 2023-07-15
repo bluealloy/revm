@@ -3,14 +3,7 @@ use core::ops::Index;
 use crate::{gas, interpreter::Interpreter, primitives::U256, Host, InstructionResult};
 use core::cmp::max;
 
-use revm_primitives::SpecId::CANCUN;
-
-use crate::{
-    gas,
-    interpreter::Interpreter,
-    primitives::{Spec, U256},
-    Host, InstructionResult,
-};
+use revm_primitives::{SpecId::CANCUN, Spec};
 
 
 pub fn mload(interpreter: &mut Interpreter, _host: &mut dyn Host) {
