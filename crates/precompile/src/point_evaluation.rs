@@ -1,7 +1,5 @@
-use core::str::FromStr;
-
 use alloc::vec::Vec;
-use revm_primitives::{PrecompileResult, StandardPrecompileFn, uint, U256};
+use revm_primitives::{PrecompileResult, StandardPrecompileFn};
 use sha2::{Digest, Sha256};
 
 use crate::{Precompile, PrecompileAddress};
@@ -11,10 +9,15 @@ pub const POINT_EVALUATION_PRECOMPILE: PrecompileAddress = PrecompileAddress(
     Precompile::Standard(point_evaluation_run as StandardPrecompileFn),
 );
 
-// `FIELD_ELEMENTS_PER_BLOB = 4096`
-const FIELD_ELEMENTS_PER_BLOB: [u8;4] = [0,0,16,0];
-// `BLS_MODULUS: = 52435875175126190479447740508185965837690552500527637822603658699938581184513`
-const BLS_MODULUS: [u8;32] = [115, 237, 167, 83, 41, 157, 125, 72, 51, 57, 216, 8, 9, 161, 216, 5, 83, 189, 164, 2, 255, 254, 91, 254, 255, 255, 255, 255, 0, 0, 0, 1];
+/// `FIELD_ELEMENTS_PER_BLOB = 4096`
+/// in big endian format
+const FIELD_ELEMENTS_PER_BLOB: [u8; 4] = [0, 0, 16, 0];
+/// `BLS_MODULUS: = 52435875175126190479447740508185965837690552500527637822603658699938581184513`
+/// in big endian format
+const BLS_MODULUS: [u8; 32] = [
+    115, 237, 167, 83, 41, 157, 125, 72, 51, 57, 216, 8, 9, 161, 216, 5, 83, 189, 164, 2, 255, 254,
+    91, 254, 255, 255, 255, 255, 0, 0, 0, 1,
+];
 const BLOB_COMMITMENT_VERSION_KZG: u8 = 1;
 
 pub fn point_evaluation_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
