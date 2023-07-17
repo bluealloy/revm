@@ -152,3 +152,30 @@ pub fn reverse_bits(n: u32, order: u32) -> u32 {
 
 
 
+mod tests {
+    use super::*;
+
+    #[test]
+    fn kzg_to_versioned_hash() {
+        let commitment = [0x01, 0x02];
+        let hashed_commitment = super::kzg_to_versioned_hash(&commitment);
+        assert_eq!(
+            hashed_commitment,
+            [
+                1, 40, 113, 254, 226, 16, 251, 134, 25, 41, 30, 174, 161, 148, 88, 28, 189, 37, 49,
+                228, 178, 55, 89, 210, 37, 246, 128, 105, 35, 246, 50, 34
+            ]
+        );
+    }
+
+    #[test]
+    fn verify_kzg_proof() {
+        todo!();
+    }
+
+    #[test]
+    fn point_evaluation_run() {
+        // Test the assertion in the run too
+        todo!();
+    }
+}
