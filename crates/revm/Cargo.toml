@@ -37,14 +37,7 @@ anyhow = "1.0.71"
 
 [features]
 default = ["std", "secp256k1"]
-dev = [
-    "memory_limit",
-    "optional_balance_check",
-    "optional_block_gas_limit",
-    "optional_eip3607",
-    "optional_gas_refund",
-    "optional_no_base_fee",
-]
+dev = ["memory_limit", "optional_balance_check", "optional_block_gas_limit", "optional_eip3607", "optional_gas_refund", "optional_no_base_fee"]
 secp256k1 = ["revm-precompile/secp256k1"]
 memory_limit = ["revm-interpreter/memory_limit"]
 no_gas_measuring = ["revm-interpreter/no_gas_measuring"]
