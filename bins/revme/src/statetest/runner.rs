@@ -166,7 +166,7 @@ pub fn execute_test_suit(
 
     for (name, unit) in suit.0.into_iter() {
         // Create database and insert cache
-        let mut cache_state = revm::CacheState::new_without_state_clear();
+        let mut cache_state = revm::CacheState::new(false);
         for (address, info) in unit.pre.into_iter() {
             let acc_info = revm::primitives::AccountInfo {
                 balance: info.balance,
@@ -256,10 +256,14 @@ pub fn execute_test_suit(
                 };
                 env.tx.transact_to = to;
 
-                let mut state = revm::db::State::new_with_cache(
-                    cache_state.clone(),
-                    SpecId::enabled(env.cfg.spec_id, revm::primitives::SpecId::SPURIOUS_DRAGON),
-                );
+                let mut cache = cache_state.clone();
+                cache.set_state_clear_flag(SpecId::enabled(
+                    env.cfg.spec_id,
+                    revm::primitives::SpecId::SPURIOUS_DRAGON,
+                ));
+                let mut state = revm::db::StateBuilder::default()
+                    .with_cached_prestate(cache)
+                    .build();
                 let mut evm = revm::new();
                 evm.database(&mut state);
                 evm.env = env.clone();
@@ -288,10 +292,15 @@ pub fn execute_test_suit(
                         "Roots did not match:\nState root: wanted {:?}, got {state_root:?}\nLogs root: wanted {:?}, got {logs_root:?}",
                         test.hash, test.logs
                     );
-                    let mut state = revm::State::new_with_cache(
-                        cache_state.clone(),
-                        SpecId::enabled(env.cfg.spec_id, revm::primitives::SpecId::SPURIOUS_DRAGON),
-                    );
+
+                    let mut cache = cache_state.clone();
+                    cache.set_state_clear_flag(SpecId::enabled(
+                        env.cfg.spec_id,
+                        revm::primitives::SpecId::SPURIOUS_DRAGON,
+                    ));
+                    let mut state = revm::db::StateBuilder::default()
+                        .with_cached_prestate(cache)
+                        .build();
                     evm.database(&mut state);
                     let _ =
                         evm.inspect_commit(TracerEip3155::new(Box::new(stdout()), false, false));

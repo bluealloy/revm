@@ -1,9 +1,7 @@
-use core::convert::Infallible;
-
 use super::{
     cache::CacheState, plain_account::PlainStorage, BundleState, CacheAccount, TransitionState,
 };
-use crate::{db::EmptyDB, TransitionAccount};
+use crate::TransitionAccount;
 use revm_interpreter::primitives::{
     db::{Database, DatabaseCommit},
     hash_map, Account, AccountInfo, Bytecode, HashMap, B160, B256, U256,
@@ -23,74 +21,21 @@ pub struct State<'a, DBError> {
     ///
     /// Note: It is marked as Send so database can be shared between threads.
     pub database: Box<dyn Database<Error = DBError> + Send + 'a>,
-    /// Build reverts and state that gets applied to the state.
-    pub transition_builder: Option<TransitionBuilder>,
-}
-
-#[derive(Debug, Clone, Default)]
-pub struct TransitionBuilder {
     /// Block state, it aggregates transactions transitions into one state.
-    pub transition_state: TransitionState,
+    ///
+    /// Build reverts and state that gets applied to the state.
+    pub transition_state: Option<TransitionState>,
     /// After block is finishes we merge those changes inside bundle.
     /// Bundle is used to update database and create changesets.
-    pub bundle_state: BundleState,
-}
-
-impl TransitionBuilder {
-    /// Take all transitions and merge them inside bundle state.
-    /// This action will create final post state and all reverts so that
-    /// we at any time revert state of bundle to the state before transition
-    /// is applied.
-    pub fn merge_transitions(&mut self) {
-        let transition_state = self.transition_state.take();
-        self.bundle_state
-            .apply_block_substate_and_create_reverts(transition_state);
-    }
-}
-
-impl Default for State<'_, Infallible> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-/// For State that does not have database.
-impl State<'_, Infallible> {
-    pub fn new_with_cache(mut cache: CacheState, has_state_clear: bool) -> Self {
-        cache.has_state_clear = has_state_clear;
-        Self {
-            cache,
-            database: Box::<EmptyDB>::default(),
-            transition_builder: None,
-        }
-    }
-
-    pub fn new_cached_with_transition() -> Self {
-        Self {
-            cache: CacheState::default(),
-            database: Box::<EmptyDB>::default(),
-            transition_builder: Some(TransitionBuilder {
-                transition_state: TransitionState::default(),
-                bundle_state: BundleState::default(),
-            }),
-        }
-    }
-
-    pub fn new() -> Self {
-        Self {
-            cache: CacheState::default(),
-            database: Box::<EmptyDB>::default(),
-            transition_builder: None,
-        }
-    }
-
-    pub fn new_legacy() -> Self {
-        Self {
-            cache: CacheState::default(),
-            database: Box::<EmptyDB>::default(),
-            transition_builder: None,
-        }
-    }
+    ///
+    /// Bundle state can be present if we want to use preloaded bundle.
+    pub bundle_state: Option<BundleState>,
+    /// Addition layer that is going to be used to fetched values before fetching values
+    /// from database.
+    ///
+    /// Bundle is the main output of the state execution and this allows setting previous bundle
+    /// and using its values for execution.
+    pub use_preloaded_bundle: bool,
 }
 
 impl<'a, DBError> State<'a, DBError> {
@@ -109,12 +54,9 @@ impl<'a, DBError> State<'a, DBError> {
             transitions.push((address, original_account.increment_balance(balance)))
         }
         // append transition
-        if let Some(transition_builder) = self.transition_builder.as_mut() {
-            transition_builder
-                .transition_state
-                .add_transitions(transitions);
+        if let Some(s) = self.transition_state.as_mut() {
+            s.add_transitions(transitions)
         }
-
         Ok(())
     }
 
@@ -135,10 +77,8 @@ impl<'a, DBError> State<'a, DBError> {
             transitions.push((address, transition))
         }
         // append transition
-        if let Some(transition_builder) = self.transition_builder.as_mut() {
-            transition_builder
-                .transition_state
-                .add_transitions(transitions);
+        if let Some(s) = self.transition_state.as_mut() {
+            s.add_transitions(transitions)
         }
         Ok(balances)
     }
@@ -146,25 +86,6 @@ impl<'a, DBError> State<'a, DBError> {
     /// State clear EIP-161 is enabled in Spurious Dragon hardfork.
     pub fn set_state_clear_flag(&mut self, has_state_clear: bool) {
         self.cache.has_state_clear = has_state_clear;
-    }
-
-    pub fn new_without_transitions(db: Box<dyn Database<Error = DBError> + Send + 'a>) -> Self {
-        Self {
-            cache: CacheState::default(),
-            database: db,
-            transition_builder: None,
-        }
-    }
-
-    pub fn new_with_transition(db: Box<dyn Database<Error = DBError> + Send + 'a>) -> Self {
-        Self {
-            cache: CacheState::default(),
-            database: db,
-            transition_builder: Some(TransitionBuilder {
-                transition_state: TransitionState::default(),
-                bundle_state: BundleState::default(),
-            }),
-        }
     }
 
     pub fn insert_not_existing(&mut self, address: B160) {
@@ -188,18 +109,27 @@ impl<'a, DBError> State<'a, DBError> {
     /// Apply evm transitions to transition state.
     fn apply_transition(&mut self, transitions: Vec<(B160, TransitionAccount)>) {
         // add transition to transition state.
-        if let Some(transition_builder) = self.transition_builder.as_mut() {
-            // NOTE: can be done in parallel
-            transition_builder
-                .transition_state
-                .add_transitions(transitions);
+        if let Some(s) = self.transition_state.as_mut() {
+            s.add_transitions(transitions)
         }
     }
 
-    /// Merge transitions to the bundle and crete reverts for it.
+    /// Take all transitions and merge them inside bundle state.
+    /// This action will create final post state and all reverts so that
+    /// we at any time revert state of bundle to the state before transition
+    /// is applied.
     pub fn merge_transitions(&mut self) {
-        if let Some(builder) = self.transition_builder.as_mut() {
-            builder.merge_transitions()
+        if let Some(transition_state) = self.transition_state.as_mut() {
+            let transition_state = transition_state.take();
+
+            if self.bundle_state.is_none() {
+                self.bundle_state = Some(BundleState::default());
+            }
+
+            self.bundle_state
+                .as_mut()
+                .unwrap()
+                .apply_block_substate_and_create_reverts(transition_state);
         }
     }
 
@@ -225,14 +155,7 @@ impl<'a, DBError> State<'a, DBError> {
     ///
     /// TODO make cache aware of transitions dropping by having global transition counter.
     pub fn take_bundle(&mut self) -> BundleState {
-        std::mem::replace(
-            self.transition_builder.as_mut().unwrap(),
-            TransitionBuilder {
-                transition_state: TransitionState::default(),
-                bundle_state: BundleState::default(),
-            },
-        )
-        .bundle_state
+        std::mem::take(self.bundle_state.as_mut().unwrap())
     }
 }
 

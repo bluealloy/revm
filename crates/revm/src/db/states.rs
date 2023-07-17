@@ -7,6 +7,7 @@ pub mod changes;
 pub mod plain_account;
 pub mod reverts;
 pub mod state;
+pub mod state_builder;
 pub mod transition_account;
 pub mod transition_state;
 
@@ -20,5 +21,6 @@ pub use changes::{StateChangeset, StateReverts};
 pub use plain_account::{PlainAccount, StorageWithOriginalValues};
 pub use reverts::{AccountRevert, RevertToSlot};
 pub use state::State;
+pub use state_builder::StateBuilder;
 pub use transition_account::TransitionAccount;
 pub use transition_state::TransitionState;

@@ -10,7 +10,8 @@ pub mod states;
 
 pub use states::{
     AccountRevert, AccountStatus, BundleAccount, BundleState, CacheState, PlainAccount,
-    RevertToSlot, State, StorageWithOriginalValues, TransitionAccount, TransitionState,
+    RevertToSlot, State, StateBuilder, StorageWithOriginalValues, TransitionAccount,
+    TransitionState,
 };
 
 #[cfg(all(not(feature = "ethersdb"), feature = "web3db"))]

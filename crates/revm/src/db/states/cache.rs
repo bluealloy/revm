@@ -25,26 +25,23 @@ pub struct CacheState {
 
 impl Default for CacheState {
     fn default() -> Self {
-        Self::new()
+        Self::new(true)
     }
 }
 
 impl CacheState {
     /// New default state.
-    pub fn new() -> Self {
+    pub fn new(has_state_clear: bool) -> Self {
         Self {
             accounts: HashMap::default(),
             contracts: HashMap::default(),
-            has_state_clear: true,
+            has_state_clear,
         }
     }
 
-    pub fn new_without_state_clear() -> Self {
-        Self {
-            accounts: HashMap::default(),
-            contracts: HashMap::default(),
-            has_state_clear: false,
-        }
+    /// Set state clear flag. EIP-161.
+    pub fn set_state_clear_flag(&mut self, has_state_clear: bool) {
+        self.has_state_clear = has_state_clear;
     }
 
     /// Helper function that returns all accounts.
@@ -203,6 +200,7 @@ impl CacheState {
                     }
                     Entry::Vacant(entry) => {
                         // It is assumed initial state is Loaded. Should not happen.
+                        // TODO(rakita) this should not happen, EVM will load it first.
                         entry.insert(CacheAccount::new_changed(
                             account.info.clone(),
                             account

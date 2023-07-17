@@ -93,6 +93,7 @@ impl CacheAccount {
     }
 
     /// Account got touched and before EIP161 state clear this account is considered created.
+    /// TODO(rakita) pre_eip161
     pub fn touch_create_eip161(&mut self, storage: StorageWithOriginalValues) -> TransitionAccount {
         let previous_status = self.status;
         self.status = match self.status {
@@ -238,6 +239,8 @@ impl CacheAccount {
         let mut previous_info = self.account.take();
 
         // For newly create accounts. Old storage needs to be discarded (set to zero).
+
+        // TODO(rakita) Storage is empty for new accounts.
         let mut storage_diff = previous_info
             .as_mut()
             .map(|a| {
@@ -372,6 +375,7 @@ impl CacheAccount {
 
         self.status = match self.status {
             AccountStatus::Loaded => {
+                // TODO(rakita) add nonce check
                 if previous_info.as_ref().map(|a| a.code_hash) == Some(KECCAK_EMPTY) {
                     // account can still be created but some balance is added to it.
                     AccountStatus::InMemoryChange
