@@ -18,6 +18,10 @@ ripemd = { version = "0.1", default-features = false }
 secp256k1 = { version = "0.27.0", default-features = false, features = ["alloc", "recovery"], optional = true }
 sha2 = { version = "0.10.5", default-features = false }
 sha3 = { version = "0.10.7", default-features = false }
+# For the audited ckzg ffi bindings from the EF
+c-kzg = { git = "https://github.com/ethereum/c-kzg-4844", package = "c-kzg" }
+
+# With Arkworks (first implementation)
 ark-bls12-381 = "0.4.0"
 ark-ec = "0.4.2"
 ark-serialize = "0.4.0"
