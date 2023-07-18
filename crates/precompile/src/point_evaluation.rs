@@ -2,7 +2,10 @@ use alloc::vec::Vec;
 use revm_primitives::{PrecompileResult, StandardPrecompileFn};
 use sha2::{Digest, Sha256};
 use ark_bls12_381::{G1Affine, G2Affine, Bls12_381, Fr, G1Projective as G1, G2Projective as G2};
-use ark_ff::BigInteger320;
+use ark_serialize::{CanonicalSerialize, CanonicalDeserialize};
+
+// Maybe use blst crate instead of ark_bls12_381 after we get it working
+// use blst::*;
 
 use crate::{Precompile, PrecompileAddress};
 
@@ -11,9 +14,16 @@ pub const POINT_EVALUATION_PRECOMPILE: PrecompileAddress = PrecompileAddress(
     Precompile::Standard(point_evaluation_run as StandardPrecompileFn),
 );
 
+const G1_POINT_AT_INFINITY: [u8; 48] = [
+    0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+];
+
 const FIELD_ELEMENTS_PER_BLOB: usize = 4096;
 /// in big endian format
 // const FIELD_ELEMENTS_PER_BLOB: [u8; 4] = [0, 0, 16, 0];
+
 /// `BLS_MODULUS: = 52435875175126190479447740508185965837690552500527637822603658699938581184513`
 /// in big endian format
 const BLS_MODULUS: [u8; 32] = [
@@ -26,43 +36,30 @@ const BYTES_PER_FIELD_ELEMENT: usize = 32;
 
 // Alias for BLSFieldElement
 // Validation: x < BLS_MODULUS
-pub struct BLSFieldElement {
-    bytes: [u8; 48],
-}
+type BLSFieldElement = [u8; 48];
 
 // Custom type for G1Point
 // Validation: Perform BLS standard's "KeyValidate" check but do allow the identity point
-pub struct G1Point {
-    point: G1Affine, // or another appropriate type depending on your exact requirements
-}
-
+type G1Point = G1Affine;
 // Custom type for G2Point
-pub struct G2Point {
-    point: G2Affine, // or another appropriate type depending on your exact requirements
-}
-
+type G2Point = G2Affine;
 // Custom type for KZGCommitment
 // Validation: Perform BLS standard's "KeyValidate" check but do allow the identity point
-pub struct KZGCommitment {
-    commitment: [u8; 48], // or another appropriate type depending on your exact requirements
-}
-
+type KZGCommitment = [u8; 48];
 // Custom type for KZGProof
-pub struct KZGProof {
-    proof: [u8; 48], // or another appropriate type depending on your exact requirements
-}
-
+type KZGProof = [u8; 48];
 // Custom type for Polynomial
 // A polynomial in evaluation form
 pub struct Polynomial {
     coefficients: [BLSFieldElement; FIELD_ELEMENTS_PER_BLOB], 
 }
-
 // Custom type for Blob
 // A basic blob data
 pub struct Blob {
-    data: [u8; BYTES_PER_FIELD_ELEMENT * FIELD_ELEMENTS_PER_BLOB], // Replace BYTES_PER_FIELD_ELEMENT and FIELD_ELEMENTS_PER_BLOB with the appropriate size
+    data: [u8; BYTES_PER_FIELD_ELEMENT * FIELD_ELEMENTS_PER_BLOB],
 }
+// Custom type for Versioned Hash
+type VersionedHash = [u8; 32];
 
 
 pub fn point_evaluation_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
@@ -71,16 +68,19 @@ pub fn point_evaluation_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let versioned_hash = &input[0..32];
     let z = &input[32..64];
     let y = &input[64..96];
-    let commitment = &input[96..144];
+    let commitment =  &input[96..144];
     let proof = &input[144..192];
 
     // Verify commitment matches versioned_hash
     assert!(kzg_to_versioned_hash(commitment) == versioned_hash);
 
     // Verify KZG proof with z and y in big endian format
-    assert!(verify_kzg_proof(commitment, z, y, proof));
+    unsafe {
+        assert!(verify_kzg_proof(commitment, z, y, proof));
+    }
 
-    let mut result = Vec::from(FIELD_ELEMENTS_PER_BLOB); // The first bytes of the result are the FIELD_ELEMENTS_PER_BLOB
+    let bytes: [u8; core::mem::size_of::<usize>()] = FIELD_ELEMENTS_PER_BLOB.to_ne_bytes();
+    let mut result = Vec::from(bytes); // The first bytes of the result are the FIELD_ELEMENTS_PER_BLOB
     result.extend(Vec::from(BLS_MODULUS)); // Concatenate the BLS_MODULUS to the result
 
     Ok((gas_limit, result))
@@ -101,18 +101,23 @@ pub fn kzg_to_versioned_hash(commitment: &[u8]) -> Vec<u8> {
     result
 }
 
-// impl BlsFieldElement {
-//     pub fn from_bytes(bytes: &[u8]) -> Self {
-//         assert!(bytes.len() == 32);
-//         let mut bytes = bytes.to_vec();
-//         bytes.reverse();
-//         BlsFieldElement(U256::from_little_endian(&bytes))
-//     }
-// }
-pub fn verify_kzg_proof(_commitment: &[u8], _z: &[u8], _y: &[u8], _proof: &[u8]) -> bool {
+pub unsafe fn verify_kzg_proof(_commitment: &[u8], _z: &[u8], _y: &[u8], _proof: &[u8]) -> bool {
 
-    // let bls_modulus_minus_z = Field::zero() - &z;
-    // let bls_modulus_minus_y = Fr::zero() - &y;
+    // Step 1)
+    // convert byte slices into BLS types 
+    // maybe have to deserializes
+    let commitment: Fr = CanonicalDeserialize::deserialize_compressed_unchecked(_commitment).unwrap();
+    // let z: 
+    // P(z) = y
+    // let thing = blst::blst_encode_to_g2(out, msg, msg_len, DST, DST_len, aug, aug_len)
+
+    // let z_as_field_el = Fr::from(_z);
+    // let y_as_field_el = Fr::from(_y);
+
+    // let modulus_as_field_el = Fr::from(BLS_MODULUS);
+
+    // let bls_modulus_minus_z = modulus_as_field_el - &z_as_field_el;
+    // let bls_modulus_minus_y = modulus_as_field_el - &y_as_field_el;
 
     // let x_minus_z = G2::one().add(&kzg_setup_g2.mul(&bls_modulus_minus_z.into_repr()));
     // let p_minus_y = commitment.add(&G1::one().mul(&bls_modulus_minus_y.into_repr()));
@@ -149,23 +154,63 @@ pub fn reverse_bits(n: u32, order: u32) -> u32 {
     result >> (32 - order)
 }
 
+pub fn bytes_to_bls_field_element(bytes: &[u8]) -> BLSFieldElement {
+    assert!(bytes.len() == 48);
+    let mut result: BLSFieldElement = [0u8; 48];
+    result.copy_from_slice(bytes);
+    result
+}
 
+fn bytes_to_kzg_proof(b: &[u8]) -> KZGProof {
+    // """
+    // Convert untrusted bytes into a trusted and validated KZGProof.
+    // """
+    
 
+    validate_kzg_g1(b);
+    return KZGProof(b)
+}
+fn validate_kzg_g1(bytes: &[u8]) {
+    if bytes == G1_POINT_AT_INFINITY {
+        return
+    }
+    assert!(bls.KeyValidate(bytes))
+}
+
+fn KZGProof(bytes: &[u8]) -> KZGProof {
+    KZGProof(bytes)
+}
+
+fn bytes_to_bls_field(b: &u8) -> Fr {
+    /**
+     * pyton impl
+     *     """
+    Convert untrusted bytes to a trusted and validated BLS scalar field element.
+    This function does not accept inputs greater than the BLS modulus.
+    """
+    field_element = int.from_bytes(b, ENDIANNESS)
+    assert field_element < BLS_MODULUS
+    return BLSFieldElement(field_element)
+     */
+    
+    // CanonicalDeserialize::deserialize_compressed_unchecked(b)
+} 
 
 mod tests {
     use super::*;
 
     #[test]
     fn kzg_to_versioned_hash() {
-        let commitment = [0x01, 0x02];
-        let hashed_commitment = super::kzg_to_versioned_hash(&commitment);
-        assert_eq!(
-            hashed_commitment,
-            [
-                1, 40, 113, 254, 226, 16, 251, 134, 25, 41, 30, 174, 161, 148, 88, 28, 189, 37, 49,
-                228, 178, 55, 89, 210, 37, 246, 128, 105, 35, 246, 50, 34
-            ]
-        );
+        // let commitment = [0x01, 0x02];
+        // let hashed_commitment = super::kzg_to_versioned_hash(&commitment);
+        // assert_eq!(
+        //     hashed_commitment,
+        //     [
+        //         1, 40, 113, 254, 226, 16, 251, 134, 25, 41, 30, 174, 161, 148, 88, 28, 189, 37, 49,
+        //         228, 178, 55, 89, 210, 37, 246, 128, 105, 35, 246, 50, 34
+        //     ]
+        // );
+        todo!();
     }
 
     #[test]
