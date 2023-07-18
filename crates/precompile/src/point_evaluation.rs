@@ -1,7 +1,10 @@
+use core::ops::Mul;
+
 use alloc::vec::Vec;
 use revm_primitives::{PrecompileResult, StandardPrecompileFn};
 use sha2::{Digest, Sha256};
-use ark_bls12_381::{G1Affine, G2Affine, Bls12_381, Fr, G1Projective as G1, G2Projective as G2};
+use ark_ec::{Group, pairing::Pairing};
+use ark_bls12_381::{G1Affine, G2Affine, Bls12_381, Fr, G1Projective, G2Projective};
 use ark_serialize::{CanonicalSerialize, CanonicalDeserialize};
 
 // Maybe use blst crate instead of ark_bls12_381 after we get it working
@@ -102,33 +105,28 @@ pub fn kzg_to_versioned_hash(commitment: &[u8]) -> Vec<u8> {
 }
 
 pub unsafe fn verify_kzg_proof(_commitment: &[u8], _z: &[u8], _y: &[u8], _proof: &[u8]) -> bool {
-
     // Step 1)
     // convert byte slices into BLS types 
-    // maybe have to deserializes
-    let commitment: Fr = CanonicalDeserialize::deserialize_compressed_unchecked(_commitment).unwrap();
-    // let z: 
-    // P(z) = y
-    // let thing = blst::blst_encode_to_g2(out, msg, msg_len, DST, DST_len, aug, aug_len)
+    // maybe have to deseFrs()
+    let commitment = G1Projective::deserialize_compressed_unchecked(&_commitment[..]).unwrap();
+    let proof = G1Projective::deserialize_compressed_unchecked(&_proof[..]).unwrap();
+    
+    let z: Fr = CanonicalDeserialize::deserialize_compressed_unchecked(_z).unwrap();
+    let y: Fr = CanonicalDeserialize::deserialize_compressed_unchecked(_y).unwrap();
+    
+    let gen1 = G1Projective::generator();
+    let gen2 = G2Projective::generator();
 
-    // let z_as_field_el = Fr::from(_z);
-    // let y_as_field_el = Fr::from(_y);
+    // sG2 - zG2
+    // TODO: This should be KZG_SETUP_G2[1] + gen2.mul(-z)
+    let s_minus_z = gen2.mul(-z);
+    // C - yG1
+    let commitment_minus_y = commitment - gen1.mul(y);
+    
+    let lhs = Bls12_381::pairing(commitment_minus_y, gen2);
+    let rhs = Bls12_381::pairing(proof, s_minus_z);
 
-    // let modulus_as_field_el = Fr::from(BLS_MODULUS);
-
-    // let bls_modulus_minus_z = modulus_as_field_el - &z_as_field_el;
-    // let bls_modulus_minus_y = modulus_as_field_el - &y_as_field_el;
-
-    // let x_minus_z = G2::one().add(&kzg_setup_g2.mul(&bls_modulus_minus_z.into_repr()));
-    // let p_minus_y = commitment.add(&G1::one().mul(&bls_modulus_minus_y.into_repr()));
-
-    // let neg_g2 = G2::one().neg();
-
-    // let pairing_check_1 = Bls12_381::pairing(p_minus_y.into_affine(), neg_g2.into_affine());
-    // let pairing_check_2 = Bls12_381::pairing(proof.com.into_affine(), x_minus_z.into_affine());
-
-    // pairing_check_1 == pairing_check_2
-    todo!()
+    lhs == rhs
 }
 
 
