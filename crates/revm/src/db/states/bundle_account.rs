@@ -401,6 +401,7 @@ impl BundleAccount {
                                 account: AccountInfoRevert::RevertTo(
                                     self.info.clone().unwrap_or_default(),
                                 ),
+                                // TODO(rakita) is this invalid?
                                 storage: previous_storage_from_update,
                                 previous_status: AccountStatus::DestroyedChanged,
                                 wipe_storage: false,

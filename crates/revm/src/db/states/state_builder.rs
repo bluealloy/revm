@@ -12,7 +12,7 @@ pub struct StateBuilder<'a, DBError> {
     /// Note: It is marked as Send so database can be shared between threads.
     pub database: Box<dyn Database<Error = DBError> + Send + 'a>,
     /// if there is prestate that we want to use.
-    /// This would mean that we have additional layer
+    /// This would mean that we have additional state layer between evm and disk/database.
     pub with_bundle_prestate: Option<BundleState>,
     /// This will initialize cache to this state.
     pub with_cache_prestate: Option<CacheState>,

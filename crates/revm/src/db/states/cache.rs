@@ -1,6 +1,5 @@
 use super::{
-    plain_account::PlainStorage, transition_account::TransitionAccount, AccountStatus,
-    CacheAccount, PlainAccount,
+    plain_account::PlainStorage, transition_account::TransitionAccount, CacheAccount, PlainAccount,
 };
 use revm_interpreter::primitives::{
     hash_map::Entry, AccountInfo, Bytecode, HashMap, State as EVMState, B160, B256,
@@ -104,10 +103,10 @@ impl CacheState {
                             transitions.push((address, transition));
                         }
                     }
-                    Entry::Vacant(entry) => {
+                    Entry::Vacant(_entry) => {
                         // if account is not present in db, we can just mark it sa NotExisting.
                         // This should not happen as all account should be loaded through this state.
-                        entry.insert(CacheAccount::new_loaded_not_existing());
+                        unreachable!("All account should be loaded from cache for selfdestruct");
                     }
                 };
                 continue;
@@ -130,29 +129,10 @@ impl CacheState {
                         transitions
                             .push((address, this.newly_created(account.info, account.storage)))
                     }
-                    Entry::Vacant(entry) => {
+                    Entry::Vacant(_entry) => {
                         // This means shold not happen as all accounts should be loaded through
                         // this state.
-                        entry.insert(CacheAccount::new_newly_created(
-                            account.info.clone(),
-                            account
-                                .storage
-                                .iter()
-                                .map(|(k, v)| (*k, v.present_value))
-                                .collect(),
-                        ));
-
-                        // push transition but assume original state is LoadedNotExisting.
-                        transitions.push((
-                            address,
-                            TransitionAccount {
-                                info: Some(account.info.clone()),
-                                status: AccountStatus::InMemoryChange,
-                                storage: account.storage,
-                                previous_info: None,
-                                previous_status: AccountStatus::LoadedNotExisting,
-                            },
-                        ));
+                        unreachable!("All account should be loaded from cache for created account");
                     }
                 }
             } else {
@@ -198,17 +178,9 @@ impl CacheState {
                         // make a change and create transition.
                         transitions.push((address, this.change(account.info, account.storage)));
                     }
-                    Entry::Vacant(entry) => {
+                    Entry::Vacant(_entry) => {
                         // It is assumed initial state is Loaded. Should not happen.
-                        // TODO(rakita) this should not happen, EVM will load it first.
-                        entry.insert(CacheAccount::new_changed(
-                            account.info.clone(),
-                            account
-                                .storage
-                                .iter()
-                                .map(|(k, v)| (*k, v.present_value))
-                                .collect(),
-                        ));
+                        unreachable!("All account should be loaded from cache for change account");
                     }
                 }
             };

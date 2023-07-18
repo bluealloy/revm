@@ -201,7 +201,7 @@ impl BundleState {
             // append storage changes
 
             // NOTE: Assumption is that revert is going to remova whole plain storage from
-            // database so we need to check if plain state was wiped or not.
+            // database so we can check if plain state was wiped or not.
             let mut account_storage_changed = Vec::with_capacity(account.storage.len());
             if was_destroyed {
                 // If storage was destroyed that means that storage was wipped.
