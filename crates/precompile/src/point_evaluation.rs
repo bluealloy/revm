@@ -168,32 +168,31 @@ fn bytes_to_kzg_proof(b: &[u8]) -> KZGProof {
     
 
     validate_kzg_g1(b);
-    return KZGProof(b)
+    return kzgproof(b)
 }
 fn validate_kzg_g1(bytes: &[u8]) {
     if bytes == G1_POINT_AT_INFINITY {
         return
     }
+    todo!("validate_kzg_g1 here");
     assert!(bls.KeyValidate(bytes))
 }
 
-fn KZGProof(bytes: &[u8]) -> KZGProof {
-    KZGProof(bytes)
+fn kzgproof(bytes: &[u8]) -> KZGProof {
+    let array: [u8; 48] = bytes.try_into().expect("Slice with incorrect length");
+    array
 }
 
-fn bytes_to_bls_field(b: &u8) -> Fr {
-    /**
-     * pyton impl
-     *     """
-    Convert untrusted bytes to a trusted and validated BLS scalar field element.
-    This function does not accept inputs greater than the BLS modulus.
-    """
-    field_element = int.from_bytes(b, ENDIANNESS)
-    assert field_element < BLS_MODULUS
-    return BLSFieldElement(field_element)
-     */
+fn bytes_to_bls_field(b: &[u8]) -> Fr {
     
-    // CanonicalDeserialize::deserialize_compressed_unchecked(b)
+    // Convert untrusted bytes to a trusted and validated BLS scalar field element.
+    // This function does not accept inputs greater than the BLS modulus.
+
+    let field_element = bytes_to_bls_field(b);
+    let modulus_field_element = bytes_to_bls_field(BLS_MODULUS.as_slice());
+    assert!(field_element < modulus_field_element);
+    field_element
+    
 } 
 
 mod tests {
