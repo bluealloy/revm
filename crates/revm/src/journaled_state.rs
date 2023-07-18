@@ -411,9 +411,7 @@ impl JournaledState {
                     address,
                     key,
                     had_value,
-                } => {
-                    transient_storage.set(address, key, had_value.unwrap());
-                }
+                } => transient_storage.set(address, key, had_value.unwrap_or_default()),
                 JournalEntry::CodeChange { address, had_code } => {
                     let acc = state.get_mut(&address).unwrap();
                     acc.info.code_hash = had_code.hash();
@@ -704,7 +702,9 @@ impl JournaledState {
                 address,
                 key,
                 had_value: Some(present),
-            })
+            });
+
+        self.transient_storage.set(address, key, new)
     }
 
     /// push log into subroutine

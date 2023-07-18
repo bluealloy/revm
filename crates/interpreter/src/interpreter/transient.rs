@@ -20,27 +20,16 @@ impl TransientStorage {
     }
 
     pub fn set(&mut self, address: B160, key: U256, value: U256) {
-        match self.data.get_mut(&address) {
-            Some(storage) => {
-                let _ = storage.insert(key, value);
-                return;
-            }
-            None => {
-                let mut storage: HashMap<U256, U256> = HashMap::default();
-                let _ = storage.insert(key, value);
-                self.data.insert(address, storage);
-                return;
-            }
-        }
+        self.data
+            .get_mut(&address)
+            .and_then(|s| s.insert(key, value));
     }
 
     pub fn get(&self, address: B160, key: U256) -> U256 {
-        match self.data.get(&address) {
-            Some(storage) => match storage.get(&key) {
-                Some(value) => *value,
-                None => U256::default(),
-            },
-            None => U256::default(),
-        }
+        self.data
+            .get(&address)
+            .and_then(|s| s.get(&key))
+            .cloned()
+            .unwrap_or_default()
     }
 }

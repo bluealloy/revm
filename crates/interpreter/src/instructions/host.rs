@@ -180,6 +180,7 @@ pub fn sstore<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
 }
 
 pub fn tstore<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+    check!(interpreter, SPEC::enabled(CANCUN));
     check_staticcall!(interpreter);
     gas!(interpreter, gas::WARM_STORAGE_READ_COST);
 
@@ -189,11 +190,12 @@ pub fn tstore<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) 
 }
 
 pub fn tload<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+    check!(interpreter, SPEC::enabled(CANCUN));
     gas!(interpreter, gas::WARM_STORAGE_READ_COST);
 
-    pop!(interpreter, index);
+    pop_top!(interpreter, index);
 
-    let value = host.tload(interpreter.contract.address, index);
+    let value = host.tload(interpreter.contract.address, *index);
     push!(interpreter, value);
 }
 
