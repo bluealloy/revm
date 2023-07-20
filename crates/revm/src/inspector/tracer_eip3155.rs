@@ -125,6 +125,20 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         (ret, remaining_gas, out)
     }
 
+    fn create(
+        &mut self,
+        data: &mut EVMData<'_, DB>,
+        _inputs: &mut CreateInputs,
+    ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
+        self.print_log_line(data.journaled_state.depth());
+        (
+            InstructionResult::Continue,
+            None,
+            Gas::new(0),
+            Bytes::default(),
+        )
+    }
+
     fn create_end(
         &mut self,
         data: &mut EVMData<'_, DB>,
