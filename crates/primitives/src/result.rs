@@ -1,6 +1,7 @@
 use crate::{Log, State, B160};
 use alloc::vec::Vec;
 use bytes::Bytes;
+use core::fmt;
 use ruint::aliases::U256;
 
 pub type EVMResult<DBError> = core::result::Result<ResultAndState, EVMError<DBError>>;
@@ -126,6 +127,22 @@ pub enum EVMError<DBError> {
     /// REVM specific and related to environment.
     PrevrandaoNotSet,
     Database(DBError),
+}
+
+#[cfg(feature = "std")]
+impl<DBError> std::error::Error for EVMError<DBError> where Self: fmt::Debug + fmt::Display {}
+
+impl<DBError> fmt::Display for EVMError<DBError>
+where
+    DBError: fmt::Display,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            EVMError::Transaction(v) => write!(f, "Transaction error: {:?}", v),
+            EVMError::PrevrandaoNotSet => f.write_str("Prevrandao not set"),
+            EVMError::Database(v) => write!(f, "Database error: {}", v),
+        }
+    }
 }
 
 impl<DBError> From<InvalidTransaction> for EVMError<DBError> {
