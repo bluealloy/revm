@@ -1,5 +1,3 @@
-pub use crate::InstructionResult;
-
 macro_rules! check_staticcall {
     ($interp:expr) => {
         if $interp.is_static {
@@ -10,8 +8,8 @@ macro_rules! check_staticcall {
 }
 
 macro_rules! check {
-    ($interp:expr, $expresion:expr) => {
-        if !$expresion {
+    ($interp:expr, $e:expr) => {
+        if !$e {
             $interp.instruction_result = InstructionResult::NotActivated;
             return;
         }
@@ -21,7 +19,7 @@ macro_rules! check {
 macro_rules! gas {
     ($interp:expr, $gas:expr) => {
         if crate::USE_GAS {
-            if !$interp.gas.record_cost(($gas)) {
+            if !$interp.gas.record_cost($gas) {
                 $interp.instruction_result = InstructionResult::OutOfGas;
                 return;
             }
@@ -82,7 +80,7 @@ macro_rules! memory_resize {
 }
 
 macro_rules! pop_address {
-    ( $interp:expr, $x1:ident) => {
+    ($interp:expr, $x1:ident) => {
         if $interp.stack.len() < 1 {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
@@ -94,12 +92,11 @@ macro_rules! pop_address {
                 .unwrap(),
         );
     };
-    ( $interp:expr, $x1:ident, $x2:ident) => {
+    ($interp:expr, $x1:ident, $x2:ident) => {
         if $interp.stack.len() < 2 {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
-        let mut temp = H256::zero();
 
         let $x1: B160 = B160(
             unsafe { $interp.stack.pop_unsafe() }.to_be_bytes::<{ U256::BYTES }>()[12..]
@@ -115,7 +112,7 @@ macro_rules! pop_address {
 }
 
 macro_rules! pop {
-    ( $interp:expr, $x1:ident) => {
+    ($interp:expr, $x1:ident) => {
         if $interp.stack.len() < 1 {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
@@ -123,7 +120,7 @@ macro_rules! pop {
         // Safety: Length is checked above.
         let $x1 = unsafe { $interp.stack.pop_unsafe() };
     };
-    ( $interp:expr, $x1:ident, $x2:ident) => {
+    ($interp:expr, $x1:ident, $x2:ident) => {
         if $interp.stack.len() < 2 {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
@@ -131,7 +128,7 @@ macro_rules! pop {
         // Safety: Length is checked above.
         let ($x1, $x2) = unsafe { $interp.stack.pop2_unsafe() };
     };
-    ( $interp:expr, $x1:ident, $x2:ident, $x3:ident) => {
+    ($interp:expr, $x1:ident, $x2:ident, $x3:ident) => {
         if $interp.stack.len() < 3 {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
@@ -140,7 +137,7 @@ macro_rules! pop {
         let ($x1, $x2, $x3) = unsafe { $interp.stack.pop3_unsafe() };
     };
 
-    ( $interp:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident) => {
+    ($interp:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident) => {
         if $interp.stack.len() < 4 {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
@@ -151,7 +148,7 @@ macro_rules! pop {
 }
 
 macro_rules! pop_top {
-    ( $interp:expr, $x1:ident) => {
+    ($interp:expr, $x1:ident) => {
         if $interp.stack.len() < 1 {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
@@ -159,7 +156,7 @@ macro_rules! pop_top {
         // Safety: Length is checked above.
         let $x1 = unsafe { $interp.stack.top_unsafe() };
     };
-    ( $interp:expr, $x1:ident, $x2:ident) => {
+    ($interp:expr, $x1:ident, $x2:ident) => {
         if $interp.stack.len() < 2 {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
@@ -167,7 +164,7 @@ macro_rules! pop_top {
         // Safety: Length is checked above.
         let ($x1, $x2) = unsafe { $interp.stack.pop_top_unsafe() };
     };
-    ( $interp:expr, $x1:ident, $x2:ident, $x3:ident) => {
+    ($interp:expr, $x1:ident, $x2:ident, $x3:ident) => {
         if $interp.stack.len() < 3 {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
@@ -178,59 +175,57 @@ macro_rules! pop_top {
 }
 
 macro_rules! push_b256 {
-	( $interp:expr, $( $x:expr ),* ) => (
-		$(
-			match $interp.stack.push_b256($x) {
-				Ok(()) => (),
-				Err(e) => {
-                    $interp.instruction_result = e;
-                    return
-                },
-			}
-		)*
-	)
+	($interp:expr, $($x:expr),* $(,)?) => ($(
+        match $interp.stack.push_b256($x) {
+            Ok(()) => {},
+            Err(e) => {
+                $interp.instruction_result = e;
+                return;
+            },
+        }
+    )*)
 }
 
 macro_rules! push {
-    ( $interp:expr, $( $x:expr ),* ) => (
-		$(
-			match $interp.stack.push($x) {
-				Ok(()) => (),
-				Err(e) => { $interp.instruction_result = e;
-                    return
-                } ,
-			}
-		)*
-	)
+    ($interp:expr, $($x:expr),* $(,)?) => ($(
+        match $interp.stack.push($x) {
+            Ok(()) => {},
+            Err(e) => {
+                $interp.instruction_result = e;
+                return;
+            }
+        }
+    )*)
 }
 
 macro_rules! as_u64_saturated {
-    ( $v:expr ) => {{
-        if $v.as_limbs()[1] != 0 || $v.as_limbs()[2] != 0 || $v.as_limbs()[3] != 0 {
-            u64::MAX
+    ($v:expr) => {{
+        let x: &[u64; 4] = $v.as_limbs();
+        if x[1] == 0 && x[2] == 0 && x[3] == 0 {
+            x[0]
         } else {
-            $v.as_limbs()[0]
+            u64::MAX
         }
     }};
 }
 
 macro_rules! as_usize_saturated {
-    ( $v:expr ) => {{
+    ($v:expr) => {
         as_u64_saturated!($v) as usize
-    }};
+    };
 }
 
 macro_rules! as_usize_or_fail {
-    (  $interp:expr, $v:expr ) => {{
+    ($interp:expr, $v:expr) => {
         as_usize_or_fail!($interp, $v, InstructionResult::InvalidOperandOOG)
-    }};
+    };
 
-    (  $interp:expr, $v:expr, $reason:expr ) => {{
-        if $v.as_limbs()[1] != 0 || $v.as_limbs()[2] != 0 || $v.as_limbs()[3] != 0 {
+    ($interp:expr, $v:expr, $reason:expr) => {{
+        let x = $v.as_limbs();
+        if x[1] != 0 || x[2] != 0 || x[3] != 0 {
             $interp.instruction_result = $reason;
             return;
         }
-
-        $v.as_limbs()[0] as usize
+        x[0] as usize
     }};
 }

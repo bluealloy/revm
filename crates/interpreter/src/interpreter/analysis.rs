@@ -1,13 +1,12 @@
 use crate::opcode;
-use crate::primitives::{Bytecode, BytecodeState, Bytes, B256};
+use crate::primitives::{
+    bitvec::prelude::{bitvec, BitVec, Lsb0},
+    Bytecode, BytecodeState, Bytes, JumpMap, B256,
+};
 use alloc::sync::Arc;
 // use bitvec::order::Lsb0;
 // use bitvec::prelude::bitvec;
 // use bitvec::vec::BitVec;
-use revm_primitives::{
-    bitvec::prelude::{bitvec, BitVec, Lsb0},
-    JumpMap,
-};
 
 /// Perform bytecode analysis.
 ///

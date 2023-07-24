@@ -116,8 +116,8 @@ impl Memory {
     /// # Safety
     /// The caller is responsible to check that we resized memory properly.
     #[inline(always)]
-    pub fn copy(&mut self, dst: usize, src: usize, length: usize) {
-        self.data.copy_within(src..src + length, dst);
+    pub fn copy(&mut self, dst: usize, src: usize, len: usize) {
+        self.data.copy_within(src..src + len, dst);
     }
 }
 

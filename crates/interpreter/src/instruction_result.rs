@@ -1,4 +1,4 @@
-use revm_primitives::{Eval, Halt};
+use crate::primitives::{Eval, Halt};
 
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]

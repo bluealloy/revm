@@ -98,7 +98,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let effective_gas_price = env.effective_gas_price();
 
         let initial_gas_spend =
-            initial_tx_gas::<GSPEC>(&tx_data, tx_is_create, &env.tx.access_list);
+            initial_tx_gas(&tx_data, tx_is_create, &env.tx.access_list, GSPEC::SPEC_ID);
 
         // Additonal check to see if limit is big enought to cover initial gas.
         if env.tx.gas_limit < initial_gas_spend {

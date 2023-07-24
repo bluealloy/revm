@@ -1,5 +1,6 @@
 use crate::primitives::{B256, U256};
 use crate::{alloc::vec::Vec, InstructionResult};
+use core::fmt;
 
 pub const STACK_LIMIT: usize = 1024;
 
@@ -10,25 +11,21 @@ pub struct Stack {
     data: Vec<U256>,
 }
 
-#[cfg(feature = "std")]
-impl std::fmt::Display for Stack {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        if self.data.is_empty() {
-            f.write_str("[]")?;
-        } else {
-            f.write_str("[")?;
-            for i in self.data[..self.data.len() - 1].iter() {
-                f.write_str(&i.to_string())?;
+impl fmt::Display for Stack {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("[")?;
+        for (i, x) in self.data.iter().enumerate() {
+            if i > 0 {
                 f.write_str(", ")?;
             }
-            f.write_str(&self.data.last().unwrap().to_string())?;
-            f.write_str("]")?;
+            write!(f, "{x}")?;
         }
-        Ok(())
+        f.write_str("]")
     }
 }
 
 impl Default for Stack {
+    #[inline]
     fn default() -> Self {
         Self::new()
     }
@@ -36,6 +33,7 @@ impl Default for Stack {
 
 impl Stack {
     /// Create a new stack with given limit.
+    #[inline]
     pub fn new() -> Self {
         Self {
             // Safety: A lot of functions assumes that capacity is STACK_LIMIT
@@ -236,12 +234,8 @@ impl Stack {
         if len <= N {
             return Some(InstructionResult::StackUnderflow);
         }
-        // Safety: length is checked before so we are okay to switch bytes in unsafe way.
-        unsafe {
-            let pa: *mut U256 = self.data.get_unchecked_mut(len - 1);
-            let pb: *mut U256 = self.data.get_unchecked_mut(len - 1 - N);
-            core::ptr::swap(pa, pb);
-        }
+        let last = len - 1;
+        self.data.swap(last, last - N);
         None
     }
 

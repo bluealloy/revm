@@ -1,7 +1,6 @@
 use super::analysis::{to_analysed, BytecodeLocked};
-use crate::primitives::{Bytecode, Bytes, B160, U256};
+use crate::primitives::{Bytecode, Bytes, Env, TransactTo, B160, U256};
 use crate::CallContext;
-use revm_primitives::{Env, TransactTo};
 
 #[derive(Clone, Default)]
 pub struct Contract {
@@ -46,8 +45,8 @@ impl Contract {
         )
     }
 
-    pub fn is_valid_jump(&self, possition: usize) -> bool {
-        self.bytecode.jump_map().is_valid(possition)
+    pub fn is_valid_jump(&self, pos: usize) -> bool {
+        self.bytecode.jump_map().is_valid(pos)
     }
 
     pub fn new_with_context(input: Bytes, bytecode: Bytecode, call_context: &CallContext) -> Self {

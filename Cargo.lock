@@ -1984,8 +1984,6 @@ name = "revm-interpreter"
 version = "1.1.2"
 dependencies = [
  "arbitrary",
- "derive_more",
- "enumn",
  "proptest",
  "proptest-derive",
  "revm-primitives",

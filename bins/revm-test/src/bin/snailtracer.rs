@@ -34,9 +34,7 @@ pub fn simple_example() {
     microbench::bench(
         &bench_options,
         "Snailtracer Host+Interpreter benchmark",
-        || {
-            let _ = evm.transact().unwrap();
-        },
+        || evm.transact().unwrap(),
     );
 
     // revm interpreter

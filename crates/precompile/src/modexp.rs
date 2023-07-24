@@ -47,7 +47,7 @@ fn calculate_iteration_count(exp_length: u64, exp_highp: &BigUint) -> u64 {
 }
 
 macro_rules! read_u64_with_overflow {
-    ($input:expr,$from:expr,$to:expr, $overflow_limit:expr) => {{
+    ($input:expr, $from:expr, $to:expr, $overflow_limit:expr) => {{
         const SPLIT: usize = 32 - size_of::<u64>();
         let len = $input.len();
         let from_zero = min($from, len);
