@@ -138,6 +138,10 @@ impl BundleAccount {
         let updated_info = transition.info;
         let updated_storage = transition.storage;
         let updated_status = transition.status;
+        // storage was destroyed so we should clear current storage.
+        if transition.storage_was_destroyed {
+            self.storage.clear();
+        }
 
         // the helper that extends this storage but preserves original value.
         let extend_storage =
@@ -148,141 +152,68 @@ impl BundleAccount {
                 }
             };
 
-        // handle it more optimal in future but for now be more flexible to set the logic.
+        // Needed for some reverts
         let previous_storage_from_update = updated_storage
             .iter()
             .filter(|s| s.1.original_value != s.1.present_value)
             .map(|(key, value)| (*key, RevertToSlot::Some(value.original_value)))
             .collect();
 
+        // Needed for some reverts.
+        let info_revert = if self.info != updated_info {
+            AccountInfoRevert::RevertTo(self.info.clone().unwrap_or_default())
+        } else {
+            AccountInfoRevert::DoNothing
+        };
+
         match updated_status {
             AccountStatus::Changed => {
                 match self.status {
-                    AccountStatus::Changed => {
+                    AccountStatus::Changed | AccountStatus::Loaded => {
                         // extend the storage. original values is not used inside bundle.
-                        let revert_info = if self.info != updated_info {
-                            AccountInfoRevert::RevertTo(self.info.clone().unwrap_or_default())
-                        } else {
-                            AccountInfoRevert::DoNothing
-                        };
                         extend_storage(&mut self.storage, updated_storage);
-                        self.info = updated_info;
-                        Some(AccountRevert {
-                            account: revert_info,
-                            storage: previous_storage_from_update,
-                            previous_status: AccountStatus::Changed,
-                            wipe_storage: false,
-                        })
-                    }
-                    AccountStatus::Loaded => {
-                        let info_revert = if self.info != updated_info {
-                            AccountInfoRevert::RevertTo(self.info.clone().unwrap_or_default())
-                        } else {
-                            AccountInfoRevert::DoNothing
-                        };
-                        self.status = AccountStatus::Changed;
-                        self.info = updated_info;
-                        extend_storage(&mut self.storage, updated_storage);
-
-                        Some(AccountRevert {
-                            account: info_revert,
-                            storage: previous_storage_from_update,
-                            previous_status: AccountStatus::Loaded,
-                            wipe_storage: false,
-                        })
                     }
                     AccountStatus::LoadedEmptyEIP161 => {
+                        // Do nothing.
                         // Only change that can happen from LoadedEmpty to Changed
                         // is if balance is send to account. So we are only checking account change here.
-                        let info_revert = if self.info != updated_info {
-                            AccountInfoRevert::RevertTo(self.info.clone().unwrap_or_default())
-                        } else {
-                            AccountInfoRevert::DoNothing
-                        };
-                        self.status = AccountStatus::Changed;
-                        self.info = updated_info;
-                        Some(AccountRevert {
-                            account: info_revert,
-                            storage: HashMap::default(),
-                            previous_status: AccountStatus::Loaded,
-                            wipe_storage: false,
-                        })
                     }
                     _ => unreachable!("Invalid state transfer to Changed from {self:?}"),
-                }
+                };
+                let previous_status = self.status;
+                self.status = AccountStatus::Changed;
+                self.info = updated_info;
+                Some(AccountRevert {
+                    account: info_revert,
+                    storage: previous_storage_from_update,
+                    previous_status: previous_status,
+                    wipe_storage: false,
+                })
             }
-            AccountStatus::InMemoryChange => match self.status {
-                AccountStatus::LoadedEmptyEIP161 => {
-                    let revert_info = if self.info != updated_info {
-                        AccountInfoRevert::RevertTo(AccountInfo::default())
-                    } else {
-                        AccountInfoRevert::DoNothing
-                    };
-                    // set as new as we didn't have that transition
-                    self.status = AccountStatus::InMemoryChange;
-                    self.info = updated_info;
-                    extend_storage(&mut self.storage, updated_storage);
-
-                    Some(AccountRevert {
-                        account: revert_info,
-                        storage: previous_storage_from_update,
-                        previous_status: AccountStatus::LoadedEmptyEIP161,
-                        wipe_storage: false,
-                    })
-                }
-                AccountStatus::Loaded => {
-                    // from loaded to InMemoryChange can happen if there is balance change
-                    // or new created account but Loaded didn't have contract.
-                    let revert_info = if self.info != updated_info {
-                        AccountInfoRevert::RevertTo(AccountInfo::default())
-                    } else {
-                        AccountInfoRevert::DoNothing
-                    };
-                    // set as new as we didn't have that transition
-                    self.status = AccountStatus::InMemoryChange;
-                    self.info = updated_info;
-                    extend_storage(&mut self.storage, updated_storage);
-
-                    Some(AccountRevert {
-                        account: revert_info,
-                        storage: previous_storage_from_update,
-                        previous_status: AccountStatus::Loaded,
-                        wipe_storage: false,
-                    })
-                }
-                AccountStatus::LoadedNotExisting => {
-                    // set as new as we didn't have that transition
-                    self.status = AccountStatus::InMemoryChange;
-                    self.info = updated_info;
-                    self.storage = updated_storage;
-
-                    Some(AccountRevert {
-                        account: AccountInfoRevert::DeleteIt,
-                        storage: previous_storage_from_update,
-                        previous_status: AccountStatus::LoadedNotExisting,
-                        wipe_storage: false,
-                    })
-                }
-                AccountStatus::InMemoryChange => {
-                    let revert_info = if self.info != updated_info {
-                        AccountInfoRevert::RevertTo(self.info.clone().unwrap_or_default())
-                    } else {
-                        AccountInfoRevert::DoNothing
-                    };
-                    // set as new as we didn't have that transition
-                    self.status = AccountStatus::InMemoryChange;
-                    self.info = updated_info;
-                    extend_storage(&mut self.storage, updated_storage);
-
-                    Some(AccountRevert {
-                        account: revert_info,
-                        storage: previous_storage_from_update,
-                        previous_status: AccountStatus::InMemoryChange,
-                        wipe_storage: false,
-                    })
-                }
-                _ => unreachable!("Invalid change to InMemoryChange from {self:?}"),
-            },
+            AccountStatus::InMemoryChange => {
+                let in_memory_info_revert = match self.status {
+                    AccountStatus::Loaded | AccountStatus::InMemoryChange => {
+                        // from loaded (Or LoadedEmpty) to InMemoryChange can happen if there is balance change
+                        // or new created account but Loaded didn't have contract.
+                        extend_storage(&mut self.storage, updated_storage);
+                        info_revert
+                    }
+                    AccountStatus::LoadedEmptyEIP161 | AccountStatus::LoadedNotExisting => {
+                        self.storage = updated_storage;
+                        AccountInfoRevert::DeleteIt
+                    }
+                    _ => unreachable!("Invalid change to InMemoryChange from {self:?}"),
+                };
+                let previous_status = self.status;
+                self.status = AccountStatus::InMemoryChange;
+                self.info = updated_info;
+                Some(AccountRevert {
+                    account: in_memory_info_revert,
+                    storage: previous_storage_from_update,
+                    previous_status,
+                    wipe_storage: false,
+                })
+            }
             AccountStatus::Loaded
             | AccountStatus::LoadedNotExisting
             | AccountStatus::LoadedEmptyEIP161 => {
@@ -324,36 +255,22 @@ impl BundleAccount {
                 }
 
                 let ret = match self.status {
-                    AccountStatus::Destroyed => {
+                    AccountStatus::Destroyed | AccountStatus::LoadedNotExisting => {
                         // from destroyed state new account is made
                         Some(AccountRevert {
                             account: AccountInfoRevert::DeleteIt,
                             storage: previous_storage_from_update,
-                            previous_status: AccountStatus::Destroyed,
+                            previous_status: self.status,
                             wipe_storage: false,
                         })
                     }
                     AccountStatus::DestroyedChanged => {
-                        let revert_info = if self.info != updated_info {
-                            AccountInfoRevert::RevertTo(AccountInfo::default())
-                        } else {
-                            AccountInfoRevert::DoNothing
-                        };
                         // Stays same as DestroyedNewChanged
                         Some(AccountRevert {
                             // empty account
-                            account: revert_info,
+                            account: info_revert,
                             storage: previous_storage_from_update,
                             previous_status: AccountStatus::DestroyedChanged,
-                            wipe_storage: false,
-                        })
-                    }
-                    AccountStatus::LoadedNotExisting => {
-                        Some(AccountRevert {
-                            // empty account
-                            account: AccountInfoRevert::DeleteIt,
-                            storage: previous_storage_from_update,
-                            previous_status: AccountStatus::LoadedNotExisting,
                             wipe_storage: false,
                         })
                     }
@@ -368,7 +285,8 @@ impl BundleAccount {
                 };
                 self.status = AccountStatus::DestroyedChanged;
                 self.info = updated_info;
-                self.storage = updated_storage;
+                // extends current storage.
+                extend_storage(&mut self.storage, updated_storage);
 
                 ret
             }

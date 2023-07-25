@@ -117,6 +117,7 @@ impl CacheAccount {
             previous_info: None,
             previous_status,
             storage,
+            storage_was_destroyed: false,
         }
     }
 
@@ -188,6 +189,7 @@ impl CacheAccount {
                 previous_info,
                 previous_status,
                 storage,
+                storage_was_destroyed: false,
             })
         }
     }
@@ -225,6 +227,7 @@ impl CacheAccount {
                 previous_info,
                 previous_status,
                 storage: HashMap::new(),
+                storage_was_destroyed: false,
             })
         }
     }
@@ -281,6 +284,7 @@ impl CacheAccount {
             previous_status,
             previous_info: previous_info.map(|a| a.info),
             storage: storage_diff,
+            storage_was_destroyed: false,
         };
         self.account = Some(PlainAccount {
             info: new_info,
@@ -338,6 +342,7 @@ impl CacheAccount {
                 previous_info,
                 previous_status,
                 storage: HashMap::new(),
+                storage_was_destroyed: false,
             },
         )
     }
@@ -422,6 +427,7 @@ impl CacheAccount {
             previous_info,
             previous_status,
             storage,
+            storage_was_destroyed: false,
         }
     }
 }

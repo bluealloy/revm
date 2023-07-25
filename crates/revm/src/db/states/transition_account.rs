@@ -19,6 +19,12 @@ pub struct TransitionAccount {
     pub previous_status: AccountStatus,
     /// Storage contains both old and new account
     pub storage: StorageWithOriginalValues,
+    /// If there is transition that clears the storage we shold mark it here and
+    /// delete all storages in BundleState. This flag is needed if we have transition
+    /// between Destroyed states from DestroyedChanged-> DestroyedAgain-> DestroyedChanged
+    /// in the end transition that we would have would be `DestroyedChanged->DestroyedChanged`
+    /// and with only that info we coudn't decide what to do.
+    pub storage_was_destroyed: bool,
 }
 
 impl TransitionAccount {
@@ -30,6 +36,7 @@ impl TransitionAccount {
             previous_info: None,
             previous_status: AccountStatus::LoadedNotExisting,
             storage,
+            storage_was_destroyed: false,
         }
     }
 
@@ -54,12 +61,12 @@ impl TransitionAccount {
 
         // if transition is from some to destroyed drop the storage.
         // This need to be done here as it is one increment of the state.
-
         if matches!(
             other.status,
             AccountStatus::Destroyed | AccountStatus::DestroyedAgain
         ) {
             self.storage = StorageWithOriginalValues::new();
+            self.storage_was_destroyed = true;
         }
 
         // update changed values to this transition.

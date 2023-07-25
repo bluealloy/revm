@@ -371,6 +371,7 @@ mod tests {
             previous_info: None,
             previous_status: AccountStatus::LoadedNotExisting,
             storage: StorageWithOriginalValues::default(),
+            storage_was_destroyed: false,
         };
 
         // apply first transition
