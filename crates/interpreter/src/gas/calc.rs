@@ -239,18 +239,19 @@ pub fn selfdestruct_cost(res: SelfDestructResult, spec: SpecId) -> u64 {
         !res.target_exists
     };
 
+    // EIP-150: Gas cost changes for IO-heavy operations
     let selfdestruct_gas_topup = if SpecId::enabled(spec, TANGERINE) && should_charge_topup {
-        //EIP-150: Gas cost changes for IO-heavy operations
         25000
     } else {
         0
     };
 
+    // EIP-150: Gas cost changes for IO-heavy operations
     let selfdestruct_gas = if SpecId::enabled(spec, TANGERINE) {
         5000
     } else {
         0
-    }; //EIP-150: Gas cost changes for IO-heavy operations
+    };
 
     let mut gas = selfdestruct_gas + selfdestruct_gas_topup;
     if SpecId::enabled(spec, BERLIN) && res.is_cold {

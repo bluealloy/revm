@@ -449,9 +449,9 @@ fn prepare_call_inputs(
         )
     );
 
+    // EIP-150: Gas cost changes for IO-heavy operations
     // take l64 part of gas_limit
     let mut gas_limit = if SpecId::enabled(spec, TANGERINE) {
-        //EIP-150: Gas cost changes for IO-heavy operations
         let gas = interpreter.gas().remaining();
         min(gas - gas / 64, local_gas_limit)
     } else {
