@@ -57,7 +57,7 @@ opcodes! {
     0x07 => SMOD       => arithmetic::smod,
     0x08 => ADDMOD     => arithmetic::addmod,
     0x09 => MULMOD     => arithmetic::mulmod,
-    0x0A => EXP        => arithmetic::eval_exp,
+    0x0A => EXP        => arithmetic::exp,
     0x0B => SIGNEXTEND => arithmetic::signextend,
 
     0x10 => LT     => bitwise::lt,
