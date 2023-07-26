@@ -1,45 +1,40 @@
 use super::i256::{i256_cmp, i256_sign, two_compl, Sign};
 use super::prelude::*;
 
-#[inline]
-const fn btou256(b: bool) -> U256 {
-    U256::from_limbs([b as u64, 0, 0, 0])
-}
-
 pub(super) fn lt(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
-    *op2 = btou256(op1 < *op2);
+    *op2 = U256::from(op1 < *op2);
 }
 
 pub(super) fn gt(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
-    *op2 = btou256(op1 > *op2);
+    *op2 = U256::from(op1 > *op2);
 }
 
 pub(super) fn slt(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
-    *op2 = btou256(i256_cmp(op1, *op2) == Ordering::Less);
+    *op2 = U256::from(i256_cmp(op1, *op2) == Ordering::Less);
 }
 
 pub(super) fn sgt(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
-    *op2 = btou256(i256_cmp(op1, *op2) == Ordering::Greater);
+    *op2 = U256::from(i256_cmp(op1, *op2) == Ordering::Greater);
 }
 
 pub(super) fn eq(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
-    *op2 = btou256(op1 == *op2);
+    *op2 = U256::from(op1 == *op2);
 }
 
 pub(super) fn iszero(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1);
-    *op1 = btou256(*op1 == U256::ZERO);
+    *op1 = U256::from(*op1 == U256::ZERO);
 }
 
 pub(super) fn bitand(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
@@ -72,17 +67,15 @@ pub(super) fn byte(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: S
 
     let o1 = as_usize_saturated!(op1);
     *op2 = if o1 < 32 {
-        // On little endian targets, `Uint` can be interpreted as `&[u8; BYTES]` in LE
-        #[cfg(target_endian = "little")]
-        {
-            // SAFETY: in range 0..32
-            U256::from(unsafe { *op2.as_limbs().as_ptr().cast::<u8>().add(31 - o1) })
-        }
+        // TODO: Remove once this optimization is in `Uint::byte`
+        // https://github.com/recmo/uint/pull/273
 
+        // `31 - o1` because `byte` returns LE, while we want BE
+        #[cfg(target_endian = "little")]
+        let byte = op2.as_le_slice()[31 - o1];
         #[cfg(target_endian = "big")]
-        {
-            (*op2 << (8 * o1)) >> (8 * 31)
-        }
+        let byte = op2.byte(31 - o1);
+        U256::from(byte)
     } else {
         U256::ZERO
     };
