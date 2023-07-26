@@ -227,7 +227,7 @@ impl CacheAccount {
                 previous_info,
                 previous_status,
                 storage: HashMap::new(),
-                storage_was_destroyed: false,
+                storage_was_destroyed: true,
             })
         }
     }
@@ -325,13 +325,13 @@ impl CacheAccount {
                     AccountStatus::Changed
                 }
             }
-            AccountStatus::LoadedNotExisting => AccountStatus::InMemoryChange,
-            AccountStatus::LoadedEmptyEIP161 => AccountStatus::InMemoryChange,
+            AccountStatus::LoadedNotExisting
+            | AccountStatus::LoadedEmptyEIP161
+            | AccountStatus::InMemoryChange => AccountStatus::InMemoryChange,
             AccountStatus::Changed => AccountStatus::Changed,
-            AccountStatus::InMemoryChange => AccountStatus::InMemoryChange,
-            AccountStatus::Destroyed => AccountStatus::DestroyedChanged,
-            AccountStatus::DestroyedChanged => AccountStatus::DestroyedChanged,
-            AccountStatus::DestroyedAgain => AccountStatus::DestroyedChanged,
+            AccountStatus::Destroyed
+            | AccountStatus::DestroyedAgain
+            | AccountStatus::DestroyedChanged => AccountStatus::DestroyedChanged,
         };
 
         (
@@ -370,7 +370,6 @@ impl CacheAccount {
             .take()
             .map(|acc| acc.storage)
             .unwrap_or_default();
-        let mut this_storage = core::mem::take(&mut this_storage);
 
         this_storage.extend(storage.iter().map(|(k, s)| (*k, s.present_value)));
         let changed_account = PlainAccount {
