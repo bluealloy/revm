@@ -135,7 +135,6 @@ impl BundleAccount {
         &mut self,
         transition: TransitionAccount,
     ) -> Option<AccountRevert> {
-
         let updated_info = transition.info;
         let updated_storage = transition.storage;
         let updated_status = transition.status;
@@ -201,7 +200,11 @@ impl BundleAccount {
                         extend_storage(&mut self.storage, updated_storage);
                         info_revert
                     }
-                    AccountStatus::LoadedEmptyEIP161 | AccountStatus::LoadedNotExisting => {
+                    AccountStatus::LoadedEmptyEIP161 => {
+                        self.storage = updated_storage;
+                        info_revert
+                    }
+                    AccountStatus::LoadedNotExisting => {
                         self.storage = updated_storage;
                         AccountInfoRevert::DeleteIt
                     }

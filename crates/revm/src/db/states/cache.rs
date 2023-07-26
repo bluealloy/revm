@@ -2,11 +2,10 @@ use super::{
     plain_account::PlainStorage, transition_account::TransitionAccount, CacheAccount, PlainAccount,
 };
 use revm_interpreter::primitives::{
-    hex_literal::hex, AccountInfo, Bytecode, HashMap, HashSet, State as EVMState,
-    B160, B256,
+    hex_literal::hex, AccountInfo, Bytecode, HashMap, HashSet, State as EVMState, B160, B256,
 };
 
-pub const DEBUG_ACCOUNT : B160 = B160(hex!("427c1d0F6C20ADa006CE8FaDa56297981903be33"));
+pub const DEBUG_ACCOUNT: B160 = B160(hex!("427c1d0F6C20ADa006CE8FaDa56297981903be33"));
 
 /// Cache state contains both modified and original values.
 ///
@@ -91,11 +90,10 @@ impl CacheState {
     /// Apply output of revm execution and create TransactionAccount
     /// that is used to build BundleState.
     pub fn apply_evm_state(&mut self, evm_state: EVMState) -> Vec<(B160, TransitionAccount)> {
-        let test_print = evm_state.get(&B160([11;20])).is_some();
+        let test_print = evm_state.get(&B160([11; 20])).is_some();
         let mut transitions = Vec::with_capacity(evm_state.len());
         // TODO test only, remove it.
-        let interesting_account: HashSet<B160> =
-            HashSet::from([DEBUG_ACCOUNT]);
+        let interesting_account: HashSet<B160> = HashSet::from([DEBUG_ACCOUNT]);
         for (address, account) in evm_state {
             if test_print || interesting_account.contains(&address) {
                 println!(
@@ -151,10 +149,11 @@ impl CacheState {
                     } else {
                         // if account is empty and state clear is not enabled we should save
                         // empty account.
-                        transitions.push((
-                            address,
-                            this_account.touch_create_pre_eip161(account.storage),
-                        ));
+                        if let Some(transition) =
+                            this_account.touch_create_pre_eip161(account.storage)
+                        {
+                            transitions.push((address, transition));
+                        }
                     }
                 } else {
                     transitions.push((address, this_account.change(account.info, account.storage)));

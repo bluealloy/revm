@@ -96,33 +96,47 @@ impl CacheAccount {
     pub fn touch_create_pre_eip161(
         &mut self,
         storage: StorageWithOriginalValues,
-    ) -> TransitionAccount {
+    ) -> Option<TransitionAccount> {
         let previous_status = self.status;
-        let previous_info = self.account.take().map(|a| a.info);
 
         self.status = match self.status {
-            AccountStatus::DestroyedChanged
-            | AccountStatus::Destroyed
-            | AccountStatus::DestroyedAgain => AccountStatus::DestroyedChanged,
-            AccountStatus::LoadedEmptyEIP161
-            | AccountStatus::InMemoryChange
-            | AccountStatus::LoadedNotExisting => AccountStatus::InMemoryChange,
+            AccountStatus::DestroyedChanged => {
+                if self
+                    .account
+                    .as_ref()
+                    .map(|a| a.info.is_empty())
+                    .unwrap_or_default()
+                {
+                    return None;
+                }
+                AccountStatus::DestroyedChanged
+            }
+            AccountStatus::Destroyed | AccountStatus::DestroyedAgain => {
+                AccountStatus::DestroyedChanged
+            }
+            AccountStatus::LoadedEmptyEIP161 => {
+                return None;
+            }
+            AccountStatus::InMemoryChange | AccountStatus::LoadedNotExisting => {
+                AccountStatus::InMemoryChange
+            }
             AccountStatus::Loaded | AccountStatus::Changed => {
                 unreachable!("Wrong state transition, touch crate is not possible from {self:?}")
             }
         };
         let plain_storage = storage.iter().map(|(k, v)| (*k, v.present_value)).collect();
-        
+        let previous_info = self.account.take().map(|a| a.info);
+
         self.account = Some(PlainAccount::new_empty_with_storage(plain_storage));
 
-        TransitionAccount {
+        Some(TransitionAccount {
             info: Some(AccountInfo::default()),
             status: self.status,
             previous_info,
             previous_status,
             storage,
             storage_was_destroyed: false,
-        }
+        })
     }
 
     /// Touche empty account, related to EIP-161 state clear.
