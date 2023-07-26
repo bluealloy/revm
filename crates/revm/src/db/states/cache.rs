@@ -93,7 +93,7 @@ impl CacheState {
         let mut transitions = Vec::with_capacity(evm_state.len());
         // TODO test only, remove it.
         let interesting_account: HashSet<B160> =
-            HashSet::from([B160(hex!("00007c46219d9205f056f28fee5950ad564d7465"))]);
+            HashSet::from([B160(hex!("427c1d0F6C20ADa006CE8FaDa56297981903be33"))]);
         for (address, account) in evm_state {
             if test_print || interesting_account.contains(&address) {
                 println!(

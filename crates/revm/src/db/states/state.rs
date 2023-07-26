@@ -85,7 +85,7 @@ impl<'a, DBError> State<'a, DBError> {
 
     /// State clear EIP-161 is enabled in Spurious Dragon hardfork.
     pub fn set_state_clear_flag(&mut self, has_state_clear: bool) {
-        self.cache.has_state_clear = has_state_clear;
+        self.cache.set_state_clear_flag(has_state_clear);
     }
 
     pub fn insert_not_existing(&mut self, address: B160) {
