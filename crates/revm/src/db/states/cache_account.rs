@@ -380,9 +380,9 @@ impl CacheAccount {
 
         self.status = match self.status {
             AccountStatus::Loaded => {
-                // TODO(rakita) add nonce check
-                if previous_info.as_ref().map(|a| a.code_hash) == Some(KECCAK_EMPTY) {
-                    // account can still be created but some balance is added to it.
+                if previous_info.as_ref().map(|a| (a.code_hash, a.nonce)) == Some((KECCAK_EMPTY, 0))
+                {
+                    // account is fully in memory
                     AccountStatus::InMemoryChange
                 } else {
                     // can be contract and some of storage slots can be present inside db.

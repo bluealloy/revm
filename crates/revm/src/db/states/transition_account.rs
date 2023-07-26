@@ -65,13 +65,13 @@ impl TransitionAccount {
             other.status,
             AccountStatus::Destroyed | AccountStatus::DestroyedAgain
         ) {
-            self.storage = StorageWithOriginalValues::new();
+            self.storage = other.storage;
             self.storage_was_destroyed = true;
-        }
-
-        // update changed values to this transition.
-        for (key, slot) in other.storage.into_iter() {
-            self.storage.entry(key).or_insert(slot).present_value = slot.present_value;
+        } else {
+            // update changed values to this transition.
+            for (key, slot) in other.storage.into_iter() {
+                self.storage.entry(key).or_insert(slot).present_value = slot.present_value;
+            }
         }
     }
 

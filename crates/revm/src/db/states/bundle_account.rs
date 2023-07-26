@@ -148,6 +148,8 @@ impl BundleAccount {
             |this_storage: &mut StorageWithOriginalValues,
              storage_update: StorageWithOriginalValues| {
                 for (key, value) in storage_update {
+                    // TODO small optimization but if present and original values are same we can
+                    // remove this entry from this storage.
                     this_storage.entry(key).or_insert(value).present_value = value.present_value;
                 }
             };
