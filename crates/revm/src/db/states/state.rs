@@ -185,13 +185,20 @@ impl<'a, DBError> Database for State<'a, DBError> {
         // Account is guaranteed to be loaded.
         if let Some(account) = self.cache.accounts.get_mut(&address) {
             // account will always be some, but if it is not, U256::ZERO will be returned.
+            let is_storage_known = account.status.storage_known();
             Ok(account
                 .account
                 .as_mut()
                 .map(|account| match account.storage.entry(index) {
                     hash_map::Entry::Occupied(entry) => Ok(*entry.get()),
                     hash_map::Entry::Vacant(entry) => {
-                        let value = self.database.storage(address, index)?;
+                        // if account was destroyed or account is newely build
+                        // we return zero and dont ask detabase.
+                        let value = if is_storage_known {
+                            U256::ZERO
+                        } else {
+                            self.database.storage(address, index)?
+                        };
                         entry.insert(value);
                         Ok(value)
                     }
