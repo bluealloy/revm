@@ -2,7 +2,8 @@ use super::{
     plain_account::PlainStorage, transition_account::TransitionAccount, CacheAccount, PlainAccount,
 };
 use revm_interpreter::primitives::{
-    hash_map::Entry, AccountInfo, Bytecode, HashMap, State as EVMState, B160, B256,
+    hex_literal::hex, AccountInfo, Bytecode, HashMap, HashSet, State as EVMState,
+    B160, B256,
 };
 
 /// Cache state contains both modified and original values.
@@ -88,30 +89,37 @@ impl CacheState {
     /// Apply output of revm execution and create TransactionAccount
     /// that is used to build BundleState.
     pub fn apply_evm_state(&mut self, evm_state: EVMState) -> Vec<(B160, TransitionAccount)> {
+        let test_print = evm_state.get(&B160([11;20])).is_some();
         let mut transitions = Vec::with_capacity(evm_state.len());
+        // TODO test only, remove it.
+        let interesting_account: HashSet<B160> =
+            HashSet::from([B160(hex!("00007c46219d9205f056f28fee5950ad564d7465"))]);
         for (address, account) in evm_state {
+            if test_print || interesting_account.contains(&address) {
+                println!(
+                    "UPDATE:{:?} -------->\n     UPDATEd:{:?}\n    present:{:?}",
+                    address,
+                    account,
+                    self.accounts.get(&address)
+                );
+            }
             if !account.is_touched() {
                 // not touched account are never changed.
                 continue;
-            } else if account.is_selfdestructed() {
+            }
+            let this_account = self
+                .accounts
+                .get_mut(&address)
+                .expect("All accounts should be present inside cache");
+
+            if account.is_selfdestructed() {
                 // If it is marked as selfdestructed inside revm
                 // we need to changed state to destroyed.
-                match self.accounts.entry(address) {
-                    Entry::Occupied(mut entry) => {
-                        let this = entry.get_mut();
-                        if let Some(transition) = this.selfdestruct() {
-                            transitions.push((address, transition));
-                        }
-                    }
-                    Entry::Vacant(_entry) => {
-                        // if account is not present in db, we can just mark it sa NotExisting.
-                        // This should not happen as all account should be loaded through this state.
-                        unreachable!("All account should be loaded from cache for selfdestruct");
-                    }
-                };
+                if let Some(transition) = this_account.selfdestruct() {
+                    transitions.push((address, transition));
+                }
                 continue;
             }
-            let is_empty = account.is_empty();
             if account.is_created() {
                 // Note: it can happen that created contract get selfdestructed in same block
                 // that is why is_created is checked after selfdestructed
@@ -122,66 +130,32 @@ impl CacheState {
                 // by just setting storage inside CRATE contstructor. Overlap of those contracts
                 // is not possible because CREATE2 is introduced later.
 
-                match self.accounts.entry(address) {
-                    // if account is already present id db.
-                    Entry::Occupied(mut entry) => {
-                        let this = entry.get_mut();
-                        transitions
-                            .push((address, this.newly_created(account.info, account.storage)))
-                    }
-                    Entry::Vacant(_entry) => {
-                        // This means shold not happen as all accounts should be loaded through
-                        // this state.
-                        unreachable!("All account should be loaded from cache for created account");
-                    }
-                }
+                transitions.push((
+                    address,
+                    this_account.newly_created(account.info, account.storage),
+                ));
             } else {
                 // Account is touched, but not selfdestructed or newly created.
                 // Account can be touched and not changed.
 
                 // And when empty account is touched it needs to be removed from database.
                 // EIP-161 state clear
-                if is_empty {
+                if account.is_empty() {
                     if self.has_state_clear {
                         // touch empty account.
-                        match self.accounts.entry(address) {
-                            Entry::Occupied(mut entry) => {
-                                if let Some(transition) = entry.get_mut().touch_empty_eip161() {
-                                    transitions.push((address, transition));
-                                }
-                            }
-                            Entry::Vacant(_entry) => {
-                                unreachable!("Empty account should be loaded in cache")
-                            }
+                        if let Some(transition) = this_account.touch_empty_eip161() {
+                            transitions.push((address, transition));
                         }
                     } else {
                         // if account is empty and state clear is not enabled we should save
                         // empty account.
-                        match self.accounts.entry(address) {
-                            Entry::Occupied(mut entry) => {
-                                let transition =
-                                    entry.get_mut().touch_create_pre_eip161(account.storage);
-                                transitions.push((address, transition));
-                            }
-                            Entry::Vacant(_entry) => {
-                                unreachable!("Empty Account should be loaded in cache")
-                            }
-                        }
+                        transitions.push((
+                            address,
+                            this_account.touch_create_pre_eip161(account.storage),
+                        ));
                     }
-                    continue;
-                }
-
-                // mark account as changed.
-                match self.accounts.entry(address) {
-                    Entry::Occupied(mut entry) => {
-                        let this = entry.get_mut();
-                        // make a change and create transition.
-                        transitions.push((address, this.change(account.info, account.storage)));
-                    }
-                    Entry::Vacant(_entry) => {
-                        // It is assumed initial state is Loaded. Should not happen.
-                        unreachable!("All account should be loaded from cache for change account");
-                    }
+                } else {
+                    transitions.push((address, this_account.change(account.info, account.storage)));
                 }
             };
         }
