@@ -6,6 +6,8 @@ use revm_interpreter::primitives::{
     B160, B256,
 };
 
+pub const DEBUG_ACCOUNT : B160 = B160((hex!("427c1d0F6C20ADa006CE8FaDa56297981903be33")));
+
 /// Cache state contains both modified and original values.
 ///
 /// Cache state is main state that revm uses to access state.
@@ -93,7 +95,7 @@ impl CacheState {
         let mut transitions = Vec::with_capacity(evm_state.len());
         // TODO test only, remove it.
         let interesting_account: HashSet<B160> =
-            HashSet::from([B160(hex!("427c1d0F6C20ADa006CE8FaDa56297981903be33"))]);
+            HashSet::from([DEBUG_ACCOUNT]);
         for (address, account) in evm_state {
             if test_print || interesting_account.contains(&address) {
                 println!(

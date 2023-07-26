@@ -92,7 +92,7 @@ impl TransitionAccount {
     }
 
     /// Original bundle account
-    pub fn original_bundle_account(&self) -> BundleAccount {
+    fn original_bundle_account(&self) -> BundleAccount {
         BundleAccount {
             info: self.previous_info.clone(),
             original_info: self.previous_info.clone(),

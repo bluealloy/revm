@@ -41,7 +41,7 @@ impl AccountRevert {
             account: AccountInfoRevert::RevertTo(account),
             storage: previous_storage,
             previous_status: status,
-            wipe_storage: true,
+            wipe_storage: false,
         }
     }
 
@@ -75,8 +75,7 @@ impl AccountRevert {
             .iter_mut()
             .map(|(key, value)| {
                 // take previous value and set ZERO as storage got destroyed.
-                let previous_value = core::mem::take(&mut value.present_value);
-                (*key, RevertToSlot::Some(previous_value))
+                (*key, RevertToSlot::Some(value.present_value))
             })
             .collect();
 
