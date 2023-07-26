@@ -121,7 +121,7 @@ impl CacheState {
                 // Note: It is possibility to create KECCAK_EMPTY contract with some storage
                 // by just setting storage inside CRATE contstructor. Overlap of those contracts
                 // is not possible because CREATE2 is introduced later.
-                //
+
                 match self.accounts.entry(address) {
                     // if account is already present id db.
                     Entry::Occupied(mut entry) => {
@@ -146,7 +146,7 @@ impl CacheState {
                         // touch empty account.
                         match self.accounts.entry(address) {
                             Entry::Occupied(mut entry) => {
-                                if let Some(transition) = entry.get_mut().touch_empty() {
+                                if let Some(transition) = entry.get_mut().touch_empty_eip161() {
                                     transitions.push((address, transition));
                                 }
                             }
@@ -160,7 +160,7 @@ impl CacheState {
                         match self.accounts.entry(address) {
                             Entry::Occupied(mut entry) => {
                                 let transition =
-                                    entry.get_mut().touch_create_eip161(account.storage);
+                                    entry.get_mut().touch_create_pre_eip161(account.storage);
                                 transitions.push((address, transition));
                             }
                             Entry::Vacant(_entry) => {

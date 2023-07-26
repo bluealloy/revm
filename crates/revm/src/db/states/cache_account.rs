@@ -2,7 +2,7 @@ use super::{
     plain_account::PlainStorage, AccountStatus, PlainAccount, StorageWithOriginalValues,
     TransitionAccount,
 };
-use revm_interpreter::primitives::{AccountInfo, StorageSlot, KECCAK_EMPTY, U256};
+use revm_interpreter::primitives::{AccountInfo, KECCAK_EMPTY, U256};
 use revm_precompile::HashMap;
 
 /// Cache account is to store account from database be able
@@ -93,8 +93,10 @@ impl CacheAccount {
     }
 
     /// Account got touched and before EIP161 state clear this account is considered created.
-    /// TODO(rakita) pre_eip161
-    pub fn touch_create_eip161(&mut self, storage: StorageWithOriginalValues) -> TransitionAccount {
+    pub fn touch_create_pre_eip161(
+        &mut self,
+        storage: StorageWithOriginalValues,
+    ) -> TransitionAccount {
         let previous_status = self.status;
         self.status = match self.status {
             AccountStatus::DestroyedChanged
@@ -124,35 +126,18 @@ impl CacheAccount {
     /// Touche empty account, related to EIP-161 state clear.
     ///
     /// This account returns Transition that is used to create the BundleState.
-    pub fn touch_empty(&mut self) -> Option<TransitionAccount> {
+    pub fn touch_empty_eip161(&mut self) -> Option<TransitionAccount> {
         let previous_status = self.status;
-
-        // zero all storage slot as they are removed now.
-        // This is effecting only for pre state clear accounts, as some of
-        // then can be empty but contain storage slots.
-
-        let storage = self
-            .account
-            .as_mut()
-            .map(|acc| {
-                acc.storage
-                    .drain()
-                    .map(|(k, v)| (k, StorageSlot::new_changed(v, U256::ZERO)))
-                    .collect::<HashMap<_, _>>()
-            })
-            .unwrap_or_default();
 
         // Set account to None.
         let previous_info = self.account.take().map(|acc| acc.info);
 
         // Set account state to Destroyed as we need to clear the storage if it exist.
-        let old_status = self.status;
         self.status = match self.status {
-            // mark account as destroyed again.
-            AccountStatus::DestroyedChanged => AccountStatus::DestroyedAgain,
-            AccountStatus::InMemoryChange => {
+            AccountStatus::InMemoryChange
+            | AccountStatus::Destroyed
+            | AccountStatus::LoadedEmptyEIP161 => {
                 // account can be created empty them touched.
-                // Note: we can probably set it to LoadedNotExisting.
                 AccountStatus::Destroyed
             }
             AccountStatus::LoadedNotExisting => {
@@ -160,23 +145,17 @@ impl CacheAccount {
                 // This is a noop.
                 AccountStatus::LoadedNotExisting
             }
-            AccountStatus::Destroyed => {
-                // do nothing
-                AccountStatus::Destroyed
-            }
-            AccountStatus::DestroyedAgain => {
+            AccountStatus::DestroyedAgain | AccountStatus::DestroyedChanged => {
                 // do nothing
                 AccountStatus::DestroyedAgain
             }
-            // We need to clear the storage if there is any.
-            AccountStatus::LoadedEmptyEIP161 => AccountStatus::Destroyed,
             _ => {
                 // do nothing
                 unreachable!("Wrong state transition, touch empty is not possible from {self:?}");
             }
         };
         if matches!(
-            old_status,
+            previous_status,
             AccountStatus::LoadedNotExisting
                 | AccountStatus::Destroyed
                 | AccountStatus::DestroyedAgain
@@ -188,8 +167,8 @@ impl CacheAccount {
                 status: self.status,
                 previous_info,
                 previous_status,
-                storage,
-                storage_was_destroyed: false,
+                storage: HashMap::default(),
+                storage_was_destroyed: true,
             })
         }
     }
@@ -239,26 +218,12 @@ impl CacheAccount {
         new_storage: StorageWithOriginalValues,
     ) -> TransitionAccount {
         let previous_status = self.status;
-        let mut previous_info = self.account.take();
+        let previous_info = self.account.take().map(|a| a.info);
 
-        // For newly create accounts. Old storage needs to be discarded (set to zero).
-
-        // TODO(rakita) Storage is empty for new accounts.
-        let mut storage_diff = previous_info
-            .as_mut()
-            .map(|a| {
-                core::mem::take(&mut a.storage)
-                    .into_iter()
-                    .map(|(k, v)| (k, StorageSlot::new_changed(U256::ZERO, v)))
-                    .collect::<HashMap<_, _>>()
-            })
-            .unwrap_or_default();
         let new_bundle_storage = new_storage
             .iter()
             .map(|(k, s)| (*k, s.present_value))
             .collect();
-
-        storage_diff.extend(new_storage);
 
         self.status = match self.status {
             // if account was destroyed previously just copy new info to it.
@@ -282,8 +247,8 @@ impl CacheAccount {
             info: Some(new_info.clone()),
             status: self.status,
             previous_status,
-            previous_info: previous_info.map(|a| a.info),
-            storage: storage_diff,
+            previous_info: previous_info,
+            storage: new_storage,
             storage_was_destroyed: false,
         };
         self.account = Some(PlainAccount {
