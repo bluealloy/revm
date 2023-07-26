@@ -98,6 +98,8 @@ impl CacheAccount {
         storage: StorageWithOriginalValues,
     ) -> TransitionAccount {
         let previous_status = self.status;
+        let previous_info = self.account.take().map(|a| a.info);
+
         self.status = match self.status {
             AccountStatus::DestroyedChanged
             | AccountStatus::Destroyed
@@ -110,13 +112,13 @@ impl CacheAccount {
             }
         };
         let plain_storage = storage.iter().map(|(k, v)| (*k, v.present_value)).collect();
-
+        
         self.account = Some(PlainAccount::new_empty_with_storage(plain_storage));
 
         TransitionAccount {
             info: Some(AccountInfo::default()),
             status: self.status,
-            previous_info: None,
+            previous_info,
             previous_status,
             storage,
             storage_was_destroyed: false,

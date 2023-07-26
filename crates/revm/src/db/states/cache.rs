@@ -6,7 +6,7 @@ use revm_interpreter::primitives::{
     B160, B256,
 };
 
-pub const DEBUG_ACCOUNT : B160 = B160((hex!("427c1d0F6C20ADa006CE8FaDa56297981903be33")));
+pub const DEBUG_ACCOUNT : B160 = B160(hex!("427c1d0F6C20ADa006CE8FaDa56297981903be33"));
 
 /// Cache state contains both modified and original values.
 ///

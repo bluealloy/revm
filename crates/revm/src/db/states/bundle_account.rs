@@ -135,6 +135,7 @@ impl BundleAccount {
         &mut self,
         transition: TransitionAccount,
     ) -> Option<AccountRevert> {
+
         let updated_info = transition.info;
         let updated_storage = transition.storage;
         let updated_status = transition.status;

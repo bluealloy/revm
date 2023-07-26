@@ -180,7 +180,7 @@ impl BundleState {
                     if address == DEBUG_ACCOUNT {
                         println!("REVERT: {:?}", revert);
                     }
-                    
+
                     if revert.is_some() {
                         entry.insert(present_bundle);
                     }
