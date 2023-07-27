@@ -197,7 +197,7 @@ impl Precompiles {
             let mut precompiles = Self::cancun().clone();
             precompiles.fun.extend(
                 vec![
-                    // EIP-2565: ModExp Gas Cost.
+                    // EIP-4848: Point evaluation precompile.
                     point_evaluation::POINT_EVALUATION_PRECOMPILE,
                 ]
                 .into_iter()

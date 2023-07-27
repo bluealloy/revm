@@ -1,12 +1,12 @@
 use crate::{Precompile, PrecompileAddress};
-use c_kzg::*;
+use c_kzg::{Bytes32, Bytes48};
 use revm_primitives::{PrecompileResult, StandardPrecompileFn};
 
 pub const POINT_EVALUATION_PRECOMPILE: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(12),
+    crate::u64_to_b160(10),
     Precompile::Standard(point_evaluation_run as StandardPrecompileFn),
 );
-
+use crate::Error;
 /// `BLS_MODULUS: = 52435875175126190479447740508185965837690552500527637822603658699938581184513`
 /// in big endian format
 const BLS_MODULUS: [u8; 32] = [
@@ -14,9 +14,14 @@ const BLS_MODULUS: [u8; 32] = [
     91, 254, 255, 255, 255, 255, 0, 0, 0, 1,
 ];
 
+/// See: https://eips.ethereum.org/EIPS/eip-4844
 pub fn point_evaluation_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     // The data is encoded as follows: versioned_hash | z | y | commitment | proof | with z and y being padded 32 byte big endian values
     assert!(input.len() == 192);
+    let cost = 5000;
+    if cost > gas_limit {
+        return Err(Error::OutOfGas);
+    }
 
     // We can always be sure that these will be 48 bytes so this unwrap should be okay
     let z = Bytes32::from_bytes(&input[32..64]).unwrap();
@@ -34,13 +39,13 @@ pub fn point_evaluation_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     // Verify KZG proof with z and y in big endian format
     assert!(c_kzg::KzgProof::verify_kzg_proof(commitment, z, y, proof, &kzg_settings).unwrap());
 
-
-    // # Return FIELD_ELEMENTS_PER_BLOB and BLS_MODULUS as padded 32 byte big endian values
+    // Return FIELD_ELEMENTS_PER_BLOB and BLS_MODULUS as padded 32 byte big endian values
 
     // Convert FIELD_ELEMENTS_PER_BLOB to big-endian bytes and pad to 32 bytes
     let mut field_elements_bytes = [0u8; 32];
     let field_elements_bytes_small = c_kzg::FIELD_ELEMENTS_PER_BLOB.to_be_bytes();
-    field_elements_bytes[(32 - field_elements_bytes_small.len())..].copy_from_slice(&field_elements_bytes_small);
+    field_elements_bytes[(32 - field_elements_bytes_small.len())..]
+        .copy_from_slice(&field_elements_bytes_small);
 
     // Concatenate the byte arrays
     let mut result = [0u8; 64];
