@@ -5,7 +5,7 @@ use revm_interpreter::primitives::{
     hex_literal::hex, AccountInfo, Bytecode, HashMap, HashSet, State as EVMState, B160, B256,
 };
 
-pub const DEBUG_ACCOUNT: B160 = B160(hex!("508Bd776B1174d8979199069fc8561A09133EDE9"));
+pub const DEBUG_ACCOUNT: B160 = B160(hex!("b3afb61beb834242ec01f6bbd6f178cc4860c2bb"));
 
 /// Cache state contains both modified and original values.
 ///
