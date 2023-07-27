@@ -54,12 +54,16 @@ impl AccountRevert {
             AccountStatus::InMemoryChange
             | AccountStatus::Changed
             | AccountStatus::LoadedEmptyEIP161
-            | AccountStatus::Loaded => Some(AccountRevert::new_selfdestructed_again(
-                bundle_account.status,
-                bundle_account.info.clone().unwrap_or_default(),
-                bundle_account.storage.drain().collect(),
-                updated_storage.clone(),
-            )),
+            | AccountStatus::Loaded => {
+                let mut ret = AccountRevert::new_selfdestructed_again(
+                    bundle_account.status,
+                    bundle_account.info.clone().unwrap_or_default(),
+                    bundle_account.storage.drain().collect(),
+                    updated_storage.clone(),
+                );
+                ret.wipe_storage = true;
+                Some(ret)
+            }
             _ => None,
         }
     }
