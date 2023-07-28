@@ -1,9 +1,7 @@
-use crate::interpreter::{
-    inner_models::SelfDestructResult, transient::TransientStorage, InstructionResult,
-};
+use crate::interpreter::{inner_models::SelfDestructResult, InstructionResult};
 use crate::primitives::{
-    db::Database, hash_map::Entry, Account, Bytecode, HashMap, Log, State, StorageSlot, B160,
-    KECCAK_EMPTY, U256,
+    db::Database, hash_map::Entry, Account, Bytecode, HashMap, Log, State, StorageSlot,
+    TransientStorage, B160, KECCAK_EMPTY, U256,
 };
 use alloc::{vec, vec::Vec};
 use core::mem::{self};
@@ -78,7 +76,7 @@ pub enum JournalEntry {
     TransientStorageChange {
         address: B160,
         key: U256,
-        had_value: Option<U256>,
+        had_value: U256,
     },
     /// Code changed
     /// Action: Account code changed
@@ -411,7 +409,16 @@ impl JournaledState {
                     address,
                     key,
                     had_value,
-                } => transient_storage.set(address, key, had_value.unwrap_or_default()),
+                } => {
+                    let tkey = (address, key);
+                    if had_value == U256::ZERO {
+                        // if previous value is zero, remove it
+                        transient_storage.remove(&tkey);
+                    } else {
+                        // if not zero, reinsert old value to transient storage.
+                        transient_storage.insert(tkey, had_value);
+                    }
+                }
                 JournalEntry::CodeChange { address, had_code } => {
                     let acc = state.get_mut(&address).unwrap();
                     acc.info.code_hash = had_code.hash();
@@ -650,10 +657,6 @@ impl JournaledState {
         Ok(load)
     }
 
-    pub fn tload(&mut self, address: B160, key: U256) -> U256 {
-        self.transient_storage.get(address, key)
-    }
-
     /// account should already be present in our state.
     /// returns (original,present,new) slot
     pub fn sstore<DB: Database>(
@@ -688,23 +691,55 @@ impl JournaledState {
         Ok((slot.original_value, present, new, is_cold))
     }
 
+    /// Read transient storage tied to the account.
+    ///
+    /// EIP-1153: Transient storage opcodes
+    pub fn tload(&mut self, address: B160, key: U256) -> U256 {
+        self.transient_storage
+            .get(&(address, key))
+            .cloned()
+            .unwrap_or_default()
+    }
+
+    /// Store transient storage tied to the account.
+    ///
+    /// If values is different add entry to the journal
+    /// so that old state can be reverted if that action is needed.
+    ///
+    /// EIP-1153: Transient storage opcodes
     pub fn tstore(&mut self, address: B160, key: U256, new: U256) {
-        let present = self.tload(address, key);
+        let had_value = if new == U256::ZERO {
+            // if new values is zero, remove entry from transient storage.
+            // if previous values was some insert it inside journal.
+            // If it is none nothing should be inserted.
+            self.transient_storage.remove(&(address, key))
+        } else {
+            // insert values
+            let previous_value = self
+                .transient_storage
+                .insert((address, key), new)
+                .unwrap_or_default();
 
-        if present == new {
-            return;
+            // check if previous value is same
+            if previous_value != new {
+                // if it is different, insert previous values inside journal.
+                Some(new)
+            } else {
+                None
+            }
+        };
+
+        if let Some(had_value) = had_value {
+            // insert in journal only if value was changed.
+            self.journal
+                .last_mut()
+                .unwrap()
+                .push(JournalEntry::TransientStorageChange {
+                    address,
+                    key,
+                    had_value,
+                });
         }
-
-        self.journal
-            .last_mut()
-            .unwrap()
-            .push(JournalEntry::TransientStorageChange {
-                address,
-                key,
-                had_value: Some(present),
-            });
-
-        self.transient_storage.set(address, key, new)
     }
 
     /// push log into subroutine
