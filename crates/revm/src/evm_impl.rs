@@ -591,7 +591,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
     }
 
-    fn prepare_call(&mut self, inputs: &mut CallInputs) -> Result<PreparedCall, CallResult> {
+    fn prepare_call(&mut self, inputs: &CallInputs) -> Result<PreparedCall, CallResult> {
         let gas = Gas::new(inputs.gas_limit);
         // Load account and get code. Account is now hot.
         let Some((bytecode, _)) = self.code(inputs.contract) else {
@@ -649,7 +649,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     }
 
     /// Main contract call of the EVM.
-    fn call_inner(&mut self, inputs: &mut CallInputs) -> CallResult {
+    fn call_inner(&mut self, inputs: &CallInputs) -> CallResult {
         let res = self.prepare_call(inputs);
 
         let prepared_call = match res {
