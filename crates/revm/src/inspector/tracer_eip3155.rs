@@ -109,20 +109,30 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         if data.journaled_state.depth() == 0 {
             let log_line = json!({
                 //stateroot
-                "output": format!("{out:?}"),
+                "output": format!("0x{}", hex::encode(out.as_ref())),
                 "gasUsed": format!("0x{:x}", self.gas_inspector.gas_remaining()),
                 //time
                 //fork
             });
 
-            writeln!(
-                self.output,
-                "{:?}",
-                serde_json::to_string(&log_line).unwrap()
-            )
-            .expect("If output fails we can ignore the logging");
+            writeln!(self.output, "{}", serde_json::to_string(&log_line).unwrap())
+                .expect("If output fails we can ignore the logging");
         }
         (ret, remaining_gas, out)
+    }
+
+    fn create(
+        &mut self,
+        data: &mut EVMData<'_, DB>,
+        _inputs: &mut CreateInputs,
+    ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
+        self.print_log_line(data.journaled_state.depth());
+        (
+            InstructionResult::Continue,
+            None,
+            Gas::new(0),
+            Bytes::default(),
+        )
     }
 
     fn create_end(
@@ -136,6 +146,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
     ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
         self.gas_inspector
             .create_end(data, inputs, ret, address, remaining_gas, out.clone());
+        self.skip = true;
         (ret, address, remaining_gas, out)
     }
 }

@@ -48,7 +48,7 @@ pub fn simple_example() {
 
     let mut host = DummyHost::new(env);
     microbench::bench(&bench_options, "Snailtracer Interpreter benchmark", || {
-        let mut interpreter = Interpreter::new(contract.clone(), u64::MAX, false);
+        let mut interpreter = Interpreter::new(Box::new(contract.clone()), u64::MAX, false);
         interpreter.run::<_, BerlinSpec>(&mut host);
         host.clear()
     });

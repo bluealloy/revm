@@ -12,6 +12,7 @@ pub use primitives::{
     precompile::{PrecompileError as Error, *},
     Bytes, HashMap,
 };
+#[doc(inline)]
 pub use revm_primitives as primitives;
 
 pub type B160 = [u8; 20];
