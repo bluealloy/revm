@@ -150,6 +150,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
     ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
         self.gas_inspector
             .create_end(data, inputs, ret, address, remaining_gas, out.clone());
+        self.skip = true;
         (ret, address, remaining_gas, out)
     }
 }
