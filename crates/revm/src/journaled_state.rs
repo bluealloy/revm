@@ -101,7 +101,7 @@ impl JournaledState {
     pub fn new(num_of_precompiles: usize) -> JournaledState {
         Self {
             state: HashMap::new(),
-            transient_storage: TransientStorage::new(),
+            transient_storage: TransientStorage::default(),
             logs: Vec::new(),
             journal: vec![vec![]],
             depth: 0,

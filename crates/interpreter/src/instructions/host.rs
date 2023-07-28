@@ -180,7 +180,7 @@ pub fn sstore<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     refund!(interpreter, gas::sstore_refund::<SPEC>(original, old, new));
 }
 
-/// Store values to transient storage
+/// Store value to transient storage
 pub fn tstore<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     // EIP-1153: Transient storage opcodes
     check!(interpreter, SPEC::enabled(CANCUN));

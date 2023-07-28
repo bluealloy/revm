@@ -43,7 +43,7 @@ impl Default for AccountStatus {
 
 pub type State = HashMap<B160, Account>;
 
-/// Structure define
+/// Structure used for EIP-1153 transient storage.
 pub type TransientStorage = HashMap<(B160, U256), U256>;
 pub type Storage = HashMap<U256, StorageSlot>;
 
