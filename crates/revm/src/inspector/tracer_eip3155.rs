@@ -109,18 +109,14 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         if data.journaled_state.depth() == 0 {
             let log_line = json!({
                 //stateroot
-                "output": format!("{out:?}"),
+                "output": format!("0x{}", hex::encode(out.as_ref())),
                 "gasUsed": format!("0x{:x}", self.gas_inspector.gas_remaining()),
                 //time
                 //fork
             });
 
-            writeln!(
-                self.output,
-                "{:?}",
-                serde_json::to_string(&log_line).unwrap()
-            )
-            .expect("If output fails we can ignore the logging");
+            writeln!(self.output, "{}", serde_json::to_string(&log_line).unwrap())
+                .expect("If output fails we can ignore the logging");
         }
         (ret, remaining_gas, out)
     }
