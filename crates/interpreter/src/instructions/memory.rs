@@ -24,14 +24,12 @@ pub(super) fn mstore8(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec
     pop!(interpreter, index, value);
     let index = as_usize_or_fail!(interpreter, index);
     memory_resize!(interpreter, index, 1);
-    let value = value.as_le_bytes()[0];
-    // Safety: we resized our memory two lines above.
-    unsafe { interpreter.memory.set_byte(index, value) }
+    interpreter.memory.set_byte(index, value.byte(0))
 }
 
 pub(super) fn msize(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, U256::from(interpreter.memory.effective_len()));
+    push!(interpreter, U256::from(interpreter.memory.len()));
 }
 
 // EIP-5656: MCOPY - Memory copying instruction

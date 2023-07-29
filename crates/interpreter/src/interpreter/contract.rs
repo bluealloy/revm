@@ -18,6 +18,8 @@ pub struct Contract {
 }
 
 impl Contract {
+    /// Instantiates a new contract by analyzing the given bytecode.
+    #[inline]
     pub fn new(input: Bytes, bytecode: Bytecode, address: B160, caller: B160, value: U256) -> Self {
         let bytecode = to_analysed(bytecode).try_into().expect("it is analyzed");
 
@@ -30,7 +32,8 @@ impl Contract {
         }
     }
 
-    /// Create new contract from environment
+    /// Creates a new contract from the given [`Env`].
+    #[inline]
     pub fn new_env(env: &Env, bytecode: Bytecode) -> Self {
         let contract_address = match env.tx.transact_to {
             TransactTo::Call(caller) => caller,
@@ -45,10 +48,8 @@ impl Contract {
         )
     }
 
-    pub fn is_valid_jump(&self, pos: usize) -> bool {
-        self.bytecode.jump_map().is_valid(pos)
-    }
-
+    /// Creates a new contract from the given [`CallContext`].
+    #[inline]
     pub fn new_with_context(input: Bytes, bytecode: Bytecode, call_context: &CallContext) -> Self {
         Self::new(
             input,
@@ -57,5 +58,11 @@ impl Contract {
             call_context.caller,
             call_context.apparent_value,
         )
+    }
+
+    /// Returns whether the given position is a valid jump destination.
+    #[inline]
+    pub fn is_valid_jump(&self, pos: usize) -> bool {
+        self.bytecode.jump_map().is_valid(pos)
     }
 }

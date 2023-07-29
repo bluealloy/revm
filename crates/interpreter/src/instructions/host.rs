@@ -299,7 +299,7 @@ pub(super) fn create<const IS_CREATE2: bool>(
 
     match return_reason {
         return_ok!() => {
-            push_b256!(interpreter, address.unwrap_or_default().into());
+            push_b256!(interpreter, address.map_or(B256::zero(), Into::into));
             if crate::USE_GAS {
                 interpreter.gas.erase_cost(gas.remaining());
                 interpreter.gas.record_refund(gas.refunded());

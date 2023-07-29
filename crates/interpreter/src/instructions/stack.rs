@@ -2,8 +2,8 @@ use super::prelude::*;
 
 pub(super) fn pop(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
     gas!(interpreter, gas::BASE);
-    if let Some(ret) = interpreter.stack.reduce_one() {
-        interpreter.instruction_result = ret;
+    if let Err(result) = interpreter.stack.pop() {
+        interpreter.instruction_result = result;
     }
 }
 
@@ -27,11 +27,11 @@ pub(super) fn push<const N: usize>(
     let start = interpreter.instruction_pointer;
     // Safety: In Analysis we appended needed bytes for bytecode so that we are safe to just add without
     // checking if it is out of bound. This makes both of our unsafes block safe to do.
-    if let Some(ret) = interpreter
+    if let Err(result) = interpreter
         .stack
         .push_slice::<N>(unsafe { core::slice::from_raw_parts(start, N) })
     {
-        interpreter.instruction_result = ret;
+        interpreter.instruction_result = result;
         return;
     }
     interpreter.instruction_pointer = unsafe { start.add(N) };
@@ -43,8 +43,8 @@ pub(super) fn dup<const N: usize>(
     _spec: SpecId,
 ) {
     gas!(interpreter, gas::VERYLOW);
-    if let Some(ret) = interpreter.stack.dup::<N>() {
-        interpreter.instruction_result = ret;
+    if let Err(result) = interpreter.stack.dup::<N>() {
+        interpreter.instruction_result = result;
     }
 }
 
@@ -54,7 +54,7 @@ pub(super) fn swap<const N: usize>(
     _spec: SpecId,
 ) {
     gas!(interpreter, gas::VERYLOW);
-    if let Some(ret) = interpreter.stack.swap::<N>() {
-        interpreter.instruction_result = ret;
+    if let Err(result) = interpreter.stack.swap::<N>() {
+        interpreter.instruction_result = result;
     }
 }

@@ -1,5 +1,5 @@
 use crate::{keccak256, B256, KECCAK_EMPTY};
-use alloc::{sync::Arc, vec, vec::Vec};
+use alloc::{sync::Arc, vec::Vec};
 use bitvec::prelude::{bitvec, Lsb0};
 use bitvec::vec::BitVec;
 use bytes::Bytes;
@@ -11,16 +11,19 @@ pub struct JumpMap(pub Arc<BitVec<u8>>);
 
 impl JumpMap {
     /// Get the raw bytes of the jump map
+    #[inline]
     pub fn as_slice(&self) -> &[u8] {
         self.0.as_raw_slice()
     }
 
     /// Construct a jump map from raw bytes
+    #[inline]
     pub fn from_slice(slice: &[u8]) -> Self {
         Self(Arc::new(BitVec::from_slice(slice)))
     }
 
     /// Check if `pc` is a valid jump destination.
+    #[inline]
     pub fn is_valid(&self, pc: usize) -> bool {
         pc < self.0.len() && self.0[pc]
     }
@@ -44,16 +47,18 @@ pub struct Bytecode {
 }
 
 impl Default for Bytecode {
+    #[inline]
     fn default() -> Self {
         Bytecode::new()
     }
 }
 
 impl Bytecode {
-    /// Create [`Bytecode`] with one STOP opcode.
+    /// Creates a new [`Bytecode`] with exactly one STOP opcode.
+    #[inline]
     pub fn new() -> Self {
         Bytecode {
-            bytecode: vec![0].into(),
+            bytecode: Bytes::from_static(&[0]),
             hash: KECCAK_EMPTY,
             state: BytecodeState::Analysed {
                 len: 0,
@@ -62,6 +67,8 @@ impl Bytecode {
         }
     }
 
+    /// Creates a new raw [`Bytecode`].
+    #[inline]
     pub fn new_raw(bytecode: Bytes) -> Self {
         let hash = if bytecode.is_empty() {
             KECCAK_EMPTY
@@ -75,11 +82,15 @@ impl Bytecode {
         }
     }
 
-    /// Create new raw Bytecode with hash
+    /// Creates a new raw Bytecode with the given hash.
     ///
     /// # Safety
-    /// Hash need to be appropriate keccak256 over bytecode.
+    ///
+    /// The given `hash` has to be equal to the [`keccak256`] hash of the given `bytecode`.
+    #[inline]
+    #[cfg_attr(debug_assertions, track_caller)]
     pub unsafe fn new_raw_with_hash(bytecode: Bytes, hash: B256) -> Self {
+        debug_assert_eq!(keccak256(&bytecode), hash, "Invalid bytecode hash");
         Self {
             bytecode,
             hash,
@@ -90,8 +101,10 @@ impl Bytecode {
     /// Create new checked bytecode
     ///
     /// # Safety
+    ///
     /// Bytecode need to end with STOP (0x00) opcode as checked bytecode assumes
     /// that it is safe to iterate over bytecode without checking lengths
+    #[inline]
     pub unsafe fn new_checked(bytecode: Bytes, len: usize, hash: Option<B256>) -> Self {
         let hash = match hash {
             None if len == 0 => KECCAK_EMPTY,
@@ -105,10 +118,14 @@ impl Bytecode {
         }
     }
 
+    /// Returns a reference to the bytecode.
+    #[inline]
     pub fn bytes(&self) -> &Bytes {
         &self.bytecode
     }
 
+    /// Returns a reference to the original bytecode.
+    #[inline]
     pub fn original_bytes(&self) -> Bytes {
         match self.state {
             BytecodeState::Raw => self.bytecode.clone(),
@@ -118,28 +135,31 @@ impl Bytecode {
         }
     }
 
+    /// Returns the length of the bytecode.
+    #[inline]
+    pub fn len(&self) -> usize {
+        match self.state {
+            BytecodeState::Raw => self.bytecode.len(),
+            BytecodeState::Checked { len, .. } | BytecodeState::Analysed { len, .. } => len,
+        }
+    }
+
+    /// Returns whether the bytecode is empty.
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    /// Returns the hash of the bytecode.
+    #[inline]
     pub fn hash(&self) -> B256 {
         self.hash
     }
 
+    /// Returns the [`BytecodeState`].
+    #[inline]
     pub fn state(&self) -> &BytecodeState {
         &self.state
-    }
-
-    pub fn is_empty(&self) -> bool {
-        match self.state {
-            BytecodeState::Raw => self.bytecode.is_empty(),
-            BytecodeState::Checked { len } => len == 0,
-            BytecodeState::Analysed { len, .. } => len == 0,
-        }
-    }
-
-    pub fn len(&self) -> usize {
-        match self.state {
-            BytecodeState::Raw => self.bytecode.len(),
-            BytecodeState::Checked { len, .. } => len,
-            BytecodeState::Analysed { len, .. } => len,
-        }
     }
 
     pub fn to_checked(self) -> Self {

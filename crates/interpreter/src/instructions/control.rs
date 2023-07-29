@@ -36,21 +36,28 @@ pub(super) fn jumpdest(interpreter: &mut Interpreter, _host: &mut dyn Host, _spe
 
 pub(super) fn pc(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
     gas!(interpreter, gas::BASE);
+    // - 1 because we have already advanced the instruction pointer in `Interpreter::step`
     push!(interpreter, U256::from(interpreter.program_counter() - 1));
+}
+
+macro_rules! return_setup {
+    ($interpreter:expr) => {
+        pop!($interpreter, offset, len);
+        let len = as_usize_or_fail!($interpreter, len);
+        // important: offset must be ignored if len is zero
+        if len != 0 {
+            let offset = as_usize_or_fail!($interpreter, offset);
+            memory_resize!($interpreter, offset, len);
+            $interpreter.return_offset = offset;
+        }
+        $interpreter.return_len = len;
+    };
 }
 
 pub(super) fn ret(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
     // zero gas cost
     // gas!(interpreter, gas::ZERO);
-    pop!(interpreter, start, len);
-    let len = as_usize_or_fail!(interpreter, len);
-    if len == 0 {
-        interpreter.return_range = usize::MAX..usize::MAX;
-    } else {
-        let offset = as_usize_or_fail!(interpreter, start);
-        memory_resize!(interpreter, offset, len);
-        interpreter.return_range = offset..(offset + len);
-    }
+    return_setup!(interpreter);
     interpreter.instruction_result = InstructionResult::Return;
 }
 
@@ -59,15 +66,7 @@ pub(super) fn revert(interpreter: &mut Interpreter, _host: &mut dyn Host, spec: 
     // zero gas cost
     // gas!(interpreter, gas::ZERO);
     check!(interpreter, SpecId::enabled(spec, BYZANTIUM));
-    pop!(interpreter, start, len);
-    let len = as_usize_or_fail!(interpreter, len);
-    if len == 0 {
-        interpreter.return_range = usize::MAX..usize::MAX;
-    } else {
-        let offset = as_usize_or_fail!(interpreter, start);
-        memory_resize!(interpreter, offset, len);
-        interpreter.return_range = offset..(offset + len);
-    }
+    return_setup!(interpreter);
     interpreter.instruction_result = InstructionResult::Revert;
 }
 

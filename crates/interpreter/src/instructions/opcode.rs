@@ -75,7 +75,7 @@ opcodes! {
     0x1C => SHR    => bitwise::shr,
     0x1D => SAR    => bitwise::sar,
 
-    0x20 => KECCAK256 => system::calculate_keccak256,
+    0x20 => KECCAK256 => system::keccak256,
 
     0x30 => ADDRESS   => system::address,
     0x31 => BALANCE   => host::balance,

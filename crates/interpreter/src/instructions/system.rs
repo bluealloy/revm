@@ -1,10 +1,6 @@
 use super::prelude::*;
 
-pub(super) fn calculate_keccak256(
-    interpreter: &mut Interpreter,
-    _host: &mut dyn Host,
-    _spec: SpecId,
-) {
+pub(super) fn keccak256(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
     pop!(interpreter, from, len);
     let len = as_usize_or_fail!(interpreter, len);
     gas_or_fail!(interpreter, gas::keccak256_cost(len as u64));
@@ -13,7 +9,7 @@ pub(super) fn calculate_keccak256(
     } else {
         let from = as_usize_or_fail!(interpreter, from);
         memory_resize!(interpreter, from, len);
-        keccak256(interpreter.memory.get_slice(from, len))
+        crate::primitives::keccak256(interpreter.memory.get_slice(from, len))
     };
 
     push_b256!(interpreter, hash);

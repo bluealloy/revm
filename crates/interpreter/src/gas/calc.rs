@@ -53,6 +53,7 @@ pub fn sstore_refund(original: U256, current: U256, new: U256, spec: SpecId) -> 
     }
 }
 
+#[inline]
 pub fn create2_cost(len: usize) -> Option<u64> {
     let base = CREATE;
     // ceil(len / 32.0)
@@ -64,6 +65,7 @@ pub fn create2_cost(len: usize) -> Option<u64> {
     Some(gas)
 }
 
+#[inline]
 fn log2floor(value: U256) -> u64 {
     assert!(value != U256::ZERO);
     let mut l: u64 = 256;
@@ -83,6 +85,7 @@ fn log2floor(value: U256) -> u64 {
     l
 }
 
+#[inline]
 pub fn exp_cost(power: U256, spec: SpecId) -> Option<u64> {
     if power == U256::ZERO {
         Some(EXP)
@@ -100,12 +103,14 @@ pub fn exp_cost(power: U256, spec: SpecId) -> Option<u64> {
     }
 }
 
+#[inline]
 pub fn verylowcopy_cost(len: u64) -> Option<u64> {
     let wordd = len / 32;
     let wordr = len % 32;
     VERYLOW.checked_add(COPY.checked_mul(if wordr == 0 { wordd } else { wordd + 1 })?)
 }
 
+#[inline]
 pub fn extcodecopy_cost(len: u64, is_cold: bool, spec: SpecId) -> Option<u64> {
     let wordd = len / 32;
     let wordr = len % 32;
@@ -154,12 +159,14 @@ pub fn keccak256_cost(len: u64) -> Option<u64> {
 /// Apply extra gas cost of 2 for every 32-byte chunk of initcode.
 ///
 /// This cannot overflow as the initcode length is assumed to be checked.
+#[inline]
 pub fn initcode_cost(len: u64) -> u64 {
     let wordd = len / 32;
     let wordr = len % 32;
     INITCODE_WORD_COST * if wordr == 0 { wordd } else { wordd + 1 }
 }
 
+#[inline]
 pub fn sload_cost(is_cold: bool, spec: SpecId) -> u64 {
     if SpecId::enabled(spec, BERLIN) {
         if is_cold {
@@ -288,6 +295,7 @@ pub fn call_cost(
         + new_cost(is_call_or_staticcall, is_new, transfers_value, spec)
 }
 
+#[inline]
 pub fn hot_cold_cost(is_cold: bool, regular_value: u64, spec: SpecId) -> u64 {
     if SpecId::enabled(spec, BERLIN) {
         if is_cold {
@@ -300,6 +308,7 @@ pub fn hot_cold_cost(is_cold: bool, regular_value: u64, spec: SpecId) -> u64 {
     }
 }
 
+#[inline]
 fn xfer_cost(is_call_or_callcode: bool, transfers_value: bool) -> u64 {
     if is_call_or_callcode && transfers_value {
         CALLVALUE
@@ -308,6 +317,7 @@ fn xfer_cost(is_call_or_callcode: bool, transfers_value: bool) -> u64 {
     }
 }
 
+#[inline]
 fn new_cost(is_call_or_staticcall: bool, is_new: bool, transfers_value: bool, spec: SpecId) -> u64 {
     if is_call_or_staticcall {
         // EIP-161: State trie clearing (invariant-preserving alternative)
@@ -327,6 +337,7 @@ fn new_cost(is_call_or_staticcall: bool, is_new: bool, transfers_value: bool, sp
     }
 }
 
+#[inline]
 pub fn memory_gas(a: usize) -> u64 {
     let a = a as u64;
     MEMORY

@@ -30,7 +30,7 @@ macro_rules! gas {
 macro_rules! refund {
     ($interp:expr, $gas:expr) => {{
         if crate::USE_GAS {
-            $interp.gas.gas_refund($gas);
+            $interp.gas.record_refund($gas);
         }
     }};
 }
@@ -39,8 +39,8 @@ macro_rules! gas_or_fail {
     ($interp:expr, $gas:expr) => {
         if crate::USE_GAS {
             match $gas {
-                Some(gas_used) => gas!($interp, gas_used),
-                None => {
+                Some(gas_used) if $interp.gas.record_cost(gas_used) => {}
+                _ => {
                     $interp.instruction_result = InstructionResult::OutOfGas;
                     return;
                 }
@@ -51,10 +51,8 @@ macro_rules! gas_or_fail {
 
 macro_rules! memory_resize {
     ($interp:expr, $offset:expr, $len:expr) => {{
-        let len: usize = $len;
-        let offset: usize = $offset;
         if let Some(new_size) =
-            crate::interpreter::memory::next_multiple_of_32(offset.saturating_add(len))
+            crate::interpreter::memory::next_multiple_of_32($offset.saturating_add($len))
         {
             #[cfg(feature = "memory_limit")]
             if new_size > ($interp.memory_limit as usize) {

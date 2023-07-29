@@ -2,6 +2,7 @@ use crate::primitives::{B256, U256};
 use crate::{alloc::vec::Vec, InstructionResult};
 use core::fmt;
 
+/// The EVM stack limit, in number of words.
 pub const STACK_LIMIT: usize = 1024;
 
 /// EVM stack.
@@ -32,93 +33,86 @@ impl Default for Stack {
 }
 
 impl Stack {
-    /// Create a new stack with given limit.
+    /// Instantiate a new stack with the [default stack limit][STACK_LIMIT].
     #[inline]
     pub fn new() -> Self {
         Self {
-            // Safety: A lot of functions assumes that capacity is STACK_LIMIT
+            // Safety: A lot of functions assume that capacity is STACK_LIMIT
             data: Vec::with_capacity(STACK_LIMIT),
         }
     }
 
+    /// Returns the length of the stack in words.
     #[inline]
-    /// Stack length.
     pub fn len(&self) -> usize {
         self.data.len()
     }
 
+    /// Returns whether the stack is empty.
     #[inline]
-    /// Whether the stack is empty.
     pub fn is_empty(&self) -> bool {
         self.data.is_empty()
     }
 
+    /// Returns the underlying data of the stack.
     #[inline]
-    /// Stack data.
     pub fn data(&self) -> &Vec<U256> {
         &self.data
     }
 
-    #[inline(always)]
-    pub fn reduce_one(&mut self) -> Option<InstructionResult> {
-        let len = self.data.len();
-        if len < 1 {
-            return Some(InstructionResult::StackUnderflow);
-        }
-        unsafe {
-            self.data.set_len(len - 1);
-        }
-        None
+    /// Remove the topmost value from the stack. If the stack is empty, returns a `StackUnderflow`
+    /// error.
+    #[inline]
+    pub fn reduce_one(&mut self) -> Result<(), InstructionResult> {
+        self.pop().map(drop)
     }
 
+    /// Removes the topmost element from the stack and returns it, or `StackUnderflow` if it is
+    /// empty.
     #[inline]
-    /// Pop a value from the stack. If the stack is already empty, returns the
-    /// `StackUnderflow` error.
     pub fn pop(&mut self) -> Result<U256, InstructionResult> {
         self.data.pop().ok_or(InstructionResult::StackUnderflow)
     }
 
-    #[inline(always)]
-    /// Pops a value from the stack, returning it.
+    /// Removes the topmost element from the stack and returns it.
     ///
     /// # Safety
-    /// The caller is responsible to check length of array
+    ///
+    /// The caller is responsible for checking the length of the stack.
+    #[inline(always)]
     pub unsafe fn pop_unsafe(&mut self) -> U256 {
-        let mut len = self.data.len();
-        len -= 1;
-        self.data.set_len(len);
-        *self.data.get_unchecked(len)
+        self.data.pop().unwrap_unchecked()
     }
 
-    #[inline(always)]
     /// Peeks the top of the stack.
     ///
     /// # Safety
-    /// The caller is responsible to check length of array
+    ///
+    /// The caller is responsible for checking the length of the stack.
+    #[inline(always)]
     pub unsafe fn top_unsafe(&mut self) -> &mut U256 {
         let len = self.data.len();
         self.data.get_unchecked_mut(len - 1)
     }
 
-    #[inline(always)]
     /// Pop the topmost value, returning the value and the new topmost value.
     ///
     /// # Safety
-    /// The caller is responsible to check length of array
+    ///
+    /// The caller is responsible for checking the length of the stack.
+    #[inline(always)]
     pub unsafe fn pop_top_unsafe(&mut self) -> (U256, &mut U256) {
-        let mut len = self.data.len();
-        let pop = *self.data.get_unchecked(len - 1);
-        len -= 1;
-        self.data.set_len(len);
-
-        (pop, self.data.get_unchecked_mut(len - 1))
+        let pop = self.pop_unsafe();
+        let top = self.top_unsafe();
+        (pop, top)
     }
 
-    #[inline(always)]
     /// Pops 2 values from the stack and returns them, in addition to the new topmost value.
     ///
     /// # Safety
-    /// The caller is responsible to check length of array
+    ///
+    /// The caller is responsible for checking the length of the stack.
+    #[inline(always)]
     pub unsafe fn pop2_top_unsafe(&mut self) -> (U256, U256, &mut U256) {
         let mut len = self.data.len();
         let pop1 = *self.data.get_unchecked(len - 1);
@@ -129,11 +123,12 @@ impl Stack {
         (pop1, pop2, self.data.get_unchecked_mut(len - 1))
     }
 
-    #[inline(always)]
     /// Pops 2 values from the stack.
     ///
     /// # Safety
-    /// The caller is responsible to check length of array
+    ///
+    /// The caller is responsible for checking the length of the stack.
+    #[inline(always)]
     pub unsafe fn pop2_unsafe(&mut self) -> (U256, U256) {
         let mut len = self.data.len();
         len -= 2;
@@ -144,11 +139,12 @@ impl Stack {
         )
     }
 
-    #[inline(always)]
     /// Pops 3 values from the stack.
     ///
     /// # Safety
-    /// The caller is responsible to check length of array
+    ///
+    /// The caller is responsible for checking the length of the stack.
+    #[inline(always)]
     pub unsafe fn pop3_unsafe(&mut self) -> (U256, U256, U256) {
         let mut len = self.data.len();
         len -= 3;
@@ -160,11 +156,12 @@ impl Stack {
         )
     }
 
-    #[inline(always)]
     /// Pops 4 values from the stack.
     ///
     /// # Safety
-    /// The caller is responsible to check length of array
+    ///
+    /// The caller is responsible for checking the length of the stack.
+    #[inline(always)]
     pub unsafe fn pop4_unsafe(&mut self) -> (U256, U256, U256, U256) {
         let mut len = self.data.len();
         len -= 4;
@@ -177,9 +174,9 @@ impl Stack {
         )
     }
 
-    #[inline]
     /// Push a new value into the stack. If it will exceed the stack limit,
     /// returns `StackOverflow` error and leaves the stack unchanged.
+    #[inline]
     pub fn push_b256(&mut self, value: B256) -> Result<(), InstructionResult> {
         if self.data.len() + 1 > STACK_LIMIT {
             return Err(InstructionResult::StackOverflow);
@@ -188,9 +185,11 @@ impl Stack {
         Ok(())
     }
 
+    /// Push a new value onto the stack.
+    ///
+    /// If it will exceed the stack limit, returns `StackOverflow` error and leaves the stack
+    /// unchanged.
     #[inline]
-    /// Push a new value into the stack. If it will exceed the stack limit,
-    /// returns `StackOverflow` error and leaves the stack unchanged.
     pub fn push(&mut self, value: U256) -> Result<(), InstructionResult> {
         if self.data.len() + 1 > STACK_LIMIT {
             return Err(InstructionResult::StackOverflow);
@@ -199,10 +198,10 @@ impl Stack {
         Ok(())
     }
 
-    #[inline]
     /// Peek a value at given index for the stack, where the top of
     /// the stack is at index `0`. If the index is too large,
     /// `StackError::Underflow` is returned.
+    #[inline]
     pub fn peek(&self, no_from_top: usize) -> Result<U256, InstructionResult> {
         if self.data.len() > no_from_top {
             Ok(self.data[self.data.len() - no_from_top - 1])
@@ -211,40 +210,45 @@ impl Stack {
         }
     }
 
+    /// Duplicates the `N`th value from the top of the stack.
     #[inline(always)]
-    pub fn dup<const N: usize>(&mut self) -> Option<InstructionResult> {
+    pub fn dup<const N: usize>(&mut self) -> Result<(), InstructionResult> {
         let len = self.data.len();
         if len < N {
-            Some(InstructionResult::StackUnderflow)
+            Err(InstructionResult::StackUnderflow)
         } else if len + 1 > STACK_LIMIT {
-            Some(InstructionResult::StackOverflow)
+            Err(InstructionResult::StackOverflow)
         } else {
             // Safety: check for out of bounds is done above and it makes this safe to do.
             unsafe {
                 *self.data.get_unchecked_mut(len) = *self.data.get_unchecked(len - N);
                 self.data.set_len(len + 1);
             }
-            None
+            Ok(())
         }
     }
 
+    /// Swaps the topmost value with the `N`th value from the top.
     #[inline(always)]
-    pub fn swap<const N: usize>(&mut self) -> Option<InstructionResult> {
+    pub fn swap<const N: usize>(&mut self) -> Result<(), InstructionResult> {
         let len = self.data.len();
         if len <= N {
-            return Some(InstructionResult::StackUnderflow);
+            return Err(InstructionResult::StackUnderflow);
         }
         let last = len - 1;
         self.data.swap(last, last - N);
-        None
+        Ok(())
     }
 
-    /// push slice onto memory it is expected to be max 32 bytes and be contains inside B256
+    /// Push a slice of bytes of `N` length onto the stack.
+    ///
+    /// If it will exceed the stack limit, returns `StackOverflow` error and leaves the stack
+    /// unchanged.
     #[inline(always)]
-    pub fn push_slice<const N: usize>(&mut self, slice: &[u8]) -> Option<InstructionResult> {
+    pub fn push_slice<const N: usize>(&mut self, slice: &[u8]) -> Result<(), InstructionResult> {
         let new_len = self.data.len() + 1;
         if new_len > STACK_LIMIT {
-            return Some(InstructionResult::StackOverflow);
+            return Err(InstructionResult::StackOverflow);
         }
 
         let slot;
@@ -293,13 +297,13 @@ impl Stack {
                 }
             }
         }
-        None
+        Ok(())
     }
 
-    #[inline]
     /// Set a value at given index for the stack, where the top of the
     /// stack is at index `0`. If the index is too large,
     /// `StackError::Underflow` is returned.
+    #[inline]
     pub fn set(&mut self, no_from_top: usize, val: U256) -> Result<(), InstructionResult> {
         if self.data.len() > no_from_top {
             let len = self.data.len();

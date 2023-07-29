@@ -71,6 +71,7 @@ pub struct BytecodeLocked {
 }
 
 impl Default for BytecodeLocked {
+    #[inline]
     fn default() -> Self {
         Bytecode::default()
             .try_into()
@@ -81,6 +82,7 @@ impl Default for BytecodeLocked {
 impl TryFrom<Bytecode> for BytecodeLocked {
     type Error = ();
 
+    #[inline]
     fn try_from(bytecode: Bytecode) -> Result<Self, Self::Error> {
         if let BytecodeState::Analysed { len, jump_map } = bytecode.state {
             Ok(BytecodeLocked {
@@ -96,21 +98,31 @@ impl TryFrom<Bytecode> for BytecodeLocked {
 }
 
 impl BytecodeLocked {
+    /// Returns a raw pointer to the underlying byte slice.
+    #[inline]
     pub fn as_ptr(&self) -> *const u8 {
         self.bytecode.as_ptr()
     }
+
+    /// Returns the length of the bytecode.
+    #[inline]
     pub fn len(&self) -> usize {
         self.len
     }
 
-    pub fn hash(&self) -> B256 {
-        self.hash
-    }
-
+    /// Returns whether the bytecode is empty.
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.len == 0
     }
 
+    /// Returns the hash of the bytecode.
+    #[inline]
+    pub fn hash(&self) -> B256 {
+        self.hash
+    }
+
+    #[inline]
     pub fn unlock(self) -> Bytecode {
         Bytecode {
             bytecode: self.bytecode,
@@ -121,14 +133,21 @@ impl BytecodeLocked {
             },
         }
     }
+
+    /// Returns the bytecode as a byte slice.
+    #[inline]
     pub fn bytecode(&self) -> &[u8] {
-        self.bytecode.as_ref()
+        &self.bytecode
     }
 
+    /// Returns the original bytecode as a byte slice.
+    #[inline]
     pub fn original_bytecode_slice(&self) -> &[u8] {
-        &self.bytecode.as_ref()[..self.len]
+        &self.bytecode[..self.len]
     }
 
+    /// Returns a reference to the jump map.
+    #[inline]
     pub fn jump_map(&self) -> &JumpMap {
         &self.jump_map
     }

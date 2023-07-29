@@ -46,7 +46,21 @@ pub enum InstructionResult {
 }
 
 impl InstructionResult {
-    pub fn is_error(&self) -> bool {
+    /// Returns whether the result is a success.
+    #[inline]
+    pub fn is_ok(self) -> bool {
+        matches!(self, crate::return_ok!())
+    }
+
+    /// Returns whether the result is a revert.
+    #[inline]
+    pub fn is_revert(self) -> bool {
+        matches!(self, crate::return_revert!())
+    }
+
+    /// Returns whether the result is an error.
+    #[inline]
+    pub fn is_error(self) -> bool {
         matches!(
             self,
             Self::OutOfGas
@@ -87,11 +101,13 @@ pub enum SuccessOrHalt {
 
 impl SuccessOrHalt {
     /// Returns true if the transaction returned successfully without halts.
-    pub fn is_success(&self) -> bool {
+    #[inline]
+    pub fn is_success(self) -> bool {
         matches!(self, SuccessOrHalt::Success(_))
     }
 
     /// Returns the [Eval] value if this a successful result
+    #[inline]
     pub fn to_success(self) -> Option<Eval> {
         match self {
             SuccessOrHalt::Success(eval) => Some(eval),
@@ -100,16 +116,19 @@ impl SuccessOrHalt {
     }
 
     /// Returns true if the transaction reverted.
-    pub fn is_revert(&self) -> bool {
+    #[inline]
+    pub fn is_revert(self) -> bool {
         matches!(self, SuccessOrHalt::Revert)
     }
 
     /// Returns true if the EVM has experienced an exceptional halt
-    pub fn is_halt(&self) -> bool {
+    #[inline]
+    pub fn is_halt(self) -> bool {
         matches!(self, SuccessOrHalt::Halt(_))
     }
 
     /// Returns the [Halt] value the EVM has experienced an exceptional halt
+    #[inline]
     pub fn to_halt(self) -> Option<Halt> {
         match self {
             SuccessOrHalt::Halt(halt) => Some(halt),
