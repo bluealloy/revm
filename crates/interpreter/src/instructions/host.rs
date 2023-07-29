@@ -306,7 +306,7 @@ pub(super) fn create<const IS_CREATE2: bool>(
             }
         }
         return_revert!() => {
-            push_b256!(interpreter, B256::zero());
+            push!(interpreter, U256::ZERO);
             if crate::USE_GAS {
                 interpreter.gas.erase_cost(gas.remaining());
             }
@@ -314,9 +314,7 @@ pub(super) fn create<const IS_CREATE2: bool>(
         InstructionResult::FatalExternalError => {
             interpreter.instruction_result = InstructionResult::FatalExternalError;
         }
-        _ => {
-            push_b256!(interpreter, B256::zero());
-        }
+        _ => push!(interpreter, U256::ZERO),
     }
 }
 

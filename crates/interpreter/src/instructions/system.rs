@@ -1,5 +1,4 @@
 use super::prelude::*;
-use core::cmp::min;
 
 pub(super) fn calculate_keccak256(
     interpreter: &mut Interpreter,
@@ -61,15 +60,15 @@ pub(super) fn calldataload(interpreter: &mut Interpreter, _host: &mut dyn Host, 
     let index = as_usize_saturated!(index);
 
     let load = if index < interpreter.contract.input.len() {
-        let have_bytes = min(interpreter.contract.input.len() - index, 32);
+        let n = 32.min(interpreter.contract.input.len() - index);
         let mut bytes = [0u8; 32];
-        bytes[..have_bytes].copy_from_slice(&interpreter.contract.input[index..index + have_bytes]);
-        B256(bytes)
+        bytes[..n].copy_from_slice(&interpreter.contract.input[index..index + n]);
+        U256::from_be_bytes(bytes)
     } else {
-        B256::zero()
+        U256::ZERO
     };
 
-    push_b256!(interpreter, load);
+    push!(interpreter, load);
 }
 
 pub(super) fn calldatasize(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
