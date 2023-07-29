@@ -194,7 +194,7 @@ pub(super) fn log<const N: usize>(
         topics.push(B256(topic.to_be_bytes()));
     }
 
-    host.log(interpreter.contract.address, topics.to_vec(), data);
+    host.log(interpreter.contract.address, topics, data);
 }
 
 pub(super) fn selfdestruct(interpreter: &mut Interpreter, host: &mut dyn Host, spec: SpecId) {
