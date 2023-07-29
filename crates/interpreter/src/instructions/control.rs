@@ -65,7 +65,7 @@ pub(super) fn ret(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 pub(super) fn revert<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     // zero gas cost
     // gas!(interpreter, gas::ZERO);
-    check!(interpreter, SPEC::enabled(BYZANTIUM));
+    check!(interpreter, BYZANTIUM);
     return_setup!(interpreter);
     interpreter.instruction_result = InstructionResult::Revert;
 }

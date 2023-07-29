@@ -97,7 +97,7 @@ pub(super) fn calldatacopy(interpreter: &mut Interpreter, _host: &mut dyn Host) 
 // EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
 pub(super) fn returndatasize<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::BASE);
-    check!(interpreter, SPEC::enabled(BYZANTIUM));
+    check!(interpreter, BYZANTIUM);
     push!(
         interpreter,
         U256::from(interpreter.return_data_buffer.len())
@@ -106,7 +106,7 @@ pub(super) fn returndatasize<SPEC: Spec>(interpreter: &mut Interpreter, _host: &
 
 // EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
 pub(super) fn returndatacopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    check!(interpreter, SPEC::enabled(BYZANTIUM));
+    check!(interpreter, BYZANTIUM);
     pop!(interpreter, memory_offset, offset, len);
     let len = as_usize_or_fail!(interpreter, len);
     gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));

@@ -83,7 +83,7 @@ pub(super) fn byte(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 
 // EIP-145: Bitwise shifting instructions in EVM
 pub(super) fn shl<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    check!(interpreter, SPEC::enabled(CONSTANTINOPLE));
+    check!(interpreter, CONSTANTINOPLE);
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 <<= as_usize_saturated!(op1);
@@ -91,7 +91,7 @@ pub(super) fn shl<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Hos
 
 // EIP-145: Bitwise shifting instructions in EVM
 pub(super) fn shr<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    check!(interpreter, SPEC::enabled(CONSTANTINOPLE));
+    check!(interpreter, CONSTANTINOPLE);
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 >>= as_usize_saturated!(op1);
@@ -99,7 +99,7 @@ pub(super) fn shr<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Hos
 
 // EIP-145: Bitwise shifting instructions in EVM
 pub(super) fn sar<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    check!(interpreter, SPEC::enabled(CONSTANTINOPLE));
+    check!(interpreter, CONSTANTINOPLE);
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
 

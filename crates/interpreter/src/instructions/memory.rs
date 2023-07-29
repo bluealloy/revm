@@ -34,7 +34,7 @@ pub(super) fn msize(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 
 // EIP-5656: MCOPY - Memory copying instruction
 pub(super) fn mcopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    check!(interpreter, SPEC::enabled(CANCUN));
+    check!(interpreter, CANCUN);
     pop!(interpreter, dst, src, len);
 
     // into usize or fail

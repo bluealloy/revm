@@ -32,7 +32,7 @@ pub(super) fn balance<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn 
 
 // EIP-1884: Repricing for trie-size-dependent opcodes
 pub(super) fn selfbalance<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
-    check!(interpreter, SPEC::enabled(ISTANBUL));
+    check!(interpreter, ISTANBUL);
     gas!(interpreter, gas::LOW);
     let Some((balance, _)) = host.balance(interpreter.contract.address) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
@@ -67,7 +67,7 @@ pub(super) fn extcodesize<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut 
 
 // EIP-1052: EXTCODEHASH opcode
 pub(super) fn extcodehash<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
-    check!(interpreter, SPEC::enabled(CONSTANTINOPLE));
+    check!(interpreter, CONSTANTINOPLE);
     pop_address!(interpreter, address);
     let Some((code_hash, is_cold)) = host.code_hash(address) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
@@ -219,7 +219,7 @@ pub(super) fn prepare_create_inputs<SPEC: Spec, const IS_CREATE2: bool>(
 
     // EIP-1014: Skinny CREATE2
     if IS_CREATE2 {
-        check!(interpreter, SPEC::enabled(PETERSBURG));
+        check!(interpreter, PETERSBURG);
     }
 
     interpreter.return_data_buffer = Bytes::new();
@@ -473,9 +473,9 @@ pub(super) fn call_inner<SPEC: Spec>(
 ) {
     match scheme {
         // EIP-7: DELEGATECALL
-        CallScheme::DelegateCall => check!(interpreter, SPEC::enabled(HOMESTEAD)),
+        CallScheme::DelegateCall => check!(interpreter, HOMESTEAD),
         // EIP-214: New opcode STATICCALL
-        CallScheme::StaticCall => check!(interpreter, SPEC::enabled(BYZANTIUM)),
+        CallScheme::StaticCall => check!(interpreter, BYZANTIUM),
         _ => (),
     }
     interpreter.return_data_buffer = Bytes::new();

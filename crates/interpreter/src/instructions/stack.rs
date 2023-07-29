@@ -11,7 +11,7 @@ pub(super) fn pop(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 ///
 /// Introduce a new instruction which pushes the constant value 0 onto the stack.
 pub(super) fn push0<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    check!(interpreter, SPEC::enabled(SHANGHAI));
+    check!(interpreter, SHANGHAI);
     gas!(interpreter, gas::BASE);
     if let Err(result) = interpreter.stack.push(U256::ZERO) {
         interpreter.instruction_result = result;

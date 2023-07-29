@@ -2,7 +2,7 @@ use super::prelude::*;
 
 // EIP-1344: ChainID opcode
 pub(super) fn chainid<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
-    check!(interpreter, SPEC::enabled(ISTANBUL));
+    check!(interpreter, ISTANBUL);
     gas!(interpreter, gas::BASE);
     push!(interpreter, host.env().cfg.chain_id);
 }
@@ -43,7 +43,7 @@ pub(super) fn gasprice(interpreter: &mut Interpreter, host: &mut dyn Host) {
 
 // EIP-3198: BASEFEE opcode
 pub(super) fn basefee<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
-    check!(interpreter, SPEC::enabled(LONDON));
+    check!(interpreter, LONDON);
     gas!(interpreter, gas::BASE);
     push!(interpreter, host.env().block.basefee);
 }
