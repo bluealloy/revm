@@ -94,7 +94,7 @@ where
         let mod_end = exp_end + mod_len;
 
         let exp_highp = {
-            let mut out = vec![0; 32];
+            let mut out = [0; 32];
             let from = min(base_end, len);
             let to = min(exp_highp_end, len);
             let target_from = 32 - (exp_highp_end - base_end); // 32 - exp length

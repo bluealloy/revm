@@ -1,13 +1,13 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+
 pub mod gas;
 mod host;
 pub mod inner_models;
 pub mod instruction_result;
 mod instructions;
 mod interpreter;
-
-extern crate alloc;
 
 pub(crate) const USE_GAS: bool = !cfg!(feature = "no_gas_measuring");
 
