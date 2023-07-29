@@ -1,9 +1,11 @@
+//! EVM opcode definitions and utilities.
+
 use super::{prelude::*, *};
 use core::fmt;
 
 macro_rules! opcodes {
     ($($val:literal => $name:ident => $f:expr),* $(,)?) => {
-        // Constants for each opcode. This also takes care of duplicates.
+        // Constants for each opcode. This also takes care of duplicate names.
         $(
             #[doc = concat!("The `", stringify!($val), "` (\"", stringify!($name),"\") opcode.")]
             pub const $name: u8 = $val;
@@ -23,7 +25,7 @@ macro_rules! opcodes {
             map
         };
 
-        /// Evaluates the opcode.
+        /// Evaluates the opcode in the given context.
         #[inline(always)]
         pub(crate) fn eval<SPEC: Spec>(opcode: u8, interpreter: &mut Interpreter, host: &mut dyn Host) {
             // type Instruction = fn(&mut Interpreter, &mut dyn Host, SpecId);
@@ -45,6 +47,10 @@ macro_rules! opcodes {
     };
 }
 
+// When adding new opcodes:
+// 1. add the opcode to the list below. Make sure it's sorted by opcode value
+// 2. add its gas info in the `opcode_gas_info` function below
+// 3. implement the opcode in the corresponding module
 opcodes! {
     0x00 => STOP => control::stop,
 
@@ -205,7 +211,12 @@ opcodes! {
     0xFF => SELFDESTRUCT => host::selfdestruct::<SPEC>,
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+/// An EVM opcode.
+///
+/// This is always a valid opcode, as declared in the [`opcode`][self] module or the
+/// [`OPCODE_JUMPMAP`] constant.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[repr(transparent)]
 pub struct OpCode(u8);
 
 impl fmt::Display for OpCode {
@@ -233,7 +244,8 @@ impl OpCode {
     ///
     /// # Safety
     ///
-    /// This function is unsafe because it does not check if the opcode is valid.
+    /// All code using `Opcode` values assume that they are valid opcodes, so providing an invalid
+    /// opcode may cause undefined behavior.
     #[inline]
     pub unsafe fn new_unchecked(opcode: u8) -> Self {
         Self(opcode)
@@ -257,18 +269,20 @@ impl OpCode {
 
     #[inline]
     #[deprecated(note = "use `new` instead")]
+    #[doc(hidden)]
     pub const fn try_from_u8(opcode: u8) -> Option<Self> {
         Self::new(opcode)
     }
 
     #[inline]
     #[deprecated(note = "use `get` instead")]
+    #[doc(hidden)]
     pub const fn u8(self) -> u8 {
         self.get()
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct OpInfo {
     /// Data contains few information packed inside u32:
     /// IS_JUMP (1bit) | IS_GAS_BLOCK_END (1bit) | IS_PUSH (1bit) | gas (29bits)
@@ -281,462 +295,326 @@ const IS_PUSH_MASK: u32 = 0x20000000;
 const GAS_MASK: u32 = 0x1FFFFFFF;
 
 impl OpInfo {
-    #[inline(always)]
-    pub fn is_jump(&self) -> bool {
-        self.data & JUMP_MASK == JUMP_MASK
-    }
-
-    #[inline(always)]
-    pub fn is_gas_block_end(&self) -> bool {
-        self.data & GAS_BLOCK_END_MASK == GAS_BLOCK_END_MASK
-    }
-
-    #[inline(always)]
-    pub fn is_push(&self) -> bool {
-        self.data & IS_PUSH_MASK == IS_PUSH_MASK
-    }
-
-    #[inline(always)]
-    pub fn get_gas(&self) -> u32 {
-        self.data & GAS_MASK
-    }
-
+    /// Creates a new empty [`OpInfo`].
     pub const fn none() -> Self {
         Self { data: 0 }
     }
 
+    /// Creates a new dynamic gas [`OpInfo`].
+    pub const fn dynamic_gas() -> Self {
+        Self { data: 0 }
+    }
+
+    /// Creates a new gas block end [`OpInfo`].
     pub const fn gas_block_end(gas: u64) -> Self {
         Self {
             data: gas as u32 | GAS_BLOCK_END_MASK,
         }
     }
-    pub const fn dynamic_gas() -> Self {
-        Self { data: 0 }
-    }
 
+    /// Creates a new [`OpInfo`] with the given gas value.
     pub const fn gas(gas: u64) -> Self {
         Self { data: gas as u32 }
     }
 
+    /// Creates a new push [`OpInfo`].
     pub const fn push_opcode() -> Self {
         Self {
             data: gas::VERYLOW as u32 | IS_PUSH_MASK,
         }
     }
 
+    /// Creates a new jumpdest [`OpInfo`].
     pub const fn jumpdest() -> Self {
         Self {
             data: JUMP_MASK | GAS_BLOCK_END_MASK,
         }
     }
-}
 
-macro_rules! gas_opcodee {
-    ($name:ident, $spec_id:expr) => {
-        const $name: &'static [OpInfo; 256] = &[
-            /* 0x00  STOP */ OpInfo::gas_block_end(0),
-            /* 0x01  ADD */ OpInfo::gas(gas::VERYLOW),
-            /* 0x02  MUL */ OpInfo::gas(gas::LOW),
-            /* 0x03  SUB */ OpInfo::gas(gas::VERYLOW),
-            /* 0x04  DIV */ OpInfo::gas(gas::LOW),
-            /* 0x05  SDIV */ OpInfo::gas(gas::LOW),
-            /* 0x06  MOD */ OpInfo::gas(gas::LOW),
-            /* 0x07  SMOD */ OpInfo::gas(gas::LOW),
-            /* 0x08  ADDMOD */ OpInfo::gas(gas::MID),
-            /* 0x09  MULMOD */ OpInfo::gas(gas::MID),
-            /* 0x0A  EXP */ OpInfo::dynamic_gas(),
-            /* 0x0B  SIGNEXTEND */ OpInfo::gas(gas::LOW),
-            /* 0x0C */ OpInfo::none(),
-            /* 0x0D */ OpInfo::none(),
-            /* 0x0E */ OpInfo::none(),
-            /* 0x0F */ OpInfo::none(),
-            /* 0x10  LT */ OpInfo::gas(gas::VERYLOW),
-            /* 0x11  GT */ OpInfo::gas(gas::VERYLOW),
-            /* 0x12  SLT */ OpInfo::gas(gas::VERYLOW),
-            /* 0x13  SGT */ OpInfo::gas(gas::VERYLOW),
-            /* 0x14  EQ */ OpInfo::gas(gas::VERYLOW),
-            /* 0x15  ISZERO */ OpInfo::gas(gas::VERYLOW),
-            /* 0x16  AND */ OpInfo::gas(gas::VERYLOW),
-            /* 0x17  OR */ OpInfo::gas(gas::VERYLOW),
-            /* 0x18  XOR */ OpInfo::gas(gas::VERYLOW),
-            /* 0x19  NOT */ OpInfo::gas(gas::VERYLOW),
-            /* 0x1A  BYTE */ OpInfo::gas(gas::VERYLOW),
-            /* 0x1B  SHL */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::CONSTANTINOPLE) {
-                gas::VERYLOW
-            } else {
-                0
-            }),
-            /* 0x1C  SHR */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::CONSTANTINOPLE) {
-                gas::VERYLOW
-            } else {
-                0
-            }),
-            /* 0x1D  SAR */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::CONSTANTINOPLE) {
-                gas::VERYLOW
-            } else {
-                0
-            }),
-            /* 0x1E */ OpInfo::none(),
-            /* 0x1F */ OpInfo::none(),
-            /* 0x20  KECCAK256 */ OpInfo::dynamic_gas(),
-            /* 0x21 */ OpInfo::none(),
-            /* 0x22 */ OpInfo::none(),
-            /* 0x23 */ OpInfo::none(),
-            /* 0x24 */ OpInfo::none(),
-            /* 0x25 */ OpInfo::none(),
-            /* 0x26 */ OpInfo::none(),
-            /* 0x27 */ OpInfo::none(),
-            /* 0x28 */ OpInfo::none(),
-            /* 0x29 */ OpInfo::none(),
-            /* 0x2A */ OpInfo::none(),
-            /* 0x2B */ OpInfo::none(),
-            /* 0x2C */ OpInfo::none(),
-            /* 0x2D */ OpInfo::none(),
-            /* 0x2E */ OpInfo::none(),
-            /* 0x2F */ OpInfo::none(),
-            /* 0x30  ADDRESS */ OpInfo::gas(gas::BASE),
-            /* 0x31  BALANCE */ OpInfo::dynamic_gas(),
-            /* 0x32  ORIGIN */ OpInfo::gas(gas::BASE),
-            /* 0x33  CALLER */ OpInfo::gas(gas::BASE),
-            /* 0x34  CALLVALUE */ OpInfo::gas(gas::BASE),
-            /* 0x35  CALLDATALOAD */ OpInfo::gas(gas::VERYLOW),
-            /* 0x36  CALLDATASIZE */ OpInfo::gas(gas::BASE),
-            /* 0x37  CALLDATACOPY */ OpInfo::dynamic_gas(),
-            /* 0x38  CODESIZE */ OpInfo::gas(gas::BASE),
-            /* 0x39  CODECOPY */ OpInfo::dynamic_gas(),
-            /* 0x3A  GASPRICE */ OpInfo::gas(gas::BASE),
-            /* 0x3B  EXTCODESIZE */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::BERLIN) {
-                gas::WARM_STORAGE_READ_COST // add only part of gas
-            } else if SpecId::enabled($spec_id, SpecId::TANGERINE) {
-                700
-            } else {
-                20
-            }),
-            /* 0x3C  EXTCODECOPY */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::BERLIN) {
-                gas::WARM_STORAGE_READ_COST // add only part of gas
-            } else if SpecId::enabled($spec_id, SpecId::TANGERINE) {
-                700
-            } else {
-                20
-            }),
-            /* 0x3D  RETURNDATASIZE */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::BYZANTIUM) {
-                gas::BASE
-            } else {
-                0
-            }),
-            /* 0x3E  RETURNDATACOPY */ OpInfo::dynamic_gas(),
-            /* 0x3F  EXTCODEHASH */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::BERLIN) {
-                gas::WARM_STORAGE_READ_COST // add only part of gas
-            } else if SpecId::enabled($spec_id, SpecId::ISTANBUL) {
-                700
-            } else if SpecId::enabled($spec_id, SpecId::PETERSBURG) {
-                // constantinople
-                400
-            } else {
-                0 // not enabled
-            }),
-            /* 0x40  BLOCKHASH */ OpInfo::gas(gas::BLOCKHASH),
-            /* 0x41  COINBASE */ OpInfo::gas(gas::BASE),
-            /* 0x42  TIMESTAMP */ OpInfo::gas(gas::BASE),
-            /* 0x43  NUMBER */ OpInfo::gas(gas::BASE),
-            /* 0x44  DIFFICULTY */ OpInfo::gas(gas::BASE),
-            /* 0x45  GASLIMIT */ OpInfo::gas(gas::BASE),
-            /* 0x46  CHAINID */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::ISTANBUL) {
-                gas::BASE
-            } else {
-                0
-            }),
-            /* 0x47  SELFBALANCE */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::ISTANBUL) {
-                gas::LOW
-            } else {
-                0
-            }),
-            /* 0x48  BASEFEE */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::LONDON) {
-                gas::BASE
-            } else {
-                0
-            }),
-            /* 0x49 */ OpInfo::none(),
-            /* 0x4A */ OpInfo::none(),
-            /* 0x4B */ OpInfo::none(),
-            /* 0x4C */ OpInfo::none(),
-            /* 0x4D */ OpInfo::none(),
-            /* 0x4E */ OpInfo::none(),
-            /* 0x4F */ OpInfo::none(),
-            /* 0x50  POP */ OpInfo::gas(gas::BASE),
-            /* 0x51  MLOAD */ OpInfo::gas(gas::VERYLOW),
-            /* 0x52  MSTORE */ OpInfo::gas(gas::VERYLOW),
-            /* 0x53  MSTORE8 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x54  SLOAD */ OpInfo::dynamic_gas(),
-            /* 0x55  SSTORE */ OpInfo::gas_block_end(0),
-            /* 0x56  JUMP */ OpInfo::gas_block_end(gas::MID),
-            /* 0x57  JUMPI */ OpInfo::gas_block_end(gas::HIGH),
-            /* 0x58  PC */ OpInfo::gas(gas::BASE),
-            /* 0x59  MSIZE */ OpInfo::gas(gas::BASE),
-            /* 0x5A  GAS */ OpInfo::gas_block_end(gas::BASE),
-            /* 0x5B  JUMPDEST */
-            // gas::JUMPDEST gas is calculated in function call,
-            OpInfo::jumpdest(),
-            /* 0x5C */ OpInfo::none(),
-            /* 0x5D */ OpInfo::none(),
-            /* 0x5E  MCOPY */ OpInfo::dynamic_gas(),
-            /* 0x5F PUSH0 */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::SHANGHAI) {
-                gas::BASE
-            } else {
-                0
-            }),
-            /* 0x60  PUSH1 */ OpInfo::push_opcode(),
-            /* 0x61  PUSH2 */ OpInfo::push_opcode(),
-            /* 0x62  PUSH3 */ OpInfo::push_opcode(),
-            /* 0x63  PUSH4 */ OpInfo::push_opcode(),
-            /* 0x64  PUSH5 */ OpInfo::push_opcode(),
-            /* 0x65  PUSH6 */ OpInfo::push_opcode(),
-            /* 0x66  PUSH7 */ OpInfo::push_opcode(),
-            /* 0x67  PUSH8 */ OpInfo::push_opcode(),
-            /* 0x68  PUSH9 */ OpInfo::push_opcode(),
-            /* 0x69  PUSH10 */ OpInfo::push_opcode(),
-            /* 0x6A  PUSH11 */ OpInfo::push_opcode(),
-            /* 0x6B  PUSH12 */ OpInfo::push_opcode(),
-            /* 0x6C  PUSH13 */ OpInfo::push_opcode(),
-            /* 0x6D  PUSH14 */ OpInfo::push_opcode(),
-            /* 0x6E  PUSH15 */ OpInfo::push_opcode(),
-            /* 0x6F  PUSH16 */ OpInfo::push_opcode(),
-            /* 0x70  PUSH17 */ OpInfo::push_opcode(),
-            /* 0x71  PUSH18 */ OpInfo::push_opcode(),
-            /* 0x72  PUSH19 */ OpInfo::push_opcode(),
-            /* 0x73  PUSH20 */ OpInfo::push_opcode(),
-            /* 0x74  PUSH21 */ OpInfo::push_opcode(),
-            /* 0x75  PUSH22 */ OpInfo::push_opcode(),
-            /* 0x76  PUSH23 */ OpInfo::push_opcode(),
-            /* 0x77  PUSH24 */ OpInfo::push_opcode(),
-            /* 0x78  PUSH25 */ OpInfo::push_opcode(),
-            /* 0x79  PUSH26 */ OpInfo::push_opcode(),
-            /* 0x7A  PUSH27 */ OpInfo::push_opcode(),
-            /* 0x7B  PUSH28 */ OpInfo::push_opcode(),
-            /* 0x7C  PUSH29 */ OpInfo::push_opcode(),
-            /* 0x7D  PUSH30 */ OpInfo::push_opcode(),
-            /* 0x7E  PUSH31 */ OpInfo::push_opcode(),
-            /* 0x7F  PUSH32 */ OpInfo::push_opcode(),
-            /* 0x80  DUP1 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x81  DUP2 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x82  DUP3 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x83  DUP4 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x84  DUP5 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x85  DUP6 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x86  DUP7 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x87  DUP8 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x88  DUP9 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x89  DUP10 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x8A  DUP11 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x8B  DUP12 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x8C  DUP13 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x8D  DUP14 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x8E  DUP15 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x8F  DUP16 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x90  SWAP1 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x91  SWAP2 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x92  SWAP3 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x93  SWAP4 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x94  SWAP5 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x95  SWAP6 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x96  SWAP7 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x97  SWAP8 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x98  SWAP9 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x99  SWAP10 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x9A  SWAP11 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x9B  SWAP12 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x9C  SWAP13 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x9D  SWAP14 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x9E  SWAP15 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x9F  SWAP16 */ OpInfo::gas(gas::VERYLOW),
-            /* 0xA0  LOG0 */ OpInfo::dynamic_gas(),
-            /* 0xA1  LOG1 */ OpInfo::dynamic_gas(),
-            /* 0xA2  LOG2 */ OpInfo::dynamic_gas(),
-            /* 0xA3  LOG3 */ OpInfo::dynamic_gas(),
-            /* 0xA4  LOG4 */ OpInfo::dynamic_gas(),
-            /* 0xA5 */ OpInfo::none(),
-            /* 0xA6 */ OpInfo::none(),
-            /* 0xA7 */ OpInfo::none(),
-            /* 0xA8 */ OpInfo::none(),
-            /* 0xA9 */ OpInfo::none(),
-            /* 0xAA */ OpInfo::none(),
-            /* 0xAB */ OpInfo::none(),
-            /* 0xAC */ OpInfo::none(),
-            /* 0xAD */ OpInfo::none(),
-            /* 0xAE */ OpInfo::none(),
-            /* 0xAF */ OpInfo::none(),
-            /* 0xB0 */ OpInfo::none(),
-            /* 0xB1 */ OpInfo::none(),
-            /* 0xB2 */ OpInfo::none(),
-            /* 0xB3 */ OpInfo::none(),
-            /* 0xB4 */ OpInfo::none(),
-            /* 0xB5 */ OpInfo::none(),
-            /* 0xB6 */ OpInfo::none(),
-            /* 0xB7 */ OpInfo::none(),
-            /* 0xB8 */ OpInfo::none(),
-            /* 0xB9 */ OpInfo::none(),
-            /* 0xBA */ OpInfo::none(),
-            /* 0xBB */ OpInfo::none(),
-            /* 0xBC */ OpInfo::none(),
-            /* 0xBD */ OpInfo::none(),
-            /* 0xBE */ OpInfo::none(),
-            /* 0xBF */ OpInfo::none(),
-            /* 0xC0 */ OpInfo::none(),
-            /* 0xC1 */ OpInfo::none(),
-            /* 0xC2 */ OpInfo::none(),
-            /* 0xC3 */ OpInfo::none(),
-            /* 0xC4 */ OpInfo::none(),
-            /* 0xC5 */ OpInfo::none(),
-            /* 0xC6 */ OpInfo::none(),
-            /* 0xC7 */ OpInfo::none(),
-            /* 0xC8 */ OpInfo::none(),
-            /* 0xC9 */ OpInfo::none(),
-            /* 0xCA */ OpInfo::none(),
-            /* 0xCB */ OpInfo::none(),
-            /* 0xCC */ OpInfo::none(),
-            /* 0xCD */ OpInfo::none(),
-            /* 0xCE */ OpInfo::none(),
-            /* 0xCF */ OpInfo::none(),
-            /* 0xD0 */ OpInfo::none(),
-            /* 0xD1 */ OpInfo::none(),
-            /* 0xD2 */ OpInfo::none(),
-            /* 0xD3 */ OpInfo::none(),
-            /* 0xD4 */ OpInfo::none(),
-            /* 0xD5 */ OpInfo::none(),
-            /* 0xD6 */ OpInfo::none(),
-            /* 0xD7 */ OpInfo::none(),
-            /* 0xD8 */ OpInfo::none(),
-            /* 0xD9 */ OpInfo::none(),
-            /* 0xDA */ OpInfo::none(),
-            /* 0xDB */ OpInfo::none(),
-            /* 0xDC */ OpInfo::none(),
-            /* 0xDD */ OpInfo::none(),
-            /* 0xDE */ OpInfo::none(),
-            /* 0xDF */ OpInfo::none(),
-            /* 0xE0 */ OpInfo::none(),
-            /* 0xE1 */ OpInfo::none(),
-            /* 0xE2 */ OpInfo::none(),
-            /* 0xE3 */ OpInfo::none(),
-            /* 0xE4 */ OpInfo::none(),
-            /* 0xE5 */ OpInfo::none(),
-            /* 0xE6 */ OpInfo::none(),
-            /* 0xE7 */ OpInfo::none(),
-            /* 0xE8 */ OpInfo::none(),
-            /* 0xE9 */ OpInfo::none(),
-            /* 0xEA */ OpInfo::none(),
-            /* 0xEB */ OpInfo::none(),
-            /* 0xEC */ OpInfo::none(),
-            /* 0xED */ OpInfo::none(),
-            /* 0xEE */ OpInfo::none(),
-            /* 0xEF */ OpInfo::none(),
-            /* 0xF0  CREATE */ OpInfo::gas_block_end(0),
-            /* 0xF1  CALL */ OpInfo::gas_block_end(0),
-            /* 0xF2  CALLCODE */ OpInfo::gas_block_end(0),
-            /* 0xF3  RETURN */ OpInfo::gas_block_end(0),
-            /* 0xF4  DELEGATECALL */ OpInfo::gas_block_end(0),
-            /* 0xF5  CREATE2 */ OpInfo::gas_block_end(0),
-            /* 0xF6 */ OpInfo::none(),
-            /* 0xF7 */ OpInfo::none(),
-            /* 0xF8 */ OpInfo::none(),
-            /* 0xF9 */ OpInfo::none(),
-            /* 0xFA  STATICCALL */ OpInfo::gas_block_end(0),
-            /* 0xFB */ OpInfo::none(),
-            /* 0xFC */ OpInfo::none(),
-            /* 0xFD  REVERT */ OpInfo::gas_block_end(0),
-            /* 0xFE  INVALID */ OpInfo::gas_block_end(0),
-            /* 0xFF  SELFDESTRUCT */ OpInfo::gas_block_end(0),
-        ];
-    };
-}
-
-pub const fn spec_opcode_gas(spec_id: SpecId) -> &'static [OpInfo; 256] {
-    match spec_id {
-        SpecId::FRONTIER => {
-            gas_opcodee!(FRONTIER, SpecId::FRONTIER);
-            FRONTIER
-        }
-        SpecId::FRONTIER_THAWING => {
-            gas_opcodee!(FRONTIER_THAWING, SpecId::FRONTIER_THAWING);
-            FRONTIER_THAWING
-        }
-        SpecId::HOMESTEAD => {
-            gas_opcodee!(HOMESTEAD, SpecId::HOMESTEAD);
-            HOMESTEAD
-        }
-        SpecId::DAO_FORK => {
-            gas_opcodee!(DAO_FORK, SpecId::DAO_FORK);
-            DAO_FORK
-        }
-        SpecId::TANGERINE => {
-            gas_opcodee!(TANGERINE, SpecId::TANGERINE);
-            TANGERINE
-        }
-        SpecId::SPURIOUS_DRAGON => {
-            gas_opcodee!(SPURIOUS_DRAGON, SpecId::SPURIOUS_DRAGON);
-            SPURIOUS_DRAGON
-        }
-        SpecId::BYZANTIUM => {
-            gas_opcodee!(BYZANTIUM, SpecId::BYZANTIUM);
-            BYZANTIUM
-        }
-        SpecId::CONSTANTINOPLE => {
-            gas_opcodee!(CONSTANTINOPLE, SpecId::CONSTANTINOPLE);
-            CONSTANTINOPLE
-        }
-        SpecId::PETERSBURG => {
-            gas_opcodee!(PETERSBURG, SpecId::PETERSBURG);
-            PETERSBURG
-        }
-        SpecId::ISTANBUL => {
-            gas_opcodee!(ISTANBUL, SpecId::ISTANBUL);
-            ISTANBUL
-        }
-        SpecId::MUIR_GLACIER => {
-            gas_opcodee!(MUIRGLACIER, SpecId::MUIR_GLACIER);
-            MUIRGLACIER
-        }
-        SpecId::BERLIN => {
-            gas_opcodee!(BERLIN, SpecId::BERLIN);
-            BERLIN
-        }
-        SpecId::LONDON => {
-            gas_opcodee!(LONDON, SpecId::LONDON);
-            LONDON
-        }
-        SpecId::ARROW_GLACIER => {
-            gas_opcodee!(ARROW_GLACIER, SpecId::ARROW_GLACIER);
-            ARROW_GLACIER
-        }
-        SpecId::GRAY_GLACIER => {
-            gas_opcodee!(GRAY_GLACIER, SpecId::GRAY_GLACIER);
-            GRAY_GLACIER
-        }
-        SpecId::MERGE => {
-            gas_opcodee!(MERGE, SpecId::MERGE);
-            MERGE
-        }
-        SpecId::SHANGHAI => {
-            gas_opcodee!(SHANGAI, SpecId::SHANGHAI);
-            SHANGAI
-        }
-        SpecId::CANCUN => {
-            gas_opcodee!(CANCUN, SpecId::CANCUN);
-            CANCUN
-        }
-        SpecId::LATEST => {
-            gas_opcodee!(LATEST, SpecId::LATEST);
-            LATEST
-        }
+    /// Returns whether the opcode is a jump.
+    #[inline]
+    pub fn is_jump(self) -> bool {
+        self.data & JUMP_MASK == JUMP_MASK
     }
+
+    /// Returns whether the opcode is a gas block end.
+    #[inline]
+    pub fn is_gas_block_end(self) -> bool {
+        self.data & GAS_BLOCK_END_MASK == GAS_BLOCK_END_MASK
+    }
+
+    /// Returns whether the opcode is a push.
+    #[inline]
+    pub fn is_push(self) -> bool {
+        self.data & IS_PUSH_MASK == IS_PUSH_MASK
+    }
+
+    /// Returns the gas cost of the opcode.
+    #[inline]
+    pub fn get_gas(self) -> u32 {
+        self.data & GAS_MASK
+    }
+}
+
+const fn opcode_gas_info(opcode: u8, spec: SpecId) -> OpInfo {
+    match opcode {
+        STOP => OpInfo::gas_block_end(0),
+        ADD => OpInfo::gas(gas::VERYLOW),
+        MUL => OpInfo::gas(gas::LOW),
+        SUB => OpInfo::gas(gas::VERYLOW),
+        DIV => OpInfo::gas(gas::LOW),
+        SDIV => OpInfo::gas(gas::LOW),
+        MOD => OpInfo::gas(gas::LOW),
+        SMOD => OpInfo::gas(gas::LOW),
+        ADDMOD => OpInfo::gas(gas::MID),
+        MULMOD => OpInfo::gas(gas::MID),
+        EXP => OpInfo::dynamic_gas(),
+        SIGNEXTEND => OpInfo::gas(gas::LOW),
+
+        LT => OpInfo::gas(gas::VERYLOW),
+        GT => OpInfo::gas(gas::VERYLOW),
+        SLT => OpInfo::gas(gas::VERYLOW),
+        SGT => OpInfo::gas(gas::VERYLOW),
+        EQ => OpInfo::gas(gas::VERYLOW),
+        ISZERO => OpInfo::gas(gas::VERYLOW),
+        AND => OpInfo::gas(gas::VERYLOW),
+        OR => OpInfo::gas(gas::VERYLOW),
+        XOR => OpInfo::gas(gas::VERYLOW),
+        NOT => OpInfo::gas(gas::VERYLOW),
+        BYTE => OpInfo::gas(gas::VERYLOW),
+        SHL => OpInfo::gas(if SpecId::enabled(spec, SpecId::CONSTANTINOPLE) {
+            gas::VERYLOW
+        } else {
+            0
+        }),
+        SHR => OpInfo::gas(if SpecId::enabled(spec, SpecId::CONSTANTINOPLE) {
+            gas::VERYLOW
+        } else {
+            0
+        }),
+        SAR => OpInfo::gas(if SpecId::enabled(spec, SpecId::CONSTANTINOPLE) {
+            gas::VERYLOW
+        } else {
+            0
+        }),
+
+        KECCAK256 => OpInfo::dynamic_gas(),
+
+        ADDRESS => OpInfo::gas(gas::BASE),
+        BALANCE => OpInfo::dynamic_gas(),
+        ORIGIN => OpInfo::gas(gas::BASE),
+        CALLER => OpInfo::gas(gas::BASE),
+        CALLVALUE => OpInfo::gas(gas::BASE),
+        CALLDATALOAD => OpInfo::gas(gas::VERYLOW),
+        CALLDATASIZE => OpInfo::gas(gas::BASE),
+        CALLDATACOPY => OpInfo::dynamic_gas(),
+        CODESIZE => OpInfo::gas(gas::BASE),
+        CODECOPY => OpInfo::dynamic_gas(),
+        GASPRICE => OpInfo::gas(gas::BASE),
+        EXTCODESIZE => OpInfo::gas(if SpecId::enabled(spec, SpecId::BERLIN) {
+            gas::WARM_STORAGE_READ_COST // add only part of gas
+        } else if SpecId::enabled(spec, SpecId::TANGERINE) {
+            700
+        } else {
+            20
+        }),
+        EXTCODECOPY => OpInfo::gas(if SpecId::enabled(spec, SpecId::BERLIN) {
+            gas::WARM_STORAGE_READ_COST // add only part of gas
+        } else if SpecId::enabled(spec, SpecId::TANGERINE) {
+            700
+        } else {
+            20
+        }),
+        RETURNDATASIZE => OpInfo::gas(if SpecId::enabled(spec, SpecId::BYZANTIUM) {
+            gas::BASE
+        } else {
+            0
+        }),
+        RETURNDATACOPY => OpInfo::dynamic_gas(),
+        EXTCODEHASH => OpInfo::gas(if SpecId::enabled(spec, SpecId::BERLIN) {
+            gas::WARM_STORAGE_READ_COST // add only part of gas
+        } else if SpecId::enabled(spec, SpecId::ISTANBUL) {
+            700
+        } else if SpecId::enabled(spec, SpecId::PETERSBURG) {
+            400 // constantinople
+        } else {
+            0 // not enabled
+        }),
+        BLOCKHASH => OpInfo::gas(gas::BLOCKHASH),
+        COINBASE => OpInfo::gas(gas::BASE),
+        TIMESTAMP => OpInfo::gas(gas::BASE),
+        NUMBER => OpInfo::gas(gas::BASE),
+        DIFFICULTY => OpInfo::gas(gas::BASE),
+        GASLIMIT => OpInfo::gas(gas::BASE),
+        CHAINID => OpInfo::gas(if SpecId::enabled(spec, SpecId::ISTANBUL) {
+            gas::BASE
+        } else {
+            0
+        }),
+        SELFBALANCE => OpInfo::gas(if SpecId::enabled(spec, SpecId::ISTANBUL) {
+            gas::LOW
+        } else {
+            0
+        }),
+        BASEFEE => OpInfo::gas(if SpecId::enabled(spec, SpecId::LONDON) {
+            gas::BASE
+        } else {
+            0
+        }),
+
+        POP => OpInfo::gas(gas::BASE),
+        MLOAD => OpInfo::gas(gas::VERYLOW),
+        MSTORE => OpInfo::gas(gas::VERYLOW),
+        MSTORE8 => OpInfo::gas(gas::VERYLOW),
+        SLOAD => OpInfo::dynamic_gas(),
+        SSTORE => OpInfo::gas_block_end(0),
+        JUMP => OpInfo::gas_block_end(gas::MID),
+        JUMPI => OpInfo::gas_block_end(gas::HIGH),
+        PC => OpInfo::gas(gas::BASE),
+        MSIZE => OpInfo::gas(gas::BASE),
+        GAS => OpInfo::gas_block_end(gas::BASE),
+        // gas::JUMPDEST gas is calculated in function call
+        JUMPDEST => OpInfo::jumpdest(),
+        MCOPY => OpInfo::dynamic_gas(),
+
+        PUSH0 => OpInfo::gas(if SpecId::enabled(spec, SpecId::SHANGHAI) {
+            gas::BASE
+        } else {
+            0
+        }),
+        PUSH1 => OpInfo::push_opcode(),
+        PUSH2 => OpInfo::push_opcode(),
+        PUSH3 => OpInfo::push_opcode(),
+        PUSH4 => OpInfo::push_opcode(),
+        PUSH5 => OpInfo::push_opcode(),
+        PUSH6 => OpInfo::push_opcode(),
+        PUSH7 => OpInfo::push_opcode(),
+        PUSH8 => OpInfo::push_opcode(),
+        PUSH9 => OpInfo::push_opcode(),
+        PUSH10 => OpInfo::push_opcode(),
+        PUSH11 => OpInfo::push_opcode(),
+        PUSH12 => OpInfo::push_opcode(),
+        PUSH13 => OpInfo::push_opcode(),
+        PUSH14 => OpInfo::push_opcode(),
+        PUSH15 => OpInfo::push_opcode(),
+        PUSH16 => OpInfo::push_opcode(),
+        PUSH17 => OpInfo::push_opcode(),
+        PUSH18 => OpInfo::push_opcode(),
+        PUSH19 => OpInfo::push_opcode(),
+        PUSH20 => OpInfo::push_opcode(),
+        PUSH21 => OpInfo::push_opcode(),
+        PUSH22 => OpInfo::push_opcode(),
+        PUSH23 => OpInfo::push_opcode(),
+        PUSH24 => OpInfo::push_opcode(),
+        PUSH25 => OpInfo::push_opcode(),
+        PUSH26 => OpInfo::push_opcode(),
+        PUSH27 => OpInfo::push_opcode(),
+        PUSH28 => OpInfo::push_opcode(),
+        PUSH29 => OpInfo::push_opcode(),
+        PUSH30 => OpInfo::push_opcode(),
+        PUSH31 => OpInfo::push_opcode(),
+        PUSH32 => OpInfo::push_opcode(),
+
+        DUP1 => OpInfo::gas(gas::VERYLOW),
+        DUP2 => OpInfo::gas(gas::VERYLOW),
+        DUP3 => OpInfo::gas(gas::VERYLOW),
+        DUP4 => OpInfo::gas(gas::VERYLOW),
+        DUP5 => OpInfo::gas(gas::VERYLOW),
+        DUP6 => OpInfo::gas(gas::VERYLOW),
+        DUP7 => OpInfo::gas(gas::VERYLOW),
+        DUP8 => OpInfo::gas(gas::VERYLOW),
+        DUP9 => OpInfo::gas(gas::VERYLOW),
+        DUP10 => OpInfo::gas(gas::VERYLOW),
+        DUP11 => OpInfo::gas(gas::VERYLOW),
+        DUP12 => OpInfo::gas(gas::VERYLOW),
+        DUP13 => OpInfo::gas(gas::VERYLOW),
+        DUP14 => OpInfo::gas(gas::VERYLOW),
+        DUP15 => OpInfo::gas(gas::VERYLOW),
+        DUP16 => OpInfo::gas(gas::VERYLOW),
+
+        SWAP1 => OpInfo::gas(gas::VERYLOW),
+        SWAP2 => OpInfo::gas(gas::VERYLOW),
+        SWAP3 => OpInfo::gas(gas::VERYLOW),
+        SWAP4 => OpInfo::gas(gas::VERYLOW),
+        SWAP5 => OpInfo::gas(gas::VERYLOW),
+        SWAP6 => OpInfo::gas(gas::VERYLOW),
+        SWAP7 => OpInfo::gas(gas::VERYLOW),
+        SWAP8 => OpInfo::gas(gas::VERYLOW),
+        SWAP9 => OpInfo::gas(gas::VERYLOW),
+        SWAP10 => OpInfo::gas(gas::VERYLOW),
+        SWAP11 => OpInfo::gas(gas::VERYLOW),
+        SWAP12 => OpInfo::gas(gas::VERYLOW),
+        SWAP13 => OpInfo::gas(gas::VERYLOW),
+        SWAP14 => OpInfo::gas(gas::VERYLOW),
+        SWAP15 => OpInfo::gas(gas::VERYLOW),
+        SWAP16 => OpInfo::gas(gas::VERYLOW),
+
+        LOG0 => OpInfo::dynamic_gas(),
+        LOG1 => OpInfo::dynamic_gas(),
+        LOG2 => OpInfo::dynamic_gas(),
+        LOG3 => OpInfo::dynamic_gas(),
+        LOG4 => OpInfo::dynamic_gas(),
+
+        CREATE => OpInfo::gas_block_end(0),
+        CALL => OpInfo::gas_block_end(0),
+        CALLCODE => OpInfo::gas_block_end(0),
+        RETURN => OpInfo::gas_block_end(0),
+        DELEGATECALL => OpInfo::gas_block_end(0),
+        CREATE2 => OpInfo::gas_block_end(0),
+
+        STATICCALL => OpInfo::gas_block_end(0),
+
+        REVERT => OpInfo::gas_block_end(0),
+        INVALID => OpInfo::gas_block_end(0),
+        SELFDESTRUCT => OpInfo::gas_block_end(0),
+
+        _ => OpInfo::none(),
+    }
+}
+
+const fn make_gas_table(spec: SpecId) -> [OpInfo; 256] {
+    let mut table = [OpInfo::none(); 256];
+    let mut i = 0;
+    while i < 256 {
+        table[i] = opcode_gas_info(i as u8, spec);
+        i += 1;
+    }
+    table
+}
+
+/// Returns a lookup table of opcode gas info for the given [`SpecId`].
+#[inline]
+pub const fn spec_opcode_gas(spec_id: SpecId) -> &'static [OpInfo; 256] {
+    macro_rules! gas_maps {
+        ($($id:ident),* $(,)?) => {
+            match spec_id {$(
+                SpecId::$id => {
+                    const TABLE: &[OpInfo; 256] = &make_gas_table(SpecId::$id);
+                    TABLE
+                }
+            )*}
+        };
+    }
+
+    gas_maps!(
+        FRONTIER,
+        FRONTIER_THAWING,
+        HOMESTEAD,
+        DAO_FORK,
+        TANGERINE,
+        SPURIOUS_DRAGON,
+        BYZANTIUM,
+        CONSTANTINOPLE,
+        PETERSBURG,
+        ISTANBUL,
+        MUIR_GLACIER,
+        BERLIN,
+        LONDON,
+        ARROW_GLACIER,
+        GRAY_GLACIER,
+        MERGE,
+        SHANGHAI,
+        CANCUN,
+        LATEST,
+    )
 }

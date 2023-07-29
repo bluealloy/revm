@@ -8,13 +8,13 @@ macro_rules! check_staticcall {
 }
 
 macro_rules! check {
-    ($interp:expr, $min:ident) => {{
+    ($interp:expr, $min:ident) => {
         // TODO: Force const-eval on the condition with a `const {}` block once they are stable
         if !<SPEC as $crate::primitives::Spec>::enabled($crate::primitives::SpecId::$min) {
             $interp.instruction_result = InstructionResult::NotActivated;
             return;
         }
-    }};
+    };
 }
 
 macro_rules! gas {
@@ -29,11 +29,11 @@ macro_rules! gas {
 }
 
 macro_rules! refund {
-    ($interp:expr, $gas:expr) => {{
+    ($interp:expr, $gas:expr) => {
         if crate::USE_GAS {
             $interp.gas.record_refund($gas);
         }
-    }};
+    };
 }
 
 macro_rules! gas_or_fail {
@@ -51,7 +51,7 @@ macro_rules! gas_or_fail {
 }
 
 macro_rules! memory_resize {
-    ($interp:expr, $offset:expr, $len:expr) => {{
+    ($interp:expr, $offset:expr, $len:expr) => {
         if let Some(new_size) =
             crate::interpreter::memory::next_multiple_of_32($offset.saturating_add($len))
         {
@@ -75,7 +75,7 @@ macro_rules! memory_resize {
             $interp.instruction_result = InstructionResult::MemoryOOG;
             return;
         }
-    }};
+    };
 }
 
 macro_rules! pop_address {
