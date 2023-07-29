@@ -8,7 +8,7 @@ pub use contract::Contract;
 pub use memory::Memory;
 pub use stack::{Stack, STACK_LIMIT};
 
-use crate::primitives::{Bytes, Spec, SpecId};
+use crate::primitives::{Bytes, Spec};
 use crate::{alloc::boxed::Box, opcode::eval, Gas, Host, InstructionResult};
 
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -137,20 +137,20 @@ impl Interpreter {
 
     /// Executes the instruction at the current instruction pointer.
     #[inline(always)]
-    pub fn step(&mut self, host: &mut dyn Host, spec: SpecId) {
+    pub fn step<SPEC: Spec>(&mut self, host: &mut dyn Host) {
         // step.
         let opcode = unsafe { *self.instruction_pointer };
         // Safety: In analysis we are doing padding of bytecode so that we are sure that last
         // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
         // it will do noop and just stop execution of this contract
         self.instruction_pointer = unsafe { self.instruction_pointer.offset(1) };
-        eval(opcode, self, host, spec);
+        eval::<SPEC>(opcode, self, host);
     }
 
     /// Executes the interpreter until it returns or stops.
     pub fn run<H: Host, SPEC: Spec>(&mut self, host: &mut H) -> InstructionResult {
         while self.instruction_result == InstructionResult::Continue {
-            self.step(host, SPEC::SPEC_ID);
+            self.step::<SPEC>(host);
         }
         self.instruction_result
     }
@@ -165,7 +165,7 @@ impl Interpreter {
                 return result;
             }
 
-            self.step(host, SPEC::SPEC_ID);
+            self.step::<SPEC>(host);
 
             // step ends
             let result = host.step_end(self, self.instruction_result);

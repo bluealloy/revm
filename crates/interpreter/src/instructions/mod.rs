@@ -13,7 +13,9 @@ mod stack;
 mod system;
 
 mod prelude {
-    pub(super) use crate::primitives::{Bytes, SpecId, SpecId::*, B160, B256, KECCAK_EMPTY, U256};
+    pub(super) use crate::primitives::{
+        Bytes, Spec, SpecId, SpecId::*, B160, B256, KECCAK_EMPTY, U256,
+    };
     pub(super) use crate::{gas, Host, InstructionResult, Interpreter};
     pub(super) use core::cmp::Ordering;
 }

@@ -1,25 +1,25 @@
 use super::i256::{i256_div, i256_mod};
 use super::prelude::*;
 
-pub(super) fn wrapped_add(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
+pub(super) fn wrapped_add(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = op1.wrapping_add(*op2);
 }
 
-pub(super) fn wrapping_mul(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
+pub(super) fn wrapping_mul(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::LOW);
     pop_top!(interpreter, op1, op2);
     *op2 = op1.wrapping_mul(*op2);
 }
 
-pub(super) fn wrapping_sub(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
+pub(super) fn wrapping_sub(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = op1.wrapping_sub(*op2);
 }
 
-pub(super) fn div(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
+pub(super) fn div(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::LOW);
     pop_top!(interpreter, op1, op2);
     if *op2 != U256::ZERO {
@@ -27,13 +27,13 @@ pub(super) fn div(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: Sp
     }
 }
 
-pub(super) fn sdiv(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
+pub(super) fn sdiv(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::LOW);
     pop_top!(interpreter, op1, op2);
     *op2 = i256_div(op1, *op2);
 }
 
-pub(super) fn rem(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
+pub(super) fn rem(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::LOW);
     pop_top!(interpreter, op1, op2);
     if *op2 != U256::ZERO {
@@ -41,7 +41,7 @@ pub(super) fn rem(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: Sp
     }
 }
 
-pub(super) fn smod(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
+pub(super) fn smod(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::LOW);
     pop_top!(interpreter, op1, op2);
     if *op2 != U256::ZERO {
@@ -49,21 +49,21 @@ pub(super) fn smod(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: S
     }
 }
 
-pub(super) fn addmod(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
+pub(super) fn addmod(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::MID);
     pop_top!(interpreter, op1, op2, op3);
     *op3 = op1.add_mod(op2, *op3)
 }
 
-pub(super) fn mulmod(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
+pub(super) fn mulmod(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::MID);
     pop_top!(interpreter, op1, op2, op3);
     *op3 = op1.mul_mod(op2, *op3)
 }
 
-pub(super) fn exp(interpreter: &mut Interpreter, _host: &mut dyn Host, spec: SpecId) {
+pub(super) fn exp<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     pop_top!(interpreter, op1, op2);
-    gas_or_fail!(interpreter, gas::exp_cost(*op2, spec));
+    gas_or_fail!(interpreter, gas::exp_cost::<SPEC>(*op2));
     *op2 = op1.pow(*op2);
 }
 
@@ -82,7 +82,7 @@ pub(super) fn exp(interpreter: &mut Interpreter, _host: &mut dyn Host, spec: Spe
 /// `y | !mask` where `|` is the bitwise `OR` and `!` is bitwise negation. Similarly, if
 /// `b == 0` then the yellow paper says the output should start with all zeros, then end with
 /// bits from `b`; this is equal to `y & mask` where `&` is bitwise `AND`.
-pub(super) fn signextend(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
+pub(super) fn signextend(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::LOW);
     pop_top!(interpreter, op1, op2);
     if op1 < U256::from(32) {

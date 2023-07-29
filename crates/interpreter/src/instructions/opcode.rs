@@ -25,7 +25,7 @@ macro_rules! opcodes {
 
         /// Evaluates the opcode.
         #[inline(always)]
-        pub(crate) fn eval(opcode: u8, interpreter: &mut Interpreter, host: &mut dyn Host, spec: SpecId) {
+        pub(crate) fn eval<SPEC: Spec>(opcode: u8, interpreter: &mut Interpreter, host: &mut dyn Host) {
             // type Instruction = fn(&mut Interpreter, &mut dyn Host, SpecId);
             // const INSTRUCTIONS: [Instruction; 256] = {
             //     #[allow(unused_mut)]
@@ -38,8 +38,8 @@ macro_rules! opcodes {
             // INSTRUCTIONS[opcode as usize](interpreter, host, spec);
 
             match opcode {
-                $($name => $f(interpreter, host, spec),)*
-                _ => control::not_found(interpreter, host, spec),
+                $($name => $f(interpreter, host),)*
+                _ => control::not_found(interpreter, host),
             }
         }
     };
@@ -57,7 +57,7 @@ opcodes! {
     0x07 => SMOD       => arithmetic::smod,
     0x08 => ADDMOD     => arithmetic::addmod,
     0x09 => MULMOD     => arithmetic::mulmod,
-    0x0A => EXP        => arithmetic::exp,
+    0x0A => EXP        => arithmetic::exp::<SPEC>,
     0x0B => SIGNEXTEND => arithmetic::signextend,
 
     0x10 => LT     => bitwise::lt,
@@ -71,14 +71,14 @@ opcodes! {
     0x18 => XOR    => bitwise::bitxor,
     0x19 => NOT    => bitwise::not,
     0x1A => BYTE   => bitwise::byte,
-    0x1B => SHL    => bitwise::shl,
-    0x1C => SHR    => bitwise::shr,
-    0x1D => SAR    => bitwise::sar,
+    0x1B => SHL    => bitwise::shl::<SPEC>,
+    0x1C => SHR    => bitwise::shr::<SPEC>,
+    0x1D => SAR    => bitwise::sar::<SPEC>,
 
     0x20 => KECCAK256 => system::keccak256,
 
     0x30 => ADDRESS   => system::address,
-    0x31 => BALANCE   => host::balance,
+    0x31 => BALANCE   => host::balance::<SPEC>,
     0x32 => ORIGIN    => host_env::origin,
     0x33 => CALLER    => system::caller,
     0x34 => CALLVALUE => system::callvalue,
@@ -90,36 +90,36 @@ opcodes! {
     0x39 => CODECOPY     => system::codecopy,
 
     0x3A => GASPRICE       => host_env::gasprice,
-    0x3B => EXTCODESIZE    => host::extcodesize,
-    0x3C => EXTCODECOPY    => host::extcodecopy,
-    0x3D => RETURNDATASIZE => system::returndatasize,
-    0x3E => RETURNDATACOPY => system::returndatacopy,
-    0x3F => EXTCODEHASH    => host::extcodehash,
+    0x3B => EXTCODESIZE    => host::extcodesize::<SPEC>,
+    0x3C => EXTCODECOPY    => host::extcodecopy::<SPEC>,
+    0x3D => RETURNDATASIZE => system::returndatasize::<SPEC>,
+    0x3E => RETURNDATACOPY => system::returndatacopy::<SPEC>,
+    0x3F => EXTCODEHASH    => host::extcodehash::<SPEC>,
     0x40 => BLOCKHASH      => host::blockhash,
     0x41 => COINBASE       => host_env::coinbase,
     0x42 => TIMESTAMP      => host_env::timestamp,
     0x43 => NUMBER         => host_env::number,
-    0x44 => DIFFICULTY     => host_env::difficulty,
+    0x44 => DIFFICULTY     => host_env::difficulty::<SPEC>,
     0x45 => GASLIMIT       => host_env::gaslimit,
-    0x46 => CHAINID        => host_env::chainid,
-    0x47 => SELFBALANCE    => host::selfbalance,
-    0x48 => BASEFEE        => host_env::basefee,
+    0x46 => CHAINID        => host_env::chainid::<SPEC>,
+    0x47 => SELFBALANCE    => host::selfbalance::<SPEC>,
+    0x48 => BASEFEE        => host_env::basefee::<SPEC>,
 
     0x50 => POP      => stack::pop,
     0x51 => MLOAD    => memory::mload,
     0x52 => MSTORE   => memory::mstore,
     0x53 => MSTORE8  => memory::mstore8,
-    0x54 => SLOAD    => host::sload,
-    0x55 => SSTORE   => host::sstore,
+    0x54 => SLOAD    => host::sload::<SPEC>,
+    0x55 => SSTORE   => host::sstore::<SPEC>,
     0x56 => JUMP     => control::jump,
     0x57 => JUMPI    => control::jumpi,
     0x58 => PC       => control::pc,
     0x59 => MSIZE    => memory::msize,
     0x5A => GAS      => system::gas,
     0x5B => JUMPDEST => control::jumpdest,
-    0x5E => MCOPY    => memory::mcopy,
+    0x5E => MCOPY    => memory::mcopy::<SPEC>,
 
-    0x5F => PUSH0  => stack::push0,
+    0x5F => PUSH0  => stack::push0::<SPEC>,
     0x60 => PUSH1  => stack::push::<1>,
     0x61 => PUSH2  => stack::push::<2>,
     0x62 => PUSH3  => stack::push::<3>,
@@ -193,16 +193,16 @@ opcodes! {
     0xA3 => LOG3 => host::log::<3>,
     0xA4 => LOG4 => host::log::<4>,
 
-    0xF0 => CREATE       => host::create::<false>,
-    0xF1 => CALL         => host::call,
-    0xF2 => CALLCODE     => host::call_code,
+    0xF0 => CREATE       => host::create::<SPEC, false>,
+    0xF1 => CALL         => host::call::<SPEC>,
+    0xF2 => CALLCODE     => host::call_code::<SPEC>,
     0xF3 => RETURN       => control::ret,
-    0xF4 => DELEGATECALL => host::delegate_call,
-    0xF5 => CREATE2      => host::create::<true>,
-    0xFA => STATICCALL   => host::static_call,
-    0xFD => REVERT       => control::revert,
+    0xF4 => DELEGATECALL => host::delegate_call::<SPEC>,
+    0xF5 => CREATE2      => host::create::<SPEC, true>,
+    0xFA => STATICCALL   => host::static_call::<SPEC>,
+    0xFD => REVERT       => control::revert::<SPEC>,
     0xFE => INVALID      => control::invalid,
-    0xFF => SELFDESTRUCT => host::selfdestruct,
+    0xFF => SELFDESTRUCT => host::selfdestruct::<SPEC>,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]

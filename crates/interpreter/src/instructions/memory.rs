@@ -1,6 +1,6 @@
 use super::prelude::*;
 
-pub(super) fn mload(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
+pub(super) fn mload(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::VERYLOW);
     pop!(interpreter, index);
     let index = as_usize_or_fail!(interpreter, index);
@@ -11,7 +11,7 @@ pub(super) fn mload(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: 
     );
 }
 
-pub(super) fn mstore(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
+pub(super) fn mstore(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::VERYLOW);
     pop!(interpreter, index, value);
     let index = as_usize_or_fail!(interpreter, index);
@@ -19,7 +19,7 @@ pub(super) fn mstore(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec:
     interpreter.memory.set_u256(index, value);
 }
 
-pub(super) fn mstore8(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
+pub(super) fn mstore8(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::VERYLOW);
     pop!(interpreter, index, value);
     let index = as_usize_or_fail!(interpreter, index);
@@ -27,14 +27,14 @@ pub(super) fn mstore8(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec
     interpreter.memory.set_byte(index, value.byte(0))
 }
 
-pub(super) fn msize(interpreter: &mut Interpreter, _host: &mut dyn Host, _spec: SpecId) {
+pub(super) fn msize(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::BASE);
     push!(interpreter, U256::from(interpreter.memory.len()));
 }
 
 // EIP-5656: MCOPY - Memory copying instruction
-pub(super) fn mcopy(interpreter: &mut Interpreter, _host: &mut dyn Host, spec: SpecId) {
-    check!(interpreter, SpecId::enabled(spec, CANCUN));
+pub(super) fn mcopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+    check!(interpreter, SPEC::enabled(CANCUN));
     pop!(interpreter, dst, src, len);
 
     // into usize or fail
