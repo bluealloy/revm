@@ -67,15 +67,8 @@ pub(super) fn byte(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 
     let o1 = as_usize_saturated!(op1);
     *op2 = if o1 < 32 {
-        // TODO: Remove once this optimization is in `Uint::byte`
-        // https://github.com/recmo/uint/pull/273
-
         // `31 - o1` because `byte` returns LE, while we want BE
-        #[cfg(target_endian = "little")]
-        let byte = op2.as_le_slice()[31 - o1];
-        #[cfg(target_endian = "big")]
-        let byte = op2.byte(31 - o1);
-        U256::from(byte)
+        U256::from(op2.byte(31 - o1))
     } else {
         U256::ZERO
     };
