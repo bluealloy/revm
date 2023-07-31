@@ -60,6 +60,7 @@ struct CallResult {
 }
 
 pub trait Transact<DBError> {
+    /// Do checks that could make transaction fail before call/create
     fn preverify_transaction(&mut self) -> Result<(), EVMError<DBError>>;
 
     /// Do transaction.

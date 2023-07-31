@@ -72,6 +72,7 @@ impl<DB: Database + DatabaseCommit> EVM<DB> {
 }
 
 impl<DB: Database> EVM<DB> {
+    /// Do checks that could make transaction fail before call/create
     pub fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
         if let Some(db) = self.db.as_mut() {
             let mut noop = NoOpInspector {};
@@ -104,6 +105,7 @@ impl<DB: Database> EVM<DB> {
 }
 
 impl<'a, DB: DatabaseRef> EVM<DB> {
+    /// Do checks that could make transaction fail before call/create
     pub fn preverify_transaction_ref(&self) -> Result<(), EVMError<DB::Error>> {
         if let Some(db) = self.db.as_ref() {
             let mut noop = NoOpInspector {};
