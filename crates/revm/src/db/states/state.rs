@@ -36,6 +36,8 @@ pub struct State<'a, DBError> {
     /// Bundle is the main output of the state execution and this allows setting previous bundle
     /// and using its values for execution.
     pub use_preloaded_bundle: bool,
+    // if enabled USE Background thread for transitions and bundle
+    //pub use_background_thread: bool,
 }
 
 impl<'a, DBError> State<'a, DBError> {

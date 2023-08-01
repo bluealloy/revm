@@ -1,6 +1,6 @@
 use super::{
-    cache::DEBUG_ACCOUNT, changes::StateChangeset, reverts::AccountInfoRevert, AccountRevert,
-    AccountStatus, BundleAccount, RevertToSlot, StateReverts, TransitionState,
+    changes::StateChangeset, reverts::AccountInfoRevert, AccountRevert, AccountStatus,
+    BundleAccount, RevertToSlot, StateReverts, TransitionState,
 };
 use rayon::slice::ParallelSliceMut;
 use revm_interpreter::primitives::{
@@ -155,32 +155,13 @@ impl BundleState {
             // update state and create revert.
             let revert = match self.state.entry(address) {
                 hash_map::Entry::Occupied(mut entry) => {
-                    let this_account = entry.get_mut();
-                    let previous_account = this_account.clone();
                     // update and create revert if it is present
-                    let revert = this_account.update_and_create_revert(transition);
-                    if address == DEBUG_ACCOUNT {
-                        println!(
-                            "APPLY BUNDLE: {:?} -> {:?}\n     REVERT: {:?}",
-                            previous_account, this_account, revert
-                        );
-                    }
-                    revert
+                    entry.get_mut().update_and_create_revert(transition)
                 }
                 hash_map::Entry::Vacant(entry) => {
                     // make revert from transition account
                     let present_bundle = transition.present_bundle_account();
-                    if address == DEBUG_ACCOUNT {
-                        println!(
-                            "CREATE BUNDLE: {:?}\n    TRANSITION:{:?}",
-                            present_bundle, transition
-                        );
-                    }
                     let revert = transition.create_revert();
-                    if address == DEBUG_ACCOUNT {
-                        println!("REVERT: {:?}", revert);
-                    }
-
                     if revert.is_some() {
                         entry.insert(present_bundle);
                     }

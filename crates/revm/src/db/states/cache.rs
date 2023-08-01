@@ -1,12 +1,7 @@
 use super::{
     plain_account::PlainStorage, transition_account::TransitionAccount, CacheAccount, PlainAccount,
 };
-use revm_interpreter::primitives::{
-    hex_literal::hex, AccountInfo, Bytecode, HashMap, HashSet, State as EVMState, B160, B256,
-};
-
-pub const DEBUG_ACCOUNT: B160 = B160(hex!("b3afb61beb834242ec01f6bbd6f178cc4860c2bb"));
-
+use revm_interpreter::primitives::{AccountInfo, Bytecode, HashMap, State as EVMState, B160, B256};
 /// Cache state contains both modified and original values.
 ///
 /// Cache state is main state that revm uses to access state.
@@ -90,19 +85,8 @@ impl CacheState {
     /// Apply output of revm execution and create TransactionAccount
     /// that is used to build BundleState.
     pub fn apply_evm_state(&mut self, evm_state: EVMState) -> Vec<(B160, TransitionAccount)> {
-        let test_print = evm_state.get(&B160([11; 20])).is_some();
         let mut transitions = Vec::with_capacity(evm_state.len());
-        // TODO test only, remove it.
-        let interesting_account: HashSet<B160> = HashSet::from([DEBUG_ACCOUNT]);
         for (address, account) in evm_state {
-            if test_print || interesting_account.contains(&address) {
-                println!(
-                    "UPDATE:{:?} -------->\n     UPDATEd:{:?}\n    present:{:?}",
-                    address,
-                    account,
-                    self.accounts.get(&address)
-                );
-            }
             if !account.is_touched() {
                 // not touched account are never changed.
                 continue;

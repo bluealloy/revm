@@ -154,12 +154,14 @@ impl BundleAccount {
                 }
             };
 
-        // Needed for some reverts
-        let previous_storage_from_update = updated_storage
-            .iter()
-            .filter(|s| s.1.original_value != s.1.present_value)
-            .map(|(key, value)| (*key, RevertToSlot::Some(value.original_value)))
-            .collect();
+        let previous_storage_from_update =
+            |updated_storage: &StorageWithOriginalValues| -> HashMap<U256, RevertToSlot> {
+                updated_storage
+                    .iter()
+                    .filter(|s| s.1.original_value != s.1.present_value)
+                    .map(|(key, value)| (*key, RevertToSlot::Some(value.original_value)))
+                    .collect()
+            };
 
         // Needed for some reverts.
         let info_revert = if self.info != updated_info {
@@ -170,6 +172,7 @@ impl BundleAccount {
 
         match updated_status {
             AccountStatus::Changed => {
+                let previous_storage = previous_storage_from_update(&updated_storage);
                 match self.status {
                     AccountStatus::Changed | AccountStatus::Loaded => {
                         // extend the storage. original values is not used inside bundle.
@@ -187,12 +190,13 @@ impl BundleAccount {
                 self.info = updated_info;
                 Some(AccountRevert {
                     account: info_revert,
-                    storage: previous_storage_from_update,
+                    storage: previous_storage,
                     previous_status: previous_status,
                     wipe_storage: false,
                 })
             }
             AccountStatus::InMemoryChange => {
+                let previous_storage = previous_storage_from_update(&updated_storage);
                 let in_memory_info_revert = match self.status {
                     AccountStatus::Loaded | AccountStatus::InMemoryChange => {
                         // from loaded (Or LoadedEmpty) to InMemoryChange can happen if there is balance change
@@ -215,7 +219,7 @@ impl BundleAccount {
                 self.info = updated_info;
                 Some(AccountRevert {
                     account: in_memory_info_revert,
-                    storage: previous_storage_from_update,
+                    storage: previous_storage,
                     previous_status,
                     wipe_storage: false,
                 })
@@ -265,7 +269,7 @@ impl BundleAccount {
                         // from destroyed state new account is made
                         Some(AccountRevert {
                             account: AccountInfoRevert::DeleteIt,
-                            storage: previous_storage_from_update,
+                            storage: previous_storage_from_update(&updated_storage),
                             previous_status: self.status,
                             wipe_storage: false,
                         })
@@ -275,7 +279,7 @@ impl BundleAccount {
                         Some(AccountRevert {
                             // empty account
                             account: info_revert,
-                            storage: previous_storage_from_update,
+                            storage: previous_storage_from_update(&updated_storage),
                             previous_status: AccountStatus::DestroyedChanged,
                             wipe_storage: false,
                         })
@@ -326,7 +330,7 @@ impl BundleAccount {
                                     self.info.clone().unwrap_or_default(),
                                 ),
                                 // TODO(rakita) is this invalid?
-                                storage: previous_storage_from_update,
+                                storage: previous_storage_from_update(&updated_storage),
                                 previous_status: AccountStatus::DestroyedChanged,
                                 wipe_storage: false,
                             };

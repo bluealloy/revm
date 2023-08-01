@@ -19,6 +19,10 @@ pub struct StateBuilder<'a, DBError> {
     /// Do we want to create reverts and update bundle state.
     /// Default is true.
     pub without_bundle_update: bool,
+    /// Do we want to merge transitions in background.
+    /// This will allows evm to continue executing.
+    /// Default is false.
+    pub with_background_transition_merge: bool,
 }
 
 impl Default for StateBuilder<'_, Infallible> {
@@ -29,6 +33,7 @@ impl Default for StateBuilder<'_, Infallible> {
             with_cache_prestate: None,
             with_bundle_prestate: None,
             without_bundle_update: false,
+            with_background_transition_merge: false,
         }
     }
 }
@@ -43,12 +48,15 @@ impl<'a, DBError> StateBuilder<'a, DBError> {
         self,
         database: Box<dyn Database<Error = NewDBError> + Send + 'a>,
     ) -> StateBuilder<'a, NewDBError> {
+        // cast to the different database,
+        // Note that we return different type depending of the database NewDBError.
         StateBuilder {
             with_state_clear: self.with_state_clear,
             database,
             with_cache_prestate: self.with_cache_prestate,
             with_bundle_prestate: self.with_bundle_prestate,
             without_bundle_update: self.without_bundle_update,
+            with_background_transition_merge: self.with_background_transition_merge,
         }
     }
 
@@ -73,6 +81,10 @@ impl<'a, DBError> StateBuilder<'a, DBError> {
         }
     }
 
+    /// Dont make transitions and dont update bundle state.
+    ///
+    /// This is good option if we dont care about creating reverts
+    /// or getting output of changed states.
     pub fn without_bundle_update(self) -> Self {
         Self {
             without_bundle_update: true,
@@ -87,6 +99,15 @@ impl<'a, DBError> StateBuilder<'a, DBError> {
     pub fn with_cached_prestate(self, cache: CacheState) -> Self {
         Self {
             with_cache_prestate: Some(cache),
+            ..self
+        }
+    }
+
+    /// Starts the thread that will take transitions and do merge to the bundle state
+    /// in the background.
+    pub fn with_background_transition_merge(self) -> Self {
+        Self {
+            with_background_transition_merge: true,
             ..self
         }
     }
