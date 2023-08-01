@@ -178,7 +178,7 @@ impl Precompiles {
     pub fn berlin() -> &'static Self {
         static INSTANCE: OnceCell<Precompiles> = OnceCell::new();
         INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::berlin().clone();
+            let mut precompiles = Self::istanbul().clone();
             precompiles.fun.extend(
                 vec![
                     // EIP-2565: ModExp Gas Cost.

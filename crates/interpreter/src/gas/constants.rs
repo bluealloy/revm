@@ -39,3 +39,6 @@ pub const WARM_STORAGE_READ_COST: u64 = 100;
 pub const INITCODE_WORD_COST: u64 = 2;
 
 pub const CALL_STIPEND: u64 = 2300;
+
+/// EIP-4844: HASH_OPCODE_GAS
+pub const HASH_OPCODE_GAS: u64 = 3;

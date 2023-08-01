@@ -46,6 +46,7 @@ pub struct TxEnv {
     pub nonce: Option<u64>,
     pub access_list: Vec<(B160, Vec<U256>)>,
     pub blob_versioned_hashes: Vec<U256>,
+    pub max_fee_per_blob_gas: Option<U256>,
 }
 
 #[derive(Clone, Debug)]
@@ -233,6 +234,7 @@ impl Default for TxEnv {
             nonce: None,
             access_list: Vec::new(),
             blob_versioned_hashes: Vec::new(),
+            max_fee_per_blob_gas: None,
         }
     }
 }
