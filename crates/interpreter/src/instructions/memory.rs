@@ -68,7 +68,8 @@ pub fn mcopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 }
 
 /// see https://eips.ethereum.org/EIPS/eip-4844
-pub fn blob_hash(interpreter: &mut Interpreter, host: &mut dyn Host) {
+pub fn blob_hash<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+    check!(interpreter, SPEC::enabled(CANCUN));
     // We add an instruction BLOBHASH (with opcode HASH_OPCODE_BYTE) which reads index from the top of the stack as big-endian uint256,
     // and replaces it on the stack with tx.blob_versioned_hashes[index] if index < len(tx.blob_versioned_hashes),
     // and otherwise with a zeroed bytes32 value. The opcode has a gas cost of HASH_OPCODE_GAS.
