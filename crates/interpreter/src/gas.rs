@@ -1,4 +1,5 @@
-mod calc;
+pub mod calc;
+
 mod constants;
 
 pub use calc::*;
