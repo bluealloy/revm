@@ -59,7 +59,7 @@ pub fn trie_account_rlp(acc: &DbAccount) -> Bytes {
 }
 
 pub fn trie_root(acc_data: Vec<(H160, Bytes)>) -> B256 {
-    B256(sec_trie_root::<KeccakHasher, _, _, _>(acc_data.into_iter()).0)
+    B256(sec_trie_root::<KeccakHasher, _, _, _>(acc_data).0)
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]

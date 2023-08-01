@@ -306,7 +306,7 @@ impl JournaledState {
     #[inline(always)]
     pub fn check_account_collision(
         address: B160,
-        account: &mut Account,
+        account: &Account,
         num_of_precompiles: usize,
     ) -> bool {
         // Check collision. Bytecode needs to be empty.

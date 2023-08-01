@@ -19,13 +19,16 @@ pub use journaled_state::{JournalEntry, JournaledState};
 
 extern crate alloc;
 
-/// reexport `revm_precompiles`
+// reexport `revm_precompiles`
+#[doc(inline)]
 pub use revm_precompile as precompile;
 
 // reexport `revm_interpreter`
+#[doc(inline)]
 pub use revm_interpreter as interpreter;
 
 // reexport `revm_primitives`
+#[doc(inline)]
 pub use revm_interpreter::primitives;
 
 /// Reexport Inspector implementations
