@@ -55,7 +55,7 @@ pub fn eval<H: Host, S: Spec>(opcode: u8, interp: &mut Interpreter, host: &mut H
         opcode::SHL => bitwise::shl::<S>(interp, host),
         opcode::SHR => bitwise::shr::<S>(interp, host),
         opcode::SAR => bitwise::sar::<S>(interp, host),
-        opcode::SHA3 => system::sha3(interp, host),
+        opcode::KECCAK256 => system::calculate_keccak256(interp, host),
         opcode::ADDRESS => system::address(interp, host),
         opcode::BALANCE => host::balance::<S>(interp, host),
         opcode::SELFBALANCE => host::selfbalance::<S>(interp, host),
