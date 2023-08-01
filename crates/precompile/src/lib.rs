@@ -93,7 +93,8 @@ pub enum SpecId {
     BYZANTIUM = 1,
     ISTANBUL = 2,
     BERLIN = 3,
-    LATEST = 4,
+    CANCUN = 4,
+    LATEST = 5,
 }
 
 impl SpecId {
@@ -195,7 +196,7 @@ impl Precompiles {
     pub fn cancun() -> &'static Self {
         static INSTANCE: OnceCell<Precompiles> = OnceCell::new();
         INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::cancun().clone();
+            let mut precompiles = Self::berlin().clone();
             precompiles.fun.extend(
                 vec![
                     // EIP-4848: Point evaluation precompile.
@@ -218,6 +219,7 @@ impl Precompiles {
             SpecId::BYZANTIUM => Self::byzantium(),
             SpecId::ISTANBUL => Self::istanbul(),
             SpecId::BERLIN => Self::berlin(),
+            SpecId::CANCUN => Self::cancun(),
             SpecId::LATEST => Self::latest(),
         }
     }
