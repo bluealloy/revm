@@ -257,7 +257,7 @@ pub const OPCODE_JUMPMAP: [Option<&'static str>; 256] = [
     /* 0x46 */ Some("CHAINID"),
     /* 0x47 */ Some("SELFBALANCE"),
     /* 0x48 */ Some("BASEFEE"),
-    /* 0x49 */ Some("BLOBHASH"),
+    /* 0x49 */ Some("HASH_OPCODE_BYTE"),
     /* 0x4a */ None,
     /* 0x4b */ None,
     /* 0x4c */ None,
