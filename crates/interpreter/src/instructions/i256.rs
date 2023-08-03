@@ -1,28 +1,24 @@
-use crate::primitives::U256;
+use super::prelude::*;
 use core::cmp::Ordering;
 
-#[cfg(test)]
-use proptest_derive::Arbitrary as PropTestArbitrary;
-
-#[cfg(any(test, feature = "arbitrary"))]
-use arbitrary::Arbitrary;
-
-#[cfg_attr(test, derive(PropTestArbitrary))]
-#[cfg_attr(any(test, feature = "arbitrary"), derive(Arbitrary))]
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub enum Sign {
+#[cfg_attr(
+    any(test, feature = "arbitrary"),
+    derive(arbitrary::Arbitrary, proptest_derive::Arbitrary)
+)]
+pub(super) enum Sign {
     Plus,
     Minus,
     Zero,
 }
 
-pub const _SIGN_BIT_MASK: U256 = U256::from_limbs([
+pub(super) const _SIGN_BIT_MASK: U256 = U256::from_limbs([
     0xFFFFFFFFFFFFFFFF,
     0xFFFFFFFFFFFFFFFF,
     0xFFFFFFFFFFFFFFFF,
     0x7FFFFFFFFFFFFFFF,
 ]);
-pub const MIN_NEGATIVE_VALUE: U256 = U256::from_limbs([
+pub(super) const MIN_NEGATIVE_VALUE: U256 = U256::from_limbs([
     0x0000000000000000,
     0x0000000000000000,
     0x0000000000000000,
@@ -31,13 +27,15 @@ pub const MIN_NEGATIVE_VALUE: U256 = U256::from_limbs([
 
 const FLIPH_BITMASK_U64: u64 = 0x7FFFFFFFFFFFFFFF;
 
-#[cfg_attr(test, derive(PropTestArbitrary))]
-#[cfg_attr(any(test, feature = "arbitrary"), derive(Arbitrary))]
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub struct I256(pub Sign, pub U256);
+#[cfg_attr(
+    any(test, feature = "arbitrary"),
+    derive(arbitrary::Arbitrary, proptest_derive::Arbitrary)
+)]
+pub(super) struct I256(pub(super) Sign, pub(super) U256);
 
 #[inline(always)]
-pub fn i256_sign<const DO_TWO_COMPL: bool>(val: &mut U256) -> Sign {
+pub(super) fn i256_sign<const DO_TWO_COMPL: bool>(val: &mut U256) -> Sign {
     if !val.bit(U256::BITS - 1) {
         if *val == U256::ZERO {
             Sign::Zero
@@ -60,16 +58,16 @@ fn u256_remove_sign(val: &mut U256) {
 }
 
 #[inline(always)]
-pub fn two_compl_mut(op: &mut U256) {
+pub(super) fn two_compl_mut(op: &mut U256) {
     *op = two_compl(*op);
 }
 
-pub fn two_compl(op: U256) -> U256 {
+pub(super) fn two_compl(op: U256) -> U256 {
     op.wrapping_neg()
 }
 
 #[inline(always)]
-pub fn i256_cmp(mut first: U256, mut second: U256) -> Ordering {
+pub(super) fn i256_cmp(mut first: U256, mut second: U256) -> Ordering {
     let first_sign = i256_sign::<false>(&mut first);
     let second_sign = i256_sign::<false>(&mut second);
     match (first_sign, second_sign) {
@@ -86,7 +84,7 @@ pub fn i256_cmp(mut first: U256, mut second: U256) -> Ordering {
 }
 
 #[inline(always)]
-pub fn i256_div(mut first: U256, mut second: U256) -> U256 {
+pub(super) fn i256_div(mut first: U256, mut second: U256) -> U256 {
     let second_sign = i256_sign::<true>(&mut second);
     if second_sign == Sign::Zero {
         return U256::ZERO;
@@ -120,7 +118,7 @@ pub fn i256_div(mut first: U256, mut second: U256) -> U256 {
 }
 
 #[inline(always)]
-pub fn i256_mod(mut first: U256, mut second: U256) -> U256 {
+pub(super) fn i256_mod(mut first: U256, mut second: U256) -> U256 {
     let first_sign = i256_sign::<true>(&mut first);
     if first_sign == Sign::Zero {
         return U256::ZERO;
