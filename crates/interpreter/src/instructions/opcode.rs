@@ -48,6 +48,10 @@ pub const JUMPI: u8 = 0x57;
 pub const PC: u8 = 0x58;
 pub const MSIZE: u8 = 0x59;
 pub const JUMPDEST: u8 = 0x5b;
+
+pub const TLOAD: u8 = 0x5c;
+pub const TSTORE: u8 = 0x5d;
+
 pub const MCOPY: u8 = 0x5e;
 pub const PUSH0: u8 = 0x5f;
 pub const PUSH1: u8 = 0x60;
@@ -139,11 +143,13 @@ pub const SELFBALANCE: u8 = 0x47;
 pub const SLOAD: u8 = 0x54;
 pub const SSTORE: u8 = 0x55;
 pub const GAS: u8 = 0x5a;
+
 pub const LOG0: u8 = 0xa0;
 pub const LOG1: u8 = 0xa1;
 pub const LOG2: u8 = 0xa2;
 pub const LOG3: u8 = 0xa3;
 pub const LOG4: u8 = 0xa4;
+
 pub const CREATE: u8 = 0xf0;
 pub const CREATE2: u8 = 0xf5;
 pub const CALL: u8 = 0xf1;
@@ -275,8 +281,8 @@ pub const OPCODE_JUMPMAP: [Option<&'static str>; 256] = [
     /* 0x59 */ Some("MSIZE"),
     /* 0x5a */ Some("GAS"),
     /* 0x5b */ Some("JUMPDEST"),
-    /* 0x5c */ None,
-    /* 0x5d */ None,
+    /* 0x5c */ Some("TLOAD"),
+    /* 0x5d */ Some("TSTORE"),
     /* 0x5e */ Some("MCOPY"),
     /* 0x5f */ Some("PUSH0"),
     /* 0x60 */ Some("PUSH1"),
@@ -657,9 +663,19 @@ macro_rules! gas_opcodee {
             /* 0x5b  JUMPDEST */
             // gas::JUMPDEST gas is calculated in function call,
             OpInfo::jumpdest(),
-            /* 0x5c */ OpInfo::none(),
-            /* 0x5d */ OpInfo::none(),
-            /* 0x5e  MCOPY */ OpInfo::dynamic_gas(),
+            /* 0x5c TLOAD */
+            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::CANCUN) {
+                gas::WARM_STORAGE_READ_COST
+            } else {
+                0
+            }),
+            /* 0x5d TSTORE */
+            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::CANCUN) {
+                gas::WARM_STORAGE_READ_COST
+            } else {
+                0
+            }),
+            /* 0x5e MCOPY */ OpInfo::dynamic_gas(),
             /* 0x5f PUSH0 */
             OpInfo::gas(if SpecId::enabled($spec_id, SpecId::SHANGHAI) {
                 gas::BASE
