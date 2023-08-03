@@ -533,26 +533,23 @@ impl JournaledState {
         slots: &[U256],
         db: &mut DB,
     ) -> Result<&mut Account, DB::Error> {
-        match self.state.entry(address) {
-            Entry::Occupied(entry) => {
-                let account = entry.into_mut();
-
-                Ok(account)
-            }
-            Entry::Vacant(vac) => {
-                let mut account = db
-                    .basic(address)?
+        // load or get account.
+        let account = match self.state.entry(address) {
+            Entry::Occupied(entry) => entry.into_mut(),
+            Entry::Vacant(vac) => vac.insert(
+                db.basic(address)?
                     .map(|i| i.into())
-                    .unwrap_or(Account::new_not_existing());
-
-                for slot in slots {
-                    let storage = db.storage(address, *slot)?;
-                    account.storage.insert(*slot, StorageSlot::new(storage));
-                }
-
-                Ok(vac.insert(account))
+                    .unwrap_or(Account::new_not_existing()),
+            ),
+        };
+        // preload storages.
+        for slot in slots {
+            if let Entry::Vacant(entry) = account.storage.entry(*slot) {
+                let storage = db.storage(address, *slot)?;
+                entry.insert(StorageSlot::new(storage));
             }
         }
+        Ok(account)
     }
 
     /// load account into memory. return if it is cold or hot accessed
