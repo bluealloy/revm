@@ -118,7 +118,7 @@ pub fn execute_test_suit(
     let json_reader = std::fs::read(path).unwrap();
     let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
 
-    let map_caller_keys: HashMap<_, _> = vec![
+    let map_caller_keys: HashMap<_, _> = [
         (
             B256(hex!(
                 "45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
@@ -156,8 +156,7 @@ pub fn execute_test_suit(
             B160(hex!("dcc5ba93a1ed7e045690d722f2bf460a51c61415")),
         ),
     ]
-    .into_iter()
-    .collect();
+    .into();
 
     for (name, unit) in suit.0.into_iter() {
         // Create database and insert cache

@@ -1,5 +1,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[macro_use]
+extern crate alloc;
+
 pub mod db;
 mod evm;
 mod evm_impl;
@@ -19,8 +22,6 @@ pub use db::{Database, DatabaseCommit, InMemoryDB, State};
 pub use evm::{evm_inner, new, EVM};
 pub use evm_impl::EVMData;
 pub use journaled_state::{JournalEntry, JournaledState};
-
-extern crate alloc;
 
 // reexport `revm_precompiles`
 #[doc(inline)]
