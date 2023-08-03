@@ -48,9 +48,10 @@ macro_rules! opcodes {
 }
 
 // When adding new opcodes:
-// 1. add the opcode to the list below. Make sure it's sorted by opcode value
+// 1. add the opcode to the list below; make sure it's sorted by opcode value
 // 2. add its gas info in the `opcode_gas_info` function below
-// 3. implement the opcode in the corresponding module
+// 3. implement the opcode in the corresponding module;
+//    the function signature must be the exact same as the others
 opcodes! {
     0x00 => STOP => control::stop,
 
@@ -123,6 +124,8 @@ opcodes! {
     0x59 => MSIZE    => memory::msize,
     0x5A => GAS      => system::gas,
     0x5B => JUMPDEST => control::jumpdest,
+    0x5C => TSTORE   => host::tstore::<SPEC>,
+    0x5D => TLOAD    => host::tload::<SPEC>,
     0x5E => MCOPY    => memory::mcopy::<SPEC>,
 
     0x5F => PUSH0  => stack::push0::<SPEC>,
@@ -475,6 +478,16 @@ const fn opcode_gas_info(opcode: u8, spec: SpecId) -> OpInfo {
         GAS => OpInfo::gas_block_end(gas::BASE),
         // gas::JUMPDEST gas is calculated in function call
         JUMPDEST => OpInfo::jumpdest(),
+        TLOAD => OpInfo::gas(if SpecId::enabled(spec, SpecId::CANCUN) {
+            gas::WARM_STORAGE_READ_COST
+        } else {
+            0
+        }),
+        TSTORE => OpInfo::gas(if SpecId::enabled(spec, SpecId::CANCUN) {
+            gas::WARM_STORAGE_READ_COST
+        } else {
+            0
+        }),
         MCOPY => OpInfo::dynamic_gas(),
 
         PUSH0 => OpInfo::gas(if SpecId::enabled(spec, SpecId::SHANGHAI) {

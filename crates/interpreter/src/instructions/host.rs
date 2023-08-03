@@ -164,6 +164,29 @@ pub(super) fn sstore<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn H
     refund!(interpreter, gas::sstore_refund::<SPEC>(original, old, new));
 }
 
+// EIP-1153: Transient storage opcodes
+/// Store value to transient storage
+pub(super) fn tstore<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+    check!(interpreter, CANCUN);
+    check_staticcall!(interpreter);
+    gas!(interpreter, gas::WARM_STORAGE_READ_COST);
+
+    pop!(interpreter, index, value);
+
+    host.tstore(interpreter.contract.address, index, value);
+}
+
+// EIP-1153: Transient storage opcodes
+/// Load value from transient storage
+pub(super) fn tload<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+    check!(interpreter, CANCUN);
+    gas!(interpreter, gas::WARM_STORAGE_READ_COST);
+
+    pop_top!(interpreter, index);
+
+    *index = host.tload(interpreter.contract.address, *index);
+}
+
 pub(super) fn log<const N: usize>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     check_staticcall!(interpreter);
 

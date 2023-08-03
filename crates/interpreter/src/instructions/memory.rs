@@ -1,4 +1,5 @@
 use super::prelude::*;
+use core::cmp::max;
 
 pub(super) fn mload(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::VERYLOW);
@@ -47,8 +48,9 @@ pub(super) fn mcopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn H
 
     let dst = as_usize_or_fail!(interpreter, dst);
     let src = as_usize_or_fail!(interpreter, src);
-    // resize memory
-    memory_resize!(interpreter, src, dst.max(len).saturating_add(len));
+    // memory resize
+    let resize = max(dst, src).saturating_add(len);
+    memory_resize!(interpreter, src, resize);
     // copy memory in place
-    interpreter.memory.copy(src, dst, len);
+    interpreter.memory.copy(dst, src, len);
 }

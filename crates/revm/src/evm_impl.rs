@@ -786,6 +786,14 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .ok()
     }
 
+    fn tload(&mut self, address: B160, index: U256) -> U256 {
+        self.data.journaled_state.tload(address, index)
+    }
+
+    fn tstore(&mut self, address: B160, index: U256, value: U256) {
+        self.data.journaled_state.tstore(address, index, value)
+    }
+
     fn log(&mut self, address: B160, topics: Vec<B256>, data: Bytes) {
         if INSPECT {
             self.inspector.log(&mut self.data, &address, &topics, &data);
