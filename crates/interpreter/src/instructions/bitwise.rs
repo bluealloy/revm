@@ -1,5 +1,10 @@
 use super::i256::{i256_cmp, i256_sign, two_compl, Sign};
-use super::prelude::*;
+use crate::{
+    gas,
+    primitives::{Spec, U256},
+    Host, InstructionResult, Interpreter,
+};
+use core::cmp::Ordering;
 
 pub(super) fn lt(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::VERYLOW);

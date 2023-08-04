@@ -1,4 +1,8 @@
-use super::prelude::*;
+use crate::{
+    gas,
+    primitives::{Spec, SpecId::*},
+    Host, InstructionResult, Interpreter,
+};
 
 // EIP-1344: ChainID opcode
 pub(super) fn chainid<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {

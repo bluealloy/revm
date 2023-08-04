@@ -1,4 +1,4 @@
-use super::prelude::*;
+use crate::primitives::U256;
 use core::cmp::Ordering;
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]

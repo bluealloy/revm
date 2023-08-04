@@ -115,7 +115,7 @@ impl BytecodeLocked {
         if self.is_empty() {
             KECCAK_EMPTY
         } else {
-            keccak256(&self.original_bytecode_slice())
+            keccak256(self.original_bytecode_slice())
         }
     }
 

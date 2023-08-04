@@ -1,4 +1,8 @@
-use super::prelude::*;
+use crate::{
+    gas,
+    primitives::{Spec, U256},
+    Host, InstructionResult, Interpreter,
+};
 use core::cmp::max;
 
 pub(super) fn mload(interpreter: &mut Interpreter, _host: &mut dyn Host) {

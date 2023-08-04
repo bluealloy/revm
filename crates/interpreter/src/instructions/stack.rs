@@ -1,4 +1,8 @@
-use super::prelude::*;
+use crate::{
+    gas,
+    primitives::{Spec, U256},
+    Host, InstructionResult, Interpreter,
+};
 
 pub(super) fn pop(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::BASE);

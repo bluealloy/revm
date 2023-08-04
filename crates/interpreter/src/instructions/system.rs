@@ -1,4 +1,8 @@
-use super::prelude::*;
+use crate::{
+    gas,
+    primitives::{Spec, B256, KECCAK_EMPTY, U256},
+    Host, InstructionResult, Interpreter,
+};
 
 pub(super) fn keccak256(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     pop!(interpreter, from, len);

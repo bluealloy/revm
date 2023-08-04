@@ -1,6 +1,11 @@
 //! EVM opcode definitions and utilities.
 
-use super::{prelude::*, *};
+use super::*;
+use crate::{
+    gas,
+    primitives::{Spec, SpecId},
+    Host, Interpreter,
+};
 use core::fmt;
 
 macro_rules! opcodes {
