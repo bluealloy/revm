@@ -25,10 +25,12 @@ macro_rules! opcodes {
             map
         };
 
-        // Requires `inline_const` and `const_mut_refs` unstable features
+        type Instruction = fn(&mut Interpreter, &mut dyn Host);
+
+        // Requires `inline_const` and `const_mut_refs` unstable features,
+        // but provides ~+2% extra performance.
         // See: https://github.com/bluealloy/revm/issues/310#issuecomment-1664381513
         /*
-        type Instruction = fn(&mut Interpreter, &mut dyn Host);
         type InstructionTable = [Instruction; 256];
 
         const fn make_instruction_table<SPEC: Spec>() -> InstructionTable {
@@ -51,10 +53,13 @@ macro_rules! opcodes {
         /// Evaluates the opcode in the given context.
         #[inline(always)]
         pub(crate) fn eval<SPEC: Spec>(opcode: u8, interpreter: &mut Interpreter, host: &mut dyn Host) {
-            match opcode {
-                $($name => $f(interpreter, host),)*
-                _ => control::not_found(interpreter, host),
-            }
+            // See https://github.com/bluealloy/revm/issues/310#issuecomment-1664381513
+            // for previous efforts on optimizing this function.
+            let f: Instruction = match opcode {
+                $($name => $f as Instruction,)*
+                _ => control::not_found as Instruction,
+            };
+            f(interpreter, host);
         }
     };
 }
