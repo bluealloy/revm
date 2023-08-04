@@ -78,12 +78,12 @@ impl BundleState {
         // Create state from iterator.
         let state = state
             .into_iter()
-            .map(|(address, old_account, new_account, storage)| {
+            .map(|(address, original, present, storage)| {
                 (
                     address,
                     BundleAccount::new(
-                        old_account,
-                        new_account,
+                        original,
+                        present,
                         storage
                             .into_iter()
                             .map(|(k, (o_val, p_val))| (k, StorageSlot::new_changed(o_val, p_val)))
