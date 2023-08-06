@@ -720,7 +720,7 @@ impl JournaledState {
             // check if previous value is same
             if previous_value != new {
                 // if it is different, insert previous values inside journal.
-                Some(new)
+                Some(previous_value)
             } else {
                 None
             }
