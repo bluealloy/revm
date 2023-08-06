@@ -1,10 +1,7 @@
 
 [workspace]
 resolver = "2"
-members = [
-    "bins/*",
-    "crates/*",
-]
+members = ["bins/*", "crates/*"]
 default-members = ["crates/revm"]
 
 [profile.release]
