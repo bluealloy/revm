@@ -191,7 +191,7 @@ impl BundleAccount {
                 Some(AccountRevert {
                     account: info_revert,
                     storage: previous_storage,
-                    previous_status: previous_status,
+                    previous_status,
                     wipe_storage: false,
                 })
             }

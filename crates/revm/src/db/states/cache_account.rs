@@ -263,7 +263,7 @@ impl CacheAccount {
             info: Some(new_info.clone()),
             status: self.status,
             previous_status,
-            previous_info: previous_info,
+            previous_info,
             storage: new_storage,
             storage_was_destroyed: false,
         };
