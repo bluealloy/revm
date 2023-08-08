@@ -367,9 +367,9 @@ pub fn run(
         let mut thread = std::thread::Builder::new();
 
         // Allow bigger stack in debug mode to prevent stack overflow errors
-        if cfg!(debug_assertions) {
+        //if cfg!(debug_assertions) {
             thread = thread.stack_size(4 * 1024 * 1024);
-        }
+        //}
 
         joins.push(
             thread
