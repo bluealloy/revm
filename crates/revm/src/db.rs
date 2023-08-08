@@ -6,8 +6,10 @@ pub mod ethersdb;
 #[cfg(feature = "ethersdb")]
 pub use ethersdb::EthersDB;
 
+#[cfg(feature = "std")]
 pub mod states;
 
+#[cfg(feature = "std")]
 pub use states::{
     AccountRevert, AccountStatus, BundleAccount, BundleState, CacheState, PlainAccount,
     RevertToSlot, State, StateBuilder, StorageWithOriginalValues, TransitionAccount,

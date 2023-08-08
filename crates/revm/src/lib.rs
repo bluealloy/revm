@@ -12,10 +12,10 @@ compile_error!("`with-serde` feature has been renamed to `serde`.");
 pub(crate) const USE_GAS: bool = !cfg!(feature = "no_gas_measuring");
 pub type DummyStateDB = InMemoryDB;
 
-pub use db::{
-    CacheState, Database, DatabaseCommit, InMemoryDB, State, StateBuilder, TransitionAccount,
-    TransitionState,
-};
+#[cfg(feature = "std")]
+pub use db::{CacheState, StateBuilder, TransitionAccount, TransitionState};
+
+pub use db::{Database, DatabaseCommit, InMemoryDB, State};
 pub use evm::{evm_inner, new, EVM};
 pub use evm_impl::EVMData;
 pub use journaled_state::{JournalEntry, JournaledState};
