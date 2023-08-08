@@ -290,8 +290,15 @@ impl Env {
         }
 
         // EIP-3860: Limit and meter initcode
-        if SPEC::enabled(SpecId::SHANGHAI) && is_create && self.tx.data.len() > MAX_INITCODE_SIZE {
-            return Err(InvalidTransaction::CreateInitcodeSizeLimit);
+        if SPEC::enabled(SpecId::SHANGHAI) && is_create {
+            let max_initcode_size = self
+                .cfg
+                .limit_contract_code_size
+                .map(|limit| limit.saturating_mul(2))
+                .unwrap_or(MAX_INITCODE_SIZE);
+            if self.tx.data.len() > max_initcode_size {
+                return Err(InvalidTransaction::CreateInitcodeSizeLimit);
+            }
         }
 
         // Check if the transaction's chain id is correct
