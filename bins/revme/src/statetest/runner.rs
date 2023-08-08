@@ -115,11 +115,6 @@ pub fn execute_test_suit(
         return Ok(());
     }
 
-    // TODO temporary skip for tests that are failing
-    if path.to_str().unwrap().contains("stTimeConsuming") {
-        return Ok(());
-    }
-
     let json_reader = std::fs::read(path).unwrap();
     let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
 

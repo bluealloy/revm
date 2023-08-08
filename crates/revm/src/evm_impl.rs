@@ -218,7 +218,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                 panic!("Internal return flags should remain internal {exit_reason:?}")
             }
         };
-        //times.finish += time.elapsed();
 
         Ok(ResultAndState { result, state })
     }
