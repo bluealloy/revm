@@ -256,6 +256,7 @@ pub fn selfdestruct<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Ho
 pub fn prepare_create_inputs<const IS_CREATE2: bool, SPEC: Spec>(
     interpreter: &mut Interpreter,
     create_inputs: &mut Option<Box<CreateInputs>>,
+    host: &mut dyn Host,
 ) {
     check_staticcall!(interpreter);
     if IS_CREATE2 {
@@ -278,7 +279,14 @@ pub fn prepare_create_inputs<const IS_CREATE2: bool, SPEC: Spec>(
         );
         // EIP-3860: Limit and meter initcode
         if SPEC::enabled(SHANGHAI) {
-            if len > MAX_INITCODE_SIZE {
+            // Limit is set as double of max contract bytecode size
+            let max_initcode_size = host
+                .env()
+                .cfg
+                .limit_contract_code_size
+                .map(|limit| limit.saturating_mul(2))
+                .unwrap_or(MAX_INITCODE_SIZE);
+            if len > max_initcode_size {
                 interpreter.instruction_result = InstructionResult::CreateInitcodeSizeLimit;
                 return;
             }
@@ -320,7 +328,7 @@ pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
     host: &mut dyn Host,
 ) {
     let mut create_input: Option<Box<CreateInputs>> = None;
-    prepare_create_inputs::<IS_CREATE2, SPEC>(interpreter, &mut create_input);
+    prepare_create_inputs::<IS_CREATE2, SPEC>(interpreter, &mut create_input, host);
 
     let Some(mut create_input) = create_input else {
         return;
