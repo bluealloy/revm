@@ -161,6 +161,8 @@ pub fn eval<H: Host, S: Spec>(opcode: u8, interp: &mut Interpreter, host: &mut H
         opcode::GASLIMIT => host_env::gaslimit(interp, host),
         opcode::SLOAD => host::sload::<S>(interp, host),
         opcode::SSTORE => host::sstore::<S>(interp, host),
+        opcode::TSTORE => host::tstore::<H, S>(interp, host),
+        opcode::TLOAD => host::tload::<H, S>(interp, host),
         opcode::GAS => system::gas(interp, host),
         opcode::LOG0 => host::log::<0>(interp, host),
         opcode::LOG1 => host::log::<1>(interp, host),

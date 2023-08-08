@@ -98,6 +98,6 @@ spec!(LONDON, LondonSpec);
 // ARROW_GLACIER no EVM spec change
 // GRAY_GLACIER no EVM spec change
 spec!(MERGE, MergeSpec);
-// MERGE_EOF is pending EVM change
 spec!(SHANGHAI, ShanghaiSpec);
+spec!(CANCUN, CancunSpec);
 spec!(LATEST, LatestSpec);
