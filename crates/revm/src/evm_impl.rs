@@ -24,11 +24,11 @@ pub struct EVMData<'a, DB: Database> {
     pub journaled_state: JournaledState,
     pub db: &'a mut DB,
     pub error: Option<DB::Error>,
+    pub precompiles: Precompiles,
 }
 
 pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
     data: EVMData<'a, DB>,
-    precompiles: Precompiles,
     inspector: &'a mut dyn Inspector<DB>,
     _phantomdata: PhantomData<GSPEC>,
 }
@@ -241,8 +241,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 journaled_state,
                 db,
                 error: None,
+                precompiles,
             },
-            precompiles,
             inspector,
             _phantomdata: PhantomData {},
         }
@@ -553,6 +553,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let contract = inputs.contract;
 
         let precompile = self
+            .data
             .precompiles
             .get(&contract)
             .expect("Check for precompile should be already done");
@@ -657,7 +658,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             Err(e) => return e,
         };
 
-        let ret = if is_precompile(inputs.contract, self.precompiles.len()) {
+        let ret = if is_precompile(inputs.contract, self.data.precompiles.len()) {
             self.call_precompile(inputs, prepared_call.gas)
         } else if !prepared_call.contract.bytecode.is_empty() {
             // Create interpreter and execute subcall
