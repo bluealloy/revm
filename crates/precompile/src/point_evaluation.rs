@@ -39,8 +39,6 @@ pub fn point_evaluation_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     // Verify KZG proof with z and y in big endian format
     assert!(c_kzg::KzgProof::verify_kzg_proof(commitment, z, y, proof, &kzg_settings).unwrap());
 
-    // Return FIELD_ELEMENTS_PER_BLOB and BLS_MODULUS as padded 32 byte big endian values
-
     // Convert FIELD_ELEMENTS_PER_BLOB to big-endian bytes and pad to 32 bytes
     let mut field_elements_bytes = [0u8; 32];
     let field_elements_bytes_small = c_kzg::FIELD_ELEMENTS_PER_BLOB.to_be_bytes();
@@ -52,5 +50,6 @@ pub fn point_evaluation_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     result[0..32].copy_from_slice(&field_elements_bytes);
     result[32..64].copy_from_slice(&BLS_MODULUS);
 
+    // Return FIELD_ELEMENTS_PER_BLOB and BLS_MODULUS as padded 32 byte big endian values
     Ok((gas_limit, result.to_vec()))
 }
