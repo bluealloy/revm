@@ -16,7 +16,7 @@ use alloc::boxed::Box;
 use alloc::vec::Vec;
 use core::{cmp::min, marker::PhantomData};
 use revm_interpreter::gas::initial_tx_gas;
-use revm_interpreter::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
+use revm_interpreter::MAX_CODE_SIZE;
 use revm_precompile::{Precompile, Precompiles};
 
 pub struct EVMData<'a, DB: Database> {
