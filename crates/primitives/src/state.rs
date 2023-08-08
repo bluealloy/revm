@@ -83,6 +83,11 @@ impl Account {
         self.status |= AccountStatus::Created;
     }
 
+    /// Unmark created flag.
+    pub fn unmark_created(&mut self) {
+        self.status -= AccountStatus::Created;
+    }
+
     /// Is account loaded as not existing from database
     /// This is needed for pre spurious dragon hardforks where
     /// existing and empty were two separate states.
@@ -91,7 +96,7 @@ impl Account {
     }
 
     /// Is account newly created in this transaction.
-    pub fn is_newly_created(&self) -> bool {
+    pub fn is_created(&self) -> bool {
         self.status.contains(AccountStatus::Created)
     }
 
@@ -133,6 +138,13 @@ impl StorageSlot {
         Self {
             original_value: original,
             present_value: original,
+        }
+    }
+
+    pub fn new_changed(original_value: U256, present_value: U256) -> Self {
+        Self {
+            original_value,
+            present_value,
         }
     }
 
@@ -185,8 +197,7 @@ impl PartialEq for AccountInfo {
 }
 
 impl AccountInfo {
-    pub fn new(balance: U256, nonce: u64, code: Bytecode) -> Self {
-        let code_hash = code.hash();
+    pub fn new(balance: U256, nonce: u64, code_hash: B256, code: Bytecode) -> Self {
         Self {
             balance,
             nonce,
@@ -202,6 +213,17 @@ impl AccountInfo {
 
     pub fn exists(&self) -> bool {
         !self.is_empty()
+    }
+
+    /// Return bytecode hash associated with this account.
+    /// If account does not have code, it return's `KECCAK_EMPTY` hash.
+    pub fn code_hash(&self) -> B256 {
+        self.code_hash
+    }
+
+    /// Take bytecode from account. Code will be set to None.
+    pub fn take_bytecode(&mut self) -> Option<Bytecode> {
+        self.code.take()
     }
 
     pub fn from_balance(balance: U256) -> Self {

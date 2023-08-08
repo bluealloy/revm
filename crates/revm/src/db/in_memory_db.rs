@@ -1,7 +1,6 @@
-use super::{DatabaseCommit, DatabaseRef};
+use super::{DatabaseCommit, DatabaseRef, EmptyDB};
 use crate::primitives::{
-    hash_map::Entry, keccak256, Account, AccountInfo, Bytecode, HashMap, Log, B160, B256,
-    KECCAK_EMPTY, U256,
+    hash_map::Entry, Account, AccountInfo, Bytecode, HashMap, Log, B160, B256, KECCAK_EMPTY, U256,
 };
 use crate::Database;
 use alloc::vec::Vec;
@@ -11,7 +10,10 @@ pub type InMemoryDB = CacheDB<EmptyDB>;
 
 impl Default for InMemoryDB {
     fn default() -> Self {
-        CacheDB::new(EmptyDB {})
+        CacheDB::new(EmptyDB {
+            keccak_block_hash: true,
+            _phantom: core::marker::PhantomData,
+        })
     }
 }
 
@@ -61,7 +63,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     pub fn insert_contract(&mut self, account: &mut AccountInfo) {
         if let Some(code) = &account.code {
             if !code.is_empty() {
-                account.code_hash = code.hash();
+                account.code_hash = code.hash_slow();
                 self.contracts
                     .entry(account.code_hash)
                     .or_insert_with(|| code.clone());
@@ -134,7 +136,7 @@ impl<ExtDB: DatabaseRef> DatabaseCommit for CacheDB<ExtDB> {
                 db_account.info = AccountInfo::default();
                 continue;
             }
-            let is_newly_created = account.is_newly_created();
+            let is_newly_created = account.is_created();
             self.insert_contract(&mut account.info);
 
             let db_account = self.accounts.entry(address).or_default();
@@ -355,31 +357,6 @@ impl AccountState {
     }
 }
 
-/// An empty database that always returns default values when queried.
-#[derive(Debug, Default, Clone)]
-pub struct EmptyDB();
-
-impl DatabaseRef for EmptyDB {
-    type Error = Infallible;
-    /// Get basic account information.
-    fn basic(&self, _address: B160) -> Result<Option<AccountInfo>, Self::Error> {
-        Ok(None)
-    }
-    /// Get account code by its hash
-    fn code_by_hash(&self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
-        Ok(Bytecode::new())
-    }
-    /// Get storage value of address at index.
-    fn storage(&self, _address: B160, _index: U256) -> Result<U256, Self::Error> {
-        Ok(U256::default())
-    }
-
-    // History related
-    fn block_hash(&self, number: U256) -> Result<B256, Self::Error> {
-        Ok(keccak256(&number.to_be_bytes::<{ U256::BYTES }>()))
-    }
-}
-
 /// Custom benchmarking DB that only has account info for the zero address.
 ///
 /// Any other address will return an empty account.
@@ -388,7 +365,7 @@ pub struct BenchmarkDB(pub Bytecode, B256);
 
 impl BenchmarkDB {
     pub fn new_bytecode(bytecode: Bytecode) -> Self {
-        let hash = bytecode.hash();
+        let hash = bytecode.hash_slow();
         Self(bytecode, hash)
     }
 }

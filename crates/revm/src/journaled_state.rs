@@ -5,8 +5,8 @@ use crate::primitives::{
 };
 use alloc::{vec, vec::Vec};
 use core::mem::{self};
-use revm_interpreter::primitives::Spec;
 use revm_interpreter::primitives::SpecId::SPURIOUS_DRAGON;
+use revm_interpreter::primitives::{Spec, PRECOMPILE3};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -61,6 +61,10 @@ pub enum JournalEntry {
     NonceChange {
         address: B160, //geth has nonce value,
     },
+    /// Create account:
+    /// Actions: Mark account as created
+    /// Revert: Unmart account as created and reset nonce to zero.
+    AccountCreated { address: B160 },
     /// It is used to track both storage change and hot load of storage slot. For hot load in regard
     /// to EIP-2929 AccessList had_value will be None
     /// Action: Storage change or hot load
@@ -81,7 +85,7 @@ pub enum JournalEntry {
     /// Code changed
     /// Action: Account code changed
     /// Revert: Revert to previous bytecode.
-    CodeChange { address: B160, had_code: Bytecode },
+    CodeChange { address: B160 },
 }
 
 /// SubRoutine checkpoint that will help us to go back from this
@@ -168,12 +172,9 @@ impl JournaledState {
         self.journal
             .last_mut()
             .unwrap()
-            .push(JournalEntry::CodeChange {
-                address,
-                had_code: code.clone(),
-            });
+            .push(JournalEntry::CodeChange { address });
 
-        account.info.code_hash = code.hash();
+        account.info.code_hash = code.hash_slow();
         account.info.code = Some(code);
     }
 
@@ -271,6 +272,9 @@ impl JournaledState {
 
         // set account status to created.
         account.mark_created();
+
+        // this entry will revert set nonce.
+        last_journal.push(JournalEntry::AccountCreated { address });
         account.info.code = None;
 
         // Set all storages to default value. They need to be present to act as accessed slots in access list.
@@ -295,8 +299,8 @@ impl JournaledState {
 
         // EIP-161: State trie clearing (invariant-preserving alternative)
         if SPEC::enabled(SPURIOUS_DRAGON) {
+            // nonce is going to be reset to zero in AccountCreated journal entry.
             account.info.nonce = 1;
-            last_journal.push(JournalEntry::NonceChange { address });
         }
 
         // Sub balance from caller
@@ -343,14 +347,9 @@ impl JournaledState {
         journal_entries: Vec<JournalEntry>,
         is_spurious_dragon_enabled: bool,
     ) {
-        const PRECOMPILE3: B160 =
-            B160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]);
         for entry in journal_entries.into_iter().rev() {
             match entry {
                 JournalEntry::AccountLoaded { address } => {
-                    if is_spurious_dragon_enabled && address == PRECOMPILE3 {
-                        continue;
-                    }
                     state.remove(&address);
                 }
                 JournalEntry::AccountTouched { address } => {
@@ -393,6 +392,11 @@ impl JournaledState {
                 JournalEntry::NonceChange { address } => {
                     state.get_mut(&address).unwrap().info.nonce -= 1;
                 }
+                JournalEntry::AccountCreated { address } => {
+                    let account = &mut state.get_mut(&address).unwrap();
+                    account.unmark_created();
+                    account.info.nonce = 0;
+                }
                 JournalEntry::StorageChange {
                     address,
                     key,
@@ -419,10 +423,10 @@ impl JournaledState {
                         transient_storage.insert(tkey, had_value);
                     }
                 }
-                JournalEntry::CodeChange { address, had_code } => {
+                JournalEntry::CodeChange { address } => {
                     let acc = state.get_mut(&address).unwrap();
-                    acc.info.code_hash = had_code.hash();
-                    acc.info.code = Some(had_code);
+                    acc.info.code_hash = KECCAK_EMPTY;
+                    acc.info.code = None;
                 }
             }
         }
@@ -626,7 +630,8 @@ impl JournaledState {
         db: &mut DB,
     ) -> Result<(U256, bool), DB::Error> {
         let account = self.state.get_mut(&address).unwrap(); // asume acc is hot
-        let is_newly_created = account.is_newly_created();
+                                                             // only if account is created in this tx we can assume that storage is empty.
+        let is_newly_created = account.is_created();
         let load = match account.storage.entry(key) {
             Entry::Occupied(occ) => (occ.get().present_value, false),
             Entry::Vacant(vac) => {

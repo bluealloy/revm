@@ -3,7 +3,7 @@ use hash_db::Hasher;
 use plain_hasher::PlainHasher;
 use primitive_types::{H160, H256};
 use revm::{
-    db::DbAccount,
+    db::PlainAccount,
     primitives::{keccak256, Log, B160, B256, U256},
 };
 use rlp::RlpStream;
@@ -30,10 +30,13 @@ pub fn log_rlp_hash(logs: Vec<Log>) -> B256 {
     keccak256(&out)
 }
 
-pub fn state_merkle_trie_root(accounts: impl Iterator<Item = (B160, DbAccount)>) -> B256 {
+pub fn state_merkle_trie_root<'a>(
+    accounts: impl IntoIterator<Item = (B160, &'a PlainAccount)>,
+) -> B256 {
     let vec = accounts
+        .into_iter()
         .map(|(address, info)| {
-            let acc_root = trie_account_rlp(&info);
+            let acc_root = trie_account_rlp(info);
             (H160::from(address.0), acc_root)
         })
         .collect();
@@ -42,7 +45,7 @@ pub fn state_merkle_trie_root(accounts: impl Iterator<Item = (B160, DbAccount)>)
 }
 
 /// Returns the RLP for this account.
-pub fn trie_account_rlp(acc: &DbAccount) -> Bytes {
+pub fn trie_account_rlp(acc: &PlainAccount) -> Bytes {
     let mut stream = RlpStream::new_list(4);
     stream.append(&acc.info.nonce);
     stream.append(&acc.info.balance);

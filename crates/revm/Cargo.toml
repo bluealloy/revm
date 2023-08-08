@@ -13,17 +13,25 @@ readme = "../../README.md"
 revm-precompile = { path = "../precompile", version = "2.0.2", default-features = false }
 revm-interpreter = { path = "../interpreter", version = "1.1.2", default-features = false }
 
+#misc
 auto_impl = { version = "1.1", default-features = false }
+once_cell = { version = "1.17", default-features = false }
 
 # Optional
 serde = { version = "1.0", features = ["derive", "rc"], optional = true }
 serde_json = { version = "1.0", features = ["preserve_order"], optional = true }
 
 # ethersdb
-tokio = { version = "1.28", features = ["rt-multi-thread", "macros"], optional = true }
+tokio = { version = "1.28", features = [
+    "rt-multi-thread",
+    "macros",
+], optional = true }
 ethers-providers = { version = "2.0", optional = true }
 ethers-core = { version = "2.0", optional = true }
 futures = { version = "0.3.27", optional = true }
+
+# parallel execution inside state.
+rayon = { version = "1.7", optional = true }
 
 [dev-dependencies]
 hex-literal = "0.4"
@@ -51,7 +59,7 @@ optional_block_gas_limit = ["revm-interpreter/optional_block_gas_limit"]
 optional_eip3607 = ["revm-interpreter/optional_eip3607"]
 optional_gas_refund = ["revm-interpreter/optional_gas_refund"]
 optional_no_base_fee = ["revm-interpreter/optional_no_base_fee"]
-std = ["revm-interpreter/std"]
+std = ["revm-interpreter/std", "once_cell/std", "rayon"]
 ethersdb = ["std", "tokio", "futures", "ethers-providers", "ethers-core"]
 serde = ["dep:serde", "dep:serde_json", "revm-interpreter/serde"]
 arbitrary = ["revm-interpreter/arbitrary"]

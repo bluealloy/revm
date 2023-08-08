@@ -757,7 +757,6 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .load_code(address, db)
             .map_err(|e| *error = Some(e))
             .ok()?;
-
         if acc.is_empty() {
             return Some((B256::zero(), is_cold));
         }

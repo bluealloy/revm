@@ -3,11 +3,21 @@ use alloc::{sync::Arc, vec, vec::Vec};
 use bitvec::prelude::{bitvec, Lsb0};
 use bitvec::vec::BitVec;
 use bytes::Bytes;
+use core::fmt::Debug;
+use to_binary::BinaryString;
 
 /// A map of valid `jump` destinations.
-#[derive(Clone, Debug, Eq, PartialEq, Default)]
+#[derive(Clone, Eq, PartialEq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JumpMap(pub Arc<BitVec<u8>>);
+
+impl Debug for JumpMap {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("JumpMap")
+            .field("map", &BinaryString::from(self.0.as_raw_slice()))
+            .finish()
+    }
+}
 
 impl JumpMap {
     /// Get the raw bytes of the jump map
@@ -34,13 +44,21 @@ pub enum BytecodeState {
     Analysed { len: usize, jump_map: JumpMap },
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Bytecode {
     #[cfg_attr(feature = "serde", serde(with = "crate::utilities::serde_hex_bytes"))]
     pub bytecode: Bytes,
-    pub hash: B256,
     pub state: BytecodeState,
+}
+
+impl Debug for Bytecode {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        f.debug_struct("Bytecode")
+            .field("bytecode", &hex::encode(&self.bytecode[..]))
+            .field("state", &self.state)
+            .finish()
+    }
 }
 
 impl Default for Bytecode {
@@ -54,7 +72,6 @@ impl Bytecode {
     pub fn new() -> Self {
         Bytecode {
             bytecode: vec![0].into(),
-            hash: KECCAK_EMPTY,
             state: BytecodeState::Analysed {
                 len: 0,
                 jump_map: JumpMap(Arc::new(bitvec![u8, Lsb0; 0])),
@@ -62,15 +79,18 @@ impl Bytecode {
         }
     }
 
-    pub fn new_raw(bytecode: Bytes) -> Self {
-        let hash = if bytecode.is_empty() {
+    /// Calculate hash of the bytecode.
+    pub fn hash_slow(&self) -> B256 {
+        if self.is_empty() {
             KECCAK_EMPTY
         } else {
-            keccak256(&bytecode)
-        };
+            keccak256(&self.original_bytes())
+        }
+    }
+
+    pub fn new_raw(bytecode: Bytes) -> Self {
         Self {
             bytecode,
-            hash,
             state: BytecodeState::Raw,
         }
     }
@@ -79,10 +99,9 @@ impl Bytecode {
     ///
     /// # Safety
     /// Hash need to be appropriate keccak256 over bytecode.
-    pub unsafe fn new_raw_with_hash(bytecode: Bytes, hash: B256) -> Self {
+    pub unsafe fn new_raw_with_hash(bytecode: Bytes) -> Self {
         Self {
             bytecode,
-            hash,
             state: BytecodeState::Raw,
         }
     }
@@ -92,15 +111,9 @@ impl Bytecode {
     /// # Safety
     /// Bytecode need to end with STOP (0x00) opcode as checked bytecode assumes
     /// that it is safe to iterate over bytecode without checking lengths
-    pub unsafe fn new_checked(bytecode: Bytes, len: usize, hash: Option<B256>) -> Self {
-        let hash = match hash {
-            None if len == 0 => KECCAK_EMPTY,
-            None => keccak256(&bytecode),
-            Some(hash) => hash,
-        };
+    pub unsafe fn new_checked(bytecode: Bytes, len: usize) -> Self {
         Self {
             bytecode,
-            hash,
             state: BytecodeState::Checked { len },
         }
     }
@@ -116,10 +129,6 @@ impl Bytecode {
                 self.bytecode.slice(0..len)
             }
         }
-    }
-
-    pub fn hash(&self) -> B256 {
-        self.hash
     }
 
     pub fn state(&self) -> &BytecodeState {
@@ -150,7 +159,6 @@ impl Bytecode {
                 bytecode.resize(len + 33, 0);
                 Self {
                     bytecode: bytecode.into(),
-                    hash: self.hash,
                     state: BytecodeState::Checked { len },
                 }
             }

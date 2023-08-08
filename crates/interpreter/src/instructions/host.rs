@@ -255,8 +255,8 @@ pub fn selfdestruct<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Ho
 
 pub fn prepare_create_inputs<const IS_CREATE2: bool, SPEC: Spec>(
     interpreter: &mut Interpreter,
-    create_inputs: &mut Option<Box<CreateInputs>>,
     host: &mut dyn Host,
+    create_inputs: &mut Option<Box<CreateInputs>>,
 ) {
     check_staticcall!(interpreter);
     if IS_CREATE2 {
@@ -328,7 +328,7 @@ pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
     host: &mut dyn Host,
 ) {
     let mut create_input: Option<Box<CreateInputs>> = None;
-    prepare_create_inputs::<IS_CREATE2, SPEC>(interpreter, &mut create_input, host);
+    prepare_create_inputs::<IS_CREATE2, SPEC>(interpreter, host, &mut create_input);
 
     let Some(mut create_input) = create_input else {
         return;

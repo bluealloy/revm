@@ -308,7 +308,7 @@ impl Env {
             }
         }
 
-        // Check if the transaction's chain id is correct
+        // Check if access list is empty for transactions before BERLIN
         if !SPEC::enabled(SpecId::BERLIN) && !self.tx.access_list.is_empty() {
             return Err(InvalidTransaction::AccessListNotSupported);
         }

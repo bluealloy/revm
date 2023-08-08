@@ -69,6 +69,11 @@ where
         };
         let (nonce, balance, code) = self.block_on(f);
         // panic on not getting data?
+        let bytecode = Bytecode::new_raw(
+            code.unwrap_or_else(|e| panic!("ethers get code error: {e:?}"))
+                .0,
+        );
+        let code_hash = bytecode.hash_slow();
         Ok(Some(AccountInfo::new(
             U256::from_limbs(
                 balance
@@ -78,10 +83,8 @@ where
             nonce
                 .unwrap_or_else(|e| panic!("ethers get nonce error: {e:?}"))
                 .as_u64(),
-            Bytecode::new_raw(
-                code.unwrap_or_else(|e| panic!("ethers get code error: {e:?}"))
-                    .0,
-            ),
+            code_hash,
+            bytecode,
         )))
     }
 
