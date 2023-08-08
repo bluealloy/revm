@@ -318,25 +318,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             });
         }
 
-        // Check initcode size limit on Shanghai spec.
-        if GSPEC::enabled(SHANGHAI) {
-            let max_initcode_size = self
-                .data
-                .env
-                .cfg
-                .limit_contract_code_size
-                .map(|limit| limit.saturating_mul(2))
-                .unwrap_or(MAX_INITCODE_SIZE);
-            if inputs.init_code.len() > max_initcode_size {
-                return Err(CreateResult {
-                    result: InstructionResult::CreateInitcodeSizeLimit,
-                    created_address: None,
-                    gas,
-                    return_value: Bytes::new(),
-                });
-            }
-        }
-
         // Fetch balance of caller.
         let Some((caller_balance, _)) = self.balance(inputs.caller) else {
             return Err(CreateResult {
