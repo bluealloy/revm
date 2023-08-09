@@ -17,7 +17,9 @@ const BLS_MODULUS: [u8; 32] = [
 /// See: https://eips.ethereum.org/EIPS/eip-4844
 pub fn point_evaluation_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     // The data is encoded as follows: versioned_hash | z | y | commitment | proof | with z and y being padded 32 byte big endian values
-    assert!(input.len() == 192);
+    if input.len() != 192 {
+        return Err(Error::InvalidInputLength);
+    }
     let cost = 5000;
     if cost > gas_limit {
         return Err(Error::OutOfGas);

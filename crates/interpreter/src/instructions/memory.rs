@@ -72,8 +72,8 @@ pub fn blob_hash<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host)
     // and replaces it on the stack with tx.blob_versioned_hashes[index] if index < len(tx.blob_versioned_hashes),
     // and otherwise with a zeroed bytes32 value. The opcode has a gas cost of HASH_OPCODE_GAS.
     gas!(interpreter, gas::HASH_OPCODE_GAS);
-    pop!(interpreter, index);
-    let index = as_usize_or_fail!(interpreter, index, InstructionResult::InvalidOperandOOG);
+    pop_top!(interpreter, index);
+    let index = as_usize_saturated!(index);
     if index < host.env().tx.blob_versioned_hashes.len() {
         // Replace the top of the stack with the versioned hash here
         push!(
@@ -82,7 +82,6 @@ pub fn blob_hash<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host)
         );
     } else {
         // else write out a zerod out 32 bytes
-        let bytes: [u8; 32] = [0; 32];
-        push!(interpreter, U256::from_be_bytes(bytes));
+        push!(interpreter, U256::ZERO);
     }
 }
