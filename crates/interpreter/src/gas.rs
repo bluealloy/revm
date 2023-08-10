@@ -60,8 +60,8 @@ impl Gas {
     /// Record an explicit cost.
     #[inline(always)]
     pub fn record_cost(&mut self, cost: u64) -> bool {
-        let (all_used_gas, overflow) = self.all_used_gas.overflowing_add(cost);
-        if overflow || self.limit < all_used_gas {
+        let all_used_gas = self.all_used_gas.saturating_add(cost);
+        if self.limit < all_used_gas {
             return false;
         }
 
@@ -73,8 +73,8 @@ impl Gas {
     /// used in memory_resize! macro to record gas used for memory expansion.
     pub fn record_memory(&mut self, gas_memory: u64) -> bool {
         if gas_memory > self.memory {
-            let (all_used_gas, overflow) = self.used.overflowing_add(gas_memory);
-            if overflow || self.limit < all_used_gas {
+            let all_used_gas = self.used.saturating_add(gas_memory);
+            if self.limit < all_used_gas {
                 return false;
             }
             self.memory = gas_memory;
