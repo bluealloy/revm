@@ -89,16 +89,15 @@ async fn main() -> Result<()> {
 
     // unpack output call enum into raw bytes
     let value = match result {
-        ExecutionResult::Success { output, .. } => match output {
-            Output::Call(value) => Some(value),
-            _ => None,
-        },
-        _ => None,
+        ExecutionResult::Success {
+            output: Output::Call(value),
+            ..
+        } => value,
+        result => panic!("Execution failed: {result:?}"),
     };
 
     // decode bytes to reserves + ts via ethers-rs's abi decode
-    let (reserve0, reserve1, ts): (u128, u128, u32) =
-        abi.decode_output("getReserves", value.unwrap())?;
+    let (reserve0, reserve1, ts): (u128, u128, u32) = abi.decode_output("getReserves", value)?;
 
     // Print emulated getReserves() call output
     println!("Reserve0: {:#?}", reserve0);

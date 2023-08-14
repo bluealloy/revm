@@ -143,7 +143,7 @@ impl<DB> EVM<DB> {
 }
 
 macro_rules! create_evm {
-    ($spec:ident, $db:ident,$env:ident,$inspector:ident) => {
+    ($spec:ident, $db:ident, $env:ident, $inspector:ident) => {
         Box::new(EVMImpl::<'a, $spec, DB, INSPECT>::new(
             $db,
             $env,

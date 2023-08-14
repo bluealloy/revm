@@ -1,12 +1,10 @@
 use crate::interpreter::{inner_models::SelfDestructResult, InstructionResult};
 use crate::primitives::{
-    db::Database, hash_map::Entry, Account, Bytecode, HashMap, Log, State, StorageSlot,
-    TransientStorage, B160, KECCAK_EMPTY, U256,
+    db::Database, hash_map::Entry, Account, Bytecode, HashMap, Log, Spec, SpecId::*, State,
+    StorageSlot, TransientStorage, B160, KECCAK_EMPTY, PRECOMPILE3, U256,
 };
-use alloc::{vec, vec::Vec};
-use core::mem::{self};
-use revm_interpreter::primitives::SpecId::SPURIOUS_DRAGON;
-use revm_interpreter::primitives::{Spec, PRECOMPILE3};
+use alloc::vec::Vec;
+use core::mem;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
