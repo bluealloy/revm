@@ -148,8 +148,6 @@ impl BundleAccount {
             |this_storage: &mut StorageWithOriginalValues,
              storage_update: StorageWithOriginalValues| {
                 for (key, value) in storage_update {
-                    // TODO small optimization but if present and original values are same we can
-                    // remove this entry from this storage.
                     this_storage.entry(key).or_insert(value).present_value = value.present_value;
                 }
             };
@@ -158,8 +156,10 @@ impl BundleAccount {
             |updated_storage: &StorageWithOriginalValues| -> HashMap<U256, RevertToSlot> {
                 updated_storage
                     .iter()
-                    .filter(|s| s.1.original_value != s.1.present_value)
-                    .map(|(key, value)| (*key, RevertToSlot::Some(value.original_value)))
+                    .filter(|s| s.1.previous_or_original_value != s.1.present_value)
+                    .map(|(key, value)| {
+                        (*key, RevertToSlot::Some(value.previous_or_original_value))
+                    })
                     .collect()
             };
 
