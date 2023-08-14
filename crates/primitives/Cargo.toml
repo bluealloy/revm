@@ -18,7 +18,7 @@ ruint = { version = "1.8.0", features = ["primitive-types", "rlp"] }
 auto_impl = "1.1"
 bitvec = { version = "1", default-features = false, features = ["alloc"] }
 
-bitflags = { version = "2.2.1", default-features = false}
+bitflags = { version = "2.4.0", default-features = false}
 
 # bits B256 B160 crate
 fixed-hash = { version = "0.8", default-features = false, features = [
