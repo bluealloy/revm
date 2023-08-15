@@ -5,19 +5,23 @@ use crate::primitives::{db::Database, Address, Bytes, B256};
 use auto_impl::auto_impl;
 
 #[cfg(feature = "std")]
-pub mod customprinter;
-pub mod gas;
-pub mod noop;
+mod customprinter;
+mod gas;
+mod noop;
 #[cfg(all(feature = "std", feature = "serde"))]
-pub mod tracer_eip3155;
+mod tracer_eip3155;
 
 /// All Inspectors implementations that revm has.
 pub mod inspectors {
     #[cfg(feature = "std")]
+    #[doc(inline)]
     pub use super::customprinter::CustomPrintTracer;
+    #[doc(inline)]
     pub use super::gas::GasInspector;
+    #[doc(inline)]
     pub use super::noop::NoOpInspector;
     #[cfg(all(feature = "std", feature = "serde"))]
+    #[doc(inline)]
     pub use super::tracer_eip3155::TracerEip3155;
 }
 

@@ -416,7 +416,7 @@ mod tests {
     use crate::primitives::{db::Database, AccountInfo, Address, U256};
 
     #[test]
-    pub fn test_insert_account_storage() {
+    fn test_insert_account_storage() {
         let account = Address::with_last_byte(42);
         let nonce = 42;
         let mut init_state = CacheDB::new(EmptyDB::default());
@@ -437,7 +437,7 @@ mod tests {
     }
 
     #[test]
-    pub fn test_replace_account_storage() {
+    fn test_replace_account_storage() {
         let account = Address::with_last_byte(42);
         let nonce = 42;
         let mut init_state = CacheDB::new(EmptyDB::default());

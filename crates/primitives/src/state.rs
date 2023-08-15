@@ -240,7 +240,7 @@ mod tests {
     use crate::Account;
 
     #[test]
-    pub fn account_state() {
+    fn account_state() {
         let mut account = Account::default();
 
         assert!(!account.is_touched());
