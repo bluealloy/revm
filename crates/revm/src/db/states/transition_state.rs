@@ -23,6 +23,7 @@ impl TransitionState {
         transitions.insert(address, transition);
         TransitionState { transitions }
     }
+
     /// Return transition id and all account transitions. Leave empty transition map.
     pub fn take(&mut self) -> TransitionState {
         core::mem::take(self)

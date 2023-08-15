@@ -28,5 +28,15 @@ pub struct StateReverts {
     pub storage: StorageRevert,
 }
 
+impl StateReverts {
+    /// Constructs new [StateReverts] with pre-allocated capacity.
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self {
+            accounts: Vec::with_capacity(capacity),
+            storage: Vec::with_capacity(capacity),
+        }
+    }
+}
+
 /// Storage reverts
 pub type StorageRevert = Vec<Vec<(B160, bool, Vec<(U256, U256)>)>>;

@@ -145,9 +145,10 @@ impl BundleState {
     }
 
     /// Consume `TransitionState` by applying the changes and creating the reverts
-    pub fn apply_block_substate_and_create_reverts(&mut self, mut transitions: TransitionState) {
-        let mut reverts = Vec::new();
-        for (address, transition) in transitions.take().transitions.into_iter() {
+    pub fn apply_block_substate_and_create_reverts(&mut self, transitions: TransitionState) {
+        // pessimistically pre-allocate assuming _all_ accounts changed.
+        let mut reverts = Vec::with_capacity(transitions.transitions.len());
+        for (address, transition) in transitions.transitions.into_iter() {
             // add new contract if it was created/changed.
             if let Some((hash, new_bytecode)) = transition.has_new_contract() {
                 self.contracts.insert(hash, new_bytecode.clone());
@@ -183,8 +184,10 @@ impl BundleState {
     /// original state, this assumption can't be made in cases when
     /// we split the bundle state and commit part of it.
     pub fn take_sorted_plain_change_inner(&mut self, omit_changed_check: bool) -> StateChangeset {
-        let mut accounts = Vec::new();
-        let mut storage = Vec::new();
+        // pessimistically pre-allocate assuming _all_ accounts changed.
+        let state_len = self.state.len();
+        let mut accounts = Vec::with_capacity(state_len);
+        let mut storage = Vec::with_capacity(state_len);
 
         for (address, account) in self.state.drain() {
             // append account info if it is changed.
@@ -243,10 +246,11 @@ impl BundleState {
 
     /// Return and clear all reverts from BundleState, sort them before returning.
     pub fn take_reverts(&mut self) -> StateReverts {
-        let mut state_reverts = StateReverts::default();
+        let mut state_reverts = StateReverts::with_capacity(self.reverts.len());
         for reverts in self.reverts.drain(..) {
-            let mut accounts = Vec::new();
-            let mut storage = Vec::new();
+            // pessimistically pre-allocate assuming _all_ accounts changed.
+            let mut accounts = Vec::with_capacity(reverts.len());
+            let mut storage = Vec::with_capacity(reverts.len());
             for (address, revert_account) in reverts.into_iter() {
                 match revert_account.account {
                     AccountInfoRevert::RevertTo(acc) => accounts.push((address, Some(acc))),
@@ -254,7 +258,7 @@ impl BundleState {
                     AccountInfoRevert::DoNothing => (),
                 }
                 if revert_account.wipe_storage || !revert_account.storage.is_empty() {
-                    let mut account_storage = Vec::new();
+                    let mut account_storage = Vec::with_capacity(revert_account.storage.len());
                     for (key, revert_slot) in revert_account.storage {
                         account_storage.push((key, revert_slot.to_previous_value()));
                     }
