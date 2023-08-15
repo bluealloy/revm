@@ -378,7 +378,7 @@ mod tests {
         };
 
         // apply first transition
-        bundle_state.apply_block_substate_and_create_reverts(TransitionState::with_capacity(
+        bundle_state.apply_block_substate_and_create_reverts(TransitionState::single(
             address,
             transition.clone(),
         ));
