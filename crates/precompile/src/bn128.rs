@@ -1,9 +1,9 @@
-use crate::{primitives::U256, Error, Precompile, PrecompileAddress, PrecompileResult, B160};
+use crate::{primitives::U256, Address, Error, Precompile, PrecompileAddress, PrecompileResult};
 use alloc::vec::Vec;
 
 pub mod add {
     use super::*;
-    const ADDRESS: B160 = crate::u64_to_b160(6);
+    const ADDRESS: Address = crate::u64_to_address(6);
 
     pub const ISTANBUL: PrecompileAddress = PrecompileAddress(
         ADDRESS,
@@ -28,7 +28,7 @@ pub mod add {
 
 pub mod mul {
     use super::*;
-    const ADDRESS: B160 = crate::u64_to_b160(7);
+    const ADDRESS: Address = crate::u64_to_address(7);
     pub const ISTANBUL: PrecompileAddress = PrecompileAddress(
         ADDRESS,
         Precompile::Standard(|input: &[u8], gas_limit: u64| -> PrecompileResult {
@@ -52,7 +52,7 @@ pub mod mul {
 
 pub mod pair {
     use super::*;
-    const ADDRESS: B160 = crate::u64_to_b160(8);
+    const ADDRESS: Address = crate::u64_to_address(8);
 
     const ISTANBUL_PAIR_PER_POINT: u64 = 34_000;
     const ISTANBUL_PAIR_BASE: u64 = 45_000;

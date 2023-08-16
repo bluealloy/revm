@@ -28,7 +28,7 @@ This creates a contract with a specific bytecode and a gas price, then runs the 
 This function handles the execution of precompiled contracts. These are a special set of contracts that are part of the Ethereum protocol and implemented in native code for efficiency.
 
 - `gas`: A `Gas` instance representing the amount of gas available for execution.
-- `contract`: The address of the precompiled contract in the form of a `B160` instance.
+- `contract`: The address of the precompiled contract in the form of a `Address` instance.
 - `input_data`: The input data for the contract as a `Bytes` instance.
 
 The function returns a tuple containing the result of the contract execution, the remaining gas, and any output data as a `Bytes` instance.
@@ -37,7 +37,7 @@ For example
 
 ```rust
 let gas = Gas::new(1000000);
-let contract = B160::zero();
+let contract = Address::ZERO;
 let input_data = Bytes::from("input data");
 let (exit_reason, gas, output) = evm.call_precompile(gas, contract, input_data);
 ```

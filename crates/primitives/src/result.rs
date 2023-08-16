@@ -1,8 +1,6 @@
-use crate::{Log, State, B160};
+use crate::{Address, Bytes, Log, State, U256};
 use alloc::vec::Vec;
-use bytes::Bytes;
 use core::fmt;
-use ruint::aliases::U256;
 
 pub type EVMResult<DBError> = core::result::Result<ResultAndState, EVMError<DBError>>;
 
@@ -94,12 +92,8 @@ impl ExecutionResult {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Output {
-    #[cfg_attr(feature = "serde", serde(with = "crate::utilities::serde_hex_bytes"))]
     Call(Bytes),
-    Create(
-        #[cfg_attr(feature = "serde", serde(with = "crate::utilities::serde_hex_bytes"))] Bytes,
-        Option<B160>,
-    ),
+    Create(Bytes, Option<Address>),
 }
 
 impl Output {
