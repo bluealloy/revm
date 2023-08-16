@@ -679,7 +679,7 @@ impl JournaledState {
 
         // new value is same as present, we dont need to do anything
         if present == new {
-            return Ok((slot.original_value, present, new, is_cold));
+            return Ok((slot.previous_or_original_value, present, new, is_cold));
         }
 
         self.journal
@@ -692,7 +692,7 @@ impl JournaledState {
             });
         // insert value into present state.
         slot.present_value = new;
-        Ok((slot.original_value, present, new, is_cold))
+        Ok((slot.previous_or_original_value, present, new, is_cold))
     }
 
     /// Read transient storage tied to the account.

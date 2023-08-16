@@ -347,14 +347,12 @@ impl BundleState {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use crate::{db::StorageWithOriginalValues, TransitionAccount};
     use revm_interpreter::primitives::KECCAK_EMPTY;
 
-    use crate::{db::StorageWithOriginalValues, TransitionAccount};
-
-    use super::*;
-
     #[test]
-    fn transition_all_states() {
+    fn transition_states() {
         // dummy data
         let address = Address::new([0x01; 20]);
         let acc1 = AccountInfo {
@@ -382,5 +380,115 @@ mod tests {
             address,
             transition.clone(),
         ));
+    }
+
+    fn account1() -> B160 {
+        [0x60; 20].into()
+    }
+
+    fn account2() -> B160 {
+        [0x61; 20].into()
+    }
+
+    fn slot() -> U256 {
+        U256::from(5)
+    }
+
+    /// Test bundle one
+    fn test_bundle1() -> BundleState {
+        // block changes
+
+        let bundle = BundleState::new(
+            vec![
+                (
+                    account1(),
+                    None,
+                    Some(AccountInfo {
+                        nonce: 1,
+                        balance: U256::from(10),
+                        code_hash: KECCAK_EMPTY,
+                        code: None,
+                    }),
+                    HashMap::from([(slot(), (U256::from(0), U256::from(10)))]),
+                ),
+                (
+                    account2(),
+                    None,
+                    Some(AccountInfo {
+                        nonce: 1,
+                        balance: U256::from(10),
+                        code_hash: KECCAK_EMPTY,
+                        code: None,
+                    }),
+                    HashMap::from([]),
+                ),
+            ],
+            vec![vec![
+                (account1(), Some(None), vec![(slot(), U256::from(0))]),
+                (account2(), Some(None), vec![]),
+            ]],
+            vec![],
+        );
+        bundle
+    }
+
+    /// Test bundle two
+    fn test_bundle2() -> BundleState {
+        // block changes
+        let bundle = BundleState::new(
+            vec![
+                ((
+                    account1(),
+                    None,
+                    Some(AccountInfo {
+                        nonce: 3,
+                        balance: U256::from(20),
+                        code_hash: KECCAK_EMPTY,
+                        code: None,
+                    }),
+                    HashMap::from([(slot(), (U256::from(0), U256::from(15)))]),
+                )),
+            ],
+            vec![vec![(
+                account1(),
+                Some(Some(AccountInfo {
+                    nonce: 1,
+                    balance: U256::from(10),
+                    code_hash: KECCAK_EMPTY,
+                    code: None,
+                })),
+                vec![(slot(), U256::from(10))],
+            )]],
+            vec![],
+        );
+        bundle
+    }
+
+    #[test]
+    fn sanity_path() {
+        let bundle1 = test_bundle1();
+        let bundle2 = test_bundle2();
+
+        let mut extended = bundle1.clone();
+        extended.extend(bundle2.clone());
+
+        let mut reverted = extended.clone();
+        // revert zero does nothing.
+        reverted.revert(0);
+        assert_eq!(reverted, extended);
+
+        // revert by one gives us bundle one.
+        reverted.revert(1);
+        assert_eq!(reverted, bundle1);
+
+        // reverted by additional one gives us empty bundle.
+        reverted.revert(1);
+        assert_eq!(reverted, BundleState::default());
+
+        let mut reverted = extended.clone();
+
+        // reverted by bigger number gives us empty bundle
+        reverted.revert(10);
+        assert_eq!(reverted, BundleState::default());
     }
 }

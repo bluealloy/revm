@@ -11,7 +11,7 @@ pub use components::{
     BlockHash, BlockHashRef, DatabaseComponentError, DatabaseComponents, State, StateRef,
 };
 
-#[auto_impl(& mut, Box)]
+#[auto_impl(&mut, Box)]
 pub trait Database {
     type Error;
     /// Get basic account information.

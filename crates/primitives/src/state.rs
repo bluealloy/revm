@@ -129,7 +129,7 @@ impl From<AccountInfo> for Account {
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct StorageSlot {
-    pub original_value: U256,
+    pub previous_or_original_value: U256,
     /// When loaded with sload present value is set to original value
     pub present_value: U256,
 }
@@ -137,25 +137,25 @@ pub struct StorageSlot {
 impl StorageSlot {
     pub fn new(original: U256) -> Self {
         Self {
-            original_value: original,
+            previous_or_original_value: original,
             present_value: original,
         }
     }
 
-    pub fn new_changed(original_value: U256, present_value: U256) -> Self {
+    pub fn new_changed(previous_or_original_value: U256, present_value: U256) -> Self {
         Self {
-            original_value,
+            previous_or_original_value,
             present_value,
         }
     }
 
     /// Returns true if the present value differs from the original value
     pub fn is_changed(&self) -> bool {
-        self.original_value != self.present_value
+        self.previous_or_original_value != self.present_value
     }
 
     pub fn original_value(&self) -> U256 {
-        self.original_value
+        self.previous_or_original_value
     }
 
     pub fn present_value(&self) -> U256 {
