@@ -382,11 +382,11 @@ mod tests {
         ));
     }
 
-    fn account1() -> B160 {
+    fn account1() -> Address {
         [0x60; 20].into()
     }
 
-    fn account2() -> B160 {
+    fn account2() -> Address {
         [0x61; 20].into()
     }
 
