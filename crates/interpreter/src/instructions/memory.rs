@@ -12,7 +12,7 @@ pub(super) fn mload(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     memory_resize!(interpreter, index, 32);
     push!(
         interpreter,
-        U256::from_be_bytes::<32>(interpreter.memory.get_slice(index, 32).try_into().unwrap())
+        U256::from_be_bytes::<32>(interpreter.memory.slice(index, 32).try_into().unwrap())
     );
 }
 

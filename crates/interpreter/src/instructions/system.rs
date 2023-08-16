@@ -13,7 +13,7 @@ pub(super) fn keccak256(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     } else {
         let from = as_usize_or_fail!(interpreter, from);
         memory_resize!(interpreter, from, len);
-        crate::primitives::keccak256(interpreter.memory.get_slice(from, len))
+        crate::primitives::keccak256(interpreter.memory.slice(from, len))
     };
 
     push_b256!(interpreter, hash);
@@ -62,7 +62,9 @@ pub(super) fn calldataload(interpreter: &mut Interpreter, _host: &mut dyn Host) 
     let load = if index < interpreter.contract.input.len() {
         let n = 32.min(interpreter.contract.input.len() - index);
         let mut bytes = [0u8; 32];
-        bytes[..n].copy_from_slice(&interpreter.contract.input[index..index + n]);
+        // SAFETY: n <= len - index -> index + n <= len
+        let src = unsafe { interpreter.contract.input.get_unchecked(index..index + n) };
+        bytes[..n].copy_from_slice(src);
         U256::from_be_bytes(bytes)
     } else {
         U256::ZERO

@@ -197,7 +197,7 @@ pub(super) fn log<const N: usize>(interpreter: &mut Interpreter, host: &mut dyn 
     } else {
         let offset = as_usize_or_fail!(interpreter, offset);
         memory_resize!(interpreter, offset, len);
-        Bytes::copy_from_slice(interpreter.memory.get_slice(offset, len))
+        Bytes::copy_from_slice(interpreter.memory.slice(offset, len))
     };
 
     if interpreter.stack.len() < N {
@@ -272,7 +272,7 @@ pub(super) fn prepare_create_inputs<SPEC: Spec, const IS_CREATE2: bool>(
 
         let code_offset = as_usize_or_fail!(interpreter, code_offset);
         memory_resize!(interpreter, code_offset, len);
-        Bytes::copy_from_slice(interpreter.memory.get_slice(code_offset, len))
+        Bytes::copy_from_slice(interpreter.memory.slice(code_offset, len))
     };
 
     let scheme = if IS_CREATE2 {
@@ -393,7 +393,7 @@ fn prepare_call_inputs<SPEC: Spec>(
     let input = if in_len != 0 {
         let in_offset = as_usize_or_fail!(interpreter, in_offset);
         memory_resize!(interpreter, in_offset, in_len);
-        Bytes::copy_from_slice(interpreter.memory.get_slice(in_offset, in_len))
+        Bytes::copy_from_slice(interpreter.memory.slice(in_offset, in_len))
     } else {
         Bytes::new()
     };

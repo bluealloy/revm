@@ -4,6 +4,7 @@ use crate::primitives::{
     keccak256, Bytecode, BytecodeState, Bytes, JumpMap, B256, KECCAK_EMPTY,
 };
 use alloc::sync::Arc;
+use core::fmt;
 
 /// Perform bytecode analysis.
 ///
@@ -62,6 +63,19 @@ pub struct BytecodeLocked {
     bytecode: Bytes,
     len: usize,
     jump_map: JumpMap,
+}
+
+impl fmt::Debug for BytecodeLocked {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("BytecodeLocked")
+            .field("bytecode", &self.bytecode)
+            .field("len", &self.len)
+            .field(
+                "jump_map",
+                &crate::primitives::hex::encode(self.jump_map.as_slice()),
+            )
+            .finish()
+    }
 }
 
 impl Default for BytecodeLocked {
@@ -139,7 +153,14 @@ impl BytecodeLocked {
     /// Returns the original bytecode as a byte slice.
     #[inline]
     pub fn original_bytecode_slice(&self) -> &[u8] {
-        &self.bytecode[..self.len]
+        match self.bytecode.get(..self.len) {
+            Some(slice) => slice,
+            None => debug_unreachable!(
+                "original_bytecode_slice OOB: {} > {}",
+                self.len,
+                self.bytecode.len()
+            ),
+        }
     }
 
     /// Returns a reference to the jump map.

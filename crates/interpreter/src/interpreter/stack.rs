@@ -179,22 +179,20 @@ impl Stack {
 
     /// Push a new value into the stack. If it will exceed the stack limit,
     /// returns `StackOverflow` error and leaves the stack unchanged.
-    #[inline]
+    #[inline(always)]
     pub fn push_b256(&mut self, value: B256) -> Result<(), InstructionResult> {
-        if self.data.len() + 1 > STACK_LIMIT {
-            return Err(InstructionResult::StackOverflow);
-        }
-        self.data.push(U256::from_be_bytes(value.0));
-        Ok(())
+        self.push(value.into())
     }
 
     /// Push a new value onto the stack.
     ///
     /// If it will exceed the stack limit, returns `StackOverflow` error and leaves the stack
     /// unchanged.
-    #[inline]
+    #[inline(always)]
     pub fn push(&mut self, value: U256) -> Result<(), InstructionResult> {
-        if self.data.len() + 1 > STACK_LIMIT {
+        // allows the compiler to optimize out the `Vec::push` capacity check
+        assume!(self.data.capacity() == STACK_LIMIT);
+        if self.data.len() == STACK_LIMIT {
             return Err(InstructionResult::StackOverflow);
         }
         self.data.push(value);
@@ -204,7 +202,7 @@ impl Stack {
     /// Peek a value at given index for the stack, where the top of
     /// the stack is at index `0`. If the index is too large,
     /// `StackError::Underflow` is returned.
-    #[inline]
+    #[inline(always)]
     pub fn peek(&self, no_from_top: usize) -> Result<U256, InstructionResult> {
         if self.data.len() > no_from_top {
             Ok(self.data[self.data.len() - no_from_top - 1])

@@ -21,6 +21,7 @@ pub const MAX_CODE_SIZE: usize = 0x6000;
 /// EIP-3860: Limit and meter initcode
 pub const MAX_INITCODE_SIZE: usize = 2 * MAX_CODE_SIZE;
 
+#[derive(Debug)]
 pub struct Interpreter {
     /// Contract information and invoking data.
     pub contract: Box<Contract>,
@@ -182,7 +183,7 @@ impl Interpreter {
         if self.return_len == 0 {
             Bytes::new()
         } else {
-            Bytes::copy_from_slice(self.memory.get_slice(self.return_offset, self.return_len))
+            Bytes::copy_from_slice(self.memory.slice(self.return_offset, self.return_len))
         }
     }
 
@@ -192,7 +193,7 @@ impl Interpreter {
         if self.return_len == 0 {
             &[]
         } else {
-            self.memory.get_slice(self.return_offset, self.return_len)
+            self.memory.slice(self.return_offset, self.return_len)
         }
     }
 }

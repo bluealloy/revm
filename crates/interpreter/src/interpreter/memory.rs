@@ -1,15 +1,24 @@
 use crate::{alloc::vec::Vec, primitives::U256};
 use core::{
     cmp::min,
+    fmt,
     ops::{BitAnd, Not},
 };
 
 /// A sequential memory. It uses Rust's `Vec` for internal
 /// representation.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Memory {
     data: Vec<u8>,
+}
+
+impl fmt::Debug for Memory {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Memory")
+            .field("data", &crate::primitives::hex::encode(&self.data))
+            .finish()
+    }
 }
 
 impl Default for Memory {
@@ -76,55 +85,92 @@ impl Memory {
     }
 
     /// Returns a byte slice of the memory region at the given offset.
-    #[inline]
-    pub fn get_slice(&self, offset: usize, size: usize) -> &[u8] {
-        &self.data[offset..offset + size]
+    ///
+    /// Panics on out of bounds.
+    #[inline(always)]
+    #[cfg_attr(debug_assertions, track_caller)]
+    pub fn slice(&self, offset: usize, size: usize) -> &[u8] {
+        match self.data.get(offset..offset + size) {
+            Some(slice) => slice,
+            None => debug_unreachable!("slice OOB: {offset}..{size}; len: {}", self.len()),
+        }
+    }
+
+    /// Returns a mutable byte slice of the memory region at the given offset.
+    ///
+    /// Panics on out of bounds.
+    #[inline(always)]
+    #[cfg_attr(debug_assertions, track_caller)]
+    pub fn slice_mut(&mut self, offset: usize, size: usize) -> &mut [u8] {
+        let _len = self.len();
+        match self.data.get_mut(offset..offset + size) {
+            Some(slice) => slice,
+            None => debug_unreachable!("slice_mut OOB: {offset}..{size}; len: {_len}"),
+        }
     }
 
     /// Sets the `byte` at the given `index`.
-    #[inline]
+    ///
+    /// Panics when `index` is out of bounds.
+    #[inline(always)]
+    #[cfg_attr(debug_assertions, track_caller)]
     pub fn set_byte(&mut self, index: usize, byte: u8) {
-        self.data[index] = byte;
+        match self.data.get_mut(index) {
+            Some(b) => *b = byte,
+            None => debug_unreachable!("set_byte OOB: {index}; len: {}", self.len()),
+        }
     }
 
     /// Sets the given `value` to the memory region at the given `offset`.
-    #[inline]
-    pub fn set_u256(&mut self, index: usize, value: U256) {
-        self.data[index..index + 32].copy_from_slice(&value.to_be_bytes::<{ U256::BYTES }>());
+    ///
+    /// Panics on out of bounds.
+    #[inline(always)]
+    #[cfg_attr(debug_assertions, track_caller)]
+    pub fn set_u256(&mut self, offset: usize, value: U256) {
+        self.set(offset, &value.to_be_bytes::<32>());
     }
 
     /// Set memory region at given `offset`.
-    #[inline]
+    ///
+    /// Panics on out of bounds.
+    #[inline(always)]
+    #[cfg_attr(debug_assertions, track_caller)]
     pub fn set(&mut self, offset: usize, value: &[u8]) {
         if !value.is_empty() {
-            self.data[offset..(value.len() + offset)].copy_from_slice(value);
+            self.slice_mut(offset, value.len()).copy_from_slice(value);
         }
     }
 
     /// Set memory from data. Our memory offset+len is expected to be correct but we
     /// are doing bound checks on data/data_offeset/len and zeroing parts that is not copied.
-    #[inline]
+    ///
+    /// Panics on out of bounds.
+    #[inline(always)]
+    #[cfg_attr(debug_assertions, track_caller)]
     pub fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]) {
         if data_offset >= data.len() {
             // nullify all memory slots
-            for i in &mut self.data[memory_offset..memory_offset + len] {
-                *i = 0;
-            }
+            self.slice_mut(memory_offset, len).fill(0);
             return;
         }
         let data_end = min(data_offset + len, data.len());
-        let memory_data_end = memory_offset + (data_end - data_offset);
-        self.data[memory_offset..memory_data_end].copy_from_slice(&data[data_offset..data_end]);
+        let data_len = data_end - data_offset;
+        debug_assert!(data_offset < data.len() && data_end <= data.len());
+        let data = unsafe { data.get_unchecked(data_offset..data_end) };
+        self.slice_mut(memory_offset, data_len)
+            .copy_from_slice(data);
 
         // nullify rest of memory slots
         // Safety: Memory is assumed to be valid. And it is commented where that assumption is made
-        for i in &mut self.data[memory_data_end..memory_offset + len] {
-            *i = 0;
-        }
+        self.slice_mut(memory_offset + data_len, len - data_len)
+            .fill(0);
     }
 
-    /// In memory copy given a src, dst, and length
+    /// Copies elements from one part of the memory to another part of itself.
+    ///
+    /// Panics on out of bounds.
     #[inline(always)]
+    #[cfg_attr(debug_assertions, track_caller)]
     pub fn copy(&mut self, dst: usize, src: usize, len: usize) {
         self.data.copy_within(src..src + len, dst);
     }
@@ -156,7 +202,7 @@ mod tests {
         memory.copy(5, 0, 4);
 
         // Verify the copied data
-        let copied_data = memory.get_slice(5, 4);
+        let copied_data = memory.slice(5, 4);
         assert_eq!(copied_data, &[1, 2, 3, 4]);
     }
 
