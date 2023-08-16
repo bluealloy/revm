@@ -267,7 +267,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             };
 
             // return balance of not spend gas.
-            let caller_account = self.data.journaled_state.state().get_mut(&caller).unwrap();
+            let Ok((caller_account, _)) =
+                self.data.journaled_state.load_account(caller, self.data.db)
+            else {
+                panic!("caller account not found");
+            };
+
             caller_account.info.balance = caller_account
                 .info
                 .balance
