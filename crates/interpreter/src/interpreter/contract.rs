@@ -1,5 +1,5 @@
 use super::analysis::{to_analysed, BytecodeLocked};
-use crate::primitives::{Bytecode, Bytes, B160, U256};
+use crate::primitives::{Address, Bytecode, Bytes, U256};
 use crate::CallContext;
 use revm_primitives::{Env, TransactTo};
 
@@ -11,15 +11,21 @@ pub struct Contract {
     /// Note that current code is extended with push padding and STOP at end.
     pub bytecode: BytecodeLocked,
     /// Contract address
-    pub address: B160,
+    pub address: Address,
     /// Caller of the EVM.
-    pub caller: B160,
+    pub caller: Address,
     /// Value send to contract.
     pub value: U256,
 }
 
 impl Contract {
-    pub fn new(input: Bytes, bytecode: Bytecode, address: B160, caller: B160, value: U256) -> Self {
+    pub fn new(
+        input: Bytes,
+        bytecode: Bytecode,
+        address: Address,
+        caller: Address,
+        value: U256,
+    ) -> Self {
         let bytecode = to_analysed(bytecode).try_into().expect("it is analyzed");
 
         Self {
@@ -35,7 +41,7 @@ impl Contract {
     pub fn new_env(env: &Env, bytecode: Bytecode) -> Self {
         let contract_address = match env.tx.transact_to {
             TransactTo::Call(caller) => caller,
-            TransactTo::Create(..) => B160::zero(),
+            TransactTo::Create(..) => Address::ZERO,
         };
         Self::new(
             env.tx.data.clone(),

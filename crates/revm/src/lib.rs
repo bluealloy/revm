@@ -1,4 +1,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+#![warn(unreachable_pub)]
+
+#[macro_use]
+extern crate alloc;
 
 pub mod db;
 mod evm;
@@ -12,12 +16,13 @@ compile_error!("`with-serde` feature has been renamed to `serde`.");
 pub(crate) const USE_GAS: bool = !cfg!(feature = "no_gas_measuring");
 pub type DummyStateDB = InMemoryDB;
 
-pub use db::{Database, DatabaseCommit, InMemoryDB};
-pub use evm::{evm_inner, new, EVM};
-pub use evm_impl::EVMData;
-pub use journaled_state::{JournalEntry, JournaledState};
+#[cfg(feature = "std")]
+pub use db::{CacheState, StateBuilder, TransitionAccount, TransitionState};
 
-extern crate alloc;
+pub use db::{Database, DatabaseCommit, InMemoryDB, State};
+pub use evm::{evm_inner, new, to_precompile_id, EVM};
+pub use evm_impl::{EVMData, EVMImpl, Transact};
+pub use journaled_state::{is_precompile, JournalCheckpoint, JournalEntry, JournaledState};
 
 // reexport `revm_precompiles`
 #[doc(inline)]
@@ -31,6 +36,6 @@ pub use revm_interpreter as interpreter;
 #[doc(inline)]
 pub use revm_interpreter::primitives;
 
-/// Reexport Inspector implementations
+// reexport inspector implementations
 pub use inspector::inspectors;
 pub use inspector::Inspector;

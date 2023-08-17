@@ -1,4 +1,4 @@
-use crate::{Bytecode, B160, B256, KECCAK_EMPTY, U256};
+use crate::{Address, Bytecode, B256, KECCAK_EMPTY, U256};
 use bitflags::bitflags;
 use hashbrown::HashMap;
 
@@ -41,10 +41,11 @@ impl Default for AccountStatus {
     }
 }
 
-pub type State = HashMap<B160, Account>;
+pub type State = HashMap<Address, Account>;
 
 /// Structure used for EIP-1153 transient storage.
-pub type TransientStorage = HashMap<(B160, U256), U256>;
+pub type TransientStorage = HashMap<(Address, U256), U256>;
+
 pub type Storage = HashMap<U256, StorageSlot>;
 
 impl Account {
@@ -83,6 +84,11 @@ impl Account {
         self.status |= AccountStatus::Created;
     }
 
+    /// Unmark created flag.
+    pub fn unmark_created(&mut self) {
+        self.status -= AccountStatus::Created;
+    }
+
     /// Is account loaded as not existing from database
     /// This is needed for pre spurious dragon hardforks where
     /// existing and empty were two separate states.
@@ -91,7 +97,7 @@ impl Account {
     }
 
     /// Is account newly created in this transaction.
-    pub fn is_newly_created(&self) -> bool {
+    pub fn is_created(&self) -> bool {
         self.status.contains(AccountStatus::Created)
     }
 
@@ -123,7 +129,7 @@ impl From<AccountInfo> for Account {
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct StorageSlot {
-    pub original_value: U256,
+    pub previous_or_original_value: U256,
     /// When loaded with sload present value is set to original value
     pub present_value: U256,
 }
@@ -131,18 +137,25 @@ pub struct StorageSlot {
 impl StorageSlot {
     pub fn new(original: U256) -> Self {
         Self {
-            original_value: original,
+            previous_or_original_value: original,
             present_value: original,
+        }
+    }
+
+    pub fn new_changed(previous_or_original_value: U256, present_value: U256) -> Self {
+        Self {
+            previous_or_original_value,
+            present_value,
         }
     }
 
     /// Returns true if the present value differs from the original value
     pub fn is_changed(&self) -> bool {
-        self.original_value != self.present_value
+        self.previous_or_original_value != self.present_value
     }
 
     pub fn original_value(&self) -> U256 {
-        self.original_value
+        self.previous_or_original_value
     }
 
     pub fn present_value(&self) -> U256 {
@@ -185,8 +198,7 @@ impl PartialEq for AccountInfo {
 }
 
 impl AccountInfo {
-    pub fn new(balance: U256, nonce: u64, code: Bytecode) -> Self {
-        let code_hash = code.hash();
+    pub fn new(balance: U256, nonce: u64, code_hash: B256, code: Bytecode) -> Self {
         Self {
             balance,
             nonce,
@@ -196,12 +208,23 @@ impl AccountInfo {
     }
 
     pub fn is_empty(&self) -> bool {
-        let code_empty = self.code_hash == KECCAK_EMPTY || self.code_hash == B256::zero();
+        let code_empty = self.code_hash == KECCAK_EMPTY || self.code_hash == B256::ZERO;
         self.balance == U256::ZERO && self.nonce == 0 && code_empty
     }
 
     pub fn exists(&self) -> bool {
         !self.is_empty()
+    }
+
+    /// Return bytecode hash associated with this account.
+    /// If account does not have code, it return's `KECCAK_EMPTY` hash.
+    pub fn code_hash(&self) -> B256 {
+        self.code_hash
+    }
+
+    /// Take bytecode from account. Code will be set to None.
+    pub fn take_bytecode(&mut self) -> Option<Bytecode> {
+        self.code.take()
     }
 
     pub fn from_balance(balance: U256) -> Self {
@@ -217,7 +240,7 @@ mod tests {
     use crate::Account;
 
     #[test]
-    pub fn account_state() {
+    fn account_state() {
         let mut account = Account::default();
 
         assert!(!account.is_touched());

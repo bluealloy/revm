@@ -1,4 +1,5 @@
-use crate::{alloc::vec::Vec, primitives::U256};
+use crate::primitives::U256;
+use alloc::vec::Vec;
 use core::{
     cmp::min,
     ops::{BitAnd, Not},
@@ -14,7 +15,9 @@ pub struct Memory {
 
 impl Default for Memory {
     fn default() -> Self {
-        Memory::new()
+        Self {
+            data: Vec::with_capacity(4 * 1024), // took it from evmone
+        }
     }
 }
 
