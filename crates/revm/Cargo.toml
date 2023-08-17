@@ -34,7 +34,7 @@ rayon = { version = "1.7", optional = true }
 hex-literal = "0.4"
 ethers-contract = { version = "2.0.3", default-features = false }
 hex = "0.4.3"
-anyhow = "1.0.74"
+anyhow = "1.0.75"
 criterion = "0.5"
 
 [features]
