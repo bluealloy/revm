@@ -1,5 +1,8 @@
-use crate::primitives::{B256, U256};
-use crate::{alloc::vec::Vec, InstructionResult};
+use crate::{
+    primitives::{B256, U256},
+    InstructionResult,
+};
+use alloc::vec::Vec;
 
 pub const STACK_LIMIT: usize = 1024;
 

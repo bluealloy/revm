@@ -1,11 +1,11 @@
-use crate::{bytes::Bytes, B160, B256};
+use crate::{Address, Bytes, B256};
 use alloc::vec::Vec;
+use alloy_rlp::{RlpDecodable, RlpEncodable};
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, RlpDecodable, RlpEncodable)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Log {
-    pub address: B160,
+    pub address: Address,
     pub topics: Vec<B256>,
-    #[cfg_attr(feature = "serde", serde(with = "crate::utilities::serde_hex_bytes"))]
     pub data: Bytes,
 }
