@@ -30,7 +30,7 @@ pub trait Inspector<DB: Database> {
     fn log(
         &mut self,
         _evm_data: &mut EVMData<'_, DB>,
-        _address: &Address,
+        _address: &B160,
         _topics: &[B256],
         _data: &Bytes,
     );
@@ -57,17 +57,17 @@ pub trait Inspector<DB: Database> {
         &mut self,
         _data: &mut EVMData<'_, DB>,
         _inputs: &mut CreateInputs,
-    ) -> (InstructionResult, Option<Address>, Gas, Bytes);
+    ) -> (InstructionResult, Option<B160>, Gas, Bytes);
     fn create_end(
         &mut self,
         _data: &mut EVMData<'_, DB>,
         _inputs: &CreateInputs,
         ret: InstructionResult,
-        address: Option<Address>,
+        address: Option<B160>,
         remaining_gas: Gas,
         out: Bytes,
-    ) -> (InstructionResult, Option<Address>, Gas, Bytes);
-    fn selfdestruct(&mut self, _contract: Address, _target: Address);
+    ) -> (InstructionResult, Option<B160>, Gas, Bytes);
+    fn selfdestruct(&mut self, _contract: B160, _target: B160);
 }
 ```
 
@@ -93,7 +93,7 @@ To use an inspector, you need to implement the `Inspector` trait. For each metho
 For example, if you wanted to log all `SELFDESTRUCT` operations, you could implement the selfdestruct method to write a log entry every time a contract initiates a `selfdestruct` operation.
 
 ```rust
-fn selfdestruct(&mut self, contract: Address, target: Address) {
+fn selfdestruct(&mut self, contract: B160, target: B160) {
     println!("Contract {} self destructed, funds sent to {}", contract, target);
 }
 ```

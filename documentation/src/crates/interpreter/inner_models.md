@@ -8,7 +8,7 @@ The `CallInputs` struct is used to encapsulate the inputs to a smart contract ca
 
 ```rust
 pub struct CallInputs {
-    pub contract: Address,
+    pub contract: B160,
     pub transfer: Transfer,
     pub input: Bytes,
     pub gas_limit: u64,
@@ -25,7 +25,7 @@ The `CreateInputs` struct encapsulates the inputs for creating a new smart contr
 
 ```rust
 pub struct CreateInputs {
-    pub caller: Address,
+    pub caller: B160,
     pub scheme: CreateScheme,
     pub value: U256,
     pub init_code: Bytes,
@@ -56,9 +56,9 @@ The `CallContext` struct encapsulates the context of a smart contract call.
 
 ```rust
 pub struct CallContext {
-    pub address: Address,
-    pub caller: Address,
-    pub code_address: Address,
+    pub address: B160,
+    pub caller: B160,
+    pub code_address: B160,
     pub apparent_value: U256,
     pub scheme: CallScheme,
 }
@@ -72,8 +72,8 @@ The `Transfer` struct represents a value transfer between two accounts.
 
 ```rust
 pub struct Transfer {
-    pub source: Address,
-    pub target: Address,
+    pub source: B160,
+    pub target: B160,
     pub value: U256,
 }
 ```

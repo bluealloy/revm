@@ -3,11 +3,11 @@ use crate::{Error, Precompile, PrecompileAddress, PrecompileResult, StandardPrec
 use sha2::*;
 
 pub const SHA256: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_address(2),
+    crate::u64_to_b160(2),
     Precompile::Standard(sha256_run as StandardPrecompileFn),
 );
 pub const RIPEMD160: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_address(3),
+    crate::u64_to_b160(3),
     Precompile::Standard(ripemd160_run as StandardPrecompileFn),
 );
 

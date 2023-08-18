@@ -55,48 +55,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0942ffc6dcaadf03badf6e6a2d0228460359d5e34b57ccdc720b7382dfbd5ec5"
 
 [[package]]
-name = "alloy-primitives"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "66f73f11dcfbf8bb763d88fb1d082fe7cca0a00d3227d9921bdbd52ce5e013e2"
-dependencies = [
- "alloy-rlp",
- "arbitrary",
- "bytes",
- "cfg-if",
- "const-hex",
- "derive_arbitrary",
- "derive_more",
- "hex-literal",
- "itoa",
- "proptest",
- "proptest-derive",
- "ruint",
- "serde",
- "tiny-keccak",
-]
-
-[[package]]
 name = "alloy-rlp"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f938f00332d63a5b0ac687bd6f46d03884638948921d9f8b50c59563d421ae25"
 dependencies = [
- "alloy-rlp-derive",
  "arrayvec",
  "bytes",
  "smol_str",
-]
-
-[[package]]
-name = "alloy-rlp-derive"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9aa5bb468bc7c46e0c5074d418f575262ff79451242e5ac1380121ed4e23c4fd"
-dependencies = [
- "proc-macro2 1.0.66",
- "quote 1.0.32",
- "syn 2.0.28",
 ]
 
 [[package]]
@@ -659,18 +625,6 @@ dependencies = [
  "libc",
  "unicode-width",
  "windows-sys 0.45.0",
-]
-
-[[package]]
-name = "const-hex"
-version = "1.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "268f52aae268980d03dd9544c1ea591965b2735b038d6998d6e4ab37c8c24445"
-dependencies = [
- "cfg-if",
- "cpufeatures",
- "hex",
- "serde",
 ]
 
 [[package]]
@@ -2421,6 +2375,7 @@ version = "3.3.0"
 dependencies = [
  "anyhow",
  "auto_impl",
+ "bytes",
  "criterion",
  "ethers-contract",
  "ethers-core",
@@ -2448,6 +2403,7 @@ dependencies = [
  "proptest-derive",
  "revm-primitives",
  "serde",
+ "sha3",
 ]
 
 [[package]]
@@ -2462,6 +2418,7 @@ dependencies = [
  "ripemd",
  "secp256k1",
  "sha2 0.10.7",
+ "sha3",
  "substrate-bn",
 ]
 
@@ -2469,8 +2426,6 @@ dependencies = [
 name = "revm-primitives"
 version = "1.1.2"
 dependencies = [
- "alloy-primitives",
- "alloy-rlp",
  "arbitrary",
  "auto_impl",
  "bitflags 2.4.0",
@@ -2478,14 +2433,17 @@ dependencies = [
  "bytes",
  "derive_more",
  "enumn",
+ "fixed-hash",
  "hashbrown 0.14.0",
  "hex",
  "hex-literal",
  "primitive-types",
  "proptest",
  "proptest-derive",
+ "rlp",
  "ruint",
  "serde",
+ "sha3",
  "to-binary",
 ]
 
@@ -2493,17 +2451,20 @@ dependencies = [
 name = "revme"
 version = "0.2.0"
 dependencies = [
- "alloy-rlp",
+ "bytes",
  "hash-db",
  "hashbrown 0.14.0",
  "hex",
  "hex-literal",
  "indicatif",
  "plain_hasher",
+ "primitive-types",
  "revm",
+ "rlp",
  "ruint",
  "serde",
  "serde_json",
+ "sha3",
  "structopt",
  "thiserror",
  "triehash",

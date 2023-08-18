@@ -9,17 +9,15 @@ repository = "https://github.com/bluealloy/revm"
 version = "2.0.3"
 
 [dependencies]
-revm-primitives = { path = "../primitives", version = "1.1.2", default-features = false }
+revm-primitives = { path = "../primitives", version="1.1.2", default-features = false }
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
 k256 = { version = "0.13", default-features = false, features = ["ecdsa"] }
 num = { version = "0.4.0", default-features = false, features = ["alloc"] }
 once_cell = "1.17"
 ripemd = { version = "0.1", default-features = false }
-secp256k1 = { version = "0.27.0", default-features = false, features = [
-    "alloc",
-    "recovery",
-], optional = true }
+secp256k1 = { version = "0.27.0", default-features = false, features = ["alloc", "recovery"], optional = true }
 sha2 = { version = "0.10.5", default-features = false }
+sha3 = { version = "0.10.7", default-features = false }
 
 [dev-dependencies]
 hex = "0.4"
@@ -30,3 +28,4 @@ default = ["secp256k1"]
 # Only problem that it has, it fails to build for wasm target on windows and mac as it is c lib.
 # If you dont require wasm on win/mac, i would recommend its usage.
 secp256k1 = ["dep:secp256k1"]
+
