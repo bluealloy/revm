@@ -71,7 +71,6 @@ version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f938f00332d63a5b0ac687bd6f46d03884638948921d9f8b50c59563d421ae25"
 dependencies = [
- "alloy-rlp-derive",
  "arrayvec",
  "bytes",
  "smol_str",
@@ -2298,6 +2297,7 @@ version = "3.3.0"
 dependencies = [
  "anyhow",
  "auto_impl",
+ "bytes",
  "criterion",
  "ethers-contract",
  "ethers-core",
@@ -2325,6 +2325,7 @@ dependencies = [
  "proptest-derive",
  "revm-primitives",
  "serde",
+ "sha3",
 ]
 
 [[package]]
@@ -2349,8 +2350,6 @@ dependencies = [
 name = "revm-primitives"
 version = "1.1.2"
 dependencies = [
- "alloy-primitives",
- "alloy-rlp",
  "arbitrary",
  "auto_impl",
  "bitflags 2.4.0",
@@ -2358,14 +2357,17 @@ dependencies = [
  "bytes",
  "derive_more",
  "enumn",
+ "fixed-hash",
  "hashbrown 0.14.0",
  "hex",
  "hex-literal",
  "primitive-types",
  "proptest",
  "proptest-derive",
+ "rlp",
  "ruint",
  "serde",
+ "sha3",
  "to-binary",
 ]
 
@@ -2373,17 +2375,20 @@ dependencies = [
 name = "revme"
 version = "0.2.0"
 dependencies = [
- "alloy-rlp",
+ "bytes",
  "hash-db",
  "hashbrown 0.14.0",
  "hex",
  "hex-literal",
  "indicatif",
  "plain_hasher",
+ "primitive-types",
  "revm",
+ "rlp",
  "ruint",
  "serde",
  "serde_json",
+ "sha3",
  "structopt",
  "thiserror",
  "triehash",

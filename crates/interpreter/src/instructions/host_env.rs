@@ -11,7 +11,7 @@ pub fn chainid<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
 
 pub fn coinbase(interpreter: &mut Interpreter, host: &mut dyn Host) {
     gas!(interpreter, gas::BASE);
-    push_b256!(interpreter, host.env().block.coinbase.into_word());
+    push_b256!(interpreter, host.env().block.coinbase.into());
 }
 
 pub fn timestamp(interpreter: &mut Interpreter, host: &mut dyn Host) {
@@ -52,5 +52,5 @@ pub fn basefee<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
 
 pub fn origin(interpreter: &mut Interpreter, host: &mut dyn Host) {
     gas!(interpreter, gas::BASE);
-    push_b256!(interpreter, host.env().tx.caller.into_word());
+    push_b256!(interpreter, host.env().tx.caller.into());
 }

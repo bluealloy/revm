@@ -10,11 +10,14 @@ version = "1.1.2"
 readme = "../../README.md"
 
 [dependencies]
-revm-primitives = { path = "../primitives", version = "1.1.2", default-features = false }
+revm-primitives = { path = "../primitives", version="1.1.2", default-features = false }
 
 #utility
 derive_more = "0.99"
 enumn = "0.1"
+
+# sha3 keccak hasher
+sha3 = { version = "0.10", default-features = false, features = [] }
 
 # optional
 serde = { version = "1.0", features = ["derive", "rc"], optional = true }
@@ -45,7 +48,10 @@ optional_eip3607 = ["revm-primitives/optional_eip3607"]
 optional_gas_refund = ["revm-primitives/optional_gas_refund"]
 optional_no_base_fee = ["revm-primitives/optional_no_base_fee"]
 std = ["revm-primitives/std"]
-serde = ["dep:serde", "revm-primitives/serde"]
+serde = [
+    "dep:serde",
+    "revm-primitives/serde",
+]
 arbitrary = [
     "std",
     "dep:arbitrary",

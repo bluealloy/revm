@@ -1,7 +1,7 @@
 use core::{convert::Infallible, marker::PhantomData};
 use revm_interpreter::primitives::{
     db::{Database, DatabaseRef},
-    keccak256, AccountInfo, Address, Bytecode, B256, U256,
+    keccak256, AccountInfo, Bytecode, B160, B256, U256,
 };
 
 pub type EmptyDB = EmptyDBTyped<Infallible>;
@@ -41,7 +41,7 @@ impl<T> EmptyDBTyped<T> {
 impl<T> Database for EmptyDBTyped<T> {
     type Error = T;
 
-    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+    fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
         <Self as DatabaseRef>::basic(self, address)
     }
 
@@ -49,7 +49,7 @@ impl<T> Database for EmptyDBTyped<T> {
         <Self as DatabaseRef>::code_by_hash(self, code_hash)
     }
 
-    fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error> {
+    fn storage(&mut self, address: B160, index: U256) -> Result<U256, Self::Error> {
         <Self as DatabaseRef>::storage(self, address, index)
     }
 
@@ -61,7 +61,7 @@ impl<T> Database for EmptyDBTyped<T> {
 impl<T> DatabaseRef for EmptyDBTyped<T> {
     type Error = T;
     /// Get basic account information.
-    fn basic(&self, _address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+    fn basic(&self, _address: B160) -> Result<Option<AccountInfo>, Self::Error> {
         Ok(None)
     }
     /// Get account code by its hash
@@ -69,12 +69,12 @@ impl<T> DatabaseRef for EmptyDBTyped<T> {
         Ok(Bytecode::new())
     }
     /// Get storage value of address at index.
-    fn storage(&self, _address: Address, _index: U256) -> Result<U256, Self::Error> {
+    fn storage(&self, _address: B160, _index: U256) -> Result<U256, Self::Error> {
         Ok(U256::default())
     }
 
     // History related
     fn block_hash(&self, number: U256) -> Result<B256, Self::Error> {
-        Ok(keccak256(number.to_be_bytes::<{ U256::BYTES }>()))
+        Ok(keccak256(&number.to_be_bytes::<{ U256::BYTES }>()))
     }
 }

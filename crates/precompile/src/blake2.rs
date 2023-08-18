@@ -6,7 +6,7 @@ const F_ROUND: u64 = 1;
 const INPUT_LENGTH: usize = 213;
 
 pub const FUN: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_address(9),
+    crate::u64_to_b160(9),
     Precompile::Standard(run as StandardPrecompileFn),
 );
 

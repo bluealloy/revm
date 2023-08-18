@@ -1,7 +1,7 @@
 //! GasIspector. Helper Inspector to calculate gas for others.
-
+//!
 use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult};
-use crate::primitives::{db::Database, Address, Bytes};
+use crate::primitives::{db::Database, Bytes, B160};
 use crate::{evm_impl::EVMData, Inspector};
 
 #[allow(dead_code)]
@@ -83,10 +83,10 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         _data: &mut EVMData<'_, DB>,
         _inputs: &CreateInputs,
         ret: InstructionResult,
-        address: Option<Address>,
+        address: Option<B160>,
         remaining_gas: Gas,
         out: Bytes,
-    ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
+    ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
         (ret, address, remaining_gas, out)
     }
 }
@@ -97,7 +97,9 @@ mod tests {
     use crate::interpreter::{
         opcode, CallInputs, CreateInputs, Gas, InstructionResult, Interpreter, OpCode,
     };
-    use crate::primitives::{address, Address, Bytecode, Bytes, ResultAndState, TransactTo, B256};
+    use crate::primitives::{
+        hex_literal::hex, Bytecode, Bytes, ResultAndState, TransactTo, B160, B256,
+    };
     use crate::{inspectors::GasInspector, Database, EVMData, Inspector};
 
     #[derive(Default, Debug)]
@@ -130,7 +132,7 @@ mod tests {
         fn log(
             &mut self,
             evm_data: &mut EVMData<'_, DB>,
-            address: &Address,
+            address: &B160,
             topics: &[B256],
             data: &Bytes,
         ) {
@@ -180,7 +182,7 @@ mod tests {
             &mut self,
             data: &mut EVMData<'_, DB>,
             call: &mut CreateInputs,
-        ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
+        ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
             self.gas_inspector.create(data, call);
 
             (
@@ -196,10 +198,10 @@ mod tests {
             data: &mut EVMData<'_, DB>,
             inputs: &CreateInputs,
             status: InstructionResult,
-            address: Option<Address>,
+            address: Option<B160>,
             gas: Gas,
             retdata: Bytes,
-        ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
+        ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
             self.gas_inspector
                 .create_end(data, inputs, status, address, gas, retdata.clone());
             (status, address, gas, retdata)
@@ -227,9 +229,9 @@ mod tests {
 
         let mut evm = crate::new();
         evm.database(BenchmarkDB::new_bytecode(bytecode.clone()));
-        evm.env.tx.caller = address!("1000000000000000000000000000000000000000");
+        evm.env.tx.caller = B160(hex!("1000000000000000000000000000000000000000"));
         evm.env.tx.transact_to =
-            TransactTo::Call(address!("0000000000000000000000000000000000000000"));
+            TransactTo::Call(B160(hex!("0000000000000000000000000000000000000000")));
         evm.env.tx.gas_limit = 21100;
 
         let mut inspector = StackInspector::default();

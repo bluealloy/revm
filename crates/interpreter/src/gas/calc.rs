@@ -1,11 +1,11 @@
 use super::constants::*;
+use crate::alloc::vec::Vec;
 use crate::{
     inner_models::SelfDestructResult,
     primitives::Spec,
     primitives::{SpecId::*, U256},
 };
-use alloc::vec::Vec;
-use revm_primitives::{Address, Bytes};
+use revm_primitives::{Bytes, B160};
 
 #[allow(clippy::collapsible_else_if)]
 pub fn sstore_refund<SPEC: Spec>(original: U256, current: U256, new: U256) -> i64 {
@@ -333,7 +333,7 @@ pub fn memory_gas(a: usize) -> u64 {
 pub fn initial_tx_gas<SPEC: Spec>(
     input: &Bytes,
     is_create: bool,
-    access_list: &[(Address, Vec<U256>)],
+    access_list: &[(B160, Vec<U256>)],
 ) -> u64 {
     let mut initial_gas = 0;
     let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;
