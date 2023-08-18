@@ -18,11 +18,12 @@ impl Default for TransitionState {
 
 impl TransitionState {
     /// Create new transition state with one transition.
-    pub fn with_capacity(address: B160, transition: TransitionAccount) -> Self {
+    pub fn single(address: B160, transition: TransitionAccount) -> Self {
         let mut transitions = HashMap::new();
         transitions.insert(address, transition);
         TransitionState { transitions }
     }
+
     /// Return transition id and all account transitions. Leave empty transition map.
     pub fn take(&mut self) -> TransitionState {
         core::mem::take(self)

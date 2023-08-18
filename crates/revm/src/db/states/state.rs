@@ -12,9 +12,9 @@ use revm_interpreter::primitives::{
 /// State clear flag is set inside CacheState and by default it is enabled.
 /// If you want to disable it use `set_state_clear_flag` function.
 pub struct State<'a, DBError> {
-    /// Cached state contains both changed from evm executiong and cached/loaded account/storages
+    /// Cached state contains both changed from evm execution and cached/loaded account/storages
     /// from database. This allows us to have only one layer of cache where we can fetch data.
-    /// Additionaly we can introuduce some preloading of data from database.
+    /// Additionaly we can introduce some preloading of data from database.
     pub cache: CacheState,
     /// Optional database that we use to fetch data from. If database is not present, we will
     /// return not existing account and storage.
@@ -124,13 +124,8 @@ impl<'a, DBError> State<'a, DBError> {
         if let Some(transition_state) = self.transition_state.as_mut() {
             let transition_state = transition_state.take();
 
-            if self.bundle_state.is_none() {
-                self.bundle_state = Some(BundleState::default());
-            }
-
             self.bundle_state
-                .as_mut()
-                .unwrap()
+                .get_or_insert(BundleState::default())
                 .apply_block_substate_and_create_reverts(transition_state);
         }
     }
@@ -194,8 +189,8 @@ impl<'a, DBError> Database for State<'a, DBError> {
                 .map(|account| match account.storage.entry(index) {
                     hash_map::Entry::Occupied(entry) => Ok(*entry.get()),
                     hash_map::Entry::Vacant(entry) => {
-                        // if account was destroyed or account is newely build
-                        // we return zero and dont ask detabase.
+                        // if account was destroyed or account is newly built
+                        // we return zero and don't ask database.
                         let value = if is_storage_known {
                             U256::ZERO
                         } else {
@@ -222,5 +217,268 @@ impl<'a, DBError> DatabaseCommit for State<'a, DBError> {
     fn commit(&mut self, evm_state: HashMap<B160, Account>) {
         let transitions = self.cache.apply_evm_state(evm_state);
         self.apply_transition(transitions);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        db::{
+            states::reverts::AccountInfoRevert, AccountRevert, AccountStatus, BundleAccount,
+            RevertToSlot,
+        },
+        StateBuilder,
+    };
+    use revm_interpreter::primitives::StorageSlot;
+
+    /// Checks that if accounts is touched multiple times in the same block,
+    /// then the old values from the first change are preserved and not overwritten.
+    ///
+    /// This is important because the state transitions from different transactions in the same block may see
+    /// different states of the same account as the old value, but the revert should reflect the
+    /// state of the account before the block.
+    #[test]
+    fn account_and_storage_reverts_preserve_old_values() {
+        let mut state = StateBuilder::default().build();
+
+        let (slot1, slot2, slot3) = (U256::from(1), U256::from(2), U256::from(3));
+
+        // Non-existing account for testing account state transitions.
+        // [LoadedNotExisting] -> [Changed] (nonce: 1, balance: 1) -> [Changed] (nonce: 2) -> [Changed] (nonce: 3)
+        let new_account_address = B160::from_slice(&[0x1; 20]);
+        let new_account_created_info = AccountInfo {
+            nonce: 1,
+            balance: U256::from(1),
+            ..Default::default()
+        };
+        let new_account_changed_info = AccountInfo {
+            nonce: 2,
+            ..new_account_created_info.clone()
+        };
+        let new_account_changed_info2 = AccountInfo {
+            nonce: 3,
+            ..new_account_changed_info.clone()
+        };
+
+        // Existing account for testing storage state transitions.
+        let existing_account_address = B160::from_slice(&[0x2; 20]);
+        let existing_account_initial_info = AccountInfo {
+            nonce: 1,
+            ..Default::default()
+        };
+        let existing_account_initial_storage = HashMap::<U256, U256>::from([
+            (slot1, U256::from(100)), // 0x01 => 100
+            (slot2, U256::from(200)), // 0x02 => 200
+        ]);
+        let existing_account_changed_info = AccountInfo {
+            nonce: 2,
+            ..existing_account_initial_info.clone()
+        };
+
+        // A transaction in block 1 creates one account and changes an existing one.
+        state.apply_transition(Vec::from([
+            (
+                new_account_address,
+                TransitionAccount {
+                    status: AccountStatus::InMemoryChange,
+                    info: Some(new_account_created_info.clone()),
+                    previous_status: AccountStatus::LoadedNotExisting,
+                    previous_info: None,
+                    ..Default::default()
+                },
+            ),
+            (
+                existing_account_address,
+                TransitionAccount {
+                    status: AccountStatus::InMemoryChange,
+                    info: Some(existing_account_changed_info.clone()),
+                    previous_status: AccountStatus::Loaded,
+                    previous_info: Some(existing_account_initial_info.clone()),
+                    storage: HashMap::from([(
+                        slot1,
+                        StorageSlot {
+                            previous_or_original_value: *existing_account_initial_storage
+                                .get(&slot1)
+                                .unwrap(),
+                            present_value: U256::from(1000),
+                        },
+                    )]),
+                    storage_was_destroyed: false,
+                },
+            ),
+        ]));
+
+        // A transaction in block 1 then changes the same account.
+        state.apply_transition(Vec::from([(
+            new_account_address,
+            TransitionAccount {
+                status: AccountStatus::InMemoryChange,
+                info: Some(new_account_changed_info.clone()),
+                previous_status: AccountStatus::InMemoryChange,
+                previous_info: Some(new_account_created_info.clone()),
+                ..Default::default()
+            },
+        )]));
+
+        // Another transaction in block 1 then changes the newly created account yet again and modifies the storage in an existing one.
+        state.apply_transition(Vec::from([
+            (
+                new_account_address,
+                TransitionAccount {
+                    status: AccountStatus::InMemoryChange,
+                    info: Some(new_account_changed_info2.clone()),
+                    previous_status: AccountStatus::InMemoryChange,
+                    previous_info: Some(new_account_changed_info),
+                    storage: HashMap::from([(
+                        slot1,
+                        StorageSlot {
+                            previous_or_original_value: U256::ZERO,
+                            present_value: U256::from(1),
+                        },
+                    )]),
+                    storage_was_destroyed: false,
+                },
+            ),
+            (
+                existing_account_address,
+                TransitionAccount {
+                    status: AccountStatus::InMemoryChange,
+                    info: Some(existing_account_changed_info.clone()),
+                    previous_status: AccountStatus::InMemoryChange,
+                    previous_info: Some(existing_account_changed_info.clone()),
+                    storage: HashMap::from([
+                        (
+                            slot1,
+                            StorageSlot {
+                                previous_or_original_value: U256::from(100),
+                                present_value: U256::from(1_000),
+                            },
+                        ),
+                        (
+                            slot2,
+                            StorageSlot {
+                                previous_or_original_value: *existing_account_initial_storage
+                                    .get(&slot2)
+                                    .unwrap(),
+                                present_value: U256::from(2_000),
+                            },
+                        ),
+                        // Create new slot
+                        (
+                            slot3,
+                            StorageSlot {
+                                previous_or_original_value: U256::ZERO,
+                                present_value: U256::from(3_000),
+                            },
+                        ),
+                    ]),
+                    storage_was_destroyed: false,
+                },
+            ),
+        ]));
+
+        state.merge_transitions();
+        let bundle_state = state.take_bundle();
+
+        // The new account revert should be `DeleteIt` since this was an account creation.
+        // The existing account revert should be reverted to its previous state.
+        assert_eq!(
+            bundle_state.reverts,
+            Vec::from([Vec::from([
+                (
+                    new_account_address,
+                    AccountRevert {
+                        account: AccountInfoRevert::DeleteIt,
+                        previous_status: AccountStatus::LoadedNotExisting,
+                        storage: HashMap::from([(slot1, RevertToSlot::Some(U256::ZERO))]),
+                        wipe_storage: false,
+                    }
+                ),
+                (
+                    existing_account_address,
+                    AccountRevert {
+                        account: AccountInfoRevert::RevertTo(existing_account_initial_info.clone()),
+                        previous_status: AccountStatus::Loaded,
+                        storage: HashMap::from([
+                            (
+                                slot1,
+                                RevertToSlot::Some(
+                                    *existing_account_initial_storage.get(&slot1).unwrap()
+                                )
+                            ),
+                            (
+                                slot2,
+                                RevertToSlot::Some(
+                                    *existing_account_initial_storage.get(&slot2).unwrap()
+                                )
+                            ),
+                            (slot3, RevertToSlot::Some(U256::ZERO))
+                        ]),
+                        wipe_storage: false,
+                    }
+                ),
+            ])]),
+            "The account or storage reverts are incorrect"
+        );
+
+        // The latest state of the new account should be: nonce = 3, balance = 1, code & code hash = None.
+        // Storage: 0x01 = 1.
+        assert_eq!(
+            bundle_state.account(&new_account_address),
+            Some(&BundleAccount {
+                info: Some(new_account_changed_info2),
+                original_info: None,
+                status: AccountStatus::InMemoryChange,
+                storage: HashMap::from([(
+                    slot1,
+                    StorageSlot {
+                        previous_or_original_value: U256::ZERO,
+                        present_value: U256::from(1),
+                    }
+                )])
+            }),
+            "The latest state of the new account is incorrect"
+        );
+
+        // The latest state of the existing account should be: nonce = 2.
+        // Storage: 0x01 = 1000, 0x02 = 2000, 0x03 = 3000.
+        assert_eq!(
+            bundle_state.account(&existing_account_address),
+            Some(&BundleAccount {
+                info: Some(existing_account_changed_info),
+                original_info: Some(existing_account_initial_info),
+                status: AccountStatus::InMemoryChange,
+                storage: HashMap::from([
+                    (
+                        slot1,
+                        StorageSlot {
+                            previous_or_original_value: *existing_account_initial_storage
+                                .get(&slot1)
+                                .unwrap(),
+                            present_value: U256::from(1_000),
+                        },
+                    ),
+                    (
+                        slot2,
+                        StorageSlot {
+                            previous_or_original_value: *existing_account_initial_storage
+                                .get(&slot2)
+                                .unwrap(),
+                            present_value: U256::from(2_000),
+                        },
+                    ),
+                    // Create new slot
+                    (
+                        slot3,
+                        StorageSlot {
+                            previous_or_original_value: U256::ZERO,
+                            present_value: U256::from(3_000),
+                        },
+                    ),
+                ])
+            }),
+            "The latest state of the existing account is incorrect"
+        );
     }
 }

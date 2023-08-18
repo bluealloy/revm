@@ -32,7 +32,7 @@ pub fn to_analysed(bytecode: Bytecode) -> Bytecode {
     }
 }
 
-/// Analyzs bytecode to build a jump map.
+/// Analyze bytecode to build a jump map.
 fn analyze(code: &[u8]) -> JumpMap {
     let mut jumps: BitVec<u8> = bitvec![u8, Lsb0; 0; code.len()];
 

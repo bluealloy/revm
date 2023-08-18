@@ -1,6 +1,6 @@
 use super::{AccountRevert, BundleAccount, StorageWithOriginalValues};
 use crate::db::AccountStatus;
-use revm_interpreter::primitives::{AccountInfo, Bytecode, B256};
+use revm_interpreter::primitives::{hash_map, AccountInfo, Bytecode, B256};
 
 /// Account Created when EVM state is merged to cache state.
 /// And it is send to Block state.
@@ -11,19 +11,19 @@ use revm_interpreter::primitives::{AccountInfo, Bytecode, B256};
 pub struct TransitionAccount {
     pub info: Option<AccountInfo>,
     pub status: AccountStatus,
-    /// Previous account info is needed for account that got initialy loaded.
-    /// Initialy loaded account are not present inside bundle and are needed
+    /// Previous account info is needed for account that got initially loaded.
+    /// Initially loaded account are not present inside bundle and are needed
     /// to generate Reverts.
     pub previous_info: Option<AccountInfo>,
     /// Mostly needed when previous status Loaded/LoadedEmpty.
     pub previous_status: AccountStatus,
     /// Storage contains both old and new account
     pub storage: StorageWithOriginalValues,
-    /// If there is transition that clears the storage we shold mark it here and
+    /// If there is transition that clears the storage we should mark it here and
     /// delete all storages in BundleState. This flag is needed if we have transition
     /// between Destroyed states from DestroyedChanged-> DestroyedAgain-> DestroyedChanged
     /// in the end transition that we would have would be `DestroyedChanged->DestroyedChanged`
-    /// and with only that info we coudn't decide what to do.
+    /// and with only that info we couldn't decide what to do.
     pub storage_was_destroyed: bool,
 }
 
@@ -53,7 +53,7 @@ impl TransitionAccount {
         None
     }
 
-    /// Update new values of transition. Dont override old values
+    /// Update new values of transition. Don't override old values
     /// both account info and old storages need to be left intact.
     pub fn update(&mut self, other: Self) {
         self.info = other.info.clone();
@@ -70,7 +70,21 @@ impl TransitionAccount {
         } else {
             // update changed values to this transition.
             for (key, slot) in other.storage.into_iter() {
-                self.storage.entry(key).or_insert(slot).present_value = slot.present_value;
+                match self.storage.entry(key) {
+                    hash_map::Entry::Vacant(entry) => {
+                        entry.insert(slot);
+                    }
+                    hash_map::Entry::Occupied(mut entry) => {
+                        let value = entry.get_mut();
+                        // if new value is same as original value. Remove storage entry.
+                        if value.original_value() == slot.present_value() {
+                            entry.remove();
+                        } else {
+                            // is value is different, update transition present value;
+                            value.present_value = slot.present_value;
+                        }
+                    }
+                }
             }
         }
     }

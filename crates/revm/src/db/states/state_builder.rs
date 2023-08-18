@@ -81,9 +81,9 @@ impl<'a, DBError> StateBuilder<'a, DBError> {
         }
     }
 
-    /// Dont make transitions and dont update bundle state.
+    /// Don't make transitions and don't update bundle state.
     ///
-    /// This is good option if we dont care about creating reverts
+    /// This is good option if we don't care about creating reverts
     /// or getting output of changed states.
     pub fn without_bundle_update(self) -> Self {
         Self {

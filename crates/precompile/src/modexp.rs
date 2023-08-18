@@ -47,7 +47,7 @@ fn calculate_iteration_count(exp_length: u64, exp_highp: &BigUint) -> u64 {
 }
 
 macro_rules! read_u64_with_overflow {
-    ($input:expr,$from:expr,$to:expr, $overflow_limit:expr) => {{
+    ($input:expr, $from:expr, $to:expr, $overflow_limit:expr) => {{
         const SPLIT: usize = 32 - size_of::<u64>();
         let len = $input.len();
         let from_zero = min($from, len);
@@ -94,7 +94,7 @@ where
         let mod_end = exp_end + mod_len;
 
         let exp_highp = {
-            let mut out = vec![0; 32];
+            let mut out = [0; 32];
             let from = min(base_end, len);
             let to = min(exp_highp_end, len);
             let target_from = 32 - (exp_highp_end - base_end); // 32 - exp length
