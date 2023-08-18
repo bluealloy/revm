@@ -6,7 +6,7 @@ use k256::{elliptic_curve::sec1::ToEncodedPoint, Secp256k1};
 use k256::{AffinePoint, ProjectivePoint};
 
 pub const DERIVE_CAIT_SITH_PUBKEY: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_address(4),
+    crate::u64_to_address(1024),
     Precompile::Standard(derive_cait_sith_pubkey as StandardPrecompileFn),
 );
 
