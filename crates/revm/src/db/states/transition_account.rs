@@ -11,19 +11,19 @@ use revm_interpreter::primitives::{hash_map, AccountInfo, Bytecode, B256};
 pub struct TransitionAccount {
     pub info: Option<AccountInfo>,
     pub status: AccountStatus,
-    /// Previous account info is needed for account that got initialy loaded.
-    /// Initialy loaded account are not present inside bundle and are needed
+    /// Previous account info is needed for account that got initially loaded.
+    /// Initially loaded account are not present inside bundle and are needed
     /// to generate Reverts.
     pub previous_info: Option<AccountInfo>,
     /// Mostly needed when previous status Loaded/LoadedEmpty.
     pub previous_status: AccountStatus,
     /// Storage contains both old and new account
     pub storage: StorageWithOriginalValues,
-    /// If there is transition that clears the storage we shold mark it here and
+    /// If there is transition that clears the storage we should mark it here and
     /// delete all storages in BundleState. This flag is needed if we have transition
     /// between Destroyed states from DestroyedChanged-> DestroyedAgain-> DestroyedChanged
     /// in the end transition that we would have would be `DestroyedChanged->DestroyedChanged`
-    /// and with only that info we coudn't decide what to do.
+    /// and with only that info we couldn't decide what to do.
     pub storage_was_destroyed: bool,
 }
 
@@ -53,7 +53,7 @@ impl TransitionAccount {
         None
     }
 
-    /// Update new values of transition. Dont override old values
+    /// Update new values of transition. Don't override old values
     /// both account info and old storages need to be left intact.
     pub fn update(&mut self, other: Self) {
         self.info = other.info.clone();

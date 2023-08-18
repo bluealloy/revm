@@ -147,7 +147,7 @@ fn run_mul(input: &[u8]) -> Result<Vec<u8>, Error> {
 
     let mut fr_buf = [0u8; 32];
     fr_buf.copy_from_slice(&input[64..96]);
-    // Fr::from_slice can only fail on incorect length, and this is not a case.
+    // Fr::from_slice can only fail on incorrect length, and this is not a case.
     let fr = bn::Fr::from_slice(&fr_buf[..]).unwrap();
 
     let mut out = [0u8; 64];

@@ -70,7 +70,7 @@ async fn main() -> anyhow::Result<()> {
     // insert pre-built database from above
     evm.database(cache_db);
 
-    // fill in missing bits of env struc
+    // fill in missing bits of env struct
     // change that to whatever caller you want to be
     evm.env.tx.caller = address!("0000000000000000000000000000000000000000");
     // account you want to transact with

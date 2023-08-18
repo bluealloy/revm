@@ -81,11 +81,11 @@ pub struct CfgEnv {
     pub chain_id: U256,
     pub spec_id: SpecId,
     /// Bytecode that is created with CREATE/CREATE2 is by default analysed and jumptable is created.
-    /// This is very benefitial for testing and speeds up execution of that bytecode if called multiple times.
+    /// This is very beneficial for testing and speeds up execution of that bytecode if called multiple times.
     ///
     /// Default: Analyse
     pub perf_analyse_created_bytecodes: AnalysisKind,
-    /// If some it will effects EIP-170: Contract code size limit. Usefull to increase this because of tests.
+    /// If some it will effects EIP-170: Contract code size limit. Useful to increase this because of tests.
     /// By default it is 0x6000 (~25kb).
     pub limit_contract_code_size: Option<usize>,
     /// A hard memory limit in bytes beyond which [Memory] cannot be resized.
@@ -260,7 +260,7 @@ impl Env {
 
     /// Validate transaction data that is set inside ENV and return error if something is wrong.
     ///
-    /// Return inital spend gas (Gas needed to execute transaction).
+    /// Return initial spend gas (Gas needed to execute transaction).
     #[inline]
     pub fn validate_tx<SPEC: Spec>(&self) -> Result<(), InvalidTransaction> {
         let gas_limit = self.tx.gas_limit;
@@ -315,9 +315,9 @@ impl Env {
         Ok(())
     }
 
-    /// Validate transaction agains state.
+    /// Validate transaction against state.
     #[inline]
-    pub fn validate_tx_agains_state(&self, account: &Account) -> Result<(), InvalidTransaction> {
+    pub fn validate_tx_against_state(&self, account: &Account) -> Result<(), InvalidTransaction> {
         // EIP-3607: Reject transactions from senders with deployed code
         // This EIP is introduced after london but there was no collision in past
         // so we can leave it enabled always

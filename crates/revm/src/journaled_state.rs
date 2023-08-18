@@ -23,7 +23,7 @@ pub struct JournaledState {
     /// so we need to take care of that difference. Set this to false if you are handling
     /// legacy transactions
     pub is_before_spurious_dragon: bool,
-    /// It is assumed that precompiles start from 0x1 address and spand next N addresses.
+    /// It is assumed that precompiles start from 0x1 address and span next N addresses.
     /// we are using that assumption here
     pub num_of_precompiles: usize,
 }
@@ -100,7 +100,7 @@ impl JournaledState {
     /// Create new JournaledState.
     ///
     /// num_of_precompiles is used to determine how many precompiles are there.
-    /// Assumption is that number of N first addresses are precompiles (exclusing 0x00..00)
+    /// Assumption is that number of N first addresses are precompiles (excluding 0x00..00)
     ///
     /// Note: This function will journal state after Spurious Dragon fork.
     /// And will not take into account if account is not existing or empty.
@@ -131,7 +131,7 @@ impl JournaledState {
     }
 
     /// Mark account as touched as only touched accounts will be added to state.
-    /// This is expecially important for state clear where touched empty accounts needs to
+    /// This is especially important for state clear where touched empty accounts needs to
     /// be removed from state.
     pub fn touch(&mut self, address: &Address) {
         if let Some(account) = self.state.get_mut(address) {
@@ -226,7 +226,7 @@ impl JournaledState {
         *to_balance = to_balance
             .checked_add(balance)
             .ok_or(InstructionResult::OverflowPayment)?;
-        // Overflow of U256 balance is not possible to happen on mainnet. We dont bother to return funds from from_acc.
+        // Overflow of U256 balance is not possible to happen on mainnet. We don't bother to return funds from from_acc.
 
         self.journal
             .last_mut()
@@ -244,8 +244,8 @@ impl JournaledState {
     ///
     /// There are few steps done:
     /// 1. Make created account hot loaded (AccessList) and this should
-    ///     be done before subrouting checkpoint is created.
-    /// 2. Check if there is colission of newly created account with existing one.
+    ///     be done before subroutine checkpoint is created.
+    /// 2. Check if there is collision of newly created account with existing one.
     /// 3. Mark created account as created.
     /// 4. Add fund to created account
     /// 5. Increment nonce of created account if SpuriousDragon is active
@@ -307,10 +307,10 @@ impl JournaledState {
 
         // Sub balance from caller
         let caller_account = self.state.get_mut(&caller).unwrap();
-        // Balance is already checked in `create_inner`, so it is safe to just substract.
+        // Balance is already checked in `create_inner`, so it is safe to just subtract.
         caller_account.info.balance -= balance;
 
-        // add journal entry of transfered balance
+        // add journal entry of transferred balance
         last_journal.push(JournalEntry::BalanceTransfer {
             from: caller,
             to: address,
@@ -385,7 +385,7 @@ impl JournaledState {
                     }
                 }
                 JournalEntry::BalanceTransfer { from, to, balance } => {
-                    // we dont need to check overflow and underflow when adding sub subtracting the balance.
+                    // we don't need to check overflow and underflow when adding sub subtracting the balance.
                     let from = state.get_mut(&from).unwrap();
                     from.info.balance += balance;
                     let to = state.get_mut(&to).unwrap();
@@ -631,13 +631,13 @@ impl JournaledState {
         key: U256,
         db: &mut DB,
     ) -> Result<(U256, bool), DB::Error> {
-        let account = self.state.get_mut(&address).unwrap(); // asume acc is hot
+        let account = self.state.get_mut(&address).unwrap(); // assume acc is hot
                                                              // only if account is created in this tx we can assume that storage is empty.
         let is_newly_created = account.is_created();
         let load = match account.storage.entry(key) {
             Entry::Occupied(occ) => (occ.get().present_value, false),
             Entry::Vacant(vac) => {
-                // if storage was cleared, we dont need to ping db.
+                // if storage was cleared, we don't need to ping db.
                 let value = if is_newly_created {
                     U256::ZERO
                 } else {
@@ -677,7 +677,7 @@ impl JournaledState {
         // if there is no original value in dirty return present value, that is our original.
         let slot = acc.storage.get_mut(&key).unwrap();
 
-        // new value is same as present, we dont need to do anything
+        // new value is same as present, we don't need to do anything
         if present == new {
             return Ok((slot.previous_or_original_value, present, new, is_cold));
         }

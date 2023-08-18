@@ -71,7 +71,7 @@ pub fn execute_test_suite(
         return Ok(());
     }
 
-    // Test checks if nonce overflows. We are handling this correctly but we are not parsing exception in testsuite
+    // Test checks if nonce overflows. We are handling this correctly but we are not parsing exception in test suite
     // There are more nonce overflow tests that are in internal call/create, and those tests are passing and are enabled.
     if name == "CreateTransactionHighNonce.json" {
         return Ok(());
@@ -90,7 +90,7 @@ pub fn execute_test_suite(
         return Ok(());
     }
 
-    // Skip test where basefee/accesslist/diffuculty is present but it shouldn't be supported in London/Berlin/TheMerge.
+    // Skip test where basefee/accesslist/difficulty is present but it shouldn't be supported in London/Berlin/TheMerge.
     // https://github.com/ethereum/tests/blob/5b7e1ab3ffaf026d99d20b17bb30f533a2c80c8b/GeneralStateTests/stExample/eip1559.json#L130
     // It is expected to not execute these tests.
     if name == "accessListExample.json"
