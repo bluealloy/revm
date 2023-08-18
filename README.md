@@ -65,6 +65,14 @@ cargo run -p revm --features ethersdb --example fork_ref_transact
 (If you want to add your project to the list, ping me or open the PR)
 
 
+# Documentation
+
+To serve the mdbook documentation, ensure you have mdbook installed (if not install it with cargo) and then run:
+
+```shell
+mdbook serve documentation
+```
+
 # Contact
 
 There is public telegram group: https://t.me/+Ig4WDWOzikA3MzA0

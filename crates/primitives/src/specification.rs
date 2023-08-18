@@ -1,5 +1,5 @@
 /// SpecId and their activation block
-/// Information was obtained from: https://github.com/ethereum/execution-specs
+/// Information was obtained from: <https://github.com/ethereum/execution-specs>
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd, enumn::N)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

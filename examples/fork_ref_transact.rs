@@ -92,6 +92,7 @@ async fn main() -> Result<()> {
         ExecutionResult::Success { output, .. } => match output {
             Output::Call(value) => Some(value),
             _ => None,
+            Output::Create(_, _) => todo!(),
         },
         _ => None,
     };

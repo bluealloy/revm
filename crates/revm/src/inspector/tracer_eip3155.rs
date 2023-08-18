@@ -1,4 +1,4 @@
-//! Inspector that support tracing of EIP-3155 https://eips.ethereum.org/EIPS/eip-3155
+//! Inspector that support tracing of EIP-3155 <https://eips.ethereum.org/EIPS/eip-3155>
 
 use crate::inspectors::GasInspector;
 use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult};
