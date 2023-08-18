@@ -1,5 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+
 pub mod bits;
 pub mod bytecode;
 pub mod constants;
@@ -11,8 +13,6 @@ pub mod result;
 pub mod specification;
 pub mod state;
 pub mod utilities;
-
-extern crate alloc;
 
 pub use bits::B160;
 pub use bits::B256;

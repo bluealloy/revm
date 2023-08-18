@@ -71,7 +71,7 @@ pub fn execute_test_suit(
         return Ok(());
     }
 
-    // Test checks if nonce overflows. We are handling this correctly but we are not parsing exception in testsuite
+    // Test checks if nonce overflows. We are handling this correctly but we are not parsing exception in test suite
     // There are more nonce overflow tests that are in internal call/create, and those tests are passing and are enabled.
     if path.file_name() == Some(OsStr::new("CreateTransactionHighNonce.json")) {
         return Ok(());
@@ -90,7 +90,7 @@ pub fn execute_test_suit(
         return Ok(());
     }
 
-    // Skip test where basefee/accesslist/diffuculty is present but it shouldn't be supported in London/Berlin/TheMerge.
+    // Skip test where basefee/accesslist/difficulty is present but it shouldn't be supported in London/Berlin/TheMerge.
     // https://github.com/ethereum/tests/blob/5b7e1ab3ffaf026d99d20b17bb30f533a2c80c8b/GeneralStateTests/stExample/eip1559.json#L130
     // It is expected to not execute these tests.
     if path.file_name() == Some(OsStr::new("accessListExample.json"))
@@ -118,7 +118,7 @@ pub fn execute_test_suit(
     let json_reader = std::fs::read(path).unwrap();
     let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
 
-    let map_caller_keys: HashMap<_, _> = vec![
+    let map_caller_keys: HashMap<_, _> = [
         (
             B256(hex!(
                 "45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
@@ -156,8 +156,7 @@ pub fn execute_test_suit(
             B160(hex!("dcc5ba93a1ed7e045690d722f2bf460a51c61415")),
         ),
     ]
-    .into_iter()
-    .collect();
+    .into();
 
     for (name, unit) in suit.0.into_iter() {
         // Create database and insert cache

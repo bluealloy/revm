@@ -1,4 +1,4 @@
-//! Dummy NoOp Inspector, helpful as standalone replacemnt.
+//! Dummy NoOp Inspector, helpful as standalone replacement.
 
 use crate::{Database, Inspector};
 

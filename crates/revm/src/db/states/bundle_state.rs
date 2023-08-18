@@ -145,9 +145,10 @@ impl BundleState {
     }
 
     /// Consume `TransitionState` by applying the changes and creating the reverts
-    pub fn apply_block_substate_and_create_reverts(&mut self, mut transitions: TransitionState) {
-        let mut reverts = Vec::new();
-        for (address, transition) in transitions.take().transitions.into_iter() {
+    pub fn apply_block_substate_and_create_reverts(&mut self, transitions: TransitionState) {
+        // pessimistically pre-allocate assuming _all_ accounts changed.
+        let mut reverts = Vec::with_capacity(transitions.transitions.len());
+        for (address, transition) in transitions.transitions.into_iter() {
             // add new contract if it was created/changed.
             if let Some((hash, new_bytecode)) = transition.has_new_contract() {
                 self.contracts.insert(hash, new_bytecode.clone());
@@ -183,8 +184,10 @@ impl BundleState {
     /// original state, this assumption can't be made in cases when
     /// we split the bundle state and commit part of it.
     pub fn take_sorted_plain_change_inner(&mut self, omit_changed_check: bool) -> StateChangeset {
-        let mut accounts = Vec::new();
-        let mut storage = Vec::new();
+        // pessimistically pre-allocate assuming _all_ accounts changed.
+        let state_len = self.state.len();
+        let mut accounts = Vec::with_capacity(state_len);
+        let mut storage = Vec::with_capacity(state_len);
 
         for (address, account) in self.state.drain() {
             // append account info if it is changed.
@@ -199,11 +202,11 @@ impl BundleState {
 
             // append storage changes
 
-            // NOTE: Assumption is that revert is going to remova whole plain storage from
+            // NOTE: Assumption is that revert is going to remove whole plain storage from
             // database so we can check if plain state was wiped or not.
             let mut account_storage_changed = Vec::with_capacity(account.storage.len());
             if was_destroyed {
-                // If storage was destroyed that means that storage was wipped.
+                // If storage was destroyed that means that storage was wiped.
                 // In that case we need to check if present storage value is different then ZERO.
                 for (key, slot) in account.storage {
                     if omit_changed_check || slot.present_value != U256::ZERO {
@@ -243,10 +246,11 @@ impl BundleState {
 
     /// Return and clear all reverts from BundleState, sort them before returning.
     pub fn take_reverts(&mut self) -> StateReverts {
-        let mut state_reverts = StateReverts::default();
+        let mut state_reverts = StateReverts::with_capacity(self.reverts.len());
         for reverts in self.reverts.drain(..) {
-            let mut accounts = Vec::new();
-            let mut storage = Vec::new();
+            // pessimistically pre-allocate assuming _all_ accounts changed.
+            let mut accounts = Vec::with_capacity(reverts.len());
+            let mut storage = Vec::with_capacity(reverts.len());
             for (address, revert_account) in reverts.into_iter() {
                 match revert_account.account {
                     AccountInfoRevert::RevertTo(acc) => accounts.push((address, Some(acc))),
@@ -254,7 +258,7 @@ impl BundleState {
                     AccountInfoRevert::DoNothing => (),
                 }
                 if revert_account.wipe_storage || !revert_account.storage.is_empty() {
-                    let mut account_storage = Vec::new();
+                    let mut account_storage = Vec::with_capacity(revert_account.storage.len());
                     for (key, revert_slot) in revert_account.storage {
                         account_storage.push((key, revert_slot.to_previous_value()));
                     }
@@ -290,7 +294,7 @@ impl BundleState {
         self.reverts.extend(other.reverts);
     }
 
-    /// This will returnd detached lower part of reverts
+    /// This will return detached lower part of reverts
     ///
     /// Note that plain state will stay the same and returned BundleState
     /// will contain only reverts and will be considered broken.
@@ -343,14 +347,12 @@ impl BundleState {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use crate::{db::StorageWithOriginalValues, TransitionAccount};
     use revm_interpreter::primitives::KECCAK_EMPTY;
 
-    use crate::{db::StorageWithOriginalValues, TransitionAccount};
-
-    use super::*;
-
     #[test]
-    fn transition_all_states() {
+    fn transition_states() {
         // dummy data
         let address = B160([0x01; 20]);
         let acc1 = AccountInfo {
@@ -374,9 +376,119 @@ mod tests {
         };
 
         // apply first transition
-        bundle_state.apply_block_substate_and_create_reverts(TransitionState::with_capacity(
+        bundle_state.apply_block_substate_and_create_reverts(TransitionState::single(
             address,
             transition.clone(),
         ));
+    }
+
+    fn account1() -> B160 {
+        [0x60; 20].into()
+    }
+
+    fn account2() -> B160 {
+        [0x61; 20].into()
+    }
+
+    fn slot() -> U256 {
+        U256::from(5)
+    }
+
+    /// Test bundle one
+    fn test_bundle1() -> BundleState {
+        // block changes
+
+        let bundle = BundleState::new(
+            vec![
+                (
+                    account1(),
+                    None,
+                    Some(AccountInfo {
+                        nonce: 1,
+                        balance: U256::from(10),
+                        code_hash: KECCAK_EMPTY,
+                        code: None,
+                    }),
+                    HashMap::from([(slot(), (U256::from(0), U256::from(10)))]),
+                ),
+                (
+                    account2(),
+                    None,
+                    Some(AccountInfo {
+                        nonce: 1,
+                        balance: U256::from(10),
+                        code_hash: KECCAK_EMPTY,
+                        code: None,
+                    }),
+                    HashMap::from([]),
+                ),
+            ],
+            vec![vec![
+                (account1(), Some(None), vec![(slot(), U256::from(0))]),
+                (account2(), Some(None), vec![]),
+            ]],
+            vec![],
+        );
+        bundle
+    }
+
+    /// Test bundle two
+    fn test_bundle2() -> BundleState {
+        // block changes
+        let bundle = BundleState::new(
+            vec![
+                ((
+                    account1(),
+                    None,
+                    Some(AccountInfo {
+                        nonce: 3,
+                        balance: U256::from(20),
+                        code_hash: KECCAK_EMPTY,
+                        code: None,
+                    }),
+                    HashMap::from([(slot(), (U256::from(0), U256::from(15)))]),
+                )),
+            ],
+            vec![vec![(
+                account1(),
+                Some(Some(AccountInfo {
+                    nonce: 1,
+                    balance: U256::from(10),
+                    code_hash: KECCAK_EMPTY,
+                    code: None,
+                })),
+                vec![(slot(), U256::from(10))],
+            )]],
+            vec![],
+        );
+        bundle
+    }
+
+    #[test]
+    fn sanity_path() {
+        let bundle1 = test_bundle1();
+        let bundle2 = test_bundle2();
+
+        let mut extended = bundle1.clone();
+        extended.extend(bundle2.clone());
+
+        let mut reverted = extended.clone();
+        // revert zero does nothing.
+        reverted.revert(0);
+        assert_eq!(reverted, extended);
+
+        // revert by one gives us bundle one.
+        reverted.revert(1);
+        assert_eq!(reverted, bundle1);
+
+        // reverted by additional one gives us empty bundle.
+        reverted.revert(1);
+        assert_eq!(reverted, BundleState::default());
+
+        let mut reverted = extended.clone();
+
+        // reverted by bigger number gives us empty bundle
+        reverted.revert(10);
+        assert_eq!(reverted, BundleState::default());
     }
 }

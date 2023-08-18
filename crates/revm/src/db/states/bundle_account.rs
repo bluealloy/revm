@@ -18,11 +18,11 @@ use revm_precompile::HashMap;
 pub struct BundleAccount {
     pub info: Option<AccountInfo>,
     pub original_info: Option<AccountInfo>,
-    /// Contain both original and present state.
+    /// Contains both original and present state.
     /// When extracting changeset we compare if original value is different from present value.
     /// If it is different we add it to changeset.
     ///
-    /// If Account was destroyed we ignore original value and comprate present state with U256::ZERO.
+    /// If Account was destroyed we ignore original value and compare present state with U256::ZERO.
     pub storage: StorageWithOriginalValues,
     /// Account status.
     pub status: AccountStatus,
@@ -95,8 +95,8 @@ impl BundleAccount {
         for (key, slot) in revert.storage {
             match slot {
                 RevertToSlot::Some(value) => {
-                    // Dont overwrite original values if present
-                    // if storage is not present set original values as currect value.
+                    // Don't overwrite original values if present
+                    // if storage is not present set original values as current value.
                     self.storage
                         .entry(key)
                         .or_insert(StorageSlot::new_changed(value, U256::ZERO))
@@ -148,8 +148,6 @@ impl BundleAccount {
             |this_storage: &mut StorageWithOriginalValues,
              storage_update: StorageWithOriginalValues| {
                 for (key, value) in storage_update {
-                    // TODO small optimization but if present and original values are same we can
-                    // remove this entry from this storage.
                     this_storage.entry(key).or_insert(value).present_value = value.present_value;
                 }
             };
@@ -158,8 +156,10 @@ impl BundleAccount {
             |updated_storage: &StorageWithOriginalValues| -> HashMap<U256, RevertToSlot> {
                 updated_storage
                     .iter()
-                    .filter(|s| s.1.original_value != s.1.present_value)
-                    .map(|(key, value)| (*key, RevertToSlot::Some(value.original_value)))
+                    .filter(|s| s.1.previous_or_original_value != s.1.present_value)
+                    .map(|(key, value)| {
+                        (*key, RevertToSlot::Some(value.previous_or_original_value))
+                    })
                     .collect()
             };
 

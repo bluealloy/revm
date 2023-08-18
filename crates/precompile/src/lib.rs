@@ -1,5 +1,8 @@
 #![no_std]
 
+#[macro_use]
+extern crate alloc;
+
 mod blake2;
 mod bn128;
 mod hash;
@@ -18,9 +21,6 @@ pub use revm_primitives as primitives;
 pub type B160 = [u8; 20];
 pub type B256 = [u8; 32];
 
-/// libraries for no_std flag
-#[macro_use]
-extern crate alloc;
 use alloc::vec::Vec;
 use core::fmt;
 
@@ -121,7 +121,7 @@ impl Precompiles {
     pub fn homestead() -> &'static Self {
         static INSTANCE: OnceCell<Precompiles> = OnceCell::new();
         INSTANCE.get_or_init(|| {
-            let fun = vec![
+            let fun = [
                 secp256k1::ECRECOVER,
                 hash::SHA256,
                 hash::RIPEMD160,
@@ -139,7 +139,7 @@ impl Precompiles {
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::homestead().clone();
             precompiles.fun.extend(
-                vec![
+                [
                     // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
                     // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
                     bn128::add::BYZANTIUM,
@@ -160,7 +160,7 @@ impl Precompiles {
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::byzantium().clone();
             precompiles.fun.extend(
-                vec![
+                [
                     // EIP-152: Add BLAKE2 compression function `F` precompile.
                     blake2::FUN,
                     // EIP-1108: Reduce alt_bn128 precompile gas costs.
@@ -180,7 +180,7 @@ impl Precompiles {
         INSTANCE.get_or_init(|| {
             let mut precompiles = Self::istanbul().clone();
             precompiles.fun.extend(
-                vec![
+                [
                     // EIP-2565: ModExp Gas Cost.
                     modexp::BERLIN,
                 ]

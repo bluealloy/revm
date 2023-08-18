@@ -100,7 +100,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let initial_gas_spend =
             initial_tx_gas::<GSPEC>(&tx_data, tx_is_create, &env.tx.access_list);
 
-        // Additonal check to see if limit is big enought to cover initial gas.
+        // Additional check to see if limit is big enough to cover initial gas.
         if env.tx.gas_limit < initial_gas_spend {
             return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
         }
@@ -121,7 +121,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             .load_account(tx_caller, self.data.db)
             .map_err(EVMError::Database)?;
 
-        self.data.env.validate_tx_agains_state(caller_account)?;
+        self.data.env.validate_tx_against_state(caller_account)?;
 
         // Reduce gas_limit*gas_price amount of caller account.
         // unwrap_or can only occur if disable_balance_check is enabled
@@ -264,7 +264,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             };
 
             // return balance of not spend gas.
-            let caller_account = self.data.journaled_state.state().get_mut(&caller).unwrap();
+            let Ok((caller_account, _)) =
+                self.data.journaled_state.load_account(caller, self.data.db)
+            else {
+                panic!("caller account not found");
+            };
+
             caller_account.info.balance = caller_account
                 .info
                 .balance
@@ -409,9 +414,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
     /// EVM create opcode for both initial crate and CREATE and CREATE2 opcodes.
     fn create_inner(&mut self, inputs: &CreateInputs) -> CreateResult {
-        let res = self.prepare_create(inputs);
-
-        let prepared_create = match res {
+        // Prepare crate.
+        let prepared_create = match self.prepare_create(inputs) {
             Ok(o) => o,
             Err(e) => return e,
         };
@@ -651,9 +655,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
     /// Main contract call of the EVM.
     fn call_inner(&mut self, inputs: &CallInputs) -> CallResult {
-        let res = self.prepare_call(inputs);
-
-        let prepared_call = match res {
+        // Prepare call
+        let prepared_call = match self.prepare_call(inputs) {
             Ok(o) => o,
             Err(e) => return e,
         };
@@ -825,7 +828,9 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         if INSPECT {
             let (ret, address, gas, out) = self.inspector.create(&mut self.data, inputs);
             if ret != InstructionResult::Continue {
-                return (ret, address, gas, out);
+                return self
+                    .inspector
+                    .create_end(&mut self.data, inputs, ret, address, gas, out);
             }
         }
         let ret = self.create_inner(inputs);
@@ -847,7 +852,9 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         if INSPECT {
             let (ret, gas, out) = self.inspector.call(&mut self.data, inputs);
             if ret != InstructionResult::Continue {
-                return (ret, gas, out);
+                return self
+                    .inspector
+                    .call_end(&mut self.data, inputs, gas, ret, out);
             }
         }
         let ret = self.call_inner(inputs);

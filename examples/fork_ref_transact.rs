@@ -72,7 +72,7 @@ async fn main() -> Result<()> {
     // insert pre-built database from above
     evm.database(cache_db);
 
-    // fill in missing bits of env struc
+    // fill in missing bits of env struct
     // change that to whatever caller you want to be
     evm.env.tx.caller = B160::from_str("0x0000000000000000000000000000000000000000")?;
     // account you want to transact with
@@ -89,17 +89,15 @@ async fn main() -> Result<()> {
 
     // unpack output call enum into raw bytes
     let value = match result {
-        ExecutionResult::Success { output, .. } => match output {
-            Output::Call(value) => Some(value),
-            _ => None,
-            Output::Create(_, _) => todo!(),
-        },
-        _ => None,
+        ExecutionResult::Success {
+            output: Output::Call(value),
+            ..
+        } => value,
+        result => panic!("Execution failed: {result:?}"),
     };
 
     // decode bytes to reserves + ts via ethers-rs's abi decode
-    let (reserve0, reserve1, ts): (u128, u128, u32) =
-        abi.decode_output("getReserves", value.unwrap())?;
+    let (reserve0, reserve1, ts): (u128, u128, u32) = abi.decode_output("getReserves", value)?;
 
     // Print emulated getReserves() call output
     println!("Reserve0: {:#?}", reserve0);
