@@ -6,10 +6,10 @@ use crate::{
 };
 use core::cmp::min;
 
-pub fn sha3(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn calculate_keccak256(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     pop!(interpreter, from, len);
     let len = as_usize_or_fail!(interpreter, len, InstructionResult::InvalidOperandOOG);
-    gas_or_fail!(interpreter, gas::sha3_cost(len as u64));
+    gas_or_fail!(interpreter, gas::keccak256_cost(len as u64));
     let hash = if len == 0 {
         KECCAK_EMPTY
     } else {

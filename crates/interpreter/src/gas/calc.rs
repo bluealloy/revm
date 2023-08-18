@@ -62,7 +62,7 @@ pub fn create2_cost(len: usize) -> Option<u64> {
     // ceil(len / 32.0)
     let len = len as u64;
     let sha_addup_base = (len / 32) + u64::from((len % 32) != 0);
-    let sha_addup = SHA3WORD.checked_mul(sha_addup_base)?;
+    let sha_addup = KECCAK256WORD.checked_mul(sha_addup_base)?;
     let gas = base.checked_add(sha_addup)?;
 
     Some(gas)
@@ -146,10 +146,10 @@ pub fn log_cost(n: u8, len: u64) -> Option<u64> {
         .checked_add(LOGTOPIC * n as u64)
 }
 
-pub fn sha3_cost(len: u64) -> Option<u64> {
+pub fn keccak256_cost(len: u64) -> Option<u64> {
     let wordd = len / 32;
     let wordr = len % 32;
-    SHA3.checked_add(SHA3WORD.checked_mul(if wordr == 0 { wordd } else { wordd + 1 })?)
+    KECCAK256.checked_add(KECCAK256WORD.checked_mul(if wordr == 0 { wordd } else { wordd + 1 })?)
 }
 
 /// EIP-3860: Limit and meter initcode

@@ -1,5 +1,5 @@
 use crate::opcode;
-use crate::primitives::{Bytecode, BytecodeState, Bytes, B256};
+use crate::primitives::{Bytecode, BytecodeState, Bytes};
 use alloc::sync::Arc;
 // use bitvec::order::Lsb0;
 // use bitvec::prelude::bitvec;
@@ -15,7 +15,6 @@ use revm_primitives::{
 ///
 /// If the bytecode is already analyzed, it is returned as-is.
 pub fn to_analysed(bytecode: Bytecode) -> Bytecode {
-    let hash = bytecode.hash;
     let (bytecode, len) = match bytecode.state {
         BytecodeState::Raw => {
             let len = bytecode.bytecode.len();
@@ -29,7 +28,6 @@ pub fn to_analysed(bytecode: Bytecode) -> Bytecode {
 
     Bytecode {
         bytecode,
-        hash,
         state: BytecodeState::Analysed { len, jump_map },
     }
 }
@@ -67,7 +65,6 @@ fn analyze(code: &[u8]) -> JumpMap {
 pub struct BytecodeLocked {
     bytecode: Bytes,
     len: usize,
-    hash: B256,
     jump_map: JumpMap,
 }
 
@@ -87,7 +84,6 @@ impl TryFrom<Bytecode> for BytecodeLocked {
             Ok(BytecodeLocked {
                 bytecode: bytecode.bytecode,
                 len,
-                hash: bytecode.hash,
                 jump_map,
             })
         } else {
@@ -104,10 +100,6 @@ impl BytecodeLocked {
         self.len
     }
 
-    pub fn hash(&self) -> B256 {
-        self.hash
-    }
-
     pub fn is_empty(&self) -> bool {
         self.len == 0
     }
@@ -115,7 +107,6 @@ impl BytecodeLocked {
     pub fn unlock(self) -> Bytecode {
         Bytecode {
             bytecode: self.bytecode,
-            hash: self.hash,
             state: BytecodeState::Analysed {
                 len: self.len,
                 jump_map: self.jump_map,

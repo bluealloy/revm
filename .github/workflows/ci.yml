@@ -2,9 +2,9 @@ name: Tests
 
 on:
   push:
-    branches: [main,'release/**']
+    branches: [main, "release/**"]
   pull_request:
-    branches: [main,'release/**']
+    branches: [main, "release/**"]
 
 jobs:
   tests-stable:
@@ -12,37 +12,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          profile: minimal
-          override: true
+        uses: dtolnay/rust-toolchain@stable
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
 
       - name: cargo test
-        run: cargo test --all --all-features
+        run: cargo test --workspace --all-features
 
   lint:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@nightly
         with:
-          toolchain: nightly
-          profile: minimal
           components: rustfmt, clippy
-          override: true
 
-      - uses: Swatinem/rust-cache@v1
+      - uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
 
@@ -50,7 +43,7 @@ jobs:
         run: cargo +nightly fmt --all -- --check
 
       - name: cargo clippy
-        run: cargo +nightly clippy --all --all-features -- -D warnings
+        run: cargo +nightly clippy --workspace --all-features -- -D warnings
 
       - name: cargo check no-default-features
         run: |

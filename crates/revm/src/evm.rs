@@ -196,7 +196,7 @@ pub fn evm_inner<'a, DB: Database, const INSPECT: bool>(
         }
         SpecId::MERGE => create_evm!(MergeSpec, db, env, insp),
         SpecId::SHANGHAI => create_evm!(ShanghaiSpec, db, env, insp),
-        SpecId::CANCUN => create_evm!(LatestSpec, db, env, insp),
+        SpecId::CANCUN => create_evm!(CancunSpec, db, env, insp),
         SpecId::LATEST => create_evm!(LatestSpec, db, env, insp),
     }
 }

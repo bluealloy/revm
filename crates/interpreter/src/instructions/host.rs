@@ -180,6 +180,29 @@ pub fn sstore<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     refund!(interpreter, gas::sstore_refund::<SPEC>(original, old, new));
 }
 
+/// Store value to transient storage
+pub fn tstore<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+    // EIP-1153: Transient storage opcodes
+    check!(interpreter, SPEC::enabled(CANCUN));
+    check_staticcall!(interpreter);
+    gas!(interpreter, gas::WARM_STORAGE_READ_COST);
+
+    pop!(interpreter, index, value);
+
+    host.tstore(interpreter.contract.address, index, value);
+}
+
+/// Load value from transient storage
+pub fn tload<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+    // EIP-1153: Transient storage opcodes
+    check!(interpreter, SPEC::enabled(CANCUN));
+    gas!(interpreter, gas::WARM_STORAGE_READ_COST);
+
+    pop_top!(interpreter, index);
+
+    *index = host.tload(interpreter.contract.address, *index);
+}
+
 pub fn log<const N: u8>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     check_staticcall!(interpreter);
 
@@ -232,6 +255,7 @@ pub fn selfdestruct<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Ho
 
 pub fn prepare_create_inputs<const IS_CREATE2: bool, SPEC: Spec>(
     interpreter: &mut Interpreter,
+    host: &mut dyn Host,
     create_inputs: &mut Option<Box<CreateInputs>>,
 ) {
     check_staticcall!(interpreter);
@@ -255,7 +279,14 @@ pub fn prepare_create_inputs<const IS_CREATE2: bool, SPEC: Spec>(
         );
         // EIP-3860: Limit and meter initcode
         if SPEC::enabled(SHANGHAI) {
-            if len > MAX_INITCODE_SIZE {
+            // Limit is set as double of max contract bytecode size
+            let max_initcode_size = host
+                .env()
+                .cfg
+                .limit_contract_code_size
+                .map(|limit| limit.saturating_mul(2))
+                .unwrap_or(MAX_INITCODE_SIZE);
+            if len > max_initcode_size {
                 interpreter.instruction_result = InstructionResult::CreateInitcodeSizeLimit;
                 return;
             }
@@ -297,7 +328,7 @@ pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
     host: &mut dyn Host,
 ) {
     let mut create_input: Option<Box<CreateInputs>> = None;
-    prepare_create_inputs::<IS_CREATE2, SPEC>(interpreter, &mut create_input);
+    prepare_create_inputs::<IS_CREATE2, SPEC>(interpreter, host, &mut create_input);
 
     let Some(mut create_input) = create_input else {
         return;

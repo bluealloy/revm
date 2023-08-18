@@ -1,6 +1,6 @@
 use bytes::Bytes;
-use revm::primitives::{B160, B256, U256};
-use std::collections::{BTreeMap, HashMap};
+use revm::primitives::{HashMap, B160, B256, U256};
+use std::collections::BTreeMap;
 mod deserializer;
 mod spec;
 

@@ -21,4 +21,5 @@ pub use instructions::opcode::{self, OpCode, OPCODE_JUMPMAP};
 pub use interpreter::*;
 pub use interpreter::{BytecodeLocked, Contract, Interpreter, Memory, Stack};
 
+#[doc(inline)]
 pub use revm_primitives as primitives;

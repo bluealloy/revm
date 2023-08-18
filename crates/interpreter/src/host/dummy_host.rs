@@ -8,6 +8,7 @@ use alloc::vec::Vec;
 pub struct DummyHost {
     pub env: Env,
     pub storage: HashMap<U256, U256>,
+    pub transient_storage: HashMap<U256, U256>,
     pub log: Vec<Log>,
 }
 
@@ -16,6 +17,7 @@ impl DummyHost {
         Self {
             env,
             storage: HashMap::new(),
+            transient_storage: Default::default(),
             log: Vec::new(),
         }
     }
@@ -87,6 +89,17 @@ impl Host for DummyHost {
         };
 
         Some((U256::ZERO, present, value, is_cold))
+    }
+
+    fn tload(&mut self, _address: B160, index: U256) -> U256 {
+        self.transient_storage
+            .get(&index)
+            .cloned()
+            .unwrap_or_default()
+    }
+
+    fn tstore(&mut self, _address: B160, index: U256, value: U256) {
+        self.transient_storage.insert(index, value);
     }
 
     fn log(&mut self, address: B160, topics: Vec<B256>, data: Bytes) {

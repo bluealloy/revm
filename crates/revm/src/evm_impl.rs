@@ -24,11 +24,11 @@ pub struct EVMData<'a, DB: Database> {
     pub journaled_state: JournaledState,
     pub db: &'a mut DB,
     pub error: Option<DB::Error>,
+    pub precompiles: Precompiles,
 }
 
 pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
     data: EVMData<'a, DB>,
-    precompiles: Precompiles,
     inspector: &'a mut dyn Inspector<DB>,
     _phantomdata: PhantomData<GSPEC>,
 }
@@ -241,8 +241,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 journaled_state,
                 db,
                 error: None,
+                precompiles,
             },
-            precompiles,
             inspector,
             _phantomdata: PhantomData {},
         }
@@ -553,6 +553,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let contract = inputs.contract;
 
         let precompile = self
+            .data
             .precompiles
             .get(&contract)
             .expect("Check for precompile should be already done");
@@ -591,7 +592,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
     }
 
-    fn prepare_call(&mut self, inputs: &mut CallInputs) -> Result<PreparedCall, CallResult> {
+    fn prepare_call(&mut self, inputs: &CallInputs) -> Result<PreparedCall, CallResult> {
         let gas = Gas::new(inputs.gas_limit);
         // Load account and get code. Account is now hot.
         let Some((bytecode, _)) = self.code(inputs.contract) else {
@@ -649,7 +650,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     }
 
     /// Main contract call of the EVM.
-    fn call_inner(&mut self, inputs: &mut CallInputs) -> CallResult {
+    fn call_inner(&mut self, inputs: &CallInputs) -> CallResult {
         let res = self.prepare_call(inputs);
 
         let prepared_call = match res {
@@ -657,7 +658,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             Err(e) => return e,
         };
 
-        let ret = if is_precompile(inputs.contract, self.precompiles.len()) {
+        let ret = if is_precompile(inputs.contract, self.data.precompiles.len()) {
             self.call_precompile(inputs, prepared_call.gas)
         } else if !prepared_call.contract.bytecode.is_empty() {
             // Create interpreter and execute subcall
@@ -756,7 +757,6 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .load_code(address, db)
             .map_err(|e| *error = Some(e))
             .ok()?;
-
         if acc.is_empty() {
             return Some((B256::zero(), is_cold));
         }
@@ -784,6 +784,14 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .sstore(address, index, value, self.data.db)
             .map_err(|e| self.data.error = Some(e))
             .ok()
+    }
+
+    fn tload(&mut self, address: B160, index: U256) -> U256 {
+        self.data.journaled_state.tload(address, index)
+    }
+
+    fn tstore(&mut self, address: B160, index: U256, value: U256) {
+        self.data.journaled_state.tstore(address, index, value)
     }
 
     fn log(&mut self, address: B160, topics: Vec<B256>, data: Bytes) {
