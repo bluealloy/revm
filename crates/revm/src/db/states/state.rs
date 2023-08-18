@@ -124,13 +124,8 @@ impl<'a, DBError> State<'a, DBError> {
         if let Some(transition_state) = self.transition_state.as_mut() {
             let transition_state = transition_state.take();
 
-            if self.bundle_state.is_none() {
-                self.bundle_state = Some(BundleState::default());
-            }
-
             self.bundle_state
-                .as_mut()
-                .unwrap()
+                .get_or_insert(BundleState::default())
                 .apply_block_substate_and_create_reverts(transition_state);
         }
     }
