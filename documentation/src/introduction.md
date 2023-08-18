@@ -7,11 +7,12 @@
 The project hase 4 main crates that are used to build the revm. The crates are:
 
 - `revm`: The main EVM library.
-- `revm-primitives`: Primitive data types.
-- `revm-interpreter`: Execution loop with instructions.
-- `revm-precompile`: EVM precompiles.
+- `primitives`: Primitive data types.
+- `interpreter`: Execution loop with instructions.
+- `precompile`: EVM precompiles.
 
 ## Binaries
 
-- `revme`: A CLI binary, used for running state test json.
+- `revme`: A CLI binary, used for running state test json. Currently it is used to run ethereum tests:
+* statetest: takes path to folder where ethereum statetest json can be found. It recursively searches for all json files and execute them. This is how I run all https://github.com/ethereum/tests to check if revm is compliant. Example `revme statests test/GenericEvmTest/`
 - `revm-test`: test binaries with contracts; used mostly to check performance.
