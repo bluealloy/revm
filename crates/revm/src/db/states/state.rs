@@ -12,9 +12,9 @@ use revm_interpreter::primitives::{
 /// State clear flag is set inside CacheState and by default it is enabled.
 /// If you want to disable it use `set_state_clear_flag` function.
 pub struct State<'a, DBError> {
-    /// Cached state contains both changed from evm executiong and cached/loaded account/storages
+    /// Cached state contains both changed from evm execution and cached/loaded account/storages
     /// from database. This allows us to have only one layer of cache where we can fetch data.
-    /// Additionaly we can introuduce some preloading of data from database.
+    /// Additionaly we can introduce some preloading of data from database.
     pub cache: CacheState,
     /// Optional database that we use to fetch data from. If database is not present, we will
     /// return not existing account and storage.
@@ -189,8 +189,8 @@ impl<'a, DBError> Database for State<'a, DBError> {
                 .map(|account| match account.storage.entry(index) {
                     hash_map::Entry::Occupied(entry) => Ok(*entry.get()),
                     hash_map::Entry::Vacant(entry) => {
-                        // if account was destroyed or account is newely build
-                        // we return zero and dont ask detabase.
+                        // if account was destroyed or account is newly built
+                        // we return zero and don't ask database.
                         let value = if is_storage_known {
                             U256::ZERO
                         } else {

@@ -91,7 +91,7 @@ spec!(HOMESTEAD, HomesteadSpec);
 spec!(TANGERINE, TangerineSpec);
 spec!(SPURIOUS_DRAGON, SpuriousDragonSpec);
 spec!(BYZANTIUM, ByzantiumSpec);
-// CONSTANTINOPLE was overriden with PETERSBURG
+// CONSTANTINOPLE was overridden with PETERSBURG
 spec!(PETERSBURG, PetersburgSpec);
 spec!(ISTANBUL, IstanbulSpec);
 // MUIR_GLACIER no EVM spec change

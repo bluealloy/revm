@@ -257,7 +257,7 @@ impl Stack {
         }
 
         let slot;
-        // Safety: check above ensures us that we are okey in increment len.
+        // Safety: check above ensures us that we are okay in increment len.
         unsafe {
             self.data.set_len(new_len);
             slot = self.data.get_unchecked_mut(new_len - 1);

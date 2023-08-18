@@ -21,7 +21,7 @@ use revm_precompile::Precompiles;
 /// handling of struct you want.
 /// * Database trait has mutable self in its functions. It is usefully if on get calls you want to modify
 /// your cache or update some statistics. They enable `transact` and `inspect` functions
-/// * DatabaseRef takes reference on object, this is useful if you only have reference on state and dont
+/// * DatabaseRef takes reference on object, this is useful if you only have reference on state and don't
 /// want to update anything on it. It enabled `transact_ref` and `inspect_ref` functions
 /// * Database+DatabaseCommit allow directly committing changes of transaction. it enabled `transact_commit`
 /// and `inspect_commit`

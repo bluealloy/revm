@@ -87,7 +87,7 @@ impl CacheAccount {
         self.account.as_ref().map(|a| a.info.clone())
     }
 
-    /// Desolve account into components.
+    /// Dissolve account into components.
     pub fn into_components(self) -> (Option<(AccountInfo, PlainStorage)>, AccountStatus) {
         (self.account.map(|a| a.into_components()), self.status)
     }
@@ -253,8 +253,8 @@ impl CacheAccount {
             | AccountStatus::Loaded
             | AccountStatus::Changed
             | AccountStatus::InMemoryChange => {
-                // if account is loaded and not empty this means that account has some balance
-                // this does not mean that accoun't can be created.
+                // If account is loaded and not empty this means that account has some balance.
+                // This means that account cannot be created.
                 // We are assuming that EVM did necessary checks before allowing account to be created.
                 AccountStatus::InMemoryChange
             }
@@ -277,7 +277,7 @@ impl CacheAccount {
     /// Increment balance by `balance` amount. Assume that balance will not
     /// overflow or be zero.
     ///
-    /// Note: to skip some edgecases we assume that additional balance is never zero.
+    /// Note: to skip some edge cases we assume that additional balance is never zero.
     /// And as increment is always related to block fee/reward and withdrawals this is correct.
     pub fn increment_balance(&mut self, balance: u128) -> TransitionAccount {
         self.account_info_change(|info| {
@@ -384,7 +384,7 @@ impl CacheAccount {
             }
             AccountStatus::LoadedEmptyEIP161 => {
                 // Change on empty account, should transfer storage if there is any.
-                // There is posibility that there are storage inside db.
+                // There is possibility that there are storage inside db.
                 // That storage is used in merkle tree calculation before state clear EIP.
                 AccountStatus::InMemoryChange
             }
@@ -395,7 +395,7 @@ impl CacheAccount {
             }
             AccountStatus::Destroyed | AccountStatus::DestroyedAgain => {
                 // If account is destroyed and then changed this means this is
-                // balance tranfer.
+                // balance transfer.
                 AccountStatus::DestroyedChanged
             }
         };

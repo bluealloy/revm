@@ -45,7 +45,7 @@ impl SpecName {
             Self::Shanghai => SpecId::SHANGHAI,
             Self::Cancun => SpecId::CANCUN,
             Self::ByzantiumToConstantinopleAt5 | Self::Constantinople => {
-                panic!("Overriden with PETERSBURG")
+                panic!("Overridden with PETERSBURG")
             }
             Self::Unknown => panic!("Unknown spec"),
         }

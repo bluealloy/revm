@@ -5,7 +5,7 @@ use core::{
     ops::{BitAnd, Not},
 };
 
-/// A sequencial memory. It uses Rust's `Vec` for internal
+/// A sequential memory. It uses Rust's `Vec` for internal
 /// representation.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -58,13 +58,13 @@ impl Memory {
         self.data.shrink_to_fit()
     }
 
-    /// Resize the memory. asume that we already checked if
+    /// Resize the memory. Assume that we already checked if
     /// we have enought gas to resize this vector and that we made new_size as multiply of 32
     pub fn resize(&mut self, new_size: usize) {
         self.data.resize(new_size, 0);
     }
 
-    /// Get memory region at given offset. Dont check offset and size
+    /// Get memory region at given offset. Don't check offset and size
     #[inline(always)]
     pub fn get_slice(&self, offset: usize, size: usize) -> &[u8] {
         &self.data[offset..offset + size]
@@ -93,11 +93,11 @@ impl Memory {
     }
 
     /// Set memory from data. Our memory offset+len is expected to be correct but we
-    /// are doing bound checks on data/data_offeset/len and zeroing parts that is not copied.
+    /// are doing bound checks on data/data_offset/len and zeroing parts that is not copied.
     #[inline(always)]
     pub fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]) {
         if data_offset >= data.len() {
-            // nulify all memory slots
+            // nullify all memory slots
             for i in &mut self.data[memory_offset..memory_offset + len] {
                 *i = 0;
             }
@@ -107,7 +107,7 @@ impl Memory {
         let memory_data_end = memory_offset + (data_end - data_offset);
         self.data[memory_offset..memory_data_end].copy_from_slice(&data[data_offset..data_end]);
 
-        // nulify rest of memory slots
+        // nullify rest of memory slots
         // Safety: Memory is assumed to be valid. And it is commented where that assumption is made
         for i in &mut self.data[memory_data_end..memory_offset + len] {
             *i = 0;

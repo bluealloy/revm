@@ -135,8 +135,8 @@ impl BundleState {
     }
 
     /// Get account from state
-    pub fn account(&self, addres: &Address) -> Option<&BundleAccount> {
-        self.state.get(addres)
+    pub fn account(&self, address: &Address) -> Option<&BundleAccount> {
+        self.state.get(address)
     }
 
     /// Get bytecode from state
@@ -202,11 +202,11 @@ impl BundleState {
 
             // append storage changes
 
-            // NOTE: Assumption is that revert is going to remova whole plain storage from
+            // NOTE: Assumption is that revert is going to remove whole plain storage from
             // database so we can check if plain state was wiped or not.
             let mut account_storage_changed = Vec::with_capacity(account.storage.len());
             if was_destroyed {
-                // If storage was destroyed that means that storage was wipped.
+                // If storage was destroyed that means that storage was wiped.
                 // In that case we need to check if present storage value is different then ZERO.
                 for (key, slot) in account.storage {
                     if omit_changed_check || slot.present_value != U256::ZERO {
@@ -294,7 +294,7 @@ impl BundleState {
         self.reverts.extend(other.reverts);
     }
 
-    /// This will returnd detached lower part of reverts
+    /// This will return detached lower part of reverts
     ///
     /// Note that plain state will stay the same and returned BundleState
     /// will contain only reverts and will be considered broken.

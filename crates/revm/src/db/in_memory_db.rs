@@ -339,7 +339,7 @@ impl From<AccountInfo> for DbAccount {
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub enum AccountState {
     /// Before Spurious Dragon hardfork there was a difference between empty and not existing.
-    /// And we are flaging it here.
+    /// And we are flagging it here.
     NotExisting,
     /// EVM touched this account. For newer hardfork this means it can be cleared/removed from state.
     Touched,
