@@ -1,6 +1,6 @@
 use crate::evm_impl::EVMData;
 use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult, Interpreter};
-use crate::primitives::{db::Database, Address, Bytes, B256};
+use crate::primitives::{db::Database, Bytes, B160, B256};
 
 use auto_impl::auto_impl;
 
@@ -59,7 +59,7 @@ pub trait Inspector<DB: Database> {
     fn log(
         &mut self,
         _evm_data: &mut EVMData<'_, DB>,
-        _address: &Address,
+        _address: &B160,
         _topics: &[B256],
         _data: &Bytes,
     ) {
@@ -110,7 +110,7 @@ pub trait Inspector<DB: Database> {
         &mut self,
         _data: &mut EVMData<'_, DB>,
         _inputs: &mut CreateInputs,
-    ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
+    ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
         (
             InstructionResult::Continue,
             None,
@@ -128,13 +128,13 @@ pub trait Inspector<DB: Database> {
         _data: &mut EVMData<'_, DB>,
         _inputs: &CreateInputs,
         ret: InstructionResult,
-        address: Option<Address>,
+        address: Option<B160>,
         remaining_gas: Gas,
         out: Bytes,
-    ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
+    ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
         (ret, address, remaining_gas, out)
     }
 
     /// Called when a contract has been self-destructed with funds transferred to target.
-    fn selfdestruct(&mut self, _contract: Address, _target: Address) {}
+    fn selfdestruct(&mut self, _contract: B160, _target: B160) {}
 }

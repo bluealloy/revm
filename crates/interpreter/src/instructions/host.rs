@@ -1,13 +1,13 @@
-use crate::primitives::{Address, Bytes, Spec, SpecId::*, B256, U256};
+use crate::primitives::{Bytes, Spec, SpecId::*, B160, B256, U256};
 use crate::MAX_INITCODE_SIZE;
 use crate::{
+    alloc::boxed::Box,
+    alloc::vec::Vec,
     gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
     interpreter::Interpreter,
     return_ok, return_revert, CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme,
     Host, InstructionResult, Transfer,
 };
-use alloc::boxed::Box;
-use alloc::vec::Vec;
 use core::cmp::min;
 
 pub fn balance<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
@@ -225,7 +225,7 @@ pub fn log<const N: u8>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     let mut topics = Vec::with_capacity(n);
     for _ in 0..(n) {
         // Safety: stack bounds already checked few lines above
-        topics.push(B256::new(unsafe {
+        topics.push(B256(unsafe {
             interpreter.stack.pop_unsafe().to_be_bytes()
         }));
     }
@@ -345,14 +345,14 @@ pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
 
     match return_reason {
         return_ok!() => {
-            push_b256!(interpreter, address.unwrap_or_default().into_word());
+            push_b256!(interpreter, address.unwrap_or_default().into());
             if crate::USE_GAS {
                 interpreter.gas.erase_cost(gas.remaining());
                 interpreter.gas.record_refund(gas.refunded());
             }
         }
         return_revert!() => {
-            push_b256!(interpreter, B256::ZERO);
+            push_b256!(interpreter, B256::zero());
             if crate::USE_GAS {
                 interpreter.gas.erase_cost(gas.remaining());
             }
@@ -361,7 +361,7 @@ pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
             interpreter.instruction_result = InstructionResult::FatalExternalError;
         }
         _ => {
-            push_b256!(interpreter, B256::ZERO);
+            push_b256!(interpreter, B256::zero());
         }
     }
 }

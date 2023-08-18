@@ -1,5 +1,6 @@
 use std::io::stdout;
 use std::{
+    ffi::OsStr,
     path::{Path, PathBuf},
     sync::{atomic::AtomicBool, Arc, Mutex},
     time::{Duration, Instant},
@@ -7,16 +8,15 @@ use std::{
 
 use super::{
     merkle_trie::{log_rlp_hash, state_merkle_trie_root},
-    models::{SpecName, TestSuite},
+    models::{SpecName, TestSuit},
 };
+use hex_literal::hex;
 use indicatif::ProgressBar;
 use revm::inspectors::TracerEip3155;
 use revm::primitives::keccak256;
 use revm::{
     interpreter::CreateScheme,
-    primitives::{
-        address, b256, Bytecode, Env, ExecutionResult, HashMap, SpecId, TransactTo, B256, U256,
-    },
+    primitives::{Bytecode, Env, ExecutionResult, HashMap, SpecId, TransactTo, B160, B256, U256},
 };
 use std::sync::atomic::Ordering;
 use thiserror::Error;
@@ -31,7 +31,7 @@ pub enum TestError {
         got: B256,
         expect: B256,
     },
-    #[error("Serde json error: {0}")]
+    #[error("Serde json error")]
     SerdeDeserialize(#[from] serde_json::Error),
     #[error("Internal system error")]
     SystemError,
@@ -48,44 +48,44 @@ pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
         .collect::<Vec<PathBuf>>()
 }
 
-pub fn execute_test_suite(
+pub fn execute_test_suit(
     path: &Path,
     elapsed: &Arc<Mutex<Duration>>,
     trace: bool,
 ) -> Result<(), TestError> {
-    let name = path.file_name().unwrap().to_str().unwrap();
-
     // funky test with `bigint 0x00` value in json :) not possible to happen on mainnet and require custom json parser.
     // https://github.com/ethereum/tests/issues/971
-    if name == "ValueOverflow.json" {
+    if path.file_name() == Some(OsStr::new("ValueOverflow.json")) {
         return Ok(());
     }
 
     // precompiles having storage is not possible
-    if name == "RevertPrecompiledTouch_storage.json" || name == "RevertPrecompiledTouch.json" {
+    if path.file_name() == Some(OsStr::new("RevertPrecompiledTouch_storage.json"))
+        || path.file_name() == Some(OsStr::new("RevertPrecompiledTouch.json"))
+    {
         return Ok(());
     }
 
     // txbyte is of type 02 and we dont parse tx bytes for this test to fail.
-    if name == "typeTwoBerlin.json" {
+    if path.file_name() == Some(OsStr::new("typeTwoBerlin.json")) {
         return Ok(());
     }
 
     // Test checks if nonce overflows. We are handling this correctly but we are not parsing exception in test suite
     // There are more nonce overflow tests that are in internal call/create, and those tests are passing and are enabled.
-    if name == "CreateTransactionHighNonce.json" {
+    if path.file_name() == Some(OsStr::new("CreateTransactionHighNonce.json")) {
         return Ok(());
     }
 
     // Need to handle Test errors
-    if name == "transactionIntinsicBug.json" {
+    if path.file_name() == Some(OsStr::new("transactionIntinsicBug.json")) {
         return Ok(());
     }
 
     // Test check if gas price overflows, we handle this correctly but does not match tests specific exception.
-    if name == "HighGasPrice.json"
-        || name == "CREATE_HighNonce.json"
-        || name == "CREATE_HighNonceMinus1.json"
+    if path.file_name() == Some(OsStr::new("HighGasPrice.json"))
+        || path.file_name() == Some(OsStr::new("CREATE_HighNonce.json"))
+        || path.file_name() == Some(OsStr::new("CREATE_HighNonceMinus1.json"))
     {
         return Ok(());
     }
@@ -93,20 +93,20 @@ pub fn execute_test_suite(
     // Skip test where basefee/accesslist/difficulty is present but it shouldn't be supported in London/Berlin/TheMerge.
     // https://github.com/ethereum/tests/blob/5b7e1ab3ffaf026d99d20b17bb30f533a2c80c8b/GeneralStateTests/stExample/eip1559.json#L130
     // It is expected to not execute these tests.
-    if name == "accessListExample.json"
-        || name == "basefeeExample.json"
-        || name == "eip1559.json"
-        || name == "mergeTest.json"
+    if path.file_name() == Some(OsStr::new("accessListExample.json"))
+        || path.file_name() == Some(OsStr::new("basefeeExample.json"))
+        || path.file_name() == Some(OsStr::new("eip1559.json"))
+        || path.file_name() == Some(OsStr::new("mergeTest.json"))
     {
         return Ok(());
     }
 
     // These tests are passing, but they take a lot of time to execute so we are going to skip them.
-    if name == "loopExp.json"
-        || name == "Call50000_sha256.json"
-        || name == "static_Call50000_sha256.json"
-        || name == "loopMul.json"
-        || name == "CALLBlake2f_MaxRounds.json"
+    if path.file_name() == Some(OsStr::new("loopExp.json"))
+        || path.file_name() == Some(OsStr::new("Call50000_sha256.json"))
+        || path.file_name() == Some(OsStr::new("static_Call50000_sha256.json"))
+        || path.file_name() == Some(OsStr::new("loopMul.json"))
+        || path.file_name() == Some(OsStr::new("CALLBlake2f_MaxRounds.json"))
     {
         return Ok(());
     }
@@ -115,41 +115,53 @@ pub fn execute_test_suite(
         return Ok(());
     }
 
-    let s = std::fs::read_to_string(path).unwrap();
-    let suite: TestSuite = serde_json::from_str(&s)?;
+    let json_reader = std::fs::read(path).unwrap();
+    let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
 
     let map_caller_keys: HashMap<_, _> = [
         (
-            b256!("45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"),
-            address!("a94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
+            B256(hex!(
+                "45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+            )),
+            B160(hex!("a94f5374fce5edbc8e2a8697c15331677e6ebf0b")),
         ),
         (
-            b256!("c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4"),
-            address!("cd2a3d9f938e13cd947ec05abc7fe734df8dd826"),
+            B256(hex!(
+                "c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4"
+            )),
+            B160(hex!("cd2a3d9f938e13cd947ec05abc7fe734df8dd826")),
         ),
         (
-            b256!("044852b2a670ade5407e78fb2863c51de9fcb96542a07186fe3aeda6bb8a116d"),
-            address!("82a978b3f5962a5b0957d9ee9eef472ee55b42f1"),
+            B256(hex!(
+                "044852b2a670ade5407e78fb2863c51de9fcb96542a07186fe3aeda6bb8a116d"
+            )),
+            B160(hex!("82a978b3f5962a5b0957d9ee9eef472ee55b42f1")),
         ),
         (
-            b256!("6a7eeac5f12b409d42028f66b0b2132535ee158cfda439e3bfdd4558e8f4bf6c"),
-            address!("c9c5a15a403e41498b6f69f6f89dd9f5892d21f7"),
+            B256(hex!(
+                "6a7eeac5f12b409d42028f66b0b2132535ee158cfda439e3bfdd4558e8f4bf6c"
+            )),
+            B160(hex!("c9c5a15a403e41498b6f69f6f89dd9f5892d21f7")),
         ),
         (
-            b256!("a95defe70ebea7804f9c3be42d20d24375e2a92b9d9666b832069c5f3cd423dd"),
-            address!("3fb1cd2cd96c6d5c0b5eb3322d807b34482481d4"),
+            B256(hex!(
+                "a95defe70ebea7804f9c3be42d20d24375e2a92b9d9666b832069c5f3cd423dd"
+            )),
+            B160(hex!("3fb1cd2cd96c6d5c0b5eb3322d807b34482481d4")),
         ),
         (
-            b256!("fe13266ff57000135fb9aa854bbfe455d8da85b21f626307bf3263a0c2a8e7fe"),
-            address!("dcc5ba93a1ed7e045690d722f2bf460a51c61415"),
+            B256(hex!(
+                "fe13266ff57000135fb9aa854bbfe455d8da85b21f626307bf3263a0c2a8e7fe"
+            )),
+            B160(hex!("dcc5ba93a1ed7e045690d722f2bf460a51c61415")),
         ),
     ]
     .into();
 
-    for (name, unit) in suite.0 {
+    for (name, unit) in suit.0.into_iter() {
         // Create database and insert cache
         let mut cache_state = revm::CacheState::new(false);
-        for (address, info) in unit.pre {
+        for (address, info) in unit.pre.into_iter() {
             let acc_info = revm::primitives::AccountInfo {
                 balance: info.balance,
                 code_hash: keccak256(&info.code), // try with dummy hash.
@@ -200,26 +212,29 @@ pub fn execute_test_suite(
             env.cfg.spec_id = spec_name.to_spec_id();
 
             for (id, test) in tests.into_iter().enumerate() {
-                env.tx.gas_limit = unit.transaction.gas_limit[test.indexes.gas].saturating_to();
+                let gas_limit = *unit.transaction.gas_limit.get(test.indexes.gas).unwrap();
+                let gas_limit = u64::try_from(gas_limit).unwrap_or(u64::MAX);
+                env.tx.gas_limit = gas_limit;
                 env.tx.data = unit
                     .transaction
                     .data
                     .get(test.indexes.data)
                     .unwrap()
                     .clone();
-                env.tx.value = unit.transaction.value[test.indexes.value];
+                env.tx.value = *unit.transaction.value.get(test.indexes.value).unwrap();
 
                 let access_list = match unit.transaction.access_lists {
                     Some(ref access_list) => access_list
                         .get(test.indexes.data)
-                        .and_then(Option::as_deref)
+                        .cloned()
+                        .flatten()
                         .unwrap_or_default()
-                        .iter()
+                        .into_iter()
                         .map(|item| {
                             (
                                 item.address,
                                 item.storage_keys
-                                    .iter()
+                                    .into_iter()
                                     .map(|key| U256::from_be_bytes(key.0))
                                     .collect::<Vec<_>>(),
                             )
@@ -265,7 +280,7 @@ pub fn execute_test_suite(
                     Ok(ExecutionResult::Success { logs, .. }) => logs.clone(),
                     _ => Vec::new(),
                 };
-                let logs_root = log_rlp_hash(&logs);
+                let logs_root = log_rlp_hash(logs);
                 if test.hash != state_root || test.logs != logs_root {
                     println!(
                         "Roots did not match:\nState root: wanted {:?}, got {state_root:?}\nLogs root: wanted {:?}, got {logs_root:?}",
@@ -371,7 +386,7 @@ pub fn run(
                         return Ok(());
                     }
                     //println!("Test:{:?}\n",test_path);
-                    if let Err(err) = execute_test_suite(&test_path, &elapsed, trace) {
+                    if let Err(err) = execute_test_suit(&test_path, &elapsed, trace) {
                         endjob.store(true, Ordering::SeqCst);
                         println!("Test[{index}] named:\n{test_path:?} failed: {err}\n");
                         return Err(err);

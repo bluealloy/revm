@@ -1,16 +1,17 @@
 use crate::{Error, Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn};
 
 pub const ECRECOVER: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_address(1),
+    crate::u64_to_b160(1),
     Precompile::Standard(ec_recover_run as StandardPrecompileFn),
 );
 
 #[cfg(not(feature = "secp256k1"))]
 #[allow(clippy::module_inception)]
 mod secp256k1 {
-    use crate::B256;
     use k256::ecdsa::{Error, RecoveryId, Signature, VerifyingKey};
-    use revm_primitives::keccak256;
+    use sha3::{Digest, Keccak256};
+
+    use crate::B256;
 
     pub fn ecrecover(sig: &[u8; 65], msg: &B256) -> Result<B256, Error> {
         // parse signature
@@ -21,15 +22,15 @@ mod secp256k1 {
         let recovered_key = VerifyingKey::recover_from_prehash(msg, &signature, recid)?;
 
         // hash it
-        let mut hash = keccak256(
+        let hash = Keccak256::digest(
             &recovered_key
                 .to_encoded_point(/* compress = */ false)
                 .as_bytes()[1..],
-        )
-        .0;
+        );
 
         // truncate to 20 bytes
-        hash[..12].fill(0);
+        let mut hash: B256 = hash[..].try_into().unwrap();
+        hash.iter_mut().take(12).for_each(|i| *i = 0);
         Ok(hash)
     }
 }
@@ -38,11 +39,11 @@ mod secp256k1 {
 #[allow(clippy::module_inception)]
 mod secp256k1 {
     use crate::B256;
-    use revm_primitives::keccak256;
     use secp256k1::{
         ecdsa::{RecoverableSignature, RecoveryId},
         Message, Secp256k1,
     };
+    use sha3::{Digest, Keccak256};
 
     pub fn ecrecover(sig: &[u8; 65], msg: &B256) -> Result<B256, secp256k1::Error> {
         let sig =
@@ -51,8 +52,9 @@ mod secp256k1 {
         let secp = Secp256k1::new();
         let public = secp.recover_ecdsa(&Message::from_slice(&msg[..32])?, &sig)?;
 
-        let mut hash = keccak256(&public.serialize_uncompressed()[1..]).0;
-        hash[..12].fill(0);
+        let hash = Keccak256::digest(&public.serialize_uncompressed()[1..]);
+        let mut hash: B256 = hash[..].try_into().unwrap();
+        hash.iter_mut().take(12).for_each(|i| *i = 0);
         Ok(hash)
     }
 }

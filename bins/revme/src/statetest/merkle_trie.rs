@@ -1,74 +1,79 @@
-use alloy_rlp::{RlpEncodable, RlpMaxEncodedLen};
+use bytes::Bytes;
 use hash_db::Hasher;
 use plain_hasher::PlainHasher;
+use primitive_types::{H160, H256};
 use revm::{
     db::PlainAccount,
-    primitives::{keccak256, Address, Log, B256, U256},
+    primitives::{keccak256, Log, B160, B256, U256},
 };
+use rlp::RlpStream;
+use sha3::{Digest, Keccak256};
 use triehash::sec_trie_root;
 
-pub fn log_rlp_hash(logs: &[Log]) -> B256 {
-    let mut out = Vec::with_capacity(alloy_rlp::list_length(logs));
-    alloy_rlp::encode_list(logs, &mut out);
+pub fn log_rlp_hash(logs: Vec<Log>) -> B256 {
+    //https://github.com/ethereum/go-ethereum/blob/356bbe343a30789e77bb38f25983c8f2f2bfbb47/cmd/evm/internal/t8ntool/execution.go#L255
+    let mut stream = RlpStream::new();
+    stream.begin_unbounded_list();
+    for log in logs {
+        stream.begin_list(3);
+        stream.append(&log.address.0.as_ref());
+        stream.begin_unbounded_list();
+        for topic in log.topics {
+            stream.append(&topic.0.as_ref());
+        }
+        stream.finalize_unbounded_list();
+        stream.append(&log.data);
+    }
+    stream.finalize_unbounded_list();
+    let out = stream.out().freeze();
+
     keccak256(&out)
 }
 
 pub fn state_merkle_trie_root<'a>(
-    accounts: impl IntoIterator<Item = (Address, &'a PlainAccount)>,
+    accounts: impl IntoIterator<Item = (B160, &'a PlainAccount)>,
 ) -> B256 {
-    trie_root(accounts.into_iter().map(|(address, acc)| {
-        (
-            address,
-            alloy_rlp::encode_fixed_size(&TrieAccount::new(acc)),
+    let vec = accounts
+        .into_iter()
+        .map(|(address, info)| {
+            let acc_root = trie_account_rlp(info);
+            (H160::from(address.0), acc_root)
+        })
+        .collect();
+
+    trie_root(vec)
+}
+
+/// Returns the RLP for this account.
+pub fn trie_account_rlp(acc: &PlainAccount) -> Bytes {
+    let mut stream = RlpStream::new_list(4);
+    stream.append(&acc.info.nonce);
+    stream.append(&acc.info.balance);
+    stream.append(&{
+        sec_trie_root::<KeccakHasher, _, _, _>(
+            acc.storage
+                .iter()
+                .filter(|(_k, &v)| v != U256::ZERO)
+                .map(|(&k, v)| (H256::from(k.to_be_bytes()), rlp::encode(v))),
         )
-    }))
+    });
+    stream.append(&acc.info.code_hash.0.as_ref());
+    stream.out().freeze()
 }
 
-#[derive(RlpEncodable, RlpMaxEncodedLen)]
-struct TrieAccount {
-    nonce: u64,
-    balance: U256,
-    root_hash: B256,
-    code_hash: B256,
-}
-
-impl TrieAccount {
-    #[inline(always)]
-    fn new(acc: &PlainAccount) -> Self {
-        Self {
-            nonce: acc.info.nonce,
-            balance: acc.info.balance,
-            root_hash: sec_trie_root::<KeccakHasher, _, _, _>(
-                acc.storage
-                    .iter()
-                    .filter(|(_k, &v)| v != U256::ZERO)
-                    .map(|(k, v)| (k.to_be_bytes::<32>(), alloy_rlp::encode_fixed_size(v))),
-            ),
-            code_hash: acc.info.code_hash,
-        }
-    }
-}
-
-#[inline]
-pub fn trie_root<I, A, B>(input: I) -> B256
-where
-    I: IntoIterator<Item = (A, B)>,
-    A: AsRef<[u8]>,
-    B: AsRef<[u8]>,
-{
-    sec_trie_root::<KeccakHasher, _, _, _>(input)
+pub fn trie_root(acc_data: Vec<(H160, Bytes)>) -> B256 {
+    B256(sec_trie_root::<KeccakHasher, _, _, _>(acc_data).0)
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct KeccakHasher;
 
 impl Hasher for KeccakHasher {
-    type Out = B256;
+    type Out = H256;
     type StdHasher = PlainHasher;
     const LENGTH: usize = 32;
-
-    #[inline]
     fn hash(x: &[u8]) -> Self::Out {
-        keccak256(x)
+        let out = Keccak256::digest(x);
+        H256::from_slice(out.as_slice())
     }
 }
