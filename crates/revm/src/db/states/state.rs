@@ -251,7 +251,7 @@ mod tests {
 
         // Non-existing account for testing account state transitions.
         // [LoadedNotExisting] -> [Changed] (nonce: 1, balance: 1) -> [Changed] (nonce: 2) -> [Changed] (nonce: 3)
-        let new_account_address = B160::from_low_u64_be(1);
+        let new_account_address = Address::from_slice(&[0x1; 20]);
         let new_account_created_info = AccountInfo {
             nonce: 1,
             balance: U256::from(1),
@@ -267,7 +267,7 @@ mod tests {
         };
 
         // Existing account for testing storage state transitions.
-        let existing_account_address = B160::from_low_u64_be(2);
+        let existing_account_address = Address::from_slice(&[0x2; 20]);
         let existing_account_initial_info = AccountInfo {
             nonce: 1,
             ..Default::default()
@@ -303,7 +303,9 @@ mod tests {
                     storage: HashMap::from([(
                         slot1,
                         StorageSlot {
-                            original_value: *existing_account_initial_storage.get(&slot1).unwrap(),
+                            previous_or_original_value: *existing_account_initial_storage
+                                .get(&slot1)
+                                .unwrap(),
                             present_value: U256::from(1000),
                         },
                     )]),
@@ -336,7 +338,7 @@ mod tests {
                     storage: HashMap::from([(
                         slot1,
                         StorageSlot {
-                            original_value: U256::ZERO,
+                            previous_or_original_value: U256::ZERO,
                             present_value: U256::from(1),
                         },
                     )]),
@@ -354,14 +356,14 @@ mod tests {
                         (
                             slot1,
                             StorageSlot {
-                                original_value: U256::from(100),
+                                previous_or_original_value: U256::from(100),
                                 present_value: U256::from(1_000),
                             },
                         ),
                         (
                             slot2,
                             StorageSlot {
-                                original_value: *existing_account_initial_storage
+                                previous_or_original_value: *existing_account_initial_storage
                                     .get(&slot2)
                                     .unwrap(),
                                 present_value: U256::from(2_000),
@@ -371,7 +373,7 @@ mod tests {
                         (
                             slot3,
                             StorageSlot {
-                                original_value: U256::ZERO,
+                                previous_or_original_value: U256::ZERO,
                                 present_value: U256::from(3_000),
                             },
                         ),
@@ -436,7 +438,7 @@ mod tests {
                 storage: HashMap::from([(
                     slot1,
                     StorageSlot {
-                        original_value: U256::ZERO,
+                        previous_or_original_value: U256::ZERO,
                         present_value: U256::from(1),
                     }
                 )])
@@ -456,14 +458,18 @@ mod tests {
                     (
                         slot1,
                         StorageSlot {
-                            original_value: *existing_account_initial_storage.get(&slot1).unwrap(),
+                            previous_or_original_value: *existing_account_initial_storage
+                                .get(&slot1)
+                                .unwrap(),
                             present_value: U256::from(1_000),
                         },
                     ),
                     (
                         slot2,
                         StorageSlot {
-                            original_value: *existing_account_initial_storage.get(&slot2).unwrap(),
+                            previous_or_original_value: *existing_account_initial_storage
+                                .get(&slot2)
+                                .unwrap(),
                             present_value: U256::from(2_000),
                         },
                     ),
@@ -471,7 +477,7 @@ mod tests {
                     (
                         slot3,
                         StorageSlot {
-                            original_value: U256::ZERO,
+                            previous_or_original_value: U256::ZERO,
                             present_value: U256::from(3_000),
                         },
                     ),
