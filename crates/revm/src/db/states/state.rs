@@ -4,7 +4,7 @@ use super::{
 use crate::TransitionAccount;
 use revm_interpreter::primitives::{
     db::{Database, DatabaseCommit},
-    hash_map, Account, AccountInfo, Bytecode, HashMap, B160, B256, U256,
+    hash_map, Account, AccountInfo, Address, Bytecode, HashMap, B256, U256,
 };
 
 /// State of blockchain.
@@ -47,7 +47,7 @@ impl<'a, DBError> State<'a, DBError> {
     /// Update will create transitions for all accounts that are updated.
     pub fn increment_balances(
         &mut self,
-        balances: impl IntoIterator<Item = (B160, u128)>,
+        balances: impl IntoIterator<Item = (Address, u128)>,
     ) -> Result<(), DBError> {
         // make transition and update cache state
         let mut transitions = Vec::new();
@@ -67,7 +67,7 @@ impl<'a, DBError> State<'a, DBError> {
     /// It is used for DAO hardfork state change to move values from given accounts.
     pub fn drain_balances(
         &mut self,
-        addresses: impl IntoIterator<Item = B160>,
+        addresses: impl IntoIterator<Item = Address>,
     ) -> Result<Vec<u128>, DBError> {
         // make transition and update cache state
         let mut transitions = Vec::new();
@@ -90,17 +90,17 @@ impl<'a, DBError> State<'a, DBError> {
         self.cache.set_state_clear_flag(has_state_clear);
     }
 
-    pub fn insert_not_existing(&mut self, address: B160) {
+    pub fn insert_not_existing(&mut self, address: Address) {
         self.cache.insert_not_existing(address)
     }
 
-    pub fn insert_account(&mut self, address: B160, info: AccountInfo) {
+    pub fn insert_account(&mut self, address: Address, info: AccountInfo) {
         self.cache.insert_account(address, info)
     }
 
     pub fn insert_account_with_storage(
         &mut self,
-        address: B160,
+        address: Address,
         info: AccountInfo,
         storage: PlainStorage,
     ) {
@@ -109,7 +109,7 @@ impl<'a, DBError> State<'a, DBError> {
     }
 
     /// Apply evm transitions to transition state.
-    fn apply_transition(&mut self, transitions: Vec<(B160, TransitionAccount)>) {
+    fn apply_transition(&mut self, transitions: Vec<(Address, TransitionAccount)>) {
         // add transition to transition state.
         if let Some(s) = self.transition_state.as_mut() {
             s.add_transitions(transitions)
@@ -135,7 +135,7 @@ impl<'a, DBError> State<'a, DBError> {
         }
     }
 
-    pub fn load_cache_account(&mut self, address: B160) -> Result<&mut CacheAccount, DBError> {
+    pub fn load_cache_account(&mut self, address: Address) -> Result<&mut CacheAccount, DBError> {
         match self.cache.accounts.entry(address) {
             hash_map::Entry::Vacant(entry) => {
                 let info = self.database.basic(address)?;
@@ -164,7 +164,7 @@ impl<'a, DBError> State<'a, DBError> {
 impl<'a, DBError> Database for State<'a, DBError> {
     type Error = DBError;
 
-    fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
+    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         self.load_cache_account(address).map(|a| a.account_info())
     }
 
@@ -183,7 +183,7 @@ impl<'a, DBError> Database for State<'a, DBError> {
         res
     }
 
-    fn storage(&mut self, address: B160, index: U256) -> Result<U256, Self::Error> {
+    fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error> {
         // Account is guaranteed to be loaded.
         if let Some(account) = self.cache.accounts.get_mut(&address) {
             // account will always be some, but if it is not, U256::ZERO will be returned.
@@ -219,7 +219,7 @@ impl<'a, DBError> Database for State<'a, DBError> {
 }
 
 impl<'a, DBError> DatabaseCommit for State<'a, DBError> {
-    fn commit(&mut self, evm_state: HashMap<B160, Account>) {
+    fn commit(&mut self, evm_state: HashMap<Address, Account>) {
         let transitions = self.cache.apply_evm_state(evm_state);
         self.apply_transition(transitions);
     }

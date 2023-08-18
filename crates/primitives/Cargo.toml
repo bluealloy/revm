@@ -10,27 +10,21 @@ version = "1.1.2"
 readme = "../../README.md"
 
 [dependencies]
+alloy-primitives = { version = "0.3", default-features = false, features = ["rlp"] }
+alloy-rlp = { version = "0.3", default-features = false, features = ["derive"] }
 bytes = { version = "1.4", default-features = false }
 hashbrown = "0.14"
 primitive-types = { version = "0.12", default-features = false }
-rlp = { version = "0.5", default-features = false } # used for create2 address calculation
-ruint = { version = "1.8.0", features = ["primitive-types", "rlp"] }
 auto_impl = "1.1"
 bitvec = { version = "1", default-features = false, features = ["alloc"] }
-bitflags = { version = "2.4.0", default-features = false}
+bitflags = { version = "2.2.1", default-features = false }
 
-# bits B256 B160 crate
-fixed-hash = { version = "0.8", default-features = false, features = ["rustc-hex"] }
-
-#utility
+# utility
 hex-literal = "0.4"
 hex = { version = "0.4", default-features = false }
 to-binary = "0.4"
 derive_more = "0.99"
 enumn = "0.1"
-
-# sha3 keccak hasher
-sha3 = { version = "0.10", default-features = false }
 
 # optional
 serde = { version = "1.0", features = ["derive", "rc"], optional = true }
@@ -42,7 +36,7 @@ proptest-derive = { version = "0.3", optional = true }
 arbitrary = { version = "1.3", features = ["derive"] }
 proptest = "1.1"
 proptest-derive = "0.3"
-ruint = { version = "1.8.0", features = ["primitive-types", "rlp", "proptest", "arbitrary"] }
+ruint = { version = "1.9.0", features = ["primitive-types", "rlp", "proptest", "arbitrary"] }
 
 [features]
 default = ["std"]
@@ -61,20 +55,26 @@ optional_block_gas_limit = []
 optional_eip3607 = []
 optional_gas_refund = []
 optional_no_base_fee = []
-std = ["bytes/std", "rlp/std", "hex/std", "bitvec/std", "bitflags/std"]
+std = [
+    "alloy-primitives/std",
+    "alloy-rlp/std",
+    "bytes/std",
+    "hex/std",
+    "bitvec/std",
+    "bitflags/std",
+]
 serde = [
     "dep:serde",
+    "alloy-primitives/serde",
     "hex/serde",
     "hashbrown/serde",
-    "ruint/serde",
     "bytes/serde",
     "bitvec/serde",
     "bitflags/serde",
 ]
 arbitrary = [
     "std",
-    "ruint/arbitrary",
-    "ruint/proptest",
+    "alloy-primitives/arbitrary",
     "dep:arbitrary",
     "dep:proptest",
     "dep:proptest-derive",

@@ -20,10 +20,6 @@ impl PlainAccount {
     }
 }
 
-/// TODO Rename this to become StorageWithOriginalValues or something like that.
-/// This is used inside EVM and for block state. It is needed for block state to
-/// be able to create changeset agains bundle state.
-///
 /// This storage represent values that are before block changed.
 ///
 /// Note: Storage that we get EVM contains original values before t
@@ -31,7 +27,6 @@ pub type StorageWithOriginalValues = HashMap<U256, StorageSlot>;
 
 /// Simple plain storage that does not have previous value.
 /// This is used for loading from database, cache and for bundle state.
-///
 pub type PlainStorage = HashMap<U256, U256>;
 
 impl From<AccountInfo> for PlainAccount {
