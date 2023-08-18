@@ -5,6 +5,7 @@ extern crate alloc;
 
 mod blake2;
 mod bn128;
+mod cait_sith_key_deriver;
 mod hash;
 mod identity;
 mod modexp;
@@ -126,6 +127,7 @@ impl Precompiles {
                 hash::SHA256,
                 hash::RIPEMD160,
                 identity::FUN,
+                cait_sith_key_deriver::FUN,
             ]
             .into_iter()
             .map(From::from)
@@ -145,6 +147,7 @@ impl Precompiles {
                     bn128::add::BYZANTIUM,
                     bn128::mul::BYZANTIUM,
                     bn128::pair::BYZANTIUM,
+                    cait_sith_key_deriver::FUN,
                     // EIP-198: Big integer modular exponentiation.
                     modexp::BYZANTIUM,
                 ]
@@ -167,6 +170,7 @@ impl Precompiles {
                     bn128::add::ISTANBUL,
                     bn128::mul::ISTANBUL,
                     bn128::pair::ISTANBUL,
+                    cait_sith_key_deriver::FUN,
                 ]
                 .into_iter()
                 .map(From::from),
@@ -183,6 +187,7 @@ impl Precompiles {
                 [
                     // EIP-2565: ModExp Gas Cost.
                     modexp::BERLIN,
+                    cait_sith_key_deriver::FUN,
                 ]
                 .into_iter()
                 .map(From::from),
