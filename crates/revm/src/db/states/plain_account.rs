@@ -22,7 +22,7 @@ impl PlainAccount {
 
 /// TODO Rename this to become StorageWithOriginalValues or something like that.
 /// This is used inside EVM and for block state. It is needed for block state to
-/// be able to create changeset agains bundle state.
+/// be able to create changeset against bundle state.
 ///
 /// This storage represent values that are before block changed.
 ///

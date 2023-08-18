@@ -15,7 +15,7 @@ pub enum AccountStatus {
 }
 
 impl AccountStatus {
-    /// Account is not midified and just loaded from database.
+    /// Account is not modified and just loaded from database.
     pub fn not_modified(&self) -> bool {
         matches!(
             self,
