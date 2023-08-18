@@ -1,6 +1,6 @@
 use super::{AccountRevert, BundleAccount, StorageWithOriginalValues};
 use crate::db::AccountStatus;
-use revm_interpreter::primitives::{AccountInfo, Bytecode, B256};
+use revm_interpreter::primitives::{hash_map, AccountInfo, Bytecode, B256};
 
 /// Account Created when EVM state is merged to cache state.
 /// And it is send to Block state.
@@ -70,7 +70,21 @@ impl TransitionAccount {
         } else {
             // update changed values to this transition.
             for (key, slot) in other.storage.into_iter() {
-                self.storage.entry(key).or_insert(slot).present_value = slot.present_value;
+                match self.storage.entry(key) {
+                    hash_map::Entry::Vacant(entry) => {
+                        entry.insert(slot);
+                    }
+                    hash_map::Entry::Occupied(mut entry) => {
+                        let value = entry.get_mut();
+                        // if new value is same as original value. Remove storage entry.
+                        if value.original_value() == slot.present_value() {
+                            entry.remove();
+                        } else {
+                            // is value is different, update transition present value;
+                            value.present_value = slot.present_value;
+                        }
+                    }
+                }
             }
         }
     }

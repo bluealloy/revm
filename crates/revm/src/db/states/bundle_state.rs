@@ -5,7 +5,7 @@ use super::{
 use rayon::slice::ParallelSliceMut;
 use revm_interpreter::primitives::{
     hash_map::{self, Entry},
-    AccountInfo, Bytecode, HashMap, StorageSlot, B160, B256, U256,
+    AccountInfo, Address, Bytecode, HashMap, StorageSlot, B256, U256,
 };
 
 /// Bundle state contain only values that got changed
@@ -18,14 +18,14 @@ use revm_interpreter::primitives::{
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BundleState {
     /// Account state.
-    pub state: HashMap<B160, BundleAccount>,
+    pub state: HashMap<Address, BundleAccount>,
     /// All created contracts in this block.
     pub contracts: HashMap<B256, Bytecode>,
     /// Changes to revert.
     ///
     /// Note: Inside vector is *not* sorted by address.
     /// But it is unique by address.
-    pub reverts: Vec<Vec<(B160, AccountRevert)>>,
+    pub reverts: Vec<Vec<(Address, AccountRevert)>>,
 }
 
 impl Default for BundleState {
@@ -40,7 +40,7 @@ impl Default for BundleState {
 
 impl BundleState {
     /// Return reference to the state.
-    pub fn state(&self) -> &HashMap<B160, BundleAccount> {
+    pub fn state(&self) -> &HashMap<Address, BundleAccount> {
         &self.state
     }
 
@@ -58,7 +58,7 @@ impl BundleState {
     pub fn new(
         state: impl IntoIterator<
             Item = (
-                B160,
+                Address,
                 Option<AccountInfo>,
                 Option<AccountInfo>,
                 HashMap<U256, (U256, U256)>,
@@ -67,7 +67,7 @@ impl BundleState {
         reverts: impl IntoIterator<
             Item = impl IntoIterator<
                 Item = (
-                    B160,
+                    Address,
                     Option<Option<AccountInfo>>,
                     impl IntoIterator<Item = (U256, U256)>,
                 ),
@@ -135,7 +135,7 @@ impl BundleState {
     }
 
     /// Get account from state
-    pub fn account(&self, address: &B160) -> Option<&BundleAccount> {
+    pub fn account(&self, address: &Address) -> Option<&BundleAccount> {
         self.state.get(address)
     }
 
@@ -347,16 +347,14 @@ impl BundleState {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use crate::{db::StorageWithOriginalValues, TransitionAccount};
     use revm_interpreter::primitives::KECCAK_EMPTY;
 
-    use crate::{db::StorageWithOriginalValues, TransitionAccount};
-
-    use super::*;
-
     #[test]
-    fn transition_all_states() {
+    fn transition_states() {
         // dummy data
-        let address = B160([0x01; 20]);
+        let address = Address::new([0x01; 20]);
         let acc1 = AccountInfo {
             balance: U256::from(10),
             nonce: 1,
@@ -378,9 +376,119 @@ mod tests {
         };
 
         // apply first transition
-        bundle_state.apply_block_substate_and_create_reverts(TransitionState::with_capacity(
+        bundle_state.apply_block_substate_and_create_reverts(TransitionState::single(
             address,
             transition.clone(),
         ));
+    }
+
+    fn account1() -> Address {
+        [0x60; 20].into()
+    }
+
+    fn account2() -> Address {
+        [0x61; 20].into()
+    }
+
+    fn slot() -> U256 {
+        U256::from(5)
+    }
+
+    /// Test bundle one
+    fn test_bundle1() -> BundleState {
+        // block changes
+
+        let bundle = BundleState::new(
+            vec![
+                (
+                    account1(),
+                    None,
+                    Some(AccountInfo {
+                        nonce: 1,
+                        balance: U256::from(10),
+                        code_hash: KECCAK_EMPTY,
+                        code: None,
+                    }),
+                    HashMap::from([(slot(), (U256::from(0), U256::from(10)))]),
+                ),
+                (
+                    account2(),
+                    None,
+                    Some(AccountInfo {
+                        nonce: 1,
+                        balance: U256::from(10),
+                        code_hash: KECCAK_EMPTY,
+                        code: None,
+                    }),
+                    HashMap::from([]),
+                ),
+            ],
+            vec![vec![
+                (account1(), Some(None), vec![(slot(), U256::from(0))]),
+                (account2(), Some(None), vec![]),
+            ]],
+            vec![],
+        );
+        bundle
+    }
+
+    /// Test bundle two
+    fn test_bundle2() -> BundleState {
+        // block changes
+        let bundle = BundleState::new(
+            vec![
+                ((
+                    account1(),
+                    None,
+                    Some(AccountInfo {
+                        nonce: 3,
+                        balance: U256::from(20),
+                        code_hash: KECCAK_EMPTY,
+                        code: None,
+                    }),
+                    HashMap::from([(slot(), (U256::from(0), U256::from(15)))]),
+                )),
+            ],
+            vec![vec![(
+                account1(),
+                Some(Some(AccountInfo {
+                    nonce: 1,
+                    balance: U256::from(10),
+                    code_hash: KECCAK_EMPTY,
+                    code: None,
+                })),
+                vec![(slot(), U256::from(10))],
+            )]],
+            vec![],
+        );
+        bundle
+    }
+
+    #[test]
+    fn sanity_path() {
+        let bundle1 = test_bundle1();
+        let bundle2 = test_bundle2();
+
+        let mut extended = bundle1.clone();
+        extended.extend(bundle2.clone());
+
+        let mut reverted = extended.clone();
+        // revert zero does nothing.
+        reverted.revert(0);
+        assert_eq!(reverted, extended);
+
+        // revert by one gives us bundle one.
+        reverted.revert(1);
+        assert_eq!(reverted, bundle1);
+
+        // reverted by additional one gives us empty bundle.
+        reverted.revert(1);
+        assert_eq!(reverted, BundleState::default());
+
+        let mut reverted = extended.clone();
+
+        // reverted by bigger number gives us empty bundle
+        reverted.revert(10);
+        assert_eq!(reverted, BundleState::default());
     }
 }

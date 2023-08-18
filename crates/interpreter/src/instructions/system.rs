@@ -23,12 +23,12 @@ pub fn calculate_keccak256(interpreter: &mut Interpreter, _host: &mut dyn Host) 
 
 pub fn address(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::BASE);
-    push_b256!(interpreter, B256::from(interpreter.contract.address));
+    push_b256!(interpreter, interpreter.contract.address.into_word());
 }
 
 pub fn caller(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::BASE);
-    push_b256!(interpreter, B256::from(interpreter.contract.caller));
+    push_b256!(interpreter, interpreter.contract.caller.into_word());
 }
 
 pub fn codesize(interpreter: &mut Interpreter, _host: &mut dyn Host) {
@@ -69,9 +69,9 @@ pub fn calldataload(interpreter: &mut Interpreter, _host: &mut dyn Host) {
         let have_bytes = min(interpreter.contract.input.len() - index, 32);
         let mut bytes = [0u8; 32];
         bytes[..have_bytes].copy_from_slice(&interpreter.contract.input[index..index + have_bytes]);
-        B256(bytes)
+        B256::new(bytes)
     } else {
-        B256::zero()
+        B256::ZERO
     };
 
     push_b256!(interpreter, load);
