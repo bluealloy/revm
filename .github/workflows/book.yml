@@ -80,6 +80,7 @@ jobs:
 
       - name: Move docs to book folder
         run: |
+          mkdir -p target/book/docs
           mv target/doc target/book/docs
 
       - name: Archive artifact
