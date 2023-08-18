@@ -5,7 +5,7 @@ use k256::elliptic_curve::sec1::FromEncodedPoint;
 use k256::{elliptic_curve::sec1::ToEncodedPoint, Secp256k1};
 use k256::{AffinePoint, ProjectivePoint};
 
-pub const FUN: PrecompileAddress = PrecompileAddress(
+pub const DERIVE_CAIT_SITH_PUBKEY: PrecompileAddress = PrecompileAddress(
     crate::u64_to_address(4),
     Precompile::Standard(derive_cait_sith_pubkey as StandardPrecompileFn),
 );
@@ -16,6 +16,7 @@ const IDENTITY_BASE: u64 = 15;
 const IDENTITY_PER_WORD: u64 = 3;
 
 fn derive_cait_sith_pubkey(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    println!("derive_cait_sith_pubkey");
     let gas_used = calc_linear_cost_u32(input.len(), IDENTITY_BASE, IDENTITY_PER_WORD);
     if gas_used > gas_limit {
         return Err(Error::OutOfGas);
@@ -43,7 +44,7 @@ fn derive_cait_sith_pubkey(input: &[u8], gas_limit: u64) -> PrecompileResult {
         i += 8;
         let pubkey = &root_hd_keys_data[i..i + pubkey_len];
         i += pubkey_len;
-        let key_type = &root_hd_keys_data[i..i + 32];
+        let _key_type = &root_hd_keys_data[i..i + 32];
         i += 32;
         let projective_point = bytes_to_projective_point(pubkey);
         root_hd_keys.push(projective_point);

@@ -1,5 +1,3 @@
-#![cfg_attr(not(feature = "std"), no_std)]
-
 #[macro_use]
 extern crate alloc;
 
@@ -127,7 +125,7 @@ impl Precompiles {
                 hash::SHA256,
                 hash::RIPEMD160,
                 identity::FUN,
-                cait_sith_key_deriver::FUN,
+                cait_sith_key_deriver::DERIVE_CAIT_SITH_PUBKEY,
             ]
             .into_iter()
             .map(From::from)
@@ -147,7 +145,7 @@ impl Precompiles {
                     bn128::add::BYZANTIUM,
                     bn128::mul::BYZANTIUM,
                     bn128::pair::BYZANTIUM,
-                    cait_sith_key_deriver::FUN,
+                    cait_sith_key_deriver::DERIVE_CAIT_SITH_PUBKEY,
                     // EIP-198: Big integer modular exponentiation.
                     modexp::BYZANTIUM,
                 ]
@@ -170,7 +168,7 @@ impl Precompiles {
                     bn128::add::ISTANBUL,
                     bn128::mul::ISTANBUL,
                     bn128::pair::ISTANBUL,
-                    cait_sith_key_deriver::FUN,
+                    cait_sith_key_deriver::DERIVE_CAIT_SITH_PUBKEY,
                 ]
                 .into_iter()
                 .map(From::from),
@@ -187,7 +185,7 @@ impl Precompiles {
                 [
                     // EIP-2565: ModExp Gas Cost.
                     modexp::BERLIN,
-                    cait_sith_key_deriver::FUN,
+                    cait_sith_key_deriver::DERIVE_CAIT_SITH_PUBKEY,
                 ]
                 .into_iter()
                 .map(From::from),

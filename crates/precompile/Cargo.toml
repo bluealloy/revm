@@ -27,9 +27,8 @@ hd-keys-ecdsa = { git = "https://github.com/LIT-Protocol/hd-keys-ecdsa.git" }
 hex = "0.4"
 
 [features]
-default = ["secp256k1", "std"]
+default = ["secp256k1"]
 # secp256k1 is used as faster alternative to k256 lib. And in most cases should be default.
 # Only problem that it has, it fails to build for wasm target on windows and mac as it is c lib.
 # If you dont require wasm on win/mac, i would recommend its usage.
 secp256k1 = ["dep:secp256k1"]
-std = []
