@@ -10,6 +10,7 @@ jobs:
   tests-stable:
     name: Tests (Stable)
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
@@ -25,7 +26,9 @@ jobs:
         run: cargo test --workspace --all-features
 
   lint:
+    name: Lint
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
