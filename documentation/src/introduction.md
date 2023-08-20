@@ -4,7 +4,7 @@
 
 ## Crates
 
-The project hase 4 main crates that are used to build the revm. The crates are:
+The project has 4 main crates that are used to build the revm. The crates are:
 
 - `revm`: The main EVM library.
 - `revm-primitives`: Primitive data types.
