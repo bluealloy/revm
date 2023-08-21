@@ -1,6 +1,6 @@
 use super::{
-    plain_account::PlainStorage, AccountStatus, PlainAccount, StorageWithOriginalValues,
-    TransitionAccount,
+    plain_account::PlainStorage, AccountStatus, BundleAccount, PlainAccount,
+    StorageWithOriginalValues, TransitionAccount,
 };
 use revm_interpreter::primitives::{AccountInfo, KECCAK_EMPTY, U256};
 use revm_precompile::HashMap;
@@ -12,6 +12,23 @@ use revm_precompile::HashMap;
 pub struct CacheAccount {
     pub account: Option<PlainAccount>,
     pub status: AccountStatus,
+}
+
+impl From<BundleAccount> for CacheAccount {
+    fn from(account: BundleAccount) -> Self {
+        let storage = account
+            .storage
+            .iter()
+            .map(|(k, v)| (*k, v.present_value))
+            .collect();
+        let plain_account = account
+            .account_info()
+            .map(|info| PlainAccount { info, storage });
+        Self {
+            account: plain_account,
+            status: account.status,
+        }
+    }
 }
 
 impl CacheAccount {
