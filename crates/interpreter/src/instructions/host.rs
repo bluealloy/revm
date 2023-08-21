@@ -9,6 +9,7 @@ use crate::{
     Host, InstructionResult, Transfer,
 };
 use core::cmp::min;
+use revm_primitives::BLOCK_HASH_HISTORY;
 
 pub fn balance<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     pop_address!(interpreter, address);
@@ -137,7 +138,7 @@ pub fn blockhash(interpreter: &mut Interpreter, host: &mut dyn Host) {
     if let Some(diff) = host.env().block.number.checked_sub(*number) {
         let diff = as_usize_saturated!(diff);
         // blockhash should push zero if number is same as current block number.
-        if diff <= 256 && diff != 0 {
+        if diff <= BLOCK_HASH_HISTORY && diff != 0 {
             let ret = host.block_hash(*number);
             if ret.is_none() {
                 interpreter.instruction_result = InstructionResult::FatalExternalError;

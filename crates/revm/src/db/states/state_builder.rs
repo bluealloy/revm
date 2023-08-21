@@ -1,7 +1,8 @@
 use super::{cache::CacheState, BundleState, State, TransitionState};
 use crate::db::EmptyDB;
+use alloc::collections::BTreeMap;
 use core::convert::Infallible;
-use revm_interpreter::primitives::db::Database;
+use revm_interpreter::primitives::{db::Database, B256};
 
 /// Allows building of State and initializing it with different options.
 pub struct StateBuilder<'a, DBError> {
@@ -23,6 +24,8 @@ pub struct StateBuilder<'a, DBError> {
     /// This will allows evm to continue executing.
     /// Default is false.
     pub with_background_transition_merge: bool,
+    /// If we want to set different block hashes
+    pub with_block_hashes: BTreeMap<u64, B256>,
 }
 
 impl Default for StateBuilder<'_, Infallible> {
@@ -34,6 +37,7 @@ impl Default for StateBuilder<'_, Infallible> {
             with_bundle_prestate: None,
             without_bundle_update: false,
             with_background_transition_merge: false,
+            with_block_hashes: BTreeMap::new(),
         }
     }
 }
@@ -57,6 +61,7 @@ impl<'a, DBError> StateBuilder<'a, DBError> {
             with_bundle_prestate: self.with_bundle_prestate,
             without_bundle_update: self.without_bundle_update,
             with_background_transition_merge: self.with_background_transition_merge,
+            with_block_hashes: self.with_block_hashes,
         }
     }
 
@@ -112,6 +117,13 @@ impl<'a, DBError> StateBuilder<'a, DBError> {
         }
     }
 
+    pub fn with_block_hashes(self, block_hashes: BTreeMap<u64, B256>) -> Self {
+        Self {
+            with_block_hashes: block_hashes,
+            ..self
+        }
+    }
+
     pub fn build(mut self) -> State<'a, DBError> {
         let use_preloaded_bundle = if self.with_cache_prestate.is_some() {
             self.with_bundle_prestate = None;
@@ -131,6 +143,7 @@ impl<'a, DBError> StateBuilder<'a, DBError> {
             },
             bundle_state: self.with_bundle_prestate,
             use_preloaded_bundle,
+            block_hashes: self.with_block_hashes,
         }
     }
 }
