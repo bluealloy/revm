@@ -2,9 +2,10 @@ use super::{
     cache::CacheState, plain_account::PlainStorage, BundleState, CacheAccount, TransitionState,
 };
 use crate::TransitionAccount;
+use alloc::collections::{btree_map, BTreeMap};
 use revm_interpreter::primitives::{
     db::{Database, DatabaseCommit},
-    hash_map, Account, AccountInfo, Bytecode, HashMap, B160, B256, U256,
+    hash_map, Account, AccountInfo, Bytecode, HashMap, B160, B256, BLOCK_HASH_HISTORY, U256,
 };
 
 /// State of blockchain.
@@ -36,8 +37,12 @@ pub struct State<'a, DBError> {
     /// Bundle is the main output of the state execution and this allows setting previous bundle
     /// and using its values for execution.
     pub use_preloaded_bundle: bool,
-    // if enabled USE Background thread for transitions and bundle
-    //pub use_background_thread: bool,
+    /// If EVM asks for block hash we will first check if they are found here.
+    /// and then ask the database.
+    ///
+    /// This map can be used to give different values for block hashes if in case
+    /// The fork block is different or some blocks are not saved inside database.
+    pub block_hashes: BTreeMap<u64, B256>,
 }
 
 impl<'a, DBError> State<'a, DBError> {
@@ -208,8 +213,25 @@ impl<'a, DBError> Database for State<'a, DBError> {
     }
 
     fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
-        // TODO maybe cache it.
-        self.database.block_hash(number)
+        // block number is never biger then u64::MAX.
+        let u64num: u64 = number.to();
+        match self.block_hashes.entry(u64num) {
+            btree_map::Entry::Occupied(entry) => Ok(*entry.get()),
+            btree_map::Entry::Vacant(entry) => {
+                let ret = *entry.insert(self.database.block_hash(number)?);
+
+                // prune all hashes that are older then BLOCK_HASH_HISTORY
+                while let Some(entry) = self.block_hashes.first_entry() {
+                    if *entry.key() < u64num.saturating_sub(BLOCK_HASH_HISTORY as u64) {
+                        entry.remove();
+                    } else {
+                        break;
+                    }
+                }
+
+                Ok(ret)
+            }
+        }
     }
 }
 
@@ -230,7 +252,31 @@ mod tests {
         },
         StateBuilder,
     };
-    use revm_interpreter::primitives::StorageSlot;
+    use revm_interpreter::primitives::{keccak256, StorageSlot};
+
+    #[test]
+    fn block_hash_cache() {
+        let mut state = StateBuilder::default().build();
+        state.block_hash(U256::from(1)).unwrap();
+        state.block_hash(U256::from(2)).unwrap();
+
+        let test_number = BLOCK_HASH_HISTORY as u64 + 2;
+
+        let block1_hash = keccak256(&U256::from(1).to_be_bytes::<{ U256::BYTES }>());
+        let block2_hash = keccak256(&U256::from(2).to_be_bytes::<{ U256::BYTES }>());
+        let block_test_hash = keccak256(&U256::from(test_number).to_be_bytes::<{ U256::BYTES }>());
+
+        assert_eq!(
+            state.block_hashes,
+            BTreeMap::from([(1, block1_hash), (2, block2_hash)])
+        );
+
+        state.block_hash(U256::from(test_number)).unwrap();
+        assert_eq!(
+            state.block_hashes,
+            BTreeMap::from([(test_number, block_test_hash), (2, block2_hash)])
+        );
+    }
 
     /// Checks that if accounts is touched multiple times in the same block,
     /// then the old values from the first change are preserved and not overwritten.
