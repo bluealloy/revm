@@ -138,15 +138,26 @@ impl<'a, DBError> State<'a, DBError> {
     pub fn load_cache_account(&mut self, address: B160) -> Result<&mut CacheAccount, DBError> {
         match self.cache.accounts.entry(address) {
             hash_map::Entry::Vacant(entry) => {
+                if self.use_preloaded_bundle {
+                    // load account from bundle state
+                    if let Some(Some(account)) = self
+                        .bundle_state
+                        .as_ref()
+                        .map(|bundle| bundle.account(&address).cloned().map(Into::into))
+                    {
+                        return Ok(entry.insert(account));
+                    }
+                }
+                // if not found in bundle, load it from database
                 let info = self.database.basic(address)?;
-                let bundle_account = match info {
+                let account = match info {
                     None => CacheAccount::new_loaded_not_existing(),
                     Some(acc) if acc.is_empty() => {
                         CacheAccount::new_loaded_empty_eip161(HashMap::new())
                     }
                     Some(acc) => CacheAccount::new_loaded(acc, HashMap::new()),
                 };
-                Ok(entry.insert(bundle_account))
+                Ok(entry.insert(account))
             }
             hash_map::Entry::Occupied(entry) => Ok(entry.into_mut()),
         }
@@ -168,13 +179,21 @@ impl<'a, DBError> Database for State<'a, DBError> {
         self.load_cache_account(address).map(|a| a.account_info())
     }
 
-    fn code_by_hash(
-        &mut self,
-        code_hash: revm_interpreter::primitives::B256,
-    ) -> Result<Bytecode, Self::Error> {
+    fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
         let res = match self.cache.contracts.entry(code_hash) {
             hash_map::Entry::Occupied(entry) => Ok(entry.get().clone()),
             hash_map::Entry::Vacant(entry) => {
+                if self.use_preloaded_bundle {
+                    if let Some(Some(code)) = self
+                        .bundle_state
+                        .as_ref()
+                        .map(|bundle| bundle.contracts.get(&code_hash))
+                    {
+                        entry.insert(code.clone());
+                        return Ok(code.clone());
+                    }
+                }
+                // if not found in bundle ask database
                 let code = self.database.code_by_hash(code_hash)?;
                 entry.insert(code.clone());
                 Ok(code)
@@ -185,6 +204,7 @@ impl<'a, DBError> Database for State<'a, DBError> {
 
     fn storage(&mut self, address: B160, index: U256) -> Result<U256, Self::Error> {
         // Account is guaranteed to be loaded.
+        // Note that storage from bundle is already loaded with account.
         if let Some(account) = self.cache.accounts.get_mut(&address) {
             // account will always be some, but if it is not, U256::ZERO will be returned.
             let is_storage_known = account.status.storage_known();
