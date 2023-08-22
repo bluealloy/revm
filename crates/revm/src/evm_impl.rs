@@ -601,13 +601,30 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
     fn prepare_call(&mut self, inputs: &CallInputs) -> Result<PreparedCall, CallResult> {
         let gas = Gas::new(inputs.gas_limit);
-        // Load account and get code. Account is now hot.
-        let Some((bytecode, _)) = self.code(inputs.contract) else {
-            return Err(CallResult {
-                result: InstructionResult::FatalExternalError,
-                gas,
-                return_value: Bytes::new(),
-            });
+        let account = match self
+            .data
+            .journaled_state
+            .load_code(inputs.contract, self.data.db)
+        {
+            Ok((account, _)) => account,
+            Err(_) => {
+                return Err(CallResult {
+                    result: InstructionResult::FatalExternalError,
+                    gas,
+                    return_value: Bytes::new(),
+                })
+            }
+        };
+        let code_hash = account.info.code_hash();
+        let bytecode = match account.info.code {
+            Some(ref code) => code.clone(),
+            None => {
+                return Err(CallResult {
+                    result: InstructionResult::FatalExternalError,
+                    gas,
+                    return_value: Bytes::new(),
+                })
+            }
         };
 
         // Check depth
@@ -643,12 +660,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             });
         }
 
-        let hash = bytecode.hash_slow();
-
         let contract = Box::new(Contract::new_with_context(
             inputs.input.clone(),
             bytecode,
-            hash,
+            code_hash,
             &inputs.context,
         ));
 
