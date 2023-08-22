@@ -39,6 +39,7 @@ dev = [
     "optional_eip3607",
     "optional_gas_refund",
     "optional_no_base_fee",
+    "optional_coinbase_tip",
 ]
 memory_limit = ["revm-primitives/memory_limit"]
 no_gas_measuring = ["revm-primitives/no_gas_measuring"]
@@ -47,6 +48,7 @@ optional_block_gas_limit = ["revm-primitives/optional_block_gas_limit"]
 optional_eip3607 = ["revm-primitives/optional_eip3607"]
 optional_gas_refund = ["revm-primitives/optional_gas_refund"]
 optional_no_base_fee = ["revm-primitives/optional_no_base_fee"]
+optional_coinbase_tip = ["revm-primitives/optional_coinbase_tip"]
 std = ["revm-primitives/std"]
 serde = [
     "dep:serde",
