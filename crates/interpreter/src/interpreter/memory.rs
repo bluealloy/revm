@@ -96,6 +96,13 @@ impl Memory {
         }
     }
 
+    #[deprecated = "use `slice` instead"]
+    #[inline(always)]
+    #[cfg_attr(debug_assertions, track_caller)]
+    pub fn get_slice(&self, offset: usize, size: usize) -> &[u8] {
+        self.slice(offset, size)
+    }
+
     /// Returns a mutable byte slice of the memory region at the given offset.
     ///
     /// Panics on out of bounds.
