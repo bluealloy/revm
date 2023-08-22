@@ -683,7 +683,10 @@ mod tests {
 
         state.merge_transitions();
 
-        let bundle_state = state.take_bundle();
+        let mut bundle_state = state.take_bundle();
+        for revert in &mut bundle_state.reverts {
+            revert.sort_unstable_by_key(|(address, _)| *address);
+        }
 
         assert_eq!(
             bundle_state.reverts,
@@ -691,6 +694,15 @@ mod tests {
                 // new account is destroyed as if it never existed.
                 // ( ... )
                 //
+                // existing account should not result in an actionable revert
+                (
+                    existing_account_address,
+                    AccountRevert {
+                        account: AccountInfoRevert::DoNothing,
+                        previous_status: AccountStatus::Loaded,
+                        ..Default::default()
+                    }
+                ),
                 // existing account with storage should not result in an actionable revert
                 (
                     existing_account_with_storage_address,
@@ -699,15 +711,6 @@ mod tests {
                         previous_status: AccountStatus::Loaded,
                         storage: HashMap::default(),
                         wipe_storage: false
-                    }
-                ),
-                // existing account should not result in an actionable revert
-                (
-                    existing_account_address,
-                    AccountRevert {
-                        account: AccountInfoRevert::DoNothing,
-                        previous_status: AccountStatus::Loaded,
-                        ..Default::default()
                     }
                 ),
             ])])
