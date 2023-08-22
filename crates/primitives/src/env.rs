@@ -78,6 +78,7 @@ pub enum CreateScheme {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[non_exhaustive]
 pub struct CfgEnv {
     pub chain_id: U256,
     pub spec_id: SpecId,
