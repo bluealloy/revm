@@ -1,5 +1,6 @@
 #[macro_use]
 mod macros;
+
 mod arithmetic;
 mod bitwise;
 mod control;
