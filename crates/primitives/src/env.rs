@@ -89,6 +89,9 @@ pub struct CfgEnv {
     /// If some it will effects EIP-170: Contract code size limit. Useful to increase this because of tests.
     /// By default it is 0x6000 (~25kb).
     pub limit_contract_code_size: Option<usize>,
+    /// Disables the coinbase tip during the finalization of the transaction. This is useful for
+    /// rollups that redirect the tip to the sequencer.
+    pub disable_coinbase_tip: bool,
     /// A hard memory limit in bytes beyond which [Memory] cannot be resized.
     ///
     /// In cases where the gas limit may be extraordinarily high, it is recommended to set this to
@@ -118,10 +121,6 @@ pub struct CfgEnv {
     /// This is useful for testing method calls with zero gas price.
     #[cfg(feature = "optional_no_base_fee")]
     pub disable_base_fee: bool,
-    /// Disables the coinbase tip during the finalization of the transaction. This is useful for
-    /// rollups that redirect the tip to the sequencer.
-    #[cfg(feature = "optional_coinbase_tip")]
-    pub disable_coinbase_tip: bool,
 }
 
 impl CfgEnv {
@@ -174,16 +173,6 @@ impl CfgEnv {
     pub fn is_block_gas_limit_disabled(&self) -> bool {
         false
     }
-
-    #[cfg(feature = "optional_coinbase_tip")]
-    pub fn is_coinbase_tip_disabled(&self) -> bool {
-        self.disable_coinbase_tip
-    }
-
-    #[cfg(not(feature = "optional_coinbase_tip"))]
-    pub fn is_coinbase_tip_disabled(&self) -> bool {
-        false
-    }
 }
 
 #[derive(Clone, Default, Debug, Eq, PartialEq)]
@@ -202,6 +191,7 @@ impl Default for CfgEnv {
             spec_id: SpecId::LATEST,
             perf_analyse_created_bytecodes: Default::default(),
             limit_contract_code_size: None,
+            disable_coinbase_tip: false,
             #[cfg(feature = "memory_limit")]
             memory_limit: 2u64.pow(32) - 1,
             #[cfg(feature = "optional_balance_check")]
@@ -214,8 +204,6 @@ impl Default for CfgEnv {
             disable_gas_refund: false,
             #[cfg(feature = "optional_no_base_fee")]
             disable_base_fee: false,
-            #[cfg(feature = "optional_coinbase_tip")]
-            disable_coinbase_tip: false,
         }
     }
 }

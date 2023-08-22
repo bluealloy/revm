@@ -276,7 +276,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 );
 
                 // transfer fee to coinbase/beneficiary.
-                if !self.data.env.cfg.is_coinbase_tip_disabled() {
+                if !self.data.env.cfg.disable_coinbase_tip {
                     // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
                     let coinbase_gas_price = if SPEC::enabled(LONDON) {
                         effective_gas_price.saturating_sub(basefee)

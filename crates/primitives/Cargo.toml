@@ -61,7 +61,6 @@ optional_block_gas_limit = []
 optional_eip3607 = []
 optional_gas_refund = []
 optional_no_base_fee = []
-optional_coinbase_tip = []
 std = ["bytes/std", "rlp/std", "hex/std", "bitvec/std", "bitflags/std"]
 serde = [
     "dep:serde",
