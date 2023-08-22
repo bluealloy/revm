@@ -603,13 +603,7 @@ mod tests {
                 previous_status: AccountStatus::DestroyedChanged,
                 previous_info: Some(existing_account_info.clone()),
                 // storage change should be ignored
-                storage: HashMap::from([(
-                    slot1,
-                    StorageSlot {
-                        previous_or_original_value: U256::from(1),
-                        present_value: U256::from(2),
-                    },
-                )]),
+                storage: HashMap::default(),
                 storage_was_destroyed: true,
             },
         )]));
