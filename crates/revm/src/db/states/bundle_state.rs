@@ -135,8 +135,8 @@ impl BundleState {
     }
 
     /// Get account from state
-    pub fn account(&self, addres: &B160) -> Option<&BundleAccount> {
-        self.state.get(addres)
+    pub fn account(&self, address: &B160) -> Option<&BundleAccount> {
+        self.state.get(address)
     }
 
     /// Get bytecode from state
