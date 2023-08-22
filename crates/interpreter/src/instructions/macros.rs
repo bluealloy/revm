@@ -32,7 +32,7 @@ macro_rules! gas {
 macro_rules! refund {
     ($interp:expr, $gas:expr) => {{
         if crate::USE_GAS {
-            $interp.gas.gas_refund($gas);
+            $interp.gas.record_refund($gas);
         }
     }};
 }
