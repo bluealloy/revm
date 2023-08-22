@@ -1,7 +1,7 @@
 use super::analysis::{to_analysed, BytecodeLocked};
 use crate::primitives::{Bytecode, Bytes, B160, U256};
 use crate::CallContext;
-use revm_primitives::{Env, TransactTo};
+use revm_primitives::{Env, TransactTo, B256};
 
 #[derive(Clone, Default)]
 pub struct Contract {
@@ -10,6 +10,8 @@ pub struct Contract {
     /// Bytecode contains contract code, size of original code, analysis with gas block and jump table.
     /// Note that current code is extended with push padding and STOP at end.
     pub bytecode: BytecodeLocked,
+    /// Bytecode hash.
+    pub hash: B256,
     /// Contract address
     pub address: B160,
     /// Caller of the EVM.
@@ -20,11 +22,13 @@ pub struct Contract {
 
 impl Contract {
     pub fn new(input: Bytes, bytecode: Bytecode, address: B160, caller: B160, value: U256) -> Self {
+        let hash = bytecode.hash_slow();
         let bytecode = to_analysed(bytecode).try_into().expect("it is analyzed");
 
         Self {
             input,
             bytecode,
+            hash,
             address,
             caller,
             value,
