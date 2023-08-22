@@ -397,12 +397,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         };
 
         let bytecode = Bytecode::new_raw(inputs.init_code.clone());
-        let hash = bytecode.hash_slow();
 
         let contract = Box::new(Contract::new(
             Bytes::new(),
             bytecode,
-            hash,
+            code_hash,
             created_address,
             inputs.caller,
             inputs.value,
