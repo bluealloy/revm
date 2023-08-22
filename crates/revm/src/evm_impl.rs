@@ -396,9 +396,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             }
         };
 
+        let bytecode = Bytecode::new_raw(inputs.init_code.clone());
+        let hash = bytecode.hash_slow();
+
         let contract = Box::new(Contract::new(
             Bytes::new(),
-            Bytecode::new_raw(inputs.init_code.clone()),
+            bytecode,
+            hash,
             created_address,
             inputs.caller,
             inputs.value,
@@ -640,9 +644,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             });
         }
 
+        let hash = bytecode.hash_slow();
+
         let contract = Box::new(Contract::new_with_context(
             inputs.input.clone(),
             bytecode,
+            hash,
             &inputs.context,
         ));
 
