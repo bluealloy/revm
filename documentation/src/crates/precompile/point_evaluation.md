@@ -1,0 +1,6 @@
+# Point Evaluation Precompile
+
+This precompile is introduced in [EIP4844](https://eips.ethereum.org/EIPS/eip-4844) and is used to verify KZG commitments of blobspace. The precompile allows for efficient verification of commitments to blog transactions. The blob-space transaction contains a large amount of data that cannot be accessed by EVM execution, but has a commitment that can be accessed and verified. The EIP is designed to be forward compatible with danksharding architecture while giving L2s access to cheaper L1 commitments. This precompiled contract resides at the hardcoded Ethereum address `0x000000000000000000000000000000000000000A`.
+
+
+A useful resource is the python refrence implementation for the precompile, which can be found [here](https://github.com/ethereum/consensus-specs/blob/86fb82b221474cc89387fa6436806507b3849d88/specs/deneb/polynomial-commitments.md). This implementation uses the [c-kzg](https://github.com/ethereum/c-kzg-4844) audited foriegn function interface bindings from the Ethereum Foundation.
