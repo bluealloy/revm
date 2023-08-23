@@ -607,25 +607,17 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             .load_code(inputs.contract, self.data.db)
         {
             Ok((account, _)) => account,
-            Err(_) => {
+            Err(e) => {
+                self.data.error = Some(e);
                 return Err(CallResult {
                     result: InstructionResult::FatalExternalError,
                     gas,
                     return_value: Bytes::new(),
-                })
+                });
             }
         };
         let code_hash = account.info.code_hash();
-        let bytecode = match account.info.code {
-            Some(ref code) => code.clone(),
-            None => {
-                return Err(CallResult {
-                    result: InstructionResult::FatalExternalError,
-                    gas,
-                    return_value: Bytes::new(),
-                })
-            }
-        };
+        let bytecode = account.info.code.clone().unwrap_or_default();
 
         // Check depth
         if self.data.journaled_state.depth() > CALL_STACK_LIMIT {
