@@ -22,7 +22,7 @@ impl AccountRevert {
     /// for the storage that are set if account is again created.
     pub fn new_selfdestructed_again(
         status: AccountStatus,
-        account: AccountInfo,
+        account: AccountInfoRevert,
         mut previous_storage: StorageWithOriginalValues,
         updated_storage: StorageWithOriginalValues,
     ) -> Self {
@@ -38,7 +38,7 @@ impl AccountRevert {
                 .or_insert(RevertToSlot::Destroyed);
         }
         AccountRevert {
-            account: AccountInfoRevert::RevertTo(account),
+            account,
             storage: previous_storage,
             previous_status: status,
             wipe_storage: false,
@@ -47,6 +47,7 @@ impl AccountRevert {
 
     /// Create revert for states that were before selfdestruct.
     pub fn new_selfdestructed_from_bundle(
+        account_info_revert: AccountInfoRevert,
         bundle_account: &mut BundleAccount,
         updated_storage: &StorageWithOriginalValues,
     ) -> Option<Self> {
@@ -57,7 +58,7 @@ impl AccountRevert {
             | AccountStatus::Loaded => {
                 let mut ret = AccountRevert::new_selfdestructed_again(
                     bundle_account.status,
-                    bundle_account.info.clone().unwrap_or_default(),
+                    account_info_revert,
                     bundle_account.storage.drain().collect(),
                     updated_storage.clone(),
                 );
@@ -71,7 +72,7 @@ impl AccountRevert {
     /// Create new selfdestruct revert.
     pub fn new_selfdestructed(
         status: AccountStatus,
-        account: AccountInfo,
+        account: AccountInfoRevert,
         mut storage: StorageWithOriginalValues,
     ) -> Self {
         // Zero all present storage values and save present values to AccountRevert.
@@ -84,7 +85,7 @@ impl AccountRevert {
             .collect();
 
         Self {
-            account: AccountInfoRevert::RevertTo(account),
+            account,
             storage: previous_storage,
             previous_status: status,
             wipe_storage: true,
