@@ -1,3 +1,4 @@
+use super::RevertToSlot;
 use revm_interpreter::primitives::{AccountInfo, Bytecode, B160, B256, U256};
 
 /// Sorted accounts/storages/contracts for inclusion into database.
@@ -39,4 +40,4 @@ impl StateReverts {
 }
 
 /// Storage reverts
-pub type StorageRevert = Vec<Vec<(B160, bool, Vec<(U256, U256)>)>>;
+pub type StorageRevert = Vec<Vec<(B160, bool, Vec<(U256, RevertToSlot)>)>>;
