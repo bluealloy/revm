@@ -101,14 +101,10 @@ impl BundleState {
                 block_reverts
                     .into_iter()
                     .map(|(address, account, storage)| {
-                        let account = if let Some(account) = account {
-                            if let Some(account) = account {
-                                AccountInfoRevert::RevertTo(account)
-                            } else {
-                                AccountInfoRevert::DeleteIt
-                            }
-                        } else {
-                            AccountInfoRevert::DoNothing
+                        let account = match account {
+                            Some(Some(account)) => AccountInfoRevert::RevertTo(account),
+                            Some(None) => AccountInfoRevert::DeleteIt,
+                            None => AccountInfoRevert::DoNothing,
                         };
                         (
                             address,
@@ -193,10 +189,7 @@ impl BundleState {
             // append account info if it is changed.
             let was_destroyed = account.was_destroyed();
             if omit_changed_check || account.is_info_changed() {
-                let mut info = account.info;
-                if let Some(info) = info.as_mut() {
-                    info.code = None
-                }
+                let info = account.info.map(AccountInfo::without_code);
                 accounts.push((address, info));
             }
 
@@ -205,21 +198,18 @@ impl BundleState {
             // NOTE: Assumption is that revert is going to remove whole plain storage from
             // database so we can check if plain state was wiped or not.
             let mut account_storage_changed = Vec::with_capacity(account.storage.len());
-            if was_destroyed {
+
+            for (key, slot) in account.storage {
                 // If storage was destroyed that means that storage was wiped.
                 // In that case we need to check if present storage value is different then ZERO.
-                for (key, slot) in account.storage {
-                    if omit_changed_check || slot.present_value != U256::ZERO {
-                        account_storage_changed.push((key, slot.present_value));
-                    }
-                }
-            } else {
-                // if account is not destroyed check if original values was changed.
+                let destroyed_and_not_zero = was_destroyed && slot.present_value != U256::ZERO;
+
+                // If account is not destroyed check if original values was changed,
                 // so we can update it.
-                for (key, slot) in account.storage {
-                    if omit_changed_check || slot.is_changed() {
-                        account_storage_changed.push((key, slot.present_value));
-                    }
+                let not_destroyed_and_changed = !was_destroyed && slot.is_changed();
+
+                if omit_changed_check || destroyed_and_not_zero || not_destroyed_and_changed {
+                    account_storage_changed.push((key, slot.present_value));
                 }
             }
 
@@ -300,12 +290,10 @@ impl BundleState {
     /// If given number is greater then number of reverts then None is returned.
     /// Same if given transition number is zero.
     pub fn detach_lower_part_reverts(&mut self, num_of_detachments: usize) -> Option<Self> {
-        if num_of_detachments == 0 {
+        if num_of_detachments == 0 || num_of_detachments > self.reverts.len() {
             return None;
         }
-        if num_of_detachments > self.reverts.len() {
-            return None;
-        }
+
         // split is done as [0, num) and [num, len].
         let (detach, this) = self.reverts.split_at(num_of_detachments);
 
