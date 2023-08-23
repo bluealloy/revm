@@ -13,6 +13,8 @@ pub struct DummyHost {
 }
 
 impl DummyHost {
+    /// Create a new dummy host with the given [`Env`].
+    #[inline]
     pub fn new(env: Env) -> Self {
         Self {
             env,
@@ -21,6 +23,9 @@ impl DummyHost {
             log: Vec::new(),
         }
     }
+
+    /// Clears the storage and logs of the dummy host.
+    #[inline]
     pub fn clear(&mut self) {
         self.storage.clear();
         self.log.clear();
@@ -28,10 +33,12 @@ impl DummyHost {
 }
 
 impl Host for DummyHost {
+    #[inline]
     fn step(&mut self, _interp: &mut Interpreter) -> InstructionResult {
         InstructionResult::Continue
     }
 
+    #[inline]
     fn step_end(
         &mut self,
         _interp: &mut Interpreter,
@@ -40,30 +47,37 @@ impl Host for DummyHost {
         InstructionResult::Continue
     }
 
+    #[inline]
     fn env(&mut self) -> &mut Env {
         &mut self.env
     }
 
+    #[inline]
     fn load_account(&mut self, _address: B160) -> Option<(bool, bool)> {
         Some((true, true))
     }
 
+    #[inline]
     fn block_hash(&mut self, _number: U256) -> Option<B256> {
         Some(B256::zero())
     }
 
+    #[inline]
     fn balance(&mut self, _address: B160) -> Option<(U256, bool)> {
         Some((U256::ZERO, false))
     }
 
+    #[inline]
     fn code(&mut self, _address: B160) -> Option<(Bytecode, bool)> {
         Some((Bytecode::default(), false))
     }
 
+    #[inline]
     fn code_hash(&mut self, __address: B160) -> Option<(B256, bool)> {
         Some((KECCAK_EMPTY, false))
     }
 
+    #[inline]
     fn sload(&mut self, __address: B160, index: U256) -> Option<(U256, bool)> {
         match self.storage.entry(index) {
             Entry::Occupied(entry) => Some((*entry.get(), false)),
@@ -74,6 +88,7 @@ impl Host for DummyHost {
         }
     }
 
+    #[inline]
     fn sstore(
         &mut self,
         _address: B160,
@@ -91,6 +106,7 @@ impl Host for DummyHost {
         Some((U256::ZERO, present, value, is_cold))
     }
 
+    #[inline]
     fn tload(&mut self, _address: B160, index: U256) -> U256 {
         self.transient_storage
             .get(&index)
@@ -98,10 +114,12 @@ impl Host for DummyHost {
             .unwrap_or_default()
     }
 
+    #[inline]
     fn tstore(&mut self, _address: B160, index: U256, value: U256) {
         self.transient_storage.insert(index, value);
     }
 
+    #[inline]
     fn log(&mut self, address: B160, topics: Vec<B256>, data: Bytes) {
         self.log.push(Log {
             address,
@@ -110,10 +128,12 @@ impl Host for DummyHost {
         })
     }
 
+    #[inline]
     fn selfdestruct(&mut self, _address: B160, _target: B160) -> Option<SelfDestructResult> {
         panic!("Selfdestruct is not supported for this host")
     }
 
+    #[inline]
     fn create(
         &mut self,
         _inputs: &mut CreateInputs,
@@ -121,6 +141,7 @@ impl Host for DummyHost {
         panic!("Create is not supported for this host")
     }
 
+    #[inline]
     fn call(&mut self, _input: &mut CallInputs) -> (InstructionResult, Gas, Bytes) {
         panic!("Call is not supported for this host")
     }
