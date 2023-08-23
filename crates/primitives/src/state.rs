@@ -206,6 +206,12 @@ impl AccountInfo {
         }
     }
 
+    /// Returns account info without the code.
+    pub fn without_code(mut self) -> Self {
+        self.take_bytecode();
+        self
+    }
+
     pub fn is_empty(&self) -> bool {
         let code_empty = self.code_hash == KECCAK_EMPTY || self.code_hash == B256::zero();
         self.balance == U256::ZERO && self.nonce == 0 && code_empty
