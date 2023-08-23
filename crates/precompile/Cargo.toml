@@ -18,6 +18,9 @@ ripemd = { version = "0.1", default-features = false }
 secp256k1 = { version = "0.27.0", default-features = false, features = ["alloc", "recovery"], optional = true }
 sha2 = { version = "0.10.5", default-features = false }
 sha3 = { version = "0.10.7", default-features = false }
+rust-crypto = "0.2.36"
+rand = "0.8.5"
+rand_core = "0.6.4"
 
 [dev-dependencies]
 hex = "0.4"

@@ -5,6 +5,7 @@ extern crate alloc;
 
 mod blake2;
 mod bn128;
+mod ed25519;
 mod hash;
 mod identity;
 mod modexp;
@@ -191,8 +192,21 @@ impl Precompiles {
         })
     }
 
+    // TODO: This is hack to force the custom precompile here, there might be a better way to do this
     pub fn latest() -> &'static Self {
-        Self::berlin()
+        static INSTANCE: OnceCell<Precompiles> = OnceCell::new();
+        INSTANCE.get_or_init(|| {
+            let mut precompiles = Self::berlin().clone();
+            precompiles.fun.extend(
+                [
+                    // Custom Precompile: ED25519
+                    ed25519::ED25519_VERIFY,
+                ]
+                .into_iter()
+                .map(From::from),
+            );
+            precompiles
+        })
     }
 
     pub fn new(spec: SpecId) -> &'static Self {
