@@ -1,11 +1,7 @@
 use super::constants::*;
-use crate::alloc::vec::Vec;
-use crate::{
-    inner_models::SelfDestructResult,
-    primitives::Spec,
-    primitives::{SpecId::*, U256},
-};
-use revm_primitives::{Bytes, B160};
+use crate::inner_models::SelfDestructResult;
+use crate::primitives::{Bytes, Spec, SpecId::*, B160, U256};
+use alloc::vec::Vec;
 
 #[allow(clippy::collapsible_else_if)]
 pub fn sstore_refund<SPEC: Spec>(original: U256, current: U256, new: U256) -> i64 {
@@ -57,6 +53,7 @@ pub fn sstore_refund<SPEC: Spec>(original: U256, current: U256, new: U256) -> i6
     }
 }
 
+#[inline]
 pub fn create2_cost(len: usize) -> Option<u64> {
     let base = CREATE;
     // ceil(len / 32.0)
@@ -68,6 +65,7 @@ pub fn create2_cost(len: usize) -> Option<u64> {
     Some(gas)
 }
 
+#[inline]
 fn log2floor(value: U256) -> u64 {
     assert!(value != U256::ZERO);
     let mut l: u64 = 256;
@@ -87,15 +85,17 @@ fn log2floor(value: U256) -> u64 {
     l
 }
 
+#[inline]
 pub fn exp_cost<SPEC: Spec>(power: U256) -> Option<u64> {
     if power == U256::ZERO {
         Some(EXP)
     } else {
+        // EIP-160: EXP cost increase
         let gas_byte = U256::from(if SPEC::enabled(SPURIOUS_DRAGON) {
-            50
+            50u64
         } else {
             10
-        }); // EIP-160: EXP cost increase
+        });
         let gas = U256::from(EXP)
             .checked_add(gas_byte.checked_mul(U256::from(log2floor(power) / 8 + 1))?)?;
 
@@ -103,12 +103,14 @@ pub fn exp_cost<SPEC: Spec>(power: U256) -> Option<u64> {
     }
 }
 
+#[inline]
 pub fn verylowcopy_cost(len: u64) -> Option<u64> {
     let wordd = len / 32;
     let wordr = len % 32;
     VERYLOW.checked_add(COPY.checked_mul(if wordr == 0 { wordd } else { wordd + 1 })?)
 }
 
+#[inline]
 pub fn extcodecopy_cost<SPEC: Spec>(len: u64, is_cold: bool) -> Option<u64> {
     let wordd = len / 32;
     let wordr = len % 32;
@@ -153,14 +155,18 @@ pub fn keccak256_cost(len: u64) -> Option<u64> {
 }
 
 /// EIP-3860: Limit and meter initcode
-/// apply extra gas cost of 2 for every 32-byte chunk of initcode
-/// Can't overflow as initcode length is assumed to be checked
+///
+/// Apply extra gas cost of 2 for every 32-byte chunk of initcode.
+///
+/// This cannot overflow as the initcode length is assumed to be checked.
+#[inline]
 pub fn initcode_cost(len: u64) -> u64 {
     let wordd = len / 32;
     let wordr = len % 32;
     INITCODE_WORD_COST * if wordr == 0 { wordd } else { wordd + 1 }
 }
 
+#[inline]
 pub fn sload_cost<SPEC: Spec>(is_cold: bool) -> u64 {
     if SPEC::enabled(BERLIN) {
         if is_cold {
@@ -239,14 +245,15 @@ pub fn selfdestruct_cost<SPEC: Spec>(res: SelfDestructResult) -> u64 {
         !res.target_exists
     };
 
+    // EIP-150: Gas cost changes for IO-heavy operations
     let selfdestruct_gas_topup = if SPEC::enabled(TANGERINE) && should_charge_topup {
-        //EIP-150: Gas cost changes for IO-heavy operations
         25000
     } else {
         0
     };
 
-    let selfdestruct_gas = if SPEC::enabled(TANGERINE) { 5000 } else { 0 }; //EIP-150: Gas cost changes for IO-heavy operations
+    // EIP-150: Gas cost changes for IO-heavy operations
+    let selfdestruct_gas = if SPEC::enabled(TANGERINE) { 5000 } else { 0 };
 
     let mut gas = selfdestruct_gas + selfdestruct_gas_topup;
     if SPEC::enabled(BERLIN) && res.is_cold {
@@ -282,6 +289,7 @@ pub fn call_cost<SPEC: Spec>(
         + new_cost::<SPEC>(is_call_or_staticcall, is_new, transfers_value)
 }
 
+#[inline]
 pub fn hot_cold_cost<SPEC: Spec>(is_cold: bool, regular_value: u64) -> u64 {
     if SPEC::enabled(BERLIN) {
         if is_cold {
@@ -294,6 +302,7 @@ pub fn hot_cold_cost<SPEC: Spec>(is_cold: bool, regular_value: u64) -> u64 {
     }
 }
 
+#[inline]
 fn xfer_cost(is_call_or_callcode: bool, transfers_value: bool) -> u64 {
     if is_call_or_callcode && transfers_value {
         CALLVALUE
@@ -302,6 +311,7 @@ fn xfer_cost(is_call_or_callcode: bool, transfers_value: bool) -> u64 {
     }
 }
 
+#[inline]
 fn new_cost<SPEC: Spec>(is_call_or_staticcall: bool, is_new: bool, transfers_value: bool) -> u64 {
     if is_call_or_staticcall {
         // EIP-161: State trie clearing (invariant-preserving alternative)
@@ -321,6 +331,7 @@ fn new_cost<SPEC: Spec>(is_call_or_staticcall: bool, is_new: bool, transfers_val
     }
 }
 
+#[inline]
 pub fn memory_gas(a: usize) -> u64 {
     let a = a as u64;
     MEMORY
