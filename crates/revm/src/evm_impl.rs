@@ -13,9 +13,12 @@ use crate::primitives::{
 };
 use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector};
 use alloc::boxed::Box;
+use alloc::rc::Rc;
 use alloc::vec::Vec;
+use core::cell::RefCell;
 use core::{cmp::min, marker::PhantomData};
 use revm_interpreter::gas::initial_tx_gas;
+use revm_interpreter::primitives::shared_memory::SharedMemory;
 use revm_interpreter::MAX_CODE_SIZE;
 use revm_precompile::{Precompile, Precompiles};
 
@@ -160,6 +163,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
 
         let transact_gas_limit = tx_gas_limit - initial_gas_spend;
 
+        let shared_memory = Rc::new(RefCell::new(SharedMemory::new(transact_gas_limit, None)));
+
         // call inner handling of call/create
         let (exit_reason, ret_gas, output) = match self.data.env.tx.transact_to {
             TransactTo::Call(address) => {
@@ -167,34 +172,40 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                 caller_account.info.nonce =
                     caller_account.info.nonce.checked_add(1).unwrap_or(u64::MAX);
 
-                let (exit, gas, bytes) = self.call(&mut CallInputs {
-                    contract: address,
-                    transfer: Transfer {
-                        source: tx_caller,
-                        target: address,
-                        value: tx_value,
+                let (exit, gas, bytes) = self.call(
+                    &mut CallInputs {
+                        contract: address,
+                        transfer: Transfer {
+                            source: tx_caller,
+                            target: address,
+                            value: tx_value,
+                        },
+                        input: tx_data,
+                        gas_limit: transact_gas_limit,
+                        context: CallContext {
+                            caller: tx_caller,
+                            address,
+                            code_address: address,
+                            apparent_value: tx_value,
+                            scheme: CallScheme::Call,
+                        },
+                        is_static: false,
                     },
-                    input: tx_data,
-                    gas_limit: transact_gas_limit,
-                    context: CallContext {
-                        caller: tx_caller,
-                        address,
-                        code_address: address,
-                        apparent_value: tx_value,
-                        scheme: CallScheme::Call,
-                    },
-                    is_static: false,
-                });
+                    &shared_memory,
+                );
                 (exit, gas, Output::Call(bytes))
             }
             TransactTo::Create(scheme) => {
-                let (exit, address, ret_gas, bytes) = self.create(&mut CreateInputs {
-                    caller: tx_caller,
-                    scheme,
-                    value: tx_value,
-                    init_code: tx_data,
-                    gas_limit: transact_gas_limit,
-                });
+                let (exit, address, ret_gas, bytes) = self.create(
+                    &mut CreateInputs {
+                        caller: tx_caller,
+                        scheme,
+                        value: tx_value,
+                        init_code: tx_data,
+                        gas_limit: transact_gas_limit,
+                    },
+                    &shared_memory,
+                );
                 (exit, ret_gas, Output::Create(bytes, address))
             }
         };
@@ -446,7 +457,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     }
 
     /// EVM create opcode for both initial crate and CREATE and CREATE2 opcodes.
-    fn create_inner(&mut self, inputs: &CreateInputs) -> CreateResult {
+    fn create_inner(
+        &mut self,
+        inputs: &CreateInputs,
+        shared_memory: &Rc<RefCell<SharedMemory>>,
+    ) -> CreateResult {
         // Prepare crate.
         let prepared_create = match self.prepare_create(inputs) {
             Ok(o) => o,
@@ -454,8 +469,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         };
 
         // Create new interpreter and execute initcode
-        let (exit_reason, mut interpreter) =
-            self.run_interpreter(prepared_create.contract, prepared_create.gas.limit(), false);
+        let (exit_reason, mut interpreter) = self.run_interpreter(
+            prepared_create.contract,
+            prepared_create.gas.limit(),
+            false,
+            shared_memory,
+        );
 
         // Host error if present on execution
         match exit_reason {
@@ -558,6 +577,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         contract: Box<Contract>,
         gas_limit: u64,
         is_static: bool,
+        shared_memory: &Rc<RefCell<SharedMemory>>,
     ) -> (InstructionResult, Box<Interpreter>) {
         // Create inspector
         #[cfg(feature = "memory_limit")]
@@ -566,7 +586,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             gas_limit,
             is_static,
             self.data.env.cfg.memory_limit,
+            shared_memory,
         ));
+
+        interpreter.shared_memory.borrow_mut().use_new_memory();
 
         #[cfg(not(feature = "memory_limit"))]
         let mut interpreter = Box::new(Interpreter::new(contract, gas_limit, is_static));
@@ -697,7 +720,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     }
 
     /// Main contract call of the EVM.
-    fn call_inner(&mut self, inputs: &CallInputs) -> CallResult {
+    fn call_inner(
+        &mut self,
+        inputs: &CallInputs,
+        shared_memory: &Rc<RefCell<SharedMemory>>,
+    ) -> CallResult {
         // Prepare call
         let prepared_call = match self.prepare_call(inputs) {
             Ok(o) => o,
@@ -712,6 +739,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 prepared_call.contract,
                 prepared_call.gas.limit(),
                 inputs.is_static,
+                shared_memory,
             );
             CallResult {
                 result: exit_reason,
@@ -868,6 +896,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     fn create(
         &mut self,
         inputs: &mut CreateInputs,
+        shared_memory: &Rc<RefCell<SharedMemory>>,
     ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
         // Call inspector
         if INSPECT {
@@ -878,7 +907,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
                     .create_end(&mut self.data, inputs, ret, address, gas, out);
             }
         }
-        let ret = self.create_inner(inputs);
+        let ret = self.create_inner(inputs, shared_memory);
         if INSPECT {
             self.inspector.create_end(
                 &mut self.data,
@@ -893,7 +922,11 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         }
     }
 
-    fn call(&mut self, inputs: &mut CallInputs) -> (InstructionResult, Gas, Bytes) {
+    fn call(
+        &mut self,
+        inputs: &mut CallInputs,
+        shared_memory: &Rc<RefCell<SharedMemory>>,
+    ) -> (InstructionResult, Gas, Bytes) {
         if INSPECT {
             let (ret, gas, out) = self.inspector.call(&mut self.data, inputs);
             if ret != InstructionResult::Continue {
@@ -902,7 +935,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
                     .call_end(&mut self.data, inputs, gas, ret, out);
             }
         }
-        let ret = self.call_inner(inputs);
+        let ret = self.call_inner(inputs, shared_memory);
         if INSPECT {
             self.inspector.call_end(
                 &mut self.data,

@@ -1,3 +1,5 @@
+use core::cell::RefCell;
+
 use crate::primitives::Bytecode;
 use crate::{
     primitives::{Bytes, Env, B160, B256, U256},
@@ -7,6 +9,8 @@ use alloc::vec::Vec;
 pub use dummy::DummyHost;
 
 mod dummy;
+use alloc::rc::Rc;
+use revm_primitives::shared_memory::SharedMemory;
 
 /// EVM context host.
 pub trait Host {
@@ -51,7 +55,12 @@ pub trait Host {
     fn create(
         &mut self,
         inputs: &mut CreateInputs,
+        shared_memory: &Rc<RefCell<SharedMemory>>,
     ) -> (InstructionResult, Option<B160>, Gas, Bytes);
     /// Invoke a call operation.
-    fn call(&mut self, input: &mut CallInputs) -> (InstructionResult, Gas, Bytes);
+    fn call(
+        &mut self,
+        input: &mut CallInputs,
+        shared_memory: &Rc<RefCell<SharedMemory>>,
+    ) -> (InstructionResult, Gas, Bytes);
 }

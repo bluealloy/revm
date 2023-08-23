@@ -7,7 +7,8 @@ use revm::{
     interpreter::{analysis::to_analysed, BytecodeLocked, Contract, DummyHost, Interpreter},
     primitives::{BerlinSpec, Bytecode, BytecodeState, TransactTo, U256},
 };
-use std::time::Duration;
+use revm_interpreter::primitives::shared_memory::SharedMemory;
+use std::{cell::RefCell, rc::Rc, time::Duration};
 
 type Evm = revm::EVM<BenchmarkDB>;
 
@@ -110,8 +111,10 @@ fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &Evm) {
             ..Default::default()
         };
         let mut host = DummyHost::new(evm.env.clone());
+        let shared_memory = Rc::new(RefCell::new(SharedMemory::new(evm.env.tx.gas_limit, None)));
         b.iter(|| {
-            let mut interpreter = Interpreter::new(Box::new(contract.clone()), u64::MAX, false);
+            let mut interpreter =
+                Interpreter::new(Box::new(contract.clone()), u64::MAX, false, &shared_memory);
             let res = interpreter.run::<_, BerlinSpec>(&mut host);
             host.clear();
             res

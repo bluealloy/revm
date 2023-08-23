@@ -320,7 +320,8 @@ pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
         return;
     };
 
-    let (return_reason, address, gas, return_data) = host.create(&mut create_input);
+    let (return_reason, address, gas, return_data) =
+        host.create(&mut create_input, &mut interpreter.shared_memory);
 
     interpreter.return_data_buffer = match return_reason {
         // Save data to return data buffer if the create reverted
@@ -540,7 +541,7 @@ pub fn call_inner<SPEC: Spec>(
     };
 
     // Call host to interact with target contract
-    let (reason, gas, return_data) = host.call(&mut call_input);
+    let (reason, gas, return_data) = host.call(&mut call_input, &mut interpreter.shared_memory);
 
     interpreter.return_data_buffer = return_data;
 
