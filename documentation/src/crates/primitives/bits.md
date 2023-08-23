@@ -1,4 +1,4 @@
-# bits
+# Bits
 
 > NOTE: This module's types have been replaced by [`alloy_primitives`](https://github.com/alloy-rs/core)'s `Address` and `FixedBytes`.
 
@@ -6,7 +6,7 @@ This module houses the definitions for fixed-size bit arrays, `Address` and `B25
 
 The `AsRef` and `Deref` traits from `derive_more` crate are derived for both of these structures, providing convenient methods for converting these types to and from references of their underlying data.
 
-The `Arbitrary` trait from the `arbitrary` crate and the `PropTestArbitrary` trait from `proptest_derive` crate are derived conditionally when either testing or the "arbitrary" feature is enabled. These traits are used for property testing, a form of testing where random inputs are generated and used to validate certain properties of your code.
+The `Arbitrary` trait from the `arbitrary` crate and the `PropTestArbitrary` trait from `proptest_derive` crate are derived conditionally when either testing or the "arbitrary" feature is enabled. 
 
 The code also provides conversions between `B256`, `Address` and various other types such as `u64`, `primitive_types::H256`, `primitive_types::H160`, `primitive_types::U256`, and `ruint::aliases::U256`. The `impl` From blocks specify how to convert from one type to another.
 

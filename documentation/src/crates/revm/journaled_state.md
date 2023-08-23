@@ -1,14 +1,14 @@
 # Journaled State
 
 The `journaled_state` module of the `revm` crate provides a state management
-implementation for Ethereum-style accounts in a blockchain. It includes support for
+implementation for Ethereum-style accounts. It includes support for
 various actions such as self-destruction of accounts, initial account loading, account state
 modification, and logging. It also contains several important utility functions such as
 `is_precompile`.
 This module is built around the `JournaledState` structure, which encapsulates the entire
 state of the blockchain. `JournaledState` uses an internal state representation (a HashMap)
 that tracks all accounts. Each account is represented by the `Account` structure, which includes
-fields like balance, nonce, and code hash, among others.
+fields like balance, nonce, and code hash.
 For state-changing operations, the module keeps track of all the changes within a "journal" for
 easy reversion and commitment to the database. This feature is particularly useful for handling
 reversion of state changes in case of transaction failures or other exceptions.
@@ -16,165 +16,76 @@ The module interacts with a database through the `Database` trait, which abstrac
 operations for fetching and storing data. This design allows for a pluggable backend
 where different implementations of the `Database` trait can be used to persist the state
 in various ways (for instance, in-memory or disk-based databases).
-A notable feature of this module is its handling of "cold" and "hot" accesses to accounts and
-storage, mimicking how Ethereum clients implement these concepts for state accesses.
 
-## Structures
+## Data Structures
 
-### `JournaledState`
+- `JournaledState`
 
-This structure represents the entire state of the blockchain, including accounts, their
-associated balances, nonces, and code hashes. It maintains a journal of all state changes
-that allows for easy reversion and commitment of changes to the database.
+    This structure represents the entire state of the blockchain, including accounts, their
+    associated balances, nonces, and code hashes. It maintains a journal of all state changes
+    that allows for easy reversion and commitment of changes to the database.
 
-### `Account`
+- `Account`
 
-This structure represents an individual account on the blockchain. It includes the account's
-balance, nonce, and code hash. It also includes a flag indicating if the account is
-self-destructed, and a map representing the account's storage.
+    This structure represents an individual account on the blockchain. It includes the account's
+    balance, nonce, and code hash. It also includes a flag indicating if the account is
+    self-destructed, and a map representing the account's storage.
 
-### `JournalEntry`
+- `JournalEntry`
 
-This structure represents an entry in the `JournaledState`'s journal. Each entry describes
-an operation that changes the state, such as an account loading, an account destruction, or a
-storage change.
+    This structure represents an entry in the `JournaledState`'s journal. Each entry describes
+    an operation that changes the state, such as an account loading, an account destruction, or a
+    storage change.
 
 ## Methods
 
-### `selfdestruct`
+- `selfdestruct`
 
-This method marks an account as self-destructed and transfers its balance to a target account.
-If the target account does not exist, it's created. If the self-destructed account and the
-target are the same, the balance will be lost.
+    This method marks an account as self-destructed and transfers its balance to a target account.
+    If the target account does not exist, it's created. If the self-destructed account and the
+    target are the same, the balance will be lost.
 
-Example:
+-  `initial_account_and_code_load`
 
-```rust
-// Mark an account for self-destruction
-journaled_state.selfdestruct(&account_address, &target_address);
-```
+    This method initializes an account and loads its associated code from the database. If the
+    code does not exist, an empty code is associated with the account.
 
-### `initial_account_and_code_load`
+-  `initial_account_load`
 
-This method initializes an account and loads its associated code from the database. If the
-code does not exist, an empty code is associated with the account.
+    This method loads an account's basic information from the database without loading the code.
+    It also loads specified storage slots into memory.
 
-Example:
+- `load_account`
 
-```rust
-// Load an account and its code
-journaled_state.initial_account_and_code_load(&account_address);
-let account = journaled_state.get_account(&account_address);
-let code = journaled_state.get_code(&account_address);
-println!("Account: {:?}", account);
-println!("Code: {:?}", code);
-```
+    This method loads an account's information into memory and returns whether the account was
+    cold or hot accessed.
 
-### `initial_account_load`
+- `load_account_exist`
 
-This method loads an account's basic information from the database without loading the code.
-It also loads specified storage slots into memory.
+    This method checks whether an account exists or not. It returns whether the account was
+    cold or hot accessed and whether it exists.
 
-Example:
+- `load_code`
 
-```rust
-// Load account without loading the code
-journaled_state.initial_account_load(&account_address, &vec![slot1, slot2]);
-let account = journaled_state.get_account(&account_address);
-println!("Account: {:?}", account);
-```
+    This method loads an account's code into memory from the database.
 
-### `load_account`
+- `sload`
 
-This method loads an account's information into memory and returns whether the account was
-cold or hot accessed.
+    This method loads a specified storage value of an account. It returns the value and whether
+    the storage was cold loaded.
 
-Example:
+- `sstore`
 
-```rust
-// Load an account
-let (account, was_cold) = journaled_state.load_account(&account_address);
-println!("Account: {:?}", account);
-println!("Was cold: {:?}", was_cold);
-```
+    This method changes the value of a specified storage slot in an account and returns the
+    original value, the present value, the new value, and whether the storage was cold loaded.
 
-### `load_account_exist`
+- `log`
 
-This method checks whether an account exists or not. It returns whether the account was
-cold or hot accessed and whether it exists.
+    This method adds a log entry to the journal.
 
-Example:
+- `is_precompile`
 
-```rust
-// Load an account's data and check its existence
-let mut journaled_state = JournaledState::new(db);
-let cold_accessed = journaled_state.load_account_exist(&account_address);
-println!("Account exists: {:?}", cold_accessed.1);
-```
-
-### `load_code`
-
-This method loads an account's code into memory from the database.
-
-Example:
-
-```rust
-// Load the code of an account
-let (account, was_cold) = journaled_state.load_code(&account_address);
-println!("Account: {:?}", account);
-println!("Code: {:?}", account.info.code.unwrap());
-println!("Was cold: {:?}", was_cold);
-```
-
-### `sload`
-
-This method loads a specified storage value of an account. It returns the value and whether
-the storage was cold loaded.
-
-Example:
-
-```rust
-// Load a storage value
-let (value, was_cold) = journaled_state.sload(&account_address, &slot);
-println!("Storage value: {:?}, Was cold: {:?}", value, was_cold);
-```
-
-### `sstore`
-
-This method changes the value of a specified storage slot in an account and returns the
-original value, the present value, the new value, and whether the storage was cold loaded.
-
-Example:
-
-```rust
-// Change a storage value and commit the change
-journaled_state.sstore(&account_address, slot, new_value);
-journaled_state.commit();
-```
-
-### `log`
-
-This method adds a log entry to the journal.
-
-Example:
-
-```rust
-// Create a log entry
-let topics = vec![H256::random(), H256::random()];
-journaled_state.log(&account_address, &topics, &data);
-```
-
-### `is_precompile`
-
-This method checks whether an address is a precompiled contract or not.
-
-Example:
-
-```rust
-// Check whether an address is a precompiled contract
-let is_precompile = journaled_state.is_precompile(&account_address);
-println!("Is precompiled contract: {:?}", is_precompile);
-```
+    This method checks whether an address is a precompiled contract or not.
 
 ## Relevant EIPs
 
