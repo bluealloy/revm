@@ -580,7 +580,6 @@ mod tests {
             nonce: 1,
             ..Default::default()
         };
-
         // A transaction in block 1 creates a new account.
         state.apply_transition(Vec::from([
             (
@@ -715,5 +714,121 @@ mod tests {
                 ),
             ])])
         );
+    }
+
+    /// Checks that the behavior of selfdestruct within the block is correct.
+    #[test]
+    fn selfdestruct_state_and_reverts() {
+        let mut state = StateBuilder::default().build();
+
+        // Existing account.
+        let existing_account_address = B160::from_slice(&[0x1; 20]);
+        let existing_account_info = AccountInfo {
+            nonce: 1,
+            ..Default::default()
+        };
+
+        let (slot1, slot2) = (U256::from(1), U256::from(2));
+
+        // Existing account is destroyed.
+        state.apply_transition(Vec::from([(
+            existing_account_address,
+            TransitionAccount {
+                status: AccountStatus::Destroyed,
+                info: None,
+                previous_status: AccountStatus::Loaded,
+                previous_info: Some(existing_account_info.clone()),
+                storage: HashMap::default(),
+                storage_was_destroyed: true,
+            },
+        )]));
+
+        // Existing account is re-created and slot 0x01 is changed.
+        state.apply_transition(Vec::from([(
+            existing_account_address,
+            TransitionAccount {
+                status: AccountStatus::DestroyedChanged,
+                info: Some(existing_account_info.clone()),
+                previous_status: AccountStatus::Destroyed,
+                previous_info: None,
+                storage: HashMap::from([(
+                    slot1,
+                    StorageSlot {
+                        previous_or_original_value: U256::ZERO,
+                        present_value: U256::from(1),
+                    },
+                )]),
+                storage_was_destroyed: false,
+            },
+        )]));
+
+        // Slot 0x01 is changed, but existing account is destroyed again.
+        state.apply_transition(Vec::from([(
+            existing_account_address,
+            TransitionAccount {
+                status: AccountStatus::DestroyedAgain,
+                info: None,
+                previous_status: AccountStatus::DestroyedChanged,
+                previous_info: Some(existing_account_info.clone()),
+                // storage change should be ignored
+                storage: HashMap::default(),
+                storage_was_destroyed: true,
+            },
+        )]));
+
+        // Existing account is re-created and slot 0x02 is changed.
+        state.apply_transition(Vec::from([(
+            existing_account_address,
+            TransitionAccount {
+                status: AccountStatus::DestroyedChanged,
+                info: Some(existing_account_info.clone()),
+                previous_status: AccountStatus::DestroyedAgain,
+                previous_info: None,
+                storage: HashMap::from([(
+                    slot2,
+                    StorageSlot {
+                        previous_or_original_value: U256::ZERO,
+                        present_value: U256::from(2),
+                    },
+                )]),
+                storage_was_destroyed: false,
+            },
+        )]));
+
+        state.merge_transitions();
+
+        let bundle_state = state.take_bundle();
+
+        assert_eq!(
+            bundle_state.state,
+            HashMap::from([(
+                existing_account_address,
+                BundleAccount {
+                    info: Some(existing_account_info.clone()),
+                    original_info: Some(existing_account_info.clone()),
+                    storage: HashMap::from([(
+                        slot2,
+                        StorageSlot {
+                            previous_or_original_value: U256::ZERO,
+                            present_value: U256::from(2),
+                        },
+                    )]),
+                    status: AccountStatus::DestroyedChanged
+                }
+            )])
+        );
+
+        assert_eq!(
+            bundle_state.reverts,
+            Vec::from([Vec::from([(
+                existing_account_address,
+                AccountRevert {
+                    account: AccountInfoRevert::DoNothing,
+                    previous_status: AccountStatus::Loaded,
+                    storage: HashMap::from([(slot2, RevertToSlot::Destroyed)]),
+                    wipe_storage: true
+                }
+            )])])
+        )
     }
 }
