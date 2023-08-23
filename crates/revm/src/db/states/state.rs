@@ -825,7 +825,7 @@ mod tests {
                 AccountRevert {
                     account: AccountInfoRevert::DoNothing,
                     previous_status: AccountStatus::Loaded,
-                    storage: HashMap::from([(slot2, RevertToSlot::Some(U256::ZERO))]),
+                    storage: HashMap::from([(slot2, RevertToSlot::Destroyed)]),
                     wipe_storage: true
                 }
             )])])
