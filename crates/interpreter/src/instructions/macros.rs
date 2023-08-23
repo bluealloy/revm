@@ -39,8 +39,8 @@ macro_rules! gas_or_fail {
     ($interp:expr, $gas:expr) => {
         if crate::USE_GAS {
             match $gas {
-                Some(gas_used) if $interp.gas.record_cost(gas_used) => {}
-                _ => {
+                Some(gas_used) => gas!($interp, gas_used),
+                None => {
                     $interp.instruction_result = InstructionResult::OutOfGas;
                     return;
                 }
