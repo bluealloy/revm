@@ -2,23 +2,8 @@
 
 The `host.rs` module in this Rust EVM implementation defines a crucial trait `Host`. The `Host` trait outlines an interface for the interaction of the EVM interpreter with its environment (or "host"), encompassing essential operations such as account and storage access, creating logs, and invoking transactions.
 
-## `Host` Trait
 
-The `Host` trait provides the definition for all the methods that any EVM host must implement. It's a crucial bridge between the EVM and its environment, allowing the EVM to interact with blockchain state.
-
-```rust
-pub trait Host {
-    fn step(&mut self, interpreter: &mut Interpreter) -> InstructionResult;
-    fn step_end(
-        &mut self,
-        interpreter: &mut Interpreter,
-        ret: InstructionResult,
-    ) -> InstructionResult;
-    // ... (other methods omitted for brevity)
-}
-```
-
-## Key Methods of the `Host` Trait
+## Trait Methods
 
 - `step` & `step_end`: These methods manage the execution of EVM opcodes. The `step` method is invoked before executing an opcode, while `step_end` is invoked after. These methods can modify the EVM state or halt execution based on certain conditions.
 
@@ -38,6 +23,5 @@ pub trait Host {
 
 - `create` & `call`: These methods handle the creation of new smart contracts and the invocation of smart contract functions, respectively.
 
-## Importance of the `Host` Trait
 
 The `Host` trait provides a standard interface that any host environment for the EVM must implement. This abstraction allows the EVM code to interact with the state of the Ethereum network in a generic way, thereby enhancing modularity and interoperability. Different implementations of the `Host` trait can be used to simulate different environments for testing or for connecting to different Ethereum-like networks.

@@ -1,4 +1,4 @@
-# result
+# Result
 
 At the core of this module is the `ExecutionResult` enum, which describes the possible outcomes of an EVM execution: `Success`, `Revert`, and `Halt`. `Success` represents a successful transaction execution, and it holds important information such as the reason for `success` (an Eval enum), the gas used, the gas refunded, a vector of logs (`Vec<Log>`), and the output of the execution. This aligns with the stipulation in [EIP-658](https://eips.ethereum.org/EIPS/eip-658) that introduces a status code in the receipt of a transaction, indicating whether the top-level call was successful or failed.
 
