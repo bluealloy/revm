@@ -251,61 +251,62 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     fn finalize<SPEC: Spec>(&mut self, gas: &Gas) -> (HashMap<B160, Account>, Vec<Log>, u64, u64) {
         let caller = self.data.env.tx.caller;
         let coinbase = self.data.env.block.coinbase;
-        let (gas_used, gas_refunded) = if crate::USE_GAS {
-            let effective_gas_price = self.data.env.effective_gas_price();
-            let basefee = self.data.env.block.basefee;
+        let (gas_used, gas_refunded) =
+            if crate::USE_GAS {
+                let effective_gas_price = self.data.env.effective_gas_price();
+                let basefee = self.data.env.block.basefee;
 
-            let gas_refunded = if self.env().cfg.is_gas_refund_disabled() {
-                0
+                let gas_refunded = if self.env().cfg.is_gas_refund_disabled() {
+                    0
+                } else {
+                    // EIP-3529: Reduction in refunds
+                    let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 };
+                    min(gas.refunded() as u64, gas.spend() / max_refund_quotient)
+                };
+
+                // return balance of not spend gas.
+                let Ok((caller_account, _)) =
+                    self.data.journaled_state.load_account(caller, self.data.db)
+                else {
+                    panic!("caller account not found");
+                };
+
+                caller_account.info.balance = caller_account.info.balance.saturating_add(
+                    effective_gas_price * U256::from(gas.remaining() + gas_refunded),
+                );
+
+                // transfer fee to coinbase/beneficiary.
+                if !self.data.env.cfg.disable_coinbase_tip {
+                    // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
+                    let coinbase_gas_price = if SPEC::enabled(LONDON) {
+                        effective_gas_price.saturating_sub(basefee)
+                    } else {
+                        effective_gas_price
+                    };
+
+                    let Ok((coinbase_account, _)) = self
+                        .data
+                        .journaled_state
+                        .load_account(coinbase, self.data.db)
+                    else {
+                        panic!("coinbase account not found");
+                    };
+                    coinbase_account.mark_touch();
+                    coinbase_account.info.balance = coinbase_account.info.balance.saturating_add(
+                        coinbase_gas_price * U256::from(gas.spend() - gas_refunded),
+                    );
+                }
+
+                (gas.spend() - gas_refunded, gas_refunded)
             } else {
-                // EIP-3529: Reduction in refunds
-                let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 };
-                min(gas.refunded() as u64, gas.spend() / max_refund_quotient)
+                // touch coinbase
+                let _ = self
+                    .data
+                    .journaled_state
+                    .load_account(coinbase, self.data.db);
+                self.data.journaled_state.touch(&coinbase);
+                (0, 0)
             };
-
-            // return balance of not spend gas.
-            let Ok((caller_account, _)) =
-                self.data.journaled_state.load_account(caller, self.data.db)
-            else {
-                panic!("caller account not found");
-            };
-
-            caller_account.info.balance = caller_account
-                .info
-                .balance
-                .saturating_add(effective_gas_price * U256::from(gas.remaining() + gas_refunded));
-
-            // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
-            let coinbase_gas_price = if SPEC::enabled(LONDON) {
-                effective_gas_price.saturating_sub(basefee)
-            } else {
-                effective_gas_price
-            };
-
-            // transfer fee to coinbase/beneficiary.
-            let Ok((coinbase_account, _)) = self
-                .data
-                .journaled_state
-                .load_account(coinbase, self.data.db)
-            else {
-                panic!("coinbase account not found");
-            };
-            coinbase_account.mark_touch();
-            coinbase_account.info.balance = coinbase_account
-                .info
-                .balance
-                .saturating_add(coinbase_gas_price * U256::from(gas.spend() - gas_refunded));
-
-            (gas.spend() - gas_refunded, gas_refunded)
-        } else {
-            // touch coinbase
-            let _ = self
-                .data
-                .journaled_state
-                .load_account(coinbase, self.data.db);
-            self.data.journaled_state.touch(&coinbase);
-            (0, 0)
-        };
         let (new_state, logs) = self.data.journaled_state.finalize();
         (new_state, logs, gas_used, gas_refunded)
     }
