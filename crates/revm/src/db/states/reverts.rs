@@ -111,7 +111,7 @@ pub enum AccountInfoRevert {
 ///
 /// Note: It is completely different state if Storage is Zero or Some or if Storage was
 /// Destroyed. Because if it is destroyed, previous values can be found in database or it can be zero.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Copy, PartialEq, Eq)]
 pub enum RevertToSlot {
     Some(U256),
     Destroyed,

@@ -258,10 +258,8 @@ impl BundleState {
                     AccountInfoRevert::DoNothing => (),
                 }
                 if revert_account.wipe_storage || !revert_account.storage.is_empty() {
-                    let mut account_storage = Vec::with_capacity(revert_account.storage.len());
-                    for (key, revert_slot) in revert_account.storage {
-                        account_storage.push((key, revert_slot.to_previous_value()));
-                    }
+                    let mut account_storage =
+                        revert_account.storage.into_iter().collect::<Vec<_>>();
                     account_storage.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
                     storage.push((address, revert_account.wipe_storage, account_storage));
                 }
