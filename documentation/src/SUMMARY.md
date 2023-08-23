@@ -12,7 +12,6 @@
   - [inner_models](./crates/interpreter/inner_models.md)
   - [instruction_result](./crates/interpreter/instruction_result.md)
   - [instructions](./crates/interpreter/instructions.md)
-- [Examples](./examples.md)
 - [Primitives](./crates/primitives.md)
   - [database](./crates/primitives/database.md)
   - [result](./crates/primitives/result.md)
@@ -32,3 +31,4 @@
   - [Identity function](./crates/precompile/identity.md)
   - [Modular Exponentiation](./crates/precompile/modexp.md)
   - [Secp256k1](./crates/precompile/secp256k1.md)
+  - [Point Evaluation](./crates/precompile/point_evaluation.md)

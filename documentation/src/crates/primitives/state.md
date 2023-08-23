@@ -1,4 +1,4 @@
-# state
+# State
 
 Manages the EVM's state, including account balances, contract storage, and more.
 

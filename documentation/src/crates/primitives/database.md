@@ -1,6 +1,6 @@
-# database
+# Database
 
-As its name suggests, it's responsible for database operations. This module is where the blockchain's state persistence is managed.
+Responsible for database operations. This module is where the blockchain's state persistence is managed.
 The module defines three primary traits (`Database`, `DatabaseCommit`, and `DatabaseRef`), a structure `RefDBWrapper`, and their associated methods.
 
 The `Database` trait defines an interface for mutable interaction with the database. It has a generic associated type `Error` to handle different kinds of errors that might occur during these interactions. It provides methods to retrieve basic account information (`basic`), retrieve account code by its hash (`code_by_hash`), retrieve the storage value of an address at a certain index (`storage`), and retrieve the block hash for a certain block number (`block_hash`).

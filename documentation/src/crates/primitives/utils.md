@@ -1,4 +1,4 @@
-# utilities
+# Utilities
 
 This Rust module provides utility functions and constants for handling Keccak hashing (used in Ethereum) and creating Ethereum addresses via legacy and `CREATE2` methods. It also includes serialization and deserialization methods for hexadecimal strings representing byte arrays.
 
