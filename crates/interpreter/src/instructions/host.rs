@@ -13,12 +13,10 @@ use revm_primitives::BLOCK_HASH_HISTORY;
 
 pub fn balance<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     pop_address!(interpreter, address);
-    let ret = host.balance(address);
-    if ret.is_none() {
+    let Some((balance, is_cold)) = host.balance(address) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
-    }
-    let (balance, is_cold) = ret.unwrap();
+    };
     gas!(
         interpreter,
         if SPEC::enabled(ISTANBUL) {
@@ -37,23 +35,19 @@ pub fn selfbalance<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Hos
     // EIP-1884: Repricing for trie-size-dependent opcodes
     check!(interpreter, SPEC::enabled(ISTANBUL));
     gas!(interpreter, gas::LOW);
-    let ret = host.balance(interpreter.contract.address);
-    if ret.is_none() {
+    let Some((balance, _)) = host.balance(interpreter.contract.address) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
-    }
-    let (balance, _) = ret.unwrap();
+    };
     push!(interpreter, balance);
 }
 
 pub fn extcodesize<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     pop_address!(interpreter, address);
-    let ret = host.code(address);
-    if ret.is_none() {
+    let Some((code, is_cold)) = host.code(address) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
-    }
-    let (code, is_cold) = ret.unwrap();
+    };
     if SPEC::enabled(BERLIN) {
         gas!(
             interpreter,
@@ -75,12 +69,10 @@ pub fn extcodesize<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Hos
 pub fn extcodehash<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     check!(interpreter, SPEC::enabled(CONSTANTINOPLE)); // EIP-1052: EXTCODEHASH opcode
     pop_address!(interpreter, address);
-    let ret = host.code_hash(address);
-    if ret.is_none() {
+    let Some((code_hash, is_cold)) = host.code_hash(address) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
-    }
-    let (code_hash, is_cold) = ret.unwrap();
+    };
     if SPEC::enabled(BERLIN) {
         gas!(
             interpreter,
@@ -102,12 +94,10 @@ pub fn extcodecopy<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Hos
     pop_address!(interpreter, address);
     pop!(interpreter, memory_offset, code_offset, len_u256);
 
-    let ret = host.code(address);
-    if ret.is_none() {
+    let Some((code, is_cold)) = host.code(address) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
-    }
-    let (code, is_cold) = ret.unwrap();
+    };
 
     let len = as_usize_or_fail!(interpreter, len_u256, InstructionResult::InvalidOperandOOG);
     gas_or_fail!(
@@ -139,12 +129,11 @@ pub fn blockhash(interpreter: &mut Interpreter, host: &mut dyn Host) {
         let diff = as_usize_saturated!(diff);
         // blockhash should push zero if number is same as current block number.
         if diff <= BLOCK_HASH_HISTORY && diff != 0 {
-            let ret = host.block_hash(*number);
-            if ret.is_none() {
+            let Some(hash) = host.block_hash(*number) else {
                 interpreter.instruction_result = InstructionResult::FatalExternalError;
                 return;
-            }
-            *number = U256::from_be_bytes(*ret.unwrap());
+            };
+            *number = U256::from_be_bytes(hash.0);
             return;
         }
     }
@@ -154,12 +143,10 @@ pub fn blockhash(interpreter: &mut Interpreter, host: &mut dyn Host) {
 pub fn sload<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     pop!(interpreter, index);
 
-    let ret = host.sload(interpreter.contract.address, index);
-    if ret.is_none() {
+    let Some((value, is_cold)) = host.sload(interpreter.contract.address, index) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
-    }
-    let (value, is_cold) = ret.unwrap();
+    };
     gas!(interpreter, gas::sload_cost::<SPEC>(is_cold));
     push!(interpreter, value);
 }
@@ -168,12 +155,12 @@ pub fn sstore<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     check_staticcall!(interpreter);
 
     pop!(interpreter, index, value);
-    let ret = host.sstore(interpreter.contract.address, index, value);
-    if ret.is_none() {
+    let Some((original, old, new, is_cold)) =
+        host.sstore(interpreter.contract.address, index, value)
+    else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
-    }
-    let (original, old, new, is_cold) = ret.unwrap();
+    };
     gas_or_fail!(interpreter, {
         let remaining_gas = interpreter.gas.remaining();
         gas::sstore_cost::<SPEC>(original, old, new, remaining_gas, is_cold)
@@ -238,12 +225,10 @@ pub fn selfdestruct<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Ho
     check_staticcall!(interpreter);
     pop_address!(interpreter, target);
 
-    let res = host.selfdestruct(interpreter.contract.address, target);
-    if res.is_none() {
+    let Some(res) = host.selfdestruct(interpreter.contract.address, target) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
-    }
-    let res = res.unwrap();
+    };
 
     // EIP-3529: Reduction in refunds
     if !SPEC::enabled(LONDON) && !res.previously_destroyed {
@@ -482,12 +467,10 @@ fn prepare_call_inputs<SPEC: Spec>(
     };
 
     // load account and calculate gas cost.
-    let res = host.load_account(to);
-    if res.is_none() {
+    let Some((is_cold, exist)) = host.load_account(to) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
-    }
-    let (is_cold, exist) = res.unwrap();
+    };
     let is_new = !exist;
 
     gas!(
