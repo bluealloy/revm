@@ -383,8 +383,7 @@ mod tests {
     /// Test bundle one
     fn test_bundle1() -> BundleState {
         // block changes
-
-        let bundle = BundleState::new(
+        BundleState::new(
             vec![
                 (
                     account1(),
@@ -414,27 +413,24 @@ mod tests {
                 (account2(), Some(None), vec![]),
             ]],
             vec![],
-        );
-        bundle
+        )
     }
 
     /// Test bundle two
     fn test_bundle2() -> BundleState {
         // block changes
-        let bundle = BundleState::new(
-            vec![
-                ((
-                    account1(),
-                    None,
-                    Some(AccountInfo {
-                        nonce: 3,
-                        balance: U256::from(20),
-                        code_hash: KECCAK_EMPTY,
-                        code: None,
-                    }),
-                    HashMap::from([(slot(), (U256::from(0), U256::from(15)))]),
-                )),
-            ],
+        BundleState::new(
+            vec![(
+                account1(),
+                None,
+                Some(AccountInfo {
+                    nonce: 3,
+                    balance: U256::from(20),
+                    code_hash: KECCAK_EMPTY,
+                    code: None,
+                }),
+                HashMap::from([(slot(), (U256::from(0), U256::from(15)))]),
+            )],
             vec![vec![(
                 account1(),
                 Some(Some(AccountInfo {
@@ -446,8 +442,7 @@ mod tests {
                 vec![(slot(), U256::from(10))],
             )]],
             vec![],
-        );
-        bundle
+        )
     }
 
     #[test]
