@@ -3,10 +3,10 @@ use crate::{
     primitives::{Address, Bytes, Env, B256, U256},
     CallInputs, CreateInputs, Gas, InstructionResult, Interpreter, SelfDestructResult,
 };
-pub use alloc::vec::Vec;
-pub use dummy_host::DummyHost;
+use alloc::vec::Vec;
+pub use dummy::DummyHost;
 
-mod dummy_host;
+mod dummy;
 
 /// EVM context host.
 pub trait Host {
