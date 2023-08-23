@@ -63,6 +63,9 @@ pub trait Transact<DBError> {
     /// Do checks that could make transaction fail before call/create
     fn preverify_transaction(&mut self) -> Result<(), EVMError<DBError>>;
 
+    /// Skip preverification steps and do transaction
+    fn transact_preverified(&mut self) -> EVMResult<DBError>;
+
     /// Do transaction.
     /// InstructionResult InstructionResult, Output for call or Address if we are creating
     /// contract, gas spend, gas refunded, State that needs to be applied.
@@ -116,7 +119,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         Ok(())
     }
 
-    fn transact(&mut self) -> EVMResult<DB::Error> {
+    fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
         let env = &self.data.env;
         let tx_caller = env.tx.caller;
         let tx_value = env.tx.value;
@@ -241,6 +244,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         };
 
         Ok(ResultAndState { result, state })
+    }
+
+    fn transact(&mut self) -> EVMResult<DB::Error> {
+        self.preverify_transaction()
+            .and_then(|_| self.transact_preverified())
     }
 }
 

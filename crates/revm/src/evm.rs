@@ -83,6 +83,18 @@ impl<DB: Database> EVM<DB> {
         }
     }
 
+    /// Skip preverification steps and execute transaction
+    /// without writing to DB, return change state.
+    pub fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
+        if let Some(db) = self.db.as_mut() {
+            let mut noop = NoOpInspector {};
+            let out = evm_inner::<DB, false>(&mut self.env, db, &mut noop).transact_preverified();
+            out
+        } else {
+            panic!("Database needs to be set");
+        }
+    }
+
     /// Execute transaction without writing to DB, return change state.
     pub fn transact(&mut self) -> EVMResult<DB::Error> {
         if let Some(db) = self.db.as_mut() {
@@ -114,6 +126,22 @@ impl<'a, DB: DatabaseRef> EVM<DB> {
             let out =
                 evm_inner::<RefDBWrapper<DB::Error>, false>(&mut self.env.clone(), db, &mut noop)
                     .preverify_transaction();
+            out
+        } else {
+            panic!("Database needs to be set");
+        }
+    }
+
+    /// Skip preverification steps and execute transaction
+    /// without writing to DB, return change state.
+    pub fn transact_preverified_ref(&self) -> EVMResult<DB::Error> {
+        if let Some(db) = self.db.as_ref() {
+            let mut noop = NoOpInspector {};
+            let mut db = RefDBWrapper::new(db);
+            let db = &mut db;
+            let out =
+                evm_inner::<RefDBWrapper<DB::Error>, false>(&mut self.env.clone(), db, &mut noop)
+                    .transact_preverified();
             out
         } else {
             panic!("Database needs to be set");

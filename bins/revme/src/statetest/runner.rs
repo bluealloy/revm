@@ -268,8 +268,7 @@ pub fn execute_test_suit(
                 let exec_result = if trace {
                     evm.inspect_commit(TracerEip3155::new(Box::new(stdout()), false, false))
                 } else {
-                    evm.preverify_transaction()
-                        .and_then(|_| evm.transact_commit())
+                    evm.transact_commit()
                 };
                 let timer = timer.elapsed();
 
