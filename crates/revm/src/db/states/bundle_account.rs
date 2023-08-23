@@ -232,11 +232,10 @@ impl BundleAccount {
                 None
             }
             AccountStatus::Destroyed => {
-                let this_info = self.info.take().unwrap_or_default();
                 let this_storage = self.storage.drain().collect();
                 let ret = match self.status {
                     AccountStatus::InMemoryChange | AccountStatus::Changed | AccountStatus::Loaded | AccountStatus::LoadedEmptyEIP161 => {
-                        AccountRevert::new_selfdestructed(self.status, this_info, this_storage)
+                        AccountRevert::new_selfdestructed(self.status, info_revert, this_storage)
                     }
                     AccountStatus::LoadedNotExisting => {
                         // Do nothing as we have LoadedNotExisting -> Destroyed (It is noop)
@@ -253,9 +252,11 @@ impl BundleAccount {
                 // (It was destroyed on previous block or one before).
 
                 // check common pre destroy paths.
-                if let Some(revert_state) =
-                    AccountRevert::new_selfdestructed_from_bundle(self, &updated_storage)
-                {
+                if let Some(revert_state) = AccountRevert::new_selfdestructed_from_bundle(
+                    info_revert.clone(),
+                    self,
+                    &updated_storage,
+                ) {
                     // set to destroyed and revert state.
                     self.status = AccountStatus::DestroyedChanged;
                     self.info = updated_info;
@@ -287,7 +288,7 @@ impl BundleAccount {
                     AccountStatus::DestroyedAgain => Some(AccountRevert::new_selfdestructed_again(
                         // destroyed again will set empty account.
                         AccountStatus::DestroyedAgain,
-                        AccountInfo::default(),
+                        AccountInfoRevert::DeleteIt,
                         HashMap::default(),
                         updated_storage.clone(),
                     )),
@@ -305,9 +306,11 @@ impl BundleAccount {
                 // (It was destroyed on previous block or one before).
 
                 // check common pre destroy paths.
-                let ret = if let Some(revert_state) =
-                    AccountRevert::new_selfdestructed_from_bundle(self, &HashMap::default())
-                {
+                let ret = if let Some(revert_state) = AccountRevert::new_selfdestructed_from_bundle(
+                    info_revert,
+                    self,
+                    &HashMap::default(),
+                ) {
                     Some(revert_state)
                 } else {
                     match self.status {
