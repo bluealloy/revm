@@ -397,9 +397,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             }
         };
 
+        let bytecode = Bytecode::new_raw(inputs.init_code.clone());
+
         let contract = Box::new(Contract::new(
             Bytes::new(),
-            Bytecode::new_raw(inputs.init_code.clone()),
+            bytecode,
+            code_hash,
             created_address,
             inputs.caller,
             inputs.value,
@@ -599,14 +602,23 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
     fn prepare_call(&mut self, inputs: &CallInputs) -> Result<PreparedCall, CallResult> {
         let gas = Gas::new(inputs.gas_limit);
-        // Load account and get code. Account is now hot.
-        let Some((bytecode, _)) = self.code(inputs.contract) else {
-            return Err(CallResult {
-                result: InstructionResult::FatalExternalError,
-                gas,
-                return_value: Bytes::new(),
-            });
+        let account = match self
+            .data
+            .journaled_state
+            .load_code(inputs.contract, self.data.db)
+        {
+            Ok((account, _)) => account,
+            Err(e) => {
+                self.data.error = Some(e);
+                return Err(CallResult {
+                    result: InstructionResult::FatalExternalError,
+                    gas,
+                    return_value: Bytes::new(),
+                });
+            }
         };
+        let code_hash = account.info.code_hash();
+        let bytecode = account.info.code.clone().unwrap_or_default();
 
         // Check depth
         if self.data.journaled_state.depth() > CALL_STACK_LIMIT {
@@ -644,6 +656,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let contract = Box::new(Contract::new_with_context(
             inputs.input.clone(),
             bytecode,
+            code_hash,
             &inputs.context,
         ));
 
