@@ -14,7 +14,10 @@ use crate::{
     instructions::{eval, InstructionResult},
     Gas, Host,
 };
+use alloc::rc::Rc;
+use core::cell::RefCell;
 use core::ops::Range;
+use revm_primitives::shared_memory::SharedMemory;
 
 pub const CALL_STACK_LIMIT: u64 = 1024;
 
@@ -48,6 +51,8 @@ pub struct Interpreter {
     /// Memory limit. See [`crate::CfgEnv`].
     #[cfg(feature = "memory_limit")]
     pub memory_limit: u64,
+
+    pub shared_memory: Rc<RefCell<SharedMemory>>,
 }
 
 impl Interpreter {
@@ -57,7 +62,12 @@ impl Interpreter {
     }
 
     /// Create new interpreter
-    pub fn new(contract: Box<Contract>, gas_limit: u64, is_static: bool) -> Self {
+    pub fn new(
+        contract: Box<Contract>,
+        gas_limit: u64,
+        is_static: bool,
+        shared_memory: &Rc<RefCell<SharedMemory>>,
+    ) -> Self {
         #[cfg(not(feature = "memory_limit"))]
         {
             Self {
@@ -75,7 +85,7 @@ impl Interpreter {
 
         #[cfg(feature = "memory_limit")]
         {
-            Self::new_with_memory_limit(contract, gas_limit, is_static, u64::MAX)
+            Self::new_with_memory_limit(contract, gas_limit, is_static, u64::MAX, shared_memory)
         }
     }
 
@@ -85,6 +95,7 @@ impl Interpreter {
         gas_limit: u64,
         is_static: bool,
         memory_limit: u64,
+        shared_memory: &Rc<RefCell<SharedMemory>>,
     ) -> Self {
         Self {
             instruction_pointer: contract.bytecode.as_ptr(),
@@ -97,6 +108,7 @@ impl Interpreter {
             is_static,
             gas: Gas::new(gas_limit),
             memory_limit,
+            shared_memory: Rc::clone(shared_memory),
         }
     }
 
