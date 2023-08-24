@@ -1,12 +1,12 @@
-mod dummy_host;
-
 use crate::primitives::Bytecode;
 use crate::{
     primitives::{Bytes, Env, B160, B256, U256},
     CallInputs, CreateInputs, Gas, InstructionResult, Interpreter, SelfDestructResult,
 };
-pub use alloc::vec::Vec;
-pub use dummy_host::DummyHost;
+use alloc::vec::Vec;
+pub use dummy::DummyHost;
+
+mod dummy;
 
 /// EVM context host.
 pub trait Host {

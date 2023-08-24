@@ -15,62 +15,6 @@ There are several built-in inspectors in this module:
 
 The `Inspector` trait defines a set of methods that are called during various stages of EVM execution. You can implement this trait to create your own custom inspectors.
 
-```rust
-pub trait Inspector<DB: Database> {
-    fn initialize_interp(
-        &mut self,
-        _interp: &mut Interpreter,
-        _data: &mut EVMData<'_, DB>,
-    ) -> InstructionResult;
-    fn step(
-        &mut self,
-        _interp: &mut Interpreter,
-        _data: &mut EVMData<'_, DB>,
-    ) -> InstructionResult;
-    fn log(
-        &mut self,
-        _evm_data: &mut EVMData<'_, DB>,
-        _address: &B160,
-        _topics: &[B256],
-        _data: &Bytes,
-    );
-    fn step_end(
-        &mut self,
-        _interp: &mut Interpreter,
-        _data: &mut EVMData<'_, DB>,
-        _eval: InstructionResult,
-    ) -> InstructionResult;
-    fn call(
-        &mut self,
-        _data: &mut EVMData<'_, DB>,
-        _inputs: &mut CallInputs,
-    ) -> (InstructionResult, Gas, Bytes);
-    fn call_end(
-        &mut self,
-        _data: &mut EVMData<'_, DB>,
-        _inputs: &CallInputs,
-        remaining_gas: Gas,
-        ret: InstructionResult,
-        out: Bytes,
-    ) -> (InstructionResult, Gas, Bytes);
-    fn create(
-        &mut self,
-        _data: &mut EVMData<'_, DB>,
-        _inputs: &mut CreateInputs,
-    ) -> (InstructionResult, Option<B160>, Gas, Bytes);
-    fn create_end(
-        &mut self,
-        _data: &mut EVMData<'_, DB>,
-        _inputs: &CreateInputs,
-        ret: InstructionResult,
-        address: Option<B160>,
-        remaining_gas: Gas,
-        out: Bytes,
-    ) -> (InstructionResult, Option<B160>, Gas, Bytes);
-    fn selfdestruct(&mut self, _contract: B160, _target: B160);
-}
-```
-
 Each of these methods is called at different stages of the execution of a transaction, and they can be used to monitor, debug, or modify the execution of the EVM.
 
 For example, the `step` method is called on each step of the interpreter, and the `log` method is called when a log is emitted.
@@ -91,11 +35,5 @@ The module provides several inspector implementations out of the box, which can 
 To use an inspector, you need to implement the `Inspector` trait. For each method, you can decide what you want to do at each point in the EVM execution.
 
 For example, if you wanted to log all `SELFDESTRUCT` operations, you could implement the selfdestruct method to write a log entry every time a contract initiates a `selfdestruct` operation.
-
-```rust
-fn selfdestruct(&mut self, contract: B160, target: B160) {
-    println!("Contract {} self destructed, funds sent to {}", contract, target);
-}
-```
 
 Remember, the methods in the `Inspector` trait are optional to implement; if you do not need specific functionality, you can use the provided default implementations.

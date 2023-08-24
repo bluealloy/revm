@@ -101,14 +101,10 @@ impl BundleState {
                 block_reverts
                     .into_iter()
                     .map(|(address, account, storage)| {
-                        let account = if let Some(account) = account {
-                            if let Some(account) = account {
-                                AccountInfoRevert::RevertTo(account)
-                            } else {
-                                AccountInfoRevert::DeleteIt
-                            }
-                        } else {
-                            AccountInfoRevert::DoNothing
+                        let account = match account {
+                            Some(Some(account)) => AccountInfoRevert::RevertTo(account),
+                            Some(None) => AccountInfoRevert::DeleteIt,
+                            None => AccountInfoRevert::DoNothing,
                         };
                         (
                             address,
@@ -135,8 +131,8 @@ impl BundleState {
     }
 
     /// Get account from state
-    pub fn account(&self, addres: &B160) -> Option<&BundleAccount> {
-        self.state.get(addres)
+    pub fn account(&self, address: &B160) -> Option<&BundleAccount> {
+        self.state.get(address)
     }
 
     /// Get bytecode from state
@@ -193,10 +189,7 @@ impl BundleState {
             // append account info if it is changed.
             let was_destroyed = account.was_destroyed();
             if omit_changed_check || account.is_info_changed() {
-                let mut info = account.info;
-                if let Some(info) = info.as_mut() {
-                    info.code = None
-                }
+                let info = account.info.map(AccountInfo::without_code);
                 accounts.push((address, info));
             }
 
@@ -205,30 +198,29 @@ impl BundleState {
             // NOTE: Assumption is that revert is going to remove whole plain storage from
             // database so we can check if plain state was wiped or not.
             let mut account_storage_changed = Vec::with_capacity(account.storage.len());
-            if was_destroyed {
+
+            for (key, slot) in account.storage {
                 // If storage was destroyed that means that storage was wiped.
                 // In that case we need to check if present storage value is different then ZERO.
-                for (key, slot) in account.storage {
-                    if omit_changed_check || slot.present_value != U256::ZERO {
-                        account_storage_changed.push((key, slot.present_value));
-                    }
-                }
-            } else {
-                // if account is not destroyed check if original values was changed.
+                let destroyed_and_not_zero = was_destroyed && slot.present_value != U256::ZERO;
+
+                // If account is not destroyed check if original values was changed,
                 // so we can update it.
-                for (key, slot) in account.storage {
-                    if omit_changed_check || slot.is_changed() {
-                        account_storage_changed.push((key, slot.present_value));
-                    }
+                let not_destroyed_and_changed = !was_destroyed && slot.is_changed();
+
+                if omit_changed_check || destroyed_and_not_zero || not_destroyed_and_changed {
+                    account_storage_changed.push((key, slot.present_value));
                 }
             }
 
-            account_storage_changed.sort_by(|a, b| a.0.cmp(&b.0));
-            // append storage changes to account.
-            storage.push((
-                address,
-                (account.status.was_destroyed(), account_storage_changed),
-            ));
+            if !account_storage_changed.is_empty() {
+                account_storage_changed.sort_by(|a, b| a.0.cmp(&b.0));
+                // append storage changes to account.
+                storage.push((
+                    address,
+                    (account.status.was_destroyed(), account_storage_changed),
+                ));
+            }
         }
 
         accounts.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
@@ -258,10 +250,8 @@ impl BundleState {
                     AccountInfoRevert::DoNothing => (),
                 }
                 if revert_account.wipe_storage || !revert_account.storage.is_empty() {
-                    let mut account_storage = Vec::with_capacity(revert_account.storage.len());
-                    for (key, revert_slot) in revert_account.storage {
-                        account_storage.push((key, revert_slot.to_previous_value()));
-                    }
+                    let mut account_storage =
+                        revert_account.storage.into_iter().collect::<Vec<_>>();
                     account_storage.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
                     storage.push((address, revert_account.wipe_storage, account_storage));
                 }
@@ -302,12 +292,10 @@ impl BundleState {
     /// If given number is greater then number of reverts then None is returned.
     /// Same if given transition number is zero.
     pub fn detach_lower_part_reverts(&mut self, num_of_detachments: usize) -> Option<Self> {
-        if num_of_detachments == 0 {
+        if num_of_detachments == 0 || num_of_detachments > self.reverts.len() {
             return None;
         }
-        if num_of_detachments > self.reverts.len() {
-            return None;
-        }
+
         // split is done as [0, num) and [num, len].
         let (detach, this) = self.reverts.split_at(num_of_detachments);
 
@@ -397,8 +385,7 @@ mod tests {
     /// Test bundle one
     fn test_bundle1() -> BundleState {
         // block changes
-
-        let bundle = BundleState::new(
+        BundleState::new(
             vec![
                 (
                     account1(),
@@ -428,27 +415,24 @@ mod tests {
                 (account2(), Some(None), vec![]),
             ]],
             vec![],
-        );
-        bundle
+        )
     }
 
     /// Test bundle two
     fn test_bundle2() -> BundleState {
         // block changes
-        let bundle = BundleState::new(
-            vec![
-                ((
-                    account1(),
-                    None,
-                    Some(AccountInfo {
-                        nonce: 3,
-                        balance: U256::from(20),
-                        code_hash: KECCAK_EMPTY,
-                        code: None,
-                    }),
-                    HashMap::from([(slot(), (U256::from(0), U256::from(15)))]),
-                )),
-            ],
+        BundleState::new(
+            vec![(
+                account1(),
+                None,
+                Some(AccountInfo {
+                    nonce: 3,
+                    balance: U256::from(20),
+                    code_hash: KECCAK_EMPTY,
+                    code: None,
+                }),
+                HashMap::from([(slot(), (U256::from(0), U256::from(15)))]),
+            )],
             vec![vec![(
                 account1(),
                 Some(Some(AccountInfo {
@@ -460,8 +444,7 @@ mod tests {
                 vec![(slot(), U256::from(10))],
             )]],
             vec![],
-        );
-        bundle
+        )
     }
 
     #[test]

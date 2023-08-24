@@ -11,7 +11,7 @@ pub fn keccak256(input: &[u8]) -> B256 {
     B256(Keccak256::digest(input)[..].try_into().unwrap())
 }
 
-/// Returns the address for the legacy `CREATE` scheme: [`CreateScheme::Create`]
+/// Returns the address for the legacy `CREATE` scheme: [`crate::env::CreateScheme::Create`]
 pub fn create_address(caller: B160, nonce: u64) -> B160 {
     let mut stream = rlp::RlpStream::new_list(2);
     stream.append(&caller.0.as_ref());
@@ -20,7 +20,7 @@ pub fn create_address(caller: B160, nonce: u64) -> B160 {
     B160(out[12..].try_into().unwrap())
 }
 
-/// Returns the address for the `CREATE2` scheme: [`CreateScheme::Create2`]
+/// Returns the address for the `CREATE2` scheme: [`crate::env::CreateScheme::Create2`]
 pub fn create2_address(caller: B160, code_hash: B256, salt: U256) -> B160 {
     let mut hasher = Keccak256::new();
     hasher.update([0xff]);
