@@ -32,7 +32,7 @@ rayon = { version = "1.7", optional = true }
 
 [dev-dependencies]
 hex-literal = "0.4"
-ethers-contract = { version = "2.0.3", default-features = false }
+ethers-contract = { version = "2.0.9", default-features = false }
 hex = "0.4.3"
 anyhow = "1.0.75"
 bytes = "1.4.0"
