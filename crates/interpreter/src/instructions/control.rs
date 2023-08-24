@@ -50,7 +50,7 @@ pub fn ret(interpreter: &mut Interpreter, _host: &mut dyn Host) {
         interpreter.return_range = usize::MAX..usize::MAX;
     } else {
         let offset = as_usize_or_fail!(interpreter, start, InstructionResult::InvalidOperandOOG);
-        memory_resize!(interpreter, offset, len);
+        shared_memory_resize!(interpreter, offset, len);
         interpreter.return_range = offset..(offset + len);
     }
     interpreter.instruction_result = InstructionResult::Return;
@@ -66,7 +66,7 @@ pub fn revert<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
         interpreter.return_range = usize::MAX..usize::MAX;
     } else {
         let offset = as_usize_or_fail!(interpreter, start, InstructionResult::InvalidOperandOOG);
-        memory_resize!(interpreter, offset, len);
+        shared_memory_resize!(interpreter, offset, len);
         interpreter.return_range = offset..(offset + len);
     }
     interpreter.instruction_result = InstructionResult::Revert;

@@ -106,6 +106,15 @@ impl SharedMemory {
         &self.get_current_slice()[offset..offset + size]
     }
 
+    /// Set memory region at given offset
+    ///
+    /// # Safety
+    /// The caller is responsible for checking the offset and value
+    #[inline(always)]
+    pub unsafe fn set_byte(&mut self, index: usize, byte: u8) {
+        self.get_current_slice_mut()[index] = byte;
+    }
+
     #[inline(always)]
     pub fn set_u256(&mut self, index: usize, value: U256) {
         self.get_current_slice_mut()[index..index + 32]
