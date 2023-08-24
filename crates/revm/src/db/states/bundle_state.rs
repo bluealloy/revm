@@ -213,12 +213,14 @@ impl BundleState {
                 }
             }
 
-            account_storage_changed.sort_by(|a, b| a.0.cmp(&b.0));
-            // append storage changes to account.
-            storage.push((
-                address,
-                (account.status.was_destroyed(), account_storage_changed),
-            ));
+            if !account_storage_changed.is_empty() {
+                account_storage_changed.sort_by(|a, b| a.0.cmp(&b.0));
+                // append storage changes to account.
+                storage.push((
+                    address,
+                    (account.status.was_destroyed(), account_storage_changed),
+                ));
+            }
         }
 
         accounts.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
