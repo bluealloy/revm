@@ -589,10 +589,15 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             shared_memory,
         ));
 
-        interpreter.shared_memory.borrow_mut().use_new_memory();
-
         #[cfg(not(feature = "memory_limit"))]
-        let mut interpreter = Box::new(Interpreter::new(contract, gas_limit, is_static));
+        let mut interpreter = Box::new(Interpreter::new(
+            contract,
+            gas_limit,
+            is_static,
+            shared_memory,
+        ));
+
+        interpreter.shared_memory.borrow_mut().use_new_memory();
 
         if INSPECT {
             self.inspector

@@ -80,6 +80,7 @@ impl Interpreter {
                 instruction_result: InstructionResult::Continue,
                 is_static,
                 gas: Gas::new(gas_limit),
+                shared_memory: Rc::clone(shared_memory),
             }
         }
 
@@ -184,7 +185,7 @@ impl Interpreter {
         if self.return_range.start == usize::MAX {
             Bytes::new()
         } else {
-            Bytes::copy_from_slice(self.memory.get_slice(
+            Bytes::copy_from_slice(self.shared_memory.borrow().get_slice(
                 self.return_range.start,
                 self.return_range.end - self.return_range.start,
             ))

@@ -14,8 +14,8 @@ pub fn calculate_keccak256(interpreter: &mut Interpreter, _host: &mut dyn Host) 
         KECCAK_EMPTY
     } else {
         let from = as_usize_or_fail!(interpreter, from, InstructionResult::InvalidOperandOOG);
-        memory_resize!(interpreter, from, len);
-        keccak256(interpreter.memory.get_slice(from, len))
+        shared_memory_resize!(interpreter, from, len);
+        keccak256(interpreter.shared_memory.borrow().get_slice(from, len))
     };
 
     push_b256!(interpreter, hash);
@@ -49,10 +49,10 @@ pub fn codecopy(interpreter: &mut Interpreter, _host: &mut dyn Host) {
         InstructionResult::InvalidOperandOOG
     );
     let code_offset = as_usize_saturated!(code_offset);
-    memory_resize!(interpreter, memory_offset, len);
+    shared_memory_resize!(interpreter, memory_offset, len);
 
     // Safety: set_data is unsafe function and memory_resize ensures us that it is safe to call it
-    interpreter.memory.set_data(
+    interpreter.shared_memory.borrow_mut().set_data(
         memory_offset,
         code_offset,
         len,
@@ -100,12 +100,15 @@ pub fn calldatacopy(interpreter: &mut Interpreter, _host: &mut dyn Host) {
         InstructionResult::InvalidOperandOOG
     );
     let data_offset = as_usize_saturated!(data_offset);
-    memory_resize!(interpreter, memory_offset, len);
+    shared_memory_resize!(interpreter, memory_offset, len);
 
     // Safety: set_data is unsafe function and memory_resize ensures us that it is safe to call it
-    interpreter
-        .memory
-        .set_data(memory_offset, data_offset, len, &interpreter.contract.input);
+    interpreter.shared_memory.borrow_mut().set_data(
+        memory_offset,
+        data_offset,
+        len,
+        &interpreter.contract.input,
+    );
 }
 
 pub fn returndatasize<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
@@ -136,8 +139,8 @@ pub fn returndatacopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn
             memory_offset,
             InstructionResult::InvalidOperandOOG
         );
-        memory_resize!(interpreter, memory_offset, len);
-        interpreter.memory.set(
+        shared_memory_resize!(interpreter, memory_offset, len);
+        interpreter.shared_memory.borrow_mut().set(
             memory_offset,
             &interpreter.return_data_buffer[data_offset..data_end],
         );

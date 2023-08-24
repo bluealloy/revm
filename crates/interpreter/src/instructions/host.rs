@@ -113,11 +113,12 @@ pub fn extcodecopy<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Hos
         InstructionResult::InvalidOperandOOG
     );
     let code_offset = min(as_usize_saturated!(code_offset), code.len());
-    memory_resize!(interpreter, memory_offset, len);
+    shared_memory_resize!(interpreter, memory_offset, len);
 
     // Safety: set_data is unsafe function and memory_resize ensures us that it is safe to call it
     interpreter
-        .memory
+        .shared_memory
+        .borrow_mut()
         .set_data(memory_offset, code_offset, len, code.bytes());
 }
 
@@ -201,8 +202,8 @@ pub fn log<const N: u8>(interpreter: &mut Interpreter, host: &mut dyn Host) {
         Bytes::new()
     } else {
         let offset = as_usize_or_fail!(interpreter, offset, InstructionResult::InvalidOperandOOG);
-        memory_resize!(interpreter, offset, len);
-        Bytes::copy_from_slice(interpreter.memory.get_slice(offset, len))
+        shared_memory_resize!(interpreter, offset, len);
+        Bytes::copy_from_slice(interpreter.shared_memory.borrow().get_slice(offset, len))
     };
     let n = N as usize;
     if interpreter.stack.len() < n {
@@ -278,8 +279,13 @@ pub fn prepare_create_inputs<const IS_CREATE2: bool, SPEC: Spec>(
             }
             gas!(interpreter, gas::initcode_cost(len as u64));
         }
-        memory_resize!(interpreter, code_offset, len);
-        Bytes::copy_from_slice(interpreter.memory.get_slice(code_offset, len))
+        shared_memory_resize!(interpreter, code_offset, len);
+        Bytes::copy_from_slice(
+            interpreter
+                .shared_memory
+                .borrow()
+                .get_slice(code_offset, len),
+        )
     };
 
     let scheme = if IS_CREATE2 {
@@ -321,7 +327,7 @@ pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
     };
 
     let (return_reason, address, gas, return_data) =
-        host.create(&mut create_input, &mut interpreter.shared_memory);
+        host.create(&mut create_input, &interpreter.shared_memory);
 
     interpreter.return_data_buffer = match return_reason {
         // Save data to return data buffer if the create reverted
@@ -403,8 +409,13 @@ fn prepare_call_inputs<SPEC: Spec>(
     let input = if in_len != 0 {
         let in_offset =
             as_usize_or_fail!(interpreter, in_offset, InstructionResult::InvalidOperandOOG);
-        memory_resize!(interpreter, in_offset, in_len);
-        Bytes::copy_from_slice(interpreter.memory.get_slice(in_offset, in_len))
+        shared_memory_resize!(interpreter, in_offset, in_len);
+        Bytes::copy_from_slice(
+            interpreter
+                .shared_memory
+                .borrow()
+                .get_slice(in_offset, in_len),
+        )
     } else {
         Bytes::new()
     };
@@ -416,7 +427,7 @@ fn prepare_call_inputs<SPEC: Spec>(
             out_offset,
             InstructionResult::InvalidOperandOOG
         );
-        memory_resize!(interpreter, out_offset, *result_len);
+        shared_memory_resize!(interpreter, out_offset, *result_len);
         out_offset
     } else {
         usize::MAX //unrealistic value so we are sure it is not used
@@ -541,7 +552,7 @@ pub fn call_inner<SPEC: Spec>(
     };
 
     // Call host to interact with target contract
-    let (reason, gas, return_data) = host.call(&mut call_input, &mut interpreter.shared_memory);
+    let (reason, gas, return_data) = host.call(&mut call_input, &interpreter.shared_memory);
 
     interpreter.return_data_buffer = return_data;
 
@@ -555,7 +566,8 @@ pub fn call_inner<SPEC: Spec>(
                 interpreter.gas.record_refund(gas.refunded());
             }
             interpreter
-                .memory
+                .shared_memory
+                .borrow_mut()
                 .set(out_offset, &interpreter.return_data_buffer[..target_len]);
             push!(interpreter, U256::from(1));
         }
@@ -564,7 +576,8 @@ pub fn call_inner<SPEC: Spec>(
                 interpreter.gas.erase_cost(gas.remaining());
             }
             interpreter
-                .memory
+                .shared_memory
+                .borrow_mut()
                 .set(out_offset, &interpreter.return_data_buffer[..target_len]);
             push!(interpreter, U256::ZERO);
         }
