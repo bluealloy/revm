@@ -212,7 +212,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             },
             SuccessOrHalt::Halt(reason) => ExecutionResult::Halt { reason, gas_used },
             SuccessOrHalt::FatalExternalError => {
-                return Err(EVMError::Database(self.data.error.take().unwrap()))
+                return Err(EVMError::Database(self.data.error.take().unwrap()));
             }
             SuccessOrHalt::InternalContinue => {
                 panic!("Internal return flags should remain internal {exit_reason:?}")
@@ -393,7 +393,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     created_address: None,
                     gas,
                     return_value: Bytes::new(),
-                })
+                });
             }
         };
 
@@ -825,7 +825,9 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
 
     fn selfdestruct(&mut self, address: B160, target: B160) -> Option<SelfDestructResult> {
         if INSPECT {
-            self.inspector.selfdestruct(address, target);
+            let acc = self.data.journaled_state.state.get(&address).unwrap();
+            self.inspector
+                .selfdestruct(address, target, acc.info.balance);
         }
         self.data
             .journaled_state
