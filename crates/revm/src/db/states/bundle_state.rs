@@ -263,7 +263,7 @@ impl BundleState {
     }
 
     /// Consume the bundle state and split it into reverts and plain state.
-    pub fn split_into_plain_and_reverts(
+    pub fn into_sorted_plain_state_and_reverts(
         mut self,
         omit_changed_check: bool,
     ) -> (StateChangeset, StateReverts) {
