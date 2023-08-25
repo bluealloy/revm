@@ -174,18 +174,46 @@ impl BundleState {
         self.reverts.push(reverts);
     }
 
-    /// Nuke the bundle state and return sorted plain state.
+    /// Return and clear all reverts from BundleState, sort them before returning.
+    pub fn take_reverts(&mut self) -> StateReverts {
+        let mut state_reverts = StateReverts::with_capacity(self.reverts.len());
+        for reverts in self.reverts.drain(..) {
+            // pessimistically pre-allocate assuming _all_ accounts changed.
+            let mut accounts = Vec::with_capacity(reverts.len());
+            let mut storage = Vec::with_capacity(reverts.len());
+            for (address, revert_account) in reverts.into_iter() {
+                match revert_account.account {
+                    AccountInfoRevert::RevertTo(acc) => accounts.push((address, Some(acc))),
+                    AccountInfoRevert::DeleteIt => accounts.push((address, None)),
+                    AccountInfoRevert::DoNothing => (),
+                }
+                if revert_account.wipe_storage || !revert_account.storage.is_empty() {
+                    let mut account_storage =
+                        revert_account.storage.into_iter().collect::<Vec<_>>();
+                    account_storage.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
+                    storage.push((address, revert_account.wipe_storage, account_storage));
+                }
+            }
+            accounts.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
+            state_reverts.accounts.push(accounts);
+            state_reverts.storage.push(storage);
+        }
+
+        state_reverts
+    }
+
+    /// Consume the bundle state and return sorted plain state.
     ///
     /// `omit_changed_check` does not check If account is same as
     /// original state, this assumption can't be made in cases when
     /// we split the bundle state and commit part of it.
-    pub fn take_sorted_plain_change_inner(&mut self, omit_changed_check: bool) -> StateChangeset {
+    pub fn into_plain_state_sorted(self, omit_changed_check: bool) -> StateChangeset {
         // pessimistically pre-allocate assuming _all_ accounts changed.
         let state_len = self.state.len();
         let mut accounts = Vec::with_capacity(state_len);
         let mut storage = Vec::with_capacity(state_len);
 
-        for (address, account) in self.state.drain() {
+        for (address, account) in self.state {
             // append account info if it is changed.
             let was_destroyed = account.was_destroyed();
             if omit_changed_check || account.is_info_changed() {
@@ -226,7 +254,7 @@ impl BundleState {
         accounts.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
         storage.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
 
-        let mut contracts = self.contracts.drain().collect::<Vec<_>>();
+        let mut contracts = self.contracts.into_iter().collect::<Vec<_>>();
         contracts.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
 
         StateChangeset {
@@ -236,32 +264,14 @@ impl BundleState {
         }
     }
 
-    /// Return and clear all reverts from BundleState, sort them before returning.
-    pub fn take_reverts(&mut self) -> StateReverts {
-        let mut state_reverts = StateReverts::with_capacity(self.reverts.len());
-        for reverts in self.reverts.drain(..) {
-            // pessimistically pre-allocate assuming _all_ accounts changed.
-            let mut accounts = Vec::with_capacity(reverts.len());
-            let mut storage = Vec::with_capacity(reverts.len());
-            for (address, revert_account) in reverts.into_iter() {
-                match revert_account.account {
-                    AccountInfoRevert::RevertTo(acc) => accounts.push((address, Some(acc))),
-                    AccountInfoRevert::DeleteIt => accounts.push((address, None)),
-                    AccountInfoRevert::DoNothing => (),
-                }
-                if revert_account.wipe_storage || !revert_account.storage.is_empty() {
-                    let mut account_storage =
-                        revert_account.storage.into_iter().collect::<Vec<_>>();
-                    account_storage.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
-                    storage.push((address, revert_account.wipe_storage, account_storage));
-                }
-            }
-            accounts.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
-            state_reverts.accounts.push(accounts);
-            state_reverts.storage.push(storage);
-        }
-
-        state_reverts
+    /// Consume the bundle state and split it into reverts and plain state.
+    pub fn into_sorted_plain_state_and_reverts(
+        mut self,
+        omit_changed_check: bool,
+    ) -> (StateChangeset, StateReverts) {
+        let reverts = self.take_reverts();
+        let plain_state = self.into_plain_state_sorted(omit_changed_check);
+        (plain_state, reverts)
     }
 
     /// Extend the state with state that is build on top of it.
