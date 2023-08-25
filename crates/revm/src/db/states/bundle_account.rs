@@ -326,18 +326,14 @@ impl BundleAccount {
                             None
                         }
                         AccountStatus::DestroyedChanged => {
-                            // From destroyed new to destroyed again.
-                            let ret = AccountRevert {
-                                // empty account
-                                account: AccountInfoRevert::RevertTo(
-                                    self.info.clone().unwrap_or_default(),
-                                ),
-                                // TODO(rakita) is this invalid?
-                                storage: previous_storage_from_update(&updated_storage),
-                                previous_status: AccountStatus::DestroyedChanged,
-                                wipe_storage: false,
-                            };
-                            Some(ret)
+                            // From destroyed changed to destroyed again.
+                            Some(AccountRevert::new_selfdestructed_again(
+                                // destroyed again will set empty account.
+                                AccountStatus::DestroyedChanged,
+                                AccountInfoRevert::RevertTo(self.info.clone().unwrap_or_default()),
+                                self.storage.drain().collect(),
+                                HashMap::default(),
+                            ))
                         }
                         _ => unreachable!("Invalid state to DestroyedAgain from {self:?}"),
                     }
