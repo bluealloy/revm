@@ -2,7 +2,7 @@
 //! It is a great tool if some debugging is needed.
 //!
 use crate::interpreter::{opcode, CallInputs, CreateInputs, Gas, InstructionResult, Interpreter};
-use crate::primitives::{Address, Bytes};
+use crate::primitives::{Bytes, Address, U256};
 use crate::{inspectors::GasInspector, Database, EVMData, Inspector};
 #[derive(Clone, Default)]
 pub struct CustomPrintTracer {
@@ -89,7 +89,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         inputs: &mut CallInputs,
     ) -> (InstructionResult, Gas, Bytes) {
         println!(
-            "SM CALL:   {:?},context:{:?}, is_static:{:?}, transfer:{:?}, input_size:{:?}",
+            "SM CALL:   {:?}, context:{:?}, is_static:{:?}, transfer:{:?}, input_size:{:?}",
             inputs.contract,
             inputs.context,
             inputs.is_static,
@@ -111,8 +111,11 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         (InstructionResult::Continue, None, Gas::new(0), Bytes::new())
     }
 
-    fn selfdestruct(&mut self, contract: Address, target: Address) {
-        println!("SELFDESTRUCT on {contract:?} refund target: {target:?}");
+    fn selfdestruct(&mut self, contract: Address, target: Address, value: U256) {
+        println!(
+            "SELFDESTRUCT: contract: {:?}, refund target: {:?}, value {:?}",
+            contract, target, value
+        );
     }
 }
 

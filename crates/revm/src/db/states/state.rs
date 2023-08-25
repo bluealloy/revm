@@ -554,7 +554,7 @@ mod tests {
         let mut state = StateBuilder::default().build();
 
         // Non-existing account.
-        let new_account_address = B160::from_slice(&[0x1; 20]);
+        let new_account_address = Address::from_slice(&[0x1; 20]);
         let new_account_created_info = AccountInfo {
             nonce: 1,
             balance: U256::from(1),
@@ -562,7 +562,7 @@ mod tests {
         };
 
         // Existing account.
-        let existing_account_address = B160::from_slice(&[0x2; 20]);
+        let existing_account_address = Address::from_slice(&[0x2; 20]);
         let existing_account_initial_info = AccountInfo {
             nonce: 1,
             ..Default::default()
@@ -575,7 +575,7 @@ mod tests {
 
         // Existing account with storage.
         let (slot1, slot2) = (U256::from(1), U256::from(2));
-        let existing_account_with_storage_address = B160::from_slice(&[0x3; 20]);
+        let existing_account_with_storage_address = Address::from_slice(&[0x3; 20]);
         let existing_account_with_storage_info = AccountInfo {
             nonce: 1,
             ..Default::default()
@@ -722,7 +722,7 @@ mod tests {
         let mut state = StateBuilder::default().build();
 
         // Existing account.
-        let existing_account_address = B160::from_slice(&[0x1; 20]);
+        let existing_account_address = Address::from_slice(&[0x1; 20]);
         let existing_account_info = AccountInfo {
             nonce: 1,
             ..Default::default()
