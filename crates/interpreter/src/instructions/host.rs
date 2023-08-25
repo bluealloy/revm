@@ -555,7 +555,6 @@ pub fn call_inner<SPEC: Spec>(
     let (reason, gas, return_data) = host.call(&mut call_input, &interpreter.shared_memory);
 
     interpreter.return_data_buffer = return_data;
-
     let target_len = min(out_len, interpreter.return_data_buffer.len());
 
     match reason {

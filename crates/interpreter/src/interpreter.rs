@@ -37,7 +37,7 @@ pub struct Interpreter {
     /// left gas. Memory gas can be found in Memory field.
     pub gas: Gas,
     /// Memory.
-    pub memory: Memory,
+    // pub memory: Memory,
     /// Stack.
     pub stack: Stack,
     /// After call returns, its return data is saved here.
@@ -73,7 +73,7 @@ impl Interpreter {
             Self {
                 instruction_pointer: contract.bytecode.as_ptr(),
                 return_range: Range::default(),
-                memory: Memory::new(),
+                // memory: Memory::new(),
                 stack: Stack::new(),
                 return_data_buffer: Bytes::new(),
                 contract,
@@ -101,7 +101,7 @@ impl Interpreter {
         Self {
             instruction_pointer: contract.bytecode.as_ptr(),
             return_range: Range::default(),
-            memory: Memory::new(),
+            // memory: Memory::new(),
             stack: Stack::new(),
             return_data_buffer: Bytes::new(),
             contract,
@@ -122,9 +122,9 @@ impl Interpreter {
     }
 
     /// Reference of interpreter memory.
-    pub fn memory(&self) -> &Memory {
-        &self.memory
-    }
+    // pub fn memory(&self) -> &Memory {
+    //     &self.memory
+    // }
 
     /// Reference of interpreter stack.
     pub fn stack(&self) -> &Stack {
@@ -182,13 +182,15 @@ impl Interpreter {
     /// Copy and get the return value of the interpreter, if any.
     pub fn return_value(&self) -> Bytes {
         // if start is usize max it means that our return len is zero and we need to return empty
-        if self.return_range.start == usize::MAX {
+        let bytes = if self.return_range.start == usize::MAX {
             Bytes::new()
         } else {
             Bytes::copy_from_slice(self.shared_memory.borrow().get_slice(
                 self.return_range.start,
                 self.return_range.end - self.return_range.start,
             ))
-        }
+        };
+        self.shared_memory.borrow_mut().free_memory();
+        bytes
     }
 }

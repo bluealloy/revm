@@ -63,7 +63,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         self.stack = interp.stack.clone();
         self.pc = interp.program_counter();
         self.opcode = interp.current_opcode();
-        self.mem_size = interp.memory.len();
+        self.mem_size = interp.shared_memory.borrow().len();
         self.gas = self.gas_inspector.gas_remaining();
         //
         InstructionResult::Continue
