@@ -60,6 +60,12 @@ struct CallResult {
 }
 
 pub trait Transact<DBError> {
+    /// Do checks that could make transaction fail before call/create
+    fn preverify_transaction(&mut self) -> Result<(), EVMError<DBError>>;
+
+    /// Skip preverification steps and do transaction
+    fn transact_preverified(&mut self) -> EVMResult<DBError>;
+
     /// Do transaction.
     /// InstructionResult InstructionResult, Output for call or Address if we are creating
     /// contract, gas spend, gas refunded, State that needs to be applied.
@@ -85,10 +91,35 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
     for EVMImpl<'a, GSPEC, DB, INSPECT>
 {
-    fn transact(&mut self) -> EVMResult<DB::Error> {
-        self.env().validate_block_env::<GSPEC, DB::Error>()?;
-        self.env().validate_tx::<GSPEC>()?;
+    fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
+        let env = self.env();
 
+        env.validate_block_env::<GSPEC, DB::Error>()?;
+        env.validate_tx::<GSPEC>()?;
+
+        let tx_caller = env.tx.caller;
+        let tx_data = &env.tx.data;
+        let tx_is_create = env.tx.transact_to.is_create();
+
+        let initial_gas_spend = initial_tx_gas::<GSPEC>(tx_data, tx_is_create, &env.tx.access_list);
+
+        // Additonal check to see if limit is big enought to cover initial gas.
+        if env.tx.gas_limit < initial_gas_spend {
+            return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
+        }
+
+        // load acc
+        let journal = &mut self.data.journaled_state;
+        let (caller_account, _) = journal
+            .load_account(tx_caller, self.data.db)
+            .map_err(EVMError::Database)?;
+
+        self.data.env.validate_tx_against_state(caller_account)?;
+
+        Ok(())
+    }
+
+    fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
         let env = &self.data.env;
         let tx_caller = env.tx.caller;
         let tx_value = env.tx.value;
@@ -99,11 +130,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
 
         let initial_gas_spend =
             initial_tx_gas::<GSPEC>(&tx_data, tx_is_create, &env.tx.access_list);
-
-        // Additional check to see if limit is big enough to cover initial gas.
-        if env.tx.gas_limit < initial_gas_spend {
-            return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
-        }
 
         // load coinbase
         // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
@@ -120,8 +146,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let (caller_account, _) = journal
             .load_account(tx_caller, self.data.db)
             .map_err(EVMError::Database)?;
-
-        self.data.env.validate_tx_against_state(caller_account)?;
 
         // Reduce gas_limit*gas_price amount of caller account.
         // unwrap_or can only occur if disable_balance_check is enabled
@@ -220,6 +244,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         };
 
         Ok(ResultAndState { result, state })
+    }
+
+    fn transact(&mut self) -> EVMResult<DB::Error> {
+        self.preverify_transaction()
+            .and_then(|_| self.transact_preverified())
     }
 }
 
