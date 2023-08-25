@@ -42,7 +42,7 @@ pub fn mstore8(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::VERYLOW);
     pop!(interpreter, index, value);
     let index = as_usize_or_fail!(interpreter, index, InstructionResult::InvalidOperandOOG);
-    shared_memory_resize!(interpreter, index, 32);
+    shared_memory_resize!(interpreter, index, 1);
     let value = value.as_le_bytes()[0];
     // Safety: we resized our memory two lines above.
     unsafe {
@@ -57,7 +57,7 @@ pub fn msize(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::BASE);
     push!(
         interpreter,
-        U256::from(interpreter.shared_memory.borrow().effective_len())
+        U256::from(interpreter.shared_memory.borrow().len())
     );
 }
 
