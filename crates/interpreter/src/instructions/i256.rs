@@ -1,27 +1,17 @@
 use crate::primitives::U256;
 use core::cmp::Ordering;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(
-    any(test, feature = "arbitrary"),
-    derive(arbitrary::Arbitrary, proptest_derive::Arbitrary)
-)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(i8)]
 pub(super) enum Sign {
     // same as `cmp::Ordering`
     Minus = -1,
     Zero = 0,
-    #[allow(dead_code)] // "constructed" with `mem::transmute`
+    #[allow(dead_code)] // "constructed" with `mem::transmute` in `i256_sign` below
     Plus = 1,
 }
 
-pub(super) const _SIGN_BIT_MASK: U256 = U256::from_limbs([
-    0xFFFFFFFFFFFFFFFF,
-    0xFFFFFFFFFFFFFFFF,
-    0xFFFFFFFFFFFFFFFF,
-    0x7FFFFFFFFFFFFFFF,
-]);
-pub(super) const MIN_NEGATIVE_VALUE: U256 = U256::from_limbs([
+const MIN_NEGATIVE_VALUE: U256 = U256::from_limbs([
     0x0000000000000000,
     0x0000000000000000,
     0x0000000000000000,
@@ -29,13 +19,6 @@ pub(super) const MIN_NEGATIVE_VALUE: U256 = U256::from_limbs([
 ]);
 
 const FLIPH_BITMASK_U64: u64 = 0x7FFFFFFFFFFFFFFF;
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-#[cfg_attr(
-    any(test, feature = "arbitrary"),
-    derive(arbitrary::Arbitrary, proptest_derive::Arbitrary)
-)]
-pub(super) struct I256(pub(super) Sign, pub(super) U256);
 
 #[inline(always)]
 pub(super) fn i256_sign(val: &U256) -> Sign {
@@ -92,12 +75,14 @@ pub(super) fn i256_div(mut first: U256, mut second: U256) -> U256 {
     if second_sign == Sign::Zero {
         return U256::ZERO;
     }
+
     let first_sign = i256_sign_compl(&mut first);
     if first_sign == Sign::Minus && first == MIN_NEGATIVE_VALUE && second == U256::from(1) {
         return two_compl(MIN_NEGATIVE_VALUE);
     }
 
-    let mut d = first.wrapping_div(second);
+    // necessary overflow checks are done above, perform the division
+    let mut d = first / second;
 
     // set sign bit to zero
     u256_remove_sign(&mut d);
@@ -106,8 +91,8 @@ pub(super) fn i256_div(mut first: U256, mut second: U256) -> U256 {
         return U256::ZERO;
     }
 
-    // do complement if signs are different
-    // note: this condition has better codegen than an exhaustive match as of #582
+    // two's complement only if the signs are different
+    // note: this condition has better codegen than an exhaustive match, as of #582
     if (first_sign == Sign::Minus && second_sign != Sign::Minus)
         || (second_sign == Sign::Minus && first_sign != Sign::Minus)
     {
@@ -125,7 +110,11 @@ pub(super) fn i256_mod(mut first: U256, mut second: U256) -> U256 {
     }
 
     let _ = i256_sign_compl(&mut second);
+
+    // necessary overflow checks are done above, perform the operation
     let mut r = first % second;
+
+    // set sign bit to zero
     u256_remove_sign(&mut r);
     if r == U256::ZERO {
         return U256::ZERO;
@@ -168,10 +157,5 @@ mod tests {
         assert_eq!(i256_div(max_value, minus_one), neg_max_value);
         assert_eq!(i256_div(one_hundred, minus_one), neg_one_hundred);
         assert_eq!(i256_div(one_hundred, two), fifty);
-    }
-
-    #[test]
-    fn arbitrary() {
-        proptest::proptest!(|(_value: I256)| { })
     }
 }
