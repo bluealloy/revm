@@ -87,10 +87,6 @@ pub(super) fn i256_div(mut first: U256, mut second: U256) -> U256 {
     // set sign bit to zero
     u256_remove_sign(&mut d);
 
-    if d == U256::ZERO {
-        return U256::ZERO;
-    }
-
     // two's complement only if the signs are different
     // note: this condition has better codegen than an exhaustive match, as of #582
     if (first_sign == Sign::Minus && second_sign != Sign::Minus)
@@ -116,9 +112,7 @@ pub(super) fn i256_mod(mut first: U256, mut second: U256) -> U256 {
 
     // set sign bit to zero
     u256_remove_sign(&mut r);
-    if r == U256::ZERO {
-        return U256::ZERO;
-    }
+
     if first_sign == Sign::Minus {
         two_compl(r)
     } else {
