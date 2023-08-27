@@ -138,10 +138,6 @@ impl BundleAccount {
         let updated_info = transition.info;
         let updated_storage = transition.storage;
         let updated_status = transition.status;
-        // storage was destroyed so we should clear current storage.
-        if transition.storage_was_destroyed {
-            self.storage.clear();
-        }
 
         // the helper that extends this storage but preserves original value.
         let extend_storage =
@@ -180,8 +176,8 @@ impl BundleAccount {
                     }
                     AccountStatus::LoadedEmptyEIP161 => {
                         // Do nothing.
-                        // Only change that can happen from LoadedEmpty to Changed
-                        // is if balance is send to account. So we are only checking account change here.
+                        // Only change that can happen from LoadedEmpty to Changed is if balance
+                        // is send to account. So we are only checking account change here.
                     }
                     _ => unreachable!("Invalid state transfer to Changed from {self:?}"),
                 };
@@ -252,6 +248,7 @@ impl BundleAccount {
                 // (It was destroyed on previous block or one before).
 
                 // check common pre destroy paths.
+                // If common path is there it will drain the storage.
                 if let Some(revert_state) = AccountRevert::new_selfdestructed_from_bundle(
                     info_revert.clone(),
                     self,
@@ -276,11 +273,27 @@ impl BundleAccount {
                         })
                     }
                     AccountStatus::DestroyedChanged => {
-                        // Stays same as DestroyedNewChanged
+                        // Account was destroyed in this transition. So we should clear present storage
+                        // and insert it inside revert.
+
+                        let previous_storage = if transition.storage_was_destroyed {
+                            let mut storage = std::mem::take(&mut self.storage)
+                                .into_iter()
+                                .map(|t| (t.0, RevertToSlot::Some(t.1.present_value)))
+                                .collect::<HashMap<_, _>>();
+                            for (key, _) in &updated_storage {
+                                // as it is not existing inside Destroyed storage this means
+                                // that previous values must be zero
+                                storage.entry(*key).or_insert(RevertToSlot::Destroyed);
+                            }
+                            storage
+                        } else {
+                            previous_storage_from_update(&updated_storage)
+                        };
+
                         Some(AccountRevert {
-                            // empty account
                             account: info_revert,
-                            storage: previous_storage_from_update(&updated_storage),
+                            storage: previous_storage,
                             previous_status: AccountStatus::DestroyedChanged,
                             wipe_storage: false,
                         })
@@ -306,6 +319,7 @@ impl BundleAccount {
                 // (It was destroyed on previous block or one before).
 
                 // check common pre destroy paths.
+                // This will drain the storage if it is common transition.
                 let ret = if let Some(revert_state) = AccountRevert::new_selfdestructed_from_bundle(
                     info_revert,
                     self,
