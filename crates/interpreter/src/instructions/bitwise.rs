@@ -1,4 +1,4 @@
-use super::i256::{i256_cmp, i256_sign, two_compl, Sign};
+use super::i256::{i256_cmp, i256_sign_compl, two_compl, Sign};
 use crate::{
     gas,
     primitives::{Spec, U256},
@@ -21,13 +21,13 @@ pub(super) fn gt(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 pub(super) fn slt(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
-    *op2 = U256::from(i256_cmp(op1, *op2) == Ordering::Less);
+    *op2 = U256::from(i256_cmp(&op1, op2) == Ordering::Less);
 }
 
 pub(super) fn sgt(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
-    *op2 = U256::from(i256_cmp(op1, *op2) == Ordering::Greater);
+    *op2 = U256::from(i256_cmp(&op1, op2) == Ordering::Greater);
 }
 
 pub(super) fn eq(interpreter: &mut Interpreter, _host: &mut dyn Host) {
@@ -101,7 +101,7 @@ pub(super) fn sar<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Hos
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
 
-    let value_sign = i256_sign::<true>(op2);
+    let value_sign = i256_sign_compl(op2);
 
     *op2 = if *op2 == U256::ZERO || op1 >= U256::from(256) {
         match value_sign {
