@@ -59,7 +59,7 @@ dependencies = [
  "hex-literal",
  "itoa",
  "proptest",
- "proptest-derive",
+ "proptest-derive 0.3.0",
  "ruint",
  "serde",
  "tiny-keccak",
@@ -2074,6 +2074,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "proptest-derive"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9cf16337405ca084e9c78985114633b6827711d22b9e6ef6c6c0d665eb3f0b6e"
+dependencies = [
+ "proc-macro2 1.0.67",
+ "quote 1.0.33",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "quick-error"
 version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2277,7 +2288,7 @@ dependencies = [
  "derive_more",
  "enumn",
  "proptest",
- "proptest-derive",
+ "proptest-derive 0.4.0",
  "revm-primitives",
  "serde",
 ]
@@ -2315,7 +2326,7 @@ dependencies = [
  "hex-literal",
  "primitive-types",
  "proptest",
- "proptest-derive",
+ "proptest-derive 0.4.0",
  "ruint",
  "serde",
  "to-binary",
