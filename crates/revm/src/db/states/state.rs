@@ -502,7 +502,7 @@ mod tests {
                         previous_or_original_value: U256::ZERO,
                         present_value: U256::from(1),
                     }
-                )])
+                )]),
             }),
             "The latest state of the new account is incorrect"
         );
@@ -542,7 +542,7 @@ mod tests {
                             present_value: U256::from(3_000),
                         },
                     ),
-                ])
+                ]),
             }),
             "The latest state of the existing account is incorrect"
         );
@@ -813,7 +813,7 @@ mod tests {
                             present_value: U256::from(2),
                         },
                     )]),
-                    status: AccountStatus::DestroyedChanged
+                    status: AccountStatus::DestroyedChanged,
                 }
             )])
         );
@@ -826,7 +826,7 @@ mod tests {
                     account: AccountInfoRevert::DoNothing,
                     previous_status: AccountStatus::Loaded,
                     storage: HashMap::from([(slot2, RevertToSlot::Destroyed)]),
-                    wipe_storage: true
+                    wipe_storage: true,
                 }
             )])])
         )

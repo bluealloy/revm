@@ -294,12 +294,65 @@ impl BundleState {
     }
 
     /// Extend the state with state that is build on top of it.
-    pub fn extend(&mut self, other: Self) {
+    ///
+    /// For other state, if there is wipe storage inside `this` copy its state
+    /// to `other` revert (if there is no duplicates of course).
+    ///
+    /// Check if `this` bundle was selfdestroyed if it is and if `other`
+    /// has was selfdestroyed too we need to invalidate second (`other`) wipe flag
+    /// as wiping from database is done only once and we already transferred
+    /// all potentially missing storages to the `other` revert.
+    ///
+    /// Additionally update the `other` state only if there is no selfdestruct inside
+    // `other` revert.
+    pub fn extend(&mut self, mut other: Self) {
         // Extend the state.
+
+        // iterate over reverts and if its storage is wiped try to add previous bundle
+        // state as there is potential missing slots.
+        for i in other.reverts.iter_mut() {
+            for (address, revert_account) in i.iter_mut() {
+                if revert_account.wipe_storage {
+                    // If there is wipe storage in other revert
+                    // we need to copy the storage from this revert
+                    // to other revert.
+                    if let Some(account) = self.state.get(address) {
+                        for (key, value) in &account.storage {
+                            revert_account
+                                .storage
+                                .entry(*key)
+                                .or_insert(RevertToSlot::Some(value.present_value));
+                        }
+
+                        // nullify this wipe as database wipe is done in `this`.
+                        if account.was_destroyed() {
+                            revert_account.wipe_storage = false;
+                        }
+                    }
+                }
+            }
+        }
+
         for (address, other) in other.state {
             match self.state.entry(address) {
                 hash_map::Entry::Occupied(mut entry) => {
-                    entry.get_mut().extend(other);
+                    let this = entry.get_mut();
+                    // if other was destroyed. replace `this` storage with
+                    // the `other one.
+                    if other.was_destroyed() {
+                        this.storage = other.storage;
+                    } else {
+                        // otherwise extend this storage with other
+                        for (key, storage_slot) in other.storage {
+                            // update present value or insert storage slot.
+                            this.storage
+                                .entry(key)
+                                .or_insert(storage_slot)
+                                .present_value = storage_slot.present_value;
+                        }
+                    }
+                    this.status = other.status;
+                    this.info = other.info;
                 }
                 hash_map::Entry::Vacant(entry) => {
                     // just insert if empty
