@@ -294,16 +294,65 @@ impl BundleState {
     }
 
     /// Extend the state with state that is build on top of it.
-    pub fn extend(&mut self, other: Self) {
+    ///
+    /// For other state, if there a wipe storage flag set inside Revert copy the state
+    /// from `this` to `other` revert (if there is no duplicates of course).
+    ///
+    /// Check if `this` bundle was selfdestroyed if it is and if `other`
+    /// was selfdestroyed too we need to invalidate second (`other`) wipe flag
+    /// as wiping from database is done only once and we already transferred
+    /// all potentially missing storages to the `other` revert.
+    ///
+    /// Additionally update the `other` state only if there is no selfdestruct inside
+    /// `other` revert.
+    pub fn extend(&mut self, mut other: Self) {
         // Extend the state.
-        for (address, other) in other.state {
+
+        for (address, other_account) in other.state {
             match self.state.entry(address) {
                 hash_map::Entry::Occupied(mut entry) => {
-                    entry.get_mut().extend(other);
+                    // iterate over reverts and if its storage is wiped try to add previous bundle
+                    // state as there is potential missing slots.
+
+                    let this = entry.get_mut();
+                    for (_, revert_account) in other.reverts.iter_mut().flatten() {
+                        if revert_account.wipe_storage {
+                            // If there is wipe storage in other revert
+                            // we need to copy the storage from this revert
+                            // to other revert.
+                            for (key, value) in &this.storage {
+                                revert_account
+                                    .storage
+                                    .entry(*key)
+                                    .or_insert(RevertToSlot::Some(value.present_value));
+                            }
+
+                            // nullify this wipe as database wipe is done in `this`.
+                            if this.was_destroyed() {
+                                revert_account.wipe_storage = false;
+                            }
+                        }
+                    }
+                    // if other was destroyed. replace `this` storage with
+                    // the `other one.
+                    if other_account.was_destroyed() {
+                        this.storage = other_account.storage;
+                    } else {
+                        // otherwise extend this storage with other
+                        for (key, storage_slot) in other_account.storage {
+                            // update present value or insert storage slot.
+                            this.storage
+                                .entry(key)
+                                .or_insert(storage_slot)
+                                .present_value = storage_slot.present_value;
+                        }
+                    }
+                    this.status = other_account.status;
+                    this.info = other_account.info;
                 }
                 hash_map::Entry::Vacant(entry) => {
                     // just insert if empty
-                    entry.insert(other);
+                    entry.insert(other_account);
                 }
             }
         }
