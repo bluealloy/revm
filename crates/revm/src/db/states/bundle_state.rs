@@ -21,8 +21,13 @@ pub struct BundleState {
     pub state: HashMap<B160, BundleAccount>,
     /// All created contracts in this block.
     pub contracts: HashMap<B256, Bytecode>,
+    /// The flag indicating whether we should collect the reverts.
+    /// Defaults to `true`.
+    pub should_collect_reverts: bool,
     /// Changes to revert.
     ///
+    /// If `should_collect_reverts` flag was set to `false`, the revert for any given block will be just an empty array.
+    ///  
     /// Note: Inside vector is *not* sorted by address.
     /// But it is unique by address.
     pub reverts: Vec<Vec<(B160, AccountRevert)>>,
@@ -32,28 +37,14 @@ impl Default for BundleState {
     fn default() -> Self {
         Self {
             state: HashMap::new(),
-            reverts: Vec::new(),
             contracts: HashMap::new(),
+            should_collect_reverts: true,
+            reverts: Vec::new(),
         }
     }
 }
 
 impl BundleState {
-    /// Return reference to the state.
-    pub fn state(&self) -> &HashMap<B160, BundleAccount> {
-        &self.state
-    }
-
-    /// Is bundle state empty.
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-
-    /// Return number of changed accounts.
-    pub fn len(&self) -> usize {
-        self.state.len()
-    }
-
     /// Create it with new and old values of both Storage and AccountInfo.
     pub fn new(
         state: impl IntoIterator<
@@ -126,8 +117,29 @@ impl BundleState {
         Self {
             state,
             contracts: contracts.into_iter().collect(),
+            should_collect_reverts: true,
             reverts,
         }
+    }
+
+    /// Set the flag indicating whether reverts should be collected.
+    pub fn set_should_collect_reverts(&mut self, should_collect: bool) {
+        self.should_collect_reverts = should_collect;
+    }
+
+    /// Return reference to the state.
+    pub fn state(&self) -> &HashMap<B160, BundleAccount> {
+        &self.state
+    }
+
+    /// Is bundle state empty.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    /// Return number of changed accounts.
+    pub fn len(&self) -> usize {
+        self.state.len()
     }
 
     /// Get account from state
@@ -143,7 +155,13 @@ impl BundleState {
     /// Consume `TransitionState` by applying the changes and creating the reverts
     pub fn apply_block_substate_and_create_reverts(&mut self, transitions: TransitionState) {
         // pessimistically pre-allocate assuming _all_ accounts changed.
-        let mut reverts = Vec::with_capacity(transitions.transitions.len());
+        let reverts_capacity = if self.should_collect_reverts {
+            transitions.transitions.len()
+        } else {
+            0
+        };
+        let mut reverts = Vec::with_capacity(reverts_capacity);
+
         for (address, transition) in transitions.transitions.into_iter() {
             // add new contract if it was created/changed.
             if let Some((hash, new_bytecode)) = transition.has_new_contract() {
@@ -167,10 +185,11 @@ impl BundleState {
             };
 
             // append revert if present.
-            if let Some(revert) = revert {
+            if let Some(revert) = revert.filter(|_| self.should_collect_reverts) {
                 reverts.push((address, revert));
             }
         }
+
         self.reverts.push(reverts);
     }
 
