@@ -5,7 +5,7 @@ use super::{
 use rayon::slice::ParallelSliceMut;
 use revm_interpreter::primitives::{
     hash_map::{self, Entry},
-    AccountInfo, Bytecode, HashMap, StorageSlot, B160, B256, U256,
+    AccountInfo, Bytecode, HashMap, StorageSlot, B160, B256, KECCAK_EMPTY, U256,
 };
 
 /// Bundle state contain only values that got changed
@@ -273,7 +273,12 @@ impl BundleState {
         accounts.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
         storage.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
 
-        let mut contracts = self.contracts.into_iter().collect::<Vec<_>>();
+        let mut contracts = self
+            .contracts
+            .into_iter()
+            // remove empty bytecodes
+            .filter(|(b, _)| *b != KECCAK_EMPTY)
+            .collect::<Vec<_>>();
         contracts.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
 
         StateChangeset {
