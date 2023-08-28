@@ -91,7 +91,7 @@ impl BundleAccount {
             }
             AccountInfoRevert::RevertTo(info) => self.info = Some(info),
         };
-        // revert stoarge
+        // revert storage
         for (key, slot) in revert.storage {
             match slot {
                 RevertToSlot::Some(value) => {
@@ -109,24 +109,6 @@ impl BundleAccount {
             }
         }
         false
-    }
-
-    /// Extend account with another account.
-    ///
-    /// It is similar with the update but it is done with another BundleAccount.
-    ///
-    /// Original values of acccount and storage stay the same.
-    pub(crate) fn extend(&mut self, other: Self) {
-        self.status = other.status;
-        self.info = other.info;
-        // extend storage
-        for (key, storage_slot) in other.storage {
-            // update present value or insert storage slot.
-            self.storage
-                .entry(key)
-                .or_insert(storage_slot)
-                .present_value = storage_slot.present_value;
-        }
     }
 
     /// Update to new state and generate AccountRevert that if applied to new state will
