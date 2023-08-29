@@ -8,7 +8,7 @@ use revm_interpreter::primitives::{
     AccountInfo, Bytecode, HashMap, StorageSlot, B160, B256, KECCAK_EMPTY, U256,
 };
 
-/// Bundle state contain only values that got changed
+/// Bundle state contains only values that got changed
 ///
 /// For every account it contains both original and present state.
 /// This is needed to decide if there were any changes to the account.
@@ -365,7 +365,7 @@ impl BundleState {
 
     /// This will return detached lower part of reverts
     ///
-    /// Note that plain state will stay the same and returned BundleState
+    /// Note that plain state will stay the same and returned [BundleState]
     /// will contain only reverts and will be considered broken.
     ///
     /// If given number is greater then number of reverts then None is returned.
