@@ -43,7 +43,7 @@ pub fn gasprice<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
     push!(interpreter, host.env().effective_gas_price());
 }
 
-pub fn basefee<H:Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn basefee<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     gas!(interpreter, gas::BASE);
     // EIP-3198: BASEFEE opcode
     check!(interpreter, SPEC::enabled(LONDON));

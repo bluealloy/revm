@@ -118,7 +118,7 @@ pub fn returndatasize<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host:
     );
 }
 
-pub fn returndatacopy<H: Host,SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn returndatacopy<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
     // EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
     check!(interpreter, SPEC::enabled(BYZANTIUM));
     pop!(interpreter, memory_offset, offset, len);
@@ -144,7 +144,7 @@ pub fn returndatacopy<H: Host,SPEC: Spec>(interpreter: &mut Interpreter, _host: 
     }
 }
 
-pub fn gas<H: Host,>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn gas<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::BASE);
     push!(interpreter, U256::from(interpreter.gas.remaining()));
 }

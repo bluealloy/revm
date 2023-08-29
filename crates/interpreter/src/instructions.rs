@@ -144,7 +144,7 @@ pub fn eval<H: Host, S: Spec>(opcode: u8, interp: &mut Interpreter, host: &mut H
         opcode::RETURN => control::ret(interp, host),
         opcode::REVERT => control::revert::<S>(interp, host),
         opcode::INVALID => return_invalid(interp, host),
-        opcode::BASEFEE => host_env::basefee::<H,S>(interp, host),
+        opcode::BASEFEE => host_env::basefee::<H, S>(interp, host),
         opcode::ORIGIN => host_env::origin::<H>(interp, host),
         opcode::CALLER => system::caller::<H>(interp, host),
         opcode::CALLVALUE => system::callvalue(interp, host),
