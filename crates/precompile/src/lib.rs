@@ -10,7 +10,6 @@ mod identity;
 mod modexp;
 mod secp256k1;
 
-use once_cell::sync::OnceCell;
 pub use primitives::{
     precompile::{PrecompileError as Error, *},
     Bytes, HashMap,
@@ -23,6 +22,7 @@ pub type B256 = [u8; 32];
 
 use alloc::vec::Vec;
 use core::fmt;
+use lazy_static::lazy_static;
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base
@@ -119,76 +119,88 @@ impl SpecId {
 
 impl Precompiles {
     pub fn homestead() -> &'static Self {
-        static INSTANCE: OnceCell<Precompiles> = OnceCell::new();
-        INSTANCE.get_or_init(|| {
-            let fun = [
-                secp256k1::ECRECOVER,
-                hash::SHA256,
-                hash::RIPEMD160,
-                identity::FUN,
-            ]
-            .into_iter()
-            .map(From::from)
-            .collect();
-            Self { fun }
-        })
+        lazy_static! {
+            static ref INSTANCE: Precompiles = {
+                let fun = [
+                    secp256k1::ECRECOVER,
+                    hash::SHA256,
+                    hash::RIPEMD160,
+                    identity::FUN,
+                ]
+                .into_iter()
+                .map(From::from)
+                .collect();
+                Precompiles { fun }
+            };
+        }
+
+        &INSTANCE
     }
 
     pub fn byzantium() -> &'static Self {
-        static INSTANCE: OnceCell<Precompiles> = OnceCell::new();
-        INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::homestead().clone();
-            precompiles.fun.extend(
-                [
-                    // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
-                    // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
-                    bn128::add::BYZANTIUM,
-                    bn128::mul::BYZANTIUM,
-                    bn128::pair::BYZANTIUM,
-                    // EIP-198: Big integer modular exponentiation.
-                    modexp::BYZANTIUM,
-                ]
-                .into_iter()
-                .map(From::from),
-            );
-            precompiles
-        })
+        lazy_static! {
+            static ref INSTANCE: Precompiles = {
+                let mut precompiles = Precompiles::homestead().clone();
+                precompiles.fun.extend(
+                    [
+                        // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
+                        // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
+                        bn128::add::BYZANTIUM,
+                        bn128::mul::BYZANTIUM,
+                        bn128::pair::BYZANTIUM,
+                        // EIP-198: Big integer modular exponentiation.
+                        modexp::BYZANTIUM,
+                    ]
+                    .into_iter()
+                    .map(From::from),
+                );
+                precompiles
+            };
+        }
+
+        &INSTANCE
     }
 
     pub fn istanbul() -> &'static Self {
-        static INSTANCE: OnceCell<Precompiles> = OnceCell::new();
-        INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::byzantium().clone();
-            precompiles.fun.extend(
-                [
-                    // EIP-152: Add BLAKE2 compression function `F` precompile.
-                    blake2::FUN,
-                    // EIP-1108: Reduce alt_bn128 precompile gas costs.
-                    bn128::add::ISTANBUL,
-                    bn128::mul::ISTANBUL,
-                    bn128::pair::ISTANBUL,
-                ]
-                .into_iter()
-                .map(From::from),
-            );
-            precompiles
-        })
+        lazy_static! {
+            static ref INSTANCE: Precompiles = {
+                let mut precompiles = Precompiles::byzantium().clone();
+                precompiles.fun.extend(
+                    [
+                        // EIP-152: Add BLAKE2 compression function `F` precompile.
+                        blake2::FUN,
+                        // EIP-1108: Reduce alt_bn128 precompile gas costs.
+                        bn128::add::ISTANBUL,
+                        bn128::mul::ISTANBUL,
+                        bn128::pair::ISTANBUL,
+                    ]
+                    .into_iter()
+                    .map(From::from),
+                );
+                precompiles
+            };
+        }
+
+        &INSTANCE
     }
 
     pub fn berlin() -> &'static Self {
-        static INSTANCE: OnceCell<Precompiles> = OnceCell::new();
-        INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::istanbul().clone();
-            precompiles.fun.extend(
-                [
-                    // EIP-2565: ModExp Gas Cost.
-                    modexp::BERLIN,
-                ]
-                .into_iter()
-                .map(From::from),
-            );
-            precompiles
-        })
+        lazy_static! {
+            static ref INSTANCE: Precompiles = {
+                let mut precompiles = Precompiles::istanbul().clone();
+                precompiles.fun.extend(
+                    [
+                        // EIP-2565: ModExp Gas Cost.
+                        modexp::BERLIN,
+                    ]
+                    .into_iter()
+                    .map(From::from),
+                );
+                precompiles
+            };
+        }
+
+        &INSTANCE
     }
 
     pub fn latest() -> &'static Self {
