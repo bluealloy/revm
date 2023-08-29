@@ -5,6 +5,8 @@ use super::{
 use revm_interpreter::primitives::{AccountInfo, KECCAK_EMPTY, U256};
 use revm_precompile::HashMap;
 
+// mattsse: can we rephrase this a bit? basically this is an account read from the database that represents the current state of the account inside the database?
+
 /// Cache account is to store account from database be able
 /// to be updated from output of revm and while doing that
 /// create TransitionAccount needed for BundleState.

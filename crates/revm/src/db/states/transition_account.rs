@@ -2,6 +2,9 @@ use super::{AccountRevert, BundleAccount, StorageWithOriginalValues};
 use crate::db::AccountStatus;
 use revm_interpreter::primitives::{hash_map, AccountInfo, Bytecode, B256};
 
+// mattsse: should this reference `BundleState` instead? unclear what Block state is
+// Does `transition` mean  the state of an account after a transaction.
+
 /// Account Created when EVM state is merged to cache state.
 /// And it is send to Block state.
 ///

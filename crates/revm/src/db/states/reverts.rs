@@ -93,6 +93,7 @@ impl AccountRevert {
     }
 }
 
+// mattsse: what does this exactly represent? the action that needs to be taken on revert? maybe rename?
 #[derive(Clone, Default, Debug, PartialEq, Eq)]
 pub enum AccountInfoRevert {
     #[default]

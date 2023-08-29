@@ -15,9 +15,11 @@ pub struct StateChangeset {
     pub contracts: Vec<(B256, Bytecode)>,
 }
 
+// mattsse: a lot of the type aliases are very hard to read, this looks like Address with some bool marker and a list of storage slots with values, but it is not obvious, Personally I'd prefer structs for these tuples or at the very least docs what these types represent.
 /// Storage changeset
 pub type StorageChangeset = Vec<(B160, (bool, Vec<(U256, U256)>))>;
 
+// mattsse: what is a StateRevert exactly?
 #[derive(Clone, Debug, Default)]
 pub struct StateReverts {
     /// Vector of account presorted by address, with removed contracts bytecode

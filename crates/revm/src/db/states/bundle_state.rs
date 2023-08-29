@@ -8,6 +8,8 @@ use revm_interpreter::primitives::{
     AccountInfo, Bytecode, HashMap, StorageSlot, B160, B256, KECCAK_EMPTY, U256,
 };
 
+// mattsse: It's not clear to me what exactly a bundle is, is this a collection of multiple executed transactions that are bundled together?
+
 /// Bundle state contains only values that got changed
 ///
 /// For every account it contains both original and present state.
@@ -19,8 +21,12 @@ use revm_interpreter::primitives::{
 pub struct BundleState {
     /// Account state.
     pub state: HashMap<B160, BundleAccount>,
+    // mattsse: This mentions block, so this is only supposed to represent all changes in a single block? or is this independent of block and just multiple transactions?
+
     /// All created contracts in this block.
     pub contracts: HashMap<B256, Bytecode>,
+    // mattsse: Are these reverted transactions, or Account changes that can be reverted? The `revert` naming makes this a bit ambiguous.
+
     /// Changes to revert.
     ///
     /// If `should_collect_reverts` flag was set to `false`, the revert for any given block will be just an empty array.
@@ -142,9 +148,13 @@ impl BundleState {
         self.contracts.get(hash).cloned()
     }
 
+    // mattsse: what does `substate` mean here exactly?
+
     /// Consume `TransitionState` by applying the changes and creating the reverts
     ///
     /// `with_reverts` flag indicates whether we should collect the reverts.
+
+    // mattsse: what does collecting the reverts mean? keeping the inverse of the transition changes, so they can be reverted/rolled back?
     pub fn apply_block_substate_and_create_reverts(
         &mut self,
         transitions: TransitionState,
@@ -219,9 +229,9 @@ impl BundleState {
 
     /// Consume the bundle state and return sorted plain state.
     ///
-    /// `omit_changed_check` does not check If account is same as
+    /// `omit_changed_check` does not check if account is same as
     /// original state, this assumption can't be made in cases when
-    /// we split the bundle state and commit part of it.
+    /// we split the bundle state and commit parts of it.
     pub fn into_plain_state_sorted(self, omit_changed_check: bool) -> StateChangeset {
         // pessimistically pre-allocate assuming _all_ accounts changed.
         let state_len = self.state.len();
@@ -296,6 +306,7 @@ impl BundleState {
 
     /// Extend the state with state that is build on top of it.
     ///
+    // mattsse: this paragraph is very hard to parse:
     /// For other state, if there a wipe storage flag set inside Revert copy the state
     /// from `this` to `other` revert (if there is no duplicates of course).
     ///
@@ -362,6 +373,9 @@ impl BundleState {
         // Reverts can be just extended
         self.reverts.extend(other.reverts);
     }
+
+    // mattsse: It is weird to me that this returns type Self, but only includes the reverts
+    // should this return only the reverts?
 
     /// This will return detached lower part of reverts
     ///
