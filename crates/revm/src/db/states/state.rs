@@ -126,7 +126,7 @@ impl<'a, DBError> State<'a, DBError> {
     /// we at any time revert state of bundle to the state before transition
     /// is applied.
     pub fn merge_transitions(&mut self, with_reverts: bool) {
-        if let Some(transition_state) = self.transition_state.take() {
+        if let Some(transition_state) = self.transition_state.as_mut().map(TransitionState::take) {
             self.bundle_state
                 .get_or_insert(BundleState::default())
                 .apply_block_substate_and_create_reverts(transition_state, with_reverts);
