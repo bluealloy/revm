@@ -4,10 +4,10 @@ use crate::primitives::{hash_map::Entry, Bytecode, Bytes, HashMap, U256};
 use crate::{
     primitives::{Env, Log, B160, B256, KECCAK_EMPTY},
     CallInputs, CreateInputs, Gas, Host, InstructionResult, Interpreter, SelfDestructResult,
+    SharedMemory,
 };
 use alloc::rc::Rc;
 use alloc::vec::Vec;
-use revm_primitives::shared_memory::SharedMemory;
 
 pub struct DummyHost {
     pub env: Env,

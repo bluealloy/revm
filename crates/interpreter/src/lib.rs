@@ -19,7 +19,7 @@ pub use inner_models::*;
 pub use instruction_result::InstructionResult;
 pub use instructions::opcode::{self, OpCode, OPCODE_JUMPMAP};
 pub use interpreter::*;
-pub use interpreter::{BytecodeLocked, Contract, Interpreter, Memory, Stack};
+pub use interpreter::{BytecodeLocked, Contract, Interpreter, Stack};
 
 #[doc(inline)]
 pub use revm_primitives as primitives;

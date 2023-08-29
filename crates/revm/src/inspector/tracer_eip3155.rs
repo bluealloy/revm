@@ -5,7 +5,7 @@ use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult};
 use crate::primitives::{db::Database, hex, Bytes, B160};
 use crate::{evm_impl::EVMData, Inspector};
 use revm_interpreter::primitives::U256;
-use revm_interpreter::{opcode, Interpreter, Memory, Stack};
+use revm_interpreter::{opcode, Interpreter, SharedMemory, Stack};
 use serde_json::json;
 use std::io::Write;
 
@@ -24,7 +24,7 @@ pub struct TracerEip3155 {
     gas: u64,
     mem_size: usize,
     #[allow(dead_code)]
-    memory: Option<Memory>,
+    memory: Option<SharedMemory>,
     skip: bool,
 }
 

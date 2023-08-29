@@ -1,11 +1,11 @@
 pub mod analysis;
 mod contract;
-pub(crate) mod memory;
+pub(crate) mod shared_memory;
 mod stack;
 
 pub use analysis::BytecodeLocked;
 pub use contract::Contract;
-pub use memory::Memory;
+pub use shared_memory::SharedMemory;
 pub use stack::{Stack, STACK_LIMIT};
 
 use crate::primitives::{Bytes, Spec};
@@ -17,7 +17,6 @@ use crate::{
 use alloc::rc::Rc;
 use core::cell::RefCell;
 use core::ops::Range;
-use revm_primitives::shared_memory::SharedMemory;
 
 pub const CALL_STACK_LIMIT: u64 = 1024;
 
@@ -36,8 +35,8 @@ pub struct Interpreter {
     pub instruction_result: InstructionResult,
     /// left gas. Memory gas can be found in Memory field.
     pub gas: Gas,
-    /// Memory.
-    // pub memory: Memory,
+    /// Shared memory.
+    pub shared_memory: Rc<RefCell<SharedMemory>>,
     /// Stack.
     pub stack: Stack,
     /// After call returns, its return data is saved here.
@@ -51,8 +50,6 @@ pub struct Interpreter {
     /// Memory limit. See [`crate::CfgEnv`].
     #[cfg(feature = "memory_limit")]
     pub memory_limit: u64,
-
-    pub shared_memory: Rc<RefCell<SharedMemory>>,
 }
 
 impl Interpreter {
@@ -121,11 +118,6 @@ impl Interpreter {
         &self.gas
     }
 
-    /// Reference of interpreter memory.
-    // pub fn memory(&self) -> &Memory {
-    //     &self.memory
-    // }
-
     /// Reference of interpreter stack.
     pub fn stack(&self) -> &Stack {
         &self.stack
@@ -190,7 +182,7 @@ impl Interpreter {
                 self.return_range.end - self.return_range.start,
             ))
         };
-        self.shared_memory.borrow_mut().free_memory();
+        self.shared_memory.borrow_mut().free_context_memory();
         bytes
     }
 }

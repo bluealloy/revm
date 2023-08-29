@@ -18,8 +18,7 @@ use alloc::vec::Vec;
 use core::cell::RefCell;
 use core::{cmp::min, marker::PhantomData};
 use revm_interpreter::gas::initial_tx_gas;
-use revm_interpreter::primitives::shared_memory::SharedMemory;
-use revm_interpreter::MAX_CODE_SIZE;
+use revm_interpreter::{SharedMemory, MAX_CODE_SIZE};
 use revm_precompile::{Precompile, Precompiles};
 
 pub struct EVMData<'a, DB: Database> {
@@ -597,7 +596,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             shared_memory,
         ));
 
-        interpreter.shared_memory.borrow_mut().use_new_memory();
+        interpreter.shared_memory.borrow_mut().new_context_memory();
 
         if INSPECT {
             self.inspector

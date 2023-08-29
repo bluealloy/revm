@@ -4,13 +4,13 @@ use crate::primitives::Bytecode;
 use crate::{
     primitives::{Bytes, Env, B160, B256, U256},
     CallInputs, CreateInputs, Gas, InstructionResult, Interpreter, SelfDestructResult,
+    SharedMemory,
 };
 use alloc::vec::Vec;
 pub use dummy::DummyHost;
 
 mod dummy;
 use alloc::rc::Rc;
-use revm_primitives::shared_memory::SharedMemory;
 
 /// EVM context host.
 pub trait Host {

@@ -10,7 +10,6 @@ pub mod env;
 pub mod log;
 pub mod precompile;
 pub mod result;
-pub mod shared_memory;
 pub mod specification;
 pub mod state;
 pub mod utilities;
