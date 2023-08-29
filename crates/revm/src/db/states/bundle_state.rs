@@ -386,14 +386,14 @@ impl BundleState {
         })
     }
 
-    /// Reverse the state changes by N transitions back
-    pub fn revert(&mut self, mut transition: usize) {
-        if transition == 0 {
-            return;
-        }
-
-        // revert the state.
-        while let Some(reverts) = self.reverts.pop() {
+    /// Reverts the state changes of the latest transition
+    ///
+    /// Note: This is the same as `BundleState::revert(1)`
+    ///
+    /// Returns true if the state was reverted.
+    pub fn revert_latest(&mut self) -> bool {
+        // revert the latest recorded state
+        if let Some(reverts) = self.reverts.pop() {
             for (address, revert_account) in reverts.into_iter() {
                 if let Entry::Occupied(mut entry) = self.state.entry(address) {
                     if entry.get_mut().revert(revert_account) {
@@ -403,8 +403,23 @@ impl BundleState {
                     unreachable!("Account {address:?} {revert_account:?} for revert should exist");
                 }
             }
-            transition -= 1;
-            if transition == 0 {
+            return true;
+        }
+
+        false
+    }
+
+    /// Reverts the state changes by N transitions back.
+    ///
+    /// See also [Self::revert_latest]
+    pub fn revert(&mut self, mut num_transitions: usize) {
+        if num_transitions == 0 {
+            return;
+        }
+
+        while self.revert_latest() {
+            num_transitions -= 1;
+            if num_transitions == 0 {
                 // break the loop.
                 break;
             }
