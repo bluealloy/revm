@@ -127,9 +127,9 @@ impl<'a, DBError> State<'a, DBError> {
     /// is applied.
     pub fn merge_transitions(&mut self, with_reverts: bool) {
         if let Some(transition_state) = self.transition_state.take() {
-            let bundle_state = self.bundle_state.get_or_insert(BundleState::default());
-            bundle_state.set_should_collect_reverts(with_reverts);
-            bundle_state.apply_block_substate_and_create_reverts(transition_state);
+            self.bundle_state
+                .get_or_insert(BundleState::default())
+                .apply_block_substate_and_create_reverts(transition_state, with_reverts);
         }
     }
 

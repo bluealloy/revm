@@ -21,9 +21,6 @@ pub struct BundleState {
     pub state: HashMap<B160, BundleAccount>,
     /// All created contracts in this block.
     pub contracts: HashMap<B256, Bytecode>,
-    /// The flag indicating whether we should collect the reverts.
-    /// Defaults to `true`.
-    pub should_collect_reverts: bool,
     /// Changes to revert.
     ///
     /// If `should_collect_reverts` flag was set to `false`, the revert for any given block will be just an empty array.
@@ -38,7 +35,6 @@ impl Default for BundleState {
         Self {
             state: HashMap::new(),
             contracts: HashMap::new(),
-            should_collect_reverts: true,
             reverts: Vec::new(),
         }
     }
@@ -117,14 +113,8 @@ impl BundleState {
         Self {
             state,
             contracts: contracts.into_iter().collect(),
-            should_collect_reverts: true,
             reverts,
         }
-    }
-
-    /// Set the flag indicating whether reverts should be collected.
-    pub fn set_should_collect_reverts(&mut self, should_collect: bool) {
-        self.should_collect_reverts = should_collect;
     }
 
     /// Return reference to the state.
@@ -153,9 +143,15 @@ impl BundleState {
     }
 
     /// Consume `TransitionState` by applying the changes and creating the reverts
-    pub fn apply_block_substate_and_create_reverts(&mut self, transitions: TransitionState) {
+    ///
+    /// `with_reverts` flag indicates whether we should collect the reverts.
+    pub fn apply_block_substate_and_create_reverts(
+        &mut self,
+        transitions: TransitionState,
+        with_reverts: bool,
+    ) {
         // pessimistically pre-allocate assuming _all_ accounts changed.
-        let reverts_capacity = if self.should_collect_reverts {
+        let reverts_capacity = if with_reverts {
             transitions.transitions.len()
         } else {
             0
@@ -185,7 +181,7 @@ impl BundleState {
             };
 
             // append revert if present.
-            if let Some(revert) = revert.filter(|_| self.should_collect_reverts) {
+            if let Some(revert) = revert.filter(|_| with_reverts) {
                 reverts.push((address, revert));
             }
         }
@@ -447,10 +443,10 @@ mod tests {
         };
 
         // apply first transition
-        bundle_state.apply_block_substate_and_create_reverts(TransitionState::single(
-            address,
-            transition.clone(),
-        ));
+        bundle_state.apply_block_substate_and_create_reverts(
+            TransitionState::single(address, transition.clone()),
+            true,
+        );
     }
 
     fn account1() -> B160 {
