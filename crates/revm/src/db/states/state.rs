@@ -125,13 +125,11 @@ impl<'a, DBError> State<'a, DBError> {
     /// This action will create final post state and all reverts so that
     /// we at any time revert state of bundle to the state before transition
     /// is applied.
-    pub fn merge_transitions(&mut self) {
-        if let Some(transition_state) = self.transition_state.as_mut() {
-            let transition_state = transition_state.take();
-
-            self.bundle_state
-                .get_or_insert(BundleState::default())
-                .apply_block_substate_and_create_reverts(transition_state);
+    pub fn merge_transitions(&mut self, with_reverts: bool) {
+        if let Some(transition_state) = self.transition_state.take() {
+            let bundle_state = self.bundle_state.get_or_insert(BundleState::default());
+            bundle_state.set_should_collect_reverts(with_reverts);
+            bundle_state.apply_block_substate_and_create_reverts(transition_state);
         }
     }
 
@@ -444,7 +442,7 @@ mod tests {
             ),
         ]));
 
-        state.merge_transitions();
+        state.merge_transitions(true);
         let bundle_state = state.take_bundle();
 
         // The new account revert should be `DeleteIt` since this was an account creation.
@@ -680,7 +678,7 @@ mod tests {
             ),
         ]));
 
-        state.merge_transitions();
+        state.merge_transitions(true);
 
         let mut bundle_state = state.take_bundle();
         for revert in &mut bundle_state.reverts {
@@ -795,7 +793,7 @@ mod tests {
             },
         )]));
 
-        state.merge_transitions();
+        state.merge_transitions(true);
 
         let bundle_state = state.take_bundle();
 
