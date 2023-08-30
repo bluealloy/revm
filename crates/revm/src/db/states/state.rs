@@ -1,5 +1,6 @@
 use super::{
-    cache::CacheState, plain_account::PlainStorage, BundleState, CacheAccount, TransitionState,
+    bundle_state::BundleRetention, cache::CacheState, plain_account::PlainStorage, BundleState,
+    CacheAccount, TransitionState,
 };
 use crate::TransitionAccount;
 use alloc::collections::{btree_map, BTreeMap};
@@ -125,11 +126,11 @@ impl<'a, DBError> State<'a, DBError> {
     /// This action will create final post state and all reverts so that
     /// we at any time revert state of bundle to the state before transition
     /// is applied.
-    pub fn merge_transitions(&mut self, with_reverts: bool) {
+    pub fn merge_transitions(&mut self, retention: BundleRetention) {
         if let Some(transition_state) = self.transition_state.as_mut().map(TransitionState::take) {
             self.bundle_state
                 .get_or_insert(BundleState::default())
-                .apply_block_substate_and_create_reverts(transition_state, with_reverts);
+                .apply_block_substate_and_create_reverts(transition_state, retention);
         }
     }
 
@@ -442,7 +443,7 @@ mod tests {
             ),
         ]));
 
-        state.merge_transitions(true);
+        state.merge_transitions(BundleRetention::Reverts);
         let bundle_state = state.take_bundle();
 
         // The new account revert should be `DeleteIt` since this was an account creation.
@@ -678,7 +679,7 @@ mod tests {
             ),
         ]));
 
-        state.merge_transitions(true);
+        state.merge_transitions(BundleRetention::Reverts);
 
         let mut bundle_state = state.take_bundle();
         for revert in &mut bundle_state.reverts {
@@ -793,7 +794,7 @@ mod tests {
             },
         )]));
 
-        state.merge_transitions(true);
+        state.merge_transitions(BundleRetention::Reverts);
 
         let bundle_state = state.take_bundle();
 
