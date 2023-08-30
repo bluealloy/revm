@@ -1,6 +1,8 @@
 use alloc::vec::Vec;
 
 /// A precompile operation result.
+///
+/// Returns either `Ok((gas_used, return_bytes))` or `Err(error)`.
 pub type PrecompileResult = Result<(u64, Vec<u8>), PrecompileError>;
 
 pub type StandardPrecompileFn = fn(&[u8], u64) -> PrecompileResult;
@@ -21,4 +23,11 @@ pub enum PrecompileError {
     Bn128FieldPointNotAMember,
     Bn128AffineGFailedToCreate,
     Bn128PairLength,
+    // KZG errors
+    /// The input length is not exactly 192 bytes.
+    KzgInvalidInputLength,
+    /// The commitment does not match the versioned hash.
+    KzgInvalidCommitment,
+    /// The proof verification failed.
+    KzgVerifyProofFailed,
 }

@@ -7,6 +7,7 @@ mod blake2;
 mod bn128;
 mod hash;
 mod identity;
+mod kzg;
 mod modexp;
 mod secp256k1;
 
@@ -88,11 +89,12 @@ impl From<PrecompileAddress> for (B160, Precompile) {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub enum SpecId {
-    HOMESTEAD = 0,
-    BYZANTIUM = 1,
-    ISTANBUL = 2,
-    BERLIN = 3,
-    LATEST = 4,
+    HOMESTEAD,
+    BYZANTIUM,
+    ISTANBUL,
+    BERLIN,
+    CANCUN,
+    LATEST,
 }
 
 impl SpecId {
@@ -105,9 +107,8 @@ impl SpecId {
             }
             BYZANTIUM | CONSTANTINOPLE | PETERSBURG => Self::BYZANTIUM,
             ISTANBUL | MUIR_GLACIER => Self::ISTANBUL,
-            BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | SHANGHAI | CANCUN => {
-                Self::BERLIN
-            }
+            BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | SHANGHAI => Self::BERLIN,
+            CANCUN => Self::CANCUN,
             LATEST => Self::LATEST,
         }
     }
@@ -191,6 +192,22 @@ impl Precompiles {
         })
     }
 
+    pub fn cancun() -> &'static Self {
+        static INSTANCE: OnceCell<Precompiles> = OnceCell::new();
+        INSTANCE.get_or_init(|| {
+            let mut precompiles = Self::berlin().clone();
+            precompiles.fun.extend(
+                [
+                    // EIP-4844: Shard Blob Transactions
+                    kzg::POINT_EVALUATION,
+                ]
+                .into_iter()
+                .map(From::from),
+            );
+            precompiles
+        })
+    }
+
     pub fn latest() -> &'static Self {
         Self::berlin()
     }
@@ -201,6 +218,7 @@ impl Precompiles {
             SpecId::BYZANTIUM => Self::byzantium(),
             SpecId::ISTANBUL => Self::istanbul(),
             SpecId::BERLIN => Self::berlin(),
+            SpecId::CANCUN => Self::cancun(),
             SpecId::LATEST => Self::latest(),
         }
     }
