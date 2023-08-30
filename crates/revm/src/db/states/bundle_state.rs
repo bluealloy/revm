@@ -160,7 +160,7 @@ impl BundleState {
 
     /// Consume `TransitionState` by applying the changes and creating the reverts
     ///
-    /// `with_reverts` flag indicates whether we should collect the reverts.
+    /// If [BundleRetention::includes_reverts] is `true`, then the reverts will be retained.
     pub fn apply_block_substate_and_create_reverts(
         &mut self,
         transitions: TransitionState,
