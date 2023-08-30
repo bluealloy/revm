@@ -1,6 +1,5 @@
 use std::io::stdout;
 use std::{
-    ffi::OsStr,
     path::{Path, PathBuf},
     sync::{atomic::AtomicBool, Arc, Mutex},
     time::{Duration, Instant},
@@ -8,7 +7,7 @@ use std::{
 
 use super::{
     merkle_trie::{log_rlp_hash, state_merkle_trie_root},
-    models::{SpecName, TestSuit},
+    models::{SpecName, TestSuite},
 };
 use hex_literal::hex;
 use indicatif::ProgressBar;
@@ -24,19 +23,14 @@ use walkdir::{DirEntry, WalkDir};
 
 #[derive(Debug, Error)]
 pub enum TestError {
-    #[error("Test: {id} ({spec_id:?}), root mismatched, expected: {expect:?} got: {got:?}")]
-    RootMismatch {
-        spec_id: SpecId,
-        id: usize,
-        got: B256,
-        expect: B256,
-    },
-    #[error("Serde json error")]
+    #[error("Logs root mismatch: expected {expected:?}, got {got:?}")]
+    LogsRootMismatch { got: B256, expected: B256 },
+    #[error("State root mismatch: expected {expected:?}, got {got:?}")]
+    StateRootMismatch { got: B256, expected: B256 },
+    #[error("serde_json error: {0}")]
     SerdeDeserialize(#[from] serde_json::Error),
-    #[error("Internal system error")]
-    SystemError,
-    #[error("Unknown private key: {private_key:?}")]
-    UnknownPrivateKey { private_key: B256 },
+    #[error("Unknown private key: {0:?}")]
+    UnknownPrivateKey(B256),
 }
 
 pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
@@ -48,75 +42,83 @@ pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
         .collect::<Vec<PathBuf>>()
 }
 
-pub fn execute_test_suit(
-    path: &Path,
-    elapsed: &Arc<Mutex<Duration>>,
-    trace: bool,
-) -> Result<(), TestError> {
+fn skip_test(path: &Path) -> bool {
+    let name = path.file_name().unwrap().to_str().unwrap();
+
     // funky test with `bigint 0x00` value in json :) not possible to happen on mainnet and require custom json parser.
     // https://github.com/ethereum/tests/issues/971
-    if path.file_name() == Some(OsStr::new("ValueOverflow.json")) {
-        return Ok(());
+    if name == "ValueOverflow.json" {
+        return true;
     }
 
     // precompiles having storage is not possible
-    if path.file_name() == Some(OsStr::new("RevertPrecompiledTouch_storage.json"))
-        || path.file_name() == Some(OsStr::new("RevertPrecompiledTouch.json"))
-    {
-        return Ok(());
+    if name == "RevertPrecompiledTouch_storage.json" || name == "RevertPrecompiledTouch.json" {
+        return true;
     }
 
     // txbyte is of type 02 and we dont parse tx bytes for this test to fail.
-    if path.file_name() == Some(OsStr::new("typeTwoBerlin.json")) {
-        return Ok(());
+    if name == "typeTwoBerlin.json" {
+        return true;
     }
 
     // Test checks if nonce overflows. We are handling this correctly but we are not parsing exception in test suite
     // There are more nonce overflow tests that are in internal call/create, and those tests are passing and are enabled.
-    if path.file_name() == Some(OsStr::new("CreateTransactionHighNonce.json")) {
-        return Ok(());
+    if name == "CreateTransactionHighNonce.json" {
+        return true;
     }
 
     // Need to handle Test errors
-    if path.file_name() == Some(OsStr::new("transactionIntinsicBug.json")) {
-        return Ok(());
+    if name == "transactionIntinsicBug.json" {
+        return true;
     }
 
     // Test check if gas price overflows, we handle this correctly but does not match tests specific exception.
-    if path.file_name() == Some(OsStr::new("HighGasPrice.json"))
-        || path.file_name() == Some(OsStr::new("CREATE_HighNonce.json"))
-        || path.file_name() == Some(OsStr::new("CREATE_HighNonceMinus1.json"))
+    if name == "HighGasPrice.json"
+        || name == "CREATE_HighNonce.json"
+        || name == "CREATE_HighNonceMinus1.json"
     {
-        return Ok(());
+        return true;
     }
 
     // Skip test where basefee/accesslist/difficulty is present but it shouldn't be supported in London/Berlin/TheMerge.
     // https://github.com/ethereum/tests/blob/5b7e1ab3ffaf026d99d20b17bb30f533a2c80c8b/GeneralStateTests/stExample/eip1559.json#L130
     // It is expected to not execute these tests.
-    if path.file_name() == Some(OsStr::new("accessListExample.json"))
-        || path.file_name() == Some(OsStr::new("basefeeExample.json"))
-        || path.file_name() == Some(OsStr::new("eip1559.json"))
-        || path.file_name() == Some(OsStr::new("mergeTest.json"))
+    if name == "accessListExample.json"
+        || name == "basefeeExample.json"
+        || name == "eip1559.json"
+        || name == "mergeTest.json"
     {
-        return Ok(());
+        return true;
     }
 
     // These tests are passing, but they take a lot of time to execute so we are going to skip them.
-    if path.file_name() == Some(OsStr::new("loopExp.json"))
-        || path.file_name() == Some(OsStr::new("Call50000_sha256.json"))
-        || path.file_name() == Some(OsStr::new("static_Call50000_sha256.json"))
-        || path.file_name() == Some(OsStr::new("loopMul.json"))
-        || path.file_name() == Some(OsStr::new("CALLBlake2f_MaxRounds.json"))
+    if name == "loopExp.json"
+        || name == "Call50000_sha256.json"
+        || name == "static_Call50000_sha256.json"
+        || name == "loopMul.json"
+        || name == "CALLBlake2f_MaxRounds.json"
     {
-        return Ok(());
+        return true;
     }
 
     if path.to_str().unwrap().contains("stEOF") {
+        return true;
+    }
+
+    false
+}
+
+pub fn execute_test_suite(
+    path: &Path,
+    elapsed: &Arc<Mutex<Duration>>,
+    trace: bool,
+) -> Result<(), TestError> {
+    if skip_test(path) {
         return Ok(());
     }
 
-    let json_reader = std::fs::read(path).unwrap();
-    let suit: TestSuit = serde_json::from_reader(&*json_reader)?;
+    let s = std::fs::read_to_string(path).unwrap();
+    let suite: TestSuite = serde_json::from_str(&s)?;
 
     let map_caller_keys: HashMap<_, _> = [
         (
@@ -158,21 +160,23 @@ pub fn execute_test_suit(
     ]
     .into();
 
-    for (name, unit) in suit.0.into_iter() {
+    for (name, unit) in suite.0 {
         // Create database and insert cache
         let mut cache_state = revm::CacheState::new(false);
-        for (address, info) in unit.pre.into_iter() {
+        for (address, info) in unit.pre {
             let acc_info = revm::primitives::AccountInfo {
                 balance: info.balance,
-                code_hash: keccak256(&info.code), // try with dummy hash.
-                code: Some(Bytecode::new_raw(info.code.clone())),
+                code_hash: keccak256(&info.code),
+                code: Some(Bytecode::new_raw(info.code)),
                 nonce: info.nonce,
             };
-            cache_state.insert_account_with_storage(address, acc_info, info.storage.clone());
+            cache_state.insert_account_with_storage(address, acc_info, info.storage);
         }
+
         let mut env = Env::default();
-        // cfg env. SpecId is set down the road
-        env.cfg.chain_id = U256::from(1); // for mainnet
+        // for mainnet
+        env.cfg.chain_id = U256::from(1);
+        // env.cfg.spec_id is set down the road
 
         // block env
         env.block.number = unit.env.current_number;
@@ -184,19 +188,21 @@ pub fn execute_test_suit(
         // after the Merge prevrandao replaces mix_hash field in block and replaced difficulty opcode in EVM.
         env.block.prevrandao = Some(unit.env.current_difficulty.to_be_bytes().into());
 
-        //tx env
-        env.tx.caller =
-            if let Some(caller) = map_caller_keys.get(&unit.transaction.secret_key.unwrap()) {
-                *caller
-            } else {
-                let private_key = unit.transaction.secret_key.unwrap();
-                return Err(TestError::UnknownPrivateKey { private_key });
-            };
+        // tx env
+        let pk = unit.transaction.secret_key;
+        env.tx.caller = map_caller_keys
+            .get(&pk)
+            .copied()
+            .ok_or_else(|| TestError::UnknownPrivateKey(pk))?;
         env.tx.gas_price = unit
             .transaction
             .gas_price
-            .unwrap_or_else(|| unit.transaction.max_fee_per_gas.unwrap_or_default());
+            .or(unit.transaction.max_fee_per_gas)
+            .unwrap_or_default();
         env.tx.gas_priority_fee = unit.transaction.max_priority_fee_per_gas;
+        // EIP-4844
+        env.tx.blob_hashes = unit.transaction.blob_versioned_hashes;
+        env.tx.max_fee_per_blob_gas = unit.transaction.max_fee_per_blob_gas;
 
         // post and execution
         for (spec_name, tests) in unit.post {
@@ -223,26 +229,23 @@ pub fn execute_test_suit(
                     .clone();
                 env.tx.value = *unit.transaction.value.get(test.indexes.value).unwrap();
 
-                let access_list = match unit.transaction.access_lists {
-                    Some(ref access_list) => access_list
-                        .get(test.indexes.data)
-                        .cloned()
-                        .flatten()
-                        .unwrap_or_default()
-                        .into_iter()
-                        .map(|item| {
-                            (
-                                item.address,
-                                item.storage_keys
-                                    .into_iter()
-                                    .map(|key| U256::from_be_bytes(key.0))
-                                    .collect::<Vec<_>>(),
-                            )
-                        })
-                        .collect(),
-                    None => Vec::new(),
-                };
-                env.tx.access_list = access_list;
+                env.tx.access_list = unit
+                    .transaction
+                    .access_lists
+                    .get(test.indexes.data)
+                    .and_then(Option::as_deref)
+                    .unwrap_or_default()
+                    .iter()
+                    .map(|item| {
+                        (
+                            item.address,
+                            item.storage_keys
+                                .iter()
+                                .map(|key| U256::from_be_bytes(key.0))
+                                .collect::<Vec<_>>(),
+                        )
+                    })
+                    .collect();
 
                 let to = match unit.transaction.to {
                     Some(add) => TransactTo::Call(add),
@@ -261,81 +264,77 @@ pub fn execute_test_suit(
                 let mut evm = revm::new();
                 evm.database(&mut state);
                 evm.env = env.clone();
+
                 // do the deed
-
                 let timer = Instant::now();
-
                 let exec_result = if trace {
                     evm.inspect_commit(TracerEip3155::new(Box::new(stdout()), false, false))
                 } else {
                     evm.transact_commit()
                 };
-                let timer = timer.elapsed();
+                *elapsed.lock().unwrap() += timer.elapsed();
 
-                *elapsed.lock().unwrap() += timer;
+                // validate results
+                // this is in a closure so we can have a common printing routine for errors
+                let check = || {
+                    let logs = match &exec_result {
+                        Ok(ExecutionResult::Success { logs, .. }) => logs.clone(),
+                        _ => Vec::new(),
+                    };
+                    let logs_root = log_rlp_hash(logs);
 
-                let db = evm.db().unwrap();
-                let state_root = state_merkle_trie_root(db.cache.trie_account());
-                let logs = match &exec_result {
-                    Ok(ExecutionResult::Success { logs, .. }) => logs.clone(),
-                    _ => Vec::new(),
-                };
-                let logs_root = log_rlp_hash(logs);
-                if test.hash != state_root || test.logs != logs_root {
-                    println!(
-                        "Roots did not match:\nState root: wanted {:?}, got {state_root:?}\nLogs root: wanted {:?}, got {logs_root:?}",
-                        test.hash, test.logs
-                    );
-
-                    let mut cache = cache_state.clone();
-                    cache.set_state_clear_flag(SpecId::enabled(
-                        env.cfg.spec_id,
-                        revm::primitives::SpecId::SPURIOUS_DRAGON,
-                    ));
-                    let mut state = revm::db::StateBuilder::default()
-                        .with_cached_prestate(cache)
-                        .build();
-                    evm.database(&mut state);
-                    let _ =
-                        evm.inspect_commit(TracerEip3155::new(Box::new(stdout()), false, false));
-                    let db = evm.db().unwrap();
-                    println!("{path:?} UNIT_TEST:{name}\n");
-                    match &exec_result {
-                        Ok(ExecutionResult::Success {
-                            reason,
-                            gas_used,
-                            gas_refunded,
-                            ..
-                        }) => {
-                            println!("Failed reason: {reason:?} {path:?} UNIT_TEST:{name}\n gas:{gas_used:?} ({gas_refunded:?} refunded)");
-                        }
-                        Ok(ExecutionResult::Revert { gas_used, output }) => {
-                            println!(
-                                "Reverted: {output:?} {path:?} UNIT_TEST:{name}\n gas:{gas_used:?}"
-                            );
-                        }
-                        Ok(ExecutionResult::Halt { reason, gas_used }) => {
-                            println!(
-                                "Halted: {reason:?} {path:?} UNIT_TEST:{name}\n gas:{gas_used:?}"
-                            );
-                        }
-                        Err(out) => {
-                            println!("Output: {out:?} {path:?} UNIT_TEST:{name}\n");
-                        }
+                    if logs_root != test.logs {
+                        return Err(TestError::LogsRootMismatch {
+                            got: logs_root,
+                            expected: test.logs,
+                        });
                     }
-                    println!(" TEST NAME: {:?}", name);
-                    println!("\nApplied state:\n{:#?}\n", db.cache);
-                    println!("\nState root: {state_root:?}\n");
-                    println!("env.tx: {:?}\n", env.tx);
-                    println!("env.block: {:?}\n", env.block);
-                    println!("env.cfg: {:?}\n", env.cfg);
-                    return Err(TestError::RootMismatch {
-                        spec_id: env.cfg.spec_id,
-                        id,
-                        got: state_root,
-                        expect: test.hash,
-                    });
+
+                    let db = evm.db.as_ref().unwrap();
+                    let state_root = state_merkle_trie_root(db.cache.trie_account());
+
+                    if state_root != test.hash {
+                        return Err(TestError::StateRootMismatch {
+                            got: state_root,
+                            expected: test.hash,
+                        });
+                    }
+
+                    Ok(())
+                };
+
+                // dump state and traces if test failed
+                let Err(e) = check() else { continue };
+
+                // print only once
+                static FAILED: AtomicBool = AtomicBool::new(false);
+                if FAILED.swap(true, Ordering::SeqCst) {
+                    return Err(e);
                 }
+
+                // re build to run with tracing
+                let mut cache = cache_state.clone();
+                cache.set_state_clear_flag(SpecId::enabled(
+                    env.cfg.spec_id,
+                    revm::primitives::SpecId::SPURIOUS_DRAGON,
+                ));
+                let mut state = revm::db::StateBuilder::default()
+                    .with_cached_prestate(cache)
+                    .build();
+                evm.database(&mut state);
+
+                let path = path.display();
+                println!("Test {name:?} (id: {id}, path: {path}) failed:\n{e}");
+
+                println!("\nTraces:");
+                let _ = evm.inspect_commit(TracerEip3155::new(Box::new(stdout()), false, false));
+
+                println!("\nExecution result: {exec_result:#?}");
+                println!("\nExpected exception: {:?}", test.expect_exception);
+                println!("\nState before: {cache_state:#?}");
+                println!("\nState after: {:#?}", evm.db().unwrap().cache);
+                println!("\nEnvironment: {env:#?}");
+                return Err(e);
             }
         }
     }
@@ -350,58 +349,82 @@ pub fn run(
     if trace {
         single_thread = true;
     }
+    let n_files = test_files.len();
 
     let endjob = Arc::new(AtomicBool::new(false));
-    let console_bar = Arc::new(ProgressBar::new(test_files.len() as u64));
-    let mut joins: Vec<std::thread::JoinHandle<Result<(), TestError>>> = Vec::new();
-    let queue = Arc::new(Mutex::new((0, test_files)));
+    let console_bar = Arc::new(ProgressBar::new(n_files as u64));
+    let queue = Arc::new(Mutex::new((0usize, test_files)));
     let elapsed = Arc::new(Mutex::new(std::time::Duration::ZERO));
-    let num_threads = if single_thread { 1 } else { 10 };
-    for _ in 0..num_threads {
+
+    let num_threads = match (single_thread, std::thread::available_parallelism()) {
+        (true, _) | (false, Err(_)) => 1,
+        (false, Ok(n)) => n.get(),
+    };
+    let num_threads = num_threads.min(n_files);
+    let mut handles = Vec::with_capacity(num_threads);
+    for i in 0..num_threads {
         let queue = queue.clone();
         let endjob = endjob.clone();
         let console_bar = console_bar.clone();
         let elapsed = elapsed.clone();
 
-        let mut thread = std::thread::Builder::new();
+        let mut thread = std::thread::Builder::new().name(format!("runner-{i}"));
 
         // Allow bigger stack in debug mode to prevent stack overflow errors
-        //if cfg!(debug_assertions) {
-        thread = thread.stack_size(4 * 1024 * 1024);
-        //}
+        if cfg!(debug_assertions) {
+            thread = thread.stack_size(4 * 1024 * 1024);
+        }
 
-        joins.push(
-            thread
-                .spawn(move || loop {
-                    let (index, test_path) = {
-                        let mut queue = queue.lock().unwrap();
-                        if queue.1.len() <= queue.0 {
-                            return Ok(());
-                        }
-                        let test_path = queue.1[queue.0].clone();
-                        queue.0 += 1;
-                        (queue.0 - 1, test_path)
-                    };
-                    if endjob.load(Ordering::SeqCst) {
-                        return Ok(());
-                    }
-                    //println!("Test:{:?}\n",test_path);
-                    if let Err(err) = execute_test_suit(&test_path, &elapsed, trace) {
-                        endjob.store(true, Ordering::SeqCst);
-                        println!("Test[{index}] named:\n{test_path:?} failed: {err}\n");
-                        return Err(err);
-                    }
+        let f = move || loop {
+            if endjob.load(Ordering::SeqCst) {
+                return Ok(());
+            }
 
-                    //println!("TestDone:{:?}\n",test_path);
-                    console_bar.inc(1);
-                })
-                .unwrap(),
-        );
+            let (_index, test_path) = {
+                let (current_idx, queue) = &mut *queue.lock().unwrap();
+                let prev_idx = *current_idx;
+                let Some(test_path) = queue.get(prev_idx).cloned() else {
+                    return Ok(());
+                };
+                *current_idx = prev_idx + 1;
+                (prev_idx, test_path)
+            };
+
+            if let Err(err) = execute_test_suite(&test_path, &elapsed, trace) {
+                endjob.store(true, Ordering::SeqCst);
+                return Err(err);
+            }
+
+            console_bar.inc(1);
+        };
+        handles.push(thread.spawn(f).unwrap());
     }
-    for handler in joins {
-        handler.join().map_err(|_| TestError::SystemError)??;
+
+    // join all threads before returning an error
+    let mut errors = Vec::new();
+    for handle in handles {
+        if let Err(e) = handle.join().unwrap() {
+            errors.push(e);
+        }
     }
+
     console_bar.finish();
-    println!("Finished execution. Time:{:?}", elapsed.lock().unwrap());
-    Ok(())
+
+    println!(
+        "Finished execution. Total duration: {:.6}s",
+        elapsed.lock().unwrap().as_secs_f64()
+    );
+    if errors.is_empty() {
+        println!("All tests passed!");
+        Ok(())
+    } else {
+        let n = errors.len();
+        if n > 1 {
+            println!("{n} threads returned an error, out of {num_threads} total:");
+            for error in &errors {
+                println!("{error}");
+            }
+        }
+        Err(errors.swap_remove(0))
+    }
 }

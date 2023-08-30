@@ -65,7 +65,6 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         self.opcode = interp.current_opcode();
         self.mem_size = interp.memory.len();
         self.gas = self.gas_inspector.gas_remaining();
-        //
         InstructionResult::Continue
     }
 

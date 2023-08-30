@@ -12,6 +12,7 @@ pub struct Env {
     pub block: BlockEnv,
     pub tx: TxEnv,
 }
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlockEnv {
@@ -47,7 +48,8 @@ pub struct TxEnv {
 
     pub access_list: Vec<(B160, Vec<U256>)>,
 
-    pub blob_versioned_hashes: Vec<B256>,
+    pub blob_hashes: Vec<B256>,
+    pub max_fee_per_blob_gas: Option<U256>,
 }
 
 #[derive(Clone, Debug)]
@@ -240,7 +242,8 @@ impl Default for TxEnv {
             chain_id: None,
             nonce: None,
             access_list: Vec::new(),
-            blob_versioned_hashes: Vec::new(),
+            blob_hashes: Vec::new(),
+            max_fee_per_blob_gas: None,
         }
     }
 }
