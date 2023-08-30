@@ -44,7 +44,10 @@ pub struct TxEnv {
     pub data: Bytes,
     pub chain_id: Option<u64>,
     pub nonce: Option<u64>,
+
     pub access_list: Vec<(B160, Vec<U256>)>,
+
+    pub blob_versioned_hashes: Vec<B256>,
 }
 
 #[derive(Clone, Debug)]
@@ -58,6 +61,7 @@ impl TransactTo {
     pub fn create() -> Self {
         Self::Create(CreateScheme::Create)
     }
+
     pub fn is_create(&self) -> bool {
         matches!(self, Self::Create(_))
     }
@@ -230,12 +234,13 @@ impl Default for TxEnv {
             gas_limit: u64::MAX,
             gas_price: U256::ZERO,
             gas_priority_fee: None,
-            transact_to: TransactTo::Call(B160::zero()), //will do nothing
+            transact_to: TransactTo::Call(B160::zero()), // will do nothing
             value: U256::ZERO,
             data: Bytes::new(),
             chain_id: None,
             nonce: None,
             access_list: Vec::new(),
+            blob_versioned_hashes: Vec::new(),
         }
     }
 }
