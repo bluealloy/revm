@@ -9,8 +9,8 @@ fn main() {
 }
 
 fn generate_kzg_settings() {
-    let in_path = "src/kzg/trusted_setup.txt";
-    let out_path = "src/kzg/generated_settings.rs";
+    let in_path = "src/blob/trusted_setup.txt";
+    let out_path = "src/blob/generated_settings.rs";
 
     let in_path = Path::new(in_path);
     println!("cargo:rerun-if-changed={}", in_path.display());

@@ -23,11 +23,11 @@ pub enum PrecompileError {
     Bn128FieldPointNotAMember,
     Bn128AffineGFailedToCreate,
     Bn128PairLength,
-    // KZG errors
+    // Blob errors
     /// The input length is not exactly 192 bytes.
-    KzgInvalidInputLength,
+    BlobInvalidInputLength,
     /// The commitment does not match the versioned hash.
-    KzgInvalidCommitment,
+    BlobMismatchedVersion,
     /// The proof verification failed.
-    KzgVerifyProofFailed,
+    BlobVerifyKzgProofFailed,
 }

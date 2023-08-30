@@ -4,10 +4,10 @@
 extern crate alloc;
 
 mod blake2;
+mod blob;
 mod bn128;
 mod hash;
 mod identity;
-mod kzg;
 mod modexp;
 mod secp256k1;
 
@@ -199,7 +199,7 @@ impl Precompiles {
             precompiles.fun.extend(
                 [
                     // EIP-4844: Shard Blob Transactions
-                    kzg::POINT_EVALUATION,
+                    blob::POINT_EVALUATION,
                 ]
                 .into_iter()
                 .map(From::from),

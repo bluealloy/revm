@@ -33,14 +33,14 @@ fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
         return Err(Error::OutOfGas);
     }
     if input.len() != 192 {
-        return Err(Error::KzgInvalidInputLength);
+        return Err(Error::BlobInvalidInputLength);
     }
 
     // Verify commitment matches versioned_hash
     let commitment = &input[96..144];
     let versioned_hash = &input[0..32];
     if kzg_to_versioned_hash(commitment) != versioned_hash {
-        return Err(Error::KzgInvalidCommitment);
+        return Err(Error::BlobMismatchedVersion);
     }
 
     // Verify KZG proof
@@ -49,7 +49,7 @@ fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     let y = as_bytes32(&input[64..96]);
     let proof = as_bytes48(&input[144..192]);
     if !verify_kzg_proof(commitment, z, y, proof) {
-        return Err(Error::KzgVerifyProofFailed);
+        return Err(Error::BlobVerifyKzgProofFailed);
     }
 
     Ok((GAS_COST, RETURN_VALUE.to_vec()))
