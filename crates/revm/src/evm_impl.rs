@@ -123,6 +123,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
 
     fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
         let env = &self.data.env;
+        #[cfg(feature = "memory_limit")]
+        let memory_limit = env.cfg.memory_limit;
         let tx_caller = env.tx.caller;
         let tx_value = env.tx.value;
         let tx_data = env.tx.data.clone();
@@ -162,7 +164,14 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
 
         let transact_gas_limit = tx_gas_limit - initial_gas_spend;
 
-        let shared_memory = Rc::new(RefCell::new(SharedMemory::new(transact_gas_limit, None)));
+        #[cfg(feature = "memory_limit")]
+        let shared_memory = Rc::new(RefCell::new(SharedMemory::new_with_memory_limit(
+            transact_gas_limit,
+            memory_limit,
+        )));
+
+        #[cfg(not(feature = "memory_limit"))]
+        let shared_memory = Rc::new(RefCell::new(SharedMemory::new(transact_gas_limit)));
 
         // call inner handling of call/create
         let (exit_reason, ret_gas, output) = match self.data.env.tx.transact_to {
@@ -578,17 +587,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         is_static: bool,
         shared_memory: &Rc<RefCell<SharedMemory>>,
     ) -> (InstructionResult, Box<Interpreter>) {
-        // Create inspector
-        #[cfg(feature = "memory_limit")]
-        let mut interpreter = Box::new(Interpreter::new_with_memory_limit(
-            contract,
-            gas_limit,
-            is_static,
-            self.data.env.cfg.memory_limit,
-            shared_memory,
-        ));
-
-        #[cfg(not(feature = "memory_limit"))]
         let mut interpreter = Box::new(Interpreter::new(
             contract,
             gas_limit,

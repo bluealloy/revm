@@ -16,36 +16,58 @@ pub struct SharedMemory {
     data: Vec<u8>,
     /// Memory checkpoints for each depth
     checkpoints: Vec<usize>,
-    /// Amount of memory left for assignment
-    pub limit: u64,
     /// Raw pointer used for the portion of memory used
     /// by the current context
     current_slice: *mut [u8],
     /// How much memory has been used in the current context
     current_len: usize,
+    /// Amount of memory left for assignment
+    pub limit: u64,
 }
 
 impl SharedMemory {
     /// Allocate memory to be shared between calls.
     /// Memory size is estimated using https://2π.com/22/eth-max-mem
-    /// using transaction [gas_limit];
-    pub fn new(gas_limit: u64, _memory_limit: Option<u64>) -> Self {
-        let upper_bound = 4096 * (2_f64 * gas_limit as f64).sqrt() as usize;
-        // let max_alloc_size = isize::MAX as usize;
-        let max_alloc_size = u32::MAX as usize;
-        let size = min(upper_bound, max_alloc_size);
+    /// which depends on transaction [gas_limit].
+    /// Maximum allocation size is 2^32 - 1 bytes;
+    pub fn new(gas_limit: u64) -> Self {
+        let size = min(
+            SharedMemory::calculate_upper_bound(gas_limit) as usize,
+            2usize.pow(32) - 1,
+        );
 
         let mut data = vec![0; size];
-        let checkpoints = Vec::with_capacity(1024);
         let current_slice: *mut [u8] = &mut data[..];
         SharedMemory {
             data,
-            limit: u64::MAX,
-            checkpoints,
+            checkpoints: Vec::with_capacity(1024),
             current_slice,
             current_len: 0,
+            limit: size as u64,
         }
     }
+
+    /// Allocate memory to be shared between calls.
+    /// Memory size is estimated using https://2π.com/22/eth-max-mem
+    /// which depends on transaction [gas_limit].
+    /// Uses [memory_limit] as maximum allocation size
+    pub fn new_with_memory_limit(gas_limit: u64, memory_limit: u64) -> Self {
+        let size = min(
+            SharedMemory::calculate_upper_bound(gas_limit) as usize,
+            memory_limit as usize,
+        );
+
+        let mut data = vec![0; size];
+        let current_slice: *mut [u8] = &mut data[..];
+        SharedMemory {
+            data,
+            checkpoints: Vec::with_capacity(1024),
+            current_slice,
+            current_len: 0,
+            limit: size as u64,
+        }
+    }
+
     /// Prepares the shared memory for a new context
     pub fn new_context_memory(&mut self) {
         let base_offset = self.checkpoints.last().unwrap_or(&0);
@@ -171,6 +193,13 @@ impl SharedMemory {
     fn get_current_slice_mut(&mut self) -> &mut [u8] {
         // Safety: it is a valid pointer to a slice of `self.data`
         unsafe { &mut *self.current_slice }
+    }
+
+    /// Calculates memory allocation upper bound using
+    /// https://2π.com/22/eth-max-mem
+    #[inline(always)]
+    fn calculate_upper_bound(gas_limit: u64) -> u64 {
+        4096 * ((2 * gas_limit) as f64).sqrt() as u64
     }
 
     /// Update the amount of memory left for usage

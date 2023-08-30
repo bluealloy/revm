@@ -47,9 +47,6 @@ pub struct Interpreter {
     pub is_static: bool,
     /// Contract information and invoking data
     pub contract: Box<Contract>,
-    /// Memory limit. See [`crate::CfgEnv`].
-    #[cfg(feature = "memory_limit")]
-    pub memory_limit: u64,
 }
 
 impl Interpreter {
@@ -65,48 +62,16 @@ impl Interpreter {
         is_static: bool,
         shared_memory: &Rc<RefCell<SharedMemory>>,
     ) -> Self {
-        #[cfg(not(feature = "memory_limit"))]
-        {
-            Self {
-                instruction_pointer: contract.bytecode.as_ptr(),
-                return_range: Range::default(),
-                // memory: Memory::new(),
-                stack: Stack::new(),
-                return_data_buffer: Bytes::new(),
-                contract,
-                instruction_result: InstructionResult::Continue,
-                is_static,
-                gas: Gas::new(gas_limit),
-                shared_memory: Rc::clone(shared_memory),
-            }
-        }
-
-        #[cfg(feature = "memory_limit")]
-        {
-            Self::new_with_memory_limit(contract, gas_limit, is_static, u64::MAX, shared_memory)
-        }
-    }
-
-    #[cfg(feature = "memory_limit")]
-    pub fn new_with_memory_limit(
-        contract: Box<Contract>,
-        gas_limit: u64,
-        is_static: bool,
-        memory_limit: u64,
-        shared_memory: &Rc<RefCell<SharedMemory>>,
-    ) -> Self {
         Self {
             instruction_pointer: contract.bytecode.as_ptr(),
             return_range: Range::default(),
-            // memory: Memory::new(),
             stack: Stack::new(),
+            shared_memory: Rc::clone(shared_memory),
             return_data_buffer: Bytes::new(),
             contract,
             instruction_result: InstructionResult::Continue,
             is_static,
             gas: Gas::new(gas_limit),
-            memory_limit,
-            shared_memory: Rc::clone(shared_memory),
         }
     }
 
