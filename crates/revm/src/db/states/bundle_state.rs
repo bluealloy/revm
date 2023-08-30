@@ -8,6 +8,22 @@ use revm_interpreter::primitives::{
     AccountInfo, Bytecode, HashMap, StorageSlot, B160, B256, KECCAK_EMPTY, U256,
 };
 
+/// Bundle retention policy for applying substate to the bundle.
+#[derive(Debug)]
+pub enum BundleRetention {
+    /// Only plain state is updated.
+    PlainState,
+    /// Both, plain state and reverts, are retained
+    Reverts,
+}
+
+impl BundleRetention {
+    /// Returns `true` if reverts should be retained.
+    pub fn includes_reverts(&self) -> bool {
+        matches!(self, Self::Reverts)
+    }
+}
+
 /// Bundle state contain only values that got changed
 ///
 /// For every account it contains both original and present state.
@@ -144,14 +160,15 @@ impl BundleState {
 
     /// Consume `TransitionState` by applying the changes and creating the reverts
     ///
-    /// `with_reverts` flag indicates whether we should collect the reverts.
+    /// If [BundleRetention::includes_reverts] is `true`, then the reverts will be retained.
     pub fn apply_block_substate_and_create_reverts(
         &mut self,
         transitions: TransitionState,
-        with_reverts: bool,
+        retention: BundleRetention,
     ) {
+        let include_reverts = retention.includes_reverts();
         // pessimistically pre-allocate assuming _all_ accounts changed.
-        let reverts_capacity = if with_reverts {
+        let reverts_capacity = if include_reverts {
             transitions.transitions.len()
         } else {
             0
@@ -181,7 +198,7 @@ impl BundleState {
             };
 
             // append revert if present.
-            if let Some(revert) = revert.filter(|_| with_reverts) {
+            if let Some(revert) = revert.filter(|_| include_reverts) {
                 reverts.push((address, revert));
             }
         }
@@ -189,7 +206,7 @@ impl BundleState {
         self.reverts.push(reverts);
     }
 
-    /// Return and clear all reverts from BundleState, sort them before returning.
+    /// Return and clear all reverts from [BundleState], sort them before returning.
     pub fn take_reverts(&mut self) -> StateReverts {
         let mut state_reverts = StateReverts::with_capacity(self.reverts.len());
         for reverts in self.reverts.drain(..) {
@@ -460,7 +477,7 @@ mod tests {
         // apply first transition
         bundle_state.apply_block_substate_and_create_reverts(
             TransitionState::single(address, transition.clone()),
-            true,
+            BundleRetention::Reverts,
         );
     }
 
