@@ -222,6 +222,7 @@ impl BundleAccount {
                     _ => unreachable!("Invalid transition to Destroyed account from: {self:?} to {updated_info:?} {updated_status:?}"),
                 };
                 self.status = AccountStatus::Destroyed;
+                self.info = None;
                 // set present to destroyed.
                 Some(ret)
             }
