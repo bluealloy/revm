@@ -366,27 +366,7 @@ impl BundleState {
                         }
                     }
                     this.info = other_account.info;
-                    // if this status was destroyed this means we know all the storages
-                    // and new status need to contains that "Destroyed" flag.
-                    this.status = match (
-                        this.status.was_destroyed(),
-                        other_account.status.was_destroyed(),
-                    ) {
-                        // It this account was Destroyed and other
-                        // account is not, we should mark extended account as destroyed too.
-                        // and as other account had some changes, extended account
-                        // should be marked as DestroyedChanged.
-                        (true, false) => AccountStatus::DestroyedChanged,
-                        // If both account are not destroyed
-                        // and if this account is in memory
-                        // this means that extended account is in memory too.
-                        (false, false) if this.status == AccountStatus::InMemoryChange => {
-                            AccountStatus::InMemoryChange
-                        }
-                        // otherwise if both are destroyed or other is destroyed.
-                        // set other status to extended account.
-                        _ => other_account.status,
-                    };
+                    this.status.transition(other_account.status);
                 }
                 hash_map::Entry::Vacant(entry) => {
                     // just insert if empty
