@@ -365,8 +365,28 @@ impl BundleState {
                                 .present_value = storage_slot.present_value;
                         }
                     }
-                    this.status = other_account.status;
                     this.info = other_account.info;
+                    // if this status was destroyed this means we know all the storages
+                    // and new status need to contains that "Destroyed" flag.
+                    this.status = match (
+                        this.status.was_destroyed(),
+                        other_account.status.was_destroyed(),
+                    ) {
+                        // It this account was Destroyed and other
+                        // account is not, we should mark extended account as destroyed too.
+                        // and as other account had some changes, extended account
+                        // should be marked as DestroyedChanged.
+                        (true, false) => AccountStatus::DestroyedChanged,
+                        // If both account are not destroyed
+                        // and if this account is in memory
+                        // this means that extended account is in memory too.
+                        (false, false) if this.status == AccountStatus::InMemoryChange => {
+                            AccountStatus::InMemoryChange
+                        }
+                        // otherwise if both are destroyed or other is destroyed.
+                        // set other status to extended account.
+                        _ => other_account.status,
+                    };
                 }
                 hash_map::Entry::Vacant(entry) => {
                     // just insert if empty
@@ -481,12 +501,12 @@ mod tests {
         );
     }
 
-    fn account1() -> B160 {
-        [0x60; 20].into()
+    const fn account1() -> B160 {
+        B160([0x60; 20])
     }
 
-    fn account2() -> B160 {
-        [0x61; 20].into()
+    const fn account2() -> B160 {
+        B160([0x61; 20])
     }
 
     fn slot() -> U256 {
@@ -584,5 +604,54 @@ mod tests {
         // reverted by bigger number gives us empty bundle
         reverted.revert(10);
         assert_eq!(reverted, BundleState::default());
+    }
+
+    #[test]
+    fn extend_on_destoyed_values() {
+        let base_bundle1 = test_bundle1();
+        let base_bundle2 = test_bundle2();
+
+        // test1
+        // bundle1 has Destroyed
+        // bundle2 has Changed
+        // end should be DestroyedChanged.
+        let mut b1 = base_bundle1.clone();
+        let mut b2 = base_bundle2.clone();
+        b1.state.get_mut(&account1()).unwrap().status = AccountStatus::Destroyed;
+        b2.state.get_mut(&account1()).unwrap().status = AccountStatus::Changed;
+        b1.extend(b2);
+        assert_eq!(
+            b1.state.get_mut(&account1()).unwrap().status,
+            AccountStatus::DestroyedChanged
+        );
+
+        // test2
+        // bundle1 has Changed
+        // bundle2 has Destroyed
+        // end should be Destroyed
+        let mut b1 = base_bundle1.clone();
+        let mut b2 = base_bundle2.clone();
+        b1.state.get_mut(&account1()).unwrap().status = AccountStatus::Changed;
+        b2.state.get_mut(&account1()).unwrap().status = AccountStatus::Destroyed;
+        b1.extend(b2);
+        assert_eq!(
+            b1.state.get_mut(&account1()).unwrap().status,
+            AccountStatus::Destroyed
+        );
+
+        // test3
+        // bundle1 has InMemoryChange
+        // bundle2 has Change
+        // end should be InMemoryChange.
+
+        let mut b1 = base_bundle1.clone();
+        let mut b2 = base_bundle2.clone();
+        b1.state.get_mut(&account1()).unwrap().status = AccountStatus::InMemoryChange;
+        b2.state.get_mut(&account1()).unwrap().status = AccountStatus::Changed;
+        b1.extend(b2);
+        assert_eq!(
+            b1.state.get_mut(&account1()).unwrap().status,
+            AccountStatus::InMemoryChange
+        );
     }
 }
