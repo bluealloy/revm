@@ -1,11 +1,9 @@
 use crate::{Error, Precompile, PrecompileAddress, PrecompileResult, B160};
-use c_kzg::{bindings, Bytes32, Bytes48, CkzgError, KzgSettings};
-use once_cell::sync::OnceCell;
+use c_kzg::{bindings, Bytes32, Bytes48, CkzgError};
 use revm_primitives::hex_literal::hex;
 use sha2::{Digest, Sha256};
 
-#[rustfmt::skip]
-mod generated_settings;
+pub mod kzg_settings;
 
 pub const POINT_EVALUATION: PrecompileAddress =
     PrecompileAddress(ADDRESS, Precompile::Standard(run));
@@ -63,25 +61,27 @@ fn kzg_to_versioned_hash(commitment: &[u8]) -> [u8; 32] {
 }
 
 fn verify_kzg_proof(commitment: &Bytes48, z: &Bytes32, y: &Bytes32, proof: &Bytes48) -> bool {
+    // note: we use the bindings directly to avoid copying the input bytes.
+    // If `KzgProof::verify_kzg_proof` ever changes to take references, we should use that instead.
     let mut ok = false;
-    let ret =
-        unsafe { bindings::verify_kzg_proof(&mut ok, commitment, z, y, proof, get_kzg_settings()) };
-    debug_assert!(
-        ret == CkzgError::C_KZG_OK,
-        "verify_kzg_proof returned an error: {ret:?}"
-    );
-    ok
-}
-
-fn get_kzg_settings() -> &'static KzgSettings {
-    static SETTINGS: OnceCell<KzgSettings> = OnceCell::new();
-    SETTINGS.get_or_init(|| {
-        c_kzg::KzgSettings::load_trusted_setup(
-            generated_settings::G1_POINTS,
-            generated_settings::G2_POINTS,
+    let ret = unsafe {
+        bindings::verify_kzg_proof(
+            &mut ok,
+            commitment,
+            z,
+            y,
+            proof,
+            kzg_settings::get_global_or_default(),
         )
-        .expect("failed to load trusted setup")
-    })
+    };
+    if ret != CkzgError::C_KZG_OK {
+        #[cfg(debug_assertions)]
+        panic!("verify_kzg_proof returned an error: {ret:?}");
+
+        #[cfg(not(debug_assertions))]
+        return false;
+    }
+    ok
 }
 
 #[inline(always)]
@@ -96,14 +96,14 @@ fn as_array<const N: usize>(bytes: &[u8]) -> &[u8; N] {
 #[cfg_attr(debug_assertions, track_caller)]
 fn as_bytes32(bytes: &[u8]) -> &Bytes32 {
     // SAFETY: `#[repr(C)] Bytes32([u8; 32])`
-    unsafe { *as_array::<32>(bytes).as_ptr().cast() }
+    unsafe { &*as_array::<32>(bytes).as_ptr().cast() }
 }
 
 #[inline(always)]
 #[cfg_attr(debug_assertions, track_caller)]
 fn as_bytes48(bytes: &[u8]) -> &Bytes48 {
     // SAFETY: `#[repr(C)] Bytes48([u8; 48])`
-    unsafe { *as_array::<48>(bytes).as_ptr().cast() }
+    unsafe { &*as_array::<48>(bytes).as_ptr().cast() }
 }
 
 #[cfg(test)]
@@ -124,5 +124,16 @@ mod tests {
         let elements = U256::from(FIELD_ELEMENTS_PER_BLOB);
         let result = [elements.to_be_bytes(), *BLS_MODULUS].concat();
         assert_eq!(RETURN_VALUE[..], result);
+    }
+
+    // https://github.com/ethereum/go-ethereum/blob/41ee96fdfee5924004e8fbf9bbc8aef783893917/core/vm/testdata/precompiles/pointEvaluation.json
+    #[test]
+    fn basic_test() {
+        let input = hex!("01d18459b334ffe8e2226eef1db874fda6db2bdd9357268b39220af2d59464fb564c0a11a0f704f4fc3e8acfe0f8245f0ad1347b378fbf96e206da11a5d3630624d25032e67a7e6a4910df5834b8fe70e6bcfeeac0352434196bdf4b2485d5a1978a0d595c823c05947b1156175e72634a377808384256e9921ebf72181890be2d6b58d4a73a880541d1656875654806942307f266e636553e94006d11423f2688945ff3bdf515859eba1005c1a7708d620a94d91a1c0c285f9584e75ec2f82a");
+        let expected_output = hex!("000000000000000000000000000000000000000000000000000000000000100073eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001");
+        let gas = 50000;
+        let (actual_gas, actual_output) = run(&input, gas).unwrap();
+        assert_eq!(actual_gas, gas);
+        assert_eq!(actual_output, expected_output);
     }
 }

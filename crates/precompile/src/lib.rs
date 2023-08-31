@@ -11,6 +11,9 @@ mod identity;
 mod modexp;
 mod secp256k1;
 
+// Export kzg_settings initializers
+pub use blob::kzg_settings;
+
 use once_cell::sync::OnceCell;
 pub use primitives::{
     precompile::{PrecompileError as Error, *},

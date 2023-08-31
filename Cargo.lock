@@ -441,7 +441,7 @@ dependencies = [
 [[package]]
 name = "c-kzg"
 version = "0.1.0"
-source = "git+https://github.com/danipopes/c-kzg-4844?branch=export-ffi#0703f4bf5f2fd6a0e823fa0e6ba87c7e3b6dbf50"
+source = "git+https://github.com/danipopes/c-kzg-4844?branch=export-ffi#e2ba70e6f8c9f74a0edefe3fdeebddc59870f211"
 dependencies = [
  "bindgen",
  "blst",
@@ -449,7 +449,6 @@ dependencies = [
  "glob",
  "hex",
  "libc",
- "serde",
 ]
 
 [[package]]
