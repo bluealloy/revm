@@ -1,4 +1,4 @@
-use crate::{B160, B256, U256};
+use crate::{B160, B256, TARGET_BLOB_GAS_PER_BLOCK, U256};
 use hex_literal::hex;
 use sha3::{Digest, Keccak256};
 
@@ -29,6 +29,37 @@ pub fn create2_address(caller: B160, code_hash: B256, salt: U256) -> B160 {
     hasher.update(&code_hash[..]);
 
     B160(hasher.finalize().as_slice()[12..].try_into().unwrap())
+}
+
+/// Calculates the [EIP-4844] `excess_blob_gas` from the parent header's `blob_gas_used` and
+/// `excess_blob_gas`.
+///
+/// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
+#[inline]
+pub fn calc_excess_blob_gas(parent_blob_gas_used: u64, parent_excess_blob_gas: u64) -> u64 {
+    let excess = parent_blob_gas_used.saturating_add(parent_excess_blob_gas);
+    TARGET_BLOB_GAS_PER_BLOCK.saturating_sub(excess)
+}
+
+/// Approximates `factor * e ** (numerator / denominator)` using Taylor expansion.
+#[inline]
+pub fn fake_exponential(factor: u64, numerator: u64, denominator: u64) -> u64 {
+    assert!(denominator > 0, "attempt to divide by zero");
+
+    let mut i = 1;
+    let mut output = 0;
+    let mut numerator_accum = factor * denominator;
+    while numerator_accum > 0 {
+        output += numerator_accum;
+        // SAFETY: asserted > 0 above
+        numerator_accum = unsafe {
+            (numerator_accum * numerator)
+                .checked_div(denominator * i)
+                .unwrap_unchecked()
+        };
+        i += 1;
+    }
+    output / denominator
 }
 
 /// Serde functions to serde as [bytes::Bytes] hex string

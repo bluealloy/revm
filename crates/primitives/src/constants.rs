@@ -19,3 +19,9 @@ pub const MAX_INITCODE_SIZE: usize = 2 * MAX_CODE_SIZE;
 
 /// Precompile 3 is special in few places
 pub const PRECOMPILE3: B160 = B160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]);
+
+// EIP-4844 constants
+pub const MIN_BLOB_GASPRICE: u64 = 1;
+pub const BLOB_GASPRICE_UPDATE_FRACTION: u64 = 3338477;
+pub const GAS_PER_BLOB: u64 = 1 << 17;
+pub const TARGET_BLOB_GAS_PER_BLOCK: u64 = 393216;

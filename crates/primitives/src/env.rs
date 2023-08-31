@@ -1,6 +1,7 @@
 use crate::{
-    alloc::vec::Vec, Account, EVMError, InvalidTransaction, Spec, SpecId, B160, B256, KECCAK_EMPTY,
-    MAX_INITCODE_SIZE, U256,
+    alloc::vec::Vec, fake_exponential, Account, EVMError, InvalidTransaction, Spec, SpecId, B160,
+    B256, BLOB_GASPRICE_UPDATE_FRACTION, GAS_PER_BLOB, KECCAK_EMPTY, MAX_INITCODE_SIZE,
+    MIN_BLOB_GASPRICE, U256,
 };
 use bytes::Bytes;
 use core::cmp::{min, Ordering};
@@ -13,59 +14,172 @@ pub struct Env {
     pub tx: TxEnv,
 }
 
+/// The block environment.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlockEnv {
+    /// The number of ancestor blocks of this block (block height).
     pub number: U256,
     /// Coinbase or miner or address that created and signed the block.
-    /// Address where we are going to send gas spend
+    ///
+    /// This is the receiver address of all the gas spent in the block.
     pub coinbase: B160,
+    /// The timestamp of the block in seconds since the UNIX epoch.
     pub timestamp: U256,
-    /// Difficulty is removed and not used after Paris (aka TheMerge). Value is replaced with prevrandao.
-    pub difficulty: U256,
-    /// Prevrandao is used after Paris (aka TheMerge) instead of the difficulty value.
-    /// NOTE: prevrandao can be found in block in place of mix_hash.
-    pub prevrandao: Option<B256>,
-    /// basefee is added in EIP1559 London upgrade
-    pub basefee: U256,
+    /// The gas limit of the block.
     pub gas_limit: U256,
+
+    /// The base fee per gas, added in the London upgrade with [EIP-1559].
+    ///
+    /// [EIP-1559]: https://eips.ethereum.org/EIPS/eip-1559
+    pub basefee: U256,
+
+    /// The difficulty of the block.
+    ///
+    /// Unused after the Paris (AKA the merge) upgrade, and replaced by `prevrandao`.
+    pub difficulty: U256,
+    /// The output of the randomness beacon provided by the beacon chain.
+    ///
+    /// Replaces `difficulty` after the Paris (AKA the merge) upgrade with [EIP-4399].
+    ///
+    /// NOTE: `prevrandao` can be found in a block in place of `mix_hash`.
+    ///
+    /// [EIP-4399]: https://eips.ethereum.org/EIPS/eip-4399
+    pub prevrandao: Option<B256>,
+
+    /// Excess blob gas. See also [`calc_excess_blob_gas`](crate::calc_excess_blob_gas).
+    ///
+    /// Incorporated as part of the Cancun upgrade via [EIP-4844].
+    ///
+    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
+    pub excess_blob_gas: Option<u64>,
 }
 
+impl BlockEnv {
+    /// See [EIP-4844] and [`Env::calc_data_fee`].
+    ///
+    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
+    #[inline]
+    pub fn get_blob_gasprice(&self) -> u64 {
+        if let Some(excess_blob_gas) = self.excess_blob_gas {
+            fake_exponential(
+                MIN_BLOB_GASPRICE,
+                excess_blob_gas,
+                BLOB_GASPRICE_UPDATE_FRACTION,
+            )
+        } else {
+            0
+        }
+    }
+}
+
+/// The transaction environment.
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxEnv {
-    /// Caller or Author or tx signer
+    /// The caller, author or signer of the transaction.
     pub caller: B160,
+    /// The gas limit of the transaction.
     pub gas_limit: u64,
+    /// The gas price of the transaction.
     pub gas_price: U256,
-    pub gas_priority_fee: Option<U256>,
+    /// The destination of the transaction.
     pub transact_to: TransactTo,
+    /// The value sent to `transact_to`.
     pub value: U256,
+    /// The data of the transaction.
     #[cfg_attr(feature = "serde", serde(with = "crate::utilities::serde_hex_bytes"))]
     pub data: Bytes,
-    pub chain_id: Option<u64>,
+    /// The nonce of the transaction. If set to `None`, no checks are performed.
     pub nonce: Option<u64>,
 
+    /// The chain ID of the transaction. If set to `None`, no checks are performed.
+    ///
+    /// Incorporated as part of the Spurious Dragon upgrade via [EIP-155].
+    ///
+    /// [EIP-155]: https://eips.ethereum.org/EIPS/eip-155
+    pub chain_id: Option<u64>,
+
+    /// A list of addresses and storage keys that the transaction plans to access.
+    ///
+    /// Added in [EIP-2930].
+    ///
+    /// [EIP-2930]: https://eips.ethereum.org/EIPS/eip-2930
     pub access_list: Vec<(B160, Vec<U256>)>,
 
+    /// The priority fee per gas.
+    ///
+    /// Incorporated as part of the London upgrade via [EIP-1559].
+    ///
+    /// [EIP-1559]: https://eips.ethereum.org/EIPS/eip-1559
+    pub gas_priority_fee: Option<U256>,
+
+    /// The list of blob versioned hashes.
+    ///
+    /// Incorporated as part of the Cancun upgrade via [EIP-4844].
+    ///
+    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     pub blob_hashes: Vec<B256>,
+    /// The max fee per blob gas.
+    ///
+    /// Incorporated as part of the Cancun upgrade via [EIP-4844].
+    ///
+    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     pub max_fee_per_blob_gas: Option<U256>,
 }
 
+impl TxEnv {
+    /// See [EIP-4844] and [`Env::calc_data_fee`].
+    ///
+    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
+    #[inline]
+    pub fn get_total_blob_gas(&self) -> u64 {
+        GAS_PER_BLOB * self.blob_hashes.len() as u64
+    }
+}
+
+/// Transaction destination.
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TransactTo {
+    /// Simple call to an address.
     Call(B160),
+    /// Contract creation.
     Create(CreateScheme),
 }
 
 impl TransactTo {
+    /// Calls the given address.
+    #[inline]
+    pub fn call(address: B160) -> Self {
+        Self::Call(address)
+    }
+
+    /// Creates a contract.
+    #[inline]
     pub fn create() -> Self {
         Self::Create(CreateScheme::Create)
     }
 
+    /// Creates a contract with the given salt using `CREATE2`.
+    #[inline]
+    pub fn create2(salt: U256) -> Self {
+        Self::Create(CreateScheme::Create2 { salt })
+    }
+
+    /// Returns `true` if the transaction is `Call`.
+    #[inline]
+    pub fn is_call(&self) -> bool {
+        matches!(self, Self::Call(_))
+    }
+
+    /// Returns `true` if the transaction is `Create` or `Create2`.
+    #[inline]
     pub fn is_create(&self) -> bool {
-        matches!(self, Self::Create(_))
+        matches!(
+            self,
+            Self::Create(CreateScheme::Create | CreateScheme::Create2 { .. })
+        )
     }
 }
 
@@ -82,6 +196,7 @@ pub enum CreateScheme {
     },
 }
 
+/// EVM configuration.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
@@ -182,25 +297,29 @@ impl CfgEnv {
     }
 }
 
+/// What bytecode analysis to perform.
 #[derive(Clone, Default, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AnalysisKind {
+    /// Do not perform bytecode analysis.
     Raw,
+    /// Check the bytecode for validity.
     Check,
+    /// Perform bytecode analysis.
     #[default]
     Analyse,
 }
 
 impl Default for CfgEnv {
-    fn default() -> CfgEnv {
-        CfgEnv {
+    fn default() -> Self {
+        Self {
             chain_id: U256::from(1),
             spec_id: SpecId::LATEST,
-            perf_analyse_created_bytecodes: Default::default(),
+            perf_analyse_created_bytecodes: AnalysisKind::default(),
             limit_contract_code_size: None,
             disable_coinbase_tip: false,
             #[cfg(feature = "memory_limit")]
-            memory_limit: 2u64.pow(32) - 1,
+            memory_limit: (1 << 32) - 1,
             #[cfg(feature = "optional_balance_check")]
             disable_balance_check: false,
             #[cfg(feature = "optional_block_gas_limit")]
@@ -216,22 +335,23 @@ impl Default for CfgEnv {
 }
 
 impl Default for BlockEnv {
-    fn default() -> BlockEnv {
-        BlockEnv {
-            gas_limit: U256::MAX,
+    fn default() -> Self {
+        Self {
             number: U256::ZERO,
             coinbase: B160::zero(),
             timestamp: U256::from(1),
+            gas_limit: U256::MAX,
+            basefee: U256::ZERO,
             difficulty: U256::ZERO,
             prevrandao: Some(B256::zero()),
-            basefee: U256::ZERO,
+            excess_blob_gas: None,
         }
     }
 }
 
 impl Default for TxEnv {
-    fn default() -> TxEnv {
-        TxEnv {
+    fn default() -> Self {
+        Self {
             caller: B160::zero(),
             gas_limit: u64::MAX,
             gas_price: U256::ZERO,
@@ -249,25 +369,34 @@ impl Default for TxEnv {
 }
 
 impl Env {
+    /// Calculates the effective gas price of the transaction.
+    #[inline]
     pub fn effective_gas_price(&self) -> U256 {
-        if self.tx.gas_priority_fee.is_none() {
-            self.tx.gas_price
+        if let Some(priority_fee) = self.tx.gas_priority_fee {
+            min(self.tx.gas_price, self.block.basefee + priority_fee)
         } else {
-            min(
-                self.tx.gas_price,
-                self.block.basefee + self.tx.gas_priority_fee.unwrap(),
-            )
+            self.tx.gas_price
         }
     }
 
-    /// Validate ENV data of the block.
+    /// Calculates the [EIP-4844] `data_fee` of the transaction.
     ///
-    /// It can be skip if you are sure that PREVRANDAO is set.
+    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
+    #[inline]
+    pub fn calc_data_fee(&self) -> u64 {
+        self.tx.get_total_blob_gas() + self.block.get_blob_gasprice()
+    }
+
+    /// Validate ENV data of the block.
     #[inline]
     pub fn validate_block_env<SPEC: Spec, T>(&self) -> Result<(), EVMError<T>> {
-        // Prevrandao is required for merge
+        // `prevrandao` is required for the merge
         if SPEC::enabled(SpecId::MERGE) && self.block.prevrandao.is_none() {
             return Err(EVMError::PrevrandaoNotSet);
+        }
+        // `excess_blob_gas` is required for Cancun
+        if SPEC::enabled(SpecId::CANCUN) && self.block.excess_blob_gas.is_none() {
+            return Err(EVMError::ExcessBlobGasNotSet);
         }
         Ok(())
     }
@@ -324,6 +453,11 @@ impl Env {
         // Check if access list is empty for transactions before BERLIN
         if !SPEC::enabled(SpecId::BERLIN) && !self.tx.access_list.is_empty() {
             return Err(InvalidTransaction::AccessListNotSupported);
+        }
+
+        // Check that the max fee per blob gas is not set for transactions before CANCUN
+        if !SPEC::enabled(SpecId::CANCUN) && self.tx.max_fee_per_blob_gas.is_some() {
+            return Err(InvalidTransaction::MaxFeePerBlobGasNotSupported);
         }
 
         Ok(())

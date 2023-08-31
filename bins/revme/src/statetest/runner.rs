@@ -12,7 +12,7 @@ use super::{
 use hex_literal::hex;
 use indicatif::ProgressBar;
 use revm::inspectors::TracerEip3155;
-use revm::primitives::keccak256;
+use revm::primitives::{calc_excess_blob_gas, keccak256};
 use revm::{
     interpreter::CreateScheme,
     primitives::{Bytecode, Env, ExecutionResult, HashMap, SpecId, TransactTo, B160, B256, U256},
@@ -187,6 +187,16 @@ pub fn execute_test_suite(
         env.block.difficulty = unit.env.current_difficulty;
         // after the Merge prevrandao replaces mix_hash field in block and replaced difficulty opcode in EVM.
         env.block.prevrandao = Some(unit.env.current_difficulty.to_be_bytes().into());
+        // EIP-4844
+        if let (Some(parent_blob_gas_used), Some(parent_excess_blob_gas)) = (
+            unit.env.parent_blob_gas_used,
+            unit.env.parent_excess_blob_gas,
+        ) {
+            env.block.excess_blob_gas = Some(calc_excess_blob_gas(
+                parent_blob_gas_used.to(),
+                parent_excess_blob_gas.to(),
+            ));
+        }
 
         // tx env
         let pk = unit.transaction.secret_key;
@@ -411,7 +421,7 @@ pub fn run(
     console_bar.finish();
 
     println!(
-        "Finished execution. Total duration: {:.6}s",
+        "Finished execution. Total CPU time: {:.6}s",
         elapsed.lock().unwrap().as_secs_f64()
     );
     if errors.is_empty() {
