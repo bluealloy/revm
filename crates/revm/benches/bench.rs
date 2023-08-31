@@ -23,6 +23,8 @@ fn analysis(c: &mut Criterion) {
             .parse()
             .unwrap(),
     );
+    // Empirical good value for gas_limit for low shared_memory usage
+    evm.env.tx.gas_limit = 22_000;
     // evm.env.tx.data = Bytes::from(hex::decode("30627b7c").unwrap());
     evm.env.tx.data = Bytes::from(hex::decode("8035F0CE").unwrap());
 
@@ -69,7 +71,7 @@ fn snailtracer(c: &mut Criterion) {
         .measurement_time(Duration::from_secs(10))
         .sample_size(10);
     bench_transact(&mut g, &mut evm);
-    bench_eval(&mut g, &evm);
+    bench_eval(&mut g, &mut evm);
     g.finish();
 }
 
@@ -100,11 +102,20 @@ fn bench_transact(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm) {
         BytecodeState::Analysed { .. } => "analysed",
     };
     let id = format!("transact/{state}");
-    g.bench_function(id, |b| b.iter(|| evm.transact().unwrap()));
+    g.bench_function(id, |b| {
+        b.iter(|| {
+            // reset gas limit to the right amount before tx
+            evm.env.tx.gas_limit = 22_000;
+            evm.transact().unwrap()
+        })
+    });
 }
 
-fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &Evm) {
-    let shared_memory = Rc::new(RefCell::new(SharedMemory::new(evm.env.tx.gas_limit, None)));
+fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm) {
+    let gas_limit = 22_000;
+    evm.env.tx.gas_limit = gas_limit;
+    let shared_memory = Rc::new(RefCell::new(SharedMemory::new(evm.env.tx.gas_limit)));
+
     g.bench_function("eval", |b| {
         let contract = Contract {
             input: evm.env.tx.data.clone(),
@@ -113,6 +124,8 @@ fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &Evm) {
         };
         let mut host = DummyHost::new(evm.env.clone());
         b.iter(|| {
+            // reset gas limit to the right amount before tx
+            evm.env.tx.gas_limit = gas_limit;
             let mut interpreter =
                 Interpreter::new(Box::new(contract.clone()), u64::MAX, false, &shared_memory);
             let res = interpreter.run::<_, BerlinSpec>(&mut host);
