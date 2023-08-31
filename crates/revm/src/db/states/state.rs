@@ -1,5 +1,6 @@
 use super::{
-    cache::CacheState, plain_account::PlainStorage, BundleState, CacheAccount, TransitionState,
+    bundle_state::BundleRetention, cache::CacheState, plain_account::PlainStorage, BundleState,
+    CacheAccount, TransitionState,
 };
 use crate::TransitionAccount;
 use alloc::collections::{btree_map, BTreeMap};
@@ -125,13 +126,11 @@ impl<'a, DBError> State<'a, DBError> {
     /// This action will create final post state and all reverts so that
     /// we at any time revert state of bundle to the state before transition
     /// is applied.
-    pub fn merge_transitions(&mut self) {
-        if let Some(transition_state) = self.transition_state.as_mut() {
-            let transition_state = transition_state.take();
-
+    pub fn merge_transitions(&mut self, retention: BundleRetention) {
+        if let Some(transition_state) = self.transition_state.as_mut().map(TransitionState::take) {
             self.bundle_state
                 .get_or_insert(BundleState::default())
-                .apply_block_substate_and_create_reverts(transition_state);
+                .apply_block_substate_and_create_reverts(transition_state, retention);
         }
     }
 
@@ -444,7 +443,7 @@ mod tests {
             ),
         ]));
 
-        state.merge_transitions();
+        state.merge_transitions(BundleRetention::Reverts);
         let bundle_state = state.take_bundle();
 
         // The new account revert should be `DeleteIt` since this was an account creation.
@@ -502,7 +501,7 @@ mod tests {
                         previous_or_original_value: U256::ZERO,
                         present_value: U256::from(1),
                     }
-                )])
+                )]),
             }),
             "The latest state of the new account is incorrect"
         );
@@ -542,7 +541,7 @@ mod tests {
                             present_value: U256::from(3_000),
                         },
                     ),
-                ])
+                ]),
             }),
             "The latest state of the existing account is incorrect"
         );
@@ -680,7 +679,7 @@ mod tests {
             ),
         ]));
 
-        state.merge_transitions();
+        state.merge_transitions(BundleRetention::Reverts);
 
         let mut bundle_state = state.take_bundle();
         for revert in &mut bundle_state.reverts {
@@ -795,7 +794,7 @@ mod tests {
             },
         )]));
 
-        state.merge_transitions();
+        state.merge_transitions(BundleRetention::Reverts);
 
         let bundle_state = state.take_bundle();
 
@@ -813,7 +812,7 @@ mod tests {
                             present_value: U256::from(2),
                         },
                     )]),
-                    status: AccountStatus::DestroyedChanged
+                    status: AccountStatus::DestroyedChanged,
                 }
             )])
         );
@@ -826,7 +825,7 @@ mod tests {
                     account: AccountInfoRevert::DoNothing,
                     previous_status: AccountStatus::Loaded,
                     storage: HashMap::from([(slot2, RevertToSlot::Destroyed)]),
-                    wipe_storage: true
+                    wipe_storage: true,
                 }
             )])])
         )

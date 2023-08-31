@@ -5,8 +5,24 @@ use super::{
 use rayon::slice::ParallelSliceMut;
 use revm_interpreter::primitives::{
     hash_map::{self, Entry},
-    AccountInfo, Bytecode, HashMap, StorageSlot, B160, B256, U256,
+    AccountInfo, Bytecode, HashMap, StorageSlot, B160, B256, KECCAK_EMPTY, U256,
 };
+
+/// Bundle retention policy for applying substate to the bundle.
+#[derive(Debug)]
+pub enum BundleRetention {
+    /// Only plain state is updated.
+    PlainState,
+    /// Both, plain state and reverts, are retained
+    Reverts,
+}
+
+impl BundleRetention {
+    /// Returns `true` if reverts should be retained.
+    pub fn includes_reverts(&self) -> bool {
+        matches!(self, Self::Reverts)
+    }
+}
 
 /// Bundle state contain only values that got changed
 ///
@@ -21,9 +37,6 @@ pub struct BundleState {
     pub state: HashMap<B160, BundleAccount>,
     /// All created contracts in this block.
     pub contracts: HashMap<B256, Bytecode>,
-    /// The flag indicating whether we should collect the reverts.
-    /// Defaults to `true`.
-    pub should_collect_reverts: bool,
     /// Changes to revert.
     ///
     /// If `should_collect_reverts` flag was set to `false`, the revert for any given block will be just an empty array.
@@ -38,7 +51,6 @@ impl Default for BundleState {
         Self {
             state: HashMap::new(),
             contracts: HashMap::new(),
-            should_collect_reverts: true,
             reverts: Vec::new(),
         }
     }
@@ -117,14 +129,8 @@ impl BundleState {
         Self {
             state,
             contracts: contracts.into_iter().collect(),
-            should_collect_reverts: true,
             reverts,
         }
-    }
-
-    /// Set the flag indicating whether reverts should be collected.
-    pub fn set_should_collect_reverts(&mut self, should_collect: bool) {
-        self.should_collect_reverts = should_collect;
     }
 
     /// Return reference to the state.
@@ -153,9 +159,16 @@ impl BundleState {
     }
 
     /// Consume `TransitionState` by applying the changes and creating the reverts
-    pub fn apply_block_substate_and_create_reverts(&mut self, transitions: TransitionState) {
+    ///
+    /// If [BundleRetention::includes_reverts] is `true`, then the reverts will be retained.
+    pub fn apply_block_substate_and_create_reverts(
+        &mut self,
+        transitions: TransitionState,
+        retention: BundleRetention,
+    ) {
+        let include_reverts = retention.includes_reverts();
         // pessimistically pre-allocate assuming _all_ accounts changed.
-        let reverts_capacity = if self.should_collect_reverts {
+        let reverts_capacity = if include_reverts {
             transitions.transitions.len()
         } else {
             0
@@ -185,7 +198,7 @@ impl BundleState {
             };
 
             // append revert if present.
-            if let Some(revert) = revert.filter(|_| self.should_collect_reverts) {
+            if let Some(revert) = revert.filter(|_| include_reverts) {
                 reverts.push((address, revert));
             }
         }
@@ -193,7 +206,7 @@ impl BundleState {
         self.reverts.push(reverts);
     }
 
-    /// Return and clear all reverts from BundleState, sort them before returning.
+    /// Return and clear all reverts from [BundleState], sort them before returning.
     pub fn take_reverts(&mut self) -> StateReverts {
         let mut state_reverts = StateReverts::with_capacity(self.reverts.len());
         for reverts in self.reverts.drain(..) {
@@ -273,7 +286,12 @@ impl BundleState {
         accounts.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
         storage.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
 
-        let mut contracts = self.contracts.into_iter().collect::<Vec<_>>();
+        let mut contracts = self
+            .contracts
+            .into_iter()
+            // remove empty bytecodes
+            .filter(|(b, _)| *b != KECCAK_EMPTY)
+            .collect::<Vec<_>>();
         contracts.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
 
         StateChangeset {
@@ -294,16 +312,65 @@ impl BundleState {
     }
 
     /// Extend the state with state that is build on top of it.
-    pub fn extend(&mut self, other: Self) {
+    ///
+    /// For other state, if there a wipe storage flag set inside Revert copy the state
+    /// from `this` to `other` revert (if there is no duplicates of course).
+    ///
+    /// Check if `this` bundle was selfdestroyed if it is and if `other`
+    /// was selfdestroyed too we need to invalidate second (`other`) wipe flag
+    /// as wiping from database is done only once and we already transferred
+    /// all potentially missing storages to the `other` revert.
+    ///
+    /// Additionally update the `other` state only if there is no selfdestruct inside
+    /// `other` revert.
+    pub fn extend(&mut self, mut other: Self) {
         // Extend the state.
-        for (address, other) in other.state {
+
+        for (address, other_account) in other.state {
             match self.state.entry(address) {
                 hash_map::Entry::Occupied(mut entry) => {
-                    entry.get_mut().extend(other);
+                    // iterate over reverts and if its storage is wiped try to add previous bundle
+                    // state as there is potential missing slots.
+
+                    let this = entry.get_mut();
+                    for (_, revert_account) in other.reverts.iter_mut().flatten() {
+                        if revert_account.wipe_storage {
+                            // If there is wipe storage in other revert
+                            // we need to copy the storage from this revert
+                            // to other revert.
+                            for (key, value) in &this.storage {
+                                revert_account
+                                    .storage
+                                    .entry(*key)
+                                    .or_insert(RevertToSlot::Some(value.present_value));
+                            }
+
+                            // nullify this wipe as database wipe is done in `this`.
+                            if this.was_destroyed() {
+                                revert_account.wipe_storage = false;
+                            }
+                        }
+                    }
+                    // if other was destroyed. replace `this` storage with
+                    // the `other one.
+                    if other_account.was_destroyed() {
+                        this.storage = other_account.storage;
+                    } else {
+                        // otherwise extend this storage with other
+                        for (key, storage_slot) in other_account.storage {
+                            // update present value or insert storage slot.
+                            this.storage
+                                .entry(key)
+                                .or_insert(storage_slot)
+                                .present_value = storage_slot.present_value;
+                        }
+                    }
+                    this.info = other_account.info;
+                    this.status.transition(other_account.status);
                 }
                 hash_map::Entry::Vacant(entry) => {
                     // just insert if empty
-                    entry.insert(other);
+                    entry.insert(other_account);
                 }
             }
         }
@@ -336,14 +403,14 @@ impl BundleState {
         })
     }
 
-    /// Reverse the state changes by N transitions back
-    pub fn revert(&mut self, mut transition: usize) {
-        if transition == 0 {
-            return;
-        }
-
-        // revert the state.
-        while let Some(reverts) = self.reverts.pop() {
+    /// Reverts the state changes of the latest transition
+    ///
+    /// Note: This is the same as `BundleState::revert(1)`
+    ///
+    /// Returns true if the state was reverted.
+    pub fn revert_latest(&mut self) -> bool {
+        // revert the latest recorded state
+        if let Some(reverts) = self.reverts.pop() {
             for (address, revert_account) in reverts.into_iter() {
                 if let Entry::Occupied(mut entry) = self.state.entry(address) {
                     if entry.get_mut().revert(revert_account) {
@@ -353,8 +420,23 @@ impl BundleState {
                     unreachable!("Account {address:?} {revert_account:?} for revert should exist");
                 }
             }
-            transition -= 1;
-            if transition == 0 {
+            return true;
+        }
+
+        false
+    }
+
+    /// Reverts the state changes by N transitions back.
+    ///
+    /// See also [Self::revert_latest]
+    pub fn revert(&mut self, mut num_transitions: usize) {
+        if num_transitions == 0 {
+            return;
+        }
+
+        while self.revert_latest() {
+            num_transitions -= 1;
+            if num_transitions == 0 {
                 // break the loop.
                 break;
             }
@@ -393,18 +475,18 @@ mod tests {
         };
 
         // apply first transition
-        bundle_state.apply_block_substate_and_create_reverts(TransitionState::single(
-            address,
-            transition.clone(),
-        ));
+        bundle_state.apply_block_substate_and_create_reverts(
+            TransitionState::single(address, transition.clone()),
+            BundleRetention::Reverts,
+        );
     }
 
-    fn account1() -> B160 {
-        [0x60; 20].into()
+    const fn account1() -> B160 {
+        B160([0x60; 20])
     }
 
-    fn account2() -> B160 {
-        [0x61; 20].into()
+    const fn account2() -> B160 {
+        B160([0x61; 20])
     }
 
     fn slot() -> U256 {
@@ -502,5 +584,54 @@ mod tests {
         // reverted by bigger number gives us empty bundle
         reverted.revert(10);
         assert_eq!(reverted, BundleState::default());
+    }
+
+    #[test]
+    fn extend_on_destoyed_values() {
+        let base_bundle1 = test_bundle1();
+        let base_bundle2 = test_bundle2();
+
+        // test1
+        // bundle1 has Destroyed
+        // bundle2 has Changed
+        // end should be DestroyedChanged.
+        let mut b1 = base_bundle1.clone();
+        let mut b2 = base_bundle2.clone();
+        b1.state.get_mut(&account1()).unwrap().status = AccountStatus::Destroyed;
+        b2.state.get_mut(&account1()).unwrap().status = AccountStatus::Changed;
+        b1.extend(b2);
+        assert_eq!(
+            b1.state.get_mut(&account1()).unwrap().status,
+            AccountStatus::DestroyedChanged
+        );
+
+        // test2
+        // bundle1 has Changed
+        // bundle2 has Destroyed
+        // end should be Destroyed
+        let mut b1 = base_bundle1.clone();
+        let mut b2 = base_bundle2.clone();
+        b1.state.get_mut(&account1()).unwrap().status = AccountStatus::Changed;
+        b2.state.get_mut(&account1()).unwrap().status = AccountStatus::Destroyed;
+        b1.extend(b2);
+        assert_eq!(
+            b1.state.get_mut(&account1()).unwrap().status,
+            AccountStatus::Destroyed
+        );
+
+        // test3
+        // bundle1 has InMemoryChange
+        // bundle2 has Change
+        // end should be InMemoryChange.
+
+        let mut b1 = base_bundle1.clone();
+        let mut b2 = base_bundle2.clone();
+        b1.state.get_mut(&account1()).unwrap().status = AccountStatus::InMemoryChange;
+        b2.state.get_mut(&account1()).unwrap().status = AccountStatus::Changed;
+        b1.extend(b2);
+        assert_eq!(
+            b1.state.get_mut(&account1()).unwrap().status,
+            AccountStatus::InMemoryChange
+        );
     }
 }
