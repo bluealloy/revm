@@ -3,7 +3,6 @@ use structopt::StructOpt;
 
 mod cli_env;
 mod cmd;
-mod exec;
 mod statetest;
 
 pub fn main() -> Result<(), Error> {
