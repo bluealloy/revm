@@ -743,11 +743,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 inputs.is_static,
                 shared_memory,
             );
-            let return_value = interpreter.return_value();
             CallResult {
                 result: exit_reason,
                 gas: interpreter.gas,
-                return_value,
+                return_value: interpreter.return_value(),
             }
         } else {
             CallResult {
