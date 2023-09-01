@@ -2,7 +2,8 @@
 
 pub use SpecId::*;
 
-/// SpecId and their activation block
+/// Specification IDs and their activation block.
+///
 /// Information was obtained from: <https://github.com/ethereum/execution-specs>
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd, enumn::N)]
@@ -30,8 +31,14 @@ pub enum SpecId {
 }
 
 impl SpecId {
+    #[inline]
     pub fn try_from_u8(spec_id: u8) -> Option<Self> {
         Self::n(spec_id)
+    }
+
+    #[inline(always)]
+    pub const fn enabled(our: SpecId, other: SpecId) -> bool {
+        our as u8 >= other as u8
     }
 }
 
@@ -54,13 +61,6 @@ impl From<&str> for SpecId {
             "Cancun" => Self::CANCUN,
             _ => Self::LATEST,
         }
-    }
-}
-
-impl SpecId {
-    #[inline]
-    pub const fn enabled(our: SpecId, other: SpecId) -> bool {
-        our as u8 >= other as u8
     }
 }
 

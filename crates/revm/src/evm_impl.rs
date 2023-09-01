@@ -80,6 +80,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
     fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
         let env = self.env();
 
+        // Important: validate block before tx.
         env.validate_block_env::<GSPEC, DB::Error>()?;
         env.validate_tx::<GSPEC>()?;
 
@@ -151,7 +152,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
 
         // EIP-4844
         if GSPEC::enabled(CANCUN) {
-            gas_cost = gas_cost.saturating_add(U256::from(env.calc_data_fee()));
+            let data_fee = env.calc_data_fee().expect("already checked");
+            gas_cost = gas_cost.saturating_add(U256::from(data_fee));
         }
 
         caller_account.info.balance = caller_account.info.balance.saturating_sub(gas_cost);

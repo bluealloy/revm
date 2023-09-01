@@ -57,6 +57,8 @@ pub struct BlockEnv {
 impl BlockEnv {
     /// See [EIP-4844] and [`Env::calc_data_fee`].
     ///
+    /// Returns `None` if `Cancun` is not enabled. This is enforced in [`Env::validate_block_env`].
+    ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     #[inline]
     pub fn get_blob_gasprice(&self) -> Option<u64> {
@@ -372,13 +374,17 @@ impl Env {
 
     /// Calculates the [EIP-4844] `data_fee` of the transaction.
     ///
+    /// Returns `None` if `Cancun` is not enabled. This is enforced in [`Env::validate_block_env`].
+    ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     #[inline]
-    pub fn calc_data_fee(&self) -> u64 {
-        self.tx.get_total_blob_gas() * self.block.get_blob_gasprice().unwrap_or(0)
+    pub fn calc_data_fee(&self) -> Option<u64> {
+        self.block
+            .get_blob_gasprice()
+            .map(|blob_gas_price| blob_gas_price * self.tx.get_total_blob_gas())
     }
 
-    /// Validate ENV data of the block.
+    /// Validate the block environment.
     #[inline]
     pub fn validate_block_env<SPEC: Spec, T>(&self) -> Result<(), EVMError<T>> {
         // `prevrandao` is required for the merge
@@ -441,14 +447,27 @@ impl Env {
             }
         }
 
-        // Check if access list is empty for transactions before BERLIN
+        // Check that access list is empty for transactions before BERLIN
         if !SPEC::enabled(SpecId::BERLIN) && !self.tx.access_list.is_empty() {
             return Err(InvalidTransaction::AccessListNotSupported);
         }
 
-        // Check that the max fee per blob gas is not set for transactions before CANCUN
-        if !SPEC::enabled(SpecId::CANCUN) && self.tx.max_fee_per_blob_gas.is_some() {
-            return Err(InvalidTransaction::MaxFeePerBlobGasNotSupported);
+        // - For CANCUN and later, check that the gas price is not more than the tx max
+        // - For before CANCUN, check that `blob_hashes` and `max_fee_per_blob_gas` are empty / not set
+        if SPEC::enabled(SpecId::CANCUN) {
+            if let Some(max) = self.tx.max_fee_per_blob_gas {
+                let price = self.block.get_blob_gasprice().expect("already checked");
+                if U256::from(price) > max {
+                    return Err(InvalidTransaction::BlobGasPriceGreaterThanMax);
+                }
+            }
+        } else {
+            if !self.tx.blob_hashes.is_empty() {
+                return Err(InvalidTransaction::BlobVersionedHashesNotSupported);
+            }
+            if self.tx.max_fee_per_blob_gas.is_some() {
+                return Err(InvalidTransaction::MaxFeePerBlobGasNotSupported);
+            }
         }
 
         Ok(())
@@ -478,10 +497,17 @@ impl Env {
             }
         }
 
-        let balance_check = U256::from(self.tx.gas_limit)
+        let mut balance_check = U256::from(self.tx.gas_limit)
             .checked_mul(self.tx.gas_price)
             .and_then(|gas_cost| gas_cost.checked_add(self.tx.value))
             .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
+
+        if SpecId::enabled(self.cfg.spec_id, SpecId::CANCUN) {
+            let data_fee = self.calc_data_fee().expect("already checked");
+            balance_check = balance_check
+                .checked_add(U256::from(data_fee))
+                .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
+        }
 
         // Check if account has enough balance for gas_limit*gas_price and value transfer.
         // Transfer will be done inside `*_inner` functions.

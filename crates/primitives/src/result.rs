@@ -185,6 +185,10 @@ pub enum InvalidTransaction {
     AccessListNotSupported,
     /// `max_fee_per_blob_gas` is not supported for blocks before the Cancun hardfork.
     MaxFeePerBlobGasNotSupported,
+    /// `blob_hashes`/`blob_versioned_hashes` is not supported for blocks before the Cancun hardfork.
+    BlobVersionedHashesNotSupported,
+    /// Block `blob_gas_price` is greater than tx-specified `max_fee_per_blob_gas` after Cancun.
+    BlobGasPriceGreaterThanMax,
 }
 
 /// When transaction return successfully without halts.
