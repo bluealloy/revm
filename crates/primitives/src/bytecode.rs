@@ -101,19 +101,6 @@ impl Bytecode {
         }
     }
 
-    /// Creates a new raw Bytecode with the given hash.
-    ///
-    /// # Safety
-    ///
-    /// The given `hash` has to be equal to the [`keccak256`] hash of the given `bytecode`.
-    #[inline]
-    pub unsafe fn new_raw_with_hash(bytecode: Bytes) -> Self {
-        Self {
-            bytecode,
-            state: BytecodeState::Raw,
-        }
-    }
-
     /// Create new checked bytecode
     ///
     /// # Safety
