@@ -322,7 +322,6 @@ impl BundleState {
     ///
     /// Additionally update the `other` state only if `other` is not flagged as destroyed.
     pub fn extend(&mut self, mut other: Self) {
-
         // iterate over reverts and if its storage is wiped try to add previous bundle
         // state as there is potential missing slots.
         for (address, revert) in other.reverts.iter_mut().flatten() {
@@ -490,8 +489,12 @@ mod tests {
         B160([0x61; 20])
     }
 
-    fn slot() -> U256 {
+    fn slot1() -> U256 {
         U256::from(5)
+    }
+
+    fn slot2() -> U256 {
+        U256::from(7)
     }
 
     /// Test bundle one
@@ -508,7 +511,10 @@ mod tests {
                         code_hash: KECCAK_EMPTY,
                         code: None,
                     }),
-                    HashMap::from([(slot(), (U256::from(0), U256::from(10)))]),
+                    HashMap::from([
+                        (slot1(), (U256::from(0), U256::from(10))),
+                        (slot2(), (U256::from(0), U256::from(15))),
+                    ]),
                 ),
                 (
                     account2(),
@@ -523,7 +529,11 @@ mod tests {
                 ),
             ],
             vec![vec![
-                (account1(), Some(None), vec![(slot(), U256::from(0))]),
+                (
+                    account1(),
+                    Some(None),
+                    vec![(slot1(), U256::from(0)), (slot2(), U256::from(0))],
+                ),
                 (account2(), Some(None), vec![]),
             ]],
             vec![],
@@ -543,7 +553,7 @@ mod tests {
                     code_hash: KECCAK_EMPTY,
                     code: None,
                 }),
-                HashMap::from([(slot(), (U256::from(0), U256::from(15)))]),
+                HashMap::from([(slot1(), (U256::from(0), U256::from(15)))]),
             )],
             vec![vec![(
                 account1(),
@@ -553,7 +563,7 @@ mod tests {
                     code_hash: KECCAK_EMPTY,
                     code: None,
                 })),
-                vec![(slot(), U256::from(10))],
+                vec![(slot1(), U256::from(10))],
             )]],
             vec![],
         )
@@ -614,10 +624,25 @@ mod tests {
         let mut b2 = base_bundle2.clone();
         b1.state.get_mut(&account1()).unwrap().status = AccountStatus::Changed;
         b2.state.get_mut(&account1()).unwrap().status = AccountStatus::Destroyed;
+        b2.reverts[0][0].1.wipe_storage = true;
         b1.extend(b2);
         assert_eq!(
             b1.state.get_mut(&account1()).unwrap().status,
             AccountStatus::Destroyed
+        );
+
+        // test2 extension
+        // revert of b2 should contains plain state of b1.
+        let mut revert1 = base_bundle2.reverts[0][0].clone();
+        revert1.1.wipe_storage = true;
+        revert1
+            .1
+            .storage
+            .insert(slot2(), RevertToSlot::Some(U256::from(15)));
+
+        assert_eq!(
+            b1.reverts,
+            vec![base_bundle1.reverts[0].clone(), vec![revert1]],
         );
 
         // test3
