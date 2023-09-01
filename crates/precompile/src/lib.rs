@@ -14,7 +14,7 @@ mod secp256k1;
 // Export kzg_settings initializers
 pub use blob::kzg_settings;
 
-use once_cell::sync::OnceCell;
+use once_cell::race::OnceBox;
 pub use primitives::{
     precompile::{PrecompileError as Error, *},
     Bytes, HashMap,
@@ -25,7 +25,7 @@ pub use revm_primitives as primitives;
 pub type B160 = [u8; 20];
 pub type B256 = [u8; 32];
 
-use alloc::vec::Vec;
+use alloc::{boxed::Box, vec::Vec};
 use core::fmt;
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
@@ -123,7 +123,7 @@ impl SpecId {
 
 impl Precompiles {
     pub fn homestead() -> &'static Self {
-        static INSTANCE: OnceCell<Precompiles> = OnceCell::new();
+        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
             let fun = [
                 secp256k1::ECRECOVER,
@@ -134,14 +134,14 @@ impl Precompiles {
             .into_iter()
             .map(From::from)
             .collect();
-            Self { fun }
+            Box::new(Self { fun })
         })
     }
 
     pub fn byzantium() -> &'static Self {
-        static INSTANCE: OnceCell<Precompiles> = OnceCell::new();
+        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::homestead().clone();
+            let mut precompiles = Box::new(Self::homestead().clone());
             precompiles.fun.extend(
                 [
                     // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
@@ -160,9 +160,9 @@ impl Precompiles {
     }
 
     pub fn istanbul() -> &'static Self {
-        static INSTANCE: OnceCell<Precompiles> = OnceCell::new();
+        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::byzantium().clone();
+            let mut precompiles = Box::new(Self::byzantium().clone());
             precompiles.fun.extend(
                 [
                     // EIP-152: Add BLAKE2 compression function `F` precompile.
@@ -180,9 +180,9 @@ impl Precompiles {
     }
 
     pub fn berlin() -> &'static Self {
-        static INSTANCE: OnceCell<Precompiles> = OnceCell::new();
+        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::istanbul().clone();
+            let mut precompiles = Box::new(Self::istanbul().clone());
             precompiles.fun.extend(
                 [
                     // EIP-2565: ModExp Gas Cost.
@@ -196,9 +196,9 @@ impl Precompiles {
     }
 
     pub fn cancun() -> &'static Self {
-        static INSTANCE: OnceCell<Precompiles> = OnceCell::new();
+        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::berlin().clone();
+            let mut precompiles = Box::new(Self::berlin().clone());
             precompiles.fun.extend(
                 [
                     // EIP-4844: Shard Blob Transactions
