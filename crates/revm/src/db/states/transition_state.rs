@@ -7,6 +7,15 @@ pub struct TransitionState {
     pub transitions: HashMap<B160, TransitionAccount>,
 }
 
+impl Default for TransitionState {
+    fn default() -> Self {
+        // be default make state clear EIP enabled
+        TransitionState {
+            transitions: HashMap::new(),
+        }
+    }
+}
+
 impl TransitionState {
     /// Create new transition state with one transition.
     pub fn single(address: B160, transition: TransitionAccount) -> Self {
