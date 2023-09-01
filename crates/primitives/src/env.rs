@@ -335,7 +335,7 @@ impl Default for BlockEnv {
             basefee: U256::ZERO,
             difficulty: U256::ZERO,
             prevrandao: Some(B256::zero()),
-            excess_blob_gas: None,
+            excess_blob_gas: Some(0),
         }
     }
 }
