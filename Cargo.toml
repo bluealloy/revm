@@ -11,7 +11,3 @@ codegen-units = 1
 [profile.ethtests]
 inherits = "test"
 opt-level = 3
-
-[workspace.dependencies]
-# "https://github.com/ethereum/c-kzg-4844"
-c-kzg = { git = "https://github.com/danipopes/c-kzg-4844", branch = "export-ffi", default-features = false }

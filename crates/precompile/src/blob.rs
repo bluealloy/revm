@@ -12,14 +12,6 @@ const ADDRESS: B160 = crate::u64_to_b160(0x0A);
 const GAS_COST: u64 = 50_000;
 const VERSIONED_HASH_VERSION_KZG: u8 = 0x01;
 
-#[allow(dead_code)]
-const FIELD_ELEMENTS_PER_BLOB: u64 = 4096;
-
-/// The big-endian representation of the modulus.
-#[allow(dead_code)]
-const BLS_MODULUS: &[u8; 32] =
-    &hex!("73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001");
-
 /// `U256(FIELD_ELEMENTS_PER_BLOB).to_be_bytes() ++ BLS_MODULUS.to_bytes32()`
 const RETURN_VALUE: &[u8; 64] = &hex!(
     "0000000000000000000000000000000000000000000000000000000000001000"
@@ -109,22 +101,6 @@ fn as_bytes48(bytes: &[u8]) -> &Bytes48 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use revm_primitives::U256;
-
-    #[test]
-    fn bls_modulus() {
-        let modulus =
-            "52435875175126190479447740508185965837690552500527637822603658699938581184513";
-        let modulus = modulus.parse::<U256>().unwrap();
-        assert_eq!(modulus.to_be_bytes(), *BLS_MODULUS);
-    }
-
-    #[test]
-    fn return_value() {
-        let elements = U256::from(FIELD_ELEMENTS_PER_BLOB);
-        let result = [elements.to_be_bytes(), *BLS_MODULUS].concat();
-        assert_eq!(RETURN_VALUE[..], result);
-    }
 
     // https://github.com/ethereum/go-ethereum/blob/41ee96fdfee5924004e8fbf9bbc8aef783893917/core/vm/testdata/precompiles/pointEvaluation.json
     #[test]
