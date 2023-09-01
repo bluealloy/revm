@@ -1,17 +1,16 @@
 use super::{cache::CacheState, BundleState, State, TransitionState};
 use crate::db::EmptyDB;
 use alloc::collections::BTreeMap;
-use core::convert::Infallible;
 use revm_interpreter::primitives::{db::Database, B256};
 
 /// Allows building of State and initializing it with different options.
-pub struct StateBuilder<'a, DBError> {
+pub struct StateBuilder<DB> {
     pub with_state_clear: bool,
     /// Optional database that we use to fetch data from. If database is not present, we will
     /// return not existing account and storage.
     ///
     /// Note: It is marked as Send so database can be shared between threads.
-    pub database: Box<dyn Database<Error = DBError> + Send + 'a>,
+    pub database: DB, //Box<dyn Database<Error = DBError> + Send + 'a>,
     /// if there is prestate that we want to use.
     /// This would mean that we have additional state layer between evm and disk/database.
     pub with_bundle_prestate: Option<BundleState>,
@@ -28,7 +27,7 @@ pub struct StateBuilder<'a, DBError> {
     pub with_block_hashes: BTreeMap<u64, B256>,
 }
 
-impl Default for StateBuilder<'_, Infallible> {
+impl Default for StateBuilder<Box<EmptyDB>> {
     fn default() -> Self {
         Self {
             with_state_clear: true,
@@ -42,16 +41,16 @@ impl Default for StateBuilder<'_, Infallible> {
     }
 }
 
-impl<'a, DBError> StateBuilder<'a, DBError> {
+impl<DB: Database> StateBuilder<DB> {
     /// Create default instance of builder.
-    pub fn new() -> StateBuilder<'a, Infallible> {
-        StateBuilder::<'a, Infallible>::default()
+    pub fn new() -> StateBuilder<Box<EmptyDB>> {
+        StateBuilder::<Box<EmptyDB>>::default()
     }
 
-    pub fn with_database<NewDBError>(
+    pub fn with_database_boxed<'a, NewDBError>(
         self,
         database: Box<dyn Database<Error = NewDBError> + Send + 'a>,
-    ) -> StateBuilder<'a, NewDBError> {
+    ) -> StateBuilder<Box<dyn Database<Error = NewDBError> + Send + 'a>> {
         // cast to the different database,
         // Note that we return different type depending of the database NewDBError.
         StateBuilder {
@@ -124,7 +123,7 @@ impl<'a, DBError> StateBuilder<'a, DBError> {
         }
     }
 
-    pub fn build(mut self) -> State<'a, DBError> {
+    pub fn build(mut self) -> State<DB> {
         let use_preloaded_bundle = if self.with_cache_prestate.is_some() {
             self.with_bundle_prestate = None;
             false
