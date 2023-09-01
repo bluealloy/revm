@@ -13,10 +13,17 @@ pub mod specification;
 pub mod state;
 pub mod utilities;
 
-pub use alloy_primitives::{
-    self, address, b256, bytes, fixed_bytes, hex, hex_literal, ruint, uint, Address, Bytes,
-    FixedBytes, B256, U256,
-};
+pub use bits::B160;
+pub use bits::B256;
+pub use bytes;
+pub use bytes::Bytes;
+pub use hex;
+pub use hex_literal;
+/// Address type is last 20 bytes of hash of ethereum account
+pub type Address = B160;
+/// Hash, in Ethereum usually keccak256.
+pub type Hash = B256;
+
 pub use bitvec;
 pub use to_binary;
 
