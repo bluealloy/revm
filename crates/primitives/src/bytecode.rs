@@ -4,7 +4,6 @@ use bitvec::prelude::{bitvec, Lsb0};
 use bitvec::vec::BitVec;
 use bytes::Bytes;
 use core::fmt::Debug;
-use to_binary::BinaryString;
 
 /// A map of valid `jump` destinations.
 #[derive(Clone, Eq, PartialEq, Default)]
@@ -14,7 +13,7 @@ pub struct JumpMap(pub Arc<BitVec<u8>>);
 impl Debug for JumpMap {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("JumpMap")
-            .field("map", &BinaryString::from(self.0.as_raw_slice()))
+            .field("map", &hex::encode(self.0.as_raw_slice()))
             .finish()
     }
 }
