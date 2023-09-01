@@ -161,6 +161,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let effective_gas_price = env.effective_gas_price();
         #[cfg(feature = "optimism")]
         let tx_mint = env.tx.mint;
+        #[cfg(feature = "optimism")]
+        let tx_system = env.tx.is_system_transaction;
+        #[cfg(feature = "optimism")]
+        let is_deposit = env.tx.source_hash.is_some();
 
         let initial_gas_spend =
             initial_tx_gas::<GSPEC>(&tx_data, tx_is_create, &env.tx.access_list);
@@ -197,7 +201,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             // caller's balance directly after minting the requested amount of ETH.
             #[cfg(feature = "optimism")]
             if let Ok(l1_block_info) = optimism::fetch_l1_block_info(&mut self.data.db) {
-                if !self.data.env.tx.source_hash.is_some() {
+                if !is_deposit {
                     // TODO(clabby): This is incorrect. The L1 cost is computed with the full
                     // enveloped encoding of the transaction, not its input.
                     let l1_cost = U256::from(
@@ -277,11 +281,57 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         if crate::USE_GAS {
             match exit_reason {
                 return_ok!() => {
-                    gas.erase_cost(ret_gas.remaining());
-                    gas.record_refund(ret_gas.refunded());
+                    #[cfg(not(feature = "optimism"))]
+                    {
+                        gas.erase_cost(ret_gas.remaining());
+                        gas.record_refund(ret_gas.refunded());
+                    }
+
+                    // On Optimism, deposit transactions report gas usage uniquely to other
+                    // transactions due to them being pre-paid on L1.
+                    //
+                    // Hardfork Behavior:
+                    // - Bedrock (success path):
+                    //   - Deposit transactions (non-system) report their gas limit as the usage.
+                    //     No refunds.
+                    //   - Deposit transactions (system) report 0 gas used. No refunds.
+                    //   - Regular transactions report gas usage as normal.
+                    // - Regolith (success path):
+                    //   - Deposit transactions (all) report their gas used as normal. Refunds
+                    //     enabled.
+                    //   - Regular transactions report their gas used as normal.
+                    #[cfg(feature = "optimism")]
+                    if !is_deposit || GSPEC::enabled(SpecId::REGOLITH) {
+                        // For regular transactions prior to Regolith and all transactions after
+                        // Regolith, gas is reported as normal.
+                        gas.erase_cost(ret_gas.remaining());
+                        gas.record_refund(ret_gas.refunded());
+                    } else if is_deposit && tx_system.unwrap_or(false) {
+                        // System transactions were a special type of deposit transaction in
+                        // the Bedrock hardfork that did not incur any gas costs.
+                        gas.erase_cost(tx_gas_limit);
+                    }
                 }
                 return_revert!() => {
+                    #[cfg(not(feature = "optimism"))]
                     gas.erase_cost(ret_gas.remaining());
+
+                    // On Optimism, deposit transactions report gas usage uniquely to other
+                    // transactions due to them being pre-paid on L1.
+                    //
+                    // Hardfork Behavior:
+                    // - Bedrock (revert path):
+                    //   - Deposit transactions (all) report the gas limit as the amount of gas
+                    //     used on failure. No refunds.
+                    //   - Regular transactions receive a refund on remaining gas as normal.
+                    // - Regolith (revert path):
+                    //   - Deposit transactions (all) report the actual gas used as the amount of
+                    //     gas used on failure. Refunds on remaining gas enabled.
+                    //   - Regular transactions receive a refund on remaining gas as normal.
+                    #[cfg(feature = "optimism")]
+                    if !is_deposit || GSPEC::enabled(SpecId::REGOLITH) {
+                        gas.erase_cost(ret_gas.remaining());
+                    }
                 }
                 _ => {}
             }
