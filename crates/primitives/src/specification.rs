@@ -25,6 +25,10 @@ pub enum SpecId {
     SHANGHAI = 16,
     CANCUN = 17,
     LATEST = 18,
+    #[cfg(feature = "optimism")]
+    BEDROCK = 128,
+    #[cfg(feature = "optimism")]
+    REGOLITH = 129,
 }
 
 impl SpecId {
@@ -52,6 +56,10 @@ impl From<&str> for SpecId {
             "Merge" => SpecId::MERGE,
             "Shanghai" => SpecId::SHANGHAI,
             "Cancun" => SpecId::CANCUN,
+            #[cfg(feature = "optimism")]
+            "Bedrock" => SpecId::BEDROCK,
+            #[cfg(feature = "optimism")]
+            "Regolith" => SpecId::REGOLITH,
             _ => SpecId::LATEST,
         }
     }
@@ -69,6 +77,17 @@ pub trait Spec: Sized {
 
     #[inline(always)]
     fn enabled(spec_id: SpecId) -> bool {
+        // Optimism's Bedrock and Regolith hardforks implement changes on top of the Merge
+        // hardfork. This function is modified to preserve the original behavior of the
+        // spec IDs without having to put hardforks past Merge under
+        // `#[cfg(not(feature = "optimism"))]`.
+        #[cfg(feature = "optimism")]
+        if (Self::SPEC_ID == SpecId::BEDROCK || Self::SPEC_ID == SpecId::REGOLITH)
+            && spec_id > SpecId::MERGE
+        {
+            return false;
+        }
+
         Self::SPEC_ID as u8 >= spec_id as u8
     }
 }
@@ -103,3 +122,9 @@ spec!(MERGE, MergeSpec);
 spec!(SHANGHAI, ShanghaiSpec);
 spec!(CANCUN, CancunSpec);
 spec!(LATEST, LatestSpec);
+
+// Optimism Hardforks
+#[cfg(feature = "optimism")]
+spec!(BEDROCK, BedrockSpec);
+#[cfg(feature = "optimism")]
+spec!(REGOLITH, RegolithSpec);

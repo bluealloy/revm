@@ -89,3 +89,4 @@ arbitrary = [
     "dep:proptest-derive",
     "bitflags/arbitrary",
 ]
+optimism = []

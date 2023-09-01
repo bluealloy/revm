@@ -65,6 +65,7 @@ arbitrary = ["revm-interpreter/arbitrary"]
 # deprecated feature
 web3db = []
 with-serde = []
+optimism = ["revm-interpreter/optimism", "revm-precompile/optimism"]
 
 [[example]]
 name = "fork_ref_transact"

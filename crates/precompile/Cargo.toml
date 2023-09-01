@@ -31,3 +31,4 @@ default = ["secp256k1"]
 # Only problem that it has, it fails to build for wasm target on windows and mac as it is c lib.
 # If you dont require wasm on win/mac, i would recommend its usage.
 secp256k1 = ["dep:secp256k1"]
+optimism = ["revm-primitives/optimism"]

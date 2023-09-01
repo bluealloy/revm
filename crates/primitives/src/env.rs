@@ -45,6 +45,12 @@ pub struct TxEnv {
     pub chain_id: Option<u64>,
     pub nonce: Option<u64>,
     pub access_list: Vec<(B160, Vec<U256>)>,
+    #[cfg(feature = "optimism")]
+    pub source_hash: Option<B256>,
+    #[cfg(feature = "optimism")]
+    pub mint: Option<u128>,
+    #[cfg(feature = "optimism")]
+    pub is_system_transaction: Option<bool>,
 }
 
 #[derive(Clone, Debug)]
@@ -122,6 +128,10 @@ pub struct CfgEnv {
     /// This is useful for testing method calls with zero gas price.
     #[cfg(feature = "optional_no_base_fee")]
     pub disable_base_fee: bool,
+    /// Enables Optimism's execution changes for deposit transactions and fee
+    /// collection.
+    #[cfg(feature = "optimism")]
+    pub optimism: bool,
 }
 
 impl CfgEnv {
@@ -174,6 +184,16 @@ impl CfgEnv {
     pub fn is_block_gas_limit_disabled(&self) -> bool {
         false
     }
+
+    #[cfg(feature = "optimism")]
+    pub fn is_optimism(&self) -> bool {
+        self.optimism
+    }
+
+    #[cfg(not(feature = "optimism"))]
+    pub fn is_optimism(&self) -> bool {
+        false
+    }
 }
 
 #[derive(Clone, Default, Debug, Eq, PartialEq)]
@@ -205,6 +225,8 @@ impl Default for CfgEnv {
             disable_gas_refund: false,
             #[cfg(feature = "optional_no_base_fee")]
             disable_base_fee: false,
+            #[cfg(feature = "optimism")]
+            optimism: false,
         }
     }
 }
@@ -236,6 +258,12 @@ impl Default for TxEnv {
             chain_id: None,
             nonce: None,
             access_list: Vec::new(),
+            #[cfg(feature = "optimism")]
+            source_hash: None,
+            #[cfg(feature = "optimism")]
+            mint: None,
+            #[cfg(feature = "optimism")]
+            is_system_transaction: None,
         }
     }
 }
@@ -323,12 +351,23 @@ impl Env {
 
     /// Validate transaction against state.
     #[inline]
-    pub fn validate_tx_against_state(&self, account: &Account) -> Result<(), InvalidTransaction> {
+    pub fn validate_tx_against_state(
+        &self,
+        account: &Account,
+        #[cfg(feature = "optimism")] is_deposit: bool,
+    ) -> Result<(), InvalidTransaction> {
         // EIP-3607: Reject transactions from senders with deployed code
         // This EIP is introduced after london but there was no collision in past
         // so we can leave it enabled always
         if !self.cfg.is_eip3607_disabled() && account.info.code_hash != KECCAK_EMPTY {
             return Err(InvalidTransaction::RejectCallerWithCode);
+        }
+
+        // On Optimism, deposit transactions do not have verification on the nonce
+        // nor the balance of the account.
+        #[cfg(feature = "optimism")]
+        if is_deposit {
+            return Ok(());
         }
 
         // Check that the transaction's nonce is correct

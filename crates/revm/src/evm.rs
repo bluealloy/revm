@@ -239,6 +239,8 @@ pub fn to_precompile_id(spec_id: SpecId) -> revm_precompile::SpecId {
         | SpecId::SHANGHAI
         | SpecId::CANCUN
         | SpecId::LATEST => revm_precompile::SpecId::BERLIN,
+        #[cfg(feature = "optimism")]
+        SpecId::BEDROCK | SpecId::REGOLITH => revm_precompile::SpecId::BERLIN,
     }
 }
 
@@ -264,5 +266,9 @@ pub fn evm_inner<'a, DB: Database, const INSPECT: bool>(
         SpecId::SHANGHAI => create_evm!(ShanghaiSpec, db, env, insp),
         SpecId::CANCUN => create_evm!(CancunSpec, db, env, insp),
         SpecId::LATEST => create_evm!(LatestSpec, db, env, insp),
+        #[cfg(feature = "optimism")]
+        SpecId::BEDROCK => create_evm!(BedrockSpec, db, env, insp),
+        #[cfg(feature = "optimism")]
+        SpecId::REGOLITH => create_evm!(RegolithSpec, db, env, insp),
     }
 }

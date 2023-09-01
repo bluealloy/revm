@@ -94,7 +94,20 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
     fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
         let env = self.env();
 
+        #[cfg(feature = "optimism")]
+        let is_deposit = env.tx.source_hash.is_some();
+
         env.validate_block_env::<GSPEC, DB::Error>()?;
+
+        // If the transaction is a deposit transaction on Optimism, there are no fee fields to check,
+        // no nonce to check, and no need to check if EOA (L1 already verified it for us)
+        // Gas is free, but no refunds!
+        #[cfg(feature = "optimism")]
+        if !is_deposit {
+            env.validate_tx::<GSPEC>()?;
+        }
+
+        #[cfg(not(feature = "optimism"))]
         env.validate_tx::<GSPEC>()?;
 
         let tx_caller = env.tx.caller;
@@ -114,7 +127,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             .load_account(tx_caller, self.data.db)
             .map_err(EVMError::Database)?;
 
-        self.data.env.validate_tx_against_state(caller_account)?;
+        self.data.env.validate_tx_against_state(
+            caller_account,
+            #[cfg(feature = "optimism")]
+            is_deposit,
+        )?;
 
         Ok(())
     }
@@ -127,6 +144,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let tx_gas_limit = env.tx.gas_limit;
         let tx_is_create = env.tx.transact_to.is_create();
         let effective_gas_price = env.effective_gas_price();
+        #[cfg(feature = "optimism")]
+        let tx_mint = env.tx.mint;
 
         let initial_gas_spend =
             initial_tx_gas::<GSPEC>(&tx_data, tx_is_create, &env.tx.access_list);
@@ -143,6 +162,21 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
 
         // load acc
         let journal = &mut self.data.journaled_state;
+
+        // If the transaction is a deposit with a `Some` `mint` value, add the minted value
+        // in wei to the caller's balance. This should be persisted to the database prior
+        // to the rest of execution below.
+        #[cfg(feature = "optimism")]
+        if let Some(mint) = tx_mint {
+            journal
+                .load_account(tx_caller, self.data.db)
+                .map_err(EVMError::Database)?
+                .0
+                .info
+                .balance += U256::from(mint);
+            journal.checkpoint();
+        }
+
         let (caller_account, _) = journal
             .load_account(tx_caller, self.data.db)
             .map_err(EVMError::Database)?;
@@ -304,8 +338,15 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     effective_gas_price * U256::from(gas.remaining() + gas_refunded),
                 );
 
+                #[cfg(not(feature = "optimism"))]
+                let disable_coinbase_tip = self.data.env.cfg.disable_coinbase_tip;
+
+                #[cfg(feature = "optimism")]
+                let disable_coinbase_tip = self.data.env.cfg.disable_coinbase_tip
+                    || self.data.env.tx.source_hash.is_some();
+
                 // transfer fee to coinbase/beneficiary.
-                if !self.data.env.cfg.disable_coinbase_tip {
+                if !disable_coinbase_tip {
                     // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
                     let coinbase_gas_price = if SPEC::enabled(LONDON) {
                         effective_gas_price.saturating_sub(basefee)
@@ -324,6 +365,15 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     coinbase_account.info.balance = coinbase_account.info.balance.saturating_add(
                         coinbase_gas_price * U256::from(gas.spend() - gas_refunded),
                     );
+                }
+
+                #[cfg(feature = "optimism")]
+                if self.data.env.cfg.optimism && self.data.env.tx.source_hash.is_none() {
+                    // If the transaction is not a deposit transaction, fees are paid out
+                    // to both the Base Fee Vault as well as the Sequencer Fee Vault.
+                    // TODO(clabby): Need to load the L1 fee information from the L1 block contract
+                    //               and pay out fees to the vaults.
+                    todo!()
                 }
 
                 (gas.spend() - gas_refunded, gas_refunded)

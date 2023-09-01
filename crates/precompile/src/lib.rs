@@ -109,6 +109,8 @@ impl SpecId {
                 Self::BERLIN
             }
             LATEST => Self::LATEST,
+            #[cfg(feature = "optimism")]
+            BEDROCK | REGOLITH => Self::LATEST,
         }
     }
 

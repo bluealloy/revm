@@ -59,3 +59,4 @@ arbitrary = [
     "dep:proptest-derive",
     "revm-primitives/arbitrary",
 ]
+optimism = ["revm-primitives/optimism"]
