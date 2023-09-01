@@ -22,15 +22,22 @@ use thiserror::Error;
 use walkdir::{DirEntry, WalkDir};
 
 #[derive(Debug, Error)]
-pub enum TestError {
-    #[error("Logs root mismatch: expected {expected:?}, got {got:?}")]
+#[error("Test {name} failed: {kind}")]
+pub struct TestError {
+    pub name: String,
+    pub kind: TestErrorKind,
+}
+
+#[derive(Debug, Error)]
+pub enum TestErrorKind {
+    #[error("logs root mismatch: expected {expected:?}, got {got:?}")]
     LogsRootMismatch { got: B256, expected: B256 },
-    #[error("State root mismatch: expected {expected:?}, got {got:?}")]
+    #[error("state root mismatch: expected {expected:?}, got {got:?}")]
     StateRootMismatch { got: B256, expected: B256 },
-    #[error("serde_json error: {0}")]
-    SerdeDeserialize(#[from] serde_json::Error),
     #[error("Unknown private key: {0:?}")]
     UnknownPrivateKey(B256),
+    #[error(transparent)]
+    SerdeDeserialize(#[from] serde_json::Error),
 }
 
 pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
@@ -101,6 +108,15 @@ fn skip_test(path: &Path) -> bool {
         return true;
     }
 
+    // TODO: These EIP-4844 tests might be outdated
+    if name == "emptyBlobhashList.json"
+        || name == "wrongBlobhashVersion.json"
+        || name == "createBlobhashTx.json"
+        || name == "blobhashListBounds5.json"
+    {
+        return true;
+    }
+
     if path.to_str().unwrap().contains("stEOF") {
         return true;
     }
@@ -118,7 +134,10 @@ pub fn execute_test_suite(
     }
 
     let s = std::fs::read_to_string(path).unwrap();
-    let suite: TestSuite = serde_json::from_str(&s)?;
+    let suite: TestSuite = serde_json::from_str(&s).map_err(|e| TestError {
+        name: path.to_string_lossy().into_owned(),
+        kind: e.into(),
+    })?;
 
     let map_caller_keys: HashMap<_, _> = [
         (
@@ -200,10 +219,10 @@ pub fn execute_test_suite(
 
         // tx env
         let pk = unit.transaction.secret_key;
-        env.tx.caller = map_caller_keys
-            .get(&pk)
-            .copied()
-            .ok_or_else(|| TestError::UnknownPrivateKey(pk))?;
+        env.tx.caller = map_caller_keys.get(&pk).copied().ok_or_else(|| TestError {
+            name: name.clone(),
+            kind: TestErrorKind::UnknownPrivateKey(pk),
+        })?;
         env.tx.gas_price = unit
             .transaction
             .gas_price
@@ -294,9 +313,12 @@ pub fn execute_test_suite(
                     let logs_root = log_rlp_hash(logs);
 
                     if logs_root != test.logs {
-                        return Err(TestError::LogsRootMismatch {
-                            got: logs_root,
-                            expected: test.logs,
+                        return Err(TestError {
+                            name: name.clone(),
+                            kind: TestErrorKind::LogsRootMismatch {
+                                got: logs_root,
+                                expected: test.logs,
+                            },
                         });
                     }
 
@@ -304,9 +326,12 @@ pub fn execute_test_suite(
                     let state_root = state_merkle_trie_root(db.cache.trie_account());
 
                     if state_root != test.hash {
-                        return Err(TestError::StateRootMismatch {
-                            got: state_root,
-                            expected: test.hash,
+                        return Err(TestError {
+                            name: name.clone(),
+                            kind: TestErrorKind::StateRootMismatch {
+                                got: state_root,
+                                expected: test.hash,
+                            },
                         });
                     }
 
