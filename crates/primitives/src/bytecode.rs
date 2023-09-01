@@ -13,7 +13,7 @@ pub struct JumpMap(pub Arc<BitVec<u8>>);
 impl Debug for JumpMap {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("JumpMap")
-            .field("map", &hex::encode(&self.0.as_raw_slice()))
+            .field("map", &hex::encode(self.0.as_raw_slice()))
             .finish()
     }
 }
