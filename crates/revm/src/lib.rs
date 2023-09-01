@@ -10,6 +10,9 @@ mod evm_impl;
 mod inspector;
 mod journaled_state;
 
+#[cfg(feature = "optimism")]
+pub mod optimism;
+
 #[cfg(all(feature = "with-serde", not(feature = "serde")))]
 compile_error!("`with-serde` feature has been renamed to `serde`.");
 
@@ -39,3 +42,7 @@ pub use revm_interpreter::primitives;
 // reexport inspector implementations
 pub use inspector::inspectors;
 pub use inspector::Inspector;
+
+// export Optimism types, helpers, and constants
+#[cfg(feature = "optimism")]
+pub use optimism::*;

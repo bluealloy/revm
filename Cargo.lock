@@ -2215,6 +2215,7 @@ dependencies = [
  "futures",
  "hex",
  "hex-literal",
+ "once_cell",
  "rayon",
  "revm-interpreter",
  "revm-precompile",

@@ -19,6 +19,11 @@ use revm_interpreter::gas::initial_tx_gas;
 use revm_interpreter::MAX_CODE_SIZE;
 use revm_precompile::{Precompile, Precompiles};
 
+#[cfg(feature = "optimism")]
+use crate::optimism;
+#[cfg(feature = "optimism")]
+use core::ops::Mul;
+
 pub struct EVMData<'a, DB: Database> {
     pub env: &'a mut Env,
     pub journaled_state: JournaledState,
@@ -319,7 +324,16 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 let effective_gas_price = self.data.env.effective_gas_price();
                 let basefee = self.data.env.block.basefee;
 
-                let gas_refunded = if self.env().cfg.is_gas_refund_disabled() {
+                let is_gas_refund_disabled = self.data.env.cfg.is_gas_refund_disabled();
+
+                #[cfg(feature = "optimism")]
+                let is_deposit = self.data.env.tx.source_hash.is_some();
+
+                #[cfg(feature = "optimism")]
+                let is_gas_refund_disabled =
+                    is_gas_refund_disabled && is_deposit && !SPEC::enabled(SpecId::REGOLITH);
+
+                let gas_refunded = if is_gas_refund_disabled {
                     0
                 } else {
                     // EIP-3529: Reduction in refunds
@@ -338,12 +352,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     effective_gas_price * U256::from(gas.remaining() + gas_refunded),
                 );
 
-                #[cfg(not(feature = "optimism"))]
                 let disable_coinbase_tip = self.data.env.cfg.disable_coinbase_tip;
 
                 #[cfg(feature = "optimism")]
-                let disable_coinbase_tip = self.data.env.cfg.disable_coinbase_tip
-                    || self.data.env.tx.source_hash.is_some();
+                let disable_coinbase_tip = disable_coinbase_tip || is_deposit;
 
                 // transfer fee to coinbase/beneficiary.
                 if !disable_coinbase_tip {
@@ -368,12 +380,42 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 }
 
                 #[cfg(feature = "optimism")]
-                if self.data.env.cfg.optimism && self.data.env.tx.source_hash.is_none() {
+                if self.data.env.cfg.optimism && !is_deposit {
                     // If the transaction is not a deposit transaction, fees are paid out
-                    // to both the Base Fee Vault as well as the Sequencer Fee Vault.
-                    // TODO(clabby): Need to load the L1 fee information from the L1 block contract
-                    //               and pay out fees to the vaults.
-                    todo!()
+                    // to both the Base Fee Vault as well as the L1 Fee Vault.
+
+                    // Fetch the L1 block information from account storage.
+                    let Ok(l1_block_info) = optimism::fetch_l1_block_info(&mut self.data.db) else {
+                        panic!("Failed to fetch L1 block info from account storage.");
+                    };
+
+                    // Calculate the L1 cost of the transaction based on the L1 block info.
+                    // TODO(clabby): This is incorrect. The L1 cost is computed with the full
+                    // enveloped encoding of the transaction, not its input. How do we get the full
+                    // encoded tx here? We may pass it through the `TxEnv`, but that feels hacky.
+                    let l1_cost =
+                        l1_block_info.calculate_tx_l1_cost::<SPEC>(&self.data.env.tx.data, true);
+
+                    // Send the L1 cost of the transaction to the L1 Fee Vault.
+                    let Ok((l1_fee_vault_account, _)) = self
+                        .data
+                        .journaled_state
+                        .load_account(*optimism::L1_FEE_RECIPIENT, self.data.db)
+                    else {
+                        panic!("L1 Fee Vault account not found");
+                    };
+                    l1_fee_vault_account.info.balance += l1_cost;
+
+                    // Send the base fee of the transaction to the Base Fee Vault.
+                    let Ok((base_fee_vault_account, _)) = self
+                        .data
+                        .journaled_state
+                        .load_account(*optimism::BASE_FEE_RECIPIENT, self.data.db)
+                    else {
+                        panic!("Base Fee Vault account not found");
+                    };
+                    base_fee_vault_account.info.balance +=
+                        l1_block_info.l1_base_fee.mul(U256::from(gas.spend()));
                 }
 
                 (gas.spend() - gas_refunded, gas_refunded)
