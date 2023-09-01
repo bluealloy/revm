@@ -1,7 +1,7 @@
 use super::TransitionAccount;
 use revm_interpreter::primitives::{hash_map::Entry, Address, HashMap};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TransitionState {
     /// Block state account with account state
     pub transitions: HashMap<Address, TransitionAccount>,
