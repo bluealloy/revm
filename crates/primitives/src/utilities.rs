@@ -1,4 +1,6 @@
-use crate::{B160, B256, TARGET_BLOB_GAS_PER_BLOCK, U256};
+use crate::{
+    B160, B256, BLOB_GASPRICE_UPDATE_FRACTION, MIN_BLOB_GASPRICE, TARGET_BLOB_GAS_PER_BLOCK, U256,
+};
 use hex_literal::hex;
 use sha3::{Digest, Keccak256};
 
@@ -31,27 +33,46 @@ pub fn create2_address(caller: B160, code_hash: B256, salt: U256) -> B160 {
     B160(hasher.finalize().as_slice()[12..].try_into().unwrap())
 }
 
-/// Calculates the [EIP-4844] `excess_blob_gas` from the parent header's `blob_gas_used` and
-/// `excess_blob_gas`.
+/// Calculates the `excess_blob_gas` from the parent header's `blob_gas_used` and `excess_blob_gas`.
 ///
-/// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
+/// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers).
 #[inline]
-pub fn calc_excess_blob_gas(parent_blob_gas_used: u64, parent_excess_blob_gas: u64) -> u64 {
-    let excess = parent_blob_gas_used.saturating_add(parent_excess_blob_gas);
-    TARGET_BLOB_GAS_PER_BLOCK.saturating_sub(excess)
+pub fn calc_excess_blob_gas(parent_excess_blob_gas: u64, parent_blob_gas_used: u64) -> u64 {
+    (parent_excess_blob_gas + parent_blob_gas_used).saturating_sub(TARGET_BLOB_GAS_PER_BLOCK)
+}
+
+/// Calculates the blobfee from the header's excess blob gas field.
+///
+/// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers).
+#[inline]
+pub fn calc_blob_fee(excess_blob_gas: u64) -> u64 {
+    fake_exponential(
+        MIN_BLOB_GASPRICE,
+        excess_blob_gas,
+        BLOB_GASPRICE_UPDATE_FRACTION,
+    )
 }
 
 /// Approximates `factor * e ** (numerator / denominator)` using Taylor expansion.
+///
+/// This is used to calculate the blob price.
+///
+/// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers).
 #[inline]
 pub fn fake_exponential(factor: u64, numerator: u64, denominator: u64) -> u64 {
     assert!(denominator > 0, "attempt to divide by zero");
+    let factor = factor as u128;
+    let numerator = numerator as u128;
+    let denominator = denominator as u128;
 
     let mut i = 1;
     let mut output = 0;
     let mut numerator_accum = factor * denominator;
     while numerator_accum > 0 {
         output += numerator_accum;
-        // SAFETY: asserted > 0 above
+
+        // SAFETY: asserted > 0 above.
+        // This is needed to eliminate the compiler's divide by 0 check.
         numerator_accum = unsafe {
             (numerator_accum * numerator)
                 .checked_div(denominator * i)
@@ -59,7 +80,7 @@ pub fn fake_exponential(factor: u64, numerator: u64, denominator: u64) -> u64 {
         };
         i += 1;
     }
-    output / denominator
+    (output / denominator) as u64
 }
 
 /// Serde functions to serde as [bytes::Bytes] hex string
@@ -88,5 +109,102 @@ pub mod serde_hex_bytes {
         }
         .map(Into::into)
         .map_err(|e| serde::de::Error::custom(e.to_string()))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::GAS_PER_BLOB;
+
+    // https://github.com/ethereum/go-ethereum/blob/28857080d732857030eda80c69b9ba2c8926f221/consensus/misc/eip4844/eip4844_test.go#L27
+    #[test]
+    fn test_calc_excess_blob_gas() {
+        for t @ &(excess, blobs, expected) in &[
+            // The excess blob gas should not increase from zero if the used blob
+            // slots are below - or equal - to the target.
+            (0, 0, 0),
+            (0, 1, 0),
+            (0, TARGET_BLOB_GAS_PER_BLOCK / GAS_PER_BLOB, 0),
+            // If the target blob gas is exceeded, the excessBlobGas should increase
+            // by however much it was overshot
+            (
+                0,
+                (TARGET_BLOB_GAS_PER_BLOCK / GAS_PER_BLOB) + 1,
+                GAS_PER_BLOB,
+            ),
+            (
+                1,
+                (TARGET_BLOB_GAS_PER_BLOCK / GAS_PER_BLOB) + 1,
+                GAS_PER_BLOB + 1,
+            ),
+            (
+                1,
+                (TARGET_BLOB_GAS_PER_BLOCK / GAS_PER_BLOB) + 2,
+                2 * GAS_PER_BLOB + 1,
+            ),
+            // The excess blob gas should decrease by however much the target was
+            // under-shot, capped at zero.
+            (
+                TARGET_BLOB_GAS_PER_BLOCK,
+                TARGET_BLOB_GAS_PER_BLOCK / GAS_PER_BLOB,
+                TARGET_BLOB_GAS_PER_BLOCK,
+            ),
+            // TODO ?
+            // (
+            //     TARGET_BLOB_GAS_PER_BLOCK,
+            //     (TARGET_BLOB_GAS_PER_BLOCK / GAS_PER_BLOB) - 1,
+            //     GAS_PER_BLOB,
+            // ),
+            // (
+            //     TARGET_BLOB_GAS_PER_BLOCK,
+            //     (TARGET_BLOB_GAS_PER_BLOCK / GAS_PER_BLOB) - 2,
+            //     0,
+            // ),
+            (
+                GAS_PER_BLOB - 1,
+                (TARGET_BLOB_GAS_PER_BLOCK / GAS_PER_BLOB) - 1,
+                0,
+            ),
+        ] {
+            let actual = calc_excess_blob_gas(excess, blobs * GAS_PER_BLOB);
+            assert_eq!(actual, expected, "test: {t:?}");
+        }
+    }
+
+    // https://github.com/ethereum/go-ethereum/blob/28857080d732857030eda80c69b9ba2c8926f221/consensus/misc/eip4844/eip4844_test.go#L60
+    #[test]
+    #[ignore = "Geth test is outdated"]
+    fn test_calc_blob_fee() {
+        for &(excess, expected) in &[(0, 1), (1542706, 1), (1542707, 2), (10 * 1024 * 1024, 111)] {
+            let actual = calc_blob_fee(excess);
+            assert_eq!(actual, expected, "test: {excess}");
+        }
+    }
+
+    // https://github.com/ethereum/go-ethereum/blob/28857080d732857030eda80c69b9ba2c8926f221/consensus/misc/eip4844/eip4844_test.go#L78
+    #[test]
+    fn fake_exp() {
+        for t @ &(factor, numerator, denominator, expected) in &[
+            (1u64, 0u64, 1u64, 1u64),
+            (38493, 0, 1000, 38493),
+            (0, 1234, 2345, 0),
+            (1, 2, 1, 6), // approximate 7.389
+            (1, 4, 2, 6),
+            (1, 3, 1, 16), // approximate 20.09
+            (1, 6, 2, 18),
+            (1, 4, 1, 49), // approximate 54.60
+            (1, 8, 2, 50),
+            (10, 8, 2, 542), // approximate 540.598
+            (11, 8, 2, 596), // approximate 600.58
+            (1, 5, 1, 136),  // approximate 148.4
+            (1, 5, 2, 11),   // approximate 12.18
+            (2, 5, 2, 23),   // approximate 24.36
+            (1, 50000000, 2225652, 5709098764),
+            (1, 380928, BLOB_GASPRICE_UPDATE_FRACTION, 1),
+        ] {
+            let actual = fake_exponential(factor, numerator, denominator);
+            assert_eq!(actual, expected, "test: {t:?}");
+        }
     }
 }

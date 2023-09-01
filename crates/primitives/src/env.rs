@@ -1,7 +1,6 @@
 use crate::{
-    alloc::vec::Vec, fake_exponential, Account, EVMError, InvalidTransaction, Spec, SpecId, B160,
-    B256, BLOB_GASPRICE_UPDATE_FRACTION, GAS_PER_BLOB, KECCAK_EMPTY, MAX_INITCODE_SIZE,
-    MIN_BLOB_GASPRICE, U256,
+    alloc::vec::Vec, calc_blob_fee, Account, EVMError, InvalidTransaction, Spec, SpecId, B160,
+    B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_INITCODE_SIZE, U256,
 };
 use bytes::Bytes;
 use core::cmp::{min, Ordering};
@@ -60,16 +59,8 @@ impl BlockEnv {
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     #[inline]
-    pub fn get_blob_gasprice(&self) -> u64 {
-        if let Some(excess_blob_gas) = self.excess_blob_gas {
-            fake_exponential(
-                MIN_BLOB_GASPRICE,
-                excess_blob_gas,
-                BLOB_GASPRICE_UPDATE_FRACTION,
-            )
-        } else {
-            0
-        }
+    pub fn get_blob_gasprice(&self) -> Option<u64> {
+        self.excess_blob_gas.map(calc_blob_fee)
     }
 }
 
@@ -384,7 +375,7 @@ impl Env {
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     #[inline]
     pub fn calc_data_fee(&self) -> u64 {
-        self.tx.get_total_blob_gas() + self.block.get_blob_gasprice()
+        self.tx.get_total_blob_gas() * self.block.get_blob_gasprice().unwrap_or(0)
     }
 
     /// Validate ENV data of the block.

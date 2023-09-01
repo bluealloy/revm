@@ -151,7 +151,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
 
         // EIP-4844
         if GSPEC::enabled(CANCUN) {
-            gas_cost = gas_cost.saturating_add(U256::from(dbg!(env.calc_data_fee())));
+            gas_cost = gas_cost.saturating_add(U256::from(env.calc_data_fee()));
         }
 
         caller_account.info.balance = caller_account.info.balance.saturating_sub(gas_cost);
