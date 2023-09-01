@@ -1,19 +1,10 @@
 use super::TransitionAccount;
 use revm_interpreter::primitives::{hash_map::Entry, HashMap, B160};
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq, Default)]
 pub struct TransitionState {
     /// Block state account with account state
     pub transitions: HashMap<B160, TransitionAccount>,
-}
-
-impl Default for TransitionState {
-    fn default() -> Self {
-        // be default make state clear EIP enabled
-        TransitionState {
-            transitions: HashMap::new(),
-        }
-    }
 }
 
 impl TransitionState {
