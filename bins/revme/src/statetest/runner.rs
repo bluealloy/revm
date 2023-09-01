@@ -50,78 +50,57 @@ pub fn find_all_json_tests(path: &Path) -> Vec<PathBuf> {
 }
 
 fn skip_test(path: &Path) -> bool {
+    let path_str = path.to_str().expect("Path is not valid UTF-8");
     let name = path.file_name().unwrap().to_str().unwrap();
 
-    // funky test with `bigint 0x00` value in json :) not possible to happen on mainnet and require custom json parser.
-    // https://github.com/ethereum/tests/issues/971
-    if name == "ValueOverflow.json" {
-        return true;
-    }
+    matches!(
+        name,
+        // funky test with `bigint 0x00` value in json :) not possible to happen on mainnet and require
+        // custom json parser. https://github.com/ethereum/tests/issues/971
+        | "ValueOverflow.json"
 
-    // precompiles having storage is not possible
-    if name == "RevertPrecompiledTouch_storage.json" || name == "RevertPrecompiledTouch.json" {
-        return true;
-    }
+        // precompiles having storage is not possible
+        | "RevertPrecompiledTouch_storage.json"
+        | "RevertPrecompiledTouch.json"
+    
+        // txbyte is of type 02 and we dont parse tx bytes for this test to fail.
+        | "typeTwoBerlin.json"
 
-    // txbyte is of type 02 and we dont parse tx bytes for this test to fail.
-    if name == "typeTwoBerlin.json" {
-        return true;
-    }
+        // Test checks if nonce overflows. We are handling this correctly but we are not parsing
+        // exception in testsuite There are more nonce overflow tests that are in internal
+        // call/create, and those tests are passing and are enabled.
+        | "CreateTransactionHighNonce.json"
 
-    // Test checks if nonce overflows. We are handling this correctly but we are not parsing exception in test suite
-    // There are more nonce overflow tests that are in internal call/create, and those tests are passing and are enabled.
-    if name == "CreateTransactionHighNonce.json" {
-        return true;
-    }
+        // Need to handle Test errors
+        | "transactionIntinsicBug.json"
 
-    // Need to handle Test errors
-    if name == "transactionIntinsicBug.json" {
-        return true;
-    }
+        // Test check if gas price overflows, we handle this correctly but does not match tests specific exception.
+        | "HighGasPrice.json"
+        | "CREATE_HighNonce.json"
+        | "CREATE_HighNonceMinus1.json"
+    
+        // Skip test where basefee/accesslist/difficulty is present but it shouldn't be supported in
+        // London/Berlin/TheMerge. https://github.com/ethereum/tests/blob/5b7e1ab3ffaf026d99d20b17bb30f533a2c80c8b/GeneralStateTests/stExample/eip1559.json#L130
+        // It is expected to not execute these tests.
+        | "accessListExample.json"
+        | "basefeeExample.json"
+        | "eip1559.json"
+        | "mergeTest.json"
 
-    // Test check if gas price overflows, we handle this correctly but does not match tests specific exception.
-    if name == "HighGasPrice.json"
-        || name == "CREATE_HighNonce.json"
-        || name == "CREATE_HighNonceMinus1.json"
-    {
-        return true;
-    }
+        // These tests are passing, but they take a lot of time to execute so we are going to skip them.
+        | "loopExp.json"
+        | "Call50000_sha256.json"
+        | "static_Call50000_sha256.json"
+        | "loopMul.json"
+        | "CALLBlake2f_MaxRounds.json"
+        | "shiftCombinations.json"
 
-    // Skip test where basefee/accesslist/difficulty is present but it shouldn't be supported in London/Berlin/TheMerge.
-    // https://github.com/ethereum/tests/blob/5b7e1ab3ffaf026d99d20b17bb30f533a2c80c8b/GeneralStateTests/stExample/eip1559.json#L130
-    // It is expected to not execute these tests.
-    if name == "accessListExample.json"
-        || name == "basefeeExample.json"
-        || name == "eip1559.json"
-        || name == "mergeTest.json"
-    {
-        return true;
-    }
-
-    // These tests are passing, but they take a lot of time to execute so we are going to skip them.
-    if name == "loopExp.json"
-        || name == "Call50000_sha256.json"
-        || name == "static_Call50000_sha256.json"
-        || name == "loopMul.json"
-        || name == "CALLBlake2f_MaxRounds.json"
-    {
-        return true;
-    }
-
-    // TODO: These EIP-4844 tests might be outdated
-    if name == "emptyBlobhashList.json"
-        || name == "wrongBlobhashVersion.json"
-        || name == "createBlobhashTx.json"
-        || name == "blobhashListBounds5.json"
-    {
-        return true;
-    }
-
-    if path.to_str().unwrap().contains("stEOF") {
-        return true;
-    }
-
-    false
+        // TODO: These EIP-4844 tests might be outdated
+        | "emptyBlobhashList.json"
+        | "wrongBlobhashVersion.json"
+        | "createBlobhashTx.json"
+        | "blobhashListBounds5.json"
+    ) || path_str.contains("stEOF")
 }
 
 pub fn execute_test_suite(
