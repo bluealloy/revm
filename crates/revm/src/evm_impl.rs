@@ -74,6 +74,22 @@ pub trait Transact<DBError> {
     }
 }
 
+impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, INSPECT> {
+    /// Load access list for berlin hardfork.
+    ///
+    /// Loading of accounts/storages is needed to make them hot.
+    #[inline]
+    fn load_access_list(&mut self) -> Result<(), EVMError<DB::Error>> {
+        for (address, slots) in self.data.env.tx.access_list.iter() {
+            self.data
+                .journaled_state
+                .initial_account_load(*address, slots, self.data.db)
+                .map_err(EVMError::Database)?;
+        }
+        Ok(())
+    }
+}
+
 impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
     for EVMImpl<'a, GSPEC, DB, INSPECT>
 {
@@ -131,15 +147,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                 .map_err(EVMError::Database)?;
         }
 
-        // Load access list for berlin hardfork.
-        //
-        // Loading of accounts/storages is needed to make them hot.
-        for (address, slots) in self.data.env.tx.access_list.iter() {
-            self.data
-                .journaled_state
-                .initial_account_load(*address, slots, self.data.db)
-                .map_err(EVMError::Database)?;
-        }
+        self.load_access_list()?;
+        // Without this line, the borrow checker complains that `self` is borrowed mutable above.
+        let env = &self.data.env;
 
         // load acc
         let journal = &mut self.data.journaled_state;
@@ -148,6 +158,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             .map_err(EVMError::Database)?;
 
         // Subtract gas costs from the caller's account.
+        // We need to saturate the gas cost to prevent underflow in case that `disable_balance_check` is enabled.
         let mut gas_cost = U256::from(tx_gas_limit).saturating_mul(env.effective_gas_price());
 
         // EIP-4844
