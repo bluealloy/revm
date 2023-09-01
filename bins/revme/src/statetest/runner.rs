@@ -62,7 +62,7 @@ fn skip_test(path: &Path) -> bool {
         // precompiles having storage is not possible
         | "RevertPrecompiledTouch_storage.json"
         | "RevertPrecompiledTouch.json"
-    
+
         // txbyte is of type 02 and we dont parse tx bytes for this test to fail.
         | "typeTwoBerlin.json"
 
@@ -78,7 +78,7 @@ fn skip_test(path: &Path) -> bool {
         | "HighGasPrice.json"
         | "CREATE_HighNonce.json"
         | "CREATE_HighNonceMinus1.json"
-    
+
         // Skip test where basefee/accesslist/difficulty is present but it shouldn't be supported in
         // London/Berlin/TheMerge. https://github.com/ethereum/tests/blob/5b7e1ab3ffaf026d99d20b17bb30f533a2c80c8b/GeneralStateTests/stExample/eip1559.json#L130
         // It is expected to not execute these tests.
