@@ -924,10 +924,12 @@ pub const fn spec_opcode_gas(spec_id: SpecId) -> &'static [OpInfo; 256] {
             gas_opcodee!(LATEST, SpecId::LATEST);
             LATEST
         }
+        #[cfg(feature = "optimism")]
         SpecId::BEDROCK => {
             gas_opcodee!(BEDROCK, SpecId::BEDROCK);
             BEDROCK
         }
+        #[cfg(feature = "optimism")]
         SpecId::REGOLITH => {
             gas_opcodee!(REGOLITH, SpecId::REGOLITH);
             REGOLITH

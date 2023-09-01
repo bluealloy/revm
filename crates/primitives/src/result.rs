@@ -183,6 +183,8 @@ pub enum InvalidTransaction {
     /// Access list is not supported is not supported
     /// for blocks before Berlin hardfork.
     AccessListNotSupported,
+    #[cfg(feature = "optimism")]
+    DepositSystemTxPostRegolith,
 }
 
 /// When transaction return successfully without halts.

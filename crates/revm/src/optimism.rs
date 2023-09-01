@@ -1,8 +1,7 @@
 //! Optimism-specific constants, types, and helpers.
 
-use core::ops::Mul;
-
 use bytes::Bytes;
+use core::ops::Mul;
 use once_cell::sync::Lazy;
 use revm_interpreter::primitives::{db::Database, hex_literal::hex, Address, Spec, SpecId, U256};
 

@@ -108,8 +108,18 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         // no nonce to check, and no need to check if EOA (L1 already verified it for us)
         // Gas is free, but no refunds!
         #[cfg(feature = "optimism")]
-        if !is_deposit {
-            env.validate_tx::<GSPEC>()?;
+        {
+            if !is_deposit {
+                env.validate_tx::<GSPEC>()?;
+            }
+
+            // Do not allow for a system transaction to be processed if Regolith is enabled.
+            if is_deposit
+                && env.tx.is_system_transaction.unwrap_or(false)
+                && GSPEC::enabled(SpecId::REGOLITH)
+            {
+                return Err(InvalidTransaction::DepositSystemTxPostRegolith.into());
+            }
         }
 
         #[cfg(not(feature = "optimism"))]
@@ -168,18 +178,39 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         // load acc
         let journal = &mut self.data.journaled_state;
 
-        // If the transaction is a deposit with a `Some` `mint` value, add the minted value
-        // in wei to the caller's balance. This should be persisted to the database prior
-        // to the rest of execution below.
         #[cfg(feature = "optimism")]
-        if let Some(mint) = tx_mint {
-            journal
-                .load_account(tx_caller, self.data.db)
-                .map_err(EVMError::Database)?
-                .0
-                .info
-                .balance += U256::from(mint);
-            journal.checkpoint();
+        if self.data.env.cfg.optimism {
+            // If the transaction is a deposit with a `Some` `mint` value, add the minted value
+            // in wei to the caller's balance. This should be persisted to the database prior
+            // to the rest of execution below.
+            if let Some(mint) = tx_mint {
+                journal
+                    .load_account(tx_caller, self.data.db)
+                    .map_err(EVMError::Database)?
+                    .0
+                    .info
+                    .balance += U256::from(mint);
+                journal.checkpoint();
+            }
+
+            // If the transaction is not a deposit transaction, subtract the L1 data fee from the
+            // caller's balance directly after minting the requested amount of ETH.
+            #[cfg(feature = "optimism")]
+            if let Ok(l1_block_info) = optimism::fetch_l1_block_info(&mut self.data.db) {
+                if !self.data.env.tx.source_hash.is_some() {
+                    // TODO(clabby): This is incorrect. The L1 cost is computed with the full
+                    // enveloped encoding of the transaction, not its input.
+                    let l1_cost = U256::from(
+                        l1_block_info.calculate_tx_l1_cost::<GSPEC>(&self.data.env.tx.data, false),
+                    );
+                    journal
+                        .load_account(tx_caller, self.data.db)
+                        .map_err(EVMError::Database)?
+                        .0
+                        .info
+                        .balance -= l1_cost;
+                }
+            }
         }
 
         let (caller_account, _) = journal
@@ -329,6 +360,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 #[cfg(feature = "optimism")]
                 let is_deposit = self.data.env.tx.source_hash.is_some();
 
+                // Prior to Regolith, deposit transactions did not receive gas refunds.
                 #[cfg(feature = "optimism")]
                 let is_gas_refund_disabled =
                     is_gas_refund_disabled && is_deposit && !SPEC::enabled(SpecId::REGOLITH);
@@ -354,6 +386,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
                 let disable_coinbase_tip = self.data.env.cfg.disable_coinbase_tip;
 
+                // All deposit transactions skip the coinbase tip in favor of paying the
+                // various fee vaults.
                 #[cfg(feature = "optimism")]
                 let disable_coinbase_tip = disable_coinbase_tip || is_deposit;
 
@@ -404,6 +438,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     else {
                         panic!("L1 Fee Vault account not found");
                     };
+                    l1_fee_vault_account.mark_touch();
                     l1_fee_vault_account.info.balance += l1_cost;
 
                     // Send the base fee of the transaction to the Base Fee Vault.
@@ -414,6 +449,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     else {
                         panic!("Base Fee Vault account not found");
                     };
+                    base_fee_vault_account.mark_touch();
                     base_fee_vault_account.info.balance +=
                         l1_block_info.l1_base_fee.mul(U256::from(gas.spend()));
                 }
