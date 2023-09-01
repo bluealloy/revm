@@ -113,13 +113,10 @@ pub fn extcodecopy<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Hos
         InstructionResult::InvalidOperandOOG
     );
     let code_offset = min(as_usize_saturated!(code_offset), code.len());
-    shared_memory_resize!(interpreter, memory_offset, len);
+    shared_memory_resize!(interpreter, memory_offset, len, memory);
 
     // Safety: set_data is unsafe function and memory_resize ensures us that it is safe to call it
-    interpreter
-        .shared_memory
-        .borrow_mut()
-        .set_data(memory_offset, code_offset, len, code.bytes());
+    memory.set_data(memory_offset, code_offset, len, code.bytes());
 }
 
 pub fn blockhash(interpreter: &mut Interpreter, host: &mut dyn Host) {
@@ -202,8 +199,8 @@ pub fn log<const N: u8>(interpreter: &mut Interpreter, host: &mut dyn Host) {
         Bytes::new()
     } else {
         let offset = as_usize_or_fail!(interpreter, offset, InstructionResult::InvalidOperandOOG);
-        shared_memory_resize!(interpreter, offset, len);
-        Bytes::copy_from_slice(interpreter.shared_memory.borrow().get_slice(offset, len))
+        shared_memory_resize!(interpreter, offset, len, memory);
+        Bytes::copy_from_slice(memory.get_slice(offset, len))
     };
     let n = N as usize;
     if interpreter.stack.len() < n {
@@ -279,13 +276,8 @@ pub fn prepare_create_inputs<const IS_CREATE2: bool, SPEC: Spec>(
             }
             gas!(interpreter, gas::initcode_cost(len as u64));
         }
-        shared_memory_resize!(interpreter, code_offset, len);
-        Bytes::copy_from_slice(
-            interpreter
-                .shared_memory
-                .borrow()
-                .get_slice(code_offset, len),
-        )
+        shared_memory_resize!(interpreter, code_offset, len, memory);
+        Bytes::copy_from_slice(memory.get_slice(code_offset, len))
     };
 
     let scheme = if IS_CREATE2 {
@@ -409,13 +401,8 @@ fn prepare_call_inputs<SPEC: Spec>(
     let input = if in_len != 0 {
         let in_offset =
             as_usize_or_fail!(interpreter, in_offset, InstructionResult::InvalidOperandOOG);
-        shared_memory_resize!(interpreter, in_offset, in_len);
-        Bytes::copy_from_slice(
-            interpreter
-                .shared_memory
-                .borrow()
-                .get_slice(in_offset, in_len),
-        )
+        shared_memory_resize!(interpreter, in_offset, in_len, memory);
+        Bytes::copy_from_slice(memory.get_slice(in_offset, in_len))
     } else {
         Bytes::new()
     };

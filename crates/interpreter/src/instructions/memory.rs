@@ -13,17 +13,10 @@ pub fn mload(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::VERYLOW);
     pop!(interpreter, index);
     let index = as_usize_or_fail!(interpreter, index, InstructionResult::InvalidOperandOOG);
-    shared_memory_resize!(interpreter, index, 32);
+    shared_memory_resize!(interpreter, index, 32, memory);
     push!(
         interpreter,
-        U256::from_be_bytes::<{ U256::BYTES }>(
-            interpreter
-                .shared_memory
-                .borrow()
-                .get_slice(index, 32)
-                .try_into()
-                .unwrap()
-        )
+        U256::from_be_bytes::<{ U256::BYTES }>(memory.get_slice(index, 32).try_into().unwrap())
     );
 }
 
@@ -31,26 +24,18 @@ pub fn mstore(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::VERYLOW);
     pop!(interpreter, index, value);
     let index = as_usize_or_fail!(interpreter, index, InstructionResult::InvalidOperandOOG);
-    shared_memory_resize!(interpreter, index, 32);
-    interpreter
-        .shared_memory
-        .borrow_mut()
-        .set_u256(index, value);
+    shared_memory_resize!(interpreter, index, 32, memory);
+    memory.set_u256(index, value);
 }
 
 pub fn mstore8(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::VERYLOW);
     pop!(interpreter, index, value);
     let index = as_usize_or_fail!(interpreter, index, InstructionResult::InvalidOperandOOG);
-    shared_memory_resize!(interpreter, index, 1);
+    shared_memory_resize!(interpreter, index, 1, memory);
     let value = value.as_le_bytes()[0];
     // Safety: we resized our memory two lines above.
-    unsafe {
-        interpreter
-            .shared_memory
-            .borrow_mut()
-            .set_byte(index, value)
-    }
+    unsafe { memory.set_byte(index, value) }
 }
 
 pub fn msize(interpreter: &mut Interpreter, _host: &mut dyn Host) {
@@ -80,7 +65,7 @@ pub fn mcopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     let dest = as_usize_or_fail!(interpreter, dest, InstructionResult::InvalidOperandOOG);
     let src = as_usize_or_fail!(interpreter, src, InstructionResult::InvalidOperandOOG);
     // resize memory
-    shared_memory_resize!(interpreter, max(dest, src), len);
+    shared_memory_resize!(interpreter, max(dest, src), len, memory);
     // copy memory in place
-    interpreter.shared_memory.borrow_mut().copy(dest, src, len);
+    memory.copy(dest, src, len);
 }

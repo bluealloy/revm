@@ -50,19 +50,22 @@ macro_rules! gas_or_fail {
 }
 
 macro_rules! shared_memory_resize {
-    ($interp:expr, $offset:expr, $len:expr) => {{
+    ($interp:expr, $offset:expr, $len:expr) => {
+        shared_memory_resize!($interp, $offset, $len, memory);
+    };
+    ($interp:expr, $offset:expr, $len:expr, $memory: ident) => {
         let len: usize = $len;
         let offset: usize = $offset;
-        let mut mem = $interp.shared_memory.borrow_mut();
+        let mut $memory = $interp.shared_memory.borrow_mut();
         if let Some(new_size) =
             crate::interpreter::shared_memory::next_multiple_of_32(offset.saturating_add(len))
         {
-            if new_size as u64 > mem.limit {
+            if new_size as u64 > $memory.limit {
                 $interp.instruction_result = InstructionResult::MemoryLimitOOG;
                 return;
             }
 
-            if new_size > mem.len() {
+            if new_size > $memory.len() {
                 if crate::USE_GAS {
                     let num_bytes = new_size / 32;
                     if !$interp.gas.record_memory(crate::gas::memory_gas(num_bytes)) {
@@ -70,13 +73,13 @@ macro_rules! shared_memory_resize {
                         return;
                     }
                 }
-                mem.resize(new_size);
+                $memory.resize(new_size);
             }
         } else {
             $interp.instruction_result = InstructionResult::MemoryOOG;
             return;
         }
-    };};
+    };
 }
 
 macro_rules! pop_address {
