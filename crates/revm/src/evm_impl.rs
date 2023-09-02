@@ -100,7 +100,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let env = self.env();
 
         #[cfg(feature = "optimism")]
-        let is_deposit = env.tx.source_hash.is_some();
+        let is_deposit = env.cfg.optimism && env.tx.source_hash.is_some();
 
         env.validate_block_env::<GSPEC, DB::Error>()?;
 
@@ -108,7 +108,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         // no nonce to check, and no need to check if EOA (L1 already verified it for us)
         // Gas is free, but no refunds!
         #[cfg(feature = "optimism")]
-        {
+        if env.cfg.optimism {
             if !is_deposit {
                 env.validate_tx::<GSPEC>()?;
             }
@@ -200,7 +200,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
 
             // If the transaction is not a deposit transaction, subtract the L1 data fee from the
             // caller's balance directly after minting the requested amount of ETH.
-            #[cfg(feature = "optimism")]
             if !is_deposit {
                 if let Some(l1_cost) = tx_l1_cost {
                     journal
@@ -297,7 +296,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                     //     enabled.
                     //   - Regular transactions report their gas used as normal.
                     #[cfg(feature = "optimism")]
-                    if !is_deposit || GSPEC::enabled(SpecId::REGOLITH) {
+                    if self.data.env.cfg.optimism
+                        && (!is_deposit || GSPEC::enabled(SpecId::REGOLITH))
+                    {
                         // For regular transactions prior to Regolith and all transactions after
                         // Regolith, gas is reported as normal.
                         gas.erase_cost(ret_gas.remaining());
@@ -325,7 +326,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                     //     gas used on failure. Refunds on remaining gas enabled.
                     //   - Regular transactions receive a refund on remaining gas as normal.
                     #[cfg(feature = "optimism")]
-                    if !is_deposit || GSPEC::enabled(SpecId::REGOLITH) {
+                    if self.data.env.cfg.optimism
+                        && (!is_deposit || GSPEC::enabled(SpecId::REGOLITH))
+                    {
                         gas.erase_cost(ret_gas.remaining());
                     }
                 }
@@ -403,12 +406,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             let is_gas_refund_disabled = self.data.env.cfg.is_gas_refund_disabled();
 
             #[cfg(feature = "optimism")]
-            let is_deposit = self.data.env.tx.source_hash.is_some();
+            let is_deposit = self.data.env.cfg.optimism && self.data.env.tx.source_hash.is_some();
 
             // Prior to Regolith, deposit transactions did not receive gas refunds.
             #[cfg(feature = "optimism")]
-            let is_gas_refund_disabled =
-                is_gas_refund_disabled && is_deposit && !SPEC::enabled(SpecId::REGOLITH);
+            let is_gas_refund_disabled = is_gas_refund_disabled
+                || (self.data.env.cfg.optimism && is_deposit && !SPEC::enabled(SpecId::REGOLITH));
 
             let gas_refunded = if is_gas_refund_disabled {
                 0
@@ -435,7 +438,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             // All deposit transactions skip the coinbase tip in favor of paying the
             // various fee vaults.
             #[cfg(feature = "optimism")]
-            let disable_coinbase_tip = disable_coinbase_tip || is_deposit;
+            let disable_coinbase_tip =
+                disable_coinbase_tip || (self.data.env.cfg.optimism && is_deposit);
 
             // transfer fee to coinbase/beneficiary.
             if !disable_coinbase_tip {

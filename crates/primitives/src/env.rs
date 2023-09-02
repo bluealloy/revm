@@ -370,7 +370,7 @@ impl Env {
         // On Optimism, deposit transactions do not have verification on the nonce
         // nor the balance of the account.
         #[cfg(feature = "optimism")]
-        if is_deposit {
+        if self.cfg.optimism && is_deposit {
             return Ok(());
         }
 
