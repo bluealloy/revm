@@ -164,6 +164,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         #[cfg(feature = "optimism")]
         let tx_system = env.tx.is_system_transaction;
         #[cfg(feature = "optimism")]
+        let tx_l1_cost = env.tx.l1_cost;
+        #[cfg(feature = "optimism")]
         let is_deposit = env.tx.source_hash.is_some();
 
         let initial_gas_spend =
@@ -200,13 +202,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             // If the transaction is not a deposit transaction, subtract the L1 data fee from the
             // caller's balance directly after minting the requested amount of ETH.
             #[cfg(feature = "optimism")]
-            if let Ok(l1_block_info) = optimism::fetch_l1_block_info(&mut self.data.db) {
-                if !is_deposit {
-                    // TODO(clabby): This is incorrect. The L1 cost is computed with the full
-                    // enveloped encoding of the transaction, not its input.
-                    let l1_cost = U256::from(
-                        l1_block_info.calculate_tx_l1_cost::<GSPEC>(&self.data.env.tx.data, false),
-                    );
+            if !is_deposit {
+                if let Some(l1_cost) = tx_l1_cost {
                     journal
                         .load_account(tx_caller, self.data.db)
                         .map_err(EVMError::Database)?
@@ -400,120 +397,115 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     fn finalize<SPEC: Spec>(&mut self, gas: &Gas) -> (HashMap<B160, Account>, Vec<Log>, u64, u64) {
         let caller = self.data.env.tx.caller;
         let coinbase = self.data.env.block.coinbase;
-        let (gas_used, gas_refunded) =
-            if crate::USE_GAS {
-                let effective_gas_price = self.data.env.effective_gas_price();
-                let basefee = self.data.env.block.basefee;
+        let (gas_used, gas_refunded) = if crate::USE_GAS {
+            let effective_gas_price = self.data.env.effective_gas_price();
+            let basefee = self.data.env.block.basefee;
 
-                let is_gas_refund_disabled = self.data.env.cfg.is_gas_refund_disabled();
+            let is_gas_refund_disabled = self.data.env.cfg.is_gas_refund_disabled();
 
-                #[cfg(feature = "optimism")]
-                let is_deposit = self.data.env.tx.source_hash.is_some();
+            #[cfg(feature = "optimism")]
+            let is_deposit = self.data.env.tx.source_hash.is_some();
 
-                // Prior to Regolith, deposit transactions did not receive gas refunds.
-                #[cfg(feature = "optimism")]
-                let is_gas_refund_disabled =
-                    is_gas_refund_disabled && is_deposit && !SPEC::enabled(SpecId::REGOLITH);
+            // Prior to Regolith, deposit transactions did not receive gas refunds.
+            #[cfg(feature = "optimism")]
+            let is_gas_refund_disabled =
+                is_gas_refund_disabled && is_deposit && !SPEC::enabled(SpecId::REGOLITH);
 
-                let gas_refunded = if is_gas_refund_disabled {
-                    0
+            let gas_refunded = if is_gas_refund_disabled {
+                0
+            } else {
+                // EIP-3529: Reduction in refunds
+                let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 };
+                min(gas.refunded() as u64, gas.spend() / max_refund_quotient)
+            };
+
+            // return balance of not spend gas.
+            let Ok((caller_account, _)) =
+                self.data.journaled_state.load_account(caller, self.data.db)
+            else {
+                panic!("caller account not found");
+            };
+
+            caller_account.info.balance = caller_account
+                .info
+                .balance
+                .saturating_add(effective_gas_price * U256::from(gas.remaining() + gas_refunded));
+
+            let disable_coinbase_tip = self.data.env.cfg.disable_coinbase_tip;
+
+            // All deposit transactions skip the coinbase tip in favor of paying the
+            // various fee vaults.
+            #[cfg(feature = "optimism")]
+            let disable_coinbase_tip = disable_coinbase_tip || is_deposit;
+
+            // transfer fee to coinbase/beneficiary.
+            if !disable_coinbase_tip {
+                // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
+                let coinbase_gas_price = if SPEC::enabled(LONDON) {
+                    effective_gas_price.saturating_sub(basefee)
                 } else {
-                    // EIP-3529: Reduction in refunds
-                    let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 };
-                    min(gas.refunded() as u64, gas.spend() / max_refund_quotient)
+                    effective_gas_price
                 };
 
-                // return balance of not spend gas.
-                let Ok((caller_account, _)) =
-                    self.data.journaled_state.load_account(caller, self.data.db)
+                let Ok((coinbase_account, _)) = self
+                    .data
+                    .journaled_state
+                    .load_account(coinbase, self.data.db)
                 else {
-                    panic!("caller account not found");
+                    panic!("coinbase account not found");
+                };
+                coinbase_account.mark_touch();
+                coinbase_account.info.balance = coinbase_account
+                    .info
+                    .balance
+                    .saturating_add(coinbase_gas_price * U256::from(gas.spend() - gas_refunded));
+            }
+
+            #[cfg(feature = "optimism")]
+            if self.data.env.cfg.optimism && !is_deposit {
+                // If the transaction is not a deposit transaction, fees are paid out
+                // to both the Base Fee Vault as well as the L1 Fee Vault.
+
+                let Ok(l1_block_info) = optimism::L1BlockInfo::try_fetch(&mut self.data.db) else {
+                    panic!("[OPTIMISM] Failed to load L1 block information.");
                 };
 
-                caller_account.info.balance = caller_account.info.balance.saturating_add(
-                    effective_gas_price * U256::from(gas.remaining() + gas_refunded),
-                );
-
-                let disable_coinbase_tip = self.data.env.cfg.disable_coinbase_tip;
-
-                // All deposit transactions skip the coinbase tip in favor of paying the
-                // various fee vaults.
-                #[cfg(feature = "optimism")]
-                let disable_coinbase_tip = disable_coinbase_tip || is_deposit;
-
-                // transfer fee to coinbase/beneficiary.
-                if !disable_coinbase_tip {
-                    // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
-                    let coinbase_gas_price = if SPEC::enabled(LONDON) {
-                        effective_gas_price.saturating_sub(basefee)
-                    } else {
-                        effective_gas_price
-                    };
-
-                    let Ok((coinbase_account, _)) = self
-                        .data
-                        .journaled_state
-                        .load_account(coinbase, self.data.db)
-                    else {
-                        panic!("coinbase account not found");
-                    };
-                    coinbase_account.mark_touch();
-                    coinbase_account.info.balance = coinbase_account.info.balance.saturating_add(
-                        coinbase_gas_price * U256::from(gas.spend() - gas_refunded),
-                    );
-                }
-
-                #[cfg(feature = "optimism")]
-                if self.data.env.cfg.optimism && !is_deposit {
-                    // If the transaction is not a deposit transaction, fees are paid out
-                    // to both the Base Fee Vault as well as the L1 Fee Vault.
-
-                    // Fetch the L1 block information from account storage.
-                    let Ok(l1_block_info) = optimism::fetch_l1_block_info(&mut self.data.db) else {
-                        panic!("Failed to fetch L1 block info from account storage.");
-                    };
-
-                    // Calculate the L1 cost of the transaction based on the L1 block info.
-                    // TODO(clabby): This is incorrect. The L1 cost is computed with the full
-                    // enveloped encoding of the transaction, not its input. How do we get the full
-                    // encoded tx here? We may pass it through the `TxEnv`, but that feels hacky.
-                    let l1_cost =
-                        l1_block_info.calculate_tx_l1_cost::<SPEC>(&self.data.env.tx.data, true);
-
-                    // Send the L1 cost of the transaction to the L1 Fee Vault.
+                // Send the L1 cost of the transaction to the L1 Fee Vault.
+                if let Some(l1_cost) = self.data.env.tx.l1_cost {
                     let Ok((l1_fee_vault_account, _)) = self
                         .data
                         .journaled_state
                         .load_account(*optimism::L1_FEE_RECIPIENT, self.data.db)
                     else {
-                        panic!("L1 Fee Vault account not found");
+                        panic!("[OPTIMISM] Failed to load L1 Fee Vault account");
                     };
                     l1_fee_vault_account.mark_touch();
                     l1_fee_vault_account.info.balance += l1_cost;
-
-                    // Send the base fee of the transaction to the Base Fee Vault.
-                    let Ok((base_fee_vault_account, _)) = self
-                        .data
-                        .journaled_state
-                        .load_account(*optimism::BASE_FEE_RECIPIENT, self.data.db)
-                    else {
-                        panic!("Base Fee Vault account not found");
-                    };
-                    base_fee_vault_account.mark_touch();
-                    base_fee_vault_account.info.balance +=
-                        l1_block_info.l1_base_fee.mul(U256::from(gas.spend()));
                 }
 
-                (gas.spend() - gas_refunded, gas_refunded)
-            } else {
-                // touch coinbase
-                let _ = self
+                // Send the base fee of the transaction to the Base Fee Vault.
+                let Ok((base_fee_vault_account, _)) = self
                     .data
                     .journaled_state
-                    .load_account(coinbase, self.data.db);
-                self.data.journaled_state.touch(&coinbase);
-                (0, 0)
-            };
+                    .load_account(*optimism::BASE_FEE_RECIPIENT, self.data.db)
+                else {
+                    panic!("[OPTIMISM] Failed to load Base Fee Vault account");
+                };
+                base_fee_vault_account.mark_touch();
+                base_fee_vault_account.info.balance +=
+                    l1_block_info.l1_base_fee.mul(U256::from(gas.spend()));
+            }
+
+            (gas.spend() - gas_refunded, gas_refunded)
+        } else {
+            // touch coinbase
+            let _ = self
+                .data
+                .journaled_state
+                .load_account(coinbase, self.data.db);
+            self.data.journaled_state.touch(&coinbase);
+            (0, 0)
+        };
         let (new_state, logs) = self.data.journaled_state.finalize();
         (new_state, logs, gas_used, gas_refunded)
     }

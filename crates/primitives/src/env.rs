@@ -51,6 +51,8 @@ pub struct TxEnv {
     pub mint: Option<u128>,
     #[cfg(feature = "optimism")]
     pub is_system_transaction: Option<bool>,
+    #[cfg(feature = "optimism")]
+    pub l1_cost: Option<U256>,
 }
 
 #[derive(Clone, Debug)]
@@ -264,6 +266,8 @@ impl Default for TxEnv {
             mint: None,
             #[cfg(feature = "optimism")]
             is_system_transaction: None,
+            #[cfg(feature = "optimism")]
+            l1_cost: None,
         }
     }
 }

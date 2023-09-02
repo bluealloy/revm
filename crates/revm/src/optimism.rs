@@ -1,12 +1,7 @@
 //! Optimism-specific constants, types, and helpers.
 
-use bytes::Bytes;
-use core::ops::Mul;
 use once_cell::sync::Lazy;
-use revm_interpreter::primitives::{db::Database, hex_literal::hex, Address, Spec, SpecId, U256};
-
-const ZERO_BYTE_COST: u64 = 4;
-const NON_ZERO_BYTE_COST: u64 = 16;
+use revm_interpreter::primitives::{db::Database, hex_literal::hex, Address, U256};
 
 static L1_BASE_FEE_SLOT: Lazy<U256> = Lazy::new(|| U256::from(1));
 static L1_OVERHEAD_SLOT: Lazy<U256> = Lazy::new(|| U256::from(5));
@@ -46,54 +41,16 @@ pub struct L1BlockInfo {
 }
 
 impl L1BlockInfo {
-    /// Calculate the data gas for posting the transaction on L1. Calldata costs 16 gas per non-zero
-    /// byte and 4 gas per zero byte.
-    ///
-    /// Prior to regolith, an extra 68 non-zero bytes were included in the rollup data costs to
-    /// account for the empty signature.
-    pub fn data_gas<SPEC: Spec>(&self, input: &Bytes) -> U256 {
-        let mut rollup_data_gas_cost = U256::from(input.iter().fold(0, |acc, byte| {
-            acc + if *byte == 0x00 {
-                ZERO_BYTE_COST
-            } else {
-                NON_ZERO_BYTE_COST
-            }
-        }));
+    /// Fetches the L1 block info from the `L1Block` contract in the database.
+    pub fn try_fetch<DB: Database>(db: &mut DB) -> Result<L1BlockInfo, DB::Error> {
+        let l1_base_fee = db.storage(*L1_BLOCK_CONTRACT, *L1_BASE_FEE_SLOT)?;
+        let l1_fee_overhead = db.storage(*L1_BLOCK_CONTRACT, *L1_OVERHEAD_SLOT)?;
+        let l1_fee_scalar = db.storage(*L1_BLOCK_CONTRACT, *L1_SCALAR_SLOT)?;
 
-        // Prior to regolith, an extra 68 non zero bytes were included in the rollup data costs.
-        if !SPEC::enabled(SpecId::REGOLITH) {
-            rollup_data_gas_cost += U256::from(NON_ZERO_BYTE_COST).mul(U256::from(68));
-        }
-
-        rollup_data_gas_cost
+        Ok(L1BlockInfo {
+            l1_base_fee,
+            l1_fee_overhead,
+            l1_fee_scalar,
+        })
     }
-
-    /// Calculate the gas cost of a transaction based on L1 block data posted on L2
-    pub fn calculate_tx_l1_cost<SPEC: Spec>(&self, input: &Bytes, is_deposit: bool) -> U256 {
-        let rollup_data_gas_cost = self.data_gas::<SPEC>(input);
-
-        if is_deposit || rollup_data_gas_cost == U256::ZERO {
-            return U256::ZERO;
-        }
-
-        rollup_data_gas_cost
-            .saturating_add(self.l1_fee_overhead)
-            .saturating_mul(self.l1_base_fee)
-            .saturating_mul(self.l1_fee_scalar)
-            .checked_div(U256::from(1_000_000))
-            .unwrap_or_default()
-    }
-}
-
-/// Fetches the L1 block info from the `L1Block` contract in the database.
-pub fn fetch_l1_block_info<DB: Database>(db: &mut DB) -> Result<L1BlockInfo, DB::Error> {
-    let l1_base_fee = db.storage(*L1_BLOCK_CONTRACT, *L1_BASE_FEE_SLOT)?;
-    let l1_fee_overhead = db.storage(*L1_BLOCK_CONTRACT, *L1_OVERHEAD_SLOT)?;
-    let l1_fee_scalar = db.storage(*L1_BLOCK_CONTRACT, *L1_SCALAR_SLOT)?;
-
-    Ok(L1BlockInfo {
-        l1_base_fee,
-        l1_fee_overhead,
-        l1_fee_scalar,
-    })
 }
