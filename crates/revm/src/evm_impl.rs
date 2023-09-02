@@ -142,11 +142,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             .load_account(tx_caller, self.data.db)
             .map_err(EVMError::Database)?;
 
-        self.data.env.validate_tx_against_state(
-            caller_account,
-            #[cfg(feature = "optimism")]
-            is_deposit,
-        )?;
+        self.data.env.validate_tx_against_state(caller_account)?;
 
         Ok(())
     }

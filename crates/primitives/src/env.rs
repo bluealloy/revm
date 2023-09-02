@@ -355,11 +355,7 @@ impl Env {
 
     /// Validate transaction against state.
     #[inline]
-    pub fn validate_tx_against_state(
-        &self,
-        account: &Account,
-        #[cfg(feature = "optimism")] is_deposit: bool,
-    ) -> Result<(), InvalidTransaction> {
+    pub fn validate_tx_against_state(&self, account: &Account) -> Result<(), InvalidTransaction> {
         // EIP-3607: Reject transactions from senders with deployed code
         // This EIP is introduced after london but there was no collision in past
         // so we can leave it enabled always
@@ -370,7 +366,7 @@ impl Env {
         // On Optimism, deposit transactions do not have verification on the nonce
         // nor the balance of the account.
         #[cfg(feature = "optimism")]
-        if self.cfg.optimism && is_deposit {
+        if self.cfg.optimism && self.tx.source_hash.is_some() {
             return Ok(());
         }
 
