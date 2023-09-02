@@ -45,4 +45,4 @@ pub use inspector::Inspector;
 
 // export Optimism types, helpers, and constants
 #[cfg(feature = "optimism")]
-pub use optimism::*;
+pub use optimism::{L1BlockInfo, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RECIPIENT};

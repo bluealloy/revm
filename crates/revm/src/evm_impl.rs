@@ -160,13 +160,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let tx_is_create = env.tx.transact_to.is_create();
         let effective_gas_price = env.effective_gas_price();
         #[cfg(feature = "optimism")]
-        let tx_mint = env.tx.mint;
-        #[cfg(feature = "optimism")]
-        let tx_system = env.tx.is_system_transaction;
-        #[cfg(feature = "optimism")]
-        let tx_l1_cost = env.tx.l1_cost;
-        #[cfg(feature = "optimism")]
-        let is_deposit = env.tx.source_hash.is_some();
+        let (tx_mint, tx_system, tx_l1_cost, is_deposit) = (
+            env.tx.mint,
+            env.tx.is_system_transaction,
+            env.tx.l1_cost,
+            env.tx.source_hash.is_some(),
+        );
 
         let initial_gas_spend =
             initial_tx_gas::<GSPEC>(&tx_data, tx_is_create, &env.tx.access_list);
