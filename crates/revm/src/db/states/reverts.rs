@@ -1,6 +1,80 @@
-use revm_interpreter::primitives::{AccountInfo, HashMap, U256};
+use super::{
+    changes::PlainStorageRevert, AccountStatus, BundleAccount, PlainStateReverts,
+    StorageWithOriginalValues,
+};
+use core::ops::{Deref, DerefMut};
+use rayon::slice::ParallelSliceMut;
+use revm_interpreter::primitives::{AccountInfo, HashMap, B160, U256};
 
-use super::{AccountStatus, BundleAccount, StorageWithOriginalValues};
+/// Contains reverts of multiple account in multiple transitions (Transitions as a block).
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Reverts(Vec<Vec<(B160, AccountRevert)>>);
+
+impl Deref for Reverts {
+    type Target = Vec<Vec<(B160, AccountRevert)>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Reverts {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl Reverts {
+    /// Create new reverts
+    pub fn new(reverts: Vec<Vec<(B160, AccountRevert)>>) -> Self {
+        Self(reverts)
+    }
+
+    /// Sort account inside transition by their address.
+    pub fn sort(&mut self) {
+        for revert in &mut self.0 {
+            revert.sort_by_key(|(address, _)| *address);
+        }
+    }
+
+    /// Extend reverts with other reverts.
+    pub fn extend(&mut self, other: Reverts) {
+        self.0.extend(other.0);
+    }
+
+    /// Consume reverts and create plain state reverts.
+    ///
+    /// Note that account are sorted by address.
+    pub fn into_plain_state_reverts(mut self) -> PlainStateReverts {
+        let mut state_reverts = PlainStateReverts::with_capacity(self.0.len());
+        for reverts in self.0.drain(..) {
+            // pessimistically pre-allocate assuming _all_ accounts changed.
+            let mut accounts = Vec::with_capacity(reverts.len());
+            let mut storage = Vec::with_capacity(reverts.len());
+            for (address, revert_account) in reverts.into_iter() {
+                match revert_account.account {
+                    AccountInfoRevert::RevertTo(acc) => accounts.push((address, Some(acc))),
+                    AccountInfoRevert::DeleteIt => accounts.push((address, None)),
+                    AccountInfoRevert::DoNothing => (),
+                }
+                if revert_account.wipe_storage || !revert_account.storage.is_empty() {
+                    let mut account_storage =
+                        revert_account.storage.into_iter().collect::<Vec<_>>();
+                    account_storage.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
+                    storage.push(PlainStorageRevert {
+                        address,
+                        wiped: revert_account.wipe_storage,
+                        storage_revert: account_storage,
+                    });
+                }
+            }
+            accounts.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
+            state_reverts.accounts.push(accounts);
+            state_reverts.storage.push(storage);
+        }
+        state_reverts
+    }
+}
 
 /// Assumption is that Revert can return full state from any future state to any past state.
 ///
