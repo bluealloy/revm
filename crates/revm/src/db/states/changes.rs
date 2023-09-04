@@ -17,7 +17,7 @@ pub struct StateChangeset {
 
 /// Plain storage changeset. Used to apply storage changes of plain state to
 /// the database.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct PlainStorageChangeset {
     /// Address of account
     pub address: B160,
@@ -26,7 +26,7 @@ pub struct PlainStorageChangeset {
 }
 
 /// Plain Storage Revert. Containing old values of changed storage.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct PlainStorageRevert {
     /// Address of account
     pub address: B160,
