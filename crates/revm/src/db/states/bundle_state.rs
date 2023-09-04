@@ -609,6 +609,7 @@ mod tests {
 
         let mut extended = bundle1.clone();
         extended.extend(bundle2.clone());
+        
         // check that we have two reverts
         assert_eq!(extended.reverts.len(), 2);
 
