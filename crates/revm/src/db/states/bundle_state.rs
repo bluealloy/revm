@@ -313,44 +313,44 @@ impl BundleState {
 
     /// Extend the state with state that is build on top of it.
     ///
-    /// For other state, if there a wipe storage flag set inside Revert copy the state
-    /// from `this` to `other` revert (if there is no duplicates of course).
+    /// If storage was wiped in `other` state, copy `this` plain state
+    /// and put it inside `other` revert (if there is no duplicates of course).
     ///
-    /// Check if `this` bundle was selfdestroyed if it is and if `other`
-    /// was selfdestroyed too we need to invalidate second (`other`) wipe flag
-    /// as wiping from database is done only once and we already transferred
-    /// all potentially missing storages to the `other` revert.
+    /// If `this` and `other` accounts were both destroyed invalidate second
+    /// wipe flag (from `other`). As wiping from database should be done only once
+    /// and we already transferred all potentially missing storages to the `other` revert.
     ///
-    /// Additionally update the `other` state only if there is no selfdestruct inside
-    /// `other` revert.
+    /// Additionally update the `other` state only if `other` is not flagged as destroyed.
     pub fn extend(&mut self, mut other: Self) {
-        // Extend the state.
+        // iterate over reverts and if its storage is wiped try to add previous bundle
+        // state as there is potential missing slots.
+        for (address, revert) in other.reverts.iter_mut().flatten() {
+            if revert.wipe_storage {
+                // If there is wipe storage in `other` revert
+                // we need to move storage from present state.
+                if let Some(this_account) = self.state.get_mut(address) {
+                    // As this account was destroyed inside `other` bundle.
+                    // we are fine to wipe/drain this storage and put it inside revert.
+                    for (key, value) in this_account.storage.drain() {
+                        revert
+                            .storage
+                            .entry(key)
+                            .or_insert(RevertToSlot::Some(value.present_value));
+                    }
+
+                    // nullify `other` wipe as primary database wipe is done in `this`.
+                    if this_account.was_destroyed() {
+                        revert.wipe_storage = false;
+                    }
+                }
+            }
+        }
 
         for (address, other_account) in other.state {
             match self.state.entry(address) {
                 hash_map::Entry::Occupied(mut entry) => {
-                    // iterate over reverts and if its storage is wiped try to add previous bundle
-                    // state as there is potential missing slots.
-
                     let this = entry.get_mut();
-                    for (_, revert_account) in other.reverts.iter_mut().flatten() {
-                        if revert_account.wipe_storage {
-                            // If there is wipe storage in other revert
-                            // we need to copy the storage from this revert
-                            // to other revert.
-                            for (key, value) in &this.storage {
-                                revert_account
-                                    .storage
-                                    .entry(*key)
-                                    .or_insert(RevertToSlot::Some(value.present_value));
-                            }
 
-                            // nullify this wipe as database wipe is done in `this`.
-                            if this.was_destroyed() {
-                                revert_account.wipe_storage = false;
-                            }
-                        }
-                    }
                     // if other was destroyed. replace `this` storage with
                     // the `other one.
                     if other_account.was_destroyed() {
@@ -489,8 +489,12 @@ mod tests {
         B160([0x61; 20])
     }
 
-    fn slot() -> U256 {
+    fn slot1() -> U256 {
         U256::from(5)
+    }
+
+    fn slot2() -> U256 {
+        U256::from(7)
     }
 
     /// Test bundle one
@@ -507,7 +511,10 @@ mod tests {
                         code_hash: KECCAK_EMPTY,
                         code: None,
                     }),
-                    HashMap::from([(slot(), (U256::from(0), U256::from(10)))]),
+                    HashMap::from([
+                        (slot1(), (U256::from(0), U256::from(10))),
+                        (slot2(), (U256::from(0), U256::from(15))),
+                    ]),
                 ),
                 (
                     account2(),
@@ -522,7 +529,11 @@ mod tests {
                 ),
             ],
             vec![vec![
-                (account1(), Some(None), vec![(slot(), U256::from(0))]),
+                (
+                    account1(),
+                    Some(None),
+                    vec![(slot1(), U256::from(0)), (slot2(), U256::from(0))],
+                ),
                 (account2(), Some(None), vec![]),
             ]],
             vec![],
@@ -542,7 +553,7 @@ mod tests {
                     code_hash: KECCAK_EMPTY,
                     code: None,
                 }),
-                HashMap::from([(slot(), (U256::from(0), U256::from(15)))]),
+                HashMap::from([(slot1(), (U256::from(0), U256::from(15)))]),
             )],
             vec![vec![(
                 account1(),
@@ -552,7 +563,7 @@ mod tests {
                     code_hash: KECCAK_EMPTY,
                     code: None,
                 })),
-                vec![(slot(), U256::from(10))],
+                vec![(slot1(), U256::from(10))],
             )]],
             vec![],
         )
@@ -613,10 +624,25 @@ mod tests {
         let mut b2 = base_bundle2.clone();
         b1.state.get_mut(&account1()).unwrap().status = AccountStatus::Changed;
         b2.state.get_mut(&account1()).unwrap().status = AccountStatus::Destroyed;
+        b2.reverts[0][0].1.wipe_storage = true;
         b1.extend(b2);
         assert_eq!(
             b1.state.get_mut(&account1()).unwrap().status,
             AccountStatus::Destroyed
+        );
+
+        // test2 extension
+        // revert of b2 should contains plain state of b1.
+        let mut revert1 = base_bundle2.reverts[0][0].clone();
+        revert1.1.wipe_storage = true;
+        revert1
+            .1
+            .storage
+            .insert(slot2(), RevertToSlot::Some(U256::from(15)));
+
+        assert_eq!(
+            b1.reverts,
+            vec![base_bundle1.reverts[0].clone(), vec![revert1]],
         );
 
         // test3
