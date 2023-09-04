@@ -7,6 +7,196 @@ use revm_interpreter::primitives::{
     hash_map::{self, Entry},
     AccountInfo, Bytecode, HashMap, StorageSlot, B160, B256, KECCAK_EMPTY, U256,
 };
+use std::collections::{BTreeMap, BTreeSet, HashSet};
+use std::ops::RangeInclusive;
+
+/// This builder is used to help to facilitate the initialization of `BundleState` struct
+#[derive(Debug)]
+pub struct BundleBuilder {
+    states: HashSet<B160>,
+    state_original: HashMap<B160, AccountInfo>,
+    state_present: HashMap<B160, AccountInfo>,
+    state_storage: HashMap<B160, HashMap<U256, (U256, U256)>>,
+
+    reverts: BTreeSet<(u64, B160)>,
+    revert_range: RangeInclusive<u64>,
+    revert_account: HashMap<(u64, B160), Option<Option<AccountInfo>>>,
+    revert_storage: HashMap<(u64, B160), Vec<(U256, U256)>>,
+
+    contracts: HashMap<B256, Bytecode>,
+}
+
+impl Default for BundleBuilder {
+    fn default() -> Self {
+        BundleBuilder {
+            states: HashSet::new(),
+            state_original: HashMap::new(),
+            state_present: HashMap::new(),
+            state_storage: HashMap::new(),
+            reverts: BTreeSet::new(),
+            revert_range: 0..=0,
+            revert_account: HashMap::new(),
+            revert_storage: HashMap::new(),
+            contracts: HashMap::new(),
+        }
+    }
+}
+
+impl BundleBuilder {
+    /// Create builder instance
+    ///
+    /// `revert_range` indicates the size of BundleState `reverts` field
+    pub fn new(revert_range: RangeInclusive<u64>) -> Self {
+        BundleBuilder {
+            revert_range,
+            ..Default::default()
+        }
+    }
+
+    /// Collect address info of BundleState state
+    pub fn state_address(mut self, address: B160) -> Self {
+        self.states.insert(address);
+        self
+    }
+
+    /// Collect account info of BundleState state
+    pub fn state_original_account_info(mut self, address: B160, original: AccountInfo) -> Self {
+        self.states.insert(address);
+        self.state_original.insert(address, original);
+        self
+    }
+
+    /// Collect account info of BundleState state
+    pub fn state_present_account_info(mut self, address: B160, present: AccountInfo) -> Self {
+        self.states.insert(address);
+        self.state_present.insert(address, present);
+        self
+    }
+
+    /// Collect storage info of BundleState state
+    pub fn state_storage(mut self, address: B160, storage: HashMap<U256, (U256, U256)>) -> Self {
+        self.states.insert(address);
+        self.state_storage.insert(address, storage);
+        self
+    }
+
+    /// Collect address info of BundleState reverts
+    ///
+    /// `block_number` must respect `revert_range`, or the input
+    /// will be ignored during the final build process
+    pub fn revert_address(mut self, block_number: u64, address: B160) -> Self {
+        self.reverts.insert((block_number, address));
+        self
+    }
+
+    /// Collect account info of BundleState reverts
+    ///
+    /// `block_number` must respect `revert_range`, or the input
+    /// will be ignored during the final build process
+    pub fn revert_account_info(
+        mut self,
+        block_number: u64,
+        address: B160,
+        account: Option<Option<AccountInfo>>,
+    ) -> Self {
+        self.reverts.insert((block_number, address));
+        self.revert_account.insert((block_number, address), account);
+        self
+    }
+
+    /// Collect storage info of BundleState reverts
+    ///
+    /// `block_number` must respect `revert_range`, or the input
+    /// will be ignored during the final build process
+    pub fn revert_storage(
+        mut self,
+        block_number: u64,
+        address: B160,
+        storage: Vec<(U256, U256)>,
+    ) -> Self {
+        self.reverts.insert((block_number, address));
+        self.revert_storage.insert((block_number, address), storage);
+        self
+    }
+
+    /// Collect contracts info
+    pub fn contract(mut self, address: B256, bytecode: Bytecode) -> Self {
+        self.contracts.insert(address, bytecode);
+        self
+    }
+
+    /// Create `BundleState` instance based on collected information
+    pub fn build(mut self) -> BundleState {
+        let state = self
+            .states
+            .into_iter()
+            .map(|address| {
+                let storage = self
+                    .state_storage
+                    .remove(&address)
+                    .map(|s| {
+                        s.into_iter()
+                            .map(|(k, (o_val, p_val))| (k, StorageSlot::new_changed(o_val, p_val)))
+                            .collect()
+                    })
+                    .unwrap_or_default();
+                let bundle_account = BundleAccount::new(
+                    self.state_original.remove(&address),
+                    self.state_present.remove(&address),
+                    storage,
+                    AccountStatus::Changed,
+                );
+                (address, bundle_account)
+            })
+            .collect();
+
+        let mut reverts_map = BTreeMap::new();
+        for block_number in self.revert_range {
+            reverts_map.insert(block_number, Vec::new());
+        }
+        self.reverts
+            .into_iter()
+            .for_each(|(block_number, address)| {
+                let account = match self
+                    .revert_account
+                    .remove(&(block_number, address))
+                    .unwrap_or_default()
+                {
+                    Some(Some(account)) => AccountInfoRevert::RevertTo(account),
+                    Some(None) => AccountInfoRevert::DeleteIt,
+                    None => AccountInfoRevert::DoNothing,
+                };
+                let storage = self
+                    .revert_storage
+                    .remove(&(block_number, address))
+                    .map(|s| {
+                        s.into_iter()
+                            .map(|(k, v)| (k, RevertToSlot::Some(v)))
+                            .collect()
+                    })
+                    .unwrap_or_default();
+                let account_revert = AccountRevert {
+                    account,
+                    storage,
+                    previous_status: AccountStatus::Changed,
+                    wipe_storage: false,
+                };
+
+                if reverts_map.contains_key(&block_number) {
+                    reverts_map
+                        .entry(block_number)
+                        .or_insert(Vec::new())
+                        .push((address, account_revert));
+                }
+            });
+
+        BundleState {
+            state,
+            contracts: self.contracts,
+            reverts: reverts_map.into_values().collect(),
+        }
+    }
+}
 
 /// Bundle retention policy for applying substate to the bundle.
 #[derive(Debug)]
@@ -57,6 +247,11 @@ impl Default for BundleState {
 }
 
 impl BundleState {
+    /// Return builder instance for further manipulation
+    pub fn builder(revert_range: RangeInclusive<u64>) -> BundleBuilder {
+        BundleBuilder::new(revert_range)
+    }
+
     /// Create it with new and old values of both Storage and AccountInfo.
     pub fn new(
         state: impl IntoIterator<
@@ -569,11 +764,71 @@ mod tests {
         )
     }
 
-    #[test]
-    fn sanity_path() {
-        let bundle1 = test_bundle1();
-        let bundle2 = test_bundle2();
+    /// Test bundle three
+    fn test_bundle3() -> BundleState {
+        BundleState::builder(0..=0)
+            .state_present_account_info(
+                account1(),
+                AccountInfo {
+                    nonce: 1,
+                    balance: U256::from(10),
+                    code_hash: KECCAK_EMPTY,
+                    code: None,
+                },
+            )
+            .state_storage(
+                account1(),
+                HashMap::from([(slot(), (U256::from(0), U256::from(10)))]),
+            )
+            .state_address(account2())
+            .state_present_account_info(
+                account2(),
+                AccountInfo {
+                    nonce: 1,
+                    balance: U256::from(10),
+                    code_hash: KECCAK_EMPTY,
+                    code: None,
+                },
+            )
+            .revert_address(0, account1())
+            .revert_account_info(0, account1(), Some(None))
+            .revert_storage(0, account1(), vec![(slot(), U256::from(0))])
+            .revert_account_info(0, account2(), Some(None))
+            .build()
+    }
 
+    /// Test bundle four
+    fn test_bundle4() -> BundleState {
+        BundleState::builder(0..=0)
+            .state_present_account_info(
+                account1(),
+                AccountInfo {
+                    nonce: 3,
+                    balance: U256::from(20),
+                    code_hash: KECCAK_EMPTY,
+                    code: None,
+                },
+            )
+            .state_storage(
+                account1(),
+                HashMap::from([(slot(), (U256::from(0), U256::from(15)))]),
+            )
+            .revert_address(0, account1())
+            .revert_account_info(
+                0,
+                account1(),
+                Some(Some(AccountInfo {
+                    nonce: 1,
+                    balance: U256::from(10),
+                    code_hash: KECCAK_EMPTY,
+                    code: None,
+                })),
+            )
+            .revert_storage(0, account1(), vec![(slot(), U256::from(10))])
+            .build()
+    }
+
+    fn sanity_path(bundle1: BundleState, bundle2: BundleState) {
         let mut extended = bundle1.clone();
         extended.extend(bundle2.clone());
 
@@ -659,5 +914,36 @@ mod tests {
             b1.state.get_mut(&account1()).unwrap().status,
             AccountStatus::InMemoryChange
         );
+    }
+
+    #[test]
+    fn test_sanity_path() {
+        sanity_path(test_bundle1(), test_bundle2());
+        sanity_path(test_bundle3(), test_bundle4());
+    }
+
+    #[test]
+    fn test_revert_capacity() {
+        let state = BundleState::builder(0..=3)
+            .revert_address(0, account1())
+            .revert_address(2, account2())
+            .revert_account_info(0, account1(), Some(None))
+            .revert_account_info(2, account2(), None)
+            .revert_storage(0, account1(), vec![(slot(), U256::from(10))])
+            .build();
+
+        assert_eq!(state.reverts.len(), 4);
+        assert_eq!(state.reverts[1], vec![]);
+        assert_eq!(state.reverts[3], vec![]);
+        assert_eq!(state.reverts[0].len(), 1);
+        assert_eq!(state.reverts[2].len(), 1);
+
+        let (addr1, revert1) = &state.reverts[0][0];
+        assert_eq!(addr1, &account1());
+        assert_eq!(revert1.account, AccountInfoRevert::DeleteIt);
+
+        let (addr2, revert2) = &state.reverts[2][0];
+        assert_eq!(addr2, &account2());
+        assert_eq!(revert2.account, AccountInfoRevert::DoNothing);
     }
 }
