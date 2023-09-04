@@ -1,6 +1,7 @@
 use super::{
-    changes::StateChangeset, reverts::AccountInfoRevert, AccountRevert, AccountStatus,
-    BundleAccount, RevertToSlot, StateReverts, TransitionState,
+    changes::{PlainStorageChangeset, StateChangeset},
+    reverts::{AccountInfoRevert, Reverts},
+    AccountRevert, AccountStatus, BundleAccount, PlainStateReverts, RevertToSlot, TransitionState,
 };
 use rayon::slice::ParallelSliceMut;
 use revm_interpreter::primitives::{
@@ -193,7 +194,7 @@ impl BundleBuilder {
         BundleState {
             state,
             contracts: self.contracts,
-            reverts: reverts_map.into_values().collect(),
+            reverts: Reverts::new(reverts_map.into_values().collect()),
         }
     }
 }
@@ -233,7 +234,7 @@ pub struct BundleState {
     ///  
     /// Note: Inside vector is *not* sorted by address.
     /// But it is unique by address.
-    pub reverts: Vec<Vec<(B160, AccountRevert)>>,
+    pub reverts: Reverts,
 }
 
 impl Default for BundleState {
@@ -241,7 +242,7 @@ impl Default for BundleState {
         Self {
             state: HashMap::new(),
             contracts: HashMap::new(),
-            reverts: Vec::new(),
+            reverts: Reverts::default(),
         }
     }
 }
@@ -324,7 +325,7 @@ impl BundleState {
         Self {
             state,
             contracts: contracts.into_iter().collect(),
-            reverts,
+            reverts: Reverts::new(reverts),
         }
     }
 
@@ -401,39 +402,11 @@ impl BundleState {
         self.reverts.push(reverts);
     }
 
-    /// Return and clear all reverts from [BundleState], sort them before returning.
-    pub fn take_reverts(&mut self) -> StateReverts {
-        let mut state_reverts = StateReverts::with_capacity(self.reverts.len());
-        for reverts in self.reverts.drain(..) {
-            // pessimistically pre-allocate assuming _all_ accounts changed.
-            let mut accounts = Vec::with_capacity(reverts.len());
-            let mut storage = Vec::with_capacity(reverts.len());
-            for (address, revert_account) in reverts.into_iter() {
-                match revert_account.account {
-                    AccountInfoRevert::RevertTo(acc) => accounts.push((address, Some(acc))),
-                    AccountInfoRevert::DeleteIt => accounts.push((address, None)),
-                    AccountInfoRevert::DoNothing => (),
-                }
-                if revert_account.wipe_storage || !revert_account.storage.is_empty() {
-                    let mut account_storage =
-                        revert_account.storage.into_iter().collect::<Vec<_>>();
-                    account_storage.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
-                    storage.push((address, revert_account.wipe_storage, account_storage));
-                }
-            }
-            accounts.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
-            state_reverts.accounts.push(accounts);
-            state_reverts.storage.push(storage);
-        }
-
-        state_reverts
-    }
-
     /// Consume the bundle state and return sorted plain state.
     ///
-    /// `omit_changed_check` does not check If account is same as
+    /// `omit_changed_check` does not check if account is same as
     /// original state, this assumption can't be made in cases when
-    /// we split the bundle state and commit part of it.
+    /// we split the bundle state and commit parts of it.
     pub fn into_plain_state_sorted(self, omit_changed_check: bool) -> StateChangeset {
         // pessimistically pre-allocate assuming _all_ accounts changed.
         let state_len = self.state.len();
@@ -471,15 +444,15 @@ impl BundleState {
             if !account_storage_changed.is_empty() {
                 account_storage_changed.sort_by(|a, b| a.0.cmp(&b.0));
                 // append storage changes to account.
-                storage.push((
+                storage.push(PlainStorageChangeset {
                     address,
-                    (account.status.was_destroyed(), account_storage_changed),
-                ));
+                    storage: account_storage_changed,
+                });
             }
         }
 
         accounts.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
-        storage.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
+        storage.par_sort_unstable_by(|a, b| a.address.cmp(&b.address));
 
         let mut contracts = self
             .contracts
@@ -500,10 +473,10 @@ impl BundleState {
     pub fn into_sorted_plain_state_and_reverts(
         mut self,
         omit_changed_check: bool,
-    ) -> (StateChangeset, StateReverts) {
-        let reverts = self.take_reverts();
+    ) -> (StateChangeset, PlainStateReverts) {
+        let reverts = self.take_all_reverts();
         let plain_state = self.into_plain_state_sorted(omit_changed_check);
-        (plain_state, reverts)
+        (plain_state, reverts.into_plain_state_reverts())
     }
 
     /// Extend the state with state that is build on top of it.
@@ -575,27 +548,21 @@ impl BundleState {
         self.reverts.extend(other.reverts);
     }
 
-    /// This will return detached lower part of reverts
-    ///
-    /// Note that plain state will stay the same and returned BundleState
-    /// will contain only reverts and will be considered broken.
-    ///
-    /// If given number is greater then number of reverts then None is returned.
-    /// Same if given transition number is zero.
-    pub fn detach_lower_part_reverts(&mut self, num_of_detachments: usize) -> Option<Self> {
-        if num_of_detachments == 0 || num_of_detachments > self.reverts.len() {
-            return None;
-        }
-
+    /// Take first N raw reverts from the [BundleState].
+    pub fn take_n_reverts(&mut self, reverts_to_take: usize) -> Reverts {
         // split is done as [0, num) and [num, len].
-        let (detach, this) = self.reverts.split_at(num_of_detachments);
+        if reverts_to_take > self.reverts.len() {
+            return self.take_all_reverts();
+        }
+        let (detach, this) = self.reverts.split_at(reverts_to_take);
+        let ret = Reverts::new(detach.to_vec());
+        self.reverts = Reverts::new(this.to_vec());
+        ret
+    }
 
-        let detached_reverts = detach.to_vec();
-        self.reverts = this.to_vec();
-        Some(Self {
-            reverts: detached_reverts,
-            ..Default::default()
-        })
+    /// Return and clear all reverts from [BundleState]
+    pub fn take_all_reverts(&mut self) -> Reverts {
+        core::mem::take(&mut self.reverts)
     }
 
     /// Reverts the state changes of the latest transition
@@ -778,7 +745,7 @@ mod tests {
             )
             .state_storage(
                 account1(),
-                HashMap::from([(slot(), (U256::from(0), U256::from(10)))]),
+                HashMap::from([(slot1(), (U256::from(0), U256::from(10)))]),
             )
             .state_address(account2())
             .state_present_account_info(
@@ -792,7 +759,7 @@ mod tests {
             )
             .revert_address(0, account1())
             .revert_account_info(0, account1(), Some(None))
-            .revert_storage(0, account1(), vec![(slot(), U256::from(0))])
+            .revert_storage(0, account1(), vec![(slot1(), U256::from(0))])
             .revert_account_info(0, account2(), Some(None))
             .build()
     }
@@ -811,7 +778,7 @@ mod tests {
             )
             .state_storage(
                 account1(),
-                HashMap::from([(slot(), (U256::from(0), U256::from(15)))]),
+                HashMap::from([(slot1(), (U256::from(0), U256::from(15)))]),
             )
             .revert_address(0, account1())
             .revert_account_info(
@@ -824,7 +791,7 @@ mod tests {
                     code: None,
                 })),
             )
-            .revert_storage(0, account1(), vec![(slot(), U256::from(10))])
+            .revert_storage(0, account1(), vec![(slot1(), U256::from(10))])
             .build()
     }
 
@@ -896,7 +863,7 @@ mod tests {
             .insert(slot2(), RevertToSlot::Some(U256::from(15)));
 
         assert_eq!(
-            b1.reverts,
+            b1.reverts.as_ref(),
             vec![base_bundle1.reverts[0].clone(), vec![revert1]],
         );
 
@@ -929,7 +896,7 @@ mod tests {
             .revert_address(2, account2())
             .revert_account_info(0, account1(), Some(None))
             .revert_account_info(2, account2(), None)
-            .revert_storage(0, account1(), vec![(slot(), U256::from(10))])
+            .revert_storage(0, account1(), vec![(slot1(), U256::from(10))])
             .build();
 
         assert_eq!(state.reverts.len(), 4);
@@ -945,5 +912,38 @@ mod tests {
         let (addr2, revert2) = &state.reverts[2][0];
         assert_eq!(addr2, &account2());
         assert_eq!(revert2.account, AccountInfoRevert::DoNothing);
+    }
+
+    #[test]
+    fn take_reverts() {
+        let bundle1 = test_bundle1();
+        let bundle2 = test_bundle2();
+
+        let mut extended = bundle1.clone();
+        extended.extend(bundle2.clone());
+
+        // check that we have two reverts
+        assert_eq!(extended.reverts.len(), 2);
+
+        // take all by big N
+        let mut extended2 = extended.clone();
+        assert_eq!(extended2.take_n_reverts(100), extended.reverts);
+
+        // take all reverts
+        let mut extended2 = extended.clone();
+        assert_eq!(extended2.take_all_reverts(), extended.reverts);
+
+        // take zero revert
+        let taken_reverts = extended.take_n_reverts(0);
+        assert_eq!(taken_reverts, Reverts::default());
+        assert_eq!(extended.reverts.len(), 2);
+
+        // take one revert
+        let taken_reverts = extended.take_n_reverts(1);
+        assert_eq!(taken_reverts, bundle1.reverts);
+
+        // take last revert
+        let taken_reverts = extended.take_n_reverts(1);
+        assert_eq!(taken_reverts, bundle2.reverts);
     }
 }
