@@ -883,7 +883,6 @@ mod tests {
         );
     }
 
-
     #[test]
     fn test_sanity_path() {
         sanity_path(test_bundle1(), test_bundle2());
