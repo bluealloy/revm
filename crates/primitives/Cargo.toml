@@ -34,6 +34,7 @@ hex-literal = "0.4"
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
 derive_more = "0.99"
 enumn = "0.1"
+to-binary = "0.4"
 
 # optional
 serde = { version = "1.0", features = ["derive", "rc"], optional = true }
