@@ -378,7 +378,7 @@ impl BundleState {
     /// Consume `TransitionState` by applying the changes and creating the reverts
     ///
     /// If [BundleRetention::includes_reverts] is `true`, then the reverts will be retained.
-    pub fn apply_block_substate_and_create_reverts(
+    pub fn apply_transitions_and_create_reverts(
         &mut self,
         transitions: TransitionState,
         retention: BundleRetention,
@@ -658,7 +658,7 @@ mod tests {
         };
 
         // apply first transition
-        bundle_state.apply_block_substate_and_create_reverts(
+        bundle_state.apply_transitions_and_create_reverts(
             TransitionState::single(address, transition.clone()),
             BundleRetention::Reverts,
         );

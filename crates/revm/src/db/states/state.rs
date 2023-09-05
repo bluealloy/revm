@@ -130,7 +130,7 @@ impl<'a, DBError> State<'a, DBError> {
         if let Some(transition_state) = self.transition_state.as_mut().map(TransitionState::take) {
             self.bundle_state
                 .get_or_insert(BundleState::default())
-                .apply_block_substate_and_create_reverts(transition_state, retention);
+                .apply_transitions_and_create_reverts(transition_state, retention);
         }
     }
 
