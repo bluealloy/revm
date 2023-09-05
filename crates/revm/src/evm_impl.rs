@@ -91,6 +91,52 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
         Ok(())
     }
+
+    /// If the transaction is not a deposit transaction, subtract the L1 data fee from the
+    /// caller's balance directly after minting the requested amount of ETH.
+    #[cfg(feature = "optimism")]
+    fn remove_l1_cost(
+        is_deposit: bool,
+        tx_caller: B160,
+        tx_l1_cost: Option<U256>,
+        db: &mut DB,
+        journal: &mut JournaledState,
+    ) -> Result<(), EVMError<DB::Error>> {
+        if is_deposit {
+            return Ok(());
+        }
+        if let Some(l1_cost) = tx_l1_cost {
+            let acc = journal
+                .load_account(tx_caller, db)
+                .map_err(EVMError::Database)?
+                .0;
+            let res = acc.info.balance.saturating_sub(l1_cost);
+            acc.info.balance = res;
+        }
+        Ok(())
+    }
+
+    /// If the transaction is a deposit with a `mint` value, add the mint value
+    /// in wei to the caller's balance. This should be persisted to the database
+    /// prior to the rest of execution.
+    #[cfg(feature = "optimism")]
+    fn commit_mint_value(
+        tx_caller: B160,
+        tx_mint: Option<u128>,
+        db: &mut DB,
+        journal: &mut JournaledState,
+    ) -> Result<(), EVMError<DB::Error>> {
+        if let Some(mint) = tx_mint {
+            journal
+                .load_account(tx_caller, db)
+                .map_err(EVMError::Database)?
+                .0
+                .info
+                .balance += U256::from(mint);
+            journal.checkpoint();
+        }
+        Ok(())
+    }
 }
 
 impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
@@ -158,31 +204,20 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
 
         #[cfg(feature = "optimism")]
         if self.data.env.cfg.optimism {
-            // If the transaction is a deposit with a `Some` `mint` value, add the minted value
-            // in wei to the caller's balance. This should be persisted to the database prior
-            // to the rest of execution below.
-            if let Some(mint) = tx_mint {
-                journal
-                    .load_account(tx_caller, self.data.db)
-                    .map_err(EVMError::Database)?
-                    .0
-                    .info
-                    .balance += U256::from(mint);
-                journal.checkpoint();
-            }
+            EVMImpl::<GSPEC, DB, INSPECT>::commit_mint_value(
+                tx_caller,
+                tx_mint,
+                self.data.db,
+                journal,
+            )?;
 
-            // If the transaction is not a deposit transaction, subtract the L1 data fee from the
-            // caller's balance directly after minting the requested amount of ETH.
-            if !is_deposit {
-                if let Some(l1_cost) = tx_l1_cost {
-                    journal
-                        .load_account(tx_caller, self.data.db)
-                        .map_err(EVMError::Database)?
-                        .0
-                        .info
-                        .balance -= l1_cost;
-                }
-            }
+            EVMImpl::<GSPEC, DB, INSPECT>::remove_l1_cost(
+                is_deposit,
+                tx_caller,
+                tx_l1_cost,
+                self.data.db,
+                journal,
+            )?;
         }
 
         let (caller_account, _) = journal
