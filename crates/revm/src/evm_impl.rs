@@ -110,8 +110,21 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 .load_account(tx_caller, db)
                 .map_err(EVMError::Database)?
                 .0;
-            let res = acc.info.balance.saturating_sub(l1_cost);
-            acc.info.balance = res;
+            if l1_cost.gt(&acc.info.balance) {
+                let x = l1_cost.as_limbs();
+                let u64_cost = if x[1] == 0 && x[2] == 0 && x[3] == 0 {
+                    x[0]
+                } else {
+                    u64::MAX
+                };
+                return Err(EVMError::Transaction(
+                    InvalidTransaction::LackOfFundForMaxFee {
+                        fee: u64_cost,
+                        balance: acc.info.balance,
+                    },
+                ));
+            }
+            acc.info.balance = acc.info.balance.saturating_sub(l1_cost);
         }
         Ok(())
     }
