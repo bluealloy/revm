@@ -132,7 +132,7 @@ impl<DB: Database> State<DB> {
         if let Some(transition_state) = self.transition_state.as_mut().map(TransitionState::take) {
             self.bundle_state
                 .get_or_insert(BundleState::default())
-                .apply_block_substate_and_create_reverts(transition_state, retention);
+                .apply_transitions_and_create_reverts(transition_state, retention);
         }
     }
 
@@ -451,7 +451,7 @@ mod tests {
         // The new account revert should be `DeleteIt` since this was an account creation.
         // The existing account revert should be reverted to its previous state.
         assert_eq!(
-            bundle_state.reverts,
+            bundle_state.reverts.as_ref(),
             Vec::from([Vec::from([
                 (
                     new_account_address,
@@ -684,12 +684,10 @@ mod tests {
         state.merge_transitions(BundleRetention::Reverts);
 
         let mut bundle_state = state.take_bundle();
-        for revert in &mut bundle_state.reverts {
-            revert.sort_unstable_by_key(|(address, _)| *address);
-        }
+        bundle_state.reverts.sort();
 
         assert_eq!(
-            bundle_state.reverts,
+            bundle_state.reverts.as_ref(),
             Vec::from([Vec::from([
                 // new account is destroyed as if it never existed.
                 // ( ... )
@@ -820,7 +818,7 @@ mod tests {
         );
 
         assert_eq!(
-            bundle_state.reverts,
+            bundle_state.reverts.as_ref(),
             Vec::from([Vec::from([(
                 existing_account_address,
                 AccountRevert {
