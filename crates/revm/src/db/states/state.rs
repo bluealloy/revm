@@ -9,6 +9,9 @@ use revm_interpreter::primitives::{
     hash_map, Account, AccountInfo, Bytecode, HashMap, B160, B256, BLOCK_HASH_HISTORY, U256,
 };
 
+/// More constrained version of State that uses Boxed database with a lifetime.
+///
+/// This is used to make it easier to use State.
 pub type StateDBBox<'a, DBError> = State<Box<dyn Database<Error = DBError> + Send + 'a>>;
 
 /// State of blockchain.
