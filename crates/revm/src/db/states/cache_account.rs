@@ -5,9 +5,8 @@ use super::{
 use revm_interpreter::primitives::{AccountInfo, KECCAK_EMPTY, U256};
 use revm_precompile::HashMap;
 
-/// Cache account is to store account from database be able
-/// to be updated from output of revm and while doing that
-/// create TransitionAccount needed for BundleState.
+/// Cache account contains plain state that gets updated
+/// at every transaction when evm output is applied to CacheState.
 #[derive(Clone, Debug)]
 pub struct CacheAccount {
     pub account: Option<PlainAccount>,
