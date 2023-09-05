@@ -156,12 +156,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     #[inline]
     fn use_gas(
         &mut self,
+        gas: &mut Gas,
         gas_limit: u64,
         ret_gas: Gas,
         exit_reason: InstructionResult,
-    ) -> Result<Gas, EVMError<DB::Error>> {
-        let mut gas = Gas::new(gas_limit);
-        gas.record_cost(gas_limit);
+    ) -> Result<(), EVMError<DB::Error>> {
         if crate::USE_GAS {
             match exit_reason {
                 return_ok!() => {
@@ -174,7 +173,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 _ => {}
             }
         }
-        Ok(gas)
+        Ok(())
     }
 
     /// Set gas to the gas limit and spend it all.
@@ -182,14 +181,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     #[inline]
     fn use_gas(
         &mut self,
+        gas: &mut Gas,
         is_deposit: bool,
         tx_system: Option<bool>,
         gas_limit: u64,
         ret_gas: Gas,
         exit_reason: InstructionResult,
-    ) -> Result<Gas, EVMError<DB::Error>> {
-        let mut gas = Gas::new(gas_limit);
-        gas.record_cost(gas_limit);
+    ) -> Result<(), EVMError<DB::Error>> {
         if crate::USE_GAS {
             match exit_reason {
                 return_ok!() => {
@@ -241,7 +239,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 _ => {}
             }
         }
-        Ok(gas)
+        Ok(())
     }
 }
 
@@ -286,13 +284,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let effective_gas_price = env.effective_gas_price();
 
         #[cfg(feature = "optimism")]
-        let tx_mint = env.tx.optimism.mint;
-        #[cfg(feature = "optimism")]
-        let tx_system = env.tx.optimism.is_system_transaction;
-        #[cfg(feature = "optimism")]
-        let tx_l1_cost = env.tx.optimism.l1_cost;
-        #[cfg(feature = "optimism")]
-        let is_deposit = env.tx.optimism.source_hash.is_some();
+        let (tx_mint, tx_system, tx_l1_cost, is_deposit) = (
+            env.tx.optimism.mint,
+            env.tx.optimism.is_system_transaction,
+            env.tx.optimism.l1_cost,
+            env.tx.optimism.source_hash.is_some(),
+        );
 
         let initial_gas_spend =
             initial_tx_gas::<GSPEC>(&tx_data, tx_is_create, &env.tx.access_list);
@@ -385,10 +382,21 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         };
 
         // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
+        let mut gas = Gas::new(tx_gas_limit);
+        gas.record_cost(tx_gas_limit);
+
         #[cfg(not(feature = "optimism"))]
-        let gas = self.use_gas(tx_gas_limit, ret_gas, exit_reason)?;
+        self.use_gas(&mut gas, tx_gas_limit, ret_gas, exit_reason)?;
+
         #[cfg(feature = "optimism")]
-        let gas = self.use_gas(is_deposit, tx_system, tx_gas_limit, ret_gas, exit_reason)?;
+        self.use_gas(
+            &mut gas,
+            is_deposit,
+            tx_system,
+            tx_gas_limit,
+            ret_gas,
+            exit_reason,
+        )?;
 
         let (state, logs, gas_used, gas_refunded) = self.finalize::<GSPEC>(&gas);
 
