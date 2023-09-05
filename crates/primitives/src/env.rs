@@ -29,6 +29,15 @@ pub struct BlockEnv {
     pub basefee: U256,
     pub gas_limit: U256,
 }
+#[cfg(feature = "optimism")]
+#[derive(Clone, Debug, Default)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct OptimismFields {
+    pub source_hash: Option<B256>,
+    pub mint: Option<u128>,
+    pub is_system_transaction: Option<bool>,
+    pub l1_cost: Option<U256>,
+}
 
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -45,14 +54,9 @@ pub struct TxEnv {
     pub chain_id: Option<u64>,
     pub nonce: Option<u64>,
     pub access_list: Vec<(B160, Vec<U256>)>,
+    #[cfg_attr(feature = "serde", serde(flatten))]
     #[cfg(feature = "optimism")]
-    pub source_hash: Option<B256>,
-    #[cfg(feature = "optimism")]
-    pub mint: Option<u128>,
-    #[cfg(feature = "optimism")]
-    pub is_system_transaction: Option<bool>,
-    #[cfg(feature = "optimism")]
-    pub l1_cost: Option<U256>,
+    pub optimism: OptimismFields,
 }
 
 #[derive(Clone, Debug)]
@@ -261,13 +265,7 @@ impl Default for TxEnv {
             nonce: None,
             access_list: Vec::new(),
             #[cfg(feature = "optimism")]
-            source_hash: None,
-            #[cfg(feature = "optimism")]
-            mint: None,
-            #[cfg(feature = "optimism")]
-            is_system_transaction: None,
-            #[cfg(feature = "optimism")]
-            l1_cost: None,
+            optimism: OptimismFields::default(),
         }
     }
 }
@@ -304,12 +302,14 @@ impl Env {
         #[cfg(feature = "optimism")]
         if self.cfg.optimism {
             // Do not allow for a system transaction to be processed if Regolith is enabled.
-            if self.tx.is_system_transaction.unwrap_or(false) && SPEC::enabled(SpecId::REGOLITH) {
+            if self.tx.optimism.is_system_transaction.unwrap_or(false)
+                && SPEC::enabled(SpecId::REGOLITH)
+            {
                 return Err(InvalidTransaction::DepositSystemTxPostRegolith);
             }
 
             // Do not perform any extra validation for deposit transactions, they are pre-verified on L1.
-            if self.tx.source_hash.is_some() {
+            if self.tx.optimism.source_hash.is_some() {
                 return Ok(());
             }
         }
@@ -379,7 +379,7 @@ impl Env {
         // On Optimism, deposit transactions do not have verification on the nonce
         // nor the balance of the account.
         #[cfg(feature = "optimism")]
-        if self.cfg.optimism && self.tx.source_hash.is_some() {
+        if self.cfg.optimism && self.tx.optimism.source_hash.is_some() {
             return Ok(());
         }
 

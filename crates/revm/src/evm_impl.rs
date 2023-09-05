@@ -134,10 +134,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let effective_gas_price = env.effective_gas_price();
         #[cfg(feature = "optimism")]
         let (tx_mint, tx_system, tx_l1_cost, is_deposit) = (
-            env.tx.mint,
-            env.tx.is_system_transaction,
-            env.tx.l1_cost,
-            env.tx.source_hash.is_some(),
+            env.tx.optimism.mint,
+            env.tx.optimism.is_system_transaction,
+            env.tx.optimism.l1_cost,
+            env.tx.optimism.source_hash.is_some(),
         );
 
         let initial_gas_spend =
@@ -379,7 +379,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             let is_gas_refund_disabled = self.data.env.cfg.is_gas_refund_disabled();
 
             #[cfg(feature = "optimism")]
-            let is_deposit = self.data.env.cfg.optimism && self.data.env.tx.source_hash.is_some();
+            let is_deposit =
+                self.data.env.cfg.optimism && self.data.env.tx.optimism.source_hash.is_some();
 
             // Prior to Regolith, deposit transactions did not receive gas refunds.
             #[cfg(feature = "optimism")]
@@ -447,11 +448,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 };
 
                 // Send the L1 cost of the transaction to the L1 Fee Vault.
-                if let Some(l1_cost) = self.data.env.tx.l1_cost {
+                if let Some(l1_cost) = self.data.env.tx.optimism.l1_cost {
                     let Ok((l1_fee_vault_account, _)) = self
                         .data
                         .journaled_state
-                        .load_account(optimism::L1_FEE_RECIPIENT.into(), self.data.db)
+                        .load_account(optimism::L1_FEE_RECIPIENT, self.data.db)
                     else {
                         panic!("[OPTIMISM] Failed to load L1 Fee Vault account");
                     };
@@ -463,7 +464,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 let Ok((base_fee_vault_account, _)) = self
                     .data
                     .journaled_state
-                    .load_account(optimism::BASE_FEE_RECIPIENT.into(), self.data.db)
+                    .load_account(optimism::BASE_FEE_RECIPIENT, self.data.db)
                 else {
                     panic!("[OPTIMISM] Failed to load Base Fee Vault account");
                 };
