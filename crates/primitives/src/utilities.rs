@@ -150,17 +150,16 @@ mod tests {
                 TARGET_BLOB_GAS_PER_BLOCK / GAS_PER_BLOB,
                 TARGET_BLOB_GAS_PER_BLOCK,
             ),
-            // TODO: Geth test cases are outdated
-            // (
-            //     TARGET_BLOB_GAS_PER_BLOCK,
-            //     (TARGET_BLOB_GAS_PER_BLOCK / GAS_PER_BLOB) - 1,
-            //     GAS_PER_BLOB,
-            // ),
-            // (
-            //     TARGET_BLOB_GAS_PER_BLOCK,
-            //     (TARGET_BLOB_GAS_PER_BLOCK / GAS_PER_BLOB) - 2,
-            //     0,
-            // ),
+            (
+                TARGET_BLOB_GAS_PER_BLOCK,
+                (TARGET_BLOB_GAS_PER_BLOCK / GAS_PER_BLOB) - 1,
+                TARGET_BLOB_GAS_PER_BLOCK - GAS_PER_BLOB,
+            ),
+            (
+                TARGET_BLOB_GAS_PER_BLOCK,
+                (TARGET_BLOB_GAS_PER_BLOCK / GAS_PER_BLOB) - 2,
+                TARGET_BLOB_GAS_PER_BLOCK - (2 * GAS_PER_BLOB),
+            ),
             (
                 GAS_PER_BLOB - 1,
                 (TARGET_BLOB_GAS_PER_BLOCK / GAS_PER_BLOB) - 1,
@@ -174,9 +173,8 @@ mod tests {
 
     // https://github.com/ethereum/go-ethereum/blob/28857080d732857030eda80c69b9ba2c8926f221/consensus/misc/eip4844/eip4844_test.go#L60
     #[test]
-    #[ignore = "TODO: Geth test cases are outdated"]
     fn test_calc_blob_fee() {
-        for &(excess, expected) in &[(0, 1), (1542706, 1), (1542707, 2), (10 * 1024 * 1024, 111)] {
+        for &(excess, expected) in &[(0, 1), (2314057, 1), (2314058, 2), (10 * 1024 * 1024, 23)] {
             let actual = calc_blob_fee(excess);
             assert_eq!(actual, expected, "test: {excess}");
         }
