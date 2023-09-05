@@ -199,7 +199,7 @@ impl SharedMemory {
     /// https://2π.com/22/eth-max-mem
     #[inline(always)]
     fn calculate_upper_bound(gas_limit: u64) -> u64 {
-        4096 * ((2 * gas_limit) as f64).sqrt() as u64
+        4096 * sqrt(2 * gas_limit)
     }
 
     /// Update the amount of memory left for usage
@@ -215,4 +215,18 @@ impl SharedMemory {
 pub(crate) fn next_multiple_of_32(x: usize) -> Option<usize> {
     let r = x.bitand(31).not().wrapping_add(1).bitand(31);
     x.checked_add(r)
+}
+
+/// Basic sqrt function using Babylonian method
+fn sqrt(n: u64) -> u64 {
+    if n < 2 {
+        return n;
+    }
+    let mut x = n / 2;
+    let mut y = (x + n / x) / 2;
+    while y < x {
+        x = y;
+        y = (x + n / x) / 2;
+    }
+    x
 }
