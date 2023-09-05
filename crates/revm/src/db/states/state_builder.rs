@@ -18,8 +18,8 @@ pub struct StateBuilder<'a, DBError> {
     /// This will initialize cache to this state.
     pub with_cache_prestate: Option<CacheState>,
     /// Do we want to create reverts and update bundle state.
-    /// Default is true.
-    pub without_bundle_update: bool,
+    /// Default is false.
+    pub with_bundle_update: bool,
     /// Do we want to merge transitions in background.
     /// This will allows evm to continue executing.
     /// Default is false.
@@ -35,7 +35,7 @@ impl Default for StateBuilder<'_, Infallible> {
             database: Box::<EmptyDB>::default(),
             with_cache_prestate: None,
             with_bundle_prestate: None,
-            without_bundle_update: false,
+            with_bundle_update: false,
             with_background_transition_merge: false,
             with_block_hashes: BTreeMap::new(),
         }
@@ -59,7 +59,7 @@ impl<'a, DBError> StateBuilder<'a, DBError> {
             database,
             with_cache_prestate: self.with_cache_prestate,
             with_bundle_prestate: self.with_bundle_prestate,
-            without_bundle_update: self.without_bundle_update,
+            with_bundle_update: self.with_bundle_update,
             with_background_transition_merge: self.with_background_transition_merge,
             with_block_hashes: self.with_block_hashes,
         }
@@ -86,13 +86,13 @@ impl<'a, DBError> StateBuilder<'a, DBError> {
         }
     }
 
-    /// Don't make transitions and don't update bundle state.
+    /// Make transitions and update bundle state.
     ///
-    /// This is good option if we don't care about creating reverts
-    /// or getting output of changed states.
-    pub fn without_bundle_update(self) -> Self {
+    /// This is needed option if we want to create reverts
+    /// and getting output of changed states.
+    pub fn witho_bundle_update(self) -> Self {
         Self {
-            without_bundle_update: true,
+            with_bundle_update: true,
             ..self
         }
     }
@@ -136,10 +136,10 @@ impl<'a, DBError> StateBuilder<'a, DBError> {
                 .with_cache_prestate
                 .unwrap_or(CacheState::new(self.with_state_clear)),
             database: self.database,
-            transition_state: if self.without_bundle_update {
-                None
-            } else {
+            transition_state: if self.with_bundle_update {
                 Some(TransitionState::default())
+            } else {
+                None
             },
             bundle_state: self.with_bundle_prestate,
             use_preloaded_bundle,
