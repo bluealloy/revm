@@ -167,6 +167,8 @@ impl AccountRevert {
     }
 }
 
+/// Depending on previous state of account info this
+/// will tell us what to do on revert.
 #[derive(Clone, Default, Debug, PartialEq, Eq)]
 pub enum AccountInfoRevert {
     #[default]
