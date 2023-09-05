@@ -169,10 +169,7 @@ impl TransactTo {
     /// Returns `true` if the transaction is `Create` or `Create2`.
     #[inline]
     pub fn is_create(&self) -> bool {
-        matches!(
-            self,
-            Self::Create(CreateScheme::Create | CreateScheme::Create2 { .. })
-        )
+        matches!(self, Self::Create(_))
     }
 }
 
