@@ -1,28 +1,25 @@
 //! Optimism-specific constants, types, and helpers.
 
-use bytes::Bytes;
 use core::ops::Mul;
-use once_cell::sync::Lazy;
-use revm_interpreter::primitives::{db::Database, hex_literal::hex, Address, Spec, SpecId, U256};
+use revm_interpreter::primitives::{
+    db::Database, hex_literal::hex, Bytes, Spec, SpecId, B160, U256,
+};
 
 const ZERO_BYTE_COST: u64 = 4;
 const NON_ZERO_BYTE_COST: u64 = 16;
 
-static L1_BASE_FEE_SLOT: Lazy<U256> = Lazy::new(|| U256::from(1));
-static L1_OVERHEAD_SLOT: Lazy<U256> = Lazy::new(|| U256::from(5));
-static L1_SCALAR_SLOT: Lazy<U256> = Lazy::new(|| U256::from(6));
+const L1_BASE_FEE_SLOT: U256 = U256::from_limbs([1u64, 0, 0, 0]);
+const L1_OVERHEAD_SLOT: U256 = U256::from_limbs([5u64, 0, 0, 0]);
+const L1_SCALAR_SLOT: U256 = U256::from_limbs([6u64, 0, 0, 0]);
 
 /// The address of L1 fee recipient.
-pub static L1_FEE_RECIPIENT: Lazy<Address> =
-    Lazy::new(|| Address::from_slice(&hex!("420000000000000000000000000000000000001A")));
+pub const L1_FEE_RECIPIENT: B160 = B160(hex!("420000000000000000000000000000000000001A"));
 
 /// The address of the base fee recipient.
-pub static BASE_FEE_RECIPIENT: Lazy<Address> =
-    Lazy::new(|| Address::from_slice(&hex!("4200000000000000000000000000000000000019")));
+pub const BASE_FEE_RECIPIENT: B160 = B160(hex!("4200000000000000000000000000000000000019"));
 
 /// The address of the L1Block contract.
-pub static L1_BLOCK_CONTRACT: Lazy<Address> =
-    Lazy::new(|| Address::from_slice(&hex!("4200000000000000000000000000000000000015")));
+pub const L1_BLOCK_CONTRACT: B160 = B160(hex!("4200000000000000000000000000000000000015"));
 
 /// L1 block info
 ///
@@ -48,9 +45,9 @@ pub struct L1BlockInfo {
 impl L1BlockInfo {
     /// Fetches the L1 block info from the `L1Block` contract in the database.
     pub fn try_fetch<DB: Database>(db: &mut DB) -> Result<L1BlockInfo, DB::Error> {
-        let l1_base_fee = db.storage(*L1_BLOCK_CONTRACT, *L1_BASE_FEE_SLOT)?;
-        let l1_fee_overhead = db.storage(*L1_BLOCK_CONTRACT, *L1_OVERHEAD_SLOT)?;
-        let l1_fee_scalar = db.storage(*L1_BLOCK_CONTRACT, *L1_SCALAR_SLOT)?;
+        let l1_base_fee = db.storage(L1_BLOCK_CONTRACT.into(), L1_BASE_FEE_SLOT)?;
+        let l1_fee_overhead = db.storage(L1_BLOCK_CONTRACT.into(), L1_OVERHEAD_SLOT)?;
+        let l1_fee_scalar = db.storage(L1_BLOCK_CONTRACT.into(), L1_SCALAR_SLOT)?;
 
         Ok(L1BlockInfo {
             l1_base_fee,

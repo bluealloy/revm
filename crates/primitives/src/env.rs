@@ -301,6 +301,19 @@ impl Env {
     /// Return initial spend gas (Gas needed to execute transaction).
     #[inline]
     pub fn validate_tx<SPEC: Spec>(&self) -> Result<(), InvalidTransaction> {
+        #[cfg(feature = "optimism")]
+        if self.cfg.optimism {
+            // Do not allow for a system transaction to be processed if Regolith is enabled.
+            if self.tx.is_system_transaction.unwrap_or(false) && SPEC::enabled(SpecId::REGOLITH) {
+                return Err(InvalidTransaction::DepositSystemTxPostRegolith);
+            }
+
+            // Do not perform any extra validation for deposit transactions, they are pre-verified on L1.
+            if self.tx.source_hash.is_some() {
+                return Ok(());
+            }
+        }
+
         let gas_limit = self.tx.gas_limit;
         let effective_gas_price = self.effective_gas_price();
         let is_create = self.tx.transact_to.is_create();

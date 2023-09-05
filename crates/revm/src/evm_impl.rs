@@ -99,30 +99,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
     fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
         let env = self.env();
 
-        #[cfg(feature = "optimism")]
-        let is_deposit = env.cfg.optimism && env.tx.source_hash.is_some();
-
         env.validate_block_env::<GSPEC, DB::Error>()?;
-
-        // If the transaction is a deposit transaction on Optimism, there are no fee fields to check,
-        // no nonce to check, and no need to check if EOA (L1 already verified it for us)
-        // Gas is free, but no refunds!
-        #[cfg(feature = "optimism")]
-        if env.cfg.optimism {
-            if !is_deposit {
-                env.validate_tx::<GSPEC>()?;
-            }
-
-            // Do not allow for a system transaction to be processed if Regolith is enabled.
-            if is_deposit
-                && env.tx.is_system_transaction.unwrap_or(false)
-                && GSPEC::enabled(SpecId::REGOLITH)
-            {
-                return Err(InvalidTransaction::DepositSystemTxPostRegolith.into());
-            }
-        }
-
-        #[cfg(not(feature = "optimism"))]
         env.validate_tx::<GSPEC>()?;
 
         let tx_caller = env.tx.caller;
@@ -474,7 +451,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     let Ok((l1_fee_vault_account, _)) = self
                         .data
                         .journaled_state
-                        .load_account(*optimism::L1_FEE_RECIPIENT, self.data.db)
+                        .load_account(optimism::L1_FEE_RECIPIENT.into(), self.data.db)
                     else {
                         panic!("[OPTIMISM] Failed to load L1 Fee Vault account");
                     };
@@ -486,7 +463,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 let Ok((base_fee_vault_account, _)) = self
                     .data
                     .journaled_state
-                    .load_account(*optimism::BASE_FEE_RECIPIENT, self.data.db)
+                    .load_account(optimism::BASE_FEE_RECIPIENT.into(), self.data.db)
                 else {
                     panic!("[OPTIMISM] Failed to load Base Fee Vault account");
                 };
