@@ -45,9 +45,9 @@ pub struct L1BlockInfo {
 impl L1BlockInfo {
     /// Fetches the L1 block info from the `L1Block` contract in the database.
     pub fn try_fetch<DB: Database>(db: &mut DB) -> Result<L1BlockInfo, DB::Error> {
-        let l1_base_fee = db.storage(L1_BLOCK_CONTRACT.into(), L1_BASE_FEE_SLOT)?;
-        let l1_fee_overhead = db.storage(L1_BLOCK_CONTRACT.into(), L1_OVERHEAD_SLOT)?;
-        let l1_fee_scalar = db.storage(L1_BLOCK_CONTRACT.into(), L1_SCALAR_SLOT)?;
+        let l1_base_fee = db.storage(L1_BLOCK_CONTRACT, L1_BASE_FEE_SLOT)?;
+        let l1_fee_overhead = db.storage(L1_BLOCK_CONTRACT, L1_OVERHEAD_SLOT)?;
+        let l1_fee_scalar = db.storage(L1_BLOCK_CONTRACT, L1_SCALAR_SLOT)?;
 
         Ok(L1BlockInfo {
             l1_base_fee,
