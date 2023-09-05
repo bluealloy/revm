@@ -14,8 +14,6 @@ use crate::{
     instructions::{eval, InstructionResult},
     Gas, Host,
 };
-use alloc::rc::Rc;
-use core::cell::RefCell;
 use core::ops::Range;
 
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -28,7 +26,7 @@ pub const MAX_CODE_SIZE: usize = 0x6000;
 /// EIP-3860: Limit and meter initcode
 pub const MAX_INITCODE_SIZE: usize = 2 * MAX_CODE_SIZE;
 
-pub struct Interpreter {
+pub struct Interpreter<'a> {
     /// Instruction pointer.
     pub instruction_pointer: *const u8,
     /// Return is main control flag, it tell us if we should continue interpreter or break from it
@@ -36,7 +34,7 @@ pub struct Interpreter {
     /// left gas. Memory gas can be found in Memory field.
     pub gas: Gas,
     /// Shared memory.
-    pub shared_memory: Rc<RefCell<SharedMemory>>,
+    pub shared_memory: &'a mut SharedMemory,
     /// Stack.
     pub stack: Stack,
     /// After call returns, its return data is saved here.
@@ -49,7 +47,7 @@ pub struct Interpreter {
     pub contract: Box<Contract>,
 }
 
-impl Interpreter {
+impl<'a> Interpreter<'a> {
     /// Current opcode
     pub fn current_opcode(&self) -> u8 {
         unsafe { *self.instruction_pointer }
@@ -60,13 +58,13 @@ impl Interpreter {
         contract: Box<Contract>,
         gas_limit: u64,
         is_static: bool,
-        shared_memory: &Rc<RefCell<SharedMemory>>,
+        shared_memory: &'a mut SharedMemory,
     ) -> Self {
         Self {
             instruction_pointer: contract.bytecode.as_ptr(),
             return_range: Range::default(),
             stack: Stack::new(),
-            shared_memory: Rc::clone(shared_memory),
+            shared_memory,
             return_data_buffer: Bytes::new(),
             contract,
             instruction_result: InstructionResult::Continue,
@@ -137,17 +135,17 @@ impl Interpreter {
     }
 
     /// Copy and get the return value of the interpreter, if any.
-    pub fn return_value(&self) -> Bytes {
+    pub fn return_value(&mut self) -> Bytes {
         // if start is usize max it means that our return len is zero and we need to return empty
         let bytes = if self.return_range.start == usize::MAX {
             Bytes::new()
         } else {
-            Bytes::copy_from_slice(self.shared_memory.borrow().get_slice(
+            Bytes::copy_from_slice(self.shared_memory.get_slice(
                 self.return_range.start,
                 self.return_range.end - self.return_range.start,
             ))
         };
-        self.shared_memory.borrow_mut().free_context_memory();
+        self.shared_memory.free_context_memory();
         bytes
     }
 }

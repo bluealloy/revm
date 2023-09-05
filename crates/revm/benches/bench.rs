@@ -8,7 +8,7 @@ use revm::{
     primitives::{BerlinSpec, Bytecode, BytecodeState, TransactTo, U256},
 };
 use revm_interpreter::SharedMemory;
-use std::{cell::RefCell, rc::Rc, time::Duration};
+use std::time::Duration;
 
 type Evm = revm::EVM<BenchmarkDB>;
 
@@ -114,7 +114,7 @@ fn bench_transact(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm) {
 fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm) {
     let gas_limit = 22_000;
     evm.env.tx.gas_limit = gas_limit;
-    let shared_memory = Rc::new(RefCell::new(SharedMemory::new(evm.env.tx.gas_limit)));
+    let mut shared_memory = SharedMemory::new(evm.env.tx.gas_limit);
 
     g.bench_function("eval", |b| {
         let contract = Contract {
@@ -126,8 +126,12 @@ fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm) {
         b.iter(|| {
             // reset gas limit to the right amount before tx
             evm.env.tx.gas_limit = gas_limit;
-            let mut interpreter =
-                Interpreter::new(Box::new(contract.clone()), u64::MAX, false, &shared_memory);
+            let mut interpreter = Interpreter::new(
+                Box::new(contract.clone()),
+                u64::MAX,
+                false,
+                &mut shared_memory,
+            );
             let res = interpreter.run::<_, BerlinSpec>(&mut host);
             host.clear();
             res

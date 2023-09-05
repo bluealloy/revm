@@ -1,12 +1,9 @@
-use core::cell::RefCell;
-
 use crate::primitives::{hash_map::Entry, Bytecode, Bytes, HashMap, U256};
 use crate::{
     primitives::{Env, Log, B160, B256, KECCAK_EMPTY},
     CallInputs, CreateInputs, Gas, Host, InstructionResult, Interpreter, SelfDestructResult,
     SharedMemory,
 };
-use alloc::rc::Rc;
 use alloc::vec::Vec;
 
 pub struct DummyHost {
@@ -141,7 +138,7 @@ impl Host for DummyHost {
     fn create(
         &mut self,
         _inputs: &mut CreateInputs,
-        _shared_memory: &Rc<RefCell<SharedMemory>>,
+        _shared_memory: &mut SharedMemory,
     ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
         panic!("Create is not supported for this host")
     }
@@ -150,7 +147,7 @@ impl Host for DummyHost {
     fn call(
         &mut self,
         _input: &mut CallInputs,
-        _shared_memory: &Rc<RefCell<SharedMemory>>,
+        _shared_memory: &mut SharedMemory,
     ) -> (InstructionResult, Gas, Bytes) {
         panic!("Call is not supported for this host")
     }
