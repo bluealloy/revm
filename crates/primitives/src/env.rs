@@ -29,9 +29,8 @@ pub struct BlockEnv {
     pub basefee: U256,
     pub gas_limit: U256,
 }
-
-#[derive(Clone, Debug, Default)]
 #[cfg(feature = "optimism")]
+#[derive(Clone, Debug, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct OptimismFields {
     pub source_hash: Option<B256>,
