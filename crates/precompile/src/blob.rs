@@ -1,5 +1,5 @@
 use crate::{Error, Precompile, PrecompileAddress, PrecompileResult, B160};
-use c_kzg::{bindings, Bytes32, Bytes48, CkzgError};
+use c_kzg::{Bytes32, Bytes48, KzgProof};
 use revm_primitives::hex_literal::hex;
 use sha2::{Digest, Sha256};
 
@@ -46,53 +46,50 @@ fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
 }
 
 /// `VERSIONED_HASH_VERSION_KZG ++ sha256(commitment)[1..]`
+#[inline]
 fn kzg_to_versioned_hash(commitment: &[u8]) -> [u8; 32] {
     let mut hash: [u8; 32] = Sha256::digest(commitment).into();
     hash[0] = VERSIONED_HASH_VERSION_KZG;
     hash
 }
 
+#[inline]
 fn verify_kzg_proof(commitment: &Bytes48, z: &Bytes32, y: &Bytes32, proof: &Bytes48) -> bool {
-    // note: we use the bindings directly to avoid copying the input bytes.
-    // If `KzgProof::verify_kzg_proof` ever changes to take references, we should use that instead.
-    let mut ok = false;
-    let ret = unsafe {
-        bindings::verify_kzg_proof(
-            &mut ok,
-            commitment,
-            z,
-            y,
-            proof,
-            kzg_settings::get_global_or_default(),
-        )
-    };
-    if ret != CkzgError::C_KZG_OK {
-        #[cfg(debug_assertions)]
-        panic!("verify_kzg_proof returned an error: {ret:?}");
+    match KzgProof::verify_kzg_proof(
+        commitment,
+        z,
+        y,
+        proof,
+        kzg_settings::get_global_or_default(),
+    ) {
+        Ok(ok) => ok,
+        Err(e) => {
+            #[cfg(debug_assertions)]
+            panic!("verify_kzg_proof returned an error: {e:?}");
 
-        #[cfg(not(debug_assertions))]
-        return false;
+            #[cfg(not(debug_assertions))]
+            false
+        }
     }
-    ok
 }
 
 #[inline(always)]
-#[cfg_attr(debug_assertions, track_caller)]
+#[track_caller]
 fn as_array<const N: usize>(bytes: &[u8]) -> &[u8; N] {
-    debug_assert_eq!(bytes.len(), N);
+    assert_eq!(bytes.len(), N);
     // SAFETY: Length is checked above
     unsafe { &*bytes.as_ptr().cast() }
 }
 
 #[inline(always)]
-#[cfg_attr(debug_assertions, track_caller)]
+#[track_caller]
 fn as_bytes32(bytes: &[u8]) -> &Bytes32 {
     // SAFETY: `#[repr(C)] Bytes32([u8; 32])`
     unsafe { &*as_array::<32>(bytes).as_ptr().cast() }
 }
 
 #[inline(always)]
-#[cfg_attr(debug_assertions, track_caller)]
+#[track_caller]
 fn as_bytes48(bytes: &[u8]) -> &Bytes48 {
     // SAFETY: `#[repr(C)] Bytes48([u8; 48])`
     unsafe { &*as_array::<48>(bytes).as_ptr().cast() }
