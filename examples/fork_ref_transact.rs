@@ -78,7 +78,7 @@ async fn main() -> anyhow::Result<()> {
     // calldata formed via abigen
     evm.env.tx.data = encoded.0.into();
     // transaction value in wei
-    evm.env.tx.value = U256::ZERO;
+    evm.env.tx.value = U256::from(0);
 
     // execute transaction without writing to the DB
     let ref_tx = evm.transact_ref().unwrap();
