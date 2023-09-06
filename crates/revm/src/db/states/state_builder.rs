@@ -6,26 +6,26 @@ use revm_interpreter::primitives::{db::Database, B256};
 
 /// Allows building of State and initializing it with different options.
 pub struct StateBuilder<'a, DBError> {
-    pub with_state_clear: bool,
+    with_state_clear: bool,
     /// Optional database that we use to fetch data from. If database is not present, we will
     /// return not existing account and storage.
     ///
     /// Note: It is marked as Send so database can be shared between threads.
-    pub database: Box<dyn Database<Error = DBError> + Send + 'a>,
+    database: Box<dyn Database<Error = DBError> + Send + 'a>,
     /// if there is prestate that we want to use.
     /// This would mean that we have additional state layer between evm and disk/database.
-    pub with_bundle_prestate: Option<BundleState>,
+    with_bundle_prestate: Option<BundleState>,
     /// This will initialize cache to this state.
-    pub with_cache_prestate: Option<CacheState>,
+    with_cache_prestate: Option<CacheState>,
     /// Do we want to create reverts and update bundle state.
     /// Default is false.
-    pub with_bundle_update: bool,
+    with_bundle_update: bool,
     /// Do we want to merge transitions in background.
     /// This will allows evm to continue executing.
     /// Default is false.
-    pub with_background_transition_merge: bool,
+    with_background_transition_merge: bool,
     /// If we want to set different block hashes
-    pub with_block_hashes: BTreeMap<u64, B256>,
+    with_block_hashes: BTreeMap<u64, B256>,
 }
 
 impl Default for StateBuilder<'_, Infallible> {
@@ -90,7 +90,7 @@ impl<'a, DBError> StateBuilder<'a, DBError> {
     ///
     /// This is needed option if we want to create reverts
     /// and getting output of changed states.
-    pub fn witho_bundle_update(self) -> Self {
+    pub fn with_bundle_update(self) -> Self {
         Self {
             with_bundle_update: true,
             ..self
