@@ -44,6 +44,12 @@ impl BundleAccount {
         }
     }
 
+    /// The approximate size of changes needed to store this account.
+    /// `1 + storage_len`
+    pub fn size_hint(&self) -> usize {
+        1 + self.storage.len()
+    }
+
     /// Return storage slot if it exist.
     ///
     /// In case we know that account is destroyed return `Some(U256::ZERO)`
