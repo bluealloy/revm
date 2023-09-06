@@ -101,7 +101,7 @@ mod tests {
     use crate::primitives::specification::*;
 
     #[test]
-    fn test_data_gas() {
+    fn test_data_gas_non_zero_bytes() {
         let l1_block_info = L1BlockInfo {
             l1_base_fee: U256::from(1_000_000),
             l1_fee_overhead: U256::from(1_000_000),
@@ -109,17 +109,42 @@ mod tests {
         };
 
         // 0xFACADE = 6 nibbles = 3 bytes
-        // 1111 1010 | 1100 1010 | 1101 1110
-        // 111110101100101011011110
-        //
-        // gas cost = 3 non-zero bytes * NON_ZERO_BYTE_COST
-        // gas cost += NON_ZERO_BYTE_COST * 68
+        // 0xFACADE = 1111 1010 . 1100 1010 . 1101 1110
 
+        // Pre-regolith (ie bedrock) has an extra 68 non-zero bytes
+        // gas cost = 3 non-zero bytes * NON_ZERO_BYTE_COST + NON_ZERO_BYTE_COST * 68
+        // gas cost = 3 * 16 + 68 * 16 = 1136
         let input = Bytes::from(hex!("FACADE").to_vec());
         let bedrock_data_gas = l1_block_info.data_gas::<BedrockSpec>(&input);
         assert_eq!(bedrock_data_gas, U256::from(1136));
 
+        // Regolith has no added 68 non zero bytes
+        // gas cost = 3 * 16 = 48
         let regolith_data_gas = l1_block_info.data_gas::<RegolithSpec>(&input);
         assert_eq!(regolith_data_gas, U256::from(48));
+    }
+
+    #[test]
+    fn test_data_gas_zero_bytes() {
+        let l1_block_info = L1BlockInfo {
+            l1_base_fee: U256::from(1_000_000),
+            l1_fee_overhead: U256::from(1_000_000),
+            l1_fee_scalar: U256::from(1_000_000),
+        };
+
+        // 0xFA00CA00DE = 10 nibbles = 5 bytes
+        // 0xFA00CA00DE = 1111 1010 . 0000 0000 . 1100 1010 . 0000 0000 . 1101 1110
+
+        // Pre-regolith (ie bedrock) has an extra 68 non-zero bytes
+        // gas cost = 3 non-zero * NON_ZERO_BYTE_COST + 2 * ZERO_BYTE_COST + NON_ZERO_BYTE_COST * 68
+        // gas cost = 3 * 16 + 2 * 4 + 68 * 16 = 1144
+        let input = Bytes::from(hex!("FA00CA00DE").to_vec());
+        let bedrock_data_gas = l1_block_info.data_gas::<BedrockSpec>(&input);
+        assert_eq!(bedrock_data_gas, U256::from(1144));
+
+        // Regolith has no added 68 non zero bytes
+        // gas cost = 3 * 16 + 2 * 4 = 56
+        let regolith_data_gas = l1_block_info.data_gas::<RegolithSpec>(&input);
+        assert_eq!(regolith_data_gas, U256::from(56));
     }
 }
