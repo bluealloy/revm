@@ -20,7 +20,7 @@ pub use cache_account::CacheAccount;
 pub use changes::{PlainStateReverts, PlainStorageChangeset, PlainStorageRevert, StateChangeset};
 pub use plain_account::{PlainAccount, StorageWithOriginalValues};
 pub use reverts::{AccountRevert, RevertToSlot};
-pub use state::State;
+pub use state::{State, StateDBBox};
 pub use state_builder::StateBuilder;
 pub use transition_account::TransitionAccount;
 pub use transition_state::TransitionState;
