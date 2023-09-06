@@ -147,4 +147,21 @@ mod tests {
         let regolith_data_gas = l1_block_info.data_gas::<RegolithSpec>(&input);
         assert_eq!(regolith_data_gas, U256::from(56));
     }
+
+    #[test]
+    fn test_calculate_tx_l1_cost() {
+        let l1_block_info = L1BlockInfo {
+            l1_base_fee: U256::from(1_000),
+            l1_fee_overhead: U256::from(1_000),
+            l1_fee_scalar: U256::from(1_000),
+        };
+
+        // The gas cost here should be zero since the tx is a deposit
+        let input = Bytes::from(hex!("FACADE").to_vec());
+        let gas_cost = l1_block_info.calculate_tx_l1_cost::<BedrockSpec>(&input, true);
+        assert_eq!(gas_cost, U256::ZERO);
+
+        let gas_cost = l1_block_info.calculate_tx_l1_cost::<RegolithSpec>(&input, false);
+        assert_eq!(gas_cost, U256::from(1048));
+    }
 }
