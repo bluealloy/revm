@@ -135,7 +135,11 @@ pub struct CfgEnv {
     #[cfg(feature = "optional_no_base_fee")]
     pub disable_base_fee: bool,
     /// Enables Optimism's execution changes for deposit transactions and fee
-    /// collection.
+    /// collection. Hot toggling the optimism field at runtime gives
+    /// applications built ontop of revm the ability to switch optimism
+    /// execution on and off. This allows for features like multichain
+    /// fork testing. Setting this to false will disable all optimism
+    /// execution changes regardless of the optimism feature flag.
     #[cfg(feature = "optimism")]
     pub optimism: bool,
 }
