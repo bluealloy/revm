@@ -9,11 +9,16 @@ use revm_interpreter::primitives::{
     hash_map, Account, AccountInfo, Bytecode, HashMap, B160, B256, BLOCK_HASH_HISTORY, U256,
 };
 
+/// More constrained version of State that uses Boxed database with a lifetime.
+///
+/// This is used to make it easier to use State.
+pub type StateDBBox<'a, DBError> = State<Box<dyn Database<Error = DBError> + Send + 'a>>;
+
 /// State of blockchain.
 ///
 /// State clear flag is set inside CacheState and by default it is enabled.
 /// If you want to disable it use `set_state_clear_flag` function.
-pub struct State<'a, DBError> {
+pub struct State<DB: Database> {
     /// Cached state contains both changed from evm execution and cached/loaded account/storages
     /// from database. This allows us to have only one layer of cache where we can fetch data.
     /// Additionaly we can introduce some preloading of data from database.
@@ -22,7 +27,7 @@ pub struct State<'a, DBError> {
     /// return not existing account and storage.
     ///
     /// Note: It is marked as Send so database can be shared between threads.
-    pub database: Box<dyn Database<Error = DBError> + Send + 'a>,
+    pub database: DB, //Box<dyn Database<Error = DBError> + Send + 'a>,
     /// Block state, it aggregates transactions transitions into one state.
     ///
     /// Build reverts and state that gets applied to the state.
@@ -46,7 +51,7 @@ pub struct State<'a, DBError> {
     pub block_hashes: BTreeMap<u64, B256>,
 }
 
-impl<'a, DBError> State<'a, DBError> {
+impl<DB: Database> State<DB> {
     /// Iterate over received balances and increment all account balances.
     /// If account is not found inside cache state it will be loaded from database.
     ///
@@ -54,7 +59,7 @@ impl<'a, DBError> State<'a, DBError> {
     pub fn increment_balances(
         &mut self,
         balances: impl IntoIterator<Item = (B160, u128)>,
-    ) -> Result<(), DBError> {
+    ) -> Result<(), DB::Error> {
         // make transition and update cache state
         let mut transitions = Vec::new();
         for (address, balance) in balances {
@@ -74,7 +79,7 @@ impl<'a, DBError> State<'a, DBError> {
     pub fn drain_balances(
         &mut self,
         addresses: impl IntoIterator<Item = B160>,
-    ) -> Result<Vec<u128>, DBError> {
+    ) -> Result<Vec<u128>, DB::Error> {
         // make transition and update cache state
         let mut transitions = Vec::new();
         let mut balances = Vec::new();
@@ -130,11 +135,11 @@ impl<'a, DBError> State<'a, DBError> {
         if let Some(transition_state) = self.transition_state.as_mut().map(TransitionState::take) {
             self.bundle_state
                 .get_or_insert(BundleState::default())
-                .apply_block_substate_and_create_reverts(transition_state, retention);
+                .apply_transitions_and_create_reverts(transition_state, retention);
         }
     }
 
-    pub fn load_cache_account(&mut self, address: B160) -> Result<&mut CacheAccount, DBError> {
+    pub fn load_cache_account(&mut self, address: B160) -> Result<&mut CacheAccount, DB::Error> {
         match self.cache.accounts.entry(address) {
             hash_map::Entry::Vacant(entry) => {
                 if self.use_preloaded_bundle {
@@ -171,8 +176,8 @@ impl<'a, DBError> State<'a, DBError> {
     }
 }
 
-impl<'a, DBError> Database for State<'a, DBError> {
-    type Error = DBError;
+impl<DB: Database> Database for State<DB> {
+    type Error = DB::Error;
 
     fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
         self.load_cache_account(address).map(|a| a.account_info())
@@ -254,7 +259,7 @@ impl<'a, DBError> Database for State<'a, DBError> {
     }
 }
 
-impl<'a, DBError> DatabaseCommit for State<'a, DBError> {
+impl<DB: Database> DatabaseCommit for State<DB> {
     fn commit(&mut self, evm_state: HashMap<B160, Account>) {
         let transitions = self.cache.apply_evm_state(evm_state);
         self.apply_transition(transitions);
@@ -305,7 +310,7 @@ mod tests {
     /// state of the account before the block.
     #[test]
     fn reverts_preserve_old_values() {
-        let mut state = StateBuilder::default().build();
+        let mut state = StateBuilder::default().with_bundle_update().build();
 
         let (slot1, slot2, slot3) = (U256::from(1), U256::from(2), U256::from(3));
 
@@ -449,7 +454,7 @@ mod tests {
         // The new account revert should be `DeleteIt` since this was an account creation.
         // The existing account revert should be reverted to its previous state.
         assert_eq!(
-            bundle_state.reverts,
+            bundle_state.reverts.as_ref(),
             Vec::from([Vec::from([
                 (
                     new_account_address,
@@ -550,7 +555,7 @@ mod tests {
     /// Checks that the accounts and storages that are changed within the block and reverted to their previous state do not appear in the reverts.
     #[test]
     fn bundle_scoped_reverts_collapse() {
-        let mut state = StateBuilder::default().build();
+        let mut state = StateBuilder::default().with_bundle_update().build();
 
         // Non-existing account.
         let new_account_address = B160::from_slice(&[0x1; 20]);
@@ -682,12 +687,10 @@ mod tests {
         state.merge_transitions(BundleRetention::Reverts);
 
         let mut bundle_state = state.take_bundle();
-        for revert in &mut bundle_state.reverts {
-            revert.sort_unstable_by_key(|(address, _)| *address);
-        }
+        bundle_state.reverts.sort();
 
         assert_eq!(
-            bundle_state.reverts,
+            bundle_state.reverts.as_ref(),
             Vec::from([Vec::from([
                 // new account is destroyed as if it never existed.
                 // ( ... )
@@ -718,7 +721,7 @@ mod tests {
     /// Checks that the behavior of selfdestruct within the block is correct.
     #[test]
     fn selfdestruct_state_and_reverts() {
-        let mut state = StateBuilder::default().build();
+        let mut state = StateBuilder::default().with_bundle_update().build();
 
         // Existing account.
         let existing_account_address = B160::from_slice(&[0x1; 20]);
@@ -818,7 +821,7 @@ mod tests {
         );
 
         assert_eq!(
-            bundle_state.reverts,
+            bundle_state.reverts.as_ref(),
             Vec::from([Vec::from([(
                 existing_account_address,
                 AccountRevert {

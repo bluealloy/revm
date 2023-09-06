@@ -3,6 +3,6 @@
 use crate::{Database, Inspector};
 
 #[derive(Clone, Copy)]
-pub struct NoOpInspector();
+pub struct NoOpInspector;
 
 impl<DB: Database> Inspector<DB> for NoOpInspector {}

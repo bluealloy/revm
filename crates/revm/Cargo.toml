@@ -10,8 +10,8 @@ version = "3.3.0"
 readme = "../../README.md"
 
 [dependencies]
-revm-precompile = { path = "../precompile", version = "2.0.2", default-features = false }
 revm-interpreter = { path = "../interpreter", version = "1.1.2", default-features = false }
+revm-precompile = { path = "../precompile", version = "2.0.2", default-features = false }
 
 #misc
 auto_impl = { version = "1.1", default-features = false }

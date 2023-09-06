@@ -12,7 +12,7 @@ pub mod states;
 #[cfg(feature = "std")]
 pub use states::{
     AccountRevert, AccountStatus, BundleAccount, BundleState, CacheState, PlainAccount,
-    RevertToSlot, State, StateBuilder, StorageWithOriginalValues, TransitionAccount,
+    RevertToSlot, State, StateBuilder, StateDBBox, StorageWithOriginalValues, TransitionAccount,
     TransitionState,
 };
 
