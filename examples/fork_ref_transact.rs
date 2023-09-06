@@ -80,7 +80,7 @@ async fn main() -> Result<()> {
     // calldata formed via abigen
     evm.env.tx.data = Bytes::from(hex::decode(hex::encode(&encoded))?);
     // transaction value in wei
-    evm.env.tx.value = rU256::try_from(0)?;
+    evm.env.tx.value = rU256::from(0);
 
     // execute transaction without writing to the DB
     let ref_tx = evm.transact_ref().unwrap();
