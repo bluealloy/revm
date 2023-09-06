@@ -310,7 +310,7 @@ mod tests {
     /// state of the account before the block.
     #[test]
     fn reverts_preserve_old_values() {
-        let mut state = StateBuilder::default().build();
+        let mut state = StateBuilder::default().with_bundle_update().build();
 
         let (slot1, slot2, slot3) = (U256::from(1), U256::from(2), U256::from(3));
 
@@ -555,7 +555,7 @@ mod tests {
     /// Checks that the accounts and storages that are changed within the block and reverted to their previous state do not appear in the reverts.
     #[test]
     fn bundle_scoped_reverts_collapse() {
-        let mut state = StateBuilder::default().build();
+        let mut state = StateBuilder::default().with_bundle_update().build();
 
         // Non-existing account.
         let new_account_address = B160::from_slice(&[0x1; 20]);
@@ -721,7 +721,7 @@ mod tests {
     /// Checks that the behavior of selfdestruct within the block is correct.
     #[test]
     fn selfdestruct_state_and_reverts() {
-        let mut state = StateBuilder::default().build();
+        let mut state = StateBuilder::default().with_bundle_update().build();
 
         // Existing account.
         let existing_account_address = B160::from_slice(&[0x1; 20]);

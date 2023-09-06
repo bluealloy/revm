@@ -257,6 +257,7 @@ pub fn execute_test_suit(
                 ));
                 let mut state = revm::db::StateBuilder::default()
                     .with_cached_prestate(cache)
+                    .with_bundle_update()
                     .build();
                 let mut evm = revm::new();
                 evm.database(&mut state);
@@ -294,6 +295,7 @@ pub fn execute_test_suit(
                     ));
                     let mut state = revm::db::StateBuilder::default()
                         .with_cached_prestate(cache)
+                        .with_bundle_update()
                         .build();
                     evm.database(&mut state);
                     let _ =
