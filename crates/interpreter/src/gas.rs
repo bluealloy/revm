@@ -79,6 +79,8 @@ impl Gas {
 
     /// Records an explicit cost.
     ///
+    /// Returns `false` if the gas limit is exceeded.
+    ///
     /// This function is called on every instruction in the interpreter if the feature
     /// `no_gas_measuring` is not enabled.
     #[inline(always)]
