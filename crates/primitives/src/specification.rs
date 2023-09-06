@@ -77,15 +77,19 @@ pub trait Spec: Sized {
 
     #[inline(always)]
     fn enabled(spec_id: SpecId) -> bool {
-        // Optimism's Bedrock and Regolith hardforks implement changes on top of the Merge
-        // hardfork. This function is modified to preserve the original behavior of the
-        // spec IDs without having to put hardforks past Merge under
-        // `#[cfg(not(feature = "optimism"))]`.
         #[cfg(feature = "optimism")]
-        if (Self::SPEC_ID == SpecId::BEDROCK || Self::SPEC_ID == SpecId::REGOLITH)
-            && spec_id > SpecId::MERGE
         {
-            return false;
+            // If the Spec is Bedrock or Regolith, and the input is not Bedrock or Regolith,
+            // then no hardforks should be enabled after the merge. This is because Optimism's
+            // Bedrock and Regolith hardforks implement changes on top of the Merge hardfork.
+            let is_self_optimism =
+                Self::SPEC_ID == SpecId::BEDROCK || Self::SPEC_ID == SpecId::REGOLITH;
+            let input_not_optimism = spec_id != SpecId::BEDROCK && spec_id != SpecId::REGOLITH;
+            let after_merge = spec_id > SpecId::MERGE;
+
+            if is_self_optimism && input_not_optimism && after_merge {
+                return false;
+            }
         }
 
         Self::SPEC_ID as u8 >= spec_id as u8
@@ -128,3 +132,29 @@ spec!(LATEST, LatestSpec);
 spec!(BEDROCK, BedrockSpec);
 #[cfg(feature = "optimism")]
 spec!(REGOLITH, RegolithSpec);
+
+#[cfg(feature = "optimism")]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_bedrock_post_merge_hardforks() {
+        assert!(BedrockSpec::enabled(SpecId::MERGE));
+        assert!(!BedrockSpec::enabled(SpecId::SHANGHAI));
+        assert!(!BedrockSpec::enabled(SpecId::CANCUN));
+        assert!(!BedrockSpec::enabled(SpecId::LATEST));
+        assert!(BedrockSpec::enabled(SpecId::BEDROCK));
+        assert!(!BedrockSpec::enabled(SpecId::REGOLITH));
+    }
+
+    #[test]
+    fn test_regolith_post_merge_hardforks() {
+        assert!(RegolithSpec::enabled(SpecId::MERGE));
+        assert!(!RegolithSpec::enabled(SpecId::SHANGHAI));
+        assert!(!RegolithSpec::enabled(SpecId::CANCUN));
+        assert!(!RegolithSpec::enabled(SpecId::LATEST));
+        assert!(RegolithSpec::enabled(SpecId::BEDROCK));
+        assert!(RegolithSpec::enabled(SpecId::REGOLITH));
+    }
+}
