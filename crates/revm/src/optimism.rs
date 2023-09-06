@@ -163,5 +163,10 @@ mod tests {
 
         let gas_cost = l1_block_info.calculate_tx_l1_cost::<RegolithSpec>(&input, false);
         assert_eq!(gas_cost, U256::from(1048));
+
+        // Zero rollup data gas cost should result in zero for non-deposits
+        let input = Bytes::from(hex!("").to_vec());
+        let gas_cost = l1_block_info.calculate_tx_l1_cost::<RegolithSpec>(&input, false);
+        assert_eq!(gas_cost, U256::ZERO);
     }
 }
