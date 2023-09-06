@@ -589,7 +589,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
     /// Call precompile contract
     fn call_precompile(&mut self, inputs: &CallInputs, mut gas: Gas) -> CallResult {
-        let input_data = inputs.input.clone();
+        let input_data = &inputs.input;
         let contract = inputs.contract;
 
         let precompile = self
@@ -598,8 +598,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             .get(&contract)
             .expect("Check for precompile should be already done");
         let out = match precompile {
-            Precompile::Standard(fun) => fun(&input_data, gas.limit()),
-            Precompile::Custom(fun) => fun(&input_data, gas.limit()),
+            Precompile::Standard(fun) => fun(input_data, gas.limit()),
+            Precompile::Custom(fun) => fun(input_data, gas.limit()),
         };
         match out {
             Ok((gas_used, data)) => {
@@ -618,13 +618,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 }
             }
             Err(e) => {
-                let ret = if precompile::Error::OutOfGas == e {
+                let result = if precompile::Error::OutOfGas == e {
                     InstructionResult::PrecompileOOG
                 } else {
                     InstructionResult::PrecompileError
                 };
                 CallResult {
-                    result: ret,
+                    result,
                     gas,
                     return_value: Bytes::new(),
                 }
