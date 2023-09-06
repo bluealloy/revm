@@ -94,3 +94,32 @@ impl L1BlockInfo {
             .unwrap_or_default()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::primitives::specification::*;
+
+    #[test]
+    fn test_data_gas() {
+        let l1_block_info = L1BlockInfo {
+            l1_base_fee: U256::from(1_000_000),
+            l1_fee_overhead: U256::from(1_000_000),
+            l1_fee_scalar: U256::from(1_000_000),
+        };
+
+        // 0xFACADE = 6 nibbles = 3 bytes
+        // 1111 1010 | 1100 1010 | 1101 1110
+        // 111110101100101011011110
+        //
+        // gas cost = 3 non-zero bytes * NON_ZERO_BYTE_COST
+        // gas cost += NON_ZERO_BYTE_COST * 68
+
+        let input = Bytes::from(hex!("FACADE").to_vec());
+        let bedrock_data_gas = l1_block_info.data_gas::<BedrockSpec>(&input);
+        assert_eq!(bedrock_data_gas, U256::from(1136));
+
+        let regolith_data_gas = l1_block_info.data_gas::<RegolithSpec>(&input);
+        assert_eq!(regolith_data_gas, U256::from(48));
+    }
+}
