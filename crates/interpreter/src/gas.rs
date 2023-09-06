@@ -93,6 +93,85 @@ impl Gas {
         true
     }
 
+    /// Consumes the remaining gas.
+    #[cfg(not(feature = "optimism"))]
+    #[inline]
+    pub fn consume_gas(&mut self, ret_gas: Gas) {
+        self.erase_cost(ret_gas.remaining());
+        self.record_refund(ret_gas.refunded());
+    }
+
+    /// Consume the revert gas.
+    #[cfg(not(feature = "optimism"))]
+    #[inline]
+    pub fn consume_revert_gas(&mut self, ret_gas: Gas) {
+        self.erase_cost(ret_gas.remaining());
+    }
+
+    /// Consume revert gas limit.
+    #[cfg(feature = "optimism")]
+    #[inline]
+    pub fn consume_revert_gas(
+        &mut self,
+        is_optimism: bool,
+        is_deposit: bool,
+        is_regolith: bool,
+        ret_gas: Gas,
+    ) {
+        // On Optimism, deposit transactions report gas usage uniquely to other
+        // transactions due to them being pre-paid on L1.
+        //
+        // Hardfork Behavior:
+        // - Bedrock (revert path):
+        //   - Deposit transactions (all) report the gas limit as the amount of gas
+        //     used on failure. No refunds.
+        //   - Regular transactions receive a refund on remaining gas as normal.
+        // - Regolith (revert path):
+        //   - Deposit transactions (all) report the actual gas used as the amount of
+        //     gas used on failure. Refunds on remaining gas enabled.
+        //   - Regular transactions receive a refund on remaining gas as normal.
+        if is_optimism && (!is_deposit || is_regolith) {
+            self.erase_cost(ret_gas.remaining());
+        }
+    }
+
+    /// Consume remaining gas.
+    #[cfg(feature = "optimism")]
+    #[inline]
+    pub fn consume_gas(
+        &mut self,
+        is_optimism: bool,
+        is_deposit: bool,
+        is_regolith: bool,
+        tx_system: Option<bool>,
+        gas_limit: u64,
+        ret_gas: Gas,
+    ) {
+        // On Optimism, deposit transactions report gas usage uniquely to other
+        // transactions due to them being pre-paid on L1.
+        //
+        // Hardfork Behavior:
+        // - Bedrock (success path):
+        //   - Deposit transactions (non-system) report their gas limit as the usage.
+        //     No refunds.
+        //   - Deposit transactions (system) report 0 gas used. No refunds.
+        //   - Regular transactions report gas usage as normal.
+        // - Regolith (success path):
+        //   - Deposit transactions (all) report their gas used as normal. Refunds
+        //     enabled.
+        //   - Regular transactions report their gas used as normal.
+        if is_optimism && (!is_deposit || is_regolith) {
+            // For regular transactions prior to Regolith and all transactions after
+            // Regolith, gas is reported as normal.
+            self.erase_cost(ret_gas.remaining());
+            self.record_refund(ret_gas.refunded());
+        } else if is_deposit && tx_system.unwrap_or(false) {
+            // System transactions were a special type of deposit transaction in
+            // the Bedrock hardfork that did not incur any gas costs.
+            self.erase_cost(gas_limit);
+        }
+    }
+
     /// used in memory_resize! macro to record gas used for memory expansion.
     #[inline]
     pub fn record_memory(&mut self, gas_memory: u64) -> bool {
