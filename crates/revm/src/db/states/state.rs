@@ -52,6 +52,17 @@ pub struct State<DB: Database> {
 }
 
 impl<DB: Database> State<DB> {
+    /// Returns the size hint for the inner bundle state.
+    /// See [BundleState::size_hint] for more info.
+    ///
+    /// Returns `0` if bundle state is not set.
+    pub fn bundle_size_hint(&self) -> usize {
+        self.bundle_state
+            .as_ref()
+            .map(|s| s.size_hint())
+            .unwrap_or_default()
+    }
+
     /// Iterate over received balances and increment all account balances.
     /// If account is not found inside cache state it will be loaded from database.
     ///
