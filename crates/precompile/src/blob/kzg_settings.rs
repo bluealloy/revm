@@ -29,6 +29,6 @@ pub fn set_global(value: Box<KzgSettings>) -> Result<(), Box<KzgSettings>> {
 
 /// Creates a new a [KzgSettings] instance by initializing it with the default value.
 pub fn default() -> KzgSettings {
-    c_kzg::KzgSettings::load_trusted_setup(generated::G1_POINTS, generated::G2_POINTS)
+    KzgSettings::load_trusted_setup(generated::G1_POINTS, generated::G2_POINTS)
         .expect("failed to load default trusted setup")
 }
