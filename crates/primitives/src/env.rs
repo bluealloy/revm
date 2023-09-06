@@ -5,14 +5,14 @@ use crate::{
 use bytes::Bytes;
 use core::cmp::{min, Ordering};
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Env {
     pub cfg: CfgEnv,
     pub block: BlockEnv,
     pub tx: TxEnv,
 }
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlockEnv {
     pub number: U256,
@@ -30,7 +30,7 @@ pub struct BlockEnv {
     pub gas_limit: U256,
 }
 #[cfg(feature = "optimism")]
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct OptimismFields {
     pub source_hash: Option<B256>,
@@ -39,7 +39,7 @@ pub struct OptimismFields {
     pub l1_cost: Option<U256>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxEnv {
     /// Caller or Author or tx signer
@@ -59,7 +59,7 @@ pub struct TxEnv {
     pub optimism: OptimismFields,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TransactTo {
     Call(B160),
