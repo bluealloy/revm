@@ -36,7 +36,11 @@ pub struct OptimismFields {
     pub source_hash: Option<B256>,
     pub mint: Option<u128>,
     pub is_system_transaction: Option<bool>,
-    pub l1_cost: Option<U256>,
+    /// An enveloped EIP-2718 typed transaction. This is used
+    /// to compute the L1 tx cost using the L1 block info, as
+    /// opposed to requiring downstream apps to compute the cost
+    /// externally.
+    pub enveloped_tx: Bytes,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
