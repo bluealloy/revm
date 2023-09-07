@@ -409,7 +409,26 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                     Output::Create(return_value, _) => return_value,
                 },
             },
-            SuccessOrHalt::Halt(reason) => ExecutionResult::Halt { reason, gas_used },
+            SuccessOrHalt::Halt(reason) => {
+                // Post-regolith, if the transaction is a deposit transaction and the
+                // output is a contract creation, increment the account nonce even if
+                // the transaction halts.
+                #[cfg(feature = "optimism")]
+                {
+                    let is_creation = matches!(output, Output::Create(_, _));
+                    let regolith_enabled = GSPEC::enabled(SpecId::REGOLITH);
+                    let optimism_regolith = self.data.env.cfg.optimism && regolith_enabled;
+                    if is_deposit && is_creation && optimism_regolith {
+                        let (acc, _) = self
+                            .data
+                            .journaled_state
+                            .load_account(tx_caller, self.data.db)
+                            .map_err(EVMError::Database)?;
+                        acc.info.nonce = acc.info.nonce.checked_add(1).unwrap_or(u64::MAX);
+                    }
+                }
+                ExecutionResult::Halt { reason, gas_used }
+            }
             SuccessOrHalt::FatalExternalError => {
                 return Err(EVMError::Database(self.data.error.take().unwrap()));
             }
