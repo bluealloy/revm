@@ -80,7 +80,7 @@ pub enum CreateScheme {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct CfgEnv {
-    pub chain_id: U256,
+    pub chain_id: u64,
     pub spec_id: SpecId,
     /// Bytecode that is created with CREATE/CREATE2 is by default analysed and jumptable is created.
     /// This is very beneficial for testing and speeds up execution of that bytecode if called multiple times.
@@ -188,7 +188,7 @@ pub enum AnalysisKind {
 impl Default for CfgEnv {
     fn default() -> CfgEnv {
         CfgEnv {
-            chain_id: U256::from(1),
+            chain_id: 1,
             spec_id: SpecId::LATEST,
             perf_analyse_created_bytecodes: Default::default(),
             limit_contract_code_size: None,
@@ -308,7 +308,7 @@ impl Env {
 
         // Check if the transaction's chain id is correct
         if let Some(tx_chain_id) = self.tx.chain_id {
-            if U256::from(tx_chain_id) != self.cfg.chain_id {
+            if tx_chain_id != self.cfg.chain_id {
                 return Err(InvalidTransaction::InvalidChainId);
             }
         }
