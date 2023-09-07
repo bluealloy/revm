@@ -98,34 +98,32 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     fn remove_l1_cost(
         is_deposit: bool,
         tx_caller: B160,
-        tx_l1_cost: Option<U256>,
+        l1_cost: U256,
         db: &mut DB,
         journal: &mut JournaledState,
     ) -> Result<(), EVMError<DB::Error>> {
         if is_deposit {
             return Ok(());
         }
-        if let Some(l1_cost) = tx_l1_cost {
-            let acc = journal
-                .load_account(tx_caller, db)
-                .map_err(EVMError::Database)?
-                .0;
-            if l1_cost.gt(&acc.info.balance) {
-                let x = l1_cost.as_limbs();
-                let u64_cost = if x[1] == 0 && x[2] == 0 && x[3] == 0 {
-                    x[0]
-                } else {
-                    u64::MAX
-                };
-                return Err(EVMError::Transaction(
-                    InvalidTransaction::LackOfFundForMaxFee {
-                        fee: u64_cost,
-                        balance: acc.info.balance,
-                    },
-                ));
-            }
-            acc.info.balance = acc.info.balance.saturating_sub(l1_cost);
+        let acc = journal
+            .load_account(tx_caller, db)
+            .map_err(EVMError::Database)?
+            .0;
+        if l1_cost.gt(&acc.info.balance) {
+            let x = l1_cost.as_limbs();
+            let u64_cost = if x[1] == 0 && x[2] == 0 && x[3] == 0 {
+                x[0]
+            } else {
+                u64::MAX
+            };
+            return Err(EVMError::Transaction(
+                InvalidTransaction::LackOfFundForMaxFee {
+                    fee: u64_cost,
+                    balance: acc.info.balance,
+                },
+            ));
         }
+        acc.info.balance = acc.info.balance.saturating_sub(l1_cost);
         Ok(())
     }
 
@@ -193,12 +191,19 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let effective_gas_price = env.effective_gas_price();
 
         #[cfg(feature = "optimism")]
-        let (tx_mint, tx_system, tx_l1_cost, is_deposit) = (
+        let (tx_mint, tx_system, is_deposit) = (
             env.tx.optimism.mint,
             env.tx.optimism.is_system_transaction,
-            env.tx.optimism.l1_cost,
             env.tx.optimism.source_hash.is_some(),
         );
+
+        // Perform this calculation optimistically to avoid cloning the enveloped tx.
+        #[cfg(feature = "optimism")]
+        let tx_l1_cost = {
+            let l1_block_info =
+                optimism::L1BlockInfo::try_fetch(&mut self.data.db).map_err(EVMError::Database)?;
+            l1_block_info.calculate_tx_l1_cost::<GSPEC>(&env.tx.optimism.enveloped_tx, is_deposit)
+        };
 
         let initial_gas_spend =
             initial_tx_gas::<GSPEC>(&tx_data, tx_is_create, &env.tx.access_list);
@@ -481,18 +486,21 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     panic!("[OPTIMISM] Failed to load L1 block information.");
                 };
 
-                // Send the L1 cost of the transaction to the L1 Fee Vault.
-                if let Some(l1_cost) = self.data.env.tx.optimism.l1_cost {
-                    let Ok((l1_fee_vault_account, _)) = self
-                        .data
-                        .journaled_state
-                        .load_account(optimism::L1_FEE_RECIPIENT, self.data.db)
-                    else {
-                        panic!("[OPTIMISM] Failed to load L1 Fee Vault account");
-                    };
-                    l1_fee_vault_account.mark_touch();
-                    l1_fee_vault_account.info.balance += l1_cost;
-                }
+                let l1_cost = l1_block_info.calculate_tx_l1_cost::<SPEC>(
+                    &self.data.env.tx.optimism.enveloped_tx,
+                    is_deposit,
+                );
+
+                // Send the L1 cost of the transaction to the L1 Fee Vault.               if let Some(l1_cost) = self.data.env.tx.optimism.l1_cost {
+                let Ok((l1_fee_vault_account, _)) = self
+                    .data
+                    .journaled_state
+                    .load_account(optimism::L1_FEE_RECIPIENT, self.data.db)
+                else {
+                    panic!("[OPTIMISM] Failed to load L1 Fee Vault account");
+                };
+                l1_fee_vault_account.mark_touch();
+                l1_fee_vault_account.info.balance += l1_cost;
 
                 // Send the base fee of the transaction to the Base Fee Vault.
                 let Ok((base_fee_vault_account, _)) = self
