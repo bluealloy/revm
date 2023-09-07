@@ -200,6 +200,39 @@ mod tests {
 
     #[cfg(not(feature = "optimism"))]
     #[test]
+    fn test_consume_gas() {
+        let mut gas = Gas::new(100);
+        gas.record_cost(50);
+        assert_eq!(gas.remaining(), 50);
+        assert_eq!(gas.used, 50);
+        assert_eq!(gas.all_used_gas, 50);
+
+        // Consume the revert gas
+        gas.consume_gas(Gas::new(50));
+        assert_eq!(gas, Gas::new(100));
+    }
+
+    #[cfg(not(feature = "optimism"))]
+    #[test]
+    fn test_consume_gas_with_refund() {
+        let mut gas = Gas::new(100);
+        gas.record_cost(50);
+        assert_eq!(gas.remaining(), 50);
+        assert_eq!(gas.used, 50);
+        assert_eq!(gas.all_used_gas, 50);
+
+        // Consume the revert gas
+        let mut ret_gas = Gas::new(50);
+        ret_gas.record_refund(50);
+        gas.consume_gas(ret_gas);
+        assert_eq!(gas.remaining(), 100);
+        assert_eq!(gas.used, 0);
+        assert_eq!(gas.all_used_gas, 0);
+        assert_eq!(gas.refunded, 50);
+    }
+
+    #[cfg(not(feature = "optimism"))]
+    #[test]
     fn test_revert_gas() {
         let mut gas = Gas::new(100);
         gas.record_cost(50);
