@@ -2,17 +2,20 @@ use super::{
     bundle_state::BundleRetention, cache::CacheState, plain_account::PlainStorage, BundleState,
     CacheAccount, TransitionState,
 };
-use crate::TransitionAccount;
+use crate::{db::EmptyDB, StateBuilder, TransitionAccount};
 use alloc::collections::{btree_map, BTreeMap};
 use revm_interpreter::primitives::{
     db::{Database, DatabaseCommit},
     hash_map, Account, AccountInfo, Bytecode, HashMap, B160, B256, BLOCK_HASH_HISTORY, U256,
 };
 
+/// Database boxed with a lifetime and Send.
+pub type DBBox<'a, E> = Box<dyn Database<Error = E> + Send + 'a>;
+
 /// More constrained version of State that uses Boxed database with a lifetime.
 ///
 /// This is used to make it easier to use State.
-pub type StateDBBox<'a, DBError> = State<Box<dyn Database<Error = DBError> + Send + 'a>>;
+pub type StateDBBox<'a, E> = State<DBBox<'a, E>>;
 
 /// State of blockchain.
 ///
@@ -51,7 +54,26 @@ pub struct State<DB: Database> {
     pub block_hashes: BTreeMap<u64, B256>,
 }
 
+// Have ability to call State::builder without having to specify the type.
+impl State<EmptyDB> {
+    /// Return the builder that build the State.
+    pub fn builder() -> StateBuilder<EmptyDB> {
+        StateBuilder::default()
+    }
+}
+
 impl<DB: Database> State<DB> {
+    /// Returns the size hint for the inner bundle state.
+    /// See [BundleState::size_hint] for more info.
+    ///
+    /// Returns `0` if bundle state is not set.
+    pub fn bundle_size_hint(&self) -> usize {
+        self.bundle_state
+            .as_ref()
+            .map(|s| s.size_hint())
+            .unwrap_or_default()
+    }
+
     /// Iterate over received balances and increment all account balances.
     /// If account is not found inside cache state it will be loaded from database.
     ///
@@ -269,18 +291,15 @@ impl<DB: Database> DatabaseCommit for State<DB> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        db::{
-            states::reverts::AccountInfoRevert, AccountRevert, AccountStatus, BundleAccount,
-            RevertToSlot,
-        },
-        StateBuilder,
+    use crate::db::{
+        states::reverts::AccountInfoRevert, AccountRevert, AccountStatus, BundleAccount,
+        RevertToSlot,
     };
     use revm_interpreter::primitives::{keccak256, StorageSlot};
 
     #[test]
     fn block_hash_cache() {
-        let mut state = StateBuilder::default().build();
+        let mut state = State::builder().build();
         state.block_hash(U256::from(1)).unwrap();
         state.block_hash(U256::from(2)).unwrap();
 
@@ -310,7 +329,7 @@ mod tests {
     /// state of the account before the block.
     #[test]
     fn reverts_preserve_old_values() {
-        let mut state = StateBuilder::default().with_bundle_update().build();
+        let mut state = State::builder().with_bundle_update().build();
 
         let (slot1, slot2, slot3) = (U256::from(1), U256::from(2), U256::from(3));
 
@@ -555,7 +574,7 @@ mod tests {
     /// Checks that the accounts and storages that are changed within the block and reverted to their previous state do not appear in the reverts.
     #[test]
     fn bundle_scoped_reverts_collapse() {
-        let mut state = StateBuilder::default().with_bundle_update().build();
+        let mut state = State::builder().with_bundle_update().build();
 
         // Non-existing account.
         let new_account_address = B160::from_slice(&[0x1; 20]);
@@ -721,7 +740,7 @@ mod tests {
     /// Checks that the behavior of selfdestruct within the block is correct.
     #[test]
     fn selfdestruct_state_and_reverts() {
-        let mut state = StateBuilder::default().with_bundle_update().build();
+        let mut state = State::builder().with_bundle_update().build();
 
         // Existing account.
         let existing_account_address = B160::from_slice(&[0x1; 20]);

@@ -1,7 +1,10 @@
-use super::{cache::CacheState, BundleState, State, TransitionState};
+use super::{cache::CacheState, state::DBBox, BundleState, State, TransitionState};
 use crate::db::EmptyDB;
 use alloc::collections::BTreeMap;
-use revm_interpreter::primitives::{db::Database, B256};
+use revm_interpreter::primitives::{
+    db::{Database, DatabaseRef, WrapDatabaseRef},
+    B256,
+};
 
 /// Allows building of State and initializing it with different options.
 pub struct StateBuilder<DB> {
@@ -12,7 +15,7 @@ pub struct StateBuilder<DB> {
     /// return not existing account and storage.
     ///
     /// Note: It is marked as Send so database can be shared between threads.
-    database: DB, //Box<dyn Database<Error = DBError> + Send + 'a>,
+    database: DB,
     /// if there is prestate that we want to use.
     /// This would mean that we have additional state layer between evm and disk/database.
     with_bundle_prestate: Option<BundleState>,
@@ -29,11 +32,11 @@ pub struct StateBuilder<DB> {
     with_block_hashes: BTreeMap<u64, B256>,
 }
 
-impl Default for StateBuilder<Box<EmptyDB>> {
+impl Default for StateBuilder<EmptyDB> {
     fn default() -> Self {
         Self {
             with_state_clear: true,
-            database: Box::<EmptyDB>::default(),
+            database: EmptyDB::default(),
             with_cache_prestate: None,
             with_bundle_prestate: None,
             with_bundle_update: false,
@@ -45,14 +48,12 @@ impl Default for StateBuilder<Box<EmptyDB>> {
 
 impl<DB: Database> StateBuilder<DB> {
     /// Create default instance of builder.
-    pub fn new() -> StateBuilder<Box<EmptyDB>> {
-        StateBuilder::<Box<EmptyDB>>::default()
+    pub fn new() -> StateBuilder<EmptyDB> {
+        StateBuilder::default()
     }
 
-    pub fn with_database_boxed<'a, NewDBError>(
-        self,
-        database: Box<dyn Database<Error = NewDBError> + Send + 'a>,
-    ) -> StateBuilder<Box<dyn Database<Error = NewDBError> + Send + 'a>> {
+    /// With generic database.
+    pub fn with_database<ODB: Database>(self, database: ODB) -> StateBuilder<ODB> {
         // cast to the different database,
         // Note that we return different type depending of the database NewDBError.
         StateBuilder {
@@ -64,6 +65,22 @@ impl<DB: Database> StateBuilder<DB> {
             with_background_transition_merge: self.with_background_transition_merge,
             with_block_hashes: self.with_block_hashes,
         }
+    }
+
+    /// Takes [DatabaseRef] and wraps [WrapDatabaseRef] around it.
+    pub fn with_database_ref<ODB: DatabaseRef>(
+        self,
+        database: ODB,
+    ) -> StateBuilder<WrapDatabaseRef<ODB>> {
+        self.with_database(WrapDatabaseRef(database))
+    }
+
+    /// With boxed version of database.
+    pub fn with_database_boxed<Error>(
+        self,
+        database: DBBox<'_, Error>,
+    ) -> StateBuilder<DBBox<'_, Error>> {
+        self.with_database(database)
     }
 
     /// By default state clear flag is enabled but for initial sync on mainnet

@@ -14,13 +14,13 @@ pub mod transition_state;
 /// Account status for Block and Bundle states.
 pub use account_status::AccountStatus;
 pub use bundle_account::BundleAccount;
-pub use bundle_state::BundleState;
+pub use bundle_state::{BundleState, OriginalValuesKnown};
 pub use cache::CacheState;
 pub use cache_account::CacheAccount;
 pub use changes::{PlainStateReverts, PlainStorageChangeset, PlainStorageRevert, StateChangeset};
 pub use plain_account::{PlainAccount, StorageWithOriginalValues};
 pub use reverts::{AccountRevert, RevertToSlot};
-pub use state::{State, StateDBBox};
+pub use state::{DBBox, State, StateDBBox};
 pub use state_builder::StateBuilder;
 pub use transition_account::TransitionAccount;
 pub use transition_state::TransitionState;
