@@ -571,7 +571,8 @@ mod tests {
         );
     }
 
-    /// Checks that the accounts and storages that are changed within the block and reverted to their previous state do not appear in the reverts.
+    /// Checks that the accounts and storages that are changed within the
+    /// block and reverted to their previous state do not appear in the reverts.
     #[test]
     fn bundle_scoped_reverts_collapse() {
         let mut state = State::builder().with_bundle_update().build();
@@ -708,33 +709,9 @@ mod tests {
         let mut bundle_state = state.take_bundle();
         bundle_state.reverts.sort();
 
-        assert_eq!(
-            bundle_state.reverts.as_ref(),
-            Vec::from([Vec::from([
-                // new account is destroyed as if it never existed.
-                // ( ... )
-                //
-                // existing account should not result in an actionable revert
-                (
-                    existing_account_address,
-                    AccountRevert {
-                        account: AccountInfoRevert::DoNothing,
-                        previous_status: AccountStatus::Loaded,
-                        ..Default::default()
-                    }
-                ),
-                // existing account with storage should not result in an actionable revert
-                (
-                    existing_account_with_storage_address,
-                    AccountRevert {
-                        account: AccountInfoRevert::DoNothing,
-                        previous_status: AccountStatus::Loaded,
-                        storage: HashMap::default(),
-                        wipe_storage: false
-                    }
-                ),
-            ])])
-        );
+        // both account info and storage are left as before transitions,
+        // therefore there is nothing to revert
+        assert_eq!(bundle_state.reverts.as_ref(), Vec::from([Vec::from([])]));
     }
 
     /// Checks that the behavior of selfdestruct within the block is correct.
