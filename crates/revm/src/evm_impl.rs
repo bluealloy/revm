@@ -22,8 +22,6 @@ use revm_precompile::{Precompile, Precompiles};
 #[cfg(feature = "optimism")]
 use crate::optimism;
 #[cfg(feature = "optimism")]
-use crate::primitives::specification::RegolithSpec;
-#[cfg(feature = "optimism")]
 use core::ops::Mul;
 
 pub struct EVMData<'a, DB: Database> {
@@ -418,7 +416,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                 #[cfg(feature = "optimism")]
                 {
                     let is_creation = matches!(output, Output::Create(_, _));
-                    let regolith_enabled = RegolithSpec::enabled(self.data.env.cfg.spec_id);
+                    let regolith_enabled = GSPEC::enabled(SpecId::REGOLITH);
                     let optimism_regolith = self.data.env.cfg.optimism && regolith_enabled;
                     if is_deposit && is_creation && optimism_regolith {
                         let (acc, _) = self
