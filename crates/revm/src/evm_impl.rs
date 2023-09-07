@@ -1123,6 +1123,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     }
 }
 
+#[cfg(feature = "optimism")]
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1131,7 +1132,6 @@ mod tests {
     use crate::primitives::specification::BedrockSpec;
     use crate::primitives::state::AccountInfo;
 
-    #[cfg(feature = "optimism")]
     #[test]
     fn test_commit_mint_value() {
         let caller = B160::zero();
@@ -1176,5 +1176,91 @@ mod tests {
         );
         let (account, _) = journal.load_account(caller, &mut db).unwrap();
         assert_eq!(account.info.balance, U256::from(101));
+    }
+
+    #[test]
+    fn test_remove_l1_cost_non_deposit() {
+        let caller = B160::zero();
+        let mut db = InMemoryDB::default();
+        let mut journal = JournaledState::new(0);
+        let slots = &[U256::from(100)];
+        journal
+            .initial_account_load(caller, slots, &mut db)
+            .unwrap();
+        assert!(EVMImpl::<BedrockSpec, InMemoryDB, false>::remove_l1_cost(
+            true,
+            caller,
+            None,
+            &mut db,
+            &mut journal
+        )
+        .is_ok(),);
+    }
+
+    #[test]
+    fn test_remove_l1_cost() {
+        let caller = B160::zero();
+        let tx_l1_cost = Some(U256::from(1));
+        let mut db = InMemoryDB::default();
+        db.insert_account_info(
+            caller,
+            AccountInfo {
+                nonce: 0,
+                balance: U256::from(100),
+                code_hash: B256::zero(),
+                code: None,
+            },
+        );
+        let mut journal = JournaledState::new(0);
+        journal
+            .initial_account_load(caller, &[U256::from(100)], &mut db)
+            .unwrap();
+        assert!(EVMImpl::<BedrockSpec, InMemoryDB, false>::remove_l1_cost(
+            false,
+            caller,
+            tx_l1_cost,
+            &mut db,
+            &mut journal
+        )
+        .is_ok(),);
+
+        // Check the account balance is updated.
+        let (account, _) = journal.load_account(caller, &mut db).unwrap();
+        assert_eq!(account.info.balance, U256::from(99));
+    }
+
+    #[test]
+    fn test_remove_l1_cost_lack_of_funds() {
+        let caller = B160::zero();
+        let tx_l1_cost = Some(U256::from(101));
+        let mut db = InMemoryDB::default();
+        db.insert_account_info(
+            caller,
+            AccountInfo {
+                nonce: 0,
+                balance: U256::from(100),
+                code_hash: B256::zero(),
+                code: None,
+            },
+        );
+        let mut journal = JournaledState::new(0);
+        journal
+            .initial_account_load(caller, &[U256::from(100)], &mut db)
+            .unwrap();
+        assert_eq!(
+            EVMImpl::<BedrockSpec, InMemoryDB, false>::remove_l1_cost(
+                false,
+                caller,
+                tx_l1_cost,
+                &mut db,
+                &mut journal
+            ),
+            Err(EVMError::Transaction(
+                InvalidTransaction::LackOfFundForMaxFee {
+                    fee: 101u64,
+                    balance: U256::from(100),
+                },
+            ))
+        );
     }
 }
