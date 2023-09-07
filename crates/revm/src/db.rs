@@ -11,9 +11,9 @@ pub mod states;
 
 #[cfg(feature = "std")]
 pub use states::{
-    AccountRevert, AccountStatus, BundleAccount, BundleState, CacheState, PlainAccount,
-    RevertToSlot, State, StateBuilder, StateDBBox, StorageWithOriginalValues, TransitionAccount,
-    TransitionState,
+    AccountRevert, AccountStatus, BundleAccount, BundleState, CacheState, DBBox,
+    OriginalValuesKnown, PlainAccount, RevertToSlot, State, StateBuilder, StateDBBox,
+    StorageWithOriginalValues, TransitionAccount, TransitionState,
 };
 
 #[cfg(all(not(feature = "ethersdb"), feature = "web3db"))]

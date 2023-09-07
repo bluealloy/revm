@@ -441,11 +441,7 @@ impl BundleState {
     }
 
     /// Consume the bundle state and return sorted plain state.
-    ///
-    /// `omit_changed_check` does not check if account is same as
-    /// original state, this assumption can't be made in cases when
-    /// we split the bundle state and commit parts of it.
-    pub fn into_plain_state_sorted(self, omit_changed_check: bool) -> StateChangeset {
+    pub fn into_plain_state_sorted(self, is_value_known: OriginalValuesKnown) -> StateChangeset {
         // pessimistically pre-allocate assuming _all_ accounts changed.
         let state_len = self.state.len();
         let mut accounts = Vec::with_capacity(state_len);
@@ -454,7 +450,7 @@ impl BundleState {
         for (address, account) in self.state {
             // append account info if it is changed.
             let was_destroyed = account.was_destroyed();
-            if omit_changed_check || account.is_info_changed() {
+            if is_value_known.is_not_known() || account.is_info_changed() {
                 let info = account.info.map(AccountInfo::without_code);
                 accounts.push((address, info));
             }
@@ -474,7 +470,10 @@ impl BundleState {
                 // so we can update it.
                 let not_destroyed_and_changed = !was_destroyed && slot.is_changed();
 
-                if omit_changed_check || destroyed_and_not_zero || not_destroyed_and_changed {
+                if is_value_known.is_not_known()
+                    || destroyed_and_not_zero
+                    || not_destroyed_and_changed
+                {
                     account_storage_changed.push((key, slot.present_value));
                 }
             }
@@ -510,10 +509,10 @@ impl BundleState {
     /// Consume the bundle state and split it into reverts and plain state.
     pub fn into_sorted_plain_state_and_reverts(
         mut self,
-        omit_changed_check: bool,
+        is_value_known: OriginalValuesKnown,
     ) -> (StateChangeset, PlainStateReverts) {
         let reverts = self.take_all_reverts();
-        let plain_state = self.into_plain_state_sorted(omit_changed_check);
+        let plain_state = self.into_plain_state_sorted(is_value_known);
         (plain_state, reverts.into_plain_state_reverts())
     }
 
