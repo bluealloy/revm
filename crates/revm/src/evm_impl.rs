@@ -110,7 +110,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             .map_err(EVMError::Database)?
             .0;
         if l1_cost.gt(&acc.info.balance) {
-            let x = l1_cost.as_limbs();
             let u64_cost = if U256::from(u64::MAX).lt(&l1_cost) {
                 u64::MAX
             } else {
