@@ -93,14 +93,6 @@ impl Gas {
         true
     }
 
-    /// Consumes the remaining gas.
-    #[cfg(not(feature = "optimism"))]
-    #[inline]
-    pub fn consume_gas(&mut self, ret_gas: Gas) {
-        self.erase_cost(ret_gas.remaining());
-        self.record_refund(ret_gas.refunded());
-    }
-
     /// Consume the revert gas.
     #[cfg(not(feature = "optimism"))]
     #[inline]
@@ -133,6 +125,14 @@ impl Gas {
         if is_optimism && (!is_deposit || is_regolith) {
             self.erase_cost(ret_gas.remaining());
         }
+    }
+
+    /// Consumes the remaining gas.
+    #[cfg(not(feature = "optimism"))]
+    #[inline]
+    pub fn consume_gas(&mut self, ret_gas: Gas) {
+        self.erase_cost(ret_gas.remaining());
+        self.record_refund(ret_gas.refunded());
     }
 
     /// Consume remaining gas.
