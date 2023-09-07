@@ -194,7 +194,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             let is_deposit = env.tx.optimism.source_hash.is_some();
 
             let l1_block_info =
-                optimism::L1BlockInfo::try_fetch_mut(self.data.db, self.data.env.cfg.optimism)?;
+                optimism::L1BlockInfo::try_fetch(self.data.db, self.data.env.cfg.optimism)?;
 
             // Perform this calculation optimistically to avoid cloning the enveloped tx.
             let tx_l1_cost = l1_block_info.clone().map(|l1_block_info| {
