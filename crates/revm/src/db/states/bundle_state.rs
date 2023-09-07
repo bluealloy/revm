@@ -27,6 +27,25 @@ pub struct BundleBuilder {
     contracts: HashMap<B256, Bytecode>,
 }
 
+/// Option for [`BundleState`] when converting it to the plain state.
+pub enum OriginalValuesKnown {
+    /// Check changed with original values that [BundleState] has
+    /// If we dont expect parent blocks to be committed or unwinded from database
+    /// this option should be used.
+    Yes,
+    /// Dont check original values, see CheckOriginalValues for more info.
+    /// If Bundle can be split or extended we would not be sure about
+    /// original values so this option should be used.
+    No,
+}
+
+impl OriginalValuesKnown {
+    /// Original value is not known for sure.
+    pub fn is_not_known(&self) -> bool {
+        matches!(self, Self::No)
+    }
+}
+
 impl Default for BundleBuilder {
     fn default() -> Self {
         BundleBuilder {
@@ -128,6 +147,7 @@ impl BundleBuilder {
 
     /// Create `BundleState` instance based on collected information
     pub fn build(mut self) -> BundleState {
+        let mut state_size = 0;
         let state = self
             .states
             .into_iter()
@@ -147,10 +167,12 @@ impl BundleBuilder {
                     storage,
                     AccountStatus::Changed,
                 );
+                state_size += bundle_account.size_hint();
                 (address, bundle_account)
             })
             .collect();
 
+        let mut reverts_size = 0;
         let mut reverts_map = BTreeMap::new();
         for block_number in self.revert_range {
             reverts_map.insert(block_number, Vec::new());
@@ -184,6 +206,7 @@ impl BundleBuilder {
                 };
 
                 if reverts_map.contains_key(&block_number) {
+                    reverts_size += account_revert.size_hint();
                     reverts_map
                         .entry(block_number)
                         .or_insert(Vec::new())
@@ -195,6 +218,8 @@ impl BundleBuilder {
             state,
             contracts: self.contracts,
             reverts: Reverts::new(reverts_map.into_values().collect()),
+            state_size,
+            reverts_size,
         }
     }
 }
@@ -222,7 +247,7 @@ impl BundleRetention {
 ///
 /// Reverts and created when TransitionState is applied to BundleState.
 /// And can be used to revert BundleState to the state before transition.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Default, Clone, Debug, PartialEq, Eq)]
 pub struct BundleState {
     /// Account state.
     pub state: HashMap<B160, BundleAccount>,
@@ -230,21 +255,16 @@ pub struct BundleState {
     pub contracts: HashMap<B256, Bytecode>,
     /// Changes to revert.
     ///
-    /// If `should_collect_reverts` flag was set to `false`, the revert for any given block will be just an empty array.
+    /// If `should_collect_reverts` flag was set to `false`,
+    /// the revert for any given block will be just an empty array.
     ///  
     /// Note: Inside vector is *not* sorted by address.
     /// But it is unique by address.
     pub reverts: Reverts,
-}
-
-impl Default for BundleState {
-    fn default() -> Self {
-        Self {
-            state: HashMap::new(),
-            contracts: HashMap::new(),
-            reverts: Reverts::default(),
-        }
-    }
+    /// The size of the plain state in the bundle state.
+    pub state_size: usize,
+    /// The size of reverts in the bundle state.
+    pub reverts_size: usize,
 }
 
 impl BundleState {
@@ -275,25 +295,26 @@ impl BundleState {
         contracts: impl IntoIterator<Item = (B256, Bytecode)>,
     ) -> Self {
         // Create state from iterator.
+        let mut state_size = 0;
         let state = state
             .into_iter()
             .map(|(address, original, present, storage)| {
-                (
-                    address,
-                    BundleAccount::new(
-                        original,
-                        present,
-                        storage
-                            .into_iter()
-                            .map(|(k, (o_val, p_val))| (k, StorageSlot::new_changed(o_val, p_val)))
-                            .collect(),
-                        AccountStatus::Changed,
-                    ),
-                )
+                let account = BundleAccount::new(
+                    original,
+                    present,
+                    storage
+                        .into_iter()
+                        .map(|(k, (o_val, p_val))| (k, StorageSlot::new_changed(o_val, p_val)))
+                        .collect(),
+                    AccountStatus::Changed,
+                );
+                state_size += account.size_hint();
+                (address, account)
             })
             .collect();
 
         // Create reverts from iterator.
+        let mut reverts_size = 0;
         let reverts = reverts
             .into_iter()
             .map(|block_reverts| {
@@ -305,18 +326,17 @@ impl BundleState {
                             Some(None) => AccountInfoRevert::DeleteIt,
                             None => AccountInfoRevert::DoNothing,
                         };
-                        (
-                            address,
-                            AccountRevert {
-                                account,
-                                storage: storage
-                                    .into_iter()
-                                    .map(|(k, v)| (k, RevertToSlot::Some(v)))
-                                    .collect(),
-                                previous_status: AccountStatus::Changed,
-                                wipe_storage: false,
-                            },
-                        )
+                        let revert = AccountRevert {
+                            account,
+                            storage: storage
+                                .into_iter()
+                                .map(|(k, v)| (k, RevertToSlot::Some(v)))
+                                .collect(),
+                            previous_status: AccountStatus::Changed,
+                            wipe_storage: false,
+                        };
+                        reverts_size += revert.size_hint();
+                        (address, revert)
                     })
                     .collect::<Vec<_>>()
             })
@@ -326,7 +346,16 @@ impl BundleState {
             state,
             contracts: contracts.into_iter().collect(),
             reverts: Reverts::new(reverts),
+            state_size,
+            reverts_size,
         }
+    }
+
+    /// Returns the approximate size of changes in the bundle state.
+    /// The estimation is not precise, because the information about the number of
+    /// destroyed entries that need to be removed is not accessible to the bundle state.
+    pub fn size_hint(&self) -> usize {
+        self.state_size + self.reverts_size + self.contracts.len()
     }
 
     /// Return reference to the state.
@@ -379,14 +408,20 @@ impl BundleState {
             // update state and create revert.
             let revert = match self.state.entry(address) {
                 hash_map::Entry::Occupied(mut entry) => {
+                    let entry = entry.get_mut();
+                    self.state_size -= entry.size_hint();
                     // update and create revert if it is present
-                    entry.get_mut().update_and_create_revert(transition)
+                    let revert = entry.update_and_create_revert(transition);
+                    // update the state size
+                    self.state_size += entry.size_hint();
+                    revert
                 }
                 hash_map::Entry::Vacant(entry) => {
                     // make revert from transition account
                     let present_bundle = transition.present_bundle_account();
                     let revert = transition.create_revert();
                     if revert.is_some() {
+                        self.state_size += present_bundle.size_hint();
                         entry.insert(present_bundle);
                     }
                     revert
@@ -395,6 +430,7 @@ impl BundleState {
 
             // append revert if present.
             if let Some(revert) = revert.filter(|_| include_reverts) {
+                self.reverts_size += revert.size_hint();
                 reverts.push((address, revert));
             }
         }
@@ -403,11 +439,7 @@ impl BundleState {
     }
 
     /// Consume the bundle state and return sorted plain state.
-    ///
-    /// `omit_changed_check` does not check if account is same as
-    /// original state, this assumption can't be made in cases when
-    /// we split the bundle state and commit parts of it.
-    pub fn into_plain_state_sorted(self, omit_changed_check: bool) -> StateChangeset {
+    pub fn into_plain_state_sorted(self, is_value_known: OriginalValuesKnown) -> StateChangeset {
         // pessimistically pre-allocate assuming _all_ accounts changed.
         let state_len = self.state.len();
         let mut accounts = Vec::with_capacity(state_len);
@@ -416,7 +448,7 @@ impl BundleState {
         for (address, account) in self.state {
             // append account info if it is changed.
             let was_destroyed = account.was_destroyed();
-            if omit_changed_check || account.is_info_changed() {
+            if is_value_known.is_not_known() || account.is_info_changed() {
                 let info = account.info.map(AccountInfo::without_code);
                 accounts.push((address, info));
             }
@@ -436,7 +468,10 @@ impl BundleState {
                 // so we can update it.
                 let not_destroyed_and_changed = !was_destroyed && slot.is_changed();
 
-                if omit_changed_check || destroyed_and_not_zero || not_destroyed_and_changed {
+                if is_value_known.is_not_known()
+                    || destroyed_and_not_zero
+                    || not_destroyed_and_changed
+                {
                     account_storage_changed.push((key, slot.present_value));
                 }
             }
@@ -472,10 +507,10 @@ impl BundleState {
     /// Consume the bundle state and split it into reverts and plain state.
     pub fn into_sorted_plain_state_and_reverts(
         mut self,
-        omit_changed_check: bool,
+        is_value_known: OriginalValuesKnown,
     ) -> (StateChangeset, PlainStateReverts) {
         let reverts = self.take_all_reverts();
-        let plain_state = self.into_plain_state_sorted(omit_changed_check);
+        let plain_state = self.into_plain_state_sorted(is_value_known);
         (plain_state, reverts.into_plain_state_reverts())
     }
 
@@ -512,12 +547,16 @@ impl BundleState {
                     }
                 }
             }
+
+            // Increment reverts size for each of the updated reverts.
+            self.reverts_size += revert.size_hint();
         }
 
         for (address, other_account) in other.state {
             match self.state.entry(address) {
                 hash_map::Entry::Occupied(mut entry) => {
                     let this = entry.get_mut();
+                    self.state_size -= this.size_hint();
 
                     // if other was destroyed. replace `this` storage with
                     // the `other one.
@@ -535,9 +574,13 @@ impl BundleState {
                     }
                     this.info = other_account.info;
                     this.status.transition(other_account.status);
+
+                    // Update the state size
+                    self.state_size += this.size_hint();
                 }
                 hash_map::Entry::Vacant(entry) => {
                     // just insert if empty
+                    self.state_size += other_account.size_hint();
                     entry.insert(other_account);
                 }
             }
@@ -555,13 +598,18 @@ impl BundleState {
             return self.take_all_reverts();
         }
         let (detach, this) = self.reverts.split_at(reverts_to_take);
-        let ret = Reverts::new(detach.to_vec());
+        let detached_reverts = Reverts::new(detach.to_vec());
+        self.reverts_size = this
+            .iter()
+            .flatten()
+            .fold(0, |acc, (_, revert)| acc + revert.size_hint());
         self.reverts = Reverts::new(this.to_vec());
-        ret
+        detached_reverts
     }
 
     /// Return and clear all reverts from [BundleState]
     pub fn take_all_reverts(&mut self) -> Reverts {
+        self.reverts_size = 0;
         core::mem::take(&mut self.reverts)
     }
 
@@ -574,9 +622,14 @@ impl BundleState {
         // revert the latest recorded state
         if let Some(reverts) = self.reverts.pop() {
             for (address, revert_account) in reverts.into_iter() {
+                self.reverts_size -= revert_account.size_hint();
                 if let Entry::Occupied(mut entry) = self.state.entry(address) {
-                    if entry.get_mut().revert(revert_account) {
+                    let account = entry.get_mut();
+                    self.state_size -= account.size_hint();
+                    if account.revert(revert_account) {
                         entry.remove();
+                    } else {
+                        self.state_size += account.size_hint();
                     }
                 } else {
                     unreachable!("Account {address:?} {revert_account:?} for revert should exist");

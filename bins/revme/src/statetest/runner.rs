@@ -172,7 +172,7 @@ pub fn execute_test_suit(
         }
         let mut env = Env::default();
         // cfg env. SpecId is set down the road
-        env.cfg.chain_id = U256::from(1); // for mainnet
+        env.cfg.chain_id = 1; // for mainnet
 
         // block env
         env.block.number = unit.env.current_number;
