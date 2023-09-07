@@ -466,7 +466,7 @@ mod tests {
     fn test_validate_tx_chain_id() {
         let mut env = Env::default();
         env.tx.chain_id = Some(1);
-        env.cfg.chain_id = U256::from(2);
+        env.cfg.chain_id = 2;
         assert_eq!(
             env.validate_tx::<crate::LatestSpec>(),
             Err(InvalidTransaction::InvalidChainId)
