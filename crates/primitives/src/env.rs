@@ -418,3 +418,68 @@ impl Env {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[cfg(feature = "optimism")]
+    #[test]
+    fn test_validate_sys_tx() {
+        // Set the optimism flag to true and mark
+        // the tx as a system transaction.
+        let mut env = Env::default();
+        env.cfg.optimism = true;
+        env.tx.optimism.is_system_transaction = Some(true);
+        assert_eq!(
+            env.validate_tx::<crate::RegolithSpec>(),
+            Err(InvalidTransaction::DepositSystemTxPostRegolith)
+        );
+
+        // Pre-regolith system transactions should be allowed.
+        assert!(env.validate_tx::<crate::BedrockSpec>().is_ok());
+    }
+
+    #[cfg(feature = "optimism")]
+    #[test]
+    fn test_validate_deposit_tx() {
+        // Set the optimism flag and source hash.
+        let mut env = Env::default();
+        env.cfg.optimism = true;
+        env.tx.optimism.source_hash = Some(B256::zero());
+        assert!(env.validate_tx::<crate::RegolithSpec>().is_ok());
+    }
+
+    #[cfg(feature = "optimism")]
+    #[test]
+    fn test_validate_tx_against_state_deposit_tx() {
+        // Set the optimism flag and source hash.
+        let mut env = Env::default();
+        env.cfg.optimism = true;
+        env.tx.optimism.source_hash = Some(B256::zero());
+
+        // Nonce and balance checks should be skipped for deposit transactions.
+        assert!(env.validate_tx_against_state(&Account::default()).is_ok());
+    }
+
+    #[test]
+    fn test_validate_tx_chain_id() {
+        let mut env = Env::default();
+        env.tx.chain_id = Some(1);
+        env.cfg.chain_id = U256::from(2);
+        assert_eq!(
+            env.validate_tx::<crate::LatestSpec>(),
+            Err(InvalidTransaction::InvalidChainId)
+        );
+    }
+
+    #[test]
+    fn test_validate_tx_access_list() {
+        let mut env = Env::default();
+        env.tx.access_list = vec![(B160::zero(), vec![])];
+        assert_eq!(
+            env.validate_tx::<crate::FrontierSpec>(),
+            Err(InvalidTransaction::AccessListNotSupported)
+        );
+    }
+}
