@@ -74,32 +74,41 @@ impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
     }
 }
 
-pub struct RefDBWrapper<'a, Error> {
-    pub db: &'a dyn DatabaseRef<Error = Error>,
+/// Wraps a `dyn DatabaseRef` to provide a [`Database`] implementation.
+#[doc(hidden)]
+#[deprecated = "use `WrapDatabaseRef` instead"]
+pub struct RefDBWrapper<'a, E> {
+    pub db: &'a dyn DatabaseRef<Error = E>,
 }
 
-impl<'a, Error> RefDBWrapper<'a, Error> {
-    pub fn new(db: &'a dyn DatabaseRef<Error = Error>) -> Self {
+#[allow(deprecated)]
+impl<'a, E> RefDBWrapper<'a, E> {
+    #[inline]
+    pub fn new(db: &'a dyn DatabaseRef<Error = E>) -> Self {
         Self { db }
     }
 }
 
-impl<'a, Error> Database for RefDBWrapper<'a, Error> {
-    type Error = Error;
-    /// Get basic account information.
+#[allow(deprecated)]
+impl<'a, E> Database for RefDBWrapper<'a, E> {
+    type Error = E;
+
+    #[inline]
     fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
         self.db.basic(address)
     }
-    /// Get account code by its hash
+
+    #[inline]
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
         self.db.code_by_hash(code_hash)
     }
-    /// Get storage value of address at index.
+
+    #[inline]
     fn storage(&mut self, address: B160, index: U256) -> Result<U256, Self::Error> {
         self.db.storage(address, index)
     }
 
-    // History related
+    #[inline]
     fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
         self.db.block_hash(number)
     }

@@ -92,6 +92,12 @@ pub struct AccountRevert {
 }
 
 impl AccountRevert {
+    /// The approximate size of changes needed to store this account revert.
+    /// `1 + storage_reverts_len`
+    pub fn size_hint(&self) -> usize {
+        1 + self.storage.len()
+    }
+
     /// Very similar to new_selfdestructed but it will add additional zeros (RevertToSlot::Destroyed)
     /// for the storage that are set if account is again created.
     pub fn new_selfdestructed_again(
