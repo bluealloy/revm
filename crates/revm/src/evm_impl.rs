@@ -111,10 +111,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             .0;
         if l1_cost.gt(&acc.info.balance) {
             let x = l1_cost.as_limbs();
-            let u64_cost = if x[1] == 0 && x[2] == 0 && x[3] == 0 {
-                x[0]
-            } else {
+            let u64_cost = if U256::from(u64::MAX).lt(&l1_cost) {
                 u64::MAX
+            } else {
+                l1_cost.as_limbs()[0]
             };
             return Err(EVMError::Transaction(
                 InvalidTransaction::LackOfFundForMaxFee {
