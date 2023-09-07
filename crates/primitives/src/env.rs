@@ -447,7 +447,19 @@ mod tests {
         let mut env = Env::default();
         env.cfg.optimism = true;
         env.tx.optimism.source_hash = Some(B256::zero());
-        assert_eq!(env.validate_tx::<crate::RegolithSpec>(), Ok(()));
+        assert!(env.validate_tx::<crate::RegolithSpec>().is_ok());
+    }
+
+    #[cfg(feature = "optimism")]
+    #[test]
+    fn test_validate_tx_against_state_deposit_tx() {
+        // Set the optimism flag and source hash.
+        let mut env = Env::default();
+        env.cfg.optimism = true;
+        env.tx.optimism.source_hash = Some(B256::zero());
+
+        // Nonce and balance checks should be skipped for deposit transactions.
+        assert!(env.validate_tx_against_state(&Account::default()).is_ok());
     }
 
     #[test]
