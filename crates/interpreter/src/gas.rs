@@ -193,3 +193,89 @@ impl Gas {
         self.record_refund(refund);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[cfg(not(feature = "optimism"))]
+    #[test]
+    fn test_revert_gas() {
+        let mut gas = Gas::new(100);
+        gas.record_cost(50);
+        assert_eq!(gas.remaining(), 50);
+        assert_eq!(gas.used, 50);
+        assert_eq!(gas.all_used_gas, 50);
+
+        // Consume the revert gas
+        gas.consume_revert_gas(Gas::new(50));
+        assert_eq!(gas.remaining(), 100);
+        assert_eq!(gas.used, 0);
+        assert_eq!(gas.all_used_gas, 0);
+    }
+
+    #[cfg(feature = "optimism")]
+    #[test]
+    fn test_revert_gas() {
+        let mut gas = Gas::new(100);
+        gas.record_cost(50);
+
+        gas.consume_revert_gas(true, false, false, Gas::new(50));
+        assert_eq!(gas.remaining(), 100);
+        assert_eq!(gas.used, 0);
+        assert_eq!(gas.all_used_gas, 0);
+
+        let mut gas = Gas::new(100);
+        gas.consume_revert_gas(false, false, false, Gas::new(50));
+    }
+
+    #[cfg(feature = "optimism")]
+    #[test]
+    fn test_revert_gas_non_optimism() {
+        let mut gas = Gas::new(100);
+        gas.consume_revert_gas(false, false, false, Gas::new(50));
+        assert_eq!(gas.remaining(), 100);
+    }
+
+    #[cfg(feature = "optimism")]
+    #[test]
+    fn test_consume_gas() {
+        let mut gas = Gas::new(100);
+        gas.record_cost(50);
+
+        gas.consume_gas(true, true, true, None, 100, Gas::new(50));
+        assert_eq!(gas.remaining(), 100);
+        assert_eq!(gas.used, 0);
+        assert_eq!(gas.all_used_gas, 0);
+        assert_eq!(gas.refunded, 0);
+    }
+
+    #[cfg(feature = "optimism")]
+    #[test]
+    fn test_consume_gas_with_refund() {
+        let mut gas = Gas::new(100);
+        gas.record_cost(50);
+
+        let mut ret_gas = Gas::new(50);
+        ret_gas.record_refund(50);
+        gas.consume_gas(true, true, true, None, 100, ret_gas);
+        assert_eq!(gas.remaining(), 100);
+        assert_eq!(gas.used, 0);
+        assert_eq!(gas.all_used_gas, 0);
+        assert_eq!(gas.refunded, 50);
+    }
+
+    #[cfg(feature = "optimism")]
+    #[test]
+    fn test_consume_gas_sys_deposit_tx() {
+        let mut gas = Gas::new(100);
+        gas.record_cost(100);
+        gas.consume_gas(true, true, false, Some(true), 50, Gas::new(0));
+        assert_eq!(gas.remaining(), 50);
+        assert_eq!(gas.used, 50);
+        assert_eq!(gas.all_used_gas, 50);
+
+        gas.consume_gas(true, true, false, Some(true), 50, Gas::new(0));
+        assert_eq!(gas, Gas::new(100));
+    }
+}
