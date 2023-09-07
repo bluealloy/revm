@@ -47,21 +47,25 @@ impl L1BlockInfo {
         db: &mut DB,
         is_optimism: bool,
     ) -> Result<Option<L1BlockInfo>, EVMError<DB::Error>> {
-        let l1_base_fee = db
-            .storage(L1_BLOCK_CONTRACT, L1_BASE_FEE_SLOT)
-            .map_err(EVMError::Database)?;
-        let l1_fee_overhead = db
-            .storage(L1_BLOCK_CONTRACT, L1_OVERHEAD_SLOT)
-            .map_err(EVMError::Database)?;
-        let l1_fee_scalar = db
-            .storage(L1_BLOCK_CONTRACT, L1_SCALAR_SLOT)
-            .map_err(EVMError::Database)?;
+        is_optimism
+            .then(|| {
+                let l1_base_fee = db
+                    .storage(L1_BLOCK_CONTRACT, L1_BASE_FEE_SLOT)
+                    .map_err(EVMError::Database)?;
+                let l1_fee_overhead = db
+                    .storage(L1_BLOCK_CONTRACT, L1_OVERHEAD_SLOT)
+                    .map_err(EVMError::Database)?;
+                let l1_fee_scalar = db
+                    .storage(L1_BLOCK_CONTRACT, L1_SCALAR_SLOT)
+                    .map_err(EVMError::Database)?;
 
-        Ok(is_optimism.then_some(L1BlockInfo {
-            l1_base_fee,
-            l1_fee_overhead,
-            l1_fee_scalar,
-        }))
+                Ok(L1BlockInfo {
+                    l1_base_fee,
+                    l1_fee_overhead,
+                    l1_fee_scalar,
+                })
+            })
+            .map_or(Ok(None), |v| v.map(Some))
     }
 
     /// Calculate the data gas for posting the transaction on L1. Calldata costs 16 gas per non-zero
