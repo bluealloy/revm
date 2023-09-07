@@ -491,7 +491,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     is_deposit,
                 );
 
-                // Send the L1 cost of the transaction to the L1 Fee Vault.               if let Some(l1_cost) = self.data.env.tx.optimism.l1_cost {
+                // Send the L1 cost of the transaction to the L1 Fee Vault.
                 let Ok((l1_fee_vault_account, _)) = self
                     .data
                     .journaled_state
