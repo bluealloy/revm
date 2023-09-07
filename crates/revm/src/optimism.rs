@@ -2,7 +2,9 @@
 
 use core::ops::Mul;
 use revm_interpreter::primitives::{
-    db::Database, hex_literal::hex, Bytes, Spec, SpecId, B160, U256,
+    db::{Database, DatabaseRef},
+    hex_literal::hex,
+    Bytes, EVMError, Spec, SpecId, B160, U256,
 };
 
 const ZERO_BYTE_COST: u64 = 4;
@@ -43,17 +45,46 @@ pub struct L1BlockInfo {
 }
 
 impl L1BlockInfo {
-    /// Fetches the L1 block info from the `L1Block` contract in the database.
-    pub fn try_fetch<DB: Database>(db: &mut DB) -> Result<L1BlockInfo, DB::Error> {
-        let l1_base_fee = db.storage(L1_BLOCK_CONTRACT, L1_BASE_FEE_SLOT)?;
-        let l1_fee_overhead = db.storage(L1_BLOCK_CONTRACT, L1_OVERHEAD_SLOT)?;
-        let l1_fee_scalar = db.storage(L1_BLOCK_CONTRACT, L1_SCALAR_SLOT)?;
+    pub fn try_fetch_mut<DB: Database>(
+        db: &mut DB,
+        is_optimism: bool,
+    ) -> Result<Option<L1BlockInfo>, EVMError<DB::Error>> {
+        let l1_base_fee = db
+            .storage(L1_BLOCK_CONTRACT, L1_BASE_FEE_SLOT)
+            .map_err(EVMError::Database)?;
+        let l1_fee_overhead = db
+            .storage(L1_BLOCK_CONTRACT, L1_OVERHEAD_SLOT)
+            .map_err(EVMError::Database)?;
+        let l1_fee_scalar = db
+            .storage(L1_BLOCK_CONTRACT, L1_SCALAR_SLOT)
+            .map_err(EVMError::Database)?;
 
-        Ok(L1BlockInfo {
+        Ok(is_optimism.then_some(L1BlockInfo {
             l1_base_fee,
             l1_fee_overhead,
             l1_fee_scalar,
-        })
+        }))
+    }
+
+    pub fn try_fetch<DB: DatabaseRef>(
+        db: &DB,
+        is_optimism: bool,
+    ) -> Result<Option<L1BlockInfo>, EVMError<DB::Error>> {
+        let l1_base_fee = db
+            .storage(L1_BLOCK_CONTRACT, L1_BASE_FEE_SLOT)
+            .map_err(EVMError::Database)?;
+        let l1_fee_overhead = db
+            .storage(L1_BLOCK_CONTRACT, L1_OVERHEAD_SLOT)
+            .map_err(EVMError::Database)?;
+        let l1_fee_scalar = db
+            .storage(L1_BLOCK_CONTRACT, L1_SCALAR_SLOT)
+            .map_err(EVMError::Database)?;
+
+        Ok(is_optimism.then_some(L1BlockInfo {
+            l1_base_fee,
+            l1_fee_overhead,
+            l1_fee_scalar,
+        }))
     }
 
     /// Calculate the data gas for posting the transaction on L1. Calldata costs 16 gas per non-zero
