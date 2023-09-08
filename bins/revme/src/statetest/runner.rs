@@ -1,24 +1,24 @@
-use std::io::stdout;
-use std::{
-    ffi::OsStr,
-    path::{Path, PathBuf},
-    sync::{atomic::AtomicBool, Arc, Mutex},
-    time::{Duration, Instant},
-};
-
 use super::{
     merkle_trie::{log_rlp_hash, state_merkle_trie_root},
     models::{SpecName, TestSuit},
 };
 use hex_literal::hex;
 use indicatif::ProgressBar;
-use revm::inspectors::TracerEip3155;
-use revm::primitives::keccak256;
 use revm::{
+    inspectors::TracerEip3155,
     interpreter::CreateScheme,
-    primitives::{Bytecode, Env, ExecutionResult, HashMap, SpecId, TransactTo, B160, B256, U256},
+    primitives::{
+        keccak256, Bytecode, Env, ExecutionResult, HashMap, SpecId, TransactTo, B160, B256, U256,
+    },
 };
-use std::sync::atomic::Ordering;
+use std::{
+    ffi::OsStr,
+    io::stdout,
+    path::{Path, PathBuf},
+    sync::atomic::Ordering,
+    sync::{atomic::AtomicBool, Arc, Mutex},
+    time::{Duration, Instant},
+};
 use thiserror::Error;
 use walkdir::{DirEntry, WalkDir};
 
@@ -255,7 +255,7 @@ pub fn execute_test_suit(
                     env.cfg.spec_id,
                     revm::primitives::SpecId::SPURIOUS_DRAGON,
                 ));
-                let mut state = revm::db::StateBuilder::default()
+                let mut state = revm::db::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();

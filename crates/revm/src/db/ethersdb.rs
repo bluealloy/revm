@@ -5,19 +5,13 @@ use ethers_providers::Middleware;
 use std::sync::Arc;
 use tokio::runtime::{Handle, Runtime};
 
-pub struct EthersDB<M>
-where
-    M: Middleware,
-{
+pub struct EthersDB<M: Middleware> {
     client: Arc<M>,
     runtime: Option<Runtime>,
     block_number: Option<BlockId>,
 }
 
-impl<M> EthersDB<M>
-where
-    M: Middleware,
-{
+impl<M: Middleware> EthersDB<M> {
     /// create ethers db connector inputs are url and block on what we are basing our database (None for latest)
     pub fn new(client: Arc<M>, block_number: Option<BlockId>) -> Option<Self> {
         let runtime = Handle::try_current()
@@ -52,10 +46,7 @@ where
     }
 }
 
-impl<M> Database for EthersDB<M>
-where
-    M: Middleware,
-{
+impl<M: Middleware> Database for EthersDB<M> {
     type Error = ();
 
     fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
@@ -124,14 +115,13 @@ where
     }
 }
 
-/// Run tests with `cargo test -- --nocapture` to see print statements
+// Run tests with `cargo test -- --nocapture` to see print statements
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
-
     use super::*;
     use ethers_core::types::U256 as eU256;
     use ethers_providers::{Http, Provider};
+    use std::str::FromStr;
 
     #[test]
     fn can_get_basic() {
