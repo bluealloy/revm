@@ -171,6 +171,16 @@ impl AccountRevert {
             wipe_storage: true,
         }
     }
+
+    /// Returns `true` if there is nothing to revert,
+    /// by checking that:
+    /// * both account info and storage have been left untouched
+    /// * we don't need to wipe storage
+    pub fn is_empty(&self) -> bool {
+        self.account == AccountInfoRevert::DoNothing
+            && self.storage.is_empty()
+            && !self.wipe_storage
+    }
 }
 
 /// Depending on previous state of account info this
