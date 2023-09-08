@@ -199,8 +199,14 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
 
             // Perform this calculation optimistically to avoid cloning the enveloped tx.
             let tx_l1_cost = l1_block_info.as_ref().map(|l1_block_info| {
-                l1_block_info
-                    .calculate_tx_l1_cost::<GSPEC>(&env.tx.optimism.enveloped_tx, is_deposit)
+                env.tx
+                    .optimism
+                    .enveloped_tx
+                    .as_ref()
+                    .map(|enveloped_tx| {
+                        l1_block_info.calculate_tx_l1_cost::<GSPEC>(enveloped_tx, is_deposit)
+                    })
+                    .unwrap_or(U256::ZERO)
             });
 
             (
@@ -503,10 +509,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     panic!("[OPTIMISM] Failed to load L1 block information.");
                 };
 
-                let l1_cost = l1_block_info.calculate_tx_l1_cost::<SPEC>(
-                    &self.data.env.tx.optimism.enveloped_tx,
-                    is_deposit,
-                );
+                let Some(enveloped_tx) = &self.data.env.tx.optimism.enveloped_tx else {
+                    panic!("[OPTIMISM] Failed to load enveloped transaction.");
+                };
+
+                let l1_cost = l1_block_info.calculate_tx_l1_cost::<SPEC>(enveloped_tx, is_deposit);
 
                 // Send the L1 cost of the transaction to the L1 Fee Vault.
                 let Ok((l1_fee_vault_account, _)) = self

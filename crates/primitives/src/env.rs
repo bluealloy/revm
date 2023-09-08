@@ -40,7 +40,10 @@ pub struct OptimismFields {
     /// to compute the L1 tx cost using the L1 block info, as
     /// opposed to requiring downstream apps to compute the cost
     /// externally.
-    pub enveloped_tx: Bytes,
+    /// This field is optional to allow the [TxEnv] to be constructed
+    /// for non-optimism chains when the `optimism` feature is enabled,
+    /// but the [CfgEnv] `optimism` field is set to false.
+    pub enveloped_tx: Option<Bytes>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
