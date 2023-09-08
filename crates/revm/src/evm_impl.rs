@@ -190,18 +190,26 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let effective_gas_price = env.effective_gas_price();
 
         #[cfg(feature = "optimism")]
-        let (tx_mint, tx_system, is_deposit) = (
-            env.tx.optimism.mint,
-            env.tx.optimism.is_system_transaction,
-            env.tx.optimism.source_hash.is_some(),
-        );
+        let (tx_mint, tx_system, tx_l1_cost, is_deposit, l1_block_info) = {
+            let is_deposit = env.tx.optimism.source_hash.is_some();
 
-        // Perform this calculation optimistically to avoid cloning the enveloped tx.
-        #[cfg(feature = "optimism")]
-        let tx_l1_cost = {
             let l1_block_info =
-                optimism::L1BlockInfo::try_fetch(&mut self.data.db).map_err(EVMError::Database)?;
-            l1_block_info.calculate_tx_l1_cost::<GSPEC>(&env.tx.optimism.enveloped_tx, is_deposit)
+                optimism::L1BlockInfo::try_fetch(self.data.db, self.data.env.cfg.optimism)
+                    .map_err(EVMError::Database)?;
+
+            // Perform this calculation optimistically to avoid cloning the enveloped tx.
+            let tx_l1_cost = l1_block_info.as_ref().map(|l1_block_info| {
+                l1_block_info
+                    .calculate_tx_l1_cost::<GSPEC>(&env.tx.optimism.enveloped_tx, is_deposit)
+            });
+
+            (
+                env.tx.optimism.mint,
+                env.tx.optimism.is_system_transaction,
+                tx_l1_cost,
+                is_deposit,
+                l1_block_info,
+            )
         };
 
         let initial_gas_spend =
@@ -229,6 +237,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                 journal,
             )?;
 
+            let Some(tx_l1_cost) = tx_l1_cost else {
+                panic!("[OPTIMISM] L1 Block Info could not be loaded from the DB.")
+            };
             EVMImpl::<GSPEC, DB, INSPECT>::remove_l1_cost(
                 is_deposit,
                 tx_caller,
@@ -328,7 +339,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             }
         }
 
-        let (state, logs, gas_used, gas_refunded) = self.finalize::<GSPEC>(&gas);
+        let (state, logs, gas_used, gas_refunded) = self.finalize::<GSPEC>(
+            &gas,
+            #[cfg(feature = "optimism")]
+            l1_block_info.as_ref(),
+        );
 
         let result = match exit_reason.into() {
             SuccessOrHalt::Success(reason) => ExecutionResult::Success {
@@ -407,7 +422,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
     }
 
-    fn finalize<SPEC: Spec>(&mut self, gas: &Gas) -> (HashMap<B160, Account>, Vec<Log>, u64, u64) {
+    fn finalize<SPEC: Spec>(
+        &mut self,
+        gas: &Gas,
+        #[cfg(feature = "optimism")] l1_block_info: Option<&optimism::L1BlockInfo>,
+    ) -> (HashMap<B160, Account>, Vec<Log>, u64, u64) {
         let caller = self.data.env.tx.caller;
         let coinbase = self.data.env.block.coinbase;
         let (gas_used, gas_refunded) = if crate::USE_GAS {
@@ -480,8 +499,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             if self.data.env.cfg.optimism && !is_deposit {
                 // If the transaction is not a deposit transaction, fees are paid out
                 // to both the Base Fee Vault as well as the L1 Fee Vault.
-
-                let Ok(l1_block_info) = optimism::L1BlockInfo::try_fetch(&mut self.data.db) else {
+                let Some(l1_block_info) = l1_block_info else {
                     panic!("[OPTIMISM] Failed to load L1 block information.");
                 };
 
