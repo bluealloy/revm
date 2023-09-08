@@ -1190,7 +1190,7 @@ mod tests {
         assert!(EVMImpl::<BedrockSpec, InMemoryDB, false>::remove_l1_cost(
             true,
             caller,
-            None,
+            U256::ZERO,
             &mut db,
             &mut journal
         )
@@ -1200,7 +1200,6 @@ mod tests {
     #[test]
     fn test_remove_l1_cost() {
         let caller = B160::zero();
-        let tx_l1_cost = Some(U256::from(1));
         let mut db = InMemoryDB::default();
         db.insert_account_info(
             caller,
@@ -1218,7 +1217,7 @@ mod tests {
         assert!(EVMImpl::<BedrockSpec, InMemoryDB, false>::remove_l1_cost(
             false,
             caller,
-            tx_l1_cost,
+            U256::from(1),
             &mut db,
             &mut journal
         )
@@ -1232,7 +1231,6 @@ mod tests {
     #[test]
     fn test_remove_l1_cost_lack_of_funds() {
         let caller = B160::zero();
-        let tx_l1_cost = Some(U256::from(101));
         let mut db = InMemoryDB::default();
         db.insert_account_info(
             caller,
@@ -1251,7 +1249,7 @@ mod tests {
             EVMImpl::<BedrockSpec, InMemoryDB, false>::remove_l1_cost(
                 false,
                 caller,
-                tx_l1_cost,
+                U256::from(101),
                 &mut db,
                 &mut journal
             ),
