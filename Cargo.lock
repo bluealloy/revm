@@ -2264,6 +2264,7 @@ version = "3.3.0"
 dependencies = [
  "anyhow",
  "auto_impl",
+ "bytes",
  "criterion",
  "ethers-contract",
  "ethers-core",
@@ -2338,6 +2339,7 @@ name = "revme"
 version = "0.2.0"
 dependencies = [
  "alloy-rlp",
+ "bytes",
  "hash-db",
  "hashbrown 0.14.0",
  "hex",
