@@ -11,6 +11,9 @@ jobs:
     name: Ethereum Tests (Stable)
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      matrix:
+        profile: [ethtests, release]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
@@ -31,7 +34,7 @@ jobs:
 
       - name: Run Ethereum tests
         run: |
-          cargo run --profile ethtests -p revme -- \
+          cargo run --profile ${{ matrix.profile }} -p revme -- \
           statetest \
           ethtests/GeneralStateTests/ \
           ethtests/LegacyTests/Constantinople/GeneralStateTests/ \
