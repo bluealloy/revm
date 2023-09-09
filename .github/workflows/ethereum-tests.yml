@@ -29,9 +29,18 @@ jobs:
         with:
           cache-on-failure: true
 
-      - name: Run Ethereum tests
+      - name: Run Ethereum tests (Debug mode)
         run: |
           cargo run --profile ethtests -p revme -- \
+          statetest \
+          ethtests/GeneralStateTests/ \
+          ethtests/LegacyTests/Constantinople/GeneralStateTests/ \
+          tests/EIPTests/StateTests/stEIP5656-MCOPY/ \
+          tests/EIPTests/StateTests/stEIP1153-transientStorage/
+
+      - name: Run Ethereum tests (Release mode)
+        run: |
+          cargo run --release -p revme -- \
           statetest \
           ethtests/GeneralStateTests/ \
           ethtests/LegacyTests/Constantinople/GeneralStateTests/ \
