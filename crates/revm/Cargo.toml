@@ -37,7 +37,7 @@ hex-literal = "0.4"
 ethers-contract = { version = "2.0.10", default-features = false }
 hex = "0.4.3"
 anyhow = "1.0.75"
-bytes = "1.4.0"
+bytes = "1.5.0"
 criterion = "0.5"
 
 [features]
