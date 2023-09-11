@@ -260,7 +260,7 @@ pub fn execute_test_suit(
                     .with_bundle_update()
                     .build();
                 let mut evm = revm::new(Default::default());
-                evm.database(state);
+                *evm.db() = state;
                 evm.env = env.clone();
                 // do the deed
 
@@ -297,7 +297,7 @@ pub fn execute_test_suit(
                         .with_cached_prestate(cache)
                         .with_bundle_update()
                         .build();
-                    evm.database(state);
+                    *evm.db() = state;
                     let _ =
                         evm.inspect_commit(TracerEip3155::new(Box::new(stdout()), false, false));
                     let db = evm.db;

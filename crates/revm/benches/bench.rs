@@ -34,15 +34,15 @@ fn analysis(c: &mut Criterion) {
         .sample_size(10);
 
     let raw = Bytecode::new_raw(contract_data.clone());
-    evm.database(BenchmarkDB::new_bytecode(raw));
+    *evm.db() = BenchmarkDB::new_bytecode(raw);
     bench_transact(&mut g, &mut evm);
 
     let checked = Bytecode::new_raw(contract_data.clone()).to_checked();
-    evm.database(BenchmarkDB::new_bytecode(checked));
+    *evm.db() = BenchmarkDB::new_bytecode(checked);
     bench_transact(&mut g, &mut evm);
 
     let analysed = to_analysed(Bytecode::new_raw(contract_data));
-    evm.database(BenchmarkDB::new_bytecode(analysed));
+    *evm.db() = BenchmarkDB::new_bytecode(analysed);
     bench_transact(&mut g, &mut evm);
 
     g.finish();
@@ -50,7 +50,7 @@ fn analysis(c: &mut Criterion) {
 
 fn snailtracer(c: &mut Criterion) {
     let mut evm = revm::new(Default::default());
-    evm.database(BenchmarkDB::new_bytecode(bytecode(SNAILTRACER)));
+    *evm.db() = BenchmarkDB::new_bytecode(bytecode(SNAILTRACER));
 
     evm.env.tx.caller = "0x1000000000000000000000000000000000000000"
         .parse()
@@ -74,7 +74,7 @@ fn snailtracer(c: &mut Criterion) {
 
 fn transfer(c: &mut Criterion) {
     let mut evm = revm::new(Default::default());
-    evm.database(BenchmarkDB::new_bytecode(Bytecode::new()));
+    *evm.db() = BenchmarkDB::new_bytecode(Bytecode::new());
 
     evm.env.tx.caller = "0x0000000000000000000000000000000000000001"
         .parse()

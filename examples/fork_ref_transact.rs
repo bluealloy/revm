@@ -4,7 +4,7 @@ use ethers_contract::BaseContract;
 use ethers_core::abi::parse_abi;
 use ethers_providers::{Http, Provider};
 use revm::{
-    db::{CacheDB, EmptyDB, EthersDB},
+    db::{CacheDB, EmptyDB, EthersDB, states::cache},
     primitives::{ExecutionResult, Output, TransactTo, B160, U256 as rU256},
     Database, EVM,
 };
@@ -70,7 +70,7 @@ async fn main() -> Result<()> {
     let mut evm = EVM::new(Default::default());
 
     // insert pre-built database from above
-    evm.database(cache_db);
+    *evm.db() = cache_db;
 
     // fill in missing bits of env struct
     // change that to whatever caller you want to be

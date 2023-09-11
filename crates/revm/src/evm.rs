@@ -33,12 +33,6 @@ use revm_precompile::Precompiles;
 /// # use revm::EVM;        // Assuming this struct is in 'your_crate_name'
 /// # struct SomeDatabase;  // Mocking a database type for the purpose of this example
 /// # struct Env;           // Assuming the type Env is defined somewhere
-/// 
-/// impl Default for SomeDatabase {
-///     fn default() -> Self {
-///         unimplemented!()
-///     }
-/// }
 ///
 /// let evm: EVM<SomeDatabase> = EVM::new(SomeDatabase);
 /// ```
@@ -49,7 +43,7 @@ pub struct EVM<DB> {
     pub db: DB,
 }
 
-pub fn new<DB: Default>(db: DB) -> EVM<DB> {
+pub fn new<DB>(db: DB) -> EVM<DB> {
     EVM::new(db)
 }
 
@@ -149,7 +143,7 @@ impl<'a, DB: DatabaseRef> EVM<DB> {
     }
 }
 
-impl<DB: Default> EVM<DB> {
+impl<DB> EVM<DB> {
     /// Creates a new [EVM] instance with the default environment,
     pub fn new(db: DB) -> Self {
         Self::with_env(Default::default(), db)
@@ -160,16 +154,8 @@ impl<DB: Default> EVM<DB> {
         Self { env, db }
     }
 
-    pub fn database(&mut self, db: DB) {
-        self.db = db;
-    }
-
     pub fn db(&mut self) -> &mut DB {
         &mut self.db
-    }
-
-    pub fn take_db(&mut self) -> DB {
-        core::mem::take(&mut self.db)
     }
 }
 

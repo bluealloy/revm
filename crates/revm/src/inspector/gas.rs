@@ -228,7 +228,7 @@ mod tests {
         let bytecode = Bytecode::new_raw(contract_data);
 
         let mut evm = crate::new(Default::default());
-        evm.database(BenchmarkDB::new_bytecode(bytecode.clone()));
+        *evm.db() = BenchmarkDB::new_bytecode(bytecode.clone());
         evm.env.tx.caller = B160(hex!("1000000000000000000000000000000000000000"));
         evm.env.tx.transact_to =
             TransactTo::Call(B160(hex!("0000000000000000000000000000000000000000")));

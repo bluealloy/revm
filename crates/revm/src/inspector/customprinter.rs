@@ -144,7 +144,7 @@ mod test {
         };
         let callee = hex_literal::hex!("5fdcca53617f4d2b9134b29090c87d01058e27e9");
         database.insert_account_info(crate::primitives::B160(callee), acc_info);
-        evm.database(database);
+        *evm.db() = database;
         evm.env.tx.caller = crate::primitives::B160(hex_literal::hex!(
             "5fdcca53617f4d2b9134b29090c87d01058e27e0"
         ));
