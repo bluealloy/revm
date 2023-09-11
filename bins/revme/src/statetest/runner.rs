@@ -365,12 +365,7 @@ pub fn run(
         let console_bar = console_bar.clone();
         let elapsed = elapsed.clone();
 
-        let mut thread = std::thread::Builder::new();
-
-        // Allow bigger stack in debug mode to prevent stack overflow errors
-        //if cfg!(debug_assertions) {
-        thread = thread.stack_size(4 * 1024 * 1024);
-        //}
+        let thread: std::thread::Builder = std::thread::Builder::new();
 
         joins.push(
             thread

@@ -239,6 +239,7 @@ pub fn selfdestruct<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Ho
     interpreter.instruction_result = InstructionResult::SelfDestruct;
 }
 
+#[inline(never)]
 pub fn prepare_create_inputs<const IS_CREATE2: bool, SPEC: Spec>(
     interpreter: &mut Interpreter,
     host: &mut dyn Host,
@@ -368,6 +369,7 @@ pub fn static_call<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Hos
     call_inner::<SPEC>(interpreter, CallScheme::StaticCall, host);
 }
 
+#[inline(never)]
 fn prepare_call_inputs<SPEC: Spec>(
     interpreter: &mut Interpreter,
     scheme: CallScheme,
