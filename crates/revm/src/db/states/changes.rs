@@ -21,6 +21,8 @@ pub struct StateChangeset {
 pub struct PlainStorageChangeset {
     /// Address of account
     pub address: B160,
+    /// Wipe storage,
+    pub wipe_storage: bool,
     /// Storage key value pairs.
     pub storage: Vec<(U256, U256)>,
 }
