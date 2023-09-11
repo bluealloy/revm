@@ -216,6 +216,7 @@ impl BundleAccount {
                 None
             }
             AccountStatus::Destroyed => {
+                // clear this storage and move it to the Revert.
                 let this_storage = self.storage.drain().collect();
                 let ret = match self.status {
                     AccountStatus::InMemoryChange | AccountStatus::Changed | AccountStatus::Loaded | AccountStatus::LoadedEmptyEIP161 => {
