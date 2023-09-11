@@ -476,11 +476,12 @@ impl BundleState {
                 }
             }
 
-            if !account_storage_changed.is_empty() {
+            if !account_storage_changed.is_empty() || was_destroyed {
                 account_storage_changed.sort_by(|a, b| a.0.cmp(&b.0));
                 // append storage changes to account.
                 storage.push(PlainStorageChangeset {
                     address,
+                    wipe_storage: was_destroyed,
                     storage: account_storage_changed,
                 });
             }
