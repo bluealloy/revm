@@ -4,7 +4,7 @@ use ethers_contract::BaseContract;
 use ethers_core::abi::parse_abi;
 use ethers_providers::{Http, Provider};
 use revm::{
-    db::{CacheDB, EmptyDB, EthersDB, states::cache},
+    db::{CacheDB, EmptyDB, EthersDB},
     primitives::{ExecutionResult, Output, TransactTo, B160, U256 as rU256},
     Database, EVM,
 };
