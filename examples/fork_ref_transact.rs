@@ -67,7 +67,7 @@ async fn main() -> Result<()> {
         .unwrap();
 
     // initialise an empty (default) EVM
-    let mut evm = EVM::new();
+    let mut evm = EVM::new(Default::default());
 
     // insert pre-built database from above
     evm.database(cache_db);

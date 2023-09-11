@@ -12,7 +12,7 @@ use std::time::Duration;
 type Evm = revm::EVM<BenchmarkDB>;
 
 fn analysis(c: &mut Criterion) {
-    let mut evm = revm::new();
+    let mut evm = revm::new(Default::default());
 
     evm.env.tx.caller = "0x1000000000000000000000000000000000000000"
         .parse()
@@ -49,7 +49,7 @@ fn analysis(c: &mut Criterion) {
 }
 
 fn snailtracer(c: &mut Criterion) {
-    let mut evm = revm::new();
+    let mut evm = revm::new(Default::default());
     evm.database(BenchmarkDB::new_bytecode(bytecode(SNAILTRACER)));
 
     evm.env.tx.caller = "0x1000000000000000000000000000000000000000"
@@ -73,7 +73,7 @@ fn snailtracer(c: &mut Criterion) {
 }
 
 fn transfer(c: &mut Criterion) {
-    let mut evm = revm::new();
+    let mut evm = revm::new(Default::default());
     evm.database(BenchmarkDB::new_bytecode(Bytecode::new()));
 
     evm.env.tx.caller = "0x0000000000000000000000000000000000000001"
@@ -93,7 +93,7 @@ fn transfer(c: &mut Criterion) {
 }
 
 fn bench_transact(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm) {
-    let state = match evm.db.as_mut().unwrap().0.state {
+    let state = match evm.db.0.state {
         BytecodeState::Raw => "raw",
         BytecodeState::Checked { .. } => "checked",
         BytecodeState::Analysed { .. } => "analysed",
@@ -106,7 +106,7 @@ fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &Evm) {
     g.bench_function("eval", |b| {
         let contract = Contract {
             input: evm.env.tx.data.clone(),
-            bytecode: BytecodeLocked::try_from(evm.db.as_ref().unwrap().0.clone()).unwrap(),
+            bytecode: BytecodeLocked::try_from(evm.db.0.clone()).unwrap(),
             ..Default::default()
         };
         let mut host = DummyHost::new(evm.env.clone());
