@@ -4,6 +4,7 @@
 - [Revm](./crates/revm.md)
   - [evm](./crates/revm/evm.md)
   - [evm_impl](./crates/revm/evm_impl.md)
+  - [The Host Trait](./crates/revm/host_trait.md)
   - [inspector](./crates/revm/inspector.md)
   - [journaled_state](./crates/revm/journaled_state.md)
 - [Interpreter](./crates/interpreter.md)
