@@ -33,9 +33,14 @@ use revm_precompile::Precompiles;
 /// # use revm::EVM;        // Assuming this struct is in 'your_crate_name'
 /// # struct SomeDatabase;  // Mocking a database type for the purpose of this example
 /// # struct Env;           // Assuming the type Env is defined somewhere
+/// 
+/// impl Default for SomeDatabase {
+///     fn default() -> Self {
+///         unimplemented!()
+///     }
+/// }
 ///
-/// let evm: EVM<SomeDatabase> = EVM::new();
-/// assert!(evm.db.is_none());
+/// let evm: EVM<SomeDatabase> = EVM::new(SomeDatabase);
 /// ```
 ///
 #[derive(Clone)]
@@ -76,13 +81,15 @@ impl<DB: Database + DatabaseCommit> EVM<DB> {
 impl<DB: Database> EVM<DB> {
     /// Do checks that could make transaction fail before call/create
     pub fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
-        evm_inner::<DB, false>(&mut self.env, &mut self.db, &mut NoOpInspector).preverify_transaction()
+        evm_inner::<DB, false>(&mut self.env, &mut self.db, &mut NoOpInspector)
+            .preverify_transaction()
     }
 
     /// Skip preverification steps and execute transaction without writing to DB, return change
     /// state.
     pub fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
-        evm_inner::<DB, false>(&mut self.env, &mut self.db, &mut NoOpInspector).transact_preverified()
+        evm_inner::<DB, false>(&mut self.env, &mut self.db, &mut NoOpInspector)
+            .transact_preverified()
     }
 
     /// Execute transaction without writing to DB, return change state.

@@ -255,12 +255,12 @@ pub fn execute_test_suit(
                     env.cfg.spec_id,
                     revm::primitives::SpecId::SPURIOUS_DRAGON,
                 ));
-                let mut state = revm::db::State::builder()
+                let state = revm::db::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();
-                let mut evm = revm::new();
-                evm.database(&mut state);
+                let mut evm = revm::new(Default::default());
+                evm.database(state);
                 evm.env = env.clone();
                 // do the deed
 
@@ -275,7 +275,7 @@ pub fn execute_test_suit(
 
                 *elapsed.lock().unwrap() += timer;
 
-                let db = evm.db().unwrap();
+                let db = &evm.db;
                 let state_root = state_merkle_trie_root(db.cache.trie_account());
                 let logs = match &exec_result {
                     Ok(ExecutionResult::Success { logs, .. }) => logs.clone(),
@@ -293,14 +293,14 @@ pub fn execute_test_suit(
                         env.cfg.spec_id,
                         revm::primitives::SpecId::SPURIOUS_DRAGON,
                     ));
-                    let mut state = revm::db::StateBuilder::default()
+                    let state = revm::db::StateBuilder::default()
                         .with_cached_prestate(cache)
                         .with_bundle_update()
                         .build();
-                    evm.database(&mut state);
+                    evm.database(state);
                     let _ =
                         evm.inspect_commit(TracerEip3155::new(Box::new(stdout()), false, false));
-                    let db = evm.db().unwrap();
+                    let db = evm.db;
                     println!("{path:?} UNIT_TEST:{name}\n");
                     match &exec_result {
                         Ok(ExecutionResult::Success {

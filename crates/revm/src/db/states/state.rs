@@ -62,6 +62,19 @@ impl State<EmptyDB> {
     }
 }
 
+impl<DB: Database + Default> Default for State<DB> {
+    fn default() -> Self {
+        Self {
+            cache: Default::default(),
+            database: Default::default(),
+            transition_state: Default::default(),
+            bundle_state: Default::default(),
+            use_preloaded_bundle: Default::default(),
+            block_hashes: Default::default(),
+        }
+    }
+}
+
 impl<DB: Database> State<DB> {
     /// Returns the size hint for the inner bundle state.
     /// See [BundleState::size_hint] for more info.
