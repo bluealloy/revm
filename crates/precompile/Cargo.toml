@@ -11,7 +11,9 @@ version = "2.0.3"
 [dependencies]
 revm-primitives = { path = "../primitives", version = "1.1.2", default-features = false }
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
+elliptic-curve = { version = "0.13.5", features = ["arithmetic", "hash2curve"] }
 k256 = { version = "0.13", default-features = false, features = ["ecdsa"] }
+p256 = { version = "0.13", default-features = false, features = ["ecdsa"] }
 num = { version = "0.4.0", default-features = false, features = ["alloc"] }
 once_cell = "1.17"
 ripemd = { version = "0.1", default-features = false }
