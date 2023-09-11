@@ -5,7 +5,7 @@ use crate::{
 use bytes::Bytes;
 use core::cmp::{min, Ordering};
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Env {
     pub cfg: CfgEnv,
@@ -14,7 +14,7 @@ pub struct Env {
 }
 
 /// The block environment.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlockEnv {
     /// The number of ancestor blocks of this block (block height).
@@ -67,7 +67,7 @@ impl BlockEnv {
 }
 
 /// The transaction environment.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxEnv {
     /// The caller, author or signer of the transaction.
@@ -132,7 +132,7 @@ impl TxEnv {
 }
 
 /// Transaction destination.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TransactTo {
     /// Simple call to an address.
@@ -191,7 +191,7 @@ pub enum CreateScheme {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct CfgEnv {
-    pub chain_id: U256,
+    pub chain_id: u64,
     pub spec_id: SpecId,
     /// Bytecode that is created with CREATE/CREATE2 is by default analysed and jumptable is created.
     /// This is very beneficial for testing and speeds up execution of that bytecode if called multiple times.
@@ -303,7 +303,7 @@ pub enum AnalysisKind {
 impl Default for CfgEnv {
     fn default() -> Self {
         Self {
-            chain_id: U256::from(1),
+            chain_id: 1,
             spec_id: SpecId::LATEST,
             perf_analyse_created_bytecodes: AnalysisKind::default(),
             limit_contract_code_size: None,
@@ -439,7 +439,7 @@ impl Env {
 
         // Check if the transaction's chain id is correct
         if let Some(tx_chain_id) = self.tx.chain_id {
-            if U256::from(tx_chain_id) != self.cfg.chain_id {
+            if tx_chain_id != self.cfg.chain_id {
                 return Err(InvalidTransaction::InvalidChainId);
             }
         }

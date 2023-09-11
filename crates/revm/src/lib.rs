@@ -17,9 +17,11 @@ pub(crate) const USE_GAS: bool = !cfg!(feature = "no_gas_measuring");
 pub type DummyStateDB = InMemoryDB;
 
 #[cfg(feature = "std")]
-pub use db::{CacheState, StateBuilder, TransitionAccount, TransitionState};
+pub use db::{
+    CacheState, DBBox, State, StateBuilder, StateDBBox, TransitionAccount, TransitionState,
+};
 
-pub use db::{Database, DatabaseCommit, InMemoryDB, State};
+pub use db::{Database, DatabaseCommit, InMemoryDB};
 pub use evm::{evm_inner, new, to_precompile_id, EVM};
 pub use evm_impl::{EVMData, EVMImpl, Transact};
 pub use journaled_state::{is_precompile, JournalCheckpoint, JournalEntry, JournaledState};

@@ -191,7 +191,7 @@ pub enum InvalidTransaction {
     BlobGasPriceGreaterThanMax,
 }
 
-/// When transaction return successfully without halts.
+/// Reason a transaction successfully completed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Eval {

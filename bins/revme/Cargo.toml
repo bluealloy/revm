@@ -10,7 +10,7 @@ version = "0.2.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bytes = "1.4"
+bytes = "1.5"
 hash-db = "0.15"
 hashbrown = "0.14"
 hex = "0.4"
@@ -30,5 +30,5 @@ sha3 = { version = "0.10", default-features = false }
 structopt = "0.3"
 thiserror = "1.0"
 triehash = "0.8"
-walkdir = "2.3"
+walkdir = "2.4"
 hex-literal = "0.4"
