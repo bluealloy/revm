@@ -1,7 +1,7 @@
 #![allow(non_camel_case_types)]
 
 /// SpecId and their activation block
-/// Information was obtained from: https://github.com/ethereum/execution-specs
+/// Information was obtained from: <https://github.com/ethereum/execution-specs>
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd, enumn::N)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -91,7 +91,7 @@ spec!(HOMESTEAD, HomesteadSpec);
 spec!(TANGERINE, TangerineSpec);
 spec!(SPURIOUS_DRAGON, SpuriousDragonSpec);
 spec!(BYZANTIUM, ByzantiumSpec);
-// CONSTANTINOPLE was overriden with PETERSBURG
+// CONSTANTINOPLE was overridden with PETERSBURG
 spec!(PETERSBURG, PetersburgSpec);
 spec!(ISTANBUL, IstanbulSpec);
 // MUIR_GLACIER no EVM spec change

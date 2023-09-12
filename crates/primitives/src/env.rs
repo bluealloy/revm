@@ -1,24 +1,24 @@
 use crate::{
-    Account, Address, Bytes, EVMError, InvalidTransaction, Spec, SpecId, B256, KECCAK_EMPTY,
+    alloc::vec::Vec, Account, EVMError, InvalidTransaction, Spec, SpecId, B160, B256, KECCAK_EMPTY,
     MAX_INITCODE_SIZE, U256,
 };
-use alloc::vec::Vec;
+use bytes::Bytes;
 use core::cmp::{min, Ordering};
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Env {
     pub cfg: CfgEnv,
     pub block: BlockEnv,
     pub tx: TxEnv,
 }
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlockEnv {
     pub number: U256,
     /// Coinbase or miner or address that created and signed the block.
     /// Address where we are going to send gas spend
-    pub coinbase: Address,
+    pub coinbase: B160,
     pub timestamp: U256,
     /// Difficulty is removed and not used after Paris (aka TheMerge). Value is replaced with prevrandao.
     pub difficulty: U256,
@@ -30,26 +30,27 @@ pub struct BlockEnv {
     pub gas_limit: U256,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxEnv {
     /// Caller or Author or tx signer
-    pub caller: Address,
+    pub caller: B160,
     pub gas_limit: u64,
     pub gas_price: U256,
     pub gas_priority_fee: Option<U256>,
     pub transact_to: TransactTo,
     pub value: U256,
+    #[cfg_attr(feature = "serde", serde(with = "crate::utilities::serde_hex_bytes"))]
     pub data: Bytes,
     pub chain_id: Option<u64>,
     pub nonce: Option<u64>,
-    pub access_list: Vec<(Address, Vec<U256>)>,
+    pub access_list: Vec<(B160, Vec<U256>)>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TransactTo {
-    Call(Address),
+    Call(B160),
     Create(CreateScheme),
 }
 
@@ -77,17 +78,21 @@ pub enum CreateScheme {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[non_exhaustive]
 pub struct CfgEnv {
-    pub chain_id: U256,
+    pub chain_id: u64,
     pub spec_id: SpecId,
     /// Bytecode that is created with CREATE/CREATE2 is by default analysed and jumptable is created.
-    /// This is very benefitial for testing and speeds up execution of that bytecode if called multiple times.
+    /// This is very beneficial for testing and speeds up execution of that bytecode if called multiple times.
     ///
     /// Default: Analyse
     pub perf_analyse_created_bytecodes: AnalysisKind,
-    /// If some it will effects EIP-170: Contract code size limit. Usefull to increase this because of tests.
+    /// If some it will effects EIP-170: Contract code size limit. Useful to increase this because of tests.
     /// By default it is 0x6000 (~25kb).
     pub limit_contract_code_size: Option<usize>,
+    /// Disables the coinbase tip during the finalization of the transaction. This is useful for
+    /// rollups that redirect the tip to the sequencer.
+    pub disable_coinbase_tip: bool,
     /// A hard memory limit in bytes beyond which [Memory] cannot be resized.
     ///
     /// In cases where the gas limit may be extraordinarily high, it is recommended to set this to
@@ -183,10 +188,11 @@ pub enum AnalysisKind {
 impl Default for CfgEnv {
     fn default() -> CfgEnv {
         CfgEnv {
-            chain_id: U256::from(1),
+            chain_id: 1,
             spec_id: SpecId::LATEST,
             perf_analyse_created_bytecodes: Default::default(),
             limit_contract_code_size: None,
+            disable_coinbase_tip: false,
             #[cfg(feature = "memory_limit")]
             memory_limit: 2u64.pow(32) - 1,
             #[cfg(feature = "optional_balance_check")]
@@ -208,10 +214,10 @@ impl Default for BlockEnv {
         BlockEnv {
             gas_limit: U256::MAX,
             number: U256::ZERO,
-            coinbase: Address::ZERO,
+            coinbase: B160::zero(),
             timestamp: U256::from(1),
             difficulty: U256::ZERO,
-            prevrandao: Some(B256::ZERO),
+            prevrandao: Some(B256::zero()),
             basefee: U256::ZERO,
         }
     }
@@ -220,11 +226,11 @@ impl Default for BlockEnv {
 impl Default for TxEnv {
     fn default() -> TxEnv {
         TxEnv {
-            caller: Address::ZERO,
+            caller: B160::zero(),
             gas_limit: u64::MAX,
             gas_price: U256::ZERO,
             gas_priority_fee: None,
-            transact_to: TransactTo::Call(Address::ZERO), //will do nothing
+            transact_to: TransactTo::Call(B160::zero()), //will do nothing
             value: U256::ZERO,
             data: Bytes::new(),
             chain_id: None,
@@ -260,7 +266,7 @@ impl Env {
 
     /// Validate transaction data that is set inside ENV and return error if something is wrong.
     ///
-    /// Return inital spend gas (Gas needed to execute transaction).
+    /// Return initial spend gas (Gas needed to execute transaction).
     #[inline]
     pub fn validate_tx<SPEC: Spec>(&self) -> Result<(), InvalidTransaction> {
         let gas_limit = self.tx.gas_limit;
@@ -302,7 +308,7 @@ impl Env {
 
         // Check if the transaction's chain id is correct
         if let Some(tx_chain_id) = self.tx.chain_id {
-            if U256::from(tx_chain_id) != self.cfg.chain_id {
+            if tx_chain_id != self.cfg.chain_id {
                 return Err(InvalidTransaction::InvalidChainId);
             }
         }
@@ -315,9 +321,9 @@ impl Env {
         Ok(())
     }
 
-    /// Validate transaction agains state.
+    /// Validate transaction against state.
     #[inline]
-    pub fn validate_tx_agains_state(&self, account: &Account) -> Result<(), InvalidTransaction> {
+    pub fn validate_tx_against_state(&self, account: &Account) -> Result<(), InvalidTransaction> {
         // EIP-3607: Reject transactions from senders with deployed code
         // This EIP is introduced after london but there was no collision in past
         // so we can leave it enabled always

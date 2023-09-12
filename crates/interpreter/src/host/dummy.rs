@@ -1,6 +1,6 @@
 use crate::primitives::{hash_map::Entry, Bytecode, Bytes, HashMap, U256};
 use crate::{
-    primitives::{Address, Env, Log, B256, KECCAK_EMPTY},
+    primitives::{Env, Log, B160, B256, KECCAK_EMPTY},
     CallInputs, CreateInputs, Gas, Host, InstructionResult, Interpreter, SelfDestructResult,
 };
 use alloc::vec::Vec;
@@ -13,6 +13,8 @@ pub struct DummyHost {
 }
 
 impl DummyHost {
+    /// Create a new dummy host with the given [`Env`].
+    #[inline]
     pub fn new(env: Env) -> Self {
         Self {
             env,
@@ -21,6 +23,9 @@ impl DummyHost {
             log: Vec::new(),
         }
     }
+
+    /// Clears the storage and logs of the dummy host.
+    #[inline]
     pub fn clear(&mut self) {
         self.storage.clear();
         self.log.clear();
@@ -28,10 +33,12 @@ impl DummyHost {
 }
 
 impl Host for DummyHost {
+    #[inline]
     fn step(&mut self, _interp: &mut Interpreter) -> InstructionResult {
         InstructionResult::Continue
     }
 
+    #[inline]
     fn step_end(
         &mut self,
         _interp: &mut Interpreter,
@@ -40,31 +47,38 @@ impl Host for DummyHost {
         InstructionResult::Continue
     }
 
+    #[inline]
     fn env(&mut self) -> &mut Env {
         &mut self.env
     }
 
-    fn load_account(&mut self, _address: Address) -> Option<(bool, bool)> {
+    #[inline]
+    fn load_account(&mut self, _address: B160) -> Option<(bool, bool)> {
         Some((true, true))
     }
 
+    #[inline]
     fn block_hash(&mut self, _number: U256) -> Option<B256> {
-        Some(B256::ZERO)
+        Some(B256::zero())
     }
 
-    fn balance(&mut self, _address: Address) -> Option<(U256, bool)> {
+    #[inline]
+    fn balance(&mut self, _address: B160) -> Option<(U256, bool)> {
         Some((U256::ZERO, false))
     }
 
-    fn code(&mut self, _address: Address) -> Option<(Bytecode, bool)> {
+    #[inline]
+    fn code(&mut self, _address: B160) -> Option<(Bytecode, bool)> {
         Some((Bytecode::default(), false))
     }
 
-    fn code_hash(&mut self, __address: Address) -> Option<(B256, bool)> {
+    #[inline]
+    fn code_hash(&mut self, __address: B160) -> Option<(B256, bool)> {
         Some((KECCAK_EMPTY, false))
     }
 
-    fn sload(&mut self, __address: Address, index: U256) -> Option<(U256, bool)> {
+    #[inline]
+    fn sload(&mut self, __address: B160, index: U256) -> Option<(U256, bool)> {
         match self.storage.entry(index) {
             Entry::Occupied(entry) => Some((*entry.get(), false)),
             Entry::Vacant(entry) => {
@@ -74,9 +88,10 @@ impl Host for DummyHost {
         }
     }
 
+    #[inline]
     fn sstore(
         &mut self,
-        _address: Address,
+        _address: B160,
         index: U256,
         value: U256,
     ) -> Option<(U256, U256, U256, bool)> {
@@ -91,18 +106,21 @@ impl Host for DummyHost {
         Some((U256::ZERO, present, value, is_cold))
     }
 
-    fn tload(&mut self, _address: Address, index: U256) -> U256 {
+    #[inline]
+    fn tload(&mut self, _address: B160, index: U256) -> U256 {
         self.transient_storage
             .get(&index)
             .cloned()
             .unwrap_or_default()
     }
 
-    fn tstore(&mut self, _address: Address, index: U256, value: U256) {
+    #[inline]
+    fn tstore(&mut self, _address: B160, index: U256, value: U256) {
         self.transient_storage.insert(index, value);
     }
 
-    fn log(&mut self, address: Address, topics: Vec<B256>, data: Bytes) {
+    #[inline]
+    fn log(&mut self, address: B160, topics: Vec<B256>, data: Bytes) {
         self.log.push(Log {
             address,
             topics,
@@ -110,17 +128,20 @@ impl Host for DummyHost {
         })
     }
 
-    fn selfdestruct(&mut self, _address: Address, _target: Address) -> Option<SelfDestructResult> {
+    #[inline]
+    fn selfdestruct(&mut self, _address: B160, _target: B160) -> Option<SelfDestructResult> {
         panic!("Selfdestruct is not supported for this host")
     }
 
+    #[inline]
     fn create(
         &mut self,
         _inputs: &mut CreateInputs,
-    ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
+    ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
         panic!("Create is not supported for this host")
     }
 
+    #[inline]
     fn call(&mut self, _input: &mut CallInputs) -> (InstructionResult, Gas, Bytes) {
         panic!("Call is not supported for this host")
     }

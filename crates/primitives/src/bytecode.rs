@@ -1,9 +1,9 @@
-use crate::{keccak256, Bytes, B256, KECCAK_EMPTY};
+use crate::{keccak256, B256, KECCAK_EMPTY};
 use alloc::{sync::Arc, vec::Vec};
 use bitvec::prelude::{bitvec, Lsb0};
 use bitvec::vec::BitVec;
+use bytes::Bytes;
 use core::fmt::Debug;
-use to_binary::BinaryString;
 
 /// A map of valid `jump` destinations.
 #[derive(Clone, Eq, PartialEq, Default)]
@@ -13,7 +13,7 @@ pub struct JumpMap(pub Arc<BitVec<u8>>);
 impl Debug for JumpMap {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("JumpMap")
-            .field("map", &BinaryString::from(self.0.as_raw_slice()))
+            .field("map", &hex::encode(self.0.as_raw_slice()))
             .finish()
     }
 }
@@ -49,6 +49,7 @@ pub enum BytecodeState {
 #[derive(Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Bytecode {
+    #[cfg_attr(feature = "serde", serde(with = "crate::utilities::serde_hex_bytes"))]
     pub bytecode: Bytes,
     pub state: BytecodeState,
 }
@@ -56,7 +57,7 @@ pub struct Bytecode {
 impl Debug for Bytecode {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("Bytecode")
-            .field("bytecode", &self.bytecode)
+            .field("bytecode", &hex::encode(&self.bytecode[..]))
             .field("state", &self.state)
             .finish()
     }
@@ -94,19 +95,6 @@ impl Bytecode {
     /// Creates a new raw [`Bytecode`].
     #[inline]
     pub fn new_raw(bytecode: Bytes) -> Self {
-        Self {
-            bytecode,
-            state: BytecodeState::Raw,
-        }
-    }
-
-    /// Creates a new raw Bytecode with the given hash.
-    ///
-    /// # Safety
-    ///
-    /// The given `hash` has to be equal to the [`keccak256`] hash of the given `bytecode`.
-    #[inline]
-    pub unsafe fn new_raw_with_hash(bytecode: Bytes) -> Self {
         Self {
             bytecode,
             state: BytecodeState::Raw,

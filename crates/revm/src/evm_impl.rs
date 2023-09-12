@@ -5,11 +5,11 @@ use crate::interpreter::{
 };
 use crate::journaled_state::{is_precompile, JournalCheckpoint};
 use crate::primitives::{
-    create2_address, create_address, keccak256, Account, Address, AnalysisKind, Bytecode, Bytes,
-    EVMError, EVMResult, Env, ExecutionResult, HashMap, InvalidTransaction, Log, Output,
-    ResultAndState, Spec,
+    create2_address, create_address, keccak256, Account, AnalysisKind, Bytecode, Bytes, EVMError,
+    EVMResult, Env, ExecutionResult, HashMap, InvalidTransaction, Log, Output, ResultAndState,
+    Spec,
     SpecId::{self, *},
-    TransactTo, B256, U256,
+    TransactTo, B160, B256, U256,
 };
 use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector};
 use alloc::boxed::Box;
@@ -35,14 +35,14 @@ pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
 
 struct PreparedCreate {
     gas: Gas,
-    created_address: Address,
+    created_address: B160,
     checkpoint: JournalCheckpoint,
     contract: Box<Contract>,
 }
 
 struct CreateResult {
     result: InstructionResult,
-    created_address: Option<Address>,
+    created_address: Option<B160>,
     gas: Gas,
     return_value: Bytes,
 }
@@ -60,6 +60,12 @@ struct CallResult {
 }
 
 pub trait Transact<DBError> {
+    /// Do checks that could make transaction fail before call/create
+    fn preverify_transaction(&mut self) -> Result<(), EVMError<DBError>>;
+
+    /// Skip preverification steps and do transaction
+    fn transact_preverified(&mut self) -> EVMResult<DBError>;
+
     /// Do transaction.
     /// InstructionResult InstructionResult, Output for call or Address if we are creating
     /// contract, gas spend, gas refunded, State that needs to be applied.
@@ -85,10 +91,35 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
     for EVMImpl<'a, GSPEC, DB, INSPECT>
 {
-    fn transact(&mut self) -> EVMResult<DB::Error> {
-        self.env().validate_block_env::<GSPEC, DB::Error>()?;
-        self.env().validate_tx::<GSPEC>()?;
+    fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
+        let env = self.env();
 
+        env.validate_block_env::<GSPEC, DB::Error>()?;
+        env.validate_tx::<GSPEC>()?;
+
+        let tx_caller = env.tx.caller;
+        let tx_data = &env.tx.data;
+        let tx_is_create = env.tx.transact_to.is_create();
+
+        let initial_gas_spend = initial_tx_gas::<GSPEC>(tx_data, tx_is_create, &env.tx.access_list);
+
+        // Additonal check to see if limit is big enought to cover initial gas.
+        if env.tx.gas_limit < initial_gas_spend {
+            return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
+        }
+
+        // load acc
+        let journal = &mut self.data.journaled_state;
+        let (caller_account, _) = journal
+            .load_account(tx_caller, self.data.db)
+            .map_err(EVMError::Database)?;
+
+        self.data.env.validate_tx_against_state(caller_account)?;
+
+        Ok(())
+    }
+
+    fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
         let env = &self.data.env;
         let tx_caller = env.tx.caller;
         let tx_value = env.tx.value;
@@ -99,11 +130,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
 
         let initial_gas_spend =
             initial_tx_gas::<GSPEC>(&tx_data, tx_is_create, &env.tx.access_list);
-
-        // Additonal check to see if limit is big enought to cover initial gas.
-        if env.tx.gas_limit < initial_gas_spend {
-            return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
-        }
 
         // load coinbase
         // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
@@ -120,8 +146,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let (caller_account, _) = journal
             .load_account(tx_caller, self.data.db)
             .map_err(EVMError::Database)?;
-
-        self.data.env.validate_tx_agains_state(caller_account)?;
 
         // Reduce gas_limit*gas_price amount of caller account.
         // unwrap_or can only occur if disable_balance_check is enabled
@@ -212,7 +236,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             },
             SuccessOrHalt::Halt(reason) => ExecutionResult::Halt { reason, gas_used },
             SuccessOrHalt::FatalExternalError => {
-                return Err(EVMError::Database(self.data.error.take().unwrap()))
+                return Err(EVMError::Database(self.data.error.take().unwrap()));
             }
             SuccessOrHalt::InternalContinue => {
                 panic!("Internal return flags should remain internal {exit_reason:?}")
@@ -220,6 +244,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         };
 
         Ok(ResultAndState { result, state })
+    }
+
+    fn transact(&mut self) -> EVMResult<DB::Error> {
+        self.preverify_transaction()
+            .and_then(|_| self.transact_preverified())
     }
 }
 
@@ -248,71 +277,70 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
     }
 
-    fn finalize<SPEC: Spec>(
-        &mut self,
-        gas: &Gas,
-    ) -> (HashMap<Address, Account>, Vec<Log>, u64, u64) {
+    fn finalize<SPEC: Spec>(&mut self, gas: &Gas) -> (HashMap<B160, Account>, Vec<Log>, u64, u64) {
         let caller = self.data.env.tx.caller;
         let coinbase = self.data.env.block.coinbase;
-        let (gas_used, gas_refunded) = if crate::USE_GAS {
-            let effective_gas_price = self.data.env.effective_gas_price();
-            let basefee = self.data.env.block.basefee;
+        let (gas_used, gas_refunded) =
+            if crate::USE_GAS {
+                let effective_gas_price = self.data.env.effective_gas_price();
+                let basefee = self.data.env.block.basefee;
 
-            let gas_refunded = if self.env().cfg.is_gas_refund_disabled() {
-                0
+                let gas_refunded = if self.env().cfg.is_gas_refund_disabled() {
+                    0
+                } else {
+                    // EIP-3529: Reduction in refunds
+                    let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 };
+                    min(gas.refunded() as u64, gas.spend() / max_refund_quotient)
+                };
+
+                // return balance of not spend gas.
+                let Ok((caller_account, _)) =
+                    self.data.journaled_state.load_account(caller, self.data.db)
+                else {
+                    panic!("caller account not found");
+                };
+
+                caller_account.info.balance = caller_account.info.balance.saturating_add(
+                    effective_gas_price * U256::from(gas.remaining() + gas_refunded),
+                );
+
+                // transfer fee to coinbase/beneficiary.
+                if !self.data.env.cfg.disable_coinbase_tip {
+                    // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
+                    let coinbase_gas_price = if SPEC::enabled(LONDON) {
+                        effective_gas_price.saturating_sub(basefee)
+                    } else {
+                        effective_gas_price
+                    };
+
+                    let Ok((coinbase_account, _)) = self
+                        .data
+                        .journaled_state
+                        .load_account(coinbase, self.data.db)
+                    else {
+                        panic!("coinbase account not found");
+                    };
+                    coinbase_account.mark_touch();
+                    coinbase_account.info.balance = coinbase_account.info.balance.saturating_add(
+                        coinbase_gas_price * U256::from(gas.spend() - gas_refunded),
+                    );
+                }
+
+                (gas.spend() - gas_refunded, gas_refunded)
             } else {
-                // EIP-3529: Reduction in refunds
-                let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 };
-                min(gas.refunded() as u64, gas.spend() / max_refund_quotient)
+                // touch coinbase
+                let _ = self
+                    .data
+                    .journaled_state
+                    .load_account(coinbase, self.data.db);
+                self.data.journaled_state.touch(&coinbase);
+                (0, 0)
             };
-
-            // return balance of not spend gas.
-            let Ok((caller_account, _)) =
-                self.data.journaled_state.load_account(caller, self.data.db)
-            else {
-                panic!("caller account not found");
-            };
-
-            caller_account.info.balance = caller_account
-                .info
-                .balance
-                .saturating_add(effective_gas_price * U256::from(gas.remaining() + gas_refunded));
-
-            // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
-            let coinbase_gas_price = if SPEC::enabled(LONDON) {
-                effective_gas_price.saturating_sub(basefee)
-            } else {
-                effective_gas_price
-            };
-
-            // transfer fee to coinbase/beneficiary.
-            let Ok((coinbase_account, _)) = self
-                .data
-                .journaled_state
-                .load_account(coinbase, self.data.db)
-            else {
-                panic!("coinbase account not found");
-            };
-            coinbase_account.mark_touch();
-            coinbase_account.info.balance = coinbase_account
-                .info
-                .balance
-                .saturating_add(coinbase_gas_price * U256::from(gas.spend() - gas_refunded));
-
-            (gas.spend() - gas_refunded, gas_refunded)
-        } else {
-            // touch coinbase
-            let _ = self
-                .data
-                .journaled_state
-                .load_account(coinbase, self.data.db);
-            self.data.journaled_state.touch(&coinbase);
-            (0, 0)
-        };
         let (new_state, logs) = self.data.journaled_state.finalize();
         (new_state, logs, gas_used, gas_refunded)
     }
 
+    #[inline(never)]
     fn prepare_create(&mut self, inputs: &CreateInputs) -> Result<PreparedCreate, CreateResult> {
         let gas = Gas::new(inputs.gas_limit);
 
@@ -395,13 +423,16 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     created_address: None,
                     gas,
                     return_value: Bytes::new(),
-                })
+                });
             }
         };
 
+        let bytecode = Bytecode::new_raw(inputs.init_code.clone());
+
         let contract = Box::new(Contract::new(
             Bytes::new(),
-            Bytecode::new_raw(inputs.init_code.clone()),
+            bytecode,
+            code_hash,
             created_address,
             inputs.caller,
             inputs.value,
@@ -556,7 +587,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
     /// Call precompile contract
     fn call_precompile(&mut self, inputs: &CallInputs, mut gas: Gas) -> CallResult {
-        let input_data = inputs.input.clone();
+        let input_data = &inputs.input;
         let contract = inputs.contract;
 
         let precompile = self
@@ -565,8 +596,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             .get(&contract)
             .expect("Check for precompile should be already done");
         let out = match precompile {
-            Precompile::Standard(fun) => fun(&input_data, gas.limit()),
-            Precompile::Custom(fun) => fun(&input_data, gas.limit()),
+            Precompile::Standard(fun) => fun(input_data, gas.limit()),
+            Precompile::Custom(fun) => fun(input_data, gas.limit()),
         };
         match out {
             Ok((gas_used, data)) => {
@@ -585,13 +616,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 }
             }
             Err(e) => {
-                let ret = if precompile::Error::OutOfGas == e {
+                let result = if precompile::Error::OutOfGas == e {
                     InstructionResult::PrecompileOOG
                 } else {
                     InstructionResult::PrecompileError
                 };
                 CallResult {
-                    result: ret,
+                    result,
                     gas,
                     return_value: Bytes::new(),
                 }
@@ -599,16 +630,26 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         }
     }
 
+    #[inline(never)]
     fn prepare_call(&mut self, inputs: &CallInputs) -> Result<PreparedCall, CallResult> {
         let gas = Gas::new(inputs.gas_limit);
-        // Load account and get code. Account is now hot.
-        let Some((bytecode, _)) = self.code(inputs.contract) else {
-            return Err(CallResult {
-                result: InstructionResult::FatalExternalError,
-                gas,
-                return_value: Bytes::new(),
-            });
+        let account = match self
+            .data
+            .journaled_state
+            .load_code(inputs.contract, self.data.db)
+        {
+            Ok((account, _)) => account,
+            Err(e) => {
+                self.data.error = Some(e);
+                return Err(CallResult {
+                    result: InstructionResult::FatalExternalError,
+                    gas,
+                    return_value: Bytes::new(),
+                });
+            }
         };
+        let code_hash = account.info.code_hash();
+        let bytecode = account.info.code.clone().unwrap_or_default();
 
         // Check depth
         if self.data.journaled_state.depth() > CALL_STACK_LIMIT {
@@ -646,6 +687,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let contract = Box::new(Contract::new_with_context(
             inputs.input.clone(),
             bytecode,
+            code_hash,
             &inputs.context,
         ));
 
@@ -722,7 +764,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .ok()
     }
 
-    fn load_account(&mut self, address: Address) -> Option<(bool, bool)> {
+    fn load_account(&mut self, address: B160) -> Option<(bool, bool)> {
         self.data
             .journaled_state
             .load_account_exist(address, self.data.db)
@@ -730,7 +772,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .ok()
     }
 
-    fn balance(&mut self, address: Address) -> Option<(U256, bool)> {
+    fn balance(&mut self, address: B160) -> Option<(U256, bool)> {
         let db = &mut self.data.db;
         let journal = &mut self.data.journaled_state;
         let error = &mut self.data.error;
@@ -741,7 +783,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .map(|(acc, is_cold)| (acc.info.balance, is_cold))
     }
 
-    fn code(&mut self, address: Address) -> Option<(Bytecode, bool)> {
+    fn code(&mut self, address: B160) -> Option<(Bytecode, bool)> {
         let journal = &mut self.data.journaled_state;
         let db = &mut self.data.db;
         let error = &mut self.data.error;
@@ -754,7 +796,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     }
 
     /// Get code hash of address.
-    fn code_hash(&mut self, address: Address) -> Option<(B256, bool)> {
+    fn code_hash(&mut self, address: B160) -> Option<(B256, bool)> {
         let journal = &mut self.data.journaled_state;
         let db = &mut self.data.db;
         let error = &mut self.data.error;
@@ -764,13 +806,13 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .map_err(|e| *error = Some(e))
             .ok()?;
         if acc.is_empty() {
-            return Some((B256::ZERO, is_cold));
+            return Some((B256::zero(), is_cold));
         }
 
         Some((acc.info.code_hash, is_cold))
     }
 
-    fn sload(&mut self, address: Address, index: U256) -> Option<(U256, bool)> {
+    fn sload(&mut self, address: B160, index: U256) -> Option<(U256, bool)> {
         // account is always hot. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
         self.data
             .journaled_state
@@ -781,7 +823,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
 
     fn sstore(
         &mut self,
-        address: Address,
+        address: B160,
         index: U256,
         value: U256,
     ) -> Option<(U256, U256, U256, bool)> {
@@ -792,15 +834,15 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .ok()
     }
 
-    fn tload(&mut self, address: Address, index: U256) -> U256 {
+    fn tload(&mut self, address: B160, index: U256) -> U256 {
         self.data.journaled_state.tload(address, index)
     }
 
-    fn tstore(&mut self, address: Address, index: U256, value: U256) {
+    fn tstore(&mut self, address: B160, index: U256, value: U256) {
         self.data.journaled_state.tstore(address, index, value)
     }
 
-    fn log(&mut self, address: Address, topics: Vec<B256>, data: Bytes) {
+    fn log(&mut self, address: B160, topics: Vec<B256>, data: Bytes) {
         if INSPECT {
             self.inspector.log(&mut self.data, &address, &topics, &data);
         }
@@ -812,9 +854,11 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         self.data.journaled_state.log(log);
     }
 
-    fn selfdestruct(&mut self, address: Address, target: Address) -> Option<SelfDestructResult> {
+    fn selfdestruct(&mut self, address: B160, target: B160) -> Option<SelfDestructResult> {
         if INSPECT {
-            self.inspector.selfdestruct(address, target);
+            let acc = self.data.journaled_state.state.get(&address).unwrap();
+            self.inspector
+                .selfdestruct(address, target, acc.info.balance);
         }
         self.data
             .journaled_state
@@ -826,7 +870,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     fn create(
         &mut self,
         inputs: &mut CreateInputs,
-    ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
+    ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
         // Call inspector
         if INSPECT {
             let (ret, address, gas, out) = self.inspector.create(&mut self.data, inputs);

@@ -1,4 +1,4 @@
-# specifications
+# Specifications
 
 Holds data related to Ethereum's technical specifications, serving as a reference point for Ethereum's rules and procedures obtained from the [Ethereum execution specifications](https://github.com/ethereum/execution-specs). The module is primarily used to enumerate and handle Ethereum's network upgrades or "hard forks" within the Ethereum Virtual Machine (EVM). These hard forks are referred to as `SpecId` in the code, representing different phases of Ethereum's development.
 

@@ -4,7 +4,7 @@ This crate is a core component of the Revm system. It is designed to provide def
 
 Modules:
 
-- [bits](./primitives/bits.md): This module provides types for handling specific sizes of byte arrays (Address and B256).
+- [bits](./primitives/bits.md): This module provides types for handling specific sizes of byte arrays (B160 and B256).
 - [bytecode](./primitives/bytecode.md): This module provides functionality related to EVM bytecode.
 - [constants](./primitives/constants.md): This module contains constant values used throughout the EVM implementation.
 - [db](./primitives/database.md): This module contains data structures and functions related to the EVM's database implementation.
@@ -28,11 +28,12 @@ External Crates:
 
 Type Aliases:
 
+- Address: An alias for B160, representing a 20-byte Ethereum address.
 - Hash: An alias for B256, typically used to represent 256-bit hashes or integer values in Ethereum.
 
 Re-exported Types:
 
-- Address: A type representing a 160-bit (or 20-byte) array, typically used for Ethereum addresses.
+- B160: A type representing a 160-bit (or 20-byte) array, typically used for Ethereum addresses.
 - B256: A type representing a 256-bit (or 32-byte) array, typically used for Ethereum hashes or integers.
 - Bytes: A type representing a sequence of bytes.
 - U256: A 256-bit unsigned integer type from the ruint crate.

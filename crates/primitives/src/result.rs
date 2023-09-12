@@ -1,6 +1,8 @@
-use crate::{Address, Bytes, Log, State, U256};
+use crate::{Log, State, B160};
 use alloc::vec::Vec;
+use bytes::Bytes;
 use core::fmt;
+use ruint::aliases::U256;
 
 pub type EVMResult<DBError> = core::result::Result<ResultAndState, EVMError<DBError>>;
 
@@ -37,7 +39,7 @@ pub enum ExecutionResult {
 impl ExecutionResult {
     /// Returns if transaction execution is successful.
     /// 1 indicates success, 0 indicates revert.
-    /// https://eips.ethereum.org/EIPS/eip-658
+    /// <https://eips.ethereum.org/EIPS/eip-658>
     pub fn is_success(&self) -> bool {
         matches!(self, Self::Success { .. })
     }
@@ -92,8 +94,12 @@ impl ExecutionResult {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Output {
+    #[cfg_attr(feature = "serde", serde(with = "crate::utilities::serde_hex_bytes"))]
     Call(Bytes),
-    Create(Bytes, Option<Address>),
+    Create(
+        #[cfg_attr(feature = "serde", serde(with = "crate::utilities::serde_hex_bytes"))] Bytes,
+        Option<B160>,
+    ),
 }
 
 impl Output {
@@ -179,7 +185,7 @@ pub enum InvalidTransaction {
     AccessListNotSupported,
 }
 
-/// When transaction return successfully without halts.
+/// Reason a transaction successfully completed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Eval {
