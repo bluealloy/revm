@@ -1,12 +1,12 @@
 # Precompile
 
-The `precompile` crate contains the implementation of the Ethereum precompile opcodes in the evm. Precompiles are a shortcut to execute a function implemented by the EVM itself, rather than an actual contract. Precompiled contracts are essentially predefined smart contracts on Ethereum, residing at hardcoded addresses and used for computationally heavy operations that are cheaper when implemented this way. There are 6 precompiles implemented in REVM, and they are: `blake2`, `bn128` curve, `identity`, `secp256k1`, `modexp`, and `sha256` and `ripemd160` has functions.
+The `precompile` crate contains the implementation of the Ethereum precompile opcodes in the EVM. Precompiles are a shortcut to execute a function implemented by the EVM itself, rather than an actual contract. Precompiled contracts are essentially predefined smart contracts on Ethereum, residing at hardcoded addresses and used for computationally heavy operations that are cheaper when implemented this way. There are 6 precompiles implemented in REVM, and they are: `blake2`, `bn128` curve, `identity`, `secp256k1`, `modexp`, and `sha256` and `ripemd160` hash functions.
 
 Modules:
 
 - [blake2](./precompile/blake2.md): This module implements the `BLAKE2` compression function, as specified in EIP-152.
 - [bn128](./precompile/bn128.md): This module contains the implementations of precompiled contracts for addition, scalar multiplication, and optimal ate pairing check on the alt_bn128 elliptic curve.
-- [hash](./precompile/hash.md): This module includes the implementations for the SHA256 and RIPEMD160 hash function precompiles.
+- [hash](./precompile/hash.md): This module includes the implementations for the `SHA256` and `RIPEMD160` hash function precompiles.
 - [identity](./precompile/identity.md): This module implements the Identity precompile, which returns the input data unchanged.
 - [modexp](./precompile/modexp.md): This module implements the big integer modular exponentiation precompile.
 - [secp256k1](./precompile/secp256k1.md): This module implements the ECDSA public key recovery precompile, based on the secp256k1 curve.
@@ -29,8 +29,8 @@ Functions:
 
 External Crates:
 
-- alloc: The alloc crate provides types for heap allocation, and is used here for the `Vec` type.
-- core: The core crate provides fundamental Rust types, macros, and traits, and is used here for `fmt::Result`.
+- [alloc](https://doc.rust-lang.org/alloc/): The alloc crate provides types for heap allocation, and is used here for the `Vec` type.
+- [core](https://doc.rust-lang.org/core/): The core crate provides fundamental Rust types, macros, and traits, and is used here for `fmt::Result`.
 
 Re-exported Crates and Types:
 
