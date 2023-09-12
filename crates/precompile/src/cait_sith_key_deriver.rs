@@ -13,6 +13,7 @@ pub const DERIVE_CAIT_SITH_PUBKEY: PrecompileAddress = PrecompileAddress(
     Precompile::Standard(derive_cait_sith_pubkey as StandardPrecompileFn),
 );
 
+/// The minimum length of the input.
 const MIN_LENGTH: usize = 81;
 /// The base cost of the operation.
 const IDENTITY_BASE: u64 = 15;
@@ -154,7 +155,7 @@ where
             value[offset + 3],
         ]) as usize;
 
-        if pks_cnt == 0 || (offset + pks_cnt * 33) > value.len() {
+        if pks_cnt < 2 || (offset + pks_cnt * 33) > value.len() {
             return err;
         }
 
@@ -220,4 +221,53 @@ where
         points.push(point.unwrap());
     }
     Ok(points)
+}
+
+
+#[test]
+fn derive_precompile_works() {
+    let k256_vectors = TestVector {
+        tweaks: vec![
+            k256::Scalar::from_repr(elliptic_curve::FieldBytes::from_slice(hex::decode("80efe4d28a41cf962133bfcaa2807d38a7f5cec16941cc6d6eec8e76185d2a43"))).unwrap(),
+            k256::Scalar::from_repr(elliptic_curve::FieldBytes::from_slice(hex::decode("5afd988c6086d335f892a43ccf943d3973814eadd315adc04bb12808f1c1ac4e"))).unwrap(),
+            k256::Scalar::from_repr(elliptic_curve::FieldBytes::from_slice(hex::decode("666f2ce0352e74402c16c02df1b8c29334898e89792eb3ccea54172289c8683b"))).unwrap(),
+            k256::Scalar::from_repr(elliptic_curve::FieldBytes::from_slice(hex::decode("d8d9ab7eb84354614b196236009e60f10f28c1c389013c53c907d203f69c9dcf"))).unwrap(),
+            k256::Scalar::from_repr(elliptic_curve::FieldBytes::from_slice(hex::decode("8be371c633650ced7b804f127f7c657ec555abc9b9388bdaff3768089e35f1e7"))).unwrap(),
+        ],
+        derived_secret_keys: vec![
+            k256::Scalar::from_repr(elliptic_curve::FieldBytes::from_slice(hex::decode("028b65b2be48d4995b4605fd15d9fe84a8a2aa2844413144e7fd639f02cb3cec"))).unwrap(),
+            k256::Scalar::from_repr(elliptic_curve::FieldBytes::from_slice(hex::decode("5afd988c6086d335f892a43ccf943d3973814eadd315adc04bb12808f1c1ac4e"))).unwrap(),
+            k256::Scalar::from_repr(elliptic_curve::FieldBytes::from_slice(hex::decode("666f2ce0352e74402c16c02df1b8c29334898e89792eb3ccea54172289c8683b"))).unwrap(),
+            k256::Scalar::from_repr(elliptic_curve::FieldBytes::from_slice(hex::decode("d8d9ab7eb84354614b196236009e60f10f28c1c389013c53c907d203f69c9dcf"))).unwrap(),
+            k256::Scalar::from_repr(elliptic_curve::FieldBytes::from_slice(hex::decode("8be371c633650ced7b804f127f7c657ec555abc9b9388bdaff3768089e35f1e7"))).unwrap(),
+        ],
+        derived_public_keys: vec![],
+    };
+    compute_key_test_vectors::<k256::Secp256k1>()
+}
+
+#[cfg(test)]
+fn compute_key_test_vectors<C>(test_vectors: TestVector<C>)
+    where
+        C: GroupDigest,
+        <C as CurveArithmetic>::ProjectivePoint: CofactorGroup,
+        <C as CurveArithmetic>::AffinePoint: FromEncodedPoint<C>,
+        <C as CurveArithmetic>::Scalar: FromOkm,
+        <C as Curve>::FieldBytesSize: ModulusSize,
+{
+
+}
+
+#[cfg(test)]
+struct TestVector<C>
+    where
+        C: GroupDigest,
+        <C as CurveArithmetic>::ProjectivePoint: CofactorGroup,
+        <C as CurveArithmetic>::AffinePoint: FromEncodedPoint<C>,
+        <C as CurveArithmetic>::Scalar: FromOkm,
+        <C as Curve>::FieldBytesSize: ModulusSize,
+{
+    tweaks: Vec<C::Scalar>,
+    derived_secret_keys: Vec<C::Scalar>,
+    derived_public_keys: Vec<C::ProjectivePoint>,
 }
