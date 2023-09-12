@@ -189,10 +189,16 @@ impl<DB: Database> State<DB> {
         }
     }
 
+    // TODO make cache aware of transitions dropping by having global transition counter.
     /// Takes changeset and reverts from state and replaces it with empty one.
     /// This will trop pending Transition and any transitions would be lost.
     ///
-    /// TODO make cache aware of transitions dropping by having global transition counter.
+    /// NOTE: If either:
+    /// * The [State] has not been built with [StateBuilder::with_bundle_update], or
+    /// * The [State] has a [TransitionState] set to `None` when
+    /// [TransitionState::merge_transitions] is called,
+    ///
+    /// this will panic.
     pub fn take_bundle(&mut self) -> BundleState {
         std::mem::take(self.bundle_state.as_mut().unwrap())
     }
