@@ -9,7 +9,7 @@ use elliptic_curve::{
 use hd_keys_ecdsa::*;
 
 pub const DERIVE_CAIT_SITH_PUBKEY: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(100),
+    crate::u64_to_b160(10),
     Precompile::Standard(derive_cait_sith_pubkey as StandardPrecompileFn),
 );
 
