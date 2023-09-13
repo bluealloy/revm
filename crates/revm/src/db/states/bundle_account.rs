@@ -270,7 +270,7 @@ impl BundleAccount {
                             // and insert it inside revert.
 
                             let previous_storage = if transition.storage_was_destroyed {
-                                let mut storage = std::mem::take(&mut self.storage)
+                                let mut storage = core::mem::take(&mut self.storage)
                                     .into_iter()
                                     .map(|t| (t.0, RevertToSlot::Some(t.1.present_value)))
                                     .collect::<HashMap<_, _>>();

@@ -1,9 +1,8 @@
 use super::{
     plain_account::PlainStorage, transition_account::TransitionAccount, CacheAccount, PlainAccount,
 };
-use revm_interpreter::primitives::{
-    AccountInfo, Address, Bytecode, HashMap, State as EVMState, B256,
-};
+use alloc::vec::Vec;
+use revm_interpreter::primitives::{AccountInfo, Bytecode, HashMap, State as EVMState, Address, B256};
 
 /// Cache state contains both modified and original values.
 ///

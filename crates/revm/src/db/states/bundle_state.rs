@@ -3,16 +3,15 @@ use super::{
     reverts::{AccountInfoRevert, Reverts},
     AccountRevert, AccountStatus, BundleAccount, PlainStateReverts, RevertToSlot, TransitionState,
 };
-use rayon::slice::ParallelSliceMut;
-use revm_interpreter::primitives::{
-    hash_map::{self, Entry},
-    AccountInfo, Bytecode, HashMap, HashSet, StorageSlot, Address, B256, KECCAK_EMPTY, U256,
-};
 use alloc::{
     collections::{BTreeMap, BTreeSet},
     vec::Vec,
 };
-use std::ops::RangeInclusive;
+use core::ops::RangeInclusive;
+use revm_interpreter::primitives::{
+    hash_map::{self, Entry},
+    AccountInfo, Bytecode, HashMap, HashSet, StorageSlot, Address, B256, KECCAK_EMPTY, U256,
+};
 
 /// This builder is used to help to facilitate the initialization of `BundleState` struct
 #[derive(Debug)]
@@ -440,8 +439,8 @@ impl BundleState {
         self.reverts.push(reverts);
     }
 
-    /// Consume the bundle state and return sorted plain state.
-    pub fn into_plain_state_sorted(self, is_value_known: OriginalValuesKnown) -> StateChangeset {
+    /// Consume the bundle state and return plain state.
+    pub fn into_plain_state(self, is_value_known: OriginalValuesKnown) -> StateChangeset {
         // pessimistically pre-allocate assuming _all_ accounts changed.
         let state_len = self.state.len();
         let mut accounts = Vec::with_capacity(state_len);
@@ -479,7 +478,6 @@ impl BundleState {
             }
 
             if !account_storage_changed.is_empty() || was_destroyed {
-                account_storage_changed.sort_by(|a, b| a.0.cmp(&b.0));
                 // append storage changes to account.
                 storage.push(PlainStorageChangeset {
                     address,
@@ -488,18 +486,12 @@ impl BundleState {
                 });
             }
         }
-
-        accounts.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
-        storage.par_sort_unstable_by(|a, b| a.address.cmp(&b.address));
-
-        let mut contracts = self
+        let contracts = self
             .contracts
             .into_iter()
             // remove empty bytecodes
             .filter(|(b, _)| *b != KECCAK_EMPTY)
             .collect::<Vec<_>>();
-        contracts.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
-
         StateChangeset {
             accounts,
             storage,
@@ -508,12 +500,12 @@ impl BundleState {
     }
 
     /// Consume the bundle state and split it into reverts and plain state.
-    pub fn into_sorted_plain_state_and_reverts(
+    pub fn into_plain_state_and_reverts(
         mut self,
         is_value_known: OriginalValuesKnown,
     ) -> (StateChangeset, PlainStateReverts) {
         let reverts = self.take_all_reverts();
-        let plain_state = self.into_plain_state_sorted(is_value_known);
+        let plain_state = self.into_plain_state(is_value_known);
         (plain_state, reverts.into_plain_state_reverts())
     }
 

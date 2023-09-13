@@ -17,6 +17,8 @@ jobs:
 
       - name: Install toolchain
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: riscv32imac-unknown-none-elf
 
       - uses: Swatinem/rust-cache@v2
         with:
@@ -24,6 +26,9 @@ jobs:
 
       - name: cargo test
         run: cargo test --workspace --all-features
+      
+      - name: cargo check no_std
+        run: cargo check --target riscv32imac-unknown-none-elf --no-default-features
 
   lint:
     name: Lint
