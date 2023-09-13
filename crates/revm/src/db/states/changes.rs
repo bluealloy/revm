@@ -2,9 +2,12 @@ use super::RevertToSlot;
 use alloc::vec::Vec;
 use revm_interpreter::primitives::{AccountInfo, Bytecode, B160, B256, U256};
 
-/// Sorted accounts/storages/contracts for inclusion into database.
+/// accounts/storages/contracts for inclusion into database.
 /// Structure is made so it is easier to apply directly to database
 /// that mostly have separate tables to store account/storage/contract data.
+///
+/// Note: that data is **not** sorted. Some database benefit of faster inclusion
+/// and smaller footprint if data is inserted in sorted order.
 #[derive(Clone, Debug, Default)]
 pub struct StateChangeset {
     /// Vector of **not** sorted accounts information.

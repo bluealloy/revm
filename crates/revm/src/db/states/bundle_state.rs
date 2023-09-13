@@ -3,8 +3,10 @@ use super::{
     reverts::{AccountInfoRevert, Reverts},
     AccountRevert, AccountStatus, BundleAccount, PlainStateReverts, RevertToSlot, TransitionState,
 };
-use alloc::collections::{BTreeMap, BTreeSet};
-use alloc::vec::Vec;
+use alloc::{
+    collections::{BTreeMap, BTreeSet},
+    vec::Vec,
+};
 use core::ops::RangeInclusive;
 use revm_interpreter::primitives::{
     hash_map::{self, Entry},
