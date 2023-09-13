@@ -1,9 +1,13 @@
 use super::{
     bundle_state::BundleRetention, cache::CacheState, plain_account::PlainStorage, BundleState,
-    CacheAccount, TransitionState,
+    CacheAccount, StateBuilder, TransitionAccount, TransitionState,
 };
-use crate::{db::EmptyDB, StateBuilder, TransitionAccount};
-use alloc::collections::{btree_map, BTreeMap};
+use crate::db::EmptyDB;
+use alloc::{
+    boxed::Box,
+    collections::{btree_map, BTreeMap},
+    vec::Vec,
+};
 use revm_interpreter::primitives::{
     db::{Database, DatabaseCommit},
     hash_map, Account, AccountInfo, Bytecode, HashMap, B160, B256, BLOCK_HASH_HISTORY, U256,
@@ -200,7 +204,7 @@ impl<DB: Database> State<DB> {
     ///
     /// this will panic.
     pub fn take_bundle(&mut self) -> BundleState {
-        std::mem::take(self.bundle_state.as_mut().unwrap())
+        core::mem::take(self.bundle_state.as_mut().unwrap())
     }
 }
 
