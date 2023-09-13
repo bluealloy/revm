@@ -2215,7 +2215,6 @@ dependencies = [
  "futures",
  "hex",
  "hex-literal",
- "rayon",
  "revm-interpreter",
  "revm-precompile",
  "serde",
