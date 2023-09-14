@@ -20,7 +20,7 @@ Structure:
 * bins:
     * revme: cli binary, used for running state test jsons
 
-Project tend to use the newest rust, so if there is a build error try first to run `rustup update`.
+This project tends to use the newest rust version, so if you're encountering a build error try running `rustup update` first.
 
 There were some big efforts on optimization of revm:
 * Optimizing interpreter loop: https://github.com/bluealloy/revm/issues/7
