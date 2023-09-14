@@ -1,3 +1,4 @@
+use crate::Env;
 use alloc::vec::Vec;
 
 /// A precompile operation result.
@@ -6,7 +7,7 @@ use alloc::vec::Vec;
 pub type PrecompileResult = Result<(u64, Vec<u8>), PrecompileError>;
 
 pub type StandardPrecompileFn = fn(&[u8], u64) -> PrecompileResult;
-pub type CustomPrecompileFn = fn(&[u8], u64) -> PrecompileResult;
+pub type EnvPrecompileFn = fn(&[u8], u64, env: &Env) -> PrecompileResult;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum PrecompileError {

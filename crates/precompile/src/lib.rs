@@ -4,15 +4,13 @@
 extern crate alloc;
 
 mod blake2;
-mod blob;
+mod kzg_point_evaluation;
 mod bn128;
 mod hash;
 mod identity;
 mod modexp;
 mod secp256k1;
 
-// Export kzg_settings initializers
-pub use blob::kzg_settings;
 
 use once_cell::race::OnceBox;
 pub use primitives::{
@@ -70,14 +68,14 @@ impl Default for Precompiles {
 #[derive(Clone)]
 pub enum Precompile {
     Standard(StandardPrecompileFn),
-    Custom(CustomPrecompileFn),
+    Env(EnvPrecompileFn),
 }
 
 impl fmt::Debug for Precompile {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Precompile::Standard(_) => f.write_str("Standard"),
-            Precompile::Custom(_) => f.write_str("Custom"),
+            Precompile::Env(_) => f.write_str("Env"),
         }
     }
 }
@@ -202,7 +200,7 @@ impl Precompiles {
             precompiles.fun.extend(
                 [
                     // EIP-4844: Shard Blob Transactions
-                    blob::POINT_EVALUATION,
+                    kzg_point_evaluation::POINT_EVALUATION,
                 ]
                 .into_iter()
                 .map(From::from),

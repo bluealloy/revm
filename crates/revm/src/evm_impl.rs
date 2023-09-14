@@ -605,7 +605,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             .expect("Check for precompile should be already done");
         let out = match precompile {
             Precompile::Standard(fun) => fun(input_data, gas.limit()),
-            Precompile::Custom(fun) => fun(input_data, gas.limit()),
+            Precompile::Env(fun) => fun(input_data, gas.limit(), self.env()),
         };
         match out {
             Ok((gas_used, data)) => {

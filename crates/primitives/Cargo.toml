@@ -22,6 +22,10 @@ auto_impl = "1.1"
 bitvec = { version = "1", default-features = false, features = ["alloc"] }
 bitflags = { version = "2.4.0", default-features = false }
 
+# For setting the CfgEnv KZGSettings.
+c-kzg = { git = "https://github.com/ethereum/c-kzg-4844", default-features = false }
+once_cell = { version = "1.18", default-features = false }
+
 # bits B256 B160 crate
 fixed-hash = { version = "0.8", default-features = false, features = [
     "rustc-hex",
@@ -52,6 +56,9 @@ ruint = { version = "1.10.1", features = [
     "proptest",
     "arbitrary",
 ] }
+
+[build-dependencies]
+hex = "0.4"
 
 [features]
 default = ["std"]

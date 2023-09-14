@@ -4,6 +4,7 @@ use std::ffi::CString;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::slice;
+use hex;
 
 const BYTES_PER_G1_POINT: usize = 48;
 const BYTES_PER_G2_POINT: usize = 96;
@@ -16,10 +17,10 @@ fn generate_kzg_settings() {
     // Note: we don't use `OUT_DIR` because we don't ship this build script with the crate, so all
     // used files must be in tree.
     // let out_dir = PathBuf::from(std::env::var("OUT_DIR").unwrap());
-    let out_dir = Path::new("src/blob/kzg_settings");
+    let out_dir = Path::new("src/kzg/");
     let out_path = out_dir.join("generated.rs");
 
-    let in_path = Path::new("src/blob/kzg_settings/trusted_setup.txt");
+    let in_path = Path::new("src/kzg/trusted_setup.txt");
     println!("cargo:rerun-if-changed={}", in_path.display());
     assert!(in_path.exists());
     let contents = format_kzg_settings(in_path, out_dir);

@@ -7,6 +7,7 @@ pub mod bytecode;
 pub mod constants;
 pub mod db;
 pub mod env;
+pub mod kzg;
 pub mod log;
 pub mod precompile;
 pub mod result;
@@ -16,20 +17,15 @@ pub mod utilities;
 
 pub use bits::B160;
 pub use bits::B256;
-pub use bytes;
-pub use bytes::Bytes;
-pub use hex;
-pub use hex_literal;
-/// Address type is last 20 bytes of hash of ethereum account
-pub type Address = B160;
-/// Hash, in Ethereum usually keccak256.
-pub type Hash = B256;
-
 pub use bitvec;
 pub use bytecode::*;
+pub use bytes;
+pub use bytes::Bytes;
 pub use constants::*;
 pub use env::*;
 pub use hashbrown::{hash_map, hash_set, HashMap, HashSet};
+pub use hex;
+pub use hex_literal;
 pub use log::Log;
 pub use precompile::*;
 pub use result::*;
@@ -39,3 +35,9 @@ pub use ruint::uint;
 pub use specification::*;
 pub use state::*;
 pub use utilities::*;
+pub use kzg::{KzgSettings,EnvKzgSettings};
+
+/// Address type is last 20 bytes of hash of ethereum account
+pub type Address = B160;
+/// Hash, in Ethereum usually keccak256.
+pub type Hash = B256;
