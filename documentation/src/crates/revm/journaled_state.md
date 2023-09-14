@@ -1,21 +1,8 @@
 # Journaled State
 
-The `journaled_state` module of the `revm` crate provides a state management
-implementation for Ethereum-style accounts. It includes support for
-various actions such as self-destruction of accounts, initial account loading, account state
-modification, and logging. It also contains several important utility functions such as
-`is_precompile`.
-This module is built around the `JournaledState` structure, which encapsulates the entire
-state of the blockchain. `JournaledState` uses an internal state representation (a HashMap)
-that tracks all accounts. Each account is represented by the `Account` structure, which includes
-fields like balance, nonce, and code hash.
-For state-changing operations, the module keeps track of all the changes within a "journal" for
-easy reversion and commitment to the database. This feature is particularly useful for handling
-reversion of state changes in case of transaction failures or other exceptions.
-The module interacts with a database through the `Database` trait, which abstracts the
-operations for fetching and storing data. This design allows for a pluggable backend
-where different implementations of the `Database` trait can be used to persist the state
-in various ways (for instance, in-memory or disk-based databases).
+The `journaled_state` module of the `revm` crate provides a state management implementation for Ethereum-style accounts. It includes support for various actions such as self-destruction of accounts, initial account loading, account state modification, and logging. It also contains several important utility functions such as `is_precompile`.
+
+This module is built around the `JournaledState` structure, which encapsulates the entire state of the blockchain. `JournaledState` uses an internal state representation (a `HashMap`) that tracks all accounts. Each account is represented by the `Account` structure, which includes fields like balance, nonce, and code hash. For state-changing operations, the module keeps track of all the changes within a "journal" for easy reversion and commitment to the database. This feature is particularly useful for handling reversion of state changes in case of transaction failures or other exceptions. The module interacts with a database through the `Database` trait, which abstracts the operations for fetching and storing data. This design allows for a pluggable backend where different implementations of the `Database` trait can be used to persist the state in various ways (for instance, in-memory or disk-based databases).
 
 ## Data Structures
 

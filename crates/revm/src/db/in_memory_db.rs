@@ -61,7 +61,9 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     pub fn insert_contract(&mut self, account: &mut AccountInfo) {
         if let Some(code) = &account.code {
             if !code.is_empty() {
-                account.code_hash = code.hash_slow();
+                if account.code_hash == KECCAK_EMPTY {
+                    account.code_hash = code.hash_slow();
+                }
                 self.contracts
                     .entry(account.code_hash)
                     .or_insert_with(|| code.clone());

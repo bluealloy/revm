@@ -1,17 +1,20 @@
 use super::RevertToSlot;
+use alloc::vec::Vec;
 use revm_interpreter::primitives::{AccountInfo, Bytecode, B160, B256, U256};
 
-/// Sorted accounts/storages/contracts for inclusion into database.
+/// accounts/storages/contracts for inclusion into database.
 /// Structure is made so it is easier to apply directly to database
 /// that mostly have separate tables to store account/storage/contract data.
+///
+/// Note: that data is **not** sorted. Some database benefit of faster inclusion
+/// and smaller footprint if data is inserted in sorted order.
 #[derive(Clone, Debug, Default)]
 pub struct StateChangeset {
-    /// Vector of account presorted by address, with removed contracts bytecode
+    /// Vector of **not** sorted accounts information.
     pub accounts: Vec<(B160, Option<AccountInfo>)>,
-    /// Vector of storage presorted by address
-    /// First bool is indicator if storage needs to be dropped.
+    /// Vector of **not** sorted storage.
     pub storage: Vec<PlainStorageChangeset>,
-    /// Vector of contracts presorted by bytecode hash
+    /// Vector of contracts by bytecode hash. **not** sorted.
     pub contracts: Vec<(B256, Bytecode)>,
 }
 
@@ -37,20 +40,20 @@ pub struct PlainStorageRevert {
     /// state of this storage from database (And moving it to revert).
     pub wiped: bool,
     /// Contains the storage key and old values of that storage.
-    /// Assume they are sorted by the key.
+    /// Reverts are **not** sorted.
     pub storage_revert: Vec<(U256, RevertToSlot)>,
 }
 
 /// Plain state reverts are used to easily store reverts into database.
 ///
-/// Note that accounts are assumed sorted by address.
+/// Note that accounts are assumed **not** sorted.
 #[derive(Clone, Debug, Default)]
 pub struct PlainStateReverts {
-    /// Vector of account presorted by address, with removed contracts bytecode
+    /// Vector of account with removed contracts bytecode
     ///
-    /// Note: AccountInfo None means that account needs to be removed.
+    /// Note: If AccountInfo is None means that account needs to be removed.
     pub accounts: Vec<Vec<(B160, Option<AccountInfo>)>>,
-    /// Vector of storage presorted by address
+    /// Vector of storage with its address.
     pub storage: Vec<Vec<PlainStorageRevert>>,
 }
 

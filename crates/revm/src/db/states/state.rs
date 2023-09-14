@@ -1,9 +1,13 @@
 use super::{
     bundle_state::BundleRetention, cache::CacheState, plain_account::PlainStorage, BundleState,
-    CacheAccount, TransitionState,
+    CacheAccount, StateBuilder, TransitionAccount, TransitionState,
 };
-use crate::{db::EmptyDB, StateBuilder, TransitionAccount};
-use alloc::collections::{btree_map, BTreeMap};
+use crate::db::EmptyDB;
+use alloc::{
+    boxed::Box,
+    collections::{btree_map, BTreeMap},
+    vec::Vec,
+};
 use revm_interpreter::primitives::{
     db::{Database, DatabaseCommit},
     hash_map, Account, AccountInfo, Bytecode, HashMap, B160, B256, BLOCK_HASH_HISTORY, U256,
@@ -189,12 +193,18 @@ impl<DB: Database> State<DB> {
         }
     }
 
+    // TODO make cache aware of transitions dropping by having global transition counter.
     /// Takes changeset and reverts from state and replaces it with empty one.
     /// This will trop pending Transition and any transitions would be lost.
     ///
-    /// TODO make cache aware of transitions dropping by having global transition counter.
+    /// NOTE: If either:
+    /// * The [State] has not been built with [StateBuilder::with_bundle_update], or
+    /// * The [State] has a [TransitionState] set to `None` when
+    /// [TransitionState::merge_transitions] is called,
+    ///
+    /// this will panic.
     pub fn take_bundle(&mut self) -> BundleState {
-        std::mem::take(self.bundle_state.as_mut().unwrap())
+        core::mem::take(self.bundle_state.as_mut().unwrap())
     }
 }
 
