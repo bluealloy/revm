@@ -1,4 +1,5 @@
 mod env_settings;
+#[rustfmt::skip]
 mod generated;
 
 pub use c_kzg::KzgSettings;

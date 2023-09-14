@@ -4,7 +4,6 @@ use std::ffi::CString;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::slice;
-use hex;
 
 const BYTES_PER_G1_POINT: usize = 48;
 const BYTES_PER_G2_POINT: usize = 96;
