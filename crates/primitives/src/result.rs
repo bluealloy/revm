@@ -154,9 +154,21 @@ impl<DBError> From<InvalidTransaction> for EVMError<DBError> {
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InvalidTransaction {
-    GasMaxFeeGreaterThanPriorityFee,
+    /// When using the EIP-1559 fee model introduced in the London upgrade, transactions specify two primary fee fields:
+    /// - `gas_max_fee`: The maximum total fee a user is willing to pay, inclusive of both base fee and priority fee.
+    /// - `gas_priority_fee`: The extra amount a user is willing to give directly to the miner, often referred to as the "tip".
+    ///
+    /// Provided `gas_priority_fee` exceeds the total `gas_max_fee`.
+    PriorityFeeGreaterThanMaxFee,
+    /// EIP-1559: `gas_price` is less than `basefee`.
     GasPriceLessThanBasefee,
+    /// `gas_limit` in the tx is bigger than `block_gas_limit`.
     CallerGasLimitMoreThanBlock,
+    /// Initial gas for a Call is bigger than `gas_limit`.
+    ///
+    /// Initial gas for a Call contains:
+    /// - initial stipend gas
+    /// - gas for access list and input data
     CallGasCostMoreThanGasLimit,
     /// EIP-3607 Reject transactions from senders with deployed code
     RejectCallerWithCode,
