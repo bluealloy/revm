@@ -752,6 +752,12 @@ impl JournaledState {
 /// that precompiles are in range of 1 to N.
 #[inline(always)]
 pub fn is_precompile(address: B160, num_of_precompiles: usize) -> bool {
+    // hardcode for 0x00000000000000000000000000000000000000F5
+    let cait_sith_precompile_address =
+        B160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 245]);
+    if address == cait_sith_precompile_address {
+        return true;
+    }
     if !address[..18].iter().all(|i| *i == 0) {
         return false;
     }
@@ -765,6 +771,11 @@ mod test {
 
     #[test]
     fn test_is_precompile() {
+        assert!(is_precompile(
+            B160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 245]),
+            2,
+        ));
+
         assert!(
             !is_precompile(
                 B160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
