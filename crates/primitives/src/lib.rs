@@ -7,6 +7,7 @@ pub mod bytecode;
 pub mod constants;
 pub mod db;
 pub mod env;
+#[cfg(feature = "std")]
 pub mod kzg;
 pub mod log;
 pub mod precompile;
@@ -26,6 +27,8 @@ pub use env::*;
 pub use hashbrown::{hash_map, hash_set, HashMap, HashSet};
 pub use hex;
 pub use hex_literal;
+#[cfg(feature = "std")]
+pub use kzg::{EnvKzgSettings, KzgSettings};
 pub use log::Log;
 pub use precompile::*;
 pub use result::*;
@@ -35,7 +38,6 @@ pub use ruint::uint;
 pub use specification::*;
 pub use state::*;
 pub use utilities::*;
-pub use kzg::{KzgSettings,EnvKzgSettings};
 
 /// Address type is last 20 bytes of hash of ethereum account
 pub type Address = B160;

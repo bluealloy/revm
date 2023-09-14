@@ -4,14 +4,16 @@
 extern crate alloc;
 
 mod blake2;
-mod kzg_point_evaluation;
 mod bn128;
 mod hash;
 mod identity;
+#[cfg(feature = "std")]
+mod kzg_point_evaluation;
 mod modexp;
 mod secp256k1;
 
-
+use alloc::{boxed::Box, vec::Vec};
+use core::fmt;
 use once_cell::race::OnceBox;
 pub use primitives::{
     precompile::{PrecompileError as Error, *},
@@ -22,9 +24,6 @@ pub use revm_primitives as primitives;
 
 pub type B160 = [u8; 20];
 pub type B256 = [u8; 32];
-
-use alloc::{boxed::Box, vec::Vec};
-use core::fmt;
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base
@@ -196,16 +195,24 @@ impl Precompiles {
     pub fn cancun() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
-            let mut precompiles = Box::new(Self::berlin().clone());
-            precompiles.fun.extend(
-                [
-                    // EIP-4844: Shard Blob Transactions
-                    kzg_point_evaluation::POINT_EVALUATION,
-                ]
-                .into_iter()
-                .map(From::from),
-            );
-            precompiles
+            // Don't include KZG point evaluation precompile in no_std builds.
+            #[cfg(feature = "std")]
+            {
+                let mut precompiles = Box::new(Self::berlin().clone());
+                precompiles.fun.extend(
+                    [
+                        // EIP-4844: Shard Blob Transactions
+                        kzg_point_evaluation::POINT_EVALUATION,
+                    ]
+                    .into_iter()
+                    .map(From::from),
+                );
+                precompiles
+            }
+            #[cfg(not(feature = "std"))]
+            {
+                Box::new(Self::berlin().clone())
+            }
         })
     }
 
