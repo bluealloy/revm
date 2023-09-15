@@ -97,10 +97,10 @@ fn skip_test(path: &Path) -> bool {
         | "shiftCombinations.json"
 
         // TODO: These EIP-4844 tests might be outdated
-        | "emptyBlobhashList.json"
-        | "wrongBlobhashVersion.json"
-        | "createBlobhashTx.json"
-        | "blobhashListBounds5.json"
+        | "emptyBlobhashList.json" // '>=Cancun': TR_EMPTYBLOB
+        | "wrongBlobhashVersion.json"  // '>=Cancun': TR_BLOBVERSION_INVALID
+        | "createBlobhashTx.json" // '>=Cancun': TR_BLOBCREATE
+        | "blobhashListBounds7.json" // ">=Cancun": "TR_BLOBLIST_OVERSIZE"
     ) || path_str.contains("stEOF")
 }
 
