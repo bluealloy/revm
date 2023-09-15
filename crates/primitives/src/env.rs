@@ -193,7 +193,7 @@ pub enum CreateScheme {
 pub struct CfgEnv {
     pub chain_id: u64,
     pub spec_id: SpecId,
-    ///// KZG Settings
+    /// KZG Settings for point evaluation precompile. By default, this is loaded from the ethereum mainnet trusted setup.
     #[cfg_attr(feature = "serde", serde(skip))]
     #[cfg(feature = "std")]
     pub kzg_settings: crate::kzg::EnvKzgSettings,

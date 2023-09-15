@@ -58,11 +58,13 @@ pub fn calc_blob_fee(excess_blob_gas: u64) -> u64 {
 /// This is used to calculate the blob price.
 ///
 /// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers).
+///
+/// # Panic
+///
+/// Panics if `denominator` is zero.
 #[inline]
 pub fn fake_exponential(factor: u64, numerator: u64, denominator: u64) -> u64 {
-    if denominator == 0 {
-        panic!("attempt to divide by zero");
-    }
+    assert_ne!(denominator, 0, "attempt to divide by zero");
     let factor = factor as u128;
     let numerator = numerator as u128;
     let denominator = denominator as u128;
@@ -73,7 +75,7 @@ pub fn fake_exponential(factor: u64, numerator: u64, denominator: u64) -> u64 {
     while numerator_accum > 0 {
         output += numerator_accum;
 
-        // Check for to see if denominator is zero is done at the beginning of the call.
+        // Denominator is asserted as not zero at the start of the function.
         numerator_accum = (numerator_accum * numerator) / (denominator * i);
         i += 1;
     }

@@ -5,15 +5,21 @@ use super::{
 use alloc::{boxed::Box, sync::Arc};
 use once_cell::race::OnceBox;
 
-/// KZG Settings.
+/// KZG Settings that allow us to specify a custom trusted setup.
+/// or use hardcoded default settings.
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub enum EnvKzgSettings {
+    /// Default mainnet trusted setup
     #[default]
     Default,
+    /// Custom trusted setup.
     Custom(Arc<c_kzg::KzgSettings>),
 }
 
 impl EnvKzgSettings {
+    /// Return set KZG settings.
+    ///
+    /// In will initialize the default settings if it is not already loaded.
     pub fn get(&self) -> &KzgSettings {
         match self {
             Self::Default => {

@@ -15,22 +15,32 @@ const RETURN_VALUE: &[u8; 64] = &hex!(
     "73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001"
 );
 
+/// Run kzg point evaluation precompile.
+///
+/// The Env has the KZGSettings that is needed for evaluation.
+///
+/// The input is encoded as follows:
+/// | versioned_hash |  z  |  y  | commitment | proof |
+/// |     32         | 32  | 32  |     48     |   48  |
+/// with z and y being padded 32 byte big endian values
 fn run(input: &[u8], gas_limit: u64, env: &Env) -> PrecompileResult {
     if gas_limit < GAS_COST {
         return Err(Error::OutOfGas);
     }
+
+    // Verify input length.
     if input.len() != 192 {
         return Err(Error::BlobInvalidInputLength);
     }
 
     // Verify commitment matches versioned_hash
+    let versioned_hash = &input[..32];
     let commitment = &input[96..144];
-    let versioned_hash = &input[0..32];
     if kzg_to_versioned_hash(commitment) != versioned_hash {
         return Err(Error::BlobMismatchedVersion);
     }
 
-    // Verify KZG proof
+    // Verify KZG proof with z and y in big endian format
     let commitment = as_bytes48(commitment);
     let z = as_bytes32(&input[32..64]);
     let y = as_bytes32(&input[64..96]);
@@ -39,6 +49,7 @@ fn run(input: &[u8], gas_limit: u64, env: &Env) -> PrecompileResult {
         return Err(Error::BlobVerifyKzgProofFailed);
     }
 
+    // Return FIELD_ELEMENTS_PER_BLOB and BLS_MODULUS as padded 32 byte big endian values
     Ok((GAS_COST, RETURN_VALUE.to_vec()))
 }
 

@@ -192,6 +192,7 @@ impl Precompiles {
         })
     }
 
+    /// If `std` feature is not enabled KZG Point Evaluation precompile will not be included.
     pub fn cancun() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
