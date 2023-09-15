@@ -53,6 +53,16 @@ pub fn basefee<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     push!(interpreter, host.env().block.basefee);
 }
 
+pub fn blobfee<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+    gas!(interpreter, gas::BASE);
+    // EIP-7516: BLOBBASEFEE opcode
+    check!(interpreter, SPEC::enabled(CANCUN));
+    push!(
+        interpreter,
+        U256::from(host.env().block.get_blob_fee().unwrap_or_default())
+    );
+}
+
 pub fn origin(interpreter: &mut Interpreter, host: &mut dyn Host) {
     gas!(interpreter, gas::BASE);
     push_b256!(interpreter, host.env().tx.caller.into());

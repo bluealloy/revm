@@ -27,12 +27,10 @@ pub struct BlockEnv {
     pub timestamp: U256,
     /// The gas limit of the block.
     pub gas_limit: U256,
-
     /// The base fee per gas, added in the London upgrade with [EIP-1559].
     ///
     /// [EIP-1559]: https://eips.ethereum.org/EIPS/eip-1559
     pub basefee: U256,
-
     /// The difficulty of the block.
     ///
     /// Unused after the Paris (AKA the merge) upgrade, and replaced by `prevrandao`.
@@ -45,24 +43,62 @@ pub struct BlockEnv {
     ///
     /// [EIP-4399]: https://eips.ethereum.org/EIPS/eip-4399
     pub prevrandao: Option<B256>,
-
-    /// Excess blob gas. See also [`calc_excess_blob_gas`](crate::calc_excess_blob_gas).
+    /// Excess blob gas and blob fee.
+    /// See also [`calc_excess_blob_gas`](crate::calc_excess_blob_gas)
     ///
     /// Incorporated as part of the Cancun upgrade via [EIP-4844].
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-    pub excess_blob_gas: Option<u64>,
+    pub blob_gas_and_fee: Option<BlobGasAndFee>,
+}
+
+/// Structure holding block blob excess gas and it calculates blob fee.
+///
+/// Incorporated as part of the Cancun upgrade via [EIP-4844].
+///
+/// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct BlobGasAndFee {
+    pub excess_blob_gas: u64,
+    pub blob_fee: u64,
+}
+
+impl BlobGasAndFee {
+    /// Takes excess blob gas and calculated blob fee with [`calc_blob_fee`]
+    pub fn new(excess_blob_gas: u64) -> Self {
+        let blob_fee = calc_blob_fee(excess_blob_gas);
+        Self {
+            excess_blob_gas,
+            blob_fee,
+        }
+    }
 }
 
 impl BlockEnv {
+    /// Takes `blob_excess_gas` saves it inside env
+    /// and calculates `blob_fee` with [`BlobGasAndFee`].
+    pub fn set_blob_gas_and_fee(&mut self, excess_blob_gas: u64) {
+        self.blob_gas_and_fee = Some(BlobGasAndFee::new(excess_blob_gas));
+    }
     /// See [EIP-4844] and [`Env::calc_data_fee`].
     ///
     /// Returns `None` if `Cancun` is not enabled. This is enforced in [`Env::validate_block_env`].
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     #[inline]
-    pub fn get_blob_gasprice(&self) -> Option<u64> {
-        self.excess_blob_gas.map(calc_blob_fee)
+    pub fn get_blob_fee(&self) -> Option<u64> {
+        self.blob_gas_and_fee.as_ref().map(|a| a.blob_fee)
+    }
+
+    /// Return `blob_excess_gas` header field. See [EIP-4844].
+    ///
+    /// Returns `None` if `Cancun` is not enabled. This is enforced in [`Env::validate_block_env`].
+    ///
+    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
+    #[inline]
+    pub fn get_blob_excess_gas(&self) -> Option<u64> {
+        self.blob_gas_and_fee.as_ref().map(|a| a.excess_blob_gas)
     }
 }
 
@@ -340,7 +376,7 @@ impl Default for BlockEnv {
             basefee: U256::ZERO,
             difficulty: U256::ZERO,
             prevrandao: Some(B256::zero()),
-            excess_blob_gas: Some(0),
+            blob_gas_and_fee: Some(BlobGasAndFee::new(0)),
         }
     }
 }
@@ -383,7 +419,7 @@ impl Env {
     #[inline]
     pub fn calc_data_fee(&self) -> Option<u64> {
         self.block
-            .get_blob_gasprice()
+            .get_blob_fee()
             .map(|blob_gas_price| blob_gas_price * self.tx.get_total_blob_gas())
     }
 
@@ -395,7 +431,7 @@ impl Env {
             return Err(EVMError::PrevrandaoNotSet);
         }
         // `excess_blob_gas` is required for Cancun
-        if SPEC::enabled(SpecId::CANCUN) && self.block.excess_blob_gas.is_none() {
+        if SPEC::enabled(SpecId::CANCUN) && self.block.blob_gas_and_fee.is_none() {
             return Err(EVMError::ExcessBlobGasNotSet);
         }
         Ok(())
@@ -459,7 +495,7 @@ impl Env {
         // - For before CANCUN, check that `blob_hashes` and `max_fee_per_blob_gas` are empty / not set
         if SPEC::enabled(SpecId::CANCUN) {
             if let Some(max) = self.tx.max_fee_per_blob_gas {
-                let price = self.block.get_blob_gasprice().expect("already checked");
+                let price = self.block.get_blob_fee().expect("already checked");
                 if U256::from(price) > max {
                     return Err(InvalidTransaction::BlobGasPriceGreaterThanMax);
                 }

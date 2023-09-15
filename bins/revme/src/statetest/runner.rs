@@ -191,7 +191,7 @@ pub fn execute_test_suite(
             unit.env.parent_blob_gas_used,
             unit.env.parent_excess_blob_gas,
         ) {
-            env.block.excess_blob_gas = Some(calc_excess_blob_gas(
+            env.block.set_blob_gas_and_fee(calc_excess_blob_gas(
                 parent_blob_gas_used.to(),
                 parent_excess_blob_gas.to(),
             ));
