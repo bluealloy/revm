@@ -1,5 +1,5 @@
 use crate::{Error, Precompile, PrecompileAddress, PrecompileResult, B160};
-use c_kzg::{Bytes32, Bytes48, KzgProof};
+use c_kzg::{Bytes32, Bytes48, KzgProof, KzgSettings};
 use revm_primitives::{hex_literal::hex, Env};
 use sha2::{Digest, Sha256};
 
@@ -45,7 +45,7 @@ fn run(input: &[u8], gas_limit: u64, env: &Env) -> PrecompileResult {
     let z = as_bytes32(&input[32..64]);
     let y = as_bytes32(&input[64..96]);
     let proof = as_bytes48(&input[144..192]);
-    if KzgProof::verify_kzg_proof(commitment, z, y, proof, env.cfg.kzg_settings.get()).is_err() {
+    if !verify_kzg_proof(commitment, z, y, proof, env.cfg.kzg_settings.get()) {
         return Err(Error::BlobVerifyKzgProofFailed);
     }
 
@@ -59,6 +59,25 @@ fn kzg_to_versioned_hash(commitment: &[u8]) -> [u8; 32] {
     let mut hash: [u8; 32] = Sha256::digest(commitment).into();
     hash[0] = VERSIONED_HASH_VERSION_KZG;
     hash
+}
+
+#[inline]
+fn verify_kzg_proof(
+    commitment: &Bytes48,
+    z: &Bytes32,
+    y: &Bytes32,
+    proof: &Bytes48,
+    kzg_settings: &KzgSettings,
+) -> bool {
+    match KzgProof::verify_kzg_proof(commitment, z, y, proof, kzg_settings) {
+        Ok(ok) => ok,
+        #[cfg(not(debug_assertions))]
+        Err(_) => false,
+        #[cfg(debug_assertions)]
+        Err(e) => {
+            panic!("verify_kzg_proof returned an error: {e:?}");
+        }
+    }
 }
 
 #[inline(always)]

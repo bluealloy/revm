@@ -96,7 +96,7 @@ fn skip_test(path: &Path) -> bool {
         | "CALLBlake2f_MaxRounds.json"
         | "shiftCombinations.json"
 
-        // TODO: These EIP-4844 tests might be outdated
+        // TODO: These EIP-4844 all have exception specified.
         | "emptyBlobhashList.json" // '>=Cancun': TR_EMPTYBLOB
         | "wrongBlobhashVersion.json"  // '>=Cancun': TR_BLOBVERSION_INVALID
         | "createBlobhashTx.json" // '>=Cancun': TR_BLOBCREATE
