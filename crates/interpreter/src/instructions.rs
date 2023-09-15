@@ -60,6 +60,7 @@ pub fn eval<H: Host, S: Spec>(opcode: u8, interp: &mut Interpreter, host: &mut H
         opcode::ADDRESS => system::address(interp, host),
         opcode::BALANCE => host::balance::<S>(interp, host),
         opcode::SELFBALANCE => host::selfbalance::<S>(interp, host),
+        opcode::BLOBHASH => host_env::blob_hash::<S>(interp, host),
         opcode::CODESIZE => system::codesize(interp, host),
         opcode::CODECOPY => system::codecopy(interp, host),
         opcode::CALLDATALOAD => system::calldataload(interp, host),

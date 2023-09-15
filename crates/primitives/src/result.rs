@@ -122,25 +122,26 @@ impl Output {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[non_exhaustive]
 pub enum EVMError<DBError> {
     Transaction(InvalidTransaction),
-    /// REVM specific and related to environment.
+    /// `prevrandao` is not set for Merge and above.
     PrevrandaoNotSet,
+    /// `excess_blob_gas` is not set for Cancun and above.
+    ExcessBlobGasNotSet,
     Database(DBError),
 }
 
 #[cfg(feature = "std")]
-impl<DBError> std::error::Error for EVMError<DBError> where Self: fmt::Debug + fmt::Display {}
+impl<DBError: fmt::Debug + fmt::Display> std::error::Error for EVMError<DBError> {}
 
-impl<DBError> fmt::Display for EVMError<DBError>
-where
-    DBError: fmt::Display,
-{
+impl<DBError: fmt::Display> fmt::Display for EVMError<DBError> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            EVMError::Transaction(v) => write!(f, "Transaction error: {:?}", v),
-            EVMError::PrevrandaoNotSet => f.write_str("Prevrandao not set"),
-            EVMError::Database(v) => write!(f, "Database error: {}", v),
+            EVMError::Transaction(e) => write!(f, "Transaction error: {e:?}"),
+            EVMError::PrevrandaoNotSet => f.write_str("`prevrandao` not set"),
+            EVMError::ExcessBlobGasNotSet => f.write_str("`excess_blob_gas` not set"),
+            EVMError::Database(e) => write!(f, "Database error: {e}"),
         }
     }
 }
@@ -180,9 +181,14 @@ pub enum InvalidTransaction {
     /// EIP-3860: Limit and meter initcode
     CreateInitcodeSizeLimit,
     InvalidChainId,
-    /// Access list is not supported is not supported
-    /// for blocks before Berlin hardfork.
+    /// Access list is not supported for blocks before the Berlin hardfork.
     AccessListNotSupported,
+    /// `max_fee_per_blob_gas` is not supported for blocks before the Cancun hardfork.
+    MaxFeePerBlobGasNotSupported,
+    /// `blob_hashes`/`blob_versioned_hashes` is not supported for blocks before the Cancun hardfork.
+    BlobVersionedHashesNotSupported,
+    /// Block `blob_gas_price` is greater than tx-specified `max_fee_per_blob_gas` after Cancun.
+    BlobGasPriceGreaterThanMax,
 }
 
 /// Reason a transaction successfully completed.

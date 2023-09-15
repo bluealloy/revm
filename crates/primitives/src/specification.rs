@@ -1,6 +1,9 @@
 #![allow(non_camel_case_types)]
 
-/// SpecId and their activation block
+pub use SpecId::*;
+
+/// Specification IDs and their activation block.
+///
 /// Information was obtained from: <https://github.com/ethereum/execution-specs>
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd, enumn::N)]
@@ -21,52 +24,51 @@ pub enum SpecId {
     LONDON = 12,          // London	                12965000
     ARROW_GLACIER = 13,   // Arrow Glacier	        13773000
     GRAY_GLACIER = 14,    // Gray Glacier	        15050000
-    MERGE = 15,           // Paris/Merge	        TBD (Depends on difficulty)
-    SHANGHAI = 16,
-    CANCUN = 17,
-    LATEST = 18,
-}
-
-impl SpecId {
-    pub fn try_from_u8(spec_id: u8) -> Option<Self> {
-        Self::n(spec_id)
-    }
-}
-
-pub use SpecId::*;
-
-impl From<&str> for SpecId {
-    fn from(name: &str) -> Self {
-        match name {
-            "Frontier" => SpecId::FRONTIER,
-            "Homestead" => SpecId::HOMESTEAD,
-            "Tangerine" => SpecId::TANGERINE,
-            "Spurious" => SpecId::SPURIOUS_DRAGON,
-            "Byzantium" => SpecId::BYZANTIUM,
-            "Constantinople" => SpecId::CONSTANTINOPLE,
-            "Petersburg" => SpecId::PETERSBURG,
-            "Istanbul" => SpecId::ISTANBUL,
-            "MuirGlacier" => SpecId::MUIR_GLACIER,
-            "Berlin" => SpecId::BERLIN,
-            "London" => SpecId::LONDON,
-            "Merge" => SpecId::MERGE,
-            "Shanghai" => SpecId::SHANGHAI,
-            "Cancun" => SpecId::CANCUN,
-            _ => SpecId::LATEST,
-        }
-    }
+    MERGE = 15,           // Paris/Merge	        15537394 (TTD: 58750000000000000000000)
+    SHANGHAI = 16,        // Shanghai	            17034870 (TS: 1681338455)
+    CANCUN = 17,          // Cancun	                TBD
+    LATEST = u8::MAX,
 }
 
 impl SpecId {
     #[inline]
+    pub fn try_from_u8(spec_id: u8) -> Option<Self> {
+        Self::n(spec_id)
+    }
+
+    #[inline(always)]
     pub const fn enabled(our: SpecId, other: SpecId) -> bool {
         our as u8 >= other as u8
     }
 }
 
+impl From<&str> for SpecId {
+    fn from(name: &str) -> Self {
+        match name {
+            "Frontier" => Self::FRONTIER,
+            "Homestead" => Self::HOMESTEAD,
+            "Tangerine" => Self::TANGERINE,
+            "Spurious" => Self::SPURIOUS_DRAGON,
+            "Byzantium" => Self::BYZANTIUM,
+            "Constantinople" => Self::CONSTANTINOPLE,
+            "Petersburg" => Self::PETERSBURG,
+            "Istanbul" => Self::ISTANBUL,
+            "MuirGlacier" => Self::MUIR_GLACIER,
+            "Berlin" => Self::BERLIN,
+            "London" => Self::LONDON,
+            "Merge" => Self::MERGE,
+            "Shanghai" => Self::SHANGHAI,
+            "Cancun" => Self::CANCUN,
+            _ => Self::LATEST,
+        }
+    }
+}
+
 pub trait Spec: Sized {
+    /// The specification ID.
     const SPEC_ID: SpecId;
 
+    /// Returns `true` if the given specification ID is enabled in this spec.
     #[inline(always)]
     fn enabled(spec_id: SpecId) -> bool {
         Self::SPEC_ID as u8 >= spec_id as u8
@@ -74,11 +76,10 @@ pub trait Spec: Sized {
 }
 
 macro_rules! spec {
-    ($spec_id:tt, $spec_name:tt) => {
+    ($spec_id:ident, $spec_name:ident) => {
         pub struct $spec_name;
 
         impl Spec for $spec_name {
-            //specification id
             const SPEC_ID: SpecId = $spec_id;
         }
     };
@@ -102,4 +103,5 @@ spec!(LONDON, LondonSpec);
 spec!(MERGE, MergeSpec);
 spec!(SHANGHAI, ShanghaiSpec);
 spec!(CANCUN, CancunSpec);
+
 spec!(LATEST, LatestSpec);

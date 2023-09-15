@@ -22,6 +22,9 @@ auto_impl = "1.1"
 bitvec = { version = "1", default-features = false, features = ["alloc"] }
 bitflags = { version = "2.4.0", default-features = false }
 
+# For setting the CfgEnv KZGSettings. Enabled by std flag.
+c-kzg = { git = "https://github.com/ethereum/c-kzg-4844", default-features = false, optional = true }
+
 # bits B256 B160 crate
 fixed-hash = { version = "0.8", default-features = false, features = [
     "rustc-hex",
@@ -32,6 +35,7 @@ hex-literal = "0.4"
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
 derive_more = "0.99"
 enumn = "0.1"
+once_cell = { version = "1.18", default-features = false }
 
 # sha3 keccak hasher
 sha3 = { version = "0.10", default-features = false }
@@ -53,6 +57,9 @@ ruint = { version = "1.10.1", features = [
     "arbitrary",
 ] }
 
+[build-dependencies]
+hex = "0.4"
+
 [features]
 default = ["std"]
 dev = [
@@ -70,7 +77,7 @@ optional_block_gas_limit = []
 optional_eip3607 = []
 optional_gas_refund = []
 optional_no_base_fee = []
-std = ["bytes/std", "rlp/std", "hex/std", "bitvec/std", "bitflags/std"]
+std = ["bytes/std", "rlp/std", "hex/std", "bitvec/std", "bitflags/std", "dep:c-kzg"]
 serde = [
     "dep:serde",
     "hex/serde",

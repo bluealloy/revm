@@ -1,7 +1,8 @@
-use revm_primitives::U256;
-
 use crate::{
-    gas, interpreter::Interpreter, primitives::Spec, primitives::SpecId::*, Host, InstructionResult,
+    gas,
+    interpreter::Interpreter,
+    primitives::{Spec, SpecId::*, U256},
+    Host, InstructionResult,
 };
 
 pub fn chainid<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
@@ -55,4 +56,16 @@ pub fn basefee<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
 pub fn origin(interpreter: &mut Interpreter, host: &mut dyn Host) {
     gas!(interpreter, gas::BASE);
     push_b256!(interpreter, host.env().tx.caller.into());
+}
+
+// EIP-4844: Shard Blob Transactions
+pub fn blob_hash<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+    check!(interpreter, SPEC::enabled(CANCUN));
+    gas!(interpreter, gas::VERYLOW);
+    pop_top!(interpreter, index);
+    let i = as_usize_saturated!(index);
+    *index = match host.env().tx.blob_hashes.get(i) {
+        Some(hash) => U256::from_be_bytes(hash.0),
+        None => U256::ZERO,
+    };
 }

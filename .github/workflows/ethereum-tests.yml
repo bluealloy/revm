@@ -34,9 +34,9 @@ jobs:
 
       - name: Run Ethereum tests
         run: |
-          cargo run --profile ${{ matrix.profile }} -p revme -- \
-          statetest \
-          ethtests/GeneralStateTests/ \
-          ethtests/LegacyTests/Constantinople/GeneralStateTests/ \
-          tests/EIPTests/StateTests/stEIP5656-MCOPY/ \
-          tests/EIPTests/StateTests/stEIP1153-transientStorage/
+          cargo run --profile ${{ matrix.profile }} -p revme -- statetest \
+            ethtests/GeneralStateTests/ \
+            ethtests/LegacyTests/Constantinople/GeneralStateTests/ \
+            ethtests/EIPTests/StateTests/stEIP1153-transientStorage/ \
+            ethtests/EIPTests/StateTests/stEIP4844-blobtransactions/ \
+            ethtests/EIPTests/StateTests/stEIP5656-MCOPY/
