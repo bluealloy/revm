@@ -147,8 +147,8 @@ opcodes! {
     0x59 => MSIZE    => memory::msize,
     0x5A => GAS      => system::gas,
     0x5B => JUMPDEST => control::jumpdest,
-    0x5C => TSTORE   => host::tstore::<SPEC>,
-    0x5D => TLOAD    => host::tload::<SPEC>,
+    0x5C => TLOAD    => host::tload::<SPEC>,
+    0x5D => TSTORE   => host::tstore::<SPEC>,
     0x5E => MCOPY    => memory::mcopy::<SPEC>,
 
     0x5F => PUSH0  => stack::push0::<SPEC>,
