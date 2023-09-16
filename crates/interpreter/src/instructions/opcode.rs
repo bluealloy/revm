@@ -133,6 +133,7 @@ opcodes! {
     0x46 => CHAINID        => host_env::chainid::<SPEC>,
     0x47 => SELFBALANCE    => host::selfbalance::<SPEC>,
     0x48 => BASEFEE        => host_env::basefee::<SPEC>,
+    0x49 => BLOBHASH       => host_env::blob_hash::<SPEC>,
 
     0x50 => POP      => stack::pop,
     0x51 => MLOAD    => memory::mload,
@@ -483,6 +484,11 @@ const fn opcode_gas_info(opcode: u8, spec: SpecId) -> OpInfo {
         }),
         BASEFEE => OpInfo::gas(if SpecId::enabled(spec, SpecId::LONDON) {
             gas::BASE
+        } else {
+            0
+        }),
+        BLOBHASH => OpInfo::gas(if SpecId::enabled(spec, SpecId::CANCUN) {
+            gas::VERYLOW
         } else {
             0
         }),
