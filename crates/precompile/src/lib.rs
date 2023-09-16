@@ -7,10 +7,14 @@ mod blake2;
 mod bn128;
 mod hash;
 mod identity;
+#[cfg(feature = "std")]
+mod kzg_point_evaluation;
 mod modexp;
 mod secp256k1;
 
-use once_cell::sync::OnceCell;
+use alloc::{boxed::Box, vec::Vec};
+use core::fmt;
+use once_cell::race::OnceBox;
 pub use primitives::{
     precompile::{PrecompileError as Error, *},
     Bytes, HashMap,
@@ -20,9 +24,6 @@ pub use revm_primitives as primitives;
 
 pub type B160 = [u8; 20];
 pub type B256 = [u8; 32];
-
-use alloc::vec::Vec;
-use core::fmt;
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base
@@ -66,14 +67,14 @@ impl Default for Precompiles {
 #[derive(Clone)]
 pub enum Precompile {
     Standard(StandardPrecompileFn),
-    Custom(CustomPrecompileFn),
+    Env(EnvPrecompileFn),
 }
 
 impl fmt::Debug for Precompile {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Precompile::Standard(_) => f.write_str("Standard"),
-            Precompile::Custom(_) => f.write_str("Custom"),
+            Precompile::Env(_) => f.write_str("Env"),
         }
     }
 }
@@ -88,11 +89,12 @@ impl From<PrecompileAddress> for (B160, Precompile) {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub enum SpecId {
-    HOMESTEAD = 0,
-    BYZANTIUM = 1,
-    ISTANBUL = 2,
-    BERLIN = 3,
-    LATEST = 4,
+    HOMESTEAD,
+    BYZANTIUM,
+    ISTANBUL,
+    BERLIN,
+    CANCUN,
+    LATEST,
 }
 
 impl SpecId {
@@ -105,9 +107,8 @@ impl SpecId {
             }
             BYZANTIUM | CONSTANTINOPLE | PETERSBURG => Self::BYZANTIUM,
             ISTANBUL | MUIR_GLACIER => Self::ISTANBUL,
-            BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | SHANGHAI | CANCUN => {
-                Self::BERLIN
-            }
+            BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | SHANGHAI => Self::BERLIN,
+            CANCUN => Self::CANCUN,
             LATEST => Self::LATEST,
         }
     }
@@ -119,7 +120,7 @@ impl SpecId {
 
 impl Precompiles {
     pub fn homestead() -> &'static Self {
-        static INSTANCE: OnceCell<Precompiles> = OnceCell::new();
+        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
             let fun = [
                 secp256k1::ECRECOVER,
@@ -130,14 +131,14 @@ impl Precompiles {
             .into_iter()
             .map(From::from)
             .collect();
-            Self { fun }
+            Box::new(Self { fun })
         })
     }
 
     pub fn byzantium() -> &'static Self {
-        static INSTANCE: OnceCell<Precompiles> = OnceCell::new();
+        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::homestead().clone();
+            let mut precompiles = Box::new(Self::homestead().clone());
             precompiles.fun.extend(
                 [
                     // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
@@ -156,9 +157,9 @@ impl Precompiles {
     }
 
     pub fn istanbul() -> &'static Self {
-        static INSTANCE: OnceCell<Precompiles> = OnceCell::new();
+        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::byzantium().clone();
+            let mut precompiles = Box::new(Self::byzantium().clone());
             precompiles.fun.extend(
                 [
                     // EIP-152: Add BLAKE2 compression function `F` precompile.
@@ -176,9 +177,9 @@ impl Precompiles {
     }
 
     pub fn berlin() -> &'static Self {
-        static INSTANCE: OnceCell<Precompiles> = OnceCell::new();
+        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
-            let mut precompiles = Self::istanbul().clone();
+            let mut precompiles = Box::new(Self::istanbul().clone());
             precompiles.fun.extend(
                 [
                     // EIP-2565: ModExp Gas Cost.
@@ -188,6 +189,31 @@ impl Precompiles {
                 .map(From::from),
             );
             precompiles
+        })
+    }
+
+    /// If `std` feature is not enabled KZG Point Evaluation precompile will not be included.
+    pub fn cancun() -> &'static Self {
+        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
+        INSTANCE.get_or_init(|| {
+            // Don't include KZG point evaluation precompile in no_std builds.
+            #[cfg(feature = "std")]
+            {
+                let mut precompiles = Box::new(Self::berlin().clone());
+                precompiles.fun.extend(
+                    [
+                        // EIP-4844: Shard Blob Transactions
+                        kzg_point_evaluation::POINT_EVALUATION,
+                    ]
+                    .into_iter()
+                    .map(From::from),
+                );
+                precompiles
+            }
+            #[cfg(not(feature = "std"))]
+            {
+                Box::new(Self::berlin().clone())
+            }
         })
     }
 
@@ -201,6 +227,7 @@ impl Precompiles {
             SpecId::BYZANTIUM => Self::byzantium(),
             SpecId::ISTANBUL => Self::istanbul(),
             SpecId::BERLIN => Self::berlin(),
+            SpecId::CANCUN => Self::cancun(),
             SpecId::LATEST => Self::latest(),
         }
     }

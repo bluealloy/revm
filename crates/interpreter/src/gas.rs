@@ -79,6 +79,8 @@ impl Gas {
 
     /// Records an explicit cost.
     ///
+    /// Returns `false` if the gas limit is exceeded.
+    ///
     /// This function is called on every instruction in the interpreter if the feature
     /// `no_gas_measuring` is not enabled.
     #[inline(always)]
@@ -107,9 +109,9 @@ impl Gas {
         true
     }
 
-    #[inline]
-    #[deprecated = "Use `record_refund` instead"]
     #[doc(hidden)]
+    #[deprecated = "use `record_refund` instead"]
+    #[inline]
     pub fn gas_refund(&mut self, refund: i64) {
         self.record_refund(refund);
     }

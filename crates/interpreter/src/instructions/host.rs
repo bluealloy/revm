@@ -234,7 +234,8 @@ pub(super) fn selfdestruct<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut
     interpreter.instruction_result = InstructionResult::SelfDestruct;
 }
 
-pub(super) fn prepare_create_inputs<SPEC: Spec, const IS_CREATE2: bool>(
+#[inline(never)]
+pub(super) fn prepare_create_inputs<const IS_CREATE2: bool, SPEC: Spec>(
     interpreter: &mut Interpreter,
     host: &mut dyn Host,
     create_inputs: &mut Option<Box<CreateInputs>>,
@@ -302,12 +303,12 @@ pub(super) fn prepare_create_inputs<SPEC: Spec, const IS_CREATE2: bool>(
     }));
 }
 
-pub(super) fn create<SPEC: Spec, const IS_CREATE2: bool>(
+pub(super) fn create<const IS_CREATE2: bool, SPEC: Spec>(
     interpreter: &mut Interpreter,
     host: &mut dyn Host,
 ) {
     let mut create_input: Option<Box<CreateInputs>> = None;
-    prepare_create_inputs::<SPEC, IS_CREATE2>(interpreter, host, &mut create_input);
+    prepare_create_inputs::<IS_CREATE2, SPEC>(interpreter, host, &mut create_input);
 
     let Some(mut create_input) = create_input else {
         return;
@@ -359,6 +360,7 @@ pub(super) fn static_call<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut 
     call_inner::<SPEC>(CallScheme::StaticCall, interpreter, host);
 }
 
+#[inline(never)]
 fn prepare_call_inputs<SPEC: Spec>(
     interpreter: &mut Interpreter,
     scheme: CallScheme,

@@ -1,6 +1,6 @@
 use super::constants::*;
 use crate::inner_models::SelfDestructResult;
-use crate::primitives::{Bytes, Spec, SpecId::*, B160, U256};
+use crate::primitives::{Spec, SpecId::*, B160, U256};
 use alloc::vec::Vec;
 
 #[allow(clippy::collapsible_else_if)]
@@ -342,7 +342,7 @@ pub fn memory_gas(a: usize) -> u64 {
 /// Initial gas that is deducted for transaction to be included.
 /// Initial gas contains initial stipend gas, gas for access list and input data.
 pub fn initial_tx_gas<SPEC: Spec>(
-    input: &Bytes,
+    input: &[u8],
     is_create: bool,
     access_list: &[(B160, Vec<U256>)],
 ) -> u64 {

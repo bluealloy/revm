@@ -1,6 +1,6 @@
 use crate::{
     gas,
-    primitives::{Spec, SpecId::*},
+    primitives::{Spec, SpecId::*, U256},
     Host, InstructionResult, Interpreter,
 };
 
@@ -8,7 +8,7 @@ use crate::{
 pub(super) fn chainid<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     check!(interpreter, ISTANBUL);
     gas!(interpreter, gas::BASE);
-    push!(interpreter, host.env().cfg.chain_id);
+    push!(interpreter, U256::from(host.env().cfg.chain_id));
 }
 
 pub(super) fn coinbase(interpreter: &mut Interpreter, host: &mut dyn Host) {
@@ -55,4 +55,16 @@ pub(super) fn basefee<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn 
 pub(super) fn origin(interpreter: &mut Interpreter, host: &mut dyn Host) {
     gas!(interpreter, gas::BASE);
     push_b256!(interpreter, host.env().tx.caller.into());
+}
+
+// EIP-4844: Shard Blob Transactions
+pub fn blob_hash<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+    check!(interpreter, CANCUN);
+    gas!(interpreter, gas::VERYLOW);
+    pop_top!(interpreter, index);
+    let i = as_usize_saturated!(index);
+    *index = match host.env().tx.blob_hashes.get(i) {
+        Some(hash) => U256::from_be_bytes(hash.0),
+        None => U256::ZERO,
+    };
 }
