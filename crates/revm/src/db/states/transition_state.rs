@@ -1,4 +1,5 @@
 use super::TransitionAccount;
+use alloc::vec::Vec;
 use revm_interpreter::primitives::{hash_map::Entry, HashMap, B160};
 
 #[derive(Clone, Debug, Eq, PartialEq)]

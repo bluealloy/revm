@@ -1,6 +1,9 @@
 #![allow(non_camel_case_types)]
 
-/// SpecId and their activation block
+pub use SpecId::*;
+
+/// Specification IDs and their activation block.
+///
 /// Information was obtained from: <https://github.com/ethereum/execution-specs>
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd, enumn::N)]
@@ -21,60 +24,76 @@ pub enum SpecId {
     LONDON = 12,          // London	                12965000
     ARROW_GLACIER = 13,   // Arrow Glacier	        13773000
     GRAY_GLACIER = 14,    // Gray Glacier	        15050000
-    MERGE = 15,           // Paris/Merge	        TBD (Depends on difficulty)
-    SHANGHAI = 16,
-    CANCUN = 17,
-    LATEST = 18,
+    MERGE = 15,           // Paris/Merge	        15537394 (TTD: 58750000000000000000000)
+    SHANGHAI = 16,        // Shanghai	            17034870 (TS: 1681338455)
+    CANCUN = 17,          // Cancun	                TBD
     #[cfg(feature = "optimism")]
     BEDROCK = 128,
     #[cfg(feature = "optimism")]
     REGOLITH = 129,
-}
-
-impl SpecId {
-    pub fn try_from_u8(spec_id: u8) -> Option<Self> {
-        Self::n(spec_id)
-    }
-}
-
-pub use SpecId::*;
-
-impl From<&str> for SpecId {
-    fn from(name: &str) -> Self {
-        match name {
-            "Frontier" => SpecId::FRONTIER,
-            "Homestead" => SpecId::HOMESTEAD,
-            "Tangerine" => SpecId::TANGERINE,
-            "Spurious" => SpecId::SPURIOUS_DRAGON,
-            "Byzantium" => SpecId::BYZANTIUM,
-            "Constantinople" => SpecId::CONSTANTINOPLE,
-            "Petersburg" => SpecId::PETERSBURG,
-            "Istanbul" => SpecId::ISTANBUL,
-            "MuirGlacier" => SpecId::MUIR_GLACIER,
-            "Berlin" => SpecId::BERLIN,
-            "London" => SpecId::LONDON,
-            "Merge" => SpecId::MERGE,
-            "Shanghai" => SpecId::SHANGHAI,
-            "Cancun" => SpecId::CANCUN,
-            #[cfg(feature = "optimism")]
-            "Bedrock" => SpecId::BEDROCK,
-            #[cfg(feature = "optimism")]
-            "Regolith" => SpecId::REGOLITH,
-            _ => SpecId::LATEST,
-        }
-    }
+    LATEST = u8::MAX,
 }
 
 impl SpecId {
     #[inline]
+    pub fn try_from_u8(spec_id: u8) -> Option<Self> {
+        Self::n(spec_id)
+    }
+
+    #[inline(always)]
     pub const fn enabled(our: SpecId, other: SpecId) -> bool {
+        #[cfg(feature = "optimism")]
+        {
+            let (our, other) = (our as u8, other as u8);
+            let (merge, bedrock, regolith) =
+                (Self::MERGE as u8, Self::BEDROCK as u8, Self::REGOLITH as u8);
+            // If the Spec is Bedrock or Regolith, and the input is not Bedrock or Regolith,
+            // then no hardforks should be enabled after the merge. This is because Optimism's
+            // Bedrock and Regolith hardforks implement changes on top of the Merge hardfork.
+            let is_self_optimism = our == bedrock || our == regolith;
+            let input_not_optimism = other != bedrock && other != regolith;
+            let after_merge = other > merge;
+
+            if is_self_optimism && input_not_optimism && after_merge {
+                return false;
+            }
+        }
+
         our as u8 >= other as u8
     }
 }
 
+impl From<&str> for SpecId {
+    fn from(name: &str) -> Self {
+        match name {
+            "Frontier" => Self::FRONTIER,
+            "Homestead" => Self::HOMESTEAD,
+            "Tangerine" => Self::TANGERINE,
+            "Spurious" => Self::SPURIOUS_DRAGON,
+            "Byzantium" => Self::BYZANTIUM,
+            "Constantinople" => Self::CONSTANTINOPLE,
+            "Petersburg" => Self::PETERSBURG,
+            "Istanbul" => Self::ISTANBUL,
+            "MuirGlacier" => Self::MUIR_GLACIER,
+            "Berlin" => Self::BERLIN,
+            "London" => Self::LONDON,
+            "Merge" => Self::MERGE,
+            "Shanghai" => Self::SHANGHAI,
+            "Cancun" => Self::CANCUN,
+            #[cfg(feature = "optimism")]
+            "Bedrock" => SpecId::BEDROCK,
+            #[cfg(feature = "optimism")]
+            "Regolith" => SpecId::REGOLITH,
+            _ => Self::LATEST,
+        }
+    }
+}
+
 pub trait Spec: Sized {
+    /// The specification ID.
     const SPEC_ID: SpecId;
 
+    /// Returns `true` if the given specification ID is enabled in this spec.
     #[inline(always)]
     fn enabled(spec_id: SpecId) -> bool {
         #[cfg(feature = "optimism")]
@@ -97,11 +116,10 @@ pub trait Spec: Sized {
 }
 
 macro_rules! spec {
-    ($spec_id:tt, $spec_name:tt) => {
+    ($spec_id:ident, $spec_name:ident) => {
         pub struct $spec_name;
 
         impl Spec for $spec_name {
-            //specification id
             const SPEC_ID: SpecId = $spec_id;
         }
     };
@@ -125,6 +143,7 @@ spec!(LONDON, LondonSpec);
 spec!(MERGE, MergeSpec);
 spec!(SHANGHAI, ShanghaiSpec);
 spec!(CANCUN, CancunSpec);
+
 spec!(LATEST, LatestSpec);
 
 // Optimism Hardforks
@@ -156,5 +175,25 @@ mod tests {
         assert!(!RegolithSpec::enabled(SpecId::LATEST));
         assert!(RegolithSpec::enabled(SpecId::BEDROCK));
         assert!(RegolithSpec::enabled(SpecId::REGOLITH));
+    }
+
+    #[test]
+    fn test_bedrock_post_merge_hardforks_spec_id() {
+        assert!(SpecId::enabled(SpecId::BEDROCK, SpecId::MERGE));
+        assert!(!SpecId::enabled(SpecId::BEDROCK, SpecId::SHANGHAI));
+        assert!(!SpecId::enabled(SpecId::BEDROCK, SpecId::CANCUN));
+        assert!(!SpecId::enabled(SpecId::BEDROCK, SpecId::LATEST));
+        assert!(SpecId::enabled(SpecId::BEDROCK, SpecId::BEDROCK));
+        assert!(!SpecId::enabled(SpecId::BEDROCK, SpecId::REGOLITH));
+    }
+
+    #[test]
+    fn test_regolith_post_merge_hardforks_spec_id() {
+        assert!(SpecId::enabled(SpecId::REGOLITH, SpecId::MERGE));
+        assert!(!SpecId::enabled(SpecId::REGOLITH, SpecId::SHANGHAI));
+        assert!(!SpecId::enabled(SpecId::REGOLITH, SpecId::CANCUN));
+        assert!(!SpecId::enabled(SpecId::REGOLITH, SpecId::LATEST));
+        assert!(SpecId::enabled(SpecId::REGOLITH, SpecId::BEDROCK));
+        assert!(SpecId::enabled(SpecId::REGOLITH, SpecId::REGOLITH));
     }
 }

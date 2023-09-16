@@ -1,4 +1,4 @@
-#![allow(clippy::incorrect_clone_impl_on_copy_type)]
+#![allow(clippy::non_canonical_clone_impl)]
 
 use derive_more::{AsRef, Deref};
 use fixed_hash::{construct_fixed_hash, impl_fixed_hash_conversions};

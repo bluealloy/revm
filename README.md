@@ -11,17 +11,16 @@ Here is a list of things that I would like to use as guide in this project:
 
 # Project
 
-structure:
+Structure:
 * crates
     * revm -> main EVM library.
     * revm-primitives -> Primitive data types.
     * revm-interpreter -> Execution loop with instructions
     * revm-precompile -> EVM precompiles
 * bins:
-    * revme: cli binary, used for running state test json
-    * revm-test: test binaries with contracts, used mostly to check performance
+    * revme: cli binary, used for running state test jsons
 
-Last checked revm requires rust v1.65 or higher for `core::error::Error`
+This project tends to use the newest rust version, so if you're encountering a build error try running `rustup update` first.
 
 There were some big efforts on optimization of revm:
 * Optimizing interpreter loop: https://github.com/bluealloy/revm/issues/7
@@ -40,6 +39,8 @@ run tests with command: `cargo run --release -- statetest tests/GeneralStateTest
 
 ## Running benchmarks
 
+TODO needs to be updated. Benches can now be found inside `crates/revm/benches`
+
 ```shell
 cargo run --package revm-test --release --bin snailtracer
 ```
@@ -56,18 +57,23 @@ cargo run -p revm --features ethersdb --example fork_ref_transact
 
 # Used by:
 
-* Foundry: https://github.com/foundry-rs/foundry
-* Helios: https://github.com/a16z/helios
-* Hardhat (transitioning to it): https://github.com/NomicFoundation/hardhat/tree/rethnet/main
-* Reth: https://github.com/paradigmxyz/reth
-* Arbiter: https://github.com/primitivefinance/arbiter
+* [Foundry](https://github.com/foundry-rs/foundry) is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.
+* [Helios](https://github.com/a16z/helios) is a fully trustless, efficient, and portable Ethereum light client written in Rust.
+* [Reth](https://github.com/paradigmxyz/reth) Modular, contributor-friendly and blazing-fast implementation of the Ethereum protocol
+* [Arbiter](https://github.com/primitivefinance/arbiter) is a framework for stateful Ethereum smart-contract simulation
+* [Zeth](https://github.com/risc0/zeth) is an open-source ZK block prover for Ethereum built on the RISC Zero zkVM.
+* ...
 
-(If you want to add your project to the list, ping me or open the PR)
+(If you want to add project to the list, ping me or open the PR)
 
 
 # Documentation
 
-To serve the mdbook documentation, ensure you have mdbook installed (if not install it with cargo) and then run:
+The book can be found at github page here: https://bluealloy.github.io/revm/
+
+The documentation (alas needs some love) can be found here: https://bluealloy.github.io/revm/docs/
+
+To serve the mdbook documentation in a local environment, ensure you have mdbook installed (if not install it with cargo) and then run:
 
 ```shell
 mdbook serve documentation

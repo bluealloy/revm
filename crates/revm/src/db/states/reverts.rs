@@ -2,8 +2,8 @@ use super::{
     changes::PlainStorageRevert, AccountStatus, BundleAccount, PlainStateReverts,
     StorageWithOriginalValues,
 };
+use alloc::vec::Vec;
 use core::ops::{Deref, DerefMut};
-use rayon::slice::ParallelSliceMut;
 use revm_interpreter::primitives::{AccountInfo, HashMap, B160, U256};
 
 /// Contains reverts of multiple account in multiple transitions (Transitions as a block).
@@ -58,17 +58,13 @@ impl Reverts {
                     AccountInfoRevert::DoNothing => (),
                 }
                 if revert_account.wipe_storage || !revert_account.storage.is_empty() {
-                    let mut account_storage =
-                        revert_account.storage.into_iter().collect::<Vec<_>>();
-                    account_storage.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
                     storage.push(PlainStorageRevert {
                         address,
                         wiped: revert_account.wipe_storage,
-                        storage_revert: account_storage,
+                        storage_revert: revert_account.storage.into_iter().collect::<Vec<_>>(),
                     });
                 }
             }
-            accounts.par_sort_unstable_by(|a, b| a.0.cmp(&b.0));
             state_reverts.accounts.push(accounts);
             state_reverts.storage.push(storage);
         }
