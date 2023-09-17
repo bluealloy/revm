@@ -8,6 +8,9 @@ name = "revm-precompile"
 repository = "https://github.com/bluealloy/revm"
 version = "2.0.3"
 
+# Don't need to run build script outside of this repo
+exclude = ["build.rs", "src/blob/kzg_settings/*.txt"]
+
 [dependencies]
 revm-primitives = { path = "../primitives", version = "1.1.2", default-features = false }
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
@@ -21,12 +24,19 @@ secp256k1 = { version = "0.27.0", default-features = false, features = [
 ], optional = true }
 sha2 = { version = "0.10.5", default-features = false }
 sha3 = { version = "0.10.7", default-features = false }
+c-kzg = { git = "https://github.com/ethereum/c-kzg-4844", default-features = false, optional = true }
 
 [dev-dependencies]
 hex = "0.4"
 
+[build-dependencies]
+hex = "0.4"
+
 [features]
-default = ["secp256k1"]
+default = ["secp256k1", "std"]
+# Used to disable kzg lib as i couldn't make it compile for wasm target
+# at least not on mac.
+std = ["dep:c-kzg"]
 # secp256k1 is used as faster alternative to k256 lib. And in most cases should be default.
 # Only problem that it has, it fails to build for wasm target on windows and mac as it is c lib.
 # If you dont require wasm on win/mac, i would recommend its usage.

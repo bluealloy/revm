@@ -216,6 +216,7 @@ impl BundleAccount {
                 None
             }
             AccountStatus::Destroyed => {
+                // clear this storage and move it to the Revert.
                 let this_storage = self.storage.drain().collect();
                 let ret = match self.status {
                     AccountStatus::InMemoryChange | AccountStatus::Changed | AccountStatus::Loaded | AccountStatus::LoadedEmptyEIP161 => {
@@ -269,7 +270,7 @@ impl BundleAccount {
                             // and insert it inside revert.
 
                             let previous_storage = if transition.storage_was_destroyed {
-                                let mut storage = std::mem::take(&mut self.storage)
+                                let mut storage = core::mem::take(&mut self.storage)
                                     .into_iter()
                                     .map(|t| (t.0, RevertToSlot::Some(t.1.present_value)))
                                     .collect::<HashMap<_, _>>();

@@ -38,11 +38,15 @@ impl JumpMap {
     }
 }
 
+/// State of the [`Bytecode`] analysis.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum BytecodeState {
+    /// No analysis has been performed.
     Raw,
+    /// The bytecode has been checked for validity.
     Checked { len: usize },
+    /// The bytecode has been analyzed for valid jump destinations.
     Analysed { len: usize, jump_map: JumpMap },
 }
 
@@ -156,10 +160,11 @@ impl Bytecode {
         match self.state {
             BytecodeState::Raw => {
                 let len = self.bytecode.len();
-                let mut bytecode: Vec<u8> = Vec::from(self.bytecode.as_ref());
-                bytecode.resize(len + 33, 0);
+                let mut padded_bytecode = Vec::with_capacity(len + 33);
+                padded_bytecode.extend_from_slice(&self.bytecode);
+                padded_bytecode.resize(len + 33, 0);
                 Self {
-                    bytecode: bytecode.into(),
+                    bytecode: padded_bytecode.into(),
                     state: BytecodeState::Checked { len },
                 }
             }
