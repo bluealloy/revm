@@ -53,6 +53,7 @@ pub struct BlockEnv {
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     pub excess_blob_gas: Option<u64>,
 }
+
 #[cfg(feature = "optimism")]
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
