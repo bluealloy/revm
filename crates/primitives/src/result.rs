@@ -122,7 +122,6 @@ impl Output {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[non_exhaustive]
 pub enum EVMError<DBError> {
     Transaction(InvalidTransaction),
     /// `prevrandao` is not set for Merge and above.
