@@ -5,363 +5,16 @@ use crate::{
 use bytes::Bytes;
 use core::cmp::{min, Ordering};
 
+/// EVM environment configuration.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Env {
+    /// Configuration of the EVM itself.
     pub cfg: CfgEnv,
+    /// Configuration of the block the transaction is in.
     pub block: BlockEnv,
+    /// Configuration of the transaction that is being executed.
     pub tx: TxEnv,
-}
-
-/// The block environment.
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct BlockEnv {
-    /// The number of ancestor blocks of this block (block height).
-    pub number: U256,
-    /// Coinbase or miner or address that created and signed the block.
-    ///
-    /// This is the receiver address of all the gas spent in the block.
-    pub coinbase: B160,
-    /// The timestamp of the block in seconds since the UNIX epoch.
-    pub timestamp: U256,
-    /// The gas limit of the block.
-    pub gas_limit: U256,
-
-    /// The base fee per gas, added in the London upgrade with [EIP-1559].
-    ///
-    /// [EIP-1559]: https://eips.ethereum.org/EIPS/eip-1559
-    pub basefee: U256,
-
-    /// The difficulty of the block.
-    ///
-    /// Unused after the Paris (AKA the merge) upgrade, and replaced by `prevrandao`.
-    pub difficulty: U256,
-    /// The output of the randomness beacon provided by the beacon chain.
-    ///
-    /// Replaces `difficulty` after the Paris (AKA the merge) upgrade with [EIP-4399].
-    ///
-    /// NOTE: `prevrandao` can be found in a block in place of `mix_hash`.
-    ///
-    /// [EIP-4399]: https://eips.ethereum.org/EIPS/eip-4399
-    pub prevrandao: Option<B256>,
-
-    /// Excess blob gas. See also [`calc_excess_blob_gas`](crate::calc_excess_blob_gas).
-    ///
-    /// Incorporated as part of the Cancun upgrade via [EIP-4844].
-    ///
-    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-    pub excess_blob_gas: Option<u64>,
-}
-
-impl BlockEnv {
-    /// See [EIP-4844] and [`Env::calc_data_fee`].
-    ///
-    /// Returns `None` if `Cancun` is not enabled. This is enforced in [`Env::validate_block_env`].
-    ///
-    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-    #[inline]
-    pub fn get_blob_gasprice(&self) -> Option<u64> {
-        self.excess_blob_gas.map(calc_blob_fee)
-    }
-}
-
-/// The transaction environment.
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct TxEnv {
-    /// The caller, author or signer of the transaction.
-    pub caller: B160,
-    /// The gas limit of the transaction.
-    pub gas_limit: u64,
-    /// The gas price of the transaction.
-    pub gas_price: U256,
-    /// The destination of the transaction.
-    pub transact_to: TransactTo,
-    /// The value sent to `transact_to`.
-    pub value: U256,
-    /// The data of the transaction.
-    #[cfg_attr(feature = "serde", serde(with = "crate::utilities::serde_hex_bytes"))]
-    pub data: Bytes,
-    /// The nonce of the transaction. If set to `None`, no checks are performed.
-    pub nonce: Option<u64>,
-
-    /// The chain ID of the transaction. If set to `None`, no checks are performed.
-    ///
-    /// Incorporated as part of the Spurious Dragon upgrade via [EIP-155].
-    ///
-    /// [EIP-155]: https://eips.ethereum.org/EIPS/eip-155
-    pub chain_id: Option<u64>,
-
-    /// A list of addresses and storage keys that the transaction plans to access.
-    ///
-    /// Added in [EIP-2930].
-    ///
-    /// [EIP-2930]: https://eips.ethereum.org/EIPS/eip-2930
-    pub access_list: Vec<(B160, Vec<U256>)>,
-
-    /// The priority fee per gas.
-    ///
-    /// Incorporated as part of the London upgrade via [EIP-1559].
-    ///
-    /// [EIP-1559]: https://eips.ethereum.org/EIPS/eip-1559
-    pub gas_priority_fee: Option<U256>,
-
-    /// The list of blob versioned hashes.
-    ///
-    /// Incorporated as part of the Cancun upgrade via [EIP-4844].
-    ///
-    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-    pub blob_hashes: Vec<B256>,
-    /// The max fee per blob gas.
-    ///
-    /// Incorporated as part of the Cancun upgrade via [EIP-4844].
-    ///
-    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-    pub max_fee_per_blob_gas: Option<U256>,
-}
-
-impl TxEnv {
-    /// See [EIP-4844] and [`Env::calc_data_fee`].
-    ///
-    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-    #[inline]
-    pub fn get_total_blob_gas(&self) -> u64 {
-        GAS_PER_BLOB * self.blob_hashes.len() as u64
-    }
-}
-
-/// Transaction destination.
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum TransactTo {
-    /// Simple call to an address.
-    Call(B160),
-    /// Contract creation.
-    Create(CreateScheme),
-}
-
-impl TransactTo {
-    /// Calls the given address.
-    #[inline]
-    pub fn call(address: B160) -> Self {
-        Self::Call(address)
-    }
-
-    /// Creates a contract.
-    #[inline]
-    pub fn create() -> Self {
-        Self::Create(CreateScheme::Create)
-    }
-
-    /// Creates a contract with the given salt using `CREATE2`.
-    #[inline]
-    pub fn create2(salt: U256) -> Self {
-        Self::Create(CreateScheme::Create2 { salt })
-    }
-
-    /// Returns `true` if the transaction is `Call`.
-    #[inline]
-    pub fn is_call(&self) -> bool {
-        matches!(self, Self::Call(_))
-    }
-
-    /// Returns `true` if the transaction is `Create` or `Create2`.
-    #[inline]
-    pub fn is_create(&self) -> bool {
-        matches!(self, Self::Create(_))
-    }
-}
-
-/// Create scheme.
-#[derive(Clone, Copy, Eq, PartialEq, Debug)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum CreateScheme {
-    /// Legacy create scheme of `CREATE`.
-    Create,
-    /// Create scheme of `CREATE2`.
-    Create2 {
-        /// Salt.
-        salt: U256,
-    },
-}
-
-/// EVM configuration.
-#[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[non_exhaustive]
-pub struct CfgEnv {
-    pub chain_id: u64,
-    pub spec_id: SpecId,
-    /// KZG Settings for point evaluation precompile. By default, this is loaded from the ethereum mainnet trusted setup.
-    #[cfg_attr(feature = "serde", serde(skip))]
-    #[cfg(feature = "std")]
-    pub kzg_settings: crate::kzg::EnvKzgSettings,
-    /// Bytecode that is created with CREATE/CREATE2 is by default analysed and jumptable is created.
-    /// This is very beneficial for testing and speeds up execution of that bytecode if called multiple times.
-    ///
-    /// Default: Analyse
-    pub perf_analyse_created_bytecodes: AnalysisKind,
-    /// If some it will effects EIP-170: Contract code size limit. Useful to increase this because of tests.
-    /// By default it is 0x6000 (~25kb).
-    pub limit_contract_code_size: Option<usize>,
-    /// Disables the coinbase tip during the finalization of the transaction. This is useful for
-    /// rollups that redirect the tip to the sequencer.
-    pub disable_coinbase_tip: bool,
-    /// A hard memory limit in bytes beyond which [Memory] cannot be resized.
-    ///
-    /// In cases where the gas limit may be extraordinarily high, it is recommended to set this to
-    /// a sane value to prevent memory allocation panics. Defaults to `2^32 - 1` bytes per
-    /// EIP-1985.
-    #[cfg(feature = "memory_limit")]
-    pub memory_limit: u64,
-    /// Skip balance checks if true. Adds transaction cost to balance to ensure execution doesn't fail.
-    #[cfg(feature = "optional_balance_check")]
-    pub disable_balance_check: bool,
-    /// There are use cases where it's allowed to provide a gas limit that's higher than a block's gas limit. To that
-    /// end, you can disable the block gas limit validation.
-    /// By default, it is set to `false`.
-    #[cfg(feature = "optional_block_gas_limit")]
-    pub disable_block_gas_limit: bool,
-    /// EIP-3607 rejects transactions from senders with deployed code. In development, it can be desirable to simulate
-    /// calls from contracts, which this setting allows.
-    /// By default, it is set to `false`.
-    #[cfg(feature = "optional_eip3607")]
-    pub disable_eip3607: bool,
-    /// Disables all gas refunds. This is useful when using chains that have gas refunds disabled e.g. Avalanche.
-    /// Reasoning behind removing gas refunds can be found in EIP-3298.
-    /// By default, it is set to `false`.
-    #[cfg(feature = "optional_gas_refund")]
-    pub disable_gas_refund: bool,
-    /// Disables base fee checks for EIP-1559 transactions.
-    /// This is useful for testing method calls with zero gas price.
-    #[cfg(feature = "optional_no_base_fee")]
-    pub disable_base_fee: bool,
-}
-
-impl CfgEnv {
-    #[cfg(feature = "optional_eip3607")]
-    pub fn is_eip3607_disabled(&self) -> bool {
-        self.disable_eip3607
-    }
-
-    #[cfg(not(feature = "optional_eip3607"))]
-    pub fn is_eip3607_disabled(&self) -> bool {
-        false
-    }
-
-    #[cfg(feature = "optional_balance_check")]
-    pub fn is_balance_check_disabled(&self) -> bool {
-        self.disable_balance_check
-    }
-
-    #[cfg(not(feature = "optional_balance_check"))]
-    pub fn is_balance_check_disabled(&self) -> bool {
-        false
-    }
-
-    #[cfg(feature = "optional_gas_refund")]
-    pub fn is_gas_refund_disabled(&self) -> bool {
-        self.disable_gas_refund
-    }
-
-    #[cfg(not(feature = "optional_gas_refund"))]
-    pub fn is_gas_refund_disabled(&self) -> bool {
-        false
-    }
-
-    #[cfg(feature = "optional_no_base_fee")]
-    pub fn is_base_fee_check_disabled(&self) -> bool {
-        self.disable_base_fee
-    }
-
-    #[cfg(not(feature = "optional_no_base_fee"))]
-    pub fn is_base_fee_check_disabled(&self) -> bool {
-        false
-    }
-
-    #[cfg(feature = "optional_block_gas_limit")]
-    pub fn is_block_gas_limit_disabled(&self) -> bool {
-        self.disable_block_gas_limit
-    }
-
-    #[cfg(not(feature = "optional_block_gas_limit"))]
-    pub fn is_block_gas_limit_disabled(&self) -> bool {
-        false
-    }
-}
-
-/// What bytecode analysis to perform.
-#[derive(Clone, Default, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum AnalysisKind {
-    /// Do not perform bytecode analysis.
-    Raw,
-    /// Check the bytecode for validity.
-    Check,
-    /// Perform bytecode analysis.
-    #[default]
-    Analyse,
-}
-
-impl Default for CfgEnv {
-    fn default() -> Self {
-        Self {
-            chain_id: 1,
-            spec_id: SpecId::LATEST,
-            perf_analyse_created_bytecodes: AnalysisKind::default(),
-            limit_contract_code_size: None,
-            disable_coinbase_tip: false,
-            #[cfg(feature = "std")]
-            kzg_settings: crate::kzg::EnvKzgSettings::Default,
-            #[cfg(feature = "memory_limit")]
-            memory_limit: (1 << 32) - 1,
-            #[cfg(feature = "optional_balance_check")]
-            disable_balance_check: false,
-            #[cfg(feature = "optional_block_gas_limit")]
-            disable_block_gas_limit: false,
-            #[cfg(feature = "optional_eip3607")]
-            disable_eip3607: false,
-            #[cfg(feature = "optional_gas_refund")]
-            disable_gas_refund: false,
-            #[cfg(feature = "optional_no_base_fee")]
-            disable_base_fee: false,
-        }
-    }
-}
-
-impl Default for BlockEnv {
-    fn default() -> Self {
-        Self {
-            number: U256::ZERO,
-            coinbase: B160::zero(),
-            timestamp: U256::from(1),
-            gas_limit: U256::MAX,
-            basefee: U256::ZERO,
-            difficulty: U256::ZERO,
-            prevrandao: Some(B256::zero()),
-            excess_blob_gas: Some(0),
-        }
-    }
-}
-
-impl Default for TxEnv {
-    fn default() -> Self {
-        Self {
-            caller: B160::zero(),
-            gas_limit: u64::MAX,
-            gas_price: U256::ZERO,
-            gas_priority_fee: None,
-            transact_to: TransactTo::Call(B160::zero()), // will do nothing
-            value: U256::ZERO,
-            data: Bytes::new(),
-            chain_id: None,
-            nonce: None,
-            access_list: Vec::new(),
-            blob_hashes: Vec::new(),
-            max_fee_per_blob_gas: None,
-        }
-    }
 }
 
 impl Env {
@@ -523,4 +176,355 @@ impl Env {
 
         Ok(())
     }
+}
+
+/// EVM configuration.
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[non_exhaustive]
+pub struct CfgEnv {
+    pub chain_id: u64,
+    pub spec_id: SpecId,
+    /// KZG Settings for point evaluation precompile. By default, this is loaded from the ethereum mainnet trusted setup.
+    #[cfg_attr(feature = "serde", serde(skip))]
+    #[cfg(feature = "std")]
+    pub kzg_settings: crate::kzg::EnvKzgSettings,
+    /// Bytecode that is created with CREATE/CREATE2 is by default analysed and jumptable is created.
+    /// This is very beneficial for testing and speeds up execution of that bytecode if called multiple times.
+    ///
+    /// Default: Analyse
+    pub perf_analyse_created_bytecodes: AnalysisKind,
+    /// If some it will effects EIP-170: Contract code size limit. Useful to increase this because of tests.
+    /// By default it is 0x6000 (~25kb).
+    pub limit_contract_code_size: Option<usize>,
+    /// Disables the coinbase tip during the finalization of the transaction. This is useful for
+    /// rollups that redirect the tip to the sequencer.
+    pub disable_coinbase_tip: bool,
+    /// A hard memory limit in bytes beyond which [Memory] cannot be resized.
+    ///
+    /// In cases where the gas limit may be extraordinarily high, it is recommended to set this to
+    /// a sane value to prevent memory allocation panics. Defaults to `2^32 - 1` bytes per
+    /// EIP-1985.
+    #[cfg(feature = "memory_limit")]
+    pub memory_limit: u64,
+    /// Skip balance checks if true. Adds transaction cost to balance to ensure execution doesn't fail.
+    #[cfg(feature = "optional_balance_check")]
+    pub disable_balance_check: bool,
+    /// There are use cases where it's allowed to provide a gas limit that's higher than a block's gas limit. To that
+    /// end, you can disable the block gas limit validation.
+    /// By default, it is set to `false`.
+    #[cfg(feature = "optional_block_gas_limit")]
+    pub disable_block_gas_limit: bool,
+    /// EIP-3607 rejects transactions from senders with deployed code. In development, it can be desirable to simulate
+    /// calls from contracts, which this setting allows.
+    /// By default, it is set to `false`.
+    #[cfg(feature = "optional_eip3607")]
+    pub disable_eip3607: bool,
+    /// Disables all gas refunds. This is useful when using chains that have gas refunds disabled e.g. Avalanche.
+    /// Reasoning behind removing gas refunds can be found in EIP-3298.
+    /// By default, it is set to `false`.
+    #[cfg(feature = "optional_gas_refund")]
+    pub disable_gas_refund: bool,
+    /// Disables base fee checks for EIP-1559 transactions.
+    /// This is useful for testing method calls with zero gas price.
+    #[cfg(feature = "optional_no_base_fee")]
+    pub disable_base_fee: bool,
+}
+
+impl CfgEnv {
+    #[cfg(feature = "optional_eip3607")]
+    pub fn is_eip3607_disabled(&self) -> bool {
+        self.disable_eip3607
+    }
+
+    #[cfg(not(feature = "optional_eip3607"))]
+    pub fn is_eip3607_disabled(&self) -> bool {
+        false
+    }
+
+    #[cfg(feature = "optional_balance_check")]
+    pub fn is_balance_check_disabled(&self) -> bool {
+        self.disable_balance_check
+    }
+
+    #[cfg(not(feature = "optional_balance_check"))]
+    pub fn is_balance_check_disabled(&self) -> bool {
+        false
+    }
+
+    #[cfg(feature = "optional_gas_refund")]
+    pub fn is_gas_refund_disabled(&self) -> bool {
+        self.disable_gas_refund
+    }
+
+    #[cfg(not(feature = "optional_gas_refund"))]
+    pub fn is_gas_refund_disabled(&self) -> bool {
+        false
+    }
+
+    #[cfg(feature = "optional_no_base_fee")]
+    pub fn is_base_fee_check_disabled(&self) -> bool {
+        self.disable_base_fee
+    }
+
+    #[cfg(not(feature = "optional_no_base_fee"))]
+    pub fn is_base_fee_check_disabled(&self) -> bool {
+        false
+    }
+
+    #[cfg(feature = "optional_block_gas_limit")]
+    pub fn is_block_gas_limit_disabled(&self) -> bool {
+        self.disable_block_gas_limit
+    }
+
+    #[cfg(not(feature = "optional_block_gas_limit"))]
+    pub fn is_block_gas_limit_disabled(&self) -> bool {
+        false
+    }
+}
+
+impl Default for CfgEnv {
+    fn default() -> Self {
+        Self {
+            chain_id: 1,
+            spec_id: SpecId::LATEST,
+            perf_analyse_created_bytecodes: AnalysisKind::default(),
+            limit_contract_code_size: None,
+            disable_coinbase_tip: false,
+            #[cfg(feature = "std")]
+            kzg_settings: crate::kzg::EnvKzgSettings::Default,
+            #[cfg(feature = "memory_limit")]
+            memory_limit: (1 << 32) - 1,
+            #[cfg(feature = "optional_balance_check")]
+            disable_balance_check: false,
+            #[cfg(feature = "optional_block_gas_limit")]
+            disable_block_gas_limit: false,
+            #[cfg(feature = "optional_eip3607")]
+            disable_eip3607: false,
+            #[cfg(feature = "optional_gas_refund")]
+            disable_gas_refund: false,
+            #[cfg(feature = "optional_no_base_fee")]
+            disable_base_fee: false,
+        }
+    }
+}
+
+/// The block environment.
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct BlockEnv {
+    /// The number of ancestor blocks of this block (block height).
+    pub number: U256,
+    /// Coinbase or miner or address that created and signed the block.
+    ///
+    /// This is the receiver address of all the gas spent in the block.
+    pub coinbase: B160,
+    /// The timestamp of the block in seconds since the UNIX epoch.
+    pub timestamp: U256,
+    /// The gas limit of the block.
+    pub gas_limit: U256,
+
+    /// The base fee per gas, added in the London upgrade with [EIP-1559].
+    ///
+    /// [EIP-1559]: https://eips.ethereum.org/EIPS/eip-1559
+    pub basefee: U256,
+
+    /// The difficulty of the block.
+    ///
+    /// Unused after the Paris (AKA the merge) upgrade, and replaced by `prevrandao`.
+    pub difficulty: U256,
+    /// The output of the randomness beacon provided by the beacon chain.
+    ///
+    /// Replaces `difficulty` after the Paris (AKA the merge) upgrade with [EIP-4399].
+    ///
+    /// NOTE: `prevrandao` can be found in a block in place of `mix_hash`.
+    ///
+    /// [EIP-4399]: https://eips.ethereum.org/EIPS/eip-4399
+    pub prevrandao: Option<B256>,
+
+    /// Excess blob gas. See also [`calc_excess_blob_gas`](crate::calc_excess_blob_gas).
+    ///
+    /// Incorporated as part of the Cancun upgrade via [EIP-4844].
+    ///
+    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
+    pub excess_blob_gas: Option<u64>,
+}
+
+impl BlockEnv {
+    /// See [EIP-4844] and [`Env::calc_data_fee`].
+    ///
+    /// Returns `None` if `Cancun` is not enabled. This is enforced in [`Env::validate_block_env`].
+    ///
+    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
+    #[inline]
+    pub fn get_blob_gasprice(&self) -> Option<u64> {
+        self.excess_blob_gas.map(calc_blob_fee)
+    }
+}
+
+impl Default for BlockEnv {
+    fn default() -> Self {
+        Self {
+            number: U256::ZERO,
+            coinbase: B160::zero(),
+            timestamp: U256::from(1),
+            gas_limit: U256::MAX,
+            basefee: U256::ZERO,
+            difficulty: U256::ZERO,
+            prevrandao: Some(B256::zero()),
+            excess_blob_gas: Some(0),
+        }
+    }
+}
+
+/// The transaction environment.
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct TxEnv {
+    /// The caller, author or signer of the transaction.
+    pub caller: B160,
+    /// The gas limit of the transaction.
+    pub gas_limit: u64,
+    /// The gas price of the transaction.
+    pub gas_price: U256,
+    /// The destination of the transaction.
+    pub transact_to: TransactTo,
+    /// The value sent to `transact_to`.
+    pub value: U256,
+    /// The data of the transaction.
+    #[cfg_attr(feature = "serde", serde(with = "crate::utilities::serde_hex_bytes"))]
+    pub data: Bytes,
+    /// The nonce of the transaction. If set to `None`, no checks are performed.
+    pub nonce: Option<u64>,
+
+    /// The chain ID of the transaction. If set to `None`, no checks are performed.
+    ///
+    /// Incorporated as part of the Spurious Dragon upgrade via [EIP-155].
+    ///
+    /// [EIP-155]: https://eips.ethereum.org/EIPS/eip-155
+    pub chain_id: Option<u64>,
+
+    /// A list of addresses and storage keys that the transaction plans to access.
+    ///
+    /// Added in [EIP-2930].
+    ///
+    /// [EIP-2930]: https://eips.ethereum.org/EIPS/eip-2930
+    pub access_list: Vec<(B160, Vec<U256>)>,
+
+    /// The priority fee per gas.
+    ///
+    /// Incorporated as part of the London upgrade via [EIP-1559].
+    ///
+    /// [EIP-1559]: https://eips.ethereum.org/EIPS/eip-1559
+    pub gas_priority_fee: Option<U256>,
+
+    /// The list of blob versioned hashes.
+    ///
+    /// Incorporated as part of the Cancun upgrade via [EIP-4844].
+    ///
+    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
+    pub blob_hashes: Vec<B256>,
+    /// The max fee per blob gas.
+    ///
+    /// Incorporated as part of the Cancun upgrade via [EIP-4844].
+    ///
+    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
+    pub max_fee_per_blob_gas: Option<U256>,
+}
+
+impl TxEnv {
+    /// See [EIP-4844] and [`Env::calc_data_fee`].
+    ///
+    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
+    #[inline]
+    pub fn get_total_blob_gas(&self) -> u64 {
+        GAS_PER_BLOB * self.blob_hashes.len() as u64
+    }
+}
+
+impl Default for TxEnv {
+    fn default() -> Self {
+        Self {
+            caller: B160::zero(),
+            gas_limit: u64::MAX,
+            gas_price: U256::ZERO,
+            gas_priority_fee: None,
+            transact_to: TransactTo::Call(B160::zero()), // will do nothing
+            value: U256::ZERO,
+            data: Bytes::new(),
+            chain_id: None,
+            nonce: None,
+            access_list: Vec::new(),
+            blob_hashes: Vec::new(),
+            max_fee_per_blob_gas: None,
+        }
+    }
+}
+
+/// Transaction destination.
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum TransactTo {
+    /// Simple call to an address.
+    Call(B160),
+    /// Contract creation.
+    Create(CreateScheme),
+}
+
+impl TransactTo {
+    /// Calls the given address.
+    #[inline]
+    pub fn call(address: B160) -> Self {
+        Self::Call(address)
+    }
+
+    /// Creates a contract.
+    #[inline]
+    pub fn create() -> Self {
+        Self::Create(CreateScheme::Create)
+    }
+
+    /// Creates a contract with the given salt using `CREATE2`.
+    #[inline]
+    pub fn create2(salt: U256) -> Self {
+        Self::Create(CreateScheme::Create2 { salt })
+    }
+
+    /// Returns `true` if the transaction is `Call`.
+    #[inline]
+    pub fn is_call(&self) -> bool {
+        matches!(self, Self::Call(_))
+    }
+
+    /// Returns `true` if the transaction is `Create` or `Create2`.
+    #[inline]
+    pub fn is_create(&self) -> bool {
+        matches!(self, Self::Create(_))
+    }
+}
+
+/// Create scheme.
+#[derive(Clone, Copy, Eq, PartialEq, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum CreateScheme {
+    /// Legacy create scheme of `CREATE`.
+    Create,
+    /// Create scheme of `CREATE2`.
+    Create2 {
+        /// Salt.
+        salt: U256,
+    },
+}
+
+/// What bytecode analysis to perform.
+#[derive(Clone, Default, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum AnalysisKind {
+    /// Do not perform bytecode analysis.
+    Raw,
+    /// Check the bytecode for validity.
+    Check,
+    /// Perform bytecode analysis.
+    #[default]
+    Analyse,
 }
