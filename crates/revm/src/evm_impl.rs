@@ -97,7 +97,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let env = self.env();
 
         // Important: validate block before tx.
-        env.validate_block_env::<GSPEC, DB::Error>()?;
+        env.validate_block_env::<GSPEC>()?;
         env.validate_tx::<GSPEC>()?;
 
         let initial_gas_spend = initial_tx_gas::<GSPEC>(
