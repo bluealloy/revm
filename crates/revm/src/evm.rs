@@ -215,9 +215,9 @@ pub fn to_precompile_id(spec_id: SpecId) -> revm_precompile::SpecId {
         | SpecId::ARROW_GLACIER
         | SpecId::GRAY_GLACIER
         | SpecId::MERGE
-        | SpecId::SHANGHAI
-        | SpecId::CANCUN
-        | SpecId::LATEST => revm_precompile::SpecId::BERLIN,
+        | SpecId::SHANGHAI => revm_precompile::SpecId::BERLIN,
+        SpecId::CANCUN => revm_precompile::SpecId::CANCUN,
+        SpecId::LATEST => revm_precompile::SpecId::LATEST,
     }
 }
 
