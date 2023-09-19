@@ -21,7 +21,8 @@ pub struct JournaledState {
     /// journal with changes that happened between calls.
     pub journal: Vec<Vec<JournalEntry>>,
     /// Ethereum before EIP-161 differently defined empty and not-existing account
-    /// so we need to take care of that difference.
+    /// Spec is needed for two things SpuriousDragon's `EIP-161 State clear`,
+    /// and for Cancun's `EIP-6780: SELFDESTRUCT in same transaction`
     pub spec: SpecId,
     /// It is assumed that precompiles start from 0x1 address and span next N addresses.
     /// we are using that assumption here
@@ -460,9 +461,11 @@ impl JournaledState {
     }
 
     /// Transfer balance from address to target. Check if target exist/is_cold
-    /// NOTE: balance will be lost if [address] and [target] are the same BUT when
+    ///
+    /// Note: balance will be lost if [address] and [target] are the same BUT when
     /// current spec enables Cancun, this happens only when the account associated to [address]
     /// is created in the same tx
+    ///
     /// references:
     ///  * https://github.com/ethereum/go-ethereum/blob/141cd425310b503c5678e674a8c3872cf46b7086/core/vm/instructions.go#L832-L833
     ///  * https://github.com/ethereum/go-ethereum/blob/141cd425310b503c5678e674a8c3872cf46b7086/core/state/statedb.go#L449
@@ -488,10 +491,11 @@ impl JournaledState {
         let previously_destroyed = acc.is_selfdestructed();
         let is_cancun_enabled = SpecId::enabled(self.spec, CANCUN);
 
+        acc.info.balance = U256::ZERO;
+
         // EIP-6780 (Cancun hard-fork): selfdestruct only if contract is created in the same tx
         let journal_entry = if acc.is_created() || !is_cancun_enabled {
             acc.mark_selfdestruct();
-            acc.info.balance = U256::ZERO;
             JournalEntry::AccountDestroyed {
                 address,
                 target,
@@ -499,7 +503,6 @@ impl JournaledState {
                 had_balance: balance,
             }
         } else {
-            Self::touch_account(self.journal.last_mut().unwrap(), &address, acc);
             JournalEntry::BalanceTransfer {
                 from: address,
                 to: target,
