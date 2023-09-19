@@ -20,7 +20,6 @@ pub const MAX_INITCODE_SIZE: usize = 2 * MAX_CODE_SIZE;
 /// Precompile 3 is special in few places
 pub const PRECOMPILE3: Address =
     Address::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]);
-
 // EIP-4844 constants
 /// Maximum consumable blob gas for data blobs per block.
 pub const MAX_BLOB_GAS_PER_BLOCK: u64 = 6 * GAS_PER_BLOB;

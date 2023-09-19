@@ -22,6 +22,7 @@ pub struct BlockEnv {
     ///
     /// This is the receiver address of all the gas spent in the block.
     pub coinbase: Address,
+
     /// The timestamp of the block in seconds since the UNIX epoch.
     pub timestamp: U256,
     /// The gas limit of the block.

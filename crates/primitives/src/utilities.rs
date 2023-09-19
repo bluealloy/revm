@@ -2,7 +2,6 @@ use crate::{
     b256, Address, B256, BLOB_GASPRICE_UPDATE_FRACTION, MIN_BLOB_GASPRICE,
     TARGET_BLOB_GAS_PER_BLOCK, U256,
 };
-
 pub use alloy_primitives::keccak256;
 
 /// The Keccak-256 hash of the empty string `""`.
@@ -19,6 +18,55 @@ pub fn create_address(caller: Address, nonce: u64) -> Address {
 #[inline]
 pub fn create2_address(caller: Address, code_hash: B256, salt: U256) -> Address {
     caller.create2(salt.to_be_bytes::<32>(), code_hash)
+}
+
+/// Calculates the `excess_blob_gas` from the parent header's `blob_gas_used` and `excess_blob_gas`.
+///
+/// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers).
+#[inline]
+pub fn calc_excess_blob_gas(parent_excess_blob_gas: u64, parent_blob_gas_used: u64) -> u64 {
+    (parent_excess_blob_gas + parent_blob_gas_used).saturating_sub(TARGET_BLOB_GAS_PER_BLOCK)
+}
+
+/// Calculates the blobfee from the header's excess blob gas field.
+///
+/// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers).
+#[inline]
+pub fn calc_blob_fee(excess_blob_gas: u64) -> u64 {
+    fake_exponential(
+        MIN_BLOB_GASPRICE,
+        excess_blob_gas,
+        BLOB_GASPRICE_UPDATE_FRACTION,
+    )
+}
+
+/// Approximates `factor * e ** (numerator / denominator)` using Taylor expansion.
+///
+/// This is used to calculate the blob price.
+///
+/// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers).
+///
+/// # Panic
+///
+/// Panics if `denominator` is zero.
+#[inline]
+pub fn fake_exponential(factor: u64, numerator: u64, denominator: u64) -> u64 {
+    assert_ne!(denominator, 0, "attempt to divide by zero");
+    let factor = factor as u128;
+    let numerator = numerator as u128;
+    let denominator = denominator as u128;
+
+    let mut i = 1;
+    let mut output = 0;
+    let mut numerator_accum = factor * denominator;
+    while numerator_accum > 0 {
+        output += numerator_accum;
+
+        // Denominator is asserted as not zero at the start of the function.
+        numerator_accum = (numerator_accum * numerator) / (denominator * i);
+        i += 1;
+    }
+    (output / denominator) as u64
 }
 
 /// Calculates the `excess_blob_gas` from the parent header's `blob_gas_used` and `excess_blob_gas`.
