@@ -1,8 +1,7 @@
-use crate::{keccak256, B256, KECCAK_EMPTY};
+use crate::{hex, keccak256, Bytes, B256, KECCAK_EMPTY};
 use alloc::{sync::Arc, vec::Vec};
 use bitvec::prelude::{bitvec, Lsb0};
 use bitvec::vec::BitVec;
-use bytes::Bytes;
 use core::fmt::Debug;
 
 /// A map of valid `jump` destinations.
@@ -38,18 +37,21 @@ impl JumpMap {
     }
 }
 
+/// State of the [`Bytecode`] analysis.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum BytecodeState {
+    /// No analysis has been performed.
     Raw,
+    /// The bytecode has been checked for validity.
     Checked { len: usize },
+    /// The bytecode has been analyzed for valid jump destinations.
     Analysed { len: usize, jump_map: JumpMap },
 }
 
 #[derive(Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Bytecode {
-    #[cfg_attr(feature = "serde", serde(with = "crate::utilities::serde_hex_bytes"))]
     pub bytecode: Bytes,
     pub state: BytecodeState,
 }
@@ -57,7 +59,7 @@ pub struct Bytecode {
 impl Debug for Bytecode {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("Bytecode")
-            .field("bytecode", &hex::encode(&self.bytecode[..]))
+            .field("bytecode", &self.bytecode)
             .field("state", &self.state)
             .finish()
     }
@@ -156,10 +158,11 @@ impl Bytecode {
         match self.state {
             BytecodeState::Raw => {
                 let len = self.bytecode.len();
-                let mut bytecode: Vec<u8> = Vec::from(self.bytecode.as_ref());
-                bytecode.resize(len + 33, 0);
+                let mut padded_bytecode = Vec::with_capacity(len + 33);
+                padded_bytecode.extend_from_slice(&self.bytecode);
+                padded_bytecode.resize(len + 33, 0);
                 Self {
-                    bytecode: bytecode.into(),
+                    bytecode: padded_bytecode.into(),
                     state: BytecodeState::Checked { len },
                 }
             }

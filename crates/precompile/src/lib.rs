@@ -7,9 +7,13 @@ mod blake2;
 mod bn128;
 mod hash;
 mod identity;
+#[cfg(feature = "std")]
+mod kzg_point_evaluation;
 mod modexp;
 mod secp256k1;
 
+use alloc::{boxed::Box, vec::Vec};
+use core::fmt;
 use once_cell::race::OnceBox;
 pub use primitives::{
     precompile::{PrecompileError as Error, *},
@@ -18,11 +22,8 @@ pub use primitives::{
 #[doc(inline)]
 pub use revm_primitives as primitives;
 
-pub type B160 = [u8; 20];
+pub type Address = [u8; 20];
 pub type B256 = [u8; 32];
-
-use alloc::{boxed::Box, vec::Vec};
-use core::fmt;
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base
@@ -37,7 +38,7 @@ pub struct PrecompileOutput {
 
 #[derive(Debug, Default)]
 pub struct Log {
-    pub address: B160,
+    pub address: Address,
     pub topics: Vec<B256>,
     pub data: Bytes,
 }
@@ -54,7 +55,7 @@ impl PrecompileOutput {
 
 #[derive(Clone, Debug)]
 pub struct Precompiles {
-    pub fun: HashMap<B160, Precompile>,
+    pub fun: HashMap<Address, Precompile>,
 }
 
 impl Default for Precompiles {
@@ -66,21 +67,21 @@ impl Default for Precompiles {
 #[derive(Clone)]
 pub enum Precompile {
     Standard(StandardPrecompileFn),
-    Custom(CustomPrecompileFn),
+    Env(EnvPrecompileFn),
 }
 
 impl fmt::Debug for Precompile {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Precompile::Standard(_) => f.write_str("Standard"),
-            Precompile::Custom(_) => f.write_str("Custom"),
+            Precompile::Env(_) => f.write_str("Env"),
         }
     }
 }
 
-pub struct PrecompileAddress(B160, Precompile);
+pub struct PrecompileAddress(Address, Precompile);
 
-impl From<PrecompileAddress> for (B160, Precompile) {
+impl From<PrecompileAddress> for (Address, Precompile) {
     fn from(value: PrecompileAddress) -> Self {
         (value.0, value.1)
     }
@@ -88,11 +89,12 @@ impl From<PrecompileAddress> for (B160, Precompile) {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub enum SpecId {
-    HOMESTEAD = 0,
-    BYZANTIUM = 1,
-    ISTANBUL = 2,
-    BERLIN = 3,
-    LATEST = 4,
+    HOMESTEAD,
+    BYZANTIUM,
+    ISTANBUL,
+    BERLIN,
+    CANCUN,
+    LATEST,
 }
 
 impl SpecId {
@@ -105,9 +107,8 @@ impl SpecId {
             }
             BYZANTIUM | CONSTANTINOPLE | PETERSBURG => Self::BYZANTIUM,
             ISTANBUL | MUIR_GLACIER => Self::ISTANBUL,
-            BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | SHANGHAI | CANCUN => {
-                Self::BERLIN
-            }
+            BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | SHANGHAI => Self::BERLIN,
+            CANCUN => Self::CANCUN,
             LATEST => Self::LATEST,
         }
     }
@@ -191,6 +192,31 @@ impl Precompiles {
         })
     }
 
+    /// If `std` feature is not enabled KZG Point Evaluation precompile will not be included.
+    pub fn cancun() -> &'static Self {
+        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
+        INSTANCE.get_or_init(|| {
+            // Don't include KZG point evaluation precompile in no_std builds.
+            #[cfg(feature = "std")]
+            {
+                let mut precompiles = Box::new(Self::berlin().clone());
+                precompiles.fun.extend(
+                    [
+                        // EIP-4844: Shard Blob Transactions
+                        kzg_point_evaluation::POINT_EVALUATION,
+                    ]
+                    .into_iter()
+                    .map(From::from),
+                );
+                precompiles
+            }
+            #[cfg(not(feature = "std"))]
+            {
+                Box::new(Self::berlin().clone())
+            }
+        })
+    }
+
     pub fn latest() -> &'static Self {
         Self::berlin()
     }
@@ -201,19 +227,20 @@ impl Precompiles {
             SpecId::BYZANTIUM => Self::byzantium(),
             SpecId::ISTANBUL => Self::istanbul(),
             SpecId::BERLIN => Self::berlin(),
+            SpecId::CANCUN => Self::cancun(),
             SpecId::LATEST => Self::latest(),
         }
     }
 
-    pub fn addresses(&self) -> impl IntoIterator<Item = &B160> {
+    pub fn addresses(&self) -> impl IntoIterator<Item = &Address> {
         self.fun.keys()
     }
 
-    pub fn contains(&self, address: &B160) -> bool {
+    pub fn contains(&self, address: &Address) -> bool {
         self.fun.contains_key(address)
     }
 
-    pub fn get(&self, address: &B160) -> Option<Precompile> {
+    pub fn get(&self, address: &Address) -> Option<Precompile> {
         //return None;
         self.fun.get(address).cloned()
     }
@@ -227,13 +254,14 @@ impl Precompiles {
     }
 }
 
-/// const fn for making an address by concatenating the bytes from two given numbers,
+/// Const function for making an address by concatenating the bytes from two given numbers.
+///
 /// Note that 32 + 128 = 160 = 20 bytes (the length of an address). This function is used
 /// as a convenience for specifying the addresses of the various precompiles.
-const fn u64_to_b160(x: u64) -> B160 {
-    let x_bytes = x.to_be_bytes();
+#[inline]
+const fn u64_to_address(x: u64) -> Address {
+    let x = x.to_be_bytes();
     [
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x_bytes[0], x_bytes[1], x_bytes[2], x_bytes[3],
-        x_bytes[4], x_bytes[5], x_bytes[6], x_bytes[7],
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7],
     ]
 }

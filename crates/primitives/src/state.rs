@@ -1,4 +1,4 @@
-use crate::{Bytecode, B160, B256, KECCAK_EMPTY, U256};
+use crate::{Address, Bytecode, B256, KECCAK_EMPTY, U256};
 use bitflags::bitflags;
 use hashbrown::HashMap;
 
@@ -41,10 +41,11 @@ impl Default for AccountStatus {
     }
 }
 
-pub type State = HashMap<B160, Account>;
+pub type State = HashMap<Address, Account>;
 
 /// Structure used for EIP-1153 transient storage.
-pub type TransientStorage = HashMap<(B160, U256), U256>;
+pub type TransientStorage = HashMap<(Address, U256), U256>;
+
 pub type Storage = HashMap<U256, StorageSlot>;
 
 impl Account {
@@ -213,7 +214,7 @@ impl AccountInfo {
     }
 
     pub fn is_empty(&self) -> bool {
-        let code_empty = self.code_hash == KECCAK_EMPTY || self.code_hash == B256::zero();
+        let code_empty = self.code_hash == KECCAK_EMPTY || self.code_hash == B256::ZERO;
         self.balance == U256::ZERO && self.nonce == 0 && code_empty
     }
 

@@ -1,11 +1,11 @@
 use super::TransitionAccount;
 use alloc::vec::Vec;
-use revm_interpreter::primitives::{hash_map::Entry, HashMap, B160};
+use revm_interpreter::primitives::{hash_map::Entry, Address, HashMap};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct TransitionState {
     /// Block state account with account state
-    pub transitions: HashMap<B160, TransitionAccount>,
+    pub transitions: HashMap<Address, TransitionAccount>,
 }
 
 impl Default for TransitionState {
@@ -19,7 +19,7 @@ impl Default for TransitionState {
 
 impl TransitionState {
     /// Create new transition state with one transition.
-    pub fn single(address: B160, transition: TransitionAccount) -> Self {
+    pub fn single(address: Address, transition: TransitionAccount) -> Self {
         let mut transitions = HashMap::new();
         transitions.insert(address, transition);
         TransitionState { transitions }
@@ -30,7 +30,7 @@ impl TransitionState {
         core::mem::take(self)
     }
 
-    pub fn add_transitions(&mut self, transitions: Vec<(B160, TransitionAccount)>) {
+    pub fn add_transitions(&mut self, transitions: Vec<(Address, TransitionAccount)>) {
         for (address, account) in transitions {
             match self.transitions.entry(address) {
                 Entry::Occupied(entry) => {

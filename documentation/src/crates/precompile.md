@@ -13,7 +13,7 @@ Modules:
 
 Types and Constants:
 
-- `B160`: A type alias for an array of 20 bytes. This is typically used to represent Ethereum addresses.
+- `Address`: A type alias for an array of 20 bytes. This is typically used to represent Ethereum addresses.
 - `B256`: A type alias for an array of 32 bytes, typically used to represent 256-bit hashes or integer values in Ethereum.
 - `PrecompileOutput`: Represents the output of a precompiled contract execution, including the gas cost, output data, and any logs generated.
 - `Log`: Represents an Ethereum log, with an address, a list of topics, and associated data.

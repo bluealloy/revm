@@ -1,6 +1,6 @@
 use super::RevertToSlot;
 use alloc::vec::Vec;
-use revm_interpreter::primitives::{AccountInfo, Bytecode, B160, B256, U256};
+use revm_interpreter::primitives::{AccountInfo, Address, Bytecode, B256, U256};
 
 /// accounts/storages/contracts for inclusion into database.
 /// Structure is made so it is easier to apply directly to database
@@ -11,7 +11,7 @@ use revm_interpreter::primitives::{AccountInfo, Bytecode, B160, B256, U256};
 #[derive(Clone, Debug, Default)]
 pub struct StateChangeset {
     /// Vector of **not** sorted accounts information.
-    pub accounts: Vec<(B160, Option<AccountInfo>)>,
+    pub accounts: Vec<(Address, Option<AccountInfo>)>,
     /// Vector of **not** sorted storage.
     pub storage: Vec<PlainStorageChangeset>,
     /// Vector of contracts by bytecode hash. **not** sorted.
@@ -23,7 +23,7 @@ pub struct StateChangeset {
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct PlainStorageChangeset {
     /// Address of account
-    pub address: B160,
+    pub address: Address,
     /// Wipe storage,
     pub wipe_storage: bool,
     /// Storage key value pairs.
@@ -34,7 +34,7 @@ pub struct PlainStorageChangeset {
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct PlainStorageRevert {
     /// Address of account
-    pub address: B160,
+    pub address: Address,
     /// Is storage wiped in this revert. Wiped flag is set on
     /// first known selfdestruct and would require clearing the
     /// state of this storage from database (And moving it to revert).
@@ -52,7 +52,7 @@ pub struct PlainStateReverts {
     /// Vector of account with removed contracts bytecode
     ///
     /// Note: If AccountInfo is None means that account needs to be removed.
-    pub accounts: Vec<Vec<(B160, Option<AccountInfo>)>>,
+    pub accounts: Vec<Vec<(Address, Option<AccountInfo>)>>,
     /// Vector of storage with its address.
     pub storage: Vec<Vec<PlainStorageRevert>>,
 }
@@ -68,4 +68,4 @@ impl PlainStateReverts {
 }
 
 /// Storage reverts
-pub type StorageRevert = Vec<Vec<(B160, bool, Vec<(U256, RevertToSlot)>)>>;
+pub type StorageRevert = Vec<Vec<(Address, bool, Vec<(U256, RevertToSlot)>)>>;
