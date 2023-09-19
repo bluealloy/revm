@@ -22,8 +22,6 @@ pub use alloy_primitives::{
 
 pub use bitvec;
 pub use bytecode::*;
-pub use bytes;
-pub use bytes::Bytes;
 pub use constants::*;
 pub use env::*;
 pub use hashbrown::{hash_map, hash_set, HashMap, HashSet};
