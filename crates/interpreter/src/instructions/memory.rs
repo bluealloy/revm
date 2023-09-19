@@ -5,7 +5,7 @@ use crate::{
 };
 use core::cmp::max;
 
-pub(super) fn mload(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn mload(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::VERYLOW);
     pop!(interpreter, index);
     let index = as_usize_or_fail!(interpreter, index);
@@ -16,7 +16,7 @@ pub(super) fn mload(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     );
 }
 
-pub(super) fn mstore(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn mstore(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::VERYLOW);
     pop!(interpreter, index, value);
     let index = as_usize_or_fail!(interpreter, index);
@@ -24,7 +24,7 @@ pub(super) fn mstore(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     interpreter.memory.set_u256(index, value);
 }
 
-pub(super) fn mstore8(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn mstore8(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::VERYLOW);
     pop!(interpreter, index, value);
     let index = as_usize_or_fail!(interpreter, index);
@@ -32,13 +32,13 @@ pub(super) fn mstore8(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     interpreter.memory.set_byte(index, value.byte(0))
 }
 
-pub(super) fn msize(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn msize(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::BASE);
     push!(interpreter, U256::from(interpreter.memory.len()));
 }
 
 // EIP-5656: MCOPY - Memory copying instruction
-pub(super) fn mcopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn mcopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     check!(interpreter, CANCUN);
     pop!(interpreter, dst, src, len);
 

@@ -4,29 +4,29 @@ use crate::{
     Host, InstructionResult, Interpreter,
 };
 
-// EIP-1344: ChainID opcode
-pub(super) fn chainid<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+/// EIP-1344: ChainID opcode
+pub fn chainid<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     check!(interpreter, ISTANBUL);
     gas!(interpreter, gas::BASE);
     push!(interpreter, U256::from(host.env().cfg.chain_id));
 }
 
-pub(super) fn coinbase(interpreter: &mut Interpreter, host: &mut dyn Host) {
+pub fn coinbase(interpreter: &mut Interpreter, host: &mut dyn Host) {
     gas!(interpreter, gas::BASE);
     push_b256!(interpreter, host.env().block.coinbase.into());
 }
 
-pub(super) fn timestamp(interpreter: &mut Interpreter, host: &mut dyn Host) {
+pub fn timestamp(interpreter: &mut Interpreter, host: &mut dyn Host) {
     gas!(interpreter, gas::BASE);
     push!(interpreter, host.env().block.timestamp);
 }
 
-pub(super) fn number(interpreter: &mut Interpreter, host: &mut dyn Host) {
+pub fn number(interpreter: &mut Interpreter, host: &mut dyn Host) {
     gas!(interpreter, gas::BASE);
     push!(interpreter, host.env().block.number);
 }
 
-pub(super) fn difficulty<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+pub fn difficulty<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     gas!(interpreter, gas::BASE);
     if SPEC::enabled(MERGE) {
         push_b256!(interpreter, host.env().block.prevrandao.unwrap());
@@ -35,24 +35,24 @@ pub(super) fn difficulty<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut d
     }
 }
 
-pub(super) fn gaslimit(interpreter: &mut Interpreter, host: &mut dyn Host) {
+pub fn gaslimit(interpreter: &mut Interpreter, host: &mut dyn Host) {
     gas!(interpreter, gas::BASE);
     push!(interpreter, host.env().block.gas_limit);
 }
 
-pub(super) fn gasprice(interpreter: &mut Interpreter, host: &mut dyn Host) {
+pub fn gasprice(interpreter: &mut Interpreter, host: &mut dyn Host) {
     gas!(interpreter, gas::BASE);
     push!(interpreter, host.env().effective_gas_price());
 }
 
-// EIP-3198: BASEFEE opcode
-pub(super) fn basefee<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+/// EIP-3198: BASEFEE opcode
+pub fn basefee<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     check!(interpreter, LONDON);
     gas!(interpreter, gas::BASE);
     push!(interpreter, host.env().block.basefee);
 }
 
-pub(super) fn origin(interpreter: &mut Interpreter, host: &mut dyn Host) {
+pub fn origin(interpreter: &mut Interpreter, host: &mut dyn Host) {
     gas!(interpreter, gas::BASE);
     push_b256!(interpreter, host.env().tx.caller.into());
 }

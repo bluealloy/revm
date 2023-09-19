@@ -8,6 +8,8 @@ use crate::{
 };
 use core::fmt;
 
+type Instruction = fn(&mut Interpreter, &mut dyn Host);
+
 macro_rules! opcodes {
     ($($val:literal => $name:ident => $f:expr),* $(,)?) => {
         // Constants for each opcode. This also takes care of duplicate names.
@@ -29,8 +31,6 @@ macro_rules! opcodes {
             let _ = prev;
             map
         };
-
-        type Instruction = fn(&mut Interpreter, &mut dyn Host);
 
         // Requires `inline_const` and `const_mut_refs` unstable features,
         // but provides ~+2% extra performance.
@@ -88,7 +88,10 @@ opcodes! {
     0x09 => MULMOD     => arithmetic::mulmod,
     0x0A => EXP        => arithmetic::exp::<SPEC>,
     0x0B => SIGNEXTEND => arithmetic::signextend,
-
+    // 0x0C
+    // 0x0D
+    // 0x0E
+    // 0x0F
     0x10 => LT     => bitwise::lt,
     0x11 => GT     => bitwise::gt,
     0x12 => SLT    => bitwise::slt,
@@ -103,15 +106,29 @@ opcodes! {
     0x1B => SHL    => bitwise::shl::<SPEC>,
     0x1C => SHR    => bitwise::shr::<SPEC>,
     0x1D => SAR    => bitwise::sar::<SPEC>,
-
+    // 0x1E
+    // 0x1F
     0x20 => KECCAK256 => system::keccak256,
-
+    // 0x21
+    // 0x22
+    // 0x23
+    // 0x24
+    // 0x25
+    // 0x26
+    // 0x27
+    // 0x28
+    // 0x29
+    // 0x2A
+    // 0x2B
+    // 0x2C
+    // 0x2D
+    // 0x2E
+    // 0x2F
     0x30 => ADDRESS   => system::address,
     0x31 => BALANCE   => host::balance::<SPEC>,
     0x32 => ORIGIN    => host_env::origin,
     0x33 => CALLER    => system::caller,
     0x34 => CALLVALUE => system::callvalue,
-
     0x35 => CALLDATALOAD => system::calldataload,
     0x36 => CALLDATASIZE => system::calldatasize,
     0x37 => CALLDATACOPY => system::calldatacopy,
@@ -134,7 +151,12 @@ opcodes! {
     0x47 => SELFBALANCE    => host::selfbalance::<SPEC>,
     0x48 => BASEFEE        => host_env::basefee::<SPEC>,
     0x49 => BLOBHASH       => host_env::blob_hash::<SPEC>,
-
+    // 0x4A
+    // 0x4B
+    // 0x4C
+    // 0x4D
+    // 0x4E
+    // 0x4F
     0x50 => POP      => stack::pop,
     0x51 => MLOAD    => memory::mload,
     0x52 => MSTORE   => memory::mstore,
@@ -224,14 +246,94 @@ opcodes! {
     0xA2 => LOG2 => host::log::<2>,
     0xA3 => LOG3 => host::log::<3>,
     0xA4 => LOG4 => host::log::<4>,
-
+    // 0xA5
+    // 0xA6
+    // 0xA7
+    // 0xA8
+    // 0xA9
+    // 0xAA
+    // 0xAB
+    // 0xAC
+    // 0xAD
+    // 0xAE
+    // 0xAF
+    // 0xB0
+    // 0xB1
+    // 0xB2
+    // 0xB3
+    // 0xB4
+    // 0xB5
+    // 0xB6
+    // 0xB7
+    // 0xB8
+    // 0xB9
+    // 0xBA
+    // 0xBB
+    // 0xBC
+    // 0xBD
+    // 0xBE
+    // 0xBF
+    // 0xC0
+    // 0xC1
+    // 0xC2
+    // 0xC3
+    // 0xC4
+    // 0xC5
+    // 0xC6
+    // 0xC7
+    // 0xC8
+    // 0xC9
+    // 0xCA
+    // 0xCB
+    // 0xCC
+    // 0xCD
+    // 0xCE
+    // 0xCF
+    // 0xD0
+    // 0xD1
+    // 0xD2
+    // 0xD3
+    // 0xD4
+    // 0xD5
+    // 0xD6
+    // 0xD7
+    // 0xD8
+    // 0xD9
+    // 0xDA
+    // 0xDB
+    // 0xDC
+    // 0xDD
+    // 0xDE
+    // 0xDF
+    // 0xE0
+    // 0xE1
+    // 0xE2
+    // 0xE3
+    // 0xE4
+    // 0xE5
+    // 0xE6
+    // 0xE7
+    // 0xE8
+    // 0xE9
+    // 0xEA
+    // 0xEB
+    // 0xEC
+    // 0xED
+    // 0xEE
+    // 0xEF
     0xF0 => CREATE       => host::create::<false, SPEC>,
     0xF1 => CALL         => host::call::<SPEC>,
     0xF2 => CALLCODE     => host::call_code::<SPEC>,
     0xF3 => RETURN       => control::ret,
     0xF4 => DELEGATECALL => host::delegate_call::<SPEC>,
     0xF5 => CREATE2      => host::create::<true, SPEC>,
+    // 0xF6
+    // 0xF7
+    // 0xF8
+    // 0xF9
     0xFA => STATICCALL   => host::static_call::<SPEC>,
+    // 0xFB
+    // 0xF
     0xFD => REVERT       => control::revert::<SPEC>,
     0xFE => INVALID      => control::invalid,
     0xFF => SELFDESTRUCT => host::selfdestruct::<SPEC>,

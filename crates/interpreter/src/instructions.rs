@@ -1,15 +1,15 @@
 #[macro_use]
-mod macros;
+pub mod macros;
 
-mod arithmetic;
-mod bitwise;
-mod control;
-mod host;
-mod host_env;
-mod i256;
-mod memory;
+pub mod arithmetic;
+pub mod bitwise;
+pub mod control;
+pub mod host;
+pub mod host_env;
+pub mod i256;
+pub mod memory;
 pub mod opcode;
-mod stack;
-mod system;
+pub mod stack;
+pub mod system;
 
 pub use opcode::{OpCode, OPCODE_JUMPMAP};

@@ -1,15 +1,15 @@
 pub mod analysis;
 mod contract;
-pub(crate) mod memory;
+pub mod memory;
 mod stack;
+
+use crate::primitives::{Bytes, Spec};
+use crate::{alloc::boxed::Box, opcode::eval, Gas, Host, InstructionResult};
 
 pub use analysis::BytecodeLocked;
 pub use contract::Contract;
 pub use memory::Memory;
 pub use stack::{Stack, STACK_LIMIT};
-
-use crate::primitives::{Bytes, Spec};
-use crate::{alloc::boxed::Box, opcode::eval, Gas, Host, InstructionResult};
 
 pub const CALL_STACK_LIMIT: u64 = 1024;
 
@@ -183,7 +183,7 @@ impl Interpreter {
         if self.return_len == 0 {
             Bytes::new()
         } else {
-            Bytes::copy_from_slice(self.memory.slice(self.return_offset, self.return_len))
+            Bytes::copy_from_slice(self.return_value_slice())
         }
     }
 

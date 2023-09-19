@@ -5,7 +5,7 @@ use crate::{
 use alloc::vec::Vec;
 use core::fmt;
 
-/// The EVM stack limit, in number of words.
+/// The EVM stack limit, in number of items.
 pub const STACK_LIMIT: usize = 1024;
 
 /// EVM stack.
@@ -40,7 +40,7 @@ impl Stack {
     #[inline]
     pub fn new() -> Self {
         Self {
-            // Safety: A lot of functions assume that capacity is STACK_LIMIT
+            // Safety: [`Self::push`] assumes that capacity is STACK_LIMIT
             data: Vec::with_capacity(STACK_LIMIT),
         }
     }
@@ -61,13 +61,6 @@ impl Stack {
     #[inline]
     pub fn data(&self) -> &Vec<U256> {
         &self.data
-    }
-
-    /// Remove the topmost value from the stack. If the stack is empty, returns a `StackUnderflow`
-    /// error.
-    #[inline]
-    pub fn reduce_one(&mut self) -> Result<(), InstructionResult> {
-        self.pop().map(drop)
     }
 
     /// Removes the topmost element from the stack and returns it, or `StackUnderflow` if it is
@@ -110,22 +103,6 @@ impl Stack {
         (pop, top)
     }
 
-    /// Pops 2 values from the stack and returns them, in addition to the new topmost value.
-    ///
-    /// # Safety
-    ///
-    /// The caller is responsible for checking the length of the stack.
-    #[inline(always)]
-    pub unsafe fn pop2_top_unsafe(&mut self) -> (U256, U256, &mut U256) {
-        let mut len = self.data.len();
-        let pop1 = *self.data.get_unchecked(len - 1);
-        len -= 2;
-        let pop2 = *self.data.get_unchecked(len);
-        self.data.set_len(len);
-
-        (pop1, pop2, self.data.get_unchecked_mut(len - 1))
-    }
-
     /// Pops 2 values from the stack.
     ///
     /// # Safety
@@ -133,13 +110,23 @@ impl Stack {
     /// The caller is responsible for checking the length of the stack.
     #[inline(always)]
     pub unsafe fn pop2_unsafe(&mut self) -> (U256, U256) {
-        let mut len = self.data.len();
-        len -= 2;
-        self.data.set_len(len);
-        (
-            *self.data.get_unchecked(len + 1),
-            *self.data.get_unchecked(len),
-        )
+        let pop1 = self.pop_unsafe();
+        let pop2 = self.pop_unsafe();
+        (pop1, pop2)
+    }
+
+    /// Pops 2 values from the stack and returns them, in addition to the new topmost value.
+    ///
+    /// # Safety
+    ///
+    /// The caller is responsible for checking the length of the stack.
+    #[inline(always)]
+    pub unsafe fn pop2_top_unsafe(&mut self) -> (U256, U256, &mut U256) {
+        let pop1 = self.pop_unsafe();
+        let pop2 = self.pop_unsafe();
+        let top = self.top_unsafe();
+
+        (pop1, pop2, top)
     }
 
     /// Pops 3 values from the stack.
@@ -149,14 +136,11 @@ impl Stack {
     /// The caller is responsible for checking the length of the stack.
     #[inline(always)]
     pub unsafe fn pop3_unsafe(&mut self) -> (U256, U256, U256) {
-        let mut len = self.data.len();
-        len -= 3;
-        self.data.set_len(len);
-        (
-            *self.data.get_unchecked(len + 2),
-            *self.data.get_unchecked(len + 1),
-            *self.data.get_unchecked(len),
-        )
+        let pop1 = self.pop_unsafe();
+        let pop2 = self.pop_unsafe();
+        let pop3 = self.pop_unsafe();
+
+        (pop1, pop2, pop3)
     }
 
     /// Pops 4 values from the stack.
@@ -166,15 +150,12 @@ impl Stack {
     /// The caller is responsible for checking the length of the stack.
     #[inline(always)]
     pub unsafe fn pop4_unsafe(&mut self) -> (U256, U256, U256, U256) {
-        let mut len = self.data.len();
-        len -= 4;
-        self.data.set_len(len);
-        (
-            *self.data.get_unchecked(len + 3),
-            *self.data.get_unchecked(len + 2),
-            *self.data.get_unchecked(len + 1),
-            *self.data.get_unchecked(len),
-        )
+        let pop1 = self.pop_unsafe();
+        let pop2 = self.pop_unsafe();
+        let pop3 = self.pop_unsafe();
+        let pop4 = self.pop_unsafe();
+
+        (pop1, pop2, pop3, pop4)
     }
 
     /// Push a new value into the stack. If it will exceed the stack limit,
