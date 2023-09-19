@@ -41,7 +41,7 @@ pub fn calc_excess_blob_gas(parent_excess_blob_gas: u64, parent_blob_gas_used: u
     (parent_excess_blob_gas + parent_blob_gas_used).saturating_sub(TARGET_BLOB_GAS_PER_BLOCK)
 }
 
-/// Calculates the blobfee from the header's excess blob gas field.
+/// Calculates the blobbasefee from the header's excess blob gas field.
 ///
 /// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers).
 #[inline]

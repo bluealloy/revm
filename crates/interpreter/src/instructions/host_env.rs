@@ -53,7 +53,7 @@ pub fn basefee<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     push!(interpreter, host.env().block.basefee);
 }
 
-pub fn blobfee<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+pub fn blobbasefee<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     // EIP-7516: BLOBBASEFEE opcode
     check!(interpreter, SPEC::enabled(CANCUN));
     gas!(interpreter, gas::BASE);

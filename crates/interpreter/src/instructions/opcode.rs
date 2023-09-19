@@ -141,7 +141,7 @@ pub const DIFFICULTY: u8 = 0x44;
 pub const GASLIMIT: u8 = 0x45;
 pub const SELFBALANCE: u8 = 0x47;
 pub const BLOBHASH: u8 = 0x49;
-pub const BLOBFEE: u8 = 0x4a;
+pub const BLOBBASEFEE: u8 = 0x4a;
 pub const SLOAD: u8 = 0x54;
 pub const SSTORE: u8 = 0x55;
 pub const GAS: u8 = 0x5a;
@@ -265,7 +265,7 @@ pub const OPCODE_JUMPMAP: [Option<&'static str>; 256] = [
     /* 0x47 */ Some("SELFBALANCE"),
     /* 0x48 */ Some("BASEFEE"),
     /* 0x49 */ Some("BLOBHASH"),
-    /* 0x4a */ Some("BLOBFEE"),
+    /* 0x4a */ Some("BLOBBASEFEE"),
     /* 0x4b */ None,
     /* 0x4c */ None,
     /* 0x4d */ None,
@@ -650,7 +650,7 @@ macro_rules! gas_opcodee {
             } else {
                 0
             }),
-            /* 0x4a BLOBFEE */
+            /* 0x4a BLOBBASEFEE */
             OpInfo::gas(if SpecId::enabled($spec_id, SpecId::CANCUN) {
                 gas::BASE
             } else {
