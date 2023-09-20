@@ -179,6 +179,7 @@ pub enum InvalidTransaction {
     },
     /// EIP-3860: Limit and meter initcode
     CreateInitcodeSizeLimit,
+    /// Transaction chain id does not match the config chain id.
     InvalidChainId,
     /// Access list is not supported for blocks before the Berlin hardfork.
     AccessListNotSupported,
@@ -188,6 +189,15 @@ pub enum InvalidTransaction {
     BlobVersionedHashesNotSupported,
     /// Block `blob_gas_price` is greater than tx-specified `max_fee_per_blob_gas` after Cancun.
     BlobGasPriceGreaterThanMax,
+    /// There should be at least one blob in Blob transaction.
+    EmptyBlobs,
+    /// Blob transaction can't be a create transaction.
+    /// `to` must be present
+    BlobCreateTransaction,
+    /// Transaction has more then [`crate::MAX_BLOB_NUMBER_PER_BLOCK`] blobs
+    TooManyBlobs,
+    /// Blob transaction contains a versioned hash with an incorrect version
+    BlobVersionNotSupported,
 }
 
 /// Reason a transaction successfully completed.

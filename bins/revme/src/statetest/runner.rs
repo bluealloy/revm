@@ -100,12 +100,6 @@ fn skip_test(path: &Path) -> bool {
         | "loopMul.json"
         | "CALLBlake2f_MaxRounds.json"
         | "shiftCombinations.json"
-
-        // TODO: These EIP-4844 all have exception specified.
-        | "emptyBlobhashList.json" // '>=Cancun': TR_EMPTYBLOB
-        | "wrongBlobhashVersion.json"  // '>=Cancun': TR_BLOBVERSION_INVALID
-        | "createBlobhashTx.json" // '>=Cancun': TR_BLOBCREATE
-        | "blobhashListBounds7.json" // ">=Cancun": "TR_BLOBLIST_OVERSIZE"
     ) || path_str.contains("stEOF")
 }
 

@@ -1,6 +1,7 @@
 use crate::{
     alloc::vec::Vec, calc_blob_fee, Account, EVMError, InvalidTransaction, Spec, SpecId, B160,
-    B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_INITCODE_SIZE, U256,
+    B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK, MAX_INITCODE_SIZE, U256,
+    VERSIONED_HASH_VERSION_KZG,
 };
 use bytes::Bytes;
 use core::cmp::{min, Ordering};
@@ -107,7 +108,8 @@ pub struct TxEnv {
     /// [EIP-1559]: https://eips.ethereum.org/EIPS/eip-1559
     pub gas_priority_fee: Option<U256>,
 
-    /// The list of blob versioned hashes.
+    /// The list of blob versioned hashes. Per EIP there should be at least
+    /// one blob present if [`Self::max_fee_per_blob_gas`] is `Some`.
     ///
     /// Incorporated as part of the Cancun upgrade via [EIP-4844].
     ///
@@ -458,10 +460,39 @@ impl Env {
         // - For CANCUN and later, check that the gas price is not more than the tx max
         // - For before CANCUN, check that `blob_hashes` and `max_fee_per_blob_gas` are empty / not set
         if SPEC::enabled(SpecId::CANCUN) {
+            // Presence of max_fee_per_blob_gas means that this is blob transaction.
             if let Some(max) = self.tx.max_fee_per_blob_gas {
+                // ensure that the user was willing to at least pay the current blob gasprice
                 let price = self.block.get_blob_gasprice().expect("already checked");
                 if U256::from(price) > max {
                     return Err(InvalidTransaction::BlobGasPriceGreaterThanMax);
+                }
+
+                // there must be at least one blob
+                // assert len(tx.blob_versioned_hashes) > 0
+                if self.tx.blob_hashes.is_empty() {
+                    return Err(InvalidTransaction::EmptyBlobs);
+                }
+
+                // The field `to` deviates slightly from the semantics with the exception
+                // that it MUST NOT be nil and therefore must always represent
+                // a 20-byte address. This means that blob transactions cannot
+                // have the form of a create transaction.
+                if self.tx.transact_to.is_create() {
+                    return Err(InvalidTransaction::BlobCreateTransaction);
+                }
+
+                // all versioned blob hashes must start with VERSIONED_HASH_VERSION_KZG
+                for blob in self.tx.blob_hashes.iter() {
+                    if blob[0] != VERSIONED_HASH_VERSION_KZG {
+                        return Err(InvalidTransaction::BlobVersionNotSupported);
+                    }
+                }
+
+                // ensure the total blob gas spent is at most equal to the limit
+                // assert blob_gas_used <= MAX_BLOB_GAS_PER_BLOCK
+                if self.tx.blob_hashes.len() > MAX_BLOB_NUMBER_PER_BLOCK as usize {
+                    return Err(InvalidTransaction::TooManyBlobs);
                 }
             }
         } else {
