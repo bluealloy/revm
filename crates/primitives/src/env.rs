@@ -485,7 +485,7 @@ impl Env {
                 // all versioned blob hashes must start with VERSIONED_HASH_VERSION_KZG
                 for blob in self.tx.blob_hashes.iter() {
                     if blob[0] != VERSIONED_HASH_VERSION_KZG {
-                        return Err(InvalidTransaction::BlobVersionedHashesNotSupported);
+                        return Err(InvalidTransaction::BlobVersionNotSupported);
                     }
                 }
 

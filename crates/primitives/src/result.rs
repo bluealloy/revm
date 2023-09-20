@@ -196,6 +196,8 @@ pub enum InvalidTransaction {
     BlobCreateTransaction,
     /// Transaction has more then [`crate::MAX_BLOB_NUMBER_PER_BLOCK`] blobs
     TooManyBlobs,
+    /// Blob transaction contains a versioned hash with an incorrect version
+    BlobVersionNotSupported,
 }
 
 /// Reason a transaction successfully completed.
