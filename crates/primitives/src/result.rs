@@ -214,6 +214,7 @@ impl<DBError> From<InvalidHeader> for EVMError<DBError> {
     }
 }
 
+/// Errors related to misconfiguration of the  `BlockEnv`
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InvalidHeader {
