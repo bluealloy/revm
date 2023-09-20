@@ -1,13 +1,10 @@
 use crate::opcode;
-use crate::primitives::{Bytecode, BytecodeState, Bytes};
-use alloc::sync::Arc;
-// use bitvec::order::Lsb0;
-// use bitvec::prelude::bitvec;
-// use bitvec::vec::BitVec;
-use revm_primitives::{
+use crate::primitives::{
     bitvec::prelude::{bitvec, BitVec, Lsb0},
-    JumpMap,
+    keccak256, Bytecode, BytecodeState, Bytes, JumpMap, B256, KECCAK_EMPTY,
 };
+use alloc::sync::Arc;
+use core::fmt;
 
 /// Perform bytecode analysis.
 ///
@@ -68,7 +65,21 @@ pub struct BytecodeLocked {
     jump_map: JumpMap,
 }
 
+impl fmt::Debug for BytecodeLocked {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("BytecodeLocked")
+            .field("bytecode", &self.bytecode)
+            .field("len", &self.len)
+            .field(
+                "jump_map",
+                &crate::primitives::hex::encode(self.jump_map.as_slice()),
+            )
+            .finish()
+    }
+}
+
 impl Default for BytecodeLocked {
+    #[inline]
     fn default() -> Self {
         Bytecode::default()
             .try_into()
@@ -79,6 +90,7 @@ impl Default for BytecodeLocked {
 impl TryFrom<Bytecode> for BytecodeLocked {
     type Error = ();
 
+    #[inline]
     fn try_from(bytecode: Bytecode) -> Result<Self, Self::Error> {
         if let BytecodeState::Analysed { len, jump_map } = bytecode.state {
             Ok(BytecodeLocked {
@@ -93,17 +105,35 @@ impl TryFrom<Bytecode> for BytecodeLocked {
 }
 
 impl BytecodeLocked {
+    /// Returns a raw pointer to the underlying byte slice.
+    #[inline]
     pub fn as_ptr(&self) -> *const u8 {
         self.bytecode.as_ptr()
     }
+
+    /// Returns the length of the bytecode.
+    #[inline]
     pub fn len(&self) -> usize {
         self.len
     }
 
+    /// Returns whether the bytecode is empty.
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.len == 0
     }
 
+    /// Calculate hash of the bytecode.
+    #[inline]
+    pub fn hash_slow(&self) -> B256 {
+        if self.is_empty() {
+            KECCAK_EMPTY
+        } else {
+            keccak256(self.original_bytecode_slice())
+        }
+    }
+
+    #[inline]
     pub fn unlock(self) -> Bytecode {
         Bytecode {
             bytecode: self.bytecode,
@@ -113,14 +143,28 @@ impl BytecodeLocked {
             },
         }
     }
+
+    /// Returns the bytecode as a byte slice.
+    #[inline]
     pub fn bytecode(&self) -> &[u8] {
-        self.bytecode.as_ref()
+        &self.bytecode
     }
 
+    /// Returns the original bytecode as a byte slice.
+    #[inline]
     pub fn original_bytecode_slice(&self) -> &[u8] {
-        &self.bytecode.as_ref()[..self.len]
+        match self.bytecode.get(..self.len) {
+            Some(slice) => slice,
+            None => debug_unreachable!(
+                "original_bytecode_slice OOB: {} > {}",
+                self.len,
+                self.bytecode.len()
+            ),
+        }
     }
 
+    /// Returns a reference to the jump map.
+    #[inline]
     pub fn jump_map(&self) -> &JumpMap {
         &self.jump_map
     }

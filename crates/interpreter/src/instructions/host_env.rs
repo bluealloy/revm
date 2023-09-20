@@ -1,13 +1,12 @@
 use crate::{
     gas,
-    interpreter::Interpreter,
     primitives::{Spec, SpecId::*, U256},
-    Host, InstructionResult,
+    Host, InstructionResult, Interpreter,
 };
 
+/// EIP-1344: ChainID opcode
 pub fn chainid<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
-    // EIP-1344: ChainID opcode
-    check!(interpreter, SPEC::enabled(ISTANBUL));
+    check!(interpreter, ISTANBUL);
     gas!(interpreter, gas::BASE);
     push!(interpreter, U256::from(host.env().cfg.chain_id));
 }
@@ -27,7 +26,7 @@ pub fn number(interpreter: &mut Interpreter, host: &mut dyn Host) {
     push!(interpreter, host.env().block.number);
 }
 
-pub fn difficulty<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn difficulty<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     gas!(interpreter, gas::BASE);
     if SPEC::enabled(MERGE) {
         push_b256!(interpreter, host.env().block.prevrandao.unwrap());
@@ -46,10 +45,10 @@ pub fn gasprice(interpreter: &mut Interpreter, host: &mut dyn Host) {
     push!(interpreter, host.env().effective_gas_price());
 }
 
+/// EIP-3198: BASEFEE opcode
 pub fn basefee<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+    check!(interpreter, LONDON);
     gas!(interpreter, gas::BASE);
-    // EIP-3198: BASEFEE opcode
-    check!(interpreter, SPEC::enabled(LONDON));
     push!(interpreter, host.env().block.basefee);
 }
 
@@ -60,7 +59,7 @@ pub fn origin(interpreter: &mut Interpreter, host: &mut dyn Host) {
 
 // EIP-4844: Shard Blob Transactions
 pub fn blob_hash<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
-    check!(interpreter, SPEC::enabled(CANCUN));
+    check!(interpreter, CANCUN);
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, index);
     let i = as_usize_saturated!(index);
