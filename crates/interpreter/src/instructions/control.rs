@@ -44,8 +44,8 @@ pub fn pc(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     push!(interpreter, U256::from(interpreter.program_counter() - 1));
 }
 
-#[inline]
-pub fn ret(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+#[inline(always)]
+fn return_inner(interpreter: &mut Interpreter, result: InstructionResult) {
     // zero gas cost
     // gas!(interpreter, gas::ZERO);
     pop!(interpreter, offset, len);
@@ -57,16 +57,17 @@ pub fn ret(interpreter: &mut Interpreter, _host: &mut dyn Host) {
         interpreter.return_offset = offset;
     }
     interpreter.return_len = len;
-    interpreter.instruction_result = InstructionResult::Return;
+    interpreter.instruction_result = result;
+}
+
+pub fn ret(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+    return_inner(interpreter, InstructionResult::Return)
 }
 
 /// EIP-140: REVERT instruction
 pub fn revert<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    // zero gas cost
-    // gas!(interpreter, gas::ZERO);
     check!(interpreter, BYZANTIUM);
-    ret(interpreter, _host);
-    interpreter.instruction_result = InstructionResult::Revert;
+    return_inner(interpreter, InstructionResult::Revert)
 }
 
 pub fn stop(interpreter: &mut Interpreter, _host: &mut dyn Host) {
