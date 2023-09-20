@@ -58,7 +58,7 @@ pub fn blob_basefee<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Ho
     gas!(interpreter, gas::BASE);
     push!(
         interpreter,
-        U256::from(host.env().block.get_blob_fee().unwrap_or_default())
+        U256::from(host.env().block.get_blob_gasprice().unwrap_or_default())
     );
 }
 
