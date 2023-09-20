@@ -25,37 +25,27 @@ pub const MAX_INITCODE_SIZE: usize = 2 * MAX_CODE_SIZE;
 pub struct Interpreter {
     /// Contract information and invoking data.
     pub contract: Box<Contract>,
-
     /// The current instruction pointer.
     pub instruction_pointer: *const u8,
-
     /// The execution control flag. If this is not set to `Continue`, the interpreter will stop
     /// execution.
     pub instruction_result: InstructionResult,
-
     /// The gas state.
     pub gas: Gas,
-
     /// The memory.
     pub memory: Memory,
-
     /// The stack.
     pub stack: Stack,
-
     /// The return data buffer for internal calls.
     pub return_data_buffer: Bytes,
-
     /// The offset into `self.memory` of the return data.
     ///
     /// This value must be ignored if `self.return_len` is 0.
     pub return_offset: usize,
-
     /// The length of the return data.
     pub return_len: usize,
-
     /// Whether the interpreter is in "staticcall" mode, meaning no state changes can happen.
     pub is_static: bool,
-
     /// Memory limit. See [`crate::CfgEnv`].
     #[cfg(feature = "memory_limit")]
     pub memory_limit: u64,
@@ -180,11 +170,7 @@ impl Interpreter {
     /// Returns a copy of the interpreter's return value, if any.
     #[inline]
     pub fn return_value(&self) -> Bytes {
-        if self.return_len == 0 {
-            Bytes::new()
-        } else {
-            Bytes::copy_from_slice(self.return_value_slice())
-        }
+        self.return_value_slice().to_vec().into()
     }
 
     /// Returns a reference to the interpreter's return value, if any.

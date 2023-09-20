@@ -8,7 +8,7 @@ use crate::{
 };
 use core::fmt;
 
-type Instruction = fn(&mut Interpreter, &mut dyn Host);
+pub type Instruction = fn(&mut Interpreter, &mut dyn Host);
 
 macro_rules! opcodes {
     ($($val:literal => $name:ident => $f:expr),* $(,)?) => {

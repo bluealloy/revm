@@ -19,7 +19,7 @@ pub use gas::Gas;
 pub use host::{DummyHost, Host};
 pub use inner_models::*;
 pub use instruction_result::InstructionResult;
-pub use instructions::{opcode, OpCode, OPCODE_JUMPMAP};
+pub use instructions::{opcode, Instruction, OpCode, OPCODE_JUMPMAP};
 pub use interpreter::{
     analysis, BytecodeLocked, Contract, Interpreter, Memory, Stack, CALL_STACK_LIMIT,
     MAX_CODE_SIZE, MAX_INITCODE_SIZE,

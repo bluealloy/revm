@@ -12,4 +12,4 @@ pub mod opcode;
 pub mod stack;
 pub mod system;
 
-pub use opcode::{OpCode, OPCODE_JUMPMAP};
+pub use opcode::{Instruction, OpCode, OPCODE_JUMPMAP};
