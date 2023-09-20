@@ -417,7 +417,7 @@ impl Env {
             if let Some(priority_fee) = self.tx.gas_priority_fee {
                 if priority_fee > self.tx.gas_price {
                     // or gas_max_fee for eip1559
-                    return Err(InvalidTransaction::GasMaxFeeGreaterThanPriorityFee);
+                    return Err(InvalidTransaction::PriorityFeeGreaterThanMaxFee);
                 }
             }
             let basefee = self.block.basefee;
