@@ -106,7 +106,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             &env.tx.access_list,
         );
 
-        // Additonal check to see if limit is big enought to cover initial gas.
+        // Additional check to see if limit is big enough to cover initial gas.
         if initial_gas_spend > env.tx.gas_limit {
             return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
         }
