@@ -1,4 +1,4 @@
-use crate::primitives::{specification, EVMError, EVMResult, Env, ExecutionResult, SpecId};
+use crate::primitives::{specification, EVMError, EVMResult, Env, ExecutionResult};
 use crate::{
     db::{Database, DatabaseCommit, DatabaseRef},
     evm_impl::{EVMImpl, Transact},
@@ -198,29 +198,6 @@ impl<DB> EVM<DB> {
     }
 }
 
-pub fn to_precompile_id(spec_id: SpecId) -> revm_precompile::SpecId {
-    match spec_id {
-        SpecId::FRONTIER
-        | SpecId::FRONTIER_THAWING
-        | SpecId::HOMESTEAD
-        | SpecId::DAO_FORK
-        | SpecId::TANGERINE
-        | SpecId::SPURIOUS_DRAGON => revm_precompile::SpecId::HOMESTEAD,
-        SpecId::BYZANTIUM | SpecId::CONSTANTINOPLE | SpecId::PETERSBURG => {
-            revm_precompile::SpecId::BYZANTIUM
-        }
-        SpecId::ISTANBUL | SpecId::MUIR_GLACIER => revm_precompile::SpecId::ISTANBUL,
-        SpecId::BERLIN
-        | SpecId::LONDON
-        | SpecId::ARROW_GLACIER
-        | SpecId::GRAY_GLACIER
-        | SpecId::MERGE
-        | SpecId::SHANGHAI
-        | SpecId::CANCUN
-        | SpecId::LATEST => revm_precompile::SpecId::BERLIN,
-    }
-}
-
 pub fn evm_inner<'a, DB: Database, const INSPECT: bool>(
     env: &'a mut Env,
     db: &'a mut DB,
@@ -232,7 +209,7 @@ pub fn evm_inner<'a, DB: Database, const INSPECT: bool>(
                 db,
                 env,
                 insp,
-                Precompiles::new(to_precompile_id($spec::SPEC_ID)).clone(),
+                Precompiles::new(revm_precompile::SpecId::from_spec_id($spec::SPEC_ID)).clone(),
             )) as Box<dyn Transact<DB::Error> + 'a>
         };
     }

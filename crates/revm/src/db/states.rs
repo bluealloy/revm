@@ -14,7 +14,7 @@ pub mod transition_state;
 /// Account status for Block and Bundle states.
 pub use account_status::AccountStatus;
 pub use bundle_account::BundleAccount;
-pub use bundle_state::{BundleState, OriginalValuesKnown};
+pub use bundle_state::{BundleBuilder, BundleState, OriginalValuesKnown};
 pub use cache::CacheState;
 pub use cache_account::CacheAccount;
 pub use changes::{PlainStateReverts, PlainStorageChangeset, PlainStorageRevert, StateChangeset};
