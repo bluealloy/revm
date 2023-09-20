@@ -8,7 +8,7 @@ mod bn128;
 mod hash;
 mod identity;
 #[cfg(feature = "std")]
-mod kzg_point_evaluation;
+pub mod kzg_point_evaluation;
 mod modexp;
 mod secp256k1;
 

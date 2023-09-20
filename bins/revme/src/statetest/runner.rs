@@ -36,6 +36,11 @@ pub enum TestErrorKind {
     StateRootMismatch { got: B256, expected: B256 },
     #[error("Unknown private key: {0:?}")]
     UnknownPrivateKey(B256),
+    #[error("Unexpected exception: {got_exception:?} but test expects:{expected_exception:?}")]
+    UnexpectedException {
+        expected_exception: Option<String>,
+        got_exception: Option<String>,
+    },
     #[error(transparent)]
     SerdeDeserialize(#[from] serde_json::Error),
 }
@@ -94,12 +99,6 @@ fn skip_test(path: &Path) -> bool {
         | "loopMul.json"
         | "CALLBlake2f_MaxRounds.json"
         | "shiftCombinations.json"
-
-        // TODO: These EIP-4844 all have exception specified.
-        | "emptyBlobhashList.json" // '>=Cancun': TR_EMPTYBLOB
-        | "wrongBlobhashVersion.json"  // '>=Cancun': TR_BLOBVERSION_INVALID
-        | "createBlobhashTx.json" // '>=Cancun': TR_BLOBCREATE
-        | "blobhashListBounds7.json" // ">=Cancun": "TR_BLOBLIST_OVERSIZE"
     ) || path_str.contains("stEOF")
 }
 
@@ -215,6 +214,7 @@ pub fn execute_test_suite(
 
             for (id, test) in tests.into_iter().enumerate() {
                 env.tx.gas_limit = unit.transaction.gas_limit[test.indexes.gas].saturating_to();
+
                 env.tx.data = unit
                     .transaction
                     .data
@@ -272,11 +272,34 @@ pub fn execute_test_suite(
                 // validate results
                 // this is in a closure so we can have a common printing routine for errors
                 let check = || {
-                    let logs = match &exec_result {
-                        Ok(ExecutionResult::Success { logs, .. }) => logs.clone(),
-                        _ => Vec::new(),
-                    };
-                    let logs_root = log_rlp_hash(&logs);
+                    // if we expect exception revm should return error from execution.
+                    // So we do not check logs and state root.
+                    //
+                    // Note that some tests that have exception and run tests from before state clear
+                    // would touch the caller account and make it appear in state root calculation.
+                    // This is not something that we would expect as invalid tx should not touch state.
+                    // but as this is a cleanup of invalid tx it is not properly defined and in the end
+                    // it does not matter.
+                    // Test where this happens: `tests/GeneralStateTests/stTransactionTest/NoSrcAccountCreate.json`
+                    // and you can check that we have only two "hash" values for before and after state clear.
+                    match (&test.expect_exception, &exec_result) {
+                        // do nothing
+                        (None, Ok(_)) => (),
+                        // return okay, exception is expected.
+                        (Some(_), Err(_)) => return Ok(()),
+                        _ => {
+                            return Err(TestError {
+                                name: name.clone(),
+                                kind: TestErrorKind::UnexpectedException {
+                                    expected_exception: test.expect_exception.clone(),
+                                    got_exception: exec_result.clone().err().map(|e| e.to_string()),
+                                },
+                            });
+                        }
+                    }
+
+                    let logs_root =
+                        log_rlp_hash(exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
 
                     if logs_root != test.logs {
                         return Err(TestError {
@@ -325,7 +348,7 @@ pub fn execute_test_suite(
                 evm.database(&mut state);
 
                 let path = path.display();
-                println!("Test {name:?} (id: {id}, path: {path}) failed:\n{e}");
+                println!("Test {name:?} (index: {index}, path: {path}) failed:\n{e}");
 
                 println!("\nTraces:");
                 let _ = evm.inspect_commit(TracerEip3155::new(Box::new(stdout()), false, false));

@@ -1,171 +1,387 @@
-use crate::gas;
-use crate::primitives::SpecId;
+//! EVM opcode definitions and utilities.
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+use super::*;
+use crate::{
+    gas,
+    primitives::{Spec, SpecId},
+    Host, Interpreter,
+};
+use core::fmt;
+
+pub type Instruction = fn(&mut Interpreter, &mut dyn Host);
+
+macro_rules! opcodes {
+    ($($val:literal => $name:ident => $f:expr),* $(,)?) => {
+        // Constants for each opcode. This also takes care of duplicate names.
+        $(
+            #[doc = concat!("The `", stringify!($val), "` (\"", stringify!($name),"\") opcode.")]
+            pub const $name: u8 = $val;
+        )*
+
+        /// Maps each opcode to its name.
+        pub const OPCODE_JUMPMAP: [Option<&'static str>; 256] = {
+            let mut map = [None; 256];
+            let mut prev: u8 = 0;
+            $(
+                let val: u8 = $val;
+                assert!(val == 0 || val > prev, "opcodes must be sorted in ascending order");
+                prev = val;
+                map[$val] = Some(stringify!($name));
+            )*
+            let _ = prev;
+            map
+        };
+
+        // Requires `inline_const` and `const_mut_refs` unstable features,
+        // but provides ~+2% extra performance.
+        // See: https://github.com/bluealloy/revm/issues/310#issuecomment-1664381513
+        /*
+        type InstructionTable = [Instruction; 256];
+
+        const fn make_instruction_table<SPEC: Spec>() -> InstructionTable {
+            let mut table: InstructionTable = [control::not_found; 256];
+            let mut i = 0usize;
+            while i < 256 {
+                table[i] = match i as u8 {
+                    $($name => $f,)*
+                    _ => control::not_found,
+                };
+                i += 1;
+            }
+            table
+        }
+
+        // in `eval`:
+        (const { make_instruction_table::<SPEC>() })[opcode as usize](interpreter, host)
+        */
+
+        /// Evaluates the opcode in the given context.
+        #[inline(always)]
+        pub(crate) fn eval<SPEC: Spec>(opcode: u8, interpreter: &mut Interpreter, host: &mut dyn Host) {
+            // See https://github.com/bluealloy/revm/issues/310#issuecomment-1664381513
+            // for previous efforts on optimizing this function.
+            let f: Instruction = match opcode {
+                $($name => $f as Instruction,)*
+                _ => control::not_found as Instruction,
+            };
+            f(interpreter, host);
+        }
+    };
+}
+
+// When adding new opcodes:
+// 1. add the opcode to the list below; make sure it's sorted by opcode value
+// 2. add its gas info in the `opcode_gas_info` function below
+// 3. implement the opcode in the corresponding module;
+//    the function signature must be the exact same as the others
+opcodes! {
+    0x00 => STOP => control::stop,
+
+    0x01 => ADD        => arithmetic::wrapped_add,
+    0x02 => MUL        => arithmetic::wrapping_mul,
+    0x03 => SUB        => arithmetic::wrapping_sub,
+    0x04 => DIV        => arithmetic::div,
+    0x05 => SDIV       => arithmetic::sdiv,
+    0x06 => MOD        => arithmetic::rem,
+    0x07 => SMOD       => arithmetic::smod,
+    0x08 => ADDMOD     => arithmetic::addmod,
+    0x09 => MULMOD     => arithmetic::mulmod,
+    0x0A => EXP        => arithmetic::exp::<SPEC>,
+    0x0B => SIGNEXTEND => arithmetic::signextend,
+    // 0x0C
+    // 0x0D
+    // 0x0E
+    // 0x0F
+    0x10 => LT     => bitwise::lt,
+    0x11 => GT     => bitwise::gt,
+    0x12 => SLT    => bitwise::slt,
+    0x13 => SGT    => bitwise::sgt,
+    0x14 => EQ     => bitwise::eq,
+    0x15 => ISZERO => bitwise::iszero,
+    0x16 => AND    => bitwise::bitand,
+    0x17 => OR     => bitwise::bitor,
+    0x18 => XOR    => bitwise::bitxor,
+    0x19 => NOT    => bitwise::not,
+    0x1A => BYTE   => bitwise::byte,
+    0x1B => SHL    => bitwise::shl::<SPEC>,
+    0x1C => SHR    => bitwise::shr::<SPEC>,
+    0x1D => SAR    => bitwise::sar::<SPEC>,
+    // 0x1E
+    // 0x1F
+    0x20 => KECCAK256 => system::keccak256,
+    // 0x21
+    // 0x22
+    // 0x23
+    // 0x24
+    // 0x25
+    // 0x26
+    // 0x27
+    // 0x28
+    // 0x29
+    // 0x2A
+    // 0x2B
+    // 0x2C
+    // 0x2D
+    // 0x2E
+    // 0x2F
+    0x30 => ADDRESS   => system::address,
+    0x31 => BALANCE   => host::balance::<SPEC>,
+    0x32 => ORIGIN    => host_env::origin,
+    0x33 => CALLER    => system::caller,
+    0x34 => CALLVALUE => system::callvalue,
+    0x35 => CALLDATALOAD => system::calldataload,
+    0x36 => CALLDATASIZE => system::calldatasize,
+    0x37 => CALLDATACOPY => system::calldatacopy,
+    0x38 => CODESIZE     => system::codesize,
+    0x39 => CODECOPY     => system::codecopy,
+
+    0x3A => GASPRICE       => host_env::gasprice,
+    0x3B => EXTCODESIZE    => host::extcodesize::<SPEC>,
+    0x3C => EXTCODECOPY    => host::extcodecopy::<SPEC>,
+    0x3D => RETURNDATASIZE => system::returndatasize::<SPEC>,
+    0x3E => RETURNDATACOPY => system::returndatacopy::<SPEC>,
+    0x3F => EXTCODEHASH    => host::extcodehash::<SPEC>,
+    0x40 => BLOCKHASH      => host::blockhash,
+    0x41 => COINBASE       => host_env::coinbase,
+    0x42 => TIMESTAMP      => host_env::timestamp,
+    0x43 => NUMBER         => host_env::number,
+    0x44 => DIFFICULTY     => host_env::difficulty::<SPEC>,
+    0x45 => GASLIMIT       => host_env::gaslimit,
+    0x46 => CHAINID        => host_env::chainid::<SPEC>,
+    0x47 => SELFBALANCE    => host::selfbalance::<SPEC>,
+    0x48 => BASEFEE        => host_env::basefee::<SPEC>,
+    0x49 => BLOBHASH       => host_env::blob_hash::<SPEC>,
+    // 0x4A
+    // 0x4B
+    // 0x4C
+    // 0x4D
+    // 0x4E
+    // 0x4F
+    0x50 => POP      => stack::pop,
+    0x51 => MLOAD    => memory::mload,
+    0x52 => MSTORE   => memory::mstore,
+    0x53 => MSTORE8  => memory::mstore8,
+    0x54 => SLOAD    => host::sload::<SPEC>,
+    0x55 => SSTORE   => host::sstore::<SPEC>,
+    0x56 => JUMP     => control::jump,
+    0x57 => JUMPI    => control::jumpi,
+    0x58 => PC       => control::pc,
+    0x59 => MSIZE    => memory::msize,
+    0x5A => GAS      => system::gas,
+    0x5B => JUMPDEST => control::jumpdest,
+    0x5C => TLOAD    => host::tload::<SPEC>,
+    0x5D => TSTORE   => host::tstore::<SPEC>,
+    0x5E => MCOPY    => memory::mcopy::<SPEC>,
+
+    0x5F => PUSH0  => stack::push0::<SPEC>,
+    0x60 => PUSH1  => stack::push::<1>,
+    0x61 => PUSH2  => stack::push::<2>,
+    0x62 => PUSH3  => stack::push::<3>,
+    0x63 => PUSH4  => stack::push::<4>,
+    0x64 => PUSH5  => stack::push::<5>,
+    0x65 => PUSH6  => stack::push::<6>,
+    0x66 => PUSH7  => stack::push::<7>,
+    0x67 => PUSH8  => stack::push::<8>,
+    0x68 => PUSH9  => stack::push::<9>,
+    0x69 => PUSH10 => stack::push::<10>,
+    0x6A => PUSH11 => stack::push::<11>,
+    0x6B => PUSH12 => stack::push::<12>,
+    0x6C => PUSH13 => stack::push::<13>,
+    0x6D => PUSH14 => stack::push::<14>,
+    0x6E => PUSH15 => stack::push::<15>,
+    0x6F => PUSH16 => stack::push::<16>,
+    0x70 => PUSH17 => stack::push::<17>,
+    0x71 => PUSH18 => stack::push::<18>,
+    0x72 => PUSH19 => stack::push::<19>,
+    0x73 => PUSH20 => stack::push::<20>,
+    0x74 => PUSH21 => stack::push::<21>,
+    0x75 => PUSH22 => stack::push::<22>,
+    0x76 => PUSH23 => stack::push::<23>,
+    0x77 => PUSH24 => stack::push::<24>,
+    0x78 => PUSH25 => stack::push::<25>,
+    0x79 => PUSH26 => stack::push::<26>,
+    0x7A => PUSH27 => stack::push::<27>,
+    0x7B => PUSH28 => stack::push::<28>,
+    0x7C => PUSH29 => stack::push::<29>,
+    0x7D => PUSH30 => stack::push::<30>,
+    0x7E => PUSH31 => stack::push::<31>,
+    0x7F => PUSH32 => stack::push::<32>,
+
+    0x80 => DUP1  => stack::dup::<1>,
+    0x81 => DUP2  => stack::dup::<2>,
+    0x82 => DUP3  => stack::dup::<3>,
+    0x83 => DUP4  => stack::dup::<4>,
+    0x84 => DUP5  => stack::dup::<5>,
+    0x85 => DUP6  => stack::dup::<6>,
+    0x86 => DUP7  => stack::dup::<7>,
+    0x87 => DUP8  => stack::dup::<8>,
+    0x88 => DUP9  => stack::dup::<9>,
+    0x89 => DUP10 => stack::dup::<10>,
+    0x8A => DUP11 => stack::dup::<11>,
+    0x8B => DUP12 => stack::dup::<12>,
+    0x8C => DUP13 => stack::dup::<13>,
+    0x8D => DUP14 => stack::dup::<14>,
+    0x8E => DUP15 => stack::dup::<15>,
+    0x8F => DUP16 => stack::dup::<16>,
+
+    0x90 => SWAP1  => stack::swap::<1>,
+    0x91 => SWAP2  => stack::swap::<2>,
+    0x92 => SWAP3  => stack::swap::<3>,
+    0x93 => SWAP4  => stack::swap::<4>,
+    0x94 => SWAP5  => stack::swap::<5>,
+    0x95 => SWAP6  => stack::swap::<6>,
+    0x96 => SWAP7  => stack::swap::<7>,
+    0x97 => SWAP8  => stack::swap::<8>,
+    0x98 => SWAP9  => stack::swap::<9>,
+    0x99 => SWAP10 => stack::swap::<10>,
+    0x9A => SWAP11 => stack::swap::<11>,
+    0x9B => SWAP12 => stack::swap::<12>,
+    0x9C => SWAP13 => stack::swap::<13>,
+    0x9D => SWAP14 => stack::swap::<14>,
+    0x9E => SWAP15 => stack::swap::<15>,
+    0x9F => SWAP16 => stack::swap::<16>,
+
+    0xA0 => LOG0 => host::log::<0>,
+    0xA1 => LOG1 => host::log::<1>,
+    0xA2 => LOG2 => host::log::<2>,
+    0xA3 => LOG3 => host::log::<3>,
+    0xA4 => LOG4 => host::log::<4>,
+    // 0xA5
+    // 0xA6
+    // 0xA7
+    // 0xA8
+    // 0xA9
+    // 0xAA
+    // 0xAB
+    // 0xAC
+    // 0xAD
+    // 0xAE
+    // 0xAF
+    // 0xB0
+    // 0xB1
+    // 0xB2
+    // 0xB3
+    // 0xB4
+    // 0xB5
+    // 0xB6
+    // 0xB7
+    // 0xB8
+    // 0xB9
+    // 0xBA
+    // 0xBB
+    // 0xBC
+    // 0xBD
+    // 0xBE
+    // 0xBF
+    // 0xC0
+    // 0xC1
+    // 0xC2
+    // 0xC3
+    // 0xC4
+    // 0xC5
+    // 0xC6
+    // 0xC7
+    // 0xC8
+    // 0xC9
+    // 0xCA
+    // 0xCB
+    // 0xCC
+    // 0xCD
+    // 0xCE
+    // 0xCF
+    // 0xD0
+    // 0xD1
+    // 0xD2
+    // 0xD3
+    // 0xD4
+    // 0xD5
+    // 0xD6
+    // 0xD7
+    // 0xD8
+    // 0xD9
+    // 0xDA
+    // 0xDB
+    // 0xDC
+    // 0xDD
+    // 0xDE
+    // 0xDF
+    // 0xE0
+    // 0xE1
+    // 0xE2
+    // 0xE3
+    // 0xE4
+    // 0xE5
+    // 0xE6
+    // 0xE7
+    // 0xE8
+    // 0xE9
+    // 0xEA
+    // 0xEB
+    // 0xEC
+    // 0xED
+    // 0xEE
+    // 0xEF
+    0xF0 => CREATE       => host::create::<false, SPEC>,
+    0xF1 => CALL         => host::call::<SPEC>,
+    0xF2 => CALLCODE     => host::call_code::<SPEC>,
+    0xF3 => RETURN       => control::ret,
+    0xF4 => DELEGATECALL => host::delegate_call::<SPEC>,
+    0xF5 => CREATE2      => host::create::<true, SPEC>,
+    // 0xF6
+    // 0xF7
+    // 0xF8
+    // 0xF9
+    0xFA => STATICCALL   => host::static_call::<SPEC>,
+    // 0xFB
+    // 0xF
+    0xFD => REVERT       => control::revert::<SPEC>,
+    0xFE => INVALID      => control::invalid,
+    0xFF => SELFDESTRUCT => host::selfdestruct::<SPEC>,
+}
+
+/// An EVM opcode.
+///
+/// This is always a valid opcode, as declared in the [`opcode`][self] module or the
+/// [`OPCODE_JUMPMAP`] constant.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[repr(transparent)]
 pub struct OpCode(u8);
 
-pub const STOP: u8 = 0x00;
-pub const ADD: u8 = 0x01;
-pub const MUL: u8 = 0x02;
-pub const SUB: u8 = 0x03;
-pub const DIV: u8 = 0x04;
-pub const SDIV: u8 = 0x05;
-pub const MOD: u8 = 0x06;
-pub const SMOD: u8 = 0x07;
-pub const ADDMOD: u8 = 0x08;
-pub const MULMOD: u8 = 0x09;
-pub const EXP: u8 = 0x0a;
-pub const SIGNEXTEND: u8 = 0x0b;
-
-pub const LT: u8 = 0x10;
-pub const GT: u8 = 0x11;
-pub const SLT: u8 = 0x12;
-pub const SGT: u8 = 0x13;
-pub const EQ: u8 = 0x14;
-pub const ISZERO: u8 = 0x15;
-pub const AND: u8 = 0x16;
-pub const OR: u8 = 0x17;
-pub const XOR: u8 = 0x18;
-pub const NOT: u8 = 0x19;
-pub const BYTE: u8 = 0x1a;
-
-pub const CALLDATALOAD: u8 = 0x35;
-pub const CALLDATASIZE: u8 = 0x36;
-pub const CALLDATACOPY: u8 = 0x37;
-pub const CODESIZE: u8 = 0x38;
-pub const CODECOPY: u8 = 0x39;
-
-pub const SHL: u8 = 0x1b;
-pub const SHR: u8 = 0x1c;
-pub const SAR: u8 = 0x1d;
-pub const KECCAK256: u8 = 0x20;
-pub const POP: u8 = 0x50;
-pub const MLOAD: u8 = 0x51;
-pub const MSTORE: u8 = 0x52;
-pub const MSTORE8: u8 = 0x53;
-pub const JUMP: u8 = 0x56;
-pub const JUMPI: u8 = 0x57;
-pub const PC: u8 = 0x58;
-pub const MSIZE: u8 = 0x59;
-pub const JUMPDEST: u8 = 0x5b;
-
-pub const TLOAD: u8 = 0x5c;
-pub const TSTORE: u8 = 0x5d;
-
-pub const MCOPY: u8 = 0x5e;
-pub const PUSH0: u8 = 0x5f;
-pub const PUSH1: u8 = 0x60;
-pub const PUSH2: u8 = 0x61;
-pub const PUSH3: u8 = 0x62;
-pub const PUSH4: u8 = 0x63;
-pub const PUSH5: u8 = 0x64;
-pub const PUSH6: u8 = 0x65;
-pub const PUSH7: u8 = 0x66;
-pub const PUSH8: u8 = 0x67;
-pub const PUSH9: u8 = 0x68;
-pub const PUSH10: u8 = 0x69;
-pub const PUSH11: u8 = 0x6a;
-pub const PUSH12: u8 = 0x6b;
-pub const PUSH13: u8 = 0x6c;
-pub const PUSH14: u8 = 0x6d;
-pub const PUSH15: u8 = 0x6e;
-pub const PUSH16: u8 = 0x6f;
-pub const PUSH17: u8 = 0x70;
-pub const PUSH18: u8 = 0x71;
-pub const PUSH19: u8 = 0x72;
-pub const PUSH20: u8 = 0x73;
-pub const PUSH21: u8 = 0x74;
-pub const PUSH22: u8 = 0x75;
-pub const PUSH23: u8 = 0x76;
-pub const PUSH24: u8 = 0x77;
-pub const PUSH25: u8 = 0x78;
-pub const PUSH26: u8 = 0x79;
-pub const PUSH27: u8 = 0x7a;
-pub const PUSH28: u8 = 0x7b;
-pub const PUSH29: u8 = 0x7c;
-pub const PUSH30: u8 = 0x7d;
-pub const PUSH31: u8 = 0x7e;
-pub const PUSH32: u8 = 0x7f;
-pub const DUP1: u8 = 0x80;
-pub const DUP2: u8 = 0x81;
-pub const DUP3: u8 = 0x82;
-pub const DUP4: u8 = 0x83;
-pub const DUP5: u8 = 0x84;
-pub const DUP6: u8 = 0x85;
-pub const DUP7: u8 = 0x86;
-pub const DUP8: u8 = 0x87;
-pub const DUP9: u8 = 0x88;
-pub const DUP10: u8 = 0x89;
-pub const DUP11: u8 = 0x8a;
-pub const DUP12: u8 = 0x8b;
-pub const DUP13: u8 = 0x8c;
-pub const DUP14: u8 = 0x8d;
-pub const DUP15: u8 = 0x8e;
-pub const DUP16: u8 = 0x8f;
-pub const SWAP1: u8 = 0x90;
-pub const SWAP2: u8 = 0x91;
-pub const SWAP3: u8 = 0x92;
-pub const SWAP4: u8 = 0x93;
-pub const SWAP5: u8 = 0x94;
-pub const SWAP6: u8 = 0x95;
-pub const SWAP7: u8 = 0x96;
-pub const SWAP8: u8 = 0x97;
-pub const SWAP9: u8 = 0x98;
-pub const SWAP10: u8 = 0x99;
-pub const SWAP11: u8 = 0x9a;
-pub const SWAP12: u8 = 0x9b;
-pub const SWAP13: u8 = 0x9c;
-pub const SWAP14: u8 = 0x9d;
-pub const SWAP15: u8 = 0x9e;
-pub const SWAP16: u8 = 0x9f;
-pub const RETURN: u8 = 0xf3;
-pub const REVERT: u8 = 0xfd;
-pub const INVALID: u8 = 0xfe;
-pub const ADDRESS: u8 = 0x30;
-pub const BALANCE: u8 = 0x31;
-pub const BASEFEE: u8 = 0x48;
-pub const ORIGIN: u8 = 0x32;
-pub const CALLER: u8 = 0x33;
-pub const CALLVALUE: u8 = 0x34;
-pub const GASPRICE: u8 = 0x3a;
-pub const EXTCODESIZE: u8 = 0x3b;
-pub const EXTCODECOPY: u8 = 0x3c;
-pub const EXTCODEHASH: u8 = 0x3f;
-pub const RETURNDATASIZE: u8 = 0x3d;
-pub const RETURNDATACOPY: u8 = 0x3e;
-pub const BLOCKHASH: u8 = 0x40;
-pub const COINBASE: u8 = 0x41;
-pub const TIMESTAMP: u8 = 0x42;
-pub const NUMBER: u8 = 0x43;
-pub const DIFFICULTY: u8 = 0x44;
-pub const GASLIMIT: u8 = 0x45;
-pub const SELFBALANCE: u8 = 0x47;
-pub const BLOBHASH: u8 = 0x49;
-pub const SLOAD: u8 = 0x54;
-pub const SSTORE: u8 = 0x55;
-pub const GAS: u8 = 0x5a;
-
-pub const LOG0: u8 = 0xa0;
-pub const LOG1: u8 = 0xa1;
-pub const LOG2: u8 = 0xa2;
-pub const LOG3: u8 = 0xa3;
-pub const LOG4: u8 = 0xa4;
-
-pub const CREATE: u8 = 0xf0;
-pub const CREATE2: u8 = 0xf5;
-pub const CALL: u8 = 0xf1;
-pub const CALLCODE: u8 = 0xf2;
-pub const DELEGATECALL: u8 = 0xf4;
-pub const STATICCALL: u8 = 0xfa;
-pub const SELFDESTRUCT: u8 = 0xff;
-pub const CHAINID: u8 = 0x46;
+impl fmt::Display for OpCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let n = self.get();
+        if let Some(val) = OPCODE_JUMPMAP[n as usize] {
+            f.write_str(val)
+        } else {
+            write!(f, "UNKNOWN(0x{n:02X})")
+        }
+    }
+}
 
 impl OpCode {
-    pub fn try_from_u8(opcode: u8) -> Option<OpCode> {
-        OPCODE_JUMPMAP[opcode as usize].map(|_| OpCode(opcode))
+    /// Instantiate a new opcode from a u8.
+    #[inline]
+    pub const fn new(opcode: u8) -> Option<Self> {
+        match OPCODE_JUMPMAP[opcode as usize] {
+            Some(_) => Some(Self(opcode)),
+            None => None,
+        }
     }
 
-    pub const fn as_str(&self) -> &'static str {
+    /// Instantiate a new opcode from a u8 without checking if it is valid.
+    ///
+    /// # Safety
+    ///
+    /// All code using `Opcode` values assume that they are valid opcodes, so providing an invalid
+    /// opcode may cause undefined behavior.
+    #[inline]
+    pub unsafe fn new_unchecked(opcode: u8) -> Self {
+        Self(opcode)
+    }
+
+    /// Returns the opcode as a string.
+    #[inline]
+    pub const fn as_str(self) -> &'static str {
         if let Some(str) = OPCODE_JUMPMAP[self.0 as usize] {
             str
         } else {
@@ -173,282 +389,28 @@ impl OpCode {
         }
     }
 
-    #[inline(always)]
-    pub const fn u8(&self) -> u8 {
+    /// Returns the opcode as a u8.
+    #[inline]
+    pub const fn get(self) -> u8 {
         self.0
     }
-}
 
-impl core::fmt::Display for OpCode {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        if let Some(val) = OPCODE_JUMPMAP[self.0 as usize] {
-            f.write_str(val)
-        } else {
-            write!(f, "UNKNOWN(0x{:02x})", self.0)
-        }
+    #[inline]
+    #[deprecated(note = "use `new` instead")]
+    #[doc(hidden)]
+    pub const fn try_from_u8(opcode: u8) -> Option<Self> {
+        Self::new(opcode)
+    }
+
+    #[inline]
+    #[deprecated(note = "use `get` instead")]
+    #[doc(hidden)]
+    pub const fn u8(self) -> u8 {
+        self.get()
     }
 }
 
-pub const OPCODE_JUMPMAP: [Option<&'static str>; 256] = [
-    /* 0x00 */ Some("STOP"),
-    /* 0x01 */ Some("ADD"),
-    /* 0x02 */ Some("MUL"),
-    /* 0x03 */ Some("SUB"),
-    /* 0x04 */ Some("DIV"),
-    /* 0x05 */ Some("SDIV"),
-    /* 0x06 */ Some("MOD"),
-    /* 0x07 */ Some("SMOD"),
-    /* 0x08 */ Some("ADDMOD"),
-    /* 0x09 */ Some("MULMOD"),
-    /* 0x0a */ Some("EXP"),
-    /* 0x0b */ Some("SIGNEXTEND"),
-    /* 0x0c */ None,
-    /* 0x0d */ None,
-    /* 0x0e */ None,
-    /* 0x0f */ None,
-    /* 0x10 */ Some("LT"),
-    /* 0x11 */ Some("GT"),
-    /* 0x12 */ Some("SLT"),
-    /* 0x13 */ Some("SGT"),
-    /* 0x14 */ Some("EQ"),
-    /* 0x15 */ Some("ISZERO"),
-    /* 0x16 */ Some("AND"),
-    /* 0x17 */ Some("OR"),
-    /* 0x18 */ Some("XOR"),
-    /* 0x19 */ Some("NOT"),
-    /* 0x1a */ Some("BYTE"),
-    /* 0x1b */ Some("SHL"),
-    /* 0x1c */ Some("SHR"),
-    /* 0x1d */ Some("SAR"),
-    /* 0x1e */ None,
-    /* 0x1f */ None,
-    /* 0x20 */ Some("KECCAK256"),
-    /* 0x21 */ None,
-    /* 0x22 */ None,
-    /* 0x23 */ None,
-    /* 0x24 */ None,
-    /* 0x25 */ None,
-    /* 0x26 */ None,
-    /* 0x27 */ None,
-    /* 0x28 */ None,
-    /* 0x29 */ None,
-    /* 0x2a */ None,
-    /* 0x2b */ None,
-    /* 0x2c */ None,
-    /* 0x2d */ None,
-    /* 0x2e */ None,
-    /* 0x2f */ None,
-    /* 0x30 */ Some("ADDRESS"),
-    /* 0x31 */ Some("BALANCE"),
-    /* 0x32 */ Some("ORIGIN"),
-    /* 0x33 */ Some("CALLER"),
-    /* 0x34 */ Some("CALLVALUE"),
-    /* 0x35 */ Some("CALLDATALOAD"),
-    /* 0x36 */ Some("CALLDATASIZE"),
-    /* 0x37 */ Some("CALLDATACOPY"),
-    /* 0x38 */ Some("CODESIZE"),
-    /* 0x39 */ Some("CODECOPY"),
-    /* 0x3a */ Some("GASPRICE"),
-    /* 0x3b */ Some("EXTCODESIZE"),
-    /* 0x3c */ Some("EXTCODECOPY"),
-    /* 0x3d */ Some("RETURNDATASIZE"),
-    /* 0x3e */ Some("RETURNDATACOPY"),
-    /* 0x3f */ Some("EXTCODEHASH"),
-    /* 0x40 */ Some("BLOCKHASH"),
-    /* 0x41 */ Some("COINBASE"),
-    /* 0x42 */ Some("TIMESTAMP"),
-    /* 0x43 */ Some("NUMBER"),
-    /* 0x44 */ Some("DIFFICULTY"),
-    /* 0x45 */ Some("GASLIMIT"),
-    /* 0x46 */ Some("CHAINID"),
-    /* 0x47 */ Some("SELFBALANCE"),
-    /* 0x48 */ Some("BASEFEE"),
-    /* 0x49 */ Some("BLOBHASH"),
-    /* 0x4a */ None,
-    /* 0x4b */ None,
-    /* 0x4c */ None,
-    /* 0x4d */ None,
-    /* 0x4e */ None,
-    /* 0x4f */ None,
-    /* 0x50 */ Some("POP"),
-    /* 0x51 */ Some("MLOAD"),
-    /* 0x52 */ Some("MSTORE"),
-    /* 0x53 */ Some("MSTORE8"),
-    /* 0x54 */ Some("SLOAD"),
-    /* 0x55 */ Some("SSTORE"),
-    /* 0x56 */ Some("JUMP"),
-    /* 0x57 */ Some("JUMPI"),
-    /* 0x58 */ Some("PC"),
-    /* 0x59 */ Some("MSIZE"),
-    /* 0x5a */ Some("GAS"),
-    /* 0x5b */ Some("JUMPDEST"),
-    /* 0x5c */ Some("TLOAD"),
-    /* 0x5d */ Some("TSTORE"),
-    /* 0x5e */ Some("MCOPY"),
-    /* 0x5f */ Some("PUSH0"),
-    /* 0x60 */ Some("PUSH1"),
-    /* 0x61 */ Some("PUSH2"),
-    /* 0x62 */ Some("PUSH3"),
-    /* 0x63 */ Some("PUSH4"),
-    /* 0x64 */ Some("PUSH5"),
-    /* 0x65 */ Some("PUSH6"),
-    /* 0x66 */ Some("PUSH7"),
-    /* 0x67 */ Some("PUSH8"),
-    /* 0x68 */ Some("PUSH9"),
-    /* 0x69 */ Some("PUSH10"),
-    /* 0x6a */ Some("PUSH11"),
-    /* 0x6b */ Some("PUSH12"),
-    /* 0x6c */ Some("PUSH13"),
-    /* 0x6d */ Some("PUSH14"),
-    /* 0x6e */ Some("PUSH15"),
-    /* 0x6f */ Some("PUSH16"),
-    /* 0x70 */ Some("PUSH17"),
-    /* 0x71 */ Some("PUSH18"),
-    /* 0x72 */ Some("PUSH19"),
-    /* 0x73 */ Some("PUSH20"),
-    /* 0x74 */ Some("PUSH21"),
-    /* 0x75 */ Some("PUSH22"),
-    /* 0x76 */ Some("PUSH23"),
-    /* 0x77 */ Some("PUSH24"),
-    /* 0x78 */ Some("PUSH25"),
-    /* 0x79 */ Some("PUSH26"),
-    /* 0x7a */ Some("PUSH27"),
-    /* 0x7b */ Some("PUSH28"),
-    /* 0x7c */ Some("PUSH29"),
-    /* 0x7d */ Some("PUSH30"),
-    /* 0x7e */ Some("PUSH31"),
-    /* 0x7f */ Some("PUSH32"),
-    /* 0x80 */ Some("DUP1"),
-    /* 0x81 */ Some("DUP2"),
-    /* 0x82 */ Some("DUP3"),
-    /* 0x83 */ Some("DUP4"),
-    /* 0x84 */ Some("DUP5"),
-    /* 0x85 */ Some("DUP6"),
-    /* 0x86 */ Some("DUP7"),
-    /* 0x87 */ Some("DUP8"),
-    /* 0x88 */ Some("DUP9"),
-    /* 0x89 */ Some("DUP10"),
-    /* 0x8a */ Some("DUP11"),
-    /* 0x8b */ Some("DUP12"),
-    /* 0x8c */ Some("DUP13"),
-    /* 0x8d */ Some("DUP14"),
-    /* 0x8e */ Some("DUP15"),
-    /* 0x8f */ Some("DUP16"),
-    /* 0x90 */ Some("SWAP1"),
-    /* 0x91 */ Some("SWAP2"),
-    /* 0x92 */ Some("SWAP3"),
-    /* 0x93 */ Some("SWAP4"),
-    /* 0x94 */ Some("SWAP5"),
-    /* 0x95 */ Some("SWAP6"),
-    /* 0x96 */ Some("SWAP7"),
-    /* 0x97 */ Some("SWAP8"),
-    /* 0x98 */ Some("SWAP9"),
-    /* 0x99 */ Some("SWAP10"),
-    /* 0x9a */ Some("SWAP11"),
-    /* 0x9b */ Some("SWAP12"),
-    /* 0x9c */ Some("SWAP13"),
-    /* 0x9d */ Some("SWAP14"),
-    /* 0x9e */ Some("SWAP15"),
-    /* 0x9f */ Some("SWAP16"),
-    /* 0xa0 */ Some("LOG0"),
-    /* 0xa1 */ Some("LOG1"),
-    /* 0xa2 */ Some("LOG2"),
-    /* 0xa3 */ Some("LOG3"),
-    /* 0xa4 */ Some("LOG4"),
-    /* 0xa5 */ None,
-    /* 0xa6 */ None,
-    /* 0xa7 */ None,
-    /* 0xa8 */ None,
-    /* 0xa9 */ None,
-    /* 0xaa */ None,
-    /* 0xab */ None,
-    /* 0xac */ None,
-    /* 0xad */ None,
-    /* 0xae */ None,
-    /* 0xaf */ None,
-    /* 0xb0 */ None,
-    /* 0xb1 */ None,
-    /* 0xb2 */ None,
-    /* 0xb3 */ None,
-    /* 0xb4 */ None,
-    /* 0xb5 */ None,
-    /* 0xb6 */ None,
-    /* 0xb7 */ None,
-    /* 0xb8 */ None,
-    /* 0xb9 */ None,
-    /* 0xba */ None,
-    /* 0xbb */ None,
-    /* 0xbc */ None,
-    /* 0xbd */ None,
-    /* 0xbe */ None,
-    /* 0xbf */ None,
-    /* 0xc0 */ None,
-    /* 0xc1 */ None,
-    /* 0xc2 */ None,
-    /* 0xc3 */ None,
-    /* 0xc4 */ None,
-    /* 0xc5 */ None,
-    /* 0xc6 */ None,
-    /* 0xc7 */ None,
-    /* 0xc8 */ None,
-    /* 0xc9 */ None,
-    /* 0xca */ None,
-    /* 0xcb */ None,
-    /* 0xcc */ None,
-    /* 0xcd */ None,
-    /* 0xce */ None,
-    /* 0xcf */ None,
-    /* 0xd0 */ None,
-    /* 0xd1 */ None,
-    /* 0xd2 */ None,
-    /* 0xd3 */ None,
-    /* 0xd4 */ None,
-    /* 0xd5 */ None,
-    /* 0xd6 */ None,
-    /* 0xd7 */ None,
-    /* 0xd8 */ None,
-    /* 0xd9 */ None,
-    /* 0xda */ None,
-    /* 0xdb */ None,
-    /* 0xdc */ None,
-    /* 0xdd */ None,
-    /* 0xde */ None,
-    /* 0xdf */ None,
-    /* 0xe0 */ None,
-    /* 0xe1 */ None,
-    /* 0xe2 */ None,
-    /* 0xe3 */ None,
-    /* 0xe4 */ None,
-    /* 0xe5 */ None,
-    /* 0xe6 */ None,
-    /* 0xe7 */ None,
-    /* 0xe8 */ None,
-    /* 0xe9 */ None,
-    /* 0xea */ None,
-    /* 0xeb */ None,
-    /* 0xec */ None,
-    /* 0xed */ None,
-    /* 0xee */ None,
-    /* 0xef */ None,
-    /* 0xf0 */ Some("CREATE"),
-    /* 0xf1 */ Some("CALL"),
-    /* 0xf2 */ Some("CALLCODE"),
-    /* 0xf3 */ Some("RETURN"),
-    /* 0xf4 */ Some("DELEGATECALL"),
-    /* 0xf5 */ Some("CREATE2"),
-    /* 0xf6 */ None,
-    /* 0xf7 */ None,
-    /* 0xf8 */ None,
-    /* 0xf9 */ None,
-    /* 0xfa */ Some("STATICCALL"),
-    /* 0xfb */ None,
-    /* 0xfc */ None,
-    /* 0xfd */ Some("REVERT"),
-    /* 0xfe */ Some("INVALID"),
-    /* 0xff */ Some("SELFDESTRUCT"),
-];
-
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct OpInfo {
     /// Data contains few information packed inside u32:
     /// IS_JUMP (1bit) | IS_GAS_BLOCK_END (1bit) | IS_PUSH (1bit) | gas (29bits)
@@ -461,474 +423,341 @@ const IS_PUSH_MASK: u32 = 0x20000000;
 const GAS_MASK: u32 = 0x1FFFFFFF;
 
 impl OpInfo {
-    #[inline(always)]
-    pub fn is_jump(&self) -> bool {
-        self.data & JUMP_MASK == JUMP_MASK
-    }
-    #[inline(always)]
-    pub fn is_gas_block_end(&self) -> bool {
-        self.data & GAS_BLOCK_END_MASK == GAS_BLOCK_END_MASK
-    }
-    #[inline(always)]
-    pub fn is_push(&self) -> bool {
-        self.data & IS_PUSH_MASK == IS_PUSH_MASK
-    }
-
-    #[inline(always)]
-    pub fn get_gas(&self) -> u32 {
-        self.data & GAS_MASK
-    }
-
+    /// Creates a new empty [`OpInfo`].
     pub const fn none() -> Self {
         Self { data: 0 }
     }
 
+    /// Creates a new dynamic gas [`OpInfo`].
+    pub const fn dynamic_gas() -> Self {
+        Self { data: 0 }
+    }
+
+    /// Creates a new gas block end [`OpInfo`].
     pub const fn gas_block_end(gas: u64) -> Self {
         Self {
             data: gas as u32 | GAS_BLOCK_END_MASK,
         }
     }
-    pub const fn dynamic_gas() -> Self {
-        Self { data: 0 }
-    }
 
+    /// Creates a new [`OpInfo`] with the given gas value.
     pub const fn gas(gas: u64) -> Self {
         Self { data: gas as u32 }
     }
+
+    /// Creates a new push [`OpInfo`].
     pub const fn push_opcode() -> Self {
         Self {
             data: gas::VERYLOW as u32 | IS_PUSH_MASK,
         }
     }
 
+    /// Creates a new jumpdest [`OpInfo`].
     pub const fn jumpdest() -> Self {
         Self {
             data: JUMP_MASK | GAS_BLOCK_END_MASK,
         }
     }
-}
 
-macro_rules! gas_opcodee {
-    ($name:ident, $spec_id:expr) => {
-        const $name: &'static [OpInfo; 256] = &[
-            /* 0x00  STOP */ OpInfo::gas_block_end(0),
-            /* 0x01  ADD */ OpInfo::gas(gas::VERYLOW),
-            /* 0x02  MUL */ OpInfo::gas(gas::LOW),
-            /* 0x03  SUB */ OpInfo::gas(gas::VERYLOW),
-            /* 0x04  DIV */ OpInfo::gas(gas::LOW),
-            /* 0x05  SDIV */ OpInfo::gas(gas::LOW),
-            /* 0x06  MOD */ OpInfo::gas(gas::LOW),
-            /* 0x07  SMOD */ OpInfo::gas(gas::LOW),
-            /* 0x08  ADDMOD */ OpInfo::gas(gas::MID),
-            /* 0x09  MULMOD */ OpInfo::gas(gas::MID),
-            /* 0x0a  EXP */ OpInfo::dynamic_gas(),
-            /* 0x0b  SIGNEXTEND */ OpInfo::gas(gas::LOW),
-            /* 0x0c */ OpInfo::none(),
-            /* 0x0d */ OpInfo::none(),
-            /* 0x0e */ OpInfo::none(),
-            /* 0x0f */ OpInfo::none(),
-            /* 0x10  LT */ OpInfo::gas(gas::VERYLOW),
-            /* 0x11  GT */ OpInfo::gas(gas::VERYLOW),
-            /* 0x12  SLT */ OpInfo::gas(gas::VERYLOW),
-            /* 0x13  SGT */ OpInfo::gas(gas::VERYLOW),
-            /* 0x14  EQ */ OpInfo::gas(gas::VERYLOW),
-            /* 0x15  ISZERO */ OpInfo::gas(gas::VERYLOW),
-            /* 0x16  AND */ OpInfo::gas(gas::VERYLOW),
-            /* 0x17  OR */ OpInfo::gas(gas::VERYLOW),
-            /* 0x18  XOR */ OpInfo::gas(gas::VERYLOW),
-            /* 0x19  NOT */ OpInfo::gas(gas::VERYLOW),
-            /* 0x1a  BYTE */ OpInfo::gas(gas::VERYLOW),
-            /* 0x1b  SHL */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::CONSTANTINOPLE) {
-                gas::VERYLOW
-            } else {
-                0
-            }),
-            /* 0x1c  SHR */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::CONSTANTINOPLE) {
-                gas::VERYLOW
-            } else {
-                0
-            }),
-            /* 0x1d  SAR */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::CONSTANTINOPLE) {
-                gas::VERYLOW
-            } else {
-                0
-            }),
-            /* 0x1e */ OpInfo::none(),
-            /* 0x1f */ OpInfo::none(),
-            /* 0x20  KECCAK256 */ OpInfo::dynamic_gas(),
-            /* 0x21 */ OpInfo::none(),
-            /* 0x22 */ OpInfo::none(),
-            /* 0x23 */ OpInfo::none(),
-            /* 0x24 */ OpInfo::none(),
-            /* 0x25 */ OpInfo::none(),
-            /* 0x26 */ OpInfo::none(),
-            /* 0x27 */ OpInfo::none(),
-            /* 0x28 */ OpInfo::none(),
-            /* 0x29 */ OpInfo::none(),
-            /* 0x2a */ OpInfo::none(),
-            /* 0x2b */ OpInfo::none(),
-            /* 0x2c */ OpInfo::none(),
-            /* 0x2d */ OpInfo::none(),
-            /* 0x2e */ OpInfo::none(),
-            /* 0x2f */ OpInfo::none(),
-            /* 0x30  ADDRESS */ OpInfo::gas(gas::BASE),
-            /* 0x31  BALANCE */ OpInfo::dynamic_gas(),
-            /* 0x32  ORIGIN */ OpInfo::gas(gas::BASE),
-            /* 0x33  CALLER */ OpInfo::gas(gas::BASE),
-            /* 0x34  CALLVALUE */ OpInfo::gas(gas::BASE),
-            /* 0x35  CALLDATALOAD */ OpInfo::gas(gas::VERYLOW),
-            /* 0x36  CALLDATASIZE */ OpInfo::gas(gas::BASE),
-            /* 0x37  CALLDATACOPY */ OpInfo::dynamic_gas(),
-            /* 0x38  CODESIZE */ OpInfo::gas(gas::BASE),
-            /* 0x39  CODECOPY */ OpInfo::dynamic_gas(),
-            /* 0x3a  GASPRICE */ OpInfo::gas(gas::BASE),
-            /* 0x3b  EXTCODESIZE */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::BERLIN) {
-                gas::WARM_STORAGE_READ_COST // add only part of gas
-            } else if SpecId::enabled($spec_id, SpecId::TANGERINE) {
-                700
-            } else {
-                20
-            }),
-            /* 0x3c  EXTCODECOPY */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::BERLIN) {
-                gas::WARM_STORAGE_READ_COST // add only part of gas
-            } else if SpecId::enabled($spec_id, SpecId::TANGERINE) {
-                700
-            } else {
-                20
-            }),
-            /* 0x3d  RETURNDATASIZE */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::BYZANTIUM) {
-                gas::BASE
-            } else {
-                0
-            }),
-            /* 0x3e  RETURNDATACOPY */ OpInfo::dynamic_gas(),
-            /* 0x3f  EXTCODEHASH */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::BERLIN) {
-                gas::WARM_STORAGE_READ_COST // add only part of gas
-            } else if SpecId::enabled($spec_id, SpecId::ISTANBUL) {
-                700
-            } else if SpecId::enabled($spec_id, SpecId::PETERSBURG) {
-                // constantinople
-                400
-            } else {
-                0 // not enabled
-            }),
-            /* 0x40  BLOCKHASH */ OpInfo::gas(gas::BLOCKHASH),
-            /* 0x41  COINBASE */ OpInfo::gas(gas::BASE),
-            /* 0x42  TIMESTAMP */ OpInfo::gas(gas::BASE),
-            /* 0x43  NUMBER */ OpInfo::gas(gas::BASE),
-            /* 0x44  DIFFICULTY */ OpInfo::gas(gas::BASE),
-            /* 0x45  GASLIMIT */ OpInfo::gas(gas::BASE),
-            /* 0x46  CHAINID */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::ISTANBUL) {
-                gas::BASE
-            } else {
-                0
-            }),
-            /* 0x47  SELFBALANCE */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::ISTANBUL) {
-                gas::LOW
-            } else {
-                0
-            }),
-            /* 0x48  BASEFEE */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::LONDON) {
-                gas::BASE
-            } else {
-                0
-            }),
-            /* 0x49 BLOBHASH */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::CANCUN) {
-                gas::VERYLOW
-            } else {
-                0
-            }),
-            /* 0x4a */ OpInfo::none(),
-            /* 0x4b */ OpInfo::none(),
-            /* 0x4c */ OpInfo::none(),
-            /* 0x4d */ OpInfo::none(),
-            /* 0x4e */ OpInfo::none(),
-            /* 0x4f */ OpInfo::none(),
-            /* 0x50  POP */ OpInfo::gas(gas::BASE),
-            /* 0x51  MLOAD */ OpInfo::gas(gas::VERYLOW),
-            /* 0x52  MSTORE */ OpInfo::gas(gas::VERYLOW),
-            /* 0x53  MSTORE8 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x54  SLOAD */ OpInfo::dynamic_gas(),
-            /* 0x55  SSTORE */ OpInfo::gas_block_end(0),
-            /* 0x56  JUMP */ OpInfo::gas_block_end(gas::MID),
-            /* 0x57  JUMPI */ OpInfo::gas_block_end(gas::HIGH),
-            /* 0x58  PC */ OpInfo::gas(gas::BASE),
-            /* 0x59  MSIZE */ OpInfo::gas(gas::BASE),
-            /* 0x5a  GAS */ OpInfo::gas_block_end(gas::BASE),
-            /* 0x5b  JUMPDEST */
-            // gas::JUMPDEST gas is calculated in function call,
-            OpInfo::jumpdest(),
-            /* 0x5c TLOAD */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::CANCUN) {
-                gas::WARM_STORAGE_READ_COST
-            } else {
-                0
-            }),
-            /* 0x5d TSTORE */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::CANCUN) {
-                gas::WARM_STORAGE_READ_COST
-            } else {
-                0
-            }),
-            /* 0x5e MCOPY */ OpInfo::dynamic_gas(),
-            /* 0x5f PUSH0 */
-            OpInfo::gas(if SpecId::enabled($spec_id, SpecId::SHANGHAI) {
-                gas::BASE
-            } else {
-                0
-            }),
-            /* 0x60  PUSH1 */ OpInfo::push_opcode(),
-            /* 0x61  PUSH2 */ OpInfo::push_opcode(),
-            /* 0x62  PUSH3 */ OpInfo::push_opcode(),
-            /* 0x63  PUSH4 */ OpInfo::push_opcode(),
-            /* 0x64  PUSH5 */ OpInfo::push_opcode(),
-            /* 0x65  PUSH6 */ OpInfo::push_opcode(),
-            /* 0x66  PUSH7 */ OpInfo::push_opcode(),
-            /* 0x67  PUSH8 */ OpInfo::push_opcode(),
-            /* 0x68  PUSH9 */ OpInfo::push_opcode(),
-            /* 0x69  PUSH10 */ OpInfo::push_opcode(),
-            /* 0x6a  PUSH11 */ OpInfo::push_opcode(),
-            /* 0x6b  PUSH12 */ OpInfo::push_opcode(),
-            /* 0x6c  PUSH13 */ OpInfo::push_opcode(),
-            /* 0x6d  PUSH14 */ OpInfo::push_opcode(),
-            /* 0x6e  PUSH15 */ OpInfo::push_opcode(),
-            /* 0x6f  PUSH16 */ OpInfo::push_opcode(),
-            /* 0x70  PUSH17 */ OpInfo::push_opcode(),
-            /* 0x71  PUSH18 */ OpInfo::push_opcode(),
-            /* 0x72  PUSH19 */ OpInfo::push_opcode(),
-            /* 0x73  PUSH20 */ OpInfo::push_opcode(),
-            /* 0x74  PUSH21 */ OpInfo::push_opcode(),
-            /* 0x75  PUSH22 */ OpInfo::push_opcode(),
-            /* 0x76  PUSH23 */ OpInfo::push_opcode(),
-            /* 0x77  PUSH24 */ OpInfo::push_opcode(),
-            /* 0x78  PUSH25 */ OpInfo::push_opcode(),
-            /* 0x79  PUSH26 */ OpInfo::push_opcode(),
-            /* 0x7a  PUSH27 */ OpInfo::push_opcode(),
-            /* 0x7b  PUSH28 */ OpInfo::push_opcode(),
-            /* 0x7c  PUSH29 */ OpInfo::push_opcode(),
-            /* 0x7d  PUSH30 */ OpInfo::push_opcode(),
-            /* 0x7e  PUSH31 */ OpInfo::push_opcode(),
-            /* 0x7f  PUSH32 */ OpInfo::push_opcode(),
-            /* 0x80  DUP1 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x81  DUP2 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x82  DUP3 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x83  DUP4 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x84  DUP5 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x85  DUP6 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x86  DUP7 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x87  DUP8 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x88  DUP9 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x89  DUP10 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x8a  DUP11 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x8b  DUP12 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x8c  DUP13 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x8d  DUP14 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x8e  DUP15 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x8f  DUP16 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x90  SWAP1 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x91  SWAP2 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x92  SWAP3 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x93  SWAP4 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x94  SWAP5 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x95  SWAP6 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x96  SWAP7 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x97  SWAP8 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x98  SWAP9 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x99  SWAP10 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x9a  SWAP11 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x9b  SWAP12 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x9c  SWAP13 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x9d  SWAP14 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x9e  SWAP15 */ OpInfo::gas(gas::VERYLOW),
-            /* 0x9f  SWAP16 */ OpInfo::gas(gas::VERYLOW),
-            /* 0xa0  LOG0 */ OpInfo::dynamic_gas(),
-            /* 0xa1  LOG1 */ OpInfo::dynamic_gas(),
-            /* 0xa2  LOG2 */ OpInfo::dynamic_gas(),
-            /* 0xa3  LOG3 */ OpInfo::dynamic_gas(),
-            /* 0xa4  LOG4 */ OpInfo::dynamic_gas(),
-            /* 0xa5 */ OpInfo::none(),
-            /* 0xa6 */ OpInfo::none(),
-            /* 0xa7 */ OpInfo::none(),
-            /* 0xa8 */ OpInfo::none(),
-            /* 0xa9 */ OpInfo::none(),
-            /* 0xaa */ OpInfo::none(),
-            /* 0xab */ OpInfo::none(),
-            /* 0xac */ OpInfo::none(),
-            /* 0xad */ OpInfo::none(),
-            /* 0xae */ OpInfo::none(),
-            /* 0xaf */ OpInfo::none(),
-            /* 0xb0 */ OpInfo::none(),
-            /* 0xb1 */ OpInfo::none(),
-            /* 0xb2 */ OpInfo::none(),
-            /* 0xb3 */ OpInfo::none(),
-            /* 0xb4 */ OpInfo::none(),
-            /* 0xb5 */ OpInfo::none(),
-            /* 0xb6 */ OpInfo::none(),
-            /* 0xb7 */ OpInfo::none(),
-            /* 0xb8 */ OpInfo::none(),
-            /* 0xb9 */ OpInfo::none(),
-            /* 0xba */ OpInfo::none(),
-            /* 0xbb */ OpInfo::none(),
-            /* 0xbc */ OpInfo::none(),
-            /* 0xbd */ OpInfo::none(),
-            /* 0xbe */ OpInfo::none(),
-            /* 0xbf */ OpInfo::none(),
-            /* 0xc0 */ OpInfo::none(),
-            /* 0xc1 */ OpInfo::none(),
-            /* 0xc2 */ OpInfo::none(),
-            /* 0xc3 */ OpInfo::none(),
-            /* 0xc4 */ OpInfo::none(),
-            /* 0xc5 */ OpInfo::none(),
-            /* 0xc6 */ OpInfo::none(),
-            /* 0xc7 */ OpInfo::none(),
-            /* 0xc8 */ OpInfo::none(),
-            /* 0xc9 */ OpInfo::none(),
-            /* 0xca */ OpInfo::none(),
-            /* 0xcb */ OpInfo::none(),
-            /* 0xcc */ OpInfo::none(),
-            /* 0xcd */ OpInfo::none(),
-            /* 0xce */ OpInfo::none(),
-            /* 0xcf */ OpInfo::none(),
-            /* 0xd0 */ OpInfo::none(),
-            /* 0xd1 */ OpInfo::none(),
-            /* 0xd2 */ OpInfo::none(),
-            /* 0xd3 */ OpInfo::none(),
-            /* 0xd4 */ OpInfo::none(),
-            /* 0xd5 */ OpInfo::none(),
-            /* 0xd6 */ OpInfo::none(),
-            /* 0xd7 */ OpInfo::none(),
-            /* 0xd8 */ OpInfo::none(),
-            /* 0xd9 */ OpInfo::none(),
-            /* 0xda */ OpInfo::none(),
-            /* 0xdb */ OpInfo::none(),
-            /* 0xdc */ OpInfo::none(),
-            /* 0xdd */ OpInfo::none(),
-            /* 0xde */ OpInfo::none(),
-            /* 0xdf */ OpInfo::none(),
-            /* 0xe0 */ OpInfo::none(),
-            /* 0xe1 */ OpInfo::none(),
-            /* 0xe2 */ OpInfo::none(),
-            /* 0xe3 */ OpInfo::none(),
-            /* 0xe4 */ OpInfo::none(),
-            /* 0xe5 */ OpInfo::none(),
-            /* 0xe6 */ OpInfo::none(),
-            /* 0xe7 */ OpInfo::none(),
-            /* 0xe8 */ OpInfo::none(),
-            /* 0xe9 */ OpInfo::none(),
-            /* 0xea */ OpInfo::none(),
-            /* 0xeb */ OpInfo::none(),
-            /* 0xec */ OpInfo::none(),
-            /* 0xed */ OpInfo::none(),
-            /* 0xee */ OpInfo::none(),
-            /* 0xef */ OpInfo::none(),
-            /* 0xf0  CREATE */ OpInfo::gas_block_end(0),
-            /* 0xf1  CALL */ OpInfo::gas_block_end(0),
-            /* 0xf2  CALLCODE */ OpInfo::gas_block_end(0),
-            /* 0xf3  RETURN */ OpInfo::gas_block_end(0),
-            /* 0xf4  DELEGATECALL */ OpInfo::gas_block_end(0),
-            /* 0xf5  CREATE2 */ OpInfo::gas_block_end(0),
-            /* 0xf6 */ OpInfo::none(),
-            /* 0xf7 */ OpInfo::none(),
-            /* 0xf8 */ OpInfo::none(),
-            /* 0xf9 */ OpInfo::none(),
-            /* 0xfa  STATICCALL */ OpInfo::gas_block_end(0),
-            /* 0xfb */ OpInfo::none(),
-            /* 0xfc */ OpInfo::none(),
-            /* 0xfd  REVERT */ OpInfo::gas_block_end(0),
-            /* 0xfe  INVALID */ OpInfo::gas_block_end(0),
-            /* 0xff  SELFDESTRUCT */ OpInfo::gas_block_end(0),
-        ];
-    };
-}
-
-pub const fn spec_opcode_gas(spec_id: SpecId) -> &'static [OpInfo; 256] {
-    match spec_id {
-        SpecId::FRONTIER => {
-            gas_opcodee!(FRONTIER, SpecId::FRONTIER);
-            FRONTIER
-        }
-        SpecId::FRONTIER_THAWING => {
-            gas_opcodee!(FRONTIER_THAWING, SpecId::FRONTIER_THAWING);
-            FRONTIER_THAWING
-        }
-        SpecId::HOMESTEAD => {
-            gas_opcodee!(HOMESTEAD, SpecId::HOMESTEAD);
-            HOMESTEAD
-        }
-        SpecId::DAO_FORK => {
-            gas_opcodee!(DAO_FORK, SpecId::DAO_FORK);
-            DAO_FORK
-        }
-        SpecId::TANGERINE => {
-            gas_opcodee!(TANGERINE, SpecId::TANGERINE);
-            TANGERINE
-        }
-        SpecId::SPURIOUS_DRAGON => {
-            gas_opcodee!(SPURIOUS_DRAGON, SpecId::SPURIOUS_DRAGON);
-            SPURIOUS_DRAGON
-        }
-        SpecId::BYZANTIUM => {
-            gas_opcodee!(BYZANTIUM, SpecId::BYZANTIUM);
-            BYZANTIUM
-        }
-        SpecId::CONSTANTINOPLE => {
-            gas_opcodee!(CONSTANTINOPLE, SpecId::CONSTANTINOPLE);
-            CONSTANTINOPLE
-        }
-        SpecId::PETERSBURG => {
-            gas_opcodee!(PETERSBURG, SpecId::PETERSBURG);
-            PETERSBURG
-        }
-        SpecId::ISTANBUL => {
-            gas_opcodee!(ISTANBUL, SpecId::ISTANBUL);
-            ISTANBUL
-        }
-        SpecId::MUIR_GLACIER => {
-            gas_opcodee!(MUIRGLACIER, SpecId::MUIR_GLACIER);
-            MUIRGLACIER
-        }
-        SpecId::BERLIN => {
-            gas_opcodee!(BERLIN, SpecId::BERLIN);
-            BERLIN
-        }
-        SpecId::LONDON => {
-            gas_opcodee!(LONDON, SpecId::LONDON);
-            LONDON
-        }
-        SpecId::ARROW_GLACIER => {
-            gas_opcodee!(ARROW_GLACIER, SpecId::ARROW_GLACIER);
-            ARROW_GLACIER
-        }
-        SpecId::GRAY_GLACIER => {
-            gas_opcodee!(GRAY_GLACIER, SpecId::GRAY_GLACIER);
-            GRAY_GLACIER
-        }
-        SpecId::MERGE => {
-            gas_opcodee!(MERGE, SpecId::MERGE);
-            MERGE
-        }
-        SpecId::SHANGHAI => {
-            gas_opcodee!(SHANGAI, SpecId::SHANGHAI);
-            SHANGAI
-        }
-        SpecId::CANCUN => {
-            gas_opcodee!(CANCUN, SpecId::CANCUN);
-            CANCUN
-        }
-        SpecId::LATEST => {
-            gas_opcodee!(LATEST, SpecId::LATEST);
-            LATEST
-        }
+    /// Returns whether the opcode is a jump.
+    #[inline]
+    pub fn is_jump(self) -> bool {
+        self.data & JUMP_MASK == JUMP_MASK
     }
+
+    /// Returns whether the opcode is a gas block end.
+    #[inline]
+    pub fn is_gas_block_end(self) -> bool {
+        self.data & GAS_BLOCK_END_MASK == GAS_BLOCK_END_MASK
+    }
+
+    /// Returns whether the opcode is a push.
+    #[inline]
+    pub fn is_push(self) -> bool {
+        self.data & IS_PUSH_MASK == IS_PUSH_MASK
+    }
+
+    /// Returns the gas cost of the opcode.
+    #[inline]
+    pub fn get_gas(self) -> u32 {
+        self.data & GAS_MASK
+    }
+}
+
+const fn opcode_gas_info(opcode: u8, spec: SpecId) -> OpInfo {
+    match opcode {
+        STOP => OpInfo::gas_block_end(0),
+        ADD => OpInfo::gas(gas::VERYLOW),
+        MUL => OpInfo::gas(gas::LOW),
+        SUB => OpInfo::gas(gas::VERYLOW),
+        DIV => OpInfo::gas(gas::LOW),
+        SDIV => OpInfo::gas(gas::LOW),
+        MOD => OpInfo::gas(gas::LOW),
+        SMOD => OpInfo::gas(gas::LOW),
+        ADDMOD => OpInfo::gas(gas::MID),
+        MULMOD => OpInfo::gas(gas::MID),
+        EXP => OpInfo::dynamic_gas(),
+        SIGNEXTEND => OpInfo::gas(gas::LOW),
+
+        LT => OpInfo::gas(gas::VERYLOW),
+        GT => OpInfo::gas(gas::VERYLOW),
+        SLT => OpInfo::gas(gas::VERYLOW),
+        SGT => OpInfo::gas(gas::VERYLOW),
+        EQ => OpInfo::gas(gas::VERYLOW),
+        ISZERO => OpInfo::gas(gas::VERYLOW),
+        AND => OpInfo::gas(gas::VERYLOW),
+        OR => OpInfo::gas(gas::VERYLOW),
+        XOR => OpInfo::gas(gas::VERYLOW),
+        NOT => OpInfo::gas(gas::VERYLOW),
+        BYTE => OpInfo::gas(gas::VERYLOW),
+        SHL => OpInfo::gas(if SpecId::enabled(spec, SpecId::CONSTANTINOPLE) {
+            gas::VERYLOW
+        } else {
+            0
+        }),
+        SHR => OpInfo::gas(if SpecId::enabled(spec, SpecId::CONSTANTINOPLE) {
+            gas::VERYLOW
+        } else {
+            0
+        }),
+        SAR => OpInfo::gas(if SpecId::enabled(spec, SpecId::CONSTANTINOPLE) {
+            gas::VERYLOW
+        } else {
+            0
+        }),
+
+        KECCAK256 => OpInfo::dynamic_gas(),
+
+        ADDRESS => OpInfo::gas(gas::BASE),
+        BALANCE => OpInfo::dynamic_gas(),
+        ORIGIN => OpInfo::gas(gas::BASE),
+        CALLER => OpInfo::gas(gas::BASE),
+        CALLVALUE => OpInfo::gas(gas::BASE),
+        CALLDATALOAD => OpInfo::gas(gas::VERYLOW),
+        CALLDATASIZE => OpInfo::gas(gas::BASE),
+        CALLDATACOPY => OpInfo::dynamic_gas(),
+        CODESIZE => OpInfo::gas(gas::BASE),
+        CODECOPY => OpInfo::dynamic_gas(),
+        GASPRICE => OpInfo::gas(gas::BASE),
+        EXTCODESIZE => OpInfo::gas(if SpecId::enabled(spec, SpecId::BERLIN) {
+            gas::WARM_STORAGE_READ_COST // add only part of gas
+        } else if SpecId::enabled(spec, SpecId::TANGERINE) {
+            700
+        } else {
+            20
+        }),
+        EXTCODECOPY => OpInfo::gas(if SpecId::enabled(spec, SpecId::BERLIN) {
+            gas::WARM_STORAGE_READ_COST // add only part of gas
+        } else if SpecId::enabled(spec, SpecId::TANGERINE) {
+            700
+        } else {
+            20
+        }),
+        RETURNDATASIZE => OpInfo::gas(if SpecId::enabled(spec, SpecId::BYZANTIUM) {
+            gas::BASE
+        } else {
+            0
+        }),
+        RETURNDATACOPY => OpInfo::dynamic_gas(),
+        EXTCODEHASH => OpInfo::gas(if SpecId::enabled(spec, SpecId::BERLIN) {
+            gas::WARM_STORAGE_READ_COST // add only part of gas
+        } else if SpecId::enabled(spec, SpecId::ISTANBUL) {
+            700
+        } else if SpecId::enabled(spec, SpecId::PETERSBURG) {
+            400 // constantinople
+        } else {
+            0 // not enabled
+        }),
+        BLOCKHASH => OpInfo::gas(gas::BLOCKHASH),
+        COINBASE => OpInfo::gas(gas::BASE),
+        TIMESTAMP => OpInfo::gas(gas::BASE),
+        NUMBER => OpInfo::gas(gas::BASE),
+        DIFFICULTY => OpInfo::gas(gas::BASE),
+        GASLIMIT => OpInfo::gas(gas::BASE),
+        CHAINID => OpInfo::gas(if SpecId::enabled(spec, SpecId::ISTANBUL) {
+            gas::BASE
+        } else {
+            0
+        }),
+        SELFBALANCE => OpInfo::gas(if SpecId::enabled(spec, SpecId::ISTANBUL) {
+            gas::LOW
+        } else {
+            0
+        }),
+        BASEFEE => OpInfo::gas(if SpecId::enabled(spec, SpecId::LONDON) {
+            gas::BASE
+        } else {
+            0
+        }),
+        BLOBHASH => OpInfo::gas(if SpecId::enabled(spec, SpecId::CANCUN) {
+            gas::VERYLOW
+        } else {
+            0
+        }),
+
+        POP => OpInfo::gas(gas::BASE),
+        MLOAD => OpInfo::gas(gas::VERYLOW),
+        MSTORE => OpInfo::gas(gas::VERYLOW),
+        MSTORE8 => OpInfo::gas(gas::VERYLOW),
+        SLOAD => OpInfo::dynamic_gas(),
+        SSTORE => OpInfo::gas_block_end(0),
+        JUMP => OpInfo::gas_block_end(gas::MID),
+        JUMPI => OpInfo::gas_block_end(gas::HIGH),
+        PC => OpInfo::gas(gas::BASE),
+        MSIZE => OpInfo::gas(gas::BASE),
+        GAS => OpInfo::gas_block_end(gas::BASE),
+        // gas::JUMPDEST gas is calculated in function call
+        JUMPDEST => OpInfo::jumpdest(),
+        TLOAD => OpInfo::gas(if SpecId::enabled(spec, SpecId::CANCUN) {
+            gas::WARM_STORAGE_READ_COST
+        } else {
+            0
+        }),
+        TSTORE => OpInfo::gas(if SpecId::enabled(spec, SpecId::CANCUN) {
+            gas::WARM_STORAGE_READ_COST
+        } else {
+            0
+        }),
+        MCOPY => OpInfo::dynamic_gas(),
+
+        PUSH0 => OpInfo::gas(if SpecId::enabled(spec, SpecId::SHANGHAI) {
+            gas::BASE
+        } else {
+            0
+        }),
+        PUSH1 => OpInfo::push_opcode(),
+        PUSH2 => OpInfo::push_opcode(),
+        PUSH3 => OpInfo::push_opcode(),
+        PUSH4 => OpInfo::push_opcode(),
+        PUSH5 => OpInfo::push_opcode(),
+        PUSH6 => OpInfo::push_opcode(),
+        PUSH7 => OpInfo::push_opcode(),
+        PUSH8 => OpInfo::push_opcode(),
+        PUSH9 => OpInfo::push_opcode(),
+        PUSH10 => OpInfo::push_opcode(),
+        PUSH11 => OpInfo::push_opcode(),
+        PUSH12 => OpInfo::push_opcode(),
+        PUSH13 => OpInfo::push_opcode(),
+        PUSH14 => OpInfo::push_opcode(),
+        PUSH15 => OpInfo::push_opcode(),
+        PUSH16 => OpInfo::push_opcode(),
+        PUSH17 => OpInfo::push_opcode(),
+        PUSH18 => OpInfo::push_opcode(),
+        PUSH19 => OpInfo::push_opcode(),
+        PUSH20 => OpInfo::push_opcode(),
+        PUSH21 => OpInfo::push_opcode(),
+        PUSH22 => OpInfo::push_opcode(),
+        PUSH23 => OpInfo::push_opcode(),
+        PUSH24 => OpInfo::push_opcode(),
+        PUSH25 => OpInfo::push_opcode(),
+        PUSH26 => OpInfo::push_opcode(),
+        PUSH27 => OpInfo::push_opcode(),
+        PUSH28 => OpInfo::push_opcode(),
+        PUSH29 => OpInfo::push_opcode(),
+        PUSH30 => OpInfo::push_opcode(),
+        PUSH31 => OpInfo::push_opcode(),
+        PUSH32 => OpInfo::push_opcode(),
+
+        DUP1 => OpInfo::gas(gas::VERYLOW),
+        DUP2 => OpInfo::gas(gas::VERYLOW),
+        DUP3 => OpInfo::gas(gas::VERYLOW),
+        DUP4 => OpInfo::gas(gas::VERYLOW),
+        DUP5 => OpInfo::gas(gas::VERYLOW),
+        DUP6 => OpInfo::gas(gas::VERYLOW),
+        DUP7 => OpInfo::gas(gas::VERYLOW),
+        DUP8 => OpInfo::gas(gas::VERYLOW),
+        DUP9 => OpInfo::gas(gas::VERYLOW),
+        DUP10 => OpInfo::gas(gas::VERYLOW),
+        DUP11 => OpInfo::gas(gas::VERYLOW),
+        DUP12 => OpInfo::gas(gas::VERYLOW),
+        DUP13 => OpInfo::gas(gas::VERYLOW),
+        DUP14 => OpInfo::gas(gas::VERYLOW),
+        DUP15 => OpInfo::gas(gas::VERYLOW),
+        DUP16 => OpInfo::gas(gas::VERYLOW),
+
+        SWAP1 => OpInfo::gas(gas::VERYLOW),
+        SWAP2 => OpInfo::gas(gas::VERYLOW),
+        SWAP3 => OpInfo::gas(gas::VERYLOW),
+        SWAP4 => OpInfo::gas(gas::VERYLOW),
+        SWAP5 => OpInfo::gas(gas::VERYLOW),
+        SWAP6 => OpInfo::gas(gas::VERYLOW),
+        SWAP7 => OpInfo::gas(gas::VERYLOW),
+        SWAP8 => OpInfo::gas(gas::VERYLOW),
+        SWAP9 => OpInfo::gas(gas::VERYLOW),
+        SWAP10 => OpInfo::gas(gas::VERYLOW),
+        SWAP11 => OpInfo::gas(gas::VERYLOW),
+        SWAP12 => OpInfo::gas(gas::VERYLOW),
+        SWAP13 => OpInfo::gas(gas::VERYLOW),
+        SWAP14 => OpInfo::gas(gas::VERYLOW),
+        SWAP15 => OpInfo::gas(gas::VERYLOW),
+        SWAP16 => OpInfo::gas(gas::VERYLOW),
+
+        LOG0 => OpInfo::dynamic_gas(),
+        LOG1 => OpInfo::dynamic_gas(),
+        LOG2 => OpInfo::dynamic_gas(),
+        LOG3 => OpInfo::dynamic_gas(),
+        LOG4 => OpInfo::dynamic_gas(),
+
+        CREATE => OpInfo::gas_block_end(0),
+        CALL => OpInfo::gas_block_end(0),
+        CALLCODE => OpInfo::gas_block_end(0),
+        RETURN => OpInfo::gas_block_end(0),
+        DELEGATECALL => OpInfo::gas_block_end(0),
+        CREATE2 => OpInfo::gas_block_end(0),
+
+        STATICCALL => OpInfo::gas_block_end(0),
+
+        REVERT => OpInfo::gas_block_end(0),
+        INVALID => OpInfo::gas_block_end(0),
+        SELFDESTRUCT => OpInfo::gas_block_end(0),
+
+        _ => OpInfo::none(),
+    }
+}
+
+const fn make_gas_table(spec: SpecId) -> [OpInfo; 256] {
+    let mut table = [OpInfo::none(); 256];
+    let mut i = 0;
+    while i < 256 {
+        table[i] = opcode_gas_info(i as u8, spec);
+        i += 1;
+    }
+    table
+}
+
+/// Returns a lookup table of opcode gas info for the given [`SpecId`].
+#[inline]
+pub const fn spec_opcode_gas(spec_id: SpecId) -> &'static [OpInfo; 256] {
+    macro_rules! gas_maps {
+        ($($id:ident),* $(,)?) => {
+            match spec_id {$(
+                SpecId::$id => {
+                    const TABLE: &[OpInfo; 256] = &make_gas_table(SpecId::$id);
+                    TABLE
+                }
+            )*}
+        };
+    }
+
+    gas_maps!(
+        FRONTIER,
+        FRONTIER_THAWING,
+        HOMESTEAD,
+        DAO_FORK,
+        TANGERINE,
+        SPURIOUS_DRAGON,
+        BYZANTIUM,
+        CONSTANTINOPLE,
+        PETERSBURG,
+        ISTANBUL,
+        MUIR_GLACIER,
+        BERLIN,
+        LONDON,
+        ARROW_GLACIER,
+        GRAY_GLACIER,
+        MERGE,
+        SHANGHAI,
+        CANCUN,
+        LATEST,
+    )
 }
