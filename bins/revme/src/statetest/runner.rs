@@ -7,8 +7,8 @@ use revm::{
     inspectors::TracerEip3155,
     interpreter::CreateScheme,
     primitives::{
-        address, b256, calc_excess_blob_gas, keccak256, Bytecode, Env, ExecutionResult, HashMap,
-        SpecId, TransactTo, B256, U256,
+        address, b256, calc_excess_blob_gas, keccak256, Bytecode, Env, HashMap, SpecId, TransactTo,
+        B256, U256,
     },
 };
 use std::{
@@ -212,7 +212,7 @@ pub fn execute_test_suite(
 
             env.cfg.spec_id = spec_name.to_spec_id();
 
-            for (id, test) in tests.into_iter().enumerate() {
+            for (index, test) in tests.into_iter().enumerate() {
                 env.tx.gas_limit = unit.transaction.gas_limit[test.indexes.gas].saturating_to();
 
                 env.tx.data = unit
@@ -299,7 +299,7 @@ pub fn execute_test_suite(
                     }
 
                     let logs_root =
-                        log_rlp_hash(exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
+                        log_rlp_hash(&exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
 
                     if logs_root != test.logs {
                         return Err(TestError {

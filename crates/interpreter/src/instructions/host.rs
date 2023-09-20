@@ -3,9 +3,8 @@ use crate::MAX_INITCODE_SIZE;
 use crate::{
     gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
     interpreter::Interpreter,
-    primitives::{Bytes, Spec, SpecId::*, B160, B256, U256},
     return_ok, return_revert, CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme,
-    Host, InstructionResult, Transfer, MAX_INITCODE_SIZE,
+    Host, InstructionResult, Transfer,
 };
 use alloc::{boxed::Box, vec::Vec};
 use core::cmp::min;

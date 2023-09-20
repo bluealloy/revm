@@ -58,9 +58,8 @@ pub fn calldataload(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     gas!(interpreter, gas::VERYLOW);
     pop!(interpreter, index);
     let index = as_usize_saturated!(index);
-
     let load = if index < interpreter.contract.input.len() {
-        let n = 32.min(interpreter.contract.input.len() - index);
+        let have_bytes = 32.min(interpreter.contract.input.len() - index);
         let mut bytes = [0u8; 32];
         bytes[..have_bytes].copy_from_slice(&interpreter.contract.input[index..index + have_bytes]);
         B256::new(bytes)
@@ -68,7 +67,7 @@ pub fn calldataload(interpreter: &mut Interpreter, _host: &mut dyn Host) {
         B256::ZERO
     };
 
-    push!(interpreter, load);
+    push_b256!(interpreter, load);
 }
 
 pub fn calldatasize(interpreter: &mut Interpreter, _host: &mut dyn Host) {

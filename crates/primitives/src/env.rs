@@ -1,5 +1,5 @@
 use crate::{
-    alloc::vec::Vec, calc_blob_fee, Account, Address, EVMError, InvalidTransaction, Spec, SpecId,
+    alloc::vec::Vec, calc_blob_fee, Account, Address, Bytes, EVMError, InvalidTransaction, Spec, SpecId,
     B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK, MAX_INITCODE_SIZE, U256,
     VERSIONED_HASH_VERSION_KZG,
 };
