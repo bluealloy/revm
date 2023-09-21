@@ -51,7 +51,7 @@ pub struct BlockEnv {
     /// Incorporated as part of the Cancun upgrade via [EIP-4844].
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-    pub blob_gas_and_fee: Option<BlobExcessGasAndPrice>,
+    pub blob_excess_gas_and_price: Option<BlobExcessGasAndPrice>,
 }
 
 /// Structure holding block blob excess gas and it calculates blob fee.
@@ -80,17 +80,19 @@ impl BlobExcessGasAndPrice {
 impl BlockEnv {
     /// Takes `blob_excess_gas` saves it inside env
     /// and calculates `blob_fee` with [`BlobGasAndFee`].
-    pub fn set_blob_gas_and_fee(&mut self, excess_blob_gas: u64) {
-        self.blob_gas_and_fee = Some(BlobExcessGasAndPrice::new(excess_blob_gas));
+    pub fn set_blob_excess_gas_and_price(&mut self, excess_blob_gas: u64) {
+        self.blob_excess_gas_and_price = Some(BlobExcessGasAndPrice::new(excess_blob_gas));
     }
-    /// See [EIP-4844] and [`Env::calc_data_fee`].
+    /// See [EIP-4844] and [`crate::calc_blob_gasprice`].
     ///
     /// Returns `None` if `Cancun` is not enabled. This is enforced in [`Env::validate_block_env`].
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     #[inline]
     pub fn get_blob_gasprice(&self) -> Option<u64> {
-        self.blob_gas_and_fee.as_ref().map(|a| a.blob_gasprice)
+        self.blob_excess_gas_and_price
+            .as_ref()
+            .map(|a| a.blob_gasprice)
     }
 
     /// Return `blob_excess_gas` header field. See [EIP-4844].
@@ -100,7 +102,9 @@ impl BlockEnv {
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     #[inline]
     pub fn get_blob_excess_gas(&self) -> Option<u64> {
-        self.blob_gas_and_fee.as_ref().map(|a| a.excess_blob_gas)
+        self.blob_excess_gas_and_price
+            .as_ref()
+            .map(|a| a.excess_blob_gas)
     }
 }
 
@@ -379,7 +383,7 @@ impl Default for BlockEnv {
             basefee: U256::ZERO,
             difficulty: U256::ZERO,
             prevrandao: Some(B256::zero()),
-            blob_gas_and_fee: Some(BlobExcessGasAndPrice::new(0)),
+            blob_excess_gas_and_price: Some(BlobExcessGasAndPrice::new(0)),
         }
     }
 }
@@ -434,7 +438,7 @@ impl Env {
             return Err(EVMError::PrevrandaoNotSet);
         }
         // `excess_blob_gas` is required for Cancun
-        if SPEC::enabled(SpecId::CANCUN) && self.block.blob_gas_and_fee.is_none() {
+        if SPEC::enabled(SpecId::CANCUN) && self.block.blob_excess_gas_and_price.is_none() {
             return Err(EVMError::ExcessBlobGasNotSet);
         }
         Ok(())
