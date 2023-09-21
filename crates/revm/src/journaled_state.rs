@@ -5,6 +5,7 @@ use crate::primitives::{
 };
 use alloc::vec::Vec;
 use core::mem;
+use revm_interpreter::primitives::SpecId;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -20,9 +21,9 @@ pub struct JournaledState {
     /// journal with changes that happened between calls.
     pub journal: Vec<Vec<JournalEntry>>,
     /// Ethereum before EIP-161 differently defined empty and not-existing account
-    /// so we need to take care of that difference. Set this to false if you are handling
-    /// legacy transactions
-    pub is_before_spurious_dragon: bool,
+    /// Spec is needed for two things SpuriousDragon's `EIP-161 State clear`,
+    /// and for Cancun's `EIP-6780: SELFDESTRUCT in same transaction`
+    pub spec: SpecId,
     /// It is assumed that precompiles start from 0x1 address and span next N addresses.
     /// we are using that assumption here
     pub num_of_precompiles: usize,
@@ -100,25 +101,16 @@ impl JournaledState {
     ///
     /// Note: This function will journal state after Spurious Dragon fork.
     /// And will not take into account if account is not existing or empty.
-    pub fn new(num_of_precompiles: usize) -> JournaledState {
+    pub fn new(num_of_precompiles: usize, spec: SpecId) -> JournaledState {
         Self {
             state: HashMap::new(),
             transient_storage: TransientStorage::default(),
             logs: Vec::new(),
             journal: vec![vec![]],
             depth: 0,
-            is_before_spurious_dragon: false,
+            spec,
             num_of_precompiles,
         }
-    }
-
-    /// Same as [`Self::new`] but will journal state before Spurious Dragon fork.
-    ///
-    /// Note: Before Spurious Dragon fork empty and not existing accounts were treated differently.
-    pub fn new_legacy(num_of_precompiles: usize) -> JournaledState {
-        let mut journal = Self::new(num_of_precompiles);
-        journal.is_before_spurious_dragon = true;
-        journal
     }
 
     /// Return reference to state.
@@ -445,7 +437,7 @@ impl JournaledState {
     }
 
     pub fn checkpoint_revert(&mut self, checkpoint: JournalCheckpoint) {
-        let is_spurious_dragon_enabled = !self.is_before_spurious_dragon;
+        let is_spurious_dragon_enabled = SpecId::enabled(self.spec, SPURIOUS_DRAGON);
         let state = &mut self.state;
         let transient_storage = &mut self.transient_storage;
         self.depth -= 1;
@@ -468,7 +460,16 @@ impl JournaledState {
         self.journal.truncate(checkpoint.journal_i);
     }
 
-    /// transfer balance from address to target. Check if target exist/is_cold
+    /// Transfer balance from address to target. Check if target exist/is_cold
+    ///
+    /// Note: balance will be lost if [address] and [target] are the same BUT when
+    /// current spec enables Cancun, this happens only when the account associated to [address]
+    /// is created in the same tx
+    ///
+    /// references:
+    ///  * https://github.com/ethereum/go-ethereum/blob/141cd425310b503c5678e674a8c3872cf46b7086/core/vm/instructions.go#L832-L833
+    ///  * https://github.com/ethereum/go-ethereum/blob/141cd425310b503c5678e674a8c3872cf46b7086/core/state/statedb.go#L449
+    ///  * https://eips.ethereum.org/EIPS/eip-6780
     pub fn selfdestruct<DB: Database>(
         &mut self,
         address: B160,
@@ -476,31 +477,50 @@ impl JournaledState {
         db: &mut DB,
     ) -> Result<SelfDestructResult, DB::Error> {
         let (is_cold, target_exists) = self.load_account_exist(target, db)?;
-        // transfer all the balance
-        let acc = self.state.get_mut(&address).unwrap();
-        let balance = mem::take(&mut acc.info.balance);
-        let previously_destroyed = acc.is_selfdestructed();
-        acc.mark_selfdestruct();
 
-        // NOTE: In case that target and destroyed addresses are same, balance will be lost.
-        // ref: https://github.com/ethereum/go-ethereum/blob/141cd425310b503c5678e674a8c3872cf46b7086/core/vm/instructions.go#L832-L833
-        // https://github.com/ethereum/go-ethereum/blob/141cd425310b503c5678e674a8c3872cf46b7086/core/state/statedb.go#L449
-        if address != target {
-            let target_account = self.state.get_mut(&target).unwrap();
-            // touch target account
+        let acc = if address != target {
+            // Both accounts are loaded before this point, `address` as we execute its contract.
+            // and `target` at the beginning of the function.
+            let [acc, target_account] = self.state.get_many_mut([&address, &target]).unwrap();
             Self::touch_account(self.journal.last_mut().unwrap(), &target, target_account);
-            target_account.info.balance += balance;
-        }
+            target_account.info.balance += acc.info.balance;
+            acc
+        } else {
+            self.state.get_mut(&address).unwrap()
+        };
 
-        self.journal
-            .last_mut()
-            .unwrap()
-            .push(JournalEntry::AccountDestroyed {
+        let balance = acc.info.balance;
+        let previously_destroyed = acc.is_selfdestructed();
+        let is_cancun_enabled = SpecId::enabled(self.spec, CANCUN);
+
+        // EIP-6780 (Cancun hard-fork): selfdestruct only if contract is created in the same tx
+        let journal_entry = if acc.is_created() || !is_cancun_enabled {
+            acc.mark_selfdestruct();
+            acc.info.balance = U256::ZERO;
+            Some(JournalEntry::AccountDestroyed {
                 address,
                 target,
                 was_destroyed: previously_destroyed,
                 had_balance: balance,
-            });
+            })
+        } else if address != target {
+            acc.info.balance = U256::ZERO;
+            Some(JournalEntry::BalanceTransfer {
+                from: address,
+                to: target,
+                balance,
+            })
+        } else {
+            // State is not changed:
+            // * if we are after Cancun upgrade and
+            // * Selfdestruct account that is created in the same transaction and
+            // * Specify the target is same as selfdestructed account. The balance stays unchanged.
+            None
+        };
+
+        if let Some(entry) = journal_entry {
+            self.journal.last_mut().unwrap().push(entry);
+        };
 
         Ok(SelfDestructResult {
             had_value: balance != U256::ZERO,
@@ -589,15 +609,15 @@ impl JournaledState {
         address: B160,
         db: &mut DB,
     ) -> Result<(bool, bool), DB::Error> {
-        let is_before_spurious_dragon = self.is_before_spurious_dragon;
+        let is_spurious_dragon_enabled = SpecId::enabled(self.spec, SPURIOUS_DRAGON);
         let (acc, is_cold) = self.load_account(address, db)?;
 
-        let exist = if is_before_spurious_dragon {
+        let exist = if is_spurious_dragon_enabled {
+            !acc.is_empty()
+        } else {
             let is_existing = !acc.is_loaded_as_not_existing();
             let is_touched = acc.is_touched();
             is_existing || is_touched
-        } else {
-            !acc.is_empty()
         };
         Ok((is_cold, exist))
     }

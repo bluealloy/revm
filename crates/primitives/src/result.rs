@@ -124,10 +124,7 @@ impl Output {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum EVMError<DBError> {
     Transaction(InvalidTransaction),
-    /// `prevrandao` is not set for Merge and above.
-    PrevrandaoNotSet,
-    /// `excess_blob_gas` is not set for Cancun and above.
-    ExcessBlobGasNotSet,
+    Header(InvalidHeader),
     Database(DBError),
 }
 
@@ -138,8 +135,7 @@ impl<DBError: fmt::Display> fmt::Display for EVMError<DBError> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             EVMError::Transaction(e) => write!(f, "Transaction error: {e:?}"),
-            EVMError::PrevrandaoNotSet => f.write_str("`prevrandao` not set"),
-            EVMError::ExcessBlobGasNotSet => f.write_str("`excess_blob_gas` not set"),
+            EVMError::Header(e) => write!(f, "Header error: {e:?}"),
             EVMError::Database(e) => write!(f, "Database error: {e}"),
         }
     }
@@ -210,6 +206,22 @@ pub enum InvalidTransaction {
     TooManyBlobs,
     /// Blob transaction contains a versioned hash with an incorrect version
     BlobVersionNotSupported,
+}
+
+impl<DBError> From<InvalidHeader> for EVMError<DBError> {
+    fn from(invalid: InvalidHeader) -> Self {
+        EVMError::Header(invalid)
+    }
+}
+
+/// Errors related to misconfiguration of the  `BlockEnv`
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum InvalidHeader {
+    /// `prevrandao` is not set for Merge and above.
+    PrevrandaoNotSet,
+    /// `excess_blob_gas` is not set for Cancun and above.
+    ExcessBlobGasNotSet,
 }
 
 /// Reason a transaction successfully completed.
