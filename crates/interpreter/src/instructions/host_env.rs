@@ -68,3 +68,13 @@ pub fn blob_hash<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host)
         None => U256::ZERO,
     };
 }
+
+/// EIP-7516: BLOBBASEFEE opcode
+pub fn blob_basefee<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+    check!(interpreter, CANCUN);
+    gas!(interpreter, gas::BASE);
+    push!(
+        interpreter,
+        U256::from(host.env().block.get_blob_gasprice().unwrap_or_default())
+    );
+}

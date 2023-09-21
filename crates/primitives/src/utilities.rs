@@ -41,11 +41,11 @@ pub fn calc_excess_blob_gas(parent_excess_blob_gas: u64, parent_blob_gas_used: u
     (parent_excess_blob_gas + parent_blob_gas_used).saturating_sub(TARGET_BLOB_GAS_PER_BLOCK)
 }
 
-/// Calculates the blobfee from the header's excess blob gas field.
+/// Calculates the blob gasprice from the header's excess blob gas field.
 ///
 /// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers).
 #[inline]
-pub fn calc_blob_fee(excess_blob_gas: u64) -> u64 {
+pub fn calc_blob_gasprice(excess_blob_gas: u64) -> u64 {
     fake_exponential(
         MIN_BLOB_GASPRICE,
         excess_blob_gas,
@@ -174,7 +174,7 @@ mod tests {
     #[test]
     fn test_calc_blob_fee() {
         for &(excess, expected) in &[(0, 1), (2314057, 1), (2314058, 2), (10 * 1024 * 1024, 23)] {
-            let actual = calc_blob_fee(excess);
+            let actual = calc_blob_gasprice(excess);
             assert_eq!(actual, expected, "test: {excess}");
         }
     }
