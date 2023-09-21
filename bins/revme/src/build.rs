@@ -67,7 +67,7 @@ fn format_kzg_settings(in_path: &Path, out_dir: &Path) -> Result<String, KzgErro
         g2_points.push(bytes);
     }
 
-    if !lines.next().is_none() {
+    if lines.next().is_some() {
         return Err(KzgErrors::FileFormatError);
     }
 
