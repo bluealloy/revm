@@ -10,7 +10,9 @@ version = "1.1.2"
 readme = "../../README.md"
 
 [dependencies]
-alloy-primitives = { version = "0.3", default-features = false, features = ["rlp"] }
+alloy-primitives = { version = "0.3", default-features = false, features = [
+    "rlp",
+] }
 alloy-rlp = { version = "0.3", default-features = false, features = ["derive"] }
 bytes = { version = "1.5", default-features = false }
 hashbrown = "0.14"
@@ -22,10 +24,7 @@ bitflags = { version = "2.4.0", default-features = false }
 # For setting the CfgEnv KZGSettings. Enabled by std flag.
 c-kzg = { git = "https://github.com/ethereum/c-kzg-4844", default-features = false, optional = true }
 
-
-#utility
-hex-literal = "0.4"
-hex = { version = "0.4", default-features = false, features = ["alloc"]}
+# utility
 derive_more = "0.99"
 enumn = "0.1"
 once_cell = { version = "1.18", default-features = false }
@@ -71,7 +70,6 @@ std = [
     "alloy-primitives/std",
     "alloy-rlp/std",
     "bytes/std",
-    "hex/std",
     "bitvec/std",
     "bitflags/std",
     "dep:c-kzg",
@@ -79,7 +77,6 @@ std = [
 serde = [
     "dep:serde",
     "alloy-primitives/serde",
-    "hex/serde",
     "hashbrown/serde",
     "bytes/serde",
     "bitvec/serde",
