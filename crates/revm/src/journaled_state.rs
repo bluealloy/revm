@@ -491,26 +491,30 @@ impl JournaledState {
         let previously_destroyed = acc.is_selfdestructed();
         let is_cancun_enabled = SpecId::enabled(self.spec, CANCUN);
 
-        acc.info.balance = U256::ZERO;
-
         // EIP-6780 (Cancun hard-fork): selfdestruct only if contract is created in the same tx
         let journal_entry = if acc.is_created() || !is_cancun_enabled {
             acc.mark_selfdestruct();
-            JournalEntry::AccountDestroyed {
+            acc.info.balance = U256::ZERO;
+            Some(JournalEntry::AccountDestroyed {
                 address,
                 target,
                 was_destroyed: previously_destroyed,
                 had_balance: balance,
-            }
-        } else {
-            JournalEntry::BalanceTransfer {
+            })
+        } else if address != target {
+            acc.info.balance = U256::ZERO;
+            Some(JournalEntry::BalanceTransfer {
                 from: address,
                 to: target,
                 balance,
-            }
+            })
+        } else {
+            None
         };
 
-        self.journal.last_mut().unwrap().push(journal_entry);
+        if let Some(entry) = journal_entry {
+            self.journal.last_mut().unwrap().push(entry);
+        };
 
         Ok(SelfDestructResult {
             had_value: balance != U256::ZERO,
