@@ -509,6 +509,10 @@ impl JournaledState {
                 balance,
             })
         } else {
+            // State is not changed:
+            // * if we are after Cancun upgrade and
+            // * Selfdestruct account that is created in the same transaction and
+            // * Specify the target is same as selfdestructed account. The balance stays unchanged.
             None
         };
 
