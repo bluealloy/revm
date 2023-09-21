@@ -6,67 +6,67 @@ use crate::{
 };
 use core::cmp::Ordering;
 
-pub fn lt(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn lt<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = U256::from(op1 < *op2);
 }
 
-pub fn gt(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn gt<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = U256::from(op1 > *op2);
 }
 
-pub fn slt(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn slt<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = U256::from(i256_cmp(&op1, op2) == Ordering::Less);
 }
 
-pub fn sgt(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn sgt<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = U256::from(i256_cmp(&op1, op2) == Ordering::Greater);
 }
 
-pub fn eq(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn eq<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = U256::from(op1 == *op2);
 }
 
-pub fn iszero(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn iszero<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1);
     *op1 = U256::from(*op1 == U256::ZERO);
 }
 
-pub fn bitand(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn bitand<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = op1 & *op2;
 }
 
-pub fn bitor(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn bitor<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = op1 | *op2;
 }
 
-pub fn bitxor(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn bitxor<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = op1 ^ *op2;
 }
 
-pub fn not(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn not<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1);
     *op1 = !*op1;
 }
 
-pub fn byte(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn byte<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
 
@@ -80,7 +80,7 @@ pub fn byte(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
-pub fn shl<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn shl<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
     check!(interpreter, CONSTANTINOPLE);
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
@@ -88,7 +88,7 @@ pub fn shl<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
-pub fn shr<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn shr<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
     check!(interpreter, CONSTANTINOPLE);
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
@@ -96,7 +96,7 @@ pub fn shr<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
-pub fn sar<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn sar<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
     check!(interpreter, CONSTANTINOPLE);
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
