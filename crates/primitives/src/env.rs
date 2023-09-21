@@ -1,6 +1,6 @@
 use crate::{
-    alloc::vec::Vec, calc_blob_gasprice, Account, EVMError, InvalidTransaction, Spec, SpecId, B160,
-    B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK, MAX_INITCODE_SIZE, U256,
+    alloc::vec::Vec, calc_blob_gasprice, Account, InvalidHeader, InvalidTransaction, Spec, SpecId,
+    B160, B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK, MAX_INITCODE_SIZE, U256,
     VERSIONED_HASH_VERSION_KZG,
 };
 use bytes::Bytes;
@@ -432,14 +432,14 @@ impl Env {
 
     /// Validate the block environment.
     #[inline]
-    pub fn validate_block_env<SPEC: Spec, T>(&self) -> Result<(), EVMError<T>> {
+    pub fn validate_block_env<SPEC: Spec>(&self) -> Result<(), InvalidHeader> {
         // `prevrandao` is required for the merge
         if SPEC::enabled(SpecId::MERGE) && self.block.prevrandao.is_none() {
-            return Err(EVMError::PrevrandaoNotSet);
+            return Err(InvalidHeader::PrevrandaoNotSet);
         }
         // `excess_blob_gas` is required for Cancun
         if SPEC::enabled(SpecId::CANCUN) && self.block.blob_excess_gas_and_price.is_none() {
-            return Err(EVMError::ExcessBlobGasNotSet);
+            return Err(InvalidHeader::ExcessBlobGasNotSet);
         }
         Ok(())
     }
