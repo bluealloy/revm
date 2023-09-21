@@ -4,7 +4,9 @@ use criterion::{
 use revm::{
     db::BenchmarkDB,
     interpreter::{analysis::to_analysed, BytecodeLocked, Contract, DummyHost, Interpreter},
-    primitives::{address, bytes, BerlinSpec, Bytecode, BytecodeState, Bytes, TransactTo, U256},
+    primitives::{
+        address, bytes, hex, BerlinSpec, Bytecode, BytecodeState, Bytes, TransactTo, U256,
+    },
 };
 use std::time::Duration;
 

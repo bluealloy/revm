@@ -26,12 +26,6 @@ sha2 = { version = "0.10.5", default-features = false }
 sha3 = { version = "0.10.7", default-features = false }
 c-kzg = { git = "https://github.com/ethereum/c-kzg-4844", default-features = false, optional = true }
 
-[dev-dependencies]
-hex = "0.4"
-
-[build-dependencies]
-hex = "0.4"
-
 [features]
 default = ["secp256k1", "std"]
 # Used to disable kzg lib as i couldn't make it compile for wasm target

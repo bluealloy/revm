@@ -2378,8 +2378,6 @@ dependencies = [
  "ethers-core",
  "ethers-providers",
  "futures",
- "hex",
- "hex-literal",
  "revm-interpreter",
  "revm-precompile",
  "serde",
@@ -2405,7 +2403,6 @@ name = "revm-precompile"
 version = "2.0.3"
 dependencies = [
  "c-kzg",
- "hex",
  "k256",
  "num",
  "once_cell",
@@ -2433,7 +2430,6 @@ dependencies = [
  "enumn",
  "hashbrown 0.14.0",
  "hex",
- "hex-literal",
  "once_cell",
  "primitive-types",
  "proptest",
@@ -2449,8 +2445,6 @@ dependencies = [
  "alloy-rlp",
  "hash-db",
  "hashbrown 0.14.0",
- "hex",
- "hex-literal",
  "indicatif",
  "plain_hasher",
  "revm",

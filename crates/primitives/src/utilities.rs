@@ -69,35 +69,6 @@ pub fn fake_exponential(factor: u64, numerator: u64, denominator: u64) -> u64 {
     (output / denominator) as u64
 }
 
-/// Serde functions to serde as [bytes::Bytes] hex string
-#[cfg(feature = "serde")]
-pub mod serde_hex_bytes {
-    use alloc::string::{String, ToString};
-    use serde::{Deserialize, Deserializer, Serializer};
-
-    pub fn serialize<S, T>(x: T, s: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-        T: AsRef<[u8]>,
-    {
-        s.serialize_str(&alloc::format!("0x{}", hex::encode(x.as_ref())))
-    }
-
-    pub fn deserialize<'de, D>(d: D) -> Result<bytes::Bytes, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let value = String::deserialize(d)?;
-        if let Some(value) = value.strip_prefix("0x") {
-            hex::decode(value)
-        } else {
-            hex::decode(&value)
-        }
-        .map(Into::into)
-        .map_err(|e| serde::de::Error::custom(e.to_string()))
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

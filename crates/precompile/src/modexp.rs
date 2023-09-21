@@ -196,8 +196,8 @@ fn berlin_gas_calc(base_length: u64, exp_length: u64, mod_length: u64, exp_highp
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
+    use revm_primitives::hex;
 
     struct Test {
         input: &'static str,
