@@ -1,5 +1,5 @@
 use crate::{
-    alloc::vec::Vec, calc_blob_fee, Account, EVMError, InvalidTransaction, Spec, SpecId, B160,
+    alloc::vec::Vec, calc_blob_gasprice, Account, EVMError, InvalidTransaction, Spec, SpecId, B160,
     B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK, MAX_INITCODE_SIZE, U256,
     VERSIONED_HASH_VERSION_KZG,
 };
@@ -44,13 +44,14 @@ pub struct BlockEnv {
     ///
     /// [EIP-4399]: https://eips.ethereum.org/EIPS/eip-4399
     pub prevrandao: Option<B256>,
-    /// Excess blob gas and blob fee.
+    /// Excess blob gas and blob gasprice.
     /// See also [`calc_excess_blob_gas`](crate::calc_excess_blob_gas)
+    /// and [`calc_blob_gasprice`](crate::calc_blob_gasprice).
     ///
     /// Incorporated as part of the Cancun upgrade via [EIP-4844].
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-    pub blob_gas_and_fee: Option<BlobGasAndFee>,
+    pub blob_gas_and_fee: Option<BlobExcessGasAndPrice>,
 }
 
 /// Structure holding block blob excess gas and it calculates blob fee.
@@ -60,18 +61,18 @@ pub struct BlockEnv {
 /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct BlobGasAndFee {
+pub struct BlobExcessGasAndPrice {
     pub excess_blob_gas: u64,
-    pub blob_fee: u64,
+    pub blob_gasprice: u64,
 }
 
-impl BlobGasAndFee {
+impl BlobExcessGasAndPrice {
     /// Takes excess blob gas and calculated blob fee with [`calc_blob_fee`]
     pub fn new(excess_blob_gas: u64) -> Self {
-        let blob_fee = calc_blob_fee(excess_blob_gas);
+        let blob_gasprice = calc_blob_gasprice(excess_blob_gas);
         Self {
             excess_blob_gas,
-            blob_fee,
+            blob_gasprice,
         }
     }
 }
@@ -80,7 +81,7 @@ impl BlockEnv {
     /// Takes `blob_excess_gas` saves it inside env
     /// and calculates `blob_fee` with [`BlobGasAndFee`].
     pub fn set_blob_gas_and_fee(&mut self, excess_blob_gas: u64) {
-        self.blob_gas_and_fee = Some(BlobGasAndFee::new(excess_blob_gas));
+        self.blob_gas_and_fee = Some(BlobExcessGasAndPrice::new(excess_blob_gas));
     }
     /// See [EIP-4844] and [`Env::calc_data_fee`].
     ///
@@ -89,7 +90,7 @@ impl BlockEnv {
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     #[inline]
     pub fn get_blob_gasprice(&self) -> Option<u64> {
-        self.blob_gas_and_fee.as_ref().map(|a| a.blob_fee)
+        self.blob_gas_and_fee.as_ref().map(|a| a.blob_gasprice)
     }
 
     /// Return `blob_excess_gas` header field. See [EIP-4844].
@@ -378,7 +379,7 @@ impl Default for BlockEnv {
             basefee: U256::ZERO,
             difficulty: U256::ZERO,
             prevrandao: Some(B256::zero()),
-            blob_gas_and_fee: Some(BlobGasAndFee::new(0)),
+            blob_gas_and_fee: Some(BlobExcessGasAndPrice::new(0)),
         }
     }
 }
