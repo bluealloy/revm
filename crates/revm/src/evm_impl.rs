@@ -7,9 +7,7 @@ use crate::journaled_state::{is_precompile, JournalCheckpoint};
 use crate::primitives::{
     create2_address, create_address, keccak256, Account, AnalysisKind, Bytecode, Bytes, EVMError,
     EVMResult, Env, ExecutionResult, HashMap, InvalidTransaction, Log, Output, ResultAndState,
-    Spec,
-    SpecId::{self, *},
-    TransactTo, B160, B256, U256,
+    Spec, SpecId::*, TransactTo, B160, B256, U256,
 };
 use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector};
 use alloc::boxed::Box;
@@ -267,11 +265,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         inspector: &'a mut dyn Inspector<DB>,
         precompiles: Precompiles,
     ) -> Self {
-        let journaled_state = if GSPEC::enabled(SpecId::SPURIOUS_DRAGON) {
-            JournaledState::new(precompiles.len())
-        } else {
-            JournaledState::new_legacy(precompiles.len())
-        };
+        let journaled_state = JournaledState::new(precompiles.len(), GSPEC::SPEC_ID);
         Self {
             data: EVMData {
                 env,
