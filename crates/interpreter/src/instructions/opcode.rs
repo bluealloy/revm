@@ -58,7 +58,7 @@ macro_rules! opcodes {
 
         /// Evaluates the opcode in the given context.
         #[inline(always)]
-        pub(crate) fn eval<H: Host, SPEC: Spec>(opcode: u8, interpreter: &mut Interpreter, host: &mut H) {
+        pub fn eval<H: Host, SPEC: Spec>(opcode: u8, interpreter: &mut Interpreter, host: &mut H) {
             // See https://github.com/bluealloy/revm/issues/310#issuecomment-1664381513
             // for previous efforts on optimizing this function.
             let f: Instruction<H> = match opcode {
