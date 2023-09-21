@@ -70,7 +70,7 @@ pub fn blob_hash<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut 
 }
 
 /// EIP-7516: BLOBBASEFEE opcode
-pub fn blob_basefee<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+pub fn blob_basefee<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     check!(interpreter, CANCUN);
     gas!(interpreter, gas::BASE);
     push!(
