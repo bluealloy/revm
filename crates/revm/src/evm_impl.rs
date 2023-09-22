@@ -1,7 +1,8 @@
+use crate::handlers;
 use crate::interpreter::{
-    analysis::to_analysed, gas, instruction_result::SuccessOrHalt, return_ok, return_revert,
-    CallContext, CallInputs, CallScheme, Contract, CreateInputs, CreateScheme, Gas, Host,
-    InstructionResult, Interpreter, SelfDestructResult, Transfer, CALL_STACK_LIMIT,
+    analysis::to_analysed, gas, instruction_result::SuccessOrHalt, return_ok, CallContext,
+    CallInputs, CallScheme, Contract, CreateInputs, CreateScheme, Gas, Host, InstructionResult,
+    Interpreter, SelfDestructResult, Transfer, CALL_STACK_LIMIT,
 };
 use crate::journaled_state::{is_precompile, JournalCheckpoint};
 use crate::primitives::{
@@ -194,7 +195,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let tx_gas_limit = env.tx.gas_limit;
 
         #[cfg(feature = "optimism")]
-        let (tx_mint, tx_system, tx_l1_cost, is_deposit, l1_block_info) = {
+        let (tx_mint, is_deposit, tx_l1_cost, l1_block_info) = {
             let is_deposit = env.tx.optimism.source_hash.is_some();
 
             let l1_block_info =
@@ -213,13 +214,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                     .unwrap_or(U256::ZERO)
             });
 
-            (
-                env.tx.optimism.mint,
-                env.tx.optimism.is_system_transaction,
-                tx_l1_cost,
-                is_deposit,
-                l1_block_info,
-            )
+            (env.tx.optimism.mint, is_deposit, tx_l1_cost, l1_block_info)
         };
 
         let initial_gas_spend = initial_tx_gas::<GSPEC>(
@@ -287,7 +282,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let transact_gas_limit = tx_gas_limit - initial_gas_spend;
 
         // call inner handling of call/create
-        let (exit_reason, ret_gas, output) = match self.data.env.tx.transact_to {
+        let (call_result, ret_gas, output) = match self.data.env.tx.transact_to {
             TransactTo::Call(address) => {
                 // Nonce is already checked
                 caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
@@ -324,39 +319,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             }
         };
 
-        // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
-        let mut gas = Gas::new(tx_gas_limit);
-        gas.record_cost(tx_gas_limit);
-
-        if crate::USE_GAS {
-            match exit_reason {
-                return_ok!() => {
-                    #[cfg(not(feature = "optimism"))]
-                    gas.consume_gas(ret_gas);
-                    #[cfg(feature = "optimism")]
-                    gas.consume_gas(
-                        self.data.env.cfg.optimism,
-                        is_deposit,
-                        GSPEC::enabled(SpecId::REGOLITH),
-                        tx_system,
-                        tx_gas_limit,
-                        ret_gas,
-                    );
-                }
-                return_revert!() => {
-                    #[cfg(not(feature = "optimism"))]
-                    gas.consume_revert_gas(ret_gas);
-                    #[cfg(feature = "optimism")]
-                    gas.consume_revert_gas(
-                        self.data.env.cfg.optimism,
-                        is_deposit,
-                        GSPEC::enabled(SpecId::REGOLITH),
-                        ret_gas,
-                    );
-                }
-                _ => {}
-            }
-        }
+        let gas = handlers::handle_call_return::<GSPEC>(self.env(), call_result, ret_gas);
 
         let (state, logs, gas_used, gas_refunded) = self.finalize::<GSPEC>(
             &gas,
@@ -364,7 +327,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             l1_block_info.as_ref(),
         );
 
-        let result = match exit_reason.into() {
+        let result = match call_result.into() {
             SuccessOrHalt::Success(reason) => ExecutionResult::Success {
                 reason,
                 gas_used,
@@ -403,7 +366,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                 return Err(EVMError::Database(self.data.error.take().unwrap()));
             }
             SuccessOrHalt::InternalContinue => {
-                panic!("Internal return flags should remain internal {exit_reason:?}")
+                panic!("Internal return flags should remain internal {call_result:?}")
             }
         };
 

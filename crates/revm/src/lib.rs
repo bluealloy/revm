@@ -7,6 +7,7 @@ extern crate alloc;
 pub mod db;
 mod evm;
 mod evm_impl;
+pub mod handlers;
 mod inspector;
 mod journaled_state;
 
