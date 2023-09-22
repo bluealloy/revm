@@ -1,8 +1,9 @@
 use crate::B160;
 
-/// Interpreter stack limit
-pub const STACK_LIMIT: u64 = 1024;
-/// EVM call stack limit
+/// EVM Interpreter stack limit.
+pub const STACK_LIMIT: usize = 1024;
+
+/// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
 
 /// EIP-170: Contract code size limit

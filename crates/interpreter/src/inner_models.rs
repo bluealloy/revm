@@ -18,20 +18,26 @@ pub struct CallInputs {
     pub gas_limit: u64,
     /// The context of the call.
     pub context: CallContext,
-    /// Is static call
+    /// Whether this is a static call.
     pub is_static: bool,
 }
 
+/// Inputs for a create call.
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CreateInputs {
+    /// Caller address of the EVM.
     pub caller: B160,
+    /// The create scheme.
     pub scheme: CreateScheme,
+    /// The value to transfer.
     pub value: U256,
+    /// The init code of the contract.
     #[cfg_attr(
         feature = "serde",
         serde(with = "crate::primitives::utilities::serde_hex_bytes")
     )]
     pub init_code: Bytes,
+    /// The gas limit of the call.
     pub gas_limit: u64,
 }
 
@@ -49,13 +55,13 @@ pub enum CallScheme {
     StaticCall,
 }
 
-/// CallContext of the runtime.
+/// Context of a runtime call.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallContext {
     /// Execution address.
     pub address: B160,
-    /// Caller of the EVM.
+    /// Caller address of the EVM.
     pub caller: B160,
     /// The address the contract code was loaded from, if any.
     pub code_address: B160,
@@ -81,14 +87,15 @@ impl Default for CallContext {
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Transfer {
-    /// Source address.
+    /// The source address.
     pub source: B160,
-    /// Target address.
+    /// The target address.
     pub target: B160,
-    /// Transfer value.
+    /// The transfer value.
     pub value: U256,
 }
 
+/// Result of a call that resulted in a self destruct.
 #[derive(Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SelfDestructResult {

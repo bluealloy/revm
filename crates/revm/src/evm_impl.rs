@@ -1,14 +1,14 @@
 use crate::handler::Handler;
 use crate::interpreter::{
-    analysis::to_analysed, gas, instruction_result::SuccessOrHalt, return_ok, CallContext,
-    CallInputs, CallScheme, Contract, CreateInputs, CreateScheme, Gas, Host, InstructionResult,
-    Interpreter, SelfDestructResult, Transfer, CALL_STACK_LIMIT,
+    analysis::to_analysed, gas, return_ok, CallContext, CallInputs, CallScheme, Contract,
+    CreateInputs, CreateScheme, Gas, Host, InstructionResult, Interpreter, SelfDestructResult,
+    SuccessOrHalt, Transfer,
 };
 use crate::journaled_state::{is_precompile, JournalCheckpoint};
 use crate::primitives::{
     create2_address, create_address, keccak256, AnalysisKind, Bytecode, Bytes, EVMError, EVMResult,
     Env, ExecutionResult, InvalidTransaction, Log, Output, ResultAndState, Spec, SpecId::*,
-    TransactTo, B160, B256, U256,
+    TransactTo, B160, B256, CALL_STACK_LIMIT, U256,
 };
 use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector};
 use alloc::boxed::Box;

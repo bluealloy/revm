@@ -195,8 +195,7 @@ mod tests {
         let mut ret_gas = Gas::new(90);
         ret_gas.record_refund(20);
 
-        let gas =
-            handle_call_return::<RegolithSpec>(&env, InstructionResult::Stop, ret_gas.clone());
+        let gas = handle_call_return::<RegolithSpec>(&env, InstructionResult::Stop, ret_gas);
         assert_eq!(gas.remaining(), 90);
         assert_eq!(gas.spend(), 10);
         assert_eq!(gas.refunded(), 20);

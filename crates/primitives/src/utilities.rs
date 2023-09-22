@@ -1,6 +1,7 @@
 use crate::{
     B160, B256, BLOB_GASPRICE_UPDATE_FRACTION, MIN_BLOB_GASPRICE, TARGET_BLOB_GAS_PER_BLOCK, U256,
 };
+use core::ops::{BitAnd, Not};
 use hex_literal::hex;
 use sha3::{Digest, Keccak256};
 
@@ -8,12 +9,15 @@ pub const KECCAK_EMPTY: B256 = B256(hex!(
     "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
 ));
 
-#[inline(always)]
+/// Simple interface to the [`Keccak-256`] hash function.
+///
+/// [`Keccak-256`]: https://en.wikipedia.org/wiki/SHA-3
+#[inline]
 pub fn keccak256(input: &[u8]) -> B256 {
-    B256(Keccak256::digest(input)[..].try_into().unwrap())
+    B256(Keccak256::digest(input).into())
 }
 
-/// Returns the address for the legacy `CREATE` scheme: [`crate::env::CreateScheme::Create`]
+/// Returns the address for the legacy [`CREATE`](crate::env::CreateScheme::Create) scheme.
 pub fn create_address(caller: B160, nonce: u64) -> B160 {
     let mut stream = rlp::RlpStream::new_list(2);
     stream.append(&caller.0.as_ref());
@@ -22,7 +26,7 @@ pub fn create_address(caller: B160, nonce: u64) -> B160 {
     B160(out[12..].try_into().unwrap())
 }
 
-/// Returns the address for the `CREATE2` scheme: [`crate::env::CreateScheme::Create2`]
+/// Returns the address for the [`CREATE2`](crate::env::CreateScheme::Create2) scheme.
 pub fn create2_address(caller: B160, code_hash: B256, salt: U256) -> B160 {
     let mut hasher = Keccak256::new();
     hasher.update([0xff]);
@@ -35,15 +39,17 @@ pub fn create2_address(caller: B160, code_hash: B256, salt: U256) -> B160 {
 
 /// Calculates the `excess_blob_gas` from the parent header's `blob_gas_used` and `excess_blob_gas`.
 ///
-/// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers).
+/// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers
+/// (`calc_excess_blob_gas`).
 #[inline]
 pub fn calc_excess_blob_gas(parent_excess_blob_gas: u64, parent_blob_gas_used: u64) -> u64 {
     (parent_excess_blob_gas + parent_blob_gas_used).saturating_sub(TARGET_BLOB_GAS_PER_BLOCK)
 }
 
-/// Calculates the blob gasprice from the header's excess blob gas field.
+/// Calculates the blob gas price from the header's excess blob gas field.
 ///
-/// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers).
+/// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers)
+/// (`get_blob_gasprice`).
 #[inline]
 pub fn calc_blob_gasprice(excess_blob_gas: u64) -> u64 {
     fake_exponential(
@@ -57,11 +63,12 @@ pub fn calc_blob_gasprice(excess_blob_gas: u64) -> u64 {
 ///
 /// This is used to calculate the blob price.
 ///
-/// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers).
+/// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers)
+/// (`fake_exponential`).
 ///
-/// # Panic
+/// # Panics
 ///
-/// Panics if `denominator` is zero.
+/// This function panics if `denominator` is zero.
 #[inline]
 pub fn fake_exponential(factor: u64, numerator: u64, denominator: u64) -> u64 {
     assert_ne!(denominator, 0, "attempt to divide by zero");
@@ -80,6 +87,13 @@ pub fn fake_exponential(factor: u64, numerator: u64, denominator: u64) -> u64 {
         i += 1;
     }
     (output / denominator) as u64
+}
+
+/// Rounds up `x` to the closest multiple of 32. If `x % 32 == 0` then `x` is returned.
+#[inline]
+pub fn next_multiple_of_32(x: usize) -> Option<usize> {
+    let r = x.bitand(31).not().wrapping_add(1).bitand(31);
+    x.checked_add(r)
 }
 
 /// Serde functions to serde as [bytes::Bytes] hex string
@@ -202,6 +216,24 @@ mod tests {
         ] {
             let actual = fake_exponential(factor, numerator, denominator);
             assert_eq!(actual, expected, "test: {t:?}");
+        }
+    }
+
+    #[test]
+    fn test_next_multiple_of_32() {
+        // next_multiple_of_32 returns x when it is a multiple of 32
+        for i in 0..32 {
+            let x = i * 32;
+            assert_eq!(Some(x), next_multiple_of_32(x));
+        }
+
+        // next_multiple_of_32 rounds up to the nearest multiple of 32 when `x % 32 != 0`
+        for x in 0..1024 {
+            if x % 32 == 0 {
+                continue;
+            }
+            let next_multiple = x + 32 - (x % 32);
+            assert_eq!(Some(next_multiple), next_multiple_of_32(x));
         }
     }
 }

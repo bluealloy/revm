@@ -1,9 +1,5 @@
 use crate::{alloc::vec::Vec, primitives::U256};
-use core::{
-    cmp::min,
-    fmt,
-    ops::{BitAnd, Not},
-};
+use core::{cmp::min, fmt};
 
 /// A sequential memory. It uses Rust's `Vec` for internal
 /// representation.
@@ -183,17 +179,9 @@ impl Memory {
     }
 }
 
-/// Rounds up `x` to the closest multiple of 32. If `x % 32 == 0` then `x` is returned.
-#[inline]
-pub(crate) fn next_multiple_of_32(x: usize) -> Option<usize> {
-    let r = x.bitand(31).not().wrapping_add(1).bitand(31);
-    x.checked_add(r)
-}
-
 #[cfg(test)]
 mod tests {
-    use super::next_multiple_of_32;
-    use crate::Memory;
+    use super::*;
 
     #[test]
     fn test_copy() {
@@ -211,23 +199,5 @@ mod tests {
         // Verify the copied data
         let copied_data = memory.slice(5, 4);
         assert_eq!(copied_data, &[1, 2, 3, 4]);
-    }
-
-    #[test]
-    fn test_next_multiple_of_32() {
-        // next_multiple_of_32 returns x when it is a multiple of 32
-        for i in 0..32 {
-            let x = i * 32;
-            assert_eq!(Some(x), next_multiple_of_32(x));
-        }
-
-        // next_multiple_of_32 rounds up to the nearest multiple of 32 when `x % 32 != 0`
-        for x in 0..1024 {
-            if x % 32 == 0 {
-                continue;
-            }
-            let next_multiple = x + 32 - (x % 32);
-            assert_eq!(Some(next_multiple), next_multiple_of_32(x));
-        }
     }
 }

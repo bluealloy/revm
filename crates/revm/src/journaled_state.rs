@@ -1,4 +1,4 @@
-use crate::interpreter::{inner_models::SelfDestructResult, InstructionResult};
+use crate::interpreter::{InstructionResult, SelfDestructResult};
 use crate::primitives::{
     db::Database, hash_map::Entry, Account, Bytecode, HashMap, Log, Spec, SpecId::*, State,
     StorageSlot, TransientStorage, B160, KECCAK_EMPTY, PRECOMPILE3, U256,

@@ -1,12 +1,9 @@
 use crate::{
-    primitives::{B256, U256},
+    primitives::{B256, STACK_LIMIT, U256},
     InstructionResult,
 };
 use alloc::vec::Vec;
 use core::fmt;
-
-/// The EVM stack limit, in number of items.
-pub const STACK_LIMIT: usize = 1024;
 
 /// EVM stack.
 #[derive(Clone, Debug, Eq, PartialEq)]

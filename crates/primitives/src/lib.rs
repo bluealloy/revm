@@ -1,23 +1,26 @@
+//! # revm-primitives
+//!
+//! EVM primitive types.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
 
-pub mod bits;
-pub mod bytecode;
-pub mod constants;
+mod bits;
+mod bytecode;
+mod constants;
 pub mod db;
 pub mod env;
 #[cfg(feature = "c-kzg")]
 pub mod kzg;
-pub mod log;
+mod log;
 pub mod precompile;
 pub mod result;
 pub mod specification;
 pub mod state;
 pub mod utilities;
 
-pub use bits::B160;
-pub use bits::B256;
+pub use bits::*;
 pub use bitvec;
 pub use bytecode::*;
 pub use bytes;
@@ -29,7 +32,7 @@ pub use hex;
 pub use hex_literal;
 #[cfg(feature = "c-kzg")]
 pub use kzg::{EnvKzgSettings, KzgSettings};
-pub use log::Log;
+pub use log::*;
 pub use precompile::*;
 pub use result::*;
 pub use ruint;
