@@ -7,9 +7,7 @@ use crate::journaled_state::{is_precompile, JournalCheckpoint};
 use crate::primitives::{
     create2_address, create_address, keccak256, Account, Address, AnalysisKind, Bytecode, Bytes,
     EVMError, EVMResult, Env, ExecutionResult, HashMap, InvalidTransaction, Log, Output,
-    ResultAndState, Spec,
-    SpecId::*,
-    TransactTo, B256, U256,
+    ResultAndState, Spec, SpecId::*, TransactTo, B256, U256,
 };
 use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector};
 use alloc::boxed::Box;
