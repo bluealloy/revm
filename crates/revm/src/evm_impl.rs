@@ -8,7 +8,7 @@ use crate::primitives::{
     create2_address, create_address, keccak256, Account, Address, AnalysisKind, Bytecode, Bytes,
     EVMError, EVMResult, Env, ExecutionResult, HashMap, InvalidTransaction, Log, Output,
     ResultAndState, Spec,
-    SpecId::{self, *},
+    SpecId::*,
     TransactTo, B256, U256,
 };
 use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector};
@@ -97,7 +97,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let env = self.env();
 
         // Important: validate block before tx.
-        env.validate_block_env::<GSPEC, DB::Error>()?;
+        env.validate_block_env::<GSPEC>()?;
         env.validate_tx::<GSPEC>()?;
 
         let initial_gas_spend = initial_tx_gas::<GSPEC>(
@@ -267,11 +267,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         inspector: &'a mut dyn Inspector<DB>,
         precompiles: Precompiles,
     ) -> Self {
-        let journaled_state = if GSPEC::enabled(SpecId::SPURIOUS_DRAGON) {
-            JournaledState::new(precompiles.len())
-        } else {
-            JournaledState::new_legacy(precompiles.len())
-        };
+        let journaled_state = JournaledState::new(precompiles.len(), GSPEC::SPEC_ID);
         Self {
             data: EVMData {
                 env,

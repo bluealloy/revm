@@ -10,7 +10,7 @@ use alloc::{boxed::Box, vec::Vec};
 use core::cmp::min;
 use revm_primitives::BLOCK_HASH_HISTORY;
 
-pub fn balance<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+pub fn balance<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     pop_address!(interpreter, address);
     let Some((balance, is_cold)) = host.balance(address) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
@@ -31,7 +31,7 @@ pub fn balance<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
 }
 
 /// EIP-1884: Repricing for trie-size-dependent opcodes
-pub fn selfbalance<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+pub fn selfbalance<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     check!(interpreter, ISTANBUL);
     gas!(interpreter, gas::LOW);
     let Some((balance, _)) = host.balance(interpreter.contract.address) else {
@@ -41,7 +41,7 @@ pub fn selfbalance<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Hos
     push!(interpreter, balance);
 }
 
-pub fn extcodesize<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+pub fn extcodesize<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     pop_address!(interpreter, address);
     let Some((code, is_cold)) = host.code(address) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
@@ -66,7 +66,7 @@ pub fn extcodesize<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Hos
 }
 
 /// EIP-1052: EXTCODEHASH opcode
-pub fn extcodehash<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+pub fn extcodehash<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     check!(interpreter, CONSTANTINOPLE);
     pop_address!(interpreter, address);
     let Some((code_hash, is_cold)) = host.code_hash(address) else {
@@ -90,7 +90,7 @@ pub fn extcodehash<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Hos
     push_b256!(interpreter, code_hash);
 }
 
-pub fn extcodecopy<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+pub fn extcodecopy<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     pop_address!(interpreter, address);
     pop!(interpreter, memory_offset, code_offset, len_u256);
 
@@ -117,7 +117,7 @@ pub fn extcodecopy<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Hos
         .set_data(memory_offset, code_offset, len, code.bytes());
 }
 
-pub fn blockhash(interpreter: &mut Interpreter, host: &mut dyn Host) {
+pub fn blockhash<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
     gas!(interpreter, gas::BLOCKHASH);
     pop_top!(interpreter, number);
 
@@ -136,7 +136,7 @@ pub fn blockhash(interpreter: &mut Interpreter, host: &mut dyn Host) {
     *number = U256::ZERO;
 }
 
-pub fn sload<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+pub fn sload<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     pop!(interpreter, index);
 
     let Some((value, is_cold)) = host.sload(interpreter.contract.address, index) else {
@@ -147,7 +147,7 @@ pub fn sload<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     push!(interpreter, value);
 }
 
-pub fn sstore<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+pub fn sstore<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     check_staticcall!(interpreter);
 
     pop!(interpreter, index, value);
@@ -166,7 +166,7 @@ pub fn sstore<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
 
 /// EIP-1153: Transient storage opcodes
 /// Store value to transient storage
-pub fn tstore<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+pub fn tstore<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     check!(interpreter, CANCUN);
     check_staticcall!(interpreter);
     gas!(interpreter, gas::WARM_STORAGE_READ_COST);
@@ -178,7 +178,7 @@ pub fn tstore<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
 
 /// EIP-1153: Transient storage opcodes
 /// Load value from transient storage
-pub fn tload<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+pub fn tload<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     check!(interpreter, CANCUN);
     gas!(interpreter, gas::WARM_STORAGE_READ_COST);
 
@@ -187,7 +187,7 @@ pub fn tload<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     *index = host.tload(interpreter.contract.address, *index);
 }
 
-pub fn log<const N: usize>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+pub fn log<H: Host, const N: usize>(interpreter: &mut Interpreter, host: &mut H) {
     check_staticcall!(interpreter);
 
     pop!(interpreter, offset, len);
@@ -217,7 +217,7 @@ pub fn log<const N: usize>(interpreter: &mut Interpreter, host: &mut dyn Host) {
     host.log(interpreter.contract.address, topics, data);
 }
 
-pub fn selfdestruct<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
+pub fn selfdestruct<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     check_staticcall!(interpreter);
     pop_address!(interpreter, target);
 
@@ -236,9 +236,9 @@ pub fn selfdestruct<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Ho
 }
 
 #[inline(never)]
-pub fn prepare_create_inputs<const IS_CREATE2: bool, SPEC: Spec>(
+pub fn prepare_create_inputs<H: Host, const IS_CREATE2: bool, SPEC: Spec>(
     interpreter: &mut Interpreter,
-    host: &mut dyn Host,
+    host: &mut H,
     create_inputs: &mut Option<Box<CreateInputs>>,
 ) {
     check_staticcall!(interpreter);
@@ -304,12 +304,12 @@ pub fn prepare_create_inputs<const IS_CREATE2: bool, SPEC: Spec>(
     }));
 }
 
-pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
+pub fn create<H: Host, const IS_CREATE2: bool, SPEC: Spec>(
     interpreter: &mut Interpreter,
-    host: &mut dyn Host,
+    host: &mut H,
 ) {
     let mut create_input: Option<Box<CreateInputs>> = None;
-    prepare_create_inputs::<IS_CREATE2, SPEC>(interpreter, host, &mut create_input);
+    prepare_create_inputs::<H, IS_CREATE2, SPEC>(interpreter, host, &mut create_input);
 
     let Some(mut create_input) = create_input else {
         return;
@@ -349,27 +349,27 @@ pub fn create<const IS_CREATE2: bool, SPEC: Spec>(
     }
 }
 
-pub fn call<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
-    call_inner::<SPEC>(CallScheme::Call, interpreter, host);
+pub fn call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+    call_inner::<H, SPEC>(CallScheme::Call, interpreter, host);
 }
 
-pub fn call_code<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
-    call_inner::<SPEC>(CallScheme::CallCode, interpreter, host);
+pub fn call_code<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+    call_inner::<H, SPEC>(CallScheme::CallCode, interpreter, host);
 }
 
-pub fn delegate_call<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
-    call_inner::<SPEC>(CallScheme::DelegateCall, interpreter, host);
+pub fn delegate_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+    call_inner::<H, SPEC>(CallScheme::DelegateCall, interpreter, host);
 }
 
-pub fn static_call<SPEC: Spec>(interpreter: &mut Interpreter, host: &mut dyn Host) {
-    call_inner::<SPEC>(CallScheme::StaticCall, interpreter, host);
+pub fn static_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+    call_inner::<H, SPEC>(CallScheme::StaticCall, interpreter, host);
 }
 
 #[inline(never)]
-fn prepare_call_inputs<SPEC: Spec>(
+fn prepare_call_inputs<H: Host, SPEC: Spec>(
     interpreter: &mut Interpreter,
     scheme: CallScheme,
-    host: &mut dyn Host,
+    host: &mut H,
     result_len: &mut usize,
     result_offset: &mut usize,
     result_call_inputs: &mut Option<Box<CallInputs>>,
@@ -504,10 +504,10 @@ fn prepare_call_inputs<SPEC: Spec>(
     }));
 }
 
-pub fn call_inner<SPEC: Spec>(
+pub fn call_inner<H: Host, SPEC: Spec>(
     scheme: CallScheme,
     interpreter: &mut Interpreter,
-    host: &mut dyn Host,
+    host: &mut H,
 ) {
     match scheme {
         // EIP-7: DELEGATECALL
@@ -521,7 +521,7 @@ pub fn call_inner<SPEC: Spec>(
     let mut out_offset: usize = 0;
     let mut out_len: usize = 0;
     let mut call_input: Option<Box<CallInputs>> = None;
-    prepare_call_inputs::<SPEC>(
+    prepare_call_inputs::<H, SPEC>(
         interpreter,
         scheme,
         host,
