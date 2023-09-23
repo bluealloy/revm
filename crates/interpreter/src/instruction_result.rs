@@ -17,10 +17,10 @@ pub enum InstructionResult {
 
     // error codes
     OutOfGas = 0x50,
-    MemoryOOG = 0x51,
-    MemoryLimitOOG = 0x52,
-    PrecompileOOG = 0x53,
-    InvalidOperandOOG = 0x54,
+    MemoryOOG,
+    MemoryLimitOOG,
+    PrecompileOOG,
+    InvalidOperandOOG,
     OpcodeNotFound,
     CallNotAllowedInsideStatic,
     StateChangeDuringStaticCall,

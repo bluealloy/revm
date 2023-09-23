@@ -124,23 +124,23 @@ impl Output {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum EVMError<DBError> {
     Transaction(InvalidTransaction),
-    /// REVM specific and related to environment.
+    /// `prevrandao` is not set for Merge and above.
     PrevrandaoNotSet,
+    /// `excess_blob_gas` is not set for Cancun and above.
+    ExcessBlobGasNotSet,
     Database(DBError),
 }
 
 #[cfg(feature = "std")]
-impl<DBError> std::error::Error for EVMError<DBError> where Self: fmt::Debug + fmt::Display {}
+impl<DBError: fmt::Debug + fmt::Display> std::error::Error for EVMError<DBError> {}
 
-impl<DBError> fmt::Display for EVMError<DBError>
-where
-    DBError: fmt::Display,
-{
+impl<DBError: fmt::Display> fmt::Display for EVMError<DBError> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            EVMError::Transaction(v) => write!(f, "Transaction error: {:?}", v),
-            EVMError::PrevrandaoNotSet => f.write_str("Prevrandao not set"),
-            EVMError::Database(v) => write!(f, "Database error: {}", v),
+            EVMError::Transaction(e) => write!(f, "Transaction error: {e:?}"),
+            EVMError::PrevrandaoNotSet => f.write_str("`prevrandao` not set"),
+            EVMError::ExcessBlobGasNotSet => f.write_str("`excess_blob_gas` not set"),
+            EVMError::Database(e) => write!(f, "Database error: {e}"),
         }
     }
 }
@@ -154,9 +154,21 @@ impl<DBError> From<InvalidTransaction> for EVMError<DBError> {
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InvalidTransaction {
-    GasMaxFeeGreaterThanPriorityFee,
+    /// When using the EIP-1559 fee model introduced in the London upgrade, transactions specify two primary fee fields:
+    /// - `gas_max_fee`: The maximum total fee a user is willing to pay, inclusive of both base fee and priority fee.
+    /// - `gas_priority_fee`: The extra amount a user is willing to give directly to the miner, often referred to as the "tip".
+    ///
+    /// Provided `gas_priority_fee` exceeds the total `gas_max_fee`.
+    PriorityFeeGreaterThanMaxFee,
+    /// EIP-1559: `gas_price` is less than `basefee`.
     GasPriceLessThanBasefee,
+    /// `gas_limit` in the tx is bigger than `block_gas_limit`.
     CallerGasLimitMoreThanBlock,
+    /// Initial gas for a Call is bigger than `gas_limit`.
+    ///
+    /// Initial gas for a Call contains:
+    /// - initial stipend gas
+    /// - gas for access list and input data
     CallGasCostMoreThanGasLimit,
     /// EIP-3607 Reject transactions from senders with deployed code
     RejectCallerWithCode,
@@ -179,13 +191,28 @@ pub enum InvalidTransaction {
     },
     /// EIP-3860: Limit and meter initcode
     CreateInitcodeSizeLimit,
+    /// Transaction chain id does not match the config chain id.
     InvalidChainId,
-    /// Access list is not supported is not supported
-    /// for blocks before Berlin hardfork.
+    /// Access list is not supported for blocks before the Berlin hardfork.
     AccessListNotSupported,
+    /// `max_fee_per_blob_gas` is not supported for blocks before the Cancun hardfork.
+    MaxFeePerBlobGasNotSupported,
+    /// `blob_hashes`/`blob_versioned_hashes` is not supported for blocks before the Cancun hardfork.
+    BlobVersionedHashesNotSupported,
+    /// Block `blob_gas_price` is greater than tx-specified `max_fee_per_blob_gas` after Cancun.
+    BlobGasPriceGreaterThanMax,
+    /// There should be at least one blob in Blob transaction.
+    EmptyBlobs,
+    /// Blob transaction can't be a create transaction.
+    /// `to` must be present
+    BlobCreateTransaction,
+    /// Transaction has more then [`crate::MAX_BLOB_NUMBER_PER_BLOCK`] blobs
+    TooManyBlobs,
+    /// Blob transaction contains a versioned hash with an incorrect version
+    BlobVersionNotSupported,
 }
 
-/// When transaction return successfully without halts.
+/// Reason a transaction successfully completed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Eval {

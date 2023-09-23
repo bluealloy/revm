@@ -3,18 +3,13 @@ mod contract;
 pub(crate) mod shared_memory;
 mod stack;
 
+use crate::primitives::{Bytes, Spec};
+use crate::{alloc::boxed::Box, opcode::eval, Gas, Host, InstructionResult};
+
 pub use analysis::BytecodeLocked;
 pub use contract::Contract;
 pub use shared_memory::SharedMemory;
 pub use stack::{Stack, STACK_LIMIT};
-
-use crate::primitives::{Bytes, Spec};
-use crate::{
-    alloc::boxed::Box,
-    instructions::{eval, InstructionResult},
-    Gas, Host,
-};
-use core::ops::Range;
 
 pub const CALL_STACK_LIMIT: u64 = 1024;
 
@@ -26,33 +21,34 @@ pub const MAX_CODE_SIZE: usize = 0x6000;
 /// EIP-3860: Limit and meter initcode
 pub const MAX_INITCODE_SIZE: usize = 2 * MAX_CODE_SIZE;
 
+#[derive(Debug)]
 pub struct Interpreter<'a> {
-    /// Instruction pointer.
+    /// Contract information and invoking data
+    pub contract: Box<Contract>,
+    /// The current instruction pointer.
     pub instruction_pointer: *const u8,
-    /// Return is main control flag, it tell us if we should continue interpreter or break from it
+    /// The execution control flag. If this is not set to `Continue`, the interpreter will stop
+    /// execution.
     pub instruction_result: InstructionResult,
-    /// left gas. Memory gas can be found in Memory field.
+    /// The gas state.
     pub gas: Gas,
     /// Shared memory.
     pub shared_memory: &'a mut SharedMemory,
     /// Stack.
     pub stack: Stack,
-    /// After call returns, its return data is saved here.
+    /// The return data buffer for internal calls.
     pub return_data_buffer: Bytes,
-    /// Return value.
-    pub return_range: Range<usize>,
-    /// Is interpreter call static.
+    /// The offset into `self.memory` of the return data.
+    ///
+    /// This value must be ignored if `self.return_len` is 0.
+    pub return_offset: usize,
+    /// The length of the return data.
+    pub return_len: usize,
+    /// Whether the interpreter is in "staticcall" mode, meaning no state changes can happen.
     pub is_static: bool,
-    /// Contract information and invoking data
-    pub contract: Box<Contract>,
 }
 
 impl<'a> Interpreter<'a> {
-    /// Current opcode
-    pub fn current_opcode(&self) -> u8 {
-        unsafe { *self.instruction_pointer }
-    }
-
     /// Create new interpreter
     pub fn new(
         contract: Box<Contract>,
@@ -62,21 +58,32 @@ impl<'a> Interpreter<'a> {
     ) -> Self {
         Self {
             instruction_pointer: contract.bytecode.as_ptr(),
-            return_range: Range::default(),
-            stack: Stack::new(),
-            shared_memory,
-            return_data_buffer: Bytes::new(),
             contract,
+            gas: Gas::new(gas_limit),
             instruction_result: InstructionResult::Continue,
             is_static,
-            gas: Gas::new(gas_limit),
+            return_data_buffer: Bytes::new(),
+            return_len: 0,
+            return_offset: 0,
+            shared_memory,
+            stack: Stack::new(),
         }
     }
 
+    /// Returns the opcode at the current instruction pointer.
+    #[inline]
+    pub fn current_opcode(&self) -> u8 {
+        unsafe { *self.instruction_pointer }
+    }
+
+    /// Returns a reference to the contract.
+    #[inline]
     pub fn contract(&self) -> &Contract {
         &self.contract
     }
 
+    /// Returns a reference to the interpreter's gas state.
+    #[inline]
     pub fn gas(&self) -> &Gas {
         &self.gas
     }
@@ -86,7 +93,8 @@ impl<'a> Interpreter<'a> {
         &self.stack
     }
 
-    /// Return a reference of the program counter.
+    /// Returns the current program counter.
+    #[inline]
     pub fn program_counter(&self) -> usize {
         // Safety: this is just subtraction of pointers, it is safe to do.
         unsafe {
@@ -95,57 +103,61 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    /// Execute next instruction
+    /// Executes the instruction at the current instruction pointer.
     #[inline(always)]
-    pub fn step<H: Host, SPEC: Spec>(&mut self, host: &mut H) {
+    pub fn step<SPEC: Spec>(&mut self, host: &mut dyn Host) {
         // step.
         let opcode = unsafe { *self.instruction_pointer };
         // Safety: In analysis we are doing padding of bytecode so that we are sure that last
         // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
         // it will do noop and just stop execution of this contract
         self.instruction_pointer = unsafe { self.instruction_pointer.offset(1) };
-        eval::<H, SPEC>(opcode, self, host);
+        eval::<SPEC>(opcode, self, host);
     }
 
-    /// loop steps until we are finished with execution
+    /// Executes the interpreter until it returns or stops.
     pub fn run<H: Host, SPEC: Spec>(&mut self, host: &mut H) -> InstructionResult {
         while self.instruction_result == InstructionResult::Continue {
-            self.step::<H, SPEC>(host)
+            self.step::<SPEC>(host);
         }
         self.instruction_result
     }
 
-    /// loop steps until we are finished with execution
+    /// Executes the interpreter until it returns or stops. Same as `run` but with
+    /// calls to the [`Host::step`] and [`Host::step_end`] callbacks.
     pub fn run_inspect<H: Host, SPEC: Spec>(&mut self, host: &mut H) -> InstructionResult {
         while self.instruction_result == InstructionResult::Continue {
             // step
-            let ret = host.step(self);
-            if ret != InstructionResult::Continue {
-                return ret;
+            let result = host.step(self);
+            if result != InstructionResult::Continue {
+                return result;
             }
-            self.step::<H, SPEC>(host);
+
+            self.step::<SPEC>(host);
 
             // step ends
-            let ret = host.step_end(self, self.instruction_result);
-            if ret != InstructionResult::Continue {
-                return ret;
+            let result = host.step_end(self, self.instruction_result);
+            if result != InstructionResult::Continue {
+                return result;
             }
         }
         self.instruction_result
     }
 
-    /// Copy and get the return value of the interpreter, if any.
-    pub fn return_value(&mut self) -> Bytes {
-        // if start is usize max it means that our return len is zero and we need to return empty
-        let bytes = if self.return_range.start == usize::MAX {
-            Bytes::new()
+    /// Returns a copy of the interpreter's return value, if any.
+    #[inline]
+    pub fn return_value(&self) -> Bytes {
+        self.return_value_slice().to_vec().into()
+    }
+
+    /// Returns a reference to the interpreter's return value, if any.
+    #[inline]
+    pub fn return_value_slice(&self) -> &[u8] {
+        if self.return_len == 0 {
+            &[]
         } else {
-            Bytes::copy_from_slice(self.shared_memory.get_slice(
-                self.return_range.start,
-                self.return_range.end - self.return_range.start,
-            ))
-        };
-        self.shared_memory.free_context_memory();
-        bytes
+            self.shared_memory
+                .slice(self.return_offset, self.return_len)
+        }
     }
 }

@@ -4,6 +4,7 @@ use crate::alloc::vec;
 use crate::alloc::vec::Vec;
 use core::{
     cmp::min,
+    fmt,
     ops::{BitAnd, Not},
 };
 
@@ -23,6 +24,17 @@ pub struct SharedMemory {
     current_len: usize,
     /// Amount of memory left for assignment
     pub limit: u64,
+}
+
+impl fmt::Debug for SharedMemory {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SharedMemory")
+            .field(
+                "current_slice",
+                &crate::primitives::hex::encode(self.get_current_slice()),
+            )
+            .finish()
+    }
 }
 
 impl SharedMemory {
@@ -99,7 +111,7 @@ impl SharedMemory {
         self.current_len == 0
     }
 
-    /// Return the full memory.
+    /// Return the memory of the current context
     pub fn data(&self) -> &[u8] {
         self.get_current_slice()
     }
@@ -119,66 +131,96 @@ impl SharedMemory {
         self.update_limit();
     }
 
-    /// Get memory region at given offset. Dont check offset and size
-    #[inline(always)]
-    pub fn get_slice(&self, offset: usize, size: usize) -> &[u8] {
-        &self.get_current_slice()[offset..offset + size]
-    }
-
-    /// Set memory region at given offset
+    /// Returns a byte slice of the memory region at the given offset.
     ///
-    /// # Safety
-    /// The caller is responsible for checking the offset and value
+    /// Panics on out of bounds.
     #[inline(always)]
-    pub unsafe fn set_byte(&mut self, index: usize, byte: u8) {
-        self.get_current_slice_mut()[index] = byte;
+    #[cfg_attr(debug_assertions, track_caller)]
+    pub fn slice(&self, offset: usize, size: usize) -> &[u8] {
+        match self.get_current_slice().get(offset..offset + size) {
+            Some(slice) => slice,
+            None => debug_unreachable!("slice OOB: {offset}..{size}; len: {}", self.len()),
+        }
     }
 
+    /// Returns a byte slice of the memory region at the given offset.
+    ///
+    /// Panics on out of bounds.
     #[inline(always)]
-    pub fn set_u256(&mut self, index: usize, value: U256) {
-        self.get_current_slice_mut()[index..index + 32]
-            .copy_from_slice(&value.to_be_bytes::<{ U256::BYTES }>());
+    #[cfg_attr(debug_assertions, track_caller)]
+    pub fn slice_mut(&mut self, offset: usize, size: usize) -> &mut [u8] {
+        let len = self.current_len;
+        match self.get_current_slice_mut().get_mut(offset..offset + size) {
+            Some(slice) => slice,
+            None => debug_unreachable!("slice OOB: {offset}..{size}; len: {}", len),
+        }
     }
 
-    /// Set memory region at given offset. The offset and value are already checked
+    /// Sets the `byte` at the given `index`.
+    ///
+    /// Panics when `index` is out of bounds.
     #[inline(always)]
+    #[cfg_attr(debug_assertions, track_caller)]
+    pub fn set_byte(&mut self, index: usize, byte: u8) {
+        match self.get_current_slice_mut().get_mut(index) {
+            Some(b) => *b = byte,
+            None => debug_unreachable!("set_byte OOB: {index}; len: {}", self.len()),
+        }
+    }
+
+    /// Sets the given `value` to the memory region at the given `offset`.
+    ///
+    /// Panics on out of bounds.
+    #[inline(always)]
+    #[cfg_attr(debug_assertions, track_caller)]
+    pub fn set_u256(&mut self, offset: usize, value: U256) {
+        self.set(offset, &value.to_be_bytes::<32>());
+    }
+
+    /// Set memory region at given `offset`.
+    ///
+    /// Panics on out of bounds.
+    #[inline(always)]
+    #[cfg_attr(debug_assertions, track_caller)]
     pub fn set(&mut self, offset: usize, value: &[u8]) {
         if !value.is_empty() {
-            self.get_current_slice_mut()[offset..(value.len() + offset)].copy_from_slice(value);
+            self.slice_mut(offset, value.len()).copy_from_slice(value);
         }
     }
 
     /// Set memory from data. Our memory offset+len is expected to be correct but we
     /// are doing bound checks on data/data_offeset/len and zeroing parts that is not copied.
+    ///
+    /// Panics on out of bounds.
     #[inline(always)]
+    #[cfg_attr(debug_assertions, track_caller)]
     pub fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]) {
         if data_offset >= data.len() {
-            // nulify all memory slots
-            for i in &mut self.get_current_slice_mut()[memory_offset..memory_offset + len] {
-                *i = 0;
-            }
+            // nullify all memory slots
+            self.slice_mut(memory_offset, len).fill(0);
             return;
         }
         let data_end = min(data_offset + len, data.len());
-        let memory_data_end = memory_offset + (data_end - data_offset);
-        self.get_current_slice_mut()[memory_offset..memory_data_end]
-            .copy_from_slice(&data[data_offset..data_end]);
+        let data_len = data_end - data_offset;
+        debug_assert!(data_offset < data.len() && data_end <= data.len());
+        let data = unsafe { data.get_unchecked(data_offset..data_end) };
+        self.slice_mut(memory_offset, data_len)
+            .copy_from_slice(data);
 
-        // nulify rest of memory slots
+        // nullify rest of memory slots
         // Safety: Memory is assumed to be valid. And it is commented where that assumption is made
-        for i in &mut self.get_current_slice_mut()[memory_data_end..memory_offset + len] {
-            *i = 0;
-        }
+        self.slice_mut(memory_offset + data_len, len - data_len)
+            .fill(0);
     }
 
-    /// In memory copy given a src, dst, and length
+    /// Copies elements from one part of the memory to another part of itself.
     ///
-    /// # Safety
-    /// The caller is responsible to check that we resized memory properly.
+    /// Panics on out of bounds.
     #[inline(always)]
-    pub fn copy(&mut self, dst: usize, src: usize, length: usize) {
+    #[cfg_attr(debug_assertions, track_caller)]
+    pub fn copy(&mut self, dst: usize, src: usize, len: usize) {
         self.get_current_slice_mut()
-            .copy_within(src..src + length, dst);
+            .copy_within(src..src + len, dst);
     }
 
     /// Get a refernce to the memory of the current context
@@ -229,4 +271,27 @@ fn sqrt(n: u64) -> u64 {
         y = (x + n / x) / 2;
     }
     x
+}
+
+#[cfg(test)]
+mod tests {
+    use super::next_multiple_of_32;
+
+    #[test]
+    fn test_next_multiple_of_32() {
+        // next_multiple_of_32 returns x when it is a multiple of 32
+        for i in 0..32 {
+            let x = i * 32;
+            assert_eq!(Some(x), next_multiple_of_32(x));
+        }
+
+        // next_multiple_of_32 rounds up to the nearest multiple of 32 when `x % 32 != 0`
+        for x in 0..1024 {
+            if x % 32 == 0 {
+                continue;
+            }
+            let next_multiple = x + 32 - (x % 32);
+            assert_eq!(Some(next_multiple), next_multiple_of_32(x));
+        }
+    }
 }

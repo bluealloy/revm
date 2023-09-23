@@ -5,7 +5,6 @@ multilingual = false
 src = "documentation/src"
 title = "Rust EVM"
 
-
 [output.linkcheck]
 optional = true
 follow-web-links = true

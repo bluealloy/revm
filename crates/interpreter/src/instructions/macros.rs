@@ -8,8 +8,9 @@ macro_rules! check_staticcall {
 }
 
 macro_rules! check {
-    ($interp:expr, $expresion:expr) => {
-        if !$expresion {
+    ($interp:expr, $min:ident) => {
+        // TODO: Force const-eval on the condition with a `const {}` block once they are stable
+        if !<SPEC as $crate::primitives::Spec>::enabled($crate::primitives::SpecId::$min) {
             $interp.instruction_result = InstructionResult::NotActivated;
             return;
         }

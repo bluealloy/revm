@@ -241,7 +241,7 @@ mod tests {
         for (pc, gas) in inspector.gas_remaining_steps {
             println!(
                 "{pc} {} {gas:?}",
-                OpCode::try_from_u8(bytecode.bytes()[pc]).unwrap().as_str(),
+                OpCode::new(bytecode.bytes()[pc]).unwrap().as_str(),
             );
         }
     }

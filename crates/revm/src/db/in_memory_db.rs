@@ -6,16 +6,8 @@ use crate::Database;
 use alloc::vec::Vec;
 use core::convert::Infallible;
 
+/// A [Database] implementation that stores all state changes in memory.
 pub type InMemoryDB = CacheDB<EmptyDB>;
-
-impl Default for InMemoryDB {
-    fn default() -> Self {
-        CacheDB::new(EmptyDB {
-            keccak_block_hash: true,
-            _phantom: core::marker::PhantomData,
-        })
-    }
-}
 
 /// A [Database] implementation that stores all state changes in memory.
 ///
@@ -41,6 +33,12 @@ pub struct CacheDB<ExtDB: DatabaseRef> {
     pub db: ExtDB,
 }
 
+impl<ExtDB: DatabaseRef + Default> Default for CacheDB<ExtDB> {
+    fn default() -> Self {
+        Self::new(ExtDB::default())
+    }
+}
+
 impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     pub fn new(db: ExtDB) -> Self {
         let mut contracts = HashMap::new();
@@ -63,7 +61,9 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
     pub fn insert_contract(&mut self, account: &mut AccountInfo) {
         if let Some(code) = &account.code {
             if !code.is_empty() {
-                account.code_hash = code.hash_slow();
+                if account.code_hash == KECCAK_EMPTY {
+                    account.code_hash = code.hash_slow();
+                }
                 self.contracts
                     .entry(account.code_hash)
                     .or_insert_with(|| code.clone());
@@ -302,6 +302,7 @@ impl DbAccount {
             ..Default::default()
         }
     }
+
     pub fn info(&self) -> Option<AccountInfo> {
         if matches!(self.account_state, AccountState::NotExisting) {
             None
@@ -313,15 +314,7 @@ impl DbAccount {
 
 impl From<Option<AccountInfo>> for DbAccount {
     fn from(from: Option<AccountInfo>) -> Self {
-        if let Some(info) = from {
-            Self {
-                info,
-                account_state: AccountState::None,
-                ..Default::default()
-            }
-        } else {
-            Self::new_not_existing()
-        }
+        from.map(Self::from).unwrap_or_else(Self::new_not_existing)
     }
 }
 
