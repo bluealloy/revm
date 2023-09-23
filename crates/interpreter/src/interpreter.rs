@@ -105,20 +105,20 @@ impl<'a> Interpreter<'a> {
 
     /// Executes the instruction at the current instruction pointer.
     #[inline(always)]
-    pub fn step<SPEC: Spec>(&mut self, host: &mut dyn Host) {
+    pub fn step<H: Host, SPEC: Spec>(&mut self, host: &mut H) {
         // step.
         let opcode = unsafe { *self.instruction_pointer };
         // Safety: In analysis we are doing padding of bytecode so that we are sure that last
         // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
         // it will do noop and just stop execution of this contract
         self.instruction_pointer = unsafe { self.instruction_pointer.offset(1) };
-        eval::<SPEC>(opcode, self, host);
+        eval::<H, SPEC>(opcode, self, host);
     }
 
     /// Executes the interpreter until it returns or stops.
     pub fn run<H: Host, SPEC: Spec>(&mut self, host: &mut H) -> InstructionResult {
         while self.instruction_result == InstructionResult::Continue {
-            self.step::<SPEC>(host);
+            self.step::<H, SPEC>(host);
         }
         self.instruction_result
     }
@@ -133,7 +133,7 @@ impl<'a> Interpreter<'a> {
                 return result;
             }
 
-            self.step::<SPEC>(host);
+            self.step::<H, SPEC>(host);
 
             // step ends
             let result = host.step_end(self, self.instruction_result);
