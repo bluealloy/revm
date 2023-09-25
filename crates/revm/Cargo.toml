@@ -58,6 +58,7 @@ optional_no_base_fee = ["revm-interpreter/optional_no_base_fee"]
 std = ["revm-interpreter/std", "revm-precompile/std"]
 ethersdb = ["std", "tokio", "futures", "ethers-providers", "ethers-core"]
 serde = ["dep:serde", "dep:serde_json", "revm-interpreter/serde"]
+c_kzg = ["revm-precompile/c_kzg"]
 arbitrary = ["revm-interpreter/arbitrary"]
 # deprecated feature
 web3db = []
