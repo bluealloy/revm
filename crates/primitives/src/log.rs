@@ -1,7 +1,7 @@
 use crate::{bytes::Bytes, B160, B256};
 use alloc::vec::Vec;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Log {
     pub address: B160,

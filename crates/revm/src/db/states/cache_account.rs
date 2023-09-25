@@ -7,7 +7,7 @@ use revm_precompile::HashMap;
 
 /// Cache account contains plain state that gets updated
 /// at every transaction when evm output is applied to CacheState.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CacheAccount {
     pub account: Option<PlainAccount>,
     pub status: AccountStatus,

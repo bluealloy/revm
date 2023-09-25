@@ -58,6 +58,7 @@ pub trait DatabaseRef {
 }
 
 /// Wraps a [`DatabaseRef`] to provide a [`Database`] implementation.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct WrapDatabaseRef<T: DatabaseRef>(pub T);
 
 impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
@@ -87,6 +88,7 @@ impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
 /// Wraps a `dyn DatabaseRef` to provide a [`Database`] implementation.
 #[doc(hidden)]
 #[deprecated = "use `WrapDatabaseRef` instead"]
+#[allow(missing_debug_implementations)]
 pub struct RefDBWrapper<'a, E> {
     pub db: &'a dyn DatabaseRef<Error = E>,
 }

@@ -5,6 +5,7 @@ use crate::{
 };
 use alloc::vec::Vec;
 
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct DummyHost {
     pub env: Env,
     pub storage: HashMap<U256, U256>,
@@ -18,9 +19,7 @@ impl DummyHost {
     pub fn new(env: Env) -> Self {
         Self {
             env,
-            storage: HashMap::new(),
-            transient_storage: Default::default(),
-            log: Vec::new(),
+            ..Default::default()
         }
     }
 

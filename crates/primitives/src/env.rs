@@ -6,7 +6,7 @@ use crate::{
 use bytes::Bytes;
 use core::cmp::{min, Ordering};
 
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Env {
     pub cfg: CfgEnv,
@@ -15,7 +15,7 @@ pub struct Env {
 }
 
 /// The block environment.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlockEnv {
     /// The number of ancestor blocks of this block (block height).
@@ -59,7 +59,7 @@ pub struct BlockEnv {
 /// Incorporated as part of the Cancun upgrade via [EIP-4844].
 ///
 /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlobExcessGasAndPrice {
     pub excess_blob_gas: u64,
@@ -109,7 +109,7 @@ impl BlockEnv {
 }
 
 /// The transaction environment.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxEnv {
     /// The caller, author or signer of the transaction.
@@ -175,7 +175,7 @@ impl TxEnv {
 }
 
 /// Transaction destination.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TransactTo {
     /// Simple call to an address.
@@ -217,7 +217,7 @@ impl TransactTo {
 }
 
 /// Create scheme.
-#[derive(Clone, Copy, Eq, PartialEq, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum CreateScheme {
     /// Legacy create scheme of `CREATE`.
@@ -230,7 +230,7 @@ pub enum CreateScheme {
 }
 
 /// EVM configuration.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct CfgEnv {
@@ -335,7 +335,7 @@ impl CfgEnv {
 }
 
 /// What bytecode analysis to perform.
-#[derive(Clone, Default, Debug, Eq, PartialEq)]
+#[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AnalysisKind {
     /// Do not perform bytecode analysis.

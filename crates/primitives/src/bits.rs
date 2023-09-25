@@ -164,7 +164,7 @@ mod serialize {
     }
 
     /// Decoding bytes from hex string error.
-    #[derive(Debug, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq, Hash)]
     pub enum FromHexError {
         /// Invalid (non-hex) character encountered.
         InvalidHex {
@@ -179,7 +179,7 @@ mod serialize {
     impl std::error::Error for FromHexError {}
 
     impl fmt::Display for FromHexError {
-        fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
             match *self {
                 Self::InvalidHex { character, index } => {
                     write!(fmt, "invalid hex character: {character}, at {index}")
@@ -245,7 +245,7 @@ mod serialize {
     }
 
     /// Expected length of bytes vector.
-    #[derive(Debug, PartialEq, Eq)]
+    #[derive(Debug, PartialEq, Eq, Hash)]
     pub enum ExpectedLen<'a> {
         /// Exact length in bytes.
         Exact(&'a mut [u8]),
@@ -255,7 +255,7 @@ mod serialize {
     }
 
     impl<'a> fmt::Display for ExpectedLen<'a> {
-        fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
             match *self {
                 ExpectedLen::Exact(ref v) => write!(fmt, "length of {}", v.len() * 2),
                 ExpectedLen::Between(min, ref v) => {
@@ -281,7 +281,7 @@ mod serialize {
         impl<'a, 'b> de::Visitor<'b> for Visitor<'a> {
             type Value = usize;
 
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
                 write!(
                     formatter,
                     "a (both 0x-prefixed or not) hex string with {}",

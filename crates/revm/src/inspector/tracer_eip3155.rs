@@ -9,6 +9,7 @@ use revm_interpreter::{opcode, Interpreter, Memory, Stack};
 use serde_json::json;
 use std::io::Write;
 
+#[allow(missing_debug_implementations)]
 pub struct TracerEip3155 {
     output: Box<dyn Write>,
     gas_inspector: GasInspector,

@@ -1,7 +1,7 @@
 use crate::primitives::{Eval, Halt};
 
 #[repr(u8)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InstructionResult {
     // success codes
@@ -89,7 +89,7 @@ impl InstructionResult {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum SuccessOrHalt {
     Success(Eval),
     Revert,

@@ -1,8 +1,9 @@
 use crate::{Bytecode, B160, B256, KECCAK_EMPTY, U256};
 use bitflags::bitflags;
+use core::hash::{Hash, Hasher};
 use hashbrown::HashMap;
 
-#[derive(Debug, Clone, Eq, PartialEq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Account {
     /// Balance of the account.
@@ -125,7 +126,7 @@ impl From<AccountInfo> for Account {
     }
 }
 
-#[derive(Debug, Clone, Default, Eq, PartialEq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct StorageSlot {
     pub previous_or_original_value: U256,
@@ -193,6 +194,14 @@ impl PartialEq for AccountInfo {
         self.balance == other.balance
             && self.nonce == other.nonce
             && self.code_hash == other.code_hash
+    }
+}
+
+impl Hash for AccountInfo {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.balance.hash(state);
+        self.nonce.hash(state);
+        self.code_hash.hash(state);
     }
 }
 

@@ -9,7 +9,7 @@ use core::fmt;
 pub const STACK_LIMIT: usize = 1024;
 
 /// EVM stack.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Stack {
     data: Vec<U256>,

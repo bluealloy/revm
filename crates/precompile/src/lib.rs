@@ -1,4 +1,7 @@
-#![no_std]
+#![warn(missing_debug_implementations)]
+#![deny(unused_must_use, rust_2018_idioms)]
+#![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 
 #[macro_use]
 extern crate alloc;
@@ -64,7 +67,7 @@ impl Default for Precompiles {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub enum Precompile {
     Standard(StandardPrecompileFn),
     Env(EnvPrecompileFn),
@@ -79,6 +82,7 @@ impl fmt::Debug for Precompile {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct PrecompileAddress(B160, Precompile);
 
 impl From<PrecompileAddress> for (B160, Precompile) {
@@ -87,7 +91,7 @@ impl From<PrecompileAddress> for (B160, Precompile) {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub enum SpecId {
     HOMESTEAD,
     BYZANTIUM,

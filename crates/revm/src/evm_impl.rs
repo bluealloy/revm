@@ -12,11 +12,13 @@ use crate::primitives::{
 use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector};
 use alloc::boxed::Box;
 use alloc::vec::Vec;
+use core::fmt;
 use core::{cmp::min, marker::PhantomData};
 use revm_interpreter::gas::initial_tx_gas;
 use revm_interpreter::MAX_CODE_SIZE;
 use revm_precompile::{Precompile, Precompiles};
 
+#[derive(Debug)]
 pub struct EVMData<'a, DB: Database> {
     pub env: &'a mut Env,
     pub journaled_state: JournaledState,
@@ -29,6 +31,17 @@ pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
     data: EVMData<'a, DB>,
     inspector: &'a mut dyn Inspector<DB>,
     _phantomdata: PhantomData<GSPEC>,
+}
+
+impl<GSPEC, DB, const INSPECT: bool> fmt::Debug for EVMImpl<'_, GSPEC, DB, INSPECT>
+where
+    GSPEC: Spec,
+    DB: Database + fmt::Debug,
+    DB::Error: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("EVMImpl").field("data", &self.data).finish()
+    }
 }
 
 struct PreparedCreate {

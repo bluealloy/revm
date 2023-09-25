@@ -30,6 +30,7 @@ pub struct BundleBuilder {
 }
 
 /// Option for [`BundleState`] when converting it to the plain state.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum OriginalValuesKnown {
     /// Check changed with original values that [BundleState] has
     /// If we dont expect parent blocks to be committed or unwinded from database

@@ -7,7 +7,7 @@ use core::{
 
 /// A sequential memory. It uses Rust's `Vec` for internal
 /// representation.
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Memory {
     data: Vec<u8>,

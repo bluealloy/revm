@@ -38,7 +38,7 @@ use revm_precompile::Precompiles;
 /// assert!(evm.db.is_none());
 /// ```
 ///
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct EVM<DB> {
     pub env: Env,
     pub db: Option<DB>,

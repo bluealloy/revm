@@ -6,7 +6,7 @@ use bytes::Bytes;
 use core::fmt::Debug;
 
 /// A map of valid `jump` destinations.
-#[derive(Clone, Eq, PartialEq, Default)]
+#[derive(Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JumpMap(pub Arc<BitVec<u8>>);
 
@@ -39,7 +39,7 @@ impl JumpMap {
 }
 
 /// State of the [`Bytecode`] analysis.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum BytecodeState {
     /// No analysis has been performed.
@@ -50,7 +50,7 @@ pub enum BytecodeState {
     Analysed { len: usize, jump_map: JumpMap },
 }
 
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Bytecode {
     #[cfg_attr(feature = "serde", serde(with = "crate::utilities::serde_hex_bytes"))]

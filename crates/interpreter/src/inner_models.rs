@@ -2,6 +2,7 @@ pub use crate::primitives::CreateScheme;
 use crate::primitives::{Bytes, B160, U256};
 
 /// Inputs for a call.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallInputs {
     /// The target of the call.
@@ -22,6 +23,7 @@ pub struct CallInputs {
     pub is_static: bool,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CreateInputs {
     pub caller: B160,
@@ -36,7 +38,7 @@ pub struct CreateInputs {
 }
 
 /// Call schemes.
-#[derive(Clone, Copy, Eq, PartialEq, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum CallScheme {
     /// `CALL`
@@ -50,7 +52,7 @@ pub enum CallScheme {
 }
 
 /// CallContext of the runtime.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallContext {
     /// Execution address.
@@ -78,7 +80,7 @@ impl Default for CallContext {
 }
 
 /// Transfer from source to target, with given value.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Transfer {
     /// Source address.
@@ -89,7 +91,7 @@ pub struct Transfer {
     pub value: U256,
 }
 
-#[derive(Default)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SelfDestructResult {
     pub had_value: bool,

@@ -7,7 +7,7 @@ use revm_interpreter::primitives::{hash_map, AccountInfo, Bytecode, B256};
 ///
 /// It is used when block state gets merged to bundle state to
 /// create needed Reverts.
-#[derive(Clone, Debug, Eq, PartialEq, Default)]
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct TransitionAccount {
     pub info: Option<AccountInfo>,
     pub status: AccountStatus,

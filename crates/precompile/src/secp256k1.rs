@@ -1,4 +1,6 @@
 use crate::{Error, Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn};
+use alloc::vec::Vec;
+use core::cmp::min;
 
 pub const ECRECOVER: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(1),
@@ -60,9 +62,6 @@ mod secp256k1 {
 }
 
 fn ec_recover_run(i: &[u8], target_gas: u64) -> PrecompileResult {
-    use alloc::vec::Vec;
-    use core::cmp::min;
-
     const ECRECOVER_BASE: u64 = 3_000;
 
     if ECRECOVER_BASE > target_gas {

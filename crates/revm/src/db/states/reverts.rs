@@ -181,7 +181,7 @@ impl AccountRevert {
 
 /// Depending on previous state of account info this
 /// will tell us what to do on revert.
-#[derive(Clone, Default, Debug, PartialEq, Eq)]
+#[derive(Clone, Default, Debug, PartialEq, Eq, Hash)]
 pub enum AccountInfoRevert {
     #[default]
     /// Nothing changed
@@ -199,7 +199,7 @@ pub enum AccountInfoRevert {
 ///
 /// Note: It is completely different state if Storage is Zero or Some or if Storage was
 /// Destroyed. Because if it is destroyed, previous values can be found in database or it can be zero.
-#[derive(Clone, Debug, Copy, PartialEq, Eq)]
+#[derive(Clone, Debug, Copy, PartialEq, Eq, Hash)]
 pub enum RevertToSlot {
     Some(U256),
     Destroyed,

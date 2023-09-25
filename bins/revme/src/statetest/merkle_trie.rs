@@ -65,7 +65,7 @@ pub fn trie_root(acc_data: Vec<(H160, Bytes)>) -> B256 {
     B256(sec_trie_root::<KeccakHasher, _, _, _>(acc_data).0)
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct KeccakHasher;
 
 impl Hasher for KeccakHasher {
