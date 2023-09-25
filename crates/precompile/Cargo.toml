@@ -36,7 +36,8 @@ hex = "0.4"
 default = ["secp256k1", "std"]
 # Used to disable kzg lib as i couldn't make it compile for wasm target
 # at least not on mac.
-std = ["dep:c-kzg"]
+std = []
+c_kzg = ["dep:c-kzg", "revm-primitives/c_kzg"]
 # secp256k1 is used as faster alternative to k256 lib. And in most cases should be default.
 # Only problem that it has, it fails to build for wasm target on windows and mac as it is c lib.
 # If you dont require wasm on win/mac, i would recommend its usage.
