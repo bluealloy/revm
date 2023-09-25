@@ -61,7 +61,7 @@ ruint = { version = "1.10.1", features = [
 hex = "0.4"
 
 [features]
-default = ["std"]
+default = ["std", "c-kzg"]
 std = ["bytes/std", "rlp/std", "hex/std", "bitvec/std", "bitflags/std"]
 serde = [
     "dep:serde",
@@ -99,4 +99,5 @@ optional_eip3607 = []
 optional_gas_refund = []
 optional_no_base_fee = []
 
-kzg = ["dep:c-kzg"]
+# See comments in `revm-precompile`
+c-kzg = ["dep:c-kzg"]

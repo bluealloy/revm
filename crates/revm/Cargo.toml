@@ -38,7 +38,7 @@ bytes = "1.5.0"
 criterion = "0.5"
 
 [features]
-default = ["std", "secp256k1"]
+default = ["std", "c-kzg", "secp256k1"]
 std = ["revm-interpreter/std", "revm-precompile/std"]
 serde = ["dep:serde", "dep:serde_json", "revm-interpreter/serde"]
 arbitrary = ["revm-interpreter/arbitrary"]
@@ -53,7 +53,6 @@ dev = [
     "optional_gas_refund",
     "optional_no_base_fee",
 ]
-secp256k1 = ["revm-precompile/secp256k1"]
 memory_limit = ["revm-interpreter/memory_limit"]
 no_gas_measuring = ["revm-interpreter/no_gas_measuring"]
 optional_balance_check = ["revm-interpreter/optional_balance_check"]
@@ -62,7 +61,9 @@ optional_eip3607 = ["revm-interpreter/optional_eip3607"]
 optional_gas_refund = ["revm-interpreter/optional_gas_refund"]
 optional_no_base_fee = ["revm-interpreter/optional_no_base_fee"]
 
-kzg = ["revm-precompile/kzg"]
+# See comments in `revm-precompile`
+secp256k1 = ["revm-precompile/secp256k1"]
+c-kzg = ["revm-precompile/c-kzg"]
 
 # deprecated features
 web3db = []

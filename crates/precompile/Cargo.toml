@@ -33,7 +33,7 @@ hex = "0.4"
 hex = "0.4"
 
 [features]
-default = ["std", "kzg", "secp256k1"]
+default = ["std", "c-kzg", "secp256k1"]
 std = [
     "revm-primitives/std",
     "k256/std",
@@ -48,7 +48,7 @@ std = [
 
 # The following features may not work on all platforms as they depends on C libraries.
 # Enables the KZG point evaluation precompile.
-kzg = ["dep:c-kzg", "revm-primitives/kzg"]
+c-kzg = ["dep:c-kzg", "revm-primitives/c-kzg"]
 
 # Use `secp256k1` as a faster alternative to `k256`.
 secp256k1 = ["dep:secp256k1"]
