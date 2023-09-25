@@ -130,8 +130,8 @@ impl<'de> serde::Deserialize<'de> for B160 {
 
 // code optained from: https://docs.rs/impl-serde/0.4.0/impl_serde/
 #[cfg(feature = "serde")]
+#[allow(unreachable_pub)]
 mod serialize {
-
     use alloc::string::String;
     use core::{fmt, result::Result};
     use serde::{de, Deserializer, Serializer};

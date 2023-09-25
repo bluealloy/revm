@@ -1,6 +1,6 @@
 pub mod analysis;
 mod contract;
-pub mod memory;
+pub(crate) mod memory;
 mod stack;
 
 use crate::primitives::{Bytes, Spec};
@@ -9,7 +9,7 @@ use crate::{alloc::boxed::Box, opcode::eval, Gas, Host, InstructionResult};
 pub use analysis::BytecodeLocked;
 pub use contract::Contract;
 pub use memory::Memory;
-pub use stack::{Stack, STACK_LIMIT};
+pub use stack::Stack;
 
 pub const CALL_STACK_LIMIT: u64 = 1024;
 
