@@ -1,8 +1,16 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-#![warn(unreachable_pub)]
+#![warn(unused_crate_dependencies, unreachable_pub)]
 
 #[macro_use]
 extern crate alloc;
+
+// Actually used in benches and examples
+#[cfg(test)]
+mod unused {
+    use anyhow as _;
+    use criterion as _;
+    use ethers_contract as _;
+}
 
 pub mod db;
 mod evm;

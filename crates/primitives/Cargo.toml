@@ -11,12 +11,10 @@ readme = "../../README.md"
 
 [dependencies]
 alloy-primitives = { version = "0.3", default-features = false, features = [
-    "rlp"
+    "rlp",
 ] }
 alloy-rlp = { version = "0.3", default-features = false, features = ["derive"] }
-bytes = { version = "1.5", default-features = false }
 hashbrown = "0.14"
-primitive-types = { version = "0.12", default-features = false }
 auto_impl = "1.1"
 bitvec = { version = "1", default-features = false, features = ["alloc"] }
 bitflags = { version = "2.4.0", default-features = false }
@@ -25,53 +23,28 @@ bitflags = { version = "2.4.0", default-features = false }
 c-kzg = { git = "https://github.com/ethereum/c-kzg-4844", default-features = false, optional = true }
 
 # utility
-derive_more = "0.99"
 enumn = "0.1"
-once_cell = { version = "1.18", default-features = false }
+once_cell = { version = "1.18", default-features = false, optional = true }
 
 # optional
 serde = { version = "1.0", features = ["derive", "rc"], optional = true }
-arbitrary = { version = "1.3", features = ["derive"], optional = true }
-proptest = { version = "1.1", optional = true }
-proptest-derive = { version = "0.4", optional = true }
-
-[dev-dependencies]
-arbitrary = { version = "1.3", features = ["derive"] }
-proptest = "1.1"
-proptest-derive = "0.4"
-ruint = { version = "1.10.1", features = [
-    "primitive-types",
-    "rlp",
-    "proptest",
-    "arbitrary",
-] }
 
 [build-dependencies]
 hex = "0.4"
 
 [features]
 default = ["std", "c-kzg"]
-std = ["bytes/std", "alloy-rlp/std", "hex/std", "bitvec/std", "bitflags/std"]
+std = ["alloy-rlp/std", "hex/std", "bitvec/std", "bitflags/std"]
 serde = [
     "dep:serde",
     "alloy-primitives/serde",
     "hex/serde",
     "hashbrown/serde",
-    "ruint/serde",
-    "bytes/serde",
     "bitvec/serde",
     "bitflags/serde",
     "c-kzg?/serde",
 ]
-arbitrary = [
-    "std",
-    "ruint/arbitrary",
-    "ruint/proptest",
-    "dep:arbitrary",
-    "dep:proptest",
-    "dep:proptest-derive",
-    "bitflags/arbitrary",
-]
+arbitrary = ["std", "alloy-primitives/arbitrary", "bitflags/arbitrary"]
 
 dev = [
     "memory_limit",
@@ -90,4 +63,4 @@ optional_gas_refund = []
 optional_no_base_fee = []
 
 # See comments in `revm-precompile`
-c-kzg = ["dep:c-kzg"]
+c-kzg = ["dep:c-kzg", "dep:once_cell"]

@@ -1,4 +1,5 @@
 #![no_std]
+#![warn(unused_crate_dependencies)]
 
 #[macro_use]
 extern crate alloc;
