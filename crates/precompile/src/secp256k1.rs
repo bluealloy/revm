@@ -44,6 +44,9 @@ mod secp256k1 {
         Message, Secp256k1,
     };
 
+    // Silence the unused crate dependency warning.
+    use k256 as _;
+
     pub fn ecrecover(sig: &[u8; 65], msg: &B256) -> Result<B256, secp256k1::Error> {
         let sig =
             RecoverableSignature::from_compact(&sig[0..64], RecoveryId::from_i32(sig[64] as i32)?)?;

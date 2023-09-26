@@ -1,5 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(unreachable_pub)]
+#![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
 #[macro_use]
 extern crate alloc;
