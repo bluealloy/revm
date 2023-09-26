@@ -1,9 +1,10 @@
 use crate::{
-    gas, interpreter::Interpreter, primitives::Spec, primitives::SpecId::*, primitives::U256, Host,
-    InstructionResult,
+    gas,
+    primitives::{Spec, U256},
+    Host, InstructionResult, Interpreter,
 };
 
-pub fn jump(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn jump<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::MID);
     pop!(interpreter, dest);
     let dest = as_usize_or_fail!(interpreter, dest, InstructionResult::InvalidJump);
@@ -17,7 +18,7 @@ pub fn jump(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     }
 }
 
-pub fn jumpi(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn jumpi<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::HIGH);
     pop!(interpreter, dest, value);
     if value != U256::ZERO {
@@ -33,41 +34,50 @@ pub fn jumpi(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     }
 }
 
-pub fn jumpdest(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn jumpdest<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::JUMPDEST);
 }
 
-pub fn pc(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn pc<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::BASE);
+    // - 1 because we have already advanced the instruction pointer in `Interpreter::step`
     push!(interpreter, U256::from(interpreter.program_counter() - 1));
 }
 
-pub fn ret(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    // zero gas cost gas!(interp,gas::ZERO);
-    pop!(interpreter, start, len);
-    let len = as_usize_or_fail!(interpreter, len, InstructionResult::InvalidOperandOOG);
-    if len == 0 {
-        interpreter.return_range = usize::MAX..usize::MAX;
-    } else {
-        let offset = as_usize_or_fail!(interpreter, start, InstructionResult::InvalidOperandOOG);
+#[inline(always)]
+fn return_inner(interpreter: &mut Interpreter, result: InstructionResult) {
+    // zero gas cost
+    // gas!(interpreter, gas::ZERO);
+    pop!(interpreter, offset, len);
+    let len = as_usize_or_fail!(interpreter, len);
+    // important: offset must be ignored if len is zero
+    if len != 0 {
+        let offset = as_usize_or_fail!(interpreter, offset);
         memory_resize!(interpreter, offset, len);
-        interpreter.return_range = offset..(offset + len);
+        interpreter.return_offset = offset;
     }
-    interpreter.instruction_result = InstructionResult::Return;
+    interpreter.return_len = len;
+    interpreter.instruction_result = result;
 }
 
-pub fn revert<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    // zero gas cost gas!(interp,gas::ZERO);
-    // EIP-140: REVERT instruction
-    check!(interpreter, SPEC::enabled(BYZANTIUM));
-    pop!(interpreter, start, len);
-    let len = as_usize_or_fail!(interpreter, len, InstructionResult::InvalidOperandOOG);
-    if len == 0 {
-        interpreter.return_range = usize::MAX..usize::MAX;
-    } else {
-        let offset = as_usize_or_fail!(interpreter, start, InstructionResult::InvalidOperandOOG);
-        memory_resize!(interpreter, offset, len);
-        interpreter.return_range = offset..(offset + len);
-    }
-    interpreter.instruction_result = InstructionResult::Revert;
+pub fn ret<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+    return_inner(interpreter, InstructionResult::Return)
+}
+
+/// EIP-140: REVERT instruction
+pub fn revert<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+    check!(interpreter, BYZANTIUM);
+    return_inner(interpreter, InstructionResult::Revert)
+}
+
+pub fn stop<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+    interpreter.instruction_result = InstructionResult::Stop;
+}
+
+pub fn invalid<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+    interpreter.instruction_result = InstructionResult::InvalidFEOpcode;
+}
+
+pub fn not_found<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+    interpreter.instruction_result = InstructionResult::OpcodeNotFound;
 }

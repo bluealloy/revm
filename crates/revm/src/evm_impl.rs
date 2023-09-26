@@ -7,8 +7,7 @@ use crate::interpreter::{
 use crate::journaled_state::{is_precompile, JournalCheckpoint};
 use crate::primitives::{
     create2_address, create_address, keccak256, AnalysisKind, Bytecode, Bytes, EVMError, EVMResult,
-    Env, ExecutionResult, InvalidTransaction, Log, Output, ResultAndState, Spec,
-    SpecId::{self, *},
+    Env, ExecutionResult, InvalidTransaction, Log, Output, ResultAndState, Spec, SpecId::*,
     TransactTo, B160, B256, U256,
 };
 use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector};
@@ -160,7 +159,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let env = self.env();
 
         // Important: validate block before tx.
-        env.validate_block_env::<GSPEC, DB::Error>()?;
+        env.validate_block_env::<GSPEC>()?;
         env.validate_tx::<GSPEC>()?;
 
         let initial_gas_spend = initial_tx_gas::<GSPEC>(
@@ -169,7 +168,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             &env.tx.access_list,
         );
 
-        // Additonal check to see if limit is big enought to cover initial gas.
+        // Additional check to see if limit is big enough to cover initial gas.
         if initial_gas_spend > env.tx.gas_limit {
             return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
         }
@@ -367,7 +366,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                 {
                     let is_deposit = self.data.env.tx.optimism.source_hash.is_some();
                     let is_creation = matches!(output, Output::Create(_, _));
-                    let regolith_enabled = GSPEC::enabled(SpecId::REGOLITH);
+                    let regolith_enabled = GSPEC::enabled(REGOLITH);
                     let optimism_regolith = self.data.env.cfg.optimism && regolith_enabled;
                     if is_deposit && is_creation && optimism_regolith {
                         let (acc, _) = self
@@ -402,11 +401,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         inspector: &'a mut dyn Inspector<DB>,
         precompiles: Precompiles,
     ) -> Self {
-        let journaled_state = if GSPEC::enabled(SpecId::SPURIOUS_DRAGON) {
-            JournaledState::new(precompiles.len())
-        } else {
-            JournaledState::new_legacy(precompiles.len())
-        };
+        let journaled_state = JournaledState::new(precompiles.len(), GSPEC::SPEC_ID);
         Self {
             data: EVMData {
                 env,
@@ -1008,8 +1003,7 @@ mod tests {
     use super::*;
 
     use crate::db::InMemoryDB;
-    use crate::primitives::specification::BedrockSpec;
-    use crate::primitives::state::AccountInfo;
+    use crate::primitives::{specification::BedrockSpec, state::AccountInfo, SpecId};
 
     #[test]
     fn test_commit_mint_value() {
@@ -1025,7 +1019,7 @@ mod tests {
                 code: None,
             },
         );
-        let mut journal = JournaledState::new(0);
+        let mut journal = JournaledState::new(0, SpecId::BERLIN);
         journal
             .initial_account_load(caller, &[U256::from(100)], &mut db)
             .unwrap();
@@ -1061,7 +1055,7 @@ mod tests {
     fn test_remove_l1_cost_non_deposit() {
         let caller = B160::zero();
         let mut db = InMemoryDB::default();
-        let mut journal = JournaledState::new(0);
+        let mut journal = JournaledState::new(0, SpecId::BERLIN);
         let slots = &[U256::from(100)];
         journal
             .initial_account_load(caller, slots, &mut db)
@@ -1089,7 +1083,7 @@ mod tests {
                 code: None,
             },
         );
-        let mut journal = JournaledState::new(0);
+        let mut journal = JournaledState::new(0, SpecId::BERLIN);
         journal
             .initial_account_load(caller, &[U256::from(100)], &mut db)
             .unwrap();
@@ -1120,7 +1114,7 @@ mod tests {
                 code: None,
             },
         );
-        let mut journal = JournaledState::new(0);
+        let mut journal = JournaledState::new(0, SpecId::BERLIN);
         journal
             .initial_account_load(caller, &[U256::from(100)], &mut db)
             .unwrap();

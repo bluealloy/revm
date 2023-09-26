@@ -1,6 +1,7 @@
 use crate::{
-    alloc::vec::Vec, calc_blob_fee, Account, EVMError, InvalidTransaction, Spec, SpecId, B160,
-    B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_INITCODE_SIZE, U256,
+    alloc::vec::Vec, calc_blob_gasprice, Account, InvalidHeader, InvalidTransaction, Spec, SpecId,
+    B160, B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK, MAX_INITCODE_SIZE, U256,
+    VERSIONED_HASH_VERSION_KZG,
 };
 use bytes::Bytes;
 use core::cmp::{min, Ordering};
@@ -27,12 +28,10 @@ pub struct BlockEnv {
     pub timestamp: U256,
     /// The gas limit of the block.
     pub gas_limit: U256,
-
     /// The base fee per gas, added in the London upgrade with [EIP-1559].
     ///
     /// [EIP-1559]: https://eips.ethereum.org/EIPS/eip-1559
     pub basefee: U256,
-
     /// The difficulty of the block.
     ///
     /// Unused after the Paris (AKA the merge) upgrade, and replaced by `prevrandao`.
@@ -45,13 +44,37 @@ pub struct BlockEnv {
     ///
     /// [EIP-4399]: https://eips.ethereum.org/EIPS/eip-4399
     pub prevrandao: Option<B256>,
-
-    /// Excess blob gas. See also [`calc_excess_blob_gas`](crate::calc_excess_blob_gas).
+    /// Excess blob gas and blob gasprice.
+    /// See also [`calc_excess_blob_gas`](crate::calc_excess_blob_gas)
+    /// and [`calc_blob_gasprice`](crate::calc_blob_gasprice).
     ///
     /// Incorporated as part of the Cancun upgrade via [EIP-4844].
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-    pub excess_blob_gas: Option<u64>,
+    pub blob_excess_gas_and_price: Option<BlobExcessGasAndPrice>,
+}
+
+/// Structure holding block blob excess gas and it calculates blob fee.
+///
+/// Incorporated as part of the Cancun upgrade via [EIP-4844].
+///
+/// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct BlobExcessGasAndPrice {
+    pub excess_blob_gas: u64,
+    pub blob_gasprice: u64,
+}
+
+impl BlobExcessGasAndPrice {
+    /// Takes excess blob gas and calculated blob fee with [`calc_blob_fee`]
+    pub fn new(excess_blob_gas: u64) -> Self {
+        let blob_gasprice = calc_blob_gasprice(excess_blob_gas);
+        Self {
+            excess_blob_gas,
+            blob_gasprice,
+        }
+    }
 }
 
 #[cfg(feature = "optimism")]
@@ -72,14 +95,33 @@ pub struct OptimismFields {
 }
 
 impl BlockEnv {
-    /// See [EIP-4844] and [`Env::calc_data_fee`].
+    /// Takes `blob_excess_gas` saves it inside env
+    /// and calculates `blob_fee` with [`BlobGasAndFee`].
+    pub fn set_blob_excess_gas_and_price(&mut self, excess_blob_gas: u64) {
+        self.blob_excess_gas_and_price = Some(BlobExcessGasAndPrice::new(excess_blob_gas));
+    }
+    /// See [EIP-4844] and [`crate::calc_blob_gasprice`].
     ///
     /// Returns `None` if `Cancun` is not enabled. This is enforced in [`Env::validate_block_env`].
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     #[inline]
     pub fn get_blob_gasprice(&self) -> Option<u64> {
-        self.excess_blob_gas.map(calc_blob_fee)
+        self.blob_excess_gas_and_price
+            .as_ref()
+            .map(|a| a.blob_gasprice)
+    }
+
+    /// Return `blob_excess_gas` header field. See [EIP-4844].
+    ///
+    /// Returns `None` if `Cancun` is not enabled. This is enforced in [`Env::validate_block_env`].
+    ///
+    /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
+    #[inline]
+    pub fn get_blob_excess_gas(&self) -> Option<u64> {
+        self.blob_excess_gas_and_price
+            .as_ref()
+            .map(|a| a.excess_blob_gas)
     }
 }
 
@@ -124,7 +166,8 @@ pub struct TxEnv {
     /// [EIP-1559]: https://eips.ethereum.org/EIPS/eip-1559
     pub gas_priority_fee: Option<U256>,
 
-    /// The list of blob versioned hashes.
+    /// The list of blob versioned hashes. Per EIP there should be at least
+    /// one blob present if [`Self::max_fee_per_blob_gas`] is `Some`.
     ///
     /// Incorporated as part of the Cancun upgrade via [EIP-4844].
     ///
@@ -215,8 +258,8 @@ pub struct CfgEnv {
     pub chain_id: u64,
     pub spec_id: SpecId,
     /// KZG Settings for point evaluation precompile. By default, this is loaded from the ethereum mainnet trusted setup.
+    #[cfg(feature = "c-kzg")]
     #[cfg_attr(feature = "serde", serde(skip))]
-    #[cfg(feature = "std")]
     pub kzg_settings: crate::kzg::EnvKzgSettings,
     /// Bytecode that is created with CREATE/CREATE2 is by default analysed and jumptable is created.
     /// This is very beneficial for testing and speeds up execution of that bytecode if called multiple times.
@@ -347,7 +390,7 @@ impl Default for CfgEnv {
             spec_id: SpecId::LATEST,
             perf_analyse_created_bytecodes: AnalysisKind::default(),
             limit_contract_code_size: None,
-            #[cfg(feature = "std")]
+            #[cfg(feature = "c-kzg")]
             kzg_settings: crate::kzg::EnvKzgSettings::Default,
             #[cfg(feature = "memory_limit")]
             memory_limit: (1 << 32) - 1,
@@ -377,7 +420,7 @@ impl Default for BlockEnv {
             basefee: U256::ZERO,
             difficulty: U256::ZERO,
             prevrandao: Some(B256::zero()),
-            excess_blob_gas: Some(0),
+            blob_excess_gas_and_price: Some(BlobExcessGasAndPrice::new(0)),
         }
     }
 }
@@ -428,14 +471,14 @@ impl Env {
 
     /// Validate the block environment.
     #[inline]
-    pub fn validate_block_env<SPEC: Spec, T>(&self) -> Result<(), EVMError<T>> {
+    pub fn validate_block_env<SPEC: Spec>(&self) -> Result<(), InvalidHeader> {
         // `prevrandao` is required for the merge
         if SPEC::enabled(SpecId::MERGE) && self.block.prevrandao.is_none() {
-            return Err(EVMError::PrevrandaoNotSet);
+            return Err(InvalidHeader::PrevrandaoNotSet);
         }
         // `excess_blob_gas` is required for Cancun
-        if SPEC::enabled(SpecId::CANCUN) && self.block.excess_blob_gas.is_none() {
-            return Err(EVMError::ExcessBlobGasNotSet);
+        if SPEC::enabled(SpecId::CANCUN) && self.block.blob_excess_gas_and_price.is_none() {
+            return Err(InvalidHeader::ExcessBlobGasNotSet);
         }
         Ok(())
     }
@@ -469,7 +512,7 @@ impl Env {
             if let Some(priority_fee) = self.tx.gas_priority_fee {
                 if priority_fee > self.tx.gas_price {
                     // or gas_max_fee for eip1559
-                    return Err(InvalidTransaction::GasMaxFeeGreaterThanPriorityFee);
+                    return Err(InvalidTransaction::PriorityFeeGreaterThanMaxFee);
                 }
             }
             let basefee = self.block.basefee;
@@ -512,10 +555,39 @@ impl Env {
         // - For CANCUN and later, check that the gas price is not more than the tx max
         // - For before CANCUN, check that `blob_hashes` and `max_fee_per_blob_gas` are empty / not set
         if SPEC::enabled(SpecId::CANCUN) {
+            // Presence of max_fee_per_blob_gas means that this is blob transaction.
             if let Some(max) = self.tx.max_fee_per_blob_gas {
+                // ensure that the user was willing to at least pay the current blob gasprice
                 let price = self.block.get_blob_gasprice().expect("already checked");
                 if U256::from(price) > max {
                     return Err(InvalidTransaction::BlobGasPriceGreaterThanMax);
+                }
+
+                // there must be at least one blob
+                // assert len(tx.blob_versioned_hashes) > 0
+                if self.tx.blob_hashes.is_empty() {
+                    return Err(InvalidTransaction::EmptyBlobs);
+                }
+
+                // The field `to` deviates slightly from the semantics with the exception
+                // that it MUST NOT be nil and therefore must always represent
+                // a 20-byte address. This means that blob transactions cannot
+                // have the form of a create transaction.
+                if self.tx.transact_to.is_create() {
+                    return Err(InvalidTransaction::BlobCreateTransaction);
+                }
+
+                // all versioned blob hashes must start with VERSIONED_HASH_VERSION_KZG
+                for blob in self.tx.blob_hashes.iter() {
+                    if blob[0] != VERSIONED_HASH_VERSION_KZG {
+                        return Err(InvalidTransaction::BlobVersionNotSupported);
+                    }
+                }
+
+                // ensure the total blob gas spent is at most equal to the limit
+                // assert blob_gas_used <= MAX_BLOB_GAS_PER_BLOCK
+                if self.tx.blob_hashes.len() > MAX_BLOB_NUMBER_PER_BLOCK as usize {
+                    return Err(InvalidTransaction::TooManyBlobs);
                 }
             }
         } else {

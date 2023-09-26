@@ -1,9 +1,8 @@
 use super::analysis::{to_analysed, BytecodeLocked};
-use crate::primitives::{Bytecode, Bytes, B160, U256};
+use crate::primitives::{Bytecode, Bytes, Env, TransactTo, B160, B256, U256};
 use crate::CallContext;
-use revm_primitives::{Env, TransactTo, B256};
 
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct Contract {
     /// Contracts data
     pub input: Bytes,
@@ -21,6 +20,8 @@ pub struct Contract {
 }
 
 impl Contract {
+    /// Instantiates a new contract by analyzing the given bytecode.
+    #[inline]
     pub fn new(
         input: Bytes,
         bytecode: Bytecode,
@@ -41,7 +42,8 @@ impl Contract {
         }
     }
 
-    /// Create new contract from environment
+    /// Creates a new contract from the given [`Env`].
+    #[inline]
     pub fn new_env(env: &Env, bytecode: Bytecode, hash: B256) -> Self {
         let contract_address = match env.tx.transact_to {
             TransactTo::Call(caller) => caller,
@@ -57,10 +59,8 @@ impl Contract {
         )
     }
 
-    pub fn is_valid_jump(&self, possition: usize) -> bool {
-        self.bytecode.jump_map().is_valid(possition)
-    }
-
+    /// Creates a new contract from the given [`CallContext`].
+    #[inline]
     pub fn new_with_context(
         input: Bytes,
         bytecode: Bytecode,
@@ -75,5 +75,11 @@ impl Contract {
             call_context.caller,
             call_context.apparent_value,
         )
+    }
+
+    /// Returns whether the given position is a valid jump destination.
+    #[inline]
+    pub fn is_valid_jump(&self, pos: usize) -> bool {
+        self.bytecode.jump_map().is_valid(pos)
     }
 }

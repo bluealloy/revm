@@ -1,53 +1,47 @@
 use crate::{
     gas,
-    interpreter::Interpreter,
-    primitives::{keccak256, Spec, SpecId::*, B256, KECCAK_EMPTY, U256},
-    Host, InstructionResult,
+    primitives::{Spec, B256, KECCAK_EMPTY, U256},
+    Host, InstructionResult, Interpreter,
 };
-use core::cmp::min;
 
-pub fn calculate_keccak256(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn keccak256<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     pop!(interpreter, from, len);
-    let len = as_usize_or_fail!(interpreter, len, InstructionResult::InvalidOperandOOG);
+    let len = as_usize_or_fail!(interpreter, len);
     gas_or_fail!(interpreter, gas::keccak256_cost(len as u64));
     let hash = if len == 0 {
         KECCAK_EMPTY
     } else {
-        let from = as_usize_or_fail!(interpreter, from, InstructionResult::InvalidOperandOOG);
+        let from = as_usize_or_fail!(interpreter, from);
         memory_resize!(interpreter, from, len);
-        keccak256(interpreter.memory.get_slice(from, len))
+        crate::primitives::keccak256(interpreter.memory.slice(from, len))
     };
 
     push_b256!(interpreter, hash);
 }
 
-pub fn address(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn address<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::BASE);
     push_b256!(interpreter, B256::from(interpreter.contract.address));
 }
 
-pub fn caller(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn caller<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::BASE);
     push_b256!(interpreter, B256::from(interpreter.contract.caller));
 }
 
-pub fn codesize(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn codesize<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::BASE);
     push!(interpreter, U256::from(interpreter.contract.bytecode.len()));
 }
 
-pub fn codecopy(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn codecopy<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     pop!(interpreter, memory_offset, code_offset, len);
-    let len = as_usize_or_fail!(interpreter, len, InstructionResult::InvalidOperandOOG);
+    let len = as_usize_or_fail!(interpreter, len);
     gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
     if len == 0 {
         return;
     }
-    let memory_offset = as_usize_or_fail!(
-        interpreter,
-        memory_offset,
-        InstructionResult::InvalidOperandOOG
-    );
+    let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
     let code_offset = as_usize_saturated!(code_offset);
     memory_resize!(interpreter, memory_offset, len);
 
@@ -60,45 +54,43 @@ pub fn codecopy(interpreter: &mut Interpreter, _host: &mut dyn Host) {
     );
 }
 
-pub fn calldataload(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn calldataload<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop!(interpreter, index);
     let index = as_usize_saturated!(index);
 
     let load = if index < interpreter.contract.input.len() {
-        let have_bytes = min(interpreter.contract.input.len() - index, 32);
+        let n = 32.min(interpreter.contract.input.len() - index);
         let mut bytes = [0u8; 32];
-        bytes[..have_bytes].copy_from_slice(&interpreter.contract.input[index..index + have_bytes]);
-        B256(bytes)
+        // SAFETY: n <= len - index -> index + n <= len
+        let src = unsafe { interpreter.contract.input.get_unchecked(index..index + n) };
+        bytes[..n].copy_from_slice(src);
+        U256::from_be_bytes(bytes)
     } else {
-        B256::zero()
+        U256::ZERO
     };
 
-    push_b256!(interpreter, load);
+    push!(interpreter, load);
 }
 
-pub fn calldatasize(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn calldatasize<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::BASE);
     push!(interpreter, U256::from(interpreter.contract.input.len()));
 }
 
-pub fn callvalue(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn callvalue<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::BASE);
     push!(interpreter, interpreter.contract.value);
 }
 
-pub fn calldatacopy(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn calldatacopy<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     pop!(interpreter, memory_offset, data_offset, len);
-    let len = as_usize_or_fail!(interpreter, len, InstructionResult::InvalidOperandOOG);
+    let len = as_usize_or_fail!(interpreter, len);
     gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
     if len == 0 {
         return;
     }
-    let memory_offset = as_usize_or_fail!(
-        interpreter,
-        memory_offset,
-        InstructionResult::InvalidOperandOOG
-    );
+    let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
     let data_offset = as_usize_saturated!(data_offset);
     memory_resize!(interpreter, memory_offset, len);
 
@@ -108,21 +100,21 @@ pub fn calldatacopy(interpreter: &mut Interpreter, _host: &mut dyn Host) {
         .set_data(memory_offset, data_offset, len, &interpreter.contract.input);
 }
 
-pub fn returndatasize<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+/// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
+pub fn returndatasize<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+    check!(interpreter, BYZANTIUM);
     gas!(interpreter, gas::BASE);
-    // EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
-    check!(interpreter, SPEC::enabled(BYZANTIUM));
     push!(
         interpreter,
         U256::from(interpreter.return_data_buffer.len())
     );
 }
 
-pub fn returndatacopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn Host) {
-    // EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
-    check!(interpreter, SPEC::enabled(BYZANTIUM));
+/// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
+pub fn returndatacopy<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+    check!(interpreter, BYZANTIUM);
     pop!(interpreter, memory_offset, offset, len);
-    let len = as_usize_or_fail!(interpreter, len, InstructionResult::InvalidOperandOOG);
+    let len = as_usize_or_fail!(interpreter, len);
     gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
     let data_offset = as_usize_saturated!(offset);
     let (data_end, overflow) = data_offset.overflowing_add(len);
@@ -131,11 +123,7 @@ pub fn returndatacopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn
         return;
     }
     if len != 0 {
-        let memory_offset = as_usize_or_fail!(
-            interpreter,
-            memory_offset,
-            InstructionResult::InvalidOperandOOG
-        );
+        let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
         memory_resize!(interpreter, memory_offset, len);
         interpreter.memory.set(
             memory_offset,
@@ -144,7 +132,7 @@ pub fn returndatacopy<SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut dyn
     }
 }
 
-pub fn gas(interpreter: &mut Interpreter, _host: &mut dyn Host) {
+pub fn gas<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::BASE);
     push!(interpreter, U256::from(interpreter.gas.remaining()));
 }
