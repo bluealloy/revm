@@ -5,7 +5,7 @@ pub const ECRECOVER: PrecompileAddress = PrecompileAddress(
     Precompile::Standard(ec_recover_run as StandardPrecompileFn),
 );
 
-#[cfg(all(not(feature = "secp256k1"), feature = "k256"))]
+#[cfg(not(feature = "secp256k1"))]
 #[allow(clippy::module_inception)]
 mod secp256k1 {
     use crate::B256;
@@ -44,8 +44,7 @@ mod secp256k1 {
         Message, Secp256k1,
     };
 
-    // In case that both features are enabled we prefer `secp256k1`, so silence the unused warning.
-    #[cfg(feature = "k256")]
+    // Silence the unused crate dependency warning.
     use k256 as _;
 
     pub fn ecrecover(sig: &[u8; 65], msg: &B256) -> Result<B256, secp256k1::Error> {
@@ -58,16 +57,6 @@ mod secp256k1 {
         let mut hash = keccak256(&public.serialize_uncompressed()[1..]).0;
         hash[..12].fill(0);
         Ok(hash)
-    }
-}
-
-#[cfg(not(any(feature = "k256", feature = "secp256k1")))]
-mod secp256k1 {
-    use crate::B256;
-
-    #[deprecated = "warning: no `ecRecover` backend is enabled"]
-    pub fn ecrecover(_sig: &[u8; 65], _msg: &B256) -> Result<B256, ()> {
-        unimplemented!("no `ecRecover` backend is enabled")
     }
 }
 

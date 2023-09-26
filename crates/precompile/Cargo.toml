@@ -19,13 +19,11 @@ once_cell = { version = "1.17", default-features = false, features = ["alloc"] }
 ripemd = { version = "0.1", default-features = false }
 sha2 = { version = "0.10", default-features = false }
 
-# Optional KZG precompile
+# Optional KZG point evaluation precompile
 c-kzg = { git = "https://github.com/ethereum/c-kzg-4844", default-features = false, optional = true }
 
-# Either enables the ecRecover precompile
-k256 = { version = "0.13", default-features = false, features = [
-    "ecdsa",
-], optional = true }
+# ecRecover precompile
+k256 = { version = "0.13", default-features = false, features = ["ecdsa"] }
 secp256k1 = { version = "0.27.0", default-features = false, features = [
     "alloc",
     "recovery",
@@ -35,20 +33,18 @@ secp256k1 = { version = "0.27.0", default-features = false, features = [
 default = ["std", "c-kzg", "secp256k1"]
 std = [
     "revm-primitives/std",
+    "k256/std",
     "num/std",
     "once_cell/std",
     "ripemd/std",
     "sha2/std",
     "c-kzg?/std",
-    "k256?/std",
     "secp256k1?/std",
 ]
 
 # * Enables the KZG point evaluation precompile.
 c-kzg = ["dep:c-kzg", "revm-primitives/c-kzg"]
 
-# Either enables the ecRecover precompile
-k256 = ["dep:k256"]
 # * `secp256k1` as a faster alternative to `k256`.
 # The problem that `secp256k1` has is it fails to build for `wasm` target on Windows and Mac as it is c lib.
 # In Linux it passes. If you don't require to build wasm on win/mac, it is safe to use it and it is enabled by default.
