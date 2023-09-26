@@ -22,7 +22,7 @@ sha2 = { version = "0.10", default-features = false }
 # Optional KZG precompile
 c-kzg = { git = "https://github.com/ethereum/c-kzg-4844", default-features = false, optional = true }
 
-# Either one enable the ``
+# Either enables the ecRecover precompile
 k256 = { version = "0.13", default-features = false, features = [
     "ecdsa",
 ], optional = true }
@@ -50,6 +50,8 @@ c-kzg = ["dep:c-kzg", "revm-primitives/c-kzg"]
 # Either enables the ecRecover precompile
 k256 = ["dep:k256"]
 # * `secp256k1` as a faster alternative to `k256`.
+# The problem that `secp256k1` has is it fails to build for `wasm` target on Windows and Mac as it is c lib.
+# In Linux it passes. If you don't require to build wasm on win/mac, it is safe to use it and it is enabled by default.
 secp256k1 = ["dep:secp256k1"]
 
 # * = This library may not work on all platforms as it depends on C libraries.
