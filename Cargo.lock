@@ -451,6 +451,7 @@ dependencies = [
  "glob",
  "hex",
  "libc",
+ "serde",
 ]
 
 [[package]]
