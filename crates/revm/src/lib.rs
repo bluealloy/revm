@@ -7,7 +7,7 @@ extern crate alloc;
 pub mod db;
 mod evm;
 mod evm_impl;
-pub mod handlers;
+pub mod handler;
 mod inspector;
 mod journaled_state;
 
@@ -49,3 +49,5 @@ pub use inspector::Inspector;
 // export Optimism types, helpers, and constants
 #[cfg(feature = "optimism")]
 pub use optimism::{L1BlockInfo, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RECIPIENT};
+
+pub use handler::Handler;
