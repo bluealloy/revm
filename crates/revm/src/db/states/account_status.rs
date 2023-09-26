@@ -15,8 +15,7 @@ pub enum AccountStatus {
 }
 
 impl AccountStatus {
-    /// Transition to other state while preserving
-    /// invariance of this state.
+    /// Transition to other state while preserving invariance of this state.
     ///
     /// It this account was Destroyed and other account is not:
     /// we should mark extended account as destroyed too.
@@ -26,7 +25,7 @@ impl AccountStatus {
     /// If both account are not destroyed and if this account is in memory:
     /// this means that extended account is in memory too.
     ///
-    /// otherwise if both are destroyed or other is destroyed:
+    /// Otherwise, if both are destroyed or other is destroyed:
     /// set other status to extended account.
     pub fn transition(&mut self, other: Self) {
         *self = match (self.was_destroyed(), other.was_destroyed()) {
@@ -69,7 +68,7 @@ impl AccountStatus {
     }
 
     /// Account is modified but not destroyed.
-    /// This means that some of storage values can be found in both
+    /// This means that some storage values can be found in both
     /// memory and database.
     pub fn modified_but_not_destroyed(&self) -> bool {
         matches!(self, AccountStatus::Changed | AccountStatus::InMemoryChange)
