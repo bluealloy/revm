@@ -6,7 +6,7 @@ pub mod bytecode;
 pub mod constants;
 pub mod db;
 pub mod env;
-#[cfg(feature = "std")]
+#[cfg(feature = "c-kzg")]
 pub mod kzg;
 pub mod log;
 pub mod precompile;
@@ -25,7 +25,7 @@ pub use bytecode::*;
 pub use constants::*;
 pub use env::*;
 pub use hashbrown::{hash_map, hash_set, HashMap, HashSet};
-#[cfg(feature = "std")]
+#[cfg(feature = "c-kzg")]
 pub use kzg::{EnvKzgSettings, KzgSettings};
 pub use log::Log;
 pub use precompile::*;

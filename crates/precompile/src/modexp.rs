@@ -81,6 +81,9 @@ where
     }
 
     let (r, gas_cost) = if base_len == 0 && mod_len == 0 {
+        if min_gas > gas_limit {
+            return Err(Error::OutOfGas);
+        }
         (BigUint::zero(), min_gas)
     } else {
         // set limit for exp overflow

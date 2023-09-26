@@ -11,7 +11,7 @@ readme = "../../README.md"
 
 [dependencies]
 alloy-primitives = { version = "0.3", default-features = false, features = [
-    "rlp",
+    "rlp"
 ] }
 alloy-rlp = { version = "0.3", default-features = false, features = ["derive"] }
 bytes = { version = "1.5", default-features = false }
@@ -50,7 +50,29 @@ ruint = { version = "1.10.1", features = [
 hex = "0.4"
 
 [features]
-default = ["std"]
+default = ["std", "c-kzg"]
+std = ["bytes/std", "alloy-rlp/std", "hex/std", "bitvec/std", "bitflags/std"]
+serde = [
+    "dep:serde",
+    "alloy-primitives/serde",
+    "hex/serde",
+    "hashbrown/serde",
+    "ruint/serde",
+    "bytes/serde",
+    "bitvec/serde",
+    "bitflags/serde",
+    "c-kzg?/serde",
+]
+arbitrary = [
+    "std",
+    "ruint/arbitrary",
+    "ruint/proptest",
+    "dep:arbitrary",
+    "dep:proptest",
+    "dep:proptest-derive",
+    "bitflags/arbitrary",
+]
+
 dev = [
     "memory_limit",
     "optional_balance_check",
@@ -66,27 +88,6 @@ optional_block_gas_limit = []
 optional_eip3607 = []
 optional_gas_refund = []
 optional_no_base_fee = []
-std = [
-    "alloy-primitives/std",
-    "alloy-rlp/std",
-    "bytes/std",
-    "bitvec/std",
-    "bitflags/std",
-    "dep:c-kzg",
-]
-serde = [
-    "dep:serde",
-    "alloy-primitives/serde",
-    "hashbrown/serde",
-    "bytes/serde",
-    "bitvec/serde",
-    "bitflags/serde",
-]
-arbitrary = [
-    "std",
-    "alloy-primitives/arbitrary",
-    "dep:arbitrary",
-    "dep:proptest",
-    "dep:proptest-derive",
-    "bitflags/arbitrary",
-]
+
+# See comments in `revm-precompile`
+c-kzg = ["dep:c-kzg"]
