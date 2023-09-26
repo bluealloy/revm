@@ -1,6 +1,7 @@
 # revm - Rust Ethereum Virtual Machine
+<img src="./assets/logo.png" height="200">
 
-Is EVM written in rust that is focused on **speed** and **simplicity**. It has fast and flexible implementation with simple interface and embedded Host. It is passing all `ethereum/tests` test suits
+Is EVM written in the Rust that is focused on **speed** and **simplicity**. It has fast and flexible implementation with simple interface and embedded Host. It is passing all `ethereum/tests` test suits
 
 Here is a list of things that I would like to use as guide in this project:
 - **EVM compatibility and stability** - this goes without saying but it is nice to put it here. In the blockchain industry, stability is the most desired attribute of any system.

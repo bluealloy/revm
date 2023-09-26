@@ -126,13 +126,9 @@ impl Output {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-#[non_exhaustive]
 pub enum EVMError<DBError> {
     Transaction(InvalidTransaction),
-    /// `prevrandao` is not set for Merge and above.
-    PrevrandaoNotSet,
-    /// `excess_blob_gas` is not set for Cancun and above.
-    ExcessBlobGasNotSet,
+    Header(InvalidHeader),
     Database(DBError),
 }
 
@@ -143,8 +139,7 @@ impl<DBError: fmt::Display> fmt::Display for EVMError<DBError> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             EVMError::Transaction(e) => write!(f, "Transaction error: {e:?}"),
-            EVMError::PrevrandaoNotSet => f.write_str("`prevrandao` not set"),
-            EVMError::ExcessBlobGasNotSet => f.write_str("`excess_blob_gas` not set"),
+            EVMError::Header(e) => write!(f, "Header error: {e:?}"),
             EVMError::Database(e) => write!(f, "Database error: {e}"),
         }
     }
@@ -159,9 +154,21 @@ impl<DBError> From<InvalidTransaction> for EVMError<DBError> {
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InvalidTransaction {
-    GasMaxFeeGreaterThanPriorityFee,
+    /// When using the EIP-1559 fee model introduced in the London upgrade, transactions specify two primary fee fields:
+    /// - `gas_max_fee`: The maximum total fee a user is willing to pay, inclusive of both base fee and priority fee.
+    /// - `gas_priority_fee`: The extra amount a user is willing to give directly to the miner, often referred to as the "tip".
+    ///
+    /// Provided `gas_priority_fee` exceeds the total `gas_max_fee`.
+    PriorityFeeGreaterThanMaxFee,
+    /// EIP-1559: `gas_price` is less than `basefee`.
     GasPriceLessThanBasefee,
+    /// `gas_limit` in the tx is bigger than `block_gas_limit`.
     CallerGasLimitMoreThanBlock,
+    /// Initial gas for a Call is bigger than `gas_limit`.
+    ///
+    /// Initial gas for a Call contains:
+    /// - initial stipend gas
+    /// - gas for access list and input data
     CallGasCostMoreThanGasLimit,
     /// EIP-3607 Reject transactions from senders with deployed code
     RejectCallerWithCode,
@@ -184,6 +191,7 @@ pub enum InvalidTransaction {
     },
     /// EIP-3860: Limit and meter initcode
     CreateInitcodeSizeLimit,
+    /// Transaction chain id does not match the config chain id.
     InvalidChainId,
     /// Access list is not supported for blocks before the Berlin hardfork.
     AccessListNotSupported,
@@ -193,10 +201,35 @@ pub enum InvalidTransaction {
     BlobVersionedHashesNotSupported,
     /// Block `blob_gas_price` is greater than tx-specified `max_fee_per_blob_gas` after Cancun.
     BlobGasPriceGreaterThanMax,
+    /// There should be at least one blob in Blob transaction.
+    EmptyBlobs,
+    /// Blob transaction can't be a create transaction.
+    /// `to` must be present
+    BlobCreateTransaction,
+    /// Transaction has more then [`crate::MAX_BLOB_NUMBER_PER_BLOCK`] blobs
+    TooManyBlobs,
+    /// Blob transaction contains a versioned hash with an incorrect version
+    BlobVersionNotSupported,
     /// System transactions are not supported
     /// post-regolith hardfork.
     #[cfg(feature = "optimism")]
     DepositSystemTxPostRegolith,
+}
+
+impl<DBError> From<InvalidHeader> for EVMError<DBError> {
+    fn from(invalid: InvalidHeader) -> Self {
+        EVMError::Header(invalid)
+    }
+}
+
+/// Errors related to misconfiguration of the  `BlockEnv`
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum InvalidHeader {
+    /// `prevrandao` is not set for Merge and above.
+    PrevrandaoNotSet,
+    /// `excess_blob_gas` is not set for Cancun and above.
+    ExcessBlobGasNotSet,
 }
 
 /// Reason a transaction successfully completed.

@@ -207,13 +207,10 @@ mod tests {
     #[cfg(not(feature = "optimism"))]
     fn test_gas_inspector() {
         use crate::db::BenchmarkDB;
-        use crate::interpreter::{
-            opcode, CallInputs, CreateInputs, Gas, InstructionResult, Interpreter, OpCode,
-        };
+        use crate::interpreter::{opcode, OpCode};
         use crate::primitives::{
-            hex_literal::hex, Bytecode, Bytes, ResultAndState, TransactTo, B160, B256,
+            hex_literal::hex, Bytecode, Bytes, ResultAndState, TransactTo, B160,
         };
-        use crate::{inspectors::GasInspector, Database, EVMData, Inspector};
 
         let contract_data: Bytes = Bytes::from(vec![
             opcode::PUSH1,
@@ -246,7 +243,7 @@ mod tests {
         for (pc, gas) in inspector.gas_remaining_steps {
             println!(
                 "{pc} {} {gas:?}",
-                OpCode::try_from_u8(bytecode.bytes()[pc]).unwrap().as_str(),
+                OpCode::new(bytecode.bytes()[pc]).unwrap().as_str(),
             );
         }
     }
