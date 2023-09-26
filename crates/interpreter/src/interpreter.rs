@@ -146,8 +146,10 @@ impl<'a> Interpreter<'a> {
 
     /// Returns a copy of the interpreter's return value, if any.
     #[inline]
-    pub fn return_value(&self) -> Bytes {
-        self.return_value_slice().to_vec().into()
+    pub fn return_value(&mut self) -> Bytes {
+        let return_data = self.return_value_slice().to_vec().into();
+        self.shared_memory.free_context_memory();
+        return_data
     }
 
     /// Returns a reference to the interpreter's return value, if any.
