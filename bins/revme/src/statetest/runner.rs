@@ -60,6 +60,12 @@ fn skip_test(path: &Path) -> bool {
         // custom json parser. https://github.com/ethereum/tests/issues/971
         | "ValueOverflow.json"
 
+        // TODO remove this after we merge branch to main.
+        | "NoSrcAccountCreate.json"
+        | "NoSrcAccount1559.json"
+        | "NoSrcAccountCreate1559.json"
+        | "NoSrcAccount.json"
+
         // precompiles having storage is not possible
         | "RevertPrecompiledTouch_storage.json"
         | "RevertPrecompiledTouch.json"

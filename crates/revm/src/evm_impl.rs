@@ -1,4 +1,4 @@
-use crate::handlers;
+use crate::handler::Handler;
 use crate::interpreter::{
     analysis::to_analysed, gas, instruction_result::SuccessOrHalt, return_ok, CallContext,
     CallInputs, CallScheme, Contract, CreateInputs, CreateScheme, Gas, Host, InstructionResult,
@@ -6,24 +6,21 @@ use crate::interpreter::{
 };
 use crate::journaled_state::{is_precompile, JournalCheckpoint};
 use crate::primitives::{
-    create2_address, create_address, keccak256, Account, AnalysisKind, Bytecode, Bytes, EVMError,
-    EVMResult, Env, ExecutionResult, HashMap, InvalidTransaction, Log, Output, ResultAndState,
-    Spec,
+    create2_address, create_address, keccak256, AnalysisKind, Bytecode, Bytes, EVMError, EVMResult,
+    Env, ExecutionResult, InvalidTransaction, Log, Output, ResultAndState, Spec,
     SpecId::{self, *},
     TransactTo, B160, B256, U256,
 };
 use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector};
 use alloc::boxed::Box;
 use alloc::vec::Vec;
-use core::{cmp::min, marker::PhantomData};
+use core::marker::PhantomData;
 use revm_interpreter::gas::initial_tx_gas;
 use revm_interpreter::MAX_CODE_SIZE;
 use revm_precompile::{Precompile, Precompiles};
 
 #[cfg(feature = "optimism")]
 use crate::optimism;
-#[cfg(feature = "optimism")]
-use core::ops::Mul;
 
 pub struct EVMData<'a, DB: Database> {
     pub env: &'a mut Env,
@@ -31,11 +28,15 @@ pub struct EVMData<'a, DB: Database> {
     pub db: &'a mut DB,
     pub error: Option<DB::Error>,
     pub precompiles: Precompiles,
+    /// Used as temporary value holder to store L1 block info.
+    #[cfg(feature = "optimism")]
+    pub l1_block_info: Option<optimism::L1BlockInfo>,
 }
 
 pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
     data: EVMData<'a, DB>,
     inspector: &'a mut dyn Inspector<DB>,
+    handler: Handler<DB>,
     _phantomdata: PhantomData<GSPEC>,
 }
 
@@ -80,24 +81,25 @@ pub trait Transact<DBError> {
     }
 }
 
-impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, INSPECT> {
+impl<'a, DB: Database> EVMData<'a, DB> {
     /// Load access list for berlin hardfork.
     ///
     /// Loading of accounts/storages is needed to make them hot.
     #[inline]
     fn load_access_list(&mut self) -> Result<(), EVMError<DB::Error>> {
-        for (address, slots) in self.data.env.tx.access_list.iter() {
-            self.data
-                .journaled_state
-                .initial_account_load(*address, slots, self.data.db)
+        for (address, slots) in self.env.tx.access_list.iter() {
+            self.journaled_state
+                .initial_account_load(*address, slots, self.db)
                 .map_err(EVMError::Database)?;
         }
         Ok(())
     }
+}
 
+#[cfg(feature = "optimism")]
+impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, INSPECT> {
     /// If the transaction is not a deposit transaction, subtract the L1 data fee from the
     /// caller's balance directly after minting the requested amount of ETH.
-    #[cfg(feature = "optimism")]
     fn remove_l1_cost(
         is_deposit: bool,
         tx_caller: B160,
@@ -132,7 +134,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     /// If the transaction is a deposit with a `mint` value, add the mint value
     /// in wei to the caller's balance. This should be persisted to the database
     /// prior to the rest of execution.
-    #[cfg(feature = "optimism")]
     fn commit_mint_value(
         tx_caller: B160,
         tx_mint: Option<u128>,
@@ -195,7 +196,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let tx_gas_limit = env.tx.gas_limit;
 
         #[cfg(feature = "optimism")]
-        let (tx_mint, is_deposit, tx_l1_cost, l1_block_info) = {
+        let tx_l1_cost = {
             let is_deposit = env.tx.optimism.source_hash.is_some();
 
             let l1_block_info =
@@ -213,8 +214,15 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                     })
                     .unwrap_or(U256::ZERO)
             });
+            // storage l1 block info for later use.
+            self.data.l1_block_info = l1_block_info;
 
-            (env.tx.optimism.mint, is_deposit, tx_l1_cost, l1_block_info)
+            //
+            let Some(tx_l1_cost) = tx_l1_cost else {
+                panic!("[OPTIMISM] L1 Block Info could not be loaded from the DB.")
+            };
+
+            tx_l1_cost
         };
 
         let initial_gas_spend = initial_tx_gas::<GSPEC>(
@@ -232,9 +240,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                 .map_err(EVMError::Database)?;
         }
 
-        self.load_access_list()?;
-        // Without this line, the borrow checker complains that `self` is borrowed mutable above.
-        let env = &self.data.env;
+        self.data.load_access_list()?;
 
         // load acc
         let journal = &mut self.data.journaled_state;
@@ -243,14 +249,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         if self.data.env.cfg.optimism {
             EVMImpl::<GSPEC, DB, INSPECT>::commit_mint_value(
                 tx_caller,
-                tx_mint,
+                self.data.env.tx.optimism.mint,
                 self.data.db,
                 journal,
             )?;
 
-            let Some(tx_l1_cost) = tx_l1_cost else {
-                panic!("[OPTIMISM] L1 Block Info could not be loaded from the DB.")
-            };
+            let is_deposit = self.data.env.tx.optimism.source_hash.is_some();
             EVMImpl::<GSPEC, DB, INSPECT>::remove_l1_cost(
                 is_deposit,
                 tx_caller,
@@ -266,11 +270,12 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
 
         // Subtract gas costs from the caller's account.
         // We need to saturate the gas cost to prevent underflow in case that `disable_balance_check` is enabled.
-        let mut gas_cost = U256::from(tx_gas_limit).saturating_mul(env.effective_gas_price());
+        let mut gas_cost =
+            U256::from(tx_gas_limit).saturating_mul(self.data.env.effective_gas_price());
 
         // EIP-4844
         if GSPEC::enabled(CANCUN) {
-            let data_fee = env.calc_data_fee().expect("already checked");
+            let data_fee = self.data.env.calc_data_fee().expect("already checked");
             gas_cost = gas_cost.saturating_add(U256::from(data_fee));
         }
 
@@ -319,24 +324,36 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             }
         };
 
-        let gas = handlers::handle_call_return::<GSPEC>(self.env(), call_result, ret_gas);
+        let handler = &self.handler;
+        let data = &mut self.data;
 
-        let (state, logs, gas_used, gas_refunded) = self.finalize::<GSPEC>(
-            &gas,
-            #[cfg(feature = "optimism")]
-            l1_block_info.as_ref(),
-        );
+        // handle output of call/create calls.
+        let gas = handler.call_return(data.env, call_result, ret_gas);
+
+        let gas_refunded = handler.calculate_gas_refund(data.env, &gas);
+
+        // Reimburse the caller
+        handler.reimburse_caller(data, &gas, gas_refunded)?;
+
+        // Reward beneficiary
+        handler.reward_beneficiary(data, &gas, gas_refunded)?;
+
+        // used gas with refund calculated.
+        let final_gas_used = gas.spend() - gas_refunded;
+
+        // reset journal and return present state.
+        let (state, logs) = self.data.journaled_state.finalize();
 
         let result = match call_result.into() {
             SuccessOrHalt::Success(reason) => ExecutionResult::Success {
                 reason,
-                gas_used,
+                gas_used: final_gas_used,
                 gas_refunded,
                 logs,
                 output,
             },
             SuccessOrHalt::Revert => ExecutionResult::Revert {
-                gas_used,
+                gas_used: final_gas_used,
                 output: match output {
                     Output::Call(return_value) => return_value,
                     Output::Create(return_value, _) => return_value,
@@ -348,6 +365,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                 // the transaction halts.
                 #[cfg(feature = "optimism")]
                 {
+                    let is_deposit = self.data.env.tx.optimism.source_hash.is_some();
                     let is_creation = matches!(output, Output::Create(_, _));
                     let regolith_enabled = GSPEC::enabled(SpecId::REGOLITH);
                     let optimism_regolith = self.data.env.cfg.optimism && regolith_enabled;
@@ -360,7 +378,10 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
                         acc.info.nonce = acc.info.nonce.checked_add(1).unwrap_or(u64::MAX);
                     }
                 }
-                ExecutionResult::Halt { reason, gas_used }
+                ExecutionResult::Halt {
+                    reason,
+                    gas_used: final_gas_used,
+                }
             }
             SuccessOrHalt::FatalExternalError => {
                 return Err(EVMError::Database(self.data.error.take().unwrap()));
@@ -393,135 +414,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 db,
                 error: None,
                 precompiles,
+                #[cfg(feature = "optimism")]
+                l1_block_info: None,
             },
             inspector,
+            handler: Handler::mainnet::<GSPEC>(),
             _phantomdata: PhantomData {},
         }
-    }
-
-    fn finalize<SPEC: Spec>(
-        &mut self,
-        gas: &Gas,
-        #[cfg(feature = "optimism")] l1_block_info: Option<&optimism::L1BlockInfo>,
-    ) -> (HashMap<B160, Account>, Vec<Log>, u64, u64) {
-        let caller = self.data.env.tx.caller;
-        let coinbase = self.data.env.block.coinbase;
-        let (gas_used, gas_refunded) = if crate::USE_GAS {
-            let effective_gas_price = self.data.env.effective_gas_price();
-            let basefee = self.data.env.block.basefee;
-
-            let is_gas_refund_disabled = self.data.env.cfg.is_gas_refund_disabled();
-
-            #[cfg(feature = "optimism")]
-            let is_deposit =
-                self.data.env.cfg.optimism && self.data.env.tx.optimism.source_hash.is_some();
-
-            // Prior to Regolith, deposit transactions did not receive gas refunds.
-            #[cfg(feature = "optimism")]
-            let is_gas_refund_disabled = is_gas_refund_disabled
-                || (self.data.env.cfg.optimism && is_deposit && !SPEC::enabled(SpecId::REGOLITH));
-
-            let gas_refunded = if is_gas_refund_disabled {
-                0
-            } else {
-                // EIP-3529: Reduction in refunds
-                let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 };
-                min(gas.refunded() as u64, gas.spend() / max_refund_quotient)
-            };
-
-            // return balance of not spend gas.
-            let Ok((caller_account, _)) =
-                self.data.journaled_state.load_account(caller, self.data.db)
-            else {
-                panic!("caller account not found");
-            };
-
-            caller_account.info.balance = caller_account
-                .info
-                .balance
-                .saturating_add(effective_gas_price * U256::from(gas.remaining() + gas_refunded));
-
-            let disable_coinbase_tip = self.data.env.cfg.disable_coinbase_tip;
-
-            // All deposit transactions skip the coinbase tip in favor of paying the
-            // various fee vaults.
-            #[cfg(feature = "optimism")]
-            let disable_coinbase_tip =
-                disable_coinbase_tip || (self.data.env.cfg.optimism && is_deposit);
-
-            // transfer fee to coinbase/beneficiary.
-            if !disable_coinbase_tip {
-                // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
-                let coinbase_gas_price = if SPEC::enabled(LONDON) {
-                    effective_gas_price.saturating_sub(basefee)
-                } else {
-                    effective_gas_price
-                };
-
-                let Ok((coinbase_account, _)) = self
-                    .data
-                    .journaled_state
-                    .load_account(coinbase, self.data.db)
-                else {
-                    panic!("coinbase account not found");
-                };
-                coinbase_account.mark_touch();
-                coinbase_account.info.balance = coinbase_account
-                    .info
-                    .balance
-                    .saturating_add(coinbase_gas_price * U256::from(gas.spend() - gas_refunded));
-            }
-
-            #[cfg(feature = "optimism")]
-            if self.data.env.cfg.optimism && !is_deposit {
-                // If the transaction is not a deposit transaction, fees are paid out
-                // to both the Base Fee Vault as well as the L1 Fee Vault.
-                let Some(l1_block_info) = l1_block_info else {
-                    panic!("[OPTIMISM] Failed to load L1 block information.");
-                };
-
-                let Some(enveloped_tx) = &self.data.env.tx.optimism.enveloped_tx else {
-                    panic!("[OPTIMISM] Failed to load enveloped transaction.");
-                };
-
-                let l1_cost = l1_block_info.calculate_tx_l1_cost::<SPEC>(enveloped_tx, is_deposit);
-
-                // Send the L1 cost of the transaction to the L1 Fee Vault.
-                let Ok((l1_fee_vault_account, _)) = self
-                    .data
-                    .journaled_state
-                    .load_account(optimism::L1_FEE_RECIPIENT, self.data.db)
-                else {
-                    panic!("[OPTIMISM] Failed to load L1 Fee Vault account");
-                };
-                l1_fee_vault_account.mark_touch();
-                l1_fee_vault_account.info.balance += l1_cost;
-
-                // Send the base fee of the transaction to the Base Fee Vault.
-                let Ok((base_fee_vault_account, _)) = self
-                    .data
-                    .journaled_state
-                    .load_account(optimism::BASE_FEE_RECIPIENT, self.data.db)
-                else {
-                    panic!("[OPTIMISM] Failed to load Base Fee Vault account");
-                };
-                base_fee_vault_account.mark_touch();
-                base_fee_vault_account.info.balance +=
-                    l1_block_info.l1_base_fee.mul(U256::from(gas.spend()));
-            }
-
-            (gas.spend() - gas_refunded, gas_refunded)
-        } else {
-            // touch coinbase
-            let _ = self
-                .data
-                .journaled_state
-                .load_account(coinbase, self.data.db);
-            self.data.journaled_state.touch(&coinbase);
-            (0, 0)
-        };
-        let (new_state, logs) = self.data.journaled_state.finalize();
-        (new_state, logs, gas_used, gas_refunded)
     }
 
     #[inline(never)]

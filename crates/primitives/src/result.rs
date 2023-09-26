@@ -4,7 +4,11 @@ use bytes::Bytes;
 use core::fmt;
 use ruint::aliases::U256;
 
-pub type EVMResult<DBError> = core::result::Result<ResultAndState, EVMError<DBError>>;
+/// Result of EVM execution.
+pub type EVMResult<DBError> = EVMResultGeneric<ResultAndState, DBError>;
+
+/// Generic result of EVM execution. Used to represent error and generic output.
+pub type EVMResultGeneric<T, DBError> = core::result::Result<T, EVMError<DBError>>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
