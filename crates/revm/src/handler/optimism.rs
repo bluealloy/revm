@@ -138,7 +138,6 @@ pub fn reward_beneficiary<SPEC: Spec, DB: Database>(
     Ok(())
 }
 
-
 #[cfg(test)]
 mod tests {
     use crate::primitives::{BedrockSpec, RegolithSpec};
