@@ -1,6 +1,6 @@
 # revm 
 
-[![CI status](https://github.com/bluealloy/revm/workflows/Tests/badge.svg)][gh-ci]
+[![CI status](https://github.com/bluealloy/revm/workflows/Tests/badge.svg?label=ci)][gh-ci]
 [![Telegram Chat][tg-badge]][tg-url]
 
 **Rust Ethereum Virtual Machine**
