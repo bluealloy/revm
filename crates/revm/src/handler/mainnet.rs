@@ -18,17 +18,15 @@ pub fn handle_call_return<SPEC: Spec>(
     let mut gas = Gas::new(tx_gas_limit);
     gas.record_cost(tx_gas_limit);
 
-    if crate::USE_GAS {
-        match call_result {
-            return_ok!() => {
-                gas.erase_cost(returned_gas.remaining());
-                gas.record_refund(returned_gas.refunded());
-            }
-            return_revert!() => {
-                gas.erase_cost(returned_gas.remaining());
-            }
-            _ => {}
+    match call_result {
+        return_ok!() => {
+            gas.erase_cost(returned_gas.remaining());
+            gas.record_refund(returned_gas.refunded());
         }
+        return_revert!() => {
+            gas.erase_cost(returned_gas.remaining());
+        }
+        _ => {}
     }
     gas
 }
