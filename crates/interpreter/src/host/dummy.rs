@@ -110,7 +110,7 @@ impl Host for DummyHost {
     fn tload(&mut self, _address: B160, index: U256) -> U256 {
         self.transient_storage
             .get(&index)
-            .cloned()
+            .copied()
             .unwrap_or_default()
     }
 

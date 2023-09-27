@@ -5,11 +5,11 @@ use hashbrown::HashMap;
 #[derive(Debug, Clone, Eq, PartialEq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Account {
-    /// Balance of the account.
+    /// Balance, nonce, and code.
     pub info: AccountInfo,
-    /// storage cache
+    /// Storage cache
     pub storage: HashMap<U256, StorageSlot>,
-    // Account status flags.
+    /// Account status flags.
     pub status: AccountStatus,
 }
 
@@ -173,7 +173,7 @@ pub struct AccountInfo {
     /// code hash,
     pub code_hash: B256,
     /// code: if None, `code_by_hash` will be used to fetch it if code needs to be loaded from
-    /// inside of revm.
+    /// inside of `revm`.
     pub code: Option<Bytecode>,
 }
 
