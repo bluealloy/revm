@@ -550,7 +550,10 @@ impl Env {
 
     /// Validate transaction against state.
     #[inline]
-    pub fn validate_tx_against_state(&self, account: &Account) -> Result<(), InvalidTransaction> {
+    pub fn validate_tx_against_state(
+        &self,
+        account: &mut Account,
+    ) -> Result<(), InvalidTransaction> {
         // EIP-3607: Reject transactions from senders with deployed code
         // This EIP is introduced after london but there was no collision in past
         // so we can leave it enabled always
@@ -586,11 +589,16 @@ impl Env {
 
         // Check if account has enough balance for gas_limit*gas_price and value transfer.
         // Transfer will be done inside `*_inner` functions.
-        if !self.cfg.is_balance_check_disabled() && balance_check > account.info.balance {
-            return Err(InvalidTransaction::LackOfFundForMaxFee {
-                fee: self.tx.gas_limit,
-                balance: account.info.balance,
-            });
+        if balance_check > account.info.balance {
+            if self.cfg.is_balance_check_disabled() {
+                // Add transaction cost to balance to ensure execution doesn't fail.
+                account.info.balance = balance_check;
+            } else {
+                return Err(InvalidTransaction::LackOfFundForMaxFee {
+                    fee: self.tx.gas_limit,
+                    balance: account.info.balance,
+                });
+            }
         }
 
         Ok(())
