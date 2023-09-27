@@ -14,8 +14,8 @@
 ![](./assets/revm-banner.png)
 
 Revm is an EVM written in Rust that is focused on **speed** and **simplicity**.
-It has fast and flexible implementation with simple interface and embedded Host.
-It is passing all `ethereum/tests` test suites.
+It has a fast and flexible implementation with a simple interface and embedded Host.
+It passes all `ethereum/tests` test suites.
 
 Here is a list of guiding principles that Revm follows.
 - **EVM compatibility and stability** - this goes without saying but it is nice to put it here. In the blockchain industry, stability is the most desired attribute of any system.
