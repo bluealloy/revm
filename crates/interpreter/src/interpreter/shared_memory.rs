@@ -1,7 +1,7 @@
 use revm_primitives::U256;
 
 use crate::alloc::vec;
-use crate::alloc::vec::Vec;
+use crate::alloc::{boxed::Box, slice, vec::Vec};
 use core::{
     cmp::min,
     fmt,
@@ -14,16 +14,16 @@ use core::{
 /// the `new` static method to ensure memory safety.
 pub struct SharedMemory {
     /// Shared buffer
-    data: Vec<u8>,
+    data: Box<[u8]>,
     /// Memory checkpoints for each depth
     checkpoints: Vec<usize>,
     /// Raw pointer used for the portion of memory used
     /// by the current context
-    current_slice: *mut [u8],
+    current_ptr: *mut u8,
     /// How much memory has been used in the current context
     current_len: usize,
     /// Amount of memory left for assignment
-    pub limit: u64,
+    pub limit: usize,
 }
 
 impl fmt::Debug for SharedMemory {
@@ -31,32 +31,26 @@ impl fmt::Debug for SharedMemory {
         f.debug_struct("SharedMemory")
             .field(
                 "current_slice",
-                &crate::primitives::hex::encode(self.get_current_slice()),
+                &crate::primitives::hex::encode(self.current_slice()),
             )
             .finish()
     }
 }
 
 impl SharedMemory {
+    /// Calculates memory allocation upper bound using
+    /// https://2π.com/22/eth-max-mem
+    #[inline]
+    pub fn calculate_upper_bound(gas_limit: u64) -> u64 {
+        4096 * sqrt(2u64.checked_mul(gas_limit).unwrap_or(u64::MAX))
+    }
+
     /// Allocate memory to be shared between calls.
     /// Memory size is estimated using https://2π.com/22/eth-max-mem
     /// which depends on transaction [gas_limit].
     /// Maximum allocation size is 2^32 - 1 bytes;
     pub fn new(gas_limit: u64) -> Self {
-        let size = min(
-            SharedMemory::calculate_upper_bound(gas_limit) as usize,
-            2usize.pow(32) - 1,
-        );
-
-        let mut data = vec![0; size];
-        let current_slice: *mut [u8] = &mut data[..];
-        SharedMemory {
-            data,
-            checkpoints: Vec::with_capacity(1024),
-            current_slice,
-            current_len: 0,
-            limit: size as u64,
-        }
+        Self::new_with_memory_limit(gas_limit, (u32::MAX - 1) as u64)
     }
 
     /// Allocate memory to be shared between calls.
@@ -64,69 +58,67 @@ impl SharedMemory {
     /// which depends on transaction [gas_limit].
     /// Uses [memory_limit] as maximum allocation size
     pub fn new_with_memory_limit(gas_limit: u64, memory_limit: u64) -> Self {
-        let size = min(
-            SharedMemory::calculate_upper_bound(gas_limit) as usize,
+        let limit = min(
+            Self::calculate_upper_bound(gas_limit) as usize,
             memory_limit as usize,
         );
 
-        let mut data = vec![0; size];
-        let current_slice: *mut [u8] = &mut data[..];
-        SharedMemory {
+        let mut data = vec![0; limit].into_boxed_slice();
+        let current_slice = data.as_mut_ptr();
+        Self {
             data,
-            checkpoints: Vec::with_capacity(1024),
-            current_slice,
+            checkpoints: Vec::with_capacity(32),
+            current_ptr: current_slice,
             current_len: 0,
-            limit: size as u64,
+            limit,
         }
     }
 
     /// Prepares the shared memory for a new context
     pub fn new_context_memory(&mut self) {
-        let base_offset = self.checkpoints.last().unwrap_or(&0);
+        let base_offset = self.last_checkpoint();
         let new_checkpoint = base_offset + self.current_len;
 
         self.checkpoints.push(new_checkpoint);
 
-        self.current_slice = &mut self.data[new_checkpoint..];
+        self.current_ptr = self.data[new_checkpoint..].as_mut_ptr();
         self.current_len = 0;
     }
 
     /// Prepares the shared memory for returning to the previous context
     pub fn free_context_memory(&mut self) {
         if let Some(old_checkpoint) = self.checkpoints.pop() {
-            let last = *self.checkpoints.last().unwrap_or(&0);
-            self.current_slice = &mut self.data[last..];
-            self.current_len = old_checkpoint - last;
+            let last_checkpoint = self.last_checkpoint();
+            self.current_ptr = self.data[last_checkpoint..].as_mut_ptr();
+            self.current_len = old_checkpoint - last_checkpoint;
             self.update_limit();
         }
     }
 
     /// Get the length of the current memory range.
+    #[inline(always)]
     pub fn len(&self) -> usize {
         self.current_len
     }
 
-    /// Return true if current effective memory range is zero.
+    #[inline(always)]
     pub fn is_empty(&self) -> bool {
         self.current_len == 0
     }
 
-    /// Return the memory of the current context
-    pub fn data(&self) -> &[u8] {
-        self.get_current_slice()
-    }
-
     /// Resize the memory. assume that we already checked if:
-    /// - we have enought gas to resize this vector
+    /// - we have enough gas to resize this vector
     /// - we made new_size as multiply of 32
     /// - [new_size] is greater than `self.len()`
+    #[inline(always)]
     pub fn resize(&mut self, new_size: usize) {
         // extend with zeros
         let range = self.current_len..new_size;
 
-        self.get_current_slice_mut()[range]
-            .iter_mut()
-            .for_each(|byte| *byte = 0);
+        for byte in self.current_slice_mut()[range].iter_mut() {
+            *byte = 0;
+        }
+
         self.current_len = new_size;
         self.update_limit();
     }
@@ -137,7 +129,7 @@ impl SharedMemory {
     #[inline(always)]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn slice(&self, offset: usize, size: usize) -> &[u8] {
-        match self.get_current_slice().get(offset..offset + size) {
+        match self.current_slice().get(offset..offset + size) {
             Some(slice) => slice,
             None => debug_unreachable!("slice OOB: {offset}..{size}; len: {}", self.len()),
         }
@@ -150,7 +142,7 @@ impl SharedMemory {
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn slice_mut(&mut self, offset: usize, size: usize) -> &mut [u8] {
         let len = self.current_len;
-        match self.get_current_slice_mut().get_mut(offset..offset + size) {
+        match self.current_slice_mut().get_mut(offset..offset + size) {
             Some(slice) => slice,
             None => debug_unreachable!("slice OOB: {offset}..{size}; len: {}", len),
         }
@@ -162,7 +154,7 @@ impl SharedMemory {
     #[inline(always)]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn set_byte(&mut self, index: usize, byte: u8) {
-        match self.get_current_slice_mut().get_mut(index) {
+        match self.current_slice_mut().get_mut(index) {
             Some(b) => *b = byte,
             None => debug_unreachable!("set_byte OOB: {index}; len: {}", self.len()),
         }
@@ -219,36 +211,33 @@ impl SharedMemory {
     #[inline(always)]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn copy(&mut self, dst: usize, src: usize, len: usize) {
-        self.get_current_slice_mut()
-            .copy_within(src..src + len, dst);
+        self.current_slice_mut().copy_within(src..src + len, dst);
     }
 
-    /// Get a refernce to the memory of the current context
+    /// Get a reference to the memory of the current context
     #[inline(always)]
-    fn get_current_slice(&self) -> &[u8] {
+    fn current_slice(&self) -> &[u8] {
         // Safety: if it is a valid pointer to a slice of `self.data`
-        unsafe { &*self.current_slice }
+        unsafe { slice::from_raw_parts(self.current_ptr, self.limit) }
     }
 
-    /// Get a mutable refernce to the memory of the current context
+    /// Get a mutable reference to the memory of the current context
     #[inline(always)]
-    fn get_current_slice_mut(&mut self) -> &mut [u8] {
+    fn current_slice_mut(&mut self) -> &mut [u8] {
         // Safety: it is a valid pointer to a slice of `self.data`
-        unsafe { &mut *self.current_slice }
-    }
-
-    /// Calculates memory allocation upper bound using
-    /// https://2π.com/22/eth-max-mem
-    #[inline(always)]
-    fn calculate_upper_bound(gas_limit: u64) -> u64 {
-        4096 * sqrt(2 * gas_limit)
+        unsafe { slice::from_raw_parts_mut(self.current_ptr, self.limit) }
     }
 
     /// Update the amount of memory left for usage
     #[inline(always)]
     fn update_limit(&mut self) {
-        self.limit =
-            (self.data.len() - *self.checkpoints.last().unwrap_or(&0) - self.current_len) as u64;
+        self.limit = self.data.len() - self.last_checkpoint() - self.current_len;
+    }
+
+    /// Get the last memory checkpoint
+    #[inline(always)]
+    fn last_checkpoint(&self) -> usize {
+        *self.checkpoints.last().unwrap_or(&0)
     }
 }
 

@@ -604,7 +604,11 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             interpreter.run::<Self, GSPEC>(self)
         };
 
-        (exit_reason, interpreter.return_value(), *interpreter.gas())
+        let (return_value, gas) = (interpreter.return_value(), *interpreter.gas());
+
+        interpreter.shared_memory.free_context_memory();
+
+        (exit_reason, return_value, gas)
     }
 
     /// Call precompile contract

@@ -52,12 +52,10 @@ macro_rules! gas_or_fail {
 
 macro_rules! shared_memory_resize {
     ($interp:expr, $offset:expr, $len:expr) => {
-        let len: usize = $len;
-        let offset: usize = $offset;
         if let Some(new_size) =
-            crate::interpreter::shared_memory::next_multiple_of_32(offset.saturating_add(len))
+            crate::interpreter::shared_memory::next_multiple_of_32($offset.saturating_add($len))
         {
-            if new_size as u64 > $interp.shared_memory.limit {
+            if new_size > $interp.shared_memory.limit {
                 $interp.instruction_result = InstructionResult::MemoryLimitOOG;
                 return;
             }
