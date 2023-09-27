@@ -85,7 +85,7 @@ The [EIP-161](https://eips.ethereum.org/EIPS/eip-161) aims to optimize Ethereum'
 
 - Account Creation: During the creation of an account (whether by transactions or the `CREATE` operation), the nonce of the new account is incremented by one before the execution of the initialization code. For most networks, the starting value is 1, but this may vary for test networks with non-zero default starting nonces.
 
-- Call and Suicide Charges: Prior to [EIP-161](https://eips.ethereum.org/EIPS/eip-161), a gas charge of 25,000 was levied for `CALL` and `SUICIDE` operations if the destination account did not exist. With [EIP-161](https://eips.ethereum.org/EIPS/eip-161), this charge is only applied if the operation transfers more than zero value and the destination account is dead (non-existent or empty).
+- CALL and SELFDESTRUCT Charges: Prior to [EIP-161](https://eips.ethereum.org/EIPS/eip-161), a gas charge of 25,000 was levied for `CALL` and `SELFDESTRUCT` operations if the destination account did not exist. With [EIP-161](https://eips.ethereum.org/EIPS/eip-161), this charge is only applied if the operation transfers more than zero value and the destination account is dead (non-existent or empty).
 
 - Existence of Empty Accounts: An account cannot change its state from non-existent to existent-but-empty. If an operation would result in this, the account remains non-existent.
 
@@ -99,7 +99,7 @@ These rules have an impact on how state is managed within the [EIP-161](https://
 
 The rationale behind [EIP-161](https://eips.ethereum.org/EIPS/eip-161) is to optimize the Ethereum state management by getting rid of unnecessary data. Prior to this change, it was possible for the state trie to become bloated with empty accounts. This bloating resulted in increased storage requirements and slower processing times for Ethereum nodes.
 
-By removing these empty accounts, the size of the state trie can be reduced, leading to improvements in the performance of Ethereum nodes. Additionally, the changes regarding the gas costs for `CALL` and `SUICIDE` operations add a new level of nuance to the Ethereum gas model, further optimizing transaction processing.
+By removing these empty accounts, the size of the state trie can be reduced, leading to improvements in the performance of Ethereum nodes. Additionally, the changes regarding the gas costs for `CALL` and `SELFDESTRUCT` operations add a new level of nuance to the Ethereum gas model, further optimizing transaction processing.
 
 [EIP-161](https://eips.ethereum.org/EIPS/eip-161) has a significant impact on the state management of Ethereum, and thus is highly relevant to the JournaledState module of the revm crate. The operations defined in this module, such as loading accounts, self-destructing accounts, and changing storage, must all conform to the rules defined in [EIP-161](https://eips.ethereum.org/EIPS/eip-161).
 

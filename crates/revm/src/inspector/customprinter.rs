@@ -140,7 +140,7 @@ mod test {
             balance: "0x100c5d668240db8e00".parse().unwrap(),
             code_hash: crate::primitives::keccak256(&code),
             code: Some(crate::primitives::Bytecode::new_raw(code.clone())),
-            nonce: "1".parse().unwrap(),
+            nonce: 1,
         };
         let callee = hex_literal::hex!("5fdcca53617f4d2b9134b29090c87d01058e27e9");
         database.insert_account_info(crate::primitives::B160(callee), acc_info);

@@ -869,7 +869,7 @@ mod tests {
     }
 
     #[test]
-    fn extend_on_destoyed_values() {
+    fn extend_on_destroyed_values() {
         let base_bundle1 = test_bundle1();
         let base_bundle2 = test_bundle2();
 

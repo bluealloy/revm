@@ -50,9 +50,9 @@ impl BundleAccount {
         1 + self.storage.len()
     }
 
-    /// Return storage slot if it exist.
+    /// Return storage slot if it exists.
     ///
-    /// In case we know that account is destroyed return `Some(U256::ZERO)`
+    /// In case we know that account is newly created or destroyed, return `Some(U256::ZERO)`
     pub fn storage_slot(&self, slot: U256) -> Option<U256> {
         let slot = self.storage.get(&slot).map(|s| s.present_value);
         if slot.is_some() {

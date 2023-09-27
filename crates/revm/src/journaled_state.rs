@@ -356,7 +356,7 @@ impl JournaledState {
                     had_balance,
                 } => {
                     let account = state.get_mut(&address).unwrap();
-                    // set previous ste of selfdestructed flag. as there could be multiple
+                    // set previous state of selfdestructed flag, as there could be multiple
                     // selfdestructs in one transaction.
                     if was_destroyed {
                         // flag is still selfdestructed
@@ -373,7 +373,7 @@ impl JournaledState {
                     }
                 }
                 JournalEntry::BalanceTransfer { from, to, balance } => {
-                    // we don't need to check overflow and underflow when adding sub subtracting the balance.
+                    // we don't need to check overflow and underflow when adding and subtracting the balance.
                     let from = state.get_mut(&from).unwrap();
                     from.info.balance += balance;
                     let to = state.get_mut(&to).unwrap();
@@ -717,7 +717,7 @@ impl JournaledState {
     pub fn tload(&mut self, address: B160, key: U256) -> U256 {
         self.transient_storage
             .get(&(address, key))
-            .cloned()
+            .copied()
             .unwrap_or_default()
     }
 
