@@ -706,7 +706,9 @@ mod tests {
         env.tx.optimism.source_hash = Some(B256::zero());
 
         // Nonce and balance checks should be skipped for deposit transactions.
-        assert!(env.validate_tx_against_state(&Account::default()).is_ok());
+        assert!(env
+            .validate_tx_against_state(&mut Account::default())
+            .is_ok());
     }
 
     #[test]
