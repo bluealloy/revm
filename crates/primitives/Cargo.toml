@@ -83,6 +83,8 @@ arbitrary = [
     "bitflags/arbitrary",
 ]
 
+optimism = []
+
 dev = [
     "memory_limit",
     "optional_balance_check",

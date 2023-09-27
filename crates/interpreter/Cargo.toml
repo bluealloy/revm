@@ -42,6 +42,8 @@ arbitrary = [
     "revm-primitives/arbitrary",
 ]
 
+optimism = ["revm-primitives/optimism"]
+
 dev = [
     "memory_limit",
     "optional_balance_check",

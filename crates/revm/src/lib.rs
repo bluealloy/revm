@@ -7,8 +7,12 @@ extern crate alloc;
 pub mod db;
 mod evm;
 mod evm_impl;
+pub mod handler;
 mod inspector;
 mod journaled_state;
+
+#[cfg(feature = "optimism")]
+pub mod optimism;
 
 #[cfg(all(feature = "with-serde", not(feature = "serde")))]
 compile_error!("`with-serde` feature has been renamed to `serde`.");
@@ -41,3 +45,9 @@ pub use revm_interpreter::primitives;
 // reexport inspector implementations
 pub use inspector::inspectors;
 pub use inspector::Inspector;
+
+// export Optimism types, helpers, and constants
+#[cfg(feature = "optimism")]
+pub use optimism::{L1BlockInfo, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RECIPIENT};
+
+pub use handler::Handler;

@@ -54,3 +54,4 @@ c-kzg = ["dep:c-kzg", "revm-primitives/c-kzg"]
 # The problem that `secp256k1` has is it fails to build for `wasm` target on Windows and Mac as it is c lib.
 # In Linux it passes. If you don't require to build wasm on win/mac, it is safe to use it and it is enabled by default.
 secp256k1 = ["dep:secp256k1"]
+optimism = ["revm-primitives/optimism"]

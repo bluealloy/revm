@@ -29,6 +29,9 @@ jobs:
           cache-on-failure: true
 
       - name: cargo test
+        run: cargo test --workspace
+
+      - name: cargo test all features
         run: cargo test --workspace --all-features
       
       - name: cargo check no_std
