@@ -1,7 +1,13 @@
 # revm 
 
-[![CI status](https://github.com/bluealloy/revm/workflows/Tests/badge.svg?label=ci)][gh-ci]
-[![Telegram Chat][tg-badge]][tg-url]
+[![CI](https://github.com/bluealloy/revm/actions/workflows/ci.yml/badge.svg)][gh-ci]
+[![License](https://img.shields.io/badge/License-MIT-orange.svg)][mit-license]
+[![Chat][tg-badge]][tg-url]
+
+[mit-license]: https://opensource.org/license/mit/
+[gh-ci]: https://github.com/bluealloy/revm/actions/workflows/ci.yml
+[tg-url]: https://t.me/+Ig4WDWOzikA3MzA0
+[tg-badge]: https://img.shields.io/badge/chat-telegram-blue
 
 **Rust Ethereum Virtual Machine**
 
@@ -17,9 +23,6 @@ Here is a list of guiding principles that Revm follows.
 - **Simplicity** - simplification of internals so that it can be easily understood and extended, and interface that can be easily used or integrated into other projects.
 - **interfacing** - `[no_std]` so that it can be used as wasm lib and integrate with JavaScript and cpp binding if needed.
 
-[gh-ci]: https://github.com/bluealloy/revm/actions/workflows/ci.yml
-[tg-url]: https://t.me/+Ig4WDWOzikA3MzA0
-[tg-badge]: https://img.shields.io/badge/telegram-❤️-252850?logo=telegram
 
 # Project
 
