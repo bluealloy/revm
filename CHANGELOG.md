@@ -1,5 +1,16 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v25 tag
+date: 28.09.2023
+
+Bigger release. Cancun support, revm State added and some cleanup refactoring.
+
+* revm: v3.4.0
+* revm-precompile: v2.1.0
+* revm-primitives: v1.2.0
+* revm-interpreter: v1.2.0
+
+
 # v24 tag
 date: 03.05.2023
 

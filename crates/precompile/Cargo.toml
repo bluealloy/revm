@@ -6,13 +6,13 @@ keywords = ["no_std", "ethereum", "evm", "revm", "precompiles"]
 license = "MIT"
 name = "revm-precompile"
 repository = "https://github.com/bluealloy/revm"
-version = "2.0.3"
+version = "2.1.0"
 
 # Don't need to run build script outside of this repo
 exclude = ["build.rs", "src/blob/kzg_settings/*.txt"]
 
 [dependencies]
-revm-primitives = { path = "../primitives", version = "1.1.2", default-features = false }
+revm-primitives = { path = "../primitives", version = "1.2.0", default-features = false }
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
 k256 = { version = "0.13", default-features = false, features = ["ecdsa"] }
 num = { version = "0.4.0", default-features = false, features = ["alloc"] }
