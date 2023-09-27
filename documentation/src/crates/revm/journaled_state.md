@@ -45,12 +45,12 @@ This module is built around the `JournaledState` structure, which encapsulates t
 - `load_account`
 
     This method loads an account's information into memory and returns whether the account was
-    cold or hot accessed.
+    cold or warm accessed.
 
 - `load_account_exist`
 
     This method checks whether an account exists or not. It returns whether the account was
-    cold or hot accessed and whether it exists.
+    cold or warm accessed and whether it exists.
 
 - `load_code`
 

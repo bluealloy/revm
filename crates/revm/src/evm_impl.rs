@@ -75,7 +75,7 @@ pub trait Transact<DBError> {
 impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, INSPECT> {
     /// Load access list for berlin hardfork.
     ///
-    /// Loading of accounts/storages is needed to make them hot.
+    /// Loading of accounts/storages is needed to make them warm.
     #[inline]
     fn load_access_list(&mut self) -> Result<(), EVMError<DB::Error>> {
         for (address, slots) in self.data.env.tx.access_list.iter() {
@@ -396,7 +396,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             CreateScheme::Create2 { salt } => create2_address(inputs.caller, code_hash, salt),
         };
 
-        // Load account so it needs to be marked as hot for access list.
+        // Load account so it needs to be marked as warm for access list.
         if self
             .data
             .journaled_state
@@ -815,7 +815,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     }
 
     fn sload(&mut self, address: B160, index: U256) -> Option<(U256, bool)> {
-        // account is always hot. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
+        // account is always warm. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
         self.data
             .journaled_state
             .sload(address, index, self.data.db)
