@@ -82,6 +82,10 @@ impl<DB: Database> State<DB> {
     /// If account is not found inside cache state it will be loaded from database.
     ///
     /// Update will create transitions for all accounts that are updated.
+    ///
+    /// Like [CacheAccount::increment_balance], this assumes that incremented balances are not
+    /// zero, and will not overflow once incremented. If using this to implement withdrawals, zero
+    /// balances must be filtered out before calling this function.
     pub fn increment_balances(
         &mut self,
         balances: impl IntoIterator<Item = (B160, u128)>,

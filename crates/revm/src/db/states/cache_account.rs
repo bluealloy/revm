@@ -296,6 +296,7 @@ impl CacheAccount {
     /// Note: to skip some edge cases we assume that additional balance is never zero.
     /// And as increment is always related to block fee/reward and withdrawals this is correct.
     pub fn increment_balance(&mut self, balance: u128) -> TransitionAccount {
+        debug_assert!(balance > 0, "Balance is assumed to be positive");
         self.account_info_change(|info| {
             info.balance += U256::from(balance);
         })
