@@ -463,10 +463,10 @@ impl Env {
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     #[inline]
-    pub fn calc_data_fee(&self) -> Option<u64> {
+    pub fn calc_data_fee(&self) -> Option<u128> {
         self.block
             .get_blob_gasprice()
-            .map(|blob_gas_price| blob_gas_price * self.tx.get_total_blob_gas())
+            .map(|blob_gas_price| blob_gas_price as u128 * self.tx.get_total_blob_gas() as u128)
     }
 
     /// Validate the block environment.
