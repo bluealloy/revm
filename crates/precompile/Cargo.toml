@@ -24,7 +24,7 @@ secp256k1 = { version = "0.27.0", default-features = false, features = [
 ], optional = true }
 sha2 = { version = "0.10.8", default-features = false }
 sha3 = { version = "0.10.7", default-features = false }
-c-kzg = { git = "https://github.com/ethereum/c-kzg-4844", default-features = false, optional = true }
+c-kzg = { version="0.1.1", default-features = false, optional = true }
 
 [dev-dependencies]
 hex = "0.4"
