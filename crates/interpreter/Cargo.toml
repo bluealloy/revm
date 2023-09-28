@@ -6,11 +6,11 @@ keywords = ["no_std", "ethereum", "evm", "revm", "interpreter"]
 license = "MIT"
 name = "revm-interpreter"
 repository = "https://github.com/bluealloy/revm"
-version = "1.1.2"
+version = "1.2.0"
 readme = "../../README.md"
 
 [dependencies]
-revm-primitives = { path = "../primitives", version = "1.1.2", default-features = false }
+revm-primitives = { path = "../primitives", version = "1.2.0", default-features = false }
 
 #utility
 derive_more = "0.99"

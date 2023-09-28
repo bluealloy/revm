@@ -1,3 +1,125 @@
+# v3.4.0
+date: 28.09.2023
+
+Summary:
+* Cancun ready. all EIP implemented.
+  Check interpreter CHANGELOG
+* revm State. a `Database` that handles Reverts and state transitions.
+* Optimism support
+* no_std build
+
+Note: c-kzg can't be build for wasm and is behind "c-kzg" feature flag.
+
+Full git log:
+* ea0d8d8 - fix: use u128 for calc data fee result (#757) (46 minutes ago) <Dan Cline>
+* 4f916be - chore: bump c-kzg to create lib (#758) (5 hours ago) <rakita>
+* ded673c - docs: Readme Updates (#756) (16 hours ago) <refcell.eth>
+* f79d0e1 - feat: Optimism execution changes (#682) (16 hours ago) <clabby>
+* d2a066b - ci: concurrency for github actions (#750) (25 hours ago) <Paul Razvan Berg>
+* d03dfcb - Improve wording and fix typos (#749) (25 hours ago) <Paul Razvan Berg>
+* 2c556c0 - refactor: say "warm" instead of "hot" (#754) (25 hours ago) <Paul Razvan Berg>
+* 8a85d19 - fix: balance check disabled (#751) (25 hours ago) <Wodann>
+* b9938a8 - chore(deps): bump sha2 from 0.10.7 to 0.10.8 (#752) (30 hours ago) <dependabot[bot]>
+* 4829e6a - chore(deps): bump thiserror from 1.0.48 to 1.0.49 (#753) (30 hours ago) <dependabot[bot]>
+* 8206193 - feat: add "kzg" as a separate feature (#746) (3 hours ago) <DaniPopes>
+* 4b5fa61 - EIP-6780: SELFDESTRUCT only in same transaction (#719) (5 days ago) <Lorenzo Feroleto>
+* f72eaa0 - chore: error type for block header (#731) (5 days ago) <hack3r-0m>
+* cb39117 - fix(eip4844): Pass eth tests, additional conditions added. (#735) (6 days ago) <rakita>
+* c2cde03 - fix: use CANCUN precompile id for CANCUN SpecId (#733) (6 days ago) <Dan Cline>
+* d926728 - perf: refactor interpreter internals and cleanup (#582) (6 days ago) <DaniPopes>
+* 1b8cd57 - make BundleBuilder publicly available (#729) (8 days ago) <Thomas Coratger>
+* fa13fea - feat: implement EIP-4844 (#668) (11 days ago) <DaniPopes>
+* 9f00e37 - feat(state): remove state sorting, no_std ci,remove rayon (#717) (13 days ago) <rakita>
+* 429da73 - chore(perf): only recalc code hash if its the default (#716) (13 days ago) <evalir>
+* e2ecd5e - docs: add warning on panic conditions in take_bundle (#715) (2 weeks ago) <Dan Cline>
+* 190f90e - Never inline the prepare functions (#712) (2 weeks ago) <Valentin Mihov>
+* 26dc07d - feat: return wiped inside storage changeset (#711) (2 weeks ago) <rakita>
+* 5d68dd5 - chore(deps): bump bytes from 1.4.0 to 1.5.0 (#707) (2 weeks ago) <dependabot[bot]>
+* fd8d4c5 - chore(deps): bump ethers-contract from 2.0.9 to 2.0.10 (#705) (2 weeks ago) <dependabot[bot]>
+* e86c19b - chore(state): do not insert empty reverts in state (#702) (3 weeks ago) <Lorenzo Feroleto>
+* 7eacc3a - chore: implement `Default` for other databases (#691) (3 weeks ago) <DaniPopes>
+* 1d6a039 - chore: make `impl Default for StateBuilder` generic (#690) (3 weeks ago) <DaniPopes>
+* c60abcf - feat(state): Nits, builder option and OriginalValueKnown flags (#699) (3 weeks ago) <rakita>
+* 7e7a339 - bundle size hint (#670) (3 weeks ago) <Roman Krasiuk>
+* f6c9c7f - chore: deprecate `RefDBWrapper` (#696) (3 weeks ago) <DaniPopes>
+* d04aad3 - chore: expose StateDBBox (#694) (3 weeks ago) <rakita>
+* ee13aac - feat(StateBuilder): switch builder option from without_bundle to with_bundle (#688) (3 weeks ago) <rakita>
+* 7d7f63f - chore(state): Make Database more generic. (#687) (3 weeks ago) <rakita>
+* a9dce30 - chore: nits and renamings (#684) (3 weeks ago) <rakita>
+* b500718 - feat(state): take N reverts from BundleState, struct refactor (#681) (3 weeks ago) <rakita>
+* fde6df1 - apply builder pattern for BundleState initialization (#649) (3 weeks ago) <Eric>
+* 2897655 - fix(state): Extend now properly transfers wiped storage (#675) (3 weeks ago) <rakita>
+* 6bd05c9 - chore: impl Eq, PartialEq for TransitionState (#677) (4 weeks ago) <Dan Cline>
+* 175aaec - Removed the last dependencies breaking no-std build. (#669) (4 weeks ago) <Lucas Clemente Vella>
+* 4272535 - fix(state): retain destroyed account status on bundle extend (#667) (4 weeks ago) <rakita>
+* bef9edd - chore(state): bundle retention (#666) (4 weeks ago) <Roman Krasiuk>
+* 1053d0e - fix(state): Regresion, remove present info on selfdestruct (#664) (4 weeks ago) <rakita>
+* 6c4cd31 - feat: add BundleState::revert_latest (#661) (4 weeks ago) <Matthias Seitz>
+* fd2cc88 - fix(state): state transition regression (#662) (4 weeks ago) <Roman Krasiuk>
+* c14f8a9 - feat(state): add a flag allowing transition merge without reverts (#657) (4 weeks ago) <Roman Krasiuk>
+* 33498d7 - chore(deps): bump ethers-contract from 2.0.8 to 2.0.9 (#640) (4 weeks ago) <dependabot[bot]>
+* 9a88c99 - chore: filter out empty bytecode from bundle (#656) (4 weeks ago) <rakita>
+* 98a4a18 - feat(state): Make Bundle extend wipe aware (#655) (4 weeks ago) <rakita>
+* 1bf0315 - feat(state): ability to disable reverts collection in bundle state (#654) (4 weeks ago) <Roman Krasiuk>
+* 3eea324 - fix(state): drop storage only for DestroyedChanged (#651) (4 weeks ago) <rakita>
+* 37027db - fix revert from DestroyedChanged to DestroyedAgain (#648) (5 weeks ago) <rakita>
+* cec7f82 - chore(state): bundle state split (#646) (5 weeks ago) <Roman Krasiuk>
+* ff5a2bc - add value parameter to Inspector::selfdestruct (#645) (5 weeks ago) <Tony Ke>
+* b2d6f7a - Refactor: Split transaction pre verification to separate function (#573) (5 weeks ago) <Lorenzo Feroleto>
+* afbc896 - fix(state): check if storage revert is empty (#643) (5 weeks ago) <Roman Krasiuk>
+* 0b9c12e - test(state): bundle selfdestructs (#627) (5 weeks ago) <Roman Krasiuk>
+* 6b55b9c - feat(`interpreter`): add hash to bytecode (#628) (5 weeks ago) <evalir>
+* 2054293 - chore: misc improvements (#633) (5 weeks ago) <DaniPopes>
+* 43d535c - style: bundle state (#637) (5 weeks ago) <Roman Krasiuk>
+* f843592 - fix(state): return RevertToSlot struct with more info (#636) (5 weeks ago) <rakita>
+* aee1d1c - bug(state): remove redundunt info revert on destruct (#635) (5 weeks ago) <rakita>
+* 321152a - book workflow (#537) (5 weeks ago) <Waylon Jepsen>
+* 0028193 - feat: Optional coinbase tip (#625) (5 weeks ago) <clabby>
+* 6ea1edc - test(state): bundle reverts collapse (#626) (5 weeks ago) <Roman Krasiuk>
+* a40f272 - feat(state): Use preloaded bundle inside state (#622) (5 weeks ago) <rakita>
+* 68820da - feat(state): Block hash cache and overrides (#621) (5 weeks ago) <rakita>
+* eb6a9f0 - Revert "feat: alloy migration (#535)" (#616) (6 weeks ago) <rakita>
+* e5227c4 - test(state): account & storage revert value preservation (#614) (6 weeks ago) <Roman Krasiuk>
+* c1bad0d - chore: spell check (#615) (6 weeks ago) <Roman Krasiuk>
+* 588503a - chore: get or insert bundle state (#613) (6 weeks ago) <Roman Krasiuk>
+* 7e83c7f - fix(inspector): call call_end/create_end when inspector shortcircuits calls (#609) (6 weeks ago) <evalir>
+* adf42b2 - chore(deps): bump anyhow from 1.0.74 to 1.0.75 (#606) (6 weeks ago) <dependabot[bot]>
+* 0e85fdf - chore(deps): bump tokio from 1.31.0 to 1.32.0 (#607) (6 weeks ago) <dependabot[bot]>
+* 449d6b9 - chore: export some `unreachable_pub` items (#598) (6 weeks ago) <DaniPopes>
+* 5d0b54d - chore(deps): bump anyhow from 1.0.72 to 1.0.74 (#602) (6 weeks ago) <dependabot[bot]>
+* c785115 - fix: Load caller in safe way in finalization fn (#604) (6 weeks ago) <rakita>
+* dfae7fe - chore: fix test build, use new types (#605) (6 weeks ago) <rakita>
+* fc2107c - chore: Revert test, not change storage check , renaming of original slot value (#601) (6 weeks ago) <rakita>
+* f95b7a4 - feat: alloy migration (#535) (6 weeks ago) <DaniPopes>
+* 49a6470 - chore: `TransitionState::with_capacity` -> `TransitionState::single` (#600) (6 weeks ago) <Roman Krasiuk>
+* f4224d8 - perf: pre-allocate inner bundle state (#599) (6 weeks ago) <Roman Krasiuk>
+* 5cdaa97 - chore: avoid unnecessary allocations (#581) (6 weeks ago) <DaniPopes>
+* da26d0d - chore(deps): bump tokio from 1.29.1 to 1.31.0 (#595) (6 weeks ago) <dependabot[bot]>
+* ef57a46 - feat: State with account status (#499) (7 weeks ago) <rakita>
+* 1478724 - chore: move precompiles to EVMData for inspectors (#588) (7 weeks ago) <evalir>
+* fe6c54e - fix(transient_storage): set previous value in journal (#585) (7 weeks ago) <rakita>
+* bd84a07 - refactor: rewrite revm-test as a criterion bench (#579) (7 weeks ago) <DaniPopes>
+* 5734f12 - fix: AccessList with two same addresses (#578) (8 weeks ago) <rakita>
+* 06b1f6b - feat: EIP-1153 Transient storage opcodes (#546) (8 weeks ago) <Mark Tyneway>
+* 4686cb3 - fix(revm): EIP-3155 tracer tx output without debug artefact (#552) (9 weeks ago) <Perama>
+* 26126ad - fix(revm): extra return in EIP3155 inspector (#563) (9 weeks ago) <Perama>
+* 3f6052c - fix(revm): include CREATE/CREATE2 in EIP3155 inspector (#562) (9 weeks ago) <Perama>
+* 5ce9dc9 - chore: clippy and fmt (#568) (9 weeks ago) <rakita>
+* 30bfa73 - fix(doc): Inline documentation of re-exports (#560) (9 weeks ago) <Yiannis Marangos>
+* 10f81ba - optimize stack usage for recursive `call` and `create` programs (#522) (3 months ago) <Valentin Mihov>
+* 323370a - fix comment (#529) (3 months ago) <Ethan-000>
+* 51072e6 - consume all gas on invalid opcode (#500) (3 months ago) <teddav>
+* 63f9460 - chore(deps): bump auto_impl from 1.0.1 to 1.1.0 (#478) (3 months ago) <dependabot[bot]>
+* 3a77ee5 - docs: fix comment typo (#517) (3 months ago) <Sabnock>
+* d343858 - fix: typo in eip-3155 output (#497) (4 months ago) <Perama>
+* f8ff6b3 - feat: separate initial checks (#486) (5 months ago) <rakita>
+* c3b0312 - docs: add some CacheDB docs (#484) (5 months ago) <Matthias Seitz>
+* c81acc6 - feat: Create account checkpoint (#483) (5 months ago) <rakita>
+* 6057cc2 - chore: refactor interpreter run and remove static flag (#481) (5 months ago) <rakita>
+* d193418 - chore: Bundle inspector crate/call calls (#480) (5 months ago) <rakita>
+* 75a6136 - feat: Introduce account status as bitflag inside JournalState (#477) (5 months ago) <rakita>
+
+
 # v3.3.0
 date: 03.05.2023
 
