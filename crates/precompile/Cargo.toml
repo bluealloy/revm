@@ -20,7 +20,7 @@ ripemd = { version = "0.1", default-features = false }
 sha2 = { version = "0.10", default-features = false }
 
 # Optional KZG point evaluation precompile
-c-kzg = { git = "https://github.com/ethereum/c-kzg-4844", default-features = false, optional = true }
+c-kzg = { version = "0.1.1", default-features = false, optional = true }
 
 # ecRecover precompile
 k256 = { version = "0.13", default-features = false, features = ["ecdsa"] }
@@ -41,6 +41,8 @@ std = [
     "c-kzg?/std",
     "secp256k1?/std",
 ]
+
+optimism = ["revm-primitives/optimism"]
 
 # * Enables the KZG point evaluation precompile.
 c-kzg = ["dep:c-kzg", "revm-primitives/c-kzg"]

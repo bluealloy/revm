@@ -290,7 +290,7 @@ pub fn call_cost<SPEC: Spec>(
 }
 
 #[inline]
-pub fn hot_cold_cost<SPEC: Spec>(is_cold: bool, regular_value: u64) -> u64 {
+pub fn warm_cold_cost<SPEC: Spec>(is_cold: bool, regular_value: u64) -> u64 {
     if SPEC::enabled(BERLIN) {
         if is_cold {
             COLD_ACCOUNT_ACCESS_COST

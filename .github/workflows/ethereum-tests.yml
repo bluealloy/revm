@@ -1,10 +1,15 @@
+name: Ethereum Tests
+
+concurrency:
+  cancel-in-progress: true
+  group: ${{github.workflow}}-${{github.ref}}
+
 on:
   push:
     branches: [main, "release/**"]
   pull_request:
     branches: [main, "release/**"]
 
-name: Ethereum Tests
 
 jobs:
   tests-stable:

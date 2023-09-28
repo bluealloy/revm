@@ -1,5 +1,9 @@
 name: Tests
 
+concurrency:
+  cancel-in-progress: true
+  group: ${{github.workflow}}-${{github.ref}}
+
 on:
   push:
     branches: [main, "release/**"]
@@ -25,6 +29,9 @@ jobs:
           cache-on-failure: true
 
       - name: cargo test
+        run: cargo test --workspace
+
+      - name: cargo test all features
         run: cargo test --workspace --all-features
       
       - name: cargo check no_std
