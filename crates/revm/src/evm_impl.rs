@@ -48,7 +48,9 @@ where
     DB::Error: fmt::Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("EVMImpl").field("data", &self.data).finish_non_exhaustive()
+        f.debug_struct("EVMImpl")
+            .field("data", &self.data)
+            .finish_non_exhaustive()
     }
 }
 
