@@ -10,8 +10,8 @@ version = "1.1.2"
 readme = "../../README.md"
 
 [dependencies]
-alloy-primitives = { version = "0.3", default-features = false, features = [
-    "rlp",
+alloy-primitives = { version = "0.4", default-features = false, features = [
+    "rlp"
 ] }
 alloy-rlp = { version = "0.3", default-features = false, features = ["derive"] }
 hashbrown = "0.14"

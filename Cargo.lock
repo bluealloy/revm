@@ -45,9 +45,9 @@ checksum = "0942ffc6dcaadf03badf6e6a2d0228460359d5e34b57ccdc720b7382dfbd5ec5"
 
 [[package]]
 name = "alloy-primitives"
-version = "0.3.3"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e416903084d3392ebd32d94735c395d6709415b76c7728e594d3f996f2b03e65"
+checksum = "6b4084879b7257d5b95b9009837c07a1868bd7d60e66418a7764b9b580ae64e0"
 dependencies = [
  "alloy-rlp",
  "arbitrary",
