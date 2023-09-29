@@ -32,7 +32,7 @@ pub struct JournaledState {
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum JournalEntry {
-    /// Used to mark account that is hot inside EVM in regards to EIP-2929 AccessList.
+    /// Used to mark account that is warm inside EVM in regards to EIP-2929 AccessList.
     /// Action: We will add Account to state.
     /// Revert: we will remove account from state.
     AccountLoaded { address: Address },
@@ -68,9 +68,9 @@ pub enum JournalEntry {
     /// Actions: Mark account as created
     /// Revert: Unmart account as created and reset nonce to zero.
     AccountCreated { address: Address },
-    /// It is used to track both storage change and hot load of storage slot. For hot load in regard
+    /// It is used to track both storage change and warm load of storage slot. For warm load in regard
     /// to EIP-2929 AccessList had_value will be None
-    /// Action: Storage change or hot load
+    /// Action: Storage change or warm load
     /// Revert: Revert to previous value or remove slot from storage
     StorageChange {
         address: Address,
@@ -157,8 +157,8 @@ impl JournaledState {
         self.depth as u64
     }
 
-    /// use it only if you know that acc is hot
-    /// Assume account is hot
+    /// use it only if you know that acc is warm
+    /// Assume account is warm
     pub fn set_code(&mut self, address: Address, code: Bytecode) {
         let account = self.state.get_mut(&address).unwrap();
         Self::touch_account(self.journal.last_mut().unwrap(), &address, account);
@@ -235,7 +235,7 @@ impl JournaledState {
     /// Create account or return false if collision is detected.
     ///
     /// There are few steps done:
-    /// 1. Make created account hot loaded (AccessList) and this should
+    /// 1. Make created account warm loaded (AccessList) and this should
     ///     be done before subroutine checkpoint is created.
     /// 2. Check if there is collision of newly created account with existing one.
     /// 3. Mark created account as created.
@@ -360,7 +360,7 @@ impl JournaledState {
                     had_balance,
                 } => {
                     let account = state.get_mut(&address).unwrap();
-                    // set previous ste of selfdestructed flag. as there could be multiple
+                    // set previous state of selfdestructed flag, as there could be multiple
                     // selfdestructs in one transaction.
                     if was_destroyed {
                         // flag is still selfdestructed
@@ -377,7 +377,7 @@ impl JournaledState {
                     }
                 }
                 JournalEntry::BalanceTransfer { from, to, balance } => {
-                    // we don't need to check overflow and underflow when adding sub subtracting the balance.
+                    // we don't need to check overflow and underflow when adding and subtracting the balance.
                     let from = state.get_mut(&from).unwrap();
                     from.info.balance += balance;
                     let to = state.get_mut(&to).unwrap();
@@ -578,7 +578,7 @@ impl JournaledState {
         Ok(account)
     }
 
-    /// load account into memory. return if it is cold or hot accessed
+    /// load account into memory. return if it is cold or warm accessed
     pub fn load_account<DB: Database>(
         &mut self,
         address: Address,
@@ -599,7 +599,7 @@ impl JournaledState {
                     .unwrap()
                     .push(JournalEntry::AccountLoaded { address });
 
-                // precompiles are hot loaded so we need to take that into account
+                // precompiles are warm loaded so we need to take that into account
                 let is_cold = !is_precompile(address, self.num_of_precompiles);
 
                 (vac.insert(account), is_cold)
@@ -651,7 +651,7 @@ impl JournaledState {
         key: U256,
         db: &mut DB,
     ) -> Result<(U256, bool), DB::Error> {
-        let account = self.state.get_mut(&address).unwrap(); // assume acc is hot
+        let account = self.state.get_mut(&address).unwrap(); // assume acc is warm
                                                              // only if account is created in this tx we can assume that storage is empty.
         let is_newly_created = account.is_created();
         let load = match account.storage.entry(key) {
@@ -721,7 +721,7 @@ impl JournaledState {
     pub fn tload(&mut self, address: Address, key: U256) -> U256 {
         self.transient_storage
             .get(&(address, key))
-            .cloned()
+            .copied()
             .unwrap_or_default()
     }
 

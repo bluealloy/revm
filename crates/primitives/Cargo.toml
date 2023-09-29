@@ -20,7 +20,7 @@ bitvec = { version = "1", default-features = false, features = ["alloc"] }
 bitflags = { version = "2.4.0", default-features = false }
 
 # For setting the CfgEnv KZGSettings. Enabled by std flag.
-c-kzg = { git = "https://github.com/ethereum/c-kzg-4844", default-features = false, optional = true }
+c-kzg = { version = "0.1.1", default-features = false, optional = true }
 
 # utility
 enumn = "0.1"
@@ -45,6 +45,8 @@ serde = [
     "c-kzg?/serde",
 ]
 arbitrary = ["std", "alloy-primitives/arbitrary", "bitflags/arbitrary"]
+
+optimism = []
 
 dev = [
     "memory_limit",

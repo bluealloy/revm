@@ -269,7 +269,7 @@ impl<DB: Database> Database for State<DB> {
     }
 
     fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
-        // block number is never biger then u64::MAX.
+        // block number is never bigger then u64::MAX.
         let u64num: u64 = number.to();
         match self.block_hashes.entry(u64num) {
             btree_map::Entry::Occupied(entry) => Ok(*entry.get()),

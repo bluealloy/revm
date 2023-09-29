@@ -21,6 +21,8 @@ std = ["revm-primitives/std"]
 serde = ["dep:serde", "revm-primitives/serde"]
 arbitrary = ["std", "revm-primitives/arbitrary"]
 
+optimism = ["revm-primitives/optimism"]
+
 dev = [
     "memory_limit",
     "optional_balance_check",

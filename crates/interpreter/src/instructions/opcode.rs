@@ -834,12 +834,24 @@ const fn make_gas_table(spec: SpecId) -> [OpInfo; 256] {
 pub const fn spec_opcode_gas(spec_id: SpecId) -> &'static [OpInfo; 256] {
     macro_rules! gas_maps {
         ($($id:ident),* $(,)?) => {
-            match spec_id {$(
+            match spec_id {
+            $(
                 SpecId::$id => {
                     const TABLE: &[OpInfo; 256] = &make_gas_table(SpecId::$id);
                     TABLE
                 }
-            )*}
+            )*
+                #[cfg(feature = "optimism")]
+                SpecId::BEDROCK => {
+                    const TABLE: &[OpInfo;256] = &make_gas_table(SpecId::BEDROCK);
+                    TABLE
+                }
+                #[cfg(feature = "optimism")]
+                SpecId::REGOLITH => {
+                    const TABLE: &[OpInfo;256] = &make_gas_table(SpecId::REGOLITH);
+                    TABLE
+                }
+            }
         };
     }
 

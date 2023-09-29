@@ -93,11 +93,8 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 
 #[cfg(test)]
 mod tests {
-    use crate::db::BenchmarkDB;
-    use crate::interpreter::{
-        opcode, CallInputs, CreateInputs, Gas, InstructionResult, Interpreter, OpCode,
-    };
-    use crate::primitives::{address, Address, Bytecode, Bytes, ResultAndState, TransactTo, B256};
+    use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult, Interpreter};
+    use crate::primitives::{Address, Bytes, B256};
     use crate::{inspectors::GasInspector, Database, EVMData, Inspector};
 
     #[derive(Default, Debug)]
@@ -207,7 +204,12 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(feature = "optimism"))]
     fn test_gas_inspector() {
+        use crate::db::BenchmarkDB;
+        use crate::interpreter::{opcode, OpCode};
+        use crate::primitives::{address, Bytecode, Bytes, ResultAndState, TransactTo};
+
         let contract_data: Bytes = Bytes::from(vec![
             opcode::PUSH1,
             0x1,

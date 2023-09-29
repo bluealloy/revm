@@ -111,6 +111,8 @@ impl SpecId {
             BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | SHANGHAI => Self::BERLIN,
             CANCUN => Self::CANCUN,
             LATEST => Self::LATEST,
+            #[cfg(feature = "optimism")]
+            BEDROCK | REGOLITH => Self::BERLIN,
         }
     }
 
