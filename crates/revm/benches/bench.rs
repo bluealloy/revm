@@ -102,18 +102,11 @@ fn bench_transact(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm) {
         BytecodeState::Analysed { .. } => "analysed",
     };
     let id = format!("transact/{state}");
-    g.bench_function(id, |b| {
-        b.iter(|| {
-            // reset gas limit to the right amount before tx
-            evm.env.tx.gas_limit = 22_000;
-            evm.transact().unwrap()
-        })
-    });
+    g.bench_function(id, |b| b.iter(|| evm.transact().unwrap()));
 }
 
 fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm) {
-    let gas_limit = 22_000;
-    evm.env.tx.gas_limit = gas_limit;
+    evm.env.tx.gas_limit = 22_000;
     let mut shared_memory = SharedMemory::new(evm.env.tx.gas_limit);
 
     g.bench_function("eval", |b| {
@@ -124,8 +117,6 @@ fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm) {
         };
         let mut host = DummyHost::new(evm.env.clone());
         b.iter(|| {
-            // reset gas limit to the right amount before tx
-            evm.env.tx.gas_limit = gas_limit;
             let mut interpreter = Interpreter::new(
                 Box::new(contract.clone()),
                 u64::MAX,

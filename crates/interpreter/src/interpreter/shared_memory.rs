@@ -42,7 +42,7 @@ impl SharedMemory {
     /// https://2π.com/22/eth-max-mem
     #[inline]
     pub fn calculate_upper_bound(gas_limit: u64) -> u64 {
-        4096 * sqrt(2u64.checked_mul(gas_limit).unwrap_or(u64::MAX))
+        4096 * sqrt(2u64.saturating_mul(gas_limit))
     }
 
     /// Allocate memory to be shared between calls.
@@ -50,7 +50,7 @@ impl SharedMemory {
     /// which depends on transaction [gas_limit].
     /// Maximum allocation size is 2^32 - 1 bytes;
     pub fn new(gas_limit: u64) -> Self {
-        Self::new_with_memory_limit(gas_limit, (u32::MAX - 1) as u64)
+        Self::new_with_memory_limit(gas_limit, u32::MAX as u64)
     }
 
     /// Allocate memory to be shared between calls.
@@ -81,7 +81,7 @@ impl SharedMemory {
 
         self.checkpoints.push(new_checkpoint);
 
-        self.current_ptr = self.data[new_checkpoint..].as_mut_ptr();
+        self.set_ptr(new_checkpoint);
         self.current_len = 0;
     }
 
@@ -89,7 +89,7 @@ impl SharedMemory {
     pub fn free_context_memory(&mut self) {
         if let Some(old_checkpoint) = self.checkpoints.pop() {
             let last_checkpoint = self.last_checkpoint();
-            self.current_ptr = self.data[last_checkpoint..].as_mut_ptr();
+            self.set_ptr(last_checkpoint);
             self.current_len = old_checkpoint - last_checkpoint;
             self.update_limit();
         }
@@ -101,6 +101,7 @@ impl SharedMemory {
         self.current_len
     }
 
+    /// Returns true if the current memory range is empty.
     #[inline(always)]
     pub fn is_empty(&self) -> bool {
         self.current_len == 0
@@ -115,9 +116,7 @@ impl SharedMemory {
         // extend with zeros
         let range = self.current_len..new_size;
 
-        for byte in self.current_slice_mut()[range].iter_mut() {
-            *byte = 0;
-        }
+        self.current_slice_mut()[range].fill(0);
 
         self.current_len = new_size;
         self.update_limit();
@@ -129,9 +128,10 @@ impl SharedMemory {
     #[inline(always)]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn slice(&self, offset: usize, size: usize) -> &[u8] {
-        match self.current_slice().get(offset..offset + size) {
+        let end = offset + size;
+        match self.current_slice().get(offset..end) {
             Some(slice) => slice,
-            None => debug_unreachable!("slice OOB: {offset}..{size}; len: {}", self.len()),
+            None => debug_unreachable!("slice OOB: {offset}..{end}; len: {}", self.len()),
         }
     }
 
@@ -141,10 +141,11 @@ impl SharedMemory {
     #[inline(always)]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn slice_mut(&mut self, offset: usize, size: usize) -> &mut [u8] {
+        let end = offset + size;
         let len = self.current_len;
         match self.current_slice_mut().get_mut(offset..offset + size) {
             Some(slice) => slice,
-            None => debug_unreachable!("slice OOB: {offset}..{size}; len: {}", len),
+            None => debug_unreachable!("slice OOB: {offset}..{end}; len: {}", len),
         }
     }
 
@@ -218,14 +219,16 @@ impl SharedMemory {
     #[inline(always)]
     fn current_slice(&self) -> &[u8] {
         // Safety: if it is a valid pointer to a slice of `self.data`
-        unsafe { slice::from_raw_parts(self.current_ptr, self.limit) }
+        unsafe { slice::from_raw_parts(self.current_ptr, self.data.len() - self.last_checkpoint()) }
     }
 
     /// Get a mutable reference to the memory of the current context
     #[inline(always)]
     fn current_slice_mut(&mut self) -> &mut [u8] {
         // Safety: it is a valid pointer to a slice of `self.data`
-        unsafe { slice::from_raw_parts_mut(self.current_ptr, self.limit) }
+        unsafe {
+            slice::from_raw_parts_mut(self.current_ptr, self.data.len() - self.last_checkpoint())
+        }
     }
 
     /// Update the amount of memory left for usage
@@ -238,6 +241,15 @@ impl SharedMemory {
     #[inline(always)]
     fn last_checkpoint(&self) -> usize {
         *self.checkpoints.last().unwrap_or(&0)
+    }
+
+    /// Set memory pointer to checkpoint
+    #[inline(always)]
+    fn set_ptr(&mut self, checkpoint: usize) {
+        if self.data.len() > 0 {
+            assume!(checkpoint < self.data.len());
+            self.current_ptr = unsafe { self.data.as_mut_ptr().add(checkpoint) };
+        }
     }
 }
 

@@ -88,7 +88,8 @@ impl<'a> Interpreter<'a> {
         &self.gas
     }
 
-    /// Reference of interpreter stack.
+    /// Returns a reference to the interpreter's stack.
+    #[inline]
     pub fn stack(&self) -> &Stack {
         &self.stack
     }
@@ -146,7 +147,7 @@ impl<'a> Interpreter<'a> {
 
     /// Returns a copy of the interpreter's return value, if any.
     #[inline]
-    pub fn return_value(&mut self) -> Bytes {
+    pub fn return_value(&self) -> Bytes {
         self.return_value_slice().to_vec().into()
     }
 
