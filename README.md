@@ -1,9 +1,23 @@
-# revm - Rust Ethereum Virtual Machine
-<img src="./assets/logo.png" height="200">
+# revm 
 
-Is EVM written in the Rust that is focused on **speed** and **simplicity**. It has fast and flexible implementation with simple interface and embedded Host. It is passing all `ethereum/tests` test suits
+[![CI](https://github.com/bluealloy/revm/actions/workflows/ci.yml/badge.svg)][gh-ci]
+[![License](https://img.shields.io/badge/License-MIT-orange.svg)][mit-license]
+[![Chat][tg-badge]][tg-url]
 
-Here is a list of things that I would like to use as guide in this project:
+[mit-license]: https://opensource.org/license/mit/
+[gh-ci]: https://github.com/bluealloy/revm/actions/workflows/ci.yml
+[tg-url]: https://t.me/+Ig4WDWOzikA3MzA0
+[tg-badge]: https://img.shields.io/badge/chat-telegram-blue
+
+**Rust Ethereum Virtual Machine**
+
+![](./assets/revm-banner.png)
+
+Revm is an EVM written in Rust that is focused on **speed** and **simplicity**.
+It has a fast and flexible implementation with a simple interface and embedded Host.
+It passes all `ethereum/tests` test suites.
+
+Here is a list of guiding principles that Revm follows.
 - **EVM compatibility and stability** - this goes without saying but it is nice to put it here. In the blockchain industry, stability is the most desired attribute of any system.
 - **Speed** - is one of the most important things and most decisions are made to complement this.
 - **Simplicity** - simplification of internals so that it can be easily understood and extended, and interface that can be easily used or integrated into other projects.

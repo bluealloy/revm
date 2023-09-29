@@ -10,7 +10,7 @@ mod blake2;
 mod bn128;
 mod hash;
 mod identity;
-#[cfg(feature = "std")]
+#[cfg(feature = "c-kzg")]
 pub mod kzg_point_evaluation;
 mod modexp;
 mod secp256k1;
@@ -114,6 +114,8 @@ impl SpecId {
             BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | SHANGHAI => Self::BERLIN,
             CANCUN => Self::CANCUN,
             LATEST => Self::LATEST,
+            #[cfg(feature = "optimism")]
+            BEDROCK | REGOLITH => Self::BERLIN,
         }
     }
 
@@ -201,7 +203,7 @@ impl Precompiles {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
             // Don't include KZG point evaluation precompile in no_std builds.
-            #[cfg(feature = "std")]
+            #[cfg(feature = "c-kzg")]
             {
                 let mut precompiles = Box::new(Self::berlin().clone());
                 precompiles.fun.extend(
@@ -214,7 +216,7 @@ impl Precompiles {
                 );
                 precompiles
             }
-            #[cfg(not(feature = "std"))]
+            #[cfg(not(feature = "c-kzg"))]
             {
                 Box::new(Self::berlin().clone())
             }

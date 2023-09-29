@@ -231,5 +231,9 @@ pub fn evm_inner<'a, DB: Database, const INSPECT: bool>(
         SpecId::SHANGHAI => create_evm!(ShanghaiSpec),
         SpecId::CANCUN => create_evm!(CancunSpec),
         SpecId::LATEST => create_evm!(LatestSpec),
+        #[cfg(feature = "optimism")]
+        SpecId::BEDROCK => create_evm!(BedrockSpec),
+        #[cfg(feature = "optimism")]
+        SpecId::REGOLITH => create_evm!(RegolithSpec),
     }
 }

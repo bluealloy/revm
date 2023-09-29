@@ -155,9 +155,9 @@ impl CacheAccount {
         })
     }
 
-    /// Touche empty account, related to EIP-161 state clear.
+    /// Touch empty account, related to EIP-161 state clear.
     ///
-    /// This account returns Transition that is used to create the BundleState.
+    /// This account returns the Transition that is used to create the BundleState.
     pub fn touch_empty_eip161(&mut self) -> Option<TransitionAccount> {
         let previous_status = self.status;
 
@@ -169,7 +169,7 @@ impl CacheAccount {
             AccountStatus::InMemoryChange
             | AccountStatus::Destroyed
             | AccountStatus::LoadedEmptyEIP161 => {
-                // account can be created empty them touched.
+                // account can be created empty then touched.
                 AccountStatus::Destroyed
             }
             AccountStatus::LoadedNotExisting => {
@@ -344,7 +344,7 @@ impl CacheAccount {
         )
     }
 
-    /// Drain balance from account and return transition and drained amount
+    /// Drain balance from account and return drained amount and transition.
     ///
     /// Used for DAO hardfork transition.
     pub fn drain_balance(&mut self) -> (u128, TransitionAccount) {
