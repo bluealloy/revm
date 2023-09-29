@@ -93,8 +93,16 @@ impl<DB: Database> State<DB> {
         // make transition and update cache state
         let mut transitions = Vec::new();
         for (address, balance) in balances {
+            if balance == 0 {
+                continue;
+            }
             let original_account = self.load_cache_account(address)?;
-            transitions.push((address, original_account.increment_balance(balance)))
+            transitions.push((
+                address,
+                original_account
+                    .increment_balance(balance)
+                    .expect("Balance is not zero"),
+            ))
         }
         // append transition
         if let Some(s) = self.transition_state.as_mut() {
