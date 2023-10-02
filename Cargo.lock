@@ -1308,9 +1308,9 @@ checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
 
 [[package]]
 name = "hashbrown"
-version = "0.14.0"
+version = "0.14.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c6201b9ff9fd90a5a3bac2e56a830d0caa509576f0e503818ee82c181b3437a"
+checksum = "7dfda62a12f55daeae5015f81b0baea145391cb4520f86c248fc615d72640d12"
 dependencies = [
  "ahash",
  "allocator-api2",
@@ -1517,7 +1517,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d5477fe2230a79769d8dc68e0eabf5437907c0457a5614a9e8dddb67f65eb65d"
 dependencies = [
  "equivalent",
- "hashbrown 0.14.0",
+ "hashbrown 0.14.1",
 ]
 
 [[package]]
@@ -2384,7 +2384,7 @@ dependencies = [
  "derive_more",
  "enumn",
  "fixed-hash",
- "hashbrown 0.14.0",
+ "hashbrown 0.14.1",
  "hex",
  "hex-literal",
  "once_cell",
@@ -2403,7 +2403,7 @@ version = "0.2.0"
 dependencies = [
  "bytes",
  "hash-db",
- "hashbrown 0.14.0",
+ "hashbrown 0.14.1",
  "hex",
  "hex-literal",
  "indicatif",
