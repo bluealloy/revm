@@ -178,6 +178,11 @@ mod tests {
             (2314057, 1),
             (2314058, 2),
             (10 * 1024 * 1024, 23),
+            // calc_blob_gasprice approximates `e ** (excess_blob_gas / BLOB_GASPRICE_UPDATE_FRACTION)` using Taylor expansion
+            //
+            // to roughly find where boundaries will be hit:
+            // 2 ** bits = e ** (excess_blob_gas / BLOB_GASPRICE_UPDATE_FRACTION)
+            // excess_blob_gas = ln(2 ** bits) * BLOB_GASPRICE_UPDATE_FRACTION
             (148099578, 18446739238971471609), // output is just below the overflow
             (148099579, 18446744762204311910), // output is just after the overflow
             (161087488, 902580055246494526580),
