@@ -6,13 +6,13 @@ keywords = ["no_std", "ethereum", "evm", "revm", "precompiles"]
 license = "MIT"
 name = "revm-precompile"
 repository = "https://github.com/bluealloy/revm"
-version = "2.0.3"
+version = "2.1.0"
 
 # Don't need to run build script outside of this repo
 exclude = ["build.rs", "src/blob/kzg_settings/*.txt"]
 
 [dependencies]
-revm-primitives = { path = "../primitives", version = "1.1.2", default-features = false }
+revm-primitives = { path = "../primitives", version = "1.2.0", default-features = false }
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
 num = { version = "0.4.0", default-features = false, features = ["alloc"] }
 once_cell = { version = "1.17", default-features = false, features = ["alloc"] }
@@ -47,7 +47,7 @@ optimism = ["revm-primitives/optimism"]
 # * Enables the KZG point evaluation precompile.
 c-kzg = ["dep:c-kzg", "revm-primitives/c-kzg"]
 
-# * `secp256k1` as a faster alternative to `k256`.
+# Use `secp256k1` as a faster alternative to `k256`.
 # The problem that `secp256k1` has is it fails to build for `wasm` target on Windows and Mac as it is c lib.
 # In Linux it passes. If you don't require to build wasm on win/mac, it is safe to use it and it is enabled by default.
 secp256k1 = ["dep:secp256k1"]

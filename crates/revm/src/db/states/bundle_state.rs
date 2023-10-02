@@ -658,7 +658,7 @@ impl BundleState {
 mod tests {
     use super::*;
     use crate::{db::StorageWithOriginalValues, TransitionAccount};
-    use revm_interpreter::primitives::{FixedBytes, KECCAK_EMPTY};
+    use revm_interpreter::primitives::KECCAK_EMPTY;
 
     #[test]
     fn transition_states() {
