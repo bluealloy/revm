@@ -44,12 +44,12 @@ std = [
 
 optimism = ["revm-primitives/optimism"]
 
-# * Enables the KZG point evaluation precompile.
-c-kzg = ["dep:c-kzg", "revm-primitives/c-kzg"]
 
+# This library may not work on all no_std platforms as they depend on C libraries.
+
+# Enables the KZG point evaluation precompile.
+c-kzg = ["dep:c-kzg", "revm-primitives/c-kzg"]
 # Use `secp256k1` as a faster alternative to `k256`.
 # The problem that `secp256k1` has is it fails to build for `wasm` target on Windows and Mac as it is c lib.
 # In Linux it passes. If you don't require to build wasm on win/mac, it is safe to use it and it is enabled by default.
 secp256k1 = ["dep:secp256k1"]
-
-# * = This library may not work on all platforms as it depends on C libraries.

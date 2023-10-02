@@ -129,7 +129,7 @@ impl BlockEnv {
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxEnv {
-    /// Caller or Author or tx signer
+    /// Caller aka Author aka transaction signer.
     pub caller: Address,
     /// The gas limit of the transaction.
     pub gas_limit: u64,

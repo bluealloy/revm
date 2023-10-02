@@ -20,7 +20,6 @@ pub use alloy_primitives::{
     self, address, b256, bytes, fixed_bytes, hex, hex_literal, ruint, uint, Address, Bytes,
     FixedBytes, B256, U256,
 };
-
 pub use bitvec;
 pub use bytecode::*;
 pub use constants::*;
