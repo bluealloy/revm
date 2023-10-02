@@ -10,7 +10,7 @@ use alloc::{
 };
 use revm_interpreter::primitives::{
     db::{Database, DatabaseCommit},
-    hash_map, Account, AccountInfo, Bytecode, HashMap, B160, B256, BLOCK_HASH_HISTORY, U256,
+    hash_map, Account, AccountInfo, Address, Bytecode, HashMap, B256, BLOCK_HASH_HISTORY, U256,
 };
 
 /// Database boxed with a lifetime and Send.
@@ -84,7 +84,7 @@ impl<DB: Database> State<DB> {
     /// Update will create transitions for all accounts that are updated.
     pub fn increment_balances(
         &mut self,
-        balances: impl IntoIterator<Item = (B160, u128)>,
+        balances: impl IntoIterator<Item = (Address, u128)>,
     ) -> Result<(), DB::Error> {
         // make transition and update cache state
         let mut transitions = Vec::new();
@@ -104,7 +104,7 @@ impl<DB: Database> State<DB> {
     /// It is used for DAO hardfork state change to move values from given accounts.
     pub fn drain_balances(
         &mut self,
-        addresses: impl IntoIterator<Item = B160>,
+        addresses: impl IntoIterator<Item = Address>,
     ) -> Result<Vec<u128>, DB::Error> {
         // make transition and update cache state
         let mut transitions = Vec::new();
@@ -127,17 +127,17 @@ impl<DB: Database> State<DB> {
         self.cache.set_state_clear_flag(has_state_clear);
     }
 
-    pub fn insert_not_existing(&mut self, address: B160) {
+    pub fn insert_not_existing(&mut self, address: Address) {
         self.cache.insert_not_existing(address)
     }
 
-    pub fn insert_account(&mut self, address: B160, info: AccountInfo) {
+    pub fn insert_account(&mut self, address: Address, info: AccountInfo) {
         self.cache.insert_account(address, info)
     }
 
     pub fn insert_account_with_storage(
         &mut self,
-        address: B160,
+        address: Address,
         info: AccountInfo,
         storage: PlainStorage,
     ) {
@@ -146,7 +146,7 @@ impl<DB: Database> State<DB> {
     }
 
     /// Apply evm transitions to transition state.
-    fn apply_transition(&mut self, transitions: Vec<(B160, TransitionAccount)>) {
+    fn apply_transition(&mut self, transitions: Vec<(Address, TransitionAccount)>) {
         // add transition to transition state.
         if let Some(s) = self.transition_state.as_mut() {
             s.add_transitions(transitions)
@@ -165,7 +165,7 @@ impl<DB: Database> State<DB> {
         }
     }
 
-    pub fn load_cache_account(&mut self, address: B160) -> Result<&mut CacheAccount, DB::Error> {
+    pub fn load_cache_account(&mut self, address: Address) -> Result<&mut CacheAccount, DB::Error> {
         match self.cache.accounts.entry(address) {
             hash_map::Entry::Vacant(entry) => {
                 if self.use_preloaded_bundle {
@@ -211,7 +211,7 @@ impl<DB: Database> State<DB> {
 impl<DB: Database> Database for State<DB> {
     type Error = DB::Error;
 
-    fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
+    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         self.load_cache_account(address).map(|a| a.account_info())
     }
 
@@ -238,7 +238,7 @@ impl<DB: Database> Database for State<DB> {
         res
     }
 
-    fn storage(&mut self, address: B160, index: U256) -> Result<U256, Self::Error> {
+    fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error> {
         // Account is guaranteed to be loaded.
         // Note that storage from bundle is already loaded with account.
         if let Some(account) = self.cache.accounts.get_mut(&address) {
@@ -292,7 +292,7 @@ impl<DB: Database> Database for State<DB> {
 }
 
 impl<DB: Database> DatabaseCommit for State<DB> {
-    fn commit(&mut self, evm_state: HashMap<B160, Account>) {
+    fn commit(&mut self, evm_state: HashMap<Address, Account>) {
         let transitions = self.cache.apply_evm_state(evm_state);
         self.apply_transition(transitions);
     }
@@ -345,7 +345,7 @@ mod tests {
 
         // Non-existing account for testing account state transitions.
         // [LoadedNotExisting] -> [Changed] (nonce: 1, balance: 1) -> [Changed] (nonce: 2) -> [Changed] (nonce: 3)
-        let new_account_address = B160::from_slice(&[0x1; 20]);
+        let new_account_address = Address::from_slice(&[0x1; 20]);
         let new_account_created_info = AccountInfo {
             nonce: 1,
             balance: U256::from(1),
@@ -361,7 +361,7 @@ mod tests {
         };
 
         // Existing account for testing storage state transitions.
-        let existing_account_address = B160::from_slice(&[0x2; 20]);
+        let existing_account_address = Address::from_slice(&[0x2; 20]);
         let existing_account_initial_info = AccountInfo {
             nonce: 1,
             ..Default::default()
@@ -588,7 +588,7 @@ mod tests {
         let mut state = State::builder().with_bundle_update().build();
 
         // Non-existing account.
-        let new_account_address = B160::from_slice(&[0x1; 20]);
+        let new_account_address = Address::from_slice(&[0x1; 20]);
         let new_account_created_info = AccountInfo {
             nonce: 1,
             balance: U256::from(1),
@@ -596,7 +596,7 @@ mod tests {
         };
 
         // Existing account.
-        let existing_account_address = B160::from_slice(&[0x2; 20]);
+        let existing_account_address = Address::from_slice(&[0x2; 20]);
         let existing_account_initial_info = AccountInfo {
             nonce: 1,
             ..Default::default()
@@ -609,7 +609,7 @@ mod tests {
 
         // Existing account with storage.
         let (slot1, slot2) = (U256::from(1), U256::from(2));
-        let existing_account_with_storage_address = B160::from_slice(&[0x3; 20]);
+        let existing_account_with_storage_address = Address::from_slice(&[0x3; 20]);
         let existing_account_with_storage_info = AccountInfo {
             nonce: 1,
             ..Default::default()
@@ -730,7 +730,7 @@ mod tests {
         let mut state = State::builder().with_bundle_update().build();
 
         // Existing account.
-        let existing_account_address = B160::from_slice(&[0x1; 20]);
+        let existing_account_address = Address::from_slice(&[0x1; 20]);
         let existing_account_info = AccountInfo {
             nonce: 1,
             ..Default::default()

@@ -2,7 +2,7 @@
 
 use crate::inspectors::GasInspector;
 use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult};
-use crate::primitives::{db::Database, hex, Bytes, B160};
+use crate::primitives::{db::Database, hex, Address, Bytes};
 use crate::{evm_impl::EVMData, Inspector};
 use revm_interpreter::primitives::U256;
 use revm_interpreter::{opcode, Interpreter, Memory, Stack};
@@ -124,7 +124,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         &mut self,
         data: &mut EVMData<'_, DB>,
         _inputs: &mut CreateInputs,
-    ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
+    ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
         self.print_log_line(data.journaled_state.depth());
         (
             InstructionResult::Continue,
@@ -139,10 +139,10 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         data: &mut EVMData<'_, DB>,
         inputs: &CreateInputs,
         ret: InstructionResult,
-        address: Option<B160>,
+        address: Option<Address>,
         remaining_gas: Gas,
         out: Bytes,
-    ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
+    ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
         self.gas_inspector
             .create_end(data, inputs, ret, address, remaining_gas, out.clone());
         self.skip = true;
@@ -176,9 +176,8 @@ impl TracerEip3155 {
 }
 
 fn short_hex(b: U256) -> String {
-    let s = hex::encode(b.to_be_bytes_vec())
-        .trim_start_matches('0')
-        .to_string();
+    let s = hex::encode(b.to_be_bytes::<32>());
+    let s = s.trim_start_matches('0');
     if s.is_empty() {
         "0x0".to_string()
     } else {

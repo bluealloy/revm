@@ -1,6 +1,6 @@
 [package]
 authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
-description = "REVM Precompiles - Ethereum compatible precompiled contracts"
+description = "revm Precompiles - Ethereum compatible precompiled contracts"
 edition = "2021"
 keywords = ["no_std", "ethereum", "evm", "revm", "precompiles"]
 license = "MIT"
@@ -14,23 +14,20 @@ exclude = ["build.rs", "src/blob/kzg_settings/*.txt"]
 [dependencies]
 revm-primitives = { path = "../primitives", version = "1.2.0", default-features = false }
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
-k256 = { version = "0.13", default-features = false, features = ["ecdsa"] }
 num = { version = "0.4.0", default-features = false, features = ["alloc"] }
 once_cell = { version = "1.17", default-features = false, features = ["alloc"] }
 ripemd = { version = "0.1", default-features = false }
+sha2 = { version = "0.10", default-features = false }
+
+# Optional KZG point evaluation precompile
+c-kzg = { version = "0.1.1", default-features = false, optional = true }
+
+# ecRecover precompile
+k256 = { version = "0.13", default-features = false, features = ["ecdsa"] }
 secp256k1 = { version = "0.27.0", default-features = false, features = [
     "alloc",
     "recovery",
 ], optional = true }
-sha2 = { version = "0.10.8", default-features = false }
-sha3 = { version = "0.10.7", default-features = false }
-c-kzg = { version="0.1.1", default-features = false, optional = true }
-
-[dev-dependencies]
-hex = "0.4"
-
-[build-dependencies]
-hex = "0.4"
 
 [features]
 default = ["std", "c-kzg", "secp256k1"]
@@ -41,17 +38,18 @@ std = [
     "once_cell/std",
     "ripemd/std",
     "sha2/std",
-    "sha3/std",
     "c-kzg?/std",
     "secp256k1?/std",
 ]
 
-# The following features may not work on all platforms as they depend on C libraries.
+optimism = ["revm-primitives/optimism"]
+
+
+# This library may not work on all no_std platforms as they depend on C libraries.
+
 # Enables the KZG point evaluation precompile.
 c-kzg = ["dep:c-kzg", "revm-primitives/c-kzg"]
-
 # Use `secp256k1` as a faster alternative to `k256`.
 # The problem that `secp256k1` has is it fails to build for `wasm` target on Windows and Mac as it is c lib.
 # In Linux it passes. If you don't require to build wasm on win/mac, it is safe to use it and it is enabled by default.
 secp256k1 = ["dep:secp256k1"]
-optimism = ["revm-primitives/optimism"]

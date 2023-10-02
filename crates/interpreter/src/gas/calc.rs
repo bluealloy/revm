@@ -1,6 +1,6 @@
 use super::constants::*;
 use crate::inner_models::SelfDestructResult;
-use crate::primitives::{Spec, SpecId::*, B160, U256};
+use crate::primitives::{Address, Spec, SpecId::*, U256};
 use alloc::vec::Vec;
 
 #[allow(clippy::collapsible_else_if)]
@@ -344,7 +344,7 @@ pub fn memory_gas(a: usize) -> u64 {
 pub fn initial_tx_gas<SPEC: Spec>(
     input: &[u8],
     is_create: bool,
-    access_list: &[(B160, Vec<U256>)],
+    access_list: &[(Address, Vec<U256>)],
 ) -> u64 {
     let mut initial_gas = 0;
     let zero_data_len = input.iter().filter(|v| **v == 0).count() as u64;

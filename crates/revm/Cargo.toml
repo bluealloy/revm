@@ -1,6 +1,6 @@
 [package]
 authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
-description = "REVM - Rust Ethereum Virtual Machine"
+description = "revm - Rust Ethereum Virtual Machine"
 edition = "2021"
 keywords = ["no_std", "ethereum", "evm", "revm"]
 license = "MIT"
@@ -30,11 +30,8 @@ ethers-core = { version = "2.0", optional = true }
 futures = { version = "0.3.27", optional = true }
 
 [dev-dependencies]
-hex-literal = "0.4"
 ethers-contract = { version = "2.0.10", default-features = false }
-hex = "0.4.3"
 anyhow = "1.0.75"
-bytes = "1.5.0"
 criterion = "0.5"
 
 [features]
@@ -42,6 +39,8 @@ default = ["std", "c-kzg", "secp256k1"]
 std = ["revm-interpreter/std", "revm-precompile/std"]
 serde = ["dep:serde", "dep:serde_json", "revm-interpreter/serde"]
 arbitrary = ["revm-interpreter/arbitrary"]
+
+optimism = ["revm-interpreter/optimism", "revm-precompile/optimism"]
 
 ethersdb = ["std", "tokio", "futures", "ethers-providers", "ethers-core"]
 
@@ -68,7 +67,6 @@ c-kzg = ["revm-precompile/c-kzg"]
 # deprecated features
 web3db = []
 with-serde = []
-optimism = ["revm-interpreter/optimism", "revm-precompile/optimism"]
 
 [[example]]
 name = "fork_ref_transact"

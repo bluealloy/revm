@@ -1,6 +1,6 @@
 [package]
 authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
-description = "REVM Interpreter"
+description = "revm Interpreter"
 edition = "2021"
 keywords = ["no_std", "ethereum", "evm", "revm", "interpreter"]
 license = "MIT"
@@ -12,35 +12,14 @@ readme = "../../README.md"
 [dependencies]
 revm-primitives = { path = "../primitives", version = "1.2.0", default-features = false }
 
-#utility
-derive_more = "0.99"
-enumn = "0.1"
-
-# sha3 keccak hasher
-sha3 = { version = "0.10", default-features = false, features = [] }
-
 # optional
 serde = { version = "1.0", features = ["derive", "rc"], optional = true }
-arbitrary = { version = "1.3", features = ["derive"], optional = true }
-proptest = { version = "1.3", optional = true }
-proptest-derive = { version = "0.4", optional = true }
-
-[dev-dependencies]
-arbitrary = { version = "1.3", features = ["derive"] }
-proptest = "1.3"
-proptest-derive = "0.4"
 
 [features]
 default = ["std"]
 std = ["revm-primitives/std"]
 serde = ["dep:serde", "revm-primitives/serde"]
-arbitrary = [
-    "std",
-    "dep:arbitrary",
-    "dep:proptest",
-    "dep:proptest-derive",
-    "revm-primitives/arbitrary",
-]
+arbitrary = ["std", "revm-primitives/arbitrary"]
 
 optimism = ["revm-primitives/optimism"]
 

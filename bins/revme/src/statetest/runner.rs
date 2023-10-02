@@ -2,14 +2,13 @@ use super::{
     merkle_trie::{log_rlp_hash, state_merkle_trie_root},
     models::{SpecName, TestSuite},
 };
-use hex_literal::hex;
 use indicatif::ProgressBar;
 use revm::{
     inspectors::TracerEip3155,
     interpreter::CreateScheme,
     primitives::{
-        calc_excess_blob_gas, keccak256, Bytecode, Env, HashMap, SpecId, TransactTo, B160, B256,
-        U256,
+        address, b256, calc_excess_blob_gas, keccak256, Bytecode, Env, HashMap, SpecId, TransactTo,
+        B256, U256,
     },
 };
 use std::{
@@ -120,40 +119,28 @@ pub fn execute_test_suite(
 
     let map_caller_keys: HashMap<_, _> = [
         (
-            B256(hex!(
-                "45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
-            )),
-            B160(hex!("a94f5374fce5edbc8e2a8697c15331677e6ebf0b")),
+            b256!("45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"),
+            address!("a94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
         ),
         (
-            B256(hex!(
-                "c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4"
-            )),
-            B160(hex!("cd2a3d9f938e13cd947ec05abc7fe734df8dd826")),
+            b256!("c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4"),
+            address!("cd2a3d9f938e13cd947ec05abc7fe734df8dd826"),
         ),
         (
-            B256(hex!(
-                "044852b2a670ade5407e78fb2863c51de9fcb96542a07186fe3aeda6bb8a116d"
-            )),
-            B160(hex!("82a978b3f5962a5b0957d9ee9eef472ee55b42f1")),
+            b256!("044852b2a670ade5407e78fb2863c51de9fcb96542a07186fe3aeda6bb8a116d"),
+            address!("82a978b3f5962a5b0957d9ee9eef472ee55b42f1"),
         ),
         (
-            B256(hex!(
-                "6a7eeac5f12b409d42028f66b0b2132535ee158cfda439e3bfdd4558e8f4bf6c"
-            )),
-            B160(hex!("c9c5a15a403e41498b6f69f6f89dd9f5892d21f7")),
+            b256!("6a7eeac5f12b409d42028f66b0b2132535ee158cfda439e3bfdd4558e8f4bf6c"),
+            address!("c9c5a15a403e41498b6f69f6f89dd9f5892d21f7"),
         ),
         (
-            B256(hex!(
-                "a95defe70ebea7804f9c3be42d20d24375e2a92b9d9666b832069c5f3cd423dd"
-            )),
-            B160(hex!("3fb1cd2cd96c6d5c0b5eb3322d807b34482481d4")),
+            b256!("a95defe70ebea7804f9c3be42d20d24375e2a92b9d9666b832069c5f3cd423dd"),
+            address!("3fb1cd2cd96c6d5c0b5eb3322d807b34482481d4"),
         ),
         (
-            B256(hex!(
-                "fe13266ff57000135fb9aa854bbfe455d8da85b21f626307bf3263a0c2a8e7fe"
-            )),
-            B160(hex!("dcc5ba93a1ed7e045690d722f2bf460a51c61415")),
+            b256!("fe13266ff57000135fb9aa854bbfe455d8da85b21f626307bf3263a0c2a8e7fe"),
+            address!("dcc5ba93a1ed7e045690d722f2bf460a51c61415"),
         ),
     ]
     .into();
@@ -227,16 +214,15 @@ pub fn execute_test_suite(
             env.cfg.spec_id = spec_name.to_spec_id();
 
             for (index, test) in tests.into_iter().enumerate() {
-                let gas_limit = *unit.transaction.gas_limit.get(test.indexes.gas).unwrap();
-                let gas_limit = u64::try_from(gas_limit).unwrap_or(u64::MAX);
-                env.tx.gas_limit = gas_limit;
+                env.tx.gas_limit = unit.transaction.gas_limit[test.indexes.gas].saturating_to();
+
                 env.tx.data = unit
                     .transaction
                     .data
                     .get(test.indexes.data)
                     .unwrap()
                     .clone();
-                env.tx.value = *unit.transaction.value.get(test.indexes.value).unwrap();
+                env.tx.value = unit.transaction.value[test.indexes.value];
 
                 env.tx.access_list = unit
                     .transaction
@@ -314,7 +300,7 @@ pub fn execute_test_suite(
                     }
 
                     let logs_root =
-                        log_rlp_hash(exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
+                        log_rlp_hash(&exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
 
                     if logs_root != test.logs {
                         return Err(TestError {

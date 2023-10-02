@@ -1,9 +1,8 @@
 use crate::{
-    alloc::vec::Vec, calc_blob_gasprice, Account, InvalidHeader, InvalidTransaction, Spec, SpecId,
-    B160, B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK, MAX_INITCODE_SIZE, U256,
-    VERSIONED_HASH_VERSION_KZG,
+    alloc::vec::Vec, calc_blob_gasprice, Account, Address, Bytes, InvalidHeader,
+    InvalidTransaction, Spec, SpecId, B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK,
+    MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
 };
-use bytes::Bytes;
 use core::cmp::{min, Ordering};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -23,7 +22,8 @@ pub struct BlockEnv {
     /// Coinbase or miner or address that created and signed the block.
     ///
     /// This is the receiver address of all the gas spent in the block.
-    pub coinbase: B160,
+    pub coinbase: Address,
+
     /// The timestamp of the block in seconds since the UNIX epoch.
     pub timestamp: U256,
     /// The gas limit of the block.
@@ -129,8 +129,8 @@ impl BlockEnv {
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxEnv {
-    /// The caller, author or signer of the transaction.
-    pub caller: B160,
+    /// Caller aka Author aka transaction signer.
+    pub caller: Address,
     /// The gas limit of the transaction.
     pub gas_limit: u64,
     /// The gas price of the transaction.
@@ -140,7 +140,6 @@ pub struct TxEnv {
     /// The value sent to `transact_to`.
     pub value: U256,
     /// The data of the transaction.
-    #[cfg_attr(feature = "serde", serde(with = "crate::utilities::serde_hex_bytes"))]
     pub data: Bytes,
     /// The nonce of the transaction. If set to `None`, no checks are performed.
     pub nonce: Option<u64>,
@@ -157,7 +156,7 @@ pub struct TxEnv {
     /// Added in [EIP-2930].
     ///
     /// [EIP-2930]: https://eips.ethereum.org/EIPS/eip-2930
-    pub access_list: Vec<(B160, Vec<U256>)>,
+    pub access_list: Vec<(Address, Vec<U256>)>,
 
     /// The priority fee per gas.
     ///
@@ -173,6 +172,7 @@ pub struct TxEnv {
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     pub blob_hashes: Vec<B256>,
+
     /// The max fee per blob gas.
     ///
     /// Incorporated as part of the Cancun upgrade via [EIP-4844].
@@ -200,7 +200,7 @@ impl TxEnv {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TransactTo {
     /// Simple call to an address.
-    Call(B160),
+    Call(Address),
     /// Contract creation.
     Create(CreateScheme),
 }
@@ -208,7 +208,7 @@ pub enum TransactTo {
 impl TransactTo {
     /// Calls the given address.
     #[inline]
-    pub fn call(address: B160) -> Self {
+    pub fn call(address: Address) -> Self {
         Self::Call(address)
     }
 
@@ -414,12 +414,12 @@ impl Default for BlockEnv {
     fn default() -> Self {
         Self {
             number: U256::ZERO,
-            coinbase: B160::zero(),
+            coinbase: Address::ZERO,
             timestamp: U256::from(1),
             gas_limit: U256::MAX,
             basefee: U256::ZERO,
             difficulty: U256::ZERO,
-            prevrandao: Some(B256::zero()),
+            prevrandao: Some(B256::ZERO),
             blob_excess_gas_and_price: Some(BlobExcessGasAndPrice::new(0)),
         }
     }
@@ -428,11 +428,11 @@ impl Default for BlockEnv {
 impl Default for TxEnv {
     fn default() -> Self {
         Self {
-            caller: B160::zero(),
+            caller: Address::ZERO,
             gas_limit: u64::MAX,
             gas_price: U256::ZERO,
             gas_priority_fee: None,
-            transact_to: TransactTo::Call(B160::zero()), // will do nothing
+            transact_to: TransactTo::Call(Address::ZERO), // will do nothing
             value: U256::ZERO,
             data: Bytes::new(),
             chain_id: None,
@@ -693,7 +693,7 @@ mod tests {
         // Set the optimism flag and source hash.
         let mut env = Env::default();
         env.cfg.optimism = true;
-        env.tx.optimism.source_hash = Some(B256::zero());
+        env.tx.optimism.source_hash = Some(B256::ZERO);
         assert!(env.validate_tx::<crate::RegolithSpec>().is_ok());
     }
 
@@ -703,7 +703,7 @@ mod tests {
         // Set the optimism flag and source hash.
         let mut env = Env::default();
         env.cfg.optimism = true;
-        env.tx.optimism.source_hash = Some(B256::zero());
+        env.tx.optimism.source_hash = Some(B256::ZERO);
 
         // Nonce and balance checks should be skipped for deposit transactions.
         assert!(env
@@ -725,7 +725,7 @@ mod tests {
     #[test]
     fn test_validate_tx_access_list() {
         let mut env = Env::default();
-        env.tx.access_list = vec![(B160::zero(), vec![])];
+        env.tx.access_list = vec![(Address::ZERO, vec![])];
         assert_eq!(
             env.validate_tx::<crate::FrontierSpec>(),
             Err(InvalidTransaction::AccessListNotSupported)

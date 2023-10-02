@@ -6,9 +6,9 @@ use crate::interpreter::{
 };
 use crate::journaled_state::{is_precompile, JournalCheckpoint};
 use crate::primitives::{
-    create2_address, create_address, keccak256, AnalysisKind, Bytecode, Bytes, EVMError, EVMResult,
-    Env, ExecutionResult, InvalidTransaction, Log, Output, ResultAndState, Spec, SpecId::*,
-    TransactTo, B160, B256, U256,
+    create2_address, create_address, keccak256, Address, AnalysisKind, Bytecode, Bytes, EVMError,
+    EVMResult, Env, ExecutionResult, InvalidTransaction, Log, Output, ResultAndState, Spec,
+    SpecId::*, TransactTo, B256, U256,
 };
 use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector};
 use alloc::boxed::Box;
@@ -41,14 +41,14 @@ pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
 
 struct PreparedCreate {
     gas: Gas,
-    created_address: B160,
+    created_address: Address,
     checkpoint: JournalCheckpoint,
     contract: Box<Contract>,
 }
 
 struct CreateResult {
     result: InstructionResult,
-    created_address: Option<B160>,
+    created_address: Option<Address>,
     gas: Gas,
     return_value: Bytes,
 }
@@ -101,7 +101,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     /// caller's balance directly after minting the requested amount of ETH.
     fn remove_l1_cost(
         is_deposit: bool,
-        tx_caller: B160,
+        tx_caller: Address,
         l1_cost: U256,
         db: &mut DB,
         journal: &mut JournaledState,
@@ -134,7 +134,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     /// in wei to the caller's balance. This should be persisted to the database
     /// prior to the rest of execution.
     fn commit_mint_value(
-        tx_caller: B160,
+        tx_caller: Address,
         tx_mint: Option<u128>,
         db: &mut DB,
         journal: &mut JournaledState,
@@ -842,7 +842,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .ok()
     }
 
-    fn load_account(&mut self, address: B160) -> Option<(bool, bool)> {
+    fn load_account(&mut self, address: Address) -> Option<(bool, bool)> {
         self.data
             .journaled_state
             .load_account_exist(address, self.data.db)
@@ -850,7 +850,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .ok()
     }
 
-    fn balance(&mut self, address: B160) -> Option<(U256, bool)> {
+    fn balance(&mut self, address: Address) -> Option<(U256, bool)> {
         let db = &mut self.data.db;
         let journal = &mut self.data.journaled_state;
         let error = &mut self.data.error;
@@ -861,7 +861,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .map(|(acc, is_cold)| (acc.info.balance, is_cold))
     }
 
-    fn code(&mut self, address: B160) -> Option<(Bytecode, bool)> {
+    fn code(&mut self, address: Address) -> Option<(Bytecode, bool)> {
         let journal = &mut self.data.journaled_state;
         let db = &mut self.data.db;
         let error = &mut self.data.error;
@@ -874,7 +874,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     }
 
     /// Get code hash of address.
-    fn code_hash(&mut self, address: B160) -> Option<(B256, bool)> {
+    fn code_hash(&mut self, address: Address) -> Option<(B256, bool)> {
         let journal = &mut self.data.journaled_state;
         let db = &mut self.data.db;
         let error = &mut self.data.error;
@@ -884,13 +884,13 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .map_err(|e| *error = Some(e))
             .ok()?;
         if acc.is_empty() {
-            return Some((B256::zero(), is_cold));
+            return Some((B256::ZERO, is_cold));
         }
 
         Some((acc.info.code_hash, is_cold))
     }
 
-    fn sload(&mut self, address: B160, index: U256) -> Option<(U256, bool)> {
+    fn sload(&mut self, address: Address, index: U256) -> Option<(U256, bool)> {
         // account is always warm. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
         self.data
             .journaled_state
@@ -901,7 +901,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
 
     fn sstore(
         &mut self,
-        address: B160,
+        address: Address,
         index: U256,
         value: U256,
     ) -> Option<(U256, U256, U256, bool)> {
@@ -912,15 +912,15 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
             .ok()
     }
 
-    fn tload(&mut self, address: B160, index: U256) -> U256 {
+    fn tload(&mut self, address: Address, index: U256) -> U256 {
         self.data.journaled_state.tload(address, index)
     }
 
-    fn tstore(&mut self, address: B160, index: U256, value: U256) {
+    fn tstore(&mut self, address: Address, index: U256, value: U256) {
         self.data.journaled_state.tstore(address, index, value)
     }
 
-    fn log(&mut self, address: B160, topics: Vec<B256>, data: Bytes) {
+    fn log(&mut self, address: Address, topics: Vec<B256>, data: Bytes) {
         if INSPECT {
             self.inspector.log(&mut self.data, &address, &topics, &data);
         }
@@ -932,7 +932,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         self.data.journaled_state.log(log);
     }
 
-    fn selfdestruct(&mut self, address: B160, target: B160) -> Option<SelfDestructResult> {
+    fn selfdestruct(&mut self, address: Address, target: Address) -> Option<SelfDestructResult> {
         if INSPECT {
             let acc = self.data.journaled_state.state.get(&address).unwrap();
             self.inspector
@@ -948,7 +948,7 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     fn create(
         &mut self,
         inputs: &mut CreateInputs,
-    ) -> (InstructionResult, Option<B160>, Gas, Bytes) {
+    ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
         // Call inspector
         if INSPECT {
             let (ret, address, gas, out) = self.inspector.create(&mut self.data, inputs);
@@ -1007,7 +1007,7 @@ mod tests {
 
     #[test]
     fn test_commit_mint_value() {
-        let caller = B160::zero();
+        let caller = Address::ZERO;
         let mint_value = Some(1u128);
         let mut db = InMemoryDB::default();
         db.insert_account_info(
@@ -1015,7 +1015,7 @@ mod tests {
             AccountInfo {
                 nonce: 0,
                 balance: U256::from(100),
-                code_hash: B256::zero(),
+                code_hash: B256::ZERO,
                 code: None,
             },
         );
@@ -1053,7 +1053,7 @@ mod tests {
 
     #[test]
     fn test_remove_l1_cost_non_deposit() {
-        let caller = B160::zero();
+        let caller = Address::ZERO;
         let mut db = InMemoryDB::default();
         let mut journal = JournaledState::new(0, SpecId::BERLIN);
         let slots = &[U256::from(100)];
@@ -1072,14 +1072,14 @@ mod tests {
 
     #[test]
     fn test_remove_l1_cost() {
-        let caller = B160::zero();
+        let caller = Address::ZERO;
         let mut db = InMemoryDB::default();
         db.insert_account_info(
             caller,
             AccountInfo {
                 nonce: 0,
                 balance: U256::from(100),
-                code_hash: B256::zero(),
+                code_hash: B256::ZERO,
                 code: None,
             },
         );
@@ -1103,14 +1103,14 @@ mod tests {
 
     #[test]
     fn test_remove_l1_cost_lack_of_funds() {
-        let caller = B160::zero();
+        let caller = Address::ZERO;
         let mut db = InMemoryDB::default();
         db.insert_account_info(
             caller,
             AccountInfo {
                 nonce: 0,
                 balance: U256::from(100),
-                code_hash: B256::zero(),
+                code_hash: B256::ZERO,
                 code: None,
             },
         );

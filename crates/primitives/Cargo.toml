@@ -1,6 +1,6 @@
 [package]
 authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
-description = "REVM primitives"
+description = "revm primitives"
 edition = "2021"
 keywords = ["no_std", "ethereum", "evm", "revm", "types"]
 license = "MIT"
@@ -10,78 +10,41 @@ version = "1.2.0"
 readme = "../../README.md"
 
 [dependencies]
-bytes = { version = "1.5", default-features = false }
-hashbrown = "0.14"
-primitive-types = { version = "0.12", default-features = false }
-rlp = { version = "0.5", default-features = false } # used for create2 address calculation
-ruint = { version = "1.8.0", default-features = false, features = [
-    "primitive-types",
+alloy-primitives = { version = "0.4", default-features = false, features = [
     "rlp",
 ] }
+alloy-rlp = { version = "0.3", default-features = false, features = ["derive"] }
+hashbrown = "0.14"
 auto_impl = "1.1"
 bitvec = { version = "1", default-features = false, features = ["alloc"] }
 bitflags = { version = "2.4.0", default-features = false }
 
-# For setting the CfgEnv KZGSettings. Enabled by std flag.
+# For setting the CfgEnv KZGSettings. Enabled by c-kzg flag.
 c-kzg = { version = "0.1.1", default-features = false, optional = true }
+once_cell = { version = "1.18", default-features = false, optional = true }
 
-# bits B256 B160 crate
-fixed-hash = { version = "0.8", default-features = false, features = [
-    "rustc-hex",
-] }
-
-#utility
-hex-literal = "0.4"
-hex = { version = "0.4", default-features = false, features = ["alloc"] }
-derive_more = "0.99"
+# utility
 enumn = "0.1"
-once_cell = { version = "1.18", default-features = false }
-
-# sha3 keccak hasher
-sha3 = { version = "0.10", default-features = false }
 
 # optional
 serde = { version = "1.0", features = ["derive", "rc"], optional = true }
-arbitrary = { version = "1.3", features = ["derive"], optional = true }
-proptest = { version = "1.3", optional = true }
-proptest-derive = { version = "0.4", optional = true }
-
-[dev-dependencies]
-arbitrary = { version = "1.3", features = ["derive"] }
-proptest = "1.3"
-proptest-derive = "0.4"
-ruint = { version = "1.10.1", features = [
-    "primitive-types",
-    "rlp",
-    "proptest",
-    "arbitrary",
-] }
 
 [build-dependencies]
 hex = "0.4"
 
 [features]
 default = ["std", "c-kzg"]
-std = ["bytes/std", "rlp/std", "hex/std", "bitvec/std", "bitflags/std"]
+std = ["alloy-rlp/std", "hex/std", "bitvec/std", "bitflags/std"]
 serde = [
     "dep:serde",
+    "alloy-primitives/serde",
     "hex/serde",
     "hashbrown/serde",
-    "ruint/serde",
-    "bytes/serde",
     "bitvec/serde",
     "bitflags/serde",
     "c-kzg?/serde",
 ]
-arbitrary = [
-    "std",
-    "ruint/arbitrary",
-    "ruint/proptest",
-    "dep:arbitrary",
-    "dep:proptest",
-    "dep:proptest-derive",
-    "bitflags/arbitrary",
-]
+arbitrary = ["std", "alloy-primitives/arbitrary", "bitflags/arbitrary"]
 
 optimism = []
 
@@ -102,4 +65,4 @@ optional_gas_refund = []
 optional_no_base_fee = []
 
 # See comments in `revm-precompile`
-c-kzg = ["dep:c-kzg"]
+c-kzg = ["dep:c-kzg", "dep:once_cell"]

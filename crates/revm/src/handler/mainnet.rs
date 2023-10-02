@@ -129,8 +129,7 @@ mod tests {
         let mut return_gas = Gas::new(90);
         return_gas.record_refund(30);
 
-        let gas =
-            handle_call_return::<CancunSpec>(&env, InstructionResult::Stop, return_gas.clone());
+        let gas = handle_call_return::<CancunSpec>(&env, InstructionResult::Stop, return_gas);
         assert_eq!(gas.remaining(), 90);
         assert_eq!(gas.spend(), 10);
         assert_eq!(gas.refunded(), 30);

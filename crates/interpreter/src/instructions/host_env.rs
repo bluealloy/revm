@@ -13,7 +13,7 @@ pub fn chainid<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H)
 
 pub fn coinbase<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
     gas!(interpreter, gas::BASE);
-    push_b256!(interpreter, host.env().block.coinbase.into());
+    push_b256!(interpreter, host.env().block.coinbase.into_word());
 }
 
 pub fn timestamp<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
@@ -54,7 +54,7 @@ pub fn basefee<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H)
 
 pub fn origin<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
     gas!(interpreter, gas::BASE);
-    push_b256!(interpreter, host.env().tx.caller.into());
+    push_b256!(interpreter, host.env().tx.caller.into_word());
 }
 
 // EIP-4844: Shard Blob Transactions
