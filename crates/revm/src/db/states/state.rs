@@ -82,6 +82,10 @@ impl<DB: Database> State<DB> {
     /// If account is not found inside cache state it will be loaded from database.
     ///
     /// Update will create transitions for all accounts that are updated.
+    ///
+    /// Like [CacheAccount::increment_balance], this assumes that incremented balances are not
+    /// zero, and will not overflow once incremented. If using this to implement withdrawals, zero
+    /// balances must be filtered out before calling this function.
     pub fn increment_balances(
         &mut self,
         balances: impl IntoIterator<Item = (Address, u128)>,
@@ -89,8 +93,16 @@ impl<DB: Database> State<DB> {
         // make transition and update cache state
         let mut transitions = Vec::new();
         for (address, balance) in balances {
+            if balance == 0 {
+                continue;
+            }
             let original_account = self.load_cache_account(address)?;
-            transitions.push((address, original_account.increment_balance(balance)))
+            transitions.push((
+                address,
+                original_account
+                    .increment_balance(balance)
+                    .expect("Balance is not zero"),
+            ))
         }
         // append transition
         if let Some(s) = self.transition_state.as_mut() {
