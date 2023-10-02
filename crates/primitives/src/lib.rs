@@ -34,6 +34,3 @@ pub use result::*;
 pub use specification::*;
 pub use state::*;
 pub use utilities::*;
-
-/// Hash, in Ethereum usually keccak256.
-pub type Hash = B256;
