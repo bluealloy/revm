@@ -63,7 +63,7 @@ pub struct BlockEnv {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlobExcessGasAndPrice {
     pub excess_blob_gas: u64,
-    pub blob_gasprice: u64,
+    pub blob_gasprice: u128,
 }
 
 impl BlobExcessGasAndPrice {
@@ -106,7 +106,7 @@ impl BlockEnv {
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     #[inline]
-    pub fn get_blob_gasprice(&self) -> Option<u64> {
+    pub fn get_blob_gasprice(&self) -> Option<u128> {
         self.blob_excess_gas_and_price
             .as_ref()
             .map(|a| a.blob_gasprice)

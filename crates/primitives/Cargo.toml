@@ -1,6 +1,6 @@
 [package]
 authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
-description = "REVM primitives"
+description = "revm primitives"
 edition = "2021"
 keywords = ["no_std", "ethereum", "evm", "revm", "types"]
 license = "MIT"
@@ -11,7 +11,7 @@ readme = "../../README.md"
 
 [dependencies]
 alloy-primitives = { version = "0.4", default-features = false, features = [
-    "rlp"
+    "rlp",
 ] }
 alloy-rlp = { version = "0.3", default-features = false, features = ["derive"] }
 hashbrown = "0.14"
@@ -19,12 +19,12 @@ auto_impl = "1.1"
 bitvec = { version = "1", default-features = false, features = ["alloc"] }
 bitflags = { version = "2.4.0", default-features = false }
 
-# For setting the CfgEnv KZGSettings. Enabled by std flag.
+# For setting the CfgEnv KZGSettings. Enabled by c-kzg flag.
 c-kzg = { version = "0.1.1", default-features = false, optional = true }
+once_cell = { version = "1.18", default-features = false, optional = true }
 
 # utility
 enumn = "0.1"
-once_cell = { version = "1.18", default-features = false, optional = true }
 
 # optional
 serde = { version = "1.0", features = ["derive", "rc"], optional = true }
