@@ -1,5 +1,15 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v26 tag
+date 02.10.2023
+
+Migration to alloy primitive types.
+
+* revm: v3.5.0
+* revm-precompile: v2.2.0
+* revm-primitives: v1.3.0
+* revm-interpreter: v1.3.0
+
 # v25 tag
 date: 28.09.2023
 

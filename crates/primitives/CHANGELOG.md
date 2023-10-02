@@ -1,3 +1,14 @@
+
+# v1.3.0
+date 02.10.2023
+
+Migration to alloy primitive types.
+
+Full git log:
+* af4146a - feat: Alloy primitives (#724) (15 hours ago) <evalir>
+* 83d27b0 - fix: use u128 for calc_blob_gasprice (#764) (16 hours ago) <Dan Cline>
+* 1f86e45 - chore(deps): bump proptest from 1.2.0 to 1.3.1 (#763) (21 hours ago) <dependabot[bot]
+
 # v1.2.0
 date 28.09.2023
 

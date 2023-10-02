@@ -14,7 +14,7 @@ hash-db = "0.15"
 hashbrown = "0.14"
 indicatif = "0.17"
 plain_hasher = "0.2"
-revm = { path = "../../crates/revm", version = "3.4.0", default-features = false, features = [
+revm = { path = "../../crates/revm", version = "3.5.0", default-features = false, features = [
     "ethersdb",
     "std",
     "serde",
