@@ -692,11 +692,11 @@ mod tests {
     }
 
     const fn account1() -> Address {
-        Address(FixedBytes([0x60; 20]))
+        Address::new([0x60; 20])
     }
 
     const fn account2() -> Address {
-        Address(FixedBytes([0x61; 20]))
+        Address::new([0x61; 20])
     }
 
     fn slot1() -> U256 {
