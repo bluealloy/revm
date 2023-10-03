@@ -1,6 +1,6 @@
 [package]
 authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
-description = "EVM bytecode interpreter"
+description = "REVM Interpreter"
 edition = "2021"
 keywords = ["no_std", "ethereum", "evm", "revm", "interpreter"]
 license = "MIT"

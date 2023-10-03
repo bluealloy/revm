@@ -1,6 +1,6 @@
 use crate::B160;
 
-/// EVM Interpreter stack limit.
+/// EVM interpreter stack limit.
 pub const STACK_LIMIT: usize = 1024;
 
 /// EVM call stack limit.
