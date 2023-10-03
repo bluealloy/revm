@@ -1,10 +1,12 @@
-use crate::{Log, State, B160};
+use crate::{Address, Bytes, Log, State, U256};
 use alloc::vec::Vec;
-use bytes::Bytes;
 use core::fmt;
-use ruint::aliases::U256;
 
-pub type EVMResult<DBError> = core::result::Result<ResultAndState, EVMError<DBError>>;
+/// Result of EVM execution.
+pub type EVMResult<DBError> = EVMResultGeneric<ResultAndState, DBError>;
+
+/// Generic result of EVM execution. Used to represent error and generic output.
+pub type EVMResultGeneric<T, DBError> = core::result::Result<T, EVMError<DBError>>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -94,12 +96,8 @@ impl ExecutionResult {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Output {
-    #[cfg_attr(feature = "serde", serde(with = "crate::utilities::serde_hex_bytes"))]
     Call(Bytes),
-    Create(
-        #[cfg_attr(feature = "serde", serde(with = "crate::utilities::serde_hex_bytes"))] Bytes,
-        Option<B160>,
-    ),
+    Create(Bytes, Option<Address>),
 }
 
 impl Output {
@@ -206,6 +204,10 @@ pub enum InvalidTransaction {
     TooManyBlobs,
     /// Blob transaction contains a versioned hash with an incorrect version
     BlobVersionNotSupported,
+    /// System transactions are not supported
+    /// post-regolith hardfork.
+    #[cfg(feature = "optimism")]
+    DepositSystemTxPostRegolith,
 }
 
 impl<DBError> From<InvalidHeader> for EVMError<DBError> {

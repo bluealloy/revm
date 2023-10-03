@@ -1,8 +1,7 @@
-use crate::{keccak256, B256, KECCAK_EMPTY};
+use crate::{hex, keccak256, Bytes, B256, KECCAK_EMPTY};
 use alloc::{sync::Arc, vec::Vec};
 use bitvec::prelude::{bitvec, Lsb0};
 use bitvec::vec::BitVec;
-use bytes::Bytes;
 use core::fmt::Debug;
 
 /// A map of valid `jump` destinations.
@@ -53,7 +52,6 @@ pub enum BytecodeState {
 #[derive(Clone, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Bytecode {
-    #[cfg_attr(feature = "serde", serde(with = "crate::utilities::serde_hex_bytes"))]
     pub bytecode: Bytes,
     pub state: BytecodeState,
 }
@@ -61,7 +59,7 @@ pub struct Bytecode {
 impl Debug for Bytecode {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("Bytecode")
-            .field("bytecode", &hex::encode(&self.bytecode[..]))
+            .field("bytecode", &self.bytecode)
             .field("state", &self.state)
             .finish()
     }

@@ -24,11 +24,11 @@ The [`EVMImpl`](./evm_impl.md) struct implements this `Host` trait.
 
     This method retrieves the balance of an Ethereum account given its address. It returns a tuple containing the balance and a boolean indicating whether the account was "cold" (accessed for the first time in the current transaction).
 
--  `code`
+- `code`
 
     This method retrieves the bytecode of a given address. It returns a tuple containing the bytecode and a boolean indicating whether the account was "cold".
 
--  `code_hash`
+- `code_hash`
 
     This method retrieves the code_hash at a given address. It returns a tuple containing the hash and a boolean indicating whether the account was "cold".
 
@@ -44,7 +44,7 @@ The [`EVMImpl`](./evm_impl.md) struct implements this `Host` trait.
 
     This method is used to create log entries, which are a way for contracts to produce output that external observers (like dapps or the frontend of a blockchain explorer) can listen for and react to.
 
--  `selfdestruct`
+- `selfdestruct`
 
     The selfdestruct method attempts to terminate the specified address, transferring its remaining balance to a given target address. If the INSPECT constant is true, the self-destruction event is observed or logged via an inspector. The method returns an Option<SelfDestructResult>, encapsulating the outcome of the operation: Some(SelfDestructResult) on success and None if an error occurs, with the error being stored internally for later reference.
 

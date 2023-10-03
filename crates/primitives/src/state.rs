@@ -1,15 +1,15 @@
-use crate::{Bytecode, B160, B256, KECCAK_EMPTY, U256};
+use crate::{Address, Bytecode, B256, KECCAK_EMPTY, U256};
 use bitflags::bitflags;
 use hashbrown::HashMap;
 
 #[derive(Debug, Clone, Eq, PartialEq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Account {
-    /// Balance of the account.
+    /// Balance, nonce, and code.
     pub info: AccountInfo,
-    /// storage cache
+    /// Storage cache
     pub storage: HashMap<U256, StorageSlot>,
-    // Account status flags.
+    /// Account status flags.
     pub status: AccountStatus,
 }
 
@@ -41,10 +41,11 @@ impl Default for AccountStatus {
     }
 }
 
-pub type State = HashMap<B160, Account>;
+pub type State = HashMap<Address, Account>;
 
 /// Structure used for EIP-1153 transient storage.
-pub type TransientStorage = HashMap<(B160, U256), U256>;
+pub type TransientStorage = HashMap<(Address, U256), U256>;
+
 pub type Storage = HashMap<U256, StorageSlot>;
 
 impl Account {
@@ -173,7 +174,7 @@ pub struct AccountInfo {
     /// code hash,
     pub code_hash: B256,
     /// code: if None, `code_by_hash` will be used to fetch it if code needs to be loaded from
-    /// inside of revm.
+    /// inside of `revm`.
     pub code: Option<Bytecode>,
 }
 
@@ -213,7 +214,7 @@ impl AccountInfo {
     }
 
     pub fn is_empty(&self) -> bool {
-        let code_empty = self.code_hash == KECCAK_EMPTY || self.code_hash == B256::zero();
+        let code_empty = self.code_hash == KECCAK_EMPTY || self.code_hash == B256::ZERO;
         self.balance == U256::ZERO && self.nonce == 0 && code_empty
     }
 

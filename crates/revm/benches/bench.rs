@@ -1,11 +1,12 @@
-use bytes::Bytes;
 use criterion::{
     criterion_group, criterion_main, measurement::WallTime, BenchmarkGroup, Criterion,
 };
 use revm::{
     db::BenchmarkDB,
     interpreter::{analysis::to_analysed, BytecodeLocked, Contract, DummyHost, Interpreter},
-    primitives::{BerlinSpec, Bytecode, BytecodeState, TransactTo, U256},
+    primitives::{
+        address, bytes, hex, BerlinSpec, Bytecode, BytecodeState, Bytes, TransactTo, U256,
+    },
 };
 use revm_interpreter::SharedMemory;
 use std::time::Duration;
@@ -15,18 +16,13 @@ type Evm = revm::EVM<BenchmarkDB>;
 fn analysis(c: &mut Criterion) {
     let mut evm = revm::new();
 
-    evm.env.tx.caller = "0x1000000000000000000000000000000000000000"
-        .parse()
-        .unwrap();
-    evm.env.tx.transact_to = TransactTo::Call(
-        "0x0000000000000000000000000000000000000000"
-            .parse()
-            .unwrap(),
-    );
     // Empirical good value for gas_limit for low shared_memory usage
     evm.env.tx.gas_limit = 22_000;
-    // evm.env.tx.data = Bytes::from(hex::decode("30627b7c").unwrap());
-    evm.env.tx.data = Bytes::from(hex::decode("8035F0CE").unwrap());
+
+    evm.env.tx.caller = address!("1000000000000000000000000000000000000000");
+    evm.env.tx.transact_to = TransactTo::Call(address!("0000000000000000000000000000000000000000"));
+    // evm.env.tx.data = bytes!("30627b7c");
+    evm.env.tx.data = bytes!("8035F0CE");
 
     let contract_data: Bytes = hex::decode(ANALYSIS).unwrap().into();
 
@@ -55,15 +51,9 @@ fn snailtracer(c: &mut Criterion) {
     let mut evm = revm::new();
     evm.database(BenchmarkDB::new_bytecode(bytecode(SNAILTRACER)));
 
-    evm.env.tx.caller = "0x1000000000000000000000000000000000000000"
-        .parse()
-        .unwrap();
-    evm.env.tx.transact_to = TransactTo::Call(
-        "0x0000000000000000000000000000000000000000"
-            .parse()
-            .unwrap(),
-    );
-    evm.env.tx.data = Bytes::from(hex::decode("30627b7c").unwrap());
+    evm.env.tx.caller = address!("1000000000000000000000000000000000000000");
+    evm.env.tx.transact_to = TransactTo::Call(address!("0000000000000000000000000000000000000000"));
+    evm.env.tx.data = bytes!("30627b7c");
 
     let mut g = c.benchmark_group("snailtracer");
     g.noise_threshold(0.03)
@@ -79,14 +69,8 @@ fn transfer(c: &mut Criterion) {
     let mut evm = revm::new();
     evm.database(BenchmarkDB::new_bytecode(Bytecode::new()));
 
-    evm.env.tx.caller = "0x0000000000000000000000000000000000000001"
-        .parse()
-        .unwrap();
-    evm.env.tx.transact_to = TransactTo::Call(
-        "0x0000000000000000000000000000000000000000"
-            .parse()
-            .unwrap(),
-    );
+    evm.env.tx.caller = address!("0000000000000000000000000000000000000001");
+    evm.env.tx.transact_to = TransactTo::Call(address!("0000000000000000000000000000000000000000"));
     evm.env.tx.value = U256::from(10);
 
     let mut g = c.benchmark_group("transfer");

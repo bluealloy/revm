@@ -1,4 +1,4 @@
-use crate::primitives::{AccountInfo, Bytecode, B160, B256, KECCAK_EMPTY, U256};
+use crate::primitives::{AccountInfo, Address, Bytecode, B256, KECCAK_EMPTY, U256};
 use crate::Database;
 use ethers_core::types::{BlockId, H160 as eH160, H256, U64 as eU64};
 use ethers_providers::Middleware;
@@ -49,8 +49,8 @@ impl<M: Middleware> EthersDB<M> {
 impl<M: Middleware> Database for EthersDB<M> {
     type Error = ();
 
-    fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
-        let add = eH160::from(address.0);
+    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+        let add = eH160::from(address.0 .0);
 
         let f = async {
             let nonce = self.client.get_transaction_count(add, self.block_number);
@@ -60,10 +60,8 @@ impl<M: Middleware> Database for EthersDB<M> {
         };
         let (nonce, balance, code) = self.block_on(f);
         // panic on not getting data?
-        let bytecode = Bytecode::new_raw(
-            code.unwrap_or_else(|e| panic!("ethers get code error: {e:?}"))
-                .0,
-        );
+        let bytecode = code.unwrap_or_else(|e| panic!("ethers get code error: {e:?}"));
+        let bytecode = Bytecode::new_raw(bytecode.0.into());
         let code_hash = bytecode.hash_slow();
         Ok(Some(AccountInfo::new(
             U256::from_limbs(
@@ -84,8 +82,8 @@ impl<M: Middleware> Database for EthersDB<M> {
         // not needed because we already load code with basic info
     }
 
-    fn storage(&mut self, address: B160, index: U256) -> Result<U256, Self::Error> {
-        let add = eH160::from(address.0);
+    fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error> {
+        let add = eH160::from(address.0 .0);
         let index = H256::from(index.to_be_bytes());
         let f = async {
             let storage = self
@@ -111,7 +109,7 @@ impl<M: Middleware> Database for EthersDB<M> {
                 .ok()
                 .flatten()
         };
-        Ok(B256(self.block_on(f).unwrap().hash.unwrap().0))
+        Ok(B256::new(self.block_on(f).unwrap().hash.unwrap().0))
     }
 }
 

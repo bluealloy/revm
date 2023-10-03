@@ -1,36 +1,23 @@
 use crate::{
-    B160, B256, BLOB_GASPRICE_UPDATE_FRACTION, MIN_BLOB_GASPRICE, TARGET_BLOB_GAS_PER_BLOCK, U256,
+    b256, Address, B256, BLOB_GASPRICE_UPDATE_FRACTION, MIN_BLOB_GASPRICE,
+    TARGET_BLOB_GAS_PER_BLOCK, U256,
 };
-use hex_literal::hex;
-use sha3::{Digest, Keccak256};
+pub use alloy_primitives::keccak256;
 
-pub const KECCAK_EMPTY: B256 = B256(hex!(
-    "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
-));
+/// The Keccak-256 hash of the empty string `""`.
+pub const KECCAK_EMPTY: B256 =
+    b256!("c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470");
 
-#[inline(always)]
-pub fn keccak256(input: &[u8]) -> B256 {
-    B256(Keccak256::digest(input)[..].try_into().unwrap())
+/// Returns the address for the legacy `CREATE` scheme: [`CreateScheme::Create`]
+#[inline]
+pub fn create_address(caller: Address, nonce: u64) -> Address {
+    caller.create(nonce)
 }
 
-/// Returns the address for the legacy `CREATE` scheme: [`crate::env::CreateScheme::Create`]
-pub fn create_address(caller: B160, nonce: u64) -> B160 {
-    let mut stream = rlp::RlpStream::new_list(2);
-    stream.append(&caller.0.as_ref());
-    stream.append(&nonce);
-    let out = keccak256(&stream.out());
-    B160(out[12..].try_into().unwrap())
-}
-
-/// Returns the address for the `CREATE2` scheme: [`crate::env::CreateScheme::Create2`]
-pub fn create2_address(caller: B160, code_hash: B256, salt: U256) -> B160 {
-    let mut hasher = Keccak256::new();
-    hasher.update([0xff]);
-    hasher.update(&caller[..]);
-    hasher.update(salt.to_be_bytes::<{ U256::BYTES }>());
-    hasher.update(&code_hash[..]);
-
-    B160(hasher.finalize().as_slice()[12..].try_into().unwrap())
+/// Returns the address for the `CREATE2` scheme: [`CreateScheme::Create2`]
+#[inline]
+pub fn create2_address(caller: Address, code_hash: B256, salt: U256) -> Address {
+    caller.create2(salt.to_be_bytes::<32>(), code_hash)
 }
 
 /// Calculates the `excess_blob_gas` from the parent header's `blob_gas_used` and `excess_blob_gas`.
@@ -45,7 +32,7 @@ pub fn calc_excess_blob_gas(parent_excess_blob_gas: u64, parent_blob_gas_used: u
 ///
 /// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers).
 #[inline]
-pub fn calc_blob_gasprice(excess_blob_gas: u64) -> u64 {
+pub fn calc_blob_gasprice(excess_blob_gas: u64) -> u128 {
     fake_exponential(
         MIN_BLOB_GASPRICE,
         excess_blob_gas,
@@ -63,7 +50,7 @@ pub fn calc_blob_gasprice(excess_blob_gas: u64) -> u64 {
 ///
 /// Panics if `denominator` is zero.
 #[inline]
-pub fn fake_exponential(factor: u64, numerator: u64, denominator: u64) -> u64 {
+pub fn fake_exponential(factor: u64, numerator: u64, denominator: u64) -> u128 {
     assert_ne!(denominator, 0, "attempt to divide by zero");
     let factor = factor as u128;
     let numerator = numerator as u128;
@@ -79,36 +66,7 @@ pub fn fake_exponential(factor: u64, numerator: u64, denominator: u64) -> u64 {
         numerator_accum = (numerator_accum * numerator) / (denominator * i);
         i += 1;
     }
-    (output / denominator) as u64
-}
-
-/// Serde functions to serde as [bytes::Bytes] hex string
-#[cfg(feature = "serde")]
-pub mod serde_hex_bytes {
-    use alloc::string::{String, ToString};
-    use serde::{Deserialize, Deserializer, Serializer};
-
-    pub fn serialize<S, T>(x: T, s: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-        T: AsRef<[u8]>,
-    {
-        s.serialize_str(&alloc::format!("0x{}", hex::encode(x.as_ref())))
-    }
-
-    pub fn deserialize<'de, D>(d: D) -> Result<bytes::Bytes, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let value = String::deserialize(d)?;
-        if let Some(value) = value.strip_prefix("0x") {
-            hex::decode(value)
-        } else {
-            hex::decode(&value)
-        }
-        .map(Into::into)
-        .map_err(|e| serde::de::Error::custom(e.to_string()))
-    }
+    output / denominator
 }
 
 #[cfg(test)]
@@ -173,7 +131,22 @@ mod tests {
     // https://github.com/ethereum/go-ethereum/blob/28857080d732857030eda80c69b9ba2c8926f221/consensus/misc/eip4844/eip4844_test.go#L60
     #[test]
     fn test_calc_blob_fee() {
-        for &(excess, expected) in &[(0, 1), (2314057, 1), (2314058, 2), (10 * 1024 * 1024, 23)] {
+        let blob_fee_vectors = &[
+            (0, 1),
+            (2314057, 1),
+            (2314058, 2),
+            (10 * 1024 * 1024, 23),
+            // calc_blob_gasprice approximates `e ** (excess_blob_gas / BLOB_GASPRICE_UPDATE_FRACTION)` using Taylor expansion
+            //
+            // to roughly find where boundaries will be hit:
+            // 2 ** bits = e ** (excess_blob_gas / BLOB_GASPRICE_UPDATE_FRACTION)
+            // excess_blob_gas = ln(2 ** bits) * BLOB_GASPRICE_UPDATE_FRACTION
+            (148099578, 18446739238971471609), // output is just below the overflow
+            (148099579, 18446744762204311910), // output is just after the overflow
+            (161087488, 902580055246494526580),
+        ];
+
+        for &(excess, expected) in blob_fee_vectors {
             let actual = calc_blob_gasprice(excess);
             assert_eq!(actual, expected, "test: {excess}");
         }
@@ -183,7 +156,7 @@ mod tests {
     #[test]
     fn fake_exp() {
         for t @ &(factor, numerator, denominator, expected) in &[
-            (1u64, 0u64, 1u64, 1u64),
+            (1u64, 0u64, 1u64, 1u128),
             (38493, 0, 1000, 38493),
             (0, 1234, 2345, 0),
             (1, 2, 1, 6), // approximate 7.389

@@ -21,12 +21,12 @@ pub fn keccak256<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
 
 pub fn address<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::BASE);
-    push_b256!(interpreter, B256::from(interpreter.contract.address));
+    push_b256!(interpreter, interpreter.contract.address.into_word());
 }
 
 pub fn caller<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::BASE);
-    push_b256!(interpreter, B256::from(interpreter.contract.caller));
+    push_b256!(interpreter, interpreter.contract.caller.into_word());
 }
 
 pub fn codesize<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
@@ -58,19 +58,16 @@ pub fn calldataload<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop!(interpreter, index);
     let index = as_usize_saturated!(index);
-
     let load = if index < interpreter.contract.input.len() {
-        let n = 32.min(interpreter.contract.input.len() - index);
+        let have_bytes = 32.min(interpreter.contract.input.len() - index);
         let mut bytes = [0u8; 32];
-        // SAFETY: n <= len - index -> index + n <= len
-        let src = unsafe { interpreter.contract.input.get_unchecked(index..index + n) };
-        bytes[..n].copy_from_slice(src);
-        U256::from_be_bytes(bytes)
+        bytes[..have_bytes].copy_from_slice(&interpreter.contract.input[index..index + have_bytes]);
+        B256::new(bytes)
     } else {
-        U256::ZERO
+        B256::ZERO
     };
 
-    push!(interpreter, load);
+    push_b256!(interpreter, load);
 }
 
 pub fn calldatasize<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {

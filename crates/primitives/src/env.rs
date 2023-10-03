@@ -1,9 +1,8 @@
 use crate::{
-    alloc::vec::Vec, calc_blob_gasprice, Account, InvalidHeader, InvalidTransaction, Spec, SpecId,
-    B160, B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK, MAX_INITCODE_SIZE, U256,
-    VERSIONED_HASH_VERSION_KZG,
+    alloc::vec::Vec, calc_blob_gasprice, Account, Address, Bytes, InvalidHeader,
+    InvalidTransaction, Spec, SpecId, B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK,
+    MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
 };
-use bytes::Bytes;
 use core::cmp::{min, Ordering};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -23,7 +22,8 @@ pub struct BlockEnv {
     /// Coinbase or miner or address that created and signed the block.
     ///
     /// This is the receiver address of all the gas spent in the block.
-    pub coinbase: B160,
+    pub coinbase: Address,
+
     /// The timestamp of the block in seconds since the UNIX epoch.
     pub timestamp: U256,
     /// The gas limit of the block.
@@ -63,7 +63,7 @@ pub struct BlockEnv {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlobExcessGasAndPrice {
     pub excess_blob_gas: u64,
-    pub blob_gasprice: u64,
+    pub blob_gasprice: u128,
 }
 
 impl BlobExcessGasAndPrice {
@@ -75,6 +75,23 @@ impl BlobExcessGasAndPrice {
             blob_gasprice,
         }
     }
+}
+
+#[cfg(feature = "optimism")]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct OptimismFields {
+    pub source_hash: Option<B256>,
+    pub mint: Option<u128>,
+    pub is_system_transaction: Option<bool>,
+    /// An enveloped EIP-2718 typed transaction. This is used
+    /// to compute the L1 tx cost using the L1 block info, as
+    /// opposed to requiring downstream apps to compute the cost
+    /// externally.
+    /// This field is optional to allow the [TxEnv] to be constructed
+    /// for non-optimism chains when the `optimism` feature is enabled,
+    /// but the [CfgEnv] `optimism` field is set to false.
+    pub enveloped_tx: Option<Bytes>,
 }
 
 impl BlockEnv {
@@ -89,7 +106,7 @@ impl BlockEnv {
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     #[inline]
-    pub fn get_blob_gasprice(&self) -> Option<u64> {
+    pub fn get_blob_gasprice(&self) -> Option<u128> {
         self.blob_excess_gas_and_price
             .as_ref()
             .map(|a| a.blob_gasprice)
@@ -112,8 +129,8 @@ impl BlockEnv {
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxEnv {
-    /// The caller, author or signer of the transaction.
-    pub caller: B160,
+    /// Caller aka Author aka transaction signer.
+    pub caller: Address,
     /// The gas limit of the transaction.
     pub gas_limit: u64,
     /// The gas price of the transaction.
@@ -123,7 +140,6 @@ pub struct TxEnv {
     /// The value sent to `transact_to`.
     pub value: U256,
     /// The data of the transaction.
-    #[cfg_attr(feature = "serde", serde(with = "crate::utilities::serde_hex_bytes"))]
     pub data: Bytes,
     /// The nonce of the transaction. If set to `None`, no checks are performed.
     pub nonce: Option<u64>,
@@ -140,7 +156,7 @@ pub struct TxEnv {
     /// Added in [EIP-2930].
     ///
     /// [EIP-2930]: https://eips.ethereum.org/EIPS/eip-2930
-    pub access_list: Vec<(B160, Vec<U256>)>,
+    pub access_list: Vec<(Address, Vec<U256>)>,
 
     /// The priority fee per gas.
     ///
@@ -156,12 +172,17 @@ pub struct TxEnv {
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     pub blob_hashes: Vec<B256>,
+
     /// The max fee per blob gas.
     ///
     /// Incorporated as part of the Cancun upgrade via [EIP-4844].
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     pub max_fee_per_blob_gas: Option<U256>,
+
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[cfg(feature = "optimism")]
+    pub optimism: OptimismFields,
 }
 
 impl TxEnv {
@@ -179,7 +200,7 @@ impl TxEnv {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TransactTo {
     /// Simple call to an address.
-    Call(B160),
+    Call(Address),
     /// Contract creation.
     Create(CreateScheme),
 }
@@ -187,7 +208,7 @@ pub enum TransactTo {
 impl TransactTo {
     /// Calls the given address.
     #[inline]
-    pub fn call(address: B160) -> Self {
+    pub fn call(address: Address) -> Self {
         Self::Call(address)
     }
 
@@ -237,8 +258,8 @@ pub struct CfgEnv {
     pub chain_id: u64,
     pub spec_id: SpecId,
     /// KZG Settings for point evaluation precompile. By default, this is loaded from the ethereum mainnet trusted setup.
+    #[cfg(feature = "c-kzg")]
     #[cfg_attr(feature = "serde", serde(skip))]
-    #[cfg(feature = "std")]
     pub kzg_settings: crate::kzg::EnvKzgSettings,
     /// Bytecode that is created with CREATE/CREATE2 is by default analysed and jumptable is created.
     /// This is very beneficial for testing and speeds up execution of that bytecode if called multiple times.
@@ -248,9 +269,6 @@ pub struct CfgEnv {
     /// If some it will effects EIP-170: Contract code size limit. Useful to increase this because of tests.
     /// By default it is 0x6000 (~25kb).
     pub limit_contract_code_size: Option<usize>,
-    /// Disables the coinbase tip during the finalization of the transaction. This is useful for
-    /// rollups that redirect the tip to the sequencer.
-    pub disable_coinbase_tip: bool,
     /// A hard memory limit in bytes beyond which [Memory] cannot be resized.
     ///
     /// In cases where the gas limit may be extraordinarily high, it is recommended to set this to
@@ -280,6 +298,14 @@ pub struct CfgEnv {
     /// This is useful for testing method calls with zero gas price.
     #[cfg(feature = "optional_no_base_fee")]
     pub disable_base_fee: bool,
+    /// Enables Optimism's execution changes for deposit transactions and fee
+    /// collection. Hot toggling the optimism field gives applications built
+    /// on revm the ability to switch optimism execution on and off at runtime,
+    /// allowing for features like multichain fork testing. Setting this field
+    /// to false will disable all optimism execution changes regardless of
+    /// compilation with the optimism feature flag.
+    #[cfg(feature = "optimism")]
+    pub optimism: bool,
 }
 
 impl CfgEnv {
@@ -332,6 +358,16 @@ impl CfgEnv {
     pub fn is_block_gas_limit_disabled(&self) -> bool {
         false
     }
+
+    #[cfg(feature = "optimism")]
+    pub fn is_optimism(&self) -> bool {
+        self.optimism
+    }
+
+    #[cfg(not(feature = "optimism"))]
+    pub fn is_optimism(&self) -> bool {
+        false
+    }
 }
 
 /// What bytecode analysis to perform.
@@ -354,8 +390,7 @@ impl Default for CfgEnv {
             spec_id: SpecId::LATEST,
             perf_analyse_created_bytecodes: AnalysisKind::default(),
             limit_contract_code_size: None,
-            disable_coinbase_tip: false,
-            #[cfg(feature = "std")]
+            #[cfg(feature = "c-kzg")]
             kzg_settings: crate::kzg::EnvKzgSettings::Default,
             #[cfg(feature = "memory_limit")]
             memory_limit: (1 << 32) - 1,
@@ -369,6 +404,8 @@ impl Default for CfgEnv {
             disable_gas_refund: false,
             #[cfg(feature = "optional_no_base_fee")]
             disable_base_fee: false,
+            #[cfg(feature = "optimism")]
+            optimism: false,
         }
     }
 }
@@ -377,12 +414,12 @@ impl Default for BlockEnv {
     fn default() -> Self {
         Self {
             number: U256::ZERO,
-            coinbase: B160::zero(),
+            coinbase: Address::ZERO,
             timestamp: U256::from(1),
             gas_limit: U256::MAX,
             basefee: U256::ZERO,
             difficulty: U256::ZERO,
-            prevrandao: Some(B256::zero()),
+            prevrandao: Some(B256::ZERO),
             blob_excess_gas_and_price: Some(BlobExcessGasAndPrice::new(0)),
         }
     }
@@ -391,11 +428,11 @@ impl Default for BlockEnv {
 impl Default for TxEnv {
     fn default() -> Self {
         Self {
-            caller: B160::zero(),
+            caller: Address::ZERO,
             gas_limit: u64::MAX,
             gas_price: U256::ZERO,
             gas_priority_fee: None,
-            transact_to: TransactTo::Call(B160::zero()), // will do nothing
+            transact_to: TransactTo::Call(Address::ZERO), // will do nothing
             value: U256::ZERO,
             data: Bytes::new(),
             chain_id: None,
@@ -403,6 +440,8 @@ impl Default for TxEnv {
             access_list: Vec::new(),
             blob_hashes: Vec::new(),
             max_fee_per_blob_gas: None,
+            #[cfg(feature = "optimism")]
+            optimism: OptimismFields::default(),
         }
     }
 }
@@ -424,10 +463,10 @@ impl Env {
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     #[inline]
-    pub fn calc_data_fee(&self) -> Option<u64> {
-        self.block
-            .get_blob_gasprice()
-            .map(|blob_gas_price| blob_gas_price * self.tx.get_total_blob_gas())
+    pub fn calc_data_fee(&self) -> Option<U256> {
+        self.block.get_blob_gasprice().map(|blob_gas_price| {
+            U256::from(blob_gas_price).saturating_mul(U256::from(self.tx.get_total_blob_gas()))
+        })
     }
 
     /// Validate the block environment.
@@ -449,6 +488,21 @@ impl Env {
     /// Return initial spend gas (Gas needed to execute transaction).
     #[inline]
     pub fn validate_tx<SPEC: Spec>(&self) -> Result<(), InvalidTransaction> {
+        #[cfg(feature = "optimism")]
+        if self.cfg.optimism {
+            // Do not allow for a system transaction to be processed if Regolith is enabled.
+            if self.tx.optimism.is_system_transaction.unwrap_or(false)
+                && SPEC::enabled(SpecId::REGOLITH)
+            {
+                return Err(InvalidTransaction::DepositSystemTxPostRegolith);
+            }
+
+            // Do not perform any extra validation for deposit transactions, they are pre-verified on L1.
+            if self.tx.optimism.source_hash.is_some() {
+                return Ok(());
+            }
+        }
+
         let gas_limit = self.tx.gas_limit;
         let effective_gas_price = self.effective_gas_price();
         let is_create = self.tx.transact_to.is_create();
@@ -550,12 +604,22 @@ impl Env {
 
     /// Validate transaction against state.
     #[inline]
-    pub fn validate_tx_against_state(&self, account: &Account) -> Result<(), InvalidTransaction> {
+    pub fn validate_tx_against_state(
+        &self,
+        account: &mut Account,
+    ) -> Result<(), InvalidTransaction> {
         // EIP-3607: Reject transactions from senders with deployed code
         // This EIP is introduced after london but there was no collision in past
         // so we can leave it enabled always
         if !self.cfg.is_eip3607_disabled() && account.info.code_hash != KECCAK_EMPTY {
             return Err(InvalidTransaction::RejectCallerWithCode);
+        }
+
+        // On Optimism, deposit transactions do not have verification on the nonce
+        // nor the balance of the account.
+        #[cfg(feature = "optimism")]
+        if self.cfg.optimism && self.tx.optimism.source_hash.is_some() {
+            return Ok(());
         }
 
         // Check that the transaction's nonce is correct
@@ -586,13 +650,85 @@ impl Env {
 
         // Check if account has enough balance for gas_limit*gas_price and value transfer.
         // Transfer will be done inside `*_inner` functions.
-        if !self.cfg.is_balance_check_disabled() && balance_check > account.info.balance {
-            return Err(InvalidTransaction::LackOfFundForMaxFee {
-                fee: self.tx.gas_limit,
-                balance: account.info.balance,
-            });
+        if balance_check > account.info.balance {
+            if self.cfg.is_balance_check_disabled() {
+                // Add transaction cost to balance to ensure execution doesn't fail.
+                account.info.balance = balance_check;
+            } else {
+                return Err(InvalidTransaction::LackOfFundForMaxFee {
+                    fee: self.tx.gas_limit,
+                    balance: account.info.balance,
+                });
+            }
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[cfg(feature = "optimism")]
+    #[test]
+    fn test_validate_sys_tx() {
+        // Set the optimism flag to true and mark
+        // the tx as a system transaction.
+        let mut env = Env::default();
+        env.cfg.optimism = true;
+        env.tx.optimism.is_system_transaction = Some(true);
+        assert_eq!(
+            env.validate_tx::<crate::RegolithSpec>(),
+            Err(InvalidTransaction::DepositSystemTxPostRegolith)
+        );
+
+        // Pre-regolith system transactions should be allowed.
+        assert!(env.validate_tx::<crate::BedrockSpec>().is_ok());
+    }
+
+    #[cfg(feature = "optimism")]
+    #[test]
+    fn test_validate_deposit_tx() {
+        // Set the optimism flag and source hash.
+        let mut env = Env::default();
+        env.cfg.optimism = true;
+        env.tx.optimism.source_hash = Some(B256::ZERO);
+        assert!(env.validate_tx::<crate::RegolithSpec>().is_ok());
+    }
+
+    #[cfg(feature = "optimism")]
+    #[test]
+    fn test_validate_tx_against_state_deposit_tx() {
+        // Set the optimism flag and source hash.
+        let mut env = Env::default();
+        env.cfg.optimism = true;
+        env.tx.optimism.source_hash = Some(B256::ZERO);
+
+        // Nonce and balance checks should be skipped for deposit transactions.
+        assert!(env
+            .validate_tx_against_state(&mut Account::default())
+            .is_ok());
+    }
+
+    #[test]
+    fn test_validate_tx_chain_id() {
+        let mut env = Env::default();
+        env.tx.chain_id = Some(1);
+        env.cfg.chain_id = 2;
+        assert_eq!(
+            env.validate_tx::<crate::LatestSpec>(),
+            Err(InvalidTransaction::InvalidChainId)
+        );
+    }
+
+    #[test]
+    fn test_validate_tx_access_list() {
+        let mut env = Env::default();
+        env.tx.access_list = vec![(Address::ZERO, vec![])];
+        assert_eq!(
+            env.validate_tx::<crate::FrontierSpec>(),
+            Err(InvalidTransaction::AccessListNotSupported)
+        );
     }
 }

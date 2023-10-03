@@ -1,4 +1,4 @@
-use crate::B160;
+use crate::Address;
 
 /// Interpreter stack limit
 pub const STACK_LIMIT: u64 = 1024;
@@ -18,8 +18,8 @@ pub const BLOCK_HASH_HISTORY: usize = 256;
 pub const MAX_INITCODE_SIZE: usize = 2 * MAX_CODE_SIZE;
 
 /// Precompile 3 is special in few places
-pub const PRECOMPILE3: B160 = B160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]);
-
+pub const PRECOMPILE3: Address =
+    Address::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]);
 // EIP-4844 constants
 /// Gas consumption of a single data blob (== blob byte size).
 pub const GAS_PER_BLOB: u64 = 1 << 17;
