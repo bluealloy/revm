@@ -9,12 +9,12 @@ use core::{
 use num::{BigUint, One, Zero};
 
 pub const BYZANTIUM: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(5),
+    crate::u64_to_address(5),
     Precompile::Standard(byzantium_run as StandardPrecompileFn),
 );
 
 pub const BERLIN: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(5),
+    crate::u64_to_address(5),
     Precompile::Standard(berlin_run as StandardPrecompileFn),
 );
 
@@ -199,8 +199,8 @@ fn berlin_gas_calc(base_length: u64, exp_length: u64, mod_length: u64, exp_highp
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
+    use revm_primitives::hex;
 
     struct Test {
         input: &'static str,

@@ -1,4 +1,5 @@
-use crate::{alloc::vec::Vec, primitives::U256};
+use crate::primitives::U256;
+use alloc::vec::Vec;
 use core::{cmp::min, fmt};
 
 /// A sequential memory. It uses Rust's `Vec` for internal

@@ -1,7 +1,7 @@
 use core::{convert::Infallible, fmt, marker::PhantomData};
 use revm_interpreter::primitives::{
     db::{Database, DatabaseRef},
-    AccountInfo, Bytecode, B160, B256, U256,
+    AccountInfo, Address, Bytecode, B256, U256,
 };
 
 /// An empty database that always returns default values when queried.
@@ -61,7 +61,7 @@ impl<E> Database for EmptyDBTyped<E> {
     type Error = E;
 
     #[inline]
-    fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
+    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         <Self as DatabaseRef>::basic(self, address)
     }
 
@@ -71,7 +71,7 @@ impl<E> Database for EmptyDBTyped<E> {
     }
 
     #[inline]
-    fn storage(&mut self, address: B160, index: U256) -> Result<U256, Self::Error> {
+    fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error> {
         <Self as DatabaseRef>::storage(self, address, index)
     }
 
@@ -85,7 +85,7 @@ impl<E> DatabaseRef for EmptyDBTyped<E> {
     type Error = E;
 
     #[inline]
-    fn basic(&self, _address: B160) -> Result<Option<AccountInfo>, Self::Error> {
+    fn basic(&self, _address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         Ok(None)
     }
 
@@ -95,7 +95,7 @@ impl<E> DatabaseRef for EmptyDBTyped<E> {
     }
 
     #[inline]
-    fn storage(&self, _address: B160, _index: U256) -> Result<U256, Self::Error> {
+    fn storage(&self, _address: Address, _index: U256) -> Result<U256, Self::Error> {
         Ok(U256::default())
     }
 
