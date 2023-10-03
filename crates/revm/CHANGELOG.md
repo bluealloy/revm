@@ -5,7 +5,7 @@ date 02.10.2023
 Migration to alloy primitive types.
 
 Full git log:
-* 4e78fbe - (origin/main, origin/HEAD) docs: document non-zero amounts in State::increment_balances (#760) (15 hours ago) <Dan Cline>
+* 4e78fbe - docs: document non-zero amounts in State::increment_balances (#760) (15 hours ago) <Dan Cline>
 * af4146a - feat: Alloy primitives (#724) (15 hours ago) <evalir>
 
 # v3.4.0
