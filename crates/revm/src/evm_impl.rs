@@ -285,7 +285,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
 
         let transact_gas_limit = tx_gas_limit - initial_gas_spend;
 
-        let mut shared_memory = SharedMemory::new(transact_gas_limit);
+        let mut shared_memory = SharedMemory::new();
 
         // call inner handling of call/create
         let (call_result, ret_gas, output) = match self.data.env.tx.transact_to {

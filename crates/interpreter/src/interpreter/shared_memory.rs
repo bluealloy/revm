@@ -18,8 +18,6 @@ pub struct SharedMemory {
     checkpoints: Vec<usize>,
     /// How much memory has been used in the current context
     current_len: usize,
-    /// Amount of memory left for assignment
-    pub limit: usize,
 }
 
 impl fmt::Debug for SharedMemory {
@@ -27,31 +25,28 @@ impl fmt::Debug for SharedMemory {
         f.debug_struct("SharedMemory")
             .field(
                 "current_slice",
-                &crate::primitives::hex::encode(self.current_slice()),
+                &crate::primitives::hex::encode(self.context_memory()),
             )
             .finish()
     }
 }
 
-impl SharedMemory {
-    /// Calculates memory allocation upper bound using
-    /// https://2π.com/22/eth-max-mem
-    #[inline]
-    pub fn calculate_upper_bound(gas_limit: u64) -> u64 {
-        4096 * sqrt(2u64.saturating_mul(gas_limit))
+impl Default for SharedMemory {
+    fn default() -> Self {
+        Self::new()
     }
+}
 
+impl SharedMemory {
     /// Allocate memory to be shared between calls.
     /// Memory size is estimated using https://2π.com/22/eth-max-mem
     /// which depends on transaction [gas_limit].
     /// Maximum allocation size is 2^32 - 1 bytes;
-    pub fn new(gas_limit: u64) -> Self {
-        let limit = Self::calculate_upper_bound(gas_limit) as usize;
+    pub fn new() -> Self {
         Self {
-            data: Vec::with_capacity(1024),
+            data: Vec::with_capacity(4 * 1024), // from evmone
             checkpoints: Vec::with_capacity(32),
             current_len: 0,
-            limit,
         }
     }
 
@@ -96,7 +91,8 @@ impl SharedMemory {
         if let Some(available_memory) = self.data.get_mut(range) {
             available_memory.fill(0);
         } else {
-            self.data.resize(last_checkpoint + new_size, 0);
+            self.data
+                .resize(last_checkpoint + usize::max(new_size, 4 * 1024), 0);
         }
 
         self.current_len = new_size;
@@ -109,7 +105,12 @@ impl SharedMemory {
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn slice(&self, offset: usize, size: usize) -> &[u8] {
         let end = offset + size;
-        match self.current_slice().get(offset..end) {
+        let last_checkpoint = self.last_checkpoint();
+
+        match self
+            .data
+            .get(last_checkpoint + offset..last_checkpoint + offset + size)
+        {
             Some(slice) => slice,
             None => debug_unreachable!("slice OOB: {offset}..{end}; len: {}", self.len()),
         }
@@ -121,9 +122,14 @@ impl SharedMemory {
     #[inline(always)]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn slice_mut(&mut self, offset: usize, size: usize) -> &mut [u8] {
+        let len = self.len();
         let end = offset + size;
-        let len = self.current_len;
-        match self.current_slice_mut().get_mut(offset..offset + size) {
+        let last_checkpoint = self.last_checkpoint();
+
+        match self
+            .data
+            .get_mut(last_checkpoint + offset..last_checkpoint + offset + size)
+        {
             Some(slice) => slice,
             None => debug_unreachable!("slice OOB: {offset}..{end}; len: {}", len),
         }
@@ -135,7 +141,8 @@ impl SharedMemory {
     #[inline(always)]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn set_byte(&mut self, index: usize, byte: u8) {
-        match self.current_slice_mut().get_mut(index) {
+        let last_checkpoint = self.last_checkpoint();
+        match self.data.get_mut(last_checkpoint + index) {
             Some(b) => *b = byte,
             None => debug_unreachable!("set_byte OOB: {index}; len: {}", self.len()),
         }
@@ -192,36 +199,25 @@ impl SharedMemory {
     #[inline(always)]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn copy(&mut self, dst: usize, src: usize, len: usize) {
-        self.current_slice_mut().copy_within(src..src + len, dst);
+        self.context_memory_mut().copy_within(src..src + len, dst);
     }
 
     /// Get a reference to the memory of the current context
     #[inline(always)]
-    fn current_slice(&self) -> &[u8] {
-        // Safety: if it is a valid pointer to a slice of `self.data`
-        let data = self
-            .data
-            .get(self.last_checkpoint()..self.last_checkpoint() + self.current_len)
-            .unwrap();
-        data
+    fn context_memory(&self) -> &[u8] {
+        let last_checkpoint = self.last_checkpoint();
+        let current_len = self.current_len;
+        // Safety: it is a valid pointer to a slice of `self.data`
+        &self.data[last_checkpoint..last_checkpoint + current_len]
     }
 
     /// Get a mutable reference to the memory of the current context
     #[inline(always)]
-    fn current_slice_mut(&mut self) -> &mut [u8] {
+    fn context_memory_mut(&mut self) -> &mut [u8] {
         let last_checkpoint = self.last_checkpoint();
         let current_len = self.current_len;
         // Safety: it is a valid pointer to a slice of `self.data`
-        let data = self
-            .data
-            .get_mut(last_checkpoint..last_checkpoint + current_len)
-            .unwrap();
-        data
-    }
-
-    #[inline(always)]
-    pub fn new_size_over_limit(&self, new_size: usize) -> bool {
-        self.last_checkpoint() + new_size > self.limit
+        &mut self.data[last_checkpoint..last_checkpoint + current_len]
     }
 
     /// Get the last memory checkpoint
@@ -236,20 +232,6 @@ impl SharedMemory {
 pub(crate) fn next_multiple_of_32(x: usize) -> Option<usize> {
     let r = x.bitand(31).not().wrapping_add(1).bitand(31);
     x.checked_add(r)
-}
-
-/// Basic sqrt function using Babylonian method
-fn sqrt(n: u64) -> u64 {
-    if n < 2 {
-        return n;
-    }
-    let mut x = n / 2;
-    let mut y = (x + n / x) / 2;
-    while y < x {
-        x = y;
-        y = (x + n / x) / 2;
-    }
-    x
 }
 
 #[cfg(test)]

@@ -16,9 +16,6 @@ type Evm = revm::EVM<BenchmarkDB>;
 fn analysis(c: &mut Criterion) {
     let mut evm = revm::new();
 
-    // Empirical good value for gas_limit for low shared_memory usage
-    evm.env.tx.gas_limit = 22_000;
-
     evm.env.tx.caller = address!("1000000000000000000000000000000000000000");
     evm.env.tx.transact_to = TransactTo::Call(address!("0000000000000000000000000000000000000000"));
     // evm.env.tx.data = bytes!("30627b7c");
@@ -90,8 +87,7 @@ fn bench_transact(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm) {
 }
 
 fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm) {
-    evm.env.tx.gas_limit = 22_000;
-    let mut shared_memory = SharedMemory::new(evm.env.tx.gas_limit);
+    let mut shared_memory = SharedMemory::new();
 
     g.bench_function("eval", |b| {
         let contract = Contract {
