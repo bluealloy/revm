@@ -1,11 +1,5 @@
 use crate::Address;
 
-/// EVM interpreter stack limit.
-pub const STACK_LIMIT: usize = 1024;
-
-/// EVM call stack limit.
-pub const CALL_STACK_LIMIT: u64 = 1024;
-
 /// EIP-170: Contract code size limit
 /// By default limit is 0x6000 (~25kb)
 pub const MAX_CODE_SIZE: usize = 0x6000;

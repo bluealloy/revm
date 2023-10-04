@@ -3,7 +3,6 @@ use crate::{
     TARGET_BLOB_GAS_PER_BLOCK, U256,
 };
 pub use alloy_primitives::keccak256;
-use core::ops::{BitAnd, Not};
 
 /// The Keccak-256 hash of the empty string `""`.
 pub const KECCAK_EMPTY: B256 =
@@ -71,13 +70,6 @@ pub fn fake_exponential(factor: u64, numerator: u64, denominator: u64) -> u128 {
         i += 1;
     }
     output / denominator
-}
-
-/// Rounds up `x` to the closest multiple of 32. If `x % 32 == 0` then `x` is returned.
-#[inline]
-pub fn next_multiple_of_32(x: usize) -> Option<usize> {
-    let r = x.bitand(31).not().wrapping_add(1).bitand(31);
-    x.checked_add(r)
 }
 
 #[cfg(test)]
@@ -186,24 +178,6 @@ mod tests {
         ] {
             let actual = fake_exponential(factor, numerator, denominator);
             assert_eq!(actual, expected, "test: {t:?}");
-        }
-    }
-
-    #[test]
-    fn test_next_multiple_of_32() {
-        // next_multiple_of_32 returns x when it is a multiple of 32
-        for i in 0..32 {
-            let x = i * 32;
-            assert_eq!(Some(x), next_multiple_of_32(x));
-        }
-
-        // next_multiple_of_32 rounds up to the nearest multiple of 32 when `x % 32 != 0`
-        for x in 0..1024 {
-            if x % 32 == 0 {
-                continue;
-            }
-            let next_multiple = x + 32 - (x % 32);
-            assert_eq!(Some(next_multiple), next_multiple_of_32(x));
         }
     }
 }

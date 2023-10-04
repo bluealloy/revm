@@ -8,7 +8,7 @@ use crate::journaled_state::{is_precompile, JournalCheckpoint};
 use crate::primitives::{
     create2_address, create_address, keccak256, Address, AnalysisKind, Bytecode, Bytes, EVMError,
     EVMResult, Env, ExecutionResult, InvalidTransaction, Log, Output, ResultAndState, Spec,
-    SpecId::*, TransactTo, B256, CALL_STACK_LIMIT, U256,
+    SpecId::*, TransactTo, B256, U256,
 };
 use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector};
 use alloc::boxed::Box;
@@ -20,6 +20,9 @@ use revm_precompile::{Precompile, Precompiles};
 
 #[cfg(feature = "optimism")]
 use crate::optimism;
+
+/// EVM call stack limit.
+pub const CALL_STACK_LIMIT: u64 = 1024;
 
 pub struct EVMData<'a, DB: Database> {
     pub env: &'a mut Env,
