@@ -8,7 +8,7 @@ use crate::{alloc::boxed::Box, opcode::eval, Gas, Host, InstructionResult};
 
 pub use analysis::BytecodeLocked;
 pub use contract::Contract;
-pub use memory::Memory;
+pub use memory::{next_multiple_of_32, Memory};
 pub use stack::Stack;
 
 /// EIP-170: Contract code size limit
