@@ -1,7 +1,10 @@
 use crate::{
-    primitives::U256, Error, Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn,
+    primitives::U256,
+    utilities::{get_right_padded, get_right_padded_vec, left_padding},
+    Error, Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn,
 };
 use alloc::vec::Vec;
+use aurora_engine_modexp::modexp;
 use core::{
     cmp::{max, min, Ordering},
     mem::size_of,
@@ -48,6 +51,7 @@ fn calculate_iteration_count(exp_length: u64, exp_highp: &BigUint) -> u64 {
 
 macro_rules! read_u64_with_overflow {
     ($input:expr, $from:expr, $to:expr, $overflow_limit:expr) => {{
+        // 28 bytes, 3x8 byte values.
         const SPLIT: usize = 32 - size_of::<u64>();
         let len = $input.len();
         let from_zero = min($from, len);
@@ -67,83 +71,80 @@ fn run_inner<F>(input: &[u8], gas_limit: u64, min_gas: u64, calc_gas: F) -> Prec
 where
     F: FnOnce(u64, u64, u64, &BigUint) -> u64,
 {
-    let len = input.len();
-    let (base_len, base_overflow) = read_u64_with_overflow!(input, 0, 32, u32::MAX as usize);
-    let (exp_len, exp_overflow) = read_u64_with_overflow!(input, 32, 64, u32::MAX as usize);
-    let (mod_len, mod_overflow) = read_u64_with_overflow!(input, 64, 96, u32::MAX as usize);
+    const HEADER_LENGTH: usize = 96;
+    // extract the header
+    // <length_of_BASE> <length_of_EXPONENT> <length_of_MODULUS> <BASE> <EXPONENT> <MODULUS>
+    // Where every length is a 32-byte left-padded integer representing the number of bytes to be taken up by the next value
+    let base_len = U256::from_be_bytes(get_right_padded::<32>(input, 0));
+    let exp_len = U256::from_be_bytes(get_right_padded::<32>(input, 32));
+    let mod_len = U256::from_be_bytes(get_right_padded::<32>(input, 64));
 
-    if base_overflow || mod_overflow {
+    // cast it to u32, it does not make sense to handle larger values
+    let Ok(base_len) = usize::try_from(base_len) else {
         return Err(Error::ModexpBaseOverflow);
-    }
-
-    if mod_overflow {
+    };
+    let Ok(mod_len) = usize::try_from(mod_len) else {
         return Err(Error::ModexpModOverflow);
-    }
+    };
 
-    let (r, gas_cost) = if base_len == 0 && mod_len == 0 {
+    // Handle a special case when both the base and mod length is zero
+    if base_len == 0 && mod_len == 0 {
         if min_gas > gas_limit {
             return Err(Error::OutOfGas);
         }
-        (BigUint::zero(), min_gas)
+        return Ok((min_gas, Vec::new()));
+    }
+
+    // throw away the header data as we already extracted lengths.
+    let new_input = if input.len() > 96 {
+        &input[96..]
     } else {
-        // set limit for exp overflow
-        if exp_overflow {
-            return Err(Error::ModexpExpOverflow);
-        }
-        let base_start = 96;
-        let base_end = base_start + base_len;
-        let exp_end = base_end + exp_len;
-        let exp_highp_end = base_end + min(32, exp_len);
-        let mod_end = exp_end + mod_len;
-
-        let exp_highp = {
-            let mut out = [0; 32];
-            let from = min(base_end, len);
-            let to = min(exp_highp_end, len);
-            let target_from = 32 - (exp_highp_end - base_end); // 32 - exp length
-            let target_to = target_from + (to - from); // beginning + size to copy
-            out[target_from..target_to].copy_from_slice(&input[from..to]);
-            BigUint::from_bytes_be(&out)
-        };
-
-        let gas_cost = calc_gas(base_len as u64, exp_len as u64, mod_len as u64, &exp_highp);
-        if gas_cost > gas_limit {
-            return Err(Error::OutOfGas);
-        }
-
-        let read_big = |from: usize, to: usize| {
-            let mut out = vec![0; to - from];
-            let from = min(from, len);
-            let to = min(to, len);
-            out[..to - from].copy_from_slice(&input[from..to]);
-            BigUint::from_bytes_be(&out)
-        };
-
-        let base = read_big(base_start, base_end);
-        let exponent = read_big(base_end, exp_end);
-        let modulus = read_big(exp_end, mod_end);
-
-        if modulus.is_zero() || modulus.is_one() {
-            (BigUint::zero(), gas_cost)
-        } else {
-            (base.modpow(&exponent, &modulus), gas_cost)
-        }
+        // or set input to zero if there is no data
+        &[]
     };
 
-    // write output to given memory, left padded and same length as the modulus.
-    let bytes = r.to_bytes_be();
-    // always true except in the case of zero-length modulus, which leads to
-    // output of length and value 1.
-    match bytes.len().cmp(&mod_len) {
-        Ordering::Equal => Ok((gas_cost, bytes)),
-        Ordering::Less => {
-            let mut ret = Vec::with_capacity(mod_len);
-            ret.extend(core::iter::repeat(0).take(mod_len - bytes.len()));
-            ret.extend_from_slice(&bytes[..]);
-            Ok((gas_cost, ret))
-        }
-        Ordering::Greater => Ok((gas_cost, Vec::new())),
+    // old
+
+    let len = input.len();
+    let (exp_len, exp_overflow) = read_u64_with_overflow!(input, 32, 64, u32::MAX as usize);
+
+    // set limit for exp overflow
+    if exp_overflow {
+        return Err(Error::ModexpExpOverflow);
     }
+    let base_start = 96;
+    let base_end = base_start + base_len;
+    let exp_end = base_end + exp_len;
+    let exp_highp_end = base_end + min(32, exp_len);
+    let mod_end = exp_end + mod_len;
+
+    let exp_highp: BigUint = {
+        let mut out = [0; 32];
+        let from = min(base_end, len);
+        let to = min(exp_highp_end, len);
+        let target_from = 32 - (exp_highp_end - base_end); // 32 - exp length
+        let target_to = target_from + (to - from); // beginning + size to copy
+        out[target_from..target_to].copy_from_slice(&input[from..to]);
+        BigUint::from_bytes_be(&out)
+    };
+
+    // calculate gas spent.
+    let gas_cost = calc_gas(base_len as u64, exp_len as u64, mod_len as u64, &exp_highp);
+    // check if we have enough gas.
+    if gas_cost > gas_limit {
+        return Err(Error::OutOfGas);
+    }
+
+    // Padding is needed if the input does not contain all 3 values.
+    let base = get_right_padded_vec(input, base_start, base_len);
+    let exponent = get_right_padded_vec(input, base_end, exp_len);
+    let modulus = get_right_padded_vec(input, exp_end, mod_len);
+
+    // Run the modexp precompile.
+    let output = modexp(&base, &exponent, &modulus);
+
+    // left pad the result to mod length. bytes will always by less then modulus length.
+    Ok((gas_cost, left_padding(output, mod_len)))
 }
 
 fn byzantium_gas_calc(base_len: u64, exp_len: u64, mod_len: u64, exp_highp: &BigUint) -> u64 {
