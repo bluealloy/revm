@@ -189,8 +189,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
 
     fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
         let env = &self.data.env;
-        #[cfg(feature = "memory_limit")]
-        let memory_limit = env.cfg.memory_limit;
         let tx_caller = env.tx.caller;
         let tx_value = env.tx.value;
         let tx_data = env.tx.data.clone();
@@ -287,11 +285,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
 
         let transact_gas_limit = tx_gas_limit - initial_gas_spend;
 
-        #[cfg(feature = "memory_limit")]
-        let mut shared_memory =
-            SharedMemory::new_with_memory_limit(transact_gas_limit, memory_limit);
-
-        #[cfg(not(feature = "memory_limit"))]
         let mut shared_memory = SharedMemory::new(transact_gas_limit);
 
         // call inner handling of call/create
