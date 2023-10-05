@@ -4,6 +4,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(unused_crate_dependencies)]
+#![feature(error_in_core)]
 
 extern crate alloc;
 

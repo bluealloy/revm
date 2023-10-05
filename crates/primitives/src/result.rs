@@ -1,5 +1,6 @@
 use crate::{Address, Bytes, Log, State, U256};
 use alloc::vec::Vec;
+use core::error;
 use core::fmt;
 
 /// Result of EVM execution.
@@ -217,7 +218,7 @@ pub enum InvalidTransaction {
     DepositSystemTxPostRegolith,
 }
 
-impl std::error::Error for InvalidTransaction {}
+impl error::Error for InvalidTransaction {}
 
 impl fmt::Display for InvalidTransaction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -295,7 +296,7 @@ pub enum InvalidHeader {
     ExcessBlobGasNotSet,
 }
 
-impl std::error::Error for InvalidHeader {}
+impl error::Error for InvalidHeader {}
 
 impl fmt::Display for InvalidHeader {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
