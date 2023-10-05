@@ -303,7 +303,7 @@ dependencies = [
 [[package]]
 name = "aurora-engine-modexp"
 version = "1.0.0"
-source = "git+https://github.com/aurora-is-near/aurora-engine.git#88cc4a2cfd661cb5e91c9bdcf2d7b31205f442a5"
+source = "git+https://github.com/aurora-is-near/aurora-engine.git?rev=0cfda46#0cfda4686dbdb7a57b2dc18dddc5106ec8e24a38"
 dependencies = [
  "hex",
  "num",
@@ -2393,7 +2393,6 @@ dependencies = [
  "aurora-engine-modexp",
  "c-kzg",
  "k256",
- "num",
  "once_cell",
  "revm-primitives",
  "ripemd",

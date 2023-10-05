@@ -11,12 +11,11 @@ version = "2.2.0"
 [dependencies]
 revm-primitives = { path = "../primitives", version = "1.3.0", default-features = false }
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
-num = { version = "0.4.0", default-features = false, features = ["alloc"] }
 once_cell = { version = "1.17", default-features = false, features = ["alloc"] }
 ripemd = { version = "0.1", default-features = false }
 sha2 = { version = "0.10", default-features = false }
 # modexp precompile
-aurora-engine-modexp = { git = "https://github.com/aurora-is-near/aurora-engine.git", ref = "0cfda46", default-features = false }
+aurora-engine-modexp = { git = "https://github.com/aurora-is-near/aurora-engine.git", rev = "0cfda46", default-features = false }
 
 # Optional KZG point evaluation precompile
 c-kzg = { version = "0.1.1", default-features = false, optional = true }
@@ -34,7 +33,6 @@ default = ["std", "c-kzg", "secp256k1"]
 std = [
     "revm-primitives/std",
     "k256/std",
-    "num/std",
     "once_cell/std",
     "ripemd/std",
     "sha2/std",
