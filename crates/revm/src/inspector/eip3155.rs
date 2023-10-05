@@ -1,5 +1,3 @@
-//! Inspector that support tracing of EIP-3155 <https://eips.ethereum.org/EIPS/eip-3155>
-
 use crate::inspectors::GasInspector;
 use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult};
 use crate::primitives::{db::Database, hex, Address, Bytes};
@@ -9,6 +7,7 @@ use revm_interpreter::{opcode, Interpreter, Memory, Stack};
 use serde_json::json;
 use std::io::Write;
 
+/// [EIP-3155](https://eips.ethereum.org/EIPS/eip-3155) tracer [Inspector].
 pub struct TracerEip3155 {
     output: Box<dyn Write>,
     gas_inspector: GasInspector,

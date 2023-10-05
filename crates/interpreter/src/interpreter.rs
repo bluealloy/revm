@@ -1,6 +1,6 @@
 pub mod analysis;
 mod contract;
-pub mod memory;
+mod memory;
 mod stack;
 
 use crate::primitives::{Bytes, Spec};
@@ -8,10 +8,8 @@ use crate::{alloc::boxed::Box, opcode::eval, Gas, Host, InstructionResult};
 
 pub use analysis::BytecodeLocked;
 pub use contract::Contract;
-pub use memory::Memory;
-pub use stack::{Stack, STACK_LIMIT};
-
-pub const CALL_STACK_LIMIT: u64 = 1024;
+pub use memory::{next_multiple_of_32, Memory};
+pub use stack::Stack;
 
 /// EIP-170: Contract code size limit
 ///

@@ -1,4 +1,8 @@
-#![no_std]
+//! # revm-precompile
+//!
+//! Implementations of EVM precompiled contracts.
+
+#![cfg_attr(not(feature = "std"), no_std)]
 #![warn(unused_crate_dependencies)]
 
 #[macro_use]
@@ -17,12 +21,12 @@ pub mod utilities;
 use alloc::{boxed::Box, vec::Vec};
 use core::fmt;
 use once_cell::race::OnceBox;
-pub use primitives::{
+#[doc(hidden)]
+pub use revm_primitives as primitives;
+pub use revm_primitives::{
     precompile::{PrecompileError as Error, *},
     Bytes, HashMap,
 };
-#[doc(inline)]
-pub use revm_primitives as primitives;
 
 pub type Address = [u8; 20];
 pub type B256 = [u8; 32];

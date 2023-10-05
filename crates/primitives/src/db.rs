@@ -34,8 +34,10 @@ impl<F: DatabaseRef> From<F> for WrapDatabaseRef<F> {
     }
 }
 
+/// EVM database commit interface.
 #[auto_impl(&mut, Box)]
 pub trait DatabaseCommit {
+    /// Commit changes to the database.
     fn commit(&mut self, changes: Map<Address, Account>);
 }
 

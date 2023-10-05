@@ -1,9 +1,10 @@
-//! Custom print inspector, it has step level information of execution.
-//! It is a great tool if some debugging is needed.
-//!
 use crate::interpreter::{opcode, CallInputs, CreateInputs, Gas, InstructionResult, Interpreter};
 use crate::primitives::{Address, Bytes, U256};
 use crate::{inspectors::GasInspector, Database, EVMData, Inspector};
+
+/// Custom print [Inspector], it has step level information of execution.
+///
+/// It is a great tool if some debugging is needed.
 #[derive(Clone, Default)]
 pub struct CustomPrintTracer {
     gas_inspector: GasInspector,

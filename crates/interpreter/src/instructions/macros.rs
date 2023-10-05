@@ -53,7 +53,7 @@ macro_rules! gas_or_fail {
 macro_rules! memory_resize {
     ($interp:expr, $offset:expr, $len:expr) => {
         if let Some(new_size) =
-            crate::interpreter::memory::next_multiple_of_32($offset.saturating_add($len))
+            crate::interpreter::next_multiple_of_32($offset.saturating_add($len))
         {
             #[cfg(feature = "memory_limit")]
             if new_size > ($interp.memory_limit as usize) {
