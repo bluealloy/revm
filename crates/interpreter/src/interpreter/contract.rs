@@ -2,6 +2,7 @@ use super::analysis::{to_analysed, BytecodeLocked};
 use crate::primitives::{Address, Bytecode, Bytes, Env, TransactTo, B256, U256};
 use crate::CallContext;
 
+/// EVM contract information.
 #[derive(Clone, Debug, Default)]
 pub struct Contract {
     /// Contracts data

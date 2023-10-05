@@ -9,6 +9,9 @@ repository = "https://github.com/bluealloy/revm"
 version = "1.3.0"
 readme = "../../README.md"
 
+# Don't need to run build script outside of this repo
+exclude = ["build.rs", "src/kzg/*.txt"]
+
 [dependencies]
 alloy-primitives = { version = "0.4", default-features = false, features = [
     "rlp",

@@ -1,3 +1,5 @@
+//! [Database] implementations.
+
 pub mod emptydb;
 #[cfg(feature = "ethersdb")]
 pub mod ethersdb;

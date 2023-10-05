@@ -186,15 +186,14 @@ impl Memory {
 
 /// Rounds up `x` to the closest multiple of 32. If `x % 32 == 0` then `x` is returned.
 #[inline]
-pub(crate) fn next_multiple_of_32(x: usize) -> Option<usize> {
+pub fn next_multiple_of_32(x: usize) -> Option<usize> {
     let r = x.bitand(31).not().wrapping_add(1).bitand(31);
     x.checked_add(r)
 }
 
 #[cfg(test)]
 mod tests {
-    use super::next_multiple_of_32;
-    use crate::Memory;
+    use super::*;
 
     #[test]
     fn test_copy() {

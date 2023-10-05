@@ -4,6 +4,7 @@ use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult};
 use crate::primitives::{db::Database, Address, Bytes};
 use crate::{evm_impl::EVMData, Inspector};
 
+/// Helper [Inspector] that keeps track of gas.
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug, Default)]
 pub struct GasInspector {
@@ -32,18 +33,6 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         InstructionResult::Continue
     }
 
-    // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
-    // all other information can be obtained from interp.
-
-    #[cfg(not(feature = "no_gas_measuring"))]
-    fn step(
-        &mut self,
-        _interp: &mut crate::interpreter::Interpreter,
-        _data: &mut EVMData<'_, DB>,
-    ) -> InstructionResult {
-        InstructionResult::Continue
-    }
-
     #[cfg(not(feature = "no_gas_measuring"))]
     fn step_end(
         &mut self,
@@ -51,13 +40,8 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         _data: &mut EVMData<'_, DB>,
         _eval: InstructionResult,
     ) -> InstructionResult {
-        let last_gas = self.gas_remaining;
-        self.gas_remaining = interp.gas.remaining();
-        if last_gas > self.gas_remaining {
-            self.last_gas_cost = last_gas - self.gas_remaining;
-        } else {
-            self.last_gas_cost = 0;
-        }
+        let last_gas = core::mem::replace(&mut self.gas_remaining, interp.gas.remaining());
+        self.last_gas_cost = last_gas.saturating_sub(self.last_gas_cost);
         InstructionResult::Continue
     }
 
