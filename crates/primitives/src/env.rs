@@ -67,7 +67,7 @@ pub struct BlobExcessGasAndPrice {
 }
 
 impl BlobExcessGasAndPrice {
-    /// Takes excess blob gas and calculated blob fee with [`calc_blob_fee`]
+    /// Creates a new instance by calculating the blob gas price with [`calc_blob_gasprice`].
     pub fn new(excess_blob_gas: u64) -> Self {
         let blob_gasprice = calc_blob_gasprice(excess_blob_gas);
         Self {

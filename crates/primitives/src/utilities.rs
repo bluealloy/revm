@@ -22,15 +22,17 @@ pub fn create2_address(caller: Address, code_hash: B256, salt: U256) -> Address 
 
 /// Calculates the `excess_blob_gas` from the parent header's `blob_gas_used` and `excess_blob_gas`.
 ///
-/// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers).
+/// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers
+/// (`calc_excess_blob_gas`).
 #[inline]
 pub fn calc_excess_blob_gas(parent_excess_blob_gas: u64, parent_blob_gas_used: u64) -> u64 {
     (parent_excess_blob_gas + parent_blob_gas_used).saturating_sub(TARGET_BLOB_GAS_PER_BLOCK)
 }
 
-/// Calculates the blob gasprice from the header's excess blob gas field.
+/// Calculates the blob gas price from the header's excess blob gas field.
 ///
-/// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers).
+/// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers)
+/// (`get_blob_gasprice`).
 #[inline]
 pub fn calc_blob_gasprice(excess_blob_gas: u64) -> u128 {
     fake_exponential(
@@ -44,11 +46,12 @@ pub fn calc_blob_gasprice(excess_blob_gas: u64) -> u128 {
 ///
 /// This is used to calculate the blob price.
 ///
-/// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers).
+/// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers)
+/// (`fake_exponential`).
 ///
-/// # Panic
+/// # Panics
 ///
-/// Panics if `denominator` is zero.
+/// This function panics if `denominator` is zero.
 #[inline]
 pub fn fake_exponential(factor: u64, numerator: u64, denominator: u64) -> u128 {
     assert_ne!(denominator, 0, "attempt to divide by zero");

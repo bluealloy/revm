@@ -1,8 +1,8 @@
 use crate::handler::Handler;
 use crate::interpreter::{
-    analysis::to_analysed, gas, instruction_result::SuccessOrHalt, return_ok, CallContext,
-    CallInputs, CallScheme, Contract, CreateInputs, CreateScheme, Gas, Host, InstructionResult,
-    Interpreter, SelfDestructResult, Transfer, CALL_STACK_LIMIT,
+    analysis::to_analysed, gas, return_ok, CallContext, CallInputs, CallScheme, Contract,
+    CreateInputs, CreateScheme, Gas, Host, InstructionResult, Interpreter, SelfDestructResult,
+    SuccessOrHalt, Transfer,
 };
 use crate::journaled_state::{is_precompile, JournalCheckpoint};
 use crate::primitives::{
@@ -20,6 +20,9 @@ use revm_precompile::{Precompile, Precompiles};
 
 #[cfg(feature = "optimism")]
 use crate::optimism;
+
+/// EVM call stack limit.
+pub const CALL_STACK_LIMIT: u64 = 1024;
 
 pub struct EVMData<'a, DB: Database> {
     pub env: &'a mut Env,

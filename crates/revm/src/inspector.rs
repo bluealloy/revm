@@ -1,41 +1,40 @@
 use crate::evm_impl::EVMData;
 use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult, Interpreter};
 use crate::primitives::{db::Database, Address, Bytes, B256, U256};
-
 use auto_impl::auto_impl;
 
 #[cfg(feature = "std")]
 mod customprinter;
+#[cfg(all(feature = "std", feature = "serde"))]
+mod eip3155;
 mod gas;
 mod noop;
-#[cfg(all(feature = "std", feature = "serde"))]
-mod tracer_eip3155;
 
-/// All Inspectors implementations that revm has.
+/// [Inspector] implementations.
 pub mod inspectors {
     #[cfg(feature = "std")]
-    #[doc(inline)]
     pub use super::customprinter::CustomPrintTracer;
-    #[doc(inline)]
-    pub use super::gas::GasInspector;
-    #[doc(inline)]
-    pub use super::noop::NoOpInspector;
     #[cfg(all(feature = "std", feature = "serde"))]
-    #[doc(inline)]
-    pub use super::tracer_eip3155::TracerEip3155;
+    pub use super::eip3155::TracerEip3155;
+    pub use super::gas::GasInspector;
+    pub use super::noop::NoOpInspector;
 }
 
+/// EVM [Interpreter] callbacks.
 #[auto_impl(&mut, Box)]
 pub trait Inspector<DB: Database> {
-    /// Called Before the interpreter is initialized.
+    /// Called before the interpreter is initialized.
     ///
     /// If anything other than [InstructionResult::Continue] is returned then execution of the interpreter is
     /// skipped.
+    #[inline]
     fn initialize_interp(
         &mut self,
-        _interp: &mut Interpreter,
-        _data: &mut EVMData<'_, DB>,
+        interp: &mut Interpreter,
+        data: &mut EVMData<'_, DB>,
     ) -> InstructionResult {
+        let _ = interp;
+        let _ = data;
         InstructionResult::Continue
     }
 
@@ -47,44 +46,55 @@ pub trait Inspector<DB: Database> {
     /// # Example
     ///
     /// To get the current opcode, use `interp.current_opcode()`.
-    fn step(
-        &mut self,
-        _interp: &mut Interpreter,
-        _data: &mut EVMData<'_, DB>,
-    ) -> InstructionResult {
+    #[inline]
+    fn step(&mut self, interp: &mut Interpreter, data: &mut EVMData<'_, DB>) -> InstructionResult {
+        let _ = interp;
+        let _ = data;
         InstructionResult::Continue
     }
 
     /// Called when a log is emitted.
+    #[inline]
     fn log(
         &mut self,
-        _evm_data: &mut EVMData<'_, DB>,
-        _address: &Address,
-        _topics: &[B256],
-        _data: &Bytes,
+        evm_data: &mut EVMData<'_, DB>,
+        address: &Address,
+        topics: &[B256],
+        data: &Bytes,
     ) {
+        let _ = evm_data;
+        let _ = address;
+        let _ = topics;
+        let _ = data;
     }
 
     /// Called after `step` when the instruction has been executed.
     ///
     /// InstructionResulting anything other than [InstructionResult::Continue] alters the execution of the interpreter.
+    #[inline]
     fn step_end(
         &mut self,
-        _interp: &mut Interpreter,
-        _data: &mut EVMData<'_, DB>,
-        _eval: InstructionResult,
+        interp: &mut Interpreter,
+        data: &mut EVMData<'_, DB>,
+        eval: InstructionResult,
     ) -> InstructionResult {
+        let _ = interp;
+        let _ = data;
+        let _ = eval;
         InstructionResult::Continue
     }
 
     /// Called whenever a call to a contract is about to start.
     ///
     /// InstructionResulting anything other than [InstructionResult::Continue] overrides the result of the call.
+    #[inline]
     fn call(
         &mut self,
-        _data: &mut EVMData<'_, DB>,
-        _inputs: &mut CallInputs,
+        data: &mut EVMData<'_, DB>,
+        inputs: &mut CallInputs,
     ) -> (InstructionResult, Gas, Bytes) {
+        let _ = data;
+        let _ = inputs;
         (InstructionResult::Continue, Gas::new(0), Bytes::new())
     }
 
@@ -92,25 +102,31 @@ pub trait Inspector<DB: Database> {
     ///
     /// InstructionResulting anything other than the values passed to this function (`(ret, remaining_gas,
     /// out)`) will alter the result of the call.
+    #[inline]
     fn call_end(
         &mut self,
-        _data: &mut EVMData<'_, DB>,
-        _inputs: &CallInputs,
+        data: &mut EVMData<'_, DB>,
+        inputs: &CallInputs,
         remaining_gas: Gas,
         ret: InstructionResult,
         out: Bytes,
     ) -> (InstructionResult, Gas, Bytes) {
+        let _ = data;
+        let _ = inputs;
         (ret, remaining_gas, out)
     }
 
     /// Called when a contract is about to be created.
     ///
     /// InstructionResulting anything other than [InstructionResult::Continue] overrides the result of the creation.
+    #[inline]
     fn create(
         &mut self,
-        _data: &mut EVMData<'_, DB>,
-        _inputs: &mut CreateInputs,
+        data: &mut EVMData<'_, DB>,
+        inputs: &mut CreateInputs,
     ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
+        let _ = data;
+        let _ = inputs;
         (
             InstructionResult::Continue,
             None,
@@ -123,18 +139,26 @@ pub trait Inspector<DB: Database> {
     ///
     /// InstructionResulting anything other than the values passed to this function (`(ret, remaining_gas,
     /// address, out)`) will alter the result of the create.
+    #[inline]
     fn create_end(
         &mut self,
-        _data: &mut EVMData<'_, DB>,
-        _inputs: &CreateInputs,
+        data: &mut EVMData<'_, DB>,
+        inputs: &CreateInputs,
         ret: InstructionResult,
         address: Option<Address>,
         remaining_gas: Gas,
         out: Bytes,
     ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
+        let _ = data;
+        let _ = inputs;
         (ret, address, remaining_gas, out)
     }
 
     /// Called when a contract has been self-destructed with funds transferred to target.
-    fn selfdestruct(&mut self, _contract: Address, _target: Address, _value: U256) {}
+    #[inline]
+    fn selfdestruct(&mut self, contract: Address, target: Address, value: U256) {
+        let _ = contract;
+        let _ = target;
+        let _ = value;
+    }
 }

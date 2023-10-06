@@ -6,6 +6,7 @@ use crate::{
 };
 use alloc::vec::Vec;
 
+/// A dummy [Host] implementation.
 pub struct DummyHost {
     pub env: Env,
     pub storage: HashMap<U256, U256>,

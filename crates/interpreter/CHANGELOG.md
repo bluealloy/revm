@@ -1,3 +1,13 @@
+
+# v1.3.0
+date 02.10.2023
+
+Migration to alloy primitive types.
+
+Full git log:
+* af4146a - feat: Alloy primitives (#724) (15 hours ago) <evalir>
+* 1f86e45 - chore(deps): bump proptest from 1.2.0 to 1.3.1 (#763) (22 hours ago) <dependabot[bot]>
+
 # v1.2.0
 date: 28.09.2023
 

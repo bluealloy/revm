@@ -17,6 +17,7 @@ pub struct ResultAndState {
     pub state: State,
 }
 
+/// Result of a transaction execution.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ExecutionResult {
@@ -93,6 +94,7 @@ impl ExecutionResult {
     }
 }
 
+/// Output of a transaction execution.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Output {
@@ -118,11 +120,15 @@ impl Output {
     }
 }
 
+/// EVM error.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum EVMError<DBError> {
+    /// Transaction validation error.
     Transaction(InvalidTransaction),
+    /// Header validation error.
     Header(InvalidHeader),
+    /// Database error.
     Database(DBError),
 }
 
@@ -145,6 +151,7 @@ impl<DBError> From<InvalidTransaction> for EVMError<DBError> {
     }
 }
 
+/// Transaction validation error.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InvalidTransaction {
@@ -216,7 +223,7 @@ impl<DBError> From<InvalidHeader> for EVMError<DBError> {
     }
 }
 
-/// Errors related to misconfiguration of the  `BlockEnv`
+/// Errors related to misconfiguration of a [`BlockEnv`].
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InvalidHeader {

@@ -53,7 +53,7 @@ macro_rules! gas_or_fail {
 macro_rules! shared_memory_resize {
     ($interp:expr, $offset:expr, $len:expr) => {
         if let Some(new_size) =
-            crate::interpreter::shared_memory::next_multiple_of_32($offset.saturating_add($len))
+            crate::interpreter::next_multiple_of_32($offset.saturating_add($len))
         {
             if new_size > $interp.shared_memory.len() {
                 if crate::USE_GAS {

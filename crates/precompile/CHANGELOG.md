@@ -1,3 +1,12 @@
+
+# v2.2.0
+date 02.10.2023
+
+Migration to alloy primitive types.
+
+Full git log:
+* af4146a - feat: Alloy primitives (#724) (15 hours ago) <evalir>
+
 # v2.1.0
 date 28.09.2023
 
