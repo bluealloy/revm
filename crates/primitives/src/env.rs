@@ -592,9 +592,24 @@ impl BlobExcessGasAndPrice {
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct OptimismFields {
+    /// The source hash is used to make sure that deposit transactions do
+    /// not have identical hashes.
+    ///
+    /// L1 originated deposit transaction source hashes are computed using
+    /// the hash of the l1 block hash and the l1 log index.
+    /// L1 attributes deposit source hashes are computed with the l1 block
+    /// hash and the sequence number = l2 block number - l2 epoch start
+    /// block number.
+    ///
+    /// These two deposit transaction sources specify a domain in the outer
+    /// hash so there are no collisions.
     pub source_hash: Option<B256>,
+    /// The amount to increase the balance of the `from` account as part of
+    /// a deposit transaction. This is unconditional and is applied to the
+    /// `from` account even if the deposit transaction fails since
+    /// the deposit is pre-paid on L1.
     pub mint: Option<u128>,
-    /// Whether or not the transaction is a system transaction
+    /// Whether or not the transaction is a system transaction.
     pub is_system_transaction: Option<bool>,
     /// An enveloped EIP-2718 typed transaction. This is used
     /// to compute the L1 tx cost using the L1 block info, as
