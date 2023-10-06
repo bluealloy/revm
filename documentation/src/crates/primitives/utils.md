@@ -5,7 +5,3 @@ This Rust module provides utility functions and constants for handling Keccak ha
 The `KECCAK_EMPTY` constant represents the Keccak-256 hash of an empty input.
 
 The `keccak256` function takes a byte slice input and returns its Keccak-256 hash as a `B256` value.
-
-`create_address` function implements the address calculation for the Ethereum `CREATE` operation. It takes as parameters the address of the caller (`caller`) and a nonce (`nonce`). The function serializes these inputs using Recursive Length Prefix (RLP) encoding, calculates the Keccak-256 hash of the result, and returns the last 20 bytes of this hash as the created address.
-
-`create2_address` function implements the address calculation for the Ethereum `CREATE2` operation. It takes as parameters the address of the caller (`caller`), a hash of the initializing code (`code_hash`), and a "salt" value (`salt`). The function hashes these inputs together in a specific way, as per the Ethereum `CREATE2` rules, and returns the last 20 bytes of the result as the created address.

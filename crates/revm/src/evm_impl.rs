@@ -6,9 +6,8 @@ use crate::interpreter::{
 };
 use crate::journaled_state::{is_precompile, JournalCheckpoint};
 use crate::primitives::{
-    create2_address, create_address, keccak256, Address, AnalysisKind, Bytecode, Bytes, EVMError,
-    EVMResult, Env, ExecutionResult, InvalidTransaction, Log, Output, ResultAndState, Spec,
-    SpecId::*, TransactTo, B256, U256,
+    keccak256, Address, AnalysisKind, Bytecode, Bytes, EVMError, EVMResult, Env, ExecutionResult,
+    InvalidTransaction, Log, Output, ResultAndState, Spec, SpecId::*, TransactTo, B256, U256,
 };
 use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector};
 use alloc::boxed::Box;
@@ -471,8 +470,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         // Create address
         let code_hash = keccak256(&inputs.init_code);
         let created_address = match inputs.scheme {
-            CreateScheme::Create => create_address(inputs.caller, old_nonce),
-            CreateScheme::Create2 { salt } => create2_address(inputs.caller, code_hash, salt),
+            CreateScheme::Create => inputs.caller.create(old_nonce),
+            CreateScheme::Create2 { salt } => inputs.caller.create2(B256::from(salt), code_hash),
         };
 
         // Load account so it needs to be marked as warm for access list.
