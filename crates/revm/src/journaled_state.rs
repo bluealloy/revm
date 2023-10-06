@@ -29,74 +29,6 @@ pub struct JournaledState {
     pub num_of_precompiles: usize,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum JournalEntry {
-    /// Used to mark account that is warm inside EVM in regards to EIP-2929 AccessList.
-    /// Action: We will add Account to state.
-    /// Revert: we will remove account from state.
-    AccountLoaded { address: Address },
-    /// Mark account to be destroyed and journal balance to be reverted
-    /// Action: Mark account and transfer the balance
-    /// Revert: Unmark the account and transfer balance back
-    AccountDestroyed {
-        address: Address,
-        target: Address,
-        was_destroyed: bool, // if account had already been destroyed before this journal entry
-        had_balance: U256,
-    },
-    /// Loading account does not mean that account will need to be added to MerkleTree (touched).
-    /// Only when account is called (to execute contract or transfer balance) only then account is made touched.
-    /// Action: Mark account touched
-    /// Revert: Unmark account touched
-    AccountTouched { address: Address },
-    /// Transfer balance between two accounts
-    /// Action: Transfer balance
-    /// Revert: Transfer balance back
-    BalanceTransfer {
-        from: Address,
-        to: Address,
-        balance: U256,
-    },
-    /// Increment nonce
-    /// Action: Increment nonce by one
-    /// Revert: Decrement nonce by one
-    NonceChange {
-        address: Address, //geth has nonce value,
-    },
-    /// Create account:
-    /// Actions: Mark account as created
-    /// Revert: Unmart account as created and reset nonce to zero.
-    AccountCreated { address: Address },
-    /// It is used to track both storage change and warm load of storage slot. For warm load in regard
-    /// to EIP-2929 AccessList had_value will be None
-    /// Action: Storage change or warm load
-    /// Revert: Revert to previous value or remove slot from storage
-    StorageChange {
-        address: Address,
-        key: U256,
-        had_value: Option<U256>, //if none, storage slot was cold loaded from db and needs to be removed
-    },
-    /// It is used to track an EIP-1153 transient storage change.
-    /// Action: Transient storage changed.
-    /// Revert: Revert to previous value.
-    TransientStorageChange {
-        address: Address,
-        key: U256,
-        had_value: U256,
-    },
-    /// Code changed
-    /// Action: Account code changed
-    /// Revert: Revert to previous bytecode.
-    CodeChange { address: Address },
-}
-
-/// SubRoutine checkpoint that will help us to go back from this
-pub struct JournalCheckpoint {
-    log_i: usize,
-    journal_i: usize,
-}
-
 impl JournaledState {
     /// Create new JournaledState.
     ///
@@ -148,9 +80,17 @@ impl JournaledState {
         (state, logs)
     }
 
-    /// Use it with load_account function.
+    /// Returns the _loaded_ [Account] for the given address.
+    ///
+    /// This assumes that the account has already been loaded.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the account has not been loaded and is missing from the state set.
     pub fn account(&self, address: Address) -> &Account {
-        self.state.get(&address).unwrap() // Always assume that acc is already loaded
+        self.state
+            .get(&address)
+            .expect("Account expected to be loaded") // Always assume that acc is already loaded
     }
 
     pub fn depth(&self) -> u64 {
@@ -242,7 +182,7 @@ impl JournaledState {
     /// 4. Add fund to created account
     /// 5. Increment nonce of created account if SpuriousDragon is active
     /// 6. Decrease balance of caller account.
-    ///  
+    ///
     /// Safety: It is assumed that caller balance is already checked and that
     /// caller is already loaded inside evm. This is already done inside `create_inner`
     pub fn create_account_checkpoint<SPEC: Spec>(
@@ -770,6 +710,74 @@ impl JournaledState {
     pub fn log(&mut self, log: Log) {
         self.logs.push(log);
     }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum JournalEntry {
+    /// Used to mark account that is warm inside EVM in regards to EIP-2929 AccessList.
+    /// Action: We will add Account to state.
+    /// Revert: we will remove account from state.
+    AccountLoaded { address: Address },
+    /// Mark account to be destroyed and journal balance to be reverted
+    /// Action: Mark account and transfer the balance
+    /// Revert: Unmark the account and transfer balance back
+    AccountDestroyed {
+        address: Address,
+        target: Address,
+        was_destroyed: bool, // if account had already been destroyed before this journal entry
+        had_balance: U256,
+    },
+    /// Loading account does not mean that account will need to be added to MerkleTree (touched).
+    /// Only when account is called (to execute contract or transfer balance) only then account is made touched.
+    /// Action: Mark account touched
+    /// Revert: Unmark account touched
+    AccountTouched { address: Address },
+    /// Transfer balance between two accounts
+    /// Action: Transfer balance
+    /// Revert: Transfer balance back
+    BalanceTransfer {
+        from: Address,
+        to: Address,
+        balance: U256,
+    },
+    /// Increment nonce
+    /// Action: Increment nonce by one
+    /// Revert: Decrement nonce by one
+    NonceChange {
+        address: Address, //geth has nonce value,
+    },
+    /// Create account:
+    /// Actions: Mark account as created
+    /// Revert: Unmart account as created and reset nonce to zero.
+    AccountCreated { address: Address },
+    /// It is used to track both storage change and warm load of storage slot. For warm load in regard
+    /// to EIP-2929 AccessList had_value will be None
+    /// Action: Storage change or warm load
+    /// Revert: Revert to previous value or remove slot from storage
+    StorageChange {
+        address: Address,
+        key: U256,
+        had_value: Option<U256>, //if none, storage slot was cold loaded from db and needs to be removed
+    },
+    /// It is used to track an EIP-1153 transient storage change.
+    /// Action: Transient storage changed.
+    /// Revert: Revert to previous value.
+    TransientStorageChange {
+        address: Address,
+        key: U256,
+        had_value: U256,
+    },
+    /// Code changed
+    /// Action: Account code changed
+    /// Revert: Revert to previous bytecode.
+    CodeChange { address: Address },
+}
+
+/// SubRoutine checkpoint that will help us to go back from this
+pub struct JournalCheckpoint {
+    log_i: usize,
+    journal_i: usize,
 }
 
 /// Check if address is precompile by having assumption
