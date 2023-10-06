@@ -12,8 +12,10 @@ pub trait State {
 
     /// Get basic account information.
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
+
     /// Get account code by its hash
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error>;
+
     /// Get storage value of address at index.
     fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error>;
 }
@@ -22,12 +24,12 @@ pub trait State {
 pub trait StateRef {
     type Error;
 
-    /// Whether account at address exists.
-    //fn exists(&self, address: Address) -> Option<AccountInfo>;
     /// Get basic account information.
     fn basic(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
+
     /// Get account code by its hash
     fn code_by_hash(&self, code_hash: B256) -> Result<Bytecode, Self::Error>;
+
     /// Get storage value of address at index.
     fn storage(&self, address: Address, index: U256) -> Result<U256, Self::Error>;
 }
