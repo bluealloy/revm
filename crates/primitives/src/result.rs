@@ -217,6 +217,73 @@ pub enum InvalidTransaction {
     DepositSystemTxPostRegolith,
 }
 
+#[cfg(feature = "std")]
+impl std::error::Error for InvalidTransaction {}
+
+impl fmt::Display for InvalidTransaction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            InvalidTransaction::PriorityFeeGreaterThanMaxFee => {
+                write!(f, "Priority fee is greater than max fee")
+            }
+            InvalidTransaction::GasPriceLessThanBasefee => {
+                write!(f, "Gas price is less than basefee")
+            }
+            InvalidTransaction::CallerGasLimitMoreThanBlock => {
+                write!(f, "Caller gas limit exceeds the block gas limit")
+            }
+            InvalidTransaction::CallGasCostMoreThanGasLimit => {
+                write!(f, "Call gas cost exceeds the gas limit")
+            }
+            InvalidTransaction::RejectCallerWithCode => {
+                write!(f, "Reject transactions from senders with deployed code")
+            }
+            InvalidTransaction::LackOfFundForMaxFee { fee, balance } => {
+                write!(f, "Lack of funds {} for max fee {}", balance, fee)
+            }
+            InvalidTransaction::OverflowPaymentInTransaction => {
+                write!(f, "Overflow payment in transaction")
+            }
+            InvalidTransaction::NonceOverflowInTransaction => {
+                write!(f, "Nonce overflow in transaction")
+            }
+            InvalidTransaction::NonceTooHigh { tx, state } => {
+                write!(f, "Nonce too high {}, expected {}", tx, state)
+            }
+            InvalidTransaction::NonceTooLow { tx, state } => {
+                write!(f, "Nonce {} too low, expected {}", tx, state)
+            }
+            InvalidTransaction::CreateInitcodeSizeLimit => {
+                write!(f, "Create initcode size limit")
+            }
+            InvalidTransaction::InvalidChainId => write!(f, "Invalid chain id"),
+            InvalidTransaction::AccessListNotSupported => {
+                write!(f, "Access list not supported")
+            }
+            InvalidTransaction::MaxFeePerBlobGasNotSupported => {
+                write!(f, "Max fee per blob gas not supported")
+            }
+            InvalidTransaction::BlobVersionedHashesNotSupported => {
+                write!(f, "Blob versioned hashes not supported")
+            }
+            InvalidTransaction::BlobGasPriceGreaterThanMax => {
+                write!(f, "Blob gas price is greater than max fee per blob gas")
+            }
+            InvalidTransaction::EmptyBlobs => write!(f, "Empty blobs"),
+            InvalidTransaction::BlobCreateTransaction => write!(f, "Blob create transaction"),
+            InvalidTransaction::TooManyBlobs => write!(f, "Too many blobs"),
+            InvalidTransaction::BlobVersionNotSupported => write!(f, "Blob version not supported"),
+            #[cfg(feature = "optimism")]
+            InvalidTransaction::DepositSystemTxPostRegolith => {
+                write!(
+                    f,
+                    "Deposit system transactions post regolith hardfork are not supported"
+                )
+            }
+        }
+    }
+}
+
 impl<DBError> From<InvalidHeader> for EVMError<DBError> {
     fn from(invalid: InvalidHeader) -> Self {
         EVMError::Header(invalid)
@@ -231,6 +298,18 @@ pub enum InvalidHeader {
     PrevrandaoNotSet,
     /// `excess_blob_gas` is not set for Cancun and above.
     ExcessBlobGasNotSet,
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InvalidHeader {}
+
+impl fmt::Display for InvalidHeader {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            InvalidHeader::PrevrandaoNotSet => write!(f, "Prevrandao not set"),
+            InvalidHeader::ExcessBlobGasNotSet => write!(f, "Excess blob gas not set"),
+        }
+    }
 }
 
 /// Reason a transaction successfully completed.
