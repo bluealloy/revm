@@ -594,7 +594,7 @@ impl BlobExcessGasAndPrice {
 pub struct OptimismFields {
     /// The source hash is used to make sure that deposit transactions do
     /// not have identical hashes.
-    /// 
+    ///
     /// L1 originated deposit transaction source hashes are computed using
     /// the hash of the l1 block hash and the l1 log index.
     /// L1 attributes deposit source hashes are computed with the l1 block
