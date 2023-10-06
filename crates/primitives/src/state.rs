@@ -252,6 +252,47 @@ impl AccountInfo {
 #[cfg(test)]
 mod tests {
     use crate::Account;
+    use crate::KECCAK_EMPTY;
+    use crate::U256;
+
+    #[test]
+    fn account_is_empty_balance() {
+        let mut account = Account::default();
+        assert!(account.is_empty());
+
+        account.info.balance = U256::from(1);
+        assert!(!account.is_empty());
+
+        account.info.balance = U256::ZERO;
+        assert!(account.is_empty());
+    }
+
+    #[test]
+    fn account_is_empty_nonce() {
+        let mut account = Account::default();
+        assert!(account.is_empty());
+
+        account.info.nonce = 1;
+        assert!(!account.is_empty());
+
+        account.info.nonce = 0;
+        assert!(account.is_empty());
+    }
+
+    #[test]
+    fn account_is_empty_code_hash() {
+        let mut account = Account::default();
+        assert!(account.is_empty());
+
+        account.info.code_hash = [1; 32].into();
+        assert!(!account.is_empty());
+
+        account.info.code_hash = [0; 32].into();
+        assert!(account.is_empty());
+
+        account.info.code_hash = KECCAK_EMPTY;
+        assert!(account.is_empty());
+    }
 
     #[test]
     fn account_state() {
