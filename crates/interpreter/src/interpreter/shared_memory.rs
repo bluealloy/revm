@@ -39,9 +39,7 @@ impl Default for SharedMemory {
 
 impl SharedMemory {
     /// Allocate memory to be shared between calls.
-    /// Memory size is estimated using https://2π.com/22/eth-max-mem
-    /// which depends on transaction [gas_limit].
-    /// Maximum allocation size is 2^32 - 1 bytes;
+    /// Initial capacity is 4KiB which is expanded if needed
     pub fn new() -> Self {
         Self {
             data: Vec::with_capacity(4 * 1024), // from evmone
