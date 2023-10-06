@@ -1,6 +1,5 @@
 use crate::{Address, Bytes, Log, State, U256};
 use alloc::vec::Vec;
-use core::error;
 use core::fmt;
 
 /// Result of EVM execution.
@@ -218,7 +217,8 @@ pub enum InvalidTransaction {
     DepositSystemTxPostRegolith,
 }
 
-impl error::Error for InvalidTransaction {}
+#[cfg(feature = "std")]
+impl std::error::Error for InvalidTransaction {}
 
 impl fmt::Display for InvalidTransaction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -238,8 +238,8 @@ impl fmt::Display for InvalidTransaction {
             InvalidTransaction::RejectCallerWithCode => {
                 write!(f, "Reject transactions from senders with deployed code")
             }
-            InvalidTransaction::LackOfFundForMaxFee { .. } => {
-                write!(f, "Lack of funds for max fee",)
+            InvalidTransaction::LackOfFundForMaxFee { fee, balance } => {
+                write!(f, "Lack of funds {} for max fee {}", balance, fee)
             }
             InvalidTransaction::OverflowPaymentInTransaction => {
                 write!(f, "Overflow payment in transaction")
@@ -247,8 +247,12 @@ impl fmt::Display for InvalidTransaction {
             InvalidTransaction::NonceOverflowInTransaction => {
                 write!(f, "Nonce overflow in transaction")
             }
-            InvalidTransaction::NonceTooHigh { .. } => write!(f, "Nonce too high"),
-            InvalidTransaction::NonceTooLow { .. } => write!(f, "Nonce too low"),
+            InvalidTransaction::NonceTooHigh { tx, state } => {
+                write!(f, "Nonce too high {}, expected {}", tx, state)
+            }
+            InvalidTransaction::NonceTooLow { tx, state } => {
+                write!(f, "Nonce {} too low, expected {}", tx, state)
+            }
             InvalidTransaction::CreateInitcodeSizeLimit => {
                 write!(f, "Create initcode size limit")
             }
@@ -296,7 +300,8 @@ pub enum InvalidHeader {
     ExcessBlobGasNotSet,
 }
 
-impl error::Error for InvalidHeader {}
+#[cfg(feature = "std")]
+impl std::error::Error for InvalidHeader {}
 
 impl fmt::Display for InvalidHeader {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
