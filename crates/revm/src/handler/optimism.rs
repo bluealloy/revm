@@ -132,8 +132,11 @@ pub fn reward_beneficiary<SPEC: Spec, DB: Database>(
             panic!("[OPTIMISM] Failed to load Base Fee Vault account");
         };
         base_fee_vault_account.mark_touch();
-        base_fee_vault_account.info.balance +=
-            l1_block_info.l1_base_fee.mul(U256::from(gas.spend()));
+        base_fee_vault_account.info.balance += data
+            .env
+            .block
+            .basefee
+            .mul(U256::from(gas.spend() - gas_refund));
     }
     Ok(())
 }
