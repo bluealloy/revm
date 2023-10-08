@@ -404,6 +404,15 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         precompiles: Precompiles,
     ) -> Self {
         let journaled_state = JournaledState::new(precompiles.len(), GSPEC::SPEC_ID);
+        #[cfg(feature = "optimism")]
+        let handler = if env.cfg.optimism {
+            Handler::optimism::<GSPEC>()
+        } else {
+            Handler::mainnet::<GSPEC>()
+        };
+        #[cfg(not(feature = "optimism"))]
+        let handler = Handler::mainnet::<GSPEC>();
+
         Self {
             data: EVMData {
                 env,
@@ -415,7 +424,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 l1_block_info: None,
             },
             inspector,
-            handler: Handler::mainnet::<GSPEC>(),
+            handler,
             _phantomdata: PhantomData {},
         }
     }
