@@ -141,8 +141,8 @@ impl BundleBuilder {
     }
 
     /// Collect contracts info
-    pub fn contract(mut self, address: B256, bytecode: Bytecode) -> Self {
-        self.contracts.insert(address, bytecode);
+    pub fn contract(mut self, address: B256, bytecode: impl AsRef<Bytecode>) -> Self {
+        self.contracts.insert(address, bytecode.as_ref().to_owned());
         self
     }
 
