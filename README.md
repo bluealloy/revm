@@ -1,4 +1,4 @@
-# revm 
+# revm
 
 [![CI](https://github.com/bluealloy/revm/actions/workflows/ci.yml/badge.svg)][gh-ci]
 [![License](https://img.shields.io/badge/License-MIT-orange.svg)][mit-license]
@@ -18,29 +18,41 @@ It has a fast and flexible implementation with a simple interface and embedded H
 It passes all `ethereum/tests` test suites.
 
 Here is a list of guiding principles that Revm follows.
+
 - **EVM compatibility and stability** - this goes without saying but it is nice to put it here. In the blockchain industry, stability is the most desired attribute of any system.
 - **Speed** - is one of the most important things and most decisions are made to complement this.
 - **Simplicity** - simplification of internals so that it can be easily understood and extended, and interface that can be easily used or integrated into other projects.
 - **interfacing** - `[no_std]` so that it can be used as wasm lib and integrate with JavaScript and cpp binding if needed.
 
-
 # Project
 
 Structure:
-* crates
-    * revm -> main EVM library.
-    * revm-primitives -> Primitive data types.
-    * revm-interpreter -> Execution loop with instructions
-    * revm-precompile -> EVM precompiles
-* bins:
-    * revme: cli binary, used for running state test jsons
+
+- crates
+  - revm -> main EVM library.
+  - revm-primitives -> Primitive data types.
+  - revm-interpreter -> Execution loop with instructions
+  - revm-precompile -> EVM precompiles
+- bins:
+  - revme: cli binary, used for running state test jsons
 
 This project tends to use the newest rust version, so if you're encountering a build error try running `rustup update` first.
 
 There were some big efforts on optimization of revm:
-* Optimizing interpreter loop: https://github.com/bluealloy/revm/issues/7
-* Introducing Bytecode format (and better bytecode analysis): https://github.com/bluealloy/revm/issues/121
-* Unification of instruction signatures: https://github.com/bluealloy/revm/pull/283
+
+- Optimizing interpreter loop: https://github.com/bluealloy/revm/issues/7
+- Introducing Bytecode format (and better bytecode analysis): https://github.com/bluealloy/revm/issues/121
+- Unification of instruction signatures: https://github.com/bluealloy/revm/pull/283
+
+# Building from source
+
+```shell
+git clone https://github.com/bluealloy/revm.git
+cd revm
+cargo build --release
+```
+
+**_Note:_** `clang` is required for building revm as `c-kzg` is used as a dependency. If you don't have it installed, you can install it with `apt install clang`.
 
 # Running eth tests
 
@@ -72,15 +84,14 @@ cargo run -p revm --features ethersdb --example fork_ref_transact
 
 # Used by:
 
-* [Foundry](https://github.com/foundry-rs/foundry) is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.
-* [Helios](https://github.com/a16z/helios) is a fully trustless, efficient, and portable Ethereum light client written in Rust.
-* [Reth](https://github.com/paradigmxyz/reth) Modular, contributor-friendly and blazing-fast implementation of the Ethereum protocol
-* [Arbiter](https://github.com/primitivefinance/arbiter) is a framework for stateful Ethereum smart-contract simulation
-* [Zeth](https://github.com/risc0/zeth) is an open-source ZK block prover for Ethereum built on the RISC Zero zkVM.
-* ...
+- [Foundry](https://github.com/foundry-rs/foundry) is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.
+- [Helios](https://github.com/a16z/helios) is a fully trustless, efficient, and portable Ethereum light client written in Rust.
+- [Reth](https://github.com/paradigmxyz/reth) Modular, contributor-friendly and blazing-fast implementation of the Ethereum protocol
+- [Arbiter](https://github.com/primitivefinance/arbiter) is a framework for stateful Ethereum smart-contract simulation
+- [Zeth](https://github.com/risc0/zeth) is an open-source ZK block prover for Ethereum built on the RISC Zero zkVM.
+- ...
 
 (If you want to add project to the list, ping me or open the PR)
-
 
 # Documentation
 
