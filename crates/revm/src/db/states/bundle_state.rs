@@ -4,6 +4,7 @@ use super::{
     AccountRevert, AccountStatus, BundleAccount, PlainStateReverts, RevertToSlot, TransitionState,
 };
 use alloc::{
+    borrow::ToOwned,
     collections::{BTreeMap, BTreeSet},
     vec::Vec,
 };
