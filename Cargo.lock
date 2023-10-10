@@ -303,7 +303,8 @@ dependencies = [
 [[package]]
 name = "aurora-engine-modexp"
 version = "1.0.0"
-source = "git+https://github.com/aurora-is-near/aurora-engine.git?rev=0cfda46#0cfda4686dbdb7a57b2dc18dddc5106ec8e24a38"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bfacad86e9e138fca0670949eb8ed4ffdf73a55bded8887efe0863cd1a3a6f70"
 dependencies = [
  "hex",
  "num",
