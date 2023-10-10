@@ -65,7 +65,7 @@ pub fn ret<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
 }
 
 /// EIP-140: REVERT instruction
-pub fn revert<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn revert<SPEC: Spec, H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     check!(interpreter, BYZANTIUM);
     return_inner(interpreter, InstructionResult::Revert)
 }

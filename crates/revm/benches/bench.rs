@@ -8,6 +8,7 @@ use revm::{
         address, bytes, hex, BerlinSpec, Bytecode, BytecodeState, Bytes, TransactTo, U256,
     },
 };
+use revm_interpreter::opcode::make_instruction_table;
 use std::time::Duration;
 
 type Evm = revm::EVM<BenchmarkDB>;
@@ -53,8 +54,8 @@ fn snailtracer(c: &mut Criterion) {
 
     let mut g = c.benchmark_group("snailtracer");
     g.noise_threshold(0.03)
-        .warm_up_time(Duration::from_secs(3))
-        .measurement_time(Duration::from_secs(10))
+        .warm_up_time(Duration::from_secs(1))
+        .measurement_time(Duration::from_secs(3))
         .sample_size(10);
     bench_transact(&mut g, &mut evm);
     bench_eval(&mut g, &evm);
@@ -93,9 +94,10 @@ fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &Evm) {
             ..Default::default()
         };
         let mut host = DummyHost::new(evm.env.clone());
+        let instruction_table = make_instruction_table::<BerlinSpec, DummyHost>();
         b.iter(|| {
             let mut interpreter = Interpreter::new(Box::new(contract.clone()), u64::MAX, false);
-            let res = interpreter.run::<_, BerlinSpec>(&mut host);
+            let res = interpreter.run(&instruction_table, &mut host);
             host.clear();
             res
         })

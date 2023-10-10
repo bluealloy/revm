@@ -80,7 +80,7 @@ pub fn byte<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
-pub fn shl<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn shl<SPEC: Spec, H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     check!(interpreter, CONSTANTINOPLE);
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
@@ -88,7 +88,7 @@ pub fn shl<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
-pub fn shr<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn shr<SPEC: Spec, H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     check!(interpreter, CONSTANTINOPLE);
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
@@ -96,7 +96,7 @@ pub fn shr<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
 }
 
 /// EIP-145: Bitwise shifting instructions in EVM
-pub fn sar<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn sar<SPEC: Spec, H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     check!(interpreter, CONSTANTINOPLE);
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);

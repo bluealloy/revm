@@ -71,9 +71,8 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         &mut self,
         interp: &mut Interpreter,
         data: &mut EVMData<'_, DB>,
-        eval: InstructionResult,
     ) -> InstructionResult {
-        self.gas_inspector.step_end(interp, data, eval);
+        self.gas_inspector.step_end(interp, data);
         if self.skip {
             self.skip = false;
             return InstructionResult::Continue;

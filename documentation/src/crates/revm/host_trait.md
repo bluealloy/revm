@@ -38,7 +38,7 @@ The [`EVMImpl`](./evm_impl.md) struct implements this `Host` trait.
 
 - `tload` & `tstore`
 
-    As defined in [EIP1153](https://eips.ethereum.org/EIPS/eip-1153), for transiant storage reads and writes. 
+    As defined in [EIP1153](https://eips.ethereum.org/EIPS/eip-1153), for transient storage reads and writes. 
 
 - `log`
 
@@ -46,12 +46,12 @@ The [`EVMImpl`](./evm_impl.md) struct implements this `Host` trait.
 
 - `selfdestruct`
 
-    The selfdestruct method attempts to terminate the specified address, transferring its remaining balance to a given target address. If the INSPECT constant is true, the self-destruction event is observed or logged via an inspector. The method returns an Option<SelfDestructResult>, encapsulating the outcome of the operation: Some(SelfDestructResult) on success and None if an error occurs, with the error being stored internally for later reference.
+    The selfdestruct method attempts to terminate the specified address, transferring its remaining balance to a given target address. If the `Inspector` is `Some`, the self-destruction event is observed or logged via an inspector. The method returns an Option<SelfDestructResult>, encapsulating the outcome of the operation: Some(SelfDestructResult) on success and None if an error occurs, with the error being stored internally for later reference.
 
 - `create`
 
-    The create method initiates the creation of a contract with the provided CreateInputs. If the INSPECT constant is true, the creation process is observed or logged using an inspector, both at the start and end of the creation. The method returns a tuple consisting of the operation's result (InstructionResult), the optional address (Option<B160>) of the newly created contract, the amount of gas consumed (Gas), and the output data (Bytes). If the inspector intervenes and determines the instruction shouldn't continue, an early return occurs with the observed outcomes.
+    The create method initiates the creation of a contract with the provided CreateInputs. If the `Inspector` is `Some`, the creation process is observed or logged using an inspector, both at the start and end of the creation. The method returns a tuple consisting of the operation's result (InstructionResult), the optional address (Option<B160>) of the newly created contract, the amount of gas consumed (Gas), and the output data (Bytes). If the inspector intervenes and determines the instruction shouldn't continue, an early return occurs with the observed outcomes.
 
 - `call`
 
-    The call method manages a contract invocation using the provided CallInputs. If the INSPECT constant is active, the call event is observed or logged via an inspector before execution. The method yields a tuple representing the outcome of the call: the result status (InstructionResult), the consumed gas (Gas), and the output data (Bytes). If the inspector suggests early termination, the method returns immediately with the observed results. Otherwise, the main call execution is processed, and the outcomes, either raw or observed, are returned accordingly.
+    The call method manages a contract invocation using the provided CallInputs. If the `Inspector` is `Some`, the call event is observed or logged via an inspector before execution. The method yields a tuple representing the outcome of the call: the result status (InstructionResult), the consumed gas (Gas), and the output data (Bytes). If the inspector suggests early termination, the method returns immediately with the observed results. Otherwise, the main call execution is processed, and the outcomes, either raw or observed, are returned accordingly.

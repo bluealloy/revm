@@ -98,7 +98,7 @@ pub fn calldatacopy<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
 }
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
-pub fn returndatasize<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn returndatasize<SPEC: Spec, H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     check!(interpreter, BYZANTIUM);
     gas!(interpreter, gas::BASE);
     push!(
@@ -108,7 +108,7 @@ pub fn returndatasize<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host:
 }
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
-pub fn returndatacopy<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn returndatacopy<SPEC: Spec, H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     check!(interpreter, BYZANTIUM);
     pop!(interpreter, memory_offset, offset, len);
     let len = as_usize_or_fail!(interpreter, len);

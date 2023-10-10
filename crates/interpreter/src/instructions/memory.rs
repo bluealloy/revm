@@ -38,7 +38,7 @@ pub fn msize<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
 }
 
 // EIP-5656: MCOPY - Memory copying instruction
-pub fn mcopy<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn mcopy<SPEC: Spec, H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     check!(interpreter, CANCUN);
     pop!(interpreter, dst, src, len);
 

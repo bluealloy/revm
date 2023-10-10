@@ -1,7 +1,7 @@
 use crate::primitives::{hash_map::Entry, Bytecode, Bytes, HashMap, U256};
 use crate::{
     primitives::{Address, Env, Log, B256, KECCAK_EMPTY},
-    CallInputs, CreateInputs, Gas, Host, InstructionResult, Interpreter, SelfDestructResult,
+    CallInputs, CreateInputs, Gas, Host, InstructionResult, SelfDestructResult,
 };
 use alloc::vec::Vec;
 
@@ -34,20 +34,6 @@ impl DummyHost {
 }
 
 impl Host for DummyHost {
-    #[inline]
-    fn step(&mut self, _interp: &mut Interpreter) -> InstructionResult {
-        InstructionResult::Continue
-    }
-
-    #[inline]
-    fn step_end(
-        &mut self,
-        _interp: &mut Interpreter,
-        _ret: InstructionResult,
-    ) -> InstructionResult {
-        InstructionResult::Continue
-    }
-
     #[inline]
     fn env(&mut self) -> &mut Env {
         &mut self.env

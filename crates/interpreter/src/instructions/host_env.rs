@@ -5,7 +5,7 @@ use crate::{
 };
 
 /// EIP-1344: ChainID opcode
-pub fn chainid<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn chainid<SPEC: Spec, H: Host>(interpreter: &mut Interpreter, host: &mut H) {
     check!(interpreter, ISTANBUL);
     gas!(interpreter, gas::BASE);
     push!(interpreter, U256::from(host.env().cfg.chain_id));
@@ -26,7 +26,7 @@ pub fn number<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
     push!(interpreter, host.env().block.number);
 }
 
-pub fn difficulty<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn difficulty<SPEC: Spec, H: Host>(interpreter: &mut Interpreter, host: &mut H) {
     gas!(interpreter, gas::BASE);
     if SPEC::enabled(MERGE) {
         push_b256!(interpreter, host.env().block.prevrandao.unwrap());
@@ -46,7 +46,7 @@ pub fn gasprice<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
 }
 
 /// EIP-3198: BASEFEE opcode
-pub fn basefee<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn basefee<SPEC: Spec, H: Host>(interpreter: &mut Interpreter, host: &mut H) {
     check!(interpreter, LONDON);
     gas!(interpreter, gas::BASE);
     push!(interpreter, host.env().block.basefee);
@@ -58,7 +58,7 @@ pub fn origin<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
 }
 
 // EIP-4844: Shard Blob Transactions
-pub fn blob_hash<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn blob_hash<SPEC: Spec, H: Host>(interpreter: &mut Interpreter, host: &mut H) {
     check!(interpreter, CANCUN);
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, index);
@@ -70,7 +70,7 @@ pub fn blob_hash<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut 
 }
 
 /// EIP-7516: BLOBBASEFEE opcode
-pub fn blob_basefee<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn blob_basefee<SPEC: Spec, H: Host>(interpreter: &mut Interpreter, host: &mut H) {
     check!(interpreter, CANCUN);
     gas!(interpreter, gas::BASE);
     push!(

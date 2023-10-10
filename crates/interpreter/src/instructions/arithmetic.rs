@@ -65,7 +65,7 @@ pub fn mulmod<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     *op3 = op1.mul_mod(op2, *op3)
 }
 
-pub fn exp<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn exp<SPEC: Spec, H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     pop_top!(interpreter, op1, op2);
     gas_or_fail!(interpreter, gas::exp_cost::<SPEC>(*op2));
     *op2 = op1.pow(*op2);
