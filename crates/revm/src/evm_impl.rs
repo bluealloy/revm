@@ -198,7 +198,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
 
         // the L1-cost fee is only computed for Optimism non-deposit transactions.
         #[cfg(feature = "optimism")]
-        let tx_l1_cost = if env.cfg.optimism && !env.tx.optimism.source_hash.is_some() {
+        let tx_l1_cost = if env.cfg.optimism && env.tx.optimism.source_hash.is_none() {
             let l1_block_info =
                 optimism::L1BlockInfo::try_fetch(self.data.db).map_err(EVMError::Database)?;
 
