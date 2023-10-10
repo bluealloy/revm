@@ -112,7 +112,7 @@ pub fn reward_beneficiary<SPEC: Spec, DB: Database>(
             panic!("[OPTIMISM] Failed to load enveloped transaction.");
         };
 
-        let l1_cost = l1_block_info.calculate_tx_l1_cost::<SPEC>(enveloped_tx, is_deposit);
+        let l1_cost = l1_block_info.calculate_tx_l1_cost::<SPEC>(enveloped_tx);
 
         // Send the L1 cost of the transaction to the L1 Fee Vault.
         let Ok((l1_fee_vault_account, _)) = data

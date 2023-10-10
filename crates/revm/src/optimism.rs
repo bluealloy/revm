@@ -41,23 +41,17 @@ pub struct L1BlockInfo {
 }
 
 impl L1BlockInfo {
-    pub fn try_fetch<DB: Database>(
-        db: &mut DB,
-        is_optimism: bool,
-    ) -> Result<Option<L1BlockInfo>, DB::Error> {
-        is_optimism
-            .then(|| {
-                let l1_base_fee = db.storage(L1_BLOCK_CONTRACT, L1_BASE_FEE_SLOT)?;
-                let l1_fee_overhead = db.storage(L1_BLOCK_CONTRACT, L1_OVERHEAD_SLOT)?;
-                let l1_fee_scalar = db.storage(L1_BLOCK_CONTRACT, L1_SCALAR_SLOT)?;
+    /// Try to fetch the L1 block info from the database.
+    pub fn try_fetch<DB: Database>(db: &mut DB) -> Result<L1BlockInfo, DB::Error> {
+        let l1_base_fee = db.storage(L1_BLOCK_CONTRACT, L1_BASE_FEE_SLOT)?;
+        let l1_fee_overhead = db.storage(L1_BLOCK_CONTRACT, L1_OVERHEAD_SLOT)?;
+        let l1_fee_scalar = db.storage(L1_BLOCK_CONTRACT, L1_SCALAR_SLOT)?;
 
-                Ok(L1BlockInfo {
-                    l1_base_fee,
-                    l1_fee_overhead,
-                    l1_fee_scalar,
-                })
-            })
-            .map_or(Ok(None), |v| v.map(Some))
+        Ok(L1BlockInfo {
+            l1_base_fee,
+            l1_fee_overhead,
+            l1_fee_scalar,
+        })
     }
 
     /// Calculate the data gas for posting the transaction on L1. Calldata costs 16 gas per non-zero
@@ -83,19 +77,16 @@ impl L1BlockInfo {
     }
 
     /// Calculate the gas cost of a transaction based on L1 block data posted on L2
-    pub fn calculate_tx_l1_cost<SPEC: Spec>(&self, input: &Bytes, is_deposit: bool) -> U256 {
+    pub fn calculate_tx_l1_cost<SPEC: Spec>(&self, input: &Bytes) -> U256 {
+        // input must not be an deposit transaction
+        debug_assert!(!input.is_empty() && input[0] != 0x7E);
+
         let rollup_data_gas_cost = self.data_gas::<SPEC>(input);
-
-        if is_deposit || rollup_data_gas_cost == U256::ZERO {
-            return U256::ZERO;
-        }
-
         rollup_data_gas_cost
             .saturating_add(self.l1_fee_overhead)
             .saturating_mul(self.l1_base_fee)
             .saturating_mul(self.l1_fee_scalar)
-            .checked_div(U256::from(1_000_000))
-            .unwrap_or_default()
+            / U256::from(1_000_000)
     }
 }
 
@@ -160,17 +151,8 @@ mod tests {
             l1_fee_scalar: U256::from(1_000),
         };
 
-        // The gas cost here should be zero since the tx is a deposit
         let input = bytes!("FACADE");
-        let gas_cost = l1_block_info.calculate_tx_l1_cost::<BedrockSpec>(&input, true);
-        assert_eq!(gas_cost, U256::ZERO);
-
-        let gas_cost = l1_block_info.calculate_tx_l1_cost::<RegolithSpec>(&input, false);
+        let gas_cost = l1_block_info.calculate_tx_l1_cost::<RegolithSpec>(&input);
         assert_eq!(gas_cost, U256::from(1048));
-
-        // Zero rollup data gas cost should result in zero for non-deposits
-        let input = bytes!("");
-        let gas_cost = l1_block_info.calculate_tx_l1_cost::<RegolithSpec>(&input, false);
-        assert_eq!(gas_cost, U256::ZERO);
     }
 }
