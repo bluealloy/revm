@@ -18,6 +18,9 @@ pub struct SharedMemory {
     checkpoints: Vec<usize>,
     /// How much memory has been used in the current context
     current_len: usize,
+    /// Memory limit. See [`crate::CfgEnv`].
+    #[cfg(feature = "memory_limit")]
+    pub memory_limit: u64,
 }
 
 impl fmt::Debug for SharedMemory {
@@ -45,7 +48,27 @@ impl SharedMemory {
             data: Vec::with_capacity(4 * 1024), // from evmone
             checkpoints: Vec::with_capacity(32),
             current_len: 0,
+            #[cfg(feature = "memory_limit")]
+            memory_limit: u64::MAX,
         }
+    }
+
+    /// Allocate memory to be shared between calls, with `memory_limit`
+    /// as upper bound for allocation size.
+    /// Initial capacity is 4KiB which is expanded if needed
+    #[cfg(feature = "memory_limit")]
+    pub fn new_with_memory_limit(memory_limit: u64) -> Self {
+        Self {
+            memory_limit,
+            ..Self::new()
+        }
+    }
+
+    /// Returns true if the `new_size` for the current context memory will
+    /// make the shared buffer length exceed the `memory_limit`
+    #[cfg(feature = "memory_limit")]
+    pub fn limit_reached(&self, new_size: usize) -> bool {
+        (self.last_checkpoint() + new_size) as u64 > self.memory_limit
     }
 
     /// Prepares the shared memory for a new context
@@ -221,7 +244,7 @@ impl SharedMemory {
     /// Get the last memory checkpoint
     #[inline(always)]
     fn last_checkpoint(&self) -> usize {
-        *self.checkpoints.last().unwrap_or(&0)
+        self.checkpoints.last().cloned().unwrap_or_default()
     }
 }
 

@@ -288,6 +288,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
 
         let transact_gas_limit = tx_gas_limit - initial_gas_spend;
 
+        #[cfg(feature = "memory_limit")]
+        let mut shared_memory = SharedMemory::new_with_memory_limit(self.data.env.cfg.memory_limit);
+        #[cfg(not(feature = "memory_limit"))]
         let mut shared_memory = SharedMemory::new();
 
         // call inner handling of call/create

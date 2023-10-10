@@ -55,6 +55,12 @@ macro_rules! shared_memory_resize {
         if let Some(new_size) =
             crate::interpreter::next_multiple_of_32($offset.saturating_add($len))
         {
+            #[cfg(feature = "memory_limit")]
+            if $interp.shared_memory.limit_reached(new_size) {
+                $interp.instruction_result = InstructionResult::MemoryLimitOOG;
+                return;
+            }
+
             if new_size > $interp.shared_memory.len() {
                 if crate::USE_GAS {
                     let num_bytes = new_size / 32;
