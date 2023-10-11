@@ -78,8 +78,10 @@ impl L1BlockInfo {
 
     /// Calculate the gas cost of a transaction based on L1 block data posted on L2
     pub fn calculate_tx_l1_cost<SPEC: Spec>(&self, input: &Bytes) -> U256 {
-        // input must not be an deposit transaction
-        debug_assert!(!input.is_empty() && input[0] != 0x7E);
+        // If the input is not a deposit transaction, the default value is zero.
+        if input.is_empty() || input.first() == Some(&0x7F) {
+            return U256::ZERO;
+        }
 
         let rollup_data_gas_cost = self.data_gas::<SPEC>(input);
         rollup_data_gas_cost
@@ -154,5 +156,15 @@ mod tests {
         let input = bytes!("FACADE");
         let gas_cost = l1_block_info.calculate_tx_l1_cost::<RegolithSpec>(&input);
         assert_eq!(gas_cost, U256::from(1048));
+
+        // Zero rollup data gas cost should result in zero
+        let input = bytes!("");
+        let gas_cost = l1_block_info.calculate_tx_l1_cost::<RegolithSpec>(&input);
+        assert_eq!(gas_cost, U256::ZERO);
+
+        // Deposit transactions with the EIP-2718 type of 0x7F should result in zero
+        let input = bytes!("7FFACADE");
+        let gas_cost = l1_block_info.calculate_tx_l1_cost::<RegolithSpec>(&input);
+        assert_eq!(gas_cost, U256::ZERO);
     }
 }
