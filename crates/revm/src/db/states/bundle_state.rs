@@ -223,6 +223,11 @@ impl BundleBuilder {
             reverts_size,
         }
     }
+
+    /// Getter for `states` field
+    pub fn get_states(&self) -> &HashSet<Address> {
+        &self.states
+    }
 }
 
 /// Bundle retention policy for applying substate to the bundle.
