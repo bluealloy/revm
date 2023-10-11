@@ -31,8 +31,8 @@ pub use inner_models::*;
 pub use instruction_result::*;
 pub use instructions::{opcode, Instruction, OpCode, OPCODE_JUMPMAP};
 pub use interpreter::{
-    analysis, BytecodeLocked, Contract, Interpreter, SharedMemory, Stack, MAX_CODE_SIZE,
-    MAX_INITCODE_SIZE,
+    analysis, next_multiple_of_32, BytecodeLocked, Contract, Interpreter, SharedMemory, Stack,
+    MAX_CODE_SIZE, MAX_INITCODE_SIZE, STACK_LIMIT,
 };
 #[doc(hidden)]
 pub use revm_primitives as primitives;

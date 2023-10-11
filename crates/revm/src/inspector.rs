@@ -47,7 +47,11 @@ pub trait Inspector<DB: Database> {
     ///
     /// To get the current opcode, use `interp.current_opcode()`.
     #[inline]
-    fn step(&mut self, interp: &mut Interpreter<'_>, data: &mut EVMData<'_, DB>) -> InstructionResult {
+    fn step(
+        &mut self,
+        interp: &mut Interpreter<'_>,
+        data: &mut EVMData<'_, DB>,
+    ) -> InstructionResult {
         let _ = interp;
         let _ = data;
         InstructionResult::Continue

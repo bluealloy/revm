@@ -35,14 +35,14 @@ pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 pub struct PrecompileOutput {
     pub cost: u64,
     pub output: Vec<u8>,
     pub logs: Vec<Log>,
 }
 
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Log {
     pub address: Address,
     pub topics: Vec<B256>,
@@ -58,8 +58,7 @@ impl PrecompileOutput {
         }
     }
 }
-
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Precompiles {
     pub fun: HashMap<Address, Precompile>,
 }
@@ -94,7 +93,7 @@ impl From<PrecompileAddress> for (Address, Precompile) {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub enum SpecId {
     HOMESTEAD,
     BYZANTIUM,

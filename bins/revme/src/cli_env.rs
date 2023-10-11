@@ -1,7 +1,7 @@
 use revm::primitives::{Address, Bytes, Env, TransactTo, U256};
 use structopt::StructOpt;
 
-#[derive(StructOpt, Clone, Debug)]
+#[derive(StructOpt, Clone, Debug, PartialEq, Eq)]
 pub struct CliEnv {
     #[structopt(flatten)]
     block: CliEnvBlock,
@@ -51,7 +51,7 @@ impl From<CliEnv> for Env {
     }
 }
 
-#[derive(StructOpt, Clone, Debug)]
+#[derive(StructOpt, Clone, Debug, PartialEq, Eq)]
 pub struct CliEnvBlock {
     #[structopt(long = "env.block.gas_limit")]
     pub block_gas_limit: Option<u64>,
@@ -71,7 +71,7 @@ pub struct CliEnvBlock {
     pub basefee: Option<u64>,
 }
 
-#[derive(StructOpt, Clone, Debug)]
+#[derive(StructOpt, Clone, Debug, PartialEq, Eq)]
 pub struct CliEnvTx {
     /// Caller or Author or tx signer
     #[structopt(long = "env.tx.caller")]

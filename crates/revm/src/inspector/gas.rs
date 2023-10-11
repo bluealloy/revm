@@ -26,7 +26,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
     #[cfg(not(feature = "no_gas_measuring"))]
     fn initialize_interp(
         &mut self,
-        interp: &mut crate::interpreter::Interpreter,
+        interp: &mut crate::interpreter::Interpreter<'_>,
         _data: &mut EVMData<'_, DB>,
     ) -> InstructionResult {
         self.gas_remaining = interp.gas.limit();
@@ -36,7 +36,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
     #[cfg(not(feature = "no_gas_measuring"))]
     fn step_end(
         &mut self,
-        interp: &mut crate::interpreter::Interpreter,
+        interp: &mut crate::interpreter::Interpreter<'_>,
         _data: &mut EVMData<'_, DB>,
         _eval: InstructionResult,
     ) -> InstructionResult {

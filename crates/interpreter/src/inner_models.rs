@@ -90,7 +90,7 @@ pub struct Transfer {
 }
 
 /// Result of a call that resulted in a self destruct.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Default, Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SelfDestructResult {
     pub had_value: bool,

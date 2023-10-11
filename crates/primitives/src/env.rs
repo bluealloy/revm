@@ -664,7 +664,7 @@ impl TransactTo {
 }
 
 /// Create scheme.
-#[derive(Clone, Copy, Eq, PartialEq, Debug, Hash)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum CreateScheme {
     /// Legacy create scheme of `CREATE`.

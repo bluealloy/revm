@@ -58,7 +58,11 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 
     // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
     // all other information can be obtained from interp.
-    fn step(&mut self, interp: &mut Interpreter<'_>, data: &mut EVMData<'_, DB>) -> InstructionResult {
+    fn step(
+        &mut self,
+        interp: &mut Interpreter<'_>,
+        data: &mut EVMData<'_, DB>,
+    ) -> InstructionResult {
         self.gas_inspector.step(interp, data);
         self.stack = interp.stack.clone();
         self.pc = interp.program_counter();
