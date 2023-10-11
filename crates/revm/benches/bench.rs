@@ -8,7 +8,7 @@ use revm::{
         address, bytes, hex, BerlinSpec, Bytecode, BytecodeState, Bytes, TransactTo, U256,
     },
 };
-use revm_interpreter::{opcode::make_instruction_table, SharedMemory};
+use revm_interpreter::{opcode::make_instruction_table, SharedMemory, SharedStack};
 use std::time::Duration;
 
 type Evm = revm::EVM<BenchmarkDB>;
@@ -88,6 +88,7 @@ fn bench_transact(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm) {
 
 fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm) {
     let mut shared_memory = SharedMemory::new();
+    let mut shared_stack = SharedStack::new();
 
     g.bench_function("eval", |b| {
         let contract = Contract {
@@ -103,6 +104,7 @@ fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm) {
                 u64::MAX,
                 false,
                 &mut shared_memory,
+                &mut shared_stack,
             );
             let res = interpreter.run(&instruction_table, &mut host);
             host.clear();

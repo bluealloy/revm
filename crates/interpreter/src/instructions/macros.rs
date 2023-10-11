@@ -80,12 +80,12 @@ macro_rules! shared_memory_resize {
 
 macro_rules! pop_address {
     ($interp:expr, $x1:ident) => {
-        if $interp.stack.len() < 1 {
+        if $interp.shared_stack.len() < 1 {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
         // Safety: Length is checked above.
-        let $x1 = Address::from_word(B256::from(unsafe { $interp.stack.pop_unsafe() }));
+        let $x1 = Address::from_word(B256::from(unsafe { $interp.shared_stack.pop_unsafe() }));
     };
     ($interp:expr, $x1:ident, $x2:ident) => {
         if $interp.stack.len() < 2 {
@@ -100,70 +100,70 @@ macro_rules! pop_address {
 
 macro_rules! pop {
     ($interp:expr, $x1:ident) => {
-        if $interp.stack.len() < 1 {
+        if $interp.shared_stack.len() < 1 {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
         // Safety: Length is checked above.
-        let $x1 = unsafe { $interp.stack.pop_unsafe() };
+        let $x1 = unsafe { $interp.shared_stack.pop_unsafe() };
     };
     ($interp:expr, $x1:ident, $x2:ident) => {
-        if $interp.stack.len() < 2 {
+        if $interp.shared_stack.len() < 2 {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
         // Safety: Length is checked above.
-        let ($x1, $x2) = unsafe { $interp.stack.pop2_unsafe() };
+        let ($x1, $x2) = unsafe { $interp.shared_stack.pop2_unsafe() };
     };
     ($interp:expr, $x1:ident, $x2:ident, $x3:ident) => {
-        if $interp.stack.len() < 3 {
+        if $interp.shared_stack.len() < 3 {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
         // Safety: Length is checked above.
-        let ($x1, $x2, $x3) = unsafe { $interp.stack.pop3_unsafe() };
+        let ($x1, $x2, $x3) = unsafe { $interp.shared_stack.pop3_unsafe() };
     };
 
     ($interp:expr, $x1:ident, $x2:ident, $x3:ident, $x4:ident) => {
-        if $interp.stack.len() < 4 {
+        if $interp.shared_stack.len() < 4 {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
         // Safety: Length is checked above.
-        let ($x1, $x2, $x3, $x4) = unsafe { $interp.stack.pop4_unsafe() };
+        let ($x1, $x2, $x3, $x4) = unsafe { $interp.shared_stack.pop4_unsafe() };
     };
 }
 
 macro_rules! pop_top {
     ($interp:expr, $x1:ident) => {
-        if $interp.stack.len() < 1 {
+        if $interp.shared_stack.len() < 1 {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
         // Safety: Length is checked above.
-        let $x1 = unsafe { $interp.stack.top_unsafe() };
+        let $x1 = unsafe { $interp.shared_stack.top_unsafe() };
     };
     ($interp:expr, $x1:ident, $x2:ident) => {
-        if $interp.stack.len() < 2 {
+        if $interp.shared_stack.len() < 2 {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
         // Safety: Length is checked above.
-        let ($x1, $x2) = unsafe { $interp.stack.pop_top_unsafe() };
+        let ($x1, $x2) = unsafe { $interp.shared_stack.pop_top_unsafe() };
     };
     ($interp:expr, $x1:ident, $x2:ident, $x3:ident) => {
-        if $interp.stack.len() < 3 {
+        if $interp.shared_stack.len() < 3 {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
         // Safety: Length is checked above.
-        let ($x1, $x2, $x3) = unsafe { $interp.stack.pop2_top_unsafe() };
+        let ($x1, $x2, $x3) = unsafe { $interp.shared_stack.pop2_top_unsafe() };
     };
 }
 
 macro_rules! push_b256 {
 	($interp:expr, $($x:expr),* $(,)?) => ($(
-        match $interp.stack.push_b256($x) {
+        match $interp.shared_stack.push_b256($x) {
             Ok(()) => {},
             Err(e) => {
                 $interp.instruction_result = e;
@@ -175,7 +175,7 @@ macro_rules! push_b256 {
 
 macro_rules! push {
     ($interp:expr, $($x:expr),* $(,)?) => ($(
-        match $interp.stack.push($x) {
+        match $interp.shared_stack.push($x) {
             Ok(()) => {},
             Err(e) => {
                 $interp.instruction_result = e;

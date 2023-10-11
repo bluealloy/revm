@@ -6,7 +6,7 @@ use crate::{
 
 pub fn pop<H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
     gas!(interpreter, gas::BASE);
-    if let Err(result) = interpreter.stack.pop() {
+    if let Err(result) = interpreter.shared_stack.pop() {
         interpreter.instruction_result = result;
     }
 }
@@ -17,7 +17,7 @@ pub fn pop<H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
 pub fn push0<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
     check!(interpreter, SHANGHAI);
     gas!(interpreter, gas::BASE);
-    if let Err(result) = interpreter.stack.push(U256::ZERO) {
+    if let Err(result) = interpreter.shared_stack.push(U256::ZERO) {
         interpreter.instruction_result = result;
     }
 }
@@ -28,7 +28,7 @@ pub fn push<const N: usize, H: Host>(interpreter: &mut Interpreter<'_>, _host: &
     // Safety: In Analysis we appended needed bytes for bytecode so that we are safe to just add without
     // checking if it is out of bound. This makes both of our unsafes block safe to do.
     if let Err(result) = interpreter
-        .stack
+        .shared_stack
         .push_slice::<N>(unsafe { core::slice::from_raw_parts(start, N) })
     {
         interpreter.instruction_result = result;
@@ -39,14 +39,14 @@ pub fn push<const N: usize, H: Host>(interpreter: &mut Interpreter<'_>, _host: &
 
 pub fn dup<const N: usize, H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
-    if let Err(result) = interpreter.stack.dup::<N>() {
+    if let Err(result) = interpreter.shared_stack.dup::<N>() {
         interpreter.instruction_result = result;
     }
 }
 
 pub fn swap<const N: usize, H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
-    if let Err(result) = interpreter.stack.swap::<N>() {
+    if let Err(result) = interpreter.shared_stack.swap::<N>() {
         interpreter.instruction_result = result;
     }
 }

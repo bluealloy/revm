@@ -201,7 +201,7 @@ pub fn log<const N: usize, H: Host>(interpreter: &mut Interpreter<'_>, host: &mu
         Bytes::copy_from_slice(interpreter.shared_memory.slice(offset, len))
     };
 
-    if interpreter.stack.len() < N {
+    if interpreter.shared_stack.len() < N {
         interpreter.instruction_result = InstructionResult::StackUnderflow;
         return;
     }
@@ -210,7 +210,7 @@ pub fn log<const N: usize, H: Host>(interpreter: &mut Interpreter<'_>, host: &mu
     for _ in 0..N {
         // Safety: stack bounds already checked few lines above
         topics.push(B256::new(unsafe {
-            interpreter.stack.pop_unsafe().to_be_bytes()
+            interpreter.shared_stack.pop_unsafe().to_be_bytes()
         }));
     }
 
@@ -315,8 +315,11 @@ pub fn create<const IS_CREATE2: bool, H: Host, SPEC: Spec>(
         return;
     };
 
-    let (return_reason, address, gas, return_data) =
-        host.create(&mut create_input, interpreter.shared_memory);
+    let (return_reason, address, gas, return_data) = host.create(
+        &mut create_input,
+        interpreter.shared_memory,
+        interpreter.shared_stack,
+    );
 
     interpreter.return_data_buffer = match return_reason {
         // Save data to return data buffer if the create reverted
@@ -536,7 +539,11 @@ pub fn call_inner<SPEC: Spec, H: Host>(
     };
 
     // Call host to interact with target contract
-    let (reason, gas, return_data) = host.call(&mut call_input, interpreter.shared_memory);
+    let (reason, gas, return_data) = host.call(
+        &mut call_input,
+        interpreter.shared_memory,
+        interpreter.shared_stack,
+    );
 
     interpreter.return_data_buffer = return_data;
     let target_len = min(out_len, interpreter.return_data_buffer.len());

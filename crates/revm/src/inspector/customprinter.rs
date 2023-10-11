@@ -36,7 +36,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
             opcode,
             interp.gas.refunded(),
             interp.gas.refunded(),
-            interp.stack.data(),
+            interp.shared_stack.data(),
             interp.shared_memory.len(),
         );
 

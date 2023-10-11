@@ -1,4 +1,5 @@
 use crate::primitives::Bytecode;
+use crate::SharedStack;
 use crate::{
     primitives::{Address, Bytes, Env, B256, U256},
     CallInputs, CreateInputs, Gas, InstructionResult, SelfDestructResult, SharedMemory,
@@ -57,6 +58,7 @@ pub trait Host {
         &mut self,
         input: &mut CallInputs,
         shared_memory: &mut SharedMemory,
+        shared_stack: &mut SharedStack,
     ) -> (InstructionResult, Gas, Bytes);
 
     /// Invoke a create operation.
@@ -64,6 +66,7 @@ pub trait Host {
         &mut self,
         inputs: &mut CreateInputs,
         shared_memory: &mut SharedMemory,
+        shared_stack: &mut SharedStack,
     ) -> (InstructionResult, Option<Address>, Gas, Bytes);
 
     /// Mark `address` to be deleted, with funds transferred to `target`.

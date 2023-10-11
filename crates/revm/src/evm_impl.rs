@@ -20,7 +20,7 @@ use revm_interpreter::opcode::make_boxed_instruction_table;
 use revm_interpreter::{
     gas::initial_tx_gas,
     opcode::{make_instruction_table, InstructionTables},
-    SharedMemory, MAX_CODE_SIZE,
+    SharedMemory, SharedStack, MAX_CODE_SIZE,
 };
 use revm_precompile::{Precompile, Precompiles};
 
@@ -291,6 +291,8 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> Transact<DB::Error> for EVMImpl<'a
         #[cfg(not(feature = "memory_limit"))]
         let mut shared_memory = SharedMemory::new();
 
+        let mut shared_stack = SharedStack::new();
+
         // call inner handling of call/create
         let (call_result, ret_gas, output) = match self.data.env.tx.transact_to {
             TransactTo::Call(address) => {
@@ -317,6 +319,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> Transact<DB::Error> for EVMImpl<'a
                         is_static: false,
                     },
                     &mut shared_memory,
+                    &mut shared_stack,
                 );
                 (exit, gas, Output::Call(bytes))
             }
@@ -330,6 +333,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> Transact<DB::Error> for EVMImpl<'a
                         gas_limit: transact_gas_limit,
                     },
                     &mut shared_memory,
+                    &mut shared_stack,
                 );
                 (exit, ret_gas, Output::Create(bytes, address))
             }
@@ -506,6 +510,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         &mut self,
         inputs: &CreateInputs,
         shared_memory: &mut SharedMemory,
+        shared_stack: &mut SharedStack,
     ) -> CreateResult {
         // Prepare crate.
         let prepared_create = match self.prepare_create(inputs) {
@@ -519,6 +524,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             prepared_create.gas.limit(),
             false,
             shared_memory,
+            shared_stack,
         );
 
         // Host error if present on execution
@@ -622,15 +628,18 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         gas_limit: u64,
         is_static: bool,
         shared_memory: &mut SharedMemory,
+        shared_stack: &mut SharedStack,
     ) -> (InstructionResult, Bytes, Gas) {
         let mut interpreter = Box::new(Interpreter::new(
             contract,
             gas_limit,
             is_static,
             shared_memory,
+            shared_stack,
         ));
 
         interpreter.shared_memory.new_context();
+        interpreter.shared_stack.new_context();
 
         if let Some(inspector) = self.inspector.as_mut() {
             inspector.initialize_interp(&mut interpreter, &mut self.data);
@@ -644,6 +653,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         let (return_value, gas) = (interpreter.return_value(), *interpreter.gas());
 
         interpreter.shared_memory.free_context();
+        interpreter.shared_stack.free_context();
 
         (exit_reason, return_value, gas)
     }
@@ -762,7 +772,12 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
     }
 
     /// Main contract call of the EVM.
-    fn call_inner(&mut self, inputs: &CallInputs, shared_memory: &mut SharedMemory) -> CallResult {
+    fn call_inner(
+        &mut self,
+        inputs: &CallInputs,
+        shared_memory: &mut SharedMemory,
+        shared_stack: &mut SharedStack,
+    ) -> CallResult {
         // Prepare call
         let prepared_call = match self.prepare_call(inputs) {
             Ok(o) => o,
@@ -778,6 +793,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                 prepared_call.gas.limit(),
                 inputs.is_static,
                 shared_memory,
+                shared_stack,
             );
             CallResult {
                 result: exit_reason,
@@ -880,6 +896,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> Host for EVMImpl<'a, GSPEC, DB> {
         &mut self,
         inputs: &mut CreateInputs,
         shared_memory: &mut SharedMemory,
+        shared_stack: &mut SharedStack,
     ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
         // Call inspector
         if let Some(inspector) = self.inspector.as_mut() {
@@ -888,7 +905,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> Host for EVMImpl<'a, GSPEC, DB> {
                 return inspector.create_end(&mut self.data, inputs, ret, address, gas, out);
             }
         }
-        let ret = self.create_inner(inputs, shared_memory);
+        let ret = self.create_inner(inputs, shared_memory, shared_stack);
         if let Some(inspector) = self.inspector.as_mut() {
             inspector.create_end(
                 &mut self.data,
@@ -907,6 +924,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> Host for EVMImpl<'a, GSPEC, DB> {
         &mut self,
         inputs: &mut CallInputs,
         shared_memory: &mut SharedMemory,
+        shared_stack: &mut SharedStack,
     ) -> (InstructionResult, Gas, Bytes) {
         if let Some(inspector) = self.inspector.as_mut() {
             let (ret, gas, out) = inspector.call(&mut self.data, inputs);
@@ -914,7 +932,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> Host for EVMImpl<'a, GSPEC, DB> {
                 return inspector.call_end(&mut self.data, inputs, gas, ret, out);
             }
         }
-        let ret = self.call_inner(inputs, shared_memory);
+        let ret = self.call_inner(inputs, shared_memory, shared_stack);
         if let Some(inspector) = self.inspector.as_mut() {
             inspector.call_end(
                 &mut self.data,

@@ -3,7 +3,7 @@ use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult};
 use crate::primitives::{db::Database, hex, Address, Bytes};
 use crate::{EVMData, Inspector};
 use revm_interpreter::primitives::U256;
-use revm_interpreter::{opcode, Interpreter, SharedMemory, Stack};
+use revm_interpreter::{opcode, Interpreter, SharedMemory};
 use serde_json::json;
 use std::io::Write;
 
@@ -17,7 +17,7 @@ pub struct TracerEip3155 {
     #[allow(dead_code)]
     trace_return_data: bool,
 
-    stack: Stack,
+    stack: Vec<U256>,
     pc: usize,
     opcode: u8,
     gas: u64,
@@ -34,7 +34,7 @@ impl TracerEip3155 {
             gas_inspector: GasInspector::default(),
             trace_mem,
             trace_return_data,
-            stack: Stack::new(),
+            stack: Vec::new(),
             pc: 0,
             opcode: 0,
             gas: 0,
@@ -54,7 +54,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
     // all other information can be obtained from interp.
     fn step(&mut self, interp: &mut Interpreter<'_>, data: &mut EVMData<'_, DB>) {
         self.gas_inspector.step(interp, data);
-        self.stack = interp.stack.clone();
+        self.stack = interp.shared_stack.data().to_vec();
         self.pc = interp.program_counter();
         self.opcode = interp.current_opcode();
         self.mem_size = interp.shared_memory.len();
@@ -139,7 +139,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 
 impl TracerEip3155 {
     fn print_log_line(&mut self, depth: u64) {
-        let short_stack: Vec<String> = self.stack.data().iter().map(|&b| short_hex(b)).collect();
+        let short_stack: Vec<String> = self.stack.iter().map(|&b| short_hex(b)).collect();
         let log_line = json!({
             "pc": self.pc,
             "op": self.opcode,

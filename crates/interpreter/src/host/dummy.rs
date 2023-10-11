@@ -1,4 +1,5 @@
 use crate::primitives::{hash_map::Entry, Bytecode, Bytes, HashMap, U256};
+use crate::SharedStack;
 use crate::{
     primitives::{Address, Env, Log, B256, KECCAK_EMPTY},
     CallInputs, CreateInputs, Gas, Host, InstructionResult, SelfDestructResult, SharedMemory,
@@ -124,6 +125,7 @@ impl Host for DummyHost {
         &mut self,
         _inputs: &mut CreateInputs,
         _shared_memory: &mut SharedMemory,
+        _shared_stack: &mut SharedStack,
     ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
         panic!("Create is not supported for this host")
     }
@@ -133,6 +135,7 @@ impl Host for DummyHost {
         &mut self,
         _input: &mut CallInputs,
         _shared_memory: &mut SharedMemory,
+        _shared_stack: &mut SharedStack,
     ) -> (InstructionResult, Gas, Bytes) {
         panic!("Call is not supported for this host")
     }

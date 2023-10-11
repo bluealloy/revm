@@ -1,16 +1,16 @@
 pub mod analysis;
 mod contract;
 mod shared_memory;
-mod stack;
+mod shared_stack;
 
 pub use analysis::BytecodeLocked;
 pub use contract::Contract;
-pub use shared_memory::{next_multiple_of_32, SharedMemory};
-pub use stack::{Stack, STACK_LIMIT};
+pub use shared_memory::*;
 
 use crate::primitives::Bytes;
 use crate::{Gas, Host, InstructionResult};
 use alloc::boxed::Box;
+pub use shared_stack::SharedStack;
 
 /// EIP-170: Contract code size limit
 ///
@@ -33,8 +33,8 @@ pub struct Interpreter<'a> {
     pub gas: Gas,
     /// Shared memory.
     pub shared_memory: &'a mut SharedMemory,
-    /// Stack.
-    pub stack: Stack,
+    /// Shared stack.
+    pub shared_stack: &'a mut SharedStack,
     /// The return data buffer for internal calls.
     pub return_data_buffer: Bytes,
     /// The offset into `self.memory` of the return data.
@@ -54,6 +54,7 @@ impl<'a> Interpreter<'a> {
         gas_limit: u64,
         is_static: bool,
         shared_memory: &'a mut SharedMemory,
+        shared_stack: &'a mut SharedStack,
     ) -> Self {
         Self {
             instruction_pointer: contract.bytecode.as_ptr(),
@@ -65,7 +66,7 @@ impl<'a> Interpreter<'a> {
             return_len: 0,
             return_offset: 0,
             shared_memory,
-            stack: Stack::new(),
+            shared_stack,
         }
     }
 
@@ -85,12 +86,6 @@ impl<'a> Interpreter<'a> {
     #[inline]
     pub fn gas(&self) -> &Gas {
         &self.gas
-    }
-
-    /// Returns a reference to the interpreter's stack.
-    #[inline]
-    pub fn stack(&self) -> &Stack {
-        &self.stack
     }
 
     /// Returns the current program counter.
