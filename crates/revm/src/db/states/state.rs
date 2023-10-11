@@ -28,7 +28,7 @@ pub type StateDBBox<'a, E> = State<DBBox<'a, E>>;
 pub struct State<DB: Database> {
     /// Cached state contains both changed from evm execution and cached/loaded account/storages
     /// from database. This allows us to have only one layer of cache where we can fetch data.
-    /// Additionaly we can introduce some preloading of data from database.
+    /// Additionally we can introduce some preloading of data from database.
     pub cache: CacheState,
     /// Optional database that we use to fetch data from. If database is not present, we will
     /// return not existing account and storage.
