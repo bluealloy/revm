@@ -1,7 +1,8 @@
 pub use crate::primitives::CreateScheme;
-use crate::primitives::{Address, Bytes, U256};
+use crate::primitives::{Address, Bytes, B256, U256};
 
 /// Inputs for a call.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallInputs {
     /// The target of the call.
@@ -19,6 +20,7 @@ pub struct CallInputs {
 }
 
 /// Inputs for a create call.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CreateInputs {
     /// Caller address of the EVM.
@@ -33,8 +35,30 @@ pub struct CreateInputs {
     pub gas_limit: u64,
 }
 
+impl CreateInputs {
+    /// Returns the address that this create call will create.
+    pub fn created_address(&self, nonce: u64) -> Address {
+        match self.scheme {
+            CreateScheme::Create => self.caller.create(nonce),
+            CreateScheme::Create2 { salt } => self
+                .caller
+                .create2_from_code(salt.to_be_bytes(), &self.init_code),
+        }
+    }
+
+    /// Returns the address that this create call will create, without calculating the init code hash.
+    ///
+    /// Note: `hash` must be `keccak256(&self.init_code)`.
+    pub fn created_address_with_hash(&self, nonce: u64, hash: &B256) -> Address {
+        match self.scheme {
+            CreateScheme::Create => self.caller.create(nonce),
+            CreateScheme::Create2 { salt } => self.caller.create2(salt.to_be_bytes(), hash),
+        }
+    }
+}
+
 /// Call schemes.
-#[derive(Clone, Copy, Eq, PartialEq, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum CallScheme {
     /// `CALL`
@@ -48,7 +72,7 @@ pub enum CallScheme {
 }
 
 /// Context of a runtime call.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CallContext {
     /// Execution address.
@@ -76,7 +100,7 @@ impl Default for CallContext {
 }
 
 /// Transfer from source to target, with given value.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Transfer {
     /// The source address.
@@ -88,7 +112,7 @@ pub struct Transfer {
 }
 
 /// Result of a call that resulted in a self destruct.
-#[derive(Default)]
+#[derive(Default, Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SelfDestructResult {
     pub had_value: bool,

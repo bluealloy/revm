@@ -1,11 +1,12 @@
 use crate::primitives::{hash_map::Entry, Bytecode, Bytes, HashMap, U256};
 use crate::{
     primitives::{Address, Env, Log, B256, KECCAK_EMPTY},
-    CallInputs, CreateInputs, Gas, Host, InstructionResult, SelfDestructResult,
+    CallInputs, CreateInputs, Gas, Host, InstructionResult, SelfDestructResult, SharedMemory,
 };
 use alloc::vec::Vec;
 
 /// A dummy [Host] implementation.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct DummyHost {
     pub env: Env,
     pub storage: HashMap<U256, U256>,
@@ -19,9 +20,7 @@ impl DummyHost {
     pub fn new(env: Env) -> Self {
         Self {
             env,
-            storage: HashMap::new(),
-            transient_storage: Default::default(),
-            log: Vec::new(),
+            ..Default::default()
         }
     }
 
@@ -124,12 +123,17 @@ impl Host for DummyHost {
     fn create(
         &mut self,
         _inputs: &mut CreateInputs,
+        _shared_memory: &mut SharedMemory,
     ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
         panic!("Create is not supported for this host")
     }
 
     #[inline]
-    fn call(&mut self, _input: &mut CallInputs) -> (InstructionResult, Gas, Bytes) {
+    fn call(
+        &mut self,
+        _input: &mut CallInputs,
+        _shared_memory: &mut SharedMemory,
+    ) -> (InstructionResult, Gas, Bytes) {
         panic!("Call is not supported for this host")
     }
 }

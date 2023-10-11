@@ -10,7 +10,7 @@ pub type PrecompileResult = Result<(u64, Vec<u8>), PrecompileError>;
 pub type StandardPrecompileFn = fn(&[u8], u64) -> PrecompileResult;
 pub type EnvPrecompileFn = fn(&[u8], u64, env: &Env) -> PrecompileResult;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum PrecompileError {
     /// out of gas is the main error. Other are just here for completeness
     OutOfGas,
@@ -38,7 +38,7 @@ pub enum PrecompileError {
 impl std::error::Error for PrecompileError {}
 
 impl fmt::Display for PrecompileError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             PrecompileError::OutOfGas => write!(f, "out of gas"),
             PrecompileError::Blake2WrongLength => write!(f, "wrong input length for blake2"),

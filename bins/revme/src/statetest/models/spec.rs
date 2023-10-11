@@ -1,7 +1,7 @@
 use revm::primitives::SpecId;
 use serde::Deserialize;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Hash, Ord, Deserialize)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Deserialize, Hash)]
 pub enum SpecName {
     Frontier,
     FrontierToHomesteadAt5,

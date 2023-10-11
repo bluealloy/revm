@@ -10,7 +10,8 @@ use alloc::boxed::Box;
 use alloc::sync::Arc;
 use core::fmt;
 
-pub type Instruction<H> = fn(&mut Interpreter, &mut H);
+/// EVM opcode function signature.
+pub type Instruction<H> = fn(&mut Interpreter<'_>, &mut H);
 
 pub type InstructionTable<H> = [Instruction<H>; 256];
 
@@ -18,7 +19,7 @@ pub type InstructionTable<H> = [Instruction<H>; 256];
 pub type InstructionTableArc<H> = Arc<InstructionTable<H>>;
 
 /// EVM opcode function signature.
-pub type BoxedInstruction<'a, H> = Box<dyn Fn(&mut Interpreter, &mut H) + 'a>;
+pub type BoxedInstruction<'a, H> = Box<dyn Fn(&mut Interpreter<'_>, &mut H) + 'a>;
 
 /// A table of instructions.
 pub type BoxedInstructionTable<'a, H> = [BoxedInstruction<'a, H>; 256];
@@ -67,7 +68,7 @@ macro_rules! opcodes {
         };
 
         /// Return the instruction function for the given opcode and spec.
-        pub fn instruction<SPEC:Spec,H:Host>(opcode: u8) -> Instruction<H> {
+        pub fn instruction<H:Host, SPEC:Spec>(opcode: u8) -> Instruction<H> {
             match opcode {
                 $($name => $f,)*
                 _ => control::not_found,
@@ -77,8 +78,8 @@ macro_rules! opcodes {
     };
 }
 
-pub fn boxed_instruction<'a, SPEC: Spec, H: Host + 'a>(opcode: u8) -> BoxedInstruction<'a, H> {
-    let instruction = instruction::<SPEC, H>(opcode);
+pub fn boxed_instruction<'a, H: Host + 'a, SPEC: Spec>(opcode: u8) -> BoxedInstruction<'a, H> {
+    let instruction = instruction::<H, SPEC>(opcode);
     Box::new(instruction)
 }
 
@@ -88,20 +89,20 @@ pub fn make_instruction_table<SPEC: Spec, H: Host>() -> InstructionTable<H> {
         core::array::from_fn(|_| control::not_found::<H> as Instruction<H>);
     let mut i = 0;
     while i < 256 {
-        table[i] = instruction::<SPEC, H>(i as u8);
+        table[i] = instruction::<H, SPEC>(i as u8);
         i += 1;
     }
     table
 }
 
 /// Make instruction talbe
-pub fn make_boxed_instruction_table<'a, SPEC: Spec, H: Host + 'a>() -> BoxedInstructionTable<'a, H>
+pub fn make_boxed_instruction_table<'a, H: Host + 'a, SPEC: Spec>() -> BoxedInstructionTable<'a, H>
 {
-    let mut table: BoxedInstructionTable<H> =
+    let mut table: BoxedInstructionTable<'_, H> =
         core::array::from_fn(|_| Box::new(control::not_found::<H>) as BoxedInstruction<'a, H>);
     let mut i = 0;
     while i < 256 {
-        table[i] = boxed_instruction::<SPEC, H>(i as u8);
+        table[i] = boxed_instruction::<H, SPEC>(i as u8);
         i += 1;
     }
     table
@@ -124,7 +125,7 @@ opcodes! {
     0x07 => SMOD       => arithmetic::smod,
     0x08 => ADDMOD     => arithmetic::addmod,
     0x09 => MULMOD     => arithmetic::mulmod,
-    0x0A => EXP        => arithmetic::exp::<SPEC, H>,
+    0x0A => EXP        => arithmetic::exp::<H,SPEC>,
     0x0B => SIGNEXTEND => arithmetic::signextend,
     // 0x0C
     // 0x0D
@@ -141,9 +142,9 @@ opcodes! {
     0x18 => XOR    => bitwise::bitxor,
     0x19 => NOT    => bitwise::not,
     0x1A => BYTE   => bitwise::byte,
-    0x1B => SHL    => bitwise::shl::<SPEC, H>,
-    0x1C => SHR    => bitwise::shr::<SPEC, H>,
-    0x1D => SAR    => bitwise::sar::<SPEC, H>,
+    0x1B => SHL    => bitwise::shl::<H, SPEC>,
+    0x1C => SHR    => bitwise::shr::<H, SPEC>,
+    0x1D => SAR    => bitwise::sar::<H, SPEC>,
     // 0x1E
     // 0x1F
     0x20 => KECCAK256 => system::keccak256,
@@ -163,7 +164,7 @@ opcodes! {
     // 0x2E
     // 0x2F
     0x30 => ADDRESS   => system::address,
-    0x31 => BALANCE   => host::balance::<SPEC, H>,
+    0x31 => BALANCE   => host::balance::<H, SPEC>,
     0x32 => ORIGIN    => host_env::origin,
     0x33 => CALLER    => system::caller,
     0x34 => CALLVALUE => system::callvalue,
@@ -174,22 +175,22 @@ opcodes! {
     0x39 => CODECOPY     => system::codecopy,
 
     0x3A => GASPRICE       => host_env::gasprice,
-    0x3B => EXTCODESIZE    => host::extcodesize::<SPEC, H>,
-    0x3C => EXTCODECOPY    => host::extcodecopy::<SPEC, H>,
-    0x3D => RETURNDATASIZE => system::returndatasize::<SPEC, H>,
-    0x3E => RETURNDATACOPY => system::returndatacopy::<SPEC, H>,
-    0x3F => EXTCODEHASH    => host::extcodehash::<SPEC, H>,
+    0x3B => EXTCODESIZE    => host::extcodesize::<H, SPEC>,
+    0x3C => EXTCODECOPY    => host::extcodecopy::<H, SPEC>,
+    0x3D => RETURNDATASIZE => system::returndatasize::<H, SPEC>,
+    0x3E => RETURNDATACOPY => system::returndatacopy::<H, SPEC>,
+    0x3F => EXTCODEHASH    => host::extcodehash::<H, SPEC>,
     0x40 => BLOCKHASH      => host::blockhash,
     0x41 => COINBASE       => host_env::coinbase,
     0x42 => TIMESTAMP      => host_env::timestamp,
     0x43 => NUMBER         => host_env::number,
-    0x44 => DIFFICULTY     => host_env::difficulty::<SPEC, H>,
+    0x44 => DIFFICULTY     => host_env::difficulty::<H, SPEC>,
     0x45 => GASLIMIT       => host_env::gaslimit,
-    0x46 => CHAINID        => host_env::chainid::<SPEC, H>,
-    0x47 => SELFBALANCE    => host::selfbalance::<SPEC, H>,
-    0x48 => BASEFEE        => host_env::basefee::<SPEC, H>,
-    0x49 => BLOBHASH       => host_env::blob_hash::<SPEC, H>,
-    0x4A => BLOBBASEFEE    => host_env::blob_basefee::<SPEC, H>,
+    0x46 => CHAINID        => host_env::chainid::<H, SPEC>,
+    0x47 => SELFBALANCE    => host::selfbalance::<H, SPEC>,
+    0x48 => BASEFEE        => host_env::basefee::<H, SPEC>,
+    0x49 => BLOBHASH       => host_env::blob_hash::<H, SPEC>,
+    0x4A => BLOBBASEFEE    => host_env::blob_basefee::<H, SPEC>,
     // 0x4B
     // 0x4C
     // 0x4D
@@ -199,19 +200,19 @@ opcodes! {
     0x51 => MLOAD    => memory::mload,
     0x52 => MSTORE   => memory::mstore,
     0x53 => MSTORE8  => memory::mstore8,
-    0x54 => SLOAD    => host::sload::<SPEC, H>,
-    0x55 => SSTORE   => host::sstore::<SPEC, H>,
+    0x54 => SLOAD    => host::sload::<H, SPEC>,
+    0x55 => SSTORE   => host::sstore::<H, SPEC>,
     0x56 => JUMP     => control::jump,
     0x57 => JUMPI    => control::jumpi,
     0x58 => PC       => control::pc,
     0x59 => MSIZE    => memory::msize,
     0x5A => GAS      => system::gas,
     0x5B => JUMPDEST => control::jumpdest,
-    0x5C => TLOAD    => host::tload::<SPEC, H>,
-    0x5D => TSTORE   => host::tstore::<SPEC, H>,
-    0x5E => MCOPY    => memory::mcopy::<SPEC, H>,
+    0x5C => TLOAD    => host::tload::<H, SPEC>,
+    0x5D => TSTORE   => host::tstore::<H, SPEC>,
+    0x5E => MCOPY    => memory::mcopy::<H, SPEC>,
 
-    0x5F => PUSH0  => stack::push0::<SPEC, H>,
+    0x5F => PUSH0  => stack::push0::<H, SPEC>,
     0x60 => PUSH1  => stack::push::<1, H>,
     0x61 => PUSH2  => stack::push::<2, H>,
     0x62 => PUSH3  => stack::push::<3, H>,
@@ -359,22 +360,22 @@ opcodes! {
     // 0xED
     // 0xEE
     // 0xEF
-    0xF0 => CREATE       => host::create::<false, SPEC, H>,
-    0xF1 => CALL         => host::call::<SPEC, H>,
-    0xF2 => CALLCODE     => host::call_code::<SPEC, H>,
+    0xF0 => CREATE       => host::create::<false, H, SPEC>,
+    0xF1 => CALL         => host::call::<H, SPEC>,
+    0xF2 => CALLCODE     => host::call_code::<H, SPEC>,
     0xF3 => RETURN       => control::ret,
-    0xF4 => DELEGATECALL => host::delegate_call::<SPEC, H>,
-    0xF5 => CREATE2      => host::create::<true, SPEC, H>,
+    0xF4 => DELEGATECALL => host::delegate_call::<H, SPEC>,
+    0xF5 => CREATE2      => host::create::<true, H, SPEC>,
     // 0xF6
     // 0xF7
     // 0xF8
     // 0xF9
-    0xFA => STATICCALL   => host::static_call::<SPEC, H>,
+    0xFA => STATICCALL   => host::static_call::<H, SPEC>,
     // 0xFB
     // 0xFC
-    0xFD => REVERT       => control::revert::<SPEC, H>,
+    0xFD => REVERT       => control::revert::<H, SPEC>,
     0xFE => INVALID      => control::invalid,
-    0xFF => SELFDESTRUCT => host::selfdestruct::<SPEC, H>,
+    0xFF => SELFDESTRUCT => host::selfdestruct::<H, SPEC>,
 }
 
 /// An EVM opcode.

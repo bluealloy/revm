@@ -18,7 +18,7 @@ pub struct ResultAndState {
 }
 
 /// Result of a transaction execution.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ExecutionResult {
     /// Returned successfully
@@ -95,7 +95,7 @@ impl ExecutionResult {
 }
 
 /// Output of a transaction execution.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Output {
     Call(Bytes),
@@ -120,8 +120,8 @@ impl Output {
     }
 }
 
-/// EVM error.
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+/// Main EVM error.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum EVMError<DBError> {
     /// Transaction validation error.
@@ -152,7 +152,7 @@ impl<DBError> From<InvalidTransaction> for EVMError<DBError> {
 }
 
 /// Transaction validation error.
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InvalidTransaction {
     /// When using the EIP-1559 fee model introduced in the London upgrade, transactions specify two primary fee fields:
@@ -221,7 +221,7 @@ pub enum InvalidTransaction {
 impl std::error::Error for InvalidTransaction {}
 
 impl fmt::Display for InvalidTransaction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             InvalidTransaction::PriorityFeeGreaterThanMaxFee => {
                 write!(f, "Priority fee is greater than max fee")
@@ -291,7 +291,7 @@ impl<DBError> From<InvalidHeader> for EVMError<DBError> {
 }
 
 /// Errors related to misconfiguration of a [`BlockEnv`].
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InvalidHeader {
     /// `prevrandao` is not set for Merge and above.
@@ -304,7 +304,7 @@ pub enum InvalidHeader {
 impl std::error::Error for InvalidHeader {}
 
 impl fmt::Display for InvalidHeader {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             InvalidHeader::PrevrandaoNotSet => write!(f, "Prevrandao not set"),
             InvalidHeader::ExcessBlobGasNotSet => write!(f, "Excess blob gas not set"),
@@ -313,7 +313,7 @@ impl fmt::Display for InvalidHeader {
 }
 
 /// Reason a transaction successfully completed.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Eval {
     Stop,
@@ -323,7 +323,7 @@ pub enum Eval {
 
 /// Indicates that the EVM has experienced an exceptional halt. This causes execution to
 /// immediately end with all gas being consumed.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Halt {
     OutOfGas(OutOfGasError),
@@ -352,7 +352,7 @@ pub enum Halt {
     CallTooDeep,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum OutOfGasError {
     // Basic OOG error

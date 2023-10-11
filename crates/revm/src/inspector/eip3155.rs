@@ -3,7 +3,7 @@ use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult};
 use crate::primitives::{db::Database, hex, Address, Bytes};
 use crate::{evm_impl::EVMData, Inspector};
 use revm_interpreter::primitives::U256;
-use revm_interpreter::{opcode, Interpreter, Memory, Stack};
+use revm_interpreter::{opcode, Interpreter, SharedMemory, Stack};
 use serde_json::json;
 use std::io::Write;
 
@@ -23,7 +23,7 @@ pub struct TracerEip3155 {
     gas: u64,
     mem_size: usize,
     #[allow(dead_code)]
-    memory: Option<Memory>,
+    memory: Option<SharedMemory>,
     skip: bool,
 }
 
@@ -48,7 +48,7 @@ impl TracerEip3155 {
 impl<DB: Database> Inspector<DB> for TracerEip3155 {
     fn initialize_interp(
         &mut self,
-        interp: &mut Interpreter,
+        interp: &mut Interpreter<'_>,
         data: &mut EVMData<'_, DB>,
     ) -> InstructionResult {
         self.gas_inspector.initialize_interp(interp, data);
@@ -57,19 +57,23 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 
     // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
     // all other information can be obtained from interp.
-    fn step(&mut self, interp: &mut Interpreter, data: &mut EVMData<'_, DB>) -> InstructionResult {
+    fn step(
+        &mut self,
+        interp: &mut Interpreter<'_>,
+        data: &mut EVMData<'_, DB>,
+    ) -> InstructionResult {
         self.gas_inspector.step(interp, data);
         self.stack = interp.stack.clone();
         self.pc = interp.program_counter();
         self.opcode = interp.current_opcode();
-        self.mem_size = interp.memory.len();
+        self.mem_size = interp.shared_memory.len();
         self.gas = self.gas_inspector.gas_remaining();
         InstructionResult::Continue
     }
 
     fn step_end(
         &mut self,
-        interp: &mut Interpreter,
+        interp: &mut Interpreter<'_>,
         data: &mut EVMData<'_, DB>,
     ) -> InstructionResult {
         self.gas_inspector.step_end(interp, data);

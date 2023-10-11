@@ -27,4 +27,4 @@ cargo run --profile ethtests -p revme -- \
 
 - `revm-test`: test binaries with contracts; used mostly to check performance
 
-If you are interested in contributing, be sure to run the statetests. It is recommeded to read about the [ethereum tests](https://ethereum-tests.readthedocs.io/en/latest/).  
+If you are interested in contributing, be sure to run the statetests. It is recommended to read about the [ethereum tests](https://ethereum-tests.readthedocs.io/en/latest/).

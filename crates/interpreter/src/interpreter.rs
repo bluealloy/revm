@@ -1,15 +1,16 @@
 pub mod analysis;
 mod contract;
-mod memory;
+mod shared_memory;
 mod stack;
-
-use crate::primitives::Bytes;
-use crate::{alloc::boxed::Box, Gas, Host, InstructionResult};
 
 pub use analysis::BytecodeLocked;
 pub use contract::Contract;
-pub use memory::{next_multiple_of_32, Memory};
-pub use stack::Stack;
+pub use shared_memory::{next_multiple_of_32, SharedMemory};
+pub use stack::{Stack, STACK_LIMIT};
+
+use crate::primitives::Bytes;
+use crate::{Gas, Host, InstructionResult};
+use alloc::boxed::Box;
 
 /// EIP-170: Contract code size limit
 ///
@@ -20,8 +21,8 @@ pub const MAX_CODE_SIZE: usize = 0x6000;
 pub const MAX_INITCODE_SIZE: usize = 2 * MAX_CODE_SIZE;
 
 #[derive(Debug)]
-pub struct Interpreter {
-    /// Contract information and invoking data.
+pub struct Interpreter<'a> {
+    /// Contract information and invoking data
     pub contract: Box<Contract>,
     /// The current instruction pointer.
     pub instruction_pointer: *const u8,
@@ -30,9 +31,9 @@ pub struct Interpreter {
     pub instruction_result: InstructionResult,
     /// The gas state.
     pub gas: Gas,
-    /// The memory.
-    pub memory: Memory,
-    /// The stack.
+    /// Shared memory.
+    pub shared_memory: &'a mut SharedMemory,
+    /// Stack.
     pub stack: Stack,
     /// The return data buffer for internal calls.
     pub return_data_buffer: Bytes,
@@ -44,43 +45,27 @@ pub struct Interpreter {
     pub return_len: usize,
     /// Whether the interpreter is in "staticcall" mode, meaning no state changes can happen.
     pub is_static: bool,
-    /// Memory limit. See [`crate::CfgEnv`].
-    #[cfg(feature = "memory_limit")]
-    pub memory_limit: u64,
 }
 
-impl Interpreter {
-    /// Instantiates a new interpreter.
-    #[inline]
-    pub fn new(contract: Box<Contract>, gas_limit: u64, is_static: bool) -> Self {
-        Self {
-            instruction_pointer: contract.bytecode.as_ptr(),
-            contract,
-            instruction_result: InstructionResult::Continue,
-            gas: Gas::new(gas_limit),
-            memory: Memory::new(),
-            stack: Stack::new(),
-            return_data_buffer: Bytes::new(),
-            return_offset: 0,
-            return_len: 0,
-            is_static,
-            #[cfg(feature = "memory_limit")]
-            memory_limit: u64::MAX,
-        }
-    }
-
-    /// Instantiates a new interpreter with the given memory limit.
-    #[cfg(feature = "memory_limit")]
-    #[inline]
-    pub fn new_with_memory_limit(
+impl<'a> Interpreter<'a> {
+    /// Create new interpreter
+    pub fn new(
         contract: Box<Contract>,
         gas_limit: u64,
         is_static: bool,
-        memory_limit: u64,
+        shared_memory: &'a mut SharedMemory,
     ) -> Self {
         Self {
-            memory_limit,
-            ..Self::new(contract, gas_limit, is_static)
+            instruction_pointer: contract.bytecode.as_ptr(),
+            contract,
+            gas: Gas::new(gas_limit),
+            instruction_result: InstructionResult::Continue,
+            is_static,
+            return_data_buffer: Bytes::new(),
+            return_len: 0,
+            return_offset: 0,
+            shared_memory,
+            stack: Stack::new(),
         }
     }
 
@@ -100,12 +85,6 @@ impl Interpreter {
     #[inline]
     pub fn gas(&self) -> &Gas {
         &self.gas
-    }
-
-    /// Returns a reference to the interpreter's memory.
-    #[inline]
-    pub fn memory(&self) -> &Memory {
-        &self.memory
     }
 
     /// Returns a reference to the interpreter's stack.
@@ -128,7 +107,7 @@ impl Interpreter {
     #[inline(always)]
     pub fn step<FN, H: Host>(&mut self, instruction_table: &[FN; 256], host: &mut H)
     where
-        FN: Fn(&mut Interpreter, &mut H),
+        FN: Fn(&mut Interpreter<'_>, &mut H),
     {
         // Get current opcode.
         let opcode = unsafe { *self.instruction_pointer };
@@ -149,7 +128,7 @@ impl Interpreter {
         host: &mut H,
     ) -> InstructionResult
     where
-        FN: Fn(&mut Interpreter, &mut H),
+        FN: Fn(&mut Interpreter<'_>, &mut H),
     {
         while self.instruction_result == InstructionResult::Continue {
             self.step(instruction_table, host);
@@ -169,7 +148,8 @@ impl Interpreter {
         if self.return_len == 0 {
             &[]
         } else {
-            self.memory.slice(self.return_offset, self.return_len)
+            self.shared_memory
+                .slice(self.return_offset, self.return_len)
         }
     }
 }

@@ -6,7 +6,7 @@ use crate::{
 use core::cmp::{min, Ordering};
 
 /// EVM environment configuration.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Env {
     /// Configuration of the EVM itself.
@@ -238,7 +238,7 @@ impl Env {
 }
 
 /// EVM configuration.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct CfgEnv {
@@ -385,7 +385,7 @@ impl Default for CfgEnv {
 }
 
 /// The block environment.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlockEnv {
     /// The number of ancestor blocks of this block (block height).
@@ -472,7 +472,7 @@ impl Default for BlockEnv {
 }
 
 /// The transaction environment.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxEnv {
     /// Caller aka Author aka transaction signer.
@@ -567,7 +567,7 @@ impl Default for TxEnv {
 /// Incorporated as part of the Cancun upgrade via [EIP-4844].
 ///
 /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BlobExcessGasAndPrice {
     /// The excess blob gas of the block.
@@ -589,7 +589,7 @@ impl BlobExcessGasAndPrice {
 
 /// Additional [TxEnv] fields for optimism.
 #[cfg(feature = "optimism")]
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct OptimismFields {
     /// The source hash is used to make sure that deposit transactions do
@@ -622,7 +622,7 @@ pub struct OptimismFields {
 }
 
 /// Transaction destination.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum TransactTo {
     /// Simple call to an address.
@@ -664,7 +664,7 @@ impl TransactTo {
 }
 
 /// Create scheme.
-#[derive(Clone, Copy, Eq, PartialEq, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum CreateScheme {
     /// Legacy create scheme of `CREATE`.
@@ -677,7 +677,7 @@ pub enum CreateScheme {
 }
 
 /// What bytecode analysis to perform.
-#[derive(Clone, Default, Debug, Eq, PartialEq)]
+#[derive(Clone, Default, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AnalysisKind {
     /// Do not perform bytecode analysis.

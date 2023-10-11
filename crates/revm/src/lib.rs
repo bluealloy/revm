@@ -1,6 +1,8 @@
-#![cfg_attr(not(feature = "std"), no_std)]
 #![warn(unreachable_pub)]
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
+#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
+#![deny(unused_must_use, rust_2018_idioms)]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 #[macro_use]
 extern crate alloc;

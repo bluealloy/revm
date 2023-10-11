@@ -6,7 +6,7 @@ pub use SpecId::*;
 ///
 /// Information was obtained from: <https://github.com/ethereum/execution-specs>
 #[repr(u8)]
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd, enumn::N)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, enumn::N)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SpecId {
     FRONTIER = 0,         // Frontier	            0
@@ -117,6 +117,7 @@ pub trait Spec: Sized {
 
 macro_rules! spec {
     ($spec_id:ident, $spec_name:ident) => {
+        #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
         pub struct $spec_name;
 
         impl Spec for $spec_name {

@@ -7,7 +7,7 @@ pub use calc::*;
 pub use constants::*;
 
 /// Represents the state of gas during execution.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Gas {
     /// The initial gas limit.
     limit: u64,
