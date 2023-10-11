@@ -5,8 +5,8 @@ use crate::{
 use alloc::vec::Vec;
 use core::fmt;
 
-/// The EVM stack limit, in number of items.
-const STACK_LIMIT: usize = 1024;
+/// EVM interpreter stack limit.
+pub const STACK_LIMIT: usize = 1024;
 
 /// EVM stack.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

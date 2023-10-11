@@ -1,3 +1,13 @@
+
+# v3.5.0
+date 02.10.2023
+
+Migration to alloy primitive types.
+
+Full git log:
+* 4e78fbe - docs: document non-zero amounts in State::increment_balances (#760) (15 hours ago) <Dan Cline>
+* af4146a - feat: Alloy primitives (#724) (15 hours ago) <evalir>
+
 # v3.4.0
 date: 28.09.2023
 
@@ -288,7 +298,7 @@ Very small release. Exposes one field and added prevrandao to remove footgun of 
 # v2.2.0
 date: 12.11.2022
 
-Small release that contains consensus bug fix. Additionaly added few small feature flags needed for hardhat, opcode utility function and removal of web3db block number check. 
+Small release that contains consensus bug fix. Additionally added few small feature flags needed for hardhat, opcode utility function and removal of web3db block number check. 
 
 * dc3414a - Added OEF spec for tests. Skip HighGasPrice (4 minutes ago) <rakita>
 * f462f9d - Bugfix: if returndatacopy is len 0 return after initial cost (#259) (4 minutes ago) <gd>

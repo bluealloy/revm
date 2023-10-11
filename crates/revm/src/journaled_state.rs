@@ -1,7 +1,7 @@
-use crate::interpreter::{inner_models::SelfDestructResult, InstructionResult};
+use crate::interpreter::{InstructionResult, SelfDestructResult};
 use crate::primitives::{
-    db::Database, hash_map::Entry, Account, Bytecode, HashMap, Log, Spec, SpecId::*, State,
-    StorageSlot, TransientStorage, B160, KECCAK_EMPTY, PRECOMPILE3, U256,
+    db::Database, hash_map::Entry, Account, Address, Bytecode, HashMap, Log, Spec, SpecId::*,
+    State, StorageSlot, TransientStorage, KECCAK_EMPTY, PRECOMPILE3, U256,
 };
 use alloc::vec::Vec;
 use core::mem;
@@ -27,71 +27,6 @@ pub struct JournaledState {
     /// It is assumed that precompiles start from 0x1 address and span next N addresses.
     /// we are using that assumption here
     pub num_of_precompiles: usize,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum JournalEntry {
-    /// Used to mark account that is warm inside EVM in regards to EIP-2929 AccessList.
-    /// Action: We will add Account to state.
-    /// Revert: we will remove account from state.
-    AccountLoaded { address: B160 },
-    /// Mark account to be destroyed and journal balance to be reverted
-    /// Action: Mark account and transfer the balance
-    /// Revert: Unmark the account and transfer balance back
-    AccountDestroyed {
-        address: B160,
-        target: B160,
-        was_destroyed: bool, // if account had already been destroyed before this journal entry
-        had_balance: U256,
-    },
-    /// Loading account does not mean that account will need to be added to MerkleTree (touched).
-    /// Only when account is called (to execute contract or transfer balance) only then account is made touched.
-    /// Action: Mark account touched
-    /// Revert: Unmark account touched
-    AccountTouched { address: B160 },
-    /// Transfer balance between two accounts
-    /// Action: Transfer balance
-    /// Revert: Transfer balance back
-    BalanceTransfer { from: B160, to: B160, balance: U256 },
-    /// Increment nonce
-    /// Action: Increment nonce by one
-    /// Revert: Decrement nonce by one
-    NonceChange {
-        address: B160, //geth has nonce value,
-    },
-    /// Create account:
-    /// Actions: Mark account as created
-    /// Revert: Unmart account as created and reset nonce to zero.
-    AccountCreated { address: B160 },
-    /// It is used to track both storage change and warm load of storage slot. For warm load in regard
-    /// to EIP-2929 AccessList had_value will be None
-    /// Action: Storage change or warm load
-    /// Revert: Revert to previous value or remove slot from storage
-    StorageChange {
-        address: B160,
-        key: U256,
-        had_value: Option<U256>, //if none, storage slot was cold loaded from db and needs to be removed
-    },
-    /// It is used to track an EIP-1153 transient storage change.
-    /// Action: Transient storage changed.
-    /// Revert: Revert to previous value.
-    TransientStorageChange {
-        address: B160,
-        key: U256,
-        had_value: U256,
-    },
-    /// Code changed
-    /// Action: Account code changed
-    /// Revert: Revert to previous bytecode.
-    CodeChange { address: B160 },
-}
-
-/// SubRoutine checkpoint that will help us to go back from this
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct JournalCheckpoint {
-    log_i: usize,
-    journal_i: usize,
 }
 
 impl JournaledState {
@@ -122,13 +57,13 @@ impl JournaledState {
     /// Mark account as touched as only touched accounts will be added to state.
     /// This is especially important for state clear where touched empty accounts needs to
     /// be removed from state.
-    pub fn touch(&mut self, address: &B160) {
+    pub fn touch(&mut self, address: &Address) {
         if let Some(account) = self.state.get_mut(address) {
             Self::touch_account(self.journal.last_mut().unwrap(), address, account);
         }
     }
 
-    fn touch_account(journal: &mut Vec<JournalEntry>, address: &B160, account: &mut Account) {
+    fn touch_account(journal: &mut Vec<JournalEntry>, address: &Address, account: &mut Account) {
         if !account.is_touched() {
             journal.push(JournalEntry::AccountTouched { address: *address });
             account.mark_touch();
@@ -145,9 +80,17 @@ impl JournaledState {
         (state, logs)
     }
 
-    /// Use it with load_account function.
-    pub fn account(&self, address: B160) -> &Account {
-        self.state.get(&address).unwrap() // Always assume that acc is already loaded
+    /// Returns the _loaded_ [Account] for the given address.
+    ///
+    /// This assumes that the account has already been loaded.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the account has not been loaded and is missing from the state set.
+    pub fn account(&self, address: Address) -> &Account {
+        self.state
+            .get(&address)
+            .expect("Account expected to be loaded") // Always assume that acc is already loaded
     }
 
     pub fn depth(&self) -> u64 {
@@ -156,7 +99,7 @@ impl JournaledState {
 
     /// use it only if you know that acc is warm
     /// Assume account is warm
-    pub fn set_code(&mut self, address: B160, code: Bytecode) {
+    pub fn set_code(&mut self, address: Address, code: Bytecode) {
         let account = self.state.get_mut(&address).unwrap();
         Self::touch_account(self.journal.last_mut().unwrap(), &address, account);
 
@@ -169,7 +112,7 @@ impl JournaledState {
         account.info.code = Some(code);
     }
 
-    pub fn inc_nonce(&mut self, address: B160) -> Option<u64> {
+    pub fn inc_nonce(&mut self, address: Address) -> Option<u64> {
         let account = self.state.get_mut(&address).unwrap();
         // Check if nonce is going to overflow.
         if account.info.nonce == u64::MAX {
@@ -188,8 +131,8 @@ impl JournaledState {
 
     pub fn transfer<DB: Database>(
         &mut self,
-        from: &B160,
-        to: &B160,
+        from: &Address,
+        to: &Address,
         balance: U256,
         db: &mut DB,
     ) -> Result<(), InstructionResult> {
@@ -239,13 +182,13 @@ impl JournaledState {
     /// 4. Add fund to created account
     /// 5. Increment nonce of created account if SpuriousDragon is active
     /// 6. Decrease balance of caller account.
-    ///  
+    ///
     /// Safety: It is assumed that caller balance is already checked and that
     /// caller is already loaded inside evm. This is already done inside `create_inner`
     pub fn create_account_checkpoint<SPEC: Spec>(
         &mut self,
-        caller: B160,
-        address: B160,
+        caller: Address,
+        address: Address,
         balance: U256,
     ) -> Result<JournalCheckpoint, InstructionResult> {
         // Enter subroutine
@@ -311,7 +254,7 @@ impl JournaledState {
 
     #[inline(always)]
     pub fn check_account_collision(
-        address: B160,
+        address: Address,
         account: &Account,
         num_of_precompiles: usize,
     ) -> bool {
@@ -473,8 +416,8 @@ impl JournaledState {
     ///  * https://eips.ethereum.org/EIPS/eip-6780
     pub fn selfdestruct<DB: Database>(
         &mut self,
-        address: B160,
-        target: B160,
+        address: Address,
+        target: Address,
         db: &mut DB,
     ) -> Result<SelfDestructResult, DB::Error> {
         let (is_cold, target_exists) = self.load_account_exist(target, db)?;
@@ -533,7 +476,7 @@ impl JournaledState {
 
     pub fn initial_account_and_code_load<DB: Database>(
         &mut self,
-        address: B160,
+        address: Address,
         db: &mut DB,
     ) -> Result<&mut Account, DB::Error> {
         let account = self.initial_account_load(address, &[], db)?;
@@ -552,7 +495,7 @@ impl JournaledState {
     /// Initial load of account. This load will not be tracked inside journal
     pub fn initial_account_load<DB: Database>(
         &mut self,
-        address: B160,
+        address: Address,
         slots: &[U256],
         db: &mut DB,
     ) -> Result<&mut Account, DB::Error> {
@@ -578,7 +521,7 @@ impl JournaledState {
     /// load account into memory. return if it is cold or warm accessed
     pub fn load_account<DB: Database>(
         &mut self,
-        address: B160,
+        address: Address,
         db: &mut DB,
     ) -> Result<(&mut Account, bool), DB::Error> {
         Ok(match self.state.entry(address) {
@@ -607,7 +550,7 @@ impl JournaledState {
     // first is is_cold second bool is exists.
     pub fn load_account_exist<DB: Database>(
         &mut self,
-        address: B160,
+        address: Address,
         db: &mut DB,
     ) -> Result<(bool, bool), DB::Error> {
         let is_spurious_dragon_enabled = SpecId::enabled(self.spec, SPURIOUS_DRAGON);
@@ -625,7 +568,7 @@ impl JournaledState {
 
     pub fn load_code<DB: Database>(
         &mut self,
-        address: B160,
+        address: Address,
         db: &mut DB,
     ) -> Result<(&mut Account, bool), DB::Error> {
         let (acc, is_cold) = self.load_account(address, db)?;
@@ -644,7 +587,7 @@ impl JournaledState {
     // account is already present and loaded.
     pub fn sload<DB: Database>(
         &mut self,
-        address: B160,
+        address: Address,
         key: U256,
         db: &mut DB,
     ) -> Result<(U256, bool), DB::Error> {
@@ -682,7 +625,7 @@ impl JournaledState {
     /// returns (original,present,new) slot
     pub fn sstore<DB: Database>(
         &mut self,
-        address: B160,
+        address: Address,
         key: U256,
         new: U256,
         db: &mut DB,
@@ -715,7 +658,7 @@ impl JournaledState {
     /// Read transient storage tied to the account.
     ///
     /// EIP-1153: Transient storage opcodes
-    pub fn tload(&mut self, address: B160, key: U256) -> U256 {
+    pub fn tload(&mut self, address: Address, key: U256) -> U256 {
         self.transient_storage
             .get(&(address, key))
             .copied()
@@ -728,7 +671,7 @@ impl JournaledState {
     /// so that old state can be reverted if that action is needed.
     ///
     /// EIP-1153: Transient storage opcodes
-    pub fn tstore(&mut self, address: B160, key: U256, new: U256) {
+    pub fn tstore(&mut self, address: Address, key: U256, new: U256) {
         let had_value = if new == U256::ZERO {
             // if new values is zero, remove entry from transient storage.
             // if previous values was some insert it inside journal.
@@ -769,10 +712,79 @@ impl JournaledState {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum JournalEntry {
+    /// Used to mark account that is warm inside EVM in regards to EIP-2929 AccessList.
+    /// Action: We will add Account to state.
+    /// Revert: we will remove account from state.
+    AccountLoaded { address: Address },
+    /// Mark account to be destroyed and journal balance to be reverted
+    /// Action: Mark account and transfer the balance
+    /// Revert: Unmark the account and transfer balance back
+    AccountDestroyed {
+        address: Address,
+        target: Address,
+        was_destroyed: bool, // if account had already been destroyed before this journal entry
+        had_balance: U256,
+    },
+    /// Loading account does not mean that account will need to be added to MerkleTree (touched).
+    /// Only when account is called (to execute contract or transfer balance) only then account is made touched.
+    /// Action: Mark account touched
+    /// Revert: Unmark account touched
+    AccountTouched { address: Address },
+    /// Transfer balance between two accounts
+    /// Action: Transfer balance
+    /// Revert: Transfer balance back
+    BalanceTransfer {
+        from: Address,
+        to: Address,
+        balance: U256,
+    },
+    /// Increment nonce
+    /// Action: Increment nonce by one
+    /// Revert: Decrement nonce by one
+    NonceChange {
+        address: Address, //geth has nonce value,
+    },
+    /// Create account:
+    /// Actions: Mark account as created
+    /// Revert: Unmart account as created and reset nonce to zero.
+    AccountCreated { address: Address },
+    /// It is used to track both storage change and warm load of storage slot. For warm load in regard
+    /// to EIP-2929 AccessList had_value will be None
+    /// Action: Storage change or warm load
+    /// Revert: Revert to previous value or remove slot from storage
+    StorageChange {
+        address: Address,
+        key: U256,
+        had_value: Option<U256>, //if none, storage slot was cold loaded from db and needs to be removed
+    },
+    /// It is used to track an EIP-1153 transient storage change.
+    /// Action: Transient storage changed.
+    /// Revert: Revert to previous value.
+    TransientStorageChange {
+        address: Address,
+        key: U256,
+        had_value: U256,
+    },
+    /// Code changed
+    /// Action: Account code changed
+    /// Revert: Revert to previous bytecode.
+    CodeChange { address: Address },
+}
+
+/// SubRoutine checkpoint that will help us to go back from this
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct JournalCheckpoint {
+    log_i: usize,
+    journal_i: usize,
+}
+
 /// Check if address is precompile by having assumption
 /// that precompiles are in range of 1 to N.
 #[inline(always)]
-pub fn is_precompile(address: B160, num_of_precompiles: usize) -> bool {
+pub fn is_precompile(address: Address, num_of_precompiles: usize) -> bool {
     if !address[..18].iter().all(|i| *i == 0) {
         return false;
     }
@@ -788,7 +800,7 @@ mod test {
     fn test_is_precompile() {
         assert!(
             !is_precompile(
-                B160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+                Address::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
                 3
             ),
             "Zero is not precompile"
@@ -796,7 +808,7 @@ mod test {
 
         assert!(
             !is_precompile(
-                B160([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9]),
+                Address::new([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9]),
                 3
             ),
             "0x100..0 is not precompile"
@@ -804,7 +816,7 @@ mod test {
 
         assert!(
             !is_precompile(
-                B160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]),
+                Address::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]),
                 3
             ),
             "0x000..4 is not precompile"
@@ -812,7 +824,7 @@ mod test {
 
         assert!(
             is_precompile(
-                B160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                Address::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
                 3
             ),
             "0x00..01 is precompile"
@@ -820,7 +832,7 @@ mod test {
 
         assert!(
             is_precompile(
-                B160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]),
+                Address::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]),
                 3
             ),
             "0x000..3 is precompile"

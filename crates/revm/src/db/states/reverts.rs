@@ -4,14 +4,14 @@ use super::{
 };
 use alloc::vec::Vec;
 use core::ops::{Deref, DerefMut};
-use revm_interpreter::primitives::{AccountInfo, HashMap, B160, U256};
+use revm_interpreter::primitives::{AccountInfo, Address, HashMap, U256};
 
 /// Contains reverts of multiple account in multiple transitions (Transitions as a block).
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct Reverts(Vec<Vec<(B160, AccountRevert)>>);
+pub struct Reverts(Vec<Vec<(Address, AccountRevert)>>);
 
 impl Deref for Reverts {
-    type Target = Vec<Vec<(B160, AccountRevert)>>;
+    type Target = Vec<Vec<(Address, AccountRevert)>>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -26,7 +26,7 @@ impl DerefMut for Reverts {
 
 impl Reverts {
     /// Create new reverts
-    pub fn new(reverts: Vec<Vec<(B160, AccountRevert)>>) -> Self {
+    pub fn new(reverts: Vec<Vec<(Address, AccountRevert)>>) -> Self {
         Self(reverts)
     }
 

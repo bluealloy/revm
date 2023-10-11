@@ -293,13 +293,15 @@ impl CacheAccount {
     /// Increment balance by `balance` amount. Assume that balance will not
     /// overflow or be zero.
     ///
-    /// Note: to skip some edge cases we assume that additional balance is never zero.
-    /// And as increment is always related to block fee/reward and withdrawals this is correct.
-    pub fn increment_balance(&mut self, balance: u128) -> TransitionAccount {
-        self.account_info_change(|info| {
-            info.balance += U256::from(balance);
-        })
-        .1
+    /// Note: only if balance is zero we would return None as no transition would be made.
+    pub fn increment_balance(&mut self, balance: u128) -> Option<TransitionAccount> {
+        if balance == 0 {
+            return None;
+        }
+        let (_, transition) = self.account_info_change(|info| {
+            info.balance = info.balance.saturating_add(U256::from(balance));
+        });
+        Some(transition)
     }
 
     fn account_info_change<T, F: FnOnce(&mut AccountInfo) -> T>(

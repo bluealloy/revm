@@ -1,7 +1,8 @@
 #![warn(missing_debug_implementations, unreachable_pub)]
+#![cfg_attr(not(test), warn(unused_crate_dependencies))]
+#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 #![deny(unused_must_use, rust_2018_idioms)]
 #![cfg_attr(not(feature = "std"), no_std)]
-#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 
 #[macro_use]
 extern crate alloc;
@@ -27,9 +28,9 @@ pub use db::{
     CacheState, DBBox, State, StateBuilder, StateDBBox, TransitionAccount, TransitionState,
 };
 
-pub use db::{Database, DatabaseCommit, InMemoryDB};
+pub use db::{Database, DatabaseCommit, DatabaseRef, InMemoryDB};
 pub use evm::{evm_inner, new, EVM};
-pub use evm_impl::{EVMData, EVMImpl, Transact};
+pub use evm_impl::{EVMData, EVMImpl, Transact, CALL_STACK_LIMIT};
 pub use journaled_state::{is_precompile, JournalCheckpoint, JournalEntry, JournaledState};
 
 // reexport `revm_precompiles`

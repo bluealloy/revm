@@ -1,9 +1,7 @@
 //! Optimism-specific constants, types, and helpers.
 
+use crate::primitives::{address, db::Database, Address, Bytes, Spec, SpecId, U256};
 use core::ops::Mul;
-use revm_interpreter::primitives::{
-    db::Database, hex_literal::hex, Bytes, Spec, SpecId, B160, U256,
-};
 
 const ZERO_BYTE_COST: u64 = 4;
 const NON_ZERO_BYTE_COST: u64 = 16;
@@ -13,13 +11,13 @@ const L1_OVERHEAD_SLOT: U256 = U256::from_limbs([5u64, 0, 0, 0]);
 const L1_SCALAR_SLOT: U256 = U256::from_limbs([6u64, 0, 0, 0]);
 
 /// The address of L1 fee recipient.
-pub const L1_FEE_RECIPIENT: B160 = B160(hex!("420000000000000000000000000000000000001A"));
+pub const L1_FEE_RECIPIENT: Address = address!("420000000000000000000000000000000000001A");
 
 /// The address of the base fee recipient.
-pub const BASE_FEE_RECIPIENT: B160 = B160(hex!("4200000000000000000000000000000000000019"));
+pub const BASE_FEE_RECIPIENT: Address = address!("4200000000000000000000000000000000000019");
 
 /// The address of the L1Block contract.
-pub const L1_BLOCK_CONTRACT: B160 = B160(hex!("4200000000000000000000000000000000000015"));
+pub const L1_BLOCK_CONTRACT: Address = address!("4200000000000000000000000000000000000015");
 
 /// L1 block info
 ///
@@ -104,7 +102,7 @@ impl L1BlockInfo {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::primitives::specification::*;
+    use crate::primitives::{bytes, specification::*};
 
     #[test]
     fn test_data_gas_non_zero_bytes() {
@@ -120,7 +118,7 @@ mod tests {
         // Pre-regolith (ie bedrock) has an extra 68 non-zero bytes
         // gas cost = 3 non-zero bytes * NON_ZERO_BYTE_COST + NON_ZERO_BYTE_COST * 68
         // gas cost = 3 * 16 + 68 * 16 = 1136
-        let input = Bytes::from(hex!("FACADE").to_vec());
+        let input = bytes!("FACADE");
         let bedrock_data_gas = l1_block_info.data_gas::<BedrockSpec>(&input);
         assert_eq!(bedrock_data_gas, U256::from(1136));
 
@@ -144,7 +142,7 @@ mod tests {
         // Pre-regolith (ie bedrock) has an extra 68 non-zero bytes
         // gas cost = 3 non-zero * NON_ZERO_BYTE_COST + 2 * ZERO_BYTE_COST + NON_ZERO_BYTE_COST * 68
         // gas cost = 3 * 16 + 2 * 4 + 68 * 16 = 1144
-        let input = Bytes::from(hex!("FA00CA00DE").to_vec());
+        let input = bytes!("FA00CA00DE");
         let bedrock_data_gas = l1_block_info.data_gas::<BedrockSpec>(&input);
         assert_eq!(bedrock_data_gas, U256::from(1144));
 
@@ -163,7 +161,7 @@ mod tests {
         };
 
         // The gas cost here should be zero since the tx is a deposit
-        let input = Bytes::from(hex!("FACADE").to_vec());
+        let input = bytes!("FACADE");
         let gas_cost = l1_block_info.calculate_tx_l1_cost::<BedrockSpec>(&input, true);
         assert_eq!(gas_cost, U256::ZERO);
 
@@ -171,7 +169,7 @@ mod tests {
         assert_eq!(gas_cost, U256::from(1048));
 
         // Zero rollup data gas cost should result in zero for non-deposits
-        let input = Bytes::from(hex!("").to_vec());
+        let input = bytes!("");
         let gas_cost = l1_block_info.calculate_tx_l1_cost::<RegolithSpec>(&input, false);
         assert_eq!(gas_cost, U256::ZERO);
     }

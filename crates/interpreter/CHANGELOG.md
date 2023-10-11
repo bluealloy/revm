@@ -1,3 +1,13 @@
+
+# v1.3.0
+date 02.10.2023
+
+Migration to alloy primitive types.
+
+Full git log:
+* af4146a - feat: Alloy primitives (#724) (15 hours ago) <evalir>
+* 1f86e45 - chore(deps): bump proptest from 1.2.0 to 1.3.1 (#763) (22 hours ago) <dependabot[bot]>
+
 # v1.2.0
 date: 28.09.2023
 
@@ -38,7 +48,7 @@ Full git log:
 * eb6a9f0 - Revert "feat: alloy migration (#535)" (#616) (6 weeks ago) <rakita>
 * c1bad0d - chore: spell check (#615) (6 weeks ago) <Roman Krasiuk>
 * f95b7a4 - feat: alloy migration (#535) (6 weeks ago) <DaniPopes>
-* bc4d203 - feat: remove unneccesary var and if branch in gas calc (#592) (7 weeks ago) <bemevolent>
+* bc4d203 - feat: remove unnecessary var and if branch in gas calc (#592) (7 weeks ago) <bemevolent>
 * ef57a46 - feat: State with account status (#499) (7 weeks ago) <rakita>
 * 157ef36 - feat: introduce initcode size limit check taking config into account (#587) (7 weeks ago) <evalir>
 * 12558c5 - fix: fix mcopy memory expansion. Add eth tests to ci (#586) (7 weeks ago) <rakita>

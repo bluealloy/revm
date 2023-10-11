@@ -10,6 +10,6 @@ The `AccountStatus` is a set of bitflags, representing the state of the account.
 
 The `StorageSlot` struct represents a storage slot in the Ethereum Virtual Machine. It holds an `original_value` and a `present_value` and includes methods for creating a new slot and checking if the slot's value has been modified.
 
-Two `HashMap` type aliases are created: `State` and `Storage`. `State` maps from a `B160` address to an `Account` and `Storage` maps from a `U256` key to a `StorageSlot`.
+Two `HashMap` type aliases are created: `State` and `Storage`. `State` maps from a `Address` address to an `Account` and `Storage` maps from a `U256` key to a `StorageSlot`.
 
 The module includes a series of methods implemented for `Account` to manipulate and query the account's status. These include methods like `mark_selfdestruct`, `unmark_selfdestruct`, `is_selfdestructed`, `mark_touch`, `unmark_touch`, `is_touched`, `mark_created`, `is_newly_created`, `is_empty`, and `new_not_existing`.

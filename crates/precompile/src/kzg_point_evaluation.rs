@@ -1,13 +1,13 @@
-use crate::{Error, Precompile, PrecompileAddress, PrecompileResult, B160};
+use crate::{Address, Error, Precompile, PrecompileAddress, PrecompileResult};
 use c_kzg::{Bytes32, Bytes48, KzgProof, KzgSettings};
 use revm_primitives::{hex_literal::hex, Env};
 use sha2::{Digest, Sha256};
 
 pub const POINT_EVALUATION: PrecompileAddress = PrecompileAddress(ADDRESS, Precompile::Env(run));
 
-pub const ADDRESS: B160 = crate::u64_to_b160(0x0A);
-pub const GAS_COST: u64 = 50_000;
-pub const VERSIONED_HASH_VERSION_KZG: u8 = 0x01;
+const ADDRESS: Address = crate::u64_to_address(0x0A);
+const GAS_COST: u64 = 50_000;
+const VERSIONED_HASH_VERSION_KZG: u8 = 0x01;
 
 /// `U256(FIELD_ELEMENTS_PER_BLOB).to_be_bytes() ++ BLS_MODULUS.to_bytes32()`
 const RETURN_VALUE: &[u8; 64] = &hex!(

@@ -177,7 +177,7 @@ mod tests {
         let mut env = Env::default();
         env.tx.gas_limit = 100;
         env.cfg.optimism = true;
-        env.tx.optimism.source_hash = Some(B256::zero());
+        env.tx.optimism.source_hash = Some(B256::ZERO);
 
         let gas = handle_call_return::<RegolithSpec>(&env, InstructionResult::Stop, Gas::new(90));
         assert_eq!(gas.remaining(), 90);
@@ -190,13 +190,12 @@ mod tests {
         let mut env = Env::default();
         env.tx.gas_limit = 100;
         env.cfg.optimism = true;
-        env.tx.optimism.source_hash = Some(B256::zero());
+        env.tx.optimism.source_hash = Some(B256::ZERO);
 
         let mut ret_gas = Gas::new(90);
         ret_gas.record_refund(20);
 
-        let gas =
-            handle_call_return::<RegolithSpec>(&env, InstructionResult::Stop, ret_gas.clone());
+        let gas = handle_call_return::<RegolithSpec>(&env, InstructionResult::Stop, ret_gas);
         assert_eq!(gas.remaining(), 90);
         assert_eq!(gas.spend(), 10);
         assert_eq!(gas.refunded(), 20);
@@ -212,7 +211,7 @@ mod tests {
         let mut env = Env::default();
         env.tx.gas_limit = 100;
         env.cfg.optimism = true;
-        env.tx.optimism.source_hash = Some(B256::zero());
+        env.tx.optimism.source_hash = Some(B256::ZERO);
 
         let gas = handle_call_return::<BedrockSpec>(&env, InstructionResult::Stop, Gas::new(90));
         assert_eq!(gas.remaining(), 0);
