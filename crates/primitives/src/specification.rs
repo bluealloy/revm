@@ -40,7 +40,7 @@ impl SpecId {
         Self::n(spec_id)
     }
 
-    #[inline(always)]
+    #[inline]
     pub const fn enabled(our: SpecId, other: SpecId) -> bool {
         #[cfg(feature = "optimism")]
         {
@@ -94,7 +94,7 @@ pub trait Spec: Sized {
     const SPEC_ID: SpecId;
 
     /// Returns `true` if the given specification ID is enabled in this spec.
-    #[inline(always)]
+    #[inline]
     fn enabled(spec_id: SpecId) -> bool {
         #[cfg(feature = "optimism")]
         {

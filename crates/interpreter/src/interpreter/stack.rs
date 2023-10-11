@@ -75,7 +75,7 @@ impl Stack {
     /// # Safety
     ///
     /// The caller is responsible for checking the length of the stack.
-    #[inline(always)]
+    #[inline]
     pub unsafe fn pop_unsafe(&mut self) -> U256 {
         self.data.pop().unwrap_unchecked()
     }
@@ -85,7 +85,7 @@ impl Stack {
     /// # Safety
     ///
     /// The caller is responsible for checking the length of the stack.
-    #[inline(always)]
+    #[inline]
     pub unsafe fn top_unsafe(&mut self) -> &mut U256 {
         let len = self.data.len();
         self.data.get_unchecked_mut(len - 1)
@@ -96,7 +96,7 @@ impl Stack {
     /// # Safety
     ///
     /// The caller is responsible for checking the length of the stack.
-    #[inline(always)]
+    #[inline]
     pub unsafe fn pop_top_unsafe(&mut self) -> (U256, &mut U256) {
         let pop = self.pop_unsafe();
         let top = self.top_unsafe();
@@ -108,7 +108,7 @@ impl Stack {
     /// # Safety
     ///
     /// The caller is responsible for checking the length of the stack.
-    #[inline(always)]
+    #[inline]
     pub unsafe fn pop2_unsafe(&mut self) -> (U256, U256) {
         let pop1 = self.pop_unsafe();
         let pop2 = self.pop_unsafe();
@@ -120,7 +120,7 @@ impl Stack {
     /// # Safety
     ///
     /// The caller is responsible for checking the length of the stack.
-    #[inline(always)]
+    #[inline]
     pub unsafe fn pop2_top_unsafe(&mut self) -> (U256, U256, &mut U256) {
         let pop1 = self.pop_unsafe();
         let pop2 = self.pop_unsafe();
@@ -134,7 +134,7 @@ impl Stack {
     /// # Safety
     ///
     /// The caller is responsible for checking the length of the stack.
-    #[inline(always)]
+    #[inline]
     pub unsafe fn pop3_unsafe(&mut self) -> (U256, U256, U256) {
         let pop1 = self.pop_unsafe();
         let pop2 = self.pop_unsafe();
@@ -148,7 +148,7 @@ impl Stack {
     /// # Safety
     ///
     /// The caller is responsible for checking the length of the stack.
-    #[inline(always)]
+    #[inline]
     pub unsafe fn pop4_unsafe(&mut self) -> (U256, U256, U256, U256) {
         let pop1 = self.pop_unsafe();
         let pop2 = self.pop_unsafe();
@@ -160,7 +160,7 @@ impl Stack {
 
     /// Push a new value into the stack. If it will exceed the stack limit,
     /// returns `StackOverflow` error and leaves the stack unchanged.
-    #[inline(always)]
+    #[inline]
     pub fn push_b256(&mut self, value: B256) -> Result<(), InstructionResult> {
         self.push(value.into())
     }
@@ -169,7 +169,7 @@ impl Stack {
     ///
     /// If it will exceed the stack limit, returns `StackOverflow` error and leaves the stack
     /// unchanged.
-    #[inline(always)]
+    #[inline]
     pub fn push(&mut self, value: U256) -> Result<(), InstructionResult> {
         // allows the compiler to optimize out the `Vec::push` capacity check
         assume!(self.data.capacity() == STACK_LIMIT);
@@ -183,7 +183,7 @@ impl Stack {
     /// Peek a value at given index for the stack, where the top of
     /// the stack is at index `0`. If the index is too large,
     /// `StackError::Underflow` is returned.
-    #[inline(always)]
+    #[inline]
     pub fn peek(&self, no_from_top: usize) -> Result<U256, InstructionResult> {
         if self.data.len() > no_from_top {
             Ok(self.data[self.data.len() - no_from_top - 1])
@@ -193,7 +193,7 @@ impl Stack {
     }
 
     /// Duplicates the `N`th value from the top of the stack.
-    #[inline(always)]
+    #[inline]
     pub fn dup<const N: usize>(&mut self) -> Result<(), InstructionResult> {
         let len = self.data.len();
         if len < N {
@@ -211,7 +211,7 @@ impl Stack {
     }
 
     /// Swaps the topmost value with the `N`th value from the top.
-    #[inline(always)]
+    #[inline]
     pub fn swap<const N: usize>(&mut self) -> Result<(), InstructionResult> {
         let len = self.data.len();
         if len <= N {
@@ -226,7 +226,7 @@ impl Stack {
     ///
     /// If it will exceed the stack limit, returns `StackOverflow` error and leaves the stack
     /// unchanged.
-    #[inline(always)]
+    #[inline]
     pub fn push_slice<const N: usize>(&mut self, slice: &[u8]) -> Result<(), InstructionResult> {
         let new_len = self.data.len() + 1;
         if new_len > STACK_LIMIT {

@@ -33,7 +33,6 @@ struct TrieAccount {
 }
 
 impl TrieAccount {
-    #[inline(always)]
     fn new(acc: &PlainAccount) -> Self {
         Self {
             nonce: acc.info.nonce,

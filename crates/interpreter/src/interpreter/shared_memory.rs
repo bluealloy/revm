@@ -91,19 +91,19 @@ impl SharedMemory {
     }
 
     /// Get the length of the current memory range.
-    #[inline(always)]
+    #[inline]
     pub fn len(&self) -> usize {
         self.current_len
     }
 
     /// Returns true if the current memory range is empty.
-    #[inline(always)]
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.current_len == 0
     }
 
     /// Resizes the memory in-place so that `len` is equal to `new_len`.
-    #[inline(always)]
+    #[inline]
     pub fn resize(&mut self, new_len: usize) {
         let last_checkpoint = self.last_checkpoint();
         let range = last_checkpoint + self.current_len..last_checkpoint + new_len;
@@ -120,7 +120,7 @@ impl SharedMemory {
     /// Returns a byte slice of the memory region at the given offset.
     ///
     /// Panics on out of bounds.
-    #[inline(always)]
+    #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn slice(&self, offset: usize, size: usize) -> &[u8] {
         let end = offset + size;
@@ -138,7 +138,7 @@ impl SharedMemory {
     /// Returns a byte slice of the memory region at the given offset.
     ///
     /// Panics on out of bounds.
-    #[inline(always)]
+    #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn slice_mut(&mut self, offset: usize, size: usize) -> &mut [u8] {
         let len = self.len();
@@ -157,7 +157,7 @@ impl SharedMemory {
     /// Returns the byte at the given offset.
     ///
     /// Panics on out of bounds.
-    #[inline(always)]
+    #[inline]
     pub fn get_byte(&self, offset: usize) -> u8 {
         self.slice(offset, 1)[0]
     }
@@ -165,7 +165,7 @@ impl SharedMemory {
     /// Returns a 32-byte slice of the memory region at the given offset.
     ///
     /// Panics on out of bounds.
-    #[inline(always)]
+    #[inline]
     pub fn get_word(&self, offset: usize) -> B256 {
         self.slice(offset, 32).try_into().unwrap()
     }
@@ -173,7 +173,7 @@ impl SharedMemory {
     /// Returns a U256 of the memory region at the given offset.
     ///
     /// Panics on out of bounds.
-    #[inline(always)]
+    #[inline]
     pub fn get_u256(&self, offset: usize) -> U256 {
         self.get_word(offset).into()
     }
@@ -181,7 +181,7 @@ impl SharedMemory {
     /// Sets the `byte` at the given `index`.
     ///
     /// Panics on out of bounds.
-    #[inline(always)]
+    #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn set_byte(&mut self, offset: usize, byte: u8) {
         self.set(offset, &[byte]);
@@ -190,7 +190,7 @@ impl SharedMemory {
     /// Sets the given 32-byte `value` to the memory region at the given `offset`.
     ///
     /// Panics on out of bounds.
-    #[inline(always)]
+    #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn set_word(&mut self, offset: usize, value: &B256) {
         self.set(offset, &value[..]);
@@ -199,7 +199,7 @@ impl SharedMemory {
     /// Sets the given U256 `value` to the memory region at the given `offset`.
     ///
     /// Panics on out of bounds.
-    #[inline(always)]
+    #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn set_u256(&mut self, offset: usize, value: U256) {
         self.set(offset, &value.to_be_bytes::<32>());
@@ -208,7 +208,7 @@ impl SharedMemory {
     /// Set memory region at given `offset`.
     ///
     /// Panics on out of bounds.
-    #[inline(always)]
+    #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn set(&mut self, offset: usize, value: &[u8]) {
         if !value.is_empty() {
@@ -220,7 +220,7 @@ impl SharedMemory {
     /// are doing bound checks on data/data_offeset/len and zeroing parts that is not copied.
     ///
     /// Panics on out of bounds.
-    #[inline(always)]
+    #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn set_data(&mut self, memory_offset: usize, data_offset: usize, len: usize, data: &[u8]) {
         if data_offset >= data.len() {
@@ -244,14 +244,14 @@ impl SharedMemory {
     /// Copies elements from one part of the memory to another part of itself.
     ///
     /// Panics on out of bounds.
-    #[inline(always)]
+    #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn copy(&mut self, dst: usize, src: usize, len: usize) {
         self.context_memory_mut().copy_within(src..src + len, dst);
     }
 
     /// Get a reference to the memory of the current context
-    #[inline(always)]
+    #[inline]
     fn context_memory(&self) -> &[u8] {
         let last_checkpoint = self.last_checkpoint();
         let current_len = self.current_len;
@@ -260,7 +260,7 @@ impl SharedMemory {
     }
 
     /// Get a mutable reference to the memory of the current context
-    #[inline(always)]
+    #[inline]
     fn context_memory_mut(&mut self) -> &mut [u8] {
         let last_checkpoint = self.last_checkpoint();
         let current_len = self.current_len;
@@ -269,9 +269,9 @@ impl SharedMemory {
     }
 
     /// Get the last memory checkpoint
-    #[inline(always)]
+    #[inline]
     fn last_checkpoint(&self) -> usize {
-        self.checkpoints.last().cloned().unwrap_or_default()
+        self.checkpoints.last().copied().unwrap_or(0)
     }
 }
 
