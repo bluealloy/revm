@@ -1,4 +1,4 @@
-use revm_primitives::U256;
+use revm_primitives::{B256, U256};
 
 use crate::alloc::vec::Vec;
 use core::{
@@ -102,23 +102,19 @@ impl SharedMemory {
         self.current_len == 0
     }
 
-    /// Resize the memory. assume that we already checked if:
-    /// - we have enough gas to resize this vector
-    /// - we made new_size as multiply of 32
-    /// - [new_size] is greater than `self.len()`
+    /// Resizes the memory in-place so that `len` is equal to `new_len`.
     #[inline(always)]
-    pub fn resize(&mut self, new_size: usize) {
+    pub fn resize(&mut self, new_len: usize) {
         let last_checkpoint = self.last_checkpoint();
-        let range = last_checkpoint + self.current_len..last_checkpoint + new_size;
+        let range = last_checkpoint + self.current_len..last_checkpoint + new_len;
 
         if let Some(available_memory) = self.data.get_mut(range) {
             available_memory.fill(0);
         } else {
-            self.data
-                .resize(last_checkpoint + usize::max(new_size, 4 * 1024), 0);
+            self.data.resize(last_checkpoint + new_len, 0);
         }
 
-        self.current_len = new_size;
+        self.current_len = new_len;
     }
 
     /// Returns a byte slice of the memory region at the given offset.
@@ -132,7 +128,7 @@ impl SharedMemory {
 
         match self
             .data
-            .get(last_checkpoint + offset..last_checkpoint + offset + size)
+            .get(last_checkpoint + offset..last_checkpoint + end)
         {
             Some(slice) => slice,
             None => debug_unreachable!("slice OOB: {offset}..{end}; len: {}", self.len()),
@@ -151,27 +147,56 @@ impl SharedMemory {
 
         match self
             .data
-            .get_mut(last_checkpoint + offset..last_checkpoint + offset + size)
+            .get_mut(last_checkpoint + offset..last_checkpoint + end)
         {
             Some(slice) => slice,
-            None => debug_unreachable!("slice OOB: {offset}..{end}; len: {}", len),
+            None => debug_unreachable!("slice OOB: {offset}..{end}; len: {len}"),
         }
+    }
+
+    /// Returns the byte at the given offset.
+    ///
+    /// Panics on out of bounds.
+    #[inline(always)]
+    pub fn get_byte(&self, offset: usize) -> u8 {
+        self.slice(offset, 1)[0]
+    }
+
+    /// Returns a 32-byte slice of the memory region at the given offset.
+    ///
+    /// Panics on out of bounds.
+    #[inline(always)]
+    pub fn get_word(&self, offset: usize) -> B256 {
+        self.slice(offset, 32).try_into().unwrap()
+    }
+
+    /// Returns a U256 of the memory region at the given offset.
+    ///
+    /// Panics on out of bounds.
+    #[inline(always)]
+    pub fn get_u256(&self, offset: usize) -> U256 {
+        self.get_word(offset).into()
     }
 
     /// Sets the `byte` at the given `index`.
     ///
-    /// Panics when `index` is out of bounds.
+    /// Panics on out of bounds.
     #[inline(always)]
     #[cfg_attr(debug_assertions, track_caller)]
-    pub fn set_byte(&mut self, index: usize, byte: u8) {
-        let last_checkpoint = self.last_checkpoint();
-        match self.data.get_mut(last_checkpoint + index) {
-            Some(b) => *b = byte,
-            None => debug_unreachable!("set_byte OOB: {index}; len: {}", self.len()),
-        }
+    pub fn set_byte(&mut self, offset: usize, byte: u8) {
+        self.set(offset, &[byte]);
     }
 
-    /// Sets the given `value` to the memory region at the given `offset`.
+    /// Sets the given 32-byte `value` to the memory region at the given `offset`.
+    ///
+    /// Panics on out of bounds.
+    #[inline(always)]
+    #[cfg_attr(debug_assertions, track_caller)]
+    pub fn set_word(&mut self, offset: usize, value: &B256) {
+        self.set(offset, &value[..]);
+    }
+
+    /// Sets the given U256 `value` to the memory region at the given `offset`.
     ///
     /// Panics on out of bounds.
     #[inline(always)]

@@ -10,16 +10,7 @@ pub fn mload<H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
     pop!(interpreter, index);
     let index = as_usize_or_fail!(interpreter, index);
     shared_memory_resize!(interpreter, index, 32);
-    push!(
-        interpreter,
-        U256::from_be_bytes::<32>(
-            interpreter
-                .shared_memory
-                .slice(index, 32)
-                .try_into()
-                .unwrap()
-        )
-    );
+    push!(interpreter, interpreter.shared_memory.get_u256(index));
 }
 
 pub fn mstore<H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
