@@ -8,7 +8,6 @@ use serde_json::json;
 use std::io::Write;
 
 /// [EIP-3155](https://eips.ethereum.org/EIPS/eip-3155) tracer [Inspector].
-#[allow(missing_debug_implementations)]
 pub struct TracerEip3155 {
     output: Box<dyn Write>,
     gas_inspector: GasInspector,

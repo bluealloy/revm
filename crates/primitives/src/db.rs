@@ -90,7 +90,6 @@ impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
 /// Wraps a `dyn DatabaseRef` to provide a [`Database`] implementation.
 #[doc(hidden)]
 #[deprecated = "use `WrapDatabaseRef` instead"]
-#[allow(missing_debug_implementations)]
 pub struct RefDBWrapper<'a, E> {
     pub db: &'a dyn DatabaseRef<Error = E>,
 }
