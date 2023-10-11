@@ -1,8 +1,8 @@
 use crate::handler::Handler;
 use crate::interpreter::{
     analysis::to_analysed, gas, return_ok, CallContext, CallInputs, CallScheme, Contract,
-    CreateInputs, CreateScheme, Gas, Host, InstructionResult, Interpreter, SelfDestructResult,
-    SuccessOrHalt, Transfer,
+    CreateInputs, Gas, Host, InstructionResult, Interpreter, SelfDestructResult, SuccessOrHalt,
+    Transfer,
 };
 use crate::journaled_state::{is_precompile, JournalCheckpoint};
 use crate::primitives::{
@@ -480,10 +480,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
         // Create address
         let code_hash = keccak256(&inputs.init_code);
-        let created_address = match inputs.scheme {
-            CreateScheme::Create => inputs.caller.create(old_nonce),
-            CreateScheme::Create2 { salt } => inputs.caller.create2(B256::from(salt), code_hash),
-        };
+        let created_address = inputs.created_address_with_hash(old_nonce, &code_hash);
 
         // Load account so it needs to be marked as warm for access list.
         if self
