@@ -30,7 +30,7 @@ pub trait Inspector<DB: Database> {
     #[inline]
     fn initialize_interp(
         &mut self,
-        interp: &mut Interpreter,
+        interp: &mut Interpreter<'_>,
         data: &mut EVMData<'_, DB>,
     ) -> InstructionResult {
         let _ = interp;
@@ -47,7 +47,11 @@ pub trait Inspector<DB: Database> {
     ///
     /// To get the current opcode, use `interp.current_opcode()`.
     #[inline]
-    fn step(&mut self, interp: &mut Interpreter, data: &mut EVMData<'_, DB>) -> InstructionResult {
+    fn step(
+        &mut self,
+        interp: &mut Interpreter<'_>,
+        data: &mut EVMData<'_, DB>,
+    ) -> InstructionResult {
         let _ = interp;
         let _ = data;
         InstructionResult::Continue
@@ -74,7 +78,7 @@ pub trait Inspector<DB: Database> {
     #[inline]
     fn step_end(
         &mut self,
-        interp: &mut Interpreter,
+        interp: &mut Interpreter<'_>,
         data: &mut EVMData<'_, DB>,
         eval: InstructionResult,
     ) -> InstructionResult {

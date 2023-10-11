@@ -7,7 +7,7 @@ use alloc::vec::Vec;
 use core::mem;
 use revm_interpreter::primitives::SpecId;
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JournaledState {
     /// Current state.
@@ -712,7 +712,7 @@ impl JournaledState {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum JournalEntry {
     /// Used to mark account that is warm inside EVM in regards to EIP-2929 AccessList.
@@ -775,6 +775,7 @@ pub enum JournalEntry {
 }
 
 /// SubRoutine checkpoint that will help us to go back from this
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct JournalCheckpoint {
     log_i: usize,
     journal_i: usize,

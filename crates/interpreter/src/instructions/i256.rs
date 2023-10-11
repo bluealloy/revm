@@ -1,7 +1,7 @@
 use crate::primitives::U256;
 use core::cmp::Ordering;
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(i8)]
 pub enum Sign {
     // same as `cmp::Ordering`

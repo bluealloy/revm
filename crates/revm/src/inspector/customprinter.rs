@@ -1,3 +1,6 @@
+//! Custom print inspector, it has step level information of execution.
+//! It is a great tool if some debugging is needed.
+
 use crate::interpreter::{opcode, CallInputs, CreateInputs, Gas, InstructionResult, Interpreter};
 use crate::primitives::{Address, Bytes, U256};
 use crate::{inspectors::GasInspector, Database, EVMData, Inspector};
@@ -5,7 +8,7 @@ use crate::{inspectors::GasInspector, Database, EVMData, Inspector};
 /// Custom print [Inspector], it has step level information of execution.
 ///
 /// It is a great tool if some debugging is needed.
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct CustomPrintTracer {
     gas_inspector: GasInspector,
 }
@@ -13,7 +16,7 @@ pub struct CustomPrintTracer {
 impl<DB: Database> Inspector<DB> for CustomPrintTracer {
     fn initialize_interp(
         &mut self,
-        interp: &mut Interpreter,
+        interp: &mut Interpreter<'_>,
         data: &mut EVMData<'_, DB>,
     ) -> InstructionResult {
         self.gas_inspector.initialize_interp(interp, data);
@@ -22,7 +25,11 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
 
     // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
     // all other information can be obtained from interp.
-    fn step(&mut self, interp: &mut Interpreter, data: &mut EVMData<'_, DB>) -> InstructionResult {
+    fn step(
+        &mut self,
+        interp: &mut Interpreter<'_>,
+        data: &mut EVMData<'_, DB>,
+    ) -> InstructionResult {
         let opcode = interp.current_opcode();
         let opcode_str = opcode::OPCODE_JUMPMAP[opcode as usize];
 
@@ -49,7 +56,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
 
     fn step_end(
         &mut self,
-        interp: &mut Interpreter,
+        interp: &mut Interpreter<'_>,
         data: &mut EVMData<'_, DB>,
         eval: InstructionResult,
     ) -> InstructionResult {

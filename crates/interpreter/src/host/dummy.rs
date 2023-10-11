@@ -7,6 +7,7 @@ use crate::{
 use alloc::vec::Vec;
 
 /// A dummy [Host] implementation.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct DummyHost {
     pub env: Env,
     pub storage: HashMap<U256, U256>,
@@ -20,9 +21,7 @@ impl DummyHost {
     pub fn new(env: Env) -> Self {
         Self {
             env,
-            storage: HashMap::new(),
-            transient_storage: Default::default(),
-            log: Vec::new(),
+            ..Default::default()
         }
     }
 
@@ -36,14 +35,14 @@ impl DummyHost {
 
 impl Host for DummyHost {
     #[inline]
-    fn step(&mut self, _interp: &mut Interpreter) -> InstructionResult {
+    fn step(&mut self, _interp: &mut Interpreter<'_>) -> InstructionResult {
         InstructionResult::Continue
     }
 
     #[inline]
     fn step_end(
         &mut self,
-        _interp: &mut Interpreter,
+        _interp: &mut Interpreter<'_>,
         _ret: InstructionResult,
     ) -> InstructionResult {
         InstructionResult::Continue

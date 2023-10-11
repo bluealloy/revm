@@ -4,7 +4,7 @@ use crate::{
     Host, InstructionResult, Interpreter,
 };
 
-pub fn jump<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn jump<H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
     gas!(interpreter, gas::MID);
     pop!(interpreter, dest);
     let dest = as_usize_or_fail!(interpreter, dest, InstructionResult::InvalidJump);
@@ -18,7 +18,7 @@ pub fn jump<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     }
 }
 
-pub fn jumpi<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn jumpi<H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
     gas!(interpreter, gas::HIGH);
     pop!(interpreter, dest, value);
     if value != U256::ZERO {
@@ -34,18 +34,18 @@ pub fn jumpi<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     }
 }
 
-pub fn jumpdest<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn jumpdest<H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
     gas!(interpreter, gas::JUMPDEST);
 }
 
-pub fn pc<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn pc<H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
     gas!(interpreter, gas::BASE);
     // - 1 because we have already advanced the instruction pointer in `Interpreter::step`
     push!(interpreter, U256::from(interpreter.program_counter() - 1));
 }
 
 #[inline(always)]
-fn return_inner(interpreter: &mut Interpreter, result: InstructionResult) {
+fn return_inner(interpreter: &mut Interpreter<'_>, result: InstructionResult) {
     // zero gas cost
     // gas!(interpreter, gas::ZERO);
     pop!(interpreter, offset, len);
@@ -60,24 +60,24 @@ fn return_inner(interpreter: &mut Interpreter, result: InstructionResult) {
     interpreter.instruction_result = result;
 }
 
-pub fn ret<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn ret<H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
     return_inner(interpreter, InstructionResult::Return)
 }
 
 /// EIP-140: REVERT instruction
-pub fn revert<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn revert<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
     check!(interpreter, BYZANTIUM);
     return_inner(interpreter, InstructionResult::Revert)
 }
 
-pub fn stop<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn stop<H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
     interpreter.instruction_result = InstructionResult::Stop;
 }
 
-pub fn invalid<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn invalid<H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
     interpreter.instruction_result = InstructionResult::InvalidFEOpcode;
 }
 
-pub fn not_found<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn not_found<H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
     interpreter.instruction_result = InstructionResult::OpcodeNotFound;
 }

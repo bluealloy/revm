@@ -12,6 +12,7 @@ use crate::primitives::{
 use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector};
 use alloc::boxed::Box;
 use alloc::vec::Vec;
+use core::fmt;
 use core::marker::PhantomData;
 use revm_interpreter::gas::initial_tx_gas;
 use revm_interpreter::{SharedMemory, MAX_CODE_SIZE};
@@ -23,6 +24,7 @@ use crate::optimism;
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
 
+#[derive(Debug)]
 pub struct EVMData<'a, DB: Database> {
     pub env: &'a mut Env,
     pub journaled_state: JournaledState,
@@ -39,6 +41,19 @@ pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
     inspector: &'a mut dyn Inspector<DB>,
     handler: Handler<DB>,
     _phantomdata: PhantomData<GSPEC>,
+}
+
+impl<GSPEC, DB, const INSPECT: bool> fmt::Debug for EVMImpl<'_, GSPEC, DB, INSPECT>
+where
+    GSPEC: Spec,
+    DB: Database + fmt::Debug,
+    DB::Error: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("EVMImpl")
+            .field("data", &self.data)
+            .finish_non_exhaustive()
+    }
 }
 
 struct PreparedCreate {
@@ -842,11 +857,15 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     for EVMImpl<'a, GSPEC, DB, INSPECT>
 {
-    fn step(&mut self, interp: &mut Interpreter) -> InstructionResult {
+    fn step(&mut self, interp: &mut Interpreter<'_>) -> InstructionResult {
         self.inspector.step(interp, &mut self.data)
     }
 
-    fn step_end(&mut self, interp: &mut Interpreter, ret: InstructionResult) -> InstructionResult {
+    fn step_end(
+        &mut self,
+        interp: &mut Interpreter<'_>,
+        ret: InstructionResult,
+    ) -> InstructionResult {
         self.inspector.step_end(interp, &mut self.data, ret)
     }
 

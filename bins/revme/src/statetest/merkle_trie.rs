@@ -59,7 +59,7 @@ where
     sec_trie_root::<KeccakHasher, _, _, _>(input)
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct KeccakHasher;
 
 impl Hasher for KeccakHasher {

@@ -3,13 +3,13 @@ mod contract;
 mod shared_memory;
 mod stack;
 
-use crate::primitives::{Bytes, Spec};
-use crate::{alloc::boxed::Box, opcode::eval, Gas, Host, InstructionResult};
-
 pub use analysis::BytecodeLocked;
 pub use contract::Contract;
 pub use shared_memory::{next_multiple_of_32, SharedMemory};
-pub use stack::Stack;
+pub use stack::{Stack, STACK_LIMIT};
+
+use crate::primitives::{Bytes, Spec};
+use crate::{alloc::boxed::Box, opcode::eval, Gas, Host, InstructionResult};
 
 /// EIP-170: Contract code size limit
 ///

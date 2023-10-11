@@ -12,12 +12,12 @@ mod dummy;
 /// EVM context host.
 pub trait Host {
     /// Called before the interpreter executes an instruction.
-    fn step(&mut self, interpreter: &mut Interpreter) -> InstructionResult;
+    fn step(&mut self, interpreter: &mut Interpreter<'_>) -> InstructionResult;
 
     /// Called after the interpreter executes an instruction.
     fn step_end(
         &mut self,
-        interpreter: &mut Interpreter,
+        interpreter: &mut Interpreter<'_>,
         ret: InstructionResult,
     ) -> InstructionResult;
 
