@@ -11,6 +11,8 @@ use core::{
 /// a `Vec` for internal representation.
 /// A [SharedMemory] instance should always be obtained using
 /// the `new` static method to ensure memory safety.
+#[derive(Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SharedMemory {
     /// Shared buffer
     data: Vec<u8>,
