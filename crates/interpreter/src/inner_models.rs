@@ -40,7 +40,7 @@ impl CreateInputs {
             CreateScheme::Create => self.caller.create(nonce),
             CreateScheme::Create2 { salt } => self
                 .caller
-                .create2_from_code(&salt.to_be_bytes(), &self.init_code),
+                .create2_from_code(salt.to_be_bytes(), &self.init_code),
         }
     }
 
@@ -50,7 +50,7 @@ impl CreateInputs {
     pub fn created_address_with_hash(&self, nonce: u64, hash: &B256) -> Address {
         match self.scheme {
             CreateScheme::Create => self.caller.create(nonce),
-            CreateScheme::Create2 { salt } => self.caller.create2(&salt.to_be_bytes(), hash),
+            CreateScheme::Create2 { salt } => self.caller.create2(salt.to_be_bytes(), hash),
         }
     }
 }
