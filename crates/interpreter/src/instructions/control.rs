@@ -53,7 +53,7 @@ fn return_inner(interpreter: &mut Interpreter, result: InstructionResult) {
     // important: offset must be ignored if len is zero
     if len != 0 {
         let offset = as_usize_or_fail!(interpreter, offset);
-        memory_resize!(interpreter, offset, len);
+        shared_memory_resize!(interpreter, offset, len);
         interpreter.return_offset = offset;
     }
     interpreter.return_len = len;

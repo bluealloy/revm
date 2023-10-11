@@ -2,6 +2,7 @@ use crate::primitives::{hash_map::Entry, Bytecode, Bytes, HashMap, U256};
 use crate::{
     primitives::{Address, Env, Log, B256, KECCAK_EMPTY},
     CallInputs, CreateInputs, Gas, Host, InstructionResult, Interpreter, SelfDestructResult,
+    SharedMemory,
 };
 use alloc::vec::Vec;
 
@@ -138,12 +139,17 @@ impl Host for DummyHost {
     fn create(
         &mut self,
         _inputs: &mut CreateInputs,
+        _shared_memory: &mut SharedMemory,
     ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
         panic!("Create is not supported for this host")
     }
 
     #[inline]
-    fn call(&mut self, _input: &mut CallInputs) -> (InstructionResult, Gas, Bytes) {
+    fn call(
+        &mut self,
+        _input: &mut CallInputs,
+        _shared_memory: &mut SharedMemory,
+    ) -> (InstructionResult, Gas, Bytes) {
         panic!("Call is not supported for this host")
     }
 }

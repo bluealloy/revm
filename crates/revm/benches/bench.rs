@@ -8,6 +8,7 @@ use revm::{
         address, bytes, hex, BerlinSpec, Bytecode, BytecodeState, Bytes, TransactTo, U256,
     },
 };
+use revm_interpreter::SharedMemory;
 use std::time::Duration;
 
 type Evm = revm::EVM<BenchmarkDB>;
@@ -57,7 +58,7 @@ fn snailtracer(c: &mut Criterion) {
         .measurement_time(Duration::from_secs(10))
         .sample_size(10);
     bench_transact(&mut g, &mut evm);
-    bench_eval(&mut g, &evm);
+    bench_eval(&mut g, &mut evm);
     g.finish();
 }
 
@@ -85,7 +86,9 @@ fn bench_transact(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm) {
     g.bench_function(id, |b| b.iter(|| evm.transact().unwrap()));
 }
 
-fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &Evm) {
+fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm) {
+    let mut shared_memory = SharedMemory::new();
+
     g.bench_function("eval", |b| {
         let contract = Contract {
             input: evm.env.tx.data.clone(),
@@ -94,7 +97,12 @@ fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &Evm) {
         };
         let mut host = DummyHost::new(evm.env.clone());
         b.iter(|| {
-            let mut interpreter = Interpreter::new(Box::new(contract.clone()), u64::MAX, false);
+            let mut interpreter = Interpreter::new(
+                Box::new(contract.clone()),
+                u64::MAX,
+                false,
+                &mut shared_memory,
+            );
             let res = interpreter.run::<_, BerlinSpec>(&mut host);
             host.clear();
             res

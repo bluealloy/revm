@@ -12,8 +12,8 @@ pub fn keccak256<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
         KECCAK_EMPTY
     } else {
         let from = as_usize_or_fail!(interpreter, from);
-        memory_resize!(interpreter, from, len);
-        crate::primitives::keccak256(interpreter.memory.slice(from, len))
+        shared_memory_resize!(interpreter, from, len);
+        crate::primitives::keccak256(interpreter.shared_memory.slice(from, len))
     };
 
     push_b256!(interpreter, hash);
@@ -43,10 +43,10 @@ pub fn codecopy<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     }
     let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
     let code_offset = as_usize_saturated!(code_offset);
-    memory_resize!(interpreter, memory_offset, len);
+    shared_memory_resize!(interpreter, memory_offset, len);
 
     // Safety: set_data is unsafe function and memory_resize ensures us that it is safe to call it
-    interpreter.memory.set_data(
+    interpreter.shared_memory.set_data(
         memory_offset,
         code_offset,
         len,
@@ -89,12 +89,15 @@ pub fn calldatacopy<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     }
     let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
     let data_offset = as_usize_saturated!(data_offset);
-    memory_resize!(interpreter, memory_offset, len);
+    shared_memory_resize!(interpreter, memory_offset, len);
 
     // Safety: set_data is unsafe function and memory_resize ensures us that it is safe to call it
-    interpreter
-        .memory
-        .set_data(memory_offset, data_offset, len, &interpreter.contract.input);
+    interpreter.shared_memory.set_data(
+        memory_offset,
+        data_offset,
+        len,
+        &interpreter.contract.input,
+    );
 }
 
 /// EIP-211: New opcodes: RETURNDATASIZE and RETURNDATACOPY
@@ -121,8 +124,8 @@ pub fn returndatacopy<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host:
     }
     if len != 0 {
         let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
-        memory_resize!(interpreter, memory_offset, len);
-        interpreter.memory.set(
+        shared_memory_resize!(interpreter, memory_offset, len);
+        interpreter.shared_memory.set(
             memory_offset,
             &interpreter.return_data_buffer[data_offset..data_end],
         );
