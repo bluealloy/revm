@@ -50,7 +50,7 @@ impl<M: Middleware> EthersDB<M> {
 impl<M: Middleware> DatabaseRef for EthersDB<M> {
     type Error = ();
 
-    fn basic(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+    fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         let add = eH160::from(address.0 .0);
 
         let f = async {
@@ -78,12 +78,12 @@ impl<M: Middleware> DatabaseRef for EthersDB<M> {
         )))
     }
 
-    fn code_by_hash(&self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
+    fn code_by_hash_ref(&self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
         panic!("Should not be called. Code is already loaded");
         // not needed because we already load code with basic info
     }
 
-    fn storage(&self, address: Address, index: U256) -> Result<U256, Self::Error> {
+    fn storage_ref(&self, address: Address, index: U256) -> Result<U256, Self::Error> {
         let add = eH160::from(address.0 .0);
         let index = H256::from(index.to_be_bytes());
         let f = async {
@@ -97,7 +97,7 @@ impl<M: Middleware> DatabaseRef for EthersDB<M> {
         Ok(self.block_on(f))
     }
 
-    fn block_hash(&self, number: U256) -> Result<B256, Self::Error> {
+    fn block_hash_ref(&self, number: U256) -> Result<B256, Self::Error> {
         // saturate usize
         if number > U256::from(u64::MAX) {
             return Ok(KECCAK_EMPTY);
@@ -119,22 +119,22 @@ impl<M: Middleware> Database for EthersDB<M> {
 
     #[inline]
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
-        <Self as DatabaseRef>::basic(self, address)
+        <Self as DatabaseRef>::basic_ref(self, address)
     }
 
     #[inline]
     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
-        <Self as DatabaseRef>::code_by_hash(self, code_hash)
+        <Self as DatabaseRef>::code_by_hash_ref(self, code_hash)
     }
 
     #[inline]
     fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error> {
-        <Self as DatabaseRef>::storage(self, address, index)
+        <Self as DatabaseRef>::storage_ref(self, address, index)
     }
 
     #[inline]
     fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
-        <Self as DatabaseRef>::block_hash(self, number)
+        <Self as DatabaseRef>::block_hash_ref(self, number)
     }
 }
 
