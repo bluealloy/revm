@@ -238,7 +238,7 @@ impl fmt::Debug for SharedMemory {
         f.debug_struct("SharedMemory")
             .field("current_len", &self.current_len)
             .field(
-                "current_slice",
+                "context_memory",
                 &crate::primitives::hex::encode(self.context_memory()),
             )
             .finish_non_exhaustive()
