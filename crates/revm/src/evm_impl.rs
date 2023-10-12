@@ -1,11 +1,11 @@
 use crate::handler::Handler;
+use crate::inspector_instruction;
 use crate::interpreter::{
     analysis::to_analysed, gas, return_ok, CallContext, CallInputs, CallScheme, Contract,
     CreateInputs, Gas, Host, InstructionResult, Interpreter, SelfDestructResult, SuccessOrHalt,
     Transfer,
 };
 use crate::journaled_state::{is_precompile, JournalCheckpoint};
-use crate::make_inspector_instruction_table;
 use crate::primitives::{
     keccak256, Address, AnalysisKind, Bytecode, Bytes, EVMError, EVMResult, Env, ExecutionResult,
     InvalidTransaction, Log, Output, ResultAndState, Spec, SpecId::*, TransactTo, B256, U256,
@@ -16,6 +16,7 @@ use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::fmt;
 use core::marker::PhantomData;
+use revm_interpreter::opcode::make_boxed_instruction_table;
 use revm_interpreter::{
     gas::initial_tx_gas,
     opcode::{make_instruction_table, InstructionTables},
@@ -435,8 +436,9 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
     ) -> Self {
         let journaled_state = JournaledState::new(precompiles.len(), GSPEC::SPEC_ID);
         let instruction_table = if inspector.is_some() {
-            let instruction_table = make_inspector_instruction_table::<GSPEC, DB>(
+            let instruction_table = make_boxed_instruction_table::<GSPEC, Self, _>(
                 make_instruction_table::<GSPEC, Self>(),
+                inspector_instruction,
             );
             InstructionTables::Boxed(Arc::new(instruction_table))
         } else {

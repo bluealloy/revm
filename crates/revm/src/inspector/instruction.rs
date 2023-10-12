@@ -1,14 +1,13 @@
 use alloc::boxed::Box;
 use revm_interpreter::{
-    instructions::control,
-    opcode::{BoxedInstruction, BoxedInstructionTable, Instruction, InstructionTable},
+    opcode::{BoxedInstruction, Instruction},
     primitives::{db::Database, Spec},
     InstructionResult, Interpreter,
 };
 
 use crate::EVMImpl;
 
-/// Wrap instruction that would call inspector.
+/// Outer closure that calls Inspector for every instruction.
 pub fn inspector_instruction<'a, SPEC: Spec + 'static, DB: Database>(
     instruction: Instruction<EVMImpl<'a, SPEC, DB>>,
 ) -> BoxedInstruction<'a, EVMImpl<'a, SPEC, DB>> {
@@ -46,30 +45,20 @@ pub fn inspector_instruction<'a, SPEC: Spec + 'static, DB: Database>(
     inspector_instruction
 }
 
-/// make inspector table
-pub fn make_inspector_instruction_table<'a, SPEC: Spec + 'static, DB: Database>(
-    table: InstructionTable<EVMImpl<'a, SPEC, DB>>,
-) -> BoxedInstructionTable<'a, EVMImpl<'a, SPEC, DB>> {
-    let mut inspector_table: BoxedInstructionTable<'a, EVMImpl<'a, SPEC, DB>> =
-        core::array::from_fn(|_| inspector_instruction(control::not_found));
-
-    for (i, instruction) in table.iter().enumerate() {
-        inspector_table[i] = inspector_instruction(*instruction);
-    }
-    inspector_table
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::{db::EmptyDB, interpreter::opcode::*, primitives::BerlinSpec, EVMImpl};
 
     #[test]
-    fn test() {
+    fn test_make_boxed_instruction_table() {
         // test that this pattern builds.
         let inst: InstructionTable<EVMImpl<'_, BerlinSpec, EmptyDB>> =
             make_instruction_table::<BerlinSpec, EVMImpl<'_, BerlinSpec, _>>();
         let _test: BoxedInstructionTable<'_, EVMImpl<'_, BerlinSpec, _>> =
-            make_inspector_instruction_table(inst);
+            make_boxed_instruction_table::<'_, BerlinSpec, EVMImpl<'_, BerlinSpec, EmptyDB>, _>(
+                inst,
+                inspector_instruction,
+            );
     }
 }

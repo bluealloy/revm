@@ -54,8 +54,8 @@ fn snailtracer(c: &mut Criterion) {
 
     let mut g = c.benchmark_group("snailtracer");
     g.noise_threshold(0.03)
-        .warm_up_time(Duration::from_secs(1))
-        .measurement_time(Duration::from_secs(3))
+        .warm_up_time(Duration::from_secs(3))
+        .measurement_time(Duration::from_secs(10))
         .sample_size(10);
     bench_transact(&mut g, &mut evm);
     bench_eval(&mut g, &mut evm);

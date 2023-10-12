@@ -13,6 +13,8 @@ use core::fmt;
 /// EVM opcode function signature.
 pub type Instruction<H> = fn(&mut Interpreter<'_>, &mut H);
 
+/// Instruction table is list of instruction function pointers mapped to
+/// 256 EVM opcodes.
 pub type InstructionTable<H> = [Instruction<H>; 256];
 
 /// Arc over plain instruction table
@@ -28,21 +30,15 @@ pub type BoxedInstructionTable<'a, H> = [BoxedInstruction<'a, H>; 256];
 pub type BoxedInstructionTableArc<'a, H> = Arc<BoxedInstructionTable<'a, H>>;
 
 /// Instruction set that contains plain instruction table that contains simple `fn` function pointer.
-/// and Boxed `Fn` variant that contains `Box<dyn Fn()>` function pointer.
+/// and Boxed `Fn` variant that contains `Box<dyn Fn()>` function pointer that can be used with closured.
+///
+/// Note that `Plain` variant gives us 10-20% faster Interpreter execution.
+///
+/// Boxed variant can be used to wrap plain function pointer with closure.
 #[derive(Clone)]
 pub enum InstructionTables<'a, H> {
     Plain(InstructionTableArc<H>),
     Boxed(BoxedInstructionTableArc<'a, H>),
-}
-
-impl<'a, H> InstructionTables<'a, H> {
-    pub fn new_plain(table: InstructionTableArc<H>) -> Self {
-        Self::Plain(table)
-    }
-
-    pub fn new_boxed(table: BoxedInstructionTableArc<'a, H>) -> Self {
-        Self::Boxed(table)
-    }
 }
 
 macro_rules! opcodes {
@@ -78,12 +74,7 @@ macro_rules! opcodes {
     };
 }
 
-pub fn boxed_instruction<'a, H: Host + 'a, SPEC: Spec>(opcode: u8) -> BoxedInstruction<'a, H> {
-    let instruction = instruction::<H, SPEC>(opcode);
-    Box::new(instruction)
-}
-
-/// Make instruction talbe
+/// Make instruction table.
 pub fn make_instruction_table<SPEC: Spec, H: Host>() -> InstructionTable<H> {
     let mut table: InstructionTable<H> =
         core::array::from_fn(|_| control::not_found::<H> as Instruction<H>);
@@ -95,17 +86,21 @@ pub fn make_instruction_table<SPEC: Spec, H: Host>() -> InstructionTable<H> {
     table
 }
 
-/// Make instruction talbe
-pub fn make_boxed_instruction_table<'a, H: Host + 'a, SPEC: Spec>() -> BoxedInstructionTable<'a, H>
+/// Make boxed instruction table that calls `outer` closure for every instruction.
+pub fn make_boxed_instruction_table<'a, SPEC: Spec + 'static, H: Host + 'a, FN>(
+    table: InstructionTable<H>,
+    outer: FN,
+) -> BoxedInstructionTable<'a, H>
+where
+    FN: Fn(Instruction<H>) -> BoxedInstruction<'a, H>,
 {
-    let mut table: BoxedInstructionTable<'_, H> =
-        core::array::from_fn(|_| Box::new(control::not_found::<H>) as BoxedInstruction<'a, H>);
-    let mut i = 0;
-    while i < 256 {
-        table[i] = boxed_instruction::<H, SPEC>(i as u8);
-        i += 1;
+    let mut inspector_table: BoxedInstructionTable<'a, H> =
+        core::array::from_fn(|_| outer(control::not_found));
+
+    for (i, instruction) in table.iter().enumerate() {
+        inspector_table[i] = outer(*instruction);
     }
-    table
+    inspector_table
 }
 
 // When adding new opcodes:

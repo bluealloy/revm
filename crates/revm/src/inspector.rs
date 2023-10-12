@@ -11,7 +11,7 @@ mod gas;
 mod instruction;
 mod noop;
 
-pub use instruction::{inspector_instruction, make_inspector_instruction_table};
+pub use instruction::inspector_instruction;
 /// [Inspector] implementations.
 pub mod inspectors {
     #[cfg(feature = "std")]
