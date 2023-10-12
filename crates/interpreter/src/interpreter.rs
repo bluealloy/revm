@@ -8,8 +8,9 @@ pub use contract::Contract;
 pub use shared_memory::{next_multiple_of_32, SharedMemory};
 pub use stack::{Stack, STACK_LIMIT};
 
-use crate::primitives::{Bytes, Spec};
-use crate::{alloc::boxed::Box, opcode::eval, Gas, Host, InstructionResult};
+use crate::primitives::Bytes;
+use crate::{Gas, Host, InstructionResult};
+use alloc::boxed::Box;
 
 /// EIP-170: Contract code size limit
 ///
@@ -104,41 +105,33 @@ impl<'a> Interpreter<'a> {
 
     /// Executes the instruction at the current instruction pointer.
     #[inline(always)]
-    pub fn step<H: Host, SPEC: Spec>(&mut self, host: &mut H) {
-        // step.
+    pub fn step<FN, H: Host>(&mut self, instruction_table: &[FN; 256], host: &mut H)
+    where
+        FN: Fn(&mut Interpreter<'_>, &mut H),
+    {
+        // Get current opcode.
         let opcode = unsafe { *self.instruction_pointer };
+
         // Safety: In analysis we are doing padding of bytecode so that we are sure that last
         // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
         // it will do noop and just stop execution of this contract
         self.instruction_pointer = unsafe { self.instruction_pointer.offset(1) };
-        eval::<H, SPEC>(opcode, self, host);
+
+        // execute instruction.
+        (instruction_table[opcode as usize])(self, host)
     }
 
     /// Executes the interpreter until it returns or stops.
-    pub fn run<H: Host, SPEC: Spec>(&mut self, host: &mut H) -> InstructionResult {
+    pub fn run<FN, H: Host>(
+        &mut self,
+        instruction_table: &[FN; 256],
+        host: &mut H,
+    ) -> InstructionResult
+    where
+        FN: Fn(&mut Interpreter<'_>, &mut H),
+    {
         while self.instruction_result == InstructionResult::Continue {
-            self.step::<H, SPEC>(host);
-        }
-        self.instruction_result
-    }
-
-    /// Executes the interpreter until it returns or stops. Same as `run` but with
-    /// calls to the [`Host::step`] and [`Host::step_end`] callbacks.
-    pub fn run_inspect<H: Host, SPEC: Spec>(&mut self, host: &mut H) -> InstructionResult {
-        while self.instruction_result == InstructionResult::Continue {
-            // step
-            let result = host.step(self);
-            if result != InstructionResult::Continue {
-                return result;
-            }
-
-            self.step::<H, SPEC>(host);
-
-            // step ends
-            let result = host.step_end(self, self.instruction_result);
-            if result != InstructionResult::Continue {
-                return result;
-            }
+            self.step(instruction_table, host);
         }
         self.instruction_result
     }

@@ -187,7 +187,7 @@ pub fn tload<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, host: &mut 
     *index = host.tload(interpreter.contract.address, *index);
 }
 
-pub fn log<H: Host, const N: usize>(interpreter: &mut Interpreter<'_>, host: &mut H) {
+pub fn log<const N: usize, H: Host>(interpreter: &mut Interpreter<'_>, host: &mut H) {
     check_staticcall!(interpreter);
 
     pop!(interpreter, offset, len);
@@ -304,7 +304,7 @@ pub fn prepare_create_inputs<H: Host, const IS_CREATE2: bool, SPEC: Spec>(
     }));
 }
 
-pub fn create<H: Host, const IS_CREATE2: bool, SPEC: Spec>(
+pub fn create<const IS_CREATE2: bool, H: Host, SPEC: Spec>(
     interpreter: &mut Interpreter<'_>,
     host: &mut H,
 ) {
@@ -351,19 +351,19 @@ pub fn create<H: Host, const IS_CREATE2: bool, SPEC: Spec>(
 }
 
 pub fn call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, host: &mut H) {
-    call_inner::<H, SPEC>(CallScheme::Call, interpreter, host);
+    call_inner::<SPEC, H>(CallScheme::Call, interpreter, host);
 }
 
 pub fn call_code<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, host: &mut H) {
-    call_inner::<H, SPEC>(CallScheme::CallCode, interpreter, host);
+    call_inner::<SPEC, H>(CallScheme::CallCode, interpreter, host);
 }
 
 pub fn delegate_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, host: &mut H) {
-    call_inner::<H, SPEC>(CallScheme::DelegateCall, interpreter, host);
+    call_inner::<SPEC, H>(CallScheme::DelegateCall, interpreter, host);
 }
 
 pub fn static_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, host: &mut H) {
-    call_inner::<H, SPEC>(CallScheme::StaticCall, interpreter, host);
+    call_inner::<SPEC, H>(CallScheme::StaticCall, interpreter, host);
 }
 
 #[inline(never)]
@@ -505,7 +505,7 @@ fn prepare_call_inputs<H: Host, SPEC: Spec>(
     }));
 }
 
-pub fn call_inner<H: Host, SPEC: Spec>(
+pub fn call_inner<SPEC: Spec, H: Host>(
     scheme: CallScheme,
     interpreter: &mut Interpreter<'_>,
     host: &mut H,

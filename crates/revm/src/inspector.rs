@@ -8,8 +8,10 @@ mod customprinter;
 #[cfg(all(feature = "std", feature = "serde"))]
 mod eip3155;
 mod gas;
+mod instruction;
 mod noop;
 
+pub use instruction::inspector_instruction;
 /// [Inspector] implementations.
 pub mod inspectors {
     #[cfg(feature = "std")]
@@ -80,11 +82,9 @@ pub trait Inspector<DB: Database> {
         &mut self,
         interp: &mut Interpreter<'_>,
         data: &mut EVMData<'_, DB>,
-        eval: InstructionResult,
     ) -> InstructionResult {
         let _ = interp;
         let _ = data;
-        let _ = eval;
         InstructionResult::Continue
     }
 

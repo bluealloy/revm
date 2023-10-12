@@ -1,8 +1,7 @@
 use crate::primitives::Bytecode;
 use crate::{
     primitives::{Address, Bytes, Env, B256, U256},
-    CallInputs, CreateInputs, Gas, InstructionResult, Interpreter, SelfDestructResult,
-    SharedMemory,
+    CallInputs, CreateInputs, Gas, InstructionResult, SelfDestructResult, SharedMemory,
 };
 use alloc::vec::Vec;
 pub use dummy::DummyHost;
@@ -11,16 +10,6 @@ mod dummy;
 
 /// EVM context host.
 pub trait Host {
-    /// Called before the interpreter executes an instruction.
-    fn step(&mut self, interpreter: &mut Interpreter<'_>) -> InstructionResult;
-
-    /// Called after the interpreter executes an instruction.
-    fn step_end(
-        &mut self,
-        interpreter: &mut Interpreter<'_>,
-        ret: InstructionResult,
-    ) -> InstructionResult;
-
     /// Returns a mutable reference to the environment.
     fn env(&mut self) -> &mut Env;
 

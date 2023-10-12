@@ -1733,6 +1733,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "microbench"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c4c44e40aee4e6fd2f4257bb91e5948ce79285aeb949129448889cf2fbf6da0b"
+
+[[package]]
 name = "mime"
 version = "0.3.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2417,6 +2423,16 @@ dependencies = [
  "hex",
  "once_cell",
  "serde",
+]
+
+[[package]]
+name = "revm-test"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "hex",
+ "microbench",
+ "revm",
 ]
 
 [[package]]

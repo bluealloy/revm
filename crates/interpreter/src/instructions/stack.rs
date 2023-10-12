@@ -22,7 +22,7 @@ pub fn push0<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, _host: &mut
     }
 }
 
-pub fn push<H: Host, const N: usize>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
+pub fn push<const N: usize, H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     let start = interpreter.instruction_pointer;
     // Safety: In Analysis we appended needed bytes for bytecode so that we are safe to just add without
@@ -37,14 +37,14 @@ pub fn push<H: Host, const N: usize>(interpreter: &mut Interpreter<'_>, _host: &
     interpreter.instruction_pointer = unsafe { start.add(N) };
 }
 
-pub fn dup<H: Host, const N: usize>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
+pub fn dup<const N: usize, H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     if let Err(result) = interpreter.stack.dup::<N>() {
         interpreter.instruction_result = result;
     }
 }
 
-pub fn swap<H: Host, const N: usize>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
+pub fn swap<const N: usize, H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     if let Err(result) = interpreter.stack.swap::<N>() {
         interpreter.instruction_result = result;
