@@ -166,7 +166,7 @@ mod tests {
             .unwrap();
         let address = address.as_fixed_bytes().into();
 
-        let acc_info = ethersdb.basic(address).unwrap().unwrap();
+        let acc_info = ethersdb.basic_ref(address).unwrap().unwrap();
 
         // check if not empty
         assert!(acc_info.exists());
@@ -194,7 +194,7 @@ mod tests {
 
         // select test index
         let index = U256::from(5);
-        let storage = ethersdb.storage(address, index).unwrap();
+        let storage = ethersdb.storage_ref(address, index).unwrap();
 
         // https://etherscan.io/address/0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852#readContract
         // storage[5] -> factory: address
@@ -219,7 +219,7 @@ mod tests {
 
         // block number to test
         let block_num = U256::from(16148323);
-        let block_hash = ethersdb.block_hash(block_num).unwrap();
+        let block_hash = ethersdb.block_hash_ref(block_num).unwrap();
 
         // https://etherscan.io/block/16148323
         let actual =
