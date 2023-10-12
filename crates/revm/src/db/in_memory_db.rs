@@ -89,7 +89,7 @@ impl<ExtDB: DatabaseRef> CacheDB<ExtDB> {
         match self.accounts.entry(address) {
             Entry::Occupied(entry) => Ok(entry.into_mut()),
             Entry::Vacant(entry) => Ok(entry.insert(
-                db.basic(address)?
+                db.basic_ref(address)?
                     .map(|info| DbAccount {
                         info,
                         ..Default::default()
@@ -170,7 +170,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
             Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(entry) => entry.insert(
                 self.db
-                    .basic(address)?
+                    .basic_ref(address)?
                     .map(|info| DbAccount {
                         info,
                         ..Default::default()
@@ -186,7 +186,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
             Entry::Occupied(entry) => Ok(entry.get().clone()),
             Entry::Vacant(entry) => {
                 // if you return code bytes when basic fn is called this function is not needed.
-                Ok(entry.insert(self.db.code_by_hash(code_hash)?).clone())
+                Ok(entry.insert(self.db.code_by_hash_ref(code_hash)?).clone())
             }
         }
     }
@@ -207,7 +207,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
                         ) {
                             Ok(U256::ZERO)
                         } else {
-                            let slot = self.db.storage(address, index)?;
+                            let slot = self.db.storage_ref(address, index)?;
                             entry.insert(slot);
                             Ok(slot)
                         }
@@ -216,9 +216,9 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
             }
             Entry::Vacant(acc_entry) => {
                 // acc needs to be loaded for us to access slots.
-                let info = self.db.basic(address)?;
+                let info = self.db.basic_ref(address)?;
                 let (account, value) = if info.is_some() {
-                    let value = self.db.storage(address, index)?;
+                    let value = self.db.storage_ref(address, index)?;
                     let mut account: DbAccount = info.into();
                     account.storage.insert(index, value);
                     (account, value)
@@ -235,7 +235,7 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
         match self.block_hashes.entry(number) {
             Entry::Occupied(entry) => Ok(*entry.get()),
             Entry::Vacant(entry) => {
-                let hash = self.db.block_hash(number)?;
+                let hash = self.db.block_hash_ref(number)?;
                 entry.insert(hash);
                 Ok(hash)
             }
@@ -246,21 +246,21 @@ impl<ExtDB: DatabaseRef> Database for CacheDB<ExtDB> {
 impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
     type Error = ExtDB::Error;
 
-    fn basic(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+    fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         match self.accounts.get(&address) {
             Some(acc) => Ok(acc.info()),
-            None => self.db.basic(address),
+            None => self.db.basic_ref(address),
         }
     }
 
-    fn code_by_hash(&self, code_hash: B256) -> Result<Bytecode, Self::Error> {
+    fn code_by_hash_ref(&self, code_hash: B256) -> Result<Bytecode, Self::Error> {
         match self.contracts.get(&code_hash) {
             Some(entry) => Ok(entry.clone()),
-            None => self.db.code_by_hash(code_hash),
+            None => self.db.code_by_hash_ref(code_hash),
         }
     }
 
-    fn storage(&self, address: Address, index: U256) -> Result<U256, Self::Error> {
+    fn storage_ref(&self, address: Address, index: U256) -> Result<U256, Self::Error> {
         match self.accounts.get(&address) {
             Some(acc_entry) => match acc_entry.storage.get(&index) {
                 Some(entry) => Ok(*entry),
@@ -271,18 +271,18 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
                     ) {
                         Ok(U256::ZERO)
                     } else {
-                        self.db.storage(address, index)
+                        self.db.storage_ref(address, index)
                     }
                 }
             },
-            None => self.db.storage(address, index),
+            None => self.db.storage_ref(address, index),
         }
     }
 
-    fn block_hash(&self, number: U256) -> Result<B256, Self::Error> {
+    fn block_hash_ref(&self, number: U256) -> Result<B256, Self::Error> {
         match self.block_hashes.get(&number) {
             Some(entry) => Ok(*entry),
-            None => self.db.block_hash(number),
+            None => self.db.block_hash_ref(number),
         }
     }
 }
