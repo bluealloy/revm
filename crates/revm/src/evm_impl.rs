@@ -216,34 +216,23 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> Transact<DB::Error> for EVMImpl<'a
         let tx_data = env.tx.data.clone();
         let tx_gas_limit = env.tx.gas_limit;
 
+        // the L1-cost fee is only computed for Optimism non-deposit transactions.
         #[cfg(feature = "optimism")]
-        let tx_l1_cost = {
-            let is_deposit = env.tx.optimism.source_hash.is_some();
-
+        let tx_l1_cost = if env.cfg.optimism && env.tx.optimism.source_hash.is_none() {
             let l1_block_info =
-                optimism::L1BlockInfo::try_fetch(self.data.db, self.data.env.cfg.optimism)
-                    .map_err(EVMError::Database)?;
+                optimism::L1BlockInfo::try_fetch(self.data.db).map_err(EVMError::Database)?;
 
-            // Perform this calculation optimistically to avoid cloning the enveloped tx.
-            let tx_l1_cost = l1_block_info.as_ref().map(|l1_block_info| {
-                env.tx
-                    .optimism
-                    .enveloped_tx
-                    .as_ref()
-                    .map(|enveloped_tx| {
-                        l1_block_info.calculate_tx_l1_cost::<GSPEC>(enveloped_tx, is_deposit)
-                    })
-                    .unwrap_or(U256::ZERO)
-            });
-            // storage l1 block info for later use.
-            self.data.l1_block_info = l1_block_info;
-
-            //
-            let Some(tx_l1_cost) = tx_l1_cost else {
-                panic!("[OPTIMISM] L1 Block Info could not be loaded from the DB.")
+            let Some(enveloped_tx) = &env.tx.optimism.enveloped_tx else {
+                panic!("[OPTIMISM] Failed to load enveloped transaction.");
             };
+            let tx_l1_cost = l1_block_info.calculate_tx_l1_cost::<GSPEC>(enveloped_tx);
+
+            // storage l1 block info for later use.
+            self.data.l1_block_info = Some(l1_block_info);
 
             tx_l1_cost
+        } else {
+            U256::ZERO
         };
 
         let initial_gas_spend = initial_tx_gas::<GSPEC>(
@@ -444,6 +433,14 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         } else {
             InstructionTables::Plain(Arc::new(make_instruction_table::<GSPEC, Self>()))
         };
+        #[cfg(feature = "optimism")]
+        let handler = if env.cfg.optimism {
+            Handler::optimism::<GSPEC>()
+        } else {
+            Handler::mainnet::<GSPEC>()
+        };
+        #[cfg(not(feature = "optimism"))]
+        let handler = Handler::mainnet::<GSPEC>();
 
         Self {
             data: EVMData {
@@ -457,7 +454,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             },
             inspector,
             instruction_table,
-            handler: Handler::mainnet::<GSPEC>(),
+            handler,
             _phantomdata: PhantomData {},
         }
     }
