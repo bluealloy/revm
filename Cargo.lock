@@ -301,6 +301,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "aurora-engine-modexp"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bfacad86e9e138fca0670949eb8ed4ffdf73a55bded8887efe0863cd1a3a6f70"
+dependencies = [
+ "hex",
+ "num",
+]
+
+[[package]]
 name = "auto_impl"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2381,9 +2391,9 @@ dependencies = [
 name = "revm-precompile"
 version = "2.2.0"
 dependencies = [
+ "aurora-engine-modexp",
  "c-kzg",
  "k256",
- "num",
  "once_cell",
  "revm-primitives",
  "ripemd",

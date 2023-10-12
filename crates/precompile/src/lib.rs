@@ -17,6 +17,7 @@ mod identity;
 pub mod kzg_point_evaluation;
 mod modexp;
 mod secp256k1;
+pub mod utilities;
 
 use alloc::{boxed::Box, vec::Vec};
 use core::fmt;
