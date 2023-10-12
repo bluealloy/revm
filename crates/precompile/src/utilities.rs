@@ -2,7 +2,7 @@ use core::cmp::min;
 
 use alloc::vec::Vec;
 
-/// Get a array from the data if data does not contain start to length bytes add right padding with
+/// Get an array from the data, if data does not contain `start` to `len` bytes, add right padding with
 /// zeroes
 #[inline(always)]
 pub fn get_right_padded<const S: usize>(data: &[u8], offset: usize) -> [u8; S] {
