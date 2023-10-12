@@ -11,10 +11,11 @@ version = "2.2.0"
 [dependencies]
 revm-primitives = { path = "../primitives", version = "1.3.0", default-features = false }
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
-num = { version = "0.4.0", default-features = false, features = ["alloc"] }
 once_cell = { version = "1.17", default-features = false, features = ["alloc"] }
 ripemd = { version = "0.1", default-features = false }
 sha2 = { version = "0.10", default-features = false }
+# modexp precompile
+aurora-engine-modexp = { version = "1.0", default-features = false }
 
 # Optional KZG point evaluation precompile
 c-kzg = { version = "0.1.1", default-features = false, optional = true }
@@ -26,12 +27,12 @@ secp256k1 = { version = "0.27.0", default-features = false, features = [
     "recovery",
 ], optional = true }
 
+
 [features]
 default = ["std", "c-kzg", "secp256k1"]
 std = [
     "revm-primitives/std",
     "k256/std",
-    "num/std",
     "once_cell/std",
     "ripemd/std",
     "sha2/std",
@@ -41,7 +42,7 @@ std = [
 
 optimism = ["revm-primitives/optimism"]
 
-# This library may not work on all no_std platforms as they depend on C libraries.
+# These libraries may not work on all no_std platforms as they depend on C.
 
 # Enables the KZG point evaluation precompile.
 c-kzg = ["dep:c-kzg", "revm-primitives/c-kzg"]
