@@ -13,7 +13,7 @@ pub fn get_right_padded<const S: usize>(data: &[u8], offset: usize) -> [u8; S] {
     padded
 }
 
-/// Get a vector of the data if data does not contain the slice of start and len right padded missing
+/// Get a vector of the data, if data does not contain the slice of `start` to `len`, right pad missing
 /// part with zeroes
 #[inline(always)]
 pub fn get_right_padded_vec(data: &[u8], offset: usize, len: usize) -> Vec<u8> {
