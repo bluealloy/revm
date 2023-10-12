@@ -22,24 +22,7 @@ pub struct SharedMemory {
     current_len: usize,
     /// Memory limit. See [`crate::CfgEnv`].
     #[cfg(feature = "memory_limit")]
-    pub memory_limit: u64,
-}
-
-impl fmt::Debug for SharedMemory {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("SharedMemory")
-            .field(
-                "current_slice",
-                &crate::primitives::hex::encode(self.context_memory()),
-            )
-            .finish()
-    }
-}
-
-impl Default for SharedMemory {
-    fn default() -> Self {
-        Self::new()
-    }
+    memory_limit: u64,
 }
 
 impl SharedMemory {
@@ -247,6 +230,24 @@ impl SharedMemory {
     #[inline(always)]
     fn last_checkpoint(&self) -> usize {
         self.checkpoints.last().cloned().unwrap_or_default()
+    }
+}
+
+impl fmt::Debug for SharedMemory {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SharedMemory")
+            .field("current_len", &self.current_len)
+            .field(
+                "context_memory",
+                &crate::primitives::hex::encode(self.context_memory()),
+            )
+            .finish_non_exhaustive()
+    }
+}
+
+impl Default for SharedMemory {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
