@@ -10,7 +10,7 @@ use alloc::{boxed::Box, vec::Vec};
 use core::cmp::min;
 use revm_primitives::BLOCK_HASH_HISTORY;
 
-pub fn balance<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn balance<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, host: &mut H) {
     pop_address!(interpreter, address);
     let Some((balance, is_cold)) = host.balance(address) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
@@ -31,7 +31,7 @@ pub fn balance<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H)
 }
 
 /// EIP-1884: Repricing for trie-size-dependent opcodes
-pub fn selfbalance<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn selfbalance<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, host: &mut H) {
     check!(interpreter, ISTANBUL);
     gas!(interpreter, gas::LOW);
     let Some((balance, _)) = host.balance(interpreter.contract.address) else {
@@ -41,7 +41,7 @@ pub fn selfbalance<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mu
     push!(interpreter, balance);
 }
 
-pub fn extcodesize<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn extcodesize<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, host: &mut H) {
     pop_address!(interpreter, address);
     let Some((code, is_cold)) = host.code(address) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
@@ -66,7 +66,7 @@ pub fn extcodesize<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mu
 }
 
 /// EIP-1052: EXTCODEHASH opcode
-pub fn extcodehash<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn extcodehash<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, host: &mut H) {
     check!(interpreter, CONSTANTINOPLE);
     pop_address!(interpreter, address);
     let Some((code_hash, is_cold)) = host.code_hash(address) else {
@@ -90,7 +90,7 @@ pub fn extcodehash<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mu
     push_b256!(interpreter, code_hash);
 }
 
-pub fn extcodecopy<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn extcodecopy<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, host: &mut H) {
     pop_address!(interpreter, address);
     pop!(interpreter, memory_offset, code_offset, len_u256);
 
@@ -109,15 +109,15 @@ pub fn extcodecopy<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mu
     }
     let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
     let code_offset = min(as_usize_saturated!(code_offset), code.len());
-    memory_resize!(interpreter, memory_offset, len);
+    shared_memory_resize!(interpreter, memory_offset, len);
 
     // Safety: set_data is unsafe function and memory_resize ensures us that it is safe to call it
     interpreter
-        .memory
+        .shared_memory
         .set_data(memory_offset, code_offset, len, code.bytes());
 }
 
-pub fn blockhash<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn blockhash<H: Host>(interpreter: &mut Interpreter<'_>, host: &mut H) {
     gas!(interpreter, gas::BLOCKHASH);
     pop_top!(interpreter, number);
 
@@ -136,7 +136,7 @@ pub fn blockhash<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
     *number = U256::ZERO;
 }
 
-pub fn sload<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn sload<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, host: &mut H) {
     pop!(interpreter, index);
 
     let Some((value, is_cold)) = host.sload(interpreter.contract.address, index) else {
@@ -147,7 +147,7 @@ pub fn sload<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     push!(interpreter, value);
 }
 
-pub fn sstore<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn sstore<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, host: &mut H) {
     check_staticcall!(interpreter);
 
     pop!(interpreter, index, value);
@@ -166,7 +166,7 @@ pub fn sstore<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) 
 
 /// EIP-1153: Transient storage opcodes
 /// Store value to transient storage
-pub fn tstore<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn tstore<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, host: &mut H) {
     check!(interpreter, CANCUN);
     check_staticcall!(interpreter);
     gas!(interpreter, gas::WARM_STORAGE_READ_COST);
@@ -178,7 +178,7 @@ pub fn tstore<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) 
 
 /// EIP-1153: Transient storage opcodes
 /// Load value from transient storage
-pub fn tload<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn tload<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, host: &mut H) {
     check!(interpreter, CANCUN);
     gas!(interpreter, gas::WARM_STORAGE_READ_COST);
 
@@ -187,7 +187,7 @@ pub fn tload<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     *index = host.tload(interpreter.contract.address, *index);
 }
 
-pub fn log<H: Host, const N: usize>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn log<const N: usize, H: Host>(interpreter: &mut Interpreter<'_>, host: &mut H) {
     check_staticcall!(interpreter);
 
     pop!(interpreter, offset, len);
@@ -197,8 +197,8 @@ pub fn log<H: Host, const N: usize>(interpreter: &mut Interpreter, host: &mut H)
         Bytes::new()
     } else {
         let offset = as_usize_or_fail!(interpreter, offset);
-        memory_resize!(interpreter, offset, len);
-        Bytes::copy_from_slice(interpreter.memory.slice(offset, len))
+        shared_memory_resize!(interpreter, offset, len);
+        Bytes::copy_from_slice(interpreter.shared_memory.slice(offset, len))
     };
 
     if interpreter.stack.len() < N {
@@ -217,7 +217,7 @@ pub fn log<H: Host, const N: usize>(interpreter: &mut Interpreter, host: &mut H)
     host.log(interpreter.contract.address, topics, data);
 }
 
-pub fn selfdestruct<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn selfdestruct<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, host: &mut H) {
     check_staticcall!(interpreter);
     pop_address!(interpreter, target);
 
@@ -237,7 +237,7 @@ pub fn selfdestruct<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &m
 
 #[inline(never)]
 pub fn prepare_create_inputs<H: Host, const IS_CREATE2: bool, SPEC: Spec>(
-    interpreter: &mut Interpreter,
+    interpreter: &mut Interpreter<'_>,
     host: &mut H,
     create_inputs: &mut Option<Box<CreateInputs>>,
 ) {
@@ -273,8 +273,8 @@ pub fn prepare_create_inputs<H: Host, const IS_CREATE2: bool, SPEC: Spec>(
         }
 
         let code_offset = as_usize_or_fail!(interpreter, code_offset);
-        memory_resize!(interpreter, code_offset, len);
-        Bytes::copy_from_slice(interpreter.memory.slice(code_offset, len))
+        shared_memory_resize!(interpreter, code_offset, len);
+        Bytes::copy_from_slice(interpreter.shared_memory.slice(code_offset, len))
     };
 
     let scheme = if IS_CREATE2 {
@@ -304,8 +304,8 @@ pub fn prepare_create_inputs<H: Host, const IS_CREATE2: bool, SPEC: Spec>(
     }));
 }
 
-pub fn create<H: Host, const IS_CREATE2: bool, SPEC: Spec>(
-    interpreter: &mut Interpreter,
+pub fn create<const IS_CREATE2: bool, H: Host, SPEC: Spec>(
+    interpreter: &mut Interpreter<'_>,
     host: &mut H,
 ) {
     let mut create_input: Option<Box<CreateInputs>> = None;
@@ -315,7 +315,8 @@ pub fn create<H: Host, const IS_CREATE2: bool, SPEC: Spec>(
         return;
     };
 
-    let (return_reason, address, gas, return_data) = host.create(&mut create_input);
+    let (return_reason, address, gas, return_data) =
+        host.create(&mut create_input, interpreter.shared_memory);
 
     interpreter.return_data_buffer = match return_reason {
         // Save data to return data buffer if the create reverted
@@ -349,25 +350,25 @@ pub fn create<H: Host, const IS_CREATE2: bool, SPEC: Spec>(
     }
 }
 
-pub fn call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
-    call_inner::<H, SPEC>(CallScheme::Call, interpreter, host);
+pub fn call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, host: &mut H) {
+    call_inner::<SPEC, H>(CallScheme::Call, interpreter, host);
 }
 
-pub fn call_code<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
-    call_inner::<H, SPEC>(CallScheme::CallCode, interpreter, host);
+pub fn call_code<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, host: &mut H) {
+    call_inner::<SPEC, H>(CallScheme::CallCode, interpreter, host);
 }
 
-pub fn delegate_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
-    call_inner::<H, SPEC>(CallScheme::DelegateCall, interpreter, host);
+pub fn delegate_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, host: &mut H) {
+    call_inner::<SPEC, H>(CallScheme::DelegateCall, interpreter, host);
 }
 
-pub fn static_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
-    call_inner::<H, SPEC>(CallScheme::StaticCall, interpreter, host);
+pub fn static_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, host: &mut H) {
+    call_inner::<SPEC, H>(CallScheme::StaticCall, interpreter, host);
 }
 
 #[inline(never)]
 fn prepare_call_inputs<H: Host, SPEC: Spec>(
-    interpreter: &mut Interpreter,
+    interpreter: &mut Interpreter<'_>,
     scheme: CallScheme,
     host: &mut H,
     result_len: &mut usize,
@@ -399,8 +400,8 @@ fn prepare_call_inputs<H: Host, SPEC: Spec>(
     let in_len = as_usize_or_fail!(interpreter, in_len);
     let input = if in_len != 0 {
         let in_offset = as_usize_or_fail!(interpreter, in_offset);
-        memory_resize!(interpreter, in_offset, in_len);
-        Bytes::copy_from_slice(interpreter.memory.slice(in_offset, in_len))
+        shared_memory_resize!(interpreter, in_offset, in_len);
+        Bytes::copy_from_slice(interpreter.shared_memory.slice(in_offset, in_len))
     } else {
         Bytes::new()
     };
@@ -408,7 +409,7 @@ fn prepare_call_inputs<H: Host, SPEC: Spec>(
     *result_len = as_usize_or_fail!(interpreter, out_len);
     *result_offset = if *result_len != 0 {
         let out_offset = as_usize_or_fail!(interpreter, out_offset);
-        memory_resize!(interpreter, out_offset, *result_len);
+        shared_memory_resize!(interpreter, out_offset, *result_len);
         out_offset
     } else {
         usize::MAX //unrealistic value so we are sure it is not used
@@ -504,9 +505,9 @@ fn prepare_call_inputs<H: Host, SPEC: Spec>(
     }));
 }
 
-pub fn call_inner<H: Host, SPEC: Spec>(
+pub fn call_inner<SPEC: Spec, H: Host>(
     scheme: CallScheme,
-    interpreter: &mut Interpreter,
+    interpreter: &mut Interpreter<'_>,
     host: &mut H,
 ) {
     match scheme {
@@ -535,10 +536,9 @@ pub fn call_inner<H: Host, SPEC: Spec>(
     };
 
     // Call host to interact with target contract
-    let (reason, gas, return_data) = host.call(&mut call_input);
+    let (reason, gas, return_data) = host.call(&mut call_input, interpreter.shared_memory);
 
     interpreter.return_data_buffer = return_data;
-
     let target_len = min(out_len, interpreter.return_data_buffer.len());
 
     match reason {
@@ -549,7 +549,7 @@ pub fn call_inner<H: Host, SPEC: Spec>(
                 interpreter.gas.record_refund(gas.refunded());
             }
             interpreter
-                .memory
+                .shared_memory
                 .set(out_offset, &interpreter.return_data_buffer[..target_len]);
             push!(interpreter, U256::from(1));
         }
@@ -558,7 +558,7 @@ pub fn call_inner<H: Host, SPEC: Spec>(
                 interpreter.gas.erase_cost(gas.remaining());
             }
             interpreter
-                .memory
+                .shared_memory
                 .set(out_offset, &interpreter.return_data_buffer[..target_len]);
             push!(interpreter, U256::ZERO);
         }

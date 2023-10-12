@@ -1,9 +1,10 @@
 //! # revm-precompile
 //!
 //! Implementations of EVM precompiled contracts.
-
-#![cfg_attr(not(feature = "std"), no_std)]
 #![warn(unused_crate_dependencies)]
+#![deny(unused_must_use, rust_2018_idioms)]
+#![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 
 #[macro_use]
 extern crate alloc;
@@ -16,6 +17,7 @@ mod identity;
 pub mod kzg_point_evaluation;
 mod modexp;
 mod secp256k1;
+pub mod utilities;
 
 use alloc::{boxed::Box, vec::Vec};
 use core::fmt;
@@ -34,14 +36,14 @@ pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 pub struct PrecompileOutput {
     pub cost: u64,
     pub output: Vec<u8>,
     pub logs: Vec<Log>,
 }
 
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Log {
     pub address: Address,
     pub topics: Vec<B256>,
@@ -57,8 +59,7 @@ impl PrecompileOutput {
         }
     }
 }
-
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Precompiles {
     pub fun: HashMap<Address, Precompile>,
 }
@@ -69,7 +70,7 @@ impl Default for Precompiles {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub enum Precompile {
     Standard(StandardPrecompileFn),
     Env(EnvPrecompileFn),
@@ -84,6 +85,7 @@ impl fmt::Debug for Precompile {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct PrecompileAddress(Address, Precompile);
 
 impl From<PrecompileAddress> for (Address, Precompile) {
@@ -92,7 +94,7 @@ impl From<PrecompileAddress> for (Address, Precompile) {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub enum SpecId {
     HOMESTEAD,
     BYZANTIUM,

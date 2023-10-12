@@ -12,7 +12,7 @@ use revm_interpreter::primitives::{
 /// It loads all accounts from database and applies revm output to it.
 ///
 /// It generates transitions that is used to build BundleState.
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CacheState {
     /// Block state account with account state
     pub accounts: HashMap<Address, CacheAccount>,

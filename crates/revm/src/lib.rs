@@ -1,6 +1,8 @@
-#![cfg_attr(not(feature = "std"), no_std)]
 #![warn(unreachable_pub)]
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
+#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
+#![deny(unused_must_use, rust_2018_idioms)]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 #[macro_use]
 extern crate alloc;
@@ -19,13 +21,12 @@ pub mod optimism;
 compile_error!("`with-serde` feature has been renamed to `serde`.");
 
 pub(crate) const USE_GAS: bool = !cfg!(feature = "no_gas_measuring");
-pub type DummyStateDB = InMemoryDB;
 
+pub type DummyStateDB = InMemoryDB;
 #[cfg(feature = "std")]
 pub use db::{
     CacheState, DBBox, State, StateBuilder, StateDBBox, TransitionAccount, TransitionState,
 };
-
 pub use db::{Database, DatabaseCommit, DatabaseRef, InMemoryDB};
 pub use evm::{evm_inner, new, EVM};
 pub use evm_impl::{EVMData, EVMImpl, Transact, CALL_STACK_LIMIT};
@@ -45,7 +46,7 @@ pub use revm_interpreter::primitives;
 
 // reexport inspector implementations
 pub use inspector::inspectors;
-pub use inspector::Inspector;
+pub use inspector::{inspector_instruction, Inspector};
 
 // export Optimism types, helpers, and constants
 #[cfg(feature = "optimism")]
