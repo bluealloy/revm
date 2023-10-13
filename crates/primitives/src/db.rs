@@ -13,6 +13,7 @@ pub use components::{
 /// EVM database interface.
 #[auto_impl(&mut, Box)]
 pub trait Database {
+    /// The database error type.
     type Error;
 
     /// Get basic account information.
@@ -28,12 +29,6 @@ pub trait Database {
     fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error>;
 }
 
-impl<F: DatabaseRef> From<F> for WrapDatabaseRef<F> {
-    fn from(f: F) -> Self {
-        WrapDatabaseRef(f)
-    }
-}
-
 /// EVM database commit interface.
 #[auto_impl(&mut, Box)]
 pub trait DatabaseCommit {
@@ -41,9 +36,15 @@ pub trait DatabaseCommit {
     fn commit(&mut self, changes: Map<Address, Account>);
 }
 
-/// Same as [Database], but uses immutable references.
-#[auto_impl(&, Box, Arc)]
+/// EVM database interface.
+///
+/// Contains the same methods as [`Database`], but with `&self` receivers instead of `&mut self`.
+///
+/// Use [`WrapDatabaseRef`] to provide [`Database`] implementation for a type
+/// that only implements this trait.
+#[auto_impl(&, &mut, Box, Rc, Arc)]
 pub trait DatabaseRef {
+    /// The database error type.
     type Error;
 
     /// Get basic account information.
@@ -62,6 +63,13 @@ pub trait DatabaseRef {
 /// Wraps a [`DatabaseRef`] to provide a [`Database`] implementation.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct WrapDatabaseRef<T: DatabaseRef>(pub T);
+
+impl<F: DatabaseRef> From<F> for WrapDatabaseRef<F> {
+    #[inline]
+    fn from(f: F) -> Self {
+        WrapDatabaseRef(f)
+    }
+}
 
 impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
     type Error = T::Error;

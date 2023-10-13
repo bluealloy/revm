@@ -6,7 +6,7 @@ use alloc::sync::Arc;
 use auto_impl::auto_impl;
 use core::ops::Deref;
 
-#[auto_impl(& mut, Box)]
+#[auto_impl(&mut, Box)]
 pub trait BlockHash {
     type Error;
 
@@ -14,7 +14,7 @@ pub trait BlockHash {
     fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error>;
 }
 
-#[auto_impl(&, Box, Arc)]
+#[auto_impl(&, &mut, Box, Rc, Arc)]
 pub trait BlockHashRef {
     type Error;
 
