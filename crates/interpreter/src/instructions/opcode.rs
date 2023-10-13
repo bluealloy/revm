@@ -6,10 +6,40 @@ use crate::{
     primitives::{Spec, SpecId},
     Host, Interpreter,
 };
+use alloc::boxed::Box;
+use alloc::sync::Arc;
 use core::fmt;
 
 /// EVM opcode function signature.
 pub type Instruction<H> = fn(&mut Interpreter<'_>, &mut H);
+
+/// Instruction table is list of instruction function pointers mapped to
+/// 256 EVM opcodes.
+pub type InstructionTable<H> = [Instruction<H>; 256];
+
+/// Arc over plain instruction table
+pub type InstructionTableArc<H> = Arc<InstructionTable<H>>;
+
+/// EVM opcode function signature.
+pub type BoxedInstruction<'a, H> = Box<dyn Fn(&mut Interpreter<'_>, &mut H) + 'a>;
+
+/// A table of instructions.
+pub type BoxedInstructionTable<'a, H> = [BoxedInstruction<'a, H>; 256];
+
+/// Arc over instruction table
+pub type BoxedInstructionTableArc<'a, H> = Arc<BoxedInstructionTable<'a, H>>;
+
+/// Instruction set that contains plain instruction table that contains simple `fn` function pointer.
+/// and Boxed `Fn` variant that contains `Box<dyn Fn()>` function pointer that can be used with closured.
+///
+/// Note that `Plain` variant gives us 10-20% faster Interpreter execution.
+///
+/// Boxed variant can be used to wrap plain function pointer with closure.
+#[derive(Clone)]
+pub enum InstructionTables<'a, H> {
+    Plain(InstructionTableArc<H>),
+    Boxed(BoxedInstructionTableArc<'a, H>),
+}
 
 macro_rules! opcodes {
     ($($val:literal => $name:ident => $f:expr),* $(,)?) => {
@@ -33,41 +63,44 @@ macro_rules! opcodes {
             map
         };
 
-        // Requires `inline_const` and `const_mut_refs` unstable features,
-        // but provides ~+2% extra performance.
-        // See: https://github.com/bluealloy/revm/issues/310#issuecomment-1664381513
-        /*
-        type InstructionTable<H> = [Instruction<H>; 256];
-
-        const fn make_instruction_table<H: Host, SPEC: Spec>() -> InstructionTable<H> {
-            let mut table: InstructionTable<H> = [control::not_found; 256];
-            let mut i = 0usize;
-            while i < 256 {
-                table[i] = match i as u8 {
-                    $($name => $f,)*
-                    _ => control::not_found,
-                };
-                i += 1;
+        /// Return the instruction function for the given opcode and spec.
+        pub fn instruction<H:Host, SPEC:Spec>(opcode: u8) -> Instruction<H> {
+            match opcode {
+                $($name => $f,)*
+                _ => control::not_found,
             }
-            table
         }
 
-        // in `eval`:
-        (const { make_instruction_table::<H, SPEC>() })[opcode as usize](interpreter, host)
-        */
-
-        /// Evaluates the opcode in the given context.
-        #[inline(always)]
-        pub fn eval<H: Host, SPEC: Spec>(opcode: u8, interpreter: &mut Interpreter<'_>, host: &mut H) {
-            // See https://github.com/bluealloy/revm/issues/310#issuecomment-1664381513
-            // for previous efforts on optimizing this function.
-            let f: Instruction<H> = match opcode {
-                $($name => $f as Instruction<H>,)*
-                _ => control::not_found as Instruction<H>,
-            };
-            f(interpreter, host);
-        }
     };
+}
+
+/// Make instruction table.
+pub fn make_instruction_table<SPEC: Spec, H: Host>() -> InstructionTable<H> {
+    let mut table: InstructionTable<H> =
+        core::array::from_fn(|_| control::not_found::<H> as Instruction<H>);
+    let mut i = 0;
+    while i < 256 {
+        table[i] = instruction::<H, SPEC>(i as u8);
+        i += 1;
+    }
+    table
+}
+
+/// Make boxed instruction table that calls `outer` closure for every instruction.
+pub fn make_boxed_instruction_table<'a, SPEC: Spec + 'static, H: Host + 'a, FN>(
+    table: InstructionTable<H>,
+    outer: FN,
+) -> BoxedInstructionTable<'a, H>
+where
+    FN: Fn(Instruction<H>) -> BoxedInstruction<'a, H>,
+{
+    let mut inspector_table: BoxedInstructionTable<'a, H> =
+        core::array::from_fn(|_| outer(control::not_found));
+
+    for (i, instruction) in table.iter().enumerate() {
+        inspector_table[i] = outer(*instruction);
+    }
+    inspector_table
 }
 
 // When adding new opcodes:
@@ -87,7 +120,7 @@ opcodes! {
     0x07 => SMOD       => arithmetic::smod,
     0x08 => ADDMOD     => arithmetic::addmod,
     0x09 => MULMOD     => arithmetic::mulmod,
-    0x0A => EXP        => arithmetic::exp::<H, SPEC>,
+    0x0A => EXP        => arithmetic::exp::<H,SPEC>,
     0x0B => SIGNEXTEND => arithmetic::signextend,
     // 0x0C
     // 0x0D
@@ -175,78 +208,78 @@ opcodes! {
     0x5E => MCOPY    => memory::mcopy::<H, SPEC>,
 
     0x5F => PUSH0  => stack::push0::<H, SPEC>,
-    0x60 => PUSH1  => stack::push::<H, 1>,
-    0x61 => PUSH2  => stack::push::<H, 2>,
-    0x62 => PUSH3  => stack::push::<H, 3>,
-    0x63 => PUSH4  => stack::push::<H, 4>,
-    0x64 => PUSH5  => stack::push::<H, 5>,
-    0x65 => PUSH6  => stack::push::<H, 6>,
-    0x66 => PUSH7  => stack::push::<H, 7>,
-    0x67 => PUSH8  => stack::push::<H, 8>,
-    0x68 => PUSH9  => stack::push::<H, 9>,
-    0x69 => PUSH10 => stack::push::<H, 10>,
-    0x6A => PUSH11 => stack::push::<H, 11>,
-    0x6B => PUSH12 => stack::push::<H, 12>,
-    0x6C => PUSH13 => stack::push::<H, 13>,
-    0x6D => PUSH14 => stack::push::<H, 14>,
-    0x6E => PUSH15 => stack::push::<H, 15>,
-    0x6F => PUSH16 => stack::push::<H, 16>,
-    0x70 => PUSH17 => stack::push::<H, 17>,
-    0x71 => PUSH18 => stack::push::<H, 18>,
-    0x72 => PUSH19 => stack::push::<H, 19>,
-    0x73 => PUSH20 => stack::push::<H, 20>,
-    0x74 => PUSH21 => stack::push::<H, 21>,
-    0x75 => PUSH22 => stack::push::<H, 22>,
-    0x76 => PUSH23 => stack::push::<H, 23>,
-    0x77 => PUSH24 => stack::push::<H, 24>,
-    0x78 => PUSH25 => stack::push::<H, 25>,
-    0x79 => PUSH26 => stack::push::<H, 26>,
-    0x7A => PUSH27 => stack::push::<H, 27>,
-    0x7B => PUSH28 => stack::push::<H, 28>,
-    0x7C => PUSH29 => stack::push::<H, 29>,
-    0x7D => PUSH30 => stack::push::<H, 30>,
-    0x7E => PUSH31 => stack::push::<H, 31>,
-    0x7F => PUSH32 => stack::push::<H, 32>,
+    0x60 => PUSH1  => stack::push::<1, H>,
+    0x61 => PUSH2  => stack::push::<2, H>,
+    0x62 => PUSH3  => stack::push::<3, H>,
+    0x63 => PUSH4  => stack::push::<4, H>,
+    0x64 => PUSH5  => stack::push::<5, H>,
+    0x65 => PUSH6  => stack::push::<6, H>,
+    0x66 => PUSH7  => stack::push::<7, H>,
+    0x67 => PUSH8  => stack::push::<8, H>,
+    0x68 => PUSH9  => stack::push::<9, H>,
+    0x69 => PUSH10 => stack::push::<10, H>,
+    0x6A => PUSH11 => stack::push::<11, H>,
+    0x6B => PUSH12 => stack::push::<12, H>,
+    0x6C => PUSH13 => stack::push::<13, H>,
+    0x6D => PUSH14 => stack::push::<14, H>,
+    0x6E => PUSH15 => stack::push::<15, H>,
+    0x6F => PUSH16 => stack::push::<16, H>,
+    0x70 => PUSH17 => stack::push::<17, H>,
+    0x71 => PUSH18 => stack::push::<18, H>,
+    0x72 => PUSH19 => stack::push::<19, H>,
+    0x73 => PUSH20 => stack::push::<20, H>,
+    0x74 => PUSH21 => stack::push::<21, H>,
+    0x75 => PUSH22 => stack::push::<22, H>,
+    0x76 => PUSH23 => stack::push::<23, H>,
+    0x77 => PUSH24 => stack::push::<24, H>,
+    0x78 => PUSH25 => stack::push::<25, H>,
+    0x79 => PUSH26 => stack::push::<26, H>,
+    0x7A => PUSH27 => stack::push::<27, H>,
+    0x7B => PUSH28 => stack::push::<28, H>,
+    0x7C => PUSH29 => stack::push::<29, H>,
+    0x7D => PUSH30 => stack::push::<30, H>,
+    0x7E => PUSH31 => stack::push::<31, H>,
+    0x7F => PUSH32 => stack::push::<32, H>,
 
-    0x80 => DUP1  => stack::dup::<H, 1>,
-    0x81 => DUP2  => stack::dup::<H, 2>,
-    0x82 => DUP3  => stack::dup::<H, 3>,
-    0x83 => DUP4  => stack::dup::<H, 4>,
-    0x84 => DUP5  => stack::dup::<H, 5>,
-    0x85 => DUP6  => stack::dup::<H, 6>,
-    0x86 => DUP7  => stack::dup::<H, 7>,
-    0x87 => DUP8  => stack::dup::<H, 8>,
-    0x88 => DUP9  => stack::dup::<H, 9>,
-    0x89 => DUP10 => stack::dup::<H, 10>,
-    0x8A => DUP11 => stack::dup::<H, 11>,
-    0x8B => DUP12 => stack::dup::<H, 12>,
-    0x8C => DUP13 => stack::dup::<H, 13>,
-    0x8D => DUP14 => stack::dup::<H, 14>,
-    0x8E => DUP15 => stack::dup::<H, 15>,
-    0x8F => DUP16 => stack::dup::<H, 16>,
+    0x80 => DUP1  => stack::dup::<1, H>,
+    0x81 => DUP2  => stack::dup::<2, H>,
+    0x82 => DUP3  => stack::dup::<3, H>,
+    0x83 => DUP4  => stack::dup::<4, H>,
+    0x84 => DUP5  => stack::dup::<5, H>,
+    0x85 => DUP6  => stack::dup::<6, H>,
+    0x86 => DUP7  => stack::dup::<7, H>,
+    0x87 => DUP8  => stack::dup::<8, H>,
+    0x88 => DUP9  => stack::dup::<9, H>,
+    0x89 => DUP10 => stack::dup::<10, H>,
+    0x8A => DUP11 => stack::dup::<11, H>,
+    0x8B => DUP12 => stack::dup::<12, H>,
+    0x8C => DUP13 => stack::dup::<13, H>,
+    0x8D => DUP14 => stack::dup::<14, H>,
+    0x8E => DUP15 => stack::dup::<15, H>,
+    0x8F => DUP16 => stack::dup::<16, H>,
 
-    0x90 => SWAP1  => stack::swap::<H, 1>,
-    0x91 => SWAP2  => stack::swap::<H, 2>,
-    0x92 => SWAP3  => stack::swap::<H, 3>,
-    0x93 => SWAP4  => stack::swap::<H, 4>,
-    0x94 => SWAP5  => stack::swap::<H, 5>,
-    0x95 => SWAP6  => stack::swap::<H, 6>,
-    0x96 => SWAP7  => stack::swap::<H, 7>,
-    0x97 => SWAP8  => stack::swap::<H, 8>,
-    0x98 => SWAP9  => stack::swap::<H, 9>,
-    0x99 => SWAP10 => stack::swap::<H, 10>,
-    0x9A => SWAP11 => stack::swap::<H, 11>,
-    0x9B => SWAP12 => stack::swap::<H, 12>,
-    0x9C => SWAP13 => stack::swap::<H, 13>,
-    0x9D => SWAP14 => stack::swap::<H, 14>,
-    0x9E => SWAP15 => stack::swap::<H, 15>,
-    0x9F => SWAP16 => stack::swap::<H, 16>,
+    0x90 => SWAP1  => stack::swap::<1, H>,
+    0x91 => SWAP2  => stack::swap::<2, H>,
+    0x92 => SWAP3  => stack::swap::<3, H>,
+    0x93 => SWAP4  => stack::swap::<4, H>,
+    0x94 => SWAP5  => stack::swap::<5, H>,
+    0x95 => SWAP6  => stack::swap::<6, H>,
+    0x96 => SWAP7  => stack::swap::<7, H>,
+    0x97 => SWAP8  => stack::swap::<8, H>,
+    0x98 => SWAP9  => stack::swap::<9, H>,
+    0x99 => SWAP10 => stack::swap::<10, H>,
+    0x9A => SWAP11 => stack::swap::<11, H>,
+    0x9B => SWAP12 => stack::swap::<12, H>,
+    0x9C => SWAP13 => stack::swap::<13, H>,
+    0x9D => SWAP14 => stack::swap::<14, H>,
+    0x9E => SWAP15 => stack::swap::<15, H>,
+    0x9F => SWAP16 => stack::swap::<16, H>,
 
-    0xA0 => LOG0 => host::log::<H, 0>,
-    0xA1 => LOG1 => host::log::<H, 1>,
-    0xA2 => LOG2 => host::log::<H, 2>,
-    0xA3 => LOG3 => host::log::<H, 3>,
-    0xA4 => LOG4 => host::log::<H, 4>,
+    0xA0 => LOG0 => host::log::<0, H>,
+    0xA1 => LOG1 => host::log::<1, H>,
+    0xA2 => LOG2 => host::log::<2, H>,
+    0xA3 => LOG3 => host::log::<3, H>,
+    0xA4 => LOG4 => host::log::<4, H>,
     // 0xA5
     // 0xA6
     // 0xA7
@@ -322,12 +355,12 @@ opcodes! {
     // 0xED
     // 0xEE
     // 0xEF
-    0xF0 => CREATE       => host::create::<H, false, SPEC>,
+    0xF0 => CREATE       => host::create::<false, H, SPEC>,
     0xF1 => CALL         => host::call::<H, SPEC>,
     0xF2 => CALLCODE     => host::call_code::<H, SPEC>,
     0xF3 => RETURN       => control::ret,
     0xF4 => DELEGATECALL => host::delegate_call::<H, SPEC>,
-    0xF5 => CREATE2      => host::create::<H, true, SPEC>,
+    0xF5 => CREATE2      => host::create::<true, H, SPEC>,
     // 0xF6
     // 0xF7
     // 0xF8

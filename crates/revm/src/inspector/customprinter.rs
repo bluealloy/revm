@@ -58,9 +58,8 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         &mut self,
         interp: &mut Interpreter<'_>,
         data: &mut EVMData<'_, DB>,
-        eval: InstructionResult,
     ) -> InstructionResult {
-        self.gas_inspector.step_end(interp, data, eval);
+        self.gas_inspector.step_end(interp, data);
         InstructionResult::Continue
     }
 

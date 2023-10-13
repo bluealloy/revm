@@ -112,7 +112,7 @@ pub fn reward_beneficiary<SPEC: Spec, DB: Database>(
             panic!("[OPTIMISM] Failed to load enveloped transaction.");
         };
 
-        let l1_cost = l1_block_info.calculate_tx_l1_cost::<SPEC>(enveloped_tx, is_deposit);
+        let l1_cost = l1_block_info.calculate_tx_l1_cost::<SPEC>(enveloped_tx);
 
         // Send the L1 cost of the transaction to the L1 Fee Vault.
         let Ok((l1_fee_vault_account, _)) = data
@@ -132,8 +132,11 @@ pub fn reward_beneficiary<SPEC: Spec, DB: Database>(
             panic!("[OPTIMISM] Failed to load Base Fee Vault account");
         };
         base_fee_vault_account.mark_touch();
-        base_fee_vault_account.info.balance +=
-            l1_block_info.l1_base_fee.mul(U256::from(gas.spend()));
+        base_fee_vault_account.info.balance += data
+            .env
+            .block
+            .basefee
+            .mul(U256::from(gas.spend() - gas_refund));
     }
     Ok(())
 }

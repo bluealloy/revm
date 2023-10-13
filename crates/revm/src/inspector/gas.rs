@@ -38,7 +38,6 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         &mut self,
         interp: &mut crate::interpreter::Interpreter<'_>,
         _data: &mut EVMData<'_, DB>,
-        _eval: InstructionResult,
     ) -> InstructionResult {
         let last_gas = core::mem::replace(&mut self.gas_remaining, interp.gas.remaining());
         self.last_gas_cost = last_gas.saturating_sub(self.last_gas_cost);
@@ -122,12 +121,11 @@ mod tests {
             &mut self,
             interp: &mut Interpreter<'_>,
             data: &mut EVMData<'_, DB>,
-            eval: InstructionResult,
         ) -> InstructionResult {
-            self.gas_inspector.step_end(interp, data, eval);
+            self.gas_inspector.step_end(interp, data);
             self.gas_remaining_steps
                 .push((self.pc, self.gas_inspector.gas_remaining()));
-            eval
+            interp.instruction_result
         }
 
         fn call(
@@ -191,8 +189,8 @@ mod tests {
     #[cfg(not(feature = "optimism"))]
     fn test_gas_inspector() {
         use crate::db::BenchmarkDB;
-        use crate::interpreter::{opcode, OpCode};
-        use crate::primitives::{address, Bytecode, Bytes, ResultAndState, TransactTo};
+        use crate::interpreter::opcode;
+        use crate::primitives::{address, Bytecode, Bytes, TransactTo};
 
         let contract_data: Bytes = Bytes::from(vec![
             opcode::PUSH1,
@@ -219,14 +217,22 @@ mod tests {
         evm.env.tx.gas_limit = 21100;
 
         let mut inspector = StackInspector::default();
-        let ResultAndState { result, state } = evm.inspect(&mut inspector).unwrap();
-        println!("{result:?} {state:?} {inspector:?}");
+        evm.inspect(&mut inspector).unwrap();
 
-        for (pc, gas) in inspector.gas_remaining_steps {
-            println!(
-                "{pc} {} {gas:?}",
-                OpCode::new(bytecode.bytes()[pc]).unwrap().as_str(),
-            );
-        }
+        // starting from 100gas
+        let steps = vec![
+            // push1 -3
+            (0, 97),
+            // push1 -3
+            (2, 94),
+            // jumpi -10
+            (4, 84),
+            // jumpdest 1
+            (11, 83),
+            // stop 0
+            (12, 83),
+        ];
+
+        assert_eq!(inspector.gas_remaining_steps, steps);
     }
 }

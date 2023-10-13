@@ -1,4 +1,5 @@
 use crate::handler::Handler;
+use crate::inspector_instruction;
 use crate::interpreter::{
     analysis::to_analysed, gas, return_ok, CallContext, CallInputs, CallScheme, Contract,
     CreateInputs, Gas, Host, InstructionResult, Interpreter, SelfDestructResult, SuccessOrHalt,
@@ -11,11 +12,16 @@ use crate::primitives::{
 };
 use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector};
 use alloc::boxed::Box;
+use alloc::sync::Arc;
 use alloc::vec::Vec;
 use core::fmt;
 use core::marker::PhantomData;
-use revm_interpreter::gas::initial_tx_gas;
-use revm_interpreter::{SharedMemory, MAX_CODE_SIZE};
+use revm_interpreter::opcode::make_boxed_instruction_table;
+use revm_interpreter::{
+    gas::initial_tx_gas,
+    opcode::{make_instruction_table, InstructionTables},
+    SharedMemory, MAX_CODE_SIZE,
+};
 use revm_precompile::{Precompile, Precompiles};
 
 #[cfg(feature = "optimism")]
@@ -36,14 +42,15 @@ pub struct EVMData<'a, DB: Database> {
     pub l1_block_info: Option<optimism::L1BlockInfo>,
 }
 
-pub struct EVMImpl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> {
-    data: EVMData<'a, DB>,
-    inspector: &'a mut dyn Inspector<DB>,
-    handler: Handler<DB>,
+pub struct EVMImpl<'a, GSPEC: Spec, DB: Database> {
+    pub data: EVMData<'a, DB>,
+    pub inspector: Option<&'a mut dyn Inspector<DB>>,
+    pub instruction_table: InstructionTables<'a, Self>,
+    pub handler: Handler<DB>,
     _phantomdata: PhantomData<GSPEC>,
 }
 
-impl<GSPEC, DB, const INSPECT: bool> fmt::Debug for EVMImpl<'_, GSPEC, DB, INSPECT>
+impl<GSPEC, DB> fmt::Debug for EVMImpl<'_, GSPEC, DB>
 where
     GSPEC: Spec,
     DB: Database + fmt::Debug,
@@ -113,7 +120,7 @@ impl<'a, DB: Database> EVMData<'a, DB> {
 }
 
 #[cfg(feature = "optimism")]
-impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, INSPECT> {
+impl<'a, GSPEC: Spec, DB: Database> EVMImpl<'a, GSPEC, DB> {
     /// If the transaction is not a deposit transaction, subtract the L1 data fee from the
     /// caller's balance directly after minting the requested amount of ETH.
     fn remove_l1_cost(
@@ -169,9 +176,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     }
 }
 
-impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
-    for EVMImpl<'a, GSPEC, DB, INSPECT>
-{
+impl<'a, GSPEC: Spec + 'static, DB: Database> Transact<DB::Error> for EVMImpl<'a, GSPEC, DB> {
     fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
         let env = self.env();
 
@@ -211,34 +216,23 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let tx_data = env.tx.data.clone();
         let tx_gas_limit = env.tx.gas_limit;
 
+        // the L1-cost fee is only computed for Optimism non-deposit transactions.
         #[cfg(feature = "optimism")]
-        let tx_l1_cost = {
-            let is_deposit = env.tx.optimism.source_hash.is_some();
-
+        let tx_l1_cost = if env.cfg.optimism && env.tx.optimism.source_hash.is_none() {
             let l1_block_info =
-                optimism::L1BlockInfo::try_fetch(self.data.db, self.data.env.cfg.optimism)
-                    .map_err(EVMError::Database)?;
+                optimism::L1BlockInfo::try_fetch(self.data.db).map_err(EVMError::Database)?;
 
-            // Perform this calculation optimistically to avoid cloning the enveloped tx.
-            let tx_l1_cost = l1_block_info.as_ref().map(|l1_block_info| {
-                env.tx
-                    .optimism
-                    .enveloped_tx
-                    .as_ref()
-                    .map(|enveloped_tx| {
-                        l1_block_info.calculate_tx_l1_cost::<GSPEC>(enveloped_tx, is_deposit)
-                    })
-                    .unwrap_or(U256::ZERO)
-            });
-            // storage l1 block info for later use.
-            self.data.l1_block_info = l1_block_info;
-
-            //
-            let Some(tx_l1_cost) = tx_l1_cost else {
-                panic!("[OPTIMISM] L1 Block Info could not be loaded from the DB.")
+            let Some(enveloped_tx) = &env.tx.optimism.enveloped_tx else {
+                panic!("[OPTIMISM] Failed to load enveloped transaction.");
             };
+            let tx_l1_cost = l1_block_info.calculate_tx_l1_cost::<GSPEC>(enveloped_tx);
+
+            // storage l1 block info for later use.
+            self.data.l1_block_info = Some(l1_block_info);
 
             tx_l1_cost
+        } else {
+            U256::ZERO
         };
 
         let initial_gas_spend = initial_tx_gas::<GSPEC>(
@@ -263,7 +257,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
 
         #[cfg(feature = "optimism")]
         if self.data.env.cfg.optimism {
-            EVMImpl::<GSPEC, DB, INSPECT>::commit_mint_value(
+            EVMImpl::<GSPEC, DB>::commit_mint_value(
                 tx_caller,
                 self.data.env.tx.optimism.mint,
                 self.data.db,
@@ -271,7 +265,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             )?;
 
             let is_deposit = self.data.env.tx.optimism.source_hash.is_some();
-            EVMImpl::<GSPEC, DB, INSPECT>::remove_l1_cost(
+            EVMImpl::<GSPEC, DB>::remove_l1_cost(
                 is_deposit,
                 tx_caller,
                 tx_l1_cost,
@@ -422,14 +416,32 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
     }
 }
 
-impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, INSPECT> {
+impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
     pub fn new(
         db: &'a mut DB,
         env: &'a mut Env,
-        inspector: &'a mut dyn Inspector<DB>,
+        inspector: Option<&'a mut dyn Inspector<DB>>,
         precompiles: Precompiles,
     ) -> Self {
         let journaled_state = JournaledState::new(precompiles.len(), GSPEC::SPEC_ID);
+        let instruction_table = if inspector.is_some() {
+            let instruction_table = make_boxed_instruction_table::<GSPEC, Self, _>(
+                make_instruction_table::<GSPEC, Self>(),
+                inspector_instruction,
+            );
+            InstructionTables::Boxed(Arc::new(instruction_table))
+        } else {
+            InstructionTables::Plain(Arc::new(make_instruction_table::<GSPEC, Self>()))
+        };
+        #[cfg(feature = "optimism")]
+        let handler = if env.cfg.optimism {
+            Handler::optimism::<GSPEC>()
+        } else {
+            Handler::mainnet::<GSPEC>()
+        };
+        #[cfg(not(feature = "optimism"))]
+        let handler = Handler::mainnet::<GSPEC>();
+
         Self {
             data: EVMData {
                 env,
@@ -441,7 +453,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 l1_block_info: None,
             },
             inspector,
-            handler: Handler::mainnet::<GSPEC>(),
+            instruction_table,
+            handler,
             _phantomdata: PhantomData {},
         }
     }
@@ -680,14 +693,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
         interpreter.shared_memory.new_context_memory();
 
-        if INSPECT {
-            self.inspector
-                .initialize_interp(&mut interpreter, &mut self.data);
+        if let Some(inspector) = self.inspector.as_mut() {
+            inspector.initialize_interp(&mut interpreter, &mut self.data);
         }
-        let exit_reason = if INSPECT {
-            interpreter.run_inspect::<Self, GSPEC>(self)
-        } else {
-            interpreter.run::<Self, GSPEC>(self)
+
+        let exit_reason = match &mut self.instruction_table {
+            InstructionTables::Plain(table) => interpreter.run::<_, Self>(&table.clone(), self),
+            InstructionTables::Boxed(table) => interpreter.run::<_, Self>(&table.clone(), self),
         };
 
         let (return_value, gas) = (interpreter.return_value(), *interpreter.gas());
@@ -854,21 +866,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
     }
 }
 
-impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
-    for EVMImpl<'a, GSPEC, DB, INSPECT>
-{
-    fn step(&mut self, interp: &mut Interpreter<'_>) -> InstructionResult {
-        self.inspector.step(interp, &mut self.data)
-    }
-
-    fn step_end(
-        &mut self,
-        interp: &mut Interpreter<'_>,
-        ret: InstructionResult,
-    ) -> InstructionResult {
-        self.inspector.step_end(interp, &mut self.data, ret)
-    }
-
+impl<'a, GSPEC: Spec + 'static, DB: Database> Host for EVMImpl<'a, GSPEC, DB> {
     fn env(&mut self) -> &mut Env {
         self.data.env
     }
@@ -960,8 +958,8 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     }
 
     fn log(&mut self, address: Address, topics: Vec<B256>, data: Bytes) {
-        if INSPECT {
-            self.inspector.log(&mut self.data, &address, &topics, &data);
+        if let Some(inspector) = self.inspector.as_mut() {
+            inspector.log(&mut self.data, &address, &topics, &data);
         }
         let log = Log {
             address,
@@ -972,10 +970,9 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
     }
 
     fn selfdestruct(&mut self, address: Address, target: Address) -> Option<SelfDestructResult> {
-        if INSPECT {
+        if let Some(inspector) = self.inspector.as_mut() {
             let acc = self.data.journaled_state.state.get(&address).unwrap();
-            self.inspector
-                .selfdestruct(address, target, acc.info.balance);
+            inspector.selfdestruct(address, target, acc.info.balance);
         }
         self.data
             .journaled_state
@@ -990,17 +987,15 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         shared_memory: &mut SharedMemory,
     ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
         // Call inspector
-        if INSPECT {
-            let (ret, address, gas, out) = self.inspector.create(&mut self.data, inputs);
+        if let Some(inspector) = self.inspector.as_mut() {
+            let (ret, address, gas, out) = inspector.create(&mut self.data, inputs);
             if ret != InstructionResult::Continue {
-                return self
-                    .inspector
-                    .create_end(&mut self.data, inputs, ret, address, gas, out);
+                return inspector.create_end(&mut self.data, inputs, ret, address, gas, out);
             }
         }
         let ret = self.create_inner(inputs, shared_memory);
-        if INSPECT {
-            self.inspector.create_end(
+        if let Some(inspector) = self.inspector.as_mut() {
+            inspector.create_end(
                 &mut self.data,
                 inputs,
                 ret.result,
@@ -1018,17 +1013,15 @@ impl<'a, GSPEC: Spec, DB: Database + 'a, const INSPECT: bool> Host
         inputs: &mut CallInputs,
         shared_memory: &mut SharedMemory,
     ) -> (InstructionResult, Gas, Bytes) {
-        if INSPECT {
-            let (ret, gas, out) = self.inspector.call(&mut self.data, inputs);
+        if let Some(inspector) = self.inspector.as_mut() {
+            let (ret, gas, out) = inspector.call(&mut self.data, inputs);
             if ret != InstructionResult::Continue {
-                return self
-                    .inspector
-                    .call_end(&mut self.data, inputs, gas, ret, out);
+                return inspector.call_end(&mut self.data, inputs, gas, ret, out);
             }
         }
         let ret = self.call_inner(inputs, shared_memory);
-        if INSPECT {
-            self.inspector.call_end(
+        if let Some(inspector) = self.inspector.as_mut() {
+            inspector.call_end(
                 &mut self.data,
                 inputs,
                 ret.gas,
@@ -1067,30 +1060,26 @@ mod tests {
         journal
             .initial_account_load(caller, &[U256::from(100)], &mut db)
             .unwrap();
-        assert!(
-            EVMImpl::<BedrockSpec, InMemoryDB, false>::commit_mint_value(
-                caller,
-                mint_value,
-                &mut db,
-                &mut journal
-            )
-            .is_ok(),
-        );
+        assert!(EVMImpl::<BedrockSpec, InMemoryDB>::commit_mint_value(
+            caller,
+            mint_value,
+            &mut db,
+            &mut journal
+        )
+        .is_ok(),);
 
         // Check the account balance is updated.
         let (account, _) = journal.load_account(caller, &mut db).unwrap();
         assert_eq!(account.info.balance, U256::from(101));
 
         // No mint value should be a no-op.
-        assert!(
-            EVMImpl::<BedrockSpec, InMemoryDB, false>::commit_mint_value(
-                caller,
-                None,
-                &mut db,
-                &mut journal
-            )
-            .is_ok(),
-        );
+        assert!(EVMImpl::<BedrockSpec, InMemoryDB>::commit_mint_value(
+            caller,
+            None,
+            &mut db,
+            &mut journal
+        )
+        .is_ok(),);
         let (account, _) = journal.load_account(caller, &mut db).unwrap();
         assert_eq!(account.info.balance, U256::from(101));
     }
@@ -1104,7 +1093,7 @@ mod tests {
         journal
             .initial_account_load(caller, slots, &mut db)
             .unwrap();
-        assert!(EVMImpl::<BedrockSpec, InMemoryDB, false>::remove_l1_cost(
+        assert!(EVMImpl::<BedrockSpec, InMemoryDB>::remove_l1_cost(
             true,
             caller,
             U256::ZERO,
@@ -1131,7 +1120,7 @@ mod tests {
         journal
             .initial_account_load(caller, &[U256::from(100)], &mut db)
             .unwrap();
-        assert!(EVMImpl::<BedrockSpec, InMemoryDB, false>::remove_l1_cost(
+        assert!(EVMImpl::<BedrockSpec, InMemoryDB>::remove_l1_cost(
             false,
             caller,
             U256::from(1),
@@ -1163,7 +1152,7 @@ mod tests {
             .initial_account_load(caller, &[U256::from(100)], &mut db)
             .unwrap();
         assert_eq!(
-            EVMImpl::<BedrockSpec, InMemoryDB, false>::remove_l1_cost(
+            EVMImpl::<BedrockSpec, InMemoryDB>::remove_l1_cost(
                 false,
                 caller,
                 U256::from(101),

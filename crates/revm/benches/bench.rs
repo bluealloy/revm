@@ -8,7 +8,7 @@ use revm::{
         address, bytes, hex, BerlinSpec, Bytecode, BytecodeState, Bytes, TransactTo, U256,
     },
 };
-use revm_interpreter::SharedMemory;
+use revm_interpreter::{opcode::make_instruction_table, SharedMemory};
 use std::time::Duration;
 
 type Evm = revm::EVM<BenchmarkDB>;
@@ -96,6 +96,7 @@ fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm) {
             ..Default::default()
         };
         let mut host = DummyHost::new(evm.env.clone());
+        let instruction_table = make_instruction_table::<BerlinSpec, DummyHost>();
         b.iter(|| {
             let mut interpreter = Interpreter::new(
                 Box::new(contract.clone()),
@@ -103,7 +104,7 @@ fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm) {
                 false,
                 &mut shared_memory,
             );
-            let res = interpreter.run::<_, BerlinSpec>(&mut host);
+            let res = interpreter.run(&instruction_table, &mut host);
             host.clear();
             res
         })

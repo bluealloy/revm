@@ -24,17 +24,18 @@ pub struct SharedMemory {
     current_len: usize,
     /// Memory limit. See [`crate::CfgEnv`].
     #[cfg(feature = "memory_limit")]
-    pub memory_limit: u64,
+    memory_limit: u64,
 }
 
 impl fmt::Debug for SharedMemory {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("SharedMemory")
+            .field("current_len", &self.current_len)
             .field(
-                "current_slice",
+                "context_memory",
                 &crate::primitives::hex::encode(self.context_memory()),
             )
-            .finish()
+            .finish_non_exhaustive()
     }
 }
 

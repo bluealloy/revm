@@ -2,7 +2,6 @@ use crate::primitives::{specification, EVMError, EVMResult, Env, ExecutionResult
 use crate::{
     db::{Database, DatabaseCommit, DatabaseRef},
     evm_impl::{EVMImpl, Transact},
-    inspectors::NoOpInspector,
     Inspector,
 };
 use alloc::boxed::Box;
@@ -77,7 +76,7 @@ impl<DB: Database> EVM<DB> {
     /// Do checks that could make transaction fail before call/create
     pub fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
         if let Some(db) = self.db.as_mut() {
-            evm_inner::<DB, false>(&mut self.env, db, &mut NoOpInspector).preverify_transaction()
+            evm_inner::<DB>(&mut self.env, db, None).preverify_transaction()
         } else {
             panic!("Database needs to be set");
         }
@@ -87,7 +86,7 @@ impl<DB: Database> EVM<DB> {
     /// state.
     pub fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
         if let Some(db) = self.db.as_mut() {
-            evm_inner::<DB, false>(&mut self.env, db, &mut NoOpInspector).transact_preverified()
+            evm_inner::<DB>(&mut self.env, db, None).transact_preverified()
         } else {
             panic!("Database needs to be set");
         }
@@ -96,7 +95,7 @@ impl<DB: Database> EVM<DB> {
     /// Execute transaction without writing to DB, return change state.
     pub fn transact(&mut self) -> EVMResult<DB::Error> {
         if let Some(db) = self.db.as_mut() {
-            evm_inner::<DB, false>(&mut self.env, db, &mut NoOpInspector).transact()
+            evm_inner::<DB>(&mut self.env, db, None).transact()
         } else {
             panic!("Database needs to be set");
         }
@@ -105,7 +104,7 @@ impl<DB: Database> EVM<DB> {
     /// Execute transaction with given inspector, without wring to DB. Return change state.
     pub fn inspect<INSP: Inspector<DB>>(&mut self, mut inspector: INSP) -> EVMResult<DB::Error> {
         if let Some(db) = self.db.as_mut() {
-            evm_inner::<DB, true>(&mut self.env, db, &mut inspector).transact()
+            evm_inner::<DB>(&mut self.env, db, Some(&mut inspector)).transact()
         } else {
             panic!("Database needs to be set");
         }
@@ -116,12 +115,8 @@ impl<'a, DB: DatabaseRef> EVM<DB> {
     /// Do checks that could make transaction fail before call/create
     pub fn preverify_transaction_ref(&self) -> Result<(), EVMError<DB::Error>> {
         if let Some(db) = self.db.as_ref() {
-            evm_inner::<_, false>(
-                &mut self.env.clone(),
-                &mut WrapDatabaseRef(db),
-                &mut NoOpInspector,
-            )
-            .preverify_transaction()
+            evm_inner::<_>(&mut self.env.clone(), &mut WrapDatabaseRef(db), None)
+                .preverify_transaction()
         } else {
             panic!("Database needs to be set");
         }
@@ -131,12 +126,8 @@ impl<'a, DB: DatabaseRef> EVM<DB> {
     /// without writing to DB, return change state.
     pub fn transact_preverified_ref(&self) -> EVMResult<DB::Error> {
         if let Some(db) = self.db.as_ref() {
-            evm_inner::<_, false>(
-                &mut self.env.clone(),
-                &mut WrapDatabaseRef(db),
-                &mut NoOpInspector,
-            )
-            .transact_preverified()
+            evm_inner::<_>(&mut self.env.clone(), &mut WrapDatabaseRef(db), None)
+                .transact_preverified()
         } else {
             panic!("Database needs to be set");
         }
@@ -145,12 +136,7 @@ impl<'a, DB: DatabaseRef> EVM<DB> {
     /// Execute transaction without writing to DB, return change state.
     pub fn transact_ref(&self) -> EVMResult<DB::Error> {
         if let Some(db) = self.db.as_ref() {
-            evm_inner::<_, false>(
-                &mut self.env.clone(),
-                &mut WrapDatabaseRef(db),
-                &mut NoOpInspector,
-            )
-            .transact()
+            evm_inner::<_>(&mut self.env.clone(), &mut WrapDatabaseRef(db), None).transact()
         } else {
             panic!("Database needs to be set");
         }
@@ -162,10 +148,10 @@ impl<'a, DB: DatabaseRef> EVM<DB> {
         mut inspector: I,
     ) -> EVMResult<DB::Error> {
         if let Some(db) = self.db.as_ref() {
-            evm_inner::<_, true>(
+            evm_inner::<_>(
                 &mut self.env.clone(),
                 &mut WrapDatabaseRef(db),
-                &mut inspector,
+                Some(&mut inspector),
             )
             .transact()
         } else {
@@ -198,14 +184,14 @@ impl<DB> EVM<DB> {
     }
 }
 
-pub fn evm_inner<'a, DB: Database, const INSPECT: bool>(
+pub fn evm_inner<'a, DB: Database>(
     env: &'a mut Env,
     db: &'a mut DB,
-    insp: &'a mut dyn Inspector<DB>,
+    insp: Option<&'a mut dyn Inspector<DB>>,
 ) -> Box<dyn Transact<DB::Error> + 'a> {
     macro_rules! create_evm {
         ($spec:ident) => {
-            Box::new(EVMImpl::<'a, $spec, DB, INSPECT>::new(
+            Box::new(EVMImpl::<'a, $spec, DB>::new(
                 db,
                 env,
                 insp,
