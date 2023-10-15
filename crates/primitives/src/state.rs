@@ -52,6 +52,15 @@ impl Default for AccountStatus {
 }
 
 impl Account {
+    /// Create new account and mark it as non existing.
+    pub fn new_not_existing() -> Self {
+        Self {
+            info: AccountInfo::default(),
+            storage: HashMap::new(),
+            status: AccountStatus::LoadedAsNotExisting,
+        }
+    }
+
     /// Mark account as self destructed.
     pub fn mark_selfdestruct(&mut self) {
         self.status |= AccountStatus::SelfDestructed;
@@ -109,13 +118,11 @@ impl Account {
         self.info.is_empty()
     }
 
-    /// Create new account and mark it as non existing.
-    pub fn new_not_existing() -> Self {
-        Self {
-            info: AccountInfo::default(),
-            storage: HashMap::new(),
-            status: AccountStatus::LoadedAsNotExisting,
-        }
+    /// Returns an iterator over the storage slots that have been changed.
+    ///
+    /// See also [StorageSlot::is_changed]
+    pub fn changed_storage_slots(&self) -> impl Iterator<Item = (&U256, &StorageSlot)> {
+        self.storage.iter().filter(|(_, slot)| slot.is_changed())
     }
 }
 
