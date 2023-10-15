@@ -21,7 +21,9 @@ pub fn inspector_instruction<'a, SPEC: Spec + 'static, DB: Database>(
                 interpreter.instruction_pointer = interpreter.instruction_pointer.sub(1);
             }
             if let Some(inspector) = host.inspector.as_mut() {
-                if inspector.step(interpreter, data) != InstructionResult::Continue {
+                let result = inspector.step(interpreter, data);
+                if result != InstructionResult::Continue {
+                    interpreter.instruction_result = result;
                     return;
                 }
             }
@@ -37,7 +39,10 @@ pub fn inspector_instruction<'a, SPEC: Spec + 'static, DB: Database>(
             // step ends
             let data = &mut host.data;
             if let Some(inspector) = host.inspector.as_mut() {
-                inspector.step_end(interpreter, data);
+                let result = inspector.step_end(interpreter, data);
+                if result != InstructionResult::Continue {
+                    interpreter.instruction_result = result;
+                }
             }
         },
     );
