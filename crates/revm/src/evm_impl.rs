@@ -830,7 +830,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             Err(e) => return e,
         };
 
-        let ret = if is_precompile(inputs.contract, self.data.precompiles.len()) {
+        let ret = if is_precompile(&inputs.contract, self.data.precompiles.len()) {
             self.call_precompile(inputs, prepared_call.gas)
         } else if !prepared_call.contract.bytecode.is_empty() {
             // Create interpreter and execute subcall

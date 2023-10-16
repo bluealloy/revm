@@ -252,7 +252,7 @@ impl JournaledState {
         Ok(checkpoint)
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn check_account_collision(
         address: Address,
         account: &Account,
@@ -268,7 +268,7 @@ impl JournaledState {
         }
 
         // Check collision. New account address is precompile.
-        if is_precompile(address, num_of_precompiles) {
+        if is_precompile(&address, num_of_precompiles) {
             return true;
         }
 
@@ -540,7 +540,7 @@ impl JournaledState {
                     .push(JournalEntry::AccountLoaded { address });
 
                 // precompiles are warm loaded so we need to take that into account
-                let is_cold = !is_precompile(address, self.num_of_precompiles);
+                let is_cold = !is_precompile(&address, self.num_of_precompiles);
 
                 (vac.insert(account), is_cold)
             }
@@ -783,8 +783,8 @@ pub struct JournalCheckpoint {
 
 /// Check if address is precompile by having assumption
 /// that precompiles are in range of 1 to N.
-#[inline(always)]
-pub fn is_precompile(address: Address, num_of_precompiles: usize) -> bool {
+#[inline]
+pub fn is_precompile(address: &Address, num_of_precompiles: usize) -> bool {
     if !address[..18].iter().all(|i| *i == 0) {
         return false;
     }
@@ -800,7 +800,7 @@ mod test {
     fn test_is_precompile() {
         assert!(
             !is_precompile(
-                Address::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+                &Address::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
                 3
             ),
             "Zero is not precompile"
@@ -808,7 +808,7 @@ mod test {
 
         assert!(
             !is_precompile(
-                Address::new([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9]),
+                &Address::new([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9]),
                 3
             ),
             "0x100..0 is not precompile"
@@ -816,7 +816,7 @@ mod test {
 
         assert!(
             !is_precompile(
-                Address::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]),
+                &Address::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]),
                 3
             ),
             "0x000..4 is not precompile"
@@ -824,7 +824,7 @@ mod test {
 
         assert!(
             is_precompile(
-                Address::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+                &Address::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
                 3
             ),
             "0x00..01 is precompile"
@@ -832,7 +832,7 @@ mod test {
 
         assert!(
             is_precompile(
-                Address::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]),
+                &Address::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]),
                 3
             ),
             "0x000..3 is precompile"

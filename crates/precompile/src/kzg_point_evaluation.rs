@@ -80,20 +80,20 @@ fn verify_kzg_proof(
     }
 }
 
-#[inline(always)]
+#[inline]
 #[track_caller]
 fn as_array<const N: usize>(bytes: &[u8]) -> &[u8; N] {
     bytes.try_into().expect("slice with incorrect length")
 }
 
-#[inline(always)]
+#[inline]
 #[track_caller]
 fn as_bytes32(bytes: &[u8]) -> &Bytes32 {
     // SAFETY: `#[repr(C)] Bytes32([u8; 32])`
     unsafe { &*as_array::<32>(bytes).as_ptr().cast() }
 }
 
-#[inline(always)]
+#[inline]
 #[track_caller]
 fn as_bytes48(bytes: &[u8]) -> &Bytes48 {
     // SAFETY: `#[repr(C)] Bytes48([u8; 48])`

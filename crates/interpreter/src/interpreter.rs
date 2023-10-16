@@ -96,7 +96,8 @@ impl<'a> Interpreter<'a> {
     /// Returns the current program counter.
     #[inline]
     pub fn program_counter(&self) -> usize {
-        // Safety: this is just subtraction of pointers, it is safe to do.
+        // SAFETY: `instruction_pointer` should be at an offset from the start of the bytecode.
+        // In practice this is always true unless a caller modifies the `instruction_pointer` field manually.
         unsafe {
             self.instruction_pointer
                 .offset_from(self.contract.bytecode.as_ptr()) as usize
