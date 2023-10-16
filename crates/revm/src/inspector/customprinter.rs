@@ -25,11 +25,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
 
     // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
     // all other information can be obtained from interp.
-    fn step(
-        &mut self,
-        interp: &mut Interpreter<'_>,
-        data: &mut EVMData<'_, DB>,
-    ) -> InstructionResult {
+    fn step(&mut self, interp: &mut Interpreter<'_>, data: &mut EVMData<'_, DB>) {
         let opcode = interp.current_opcode();
         let opcode_str = opcode::OPCODE_JUMPMAP[opcode as usize];
 
@@ -50,17 +46,10 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         );
 
         self.gas_inspector.step(interp, data);
-
-        InstructionResult::Continue
     }
 
-    fn step_end(
-        &mut self,
-        interp: &mut Interpreter<'_>,
-        data: &mut EVMData<'_, DB>,
-    ) -> InstructionResult {
+    fn step_end(&mut self, interp: &mut Interpreter<'_>, data: &mut EVMData<'_, DB>) {
         self.gas_inspector.step_end(interp, data);
-        InstructionResult::Continue
     }
 
     fn call_end(

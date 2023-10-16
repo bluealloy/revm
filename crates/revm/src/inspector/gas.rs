@@ -38,10 +38,9 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         &mut self,
         interp: &mut crate::interpreter::Interpreter<'_>,
         _data: &mut EVMData<'_, DB>,
-    ) -> InstructionResult {
+    ) {
         let last_gas = core::mem::replace(&mut self.gas_remaining, interp.gas.remaining());
         self.last_gas_cost = last_gas.saturating_sub(self.last_gas_cost);
-        InstructionResult::Continue
     }
 
     fn call_end(
@@ -97,14 +96,9 @@ mod tests {
             InstructionResult::Continue
         }
 
-        fn step(
-            &mut self,
-            interp: &mut Interpreter<'_>,
-            data: &mut EVMData<'_, DB>,
-        ) -> InstructionResult {
+        fn step(&mut self, interp: &mut Interpreter<'_>, data: &mut EVMData<'_, DB>) {
             self.pc = interp.program_counter();
             self.gas_inspector.step(interp, data);
-            InstructionResult::Continue
         }
 
         fn log(
@@ -117,15 +111,10 @@ mod tests {
             self.gas_inspector.log(evm_data, address, topics, data);
         }
 
-        fn step_end(
-            &mut self,
-            interp: &mut Interpreter<'_>,
-            data: &mut EVMData<'_, DB>,
-        ) -> InstructionResult {
+        fn step_end(&mut self, interp: &mut Interpreter<'_>, data: &mut EVMData<'_, DB>) {
             self.gas_inspector.step_end(interp, data);
             self.gas_remaining_steps
                 .push((self.pc, self.gas_inspector.gas_remaining()));
-            interp.instruction_result
         }
 
         fn call(

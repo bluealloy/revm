@@ -49,14 +49,9 @@ pub trait Inspector<DB: Database> {
     ///
     /// To get the current opcode, use `interp.current_opcode()`.
     #[inline]
-    fn step(
-        &mut self,
-        interp: &mut Interpreter<'_>,
-        data: &mut EVMData<'_, DB>,
-    ) -> InstructionResult {
+    fn step(&mut self, interp: &mut Interpreter<'_>, data: &mut EVMData<'_, DB>) {
         let _ = interp;
         let _ = data;
-        InstructionResult::Continue
     }
 
     /// Called when a log is emitted.
@@ -76,16 +71,12 @@ pub trait Inspector<DB: Database> {
 
     /// Called after `step` when the instruction has been executed.
     ///
-    /// InstructionResulting anything other than [InstructionResult::Continue] alters the execution of the interpreter.
+    /// Settings `interp.instruction_result` anything other than [InstructionResult::Continue] alters the execution
+    /// of the interpreter.
     #[inline]
-    fn step_end(
-        &mut self,
-        interp: &mut Interpreter<'_>,
-        data: &mut EVMData<'_, DB>,
-    ) -> InstructionResult {
+    fn step_end(&mut self, interp: &mut Interpreter<'_>, data: &mut EVMData<'_, DB>) {
         let _ = interp;
         let _ = data;
-        InstructionResult::Continue
     }
 
     /// Called whenever a call to a contract is about to start.
