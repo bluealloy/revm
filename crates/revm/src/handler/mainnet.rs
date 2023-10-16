@@ -1,5 +1,6 @@
 //! Mainnet related handlers.
-use revm_interpreter::primitives::EVMError;
+use crate::interpreter::SuccessOrHalt;
+use crate::primitives::{EVMError, ExecutionResult, Output, ResultAndState};
 
 use crate::{
     interpreter::{return_ok, return_revert, Gas, InstructionResult},
@@ -35,7 +36,6 @@ pub fn handle_call_return<SPEC: Spec>(
 pub fn handle_reimburse_caller<SPEC: Spec, DB: Database>(
     data: &mut EVMData<'_, DB>,
     gas: &Gas,
-    gas_refund: u64,
 ) -> Result<(), EVMError<DB::Error>> {
     let _ = data;
     let caller = data.env.tx.caller;
@@ -50,7 +50,7 @@ pub fn handle_reimburse_caller<SPEC: Spec, DB: Database>(
     caller_account.info.balance = caller_account
         .info
         .balance
-        .saturating_add(effective_gas_price * U256::from(gas.remaining() + gas_refund));
+        .saturating_add(effective_gas_price * U256::from(gas.remaining() + gas.refunded() as u64));
 
     Ok(())
 }
@@ -60,7 +60,6 @@ pub fn handle_reimburse_caller<SPEC: Spec, DB: Database>(
 pub fn reward_beneficiary<SPEC: Spec, DB: Database>(
     data: &mut EVMData<'_, DB>,
     gas: &Gas,
-    gas_refund: u64,
 ) -> Result<(), EVMError<DB::Error>> {
     let beneficiary = data.env.block.coinbase;
     let effective_gas_price = data.env.effective_gas_price();
@@ -82,7 +81,7 @@ pub fn reward_beneficiary<SPEC: Spec, DB: Database>(
     coinbase_account.info.balance = coinbase_account
         .info
         .balance
-        .saturating_add(coinbase_gas_price * U256::from(gas.spend() - gas_refund));
+        .saturating_add(coinbase_gas_price * U256::from(gas.spend() - gas.refunded() as u64));
 
     Ok(())
 }
@@ -102,6 +101,49 @@ pub fn calculate_gas_refund<SPEC: Spec>(env: &Env, gas: &Gas) -> u64 {
         let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 };
         (gas.refunded() as u64).min(gas.spend() / max_refund_quotient)
     }
+}
+
+pub fn main_return<DB: Database>(
+    data: &mut EVMData<'_, DB>,
+    call_result: InstructionResult,
+    output: Output,
+    gas: &Gas,
+) -> Result<ResultAndState, EVMError<DB::Error>> {
+    // used gas with refund calculated.
+    let gas_refunded = gas.refunded() as u64;
+    let final_gas_used = gas.spend() - gas_refunded;
+
+    // reset journal and return present state.
+    let (state, logs) = data.journaled_state.finalize();
+
+    let result = match call_result.into() {
+        SuccessOrHalt::Success(reason) => ExecutionResult::Success {
+            reason,
+            gas_used: final_gas_used,
+            gas_refunded,
+            logs,
+            output,
+        },
+        SuccessOrHalt::Revert => ExecutionResult::Revert {
+            gas_used: final_gas_used,
+            output: match output {
+                Output::Call(return_value) => return_value,
+                Output::Create(return_value, _) => return_value,
+            },
+        },
+        SuccessOrHalt::Halt(reason) => ExecutionResult::Halt {
+            reason,
+            gas_used: final_gas_used,
+        },
+        SuccessOrHalt::FatalExternalError => {
+            return Err(EVMError::Database(data.error.take().unwrap()));
+        }
+        SuccessOrHalt::InternalContinue => {
+            panic!("Internal return flags should remain internal {call_result:?}")
+        }
+    };
+
+    Ok(ResultAndState { result, state })
 }
 
 #[cfg(test)]

@@ -73,10 +73,16 @@ impl Gas {
 
     /// Records a refund value.
     ///
-    /// `refund` can be negative but `self.refunded` should always be positive.
+    /// `refund` can be negative but `self.refunded` should always be positive
+    /// at the end of transact.
     #[inline]
     pub fn record_refund(&mut self, refund: i64) {
         self.refunded += refund;
+    }
+
+    /// Set a refund value
+    pub fn set_refund(&mut self, refund: i64) {
+        self.refunded = refund;
     }
 
     /// Records an explicit cost.
