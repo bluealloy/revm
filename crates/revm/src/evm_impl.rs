@@ -694,7 +694,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             shared_memory,
         ));
 
-        interpreter.shared_memory.new_context_memory();
+        interpreter.shared_memory.new_context();
 
         if let Some(inspector) = self.inspector.as_mut() {
             inspector.initialize_interp(&mut interpreter, &mut self.data);
@@ -707,7 +707,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
 
         let (return_value, gas) = (interpreter.return_value(), *interpreter.gas());
 
-        interpreter.shared_memory.free_context_memory();
+        interpreter.shared_memory.free_context();
 
         (exit_reason, return_value, gas)
     }
