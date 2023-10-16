@@ -1,6 +1,6 @@
-use crate::evm_impl::EVMData;
 use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult, Interpreter};
 use crate::primitives::{db::Database, Address, Bytes, B256, U256};
+use crate::EVMData;
 use auto_impl::auto_impl;
 
 #[cfg(feature = "std")]

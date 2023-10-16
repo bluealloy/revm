@@ -29,6 +29,10 @@ type MainReturnHandle<DB> = fn(
     &Gas,
 ) -> Result<ResultAndState, EVMError<<DB as Database>::Error>>;
 
+/// Prepare contexts for the call
+type PrepareCallHandler<DB> =
+    fn(&mut EVMData<'_, DB>, &Gas) -> Result<(), EVMError<<DB as Database>::Error>>;
+
 /// Handler acts as a proxy and allow to define different behavior for different
 /// sections of the code. This allows nice integration of different chains or
 /// to disable some mainnet behavior.

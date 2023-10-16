@@ -2,7 +2,7 @@
 
 use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult};
 use crate::primitives::{db::Database, Address, Bytes};
-use crate::{evm_impl::EVMData, Inspector};
+use crate::{EVMData, Inspector};
 
 /// Helper [Inspector] that keeps track of gas.
 #[allow(dead_code)]
