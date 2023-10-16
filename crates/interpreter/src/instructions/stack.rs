@@ -24,17 +24,17 @@ pub fn push0<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, _host: &mut
 
 pub fn push<const N: usize, H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
-    let start = interpreter.instruction_pointer;
-    // Safety: In Analysis we appended needed bytes for bytecode so that we are safe to just add without
-    // checking if it is out of bound. This makes both of our unsafes block safe to do.
+    // SAFETY: In analysis we append trailing bytes to the bytecode so that this is safe to do
+    // without bounds checking.
+    let ip = interpreter.instruction_pointer;
     if let Err(result) = interpreter
         .stack
-        .push_slice::<N>(unsafe { core::slice::from_raw_parts(start, N) })
+        .push_slice(unsafe { core::slice::from_raw_parts(ip, N) })
     {
         interpreter.instruction_result = result;
         return;
     }
-    interpreter.instruction_pointer = unsafe { start.add(N) };
+    interpreter.instruction_pointer = unsafe { ip.add(N) };
 }
 
 pub fn dup<const N: usize, H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
