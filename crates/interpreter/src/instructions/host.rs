@@ -111,7 +111,6 @@ pub fn extcodecopy<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, host:
     let code_offset = min(as_usize_saturated!(code_offset), code.len());
     shared_memory_resize!(interpreter, memory_offset, len);
 
-    // Safety: set_data is unsafe function and memory_resize ensures us that it is safe to call it
     interpreter
         .shared_memory
         .set_data(memory_offset, code_offset, len, code.bytes());
@@ -208,10 +207,8 @@ pub fn log<const N: usize, H: Host>(interpreter: &mut Interpreter<'_>, host: &mu
 
     let mut topics = Vec::with_capacity(N);
     for _ in 0..N {
-        // Safety: stack bounds already checked few lines above
-        topics.push(B256::new(unsafe {
-            interpreter.stack.pop_unsafe().to_be_bytes()
-        }));
+        // SAFETY: stack bounds already checked few lines above
+        topics.push(B256::from(unsafe { interpreter.stack.pop_unsafe() }));
     }
 
     host.log(interpreter.contract.address, topics, data);

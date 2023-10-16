@@ -84,7 +84,7 @@ macro_rules! pop_address {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
-        // Safety: Length is checked above.
+        // SAFETY: Length is checked above.
         let $x1 = Address::from_word(B256::from(unsafe { $interp.stack.pop_unsafe() }));
     };
     ($interp:expr, $x1:ident, $x2:ident) => {
@@ -92,7 +92,7 @@ macro_rules! pop_address {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
-        // Safety: Length is checked above.
+        // SAFETY: Length is checked above.
         let $x1 = Address::from_word(B256::from(unsafe { $interp.stack.pop_unsafe() }));
         let $x2 = Address::from_word(B256::from(unsafe { $interp.stack.pop_unsafe() }));
     };
@@ -104,7 +104,7 @@ macro_rules! pop {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
-        // Safety: Length is checked above.
+        // SAFETY: Length is checked above.
         let $x1 = unsafe { $interp.stack.pop_unsafe() };
     };
     ($interp:expr, $x1:ident, $x2:ident) => {
@@ -112,7 +112,7 @@ macro_rules! pop {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
-        // Safety: Length is checked above.
+        // SAFETY: Length is checked above.
         let ($x1, $x2) = unsafe { $interp.stack.pop2_unsafe() };
     };
     ($interp:expr, $x1:ident, $x2:ident, $x3:ident) => {
@@ -120,7 +120,7 @@ macro_rules! pop {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
-        // Safety: Length is checked above.
+        // SAFETY: Length is checked above.
         let ($x1, $x2, $x3) = unsafe { $interp.stack.pop3_unsafe() };
     };
 
@@ -129,7 +129,7 @@ macro_rules! pop {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
-        // Safety: Length is checked above.
+        // SAFETY: Length is checked above.
         let ($x1, $x2, $x3, $x4) = unsafe { $interp.stack.pop4_unsafe() };
     };
 }
@@ -140,7 +140,7 @@ macro_rules! pop_top {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
-        // Safety: Length is checked above.
+        // SAFETY: Length is checked above.
         let $x1 = unsafe { $interp.stack.top_unsafe() };
     };
     ($interp:expr, $x1:ident, $x2:ident) => {
@@ -148,7 +148,7 @@ macro_rules! pop_top {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
-        // Safety: Length is checked above.
+        // SAFETY: Length is checked above.
         let ($x1, $x2) = unsafe { $interp.stack.pop_top_unsafe() };
     };
     ($interp:expr, $x1:ident, $x2:ident, $x3:ident) => {
@@ -156,7 +156,7 @@ macro_rules! pop_top {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
-        // Safety: Length is checked above.
+        // SAFETY: Length is checked above.
         let ($x1, $x2, $x3) = unsafe { $interp.stack.pop2_top_unsafe() };
     };
 }
