@@ -46,13 +46,8 @@ impl TracerEip3155 {
 }
 
 impl<DB: Database> Inspector<DB> for TracerEip3155 {
-    fn initialize_interp(
-        &mut self,
-        interp: &mut Interpreter<'_>,
-        data: &mut EVMData<'_, DB>,
-    ) -> InstructionResult {
+    fn initialize_interp(&mut self, interp: &mut Interpreter<'_>, data: &mut EVMData<'_, DB>) {
         self.gas_inspector.initialize_interp(interp, data);
-        InstructionResult::Continue
     }
 
     // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
