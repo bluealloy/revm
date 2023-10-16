@@ -6,7 +6,7 @@ use alloc::sync::Arc;
 use auto_impl::auto_impl;
 use core::ops::Deref;
 
-#[auto_impl(& mut, Box)]
+#[auto_impl(&mut, Box)]
 pub trait State {
     type Error;
 
@@ -20,7 +20,7 @@ pub trait State {
     fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error>;
 }
 
-#[auto_impl(&, Box, Arc)]
+#[auto_impl(&, &mut, Box, Rc, Arc)]
 pub trait StateRef {
     type Error;
 
