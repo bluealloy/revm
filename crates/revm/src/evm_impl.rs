@@ -16,16 +16,19 @@ use alloc::vec::Vec;
 use auto_impl::auto_impl;
 use core::fmt;
 use core::marker::PhantomData;
-use revm_interpreter::opcode::make_boxed_instruction_table;
 use revm_interpreter::{
     gas::initial_tx_gas,
-    opcode::{make_instruction_table, InstructionTables},
+    opcode::{make_boxed_instruction_table, make_instruction_table, InstructionTables},
     SharedMemory, MAX_CODE_SIZE,
 };
 use revm_precompile::{Precompile, Precompiles};
 
 #[cfg(feature = "optimism")]
-use crate::optimism;
+use crate::{
+    optimism,
+    precompile::HashMap,
+    primitives::{Account, ExecutionResult, ResultAndState},
+};
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -87,11 +90,7 @@ pub trait Transact<DBError> {
     fn transact_preverified(&mut self) -> EVMResult<DBError>;
 
     /// Execute transaction by running pre-verification steps and then transaction itself.
-    #[inline]
-    fn transact(&mut self) -> EVMResult<DBError> {
-        self.preverify_transaction()
-            .and_then(|()| self.transact_preverified())
-    }
+    fn transact(&mut self) -> EVMResult<DBError>;
 }
 
 impl<'a, DB: Database> EVMData<'a, DB> {
@@ -352,6 +351,78 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> Transact<DB::Error> for EVMImpl<'a
 
         // main return
         handler.main_return(data, call_result, output, &gas)
+    }
+
+    #[inline]
+    fn transact(&mut self) -> EVMResult<DB::Error> {
+        #[cfg(not(feature = "optimism"))]
+        {
+            self.preverify_transaction()
+                .and_then(|_| self.transact_preverified())
+        }
+
+        #[cfg(feature = "optimism")]
+        match self
+            .preverify_transaction()
+            .and_then(|_| self.transact_preverified())
+        {
+            Ok(res) => Ok(res),
+            Err(err) => {
+                if self.env().cfg.optimism && self.env().tx.optimism.source_hash.is_some() {
+                    match err {
+                        EVMError::Header(_) | EVMError::Database(_) => Err(err),
+                        EVMError::Transaction(_) => {
+                            // If the transaction is a deposit transaction and it failed
+                            // for any reason, the caller nonce must be bumped, and the
+                            // gas reported must be the gas limit of the deposit. This is
+                            // also not returned as an error so that consumers can more
+                            // easily distinguish between a failed deposit and a failed
+                            // normal transaction.
+
+                            let sender = self.env().tx.caller;
+
+                            // Increment sender nonce
+                            // todo - handle error
+                            let mut account = Account::from(
+                                self.data
+                                    .db
+                                    .basic(sender)
+                                    .unwrap_or_default()
+                                    .unwrap_or_default(),
+                            );
+                            account.info.nonce = account.info.nonce.saturating_add(1);
+                            account.mark_touch();
+                            let state = HashMap::<Address, Account>::from([(sender, account)]);
+
+                            // The gas used of a failed deposit prior to regolith is the gas
+                            // limit of the transaction. Post-regolith, it is 0 for all
+                            // deposits.
+                            let is_system_tx = self
+                                .env()
+                                .tx
+                                .optimism
+                                .is_system_transaction
+                                .unwrap_or(false);
+                            let gas_used = if GSPEC::enabled(REGOLITH) || !is_system_tx {
+                                self.env().tx.gas_limit
+                            } else {
+                                0
+                            };
+
+                            Ok(ResultAndState {
+                                result: ExecutionResult::Halt {
+                                    reason: revm_interpreter::primitives::Halt::FailedDeposit,
+                                    gas_used,
+                                },
+                                state,
+                            })
+                        }
+                    }
+                } else {
+                    Err(err)
+                }
+            }
+        }
     }
 }
 

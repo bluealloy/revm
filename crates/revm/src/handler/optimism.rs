@@ -4,13 +4,17 @@ use core::ops::Mul;
 
 use super::mainnet;
 use crate::{
-    interpreter::{return_ok, return_revert, Gas, InstructionResult},
+    interpreter::{return_ok, return_revert, Gas, InstructionResult, SuccessOrHalt},
     optimism,
-    primitives::{db::Database, EVMError, Env, Spec, SpecId::REGOLITH, U256},
+    primitives::{
+        db::Database, Account, EVMError, Env, ExecutionResult, Output, ResultAndState, Spec,
+        SpecId::REGOLITH, U256,
+    },
     EVMData,
 };
 
 /// Handle output of the transaction
+#[inline]
 pub fn handle_call_return<SPEC: Spec>(
     env: &Env,
     call_result: InstructionResult,
@@ -138,6 +142,86 @@ pub fn reward_beneficiary<SPEC: Spec, DB: Database>(
             .mul(U256::from(gas.spend() - gas.refunded() as u64));
     }
     Ok(())
+}
+
+/// Main return handle this handle output of the transact.
+#[inline]
+pub fn main_return<SPEC: Spec, DB: Database>(
+    data: &mut EVMData<'_, DB>,
+    call_result: InstructionResult,
+    output: Output,
+    gas: &Gas,
+) -> Result<ResultAndState, EVMError<DB::Error>> {
+    // used gas with refund calculated.
+    let gas_refunded = gas.refunded() as u64;
+    let final_gas_used = gas.spend() - gas_refunded;
+
+    // reset journal and return present state.
+    let (mut state, logs) = data.journaled_state.finalize();
+
+    let result = match call_result.into() {
+        SuccessOrHalt::Success(reason) => ExecutionResult::Success {
+            reason,
+            gas_used: final_gas_used,
+            gas_refunded,
+            logs,
+            output,
+        },
+        SuccessOrHalt::Revert => ExecutionResult::Revert {
+            gas_used: final_gas_used,
+            output: match output {
+                Output::Call(return_value) => return_value,
+                Output::Create(return_value, _) => return_value,
+            },
+        },
+        SuccessOrHalt::Halt(reason) => {
+            // Post-regolith, if the transaction is a deposit transaction and the
+            // output is a contract creation, increment the account nonce even if
+            // the transaction halts.
+            #[cfg(feature = "optimism")]
+            let final_gas_used = {
+                let crate::primitives::TxEnv {
+                    optimism,
+                    gas_limit,
+                    caller,
+                    ..
+                } = &data.env.tx;
+                let is_deposit = optimism.source_hash.is_some();
+                let optimism_regolith = data.env.cfg.optimism && SPEC::enabled(REGOLITH);
+                if is_deposit && optimism_regolith {
+                    // Manually bump the sender nonce if the creation halted in a deposit
+                    // transaction after Regolith.
+                    if matches!(output, Output::Create(_, _)) {
+                        if let Some(acc) = state.get_mut(caller) {
+                            acc.info.nonce = acc.info.nonce.checked_add(1).unwrap_or(u64::MAX);
+                        } else {
+                            state.insert(*caller, {
+                                let mut acc = Account::default();
+                                acc.info.nonce += 1;
+                                acc
+                            });
+                        }
+                    }
+
+                    *gas_limit
+                } else {
+                    final_gas_used
+                }
+            };
+            ExecutionResult::Halt {
+                reason,
+                gas_used: final_gas_used,
+            }
+        }
+        SuccessOrHalt::FatalExternalError => {
+            return Err(EVMError::Database(data.error.take().unwrap()));
+        }
+        SuccessOrHalt::InternalContinue => {
+            panic!("Internal return flags should remain internal {call_result:?}")
+        }
+    };
+
+    Ok(ResultAndState { result, state })
 }
 
 #[cfg(test)]

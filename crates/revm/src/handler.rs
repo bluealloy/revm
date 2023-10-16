@@ -69,7 +69,7 @@ impl<DB: Database> Handler<DB> {
             reimburse_caller: mainnet::handle_reimburse_caller::<SPEC, DB>,
             calculate_gas_refund: optimism::calculate_gas_refund::<SPEC>,
             reward_beneficiary: optimism::reward_beneficiary::<SPEC, DB>,
-            main_return: mainnet::main_return::<DB>,
+            main_return: optimism::main_return::<SPEC, DB>,
         }
     }
 

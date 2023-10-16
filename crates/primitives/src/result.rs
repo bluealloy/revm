@@ -350,6 +350,10 @@ pub enum Halt {
     CallNotAllowedInsideStatic,
     OutOfFund,
     CallTooDeep,
+
+    /* Optimism errors */
+    #[cfg(feature = "optimism")]
+    FailedDeposit,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]

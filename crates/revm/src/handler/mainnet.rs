@@ -9,6 +9,7 @@ use crate::{
 };
 
 /// Handle output of the transaction
+#[inline]
 pub fn handle_call_return<SPEC: Spec>(
     env: &Env,
     call_result: InstructionResult,
@@ -103,6 +104,8 @@ pub fn calculate_gas_refund<SPEC: Spec>(env: &Env, gas: &Gas) -> u64 {
     }
 }
 
+/// Main return handle this handle output of the transact.
+#[inline]
 pub fn main_return<DB: Database>(
     data: &mut EVMData<'_, DB>,
     call_result: InstructionResult,
