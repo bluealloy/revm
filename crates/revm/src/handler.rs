@@ -1,6 +1,8 @@
 pub mod mainnet;
 #[cfg(feature = "optimism")]
 pub mod optimism;
+#[cfg(feature = "taiko")]
+pub mod taiko;
 
 use revm_interpreter::primitives::db::Database;
 use revm_interpreter::primitives::{EVMError, EVMResultGeneric};
@@ -42,6 +44,17 @@ impl<DB: Database> Handler<DB> {
             calculate_gas_refund: mainnet::calculate_gas_refund::<SPEC>,
             reimburse_caller: mainnet::handle_reimburse_caller::<SPEC, DB>,
             reward_beneficiary: mainnet::reward_beneficiary::<SPEC, DB>,
+        }
+    }
+
+    /// Handler for the taiko
+    #[cfg(feature = "taiko")]
+    pub fn taiko<SPEC: Spec>() -> Self {
+        Self {
+            call_return: taiko::handle_call_return::<SPEC>,
+            calculate_gas_refund: taiko::calculate_gas_refund::<SPEC>,
+            reimburse_caller: taiko::handle_reimburse_caller::<SPEC, DB>,
+            reward_beneficiary: taiko::reward_beneficiary::<SPEC, DB>,
         }
     }
 

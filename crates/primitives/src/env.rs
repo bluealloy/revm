@@ -3,6 +3,8 @@ use crate::{
     InvalidTransaction, Spec, SpecId, B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK,
     MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
 };
+#[cfg(feature = "taiko")]
+use crate::{EVMError, TaikoEnv, TxType};
 use core::cmp::{min, Ordering};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -11,6 +13,23 @@ pub struct Env {
     pub cfg: CfgEnv,
     pub block: BlockEnv,
     pub tx: TxEnv,
+    #[cfg(feature = "taiko")]
+    /// Configuration of the taiko
+    pub taiko: TaikoEnv,
+}
+
+#[cfg(feature = "taiko")]
+impl Env {
+    pub fn pre_check<DB>(&self) -> Result<(), EVMError<DB>> {
+        if !crate::anchor::validate(self) {
+            return Err(InvalidTransaction::InvalidAnchorTransaction.into());
+        }
+        Ok(())
+    }
+
+    pub fn is_anchor(&self) -> bool {
+        self.tx.index == 0
+    }
 }
 
 /// The block environment.
@@ -129,6 +148,13 @@ impl BlockEnv {
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxEnv {
+    /// The index of the transaction in the block.
+    #[cfg(feature = "taiko")]
+    pub index: usize,
+    /// The type of the transaction.
+    #[cfg(feature = "taiko")]
+    pub tx_type: TxType,
+
     /// Caller aka Author aka transaction signer.
     pub caller: Address,
     /// The gas limit of the transaction.
@@ -428,6 +454,11 @@ impl Default for BlockEnv {
 impl Default for TxEnv {
     fn default() -> Self {
         Self {
+            #[cfg(feature = "taiko")]
+            index: 0,
+            #[cfg(feature = "taiko")]
+            tx_type: TxType::Legacy,
+
             caller: Address::ZERO,
             gas_limit: u64::MAX,
             gas_price: U256::ZERO,
@@ -646,6 +677,11 @@ impl Env {
             balance_check = balance_check
                 .checked_add(U256::from(data_fee))
                 .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
+        }
+
+        #[cfg(feature = "taiko")]
+        if self.is_anchor() {
+            return Ok(());
         }
 
         // Check if account has enough balance for gas_limit*gas_price and value transfer.

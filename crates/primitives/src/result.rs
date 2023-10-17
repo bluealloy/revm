@@ -208,6 +208,9 @@ pub enum InvalidTransaction {
     /// post-regolith hardfork.
     #[cfg(feature = "optimism")]
     DepositSystemTxPostRegolith,
+    /// Anchor check failed
+    #[cfg(feature = "taiko")]
+    InvalidAnchorTransaction,
 }
 
 impl<DBError> From<InvalidHeader> for EVMError<DBError> {

@@ -43,6 +43,7 @@ std = [
 ]
 
 optimism = ["revm-primitives/optimism"]
+taiko = ["revm-primitives/taiko"]
 
 
 # This library may not work on all no_std platforms as they depend on C libraries.

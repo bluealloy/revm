@@ -22,6 +22,7 @@ serde = ["dep:serde", "revm-primitives/serde"]
 arbitrary = ["std", "revm-primitives/arbitrary"]
 
 optimism = ["revm-primitives/optimism"]
+taiko = ["revm-primitives/taiko"]
 
 dev = [
     "memory_limit",
