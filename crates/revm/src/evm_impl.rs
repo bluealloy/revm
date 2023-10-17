@@ -13,6 +13,8 @@ use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 use core::{cmp::min, marker::PhantomData};
+use fluentbase_runtime::{Runtime, RuntimeContext};
+use fluentbase_rwasm::rwasm::Compiler;
 use revm_interpreter::gas::initial_tx_gas;
 use revm_interpreter::MAX_CODE_SIZE;
 use revm_precompile::{Precompile, Precompiles};
@@ -429,7 +431,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             }
         };
 
-        let bytecode = Bytecode::new_raw(inputs.init_code.clone());
+        // translate WASM binary to rWASM
+        let import_linker = Runtime::new_linker();
+        let mut compiler =
+            Compiler::new_with_linker(inputs.init_code.as_ref(), Some(&import_linker)).unwrap();
+        let rwasm_bytecode = compiler.finalize().unwrap();
+
+        let bytecode = Bytecode::new_raw(Bytes::from(rwasm_bytecode));
 
         let contract = Box::new(Contract::new(
             Bytes::new(),
@@ -457,14 +465,18 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         };
 
         // Create new interpreter and execute initcode
-        let (exit_reason, mut interpreter) =
-            self.run_interpreter(prepared_create.contract, prepared_create.gas.limit(), false);
+        let (exit_reason, return_value, mut gas) = self.run_interpreter(
+            prepared_create.contract,
+            prepared_create.gas.limit(),
+            0,
+            false,
+        );
 
         // Host error if present on execution
         match exit_reason {
             return_ok!() => {
                 // if ok, check contract creation limit and calculate gas deduction on output len.
-                let mut bytes = interpreter.return_value();
+                let mut bytes = return_value;
 
                 // EIP-3541: Reject new contract code starting with the 0xEF byte
                 if GSPEC::enabled(LONDON) && !bytes.is_empty() && bytes.first() == Some(&0xEF) {
@@ -474,7 +486,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     return CreateResult {
                         result: InstructionResult::CreateContractStartingWithEF,
                         created_address: Some(prepared_create.created_address),
-                        gas: interpreter.gas,
+                        gas,
                         return_value: bytes,
                     };
                 }
@@ -496,13 +508,13 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                     return CreateResult {
                         result: InstructionResult::CreateContractSizeLimit,
                         created_address: Some(prepared_create.created_address),
-                        gas: interpreter.gas,
+                        gas,
                         return_value: bytes,
                     };
                 }
                 if crate::USE_GAS {
                     let gas_for_code = bytes.len() as u64 * gas::CODEDEPOSIT;
-                    if !interpreter.gas.record_cost(gas_for_code) {
+                    if !gas.record_cost(gas_for_code) {
                         // record code deposit gas cost and check if we are out of gas.
                         // EIP-2 point 3: If contract creation does not have enough gas to pay for the
                         // final gas fee for adding the contract code to the state, the contract
@@ -514,7 +526,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                             return CreateResult {
                                 result: InstructionResult::OutOfGas,
                                 created_address: Some(prepared_create.created_address),
-                                gas: interpreter.gas,
+                                gas,
                                 return_value: bytes,
                             };
                         } else {
@@ -536,7 +548,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 CreateResult {
                     result: InstructionResult::Return,
                     created_address: Some(prepared_create.created_address),
-                    gas: interpreter.gas,
+                    gas,
                     return_value: bytes,
                 }
             }
@@ -547,16 +559,39 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 CreateResult {
                     result: exit_reason,
                     created_address: Some(prepared_create.created_address),
-                    gas: interpreter.gas,
-                    return_value: interpreter.return_value(),
+                    gas,
+                    return_value,
                 }
             }
         }
     }
 
+    pub fn run_interpreter(
+        &mut self,
+        contract: Box<Contract>,
+        gas_limit: u64,
+        state: u32,
+        is_static: bool,
+    ) -> (InstructionResult, Bytes, Gas) {
+        let import_linker = Runtime::new_linker();
+        let execution_result = Runtime::run_with_context(
+            RuntimeContext::new(contract.bytecode.original_bytecode_slice())
+                .with_input(contract.input.as_ref())
+                .with_state(state),
+            &import_linker,
+        )
+        .unwrap();
+        let return_value = execution_result.data().output();
+        (
+            InstructionResult::Stop,
+            Bytes::from(return_value.clone()),
+            Gas::new(gas_limit),
+        )
+    }
+
     /// Create a Interpreter and run it.
     /// Returns the exit reason and created interpreter as it contains return values and gas spend.
-    pub fn run_interpreter(
+    pub fn run_evm_interpreter(
         &mut self,
         contract: Box<Contract>,
         gas_limit: u64,
@@ -712,15 +747,16 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
             self.call_precompile(inputs, prepared_call.gas)
         } else if !prepared_call.contract.bytecode.is_empty() {
             // Create interpreter and execute subcall
-            let (exit_reason, interpreter) = self.run_interpreter(
+            let (exit_reason, return_value, gas) = self.run_interpreter(
                 prepared_call.contract,
                 prepared_call.gas.limit(),
+                1,
                 inputs.is_static,
             );
             CallResult {
                 result: exit_reason,
-                gas: interpreter.gas,
-                return_value: interpreter.return_value(),
+                gas,
+                return_value,
             }
         } else {
             CallResult {

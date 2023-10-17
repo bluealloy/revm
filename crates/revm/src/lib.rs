@@ -9,6 +9,8 @@ mod evm;
 mod evm_impl;
 mod inspector;
 mod journaled_state;
+#[cfg(test)]
+mod test;
 
 #[cfg(all(feature = "with-serde", not(feature = "serde")))]
 compile_error!("`with-serde` feature has been renamed to `serde`.");
