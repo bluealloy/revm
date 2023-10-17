@@ -11,34 +11,42 @@ on:
     branches: [main, "release/**"]
 
 jobs:
-  tests-stable:
-    name: Tests (Stable)
+  tests:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: [stable, "1.66"] # MSRV
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
 
       - name: Install toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: ${{ matrix.rust }}
           targets: riscv32imac-unknown-none-elf
 
       - uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
 
+      - name: cargo build
+        run: cargo build --workspace
+
+      - name: cargo build no_std
+        run: cargo build --workspace --target riscv32imac-unknown-none-elf --no-default-features
+
       - name: cargo test
+        if: ${{ matrix.rust == 'stable' }}
         run: cargo test --workspace
 
       - name: cargo test all features
+        if: ${{ matrix.rust == 'stable' }}
         run: cargo test --workspace --all-features
-      
-      - name: cargo check no_std
-        run: cargo check --target riscv32imac-unknown-none-elf --no-default-features
 
   lint:
-    name: Lint
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

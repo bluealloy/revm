@@ -25,9 +25,8 @@ type CalculateGasRefundHandle = fn(&Env, &Gas) -> u64;
 /// Handler acts as a proxy and allow to define different behavior for different
 /// sections of the code. This allows nice integration of different chains or
 /// to disable some mainnet behavior.
-#[derive(Debug)]
 pub struct Handler<DB: Database> {
-    // Uses env, call resul and returned gas from the call to determine the gas
+    // Uses env, call result and returned gas from the call to determine the gas
     // that is returned from transaction execution..
     pub call_return: CallReturnHandle,
     pub reimburse_caller: ReimburseCallerHandle<DB>,

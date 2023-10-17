@@ -3,6 +3,11 @@ resolver = "2"
 members = ["bins/*", "crates/*"]
 default-members = ["crates/revm"]
 
+[workspace.package]
+edition = "2021"
+license = "MIT"
+rust-version = "1.66"
+
 [profile.release]
 lto = true
 codegen-units = 1

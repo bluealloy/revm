@@ -1,13 +1,15 @@
 [package]
 authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
 description = "revm Interpreter"
-edition = "2021"
 keywords = ["no_std", "ethereum", "evm", "revm", "interpreter"]
-license = "MIT"
 name = "revm-interpreter"
 repository = "https://github.com/bluealloy/revm"
 version = "1.3.0"
 readme = "../../README.md"
+
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
 
 [dependencies]
 revm-primitives = { path = "../primitives", version = "1.3.0", default-features = false }

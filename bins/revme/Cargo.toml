@@ -1,13 +1,14 @@
 [package]
 authors = ["Dragan Rakita <dragan0rakita@gmail.com>"]
-edition = "2021"
 name = "revme"
 keywords = ["ethereum", "evm"]
-license = "MIT"
 repository = "https://github.com/bluealloy/revm"
 description = "Rust Ethereum Virtual Machine Executable"
 version = "0.2.0"
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
 
 [dependencies]
 hash-db = "0.15"

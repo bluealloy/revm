@@ -36,15 +36,29 @@ Structure:
 * bins:
   * revme: cli binary, used for running state test jsons
 
-This project tends to use the newest rust version, so if you're encountering a build error try running `rustup update` first.
-
 There were some big efforts on optimization of revm:
 
 * Optimizing interpreter loop: https://github.com/bluealloy/revm/issues/7
 * Introducing Bytecode format (and better bytecode analysis): https://github.com/bluealloy/revm/issues/121
 * Unification of instruction signatures: https://github.com/bluealloy/revm/pull/283
 
-# Building from source
+## Supported Rust Versions
+
+<!--
+When updating this, also update:
+- clippy.toml
+- Cargo.toml
+- .github/workflows/ci.yml
+-->
+
+Revm will keep a rolling MSRV (minimum supported rust version) policy of **at
+least** 6 months. When increasing the MSRV, the new Rust version must have been
+released at least six months ago. The current MSRV is 1.66.0.
+
+Note that the MSRV is not increased automatically, and only as part of a minor
+release.
+
+## Building from source
 
 ```shell
 git clone https://github.com/bluealloy/revm.git
@@ -52,31 +66,44 @@ cd revm
 cargo build --release
 ```
 
-**_Note:_** `clang` is required for building revm with `c-kzg` or `secp256k1` feature flags as they depend on `C` libraries. If you don't have it installed, you can install it with `apt install clang`.
+**_Note:_** `clang` is required for building revm with `c-kzg` or `secp256k1` feature flags as they
+depend on `C` libraries. You might need to install the `clang` package using your system's package
+manager.
 
-# Running eth tests
+## Running tests
 
-go to `cd bins/revme/`
+Unit and integration tests:
 
-Download eth tests from (this will take some time): `git clone https://github.com/ethereum/tests`
+```shell
+cargo test --workspace --all-features
+```
 
-run tests with command: `cargo run --release -- statetest tests/GeneralStateTests/ tests/LegacyTests/Constantinople/GeneralStateTests`
+Ethereum Execution Tests ([`ethereum/tests`](https://github.com/ethereum/tests)):
 
-`GeneralStateTests` contains all tests related to EVM.
+```shell
+# Clone the `ethereum/tests` repo to `ethtests` (this will take some time)
+git clone https://github.com/ethereum/tests ethtests
+# Run all relevant tests
+# See `.github/workflows/ethereum-tests.yml` for the most up to date list of tests
+cargo run --profile ethtests -p revme -- statetest \
+  ethtests/GeneralStateTests/ \
+  ethtests/LegacyTests/Constantinople/GeneralStateTests/ \
+  ethtests/EIPTests/StateTests/stEIP1153-transientStorage/ \
+  ethtests/EIPTests/StateTests/stEIP4844-blobtransactions/ \
+  ethtests/EIPTests/StateTests/stEIP5656-MCOPY/
+```
 
 ## Running benchmarks
 
-TODO needs to be updated. Benches can now be found inside `crates/revm/benches`
+Requires [`cargo-criterion`](https://github.com/bheisler/cargo-criterion):
 
 ```shell
-cargo run --package revm-test --release --bin snailtracer
+cargo criterion
 ```
 
-```shell
-cargo flamegraph --root --freq 4000 --min-width 0.001 --package revm-test --bin snailtracer
-```
+Alternatively, you can just use `cargo bench`, but this will produce less detailed results.
 
-## Running example
+## Running examples
 
 ```shell
 cargo run -p revm --features ethersdb --example fork_ref_transact
