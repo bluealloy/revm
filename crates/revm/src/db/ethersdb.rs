@@ -1,10 +1,11 @@
-use crate::primitives::{AccountInfo, Bytecode, B160, B256, KECCAK_EMPTY, U256};
-use crate::Database;
+use crate::primitives::{AccountInfo, Address, Bytecode, B256, KECCAK_EMPTY, U256};
+use crate::{Database, DatabaseRef};
 use ethers_core::types::{BlockId, H160 as eH160, H256, U64 as eU64};
 use ethers_providers::Middleware;
 use std::sync::Arc;
 use tokio::runtime::{Handle, Runtime};
 
+#[derive(Debug)]
 pub struct EthersDB<M: Middleware> {
     client: Arc<M>,
     runtime: Option<Runtime>,
@@ -46,11 +47,11 @@ impl<M: Middleware> EthersDB<M> {
     }
 }
 
-impl<M: Middleware> Database for EthersDB<M> {
+impl<M: Middleware> DatabaseRef for EthersDB<M> {
     type Error = ();
 
-    fn basic(&mut self, address: B160) -> Result<Option<AccountInfo>, Self::Error> {
-        let add = eH160::from(address.0);
+    fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+        let add = eH160::from(address.0 .0);
 
         let f = async {
             let nonce = self.client.get_transaction_count(add, self.block_number);
@@ -60,10 +61,8 @@ impl<M: Middleware> Database for EthersDB<M> {
         };
         let (nonce, balance, code) = self.block_on(f);
         // panic on not getting data?
-        let bytecode = Bytecode::new_raw(
-            code.unwrap_or_else(|e| panic!("ethers get code error: {e:?}"))
-                .0,
-        );
+        let bytecode = code.unwrap_or_else(|e| panic!("ethers get code error: {e:?}"));
+        let bytecode = Bytecode::new_raw(bytecode.0.into());
         let code_hash = bytecode.hash_slow();
         Ok(Some(AccountInfo::new(
             U256::from_limbs(
@@ -79,13 +78,13 @@ impl<M: Middleware> Database for EthersDB<M> {
         )))
     }
 
-    fn code_by_hash(&mut self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
+    fn code_by_hash_ref(&self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
         panic!("Should not be called. Code is already loaded");
         // not needed because we already load code with basic info
     }
 
-    fn storage(&mut self, address: B160, index: U256) -> Result<U256, Self::Error> {
-        let add = eH160::from(address.0);
+    fn storage_ref(&self, address: Address, index: U256) -> Result<U256, Self::Error> {
+        let add = eH160::from(address.0 .0);
         let index = H256::from(index.to_be_bytes());
         let f = async {
             let storage = self
@@ -98,7 +97,7 @@ impl<M: Middleware> Database for EthersDB<M> {
         Ok(self.block_on(f))
     }
 
-    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
+    fn block_hash_ref(&self, number: U256) -> Result<B256, Self::Error> {
         // saturate usize
         if number > U256::from(u64::MAX) {
             return Ok(KECCAK_EMPTY);
@@ -111,7 +110,31 @@ impl<M: Middleware> Database for EthersDB<M> {
                 .ok()
                 .flatten()
         };
-        Ok(B256(self.block_on(f).unwrap().hash.unwrap().0))
+        Ok(B256::new(self.block_on(f).unwrap().hash.unwrap().0))
+    }
+}
+
+impl<M: Middleware> Database for EthersDB<M> {
+    type Error = ();
+
+    #[inline]
+    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+        <Self as DatabaseRef>::basic_ref(self, address)
+    }
+
+    #[inline]
+    fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
+        <Self as DatabaseRef>::code_by_hash_ref(self, code_hash)
+    }
+
+    #[inline]
+    fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error> {
+        <Self as DatabaseRef>::storage_ref(self, address, index)
+    }
+
+    #[inline]
+    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
+        <Self as DatabaseRef>::block_hash_ref(self, number)
     }
 }
 
@@ -131,7 +154,7 @@ mod tests {
         .unwrap();
         let client = Arc::new(client);
 
-        let mut ethersdb = EthersDB::new(
+        let ethersdb = EthersDB::new(
             Arc::clone(&client), // public infura mainnet
             Some(BlockId::from(16148323)),
         )
@@ -143,7 +166,7 @@ mod tests {
             .unwrap();
         let address = address.as_fixed_bytes().into();
 
-        let acc_info = ethersdb.basic(address).unwrap().unwrap();
+        let acc_info = ethersdb.basic_ref(address).unwrap().unwrap();
 
         // check if not empty
         assert!(acc_info.exists());
@@ -157,7 +180,7 @@ mod tests {
         .unwrap();
         let client = Arc::new(client);
 
-        let mut ethersdb = EthersDB::new(
+        let ethersdb = EthersDB::new(
             Arc::clone(&client), // public infura mainnet
             Some(BlockId::from(16148323)),
         )
@@ -171,7 +194,7 @@ mod tests {
 
         // select test index
         let index = U256::from(5);
-        let storage = ethersdb.storage(address, index).unwrap();
+        let storage = ethersdb.storage_ref(address, index).unwrap();
 
         // https://etherscan.io/address/0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852#readContract
         // storage[5] -> factory: address
@@ -188,7 +211,7 @@ mod tests {
         .unwrap();
         let client = Arc::new(client);
 
-        let mut ethersdb = EthersDB::new(
+        let ethersdb = EthersDB::new(
             Arc::clone(&client), // public infura mainnet
             None,
         )
@@ -196,7 +219,7 @@ mod tests {
 
         // block number to test
         let block_num = U256::from(16148323);
-        let block_hash = ethersdb.block_hash(block_num).unwrap();
+        let block_hash = ethersdb.block_hash_ref(block_num).unwrap();
 
         // https://etherscan.io/block/16148323
         let actual =

@@ -7,7 +7,7 @@ use revm_precompile::HashMap;
 
 /// Cache account contains plain state that gets updated
 /// at every transaction when evm output is applied to CacheState.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CacheAccount {
     pub account: Option<PlainAccount>,
     pub status: AccountStatus,
@@ -155,9 +155,9 @@ impl CacheAccount {
         })
     }
 
-    /// Touche empty account, related to EIP-161 state clear.
+    /// Touch empty account, related to EIP-161 state clear.
     ///
-    /// This account returns Transition that is used to create the BundleState.
+    /// This account returns the Transition that is used to create the BundleState.
     pub fn touch_empty_eip161(&mut self) -> Option<TransitionAccount> {
         let previous_status = self.status;
 
@@ -169,7 +169,7 @@ impl CacheAccount {
             AccountStatus::InMemoryChange
             | AccountStatus::Destroyed
             | AccountStatus::LoadedEmptyEIP161 => {
-                // account can be created empty them touched.
+                // account can be created empty then touched.
                 AccountStatus::Destroyed
             }
             AccountStatus::LoadedNotExisting => {
@@ -293,13 +293,15 @@ impl CacheAccount {
     /// Increment balance by `balance` amount. Assume that balance will not
     /// overflow or be zero.
     ///
-    /// Note: to skip some edge cases we assume that additional balance is never zero.
-    /// And as increment is always related to block fee/reward and withdrawals this is correct.
-    pub fn increment_balance(&mut self, balance: u128) -> TransitionAccount {
-        self.account_info_change(|info| {
-            info.balance += U256::from(balance);
-        })
-        .1
+    /// Note: only if balance is zero we would return None as no transition would be made.
+    pub fn increment_balance(&mut self, balance: u128) -> Option<TransitionAccount> {
+        if balance == 0 {
+            return None;
+        }
+        let (_, transition) = self.account_info_change(|info| {
+            info.balance = info.balance.saturating_add(U256::from(balance));
+        });
+        Some(transition)
     }
 
     fn account_info_change<T, F: FnOnce(&mut AccountInfo) -> T>(
@@ -344,7 +346,7 @@ impl CacheAccount {
         )
     }
 
-    /// Drain balance from account and return transition and drained amount
+    /// Drain balance from account and return drained amount and transition.
     ///
     /// Used for DAO hardfork transition.
     pub fn drain_balance(&mut self) -> (u128, TransitionAccount) {

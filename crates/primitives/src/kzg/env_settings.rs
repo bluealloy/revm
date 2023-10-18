@@ -3,17 +3,39 @@ use super::{
     KzgSettings,
 };
 use alloc::{boxed::Box, sync::Arc};
+use core::hash::{Hash, Hasher};
 use once_cell::race::OnceBox;
 
 /// KZG Settings that allow us to specify a custom trusted setup.
 /// or use hardcoded default settings.
-#[derive(Debug, Clone, Default, Eq, PartialEq)]
+#[derive(Debug, Clone, Default, Eq)]
 pub enum EnvKzgSettings {
     /// Default mainnet trusted setup
     #[default]
     Default,
     /// Custom trusted setup.
     Custom(Arc<c_kzg::KzgSettings>),
+}
+
+// Implement PartialEq and Hash manually because `c_kzg::KzgSettings` does not implement them
+impl PartialEq for EnvKzgSettings {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Default, Self::Default) => true,
+            (Self::Custom(a), Self::Custom(b)) => Arc::ptr_eq(a, b),
+            _ => false,
+        }
+    }
+}
+
+impl Hash for EnvKzgSettings {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        core::mem::discriminant(self).hash(state);
+        match self {
+            Self::Default => {}
+            Self::Custom(settings) => Arc::as_ptr(settings).hash(state),
+        }
+    }
 }
 
 impl EnvKzgSettings {

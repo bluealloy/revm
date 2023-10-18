@@ -106,7 +106,6 @@ pub const G2_POINTS: &G2Points = {{
 }
 
 /// [`Vec::into_flattened`].
-#[inline]
 fn into_flattened<T, const N: usize>(vec: Vec<[T; N]>) -> Vec<T> {
     let (ptr, len, cap) = into_raw_parts(vec);
     let (new_len, new_cap) = if core::mem::size_of::<T>() == 0 {
@@ -134,7 +133,6 @@ fn into_flattened<T, const N: usize>(vec: Vec<[T; N]>) -> Vec<T> {
 }
 
 /// [`Vec::into_raw_parts`]
-#[inline(always)]
 fn into_raw_parts<T>(vec: Vec<T>) -> (*mut T, usize, usize) {
     let mut me = core::mem::ManuallyDrop::new(vec);
     (me.as_mut_ptr(), me.len(), me.capacity())

@@ -10,7 +10,6 @@ Modules:
 - [instruction_result](./interpreter/instruction_result.md): This module contains definitions related to the result of instruction execution.
 - [instructions](./interpreter/instructions.md): This module includes the definitions of the EVM opcodes (instructions).
 
-
 External Crates:
 
 - [alloc](https://doc.rust-lang.org/alloc/): The alloc crate is used to provide the ability to allocate memory on the heap. It's a part of Rust's standard library that can be used in environments without a full host OS.

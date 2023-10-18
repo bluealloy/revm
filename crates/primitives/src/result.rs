@@ -1,10 +1,12 @@
-use crate::{Log, State, B160};
+use crate::{Address, Bytes, Log, State, U256};
 use alloc::vec::Vec;
-use bytes::Bytes;
 use core::fmt;
-use ruint::aliases::U256;
 
-pub type EVMResult<DBError> = core::result::Result<ResultAndState, EVMError<DBError>>;
+/// Result of EVM execution.
+pub type EVMResult<DBError> = EVMResultGeneric<ResultAndState, DBError>;
+
+/// Generic result of EVM execution. Used to represent error and generic output.
+pub type EVMResultGeneric<T, DBError> = core::result::Result<T, EVMError<DBError>>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -15,7 +17,8 @@ pub struct ResultAndState {
     pub state: State,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// Result of a transaction execution.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ExecutionResult {
     /// Returned successfully
@@ -91,15 +94,12 @@ impl ExecutionResult {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// Output of a transaction execution.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Output {
-    #[cfg_attr(feature = "serde", serde(with = "crate::utilities::serde_hex_bytes"))]
     Call(Bytes),
-    Create(
-        #[cfg_attr(feature = "serde", serde(with = "crate::utilities::serde_hex_bytes"))] Bytes,
-        Option<B160>,
-    ),
+    Create(Bytes, Option<Address>),
 }
 
 impl Output {
@@ -120,14 +120,15 @@ impl Output {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+/// Main EVM error.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum EVMError<DBError> {
+    /// Transaction validation error.
     Transaction(InvalidTransaction),
-    /// `prevrandao` is not set for Merge and above.
-    PrevrandaoNotSet,
-    /// `excess_blob_gas` is not set for Cancun and above.
-    ExcessBlobGasNotSet,
+    /// Header validation error.
+    Header(InvalidHeader),
+    /// Database error.
     Database(DBError),
 }
 
@@ -138,8 +139,7 @@ impl<DBError: fmt::Display> fmt::Display for EVMError<DBError> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             EVMError::Transaction(e) => write!(f, "Transaction error: {e:?}"),
-            EVMError::PrevrandaoNotSet => f.write_str("`prevrandao` not set"),
-            EVMError::ExcessBlobGasNotSet => f.write_str("`excess_blob_gas` not set"),
+            EVMError::Header(e) => write!(f, "Header error: {e:?}"),
             EVMError::Database(e) => write!(f, "Database error: {e}"),
         }
     }
@@ -151,7 +151,8 @@ impl<DBError> From<InvalidTransaction> for EVMError<DBError> {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+/// Transaction validation error.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InvalidTransaction {
     /// When using the EIP-1559 fee model introduced in the London upgrade, transactions specify two primary fee fields:
@@ -210,10 +211,109 @@ pub enum InvalidTransaction {
     TooManyBlobs,
     /// Blob transaction contains a versioned hash with an incorrect version
     BlobVersionNotSupported,
+    /// System transactions are not supported
+    /// post-regolith hardfork.
+    #[cfg(feature = "optimism")]
+    DepositSystemTxPostRegolith,
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InvalidTransaction {}
+
+impl fmt::Display for InvalidTransaction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            InvalidTransaction::PriorityFeeGreaterThanMaxFee => {
+                write!(f, "Priority fee is greater than max fee")
+            }
+            InvalidTransaction::GasPriceLessThanBasefee => {
+                write!(f, "Gas price is less than basefee")
+            }
+            InvalidTransaction::CallerGasLimitMoreThanBlock => {
+                write!(f, "Caller gas limit exceeds the block gas limit")
+            }
+            InvalidTransaction::CallGasCostMoreThanGasLimit => {
+                write!(f, "Call gas cost exceeds the gas limit")
+            }
+            InvalidTransaction::RejectCallerWithCode => {
+                write!(f, "Reject transactions from senders with deployed code")
+            }
+            InvalidTransaction::LackOfFundForMaxFee { fee, balance } => {
+                write!(f, "Lack of funds {} for max fee {}", balance, fee)
+            }
+            InvalidTransaction::OverflowPaymentInTransaction => {
+                write!(f, "Overflow payment in transaction")
+            }
+            InvalidTransaction::NonceOverflowInTransaction => {
+                write!(f, "Nonce overflow in transaction")
+            }
+            InvalidTransaction::NonceTooHigh { tx, state } => {
+                write!(f, "Nonce too high {}, expected {}", tx, state)
+            }
+            InvalidTransaction::NonceTooLow { tx, state } => {
+                write!(f, "Nonce {} too low, expected {}", tx, state)
+            }
+            InvalidTransaction::CreateInitcodeSizeLimit => {
+                write!(f, "Create initcode size limit")
+            }
+            InvalidTransaction::InvalidChainId => write!(f, "Invalid chain id"),
+            InvalidTransaction::AccessListNotSupported => {
+                write!(f, "Access list not supported")
+            }
+            InvalidTransaction::MaxFeePerBlobGasNotSupported => {
+                write!(f, "Max fee per blob gas not supported")
+            }
+            InvalidTransaction::BlobVersionedHashesNotSupported => {
+                write!(f, "Blob versioned hashes not supported")
+            }
+            InvalidTransaction::BlobGasPriceGreaterThanMax => {
+                write!(f, "Blob gas price is greater than max fee per blob gas")
+            }
+            InvalidTransaction::EmptyBlobs => write!(f, "Empty blobs"),
+            InvalidTransaction::BlobCreateTransaction => write!(f, "Blob create transaction"),
+            InvalidTransaction::TooManyBlobs => write!(f, "Too many blobs"),
+            InvalidTransaction::BlobVersionNotSupported => write!(f, "Blob version not supported"),
+            #[cfg(feature = "optimism")]
+            InvalidTransaction::DepositSystemTxPostRegolith => {
+                write!(
+                    f,
+                    "Deposit system transactions post regolith hardfork are not supported"
+                )
+            }
+        }
+    }
+}
+
+impl<DBError> From<InvalidHeader> for EVMError<DBError> {
+    fn from(invalid: InvalidHeader) -> Self {
+        EVMError::Header(invalid)
+    }
+}
+
+/// Errors related to misconfiguration of a [`BlockEnv`].
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum InvalidHeader {
+    /// `prevrandao` is not set for Merge and above.
+    PrevrandaoNotSet,
+    /// `excess_blob_gas` is not set for Cancun and above.
+    ExcessBlobGasNotSet,
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for InvalidHeader {}
+
+impl fmt::Display for InvalidHeader {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            InvalidHeader::PrevrandaoNotSet => write!(f, "Prevrandao not set"),
+            InvalidHeader::ExcessBlobGasNotSet => write!(f, "Excess blob gas not set"),
+        }
+    }
 }
 
 /// Reason a transaction successfully completed.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Eval {
     Stop,
@@ -223,7 +323,7 @@ pub enum Eval {
 
 /// Indicates that the EVM has experienced an exceptional halt. This causes execution to
 /// immediately end with all gas being consumed.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Halt {
     OutOfGas(OutOfGasError),
@@ -252,7 +352,7 @@ pub enum Halt {
     CallTooDeep,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum OutOfGasError {
     // Basic OOG error

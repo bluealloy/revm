@@ -7,6 +7,7 @@ use revm_interpreter::primitives::{
 };
 
 /// Allows building of State and initializing it with different options.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct StateBuilder<DB> {
     /// Database that we use to fetch data from.
     database: DB,

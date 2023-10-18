@@ -22,8 +22,8 @@ The `inner_models.rs` module within this Rust EVM implementation encompasses a c
 
 - `Transfer` Struct
 
-    The `Transfer` struct represents a value transfer between two accounts.
+The `Transfer` struct represents a value transfer between two accounts.
 
 - `SelfDestructResult` Struct
 
-    The `SelfDestructResult` struct captures the result of a self-destruction operation on a contract. In summary, the `inner_models.rs` module provides several crucial data structures that facilitate the representation and handling of various EVM operations and their associated data within this Rust EVM implementation.
+Finally, the `SelfDestructResult` struct captures the result of a self-destruction operation on a contract. In summary, the `inner_models.rs` module provides several crucial data structures that facilitate the representation and handling of various EVM operations and their associated data within this Rust EVM implementation.

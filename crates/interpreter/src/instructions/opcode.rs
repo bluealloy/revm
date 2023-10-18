@@ -6,9 +6,40 @@ use crate::{
     primitives::{Spec, SpecId},
     Host, Interpreter,
 };
+use alloc::boxed::Box;
+use alloc::sync::Arc;
 use core::fmt;
 
-pub type Instruction = fn(&mut Interpreter, &mut dyn Host);
+/// EVM opcode function signature.
+pub type Instruction<H> = fn(&mut Interpreter<'_>, &mut H);
+
+/// Instruction table is list of instruction function pointers mapped to
+/// 256 EVM opcodes.
+pub type InstructionTable<H> = [Instruction<H>; 256];
+
+/// Arc over plain instruction table
+pub type InstructionTableArc<H> = Arc<InstructionTable<H>>;
+
+/// EVM opcode function signature.
+pub type BoxedInstruction<'a, H> = Box<dyn Fn(&mut Interpreter<'_>, &mut H) + 'a>;
+
+/// A table of instructions.
+pub type BoxedInstructionTable<'a, H> = [BoxedInstruction<'a, H>; 256];
+
+/// Arc over instruction table
+pub type BoxedInstructionTableArc<'a, H> = Arc<BoxedInstructionTable<'a, H>>;
+
+/// Instruction set that contains plain instruction table that contains simple `fn` function pointer.
+/// and Boxed `Fn` variant that contains `Box<dyn Fn()>` function pointer that can be used with closured.
+///
+/// Note that `Plain` variant gives us 10-20% faster Interpreter execution.
+///
+/// Boxed variant can be used to wrap plain function pointer with closure.
+#[derive(Clone)]
+pub enum InstructionTables<'a, H> {
+    Plain(InstructionTableArc<H>),
+    Boxed(BoxedInstructionTableArc<'a, H>),
+}
 
 macro_rules! opcodes {
     ($($val:literal => $name:ident => $f:expr),* $(,)?) => {
@@ -32,41 +63,35 @@ macro_rules! opcodes {
             map
         };
 
-        // Requires `inline_const` and `const_mut_refs` unstable features,
-        // but provides ~+2% extra performance.
-        // See: https://github.com/bluealloy/revm/issues/310#issuecomment-1664381513
-        /*
-        type InstructionTable = [Instruction; 256];
-
-        const fn make_instruction_table<SPEC: Spec>() -> InstructionTable {
-            let mut table: InstructionTable = [control::not_found; 256];
-            let mut i = 0usize;
-            while i < 256 {
-                table[i] = match i as u8 {
-                    $($name => $f,)*
-                    _ => control::not_found,
-                };
-                i += 1;
+        /// Returns the instruction function for the given opcode and spec.
+        pub fn instruction<H: Host, SPEC: Spec>(opcode: u8) -> Instruction<H> {
+            match opcode {
+                $($name => $f,)*
+                _ => control::not_found,
             }
-            table
-        }
-
-        // in `eval`:
-        (const { make_instruction_table::<SPEC>() })[opcode as usize](interpreter, host)
-        */
-
-        /// Evaluates the opcode in the given context.
-        #[inline(always)]
-        pub(crate) fn eval<SPEC: Spec>(opcode: u8, interpreter: &mut Interpreter, host: &mut dyn Host) {
-            // See https://github.com/bluealloy/revm/issues/310#issuecomment-1664381513
-            // for previous efforts on optimizing this function.
-            let f: Instruction = match opcode {
-                $($name => $f as Instruction,)*
-                _ => control::not_found as Instruction,
-            };
-            f(interpreter, host);
         }
     };
+}
+
+/// Make instruction table.
+pub fn make_instruction_table<H: Host, SPEC: Spec>() -> InstructionTable<H> {
+    core::array::from_fn(|i| {
+        debug_assert!(i <= u8::MAX as usize);
+        instruction::<H, SPEC>(i as u8)
+    })
+}
+
+/// Make boxed instruction table that calls `outer` closure for every instruction.
+pub fn make_boxed_instruction_table<'a, H, SPEC, FN>(
+    table: InstructionTable<H>,
+    outer: FN,
+) -> BoxedInstructionTable<'a, H>
+where
+    H: Host + 'a,
+    SPEC: Spec + 'static,
+    FN: Fn(Instruction<H>) -> BoxedInstruction<'a, H>,
+{
+    core::array::from_fn(|i| outer(table[i]))
 }
 
 // When adding new opcodes:
@@ -86,7 +111,7 @@ opcodes! {
     0x07 => SMOD       => arithmetic::smod,
     0x08 => ADDMOD     => arithmetic::addmod,
     0x09 => MULMOD     => arithmetic::mulmod,
-    0x0A => EXP        => arithmetic::exp::<SPEC>,
+    0x0A => EXP        => arithmetic::exp::<H, SPEC>,
     0x0B => SIGNEXTEND => arithmetic::signextend,
     // 0x0C
     // 0x0D
@@ -103,9 +128,9 @@ opcodes! {
     0x18 => XOR    => bitwise::bitxor,
     0x19 => NOT    => bitwise::not,
     0x1A => BYTE   => bitwise::byte,
-    0x1B => SHL    => bitwise::shl::<SPEC>,
-    0x1C => SHR    => bitwise::shr::<SPEC>,
-    0x1D => SAR    => bitwise::sar::<SPEC>,
+    0x1B => SHL    => bitwise::shl::<H, SPEC>,
+    0x1C => SHR    => bitwise::shr::<H, SPEC>,
+    0x1D => SAR    => bitwise::sar::<H, SPEC>,
     // 0x1E
     // 0x1F
     0x20 => KECCAK256 => system::keccak256,
@@ -125,7 +150,7 @@ opcodes! {
     // 0x2E
     // 0x2F
     0x30 => ADDRESS   => system::address,
-    0x31 => BALANCE   => host::balance::<SPEC>,
+    0x31 => BALANCE   => host::balance::<H, SPEC>,
     0x32 => ORIGIN    => host_env::origin,
     0x33 => CALLER    => system::caller,
     0x34 => CALLVALUE => system::callvalue,
@@ -136,22 +161,22 @@ opcodes! {
     0x39 => CODECOPY     => system::codecopy,
 
     0x3A => GASPRICE       => host_env::gasprice,
-    0x3B => EXTCODESIZE    => host::extcodesize::<SPEC>,
-    0x3C => EXTCODECOPY    => host::extcodecopy::<SPEC>,
-    0x3D => RETURNDATASIZE => system::returndatasize::<SPEC>,
-    0x3E => RETURNDATACOPY => system::returndatacopy::<SPEC>,
-    0x3F => EXTCODEHASH    => host::extcodehash::<SPEC>,
+    0x3B => EXTCODESIZE    => host::extcodesize::<H, SPEC>,
+    0x3C => EXTCODECOPY    => host::extcodecopy::<H, SPEC>,
+    0x3D => RETURNDATASIZE => system::returndatasize::<H, SPEC>,
+    0x3E => RETURNDATACOPY => system::returndatacopy::<H, SPEC>,
+    0x3F => EXTCODEHASH    => host::extcodehash::<H, SPEC>,
     0x40 => BLOCKHASH      => host::blockhash,
     0x41 => COINBASE       => host_env::coinbase,
     0x42 => TIMESTAMP      => host_env::timestamp,
     0x43 => NUMBER         => host_env::number,
-    0x44 => DIFFICULTY     => host_env::difficulty::<SPEC>,
+    0x44 => DIFFICULTY     => host_env::difficulty::<H, SPEC>,
     0x45 => GASLIMIT       => host_env::gaslimit,
-    0x46 => CHAINID        => host_env::chainid::<SPEC>,
-    0x47 => SELFBALANCE    => host::selfbalance::<SPEC>,
-    0x48 => BASEFEE        => host_env::basefee::<SPEC>,
-    0x49 => BLOBHASH       => host_env::blob_hash::<SPEC>,
-    // 0x4A
+    0x46 => CHAINID        => host_env::chainid::<H, SPEC>,
+    0x47 => SELFBALANCE    => host::selfbalance::<H, SPEC>,
+    0x48 => BASEFEE        => host_env::basefee::<H, SPEC>,
+    0x49 => BLOBHASH       => host_env::blob_hash::<H, SPEC>,
+    0x4A => BLOBBASEFEE    => host_env::blob_basefee::<H, SPEC>,
     // 0x4B
     // 0x4C
     // 0x4D
@@ -161,91 +186,91 @@ opcodes! {
     0x51 => MLOAD    => memory::mload,
     0x52 => MSTORE   => memory::mstore,
     0x53 => MSTORE8  => memory::mstore8,
-    0x54 => SLOAD    => host::sload::<SPEC>,
-    0x55 => SSTORE   => host::sstore::<SPEC>,
+    0x54 => SLOAD    => host::sload::<H, SPEC>,
+    0x55 => SSTORE   => host::sstore::<H, SPEC>,
     0x56 => JUMP     => control::jump,
     0x57 => JUMPI    => control::jumpi,
     0x58 => PC       => control::pc,
     0x59 => MSIZE    => memory::msize,
     0x5A => GAS      => system::gas,
     0x5B => JUMPDEST => control::jumpdest,
-    0x5C => TLOAD    => host::tload::<SPEC>,
-    0x5D => TSTORE   => host::tstore::<SPEC>,
-    0x5E => MCOPY    => memory::mcopy::<SPEC>,
+    0x5C => TLOAD    => host::tload::<H, SPEC>,
+    0x5D => TSTORE   => host::tstore::<H, SPEC>,
+    0x5E => MCOPY    => memory::mcopy::<H, SPEC>,
 
-    0x5F => PUSH0  => stack::push0::<SPEC>,
-    0x60 => PUSH1  => stack::push::<1>,
-    0x61 => PUSH2  => stack::push::<2>,
-    0x62 => PUSH3  => stack::push::<3>,
-    0x63 => PUSH4  => stack::push::<4>,
-    0x64 => PUSH5  => stack::push::<5>,
-    0x65 => PUSH6  => stack::push::<6>,
-    0x66 => PUSH7  => stack::push::<7>,
-    0x67 => PUSH8  => stack::push::<8>,
-    0x68 => PUSH9  => stack::push::<9>,
-    0x69 => PUSH10 => stack::push::<10>,
-    0x6A => PUSH11 => stack::push::<11>,
-    0x6B => PUSH12 => stack::push::<12>,
-    0x6C => PUSH13 => stack::push::<13>,
-    0x6D => PUSH14 => stack::push::<14>,
-    0x6E => PUSH15 => stack::push::<15>,
-    0x6F => PUSH16 => stack::push::<16>,
-    0x70 => PUSH17 => stack::push::<17>,
-    0x71 => PUSH18 => stack::push::<18>,
-    0x72 => PUSH19 => stack::push::<19>,
-    0x73 => PUSH20 => stack::push::<20>,
-    0x74 => PUSH21 => stack::push::<21>,
-    0x75 => PUSH22 => stack::push::<22>,
-    0x76 => PUSH23 => stack::push::<23>,
-    0x77 => PUSH24 => stack::push::<24>,
-    0x78 => PUSH25 => stack::push::<25>,
-    0x79 => PUSH26 => stack::push::<26>,
-    0x7A => PUSH27 => stack::push::<27>,
-    0x7B => PUSH28 => stack::push::<28>,
-    0x7C => PUSH29 => stack::push::<29>,
-    0x7D => PUSH30 => stack::push::<30>,
-    0x7E => PUSH31 => stack::push::<31>,
-    0x7F => PUSH32 => stack::push::<32>,
+    0x5F => PUSH0  => stack::push0::<H, SPEC>,
+    0x60 => PUSH1  => stack::push::<1, H>,
+    0x61 => PUSH2  => stack::push::<2, H>,
+    0x62 => PUSH3  => stack::push::<3, H>,
+    0x63 => PUSH4  => stack::push::<4, H>,
+    0x64 => PUSH5  => stack::push::<5, H>,
+    0x65 => PUSH6  => stack::push::<6, H>,
+    0x66 => PUSH7  => stack::push::<7, H>,
+    0x67 => PUSH8  => stack::push::<8, H>,
+    0x68 => PUSH9  => stack::push::<9, H>,
+    0x69 => PUSH10 => stack::push::<10, H>,
+    0x6A => PUSH11 => stack::push::<11, H>,
+    0x6B => PUSH12 => stack::push::<12, H>,
+    0x6C => PUSH13 => stack::push::<13, H>,
+    0x6D => PUSH14 => stack::push::<14, H>,
+    0x6E => PUSH15 => stack::push::<15, H>,
+    0x6F => PUSH16 => stack::push::<16, H>,
+    0x70 => PUSH17 => stack::push::<17, H>,
+    0x71 => PUSH18 => stack::push::<18, H>,
+    0x72 => PUSH19 => stack::push::<19, H>,
+    0x73 => PUSH20 => stack::push::<20, H>,
+    0x74 => PUSH21 => stack::push::<21, H>,
+    0x75 => PUSH22 => stack::push::<22, H>,
+    0x76 => PUSH23 => stack::push::<23, H>,
+    0x77 => PUSH24 => stack::push::<24, H>,
+    0x78 => PUSH25 => stack::push::<25, H>,
+    0x79 => PUSH26 => stack::push::<26, H>,
+    0x7A => PUSH27 => stack::push::<27, H>,
+    0x7B => PUSH28 => stack::push::<28, H>,
+    0x7C => PUSH29 => stack::push::<29, H>,
+    0x7D => PUSH30 => stack::push::<30, H>,
+    0x7E => PUSH31 => stack::push::<31, H>,
+    0x7F => PUSH32 => stack::push::<32, H>,
 
-    0x80 => DUP1  => stack::dup::<1>,
-    0x81 => DUP2  => stack::dup::<2>,
-    0x82 => DUP3  => stack::dup::<3>,
-    0x83 => DUP4  => stack::dup::<4>,
-    0x84 => DUP5  => stack::dup::<5>,
-    0x85 => DUP6  => stack::dup::<6>,
-    0x86 => DUP7  => stack::dup::<7>,
-    0x87 => DUP8  => stack::dup::<8>,
-    0x88 => DUP9  => stack::dup::<9>,
-    0x89 => DUP10 => stack::dup::<10>,
-    0x8A => DUP11 => stack::dup::<11>,
-    0x8B => DUP12 => stack::dup::<12>,
-    0x8C => DUP13 => stack::dup::<13>,
-    0x8D => DUP14 => stack::dup::<14>,
-    0x8E => DUP15 => stack::dup::<15>,
-    0x8F => DUP16 => stack::dup::<16>,
+    0x80 => DUP1  => stack::dup::<1, H>,
+    0x81 => DUP2  => stack::dup::<2, H>,
+    0x82 => DUP3  => stack::dup::<3, H>,
+    0x83 => DUP4  => stack::dup::<4, H>,
+    0x84 => DUP5  => stack::dup::<5, H>,
+    0x85 => DUP6  => stack::dup::<6, H>,
+    0x86 => DUP7  => stack::dup::<7, H>,
+    0x87 => DUP8  => stack::dup::<8, H>,
+    0x88 => DUP9  => stack::dup::<9, H>,
+    0x89 => DUP10 => stack::dup::<10, H>,
+    0x8A => DUP11 => stack::dup::<11, H>,
+    0x8B => DUP12 => stack::dup::<12, H>,
+    0x8C => DUP13 => stack::dup::<13, H>,
+    0x8D => DUP14 => stack::dup::<14, H>,
+    0x8E => DUP15 => stack::dup::<15, H>,
+    0x8F => DUP16 => stack::dup::<16, H>,
 
-    0x90 => SWAP1  => stack::swap::<1>,
-    0x91 => SWAP2  => stack::swap::<2>,
-    0x92 => SWAP3  => stack::swap::<3>,
-    0x93 => SWAP4  => stack::swap::<4>,
-    0x94 => SWAP5  => stack::swap::<5>,
-    0x95 => SWAP6  => stack::swap::<6>,
-    0x96 => SWAP7  => stack::swap::<7>,
-    0x97 => SWAP8  => stack::swap::<8>,
-    0x98 => SWAP9  => stack::swap::<9>,
-    0x99 => SWAP10 => stack::swap::<10>,
-    0x9A => SWAP11 => stack::swap::<11>,
-    0x9B => SWAP12 => stack::swap::<12>,
-    0x9C => SWAP13 => stack::swap::<13>,
-    0x9D => SWAP14 => stack::swap::<14>,
-    0x9E => SWAP15 => stack::swap::<15>,
-    0x9F => SWAP16 => stack::swap::<16>,
+    0x90 => SWAP1  => stack::swap::<1, H>,
+    0x91 => SWAP2  => stack::swap::<2, H>,
+    0x92 => SWAP3  => stack::swap::<3, H>,
+    0x93 => SWAP4  => stack::swap::<4, H>,
+    0x94 => SWAP5  => stack::swap::<5, H>,
+    0x95 => SWAP6  => stack::swap::<6, H>,
+    0x96 => SWAP7  => stack::swap::<7, H>,
+    0x97 => SWAP8  => stack::swap::<8, H>,
+    0x98 => SWAP9  => stack::swap::<9, H>,
+    0x99 => SWAP10 => stack::swap::<10, H>,
+    0x9A => SWAP11 => stack::swap::<11, H>,
+    0x9B => SWAP12 => stack::swap::<12, H>,
+    0x9C => SWAP13 => stack::swap::<13, H>,
+    0x9D => SWAP14 => stack::swap::<14, H>,
+    0x9E => SWAP15 => stack::swap::<15, H>,
+    0x9F => SWAP16 => stack::swap::<16, H>,
 
-    0xA0 => LOG0 => host::log::<0>,
-    0xA1 => LOG1 => host::log::<1>,
-    0xA2 => LOG2 => host::log::<2>,
-    0xA3 => LOG3 => host::log::<3>,
-    0xA4 => LOG4 => host::log::<4>,
+    0xA0 => LOG0 => host::log::<0, H>,
+    0xA1 => LOG1 => host::log::<1, H>,
+    0xA2 => LOG2 => host::log::<2, H>,
+    0xA3 => LOG3 => host::log::<3, H>,
+    0xA4 => LOG4 => host::log::<4, H>,
     // 0xA5
     // 0xA6
     // 0xA7
@@ -321,22 +346,22 @@ opcodes! {
     // 0xED
     // 0xEE
     // 0xEF
-    0xF0 => CREATE       => host::create::<false, SPEC>,
-    0xF1 => CALL         => host::call::<SPEC>,
-    0xF2 => CALLCODE     => host::call_code::<SPEC>,
+    0xF0 => CREATE       => host::create::<false, H, SPEC>,
+    0xF1 => CALL         => host::call::<H, SPEC>,
+    0xF2 => CALLCODE     => host::call_code::<H, SPEC>,
     0xF3 => RETURN       => control::ret,
-    0xF4 => DELEGATECALL => host::delegate_call::<SPEC>,
-    0xF5 => CREATE2      => host::create::<true, SPEC>,
+    0xF4 => DELEGATECALL => host::delegate_call::<H, SPEC>,
+    0xF5 => CREATE2      => host::create::<true, H, SPEC>,
     // 0xF6
     // 0xF7
     // 0xF8
     // 0xF9
-    0xFA => STATICCALL   => host::static_call::<SPEC>,
+    0xFA => STATICCALL   => host::static_call::<H, SPEC>,
     // 0xFB
-    // 0xF
-    0xFD => REVERT       => control::revert::<SPEC>,
+    // 0xFC
+    0xFD => REVERT       => control::revert::<H, SPEC>,
     0xFE => INVALID      => control::invalid,
-    0xFF => SELFDESTRUCT => host::selfdestruct::<SPEC>,
+    0xFF => SELFDESTRUCT => host::selfdestruct::<H, SPEC>,
 }
 
 /// An EVM opcode.
@@ -498,7 +523,10 @@ const fn opcode_gas_info(opcode: u8, spec: SpecId) -> OpInfo {
         MULMOD => OpInfo::gas(gas::MID),
         EXP => OpInfo::dynamic_gas(),
         SIGNEXTEND => OpInfo::gas(gas::LOW),
-
+        0x0C => OpInfo::none(),
+        0x0D => OpInfo::none(),
+        0x0E => OpInfo::none(),
+        0x0F => OpInfo::none(),
         LT => OpInfo::gas(gas::VERYLOW),
         GT => OpInfo::gas(gas::VERYLOW),
         SLT => OpInfo::gas(gas::VERYLOW),
@@ -525,9 +553,24 @@ const fn opcode_gas_info(opcode: u8, spec: SpecId) -> OpInfo {
         } else {
             0
         }),
-
+        0x1E => OpInfo::none(),
+        0x1F => OpInfo::none(),
         KECCAK256 => OpInfo::dynamic_gas(),
-
+        0x21 => OpInfo::none(),
+        0x22 => OpInfo::none(),
+        0x23 => OpInfo::none(),
+        0x24 => OpInfo::none(),
+        0x25 => OpInfo::none(),
+        0x26 => OpInfo::none(),
+        0x27 => OpInfo::none(),
+        0x28 => OpInfo::none(),
+        0x29 => OpInfo::none(),
+        0x2A => OpInfo::none(),
+        0x2B => OpInfo::none(),
+        0x2C => OpInfo::none(),
+        0x2D => OpInfo::none(),
+        0x2E => OpInfo::none(),
+        0x2F => OpInfo::none(),
         ADDRESS => OpInfo::gas(gas::BASE),
         BALANCE => OpInfo::dynamic_gas(),
         ORIGIN => OpInfo::gas(gas::BASE),
@@ -594,7 +637,16 @@ const fn opcode_gas_info(opcode: u8, spec: SpecId) -> OpInfo {
         } else {
             0
         }),
-
+        BLOBBASEFEE => OpInfo::gas(if SpecId::enabled(spec, SpecId::CANCUN) {
+            gas::BASE
+        } else {
+            0
+        }),
+        0x4B => OpInfo::none(),
+        0x4C => OpInfo::none(),
+        0x4D => OpInfo::none(),
+        0x4E => OpInfo::none(),
+        0x4F => OpInfo::none(),
         POP => OpInfo::gas(gas::BASE),
         MLOAD => OpInfo::gas(gas::VERYLOW),
         MSTORE => OpInfo::gas(gas::VERYLOW),
@@ -697,21 +749,97 @@ const fn opcode_gas_info(opcode: u8, spec: SpecId) -> OpInfo {
         LOG2 => OpInfo::dynamic_gas(),
         LOG3 => OpInfo::dynamic_gas(),
         LOG4 => OpInfo::dynamic_gas(),
-
+        0xA5 => OpInfo::none(),
+        0xA6 => OpInfo::none(),
+        0xA7 => OpInfo::none(),
+        0xA8 => OpInfo::none(),
+        0xA9 => OpInfo::none(),
+        0xAA => OpInfo::none(),
+        0xAB => OpInfo::none(),
+        0xAC => OpInfo::none(),
+        0xAD => OpInfo::none(),
+        0xAE => OpInfo::none(),
+        0xAF => OpInfo::none(),
+        0xB0 => OpInfo::none(),
+        0xB1 => OpInfo::none(),
+        0xB2 => OpInfo::none(),
+        0xB3 => OpInfo::none(),
+        0xB4 => OpInfo::none(),
+        0xB5 => OpInfo::none(),
+        0xB6 => OpInfo::none(),
+        0xB7 => OpInfo::none(),
+        0xB8 => OpInfo::none(),
+        0xB9 => OpInfo::none(),
+        0xBA => OpInfo::none(),
+        0xBB => OpInfo::none(),
+        0xBC => OpInfo::none(),
+        0xBD => OpInfo::none(),
+        0xBE => OpInfo::none(),
+        0xBF => OpInfo::none(),
+        0xC0 => OpInfo::none(),
+        0xC1 => OpInfo::none(),
+        0xC2 => OpInfo::none(),
+        0xC3 => OpInfo::none(),
+        0xC4 => OpInfo::none(),
+        0xC5 => OpInfo::none(),
+        0xC6 => OpInfo::none(),
+        0xC7 => OpInfo::none(),
+        0xC8 => OpInfo::none(),
+        0xC9 => OpInfo::none(),
+        0xCA => OpInfo::none(),
+        0xCB => OpInfo::none(),
+        0xCC => OpInfo::none(),
+        0xCD => OpInfo::none(),
+        0xCE => OpInfo::none(),
+        0xCF => OpInfo::none(),
+        0xD0 => OpInfo::none(),
+        0xD1 => OpInfo::none(),
+        0xD2 => OpInfo::none(),
+        0xD3 => OpInfo::none(),
+        0xD4 => OpInfo::none(),
+        0xD5 => OpInfo::none(),
+        0xD6 => OpInfo::none(),
+        0xD7 => OpInfo::none(),
+        0xD8 => OpInfo::none(),
+        0xD9 => OpInfo::none(),
+        0xDA => OpInfo::none(),
+        0xDB => OpInfo::none(),
+        0xDC => OpInfo::none(),
+        0xDD => OpInfo::none(),
+        0xDE => OpInfo::none(),
+        0xDF => OpInfo::none(),
+        0xE0 => OpInfo::none(),
+        0xE1 => OpInfo::none(),
+        0xE2 => OpInfo::none(),
+        0xE3 => OpInfo::none(),
+        0xE4 => OpInfo::none(),
+        0xE5 => OpInfo::none(),
+        0xE6 => OpInfo::none(),
+        0xE7 => OpInfo::none(),
+        0xE8 => OpInfo::none(),
+        0xE9 => OpInfo::none(),
+        0xEA => OpInfo::none(),
+        0xEB => OpInfo::none(),
+        0xEC => OpInfo::none(),
+        0xED => OpInfo::none(),
+        0xEE => OpInfo::none(),
+        0xEF => OpInfo::none(),
         CREATE => OpInfo::gas_block_end(0),
         CALL => OpInfo::gas_block_end(0),
         CALLCODE => OpInfo::gas_block_end(0),
         RETURN => OpInfo::gas_block_end(0),
         DELEGATECALL => OpInfo::gas_block_end(0),
         CREATE2 => OpInfo::gas_block_end(0),
-
+        0xF6 => OpInfo::none(),
+        0xF7 => OpInfo::none(),
+        0xF8 => OpInfo::none(),
+        0xF9 => OpInfo::none(),
         STATICCALL => OpInfo::gas_block_end(0),
-
+        0xFB => OpInfo::none(),
+        0xFC => OpInfo::none(),
         REVERT => OpInfo::gas_block_end(0),
         INVALID => OpInfo::gas_block_end(0),
         SELFDESTRUCT => OpInfo::gas_block_end(0),
-
-        _ => OpInfo::none(),
     }
 }
 
@@ -730,12 +858,24 @@ const fn make_gas_table(spec: SpecId) -> [OpInfo; 256] {
 pub const fn spec_opcode_gas(spec_id: SpecId) -> &'static [OpInfo; 256] {
     macro_rules! gas_maps {
         ($($id:ident),* $(,)?) => {
-            match spec_id {$(
+            match spec_id {
+            $(
                 SpecId::$id => {
                     const TABLE: &[OpInfo; 256] = &make_gas_table(SpecId::$id);
                     TABLE
                 }
-            )*}
+            )*
+                #[cfg(feature = "optimism")]
+                SpecId::BEDROCK => {
+                    const TABLE: &[OpInfo;256] = &make_gas_table(SpecId::BEDROCK);
+                    TABLE
+                }
+                #[cfg(feature = "optimism")]
+                SpecId::REGOLITH => {
+                    const TABLE: &[OpInfo;256] = &make_gas_table(SpecId::REGOLITH);
+                    TABLE
+                }
+            }
         };
     }
 

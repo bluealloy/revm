@@ -1,11 +1,13 @@
-pub mod calc;
-pub mod constants;
+//! EVM gas calculation utilities.
+
+mod calc;
+mod constants;
 
 pub use calc::*;
 pub use constants::*;
 
 /// Represents the state of gas during execution.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Gas {
     /// The initial gas limit.
     limit: u64,
@@ -71,10 +73,16 @@ impl Gas {
 
     /// Records a refund value.
     ///
-    /// `refund` can be negative but `self.refunded` should always be positive.
+    /// `refund` can be negative but `self.refunded` should always be positive
+    /// at the end of transact.
     #[inline]
     pub fn record_refund(&mut self, refund: i64) {
         self.refunded += refund;
+    }
+
+    /// Set a refund value
+    pub fn set_refund(&mut self, refund: i64) {
+        self.refunded = refund;
     }
 
     /// Records an explicit cost.
