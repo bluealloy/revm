@@ -3,12 +3,19 @@ use crate::journaled_state::JournaledState;
 use crate::primitives::{Address, Bytecode, Env, B256, U256};
 use revm_precompile::Precompiles;
 
+/// EVM Data contains all the data that EVM needs to execute.
 #[derive(Debug)]
 pub struct EVMData<'a, DB: Database> {
+    /// EVM Environment contains all the information about config, block and transaction that
+    /// evm needs.
     pub env: &'a mut Env,
+    /// EVM State with journaling support.
     pub journaled_state: JournaledState,
+    /// Database to load data from.
     pub db: &'a mut DB,
+    /// Error that happened during execution.
     pub error: Option<DB::Error>,
+    /// Precompiles that are available for evm.
     pub precompiles: Precompiles,
     /// Used as temporary value holder to store L1 block info.
     #[cfg(feature = "optimism")]
@@ -16,10 +23,12 @@ pub struct EVMData<'a, DB: Database> {
 }
 
 impl<'a, DB: Database> EVMData<'a, DB> {
+    /// Return environment.
     pub fn env(&mut self) -> &mut Env {
         self.env
     }
 
+    /// Fetch block hash from database.
     pub fn block_hash(&mut self, number: U256) -> Option<B256> {
         self.db
             .block_hash(number)
@@ -27,6 +36,7 @@ impl<'a, DB: Database> EVMData<'a, DB> {
             .ok()
     }
 
+    /// Load account and return flags (is_cold, exists)
     pub fn load_account(&mut self, address: Address) -> Option<(bool, bool)> {
         self.journaled_state
             .load_account_exist(address, self.db)
@@ -34,6 +44,7 @@ impl<'a, DB: Database> EVMData<'a, DB> {
             .ok()
     }
 
+    /// Return account balance and is_cold flag.
     pub fn balance(&mut self, address: Address) -> Option<(U256, bool)> {
         self.journaled_state
             .load_account(address, &mut self.db)
@@ -42,6 +53,7 @@ impl<'a, DB: Database> EVMData<'a, DB> {
             .map(|(acc, is_cold)| (acc.info.balance, is_cold))
     }
 
+    /// Return account code and if address is cold loaded.
     pub fn code(&mut self, address: Address) -> Option<(Bytecode, bool)> {
         let (acc, is_cold) = self
             .journaled_state
@@ -87,10 +99,12 @@ impl<'a, DB: Database> EVMData<'a, DB> {
             .ok()
     }
 
+    /// Returns transient storage value.
     pub fn tload(&mut self, address: Address, index: U256) -> U256 {
         self.journaled_state.tload(address, index)
     }
 
+    /// Stores transient storage value.
     pub fn tstore(&mut self, address: Address, index: U256, value: U256) {
         self.journaled_state.tstore(address, index, value)
     }
