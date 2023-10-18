@@ -74,7 +74,7 @@ pub fn format_kzg_settings(
     for i in 0..n_g1 {
         let line = lines.next().ok_or(KzgErrors::FileFormatError)?;
         let mut bytes = [0; BYTES_PER_G1_POINT];
-        hex::decode_to_slice(line, &mut bytes).map_err(|_| KzgErrors::ParseError)?;
+        crate::hex::decode_to_slice(line, &mut bytes).map_err(|_| KzgErrors::ParseError)?;
         g1_points[i] = bytes;
     }
 
@@ -83,7 +83,7 @@ pub fn format_kzg_settings(
     for i in 0..n_g2 {
         let line = lines.next().ok_or(KzgErrors::FileFormatError)?;
         let mut bytes = [0; BYTES_PER_G2_POINT];
-        hex::decode_to_slice(line, &mut bytes).map_err(|_| KzgErrors::ParseError)?;
+        crate::hex::decode_to_slice(line, &mut bytes).map_err(|_| KzgErrors::ParseError)?;
         g2_points[i] = bytes;
     }
 

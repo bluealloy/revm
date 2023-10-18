@@ -28,6 +28,7 @@ once_cell = { version = "1.18", default-features = false, optional = true }
 
 # utility
 enumn = "0.1"
+derive_more = "0.99"
 
 # optional
 serde = { version = "1.0", features = ["derive", "rc"], optional = true }

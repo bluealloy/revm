@@ -2418,6 +2418,7 @@ dependencies = [
  "bitflags 2.4.1",
  "bitvec",
  "c-kzg",
+ "derive_more",
  "enumn",
  "hashbrown 0.14.1",
  "hex",
