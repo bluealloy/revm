@@ -57,6 +57,7 @@ impl SharedStack {
         let buf_len = self.buffer.len();
         self.checkpoints.push(buf_len);
         self.last_checkpoint = buf_len;
+        self.buffer.reserve(STACK_LIMIT);
     }
 
     /// Prepares the shared stack for returning to the previous context
@@ -208,10 +209,14 @@ impl SharedStack {
     #[inline]
     pub fn push(&mut self, value: U256) -> Result<(), InstructionResult> {
         // allows the compiler to optimize out the `Vec::push` capacity check
+        let buf_len = self.buffer.len();
         if self.len() == STACK_LIMIT {
             return Err(InstructionResult::StackOverflow);
         }
-        self.buffer.push(value);
+        unsafe {
+            *self.buffer.get_unchecked_mut(buf_len) = value;
+            self.buffer.set_len(buf_len + 1);
+        };
         Ok(())
     }
 
@@ -225,16 +230,19 @@ impl SharedStack {
     /// Duplicates the `N`th value from the top of the stack, with `N` >= 1
     #[inline]
     pub fn dup<const N: usize>(&mut self) -> Result<(), InstructionResult> {
-        let current_len = self.len();
-        if current_len < N {
+        let len = self.len();
+        if len < N {
             Err(InstructionResult::StackUnderflow)
-        } else if current_len >= STACK_LIMIT {
+        } else if len >= STACK_LIMIT {
             Err(InstructionResult::StackOverflow)
         } else {
             let buf_len = self.buffer.len();
             // Safety: check for out of bounds is done above and it makes this safe to do.
-            let val = unsafe { *self.buffer.get_unchecked(buf_len - N) };
-            self.buffer.push(val);
+            unsafe {
+                let val = *self.buffer.get_unchecked(buf_len - N);
+                *self.buffer.get_unchecked_mut(buf_len) = val;
+                self.buffer.set_len(buf_len + 1);
+            };
             Ok(())
         }
     }
@@ -256,7 +264,8 @@ impl SharedStack {
     /// unchanged.
     #[inline]
     pub fn push_slice<const N: usize>(&mut self, slice: &[u8]) -> Result<(), InstructionResult> {
-        if self.len() >= STACK_LIMIT {
+        let len = self.len();
+        if len >= STACK_LIMIT {
             return Err(InstructionResult::StackOverflow);
         }
 
@@ -299,9 +308,11 @@ impl SharedStack {
                     slot.as_limbs_mut()[3] = u64::from_be_bytes(dangling);
                 }
             }
-        }
 
-        self.buffer.push(slot);
+            let buf_len = self.buffer.len();
+            *self.buffer.get_unchecked_mut(buf_len) = slot;
+            self.buffer.set_len(buf_len + 1);
+        }
         Ok(())
     }
 
