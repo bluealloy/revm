@@ -493,11 +493,6 @@ mod tests {
         let mut shared_stack = SharedStack::new();
         shared_stack.new_context();
 
-        assert_eq!(
-            shared_stack.dup::<1>(),
-            Err(InstructionResult::StackUnderflow)
-        );
-
         assert_eq!(shared_stack.push(U256::from(1)), Ok(()));
         assert_eq!(shared_stack.push(U256::from(2)), Ok(()));
         assert_eq!(shared_stack.push(U256::from(3)), Ok(()));

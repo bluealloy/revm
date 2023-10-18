@@ -8,16 +8,16 @@ macro_rules! debug_unreachable {
     };
 }
 
-macro_rules! assume {
-    ($e:expr $(,)?) => {
-        if !$e {
-            debug_unreachable!(stringify!($e));
-        }
-    };
-
-    ($e:expr, $($t:tt)+) => {
-        if !$e {
-            debug_unreachable!($($t)+);
-        }
-    };
-}
+// macro_rules! assume {
+//     ($e:expr $(,)?) => {
+//         if !$e {
+//             debug_unreachable!(stringify!($e));
+//         }
+//     };
+//
+//     ($e:expr, $($t:tt)+) => {
+//         if !$e {
+//             debug_unreachable!($($t)+);
+//         }
+//     };
+// }
