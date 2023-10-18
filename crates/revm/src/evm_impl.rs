@@ -2,15 +2,14 @@ use crate::handler::Handler;
 use crate::inspector_instruction;
 use crate::interpreter::{
     analysis::to_analysed, gas, return_ok, CallContext, CallInputs, CallScheme, Contract,
-    CreateInputs, Gas, Host, InstructionResult, Interpreter, SelfDestructResult, SuccessOrHalt,
-    Transfer,
+    CreateInputs, Gas, Host, InstructionResult, Interpreter, SelfDestructResult, Transfer,
 };
-use crate::journaled_state::{is_precompile, JournalCheckpoint};
+use crate::journaled_state::{is_precompile, JournalCheckpoint, JournaledState};
 use crate::primitives::{
-    keccak256, Address, AnalysisKind, Bytecode, Bytes, EVMError, EVMResult, Env, ExecutionResult,
-    InvalidTransaction, Log, Output, ResultAndState, Spec, SpecId::*, TransactTo, B256, U256,
+    keccak256, Address, AnalysisKind, Bytecode, Bytes, EVMError, EVMResult, Env,
+    InvalidTransaction, Log, Output, Spec, SpecId::*, TransactTo, B256, U256,
 };
-use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector};
+use crate::{db::Database, precompile, Inspector};
 use alloc::boxed::Box;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
@@ -352,70 +351,19 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> Transact<DB::Error> for EVMImpl<'a
         let data = &mut self.data;
 
         // handle output of call/create calls.
-        let gas = handler.call_return(data.env, call_result, ret_gas);
+        let mut gas = handler.call_return(data.env, call_result, ret_gas);
 
-        let gas_refunded = handler.calculate_gas_refund(data.env, &gas);
+        // set refund. Refund amount depends on hardfork.
+        gas.set_refund(handler.calculate_gas_refund(data.env, &gas) as i64);
 
         // Reimburse the caller
-        handler.reimburse_caller(data, &gas, gas_refunded)?;
+        handler.reimburse_caller(data, &gas)?;
 
         // Reward beneficiary
-        handler.reward_beneficiary(data, &gas, gas_refunded)?;
+        handler.reward_beneficiary(data, &gas)?;
 
-        // used gas with refund calculated.
-        let final_gas_used = gas.spend() - gas_refunded;
-
-        // reset journal and return present state.
-        let (state, logs) = self.data.journaled_state.finalize();
-
-        let result = match call_result.into() {
-            SuccessOrHalt::Success(reason) => ExecutionResult::Success {
-                reason,
-                gas_used: final_gas_used,
-                gas_refunded,
-                logs,
-                output,
-            },
-            SuccessOrHalt::Revert => ExecutionResult::Revert {
-                gas_used: final_gas_used,
-                output: match output {
-                    Output::Call(return_value) => return_value,
-                    Output::Create(return_value, _) => return_value,
-                },
-            },
-            SuccessOrHalt::Halt(reason) => {
-                // Post-regolith, if the transaction is a deposit transaction and the
-                // output is a contract creation, increment the account nonce even if
-                // the transaction halts.
-                #[cfg(feature = "optimism")]
-                {
-                    let is_deposit = self.data.env.tx.optimism.source_hash.is_some();
-                    let is_creation = matches!(output, Output::Create(_, _));
-                    let regolith_enabled = GSPEC::enabled(REGOLITH);
-                    let optimism_regolith = self.data.env.cfg.optimism && regolith_enabled;
-                    if is_deposit && is_creation && optimism_regolith {
-                        let (acc, _) = self
-                            .data
-                            .journaled_state
-                            .load_account(tx_caller, self.data.db)
-                            .map_err(EVMError::Database)?;
-                        acc.info.nonce = acc.info.nonce.checked_add(1).unwrap_or(u64::MAX);
-                    }
-                }
-                ExecutionResult::Halt {
-                    reason,
-                    gas_used: final_gas_used,
-                }
-            }
-            SuccessOrHalt::FatalExternalError => {
-                return Err(EVMError::Database(self.data.error.take().unwrap()));
-            }
-            SuccessOrHalt::InternalContinue => {
-                panic!("Internal return flags should remain internal {call_result:?}")
-            }
-        };
-
-        Ok(ResultAndState { result, state })
+        // main return
+        handler.main_return(data, call_result, output, &gas)
     }
 }
 

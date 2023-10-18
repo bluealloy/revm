@@ -91,14 +91,13 @@ pub fn calculate_gas_refund<SPEC: Spec>(env: &Env, gas: &Gas) -> u64 {
 pub fn reward_beneficiary<SPEC: Spec, DB: Database>(
     data: &mut EVMData<'_, DB>,
     gas: &Gas,
-    gas_refund: u64,
 ) -> Result<(), EVMError<DB::Error>> {
     let is_deposit = data.env.cfg.optimism && data.env.tx.optimism.source_hash.is_some();
     let disable_coinbase_tip = data.env.cfg.optimism && is_deposit;
 
     // transfer fee to coinbase/beneficiary.
     if !disable_coinbase_tip {
-        mainnet::reward_beneficiary::<SPEC, DB>(data, gas, gas_refund)?;
+        mainnet::reward_beneficiary::<SPEC, DB>(data, gas)?;
     }
 
     if data.env.cfg.optimism && !is_deposit {
@@ -136,7 +135,7 @@ pub fn reward_beneficiary<SPEC: Spec, DB: Database>(
             .env
             .block
             .basefee
-            .mul(U256::from(gas.spend() - gas_refund));
+            .mul(U256::from(gas.spend() - gas.refunded() as u64));
     }
     Ok(())
 }
