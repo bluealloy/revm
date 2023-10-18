@@ -59,7 +59,7 @@ impl PrecompileOutput {
         }
     }
 }
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub struct Precompiles {
     pub fun: HashMap<Address, Precompile>,
 }
@@ -70,7 +70,7 @@ impl Default for Precompiles {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone)]
 pub enum Precompile {
     Standard(StandardPrecompileFn),
     Env(EnvPrecompileFn),
@@ -85,7 +85,7 @@ impl fmt::Debug for Precompile {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug)]
 pub struct PrecompileAddress(Address, Precompile);
 
 impl From<PrecompileAddress> for (Address, Precompile) {

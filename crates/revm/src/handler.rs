@@ -32,7 +32,6 @@ type MainReturnHandle<DB> = fn(
 /// Handler acts as a proxy and allow to define different behavior for different
 /// sections of the code. This allows nice integration of different chains or
 /// to disable some mainnet behavior.
-#[derive(Debug)]
 pub struct Handler<DB: Database> {
     // Uses env, call result and returned gas from the call to determine the gas
     // that is returned from transaction execution..
