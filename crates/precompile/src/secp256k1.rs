@@ -54,7 +54,7 @@ mod secp256k1 {
             RecoverableSignature::from_compact(&sig[0..64], RecoveryId::from_i32(sig[64] as i32)?)?;
 
         let secp = Secp256k1::new();
-        let public = secp.recover_ecdsa(&Message::from_slice(&msg[..32])?, &sig)?;
+        let public = secp.recover_ecdsa(&Message::from_digest_slice(&msg[..32])?, &sig)?;
 
         let mut hash = keccak256(&public.serialize_uncompressed()[1..]).0;
         hash[..12].fill(0);
