@@ -15,13 +15,12 @@ use core::{
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SharedMemory {
     /// The underlying buffer.
-    data: Vec<u8>,
+    buffer: Vec<u8>,
     /// Memory checkpoints for each depth.
     /// Invariant: these are always in bounds of `data`.
     checkpoints: Vec<usize>,
-    /// How much memory has been used in the current context.
-    /// Invariant: `checkpoints.last() + current_len <= data.len()`
-    current_len: usize,
+    /// Invariant: equals `self.checkpoints.last()`
+    last_checkpoint: usize,
     /// Memory limit. See [`crate::CfgEnv`].
     #[cfg(feature = "memory_limit")]
     memory_limit: u64,
@@ -30,7 +29,7 @@ pub struct SharedMemory {
 impl fmt::Debug for SharedMemory {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("SharedMemory")
-            .field("current_len", &self.current_len)
+            .field("current_len", &self.len())
             .field(
                 "context_memory",
                 &crate::primitives::hex::encode(self.context_memory()),
@@ -59,9 +58,9 @@ impl SharedMemory {
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
-            data: Vec::with_capacity(capacity),
+            buffer: Vec::with_capacity(capacity),
             checkpoints: Vec::with_capacity(32),
-            current_len: 0,
+            last_checkpoint: 0,
             #[cfg(feature = "memory_limit")]
             memory_limit: u64::MAX,
         }
@@ -85,53 +84,43 @@ impl SharedMemory {
     #[cfg(feature = "memory_limit")]
     #[inline]
     pub fn limit_reached(&self, new_size: usize) -> bool {
-        (self.last_checkpoint() + new_size) as u64 > self.memory_limit
+        (self.last_checkpoint + new_size) as u64 > self.memory_limit
     }
 
     /// Prepares the shared memory for a new context.
     #[inline]
-    pub fn new_context_memory(&mut self) {
-        let base_offset = self.last_checkpoint();
-        let new_checkpoint = base_offset + self.current_len;
-
+    pub fn new_context(&mut self) {
+        let new_checkpoint = self.buffer.len();
         self.checkpoints.push(new_checkpoint);
-        self.current_len = 0;
+        self.last_checkpoint = new_checkpoint;
     }
 
     /// Prepares the shared memory for returning to the previous context.
     #[inline]
-    pub fn free_context_memory(&mut self) {
+    pub fn free_context(&mut self) {
         if let Some(old_checkpoint) = self.checkpoints.pop() {
-            let last_checkpoint = self.last_checkpoint();
-            self.current_len = old_checkpoint - last_checkpoint;
+            self.last_checkpoint = self.checkpoints.last().cloned().unwrap_or_default();
+            // SAFETY: buffer length is less than or equal `old_checkpoint`
+            unsafe { self.buffer.set_len(old_checkpoint) };
         }
     }
 
     /// Returns the length of the current memory range.
     #[inline]
     pub fn len(&self) -> usize {
-        self.current_len
+        self.buffer.len() - self.last_checkpoint
     }
 
     /// Returns `true` if the current memory range is empty.
     #[inline]
     pub fn is_empty(&self) -> bool {
-        self.current_len == 0
+        self.len() == 0
     }
 
     /// Resizes the memory in-place so that `len` is equal to `new_len`.
     #[inline]
-    pub fn resize(&mut self, new_len: usize) {
-        let last_checkpoint = self.last_checkpoint();
-        let range = last_checkpoint + self.current_len..last_checkpoint + new_len;
-
-        if let Some(available_memory) = self.data.get_mut(range) {
-            available_memory.fill(0);
-        } else {
-            self.data.resize(last_checkpoint + new_len, 0);
-        }
-
-        self.current_len = new_len;
+    pub fn resize(&mut self, new_size: usize) {
+        self.buffer.resize(self.last_checkpoint + new_size, 0);
     }
 
     /// Returns a byte slice of the memory region at the given offset.
@@ -143,15 +132,13 @@ impl SharedMemory {
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn slice(&self, offset: usize, size: usize) -> &[u8] {
         let end = offset + size;
-        let last_checkpoint = self.last_checkpoint();
+        let last_checkpoint = self.last_checkpoint;
 
-        match self
-            .data
-            .get(last_checkpoint + offset..last_checkpoint + end)
-        {
-            Some(slice) => slice,
-            None => debug_unreachable!("slice OOB: {offset}..{end}; len: {}", self.len()),
-        }
+        self.buffer
+            .get(last_checkpoint + offset..last_checkpoint + offset + size)
+            .unwrap_or_else(|| {
+                debug_unreachable!("slice OOB: {offset}..{end}; len: {}", self.len())
+            })
     }
 
     /// Returns a byte slice of the memory region at the given offset.
@@ -164,15 +151,11 @@ impl SharedMemory {
     pub fn slice_mut(&mut self, offset: usize, size: usize) -> &mut [u8] {
         let len = self.len();
         let end = offset + size;
-        let last_checkpoint = self.last_checkpoint();
+        let last_checkpoint = self.last_checkpoint;
 
-        match self
-            .data
-            .get_mut(last_checkpoint + offset..last_checkpoint + end)
-        {
-            Some(slice) => slice,
-            None => debug_unreachable!("slice OOB: {offset}..{end}; len: {len}"),
-        }
+        self.buffer
+            .get_mut(last_checkpoint + offset..last_checkpoint + offset + size)
+            .unwrap_or_else(|| debug_unreachable!("slice OOB: {offset}..{end}; len: {}", len))
     }
 
     /// Returns the byte at the given offset.
@@ -273,7 +256,7 @@ impl SharedMemory {
             .copy_from_slice(data);
 
         // nullify rest of memory slots
-        // Safety: Memory is assumed to be valid. And it is commented where that assumption is made
+        // SAFETY: Memory is assumed to be valid. And it is commented where that assumption is made
         self.slice_mut(memory_offset + data_len, len - data_len)
             .fill(0);
     }
@@ -292,33 +275,19 @@ impl SharedMemory {
     /// Returns a reference to the memory of the current context.
     #[inline]
     fn context_memory(&self) -> &[u8] {
-        let last_checkpoint = self.last_checkpoint();
-        let current_len = self.current_len;
-        debug_assert!(last_checkpoint + current_len <= self.data.len());
-        // SAFETY: `last_checkpoint` and `current_len` are always in bounds of `self.data`
+        // SAFETY: access bounded by buffer length
         unsafe {
-            self.data
-                .get_unchecked(last_checkpoint..last_checkpoint + current_len)
+            self.buffer
+                .get_unchecked(self.last_checkpoint..self.buffer.len())
         }
     }
 
     /// Returns a mutable reference to the memory of the current context.
     #[inline]
     fn context_memory_mut(&mut self) -> &mut [u8] {
-        let last_checkpoint = self.last_checkpoint();
-        let current_len = self.current_len;
-        debug_assert!(last_checkpoint + current_len <= self.data.len());
-        // SAFETY: `last_checkpoint` and `current_len` are always in bounds of `self.data`
-        unsafe {
-            self.data
-                .get_unchecked_mut(last_checkpoint..last_checkpoint + current_len)
-        }
-    }
-
-    /// Returns the last memory checkpoint. This is always in bounds of the memory.
-    #[inline]
-    fn last_checkpoint(&self) -> usize {
-        self.checkpoints.last().copied().unwrap_or(0)
+        let buf_len = self.buffer.len();
+        // SAFETY: access bounded by buffer length
+        unsafe { self.buffer.get_unchecked_mut(self.last_checkpoint..buf_len) }
     }
 }
 
@@ -331,7 +300,7 @@ pub fn next_multiple_of_32(x: usize) -> Option<usize> {
 
 #[cfg(test)]
 mod tests {
-    use super::next_multiple_of_32;
+    use super::*;
 
     #[test]
     fn test_next_multiple_of_32() {
@@ -349,5 +318,78 @@ mod tests {
             let next_multiple = x + 32 - (x % 32);
             assert_eq!(Some(next_multiple), next_multiple_of_32(x));
         }
+    }
+
+    #[test]
+    fn new_free_context() {
+        let mut shared_memory = SharedMemory::new();
+        shared_memory.new_context();
+
+        assert_eq!(shared_memory.buffer.len(), 0);
+        assert_eq!(shared_memory.checkpoints.len(), 1);
+        assert_eq!(shared_memory.last_checkpoint, 0);
+
+        unsafe { shared_memory.buffer.set_len(32) };
+        assert_eq!(shared_memory.len(), 32);
+        shared_memory.new_context();
+
+        assert_eq!(shared_memory.buffer.len(), 32);
+        assert_eq!(shared_memory.checkpoints.len(), 2);
+        assert_eq!(shared_memory.last_checkpoint, 32);
+        assert_eq!(shared_memory.len(), 0);
+
+        unsafe { shared_memory.buffer.set_len(96) };
+        assert_eq!(shared_memory.len(), 64);
+        shared_memory.new_context();
+
+        assert_eq!(shared_memory.buffer.len(), 96);
+        assert_eq!(shared_memory.checkpoints.len(), 3);
+        assert_eq!(shared_memory.last_checkpoint, 96);
+        assert_eq!(shared_memory.len(), 0);
+
+        // free contexts
+        shared_memory.free_context();
+        assert_eq!(shared_memory.buffer.len(), 96);
+        assert_eq!(shared_memory.checkpoints.len(), 2);
+        assert_eq!(shared_memory.last_checkpoint, 32);
+        assert_eq!(shared_memory.len(), 64);
+
+        shared_memory.free_context();
+        assert_eq!(shared_memory.buffer.len(), 32);
+        assert_eq!(shared_memory.checkpoints.len(), 1);
+        assert_eq!(shared_memory.last_checkpoint, 0);
+        assert_eq!(shared_memory.len(), 32);
+
+        shared_memory.free_context();
+        assert_eq!(shared_memory.buffer.len(), 0);
+        assert_eq!(shared_memory.checkpoints.len(), 0);
+        assert_eq!(shared_memory.last_checkpoint, 0);
+        assert_eq!(shared_memory.len(), 0);
+    }
+
+    #[test]
+    fn resize() {
+        let mut shared_memory = SharedMemory::new();
+        shared_memory.new_context();
+
+        shared_memory.resize(32);
+        assert_eq!(shared_memory.buffer.len(), 32);
+        assert_eq!(shared_memory.len(), 32);
+        assert_eq!(shared_memory.buffer.get(0..32), Some(&[0_u8; 32] as &[u8]));
+
+        shared_memory.new_context();
+        shared_memory.resize(96);
+        assert_eq!(shared_memory.buffer.len(), 128);
+        assert_eq!(shared_memory.len(), 96);
+        assert_eq!(
+            shared_memory.buffer.get(32..128),
+            Some(&[0_u8; 96] as &[u8])
+        );
+
+        shared_memory.free_context();
+        shared_memory.resize(64);
+        assert_eq!(shared_memory.buffer.len(), 64);
+        assert_eq!(shared_memory.len(), 64);
+        assert_eq!(shared_memory.buffer.get(0..64), Some(&[0_u8; 64] as &[u8]));
     }
 }

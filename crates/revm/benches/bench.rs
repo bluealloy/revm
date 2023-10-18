@@ -96,7 +96,7 @@ fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm) {
             ..Default::default()
         };
         let mut host = DummyHost::new(evm.env.clone());
-        let instruction_table = make_instruction_table::<BerlinSpec, DummyHost>();
+        let instruction_table = make_instruction_table::<DummyHost, BerlinSpec>();
         b.iter(|| {
             let mut interpreter = Interpreter::new(
                 Box::new(contract.clone()),

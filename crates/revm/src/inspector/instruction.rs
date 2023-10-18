@@ -21,7 +21,8 @@ pub fn inspector_instruction<'a, SPEC: Spec + 'static, DB: Database>(
                 interpreter.instruction_pointer = interpreter.instruction_pointer.sub(1);
             }
             if let Some(inspector) = host.inspector.as_mut() {
-                if inspector.step(interpreter, data) != InstructionResult::Continue {
+                inspector.step(interpreter, data);
+                if interpreter.instruction_result != InstructionResult::Continue {
                     return;
                 }
             }
@@ -54,9 +55,9 @@ mod tests {
     fn test_make_boxed_instruction_table() {
         // test that this pattern builds.
         let inst: InstructionTable<EVMImpl<'_, BerlinSpec, EmptyDB>> =
-            make_instruction_table::<BerlinSpec, EVMImpl<'_, BerlinSpec, _>>();
+            make_instruction_table::<EVMImpl<'_, BerlinSpec, _>, BerlinSpec>();
         let _test: BoxedInstructionTable<'_, EVMImpl<'_, BerlinSpec, _>> =
-            make_boxed_instruction_table::<'_, BerlinSpec, EVMImpl<'_, BerlinSpec, EmptyDB>, _>(
+            make_boxed_instruction_table::<'_, EVMImpl<'_, BerlinSpec, EmptyDB>, BerlinSpec, _>(
                 inst,
                 inspector_instruction,
             );

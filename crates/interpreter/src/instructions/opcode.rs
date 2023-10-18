@@ -63,19 +63,18 @@ macro_rules! opcodes {
             map
         };
 
-        /// Return the instruction function for the given opcode and spec.
-        pub const fn instruction<H:Host, SPEC:Spec>(opcode: u8) -> Instruction<H> {
+        /// Returns the instruction function for the given opcode and spec.
+        pub const fn instruction<H: Host, SPEC: Spec>(opcode: u8) -> Instruction<H> {
             match opcode {
                 $($name => $f,)*
                 _ => control::not_found,
             }
         }
-
     };
 }
 
 /// Make instruction table.
-pub const fn make_instruction_table<SPEC: Spec, H: Host>() -> InstructionTable<H> {
+pub const fn make_instruction_table<H: Host, SPEC: Spec>() -> InstructionTable<H> {
     let mut table: InstructionTable<H> = [control::not_found::<H> as Instruction<H>; 256];
     let mut i = 0;
     while i < 256 {
@@ -87,20 +86,16 @@ pub const fn make_instruction_table<SPEC: Spec, H: Host>() -> InstructionTable<H
 
 
 /// Make boxed instruction table that calls `outer` closure for every instruction.
-pub fn make_boxed_instruction_table<'a, SPEC: Spec + 'static, H: Host + 'a, FN>(
+pub fn make_boxed_instruction_table<'a, H, SPEC, FN>(
     table: InstructionTable<H>,
     outer: FN,
 ) -> BoxedInstructionTable<'a, H>
 where
+    H: Host + 'a,
+    SPEC: Spec + 'static,
     FN: Fn(Instruction<H>) -> BoxedInstruction<'a, H>,
 {
-    let mut inspector_table: BoxedInstructionTable<'a, H> =
-        core::array::from_fn(|_| outer(control::not_found));
-
-    for (i, instruction) in table.iter().enumerate() {
-        inspector_table[i] = outer(*instruction);
-    }
-    inspector_table
+    core::array::from_fn(|i| outer(table[i]))
 }
 
 // When adding new opcodes:
@@ -120,7 +115,7 @@ opcodes! {
     0x07 => SMOD       => arithmetic::smod,
     0x08 => ADDMOD     => arithmetic::addmod,
     0x09 => MULMOD     => arithmetic::mulmod,
-    0x0A => EXP        => arithmetic::exp::<H,SPEC>,
+    0x0A => EXP        => arithmetic::exp::<H, SPEC>,
     0x0B => SIGNEXTEND => arithmetic::signextend,
     // 0x0C
     // 0x0D
