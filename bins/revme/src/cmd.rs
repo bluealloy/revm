@@ -1,8 +1,6 @@
-use crate::{
-    build::{generate_kzg_settings, KzgErrors},
-    statetest,
-};
-use std::path::PathBuf;
+pub mod format_kzg_setup;
+pub mod statetest;
+
 use structopt::{clap::AppSettings, StructOpt};
 
 #[derive(StructOpt, Debug)]
@@ -12,13 +10,9 @@ pub enum MainCmd {
     #[structopt(about = "Launch Ethereum state tests")]
     Statetest(statetest::Cmd),
     #[structopt(
-        name = "generate-kzg-points",
-        about = "Generate kzg settings from a trusted setup file (.txt)"
+        about = "Format kzg settings from a trusted setup file (.txt) into binary format (.bin)"
     )]
-    GenerateKzgPoints {
-        #[structopt(parse(from_os_str), help = "Path of the trusted setup file (.txt).")]
-        path: PathBuf,
-    },
+    FormatKzgPoints(format_kzg_setup::Cmd),
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -26,16 +20,14 @@ pub enum Error {
     #[error(transparent)]
     Statetest(#[from] statetest::Error),
     #[error(transparent)]
-    KzgErrors(#[from] KzgErrors),
+    KzgErrors(#[from] format_kzg_setup::Error),
 }
 
 impl MainCmd {
     pub fn run(&self) -> Result<(), Error> {
         match self {
             Self::Statetest(cmd) => cmd.run().map_err(Into::into),
-            Self::GenerateKzgPoints { path } => {
-                generate_kzg_settings(path.as_path()).map_err(Into::into)
-            }
+            Self::FormatKzgPoints(cmd) => cmd.run().map_err(Into::into),
         }
     }
 }
