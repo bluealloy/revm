@@ -15,8 +15,9 @@ pub struct SharedStack {
     /// Shared buffer
     pub buffer: Vec<U256>,
     /// Stack checkpoints for each depth
+    /// Invariant: these are always in bounds of `data`.
     pub checkpoints: Vec<usize>,
-    /// How much stack has been used in the current context
+    /// Invariant: equals `self.checkpoints.last()`
     pub last_checkpoint: usize,
 }
 
@@ -65,6 +66,7 @@ impl SharedStack {
     pub fn free_context(&mut self) {
         if let Some(old_checkpoint) = self.checkpoints.pop() {
             self.last_checkpoint = self.last_checkpoint();
+            // SAFETY: checkpoints are always bounded by buffer length
             unsafe { self.buffer.set_len(old_checkpoint) }
         }
     }
@@ -72,6 +74,8 @@ impl SharedStack {
     /// Returns the length of the stack in words.
     #[inline]
     pub fn len(&self) -> usize {
+        // Since checkpoints are bounded by buffer length
+        // this is always a nonnegative integer
         self.buffer.len() - self.last_checkpoint
     }
 
@@ -94,6 +98,8 @@ impl SharedStack {
         if self.is_empty() {
             Err(InstructionResult::StackUnderflow)
         } else {
+            // SAFETY: `self.len()` <= `self.buffer.len()` by construction,
+            // and `self.len()` > 0 thanks to the check above
             Ok(unsafe { self.buffer.pop().unwrap_unchecked() })
         }
     }
@@ -104,6 +110,8 @@ impl SharedStack {
     #[inline]
     pub fn peek(&self, no_from_top: usize) -> Result<U256, InstructionResult> {
         if self.len() > no_from_top {
+            // SAFETY: `0 < no_from_top + 1` <= self.len()` <= `self.buffer.len()`
+            // Therefore, this index is bounded between 0 and `self.buffer.len()`
             Ok(unsafe {
                 *self
                     .buffer
@@ -213,6 +221,8 @@ impl SharedStack {
         if self.len() == STACK_LIMIT {
             return Err(InstructionResult::StackOverflow);
         }
+        // SAFETY: the check above and the `new_context` method
+        // guarantee we have enough capacity
         unsafe {
             *self.buffer.get_unchecked_mut(buf_len) = value;
             self.buffer.set_len(buf_len + 1);
@@ -237,7 +247,8 @@ impl SharedStack {
             Err(InstructionResult::StackOverflow)
         } else {
             let buf_len = self.buffer.len();
-            // Safety: check for out of bounds is done above and it makes this safe to do.
+            // SAFETY: the check above and the `new_context`
+            // method guarantee we have enough capacity
             unsafe {
                 let val = *self.buffer.get_unchecked(buf_len - N);
                 *self.buffer.get_unchecked_mut(buf_len) = val;
@@ -310,6 +321,9 @@ impl SharedStack {
             }
 
             let buf_len = self.buffer.len();
+
+            // SAFETY: the check above and the `new_context`
+            // method guarantee we have enough capacity
             *self.buffer.get_unchecked_mut(buf_len) = slot;
             self.buffer.set_len(buf_len + 1);
         }
@@ -323,6 +337,8 @@ impl SharedStack {
     pub fn set(&mut self, no_from_top: usize, val: U256) -> Result<(), InstructionResult> {
         if self.len() > no_from_top {
             let buf_len = self.buffer.len();
+            // SAFETY: `0 < no_from_top + 1` <= self.len()` <= `self.buffer.len()`.
+            // Therefore, this index is bounded between 0 and `self.buffer.len()`
             unsafe { *self.buffer.get_unchecked_mut(buf_len - no_from_top - 1) = val };
             Ok(())
         } else {
@@ -333,7 +349,11 @@ impl SharedStack {
     /// Get a reference to the stack of the current context
     #[inline]
     fn context_stack(&self) -> &[U256] {
-        unsafe { self.buffer.get_unchecked(self.last_checkpoint..self.len()) }
+        // SAFETY: range is bounded between 0 and buffer length
+        unsafe {
+            self.buffer
+                .get_unchecked(self.last_checkpoint..self.buffer.len())
+        }
     }
 
     /// Get the last stack checkpoint
