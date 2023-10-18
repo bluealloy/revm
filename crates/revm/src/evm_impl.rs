@@ -1,5 +1,4 @@
 use crate::handler::Handler;
-use crate::inspector_instruction;
 use crate::interpreter::{
     analysis::to_analysed, gas, return_ok, CallContext, CallInputs, CallScheme, Contract,
     CreateInputs, Gas, Host, InstructionResult, Interpreter, SelfDestructResult, Transfer,
@@ -10,6 +9,7 @@ use crate::primitives::{
     InvalidTransaction, Log, Output, Spec, SpecId::*, TransactTo, B256, U256,
 };
 use crate::{db::Database, precompile, Inspector};
+use crate::{inspector_instruction, EVMData};
 use alloc::boxed::Box;
 use alloc::sync::Arc;
 use alloc::vec::Vec;
@@ -29,18 +29,6 @@ use crate::optimism;
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
-
-#[derive(Debug)]
-pub struct EVMData<'a, DB: Database> {
-    pub env: &'a mut Env,
-    pub journaled_state: JournaledState,
-    pub db: &'a mut DB,
-    pub error: Option<DB::Error>,
-    pub precompiles: Precompiles,
-    /// Used as temporary value holder to store L1 block info.
-    #[cfg(feature = "optimism")]
-    pub l1_block_info: Option<optimism::L1BlockInfo>,
-}
 
 pub struct EVMImpl<'a, GSPEC: Spec, DB: Database> {
     pub data: EVMData<'a, DB>,
@@ -819,72 +807,32 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
 
 impl<'a, GSPEC: Spec + 'static, DB: Database> Host for EVMImpl<'a, GSPEC, DB> {
     fn env(&mut self) -> &mut Env {
-        self.data.env
+        self.data.env()
     }
 
     fn block_hash(&mut self, number: U256) -> Option<B256> {
-        self.data
-            .db
-            .block_hash(number)
-            .map_err(|e| self.data.error = Some(e))
-            .ok()
+        self.data.block_hash(number)
     }
 
     fn load_account(&mut self, address: Address) -> Option<(bool, bool)> {
-        self.data
-            .journaled_state
-            .load_account_exist(address, self.data.db)
-            .map_err(|e| self.data.error = Some(e))
-            .ok()
+        self.data.load_account(address)
     }
 
     fn balance(&mut self, address: Address) -> Option<(U256, bool)> {
-        let db = &mut self.data.db;
-        let journal = &mut self.data.journaled_state;
-        let error = &mut self.data.error;
-        journal
-            .load_account(address, db)
-            .map_err(|e| *error = Some(e))
-            .ok()
-            .map(|(acc, is_cold)| (acc.info.balance, is_cold))
+        self.data.balance(address)
     }
 
     fn code(&mut self, address: Address) -> Option<(Bytecode, bool)> {
-        let journal = &mut self.data.journaled_state;
-        let db = &mut self.data.db;
-        let error = &mut self.data.error;
-
-        let (acc, is_cold) = journal
-            .load_code(address, db)
-            .map_err(|e| *error = Some(e))
-            .ok()?;
-        Some((acc.info.code.clone().unwrap(), is_cold))
+        self.data.code(address)
     }
 
     /// Get code hash of address.
     fn code_hash(&mut self, address: Address) -> Option<(B256, bool)> {
-        let journal = &mut self.data.journaled_state;
-        let db = &mut self.data.db;
-        let error = &mut self.data.error;
-
-        let (acc, is_cold) = journal
-            .load_code(address, db)
-            .map_err(|e| *error = Some(e))
-            .ok()?;
-        if acc.is_empty() {
-            return Some((B256::ZERO, is_cold));
-        }
-
-        Some((acc.info.code_hash, is_cold))
+        self.data.code_hash(address)
     }
 
     fn sload(&mut self, address: Address, index: U256) -> Option<(U256, bool)> {
-        // account is always warm. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
-        self.data
-            .journaled_state
-            .sload(address, index, self.data.db)
-            .map_err(|e| self.data.error = Some(e))
-            .ok()
+        self.data.sload(address, index)
     }
 
     fn sstore(
@@ -893,19 +841,15 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> Host for EVMImpl<'a, GSPEC, DB> {
         index: U256,
         value: U256,
     ) -> Option<(U256, U256, U256, bool)> {
-        self.data
-            .journaled_state
-            .sstore(address, index, value, self.data.db)
-            .map_err(|e| self.data.error = Some(e))
-            .ok()
+        self.data.sstore(address, index, value)
     }
 
     fn tload(&mut self, address: Address, index: U256) -> U256 {
-        self.data.journaled_state.tload(address, index)
+        self.data.tload(address, index)
     }
 
     fn tstore(&mut self, address: Address, index: U256, value: U256) {
-        self.data.journaled_state.tstore(address, index, value)
+        self.data.tstore(address, index, value)
     }
 
     fn log(&mut self, address: Address, topics: Vec<B256>, data: Bytes) {

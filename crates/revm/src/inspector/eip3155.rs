@@ -1,7 +1,7 @@
 use crate::inspectors::GasInspector;
 use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult};
 use crate::primitives::{db::Database, hex, Address, Bytes};
-use crate::{evm_impl::EVMData, Inspector};
+use crate::{EVMData, Inspector};
 use revm_interpreter::primitives::U256;
 use revm_interpreter::{opcode, Interpreter, SharedMemory, Stack};
 use serde_json::json;
