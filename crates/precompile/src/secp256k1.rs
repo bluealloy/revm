@@ -1,8 +1,8 @@
-use crate::{Error, Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn};
+use crate::{Error, Precompile, PrecompileWithAddress, PrecompileResult, StandardPrecompileFn};
 use alloc::vec::Vec;
 use core::cmp::min;
 
-pub const ECRECOVER: PrecompileAddress = PrecompileAddress(
+pub const ECRECOVER: PrecompileWithAddress = PrecompileWithAddress(
     crate::u64_to_address(1),
     Precompile::Standard(ec_recover_run as StandardPrecompileFn),
 );

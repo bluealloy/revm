@@ -61,7 +61,7 @@ impl PrecompileOutput {
 }
 #[derive(Clone, Debug)]
 pub struct Precompiles {
-    pub fun: HashMap<Address, Precompile>,
+    pub inner: Vec<PrecompileWithAddress>,
 }
 
 impl Default for Precompiles {
@@ -86,10 +86,10 @@ impl fmt::Debug for Precompile {
 }
 
 #[derive(Clone, Debug)]
-pub struct PrecompileAddress(Address, Precompile);
+pub struct PrecompileWithAddress(Address, Precompile);
 
-impl From<PrecompileAddress> for (Address, Precompile) {
-    fn from(value: PrecompileAddress) -> Self {
+impl From<PrecompileWithAddress> for (Address, Precompile) {
+    fn from(value: PrecompileWithAddress) -> Self {
         (value.0, value.1)
     }
 }
@@ -131,16 +131,14 @@ impl Precompiles {
     pub fn homestead() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
-            let fun = [
+            let inner = vec![
                 secp256k1::ECRECOVER,
                 hash::SHA256,
                 hash::RIPEMD160,
                 identity::FUN,
-            ]
-            .into_iter()
-            .map(From::from)
-            .collect();
-            Box::new(Self { fun })
+            ];
+            inner.sort_unstable_by_key(|i| i.0);
+            Box::new(Self { inner })
         })
     }
 
@@ -148,19 +146,16 @@ impl Precompiles {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
             let mut precompiles = Box::new(Self::homestead().clone());
-            precompiles.fun.extend(
-                [
-                    // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
-                    // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
-                    bn128::add::BYZANTIUM,
-                    bn128::mul::BYZANTIUM,
-                    bn128::pair::BYZANTIUM,
-                    // EIP-198: Big integer modular exponentiation.
-                    modexp::BYZANTIUM,
-                ]
-                .into_iter()
-                .map(From::from),
-            );
+            precompiles.inner.extend([
+                // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
+                // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
+                bn128::add::BYZANTIUM,
+                bn128::mul::BYZANTIUM,
+                bn128::pair::BYZANTIUM,
+                // EIP-198: Big integer modular exponentiation.
+                modexp::BYZANTIUM,
+            ]);
+            precompiles.inner.sort_unstable_by_key(|i| i.0);
             precompiles
         })
     }
@@ -169,18 +164,15 @@ impl Precompiles {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
             let mut precompiles = Box::new(Self::byzantium().clone());
-            precompiles.fun.extend(
-                [
-                    // EIP-152: Add BLAKE2 compression function `F` precompile.
-                    blake2::FUN,
-                    // EIP-1108: Reduce alt_bn128 precompile gas costs.
-                    bn128::add::ISTANBUL,
-                    bn128::mul::ISTANBUL,
-                    bn128::pair::ISTANBUL,
-                ]
-                .into_iter()
-                .map(From::from),
-            );
+            precompiles.inner.extend([
+                // EIP-152: Add BLAKE2 compression function `F` precompile.
+                blake2::FUN,
+                // EIP-1108: Reduce alt_bn128 precompile gas costs.
+                bn128::add::ISTANBUL,
+                bn128::mul::ISTANBUL,
+                bn128::pair::ISTANBUL,
+            ]);
+            precompiles.inner.sort_unstable_by_key(|i| i.0);
             precompiles
         })
     }
@@ -189,14 +181,11 @@ impl Precompiles {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
             let mut precompiles = Box::new(Self::istanbul().clone());
-            precompiles.fun.extend(
-                [
-                    // EIP-2565: ModExp Gas Cost.
-                    modexp::BERLIN,
-                ]
-                .into_iter()
-                .map(From::from),
-            );
+            precompiles.inner.extend([
+                // EIP-2565: ModExp Gas Cost.
+                modexp::BERLIN,
+            ]);
+            precompiles.inner.sort_unstable_by_key(|i| i.0);
             precompiles
         })
     }
@@ -209,7 +198,7 @@ impl Precompiles {
             #[cfg(feature = "c-kzg")]
             {
                 let mut precompiles = Box::new(Self::berlin().clone());
-                precompiles.fun.extend(
+                precompiles.inner.extend(
                     [
                         // EIP-4844: Shard Blob Transactions
                         kzg_point_evaluation::POINT_EVALUATION,
@@ -242,11 +231,11 @@ impl Precompiles {
     }
 
     pub fn addresses(&self) -> impl IntoIterator<Item = &Address> {
-        self.fun.keys()
+        self.inner.iter().map(|i| &i.0)
     }
 
     pub fn contains(&self, address: &Address) -> bool {
-        self.fun.contains_key(address)
+        self.inner.binary_search_by_key(address, |i| i.0)
     }
 
     pub fn get(&self, address: &Address) -> Option<Precompile> {

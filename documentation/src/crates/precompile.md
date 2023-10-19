@@ -19,7 +19,7 @@ Types and Constants:
 - `Log`: Represents an Ethereum log, with an address, a list of topics, and associated data.
 - `Precompiles`: A collection of precompiled contracts available in a particular hard fork of Ethereum.
 - `Precompile`: Represents a precompiled contract, which can either be a standard Ethereum precompile, or a custom precompile.
-- `PrecompileAddress`: Associates a precompiled contract with its address.
+- `PrecompileWithAddress`: Associates a precompiled contract with its address.
 - `SpecId`: An enumeration representing different hard fork specifications in Ethereum, such as Homestead, Byzantium, Istanbul, Berlin, and Latest.
 
 Functions:
