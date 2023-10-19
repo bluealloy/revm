@@ -12,7 +12,7 @@ pub enum MainCmd {
     #[structopt(
         about = "Format kzg settings from a trusted setup file (.txt) into binary format (.bin)"
     )]
-    FormatKzgPoints(format_kzg_setup::Cmd),
+    FormatKzgSetup(format_kzg_setup::Cmd),
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -27,7 +27,7 @@ impl MainCmd {
     pub fn run(&self) -> Result<(), Error> {
         match self {
             Self::Statetest(cmd) => cmd.run().map_err(Into::into),
-            Self::FormatKzgPoints(cmd) => cmd.run().map_err(Into::into),
+            Self::FormatKzgSetup(cmd) => cmd.run().map_err(Into::into),
         }
     }
 }

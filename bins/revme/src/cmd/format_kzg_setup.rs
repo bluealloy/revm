@@ -1,6 +1,5 @@
-pub use revm::primitives::kzg::KzgErrors;
-pub use revm::primitives::kzg::{format_kzg_settings, G1Points, G2Points};
-use std::path::{PathBuf, Path};
+pub use revm::primitives::kzg::{format_kzg_settings,KzgErrors, G1Points, G2Points};
+use std::path::PathBuf;
 use std::{env, fs};
 use structopt::StructOpt;
 
@@ -11,11 +10,11 @@ pub struct Cmd {
     #[structopt(required = true)]
     path: PathBuf,
     /// path to output g1 point in binary format.
-    #[structopt(short = "g1", long)]
-    g1: PathBuf,
+    #[structopt(long)]
+    g1: Option<PathBuf>,
     /// Path to output g2 point in binary format.
-    #[structopt(short = "g2", long)]
-    g2: PathBuf,
+    #[structopt(long)]
+    g2: Option<PathBuf>,
 }
 
 impl Cmd {
@@ -34,12 +33,22 @@ impl Cmd {
         // format points
         let (g1, g2) = format_kzg_settings(&kzg_trusted_settings)?;
 
-        // output points
-        fs::write(out_dir.join("g1_points.bin"), into_flattened(g1.to_vec()))
-            .map_err(|_| KzgErrors::IOError)?;
-        fs::write(out_dir.join("g2_points.bin"), into_flattened(g2.to_vec()))
-            .map_err(|_| KzgErrors::IOError)?;
+        let g1_path = self
+            .g1
+            .clone()
+            .unwrap_or_else(|| out_dir.join("g1_points.bin"));
 
+        let g2_path = self
+            .g2
+            .clone()
+            .unwrap_or_else(|| out_dir.join("g2_points.bin"));
+
+        // output points
+        fs::write(&g1_path, into_flattened(g1.to_vec())).map_err(|_| KzgErrors::IOError)?;
+        fs::write(&g2_path, into_flattened(g2.to_vec())).map_err(|_| KzgErrors::IOError)?;
+        println!("Finished formatting kzg trusted setup into binary representation.");
+        println!("G1 point path: {:?}", g1_path);
+        println!("G2 point path: {:?}", g2_path);
         Ok(())
     }
 }
