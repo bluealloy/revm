@@ -26,11 +26,8 @@ use once_cell::race::OnceBox;
 pub use revm_primitives as primitives;
 pub use revm_primitives::{
     precompile::{PrecompileError as Error, *},
-    Bytes, HashMap,
+    Address, Bytes, HashMap, B256,
 };
-
-pub type Address = [u8; 20];
-pub type B256 = [u8; 32];
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base
@@ -121,17 +118,14 @@ impl SpecId {
             BEDROCK | REGOLITH => Self::BERLIN,
         }
     }
-
-    pub const fn enabled(self, spec_id: u8) -> bool {
-        spec_id >= self as u8
-    }
 }
 
 impl Precompiles {
+    /// Returns precompiles for Homestead spec.
     pub fn homestead() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
-            let inner = vec![
+            let mut inner = vec![
                 secp256k1::ECRECOVER,
                 hash::SHA256,
                 hash::RIPEMD160,
@@ -142,6 +136,7 @@ impl Precompiles {
         })
     }
 
+    /// Returns precompiles for Byzantium spec.
     pub fn byzantium() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
@@ -160,6 +155,7 @@ impl Precompiles {
         })
     }
 
+    /// Returns precompiles for Istanbul spec.
     pub fn istanbul() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
@@ -177,6 +173,7 @@ impl Precompiles {
         })
     }
 
+    /// Returns precompiles for Berlin spec.
     pub fn berlin() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
@@ -190,6 +187,8 @@ impl Precompiles {
         })
     }
 
+    /// Returns precompiles for Cancun spec.
+    ///
     /// If `std` feature is not enabled KZG Point Evaluation precompile will not be included.
     pub fn cancun() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
@@ -215,10 +214,12 @@ impl Precompiles {
         })
     }
 
+    /// Returns the precompiles for the latest spec.
     pub fn latest() -> &'static Self {
-        Self::berlin()
+        Self::cancun()
     }
 
+    /// Returns the precompiles for the given spec.
     pub fn new(spec: SpecId) -> &'static Self {
         match spec {
             SpecId::HOMESTEAD => Self::homestead(),
@@ -230,25 +231,36 @@ impl Precompiles {
         }
     }
 
+    /// Returns an iterator over the precompiles addresses.
+    #[inline]
     pub fn addresses(&self) -> impl IntoIterator<Item = &Address> {
         self.inner.iter().map(|i| &i.0)
     }
 
+    /// Is the given address a precompile.
+    #[inline]
     pub fn contains(&self, address: &Address) -> bool {
-        self.inner.binary_search_by_key(address, |i| i.0)
+        self.get(address).is_some()
     }
 
+    /// Returns the precompile for the given address.
+    #[inline]
     pub fn get(&self, address: &Address) -> Option<Precompile> {
         //return None;
-        self.fun.get(address).cloned()
+        self.inner
+            .binary_search_by_key(address, |i| i.0)
+            .ok()
+            .map(|i| self.inner[i].1.clone())
     }
 
+    /// Is the precompiles list empty.
     pub fn is_empty(&self) -> bool {
-        self.fun.len() == 0
+        self.inner.len() == 0
     }
 
+    /// Returns the number of precompiles.
     pub fn len(&self) -> usize {
-        self.fun.len()
+        self.inner.len()
     }
 }
 
@@ -259,7 +271,7 @@ impl Precompiles {
 #[inline]
 const fn u64_to_address(x: u64) -> Address {
     let x = x.to_be_bytes();
-    [
+    Address::new([
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x[0], x[1], x[2], x[3], x[4], x[5], x[6], x[7],
-    ]
+    ])
 }

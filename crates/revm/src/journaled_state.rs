@@ -6,6 +6,7 @@ use crate::primitives::{
 use alloc::vec::Vec;
 use core::mem;
 use revm_interpreter::primitives::SpecId;
+use revm_precompile::Precompiles;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -24,20 +25,26 @@ pub struct JournaledState {
     /// Spec is needed for two things SpuriousDragon's `EIP-161 State clear`,
     /// and for Cancun's `EIP-6780: SELFDESTRUCT in same transaction`
     pub spec: SpecId,
-    /// It is assumed that precompiles start from 0x1 address and span next N addresses.
-    /// we are using that assumption here
-    pub num_of_precompiles: usize,
+    /// Precompiles addresses are used to check if loaded address
+    /// should be considered cold or hot loaded. It is cloned from
+    /// EVMData to be directly accessed from JournaledState.
+    ///
+    /// Note that addresses are sorted.
+    pub precompile_addresses: Vec<Address>,
 }
 
 impl JournaledState {
     /// Create new JournaledState.
     ///
-    /// num_of_precompiles is used to determine how many precompiles are there.
-    /// Assumption is that number of N first addresses are precompiles (excluding 0x00..00)
+    /// precompile_addresses is used to determine if address is precompile or not.
     ///
     /// Note: This function will journal state after Spurious Dragon fork.
     /// And will not take into account if account is not existing or empty.
-    pub fn new(num_of_precompiles: usize, spec: SpecId) -> JournaledState {
+    pub fn new(
+        num_of_precompiles: usize,
+        spec: SpecId,
+        precompile_addresses: Vec<Address>,
+    ) -> JournaledState {
         Self {
             state: HashMap::new(),
             transient_storage: TransientStorage::default(),
@@ -45,8 +52,13 @@ impl JournaledState {
             journal: vec![vec![]],
             depth: 0,
             spec,
-            num_of_precompiles,
+            precompile_addresses,
         }
+    }
+
+    /// Is address precompile
+    pub fn is_precompile(&self, address: &Address) -> bool {
+        self.precompile_addresses.binary_search(address).is_ok()
     }
 
     /// Return reference to state.
@@ -199,7 +211,8 @@ impl JournaledState {
         let last_journal = self.journal.last_mut().unwrap();
 
         // check if it is possible to create this account.
-        if Self::check_account_collision(address, account, self.num_of_precompiles) {
+        
+        if Self::check_account_collision(address, account, self.is_precompile(&address)) {
             self.checkpoint_revert(checkpoint);
             return Err(InstructionResult::CreateCollision);
         }
@@ -256,7 +269,7 @@ impl JournaledState {
     pub fn check_account_collision(
         address: Address,
         account: &Account,
-        num_of_precompiles: usize,
+        is_precompile: bool,
     ) -> bool {
         // Check collision. Bytecode needs to be empty.
         if account.info.code_hash != KECCAK_EMPTY {
@@ -268,7 +281,7 @@ impl JournaledState {
         }
 
         // Check collision. New account address is precompile.
-        if is_precompile(&address, num_of_precompiles) {
+        if is_precompile {
             return true;
         }
 
@@ -540,7 +553,7 @@ impl JournaledState {
                     .push(JournalEntry::AccountLoaded { address });
 
                 // precompiles are warm loaded so we need to take that into account
-                let is_cold = !is_precompile(&address, self.num_of_precompiles);
+                let is_cold = self.is_precompile(&address);
 
                 (vac.insert(account), is_cold)
             }
@@ -779,63 +792,4 @@ pub enum JournalEntry {
 pub struct JournalCheckpoint {
     log_i: usize,
     journal_i: usize,
-}
-
-/// Check if address is precompile by having assumption
-/// that precompiles are in range of 1 to N.
-#[inline]
-pub fn is_precompile(address: &Address, num_of_precompiles: usize) -> bool {
-    if !address[..18].iter().all(|i| *i == 0) {
-        return false;
-    }
-    let num = u16::from_be_bytes([address[18], address[19]]);
-    num.wrapping_sub(1) < num_of_precompiles as u16
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test_is_precompile() {
-        assert!(
-            !is_precompile(
-                &Address::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
-                3
-            ),
-            "Zero is not precompile"
-        );
-
-        assert!(
-            !is_precompile(
-                &Address::new([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9]),
-                3
-            ),
-            "0x100..0 is not precompile"
-        );
-
-        assert!(
-            !is_precompile(
-                &Address::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]),
-                3
-            ),
-            "0x000..4 is not precompile"
-        );
-
-        assert!(
-            is_precompile(
-                &Address::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-                3
-            ),
-            "0x00..01 is precompile"
-        );
-
-        assert!(
-            is_precompile(
-                &Address::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]),
-                3
-            ),
-            "0x000..3 is precompile"
-        );
-    }
 }

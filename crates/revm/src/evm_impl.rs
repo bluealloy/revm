@@ -3,7 +3,7 @@ use crate::interpreter::{
     analysis::to_analysed, gas, return_ok, CallContext, CallInputs, CallScheme, Contract,
     CreateInputs, Gas, Host, InstructionResult, Interpreter, SelfDestructResult, Transfer,
 };
-use crate::journaled_state::{is_precompile, JournalCheckpoint, JournaledState};
+use crate::journaled_state::{JournalCheckpoint, JournaledState};
 use crate::primitives::{
     keccak256, Address, AnalysisKind, Bytecode, Bytes, EVMError, EVMResult, Env,
     InvalidTransaction, Log, Output, Spec, SpecId::*, TransactTo, B256, U256,
@@ -649,19 +649,20 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
     }
 
     /// Call precompile contract
-    fn call_precompile(&mut self, inputs: &CallInputs, mut gas: Gas) -> CallResult {
+    fn call_precompile(
+        &mut self,
+        precompile: Precompile,
+        inputs: &CallInputs,
+        mut gas: Gas,
+    ) -> CallResult {
         let input_data = &inputs.input;
         let contract = inputs.contract;
 
-        let precompile = self
-            .data
-            .precompiles
-            .get(&contract)
-            .expect("Check for precompile should be already done");
         let out = match precompile {
             Precompile::Standard(fun) => fun(input_data, gas.limit()),
             Precompile::Env(fun) => fun(input_data, gas.limit(), self.env()),
         };
+
         match out {
             Ok((gas_used, data)) => {
                 if !crate::USE_GAS || gas.record_cost(gas_used) {
@@ -769,8 +770,8 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             Err(e) => return e,
         };
 
-        let ret = if is_precompile(&inputs.contract, self.data.precompiles.len()) {
-            self.call_precompile(inputs, prepared_call.gas)
+        let ret = if let Some(precompile) = self.data.precompiles.get(&inputs.contract) {
+            self.call_precompile(precompile, inputs, prepared_call.gas)
         } else if !prepared_call.contract.bytecode.is_empty() {
             // Create interpreter and execute subcall
             let (exit_reason, bytes, gas) = self.run_interpreter(
