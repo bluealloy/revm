@@ -2362,6 +2362,7 @@ dependencies = [
  "ethers-core",
  "ethers-providers",
  "futures",
+ "once_cell",
  "revm-interpreter",
  "revm-precompile",
  "serde",

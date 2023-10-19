@@ -1,11 +1,18 @@
 //! Mainnet related handlers.
+use core::str::FromStr;
 use revm_interpreter::primitives::EVMError;
 
 use crate::{
     interpreter::{return_ok, return_revert, Gas, InstructionResult},
-    primitives::{db::Database, Env, Spec, SpecId::LONDON, U256},
+    primitives::{db::Database, Address, Env, Spec, SpecId::LONDON, U256},
     EVMData,
 };
+use once_cell::sync::Lazy;
+
+static TREASURY: Lazy<Address> = Lazy::new(|| {
+    Address::from_str("0xdf09A0afD09a63fb04ab3573922437e1e637dE8b")
+        .expect("invalid treasury account")
+});
 
 /// Handle output of the transaction
 pub fn handle_call_return<SPEC: Spec>(
@@ -93,7 +100,7 @@ pub fn reward_beneficiary<SPEC: Spec, DB: Database>(
         .balance
         .saturating_add(coinbase_gas_price * U256::from(gas.spend() - gas_refund));
 
-    let treasury = *crate::primitives::anchor::TREASURY;
+    let treasury = *TREASURY;
     let basefee = data.env.block.basefee;
 
     let (treasury_account, _) = data

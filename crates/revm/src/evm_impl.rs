@@ -158,9 +158,6 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
     fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
         let env = self.env();
 
-        #[cfg(feature = "taiko")]
-        env.pre_check()?;
-
         // Important: validate block before tx.
         env.validate_block_env::<GSPEC>()?;
         env.validate_tx::<GSPEC>()?;

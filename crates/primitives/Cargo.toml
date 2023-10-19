@@ -47,7 +47,7 @@ serde = [
 arbitrary = ["std", "alloy-primitives/arbitrary", "bitflags/arbitrary"]
 
 optimism = []
-taiko = ["dep:once_cell"]
+taiko = []
 
 dev = [
     "memory_limit",

@@ -14,8 +14,6 @@ pub mod precompile;
 pub mod result;
 pub mod specification;
 pub mod state;
-#[cfg(feature = "taiko")]
-pub mod taiko;
 pub mod utilities;
 
 pub use alloy_primitives::{
@@ -34,6 +32,4 @@ pub use precompile::*;
 pub use result::*;
 pub use specification::*;
 pub use state::*;
-#[cfg(feature = "taiko")]
-pub use taiko::*;
 pub use utilities::*;
