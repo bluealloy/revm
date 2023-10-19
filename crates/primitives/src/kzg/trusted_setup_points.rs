@@ -9,11 +9,11 @@ pub const NUM_G1_POINTS: usize = 4096;
 /// Number of G2 Points.
 pub const NUM_G2_POINTS: usize = 65;
 
-/// A newtype over list of G1 point for kzg settings.
+/// A newtype over list of G1 point from kzg trusted setup.
 #[derive(Debug, Clone, PartialEq, AsRef, AsMut, Deref, DerefMut)]
 pub struct G1Points(pub [[u8; BYTES_PER_G1_POINT]; NUM_G1_POINTS]);
 
-/// A newtype over list of G2 point for kzg settings.
+/// A newtype over list of G2 point from kzg trusted setup.
 #[derive(Debug, Clone, Eq, PartialEq, AsRef, AsMut, Deref, DerefMut)]
 pub struct G2Points(pub [[u8; BYTES_PER_G2_POINT]; NUM_G2_POINTS]);
 

@@ -1,5 +1,5 @@
 use super::{
-    points::{G1_POINTS, G2_POINTS},
+    trusted_setup_points::{G1_POINTS, G2_POINTS},
     KzgSettings,
 };
 use alloc::{boxed::Box, sync::Arc};
