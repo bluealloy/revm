@@ -6,7 +6,6 @@ use crate::primitives::{
 use alloc::vec::Vec;
 use core::mem;
 use revm_interpreter::primitives::SpecId;
-use revm_precompile::Precompiles;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -40,11 +39,7 @@ impl JournaledState {
     ///
     /// Note: This function will journal state after Spurious Dragon fork.
     /// And will not take into account if account is not existing or empty.
-    pub fn new(
-        num_of_precompiles: usize,
-        spec: SpecId,
-        precompile_addresses: Vec<Address>,
-    ) -> JournaledState {
+    pub fn new(spec: SpecId, precompile_addresses: Vec<Address>) -> JournaledState {
         Self {
             state: HashMap::new(),
             transient_storage: TransientStorage::default(),
@@ -54,11 +49,6 @@ impl JournaledState {
             spec,
             precompile_addresses,
         }
-    }
-
-    /// Is address precompile
-    pub fn is_precompile(&self, address: &Address) -> bool {
-        self.precompile_addresses.binary_search(address).is_ok()
     }
 
     /// Return reference to state.
@@ -211,8 +201,8 @@ impl JournaledState {
         let last_journal = self.journal.last_mut().unwrap();
 
         // check if it is possible to create this account.
-        
-        if Self::check_account_collision(address, account, self.is_precompile(&address)) {
+        let is_precompile = self.precompile_addresses.binary_search(&address).is_ok();
+        if Self::check_account_collision(account, is_precompile) {
             self.checkpoint_revert(checkpoint);
             return Err(InstructionResult::CreateCollision);
         }
@@ -266,11 +256,7 @@ impl JournaledState {
     }
 
     #[inline]
-    pub fn check_account_collision(
-        address: Address,
-        account: &Account,
-        is_precompile: bool,
-    ) -> bool {
+    pub fn check_account_collision(account: &Account, is_precompile: bool) -> bool {
         // Check collision. Bytecode needs to be empty.
         if account.info.code_hash != KECCAK_EMPTY {
             return true;
@@ -553,7 +539,7 @@ impl JournaledState {
                     .push(JournalEntry::AccountLoaded { address });
 
                 // precompiles are warm loaded so we need to take that into account
-                let is_cold = self.is_precompile(&address);
+                let is_cold = self.precompile_addresses.binary_search(&address).is_ok();
 
                 (vac.insert(account), is_cold)
             }

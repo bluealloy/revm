@@ -362,7 +362,14 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         inspector: Option<&'a mut dyn Inspector<DB>>,
         precompiles: Precompiles,
     ) -> Self {
-        let journaled_state = JournaledState::new(precompiles.len(), GSPEC::SPEC_ID);
+        let journaled_state = JournaledState::new(
+            GSPEC::SPEC_ID,
+            precompiles
+                .addresses()
+                .into_iter()
+                .cloned()
+                .collect::<Vec<_>>(),
+        );
         let instruction_table = if inspector.is_some() {
             let instruction_table = make_boxed_instruction_table::<Self, GSPEC, _>(
                 make_instruction_table::<Self, GSPEC>(),
@@ -656,7 +663,6 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         mut gas: Gas,
     ) -> CallResult {
         let input_data = &inputs.input;
-        let contract = inputs.contract;
 
         let out = match precompile {
             Precompile::Standard(fun) => fun(input_data, gas.limit()),
