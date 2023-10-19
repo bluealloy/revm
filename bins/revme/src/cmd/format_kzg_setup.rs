@@ -1,4 +1,4 @@
-pub use revm::primitives::kzg::{format_kzg_settings,KzgErrors, G1Points, G2Points};
+pub use revm::primitives::kzg::{format_kzg_settings, G1Points, G2Points, KzgErrors};
 use std::path::PathBuf;
 use std::{env, fs};
 use structopt::StructOpt;
