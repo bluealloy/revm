@@ -48,7 +48,7 @@ pub const G2_POINTS: &G2Points = {
 /// - don't have to do weird hacks to call `load_trusted_setup_file` at runtime, see
 ///   [Reth](https://github.com/paradigmxyz/reth/blob/b839e394a45edbe7b2030fb370420ca771e5b728/crates/primitives/src/constants/eip4844.rs#L44-L52)
 pub fn format_kzg_settings(
-    trusted_setup: &String,
+    trusted_setup: &str,
 ) -> Result<(Box<G1Points>, Box<G2Points>), KzgErrors> {
     let contents = trusted_setup;
     let mut lines = contents.lines();
@@ -70,7 +70,7 @@ pub fn format_kzg_settings(
     }
 
     // load g1 points
-    let mut g1_points = Box::new(G1Points::default());
+    let mut g1_points = Box::<G1Points>::default();
     for i in 0..n_g1 {
         let line = lines.next().ok_or(KzgErrors::FileFormatError)?;
         let mut bytes = [0; BYTES_PER_G1_POINT];
@@ -79,7 +79,7 @@ pub fn format_kzg_settings(
     }
 
     // load g2 points
-    let mut g2_points = Box::new(G2Points::default());
+    let mut g2_points = Box::<G2Points>::default();
     for i in 0..n_g2 {
         let line = lines.next().ok_or(KzgErrors::FileFormatError)?;
         let mut bytes = [0; BYTES_PER_G2_POINT];
