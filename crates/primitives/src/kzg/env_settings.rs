@@ -1,5 +1,5 @@
 use super::{
-    generated::{G1_POINTS, G2_POINTS},
+    trusted_setup_points::{G1_POINTS, G2_POINTS},
     KzgSettings,
 };
 use alloc::{boxed::Box, sync::Arc};
@@ -47,8 +47,9 @@ impl EnvKzgSettings {
             Self::Default => {
                 static DEFAULT: OnceBox<KzgSettings> = OnceBox::new();
                 DEFAULT.get_or_init(|| {
-                    let settings = KzgSettings::load_trusted_setup(G1_POINTS, G2_POINTS)
-                        .expect("failed to load default trusted setup");
+                    let settings =
+                        KzgSettings::load_trusted_setup(G1_POINTS.as_ref(), G2_POINTS.as_ref())
+                            .expect("failed to load default trusted setup");
                     Box::new(settings)
                 })
             }
