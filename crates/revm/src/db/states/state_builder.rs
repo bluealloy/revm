@@ -33,7 +33,7 @@ pub struct StateBuilder<DB> {
 impl StateBuilder<EmptyDB> {
     /// Create a new builder with an empty database.
     ///
-    /// If you want to instatiate it with a specific database, use
+    /// If you want to instantiate it with a specific database, use
     /// [`new_with_database`](Self::new_with_database).
     pub fn new() -> Self {
         Self::default()
