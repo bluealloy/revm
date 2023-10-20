@@ -104,10 +104,19 @@ fn as_bytes48(bytes: &[u8]) -> &Bytes48 {
 mod tests {
     use super::*;
 
-    // https://github.com/ethereum/go-ethereum/blob/41ee96fdfee5924004e8fbf9bbc8aef783893917/core/vm/testdata/precompiles/pointEvaluation.json
     #[test]
     fn basic_test() {
-        let input = hex!("01d18459b334ffe8e2226eef1db874fda6db2bdd9357268b39220af2d59464fb564c0a11a0f704f4fc3e8acfe0f8245f0ad1347b378fbf96e206da11a5d3630624d25032e67a7e6a4910df5834b8fe70e6bcfeeac0352434196bdf4b2485d5a1978a0d595c823c05947b1156175e72634a377808384256e9921ebf72181890be2d6b58d4a73a880541d1656875654806942307f266e636553e94006d11423f2688945ff3bdf515859eba1005c1a7708d620a94d91a1c0c285f9584e75ec2f82a");
+        // test data from: https://github.com/ethereum/c-kzg-4844/blob/main/tests/verify_kzg_proof/kzg-mainnet/verify_kzg_proof_case_correct_proof_31ebd010e6098750/data.yaml
+
+        let commitment = hex!("8f59a8d2a1a625a17f3fea0fe5eb8c896db3764f3185481bc22f91b4aaffcca25f26936857bc3a7c2539ea8ec3a952b7").to_vec();
+        let mut versioned_hash = Sha256::digest(&commitment).to_vec();
+        versioned_hash[0] = VERSIONED_HASH_VERSION_KZG;
+        let z = hex!("73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000000").to_vec();
+        let y = hex!("1522a4a7f34e1ea350ae07c29c96c7e79655aa926122e95fe69fcbd932ca49e9").to_vec();
+        let proof = hex!("a62ad71d14c5719385c0686f1871430475bf3a00f0aa3f7b8dd99a9abc2160744faf0070725e00b60ad9a026a15b1a8c").to_vec();
+
+        let input = [versioned_hash, z, y, commitment, proof].concat();
+
         let expected_output = hex!("000000000000000000000000000000000000000000000000000000000000100073eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001");
         let gas = 50000;
         let env = Env::default();
