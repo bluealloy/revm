@@ -7,6 +7,8 @@ use alloc::vec::Vec;
 use core::mem;
 use revm_interpreter::primitives::SpecId;
 
+/// JournalState is internal EVM state that is used to contain state and track changes to that state.
+/// It contains journal of changes that happened to state so that they can be reverted.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JournaledState {
@@ -80,7 +82,7 @@ impl JournaledState {
         }
     }
 
-    /// do cleanup and return modified state
+    /// Does cleanup and returns modified state.
     #[inline]
     pub fn finalize(&mut self) -> (State, Vec<Log>) {
         let state = mem::take(&mut self.state);
@@ -105,6 +107,7 @@ impl JournaledState {
             .expect("Account expected to be loaded") // Always assume that acc is already loaded
     }
 
+    /// Returns call depth.
     #[inline]
     pub fn depth(&self) -> u64 {
         self.depth as u64
@@ -143,6 +146,7 @@ impl JournaledState {
         Some(account.info.nonce)
     }
 
+    /// Transfers balance from two accounts. Returns error if sender balance is not enough.
     #[inline]
     pub fn transfer<DB: Database>(
         &mut self,
@@ -214,9 +218,14 @@ impl JournaledState {
         let account = self.state.get_mut(&address).unwrap();
         let last_journal = self.journal.last_mut().unwrap();
 
-        // check if it is possible to create this account.
-        let is_precompile = self.precompile_addresses.binary_search(&address).is_ok();
-        if Self::check_account_collision(account, is_precompile) {
+        // New account can be created if:
+        // Bytecode is not empty.
+        // Nonce is not zero
+        // Account is not precompile.
+        if account.info.code_hash != KECCAK_EMPTY
+            || account.info.nonce != 0
+            || self.precompile_addresses.binary_search(&address).is_ok()
+        {
             self.checkpoint_revert(checkpoint);
             return Err(InstructionResult::CreateCollision);
         }
@@ -269,25 +278,7 @@ impl JournaledState {
         Ok(checkpoint)
     }
 
-    #[inline]
-    pub fn check_account_collision(account: &Account, is_precompile: bool) -> bool {
-        // Check collision. Bytecode needs to be empty.
-        if account.info.code_hash != KECCAK_EMPTY {
-            return true;
-        }
-        // Check collision. Nonce is not zero
-        if account.info.nonce != 0 {
-            return true;
-        }
-
-        // Check collision. New account address is precompile.
-        if is_precompile {
-            return true;
-        }
-
-        false
-    }
-
+    /// Revert all changes that happened in given journal entries.
     #[inline]
     fn journal_revert(
         state: &mut State,
@@ -380,6 +371,8 @@ impl JournaledState {
         }
     }
 
+    /// Makes a checkpoint that in case of Revert can bring back state to this point.
+    #[inline]
     pub fn checkpoint(&mut self) -> JournalCheckpoint {
         let checkpoint = JournalCheckpoint {
             log_i: self.logs.len(),
@@ -422,7 +415,8 @@ impl JournaledState {
         self.journal.truncate(checkpoint.journal_i);
     }
 
-    /// Transfer balance from address to target. Check if target exist/is_cold
+    /// Performans selfdestruct action.
+    /// Transfers balance from address to target. Check if target exist/is_cold
     ///
     /// Note: balance will be lost if [address] and [target] are the same BUT when
     /// current spec enables Cancun, this happens only when the account associated to [address]
@@ -521,6 +515,7 @@ impl JournaledState {
     }
 
     /// load account into memory. return if it is cold or warm accessed
+    #[inline]
     pub fn load_account<DB: Database>(
         &mut self,
         address: Address,
@@ -549,7 +544,10 @@ impl JournaledState {
         })
     }
 
-    // first is is_cold second bool is exists.
+    /// Load account from database to JournaledState.
+    ///
+    /// Return boolean pair where first is `is_cold`` second bool `is_exists`.
+    #[inline]
     pub fn load_account_exist<DB: Database>(
         &mut self,
         address: Address,
@@ -568,6 +566,8 @@ impl JournaledState {
         Ok((is_cold, exist))
     }
 
+    /// Loads code.
+    #[inline]
     pub fn load_code<DB: Database>(
         &mut self,
         address: Address,
@@ -586,7 +586,12 @@ impl JournaledState {
         Ok((acc, is_cold))
     }
 
-    // account is already present and loaded.
+    /// Load storage slot
+    ///
+    /// # Note
+    ///
+    /// Account is already present and loaded.
+    #[inline]
     pub fn sload<DB: Database>(
         &mut self,
         address: Address,
@@ -623,8 +628,13 @@ impl JournaledState {
         Ok(load)
     }
 
+    /// Stores storage slot.
+    /// And returns (original,present,new) slot value.
+    ///
+    /// Note:
+    ///
     /// account should already be present in our state.
-    /// returns (original,present,new) slot
+    #[inline]
     pub fn sstore<DB: Database>(
         &mut self,
         address: Address,
@@ -660,6 +670,7 @@ impl JournaledState {
     /// Read transient storage tied to the account.
     ///
     /// EIP-1153: Transient storage opcodes
+    #[inline]
     pub fn tload(&mut self, address: Address, key: U256) -> U256 {
         self.transient_storage
             .get(&(address, key))
@@ -673,6 +684,7 @@ impl JournaledState {
     /// so that old state can be reverted if that action is needed.
     ///
     /// EIP-1153: Transient storage opcodes
+    #[inline]
     pub fn tstore(&mut self, address: Address, key: U256, new: U256) {
         let had_value = if new == U256::ZERO {
             // if new values is zero, remove entry from transient storage.
@@ -709,11 +721,13 @@ impl JournaledState {
     }
 
     /// push log into subroutine
+    #[inline]
     pub fn log(&mut self, log: Log) {
         self.logs.push(log);
     }
 }
 
+/// Journal entries that are used to track changes to the state and are used to revert it.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum JournalEntry {
