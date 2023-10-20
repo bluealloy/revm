@@ -39,6 +39,10 @@ impl JournaledState {
     ///
     /// Note: This function will journal state after Spurious Dragon fork.
     /// And will not take into account if account is not existing or empty.
+    ///
+    /// # Note
+    ///
+    /// Precompile addresses should be sorted.
     pub fn new(spec: SpecId, precompile_addresses: Vec<Address>) -> JournaledState {
         Self {
             state: HashMap::new(),
@@ -52,6 +56,7 @@ impl JournaledState {
     }
 
     /// Return reference to state.
+    #[inline]
     pub fn state(&mut self) -> &mut State {
         &mut self.state
     }
@@ -59,12 +64,15 @@ impl JournaledState {
     /// Mark account as touched as only touched accounts will be added to state.
     /// This is especially important for state clear where touched empty accounts needs to
     /// be removed from state.
+    #[inline]
     pub fn touch(&mut self, address: &Address) {
         if let Some(account) = self.state.get_mut(address) {
             Self::touch_account(self.journal.last_mut().unwrap(), address, account);
         }
     }
 
+    /// Mark account as touched.
+    #[inline]
     fn touch_account(journal: &mut Vec<JournalEntry>, address: &Address, account: &mut Account) {
         if !account.is_touched() {
             journal.push(JournalEntry::AccountTouched { address: *address });
@@ -73,6 +81,7 @@ impl JournaledState {
     }
 
     /// do cleanup and return modified state
+    #[inline]
     pub fn finalize(&mut self) -> (State, Vec<Log>) {
         let state = mem::take(&mut self.state);
 
@@ -89,18 +98,21 @@ impl JournaledState {
     /// # Panics
     ///
     /// Panics if the account has not been loaded and is missing from the state set.
+    #[inline]
     pub fn account(&self, address: Address) -> &Account {
         self.state
             .get(&address)
             .expect("Account expected to be loaded") // Always assume that acc is already loaded
     }
 
+    #[inline]
     pub fn depth(&self) -> u64 {
         self.depth as u64
     }
 
     /// use it only if you know that acc is warm
     /// Assume account is warm
+    #[inline]
     pub fn set_code(&mut self, address: Address, code: Bytecode) {
         let account = self.state.get_mut(&address).unwrap();
         Self::touch_account(self.journal.last_mut().unwrap(), &address, account);
@@ -131,6 +143,7 @@ impl JournaledState {
         Some(account.info.nonce)
     }
 
+    #[inline]
     pub fn transfer<DB: Database>(
         &mut self,
         from: &Address,
@@ -187,6 +200,7 @@ impl JournaledState {
     ///
     /// Safety: It is assumed that caller balance is already checked and that
     /// caller is already loaded inside evm. This is already done inside `create_inner`
+    #[inline]
     pub fn create_account_checkpoint<SPEC: Spec>(
         &mut self,
         caller: Address,
@@ -274,6 +288,7 @@ impl JournaledState {
         false
     }
 
+    #[inline]
     fn journal_revert(
         state: &mut State,
         transient_storage: &mut TransientStorage,
@@ -375,10 +390,14 @@ impl JournaledState {
         checkpoint
     }
 
+    /// Commit the checkpoint.
+    #[inline]
     pub fn checkpoint_commit(&mut self) {
         self.depth -= 1;
     }
 
+    /// Reverts all changes to state until given checkpoint.
+    #[inline]
     pub fn checkpoint_revert(&mut self, checkpoint: JournalCheckpoint) {
         let is_spurious_dragon_enabled = SpecId::enabled(self.spec, SPURIOUS_DRAGON);
         let state = &mut self.state;
@@ -413,6 +432,7 @@ impl JournaledState {
     ///  * https://github.com/ethereum/go-ethereum/blob/141cd425310b503c5678e674a8c3872cf46b7086/core/vm/instructions.go#L832-L833
     ///  * https://github.com/ethereum/go-ethereum/blob/141cd425310b503c5678e674a8c3872cf46b7086/core/state/statedb.go#L449
     ///  * https://eips.ethereum.org/EIPS/eip-6780
+    #[inline]
     pub fn selfdestruct<DB: Database>(
         &mut self,
         address: Address,
@@ -473,25 +493,8 @@ impl JournaledState {
         })
     }
 
-    pub fn initial_account_and_code_load<DB: Database>(
-        &mut self,
-        address: Address,
-        db: &mut DB,
-    ) -> Result<&mut Account, DB::Error> {
-        let account = self.initial_account_load(address, &[], db)?;
-        if account.info.code.is_none() {
-            if account.info.code_hash == KECCAK_EMPTY {
-                account.info.code = Some(Bytecode::new());
-            } else {
-                // load code if requested
-                account.info.code = Some(db.code_by_hash(account.info.code_hash)?);
-            }
-        }
-
-        Ok(account)
-    }
-
     /// Initial load of account. This load will not be tracked inside journal
+    #[inline]
     pub fn initial_account_load<DB: Database>(
         &mut self,
         address: Address,
