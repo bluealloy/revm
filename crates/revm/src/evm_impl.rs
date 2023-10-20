@@ -94,21 +94,6 @@ pub trait Transact<DBError> {
     }
 }
 
-impl<'a, DB: Database> EVMData<'a, DB> {
-    /// Load access list for berlin hardfork.
-    ///
-    /// Loading of accounts/storages is needed to make them warm.
-    #[inline]
-    fn load_access_list(&mut self) -> Result<(), EVMError<DB::Error>> {
-        for (address, slots) in self.env.tx.access_list.iter() {
-            self.journaled_state
-                .initial_account_load(*address, slots, self.db)
-                .map_err(EVMError::Database)?;
-        }
-        Ok(())
-    }
-}
-
 #[cfg(feature = "optimism")]
 impl<'a, GSPEC: Spec, DB: Database> EVMImpl<'a, GSPEC, DB> {
     /// If the transaction is not a deposit transaction, subtract the L1 data fee from the
