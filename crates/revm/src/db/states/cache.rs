@@ -116,7 +116,7 @@ impl CacheState {
                 // Note: Create2 opcode (Petersburg) was after state clear EIP (Spurious Dragon)
                 //
                 // Note: It is possibility to create KECCAK_EMPTY contract with some storage
-                // by just setting storage inside CRATE contstructor. Overlap of those contracts
+                // by just setting storage inside CRATE constructor. Overlap of those contracts
                 // is not possible because CREATE2 is introduced later.
 
                 transitions.push((
