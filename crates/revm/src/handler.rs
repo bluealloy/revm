@@ -2,11 +2,11 @@ pub mod mainnet;
 #[cfg(feature = "optimism")]
 pub mod optimism;
 
-use crate::interpreter::{Gas, InstructionResult};
-use crate::primitives::{Env, Output, ResultAndState, Spec};
-use crate::EVMData;
-use revm_interpreter::primitives::db::Database;
-use revm_interpreter::primitives::{EVMError, EVMResultGeneric};
+use crate::{
+    interpreter::{Gas, InstructionResult},
+    primitives::{db::Database, EVMError, EVMResultGeneric, Env, Output, ResultAndState, Spec},
+    EVMData,
+};
 
 /// Handle call return and return final gas value.
 type CallReturnHandle = fn(&Env, InstructionResult, Gas) -> Gas;
@@ -43,7 +43,7 @@ pub struct Handler<DB: Database> {
     /// Calculate gas refund for transaction.
     /// Some chains have it disabled.
     pub calculate_gas_refund: CalculateGasRefundHandle,
-    /// Main return handle this handle output of the transact.
+    /// Main return handle, returns the output of the transaction.
     pub main_return: MainReturnHandle<DB>,
 }
 

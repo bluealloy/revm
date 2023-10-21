@@ -1,11 +1,12 @@
 //! Mainnet related handlers.
-use crate::interpreter::SuccessOrHalt;
-use crate::primitives::{EVMError, ExecutionResult, Output, ResultAndState};
 
 use crate::{
-    interpreter::{return_ok, return_revert, Gas, InstructionResult},
-    primitives::{db::Database, Env, Spec, SpecId::LONDON, U256},
-    EVMData,
+    interpreter::{return_ok, return_revert, Gas, InstructionResult, SuccessOrHalt},
+    primitives::{
+        db::Database, EVMError, EVMResult, Env, ExecutionResult, Output, ResultAndState, Spec,
+        SpecId::LONDON, U256,
+    },
+    EVMData, EVMImpl, Transact,
 };
 
 /// Handle output of the transaction
@@ -104,7 +105,7 @@ pub fn calculate_gas_refund<SPEC: Spec>(env: &Env, gas: &Gas) -> u64 {
     }
 }
 
-/// Main return handle this handle output of the transact.
+/// Main return handle, returns the output of the transaction.
 #[inline]
 pub fn main_return<DB: Database>(
     data: &mut EVMData<'_, DB>,
@@ -147,6 +148,14 @@ pub fn main_return<DB: Database>(
     };
 
     Ok(ResultAndState { result, state })
+}
+
+#[inline]
+pub fn default_transact<GSPEC: Spec + 'static, DB: Database>(
+    evm: &mut EVMImpl<'_, GSPEC, DB>,
+) -> EVMResult<DB::Error> {
+    evm.preverify_transaction()
+        .and_then(|_| evm.transact_preverified())
 }
 
 #[cfg(test)]

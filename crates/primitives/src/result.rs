@@ -215,6 +215,10 @@ pub enum InvalidTransaction {
     /// post-regolith hardfork.
     #[cfg(feature = "optimism")]
     DepositSystemTxPostRegolith,
+    /// Deposit transaction haults bubble up to the global main return handler,
+    /// wiping state and only increasing the nonce + persisting the mint value.
+    #[cfg(feature = "optimism")]
+    HaltedDepositPostRegolith,
 }
 
 #[cfg(feature = "std")]
@@ -278,6 +282,13 @@ impl fmt::Display for InvalidTransaction {
                 write!(
                     f,
                     "Deposit system transactions post regolith hardfork are not supported"
+                )
+            }
+            #[cfg(feature = "optimism")]
+            InvalidTransaction::HaltedDepositPostRegolith => {
+                write!(
+                    f,
+                    "Deposit transaction halted post-regolith. Error will be bubbled up to main return handler."
                 )
             }
         }

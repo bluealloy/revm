@@ -1,34 +1,29 @@
-use crate::handler::Handler;
-use crate::interpreter::{
-    analysis::to_analysed, gas, return_ok, CallContext, CallInputs, CallScheme, Contract,
-    CreateInputs, Gas, Host, InstructionResult, Interpreter, SelfDestructResult, Transfer,
+use crate::{
+    db::Database,
+    handler::Handler,
+    inspector_instruction,
+    interpreter::{
+        analysis::to_analysed,
+        gas,
+        gas::initial_tx_gas,
+        opcode::{make_boxed_instruction_table, make_instruction_table, InstructionTables},
+        return_ok, CallContext, CallInputs, CallScheme, Contract, CreateInputs, Gas, Host,
+        InstructionResult, Interpreter, SelfDestructResult, SharedMemory, Transfer, MAX_CODE_SIZE,
+    },
+    journaled_state::{is_precompile, JournalCheckpoint, JournaledState},
+    precompile::{self, Precompile, Precompiles},
+    primitives::{
+        keccak256, Address, AnalysisKind, Bytecode, Bytes, EVMError, EVMResult, Env,
+        InvalidTransaction, Log, Output, Spec, SpecId::*, TransactTo, B256, U256,
+    },
+    EVMData, Inspector,
 };
-use crate::journaled_state::{is_precompile, JournalCheckpoint, JournaledState};
-use crate::primitives::{
-    keccak256, Address, AnalysisKind, Bytecode, Bytes, EVMError, EVMResult, Env,
-    InvalidTransaction, Log, Output, Spec, SpecId::*, TransactTo, B256, U256,
-};
-use crate::{db::Database, precompile, Inspector};
-use crate::{inspector_instruction, EVMData};
-use alloc::boxed::Box;
-use alloc::sync::Arc;
-use alloc::vec::Vec;
+use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use auto_impl::auto_impl;
-use core::fmt;
-use core::marker::PhantomData;
-use revm_interpreter::{
-    gas::initial_tx_gas,
-    opcode::{make_boxed_instruction_table, make_instruction_table, InstructionTables},
-    SharedMemory, MAX_CODE_SIZE,
-};
-use revm_precompile::{Precompile, Precompiles};
+use core::{fmt, marker::PhantomData};
 
 #[cfg(feature = "optimism")]
-use crate::{
-    optimism,
-    precompile::HashMap,
-    primitives::{Account, ExecutionResult, ResultAndState},
-};
+use crate::optimism;
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -357,71 +352,12 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> Transact<DB::Error> for EVMImpl<'a
     fn transact(&mut self) -> EVMResult<DB::Error> {
         #[cfg(not(feature = "optimism"))]
         {
-            self.preverify_transaction()
-                .and_then(|_| self.transact_preverified())
+            crate::handler::mainnet::default_transact(self)
         }
 
         #[cfg(feature = "optimism")]
-        match self
-            .preverify_transaction()
-            .and_then(|_| self.transact_preverified())
         {
-            Ok(res) => Ok(res),
-            Err(err) => {
-                if self.env().cfg.optimism && self.env().tx.optimism.source_hash.is_some() {
-                    match err {
-                        EVMError::Header(_) | EVMError::Database(_) => Err(err),
-                        EVMError::Transaction(_) => {
-                            // If the transaction is a deposit transaction and it failed
-                            // for any reason, the caller nonce must be bumped, and the
-                            // gas reported must be the gas limit of the deposit. This is
-                            // also not returned as an error so that consumers can more
-                            // easily distinguish between a failed deposit and a failed
-                            // normal transaction.
-
-                            let sender = self.env().tx.caller;
-
-                            // Increment sender nonce
-                            // todo - handle error
-                            let mut account = Account::from(
-                                self.data
-                                    .db
-                                    .basic(sender)
-                                    .unwrap_or_default()
-                                    .unwrap_or_default(),
-                            );
-                            account.info.nonce = account.info.nonce.saturating_add(1);
-                            account.mark_touch();
-                            let state = HashMap::<Address, Account>::from([(sender, account)]);
-
-                            // The gas used of a failed deposit prior to regolith is the gas
-                            // limit of the transaction. Post-regolith, it is 0 for all
-                            // deposits.
-                            let is_system_tx = self
-                                .env()
-                                .tx
-                                .optimism
-                                .is_system_transaction
-                                .unwrap_or(false);
-                            let gas_used = if GSPEC::enabled(REGOLITH) || !is_system_tx {
-                                self.env().tx.gas_limit
-                            } else {
-                                0
-                            };
-
-                            Ok(ResultAndState {
-                                result: ExecutionResult::Halt {
-                                    reason: revm_interpreter::primitives::Halt::FailedDeposit,
-                                    gas_used,
-                                },
-                                state,
-                            })
-                        }
-                    }
-                } else {
-                    Err(err)
-                }
-            }
+            crate::handler::optimism::default_transact(self)
         }
     }
 }
