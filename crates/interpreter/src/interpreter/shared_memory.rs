@@ -26,25 +26,6 @@ pub struct SharedMemory {
     memory_limit: u64,
 }
 
-impl fmt::Debug for SharedMemory {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("SharedMemory")
-            .field("current_len", &self.len())
-            .field(
-                "context_memory",
-                &crate::primitives::hex::encode(self.context_memory()),
-            )
-            .finish_non_exhaustive()
-    }
-}
-
-impl Default for SharedMemory {
-    #[inline]
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl SharedMemory {
     /// Creates a new memory instance that can be shared between calls.
     ///
@@ -272,6 +253,18 @@ impl SharedMemory {
         self.context_memory_mut().copy_within(src..src + len, dst);
     }
 
+    /// Consumes the type and returns the current memory.
+    #[inline]
+    pub fn into_data(mut self) -> Vec<u8> {
+        self.buffer.split_off(self.last_checkpoint)
+    }
+
+    /// Returns the currently used memory.
+    #[inline]
+    pub fn data(&self) -> &[u8] {
+        self.context_memory()
+    }
+
     /// Returns a reference to the memory of the current context.
     #[inline]
     fn context_memory(&self) -> &[u8] {
@@ -288,6 +281,25 @@ impl SharedMemory {
         let buf_len = self.buffer.len();
         // SAFETY: access bounded by buffer length
         unsafe { self.buffer.get_unchecked_mut(self.last_checkpoint..buf_len) }
+    }
+}
+
+impl fmt::Debug for SharedMemory {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SharedMemory")
+            .field("current_len", &self.len())
+            .field(
+                "context_memory",
+                &crate::primitives::hex::encode(self.context_memory()),
+            )
+            .finish_non_exhaustive()
+    }
+}
+
+impl Default for SharedMemory {
+    #[inline]
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -391,5 +403,16 @@ mod tests {
         assert_eq!(shared_memory.buffer.len(), 64);
         assert_eq!(shared_memory.len(), 64);
         assert_eq!(shared_memory.buffer.get(0..64), Some(&[0_u8; 64] as &[u8]));
+    }
+
+    #[test]
+    fn memory_into_data() {
+        let mut shared_memory = SharedMemory::new();
+        let data = shared_memory.clone().into_data();
+        assert_eq!(data.len(), shared_memory.len());
+
+        shared_memory.new_context();
+        let data = shared_memory.clone().into_data();
+        assert!(data.is_empty());
     }
 }
