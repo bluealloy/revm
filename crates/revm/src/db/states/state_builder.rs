@@ -162,7 +162,7 @@ impl<DB: Database> StateBuilder<DB> {
                 .with_cache_prestate
                 .unwrap_or_else(|| CacheState::new(self.with_state_clear)),
             database: self.database,
-            transition_state: self.with_bundle_update.then(|| TransitionState::default()),
+            transition_state: self.with_bundle_update.then(TransitionState::default),
             bundle_state: self.with_bundle_prestate.unwrap_or_default(),
             use_preloaded_bundle,
             block_hashes: self.with_block_hashes,
