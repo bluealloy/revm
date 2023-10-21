@@ -28,7 +28,7 @@ once_cell = { version = "1.18", default-features = false, optional = true }
 
 # utility
 enumn = "0.1"
-derive_more = "0.99"
+derive_more = { version = "0.99", optional = true }
 
 # optional
 serde = { version = "1.0", features = ["derive", "rc"], optional = true }
@@ -75,4 +75,4 @@ optional_gas_refund = []
 optional_no_base_fee = []
 
 # See comments in `revm-precompile`
-c-kzg = ["dep:c-kzg", "dep:once_cell"]
+c-kzg = ["dep:c-kzg", "dep:once_cell", "dep:derive_more"]
