@@ -238,7 +238,7 @@ impl AccountInfo {
     /// - balance is zero
     /// - nonce is zero
     pub fn is_empty(&self) -> bool {
-        let code_empty = self.code_hash == KECCAK_EMPTY || self.code_hash == B256::ZERO;
+        let code_empty = self.is_empty_code_hash() || self.code_hash == B256::ZERO;
         self.balance == U256::ZERO && self.nonce == 0 && code_empty
     }
 
@@ -250,6 +250,12 @@ impl AccountInfo {
     /// If account does not have code, it return's `KECCAK_EMPTY` hash.
     pub fn code_hash(&self) -> B256 {
         self.code_hash
+    }
+
+    /// Returns true if the code hash is the Keccak256 hash of the empty string `""`.
+    #[inline]
+    pub fn is_empty_code_hash(&self) -> bool {
+        self.code_hash == KECCAK_EMPTY
     }
 
     /// Take bytecode from account. Code will be set to None.
