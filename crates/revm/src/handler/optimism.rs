@@ -2,7 +2,7 @@
 
 use super::mainnet;
 use crate::{
-    interpreter::{return_ok, return_revert, Gas, Host, InstructionResult, SuccessOrHalt},
+    interpreter::{return_ok, return_revert, Gas, Host, InstructionResult},
     optimism,
     precompile::HashMap,
     primitives::{
@@ -152,54 +152,21 @@ pub fn main_return<SPEC: Spec, DB: Database>(
     output: Output,
     gas: &Gas,
 ) -> Result<ResultAndState, EVMError<DB::Error>> {
-    // used gas with refund calculated.
-    let gas_refunded = gas.refunded() as u64;
-    let final_gas_used = gas.spend() - gas_refunded;
+    let result = mainnet::main_return::<DB>(data, call_result, output, gas)?;
 
-    // reset journal and return present state.
-    let (state, logs) = data.journaled_state.finalize();
-
-    let result = match call_result.into() {
-        SuccessOrHalt::Success(reason) => ExecutionResult::Success {
-            reason,
-            gas_used: final_gas_used,
-            gas_refunded,
-            logs,
-            output,
-        },
-        SuccessOrHalt::Revert => ExecutionResult::Revert {
-            gas_used: final_gas_used,
-            output: match output {
-                Output::Call(return_value) => return_value,
-                Output::Create(return_value, _) => return_value,
-            },
-        },
-        SuccessOrHalt::Halt(reason) => {
-            // Post-regolith, if the transaction is a deposit transaction and it haults,
-            // we bubble up to the global return handler. The mint value will be persisted
-            // and the caller nonce will be incremented there.
-            let is_deposit = data.env.tx.optimism.source_hash.is_some();
-            let optimism_regolith = data.env.cfg.optimism && SPEC::enabled(REGOLITH);
-            if is_deposit && optimism_regolith {
-                return Err(EVMError::Transaction(
-                    InvalidTransaction::HaltedDepositPostRegolith,
-                ));
-            }
-
-            ExecutionResult::Halt {
-                reason,
-                gas_used: final_gas_used,
-            }
+    if result.result.is_halt() {
+        // Post-regolith, if the transaction is a deposit transaction and it haults,
+        // we bubble up to the global return handler. The mint value will be persisted
+        // and the caller nonce will be incremented there.
+        let is_deposit = data.env.tx.optimism.source_hash.is_some();
+        let optimism_regolith = data.env.cfg.optimism && SPEC::enabled(REGOLITH);
+        if is_deposit && optimism_regolith {
+            return Err(EVMError::Transaction(
+                InvalidTransaction::HaltedDepositPostRegolith,
+            ));
         }
-        SuccessOrHalt::FatalExternalError => {
-            return Err(EVMError::Database(data.error.take().unwrap()));
-        }
-        SuccessOrHalt::InternalContinue => {
-            panic!("Internal return flags should remain internal {call_result:?}")
-        }
-    };
-
-    Ok(ResultAndState { result, state })
+    }
+    Ok(result)
 }
 
 #[inline]
