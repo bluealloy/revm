@@ -47,6 +47,11 @@ impl ExecutionResult {
         matches!(self, Self::Success { .. })
     }
 
+    /// Returns true if execution result is a Halt.
+    pub fn is_halt(&self) -> bool {
+        matches!(self, Self::Halt { .. })
+    }
+
     /// Return logs, if execution is not successful, function will return empty vec.
     pub fn logs(&self) -> Vec<Log> {
         match self {
