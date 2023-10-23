@@ -2,23 +2,68 @@ use crate::{
     primitives::{B256, U256},
     InstructionResult,
 };
+use alloc::vec;
 use alloc::vec::Vec;
 use core::fmt;
 
 /// EVM interpreter stack limit.
 pub(crate) const STACK_LIMIT: usize = 1024;
 
-/// EVM stack.
+const PAGE_SIZE: usize = 4 * STACK_LIMIT;
+type Buffer = Vec<U256>;
+type Checkpoints = Vec<usize>;
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct SharedStack {
-    /// Shared buffer
-    pub buffer: Vec<U256>,
+struct Page {
+    /// The underlying buffers shared between calls
+    buffer: Buffer,
     /// Stack checkpoints for each depth
-    /// Invariant: these are always in bounds of `data`.
-    pub checkpoints: Vec<usize>,
-    /// Invariant: equals `self.checkpoints.last()`
-    pub last_checkpoint: usize,
+    ///
+    /// Invariant: these are always in bounds of `buffer`.
+    checkpoints: Checkpoints,
+}
+
+impl Page {
+    #[inline]
+    fn new() -> Self {
+        let checkpoints = Vec::with_capacity(32);
+        Self {
+            buffer: Vec::with_capacity(PAGE_SIZE),
+            checkpoints,
+        }
+    }
+}
+
+/// A sequential stack shared between calls, which uses
+/// a vector of "pages" (buffers) or internal representation.
+///
+/// Each page includes a buffer of size `PAGE_SIZE` which
+/// is shared between calls, and when there is no more space left
+/// we move to a new page.
+///
+/// A [SharedStack] instance should always be obtained using
+/// the `new` static method to ensure memory safety.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SharedStack {
+    /// The underlying data divided in pages,
+    /// where each page has size `PAGE_SIZE`
+    pages: Vec<Page>,
+    /// Keeps track of the page used for the current context
+    /// Invariant: is a valid index of `self.pages`
+    page_idx: usize,
+    /// The pointer to the buffer used by the current page.
+    /// Needed for better performance and to avoid double
+    /// heap lookup for basic stack operations.
+    ///
+    /// Invariant: it a valid pointer to `self.pages[self.page_idx].buffer`
+    buffer: *mut Buffer,
+    /// Keeps track of the length of the stack in the current context.
+    /// Needed for better performance and to avoid double
+    /// heap lookup for basic stack operations.
+    ///
+    /// Invariant: it a valid pointer to `self.pages[self.page_idx].buffer`
+    context_len: usize,
 }
 
 impl fmt::Display for SharedStack {
@@ -42,41 +87,71 @@ impl Default for SharedStack {
 }
 
 impl SharedStack {
-    /// Instantiate a new stack with the [default stack limit][STACK_LIMIT].
+    /// Instantiate a new shared stack with a single page of size `PAGE_SIZE`
     #[inline]
     pub fn new() -> Self {
+        let mut pages = vec![Page::new()];
+        let buffer = unsafe { &mut pages.get_unchecked_mut(0).buffer };
         Self {
-            buffer: Vec::with_capacity(STACK_LIMIT),
-            checkpoints: Vec::with_capacity(32),
-            last_checkpoint: 0,
+            buffer,
+            pages,
+            page_idx: 0,
+            context_len: 0,
         }
     }
 
     /// Prepares the shared stack for a new context
     #[inline]
     pub fn new_context(&mut self) {
-        let buf_len = self.buffer.len();
-        self.checkpoints.push(buf_len);
-        self.last_checkpoint = buf_len;
-        self.buffer.reserve(STACK_LIMIT);
+        // check memory left for the current page
+        let page = self.page_mut();
+        let memory_left = page.buffer.capacity() - page.buffer.len();
+
+        if memory_left < STACK_LIMIT {
+            // we need to move to the next page
+            self.page_idx += 1;
+            if self.pages.len() == self.page_idx {
+                // new page needed
+                self.pages.push(Page::new());
+            }
+            let page = self.page_mut();
+            page.checkpoints.push(0);
+            self.buffer = &mut page.buffer
+        } else {
+            page.checkpoints.push(page.buffer.len())
+        }
+        self.context_len = 0;
     }
 
     /// Prepares the shared stack for returning to the previous context
     #[inline]
     pub fn free_context(&mut self) {
-        if let Some(old_checkpoint) = self.checkpoints.pop() {
-            self.last_checkpoint = self.last_checkpoint();
-            // SAFETY: checkpoints are always bounded by buffer length
-            unsafe { self.buffer.set_len(old_checkpoint) }
+        let page = self.page_mut();
+        // SAFETY: `new_context` logic always guarantees at least the zero checkpoint in it
+        let old_checkpoint = unsafe { page.checkpoints.pop().unwrap_unchecked() };
+        if let Some(last_checkpoint) = page.checkpoints.last() {
+            // SAFETY: checkpoints are always in bound of buffers
+            unsafe {
+                page.buffer.set_len(old_checkpoint);
+            };
+            self.context_len = old_checkpoint - last_checkpoint;
+        } else if self.page_idx > 0 {
+            // no more checkpoints means we need to move to the previous page
+            self.page_idx -= 1;
+            self.buffer = &mut self.page_mut().buffer;
+            // SAFETY: Going back to previous page implies non-empty checkpoints list
+            self.context_len = unsafe {
+                self.buffer().len() - self.page().checkpoints.last().cloned().unwrap_unchecked()
+            };
+        } else {
+            self.context_len = 0;
         }
     }
 
     /// Returns the length of the stack in words.
     #[inline]
     pub fn len(&self) -> usize {
-        // Since checkpoints are bounded by buffer length
-        // this is always a nonnegative integer
-        self.buffer.len() - self.last_checkpoint
+        self.context_len
     }
 
     /// Returns whether the stack is empty.
@@ -91,16 +166,17 @@ impl SharedStack {
         self.context_stack()
     }
 
-    /// Removes the topmost element from the stack and returns it, or `StackUnderflow` if it is
-    /// empty.
+    /// Removes the topmost element from the stack and returns it,
+    /// or `StackUnderflow` if it is empty.
     #[inline]
     pub fn pop(&mut self) -> Result<U256, InstructionResult> {
         if self.is_empty() {
             Err(InstructionResult::StackUnderflow)
         } else {
+            self.context_len -= 1;
             // SAFETY: `self.len()` <= `self.buffer.len()` by construction,
             // and `self.len()` > 0 thanks to the check above
-            Ok(unsafe { self.buffer.pop().unwrap_unchecked() })
+            Ok(unsafe { self.buffer_mut().pop().unwrap_unchecked() })
         }
     }
 
@@ -110,13 +186,11 @@ impl SharedStack {
     #[inline]
     pub fn peek(&self, no_from_top: usize) -> Result<U256, InstructionResult> {
         if self.len() > no_from_top {
+            let buffer = self.buffer();
             // SAFETY: `0 < no_from_top + 1` <= self.len()` <= `self.buffer.len()`
             // Therefore, this index is bounded between 0 and `self.buffer.len()`
-            Ok(unsafe {
-                *self
-                    .buffer
-                    .get_unchecked(self.buffer.len() - no_from_top - 1)
-            })
+            let val = unsafe { *buffer.get_unchecked(buffer.len() - no_from_top - 1) };
+            Ok(val)
         } else {
             Err(InstructionResult::StackUnderflow)
         }
@@ -129,8 +203,9 @@ impl SharedStack {
     /// The caller is responsible for checking the length of the stack.
     #[inline]
     pub unsafe fn top_unsafe(&mut self) -> &mut U256 {
-        let len = self.buffer.len();
-        self.buffer.get_unchecked_mut(len - 1)
+        let buffer = self.buffer_mut();
+        let buf_len = buffer.len();
+        buffer.get_unchecked_mut(buf_len - 1)
     }
 
     /// Removes the topmost element from the stack and returns it.
@@ -140,7 +215,8 @@ impl SharedStack {
     /// The caller is responsible for checking the length of the stack.
     #[inline]
     pub unsafe fn pop_unsafe(&mut self) -> U256 {
-        self.buffer.pop().unwrap_unchecked()
+        self.context_len -= 1;
+        self.buffer_mut().pop().unwrap_unchecked()
     }
 
     /// Pop the topmost value, returning the value and the new topmost value.
@@ -216,17 +292,18 @@ impl SharedStack {
     /// unchanged.
     #[inline]
     pub fn push(&mut self, value: U256) -> Result<(), InstructionResult> {
-        // allows the compiler to optimize out the `Vec::push` capacity check
-        let buf_len = self.buffer.len();
-        if self.len() == STACK_LIMIT {
+        if self.len() >= STACK_LIMIT {
             return Err(InstructionResult::StackOverflow);
         }
+        let buffer = self.buffer_mut();
+        let buf_len = buffer.len();
         // SAFETY: the check above and the `new_context` method
         // guarantee we have enough capacity
         unsafe {
-            *self.buffer.get_unchecked_mut(buf_len) = value;
-            self.buffer.set_len(buf_len + 1);
-        };
+            *buffer.get_unchecked_mut(buf_len) = value;
+            buffer.set_len(buf_len + 1);
+        }
+        self.context_len += 1;
         Ok(())
     }
 
@@ -240,20 +317,21 @@ impl SharedStack {
     /// Duplicates the `N`th value from the top of the stack, with `N` >= 1
     #[inline]
     pub fn dup<const N: usize>(&mut self) -> Result<(), InstructionResult> {
-        let len = self.len();
-        if len < N {
+        if self.len() < N {
             Err(InstructionResult::StackUnderflow)
-        } else if len >= STACK_LIMIT {
+        } else if self.len() >= STACK_LIMIT {
             Err(InstructionResult::StackOverflow)
         } else {
-            let buf_len = self.buffer.len();
+            let buffer = self.buffer_mut();
+            let buf_len = buffer.len();
             // SAFETY: the check above and the `new_context`
             // method guarantee we have enough capacity
             unsafe {
-                let val = *self.buffer.get_unchecked(buf_len - N);
-                *self.buffer.get_unchecked_mut(buf_len) = val;
-                self.buffer.set_len(buf_len + 1);
+                let val = *buffer.get_unchecked(buf_len - N);
+                *buffer.get_unchecked_mut(buf_len) = val;
+                buffer.set_len(buf_len + 1);
             };
+            self.context_len += 1;
             Ok(())
         }
     }
@@ -264,8 +342,9 @@ impl SharedStack {
         if self.len() <= N {
             return Err(InstructionResult::StackUnderflow);
         }
-        let last = self.buffer.len() - 1;
-        self.buffer.swap(last, last - N);
+        let buffer = self.buffer_mut();
+        let last = buffer.len() - 1;
+        buffer.swap(last, last - N);
         Ok(())
     }
 
@@ -275,8 +354,7 @@ impl SharedStack {
     /// unchanged.
     #[inline]
     pub fn push_slice<const N: usize>(&mut self, slice: &[u8]) -> Result<(), InstructionResult> {
-        let len = self.len();
-        if len >= STACK_LIMIT {
+        if self.len() >= STACK_LIMIT {
             return Err(InstructionResult::StackOverflow);
         }
 
@@ -320,12 +398,14 @@ impl SharedStack {
                 }
             }
 
-            let buf_len = self.buffer.len();
-
+            let buffer = self.buffer_mut();
+            let buf_len = buffer.len();
             // SAFETY: the check above and the `new_context`
             // method guarantee we have enough capacity
-            *self.buffer.get_unchecked_mut(buf_len) = slot;
-            self.buffer.set_len(buf_len + 1);
+
+            *buffer.get_unchecked_mut(buf_len) = slot;
+            buffer.set_len(buf_len + 1);
+            self.context_len += 1;
         }
         Ok(())
     }
@@ -336,30 +416,51 @@ impl SharedStack {
     #[inline]
     pub fn set(&mut self, no_from_top: usize, val: U256) -> Result<(), InstructionResult> {
         if self.len() > no_from_top {
-            let buf_len = self.buffer.len();
+            let buffer = self.buffer_mut();
+            let buf_len = buffer.len();
             // SAFETY: `0 < no_from_top + 1` <= self.len()` <= `self.buffer.len()`.
             // Therefore, this index is bounded between 0 and `self.buffer.len()`
-            unsafe { *self.buffer.get_unchecked_mut(buf_len - no_from_top - 1) = val };
+            unsafe { *buffer.get_unchecked_mut(buf_len - no_from_top - 1) = val };
             Ok(())
         } else {
             Err(InstructionResult::StackUnderflow)
         }
     }
 
+    #[inline]
+    fn page(&self) -> &Page {
+        // SAFETY: by construction, `self.page_idx` is a valid
+        // index of `self.pages`
+        unsafe { self.pages.get_unchecked(self.page_idx) }
+    }
+
+    #[inline]
+    fn page_mut(&mut self) -> &mut Page {
+        // SAFETY: by construction, `self.page_idx` is a valid
+        // index of `self.pages`
+        unsafe { self.pages.get_unchecked_mut(self.page_idx) }
+    }
+
+    #[inline]
+    fn buffer(&self) -> &Buffer {
+        // SAFETY: by construction, `self.buffer` is a valid
+        // pointer to the buffer of the current page
+        unsafe { &*self.buffer }
+    }
+
+    #[inline]
+    fn buffer_mut(&mut self) -> &mut Buffer {
+        // SAFETY: by construction, `self.buffer` is a valid
+        // pointer to the buffer of the current page
+        unsafe { &mut *self.buffer }
+    }
+
     /// Get a reference to the stack of the current context
     #[inline]
     fn context_stack(&self) -> &[U256] {
+        let buffer = self.buffer();
         // SAFETY: range is bounded between 0 and buffer length
-        unsafe {
-            self.buffer
-                .get_unchecked(self.last_checkpoint..self.buffer.len())
-        }
-    }
-
-    /// Get the last stack checkpoint
-    #[inline]
-    fn last_checkpoint(&self) -> usize {
-        self.checkpoints.last().cloned().unwrap_or_default()
+        unsafe { buffer.get_unchecked(buffer.len() - self.context_len..buffer.len()) }
     }
 }
 
@@ -368,51 +469,174 @@ mod tests {
     use super::*;
 
     #[test]
-    fn new_free_context_stack() {
+    fn new_free() {
         let mut shared_stack = SharedStack::new();
+
         shared_stack.new_context();
-        assert_eq!(shared_stack.last_checkpoint(), 0);
-        assert_eq!(shared_stack.checkpoints.len(), 1);
+        assert_eq!(shared_stack.page_idx, 0);
+        assert_eq!(shared_stack.pages.len(), 1);
+        assert_eq!(shared_stack.page().checkpoints.len(), 1);
+        assert_eq!(shared_stack.page().checkpoints[0], 0);
+        assert_eq!(shared_stack.context_len, 0);
 
-        unsafe { shared_stack.buffer.set_len(16) }
+        let new_len = STACK_LIMIT / 2;
+        shared_stack.context_len = new_len;
+        unsafe { shared_stack.buffer_mut().set_len(new_len) };
+
         shared_stack.new_context();
-        assert_eq!(shared_stack.last_checkpoint(), 16);
-        assert_eq!(shared_stack.checkpoints.len(), 2);
-        assert_eq!(shared_stack.len(), 0);
+        assert_eq!(shared_stack.page_idx, 0);
+        assert_eq!(shared_stack.pages.len(), 1);
+        assert_eq!(shared_stack.page().checkpoints.len(), 2);
+        assert_eq!(shared_stack.page().checkpoints[1], new_len);
+        assert_eq!(shared_stack.context_len, 0);
 
-        unsafe { shared_stack.buffer.set_len(48) }
+        // first free in the same context
+        shared_stack.free_context();
+        assert_eq!(shared_stack.page_idx, 0);
+        assert_eq!(shared_stack.pages.len(), 1);
+        assert_eq!(shared_stack.page().checkpoints.len(), 1);
+        assert_eq!(shared_stack.page().checkpoints[0], 0);
+        assert_eq!(shared_stack.context_len, new_len);
+
+        // reset
+        shared_stack.free_context();
+        assert_eq!(shared_stack.page_idx, 0);
+        assert_eq!(shared_stack.pages.len(), 1);
+        assert_eq!(shared_stack.page().checkpoints.len(), 0);
+        assert_eq!(shared_stack.context_len, 0);
+
+        // fill current page
+        for i in 0..7 {
+            shared_stack.new_context();
+            assert_eq!(shared_stack.context_len, 0);
+            assert_eq!(shared_stack.pages.len(), 1);
+            assert_eq!(shared_stack.page().checkpoints.len(), i + 1);
+            assert_eq!(
+                shared_stack.page().checkpoints.last().cloned().unwrap(),
+                shared_stack.buffer().len()
+            );
+
+            let new_len = STACK_LIMIT / 2;
+            unsafe { shared_stack.buffer_mut().set_len(new_len * (i + 1)) };
+            shared_stack.context_len = new_len;
+            println!("buffer len = {}", shared_stack.buffer().len());
+        }
+
+        // a new page should be created
         shared_stack.new_context();
-        assert_eq!(shared_stack.last_checkpoint(), 48);
-        assert_eq!(shared_stack.checkpoints.len(), 3);
-        assert_eq!(shared_stack.len(), 0);
-        assert_eq!(shared_stack.buffer.len(), 48);
+        assert_eq!(shared_stack.page_idx, 1);
+        assert_eq!(shared_stack.pages.len(), 2);
+        assert_eq!(shared_stack.page().checkpoints.len(), 1);
+        assert_eq!(shared_stack.page().checkpoints[0], 0);
+        assert_eq!(shared_stack.context_len, 0);
 
-        // free contexts
+        // go back to previous page
         shared_stack.free_context();
-        assert_eq!(shared_stack.last_checkpoint(), 16);
-        assert_eq!(shared_stack.buffer.len(), 48);
-        assert_eq!(shared_stack.checkpoints.len(), 2);
-        assert_eq!(shared_stack.len(), 32);
+        assert_eq!(shared_stack.page_idx, 0);
+        assert_eq!(shared_stack.pages.len(), 2);
+        assert_eq!(shared_stack.page().checkpoints.len(), 7);
+        assert_eq!(shared_stack.page().checkpoints[6], STACK_LIMIT * 3);
+        assert_eq!(shared_stack.context_len, STACK_LIMIT / 2);
 
-        shared_stack.free_context();
-        assert_eq!(shared_stack.last_checkpoint(), 0);
-        assert_eq!(shared_stack.checkpoints.len(), 1);
-        assert_eq!(shared_stack.len(), 16);
-        assert_eq!(shared_stack.buffer.len(), 16);
-
-        shared_stack.free_context();
-        assert_eq!(shared_stack.last_checkpoint(), 0);
-        assert_eq!(shared_stack.checkpoints.len(), 0);
-        assert_eq!(shared_stack.len(), 0);
-        assert_eq!(shared_stack.buffer.len(), 0);
+        // go to new page without creating it
+        shared_stack.new_context();
+        assert_eq!(shared_stack.page_idx, 1);
+        assert_eq!(shared_stack.pages.len(), 2);
+        assert_eq!(shared_stack.page().checkpoints.len(), 1);
+        assert_eq!(shared_stack.page().checkpoints[0], 0);
+        assert_eq!(shared_stack.context_len, 0);
     }
+
+    #[test]
+    fn new_consecutive() {
+        let mut shared_stack = SharedStack::new();
+        for i in 0..3 {
+            for j in 0..7 {
+                println!("i = {}, j = {}", i, j);
+                shared_stack.new_context();
+                assert_eq!(shared_stack.page_idx, i);
+                assert_eq!(shared_stack.pages.len(), i + 1);
+                assert_eq!(shared_stack.context_len, 0);
+                assert_eq!(shared_stack.page().checkpoints.len(), j + 1);
+                assert_eq!(
+                    shared_stack.page().checkpoints.last().cloned().unwrap(),
+                    shared_stack.buffer().len()
+                );
+
+                let new_len = STACK_LIMIT / 2;
+                unsafe { shared_stack.buffer_mut().set_len(new_len * (j + 1)) };
+                shared_stack.context_len = new_len;
+                println!("buffer len = {}", shared_stack.buffer().len());
+            }
+        }
+
+        // println!("Free");
+        //
+        // for i in (0..3).rev() {
+        //     for j in (0..7).rev() {
+        //         println!("i = {}, j = {}", i, j);
+        //         assert_eq!(shared_stack.page_idx, i);
+        //         assert_eq!(shared_stack.pages.len(), i + 1);
+        //         assert_eq!(shared_stack.context_len, STACK_LIMIT / 2);
+        //         assert_eq!(shared_stack.page().checkpoints.len(), j + 1);
+        //         assert_eq!(
+        //             shared_stack.page().checkpoints.last().cloned().unwrap(),
+        //             shared_stack.buffer().len()
+        //         );
+        //         println!("buffer len = {}", shared_stack.buffer().len());
+        //         shared_stack.free_context();
+        //     }
+        // }
+    }
+
+    // #[test]
+    // fn new_free_context_stack() {
+    //     let mut shared_stack = SharedStack::new();
+    //     shared_stack.new_context();
+    //     assert_eq!(shared_stack.last_checkpoint(), 0);
+    //     assert_eq!(shared_stack.checkpoints.len(), 1);
+    //
+    //     unsafe { shared_stack.buffer.set_len(16) }
+    //     shared_stack.new_context();
+    //     assert_eq!(shared_stack.last_checkpoint(), 16);
+    //     assert_eq!(shared_stack.checkpoints.len(), 2);
+    //     assert_eq!(shared_stack.len(), 0);
+    //
+    //     unsafe { shared_stack.buffer.set_len(48) }
+    //     shared_stack.new_context();
+    //     assert_eq!(shared_stack.last_checkpoint(), 48);
+    //     assert_eq!(shared_stack.checkpoints.len(), 3);
+    //     assert_eq!(shared_stack.len(), 0);
+    //     assert_eq!(shared_stack.buffer.len(), 48);
+    //
+    //     // free contexts
+    //     shared_stack.free_context();
+    //     assert_eq!(shared_stack.last_checkpoint(), 16);
+    //     assert_eq!(shared_stack.buffer.len(), 48);
+    //     assert_eq!(shared_stack.checkpoints.len(), 2);
+    //     assert_eq!(shared_stack.len(), 32);
+    //
+    //     shared_stack.free_context();
+    //     assert_eq!(shared_stack.last_checkpoint(), 0);
+    //     assert_eq!(shared_stack.checkpoints.len(), 1);
+    //     assert_eq!(shared_stack.len(), 16);
+    //     assert_eq!(shared_stack.buffer.len(), 16);
+    //
+    //     shared_stack.free_context();
+    //     assert_eq!(shared_stack.last_checkpoint(), 0);
+    //     assert_eq!(shared_stack.checkpoints.len(), 0);
+    //     assert_eq!(shared_stack.len(), 0);
+    //     assert_eq!(shared_stack.buffer.len(), 0);
+    // }
 
     #[test]
     fn pop() {
         let mut shared_stack = SharedStack::new();
         shared_stack.new_context();
 
-        shared_stack.buffer.push(U256::from(1));
+        shared_stack.buffer_mut().push(U256::from(1));
+        assert_eq!(shared_stack.buffer()[0], U256::from(1));
+        shared_stack.context_len += 1;
         assert_eq!(shared_stack.pop(), Ok(U256::from(1)));
     }
 
@@ -424,7 +648,7 @@ mod tests {
         assert_eq!(shared_stack.pop(), Err(InstructionResult::StackUnderflow));
 
         // pop underflow in a new empty context
-        unsafe { shared_stack.buffer.set_len(STACK_LIMIT / 2) }
+        unsafe { shared_stack.page_mut().buffer.set_len(STACK_LIMIT / 2) }
         shared_stack.new_context();
         assert_eq!(shared_stack.pop(), Err(InstructionResult::StackUnderflow));
     }
@@ -437,12 +661,12 @@ mod tests {
         let one = U256::from(1);
         let res = shared_stack.push(one);
         assert_eq!(res, Ok(()));
-        assert_eq!(shared_stack.buffer[0], one);
+        assert_eq!(shared_stack.page_mut().buffer[0], one);
 
         let two = U256::from(2);
         let res = shared_stack.push(two);
         assert_eq!(res, Ok(()));
-        assert_eq!(shared_stack.buffer[1], two);
+        assert_eq!(shared_stack.page_mut().buffer[1], two);
     }
 
     #[test]
@@ -454,7 +678,7 @@ mod tests {
             assert_eq!(shared_stack.push(U256::ZERO), Ok(()));
         }
 
-        assert_eq!(shared_stack.buffer.len(), STACK_LIMIT);
+        assert_eq!(shared_stack.page_mut().buffer.len(), STACK_LIMIT);
         assert_eq!(shared_stack.len(), STACK_LIMIT);
         assert_eq!(
             shared_stack.push(U256::ZERO),
@@ -468,7 +692,7 @@ mod tests {
         shared_stack.new_context();
 
         assert_eq!(shared_stack.push_slice::<1>(&[1]), Ok(()));
-        assert_eq!(shared_stack.buffer[0], U256::from(1));
+        assert_eq!(shared_stack.page_mut().buffer[0], U256::from(1));
         assert_eq!(shared_stack.len(), 1);
     }
 
@@ -481,7 +705,7 @@ mod tests {
             assert_eq!(shared_stack.push_slice::<1>(&[0]), Ok(()));
         }
         assert_eq!(shared_stack.len(), STACK_LIMIT);
-        assert_eq!(shared_stack.buffer.len(), STACK_LIMIT);
+        assert_eq!(shared_stack.page_mut().buffer.len(), STACK_LIMIT);
         assert_eq!(
             shared_stack.push_slice::<1>(&[0]),
             Err(InstructionResult::StackOverflow)
@@ -498,15 +722,15 @@ mod tests {
         assert_eq!(shared_stack.push(U256::from(3)), Ok(()));
         assert_eq!(shared_stack.push(U256::from(4)), Ok(()));
         assert_eq!(shared_stack.len(), 4);
-        assert_eq!(shared_stack.buffer[3], U256::from(4));
+        assert_eq!(shared_stack.page_mut().buffer[3], U256::from(4));
 
         assert_eq!(shared_stack.dup::<1>(), Ok(()));
         assert_eq!(shared_stack.len(), 5);
-        assert_eq!(shared_stack.buffer[4], U256::from(4));
+        assert_eq!(shared_stack.page_mut().buffer[4], U256::from(4));
 
         assert_eq!(shared_stack.dup::<3>(), Ok(()));
         assert_eq!(shared_stack.len(), 6);
-        assert_eq!(shared_stack.buffer[5], U256::from(3));
+        assert_eq!(shared_stack.page_mut().buffer[5], U256::from(3));
     }
 
     #[test]
@@ -519,7 +743,7 @@ mod tests {
             Err(InstructionResult::StackUnderflow)
         );
 
-        unsafe { shared_stack.buffer.set_len(STACK_LIMIT / 2) }
+        unsafe { shared_stack.page_mut().buffer.set_len(STACK_LIMIT / 2) }
         shared_stack.new_context();
 
         assert_eq!(
@@ -533,13 +757,14 @@ mod tests {
         let mut shared_stack = SharedStack::new();
         shared_stack.new_context();
 
-        shared_stack.buffer.push(U256::ZERO);
+        shared_stack.page_mut().buffer.push(U256::ZERO);
+        shared_stack.context_len += 1;
 
         for _ in 2..=STACK_LIMIT {
             assert_eq!(shared_stack.dup::<1>(), Ok(()))
         }
 
-        assert_eq!(shared_stack.buffer.len(), STACK_LIMIT);
+        assert_eq!(shared_stack.page_mut().buffer.len(), STACK_LIMIT);
         assert_eq!(shared_stack.len(), STACK_LIMIT);
 
         assert_eq!(
