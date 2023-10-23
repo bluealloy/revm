@@ -537,7 +537,7 @@ impl JournaledState {
                     .push(JournalEntry::AccountLoaded { address });
 
                 // precompiles are warm loaded so we need to take that into account
-                let is_cold = self.precompile_addresses.binary_search(&address).is_ok();
+                let is_cold = self.precompile_addresses.binary_search(&address).is_err();
 
                 (vac.insert(account), is_cold)
             }
