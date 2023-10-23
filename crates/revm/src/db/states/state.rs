@@ -42,9 +42,8 @@ pub struct State<DB: Database> {
     pub transition_state: Option<TransitionState>,
     /// After block is finishes we merge those changes inside bundle.
     /// Bundle is used to update database and create changesets.
-    ///
-    /// Bundle state can be present if we want to use preloaded bundle.
-    pub bundle_state: Option<BundleState>,
+    /// Bundle state can be set on initialization if we want to use preloaded bundle.
+    pub bundle_state: BundleState,
     /// Addition layer that is going to be used to fetched values before fetching values
     /// from database.
     ///
@@ -70,13 +69,8 @@ impl State<EmptyDB> {
 impl<DB: Database> State<DB> {
     /// Returns the size hint for the inner bundle state.
     /// See [BundleState::size_hint] for more info.
-    ///
-    /// Returns `0` if bundle state is not set.
     pub fn bundle_size_hint(&self) -> usize {
-        self.bundle_state
-            .as_ref()
-            .map(|s| s.size_hint())
-            .unwrap_or_default()
+        self.bundle_state.size_hint()
     }
 
     /// Iterate over received balances and increment all account balances.
@@ -173,7 +167,6 @@ impl<DB: Database> State<DB> {
     pub fn merge_transitions(&mut self, retention: BundleRetention) {
         if let Some(transition_state) = self.transition_state.as_mut().map(TransitionState::take) {
             self.bundle_state
-                .get_or_insert(BundleState::default())
                 .apply_transitions_and_create_reverts(transition_state, retention);
         }
     }
@@ -183,10 +176,8 @@ impl<DB: Database> State<DB> {
             hash_map::Entry::Vacant(entry) => {
                 if self.use_preloaded_bundle {
                     // load account from bundle state
-                    if let Some(Some(account)) = self
-                        .bundle_state
-                        .as_ref()
-                        .map(|bundle| bundle.account(&address).cloned().map(Into::into))
+                    if let Some(account) =
+                        self.bundle_state.account(&address).cloned().map(Into::into)
                     {
                         return Ok(entry.insert(account));
                     }
@@ -217,7 +208,7 @@ impl<DB: Database> State<DB> {
     ///
     /// this will panic.
     pub fn take_bundle(&mut self) -> BundleState {
-        core::mem::take(self.bundle_state.as_mut().unwrap())
+        core::mem::take(&mut self.bundle_state)
     }
 }
 
@@ -233,11 +224,7 @@ impl<DB: Database> Database for State<DB> {
             hash_map::Entry::Occupied(entry) => Ok(entry.get().clone()),
             hash_map::Entry::Vacant(entry) => {
                 if self.use_preloaded_bundle {
-                    if let Some(Some(code)) = self
-                        .bundle_state
-                        .as_ref()
-                        .map(|bundle| bundle.contracts.get(&code_hash))
-                    {
+                    if let Some(code) = self.bundle_state.contracts.get(&code_hash) {
                         entry.insert(code.clone());
                         return Ok(code.clone());
                     }
