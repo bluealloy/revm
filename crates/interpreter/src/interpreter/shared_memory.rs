@@ -272,9 +272,9 @@ impl SharedMemory {
         self.context_memory_mut().copy_within(src..src + len, dst);
     }
 
-    /// Returns a reference to the memory of the current context.
+    /// Returns a reference to the memory of the current context, the active memory.
     #[inline]
-    fn context_memory(&self) -> &[u8] {
+    pub fn context_memory(&self) -> &[u8] {
         // SAFETY: access bounded by buffer length
         unsafe {
             self.buffer
