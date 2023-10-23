@@ -21,15 +21,14 @@ mod secp256k1 {
         let signature = Signature::from_slice(&sig[..64])?;
 
         // recover key
-        let recovered_key = VerifyingKey::recover_from_prehash(msg, &signature, recid)?;
+        let recovered_key = VerifyingKey::recover_from_prehash(&msg[..], &signature, recid)?;
 
         // hash it
         let mut hash = keccak256(
             &recovered_key
                 .to_encoded_point(/* compress = */ false)
                 .as_bytes()[1..],
-        )
-        .0;
+        );
 
         // truncate to 20 bytes
         hash[..12].fill(0);
@@ -55,7 +54,7 @@ mod secp256k1 {
             RecoverableSignature::from_compact(&sig[0..64], RecoveryId::from_i32(sig[64] as i32)?)?;
 
         let secp = Secp256k1::new();
-        let public = secp.recover_ecdsa(&Message::from_digest_slice(&msg[..32])?, &sig)?;
+        let public = secp.recover_ecdsa(&Message::from_digest_slice(&msg[..])?, &sig)?;
 
         let mut hash = keccak256(&public.serialize_uncompressed()[1..]);
         hash[..12].fill(0);

@@ -1,6 +1,6 @@
 use crate::db::Database;
 use crate::journaled_state::JournaledState;
-use crate::primitives::{Address, EVMError, Bytecode, Env, B256, U256};
+use crate::primitives::{Address, Bytecode, EVMError, Env, B256, U256};
 use revm_precompile::Precompiles;
 
 /// EVM Data contains all the data that EVM needs to execute.
