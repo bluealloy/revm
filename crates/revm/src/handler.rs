@@ -43,7 +43,7 @@ pub struct Handler<DB: Database> {
     /// Calculate gas refund for transaction.
     /// Some chains have it disabled.
     pub calculate_gas_refund: CalculateGasRefundHandle,
-    /// Main return handle, returns the output of the transaction.
+    /// Main return handle, returns the output of the transact.
     pub main_return: MainReturnHandle<DB>,
 }
 
