@@ -1,11 +1,7 @@
-use cmd::Error;
+use revme::cmd::{Error, MainCmd};
 use structopt::StructOpt;
 
-mod cli_env;
-mod cmd;
-mod statetest;
-
 pub fn main() -> Result<(), Error> {
-    let cmd = cmd::MainCmd::from_args();
+    let cmd = MainCmd::from_args();
     cmd.run()
 }

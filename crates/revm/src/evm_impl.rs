@@ -414,7 +414,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             });
         };
 
-        // Check if caller has enough balance to send to the crated contract.
+        // Check if caller has enough balance to send to the created contract.
         if caller_balance < inputs.value {
             return Err(CreateResult {
                 result: InstructionResult::OutOfFund,

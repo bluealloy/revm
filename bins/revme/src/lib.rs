@@ -1,1 +1,1 @@
-pub mod statetest;
+pub mod cmd;
