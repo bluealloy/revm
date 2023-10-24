@@ -393,6 +393,17 @@ impl OpCode {
         }
     }
 
+    /// Instantiate a new opcode from a u8 or return
+    /// the `INVALID` opcode if missing from `OPCODE_JUMPMAP`
+    #[inline]
+    pub const fn new_or_invalid(opcode: u8) -> Self {
+        if let Some(op) = Self::new(opcode) {
+            op
+        } else {
+            Self(0xFE)
+        }
+    }
+
     /// Instantiate a new opcode from a u8 without checking if it is valid.
     ///
     /// # Safety
