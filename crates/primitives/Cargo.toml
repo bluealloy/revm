@@ -65,6 +65,7 @@ dev = [
     "optional_eip3607",
     "optional_gas_refund",
     "optional_no_base_fee",
+    "optional_beneficiary_reward",
 ]
 memory_limit = []
 no_gas_measuring = []
@@ -73,6 +74,7 @@ optional_block_gas_limit = []
 optional_eip3607 = []
 optional_gas_refund = []
 optional_no_base_fee = []
+optional_beneficiary_reward = []
 
 # See comments in `revm-precompile`
 c-kzg = ["dep:c-kzg", "dep:once_cell", "dep:derive_more"]

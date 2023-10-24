@@ -283,8 +283,13 @@ pub struct CfgEnv {
     pub disable_gas_refund: bool,
     /// Disables base fee checks for EIP-1559 transactions.
     /// This is useful for testing method calls with zero gas price.
+    /// By default, it is set to `false`.
     #[cfg(feature = "optional_no_base_fee")]
     pub disable_base_fee: bool,
+    /// Disables the payout of the reward to the beneficiary.
+    /// By default, it is set to `false`.
+    #[cfg(feature = "optional_beneficiary_reward")]
+    pub disable_beneficiary_reward: bool,
     /// Enables Optimism's execution changes for deposit transactions and fee
     /// collection. Hot toggling the optimism field gives applications built
     /// on revm the ability to switch optimism execution on and off at runtime,
@@ -343,6 +348,16 @@ impl CfgEnv {
 
     #[cfg(not(feature = "optional_block_gas_limit"))]
     pub fn is_block_gas_limit_disabled(&self) -> bool {
+        false
+    }
+
+    #[cfg(feaure = "optional_beneficiary_reward")]
+    pub fn is_beneficiary_reward_disabled(&self) -> bool {
+        self.disable_beneficiary_reward
+    }
+
+    #[cfg(not(feaure = "optional_beneficiary_reward"))]
+    pub fn is_beneficiary_reward_disabled(&self) -> bool {
         false
     }
 

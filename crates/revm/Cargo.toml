@@ -51,6 +51,7 @@ dev = [
     "optional_eip3607",
     "optional_gas_refund",
     "optional_no_base_fee",
+    "optional_beneficiary_reward",
 ]
 memory_limit = ["revm-interpreter/memory_limit"]
 no_gas_measuring = ["revm-interpreter/no_gas_measuring"]
@@ -59,6 +60,7 @@ optional_block_gas_limit = ["revm-interpreter/optional_block_gas_limit"]
 optional_eip3607 = ["revm-interpreter/optional_eip3607"]
 optional_gas_refund = ["revm-interpreter/optional_gas_refund"]
 optional_no_base_fee = ["revm-interpreter/optional_no_base_fee"]
+optional_beneficiary_reward = ["revm-interpreter/optional_beneficiary_reward"]
 
 # See comments in `revm-precompile`
 secp256k1 = ["revm-precompile/secp256k1"]
