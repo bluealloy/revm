@@ -19,8 +19,8 @@ mod modexp;
 mod secp256k1;
 pub mod utilities;
 
-use alloc::{boxed::Box, vec::Vec};
-use core::fmt;
+use alloc::{boxed::Box, collections::BTreeMap, vec::Vec};
+use core::{fmt, hash::Hash};
 use once_cell::race::OnceBox;
 #[doc(hidden)]
 pub use revm_primitives as primitives;
@@ -59,6 +59,24 @@ impl PrecompileOutput {
 #[derive(Clone, Debug)]
 pub struct Precompiles {
     pub inner: Vec<PrecompileWithAddress>,
+}
+
+impl Precompiles {
+    /// Extends the precompiles with the given precompiles.
+    ///
+    /// Other precompiles with overwrite existing precompiles.
+    pub fn extend(&mut self, other: impl IntoIterator<Item = PrecompileWithAddress>) {
+        self.inner = self
+            .inner
+            .iter()
+            .cloned()
+            .chain(other)
+            .map(|i| (i.0, i.1.clone()))
+            .collect::<BTreeMap<Address, Precompile>>()
+            .into_iter()
+            .map(|(k, v)| PrecompileWithAddress(k, v))
+            .collect::<Vec<_>>();
+    }
 }
 
 impl Default for Precompiles {
@@ -140,8 +158,8 @@ impl Precompiles {
     pub fn byzantium() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
-            let mut precompiles = Box::new(Self::homestead().clone());
-            precompiles.inner.extend([
+            let mut precompiles = Self::homestead().clone();
+            precompiles.extend([
                 // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
                 // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
                 bn128::add::BYZANTIUM,
@@ -150,8 +168,7 @@ impl Precompiles {
                 // EIP-198: Big integer modular exponentiation.
                 modexp::BYZANTIUM,
             ]);
-            precompiles.inner.sort_unstable_by_key(|i| i.0);
-            precompiles
+            Box::new(precompiles)
         })
     }
 
@@ -159,8 +176,8 @@ impl Precompiles {
     pub fn istanbul() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
-            let mut precompiles = Box::new(Self::byzantium().clone());
-            precompiles.inner.extend([
+            let mut precompiles = Self::byzantium().clone();
+            precompiles.extend([
                 // EIP-152: Add BLAKE2 compression function `F` precompile.
                 blake2::FUN,
                 // EIP-1108: Reduce alt_bn128 precompile gas costs.
@@ -168,8 +185,7 @@ impl Precompiles {
                 bn128::mul::ISTANBUL,
                 bn128::pair::ISTANBUL,
             ]);
-            precompiles.inner.sort_unstable_by_key(|i| i.0);
-            precompiles
+            Box::new(precompiles)
         })
     }
 
@@ -177,13 +193,12 @@ impl Precompiles {
     pub fn berlin() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
-            let mut precompiles = Box::new(Self::istanbul().clone());
-            precompiles.inner.extend([
+            let mut precompiles = Self::istanbul().clone();
+            precompiles.extend([
                 // EIP-2565: ModExp Gas Cost.
                 modexp::BERLIN,
             ]);
-            precompiles.inner.sort_unstable_by_key(|i| i.0);
-            precompiles
+            Box::new(precompiles)
         })
     }
 
@@ -193,24 +208,20 @@ impl Precompiles {
     pub fn cancun() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
+            let precompiles = Self::berlin().clone();
+
             // Don't include KZG point evaluation precompile in no_std builds.
             #[cfg(feature = "c-kzg")]
-            {
-                let mut precompiles = Box::new(Self::berlin().clone());
-                precompiles.inner.extend(
-                    [
-                        // EIP-4844: Shard Blob Transactions
-                        kzg_point_evaluation::POINT_EVALUATION,
-                    ]
-                    .into_iter()
-                    .map(From::from),
-                );
+            let precompiles = {
+                let mut precompiles = precompiles;
+                precompiles.extend([
+                    // EIP-4844: Shard Blob Transactions
+                    kzg_point_evaluation::POINT_EVALUATION,
+                ]);
                 precompiles
-            }
-            #[cfg(not(feature = "c-kzg"))]
-            {
-                Box::new(Self::berlin().clone())
-            }
+            };
+
+            Box::new(precompiles)
         })
     }
 

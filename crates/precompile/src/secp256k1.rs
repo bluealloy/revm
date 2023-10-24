@@ -82,7 +82,9 @@ fn ec_recover_run(i: &[u8], target_gas: u64) -> PrecompileResult {
 
     sig[64] = input[63] - 27;
 
-    let out = secp256k1::ecrecover(&sig, &msg).unwrap_or_default();
+    let out = secp256k1::ecrecover(&sig, &msg)
+        .map(|o| o.to_vec())
+        .unwrap_or_default();
 
-    Ok((ECRECOVER_BASE, out.to_vec()))
+    Ok((ECRECOVER_BASE, out))
 }
