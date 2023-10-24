@@ -393,6 +393,8 @@ impl Default for CfgEnv {
             disable_gas_refund: false,
             #[cfg(feature = "optional_no_base_fee")]
             disable_base_fee: false,
+            #[cfg(feature = "optional_beneficiary_reward")]
+            disable_beneficiary_reward: false,
             #[cfg(feature = "optimism")]
             optimism: false,
         }
