@@ -53,13 +53,15 @@ impl<M: Middleware> DatabaseRef for EthersDB<M> {
     fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         let add = eH160::from(address.0 .0);
 
-        let f = async {
-            let nonce = self.client.get_transaction_count(add, self.block_number);
-            let balance = self.client.get_balance(add, self.block_number);
-            let code = self.client.get_code(add, self.block_number);
-            tokio::join!(nonce, balance, code)
-        };
-        let (nonce, balance, code) = self.block_on(f);
+        let (nonce, balance, code) = tokio::task::block_in_place(|| {
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            rt.block_on(async {
+                let nonce = self.client.get_transaction_count(add, self.block_number);
+                let balance = self.client.get_balance(add, self.block_number);
+                let code = self.client.get_code(add, self.block_number);
+                tokio::join!(nonce, balance, code)
+            })
+        });
         // panic on not getting data?
         let bytecode = code.unwrap_or_else(|e| panic!("ethers get code error: {e:?}"));
         let bytecode = Bytecode::new_raw(bytecode.0.into());
