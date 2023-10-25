@@ -943,7 +943,7 @@ mod tests {
                 code: None,
             },
         );
-        let mut journal = JournaledState::new(0, SpecId::BERLIN);
+        let mut journal = JournaledState::new(SpecId::BERLIN, vec![]);
         journal
             .initial_account_load(caller, &[U256::from(100)], &mut db)
             .unwrap();
@@ -975,7 +975,7 @@ mod tests {
     fn test_remove_l1_cost_non_deposit() {
         let caller = Address::ZERO;
         let mut db = InMemoryDB::default();
-        let mut journal = JournaledState::new(0, SpecId::BERLIN);
+        let mut journal = JournaledState::new(SpecId::BERLIN, vec![]);
         let slots = &[U256::from(100)];
         journal
             .initial_account_load(caller, slots, &mut db)
@@ -1003,7 +1003,7 @@ mod tests {
                 code: None,
             },
         );
-        let mut journal = JournaledState::new(0, SpecId::BERLIN);
+        let mut journal = JournaledState::new(SpecId::BERLIN, vec![]);
         journal
             .initial_account_load(caller, &[U256::from(100)], &mut db)
             .unwrap();
@@ -1034,7 +1034,7 @@ mod tests {
                 code: None,
             },
         );
-        let mut journal = JournaledState::new(0, SpecId::BERLIN);
+        let mut journal = JournaledState::new(SpecId::BERLIN, vec![]);
         journal
             .initial_account_load(caller, &[U256::from(100)], &mut db)
             .unwrap();
