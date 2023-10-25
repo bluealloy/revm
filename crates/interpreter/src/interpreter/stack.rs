@@ -203,7 +203,8 @@ impl Stack {
         } else {
             // Safety: check for out of bounds is done above and it makes this safe to do.
             unsafe {
-                *self.data.get_unchecked_mut(len) = *self.data.get_unchecked(len - N);
+                let data = self.data.as_mut_ptr();
+                core::ptr::copy_nonoverlapping(data.add(len - N), data.add(len), 1);
                 self.data.set_len(len + 1);
             }
             Ok(())
