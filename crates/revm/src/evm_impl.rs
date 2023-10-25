@@ -348,7 +348,9 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> Transact<DB::Error> for EVMImpl<'a
         handler.reimburse_caller(data, &gas)?;
 
         // Reward beneficiary
-        handler.reward_beneficiary(data, &gas)?;
+        if !data.env.cfg.is_beneficiary_reward_disabled() {
+            handler.reward_beneficiary(data, &gas)?;
+        }
 
         // main return
         handler.main_return(data, call_result, output, &gas)
