@@ -181,6 +181,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                 .cloned()
                 .collect::<Vec<_>>(),
         );
+        // If T is present it should be a generic T that modifies handler.
         let instruction_table = if inspector.is_some() {
             let instruction_table = make_boxed_instruction_table::<Self, GSPEC, _>(
                 make_instruction_table::<Self, GSPEC>(),
@@ -191,13 +192,18 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             InstructionTables::Plain(Arc::new(make_instruction_table::<Self, GSPEC>()))
         };
         #[cfg(feature = "optimism")]
-        let handler = if env.cfg.optimism {
+        let mut handler = if env.cfg.optimism {
             Handler::optimism::<GSPEC>()
         } else {
             Handler::mainnet::<GSPEC>()
         };
         #[cfg(not(feature = "optimism"))]
-        let handler = Handler::mainnet::<GSPEC>();
+        let mut handler = Handler::mainnet::<GSPEC>();
+
+        if env.cfg.is_beneficiary_reward_disabled() {
+            // do nothing
+            handler.reward_beneficiary = |_, _| Ok(());
+        }
 
         Self {
             data: EVMData {
@@ -399,9 +405,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         handler.reimburse_caller(data, &gas)?;
 
         // Reward beneficiary
-        if !data.env.cfg.is_beneficiary_reward_disabled() {
-            handler.reward_beneficiary(data, &gas)?;
-        }
+        handler.reward_beneficiary(data, &gas)?;
 
         // main return
         handler.main_return(data, call_result, output, &gas)
