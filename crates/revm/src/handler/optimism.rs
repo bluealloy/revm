@@ -2,14 +2,13 @@
 
 use super::mainnet;
 use crate::{
-    interpreter::{return_ok, return_revert, Gas, Host, InstructionResult},
+    interpreter::{return_ok, return_revert, Gas, InstructionResult},
     optimism,
-    precompile::HashMap,
     primitives::{
-        db::Database, Account, EVMError, EVMResult, Env, ExecutionResult, Halt, InvalidTransaction,
+        db::Database, Account, EVMError, Env, ExecutionResult, Halt, HashMap, InvalidTransaction,
         Output, ResultAndState, Spec, SpecId::REGOLITH, U256,
     },
-    EVMData, EVMImpl, Transact,
+    EVMData,
 };
 use core::ops::Mul;
 
@@ -168,74 +167,72 @@ pub fn main_return<SPEC: Spec, DB: Database>(
     }
     Ok(result)
 }
-
+/// Optimism end handle changes output if the transaction is a deposit transaction.
+/// Deposit transaction can't be reverted and is always successful.
 #[inline]
-pub fn default_transact<GSPEC: Spec + 'static, DB: Database>(
-    evm: &mut EVMImpl<'_, GSPEC, DB>,
-) -> EVMResult<DB::Error> {
-    match evm
-        .preverify_transaction()
-        .and_then(|_| evm.transact_preverified())
-    {
-        Ok(res) => Ok(res),
-        Err(err) => {
-            if evm.env().cfg.optimism && evm.env().tx.optimism.source_hash.is_some() {
-                match err {
-                    EVMError::Header(_) | EVMError::Database(_) => Err(err),
-                    EVMError::Transaction(_) => {
-                        // If the transaction is a deposit transaction and it failed
-                        // for any reason, the caller nonce must be bumped, and the
-                        // gas reported must be altered depending on the Hardfork. This is
-                        // also returned as a special Halt variant so that consumers can more
-                        // easily distinguish between a failed deposit and a failed
-                        // normal transaction.
-                        let caller = evm.env().tx.caller;
+pub fn end_handle<SPEC: Spec, DB: Database>(
+    data: &mut EVMData<'_, DB>,
+    evm_output: Result<ResultAndState, EVMError<DB::Error>>,
+) -> Result<ResultAndState, EVMError<DB::Error>> {
+    evm_output.or_else(|err| {
+        if matches!(EVMError::Transaction(_), err)
+            && evm.env().cfg.optimism
+            && evm.env().tx.optimism.source_hash.is_some()
+        {
+            // If the transaction is a deposit transaction and it failed
+            // for any reason, the caller nonce must be bumped, and the
+            // gas reported must be altered depending on the Hardfork. This is
+            // also returned as a special Halt variant so that consumers can more
+            // easily distinguish between a failed deposit and a failed
+            // normal transaction.
+            let caller = data.env().tx.caller;
 
-                        // Increment sender nonce and account balance for the mint amount. Deposits
-                        // always persist the mint amount, even if the transaction fails.
-                        let account = {
-                            let mut acc = Account::from(
-                                evm.data
-                                    .db
-                                    .basic(caller)
-                                    .unwrap_or_default()
-                                    .unwrap_or_default(),
-                            );
-                            acc.info.nonce = acc.info.nonce.saturating_add(1);
-                            acc.info.balance = acc.info.balance.saturating_add(U256::from(
-                                evm.env().tx.optimism.mint.unwrap_or(0),
-                            ));
-                            acc.mark_touch();
-                            acc
-                        };
-                        let state = HashMap::from([(caller, account)]);
+            // Increment sender nonce and account balance for the mint amount. Deposits
+            // always persist the mint amount, even if the transaction fails.
+            let account = {
+                let mut acc = Account::from(
+                    data.db
+                        .basic(caller)
+                        .unwrap_or_default()
+                        .unwrap_or_default(),
+                );
+                acc.info.nonce = acc.info.nonce.saturating_add(1);
+                acc.info.balance = acc
+                    .info
+                    .balance
+                    .saturating_add(U256::from(data.env().tx.optimism.mint.unwrap_or(0)));
+                acc.mark_touch();
+                acc
+            };
+            let state = HashMap::from([(caller, account)]);
 
-                        // The gas used of a failed deposit post-regolith is the gas
-                        // limit of the transaction. pre-regolith, it is the gas limit
-                        // of the transaction for non system transactions and 0 for system
-                        // transactions.
-                        let is_system_tx =
-                            evm.env().tx.optimism.is_system_transaction.unwrap_or(false);
-                        let gas_used = if GSPEC::enabled(REGOLITH) || !is_system_tx {
-                            evm.env().tx.gas_limit
-                        } else {
-                            0
-                        };
-
-                        Ok(ResultAndState {
-                            result: ExecutionResult::Halt {
-                                reason: Halt::FailedDeposit,
-                                gas_used,
-                            },
-                            state,
-                        })
-                    }
-                }
+            // The gas used of a failed deposit post-regolith is the gas
+            // limit of the transaction. pre-regolith, it is the gas limit
+            // of the transaction for non system transactions and 0 for system
+            // transactions.
+            let is_system_tx = data
+                .env()
+                .tx
+                .optimism
+                .is_system_transaction
+                .unwrap_or(false);
+            let gas_used = if SPEC::enabled(REGOLITH) || !is_system_tx {
+                data.env().tx.gas_limit
             } else {
-                Err(err)
-            }
+                0
+            };
+
+            Ok(ResultAndState {
+                result: ExecutionResult::Halt {
+                    reason: Halt::FailedDeposit,
+                    gas_used,
+                },
+                state,
+            })
+        } else {
+            Err(err)
         }
-    }
+    })
 }
 
 #[cfg(test)]

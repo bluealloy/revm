@@ -3,10 +3,10 @@
 use crate::{
     interpreter::{return_ok, return_revert, Gas, InstructionResult, SuccessOrHalt},
     primitives::{
-        db::Database, EVMError, EVMResult, Env, ExecutionResult, Output, ResultAndState, Spec,
-        SpecId::LONDON, U256,
+        db::Database, EVMError, Env, ExecutionResult, Output, ResultAndState, Spec, SpecId::LONDON,
+        U256,
     },
-    EVMData, EVMImpl, Transact,
+    EVMData,
 };
 
 /// Handle output of the transaction
@@ -150,12 +150,13 @@ pub fn main_return<DB: Database>(
     Ok(ResultAndState { result, state })
 }
 
+/// Mainnet end handle does not change the output.
 #[inline]
-pub fn default_transact<GSPEC: Spec + 'static, DB: Database>(
-    evm: &mut EVMImpl<'_, GSPEC, DB>,
-) -> EVMResult<DB::Error> {
-    evm.preverify_transaction()
-        .and_then(|_| evm.transact_preverified())
+pub fn end_handle<DB: Database>(
+    _data: &mut EVMData<'_, DB>,
+    evm_output: Result<ResultAndState, EVMError<DB::Error>>,
+) -> Result<ResultAndState, EVMError<DB::Error>> {
+    evm_output
 }
 
 #[cfg(test)]

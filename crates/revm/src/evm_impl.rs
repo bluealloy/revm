@@ -161,7 +161,71 @@ impl<'a, GSPEC: Spec, DB: Database> EVMImpl<'a, GSPEC, DB> {
 }
 
 impl<'a, GSPEC: Spec + 'static, DB: Database> Transact<DB::Error> for EVMImpl<'a, GSPEC, DB> {
+    #[inline]
     fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
+        self.preverify_transaction_inner()
+    }
+
+    #[inline]
+    fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
+        let output = self.transact_preverified_inner();
+        self.handler.end(&mut self.data, output)
+    }
+
+    #[inline]
+    fn transact(&mut self) -> EVMResult<DB::Error> {
+        let output = self
+            .preverify_transaction_inner()
+            .and_then(|()| self.transact_preverified_inner());
+        self.handler.end(&mut self.data, output)
+    }
+}
+
+impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
+    pub fn new(
+        db: &'a mut DB,
+        env: &'a mut Env,
+        inspector: Option<&'a mut dyn Inspector<DB>>,
+        precompiles: Precompiles,
+    ) -> Self {
+        let journaled_state = JournaledState::new(precompiles.len(), GSPEC::SPEC_ID);
+        let instruction_table = if inspector.is_some() {
+            let instruction_table = make_boxed_instruction_table::<Self, GSPEC, _>(
+                make_instruction_table::<Self, GSPEC>(),
+                inspector_instruction,
+            );
+            InstructionTables::Boxed(Arc::new(instruction_table))
+        } else {
+            InstructionTables::Plain(Arc::new(make_instruction_table::<Self, GSPEC>()))
+        };
+        #[cfg(feature = "optimism")]
+        let handler = if env.cfg.optimism {
+            Handler::optimism::<GSPEC>()
+        } else {
+            Handler::mainnet::<GSPEC>()
+        };
+        #[cfg(not(feature = "optimism"))]
+        let handler = Handler::mainnet::<GSPEC>();
+
+        Self {
+            data: EVMData {
+                env,
+                journaled_state,
+                db,
+                error: None,
+                precompiles,
+                #[cfg(feature = "optimism")]
+                l1_block_info: None,
+            },
+            inspector,
+            instruction_table,
+            handler,
+            _phantomdata: PhantomData {},
+        }
+    }
+
+    /// Pre verify transaction.
+    pub fn preverify_transaction_inner(&mut self) -> Result<(), EVMError<DB::Error>> {
         let env = self.env();
 
         // Important: validate block before tx.
@@ -193,7 +257,8 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> Transact<DB::Error> for EVMImpl<'a
             .map_err(Into::into)
     }
 
-    fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
+    /// Transact preverified transaction.
+    pub fn transact_preverified_inner(&mut self) -> EVMResult<DB::Error> {
         let env = &self.data.env;
         let tx_caller = env.tx.caller;
         let tx_value = env.tx.value;
@@ -346,63 +411,6 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> Transact<DB::Error> for EVMImpl<'a
 
         // main return
         handler.main_return(data, call_result, output, &gas)
-    }
-
-    #[inline]
-    fn transact(&mut self) -> EVMResult<DB::Error> {
-        #[cfg(not(feature = "optimism"))]
-        {
-            crate::handler::mainnet::default_transact(self)
-        }
-
-        #[cfg(feature = "optimism")]
-        {
-            crate::handler::optimism::default_transact(self)
-        }
-    }
-}
-
-impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
-    pub fn new(
-        db: &'a mut DB,
-        env: &'a mut Env,
-        inspector: Option<&'a mut dyn Inspector<DB>>,
-        precompiles: Precompiles,
-    ) -> Self {
-        let journaled_state = JournaledState::new(precompiles.len(), GSPEC::SPEC_ID);
-        let instruction_table = if inspector.is_some() {
-            let instruction_table = make_boxed_instruction_table::<Self, GSPEC, _>(
-                make_instruction_table::<Self, GSPEC>(),
-                inspector_instruction,
-            );
-            InstructionTables::Boxed(Arc::new(instruction_table))
-        } else {
-            InstructionTables::Plain(Arc::new(make_instruction_table::<Self, GSPEC>()))
-        };
-        #[cfg(feature = "optimism")]
-        let handler = if env.cfg.optimism {
-            Handler::optimism::<GSPEC>()
-        } else {
-            Handler::mainnet::<GSPEC>()
-        };
-        #[cfg(not(feature = "optimism"))]
-        let handler = Handler::mainnet::<GSPEC>();
-
-        Self {
-            data: EVMData {
-                env,
-                journaled_state,
-                db,
-                error: None,
-                precompiles,
-                #[cfg(feature = "optimism")]
-                l1_block_info: None,
-            },
-            inspector,
-            instruction_table,
-            handler,
-            _phantomdata: PhantomData {},
-        }
     }
 
     #[inline(never)]
