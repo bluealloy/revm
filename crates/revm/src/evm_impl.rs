@@ -85,10 +85,7 @@ pub trait Transact<DBError> {
     fn transact_preverified(&mut self) -> EVMResult<DBError>;
 
     /// Execute transaction by running pre-verification steps and then transaction itself.
-    fn transact(&mut self) -> EVMResult<DBError> {
-        self.preverify_transaction()
-            .and_then(|_| self.transact_preverified())
-    }
+    fn transact(&mut self) -> EVMResult<DBError>;
 }
 
 impl<'a, DB: Database> EVMData<'a, DB> {
@@ -178,8 +175,8 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> Transact<DB::Error> for EVMImpl<'a
     #[inline]
     fn transact(&mut self) -> EVMResult<DB::Error> {
         let output = self
-            .preverify_transaction()
-            .and_then(|()| self.transact_preverified());
+            .preverify_transaction_inner()
+            .and_then(|()| self.transact_preverified_inner());
         self.handler.end(&mut self.data, output)
     }
 }
