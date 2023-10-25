@@ -41,7 +41,7 @@ impl Stack {
     #[inline]
     pub fn new() -> Self {
         Self {
-            // Important: expansion functions assume that capacity is `STACK_LIMIT`.
+            // SAFETY: expansion functions assume that capacity is `STACK_LIMIT`.
             data: Vec::with_capacity(STACK_LIMIT),
         }
     }

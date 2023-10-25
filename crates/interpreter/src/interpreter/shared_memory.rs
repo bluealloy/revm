@@ -248,6 +248,7 @@ impl SharedMemory {
             self.slice_mut(memory_offset, len).fill(0);
             return;
         }
+
         let data_end = min(data_offset + len, data.len());
         let data_len = data_end - data_offset;
         debug_assert!(data_offset < data.len() && data_end <= data.len());
@@ -256,7 +257,7 @@ impl SharedMemory {
             .copy_from_slice(data);
 
         // nullify rest of memory slots
-        // SAFETY: Memory is assumed to be valid. And it is commented where that assumption is made
+        // SAFETY: Memory is assumed to be valid, and it is commented where this assumption is made.
         self.slice_mut(memory_offset + data_len, len - data_len)
             .fill(0);
     }
