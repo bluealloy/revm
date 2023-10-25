@@ -1,18 +1,18 @@
 use crate::{
     primitives::U256,
     utilities::{get_right_padded, get_right_padded_vec, left_padding, left_padding_vec},
-    Error, Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn,
+    Error, Precompile, PrecompileResult, PrecompileWithAddress, StandardPrecompileFn,
 };
 use alloc::vec::Vec;
 use aurora_engine_modexp::modexp;
 use core::cmp::{max, min};
 
-pub const BYZANTIUM: PrecompileAddress = PrecompileAddress(
+pub const BYZANTIUM: PrecompileWithAddress = PrecompileWithAddress(
     crate::u64_to_address(5),
     Precompile::Standard(byzantium_run as StandardPrecompileFn),
 );
 
-pub const BERLIN: PrecompileAddress = PrecompileAddress(
+pub const BERLIN: PrecompileWithAddress = PrecompileWithAddress(
     crate::u64_to_address(5),
     Precompile::Standard(berlin_run as StandardPrecompileFn),
 );

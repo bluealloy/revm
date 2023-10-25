@@ -32,11 +32,6 @@ This module is built around the `JournaledState` structure, which encapsulates t
     If the target account does not exist, it's created. If the self-destructed account and the
     target are the same, the balance will be lost.
 
--  `initial_account_and_code_load`
-
-    This method initializes an account and loads its associated code from the database. If the
-    code does not exist, an empty code is associated with the account.
-
 -  `initial_account_load`
 
     This method loads an account's basic information from the database without loading the code.
@@ -93,7 +88,7 @@ The [EIP-161](https://eips.ethereum.org/EIPS/eip-161) aims to optimize Ethereum'
 
 An account is considered "empty" if it has no code, and its nonce and balance are both zero. An account is considered "dead" if it is non-existent or it is empty. An account is considered "touched" when it is involved in any potentially state-changing operation.
 
-These rules have an impact on how state is managed within the [EIP-161](https://eips.ethereum.org/EIPS/eip-161) context, and this affects how the JournaledState module functions. For example, operations like `initial_account_and_code_load`, `initial_account_load`, and `selfdestruct` all need to take into account whether an account is empty or dead.
+These rules have an impact on how state is managed within the [EIP-161](https://eips.ethereum.org/EIPS/eip-161) context, and this affects how the JournaledState module functions. For example, operations like `initial_account_load`, and `selfdestruct` all need to take into account whether an account is empty or dead.
 
 #### Rationale
 
@@ -109,7 +104,7 @@ This EIP is particularly important because it introduced a way to unambiguously 
 
 [EIP-658](https://eips.ethereum.org/EIPS/eip-658) replaced the intermediate state root field in the receipt with a status code that indicates whether the top-level call of the transaction succeeded or failed. The status code is 1 for success and 0 for failure.
 
-This EIP affects the JournaledState module, as the result of executing transactions and their success or failure status directly influences the state of the blockchain. The execution of state-modifying methods like `initial_account_and_code_load`, `selfdestruct`, `sstore`, and `log` can result in success or failure, and the status needs to be properly reflected in the transaction receipt.
+This EIP affects the JournaledState module, as the result of executing transactions and their success or failure status directly influences the state of the blockchain. The execution of state-modifying methods like , `selfdestruct`, `sstore`, and `log` can result in success or failure, and the status needs to be properly reflected in the transaction receipt.
 
 #### Rationale
 

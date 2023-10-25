@@ -1,7 +1,7 @@
 use super::calc_linear_cost_u32;
-use crate::{Error, Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn};
+use crate::{Error, Precompile, PrecompileResult, PrecompileWithAddress, StandardPrecompileFn};
 
-pub const FUN: PrecompileAddress = PrecompileAddress(
+pub const FUN: PrecompileWithAddress = PrecompileWithAddress(
     crate::u64_to_address(4),
     Precompile::Standard(identity_run as StandardPrecompileFn),
 );

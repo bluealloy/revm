@@ -10,7 +10,7 @@ use crate::{
         return_ok, CallContext, CallInputs, CallScheme, Contract, CreateInputs, Gas, Host,
         InstructionResult, Interpreter, SelfDestructResult, SharedMemory, Transfer, MAX_CODE_SIZE,
     },
-    journaled_state::{is_precompile, JournalCheckpoint, JournaledState},
+    journaled_state::{JournalCheckpoint, JournaledState},
     precompile::{self, Precompile, Precompiles},
     primitives::{
         keccak256, Address, AnalysisKind, Bytecode, Bytes, EVMError, EVMResult, Env,
@@ -86,21 +86,6 @@ pub trait Transact<DBError> {
 
     /// Execute transaction by running pre-verification steps and then transaction itself.
     fn transact(&mut self) -> EVMResult<DBError>;
-}
-
-impl<'a, DB: Database> EVMData<'a, DB> {
-    /// Load access list for berlin hardfork.
-    ///
-    /// Loading of accounts/storages is needed to make them warm.
-    #[inline]
-    fn load_access_list(&mut self) -> Result<(), EVMError<DB::Error>> {
-        for (address, slots) in self.env.tx.access_list.iter() {
-            self.journaled_state
-                .initial_account_load(*address, slots, self.db)
-                .map_err(EVMError::Database)?;
-        }
-        Ok(())
-    }
 }
 
 #[cfg(feature = "optimism")]
@@ -188,7 +173,14 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         inspector: Option<&'a mut dyn Inspector<DB>>,
         precompiles: Precompiles,
     ) -> Self {
-        let journaled_state = JournaledState::new(precompiles.len(), GSPEC::SPEC_ID);
+        let journaled_state = JournaledState::new(
+            GSPEC::SPEC_ID,
+            precompiles
+                .addresses()
+                .into_iter()
+                .cloned()
+                .collect::<Vec<_>>(),
+        );
         let instruction_table = if inspector.is_some() {
             let instruction_table = make_boxed_instruction_table::<Self, GSPEC, _>(
                 make_instruction_table::<Self, GSPEC>(),
@@ -666,19 +658,19 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
     }
 
     /// Call precompile contract
-    fn call_precompile(&mut self, inputs: &CallInputs, mut gas: Gas) -> CallResult {
+    fn call_precompile(
+        &mut self,
+        precompile: Precompile,
+        inputs: &CallInputs,
+        mut gas: Gas,
+    ) -> CallResult {
         let input_data = &inputs.input;
-        let contract = inputs.contract;
 
-        let precompile = self
-            .data
-            .precompiles
-            .get(&contract)
-            .expect("Check for precompile should be already done");
         let out = match precompile {
             Precompile::Standard(fun) => fun(input_data, gas.limit()),
             Precompile::Env(fun) => fun(input_data, gas.limit(), self.env()),
         };
+
         match out {
             Ok((gas_used, data)) => {
                 if !crate::USE_GAS || gas.record_cost(gas_used) {
@@ -786,8 +778,8 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             Err(e) => return e,
         };
 
-        let ret = if is_precompile(&inputs.contract, self.data.precompiles.len()) {
-            self.call_precompile(inputs, prepared_call.gas)
+        let ret = if let Some(precompile) = self.data.precompiles.get(&inputs.contract) {
+            self.call_precompile(precompile, inputs, prepared_call.gas)
         } else if !prepared_call.contract.bytecode.is_empty() {
             // Create interpreter and execute subcall
             let (exit_reason, bytes, gas) = self.run_interpreter(
@@ -968,7 +960,7 @@ mod tests {
                 code: None,
             },
         );
-        let mut journal = JournaledState::new(0, SpecId::BERLIN);
+        let mut journal = JournaledState::new(SpecId::BERLIN, vec![]);
         journal
             .initial_account_load(caller, &[U256::from(100)], &mut db)
             .unwrap();
@@ -1000,7 +992,7 @@ mod tests {
     fn test_remove_l1_cost_non_deposit() {
         let caller = Address::ZERO;
         let mut db = InMemoryDB::default();
-        let mut journal = JournaledState::new(0, SpecId::BERLIN);
+        let mut journal = JournaledState::new(SpecId::BERLIN, vec![]);
         let slots = &[U256::from(100)];
         journal
             .initial_account_load(caller, slots, &mut db)
@@ -1028,7 +1020,7 @@ mod tests {
                 code: None,
             },
         );
-        let mut journal = JournaledState::new(0, SpecId::BERLIN);
+        let mut journal = JournaledState::new(SpecId::BERLIN, vec![]);
         journal
             .initial_account_load(caller, &[U256::from(100)], &mut db)
             .unwrap();
@@ -1059,7 +1051,7 @@ mod tests {
                 code: None,
             },
         );
-        let mut journal = JournaledState::new(0, SpecId::BERLIN);
+        let mut journal = JournaledState::new(SpecId::BERLIN, vec![]);
         journal
             .initial_account_load(caller, &[U256::from(100)], &mut db)
             .unwrap();

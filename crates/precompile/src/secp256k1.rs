@@ -1,8 +1,9 @@
-use crate::{Error, Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn};
+use crate::{Error, Precompile, PrecompileResult, PrecompileWithAddress, StandardPrecompileFn};
 use alloc::vec::Vec;
 use core::cmp::min;
+use revm_primitives::B256;
 
-pub const ECRECOVER: PrecompileAddress = PrecompileAddress(
+pub const ECRECOVER: PrecompileWithAddress = PrecompileWithAddress(
     crate::u64_to_address(1),
     Precompile::Standard(ec_recover_run as StandardPrecompileFn),
 );
@@ -20,15 +21,14 @@ mod secp256k1 {
         let signature = Signature::from_slice(&sig[..64])?;
 
         // recover key
-        let recovered_key = VerifyingKey::recover_from_prehash(msg, &signature, recid)?;
+        let recovered_key = VerifyingKey::recover_from_prehash(&msg[..], &signature, recid)?;
 
         // hash it
         let mut hash = keccak256(
             &recovered_key
                 .to_encoded_point(/* compress = */ false)
                 .as_bytes()[1..],
-        )
-        .0;
+        );
 
         // truncate to 20 bytes
         hash[..12].fill(0);
@@ -54,9 +54,9 @@ mod secp256k1 {
             RecoverableSignature::from_compact(&sig[0..64], RecoveryId::from_i32(sig[64] as i32)?)?;
 
         let secp = Secp256k1::new();
-        let public = secp.recover_ecdsa(&Message::from_digest_slice(&msg[..32])?, &sig)?;
+        let public = secp.recover_ecdsa(&Message::from_digest_slice(&msg[..])?, &sig)?;
 
-        let mut hash = keccak256(&public.serialize_uncompressed()[1..]).0;
+        let mut hash = keccak256(&public.serialize_uncompressed()[1..]);
         hash[..12].fill(0);
         Ok(hash)
     }
@@ -71,12 +71,10 @@ fn ec_recover_run(i: &[u8], target_gas: u64) -> PrecompileResult {
     let mut input = [0u8; 128];
     input[..min(i.len(), 128)].copy_from_slice(&i[..min(i.len(), 128)]);
 
-    let mut msg = [0u8; 32];
-    let mut sig = [0u8; 65];
+    let msg = B256::from_slice(&input[0..32]);
 
-    msg[0..32].copy_from_slice(&input[0..32]);
-    sig[0..32].copy_from_slice(&input[64..96]);
-    sig[32..64].copy_from_slice(&input[96..128]);
+    let mut sig = [0u8; 65];
+    sig[0..64].copy_from_slice(&input[64..128]);
 
     if input[32..63] != [0u8; 31] || !matches!(input[63], 27 | 28) {
         return Ok((ECRECOVER_BASE, Vec::new()));
@@ -85,7 +83,7 @@ fn ec_recover_run(i: &[u8], target_gas: u64) -> PrecompileResult {
     sig[64] = input[63] - 27;
 
     let out = secp256k1::ecrecover(&sig, &msg)
-        .map(Vec::from)
+        .map(|o| o.to_vec())
         .unwrap_or_default();
 
     Ok((ECRECOVER_BASE, out))

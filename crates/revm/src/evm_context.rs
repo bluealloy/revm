@@ -1,6 +1,6 @@
 use crate::db::Database;
 use crate::journaled_state::JournaledState;
-use crate::primitives::{Address, Bytecode, Env, B256, U256};
+use crate::primitives::{Address, Bytecode, EVMError, Env, B256, U256};
 use revm_precompile::Precompiles;
 
 /// EVM Data contains all the data that EVM needs to execute.
@@ -23,6 +23,19 @@ pub struct EVMData<'a, DB: Database> {
 }
 
 impl<'a, DB: Database> EVMData<'a, DB> {
+    /// Load access list for berlin hardfork.
+    ///
+    /// Loading of accounts/storages is needed to make them warm.
+    #[inline]
+    pub fn load_access_list(&mut self) -> Result<(), EVMError<DB::Error>> {
+        for (address, slots) in self.env.tx.access_list.iter() {
+            self.journaled_state
+                .initial_account_load(*address, slots, self.db)
+                .map_err(EVMError::Database)?;
+        }
+        Ok(())
+    }
+
     /// Return environment.
     pub fn env(&mut self) -> &mut Env {
         self.env
