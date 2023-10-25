@@ -153,7 +153,7 @@ impl<DB: Database> State<DB> {
     }
 
     /// Apply evm transitions to transition state.
-    fn apply_transition(&mut self, transitions: Vec<(Address, TransitionAccount)>) {
+    pub fn apply_transition(&mut self, transitions: Vec<(Address, TransitionAccount)>) {
         // add transition to transition state.
         if let Some(s) = self.transition_state.as_mut() {
             s.add_transitions(transitions)

@@ -1,14 +1,16 @@
 //! Mainnet related handlers.
-use crate::interpreter::SuccessOrHalt;
-use crate::primitives::{EVMError, ExecutionResult, Output, ResultAndState};
 
 use crate::{
-    interpreter::{return_ok, return_revert, Gas, InstructionResult},
-    primitives::{db::Database, Env, Spec, SpecId::LONDON, U256},
+    interpreter::{return_ok, return_revert, Gas, InstructionResult, SuccessOrHalt},
+    primitives::{
+        db::Database, EVMError, Env, ExecutionResult, Output, ResultAndState, Spec, SpecId::LONDON,
+        U256,
+    },
     EVMData,
 };
 
 /// Handle output of the transaction
+#[inline]
 pub fn handle_call_return<SPEC: Spec>(
     env: &Env,
     call_result: InstructionResult,
@@ -103,6 +105,8 @@ pub fn calculate_gas_refund<SPEC: Spec>(env: &Env, gas: &Gas) -> u64 {
     }
 }
 
+/// Main return handle, returns the output of the transaction.
+#[inline]
 pub fn main_return<DB: Database>(
     data: &mut EVMData<'_, DB>,
     call_result: InstructionResult,
@@ -144,6 +148,15 @@ pub fn main_return<DB: Database>(
     };
 
     Ok(ResultAndState { result, state })
+}
+
+/// Mainnet end handle does not change the output.
+#[inline]
+pub fn end_handle<DB: Database>(
+    _data: &mut EVMData<'_, DB>,
+    evm_output: Result<ResultAndState, EVMError<DB::Error>>,
+) -> Result<ResultAndState, EVMError<DB::Error>> {
+    evm_output
 }
 
 #[cfg(test)]
