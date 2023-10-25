@@ -175,9 +175,9 @@ pub fn end_handle<SPEC: Spec, DB: Database>(
     evm_output: Result<ResultAndState, EVMError<DB::Error>>,
 ) -> Result<ResultAndState, EVMError<DB::Error>> {
     evm_output.or_else(|err| {
-        if matches!(EVMError::Transaction(_), err)
-            && evm.env().cfg.optimism
-            && evm.env().tx.optimism.source_hash.is_some()
+        if matches!(err, EVMError::Transaction(_))
+            && data.env().cfg.optimism
+            && data.env().tx.optimism.source_hash.is_some()
         {
             // If the transaction is a deposit transaction and it failed
             // for any reason, the caller nonce must be bumped, and the
