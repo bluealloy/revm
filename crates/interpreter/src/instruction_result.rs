@@ -6,18 +6,17 @@ use crate::primitives::{Eval, Halt};
 pub enum InstructionResult {
     // success codes
     Continue = 0x00,
-    Stop = 0x01,
-    Return = 0x02,
-    SelfDestruct = 0x03,
+    Stop,
+    Return,
+    SelfDestruct,
 
     // revert codes
-    Revert = 0x20, // revert opcode
-    CallTooDeep = 0x21,
-    OutOfFund = 0x22,
+    Revert = 0x10, // revert opcode
+    CallTooDeep,
+    OutOfFund,
 
     // Actions
-    Call = 0x30,   // call opcode
-    Create = 0x31, // call create
+    CallOrCreate = 0x20,
 
     // error codes
     OutOfGas = 0x50,
@@ -153,8 +152,7 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::Return => Self::Success(Eval::Return),
             InstructionResult::SelfDestruct => Self::Success(Eval::SelfDestruct),
             InstructionResult::Revert => Self::Revert,
-            InstructionResult::Call => Self::InternalCall,
-            InstructionResult::Create => Self::InernalCreate,
+            InstructionResult::CallOrCreate => Self::InternalCall, // used only in interpreter loop
             InstructionResult::CallTooDeep => Self::Halt(Halt::CallTooDeep), // not gonna happen for first call
             InstructionResult::OutOfFund => Self::Halt(Halt::OutOfFund), // Check for first call is done separately.
             InstructionResult::OutOfGas => Self::Halt(Halt::OutOfGas(

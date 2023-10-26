@@ -54,9 +54,18 @@ fn return_inner(interpreter: &mut Interpreter<'_>, result: InstructionResult) {
     if len != 0 {
         let offset = as_usize_or_fail!(interpreter, offset);
         shared_memory_resize!(interpreter, offset, len);
-        interpreter.return_offset = offset;
+
+        // insert return data into `return_data_buffer`
+        interpreter.return_data_buffer = interpreter
+            .shared_memory
+            .as_mut()
+            .unwrap()
+            .slice(offset, len)
+            .to_vec()
+            .into()
+    } else {
+        interpreter.return_data_buffer = Default::default();
     }
-    interpreter.return_len = len;
     interpreter.instruction_result = result;
 }
 

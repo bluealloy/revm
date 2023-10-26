@@ -1,3 +1,4 @@
+use crate::interpreter::InterpreterAction;
 use crate::primitives::{Address, Bytes, Spec, SpecId::*, B256, U256};
 use crate::MAX_INITCODE_SIZE;
 use crate::{
@@ -326,16 +327,22 @@ pub fn create<const IS_CREATE2: bool, H: Host, SPEC: Spec>(
     let mut create_input: Option<Box<CreateInputs>> = None;
     prepare_create_inputs::<H, IS_CREATE2, SPEC>(interpreter, host, &mut create_input);
 
-    let Some(mut create_input) = create_input else {
+    let Some(create_input) = create_input else {
         return;
     };
 
-    let (reason, address, gas, return_data) = host.create(
-        &mut create_input,
-        interpreter.shared_memory.as_mut().unwrap(),
-    );
+    // let (reason, address, gas, return_data) = host.create(
+    //     &mut create_input,
+    //     interpreter.shared_memory.as_mut().unwrap(),
+    // );
+    //
+    // interpreter.insert_create_output(address, reason, gas, return_data);
 
-    interpreter.insert_create_output(address, reason, gas, return_data);
+    // Call host to interact with target contract
+    interpreter.next_action = Some(InterpreterAction::Create {
+        inputs: create_input,
+    });
+    interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
 pub fn call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, host: &mut H) {
@@ -525,16 +532,19 @@ pub fn call_inner<SPEC: Spec, H: Host>(
         &mut call_input,
     );
 
-    let Some(mut call_input) = call_input else {
+    let Some(call_input) = call_input else {
         return;
     };
 
-    interpreter.return_offset = out_offset;
-    interpreter.return_len = out_len;
-
     // Call host to interact with target contract
-    let (reason, gas, return_data) =
-        host.call(&mut call_input, interpreter.shared_memory.as_mut().unwrap());
+    interpreter.next_action = Some(InterpreterAction::SubCall {
+        inputs: call_input,
+        return_offset: out_offset,
+        return_len: out_len,
+    });
+    interpreter.instruction_result = InstructionResult::CallOrCreate;
+    // let (reason, gas, return_data) =
+    //     host.call(&mut call_input, interpreter.shared_memory.as_mut().unwrap());
 
-    interpreter.insert_call_output(reason, gas, return_data);
+    // interpreter.insert_call_output(reason, gas, return_data);
 }

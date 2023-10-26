@@ -791,7 +791,7 @@ pub enum JournalEntry {
 }
 
 /// SubRoutine checkpoint that will help us to go back from this
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct JournalCheckpoint {
     log_i: usize,
     journal_i: usize,
