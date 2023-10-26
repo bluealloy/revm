@@ -166,6 +166,34 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> Transact<DB::Error> for EVMImpl<'a
     }
 }
 
+impl<'a, GSPEC: Spec, DB: Database> EVMImpl<'a, GSPEC, DB> {
+    #[inline]
+    pub fn main_loop(&mut self) {
+        // match action {
+        // Call
+        // Create
+        //}
+
+        let frames: Vec<Interpreter<'_>> = vec![];
+
+        loop {
+            // RUN IT ALWAYS
+            // call interpreter.run() and get result.
+
+            // get next action
+            //     SubCall/SubCreate
+            //          start call handle
+            //          start create handle.
+            //          push interpreter to stack.
+            //     Return value {
+            //          is end call handle
+            //          is end create handle
+            //          push result to previous interpreter stack.
+            //}
+        }
+    }
+}
+
 impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
     pub fn new(
         db: &'a mut DB,
@@ -636,27 +664,24 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         is_static: bool,
         shared_memory: &mut SharedMemory,
     ) -> (InstructionResult, Bytes, Gas) {
-        let mut interpreter = Box::new(Interpreter::new(
-            contract,
-            gas_limit,
-            is_static,
-            shared_memory,
-        ));
+        let mut interpreter = Box::new(Interpreter::new(contract, gas_limit, is_static));
 
-        interpreter.shared_memory.new_context();
+        shared_memory.new_context();
 
         if let Some(inspector) = self.inspector.as_mut() {
             inspector.initialize_interp(&mut interpreter, &mut self.data);
         }
 
-        let exit_reason = match &mut self.instruction_table {
-            InstructionTables::Plain(table) => interpreter.run::<_, Self>(&table.clone(), self),
-            InstructionTables::Boxed(table) => interpreter.run::<_, Self>(&table.clone(), self),
+        let (exit_reason, return_value, gas) = match &mut self.instruction_table {
+            InstructionTables::Plain(table) => {
+                interpreter.run::<_, Self>(shared_memory, &table.clone(), self)
+            }
+            InstructionTables::Boxed(table) => {
+                interpreter.run::<_, Self>(shared_memory, &table.clone(), self)
+            }
         };
 
-        let (return_value, gas) = (interpreter.return_value(), *interpreter.gas());
-
-        interpreter.shared_memory.free_context();
+        interpreter.shared_memory.as_mut().unwrap().free_context();
 
         (exit_reason, return_value, gas)
     }

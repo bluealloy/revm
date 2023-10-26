@@ -5,12 +5,14 @@ mod stack;
 
 pub use analysis::BytecodeLocked;
 pub use contract::Contract;
+use revm_primitives::{Address, U256};
 pub use shared_memory::{next_multiple_of_32, SharedMemory};
 pub use stack::{Stack, STACK_LIMIT};
 
 use crate::primitives::Bytes;
-use crate::{Gas, Host, InstructionResult};
+use crate::{push, push_b256, return_ok, return_revert, Gas, Host, InstructionResult};
 use alloc::boxed::Box;
+use core::cmp::min;
 
 /// EIP-170: Contract code size limit
 ///
@@ -32,7 +34,7 @@ pub struct Interpreter<'a> {
     /// The gas state.
     pub gas: Gas,
     /// Shared memory.
-    pub shared_memory: &'a mut SharedMemory,
+    pub shared_memory: Option<&'a mut SharedMemory>,
     /// Stack.
     pub stack: Stack,
     /// The return data buffer for internal calls.
@@ -45,16 +47,21 @@ pub struct Interpreter<'a> {
     pub return_len: usize,
     /// Whether the interpreter is in "staticcall" mode, meaning no state changes can happen.
     pub is_static: bool,
+    /// Actions that is expected
+    pub next_action: InterpreterAction,
+}
+
+#[derive(Debug, Default)]
+pub enum InterpreterAction {
+    #[default]
+    None,
+    SubCall(),
+    Create(),
 }
 
 impl<'a> Interpreter<'a> {
     /// Create new interpreter
-    pub fn new(
-        contract: Box<Contract>,
-        gas_limit: u64,
-        is_static: bool,
-        shared_memory: &'a mut SharedMemory,
-    ) -> Self {
+    pub fn new(contract: Box<Contract>, gas_limit: u64, is_static: bool) -> Self {
         Self {
             instruction_pointer: contract.bytecode.as_ptr(),
             contract,
@@ -64,9 +71,102 @@ impl<'a> Interpreter<'a> {
             return_data_buffer: Bytes::new(),
             return_len: 0,
             return_offset: 0,
-            shared_memory,
+            shared_memory: None,
             stack: Stack::new(),
+            next_action: InterpreterAction::default(),
         }
+    }
+
+    /// When sub create call returns we can insert output of that call into this interpreter.
+    pub fn insert_create_output(
+        &mut self,
+        address: Option<Address>,
+        reason: InstructionResult,
+        gas: Gas,
+        return_data: Bytes,
+    ) {
+        let interpreter = self;
+        interpreter.return_data_buffer = match reason {
+            // Save data to return data buffer if the create reverted
+            return_revert!() => return_data,
+            // Otherwise clear it
+            _ => Bytes::new(),
+        };
+
+        match reason {
+            return_ok!() => {
+                push_b256!(interpreter, address.unwrap_or_default().into_word());
+
+                if crate::USE_GAS {
+                    interpreter.gas.erase_cost(gas.remaining());
+                    interpreter.gas.record_refund(gas.refunded());
+                }
+            }
+            return_revert!() => {
+                push!(interpreter, U256::ZERO);
+
+                if crate::USE_GAS {
+                    interpreter.gas.erase_cost(gas.remaining());
+                }
+            }
+            InstructionResult::FatalExternalError => {
+                interpreter.instruction_result = InstructionResult::FatalExternalError;
+            }
+            _ => {
+                push!(interpreter, U256::ZERO);
+            }
+        }
+    }
+
+    /// When sub call returns we can insert output of that call into this interpreter.
+    pub fn insert_call_output(&mut self, reason: InstructionResult, gas: Gas, return_data: Bytes) {
+        let out_offset = self.return_offset;
+        let out_len = self.return_len;
+        let interpreter = self;
+        // Call host to interact with target contract
+        //let (reason, gas, return_data) =
+        //    host.call(&mut call_input, interpreter.shared_memory.as_mut().unwrap());
+
+        interpreter.return_data_buffer = return_data;
+        let target_len = min(out_len, interpreter.return_data_buffer.len());
+
+        match reason {
+            return_ok!() => {
+                // return unspend gas.
+                if crate::USE_GAS {
+                    interpreter.gas.erase_cost(gas.remaining());
+                    interpreter.gas.record_refund(gas.refunded());
+                }
+                interpreter
+                    .shared_memory
+                    .as_mut()
+                    .unwrap()
+                    .set(out_offset, &interpreter.return_data_buffer[..target_len]);
+                push!(interpreter, U256::from(1));
+            }
+            return_revert!() => {
+                if crate::USE_GAS {
+                    interpreter.gas.erase_cost(gas.remaining());
+                }
+                interpreter
+                    .shared_memory
+                    .as_mut()
+                    .unwrap()
+                    .set(out_offset, &interpreter.return_data_buffer[..target_len]);
+                push!(interpreter, U256::ZERO);
+            }
+            InstructionResult::FatalExternalError => {
+                interpreter.instruction_result = InstructionResult::FatalExternalError;
+            }
+            _ => {
+                push!(interpreter, U256::ZERO);
+            }
+        }
+    }
+
+    #[inline]
+    pub fn shared_memory(&mut self) -> &mut SharedMemory {
+        self.shared_memory.as_mut().unwrap()
     }
 
     /// Returns the opcode at the current instruction pointer.
@@ -125,32 +225,30 @@ impl<'a> Interpreter<'a> {
     /// Executes the interpreter until it returns or stops.
     pub fn run<FN, H: Host>(
         &mut self,
+        shared_memory: &'a mut SharedMemory,
         instruction_table: &[FN; 256],
         host: &mut H,
-    ) -> InstructionResult
+    ) -> (InstructionResult, Bytes, Gas)
     where
         FN: Fn(&mut Interpreter<'_>, &mut H),
     {
+        self.shared_memory = Some(shared_memory);
+        // main loop
         while self.instruction_result == InstructionResult::Continue {
             self.step(instruction_table, host);
         }
-        self.instruction_result
-    }
+        let shared_memory = self.shared_memory.take().unwrap();
 
-    /// Returns a copy of the interpreter's return value, if any.
-    #[inline]
-    pub fn return_value(&self) -> Bytes {
-        self.return_value_slice().to_vec().into()
-    }
-
-    /// Returns a reference to the interpreter's return value, if any.
-    #[inline]
-    pub fn return_value_slice(&self) -> &[u8] {
-        if self.return_len == 0 {
-            &[]
+        // return value
+        let output = if self.return_len == 0 {
+            Bytes::new()
         } else {
-            self.shared_memory
+            shared_memory
                 .slice(self.return_offset, self.return_len)
-        }
+                .to_vec()
+                .into()
+        };
+
+        (self.instruction_result, output, self.gas)
     }
 }

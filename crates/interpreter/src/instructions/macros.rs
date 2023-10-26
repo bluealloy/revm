@@ -61,7 +61,7 @@ macro_rules! shared_memory_resize {
                 return;
             }
 
-            if new_size > $interp.shared_memory.len() {
+            if new_size > $interp.shared_memory.as_mut().unwrap().len() {
                 if crate::USE_GAS {
                     let num_bytes = new_size / 32;
                     if !$interp.gas.record_memory(crate::gas::memory_gas(num_bytes)) {
@@ -69,7 +69,7 @@ macro_rules! shared_memory_resize {
                         return;
                     }
                 }
-                $interp.shared_memory.resize(new_size);
+                $interp.shared_memory.as_mut().unwrap().resize(new_size);
             }
         } else {
             $interp.instruction_result = InstructionResult::MemoryOOG;
@@ -161,6 +161,7 @@ macro_rules! pop_top {
     };
 }
 
+#[macro_export]
 macro_rules! push_b256 {
 	($interp:expr, $($x:expr),* $(,)?) => ($(
         match $interp.stack.push_b256($x) {
@@ -173,6 +174,7 @@ macro_rules! push_b256 {
     )*)
 }
 
+#[macro_export]
 macro_rules! push {
     ($interp:expr, $($x:expr),* $(,)?) => ($(
         match $interp.stack.push($x) {

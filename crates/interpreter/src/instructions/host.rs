@@ -3,8 +3,8 @@ use crate::MAX_INITCODE_SIZE;
 use crate::{
     gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
     interpreter::Interpreter,
-    return_ok, return_revert, CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme,
-    Host, InstructionResult, Transfer,
+    CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, Host, InstructionResult,
+    Transfer,
 };
 use alloc::{boxed::Box, vec::Vec};
 use core::cmp::min;
@@ -112,9 +112,12 @@ pub fn extcodecopy<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, host:
     shared_memory_resize!(interpreter, memory_offset, len);
 
     // Safety: set_data is unsafe function and memory_resize ensures us that it is safe to call it
-    interpreter
-        .shared_memory
-        .set_data(memory_offset, code_offset, len, code.bytes());
+    interpreter.shared_memory.as_mut().unwrap().set_data(
+        memory_offset,
+        code_offset,
+        len,
+        code.bytes(),
+    );
 }
 
 pub fn blockhash<H: Host>(interpreter: &mut Interpreter<'_>, host: &mut H) {
@@ -198,7 +201,13 @@ pub fn log<const N: usize, H: Host>(interpreter: &mut Interpreter<'_>, host: &mu
     } else {
         let offset = as_usize_or_fail!(interpreter, offset);
         shared_memory_resize!(interpreter, offset, len);
-        Bytes::copy_from_slice(interpreter.shared_memory.slice(offset, len))
+        Bytes::copy_from_slice(
+            interpreter
+                .shared_memory
+                .as_mut()
+                .unwrap()
+                .slice(offset, len),
+        )
     };
 
     if interpreter.stack.len() < N {
@@ -274,7 +283,13 @@ pub fn prepare_create_inputs<H: Host, const IS_CREATE2: bool, SPEC: Spec>(
 
         let code_offset = as_usize_or_fail!(interpreter, code_offset);
         shared_memory_resize!(interpreter, code_offset, len);
-        Bytes::copy_from_slice(interpreter.shared_memory.slice(code_offset, len))
+        Bytes::copy_from_slice(
+            interpreter
+                .shared_memory
+                .as_mut()
+                .unwrap()
+                .slice(code_offset, len),
+        )
     };
 
     let scheme = if IS_CREATE2 {
@@ -315,39 +330,12 @@ pub fn create<const IS_CREATE2: bool, H: Host, SPEC: Spec>(
         return;
     };
 
-    let (return_reason, address, gas, return_data) =
-        host.create(&mut create_input, interpreter.shared_memory);
+    let (reason, address, gas, return_data) = host.create(
+        &mut create_input,
+        interpreter.shared_memory.as_mut().unwrap(),
+    );
 
-    interpreter.return_data_buffer = match return_reason {
-        // Save data to return data buffer if the create reverted
-        return_revert!() => return_data,
-        // Otherwise clear it
-        _ => Bytes::new(),
-    };
-
-    match return_reason {
-        return_ok!() => {
-            push_b256!(interpreter, address.unwrap_or_default().into_word());
-
-            if crate::USE_GAS {
-                interpreter.gas.erase_cost(gas.remaining());
-                interpreter.gas.record_refund(gas.refunded());
-            }
-        }
-        return_revert!() => {
-            push_b256!(interpreter, B256::ZERO);
-
-            if crate::USE_GAS {
-                interpreter.gas.erase_cost(gas.remaining());
-            }
-        }
-        InstructionResult::FatalExternalError => {
-            interpreter.instruction_result = InstructionResult::FatalExternalError;
-        }
-        _ => {
-            push_b256!(interpreter, B256::ZERO);
-        }
-    }
+    interpreter.insert_create_output(address, reason, gas, return_data);
 }
 
 pub fn call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, host: &mut H) {
@@ -401,7 +389,13 @@ fn prepare_call_inputs<H: Host, SPEC: Spec>(
     let input = if in_len != 0 {
         let in_offset = as_usize_or_fail!(interpreter, in_offset);
         shared_memory_resize!(interpreter, in_offset, in_len);
-        Bytes::copy_from_slice(interpreter.shared_memory.slice(in_offset, in_len))
+        Bytes::copy_from_slice(
+            interpreter
+                .shared_memory
+                .as_mut()
+                .unwrap()
+                .slice(in_offset, in_len),
+        )
     } else {
         Bytes::new()
     };
@@ -535,38 +529,12 @@ pub fn call_inner<SPEC: Spec, H: Host>(
         return;
     };
 
+    interpreter.return_offset = out_offset;
+    interpreter.return_len = out_len;
+
     // Call host to interact with target contract
-    let (reason, gas, return_data) = host.call(&mut call_input, interpreter.shared_memory);
+    let (reason, gas, return_data) =
+        host.call(&mut call_input, interpreter.shared_memory.as_mut().unwrap());
 
-    interpreter.return_data_buffer = return_data;
-    let target_len = min(out_len, interpreter.return_data_buffer.len());
-
-    match reason {
-        return_ok!() => {
-            // return unspend gas.
-            if crate::USE_GAS {
-                interpreter.gas.erase_cost(gas.remaining());
-                interpreter.gas.record_refund(gas.refunded());
-            }
-            interpreter
-                .shared_memory
-                .set(out_offset, &interpreter.return_data_buffer[..target_len]);
-            push!(interpreter, U256::from(1));
-        }
-        return_revert!() => {
-            if crate::USE_GAS {
-                interpreter.gas.erase_cost(gas.remaining());
-            }
-            interpreter
-                .shared_memory
-                .set(out_offset, &interpreter.return_data_buffer[..target_len]);
-            push!(interpreter, U256::ZERO);
-        }
-        InstructionResult::FatalExternalError => {
-            interpreter.instruction_result = InstructionResult::FatalExternalError;
-        }
-        _ => {
-            push!(interpreter, U256::ZERO);
-        }
-    }
+    interpreter.insert_call_output(reason, gas, return_data);
 }

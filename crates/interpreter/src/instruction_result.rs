@@ -15,6 +15,10 @@ pub enum InstructionResult {
     CallTooDeep = 0x21,
     OutOfFund = 0x22,
 
+    // Actions
+    Call = 0x30,   // call opcode
+    Create = 0x31, // call create
+
     // error codes
     OutOfGas = 0x50,
     MemoryOOG,
@@ -95,8 +99,12 @@ pub enum SuccessOrHalt {
     Revert,
     Halt(Halt),
     FatalExternalError,
-    // this is internal opcode.
+    /// Internal instruction.
     InternalContinue,
+    /// Internal call opcode.
+    InternalCall,
+    /// Internal create opcod.e
+    InernalCreate,
 }
 
 impl SuccessOrHalt {
@@ -145,6 +153,8 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::Return => Self::Success(Eval::Return),
             InstructionResult::SelfDestruct => Self::Success(Eval::SelfDestruct),
             InstructionResult::Revert => Self::Revert,
+            InstructionResult::Call => Self::InternalCall,
+            InstructionResult::Create => Self::InernalCreate,
             InstructionResult::CallTooDeep => Self::Halt(Halt::CallTooDeep), // not gonna happen for first call
             InstructionResult::OutOfFund => Self::Halt(Halt::OutOfFund), // Check for first call is done separately.
             InstructionResult::OutOfGas => Self::Halt(Halt::OutOfGas(

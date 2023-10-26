@@ -142,7 +142,9 @@ pub fn main_return<DB: Database>(
         SuccessOrHalt::FatalExternalError => {
             return Err(EVMError::Database(data.error.take().unwrap()));
         }
-        SuccessOrHalt::InternalContinue => {
+        SuccessOrHalt::InternalContinue
+        | SuccessOrHalt::InternalCall
+        | SuccessOrHalt::InernalCreate => {
             panic!("Internal return flags should remain internal {call_result:?}")
         }
     };
