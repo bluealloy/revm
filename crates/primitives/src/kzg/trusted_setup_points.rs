@@ -139,7 +139,7 @@ const fn parse_str(s: &str) -> Result<usize, KzgError> {
         return Err(KzgError::ParseError);
     }
     while let [x, rest @ ..] = bytes {
-        if !matches!(x, b'0'..=b'9') {
+        if !x.is_ascii_digit() {
             return Err(KzgError::ParseError);
         }
         i = i * 10 + (*x - b'0') as usize;
