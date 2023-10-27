@@ -242,8 +242,14 @@ impl AccountInfo {
         self.balance == U256::ZERO && self.nonce == 0 && code_empty
     }
 
+    /// Returns `true` if the account is not empty.
     pub fn exists(&self) -> bool {
         !self.is_empty()
+    }
+
+    /// Returns `true` if account has no nonce and code.
+    pub fn has_no_code_and_nonce(&self) -> bool {
+        self.is_empty_code_hash() && self.nonce == 0
     }
 
     /// Return bytecode hash associated with this account.
