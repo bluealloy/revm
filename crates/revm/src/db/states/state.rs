@@ -243,7 +243,7 @@ impl<DB: Database> Database for State<DB> {
         // Note that storage from bundle is already loaded with account.
         if let Some(account) = self.cache.accounts.get_mut(&address) {
             // account will always be some, but if it is not, U256::ZERO will be returned.
-            let is_storage_known = account.status.storage_known();
+            let is_storage_known = account.status.is_storage_known();
             Ok(account
                 .account
                 .as_mut()
