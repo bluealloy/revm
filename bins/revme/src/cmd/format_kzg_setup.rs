@@ -1,4 +1,4 @@
-pub use revm::primitives::kzg::{parse_kzg_trusted_setup, G1Points, G2Points, KzgErrors};
+pub use revm::primitives::kzg::{parse_kzg_trusted_setup, G1Points, G2Points, KzgError};
 use std::path::PathBuf;
 use std::{env, fs};
 use structopt::StructOpt;
@@ -19,16 +19,16 @@ pub struct Cmd {
 
 impl Cmd {
     /// Run statetest command.
-    pub fn run(&self) -> Result<(), KzgErrors> {
+    pub fn run(&self) -> Result<(), KzgError> {
         // check if path exists.
         if !self.path.exists() {
-            return Err(KzgErrors::PathNotExists);
+            return Err(KzgError::PathNotExists);
         }
 
-        let out_dir = env::current_dir().map_err(|_| KzgErrors::FailedCurrentDirectory)?;
+        let out_dir = env::current_dir().map_err(|_| KzgError::FailedCurrentDirectory)?;
 
         let kzg_trusted_settings =
-            fs::read_to_string(&self.path).map_err(|_| KzgErrors::NotValidFile)?;
+            fs::read_to_string(&self.path).map_err(|_| KzgError::NotValidFile)?;
 
         // format points
         let (g1, g2) = parse_kzg_trusted_setup(&kzg_trusted_settings)?;
@@ -44,8 +44,8 @@ impl Cmd {
             .unwrap_or_else(|| out_dir.join("g2_points.bin"));
 
         // output points
-        fs::write(&g1_path, flatten(&g1.0)).map_err(|_| KzgErrors::IOError)?;
-        fs::write(&g2_path, flatten(&g2.0)).map_err(|_| KzgErrors::IOError)?;
+        fs::write(&g1_path, flatten(&g1.0)).map_err(|_| KzgError::IOError)?;
+        fs::write(&g2_path, flatten(&g2.0)).map_err(|_| KzgError::IOError)?;
         println!("Finished formatting kzg trusted setup into binary representation.");
         println!("G1 points path: {:?}", g1_path);
         println!("G2 points path: {:?}", g2_path);

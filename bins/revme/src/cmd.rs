@@ -20,7 +20,7 @@ pub enum Error {
     #[error(transparent)]
     Statetest(#[from] statetest::Error),
     #[error(transparent)]
-    KzgErrors(#[from] format_kzg_setup::KzgErrors),
+    KzgErrors(#[from] format_kzg_setup::KzgError),
 }
 
 impl MainCmd {

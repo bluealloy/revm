@@ -1,7 +1,8 @@
 pub use c_kzg::{BYTES_PER_G1_POINT, BYTES_PER_G2_POINT};
 use core::fmt::Display;
+use core::slice;
+use core::str;
 use derive_more::{AsMut, AsRef, Deref, DerefMut};
-use std::error::Error;
 
 /// Number of G1 Points.
 pub const NUM_G1_POINTS: usize = 4096;
@@ -31,72 +32,131 @@ impl Default for G2Points {
     }
 }
 
+const POINTS: &(G1Points, G2Points) =
+    &match parse_kzg_trusted_setup(include_str!("trusted_setup.txt")) {
+        Ok(x) => x,
+        Err(_) => panic!("failed to parse kzg trusted setup"),
+    };
+
 /// Default G1 points.
-pub const G1_POINTS: &G1Points = {
-    const BYTES: &[u8] = include_bytes!("./g1_points.bin");
-    assert!(BYTES.len() == core::mem::size_of::<G1Points>());
-    unsafe { &*BYTES.as_ptr().cast::<G1Points>() }
-};
+pub const G1_POINTS: &G1Points = &POINTS.0;
 
 /// Default G2 points.
-pub const G2_POINTS: &G2Points = {
-    const BYTES: &[u8] = include_bytes!("./g2_points.bin");
-    assert!(BYTES.len() == core::mem::size_of::<G2Points>());
-    unsafe { &*BYTES.as_ptr().cast::<G2Points>() }
-};
+pub const G2_POINTS: &G2Points = &POINTS.1;
+
+macro_rules! tri {
+    ($e:expr) => {
+        match $e {
+            Ok(x) => x,
+            Err(e) => return Err(e),
+        }
+    };
+}
+
+macro_rules! unwrap_opt {
+    ($e:expr) => {
+        match $e {
+            Some(x) => x,
+            None => return Err(KzgError::FileFormatError),
+        }
+    };
+}
 
 /// Parses the contents of a KZG trusted setup file into a list of G1 and G2 points.
 ///
 /// These can then be used to create a KZG settings object with
 /// [`KzgSettings::load_trusted_setup`](c_kzg::KzgSettings::load_trusted_setup).
-pub fn parse_kzg_trusted_setup(
+pub const fn parse_kzg_trusted_setup(
     trusted_setup: &str,
-) -> Result<(Box<G1Points>, Box<G2Points>), KzgErrors> {
-    let mut lines = trusted_setup.lines();
+) -> Result<(G1Points, G2Points), KzgError> {
+    let mut contents = trusted_setup;
 
-    // load number of points
-    let n_g1 = lines
-        .next()
-        .ok_or(KzgErrors::FileFormatError)?
-        .parse::<usize>()
-        .map_err(|_| KzgErrors::ParseError)?;
-    let n_g2 = lines
-        .next()
-        .ok_or(KzgErrors::FileFormatError)?
-        .parse::<usize>()
-        .map_err(|_| KzgErrors::ParseError)?;
+    macro_rules! next_line {
+        () => {{
+            let (rest, sl) = next_pat(contents, b'\n');
+            contents = rest;
+            sl
+        }};
+    }
+
+    let n_g1 = unwrap_opt!(next_line!());
+    let n_g1 = tri!(parse_str(n_g1));
+    let n_g2 = unwrap_opt!(next_line!());
+    let n_g2 = tri!(parse_str(n_g2));
 
     if n_g1 != NUM_G1_POINTS {
-        return Err(KzgErrors::MismatchedNumberOfPoints);
+        return Err(KzgError::MismatchedNumberOfPoints);
     }
-
     if n_g2 != NUM_G2_POINTS {
-        return Err(KzgErrors::MismatchedNumberOfPoints);
+        return Err(KzgError::MismatchedNumberOfPoints);
     }
 
-    // load g1 points
-    let mut g1_points = Box::<G1Points>::default();
-    for bytes in &mut g1_points.0 {
-        let line = lines.next().ok_or(KzgErrors::FileFormatError)?;
-        crate::hex::decode_to_slice(line, bytes).map_err(|_| KzgErrors::ParseError)?;
+    let mut g1_points = [[0; BYTES_PER_G1_POINT]; NUM_G1_POINTS];
+    let mut i = 0;
+    while i < NUM_G1_POINTS {
+        let line = unwrap_opt!(next_line!());
+        g1_points[i] = tri!(hex_decode(line));
+        i += 1;
     }
 
-    // load g2 points
-    let mut g2_points = Box::<G2Points>::default();
-    for bytes in &mut g2_points.0 {
-        let line = lines.next().ok_or(KzgErrors::FileFormatError)?;
-        crate::hex::decode_to_slice(line, bytes).map_err(|_| KzgErrors::ParseError)?;
+    let mut g2_points = [[0; BYTES_PER_G2_POINT]; NUM_G2_POINTS];
+    let mut i = 0;
+    while i < NUM_G2_POINTS {
+        let line = unwrap_opt!(next_line!());
+        g2_points[i] = tri!(hex_decode(line));
+        i += 1;
     }
 
-    if lines.next().is_some() {
-        return Err(KzgErrors::FileFormatError);
+    if next_line!().is_some() {
+        return Err(KzgError::FileFormatError);
     }
+    let _ = contents;
 
-    Ok((g1_points, g2_points))
+    Ok((G1Points(g1_points), G2Points(g2_points)))
+}
+
+const fn next_pat(s: &str, pat: u8) -> (&str, Option<&str>) {
+    assert!(pat.is_ascii());
+
+    let mut bytes = s.as_bytes();
+    while let [x, rest @ ..] = bytes {
+        if *x == pat {
+            unsafe {
+                let rest = str::from_utf8_unchecked(rest);
+                let sl = slice::from_raw_parts(s.as_ptr(), s.len() - rest.len() - 1);
+                return (rest, Some(str::from_utf8_unchecked(sl)));
+            }
+        }
+        bytes = rest;
+    }
+    (s, None)
+}
+
+const fn parse_str(s: &str) -> Result<usize, KzgError> {
+    let mut i = 0;
+    let mut bytes = s.as_bytes();
+    if bytes.is_empty() {
+        return Err(KzgError::ParseError);
+    }
+    while let [x, rest @ ..] = bytes {
+        if !matches!(x, b'0'..=b'9') {
+            return Err(KzgError::ParseError);
+        }
+        i = i * 10 + (*x - b'0') as usize;
+        bytes = rest;
+    }
+    Ok(i)
+}
+
+const fn hex_decode<const N: usize>(s: &str) -> Result<[u8; N], KzgError> {
+    match crate::hex::const_decode_to_array(s.as_bytes()) {
+        Ok(x) => Ok(x),
+        Err(_) => Err(KzgError::ParseError),
+    }
 }
 
 #[derive(Debug)]
-pub enum KzgErrors {
+pub enum KzgError {
     /// Failed to get current directory.
     FailedCurrentDirectory,
     /// The specified path does not exist.
@@ -113,20 +173,21 @@ pub enum KzgErrors {
     MismatchedNumberOfPoints,
 }
 
-impl Display for KzgErrors {
+impl Display for KzgError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
-            KzgErrors::FailedCurrentDirectory => write!(f, "Failed to get current directory"),
-            KzgErrors::PathNotExists => write!(f, "The specified path does not exist"),
-            KzgErrors::IOError => write!(f, "Problems related to I/O"),
-            KzgErrors::NotValidFile => write!(f, "Not a valid file"),
-            KzgErrors::FileFormatError => write!(f, "File is not properly formatted"),
-            KzgErrors::ParseError => write!(f, "Not able to parse to usize"),
-            KzgErrors::MismatchedNumberOfPoints => {
+            KzgError::FailedCurrentDirectory => write!(f, "Failed to get current directory"),
+            KzgError::PathNotExists => write!(f, "The specified path does not exist"),
+            KzgError::IOError => write!(f, "Problems related to I/O"),
+            KzgError::NotValidFile => write!(f, "Not a valid file"),
+            KzgError::FileFormatError => write!(f, "File is not properly formatted"),
+            KzgError::ParseError => write!(f, "Not able to parse to usize"),
+            KzgError::MismatchedNumberOfPoints => {
                 write!(f, "Number of points does not match what is expected")
             }
         }
     }
 }
 
-impl Error for KzgErrors {}
+#[cfg(feature = "std")]
+impl std::error::Error for KzgError {}
