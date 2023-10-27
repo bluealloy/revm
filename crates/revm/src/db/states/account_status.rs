@@ -27,7 +27,7 @@ impl AccountStatus {
 
     /// Account was destroyed by calling SELFDESTRUCT.
     /// This means that full account and storage are inside memory.
-    pub fn is_destroyed(&self) -> bool {
+    pub fn was_destroyed(&self) -> bool {
         matches!(
             self,
             AccountStatus::Destroyed
@@ -192,7 +192,7 @@ impl AccountStatus {
     /// Otherwise, if both are destroyed or other is destroyed:
     /// set other status to extended account.
     pub fn transition(&mut self, other: Self) {
-        *self = match (self.is_destroyed(), other.is_destroyed()) {
+        *self = match (self.was_destroyed(), other.was_destroyed()) {
             (true, false) => Self::DestroyedChanged,
             (false, false) if *self == Self::InMemoryChange => Self::InMemoryChange,
             _ => other,
@@ -228,14 +228,14 @@ mod test {
         assert!(!AccountStatus::Changed.is_storage_known());
 
         // account was destroyed
-        assert!(!AccountStatus::LoadedEmptyEIP161.is_destroyed());
-        assert!(!AccountStatus::LoadedNotExisting.is_destroyed());
-        assert!(!AccountStatus::InMemoryChange.is_destroyed());
-        assert!(AccountStatus::Destroyed.is_destroyed());
-        assert!(AccountStatus::DestroyedChanged.is_destroyed());
-        assert!(AccountStatus::DestroyedAgain.is_destroyed());
-        assert!(!AccountStatus::Loaded.is_destroyed());
-        assert!(!AccountStatus::Changed.is_destroyed());
+        assert!(!AccountStatus::LoadedEmptyEIP161.was_destroyed());
+        assert!(!AccountStatus::LoadedNotExisting.was_destroyed());
+        assert!(!AccountStatus::InMemoryChange.was_destroyed());
+        assert!(AccountStatus::Destroyed.was_destroyed());
+        assert!(AccountStatus::DestroyedChanged.was_destroyed());
+        assert!(AccountStatus::DestroyedAgain.was_destroyed());
+        assert!(!AccountStatus::Loaded.was_destroyed());
+        assert!(!AccountStatus::Changed.was_destroyed());
 
         // account modified but not destroyed
         assert!(AccountStatus::Changed.is_modified_and_not_destroyed());

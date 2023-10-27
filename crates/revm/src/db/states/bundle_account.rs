@@ -71,7 +71,7 @@ impl BundleAccount {
 
     /// Was this account destroyed.
     pub fn was_destroyed(&self) -> bool {
-        self.status.is_destroyed()
+        self.status.was_destroyed()
     }
 
     /// Return true of account info was changed.
