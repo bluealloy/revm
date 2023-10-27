@@ -7,6 +7,8 @@ use alloc::vec::Vec;
 use core::mem;
 use revm_interpreter::primitives::SpecId;
 
+/// JournalState is internal EVM state that is used to contain state and track changes to that state.
+/// It contains journal of changes that happened to state so that they can be reverted.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct JournaledState {
@@ -24,20 +26,26 @@ pub struct JournaledState {
     /// Spec is needed for two things SpuriousDragon's `EIP-161 State clear`,
     /// and for Cancun's `EIP-6780: SELFDESTRUCT in same transaction`
     pub spec: SpecId,
-    /// It is assumed that precompiles start from 0x1 address and span next N addresses.
-    /// we are using that assumption here
-    pub num_of_precompiles: usize,
+    /// Precompiles addresses are used to check if loaded address
+    /// should be considered cold or hot loaded. It is cloned from
+    /// EVMData to be directly accessed from JournaledState.
+    ///
+    /// Note that addresses are sorted.
+    pub precompile_addresses: Vec<Address>,
 }
 
 impl JournaledState {
     /// Create new JournaledState.
     ///
-    /// num_of_precompiles is used to determine how many precompiles are there.
-    /// Assumption is that number of N first addresses are precompiles (excluding 0x00..00)
+    /// precompile_addresses is used to determine if address is precompile or not.
     ///
     /// Note: This function will journal state after Spurious Dragon fork.
     /// And will not take into account if account is not existing or empty.
-    pub fn new(num_of_precompiles: usize, spec: SpecId) -> JournaledState {
+    ///
+    /// # Note
+    ///
+    /// Precompile addresses should be sorted.
+    pub fn new(spec: SpecId, precompile_addresses: Vec<Address>) -> JournaledState {
         Self {
             state: HashMap::new(),
             transient_storage: TransientStorage::default(),
@@ -45,11 +53,12 @@ impl JournaledState {
             journal: vec![vec![]],
             depth: 0,
             spec,
-            num_of_precompiles,
+            precompile_addresses,
         }
     }
 
     /// Return reference to state.
+    #[inline]
     pub fn state(&mut self) -> &mut State {
         &mut self.state
     }
@@ -57,12 +66,15 @@ impl JournaledState {
     /// Mark account as touched as only touched accounts will be added to state.
     /// This is especially important for state clear where touched empty accounts needs to
     /// be removed from state.
+    #[inline]
     pub fn touch(&mut self, address: &Address) {
         if let Some(account) = self.state.get_mut(address) {
             Self::touch_account(self.journal.last_mut().unwrap(), address, account);
         }
     }
 
+    /// Mark account as touched.
+    #[inline]
     fn touch_account(journal: &mut Vec<JournalEntry>, address: &Address, account: &mut Account) {
         if !account.is_touched() {
             journal.push(JournalEntry::AccountTouched { address: *address });
@@ -70,7 +82,8 @@ impl JournaledState {
         }
     }
 
-    /// do cleanup and return modified state
+    /// Does cleanup and returns modified state.
+    #[inline]
     pub fn finalize(&mut self) -> (State, Vec<Log>) {
         let state = mem::take(&mut self.state);
 
@@ -87,18 +100,22 @@ impl JournaledState {
     /// # Panics
     ///
     /// Panics if the account has not been loaded and is missing from the state set.
+    #[inline]
     pub fn account(&self, address: Address) -> &Account {
         self.state
             .get(&address)
             .expect("Account expected to be loaded") // Always assume that acc is already loaded
     }
 
+    /// Returns call depth.
+    #[inline]
     pub fn depth(&self) -> u64 {
         self.depth as u64
     }
 
     /// use it only if you know that acc is warm
     /// Assume account is warm
+    #[inline]
     pub fn set_code(&mut self, address: Address, code: Bytecode) {
         let account = self.state.get_mut(&address).unwrap();
         Self::touch_account(self.journal.last_mut().unwrap(), &address, account);
@@ -129,6 +146,8 @@ impl JournaledState {
         Some(account.info.nonce)
     }
 
+    /// Transfers balance from two accounts. Returns error if sender balance is not enough.
+    #[inline]
     pub fn transfer<DB: Database>(
         &mut self,
         from: &Address,
@@ -185,6 +204,7 @@ impl JournaledState {
     ///
     /// Safety: It is assumed that caller balance is already checked and that
     /// caller is already loaded inside evm. This is already done inside `create_inner`
+    #[inline]
     pub fn create_account_checkpoint<SPEC: Spec>(
         &mut self,
         caller: Address,
@@ -198,8 +218,14 @@ impl JournaledState {
         let account = self.state.get_mut(&address).unwrap();
         let last_journal = self.journal.last_mut().unwrap();
 
-        // check if it is possible to create this account.
-        if Self::check_account_collision(address, account, self.num_of_precompiles) {
+        // New account can be created if:
+        // Bytecode is not empty.
+        // Nonce is not zero
+        // Account is not precompile.
+        if account.info.code_hash != KECCAK_EMPTY
+            || account.info.nonce != 0
+            || self.precompile_addresses.binary_search(&address).is_ok()
+        {
             self.checkpoint_revert(checkpoint);
             return Err(InstructionResult::CreateCollision);
         }
@@ -252,29 +278,8 @@ impl JournaledState {
         Ok(checkpoint)
     }
 
+    /// Revert all changes that happened in given journal entries.
     #[inline]
-    pub fn check_account_collision(
-        address: Address,
-        account: &Account,
-        num_of_precompiles: usize,
-    ) -> bool {
-        // Check collision. Bytecode needs to be empty.
-        if account.info.code_hash != KECCAK_EMPTY {
-            return true;
-        }
-        // Check collision. Nonce is not zero
-        if account.info.nonce != 0 {
-            return true;
-        }
-
-        // Check collision. New account address is precompile.
-        if is_precompile(&address, num_of_precompiles) {
-            return true;
-        }
-
-        false
-    }
-
     fn journal_revert(
         state: &mut State,
         transient_storage: &mut TransientStorage,
@@ -366,6 +371,8 @@ impl JournaledState {
         }
     }
 
+    /// Makes a checkpoint that in case of Revert can bring back state to this point.
+    #[inline]
     pub fn checkpoint(&mut self) -> JournalCheckpoint {
         let checkpoint = JournalCheckpoint {
             log_i: self.logs.len(),
@@ -376,10 +383,14 @@ impl JournaledState {
         checkpoint
     }
 
+    /// Commit the checkpoint.
+    #[inline]
     pub fn checkpoint_commit(&mut self) {
         self.depth -= 1;
     }
 
+    /// Reverts all changes to state until given checkpoint.
+    #[inline]
     pub fn checkpoint_revert(&mut self, checkpoint: JournalCheckpoint) {
         let is_spurious_dragon_enabled = SpecId::enabled(self.spec, SPURIOUS_DRAGON);
         let state = &mut self.state;
@@ -404,7 +415,8 @@ impl JournaledState {
         self.journal.truncate(checkpoint.journal_i);
     }
 
-    /// Transfer balance from address to target. Check if target exist/is_cold
+    /// Performans selfdestruct action.
+    /// Transfers balance from address to target. Check if target exist/is_cold
     ///
     /// Note: balance will be lost if [address] and [target] are the same BUT when
     /// current spec enables Cancun, this happens only when the account associated to [address]
@@ -414,6 +426,7 @@ impl JournaledState {
     ///  * https://github.com/ethereum/go-ethereum/blob/141cd425310b503c5678e674a8c3872cf46b7086/core/vm/instructions.go#L832-L833
     ///  * https://github.com/ethereum/go-ethereum/blob/141cd425310b503c5678e674a8c3872cf46b7086/core/state/statedb.go#L449
     ///  * https://eips.ethereum.org/EIPS/eip-6780
+    #[inline]
     pub fn selfdestruct<DB: Database>(
         &mut self,
         address: Address,
@@ -474,25 +487,8 @@ impl JournaledState {
         })
     }
 
-    pub fn initial_account_and_code_load<DB: Database>(
-        &mut self,
-        address: Address,
-        db: &mut DB,
-    ) -> Result<&mut Account, DB::Error> {
-        let account = self.initial_account_load(address, &[], db)?;
-        if account.info.code.is_none() {
-            if account.info.code_hash == KECCAK_EMPTY {
-                account.info.code = Some(Bytecode::new());
-            } else {
-                // load code if requested
-                account.info.code = Some(db.code_by_hash(account.info.code_hash)?);
-            }
-        }
-
-        Ok(account)
-    }
-
     /// Initial load of account. This load will not be tracked inside journal
+    #[inline]
     pub fn initial_account_load<DB: Database>(
         &mut self,
         address: Address,
@@ -519,6 +515,7 @@ impl JournaledState {
     }
 
     /// load account into memory. return if it is cold or warm accessed
+    #[inline]
     pub fn load_account<DB: Database>(
         &mut self,
         address: Address,
@@ -540,14 +537,17 @@ impl JournaledState {
                     .push(JournalEntry::AccountLoaded { address });
 
                 // precompiles are warm loaded so we need to take that into account
-                let is_cold = !is_precompile(&address, self.num_of_precompiles);
+                let is_cold = self.precompile_addresses.binary_search(&address).is_err();
 
                 (vac.insert(account), is_cold)
             }
         })
     }
 
-    // first is is_cold second bool is exists.
+    /// Load account from database to JournaledState.
+    ///
+    /// Return boolean pair where first is `is_cold`` second bool `is_exists`.
+    #[inline]
     pub fn load_account_exist<DB: Database>(
         &mut self,
         address: Address,
@@ -566,6 +566,8 @@ impl JournaledState {
         Ok((is_cold, exist))
     }
 
+    /// Loads code.
+    #[inline]
     pub fn load_code<DB: Database>(
         &mut self,
         address: Address,
@@ -584,7 +586,12 @@ impl JournaledState {
         Ok((acc, is_cold))
     }
 
-    // account is already present and loaded.
+    /// Load storage slot
+    ///
+    /// # Note
+    ///
+    /// Account is already present and loaded.
+    #[inline]
     pub fn sload<DB: Database>(
         &mut self,
         address: Address,
@@ -621,8 +628,13 @@ impl JournaledState {
         Ok(load)
     }
 
+    /// Stores storage slot.
+    /// And returns (original,present,new) slot value.
+    ///
+    /// Note:
+    ///
     /// account should already be present in our state.
-    /// returns (original,present,new) slot
+    #[inline]
     pub fn sstore<DB: Database>(
         &mut self,
         address: Address,
@@ -658,6 +670,7 @@ impl JournaledState {
     /// Read transient storage tied to the account.
     ///
     /// EIP-1153: Transient storage opcodes
+    #[inline]
     pub fn tload(&mut self, address: Address, key: U256) -> U256 {
         self.transient_storage
             .get(&(address, key))
@@ -671,6 +684,7 @@ impl JournaledState {
     /// so that old state can be reverted if that action is needed.
     ///
     /// EIP-1153: Transient storage opcodes
+    #[inline]
     pub fn tstore(&mut self, address: Address, key: U256, new: U256) {
         let had_value = if new == U256::ZERO {
             // if new values is zero, remove entry from transient storage.
@@ -707,11 +721,13 @@ impl JournaledState {
     }
 
     /// push log into subroutine
+    #[inline]
     pub fn log(&mut self, log: Log) {
         self.logs.push(log);
     }
 }
 
+/// Journal entries that are used to track changes to the state and are used to revert it.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum JournalEntry {
@@ -779,63 +795,4 @@ pub enum JournalEntry {
 pub struct JournalCheckpoint {
     log_i: usize,
     journal_i: usize,
-}
-
-/// Check if address is precompile by having assumption
-/// that precompiles are in range of 1 to N.
-#[inline]
-pub fn is_precompile(address: &Address, num_of_precompiles: usize) -> bool {
-    if !address[..18].iter().all(|i| *i == 0) {
-        return false;
-    }
-    let num = u16::from_be_bytes([address[18], address[19]]);
-    num.wrapping_sub(1) < num_of_precompiles as u16
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test_is_precompile() {
-        assert!(
-            !is_precompile(
-                &Address::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
-                3
-            ),
-            "Zero is not precompile"
-        );
-
-        assert!(
-            !is_precompile(
-                &Address::new([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9]),
-                3
-            ),
-            "0x100..0 is not precompile"
-        );
-
-        assert!(
-            !is_precompile(
-                &Address::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]),
-                3
-            ),
-            "0x000..4 is not precompile"
-        );
-
-        assert!(
-            is_precompile(
-                &Address::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-                3
-            ),
-            "0x00..01 is precompile"
-        );
-
-        assert!(
-            is_precompile(
-                &Address::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3]),
-                3
-            ),
-            "0x000..3 is precompile"
-        );
-    }
 }

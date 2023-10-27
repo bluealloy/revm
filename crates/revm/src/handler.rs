@@ -2,11 +2,11 @@ pub mod mainnet;
 #[cfg(feature = "optimism")]
 pub mod optimism;
 
-use crate::interpreter::{Gas, InstructionResult};
-use crate::primitives::{Env, Output, ResultAndState, Spec};
-use crate::EVMData;
-use revm_interpreter::primitives::db::Database;
-use revm_interpreter::primitives::{EVMError, EVMResultGeneric};
+use crate::{
+    interpreter::{Gas, InstructionResult},
+    primitives::{db::Database, EVMError, EVMResultGeneric, Env, Output, ResultAndState, Spec},
+    EVMData,
+};
 
 /// Handle call return and return final gas value.
 type CallReturnHandle = fn(&Env, InstructionResult, Gas) -> Gas;
@@ -29,6 +29,15 @@ type MainReturnHandle<DB> = fn(
     &Gas,
 ) -> Result<ResultAndState, EVMError<<DB as Database>::Error>>;
 
+/// End handle, takes result and state and returns final result.
+/// This will be called after all the other handlers.
+///
+/// It is useful for catching errors and returning them in a different way.
+type EndHandle<DB> = fn(
+    &mut EVMData<'_, DB>,
+    evm_output: Result<ResultAndState, EVMError<<DB as Database>::Error>>,
+) -> Result<ResultAndState, EVMError<<DB as Database>::Error>>;
+
 /// Handler acts as a proxy and allow to define different behavior for different
 /// sections of the code. This allows nice integration of different chains or
 /// to disable some mainnet behavior.
@@ -43,8 +52,10 @@ pub struct Handler<DB: Database> {
     /// Calculate gas refund for transaction.
     /// Some chains have it disabled.
     pub calculate_gas_refund: CalculateGasRefundHandle,
-    /// Main return handle this handle output of the transact.
+    /// Main return handle, returns the output of the transact.
     pub main_return: MainReturnHandle<DB>,
+    /// End handle.
+    pub end: EndHandle<DB>,
 }
 
 impl<DB: Database> Handler<DB> {
@@ -56,6 +67,7 @@ impl<DB: Database> Handler<DB> {
             reimburse_caller: mainnet::handle_reimburse_caller::<SPEC, DB>,
             reward_beneficiary: mainnet::reward_beneficiary::<SPEC, DB>,
             main_return: mainnet::main_return::<DB>,
+            end: mainnet::end_handle::<DB>,
         }
     }
 
@@ -69,7 +81,9 @@ impl<DB: Database> Handler<DB> {
             reimburse_caller: mainnet::handle_reimburse_caller::<SPEC, DB>,
             calculate_gas_refund: optimism::calculate_gas_refund::<SPEC>,
             reward_beneficiary: optimism::reward_beneficiary::<SPEC, DB>,
-            main_return: mainnet::main_return::<DB>,
+            // In case of halt of deposit transaction return Error.
+            main_return: optimism::main_return::<SPEC, DB>,
+            end: optimism::end_handle::<SPEC, DB>,
         }
     }
 
@@ -110,5 +124,14 @@ impl<DB: Database> Handler<DB> {
         gas: &Gas,
     ) -> Result<ResultAndState, EVMError<DB::Error>> {
         (self.main_return)(data, call_result, output, gas)
+    }
+
+    /// End handler.
+    pub fn end(
+        &self,
+        data: &mut EVMData<'_, DB>,
+        end_output: Result<ResultAndState, EVMError<DB::Error>>,
+    ) -> Result<ResultAndState, EVMError<DB::Error>> {
+        (self.end)(data, end_output)
     }
 }

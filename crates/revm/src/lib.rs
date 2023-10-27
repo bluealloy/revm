@@ -32,7 +32,7 @@ pub use db::{Database, DatabaseCommit, DatabaseRef, InMemoryDB};
 pub use evm::{evm_inner, new, EVM};
 pub use evm_context::EVMData;
 pub use evm_impl::{EVMImpl, Transact, CALL_STACK_LIMIT};
-pub use journaled_state::{is_precompile, JournalCheckpoint, JournalEntry, JournaledState};
+pub use journaled_state::{JournalCheckpoint, JournalEntry, JournaledState};
 
 // reexport `revm_precompiles`
 #[doc(inline)]

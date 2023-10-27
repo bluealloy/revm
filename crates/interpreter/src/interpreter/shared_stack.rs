@@ -353,60 +353,56 @@ impl SharedStack {
     /// If it will exceed the stack limit, returns `StackOverflow` error and leaves the stack
     /// unchanged.
     #[inline]
-    pub fn push_slice<const N: usize>(&mut self, slice: &[u8]) -> Result<(), InstructionResult> {
-        if self.len() >= STACK_LIMIT {
+    pub fn push_slice(&mut self, slice: &[u8]) -> Result<(), InstructionResult> {
+        if slice.is_empty() {
+            return Ok(());
+        }
+
+        let n_words = (slice.len() + 31) / 32;
+        let new_context_len = self.len() + n_words;
+        let new_buffer_len = self.buffer().len() + n_words;
+
+        if new_context_len > STACK_LIMIT {
             return Err(InstructionResult::StackOverflow);
         }
 
-        let mut slot = U256::ZERO;
-
+        // SAFETY: length checked above.
         unsafe {
-            let mut dangling = [0u8; 8];
-            if N < 8 {
-                dangling[8 - N..].copy_from_slice(slice);
-                slot.as_limbs_mut()[0] = u64::from_be_bytes(dangling);
-            } else if N < 16 {
-                slot.as_limbs_mut()[0] =
-                    u64::from_be_bytes(slice[N - 8..N].try_into().expect("Infallible"));
-                if N != 8 {
-                    dangling[8 * 2 - N..].copy_from_slice(&slice[..N - 8]);
-                    slot.as_limbs_mut()[1] = u64::from_be_bytes(dangling);
-                }
-            } else if N < 24 {
-                slot.as_limbs_mut()[0] =
-                    u64::from_be_bytes(slice[N - 8..N].try_into().expect("Infallible"));
-                slot.as_limbs_mut()[1] =
-                    u64::from_be_bytes(slice[N - 16..N - 8].try_into().expect("Infallible"));
-                if N != 16 {
-                    dangling[8 * 3 - N..].copy_from_slice(&slice[..N - 16]);
-                    slot.as_limbs_mut()[2] = u64::from_be_bytes(dangling);
-                }
-            } else {
-                // M<32
-                slot.as_limbs_mut()[0] =
-                    u64::from_be_bytes(slice[N - 8..N].try_into().expect("Infallible"));
-                slot.as_limbs_mut()[1] =
-                    u64::from_be_bytes(slice[N - 16..N - 8].try_into().expect("Infallible"));
-                slot.as_limbs_mut()[2] =
-                    u64::from_be_bytes(slice[N - 24..N - 16].try_into().expect("Infallible"));
-                if N == 32 {
-                    slot.as_limbs_mut()[3] =
-                        u64::from_be_bytes(slice[..N - 24].try_into().expect("Infallible"));
-                } else if N != 24 {
-                    dangling[8 * 4 - N..].copy_from_slice(&slice[..N - 24]);
-                    slot.as_limbs_mut()[3] = u64::from_be_bytes(dangling);
-                }
+            let dst = self
+                .buffer_mut()
+                .as_mut_ptr()
+                .add(self.buffer().len())
+                .cast::<u64>();
+            let mut i = 0;
+
+            // write full words
+            let limbs = slice.rchunks_exact(8);
+            let rem = limbs.remainder();
+            for limb in limbs {
+                *dst.add(i) = u64::from_be_bytes(limb.try_into().unwrap());
+                i += 1;
             }
 
-            let buffer = self.buffer_mut();
-            let buf_len = buffer.len();
-            // SAFETY: the check above and the `new_context`
-            // method guarantee we have enough capacity
+            // write remainder by padding with zeros
+            if !rem.is_empty() {
+                let mut tmp = [0u8; 8];
+                tmp[8 - rem.len()..].copy_from_slice(rem);
+                *dst.add(i) = u64::from_be_bytes(tmp);
+                i += 1;
+            }
 
-            *buffer.get_unchecked_mut(buf_len) = slot;
-            buffer.set_len(buf_len + 1);
-            self.context_len += 1;
+            debug_assert_eq!((i + 3) / 4, n_words, "wrote beyond end of stack");
+
+            // zero out upper bytes of last word
+            let m = i % 4; // 32 / 8
+            if m != 0 {
+                dst.add(i).write_bytes(0, 4 - m);
+            }
+
+            self.context_len = new_context_len;
+            self.buffer_mut().set_len(new_buffer_len);
         }
+
         Ok(())
     }
 
@@ -519,7 +515,6 @@ mod tests {
             let new_len = STACK_LIMIT / 2;
             unsafe { shared_stack.buffer_mut().set_len(new_len * (i + 1)) };
             shared_stack.context_len = new_len;
-            println!("buffer len = {}", shared_stack.buffer().len());
         }
 
         // a new page should be created
@@ -552,7 +547,6 @@ mod tests {
         let mut shared_stack = SharedStack::new();
         for i in 0..3 {
             for j in 0..7 {
-                println!("i = {}, j = {}", i, j);
                 shared_stack.new_context();
                 assert_eq!(shared_stack.page_idx, i);
                 assert_eq!(shared_stack.pages.len(), i + 1);
@@ -566,68 +560,9 @@ mod tests {
                 let new_len = STACK_LIMIT / 2;
                 unsafe { shared_stack.buffer_mut().set_len(new_len * (j + 1)) };
                 shared_stack.context_len = new_len;
-                println!("buffer len = {}", shared_stack.buffer().len());
             }
         }
-
-        // println!("Free");
-        //
-        // for i in (0..3).rev() {
-        //     for j in (0..7).rev() {
-        //         println!("i = {}, j = {}", i, j);
-        //         assert_eq!(shared_stack.page_idx, i);
-        //         assert_eq!(shared_stack.pages.len(), i + 1);
-        //         assert_eq!(shared_stack.context_len, STACK_LIMIT / 2);
-        //         assert_eq!(shared_stack.page().checkpoints.len(), j + 1);
-        //         assert_eq!(
-        //             shared_stack.page().checkpoints.last().cloned().unwrap(),
-        //             shared_stack.buffer().len()
-        //         );
-        //         println!("buffer len = {}", shared_stack.buffer().len());
-        //         shared_stack.free_context();
-        //     }
-        // }
     }
-
-    // #[test]
-    // fn new_free_context_stack() {
-    //     let mut shared_stack = SharedStack::new();
-    //     shared_stack.new_context();
-    //     assert_eq!(shared_stack.last_checkpoint(), 0);
-    //     assert_eq!(shared_stack.checkpoints.len(), 1);
-    //
-    //     unsafe { shared_stack.buffer.set_len(16) }
-    //     shared_stack.new_context();
-    //     assert_eq!(shared_stack.last_checkpoint(), 16);
-    //     assert_eq!(shared_stack.checkpoints.len(), 2);
-    //     assert_eq!(shared_stack.len(), 0);
-    //
-    //     unsafe { shared_stack.buffer.set_len(48) }
-    //     shared_stack.new_context();
-    //     assert_eq!(shared_stack.last_checkpoint(), 48);
-    //     assert_eq!(shared_stack.checkpoints.len(), 3);
-    //     assert_eq!(shared_stack.len(), 0);
-    //     assert_eq!(shared_stack.buffer.len(), 48);
-    //
-    //     // free contexts
-    //     shared_stack.free_context();
-    //     assert_eq!(shared_stack.last_checkpoint(), 16);
-    //     assert_eq!(shared_stack.buffer.len(), 48);
-    //     assert_eq!(shared_stack.checkpoints.len(), 2);
-    //     assert_eq!(shared_stack.len(), 32);
-    //
-    //     shared_stack.free_context();
-    //     assert_eq!(shared_stack.last_checkpoint(), 0);
-    //     assert_eq!(shared_stack.checkpoints.len(), 1);
-    //     assert_eq!(shared_stack.len(), 16);
-    //     assert_eq!(shared_stack.buffer.len(), 16);
-    //
-    //     shared_stack.free_context();
-    //     assert_eq!(shared_stack.last_checkpoint(), 0);
-    //     assert_eq!(shared_stack.checkpoints.len(), 0);
-    //     assert_eq!(shared_stack.len(), 0);
-    //     assert_eq!(shared_stack.buffer.len(), 0);
-    // }
 
     #[test]
     fn pop() {
@@ -691,7 +626,7 @@ mod tests {
         let mut shared_stack = SharedStack::new();
         shared_stack.new_context();
 
-        assert_eq!(shared_stack.push_slice::<1>(&[1]), Ok(()));
+        assert_eq!(shared_stack.push_slice(&[1]), Ok(()));
         assert_eq!(shared_stack.page_mut().buffer[0], U256::from(1));
         assert_eq!(shared_stack.len(), 1);
     }
@@ -702,12 +637,12 @@ mod tests {
         shared_stack.new_context();
 
         for _ in 1..=STACK_LIMIT {
-            assert_eq!(shared_stack.push_slice::<1>(&[0]), Ok(()));
+            assert_eq!(shared_stack.push_slice(&[0]), Ok(()));
         }
         assert_eq!(shared_stack.len(), STACK_LIMIT);
         assert_eq!(shared_stack.page_mut().buffer.len(), STACK_LIMIT);
         assert_eq!(
-            shared_stack.push_slice::<1>(&[0]),
+            shared_stack.push_slice(&[0]),
             Err(InstructionResult::StackOverflow)
         );
     }

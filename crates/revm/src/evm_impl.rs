@@ -1,28 +1,27 @@
-use crate::handler::Handler;
-use crate::interpreter::{
-    analysis::to_analysed, gas, return_ok, CallContext, CallInputs, CallScheme, Contract,
-    CreateInputs, Gas, Host, InstructionResult, Interpreter, SelfDestructResult, Transfer,
+use crate::{
+    db::Database,
+    handler::Handler,
+    inspector_instruction,
+    interpreter::{
+        analysis::to_analysed,
+        gas,
+        gas::initial_tx_gas,
+        opcode::{make_boxed_instruction_table, make_instruction_table, InstructionTables},
+        return_ok, CallContext, CallInputs, CallScheme, Contract, CreateInputs, Gas, Host,
+        InstructionResult, Interpreter, SelfDestructResult, SharedMemory, SharedStack, Transfer,
+        MAX_CODE_SIZE,
+    },
+    journaled_state::{JournalCheckpoint, JournaledState},
+    precompile::{self, Precompile, Precompiles},
+    primitives::{
+        keccak256, Address, AnalysisKind, Bytecode, Bytes, EVMError, EVMResult, Env,
+        InvalidTransaction, Log, Output, Spec, SpecId::*, TransactTo, B256, U256,
+    },
+    EVMData, Inspector,
 };
-use crate::journaled_state::{is_precompile, JournalCheckpoint, JournaledState};
-use crate::primitives::{
-    keccak256, Address, AnalysisKind, Bytecode, Bytes, EVMError, EVMResult, Env,
-    InvalidTransaction, Log, Output, Spec, SpecId::*, TransactTo, B256, U256,
-};
-use crate::{db::Database, precompile, Inspector};
-use crate::{inspector_instruction, EVMData};
-use alloc::boxed::Box;
-use alloc::sync::Arc;
-use alloc::vec::Vec;
+use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use auto_impl::auto_impl;
-use core::fmt;
-use core::marker::PhantomData;
-use revm_interpreter::opcode::make_boxed_instruction_table;
-use revm_interpreter::{
-    gas::initial_tx_gas,
-    opcode::{make_instruction_table, InstructionTables},
-    SharedMemory, SharedStack, MAX_CODE_SIZE,
-};
-use revm_precompile::{Precompile, Precompiles};
+use core::{fmt, marker::PhantomData};
 
 #[cfg(feature = "optimism")]
 use crate::optimism;
@@ -87,26 +86,7 @@ pub trait Transact<DBError> {
     fn transact_preverified(&mut self) -> EVMResult<DBError>;
 
     /// Execute transaction by running pre-verification steps and then transaction itself.
-    #[inline]
-    fn transact(&mut self) -> EVMResult<DBError> {
-        self.preverify_transaction()
-            .and_then(|()| self.transact_preverified())
-    }
-}
-
-impl<'a, DB: Database> EVMData<'a, DB> {
-    /// Load access list for berlin hardfork.
-    ///
-    /// Loading of accounts/storages is needed to make them warm.
-    #[inline]
-    fn load_access_list(&mut self) -> Result<(), EVMError<DB::Error>> {
-        for (address, slots) in self.env.tx.access_list.iter() {
-            self.journaled_state
-                .initial_account_load(*address, slots, self.db)
-                .map_err(EVMError::Database)?;
-        }
-        Ok(())
-    }
+    fn transact(&mut self) -> EVMResult<DBError>;
 }
 
 #[cfg(feature = "optimism")]
@@ -167,7 +147,78 @@ impl<'a, GSPEC: Spec, DB: Database> EVMImpl<'a, GSPEC, DB> {
 }
 
 impl<'a, GSPEC: Spec + 'static, DB: Database> Transact<DB::Error> for EVMImpl<'a, GSPEC, DB> {
+    #[inline]
     fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
+        self.preverify_transaction_inner()
+    }
+
+    #[inline]
+    fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
+        let output = self.transact_preverified_inner();
+        self.handler.end(&mut self.data, output)
+    }
+
+    #[inline]
+    fn transact(&mut self) -> EVMResult<DB::Error> {
+        let output = self
+            .preverify_transaction_inner()
+            .and_then(|()| self.transact_preverified_inner());
+        self.handler.end(&mut self.data, output)
+    }
+}
+
+impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
+    pub fn new(
+        db: &'a mut DB,
+        env: &'a mut Env,
+        inspector: Option<&'a mut dyn Inspector<DB>>,
+        precompiles: Precompiles,
+    ) -> Self {
+        let journaled_state = JournaledState::new(
+            GSPEC::SPEC_ID,
+            precompiles
+                .addresses()
+                .into_iter()
+                .cloned()
+                .collect::<Vec<_>>(),
+        );
+        let instruction_table = if inspector.is_some() {
+            let instruction_table = make_boxed_instruction_table::<Self, GSPEC, _>(
+                make_instruction_table::<Self, GSPEC>(),
+                inspector_instruction,
+            );
+            InstructionTables::Boxed(Arc::new(instruction_table))
+        } else {
+            InstructionTables::Plain(Arc::new(make_instruction_table::<Self, GSPEC>()))
+        };
+        #[cfg(feature = "optimism")]
+        let handler = if env.cfg.optimism {
+            Handler::optimism::<GSPEC>()
+        } else {
+            Handler::mainnet::<GSPEC>()
+        };
+        #[cfg(not(feature = "optimism"))]
+        let handler = Handler::mainnet::<GSPEC>();
+
+        Self {
+            data: EVMData {
+                env,
+                journaled_state,
+                db,
+                error: None,
+                precompiles,
+                #[cfg(feature = "optimism")]
+                l1_block_info: None,
+            },
+            inspector,
+            instruction_table,
+            handler,
+            _phantomdata: PhantomData {},
+        }
+    }
+
+    /// Pre verify transaction.
+    pub fn preverify_transaction_inner(&mut self) -> Result<(), EVMError<DB::Error>> {
         let env = self.env();
 
         // Important: validate block before tx.
@@ -199,7 +250,8 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> Transact<DB::Error> for EVMImpl<'a
             .map_err(Into::into)
     }
 
-    fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
+    /// Transact preverified transaction.
+    pub fn transact_preverified_inner(&mut self) -> EVMResult<DB::Error> {
         let env = &self.data.env;
         let tx_caller = env.tx.caller;
         let tx_value = env.tx.value;
@@ -352,54 +404,12 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> Transact<DB::Error> for EVMImpl<'a
         handler.reimburse_caller(data, &gas)?;
 
         // Reward beneficiary
-        handler.reward_beneficiary(data, &gas)?;
+        if !data.env.cfg.is_beneficiary_reward_disabled() {
+            handler.reward_beneficiary(data, &gas)?;
+        }
 
         // main return
         handler.main_return(data, call_result, output, &gas)
-    }
-}
-
-impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
-    pub fn new(
-        db: &'a mut DB,
-        env: &'a mut Env,
-        inspector: Option<&'a mut dyn Inspector<DB>>,
-        precompiles: Precompiles,
-    ) -> Self {
-        let journaled_state = JournaledState::new(precompiles.len(), GSPEC::SPEC_ID);
-        let instruction_table = if inspector.is_some() {
-            let instruction_table = make_boxed_instruction_table::<Self, GSPEC, _>(
-                make_instruction_table::<Self, GSPEC>(),
-                inspector_instruction,
-            );
-            InstructionTables::Boxed(Arc::new(instruction_table))
-        } else {
-            InstructionTables::Plain(Arc::new(make_instruction_table::<Self, GSPEC>()))
-        };
-        #[cfg(feature = "optimism")]
-        let handler = if env.cfg.optimism {
-            Handler::optimism::<GSPEC>()
-        } else {
-            Handler::mainnet::<GSPEC>()
-        };
-        #[cfg(not(feature = "optimism"))]
-        let handler = Handler::mainnet::<GSPEC>();
-
-        Self {
-            data: EVMData {
-                env,
-                journaled_state,
-                db,
-                error: None,
-                precompiles,
-                #[cfg(feature = "optimism")]
-                l1_block_info: None,
-            },
-            inspector,
-            instruction_table,
-            handler,
-            _phantomdata: PhantomData {},
-        }
     }
 
     #[inline(never)]
@@ -659,19 +669,19 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
     }
 
     /// Call precompile contract
-    fn call_precompile(&mut self, inputs: &CallInputs, mut gas: Gas) -> CallResult {
+    fn call_precompile(
+        &mut self,
+        precompile: Precompile,
+        inputs: &CallInputs,
+        mut gas: Gas,
+    ) -> CallResult {
         let input_data = &inputs.input;
-        let contract = inputs.contract;
 
-        let precompile = self
-            .data
-            .precompiles
-            .get(&contract)
-            .expect("Check for precompile should be already done");
         let out = match precompile {
             Precompile::Standard(fun) => fun(input_data, gas.limit()),
             Precompile::Env(fun) => fun(input_data, gas.limit(), self.env()),
         };
+
         match out {
             Ok((gas_used, data)) => {
                 if !crate::USE_GAS || gas.record_cost(gas_used) {
@@ -784,8 +794,8 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             Err(e) => return e,
         };
 
-        let ret = if is_precompile(&inputs.contract, self.data.precompiles.len()) {
-            self.call_precompile(inputs, prepared_call.gas)
+        let ret = if let Some(precompile) = self.data.precompiles.get(&inputs.contract) {
+            self.call_precompile(precompile, inputs, prepared_call.gas)
         } else if !prepared_call.contract.bytecode.is_empty() {
             // Create interpreter and execute subcall
             let (exit_reason, bytes, gas) = self.run_interpreter(
@@ -969,7 +979,7 @@ mod tests {
                 code: None,
             },
         );
-        let mut journal = JournaledState::new(0, SpecId::BERLIN);
+        let mut journal = JournaledState::new(SpecId::BERLIN, vec![]);
         journal
             .initial_account_load(caller, &[U256::from(100)], &mut db)
             .unwrap();
@@ -1001,7 +1011,7 @@ mod tests {
     fn test_remove_l1_cost_non_deposit() {
         let caller = Address::ZERO;
         let mut db = InMemoryDB::default();
-        let mut journal = JournaledState::new(0, SpecId::BERLIN);
+        let mut journal = JournaledState::new(SpecId::BERLIN, vec![]);
         let slots = &[U256::from(100)];
         journal
             .initial_account_load(caller, slots, &mut db)
@@ -1029,7 +1039,7 @@ mod tests {
                 code: None,
             },
         );
-        let mut journal = JournaledState::new(0, SpecId::BERLIN);
+        let mut journal = JournaledState::new(SpecId::BERLIN, vec![]);
         journal
             .initial_account_load(caller, &[U256::from(100)], &mut db)
             .unwrap();
@@ -1060,7 +1070,7 @@ mod tests {
                 code: None,
             },
         );
-        let mut journal = JournaledState::new(0, SpecId::BERLIN);
+        let mut journal = JournaledState::new(SpecId::BERLIN, vec![]);
         journal
             .initial_account_load(caller, &[U256::from(100)], &mut db)
             .unwrap();
