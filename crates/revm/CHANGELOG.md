@@ -36,7 +36,7 @@ Full git log:
 * f72eaa0 - chore: error type for block header (#731) (5 days ago) <hack3r-0m>
 * cb39117 - fix(eip4844): Pass eth tests, additional conditions added. (#735) (6 days ago) <rakita>
 * c2cde03 - fix: use CANCUN precompile id for CANCUN SpecId (#733) (6 days ago) <Dan Cline>
-* d926728 - perf: refactor interpreter internals and cleanup (#582) (6 days ago) <DaniPopes>
+* d926728 - perf: refactor interpreter internals and clean-up (#582) (6 days ago) <DaniPopes>
 * 1b8cd57 - make BundleBuilder publicly available (#729) (8 days ago) <Thomas Coratger>
 * fa13fea - feat: implement EIP-4844 (#668) (11 days ago) <DaniPopes>
 * 9f00e37 - feat(state): remove state sorting, no_std ci,remove rayon (#717) (13 days ago) <rakita>
@@ -249,7 +249,7 @@ Github Changelog:
 * dc9818f - (HEAD -> o/bump, origin/bump_v20) Bump v20 (13 hours ago) <rakita>
 * 75ef0f1 - (origin/main, origin/HEAD) feat: Staticcall internal return (#349) (13 hours ago) <rakita>
 * 0194b37 - (t) fix bug introduced in last commit (13 hours ago) <rakita>
-* 7b00f32 - Cleanup imports (#348) (14 hours ago) <rakita>
+* 7b00f32 - Clean-up imports (#348) (14 hours ago) <rakita>
 * c14d7ea - fix: enable the examples to run with the current revm (#347) (16 hours ago) <flyq>
 * 329fd94 - Wrap all calls to interpreter.gas.erase_cost with checks if USE_GAS is enabled (#346) (2 days ago) <christn>
 * 72355f4 - improvement: add logs & return value to revert (#343) (3 days ago) <Wodann>
@@ -261,7 +261,7 @@ Github Changelog:
 * de83db6 - fix: feature flags (#330) (2 weeks ago) <Wodann>
 * b60269c - `revm`: mark `with-serde` feature as deprecated (#328) (2 weeks ago) <Enrique Ortiz>
 * 63bf475 - make load_account pub (#325) (3 weeks ago) <rakita>
-* 0ef0197 - Cleanup, move hot fields toggether in Interpreter (#321) (3 weeks ago) <rakita>
+* 0ef0197 - Clean-up, move hot fields together in Interpreter (#321) (3 weeks ago) <rakita>
 * 81942d6 - enable proptest with arbitrary feature (#323) (3 weeks ago) <joshieDo>
 * 2be3798 - feat: revm-interpreter created (#320) (3 weeks ago) <rakita>
 * 7e98fef - fix: feature flag compiler errors (#256) (5 weeks ago) <Wodann>
@@ -289,7 +289,7 @@ Bump dependency versions.
 
 # v2.3.0
 date: 16.11.2022
-Very small release. Exposes one field and added prevrandao to remove footgun of forgeting to set difficulty.
+Very small release. Exposes one field and added prevrandao to remove footgun of forgetting to set difficulty.
 
 * 927d16c - disable gas refunds with env flag (#267) (14 minutes ago) <gd>
 * 47a8310 - Add prevrandao field to EnvBlock (3 minutes ago) <rakita>
@@ -316,7 +316,7 @@ GasInspector added by Alexey Shekhirin and some helper functions.
 Changes:
 
 * ca14d61 - gas inspector (#222) (7 days ago) <Alexey Shekhirin>
-* 1e25c99 - chore: expose original value on storageslot (#216) (13 days ago) <Matthias Seitz>
+* 1e25c99 - chore: expose original value on storage slot (#216) (13 days ago) <Matthias Seitz>
 * aa39d64 - feat: add Memory::shrink_to_fit (#215) (13 days ago) <Matthias Seitz
 
 # v2.0.0
@@ -330,7 +330,7 @@ Main changes:
 * JournaledState (#175)
     * Optimize handling of precompiles. Initialization and account loading.
     * Fixes SELFDESTRUCT bug.
-* Optimize calldataload. Some cleanup (#168)
+* Optimize calldataload. Some clean-up (#168)
 * Handle HighNonce tests (#176)
 * feat: expose hash on `BytecodeLocked` (#189) (12 days ago) <Bjerg>
 * revm: Update account storage methods in CacheDB (#171) (4 weeks ago) <Nicolas Gotchac>
@@ -339,7 +339,7 @@ Main changes:
 * Bump dependencies version
 * current_opcode fn and rename program_counter to instruction_pointer (#211)
 * Cfg choose create analysis, option on bytecode size limit (#210)
-* Cleanup remove U256 and use u64 for gas calculation (#213)
+* Clean-up remove U256 and use u64 for gas calculation (#213)
 
 Consensus bugs:
 * SELFDESTRUCT was not handled correctly. It would remove account/storage but it should just mark it for removal. This bug was here from earlier version of revm. (#175)
@@ -432,8 +432,8 @@ There is bug introduced in last release with gas blcok optimization, it will cra
 
 Changes:
 * Bug fix for unknown OpCode
-* Omit edgecase high nonce test. tracer gas fix 
-* Some internal cleanup
+* Omit edge case high nonce test. tracer gas fix 
+* Some internal clean-up
 
 # v1.0.0
 date: 18.12.2021
@@ -462,10 +462,10 @@ Changes:
 * optimize i256
 * switch stacks from H256 with U256
 * Error's refactor to Return
-* clippy/warnings/fmt cleanup
+* clippy/warnings/fmt clean-up
 * Bump auto_impl to v0.5
 * opcode renaming
-* Gas measurment can be removed with rust features.
+* Gas measurement can be removed with rust features.
 
 # v0.4.1
 date: 02.11.2021
@@ -486,10 +486,10 @@ date: 27.10.2021
 Interface revamped and now looks a lot better.
 
 Log:
-* 1b1ebd8 - [revm] Interface. Inspector added, Env cleanup. revm-test passes (9 hours ago) <rakita>
+* 1b1ebd8 - [revm] Interface. Inspector added, Env clean-up. revm-test passes (9 hours ago) <rakita>
 * 351d4e0 - BIG interface change (11 hours ago) <rakita>
 * a723827 - no_sdt to no_std (2 days ago) <rakita>
-* a449bed - [precompiles] spelling, small cleanup (2 days ago) <rakita>
+* a449bed - [precompiles] spelling, small clean-up (2 days ago) <rakita>
 
 
 # v0.2.2
@@ -498,7 +498,7 @@ Same as v0.2.1 but added readme.
 # v0.2.1
 date: 25.10.2021
 
-Big refactor, cleanup changes, and updating tests. EIP-3607 added.
+Big refactor, clean-up changes, and updating tests. EIP-3607 added.
 
 Log:
 * a6e01de - BIG reorg. workspace added. revm-precompile lib (20 minutes ago) <rakita>
@@ -517,9 +517,9 @@ Published v0.2.0, first initial version of code. London supported and all eth st
 ### 17.10.2021:
 -For past few weeks working on this structure and project in general become really good and I like it. For me it surved as good distraction for past few weeks and i think i am going to get drained if i continue working on it, so i am taking break and i intend to come back after few months and finish it.
 - For status:
-    * machine/spec/opcodes/precompiles(without modexp) feels good and I probably dont need to touch them.
+    * machine/spec/opcodes/precompiles(without modexp) feels good and I probably don't need to touch them.
     * inspector: is what i wanted, full control on insides of EVM so that we can control it and modify it. will probably needs to add some small tweaks to interface but nothing major.
     * subroutines: Feels okay but it needs more scrutiny just to be sure that all corner cases are covered.
     * Test that are failing (~20) are mostly related to EIP-158: State clearing. For EIP-158 I will time to do it properly.
-    * There is probably benefit of replaing HashMap hasher with something simpler, but this is research for another time.
+    * There is probably benefit of replacing HashMap hasher with something simpler, but this is research for another time.
 ## Project structure:

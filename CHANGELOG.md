@@ -13,7 +13,7 @@ Migration to alloy primitive types.
 # v25 tag
 date: 28.09.2023
 
-Bigger release. Cancun support, revm State added and some cleanup refactoring.
+Bigger release. Cancun support, revm State added and some clean-up refactoring.
 
 * revm: v3.4.0
 * revm-precompile: v2.1.0
@@ -24,7 +24,7 @@ Bigger release. Cancun support, revm State added and some cleanup refactoring.
 # v24 tag
 date: 03.05.2023
 
-Cosnensus bug inside journal and some small changes.
+Consensus bug inside journal and some small changes.
 
 * revm: v3.3.0
 * revm-precompile: v2.0.3
