@@ -261,7 +261,7 @@ Github Changelog:
 * de83db6 - fix: feature flags (#330) (2 weeks ago) <Wodann>
 * b60269c - `revm`: mark `with-serde` feature as deprecated (#328) (2 weeks ago) <Enrique Ortiz>
 * 63bf475 - make load_account pub (#325) (3 weeks ago) <rakita>
-* 0ef0197 - Clean-up, move hot fields together in Interpreter (#321) (3 weeks ago) <rakita>
+* 0ef0197 - Cleanup, move hot fields toggether in Interpreter (#321) (3 weeks ago) <rakita>
 * 81942d6 - enable proptest with arbitrary feature (#323) (3 weeks ago) <joshieDo>
 * 2be3798 - feat: revm-interpreter created (#320) (3 weeks ago) <rakita>
 * 7e98fef - fix: feature flag compiler errors (#256) (5 weeks ago) <Wodann>
