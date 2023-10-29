@@ -10,6 +10,6 @@ The `enabled()` method in `SpecId` is used to check if one spec is enabled on an
 
 The `Spec` trait is used to abstract the process of checking whether a given spec is enabled. It only has one method, `enabled()`, and a constant `SPEC_ID`.
 
-The module then defines various `Spec` structs, each representing a different hard fork. These structs implement the `Spec` trait and each strut's `SPEC_ID` corresponds to the correct `SpecId` variant.
+The module then defines various `Spec` structs, each representing a different hard fork. These structs implement the `Spec` trait and each struct's `SPEC_ID` corresponds to the correct `SpecId` variant.
 
 This module provides the necessary framework to handle and interact with the different Ethereum hard forks within the EVM, making it possible to handle transactions and contracts differently depending on which hard fork rules apply. It also simplifies the process of adapting to future hard forks by creating a new `SpecId` and corresponding `Spec` struct.
