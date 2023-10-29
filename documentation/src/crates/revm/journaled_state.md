@@ -136,6 +136,6 @@ This methodology allows Ethereum to maintain an internal record of accessed acco
 
 #### Rationale
 
-- Security: Previously, these opcodes were under-priced, making them susceptible to DoS attacks where an attacker would simply send transactions that access or call a large number of accounts. By increasing the gas costs, the EIP intends to mitigate these potential security risks.
+- Security: Previously, these opcodes were underpriced, making them susceptible to DoS attacks where an attacker would simply send transactions that access or call a large number of accounts. By increasing the gas costs, the EIP intends to mitigate these potential security risks.
 
 - Improving stateless witness sizes: Stateless Ethereum clients don't maintain the complete state of the blockchain, but instead rely on block "witnesses" (a list of all the accounts, storage, and contract code accessed during transaction execution) to validate transactions. This EIP helps in reducing the size of these witnesses, thereby making stateless Ethereum more viable.
