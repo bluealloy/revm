@@ -29,8 +29,8 @@ Full git log:
 * 8206193 - feat: add "kzg" as a separate feature (#746) (2 hours ago) <DaniPopes>
 * 516f62c - perf(interpreter): remove dynamic dispatch from all instructions (#739) (5 days ago) <DaniPopes>
 * 26af13e - EIP-7516: BLOBBASEFEE opcode (#721) (5 days ago) <rakita>
-* 36e71fc - fix: don't override instruction result (#736) (6 days ago) <rakita>
-* d926728 - perf: refactor interpreter internals and clean-up (#582) (6 days ago) <DaniPopes>
+* 36e71fc - fix: dont override instruction result (#736) (6 days ago) <rakita>
+* d926728 - perf: refactor interpreter internals and cleanup (#582) (6 days ago) <DaniPopes>
 * fa13fea - feat: implement EIP-4844 (#668) (11 days ago) <DaniPopes>
 * 190f90e - Never inline the prepare functions (#712) (2 weeks ago) <Valentin Mihov>
 * 7eacc3a - chore: implement `Default` for other databases (#691) (3 weeks ago) <DaniPopes>
