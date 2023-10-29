@@ -179,8 +179,6 @@ impl CacheAccount {
         self.status = self.status.on_selfdestructed();
 
         if previous_status == AccountStatus::LoadedNotExisting {
-            // transitions for account loaded as not existing.
-            self.status = AccountStatus::LoadedNotExisting;
             None
         } else {
             Some(TransitionAccount {
