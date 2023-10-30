@@ -50,19 +50,6 @@ where
     }
 }
 
-struct PreparedCreate {
-    gas: Gas,
-    created_address: Address,
-    checkpoint: JournalCheckpoint,
-    contract: Box<Contract>,
-}
-
-struct PreparedCall {
-    gas: Gas,
-    checkpoint: JournalCheckpoint,
-    contract: Box<Contract>,
-}
-
 /// EVM transaction interface.
 #[auto_impl(&mut, Box)]
 pub trait Transact<DBError> {
@@ -204,6 +191,17 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             match action {
                 // run sub call
                 revm_interpreter::InterpreterAction::SubCall { inputs, .. } => {
+                    // Check depth
+                    if host.data.journaled_state.depth() > CALL_STACK_LIMIT {
+                        call.interpreter.insert_create_output(
+                            InterpreterResult {
+                                result: InstructionResult::CallTooDeep,
+                                gas: Gas::new(inputs.gas_limit),
+                                output: Bytes::new(),
+                            },
+                            None,
+                        );
+                    }
                     match host.make_call_frame(&inputs) {
                         Ok(new_frame) => {
                             shared_memory_ref.new_context();
@@ -217,6 +215,17 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                 }
                 // run sub create
                 revm_interpreter::InterpreterAction::Create { inputs } => {
+                    // Check depth
+                    if host.data.journaled_state.depth() > CALL_STACK_LIMIT {
+                        call.interpreter.insert_create_output(
+                            InterpreterResult {
+                                result: InstructionResult::CallTooDeep,
+                                gas: Gas::new(inputs.gas_limit),
+                                output: Bytes::new(),
+                            },
+                            None,
+                        );
+                    }
                     match host.make_create_frame(&inputs) {
                         Ok(new_frame) => {
                             shared_memory_ref.new_context();
@@ -269,33 +278,72 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         &'b mut self,
         inputs: &CallInputs,
     ) -> Result<CallFrame<'c>, InterpreterResult> {
-        let prepared_call = match self.prepare_call(inputs) {
-            Ok(o) => o,
-            Err(interpreter_result) => {
-                return Err(interpreter_result);
+        let gas = Gas::new(inputs.gas_limit);
+        let account = match self
+            .data
+            .journaled_state
+            .load_code(inputs.contract, self.data.db)
+        {
+            Ok((account, _)) => account,
+            Err(e) => {
+                self.data.error = Some(e);
+                return Err(InterpreterResult {
+                    result: InstructionResult::FatalExternalError,
+                    gas,
+                    output: Bytes::new(),
+                });
             }
         };
+        let code_hash = account.info.code_hash();
+        let bytecode = account.info.code.clone().unwrap_or_default();
+
+        // Create subroutine checkpoint
+        let checkpoint = self.data.journaled_state.checkpoint();
+
+        // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
+        if inputs.transfer.value == U256::ZERO {
+            self.load_account(inputs.context.address);
+            self.data.journaled_state.touch(&inputs.context.address);
+        }
+
+        // Transfer value from caller to called account
+        if let Err(e) = self.data.journaled_state.transfer(
+            &inputs.transfer.source,
+            &inputs.transfer.target,
+            inputs.transfer.value,
+            self.data.db,
+        ) {
+            self.data.journaled_state.checkpoint_revert(checkpoint);
+            return Err(InterpreterResult {
+                result: e,
+                gas,
+                output: Bytes::new(),
+            });
+        }
+
+        let contract = Box::new(Contract::new_with_context(
+            inputs.input.clone(),
+            bytecode,
+            code_hash,
+            &inputs.context,
+        ));
 
         let interpreter_result =
             if let Some(precompile) = self.data.precompiles.get(&inputs.contract) {
-                self.call_precompile(precompile, &inputs, prepared_call.gas)
-            } else if !prepared_call.contract.bytecode.is_empty() {
+                self.call_precompile(precompile, &inputs, gas)
+            } else if !contract.bytecode.is_empty() {
                 // Create interpreter and execute subcall
                 // push new frame
                 return Ok(CallFrame {
                     is_create: false,
-                    checkpoint: prepared_call.checkpoint,
+                    checkpoint: checkpoint,
                     created_address: None,
-                    interpreter: Interpreter::new(
-                        prepared_call.contract,
-                        prepared_call.gas.limit(),
-                        false,
-                    ),
+                    interpreter: Interpreter::new(contract, gas.limit(), false),
                 });
             } else {
                 InterpreterResult {
                     result: InstructionResult::Stop,
-                    gas: prepared_call.gas,
+                    gas,
                     output: Bytes::new(),
                 }
             };
@@ -304,9 +352,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         if matches!(interpreter_result.result, return_ok!()) {
             self.data.journaled_state.checkpoint_commit();
         } else {
-            self.data
-                .journaled_state
-                .checkpoint_revert(prepared_call.checkpoint);
+            self.data.journaled_state.checkpoint_revert(checkpoint);
         }
         Err(interpreter_result)
     }
@@ -316,19 +362,77 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         inputs: &CreateInputs,
     ) -> Result<CallFrame<'c>, InterpreterResult> {
         // Prepare crate.
-        let prepared_create: PreparedCreate = self.prepare_create(&inputs)?;
+        let gas = Gas::new(inputs.gas_limit);
 
-        // push new frame
+        let return_error = |e| {
+            Err(InterpreterResult {
+                result: e,
+                gas,
+                output: Bytes::new(),
+            })
+        };
+
+        // Fetch balance of caller.
+        let Some((caller_balance, _)) = self.balance(inputs.caller) else {
+            return return_error(InstructionResult::FatalExternalError);
+        };
+
+        // Check if caller has enough balance to send to the created contract.
+        if caller_balance < inputs.value {
+            return return_error(InstructionResult::OutOfFund);
+        }
+
+        // Increase nonce of caller and check if it overflows
+        let old_nonce;
+        if let Some(nonce) = self.data.journaled_state.inc_nonce(inputs.caller) {
+            old_nonce = nonce - 1;
+        } else {
+            return return_error(InstructionResult::Return);
+        }
+
+        // Create address
+        let code_hash = keccak256(&inputs.init_code);
+        let created_address = inputs.created_address_with_hash(old_nonce, &code_hash);
+
+        // Load account so it needs to be marked as warm for access list.
+        if self
+            .data
+            .journaled_state
+            .load_account(created_address, self.data.db)
+            .map_err(|e| self.data.error = Some(e))
+            .is_err()
+        {
+            return return_error(InstructionResult::FatalExternalError);
+        }
+
+        // create account, transfer funds and make the journal checkpoint.
+        let checkpoint = match self
+            .data
+            .journaled_state
+            .create_account_checkpoint::<GSPEC>(inputs.caller, created_address, inputs.value)
+        {
+            Ok(checkpoint) => checkpoint,
+            Err(e) => {
+                return return_error(e);
+            }
+        };
+
+        let bytecode = Bytecode::new_raw(inputs.init_code.clone());
+
+        let contract = Box::new(Contract::new(
+            Bytes::new(),
+            bytecode,
+            code_hash,
+            created_address,
+            inputs.caller,
+            inputs.value,
+        ));
 
         Ok(CallFrame {
             is_create: true,
-            checkpoint: prepared_create.checkpoint,
-            created_address: Some(prepared_create.created_address),
-            interpreter: Interpreter::new(
-                prepared_create.contract,
-                prepared_create.gas.limit(),
-                false,
-            ),
+            checkpoint: checkpoint,
+            created_address: Some(created_address),
+            interpreter: Interpreter::new(contract, gas.limit(), false),
         })
     }
 }
@@ -583,106 +687,6 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         handler.main_return(data, interpreter_result.result, output, &gas)
     }
 
-    #[inline(never)]
-    fn prepare_create(
-        &mut self,
-        inputs: &CreateInputs,
-    ) -> Result<PreparedCreate, InterpreterResult> {
-        let gas = Gas::new(inputs.gas_limit);
-
-        // Check depth of calls
-        if self.data.journaled_state.depth() > CALL_STACK_LIMIT {
-            return Err(InterpreterResult {
-                result: InstructionResult::CallTooDeep,
-                gas,
-                output: Bytes::new(),
-            });
-        }
-
-        // Fetch balance of caller.
-        let Some((caller_balance, _)) = self.balance(inputs.caller) else {
-            return Err(InterpreterResult {
-                result: InstructionResult::FatalExternalError,
-                gas,
-                output: Bytes::new(),
-            });
-        };
-
-        // Check if caller has enough balance to send to the created contract.
-        if caller_balance < inputs.value {
-            return Err(InterpreterResult {
-                result: InstructionResult::OutOfFund,
-                gas,
-                output: Bytes::new(),
-            });
-        }
-
-        // Increase nonce of caller and check if it overflows
-        let old_nonce;
-        if let Some(nonce) = self.data.journaled_state.inc_nonce(inputs.caller) {
-            old_nonce = nonce - 1;
-        } else {
-            return Err(InterpreterResult {
-                result: InstructionResult::Return,
-                gas,
-                output: Bytes::new(),
-            });
-        }
-
-        // Create address
-        let code_hash = keccak256(&inputs.init_code);
-        let created_address = inputs.created_address_with_hash(old_nonce, &code_hash);
-
-        // Load account so it needs to be marked as warm for access list.
-        if self
-            .data
-            .journaled_state
-            .load_account(created_address, self.data.db)
-            .map_err(|e| self.data.error = Some(e))
-            .is_err()
-        {
-            return Err(InterpreterResult {
-                result: InstructionResult::FatalExternalError,
-                gas,
-                output: Bytes::new(),
-            });
-        }
-
-        // create account, transfer funds and make the journal checkpoint.
-        let checkpoint = match self
-            .data
-            .journaled_state
-            .create_account_checkpoint::<GSPEC>(inputs.caller, created_address, inputs.value)
-        {
-            Ok(checkpoint) => checkpoint,
-            Err(e) => {
-                return Err(InterpreterResult {
-                    result: e,
-                    gas,
-                    output: Bytes::new(),
-                });
-            }
-        };
-
-        let bytecode = Bytecode::new_raw(inputs.init_code.clone());
-
-        let contract = Box::new(Contract::new(
-            Bytes::new(),
-            bytecode,
-            code_hash,
-            created_address,
-            inputs.caller,
-            inputs.value,
-        ));
-
-        Ok(PreparedCreate {
-            gas,
-            created_address,
-            checkpoint,
-            contract,
-        })
-    }
-
     #[inline]
     fn create_return(
         &mut self,
@@ -769,67 +773,6 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         }
     }
 
-    // /// EVM create opcode for both initial crate and CREATE and CREATE2 opcodes.
-    // fn create_inner(
-    //     &mut self,
-    //     inputs: &CreateInputs,
-    //     shared_memory: &mut SharedMemory,
-    // ) -> CreateResult {
-    //     // Prepare crate.
-    //     let prepared_create = match self.prepare_create(inputs) {
-    //         Ok(o) => o,
-    //         Err(e) => return e,
-    //     };
-
-    //     // Create new interpreter and execute initcode
-    //     let result = self.run_interpreter(
-    //         prepared_create.contract,
-    //         prepared_create.gas.limit(),
-    //         false,
-    //         shared_memory,
-    //     );
-
-    //     // Host error if present on execution
-    //     self.create_return(
-    //         result,
-    //         prepared_create.checkpoint,
-    //         prepared_create.created_address,
-    //     );
-    //     unimplemented!();
-    // }
-
-    // /// Create a Interpreter and run it.
-    // /// Returns the exit reason, return value and gas from interpreter
-    // pub fn run_interpreter(
-    //     &mut self,
-    //     contract: Box<Contract>,
-    //     gas_limit: u64,
-    //     is_static: bool,
-    //     shared_memory: &mut SharedMemory,
-    // ) -> InterpreterResult {
-    //     let mut interpreter = Box::new(Interpreter::new(contract, gas_limit, is_static));
-
-    //     shared_memory.new_context();
-
-    //     if let Some(inspector) = self.inspector.as_mut() {
-    //         inspector.initialize_interp(&mut interpreter, &mut self.data);
-    //     }
-
-    //     // let (exit_reason, return_value, gas) = match &mut self.instruction_table {
-    //     //     InstructionTables::Plain(table) => {
-    //     //         interpreter.run::<_, Self>(shared_memory, &table.clone(), self)
-    //     //     }
-    //     //     InstructionTables::Boxed(table) => {
-    //     //         interpreter.run::<_, Self>(shared_memory, &table.clone(), self)
-    //     //     }
-    //     // };
-
-    //     interpreter.shared_memory.as_mut().unwrap().free_context();
-
-    //     //(exit_reason, return_value, gas)
-    //     unimplemented!()
-    // }
-
     /// Call precompile contract
     fn call_precompile(
         &mut self,
@@ -869,116 +812,6 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         }
         result
     }
-
-    #[inline(never)]
-    fn prepare_call(&mut self, inputs: &CallInputs) -> Result<PreparedCall, InterpreterResult> {
-        let gas = Gas::new(inputs.gas_limit);
-        let account = match self
-            .data
-            .journaled_state
-            .load_code(inputs.contract, self.data.db)
-        {
-            Ok((account, _)) => account,
-            Err(e) => {
-                self.data.error = Some(e);
-                return Err(InterpreterResult {
-                    result: InstructionResult::FatalExternalError,
-                    gas,
-                    output: Bytes::new(),
-                });
-            }
-        };
-        let code_hash = account.info.code_hash();
-        let bytecode = account.info.code.clone().unwrap_or_default();
-
-        // Check depth
-        if self.data.journaled_state.depth() > CALL_STACK_LIMIT {
-            return Err(InterpreterResult {
-                result: InstructionResult::CallTooDeep,
-                gas,
-                output: Bytes::new(),
-            });
-        }
-
-        // Create subroutine checkpoint
-        let checkpoint = self.data.journaled_state.checkpoint();
-
-        // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
-        if inputs.transfer.value == U256::ZERO {
-            self.load_account(inputs.context.address);
-            self.data.journaled_state.touch(&inputs.context.address);
-        }
-
-        // Transfer value from caller to called account
-        if let Err(e) = self.data.journaled_state.transfer(
-            &inputs.transfer.source,
-            &inputs.transfer.target,
-            inputs.transfer.value,
-            self.data.db,
-        ) {
-            self.data.journaled_state.checkpoint_revert(checkpoint);
-            return Err(InterpreterResult {
-                result: e,
-                gas,
-                output: Bytes::new(),
-            });
-        }
-
-        let contract = Box::new(Contract::new_with_context(
-            inputs.input.clone(),
-            bytecode,
-            code_hash,
-            &inputs.context,
-        ));
-
-        Ok(PreparedCall {
-            gas,
-            checkpoint,
-            contract,
-        })
-    }
-
-    // /// Main contract call of the EVM.
-    // fn call_inner(
-    //     &mut self,
-    //     inputs: &CallInputs,
-    //     shared_memory: &mut SharedMemory,
-    // ) -> InterpreterResult {
-    //     // Prepare call
-    //     let prepared_call = match self.prepare_call(inputs) {
-    //         Ok(o) => o,
-    //         Err(e) => return e,
-    //     };
-
-    //     let ret = if let Some(precompile) = self.data.precompiles.get(&inputs.contract) {
-    //         self.call_precompile(precompile, inputs, prepared_call.gas)
-    //     } else if !prepared_call.contract.bytecode.is_empty() {
-    //         // Create interpreter and execute subcall
-    //         self.run_interpreter(
-    //             prepared_call.contract,
-    //             prepared_call.gas.limit(),
-    //             inputs.is_static,
-    //             shared_memory,
-    //         )
-    //     } else {
-    //         InterpreterResult {
-    //             result: InstructionResult::Stop,
-    //             gas: prepared_call.gas,
-    //             output: Bytes::new(),
-    //         }
-    //     };
-
-    //     // revert changes or not.
-    //     if matches!(ret.result, return_ok!()) {
-    //         self.data.journaled_state.checkpoint_commit();
-    //     } else {
-    //         self.data
-    //             .journaled_state
-    //             .checkpoint_revert(prepared_call.checkpoint);
-    //     }
-
-    //     ret
-    // }
 }
 
 impl<'a, GSPEC: Spec + 'static, DB: Database> Host for EVMImpl<'a, GSPEC, DB> {

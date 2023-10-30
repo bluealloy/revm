@@ -2,7 +2,10 @@ pub mod mainnet;
 #[cfg(feature = "optimism")]
 pub mod optimism;
 
+use revm_interpreter::InterpreterResult;
+
 use crate::{
+    evm_impl::CallFrame,
     interpreter::{Gas, InstructionResult},
     primitives::{db::Database, EVMError, EVMResultGeneric, Env, Output, ResultAndState, Spec},
     EVMData,
@@ -20,6 +23,9 @@ type RewardBeneficiaryHandle<DB> = ReimburseCallerHandle<DB>;
 
 /// Calculate gas refund for transaction.
 type CalculateGasRefundHandle = fn(&Env, &Gas) -> u64;
+
+/// Main first call
+type MainFirstCall = for<'a> fn(&'a Env) -> Result<CallFrame<'a>, InterpreterResult>;
 
 /// Main return handle, takes state from journal and transforms internal result to external.
 type MainReturnHandle<DB> = fn(
@@ -54,6 +60,8 @@ pub struct Handler<DB: Database> {
     pub calculate_gas_refund: CalculateGasRefundHandle,
     /// Main return handle, returns the output of the transact.
     pub main_return: MainReturnHandle<DB>,
+    /// Main first  call
+    //pub main_first_call: MainFirstCall,
     /// End handle.
     pub end: EndHandle<DB>,
 }

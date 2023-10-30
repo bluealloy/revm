@@ -105,6 +105,8 @@ pub fn calculate_gas_refund<SPEC: Spec>(env: &Env, gas: &Gas) -> u64 {
     }
 }
 
+//pub fn main_first_call
+
 /// Main return handle, returns the output of the transaction.
 #[inline]
 pub fn main_return<DB: Database>(
