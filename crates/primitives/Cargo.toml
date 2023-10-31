@@ -23,7 +23,7 @@ bitvec = { version = "1", default-features = false, features = ["alloc"] }
 bitflags = { version = "2.4.1", default-features = false }
 
 # For setting the CfgEnv KZGSettings. Enabled by c-kzg flag.
-c-kzg = { version = "0.1.1", default-features = false, optional = true }
+c-kzg = { version = "0.4.0", default-features = false, optional = true }
 once_cell = { version = "1.18", default-features = false, optional = true }
 
 # utility
