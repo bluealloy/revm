@@ -231,7 +231,7 @@ impl Stack {
         }
 
         let n_words = (slice.len() + 31) / 32;
-        let new_len = self.data.len() + n_words;
+        let new_len: usize = self.data.len() + n_words;
         if new_len > STACK_LIMIT {
             return Err(InstructionResult::StackOverflow);
         }

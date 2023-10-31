@@ -236,11 +236,13 @@ impl<'a> Interpreter<'a> {
         (instruction_table[opcode as usize])(self, host)
     }
 
-    pub fn next_action(&self) -> InterpreterAction {
+    pub fn next_action(&mut self) -> InterpreterAction {
         // return next action
         if self.instruction_result == InstructionResult::CallOrCreate {
+            // Set instruction result to continue so that run can continue working
+            self.instruction_result = InstructionResult::Continue;
             // next action is already set by one of CALL or CREATE instructions.
-            // Probably can be done differently without clone, but this is the easier.
+            // Probably can be done differently without clone, but this is easier.
             self.next_action.clone().unwrap()
         } else {
             InterpreterAction::Return {

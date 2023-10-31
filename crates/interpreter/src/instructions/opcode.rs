@@ -40,7 +40,7 @@ pub enum InstructionTables<'a, H> {
     Boxed(BoxedInstructionTableArc<'a, H>),
 }
 
-impl<'a,H> Clone for InstructionTables<'a,H> {
+impl<'a, H> Clone for InstructionTables<'a, H> {
     fn clone(&self) -> Self {
         match self {
             Self::Plain(arg0) => Self::Plain(arg0.clone()),
