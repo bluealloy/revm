@@ -79,7 +79,7 @@ Small release:
 # v1.0.0
 date: 30.04.2022
 
-Promoting it to stable version, and i dont expect for precompiles to change in any significant way in future.
+Promoting it to stable version, and i don't expect for precompiles to change in any significant way in future.
 
 * propagate the back the error of Signature::try_from. Thanks to: Nicolas Trippar
 * Updating dependency versions: secp256k1, k256,primitive_types
@@ -94,7 +94,7 @@ date: 20.1.2022
 * Error type is changed to `Return` in revm so it is in precompiles.
 # v0.2.0
 
-Removed parity-crypto and use only needed secp256k1 lib. Added `ecrecover` feature to allow dissabling it for wasm windows builds.
+Removed parity-crypto and use only needed secp256k1 lib. Added `ecrecover` feature to allow disabling it for wasm windows builds.
 
 # v0.1.0
 

@@ -1,6 +1,6 @@
 # The `inner_models.rs` Module in the Rust Ethereum Virtual Machine (EVM)
 
-The `inner_models.rs` module within this Rust EVM implementation encompasses a collection of datastructures used as internal models within the EVM. These models represent various aspects of EVM operations such as call and create inputs, call context, value transfers, and the result of self-destruction operations.
+The `inner_models.rs` module within this Rust EVM implementation encompasses a collection of data structures used as internal models within the EVM. These models represent various aspects of EVM operations such as call and create inputs, call context, value transfers, and the result of self-destruction operations.
 
 ## Data Structures
 

@@ -89,7 +89,7 @@ Changelog:
 * d0038e3 - chore(deps): bump arbitrary from 1.2.3 to 1.3.0 (#428) (2 weeks ago) <dependabot[bot]>
 * dd0e227 - feat: Add all internals results to Halt (#413) (4 weeks ago) <rakita>
 * d8dc652 - fix(interpreter): halt on CreateInitcodeSizeLimit (#412) (4 weeks ago) <Roman Krasiuk>
-* a193d79 - chore: enabled primtive default feature in precompile (#409) (4 weeks ago) <Matthias Seitz>
+* a193d79 - chore: enabled primitive default feature in precompile (#409) (4 weeks ago) <Matthias Seitz>
 * 1720729 - chore: add display impl for Opcode (#406) (4 weeks ago) <Matthias Seitz>
 * 33bf8a8 - feat: use singular bytes for the jumpmap (#402) (4 weeks ago) <Bjerg>
 * 394e8e9 - feat: extend SuccessOrHalt (#405) (4 weeks ago) <Matthias Seitz>
