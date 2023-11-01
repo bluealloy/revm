@@ -187,57 +187,83 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                 .run(shared_memory_ref, instruction_table, host);
             // take shared memory back.
             shared_memory_ref = call.interpreter.shared_memory.take().unwrap();
-
+            println!("action: {action:?}");
             match action {
                 // run sub call
-                revm_interpreter::InterpreterAction::SubCall { inputs, .. } => {
-                    // Check depth
-                    if host.data.journaled_state.depth() > CALL_STACK_LIMIT {
-                        call.interpreter.insert_create_output(
-                            InterpreterResult {
-                                result: InstructionResult::CallTooDeep,
-                                gas: Gas::new(inputs.gas_limit),
-                                output: Bytes::new(),
-                            },
-                            None,
-                        );
+                revm_interpreter::InterpreterAction::SubCall { mut inputs, .. } => {
+                    // Call inspector if it is some.
+                    if let Some(inspector) = host.inspector.as_mut() {
+                        if let Some(result) = inspector.call(&mut host.data, &mut inputs) {
+                            call.interpreter
+                                .insert_call_output(shared_memory_ref, result);
+                            continue;
+                        }
                     }
                     match host.make_call_frame(&inputs) {
                         Ok(new_frame) => {
+                            //println!("New frame added: {:#?}", new_frame);
                             shared_memory_ref.new_context();
                             frames.push(new_frame);
                         }
-                        Err(interpreter_result) => {
+                        Err(mut result) => {
+                            //println!("Result returned right away: {:#?}", result);
+                            if let Some(inspector) = host.inspector.as_mut() {
+                                result = inspector.call_end(&mut host.data, result);
+                            }
                             call.interpreter
-                                .insert_call_output(shared_memory_ref, interpreter_result);
+                                .insert_call_output(shared_memory_ref, result);
                         }
                     };
                 }
                 // run sub create
-                revm_interpreter::InterpreterAction::Create { inputs } => {
-                    // Check depth
-                    if host.data.journaled_state.depth() > CALL_STACK_LIMIT {
-                        call.interpreter.insert_create_output(
-                            InterpreterResult {
-                                result: InstructionResult::CallTooDeep,
-                                gas: Gas::new(inputs.gas_limit),
-                                output: Bytes::new(),
-                            },
-                            None,
-                        );
+                revm_interpreter::InterpreterAction::Create { mut inputs } => {
+                    // Call inspector if it is some.
+                    if let Some(inspector) = host.inspector.as_mut() {
+                        if let Some((result, address)) =
+                            inspector.create(&mut host.data, &mut inputs)
+                        {
+                            call.interpreter.insert_create_output(result, address);
+                            continue;
+                        }
                     }
+
                     match host.make_create_frame(&inputs) {
                         Ok(new_frame) => {
                             shared_memory_ref.new_context();
                             frames.push(new_frame);
                         }
-                        Err(e) => {
+                        Err(mut result) => {
+                            let mut address = None;
+                            if let Some(inspector) = host.inspector.as_mut() {
+                                let ret = inspector.create_end(
+                                    &mut host.data,
+                                    result,
+                                    call.created_address,
+                                );
+                                result = ret.0;
+                                address = ret.1;
+                            }
                             // insert result of the failed creation of create frame.
-                            call.interpreter.insert_create_output(e, None);
+                            call.interpreter.insert_create_output(result, address);
                         }
                     };
                 }
-                revm_interpreter::InterpreterAction::Return { result } => {
+                revm_interpreter::InterpreterAction::Return { mut result } => {
+                    if let Some(inspector) = host.inspector.as_mut() {
+                        result = if call.is_create {
+                            let (result, address) =
+                                inspector.create_end(&mut host.data, result, call.created_address);
+                            call.created_address = address;
+                            result
+                        } else {
+                            inspector.call_end(&mut host.data, result)
+                        }
+                    }
+
+                    let address = call.created_address;
+                    let checkpoint = call.checkpoint;
+                    let is_create = call.is_create;
+
                     // pop last interpreter frame.
                     frames.pop();
                     shared_memory_ref.free_context();
@@ -246,31 +272,32 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                     if frames.is_empty() {
                         return result;
                     }
-                    call = frames.first_mut().unwrap();
+                    let previous_call = frames.last_mut().unwrap();
 
-                    if call.is_create {
-                        let (result, address) = host.create_return(
-                            result,
-                            call.checkpoint,
-                            call.created_address.unwrap(),
-                        );
-                        call.interpreter.insert_create_output(result, Some(address))
+                    if is_create {
+                        let (result, address) =
+                            host.create_return(result, checkpoint, address.unwrap());
+                        previous_call
+                            .interpreter
+                            .insert_create_output(result, Some(address))
                     } else {
                         // revert changes or not.
                         if matches!(result.result, return_ok!()) {
                             host.data.journaled_state.checkpoint_commit();
                         } else {
-                            host.data.journaled_state.checkpoint_revert(call.checkpoint);
+                            host.data.journaled_state.checkpoint_revert(checkpoint);
                         }
 
-                        call.interpreter
+                        previous_call
+                            .interpreter
                             .insert_call_output(shared_memory_ref, result)
                     }
+                    call = previous_call;
                     continue;
                 }
             }
             // Host error if present on execution
-            call = frames.first_mut().unwrap();
+            call = frames.last_mut().unwrap();
         }
     }
 
@@ -278,6 +305,15 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         &'b mut self,
         inputs: &CallInputs,
     ) -> Result<CallFrame<'c>, InterpreterResult> {
+        // Check depth
+        if self.data.journaled_state.depth() > CALL_STACK_LIMIT {
+            return Err(InterpreterResult {
+                result: InstructionResult::CallTooDeep,
+                gas: Gas::new(inputs.gas_limit),
+                output: Bytes::new(),
+            });
+        }
+
         let gas = Gas::new(inputs.gas_limit);
         let account = match self
             .data
@@ -361,6 +397,15 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         &'b mut self,
         inputs: &CreateInputs,
     ) -> Result<CallFrame<'c>, InterpreterResult> {
+        // Check depth
+        if self.data.journaled_state.depth() > CALL_STACK_LIMIT {
+            return Err(InterpreterResult {
+                result: InstructionResult::CallTooDeep,
+                gas: Gas::new(inputs.gas_limit),
+                output: Bytes::new(),
+            });
+        }
+
         // Prepare crate.
         let gas = Gas::new(inputs.gas_limit);
 

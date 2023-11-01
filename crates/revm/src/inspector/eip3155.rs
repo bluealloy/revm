@@ -1,9 +1,11 @@
-use crate::inspectors::GasInspector;
-use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult};
-use crate::primitives::{db::Database, hex, Address, Bytes};
-use crate::{EVMData, Inspector};
-use revm_interpreter::primitives::U256;
-use revm_interpreter::{opcode, Interpreter, SharedMemory, Stack};
+use crate::{
+    inspectors::GasInspector,
+    interpreter::{
+        opcode, CallInputs, CreateInputs, Interpreter, InterpreterResult, SharedMemory, Stack,
+    },
+    primitives::{db::Database, hex, Address, U256},
+    EVMData, Inspector,
+};
 use serde_json::json;
 use std::io::Write;
 
@@ -59,6 +61,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         self.opcode = interp.current_opcode();
         self.mem_size = interp.shared_memory().len();
         self.gas = self.gas_inspector.gas_remaining();
+        self.print_log_line(data.journaled_state.depth());
     }
 
     fn step_end(&mut self, interp: &mut Interpreter<'_>, data: &mut EVMData<'_, DB>) {
@@ -73,29 +76,24 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 
     fn call(
         &mut self,
-        data: &mut EVMData<'_, DB>,
+        _data: &mut EVMData<'_, DB>,
         _inputs: &mut CallInputs,
-    ) -> (InstructionResult, Gas, Bytes) {
-        self.print_log_line(data.journaled_state.depth());
-        (InstructionResult::Continue, Gas::new(0), Bytes::new())
+    ) -> Option<InterpreterResult> {
+        None
     }
 
     fn call_end(
         &mut self,
         data: &mut EVMData<'_, DB>,
-        inputs: &CallInputs,
-        remaining_gas: Gas,
-        ret: InstructionResult,
-        out: Bytes,
-    ) -> (InstructionResult, Gas, Bytes) {
-        self.gas_inspector
-            .call_end(data, inputs, remaining_gas, ret, out.clone());
+        result: InterpreterResult,
+    ) -> InterpreterResult {
+        let result = self.gas_inspector.call_end(data, result);
         // self.log_step(interp, data, is_static, eval);
         self.skip = true;
         if data.journaled_state.depth() == 0 {
             let log_line = json!({
                 //stateroot
-                "output": format!("0x{}", hex::encode(out.as_ref())),
+                "output": format!("0x{}", hex::encode(result.output.as_ref())),
                 "gasUsed": format!("0x{:x}", self.gas_inspector.gas_remaining()),
                 //time
                 //fork
@@ -104,36 +102,26 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
             writeln!(self.output, "{}", serde_json::to_string(&log_line).unwrap())
                 .expect("If output fails we can ignore the logging");
         }
-        (ret, remaining_gas, out)
+        result
     }
 
     fn create(
         &mut self,
-        data: &mut EVMData<'_, DB>,
+        _data: &mut EVMData<'_, DB>,
         _inputs: &mut CreateInputs,
-    ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
-        self.print_log_line(data.journaled_state.depth());
-        (
-            InstructionResult::Continue,
-            None,
-            Gas::new(0),
-            Bytes::default(),
-        )
+    ) -> Option<(InterpreterResult, Option<Address>)> {
+        None
     }
 
     fn create_end(
         &mut self,
         data: &mut EVMData<'_, DB>,
-        inputs: &CreateInputs,
-        ret: InstructionResult,
+        result: InterpreterResult,
         address: Option<Address>,
-        remaining_gas: Gas,
-        out: Bytes,
-    ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
-        self.gas_inspector
-            .create_end(data, inputs, ret, address, remaining_gas, out.clone());
+    ) -> (InterpreterResult, Option<Address>) {
+        let result = self.gas_inspector.create_end(data, result, address);
         self.skip = true;
-        (ret, address, remaining_gas, out)
+        result
     }
 }
 
@@ -141,17 +129,17 @@ impl TracerEip3155 {
     fn print_log_line(&mut self, depth: u64) {
         let short_stack: Vec<String> = self.stack.data().iter().map(|&b| short_hex(b)).collect();
         let log_line = json!({
+            "depth": depth,
             "pc": self.pc,
+            "opName": opcode::OPCODE_JUMPMAP[self.opcode as usize],
             "op": self.opcode,
             "gas": format!("0x{:x}", self.gas),
             "gasCost": format!("0x{:x}", self.gas_inspector.last_gas_cost()),
             //memory?
             "memSize": self.mem_size,
             "stack": short_stack,
-            "depth": depth,
             //returnData
             //refund
-            "opName": opcode::OPCODE_JUMPMAP[self.opcode as usize],
             //error
             //storage
             //returnStack

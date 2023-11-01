@@ -1,9 +1,12 @@
 //! Custom print inspector, it has step level information of execution.
 //! It is a great tool if some debugging is needed.
 
-use crate::interpreter::{opcode, CallInputs, CreateInputs, Gas, InstructionResult, Interpreter};
-use crate::primitives::{Address, Bytes, U256};
-use crate::{inspectors::GasInspector, Database, EVMData, Inspector};
+use crate::{
+    inspectors::GasInspector,
+    interpreter::{opcode, CallInputs, CreateInputs, Interpreter, InterpreterResult},
+    primitives::{Address, U256},
+    Database, EVMData, Inspector,
+};
 
 /// Custom print [Inspector], it has step level information of execution.
 ///
@@ -52,35 +55,25 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
     fn call_end(
         &mut self,
         data: &mut EVMData<'_, DB>,
-        inputs: &CallInputs,
-        remaining_gas: Gas,
-        ret: InstructionResult,
-        out: Bytes,
-    ) -> (InstructionResult, Gas, Bytes) {
-        self.gas_inspector
-            .call_end(data, inputs, remaining_gas, ret, out.clone());
-        (ret, remaining_gas, out)
+        result: InterpreterResult,
+    ) -> InterpreterResult {
+        self.gas_inspector.call_end(data, result)
     }
 
     fn create_end(
         &mut self,
         data: &mut EVMData<'_, DB>,
-        inputs: &CreateInputs,
-        ret: InstructionResult,
+        result: InterpreterResult,
         address: Option<Address>,
-        remaining_gas: Gas,
-        out: Bytes,
-    ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
-        self.gas_inspector
-            .create_end(data, inputs, ret, address, remaining_gas, out.clone());
-        (ret, address, remaining_gas, out)
+    ) -> (InterpreterResult, Option<Address>) {
+        self.gas_inspector.create_end(data, result, address)
     }
 
     fn call(
         &mut self,
         _data: &mut EVMData<'_, DB>,
         inputs: &mut CallInputs,
-    ) -> (InstructionResult, Gas, Bytes) {
+    ) -> Option<InterpreterResult> {
         println!(
             "SM CALL:   {:?}, context:{:?}, is_static:{:?}, transfer:{:?}, input_size:{:?}",
             inputs.contract,
@@ -89,19 +82,19 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
             inputs.transfer,
             inputs.input.len(),
         );
-        (InstructionResult::Continue, Gas::new(0), Bytes::new())
+        None
     }
 
     fn create(
         &mut self,
         _data: &mut EVMData<'_, DB>,
         inputs: &mut CreateInputs,
-    ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
+    ) -> Option<(InterpreterResult, Option<Address>)> {
         println!(
             "CREATE CALL: caller:{:?}, scheme:{:?}, value:{:?}, init_code:{:?}, gas:{:?}",
             inputs.caller, inputs.scheme, inputs.value, inputs.init_code, inputs.gas_limit
         );
-        (InstructionResult::Continue, None, Gas::new(0), Bytes::new())
+        None
     }
 
     fn selfdestruct(&mut self, contract: Address, target: Address, value: U256) {

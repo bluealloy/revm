@@ -1,8 +1,10 @@
 //! GasIspector. Helper Inspector to calculate gas for others.
 
-use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult};
-use crate::primitives::{db::Database, Address, Bytes};
-use crate::{EVMData, Inspector};
+use crate::{
+    interpreter::InterpreterResult,
+    primitives::{db::Database, Address},
+    EVMData, Inspector,
+};
 
 /// Helper [Inspector] that keeps track of gas.
 #[allow(dead_code)]
@@ -45,38 +47,33 @@ impl<DB: Database> Inspector<DB> for GasInspector {
     fn call_end(
         &mut self,
         _data: &mut EVMData<'_, DB>,
-        _inputs: &CallInputs,
-        mut remaining_gas: Gas,
-        ret: InstructionResult,
-        out: Bytes,
-    ) -> (InstructionResult, Gas, Bytes) {
-        if ret.is_error() {
-            remaining_gas.record_cost(remaining_gas.remaining());
+        mut result: InterpreterResult,
+    ) -> InterpreterResult {
+        if result.result.is_error() {
+            result.gas.record_cost(result.gas.remaining());
             self.gas_remaining = 0;
-            (ret, remaining_gas, out)
-        } else {
-            (ret, remaining_gas, out)
         }
+        result
     }
 
     fn create_end(
         &mut self,
         _data: &mut EVMData<'_, DB>,
-        _inputs: &CreateInputs,
-        ret: InstructionResult,
+        result: InterpreterResult,
         address: Option<Address>,
-        remaining_gas: Gas,
-        out: Bytes,
-    ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
-        (ret, address, remaining_gas, out)
+    ) -> (InterpreterResult, Option<Address>) {
+        (result, address)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult, Interpreter};
-    use crate::primitives::{Address, Bytes, B256};
-    use crate::{inspectors::GasInspector, Database, EVMData, Inspector};
+    use crate::{
+        inspectors::GasInspector,
+        interpreter::{CallInputs, CreateInputs, Interpreter, InterpreterResult},
+        primitives::{Address, Bytes, B256},
+        Database, EVMData, Inspector,
+    };
 
     #[derive(Default, Debug)]
     struct StackInspector {
@@ -115,56 +112,34 @@ mod tests {
             &mut self,
             data: &mut EVMData<'_, DB>,
             call: &mut CallInputs,
-        ) -> (InstructionResult, Gas, Bytes) {
-            self.gas_inspector.call(data, call);
-
-            (
-                InstructionResult::Continue,
-                Gas::new(call.gas_limit),
-                Bytes::new(),
-            )
+        ) -> Option<InterpreterResult> {
+            self.gas_inspector.call(data, call)
         }
 
         fn call_end(
             &mut self,
             data: &mut EVMData<'_, DB>,
-            inputs: &CallInputs,
-            remaining_gas: Gas,
-            ret: InstructionResult,
-            out: Bytes,
-        ) -> (InstructionResult, Gas, Bytes) {
-            self.gas_inspector
-                .call_end(data, inputs, remaining_gas, ret, out.clone());
-            (ret, remaining_gas, out)
+            result: InterpreterResult,
+        ) -> InterpreterResult {
+            self.gas_inspector.call_end(data, result)
         }
 
         fn create(
             &mut self,
             data: &mut EVMData<'_, DB>,
             call: &mut CreateInputs,
-        ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
+        ) -> Option<(InterpreterResult, Option<Address>)> {
             self.gas_inspector.create(data, call);
-
-            (
-                InstructionResult::Continue,
-                None,
-                Gas::new(call.gas_limit),
-                Bytes::new(),
-            )
+            None
         }
 
         fn create_end(
             &mut self,
             data: &mut EVMData<'_, DB>,
-            inputs: &CreateInputs,
-            status: InstructionResult,
+            result: InterpreterResult,
             address: Option<Address>,
-            gas: Gas,
-            retdata: Bytes,
-        ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
-            self.gas_inspector
-                .create_end(data, inputs, status, address, gas, retdata.clone());
-            (status, address, gas, retdata)
+        ) -> (InterpreterResult, Option<Address>) {
+            self.gas_inspector.create_end(data, result, address)
         }
     }
 

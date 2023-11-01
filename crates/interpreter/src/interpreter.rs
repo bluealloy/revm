@@ -239,6 +239,11 @@ impl<'a> Interpreter<'a> {
     pub fn next_action(&mut self) -> InterpreterAction {
         // return next action
         if self.instruction_result == InstructionResult::CallOrCreate {
+            // Rewind instruction pointer to the call/create opcode as pointer get incremented.
+            // before execution. 
+            // SAFETY: previous instruction was CALL or CREATE, so we can safely rewind.
+            //self.instruction_pointer = unsafe { self.instruction_pointer.offset(-1) };
+            
             // Set instruction result to continue so that run can continue working
             self.instruction_result = InstructionResult::Continue;
             // next action is already set by one of CALL or CREATE instructions.

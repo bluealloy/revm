@@ -100,6 +100,7 @@ fn skip_test(path: &Path) -> bool {
         | "CALLBlake2f_MaxRounds.json"
         | "shiftCombinations.json"
     ) || path_str.contains("stEOF")
+        || path_str.contains("stTimeConsuming")
 }
 
 pub fn execute_test_suite(

@@ -2,11 +2,9 @@ pub mod mainnet;
 #[cfg(feature = "optimism")]
 pub mod optimism;
 
-use revm_interpreter::InterpreterResult;
-
 use crate::{
     evm_impl::CallFrame,
-    interpreter::{Gas, InstructionResult},
+    interpreter::{Gas, InstructionResult, InterpreterResult},
     primitives::{db::Database, EVMError, EVMResultGeneric, Env, Output, ResultAndState, Spec},
     EVMData,
 };

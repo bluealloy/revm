@@ -1,6 +1,8 @@
-use crate::interpreter::{CallInputs, CreateInputs, Gas, InstructionResult, Interpreter};
-use crate::primitives::{db::Database, Address, Bytes, B256, U256};
-use crate::EVMData;
+use crate::{
+    interpreter::{CallInputs, CreateInputs, Interpreter},
+    primitives::{db::Database, Address, Bytes, B256, U256},
+    EVMData,
+};
 use auto_impl::auto_impl;
 
 #[cfg(feature = "std")]
@@ -12,6 +14,7 @@ mod instruction;
 mod noop;
 
 pub use instruction::inspector_instruction;
+use revm_interpreter::InterpreterResult;
 /// [Inspector] implementations.
 pub mod inspectors {
     #[cfg(feature = "std")]
@@ -82,10 +85,10 @@ pub trait Inspector<DB: Database> {
         &mut self,
         data: &mut EVMData<'_, DB>,
         inputs: &mut CallInputs,
-    ) -> (InstructionResult, Gas, Bytes) {
+    ) -> Option<InterpreterResult> {
         let _ = data;
         let _ = inputs;
-        (InstructionResult::Continue, Gas::new(0), Bytes::new())
+        None
     }
 
     /// Called when a call to a contract has concluded.
@@ -96,14 +99,10 @@ pub trait Inspector<DB: Database> {
     fn call_end(
         &mut self,
         data: &mut EVMData<'_, DB>,
-        inputs: &CallInputs,
-        remaining_gas: Gas,
-        ret: InstructionResult,
-        out: Bytes,
-    ) -> (InstructionResult, Gas, Bytes) {
+        result: InterpreterResult,
+    ) -> InterpreterResult {
         let _ = data;
-        let _ = inputs;
-        (ret, remaining_gas, out)
+        result
     }
 
     /// Called when a contract is about to be created.
@@ -114,15 +113,10 @@ pub trait Inspector<DB: Database> {
         &mut self,
         data: &mut EVMData<'_, DB>,
         inputs: &mut CreateInputs,
-    ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
+    ) -> Option<(InterpreterResult, Option<Address>)> {
         let _ = data;
         let _ = inputs;
-        (
-            InstructionResult::Continue,
-            None,
-            Gas::new(0),
-            Bytes::default(),
-        )
+        None
     }
 
     /// Called when a contract has been created.
@@ -133,15 +127,11 @@ pub trait Inspector<DB: Database> {
     fn create_end(
         &mut self,
         data: &mut EVMData<'_, DB>,
-        inputs: &CreateInputs,
-        ret: InstructionResult,
+        result: InterpreterResult,
         address: Option<Address>,
-        remaining_gas: Gas,
-        out: Bytes,
-    ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
+    ) -> (InterpreterResult, Option<Address>) {
         let _ = data;
-        let _ = inputs;
-        (ret, address, remaining_gas, out)
+        (result, address)
     }
 
     /// Called when a contract has been self-destructed with funds transferred to target.
