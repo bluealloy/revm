@@ -543,8 +543,4 @@ pub fn call_inner<SPEC: Spec, H: Host>(
         return_len: out_len,
     });
     interpreter.instruction_result = InstructionResult::CallOrCreate;
-    // let (reason, gas, return_data) =
-    //     host.call(&mut call_input, interpreter.shared_memory.as_mut().unwrap());
-
-    // interpreter.insert_call_output(reason, gas, return_data);
 }

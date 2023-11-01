@@ -166,7 +166,8 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         FN: Fn(&mut Interpreter<'_>, &mut Self),
     {
         // bool true is create, false is a call.
-        let mut frames: Vec<CallFrame<'_>> = vec![first_frame];
+        let mut frames: Vec<CallFrame<'_>> = Vec::with_capacity(1026);
+        frames.push(first_frame);
 
         #[cfg(feature = "memory_limit")]
         let mut shared_memory = SharedMemory::new_with_memory_limit(self.data.env.cfg.memory_limit);
@@ -201,9 +202,9 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                     }
                     match host.make_call_frame(&inputs) {
                         Ok(new_frame) => {
-                            //println!("New frame added: {:#?}", new_frame);
-                            shared_memory_ref.new_context();
+                            //shared_memory_ref.new_context();
                             frames.push(new_frame);
+                            shared_memory_ref.new_context();
                         }
                         Err(mut result) => {
                             //println!("Result returned right away: {:#?}", result);
@@ -270,7 +271,19 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
 
                     // break from loop sa this is last frame.
                     if frames.is_empty() {
-                        return result;
+                        if is_create {
+                            let (result, _) =
+                                host.create_return(result, checkpoint, address.unwrap());
+                            return result;
+                        } else {
+                            // revert changes or not.
+                            if matches!(result.result, return_ok!()) {
+                                host.data.journaled_state.checkpoint_commit();
+                            } else {
+                                host.data.journaled_state.checkpoint_revert(checkpoint);
+                            }
+                            return result;
+                        }
                     }
                     let previous_call = frames.last_mut().unwrap();
 
@@ -305,16 +318,21 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         &'b mut self,
         inputs: &CallInputs,
     ) -> Result<CallFrame<'c>, InterpreterResult> {
+        let gas = Gas::new(inputs.gas_limit);
+
+        let return_result = |instruction_result: InstructionResult| {
+            Err(InterpreterResult {
+                result: instruction_result,
+                gas,
+                output: Bytes::new(),
+            })
+        };
+
         // Check depth
         if self.data.journaled_state.depth() > CALL_STACK_LIMIT {
-            return Err(InterpreterResult {
-                result: InstructionResult::CallTooDeep,
-                gas: Gas::new(inputs.gas_limit),
-                output: Bytes::new(),
-            });
+            return return_result(InstructionResult::CallTooDeep);
         }
 
-        let gas = Gas::new(inputs.gas_limit);
         let account = match self
             .data
             .journaled_state
@@ -323,11 +341,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             Ok((account, _)) => account,
             Err(e) => {
                 self.data.error = Some(e);
-                return Err(InterpreterResult {
-                    result: InstructionResult::FatalExternalError,
-                    gas,
-                    output: Bytes::new(),
-                });
+                return return_result(InstructionResult::FatalExternalError);
             }
         };
         let code_hash = account.info.code_hash();
@@ -349,63 +363,44 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             inputs.transfer.value,
             self.data.db,
         ) {
+            //println!("transfer error");
             self.data.journaled_state.checkpoint_revert(checkpoint);
-            return Err(InterpreterResult {
-                result: e,
-                gas,
-                output: Bytes::new(),
-            });
+            return return_result(e);
         }
 
-        let contract = Box::new(Contract::new_with_context(
-            inputs.input.clone(),
-            bytecode,
-            code_hash,
-            &inputs.context,
-        ));
-
-        let interpreter_result =
-            if let Some(precompile) = self.data.precompiles.get(&inputs.contract) {
-                self.call_precompile(precompile, &inputs, gas)
-            } else if !contract.bytecode.is_empty() {
-                // Create interpreter and execute subcall
-                // push new frame
-                return Ok(CallFrame {
-                    is_create: false,
-                    checkpoint: checkpoint,
-                    created_address: None,
-                    interpreter: Interpreter::new(contract, gas.limit(), false),
-                });
+        if let Some(precompile) = self.data.precompiles.get(&inputs.contract) {
+            //println!("Call precompile");
+            let result = self.call_precompile(precompile, &inputs, gas);
+            if matches!(result.result, return_ok!()) {
+                self.data.journaled_state.checkpoint_commit();
             } else {
-                InterpreterResult {
-                    result: InstructionResult::Stop,
-                    gas,
-                    output: Bytes::new(),
-                }
-            };
-
-        // revert changes or not.
-        if matches!(interpreter_result.result, return_ok!()) {
-            self.data.journaled_state.checkpoint_commit();
+                self.data.journaled_state.checkpoint_revert(checkpoint);
+            }
+            Err(result)
+        } else if !bytecode.is_empty() {
+            let contract = Box::new(Contract::new_with_context(
+                inputs.input.clone(),
+                bytecode,
+                code_hash,
+                &inputs.context,
+            ));
+            // Create interpreter and execute subcall and push new frame.
+            Ok(CallFrame {
+                is_create: false,
+                checkpoint: checkpoint,
+                created_address: None,
+                interpreter: Interpreter::new(contract, gas.limit(), inputs.is_static),
+            })
         } else {
-            self.data.journaled_state.checkpoint_revert(checkpoint);
+            self.data.journaled_state.checkpoint_commit();
+            return_result(InstructionResult::Stop)
         }
-        Err(interpreter_result)
     }
 
     pub fn make_create_frame<'b, 'c>(
         &'b mut self,
         inputs: &CreateInputs,
     ) -> Result<CallFrame<'c>, InterpreterResult> {
-        // Check depth
-        if self.data.journaled_state.depth() > CALL_STACK_LIMIT {
-            return Err(InterpreterResult {
-                result: InstructionResult::CallTooDeep,
-                gas: Gas::new(inputs.gas_limit),
-                output: Bytes::new(),
-            });
-        }
-
         // Prepare crate.
         let gas = Gas::new(inputs.gas_limit);
 
@@ -416,6 +411,11 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                 output: Bytes::new(),
             })
         };
+
+        // Check depth
+        if self.data.journaled_state.depth() > CALL_STACK_LIMIT {
+            return return_error(InstructionResult::CallTooDeep);
+        }
 
         // Fetch balance of caller.
         let Some((caller_balance, _)) = self.balance(inputs.caller) else {
@@ -823,7 +823,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         &mut self,
         precompile: Precompile,
         inputs: &CallInputs,
-        mut gas: Gas,
+        gas: Gas,
     ) -> InterpreterResult {
         let input_data = &inputs.input;
 
@@ -840,7 +840,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
 
         match out {
             Ok((gas_used, data)) => {
-                if !crate::USE_GAS || gas.record_cost(gas_used) {
+                if !crate::USE_GAS || result.gas.record_cost(gas_used) {
                     result.result = InstructionResult::Return;
                     result.output = Bytes::from(data);
                 } else {

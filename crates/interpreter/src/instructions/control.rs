@@ -1,3 +1,5 @@
+use revm_primitives::Bytes;
+
 use crate::{
     gas,
     primitives::{Spec, U256},
@@ -45,12 +47,12 @@ pub fn pc<H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
 }
 
 #[inline(always)]
-fn return_inner(interpreter: &mut Interpreter<'_>, result: InstructionResult) {
+fn return_inner(interpreter: &mut Interpreter<'_>, instruction_result: InstructionResult) {
     // zero gas cost
     // gas!(interpreter, gas::ZERO);
     pop!(interpreter, offset, len);
     let len = as_usize_or_fail!(interpreter, len);
-    // important: offset must be ignored if len is zero
+    // important: offset must be ignored if len is zeros
     if len != 0 {
         let offset = as_usize_or_fail!(interpreter, offset);
         shared_memory_resize!(interpreter, offset, len);
@@ -66,27 +68,30 @@ fn return_inner(interpreter: &mut Interpreter<'_>, result: InstructionResult) {
     } else {
         interpreter.return_data_buffer = Default::default();
     }
-    interpreter.instruction_result = result;
+    interpreter.instruction_result = instruction_result;
 }
 
 pub fn ret<H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
-    return_inner(interpreter, InstructionResult::Return)
+    return_inner(interpreter, InstructionResult::Return);
 }
 
 /// EIP-140: REVERT instruction
 pub fn revert<H: Host, SPEC: Spec>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
     check!(interpreter, BYZANTIUM);
-    return_inner(interpreter, InstructionResult::Revert)
+    return_inner(interpreter, InstructionResult::Revert);
 }
 
 pub fn stop<H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
+    interpreter.return_data_buffer = Bytes::default();
     interpreter.instruction_result = InstructionResult::Stop;
 }
 
 pub fn invalid<H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
+    interpreter.return_data_buffer = Bytes::default();
     interpreter.instruction_result = InstructionResult::InvalidFEOpcode;
 }
 
 pub fn not_found<H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
+    interpreter.return_data_buffer = Bytes::default();
     interpreter.instruction_result = InstructionResult::OpcodeNotFound;
 }

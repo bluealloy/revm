@@ -350,8 +350,6 @@ pub fn execute_test_suite(
                 evm.database(&mut state);
 
                 let path = path.display();
-                println!("Test {name:?} (index: {index}, path: {path}) failed:\n{e}");
-
                 println!("\nTraces:");
                 let _ = evm.inspect_commit(TracerEip3155::new(Box::new(stdout()), false, false));
 
@@ -360,6 +358,8 @@ pub fn execute_test_suite(
                 println!("\nState before: {cache_state:#?}");
                 println!("\nState after: {:#?}", evm.db().unwrap().cache);
                 println!("\nEnvironment: {env:#?}");
+                println!("\nTest name: {name:?} (index: {index}, path: {path}) failed:\n{e}");
+
                 return Err(e);
             }
         }

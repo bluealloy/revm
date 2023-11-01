@@ -60,8 +60,8 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         self.pc = interp.program_counter();
         self.opcode = interp.current_opcode();
         self.mem_size = interp.shared_memory().len();
-        self.gas = self.gas_inspector.gas_remaining();
-        self.print_log_line(data.journaled_state.depth());
+        self.gas = interp.gas.remaining();
+        //self.print_log_line(data.journaled_state.depth());
     }
 
     fn step_end(&mut self, interp: &mut Interpreter<'_>, data: &mut EVMData<'_, DB>) {
@@ -89,7 +89,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
     ) -> InterpreterResult {
         let result = self.gas_inspector.call_end(data, result);
         // self.log_step(interp, data, is_static, eval);
-        self.skip = true;
+        //self.skip = true;
         if data.journaled_state.depth() == 0 {
             let log_line = json!({
                 //stateroot
@@ -120,7 +120,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         address: Option<Address>,
     ) -> (InterpreterResult, Option<Address>) {
         let result = self.gas_inspector.create_end(data, result, address);
-        self.skip = true;
+        //self.skip = true;
         result
     }
 }
