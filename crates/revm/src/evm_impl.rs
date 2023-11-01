@@ -24,6 +24,7 @@ use core::{fmt, marker::PhantomData};
 #[cfg(feature = "optimism")]
 use crate::optimism;
 
+use fluentbase_sdk::evm::ContractInput;
 use fluentbase_sdk::{RwasmPlatformSDK, SDK};
 
 /// EVM call stack limit.
@@ -720,11 +721,19 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         use fluentbase_runtime::{Runtime, RuntimeContext};
         let bytecode = contract.bytecode.original_bytecode_slice();
         let mut output = vec![0u8; 1024];
-        let input = &contract.input;
         let import_linker = Runtime::<'_, EVMData<'a, DB>>::new_linker();
+        let contract_input = ContractInput {
+            input: contract.input.clone(),
+            bytecode: Bytes::copy_from_slice(contract.bytecode.original_bytecode_slice()),
+            hash: contract.hash,
+            address: contract.address,
+            caller: contract.caller,
+            value: contract.value,
+        };
+        let raw_contract_input = contract_input.into_vec();
         let ctx = RuntimeContext::<'_, EVMData<'a, DB>>::new(bytecode)
             .with_context(&mut self.data)
-            .with_input(input.to_vec())
+            .with_input(raw_contract_input)
             .with_state(state)
             .with_fuel_limit(gas_limit as u32);
         let runtime = Runtime::<'_, EVMData<'a, DB>>::new(ctx, &import_linker);
@@ -745,7 +754,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         let len = execution_output.len();
         output[0..len].copy_from_slice(execution_output.as_slice());
         let exit_code = execution_result.data().exit_code();
-        if exit_code < 0 {
+        if exit_code != 0 {
             return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
         }
         (
