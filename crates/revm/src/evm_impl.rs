@@ -15,6 +15,8 @@ use alloc::vec::Vec;
 use core::{cmp::min, marker::PhantomData};
 // use fluentbase_runtime::{Runtime, RuntimeContext};
 use fluentbase_rwasm::rwasm::Compiler;
+use fluentbase_sdk::rwasm_compile_wrapper;
+use fluentbase_sdk::rwasm_transact_wrapper;
 use revm_interpreter::gas::initial_tx_gas;
 use revm_interpreter::MAX_CODE_SIZE;
 use revm_precompile::{Precompile, Precompiles};
@@ -432,12 +434,19 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         };
 
         // translate WASM binary to rWASM
-        let import_linker = Runtime::new_linker();
-        let mut compiler =
-            Compiler::new_with_linker(inputs.init_code.as_ref(), Some(&import_linker)).unwrap();
-        let rwasm_bytecode = compiler.finalize().unwrap();
+        // TODO catch 'buffer small' error and expand buffer till output fits into it
+        let mut output = [0u8; 1024];
+        let out_len_or_err = rwasm_compile_wrapper(&inputs.init_code, &mut output[..]);
+        if out_len_or_err < 0 {
+            // TODO process error
+        }
+        // let import_linker = Runtime::new_linker();
+        // let mut compiler =
+        //     Compiler::new_with_linker(inputs.init_code.as_ref(), Some(&import_linker)).unwrap();
+        // let rwasm_bytecode = compiler.finalize().unwrap();
 
-        let bytecode = Bytecode::new_raw(Bytes::from(rwasm_bytecode));
+        let bytecode =
+            Bytecode::new_raw(Bytes::copy_from_slice(&output[..out_len_or_err as usize]));
 
         let contract = Box::new(Contract::new(
             Bytes::new(),
@@ -573,18 +582,34 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         state: u32,
         is_static: bool,
     ) -> (InstructionResult, Bytes, Gas) {
-        let import_linker = Runtime::new_linker();
-        let execution_result = Runtime::run_with_context(
-            RuntimeContext::new(contract.bytecode.original_bytecode_slice())
-                .with_input(contract.input.as_ref())
-                .with_state(state),
-            &import_linker,
-        )
-        .unwrap();
-        let return_value = execution_result.data().output();
+        // TODO catch 'buffer small' error and expand buffer till output fits into it
+        let code = contract.bytecode.original_bytecode_slice();
+        let input = &contract.input;
+        let mut output = [0u8; 1024];
+        let out_len_or_err = rwasm_transact_wrapper(
+            code.as_ptr() as i32,
+            code.len() as i32,
+            input.as_ptr() as i32,
+            input.len() as i32,
+            output.as_mut_ptr() as i32,
+            output.len() as i32,
+        );
+        if out_len_or_err < 0 {
+            // TODO process error
+        }
+        let execution_result = &output.as_slice()[..out_len_or_err as usize];
+        // let import_linker = Runtime::new_linker();
+        // let execution_result = Runtime::run_with_context(
+        //     RuntimeContext::new(contract.bytecode.original_bytecode_slice())
+        //         .with_input(contract.input.as_ref())
+        //         .with_state(state),
+        //     &import_linker,
+        // )
+        // .unwrap();
+        // let return_value = execution_result.data().output();
         (
             InstructionResult::Stop,
-            Bytes::from(return_value.clone()),
+            Bytes::copy_from_slice(execution_result),
             Gas::new(gas_limit),
         )
     }

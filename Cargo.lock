@@ -1087,7 +1087,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-rwasm"
 version = "0.30.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase?branch=devel#52cde224e5a8f6f212e036b5aa6bc775dd2f1bd3"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase?branch=evm-instructions-revm#57fc71727c50b7b9c616348f73844dff29b8cc0b"
 dependencies = [
  "byteorder",
  "downcast-rs",
@@ -1104,7 +1104,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-sdk"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase?branch=devel#52cde224e5a8f6f212e036b5aa6bc775dd2f1bd3"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase?branch=evm-instructions-revm#57fc71727c50b7b9c616348f73844dff29b8cc0b"
 dependencies = [
  "byteorder",
  "fixed-bigint",
