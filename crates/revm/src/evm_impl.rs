@@ -13,7 +13,7 @@ use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 use core::{cmp::min, marker::PhantomData};
-use fluentbase_runtime::{Runtime, RuntimeContext};
+// use fluentbase_runtime::{Runtime, RuntimeContext};
 use fluentbase_rwasm::rwasm::Compiler;
 use revm_interpreter::gas::initial_tx_gas;
 use revm_interpreter::MAX_CODE_SIZE;

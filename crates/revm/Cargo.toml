@@ -15,7 +15,8 @@ revm-precompile = { path = "../precompile", version = "2.0.2", default-features 
 
 # rwasm
 fluentbase-rwasm = { git = "https://github.com/fluentlabs-xyz/fluentbase", branch = "devel" }
-fluentbase-runtime = { git = "https://github.com/fluentlabs-xyz/fluentbase", branch = "devel" }
+#fluentbase-runtime = { git = "https://github.com/fluentlabs-xyz/fluentbase", branch = "devel" }
+fluentbase-sdk = { git = "https://github.com/fluentlabs-xyz/fluentbase", branch = "devel" }
 
 #misc
 auto_impl = { version = "1.1", default-features = false }
