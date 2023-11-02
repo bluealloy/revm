@@ -14,9 +14,9 @@ revm-interpreter = { path = "../interpreter", version = "1.1.2", default-feature
 revm-precompile = { path = "../precompile", version = "2.0.2", default-features = false }
 
 # rwasm
-fluentbase-rwasm = { git = "https://github.com/fluentlabs-xyz/fluentbase", branch = "evm-instructions-revm" }
-fluentbase-sdk = { git = "https://github.com/fluentlabs-xyz/fluentbase", branch = "evm-instructions-revm" }
-fluentbase-runtime = { git = "https://github.com/fluentlabs-xyz/fluentbase", branch = "evm-instructions-revm", optional=true }
+fluentbase-rwasm = { git = "https://github.com/fluentlabs-xyz/fluentbase", branch = "evm-instructions" }
+fluentbase-sdk = { git = "https://github.com/fluentlabs-xyz/fluentbase", branch = "evm-instructions" }
+fluentbase-runtime = { git = "https://github.com/fluentlabs-xyz/fluentbase", branch = "evm-instructions", optional=true }
 
 #misc
 auto_impl = { version = "1.1", default-features = false }
