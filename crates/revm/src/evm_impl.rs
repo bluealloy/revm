@@ -604,7 +604,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         &mut self,
         contract: Box<Contract>,
         gas_limit: u64,
-        _state: u32,
+        state: u32,
         _is_static: bool,
     ) -> (InstructionResult, Bytes, Gas) {
         let code = contract.bytecode.original_bytecode_slice();
