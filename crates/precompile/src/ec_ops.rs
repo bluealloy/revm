@@ -1,128 +1,127 @@
-use std::marker::PhantomData;
 use curve25519_dalek::EdwardsPoint;
 use elliptic_curve::{
-    group::{Curve, GroupEncoding, prime::PrimeCurveAffine},
+    group::{prime::PrimeCurveAffine, Curve, GroupEncoding},
     hash2curve::GroupDigest,
-    ops::{Reduce, Invert},
+    ops::{Invert, Reduce},
     point::AffineCoordinates,
     sec1::ToEncodedPoint,
     CurveArithmetic, Field, Group, PrimeCurve, PrimeField, ScalarPrimitive,
 };
 use num::ToPrimitive;
+use std::marker::PhantomData;
 
 use super::{calc_linear_cost_u32, extract_points, IDENTITY_BASE, IDENTITY_PER_WORD};
 use crate::{Error, Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn, Vec};
 
 pub const EC_MUL: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(300),
-    Precompile::Standard(ec_mul as StandardPrecompileFn)
+    Precompile::Standard(ec_mul as StandardPrecompileFn),
 );
 
 pub const EC_ADD: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(301),
-    Precompile::Standard(ec_add as StandardPrecompileFn)
+    Precompile::Standard(ec_add as StandardPrecompileFn),
 );
 
 pub const EC_NEG: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(302),
-    Precompile::Standard(ec_neg as StandardPrecompileFn)
+    Precompile::Standard(ec_neg as StandardPrecompileFn),
 );
 
 pub const EC_EQUAL: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(303),
-    Precompile::Standard(ec_equal as StandardPrecompileFn)
+    Precompile::Standard(ec_equal as StandardPrecompileFn),
 );
 
 pub const EC_IS_INFINITY: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(304),
-    Precompile::Standard(ec_is_infinity as StandardPrecompileFn)
+    Precompile::Standard(ec_is_infinity as StandardPrecompileFn),
 );
 
 pub const EC_IS_VALID: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(305),
-    Precompile::Standard(ec_is_valid as StandardPrecompileFn)
+    Precompile::Standard(ec_is_valid as StandardPrecompileFn),
 );
 
 pub const EC_HASH: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(306),
-    Precompile::Standard(ec_hash as StandardPrecompileFn)
+    Precompile::Standard(ec_hash as StandardPrecompileFn),
 );
 
 pub const EC_SUM_OF_PRODUCTS: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(307),
-    Precompile::Standard(ec_sum_of_products as StandardPrecompileFn)
+    Precompile::Standard(ec_sum_of_products as StandardPrecompileFn),
 );
 
 pub const SCALAR_ADD: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(308),
-    Precompile::Standard(scalar_add as StandardPrecompileFn)
+    Precompile::Standard(scalar_add as StandardPrecompileFn),
 );
 
 pub const SCALAR_MUL: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(309),
-    Precompile::Standard(scalar_mul as StandardPrecompileFn)
+    Precompile::Standard(scalar_mul as StandardPrecompileFn),
 );
 
 pub const SCALAR_NEG: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(310),
-    Precompile::Standard(scalar_neg as StandardPrecompileFn)
+    Precompile::Standard(scalar_neg as StandardPrecompileFn),
 );
 
 pub const SCALAR_INV: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(311),
-    Precompile::Standard(scalar_inv as StandardPrecompileFn)
+    Precompile::Standard(scalar_inv as StandardPrecompileFn),
 );
 
 pub const SCALAR_SQRT: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(312),
-    Precompile::Standard(scalar_sqrt as StandardPrecompileFn)
+    Precompile::Standard(scalar_sqrt as StandardPrecompileFn),
 );
 
 pub const SCALAR_EQUAL: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(313),
-    Precompile::Standard(scalar_equal as StandardPrecompileFn)
+    Precompile::Standard(scalar_equal as StandardPrecompileFn),
 );
 
 pub const SCALAR_IS_ZERO: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(314),
-    Precompile::Standard(scalar_is_zero as StandardPrecompileFn)
+    Precompile::Standard(scalar_is_zero as StandardPrecompileFn),
 );
 
 pub const SCALAR_IS_VALID: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(315),
-    Precompile::Standard(scalar_is_valid as StandardPrecompileFn)
+    Precompile::Standard(scalar_is_valid as StandardPrecompileFn),
 );
 
 pub const SCALAR_FROM_WIDE_BYTES: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(316),
-    Precompile::Standard(scalar_from_wide_bytes as StandardPrecompileFn)
+    Precompile::Standard(scalar_from_wide_bytes as StandardPrecompileFn),
 );
 
 pub const SCALAR_HASH: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(317),
-    Precompile::Standard(scalar_hash as StandardPrecompileFn)
+    Precompile::Standard(scalar_hash as StandardPrecompileFn),
 );
 
 pub const ECDSA_VERIFY: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(318),
-    Precompile::Standard(ecdsa_verify as StandardPrecompileFn)
+    Precompile::Standard(ecdsa_verify as StandardPrecompileFn),
 );
 
 pub const SCHNORR_VERIFY1: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(319),
-    Precompile::Standard(schnorr_verify1 as StandardPrecompileFn)
+    Precompile::Standard(schnorr_verify1 as StandardPrecompileFn),
 );
 
 pub const SCHNORR_VERIFY2: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(320),
-    Precompile::Standard(schnorr_verify2 as StandardPrecompileFn)
+    Precompile::Standard(schnorr_verify2 as StandardPrecompileFn),
 );
 
 pub const BLS_VERIFY: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(321),
-    Precompile::Standard(bls_verify as StandardPrecompileFn)
+    Precompile::Standard(bls_verify as StandardPrecompileFn),
 );
-
 
 fn ec_mul(input: &[u8], gas_limit: u64) -> PrecompileResult {
     EcMultiply {}.handle(input, gas_limit)
@@ -212,21 +211,66 @@ fn bls_verify(input: &[u8], gas_limit: u64) -> PrecompileResult {
     BlsVerify {}.handle(input, gas_limit)
 }
 
-const CURVE_NAME_SECP256K1: &[u8] = &[56, 59, 39, 83, 33, 83, 243, 83, 250, 76, 198, 137, 35, 159, 115, 101, 223, 233, 36, 235, 207, 103, 128, 126, 182, 145, 99, 7, 164, 226, 112, 30];
-const CURVE_NAME_PRIME256V1: &[u8] = &[236, 151, 14, 250, 71, 58, 162, 250, 152, 240, 56, 58, 218, 26, 64, 52, 15, 149, 88, 58, 236, 119, 101, 93, 71, 74, 121, 18, 49, 68, 120, 167];
-const CURVE_NAME_CURVE25519: &[u8] = &[95, 235, 190, 179, 75, 175, 72, 27, 200, 83, 4, 244, 249, 232, 242, 193, 145, 139, 223, 192, 16, 239, 86, 182, 149, 122, 201, 43, 169, 112, 141, 196];
-const CURVE_NAME_BLS12381G1: &[u8] = &[157, 137, 108, 202, 42, 239, 133, 106, 124, 17, 78, 140, 254, 165, 166, 3, 68, 236, 72, 237, 26, 60, 125, 231, 225, 12, 198, 231, 69, 129, 98, 109];
-const CURVE_NAME_BLS12381G2: &[u8] = &[234, 117, 92, 131, 99, 84, 34, 238, 113, 135, 28, 154, 84, 213, 205, 6, 52, 142, 9, 84, 93, 98, 145, 179, 160, 123, 115, 254, 95, 105, 154, 249];
-const HASH_NAME_SHA2_256: &[u8] = &[231, 8, 169, 121, 9, 175, 229, 141, 81, 199, 223, 139, 162, 228, 170, 161, 233, 154, 116, 235, 240, 211, 10, 216, 160, 162, 14, 213, 193, 29, 101, 84];
-const HASH_NAME_SHA2_384: &[u8] = &[165, 231, 169, 152, 179, 76, 168, 208, 185, 190, 244, 4, 230, 133, 69, 8, 117, 4, 239, 14, 186, 60, 224, 171, 107, 45, 169, 141, 56, 53, 132, 218];
-const HASH_NAME_SHA2_512: &[u8] = &[108, 235, 120, 129, 121, 66, 58, 97, 47, 240, 51, 176, 106, 220, 211, 45, 31, 41, 13, 229, 190, 86, 186, 224, 216, 251, 42, 59, 12, 137, 61, 187];
-const HASH_NAME_SHA3_256: &[u8] = &[95, 185, 33, 85, 116, 164, 111, 26, 144, 41, 228, 98, 213, 136, 12, 218, 137, 103, 7, 6, 108, 31, 75, 243, 13, 131, 136, 147, 145, 17, 191, 204];
-const HASH_NAME_SHA3_384: &[u8] = &[109, 242, 159, 237, 211, 254, 58, 205, 67, 35, 215, 64, 115, 228, 107, 173, 74, 204, 7, 118, 106, 22, 62, 188, 20, 44, 200, 203, 243, 1, 21, 100];
-const HASH_NAME_SHA3_512: &[u8] = &[20, 64, 42, 213, 151, 220, 133, 115, 38, 130, 119, 163, 202, 176, 151, 54, 38, 167, 226, 26, 193, 245, 177, 151, 249, 38, 251, 239, 42, 144, 199, 74];
-const HASH_NAME_SHAKE128: &[u8] = &[82, 242, 139, 107, 140, 215, 88, 250, 189, 215, 74, 41, 202, 221, 102, 126, 152, 31, 74, 226, 45, 64, 52, 33, 130, 102, 134, 86, 232, 127, 190, 59];
-const HASH_NAME_SHAKE256: &[u8] = &[28, 128, 198, 113, 20, 210, 141, 235, 57, 106, 193, 29, 195, 23, 49, 25, 252, 247, 70, 234, 53, 165, 151, 207, 109, 213, 180, 102, 191, 72, 169, 159];
-const HASH_NAME_KECCAK256: &[u8] = &[7, 183, 43, 66, 46, 159, 31, 22, 175, 173, 79, 183, 247, 18, 28, 221, 255, 124, 31, 87, 161, 229, 168, 198, 233, 193, 67, 1, 4, 63, 81, 56];
-const HASH_NAME_TAPROOT: &[u8] = &[8, 215, 83, 31, 179, 38, 223, 4, 226, 165, 107, 122, 113, 187, 97, 125, 54, 221, 210, 133, 184, 114, 109, 3, 149, 156, 81, 26, 98, 162, 91, 241];
+const CURVE_NAME_SECP256K1: &[u8] = &[
+    56, 59, 39, 83, 33, 83, 243, 83, 250, 76, 198, 137, 35, 159, 115, 101, 223, 233, 36, 235, 207,
+    103, 128, 126, 182, 145, 99, 7, 164, 226, 112, 30,
+];
+const CURVE_NAME_PRIME256V1: &[u8] = &[
+    236, 151, 14, 250, 71, 58, 162, 250, 152, 240, 56, 58, 218, 26, 64, 52, 15, 149, 88, 58, 236,
+    119, 101, 93, 71, 74, 121, 18, 49, 68, 120, 167,
+];
+const CURVE_NAME_CURVE25519: &[u8] = &[
+    95, 235, 190, 179, 75, 175, 72, 27, 200, 83, 4, 244, 249, 232, 242, 193, 145, 139, 223, 192,
+    16, 239, 86, 182, 149, 122, 201, 43, 169, 112, 141, 196,
+];
+const CURVE_NAME_BLS12381G1: &[u8] = &[
+    157, 137, 108, 202, 42, 239, 133, 106, 124, 17, 78, 140, 254, 165, 166, 3, 68, 236, 72, 237,
+    26, 60, 125, 231, 225, 12, 198, 231, 69, 129, 98, 109,
+];
+const CURVE_NAME_BLS12381G2: &[u8] = &[
+    234, 117, 92, 131, 99, 84, 34, 238, 113, 135, 28, 154, 84, 213, 205, 6, 52, 142, 9, 84, 93, 98,
+    145, 179, 160, 123, 115, 254, 95, 105, 154, 249,
+];
+const HASH_NAME_SHA2_256: &[u8] = &[
+    231, 8, 169, 121, 9, 175, 229, 141, 81, 199, 223, 139, 162, 228, 170, 161, 233, 154, 116, 235,
+    240, 211, 10, 216, 160, 162, 14, 213, 193, 29, 101, 84,
+];
+const HASH_NAME_SHA2_384: &[u8] = &[
+    165, 231, 169, 152, 179, 76, 168, 208, 185, 190, 244, 4, 230, 133, 69, 8, 117, 4, 239, 14, 186,
+    60, 224, 171, 107, 45, 169, 141, 56, 53, 132, 218,
+];
+const HASH_NAME_SHA2_512: &[u8] = &[
+    108, 235, 120, 129, 121, 66, 58, 97, 47, 240, 51, 176, 106, 220, 211, 45, 31, 41, 13, 229, 190,
+    86, 186, 224, 216, 251, 42, 59, 12, 137, 61, 187,
+];
+const HASH_NAME_SHA3_256: &[u8] = &[
+    95, 185, 33, 85, 116, 164, 111, 26, 144, 41, 228, 98, 213, 136, 12, 218, 137, 103, 7, 6, 108,
+    31, 75, 243, 13, 131, 136, 147, 145, 17, 191, 204,
+];
+const HASH_NAME_SHA3_384: &[u8] = &[
+    109, 242, 159, 237, 211, 254, 58, 205, 67, 35, 215, 64, 115, 228, 107, 173, 74, 204, 7, 118,
+    106, 22, 62, 188, 20, 44, 200, 203, 243, 1, 21, 100,
+];
+const HASH_NAME_SHA3_512: &[u8] = &[
+    20, 64, 42, 213, 151, 220, 133, 115, 38, 130, 119, 163, 202, 176, 151, 54, 38, 167, 226, 26,
+    193, 245, 177, 151, 249, 38, 251, 239, 42, 144, 199, 74,
+];
+const HASH_NAME_SHAKE128: &[u8] = &[
+    82, 242, 139, 107, 140, 215, 88, 250, 189, 215, 74, 41, 202, 221, 102, 126, 152, 31, 74, 226,
+    45, 64, 52, 33, 130, 102, 134, 86, 232, 127, 190, 59,
+];
+const HASH_NAME_SHAKE256: &[u8] = &[
+    28, 128, 198, 113, 20, 210, 141, 235, 57, 106, 193, 29, 195, 23, 49, 25, 252, 247, 70, 234, 53,
+    165, 151, 207, 109, 213, 180, 102, 191, 72, 169, 159,
+];
+const HASH_NAME_KECCAK256: &[u8] = &[
+    7, 183, 43, 66, 46, 159, 31, 22, 175, 173, 79, 183, 247, 18, 28, 221, 255, 124, 31, 87, 161,
+    229, 168, 198, 233, 193, 67, 1, 4, 63, 81, 56,
+];
+const HASH_NAME_TAPROOT: &[u8] = &[
+    8, 215, 83, 31, 179, 38, 223, 4, 226, 165, 107, 122, 113, 187, 97, 125, 54, 221, 210, 133, 184,
+    114, 109, 3, 149, 156, 81, 26, 98, 162, 91, 241,
+];
 
 trait EcOps {
     fn handle(&self, data: &[u8], gas_limit: u64) -> PrecompileResult {
@@ -281,16 +325,63 @@ trait EcOps {
 
 fn parse_hash<'a>(data: &'a [u8]) -> Result<(&'a [u8], Box<dyn SchnorrChallenge>), Error> {
     match &data[..32] {
-        HASH_NAME_SHA2_256 => Ok((&data[32..], Box::new(SchnorrFixedDigest::<sha2::Sha256> { _marker: PhantomData }))),
-        HASH_NAME_SHA2_384 => Ok((&data[32..], Box::new(SchnorrFixedDigest::<sha2::Sha384> { _marker: PhantomData }))),
-        HASH_NAME_SHA2_512 => Ok((&data[32..], Box::new(SchnorrFixedDigest::<sha2::Sha512> { _marker: PhantomData }))),
-        HASH_NAME_SHA3_256 => Ok((&data[32..], Box::new(SchnorrFixedDigest::<sha3::Sha3_256> { _marker: PhantomData }))),
-        HASH_NAME_SHA3_384 => Ok((&data[32..], Box::new(SchnorrFixedDigest::<sha3::Sha3_384> { _marker: PhantomData }))),
-        HASH_NAME_SHA3_512 => Ok((&data[32..], Box::new(SchnorrFixedDigest::<sha3::Sha3_512> { _marker: PhantomData }))),
-        HASH_NAME_KECCAK256 => Ok((&data[32..], Box::new(SchnorrFixedDigest::<sha3::Keccak256> { _marker: PhantomData }))),
+        HASH_NAME_SHA2_256 => Ok((
+            &data[32..],
+            Box::new(SchnorrFixedDigest::<sha2::Sha256> {
+                _marker: PhantomData,
+            }),
+        )),
+        HASH_NAME_SHA2_384 => Ok((
+            &data[32..],
+            Box::new(SchnorrFixedDigest::<sha2::Sha384> {
+                _marker: PhantomData,
+            }),
+        )),
+        HASH_NAME_SHA2_512 => Ok((
+            &data[32..],
+            Box::new(SchnorrFixedDigest::<sha2::Sha512> {
+                _marker: PhantomData,
+            }),
+        )),
+        HASH_NAME_SHA3_256 => Ok((
+            &data[32..],
+            Box::new(SchnorrFixedDigest::<sha3::Sha3_256> {
+                _marker: PhantomData,
+            }),
+        )),
+        HASH_NAME_SHA3_384 => Ok((
+            &data[32..],
+            Box::new(SchnorrFixedDigest::<sha3::Sha3_384> {
+                _marker: PhantomData,
+            }),
+        )),
+        HASH_NAME_SHA3_512 => Ok((
+            &data[32..],
+            Box::new(SchnorrFixedDigest::<sha3::Sha3_512> {
+                _marker: PhantomData,
+            }),
+        )),
+        HASH_NAME_KECCAK256 => Ok((
+            &data[32..],
+            Box::new(SchnorrFixedDigest::<sha3::Keccak256> {
+                _marker: PhantomData,
+            }),
+        )),
         HASH_NAME_TAPROOT => Ok((&data[32..], Box::new(SchnorrHashTaproot {}))),
-        HASH_NAME_SHAKE128 => Ok((&data[32..], Box::new(SchnorrXofDigest::<sha3::Shake128> { output_size: 32, _marker: PhantomData }))),
-        HASH_NAME_SHAKE256 => Ok((&data[32..], Box::new(SchnorrXofDigest::<sha3::Shake256> { output_size: 64, _marker: PhantomData }))),
+        HASH_NAME_SHAKE128 => Ok((
+            &data[32..],
+            Box::new(SchnorrXofDigest::<sha3::Shake128> {
+                output_size: 32,
+                _marker: PhantomData,
+            }),
+        )),
+        HASH_NAME_SHAKE256 => Ok((
+            &data[32..],
+            Box::new(SchnorrXofDigest::<sha3::Shake256> {
+                output_size: 64,
+                _marker: PhantomData,
+            }),
+        )),
         _ => Err(Error::EcOpsInvalidHash),
     }
 }
@@ -302,12 +393,12 @@ trait SchnorrChallenge {
 struct SchnorrHashTaproot {}
 
 struct SchnorrFixedDigest<D: sha2::Digest> {
-    _marker: PhantomData<D>
+    _marker: PhantomData<D>,
 }
 
 struct SchnorrXofDigest<D: Default + sha2::digest::ExtendableOutput + sha2::digest::Update> {
     output_size: usize,
-    _marker: PhantomData<D>
+    _marker: PhantomData<D>,
 }
 
 impl<D: sha2::Digest> SchnorrChallenge for SchnorrFixedDigest<D> {
@@ -320,7 +411,9 @@ impl<D: sha2::Digest> SchnorrChallenge for SchnorrFixedDigest<D> {
     }
 }
 
-impl<D: Default + sha2::digest::ExtendableOutput + sha2::digest::Update> SchnorrChallenge for SchnorrXofDigest<D> {
+impl<D: Default + sha2::digest::ExtendableOutput + sha2::digest::Update> SchnorrChallenge
+    for SchnorrXofDigest<D>
+{
     fn compute_challenge(&self, r: &[u8], pub_key: &[u8], msg: &[u8]) -> Vec<u8> {
         let mut hasher = D::default();
         hasher.update(r);
@@ -336,12 +429,14 @@ impl SchnorrChallenge for SchnorrHashTaproot {
 
         let tag_hash = sha2::Sha256::digest(b"BIP0340/challenge");
         let digest = sha2::Sha256::new();
-        digest.chain_update(tag_hash)
+        digest
+            .chain_update(tag_hash)
             .chain_update(tag_hash)
             .chain_update(r)
             .chain_update(pub_key)
             .chain_update(msg)
-            .finalize().to_vec()
+            .finalize()
+            .to_vec()
     }
 }
 
@@ -504,9 +599,10 @@ fn bls12381_scalars<'a>(
     let mut scalars = Vec::with_capacity(scalar_cnt);
     for i in 0..scalar_cnt {
         let bytes = <[u8; 32]>::try_from(&data[32 * i..32 * (i + 1)]).unwrap();
-        let scalar =
-            Option::<blsful::inner_types::Scalar>::from(blsful::inner_types::Scalar::from_be_bytes(&bytes))
-                .ok_or(Error::EcOpsInvalidScalar)?;
+        let scalar = Option::<blsful::inner_types::Scalar>::from(
+            blsful::inner_types::Scalar::from_be_bytes(&bytes),
+        )
+        .ok_or(Error::EcOpsInvalidScalar)?;
         scalars.push(scalar);
     }
     Ok((&data[32 * scalar_cnt..], scalars))
@@ -806,7 +902,9 @@ impl EcOps for EcSumOfProducts {
         let cnt = lengths[0];
         let (data, points) = secp256k1_points(data, cnt)?;
         let (_, scalars) = secp256k1_scalars(data, cnt)?;
-        Ok(secp256k1_point_out(&sum_of_products_pippenger::<k256::Secp256k1>(&points, &scalars)))
+        Ok(secp256k1_point_out(&sum_of_products_pippenger::<
+            k256::Secp256k1,
+        >(&points, &scalars)))
     }
 
     fn prime256v1(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
@@ -814,7 +912,9 @@ impl EcOps for EcSumOfProducts {
         let cnt = lengths[0];
         let (data, points) = prime256v1_points(data, cnt)?;
         let (_, scalars) = prime256v1_scalars(data, cnt)?;
-        Ok(prime256v1_point_out(&sum_of_products_pippenger::<p256::NistP256>(&points, &scalars)))
+        Ok(prime256v1_point_out(&sum_of_products_pippenger::<
+            p256::NistP256,
+        >(&points, &scalars)))
     }
 
     fn curve25519(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
@@ -1161,7 +1261,8 @@ impl EcOps for ScalarFromWideBytes {
         if data.len() != 64 {
             return Err(Error::EcOpsInvalidSize);
         }
-        let scalar = blsful::inner_types::Scalar::from_bytes_wide(&<[u8; 64]>::try_from(data).unwrap());
+        let scalar =
+            blsful::inner_types::Scalar::from_bytes_wide(&<[u8; 64]>::try_from(data).unwrap());
         Ok(scalar.to_be_bytes().to_vec())
     }
 
@@ -1169,7 +1270,8 @@ impl EcOps for ScalarFromWideBytes {
         if data.len() != 64 {
             return Err(Error::EcOpsInvalidSize);
         }
-        let scalar = blsful::inner_types::Scalar::from_bytes_wide(&<[u8; 64]>::try_from(data).unwrap());
+        let scalar =
+            blsful::inner_types::Scalar::from_bytes_wide(&<[u8; 64]>::try_from(data).unwrap());
         Ok(scalar.to_be_bytes().to_vec())
     }
 }
@@ -1295,13 +1397,19 @@ impl EcOps for SchnorrVerify1 {
         }
 
         let r_bytes = (&data[..32]).into();
-        let r = Option::<k256::FieldElement>::from(k256::FieldElement::from_bytes(r_bytes)).ok_or(Error::EcOpsInvalidScalar)?;
+        let r = Option::<k256::FieldElement>::from(k256::FieldElement::from_bytes(r_bytes))
+            .ok_or(Error::EcOpsInvalidScalar)?;
         if r.is_zero().into() {
             return Err(Error::EcOpsInvalidScalar);
         }
-        let s = k256::NonZeroScalar::try_from(&data[32..]).map_err(|_| Error::EcOpsInvalidScalar)?;
+        let s =
+            k256::NonZeroScalar::try_from(&data[32..]).map_err(|_| Error::EcOpsInvalidScalar)?;
 
-        let e_bytes = hasher.compute_challenge(r_bytes, &points[0].to_bytes()[..], &scalars[0].to_bytes()[..]);
+        let e_bytes = hasher.compute_challenge(
+            r_bytes,
+            &points[0].to_bytes()[..],
+            &scalars[0].to_bytes()[..],
+        );
         let e = <k256::Scalar as Reduce<k256::U256>>::reduce_bytes((&e_bytes[..]).into());
 
         let big_r = (k256::ProjectivePoint::GENERATOR * s.as_ref() - points[0] * e).to_affine();
@@ -1328,13 +1436,19 @@ impl EcOps for SchnorrVerify1 {
         }
 
         let r_bytes = (&data[..32]).into();
-        let r = Option::<p256::FieldElement>::from(p256::FieldElement::from_bytes(r_bytes)).ok_or(Error::EcOpsInvalidScalar)?;
+        let r = Option::<p256::FieldElement>::from(p256::FieldElement::from_bytes(r_bytes))
+            .ok_or(Error::EcOpsInvalidScalar)?;
         if r.is_zero().into() {
             return Err(Error::EcOpsInvalidScalar);
         }
-        let s = p256::NonZeroScalar::try_from(&data[32..]).map_err(|_| Error::EcOpsInvalidScalar)?;
+        let s =
+            p256::NonZeroScalar::try_from(&data[32..]).map_err(|_| Error::EcOpsInvalidScalar)?;
 
-        let e_bytes = hasher.compute_challenge(r_bytes, &points[0].to_bytes()[..], &scalars[0].to_bytes()[..]);
+        let e_bytes = hasher.compute_challenge(
+            r_bytes,
+            &points[0].to_bytes()[..],
+            &scalars[0].to_bytes()[..],
+        );
         let e = <p256::Scalar as Reduce<p256::U256>>::reduce_bytes((&e_bytes[..]).into());
 
         let big_r = (p256::ProjectivePoint::GENERATOR * s.as_ref() - points[0] * e).to_affine();
@@ -1359,15 +1473,28 @@ impl EcOps for SchnorrVerify1 {
         if data.len() < 64 {
             return Err(Error::EcOpsInvalidSignature);
         }
-        let e_bytes = hasher.compute_challenge(&data[..32], points[0].compress().as_bytes(), scalars[0].as_bytes());
+        let e_bytes = hasher.compute_challenge(
+            &data[..32],
+            points[0].compress().as_bytes(),
+            scalars[0].as_bytes(),
+        );
         let mut e_arr = [0u8; 64];
         e_arr[..e_bytes.len()].copy_from_slice(&e_bytes[..]);
         let e = curve25519_dalek::Scalar::from_bytes_mod_order_wide(&e_arr);
         let s_bytes = <[u8; 32]>::try_from(&data[32..64]).unwrap();
-        let s = Option::<curve25519_dalek::Scalar>::from(curve25519_dalek::Scalar::from_canonical_bytes(s_bytes)).ok_or(Error::EcOpsInvalidScalar)?;
-        let r = curve25519_dalek::edwards::CompressedEdwardsY::from_slice(&data[..32]).map_err(|_| Error::EcOpsInvalidScalar)?;
+        let s = Option::<curve25519_dalek::Scalar>::from(
+            curve25519_dalek::Scalar::from_canonical_bytes(s_bytes),
+        )
+        .ok_or(Error::EcOpsInvalidScalar)?;
+        let r = curve25519_dalek::edwards::CompressedEdwardsY::from_slice(&data[..32])
+            .map_err(|_| Error::EcOpsInvalidScalar)?;
 
-        let big_r = curve25519_dalek::EdwardsPoint::vartime_double_scalar_mul_basepoint(&e, &-points[0], &s).compress();
+        let big_r = curve25519_dalek::EdwardsPoint::vartime_double_scalar_mul_basepoint(
+            &e,
+            &-points[0],
+            &s,
+        )
+        .compress();
         if big_r == r {
             Ok(vec![1u8])
         } else {
@@ -1392,7 +1519,11 @@ impl EcOps for SchnorrVerify1 {
             return Err(Error::EcOpsInvalidScalar);
         }
 
-        let e_bytes = hasher.compute_challenge(sig_r.to_bytes().as_ref(), pk.to_bytes().as_ref(), scalars[0].to_be_bytes().as_ref());
+        let e_bytes = hasher.compute_challenge(
+            sig_r.to_bytes().as_ref(),
+            pk.to_bytes().as_ref(),
+            scalars[0].to_be_bytes().as_ref(),
+        );
         let mut e_arr = [0u8; 64];
         e_arr[..e_bytes.len()].copy_from_slice(&e_bytes[..]);
         let e = blsful::inner_types::Scalar::from_bytes_wide(&e_arr);
@@ -1422,7 +1553,11 @@ impl EcOps for SchnorrVerify1 {
             return Err(Error::EcOpsInvalidScalar);
         }
 
-        let e_bytes = hasher.compute_challenge(sig_r.to_bytes().as_ref(), pk.to_bytes().as_ref(), scalars[0].to_be_bytes().as_ref());
+        let e_bytes = hasher.compute_challenge(
+            sig_r.to_bytes().as_ref(),
+            pk.to_bytes().as_ref(),
+            scalars[0].to_be_bytes().as_ref(),
+        );
         let mut e_arr = [0u8; 64];
         e_arr[..e_bytes.len()].copy_from_slice(&e_bytes[..]);
         let e = blsful::inner_types::Scalar::from_bytes_wide(&e_arr);
@@ -1452,13 +1587,19 @@ impl EcOps for SchnorrVerify2 {
         }
 
         let r_bytes = (&data[..32]).into();
-        let r = Option::<k256::FieldElement>::from(k256::FieldElement::from_bytes(r_bytes)).ok_or(Error::EcOpsInvalidScalar)?;
+        let r = Option::<k256::FieldElement>::from(k256::FieldElement::from_bytes(r_bytes))
+            .ok_or(Error::EcOpsInvalidScalar)?;
         if r.is_zero().into() {
             return Err(Error::EcOpsInvalidScalar);
         }
-        let s = k256::NonZeroScalar::try_from(&data[32..]).map_err(|_| Error::EcOpsInvalidScalar)?;
+        let s =
+            k256::NonZeroScalar::try_from(&data[32..]).map_err(|_| Error::EcOpsInvalidScalar)?;
 
-        let e_bytes = hasher.compute_challenge(r_bytes, &points[0].to_bytes()[..], &scalars[0].to_bytes()[..]);
+        let e_bytes = hasher.compute_challenge(
+            r_bytes,
+            &points[0].to_bytes()[..],
+            &scalars[0].to_bytes()[..],
+        );
         let e = <k256::Scalar as Reduce<k256::U256>>::reduce_bytes((&e_bytes[..]).into());
 
         let big_r = (k256::ProjectivePoint::GENERATOR * s.as_ref() + points[0] * e).to_affine();
@@ -1485,13 +1626,19 @@ impl EcOps for SchnorrVerify2 {
         }
 
         let r_bytes = (&data[..32]).into();
-        let r = Option::<p256::FieldElement>::from(p256::FieldElement::from_bytes(r_bytes)).ok_or(Error::EcOpsInvalidScalar)?;
+        let r = Option::<p256::FieldElement>::from(p256::FieldElement::from_bytes(r_bytes))
+            .ok_or(Error::EcOpsInvalidScalar)?;
         if r.is_zero().into() {
             return Err(Error::EcOpsInvalidScalar);
         }
-        let s = p256::NonZeroScalar::try_from(&data[32..]).map_err(|_| Error::EcOpsInvalidScalar)?;
+        let s =
+            p256::NonZeroScalar::try_from(&data[32..]).map_err(|_| Error::EcOpsInvalidScalar)?;
 
-        let e_bytes = hasher.compute_challenge(r_bytes, &points[0].to_bytes()[..], &scalars[0].to_bytes()[..]);
+        let e_bytes = hasher.compute_challenge(
+            r_bytes,
+            &points[0].to_bytes()[..],
+            &scalars[0].to_bytes()[..],
+        );
         let e = <p256::Scalar as Reduce<p256::U256>>::reduce_bytes((&e_bytes[..]).into());
 
         let big_r = (p256::ProjectivePoint::GENERATOR * s.as_ref() + points[0] * e).to_affine();
@@ -1516,15 +1663,25 @@ impl EcOps for SchnorrVerify2 {
         if data.len() < 64 {
             return Err(Error::EcOpsInvalidSignature);
         }
-        let e_bytes = hasher.compute_challenge(&data[..32], points[0].compress().as_bytes(), scalars[0].as_bytes());
+        let e_bytes = hasher.compute_challenge(
+            &data[..32],
+            points[0].compress().as_bytes(),
+            scalars[0].as_bytes(),
+        );
         let mut e_arr = [0u8; 64];
         e_arr[..e_bytes.len()].copy_from_slice(&e_bytes[..]);
         let e = curve25519_dalek::Scalar::from_bytes_mod_order_wide(&e_arr);
         let s_bytes = <[u8; 32]>::try_from(&data[32..64]).unwrap();
-        let s = Option::<curve25519_dalek::Scalar>::from(curve25519_dalek::Scalar::from_canonical_bytes(s_bytes)).ok_or(Error::EcOpsInvalidScalar)?;
-        let r = curve25519_dalek::edwards::CompressedEdwardsY::from_slice(&data[..32]).map_err(|_| Error::EcOpsInvalidScalar)?;
+        let s = Option::<curve25519_dalek::Scalar>::from(
+            curve25519_dalek::Scalar::from_canonical_bytes(s_bytes),
+        )
+        .ok_or(Error::EcOpsInvalidScalar)?;
+        let r = curve25519_dalek::edwards::CompressedEdwardsY::from_slice(&data[..32])
+            .map_err(|_| Error::EcOpsInvalidScalar)?;
 
-        let big_r = curve25519_dalek::EdwardsPoint::vartime_double_scalar_mul_basepoint(&e, &points[0], &s).compress();
+        let big_r =
+            curve25519_dalek::EdwardsPoint::vartime_double_scalar_mul_basepoint(&e, &points[0], &s)
+                .compress();
         if big_r == r {
             Ok(vec![1u8])
         } else {
@@ -1549,7 +1706,11 @@ impl EcOps for SchnorrVerify2 {
             return Err(Error::EcOpsInvalidScalar);
         }
 
-        let e_bytes = hasher.compute_challenge(sig_r.to_bytes().as_ref(), pk.to_bytes().as_ref(), scalars[0].to_be_bytes().as_ref());
+        let e_bytes = hasher.compute_challenge(
+            sig_r.to_bytes().as_ref(),
+            pk.to_bytes().as_ref(),
+            scalars[0].to_be_bytes().as_ref(),
+        );
         let mut e_arr = [0u8; 64];
         e_arr[..e_bytes.len()].copy_from_slice(&e_bytes[..]);
         let e = blsful::inner_types::Scalar::from_bytes_wide(&e_arr);
@@ -1579,7 +1740,11 @@ impl EcOps for SchnorrVerify2 {
             return Err(Error::EcOpsInvalidScalar);
         }
 
-        let e_bytes = hasher.compute_challenge(sig_r.to_bytes().as_ref(), pk.to_bytes().as_ref(), scalars[0].to_be_bytes().as_ref());
+        let e_bytes = hasher.compute_challenge(
+            sig_r.to_bytes().as_ref(),
+            pk.to_bytes().as_ref(),
+            scalars[0].to_be_bytes().as_ref(),
+        );
         let mut e_arr = [0u8; 64];
         e_arr[..e_bytes.len()].copy_from_slice(&e_bytes[..]);
         let e = blsful::inner_types::Scalar::from_bytes_wide(&e_arr);
@@ -1617,7 +1782,11 @@ impl EcOps for BlsVerify {
         let (_, g2points) = bls12381g2_points(data, 1)?;
         let pk = blsful::PublicKey::<blsful::Bls12381G2Impl>(g1points[0]);
         let sig = blsful::Signature::<blsful::Bls12381G2Impl>::ProofOfPossession(g2points[0]);
-        if sig.verify(&pk, message).map_err(|_| Error::EcOpsInvalidSignature).is_ok() {
+        if sig
+            .verify(&pk, message)
+            .map_err(|_| Error::EcOpsInvalidSignature)
+            .is_ok()
+        {
             Ok(vec![1u8])
         } else {
             Ok(vec![0u8])
@@ -1636,7 +1805,11 @@ impl EcOps for BlsVerify {
 
         let pk = blsful::PublicKey::<blsful::Bls12381G1Impl>(g1points[0]);
         let sig = blsful::Signature::<blsful::Bls12381G1Impl>::ProofOfPossession(g2points[0]);
-        if sig.verify(&pk, message).map_err(|_| Error::EcOpsInvalidSignature).is_ok() {
+        if sig
+            .verify(&pk, message)
+            .map_err(|_| Error::EcOpsInvalidSignature)
+            .is_ok()
+        {
             Ok(vec![1u8])
         } else {
             Ok(vec![0u8])
@@ -1644,10 +1817,16 @@ impl EcOps for BlsVerify {
     }
 }
 
-fn verify_bls<C>(pk: &blsful::PublicKey<C>, sig: &blsful::Signature<C>, msg: &[u8]) -> Result<(), Error>
-    where C: blsful::BlsSignatureImpl
+fn verify_bls<C>(
+    pk: &blsful::PublicKey<C>,
+    sig: &blsful::Signature<C>,
+    msg: &[u8],
+) -> Result<(), Error>
+where
+    C: blsful::BlsSignatureImpl,
 {
-    sig.verify(&pk, msg).map_err(|_| Error::EcOpsInvalidSignature)
+    sig.verify(&pk, msg)
+        .map_err(|_| Error::EcOpsInvalidSignature)
 }
 
 fn verify_ecdsa<C>(
@@ -1668,8 +1847,8 @@ where
     let u1 = *z * s_inv;
     let u2 = *r * s_inv;
     let x = (elliptic_curve::ProjectivePoint::<C>::generator() * u1 + *q * u2)
-    .to_affine()
-    .x();
+        .to_affine()
+        .x();
     if *r == elliptic_curve::Scalar::<C>::reduce_bytes(&x) {
         Ok(())
     } else {
@@ -1830,7 +2009,10 @@ mod test {
         let res = ec_mul(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
-        assert_eq!(expected.to_encoded_point(false).as_bytes()[1..].to_vec(), bytes);
+        assert_eq!(
+            expected.to_encoded_point(false).as_bytes()[1..].to_vec(),
+            bytes
+        );
     }
 
     #[test]
@@ -1844,7 +2026,10 @@ mod test {
         let res = ec_mul(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
-        assert_eq!(expected.to_encoded_point(false).as_bytes()[1..].to_vec(), bytes);
+        assert_eq!(
+            expected.to_encoded_point(false).as_bytes()[1..].to_vec(),
+            bytes
+        );
     }
 
     #[test]
@@ -1898,7 +2083,11 @@ mod test {
         let res = scalar_hash(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
-        let expected = [0x2f, 0xad, 0x45, 0xa6, 0x27, 0xe2, 0xa5, 0x3f, 0x58, 0xcc, 0xa3, 0x17, 0xe7, 0xc8, 0x2f, 0x73, 0x8d, 0x09, 0x15, 0x81, 0x6d, 0xb2, 0xee, 0xcc, 0x3c, 0xa8, 0x38, 0x00, 0xb5, 0x32, 0xac, 0xb9];
+        let expected = [
+            0x2f, 0xad, 0x45, 0xa6, 0x27, 0xe2, 0xa5, 0x3f, 0x58, 0xcc, 0xa3, 0x17, 0xe7, 0xc8,
+            0x2f, 0x73, 0x8d, 0x09, 0x15, 0x81, 0x6d, 0xb2, 0xee, 0xcc, 0x3c, 0xa8, 0x38, 0x00,
+            0xb5, 0x32, 0xac, 0xb9,
+        ];
         assert_eq!(expected.to_vec(), bytes);
     }
 

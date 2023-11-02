@@ -1,7 +1,4 @@
-use super::{
-    calc_linear_cost_u32, extract_points, IDENTITY_BASE,
-    IDENTITY_PER_WORD,
-};
+use super::{calc_linear_cost_u32, extract_points, IDENTITY_BASE, IDENTITY_PER_WORD};
 use crate::{Error, Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn, Vec};
 use elliptic_curve::{
     group::cofactor::CofactorGroup,
