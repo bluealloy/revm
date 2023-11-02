@@ -188,7 +188,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                 .run(shared_memory_ref, instruction_table, host);
             // take shared memory back.
             shared_memory_ref = call.interpreter.shared_memory.take().unwrap();
-            println!("action: {action:?}");
+            //println!("action: {action:?}");
             match action {
                 // run sub call
                 revm_interpreter::InterpreterAction::SubCall { mut inputs, .. } => {

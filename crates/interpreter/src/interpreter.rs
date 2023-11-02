@@ -15,7 +15,7 @@ use crate::{
 };
 use alloc::boxed::Box;
 use core::cmp::min;
-use revm_primitives::{Address, U256};
+use revm_primitives::{hex, Address, U256};
 
 /// EIP-170: Contract code size limit
 ///
@@ -153,7 +153,6 @@ impl<'a> Interpreter<'a> {
             _ => (0, 0),
         };
         let interpreter = self;
-
         interpreter.return_data_buffer = result.output;
         let target_len = min(out_len, interpreter.return_data_buffer.len());
 
@@ -238,25 +237,28 @@ impl<'a> Interpreter<'a> {
 
     pub fn next_action(&mut self) -> InterpreterAction {
         // return next action
-        if self.instruction_result == InstructionResult::CallOrCreate {
-            // Rewind instruction pointer to the call/create opcode as pointer get incremented.
-            // before execution. 
-            // SAFETY: previous instruction was CALL or CREATE, so we can safely rewind.
-            //self.instruction_pointer = unsafe { self.instruction_pointer.offset(-1) };
-            
-            // Set instruction result to continue so that run can continue working
-            self.instruction_result = InstructionResult::Continue;
-            // next action is already set by one of CALL or CREATE instructions.
-            // Probably can be done differently without clone, but this is easier.
-            self.next_action.clone().unwrap()
-        } else {
-            InterpreterAction::Return {
+        match self.instruction_result {
+            InstructionResult::CallOrCreate => {
+                // Set instruction result to continue so that run can continue working
+                self.instruction_result = InstructionResult::Continue;
+                // next action is already set by one of CALL or CREATE instructions.
+                // Probably can be done differently without clone, but this is easier.
+                self.next_action.clone().unwrap()
+            }
+            InstructionResult::Return | InstructionResult::Revert => InterpreterAction::Return {
                 result: InterpreterResult {
                     result: self.instruction_result,
                     output: self.return_data_buffer.clone(),
                     gas: self.gas,
                 },
-            }
+            },
+            result => InterpreterAction::Return {
+                result: InterpreterResult {
+                    result,
+                    output: Bytes::new(),
+                    gas: self.gas,
+                },
+            },
         }
     }
 
