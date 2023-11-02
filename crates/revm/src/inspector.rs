@@ -1,3 +1,5 @@
+use core::ops::Range;
+
 use crate::{
     interpreter::{CallInputs, CreateInputs, Interpreter},
     primitives::{db::Database, Address, Bytes, B256, U256},
@@ -85,7 +87,7 @@ pub trait Inspector<DB: Database> {
         &mut self,
         data: &mut EVMData<'_, DB>,
         inputs: &mut CallInputs,
-    ) -> Option<InterpreterResult> {
+    ) -> Option<(InterpreterResult, Range<usize>)> {
         let _ = data;
         let _ = inputs;
         None

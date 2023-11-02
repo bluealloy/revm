@@ -102,8 +102,8 @@ pub enum SuccessOrHalt {
     InternalContinue,
     /// Internal call opcode.
     InternalCall,
-    /// Internal create opcod.e
-    InernalCreate,
+    /// Internal create opcode.
+    InternalCreate,
 }
 
 impl SuccessOrHalt {

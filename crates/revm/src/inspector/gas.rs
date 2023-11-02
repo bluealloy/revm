@@ -68,6 +68,8 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 
 #[cfg(test)]
 mod tests {
+    use core::ops::Range;
+
     use crate::{
         inspectors::GasInspector,
         interpreter::{CallInputs, CreateInputs, Interpreter, InterpreterResult},
@@ -112,7 +114,7 @@ mod tests {
             &mut self,
             data: &mut EVMData<'_, DB>,
             call: &mut CallInputs,
-        ) -> Option<InterpreterResult> {
+        ) -> Option<(InterpreterResult, Range<usize>)> {
             self.gas_inspector.call(data, call)
         }
 

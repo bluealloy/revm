@@ -1,6 +1,8 @@
 //! Custom print inspector, it has step level information of execution.
 //! It is a great tool if some debugging is needed.
 
+use core::ops::Range;
+
 use crate::{
     inspectors::GasInspector,
     interpreter::{opcode, CallInputs, CreateInputs, Interpreter, InterpreterResult},
@@ -73,7 +75,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         &mut self,
         _data: &mut EVMData<'_, DB>,
         inputs: &mut CallInputs,
-    ) -> Option<InterpreterResult> {
+    ) -> Option<(InterpreterResult, Range<usize>)> {
         println!(
             "SM CALL:   {:?}, context:{:?}, is_static:{:?}, transfer:{:?}, input_size:{:?}",
             inputs.contract,

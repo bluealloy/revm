@@ -146,7 +146,7 @@ pub fn main_return<DB: Database>(
         }
         SuccessOrHalt::InternalContinue
         | SuccessOrHalt::InternalCall
-        | SuccessOrHalt::InernalCreate => {
+        | SuccessOrHalt::InternalCreate => {
             panic!("Internal return flags should remain internal {call_result:?}")
         }
     };

@@ -6,6 +6,7 @@ use crate::{
     primitives::{db::Database, hex, Address, U256},
     EVMData, Inspector,
 };
+use core::ops::Range;
 use serde_json::json;
 use std::io::Write;
 
@@ -78,7 +79,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         &mut self,
         _data: &mut EVMData<'_, DB>,
         _inputs: &mut CallInputs,
-    ) -> Option<InterpreterResult> {
+    ) -> Option<(InterpreterResult, Range<usize>)> {
         None
     }
 

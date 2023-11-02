@@ -331,13 +331,6 @@ pub fn create<const IS_CREATE2: bool, H: Host, SPEC: Spec>(
         return;
     };
 
-    // let (reason, address, gas, return_data) = host.create(
-    //     &mut create_input,
-    //     interpreter.shared_memory.as_mut().unwrap(),
-    // );
-    //
-    // interpreter.insert_create_output(address, reason, gas, return_data);
-
     // Call host to interact with target contract
     interpreter.next_action = Some(InterpreterAction::Create {
         inputs: create_input,
@@ -539,8 +532,7 @@ pub fn call_inner<SPEC: Spec, H: Host>(
     // Call host to interact with target contract
     interpreter.next_action = Some(InterpreterAction::SubCall {
         inputs: call_input,
-        return_offset: out_offset,
-        return_len: out_len,
+        return_memory_offset: out_offset..out_offset + out_len,
     });
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }

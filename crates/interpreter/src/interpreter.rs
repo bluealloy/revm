@@ -15,7 +15,8 @@ use crate::{
 };
 use alloc::boxed::Box;
 use core::cmp::min;
-use revm_primitives::{hex, Address, U256};
+use core::ops::Range;
+use revm_primitives::{Address, U256};
 
 /// EIP-170: Contract code size limit
 ///
@@ -49,7 +50,9 @@ pub struct Interpreter<'a> {
 
     /// Whether the interpreter is in "staticcall" mode, meaning no state changes can happen.
     pub is_static: bool,
-    /// Actions that is expected
+    /// Actions that interpreter should do.
+    ///
+    /// Set inside CALL or CREATE instructions and RETURN or REVERT instructions.
     pub next_action: Option<InterpreterAction>,
 }
 
@@ -68,9 +71,7 @@ pub enum InterpreterAction {
         /// The offset into `self.memory` of the return data.
         ///
         /// This value must be ignored if `self.return_len` is 0.
-        return_offset: usize,
-        /// The length of the return data.
-        return_len: usize,
+        return_memory_offset: Range<usize>,
     },
     Create {
         inputs: Box<CreateInputs>,
@@ -143,15 +144,11 @@ impl<'a> Interpreter<'a> {
         &mut self,
         shared_memory: &mut SharedMemory,
         result: InterpreterResult,
+        memory_return_offset: Range<usize>,
     ) {
-        let (out_offset, out_len) = match self.next_action {
-            Some(InterpreterAction::SubCall {
-                return_offset,
-                return_len,
-                ..
-            }) => (return_offset, return_len),
-            _ => (0, 0),
-        };
+        let out_offset = memory_return_offset.start;
+        let out_len = memory_return_offset.len();
+
         let interpreter = self;
         interpreter.return_data_buffer = result.output;
         let target_len = min(out_len, interpreter.return_data_buffer.len());
@@ -218,6 +215,8 @@ impl<'a> Interpreter<'a> {
     }
 
     /// Executes the instruction at the current instruction pointer.
+    ///
+    /// Internally it will increment instruction pointer by one.
     #[inline(always)]
     pub fn step<FN, H: Host>(&mut self, instruction_table: &[FN; 256], host: &mut H)
     where
@@ -235,33 +234,6 @@ impl<'a> Interpreter<'a> {
         (instruction_table[opcode as usize])(self, host)
     }
 
-    pub fn next_action(&mut self) -> InterpreterAction {
-        // return next action
-        match self.instruction_result {
-            InstructionResult::CallOrCreate => {
-                // Set instruction result to continue so that run can continue working
-                self.instruction_result = InstructionResult::Continue;
-                // next action is already set by one of CALL or CREATE instructions.
-                // Probably can be done differently without clone, but this is easier.
-                self.next_action.clone().unwrap()
-            }
-            InstructionResult::Return | InstructionResult::Revert => InterpreterAction::Return {
-                result: InterpreterResult {
-                    result: self.instruction_result,
-                    output: self.return_data_buffer.clone(),
-                    gas: self.gas,
-                },
-            },
-            result => InterpreterAction::Return {
-                result: InterpreterResult {
-                    result,
-                    output: Bytes::new(),
-                    gas: self.gas,
-                },
-            },
-        }
-    }
-
     /// Executes the interpreter until it returns or stops.
     pub fn run<FN, H: Host>(
         &mut self,
@@ -272,12 +244,25 @@ impl<'a> Interpreter<'a> {
     where
         FN: Fn(&mut Interpreter<'_>, &mut H),
     {
+        self.next_action = None;
+        self.instruction_result = InstructionResult::Continue;
         self.shared_memory = Some(shared_memory);
         // main loop
         while self.instruction_result == InstructionResult::Continue {
             self.step(instruction_table, host);
         }
 
-        self.next_action()
+        // Return next action if it is some.
+        if let Some(action) = self.next_action.take() {
+            return action;
+        }
+        // If not return action without output. this means it is Interpreter halt.
+        InterpreterAction::Return {
+            result: InterpreterResult {
+                result: self.instruction_result,
+                output: Bytes::new(),
+                gas: self.gas,
+            },
+        }
     }
 }

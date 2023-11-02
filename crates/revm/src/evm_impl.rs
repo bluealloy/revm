@@ -20,7 +20,7 @@ use crate::{
 };
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use auto_impl::auto_impl;
-use core::{fmt, marker::PhantomData};
+use core::{fmt, marker::PhantomData, ops::Range};
 use revm_interpreter::InterpreterResult;
 
 #[cfg(feature = "optimism")]
@@ -151,6 +151,8 @@ pub struct CallFrame<'a> {
     checkpoint: JournalCheckpoint,
     /// temporary. If it is create it should have address.
     created_address: Option<Address>,
+    /// temporary. Call range
+    subcall_return_memory_range: Range<usize>,
     /// Interpreter
     interpreter: Interpreter<'a>,
 }
@@ -191,16 +193,19 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             //println!("action: {action:?}");
             match action {
                 // run sub call
-                revm_interpreter::InterpreterAction::SubCall { mut inputs, .. } => {
+                revm_interpreter::InterpreterAction::SubCall {
+                    mut inputs,
+                    return_memory_offset,
+                } => {
                     // Call inspector if it is some.
                     if let Some(inspector) = host.inspector.as_mut() {
-                        if let Some(result) = inspector.call(&mut host.data, &mut inputs) {
+                        if let Some((result, range)) = inspector.call(&mut host.data, &mut inputs) {
                             call.interpreter
-                                .insert_call_output(shared_memory_ref, result);
+                                .insert_call_output(shared_memory_ref, result, range);
                             continue;
                         }
                     }
-                    match host.make_call_frame(&inputs) {
+                    match host.make_call_frame(&inputs, return_memory_offset.clone()) {
                         Ok(new_frame) => {
                             //shared_memory_ref.new_context();
                             frames.push(new_frame);
@@ -211,8 +216,11 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                             if let Some(inspector) = host.inspector.as_mut() {
                                 result = inspector.call_end(&mut host.data, result);
                             }
-                            call.interpreter
-                                .insert_call_output(shared_memory_ref, result);
+                            call.interpreter.insert_call_output(
+                                shared_memory_ref,
+                                result,
+                                return_memory_offset,
+                            );
                         }
                     };
                 }
@@ -262,6 +270,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                     }
 
                     let address = call.created_address;
+                    let sub_call_return_memory_range = call.subcall_return_memory_range.clone();
                     let checkpoint = call.checkpoint;
                     let is_create = call.is_create;
 
@@ -301,9 +310,11 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                             host.data.journaled_state.checkpoint_revert(checkpoint);
                         }
 
-                        previous_call
-                            .interpreter
-                            .insert_call_output(shared_memory_ref, result)
+                        previous_call.interpreter.insert_call_output(
+                            shared_memory_ref,
+                            result,
+                            sub_call_return_memory_range,
+                        )
                     }
                     call = previous_call;
                     continue;
@@ -317,6 +328,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
     pub fn make_call_frame<'b, 'c>(
         &'b mut self,
         inputs: &CallInputs,
+        return_memory_offset: Range<usize>,
     ) -> Result<CallFrame<'c>, InterpreterResult> {
         let gas = Gas::new(inputs.gas_limit);
 
@@ -389,6 +401,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                 is_create: false,
                 checkpoint: checkpoint,
                 created_address: None,
+                subcall_return_memory_range: return_memory_offset,
                 interpreter: Interpreter::new(contract, gas.limit(), inputs.is_static),
             })
         } else {
@@ -477,6 +490,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             is_create: true,
             checkpoint: checkpoint,
             created_address: Some(created_address),
+            subcall_return_memory_range: 0..0,
             interpreter: Interpreter::new(contract, gas.limit(), false),
         })
     }
@@ -665,24 +679,27 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                 // Nonce is already checked
                 caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
 
-                self.make_call_frame(&mut CallInputs {
-                    contract: address,
-                    transfer: Transfer {
-                        source: tx_caller,
-                        target: address,
-                        value: tx_value,
+                self.make_call_frame(
+                    &mut CallInputs {
+                        contract: address,
+                        transfer: Transfer {
+                            source: tx_caller,
+                            target: address,
+                            value: tx_value,
+                        },
+                        input: tx_data,
+                        gas_limit: transact_gas_limit,
+                        context: CallContext {
+                            caller: tx_caller,
+                            address,
+                            code_address: address,
+                            apparent_value: tx_value,
+                            scheme: CallScheme::Call,
+                        },
+                        is_static: false,
                     },
-                    input: tx_data,
-                    gas_limit: transact_gas_limit,
-                    context: CallContext {
-                        caller: tx_caller,
-                        address,
-                        code_address: address,
-                        apparent_value: tx_value,
-                        scheme: CallScheme::Call,
-                    },
-                    is_static: false,
-                })
+                    0..0,
+                )
             }
             TransactTo::Create(scheme) => self.make_create_frame(&mut CreateInputs {
                 caller: tx_caller,

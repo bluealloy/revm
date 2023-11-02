@@ -3,7 +3,7 @@ use revm_primitives::Bytes;
 use crate::{
     gas,
     primitives::{Spec, U256},
-    Host, InstructionResult, Interpreter,
+    Host, InstructionResult, Interpreter, InterpreterResult,
 };
 
 pub fn jump<H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
@@ -53,22 +53,27 @@ fn return_inner(interpreter: &mut Interpreter<'_>, instruction_result: Instructi
     pop!(interpreter, offset, len);
     let len = as_usize_or_fail!(interpreter, len);
     // important: offset must be ignored if len is zeros
+    let mut output = Bytes::default();
     if len != 0 {
         let offset = as_usize_or_fail!(interpreter, offset);
         shared_memory_resize!(interpreter, offset, len);
 
-        // insert return data into `return_data_buffer`
-        interpreter.return_data_buffer = interpreter
+        output = interpreter
             .shared_memory
             .as_mut()
             .unwrap()
             .slice(offset, len)
             .to_vec()
             .into()
-    } else {
-        interpreter.return_data_buffer = Default::default();
     }
     interpreter.instruction_result = instruction_result;
+    interpreter.next_action = Some(crate::InterpreterAction::Return {
+        result: InterpreterResult {
+            output,
+            gas: interpreter.gas,
+            result: instruction_result,
+        },
+    });
 }
 
 pub fn ret<H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
