@@ -18,8 +18,198 @@ pub const EC_MUL: PrecompileAddress = PrecompileAddress(
     Precompile::Standard(ec_mul as StandardPrecompileFn)
 );
 
+pub const EC_ADD: PrecompileAddress = PrecompileAddress(
+    crate::u64_to_b160(301),
+    Precompile::Standard(ec_add as StandardPrecompileFn)
+);
+
+pub const EC_NEG: PrecompileAddress = PrecompileAddress(
+    crate::u64_to_b160(302),
+    Precompile::Standard(ec_neg as StandardPrecompileFn)
+);
+
+pub const EC_EQUAL: PrecompileAddress = PrecompileAddress(
+    crate::u64_to_b160(303),
+    Precompile::Standard(ec_equal as StandardPrecompileFn)
+);
+
+pub const EC_IS_INFINITY: PrecompileAddress = PrecompileAddress(
+    crate::u64_to_b160(304),
+    Precompile::Standard(ec_is_infinity as StandardPrecompileFn)
+);
+
+pub const EC_IS_VALID: PrecompileAddress = PrecompileAddress(
+    crate::u64_to_b160(305),
+    Precompile::Standard(ec_is_valid as StandardPrecompileFn)
+);
+
+pub const EC_HASH: PrecompileAddress = PrecompileAddress(
+    crate::u64_to_b160(306),
+    Precompile::Standard(ec_hash as StandardPrecompileFn)
+);
+
+pub const EC_SUM_OF_PRODUCTS: PrecompileAddress = PrecompileAddress(
+    crate::u64_to_b160(307),
+    Precompile::Standard(ec_sum_of_products as StandardPrecompileFn)
+);
+
+pub const SCALAR_ADD: PrecompileAddress = PrecompileAddress(
+    crate::u64_to_b160(308),
+    Precompile::Standard(scalar_add as StandardPrecompileFn)
+);
+
+pub const SCALAR_MUL: PrecompileAddress = PrecompileAddress(
+    crate::u64_to_b160(309),
+    Precompile::Standard(scalar_mul as StandardPrecompileFn)
+);
+
+pub const SCALAR_NEG: PrecompileAddress = PrecompileAddress(
+    crate::u64_to_b160(310),
+    Precompile::Standard(scalar_neg as StandardPrecompileFn)
+);
+
+pub const SCALAR_INV: PrecompileAddress = PrecompileAddress(
+    crate::u64_to_b160(311),
+    Precompile::Standard(scalar_inv as StandardPrecompileFn)
+);
+
+pub const SCALAR_SQRT: PrecompileAddress = PrecompileAddress(
+    crate::u64_to_b160(312),
+    Precompile::Standard(scalar_sqrt as StandardPrecompileFn)
+);
+
+pub const SCALAR_EQUAL: PrecompileAddress = PrecompileAddress(
+    crate::u64_to_b160(313),
+    Precompile::Standard(scalar_equal as StandardPrecompileFn)
+);
+
+pub const SCALAR_IS_ZERO: PrecompileAddress = PrecompileAddress(
+    crate::u64_to_b160(314),
+    Precompile::Standard(scalar_is_zero as StandardPrecompileFn)
+);
+
+pub const SCALAR_IS_VALID: PrecompileAddress = PrecompileAddress(
+    crate::u64_to_b160(315),
+    Precompile::Standard(scalar_is_valid as StandardPrecompileFn)
+);
+
+pub const SCALAR_FROM_WIDE_BYTES: PrecompileAddress = PrecompileAddress(
+    crate::u64_to_b160(316),
+    Precompile::Standard(scalar_from_wide_bytes as StandardPrecompileFn)
+);
+
+pub const SCALAR_HASH: PrecompileAddress = PrecompileAddress(
+    crate::u64_to_b160(317),
+    Precompile::Standard(scalar_hash as StandardPrecompileFn)
+);
+
+pub const ECDSA_VERIFY: PrecompileAddress = PrecompileAddress(
+    crate::u64_to_b160(318),
+    Precompile::Standard(ecdsa_verify as StandardPrecompileFn)
+);
+
+pub const SCHNORR_VERIFY1: PrecompileAddress = PrecompileAddress(
+    crate::u64_to_b160(319),
+    Precompile::Standard(schnorr_verify1 as StandardPrecompileFn)
+);
+
+pub const SCHNORR_VERIFY2: PrecompileAddress = PrecompileAddress(
+    crate::u64_to_b160(320),
+    Precompile::Standard(schnorr_verify2 as StandardPrecompileFn)
+);
+
+pub const BLS_VERIFY: PrecompileAddress = PrecompileAddress(
+    crate::u64_to_b160(321),
+    Precompile::Standard(bls_verify as StandardPrecompileFn)
+);
+
+
 fn ec_mul(input: &[u8], gas_limit: u64) -> PrecompileResult {
     EcMultiply {}.handle(input, gas_limit)
+}
+
+fn ec_add(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    EcAdd {}.handle(input, gas_limit)
+}
+
+fn ec_neg(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    EcNeg {}.handle(input, gas_limit)
+}
+
+fn ec_equal(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    EcEqual {}.handle(input, gas_limit)
+}
+
+fn ec_is_infinity(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    EcIsInfinity {}.handle(input, gas_limit)
+}
+
+fn ec_is_valid(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    EcIsValid {}.handle(input, gas_limit)
+}
+
+fn ec_hash(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    EcHash {}.handle(input, gas_limit)
+}
+
+fn ec_sum_of_products(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    EcSumOfProducts {}.handle(input, gas_limit)
+}
+
+fn scalar_add(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    ScalarAdd {}.handle(input, gas_limit)
+}
+
+fn scalar_mul(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    ScalarMul {}.handle(input, gas_limit)
+}
+
+fn scalar_neg(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    ScalarNeg {}.handle(input, gas_limit)
+}
+
+fn scalar_inv(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    ScalarInv {}.handle(input, gas_limit)
+}
+
+fn scalar_sqrt(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    ScalarSqrt {}.handle(input, gas_limit)
+}
+
+fn scalar_equal(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    ScalarEqual {}.handle(input, gas_limit)
+}
+
+fn scalar_is_zero(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    ScalarIsZero {}.handle(input, gas_limit)
+}
+
+fn scalar_is_valid(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    ScalarIsValid {}.handle(input, gas_limit)
+}
+
+fn scalar_from_wide_bytes(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    ScalarFromWideBytes {}.handle(input, gas_limit)
+}
+
+fn scalar_hash(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    ScalarHash {}.handle(input, gas_limit)
+}
+
+fn ecdsa_verify(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    EcdsaVerify {}.handle(input, gas_limit)
+}
+
+fn schnorr_verify1(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    SchnorrVerify1 {}.handle(input, gas_limit)
+}
+
+fn schnorr_verify2(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    SchnorrVerify2 {}.handle(input, gas_limit)
+}
+
+fn bls_verify(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    BlsVerify {}.handle(input, gas_limit)
 }
 
 const CURVE_NAME_SECP256K1: &[u8] = &[56, 59, 39, 83, 33, 83, 243, 83, 250, 76, 198, 137, 35, 159, 115, 101, 223, 233, 36, 235, 207, 103, 128, 126, 182, 145, 99, 7, 164, 226, 112, 30];
@@ -1627,6 +1817,7 @@ fn convert_scalars<C: CurveArithmetic>(scalars: &[C::Scalar]) -> Vec<[u64; 4]> {
 #[cfg(test)]
 mod test {
     use super::*;
+    const HASH_MSG: &[u8] = b"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
 
     #[test]
     fn ecc_mul_secp256k1() {
@@ -1635,7 +1826,7 @@ mod test {
         input.extend_from_slice(&pt.x().unwrap());
         input.extend_from_slice(&pt.y().unwrap());
         input.extend_from_slice(&(k256::Scalar::from(100u64)).to_bytes());
-        let expected = k256::ProjectivePoint::generator() * k256::Scalar::from(100u64);
+        let expected = k256::ProjectivePoint::GENERATOR * k256::Scalar::from(100u64);
         let res = ec_mul(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
@@ -1694,5 +1885,86 @@ mod test {
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         assert_eq!(expected.to_uncompressed().to_vec(), bytes);
+    }
+
+    #[test]
+    fn scalar_hash_secp256k1() {
+        let mut input = CURVE_NAME_SECP256K1.to_vec();
+        let length = (HASH_MSG.len() as u32).to_be_bytes();
+        let mut arr = [0u8; 32];
+        arr[32 - length.len()..].copy_from_slice(&length);
+        input.extend_from_slice(&arr);
+        input.extend_from_slice(HASH_MSG);
+        let res = scalar_hash(&input, 100);
+        assert!(res.is_ok());
+        let (_, bytes) = res.unwrap();
+        let expected = [0x2f, 0xad, 0x45, 0xa6, 0x27, 0xe2, 0xa5, 0x3f, 0x58, 0xcc, 0xa3, 0x17, 0xe7, 0xc8, 0x2f, 0x73, 0x8d, 0x09, 0x15, 0x81, 0x6d, 0xb2, 0xee, 0xcc, 0x3c, 0xa8, 0x38, 0x00, 0xb5, 0x32, 0xac, 0xb9];
+        assert_eq!(expected.to_vec(), bytes);
+    }
+
+    #[test]
+    fn scalar_mul_secp256k1() {
+        let sc1 = k256::Scalar::from(100u64);
+        let sc2 = k256::Scalar::from(200u64);
+
+        let mut input = CURVE_NAME_SECP256K1.to_vec();
+        input.extend_from_slice(&sc1.to_bytes());
+        input.extend_from_slice(&sc2.to_bytes());
+        let expected = sc1 * sc2;
+        let res = scalar_mul(&input, 100);
+        assert!(res.is_ok());
+        let (_, bytes) = res.unwrap();
+        assert_eq!(expected.to_bytes().to_vec(), bytes);
+    }
+
+    #[test]
+    fn scalar_mul_prime256v1() {
+        let sc1 = p256::Scalar::from(100u64);
+        let sc2 = p256::Scalar::from(200u64);
+
+        let mut input = CURVE_NAME_PRIME256V1.to_vec();
+        input.extend_from_slice(&sc1.to_bytes());
+        input.extend_from_slice(&sc2.to_bytes());
+        let expected = sc1 * sc2;
+        let res = scalar_mul(&input, 100);
+        assert!(res.is_ok());
+        let (_, bytes) = res.unwrap();
+        assert_eq!(expected.to_bytes().to_vec(), bytes);
+    }
+
+    #[test]
+    fn scalar_mul_curve25519() {
+        let sc1 = curve25519_dalek::Scalar::from(100u64);
+        let sc2 = curve25519_dalek::Scalar::from(200u64);
+
+        let mut input = CURVE_NAME_CURVE25519.to_vec();
+        input.extend_from_slice(&sc1.to_bytes());
+        input.extend_from_slice(&sc2.to_bytes());
+        let expected = sc1 * sc2;
+        let res = scalar_mul(&input, 100);
+        assert!(res.is_ok());
+        let (_, bytes) = res.unwrap();
+        assert_eq!(expected.to_bytes().to_vec(), bytes);
+    }
+
+    #[test]
+    fn scalar_mul_bls12381() {
+        let sc1 = blsful::inner_types::Scalar::from(100u64);
+        let sc2 = blsful::inner_types::Scalar::from(200u64);
+
+        let mut input = CURVE_NAME_BLS12381G1.to_vec();
+        input.extend_from_slice(&sc1.to_be_bytes());
+        input.extend_from_slice(&sc2.to_be_bytes());
+        let expected = sc1 * sc2;
+        let res = scalar_mul(&input, 100);
+        assert!(res.is_ok());
+        let (_, bytes) = res.unwrap();
+        assert_eq!(expected.to_be_bytes().to_vec(), bytes);
+
+        input[..32].copy_from_slice(CURVE_NAME_BLS12381G2);
+        let res = scalar_mul(&input, 100);
+        assert!(res.is_ok());
+        let (_, bytes) = res.unwrap();
+        assert_eq!(expected.to_be_bytes().to_vec(), bytes);
     }
 }
