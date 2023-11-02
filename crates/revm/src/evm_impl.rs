@@ -18,7 +18,7 @@ use fluentbase_runtime::{Runtime, RuntimeContext};
 #[cfg(feature = "runtime")]
 use fluentbase_rwasm::rwasm::Compiler;
 #[cfg(feature = "sdk")]
-use fluentbase_sdk::{rwasm_compile_wrapper, rwasm_transact_wrapper};
+use fluentbase_sdk::{rwasm_compile, rwasm_transact};
 use revm_interpreter::gas::initial_tx_gas;
 use revm_interpreter::MAX_CODE_SIZE;
 use revm_precompile::{Precompile, Precompiles};
@@ -446,7 +446,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         {
             let mut out_len_or_err: i32;
             loop {
-                out_len_or_err = rwasm_compile_wrapper(&inputs.init_code, &mut rwasm_bytecode[..]);
+                out_len_or_err = rwasm_compile(&inputs.init_code, &mut rwasm_bytecode[..]);
                 if out_len_or_err < 0 {
                     return Err(CreateResult {
                         result: InstructionResult::FatalExternalError,
@@ -604,10 +604,9 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         &mut self,
         contract: Box<Contract>,
         gas_limit: u64,
-        state: u32,
-        is_static: bool,
+        _state: u32,
+        _is_static: bool,
     ) -> (InstructionResult, Bytes, Gas) {
-        // TODO catch 'buffer small' error and expand buffer till output fits into it
         let code = contract.bytecode.original_bytecode_slice();
         let input = &contract.input;
         let mut output = vec![0u8; 0];
@@ -615,7 +614,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         #[cfg(feature = "sdk")]
         {
             loop {
-                let out_len_or_err = rwasm_transact_wrapper(
+                let out_len_or_err = rwasm_transact(
                     code.as_ptr() as i32,
                     code.len() as i32,
                     input.as_ptr() as i32,
