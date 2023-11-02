@@ -16,6 +16,7 @@ revm-precompile = { path = "../precompile", version = "2.0.2", default-features 
 # rwasm
 fluentbase-rwasm = { git = "https://github.com/fluentlabs-xyz/fluentbase", branch = "evm-instructions-revm" }
 fluentbase-sdk = { git = "https://github.com/fluentlabs-xyz/fluentbase", branch = "evm-instructions-revm" }
+fluentbase-runtime = { git = "https://github.com/fluentlabs-xyz/fluentbase", branch = "evm-instructions-revm", optional=true }
 
 #misc
 auto_impl = { version = "1.1", default-features = false }
@@ -43,7 +44,9 @@ bytes = "1.5.0"
 criterion = "0.5"
 
 [features]
-default = ["std", "secp256k1"]
+default = ["std", "secp256k1", "runtime"]
+runtime = ["fluentbase-runtime"]
+sdk = []
 dev = [
     "memory_limit",
     "optional_balance_check",

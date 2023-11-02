@@ -13,13 +13,17 @@ use crate::{db::Database, journaled_state::JournaledState, precompile, Inspector
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 use core::{cmp::min, marker::PhantomData};
-// use fluentbase_runtime::{Runtime, RuntimeContext};
+#[cfg(feature = "runtime")]
+use fluentbase_runtime::{Runtime, RuntimeContext};
 use fluentbase_rwasm::rwasm::Compiler;
-use fluentbase_sdk::rwasm_compile_wrapper;
-use fluentbase_sdk::rwasm_transact_wrapper;
+#[cfg(feature = "sdk")]
+use fluentbase_sdk::{rwasm_compile_wrapper, rwasm_transact_wrapper};
 use revm_interpreter::gas::initial_tx_gas;
 use revm_interpreter::MAX_CODE_SIZE;
 use revm_precompile::{Precompile, Precompiles};
+
+#[cfg(all(not(feature = "sdk"), not(feature = "runtime")))]
+compile_error!("one of must be active");
 
 pub struct EVMData<'a, DB: Database> {
     pub env: &'a mut Env,
@@ -435,18 +439,38 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
 
         // translate WASM binary to rWASM
         // TODO catch 'buffer small' error and expand buffer till output fits into it
-        let mut output = [0u8; 1024];
-        let out_len_or_err = rwasm_compile_wrapper(&inputs.init_code, &mut output[..]);
-        if out_len_or_err < 0 {
-            // TODO process error
-        }
-        // let import_linker = Runtime::new_linker();
-        // let mut compiler =
-        //     Compiler::new_with_linker(inputs.init_code.as_ref(), Some(&import_linker)).unwrap();
-        // let rwasm_bytecode = compiler.finalize().unwrap();
+        let mut rwasm_bytecode = vec![0u8; 0];
 
-        let bytecode =
-            Bytecode::new_raw(Bytes::copy_from_slice(&output[..out_len_or_err as usize]));
+        #[cfg(feature = "sdk")]
+        {
+            let mut out_len_or_err: i32;
+            loop {
+                out_len_or_err = rwasm_compile_wrapper(&inputs.init_code, &mut rwasm_bytecode[..]);
+                if out_len_or_err < 0 {
+                    return Err(CreateResult {
+                        result: InstructionResult::FatalExternalError,
+                        created_address: None,
+                        gas,
+                        return_value: Bytes::new(),
+                    });
+                }
+                if out_len_or_err > rwasm_bytecode.len() as i32 {
+                    rwasm_bytecode = vec![0u8; out_len_or_err as usize];
+                    continue;
+                }
+                rwasm_bytecode = rwasm_bytecode[..out_len_or_err as usize].to_vec();
+                break;
+            }
+        }
+        #[cfg(feature = "runtime")]
+        {
+            let import_linker = Runtime::new_linker();
+            let mut compiler =
+                Compiler::new_with_linker(inputs.init_code.as_ref(), Some(&import_linker)).unwrap();
+            rwasm_bytecode = compiler.finalize().unwrap();
+        }
+
+        let bytecode = Bytecode::new_raw(Bytes::copy_from_slice(&rwasm_bytecode));
 
         let contract = Box::new(Contract::new(
             Bytes::new(),
@@ -585,31 +609,48 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         // TODO catch 'buffer small' error and expand buffer till output fits into it
         let code = contract.bytecode.original_bytecode_slice();
         let input = &contract.input;
-        let mut output = [0u8; 1024];
-        let out_len_or_err = rwasm_transact_wrapper(
-            code.as_ptr() as i32,
-            code.len() as i32,
-            input.as_ptr() as i32,
-            input.len() as i32,
-            output.as_mut_ptr() as i32,
-            output.len() as i32,
-        );
-        if out_len_or_err < 0 {
-            // TODO process error
+        let mut output = vec![0u8; 0];
+
+        #[cfg(feature = "sdk")]
+        {
+            loop {
+                let out_len_or_err = rwasm_transact_wrapper(
+                    code.as_ptr() as i32,
+                    code.len() as i32,
+                    input.as_ptr() as i32,
+                    input.len() as i32,
+                    output.as_mut_ptr() as i32,
+                    output.len() as i32,
+                );
+                if out_len_or_err < 0 {
+                    return (
+                        InstructionResult::FatalExternalError,
+                        Bytes::new(),
+                        Gas::new(gas_limit),
+                    );
+                }
+                if output.len() < out_len_or_err as usize {
+                    output = vec![0u8; out_len_or_err as usize];
+                    continue;
+                }
+                break;
+            }
         }
-        let execution_result = &output.as_slice()[..out_len_or_err as usize];
-        // let import_linker = Runtime::new_linker();
-        // let execution_result = Runtime::run_with_context(
-        //     RuntimeContext::new(contract.bytecode.original_bytecode_slice())
-        //         .with_input(contract.input.as_ref())
-        //         .with_state(state),
-        //     &import_linker,
-        // )
-        // .unwrap();
-        // let return_value = execution_result.data().output();
+        #[cfg(feature = "runtime")]
+        {
+            let import_linker = Runtime::new_linker();
+            let execution_result = Runtime::run_with_context(
+                RuntimeContext::new(contract.bytecode.original_bytecode_slice())
+                    .with_input(&vec![contract.input.to_vec()])
+                    .with_state(state),
+                &import_linker,
+            )
+            .unwrap();
+            output = execution_result.data().output().to_owned();
+        }
         (
             InstructionResult::Stop,
-            Bytes::copy_from_slice(execution_result),
+            Bytes::copy_from_slice(&output),
             Gas::new(gas_limit),
         )
     }
