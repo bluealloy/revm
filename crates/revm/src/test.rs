@@ -4,6 +4,7 @@ use crate::{
     },
     Database, DatabaseCommit, EVM,
 };
+#[cfg(feature = "runtime")]
 use fluentbase_rwasm::rwasm::{Compiler, ImportLinker};
 use hex_literal::hex;
 use revm_interpreter::primitives::{Env, TransactTo};

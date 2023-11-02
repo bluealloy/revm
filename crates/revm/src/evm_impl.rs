@@ -15,6 +15,7 @@ use alloc::vec::Vec;
 use core::{cmp::min, marker::PhantomData};
 #[cfg(feature = "runtime")]
 use fluentbase_runtime::{Runtime, RuntimeContext};
+#[cfg(feature = "runtime")]
 use fluentbase_rwasm::rwasm::Compiler;
 #[cfg(feature = "sdk")]
 use fluentbase_sdk::{rwasm_compile_wrapper, rwasm_transact_wrapper};
