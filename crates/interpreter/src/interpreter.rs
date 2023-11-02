@@ -47,7 +47,6 @@ pub struct Interpreter<'a> {
     /// * It contains the output bytes of call sub call.
     /// * When this interpreter finishes execution it contains the output bytes of this contract.
     pub return_data_buffer: Bytes,
-
     /// Whether the interpreter is in "staticcall" mode, meaning no state changes can happen.
     pub is_static: bool,
     /// Actions that interpreter should do.
@@ -117,18 +116,12 @@ impl<'a> Interpreter<'a> {
         match result.result {
             return_ok!() => {
                 push_b256!(interpreter, address.unwrap_or_default().into_word());
-
-                if crate::USE_GAS {
-                    interpreter.gas.erase_cost(result.gas.remaining());
-                    interpreter.gas.record_refund(result.gas.refunded());
-                }
+                interpreter.gas.erase_cost(result.gas.remaining());
+                interpreter.gas.record_refund(result.gas.refunded());
             }
             return_revert!() => {
                 push!(interpreter, U256::ZERO);
-
-                if crate::USE_GAS {
-                    interpreter.gas.erase_cost(result.gas.remaining());
-                }
+                interpreter.gas.erase_cost(result.gas.remaining());
             }
             InstructionResult::FatalExternalError => {
                 interpreter.instruction_result = InstructionResult::FatalExternalError;
@@ -156,17 +149,13 @@ impl<'a> Interpreter<'a> {
         match result.result {
             return_ok!() => {
                 // return unspend gas.
-                if crate::USE_GAS {
-                    interpreter.gas.erase_cost(result.gas.remaining());
-                    interpreter.gas.record_refund(result.gas.refunded());
-                }
+                interpreter.gas.erase_cost(result.gas.remaining());
+                interpreter.gas.record_refund(result.gas.refunded());
                 shared_memory.set(out_offset, &interpreter.return_data_buffer[..target_len]);
                 push!(interpreter, U256::from(1));
             }
             return_revert!() => {
-                if crate::USE_GAS {
-                    interpreter.gas.erase_cost(result.gas.remaining());
-                }
+                interpreter.gas.erase_cost(result.gas.remaining());
                 shared_memory.set(out_offset, &interpreter.return_data_buffer[..target_len]);
                 push!(interpreter, U256::ZERO);
             }

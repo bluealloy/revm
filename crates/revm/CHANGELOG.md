@@ -106,7 +106,7 @@ Full git log:
 * 5cdaa97 - chore: avoid unnecessary allocations (#581) (6 weeks ago) <DaniPopes>
 * da26d0d - chore(deps): bump tokio from 1.29.1 to 1.31.0 (#595) (6 weeks ago) <dependabot[bot]>
 * ef57a46 - feat: State with account status (#499) (7 weeks ago) <rakita>
-* 1478724 - chore: move precompiles to EVMData for inspectors (#588) (7 weeks ago) <evalir>
+* 1478724 - chore: move precompiles to EvmContext for inspectors (#588) (7 weeks ago) <evalir>
 * fe6c54e - fix(transient_storage): set previous value in journal (#585) (7 weeks ago) <rakita>
 * bd84a07 - refactor: rewrite revm-test as a criterion bench (#579) (7 weeks ago) <DaniPopes>
 * 5734f12 - fix: AccessList with two same addresses (#578) (8 weeks ago) <rakita>

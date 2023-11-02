@@ -4,7 +4,7 @@ use crate::{
         opcode, CallInputs, CreateInputs, Interpreter, InterpreterResult, SharedMemory, Stack,
     },
     primitives::{db::Database, hex, Address, U256},
-    EVMData, Inspector,
+    EvmContext, Inspector,
 };
 use core::ops::Range;
 use serde_json::json;
@@ -49,14 +49,14 @@ impl TracerEip3155 {
 }
 
 impl<DB: Database> Inspector<DB> for TracerEip3155 {
-    fn initialize_interp(&mut self, interp: &mut Interpreter<'_>, data: &mut EVMData<'_, DB>) {
-        self.gas_inspector.initialize_interp(interp, data);
+    fn initialize_interp(&mut self, interp: &mut Interpreter<'_>, context: &mut EvmContext<'_, DB>) {
+        self.gas_inspector.initialize_interp(interp, context);
     }
 
     // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
     // all other information can be obtained from interp.
-    fn step(&mut self, interp: &mut Interpreter<'_>, data: &mut EVMData<'_, DB>) {
-        self.gas_inspector.step(interp, data);
+    fn step(&mut self, interp: &mut Interpreter<'_>, context: &mut EvmContext<'_, DB>) {
+        self.gas_inspector.step(interp, context);
         self.stack = interp.stack.clone();
         self.pc = interp.program_counter();
         self.opcode = interp.current_opcode();
@@ -65,19 +65,19 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         //self.print_log_line(data.journaled_state.depth());
     }
 
-    fn step_end(&mut self, interp: &mut Interpreter<'_>, data: &mut EVMData<'_, DB>) {
-        self.gas_inspector.step_end(interp, data);
+    fn step_end(&mut self, interp: &mut Interpreter<'_>, context: &mut EvmContext<'_, DB>) {
+        self.gas_inspector.step_end(interp, context);
         if self.skip {
             self.skip = false;
             return;
         };
 
-        self.print_log_line(data.journaled_state.depth());
+        self.print_log_line(context.journaled_state.depth());
     }
 
     fn call(
         &mut self,
-        _data: &mut EVMData<'_, DB>,
+        _context: &mut EvmContext<'_, DB>,
         _inputs: &mut CallInputs,
     ) -> Option<(InterpreterResult, Range<usize>)> {
         None
@@ -85,13 +85,13 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 
     fn call_end(
         &mut self,
-        data: &mut EVMData<'_, DB>,
+        context: &mut EvmContext<'_, DB>,
         result: InterpreterResult,
     ) -> InterpreterResult {
-        let result = self.gas_inspector.call_end(data, result);
+        let result = self.gas_inspector.call_end(context, result);
         // self.log_step(interp, data, is_static, eval);
         //self.skip = true;
-        if data.journaled_state.depth() == 0 {
+        if context.journaled_state.depth() == 0 {
             let log_line = json!({
                 //stateroot
                 "output": format!("0x{}", hex::encode(result.output.as_ref())),
@@ -108,7 +108,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 
     fn create(
         &mut self,
-        _data: &mut EVMData<'_, DB>,
+        _context: &mut EvmContext<'_, DB>,
         _inputs: &mut CreateInputs,
     ) -> Option<(InterpreterResult, Option<Address>)> {
         None
@@ -116,11 +116,11 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 
     fn create_end(
         &mut self,
-        data: &mut EVMData<'_, DB>,
+        context: &mut EvmContext<'_, DB>,
         result: InterpreterResult,
         address: Option<Address>,
     ) -> (InterpreterResult, Option<Address>) {
-        let result = self.gas_inspector.create_end(data, result, address);
+        let result = self.gas_inspector.create_end(context, result, address);
         //self.skip = true;
         result
     }

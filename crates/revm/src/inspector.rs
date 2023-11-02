@@ -3,7 +3,7 @@ use core::ops::Range;
 use crate::{
     interpreter::{CallInputs, CreateInputs, Interpreter},
     primitives::{db::Database, Address, Bytes, B256, U256},
-    EVMData,
+    EvmContext,
 };
 use auto_impl::auto_impl;
 
@@ -35,9 +35,13 @@ pub trait Inspector<DB: Database> {
     /// If `interp.instruction_result` is set to anything other than [InstructionResult::Continue] then the execution of the interpreter
     /// is skipped.
     #[inline]
-    fn initialize_interp(&mut self, interp: &mut Interpreter<'_>, data: &mut EVMData<'_, DB>) {
+    fn initialize_interp(
+        &mut self,
+        interp: &mut Interpreter<'_>,
+        context: &mut EvmContext<'_, DB>,
+    ) {
         let _ = interp;
-        let _ = data;
+        let _ = context;
     }
 
     /// Called on each step of the interpreter.
@@ -49,21 +53,21 @@ pub trait Inspector<DB: Database> {
     ///
     /// To get the current opcode, use `interp.current_opcode()`.
     #[inline]
-    fn step(&mut self, interp: &mut Interpreter<'_>, data: &mut EVMData<'_, DB>) {
+    fn step(&mut self, interp: &mut Interpreter<'_>, context: &mut EvmContext<'_, DB>) {
         let _ = interp;
-        let _ = data;
+        let _ = context;
     }
 
     /// Called when a log is emitted.
     #[inline]
     fn log(
         &mut self,
-        evm_data: &mut EVMData<'_, DB>,
+        context: &mut EvmContext<'_, DB>,
         address: &Address,
         topics: &[B256],
         data: &Bytes,
     ) {
-        let _ = evm_data;
+        let _ = context;
         let _ = address;
         let _ = topics;
         let _ = data;
@@ -74,9 +78,9 @@ pub trait Inspector<DB: Database> {
     /// Setting `interp.instruction_result` to anything other than [InstructionResult::Continue] alters the execution
     /// of the interpreter.
     #[inline]
-    fn step_end(&mut self, interp: &mut Interpreter<'_>, data: &mut EVMData<'_, DB>) {
+    fn step_end(&mut self, interp: &mut Interpreter<'_>, context: &mut EvmContext<'_, DB>) {
         let _ = interp;
-        let _ = data;
+        let _ = context;
     }
 
     /// Called whenever a call to a contract is about to start.
@@ -85,10 +89,10 @@ pub trait Inspector<DB: Database> {
     #[inline]
     fn call(
         &mut self,
-        data: &mut EVMData<'_, DB>,
+        context: &mut EvmContext<'_, DB>,
         inputs: &mut CallInputs,
     ) -> Option<(InterpreterResult, Range<usize>)> {
-        let _ = data;
+        let _ = context;
         let _ = inputs;
         None
     }
@@ -100,10 +104,10 @@ pub trait Inspector<DB: Database> {
     #[inline]
     fn call_end(
         &mut self,
-        data: &mut EVMData<'_, DB>,
+        context: &mut EvmContext<'_, DB>,
         result: InterpreterResult,
     ) -> InterpreterResult {
-        let _ = data;
+        let _ = context;
         result
     }
 
@@ -113,10 +117,10 @@ pub trait Inspector<DB: Database> {
     #[inline]
     fn create(
         &mut self,
-        data: &mut EVMData<'_, DB>,
+        context: &mut EvmContext<'_, DB>,
         inputs: &mut CreateInputs,
     ) -> Option<(InterpreterResult, Option<Address>)> {
-        let _ = data;
+        let _ = context;
         let _ = inputs;
         None
     }
@@ -128,11 +132,11 @@ pub trait Inspector<DB: Database> {
     #[inline]
     fn create_end(
         &mut self,
-        data: &mut EVMData<'_, DB>,
+        context: &mut EvmContext<'_, DB>,
         result: InterpreterResult,
         address: Option<Address>,
     ) -> (InterpreterResult, Option<Address>) {
-        let _ = data;
+        let _ = context;
         (result, address)
     }
 

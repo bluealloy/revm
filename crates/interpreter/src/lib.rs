@@ -18,7 +18,9 @@ mod instruction_result;
 pub mod instructions;
 mod interpreter;
 
-pub(crate) const USE_GAS: bool = !cfg!(feature = "no_gas_measuring");
+
+#[cfg(feature = "no_gas_measuring")]
+compile_error!{"no_gas_measuring feature is deprecated and feature is removed."}
 
 // Reexport primary types.
 pub use gas::Gas;
