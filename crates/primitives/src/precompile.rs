@@ -21,4 +21,12 @@ pub enum PrecompileError {
     Bn128FieldPointNotAMember,
     Bn128AffineGFailedToCreate,
     Bn128PairLength,
+    // EcOps errors
+    EcOpsInvalidCurve,
+    EcOpsInvalidPoint,
+    EcOpsInvalidScalar,
+    EcOpsInvalidSize,
+    EcOpsNotSupported,
+    EcOpsInvalidSignature,
+    EcOpsInvalidHash,
 }

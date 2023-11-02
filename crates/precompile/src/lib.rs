@@ -4,6 +4,7 @@ extern crate alloc;
 mod blake2;
 mod bn128;
 mod cait_sith_key_deriver;
+mod ec_ops;
 mod hash;
 mod identity;
 mod modexp;
@@ -16,6 +17,11 @@ pub use primitives::{
 };
 #[doc(inline)]
 pub use revm_primitives as primitives;
+
+/// The base cost of the operation.
+pub(crate) const IDENTITY_BASE: u64 = 15;
+/// The cost per word.
+pub(crate) const IDENTITY_PER_WORD: u64 = 3;
 
 pub type B160 = [u8; 20];
 pub type B256 = [u8; 32];
@@ -239,4 +245,79 @@ const fn u64_to_b160(x: u64) -> B160 {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, x_bytes[0], x_bytes[1], x_bytes[2], x_bytes[3],
         x_bytes[4], x_bytes[5], x_bytes[6], x_bytes[7],
     ]
+}
+
+pub(crate) fn bytes_to_projective_point<C>(data: &[u8]) -> Option<C::ProjectivePoint>
+where
+    C: elliptic_curve::hash2curve::GroupDigest,
+    <C as elliptic_curve::CurveArithmetic>::ProjectivePoint:
+        elliptic_curve::group::cofactor::CofactorGroup,
+    <C as elliptic_curve::CurveArithmetic>::AffinePoint: elliptic_curve::sec1::FromEncodedPoint<C>,
+    <C as elliptic_curve::CurveArithmetic>::Scalar: elliptic_curve::hash2curve::FromOkm,
+    <C as elliptic_curve::Curve>::FieldBytesSize: elliptic_curve::sec1::ModulusSize,
+{
+    let encoded_point = elliptic_curve::sec1::EncodedPoint::<C>::from_bytes(data).ok()?;
+    let point = <C::AffinePoint as elliptic_curve::sec1::FromEncodedPoint<C>>::from_encoded_point(
+        &encoded_point,
+    )
+    .map(C::ProjectivePoint::from);
+    Option::<C::ProjectivePoint>::from(point)
+}
+pub(crate) fn extract_points<C>(
+    data: &[u8],
+    pks_cnt: usize,
+) -> Result<Vec<C::ProjectivePoint>, String>
+where
+    C: elliptic_curve::hash2curve::GroupDigest,
+    <C as elliptic_curve::CurveArithmetic>::ProjectivePoint:
+        elliptic_curve::group::cofactor::CofactorGroup,
+    <C as elliptic_curve::CurveArithmetic>::AffinePoint: elliptic_curve::sec1::FromEncodedPoint<C>,
+    <C as elliptic_curve::CurveArithmetic>::Scalar: elliptic_curve::hash2curve::FromOkm,
+    <C as elliptic_curve::Curve>::FieldBytesSize: elliptic_curve::sec1::ModulusSize,
+{
+    let mut offset = 0;
+    let mut points = Vec::with_capacity(pks_cnt);
+    while offset < data.len() && points.len() < pks_cnt {
+        let point = match data[offset] {
+            0x04 => {
+                // Uncompressed form
+                if offset + 65 > data.len() {
+                    return Err(format!(
+                        "invalid length for uncompressed point: {}",
+                        data.len()
+                    ));
+                }
+                let point = bytes_to_projective_point::<C>(&data[offset..offset + 65]);
+                offset += 65;
+                point
+            }
+            0x03 | 0x02 => {
+                // Compressed form
+                if offset + 33 > data.len() {
+                    return Err(format!(
+                        "invalid length for compressed point: {}",
+                        data.len()
+                    ));
+                }
+                let point = bytes_to_projective_point::<C>(&data[offset..offset + 33]);
+                offset += 33;
+                point
+            }
+            _ => {
+                if offset + 64 > data.len() {
+                    return Err(format!("invalid length for hybrid point: {}", data.len()));
+                }
+                let mut tmp = [4u8; 65];
+                tmp[1..].copy_from_slice(&data[offset..offset + 64]);
+                let point = bytes_to_projective_point::<C>(&tmp[..]);
+                offset += 64;
+                point
+            }
+        };
+        if point.is_none() {
+            return Err(format!("invalid point at offset {}", offset));
+        }
+        points.push(point.unwrap());
+    }
+    Ok(points)
 }

@@ -10,11 +10,15 @@ version = "2.0.3"
 
 [dependencies]
 revm-primitives = { path = "../primitives", version = "1.1.2", default-features = false }
+blsful = { version = "2.4.1", default-features = false, features = ["rust"] }
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
+curve25519-dalek = { package = "curve25519-dalek-ml", version = "4.1.1", features = ["digest"] }
+ecdsa = "0.16.8"
 elliptic-curve = { version = "0.13.5", features = ["arithmetic", "hash2curve"] }
-k256 = { version = "0.13", default-features = false, features = ["ecdsa"] }
-p256 = { version = "0.13", default-features = false, features = ["ecdsa"] }
+k256 = { version = "0.13", default-features = false, features = ["ecdsa", "arithmetic"] }
+p256 = { version = "0.13", default-features = false, features = ["ecdsa", "arithmetic"] }
 num = { version = "0.4.0", default-features = false, features = ["alloc"] }
+num-bigint = "0.4.4"
 once_cell = { version = "1.17", default-features = false, features = ["alloc"] }
 ripemd = { version = "0.1", default-features = false }
 secp256k1 = { version = "0.27.0", default-features = false, features = [
