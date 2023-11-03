@@ -2250,6 +2250,39 @@ mod test {
     }
 
     #[test]
+    fn schnorr_verify_prime256v1() {
+        use elliptic_curve::Field;
+        use p256::{ProjectivePoint, Scalar};
+        use sha2::Digest;
+
+        let sign_key = Scalar::random(&mut rand::rngs::OsRng);
+        let verify_key = ProjectivePoint::GENERATOR * sign_key;
+
+        let hashed_msg_bytes = sha2::Sha256::digest(HASH_MSG);
+
+        let little_r = Scalar::random(&mut rand::rngs::OsRng);
+        let big_r = ProjectivePoint::GENERATOR * little_r;
+        let mut sha256 = sha2::Sha256::new();
+        sha256.update(big_r.to_affine().x());
+        sha256.update(&verify_key.to_bytes()[1..]);
+        sha256.update(&hashed_msg_bytes);
+        let e_bytes = sha256.finalize();
+        let e = <Scalar as Reduce<k256::U256>>::reduce_bytes(&e_bytes);
+        let s = little_r + e * sign_key;
+
+        let mut input = CURVE_NAME_PRIME256V1.to_vec();
+        input.extend_from_slice(&HASH_NAME_SHA2_256);
+        input.extend_from_slice(&hashed_msg_bytes);
+        input.extend_from_slice(&verify_key.to_encoded_point(false).as_bytes()[1..]);
+        input.extend_from_slice(&big_r.to_affine().x());
+        input.extend_from_slice(&s.to_bytes());
+        let res = schnorr_verify1(&input, 100);
+        assert!(res.is_ok());
+        let (_, bytes) = res.unwrap();
+        assert_eq!(bytes, vec![1u8]);
+    }
+
+    #[test]
     fn schnorr_verify_curve25519() {
         use ed25519_dalek::Signer;
         use rand::Rng;
