@@ -2417,6 +2417,7 @@ dependencies = [
  "num-bigint",
  "once_cell",
  "p256",
+ "rand",
  "revm-primitives",
  "ripemd",
  "secp256k1",

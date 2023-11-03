@@ -32,6 +32,7 @@ hd-keys-ecdsa = { git = "https://github.com/LIT-Protocol/hd-keys-ecdsa.git" }
 
 [dev-dependencies]
 hex = "0.4"
+rand = "0.8.5"
 
 [features]
 default = ["secp256k1"]

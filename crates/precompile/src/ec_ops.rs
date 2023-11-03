@@ -2156,4 +2156,74 @@ mod test {
         let (_, bytes) = res.unwrap();
         assert_eq!(expected.to_be_bytes().to_vec(), bytes);
     }
+
+    #[test]
+    fn ecdsa_verify_secp256k1() {
+        use k256::{
+            ecdsa::{signature::Signer, Signature, SigningKey, VerifyingKey},
+            EncodedPoint,
+        };
+        use sha2::Digest;
+
+        const SIGN_MSG: &[u8] = b"sign message";
+        let sign_key = SigningKey::random(&mut rand::rngs::OsRng);
+        let verify_key = VerifyingKey::from(&sign_key);
+        let signature: Signature = sign_key.sign(SIGN_MSG);
+
+        let hashed_msg_bytes = sha2::Sha256::digest(SIGN_MSG);
+        let hashed_message = <k256::Scalar as Reduce<k256::U256>>::reduce_bytes(&hashed_msg_bytes);
+
+        let mut input = CURVE_NAME_SECP256K1.to_vec();
+        input.extend_from_slice(&hashed_message.to_bytes());
+        input.extend_from_slice(&verify_key.to_encoded_point(false).as_bytes()[1..]);
+        input.extend_from_slice(&signature.to_bytes());
+        let res = ecdsa_verify(&input, 100);
+        assert!(res.is_ok());
+        let (_, bytes) = res.unwrap();
+        assert_eq!(bytes, vec![1u8]);
+    }
+
+    #[test]
+    fn ecdsa_verify_prime256v1() {
+        use p256::{
+            ecdsa::{signature::Signer, Signature, SigningKey, VerifyingKey},
+            EncodedPoint,
+        };
+        use sha2::Digest;
+
+        const SIGN_MSG: &[u8] = b"sign message";
+        let sign_key = SigningKey::random(&mut rand::rngs::OsRng);
+        let verify_key = VerifyingKey::from(&sign_key);
+        let signature: Signature = sign_key.sign(SIGN_MSG);
+
+        let hashed_msg_bytes = sha2::Sha256::digest(SIGN_MSG);
+        let hashed_message = <p256::Scalar as Reduce<k256::U256>>::reduce_bytes(&hashed_msg_bytes);
+
+        let mut input = CURVE_NAME_PRIME256V1.to_vec();
+        input.extend_from_slice(&hashed_message.to_bytes());
+        input.extend_from_slice(&verify_key.to_encoded_point(false).as_bytes()[1..]);
+        input.extend_from_slice(&signature.to_bytes());
+        let res = ecdsa_verify(&input, 100);
+        assert!(res.is_ok());
+        let (_, bytes) = res.unwrap();
+        assert_eq!(bytes, vec![1u8]);
+    }
+
+    #[test]
+    fn ecdsa_not_supported_curves() {
+        let mut input = CURVE_NAME_CURVE25519.to_vec();
+        input.extend_from_slice(&[0u8; 32]);
+        input.extend_from_slice(&[0u8; 64]);
+        input.extend_from_slice(&[0u8; 64]);
+        let res = ecdsa_verify(&input, 100);
+        assert!(res.is_err());
+
+        input[..32].copy_from_slice(CURVE_NAME_BLS12381G1);
+        let res = ecdsa_verify(&input, 100);
+        assert!(res.is_err());
+
+        input[..32].copy_from_slice(CURVE_NAME_BLS12381G2);
+        let res = ecdsa_verify(&input, 100);
+        assert!(res.is_err());
+    }
 }
