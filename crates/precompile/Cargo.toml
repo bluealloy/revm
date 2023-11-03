@@ -13,6 +13,7 @@ revm-primitives = { path = "../primitives", version = "1.1.2", default-features 
 blsful = { version = "2.4.1", default-features = false, features = ["rust"] }
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
 curve25519-dalek = { package = "curve25519-dalek-ml", version = "4.1.1", features = ["digest"] }
+ed25519-dalek = "2.0.0"
 ecdsa = "0.16.8"
 elliptic-curve = { version = "0.13.5", features = ["arithmetic", "hash2curve"] }
 k256 = { version = "0.13", default-features = false, features = ["ecdsa", "arithmetic"] }

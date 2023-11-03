@@ -1384,11 +1384,11 @@ impl EcOps for EcdsaVerify {
 impl EcOps for SchnorrVerify1 {
     fn secp256k1(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
         let (data, hasher) = parse_hash(data)?;
-        let (data, scalars) = secp256k1_scalars(data, 1)?;
-        if scalars[0].is_zero().into() {
-            return Err(Error::EcOpsInvalidScalar);
+        if data.len() < 32 {
+            return Err(Error::EcOpsInvalidSize);
         }
-        let (data, points) = secp256k1_points(data, 1)?;
+        let msg = &data[..32];
+        let (data, points) = secp256k1_points(&data[32..], 1)?;
         if points[0].is_identity().into() {
             return Err(Error::EcOpsInvalidPoint);
         }
@@ -1405,16 +1405,12 @@ impl EcOps for SchnorrVerify1 {
         let s =
             k256::NonZeroScalar::try_from(&data[32..]).map_err(|_| Error::EcOpsInvalidScalar)?;
 
-        let e_bytes = hasher.compute_challenge(
-            r_bytes,
-            &points[0].to_bytes()[..],
-            &scalars[0].to_bytes()[..],
-        );
+        let e_bytes = hasher.compute_challenge(r_bytes, &points[0].to_bytes()[1..], &msg);
         let e = <k256::Scalar as Reduce<k256::U256>>::reduce_bytes((&e_bytes[..]).into());
 
         let big_r = (k256::ProjectivePoint::GENERATOR * s.as_ref() - points[0] * e).to_affine();
 
-        if big_r.is_identity().into() || big_r.y_is_odd().into() || &big_r.x() != r_bytes {
+        if big_r.is_identity().into() || &big_r.x() != r_bytes {
             Ok(vec![0u8])
         } else {
             Ok(vec![1u8])
@@ -1423,11 +1419,11 @@ impl EcOps for SchnorrVerify1 {
 
     fn prime256v1(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
         let (data, hasher) = parse_hash(data)?;
-        let (data, scalars) = prime256v1_scalars(data, 1)?;
-        if scalars[0].is_zero().into() {
-            return Err(Error::EcOpsInvalidScalar);
+        if data.len() < 32 {
+            return Err(Error::EcOpsInvalidSize);
         }
-        let (data, points) = prime256v1_points(data, 1)?;
+        let msg = &data[..32];
+        let (data, points) = prime256v1_points(&data[32..], 1)?;
         if points[0].is_identity().into() {
             return Err(Error::EcOpsInvalidPoint);
         }
@@ -1444,16 +1440,12 @@ impl EcOps for SchnorrVerify1 {
         let s =
             p256::NonZeroScalar::try_from(&data[32..]).map_err(|_| Error::EcOpsInvalidScalar)?;
 
-        let e_bytes = hasher.compute_challenge(
-            r_bytes,
-            &points[0].to_bytes()[..],
-            &scalars[0].to_bytes()[..],
-        );
+        let e_bytes = hasher.compute_challenge(r_bytes, &&points[0].to_bytes()[1..], &msg);
         let e = <p256::Scalar as Reduce<p256::U256>>::reduce_bytes((&e_bytes[..]).into());
 
         let big_r = (p256::ProjectivePoint::GENERATOR * s.as_ref() - points[0] * e).to_affine();
 
-        if big_r.is_identity().into() || big_r.y_is_odd().into() || &big_r.x() != r_bytes {
+        if big_r.is_identity().into() || &big_r.x() != r_bytes {
             Ok(vec![0u8])
         } else {
             Ok(vec![1u8])
@@ -1462,22 +1454,18 @@ impl EcOps for SchnorrVerify1 {
 
     fn curve25519(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
         let (data, hasher) = parse_hash(data)?;
-        let (data, scalars) = curve25519_scalars(data, 1)?;
-        if scalars[0].is_zero().into() {
-            return Err(Error::EcOpsInvalidScalar);
+        if data.len() < 32 {
+            return Err(Error::EcOpsInvalidSize);
         }
-        let (data, points) = curve25519_points(data, 1)?;
+        let msg = &data[..32];
+        let (data, points) = curve25519_points(&data[32..], 1)?;
         if points[0].is_identity().into() {
             return Err(Error::EcOpsInvalidPoint);
         }
         if data.len() < 64 {
             return Err(Error::EcOpsInvalidSignature);
         }
-        let e_bytes = hasher.compute_challenge(
-            &data[..32],
-            points[0].compress().as_bytes(),
-            scalars[0].as_bytes(),
-        );
+        let e_bytes = hasher.compute_challenge(&data[..32], points[0].compress().as_bytes(), &msg);
         let mut e_arr = [0u8; 64];
         e_arr[..e_bytes.len()].copy_from_slice(&e_bytes[..]);
         let e = curve25519_dalek::Scalar::from_bytes_mod_order_wide(&e_arr);
@@ -1504,11 +1492,11 @@ impl EcOps for SchnorrVerify1 {
 
     fn bls12381g1(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
         let (data, hasher) = parse_hash(data)?;
-        let (data, scalars) = bls12381_scalars(data, 1)?;
-        if scalars[0].is_zero().into() {
-            return Err(Error::EcOpsInvalidScalar);
+        if data.len() < 32 {
+            return Err(Error::EcOpsInvalidSize);
         }
-        let (data, points) = bls12381g1_points(data, 2)?;
+        let msg = &data[..32];
+        let (data, points) = bls12381g1_points(&data[32..], 2)?;
         if (points[0].is_identity() | points[1].is_identity()).into() {
             return Err(Error::EcOpsInvalidPoint);
         }
@@ -1519,13 +1507,10 @@ impl EcOps for SchnorrVerify1 {
             return Err(Error::EcOpsInvalidScalar);
         }
 
-        let e_bytes = hasher.compute_challenge(
-            sig_r.to_bytes().as_ref(),
-            pk.to_bytes().as_ref(),
-            scalars[0].to_be_bytes().as_ref(),
-        );
+        let e_bytes =
+            hasher.compute_challenge(sig_r.to_bytes().as_ref(), pk.to_bytes().as_ref(), &msg);
         let mut e_arr = [0u8; 64];
-        e_arr[..e_bytes.len()].copy_from_slice(&e_bytes[..]);
+        e_arr[64 - e_bytes.len()..].copy_from_slice(&e_bytes[..]);
         let e = blsful::inner_types::Scalar::from_bytes_wide(&e_arr);
 
         let big_r = blsful::inner_types::G1Projective::GENERATOR * sig_s[0] - pk * e;
@@ -1538,11 +1523,11 @@ impl EcOps for SchnorrVerify1 {
 
     fn bls12381g2(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
         let (data, hasher) = parse_hash(data)?;
-        let (data, scalars) = bls12381_scalars(data, 1)?;
-        if scalars[0].is_zero().into() {
-            return Err(Error::EcOpsInvalidScalar);
+        if data.len() < 32 {
+            return Err(Error::EcOpsInvalidSize);
         }
-        let (data, points) = bls12381g2_points(data, 2)?;
+        let msg = &data[..32];
+        let (data, points) = bls12381g2_points(&data[32..], 2)?;
         if (points[0].is_identity() | points[1].is_identity()).into() {
             return Err(Error::EcOpsInvalidPoint);
         }
@@ -1553,13 +1538,10 @@ impl EcOps for SchnorrVerify1 {
             return Err(Error::EcOpsInvalidScalar);
         }
 
-        let e_bytes = hasher.compute_challenge(
-            sig_r.to_bytes().as_ref(),
-            pk.to_bytes().as_ref(),
-            scalars[0].to_be_bytes().as_ref(),
-        );
+        let e_bytes =
+            hasher.compute_challenge(sig_r.to_bytes().as_ref(), pk.to_bytes().as_ref(), &msg);
         let mut e_arr = [0u8; 64];
-        e_arr[..e_bytes.len()].copy_from_slice(&e_bytes[..]);
+        e_arr[64 - e_bytes.len()..].copy_from_slice(&e_bytes[..]);
         let e = blsful::inner_types::Scalar::from_bytes_wide(&e_arr);
 
         let big_r = blsful::inner_types::G2Projective::GENERATOR * sig_s[0] - pk * e;
@@ -1815,18 +1797,6 @@ impl EcOps for BlsVerify {
             Ok(vec![0u8])
         }
     }
-}
-
-fn verify_bls<C>(
-    pk: &blsful::PublicKey<C>,
-    sig: &blsful::Signature<C>,
-    msg: &[u8],
-) -> Result<(), Error>
-where
-    C: blsful::BlsSignatureImpl,
-{
-    sig.verify(&pk, msg)
-        .map_err(|_| Error::EcOpsInvalidSignature)
 }
 
 fn verify_ecdsa<C>(
@@ -2159,18 +2129,14 @@ mod test {
 
     #[test]
     fn ecdsa_verify_secp256k1() {
-        use k256::{
-            ecdsa::{signature::Signer, Signature, SigningKey, VerifyingKey},
-            EncodedPoint,
-        };
+        use k256::ecdsa::{signature::Signer, Signature, SigningKey, VerifyingKey};
         use sha2::Digest;
 
-        const SIGN_MSG: &[u8] = b"sign message";
         let sign_key = SigningKey::random(&mut rand::rngs::OsRng);
         let verify_key = VerifyingKey::from(&sign_key);
-        let signature: Signature = sign_key.sign(SIGN_MSG);
+        let signature: Signature = sign_key.sign(HASH_MSG);
 
-        let hashed_msg_bytes = sha2::Sha256::digest(SIGN_MSG);
+        let hashed_msg_bytes = sha2::Sha256::digest(HASH_MSG);
         let hashed_message = <k256::Scalar as Reduce<k256::U256>>::reduce_bytes(&hashed_msg_bytes);
 
         let mut input = CURVE_NAME_SECP256K1.to_vec();
@@ -2185,18 +2151,14 @@ mod test {
 
     #[test]
     fn ecdsa_verify_prime256v1() {
-        use p256::{
-            ecdsa::{signature::Signer, Signature, SigningKey, VerifyingKey},
-            EncodedPoint,
-        };
+        use p256::ecdsa::{signature::Signer, Signature, SigningKey, VerifyingKey};
         use sha2::Digest;
 
-        const SIGN_MSG: &[u8] = b"sign message";
         let sign_key = SigningKey::random(&mut rand::rngs::OsRng);
         let verify_key = VerifyingKey::from(&sign_key);
-        let signature: Signature = sign_key.sign(SIGN_MSG);
+        let signature: Signature = sign_key.sign(HASH_MSG);
 
-        let hashed_msg_bytes = sha2::Sha256::digest(SIGN_MSG);
+        let hashed_msg_bytes = sha2::Sha256::digest(HASH_MSG);
         let hashed_message = <p256::Scalar as Reduce<k256::U256>>::reduce_bytes(&hashed_msg_bytes);
 
         let mut input = CURVE_NAME_PRIME256V1.to_vec();
@@ -2225,5 +2187,188 @@ mod test {
         input[..32].copy_from_slice(CURVE_NAME_BLS12381G2);
         let res = ecdsa_verify(&input, 100);
         assert!(res.is_err());
+    }
+
+    #[test]
+    fn schnorr_verify_secp256k1() {
+        use elliptic_curve::Field;
+        use k256::{ProjectivePoint, Scalar};
+        use sha2::Digest;
+
+        let sign_key = Scalar::random(&mut rand::rngs::OsRng);
+        let verify_key = ProjectivePoint::GENERATOR * sign_key;
+
+        let hashed_msg_bytes = sha2::Sha256::digest(HASH_MSG);
+
+        let little_r = Scalar::random(&mut rand::rngs::OsRng);
+        let big_r = ProjectivePoint::GENERATOR * little_r;
+        let mut sha256 = sha2::Sha256::new();
+        sha256.update(big_r.to_affine().x());
+        sha256.update(&verify_key.to_bytes()[1..]);
+        sha256.update(&hashed_msg_bytes);
+        let e_bytes = sha256.finalize();
+        let e = <Scalar as Reduce<k256::U256>>::reduce_bytes(&e_bytes);
+        let s = little_r + e * sign_key;
+
+        let mut input = CURVE_NAME_SECP256K1.to_vec();
+        input.extend_from_slice(&HASH_NAME_SHA2_256);
+        input.extend_from_slice(&hashed_msg_bytes);
+        input.extend_from_slice(&verify_key.to_encoded_point(false).as_bytes()[1..]);
+        input.extend_from_slice(&big_r.to_affine().x());
+        input.extend_from_slice(&s.to_bytes());
+        let res = schnorr_verify1(&input, 100);
+        assert!(res.is_ok());
+        let (_, bytes) = res.unwrap();
+        assert_eq!(bytes, vec![1u8]);
+    }
+
+    #[test]
+    fn schnorr_verify_secp256k1_taproot() {
+        use k256::{
+            schnorr::{signature::Signer, Signature, SigningKey},
+            ProjectivePoint,
+        };
+        use sha2::Digest;
+
+        let sign_key = SigningKey::random(&mut rand::rngs::OsRng);
+        let verify_key = sign_key.verifying_key();
+        let signature: Signature = sign_key.sign(HASH_MSG);
+
+        let hashed_msg_bytes = sha2::Sha256::digest(HASH_MSG);
+
+        let mut input = CURVE_NAME_SECP256K1.to_vec();
+        input.extend_from_slice(&HASH_NAME_TAPROOT);
+        input.extend_from_slice(&hashed_msg_bytes);
+        let point = ProjectivePoint::from(verify_key.as_affine());
+        input.extend_from_slice(&point.to_encoded_point(false).as_bytes()[1..]);
+        input.extend_from_slice(&signature.to_bytes());
+
+        let res = schnorr_verify1(&input, 100);
+        assert!(res.is_ok());
+        let (_, bytes) = res.unwrap();
+        assert_eq!(bytes, vec![1u8]);
+    }
+
+    #[test]
+    fn schnorr_verify_curve25519() {
+        use ed25519_dalek::Signer;
+        use rand::Rng;
+        use sha2::Digest;
+
+        let hashed_msg_bytes = sha2::Sha256::digest(HASH_MSG);
+
+        let secret_key = rand::rngs::OsRng.gen::<[u8; 32]>();
+        let sign_key = ed25519_dalek::SigningKey::from_bytes(&secret_key);
+        let verify_key = ed25519_dalek::VerifyingKey::from(&sign_key);
+
+        let signature = sign_key.sign(&hashed_msg_bytes);
+
+        let mut input = CURVE_NAME_CURVE25519.to_vec();
+        input.extend_from_slice(&HASH_NAME_SHA2_512);
+        input.extend_from_slice(&hashed_msg_bytes);
+        input.extend_from_slice(&[0u8; 32]);
+        input.extend_from_slice(&verify_key.to_bytes());
+        input.extend_from_slice(&signature.to_bytes());
+
+        let res = schnorr_verify1(&input, 100);
+        assert!(res.is_ok());
+        let (_, bytes) = res.unwrap();
+        assert_eq!(bytes, vec![1u8]);
+    }
+
+    #[test]
+    fn schnorr_verify_bls12831g1() {
+        use blsful::inner_types::{G1Projective, Scalar};
+        use elliptic_curve::Field;
+        use sha2::Digest;
+
+        let hashed_msg_bytes = sha2::Sha256::digest(HASH_MSG);
+
+        let sign_key = Scalar::random(&mut rand::rngs::OsRng);
+        let verify_key = G1Projective::GENERATOR * sign_key;
+
+        let little_r = Scalar::random(&mut rand::rngs::OsRng);
+        let big_r = G1Projective::GENERATOR * little_r;
+        let mut sha384 = sha2::Sha384::new();
+        sha384.update(big_r.to_bytes().as_ref());
+        sha384.update(&verify_key.to_bytes().as_ref());
+        sha384.update(&hashed_msg_bytes);
+        let e_bytes = sha384.finalize();
+        let mut e_arr = [0u8; 64];
+        e_arr[64 - e_bytes.len()..].copy_from_slice(&e_bytes[..]);
+        let e = Scalar::from_bytes_wide(&e_arr);
+        let s = little_r + e * sign_key;
+
+        let mut input = CURVE_NAME_BLS12381G1.to_vec();
+        input.extend_from_slice(&HASH_NAME_SHA2_384);
+        input.extend_from_slice(&hashed_msg_bytes);
+        input.extend_from_slice(&verify_key.to_uncompressed());
+        input.extend_from_slice(&big_r.to_uncompressed());
+        input.extend_from_slice(&s.to_be_bytes());
+
+        let res = schnorr_verify1(&input, 100);
+        assert!(res.is_ok());
+        let (_, bytes) = res.unwrap();
+        assert_eq!(bytes, vec![1u8]);
+    }
+
+    #[test]
+    fn schnorr_verify_bls12831g2() {
+        use blsful::inner_types::{G2Projective, Scalar};
+        use elliptic_curve::Field;
+        use sha2::Digest;
+
+        let hashed_msg_bytes = sha2::Sha256::digest(HASH_MSG);
+
+        let sign_key = Scalar::random(&mut rand::rngs::OsRng);
+        let verify_key = G2Projective::GENERATOR * sign_key;
+
+        let little_r = Scalar::random(&mut rand::rngs::OsRng);
+        let big_r = G2Projective::GENERATOR * little_r;
+        let mut sha384 = sha2::Sha384::new();
+        sha384.update(big_r.to_bytes().as_ref());
+        sha384.update(&verify_key.to_bytes().as_ref());
+        sha384.update(&hashed_msg_bytes);
+        let e_bytes = sha384.finalize();
+        let mut e_arr = [0u8; 64];
+        e_arr[64 - e_bytes.len()..].copy_from_slice(&e_bytes[..]);
+        let e = Scalar::from_bytes_wide(&e_arr);
+        let s = little_r + e * sign_key;
+
+        let mut input = CURVE_NAME_BLS12381G2.to_vec();
+        input.extend_from_slice(&HASH_NAME_SHA2_384);
+        input.extend_from_slice(&hashed_msg_bytes);
+        input.extend_from_slice(&verify_key.to_uncompressed());
+        input.extend_from_slice(&big_r.to_uncompressed());
+        input.extend_from_slice(&s.to_be_bytes());
+
+        let res = schnorr_verify1(&input, 100);
+        assert!(res.is_ok());
+        let (_, bytes) = res.unwrap();
+        assert_eq!(bytes, vec![1u8]);
+    }
+
+    #[test]
+    fn bls_bls12381g1_verify() {
+        use blsful::{Bls12381G2, PublicKey, SignatureSchemes};
+
+        let sign_key = Bls12381G2::new_secret_key();
+        let verify_key = PublicKey::from(&sign_key);
+        let signature = sign_key
+            .sign(SignatureSchemes::ProofOfPossession, &HASH_MSG)
+            .unwrap();
+
+        let mut input = CURVE_NAME_BLS12381G1.to_vec();
+        let length = (HASH_MSG.len() as u32).to_be_bytes();
+        let mut arr = [0u8; 32];
+        arr[32 - length.len()..].copy_from_slice(&length);
+        input.extend_from_slice(&arr);
+        input.extend_from_slice(HASH_MSG);
+        input.extend_from_slice(&verify_key.0.to_uncompressed());
+        input.extend_from_slice(&signature.as_raw_value().to_uncompressed());
+        let res = bls_verify(&input, 100);
+        assert!(res.is_ok());
+        let (_, bytes) = res.unwrap();
+        assert_eq!(bytes, vec![1u8]);
     }
 }
