@@ -49,23 +49,22 @@ impl TracerEip3155 {
 }
 
 impl<DB: Database> Inspector<DB> for TracerEip3155 {
-    fn initialize_interp(&mut self, interp: &mut Interpreter<'_>, context: &mut EvmContext<'_, DB>) {
+    fn initialize_interp(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
         self.gas_inspector.initialize_interp(interp, context);
     }
 
     // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
     // all other information can be obtained from interp.
-    fn step(&mut self, interp: &mut Interpreter<'_>, context: &mut EvmContext<'_, DB>) {
+    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
         self.gas_inspector.step(interp, context);
         self.stack = interp.stack.clone();
         self.pc = interp.program_counter();
         self.opcode = interp.current_opcode();
-        self.mem_size = interp.shared_memory().len();
+        self.mem_size = interp.shared_memory.len();
         self.gas = interp.gas.remaining();
-        //self.print_log_line(data.journaled_state.depth());
     }
 
-    fn step_end(&mut self, interp: &mut Interpreter<'_>, context: &mut EvmContext<'_, DB>) {
+    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
         self.gas_inspector.step_end(interp, context);
         if self.skip {
             self.skip = false;

@@ -1,21 +1,19 @@
-use core::ops::Range;
-
-use revm_interpreter::{
-    analysis::to_analysed, gas, return_ok, CallInputs, Contract, Interpreter, MAX_CODE_SIZE,
-};
-use revm_precompile::Precompile;
-
 use crate::{
     db::Database,
-    interpreter::{CreateInputs, Gas, InstructionResult, InterpreterResult},
+    interpreter::{
+        analysis::to_analysed, gas, return_ok, CallInputs, Contract, CreateInputs, Gas,
+        InstructionResult, Interpreter, InterpreterResult, MAX_CODE_SIZE,
+    },
     journaled_state::JournaledState,
-    precompile::Precompiles,
+    precompile::{Precompile, Precompiles},
     primitives::{
         keccak256, Address, AnalysisKind, Bytecode, Bytes, EVMError, Env, Spec, SpecId::*, B256,
         U256,
     },
-    CallStackFrame, JournalCheckpoint, CALL_STACK_LIMIT,
+    CallStackFrame, CALL_STACK_LIMIT,
 };
+use core::ops::Range;
+use alloc::boxed::Box;
 
 /// EVM Data contains all the data that EVM needs to execute.
 #[derive(Debug)]
@@ -37,7 +35,7 @@ pub struct EvmContext<'a, DB: Database> {
 }
 
 impl<'a, DB: Database> EvmContext<'a, DB> {
-    /// Load access list for berlin hardfork.
+    /// Load access list for berlin hard fork.
     ///
     /// Loading of accounts/storages is needed to make them warm.
     #[inline]
@@ -136,10 +134,11 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
         self.journaled_state.tstore(address, index, value)
     }
 
-    pub fn make_create_frame<'b, 'c, SPEC: Spec>(
-        &'b mut self,
+    /// Make create frame.
+    pub fn make_create_frame<SPEC: Spec>(
+        &mut self,
         inputs: &CreateInputs,
-    ) -> Result<CallStackFrame<'c>, InterpreterResult> {
+    ) -> Result<CallStackFrame, InterpreterResult> {
         // Prepare crate.
         let gas = Gas::new(inputs.gas_limit);
 
@@ -220,11 +219,12 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
         })
     }
 
-    pub fn make_call_frame<'b, 'c>(
-        &'b mut self,
+    /// Make call frame
+    pub fn make_call_frame(
+        &mut self,
         inputs: &CallInputs,
         return_memory_offset: Range<usize>,
-    ) -> Result<CallStackFrame<'c>, InterpreterResult> {
+    ) -> Result<CallStackFrame, InterpreterResult> {
         let gas = Gas::new(inputs.gas_limit);
 
         let return_result = |instruction_result: InstructionResult| {
@@ -341,17 +341,34 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
         result
     }
 
+    /// Handles call return.
+    #[inline]
+    pub fn call_return(
+        &mut self,
+        interpreter_result: InterpreterResult,
+        frame: CallStackFrame,
+    ) -> InterpreterResult {
+        // revert changes or not.
+        if matches!(interpreter_result.result, return_ok!()) {
+            self.journaled_state.checkpoint_commit();
+        } else {
+            self.journaled_state.checkpoint_revert(frame.checkpoint);
+        }
+        return interpreter_result;
+    }
+
+    /// Handles create return.
     #[inline]
     pub fn create_return<SPEC: Spec>(
         &mut self,
         mut interpreter_result: InterpreterResult,
-        journal_checkpoint: JournalCheckpoint,
-        created_address: Address,
+        frame: CallStackFrame,
     ) -> (InterpreterResult, Address) {
+        let address = frame.created_address.unwrap();
         // if return is not ok revert and return.
         if !matches!(interpreter_result.result, return_ok!()) {
-            self.journaled_state.checkpoint_revert(journal_checkpoint);
-            return (interpreter_result, created_address);
+            self.journaled_state.checkpoint_revert(frame.checkpoint);
+            return (interpreter_result, address);
         }
         // Host error if present on execution
         // if ok, check contract creation limit and calculate gas deduction on output len.
@@ -361,9 +378,9 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
             && !interpreter_result.output.is_empty()
             && interpreter_result.output.first() == Some(&0xEF)
         {
-            self.journaled_state.checkpoint_revert(journal_checkpoint);
+            self.journaled_state.checkpoint_revert(frame.checkpoint);
             interpreter_result.result = InstructionResult::CreateContractStartingWithEF;
-            return (interpreter_result, created_address);
+            return (interpreter_result, address);
         }
 
         // EIP-170: Contract code size limit
@@ -376,9 +393,9 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
                     .limit_contract_code_size
                     .unwrap_or(MAX_CODE_SIZE)
         {
-            self.journaled_state.checkpoint_revert(journal_checkpoint);
+            self.journaled_state.checkpoint_revert(frame.checkpoint);
             interpreter_result.result = InstructionResult::CreateContractSizeLimit;
-            return (interpreter_result, created_address);
+            return (interpreter_result, frame.created_address.unwrap());
         }
         let gas_for_code = interpreter_result.output.len() as u64 * gas::CODEDEPOSIT;
         if !interpreter_result.gas.record_cost(gas_for_code) {
@@ -387,9 +404,9 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
             // final gas fee for adding the contract code to the state, the contract
             //  creation fails (i.e. goes out-of-gas) rather than leaving an empty contract.
             if SPEC::enabled(HOMESTEAD) {
-                self.journaled_state.checkpoint_revert(journal_checkpoint);
+                self.journaled_state.checkpoint_revert(frame.checkpoint);
                 interpreter_result.result = InstructionResult::OutOfGas;
-                return (interpreter_result, created_address);
+                return (interpreter_result, address);
             } else {
                 interpreter_result.output = Bytes::new();
             }
@@ -409,9 +426,9 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
         };
 
         // set code
-        self.journaled_state.set_code(created_address, bytecode);
+        self.journaled_state.set_code(address, bytecode);
 
         interpreter_result.result = InstructionResult::Return;
-        (interpreter_result, created_address)
+        (interpreter_result, address)
     }
 }

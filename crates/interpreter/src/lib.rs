@@ -18,9 +18,8 @@ mod instruction_result;
 pub mod instructions;
 mod interpreter;
 
-
 #[cfg(feature = "no_gas_measuring")]
-compile_error!{"no_gas_measuring feature is deprecated and feature is removed."}
+compile_error! {"no_gas_measuring feature is deprecated and feature is removed."}
 
 // Reexport primary types.
 pub use gas::Gas;
@@ -30,7 +29,8 @@ pub use instruction_result::*;
 pub use instructions::{opcode, Instruction, OpCode, OPCODE_JUMPMAP};
 pub use interpreter::{
     analysis, next_multiple_of_32, BytecodeLocked, Contract, Interpreter, InterpreterAction,
-    InterpreterResult, SharedMemory, Stack, MAX_CODE_SIZE, MAX_INITCODE_SIZE, STACK_LIMIT,
+    InterpreterResult, SharedMemory, Stack, EMPTY_SHARED_MEMORY, MAX_CODE_SIZE, MAX_INITCODE_SIZE,
+    STACK_LIMIT,
 };
 #[doc(hidden)]
 pub use revm_primitives as primitives;

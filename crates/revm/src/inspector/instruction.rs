@@ -12,7 +12,7 @@ pub fn inspector_instruction<'a, SPEC: Spec + 'static, DB: Database>(
     instruction: Instruction<EVMImpl<'a, SPEC, DB>>,
 ) -> BoxedInstruction<'a, EVMImpl<'a, SPEC, DB>> {
     let inspector_instruction = Box::new(
-        move |interpreter: &mut Interpreter<'_>, host: &mut EVMImpl<'a, SPEC, DB>| {
+        move |interpreter: &mut Interpreter, host: &mut EVMImpl<'a, SPEC, DB>| {
             // step
             let context = &mut host.context;
             // Safety: as the PC was already incremented we need to subtract 1 to preserve the

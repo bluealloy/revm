@@ -55,13 +55,13 @@ macro_rules! shared_memory_resize {
                 return;
             }
 
-            if new_size > $interp.shared_memory.as_mut().unwrap().len() {
+            if new_size > $interp.shared_memory.len() {
                 let num_bytes = new_size / 32;
                 if !$interp.gas.record_memory(crate::gas::memory_gas(num_bytes)) {
                     $interp.instruction_result = InstructionResult::MemoryLimitOOG;
                     return;
                 }
-                $interp.shared_memory.as_mut().unwrap().resize(new_size);
+                $interp.shared_memory.resize(new_size);
             }
         } else {
             $interp.instruction_result = InstructionResult::MemoryOOG;

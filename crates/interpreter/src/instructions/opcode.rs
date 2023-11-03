@@ -11,7 +11,7 @@ use alloc::sync::Arc;
 use core::fmt;
 
 /// EVM opcode function signature.
-pub type Instruction<H> = fn(&mut Interpreter<'_>, &mut H);
+pub type Instruction<H> = fn(&mut Interpreter, &mut H);
 
 /// Instruction table is list of instruction function pointers mapped to
 /// 256 EVM opcodes.
@@ -21,7 +21,7 @@ pub type InstructionTable<H> = [Instruction<H>; 256];
 pub type InstructionTableArc<H> = Arc<InstructionTable<H>>;
 
 /// EVM opcode function signature.
-pub type BoxedInstruction<'a, H> = Box<dyn Fn(&mut Interpreter<'_>, &mut H) + 'a>;
+pub type BoxedInstruction<'a, H> = Box<dyn Fn(&mut Interpreter, &mut H) + 'a>;
 
 /// A table of instructions.
 pub type BoxedInstructionTable<'a, H> = [BoxedInstruction<'a, H>; 256];

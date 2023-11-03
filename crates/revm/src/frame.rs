@@ -4,7 +4,7 @@ use core::ops::Range;
 
 /// Call CallStackFrame.
 #[derive(Debug)]
-pub struct CallStackFrame<'a> {
+pub struct CallStackFrame {
     /// True if it is create false if it is call.
     /// TODO make a enum for this.
     pub is_create: bool,
@@ -15,5 +15,5 @@ pub struct CallStackFrame<'a> {
     /// temporary. Call range
     pub subcall_return_memory_range: Range<usize>,
     /// Interpreter
-    pub interpreter: Interpreter<'a>,
+    pub interpreter: Interpreter,
 }

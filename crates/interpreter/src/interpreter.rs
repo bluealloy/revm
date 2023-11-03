@@ -18,6 +18,8 @@ use core::cmp::min;
 use core::ops::Range;
 use revm_primitives::{Address, U256};
 
+pub use self::shared_memory::EMPTY_SHARED_MEMORY;
+
 /// EIP-170: Contract code size limit
 ///
 /// By default this limit is 0x6000 (~25kb)
@@ -27,7 +29,7 @@ pub const MAX_CODE_SIZE: usize = 0x6000;
 pub const MAX_INITCODE_SIZE: usize = 2 * MAX_CODE_SIZE;
 
 #[derive(Debug)]
-pub struct Interpreter<'a> {
+pub struct Interpreter {
     /// Contract information and invoking data
     pub contract: Box<Contract>,
     /// The current instruction pointer.
@@ -38,7 +40,7 @@ pub struct Interpreter<'a> {
     /// The gas state.
     pub gas: Gas,
     /// Shared memory.
-    pub shared_memory: Option<&'a mut SharedMemory>,
+    pub shared_memory: SharedMemory,
     /// Stack.
     pub stack: Stack,
     /// The return data buffer for internal calls.
@@ -80,7 +82,7 @@ pub enum InterpreterAction {
     },
 }
 
-impl<'a> Interpreter<'a> {
+impl Interpreter {
     /// Create new interpreter
     pub fn new(contract: Box<Contract>, gas_limit: u64, is_static: bool) -> Self {
         Self {
@@ -90,15 +92,10 @@ impl<'a> Interpreter<'a> {
             instruction_result: InstructionResult::Continue,
             is_static,
             return_data_buffer: Bytes::new(),
-            shared_memory: None,
+            shared_memory: EMPTY_SHARED_MEMORY,
             stack: Stack::new(),
             next_action: None,
         }
-    }
-
-    /// Returns shared memory.
-    pub fn shared_memory(&mut self) -> &mut SharedMemory {
-        self.shared_memory.as_mut().unwrap()
     }
 
     /// When sub create call returns we can insert output of that call into this interpreter.
@@ -192,6 +189,11 @@ impl<'a> Interpreter<'a> {
         &self.stack
     }
 
+    /// Returns a reference to the shared memory.
+    pub fn memory(&self) -> &SharedMemory {
+        &self.shared_memory
+    }
+
     /// Returns the current program counter.
     #[inline]
     pub fn program_counter(&self) -> usize {
@@ -207,9 +209,9 @@ impl<'a> Interpreter<'a> {
     ///
     /// Internally it will increment instruction pointer by one.
     #[inline(always)]
-    pub fn step<FN, H: Host>(&mut self, instruction_table: &[FN; 256], host: &mut H)
+    fn step<FN, H: Host>(&mut self, instruction_table: &[FN; 256], host: &mut H)
     where
-        FN: Fn(&mut Interpreter<'_>, &mut H),
+        FN: Fn(&mut Interpreter, &mut H),
     {
         // Get current opcode.
         let opcode = unsafe { *self.instruction_pointer };
@@ -223,19 +225,24 @@ impl<'a> Interpreter<'a> {
         (instruction_table[opcode as usize])(self, host)
     }
 
+    /// Take memory and replace it with empty memory.
+    pub fn take_memory(&mut self) -> SharedMemory {
+        core::mem::replace(&mut self.shared_memory, EMPTY_SHARED_MEMORY)
+    }
+
     /// Executes the interpreter until it returns or stops.
     pub fn run<FN, H: Host>(
         &mut self,
-        shared_memory: &'a mut SharedMemory,
+        shared_memory: SharedMemory,
         instruction_table: &[FN; 256],
         host: &mut H,
     ) -> InterpreterAction
     where
-        FN: Fn(&mut Interpreter<'_>, &mut H),
+        FN: Fn(&mut Interpreter, &mut H),
     {
         self.next_action = None;
         self.instruction_result = InstructionResult::Continue;
-        self.shared_memory = Some(shared_memory);
+        self.shared_memory = shared_memory;
         // main loop
         while self.instruction_result == InstructionResult::Continue {
             self.step(instruction_table, host);

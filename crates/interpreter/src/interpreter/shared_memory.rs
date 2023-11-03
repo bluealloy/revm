@@ -26,6 +26,17 @@ pub struct SharedMemory {
     memory_limit: u64,
 }
 
+/// Empty shared memory.
+///
+/// As it does not have allocations it is usable with mem::replace operations.
+pub const EMPTY_SHARED_MEMORY: SharedMemory = SharedMemory {
+    buffer: Vec::new(),
+    checkpoints: Vec::new(),
+    last_checkpoint: 0,
+    #[cfg(feature = "memory_limit")]
+    memory_limit: u64::MAX,
+};
+
 impl fmt::Debug for SharedMemory {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("SharedMemory")

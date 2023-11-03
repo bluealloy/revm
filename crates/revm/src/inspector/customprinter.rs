@@ -19,19 +19,19 @@ pub struct CustomPrintTracer {
 }
 
 impl<DB: Database> Inspector<DB> for CustomPrintTracer {
-    fn initialize_interp(&mut self, interp: &mut Interpreter<'_>, context: &mut EvmContext<'_, DB>) {
+    fn initialize_interp(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
         self.gas_inspector.initialize_interp(interp, context);
     }
 
     // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
     // all other information can be obtained from interp.
-    fn step(&mut self, interp: &mut Interpreter<'_>, context: &mut EvmContext<'_, DB>) {
+    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
         let opcode = interp.current_opcode();
         let opcode_str = opcode::OPCODE_JUMPMAP[opcode as usize];
 
         let gas_remaining = self.gas_inspector.gas_remaining();
 
-        let memory_size = interp.shared_memory().len();
+        let memory_size = interp.shared_memory.len();
 
         println!(
             "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data size:{}",
@@ -50,7 +50,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         self.gas_inspector.step(interp, context);
     }
 
-    fn step_end(&mut self, interp: &mut Interpreter<'_>, context: &mut EvmContext<'_, DB>) {
+    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
         self.gas_inspector.step_end(interp, context);
     }
 

@@ -35,11 +35,7 @@ pub trait Inspector<DB: Database> {
     /// If `interp.instruction_result` is set to anything other than [InstructionResult::Continue] then the execution of the interpreter
     /// is skipped.
     #[inline]
-    fn initialize_interp(
-        &mut self,
-        interp: &mut Interpreter<'_>,
-        context: &mut EvmContext<'_, DB>,
-    ) {
+    fn initialize_interp(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
         let _ = interp;
         let _ = context;
     }
@@ -53,7 +49,7 @@ pub trait Inspector<DB: Database> {
     ///
     /// To get the current opcode, use `interp.current_opcode()`.
     #[inline]
-    fn step(&mut self, interp: &mut Interpreter<'_>, context: &mut EvmContext<'_, DB>) {
+    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
         let _ = interp;
         let _ = context;
     }
@@ -78,7 +74,7 @@ pub trait Inspector<DB: Database> {
     /// Setting `interp.instruction_result` to anything other than [InstructionResult::Continue] alters the execution
     /// of the interpreter.
     #[inline]
-    fn step_end(&mut self, interp: &mut Interpreter<'_>, context: &mut EvmContext<'_, DB>) {
+    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
         let _ = interp;
         let _ = context;
     }
