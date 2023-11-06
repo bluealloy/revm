@@ -1969,6 +1969,181 @@ mod test {
     const HASH_MSG: &[u8] = b"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
 
     #[test]
+    fn ecc_sum_of_products_secp256k1() {
+        let points = vec![
+            k256::ProjectivePoint::GENERATOR,
+            k256::ProjectivePoint::GENERATOR,
+            k256::ProjectivePoint::GENERATOR,
+            k256::ProjectivePoint::GENERATOR,
+        ];
+        let scalars = vec![
+            k256::Scalar::from(1u64),
+            k256::Scalar::from(2u64),
+            k256::Scalar::from(3u64),
+            k256::Scalar::from(4u64),
+        ];
+        let expected = k256::ProjectivePoint::GENERATOR * k256::Scalar::from(10u64);
+        let mut input = CURVE_NAME_SECP256K1.to_vec();
+        input.extend_from_slice(&[0u8; 31]);
+        input.push(4);
+        input.extend_from_slice(&secp256k1_point_out(&points[0]));
+        input.extend_from_slice(&secp256k1_point_out(&points[1]));
+        input.extend_from_slice(&secp256k1_point_out(&points[2]));
+        input.extend_from_slice(&secp256k1_point_out(&points[3]));
+        input.extend_from_slice(&&scalars[0].to_bytes()[..]);
+        input.extend_from_slice(&&scalars[1].to_bytes()[..]);
+        input.extend_from_slice(&&scalars[2].to_bytes()[..]);
+        input.extend_from_slice(&&scalars[3].to_bytes()[..]);
+        let res = ec_sum_of_products(&input, 100);
+        assert!(res.is_ok());
+        let (_, bytes) = res.unwrap();
+        assert_eq!(
+            expected.to_encoded_point(false).as_bytes()[1..].to_vec(),
+            bytes
+        );
+    }
+
+    #[test]
+    fn ecc_sum_of_products_prime256v1() {
+        let points = vec![
+            p256::ProjectivePoint::GENERATOR,
+            p256::ProjectivePoint::GENERATOR,
+            p256::ProjectivePoint::GENERATOR,
+            p256::ProjectivePoint::GENERATOR,
+        ];
+        let scalars = vec![
+            p256::Scalar::from(1u64),
+            p256::Scalar::from(2u64),
+            p256::Scalar::from(3u64),
+            p256::Scalar::from(4u64),
+        ];
+        let expected = p256::ProjectivePoint::GENERATOR * p256::Scalar::from(10u64);
+        let mut input = CURVE_NAME_PRIME256V1.to_vec();
+        input.extend_from_slice(&[0u8; 31]);
+        input.push(4);
+        input.extend_from_slice(&prime256v1_point_out(&points[0]));
+        input.extend_from_slice(&prime256v1_point_out(&points[1]));
+        input.extend_from_slice(&prime256v1_point_out(&points[2]));
+        input.extend_from_slice(&prime256v1_point_out(&points[3]));
+        input.extend_from_slice(&&scalars[0].to_bytes()[..]);
+        input.extend_from_slice(&&scalars[1].to_bytes()[..]);
+        input.extend_from_slice(&&scalars[2].to_bytes()[..]);
+        input.extend_from_slice(&&scalars[3].to_bytes()[..]);
+        let res = ec_sum_of_products(&input, 100);
+        assert!(res.is_ok());
+        let (_, bytes) = res.unwrap();
+        assert_eq!(
+            expected.to_encoded_point(false).as_bytes()[1..].to_vec(),
+            bytes
+        );
+    }
+
+    #[test]
+    fn ecc_sum_of_products_curve25519() {
+        let points = vec![
+            curve25519_dalek::constants::ED25519_BASEPOINT_POINT,
+            curve25519_dalek::constants::ED25519_BASEPOINT_POINT,
+            curve25519_dalek::constants::ED25519_BASEPOINT_POINT,
+            curve25519_dalek::constants::ED25519_BASEPOINT_POINT,
+        ];
+        let scalars = vec![
+            curve25519_dalek::Scalar::from(1u64),
+            curve25519_dalek::Scalar::from(2u64),
+            curve25519_dalek::Scalar::from(3u64),
+            curve25519_dalek::Scalar::from(4u64),
+        ];
+        let expected = curve25519_dalek::constants::ED25519_BASEPOINT_POINT * curve25519_dalek::Scalar::from(10u64);
+        let mut input = CURVE_NAME_CURVE25519.to_vec();
+        input.extend_from_slice(&[0u8; 31]);
+        input.push(4);
+        input.extend_from_slice(&curve25519_point_out(&points[0]));
+        input.extend_from_slice(&curve25519_point_out(&points[1]));
+        input.extend_from_slice(&curve25519_point_out(&points[2]));
+        input.extend_from_slice(&curve25519_point_out(&points[3]));
+        input.extend_from_slice(&&scalars[0].to_bytes()[..]);
+        input.extend_from_slice(&&scalars[1].to_bytes()[..]);
+        input.extend_from_slice(&&scalars[2].to_bytes()[..]);
+        input.extend_from_slice(&&scalars[3].to_bytes()[..]);
+        let res = ec_sum_of_products(&input, 100);
+        assert!(res.is_ok());
+        let (_, bytes) = res.unwrap();
+        assert_eq!(
+            &expected.compress().as_bytes()[..],
+            &bytes[32..]
+        );
+    }
+
+    #[test]
+    fn ecc_sum_of_products_bls12381g1() {
+        let points = vec![
+            blsful::inner_types::G1Projective::GENERATOR,
+            blsful::inner_types::G1Projective::GENERATOR,
+            blsful::inner_types::G1Projective::GENERATOR,
+            blsful::inner_types::G1Projective::GENERATOR,
+        ];
+        let scalars = vec![
+            blsful::inner_types::Scalar::from(1u64),
+            blsful::inner_types::Scalar::from(2u64),
+            blsful::inner_types::Scalar::from(3u64),
+            blsful::inner_types::Scalar::from(4u64),
+        ];
+        let expected = blsful::inner_types::G1Projective::GENERATOR * blsful::inner_types::Scalar::from(10u64);
+        let mut input = CURVE_NAME_BLS12381G1.to_vec();
+        input.extend_from_slice(&[0u8; 31]);
+        input.push(4);
+        input.extend_from_slice(&points[0].to_uncompressed());
+        input.extend_from_slice(&points[1].to_uncompressed());
+        input.extend_from_slice(&points[2].to_uncompressed());
+        input.extend_from_slice(&points[3].to_uncompressed());
+        input.extend_from_slice(&&scalars[0].to_be_bytes()[..]);
+        input.extend_from_slice(&&scalars[1].to_be_bytes()[..]);
+        input.extend_from_slice(&&scalars[2].to_be_bytes()[..]);
+        input.extend_from_slice(&&scalars[3].to_be_bytes()[..]);
+        let res = ec_sum_of_products(&input, 100);
+        assert!(res.is_ok());
+        let (_, bytes) = res.unwrap();
+        assert_eq!(
+            expected.to_uncompressed().to_vec(),
+            bytes
+        );
+    }
+
+    #[test]
+    fn ecc_sum_of_products_bls12381g2() {
+        let points = vec![
+            blsful::inner_types::G2Projective::GENERATOR,
+            blsful::inner_types::G2Projective::GENERATOR,
+            blsful::inner_types::G2Projective::GENERATOR,
+            blsful::inner_types::G2Projective::GENERATOR,
+        ];
+        let scalars = vec![
+            blsful::inner_types::Scalar::from(1u64),
+            blsful::inner_types::Scalar::from(2u64),
+            blsful::inner_types::Scalar::from(3u64),
+            blsful::inner_types::Scalar::from(4u64),
+        ];
+        let expected = blsful::inner_types::G2Projective::GENERATOR * blsful::inner_types::Scalar::from(10u64);
+        let mut input = CURVE_NAME_BLS12381G2.to_vec();
+        input.extend_from_slice(&[0u8; 31]);
+        input.push(4);
+        input.extend_from_slice(&points[0].to_uncompressed());
+        input.extend_from_slice(&points[1].to_uncompressed());
+        input.extend_from_slice(&points[2].to_uncompressed());
+        input.extend_from_slice(&points[3].to_uncompressed());
+        input.extend_from_slice(&&scalars[0].to_be_bytes()[..]);
+        input.extend_from_slice(&&scalars[1].to_be_bytes()[..]);
+        input.extend_from_slice(&&scalars[2].to_be_bytes()[..]);
+        input.extend_from_slice(&&scalars[3].to_be_bytes()[..]);
+        let res = ec_sum_of_products(&input, 200);
+        assert!(res.is_ok());
+        let (_, bytes) = res.unwrap();
+        assert_eq!(
+            expected.to_uncompressed().to_vec(),
+            bytes
+        );
+    }
+
+    #[test]
     fn ecc_mul_secp256k1() {
         let mut input = CURVE_NAME_SECP256K1.to_vec();
         let pt = k256::ProjectivePoint::GENERATOR.to_encoded_point(false);
@@ -2050,7 +2225,7 @@ mod test {
         arr[32 - length.len()..].copy_from_slice(&length);
         input.extend_from_slice(&arr);
         input.extend_from_slice(HASH_MSG);
-        let res = scalar_hash(&input, 100);
+        let res = scalar_hash(&input, 200);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         let expected = [
@@ -2404,4 +2579,21 @@ mod test {
         let (_, bytes) = res.unwrap();
         assert_eq!(bytes, vec![1u8]);
     }
+
+    #[test]
+    fn ecc_hash_curve25519() {
+        let mut input = CURVE_NAME_CURVE25519.to_vec();
+        input.extend_from_slice(&[0u8; 31]);
+        input.push(32);
+        input.extend_from_slice(&[0u8; 32]);
+        let res = ec_hash(&input, 100);
+        assert!(res.is_ok());
+        let (_, bytes) = res.unwrap();
+
+        let mut temp = [0u8; 32];
+        hex::decode_to_slice("4838562f360e7087a5b2c6e867836ab6dd3b8d20c923eb2b535902739060bf09", &mut temp).unwrap();
+        let expected = curve25519_dalek::EdwardsPoint::from_bytes(&temp).unwrap();
+        assert_eq!(expected.compress().as_bytes()[..], bytes[32..]);
+    }
 }
+
