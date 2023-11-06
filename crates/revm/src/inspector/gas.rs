@@ -25,7 +25,6 @@ impl GasInspector {
 }
 
 impl<DB: Database> Inspector<DB> for GasInspector {
-    #[cfg(not(feature = "no_gas_measuring"))]
     fn initialize_interp(
         &mut self,
         interp: &mut crate::interpreter::Interpreter,
@@ -34,7 +33,6 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         self.gas_remaining = interp.gas.limit();
     }
 
-    #[cfg(not(feature = "no_gas_measuring"))]
     fn step_end(
         &mut self,
         interp: &mut crate::interpreter::Interpreter,

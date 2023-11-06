@@ -98,12 +98,10 @@ pub enum SuccessOrHalt {
     Revert,
     Halt(Halt),
     FatalExternalError,
-    /// Internal instruction.
+    /// Internal instruction that signals Interpreter should continue running.
     InternalContinue,
-    /// Internal call opcode.
-    InternalCall,
-    /// Internal create opcode.
-    InternalCreate,
+    /// Internal instruction that signals subcall.
+    InternalCallOrCreate,
 }
 
 impl SuccessOrHalt {
@@ -152,7 +150,7 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::Return => Self::Success(Eval::Return),
             InstructionResult::SelfDestruct => Self::Success(Eval::SelfDestruct),
             InstructionResult::Revert => Self::Revert,
-            InstructionResult::CallOrCreate => Self::InternalCall, // used only in interpreter loop
+            InstructionResult::CallOrCreate => Self::InternalCallOrCreate, // used only in interpreter loop
             InstructionResult::CallTooDeep => Self::Halt(Halt::CallTooDeep), // not gonna happen for first call
             InstructionResult::OutOfFund => Self::Halt(Halt::OutOfFund), // Check for first call is done separately.
             InstructionResult::OutOfGas => Self::Halt(Halt::OutOfGas(

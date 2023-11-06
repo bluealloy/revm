@@ -15,7 +15,7 @@ The rationale behind incorporating `Blake2b` into Ethereum's suite of precompile
 
 ## Core Components
 
-Two primary constants provide the CallStackFramework for the precompiled contract:
+Two primary constants provide the framework for the precompiled contract:
 
 `F_ROUND: u64`: This is the cost of each round of computation in gas units. Currently set to 1.
 `INPUT_LENGTH: usize`: This specifies the required length of the input data, 213 bytes in this case.

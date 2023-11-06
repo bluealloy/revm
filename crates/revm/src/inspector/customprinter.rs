@@ -111,7 +111,6 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
 mod test {
 
     #[test]
-    #[cfg(not(feature = "no_gas_measuring"))]
     #[cfg(not(feature = "optimism"))]
     fn gas_calculation_underflow() {
         use crate::primitives::{address, bytes};

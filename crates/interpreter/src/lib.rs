@@ -18,9 +18,6 @@ mod instruction_result;
 pub mod instructions;
 mod interpreter;
 
-#[cfg(feature = "no_gas_measuring")]
-compile_error! {"no_gas_measuring feature is deprecated and feature is removed."}
-
 // Reexport primary types.
 pub use gas::Gas;
 pub use host::{DummyHost, Host};

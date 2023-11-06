@@ -28,7 +28,7 @@ pub struct SharedMemory {
 
 /// Empty shared memory.
 ///
-/// As it does not have allocations it is usable with mem::replace operations.
+/// Used as placeholder inside Interpreter when it is not running.
 pub const EMPTY_SHARED_MEMORY: SharedMemory = SharedMemory {
     buffer: Vec::new(),
     checkpoints: Vec::new(),

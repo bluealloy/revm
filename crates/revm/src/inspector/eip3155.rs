@@ -88,8 +88,6 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         result: InterpreterResult,
     ) -> InterpreterResult {
         let result = self.gas_inspector.call_end(context, result);
-        // self.log_step(interp, data, is_static, eval);
-        //self.skip = true;
         if context.journaled_state.depth() == 0 {
             let log_line = json!({
                 //stateroot
@@ -119,9 +117,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         result: InterpreterResult,
         address: Option<Address>,
     ) -> (InterpreterResult, Option<Address>) {
-        let result = self.gas_inspector.create_end(context, result, address);
-        //self.skip = true;
-        result
+        self.gas_inspector.create_end(context, result, address)
     }
 }
 

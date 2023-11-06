@@ -263,14 +263,12 @@ pub fn selfdestruct_cost<SPEC: Spec>(res: SelfDestructResult) -> u64 {
 }
 
 pub fn call_cost<SPEC: Spec>(
-    value: U256,
+    transfers_value: bool,
     is_new: bool,
     is_cold: bool,
     is_call_or_callcode: bool,
     is_call_or_staticcall: bool,
 ) -> u64 {
-    let transfers_value = value != U256::default();
-
     let call_gas = if SPEC::enabled(BERLIN) {
         if is_cold {
             COLD_ACCOUNT_ACCESS_COST

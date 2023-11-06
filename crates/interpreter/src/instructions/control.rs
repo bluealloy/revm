@@ -80,17 +80,17 @@ pub fn revert<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H)
     return_inner(interpreter, InstructionResult::Revert);
 }
 
+/// Stop opcode. This opcode halts the execution.
 pub fn stop<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
-    interpreter.return_data_buffer = Bytes::default();
     interpreter.instruction_result = InstructionResult::Stop;
 }
 
+/// Invalid opcode. This opcode halts the execution.
 pub fn invalid<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
-    interpreter.return_data_buffer = Bytes::default();
     interpreter.instruction_result = InstructionResult::InvalidFEOpcode;
 }
 
-pub fn not_found<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
-    interpreter.return_data_buffer = Bytes::default();
+/// Unknown opcode. This opcode halts the execution.
+pub fn unknown<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.instruction_result = InstructionResult::OpcodeNotFound;
 }

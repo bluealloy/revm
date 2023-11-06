@@ -43,8 +43,8 @@ pub enum InstructionTables<'a, H> {
 impl<'a, H> Clone for InstructionTables<'a, H> {
     fn clone(&self) -> Self {
         match self {
-            Self::Plain(arg0) => Self::Plain(arg0.clone()),
-            Self::Boxed(arg0) => Self::Boxed(arg0.clone()),
+            Self::Plain(table) => Self::Plain(table.clone()),
+            Self::Boxed(table) => Self::Boxed(table.clone()),
         }
     }
 }
@@ -75,7 +75,7 @@ macro_rules! opcodes {
         pub fn instruction<H: Host, SPEC: Spec>(opcode: u8) -> Instruction<H> {
             match opcode {
                 $($name => $f,)*
-                _ => control::not_found,
+                _ => control::unknown,
             }
         }
     };

@@ -16,7 +16,7 @@ use crate::{
     },
     CallStackFrame, EvmContext, Inspector,
 };
-use alloc::{sync::Arc, vec::Vec, boxed::Box};
+use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use auto_impl::auto_impl;
 use core::{fmt, marker::PhantomData, ops::Range};
 
@@ -161,15 +161,15 @@ impl<'a, SPEC: Spec + 'static, DB: Database> EVMImpl<'a, SPEC, DB> {
     }
 
     #[inline]
-    pub fn main_loop<FN>(
+    pub fn run<FN>(
         &mut self,
         instruction_table: &[FN; 256],
-        first_frame: CallStackFrame,
+        first_frame: Box<CallStackFrame>,
     ) -> InterpreterResult
     where
         FN: Fn(&mut Interpreter, &mut Self),
     {
-        let mut call_stack: Vec<CallStackFrame> = Vec::with_capacity(1026);
+        let mut call_stack: Vec<Box<CallStackFrame>> = Vec::with_capacity(1025);
         call_stack.push(first_frame);
 
         #[cfg(feature = "memory_limit")]
@@ -202,6 +202,9 @@ impl<'a, SPEC: Spec + 'static, DB: Database> EVMImpl<'a, SPEC, DB> {
                 ),
                 InterpreterAction::Create { inputs } => self.handle_sub_create(inputs, stack_frame),
                 InterpreterAction::Return { result } => {
+                    // free memory context.
+                    shared_memory.free_context();
+
                     let child = call_stack.pop().unwrap();
                     let parent = call_stack.last_mut();
 
@@ -224,8 +227,8 @@ impl<'a, SPEC: Spec + 'static, DB: Database> EVMImpl<'a, SPEC, DB> {
 
     fn handle_frame_return(
         &mut self,
-        mut child_stack_frame: CallStackFrame,
-        parent_stack_frame: Option<&mut CallStackFrame>,
+        mut child_stack_frame: Box<CallStackFrame>,
+        parent_stack_frame: Option<&mut Box<CallStackFrame>>,
         shared_memory: &mut SharedMemory,
         mut result: InterpreterResult,
     ) -> Option<InterpreterResult> {
@@ -242,9 +245,6 @@ impl<'a, SPEC: Spec + 'static, DB: Database> EVMImpl<'a, SPEC, DB> {
                 inspector.call_end(&mut self.context, result)
             };
         }
-
-        // free memory context.
-        shared_memory.free_context();
 
         // break from loop if this is last CallStackFrame.
         let Some(parent_stack_frame) = parent_stack_frame else {
@@ -287,7 +287,7 @@ impl<'a, SPEC: Spec + 'static, DB: Database> EVMImpl<'a, SPEC, DB> {
         &mut self,
         mut inputs: Box<CreateInputs>,
         curent_stack_frame: &mut CallStackFrame,
-    ) -> Option<CallStackFrame> {
+    ) -> Option<Box<CallStackFrame>> {
         // Call inspector if it is some.
         if let Some(inspector) = self.inspector.as_mut() {
             if let Some((result, address)) = inspector.create(&mut self.context, &mut inputs) {
@@ -329,7 +329,7 @@ impl<'a, SPEC: Spec + 'static, DB: Database> EVMImpl<'a, SPEC, DB> {
         curent_stake_frame: &mut CallStackFrame,
         return_memory_offset: Range<usize>,
         shared_memory: &mut SharedMemory,
-    ) -> Option<CallStackFrame> {
+    ) -> Option<Box<CallStackFrame>> {
         // Call inspector if it is some.
         if let Some(inspector) = self.inspector.as_mut() {
             if let Some((result, range)) = inspector.call(&mut self.context, &mut inputs) {
@@ -487,7 +487,7 @@ impl<'a, SPEC: Spec + 'static, DB: Database> EVMImpl<'a, SPEC, DB> {
                 caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
 
                 self.context.make_call_frame(
-                    &mut CallInputs {
+                    &CallInputs {
                         contract: address,
                         transfer: Transfer {
                             source: tx_caller,
@@ -508,15 +508,13 @@ impl<'a, SPEC: Spec + 'static, DB: Database> EVMImpl<'a, SPEC, DB> {
                     0..0,
                 )
             }
-            TransactTo::Create(scheme) => {
-                self.context.make_create_frame::<SPEC>(&mut CreateInputs {
-                    caller: tx_caller,
-                    scheme,
-                    value: tx_value,
-                    init_code: tx_data,
-                    gas_limit: transact_gas_limit,
-                })
-            }
+            TransactTo::Create(scheme) => self.context.make_create_frame::<SPEC>(&CreateInputs {
+                caller: tx_caller,
+                scheme,
+                value: tx_value,
+                init_code: tx_data,
+                gas_limit: transact_gas_limit,
+            }),
         };
         // Some only if it is create.
         let mut created_address = None;
@@ -527,8 +525,8 @@ impl<'a, SPEC: Spec + 'static, DB: Database> EVMImpl<'a, SPEC, DB> {
                 created_address = first_stack_frame.created_address;
                 let table = self.instruction_table.clone();
                 match table {
-                    InstructionTables::Plain(table) => self.main_loop(&table, first_stack_frame),
-                    InstructionTables::Boxed(table) => self.main_loop(&table, first_stack_frame),
+                    InstructionTables::Plain(table) => self.run(&table, first_stack_frame),
+                    InstructionTables::Boxed(table) => self.run(&table, first_stack_frame),
                 }
             }
             Err(interpreter_result) => interpreter_result,

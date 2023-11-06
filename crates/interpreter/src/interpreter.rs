@@ -40,6 +40,9 @@ pub struct Interpreter {
     /// The gas state.
     pub gas: Gas,
     /// Shared memory.
+    ///
+    /// Note: This field is only set while running the interpreter loop.
+    /// Otherwise it is taken and replaced with empty shared memory.
     pub shared_memory: SharedMemory,
     /// Stack.
     pub stack: Stack,
@@ -51,9 +54,10 @@ pub struct Interpreter {
     pub return_data_buffer: Bytes,
     /// Whether the interpreter is in "staticcall" mode, meaning no state changes can happen.
     pub is_static: bool,
-    /// Actions that interpreter should do.
+    /// Actions that the EVM should do.
     ///
-    /// Set inside CALL or CREATE instructions and RETURN or REVERT instructions.
+    /// Set inside CALL or CREATE instructions and RETURN or REVERT instructions. Additionally those instructions will set
+    /// InstructionResult to CallOrCreate/Return/Revert so we know the reason.
     pub next_action: Option<InterpreterAction>,
 }
 
@@ -99,8 +103,6 @@ impl Interpreter {
     }
 
     /// When sub create call returns we can insert output of that call into this interpreter.
-    ///
-    /// Note: SharedMemory is not available here because we are not executing sub call.
     pub fn insert_create_output(&mut self, result: InterpreterResult, address: Option<Address>) {
         let interpreter = self;
         interpreter.return_data_buffer = match result.result {
@@ -130,6 +132,9 @@ impl Interpreter {
     }
 
     /// When sub call returns we can insert output of that call into this interpreter.
+    ///
+    /// Note that shared memory is required as a input field.
+    /// As SharedMemory inside Interpreter is taken and replaced with empty (not valid) memory.
     pub fn insert_call_output(
         &mut self,
         shared_memory: &mut SharedMemory,
@@ -187,11 +192,6 @@ impl Interpreter {
     #[inline]
     pub fn stack(&self) -> &Stack {
         &self.stack
-    }
-
-    /// Returns a reference to the shared memory.
-    pub fn memory(&self) -> &SharedMemory {
-        &self.shared_memory
     }
 
     /// Returns the current program counter.
@@ -252,10 +252,11 @@ impl Interpreter {
         if let Some(action) = self.next_action.take() {
             return action;
         }
-        // If not return action without output. this means it is Interpreter halt.
+        // If not, return action without output.
         InterpreterAction::Return {
             result: InterpreterResult {
                 result: self.instruction_result,
+                // return empty bytecode
                 output: Bytes::new(),
                 gas: self.gas,
             },

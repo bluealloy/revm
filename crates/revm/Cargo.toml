@@ -54,7 +54,6 @@ dev = [
     "optional_beneficiary_reward",
 ]
 memory_limit = ["revm-interpreter/memory_limit"]
-no_gas_measuring = ["revm-interpreter/no_gas_measuring"]
 optional_balance_check = ["revm-interpreter/optional_balance_check"]
 optional_block_gas_limit = ["revm-interpreter/optional_block_gas_limit"]
 optional_eip3607 = ["revm-interpreter/optional_eip3607"]

@@ -12,8 +12,8 @@ use crate::{
     },
     CallStackFrame, CALL_STACK_LIMIT,
 };
-use core::ops::Range;
 use alloc::boxed::Box;
+use core::ops::Range;
 
 /// EVM Data contains all the data that EVM needs to execute.
 #[derive(Debug)]
@@ -138,7 +138,7 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
     pub fn make_create_frame<SPEC: Spec>(
         &mut self,
         inputs: &CreateInputs,
-    ) -> Result<CallStackFrame, InterpreterResult> {
+    ) -> Result<Box<CallStackFrame>, InterpreterResult> {
         // Prepare crate.
         let gas = Gas::new(inputs.gas_limit);
 
@@ -210,13 +210,13 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
             inputs.value,
         ));
 
-        Ok(CallStackFrame {
+        Ok(Box::new(CallStackFrame {
             is_create: true,
-            checkpoint: checkpoint,
+            checkpoint,
             created_address: Some(created_address),
             subcall_return_memory_range: 0..0,
             interpreter: Interpreter::new(contract, gas.limit(), false),
-        })
+        }))
     }
 
     /// Make call frame
@@ -224,7 +224,7 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
         &mut self,
         inputs: &CallInputs,
         return_memory_offset: Range<usize>,
-    ) -> Result<CallStackFrame, InterpreterResult> {
+    ) -> Result<Box<CallStackFrame>, InterpreterResult> {
         let gas = Gas::new(inputs.gas_limit);
 
         let return_result = |instruction_result: InstructionResult| {
@@ -273,7 +273,7 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
 
         if let Some(precompile) = self.precompiles.get(&inputs.contract) {
             //println!("Call precompile");
-            let result = self.call_precompile(precompile, &inputs, gas);
+            let result = self.call_precompile(precompile, inputs, gas);
             if matches!(result.result, return_ok!()) {
                 self.journaled_state.checkpoint_commit();
             } else {
@@ -288,13 +288,13 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
                 &inputs.context,
             ));
             // Create interpreter and execute subcall and push new CallStackFrame.
-            Ok(CallStackFrame {
+            Ok(Box::new(CallStackFrame {
                 is_create: false,
-                checkpoint: checkpoint,
+                checkpoint,
                 created_address: None,
                 subcall_return_memory_range: return_memory_offset,
                 interpreter: Interpreter::new(contract, gas.limit(), inputs.is_static),
-            })
+            }))
         } else {
             self.journaled_state.checkpoint_commit();
             return_result(InstructionResult::Stop)
@@ -346,7 +346,7 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
     pub fn call_return(
         &mut self,
         interpreter_result: InterpreterResult,
-        frame: CallStackFrame,
+        frame: Box<CallStackFrame>,
     ) -> InterpreterResult {
         // revert changes or not.
         if matches!(interpreter_result.result, return_ok!()) {
@@ -354,7 +354,7 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
         } else {
             self.journaled_state.checkpoint_revert(frame.checkpoint);
         }
-        return interpreter_result;
+        interpreter_result
     }
 
     /// Handles create return.
@@ -362,7 +362,7 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
     pub fn create_return<SPEC: Spec>(
         &mut self,
         mut interpreter_result: InterpreterResult,
-        frame: CallStackFrame,
+        frame: Box<CallStackFrame>,
     ) -> (InterpreterResult, Address) {
         let address = frame.created_address.unwrap();
         // if return is not ok revert and return.

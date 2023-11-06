@@ -54,8 +54,6 @@ pub struct Handler<DB: Database> {
     pub calculate_gas_refund: CalculateGasRefundHandle,
     /// Main return handle, returns the output of the transact.
     pub main_return: MainReturnHandle<DB>,
-    /// Main first  call
-    //pub main_first_call: MainFirstCall,
     /// End handle.
     pub end: EndHandle<DB>,
 }

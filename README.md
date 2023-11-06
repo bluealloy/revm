@@ -87,7 +87,7 @@ cargo run -p revm --features ethersdb --example fork_ref_transact
 * [Foundry](https://github.com/foundry-rs/foundry) is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.
 * [Helios](https://github.com/a16z/helios) is a fully trustless, efficient, and portable Ethereum light client written in Rust.
 * [Reth](https://github.com/paradigmxyz/reth) Modular, contributor-friendly and blazing-fast implementation of the Ethereum protocol
-* [Arbiter](https://github.com/primitivefinance/arbiter) is a CallStackFramework for stateful Ethereum smart-contract simulation
+* [Arbiter](https://github.com/primitivefinance/arbiter) is a framework for stateful Ethereum smart-contract simulation
 * [Zeth](https://github.com/risc0/zeth) is an open-source ZK block prover for Ethereum built on the RISC Zero zkVM.
 * ...
 
