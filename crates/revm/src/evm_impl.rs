@@ -24,15 +24,8 @@ use core::{fmt, marker::PhantomData};
 
 #[cfg(feature = "optimism")]
 use crate::optimism;
-#[cfg(feature = "runtime")]
-use fluentbase_runtime::{Runtime, RuntimeContext};
-#[cfg(feature = "runtime")]
-use fluentbase_rwasm::rwasm::Compiler;
-#[cfg(feature = "sdk")]
-use fluentbase_sdk::{rwasm_compile, rwasm_transact};
 
-#[cfg(all(not(feature = "sdk"), not(feature = "runtime")))]
-compile_error!("one of must be active");
+use fluentbase_sdk::{RwasmPlatformSDK, SDK};
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -504,33 +497,23 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         // TODO catch 'buffer small' error and expand buffer till output fits into it
         let mut rwasm_bytecode = vec![0u8; 0];
 
-        #[cfg(feature = "sdk")]
-        {
-            let mut out_len_or_err: i32;
-            loop {
-                out_len_or_err = rwasm_compile(&inputs.init_code, &mut rwasm_bytecode[..]);
-                if out_len_or_err < 0 {
-                    return Err(CreateResult {
-                        result: InstructionResult::FatalExternalError,
-                        created_address: None,
-                        gas,
-                        return_value: Bytes::new(),
-                    });
-                }
-                if out_len_or_err > rwasm_bytecode.len() as i32 {
-                    rwasm_bytecode = vec![0u8; out_len_or_err as usize];
-                    continue;
-                }
-                rwasm_bytecode = rwasm_bytecode[..out_len_or_err as usize].to_vec();
-                break;
+        let mut out_len_or_err: i32;
+        loop {
+            out_len_or_err = SDK::rwasm_compile(&inputs.init_code, &mut rwasm_bytecode[..]);
+            if out_len_or_err < 0 {
+                return Err(CreateResult {
+                    result: InstructionResult::FatalExternalError,
+                    created_address: None,
+                    gas,
+                    return_value: Bytes::new(),
+                });
             }
-        }
-        #[cfg(feature = "runtime")]
-        {
-            let import_linker = Runtime::new_linker();
-            let mut compiler =
-                Compiler::new_with_linker(inputs.init_code.as_ref(), Some(&import_linker)).unwrap();
-            rwasm_bytecode = compiler.finalize().unwrap();
+            if out_len_or_err > rwasm_bytecode.len() as i32 {
+                rwasm_bytecode = vec![0u8; out_len_or_err as usize];
+                continue;
+            }
+            rwasm_bytecode = rwasm_bytecode[..out_len_or_err as usize].to_vec();
+            break;
         }
 
         let bytecode = Bytecode::new_raw(Bytes::copy_from_slice(&rwasm_bytecode));
@@ -679,56 +662,48 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         let bytecode = contract.bytecode.original_bytecode_slice();
         let mut output = vec![0u8; 0];
 
-        #[cfg(feature = "sdk")]
-        {
-            let input = &contract.input;
-            loop {
-                let out_len_or_err = rwasm_transact(
-                    bytecode.as_ptr() as i32,
-                    bytecode.len() as i32,
-                    input.as_ptr() as i32,
-                    input.len() as i32,
-                    output.as_mut_ptr() as i32,
-                    output.len() as i32,
+        let input = &contract.input;
+        loop {
+            let out_len_or_err =
+                SDK::rwasm_transact(bytecode, input.as_ref(), output.as_mut_slice(), state);
+            if out_len_or_err < 0 {
+                return (
+                    InstructionResult::FatalExternalError,
+                    Bytes::new(),
+                    Gas::new(gas_limit),
                 );
-                if out_len_or_err < 0 {
-                    return (
-                        InstructionResult::FatalExternalError,
-                        Bytes::new(),
-                        Gas::new(gas_limit),
-                    );
-                }
-                if output.len() < out_len_or_err as usize {
-                    output = vec![0u8; out_len_or_err as usize];
-                    continue;
-                }
-                break;
             }
+            if output.len() < out_len_or_err as usize {
+                output = vec![0u8; out_len_or_err as usize];
+                continue;
+            }
+            break;
         }
+
         let mut error_code = InstructionResult::Stop;
-        #[cfg(feature = "runtime")]
-        {
-            let import_linker = Runtime::new_linker();
-            let execution_result = Runtime::run_with_context(
-                RuntimeContext::new(bytecode)
-                    .with_input(&vec![contract.input.to_vec()])
-                    .with_state(state),
-                &import_linker,
-            )
-            .unwrap();
-            if execution_result.data().exit_code() != 0 {
-                if execution_result.data().output().is_empty() {
-                    output = vec![0; 4];
-                    let error_code_be = execution_result.data().exit_code().to_be_bytes();
-                    output.copy_from_slice(&error_code_be);
-                } else {
-                    output = execution_result.data().output().to_owned();
-                }
-                error_code = InstructionResult::Revert
-            } else {
-                output = execution_result.data().output().to_owned();
-            }
-        }
+        // #[cfg(feature = "runtime")]
+        // {
+        //     let import_linker = Runtime::new_linker();
+        //     let execution_result = Runtime::run_with_context(
+        //         RuntimeContext::new(bytecode)
+        //             .with_input(&vec![contract.input.to_vec()])
+        //             .with_state(state),
+        //         &import_linker,
+        //     )
+        //     .unwrap();
+        //     if execution_result.data().exit_code() != 0 {
+        //         if execution_result.data().output().is_empty() {
+        //             output = vec![0; 4];
+        //             let error_code_be = execution_result.data().exit_code().to_be_bytes();
+        //             output.copy_from_slice(&error_code_be);
+        //         } else {
+        //             output = execution_result.data().output().to_owned();
+        //         }
+        //         error_code = InstructionResult::Revert
+        //     } else {
+        //         output = execution_result.data().output().to_owned();
+        //     }
+        // }
 
         (
             error_code,

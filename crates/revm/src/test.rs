@@ -4,22 +4,19 @@ use crate::{
     },
     Database, DatabaseCommit, EVM,
 };
-#[cfg(feature = "runtime")]
-use fluentbase_rwasm::rwasm::{Compiler, ImportLinker};
+use fluentbase_sdk::{RwasmPlatformSDK, SDK};
 use hex_literal::hex;
 use revm_interpreter::primitives::{Env, TransactTo};
 
 fn wat2rwasm(wat: &str) -> Vec<u8> {
     let wasm_binary = wat::parse_str(wat).unwrap();
-    let mut compiler = Compiler::new(&wasm_binary).unwrap();
-    compiler.finalize().unwrap()
+    wasm2rwasm(wasm_binary.as_slice())
 }
 
-fn wasm2rwasm(wasm_binary: &[u8], import_linker: &ImportLinker) -> Vec<u8> {
-    Compiler::new_with_linker(&wasm_binary.to_vec(), Some(import_linker))
-        .unwrap()
-        .finalize()
-        .unwrap()
+fn wasm2rwasm(wasm_binary: &[u8]) -> Vec<u8> {
+    let mut output = vec![0u8; 1024 * 1024];
+    SDK::rwasm_compile(wasm_binary, output.as_mut_slice());
+    output
 }
 
 #[derive(Default)]
