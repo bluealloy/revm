@@ -95,7 +95,7 @@ fn test_simple() {
         block: Default::default(),
         tx: TxEnv {
             gas_limit: 1_000_000,
-            transact_to: TransactTo::Call(Address::zero()),
+            transact_to: TransactTo::Call(Address::ZERO),
             data: Default::default(),
             caller,
             ..Default::default()
@@ -113,7 +113,7 @@ fn test_simple() {
     );
     let bytecode = Bytecode::new_raw(rwasm_binary.into());
     test_db.add_account(
-        Address::zero(),
+        Address::ZERO,
         AccountInfo {
             balance: Default::default(),
             nonce: 0,

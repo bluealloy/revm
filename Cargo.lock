@@ -3718,6 +3718,7 @@ dependencies = [
  "fluentbase-rwasm",
  "fluentbase-sdk",
  "futures",
+ "hex-literal",
  "revm-interpreter",
  "revm-precompile",
  "serde",

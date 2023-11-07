@@ -39,6 +39,7 @@ wat = "1.0.77"
 ethers-contract = { version = "2.0.10", default-features = false }
 anyhow = "1.0.75"
 criterion = "0.5"
+hex-literal = "0.4.1"
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "runtime"]

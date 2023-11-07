@@ -564,7 +564,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             Err(e) => return e,
         };
 
-        // Create new interpreter and execute initcode
+        // Create new interpreter and execute init code
         let (exit_reason, mut bytes, mut gas) = self.run_interpreter(
             prepared_create.contract,
             prepared_create.gas.limit(),
@@ -676,16 +676,16 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         state: u32,
         shared_memory: &mut SharedMemory,
     ) -> (InstructionResult, Bytes, Gas) {
-        let code = contract.bytecode.original_bytecode_slice();
-        let input = &contract.input;
+        let bytecode = contract.bytecode.original_bytecode_slice();
         let mut output = vec![0u8; 0];
 
         #[cfg(feature = "sdk")]
         {
+            let input = &contract.input;
             loop {
                 let out_len_or_err = rwasm_transact(
-                    code.as_ptr() as i32,
-                    code.len() as i32,
+                    bytecode.as_ptr() as i32,
+                    bytecode.len() as i32,
                     input.as_ptr() as i32,
                     input.len() as i32,
                     output.as_mut_ptr() as i32,
@@ -705,21 +705,33 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                 break;
             }
         }
+        let mut error_code = InstructionResult::Stop;
         #[cfg(feature = "runtime")]
         {
             let import_linker = Runtime::new_linker();
             let execution_result = Runtime::run_with_context(
-                RuntimeContext::new(contract.bytecode.original_bytecode_slice())
+                RuntimeContext::new(bytecode)
                     .with_input(&vec![contract.input.to_vec()])
                     .with_state(state),
                 &import_linker,
             )
             .unwrap();
-            output = execution_result.data().output().to_owned();
+            if execution_result.data().exit_code() != 0 {
+                if execution_result.data().output().is_empty() {
+                    output = vec![0; 4];
+                    let error_code_be = execution_result.data().exit_code().to_be_bytes();
+                    output.copy_from_slice(&error_code_be);
+                } else {
+                    output = execution_result.data().output().to_owned();
+                }
+                error_code = InstructionResult::Revert
+            } else {
+                output = execution_result.data().output().to_owned();
+            }
         }
 
         (
-            InstructionResult::Stop,
+            error_code,
             Bytes::copy_from_slice(&output),
             Gas::new(gas_limit),
         )
