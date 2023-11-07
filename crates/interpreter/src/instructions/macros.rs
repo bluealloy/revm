@@ -46,16 +46,16 @@ macro_rules! gas_or_fail {
 
 macro_rules! shared_memory_resize {
     ($interp:expr, $offset:expr, $len:expr) => {
-        #[cfg(feature = "memory_limit")]
-        if $interp.shared_memory.limit_reached(new_size) {
-            $interp.instruction_result = InstructionResult::MemoryLimitOOG;
-            return;
-        }
-
         let size = $offset.saturating_add($len);
         if size > $interp.shared_memory.len() {
-            // we are find with saturating to usize if size is close to MAX value.
+            // We are fine with saturating to usize if size is close to MAX value.
             let rounded_size = crate::interpreter::next_multiple_of_32(size);
+
+            #[cfg(feature = "memory_limit")]
+            if $interp.shared_memory.limit_reached(size) {
+                $interp.instruction_result = InstructionResult::MemoryLimitOOG;
+                return;
+            }
 
             // Gas is calculated in evm words (256bits).
             let words_num = rounded_size / 32;
