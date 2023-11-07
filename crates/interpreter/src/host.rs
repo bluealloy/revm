@@ -1,8 +1,7 @@
 use crate::primitives::Bytecode;
-use crate::SharedStack;
 use crate::{
     primitives::{Address, Bytes, Env, B256, U256},
-    CallInputs, CreateInputs, Gas, InstructionResult, SelfDestructResult, SharedMemory,
+    SelfDestructResult,
 };
 use alloc::vec::Vec;
 pub use dummy::DummyHost;
@@ -52,22 +51,6 @@ pub trait Host {
 
     /// Emit a log owned by `address` with given `topics` and `data`.
     fn log(&mut self, address: Address, topics: Vec<B256>, data: Bytes);
-
-    /// Invoke a call operation.
-    fn call(
-        &mut self,
-        input: &mut CallInputs,
-        shared_memory: &mut SharedMemory,
-        shared_stack: &mut SharedStack,
-    ) -> (InstructionResult, Gas, Bytes);
-
-    /// Invoke a create operation.
-    fn create(
-        &mut self,
-        inputs: &mut CreateInputs,
-        shared_memory: &mut SharedMemory,
-        shared_stack: &mut SharedStack,
-    ) -> (InstructionResult, Option<Address>, Gas, Bytes);
 
     /// Mark `address` to be deleted, with funds transferred to `target`.
     fn selfdestruct(&mut self, address: Address, target: Address) -> Option<SelfDestructResult>;

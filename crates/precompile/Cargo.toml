@@ -18,7 +18,7 @@ sha2 = { version = "0.10", default-features = false }
 aurora-engine-modexp = { version = "1.0", default-features = false }
 
 # Optional KZG point evaluation precompile
-c-kzg = { version = "0.1.1", default-features = false, optional = true }
+c-kzg = { version = "0.4.0", default-features = false, optional = true }
 
 # ecRecover precompile
 k256 = { version = "0.13", default-features = false, features = ["ecdsa"] }

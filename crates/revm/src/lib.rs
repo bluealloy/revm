@@ -4,6 +4,9 @@
 #![deny(unused_must_use, rust_2018_idioms)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(all(feature = "with-serde", not(feature = "serde")))]
+compile_error!("`with-serde` feature has been renamed to `serde`.");
+
 #[macro_use]
 extern crate alloc;
 
@@ -11,6 +14,7 @@ pub mod db;
 mod evm;
 mod evm_context;
 mod evm_impl;
+mod frame;
 pub mod handler;
 mod inspector;
 mod journaled_state;
@@ -18,20 +22,16 @@ mod journaled_state;
 #[cfg(feature = "optimism")]
 pub mod optimism;
 
-#[cfg(all(feature = "with-serde", not(feature = "serde")))]
-compile_error!("`with-serde` feature has been renamed to `serde`.");
-
-pub(crate) const USE_GAS: bool = !cfg!(feature = "no_gas_measuring");
-
 pub type DummyStateDB = InMemoryDB;
 #[cfg(feature = "std")]
 pub use db::{
     CacheState, DBBox, State, StateBuilder, StateDBBox, TransitionAccount, TransitionState,
 };
 pub use db::{Database, DatabaseCommit, DatabaseRef, InMemoryDB};
-pub use evm::{evm_inner, new, EVM};
-pub use evm_context::EVMData;
-pub use evm_impl::{EVMImpl, Transact, CALL_STACK_LIMIT};
+pub use evm::{new, EVM};
+pub use evm_context::EvmContext;
+pub use evm_impl::{new_evm, EVMImpl, Transact, CALL_STACK_LIMIT};
+pub use frame::CallStackFrame;
 pub use journaled_state::{JournalCheckpoint, JournalEntry, JournaledState};
 
 // reexport `revm_precompiles`

@@ -14,10 +14,6 @@ External Crates:
 
 - `alloc`: The alloc crate is used to provide the ability to allocate memory on the heap. It's a part of Rust's standard library that can be used in environments without a full host OS.
 
-Constants:
-
-- `USE_GAS`: This constant determines whether gas measurement should be used. It's set to false if the no_gas_measuring feature is enabled.
-
 Re-exported Crates:
 
 - `revm_precompile`: This crate is re-exported, providing the precompiled contracts used in the EVM implementation.
@@ -28,6 +24,6 @@ Re-exported Types:
 
 - `Database`, `DatabaseCommit`, `InMemoryDB`: These types from the `db` module are re-exported for handling the database operations.
 - `EVM`: The `EVM` struct from the `evm` module is re-exported, serving as the main interface to the EVM implementation.
-- `EVMData`: The `EVMData` struct from the `evm_impl` module is re-exported, likely providing data structures to encapsulate EVM execution data.
+- `EvmContext`: The `EvmContext` struct from the `evm_impl` module is re-exported, likely providing data structures to encapsulate EVM execution data.
 - `JournalEntry`, `JournaledState`: These types from the `journaled_state` module are re-exported, providing the journaling system for the EVM state.
 - `inspectors`, `Inspector`: The `Inspector` trait and its implementations from the `inspector` module are re-exported for observing the EVM execution.

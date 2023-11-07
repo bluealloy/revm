@@ -1,13 +1,9 @@
-use crate::primitives::{specification, EVMError, EVMResult, Env, ExecutionResult};
 use crate::{
     db::{Database, DatabaseCommit, DatabaseRef},
-    evm_impl::{EVMImpl, Transact},
+    evm_impl::{new_evm, Transact},
+    primitives::{db::WrapDatabaseRef, EVMError, EVMResult, Env, ExecutionResult, ResultAndState},
     Inspector,
 };
-use alloc::boxed::Box;
-use revm_interpreter::primitives::db::WrapDatabaseRef;
-use revm_interpreter::primitives::ResultAndState;
-use revm_precompile::Precompiles;
 
 /// Struct that takes Database and enabled transact to update state directly to database.
 /// additionally it allows user to set all environment parameters.
@@ -76,7 +72,7 @@ impl<DB: Database> EVM<DB> {
     /// Do checks that could make transaction fail before call/create
     pub fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
         if let Some(db) = self.db.as_mut() {
-            evm_inner::<DB>(&mut self.env, db, None).preverify_transaction()
+            new_evm::<DB>(&mut self.env, db, None).preverify_transaction()
         } else {
             panic!("Database needs to be set");
         }
@@ -86,7 +82,7 @@ impl<DB: Database> EVM<DB> {
     /// state.
     pub fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
         if let Some(db) = self.db.as_mut() {
-            evm_inner::<DB>(&mut self.env, db, None).transact_preverified()
+            new_evm::<DB>(&mut self.env, db, None).transact_preverified()
         } else {
             panic!("Database needs to be set");
         }
@@ -95,7 +91,7 @@ impl<DB: Database> EVM<DB> {
     /// Execute transaction without writing to DB, return change state.
     pub fn transact(&mut self) -> EVMResult<DB::Error> {
         if let Some(db) = self.db.as_mut() {
-            evm_inner::<DB>(&mut self.env, db, None).transact()
+            new_evm::<DB>(&mut self.env, db, None).transact()
         } else {
             panic!("Database needs to be set");
         }
@@ -104,7 +100,7 @@ impl<DB: Database> EVM<DB> {
     /// Execute transaction with given inspector, without wring to DB. Return change state.
     pub fn inspect<INSP: Inspector<DB>>(&mut self, mut inspector: INSP) -> EVMResult<DB::Error> {
         if let Some(db) = self.db.as_mut() {
-            evm_inner::<DB>(&mut self.env, db, Some(&mut inspector)).transact()
+            new_evm::<DB>(&mut self.env, db, Some(&mut inspector)).transact()
         } else {
             panic!("Database needs to be set");
         }
@@ -115,7 +111,7 @@ impl<'a, DB: DatabaseRef> EVM<DB> {
     /// Do checks that could make transaction fail before call/create
     pub fn preverify_transaction_ref(&self) -> Result<(), EVMError<DB::Error>> {
         if let Some(db) = self.db.as_ref() {
-            evm_inner::<_>(&mut self.env.clone(), &mut WrapDatabaseRef(db), None)
+            new_evm::<_>(&mut self.env.clone(), &mut WrapDatabaseRef(db), None)
                 .preverify_transaction()
         } else {
             panic!("Database needs to be set");
@@ -126,7 +122,7 @@ impl<'a, DB: DatabaseRef> EVM<DB> {
     /// without writing to DB, return change state.
     pub fn transact_preverified_ref(&self) -> EVMResult<DB::Error> {
         if let Some(db) = self.db.as_ref() {
-            evm_inner::<_>(&mut self.env.clone(), &mut WrapDatabaseRef(db), None)
+            new_evm::<_>(&mut self.env.clone(), &mut WrapDatabaseRef(db), None)
                 .transact_preverified()
         } else {
             panic!("Database needs to be set");
@@ -136,7 +132,7 @@ impl<'a, DB: DatabaseRef> EVM<DB> {
     /// Execute transaction without writing to DB, return change state.
     pub fn transact_ref(&self) -> EVMResult<DB::Error> {
         if let Some(db) = self.db.as_ref() {
-            evm_inner::<_>(&mut self.env.clone(), &mut WrapDatabaseRef(db), None).transact()
+            new_evm::<_>(&mut self.env.clone(), &mut WrapDatabaseRef(db), None).transact()
         } else {
             panic!("Database needs to be set");
         }
@@ -148,7 +144,7 @@ impl<'a, DB: DatabaseRef> EVM<DB> {
         mut inspector: I,
     ) -> EVMResult<DB::Error> {
         if let Some(db) = self.db.as_ref() {
-            evm_inner::<_>(
+            new_evm(
                 &mut self.env.clone(),
                 &mut WrapDatabaseRef(db),
                 Some(&mut inspector),
@@ -181,45 +177,5 @@ impl<DB> EVM<DB> {
 
     pub fn take_db(&mut self) -> DB {
         core::mem::take(&mut self.db).unwrap()
-    }
-}
-
-pub fn evm_inner<'a, DB: Database>(
-    env: &'a mut Env,
-    db: &'a mut DB,
-    insp: Option<&'a mut dyn Inspector<DB>>,
-) -> Box<dyn Transact<DB::Error> + 'a> {
-    macro_rules! create_evm {
-        ($spec:ident) => {
-            Box::new(EVMImpl::<'a, $spec, DB>::new(
-                db,
-                env,
-                insp,
-                Precompiles::new(revm_precompile::SpecId::from_spec_id($spec::SPEC_ID)).clone(),
-            )) as Box<dyn Transact<DB::Error> + 'a>
-        };
-    }
-
-    use specification::*;
-    match env.cfg.spec_id {
-        SpecId::FRONTIER | SpecId::FRONTIER_THAWING => create_evm!(FrontierSpec),
-        SpecId::HOMESTEAD | SpecId::DAO_FORK => create_evm!(HomesteadSpec),
-        SpecId::TANGERINE => create_evm!(TangerineSpec),
-        SpecId::SPURIOUS_DRAGON => create_evm!(SpuriousDragonSpec),
-        SpecId::BYZANTIUM => create_evm!(ByzantiumSpec),
-        SpecId::PETERSBURG | SpecId::CONSTANTINOPLE => create_evm!(PetersburgSpec),
-        SpecId::ISTANBUL | SpecId::MUIR_GLACIER => create_evm!(IstanbulSpec),
-        SpecId::BERLIN => create_evm!(BerlinSpec),
-        SpecId::LONDON | SpecId::ARROW_GLACIER | SpecId::GRAY_GLACIER => {
-            create_evm!(LondonSpec)
-        }
-        SpecId::MERGE => create_evm!(MergeSpec),
-        SpecId::SHANGHAI => create_evm!(ShanghaiSpec),
-        SpecId::CANCUN => create_evm!(CancunSpec),
-        SpecId::LATEST => create_evm!(LatestSpec),
-        #[cfg(feature = "optimism")]
-        SpecId::BEDROCK => create_evm!(BedrockSpec),
-        #[cfg(feature = "optimism")]
-        SpecId::REGOLITH => create_evm!(RegolithSpec),
     }
 }

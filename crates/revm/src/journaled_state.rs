@@ -28,7 +28,7 @@ pub struct JournaledState {
     pub spec: SpecId,
     /// Precompiles addresses are used to check if loaded address
     /// should be considered cold or hot loaded. It is cloned from
-    /// EVMData to be directly accessed from JournaledState.
+    /// EvmContext to be directly accessed from JournaledState.
     ///
     /// Note that addresses are sorted.
     pub precompile_addresses: Vec<Address>,
@@ -202,8 +202,10 @@ impl JournaledState {
     /// 5. Increment nonce of created account if SpuriousDragon is active
     /// 6. Decrease balance of caller account.
     ///
-    /// Safety: It is assumed that caller balance is already checked and that
-    /// caller is already loaded inside evm. This is already done inside `create_inner`
+    /// # Panics
+    ///
+    /// Panics if the caller is not loaded inside of the EVM state.
+    /// This is should have been done inside `create_inner`.
     #[inline]
     pub fn create_account_checkpoint<SPEC: Spec>(
         &mut self,
@@ -791,7 +793,7 @@ pub enum JournalEntry {
 }
 
 /// SubRoutine checkpoint that will help us to go back from this
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct JournalCheckpoint {
     log_i: usize,
     journal_i: usize,

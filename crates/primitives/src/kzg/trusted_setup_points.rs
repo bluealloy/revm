@@ -11,17 +11,20 @@ pub const NUM_G2_POINTS: usize = 65;
 
 /// A newtype over list of G1 point from kzg trusted setup.
 #[derive(Debug, Clone, PartialEq, AsRef, AsMut, Deref, DerefMut)]
+#[repr(transparent)]
 pub struct G1Points(pub [[u8; BYTES_PER_G1_POINT]; NUM_G1_POINTS]);
-
-/// A newtype over list of G2 point from kzg trusted setup.
-#[derive(Debug, Clone, Eq, PartialEq, AsRef, AsMut, Deref, DerefMut)]
-pub struct G2Points(pub [[u8; BYTES_PER_G2_POINT]; NUM_G2_POINTS]);
 
 impl Default for G1Points {
     fn default() -> Self {
         Self([[0; BYTES_PER_G1_POINT]; NUM_G1_POINTS])
     }
 }
+
+/// A newtype over list of G2 point from kzg trusted setup.
+#[derive(Debug, Clone, Eq, PartialEq, AsRef, AsMut, Deref, DerefMut)]
+#[repr(transparent)]
+pub struct G2Points(pub [[u8; BYTES_PER_G2_POINT]; NUM_G2_POINTS]);
+
 impl Default for G2Points {
     fn default() -> Self {
         Self([[0; BYTES_PER_G2_POINT]; NUM_G2_POINTS])
@@ -42,16 +45,14 @@ pub const G2_POINTS: &G2Points = {
     unsafe { &*BYTES.as_ptr().cast::<G2Points>() }
 };
 
-/// Pros over `include_str!(<path-to-trusted-setup>)`:
-/// - partially decoded (hex strings -> point bytes)
-/// - smaller runtime static size (198K = `4096*48 + 65*96` vs 404K)
-/// - don't have to do weird hacks to call `load_trusted_setup_file` at runtime, see
-///   [Reth](https://github.com/paradigmxyz/reth/blob/b839e394a45edbe7b2030fb370420ca771e5b728/crates/primitives/src/constants/eip4844.rs#L44-L52)
-pub fn format_kzg_settings(
+/// Parses the contents of a KZG trusted setup file into a list of G1 and G2 points.
+///
+/// These can then be used to create a KZG settings object with
+/// [`KzgSettings::load_trusted_setup`](c_kzg::KzgSettings::load_trusted_setup).
+pub fn parse_kzg_trusted_setup(
     trusted_setup: &str,
 ) -> Result<(Box<G1Points>, Box<G2Points>), KzgErrors> {
-    let contents = trusted_setup;
-    let mut lines = contents.lines();
+    let mut lines = trusted_setup.lines();
 
     // load number of points
     let n_g1 = lines
@@ -65,26 +66,26 @@ pub fn format_kzg_settings(
         .parse::<usize>()
         .map_err(|_| KzgErrors::ParseError)?;
 
-    if n_g2 != 65 {
+    if n_g1 != NUM_G1_POINTS {
+        return Err(KzgErrors::MismatchedNumberOfPoints);
+    }
+
+    if n_g2 != NUM_G2_POINTS {
         return Err(KzgErrors::MismatchedNumberOfPoints);
     }
 
     // load g1 points
     let mut g1_points = Box::<G1Points>::default();
-    for i in 0..n_g1 {
+    for bytes in &mut g1_points.0 {
         let line = lines.next().ok_or(KzgErrors::FileFormatError)?;
-        let mut bytes = [0; BYTES_PER_G1_POINT];
-        crate::hex::decode_to_slice(line, &mut bytes).map_err(|_| KzgErrors::ParseError)?;
-        g1_points[i] = bytes;
+        crate::hex::decode_to_slice(line, bytes).map_err(|_| KzgErrors::ParseError)?;
     }
 
     // load g2 points
     let mut g2_points = Box::<G2Points>::default();
-    for i in 0..n_g2 {
+    for bytes in &mut g2_points.0 {
         let line = lines.next().ok_or(KzgErrors::FileFormatError)?;
-        let mut bytes = [0; BYTES_PER_G2_POINT];
-        crate::hex::decode_to_slice(line, &mut bytes).map_err(|_| KzgErrors::ParseError)?;
-        g2_points[i] = bytes;
+        crate::hex::decode_to_slice(line, bytes).map_err(|_| KzgErrors::ParseError)?;
     }
 
     if lines.next().is_some() {

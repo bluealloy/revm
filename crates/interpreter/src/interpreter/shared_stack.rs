@@ -66,6 +66,13 @@ pub struct SharedStack {
     context_len: usize,
 }
 
+pub const EMPTY_SHARED_STACK: SharedStack = SharedStack {
+    buffer: core::ptr::null_mut(),
+    pages: Vec::new(),
+    context_len: 0,
+    page_idx: 0,
+};
+
 impl fmt::Display for SharedStack {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("[")?;

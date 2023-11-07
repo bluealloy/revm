@@ -11,7 +11,7 @@ use alloc::sync::Arc;
 use core::fmt;
 
 /// EVM opcode function signature.
-pub type Instruction<H> = fn(&mut Interpreter<'_>, &mut H);
+pub type Instruction<H> = fn(&mut Interpreter, &mut H);
 
 /// Instruction table is list of instruction function pointers mapped to
 /// 256 EVM opcodes.
@@ -21,7 +21,7 @@ pub type InstructionTable<H> = [Instruction<H>; 256];
 pub type InstructionTableArc<H> = Arc<InstructionTable<H>>;
 
 /// EVM opcode function signature.
-pub type BoxedInstruction<'a, H> = Box<dyn Fn(&mut Interpreter<'_>, &mut H) + 'a>;
+pub type BoxedInstruction<'a, H> = Box<dyn Fn(&mut Interpreter, &mut H) + 'a>;
 
 /// A table of instructions.
 pub type BoxedInstructionTable<'a, H> = [BoxedInstruction<'a, H>; 256];
@@ -35,10 +35,18 @@ pub type BoxedInstructionTableArc<'a, H> = Arc<BoxedInstructionTable<'a, H>>;
 /// Note that `Plain` variant gives us 10-20% faster Interpreter execution.
 ///
 /// Boxed variant can be used to wrap plain function pointer with closure.
-#[derive(Clone)]
 pub enum InstructionTables<'a, H> {
     Plain(InstructionTableArc<H>),
     Boxed(BoxedInstructionTableArc<'a, H>),
+}
+
+impl<'a, H> Clone for InstructionTables<'a, H> {
+    fn clone(&self) -> Self {
+        match self {
+            Self::Plain(table) => Self::Plain(table.clone()),
+            Self::Boxed(table) => Self::Boxed(table.clone()),
+        }
+    }
 }
 
 macro_rules! opcodes {
@@ -67,7 +75,7 @@ macro_rules! opcodes {
         pub fn instruction<H: Host, SPEC: Spec>(opcode: u8) -> Instruction<H> {
             match opcode {
                 $($name => $f,)*
-                _ => control::not_found,
+                _ => control::unknown,
             }
         }
     };

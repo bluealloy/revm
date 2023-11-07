@@ -19,8 +19,24 @@ macro_rules! check {
 
 macro_rules! gas {
     ($interp:expr, $gas:expr) => {
-        if crate::USE_GAS {
-            if !$interp.gas.record_cost($gas) {
+        if !$interp.gas.record_cost($gas) {
+            $interp.instruction_result = InstructionResult::OutOfGas;
+            return;
+        }
+    };
+}
+
+macro_rules! refund {
+    ($interp:expr, $gas:expr) => {
+        $interp.gas.record_refund($gas)
+    };
+}
+
+macro_rules! gas_or_fail {
+    ($interp:expr, $gas:expr) => {
+        match $gas {
+            Some(gas_used) => gas!($interp, gas_used),
+            None => {
                 $interp.instruction_result = InstructionResult::OutOfGas;
                 return;
             }
@@ -28,52 +44,26 @@ macro_rules! gas {
     };
 }
 
-macro_rules! refund {
-    ($interp:expr, $gas:expr) => {
-        if crate::USE_GAS {
-            $interp.gas.record_refund($gas);
-        }
-    };
-}
-
-macro_rules! gas_or_fail {
-    ($interp:expr, $gas:expr) => {
-        if crate::USE_GAS {
-            match $gas {
-                Some(gas_used) => gas!($interp, gas_used),
-                None => {
-                    $interp.instruction_result = InstructionResult::OutOfGas;
-                    return;
-                }
-            }
-        }
-    };
-}
-
 macro_rules! shared_memory_resize {
     ($interp:expr, $offset:expr, $len:expr) => {
-        if let Some(new_size) =
-            crate::interpreter::next_multiple_of_32($offset.saturating_add($len))
-        {
+        let size = $offset.saturating_add($len);
+        if size > $interp.shared_memory.len() {
+            // We are fine with saturating to usize if size is close to MAX value.
+            let rounded_size = crate::interpreter::next_multiple_of_32(size);
+
             #[cfg(feature = "memory_limit")]
-            if $interp.shared_memory.limit_reached(new_size) {
+            if $interp.shared_memory.limit_reached(size) {
                 $interp.instruction_result = InstructionResult::MemoryLimitOOG;
                 return;
             }
 
-            if new_size > $interp.shared_memory.len() {
-                if crate::USE_GAS {
-                    let num_bytes = new_size / 32;
-                    if !$interp.gas.record_memory(crate::gas::memory_gas(num_bytes)) {
-                        $interp.instruction_result = InstructionResult::MemoryLimitOOG;
-                        return;
-                    }
-                }
-                $interp.shared_memory.resize(new_size);
+            // Gas is calculated in evm words (256bits).
+            let words_num = rounded_size / 32;
+            if !$interp.gas.record_memory(crate::gas::memory_gas(words_num)) {
+                $interp.instruction_result = InstructionResult::MemoryLimitOOG;
+                return;
             }
-        } else {
-            $interp.instruction_result = InstructionResult::MemoryOOG;
-            return;
+            $interp.shared_memory.resize(rounded_size);
         }
     };
 }
@@ -84,17 +74,17 @@ macro_rules! pop_address {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
-        // Safety: Length is checked above.
+        // SAFETY: Length is checked above.
         let $x1 = Address::from_word(B256::from(unsafe { $interp.shared_stack.pop_unsafe() }));
     };
     ($interp:expr, $x1:ident, $x2:ident) => {
-        if $interp.stack.len() < 2 {
+        if $interp.shared_stack.len() < 2 {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
-        // Safety: Length is checked above.
-        let $x1 = Address::from_word(B256::from(unsafe { $interp.stack.pop_unsafe() }));
-        let $x2 = Address::from_word(B256::from(unsafe { $interp.stack.pop_unsafe() }));
+        // SAFETY: Length is checked above.
+        let $x1 = Address::from_word(B256::from(unsafe { $interp.shared_stack.pop_unsafe() }));
+        let $x2 = Address::from_word(B256::from(unsafe { $interp.shared_stack.pop_unsafe() }));
     };
 }
 
@@ -104,7 +94,7 @@ macro_rules! pop {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
-        // Safety: Length is checked above.
+        // SAFETY: Length is checked above.
         let $x1 = unsafe { $interp.shared_stack.pop_unsafe() };
     };
     ($interp:expr, $x1:ident, $x2:ident) => {
@@ -112,7 +102,7 @@ macro_rules! pop {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
-        // Safety: Length is checked above.
+        // SAFETY: Length is checked above.
         let ($x1, $x2) = unsafe { $interp.shared_stack.pop2_unsafe() };
     };
     ($interp:expr, $x1:ident, $x2:ident, $x3:ident) => {
@@ -120,7 +110,7 @@ macro_rules! pop {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
-        // Safety: Length is checked above.
+        // SAFETY: Length is checked above.
         let ($x1, $x2, $x3) = unsafe { $interp.shared_stack.pop3_unsafe() };
     };
 
@@ -129,7 +119,7 @@ macro_rules! pop {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
-        // Safety: Length is checked above.
+        // SAFETY: Length is checked above.
         let ($x1, $x2, $x3, $x4) = unsafe { $interp.shared_stack.pop4_unsafe() };
     };
 }
@@ -140,7 +130,7 @@ macro_rules! pop_top {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
-        // Safety: Length is checked above.
+        // SAFETY: Length is checked above.
         let $x1 = unsafe { $interp.shared_stack.top_unsafe() };
     };
     ($interp:expr, $x1:ident, $x2:ident) => {
@@ -148,7 +138,7 @@ macro_rules! pop_top {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
-        // Safety: Length is checked above.
+        // SAFETY: Length is checked above.
         let ($x1, $x2) = unsafe { $interp.shared_stack.pop_top_unsafe() };
     };
     ($interp:expr, $x1:ident, $x2:ident, $x3:ident) => {
@@ -156,11 +146,12 @@ macro_rules! pop_top {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
-        // Safety: Length is checked above.
+        // SAFETY: Length is checked above.
         let ($x1, $x2, $x3) = unsafe { $interp.shared_stack.pop2_top_unsafe() };
     };
 }
 
+#[macro_export]
 macro_rules! push_b256 {
 	($interp:expr, $($x:expr),* $(,)?) => ($(
         match $interp.shared_stack.push_b256($x) {
@@ -173,6 +164,7 @@ macro_rules! push_b256 {
     )*)
 }
 
+#[macro_export]
 macro_rules! push {
     ($interp:expr, $($x:expr),* $(,)?) => ($(
         match $interp.shared_stack.push($x) {

@@ -5,7 +5,7 @@ pub mod optimism;
 use crate::{
     interpreter::{Gas, InstructionResult},
     primitives::{db::Database, EVMError, EVMResultGeneric, Env, Output, ResultAndState, Spec},
-    EVMData,
+    EvmContext,
 };
 
 /// Handle call return and return final gas value.
@@ -13,7 +13,7 @@ type CallReturnHandle = fn(&Env, InstructionResult, Gas) -> Gas;
 
 /// Reimburse the caller with ethereum it didn't spent.
 type ReimburseCallerHandle<DB> =
-    fn(&mut EVMData<'_, DB>, &Gas) -> EVMResultGeneric<(), <DB as Database>::Error>;
+    fn(&mut EvmContext<'_, DB>, &Gas) -> EVMResultGeneric<(), <DB as Database>::Error>;
 
 /// Reward beneficiary with transaction rewards.
 type RewardBeneficiaryHandle<DB> = ReimburseCallerHandle<DB>;
@@ -23,7 +23,7 @@ type CalculateGasRefundHandle = fn(&Env, &Gas) -> u64;
 
 /// Main return handle, takes state from journal and transforms internal result to external.
 type MainReturnHandle<DB> = fn(
-    &mut EVMData<'_, DB>,
+    &mut EvmContext<'_, DB>,
     InstructionResult,
     Output,
     &Gas,
@@ -34,7 +34,7 @@ type MainReturnHandle<DB> = fn(
 ///
 /// It is useful for catching errors and returning them in a different way.
 type EndHandle<DB> = fn(
-    &mut EVMData<'_, DB>,
+    &mut EvmContext<'_, DB>,
     evm_output: Result<ResultAndState, EVMError<<DB as Database>::Error>>,
 ) -> Result<ResultAndState, EVMError<<DB as Database>::Error>>;
 
@@ -95,10 +95,10 @@ impl<DB: Database> Handler<DB> {
     /// Reimburse the caller with gas that were not spend.
     pub fn reimburse_caller(
         &self,
-        data: &mut EVMData<'_, DB>,
+        context: &mut EvmContext<'_, DB>,
         gas: &Gas,
     ) -> Result<(), EVMError<DB::Error>> {
-        (self.reimburse_caller)(data, gas)
+        (self.reimburse_caller)(context, gas)
     }
 
     /// Calculate gas refund for transaction. Some chains have it disabled.
@@ -109,29 +109,29 @@ impl<DB: Database> Handler<DB> {
     /// Reward beneficiary
     pub fn reward_beneficiary(
         &self,
-        data: &mut EVMData<'_, DB>,
+        context: &mut EvmContext<'_, DB>,
         gas: &Gas,
     ) -> Result<(), EVMError<DB::Error>> {
-        (self.reward_beneficiary)(data, gas)
+        (self.reward_beneficiary)(context, gas)
     }
 
     /// Main return.
     pub fn main_return(
         &self,
-        data: &mut EVMData<'_, DB>,
+        context: &mut EvmContext<'_, DB>,
         call_result: InstructionResult,
         output: Output,
         gas: &Gas,
     ) -> Result<ResultAndState, EVMError<DB::Error>> {
-        (self.main_return)(data, call_result, output, gas)
+        (self.main_return)(context, call_result, output, gas)
     }
 
     /// End handler.
     pub fn end(
         &self,
-        data: &mut EVMData<'_, DB>,
+        context: &mut EvmContext<'_, DB>,
         end_output: Result<ResultAndState, EVMError<DB::Error>>,
     ) -> Result<ResultAndState, EVMError<DB::Error>> {
-        (self.end)(data, end_output)
+        (self.end)(context, end_output)
     }
 }
