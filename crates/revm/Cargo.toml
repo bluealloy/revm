@@ -14,14 +14,14 @@ revm-interpreter = { path = "../interpreter", version = "1.1.2", default-feature
 revm-precompile = { path = "../precompile", version = "2.0.2", default-features = false }
 
 # rwasm
-fluentbase-rwasm = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "evm-instructions", optional=true }
-fluentbase-runtime = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "evm-instructions", optional=true }
-fluentbase-sdk = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "evm-instructions" }
+fluentbase-rwasm = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", optional=true }
+fluentbase-runtime = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", optional=true }
+fluentbase-sdk = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel" }
 
 #misc
 auto_impl = { version = "1.1", default-features = false }
 
-# Optional
+# Optionalc-kzg
 serde = { version = "1.0", features = ["derive", "rc"], optional = true }
 serde_json = { version = "1.0", features = ["preserve_order"], optional = true }
 

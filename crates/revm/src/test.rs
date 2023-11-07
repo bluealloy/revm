@@ -123,5 +123,5 @@ fn test_simple() {
     );
     evm.database(test_db);
     let res = evm.transact().unwrap();
-    println!("{:?}", res)
+    println!("{:?}", res);
 }
