@@ -9,7 +9,6 @@ use elliptic_curve::{
 };
 use num::ToPrimitive;
 use std::marker::PhantomData;
-use curve25519_dalek::traits::IsIdentity;
 
 use super::{calc_linear_cost_u32, extract_points, IDENTITY_BASE, IDENTITY_PER_WORD};
 use crate::{Error, Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn, Vec};
@@ -1447,7 +1446,7 @@ impl EcOps for SchnorrVerify1 {
             return Err(Error::EcOpsInvalidScalar);
         }
 
-        let e_bytes = hasher.compute_challenge(r_bytes, &&points[0].to_bytes()[1..], &msg);
+        let e_bytes = hasher.compute_challenge(r_bytes, &points[0].to_bytes()[1..], &msg);
         let e = <p256::Scalar as Reduce<p256::U256>>::reduce_bytes((&e_bytes[..]).into());
 
         let big_r = (p256::ProjectivePoint::GENERATOR * s.as_ref() - points[0] * e).to_affine();
@@ -1486,16 +1485,12 @@ impl EcOps for SchnorrVerify1 {
         }
         let r = curve25519_dalek::edwards::CompressedEdwardsY::from_slice(&data[..32])
             .map_err(|_| Error::EcOpsInvalidScalar)?;
-        if r.is_identity().into() {
+        if curve25519_dalek::traits::IsIdentity::is_identity(&r) {
             return Err(Error::EcOpsInvalidPoint);
         }
 
-        let big_r = curve25519_dalek::EdwardsPoint::vartime_double_scalar_mul_basepoint(
-            &e,
-            &-points[0],
-            &s,
-        )
-        .compress();
+        let big_r =
+            EdwardsPoint::vartime_double_scalar_mul_basepoint(&e, &-points[0], &s).compress();
         if big_r == r {
             Ok(vec![1u8])
         } else {
@@ -1682,13 +1677,12 @@ impl EcOps for SchnorrVerify2 {
         }
         let r = curve25519_dalek::edwards::CompressedEdwardsY::from_slice(&data[..32])
             .map_err(|_| Error::EcOpsInvalidScalar)?;
-        if r.is_identity().into() {
-            return Err(Error::EcOpsInvalidScalar);
+        if curve25519_dalek::traits::IsIdentity::is_identity(&r) {
+            return Err(Error::EcOpsInvalidPoint);
         }
 
         let big_r =
-            curve25519_dalek::EdwardsPoint::vartime_double_scalar_mul_basepoint(&e, &points[0], &s)
-                .compress();
+            EdwardsPoint::vartime_double_scalar_mul_basepoint(&e, &points[0], &s).compress();
         if big_r == r {
             Ok(vec![1u8])
         } else {
