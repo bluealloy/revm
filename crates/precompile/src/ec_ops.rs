@@ -9,6 +9,7 @@ use elliptic_curve::{
 };
 use num::ToPrimitive;
 use std::marker::PhantomData;
+use curve25519_dalek::traits::IsIdentity;
 
 use super::{calc_linear_cost_u32, extract_points, IDENTITY_BASE, IDENTITY_PER_WORD};
 use crate::{Error, Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn, Vec};
@@ -1404,6 +1405,9 @@ impl EcOps for SchnorrVerify1 {
         }
         let s =
             k256::NonZeroScalar::try_from(&data[32..]).map_err(|_| Error::EcOpsInvalidScalar)?;
+        if s.is_zero().into() {
+            return Err(Error::EcOpsInvalidScalar);
+        }
 
         let e_bytes = hasher.compute_challenge(r_bytes, &points[0].to_bytes()[1..], &msg);
         let e = <k256::Scalar as Reduce<k256::U256>>::reduce_bytes((&e_bytes[..]).into());
@@ -1439,6 +1443,9 @@ impl EcOps for SchnorrVerify1 {
         }
         let s =
             p256::NonZeroScalar::try_from(&data[32..]).map_err(|_| Error::EcOpsInvalidScalar)?;
+        if s.is_zero().into() {
+            return Err(Error::EcOpsInvalidScalar);
+        }
 
         let e_bytes = hasher.compute_challenge(r_bytes, &&points[0].to_bytes()[1..], &msg);
         let e = <p256::Scalar as Reduce<p256::U256>>::reduce_bytes((&e_bytes[..]).into());
@@ -1474,8 +1481,14 @@ impl EcOps for SchnorrVerify1 {
             curve25519_dalek::Scalar::from_canonical_bytes(s_bytes),
         )
         .ok_or(Error::EcOpsInvalidScalar)?;
+        if s.is_zero().into() {
+            return Err(Error::EcOpsInvalidScalar);
+        }
         let r = curve25519_dalek::edwards::CompressedEdwardsY::from_slice(&data[..32])
             .map_err(|_| Error::EcOpsInvalidScalar)?;
+        if r.is_identity().into() {
+            return Err(Error::EcOpsInvalidPoint);
+        }
 
         let big_r = curve25519_dalek::EdwardsPoint::vartime_double_scalar_mul_basepoint(
             &e,
@@ -1576,6 +1589,9 @@ impl EcOps for SchnorrVerify2 {
         }
         let s =
             k256::NonZeroScalar::try_from(&data[32..]).map_err(|_| Error::EcOpsInvalidScalar)?;
+        if s.is_zero().into() {
+            return Err(Error::EcOpsInvalidScalar);
+        }
 
         let e_bytes = hasher.compute_challenge(
             r_bytes,
@@ -1586,7 +1602,7 @@ impl EcOps for SchnorrVerify2 {
 
         let big_r = (k256::ProjectivePoint::GENERATOR * s.as_ref() + points[0] * e).to_affine();
 
-        if big_r.is_identity().into() || big_r.y_is_odd().into() || &big_r.x() != r_bytes {
+        if big_r.is_identity().into() || &big_r.x() != r_bytes {
             Ok(vec![0u8])
         } else {
             Ok(vec![1u8])
@@ -1615,6 +1631,9 @@ impl EcOps for SchnorrVerify2 {
         }
         let s =
             p256::NonZeroScalar::try_from(&data[32..]).map_err(|_| Error::EcOpsInvalidScalar)?;
+        if s.is_zero().into() {
+            return Err(Error::EcOpsInvalidScalar);
+        }
 
         let e_bytes = hasher.compute_challenge(
             r_bytes,
@@ -1625,7 +1644,7 @@ impl EcOps for SchnorrVerify2 {
 
         let big_r = (p256::ProjectivePoint::GENERATOR * s.as_ref() + points[0] * e).to_affine();
 
-        if big_r.is_identity().into() || big_r.y_is_odd().into() || &big_r.x() != r_bytes {
+        if big_r.is_identity().into() || &big_r.x() != r_bytes {
             Ok(vec![0u8])
         } else {
             Ok(vec![1u8])
@@ -1658,8 +1677,14 @@ impl EcOps for SchnorrVerify2 {
             curve25519_dalek::Scalar::from_canonical_bytes(s_bytes),
         )
         .ok_or(Error::EcOpsInvalidScalar)?;
+        if s.is_zero().into() {
+            return Err(Error::EcOpsInvalidScalar);
+        }
         let r = curve25519_dalek::edwards::CompressedEdwardsY::from_slice(&data[..32])
             .map_err(|_| Error::EcOpsInvalidScalar)?;
+        if r.is_identity().into() {
+            return Err(Error::EcOpsInvalidScalar);
+        }
 
         let big_r =
             curve25519_dalek::EdwardsPoint::vartime_double_scalar_mul_basepoint(&e, &points[0], &s)
@@ -2052,7 +2077,8 @@ mod test {
             curve25519_dalek::Scalar::from(3u64),
             curve25519_dalek::Scalar::from(4u64),
         ];
-        let expected = curve25519_dalek::constants::ED25519_BASEPOINT_POINT * curve25519_dalek::Scalar::from(10u64);
+        let expected = curve25519_dalek::constants::ED25519_BASEPOINT_POINT
+            * curve25519_dalek::Scalar::from(10u64);
         let mut input = CURVE_NAME_CURVE25519.to_vec();
         input.extend_from_slice(&[0u8; 31]);
         input.push(4);
@@ -2067,10 +2093,7 @@ mod test {
         let res = ec_sum_of_products(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
-        assert_eq!(
-            &expected.compress().as_bytes()[..],
-            &bytes[32..]
-        );
+        assert_eq!(&expected.compress().as_bytes()[..], &bytes[32..]);
     }
 
     #[test]
@@ -2087,7 +2110,8 @@ mod test {
             blsful::inner_types::Scalar::from(3u64),
             blsful::inner_types::Scalar::from(4u64),
         ];
-        let expected = blsful::inner_types::G1Projective::GENERATOR * blsful::inner_types::Scalar::from(10u64);
+        let expected =
+            blsful::inner_types::G1Projective::GENERATOR * blsful::inner_types::Scalar::from(10u64);
         let mut input = CURVE_NAME_BLS12381G1.to_vec();
         input.extend_from_slice(&[0u8; 31]);
         input.push(4);
@@ -2102,10 +2126,7 @@ mod test {
         let res = ec_sum_of_products(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
-        assert_eq!(
-            expected.to_uncompressed().to_vec(),
-            bytes
-        );
+        assert_eq!(expected.to_uncompressed().to_vec(), bytes);
     }
 
     #[test]
@@ -2122,7 +2143,8 @@ mod test {
             blsful::inner_types::Scalar::from(3u64),
             blsful::inner_types::Scalar::from(4u64),
         ];
-        let expected = blsful::inner_types::G2Projective::GENERATOR * blsful::inner_types::Scalar::from(10u64);
+        let expected =
+            blsful::inner_types::G2Projective::GENERATOR * blsful::inner_types::Scalar::from(10u64);
         let mut input = CURVE_NAME_BLS12381G2.to_vec();
         input.extend_from_slice(&[0u8; 31]);
         input.push(4);
@@ -2137,10 +2159,7 @@ mod test {
         let res = ec_sum_of_products(&input, 200);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
-        assert_eq!(
-            expected.to_uncompressed().to_vec(),
-            bytes
-        );
+        assert_eq!(expected.to_uncompressed().to_vec(), bytes);
     }
 
     #[test]
@@ -2591,9 +2610,12 @@ mod test {
         let (_, bytes) = res.unwrap();
 
         let mut temp = [0u8; 32];
-        hex::decode_to_slice("4838562f360e7087a5b2c6e867836ab6dd3b8d20c923eb2b535902739060bf09", &mut temp).unwrap();
+        hex::decode_to_slice(
+            "4838562f360e7087a5b2c6e867836ab6dd3b8d20c923eb2b535902739060bf09",
+            &mut temp,
+        )
+        .unwrap();
         let expected = curve25519_dalek::EdwardsPoint::from_bytes(&temp).unwrap();
         assert_eq!(expected.compress().as_bytes()[..], bytes[32..]);
     }
 }
-
