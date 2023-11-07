@@ -1,3 +1,4 @@
+use crate::EVMImpl;
 use alloc::boxed::Box;
 use revm_interpreter::{
     opcode::{BoxedInstruction, Instruction},
@@ -5,45 +6,34 @@ use revm_interpreter::{
     InstructionResult, Interpreter,
 };
 
-use crate::EVMImpl;
-
 /// Outer closure that calls Inspector for every instruction.
 pub fn inspector_instruction<'a, SPEC: Spec + 'static, DB: Database>(
     instruction: Instruction<EVMImpl<'a, SPEC, DB>>,
 ) -> BoxedInstruction<'a, EVMImpl<'a, SPEC, DB>> {
-    let inspector_instruction = Box::new(
+    Box::new(
         move |interpreter: &mut Interpreter, host: &mut EVMImpl<'a, SPEC, DB>| {
-            // step
-            let context = &mut host.context;
-            // Safety: as the PC was already incremented we need to subtract 1 to preserve the
-            // old Inspector behavior.
-            unsafe {
-                interpreter.instruction_pointer = interpreter.instruction_pointer.sub(1);
-            }
             if let Some(inspector) = host.inspector.as_mut() {
-                inspector.step(interpreter, context);
+                // SAFETY: as the PC was already incremented we need to subtract 1 to preserve the
+                // old Inspector behavior.
+                interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.sub(1) };
+
+                inspector.step(interpreter, &mut host.context);
                 if interpreter.instruction_result != InstructionResult::Continue {
                     return;
                 }
-            }
 
-            // Safety: return PC to previous state
-            unsafe {
-                interpreter.instruction_pointer = interpreter.instruction_pointer.add(1);
+                interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.add(1) };
             }
 
             // execute instruction.
             instruction(interpreter, host);
 
             // step ends
-            let context = &mut host.context;
             if let Some(inspector) = host.inspector.as_mut() {
-                inspector.step_end(interpreter, context);
+                inspector.step_end(interpreter, &mut host.context);
             }
         },
-    );
-
-    inspector_instruction
+    )
 }
 
 #[cfg(test)]

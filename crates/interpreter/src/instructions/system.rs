@@ -45,7 +45,7 @@ pub fn codecopy<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     let code_offset = as_usize_saturated!(code_offset);
     shared_memory_resize!(interpreter, memory_offset, len);
 
-    // Safety: set_data is unsafe function and memory_resize ensures us that it is safe to call it
+    // Note: this can't panic because we resized memory to fit.
     interpreter.shared_memory.set_data(
         memory_offset,
         code_offset,
@@ -91,7 +91,7 @@ pub fn calldatacopy<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     let data_offset = as_usize_saturated!(data_offset);
     shared_memory_resize!(interpreter, memory_offset, len);
 
-    // Safety: set_data is unsafe function and memory_resize ensures us that it is safe to call it
+    // Note: this can't panic because we resized memory to fit.
     interpreter.shared_memory.set_data(
         memory_offset,
         data_offset,

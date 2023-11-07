@@ -259,6 +259,7 @@ impl SharedMemory {
             self.slice_mut(memory_offset, len).fill(0);
             return;
         }
+
         let data_end = min(data_offset + len, data.len());
         let data_len = data_end - data_offset;
         debug_assert!(data_offset < data.len() && data_end <= data.len());
@@ -267,7 +268,7 @@ impl SharedMemory {
             .copy_from_slice(data);
 
         // nullify rest of memory slots
-        // SAFETY: Memory is assumed to be valid. And it is commented where that assumption is made
+        // SAFETY: Memory is assumed to be valid, and it is commented where this assumption is made.
         self.slice_mut(memory_offset + data_len, len - data_len)
             .fill(0);
     }
@@ -304,9 +305,9 @@ impl SharedMemory {
 
 /// Rounds up `x` to the closest multiple of 32. If `x % 32 == 0` then `x` is returned.
 #[inline]
-pub fn next_multiple_of_32(x: usize) -> Option<usize> {
+pub fn next_multiple_of_32(x: usize) -> usize {
     let r = x.bitand(31).not().wrapping_add(1).bitand(31);
-    x.checked_add(r)
+    x.saturating_add(r)
 }
 
 #[cfg(test)]
@@ -318,7 +319,7 @@ mod tests {
         // next_multiple_of_32 returns x when it is a multiple of 32
         for i in 0..32 {
             let x = i * 32;
-            assert_eq!(Some(x), next_multiple_of_32(x));
+            assert_eq!(x, next_multiple_of_32(x));
         }
 
         // next_multiple_of_32 rounds up to the nearest multiple of 32 when `x % 32 != 0`
@@ -327,7 +328,7 @@ mod tests {
                 continue;
             }
             let next_multiple = x + 32 - (x % 32);
-            assert_eq!(Some(next_multiple), next_multiple_of_32(x));
+            assert_eq!(next_multiple, next_multiple_of_32(x));
         }
     }
 

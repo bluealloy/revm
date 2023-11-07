@@ -11,7 +11,7 @@ pub fn jump<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     pop!(interpreter, dest);
     let dest = as_usize_or_fail!(interpreter, dest, InstructionResult::InvalidJump);
     if interpreter.contract.is_valid_jump(dest) {
-        // Safety: In analysis we are checking create our jump table and we do check above to be
+        // SAFETY: In analysis we are checking create our jump table and we do check above to be
         // sure that jump is safe to execute.
         interpreter.instruction_pointer =
             unsafe { interpreter.contract.bytecode.as_ptr().add(dest) };
@@ -26,7 +26,7 @@ pub fn jumpi<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     if value != U256::ZERO {
         let dest = as_usize_or_fail!(interpreter, dest, InstructionResult::InvalidJump);
         if interpreter.contract.is_valid_jump(dest) {
-            // Safety: In analysis we are checking if jump is valid destination and
+            // SAFETY: In analysis we are checking if jump is valid destination and
             // this `if` makes this unsafe block safe.
             interpreter.instruction_pointer =
                 unsafe { interpreter.contract.bytecode.as_ptr().add(dest) };

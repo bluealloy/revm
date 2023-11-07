@@ -202,8 +202,10 @@ impl JournaledState {
     /// 5. Increment nonce of created account if SpuriousDragon is active
     /// 6. Decrease balance of caller account.
     ///
-    /// Safety: It is assumed that caller balance is already checked and that
-    /// caller is already loaded inside evm. This is already done inside `create_inner`
+    /// # Panics
+    ///
+    /// Panics if the caller is not loaded inside of the EVM state.
+    /// This is should have been done inside `create_inner`.
     #[inline]
     pub fn create_account_checkpoint<SPEC: Spec>(
         &mut self,
