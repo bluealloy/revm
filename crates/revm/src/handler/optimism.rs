@@ -8,7 +8,7 @@ use crate::{
         db::Database, Account, EVMError, Env, ExecutionResult, Halt, HashMap, InvalidTransaction,
         Output, ResultAndState, Spec, SpecId::REGOLITH, U256,
     },
-    EVMData,
+    EvmContext,
 };
 use core::ops::Mul;
 
@@ -92,34 +92,34 @@ pub fn calculate_gas_refund<SPEC: Spec>(env: &Env, gas: &Gas) -> u64 {
 /// Reward beneficiary with gas fee.
 #[inline]
 pub fn reward_beneficiary<SPEC: Spec, DB: Database>(
-    data: &mut EVMData<'_, DB>,
+    context: &mut EvmContext<'_, DB>,
     gas: &Gas,
 ) -> Result<(), EVMError<DB::Error>> {
-    let is_deposit = data.env.cfg.optimism && data.env.tx.optimism.source_hash.is_some();
-    let disable_coinbase_tip = data.env.cfg.optimism && is_deposit;
+    let is_deposit = context.env.cfg.optimism && context.env.tx.optimism.source_hash.is_some();
+    let disable_coinbase_tip = context.env.cfg.optimism && is_deposit;
 
     // transfer fee to coinbase/beneficiary.
     if !disable_coinbase_tip {
-        mainnet::reward_beneficiary::<SPEC, DB>(data, gas)?;
+        mainnet::reward_beneficiary::<SPEC, DB>(context, gas)?;
     }
 
-    if data.env.cfg.optimism && !is_deposit {
+    if context.env.cfg.optimism && !is_deposit {
         // If the transaction is not a deposit transaction, fees are paid out
         // to both the Base Fee Vault as well as the L1 Fee Vault.
-        let Some(l1_block_info) = data.l1_block_info.clone() else {
+        let Some(l1_block_info) = context.l1_block_info.clone() else {
             panic!("[OPTIMISM] Failed to load L1 block information.");
         };
 
-        let Some(enveloped_tx) = &data.env.tx.optimism.enveloped_tx else {
+        let Some(enveloped_tx) = &context.env.tx.optimism.enveloped_tx else {
             panic!("[OPTIMISM] Failed to load enveloped transaction.");
         };
 
         let l1_cost = l1_block_info.calculate_tx_l1_cost::<SPEC>(enveloped_tx);
 
         // Send the L1 cost of the transaction to the L1 Fee Vault.
-        let Ok((l1_fee_vault_account, _)) = data
+        let Ok((l1_fee_vault_account, _)) = context
             .journaled_state
-            .load_account(optimism::L1_FEE_RECIPIENT, data.db)
+            .load_account(optimism::L1_FEE_RECIPIENT, context.db)
         else {
             panic!("[OPTIMISM] Failed to load L1 Fee Vault account");
         };
@@ -127,14 +127,14 @@ pub fn reward_beneficiary<SPEC: Spec, DB: Database>(
         l1_fee_vault_account.info.balance += l1_cost;
 
         // Send the base fee of the transaction to the Base Fee Vault.
-        let Ok((base_fee_vault_account, _)) = data
+        let Ok((base_fee_vault_account, _)) = context
             .journaled_state
-            .load_account(optimism::BASE_FEE_RECIPIENT, data.db)
+            .load_account(optimism::BASE_FEE_RECIPIENT, context.db)
         else {
             panic!("[OPTIMISM] Failed to load Base Fee Vault account");
         };
         base_fee_vault_account.mark_touch();
-        base_fee_vault_account.info.balance += data
+        base_fee_vault_account.info.balance += context
             .env
             .block
             .basefee
@@ -146,19 +146,19 @@ pub fn reward_beneficiary<SPEC: Spec, DB: Database>(
 /// Main return handle, returns the output of the transaction.
 #[inline]
 pub fn main_return<SPEC: Spec, DB: Database>(
-    data: &mut EVMData<'_, DB>,
+    context: &mut EvmContext<'_, DB>,
     call_result: InstructionResult,
     output: Output,
     gas: &Gas,
 ) -> Result<ResultAndState, EVMError<DB::Error>> {
-    let result = mainnet::main_return::<DB>(data, call_result, output, gas)?;
+    let result = mainnet::main_return::<DB>(context, call_result, output, gas)?;
 
     if result.result.is_halt() {
         // Post-regolith, if the transaction is a deposit transaction and it haults,
         // we bubble up to the global return handler. The mint value will be persisted
         // and the caller nonce will be incremented there.
-        let is_deposit = data.env.tx.optimism.source_hash.is_some();
-        let optimism_regolith = data.env.cfg.optimism && SPEC::enabled(REGOLITH);
+        let is_deposit = context.env.tx.optimism.source_hash.is_some();
+        let optimism_regolith = context.env.cfg.optimism && SPEC::enabled(REGOLITH);
         if is_deposit && optimism_regolith {
             return Err(EVMError::Transaction(
                 InvalidTransaction::HaltedDepositPostRegolith,
@@ -171,13 +171,13 @@ pub fn main_return<SPEC: Spec, DB: Database>(
 /// Deposit transaction can't be reverted and is always successful.
 #[inline]
 pub fn end_handle<SPEC: Spec, DB: Database>(
-    data: &mut EVMData<'_, DB>,
+    context: &mut EvmContext<'_, DB>,
     evm_output: Result<ResultAndState, EVMError<DB::Error>>,
 ) -> Result<ResultAndState, EVMError<DB::Error>> {
     evm_output.or_else(|err| {
         if matches!(err, EVMError::Transaction(_))
-            && data.env().cfg.optimism
-            && data.env().tx.optimism.source_hash.is_some()
+            && context.env().cfg.optimism
+            && context.env().tx.optimism.source_hash.is_some()
         {
             // If the transaction is a deposit transaction and it failed
             // for any reason, the caller nonce must be bumped, and the
@@ -185,13 +185,14 @@ pub fn end_handle<SPEC: Spec, DB: Database>(
             // also returned as a special Halt variant so that consumers can more
             // easily distinguish between a failed deposit and a failed
             // normal transaction.
-            let caller = data.env().tx.caller;
+            let caller = context.env().tx.caller;
 
             // Increment sender nonce and account balance for the mint amount. Deposits
             // always persist the mint amount, even if the transaction fails.
             let account = {
                 let mut acc = Account::from(
-                    data.db
+                    context
+                        .db
                         .basic(caller)
                         .unwrap_or_default()
                         .unwrap_or_default(),
@@ -200,7 +201,7 @@ pub fn end_handle<SPEC: Spec, DB: Database>(
                 acc.info.balance = acc
                     .info
                     .balance
-                    .saturating_add(U256::from(data.env().tx.optimism.mint.unwrap_or(0)));
+                    .saturating_add(U256::from(context.env().tx.optimism.mint.unwrap_or(0)));
                 acc.mark_touch();
                 acc
             };
@@ -210,14 +211,14 @@ pub fn end_handle<SPEC: Spec, DB: Database>(
             // limit of the transaction. pre-regolith, it is the gas limit
             // of the transaction for non system transactions and 0 for system
             // transactions.
-            let is_system_tx = data
+            let is_system_tx = context
                 .env()
                 .tx
                 .optimism
                 .is_system_transaction
                 .unwrap_or(false);
             let gas_used = if SPEC::enabled(REGOLITH) || !is_system_tx {
-                data.env().tx.gas_limit
+                context.env().tx.gas_limit
             } else {
                 0
             };

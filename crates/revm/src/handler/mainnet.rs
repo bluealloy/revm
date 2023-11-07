@@ -6,7 +6,7 @@ use crate::{
         db::Database, EVMError, Env, ExecutionResult, Output, ResultAndState, Spec, SpecId::LONDON,
         U256,
     },
-    EVMData,
+    EvmContext,
 };
 
 /// Handle output of the transaction
@@ -36,17 +36,16 @@ pub fn handle_call_return<SPEC: Spec>(
 
 #[inline]
 pub fn handle_reimburse_caller<SPEC: Spec, DB: Database>(
-    data: &mut EVMData<'_, DB>,
+    context: &mut EvmContext<'_, DB>,
     gas: &Gas,
 ) -> Result<(), EVMError<DB::Error>> {
-    let _ = data;
-    let caller = data.env.tx.caller;
-    let effective_gas_price = data.env.effective_gas_price();
+    let caller = context.env.tx.caller;
+    let effective_gas_price = context.env.effective_gas_price();
 
     // return balance of not spend gas.
-    let (caller_account, _) = data
+    let (caller_account, _) = context
         .journaled_state
-        .load_account(caller, data.db)
+        .load_account(caller, context.db)
         .map_err(EVMError::Database)?;
 
     caller_account.info.balance = caller_account
@@ -60,23 +59,23 @@ pub fn handle_reimburse_caller<SPEC: Spec, DB: Database>(
 /// Reward beneficiary with gas fee.
 #[inline]
 pub fn reward_beneficiary<SPEC: Spec, DB: Database>(
-    data: &mut EVMData<'_, DB>,
+    context: &mut EvmContext<'_, DB>,
     gas: &Gas,
 ) -> Result<(), EVMError<DB::Error>> {
-    let beneficiary = data.env.block.coinbase;
-    let effective_gas_price = data.env.effective_gas_price();
+    let beneficiary = context.env.block.coinbase;
+    let effective_gas_price = context.env.effective_gas_price();
 
     // transfer fee to coinbase/beneficiary.
     // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
     let coinbase_gas_price = if SPEC::enabled(LONDON) {
-        effective_gas_price.saturating_sub(data.env.block.basefee)
+        effective_gas_price.saturating_sub(context.env.block.basefee)
     } else {
         effective_gas_price
     };
 
-    let (coinbase_account, _) = data
+    let (coinbase_account, _) = context
         .journaled_state
-        .load_account(beneficiary, data.db)
+        .load_account(beneficiary, context.db)
         .map_err(EVMError::Database)?;
 
     coinbase_account.mark_touch();
@@ -105,10 +104,12 @@ pub fn calculate_gas_refund<SPEC: Spec>(env: &Env, gas: &Gas) -> u64 {
     }
 }
 
+//pub fn main_first_call
+
 /// Main return handle, returns the output of the transaction.
 #[inline]
 pub fn main_return<DB: Database>(
-    data: &mut EVMData<'_, DB>,
+    context: &mut EvmContext<'_, DB>,
     call_result: InstructionResult,
     output: Output,
     gas: &Gas,
@@ -118,7 +119,7 @@ pub fn main_return<DB: Database>(
     let final_gas_used = gas.spend() - gas_refunded;
 
     // reset journal and return present state.
-    let (state, logs) = data.journaled_state.finalize();
+    let (state, logs) = context.journaled_state.finalize();
 
     let result = match call_result.into() {
         SuccessOrHalt::Success(reason) => ExecutionResult::Success {
@@ -140,9 +141,10 @@ pub fn main_return<DB: Database>(
             gas_used: final_gas_used,
         },
         SuccessOrHalt::FatalExternalError => {
-            return Err(EVMError::Database(data.error.take().unwrap()));
+            return Err(EVMError::Database(context.error.take().unwrap()));
         }
-        SuccessOrHalt::InternalContinue => {
+        // Only two internal return flags.
+        SuccessOrHalt::InternalContinue | SuccessOrHalt::InternalCallOrCreate => {
             panic!("Internal return flags should remain internal {call_result:?}")
         }
     };
@@ -153,7 +155,7 @@ pub fn main_return<DB: Database>(
 /// Mainnet end handle does not change the output.
 #[inline]
 pub fn end_handle<DB: Database>(
-    _data: &mut EVMData<'_, DB>,
+    _context: &mut EvmContext<'_, DB>,
     evm_output: Result<ResultAndState, EVMError<DB::Error>>,
 ) -> Result<ResultAndState, EVMError<DB::Error>> {
     evm_output

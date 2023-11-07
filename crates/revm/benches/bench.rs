@@ -8,7 +8,7 @@ use revm::{
         address, bytes, hex, BerlinSpec, Bytecode, BytecodeState, Bytes, TransactTo, U256,
     },
 };
-use revm_interpreter::{opcode::make_instruction_table, SharedMemory};
+use revm_interpreter::{opcode::make_instruction_table, SharedMemory, EMPTY_SHARED_MEMORY};
 use std::time::Duration;
 
 type Evm = revm::EVM<BenchmarkDB>;
@@ -87,24 +87,22 @@ fn bench_transact(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm) {
 }
 
 fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm) {
-    let mut shared_memory = SharedMemory::new();
-
     g.bench_function("eval", |b| {
         let contract = Contract {
             input: evm.env.tx.data.clone(),
             bytecode: BytecodeLocked::try_from(evm.db.as_ref().unwrap().0.clone()).unwrap(),
             ..Default::default()
         };
+        let mut shared_memory = SharedMemory::new();
         let mut host = DummyHost::new(evm.env.clone());
         let instruction_table = make_instruction_table::<DummyHost, BerlinSpec>();
-        b.iter(|| {
-            let mut interpreter = Interpreter::new(
-                Box::new(contract.clone()),
-                u64::MAX,
-                false,
-                &mut shared_memory,
-            );
-            let res = interpreter.run(&instruction_table, &mut host);
+        b.iter(move || {
+            // replace memory with empty memory to use it inside interpreter.
+            // Later return memory back.
+            let temp = core::mem::replace(&mut shared_memory, EMPTY_SHARED_MEMORY);
+            let mut interpreter = Interpreter::new(Box::new(contract.clone()), u64::MAX, false);
+            let res = interpreter.run(temp, &instruction_table, &mut host);
+            shared_memory = interpreter.take_memory();
             host.clear();
             res
         })

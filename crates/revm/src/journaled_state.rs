@@ -28,7 +28,7 @@ pub struct JournaledState {
     pub spec: SpecId,
     /// Precompiles addresses are used to check if loaded address
     /// should be considered cold or hot loaded. It is cloned from
-    /// EVMData to be directly accessed from JournaledState.
+    /// EvmContext to be directly accessed from JournaledState.
     ///
     /// Note that addresses are sorted.
     pub precompile_addresses: Vec<Address>,
@@ -791,7 +791,7 @@ pub enum JournalEntry {
 }
 
 /// SubRoutine checkpoint that will help us to go back from this
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct JournalCheckpoint {
     log_i: usize,
     journal_i: usize,

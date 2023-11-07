@@ -15,10 +15,6 @@ External Crates:
 - [alloc](https://doc.rust-lang.org/alloc/): The alloc crate is used to provide the ability to allocate memory on the heap. It's a part of Rust's standard library that can be used in environments without a full host OS.
 - [core](https://doc.rust-lang.org/core/): The core crate is the dependency-free foundation of the Rust standard library. It includes fundamental types, macros, and traits.
 
-Constants:
-
-- `USE_GAS`: This constant determines whether gas measurement should be enabled. It's set to false if the `no_gas_measuring` feature is enabled.
-
 Re-exports:
 - Several types and functions are re-exported for easier access by users of this library, such as `Gas`, `Host`, `InstructionResult`, `OpCode`, `Interpreter`, `Memory`, `Stack`, and others. This allows users to import these items directly from the library root instead of from their individual modules.
 - `revm_primitives`: This crate is re-exported, providing primitive types or functionality used in the EVM implementation.
