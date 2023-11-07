@@ -2,7 +2,9 @@ use super::{
     plain_account::PlainStorage, transition_account::TransitionAccount, CacheAccount, PlainAccount,
 };
 use alloc::vec::Vec;
-use revm_interpreter::primitives::{AccountInfo, Bytecode, HashMap, State as EVMState, B160, B256};
+use revm_interpreter::primitives::{
+    Account, AccountInfo, Address, Bytecode, HashMap, State as EVMState, B256,
+};
 
 /// Cache state contains both modified and original values.
 ///
@@ -10,10 +12,10 @@ use revm_interpreter::primitives::{AccountInfo, Bytecode, HashMap, State as EVMS
 /// It loads all accounts from database and applies revm output to it.
 ///
 /// It generates transitions that is used to build BundleState.
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct CacheState {
     /// Block state account with account state
-    pub accounts: HashMap<B160, CacheAccount>,
+    pub accounts: HashMap<Address, CacheAccount>,
     /// created contracts
     /// TODO add bytecode counter for number of bytecodes added/removed.
     pub contracts: HashMap<B256, Bytecode>,
@@ -43,8 +45,9 @@ impl CacheState {
     }
 
     /// Helper function that returns all accounts.
+    ///
     /// Used inside tests to generate merkle tree.
-    pub fn trie_account(&self) -> impl IntoIterator<Item = (B160, &PlainAccount)> {
+    pub fn trie_account(&self) -> impl IntoIterator<Item = (Address, &PlainAccount)> {
         self.accounts.iter().filter_map(|(address, account)| {
             account
                 .account
@@ -54,13 +57,13 @@ impl CacheState {
     }
 
     /// Insert not existing account.
-    pub fn insert_not_existing(&mut self, address: B160) {
+    pub fn insert_not_existing(&mut self, address: Address) {
         self.accounts
             .insert(address, CacheAccount::new_loaded_not_existing());
     }
 
     /// Insert Loaded (Or LoadedEmptyEip161 if account is empty) account.
-    pub fn insert_account(&mut self, address: B160, info: AccountInfo) {
+    pub fn insert_account(&mut self, address: Address, info: AccountInfo) {
         let account = if !info.is_empty() {
             CacheAccount::new_loaded(info, HashMap::default())
         } else {
@@ -72,7 +75,7 @@ impl CacheState {
     /// Similar to `insert_account` but with storage.
     pub fn insert_account_with_storage(
         &mut self,
-        address: B160,
+        address: Address,
         info: AccountInfo,
         storage: PlainStorage,
     ) {
@@ -84,68 +87,67 @@ impl CacheState {
         self.accounts.insert(address, account);
     }
 
-    /// Apply output of revm execution and create TransactionAccount
-    /// that is used to build BundleState.
-    pub fn apply_evm_state(&mut self, evm_state: EVMState) -> Vec<(B160, TransitionAccount)> {
+    /// Apply output of revm execution and create account transitions that are used to build BundleState.
+    pub fn apply_evm_state(&mut self, evm_state: EVMState) -> Vec<(Address, TransitionAccount)> {
         let mut transitions = Vec::with_capacity(evm_state.len());
         for (address, account) in evm_state {
-            if !account.is_touched() {
-                // not touched account are never changed.
-                continue;
+            if let Some(transition) = self.apply_account_state(address, account) {
+                transitions.push((address, transition));
             }
-            let this_account = self
-                .accounts
-                .get_mut(&address)
-                .expect("All accounts should be present inside cache");
-
-            if account.is_selfdestructed() {
-                // If it is marked as selfdestructed inside revm
-                // we need to changed state to destroyed.
-                if let Some(transition) = this_account.selfdestruct() {
-                    transitions.push((address, transition));
-                }
-                continue;
-            }
-            if account.is_created() {
-                // Note: it can happen that created contract get selfdestructed in same block
-                // that is why is_created is checked after selfdestructed
-                //
-                // Note: Create2 opcode (Petersburg) was after state clear EIP (Spurious Dragon)
-                //
-                // Note: It is possibility to create KECCAK_EMPTY contract with some storage
-                // by just setting storage inside CRATE contstructor. Overlap of those contracts
-                // is not possible because CREATE2 is introduced later.
-
-                transitions.push((
-                    address,
-                    this_account.newly_created(account.info, account.storage),
-                ));
-            } else {
-                // Account is touched, but not selfdestructed or newly created.
-                // Account can be touched and not changed.
-
-                // And when empty account is touched it needs to be removed from database.
-                // EIP-161 state clear
-                if account.is_empty() {
-                    if self.has_state_clear {
-                        // touch empty account.
-                        if let Some(transition) = this_account.touch_empty_eip161() {
-                            transitions.push((address, transition));
-                        }
-                    } else {
-                        // if account is empty and state clear is not enabled we should save
-                        // empty account.
-                        if let Some(transition) =
-                            this_account.touch_create_pre_eip161(account.storage)
-                        {
-                            transitions.push((address, transition));
-                        }
-                    }
-                } else {
-                    transitions.push((address, this_account.change(account.info, account.storage)));
-                }
-            };
         }
         transitions
+    }
+
+    /// Apply updated account state to the cached account.
+    /// Returns account transition if applicable.
+    fn apply_account_state(
+        &mut self,
+        address: Address,
+        account: Account,
+    ) -> Option<TransitionAccount> {
+        // not touched account are never changed.
+        if !account.is_touched() {
+            return None;
+        }
+
+        let this_account = self
+            .accounts
+            .get_mut(&address)
+            .expect("All accounts should be present inside cache");
+
+        // If it is marked as selfdestructed inside revm
+        // we need to changed state to destroyed.
+        if account.is_selfdestructed() {
+            return this_account.selfdestruct();
+        }
+
+        // Note: it can happen that created contract get selfdestructed in same block
+        // that is why is_created is checked after selfdestructed
+        //
+        // Note: Create2 opcode (Petersburg) was after state clear EIP (Spurious Dragon)
+        //
+        // Note: It is possibility to create KECCAK_EMPTY contract with some storage
+        // by just setting storage inside CRATE constructor. Overlap of those contracts
+        // is not possible because CREATE2 is introduced later.
+        if account.is_created() {
+            return Some(this_account.newly_created(account.info, account.storage));
+        }
+
+        // Account is touched, but not selfdestructed or newly created.
+        // Account can be touched and not changed.
+        // And when empty account is touched it needs to be removed from database.
+        // EIP-161 state clear
+        if account.is_empty() {
+            if self.has_state_clear {
+                // touch empty account.
+                this_account.touch_empty_eip161()
+            } else {
+                // if account is empty and state clear is not enabled we should save
+                // empty account.
+                this_account.touch_create_pre_eip161(account.storage)
+            }
+        } else {
+            Some(this_account.change(account.info, account.storage))
+        }
     }
 }

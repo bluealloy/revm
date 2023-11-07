@@ -1,15 +1,25 @@
-use crate::{Bytecode, B160, B256, KECCAK_EMPTY, U256};
+use crate::{Address, Bytecode, B256, KECCAK_EMPTY, U256};
 use bitflags::bitflags;
+use core::hash::{Hash, Hasher};
 use hashbrown::HashMap;
 
-#[derive(Debug, Clone, Eq, PartialEq, Default)]
+/// EVM State is a mapping from addresses to accounts.
+pub type State = HashMap<Address, Account>;
+
+/// Structure used for EIP-1153 transient storage.
+pub type TransientStorage = HashMap<(Address, U256), U256>;
+
+/// An account's Storage is a mapping from 256-bit integer keys to [StorageSlot]s.
+pub type Storage = HashMap<U256, StorageSlot>;
+
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Account {
-    /// Balance of the account.
+    /// Balance, nonce, and code.
     pub info: AccountInfo,
-    /// storage cache
-    pub storage: HashMap<U256, StorageSlot>,
-    // Account status flags.
+    /// Storage cache
+    pub storage: Storage,
+    /// Account status flags.
     pub status: AccountStatus,
 }
 
@@ -41,13 +51,16 @@ impl Default for AccountStatus {
     }
 }
 
-pub type State = HashMap<B160, Account>;
-
-/// Structure used for EIP-1153 transient storage.
-pub type TransientStorage = HashMap<(B160, U256), U256>;
-pub type Storage = HashMap<U256, StorageSlot>;
-
 impl Account {
+    /// Create new account and mark it as non existing.
+    pub fn new_not_existing() -> Self {
+        Self {
+            info: AccountInfo::default(),
+            storage: HashMap::new(),
+            status: AccountStatus::LoadedAsNotExisting,
+        }
+    }
+
     /// Mark account as self destructed.
     pub fn mark_selfdestruct(&mut self) {
         self.status |= AccountStatus::SelfDestructed;
@@ -105,13 +118,11 @@ impl Account {
         self.info.is_empty()
     }
 
-    /// Create new account and mark it as non existing.
-    pub fn new_not_existing() -> Self {
-        Self {
-            info: AccountInfo::default(),
-            storage: HashMap::new(),
-            status: AccountStatus::LoadedAsNotExisting,
-        }
+    /// Returns an iterator over the storage slots that have been changed.
+    ///
+    /// See also [StorageSlot::is_changed]
+    pub fn changed_storage_slots(&self) -> impl Iterator<Item = (&U256, &StorageSlot)> {
+        self.storage.iter().filter(|(_, slot)| slot.is_changed())
     }
 }
 
@@ -125,7 +136,7 @@ impl From<AccountInfo> for Account {
     }
 }
 
-#[derive(Debug, Clone, Default, Eq, PartialEq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct StorageSlot {
     pub previous_or_original_value: U256,
@@ -173,7 +184,7 @@ pub struct AccountInfo {
     /// code hash,
     pub code_hash: B256,
     /// code: if None, `code_by_hash` will be used to fetch it if code needs to be loaded from
-    /// inside of revm.
+    /// inside of `revm`.
     pub code: Option<Bytecode>,
 }
 
@@ -196,6 +207,14 @@ impl PartialEq for AccountInfo {
     }
 }
 
+impl Hash for AccountInfo {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.balance.hash(state);
+        self.nonce.hash(state);
+        self.code_hash.hash(state);
+    }
+}
+
 impl AccountInfo {
     pub fn new(balance: U256, nonce: u64, code_hash: B256, code: Bytecode) -> Self {
         Self {
@@ -212,19 +231,37 @@ impl AccountInfo {
         self
     }
 
+    /// Returns if an account is empty.
+    ///
+    /// An account is empty if the following conditions are met.
+    /// - code hash is zero or set to the Keccak256 hash of the empty string `""`
+    /// - balance is zero
+    /// - nonce is zero
     pub fn is_empty(&self) -> bool {
-        let code_empty = self.code_hash == KECCAK_EMPTY || self.code_hash == B256::zero();
+        let code_empty = self.is_empty_code_hash() || self.code_hash == B256::ZERO;
         self.balance == U256::ZERO && self.nonce == 0 && code_empty
     }
 
+    /// Returns `true` if the account is not empty.
     pub fn exists(&self) -> bool {
         !self.is_empty()
+    }
+
+    /// Returns `true` if account has no nonce and code.
+    pub fn has_no_code_and_nonce(&self) -> bool {
+        self.is_empty_code_hash() && self.nonce == 0
     }
 
     /// Return bytecode hash associated with this account.
     /// If account does not have code, it return's `KECCAK_EMPTY` hash.
     pub fn code_hash(&self) -> B256 {
         self.code_hash
+    }
+
+    /// Returns true if the code hash is the Keccak256 hash of the empty string `""`.
+    #[inline]
+    pub fn is_empty_code_hash(&self) -> bool {
+        self.code_hash == KECCAK_EMPTY
     }
 
     /// Take bytecode from account. Code will be set to None.
@@ -243,6 +280,47 @@ impl AccountInfo {
 #[cfg(test)]
 mod tests {
     use crate::Account;
+    use crate::KECCAK_EMPTY;
+    use crate::U256;
+
+    #[test]
+    fn account_is_empty_balance() {
+        let mut account = Account::default();
+        assert!(account.is_empty());
+
+        account.info.balance = U256::from(1);
+        assert!(!account.is_empty());
+
+        account.info.balance = U256::ZERO;
+        assert!(account.is_empty());
+    }
+
+    #[test]
+    fn account_is_empty_nonce() {
+        let mut account = Account::default();
+        assert!(account.is_empty());
+
+        account.info.nonce = 1;
+        assert!(!account.is_empty());
+
+        account.info.nonce = 0;
+        assert!(account.is_empty());
+    }
+
+    #[test]
+    fn account_is_empty_code_hash() {
+        let mut account = Account::default();
+        assert!(account.is_empty());
+
+        account.info.code_hash = [1; 32].into();
+        assert!(!account.is_empty());
+
+        account.info.code_hash = [0; 32].into();
+        assert!(account.is_empty());
+
+        account.info.code_hash = KECCAK_EMPTY;
+        assert!(account.is_empty());
+    }
 
     #[test]
     fn account_state() {

@@ -1,13 +1,13 @@
 use super::{AccountRevert, BundleAccount, StorageWithOriginalValues};
 use crate::db::AccountStatus;
-use revm_interpreter::primitives::{hash_map, AccountInfo, Bytecode, B256};
+use revm_interpreter::primitives::{hash_map, AccountInfo, Bytecode, B256, I256, U256};
 
 /// Account Created when EVM state is merged to cache state.
-/// And it is send to Block state.
+/// And it is sent to Block state.
 ///
 /// It is used when block state gets merged to bundle state to
 /// create needed Reverts.
-#[derive(Clone, Debug, Eq, PartialEq, Default)]
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct TransitionAccount {
     pub info: Option<AccountInfo>,
     pub status: AccountStatus,
@@ -53,8 +53,37 @@ impl TransitionAccount {
         None
     }
 
-    /// Update new values of transition. Don't override old values
-    /// both account info and old storages need to be left intact.
+    /// Return the balance of account before transition.
+    pub fn previous_balance(&self) -> U256 {
+        self.previous_info
+            .as_ref()
+            .map(|info| info.balance)
+            .unwrap_or_default()
+    }
+
+    /// Return the balance of account after transition.
+    pub fn current_balance(&self) -> U256 {
+        self.info
+            .as_ref()
+            .map(|info| info.balance)
+            .unwrap_or_default()
+    }
+
+    /// Calculate the change in account's balance for this transition.
+    /// Returns `None` if delta does not fit in [I256].
+    pub fn balance_delta(&self) -> Option<I256> {
+        let previous_balance = self.previous_balance();
+        let current_balance = self.current_balance();
+        let delta = I256::try_from(previous_balance.abs_diff(current_balance)).ok()?;
+        if current_balance >= previous_balance {
+            Some(delta)
+        } else {
+            delta.checked_neg()
+        }
+    }
+
+    /// Update new values of transition. Don't override old values.
+    /// Both account info and old storages need to be left intact.
     pub fn update(&mut self, other: Self) {
         self.info = other.info.clone();
         self.status = other.status;

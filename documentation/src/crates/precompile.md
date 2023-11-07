@@ -13,13 +13,13 @@ Modules:
 
 Types and Constants:
 
-- `B160`: A type alias for an array of 20 bytes. This is typically used to represent Ethereum addresses.
+- `Address`: A type alias for an array of 20 bytes. This is typically used to represent Ethereum addresses.
 - `B256`: A type alias for an array of 32 bytes, typically used to represent 256-bit hashes or integer values in Ethereum.
 - `PrecompileOutput`: Represents the output of a precompiled contract execution, including the gas cost, output data, and any logs generated.
 - `Log`: Represents an Ethereum log, with an address, a list of topics, and associated data.
 - `Precompiles`: A collection of precompiled contracts available in a particular hard fork of Ethereum.
 - `Precompile`: Represents a precompiled contract, which can either be a standard Ethereum precompile, or a custom precompile.
-- `PrecompileAddress`: Associates a precompiled contract with its address.
+- `PrecompileWithAddress`: Associates a precompiled contract with its address.
 - `SpecId`: An enumeration representing different hard fork specifications in Ethereum, such as Homestead, Byzantium, Istanbul, Berlin, and Latest.
 
 Functions:

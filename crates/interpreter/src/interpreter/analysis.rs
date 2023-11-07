@@ -58,6 +58,7 @@ fn analyze(code: &[u8]) -> JumpMap {
     JumpMap(Arc::new(jumps))
 }
 
+/// An analyzed bytecode.
 #[derive(Clone)]
 pub struct BytecodeLocked {
     bytecode: Bytes,

@@ -1,13 +1,13 @@
 use super::calc_linear_cost_u32;
-use crate::{Error, Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn};
+use crate::{Error, Precompile, PrecompileResult, PrecompileWithAddress, StandardPrecompileFn};
 use sha2::*;
 
-pub const SHA256: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(2),
+pub const SHA256: PrecompileWithAddress = PrecompileWithAddress(
+    crate::u64_to_address(2),
     Precompile::Standard(sha256_run as StandardPrecompileFn),
 );
-pub const RIPEMD160: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(3),
+pub const RIPEMD160: PrecompileWithAddress = PrecompileWithAddress(
+    crate::u64_to_address(3),
     Precompile::Standard(ripemd160_run as StandardPrecompileFn),
 );
 

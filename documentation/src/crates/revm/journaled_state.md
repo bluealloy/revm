@@ -32,11 +32,6 @@ This module is built around the `JournaledState` structure, which encapsulates t
     If the target account does not exist, it's created. If the self-destructed account and the
     target are the same, the balance will be lost.
 
--  `initial_account_and_code_load`
-
-    This method initializes an account and loads its associated code from the database. If the
-    code does not exist, an empty code is associated with the account.
-
 -  `initial_account_load`
 
     This method loads an account's basic information from the database without loading the code.
@@ -45,12 +40,12 @@ This module is built around the `JournaledState` structure, which encapsulates t
 - `load_account`
 
     This method loads an account's information into memory and returns whether the account was
-    cold or hot accessed.
+    cold or warm accessed.
 
 - `load_account_exist`
 
     This method checks whether an account exists or not. It returns whether the account was
-    cold or hot accessed and whether it exists.
+    cold or warm accessed and whether it exists.
 
 - `load_code`
 
@@ -85,7 +80,7 @@ The [EIP-161](https://eips.ethereum.org/EIPS/eip-161) aims to optimize Ethereum'
 
 - Account Creation: During the creation of an account (whether by transactions or the `CREATE` operation), the nonce of the new account is incremented by one before the execution of the initialization code. For most networks, the starting value is 1, but this may vary for test networks with non-zero default starting nonces.
 
-- Call and Suicide Charges: Prior to [EIP-161](https://eips.ethereum.org/EIPS/eip-161), a gas charge of 25,000 was levied for `CALL` and `SUICIDE` operations if the destination account did not exist. With [EIP-161](https://eips.ethereum.org/EIPS/eip-161), this charge is only applied if the operation transfers more than zero value and the destination account is dead (non-existent or empty).
+- CALL and SELFDESTRUCT Charges: Prior to [EIP-161](https://eips.ethereum.org/EIPS/eip-161), a gas charge of 25,000 was levied for `CALL` and `SELFDESTRUCT` operations if the destination account did not exist. With [EIP-161](https://eips.ethereum.org/EIPS/eip-161), this charge is only applied if the operation transfers more than zero value and the destination account is dead (non-existent or empty).
 
 - Existence of Empty Accounts: An account cannot change its state from non-existent to existent-but-empty. If an operation would result in this, the account remains non-existent.
 
@@ -93,13 +88,13 @@ The [EIP-161](https://eips.ethereum.org/EIPS/eip-161) aims to optimize Ethereum'
 
 An account is considered "empty" if it has no code, and its nonce and balance are both zero. An account is considered "dead" if it is non-existent or it is empty. An account is considered "touched" when it is involved in any potentially state-changing operation.
 
-These rules have an impact on how state is managed within the [EIP-161](https://eips.ethereum.org/EIPS/eip-161) context, and this affects how the JournaledState module functions. For example, operations like `initial_account_and_code_load`, `initial_account_load`, and `selfdestruct` all need to take into account whether an account is empty or dead.
+These rules have an impact on how state is managed within the [EIP-161](https://eips.ethereum.org/EIPS/eip-161) context, and this affects how the JournaledState module functions. For example, operations like `initial_account_load`, and `selfdestruct` all need to take into account whether an account is empty or dead.
 
 #### Rationale
 
 The rationale behind [EIP-161](https://eips.ethereum.org/EIPS/eip-161) is to optimize the Ethereum state management by getting rid of unnecessary data. Prior to this change, it was possible for the state trie to become bloated with empty accounts. This bloating resulted in increased storage requirements and slower processing times for Ethereum nodes.
 
-By removing these empty accounts, the size of the state trie can be reduced, leading to improvements in the performance of Ethereum nodes. Additionally, the changes regarding the gas costs for `CALL` and `SUICIDE` operations add a new level of nuance to the Ethereum gas model, further optimizing transaction processing.
+By removing these empty accounts, the size of the state trie can be reduced, leading to improvements in the performance of Ethereum nodes. Additionally, the changes regarding the gas costs for `CALL` and `SELFDESTRUCT` operations add a new level of nuance to the Ethereum gas model, further optimizing transaction processing.
 
 [EIP-161](https://eips.ethereum.org/EIPS/eip-161) has a significant impact on the state management of Ethereum, and thus is highly relevant to the JournaledState module of the revm crate. The operations defined in this module, such as loading accounts, self-destructing accounts, and changing storage, must all conform to the rules defined in [EIP-161](https://eips.ethereum.org/EIPS/eip-161).
 
@@ -109,7 +104,7 @@ This EIP is particularly important because it introduced a way to unambiguously 
 
 [EIP-658](https://eips.ethereum.org/EIPS/eip-658) replaced the intermediate state root field in the receipt with a status code that indicates whether the top-level call of the transaction succeeded or failed. The status code is 1 for success and 0 for failure.
 
-This EIP affects the JournaledState module, as the result of executing transactions and their success or failure status directly influences the state of the blockchain. The execution of state-modifying methods like `initial_account_and_code_load`, `selfdestruct`, `sstore`, and `log` can result in success or failure, and the status needs to be properly reflected in the transaction receipt.
+This EIP affects the JournaledState module, as the result of executing transactions and their success or failure status directly influences the state of the blockchain. The execution of state-modifying methods like , `selfdestruct`, `sstore`, and `log` can result in success or failure, and the status needs to be properly reflected in the transaction receipt.
 
 #### Rationale
 

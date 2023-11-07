@@ -1,12 +1,12 @@
-use crate::{Error, PrecompileAddress, StandardPrecompileFn};
+use crate::{Error, PrecompileWithAddress, StandardPrecompileFn};
 use crate::{Precompile, PrecompileResult};
 use core::convert::TryInto;
 
 const F_ROUND: u64 = 1;
 const INPUT_LENGTH: usize = 213;
 
-pub const FUN: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(9),
+pub const FUN: PrecompileWithAddress = PrecompileWithAddress(
+    crate::u64_to_address(9),
     Precompile::Standard(run as StandardPrecompileFn),
 );
 

@@ -1,45 +1,40 @@
+//! # revm-primitives
+//!
+//! EVM primitive types.
+#![warn(unreachable_pub, unused_crate_dependencies)]
+#![deny(unused_must_use, rust_2018_idioms)]
 #![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 
 extern crate alloc;
 
-pub mod bits;
-pub mod bytecode;
-pub mod constants;
+mod bytecode;
+mod constants;
 pub mod db;
 pub mod env;
-#[cfg(feature = "std")]
+#[cfg(feature = "c-kzg")]
 pub mod kzg;
-pub mod log;
+mod log;
 pub mod precompile;
 pub mod result;
 pub mod specification;
 pub mod state;
 pub mod utilities;
 
-pub use bits::B160;
-pub use bits::B256;
+pub use alloy_primitives::{
+    self, address, b256, bytes, fixed_bytes, hex, hex_literal, ruint, uint, Address, Bytes,
+    FixedBytes, B256, I256, U256,
+};
 pub use bitvec;
 pub use bytecode::*;
-pub use bytes;
-pub use bytes::Bytes;
 pub use constants::*;
 pub use env::*;
 pub use hashbrown::{hash_map, hash_set, HashMap, HashSet};
-pub use hex;
-pub use hex_literal;
-#[cfg(feature = "std")]
+#[cfg(feature = "c-kzg")]
 pub use kzg::{EnvKzgSettings, KzgSettings};
-pub use log::Log;
+pub use log::*;
 pub use precompile::*;
 pub use result::*;
-pub use ruint;
-pub use ruint::aliases::U256;
-pub use ruint::uint;
 pub use specification::*;
 pub use state::*;
 pub use utilities::*;
-
-/// Address type is last 20 bytes of hash of ethereum account
-pub type Address = B160;
-/// Hash, in Ethereum usually keccak256.
-pub type Hash = B256;

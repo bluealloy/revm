@@ -7,6 +7,7 @@ use revm_interpreter::primitives::{
 };
 
 /// Allows building of State and initializing it with different options.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct StateBuilder<DB> {
     /// Database that we use to fetch data from.
     database: DB,
@@ -32,7 +33,7 @@ pub struct StateBuilder<DB> {
 impl StateBuilder<EmptyDB> {
     /// Create a new builder with an empty database.
     ///
-    /// If you want to instatiate it with a specific database, use
+    /// If you want to instantiate it with a specific database, use
     /// [`new_with_database`](Self::new_with_database).
     pub fn new() -> Self {
         Self::default()
@@ -161,12 +162,8 @@ impl<DB: Database> StateBuilder<DB> {
                 .with_cache_prestate
                 .unwrap_or_else(|| CacheState::new(self.with_state_clear)),
             database: self.database,
-            transition_state: if self.with_bundle_update {
-                Some(TransitionState::default())
-            } else {
-                None
-            },
-            bundle_state: self.with_bundle_prestate,
+            transition_state: self.with_bundle_update.then(TransitionState::default),
+            bundle_state: self.with_bundle_prestate.unwrap_or_default(),
             use_preloaded_bundle,
             block_hashes: self.with_block_hashes,
         }

@@ -1,12 +1,14 @@
-use bytes::Bytes;
 use criterion::{
     criterion_group, criterion_main, measurement::WallTime, BenchmarkGroup, Criterion,
 };
 use revm::{
     db::BenchmarkDB,
     interpreter::{analysis::to_analysed, BytecodeLocked, Contract, DummyHost, Interpreter},
-    primitives::{BerlinSpec, Bytecode, BytecodeState, TransactTo, U256},
+    primitives::{
+        address, bytes, hex, BerlinSpec, Bytecode, BytecodeState, Bytes, TransactTo, U256,
+    },
 };
+use revm_interpreter::{opcode::make_instruction_table, SharedMemory};
 use std::time::Duration;
 
 type Evm = revm::EVM<BenchmarkDB>;
@@ -14,16 +16,10 @@ type Evm = revm::EVM<BenchmarkDB>;
 fn analysis(c: &mut Criterion) {
     let mut evm = revm::new();
 
-    evm.env.tx.caller = "0x1000000000000000000000000000000000000000"
-        .parse()
-        .unwrap();
-    evm.env.tx.transact_to = TransactTo::Call(
-        "0x0000000000000000000000000000000000000000"
-            .parse()
-            .unwrap(),
-    );
-    // evm.env.tx.data = Bytes::from(hex::decode("30627b7c").unwrap());
-    evm.env.tx.data = Bytes::from(hex::decode("8035F0CE").unwrap());
+    evm.env.tx.caller = address!("1000000000000000000000000000000000000000");
+    evm.env.tx.transact_to = TransactTo::Call(address!("0000000000000000000000000000000000000000"));
+    // evm.env.tx.data = bytes!("30627b7c");
+    evm.env.tx.data = bytes!("8035F0CE");
 
     let contract_data: Bytes = hex::decode(ANALYSIS).unwrap().into();
 
@@ -52,15 +48,9 @@ fn snailtracer(c: &mut Criterion) {
     let mut evm = revm::new();
     evm.database(BenchmarkDB::new_bytecode(bytecode(SNAILTRACER)));
 
-    evm.env.tx.caller = "0x1000000000000000000000000000000000000000"
-        .parse()
-        .unwrap();
-    evm.env.tx.transact_to = TransactTo::Call(
-        "0x0000000000000000000000000000000000000000"
-            .parse()
-            .unwrap(),
-    );
-    evm.env.tx.data = Bytes::from(hex::decode("30627b7c").unwrap());
+    evm.env.tx.caller = address!("1000000000000000000000000000000000000000");
+    evm.env.tx.transact_to = TransactTo::Call(address!("0000000000000000000000000000000000000000"));
+    evm.env.tx.data = bytes!("30627b7c");
 
     let mut g = c.benchmark_group("snailtracer");
     g.noise_threshold(0.03)
@@ -68,7 +58,7 @@ fn snailtracer(c: &mut Criterion) {
         .measurement_time(Duration::from_secs(10))
         .sample_size(10);
     bench_transact(&mut g, &mut evm);
-    bench_eval(&mut g, &evm);
+    bench_eval(&mut g, &mut evm);
     g.finish();
 }
 
@@ -76,14 +66,8 @@ fn transfer(c: &mut Criterion) {
     let mut evm = revm::new();
     evm.database(BenchmarkDB::new_bytecode(Bytecode::new()));
 
-    evm.env.tx.caller = "0x0000000000000000000000000000000000000001"
-        .parse()
-        .unwrap();
-    evm.env.tx.transact_to = TransactTo::Call(
-        "0x0000000000000000000000000000000000000000"
-            .parse()
-            .unwrap(),
-    );
+    evm.env.tx.caller = address!("0000000000000000000000000000000000000001");
+    evm.env.tx.transact_to = TransactTo::Call(address!("0000000000000000000000000000000000000000"));
     evm.env.tx.value = U256::from(10);
 
     let mut g = c.benchmark_group("transfer");
@@ -102,7 +86,9 @@ fn bench_transact(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm) {
     g.bench_function(id, |b| b.iter(|| evm.transact().unwrap()));
 }
 
-fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &Evm) {
+fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm) {
+    let mut shared_memory = SharedMemory::new();
+
     g.bench_function("eval", |b| {
         let contract = Contract {
             input: evm.env.tx.data.clone(),
@@ -110,9 +96,15 @@ fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &Evm) {
             ..Default::default()
         };
         let mut host = DummyHost::new(evm.env.clone());
+        let instruction_table = make_instruction_table::<DummyHost, BerlinSpec>();
         b.iter(|| {
-            let mut interpreter = Interpreter::new(Box::new(contract.clone()), u64::MAX, false);
-            let res = interpreter.run::<_, BerlinSpec>(&mut host);
+            let mut interpreter = Interpreter::new(
+                Box::new(contract.clone()),
+                u64::MAX,
+                false,
+                &mut shared_memory,
+            );
+            let res = interpreter.run(&instruction_table, &mut host);
             host.clear();
             res
         })

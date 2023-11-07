@@ -50,18 +50,18 @@ macro_rules! gas_or_fail {
     };
 }
 
-macro_rules! memory_resize {
+macro_rules! shared_memory_resize {
     ($interp:expr, $offset:expr, $len:expr) => {
         if let Some(new_size) =
-            crate::interpreter::memory::next_multiple_of_32($offset.saturating_add($len))
+            crate::interpreter::next_multiple_of_32($offset.saturating_add($len))
         {
             #[cfg(feature = "memory_limit")]
-            if new_size > ($interp.memory_limit as usize) {
+            if $interp.shared_memory.limit_reached(new_size) {
                 $interp.instruction_result = InstructionResult::MemoryLimitOOG;
                 return;
             }
 
-            if new_size > $interp.memory.len() {
+            if new_size > $interp.shared_memory.len() {
                 if crate::USE_GAS {
                     let num_bytes = new_size / 32;
                     if !$interp.gas.record_memory(crate::gas::memory_gas(num_bytes)) {
@@ -69,7 +69,7 @@ macro_rules! memory_resize {
                         return;
                     }
                 }
-                $interp.memory.resize(new_size);
+                $interp.shared_memory.resize(new_size);
             }
         } else {
             $interp.instruction_result = InstructionResult::MemoryOOG;
@@ -79,35 +79,22 @@ macro_rules! memory_resize {
 }
 
 macro_rules! pop_address {
-    ( $interp:expr, $x1:ident) => {
+    ($interp:expr, $x1:ident) => {
         if $interp.stack.len() < 1 {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
         // Safety: Length is checked above.
-        let $x1: B160 = B160(
-            unsafe { $interp.stack.pop_unsafe() }.to_be_bytes::<{ U256::BYTES }>()[12..]
-                .try_into()
-                .unwrap(),
-        );
+        let $x1 = Address::from_word(B256::from(unsafe { $interp.stack.pop_unsafe() }));
     };
-    ( $interp:expr, $x1:ident, $x2:ident) => {
+    ($interp:expr, $x1:ident, $x2:ident) => {
         if $interp.stack.len() < 2 {
             $interp.instruction_result = InstructionResult::StackUnderflow;
             return;
         }
-        let mut temp = H256::zero();
-
-        let $x1: B160 = B160(
-            unsafe { $interp.stack.pop_unsafe() }.to_be_bytes::<{ U256::BYTES }>()[12..]
-                .try_into()
-                .unwrap(),
-        );
-        let $x2: B160 = B160(
-            unsafe { $interp.stack.pop_unsafe() }.to_be_bytes::<{ U256::BYTES }>()[12..]
-                .try_into()
-                .unwrap(),
-        );
+        // Safety: Length is checked above.
+        let $x1 = Address::from_word(B256::from(unsafe { $interp.stack.pop_unsafe() }));
+        let $x2 = Address::from_word(B256::from(unsafe { $interp.stack.pop_unsafe() }));
     };
 }
 
