@@ -57,7 +57,7 @@ impl BundleAccount {
         let slot = self.storage.get(&slot).map(|s| s.present_value);
         if slot.is_some() {
             slot
-        } else if self.status.storage_known() {
+        } else if self.status.is_storage_known() {
             Some(U256::ZERO)
         } else {
             None

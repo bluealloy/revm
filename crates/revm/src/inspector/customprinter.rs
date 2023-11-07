@@ -1,9 +1,14 @@
 //! Custom print inspector, it has step level information of execution.
 //! It is a great tool if some debugging is needed.
 
-use crate::interpreter::{opcode, CallInputs, CreateInputs, Gas, InstructionResult, Interpreter};
-use crate::primitives::{Address, Bytes, U256};
-use crate::{inspectors::GasInspector, Database, EVMData, Inspector};
+use core::ops::Range;
+
+use crate::{
+    inspectors::GasInspector,
+    interpreter::{opcode, CallInputs, CreateInputs, Interpreter, InterpreterResult},
+    primitives::{Address, U256},
+    Database, EvmContext, Inspector,
+};
 
 /// Custom print [Inspector], it has step level information of execution.
 ///
@@ -14,21 +19,23 @@ pub struct CustomPrintTracer {
 }
 
 impl<DB: Database> Inspector<DB> for CustomPrintTracer {
-    fn initialize_interp(&mut self, interp: &mut Interpreter<'_>, data: &mut EVMData<'_, DB>) {
-        self.gas_inspector.initialize_interp(interp, data);
+    fn initialize_interp(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
+        self.gas_inspector.initialize_interp(interp, context);
     }
 
     // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
     // all other information can be obtained from interp.
-    fn step(&mut self, interp: &mut Interpreter<'_>, data: &mut EVMData<'_, DB>) {
+    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
         let opcode = interp.current_opcode();
         let opcode_str = opcode::OPCODE_JUMPMAP[opcode as usize];
 
         let gas_remaining = self.gas_inspector.gas_remaining();
 
+        let memory_size = interp.shared_memory.len();
+
         println!(
             "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data size:{}",
-            data.journaled_state.depth(),
+            context.journaled_state.depth(),
             interp.program_counter(),
             gas_remaining,
             gas_remaining,
@@ -37,48 +44,38 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
             interp.gas.refunded(),
             interp.gas.refunded(),
             interp.stack.data(),
-            interp.shared_memory.len(),
+            memory_size,
         );
 
-        self.gas_inspector.step(interp, data);
+        self.gas_inspector.step(interp, context);
     }
 
-    fn step_end(&mut self, interp: &mut Interpreter<'_>, data: &mut EVMData<'_, DB>) {
-        self.gas_inspector.step_end(interp, data);
+    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
+        self.gas_inspector.step_end(interp, context);
     }
 
     fn call_end(
         &mut self,
-        data: &mut EVMData<'_, DB>,
-        inputs: &CallInputs,
-        remaining_gas: Gas,
-        ret: InstructionResult,
-        out: Bytes,
-    ) -> (InstructionResult, Gas, Bytes) {
-        self.gas_inspector
-            .call_end(data, inputs, remaining_gas, ret, out.clone());
-        (ret, remaining_gas, out)
+        context: &mut EvmContext<'_, DB>,
+        result: InterpreterResult,
+    ) -> InterpreterResult {
+        self.gas_inspector.call_end(context, result)
     }
 
     fn create_end(
         &mut self,
-        data: &mut EVMData<'_, DB>,
-        inputs: &CreateInputs,
-        ret: InstructionResult,
+        context: &mut EvmContext<'_, DB>,
+        result: InterpreterResult,
         address: Option<Address>,
-        remaining_gas: Gas,
-        out: Bytes,
-    ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
-        self.gas_inspector
-            .create_end(data, inputs, ret, address, remaining_gas, out.clone());
-        (ret, address, remaining_gas, out)
+    ) -> (InterpreterResult, Option<Address>) {
+        self.gas_inspector.create_end(context, result, address)
     }
 
     fn call(
         &mut self,
-        _data: &mut EVMData<'_, DB>,
+        _context: &mut EvmContext<'_, DB>,
         inputs: &mut CallInputs,
-    ) -> (InstructionResult, Gas, Bytes) {
+    ) -> Option<(InterpreterResult, Range<usize>)> {
         println!(
             "SM CALL:   {:?}, context:{:?}, is_static:{:?}, transfer:{:?}, input_size:{:?}",
             inputs.contract,
@@ -87,19 +84,19 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
             inputs.transfer,
             inputs.input.len(),
         );
-        (InstructionResult::Continue, Gas::new(0), Bytes::new())
+        None
     }
 
     fn create(
         &mut self,
-        _data: &mut EVMData<'_, DB>,
+        _context: &mut EvmContext<'_, DB>,
         inputs: &mut CreateInputs,
-    ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
+    ) -> Option<(InterpreterResult, Option<Address>)> {
         println!(
             "CREATE CALL: caller:{:?}, scheme:{:?}, value:{:?}, init_code:{:?}, gas:{:?}",
             inputs.caller, inputs.scheme, inputs.value, inputs.init_code, inputs.gas_limit
         );
-        (InstructionResult::Continue, None, Gas::new(0), Bytes::new())
+        None
     }
 
     fn selfdestruct(&mut self, contract: Address, target: Address, value: U256) {
@@ -114,7 +111,6 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
 mod test {
 
     #[test]
-    #[cfg(not(feature = "no_gas_measuring"))]
     #[cfg(not(feature = "optimism"))]
     fn gas_calculation_underflow() {
         use crate::primitives::{address, bytes};

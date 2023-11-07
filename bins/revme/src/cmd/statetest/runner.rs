@@ -71,11 +71,6 @@ fn skip_test(path: &Path) -> bool {
         // txbyte is of type 02 and we dont parse tx bytes for this test to fail.
         | "typeTwoBerlin.json"
 
-        // Test checks if nonce overflows. We are handling this correctly but we are not parsing
-        // exception in testsuite There are more nonce overflow tests that are in internal
-        // call/create, and those tests are passing and are enabled.
-        | "CreateTransactionHighNonce.json"
-
         // Need to handle Test errors
         | "transactionIntinsicBug.json"
 
@@ -83,11 +78,11 @@ fn skip_test(path: &Path) -> bool {
         | "HighGasPrice.json"
         | "CREATE_HighNonce.json"
         | "CREATE_HighNonceMinus1.json"
+        | "CreateTransactionHighNonce.json"
 
         // Skip test where basefee/accesslist/difficulty is present but it shouldn't be supported in
         // London/Berlin/TheMerge. https://github.com/ethereum/tests/blob/5b7e1ab3ffaf026d99d20b17bb30f533a2c80c8b/GeneralStateTests/stExample/eip1559.json#L130
         // It is expected to not execute these tests.
-        | "accessListExample.json"
         | "basefeeExample.json"
         | "eip1559.json"
         | "mergeTest.json"
@@ -98,7 +93,6 @@ fn skip_test(path: &Path) -> bool {
         | "static_Call50000_sha256.json"
         | "loopMul.json"
         | "CALLBlake2f_MaxRounds.json"
-        | "shiftCombinations.json"
     ) || path_str.contains("stEOF")
 }
 
@@ -349,8 +343,6 @@ pub fn execute_test_suite(
                 evm.database(&mut state);
 
                 let path = path.display();
-                println!("Test {name:?} (index: {index}, path: {path}) failed:\n{e}");
-
                 println!("\nTraces:");
                 let _ = evm.inspect_commit(TracerEip3155::new(Box::new(stdout()), false, false));
 
@@ -359,6 +351,8 @@ pub fn execute_test_suite(
                 println!("\nState before: {cache_state:#?}");
                 println!("\nState after: {:#?}", evm.db().unwrap().cache);
                 println!("\nEnvironment: {env:#?}");
+                println!("\nTest name: {name:?} (index: {index}, path: {path}) failed:\n{e}");
+
                 return Err(e);
             }
         }

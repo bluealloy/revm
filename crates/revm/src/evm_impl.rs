@@ -3,24 +3,22 @@ use crate::{
     handler::Handler,
     inspector_instruction,
     interpreter::{
-        analysis::to_analysed,
-        gas,
         gas::initial_tx_gas,
         opcode::{make_boxed_instruction_table, make_instruction_table, InstructionTables},
-        return_ok, CallContext, CallInputs, CallScheme, Contract, CreateInputs, Gas, Host,
-        InstructionResult, Interpreter, SelfDestructResult, SharedMemory, Transfer, MAX_CODE_SIZE,
+        CallContext, CallInputs, CallScheme, CreateInputs, Host, Interpreter, InterpreterAction,
+        InterpreterResult, SelfDestructResult, SharedMemory, Transfer,
     },
-    journaled_state::{JournalCheckpoint, JournaledState},
-    precompile::{self, Precompile, Precompiles},
+    journaled_state::JournaledState,
+    precompile::Precompiles,
     primitives::{
-        keccak256, Address, AnalysisKind, Bytecode, Bytes, EVMError, EVMResult, Env,
-        InvalidTransaction, Log, Output, Spec, SpecId::*, TransactTo, B256, U256,
+        specification, Address, Bytecode, Bytes, EVMError, EVMResult, Env, InvalidTransaction, Log,
+        Output, Spec, SpecId::*, TransactTo, B256, U256,
     },
-    EVMData, Inspector,
+    CallStackFrame, EvmContext, Inspector,
 };
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use auto_impl::auto_impl;
-use core::{fmt, marker::PhantomData};
+use core::{fmt, marker::PhantomData, ops::Range};
 
 #[cfg(feature = "optimism")]
 use crate::optimism;
@@ -28,68 +26,29 @@ use crate::optimism;
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
 
-pub struct EVMImpl<'a, GSPEC: Spec, DB: Database> {
-    pub data: EVMData<'a, DB>,
+pub struct EVMImpl<'a, SPEC: Spec, DB: Database> {
+    pub context: EvmContext<'a, DB>,
     pub inspector: Option<&'a mut dyn Inspector<DB>>,
     pub instruction_table: InstructionTables<'a, Self>,
     pub handler: Handler<DB>,
-    _phantomdata: PhantomData<GSPEC>,
+    _phantomdata: PhantomData<SPEC>,
 }
 
-impl<GSPEC, DB> fmt::Debug for EVMImpl<'_, GSPEC, DB>
+impl<SPEC, DB> fmt::Debug for EVMImpl<'_, SPEC, DB>
 where
-    GSPEC: Spec,
+    SPEC: Spec,
     DB: Database + fmt::Debug,
     DB::Error: fmt::Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("EVMImpl")
-            .field("data", &self.data)
+            .field("data", &self.context)
             .finish_non_exhaustive()
     }
 }
 
-struct PreparedCreate {
-    gas: Gas,
-    created_address: Address,
-    checkpoint: JournalCheckpoint,
-    contract: Box<Contract>,
-}
-
-struct CreateResult {
-    result: InstructionResult,
-    created_address: Option<Address>,
-    gas: Gas,
-    return_value: Bytes,
-}
-
-struct PreparedCall {
-    gas: Gas,
-    checkpoint: JournalCheckpoint,
-    contract: Box<Contract>,
-}
-
-struct CallResult {
-    result: InstructionResult,
-    gas: Gas,
-    return_value: Bytes,
-}
-
-/// EVM transaction interface.
-#[auto_impl(&mut, Box)]
-pub trait Transact<DBError> {
-    /// Run checks that could make transaction fail before call/create.
-    fn preverify_transaction(&mut self) -> Result<(), EVMError<DBError>>;
-
-    /// Skip pre-verification steps and execute the transaction.
-    fn transact_preverified(&mut self) -> EVMResult<DBError>;
-
-    /// Execute transaction by running pre-verification steps and then transaction itself.
-    fn transact(&mut self) -> EVMResult<DBError>;
-}
-
 #[cfg(feature = "optimism")]
-impl<'a, GSPEC: Spec, DB: Database> EVMImpl<'a, GSPEC, DB> {
+impl<'a, SPEC: Spec, DB: Database> EVMImpl<'a, SPEC, DB> {
     /// If the transaction is not a deposit transaction, subtract the L1 data fee from the
     /// caller's balance directly after minting the requested amount of ETH.
     fn remove_l1_cost(
@@ -145,62 +104,47 @@ impl<'a, GSPEC: Spec, DB: Database> EVMImpl<'a, GSPEC, DB> {
     }
 }
 
-impl<'a, GSPEC: Spec + 'static, DB: Database> Transact<DB::Error> for EVMImpl<'a, GSPEC, DB> {
-    #[inline]
-    fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
-        self.preverify_transaction_inner()
-    }
-
-    #[inline]
-    fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
-        let output = self.transact_preverified_inner();
-        self.handler.end(&mut self.data, output)
-    }
-
-    #[inline]
-    fn transact(&mut self) -> EVMResult<DB::Error> {
-        let output = self
-            .preverify_transaction_inner()
-            .and_then(|()| self.transact_preverified_inner());
-        self.handler.end(&mut self.data, output)
-    }
-}
-
-impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
-    pub fn new(
+impl<'a, SPEC: Spec + 'static, DB: Database> EVMImpl<'a, SPEC, DB> {
+    pub fn new_with_spec(
         db: &'a mut DB,
         env: &'a mut Env,
         inspector: Option<&'a mut dyn Inspector<DB>>,
         precompiles: Precompiles,
     ) -> Self {
         let journaled_state = JournaledState::new(
-            GSPEC::SPEC_ID,
+            SPEC::SPEC_ID,
             precompiles
                 .addresses()
                 .into_iter()
                 .cloned()
                 .collect::<Vec<_>>(),
         );
+        // If T is present it should be a generic T that modifies handler.
         let instruction_table = if inspector.is_some() {
-            let instruction_table = make_boxed_instruction_table::<Self, GSPEC, _>(
-                make_instruction_table::<Self, GSPEC>(),
+            let instruction_table = make_boxed_instruction_table::<Self, SPEC, _>(
+                make_instruction_table::<Self, SPEC>(),
                 inspector_instruction,
             );
             InstructionTables::Boxed(Arc::new(instruction_table))
         } else {
-            InstructionTables::Plain(Arc::new(make_instruction_table::<Self, GSPEC>()))
+            InstructionTables::Plain(Arc::new(make_instruction_table::<Self, SPEC>()))
         };
         #[cfg(feature = "optimism")]
-        let handler = if env.cfg.optimism {
-            Handler::optimism::<GSPEC>()
+        let mut handler = if env.cfg.optimism {
+            Handler::optimism::<SPEC>()
         } else {
-            Handler::mainnet::<GSPEC>()
+            Handler::mainnet::<SPEC>()
         };
         #[cfg(not(feature = "optimism"))]
-        let handler = Handler::mainnet::<GSPEC>();
+        let mut handler = Handler::mainnet::<SPEC>();
+
+        if env.cfg.is_beneficiary_reward_disabled() {
+            // do nothing
+            handler.reward_beneficiary = |_, _| Ok(());
+        }
 
         Self {
-            data: EVMData {
+            context: EvmContext {
                 env,
                 journaled_state,
                 db,
@@ -216,15 +160,214 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         }
     }
 
+    #[inline]
+    pub fn run<FN>(
+        &mut self,
+        instruction_table: &[FN; 256],
+        first_frame: Box<CallStackFrame>,
+    ) -> InterpreterResult
+    where
+        FN: Fn(&mut Interpreter, &mut Self),
+    {
+        let mut call_stack: Vec<Box<CallStackFrame>> = Vec::with_capacity(1025);
+        call_stack.push(first_frame);
+
+        #[cfg(feature = "memory_limit")]
+        let mut shared_memory =
+            SharedMemory::new_with_memory_limit(self.context.env.cfg.memory_limit);
+        #[cfg(not(feature = "memory_limit"))]
+        let mut shared_memory = SharedMemory::new();
+
+        shared_memory.new_context();
+
+        let mut stack_frame = call_stack.first_mut().unwrap();
+
+        loop {
+            // run interpreter
+            let action = stack_frame
+                .interpreter
+                .run(shared_memory, instruction_table, self);
+            // take shared memory back.
+            shared_memory = stack_frame.interpreter.take_memory();
+
+            let new_frame = match action {
+                InterpreterAction::SubCall {
+                    inputs,
+                    return_memory_offset,
+                } => self.handle_sub_call(
+                    inputs,
+                    stack_frame,
+                    return_memory_offset,
+                    &mut shared_memory,
+                ),
+                InterpreterAction::Create { inputs } => self.handle_sub_create(inputs, stack_frame),
+                InterpreterAction::Return { result } => {
+                    // free memory context.
+                    shared_memory.free_context();
+
+                    let child = call_stack.pop().unwrap();
+                    let parent = call_stack.last_mut();
+
+                    if let Some(result) =
+                        self.handle_frame_return(child, parent, &mut shared_memory, result)
+                    {
+                        return result;
+                    }
+                    stack_frame = call_stack.last_mut().unwrap();
+                    continue;
+                }
+            };
+            if let Some(new_frame) = new_frame {
+                shared_memory.new_context();
+                call_stack.push(new_frame);
+            }
+            stack_frame = call_stack.last_mut().unwrap();
+        }
+    }
+
+    fn handle_frame_return(
+        &mut self,
+        mut child_stack_frame: Box<CallStackFrame>,
+        parent_stack_frame: Option<&mut Box<CallStackFrame>>,
+        shared_memory: &mut SharedMemory,
+        mut result: InterpreterResult,
+    ) -> Option<InterpreterResult> {
+        if let Some(inspector) = self.inspector.as_mut() {
+            result = if child_stack_frame.is_create {
+                let (result, address) = inspector.create_end(
+                    &mut self.context,
+                    result,
+                    child_stack_frame.created_address,
+                );
+                child_stack_frame.created_address = address;
+                result
+            } else {
+                inspector.call_end(&mut self.context, result)
+            };
+        }
+
+        // break from loop if this is last CallStackFrame.
+        let Some(parent_stack_frame) = parent_stack_frame else {
+            let result = if child_stack_frame.is_create {
+                self.context
+                    .create_return::<SPEC>(result, child_stack_frame)
+                    .0
+            } else {
+                self.context.call_return(result, child_stack_frame)
+            };
+
+            return Some(result);
+        };
+
+        if child_stack_frame.is_create {
+            let (result, address) = self
+                .context
+                .create_return::<SPEC>(result, child_stack_frame);
+            parent_stack_frame
+                .interpreter
+                .insert_create_output(result, Some(address))
+        } else {
+            let subcall_memory_return_offset =
+                child_stack_frame.subcall_return_memory_range.clone();
+            let result = self.context.call_return(result, child_stack_frame);
+
+            parent_stack_frame.interpreter.insert_call_output(
+                shared_memory,
+                result,
+                subcall_memory_return_offset,
+            )
+        }
+        None
+    }
+
+    /// Handle Action for new sub create call, return None if there is no need
+    /// to add new stack frame.
+    #[inline]
+    fn handle_sub_create(
+        &mut self,
+        mut inputs: Box<CreateInputs>,
+        curent_stack_frame: &mut CallStackFrame,
+    ) -> Option<Box<CallStackFrame>> {
+        // Call inspector if it is some.
+        if let Some(inspector) = self.inspector.as_mut() {
+            if let Some((result, address)) = inspector.create(&mut self.context, &mut inputs) {
+                curent_stack_frame
+                    .interpreter
+                    .insert_create_output(result, address);
+                return None;
+            }
+        }
+
+        match self.context.make_create_frame::<SPEC>(&inputs) {
+            Ok(new_frame) => Some(new_frame),
+            Err(mut result) => {
+                let mut address = None;
+                if let Some(inspector) = self.inspector.as_mut() {
+                    let ret = inspector.create_end(
+                        &mut self.context,
+                        result,
+                        curent_stack_frame.created_address,
+                    );
+                    result = ret.0;
+                    address = ret.1;
+                }
+                // insert result of the failed creation of create CallStackFrame.
+                curent_stack_frame
+                    .interpreter
+                    .insert_create_output(result, address);
+                None
+            }
+        }
+    }
+
+    /// Handles action for new sub call, return None if there is no need to add
+    /// new stack frame.
+    #[inline]
+    fn handle_sub_call(
+        &mut self,
+        mut inputs: Box<CallInputs>,
+        curent_stake_frame: &mut CallStackFrame,
+        return_memory_offset: Range<usize>,
+        shared_memory: &mut SharedMemory,
+    ) -> Option<Box<CallStackFrame>> {
+        // Call inspector if it is some.
+        if let Some(inspector) = self.inspector.as_mut() {
+            if let Some((result, range)) = inspector.call(&mut self.context, &mut inputs) {
+                curent_stake_frame
+                    .interpreter
+                    .insert_call_output(shared_memory, result, range);
+                return None;
+            }
+        }
+        match self
+            .context
+            .make_call_frame(&inputs, return_memory_offset.clone())
+        {
+            Ok(new_frame) => Some(new_frame),
+            Err(mut result) => {
+                //println!("Result returned right away: {:#?}", result);
+                if let Some(inspector) = self.inspector.as_mut() {
+                    result = inspector.call_end(&mut self.context, result);
+                }
+                curent_stake_frame.interpreter.insert_call_output(
+                    shared_memory,
+                    result,
+                    return_memory_offset,
+                );
+                None
+            }
+        }
+    }
+
     /// Pre verify transaction.
     pub fn preverify_transaction_inner(&mut self) -> Result<(), EVMError<DB::Error>> {
         let env = self.env();
 
         // Important: validate block before tx.
-        env.validate_block_env::<GSPEC>()?;
-        env.validate_tx::<GSPEC>()?;
+        env.validate_block_env::<SPEC>()?;
+        env.validate_tx::<SPEC>()?;
 
-        let initial_gas_spend = initial_tx_gas::<GSPEC>(
+        let initial_gas_spend = initial_tx_gas::<SPEC>(
             &env.tx.data,
             env.tx.transact_to.is_create(),
             &env.tx.access_list,
@@ -238,12 +381,12 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         // load acc
         let tx_caller = env.tx.caller;
         let (caller_account, _) = self
-            .data
+            .context
             .journaled_state
-            .load_account(tx_caller, self.data.db)
+            .load_account(tx_caller, self.context.db)
             .map_err(EVMError::Database)?;
 
-        self.data
+        self.context
             .env
             .validate_tx_against_state(caller_account)
             .map_err(Into::into)
@@ -251,7 +394,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
 
     /// Transact preverified transaction.
     pub fn transact_preverified_inner(&mut self) -> EVMResult<DB::Error> {
-        let env = &self.data.env;
+        let env = &self.context.env;
         let tx_caller = env.tx.caller;
         let tx_value = env.tx.value;
         let tx_data = env.tx.data.clone();
@@ -261,22 +404,22 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         #[cfg(feature = "optimism")]
         let tx_l1_cost = if env.cfg.optimism && env.tx.optimism.source_hash.is_none() {
             let l1_block_info =
-                optimism::L1BlockInfo::try_fetch(self.data.db).map_err(EVMError::Database)?;
+                optimism::L1BlockInfo::try_fetch(self.context.db).map_err(EVMError::Database)?;
 
             let Some(enveloped_tx) = &env.tx.optimism.enveloped_tx else {
                 panic!("[OPTIMISM] Failed to load enveloped transaction.");
             };
-            let tx_l1_cost = l1_block_info.calculate_tx_l1_cost::<GSPEC>(enveloped_tx);
+            let tx_l1_cost = l1_block_info.calculate_tx_l1_cost::<SPEC>(enveloped_tx);
 
             // storage l1 block info for later use.
-            self.data.l1_block_info = Some(l1_block_info);
+            self.context.l1_block_info = Some(l1_block_info);
 
             tx_l1_cost
         } else {
             U256::ZERO
         };
 
-        let initial_gas_spend = initial_tx_gas::<GSPEC>(
+        let initial_gas_spend = initial_tx_gas::<SPEC>(
             &tx_data,
             env.tx.transact_to.is_create(),
             &env.tx.access_list,
@@ -284,49 +427,49 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
 
         // load coinbase
         // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
-        if GSPEC::enabled(SHANGHAI) {
-            self.data
+        if SPEC::enabled(SHANGHAI) {
+            self.context
                 .journaled_state
-                .initial_account_load(self.data.env.block.coinbase, &[], self.data.db)
+                .initial_account_load(self.context.env.block.coinbase, &[], self.context.db)
                 .map_err(EVMError::Database)?;
         }
 
-        self.data.load_access_list()?;
+        self.context.load_access_list()?;
 
         // load acc
-        let journal = &mut self.data.journaled_state;
+        let journal = &mut self.context.journaled_state;
 
         #[cfg(feature = "optimism")]
-        if self.data.env.cfg.optimism {
-            EVMImpl::<GSPEC, DB>::commit_mint_value(
+        if self.context.env.cfg.optimism {
+            EVMImpl::<SPEC, DB>::commit_mint_value(
                 tx_caller,
-                self.data.env.tx.optimism.mint,
-                self.data.db,
+                self.context.env.tx.optimism.mint,
+                self.context.db,
                 journal,
             )?;
 
-            let is_deposit = self.data.env.tx.optimism.source_hash.is_some();
-            EVMImpl::<GSPEC, DB>::remove_l1_cost(
+            let is_deposit = self.context.env.tx.optimism.source_hash.is_some();
+            EVMImpl::<SPEC, DB>::remove_l1_cost(
                 is_deposit,
                 tx_caller,
                 tx_l1_cost,
-                self.data.db,
+                self.context.db,
                 journal,
             )?;
         }
 
         let (caller_account, _) = journal
-            .load_account(tx_caller, self.data.db)
+            .load_account(tx_caller, self.context.db)
             .map_err(EVMError::Database)?;
 
         // Subtract gas costs from the caller's account.
         // We need to saturate the gas cost to prevent underflow in case that `disable_balance_check` is enabled.
         let mut gas_cost =
-            U256::from(tx_gas_limit).saturating_mul(self.data.env.effective_gas_price());
+            U256::from(tx_gas_limit).saturating_mul(self.context.env.effective_gas_price());
 
         // EIP-4844
-        if GSPEC::enabled(CANCUN) {
-            let data_fee = self.data.env.calc_data_fee().expect("already checked");
+        if SPEC::enabled(CANCUN) {
+            let data_fee = self.context.env.calc_data_fee().expect("already checked");
             gas_cost = gas_cost.saturating_add(data_fee);
         }
 
@@ -337,19 +480,14 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
 
         let transact_gas_limit = tx_gas_limit - initial_gas_spend;
 
-        #[cfg(feature = "memory_limit")]
-        let mut shared_memory = SharedMemory::new_with_memory_limit(self.data.env.cfg.memory_limit);
-        #[cfg(not(feature = "memory_limit"))]
-        let mut shared_memory = SharedMemory::new();
-
         // call inner handling of call/create
-        let (call_result, ret_gas, output) = match self.data.env.tx.transact_to {
+        let first_stack_frame = match self.context.env.tx.transact_to {
             TransactTo::Call(address) => {
                 // Nonce is already checked
                 caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
 
-                let (exit, gas, bytes) = self.call(
-                    &mut CallInputs {
+                self.context.make_call_frame(
+                    &CallInputs {
                         contract: address,
                         transfer: Transfer {
                             source: tx_caller,
@@ -367,30 +505,39 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                         },
                         is_static: false,
                     },
-                    &mut shared_memory,
-                );
-                (exit, gas, Output::Call(bytes))
+                    0..0,
+                )
             }
-            TransactTo::Create(scheme) => {
-                let (exit, address, ret_gas, bytes) = self.create(
-                    &mut CreateInputs {
-                        caller: tx_caller,
-                        scheme,
-                        value: tx_value,
-                        init_code: tx_data,
-                        gas_limit: transact_gas_limit,
-                    },
-                    &mut shared_memory,
-                );
-                (exit, ret_gas, Output::Create(bytes, address))
+            TransactTo::Create(scheme) => self.context.make_create_frame::<SPEC>(&CreateInputs {
+                caller: tx_caller,
+                scheme,
+                value: tx_value,
+                init_code: tx_data,
+                gas_limit: transact_gas_limit,
+            }),
+        };
+        // Some only if it is create.
+        let mut created_address = None;
+
+        // start main loop if CallStackFrame is created correctly
+        let interpreter_result = match first_stack_frame {
+            Ok(first_stack_frame) => {
+                created_address = first_stack_frame.created_address;
+                let table = self.instruction_table.clone();
+                match table {
+                    InstructionTables::Plain(table) => self.run(&table, first_stack_frame),
+                    InstructionTables::Boxed(table) => self.run(&table, first_stack_frame),
+                }
             }
+            Err(interpreter_result) => interpreter_result,
         };
 
         let handler = &self.handler;
-        let data = &mut self.data;
+        let data = &mut self.context;
 
         // handle output of call/create calls.
-        let mut gas = handler.call_return(data.env, call_result, ret_gas);
+        let mut gas =
+            handler.call_return(data.env, interpreter_result.result, interpreter_result.gas);
 
         // set refund. Refund amount depends on hardfork.
         gas.set_refund(handler.calculate_gas_refund(data.env, &gas) as i64);
@@ -399,449 +546,81 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         handler.reimburse_caller(data, &gas)?;
 
         // Reward beneficiary
-        if !data.env.cfg.is_beneficiary_reward_disabled() {
-            handler.reward_beneficiary(data, &gas)?;
-        }
+        handler.reward_beneficiary(data, &gas)?;
+
+        // output of execution
+        let output = match data.env.tx.transact_to {
+            TransactTo::Call(_) => Output::Call(interpreter_result.output),
+            TransactTo::Create(_) => Output::Create(interpreter_result.output, created_address),
+        };
 
         // main return
-        handler.main_return(data, call_result, output, &gas)
-    }
-
-    #[inline(never)]
-    fn prepare_create(&mut self, inputs: &CreateInputs) -> Result<PreparedCreate, CreateResult> {
-        let gas = Gas::new(inputs.gas_limit);
-
-        // Check depth of calls
-        if self.data.journaled_state.depth() > CALL_STACK_LIMIT {
-            return Err(CreateResult {
-                result: InstructionResult::CallTooDeep,
-                created_address: None,
-                gas,
-                return_value: Bytes::new(),
-            });
-        }
-
-        // Fetch balance of caller.
-        let Some((caller_balance, _)) = self.balance(inputs.caller) else {
-            return Err(CreateResult {
-                result: InstructionResult::FatalExternalError,
-                created_address: None,
-                gas,
-                return_value: Bytes::new(),
-            });
-        };
-
-        // Check if caller has enough balance to send to the created contract.
-        if caller_balance < inputs.value {
-            return Err(CreateResult {
-                result: InstructionResult::OutOfFund,
-                created_address: None,
-                gas,
-                return_value: Bytes::new(),
-            });
-        }
-
-        // Increase nonce of caller and check if it overflows
-        let old_nonce;
-        if let Some(nonce) = self.data.journaled_state.inc_nonce(inputs.caller) {
-            old_nonce = nonce - 1;
-        } else {
-            return Err(CreateResult {
-                result: InstructionResult::Return,
-                created_address: None,
-                gas,
-                return_value: Bytes::new(),
-            });
-        }
-
-        // Create address
-        let code_hash = keccak256(&inputs.init_code);
-        let created_address = inputs.created_address_with_hash(old_nonce, &code_hash);
-
-        // Load account so it needs to be marked as warm for access list.
-        if self
-            .data
-            .journaled_state
-            .load_account(created_address, self.data.db)
-            .map_err(|e| self.data.error = Some(e))
-            .is_err()
-        {
-            return Err(CreateResult {
-                result: InstructionResult::FatalExternalError,
-                created_address: None,
-                gas,
-                return_value: Bytes::new(),
-            });
-        }
-
-        // create account, transfer funds and make the journal checkpoint.
-        let checkpoint = match self
-            .data
-            .journaled_state
-            .create_account_checkpoint::<GSPEC>(inputs.caller, created_address, inputs.value)
-        {
-            Ok(checkpoint) => checkpoint,
-            Err(e) => {
-                return Err(CreateResult {
-                    result: e,
-                    created_address: None,
-                    gas,
-                    return_value: Bytes::new(),
-                });
-            }
-        };
-
-        let bytecode = Bytecode::new_raw(inputs.init_code.clone());
-
-        let contract = Box::new(Contract::new(
-            Bytes::new(),
-            bytecode,
-            code_hash,
-            created_address,
-            inputs.caller,
-            inputs.value,
-        ));
-
-        Ok(PreparedCreate {
-            gas,
-            created_address,
-            checkpoint,
-            contract,
-        })
-    }
-
-    /// EVM create opcode for both initial crate and CREATE and CREATE2 opcodes.
-    fn create_inner(
-        &mut self,
-        inputs: &CreateInputs,
-        shared_memory: &mut SharedMemory,
-    ) -> CreateResult {
-        // Prepare crate.
-        let prepared_create = match self.prepare_create(inputs) {
-            Ok(o) => o,
-            Err(e) => return e,
-        };
-
-        // Create new interpreter and execute initcode
-        let (exit_reason, mut bytes, mut gas) = self.run_interpreter(
-            prepared_create.contract,
-            prepared_create.gas.limit(),
-            false,
-            shared_memory,
-        );
-
-        // Host error if present on execution
-        match exit_reason {
-            return_ok!() => {
-                // if ok, check contract creation limit and calculate gas deduction on output len.
-                //
-                // EIP-3541: Reject new contract code starting with the 0xEF byte
-                if GSPEC::enabled(LONDON) && !bytes.is_empty() && bytes.first() == Some(&0xEF) {
-                    self.data
-                        .journaled_state
-                        .checkpoint_revert(prepared_create.checkpoint);
-                    return CreateResult {
-                        result: InstructionResult::CreateContractStartingWithEF,
-                        created_address: Some(prepared_create.created_address),
-                        gas,
-                        return_value: bytes,
-                    };
-                }
-
-                // EIP-170: Contract code size limit
-                // By default limit is 0x6000 (~25kb)
-                if GSPEC::enabled(SPURIOUS_DRAGON)
-                    && bytes.len()
-                        > self
-                            .data
-                            .env
-                            .cfg
-                            .limit_contract_code_size
-                            .unwrap_or(MAX_CODE_SIZE)
-                {
-                    self.data
-                        .journaled_state
-                        .checkpoint_revert(prepared_create.checkpoint);
-                    return CreateResult {
-                        result: InstructionResult::CreateContractSizeLimit,
-                        created_address: Some(prepared_create.created_address),
-                        gas,
-                        return_value: bytes,
-                    };
-                }
-                if crate::USE_GAS {
-                    let gas_for_code = bytes.len() as u64 * gas::CODEDEPOSIT;
-                    if !gas.record_cost(gas_for_code) {
-                        // record code deposit gas cost and check if we are out of gas.
-                        // EIP-2 point 3: If contract creation does not have enough gas to pay for the
-                        // final gas fee for adding the contract code to the state, the contract
-                        //  creation fails (i.e. goes out-of-gas) rather than leaving an empty contract.
-                        if GSPEC::enabled(HOMESTEAD) {
-                            self.data
-                                .journaled_state
-                                .checkpoint_revert(prepared_create.checkpoint);
-                            return CreateResult {
-                                result: InstructionResult::OutOfGas,
-                                created_address: Some(prepared_create.created_address),
-                                gas,
-                                return_value: bytes,
-                            };
-                        } else {
-                            bytes = Bytes::new();
-                        }
-                    }
-                }
-                // if we have enough gas
-                self.data.journaled_state.checkpoint_commit();
-                // Do analysis of bytecode straight away.
-                let bytecode = match self.data.env.cfg.perf_analyse_created_bytecodes {
-                    AnalysisKind::Raw => Bytecode::new_raw(bytes.clone()),
-                    AnalysisKind::Check => Bytecode::new_raw(bytes.clone()).to_checked(),
-                    AnalysisKind::Analyse => to_analysed(Bytecode::new_raw(bytes.clone())),
-                };
-                self.data
-                    .journaled_state
-                    .set_code(prepared_create.created_address, bytecode);
-                CreateResult {
-                    result: InstructionResult::Return,
-                    created_address: Some(prepared_create.created_address),
-                    gas,
-                    return_value: bytes,
-                }
-            }
-            _ => {
-                self.data
-                    .journaled_state
-                    .checkpoint_revert(prepared_create.checkpoint);
-                CreateResult {
-                    result: exit_reason,
-                    created_address: Some(prepared_create.created_address),
-                    gas,
-                    return_value: bytes,
-                }
-            }
-        }
-    }
-
-    /// Create a Interpreter and run it.
-    /// Returns the exit reason, return value and gas from interpreter
-    pub fn run_interpreter(
-        &mut self,
-        contract: Box<Contract>,
-        gas_limit: u64,
-        is_static: bool,
-        shared_memory: &mut SharedMemory,
-    ) -> (InstructionResult, Bytes, Gas) {
-        let mut interpreter = Box::new(Interpreter::new(
-            contract,
-            gas_limit,
-            is_static,
-            shared_memory,
-        ));
-
-        interpreter.shared_memory.new_context();
-
-        if let Some(inspector) = self.inspector.as_mut() {
-            inspector.initialize_interp(&mut interpreter, &mut self.data);
-        }
-
-        let exit_reason = match &mut self.instruction_table {
-            InstructionTables::Plain(table) => interpreter.run::<_, Self>(&table.clone(), self),
-            InstructionTables::Boxed(table) => interpreter.run::<_, Self>(&table.clone(), self),
-        };
-
-        let (return_value, gas) = (interpreter.return_value(), *interpreter.gas());
-
-        interpreter.shared_memory.free_context();
-
-        (exit_reason, return_value, gas)
-    }
-
-    /// Call precompile contract
-    fn call_precompile(
-        &mut self,
-        precompile: Precompile,
-        inputs: &CallInputs,
-        mut gas: Gas,
-    ) -> CallResult {
-        let input_data = &inputs.input;
-
-        let out = match precompile {
-            Precompile::Standard(fun) => fun(input_data, gas.limit()),
-            Precompile::Env(fun) => fun(input_data, gas.limit(), self.env()),
-        };
-
-        match out {
-            Ok((gas_used, data)) => {
-                if !crate::USE_GAS || gas.record_cost(gas_used) {
-                    CallResult {
-                        result: InstructionResult::Return,
-                        gas,
-                        return_value: Bytes::from(data),
-                    }
-                } else {
-                    CallResult {
-                        result: InstructionResult::PrecompileOOG,
-                        gas,
-                        return_value: Bytes::new(),
-                    }
-                }
-            }
-            Err(e) => {
-                let result = if precompile::Error::OutOfGas == e {
-                    InstructionResult::PrecompileOOG
-                } else {
-                    InstructionResult::PrecompileError
-                };
-                CallResult {
-                    result,
-                    gas,
-                    return_value: Bytes::new(),
-                }
-            }
-        }
-    }
-
-    #[inline(never)]
-    fn prepare_call(&mut self, inputs: &CallInputs) -> Result<PreparedCall, CallResult> {
-        let gas = Gas::new(inputs.gas_limit);
-        let account = match self
-            .data
-            .journaled_state
-            .load_code(inputs.contract, self.data.db)
-        {
-            Ok((account, _)) => account,
-            Err(e) => {
-                self.data.error = Some(e);
-                return Err(CallResult {
-                    result: InstructionResult::FatalExternalError,
-                    gas,
-                    return_value: Bytes::new(),
-                });
-            }
-        };
-        let code_hash = account.info.code_hash();
-        let bytecode = account.info.code.clone().unwrap_or_default();
-
-        // Check depth
-        if self.data.journaled_state.depth() > CALL_STACK_LIMIT {
-            return Err(CallResult {
-                result: InstructionResult::CallTooDeep,
-                gas,
-                return_value: Bytes::new(),
-            });
-        }
-
-        // Create subroutine checkpoint
-        let checkpoint = self.data.journaled_state.checkpoint();
-
-        // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
-        if inputs.transfer.value == U256::ZERO {
-            self.load_account(inputs.context.address);
-            self.data.journaled_state.touch(&inputs.context.address);
-        }
-
-        // Transfer value from caller to called account
-        if let Err(e) = self.data.journaled_state.transfer(
-            &inputs.transfer.source,
-            &inputs.transfer.target,
-            inputs.transfer.value,
-            self.data.db,
-        ) {
-            self.data.journaled_state.checkpoint_revert(checkpoint);
-            return Err(CallResult {
-                result: e,
-                gas,
-                return_value: Bytes::new(),
-            });
-        }
-
-        let contract = Box::new(Contract::new_with_context(
-            inputs.input.clone(),
-            bytecode,
-            code_hash,
-            &inputs.context,
-        ));
-
-        Ok(PreparedCall {
-            gas,
-            checkpoint,
-            contract,
-        })
-    }
-
-    /// Main contract call of the EVM.
-    fn call_inner(&mut self, inputs: &CallInputs, shared_memory: &mut SharedMemory) -> CallResult {
-        // Prepare call
-        let prepared_call = match self.prepare_call(inputs) {
-            Ok(o) => o,
-            Err(e) => return e,
-        };
-
-        let ret = if let Some(precompile) = self.data.precompiles.get(&inputs.contract) {
-            self.call_precompile(precompile, inputs, prepared_call.gas)
-        } else if !prepared_call.contract.bytecode.is_empty() {
-            // Create interpreter and execute subcall
-            let (exit_reason, bytes, gas) = self.run_interpreter(
-                prepared_call.contract,
-                prepared_call.gas.limit(),
-                inputs.is_static,
-                shared_memory,
-            );
-            CallResult {
-                result: exit_reason,
-                gas,
-                return_value: bytes,
-            }
-        } else {
-            CallResult {
-                result: InstructionResult::Stop,
-                gas: prepared_call.gas,
-                return_value: Bytes::new(),
-            }
-        };
-
-        // revert changes or not.
-        if matches!(ret.result, return_ok!()) {
-            self.data.journaled_state.checkpoint_commit();
-        } else {
-            self.data
-                .journaled_state
-                .checkpoint_revert(prepared_call.checkpoint);
-        }
-
-        ret
+        handler.main_return(data, interpreter_result.result, output, &gas)
     }
 }
 
-impl<'a, GSPEC: Spec + 'static, DB: Database> Host for EVMImpl<'a, GSPEC, DB> {
+/// EVM transaction interface.
+#[auto_impl(&mut, Box)]
+pub trait Transact<DBError> {
+    /// Run checks that could make transaction fail before call/create.
+    fn preverify_transaction(&mut self) -> Result<(), EVMError<DBError>>;
+
+    /// Skip pre-verification steps and execute the transaction.
+    fn transact_preverified(&mut self) -> EVMResult<DBError>;
+
+    /// Execute transaction by running pre-verification steps and then transaction itself.
+    fn transact(&mut self) -> EVMResult<DBError>;
+}
+
+impl<'a, SPEC: Spec + 'static, DB: Database> Transact<DB::Error> for EVMImpl<'a, SPEC, DB> {
+    #[inline]
+    fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
+        self.preverify_transaction_inner()
+    }
+
+    #[inline]
+    fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
+        let output = self.transact_preverified_inner();
+        self.handler.end(&mut self.context, output)
+    }
+
+    #[inline]
+    fn transact(&mut self) -> EVMResult<DB::Error> {
+        let output = self
+            .preverify_transaction_inner()
+            .and_then(|()| self.transact_preverified_inner());
+        self.handler.end(&mut self.context, output)
+    }
+}
+
+impl<'a, SPEC: Spec + 'static, DB: Database> Host for EVMImpl<'a, SPEC, DB> {
     fn env(&mut self) -> &mut Env {
-        self.data.env()
+        self.context.env()
     }
 
     fn block_hash(&mut self, number: U256) -> Option<B256> {
-        self.data.block_hash(number)
+        self.context.block_hash(number)
     }
 
     fn load_account(&mut self, address: Address) -> Option<(bool, bool)> {
-        self.data.load_account(address)
+        self.context.load_account(address)
     }
 
     fn balance(&mut self, address: Address) -> Option<(U256, bool)> {
-        self.data.balance(address)
+        self.context.balance(address)
     }
 
     fn code(&mut self, address: Address) -> Option<(Bytecode, bool)> {
-        self.data.code(address)
+        self.context.code(address)
     }
 
     /// Get code hash of address.
     fn code_hash(&mut self, address: Address) -> Option<(B256, bool)> {
-        self.data.code_hash(address)
+        self.context.code_hash(address)
     }
 
     fn sload(&mut self, address: Address, index: U256) -> Option<(U256, bool)> {
-        self.data.sload(address, index)
+        self.context.sload(address, index)
     }
 
     fn sstore(
@@ -850,91 +629,80 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> Host for EVMImpl<'a, GSPEC, DB> {
         index: U256,
         value: U256,
     ) -> Option<(U256, U256, U256, bool)> {
-        self.data.sstore(address, index, value)
+        self.context.sstore(address, index, value)
     }
 
     fn tload(&mut self, address: Address, index: U256) -> U256 {
-        self.data.tload(address, index)
+        self.context.tload(address, index)
     }
 
     fn tstore(&mut self, address: Address, index: U256, value: U256) {
-        self.data.tstore(address, index, value)
+        self.context.tstore(address, index, value)
     }
 
     fn log(&mut self, address: Address, topics: Vec<B256>, data: Bytes) {
         if let Some(inspector) = self.inspector.as_mut() {
-            inspector.log(&mut self.data, &address, &topics, &data);
+            inspector.log(&mut self.context, &address, &topics, &data);
         }
         let log = Log {
             address,
             topics,
             data,
         };
-        self.data.journaled_state.log(log);
+        self.context.journaled_state.log(log);
     }
 
     fn selfdestruct(&mut self, address: Address, target: Address) -> Option<SelfDestructResult> {
         if let Some(inspector) = self.inspector.as_mut() {
-            let acc = self.data.journaled_state.state.get(&address).unwrap();
+            let acc = self.context.journaled_state.state.get(&address).unwrap();
             inspector.selfdestruct(address, target, acc.info.balance);
         }
-        self.data
+        self.context
             .journaled_state
-            .selfdestruct(address, target, self.data.db)
-            .map_err(|e| self.data.error = Some(e))
+            .selfdestruct(address, target, self.context.db)
+            .map_err(|e| self.context.error = Some(e))
             .ok()
     }
+}
 
-    fn create(
-        &mut self,
-        inputs: &mut CreateInputs,
-        shared_memory: &mut SharedMemory,
-    ) -> (InstructionResult, Option<Address>, Gas, Bytes) {
-        // Call inspector
-        if let Some(inspector) = self.inspector.as_mut() {
-            let (ret, address, gas, out) = inspector.create(&mut self.data, inputs);
-            if ret != InstructionResult::Continue {
-                return inspector.create_end(&mut self.data, inputs, ret, address, gas, out);
-            }
-        }
-        let ret = self.create_inner(inputs, shared_memory);
-        if let Some(inspector) = self.inspector.as_mut() {
-            inspector.create_end(
-                &mut self.data,
-                inputs,
-                ret.result,
-                ret.created_address,
-                ret.gas,
-                ret.return_value,
-            )
-        } else {
-            (ret.result, ret.created_address, ret.gas, ret.return_value)
-        }
+/// Creates new EVM instance with erased types.
+pub fn new_evm<'a, DB: Database>(
+    env: &'a mut Env,
+    db: &'a mut DB,
+    insp: Option<&'a mut dyn Inspector<DB>>,
+) -> Box<dyn Transact<DB::Error> + 'a> {
+    macro_rules! create_evm {
+        ($spec:ident) => {
+            Box::new(EVMImpl::<'a, $spec, DB>::new_with_spec(
+                db,
+                env,
+                insp,
+                Precompiles::new(revm_precompile::SpecId::from_spec_id($spec::SPEC_ID)).clone(),
+            ))
+        };
     }
 
-    fn call(
-        &mut self,
-        inputs: &mut CallInputs,
-        shared_memory: &mut SharedMemory,
-    ) -> (InstructionResult, Gas, Bytes) {
-        if let Some(inspector) = self.inspector.as_mut() {
-            let (ret, gas, out) = inspector.call(&mut self.data, inputs);
-            if ret != InstructionResult::Continue {
-                return inspector.call_end(&mut self.data, inputs, gas, ret, out);
-            }
+    use specification::*;
+    match env.cfg.spec_id {
+        SpecId::FRONTIER | SpecId::FRONTIER_THAWING => create_evm!(FrontierSpec),
+        SpecId::HOMESTEAD | SpecId::DAO_FORK => create_evm!(HomesteadSpec),
+        SpecId::TANGERINE => create_evm!(TangerineSpec),
+        SpecId::SPURIOUS_DRAGON => create_evm!(SpuriousDragonSpec),
+        SpecId::BYZANTIUM => create_evm!(ByzantiumSpec),
+        SpecId::PETERSBURG | SpecId::CONSTANTINOPLE => create_evm!(PetersburgSpec),
+        SpecId::ISTANBUL | SpecId::MUIR_GLACIER => create_evm!(IstanbulSpec),
+        SpecId::BERLIN => create_evm!(BerlinSpec),
+        SpecId::LONDON | SpecId::ARROW_GLACIER | SpecId::GRAY_GLACIER => {
+            create_evm!(LondonSpec)
         }
-        let ret = self.call_inner(inputs, shared_memory);
-        if let Some(inspector) = self.inspector.as_mut() {
-            inspector.call_end(
-                &mut self.data,
-                inputs,
-                ret.gas,
-                ret.result,
-                ret.return_value,
-            )
-        } else {
-            (ret.result, ret.gas, ret.return_value)
-        }
+        SpecId::MERGE => create_evm!(MergeSpec),
+        SpecId::SHANGHAI => create_evm!(ShanghaiSpec),
+        SpecId::CANCUN => create_evm!(CancunSpec),
+        SpecId::LATEST => create_evm!(LatestSpec),
+        #[cfg(feature = "optimism")]
+        SpecId::BEDROCK => create_evm!(BedrockSpec),
+        #[cfg(feature = "optimism")]
+        SpecId::REGOLITH => create_evm!(RegolithSpec),
     }
 }
 

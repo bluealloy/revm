@@ -26,6 +26,17 @@ pub struct SharedMemory {
     memory_limit: u64,
 }
 
+/// Empty shared memory.
+///
+/// Used as placeholder inside Interpreter when it is not running.
+pub const EMPTY_SHARED_MEMORY: SharedMemory = SharedMemory {
+    buffer: Vec::new(),
+    checkpoints: Vec::new(),
+    last_checkpoint: 0,
+    #[cfg(feature = "memory_limit")]
+    memory_limit: u64::MAX,
+};
+
 impl fmt::Debug for SharedMemory {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("SharedMemory")

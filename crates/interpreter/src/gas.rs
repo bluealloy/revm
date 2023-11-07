@@ -88,9 +88,6 @@ impl Gas {
     /// Records an explicit cost.
     ///
     /// Returns `false` if the gas limit is exceeded.
-    ///
-    /// This function is called on every instruction in the interpreter if the feature
-    /// `no_gas_measuring` is not enabled.
     #[inline(always)]
     pub fn record_cost(&mut self, cost: u64) -> bool {
         let all_used_gas = self.all_used_gas.saturating_add(cost);

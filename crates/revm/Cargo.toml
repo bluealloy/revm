@@ -27,7 +27,7 @@ tokio = { version = "1.33", features = [
 ], optional = true }
 ethers-providers = { version = "2.0", optional = true }
 ethers-core = { version = "2.0", optional = true }
-futures = { version = "0.3.27", optional = true }
+futures = { version = "0.3.29", optional = true }
 
 [dev-dependencies]
 ethers-contract = { version = "2.0.10", default-features = false }
@@ -54,7 +54,6 @@ dev = [
     "optional_beneficiary_reward",
 ]
 memory_limit = ["revm-interpreter/memory_limit"]
-no_gas_measuring = ["revm-interpreter/no_gas_measuring"]
 optional_balance_check = ["revm-interpreter/optional_balance_check"]
 optional_block_gas_limit = ["revm-interpreter/optional_block_gas_limit"]
 optional_eip3607 = ["revm-interpreter/optional_eip3607"]

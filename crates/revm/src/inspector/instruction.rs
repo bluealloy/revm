@@ -11,13 +11,13 @@ pub fn inspector_instruction<'a, SPEC: Spec + 'static, DB: Database>(
     instruction: Instruction<EVMImpl<'a, SPEC, DB>>,
 ) -> BoxedInstruction<'a, EVMImpl<'a, SPEC, DB>> {
     Box::new(
-        move |interpreter: &mut Interpreter<'_>, host: &mut EVMImpl<'a, SPEC, DB>| {
+        move |interpreter: &mut Interpreter, host: &mut EVMImpl<'a, SPEC, DB>| {
             if let Some(inspector) = host.inspector.as_mut() {
                 // SAFETY: as the PC was already incremented we need to subtract 1 to preserve the
                 // old Inspector behavior.
                 interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.sub(1) };
 
-                inspector.step(interpreter, &mut host.data);
+                inspector.step(interpreter, &mut host.context);
                 if interpreter.instruction_result != InstructionResult::Continue {
                     return;
                 }
@@ -30,7 +30,7 @@ pub fn inspector_instruction<'a, SPEC: Spec + 'static, DB: Database>(
 
             // step ends
             if let Some(inspector) = host.inspector.as_mut() {
-                inspector.step_end(interpreter, &mut host.data);
+                inspector.step_end(interpreter, &mut host.context);
             }
         },
     )

@@ -19,32 +19,26 @@ macro_rules! check {
 
 macro_rules! gas {
     ($interp:expr, $gas:expr) => {
-        if crate::USE_GAS {
-            if !$interp.gas.record_cost($gas) {
-                $interp.instruction_result = InstructionResult::OutOfGas;
-                return;
-            }
+        if !$interp.gas.record_cost($gas) {
+            $interp.instruction_result = InstructionResult::OutOfGas;
+            return;
         }
     };
 }
 
 macro_rules! refund {
     ($interp:expr, $gas:expr) => {
-        if crate::USE_GAS {
-            $interp.gas.record_refund($gas);
-        }
+        $interp.gas.record_refund($gas)
     };
 }
 
 macro_rules! gas_or_fail {
     ($interp:expr, $gas:expr) => {
-        if crate::USE_GAS {
-            match $gas {
-                Some(gas_used) => gas!($interp, gas_used),
-                None => {
-                    $interp.instruction_result = InstructionResult::OutOfGas;
-                    return;
-                }
+        match $gas {
+            Some(gas_used) => gas!($interp, gas_used),
+            None => {
+                $interp.instruction_result = InstructionResult::OutOfGas;
+                return;
             }
         }
     };
@@ -62,12 +56,10 @@ macro_rules! shared_memory_resize {
             }
 
             if new_size > $interp.shared_memory.len() {
-                if crate::USE_GAS {
-                    let num_bytes = new_size / 32;
-                    if !$interp.gas.record_memory(crate::gas::memory_gas(num_bytes)) {
-                        $interp.instruction_result = InstructionResult::MemoryLimitOOG;
-                        return;
-                    }
+                let num_bytes = new_size / 32;
+                if !$interp.gas.record_memory(crate::gas::memory_gas(num_bytes)) {
+                    $interp.instruction_result = InstructionResult::MemoryLimitOOG;
+                    return;
                 }
                 $interp.shared_memory.resize(new_size);
             }
@@ -161,6 +153,7 @@ macro_rules! pop_top {
     };
 }
 
+#[macro_export]
 macro_rules! push_b256 {
 	($interp:expr, $($x:expr),* $(,)?) => ($(
         match $interp.stack.push_b256($x) {
@@ -173,6 +166,7 @@ macro_rules! push_b256 {
     )*)
 }
 
+#[macro_export]
 macro_rules! push {
     ($interp:expr, $($x:expr),* $(,)?) => ($(
         match $interp.stack.push($x) {
