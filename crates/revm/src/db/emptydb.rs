@@ -1,7 +1,7 @@
 use core::{convert::Infallible, fmt, marker::PhantomData};
 use revm_interpreter::primitives::{
     db::{Database, DatabaseRef},
-    AccountInfo, Address, Bytecode, B256, U256,
+    keccak256, AccountInfo, Address, Bytecode, B256, U256,
 };
 
 /// An empty database that always returns default values when queried.
@@ -101,6 +101,6 @@ impl<E> DatabaseRef for EmptyDBTyped<E> {
 
     #[inline]
     fn block_hash_ref(&self, number: U256) -> Result<B256, Self::Error> {
-        Ok(number.to_be_bytes().into())
+        Ok(keccak256(number.to_be_bytes::<{ U256::BYTES }>()))
     }
 }
