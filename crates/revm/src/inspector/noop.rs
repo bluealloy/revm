@@ -4,4 +4,4 @@ use crate::{Database, Inspector};
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NoOpInspector;
 
-impl<DB: Database> Inspector<DB> for NoOpInspector {}
+impl<EXT, DB: Database> Inspector<EXT, DB> for NoOpInspector {}

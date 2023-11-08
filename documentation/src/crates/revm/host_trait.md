@@ -2,7 +2,7 @@
 
 The `Host` trait provides an interface that allows the EVM to interact with the external world. It contains methods to access environmental information, manipulate account balances, and interact with contract code and storage.
 
-The [`EVMImpl`](./evm_impl.md) struct implements this `Host` trait.
+The [`Evm`](./evm_impl.md) struct implements this `Host` trait.
 
 - `step` & `step_end`
 

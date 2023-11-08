@@ -4,7 +4,7 @@ use ethers_providers::{Http, Provider};
 use revm::{
     db::{CacheDB, EmptyDB, EthersDB},
     primitives::{address, ExecutionResult, Output, TransactTo, U256},
-    Database, EVM,
+    Database, EvmFactory,
 };
 use std::sync::Arc;
 
@@ -65,7 +65,7 @@ async fn main() -> anyhow::Result<()> {
         .unwrap();
 
     // initialise an empty (default) EVM
-    let mut evm = EVM::new();
+    let mut evm = EvmFactory::new();
 
     // insert pre-built database from above
     evm.database(cache_db);

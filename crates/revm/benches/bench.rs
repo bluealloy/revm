@@ -11,7 +11,7 @@ use revm::{
 use revm_interpreter::{opcode::make_instruction_table, SharedMemory, EMPTY_SHARED_MEMORY};
 use std::time::Duration;
 
-type Evm = revm::EVM<BenchmarkDB>;
+type Evm = revm::EvmFactory<BenchmarkDB>;
 
 fn analysis(c: &mut Criterion) {
     let mut evm = revm::new();

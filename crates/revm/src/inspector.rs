@@ -8,9 +8,9 @@ use crate::{
 use auto_impl::auto_impl;
 
 #[cfg(feature = "std")]
-mod customprinter;
+//mod customprinter;
 #[cfg(all(feature = "std", feature = "serde"))]
-mod eip3155;
+//mod eip3155;
 mod gas;
 mod instruction;
 mod noop;
@@ -20,22 +20,26 @@ use revm_interpreter::InterpreterResult;
 /// [Inspector] implementations.
 pub mod inspectors {
     #[cfg(feature = "std")]
-    pub use super::customprinter::CustomPrintTracer;
+    //pub use super::customprinter::CustomPrintTracer;
     #[cfg(all(feature = "std", feature = "serde"))]
-    pub use super::eip3155::TracerEip3155;
+    //pub use super::eip3155::TracerEip3155;
     pub use super::gas::GasInspector;
     pub use super::noop::NoOpInspector;
 }
 
 /// EVM [Interpreter] callbacks.
 #[auto_impl(&mut, Box)]
-pub trait Inspector<DB: Database> {
+pub trait Inspector<EXT, DB: Database> {
     /// Called before the interpreter is initialized.
     ///
     /// If `interp.instruction_result` is set to anything other than [InstructionResult::Continue] then the execution of the interpreter
     /// is skipped.
     #[inline]
-    fn initialize_interp(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
+    fn initialize_interp(
+        &mut self,
+        interp: &mut Interpreter,
+        context: &mut EvmContext<'_, EXT, DB>,
+    ) {
         let _ = interp;
         let _ = context;
     }
@@ -49,7 +53,7 @@ pub trait Inspector<DB: Database> {
     ///
     /// To get the current opcode, use `interp.current_opcode()`.
     #[inline]
-    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
+    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, EXT, DB>) {
         let _ = interp;
         let _ = context;
     }
@@ -58,7 +62,7 @@ pub trait Inspector<DB: Database> {
     #[inline]
     fn log(
         &mut self,
-        context: &mut EvmContext<'_, DB>,
+        context: &mut EvmContext<'_, EXT, DB>,
         address: &Address,
         topics: &[B256],
         data: &Bytes,
@@ -74,7 +78,7 @@ pub trait Inspector<DB: Database> {
     /// Setting `interp.instruction_result` to anything other than [InstructionResult::Continue] alters the execution
     /// of the interpreter.
     #[inline]
-    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
+    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, EXT, DB>) {
         let _ = interp;
         let _ = context;
     }
@@ -85,7 +89,7 @@ pub trait Inspector<DB: Database> {
     #[inline]
     fn call(
         &mut self,
-        context: &mut EvmContext<'_, DB>,
+        context: &mut EvmContext<'_, EXT, DB>,
         inputs: &mut CallInputs,
     ) -> Option<(InterpreterResult, Range<usize>)> {
         let _ = context;
@@ -100,7 +104,7 @@ pub trait Inspector<DB: Database> {
     #[inline]
     fn call_end(
         &mut self,
-        context: &mut EvmContext<'_, DB>,
+        context: &mut EvmContext<'_, EXT, DB>,
         result: InterpreterResult,
     ) -> InterpreterResult {
         let _ = context;
@@ -113,7 +117,7 @@ pub trait Inspector<DB: Database> {
     #[inline]
     fn create(
         &mut self,
-        context: &mut EvmContext<'_, DB>,
+        context: &mut EvmContext<'_, EXT, DB>,
         inputs: &mut CreateInputs,
     ) -> Option<(InterpreterResult, Option<Address>)> {
         let _ = context;
@@ -128,7 +132,7 @@ pub trait Inspector<DB: Database> {
     #[inline]
     fn create_end(
         &mut self,
-        context: &mut EvmContext<'_, DB>,
+        context: &mut EvmContext<'_, EXT, DB>,
         result: InterpreterResult,
         address: Option<Address>,
     ) -> (InterpreterResult, Option<Address>) {

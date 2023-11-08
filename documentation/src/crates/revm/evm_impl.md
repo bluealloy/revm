@@ -1,6 +1,6 @@
 # EVM Implementation
 
-This module implements the Ethereum Virtual Machine (EVM), a stack-based virtual machine that executes Ethereum smart contracts. The following methods are exposed through the `EVMImpl` struct.
+This module implements the Ethereum Virtual Machine (EVM), a stack-based virtual machine that executes Ethereum smart contracts. The following methods are exposed through the `Evm` struct.
 
 ## Methods
 

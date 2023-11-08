@@ -1,5 +1,8 @@
 //! Mainnet related handlers.
 
+pub mod call_loop;
+pub mod main;
+
 use crate::{
     interpreter::{return_ok, return_revert, Gas, InstructionResult, SuccessOrHalt},
     primitives::{
@@ -35,8 +38,8 @@ pub fn handle_call_return<SPEC: Spec>(
 }
 
 #[inline]
-pub fn handle_reimburse_caller<SPEC: Spec, DB: Database>(
-    context: &mut EvmContext<'_, DB>,
+pub fn handle_reimburse_caller<SPEC: Spec, EXT, DB: Database>(
+    context: &mut EvmContext<'_, EXT, DB>,
     gas: &Gas,
 ) -> Result<(), EVMError<DB::Error>> {
     let caller = context.env.tx.caller;
@@ -58,8 +61,8 @@ pub fn handle_reimburse_caller<SPEC: Spec, DB: Database>(
 
 /// Reward beneficiary with gas fee.
 #[inline]
-pub fn reward_beneficiary<SPEC: Spec, DB: Database>(
-    context: &mut EvmContext<'_, DB>,
+pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
+    context: &mut EvmContext<'_, EXT, DB>,
     gas: &Gas,
 ) -> Result<(), EVMError<DB::Error>> {
     let beneficiary = context.env.block.coinbase;
@@ -102,63 +105,6 @@ pub fn calculate_gas_refund<SPEC: Spec>(env: &Env, gas: &Gas) -> u64 {
         let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 };
         (gas.refunded() as u64).min(gas.spend() / max_refund_quotient)
     }
-}
-
-//pub fn main_first_call
-
-/// Main return handle, returns the output of the transaction.
-#[inline]
-pub fn main_return<DB: Database>(
-    context: &mut EvmContext<'_, DB>,
-    call_result: InstructionResult,
-    output: Output,
-    gas: &Gas,
-) -> Result<ResultAndState, EVMError<DB::Error>> {
-    // used gas with refund calculated.
-    let gas_refunded = gas.refunded() as u64;
-    let final_gas_used = gas.spend() - gas_refunded;
-
-    // reset journal and return present state.
-    let (state, logs) = context.journaled_state.finalize();
-
-    let result = match call_result.into() {
-        SuccessOrHalt::Success(reason) => ExecutionResult::Success {
-            reason,
-            gas_used: final_gas_used,
-            gas_refunded,
-            logs,
-            output,
-        },
-        SuccessOrHalt::Revert => ExecutionResult::Revert {
-            gas_used: final_gas_used,
-            output: match output {
-                Output::Call(return_value) => return_value,
-                Output::Create(return_value, _) => return_value,
-            },
-        },
-        SuccessOrHalt::Halt(reason) => ExecutionResult::Halt {
-            reason,
-            gas_used: final_gas_used,
-        },
-        SuccessOrHalt::FatalExternalError => {
-            return Err(EVMError::Database(context.error.take().unwrap()));
-        }
-        // Only two internal return flags.
-        SuccessOrHalt::InternalContinue | SuccessOrHalt::InternalCallOrCreate => {
-            panic!("Internal return flags should remain internal {call_result:?}")
-        }
-    };
-
-    Ok(ResultAndState { result, state })
-}
-
-/// Mainnet end handle does not change the output.
-#[inline]
-pub fn end_handle<DB: Database>(
-    _context: &mut EvmContext<'_, DB>,
-    evm_output: Result<ResultAndState, EVMError<DB::Error>>,
-) -> Result<ResultAndState, EVMError<DB::Error>> {
-    evm_output
 }
 
 #[cfg(test)]

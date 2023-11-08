@@ -10,14 +10,14 @@ use crate::{
         keccak256, Address, AnalysisKind, Bytecode, Bytes, EVMError, Env, Spec, SpecId::*, B256,
         U256,
     },
-    CallStackFrame, CALL_STACK_LIMIT,
+    CallStackFrame, FrameOrResult, CALL_STACK_LIMIT,
 };
 use alloc::boxed::Box;
 use core::ops::Range;
 
 /// EVM Data contains all the data that EVM needs to execute.
 #[derive(Debug)]
-pub struct EvmContext<'a, DB: Database> {
+pub struct EvmContext<'a, EXT, DB: Database> {
     /// EVM Environment contains all the information about config, block and transaction that
     /// evm needs.
     pub env: &'a mut Env,
@@ -29,12 +29,14 @@ pub struct EvmContext<'a, DB: Database> {
     pub error: Option<DB::Error>,
     /// Precompiles that are available for evm.
     pub precompiles: Precompiles,
+    /// External generic code.
+    pub external: EXT,
     /// Used as temporary value holder to store L1 block info.
     #[cfg(feature = "optimism")]
     pub l1_block_info: Option<crate::optimism::L1BlockInfo>,
 }
 
-impl<'a, DB: Database> EvmContext<'a, DB> {
+impl<'a, EXT, DB: Database> EvmContext<'a, EXT, DB> {
     /// Load access list for berlin hard fork.
     ///
     /// Loading of accounts/storages is needed to make them warm.
@@ -135,15 +137,12 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
     }
 
     /// Make create frame.
-    pub fn make_create_frame<SPEC: Spec>(
-        &mut self,
-        inputs: &CreateInputs,
-    ) -> Result<Box<CallStackFrame>, InterpreterResult> {
+    pub fn make_create_frame<SPEC: Spec>(&mut self, inputs: &CreateInputs) -> FrameOrResult {
         // Prepare crate.
         let gas = Gas::new(inputs.gas_limit);
 
         let return_error = |e| {
-            Err(InterpreterResult {
+            FrameOrResult::Result(InterpreterResult {
                 result: e,
                 gas,
                 output: Bytes::new(),
@@ -210,13 +209,13 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
             inputs.value,
         ));
 
-        Ok(Box::new(CallStackFrame {
+        FrameOrResult::new_frame(CallStackFrame {
             is_create: true,
             checkpoint,
             created_address: Some(created_address),
             subcall_return_memory_range: 0..0,
             interpreter: Interpreter::new(contract, gas.limit(), false),
-        }))
+        })
     }
 
     /// Make call frame
@@ -224,11 +223,11 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
         &mut self,
         inputs: &CallInputs,
         return_memory_offset: Range<usize>,
-    ) -> Result<Box<CallStackFrame>, InterpreterResult> {
+    ) -> FrameOrResult {
         let gas = Gas::new(inputs.gas_limit);
 
         let return_result = |instruction_result: InstructionResult| {
-            Err(InterpreterResult {
+            FrameOrResult::Result(InterpreterResult {
                 result: instruction_result,
                 gas,
                 output: Bytes::new(),
@@ -279,7 +278,7 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
             } else {
                 self.journaled_state.checkpoint_revert(checkpoint);
             }
-            Err(result)
+            FrameOrResult::Result(result)
         } else if !bytecode.is_empty() {
             let contract = Box::new(Contract::new_with_context(
                 inputs.input.clone(),
@@ -288,13 +287,13 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
                 &inputs.context,
             ));
             // Create interpreter and execute subcall and push new CallStackFrame.
-            Ok(Box::new(CallStackFrame {
+            FrameOrResult::new_frame(CallStackFrame {
                 is_create: false,
                 checkpoint,
                 created_address: None,
                 subcall_return_memory_range: return_memory_offset,
                 interpreter: Interpreter::new(contract, gas.limit(), inputs.is_static),
-            }))
+            })
         } else {
             self.journaled_state.checkpoint_commit();
             return_result(InstructionResult::Stop)

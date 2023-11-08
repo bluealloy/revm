@@ -19,7 +19,7 @@ pub struct CustomPrintTracer {
 }
 
 impl<DB: Database> Inspector<DB> for CustomPrintTracer {
-    fn initialize_interp(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
+    fn initialize_interp(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, Self, DB>) {
         self.gas_inspector.initialize_interp(interp, context);
     }
 
