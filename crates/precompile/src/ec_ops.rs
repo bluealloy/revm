@@ -1,3 +1,4 @@
+use blsful::Pairing;
 use curve25519_dalek::EdwardsPoint;
 use elliptic_curve::{
     group::{prime::PrimeCurveAffine, Curve, GroupEncoding},
@@ -231,6 +232,10 @@ const CURVE_NAME_BLS12381G2: &[u8] = &[
     234, 117, 92, 131, 99, 84, 34, 238, 113, 135, 28, 154, 84, 213, 205, 6, 52, 142, 9, 84, 93, 98,
     145, 179, 160, 123, 115, 254, 95, 105, 154, 249,
 ];
+const CURVE_NAME_BLS12381GT: &[u8] = &[
+    72, 104, 114, 249, 247, 74, 129, 138, 239, 93, 192, 105, 87, 88, 22, 147, 201, 72, 247, 204,
+    168, 110, 248, 13, 211, 195, 253, 59, 152, 53, 40, 135,
+];
 const HASH_NAME_SHA2_256: &[u8] = &[
     231, 8, 169, 121, 9, 175, 229, 141, 81, 199, 223, 139, 162, 228, 170, 161, 233, 154, 116, 235,
     240, 211, 10, 216, 160, 162, 14, 213, 193, 29, 101, 84,
@@ -310,6 +315,11 @@ trait EcOps {
                     let result = self.bls12381g2(&data[i + 32..])?;
                     return Ok((gas_used, result));
                 }
+                CURVE_NAME_BLS12381GT => {
+                    println!("bls12381gt");
+                    let result = self.bls12381g1(&data[i + 32..])?;
+                    return Ok((gas_used, result));
+                }
                 _ => {}
             };
             i += 1;
@@ -321,6 +331,7 @@ trait EcOps {
     fn curve25519(&self, data: &[u8]) -> Result<Vec<u8>, Error>;
     fn bls12381g1(&self, data: &[u8]) -> Result<Vec<u8>, Error>;
     fn bls12381g2(&self, data: &[u8]) -> Result<Vec<u8>, Error>;
+    fn bls12381gt(&self, data: &[u8]) -> Result<Vec<u8>, Error>;
 }
 
 fn parse_hash<'a>(data: &'a [u8]) -> Result<(&'a [u8], Box<dyn SchnorrChallenge>), Error> {
@@ -553,40 +564,71 @@ fn bls12381g1_points<'a>(
     data: &'a [u8],
     point_cnt: usize,
 ) -> Result<(&'a [u8], Vec<blsful::inner_types::G1Projective>), Error> {
-    if 96 * point_cnt > data.len() {
+    use blsful::inner_types::G1Projective;
+
+    if G1Projective::UNCOMPRESSED_BYTES * point_cnt > data.len() {
         return Err(Error::EcOpsInvalidPoint);
     }
     let mut points = Vec::with_capacity(point_cnt);
     for i in 0..point_cnt {
-        let bytes = <[u8; 96]>::try_from(&data[96 * i..96 * (i + 1)]).unwrap();
-        let point = Option::<blsful::inner_types::G1Projective>::from(
-            blsful::inner_types::G1Projective::from_uncompressed(&bytes),
+        let bytes = <[u8; G1Projective::UNCOMPRESSED_BYTES]>::try_from(
+            &data[G1Projective::UNCOMPRESSED_BYTES * i..G1Projective::UNCOMPRESSED_BYTES * (i + 1)],
         )
-        .ok_or(Error::EcOpsInvalidPoint)?;
+        .unwrap();
+        let point = Option::<G1Projective>::from(G1Projective::from_uncompressed(&bytes))
+            .ok_or(Error::EcOpsInvalidPoint)?;
         points.push(point);
     }
 
-    Ok((&data[96 * point_cnt..], points))
+    Ok((
+        &data[G1Projective::UNCOMPRESSED_BYTES * point_cnt..],
+        points,
+    ))
 }
 
 fn bls12381g2_points<'a>(
     data: &'a [u8],
     point_cnt: usize,
 ) -> Result<(&'a [u8], Vec<blsful::inner_types::G2Projective>), Error> {
-    if 192 * point_cnt > data.len() {
+    use blsful::inner_types::G2Projective;
+
+    if G2Projective::UNCOMPRESSED_BYTES * point_cnt > data.len() {
         return Err(Error::EcOpsInvalidPoint);
     }
     let mut points = Vec::with_capacity(point_cnt);
     for i in 0..point_cnt {
-        let bytes = <[u8; 192]>::try_from(&data[192 * i..192 * (i + 1)]).unwrap();
-        let point = Option::<blsful::inner_types::G2Projective>::from(
-            blsful::inner_types::G2Projective::from_uncompressed(&bytes),
+        let bytes = <[u8; G2Projective::UNCOMPRESSED_BYTES]>::try_from(
+            &data[G2Projective::UNCOMPRESSED_BYTES * i..G2Projective::UNCOMPRESSED_BYTES * (i + 1)],
         )
-        .ok_or(Error::EcOpsInvalidPoint)?;
+        .unwrap();
+        let point = Option::<G2Projective>::from(G2Projective::from_uncompressed(&bytes))
+            .ok_or(Error::EcOpsInvalidPoint)?;
         points.push(point);
     }
 
-    Ok((&data[192 * point_cnt..], points))
+    Ok((
+        &data[G2Projective::UNCOMPRESSED_BYTES * point_cnt..],
+        points,
+    ))
+}
+
+fn bls12381gt_scalar<'a>(
+    data: &'a [u8],
+    cnt: usize,
+) -> Result<(&'a [u8], Vec<blsful::inner_types::Gt>), Error> {
+    use blsful::inner_types::Gt;
+
+    if Gt::BYTES * cnt > data.len() {
+        return Err(Error::EcOpsInvalidScalar);
+    }
+    let mut scalars = Vec::with_capacity(cnt);
+    for i in 0..cnt {
+        let bytes = <[u8; Gt::BYTES]>::try_from(&data[Gt::BYTES * i..Gt::BYTES * (i + 1)]).unwrap();
+        let scalar = Option::<Gt>::from(Gt::from_bytes(&bytes)).ok_or(Error::EcOpsInvalidScalar)?;
+        scalars.push(scalar);
+    }
+
+    Ok((&data[Gt::BYTES * cnt..], scalars))
 }
 
 fn bls12381_scalars<'a>(
@@ -643,6 +685,7 @@ struct EcIsInfinity {}
 struct EcIsValid {}
 struct EcHash {}
 struct EcSumOfProducts {}
+struct EcPairing {}
 struct ScalarAdd {}
 struct ScalarMul {}
 struct ScalarNeg {}
@@ -693,6 +736,13 @@ impl EcOps for EcMultiply {
         let point = points[0] * scalars[0];
         Ok(point.to_uncompressed().to_vec())
     }
+
+    fn bls12381gt(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
+        let (data, points) = bls12381gt_scalar(data, 1)?;
+        let (_, scalars) = bls12381_scalars(data, 1)?;
+        let point = points[0] * scalars[0];
+        Ok(point.to_bytes().to_vec())
+    }
 }
 
 impl EcOps for EcAdd {
@@ -724,6 +774,12 @@ impl EcOps for EcAdd {
         let (_, points) = bls12381g2_points(data, 2)?;
         let point = points[0] + points[1];
         Ok(point.to_uncompressed().to_vec())
+    }
+
+    fn bls12381gt(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
+        let (_, scalars) = bls12381gt_scalar(data, 2)?;
+        let scalar = scalars[0] + scalars[1];
+        Ok(scalar.to_bytes().to_vec())
     }
 }
 
@@ -757,6 +813,12 @@ impl EcOps for EcNeg {
         let point = -points[0];
         Ok(point.to_uncompressed().to_vec())
     }
+
+    fn bls12381gt(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
+        let (_, scalars) = bls12381gt_scalar(data, 1)?;
+        let scalar = -scalars[0];
+        Ok(scalar.to_bytes().to_vec())
+    }
 }
 
 impl EcOps for EcEqual {
@@ -787,6 +849,12 @@ impl EcOps for EcEqual {
     fn bls12381g2(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
         let (_, points) = bls12381g2_points(data, 2)?;
         let res = points[0] == points[1];
+        Ok(vec![res.into()])
+    }
+
+    fn bls12381gt(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
+        let (_, scalars) = bls12381gt_scalar(data, 2)?;
+        let res = scalars[0] == scalars[1];
         Ok(vec![res.into()])
     }
 }
@@ -821,6 +889,12 @@ impl EcOps for EcIsInfinity {
         let res = points[0].is_identity().unwrap_u8();
         Ok(vec![res])
     }
+
+    fn bls12381gt(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
+        let (_, scalars) = bls12381gt_scalar(data, 1)?;
+        let res = scalars[0].is_identity().unwrap_u8();
+        Ok(vec![res])
+    }
 }
 
 impl EcOps for EcIsValid {
@@ -849,6 +923,11 @@ impl EcOps for EcIsValid {
         let (_, points) = bls12381g2_points(data, 1)?;
         let res = points[0].is_on_curve().unwrap_u8();
         Ok(vec![res])
+    }
+
+    fn bls12381gt(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
+        let (_, _scalars) = bls12381gt_scalar(data, 1)?;
+        Ok(vec![1])
     }
 }
 
@@ -893,6 +972,19 @@ impl EcOps for EcHash {
             elliptic_curve::hash2curve::ExpandMsgXmd<sha2::Sha256>,
         >(&data[..lengths[0]], b"BLS12381G2_XMD:SHA-256_SSWU_RO_");
         Ok(point.to_uncompressed().to_vec())
+    }
+
+    fn bls12381gt(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
+        let (data, lengths) = read_usizes(data, 1)?;
+        let point = blsful::inner_types::G1Projective::hash::<
+            elliptic_curve::hash2curve::ExpandMsgXmd<sha2::Sha256>,
+        >(&data[..lengths[0]], b"BLS12381G1_XMD:SHA-256_SSWU_RO_");
+        Ok(blsful::Bls12381G1Impl::pairing(&[(
+            point,
+            blsful::inner_types::G2Projective::GENERATOR,
+        )])
+        .to_bytes()
+        .to_vec())
     }
 }
 
@@ -945,6 +1037,74 @@ impl EcOps for EcSumOfProducts {
         let point = blsful::inner_types::G2Projective::sum_of_products(&points, &scalars);
         Ok(point.to_uncompressed().to_vec())
     }
+
+    fn bls12381gt(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
+        let (data, lengths) = read_usizes(data, 1)?;
+        let cnt = lengths[0];
+        let (data, points) = bls12381gt_scalar(data, cnt)?;
+        let (_, scalars) = bls12381_scalars(data, cnt)?;
+        let mut result = blsful::inner_types::Gt::IDENTITY;
+        for i in 0..cnt {
+            result += points[i] * scalars[i];
+        }
+        Ok(result.to_bytes().to_vec())
+    }
+}
+
+impl EcOps for EcPairing {
+    fn secp256k1(&self, _data: &[u8]) -> Result<Vec<u8>, Error> {
+        Err(Error::EcOpsInvalidCurve)
+    }
+
+    fn prime256v1(&self, _data: &[u8]) -> Result<Vec<u8>, Error> {
+        Err(Error::EcOpsInvalidCurve)
+    }
+
+    fn curve25519(&self, _data: &[u8]) -> Result<Vec<u8>, Error> {
+        Err(Error::EcOpsInvalidCurve)
+    }
+
+    fn bls12381g1(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
+        let (data, lengths) = read_usizes(data, 1)?;
+        let cnt = lengths[0];
+        let (data, points_g1) = bls12381g1_points(data, cnt)?;
+        let (_, points_g2) = bls12381g2_points(data, cnt)?;
+        let mut pairs = Vec::with_capacity(cnt);
+        for i in 0..cnt {
+            pairs.push((points_g1[i], points_g2[i]));
+        }
+        Ok(blsful::Bls12381G1Impl::pairing(pairs.as_slice())
+            .to_bytes()
+            .to_vec())
+    }
+
+    fn bls12381g2(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
+        let (data, lengths) = read_usizes(data, 1)?;
+        let cnt = lengths[0];
+        let (data, points_g1) = bls12381g1_points(data, cnt)?;
+        let (_, points_g2) = bls12381g2_points(data, cnt)?;
+        let mut pairs = Vec::with_capacity(cnt);
+        for i in 0..cnt {
+            pairs.push((points_g1[i], points_g2[i]));
+        }
+        Ok(blsful::Bls12381G1Impl::pairing(pairs.as_slice())
+            .to_bytes()
+            .to_vec())
+    }
+
+    fn bls12381gt(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
+        let (data, lengths) = read_usizes(data, 1)?;
+        let cnt = lengths[0];
+        let (data, points_g1) = bls12381g1_points(data, cnt)?;
+        let (_, points_g2) = bls12381g2_points(data, cnt)?;
+        let mut pairs = Vec::with_capacity(cnt);
+        for i in 0..cnt {
+            pairs.push((points_g1[i], points_g2[i]));
+        }
+        Ok(blsful::Bls12381G1Impl::pairing(pairs.as_slice())
+            .to_bytes()
+            .to_vec())
+    }
 }
 
 impl EcOps for ScalarAdd {
@@ -973,6 +1133,12 @@ impl EcOps for ScalarAdd {
     }
 
     fn bls12381g2(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
+        let (_, scalars) = bls12381_scalars(data, 2)?;
+        let scalar = scalars[0] + scalars[1];
+        Ok(scalar.to_be_bytes().to_vec())
+    }
+
+    fn bls12381gt(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
         let (_, scalars) = bls12381_scalars(data, 2)?;
         let scalar = scalars[0] + scalars[1];
         Ok(scalar.to_be_bytes().to_vec())
@@ -1009,6 +1175,12 @@ impl EcOps for ScalarMul {
         let scalar = scalars[0] * scalars[1];
         Ok(scalar.to_be_bytes().to_vec())
     }
+
+    fn bls12381gt(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
+        let (_, scalars) = bls12381_scalars(data, 2)?;
+        let scalar = scalars[0] * scalars[1];
+        Ok(scalar.to_be_bytes().to_vec())
+    }
 }
 
 impl EcOps for ScalarNeg {
@@ -1037,6 +1209,12 @@ impl EcOps for ScalarNeg {
     }
 
     fn bls12381g2(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
+        let (_, scalars) = bls12381_scalars(data, 1)?;
+        let scalar = -scalars[0];
+        Ok(scalar.to_be_bytes().to_vec())
+    }
+
+    fn bls12381gt(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
         let (_, scalars) = bls12381_scalars(data, 1)?;
         let scalar = -scalars[0];
         Ok(scalar.to_be_bytes().to_vec())
@@ -1072,6 +1250,13 @@ impl EcOps for ScalarInv {
     }
 
     fn bls12381g2(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
+        let (_, scalars) = bls12381_scalars(data, 1)?;
+        let scalar = Option::<blsful::inner_types::Scalar>::from(scalars[0].invert())
+            .ok_or(Error::EcOpsInvalidScalar)?;
+        Ok(scalar.to_be_bytes().to_vec())
+    }
+
+    fn bls12381gt(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
         let (_, scalars) = bls12381_scalars(data, 1)?;
         let scalar = Option::<blsful::inner_types::Scalar>::from(scalars[0].invert())
             .ok_or(Error::EcOpsInvalidScalar)?;
@@ -1129,6 +1314,16 @@ impl EcOps for ScalarSqrt {
             Err(Error::EcOpsInvalidScalar)
         }
     }
+
+    fn bls12381gt(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
+        let (_, scalars) = bls12381_scalars(data, 1)?;
+        let (is_sqr, res) = scalars[0].sqrt_alt();
+        if is_sqr.into() {
+            Ok(res.to_be_bytes().to_vec())
+        } else {
+            Err(Error::EcOpsInvalidScalar)
+        }
+    }
 }
 
 impl EcOps for ScalarEqual {
@@ -1157,6 +1352,12 @@ impl EcOps for ScalarEqual {
     }
 
     fn bls12381g2(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
+        let (_, scalars) = bls12381_scalars(data, 2)?;
+        let res = scalars[0] == scalars[1];
+        Ok(vec![res.into()])
+    }
+
+    fn bls12381gt(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
         let (_, scalars) = bls12381_scalars(data, 2)?;
         let res = scalars[0] == scalars[1];
         Ok(vec![res.into()])
@@ -1193,6 +1394,12 @@ impl EcOps for ScalarIsZero {
         let res = scalars[0].is_zero().unwrap_u8();
         Ok(vec![res])
     }
+
+    fn bls12381gt(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
+        let (_, scalars) = bls12381_scalars(data, 1)?;
+        let res = scalars[0].is_zero().unwrap_u8();
+        Ok(vec![res])
+    }
 }
 
 impl EcOps for ScalarIsValid {
@@ -1217,6 +1424,11 @@ impl EcOps for ScalarIsValid {
     }
 
     fn bls12381g2(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
+        let res = bls12381_scalars(data, 1).is_ok();
+        Ok(vec![res.into()])
+    }
+
+    fn bls12381gt(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
         let res = bls12381_scalars(data, 1).is_ok();
         Ok(vec![res.into()])
     }
@@ -1274,6 +1486,15 @@ impl EcOps for ScalarFromWideBytes {
             blsful::inner_types::Scalar::from_bytes_wide(&<[u8; 64]>::try_from(data).unwrap());
         Ok(scalar.to_be_bytes().to_vec())
     }
+
+    fn bls12381gt(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
+        if data.len() != 64 {
+            return Err(Error::EcOpsInvalidSize);
+        }
+        let scalar =
+            blsful::inner_types::Scalar::from_bytes_wide(&<[u8; 64]>::try_from(data).unwrap());
+        Ok(scalar.to_be_bytes().to_vec())
+    }
 }
 
 impl EcOps for ScalarHash {
@@ -1314,6 +1535,15 @@ impl EcOps for ScalarHash {
     }
 
     fn bls12381g2(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
+        let (data, lengths) = read_usizes(data, 1)?;
+        let cnt = lengths[0];
+        let scalar = blsful::inner_types::Scalar::hash::<
+            elliptic_curve::hash2curve::ExpandMsgXmd<sha2::Sha256>,
+        >(&data[..cnt], b"BLS12381_XMD:SHA-256_RO_");
+        Ok(scalar.to_be_bytes().to_vec())
+    }
+
+    fn bls12381gt(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
         let (data, lengths) = read_usizes(data, 1)?;
         let cnt = lengths[0];
         let scalar = blsful::inner_types::Scalar::hash::<
@@ -1377,6 +1607,10 @@ impl EcOps for EcdsaVerify {
     }
 
     fn bls12381g2(&self, _data: &[u8]) -> Result<Vec<u8>, Error> {
+        Err(Error::EcOpsNotSupported)
+    }
+
+    fn bls12381gt(&self, _data: &[u8]) -> Result<Vec<u8>, Error> {
         Err(Error::EcOpsNotSupported)
     }
 }
@@ -1553,6 +1787,37 @@ impl EcOps for SchnorrVerify1 {
         let e = blsful::inner_types::Scalar::from_bytes_wide(&e_arr);
 
         let big_r = blsful::inner_types::G2Projective::GENERATOR * sig_s[0] - pk * e;
+        if big_r == sig_r {
+            Ok(vec![1u8])
+        } else {
+            Ok(vec![0u8])
+        }
+    }
+
+    fn bls12381gt(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
+        let (data, hasher) = parse_hash(data)?;
+        if data.len() < 32 {
+            return Err(Error::EcOpsInvalidSize);
+        }
+        let msg = &data[..32];
+        let (data, points) = bls12381gt_scalar(&data[32..], 2)?;
+        if (points[0].is_identity() | points[1].is_identity()).into() {
+            return Err(Error::EcOpsInvalidPoint);
+        }
+        let pk = points[0];
+        let sig_r = points[1];
+        let (_, sig_s) = bls12381_scalars(data, 1)?;
+        if sig_s[0].is_zero().into() {
+            return Err(Error::EcOpsInvalidScalar);
+        }
+
+        let e_bytes =
+            hasher.compute_challenge(sig_r.to_bytes().as_ref(), pk.to_bytes().as_ref(), &msg);
+        let mut e_arr = [0u8; 64];
+        e_arr[64 - e_bytes.len()..].copy_from_slice(&e_bytes[..]);
+        let e = blsful::inner_types::Scalar::from_bytes_wide(&e_arr);
+
+        let big_r = blsful::inner_types::Gt::generator() * sig_s[0] - pk * e;
         if big_r == sig_r {
             Ok(vec![1u8])
         } else {
@@ -1757,6 +2022,40 @@ impl EcOps for SchnorrVerify2 {
             Ok(vec![0u8])
         }
     }
+
+    fn bls12381gt(&self, data: &[u8]) -> Result<Vec<u8>, Error> {
+        let (data, hasher) = parse_hash(data)?;
+        let (data, scalars) = bls12381_scalars(data, 1)?;
+        if scalars[0].is_zero().into() {
+            return Err(Error::EcOpsInvalidScalar);
+        }
+        let (data, points) = bls12381gt_scalar(data, 2)?;
+        if (points[0].is_identity() | points[1].is_identity()).into() {
+            return Err(Error::EcOpsInvalidScalar);
+        }
+        let pk = points[0];
+        let sig_r = points[1];
+        let (_, sig_s) = bls12381_scalars(data, 1)?;
+        if sig_s[0].is_zero().into() {
+            return Err(Error::EcOpsInvalidScalar);
+        }
+
+        let e_bytes = hasher.compute_challenge(
+            sig_r.to_bytes().as_ref(),
+            pk.to_bytes().as_ref(),
+            scalars[0].to_be_bytes().as_ref(),
+        );
+        let mut e_arr = [0u8; 64];
+        e_arr[..e_bytes.len()].copy_from_slice(&e_bytes[..]);
+        let e = blsful::inner_types::Scalar::from_bytes_wide(&e_arr);
+
+        let big_r = blsful::inner_types::Gt::generator() * sig_s[0] + pk * e;
+        if big_r == sig_r {
+            Ok(vec![1u8])
+        } else {
+            Ok(vec![0u8])
+        }
+    }
 }
 
 impl EcOps for BlsVerify {
@@ -1815,6 +2114,10 @@ impl EcOps for BlsVerify {
         } else {
             Ok(vec![0u8])
         }
+    }
+
+    fn bls12381gt(&self, _data: &[u8]) -> Result<Vec<u8>, Error> {
+        Err(Error::EcOpsNotSupported)
     }
 }
 
