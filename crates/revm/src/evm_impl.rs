@@ -667,11 +667,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             let out_len_or_err =
                 SDK::rwasm_transact(bytecode, input.as_ref(), output.as_mut_slice(), state);
             if out_len_or_err < 0 {
-                return (
-                    InstructionResult::FatalExternalError,
-                    Bytes::new(),
-                    Gas::new(gas_limit),
-                );
+                return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
             }
             if output.len() < out_len_or_err as usize {
                 output = vec![0u8; out_len_or_err as usize];
@@ -680,33 +676,8 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             break;
         }
 
-        let mut error_code = InstructionResult::Stop;
-        // #[cfg(feature = "runtime")]
-        // {
-        //     let import_linker = Runtime::new_linker();
-        //     let execution_result = Runtime::run_with_context(
-        //         RuntimeContext::new(bytecode)
-        //             .with_input(&vec![contract.input.to_vec()])
-        //             .with_state(state),
-        //         &import_linker,
-        //     )
-        //     .unwrap();
-        //     if execution_result.data().exit_code() != 0 {
-        //         if execution_result.data().output().is_empty() {
-        //             output = vec![0; 4];
-        //             let error_code_be = execution_result.data().exit_code().to_be_bytes();
-        //             output.copy_from_slice(&error_code_be);
-        //         } else {
-        //             output = execution_result.data().output().to_owned();
-        //         }
-        //         error_code = InstructionResult::Revert
-        //     } else {
-        //         output = execution_result.data().output().to_owned();
-        //     }
-        // }
-
         (
-            error_code,
+            InstructionResult::Stop,
             Bytes::copy_from_slice(&output),
             Gas::new(gas_limit),
         )
