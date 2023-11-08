@@ -36,6 +36,56 @@ pub struct EvmContext<'a, EXT, DB: Database> {
     pub l1_block_info: Option<crate::optimism::L1BlockInfo>,
 }
 
+pub struct Temp<EXT> {
+    pub external: EXT,
+    pub handle: Box<dyn Fn(&mut EXT)>,
+}
+
+impl<EXT> Temp<EXT> {
+    pub fn call(&mut self) {
+        let handle = &mut self.handle;
+        let ext = &mut self.external;
+        handle(ext);
+    }
+}
+
+#[derive(Default)]
+pub struct External {
+    pub var: bool,
+}
+
+impl External {
+    pub fn handle(&self) -> Box<dyn Fn(&mut Self)> {
+        Box::new(call)
+    }
+}
+
+impl ExtT for External {
+    fn change(&mut self) {
+        self.var = true;
+    }
+}
+
+pub trait ExtT {
+    fn change(&mut self);
+}
+
+fn call(temp: &mut impl ExtT) {
+    temp.change()
+}
+
+pub fn test() {
+    let ext = External::default();
+    let handle = ext.handle();
+    let mut temp = Temp {
+        external: ext,
+        handle: handle,
+    };
+
+    temp.call();
+    assert!(temp.external.var);
+}
+
 impl<'a, EXT, DB: Database> EvmContext<'a, EXT, DB> {
     /// Load access list for berlin hard fork.
     ///
