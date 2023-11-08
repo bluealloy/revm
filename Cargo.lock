@@ -1716,7 +1716,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-poseidon"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#d1963638f63f225e32d4bcf43948cb4a324ff1e1"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#2fee69093172020a3c62b29665264b9c2cb9f745"
 dependencies = [
  "bitvec 1.0.1",
  "halo2curves 0.3.1",
@@ -1727,7 +1727,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-runtime"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#d1963638f63f225e32d4bcf43948cb4a324ff1e1"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#2fee69093172020a3c62b29665264b9c2cb9f745"
 dependencies = [
  "bincode",
  "bitvec 1.0.1",
@@ -1765,7 +1765,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-rwasm"
 version = "0.30.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#d1963638f63f225e32d4bcf43948cb4a324ff1e1"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#2fee69093172020a3c62b29665264b9c2cb9f745"
 dependencies = [
  "byteorder",
  "downcast-rs",
@@ -1782,12 +1782,15 @@ dependencies = [
 [[package]]
 name = "fluentbase-sdk"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#d1963638f63f225e32d4bcf43948cb4a324ff1e1"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#2fee69093172020a3c62b29665264b9c2cb9f745"
 dependencies = [
  "eth_trie",
+ "fluentbase-poseidon",
  "fluentbase-runtime",
  "fluentbase-rwasm",
+ "halo2curves 0.3.1",
  "k256",
+ "keccak-hash",
 ]
 
 [[package]]
@@ -1973,9 +1976,9 @@ dependencies = [
 
 [[package]]
 name = "getrandom"
-version = "0.2.10"
+version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "be4136b2a15dd319360be1c07d9933517ccf0be8f16bf62a3bee4f0d618df427"
+checksum = "fe9006bed769170c11f845cf00c7c1e9092aeb3f268e007c3e760ac68008070f"
 dependencies = [
  "cfg-if",
  "libc",
@@ -2645,9 +2648,9 @@ dependencies = [
 
 [[package]]
 name = "linux-raw-sys"
-version = "0.4.10"
+version = "0.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da2479e8c062e40bf0066ffa0bc823de0a9368974af99c9f6df941d2c231e03f"
+checksum = "969488b55f8ac402214f3f5fd243ebb7206cf82de60d3172994707a4bcc2b829"
 
 [[package]]
 name = "lock_api"

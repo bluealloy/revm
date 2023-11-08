@@ -547,6 +547,8 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             Err(e) => return e,
         };
 
+        let bytecode = Bytes::copy_from_slice(prepared_create.contract.bytecode.bytecode());
+
         // Create new interpreter and execute init code
         let (exit_reason, mut bytes, mut gas) = self.run_interpreter(
             prepared_create.contract,
@@ -619,15 +621,9 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                 }
                 // if we have enough gas
                 self.data.journaled_state.checkpoint_commit();
-                // Do analysis of bytecode straight away.
-                let bytecode = match self.data.env.cfg.perf_analyse_created_bytecodes {
-                    AnalysisKind::Raw => Bytecode::new_raw(bytes.clone()),
-                    AnalysisKind::Check => Bytecode::new_raw(bytes.clone()).to_checked(),
-                    AnalysisKind::Analyse => to_analysed(Bytecode::new_raw(bytes.clone())),
-                };
                 self.data
                     .journaled_state
-                    .set_code(prepared_create.created_address, bytecode);
+                    .set_code(prepared_create.created_address, Bytecode::new_raw(bytecode));
                 CreateResult {
                     result: InstructionResult::Return,
                     created_address: Some(prepared_create.created_address),
