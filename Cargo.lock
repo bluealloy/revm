@@ -1716,7 +1716,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-poseidon"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#40694a72680a70e54012162feca4fb2aefba191b"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#0a24f6bb46967479bb4d90819d2b61599f873a41"
 dependencies = [
  "bitvec 1.0.1",
  "halo2curves 0.3.1",
@@ -1727,7 +1727,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-runtime"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#40694a72680a70e54012162feca4fb2aefba191b"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#0a24f6bb46967479bb4d90819d2b61599f873a41"
 dependencies = [
  "bincode",
  "bitvec 1.0.1",
@@ -1759,13 +1759,12 @@ dependencies = [
  "wasi",
  "wat",
  "web3",
- "zktrie",
 ]
 
 [[package]]
 name = "fluentbase-rwasm"
 version = "0.30.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#40694a72680a70e54012162feca4fb2aefba191b"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#0a24f6bb46967479bb4d90819d2b61599f873a41"
 dependencies = [
  "byteorder",
  "downcast-rs",
@@ -1782,7 +1781,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-sdk"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#40694a72680a70e54012162feca4fb2aefba191b"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#0a24f6bb46967479bb4d90819d2b61599f873a41"
 dependencies = [
  "eth_trie",
  "fluentbase-poseidon",
@@ -2007,15 +2006,6 @@ dependencies = [
  "futures-core",
  "js-sys",
  "wasm-bindgen",
-]
-
-[[package]]
-name = "gobuild"
-version = "0.1.0-alpha.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71e156a4ddbf3deb5e8116946c111413bd9a5679bdc1536c78a60618a7a9ac9e"
-dependencies = [
- "cc",
 ]
 
 [[package]]
@@ -4468,9 +4458,9 @@ checksum = "81cdd64d312baedb58e21336b31bc043b77e01cc99033ce76ef539f78e965ebc"
 
 [[package]]
 name = "svm-rs"
-version = "0.3.2"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d0cc95be7cc2c384a2f57cac56548d2178650905ebe5725bc8970ccc25529060"
+checksum = "20689c7d03b6461b502d0b95d6c24874c7d24dea2688af80486a130a06af3b07"
 dependencies = [
  "dirs",
  "fs2",
@@ -5506,14 +5496,6 @@ dependencies = [
  "sha1",
  "time",
  "zstd",
-]
-
-[[package]]
-name = "zktrie"
-version = "0.2.0"
-source = "git+https://github.com/scroll-tech/zktrie.git?tag=v0.6.0#83318659773604fa565e2ebeb810a6d3746f0af4"
-dependencies = [
- "gobuild",
 ]
 
 [[package]]

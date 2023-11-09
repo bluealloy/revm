@@ -660,8 +660,13 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
 
         let input = &contract.input;
         loop {
-            let out_len_or_err =
-                SDK::rwasm_transact(bytecode, input.as_ref(), output.as_mut_slice(), state);
+            let out_len_or_err = SDK::rwasm_transact(
+                bytecode,
+                input.as_ref(),
+                output.as_mut_slice(),
+                state,
+                gas_limit as u32,
+            );
             if out_len_or_err < 0 {
                 return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
             }
