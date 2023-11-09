@@ -54,6 +54,11 @@ pub const EC_SUM_OF_PRODUCTS: PrecompileAddress = PrecompileAddress(
     Precompile::Standard(ec_sum_of_products as StandardPrecompileFn),
 );
 
+pub const EC_PAIRING: PrecompileAddress = PrecompileAddress(
+    crate::u64_to_b160(308),
+    Precompile::Standard(ec_pairing as StandardPrecompileFn),
+);
+
 pub const SCALAR_ADD: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(308),
     Precompile::Standard(scalar_add as StandardPrecompileFn),
@@ -154,6 +159,10 @@ fn ec_hash(input: &[u8], gas_limit: u64) -> PrecompileResult {
 
 fn ec_sum_of_products(input: &[u8], gas_limit: u64) -> PrecompileResult {
     EcSumOfProducts {}.handle(input, gas_limit)
+}
+
+fn ec_pairing(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    EcPairing {}.handle(input, gas_limit)
 }
 
 fn scalar_add(input: &[u8], gas_limit: u64) -> PrecompileResult {
@@ -2914,5 +2923,34 @@ mod test {
         .unwrap();
         let expected = curve25519_dalek::EdwardsPoint::from_bytes(&temp).unwrap();
         assert_eq!(expected.compress().as_bytes()[..], bytes[32..]);
+    }
+
+    #[test]
+    fn ec_pairing_bls12381() {
+        let mut input = CURVE_NAME_BLS12381G1.to_vec();
+        input.extend_from_slice(&[0u8; 31]);
+        input.push(1);
+        input.extend_from_slice(
+            (blsful::inner_types::G1Projective::GENERATOR
+                * blsful::inner_types::Scalar::from(200u64))
+            .to_uncompressed()
+            .as_ref(),
+        );
+        input.extend_from_slice(
+            (blsful::inner_types::G2Projective::GENERATOR
+                * blsful::inner_types::Scalar::from(2u64))
+            .to_uncompressed()
+            .as_ref(),
+        );
+        let res = ec_pairing(&input, 100);
+        assert!(res.is_ok());
+        let (_, bytes) = res.unwrap();
+        let g1 = blsful::inner_types::G1Projective::GENERATOR
+            * blsful::inner_types::Scalar::from(400u64);
+        let expected = blsful::inner_types::pairing(
+            &g1.to_affine(),
+            &blsful::inner_types::G2Affine::generator(),
+        );
+        assert_eq!(&expected.to_bytes()[..], &bytes[..]);
     }
 }
