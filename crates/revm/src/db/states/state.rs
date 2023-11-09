@@ -305,7 +305,7 @@ mod tests {
         states::reverts::AccountInfoRevert, AccountRevert, AccountStatus, BundleAccount,
         RevertToSlot,
     };
-    use revm_interpreter::primitives::StorageSlot;
+    use revm_interpreter::primitives::{keccak256, StorageSlot};
 
     #[test]
     fn block_hash_cache() {
@@ -315,9 +315,9 @@ mod tests {
 
         let test_number = BLOCK_HASH_HISTORY as u64 + 2;
 
-        let block1_hash = B256::from(U256::from(1).to_be_bytes());
-        let block2_hash = B256::from(U256::from(2).to_be_bytes());
-        let block_test_hash = B256::from(U256::from(test_number).to_be_bytes());
+        let block1_hash = keccak256(&U256::from(1).to_be_bytes::<{ U256::BYTES }>());
+        let block2_hash = keccak256(&U256::from(2).to_be_bytes::<{ U256::BYTES }>());
+        let block_test_hash = keccak256(&U256::from(test_number).to_be_bytes::<{ U256::BYTES }>());
 
         assert_eq!(
             state.block_hashes,
