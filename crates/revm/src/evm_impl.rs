@@ -656,7 +656,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         shared_memory: &mut SharedMemory,
     ) -> (InstructionResult, Bytes, Gas) {
         let bytecode = contract.bytecode.original_bytecode_slice();
-        let mut output = vec![0u8; 0];
+        let mut output = vec![0u8; 1024];
 
         let input = &contract.input;
         loop {
@@ -667,12 +667,13 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                 state,
                 gas_limit as u32,
             );
-            if out_len_or_err < 0 {
+            if out_len_or_err < -1005 {
+                if output.len() < out_len_or_err as usize {
+                    output = vec![0u8; out_len_or_err as usize];
+                    continue;
+                }
+            } else if out_len_or_err < 0 {
                 return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
-            }
-            if output.len() < out_len_or_err as usize {
-                output = vec![0u8; out_len_or_err as usize];
-                continue;
             }
             break;
         }
