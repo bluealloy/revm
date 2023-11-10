@@ -242,7 +242,13 @@ impl fmt::Debug for Precompile {
 }
 
 #[derive(Clone, Debug)]
-pub struct PrecompileWithAddress(Address, Precompile);
+pub struct PrecompileWithAddress(pub Address, pub Precompile);
+
+impl From<(Address, Precompile)> for PrecompileWithAddress {
+    fn from(value: (Address, Precompile)) -> Self {
+        PrecompileWithAddress(value.0, value.1)
+    }
+}
 
 impl From<PrecompileWithAddress> for (Address, Precompile) {
     fn from(value: PrecompileWithAddress) -> Self {
