@@ -111,14 +111,8 @@ impl<'a, SPEC: Spec + 'static, DB: Database> EVMImpl<'a, SPEC, DB> {
         inspector: Option<&'a mut dyn Inspector<DB>>,
         precompiles: Precompiles,
     ) -> Self {
-        let journaled_state = JournaledState::new(
-            SPEC::SPEC_ID,
-            precompiles
-                .addresses()
-                .into_iter()
-                .cloned()
-                .collect::<Vec<_>>(),
-        );
+        let journaled_state =
+            JournaledState::new(SPEC::SPEC_ID, precompiles.addresses().copied().collect());
         // If T is present it should be a generic T that modifies handler.
         let instruction_table = if inspector.is_some() {
             let instruction_table = make_boxed_instruction_table::<Self, SPEC, _>(
