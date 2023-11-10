@@ -227,7 +227,7 @@ impl Env {
                 account.info.balance = balance_check;
             } else {
                 return Err(InvalidTransaction::LackOfFundForMaxFee {
-                    fee: self.tx.gas_limit,
+                    fee: balance_check,
                     balance: account.info.balance,
                 });
             }
