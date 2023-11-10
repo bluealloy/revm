@@ -62,83 +62,18 @@ pub struct Precompiles {
 }
 
 impl Precompiles {
-    /// Extends the precompiles with the given precompiles.
-    ///
-    /// Other precompiles with overwrite existing precompiles.
-    pub fn extend(&mut self, other: impl IntoIterator<Item = PrecompileWithAddress>) {
-        self.inner = self
-            .inner
-            .iter()
-            .cloned()
-            .chain(other)
-            .map(|i| (i.0, i.1.clone()))
-            .collect::<BTreeMap<Address, Precompile>>()
-            .into_iter()
-            .map(|(k, v)| PrecompileWithAddress(k, v))
-            .collect::<Vec<_>>();
-    }
-}
-
-impl Default for Precompiles {
-    fn default() -> Self {
-        Self::new(SpecId::LATEST).clone() //berlin
-    }
-}
-
-#[derive(Clone)]
-pub enum Precompile {
-    Standard(StandardPrecompileFn),
-    Env(EnvPrecompileFn),
-}
-
-impl fmt::Debug for Precompile {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Precompile::Standard(_) => f.write_str("Standard"),
-            Precompile::Env(_) => f.write_str("Env"),
+    /// Returns the precompiles for the given spec.
+    pub fn new(spec: SpecId) -> &'static Self {
+        match spec {
+            SpecId::HOMESTEAD => Self::homestead(),
+            SpecId::BYZANTIUM => Self::byzantium(),
+            SpecId::ISTANBUL => Self::istanbul(),
+            SpecId::BERLIN => Self::berlin(),
+            SpecId::CANCUN => Self::cancun(),
+            SpecId::LATEST => Self::latest(),
         }
     }
-}
 
-#[derive(Clone, Debug)]
-pub struct PrecompileWithAddress(Address, Precompile);
-
-impl From<PrecompileWithAddress> for (Address, Precompile) {
-    fn from(value: PrecompileWithAddress) -> Self {
-        (value.0, value.1)
-    }
-}
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
-pub enum SpecId {
-    HOMESTEAD,
-    BYZANTIUM,
-    ISTANBUL,
-    BERLIN,
-    CANCUN,
-    LATEST,
-}
-
-impl SpecId {
-    /// Returns the appropriate precompile Spec for the primitive [SpecId](revm_primitives::SpecId)
-    pub const fn from_spec_id(spec_id: revm_primitives::SpecId) -> Self {
-        use revm_primitives::SpecId::*;
-        match spec_id {
-            FRONTIER | FRONTIER_THAWING | HOMESTEAD | DAO_FORK | TANGERINE | SPURIOUS_DRAGON => {
-                Self::HOMESTEAD
-            }
-            BYZANTIUM | CONSTANTINOPLE | PETERSBURG => Self::BYZANTIUM,
-            ISTANBUL | MUIR_GLACIER => Self::ISTANBUL,
-            BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | SHANGHAI => Self::BERLIN,
-            CANCUN => Self::CANCUN,
-            LATEST => Self::LATEST,
-            #[cfg(feature = "optimism")]
-            BEDROCK | REGOLITH => Self::BERLIN,
-        }
-    }
-}
-
-impl Precompiles {
     /// Returns precompiles for Homestead spec.
     pub fn homestead() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
@@ -230,22 +165,16 @@ impl Precompiles {
         Self::cancun()
     }
 
-    /// Returns the precompiles for the given spec.
-    pub fn new(spec: SpecId) -> &'static Self {
-        match spec {
-            SpecId::HOMESTEAD => Self::homestead(),
-            SpecId::BYZANTIUM => Self::byzantium(),
-            SpecId::ISTANBUL => Self::istanbul(),
-            SpecId::BERLIN => Self::berlin(),
-            SpecId::CANCUN => Self::cancun(),
-            SpecId::LATEST => Self::latest(),
-        }
-    }
-
     /// Returns an iterator over the precompiles addresses.
     #[inline]
-    pub fn addresses(&self) -> impl IntoIterator<Item = &Address> {
+    pub fn addresses(&self) -> impl Iterator<Item = &Address> + '_ {
         self.inner.iter().map(|i| &i.0)
+    }
+
+    /// Consumes the type and returns all precompile addresses.
+    #[inline]
+    pub fn into_addresses(self) -> impl Iterator<Item = Address> {
+        self.inner.into_iter().map(|precompile| precompile.0)
     }
 
     /// Is the given address a precompile.
@@ -272,6 +201,81 @@ impl Precompiles {
     /// Returns the number of precompiles.
     pub fn len(&self) -> usize {
         self.inner.len()
+    }
+
+    /// Extends the precompiles with the given precompiles.
+    ///
+    /// Other precompiles with overwrite existing precompiles.
+    pub fn extend(&mut self, other: impl IntoIterator<Item = PrecompileWithAddress>) {
+        self.inner = self
+            .inner
+            .iter()
+            .cloned()
+            .chain(other)
+            .map(|i| (i.0, i.1.clone()))
+            .collect::<BTreeMap<Address, Precompile>>()
+            .into_iter()
+            .map(|(k, v)| PrecompileWithAddress(k, v))
+            .collect::<Vec<_>>();
+    }
+}
+
+impl Default for Precompiles {
+    fn default() -> Self {
+        Self::new(SpecId::LATEST).clone() //berlin
+    }
+}
+
+#[derive(Clone)]
+pub enum Precompile {
+    Standard(StandardPrecompileFn),
+    Env(EnvPrecompileFn),
+}
+
+impl fmt::Debug for Precompile {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Precompile::Standard(_) => f.write_str("Standard"),
+            Precompile::Env(_) => f.write_str("Env"),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct PrecompileWithAddress(Address, Precompile);
+
+impl From<PrecompileWithAddress> for (Address, Precompile) {
+    fn from(value: PrecompileWithAddress) -> Self {
+        (value.0, value.1)
+    }
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
+pub enum SpecId {
+    HOMESTEAD,
+    BYZANTIUM,
+    ISTANBUL,
+    BERLIN,
+    CANCUN,
+    LATEST,
+}
+
+impl SpecId {
+    /// Returns the appropriate precompile Spec for the primitive [SpecId](revm_primitives::SpecId)
+    pub const fn from_spec_id(spec_id: revm_primitives::SpecId) -> Self {
+        use revm_primitives::SpecId::*;
+        match spec_id {
+            FRONTIER | FRONTIER_THAWING | HOMESTEAD | DAO_FORK | TANGERINE | SPURIOUS_DRAGON => {
+                Self::HOMESTEAD
+            }
+            BYZANTIUM | CONSTANTINOPLE | PETERSBURG => Self::BYZANTIUM,
+            ISTANBUL | MUIR_GLACIER => Self::ISTANBUL,
+            BERLIN | LONDON | ARROW_GLACIER | GRAY_GLACIER | MERGE | SHANGHAI => Self::BERLIN,
+            CANCUN => Self::CANCUN,
+            LATEST => Self::LATEST,
+            #[cfg(feature = "optimism")]
+            BEDROCK | REGOLITH => Self::BERLIN,
+        }
     }
 }
 
