@@ -73,7 +73,7 @@ impl<'a, SPEC: Spec, DB: Database> EVMImpl<'a, SPEC, DB> {
             };
             return Err(EVMError::Transaction(
                 InvalidTransaction::LackOfFundForMaxFee {
-                    fee: u64_cost,
+                    fee: U256::from(u64_cost),
                     balance: acc.info.balance,
                 },
             ));
@@ -827,7 +827,7 @@ mod tests {
             ),
             Err(EVMError::Transaction(
                 InvalidTransaction::LackOfFundForMaxFee {
-                    fee: 101u64,
+                    fee: U256::from(101),
                     balance: U256::from(100),
                 },
             ))

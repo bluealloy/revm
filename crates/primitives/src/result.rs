@@ -180,7 +180,7 @@ pub enum InvalidTransaction {
     RejectCallerWithCode,
     /// Transaction account does not have enough amount of ether to cover transferred value and gas_limit*gas_price.
     LackOfFundForMaxFee {
-        fee: u64,
+        fee: U256,
         balance: U256,
     },
     /// Overflow payment in transaction.
