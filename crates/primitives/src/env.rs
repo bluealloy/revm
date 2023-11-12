@@ -3,6 +3,7 @@ use crate::{
     InvalidTransaction, Spec, SpecId, B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK,
     MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
 };
+use alloc::boxed::Box;
 use core::cmp::{min, Ordering};
 
 
@@ -228,8 +229,8 @@ impl Env {
                 account.info.balance = balance_check;
             } else {
                 return Err(InvalidTransaction::LackOfFundForMaxFee {
-                    fee: self.tx.gas_limit,
-                    balance: account.info.balance,
+                    fee: Box::new(balance_check),
+                    balance: Box::new(account.info.balance),
                 });
             }
         }
