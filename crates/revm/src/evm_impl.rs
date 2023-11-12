@@ -66,15 +66,10 @@ impl<'a, SPEC: Spec, DB: Database> EVMImpl<'a, SPEC, DB> {
             .map_err(EVMError::Database)?
             .0;
         if l1_cost.gt(&acc.info.balance) {
-            let u64_cost = if U256::from(u64::MAX).lt(&l1_cost) {
-                u64::MAX
-            } else {
-                l1_cost.as_limbs()[0]
-            };
             return Err(EVMError::Transaction(
                 InvalidTransaction::LackOfFundForMaxFee {
-                    fee: U256::from(u64_cost),
-                    balance: acc.info.balance,
+                    fee: Box::new(l1_cost),
+                    balance: Box::new(acc.info.balance),
                 },
             ));
         }
