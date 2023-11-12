@@ -126,7 +126,7 @@ impl Output {
 }
 
 /// Main EVM error.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum EVMError<DBError> {
     /// Transaction validation error.
@@ -157,7 +157,7 @@ impl<DBError> From<InvalidTransaction> for EVMError<DBError> {
 }
 
 /// Transaction validation error.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InvalidTransaction {
     /// When using the EIP-1559 fee model introduced in the London upgrade, transactions specify two primary fee fields:
@@ -180,8 +180,8 @@ pub enum InvalidTransaction {
     RejectCallerWithCode,
     /// Transaction account does not have enough amount of ether to cover transferred value and gas_limit*gas_price.
     LackOfFundForMaxFee {
-        fee: U256,
-        balance: U256,
+        fee: Box<U256>,
+        balance: Box<U256>,
     },
     /// Overflow payment in transaction.
     OverflowPaymentInTransaction,

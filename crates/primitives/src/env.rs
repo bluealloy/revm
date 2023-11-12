@@ -227,8 +227,8 @@ impl Env {
                 account.info.balance = balance_check;
             } else {
                 return Err(InvalidTransaction::LackOfFundForMaxFee {
-                    fee: balance_check,
-                    balance: account.info.balance,
+                    fee: Box::new(balance_check),
+                    balance: Box::new(account.info.balance),
                 });
             }
         }
