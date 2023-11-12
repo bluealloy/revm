@@ -3,7 +3,6 @@ use alloc::vec::Vec;
 use core::fmt;
 
 
-
 /// Result of EVM execution.
 pub type EVMResult<DBError> = EVMResultGeneric<ResultAndState, DBError>;
 
