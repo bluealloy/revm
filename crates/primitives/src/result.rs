@@ -2,7 +2,6 @@ use crate::{Address, Bytes, Log, State, U256};
 use alloc::{boxed::Box, vec::Vec};
 use core::fmt;
 
-
 /// Result of EVM execution.
 pub type EVMResult<DBError> = EVMResultGeneric<ResultAndState, DBError>;
 
