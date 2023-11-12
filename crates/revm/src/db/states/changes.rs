@@ -58,7 +58,7 @@ pub struct PlainStateReverts {
 }
 
 impl PlainStateReverts {
-    /// Constructs new [StateReverts] with pre-allocated capacity.
+    /// Constructs new [PlainStateReverts] with pre-allocated capacity.
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
             accounts: Vec::with_capacity(capacity),

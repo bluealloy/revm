@@ -2,6 +2,7 @@ use crate::{Address, Bytes, Log, State, U256};
 use alloc::vec::Vec;
 use core::fmt;
 
+
 /// Result of EVM execution.
 pub type EVMResult<DBError> = EVMResultGeneric<ResultAndState, DBError>;
 
@@ -306,7 +307,7 @@ impl<DBError> From<InvalidHeader> for EVMError<DBError> {
     }
 }
 
-/// Errors related to misconfiguration of a [`BlockEnv`].
+/// Errors related to misconfiguration of a [`crate::env::BlockEnv`].
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InvalidHeader {

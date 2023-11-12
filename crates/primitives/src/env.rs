@@ -5,6 +5,7 @@ use crate::{
 };
 use core::cmp::{min, Ordering};
 
+
 /// EVM environment configuration.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -256,7 +257,7 @@ pub struct CfgEnv {
     /// If some it will effects EIP-170: Contract code size limit. Useful to increase this because of tests.
     /// By default it is 0x6000 (~25kb).
     pub limit_contract_code_size: Option<usize>,
-    /// A hard memory limit in bytes beyond which [Memory] cannot be resized.
+    /// A hard memory limit in bytes beyond which [crate::result::OutOfGasError::Memory] cannot be resized.
     ///
     /// In cases where the gas limit may be extraordinarily high, it is recommended to set this to
     /// a sane value to prevent memory allocation panics. Defaults to `2^32 - 1` bytes per
@@ -433,8 +434,8 @@ pub struct BlockEnv {
     /// [EIP-4399]: https://eips.ethereum.org/EIPS/eip-4399
     pub prevrandao: Option<B256>,
     /// Excess blob gas and blob gasprice.
-    /// See also [`calc_excess_blob_gas`](crate::calc_excess_blob_gas)
-    /// and [`calc_blob_gasprice`](crate::calc_blob_gasprice).
+    /// See also [`crate::calc_excess_blob_gas`]
+    /// and [`calc_blob_gasprice`].
     ///
     /// Incorporated as part of the Cancun upgrade via [EIP-4844].
     ///
@@ -444,7 +445,7 @@ pub struct BlockEnv {
 
 impl BlockEnv {
     /// Takes `blob_excess_gas` saves it inside env
-    /// and calculates `blob_fee` with [`BlobGasAndFee`].
+    /// and calculates `blob_fee` with [`BlobExcessGasAndPrice`].
     pub fn set_blob_excess_gas_and_price(&mut self, excess_blob_gas: u64) {
         self.blob_excess_gas_and_price = Some(BlobExcessGasAndPrice::new(excess_blob_gas));
     }

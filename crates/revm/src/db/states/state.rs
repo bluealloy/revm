@@ -204,7 +204,7 @@ impl<DB: Database> State<DB> {
     /// NOTE: If either:
     /// * The [State] has not been built with [StateBuilder::with_bundle_update], or
     /// * The [State] has a [TransitionState] set to `None` when
-    /// [TransitionState::merge_transitions] is called,
+    /// [State::merge_transitions] is called,
     ///
     /// this will panic.
     pub fn take_bundle(&mut self) -> BundleState {
