@@ -822,8 +822,8 @@ mod tests {
             ),
             Err(EVMError::Transaction(
                 InvalidTransaction::LackOfFundForMaxFee {
-                    fee: U256::from(101),
-                    balance: U256::from(100),
+                    fee: Box::new(U256::from(101)),
+                    balance: Box::new(U256::from(100)),
                 },
             ))
         );
