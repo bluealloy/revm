@@ -6,7 +6,6 @@ use crate::{
 use alloc::boxed::Box;
 use core::cmp::{min, Ordering};
 
-
 /// EVM environment configuration.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
