@@ -66,15 +66,10 @@ impl<'a, SPEC: Spec, DB: Database> EVMImpl<'a, SPEC, DB> {
             .map_err(EVMError::Database)?
             .0;
         if l1_cost.gt(&acc.info.balance) {
-            let u64_cost = if U256::from(u64::MAX).lt(&l1_cost) {
-                u64::MAX
-            } else {
-                l1_cost.as_limbs()[0]
-            };
             return Err(EVMError::Transaction(
                 InvalidTransaction::LackOfFundForMaxFee {
-                    fee: u64_cost,
-                    balance: acc.info.balance,
+                    fee: Box::new(l1_cost),
+                    balance: Box::new(acc.info.balance),
                 },
             ));
         }
@@ -111,14 +106,8 @@ impl<'a, SPEC: Spec + 'static, DB: Database> EVMImpl<'a, SPEC, DB> {
         inspector: Option<&'a mut dyn Inspector<DB>>,
         precompiles: Precompiles,
     ) -> Self {
-        let journaled_state = JournaledState::new(
-            SPEC::SPEC_ID,
-            precompiles
-                .addresses()
-                .into_iter()
-                .cloned()
-                .collect::<Vec<_>>(),
-        );
+        let journaled_state =
+            JournaledState::new(SPEC::SPEC_ID, precompiles.addresses().copied().collect());
         // If T is present it should be a generic T that modifies handler.
         let instruction_table = if inspector.is_some() {
             let instruction_table = make_boxed_instruction_table::<Self, SPEC, _>(
@@ -842,8 +831,8 @@ mod tests {
             ),
             Err(EVMError::Transaction(
                 InvalidTransaction::LackOfFundForMaxFee {
-                    fee: 101u64,
-                    balance: U256::from(100),
+                    fee: Box::new(U256::from(101)),
+                    balance: Box::new(U256::from(100)),
                 },
             ))
         );

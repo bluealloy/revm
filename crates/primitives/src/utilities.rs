@@ -9,7 +9,7 @@ pub const KECCAK_EMPTY: B256 =
 
 /// Calculates the `excess_blob_gas` from the parent header's `blob_gas_used` and `excess_blob_gas`.
 ///
-/// See also [the EIP-4844 helpers](https://eips.ethereum.org/EIPS/eip-4844#helpers
+/// See also [the EIP-4844 helpers]<https://eips.ethereum.org/EIPS/eip-4844#helpers>
 /// (`calc_excess_blob_gas`).
 #[inline]
 pub fn calc_excess_blob_gas(parent_excess_blob_gas: u64, parent_blob_gas_used: u64) -> u64 {

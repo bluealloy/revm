@@ -370,38 +370,56 @@ impl SharedStack {
         // SAFETY: length checked above.
         unsafe {
             let dst = self
-                .buffer_mut()
+                .page_mut()
+                .buffer
                 .as_mut_ptr()
                 .add(self.buffer().len())
                 .cast::<u64>();
+
+            self.context_len = new_context_len;
+            self.buffer_mut().set_len(new_buffer_len);
+
             let mut i = 0;
 
             // write full words
-            let limbs = slice.rchunks_exact(8);
-            let rem = limbs.remainder();
-            for limb in limbs {
-                *dst.add(i) = u64::from_be_bytes(limb.try_into().unwrap());
+            let words = slice.chunks_exact(32);
+            let partial_last_word = words.remainder();
+            for word in words {
+                // Note: we unroll `U256::from_be_bytes` here to write directly into the buffer,
+                // instead of creating a 32 byte array on the stack and then copying it over.
+                for l in word.rchunks_exact(8) {
+                    dst.add(i).write(u64::from_be_bytes(l.try_into().unwrap()));
+                    i += 1;
+                }
+            }
+
+            if partial_last_word.is_empty() {
+                return Ok(());
+            }
+
+            // write limbs of partial last word
+            let limbs = partial_last_word.rchunks_exact(8);
+            let partial_last_limb = limbs.remainder();
+            for l in limbs {
+                dst.add(i).write(u64::from_be_bytes(l.try_into().unwrap()));
                 i += 1;
             }
 
-            // write remainder by padding with zeros
-            if !rem.is_empty() {
+            // write partial last limb by padding with zeros
+            if !partial_last_limb.is_empty() {
                 let mut tmp = [0u8; 8];
-                tmp[8 - rem.len()..].copy_from_slice(rem);
-                *dst.add(i) = u64::from_be_bytes(tmp);
+                tmp[8 - partial_last_limb.len()..].copy_from_slice(partial_last_limb);
+                dst.add(i).write(u64::from_be_bytes(tmp));
                 i += 1;
             }
 
-            debug_assert_eq!((i + 3) / 4, n_words, "wrote beyond end of stack");
+            debug_assert_eq!((i + 3) / 4, n_words, "wrote too much");
 
             // zero out upper bytes of last word
             let m = i % 4; // 32 / 8
             if m != 0 {
                 dst.add(i).write_bytes(0, 4 - m);
             }
-
-            self.context_len = new_context_len;
-            self.buffer_mut().set_len(new_buffer_len);
         }
 
         Ok(())
