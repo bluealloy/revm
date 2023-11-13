@@ -186,13 +186,6 @@ macro_rules! push {
     )*);
     ($interp:expr, $($x:expr),* $(,)?) => ($(
         push!($interp, $interp.shared_context.stack, $x)
-        // match $interp.shared_context.stack.push($x) {
-        //     Ok(()) => {},
-        //     Err(e) => {
-        //         $interp.instruction_result = e;
-        //         return;
-        //     }
-        // }
     )*)
 }
 

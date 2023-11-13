@@ -42,10 +42,10 @@ pub struct Interpreter {
     pub instruction_result: InstructionResult,
     /// The gas state.
     pub gas: Gas,
-    /// Shared stack.
+    /// Shared context.
     ///
     /// Note: This field is only set while running the interpreter loop.
-    /// Otherwise it is taken and replaced with empty shared stack.
+    /// Otherwise it is taken and replaced with empty shared context.
     pub shared_context: SharedContext,
     /// The return data buffer for internal calls.
     /// It has multi usage:
