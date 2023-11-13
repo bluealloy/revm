@@ -2,7 +2,6 @@ use crate::{
     primitives::{B256, U256},
     InstructionResult,
 };
-use alloc::vec;
 use alloc::vec::Vec;
 use core::fmt;
 
@@ -91,29 +90,31 @@ impl SharedStack {
     /// Instantiate a new shared stack with a single taken page of size `PAGE_SIZE`
     #[inline]
     pub fn new() -> Self {
-        let mut taken_pages = vec![Page::new()];
         Self {
             free_pages: Vec::new(),
             context_len: 0,
-            page: unsafe { taken_pages.get_unchecked_mut(0) },
-            taken_pages,
+            page: core::ptr::null_mut(),
+            taken_pages: Vec::new(),
         }
     }
 
     /// Prepares the shared stack for a new context
     #[inline]
     pub fn new_context(&mut self) {
-        // check memory left for the current page
-        let page = self.page_mut();
-        let memory_left = page.buffer.capacity() - page.buffer.len();
-
-        if memory_left < STACK_LIMIT {
-            // we need a new page
-            let mut new_page = self.free_pages.pop().unwrap_or(Page::new());
-            new_page.checkpoints.push(0);
-            self.page = &mut new_page;
-            self.taken_pages.push(new_page);
+        let create_new_page = if self.page.is_null() {
+            true
         } else {
+            let page = self.page();
+            let memory_left = page.buffer.capacity() - page.buffer.len();
+            memory_left < STACK_LIMIT
+        };
+
+        if create_new_page {
+            self.taken_pages
+                .push(self.free_pages.pop().unwrap_or(Page::new()));
+            self.page = self.taken_pages.last_mut().unwrap();
+        } else {
+            let page = self.page_mut();
             page.checkpoints.push(page.buffer.len())
         }
         self.context_len = 0;
@@ -122,51 +123,30 @@ impl SharedStack {
     /// Prepares the shared stack for returning to the previous context
     #[inline]
     pub fn free_context(&mut self) {
-        assert!(!self.taken_pages.is_empty());
-        // SAFETY: `new_context` logic always guarantees at least one page
-        let page = unsafe { self.taken_pages.last_mut().unwrap_unchecked() };
-        // SAFETY: `new_context` logic always guarantees at least the zero checkpoint in it
-        let current_ctx_checkpoint = unsafe { page.checkpoints.pop().unwrap_unchecked() };
-        if let Some(previous_ctx_checkpoint) = page.checkpoints.last() {
+        let Some(page) = self.taken_pages.last_mut() else {
+            return;
+        };
+
+        if let Some(current_ctx_checkpoint) = page.checkpoints.pop() {
+            let previous_ctx_checkpoint = page.checkpoints.last().cloned().unwrap_or(0);
             // SAFETY: checkpoints are always in bound of buffers
-            unsafe { page.buffer.set_len(*previous_ctx_checkpoint) };
+            unsafe { page.buffer.set_len(current_ctx_checkpoint) };
             self.context_len = current_ctx_checkpoint - previous_ctx_checkpoint;
         } else {
             // no more checkpoints means we need to move to the previous page
-            if self.taken_pages.len() > 1 {
-                // SAFETY: bound checked above
-                self.free_pages
-                    .push(unsafe { self.taken_pages.pop().unwrap_unchecked() });
-
-                // SAFETY: bound checked above
-                let page = unsafe { self.taken_pages.last_mut().unwrap_unchecked() };
-                self.context_len =
-                    page.buffer.len() - page.checkpoints.last().cloned().unwrap_or(0);
-                self.page = page;
+            // SAFETY: taken_page is some as checked above
+            let mut taken_page = self.taken_pages.pop().unwrap();
+            unsafe { taken_page.buffer.set_len(0) };
+            self.free_pages.push(taken_page);
+            self.page = if let Some(previous_taken_page) = self.taken_pages.last_mut() {
+                self.context_len = previous_taken_page.buffer.len()
+                    - previous_taken_page.checkpoints.last().cloned().unwrap_or(0);
+                previous_taken_page
             } else {
-                // we want to keep at least one page; we start from scratch
                 self.context_len = 0;
+                core::ptr::null_mut()
             }
         }
-
-        // let old_checkpoint = unsafe { page.checkpoints.pop().unwrap_unchecked() };
-        // if let Some(last_checkpoint) = page.checkpoints.last() {
-        //     // SAFETY: checkpoints are always in bound of buffers
-        //     unsafe {
-        //         page.buffer.set_len(old_checkpoint);
-        //     };
-        //     self.context_len = old_checkpoint - last_checkpoint;
-        // } else if self.page_idx > 0 {
-        //     // no more checkpoints means we need to move to the previous page
-        //     self.page_idx -= 1;
-        //     self.buffer = &mut self.page_mut().buffer;
-        //     // SAFETY: Going back to previous page implies non-empty checkpoints list
-        //     self.context_len = unsafe {
-        //         self.buffer().len() - self.page().checkpoints.last().cloned().unwrap_unchecked()
-        //     };
-        // } else {
-        //     self.context_len = 0;
-        // }
     }
 
     /// Returns the length of the stack in words.
@@ -480,12 +460,15 @@ mod tests {
     #[test]
     fn new_free() {
         let mut shared_stack = SharedStack::new();
+        assert_eq!(shared_stack.free_pages.len(), 0);
+        assert_eq!(shared_stack.taken_pages.len(), 0);
+        assert_eq!(shared_stack.page, core::ptr::null_mut());
 
         shared_stack.new_context();
         assert_eq!(shared_stack.free_pages.len(), 0);
         assert_eq!(shared_stack.taken_pages.len(), 1);
-        assert_eq!(shared_stack.page().checkpoints.len(), 1);
-        assert_eq!(shared_stack.page().checkpoints[0], 0);
+        assert_eq!(shared_stack.page().checkpoints.len(), 0);
+        assert_eq!(shared_stack.page().buffer.len(), 0);
         assert_eq!(shared_stack.context_len, 0);
 
         let new_len = STACK_LIMIT / 2;
@@ -495,23 +478,24 @@ mod tests {
         shared_stack.new_context();
         assert_eq!(shared_stack.free_pages.len(), 0);
         assert_eq!(shared_stack.taken_pages.len(), 1);
-        assert_eq!(shared_stack.page().checkpoints.len(), 2);
-        assert_eq!(shared_stack.page().checkpoints[1], new_len);
+        assert_eq!(shared_stack.page().checkpoints.len(), 1);
+        assert_eq!(shared_stack.page().checkpoints[0], new_len);
+        assert_eq!(shared_stack.page().buffer.len(), new_len);
         assert_eq!(shared_stack.context_len, 0);
 
         // first free in the same context
         shared_stack.free_context();
         assert_eq!(shared_stack.free_pages.len(), 0);
         assert_eq!(shared_stack.taken_pages.len(), 1);
-        assert_eq!(shared_stack.page().checkpoints.len(), 1);
-        assert_eq!(shared_stack.page().checkpoints[0], 0);
+        assert_eq!(shared_stack.page().checkpoints.len(), 0);
+        assert_eq!(shared_stack.page().buffer.len(), new_len);
         assert_eq!(shared_stack.context_len, new_len);
 
         // reset
         shared_stack.free_context();
-        assert_eq!(shared_stack.free_pages.len(), 0);
-        assert_eq!(shared_stack.taken_pages.len(), 1);
-        assert_eq!(shared_stack.page().checkpoints.len(), 0);
+        assert_eq!(shared_stack.free_pages.len(), 1);
+        assert_eq!(shared_stack.taken_pages.len(), 0);
+        assert_eq!(shared_stack.page, core::ptr::null_mut());
         assert_eq!(shared_stack.context_len, 0);
 
         // fill current page
@@ -520,10 +504,10 @@ mod tests {
             assert_eq!(shared_stack.context_len, 0);
             assert_eq!(shared_stack.free_pages.len(), 0);
             assert_eq!(shared_stack.taken_pages.len(), 1);
-            assert_eq!(shared_stack.page().checkpoints.len(), i + 1);
+            assert_eq!(shared_stack.page().checkpoints.len(), i);
             assert_eq!(
-                shared_stack.page().checkpoints.last().cloned().unwrap(),
-                shared_stack.buffer().len()
+                shared_stack.page().checkpoints.last().cloned().unwrap_or(0),
+                shared_stack.page().buffer.len()
             );
 
             let new_len = STACK_LIMIT / 2;
@@ -535,24 +519,25 @@ mod tests {
         shared_stack.new_context();
         assert_eq!(shared_stack.free_pages.len(), 0);
         assert_eq!(shared_stack.taken_pages.len(), 2);
-        assert_eq!(shared_stack.page().checkpoints.len(), 1);
-        assert_eq!(shared_stack.page().checkpoints[0], 0);
+        assert_eq!(shared_stack.page().checkpoints.len(), 0);
+        assert_eq!(shared_stack.page().buffer.len(), 0);
         assert_eq!(shared_stack.context_len, 0);
 
         // go back to previous page
         shared_stack.free_context();
         assert_eq!(shared_stack.free_pages.len(), 1);
         assert_eq!(shared_stack.taken_pages.len(), 1);
-        assert_eq!(shared_stack.page().checkpoints.len(), 7);
-        assert_eq!(shared_stack.page().checkpoints[6], STACK_LIMIT * 3);
+        assert_eq!(shared_stack.page().checkpoints.len(), 6);
+        assert_eq!(shared_stack.page().checkpoints[5], STACK_LIMIT * 3);
+        assert_eq!(shared_stack.page().buffer.len(), STACK_LIMIT / 2 * 7);
         assert_eq!(shared_stack.context_len, STACK_LIMIT / 2);
 
         // go to new page without creating it
         shared_stack.new_context();
         assert_eq!(shared_stack.free_pages.len(), 0);
         assert_eq!(shared_stack.taken_pages.len(), 2);
-        assert_eq!(shared_stack.page().checkpoints.len(), 1);
-        assert_eq!(shared_stack.page().checkpoints[0], 0);
+        assert_eq!(shared_stack.page().checkpoints.len(), 0);
+        assert_eq!(shared_stack.page().buffer.len(), 0);
         assert_eq!(shared_stack.context_len, 0);
     }
 
@@ -564,9 +549,9 @@ mod tests {
                 shared_stack.new_context();
                 assert_eq!(shared_stack.taken_pages.len(), i + 1);
                 assert_eq!(shared_stack.context_len, 0);
-                assert_eq!(shared_stack.page().checkpoints.len(), j + 1);
+                assert_eq!(shared_stack.page().checkpoints.len(), j);
                 assert_eq!(
-                    shared_stack.page().checkpoints.last().cloned().unwrap(),
+                    shared_stack.page().checkpoints.last().cloned().unwrap_or(0),
                     shared_stack.buffer().len()
                 );
 
