@@ -301,7 +301,7 @@ impl SharedStack {
         // SAFETY: the check above and the `new_context` method
         // guarantee we have enough capacity
         unsafe {
-            *buffer.get_unchecked_mut(buf_len) = value;
+            buffer.as_mut_ptr().add(buf_len).write(value);
             buffer.set_len(buf_len + 1);
         }
         self.context_len += 1;
@@ -328,8 +328,8 @@ impl SharedStack {
             // SAFETY: the check above and the `new_context`
             // method guarantee we have enough capacity
             unsafe {
-                let val = *buffer.get_unchecked(buf_len - N);
-                *buffer.get_unchecked_mut(buf_len) = val;
+                let buf_ptr = buffer.as_mut_ptr();
+                core::ptr::copy_nonoverlapping(buf_ptr.add(buf_len - N), buf_ptr.add(buf_len), 1);
                 buffer.set_len(buf_len + 1);
             };
             self.context_len += 1;
@@ -637,14 +637,65 @@ mod tests {
         );
     }
 
-    #[test]
-    fn push_slice() {
-        let mut shared_stack = SharedStack::new();
-        shared_stack.new_context();
+    fn run(f: impl FnOnce(&mut SharedStack)) {
+        let mut stack = SharedStack::new();
+        stack.new_context();
+        // fill capacity with non-zero values
+        unsafe {
+            stack.buffer_mut().set_len(STACK_LIMIT);
+            stack.buffer_mut().fill(U256::MAX);
+            stack.buffer_mut().set_len(0);
+        }
+        f(&mut stack);
+    }
 
-        assert_eq!(shared_stack.push_slice(&[1]), Ok(()));
-        assert_eq!(shared_stack.page_mut().buffer[0], U256::from(1));
-        assert_eq!(shared_stack.len(), 1);
+    #[test]
+    fn push_slices() {
+        // no-op
+        run(|stack| {
+            stack.push_slice(b"").unwrap();
+            assert_eq!(stack.data().to_vec(), []);
+        });
+
+        // one word
+        run(|stack| {
+            stack.push_slice(&[42]).unwrap();
+            assert_eq!(stack.data().to_vec(), [U256::from(42)]);
+        });
+
+        let n = 0x1111_2222_3333_4444_5555_6666_7777_8888_u128;
+        run(|stack| {
+            stack.push_slice(&n.to_be_bytes()).unwrap();
+            assert_eq!(stack.data().to_vec(), [U256::from(n)]);
+        });
+
+        // more than one word
+        run(|stack| {
+            let b = [U256::from(n).to_be_bytes::<32>(); 2].concat();
+            stack.push_slice(&b).unwrap();
+            assert_eq!(stack.data().to_vec(), [U256::from(n); 2]);
+        });
+
+        run(|stack| {
+            let b = [&[0; 32][..], &[42u8]].concat();
+            stack.push_slice(&b).unwrap();
+            assert_eq!(stack.data().to_vec(), [U256::ZERO, U256::from(42)]);
+        });
+
+        run(|stack| {
+            let b = [&[0; 32][..], &n.to_be_bytes()].concat();
+            stack.push_slice(&b).unwrap();
+            assert_eq!(stack.data().to_vec(), [U256::ZERO, U256::from(n)]);
+        });
+
+        run(|stack| {
+            let b = [&[0; 64][..], &n.to_be_bytes()].concat();
+            stack.push_slice(&b).unwrap();
+            assert_eq!(
+                stack.data().to_vec(),
+                [U256::ZERO, U256::ZERO, U256::from(n)]
+            );
+        });
     }
 
     #[test]
