@@ -1,10 +1,12 @@
 pub mod analysis;
 mod contract;
+mod shared_context;
 mod shared_memory;
 mod shared_stack;
 
 pub use analysis::BytecodeLocked;
 pub use contract::Contract;
+pub use shared_context::*;
 pub use shared_memory::*;
 pub use shared_stack::*;
 
@@ -44,12 +46,7 @@ pub struct Interpreter {
     ///
     /// Note: This field is only set while running the interpreter loop.
     /// Otherwise it is taken and replaced with empty shared stack.
-    pub shared_stack: SharedStack,
-    /// Shared memory.
-    ///
-    /// Note: This field is only set while running the interpreter loop.
-    /// Otherwise it is taken and replaced with empty shared memory.
-    pub shared_memory: SharedMemory,
+    pub shared_context: SharedContext,
     /// The return data buffer for internal calls.
     /// It has multi usage:
     ///
@@ -100,14 +97,18 @@ impl Interpreter {
             instruction_result: InstructionResult::Continue,
             is_static,
             return_data_buffer: Bytes::new(),
-            shared_memory: EMPTY_SHARED_MEMORY,
-            shared_stack: EMPTY_SHARED_STACK,
+            shared_context: EMPTY_SHARED_CONTEXT,
             next_action: None,
         }
     }
 
     /// When sub create call returns we can insert output of that call into this interpreter.
-    pub fn insert_create_output(&mut self, result: InterpreterResult, address: Option<Address>) {
+    pub fn insert_create_output(
+        &mut self,
+        shared_context: &mut SharedContext,
+        result: InterpreterResult,
+        address: Option<Address>,
+    ) {
         let interpreter = self;
         interpreter.return_data_buffer = match result.result {
             // Save data to return data buffer if the create reverted
@@ -118,19 +119,23 @@ impl Interpreter {
 
         match result.result {
             return_ok!() => {
-                push_b256!(interpreter, address.unwrap_or_default().into_word());
+                push_b256!(
+                    interpreter,
+                    shared_context.stack,
+                    address.unwrap_or_default().into_word()
+                );
                 interpreter.gas.erase_cost(result.gas.remaining());
                 interpreter.gas.record_refund(result.gas.refunded());
             }
             return_revert!() => {
-                push!(interpreter, U256::ZERO);
+                push!(interpreter, shared_context.stack, U256::ZERO);
                 interpreter.gas.erase_cost(result.gas.remaining());
             }
             InstructionResult::FatalExternalError => {
                 interpreter.instruction_result = InstructionResult::FatalExternalError;
             }
             _ => {
-                push!(interpreter, U256::ZERO);
+                push!(interpreter, shared_context.stack, U256::ZERO);
             }
         }
     }
@@ -141,7 +146,7 @@ impl Interpreter {
     /// As SharedMemory inside Interpreter is taken and replaced with empty (not valid) memory.
     pub fn insert_call_output(
         &mut self,
-        shared_memory: &mut SharedMemory,
+        shared_context: &mut SharedContext,
         result: InterpreterResult,
         memory_return_offset: Range<usize>,
     ) {
@@ -157,19 +162,23 @@ impl Interpreter {
                 // return unspend gas.
                 interpreter.gas.erase_cost(result.gas.remaining());
                 interpreter.gas.record_refund(result.gas.refunded());
-                shared_memory.set(out_offset, &interpreter.return_data_buffer[..target_len]);
-                push!(interpreter, U256::from(1));
+                shared_context
+                    .memory
+                    .set(out_offset, &interpreter.return_data_buffer[..target_len]);
+                push!(interpreter, shared_context.stack, U256::from(1));
             }
             return_revert!() => {
                 interpreter.gas.erase_cost(result.gas.remaining());
-                shared_memory.set(out_offset, &interpreter.return_data_buffer[..target_len]);
-                push!(interpreter, U256::ZERO);
+                shared_context
+                    .memory
+                    .set(out_offset, &interpreter.return_data_buffer[..target_len]);
+                push!(interpreter, shared_context.stack, U256::ZERO);
             }
             InstructionResult::FatalExternalError => {
                 interpreter.instruction_result = InstructionResult::FatalExternalError;
             }
             _ => {
-                push!(interpreter, U256::ZERO);
+                push!(interpreter, shared_context.stack, U256::ZERO);
             }
         }
     }
@@ -223,15 +232,15 @@ impl Interpreter {
         (instruction_table[opcode as usize])(self, host)
     }
 
-    /// Take memory and replace it with empty memory.
-    pub fn take_memory(&mut self) -> SharedMemory {
-        core::mem::replace(&mut self.shared_memory, EMPTY_SHARED_MEMORY)
+    /// Take context and replace it with empty context.
+    pub fn take_context(&mut self) -> SharedContext {
+        core::mem::replace(&mut self.shared_context, EMPTY_SHARED_CONTEXT)
     }
 
     /// Executes the interpreter until it returns or stops.
     pub fn run<FN, H: Host>(
         &mut self,
-        shared_memory: SharedMemory,
+        shared_context: SharedContext,
         instruction_table: &[FN; 256],
         host: &mut H,
     ) -> InterpreterAction
@@ -240,7 +249,7 @@ impl Interpreter {
     {
         self.next_action = None;
         self.instruction_result = InstructionResult::Continue;
-        self.shared_memory = shared_memory;
+        self.shared_context = shared_context;
         // main loop
         while self.instruction_result == InstructionResult::Continue {
             self.step(instruction_table, host);

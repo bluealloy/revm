@@ -31,7 +31,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
 
         let gas_remaining = self.gas_inspector.gas_remaining();
 
-        let memory_size = interp.shared_memory.len();
+        let memory_size = interp.shared_context.memory.len();
 
         println!(
             "depth:{}, PC:{}, gas:{:#x}({}), OPCODE: {:?}({:?})  refund:{:#x}({}) Stack:{:?}, Data size:{}",
@@ -43,7 +43,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
             opcode,
             interp.gas.refunded(),
             interp.gas.refunded(),
-            interp.shared_stack.data(),
+            interp.shared_context.stack.data(),
             memory_size,
         );
 

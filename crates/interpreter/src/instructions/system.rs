@@ -13,7 +13,7 @@ pub fn keccak256<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     } else {
         let from = as_usize_or_fail!(interpreter, from);
         shared_memory_resize!(interpreter, from, len);
-        crate::primitives::keccak256(interpreter.shared_memory.slice(from, len))
+        crate::primitives::keccak256(interpreter.shared_context.memory.slice(from, len))
     };
 
     push_b256!(interpreter, hash);
@@ -46,7 +46,7 @@ pub fn codecopy<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     shared_memory_resize!(interpreter, memory_offset, len);
 
     // Note: this can't panic because we resized memory to fit.
-    interpreter.shared_memory.set_data(
+    interpreter.shared_context.memory.set_data(
         memory_offset,
         code_offset,
         len,
@@ -92,7 +92,7 @@ pub fn calldatacopy<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     shared_memory_resize!(interpreter, memory_offset, len);
 
     // Note: this can't panic because we resized memory to fit.
-    interpreter.shared_memory.set_data(
+    interpreter.shared_context.memory.set_data(
         memory_offset,
         data_offset,
         len,
@@ -125,7 +125,7 @@ pub fn returndatacopy<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host:
     if len != 0 {
         let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
         shared_memory_resize!(interpreter, memory_offset, len);
-        interpreter.shared_memory.set(
+        interpreter.shared_context.memory.set(
             memory_offset,
             &interpreter.return_data_buffer[data_offset..data_end],
         );

@@ -103,7 +103,6 @@ impl SharedStack {
     /// Prepares the shared stack for a new context
     #[inline]
     pub fn new_context(&mut self) {
-        println!("inside new context");
         // check memory left for the current page
         let page = self.page_mut();
         let memory_left = page.buffer.capacity() - page.buffer.len();

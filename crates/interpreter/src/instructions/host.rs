@@ -114,7 +114,8 @@ pub fn extcodecopy<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mu
 
     // Note: this can't panic because we resized memory to fit.
     interpreter
-        .shared_memory
+        .shared_context
+        .memory
         .set_data(memory_offset, code_offset, len, code.bytes());
 }
 
@@ -199,10 +200,10 @@ pub fn log<const N: usize, H: Host>(interpreter: &mut Interpreter, host: &mut H)
     } else {
         let offset = as_usize_or_fail!(interpreter, offset);
         shared_memory_resize!(interpreter, offset, len);
-        Bytes::copy_from_slice(interpreter.shared_memory.slice(offset, len))
+        Bytes::copy_from_slice(interpreter.shared_context.memory.slice(offset, len))
     };
 
-    if interpreter.shared_stack.len() < N {
+    if interpreter.shared_context.stack.len() < N {
         interpreter.instruction_result = InstructionResult::StackUnderflow;
         return;
     }
@@ -210,7 +211,9 @@ pub fn log<const N: usize, H: Host>(interpreter: &mut Interpreter, host: &mut H)
     let mut topics = Vec::with_capacity(N);
     for _ in 0..N {
         // SAFETY: stack bounds already checked few lines above
-        topics.push(B256::from(unsafe { interpreter.shared_stack.pop_unsafe() }));
+        topics.push(B256::from(unsafe {
+            interpreter.shared_context.stack.pop_unsafe()
+        }));
     }
 
     host.log(interpreter.contract.address, topics, data);
@@ -268,7 +271,7 @@ pub fn create<const IS_CREATE2: bool, H: Host, SPEC: Spec>(
 
         let code_offset = as_usize_or_fail!(interpreter, code_offset);
         shared_memory_resize!(interpreter, code_offset, len);
-        code = Bytes::copy_from_slice(interpreter.shared_memory.slice(code_offset, len));
+        code = Bytes::copy_from_slice(interpreter.shared_context.memory.slice(code_offset, len));
     }
 
     // EIP-1014: Skinny CREATE2
@@ -362,7 +365,7 @@ pub fn call_inner<SPEC: Spec, H: Host>(
     let input = if in_len != 0 {
         let in_offset = as_usize_or_fail!(interpreter, in_offset);
         shared_memory_resize!(interpreter, in_offset, in_len);
-        Bytes::copy_from_slice(interpreter.shared_memory.slice(in_offset, in_len))
+        Bytes::copy_from_slice(interpreter.shared_context.memory.slice(in_offset, in_len))
     } else {
         Bytes::new()
     };

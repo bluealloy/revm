@@ -8,10 +8,7 @@ use revm::{
         address, bytes, hex, BerlinSpec, Bytecode, BytecodeState, Bytes, TransactTo, U256,
     },
 };
-use revm_interpreter::{
-    opcode::make_instruction_table, SharedMemory, SharedStack, EMPTY_SHARED_MEMORY,
-    EMPTY_SHARED_STACK,
-};
+use revm_interpreter::{opcode::make_instruction_table, SharedContext, EMPTY_SHARED_CONTEXT};
 use std::time::Duration;
 
 type Evm = revm::EVM<BenchmarkDB>;
@@ -96,18 +93,16 @@ fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm) {
             bytecode: BytecodeLocked::try_from(evm.db.as_ref().unwrap().0.clone()).unwrap(),
             ..Default::default()
         };
-        let mut shared_memory = SharedMemory::new();
-        let mut shared_stack = SharedStack::new();
+        let mut shared_context = SharedContext::new();
         let mut host = DummyHost::new(evm.env.clone());
         let instruction_table = make_instruction_table::<DummyHost, BerlinSpec>();
         b.iter(move || {
             // replace memory with empty memory to use it inside interpreter.
             // Later return memory back.
-            let temp_memory = core::mem::replace(&mut shared_memory, EMPTY_SHARED_MEMORY);
-            let temp_stack = core::mem::replace(&mut shared_stack, EMPTY_SHARED_STACK);
+            let temp_context = core::mem::replace(&mut shared_context, EMPTY_SHARED_CONTEXT);
             let mut interpreter = Interpreter::new(Box::new(contract.clone()), u64::MAX, false);
-            let res = interpreter.run(temp_memory, temp_stack, &instruction_table, &mut host);
-            shared_memory = interpreter.take_memory();
+            let res = interpreter.run(temp_context, &instruction_table, &mut host);
+            shared_context = interpreter.take_context();
             host.clear();
             res
         })

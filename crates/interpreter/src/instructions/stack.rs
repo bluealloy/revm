@@ -6,7 +6,7 @@ use crate::{
 
 pub fn pop<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::BASE);
-    if let Err(result) = interpreter.shared_stack.pop() {
+    if let Err(result) = interpreter.shared_context.stack.pop() {
         interpreter.instruction_result = result;
     }
 }
@@ -17,7 +17,7 @@ pub fn pop<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
 pub fn push0<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
     check!(interpreter, SHANGHAI);
     gas!(interpreter, gas::BASE);
-    if let Err(result) = interpreter.shared_stack.push(U256::ZERO) {
+    if let Err(result) = interpreter.shared_context.stack.push(U256::ZERO) {
         interpreter.instruction_result = result;
     }
 }
@@ -28,7 +28,8 @@ pub fn push<const N: usize, H: Host>(interpreter: &mut Interpreter, _host: &mut 
     // without bounds checking.
     let ip = interpreter.instruction_pointer;
     if let Err(result) = interpreter
-        .shared_stack
+        .shared_context
+        .stack
         .push_slice(unsafe { core::slice::from_raw_parts(ip, N) })
     {
         interpreter.instruction_result = result;
@@ -39,14 +40,14 @@ pub fn push<const N: usize, H: Host>(interpreter: &mut Interpreter, _host: &mut 
 
 pub fn dup<const N: usize, H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
-    if let Err(result) = interpreter.shared_stack.dup::<N>() {
+    if let Err(result) = interpreter.shared_context.stack.dup::<N>() {
         interpreter.instruction_result = result;
     }
 }
 
 pub fn swap<const N: usize, H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
-    if let Err(result) = interpreter.shared_stack.swap::<N>() {
+    if let Err(result) = interpreter.shared_context.stack.swap::<N>() {
         interpreter.instruction_result = result;
     }
 }

@@ -58,7 +58,12 @@ fn return_inner(interpreter: &mut Interpreter, instruction_result: InstructionRe
         let offset = as_usize_or_fail!(interpreter, offset);
         shared_memory_resize!(interpreter, offset, len);
 
-        output = interpreter.shared_memory.slice(offset, len).to_vec().into()
+        output = interpreter
+            .shared_context
+            .memory
+            .slice(offset, len)
+            .to_vec()
+            .into()
     }
     interpreter.instruction_result = instruction_result;
     interpreter.next_action = Some(crate::InterpreterAction::Return {

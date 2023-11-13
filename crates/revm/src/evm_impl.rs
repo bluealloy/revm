@@ -6,7 +6,7 @@ use crate::{
         gas::initial_tx_gas,
         opcode::{make_boxed_instruction_table, make_instruction_table, InstructionTables},
         CallContext, CallInputs, CallScheme, CreateInputs, Host, Interpreter, InterpreterAction,
-        InterpreterResult, SelfDestructResult, SharedMemory, Transfer,
+        InterpreterResult, SelfDestructResult, SharedContext, Transfer,
     },
     journaled_state::JournaledState,
     precompile::Precompiles,
@@ -173,12 +173,12 @@ impl<'a, SPEC: Spec + 'static, DB: Database> EVMImpl<'a, SPEC, DB> {
         call_stack.push(first_frame);
 
         #[cfg(feature = "memory_limit")]
-        let mut shared_memory =
-            SharedMemory::new_with_memory_limit(self.context.env.cfg.memory_limit);
+        let mut shared_context =
+            SharedContext::new_with_memory_limit(self.context.env.cfg.memory_limit);
         #[cfg(not(feature = "memory_limit"))]
-        let mut shared_memory = SharedMemory::new();
+        let mut shared_context = SharedContext::new();
 
-        shared_memory.new_context();
+        shared_context.new_context();
 
         let mut stack_frame = call_stack.first_mut().unwrap();
 
@@ -186,9 +186,9 @@ impl<'a, SPEC: Spec + 'static, DB: Database> EVMImpl<'a, SPEC, DB> {
             // run interpreter
             let action = stack_frame
                 .interpreter
-                .run(shared_memory, instruction_table, self);
+                .run(shared_context, instruction_table, self);
             // take shared memory back.
-            shared_memory = stack_frame.interpreter.take_memory();
+            shared_context = stack_frame.interpreter.take_context();
 
             let new_frame = match action {
                 InterpreterAction::SubCall {
@@ -198,18 +198,20 @@ impl<'a, SPEC: Spec + 'static, DB: Database> EVMImpl<'a, SPEC, DB> {
                     inputs,
                     stack_frame,
                     return_memory_offset,
-                    &mut shared_memory,
+                    &mut shared_context,
                 ),
-                InterpreterAction::Create { inputs } => self.handle_sub_create(inputs, stack_frame),
+                InterpreterAction::Create { inputs } => {
+                    self.handle_sub_create(inputs, stack_frame, &mut shared_context)
+                }
                 InterpreterAction::Return { result } => {
                     // free memory context.
-                    shared_memory.free_context();
+                    shared_context.free_context();
 
                     let child = call_stack.pop().unwrap();
                     let parent = call_stack.last_mut();
 
                     if let Some(result) =
-                        self.handle_frame_return(child, parent, &mut shared_memory, result)
+                        self.handle_frame_return(child, parent, &mut shared_context, result)
                     {
                         return result;
                     }
@@ -218,7 +220,7 @@ impl<'a, SPEC: Spec + 'static, DB: Database> EVMImpl<'a, SPEC, DB> {
                 }
             };
             if let Some(new_frame) = new_frame {
-                shared_memory.new_context();
+                shared_context.new_context();
                 call_stack.push(new_frame);
             }
             stack_frame = call_stack.last_mut().unwrap();
@@ -229,7 +231,7 @@ impl<'a, SPEC: Spec + 'static, DB: Database> EVMImpl<'a, SPEC, DB> {
         &mut self,
         mut child_stack_frame: Box<CallStackFrame>,
         parent_stack_frame: Option<&mut Box<CallStackFrame>>,
-        shared_memory: &mut SharedMemory,
+        shared_context: &mut SharedContext,
         mut result: InterpreterResult,
     ) -> Option<InterpreterResult> {
         if let Some(inspector) = self.inspector.as_mut() {
@@ -263,16 +265,18 @@ impl<'a, SPEC: Spec + 'static, DB: Database> EVMImpl<'a, SPEC, DB> {
             let (result, address) = self
                 .context
                 .create_return::<SPEC>(result, child_stack_frame);
-            parent_stack_frame
-                .interpreter
-                .insert_create_output(result, Some(address))
+            parent_stack_frame.interpreter.insert_create_output(
+                shared_context,
+                result,
+                Some(address),
+            )
         } else {
             let subcall_memory_return_offset =
                 child_stack_frame.subcall_return_memory_range.clone();
             let result = self.context.call_return(result, child_stack_frame);
 
             parent_stack_frame.interpreter.insert_call_output(
-                shared_memory,
+                shared_context,
                 result,
                 subcall_memory_return_offset,
             )
@@ -286,14 +290,17 @@ impl<'a, SPEC: Spec + 'static, DB: Database> EVMImpl<'a, SPEC, DB> {
     fn handle_sub_create(
         &mut self,
         mut inputs: Box<CreateInputs>,
-        curent_stack_frame: &mut CallStackFrame,
+        current_stack_frame: &mut CallStackFrame,
+        shared_context: &mut SharedContext,
     ) -> Option<Box<CallStackFrame>> {
         // Call inspector if it is some.
         if let Some(inspector) = self.inspector.as_mut() {
             if let Some((result, address)) = inspector.create(&mut self.context, &mut inputs) {
-                curent_stack_frame
-                    .interpreter
-                    .insert_create_output(result, address);
+                current_stack_frame.interpreter.insert_create_output(
+                    shared_context,
+                    result,
+                    address,
+                );
                 return None;
             }
         }
@@ -306,15 +313,17 @@ impl<'a, SPEC: Spec + 'static, DB: Database> EVMImpl<'a, SPEC, DB> {
                     let ret = inspector.create_end(
                         &mut self.context,
                         result,
-                        curent_stack_frame.created_address,
+                        current_stack_frame.created_address,
                     );
                     result = ret.0;
                     address = ret.1;
                 }
                 // insert result of the failed creation of create CallStackFrame.
-                curent_stack_frame
-                    .interpreter
-                    .insert_create_output(result, address);
+                current_stack_frame.interpreter.insert_create_output(
+                    shared_context,
+                    result,
+                    address,
+                );
                 None
             }
         }
@@ -326,16 +335,16 @@ impl<'a, SPEC: Spec + 'static, DB: Database> EVMImpl<'a, SPEC, DB> {
     fn handle_sub_call(
         &mut self,
         mut inputs: Box<CallInputs>,
-        curent_stake_frame: &mut CallStackFrame,
+        current_stake_frame: &mut CallStackFrame,
         return_memory_offset: Range<usize>,
-        shared_memory: &mut SharedMemory,
+        shared_context: &mut SharedContext,
     ) -> Option<Box<CallStackFrame>> {
         // Call inspector if it is some.
         if let Some(inspector) = self.inspector.as_mut() {
             if let Some((result, range)) = inspector.call(&mut self.context, &mut inputs) {
-                curent_stake_frame
+                current_stake_frame
                     .interpreter
-                    .insert_call_output(shared_memory, result, range);
+                    .insert_call_output(shared_context, result, range);
                 return None;
             }
         }
@@ -349,8 +358,8 @@ impl<'a, SPEC: Spec + 'static, DB: Database> EVMImpl<'a, SPEC, DB> {
                 if let Some(inspector) = self.inspector.as_mut() {
                     result = inspector.call_end(&mut self.context, result);
                 }
-                curent_stake_frame.interpreter.insert_call_output(
-                    shared_memory,
+                current_stake_frame.interpreter.insert_call_output(
+                    shared_context,
                     result,
                     return_memory_offset,
                 );
