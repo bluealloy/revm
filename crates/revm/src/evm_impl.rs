@@ -547,6 +547,8 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             Err(e) => return e,
         };
 
+        let bytecode = Bytes::copy_from_slice(prepared_create.contract.bytecode.bytecode());
+
         // Create new interpreter and execute init code
         let (exit_reason, mut bytes, mut gas) = self.run_interpreter(
             prepared_create.contract,
@@ -619,15 +621,9 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                 }
                 // if we have enough gas
                 self.data.journaled_state.checkpoint_commit();
-                // Do analysis of bytecode straight away.
-                let bytecode = match self.data.env.cfg.perf_analyse_created_bytecodes {
-                    AnalysisKind::Raw => Bytecode::new_raw(bytes.clone()),
-                    AnalysisKind::Check => Bytecode::new_raw(bytes.clone()).to_checked(),
-                    AnalysisKind::Analyse => to_analysed(Bytecode::new_raw(bytes.clone())),
-                };
                 self.data
                     .journaled_state
-                    .set_code(prepared_create.created_address, bytecode);
+                    .set_code(prepared_create.created_address, Bytecode::new_raw(bytecode));
                 CreateResult {
                     result: InstructionResult::Return,
                     created_address: Some(prepared_create.created_address),
@@ -660,7 +656,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         shared_memory: &mut SharedMemory,
     ) -> (InstructionResult, Bytes, Gas) {
         let bytecode = contract.bytecode.original_bytecode_slice();
-        let mut output = vec![0u8; 0];
+        let mut output = vec![0u8; 1024];
 
         let input = &contract.input;
         loop {
@@ -671,47 +667,20 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                 state,
                 gas_limit as u32,
             );
-            if out_len_or_err < 0 {
-                return (
-                    InstructionResult::FatalExternalError,
-                    Bytes::new(),
-                    Gas::new(gas_limit),
-                );
-            }
-            if output.len() < out_len_or_err as usize {
-                output = vec![0u8; out_len_or_err as usize];
-                continue;
+
+            if out_len_or_err < -1005 {
+                if output.len() < out_len_or_err as usize {
+                    output = vec![0u8; out_len_or_err as usize];
+                    continue;
+                }
+            } else if out_len_or_err < 0 {
+                return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
             }
             break;
         }
 
-        let mut error_code = InstructionResult::Stop;
-        // #[cfg(feature = "runtime")]
-        // {
-        //     let import_linker = Runtime::new_linker();
-        //     let execution_result = Runtime::run_with_context(
-        //         RuntimeContext::new(bytecode)
-        //             .with_input(&vec![contract.input.to_vec()])
-        //             .with_state(state),
-        //         &import_linker,
-        //     )
-        //     .unwrap();
-        //     if execution_result.data().exit_code() != 0 {
-        //         if execution_result.data().output().is_empty() {
-        //             output = vec![0; 4];
-        //             let error_code_be = execution_result.data().exit_code().to_be_bytes();
-        //             output.copy_from_slice(&error_code_be);
-        //         } else {
-        //             output = execution_result.data().output().to_owned();
-        //         }
-        //         error_code = InstructionResult::Revert
-        //     } else {
-        //         output = execution_result.data().output().to_owned();
-        //     }
-        // }
-
         (
-            error_code,
+            InstructionResult::Stop,
             Bytes::copy_from_slice(&output),
             Gas::new(gas_limit),
         )
