@@ -26,8 +26,8 @@ pub use instruction_result::*;
 pub use instructions::{opcode, Instruction, OpCode, OPCODE_JUMPMAP};
 pub use interpreter::{
     analysis, next_multiple_of_32, BytecodeLocked, Contract, Interpreter, InterpreterAction,
-    InterpreterResult, SharedContext, SharedMemory, SharedStack, EMPTY_SHARED_CONTEXT,
-    EMPTY_SHARED_MEMORY, EMPTY_SHARED_STACK, MAX_CODE_SIZE, MAX_INITCODE_SIZE,
+    InterpreterResult, Memory, SharedContext, Stack, EMPTY_MEMORY, EMPTY_SHARED_CONTEXT,
+    EMPTY_STACK, MAX_CODE_SIZE, MAX_INITCODE_SIZE,
 };
 #[doc(hidden)]
 pub use revm_primitives as primitives;

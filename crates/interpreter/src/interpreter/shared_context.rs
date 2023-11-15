@@ -1,18 +1,18 @@
-use crate::{SharedMemory, SharedStack, EMPTY_SHARED_MEMORY, EMPTY_SHARED_STACK};
+use crate::{Memory, Stack, EMPTY_MEMORY, EMPTY_STACK};
 
 pub const EMPTY_SHARED_CONTEXT: SharedContext = SharedContext {
-    stack: EMPTY_SHARED_STACK,
-    memory: EMPTY_SHARED_MEMORY,
+    stack: EMPTY_STACK,
+    memory: EMPTY_MEMORY,
 };
 
 /// The shared data between contexts.
-/// Wraps [SharedStack] and [SharedMemory] wrapped in a struct
+/// Wraps [Stack] and [Memory] wrapped in a struct
 #[derive(Debug)]
 pub struct SharedContext {
     /// Shared stack
-    pub stack: SharedStack,
+    pub stack: Stack,
     /// Shared memory
-    pub memory: SharedMemory,
+    pub memory: Memory,
 }
 
 impl Default for SharedContext {
@@ -26,8 +26,8 @@ impl SharedContext {
     #[inline]
     pub fn new() -> Self {
         Self {
-            stack: SharedStack::new(),
-            memory: SharedMemory::new(),
+            stack: Stack::new(),
+            memory: Memory::new(),
         }
     }
 
@@ -35,8 +35,8 @@ impl SharedContext {
     #[inline]
     pub fn new_with_memory_limit(memory_limit: u64) -> Self {
         Self {
-            stack: SharedStack::new(),
-            memory: SharedMemory::new_with_memory_limit(memory_limit),
+            stack: Stack::new(),
+            memory: Memory::new_with_memory_limit(memory_limit),
         }
     }
 

@@ -9,7 +9,7 @@ pub fn mload<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop!(interpreter, index);
     let index = as_usize_or_fail!(interpreter, index);
-    shared_memory_resize!(interpreter, index, 32);
+    memory_resize!(interpreter, index, 32);
     push!(
         interpreter,
         interpreter.shared_context.memory.get_u256(index)
@@ -20,7 +20,7 @@ pub fn mstore<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop!(interpreter, index, value);
     let index = as_usize_or_fail!(interpreter, index);
-    shared_memory_resize!(interpreter, index, 32);
+    memory_resize!(interpreter, index, 32);
     interpreter.shared_context.memory.set_u256(index, value);
 }
 
@@ -28,7 +28,7 @@ pub fn mstore8<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop!(interpreter, index, value);
     let index = as_usize_or_fail!(interpreter, index);
-    shared_memory_resize!(interpreter, index, 1);
+    memory_resize!(interpreter, index, 1);
     interpreter
         .shared_context
         .memory
@@ -59,7 +59,7 @@ pub fn mcopy<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) 
     let dst = as_usize_or_fail!(interpreter, dst);
     let src = as_usize_or_fail!(interpreter, src);
     // resize memory
-    shared_memory_resize!(interpreter, max(dst, src), len);
+    memory_resize!(interpreter, max(dst, src), len);
     // copy memory in place
     interpreter.shared_context.memory.copy(dst, src, len);
 }

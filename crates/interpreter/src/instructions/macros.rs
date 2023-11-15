@@ -44,7 +44,7 @@ macro_rules! gas_or_fail {
     };
 }
 
-macro_rules! shared_memory_resize {
+macro_rules! memory_resize {
     ($interp:expr, $offset:expr, $len:expr) => {
         let size = $offset.saturating_add($len);
         if size > $interp.shared_context.memory.len() {
@@ -159,8 +159,8 @@ macro_rules! pop_top {
 
 #[macro_export]
 macro_rules! push_b256 {
-	($interp:expr, $shared_stack: expr, $($x:expr),* $(,)?) => ($(
-        match $shared_stack.push_b256($x) {
+	($interp:expr, $stack: expr, $($x:expr),* $(,)?) => ($(
+        match $stack.push_b256($x) {
             Ok(()) => {},
             Err(e) => {
                 $interp.instruction_result = e;
@@ -175,8 +175,8 @@ macro_rules! push_b256 {
 
 #[macro_export]
 macro_rules! push {
-    ($interp:expr, $shared_stack: expr, $($x:expr),* $(,)?) => ($(
-        match $shared_stack.push($x) {
+    ($interp:expr, $stack: expr, $($x:expr),* $(,)?) => ($(
+        match $stack.push($x) {
             Ok(()) => {},
             Err(e) => {
                 $interp.instruction_result = e;

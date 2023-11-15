@@ -1,14 +1,14 @@
 pub mod analysis;
 mod contract;
+mod memory;
 mod shared_context;
-mod shared_memory;
-mod shared_stack;
+mod stack;
 
 pub use analysis::BytecodeLocked;
 pub use contract::Contract;
+pub use memory::*;
 pub use shared_context::*;
-pub use shared_memory::*;
-pub use shared_stack::*;
+pub use stack::*;
 
 use crate::primitives::Bytes;
 use crate::{
@@ -20,8 +20,8 @@ use core::cmp::min;
 use core::ops::Range;
 use revm_primitives::{Address, U256};
 
-pub use self::shared_memory::EMPTY_SHARED_MEMORY;
-pub use self::shared_stack::EMPTY_SHARED_STACK;
+pub use self::memory::EMPTY_MEMORY;
+pub use self::stack::EMPTY_STACK;
 
 /// EIP-170: Contract code size limit
 ///
@@ -143,7 +143,7 @@ impl Interpreter {
     /// When sub call returns we can insert output of that call into this interpreter.
     ///
     /// Note that shared memory is required as a input field.
-    /// As SharedMemory inside Interpreter is taken and replaced with empty (not valid) memory.
+    /// As Memory inside Interpreter is taken and replaced with empty (not valid) memory.
     pub fn insert_call_output(
         &mut self,
         shared_context: &mut SharedContext,
@@ -210,6 +210,30 @@ impl Interpreter {
             self.instruction_pointer
                 .offset_from(self.contract.bytecode.as_ptr()) as usize
         }
+    }
+
+    /// Returns a reference to the stack of the current context
+    #[inline]
+    pub fn stack(&self) -> &[U256] {
+        self.shared_context.stack.data()
+    }
+
+    /// Returns a reference to the stack of the current context
+    #[inline]
+    pub fn stack_mut(&mut self) -> &mut [U256] {
+        self.shared_context.stack.data_mut()
+    }
+
+    /// Returns a reference to the memory of the current context, the active memory.
+    #[inline]
+    pub fn memory(&self) -> &[u8] {
+        self.shared_context.memory.data()
+    }
+
+    /// Returns a reference to the memory of the current context, the active memory.
+    #[inline]
+    pub fn memory_mut(&mut self) -> &mut [u8] {
+        self.shared_context.memory.data_mut()
     }
 
     /// Executes the instruction at the current instruction pointer.

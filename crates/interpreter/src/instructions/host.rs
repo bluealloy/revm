@@ -110,7 +110,7 @@ pub fn extcodecopy<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mu
     }
     let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
     let code_offset = min(as_usize_saturated!(code_offset), code.len());
-    shared_memory_resize!(interpreter, memory_offset, len);
+    memory_resize!(interpreter, memory_offset, len);
 
     // Note: this can't panic because we resized memory to fit.
     interpreter
@@ -199,7 +199,7 @@ pub fn log<const N: usize, H: Host>(interpreter: &mut Interpreter, host: &mut H)
         Bytes::new()
     } else {
         let offset = as_usize_or_fail!(interpreter, offset);
-        shared_memory_resize!(interpreter, offset, len);
+        memory_resize!(interpreter, offset, len);
         Bytes::copy_from_slice(interpreter.shared_context.memory.slice(offset, len))
     };
 
@@ -270,7 +270,7 @@ pub fn create<const IS_CREATE2: bool, H: Host, SPEC: Spec>(
         }
 
         let code_offset = as_usize_or_fail!(interpreter, code_offset);
-        shared_memory_resize!(interpreter, code_offset, len);
+        memory_resize!(interpreter, code_offset, len);
         code = Bytes::copy_from_slice(interpreter.shared_context.memory.slice(code_offset, len));
     }
 
@@ -364,7 +364,7 @@ pub fn call_inner<SPEC: Spec, H: Host>(
     let in_len = as_usize_or_fail!(interpreter, in_len);
     let input = if in_len != 0 {
         let in_offset = as_usize_or_fail!(interpreter, in_offset);
-        shared_memory_resize!(interpreter, in_offset, in_len);
+        memory_resize!(interpreter, in_offset, in_len);
         Bytes::copy_from_slice(interpreter.shared_context.memory.slice(in_offset, in_len))
     } else {
         Bytes::new()
@@ -373,7 +373,7 @@ pub fn call_inner<SPEC: Spec, H: Host>(
     let out_len = as_usize_or_fail!(interpreter, out_len);
     let out_offset = if out_len != 0 {
         let out_offset = as_usize_or_fail!(interpreter, out_offset);
-        shared_memory_resize!(interpreter, out_offset, out_len);
+        memory_resize!(interpreter, out_offset, out_len);
         out_offset
     } else {
         usize::MAX //unrealistic value so we are sure it is not used

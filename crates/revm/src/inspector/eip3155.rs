@@ -1,6 +1,6 @@
 use crate::{
     inspectors::GasInspector,
-    interpreter::{opcode, CallInputs, CreateInputs, Interpreter, InterpreterResult, SharedMemory},
+    interpreter::{opcode, CallInputs, CreateInputs, Interpreter, InterpreterResult, Memory},
     primitives::{db::Database, hex, Address, U256},
     EvmContext, Inspector,
 };
@@ -24,7 +24,7 @@ pub struct TracerEip3155 {
     gas: u64,
     mem_size: usize,
     #[allow(dead_code)]
-    memory: Option<SharedMemory>,
+    memory: Option<Memory>,
     skip: bool,
 }
 
