@@ -1,6 +1,5 @@
 use crate::interpreter::InterpreterAction;
-use crate::primitives::{Address, Bytes, Spec, SpecId::*, B256, U256};
-use crate::MAX_INITCODE_SIZE;
+use crate::primitives::{Address, Bytes, Spec, SpecId::*, B256, MAX_INITCODE_SIZE, U256};
 use crate::{
     gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
     interpreter::Interpreter,

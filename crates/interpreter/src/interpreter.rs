@@ -20,14 +20,6 @@ use revm_primitives::{Address, U256};
 
 pub use self::shared_memory::EMPTY_SHARED_MEMORY;
 
-/// EIP-170: Contract code size limit
-///
-/// By default this limit is 0x6000 (~25kb)
-pub const MAX_CODE_SIZE: usize = 0x6000;
-
-/// EIP-3860: Limit and meter initcode
-pub const MAX_INITCODE_SIZE: usize = 2 * MAX_CODE_SIZE;
-
 #[derive(Debug)]
 pub struct Interpreter {
     /// Contract information and invoking data
