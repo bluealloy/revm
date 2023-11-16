@@ -12,7 +12,7 @@ extern crate alloc;
 
 pub mod db;
 mod evm_factory;
-mod evm_context;
+mod context;
 mod evm;
 mod frame;
 pub mod handler;
@@ -29,7 +29,7 @@ pub use db::{
 };
 pub use db::{Database, DatabaseCommit, DatabaseRef, InMemoryDB};
 pub use evm_factory::{new, EvmFactory};
-pub use evm_context::EvmContext;
+pub use context::{EvmContext,Context};
 pub use evm::{new_evm, Evm, Transact, CALL_STACK_LIMIT};
 pub use frame::{CallStackFrame,FrameOrResult};
 pub use journaled_state::{JournalCheckpoint, JournalEntry, JournaledState};

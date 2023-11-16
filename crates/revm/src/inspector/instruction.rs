@@ -7,7 +7,7 @@ use revm_interpreter::{
 };
 
 /// Outer closure that calls Inspector for every instruction.
-pub fn inspector_instruction<'a, SPEC: Spec + 'static, EXT, DB: Database>(
+pub fn inspector_instruction<'a, SPEC: Spec + 'static, EXT: 'a, DB: Database>(
     instruction: Instruction<Evm<'a, SPEC, EXT, DB>>,
 ) -> BoxedInstruction<'a, Evm<'a, SPEC, EXT, DB>> {
     Box::new(
@@ -17,7 +17,7 @@ pub fn inspector_instruction<'a, SPEC: Spec + 'static, EXT, DB: Database>(
                 // old Inspector behavior.
                 interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.sub(1) };
 
-                inspector.step(interpreter, &mut host.context);
+                inspector.step(interpreter, &mut host.context.evm);
                 if interpreter.instruction_result != InstructionResult::Continue {
                     return;
                 }
@@ -30,7 +30,7 @@ pub fn inspector_instruction<'a, SPEC: Spec + 'static, EXT, DB: Database>(
 
             // step ends
             if let Some(inspector) = host.inspector.as_mut() {
-                inspector.step_end(interpreter, &mut host.context);
+                inspector.step_end(interpreter, &mut host.context.evm);
             }
         },
     )

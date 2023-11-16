@@ -9,7 +9,7 @@ use crate::{
         db::Database, EVMError, Env, ExecutionResult, Output, ResultAndState, Spec, SpecId::LONDON,
         U256,
     },
-    EvmContext,
+    Context, EvmContext,
 };
 
 /// Handle output of the transaction
@@ -39,16 +39,17 @@ pub fn handle_call_return<SPEC: Spec>(
 
 #[inline]
 pub fn handle_reimburse_caller<SPEC: Spec, EXT, DB: Database>(
-    context: &mut EvmContext<'_, EXT, DB>,
+    context: &mut Context<'_, EXT, DB>,
     gas: &Gas,
 ) -> Result<(), EVMError<DB::Error>> {
-    let caller = context.env.tx.caller;
-    let effective_gas_price = context.env.effective_gas_price();
+    let caller = context.evm.env.tx.caller;
+    let effective_gas_price = context.evm.env.effective_gas_price();
 
     // return balance of not spend gas.
     let (caller_account, _) = context
+        .evm
         .journaled_state
-        .load_account(caller, context.db)
+        .load_account(caller, context.evm.db)
         .map_err(EVMError::Database)?;
 
     caller_account.info.balance = caller_account
@@ -62,23 +63,24 @@ pub fn handle_reimburse_caller<SPEC: Spec, EXT, DB: Database>(
 /// Reward beneficiary with gas fee.
 #[inline]
 pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
-    context: &mut EvmContext<'_, EXT, DB>,
+    context: &mut Context<'_, EXT, DB>,
     gas: &Gas,
 ) -> Result<(), EVMError<DB::Error>> {
-    let beneficiary = context.env.block.coinbase;
-    let effective_gas_price = context.env.effective_gas_price();
+    let beneficiary = context.evm.env.block.coinbase;
+    let effective_gas_price = context.evm.env.effective_gas_price();
 
     // transfer fee to coinbase/beneficiary.
     // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
     let coinbase_gas_price = if SPEC::enabled(LONDON) {
-        effective_gas_price.saturating_sub(context.env.block.basefee)
+        effective_gas_price.saturating_sub(context.evm.env.block.basefee)
     } else {
         effective_gas_price
     };
 
     let (coinbase_account, _) = context
+        .evm
         .journaled_state
-        .load_account(beneficiary, context.db)
+        .load_account(beneficiary, context.evm.db)
         .map_err(EVMError::Database)?;
 
     coinbase_account.mark_touch();

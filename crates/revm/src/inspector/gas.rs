@@ -28,7 +28,7 @@ impl<EXT, DB: Database> Inspector<EXT, DB> for GasInspector {
     fn initialize_interp(
         &mut self,
         interp: &mut crate::interpreter::Interpreter,
-        _context: &mut EvmContext<'_, EXT, DB>,
+        _context: &mut EvmContext<'_, DB>,
     ) {
         self.gas_remaining = interp.gas.limit();
     }
@@ -36,7 +36,7 @@ impl<EXT, DB: Database> Inspector<EXT, DB> for GasInspector {
     fn step_end(
         &mut self,
         interp: &mut crate::interpreter::Interpreter,
-        _context: &mut EvmContext<'_, EXT, DB>,
+        _context: &mut EvmContext<'_, DB>,
     ) {
         let last_gas = core::mem::replace(&mut self.gas_remaining, interp.gas.remaining());
         self.last_gas_cost = last_gas.saturating_sub(self.last_gas_cost);
@@ -44,7 +44,7 @@ impl<EXT, DB: Database> Inspector<EXT, DB> for GasInspector {
 
     fn call_end(
         &mut self,
-        _context: &mut EvmContext<'_, EXT, DB>,
+        _context: &mut EvmContext<'_, DB>,
         mut result: InterpreterResult,
     ) -> InterpreterResult {
         if result.result.is_error() {
@@ -56,7 +56,7 @@ impl<EXT, DB: Database> Inspector<EXT, DB> for GasInspector {
 
     fn create_end(
         &mut self,
-        _context: &mut EvmContext<'_, EXT, DB>,
+        _context: &mut EvmContext<'_, DB>,
         result: InterpreterResult,
         address: Option<Address>,
     ) -> (InterpreterResult, Option<Address>) {

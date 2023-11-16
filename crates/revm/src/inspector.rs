@@ -29,7 +29,7 @@ pub mod inspectors {
 
 /// EVM [Interpreter] callbacks.
 #[auto_impl(&mut, Box)]
-pub trait Inspector<EXT, DB: Database> {
+pub trait Inspector<DB: Database> {
     /// Called before the interpreter is initialized.
     ///
     /// If `interp.instruction_result` is set to anything other than [InstructionResult::Continue] then the execution of the interpreter
@@ -38,7 +38,7 @@ pub trait Inspector<EXT, DB: Database> {
     fn initialize_interp(
         &mut self,
         interp: &mut Interpreter,
-        context: &mut EvmContext<'_, EXT, DB>,
+        context: &mut EvmContext<'_, DB>,
     ) {
         let _ = interp;
         let _ = context;
@@ -53,7 +53,7 @@ pub trait Inspector<EXT, DB: Database> {
     ///
     /// To get the current opcode, use `interp.current_opcode()`.
     #[inline]
-    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, EXT, DB>) {
+    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
         let _ = interp;
         let _ = context;
     }
@@ -62,7 +62,7 @@ pub trait Inspector<EXT, DB: Database> {
     #[inline]
     fn log(
         &mut self,
-        context: &mut EvmContext<'_, EXT, DB>,
+        context: &mut EvmContext<'_, DB>,
         address: &Address,
         topics: &[B256],
         data: &Bytes,
@@ -78,7 +78,7 @@ pub trait Inspector<EXT, DB: Database> {
     /// Setting `interp.instruction_result` to anything other than [InstructionResult::Continue] alters the execution
     /// of the interpreter.
     #[inline]
-    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, EXT, DB>) {
+    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
         let _ = interp;
         let _ = context;
     }
@@ -89,7 +89,7 @@ pub trait Inspector<EXT, DB: Database> {
     #[inline]
     fn call(
         &mut self,
-        context: &mut EvmContext<'_, EXT, DB>,
+        context: &mut EvmContext<'_, DB>,
         inputs: &mut CallInputs,
     ) -> Option<(InterpreterResult, Range<usize>)> {
         let _ = context;
@@ -104,7 +104,7 @@ pub trait Inspector<EXT, DB: Database> {
     #[inline]
     fn call_end(
         &mut self,
-        context: &mut EvmContext<'_, EXT, DB>,
+        context: &mut EvmContext<'_, DB>,
         result: InterpreterResult,
     ) -> InterpreterResult {
         let _ = context;
@@ -117,7 +117,7 @@ pub trait Inspector<EXT, DB: Database> {
     #[inline]
     fn create(
         &mut self,
-        context: &mut EvmContext<'_, EXT, DB>,
+        context: &mut EvmContext<'_, DB>,
         inputs: &mut CreateInputs,
     ) -> Option<(InterpreterResult, Option<Address>)> {
         let _ = context;
@@ -132,7 +132,7 @@ pub trait Inspector<EXT, DB: Database> {
     #[inline]
     fn create_end(
         &mut self,
-        context: &mut EvmContext<'_, EXT, DB>,
+        context: &mut EvmContext<'_, DB>,
         result: InterpreterResult,
         address: Option<Address>,
     ) -> (InterpreterResult, Option<Address>) {

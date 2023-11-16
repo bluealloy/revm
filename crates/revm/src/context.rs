@@ -15,9 +15,17 @@ use crate::{
 use alloc::boxed::Box;
 use core::ops::Range;
 
+/// Main Context structure that contains both EvmContext and external contexts.
+pub struct Context<'a, EXT, DB: Database> {
+    /// Evm Context.
+    pub evm: EvmContext<'a, DB>,
+    /// External generic code.
+    pub external: EXT,
+}
+
 /// EVM Data contains all the data that EVM needs to execute.
 #[derive(Debug)]
-pub struct EvmContext<'a, EXT, DB: Database> {
+pub struct EvmContext<'a, DB: Database> {
     /// EVM Environment contains all the information about config, block and transaction that
     /// evm needs.
     pub env: &'a mut Env,
@@ -29,8 +37,6 @@ pub struct EvmContext<'a, EXT, DB: Database> {
     pub error: Option<DB::Error>,
     /// Precompiles that are available for evm.
     pub precompiles: Precompiles,
-    /// External generic code.
-    pub external: EXT,
     /// Used as temporary value holder to store L1 block info.
     #[cfg(feature = "optimism")]
     pub l1_block_info: Option<crate::optimism::L1BlockInfo>,
@@ -86,7 +92,7 @@ pub fn test() {
     assert!(temp.external.var);
 }
 
-impl<'a, EXT, DB: Database> EvmContext<'a, EXT, DB> {
+impl<'a, DB: Database> EvmContext<'a, DB> {
     /// Load access list for berlin hard fork.
     ///
     /// Loading of accounts/storages is needed to make them warm.

@@ -8,13 +8,13 @@ use crate::{
         db::Database, EVMError, Env, ExecutionResult, Output, ResultAndState, Spec, SpecId::LONDON,
         U256,
     },
-    EvmContext,
+    Context, EvmContext,
 };
 
 /// Main return handle, returns the output of the transaction.
 #[inline]
 pub fn main_return<EXT, DB: Database>(
-    context: &mut EvmContext<'_, EXT, DB>,
+    context: &mut Context<'_, EXT, DB>,
     call_result: InstructionResult,
     output: Output,
     gas: &Gas,
@@ -24,7 +24,7 @@ pub fn main_return<EXT, DB: Database>(
     let final_gas_used = gas.spend() - gas_refunded;
 
     // reset journal and return present state.
-    let (state, logs) = context.journaled_state.finalize();
+    let (state, logs) = context.evm.journaled_state.finalize();
 
     let result = match call_result.into() {
         SuccessOrHalt::Success(reason) => ExecutionResult::Success {
@@ -46,7 +46,7 @@ pub fn main_return<EXT, DB: Database>(
             gas_used: final_gas_used,
         },
         SuccessOrHalt::FatalExternalError => {
-            return Err(EVMError::Database(context.error.take().unwrap()));
+            return Err(EVMError::Database(context.evm.error.take().unwrap()));
         }
         // Only two internal return flags.
         SuccessOrHalt::InternalContinue | SuccessOrHalt::InternalCallOrCreate => {
@@ -60,7 +60,7 @@ pub fn main_return<EXT, DB: Database>(
 /// Mainnet end handle does not change the output.
 #[inline]
 pub fn end_handle<EXT, DB: Database>(
-    _context: &mut EvmContext<'_, EXT, DB>,
+    _context: &mut Context<'_, EXT, DB>,
     evm_output: Result<ResultAndState, EVMError<DB::Error>>,
 ) -> Result<ResultAndState, EVMError<DB::Error>> {
     evm_output
