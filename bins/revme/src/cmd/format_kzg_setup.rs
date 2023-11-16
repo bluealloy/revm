@@ -1,6 +1,5 @@
 pub use revm::primitives::kzg::{parse_kzg_trusted_setup, G1Points, G2Points, KzgErrors};
-use std::path::PathBuf;
-use std::{env, fs};
+use std::{env, fs, path::PathBuf};
 use structopt::StructOpt;
 
 /// Statetest command

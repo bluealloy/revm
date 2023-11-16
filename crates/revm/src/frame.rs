@@ -1,5 +1,4 @@
-use crate::JournalCheckpoint;
-use crate::{interpreter::Interpreter, primitives::Address};
+use crate::{interpreter::Interpreter, primitives::Address, JournalCheckpoint};
 use core::ops::Range;
 
 /// Call CallStackFrame.

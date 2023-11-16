@@ -8,10 +8,9 @@ pub use contract::Contract;
 pub use shared_memory::{next_multiple_of_32, SharedMemory};
 pub use stack::{Stack, STACK_LIMIT};
 
-use crate::primitives::Bytes;
 use crate::{
-    push, push_b256, return_ok, return_revert, CallInputs, CreateInputs, Gas, Host,
-    InstructionResult,
+    primitives::Bytes, push, push_b256, return_ok, return_revert, CallInputs, CreateInputs, Gas,
+    Host, InstructionResult,
 };
 use alloc::boxed::Box;
 use core::cmp::min;

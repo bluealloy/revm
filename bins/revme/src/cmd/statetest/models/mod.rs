@@ -117,7 +117,6 @@ pub type AccessList = Vec<AccessListItem>;
 mod tests {
 
     use super::*;
-    use revm::primitives::Address;
     use serde_json::Error;
 
     #[test]
