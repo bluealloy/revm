@@ -279,9 +279,7 @@ impl AccountInfo {
 
 #[cfg(test)]
 mod tests {
-    use crate::Account;
-    use crate::KECCAK_EMPTY;
-    use crate::U256;
+    use crate::{Account, KECCAK_EMPTY, U256};
 
     #[test]
     fn account_is_empty_balance() {

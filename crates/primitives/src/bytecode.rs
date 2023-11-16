@@ -1,7 +1,9 @@
 use crate::{hex, keccak256, Bytes, B256, KECCAK_EMPTY};
 use alloc::{sync::Arc, vec::Vec};
-use bitvec::prelude::{bitvec, Lsb0};
-use bitvec::vec::BitVec;
+use bitvec::{
+    prelude::{bitvec, Lsb0},
+    vec::BitVec,
+};
 use core::fmt::Debug;
 
 /// A map of valid `jump` destinations.

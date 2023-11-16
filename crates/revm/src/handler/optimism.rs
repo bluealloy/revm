@@ -238,10 +238,9 @@ pub fn end_handle<SPEC: Spec, DB: Database>(
 
 #[cfg(test)]
 mod tests {
-    use crate::primitives::{BedrockSpec, RegolithSpec};
+    use crate::primitives::{BedrockSpec, RegolithSpec, B256};
 
     use super::*;
-    use crate::primitives::B256;
 
     #[test]
     fn test_revert_gas() {
