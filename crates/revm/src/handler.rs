@@ -2,45 +2,55 @@ pub mod mainnet;
 #[cfg(feature = "optimism")]
 pub mod optimism;
 
-use core::ops::Range;
+mod register;
 
-use revm_interpreter::{CallInputs, CreateInputs, SharedMemory};
+pub use register::{ExternalData, MainnetHandle, RegisterHandler};
 
 use crate::{
     interpreter::{Gas, InstructionResult},
     primitives::{db::Database, EVMError, EVMResultGeneric, Env, Output, ResultAndState, Spec},
     CallStackFrame, Context, Evm,
 };
+use alloc::sync::Arc;
+use core::ops::Range;
+use revm_interpreter::{CallInputs, CreateInputs, SharedMemory};
 
 /// Handle call return and return final gas value.
-type CallReturnHandle = fn(&Env, InstructionResult, Gas) -> Gas;
+type CallReturnHandle<'a> = Arc<dyn Fn(&Env, InstructionResult, Gas) -> Gas + 'a>;
 
 /// Reimburse the caller with ethereum it didn't spent.
-type ReimburseCallerHandle<EXT, DB> =
-    fn(&mut Context<'_, EXT, DB>, &Gas) -> EVMResultGeneric<(), <DB as Database>::Error>;
+type ReimburseCallerHandle<'a, EXT, DB> = Arc<
+    dyn Fn(&mut Context<'_, EXT, DB>, &Gas) -> EVMResultGeneric<(), <DB as Database>::Error> + 'a,
+>;
 
 /// Reward beneficiary with transaction rewards.
-type RewardBeneficiaryHandle<EXT, DB> = ReimburseCallerHandle<EXT, DB>;
+type RewardBeneficiaryHandle<'a, EXT, DB> = ReimburseCallerHandle<'a, EXT, DB>;
 
 /// Calculate gas refund for transaction.
-type CalculateGasRefundHandle = fn(&Env, &Gas) -> u64;
+type CalculateGasRefundHandle<'a> = Arc<dyn Fn(&Env, &Gas) -> u64 + 'a>;
 
 /// Main return handle, takes state from journal and transforms internal result to external.
-type MainReturnHandle<EXT, DB> = fn(
-    &mut Context<'_, EXT, DB>,
-    InstructionResult,
-    Output,
-    &Gas,
-) -> Result<ResultAndState, EVMError<<DB as Database>::Error>>;
+type MainReturnHandle<'a, EXT, DB> = Arc<
+    dyn Fn(
+            &mut Context<'_, EXT, DB>,
+            InstructionResult,
+            Output,
+            &Gas,
+        ) -> Result<ResultAndState, EVMError<<DB as Database>::Error>>
+        + 'a,
+>;
 
 /// End handle, takes result and state and returns final result.
 /// This will be called after all the other handlers.
 ///
 /// It is useful for catching errors and returning them in a different way.
-type EndHandle<EXT, DB> = fn(
-    &mut Context<'_, EXT, DB>,
-    evm_output: Result<ResultAndState, EVMError<<DB as Database>::Error>>,
-) -> Result<ResultAndState, EVMError<<DB as Database>::Error>>;
+type EndHandle<'a, EXT, DB> = Arc<
+    dyn Fn(
+            &mut Context<'_, EXT, DB>,
+            Result<ResultAndState, EVMError<<DB as Database>::Error>>,
+        ) -> Result<ResultAndState, EVMError<<DB as Database>::Error>>
+        + 'a,
+>;
 
 // Sub call
 // type SubCall<DB: Database> = fn(
@@ -61,35 +71,35 @@ type EndHandle<EXT, DB> = fn(
 /// Handler acts as a proxy and allow to define different behavior for different
 /// sections of the code. This allows nice integration of different chains or
 /// to disable some mainnet behavior.
-pub struct Handler<EXT, DB: Database> {
+pub struct Handler<'a, EXT, DB: Database> {
     // Uses env, call result and returned gas from the call to determine the gas
     // that is returned from transaction execution..
-    pub call_return: CallReturnHandle,
+    pub call_return: CallReturnHandle<'a>,
     /// Reimburse the caller with ethereum it didn't spent.
-    pub reimburse_caller: ReimburseCallerHandle<EXT, DB>,
+    pub reimburse_caller: ReimburseCallerHandle<'a, EXT, DB>,
     /// Reward the beneficiary with caller fee.
-    pub reward_beneficiary: RewardBeneficiaryHandle<EXT, DB>,
+    pub reward_beneficiary: RewardBeneficiaryHandle<'a, EXT, DB>,
     /// Calculate gas refund for transaction.
     /// Some chains have it disabled.
-    pub calculate_gas_refund: CalculateGasRefundHandle,
+    pub calculate_gas_refund: CalculateGasRefundHandle<'a>,
     /// Main return handle, returns the output of the transact.
-    pub main_return: MainReturnHandle<EXT, DB>,
+    pub main_return: MainReturnHandle<'a, EXT, DB>,
     /// End handle.
-    pub end: EndHandle<EXT, DB>,
+    pub end: EndHandle<'a, EXT, DB>,
     // Called on sub call.
     //pub sub_call: SubCall,
 }
 
-impl<EXT, DB: Database> Handler<EXT, DB> {
+impl<'a, EXT: 'a, DB: Database + 'a> Handler<'a, EXT, DB> {
     /// Handler for the mainnet
-    pub fn mainnet<SPEC: Spec>() -> Self {
+    pub fn mainnet<SPEC: Spec + 'a>() -> Self {
         Self {
-            call_return: mainnet::handle_call_return::<SPEC>,
-            calculate_gas_refund: mainnet::calculate_gas_refund::<SPEC>,
-            reimburse_caller: mainnet::handle_reimburse_caller::<SPEC, EXT, DB>,
-            reward_beneficiary: mainnet::reward_beneficiary::<SPEC, EXT, DB>,
-            main_return: mainnet::main::main_return::<EXT, DB>,
-            end: mainnet::main::end_handle::<EXT, DB>,
+            call_return: Arc::new(mainnet::handle_call_return::<SPEC>),
+            calculate_gas_refund: Arc::new(mainnet::calculate_gas_refund::<SPEC>),
+            reimburse_caller: Arc::new(mainnet::handle_reimburse_caller::<SPEC, EXT, DB>),
+            reward_beneficiary: Arc::new(mainnet::reward_beneficiary::<SPEC, EXT, DB>),
+            main_return: Arc::new(mainnet::main::main_return::<EXT, DB>),
+            end: Arc::new(mainnet::main::end_handle::<EXT, DB>),
         }
     }
 

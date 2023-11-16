@@ -1,6 +1,7 @@
 use crate::{
     db::Database,
     handler::Handler,
+    handler::RegisterHandler,
     inspector_instruction,
     interpreter::{
         gas::initial_tx_gas,
@@ -26,43 +27,11 @@ use crate::optimism;
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
 
-/// Register external handles.
-pub trait RegisterHandler {
-    /// Register external handler.
-    fn register_handler<DB: Database>(&self, handler: Handler<Self, DB>) -> Handler<Self, DB>
-    where
-        Self: Sized,
-    {
-        handler
-    }
-}
-
-/// Default registered handler that produces default mainnet handler.
-pub struct MainnetHandle;
-
-impl RegisterHandler for MainnetHandle {}
-
-pub struct ExternalData {
-    pub flagg: bool,
-}
-
-impl RegisterHandler for ExternalData {
-    fn register_handler<DB: Database>(&self, mut handler: Handler<Self, DB>) -> Handler<Self, DB> {
-        let t = handler.reimburse_caller.clone();
-        handler.reimburse_caller = |data, gas| {
-            println!("Reimburse caller: {:#?} {:#?}", data.external.flagg, gas);
-            Ok(())
-            //t(data, gas)
-        };
-        handler
-    }
-}
-
 pub struct Evm<'a, SPEC: Spec, EXT, DB: Database> {
     pub context: Context<'a, EXT, DB>,
     pub inspector: Option<&'a mut dyn Inspector<DB>>,
     pub instruction_table: InstructionTables<'a, Self>,
-    pub handler: Handler<EXT, DB>,
+    pub handler: Handler<'a, EXT, DB>,
     _phantomdata: PhantomData<SPEC>,
 }
 
@@ -137,7 +106,10 @@ impl<'a, SPEC: Spec, DB: Database> Evm<'a, SPEC, DB> {
     }
 }
 
-impl<'a, SPEC: Spec + 'static, EXT: RegisterHandler+'a, DB: Database> Evm<'a, SPEC, EXT, DB> {
+impl<'a, SPEC: Spec + 'static, EXT: 'a, DB: Database> Evm<'a, SPEC, EXT, DB>
+where
+    EXT: RegisterHandler<DB>,
+{
     pub fn new_with_spec(
         db: &'a mut DB,
         env: &'a mut Env,
@@ -164,7 +136,7 @@ impl<'a, SPEC: Spec + 'static, EXT: RegisterHandler+'a, DB: Database> Evm<'a, SP
             InstructionTables::Plain(Arc::new(make_instruction_table::<Self, SPEC>()))
         };
 
-        let mut handler = external.register_handler(Handler::mainnet::<SPEC>());
+        let mut handler = external.register_handler::<SPEC>(Handler::mainnet::<SPEC>());
         /* TODO support
         #[cfg(feature = "optimism")]
         let mut handler = if env.cfg.optimism {
@@ -178,7 +150,7 @@ impl<'a, SPEC: Spec + 'static, EXT: RegisterHandler+'a, DB: Database> Evm<'a, SP
 
         if env.cfg.is_beneficiary_reward_disabled() {
             // do nothing
-            handler.reward_beneficiary = |_, _| Ok(());
+            handler.reward_beneficiary = Arc::new(|_, _| Ok(()));
         }
 
         Self {
@@ -633,7 +605,7 @@ pub trait Transact<DBError> {
     fn transact(&mut self) -> EVMResult<DBError>;
 }
 
-impl<'a, SPEC: Spec + 'static, EXT: RegisterHandler+'a, DB: Database> Transact<DB::Error>
+impl<'a, SPEC: Spec + 'static, EXT: RegisterHandler<DB>+'a, DB: Database> Transact<DB::Error>
     for Evm<'a, SPEC, EXT, DB>
 {
     #[inline]
@@ -736,7 +708,7 @@ impl<'a, SPEC: Spec + 'static, EXT, DB: Database> Host for Evm<'a, SPEC, EXT, DB
 }
 
 /// Creates new EVM instance with erased types.
-pub fn new_evm<'a, EXT: RegisterHandler+'a, DB: Database>(
+pub fn new_evm<'a, EXT: RegisterHandler<DB>+'a, DB: Database>(
     env: &'a mut Env,
     db: &'a mut DB,
     external: EXT,
