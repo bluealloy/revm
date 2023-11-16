@@ -1,4 +1,3 @@
-
 use crate::{
     gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
     interpreter::{Interpreter, InterpreterAction},
