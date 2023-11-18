@@ -280,7 +280,7 @@ impl SpecId {
             CANCUN => Self::CANCUN,
             LATEST => Self::LATEST,
             #[cfg(feature = "optimism")]
-            BEDROCK | REGOLITH => Self::BERLIN,
+            BEDROCK | REGOLITH | CANYON => Self::BERLIN,
         }
     }
 }

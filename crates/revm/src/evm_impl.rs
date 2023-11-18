@@ -692,6 +692,8 @@ pub fn new_evm<'a, DB: Database>(
         SpecId::BEDROCK => create_evm!(BedrockSpec),
         #[cfg(feature = "optimism")]
         SpecId::REGOLITH => create_evm!(RegolithSpec),
+        #[cfg(feature = "optimism")]
+        SpecId::CANYON => create_evm!(CanyonSpec),
     }
 }
 
