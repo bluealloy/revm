@@ -92,7 +92,9 @@ fn skip_test(path: &Path) -> bool {
         | "Call50000_sha256.json"
         | "static_Call50000_sha256.json"
         | "loopMul.json"
-        | "CALLBlake2f_MaxRounds.json"
+        | "CALLBlake2f_MaxRounds.json" //| "static_CallEcrecover0_completeReturnValue.json"
+                                       //| "CALLCODEEcrecoverH_prefixed0.json"
+                                       //| "CALLCODEEcrecover0_completeReturnValue.json"
     ) || path_str.contains("stEOF")
 }
 
