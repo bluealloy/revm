@@ -96,22 +96,7 @@ pub trait Spec: Sized {
     /// Returns `true` if the given specification ID is enabled in this spec.
     #[inline]
     fn enabled(spec_id: SpecId) -> bool {
-        #[cfg(feature = "optimism")]
-        {
-            // If the Spec is Bedrock or Regolith, and the input is not Bedrock or Regolith,
-            // then no hardforks should be enabled after the merge. This is because Optimism's
-            // Bedrock and Regolith hardforks implement changes on top of the Merge hardfork.
-            let is_self_optimism =
-                Self::SPEC_ID == SpecId::BEDROCK || Self::SPEC_ID == SpecId::REGOLITH;
-            let input_not_optimism = spec_id != SpecId::BEDROCK && spec_id != SpecId::REGOLITH;
-            let after_merge = spec_id > SpecId::MERGE;
-
-            if is_self_optimism && input_not_optimism && after_merge {
-                return false;
-            }
-        }
-
-        Self::SPEC_ID as u8 >= spec_id as u8
+        SpecId::enabled(Self::SPEC_ID, spec_id)
     }
 }
 
