@@ -1,8 +1,6 @@
 use crate::{
     inspectors::GasInspector,
-    interpreter::{
-        opcode, CallInputs, CreateInputs, Interpreter, InterpreterResult, SharedMemory, Stack,
-    },
+    interpreter::{opcode, CallInputs, CreateInputs, Interpreter, InterpreterResult, Stack},
     primitives::{db::Database, hex, Address, U256},
     EvmContext, Inspector,
 };
@@ -25,8 +23,6 @@ pub struct TracerEip3155 {
     opcode: u8,
     gas: u64,
     mem_size: usize,
-    #[allow(dead_code)]
-    memory: Option<SharedMemory>,
     skip: bool,
 }
 
@@ -42,7 +38,6 @@ impl TracerEip3155 {
             opcode: 0,
             gas: 0,
             mem_size: 0,
-            memory: None,
             skip: false,
         }
     }
@@ -71,7 +66,10 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
             return;
         };
 
-        self.print_log_line(context.journaled_state.depth());
+        self.print_log_line(
+            context.journaled_state.depth(),
+            interp.shared_memory.context_memory(),
+        );
     }
 
     fn call(
@@ -122,7 +120,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 }
 
 impl TracerEip3155 {
-    fn print_log_line(&mut self, depth: u64) {
+    fn print_log_line(&mut self, depth: u64, _memory: &[u8]) {
         let short_stack: Vec<String> = self.stack.data().iter().map(|&b| short_hex(b)).collect();
         let log_line = json!({
             "depth": depth,
@@ -132,6 +130,7 @@ impl TracerEip3155 {
             "gas": format!("0x{:x}", self.gas),
             "gasCost": format!("0x{:x}", self.gas_inspector.last_gas_cost()),
             //memory?
+            //"memory": format!("{}", hex::encode(memory)),
             "memSize": self.mem_size,
             "stack": short_stack,
             //returnData
