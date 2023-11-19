@@ -12,9 +12,9 @@ pub type EnvPrecompileFn = fn(&[u8], u64, env: &Env) -> PrecompileResult;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum PrecompileError {
-    /// out of gas is the main error. Other are just here for completeness
+    /// out of gas is the main error. Others are here just for completeness
     OutOfGas,
-    // Blake2 erorr
+    // Blake2 errors
     Blake2WrongLength,
     Blake2WrongFinalIndicatorFlag,
     // Modexp errors
