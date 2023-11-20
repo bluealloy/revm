@@ -9,216 +9,177 @@ use elliptic_curve::{
     CurveArithmetic, Field, Group, PrimeCurve, PrimeField, ScalarPrimitive,
 };
 use num::ToPrimitive;
-use std::marker::PhantomData;
+use std::{
+    fmt::{self, Display, Formatter},
+    marker::PhantomData,
+    str::FromStr,
+};
 
 use super::{calc_linear_cost_u32, extract_points, IDENTITY_BASE, IDENTITY_PER_WORD};
 use crate::{Error, Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn, Vec};
 
-pub const EC_MUL: PrecompileAddress = PrecompileAddress(
+pub const EC_OPERATION: PrecompileAddress = PrecompileAddress(
     crate::u64_to_b160(300),
-    Precompile::Standard(ec_mul as StandardPrecompileFn),
+    Precompile::Standard(ec_operation as StandardPrecompileFn),
 );
 
-pub const EC_ADD: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(301),
-    Precompile::Standard(ec_add as StandardPrecompileFn),
-);
-
-pub const EC_NEG: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(302),
-    Precompile::Standard(ec_neg as StandardPrecompileFn),
-);
-
-pub const EC_EQUAL: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(303),
-    Precompile::Standard(ec_equal as StandardPrecompileFn),
-);
-
-pub const EC_IS_INFINITY: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(304),
-    Precompile::Standard(ec_is_infinity as StandardPrecompileFn),
-);
-
-pub const EC_IS_VALID: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(305),
-    Precompile::Standard(ec_is_valid as StandardPrecompileFn),
-);
-
-pub const EC_HASH: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(306),
-    Precompile::Standard(ec_hash as StandardPrecompileFn),
-);
-
-pub const EC_SUM_OF_PRODUCTS: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(307),
-    Precompile::Standard(ec_sum_of_products as StandardPrecompileFn),
-);
-
-pub const EC_PAIRING: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(308),
-    Precompile::Standard(ec_pairing as StandardPrecompileFn),
-);
-
-pub const SCALAR_ADD: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(308),
-    Precompile::Standard(scalar_add as StandardPrecompileFn),
-);
-
-pub const SCALAR_MUL: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(309),
-    Precompile::Standard(scalar_mul as StandardPrecompileFn),
-);
-
-pub const SCALAR_NEG: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(310),
-    Precompile::Standard(scalar_neg as StandardPrecompileFn),
-);
-
-pub const SCALAR_INV: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(311),
-    Precompile::Standard(scalar_inv as StandardPrecompileFn),
-);
-
-pub const SCALAR_SQRT: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(312),
-    Precompile::Standard(scalar_sqrt as StandardPrecompileFn),
-);
-
-pub const SCALAR_EQUAL: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(313),
-    Precompile::Standard(scalar_equal as StandardPrecompileFn),
-);
-
-pub const SCALAR_IS_ZERO: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(314),
-    Precompile::Standard(scalar_is_zero as StandardPrecompileFn),
-);
-
-pub const SCALAR_IS_VALID: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(315),
-    Precompile::Standard(scalar_is_valid as StandardPrecompileFn),
-);
-
-pub const SCALAR_FROM_WIDE_BYTES: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(316),
-    Precompile::Standard(scalar_from_wide_bytes as StandardPrecompileFn),
-);
-
-pub const SCALAR_HASH: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(317),
-    Precompile::Standard(scalar_hash as StandardPrecompileFn),
-);
-
-pub const ECDSA_VERIFY: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(318),
-    Precompile::Standard(ecdsa_verify as StandardPrecompileFn),
-);
-
-pub const SCHNORR_VERIFY1: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(319),
-    Precompile::Standard(schnorr_verify1 as StandardPrecompileFn),
-);
-
-pub const SCHNORR_VERIFY2: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(320),
-    Precompile::Standard(schnorr_verify2 as StandardPrecompileFn),
-);
-
-pub const BLS_VERIFY: PrecompileAddress = PrecompileAddress(
-    crate::u64_to_b160(321),
-    Precompile::Standard(bls_verify as StandardPrecompileFn),
-);
-
-fn ec_mul(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    EcMultiply {}.handle(input, gas_limit)
+#[derive(Copy, Clone, Debug)]
+#[repr(u8)]
+pub enum EcOperation {
+    EcMul = 0x10,
+    EcAdd = 0x11,
+    EcNeg = 0x12,
+    EcEqual = 0x13,
+    EcIsInfinity = 0x14,
+    EcIsValid = 0x15,
+    EcHash = 0x16,
+    EcSumOfProducts = 0x17,
+    EcPairing = 0x18,
+    ScAdd = 0x30,
+    ScMul = 0x31,
+    ScNeg = 0x32,
+    ScInvert = 0x33,
+    ScSqrt = 0x34,
+    ScEqual = 0x35,
+    ScIsZero = 0x36,
+    ScIsValid = 0x37,
+    ScFromWideBytes = 0x38,
+    ScHash = 0x39,
+    EcdsaVerify = 0x50,
+    SchnorrVerify1 = 0x51,
+    SchnorrVerify2 = 0x52,
+    BlsVerify = 0x53,
 }
 
-fn ec_add(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    EcAdd {}.handle(input, gas_limit)
+impl TryFrom<u8> for EcOperation {
+    type Error = Error;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0x10 => Ok(Self::EcMul),
+            0x11 => Ok(Self::EcAdd),
+            0x12 => Ok(Self::EcNeg),
+            0x13 => Ok(Self::EcEqual),
+            0x14 => Ok(Self::EcIsInfinity),
+            0x15 => Ok(Self::EcIsValid),
+            0x16 => Ok(Self::EcHash),
+            0x17 => Ok(Self::EcSumOfProducts),
+            0x18 => Ok(Self::EcPairing),
+            0x30 => Ok(Self::ScAdd),
+            0x31 => Ok(Self::ScMul),
+            0x32 => Ok(Self::ScNeg),
+            0x33 => Ok(Self::ScInvert),
+            0x34 => Ok(Self::ScSqrt),
+            0x35 => Ok(Self::ScEqual),
+            0x36 => Ok(Self::ScIsZero),
+            0x37 => Ok(Self::ScIsValid),
+            0x38 => Ok(Self::ScFromWideBytes),
+            0x39 => Ok(Self::ScHash),
+            0x50 => Ok(Self::EcdsaVerify),
+            0x51 => Ok(Self::SchnorrVerify1),
+            0x52 => Ok(Self::SchnorrVerify2),
+            0x53 => Ok(Self::BlsVerify),
+            _ => Err(Error::EcOpsInvalidOperation),
+        }
+    }
 }
 
-fn ec_neg(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    EcNeg {}.handle(input, gas_limit)
+impl Display for EcOperation {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match *self {
+            Self::EcMul => write!(f, "ec_mul"),
+            Self::EcAdd => write!(f, "ec_add"),
+            Self::EcNeg => write!(f, "ec_neg"),
+            Self::EcEqual => write!(f, "ec_equal"),
+            Self::EcIsInfinity => write!(f, "ec_is_infinity"),
+            Self::EcIsValid => write!(f, "ec_is_valid"),
+            Self::EcHash => write!(f, "ec_hash"),
+            Self::EcSumOfProducts => write!(f, "ec_sum_of_products"),
+            Self::EcPairing => write!(f, "ec_pairing"),
+            Self::ScAdd => write!(f, "scalar_add"),
+            Self::ScMul => write!(f, "scalar_mul"),
+            Self::ScNeg => write!(f, "scalar_neg"),
+            Self::ScInvert => write!(f, "scalar_invert"),
+            Self::ScSqrt => write!(f, "scalar_sqrt"),
+            Self::ScEqual => write!(f, "scalar_equal"),
+            Self::ScIsZero => write!(f, "scalar_is_zero"),
+            Self::ScIsValid => write!(f, "scalar_is_valid"),
+            Self::ScFromWideBytes => write!(f, "scalar_from_wide_bytes"),
+            Self::ScHash => write!(f, "scalar_hash"),
+            Self::EcdsaVerify => write!(f, "ecdsa_verify"),
+            Self::SchnorrVerify1 => write!(f, "schnorr_verify1"),
+            Self::SchnorrVerify2 => write!(f, "schnorr_verify2"),
+            Self::BlsVerify => write!(f, "bls_verify"),
+        }
+    }
 }
 
-fn ec_equal(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    EcEqual {}.handle(input, gas_limit)
+impl FromStr for EcOperation {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "ec_mul" => Ok(Self::EcMul),
+            "ec_add" => Ok(Self::EcAdd),
+            "ec_neg" => Ok(Self::EcNeg),
+            "ec_equal" => Ok(Self::EcEqual),
+            "ec_is_infinity" => Ok(Self::EcIsInfinity),
+            "ec_is_valid" => Ok(Self::EcIsValid),
+            "ec_hash" => Ok(Self::EcHash),
+            "ec_sum_of_products" => Ok(Self::EcSumOfProducts),
+            "ec_pairing" => Ok(Self::EcPairing),
+            "scalar_add" => Ok(Self::ScAdd),
+            "scalar_mul" => Ok(Self::ScMul),
+            "scalar_neg" => Ok(Self::ScNeg),
+            "scalar_invert" => Ok(Self::ScInvert),
+            "scalar_sqrt" => Ok(Self::ScSqrt),
+            "scalar_equal" => Ok(Self::ScEqual),
+            "scalar_is_zero" => Ok(Self::ScIsZero),
+            "scalar_is_valid" => Ok(Self::ScIsValid),
+            "scalar_from_wide_bytes" => Ok(Self::ScFromWideBytes),
+            "scalar_hash" => Ok(Self::ScHash),
+            "ecdsa_verify" => Ok(Self::EcdsaVerify),
+            "schnorr_verify1" => Ok(Self::SchnorrVerify1),
+            "schnorr_verify2" => Ok(Self::SchnorrVerify2),
+            "bls_verify" => Ok(Self::BlsVerify),
+            _ => Err(Error::EcOpsInvalidOperation),
+        }
+    }
 }
 
-fn ec_is_infinity(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    EcIsInfinity {}.handle(input, gas_limit)
+impl EcOperation {
+    pub fn execute(&self, input: &[u8], gas_limit: u64) -> PrecompileResult {
+        match *self {
+            Self::EcMul => EcMultiply {}.handle(input, gas_limit),
+            Self::EcAdd => EcAdd {}.handle(input, gas_limit),
+            Self::EcNeg => EcNeg {}.handle(input, gas_limit),
+            Self::EcEqual => EcEqual {}.handle(input, gas_limit),
+            Self::EcIsInfinity => EcIsInfinity {}.handle(input, gas_limit),
+            Self::EcIsValid => EcIsValid {}.handle(input, gas_limit),
+            Self::EcHash => EcHash {}.handle(input, gas_limit),
+            Self::EcSumOfProducts => EcSumOfProducts {}.handle(input, gas_limit),
+            Self::EcPairing => EcPairing {}.handle(input, gas_limit),
+            Self::ScAdd => ScalarAdd {}.handle(input, gas_limit),
+            Self::ScMul => ScalarMul {}.handle(input, gas_limit),
+            Self::ScNeg => ScalarNeg {}.handle(input, gas_limit),
+            Self::ScInvert => ScalarInv {}.handle(input, gas_limit),
+            Self::ScSqrt => ScalarSqrt {}.handle(input, gas_limit),
+            Self::ScEqual => ScalarEqual {}.handle(input, gas_limit),
+            Self::ScIsZero => ScalarIsZero {}.handle(input, gas_limit),
+            Self::ScIsValid => ScalarIsValid {}.handle(input, gas_limit),
+            Self::ScFromWideBytes => ScalarFromWideBytes {}.handle(input, gas_limit),
+            Self::ScHash => ScalarHash {}.handle(input, gas_limit),
+            Self::EcdsaVerify => EcdsaVerify {}.handle(input, gas_limit),
+            Self::SchnorrVerify1 => SchnorrVerify1 {}.handle(input, gas_limit),
+            Self::SchnorrVerify2 => SchnorrVerify2 {}.handle(input, gas_limit),
+            Self::BlsVerify => BlsVerify {}.handle(input, gas_limit),
+        }
+    }
 }
 
-fn ec_is_valid(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    EcIsValid {}.handle(input, gas_limit)
-}
-
-fn ec_hash(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    EcHash {}.handle(input, gas_limit)
-}
-
-fn ec_sum_of_products(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    EcSumOfProducts {}.handle(input, gas_limit)
-}
-
-fn ec_pairing(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    EcPairing {}.handle(input, gas_limit)
-}
-
-fn scalar_add(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    ScalarAdd {}.handle(input, gas_limit)
-}
-
-fn scalar_mul(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    ScalarMul {}.handle(input, gas_limit)
-}
-
-fn scalar_neg(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    ScalarNeg {}.handle(input, gas_limit)
-}
-
-fn scalar_inv(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    ScalarInv {}.handle(input, gas_limit)
-}
-
-fn scalar_sqrt(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    ScalarSqrt {}.handle(input, gas_limit)
-}
-
-fn scalar_equal(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    ScalarEqual {}.handle(input, gas_limit)
-}
-
-fn scalar_is_zero(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    ScalarIsZero {}.handle(input, gas_limit)
-}
-
-fn scalar_is_valid(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    ScalarIsValid {}.handle(input, gas_limit)
-}
-
-fn scalar_from_wide_bytes(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    ScalarFromWideBytes {}.handle(input, gas_limit)
-}
-
-fn scalar_hash(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    ScalarHash {}.handle(input, gas_limit)
-}
-
-fn ecdsa_verify(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    EcdsaVerify {}.handle(input, gas_limit)
-}
-
-fn schnorr_verify1(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    SchnorrVerify1 {}.handle(input, gas_limit)
-}
-
-fn schnorr_verify2(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    SchnorrVerify2 {}.handle(input, gas_limit)
-}
-
-fn bls_verify(input: &[u8], gas_limit: u64) -> PrecompileResult {
-    BlsVerify {}.handle(input, gas_limit)
+fn ec_operation(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    let operation = EcOperation::try_from(input[0])?;
+    operation.execute(&input[1..], gas_limit)
 }
 
 const CURVE_NAME_SECP256K1: &[u8] = &[
@@ -343,7 +304,7 @@ trait EcOps {
     fn bls12381gt(&self, data: &[u8]) -> Result<Vec<u8>, Error>;
 }
 
-fn parse_hash<'a>(data: &'a [u8]) -> Result<(&'a [u8], Box<dyn SchnorrChallenge>), Error> {
+fn parse_hash(data: &[u8]) -> Result<(&[u8], Box<dyn SchnorrChallenge>), Error> {
     match &data[..32] {
         HASH_NAME_SHA2_256 => Ok((
             &data[32..],
@@ -460,10 +421,10 @@ impl SchnorrChallenge for SchnorrHashTaproot {
     }
 }
 
-fn secp256k1_points<'a>(
-    data: &'a [u8],
+fn secp256k1_points(
+    data: &[u8],
     point_cnt: usize,
-) -> Result<(&'a [u8], Vec<k256::ProjectivePoint>), Error> {
+) -> Result<(&[u8], Vec<k256::ProjectivePoint>), Error> {
     if 64 * point_cnt > data.len() {
         return Err(Error::EcOpsInvalidPoint);
     }
@@ -475,10 +436,7 @@ fn secp256k1_points<'a>(
     Ok((&data[64 * point_cnt..], points))
 }
 
-fn secp256k1_scalars<'a>(
-    data: &'a [u8],
-    scalar_cnt: usize,
-) -> Result<(&'a [u8], Vec<k256::Scalar>), Error> {
+fn secp256k1_scalars(data: &[u8], scalar_cnt: usize) -> Result<(&[u8], Vec<k256::Scalar>), Error> {
     if 32 * scalar_cnt > data.len() {
         return Err(Error::EcOpsInvalidScalar);
     }
@@ -494,10 +452,10 @@ fn secp256k1_scalars<'a>(
     Ok((&data[32 * scalar_cnt..], scalars))
 }
 
-fn prime256v1_points<'a>(
-    data: &'a [u8],
+fn prime256v1_points(
+    data: &[u8],
     point_cnt: usize,
-) -> Result<(&'a [u8], Vec<p256::ProjectivePoint>), Error> {
+) -> Result<(&[u8], Vec<p256::ProjectivePoint>), Error> {
     if 64 * point_cnt > data.len() {
         return Err(Error::EcOpsInvalidPoint);
     }
@@ -509,10 +467,7 @@ fn prime256v1_points<'a>(
     Ok((&data[64 * point_cnt..], points))
 }
 
-fn prime256v1_scalars<'a>(
-    data: &'a [u8],
-    scalar_cnt: usize,
-) -> Result<(&'a [u8], Vec<p256::Scalar>), Error> {
+fn prime256v1_scalars(data: &[u8], scalar_cnt: usize) -> Result<(&[u8], Vec<p256::Scalar>), Error> {
     if 32 * scalar_cnt > data.len() {
         return Err(Error::EcOpsInvalidScalar);
     }
@@ -528,10 +483,7 @@ fn prime256v1_scalars<'a>(
     Ok((&data[32 * scalar_cnt..], scalars))
 }
 
-fn curve25519_points<'a>(
-    data: &'a [u8],
-    point_cnt: usize,
-) -> Result<(&'a [u8], Vec<curve25519_dalek::EdwardsPoint>), Error> {
+fn curve25519_points(data: &[u8], point_cnt: usize) -> Result<(&[u8], Vec<EdwardsPoint>), Error> {
     if 64 * point_cnt > data.len() {
         return Err(Error::EcOpsInvalidPoint);
     }
@@ -550,10 +502,10 @@ fn curve25519_points<'a>(
     Ok((&data[64 * point_cnt..], points))
 }
 
-fn curve25519_scalars<'a>(
-    data: &'a [u8],
+fn curve25519_scalars(
+    data: &[u8],
     scalar_cnt: usize,
-) -> Result<(&'a [u8], Vec<curve25519_dalek::Scalar>), Error> {
+) -> Result<(&[u8], Vec<curve25519_dalek::Scalar>), Error> {
     if 32 * scalar_cnt > data.len() {
         return Err(Error::EcOpsInvalidScalar);
     }
@@ -569,10 +521,10 @@ fn curve25519_scalars<'a>(
     Ok((&data[32 * scalar_cnt..], scalars))
 }
 
-fn bls12381g1_points<'a>(
-    data: &'a [u8],
+fn bls12381g1_points(
+    data: &[u8],
     point_cnt: usize,
-) -> Result<(&'a [u8], Vec<blsful::inner_types::G1Projective>), Error> {
+) -> Result<(&[u8], Vec<blsful::inner_types::G1Projective>), Error> {
     use blsful::inner_types::G1Projective;
 
     if G1Projective::UNCOMPRESSED_BYTES * point_cnt > data.len() {
@@ -595,10 +547,10 @@ fn bls12381g1_points<'a>(
     ))
 }
 
-fn bls12381g2_points<'a>(
-    data: &'a [u8],
+fn bls12381g2_points(
+    data: &[u8],
     point_cnt: usize,
-) -> Result<(&'a [u8], Vec<blsful::inner_types::G2Projective>), Error> {
+) -> Result<(&[u8], Vec<blsful::inner_types::G2Projective>), Error> {
     use blsful::inner_types::G2Projective;
 
     if G2Projective::UNCOMPRESSED_BYTES * point_cnt > data.len() {
@@ -621,10 +573,10 @@ fn bls12381g2_points<'a>(
     ))
 }
 
-fn bls12381gt_scalar<'a>(
-    data: &'a [u8],
+fn bls12381gt_scalar(
+    data: &[u8],
     cnt: usize,
-) -> Result<(&'a [u8], Vec<blsful::inner_types::Gt>), Error> {
+) -> Result<(&[u8], Vec<blsful::inner_types::Gt>), Error> {
     use blsful::inner_types::Gt;
 
     if Gt::BYTES * cnt > data.len() {
@@ -640,10 +592,10 @@ fn bls12381gt_scalar<'a>(
     Ok((&data[Gt::BYTES * cnt..], scalars))
 }
 
-fn bls12381_scalars<'a>(
-    data: &'a [u8],
+fn bls12381_scalars(
+    data: &[u8],
     scalar_cnt: usize,
-) -> Result<(&'a [u8], Vec<blsful::inner_types::Scalar>), Error> {
+) -> Result<(&[u8], Vec<blsful::inner_types::Scalar>), Error> {
     if 32 * scalar_cnt > data.len() {
         return Err(Error::EcOpsInvalidScalar);
     }
@@ -659,7 +611,7 @@ fn bls12381_scalars<'a>(
     Ok((&data[32 * scalar_cnt..], scalars))
 }
 
-fn read_usizes<'a>(data: &'a [u8], cnt: usize) -> Result<(&'a [u8], Vec<usize>), Error> {
+fn read_usizes(data: &[u8], cnt: usize) -> Result<(&[u8], Vec<usize>), Error> {
     if 32 * cnt > data.len() {
         return Err(Error::EcOpsInvalidSize);
     }
@@ -1460,8 +1412,8 @@ impl EcOps for ScalarFromWideBytes {
         let hi = p256::FieldBytes::from_slice(&data[..32]);
         let lo = p256::FieldBytes::from_slice(&data[32..]);
 
-        let mut s0 = <p256::Scalar as elliptic_curve::ops::Reduce<elliptic_curve::bigint::U256>>::reduce_bytes(&hi);
-        let s1 = <p256::Scalar as elliptic_curve::ops::Reduce<elliptic_curve::bigint::U256>>::reduce_bytes(&lo);
+        let mut s0 = <p256::Scalar as elliptic_curve::ops::Reduce<elliptic_curve::bigint::U256>>::reduce_bytes(hi);
+        let s1 = <p256::Scalar as elliptic_curve::ops::Reduce<elliptic_curve::bigint::U256>>::reduce_bytes(lo);
         for _ in 1..=256 {
             s0 = s0.double();
         }
@@ -1651,7 +1603,7 @@ impl EcOps for SchnorrVerify1 {
             return Err(Error::EcOpsInvalidScalar);
         }
 
-        let e_bytes = hasher.compute_challenge(r_bytes, &points[0].to_bytes()[1..], &msg);
+        let e_bytes = hasher.compute_challenge(r_bytes, &points[0].to_bytes()[1..], msg);
         let e = <k256::Scalar as Reduce<k256::U256>>::reduce_bytes((&e_bytes[..]).into());
 
         let big_r = (k256::ProjectivePoint::GENERATOR * s.as_ref() - points[0] * e).to_affine();
@@ -1689,7 +1641,7 @@ impl EcOps for SchnorrVerify1 {
             return Err(Error::EcOpsInvalidScalar);
         }
 
-        let e_bytes = hasher.compute_challenge(r_bytes, &points[0].to_bytes()[1..], &msg);
+        let e_bytes = hasher.compute_challenge(r_bytes, &points[0].to_bytes()[1..], msg);
         let e = <p256::Scalar as Reduce<p256::U256>>::reduce_bytes((&e_bytes[..]).into());
 
         let big_r = (p256::ProjectivePoint::GENERATOR * s.as_ref() - points[0] * e).to_affine();
@@ -1714,7 +1666,7 @@ impl EcOps for SchnorrVerify1 {
         if data.len() < 64 {
             return Err(Error::EcOpsInvalidSignature);
         }
-        let e_bytes = hasher.compute_challenge(&data[..32], points[0].compress().as_bytes(), &msg);
+        let e_bytes = hasher.compute_challenge(&data[..32], points[0].compress().as_bytes(), msg);
         let mut e_arr = [0u8; 64];
         e_arr[..e_bytes.len()].copy_from_slice(&e_bytes[..]);
         let e = curve25519_dalek::Scalar::from_bytes_mod_order_wide(&e_arr);
@@ -1759,7 +1711,7 @@ impl EcOps for SchnorrVerify1 {
         }
 
         let e_bytes =
-            hasher.compute_challenge(sig_r.to_bytes().as_ref(), pk.to_bytes().as_ref(), &msg);
+            hasher.compute_challenge(sig_r.to_bytes().as_ref(), pk.to_bytes().as_ref(), msg);
         let mut e_arr = [0u8; 64];
         e_arr[64 - e_bytes.len()..].copy_from_slice(&e_bytes[..]);
         let e = blsful::inner_types::Scalar::from_bytes_wide(&e_arr);
@@ -1790,7 +1742,7 @@ impl EcOps for SchnorrVerify1 {
         }
 
         let e_bytes =
-            hasher.compute_challenge(sig_r.to_bytes().as_ref(), pk.to_bytes().as_ref(), &msg);
+            hasher.compute_challenge(sig_r.to_bytes().as_ref(), pk.to_bytes().as_ref(), msg);
         let mut e_arr = [0u8; 64];
         e_arr[64 - e_bytes.len()..].copy_from_slice(&e_bytes[..]);
         let e = blsful::inner_types::Scalar::from_bytes_wide(&e_arr);
@@ -1821,7 +1773,7 @@ impl EcOps for SchnorrVerify1 {
         }
 
         let e_bytes =
-            hasher.compute_challenge(sig_r.to_bytes().as_ref(), pk.to_bytes().as_ref(), &msg);
+            hasher.compute_challenge(sig_r.to_bytes().as_ref(), pk.to_bytes().as_ref(), msg);
         let mut e_arr = [0u8; 64];
         e_arr[64 - e_bytes.len()..].copy_from_slice(&e_bytes[..]);
         let e = blsful::inner_types::Scalar::from_bytes_wide(&e_arr);
@@ -2315,6 +2267,7 @@ mod test {
         ];
         let expected = k256::ProjectivePoint::GENERATOR * k256::Scalar::from(10u64);
         let mut input = CURVE_NAME_SECP256K1.to_vec();
+        input.insert(0, EcOperation::EcSumOfProducts as u8);
         input.extend_from_slice(&[0u8; 31]);
         input.push(4);
         input.extend_from_slice(&secp256k1_point_out(&points[0]));
@@ -2325,7 +2278,7 @@ mod test {
         input.extend_from_slice(&&scalars[1].to_bytes()[..]);
         input.extend_from_slice(&&scalars[2].to_bytes()[..]);
         input.extend_from_slice(&&scalars[3].to_bytes()[..]);
-        let res = ec_sum_of_products(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         assert_eq!(
@@ -2350,6 +2303,7 @@ mod test {
         ];
         let expected = p256::ProjectivePoint::GENERATOR * p256::Scalar::from(10u64);
         let mut input = CURVE_NAME_PRIME256V1.to_vec();
+        input.insert(0, EcOperation::EcSumOfProducts as u8);
         input.extend_from_slice(&[0u8; 31]);
         input.push(4);
         input.extend_from_slice(&prime256v1_point_out(&points[0]));
@@ -2360,7 +2314,7 @@ mod test {
         input.extend_from_slice(&&scalars[1].to_bytes()[..]);
         input.extend_from_slice(&&scalars[2].to_bytes()[..]);
         input.extend_from_slice(&&scalars[3].to_bytes()[..]);
-        let res = ec_sum_of_products(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         assert_eq!(
@@ -2386,6 +2340,7 @@ mod test {
         let expected = curve25519_dalek::constants::ED25519_BASEPOINT_POINT
             * curve25519_dalek::Scalar::from(10u64);
         let mut input = CURVE_NAME_CURVE25519.to_vec();
+        input.insert(0, EcOperation::EcSumOfProducts as u8);
         input.extend_from_slice(&[0u8; 31]);
         input.push(4);
         input.extend_from_slice(&curve25519_point_out(&points[0]));
@@ -2396,7 +2351,7 @@ mod test {
         input.extend_from_slice(&&scalars[1].to_bytes()[..]);
         input.extend_from_slice(&&scalars[2].to_bytes()[..]);
         input.extend_from_slice(&&scalars[3].to_bytes()[..]);
-        let res = ec_sum_of_products(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         assert_eq!(&expected.compress().as_bytes()[..], &bytes[32..]);
@@ -2419,6 +2374,7 @@ mod test {
         let expected =
             blsful::inner_types::G1Projective::GENERATOR * blsful::inner_types::Scalar::from(10u64);
         let mut input = CURVE_NAME_BLS12381G1.to_vec();
+        input.insert(0, EcOperation::EcSumOfProducts as u8);
         input.extend_from_slice(&[0u8; 31]);
         input.push(4);
         input.extend_from_slice(&points[0].to_uncompressed());
@@ -2429,7 +2385,7 @@ mod test {
         input.extend_from_slice(&&scalars[1].to_be_bytes()[..]);
         input.extend_from_slice(&&scalars[2].to_be_bytes()[..]);
         input.extend_from_slice(&&scalars[3].to_be_bytes()[..]);
-        let res = ec_sum_of_products(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         assert_eq!(expected.to_uncompressed().to_vec(), bytes);
@@ -2452,6 +2408,7 @@ mod test {
         let expected =
             blsful::inner_types::G2Projective::GENERATOR * blsful::inner_types::Scalar::from(10u64);
         let mut input = CURVE_NAME_BLS12381G2.to_vec();
+        input.insert(0, EcOperation::EcSumOfProducts as u8);
         input.extend_from_slice(&[0u8; 31]);
         input.push(4);
         input.extend_from_slice(&points[0].to_uncompressed());
@@ -2462,7 +2419,7 @@ mod test {
         input.extend_from_slice(&&scalars[1].to_be_bytes()[..]);
         input.extend_from_slice(&&scalars[2].to_be_bytes()[..]);
         input.extend_from_slice(&&scalars[3].to_be_bytes()[..]);
-        let res = ec_sum_of_products(&input, 200);
+        let res = ec_operation(&input, 200);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         assert_eq!(expected.to_uncompressed().to_vec(), bytes);
@@ -2472,11 +2429,12 @@ mod test {
     fn ecc_mul_secp256k1() {
         let mut input = CURVE_NAME_SECP256K1.to_vec();
         let pt = k256::ProjectivePoint::GENERATOR.to_encoded_point(false);
+        input.insert(0, EcOperation::EcMul as u8);
         input.extend_from_slice(&pt.x().unwrap());
         input.extend_from_slice(&pt.y().unwrap());
         input.extend_from_slice(&(k256::Scalar::from(100u64)).to_bytes());
         let expected = k256::ProjectivePoint::GENERATOR * k256::Scalar::from(100u64);
-        let res = ec_mul(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         assert_eq!(
@@ -2489,11 +2447,12 @@ mod test {
     fn ecc_mul_prime256v1() {
         let mut input = CURVE_NAME_PRIME256V1.to_vec();
         let pt = p256::ProjectivePoint::GENERATOR.to_encoded_point(false);
+        input.insert(0, EcOperation::EcMul as u8);
         input.extend_from_slice(&pt.x().unwrap());
         input.extend_from_slice(&pt.y().unwrap());
         input.extend_from_slice(&(p256::Scalar::from(100u64)).to_bytes());
         let expected = p256::ProjectivePoint::generator() * p256::Scalar::from(100u64);
-        let res = ec_mul(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         assert_eq!(
@@ -2506,11 +2465,12 @@ mod test {
     fn ecc_mul_curve25519() {
         let mut input = CURVE_NAME_CURVE25519.to_vec();
         let pt = curve25519_dalek::constants::ED25519_BASEPOINT_POINT;
+        input.insert(0, EcOperation::EcMul as u8);
         input.extend_from_slice(&[0u8; 32]);
         input.extend_from_slice(&pt.to_bytes());
         input.extend_from_slice(&(curve25519_dalek::Scalar::from(100u64)).to_bytes());
         let expected = pt * curve25519_dalek::Scalar::from(100u64);
-        let res = ec_mul(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         assert_eq!(expected.to_bytes(), bytes[32..]);
@@ -2519,11 +2479,12 @@ mod test {
     #[test]
     fn ecc_mul_bls12381g1() {
         let mut input = CURVE_NAME_BLS12381G1.to_vec();
+        input.insert(0, EcOperation::EcMul as u8);
         let pt = blsful::inner_types::G1Projective::GENERATOR;
         input.extend_from_slice(&pt.to_uncompressed());
         input.extend_from_slice(&(blsful::inner_types::Scalar::from(100u64)).to_be_bytes());
         let expected = pt * blsful::inner_types::Scalar::from(100u64);
-        let res = ec_mul(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         assert_eq!(expected.to_uncompressed().to_vec(), bytes);
@@ -2532,11 +2493,12 @@ mod test {
     #[test]
     fn ecc_mul_bls12381g2() {
         let mut input = CURVE_NAME_BLS12381G2.to_vec();
+        input.insert(0, EcOperation::EcMul as u8);
         let pt = blsful::inner_types::G2Projective::GENERATOR;
         input.extend_from_slice(&pt.to_uncompressed());
         input.extend_from_slice(&(blsful::inner_types::Scalar::from(100u64)).to_be_bytes());
         let expected = pt * blsful::inner_types::Scalar::from(100u64);
-        let res = ec_mul(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         assert_eq!(expected.to_uncompressed().to_vec(), bytes);
@@ -2545,12 +2507,13 @@ mod test {
     #[test]
     fn scalar_hash_secp256k1() {
         let mut input = CURVE_NAME_SECP256K1.to_vec();
+        input.insert(0, EcOperation::ScHash as u8);
         let length = (HASH_MSG.len() as u32).to_be_bytes();
         let mut arr = [0u8; 32];
         arr[32 - length.len()..].copy_from_slice(&length);
         input.extend_from_slice(&arr);
         input.extend_from_slice(HASH_MSG);
-        let res = scalar_hash(&input, 200);
+        let res = ec_operation(&input, 200);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         let expected = [
@@ -2567,10 +2530,11 @@ mod test {
         let sc2 = k256::Scalar::from(200u64);
 
         let mut input = CURVE_NAME_SECP256K1.to_vec();
+        input.insert(0, EcOperation::ScMul as u8);
         input.extend_from_slice(&sc1.to_bytes());
         input.extend_from_slice(&sc2.to_bytes());
         let expected = sc1 * sc2;
-        let res = scalar_mul(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         assert_eq!(expected.to_bytes().to_vec(), bytes);
@@ -2582,10 +2546,11 @@ mod test {
         let sc2 = p256::Scalar::from(200u64);
 
         let mut input = CURVE_NAME_PRIME256V1.to_vec();
+        input.insert(0, EcOperation::ScMul as u8);
         input.extend_from_slice(&sc1.to_bytes());
         input.extend_from_slice(&sc2.to_bytes());
         let expected = sc1 * sc2;
-        let res = scalar_mul(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         assert_eq!(expected.to_bytes().to_vec(), bytes);
@@ -2597,10 +2562,11 @@ mod test {
         let sc2 = curve25519_dalek::Scalar::from(200u64);
 
         let mut input = CURVE_NAME_CURVE25519.to_vec();
+        input.insert(0, EcOperation::ScMul as u8);
         input.extend_from_slice(&sc1.to_bytes());
         input.extend_from_slice(&sc2.to_bytes());
         let expected = sc1 * sc2;
-        let res = scalar_mul(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         assert_eq!(expected.to_bytes().to_vec(), bytes);
@@ -2612,16 +2578,17 @@ mod test {
         let sc2 = blsful::inner_types::Scalar::from(200u64);
 
         let mut input = CURVE_NAME_BLS12381G1.to_vec();
+        input.insert(0, EcOperation::ScMul as u8);
         input.extend_from_slice(&sc1.to_be_bytes());
         input.extend_from_slice(&sc2.to_be_bytes());
         let expected = sc1 * sc2;
-        let res = scalar_mul(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         assert_eq!(expected.to_be_bytes().to_vec(), bytes);
 
-        input[..32].copy_from_slice(CURVE_NAME_BLS12381G2);
-        let res = scalar_mul(&input, 100);
+        input[1..33].copy_from_slice(CURVE_NAME_BLS12381G2);
+        let res = ec_operation(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         assert_eq!(expected.to_be_bytes().to_vec(), bytes);
@@ -2640,10 +2607,11 @@ mod test {
         let hashed_message = <k256::Scalar as Reduce<k256::U256>>::reduce_bytes(&hashed_msg_bytes);
 
         let mut input = CURVE_NAME_SECP256K1.to_vec();
+        input.insert(0, EcOperation::EcdsaVerify as u8);
         input.extend_from_slice(&hashed_message.to_bytes());
         input.extend_from_slice(&verify_key.to_encoded_point(false).as_bytes()[1..]);
         input.extend_from_slice(&signature.to_bytes());
-        let res = ecdsa_verify(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         assert_eq!(bytes, vec![1u8]);
@@ -2662,10 +2630,11 @@ mod test {
         let hashed_message = <p256::Scalar as Reduce<k256::U256>>::reduce_bytes(&hashed_msg_bytes);
 
         let mut input = CURVE_NAME_PRIME256V1.to_vec();
+        input.insert(0, EcOperation::EcdsaVerify as u8);
         input.extend_from_slice(&hashed_message.to_bytes());
         input.extend_from_slice(&verify_key.to_encoded_point(false).as_bytes()[1..]);
         input.extend_from_slice(&signature.to_bytes());
-        let res = ecdsa_verify(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         assert_eq!(bytes, vec![1u8]);
@@ -2674,18 +2643,19 @@ mod test {
     #[test]
     fn ecdsa_not_supported_curves() {
         let mut input = CURVE_NAME_CURVE25519.to_vec();
+        input.insert(0, EcOperation::EcdsaVerify as u8);
         input.extend_from_slice(&[0u8; 32]);
         input.extend_from_slice(&[0u8; 64]);
         input.extend_from_slice(&[0u8; 64]);
-        let res = ecdsa_verify(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_err());
 
         input[..32].copy_from_slice(CURVE_NAME_BLS12381G1);
-        let res = ecdsa_verify(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_err());
 
         input[..32].copy_from_slice(CURVE_NAME_BLS12381G2);
-        let res = ecdsa_verify(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_err());
     }
 
@@ -2711,12 +2681,13 @@ mod test {
         let s = little_r + e * sign_key;
 
         let mut input = CURVE_NAME_SECP256K1.to_vec();
+        input.insert(0, EcOperation::SchnorrVerify1 as u8);
         input.extend_from_slice(&HASH_NAME_SHA2_256);
         input.extend_from_slice(&hashed_msg_bytes);
         input.extend_from_slice(&verify_key.to_encoded_point(false).as_bytes()[1..]);
         input.extend_from_slice(&big_r.to_affine().x());
         input.extend_from_slice(&s.to_bytes());
-        let res = schnorr_verify1(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         assert_eq!(bytes, vec![1u8]);
@@ -2737,13 +2708,14 @@ mod test {
         let hashed_msg_bytes = sha2::Sha256::digest(HASH_MSG);
 
         let mut input = CURVE_NAME_SECP256K1.to_vec();
+        input.insert(0, EcOperation::SchnorrVerify1 as u8);
         input.extend_from_slice(&HASH_NAME_TAPROOT);
         input.extend_from_slice(&hashed_msg_bytes);
         let point = ProjectivePoint::from(verify_key.as_affine());
         input.extend_from_slice(&point.to_encoded_point(false).as_bytes()[1..]);
         input.extend_from_slice(&signature.to_bytes());
 
-        let res = schnorr_verify1(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         assert_eq!(bytes, vec![1u8]);
@@ -2771,12 +2743,13 @@ mod test {
         let s = little_r + e * sign_key;
 
         let mut input = CURVE_NAME_PRIME256V1.to_vec();
+        input.insert(0, EcOperation::SchnorrVerify1 as u8);
         input.extend_from_slice(&HASH_NAME_SHA2_256);
         input.extend_from_slice(&hashed_msg_bytes);
         input.extend_from_slice(&verify_key.to_encoded_point(false).as_bytes()[1..]);
         input.extend_from_slice(&big_r.to_affine().x());
         input.extend_from_slice(&s.to_bytes());
-        let res = schnorr_verify1(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         assert_eq!(bytes, vec![1u8]);
@@ -2797,13 +2770,14 @@ mod test {
         let signature = sign_key.sign(&hashed_msg_bytes);
 
         let mut input = CURVE_NAME_CURVE25519.to_vec();
+        input.insert(0, EcOperation::SchnorrVerify1 as u8);
         input.extend_from_slice(&HASH_NAME_SHA2_512);
         input.extend_from_slice(&hashed_msg_bytes);
         input.extend_from_slice(&[0u8; 32]);
         input.extend_from_slice(&verify_key.to_bytes());
         input.extend_from_slice(&signature.to_bytes());
 
-        let res = schnorr_verify1(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         assert_eq!(bytes, vec![1u8]);
@@ -2833,13 +2807,14 @@ mod test {
         let s = little_r + e * sign_key;
 
         let mut input = CURVE_NAME_BLS12381G1.to_vec();
+        input.insert(0, EcOperation::SchnorrVerify1 as u8);
         input.extend_from_slice(&HASH_NAME_SHA2_384);
         input.extend_from_slice(&hashed_msg_bytes);
         input.extend_from_slice(&verify_key.to_uncompressed());
         input.extend_from_slice(&big_r.to_uncompressed());
         input.extend_from_slice(&s.to_be_bytes());
 
-        let res = schnorr_verify1(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         assert_eq!(bytes, vec![1u8]);
@@ -2869,13 +2844,14 @@ mod test {
         let s = little_r + e * sign_key;
 
         let mut input = CURVE_NAME_BLS12381G2.to_vec();
+        input.insert(0, EcOperation::SchnorrVerify1 as u8);
         input.extend_from_slice(&HASH_NAME_SHA2_384);
         input.extend_from_slice(&hashed_msg_bytes);
         input.extend_from_slice(&verify_key.to_uncompressed());
         input.extend_from_slice(&big_r.to_uncompressed());
         input.extend_from_slice(&s.to_be_bytes());
 
-        let res = schnorr_verify1(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         assert_eq!(bytes, vec![1u8]);
@@ -2892,6 +2868,7 @@ mod test {
             .unwrap();
 
         let mut input = CURVE_NAME_BLS12381G1.to_vec();
+        input.insert(0, EcOperation::BlsVerify as u8);
         let length = (HASH_MSG.len() as u32).to_be_bytes();
         let mut arr = [0u8; 32];
         arr[32 - length.len()..].copy_from_slice(&length);
@@ -2899,7 +2876,7 @@ mod test {
         input.extend_from_slice(HASH_MSG);
         input.extend_from_slice(&verify_key.0.to_uncompressed());
         input.extend_from_slice(&signature.as_raw_value().to_uncompressed());
-        let res = bls_verify(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         assert_eq!(bytes, vec![1u8]);
@@ -2908,10 +2885,11 @@ mod test {
     #[test]
     fn ecc_hash_curve25519() {
         let mut input = CURVE_NAME_CURVE25519.to_vec();
+        input.insert(0, EcOperation::EcHash as u8);
         input.extend_from_slice(&[0u8; 31]);
         input.push(32);
         input.extend_from_slice(&[0u8; 32]);
-        let res = ec_hash(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
 
@@ -2928,6 +2906,7 @@ mod test {
     #[test]
     fn ec_pairing_bls12381() {
         let mut input = CURVE_NAME_BLS12381G1.to_vec();
+        input.insert(0, EcOperation::EcPairing as u8);
         input.extend_from_slice(&[0u8; 31]);
         input.push(1);
         input.extend_from_slice(
@@ -2942,7 +2921,7 @@ mod test {
             .to_uncompressed()
             .as_ref(),
         );
-        let res = ec_pairing(&input, 100);
+        let res = ec_operation(&input, 100);
         assert!(res.is_ok());
         let (_, bytes) = res.unwrap();
         let g1 = blsful::inner_types::G1Projective::GENERATOR

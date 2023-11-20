@@ -29,4 +29,5 @@ pub enum PrecompileError {
     EcOpsNotSupported,
     EcOpsInvalidSignature,
     EcOpsInvalidHash,
+    EcOpsInvalidOperation,
 }
