@@ -856,6 +856,23 @@ const fn make_gas_table(spec: SpecId) -> [OpInfo; 256] {
 /// Returns a lookup table of opcode gas info for the given [`SpecId`].
 #[inline]
 pub const fn spec_opcode_gas(spec_id: SpecId) -> &'static [OpInfo; 256] {
+    #[cfg(feature = "optimism")]
+    match spec_id {
+        SpecId::BEDROCK => {
+            const TABLE: &[OpInfo; 256] = &make_gas_table(SpecId::BEDROCK);
+            return TABLE;
+        }
+        SpecId::REGOLITH => {
+            const TABLE: &[OpInfo; 256] = &make_gas_table(SpecId::REGOLITH);
+            return TABLE;
+        }
+        SpecId::CANYON => {
+            const TABLE: &[OpInfo; 256] = &make_gas_table(SpecId::CANYON);
+            return TABLE;
+        }
+        _ => {}
+    }
+
     macro_rules! gas_maps {
         ($($id:ident),* $(,)?) => {
             match spec_id {
@@ -866,15 +883,7 @@ pub const fn spec_opcode_gas(spec_id: SpecId) -> &'static [OpInfo; 256] {
                 }
             )*
                 #[cfg(feature = "optimism")]
-                SpecId::BEDROCK => {
-                    const TABLE: &[OpInfo;256] = &make_gas_table(SpecId::BEDROCK);
-                    TABLE
-                }
-                #[cfg(feature = "optimism")]
-                SpecId::REGOLITH => {
-                    const TABLE: &[OpInfo;256] = &make_gas_table(SpecId::REGOLITH);
-                    TABLE
-                }
+                _ => panic!("Invalid spec id"),
             }
         };
     }
