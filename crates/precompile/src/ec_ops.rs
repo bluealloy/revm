@@ -178,6 +178,9 @@ impl EcOperation {
 }
 
 fn ec_operation(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    if input.len() < 1 {
+        return Err(Error::EcOpsInvalidOperation);
+    }
     let operation = EcOperation::try_from(input[0])?;
     operation.execute(&input[1..], gas_limit)
 }
