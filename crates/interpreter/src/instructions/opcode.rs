@@ -883,6 +883,11 @@ pub const fn spec_opcode_gas(spec_id: SpecId) -> &'static [OpInfo; 256] {
                     const TABLE: &[OpInfo;256] = &make_gas_table(SpecId::REGOLITH);
                     TABLE
                 }
+                #[cfg(feature = "optimism")]
+                SpecId::CANYON => {
+                    const TABLE: &[OpInfo;256] = &make_gas_table(SpecId::CANYON);
+                    TABLE
+                }
             }
         };
     }

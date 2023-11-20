@@ -4,7 +4,8 @@ pub use SpecId::*;
 
 /// Specification IDs and their activation block.
 ///
-/// Information was obtained from: <https://github.com/ethereum/execution-specs>
+/// Information was obtained from the [Ethereum Execution Specifications](https://github.com/ethereum/execution-specs)
+#[cfg(not(feature = "optimism"))]
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, enumn::N)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -27,10 +28,38 @@ pub enum SpecId {
     MERGE = 15,           // Paris/Merge	        15537394 (TTD: 58750000000000000000000)
     SHANGHAI = 16,        // Shanghai	            17034870 (TS: 1681338455)
     CANCUN = 17,          // Cancun	                TBD
-    #[cfg(feature = "optimism")]
-    BEDROCK = 128,
-    #[cfg(feature = "optimism")]
-    REGOLITH = 129,
+    LATEST = u8::MAX,
+}
+
+/// Specification IDs and their activation block.
+///
+/// Information was obtained from the [Ethereum Execution Specifications](https://github.com/ethereum/execution-specs)
+#[cfg(feature = "optimism")]
+#[repr(u8)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, enumn::N)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum SpecId {
+    FRONTIER = 0,
+    FRONTIER_THAWING = 1,
+    HOMESTEAD = 2,
+    DAO_FORK = 3,
+    TANGERINE = 4,
+    SPURIOUS_DRAGON = 5,
+    BYZANTIUM = 6,
+    CONSTANTINOPLE = 7,
+    PETERSBURG = 8,
+    ISTANBUL = 9,
+    MUIR_GLACIER = 10,
+    BERLIN = 11,
+    LONDON = 12,
+    ARROW_GLACIER = 13,
+    GRAY_GLACIER = 14,
+    MERGE = 15,
+    BEDROCK = 16,
+    REGOLITH = 17,
+    SHANGHAI = 18,
+    CANYON = 19,
+    CANCUN = 20,
     LATEST = u8::MAX,
 }
 
@@ -42,23 +71,6 @@ impl SpecId {
 
     #[inline]
     pub const fn enabled(our: SpecId, other: SpecId) -> bool {
-        #[cfg(feature = "optimism")]
-        {
-            let (our, other) = (our as u8, other as u8);
-            let (merge, bedrock, regolith) =
-                (Self::MERGE as u8, Self::BEDROCK as u8, Self::REGOLITH as u8);
-            // If the Spec is Bedrock or Regolith, and the input is not Bedrock or Regolith,
-            // then no hardforks should be enabled after the merge. This is because Optimism's
-            // Bedrock and Regolith hardforks implement changes on top of the Merge hardfork.
-            let is_self_optimism = our == bedrock || our == regolith;
-            let input_not_optimism = other != bedrock && other != regolith;
-            let after_merge = other > merge;
-
-            if is_self_optimism && input_not_optimism && after_merge {
-                return false;
-            }
-        }
-
         our as u8 >= other as u8
     }
 }
@@ -84,6 +96,8 @@ impl From<&str> for SpecId {
             "Bedrock" => SpecId::BEDROCK,
             #[cfg(feature = "optimism")]
             "Regolith" => SpecId::REGOLITH,
+            #[cfg(feature = "optimism")]
+            "Canyon" => SpecId::CANYON,
             _ => Self::LATEST,
         }
     }
@@ -137,6 +151,8 @@ spec!(LATEST, LatestSpec);
 spec!(BEDROCK, BedrockSpec);
 #[cfg(feature = "optimism")]
 spec!(REGOLITH, RegolithSpec);
+#[cfg(feature = "optimism")]
+spec!(CANYON, CanyonSpec);
 
 #[cfg(feature = "optimism")]
 #[cfg(test)]
@@ -181,5 +197,27 @@ mod tests {
         assert!(!SpecId::enabled(SpecId::REGOLITH, SpecId::LATEST));
         assert!(SpecId::enabled(SpecId::REGOLITH, SpecId::BEDROCK));
         assert!(SpecId::enabled(SpecId::REGOLITH, SpecId::REGOLITH));
+    }
+
+    #[test]
+    fn test_canyon_post_merge_hardforks() {
+        assert!(CanyonSpec::enabled(SpecId::MERGE));
+        assert!(CanyonSpec::enabled(SpecId::SHANGHAI));
+        assert!(!CanyonSpec::enabled(SpecId::CANCUN));
+        assert!(!CanyonSpec::enabled(SpecId::LATEST));
+        assert!(CanyonSpec::enabled(SpecId::BEDROCK));
+        assert!(CanyonSpec::enabled(SpecId::REGOLITH));
+        assert!(CanyonSpec::enabled(SpecId::CANYON));
+    }
+
+    #[test]
+    fn test_canyon_post_merge_hardforks_spec_id() {
+        assert!(SpecId::enabled(SpecId::CANYON, SpecId::MERGE));
+        assert!(SpecId::enabled(SpecId::CANYON, SpecId::SHANGHAI));
+        assert!(!SpecId::enabled(SpecId::CANYON, SpecId::CANCUN));
+        assert!(!SpecId::enabled(SpecId::CANYON, SpecId::LATEST));
+        assert!(SpecId::enabled(SpecId::CANYON, SpecId::BEDROCK));
+        assert!(SpecId::enabled(SpecId::CANYON, SpecId::REGOLITH));
+        assert!(SpecId::enabled(SpecId::CANYON, SpecId::CANYON));
     }
 }
