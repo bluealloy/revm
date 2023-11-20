@@ -2,32 +2,14 @@
 
 pub use SpecId::*;
 
-macro_rules! define_spec_id {
-    ($($name:ident = $value:expr),* $(,)?) => {
-        #[doc = "Specification IDs and their activation block. See: [Ethereum Execution Specs](https://github.com/ethereum/execution-specs)"]
-        #[repr(u8)]
-        #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, enumn::N)]
-        #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-        pub enum SpecId {
-            $($name = $value,)*
-        }
-
-        impl SpecId {
-            #[inline]
-            pub fn try_from_u8(spec_id: u8) -> Option<Self> {
-                Self::n(spec_id)
-            }
-
-            #[inline]
-            pub const fn enabled(our: SpecId, other: SpecId) -> bool {
-                our as u8 >= other as u8
-            }
-        }
-    };
-}
-
+/// Specification IDs and their activation block.
+///
+/// Information was obtained from the [Ethereum Execution Specifications](https://github.com/ethereum/execution-specs)
 #[cfg(not(feature = "optimism"))]
-define_spec_id!(
+#[repr(u8)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, enumn::N)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum SpecId {
     FRONTIER = 0,         // Frontier	            0
     FRONTIER_THAWING = 1, // Frontier Thawing       200000
     HOMESTEAD = 2,        // Homestead	            1150000
@@ -47,10 +29,16 @@ define_spec_id!(
     SHANGHAI = 16,        // Shanghai	            17034870 (TS: 1681338455)
     CANCUN = 17,          // Cancun	                TBD
     LATEST = u8::MAX,
-);
+}
 
+/// Specification IDs and their activation block.
+///
+/// Information was obtained from the [Ethereum Execution Specifications](https://github.com/ethereum/execution-specs)
 #[cfg(feature = "optimism")]
-define_spec_id!(
+#[repr(u8)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, enumn::N)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum SpecId {
     FRONTIER = 0,
     FRONTIER_THAWING = 1,
     HOMESTEAD = 2,
@@ -73,7 +61,19 @@ define_spec_id!(
     CANYON = 19,
     CANCUN = 20,
     LATEST = u8::MAX,
-);
+}
+
+impl SpecId {
+    #[inline]
+    pub fn try_from_u8(spec_id: u8) -> Option<Self> {
+        Self::n(spec_id)
+    }
+
+    #[inline]
+    pub const fn enabled(our: SpecId, other: SpecId) -> bool {
+        our as u8 >= other as u8
+    }
+}
 
 impl From<&str> for SpecId {
     fn from(name: &str) -> Self {
