@@ -30,7 +30,7 @@ ethers-core = { version = "2.0", optional = true }
 futures = { version = "0.3.29", optional = true }
 
 [dev-dependencies]
-ethers-contract = { version = "2.0.10", default-features = false }
+ethers-contract = { version = "2.0.11", default-features = false }
 anyhow = "1.0.75"
 criterion = "0.5"
 
