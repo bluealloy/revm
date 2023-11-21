@@ -136,18 +136,10 @@ where
             InstructionTables::Plain(Arc::new(make_instruction_table::<Self, SPEC>()))
         };
 
+        // temporary here. Factory should create handler and register external handles.
         let mut handler = external.register_handler::<SPEC>(Handler::mainnet::<SPEC>());
-        /* TODO support
-        #[cfg(feature = "optimism")]
-        let mut handler = if env.cfg.optimism {
-            Handler::optimism::<SPEC>()
-        } else {
-            Handler::mainnet::<SPEC>()
-        };
-        #[cfg(not(feature = "optimism"))]
-        let mut handler = Handler::mainnet::<SPEC>();
-        */
 
+        // temporary here. Factory should override this handle.
         if env.cfg.is_beneficiary_reward_disabled() {
             // do nothing
             handler.reward_beneficiary = Arc::new(|_, _| Ok(()));

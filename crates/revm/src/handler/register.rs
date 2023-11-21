@@ -29,6 +29,7 @@ pub trait RegisterHandler<DB: Database> {
     ) -> Handler<'a, Self, DB>
     where
         Self: Sized,
+        DB: 'a,
     {
         handler
     }
@@ -52,6 +53,7 @@ impl<'a, DB: Database, INS: Inspector<DB>> RegisterHandler<DB> for InspectorHand
     ) -> Handler<'b, Self, DB>
     where
         Self: Sized,
+        DB: 'b,
     {
         handler
     }
@@ -66,11 +68,13 @@ impl<DB: Database> RegisterHandler<DB> for ExternalData<DB> {
     fn register_handler<'a, SPEC: Spec>(
         &self,
         mut handler: Handler<'a, Self, DB>,
-    ) -> Handler<'a, Self, DB> {
-        let t = handler.reimburse_caller.clone();
-        handler.reimburse_caller = Arc::new(|data, gas| {
-            println!("Reimburse caller: {:#?} {:#?}", data.external.flagg, gas);
-            crate::handler::mainnet::handle_reimburse_caller::<SPEC, Self, DB>(data, gas)
+    ) -> Handler<'a, Self, DB>
+    where
+        DB: 'a,
+    {
+        let old_handle = handler.reimburse_caller.clone();
+        handler.reimburse_caller = Arc::new(move |data, gas| {
+            old_handle(data, gas)
         });
         handler
     }

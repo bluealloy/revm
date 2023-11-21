@@ -2,6 +2,7 @@
 
 pub mod call_loop;
 pub mod main;
+pub mod frames;
 
 use crate::{
     interpreter::{return_ok, return_revert, Gas, InstructionResult, SuccessOrHalt},

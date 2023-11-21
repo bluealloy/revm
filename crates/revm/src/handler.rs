@@ -13,7 +13,7 @@ use crate::{
 };
 use alloc::sync::Arc;
 use core::ops::Range;
-use revm_interpreter::{CallInputs, CreateInputs, SharedMemory};
+use revm_interpreter::{CallInputs, CreateInputs, InterpreterResult, SharedMemory};
 
 /// Handle call return and return final gas value.
 type CallReturnHandle<'a> = Arc<dyn Fn(&Env, InstructionResult, Gas) -> Gas + 'a>;
@@ -37,6 +37,25 @@ type MainReturnHandle<'a, EXT, DB> = Arc<
             Output,
             &Gas,
         ) -> Result<ResultAndState, EVMError<<DB as Database>::Error>>
+        + 'a,
+>;
+
+/// After subcall is finished, call this function to handle return result.
+///
+/// Return Some if we want to halt execution. This can be done on any stack frame.
+type FrameReturn<'a, EXT, DB> = Arc<
+    dyn Fn(
+            // context
+            &mut Context<'_, EXT, DB>,
+            // returned frame
+            Box<CallStackFrame>,
+            // parent frame if it exist.
+            Option<&mut Box<CallStackFrame>>,
+            // shared memory to insert output of the call.
+            &mut SharedMemory,
+            // output of frame execution.
+            InterpreterResult,
+        ) -> Option<InterpreterResult>
         + 'a,
 >;
 
@@ -88,6 +107,8 @@ pub struct Handler<'a, EXT, DB: Database> {
     pub end: EndHandle<'a, EXT, DB>,
     // Called on sub call.
     //pub sub_call: SubCall,
+    /// Frame return
+    pub frame_return: FrameReturn<'a, EXT, DB>,
 }
 
 impl<'a, EXT: 'a, DB: Database + 'a> Handler<'a, EXT, DB> {
@@ -100,6 +121,7 @@ impl<'a, EXT: 'a, DB: Database + 'a> Handler<'a, EXT, DB> {
             reward_beneficiary: Arc::new(mainnet::reward_beneficiary::<SPEC, EXT, DB>),
             main_return: Arc::new(mainnet::main::main_return::<EXT, DB>),
             end: Arc::new(mainnet::main::end_handle::<EXT, DB>),
+            frame_return: Arc::new(mainnet::frames::handle_frame_return::<SPEC, EXT, DB>),
         }
     }
 
@@ -116,6 +138,7 @@ impl<'a, EXT: 'a, DB: Database + 'a> Handler<'a, EXT, DB> {
             // In case of halt of deposit transaction return Error.
             main_return: optimism::main_return::<SPEC, DB>,
             end: optimism::end_handle::<SPEC, DB>,
+            frame_return: Arc::new(mainnet::frames::handle_frame_return::<SPEC, EXT, DB>),
         }
     }
 
@@ -165,5 +188,23 @@ impl<'a, EXT: 'a, DB: Database + 'a> Handler<'a, EXT, DB> {
         end_output: Result<ResultAndState, EVMError<DB::Error>>,
     ) -> Result<ResultAndState, EVMError<DB::Error>> {
         (self.end)(context, end_output)
+    }
+
+    /// Frame return
+    pub fn frame_return(
+        &self,
+        context: &mut Context<'_, EXT, DB>,
+        child_stack_frame: Box<CallStackFrame>,
+        parent_stack_frame: Option<&mut Box<CallStackFrame>>,
+        shared_memory: &mut SharedMemory,
+        result: InterpreterResult,
+    ) -> Option<InterpreterResult> {
+        (self.frame_return)(
+            context,
+            child_stack_frame,
+            parent_stack_frame,
+            shared_memory,
+            result,
+        )
     }
 }
