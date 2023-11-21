@@ -1,9 +1,9 @@
-use super::calc_linear_cost_u32;
+use super::{calc_linear_cost_u32, extract_points, IDENTITY_BASE, IDENTITY_PER_WORD};
 use crate::{Error, Precompile, PrecompileAddress, PrecompileResult, StandardPrecompileFn, Vec};
 use elliptic_curve::{
     group::cofactor::CofactorGroup,
     hash2curve::{FromOkm, GroupDigest},
-    sec1::{EncodedPoint, FromEncodedPoint, ModulusSize, ToEncodedPoint},
+    sec1::{FromEncodedPoint, ModulusSize, ToEncodedPoint},
     Curve, CurveArithmetic,
 };
 use hd_keys_ecdsa::*;
@@ -15,10 +15,6 @@ pub const DERIVE_CAIT_SITH_PUBKEY: PrecompileAddress = PrecompileAddress(
 
 /// The minimum length of the input.
 const MIN_LENGTH: usize = 81;
-/// The base cost of the operation.
-const IDENTITY_BASE: u64 = 15;
-/// The cost per word.
-const IDENTITY_PER_WORD: u64 = 3;
 
 fn derive_cait_sith_pubkey(input: &[u8], gas_limit: u64) -> PrecompileResult {
     println!("derive_cait_sith_pubkey");
@@ -73,20 +69,6 @@ fn derive_cait_sith_pubkey(input: &[u8], gas_limit: u64) -> PrecompileResult {
         }
     }
     Err(Error::OutOfGas)
-}
-
-fn bytes_to_projective_point<C>(data: &[u8]) -> Option<C::ProjectivePoint>
-where
-    C: GroupDigest,
-    <C as CurveArithmetic>::ProjectivePoint: CofactorGroup,
-    <C as CurveArithmetic>::AffinePoint: FromEncodedPoint<C>,
-    <C as CurveArithmetic>::Scalar: FromOkm,
-    <C as Curve>::FieldBytesSize: ModulusSize,
-{
-    let encoded_point = EncodedPoint::<C>::from_bytes(data).ok()?;
-    let point = <C::AffinePoint as FromEncodedPoint<C>>::from_encoded_point(&encoded_point)
-        .map(C::ProjectivePoint::from);
-    Option::<C::ProjectivePoint>::from(point)
 }
 
 struct DeriveParams<C>
@@ -170,63 +152,10 @@ where
     }
 }
 
-fn extract_points<C>(data: &[u8], pks_cnt: usize) -> Result<Vec<C::ProjectivePoint>, String>
-where
-    C: GroupDigest,
-    <C as CurveArithmetic>::ProjectivePoint: CofactorGroup,
-    <C as CurveArithmetic>::AffinePoint: FromEncodedPoint<C>,
-    <C as CurveArithmetic>::Scalar: FromOkm,
-    <C as Curve>::FieldBytesSize: ModulusSize,
-{
-    let mut offset = 0;
-    let mut points = Vec::with_capacity(pks_cnt);
-    while offset < data.len() && points.len() < pks_cnt {
-        let point = match data[offset] {
-            0x04 => {
-                // Uncompressed form
-                if offset + 65 > data.len() {
-                    return Err(format!(
-                        "invalid length for uncompressed point: {}",
-                        data.len()
-                    ));
-                }
-                let point = bytes_to_projective_point::<C>(&data[offset..offset + 65]);
-                offset += 65;
-                point
-            }
-            0x03 | 0x02 => {
-                // Compressed form
-                if offset + 33 > data.len() {
-                    return Err(format!(
-                        "invalid length for compressed point: {}",
-                        data.len()
-                    ));
-                }
-                let point = bytes_to_projective_point::<C>(&data[offset..offset + 33]);
-                offset += 33;
-                point
-            }
-            _ => {
-                if offset + 64 > data.len() {
-                    return Err(format!("invalid length for hybrid point: {}", data.len()));
-                }
-                let mut tmp = [4u8; 65];
-                tmp[1..].copy_from_slice(&data[offset..offset + 64]);
-                let point = bytes_to_projective_point::<C>(&data[offset..offset + 65]);
-                offset += 65;
-                point
-            }
-        };
-        if point.is_none() {
-            return Err(format!("invalid point at offset {}", offset));
-        }
-        points.push(point.unwrap());
-    }
-    Ok(points)
-}
-
 #[test]
 fn derive_precompile_works() {
+    use crate::bytes_to_projective_point;
+
     let k256_vectors = TestVector {
         tweaks: vec![
             scalar_from_hex::<k256::Scalar>(
