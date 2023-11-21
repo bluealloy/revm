@@ -46,6 +46,12 @@ impl Stack {
         }
     }
 
+    /// Instantiate a new stack without pre-allocating any memory.
+    #[inline]
+    pub fn empty() -> Self {
+        Self { data: Vec::new() }
+    }
+
     /// Returns the length of the stack in words.
     #[inline]
     pub fn len(&self) -> usize {
