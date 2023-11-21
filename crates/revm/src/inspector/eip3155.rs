@@ -1,6 +1,6 @@
 use crate::{
     inspectors::GasInspector,
-    interpreter::{opcode, CallInputs, CreateInputs, Interpreter, InterpreterResult, Memory},
+    interpreter::{opcode, CallInputs, CreateInputs, Interpreter, InterpreterResult},
     primitives::{db::Database, hex, Address, U256},
     EvmContext, Inspector,
 };
@@ -23,8 +23,6 @@ pub struct TracerEip3155 {
     opcode: u8,
     gas: u64,
     mem_size: usize,
-    #[allow(dead_code)]
-    memory: Option<Memory>,
     skip: bool,
 }
 
@@ -40,7 +38,6 @@ impl TracerEip3155 {
             opcode: 0,
             gas: 0,
             mem_size: 0,
-            memory: None,
             skip: false,
         }
     }
@@ -55,10 +52,10 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
     // all other information can be obtained from interp.
     fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
         self.gas_inspector.step(interp, context);
-        self.stack = interp.shared_context.stack.data().to_vec();
+        self.stack = interp.stack().to_vec();
         self.pc = interp.program_counter();
         self.opcode = interp.current_opcode();
-        self.mem_size = interp.shared_context.memory.len();
+        self.mem_size = interp.memory().len();
         self.gas = interp.gas.remaining();
     }
 
@@ -69,7 +66,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
             return;
         };
 
-        self.print_log_line(context.journaled_state.depth());
+        self.print_log_line(context.journaled_state.depth(), interp.memory());
     }
 
     fn call(
@@ -120,7 +117,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 }
 
 impl TracerEip3155 {
-    fn print_log_line(&mut self, depth: u64) {
+    fn print_log_line(&mut self, depth: u64, _memory: &[u8]) {
         let short_stack: Vec<String> = self.stack.iter().map(|&b| short_hex(b)).collect();
         let log_line = json!({
             "depth": depth,
@@ -130,6 +127,7 @@ impl TracerEip3155 {
             "gas": format!("0x{:x}", self.gas),
             "gasCost": format!("0x{:x}", self.gas_inspector.last_gas_cost()),
             //memory?
+            //"memory": format!("{}", hex::encode(memory)),
             "memSize": self.mem_size,
             "stack": short_stack,
             //returnData

@@ -1,12 +1,11 @@
-use crate::primitives::Bytecode;
 use crate::{
-    primitives::{Address, Bytes, Env, B256, U256},
+    primitives::{Address, Bytecode, Bytes, Env, B256, U256},
     SelfDestructResult,
 };
 use alloc::vec::Vec;
-pub use dummy::DummyHost;
 
 mod dummy;
+pub use dummy::DummyHost;
 
 /// EVM context host.
 pub trait Host {

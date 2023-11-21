@@ -17,12 +17,18 @@ mod secp256k1 {
 
     pub fn ecrecover(sig: &[u8; 65], msg: &B256) -> Result<B256, Error> {
         // parse signature
-        let recid = RecoveryId::from_byte(sig[64]).expect("Recovery id is valid");
-        let signature = Signature::from_slice(&sig[..64])?;
+        let mut recid = sig[64];
+        let mut sig = Signature::from_slice(&sig[..64])?;
+
+        // normalize signature and flip recovery id if needed.
+        if let Some(sig_normalized) = sig.normalize_s() {
+            sig = sig_normalized;
+            recid = recid ^ 1;
+        };
+        let recid = RecoveryId::from_byte(recid).expect("Recovery id is valid");
 
         // recover key
-        let recovered_key = VerifyingKey::recover_from_prehash(&msg[..], &signature, recid)?;
-
+        let recovered_key = VerifyingKey::recover_from_prehash(&msg[..], &sig, recid)?;
         // hash it
         let mut hash = keccak256(
             &recovered_key

@@ -1,11 +1,9 @@
-use crate::interpreter::InterpreterAction;
-use crate::primitives::{Address, Bytes, Spec, SpecId::*, B256, U256};
-use crate::MAX_INITCODE_SIZE;
 use crate::{
     gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
-    interpreter::Interpreter,
+    interpreter::{Interpreter, InterpreterAction},
+    primitives::{Address, Bytes, Spec, SpecId::*, B256, U256},
     CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, Host, InstructionResult,
-    Transfer,
+    Transfer, MAX_INITCODE_SIZE,
 };
 use alloc::{boxed::Box, vec::Vec};
 use core::cmp::min;

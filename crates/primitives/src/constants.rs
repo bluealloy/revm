@@ -4,7 +4,7 @@ use crate::Address;
 /// By default limit is 0x6000 (~25kb)
 pub const MAX_CODE_SIZE: usize = 0x6000;
 
-/// Number of blocks hashes that EVM can access in the past
+/// Number of block hashes that EVM can access in the past
 pub const BLOCK_HASH_HISTORY: usize = 256;
 
 /// EIP-3860: Limit and meter initcode
