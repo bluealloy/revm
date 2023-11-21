@@ -74,3 +74,77 @@ pub fn handle_frame_return<SPEC: Spec, EXT, DB: Database>(
     }
     None
 }
+
+pub fn handle_frame_sub_call<SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<'_, EXT, DB>,
+    inputs: Box<CallInputs>,
+    curent_stack_frame: &mut CallStackFrame,
+    shared_memory: &mut SharedMemory,
+    return_memory_offset: Range<usize>,
+) -> Option<Box<CallStackFrame>> {
+    // TODO inspector handle
+    // if let Some(inspector) = self.inspector.as_mut() {
+    //     if let Some((result, range)) = inspector.call(&mut self.context.evm, &mut inputs) {
+    //         curent_stack_frame
+    //             .interpreter
+    //             .insert_call_output(shared_memory, result, range);
+    //         return None;
+    //     }
+    // }
+    match context
+        .evm
+        .make_call_frame(&inputs, return_memory_offset.clone())
+    {
+        FrameOrResult::Frame(new_frame) => Some(new_frame),
+        FrameOrResult::Result(result) => {
+            // TODO handle inspector
+            // if let Some(inspector) = self.inspector.as_mut() {
+            //     result = inspector.call_end(&mut self.context.evm, result);
+            // }
+            curent_stack_frame.interpreter.insert_call_output(
+                shared_memory,
+                result,
+                return_memory_offset,
+            );
+            None
+        }
+    }
+}
+
+pub fn handle_frame_sub_create<SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<'_, EXT, DB>,
+    curent_stack_frame: &mut CallStackFrame,
+    mut inputs: Box<CreateInputs>,
+) -> Option<Box<CallStackFrame>> {
+    // TODO add inspector handle
+    // if let Some(inspector) = self.inspector.as_mut() {
+    //     if let Some((result, address)) = inspector.create(&mut self.context.evm, &mut inputs) {
+    //         curent_stack_frame
+    //             .interpreter
+    //             .insert_create_output(result, address);
+    //         return None;
+    //     }
+    // }
+
+    match context.evm.make_create_frame::<SPEC>(&inputs) {
+        FrameOrResult::Frame(new_frame) => Some(new_frame),
+        FrameOrResult::Result(mut result) => {
+            let mut address = None;
+            // TODO add inspector handle
+            // if let Some(inspector) = self.inspector.as_mut() {
+            //     let ret = inspector.create_end(
+            //         &mut self.context.evm,
+            //         result,
+            //         curent_stack_frame.created_address,
+            //     );
+            //     result = ret.0;
+            //     address = ret.1;
+            // }
+            // insert result of the failed creation of create CallStackFrame.
+            curent_stack_frame
+                .interpreter
+                .insert_create_output(result, address);
+            None
+        }
+    }
+}

@@ -28,7 +28,7 @@ pub trait RegisterHandler<DB: Database> {
         handler: Handler<'a, Self, DB>,
     ) -> Handler<'a, Self, DB>
     where
-        Self: Sized,
+        Self: Sized+'a,
         DB: 'a,
     {
         handler
@@ -43,18 +43,39 @@ impl<DB: Database> RegisterHandler<DB> for MainnetHandle {}
 
 pub struct InspectorHandle<'a, DB: Database, INS: Inspector<DB>> {
     pub inspector: &'a mut INS,
-    pub _phantomdata: PhantomData<&'a DB>,
+    pub _phantomdata: PhantomData<DB>,
 }
 
 impl<'a, DB: Database, INS: Inspector<DB>> RegisterHandler<DB> for InspectorHandle<'a, DB, INS> {
     fn register_handler<'b, SPEC: Spec>(
         &self,
-        handler: Handler<'b, Self, DB>,
+        mut handler: Handler<'b, Self, DB>,
     ) -> Handler<'b, Self, DB>
     where
-        Self: Sized,
+        Self: Sized+'b,
         DB: 'b,
     {
+
+        
+
+        // return frame handle
+        let old_handle = handler.frame_return.clone();
+        handler.frame_return = Arc::new(
+            move |context, mut child, parent, memory, mut result| -> Option<InterpreterResult> {
+                let inspector = &mut context.external.inspector;
+                result = if child.is_create {
+                    let (result, address) =
+                        inspector.create_end(&mut context.evm, result, child.created_address);
+                    child.created_address = address;
+                    result
+                } else {
+                    inspector.call_end(&mut context.evm, result)
+                };
+                let output = old_handle(context, child, parent, memory, result);
+                output
+            },
+        );
+
         handler
     }
 }
@@ -73,9 +94,7 @@ impl<DB: Database> RegisterHandler<DB> for ExternalData<DB> {
         DB: 'a,
     {
         let old_handle = handler.reimburse_caller.clone();
-        handler.reimburse_caller = Arc::new(move |data, gas| {
-            old_handle(data, gas)
-        });
+        handler.reimburse_caller = Arc::new(move |data, gas| old_handle(data, gas));
         handler
     }
 }

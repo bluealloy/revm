@@ -199,13 +199,17 @@ where
                 InterpreterAction::SubCall {
                     inputs,
                     return_memory_offset,
-                } => self.handle_sub_call(
+                } => self.handler.frame_sub_call(
+                    &mut self.context,
                     inputs,
                     stack_frame,
-                    return_memory_offset,
                     &mut shared_memory,
+                    return_memory_offset,
                 ),
-                InterpreterAction::Create { inputs } => self.handle_sub_create(inputs, stack_frame),
+                InterpreterAction::Create { inputs } => {
+                    self.handler
+                        .frame_sub_create(&mut self.context, stack_frame, inputs)
+                }
                 InterpreterAction::Return { result } => {
                     // free memory context.
                     shared_memory.free_context();
@@ -213,9 +217,13 @@ where
                     let child = call_stack.pop().unwrap();
                     let parent = call_stack.last_mut();
 
-                    if let Some(result) =
-                        self.handle_frame_return(child, parent, &mut shared_memory, result)
-                    {
+                    if let Some(result) = self.handler.frame_return(
+                        &mut self.context,
+                        child,
+                        parent,
+                        &mut shared_memory,
+                        result,
+                    ) {
                         return result;
                     }
                     stack_frame = call_stack.last_mut().unwrap();
@@ -227,143 +235,6 @@ where
                 call_stack.push(new_frame);
             }
             stack_frame = call_stack.last_mut().unwrap();
-        }
-    }
-
-    fn handle_frame_return(
-        &mut self,
-        mut child_stack_frame: Box<CallStackFrame>,
-        parent_stack_frame: Option<&mut Box<CallStackFrame>>,
-        shared_memory: &mut SharedMemory,
-        mut result: InterpreterResult,
-    ) -> Option<InterpreterResult> {
-        if let Some(inspector) = self.inspector.as_mut() {
-            result = if child_stack_frame.is_create {
-                let (result, address) = inspector.create_end(
-                    &mut self.context.evm,
-                    result,
-                    child_stack_frame.created_address,
-                );
-                child_stack_frame.created_address = address;
-                result
-            } else {
-                inspector.call_end(&mut self.context.evm, result)
-            };
-        }
-
-        // break from loop if this is last CallStackFrame.
-        let Some(parent_stack_frame) = parent_stack_frame else {
-            let result = if child_stack_frame.is_create {
-                self.context
-                    .evm
-                    .create_return::<SPEC>(result, child_stack_frame)
-                    .0
-            } else {
-                self.context.evm.call_return(result, child_stack_frame)
-            };
-
-            return Some(result);
-        };
-
-        if child_stack_frame.is_create {
-            let (result, address) = self
-                .context
-                .evm
-                .create_return::<SPEC>(result, child_stack_frame);
-            parent_stack_frame
-                .interpreter
-                .insert_create_output(result, Some(address))
-        } else {
-            let subcall_memory_return_offset =
-                child_stack_frame.subcall_return_memory_range.clone();
-            let result = self.context.evm.call_return(result, child_stack_frame);
-
-            parent_stack_frame.interpreter.insert_call_output(
-                shared_memory,
-                result,
-                subcall_memory_return_offset,
-            )
-        }
-        None
-    }
-
-    /// Handle Action for new sub create call, return None if there is no need
-    /// to add new stack frame.
-    #[inline]
-    fn handle_sub_create(
-        &mut self,
-        mut inputs: Box<CreateInputs>,
-        curent_stack_frame: &mut CallStackFrame,
-    ) -> Option<Box<CallStackFrame>> {
-        // Call inspector if it is some.
-        if let Some(inspector) = self.inspector.as_mut() {
-            if let Some((result, address)) = inspector.create(&mut self.context.evm, &mut inputs) {
-                curent_stack_frame
-                    .interpreter
-                    .insert_create_output(result, address);
-                return None;
-            }
-        }
-
-        match self.context.evm.make_create_frame::<SPEC>(&inputs) {
-            FrameOrResult::Frame(new_frame) => Some(new_frame),
-            FrameOrResult::Result(mut result) => {
-                let mut address = None;
-                if let Some(inspector) = self.inspector.as_mut() {
-                    let ret = inspector.create_end(
-                        &mut self.context.evm,
-                        result,
-                        curent_stack_frame.created_address,
-                    );
-                    result = ret.0;
-                    address = ret.1;
-                }
-                // insert result of the failed creation of create CallStackFrame.
-                curent_stack_frame
-                    .interpreter
-                    .insert_create_output(result, address);
-                None
-            }
-        }
-    }
-
-    /// Handles action for new sub call, return None if there is no need to add
-    /// new stack frame.
-    #[inline]
-    fn handle_sub_call(
-        &mut self,
-        mut inputs: Box<CallInputs>,
-        curent_stake_frame: &mut CallStackFrame,
-        return_memory_offset: Range<usize>,
-        shared_memory: &mut SharedMemory,
-    ) -> Option<Box<CallStackFrame>> {
-        // Call inspector if it is some.
-        if let Some(inspector) = self.inspector.as_mut() {
-            if let Some((result, range)) = inspector.call(&mut self.context.evm, &mut inputs) {
-                curent_stake_frame
-                    .interpreter
-                    .insert_call_output(shared_memory, result, range);
-                return None;
-            }
-        }
-        match self
-            .context
-            .evm
-            .make_call_frame(&inputs, return_memory_offset.clone())
-        {
-            FrameOrResult::Frame(new_frame) => Some(new_frame),
-            FrameOrResult::Result(mut result) => {
-                //println!("Result returned right away: {:#?}", result);
-                if let Some(inspector) = self.inspector.as_mut() {
-                    result = inspector.call_end(&mut self.context.evm, result);
-                }
-                curent_stake_frame.interpreter.insert_call_output(
-                    shared_memory,
-                    result,
-                    return_memory_offset,
-                );
-                None
-            }
         }
     }
 
@@ -597,7 +468,7 @@ pub trait Transact<DBError> {
     fn transact(&mut self) -> EVMResult<DBError>;
 }
 
-impl<'a, SPEC: Spec + 'static, EXT: RegisterHandler<DB>+'a, DB: Database> Transact<DB::Error>
+impl<'a, SPEC: Spec + 'static, EXT: RegisterHandler<DB> + 'a, DB: Database> Transact<DB::Error>
     for Evm<'a, SPEC, EXT, DB>
 {
     #[inline]
@@ -641,7 +512,6 @@ impl<'a, SPEC: Spec + 'static, EXT, DB: Database> Host for Evm<'a, SPEC, EXT, DB
         self.context.evm.code(address)
     }
 
-    /// Get code hash of address.
     fn code_hash(&mut self, address: Address) -> Option<(B256, bool)> {
         self.context.evm.code_hash(address)
     }
@@ -668,39 +538,18 @@ impl<'a, SPEC: Spec + 'static, EXT, DB: Database> Host for Evm<'a, SPEC, EXT, DB
     }
 
     fn log(&mut self, address: Address, topics: Vec<B256>, data: Bytes) {
-        if let Some(inspector) = self.inspector.as_mut() {
-            inspector.log(&mut self.context.evm, &address, &topics, &data);
-        }
-        let log = Log {
-            address,
-            topics,
-            data,
-        };
-        self.context.evm.journaled_state.log(log);
+        self.handler
+            .host_log(&mut self.context, address, topics, data);
     }
 
     fn selfdestruct(&mut self, address: Address, target: Address) -> Option<SelfDestructResult> {
-        if let Some(inspector) = self.inspector.as_mut() {
-            let acc = self
-                .context
-                .evm
-                .journaled_state
-                .state
-                .get(&address)
-                .unwrap();
-            inspector.selfdestruct(address, target, acc.info.balance);
-        }
-        self.context
-            .evm
-            .journaled_state
-            .selfdestruct(address, target, self.context.evm.db)
-            .map_err(|e| self.context.evm.error = Some(e))
-            .ok()
+        self.handler
+            .host_selfdestruct(&mut self.context, address, target)
     }
 }
 
 /// Creates new EVM instance with erased types.
-pub fn new_evm<'a, EXT: RegisterHandler<DB>+'a, DB: Database>(
+pub fn new_evm<'a, EXT: RegisterHandler<DB> + 'a, DB: Database>(
     env: &'a mut Env,
     db: &'a mut DB,
     external: EXT,

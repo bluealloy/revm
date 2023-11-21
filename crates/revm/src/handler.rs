@@ -5,6 +5,7 @@ pub mod optimism;
 mod register;
 
 pub use register::{ExternalData, MainnetHandle, RegisterHandler};
+use revm_precompile::{Address, Bytes, B256};
 
 use crate::{
     interpreter::{Gas, InstructionResult},
@@ -13,7 +14,9 @@ use crate::{
 };
 use alloc::sync::Arc;
 use core::ops::Range;
-use revm_interpreter::{CallInputs, CreateInputs, InterpreterResult, SharedMemory};
+use revm_interpreter::{
+    CallInputs, CreateInputs, InterpreterResult, SelfDestructResult, SharedMemory,
+};
 
 /// Handle call return and return final gas value.
 type CallReturnHandle<'a> = Arc<dyn Fn(&Env, InstructionResult, Gas) -> Gas + 'a>;
@@ -43,7 +46,7 @@ type MainReturnHandle<'a, EXT, DB> = Arc<
 /// After subcall is finished, call this function to handle return result.
 ///
 /// Return Some if we want to halt execution. This can be done on any stack frame.
-type FrameReturn<'a, EXT, DB> = Arc<
+type FrameReturnHandle<'a, EXT, DB> = Arc<
     dyn Fn(
             // context
             &mut Context<'_, EXT, DB>,
@@ -59,11 +62,22 @@ type FrameReturn<'a, EXT, DB> = Arc<
         + 'a,
 >;
 
+/// Call to the host from Interpreter to save the log.
+pub type HostLogHandle<'a, EXT, DB> =
+    Arc<dyn Fn(&mut Context<'_, EXT, DB>, Address, Vec<B256>, Bytes) + 'a>;
+
+/// Call to the host from Interpreter to selfdestruct account.
+///
+/// After CANCUN hardfork original contract will stay the same but the value will
+/// be transfered to the target.
+pub type HostSelfdestruct<'a, EXT, DB> =
+    Arc<dyn Fn(&mut Context<'_, EXT, DB>, Address, Address) -> Option<SelfDestructResult> + 'a>;
+
 /// End handle, takes result and state and returns final result.
 /// This will be called after all the other handlers.
 ///
 /// It is useful for catching errors and returning them in a different way.
-type EndHandle<'a, EXT, DB> = Arc<
+pub type EndHandle<'a, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<'_, EXT, DB>,
             Result<ResultAndState, EVMError<<DB as Database>::Error>>,
@@ -71,21 +85,27 @@ type EndHandle<'a, EXT, DB> = Arc<
         + 'a,
 >;
 
-// Sub call
-// type SubCall<DB: Database> = fn(
-//     evm: &mut Evm<'_, SPEC, DB>,
-//     inputs: Box<CallInputs>,
-//     curent_stake_frame: &mut CallStackFrame,
-//     shared_memory: &mut SharedMemory,
-//     return_memory_offset: Range<usize>,
-// ) -> Option<Box<CallStackFrame>>;
+/// Handle sub call.
+type FrameSubCallHandle<'a, EXT, DB> = Arc<
+    dyn Fn(
+            &mut Context<'_, EXT, DB>,
+            Box<CallInputs>,
+            &mut CallStackFrame,
+            &mut SharedMemory,
+            Range<usize>,
+        ) -> Option<Box<CallStackFrame>>
+        + 'a,
+>;
 
-// /// sub create call
-// type SubCreateCall<SPEC: Spec, DB: Database> = fn(
-//     evm: &mut Evm<'_, SPEC, DB>,
-//     curent_stack_frame: &mut CallStackFrame,
-//     inputs: Box<CreateInputs>,
-// ) -> Option<Box<CallStackFrame>>;
+/// Handle sub create.
+type FrameSubCreateHandle<'a, EXT, DB: Database> = Arc<
+    dyn Fn(
+            &mut Context<'_, EXT, DB>,
+            &mut CallStackFrame,
+            Box<CreateInputs>,
+        ) -> Option<Box<CallStackFrame>>
+        + 'a,
+>;
 
 /// Handler acts as a proxy and allow to define different behavior for different
 /// sections of the code. This allows nice integration of different chains or
@@ -108,7 +128,15 @@ pub struct Handler<'a, EXT, DB: Database> {
     // Called on sub call.
     //pub sub_call: SubCall,
     /// Frame return
-    pub frame_return: FrameReturn<'a, EXT, DB>,
+    pub frame_return: FrameReturnHandle<'a, EXT, DB>,
+    /// Frame sub call
+    pub frame_sub_call: FrameSubCallHandle<'a, EXT, DB>,
+    /// Frame sub crate
+    pub frame_sub_create: FrameSubCreateHandle<'a, EXT, DB>,
+    /// Host log handle.
+    pub host_log: HostLogHandle<'a, EXT, DB>,
+    /// Host selfdestruct handle.
+    pub host_selfdestruct: HostSelfdestruct<'a, EXT, DB>,
 }
 
 impl<'a, EXT: 'a, DB: Database + 'a> Handler<'a, EXT, DB> {
@@ -122,6 +150,10 @@ impl<'a, EXT: 'a, DB: Database + 'a> Handler<'a, EXT, DB> {
             main_return: Arc::new(mainnet::main::main_return::<EXT, DB>),
             end: Arc::new(mainnet::main::end_handle::<EXT, DB>),
             frame_return: Arc::new(mainnet::frames::handle_frame_return::<SPEC, EXT, DB>),
+            frame_sub_call: Arc::new(mainnet::frames::handle_frame_sub_call::<SPEC, EXT, DB>),
+            frame_sub_create: Arc::new(mainnet::frames::handle_frame_sub_create::<SPEC, EXT, DB>),
+            host_log: Arc::new(mainnet::host::handle_host_log::<SPEC, EXT, DB>),
+            host_selfdestruct: Arc::new(mainnet::host::handle_selfdestruct::<SPEC, EXT, DB>),
         }
     }
 
@@ -139,6 +171,8 @@ impl<'a, EXT: 'a, DB: Database + 'a> Handler<'a, EXT, DB> {
             main_return: optimism::main_return::<SPEC, DB>,
             end: optimism::end_handle::<SPEC, DB>,
             frame_return: Arc::new(mainnet::frames::handle_frame_return::<SPEC, EXT, DB>),
+            host_log: Arc::new(mainnet::host::handle_host_log::<SPEC, EXT, DB>),
+            host_selfdestruct: Arc::new(mainnet::host::handle_selfdestruct::<SPEC, EXT, DB>),
         }
     }
 
@@ -190,6 +224,33 @@ impl<'a, EXT: 'a, DB: Database + 'a> Handler<'a, EXT, DB> {
         (self.end)(context, end_output)
     }
 
+    /// Call frame sub call handler.
+    pub fn frame_sub_call(
+        &self,
+        context: &mut Context<'_, EXT, DB>,
+        inputs: Box<CallInputs>,
+        curent_stack_frame: &mut CallStackFrame,
+        shared_memory: &mut SharedMemory,
+        return_memory_offset: Range<usize>,
+    ) -> Option<Box<CallStackFrame>> {
+        (self.frame_sub_call)(
+            context,
+            inputs,
+            curent_stack_frame,
+            shared_memory,
+            return_memory_offset,
+        )
+    }
+
+    pub fn frame_sub_create(
+        &self,
+        context: &mut Context<'_, EXT, DB>,
+        curent_stack_frame: &mut CallStackFrame,
+        inputs: Box<CreateInputs>,
+    ) -> Option<Box<CallStackFrame>> {
+        (self.frame_sub_create)(context, curent_stack_frame, inputs)
+    }
+
     /// Frame return
     pub fn frame_return(
         &self,
@@ -206,5 +267,26 @@ impl<'a, EXT: 'a, DB: Database + 'a> Handler<'a, EXT, DB> {
             shared_memory,
             result,
         )
+    }
+
+    /// Call host log handle.
+    pub fn host_log(
+        &self,
+        context: &mut Context<'_, EXT, DB>,
+        address: Address,
+        topics: Vec<B256>,
+        data: Bytes,
+    ) {
+        (self.host_log)(context, address, topics, data)
+    }
+
+    /// Call host selfdestruct handle.
+    pub fn host_selfdestruct(
+        &self,
+        context: &mut Context<'_, EXT, DB>,
+        address: Address,
+        target: Address,
+    ) -> Option<SelfDestructResult> {
+        (self.host_selfdestruct)(context, address, target)
     }
 }
