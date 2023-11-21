@@ -334,8 +334,7 @@ impl<'a, SPEC: Spec + 'static, DB: Database> EVMImpl<'a, SPEC, DB> {
         {
             Ok(new_frame) => Some(new_frame),
             Err(mut result) => {
-                //println!("Result returned right away: {:#?}", result);
-                if let Some(inspector) = self.inspector.as_mut() {
+                if let Some(inspector) = &mut self.inspector {
                     result = inspector.call_end(&mut self.context, result);
                 }
                 curent_stake_frame.interpreter.insert_call_output(
