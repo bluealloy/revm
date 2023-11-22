@@ -318,7 +318,7 @@ impl<'de> serde::Deserialize<'de> for Stack {
     {
         let mut data = Vec::<U256>::deserialize(deserializer)?;
         if data.len() > STACK_LIMIT {
-            return Err(serde::de::Error::custom(format!(
+            return Err(serde::de::Error::custom(alloc::format!(
                 "stack size exceeds limit: {} > {}",
                 data.len(),
                 STACK_LIMIT
