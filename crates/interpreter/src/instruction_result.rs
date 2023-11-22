@@ -1,10 +1,11 @@
 use crate::primitives::{Eval, Halt};
 
 #[repr(u8)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InstructionResult {
     // success codes
+    #[default]
     Continue = 0x00,
     Stop,
     Return,
