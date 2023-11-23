@@ -27,11 +27,10 @@ use crate::optimism;
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
 
-pub struct Evm<'a, SPEC: Spec, EXT, DB: Database> {
+pub struct Evm<'a, SPEC: Spec + 'static, EXT, DB: Database> {
     pub context: Context<'a, EXT, DB>,
-    pub inspector: Option<&'a mut dyn Inspector<DB>>,
     pub instruction_table: InstructionTables<'a, Self>,
-    pub handler: Handler<'a, EXT, DB>,
+    pub handler: Handler<'a, Self, EXT, DB>,
     _phantomdata: PhantomData<SPEC>,
 }
 
@@ -108,13 +107,12 @@ impl<'a, SPEC: Spec, DB: Database> Evm<'a, SPEC, DB> {
 
 impl<'a, SPEC: Spec + 'static, EXT: 'a, DB: Database> Evm<'a, SPEC, EXT, DB>
 where
-    EXT: RegisterHandler<DB>,
+    EXT: RegisterHandler<'a, DB> + 'a,
 {
     pub fn new_with_spec(
         db: &'a mut DB,
         env: &'a mut Env,
         external: EXT,
-        inspector: Option<&'a mut dyn Inspector<DB>>,
         precompiles: Precompiles,
     ) -> Self {
         let journaled_state = JournaledState::new(
@@ -126,15 +124,18 @@ where
                 .collect::<Vec<_>>(),
         );
         // If T is present it should be a generic T that modifies handler.
-        let instruction_table = if inspector.is_some() {
-            let instruction_table = make_boxed_instruction_table::<Self, SPEC, _>(
-                make_instruction_table::<Self, SPEC>(),
-                inspector_instruction,
-            );
-            InstructionTables::Boxed(Arc::new(instruction_table))
-        } else {
-            InstructionTables::Plain(Arc::new(make_instruction_table::<Self, SPEC>()))
-        };
+        // TODO move to inspector register.
+        // let instruction_table = if inspector.is_some() {
+        //     let instruction_table = make_boxed_instruction_table::<Self, SPEC, _>(
+        //         make_instruction_table::<Self, SPEC>(),
+        //         inspector_instruction,
+        //     );
+        //     InstructionTables::Boxed(Arc::new(instruction_table))
+        // } else {
+        //     InstructionTables::Plain(Arc::new(make_instruction_table::<Self, SPEC>()))
+        // };
+        let instruction_table =
+            InstructionTables::Plain(Arc::new(make_instruction_table::<Self, SPEC>()));
 
         // temporary here. Factory should create handler and register external handles.
         let mut handler = external.register_handler::<SPEC>(Handler::mainnet::<SPEC>());
@@ -158,7 +159,6 @@ where
                 },
                 external,
             },
-            inspector,
             instruction_table,
             handler,
             _phantomdata: PhantomData {},
@@ -468,7 +468,7 @@ pub trait Transact<DBError> {
     fn transact(&mut self) -> EVMResult<DBError>;
 }
 
-impl<'a, SPEC: Spec + 'static, EXT: RegisterHandler<DB> + 'a, DB: Database> Transact<DB::Error>
+impl<'a, SPEC: Spec + 'static, EXT: RegisterHandler<'a, DB> + 'a, DB: Database> Transact<DB::Error>
     for Evm<'a, SPEC, EXT, DB>
 {
     #[inline]
@@ -549,7 +549,7 @@ impl<'a, SPEC: Spec + 'static, EXT, DB: Database> Host for Evm<'a, SPEC, EXT, DB
 }
 
 /// Creates new EVM instance with erased types.
-pub fn new_evm<'a, EXT: RegisterHandler<DB> + 'a, DB: Database>(
+pub fn new_evm<'a, EXT: RegisterHandler<'a, DB> + 'a, DB: Database>(
     env: &'a mut Env,
     db: &'a mut DB,
     external: EXT,
@@ -561,7 +561,8 @@ pub fn new_evm<'a, EXT: RegisterHandler<DB> + 'a, DB: Database>(
                 db,
                 env,
                 external,
-                insp,
+                // TODO inspector
+                //insp,
                 Precompiles::new(revm_precompile::SpecId::from_spec_id($spec::SPEC_ID)).clone(),
             ))
         };

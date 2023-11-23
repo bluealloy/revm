@@ -1,10 +1,9 @@
 pub mod mainnet;
 #[cfg(feature = "optimism")]
 pub mod optimism;
+pub mod register;
 
-mod register;
-
-pub use register::{ExternalData, MainnetHandle, RegisterHandler};
+pub use register::{InspectorHandle, MainnetHandle, RegisterHandler};
 use revm_precompile::{Address, Bytes, B256};
 
 use crate::{
@@ -15,11 +14,12 @@ use crate::{
 use alloc::sync::Arc;
 use core::ops::Range;
 use revm_interpreter::{
-    CallInputs, CreateInputs, InterpreterResult, SelfDestructResult, SharedMemory,
+    opcode::{make_instruction_table, InstructionTables},
+    CallInputs, CreateInputs, Host, InterpreterResult, SelfDestructResult, SharedMemory,
 };
 
 /// Handle call return and return final gas value.
-type CallReturnHandle<'a> = Arc<dyn Fn(&Env, InstructionResult, Gas) -> Gas + 'a>;
+pub type CallReturnHandle<'a> = Arc<dyn Fn(&Env, InstructionResult, Gas) -> Gas + 'a>;
 
 /// Reimburse the caller with ethereum it didn't spent.
 type ReimburseCallerHandle<'a, EXT, DB> = Arc<
@@ -30,10 +30,10 @@ type ReimburseCallerHandle<'a, EXT, DB> = Arc<
 type RewardBeneficiaryHandle<'a, EXT, DB> = ReimburseCallerHandle<'a, EXT, DB>;
 
 /// Calculate gas refund for transaction.
-type CalculateGasRefundHandle<'a> = Arc<dyn Fn(&Env, &Gas) -> u64 + 'a>;
+pub type CalculateGasRefundHandle<'a> = Arc<dyn Fn(&Env, &Gas) -> u64 + 'a>;
 
 /// Main return handle, takes state from journal and transforms internal result to external.
-type MainReturnHandle<'a, EXT, DB> = Arc<
+pub type MainReturnHandle<'a, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<'_, EXT, DB>,
             InstructionResult,
@@ -46,7 +46,7 @@ type MainReturnHandle<'a, EXT, DB> = Arc<
 /// After subcall is finished, call this function to handle return result.
 ///
 /// Return Some if we want to halt execution. This can be done on any stack frame.
-type FrameReturnHandle<'a, EXT, DB> = Arc<
+pub type FrameReturnHandle<'a, EXT, DB> = Arc<
     dyn Fn(
             // context
             &mut Context<'_, EXT, DB>,
@@ -86,7 +86,7 @@ pub type EndHandle<'a, EXT, DB> = Arc<
 >;
 
 /// Handle sub call.
-type FrameSubCallHandle<'a, EXT, DB> = Arc<
+pub type FrameSubCallHandle<'a, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<'_, EXT, DB>,
             Box<CallInputs>,
@@ -98,7 +98,7 @@ type FrameSubCallHandle<'a, EXT, DB> = Arc<
 >;
 
 /// Handle sub create.
-type FrameSubCreateHandle<'a, EXT, DB: Database> = Arc<
+pub type FrameSubCreateHandle<'a, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<'_, EXT, DB>,
             &mut CallStackFrame,
@@ -110,7 +110,9 @@ type FrameSubCreateHandle<'a, EXT, DB: Database> = Arc<
 /// Handler acts as a proxy and allow to define different behavior for different
 /// sections of the code. This allows nice integration of different chains or
 /// to disable some mainnet behavior.
-pub struct Handler<'a, EXT, DB: Database> {
+pub struct Handler<'a, H: Host+'a, EXT, DB: Database> {
+    /// Instruction table type.
+    pub instruction_table: InstructionTables<'a, H>,
     // Uses env, call result and returned gas from the call to determine the gas
     // that is returned from transaction execution..
     pub call_return: CallReturnHandle<'a>,
@@ -125,8 +127,6 @@ pub struct Handler<'a, EXT, DB: Database> {
     pub main_return: MainReturnHandle<'a, EXT, DB>,
     /// End handle.
     pub end: EndHandle<'a, EXT, DB>,
-    // Called on sub call.
-    //pub sub_call: SubCall,
     /// Frame return
     pub frame_return: FrameReturnHandle<'a, EXT, DB>,
     /// Frame sub call
@@ -139,7 +139,7 @@ pub struct Handler<'a, EXT, DB: Database> {
     pub host_selfdestruct: HostSelfdestruct<'a, EXT, DB>,
 }
 
-impl<'a, EXT: 'a, DB: Database + 'a> Handler<'a, EXT, DB> {
+impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
     /// Handler for the mainnet
     pub fn mainnet<SPEC: Spec + 'a>() -> Self {
         Self {
@@ -149,6 +149,9 @@ impl<'a, EXT: 'a, DB: Database + 'a> Handler<'a, EXT, DB> {
             reward_beneficiary: Arc::new(mainnet::reward_beneficiary::<SPEC, EXT, DB>),
             main_return: Arc::new(mainnet::main::main_return::<EXT, DB>),
             end: Arc::new(mainnet::main::end_handle::<EXT, DB>),
+            instruction_table: InstructionTables::Plain(Arc::new(
+                make_instruction_table::<H, SPEC>(),
+            )),
             frame_return: Arc::new(mainnet::frames::handle_frame_return::<SPEC, EXT, DB>),
             frame_sub_call: Arc::new(mainnet::frames::handle_frame_sub_call::<SPEC, EXT, DB>),
             frame_sub_create: Arc::new(mainnet::frames::handle_frame_sub_create::<SPEC, EXT, DB>),

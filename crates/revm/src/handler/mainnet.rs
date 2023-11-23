@@ -1,6 +1,5 @@
 //! Mainnet related handlers.
 
-pub mod call_loop;
 pub mod main;
 pub mod frames;
 pub mod host;

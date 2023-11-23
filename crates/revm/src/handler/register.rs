@@ -14,22 +14,21 @@ use crate::{
         specification, Address, Bytecode, Bytes, EVMError, EVMResult, Env, InvalidTransaction, Log,
         Output, Spec, SpecId::*, TransactTo, B256, U256,
     },
-    CallStackFrame, Context, EvmContext, FrameOrResult, Inspector,
+    CallStackFrame, Context, Evm, EvmContext, FrameOrResult, Inspector,
 };
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use auto_impl::auto_impl;
 use core::{fmt, marker::PhantomData, ops::Range};
 
 /// Register external handles.
-pub trait RegisterHandler<DB: Database> {
-    /// Register external handler.
-    fn register_handler<'a, SPEC: Spec>(
+pub trait RegisterHandler<'a, DB: Database> {
+    fn register_handler<SPEC: Spec>(
         &self,
-        handler: Handler<'a, Self, DB>,
-    ) -> Handler<'a, Self, DB>
+        handler: Handler<'a, Evm<'a, SPEC, Self, DB>, Self, DB>,
+    ) -> Handler<'a, Evm<'a, SPEC, Self, DB>, Self, DB>
     where
-        Self: Sized+'a,
         DB: 'a,
+        Self: Sized,
     {
         handler
     }
@@ -39,24 +38,47 @@ pub trait RegisterHandler<DB: Database> {
 #[derive(Default)]
 pub struct MainnetHandle {}
 
-impl<DB: Database> RegisterHandler<DB> for MainnetHandle {}
+impl<'a, DB: Database> RegisterHandler<'a, DB> for MainnetHandle {}
 
 pub struct InspectorHandle<'a, DB: Database, INS: Inspector<DB>> {
     pub inspector: &'a mut INS,
     pub _phantomdata: PhantomData<DB>,
 }
 
-impl<'a, DB: Database, INS: Inspector<DB>> RegisterHandler<DB> for InspectorHandle<'a, DB, INS> {
-    fn register_handler<'b, SPEC: Spec>(
+impl<'handler, DB: Database, INS: Inspector<DB>> RegisterHandler<'handler, DB>
+    for InspectorHandle<'handler, DB, INS>
+{
+    fn register_handler<SPEC: Spec>(
         &self,
-        mut handler: Handler<'b, Self, DB>,
-    ) -> Handler<'b, Self, DB>
+        mut handler: Handler<'handler, Evm<'handler, SPEC, Self, DB>, Self, DB>,
+    ) -> Handler<'handler, Evm<'handler, SPEC, Self, DB>, Self, DB>
     where
-        Self: Sized+'b,
-        DB: 'b,
+        Self: Sized,
+        DB: 'handler,
     {
+        // let instruction_table = make_boxed_instruction_table::<
+        //     'handler,
+        //     Evm<'handler, SPEC, InspectorHandle<'handler, DB, INS>, DB>,
+        //     SPEC,
+        //     _,
+        // >(
+        //     make_instruction_table::<
+        //         Evm<'handler, SPEC, InspectorHandle<'handler, DB, INS>, DB>,
+        //         SPEC,
+        //     >(),
+        //     inspector_instruction::<SPEC, INS, DB>,
+        // );
 
-        
+        let flat_table = make_instruction_table::<
+            Evm<'handler, SPEC, InspectorHandle<'handler, DB, INS>, DB>,
+            SPEC,
+        >();
+
+        let table = core::array::from_fn(|i| inspector_instruction(flat_table[i]));
+
+        let table = InstructionTables::Boxed(Arc::new(table));
+
+        handler.instruction_table = table;
 
         // return frame handle
         let old_handle = handler.frame_return.clone();
@@ -80,21 +102,21 @@ impl<'a, DB: Database, INS: Inspector<DB>> RegisterHandler<DB> for InspectorHand
     }
 }
 
-pub struct ExternalData<DB: Database> {
-    pub flagg: bool,
-    pub phantom: PhantomData<DB>,
-}
+// pub struct ExternalData<DB: Database> {
+//     pub flagg: bool,
+//     pub phantom: PhantomData<DB>,
+// }
 
-impl<DB: Database> RegisterHandler<DB> for ExternalData<DB> {
-    fn register_handler<'a, SPEC: Spec>(
-        &self,
-        mut handler: Handler<'a, Self, DB>,
-    ) -> Handler<'a, Self, DB>
-    where
-        DB: 'a,
-    {
-        let old_handle = handler.reimburse_caller.clone();
-        handler.reimburse_caller = Arc::new(move |data, gas| old_handle(data, gas));
-        handler
-    }
-}
+// impl<DB: Database> RegisterHandler<DB> for ExternalData<DB> {
+//     fn register_handler<'a, SPEC: Spec>(
+//         &self,
+//         mut handler: Handler<'a, Evm<'a, SPEC, Self, DB>, Self, DB>,
+//     ) -> Handler<'a, Evm<'a, SPEC, Self, DB>, Self, DB>
+//     where
+//         DB: 'a,
+//     {
+//         let old_handle = handler.reimburse_caller.clone();
+//         handler.reimburse_caller = Arc::new(move |data, gas| old_handle(data, gas));
+//         handler
+//     }
+// }

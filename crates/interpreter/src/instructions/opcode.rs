@@ -35,12 +35,12 @@ pub type BoxedInstructionTableArc<'a, H> = Arc<BoxedInstructionTable<'a, H>>;
 /// Note that `Plain` variant gives us 10-20% faster Interpreter execution.
 ///
 /// Boxed variant can be used to wrap plain function pointer with closure.
-pub enum InstructionTables<'a, H> {
+pub enum InstructionTables<'a, H: Host> {
     Plain(InstructionTableArc<H>),
     Boxed(BoxedInstructionTableArc<'a, H>),
 }
 
-impl<'a, H> Clone for InstructionTables<'a, H> {
+impl<'a, H: Host> Clone for InstructionTables<'a, H> {
     fn clone(&self) -> Self {
         match self {
             Self::Plain(table) => Self::Plain(table.clone()),
@@ -95,7 +95,7 @@ pub fn make_boxed_instruction_table<'a, H, SPEC, FN>(
     outer: FN,
 ) -> BoxedInstructionTable<'a, H>
 where
-    H: Host + 'a,
+    H: Host,
     SPEC: Spec + 'static,
     FN: Fn(Instruction<H>) -> BoxedInstruction<'a, H>,
 {
