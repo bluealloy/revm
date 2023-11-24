@@ -45,9 +45,9 @@ checksum = "0942ffc6dcaadf03badf6e6a2d0228460359d5e34b57ccdc720b7382dfbd5ec5"
 
 [[package]]
 name = "alloy-primitives"
-version = "0.4.2"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a0628ec0ba5b98b3370bb6be17b12f23bfce8ee4ad83823325a20546d9b03b78"
+checksum = "f5def4b5e1bb8fe7ea37eeac1063246d4ef26f56cbdccf864a5a6bdcb80e91f4"
 dependencies = [
  "alloy-rlp",
  "arbitrary",
@@ -56,6 +56,7 @@ dependencies = [
  "const-hex",
  "derive_arbitrary",
  "derive_more",
+ "ethereum_ssz",
  "hex-literal",
  "itoa",
  "proptest",
@@ -1006,6 +1007,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "ethereum_ssz"
+version = "0.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e61ffea29f26e8249d35128a82ec8d3bd4fbc80179ea5f5e5e3daafef6a80fcb"
+dependencies = [
+ "ethereum-types",
+ "itertools",
+ "smallvec 1.11.2",
+]
+
+[[package]]
 name = "ethers-contract"
 version = "2.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1119,6 +1131,7 @@ version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "835c052cb0c08c1acf6ffd71c022172e18723949c8282f2b9f27efbc51e64534"
 dependencies = [
+ "arbitrary",
  "byteorder",
  "rand",
  "rustc-hex",
@@ -2513,9 +2526,9 @@ dependencies = [
 
 [[package]]
 name = "ruint"
-version = "1.10.1"
+version = "1.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95294d6e3a6192f3aabf91c38f56505a625aa495533442744185a36d75a790c4"
+checksum = "608a5726529f2f0ef81b8fde9873c4bb829d6b5b5ca6be4d97345ddf0749c825"
 dependencies = [
  "alloy-rlp",
  "arbitrary",
@@ -2524,6 +2537,7 @@ dependencies = [
  "bytes",
  "fastrlp",
  "num-bigint",
+ "num-traits",
  "parity-scale-codec",
  "primitive-types",
  "proptest",
@@ -2789,7 +2803,7 @@ checksum = "ca37e3e4d1b39afd7ff11ee4e947efae85adfddf4841787bfa47c470e96dc26d"
 dependencies = [
  "array-init",
  "serde",
- "smallvec",
+ "smallvec 0.6.14",
 ]
 
 [[package]]
@@ -2904,6 +2918,12 @@ checksum = "b97fcaeba89edba30f044a10c6a3cc39df9c3f17d7cd829dd1446cab35f890e0"
 dependencies = [
  "maybe-uninit",
 ]
+
+[[package]]
+name = "smallvec"
+version = "1.11.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4dccd0940a2dcdf68d092b8cbab7dc0ad8fa938bf95787e1b916b0e3d0e8e970"
 
 [[package]]
 name = "smol_str"
@@ -3354,6 +3374,7 @@ version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "76f64bba2c53b04fcab63c01a7d7427eadc821e3bc48c34dc9ba29c501164b52"
 dependencies = [
+ "arbitrary",
  "byteorder",
  "crunchy",
  "hex",
