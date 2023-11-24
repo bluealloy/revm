@@ -17,8 +17,8 @@ revm-precompile = { path = "../precompile", version = "2.2.0", default-features 
 auto_impl = { version = "1.1", default-features = false }
 
 # Optional
-serde = { version = "1.0", features = ["derive", "rc"], optional = true }
-serde_json = { version = "1.0", features = ["preserve_order"], optional = true }
+serde = { version = "1.0", default-features = false, features = ["derive", "rc"], optional = true }
+serde_json = { version = "1.0", default-features = false, optional = true }
 
 # ethersdb
 tokio = { version = "1.34", features = [

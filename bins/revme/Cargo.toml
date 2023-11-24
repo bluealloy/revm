@@ -16,15 +16,15 @@ indicatif = "0.17"
 plain_hasher = "0.2"
 revm = { path = "../../crates/revm", version = "3.5.0", default-features = false, features = [
     "ethersdb",
-    "std",
+    #"std",
     "serde",
     "c-kzg",
 ] }
 alloy-rlp = { version = "0.3", default-features = false, features = [
     "arrayvec",
 ] }
-serde = { version = "1.0", features = ["derive", "rc"] }
-serde_json = { version = "1.0", features = ["preserve_order"] }
+serde = { version = "1.0", default-features = false, features = ["derive", "rc"] }
+serde_json = { version = "1.0", default-features = false }
 structopt = "0.3"
 thiserror = "1.0"
 triehash = "0.8"
