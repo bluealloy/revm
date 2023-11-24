@@ -3,12 +3,9 @@
 //! They handle initial setup of the EVM, call loop and the final return of the EVM
 
 use crate::{
-    interpreter::{return_ok, return_revert, Gas, InstructionResult, SuccessOrHalt},
-    primitives::{
-        db::Database, EVMError, Env, ExecutionResult, Output, ResultAndState, Spec, SpecId::LONDON,
-        U256,
-    },
-    Context, EvmContext,
+    interpreter::{Gas, InstructionResult, SuccessOrHalt},
+    primitives::{db::Database, EVMError, ExecutionResult, Output, ResultAndState},
+    Context,
 };
 
 /// Main return handle, returns the output of the transaction.

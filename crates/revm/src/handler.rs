@@ -9,7 +9,7 @@ use revm_precompile::{Address, Bytes, B256};
 use crate::{
     interpreter::{Gas, InstructionResult},
     primitives::{db::Database, EVMError, EVMResultGeneric, Env, Output, ResultAndState, Spec},
-    CallStackFrame, Context, Evm,
+    CallStackFrame, Context,
 };
 use alloc::sync::Arc;
 use core::ops::Range;
@@ -70,7 +70,7 @@ pub type HostLogHandle<'a, EXT, DB> =
 ///
 /// After CANCUN hardfork original contract will stay the same but the value will
 /// be transfered to the target.
-pub type HostSelfdestruct<'a, EXT, DB> =
+pub type HostSelfdestructHandle<'a, EXT, DB> =
     Arc<dyn Fn(&mut Context<'_, EXT, DB>, Address, Address) -> Option<SelfDestructResult> + 'a>;
 
 /// End handle, takes result and state and returns final result.
@@ -136,7 +136,7 @@ pub struct Handler<'a, H: Host+'a, EXT, DB: Database> {
     /// Host log handle.
     pub host_log: HostLogHandle<'a, EXT, DB>,
     /// Host selfdestruct handle.
-    pub host_selfdestruct: HostSelfdestruct<'a, EXT, DB>,
+    pub host_selfdestruct: HostSelfdestructHandle<'a, EXT, DB>,
 }
 
 impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {

@@ -2,24 +2,22 @@ use crate::{
     db::Database,
     handler::Handler,
     handler::RegisterHandler,
-    inspector_instruction,
     interpreter::{
-        gas::initial_tx_gas,
-        opcode::{make_boxed_instruction_table, make_instruction_table, InstructionTables},
-        CallContext, CallInputs, CallScheme, CreateInputs, Host, Interpreter, InterpreterAction,
-        InterpreterResult, SelfDestructResult, SharedMemory, Transfer,
+        gas::initial_tx_gas, opcode::InstructionTables, CallContext, CallInputs, CallScheme,
+        CreateInputs, Host, Interpreter, InterpreterAction, InterpreterResult, SelfDestructResult,
+        SharedMemory, Transfer,
     },
     journaled_state::JournaledState,
     precompile::Precompiles,
     primitives::{
-        specification, Address, Bytecode, Bytes, EVMError, EVMResult, Env, InvalidTransaction, Log,
+        specification, Address, Bytecode, Bytes, EVMError, EVMResult, Env, InvalidTransaction,
         Output, Spec, SpecId::*, TransactTo, B256, U256,
     },
-    CallStackFrame, Context, EvmContext, FrameOrResult, Inspector,
+    CallStackFrame, Context, EvmContext, FrameOrResult,
 };
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use auto_impl::auto_impl;
-use core::{fmt, marker::PhantomData, ops::Range};
+use core::{fmt, marker::PhantomData};
 
 #[cfg(feature = "optimism")]
 use crate::optimism;
@@ -28,9 +26,11 @@ use crate::optimism;
 pub const CALL_STACK_LIMIT: u64 = 1024;
 
 pub struct Evm<'a, SPEC: Spec + 'static, EXT, DB: Database> {
+    /// Context of execution, containing both EVM and external context.
     pub context: Context<'a, EXT, DB>,
-    pub instruction_table: InstructionTables<'a, Self>,
+    /// Handler of EVM that contains all the logic.
     pub handler: Handler<'a, Self, EXT, DB>,
+    /// Phantom data
     _phantomdata: PhantomData<SPEC>,
 }
 
@@ -105,9 +105,9 @@ impl<'a, SPEC: Spec, DB: Database> Evm<'a, SPEC, DB> {
     }
 }
 
-impl<'a, SPEC: Spec + 'static, EXT: 'a, DB: Database> Evm<'a, SPEC, EXT, DB>
+impl<'a, SPEC: Spec, EXT, DB: Database> Evm<'a, SPEC, EXT, DB>
 where
-    EXT: RegisterHandler<'a, DB> + 'a,
+    EXT: RegisterHandler<'a, DB, EXT>,
 {
     pub fn new_with_spec(
         db: &'a mut DB,
@@ -123,19 +123,6 @@ where
                 .cloned()
                 .collect::<Vec<_>>(),
         );
-        // If T is present it should be a generic T that modifies handler.
-        // TODO move to inspector register.
-        // let instruction_table = if inspector.is_some() {
-        //     let instruction_table = make_boxed_instruction_table::<Self, SPEC, _>(
-        //         make_instruction_table::<Self, SPEC>(),
-        //         inspector_instruction,
-        //     );
-        //     InstructionTables::Boxed(Arc::new(instruction_table))
-        // } else {
-        //     InstructionTables::Plain(Arc::new(make_instruction_table::<Self, SPEC>()))
-        // };
-        let instruction_table =
-            InstructionTables::Plain(Arc::new(make_instruction_table::<Self, SPEC>()));
 
         // temporary here. Factory should create handler and register external handles.
         let mut handler = external.register_handler::<SPEC>(Handler::mainnet::<SPEC>());
@@ -159,7 +146,6 @@ where
                 },
                 external,
             },
-            instruction_table,
             handler,
             _phantomdata: PhantomData {},
         }
@@ -416,7 +402,7 @@ where
         let interpreter_result = match first_stack_frame {
             FrameOrResult::Frame(first_stack_frame) => {
                 created_address = first_stack_frame.created_address;
-                let table = self.instruction_table.clone();
+                let table = self.handler.instruction_table.clone();
                 match table {
                     InstructionTables::Plain(table) => self.run(&table, first_stack_frame),
                     InstructionTables::Boxed(table) => self.run(&table, first_stack_frame),
@@ -468,7 +454,7 @@ pub trait Transact<DBError> {
     fn transact(&mut self) -> EVMResult<DBError>;
 }
 
-impl<'a, SPEC: Spec + 'static, EXT: RegisterHandler<'a, DB> + 'a, DB: Database> Transact<DB::Error>
+impl<'a, SPEC: Spec + 'static, EXT: RegisterHandler<'a, DB, EXT>, DB: Database> Transact<DB::Error>
     for Evm<'a, SPEC, EXT, DB>
 {
     #[inline]
@@ -549,11 +535,10 @@ impl<'a, SPEC: Spec + 'static, EXT, DB: Database> Host for Evm<'a, SPEC, EXT, DB
 }
 
 /// Creates new EVM instance with erased types.
-pub fn new_evm<'a, EXT: RegisterHandler<'a, DB> + 'a, DB: Database>(
+pub fn new_evm<'a, EXT: RegisterHandler<'a, DB, EXT> + 'a, DB: Database>(
     env: &'a mut Env,
     db: &'a mut DB,
     external: EXT,
-    insp: Option<&'a mut dyn Inspector<DB>>,
 ) -> Box<dyn Transact<DB::Error> + 'a> {
     macro_rules! create_evm {
         ($spec:ident) => {
@@ -561,8 +546,6 @@ pub fn new_evm<'a, EXT: RegisterHandler<'a, DB> + 'a, DB: Database>(
                 db,
                 env,
                 external,
-                // TODO inspector
-                //insp,
                 Precompiles::new(revm_precompile::SpecId::from_spec_id($spec::SPEC_ID)).clone(),
             ))
         };

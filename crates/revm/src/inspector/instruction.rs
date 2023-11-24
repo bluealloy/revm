@@ -1,4 +1,7 @@
-use crate::{handler::InspectorHandle, Evm, Inspector};
+use crate::{
+    handler::{register::GetInspector, InspectorHandle},
+    Evm, Inspector,
+};
 use alloc::boxed::Box;
 use revm_interpreter::{
     opcode::{BoxedInstruction, Instruction},
@@ -7,7 +10,12 @@ use revm_interpreter::{
 };
 
 /// Outer closure that calls Inspector for every instruction.
-pub fn inspector_instruction<'a, SPEC: Spec + 'static, INSP: Inspector<DB>+'a, DB: Database>(
+pub fn inspector_instruction<
+    'a,
+    SPEC: Spec + 'static,
+    INSP: GetInspector<'a, DB> + 'a,
+    DB: Database,
+>(
     instruction: Instruction<Evm<'a, SPEC, InspectorHandle<'a, DB, INSP>, DB>>,
 ) -> BoxedInstruction<'a, Evm<'a, SPEC, InspectorHandle<'a, DB, INSP>, DB>> {
     Box::new(
@@ -20,6 +28,7 @@ pub fn inspector_instruction<'a, SPEC: Spec + 'static, INSP: Inspector<DB>+'a, D
             host.context
                 .external
                 .inspector
+                .get()
                 .step(interpreter, &mut host.context.evm);
             if interpreter.instruction_result != InstructionResult::Continue {
                 return;
@@ -34,6 +43,7 @@ pub fn inspector_instruction<'a, SPEC: Spec + 'static, INSP: Inspector<DB>+'a, D
             host.context
                 .external
                 .inspector
+                .get()
                 .step_end(interpreter, &mut host.context.evm);
         },
     )

@@ -1,16 +1,13 @@
 //! Mainnet related handlers.
 
-pub mod main;
 pub mod frames;
 pub mod host;
+pub mod main;
 
 use crate::{
-    interpreter::{return_ok, return_revert, Gas, InstructionResult, SuccessOrHalt},
-    primitives::{
-        db::Database, EVMError, Env, ExecutionResult, Output, ResultAndState, Spec, SpecId::LONDON,
-        U256,
-    },
-    Context, EvmContext,
+    interpreter::{return_ok, return_revert, Gas, InstructionResult},
+    primitives::{db::Database, EVMError, Env, Spec, SpecId::LONDON, U256},
+    Context,
 };
 
 /// Handle output of the transaction
