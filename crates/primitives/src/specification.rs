@@ -40,6 +40,10 @@ impl SpecId {
         Self::n(spec_id)
     }
 
+    pub fn is_enabled_in(&self, other: Self) -> bool {
+        Self::enabled(*self, other)
+    }
+
     #[inline]
     pub const fn enabled(our: SpecId, other: SpecId) -> bool {
         #[cfg(feature = "optimism")]

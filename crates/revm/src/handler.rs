@@ -8,7 +8,9 @@ use revm_precompile::{Address, Bytes, B256};
 
 use crate::{
     interpreter::{Gas, InstructionResult},
-    primitives::{db::Database, EVMError, EVMResultGeneric, Env, Output, ResultAndState, Spec},
+    primitives::{
+        db::Database, EVMError, EVMResultGeneric, Env, Output, ResultAndState, Spec, SpecId,
+    },
     CallStackFrame, Context,
 };
 use alloc::sync::Arc;
@@ -22,9 +24,8 @@ use revm_interpreter::{
 pub type CallReturnHandle<'a> = Arc<dyn Fn(&Env, InstructionResult, Gas) -> Gas + 'a>;
 
 /// Reimburse the caller with ethereum it didn't spent.
-type ReimburseCallerHandle<'a, EXT, DB> = Arc<
-    dyn Fn(&mut Context<'_, EXT, DB>, &Gas) -> EVMResultGeneric<(), <DB as Database>::Error> + 'a,
->;
+type ReimburseCallerHandle<'a, EXT, DB> =
+    Arc<dyn Fn(&mut Context<EXT, DB>, &Gas) -> EVMResultGeneric<(), <DB as Database>::Error> + 'a>;
 
 /// Reward beneficiary with transaction rewards.
 type RewardBeneficiaryHandle<'a, EXT, DB> = ReimburseCallerHandle<'a, EXT, DB>;
@@ -35,7 +36,7 @@ pub type CalculateGasRefundHandle<'a> = Arc<dyn Fn(&Env, &Gas) -> u64 + 'a>;
 /// Main return handle, takes state from journal and transforms internal result to external.
 pub type MainReturnHandle<'a, EXT, DB> = Arc<
     dyn Fn(
-            &mut Context<'_, EXT, DB>,
+            &mut Context<EXT, DB>,
             InstructionResult,
             Output,
             &Gas,
@@ -49,7 +50,7 @@ pub type MainReturnHandle<'a, EXT, DB> = Arc<
 pub type FrameReturnHandle<'a, EXT, DB> = Arc<
     dyn Fn(
             // context
-            &mut Context<'_, EXT, DB>,
+            &mut Context<EXT, DB>,
             // returned frame
             Box<CallStackFrame>,
             // parent frame if it exist.
@@ -64,14 +65,14 @@ pub type FrameReturnHandle<'a, EXT, DB> = Arc<
 
 /// Call to the host from Interpreter to save the log.
 pub type HostLogHandle<'a, EXT, DB> =
-    Arc<dyn Fn(&mut Context<'_, EXT, DB>, Address, Vec<B256>, Bytes) + 'a>;
+    Arc<dyn Fn(&mut Context<EXT, DB>, Address, Vec<B256>, Bytes) + 'a>;
 
 /// Call to the host from Interpreter to selfdestruct account.
 ///
 /// After CANCUN hardfork original contract will stay the same but the value will
 /// be transfered to the target.
 pub type HostSelfdestructHandle<'a, EXT, DB> =
-    Arc<dyn Fn(&mut Context<'_, EXT, DB>, Address, Address) -> Option<SelfDestructResult> + 'a>;
+    Arc<dyn Fn(&mut Context<EXT, DB>, Address, Address) -> Option<SelfDestructResult> + 'a>;
 
 /// End handle, takes result and state and returns final result.
 /// This will be called after all the other handlers.
@@ -79,7 +80,7 @@ pub type HostSelfdestructHandle<'a, EXT, DB> =
 /// It is useful for catching errors and returning them in a different way.
 pub type EndHandle<'a, EXT, DB> = Arc<
     dyn Fn(
-            &mut Context<'_, EXT, DB>,
+            &mut Context<EXT, DB>,
             Result<ResultAndState, EVMError<<DB as Database>::Error>>,
         ) -> Result<ResultAndState, EVMError<<DB as Database>::Error>>
         + 'a,
@@ -88,7 +89,7 @@ pub type EndHandle<'a, EXT, DB> = Arc<
 /// Handle sub call.
 pub type FrameSubCallHandle<'a, EXT, DB> = Arc<
     dyn Fn(
-            &mut Context<'_, EXT, DB>,
+            &mut Context<EXT, DB>,
             Box<CallInputs>,
             &mut CallStackFrame,
             &mut SharedMemory,
@@ -100,17 +101,30 @@ pub type FrameSubCallHandle<'a, EXT, DB> = Arc<
 /// Handle sub create.
 pub type FrameSubCreateHandle<'a, EXT, DB> = Arc<
     dyn Fn(
-            &mut Context<'_, EXT, DB>,
+            &mut Context<EXT, DB>,
             &mut CallStackFrame,
             Box<CreateInputs>,
         ) -> Option<Box<CallStackFrame>>
         + 'a,
 >;
 
+/// Handle that validates env.
+pub type ValidateEnvHandle<'a, DB> =
+    Arc<dyn Fn(&Env) -> Result<(), EVMError<<DB as Database>::Error>> + 'a>;
+
+/// Initial gas calculation handle
+pub type InitialTxGasHandle<'a> = Arc<dyn Fn(&Env) -> u64 + 'a>;
+
 /// Handler acts as a proxy and allow to define different behavior for different
 /// sections of the code. This allows nice integration of different chains or
 /// to disable some mainnet behavior.
-pub struct Handler<'a, H: Host+'a, EXT, DB: Database> {
+pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
+    /// Specification ID.
+    pub spec_id: SpecId,
+    /// Initial tx gas.
+    pub initial_tx_gas: InitialTxGasHandle<'a>,
+    /// Validate Env
+    pub validate_env: ValidateEnvHandle<'a, DB>,
     /// Instruction table type.
     pub instruction_table: InstructionTables<'a, H>,
     // Uses env, call result and returned gas from the call to determine the gas
@@ -141,8 +155,11 @@ pub struct Handler<'a, H: Host+'a, EXT, DB: Database> {
 
 impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
     /// Handler for the mainnet
-    pub fn mainnet<SPEC: Spec + 'a>() -> Self {
+    pub fn mainnet<SPEC: Spec + 'static>() -> Self {
         Self {
+            spec_id: SPEC::SPEC_ID,
+            initial_tx_gas: Arc::new(mainnet::preexecution::initial_tx_gas::<SPEC>),
+            validate_env: Arc::new(mainnet::preexecution::validate_env::<SPEC, DB>),
             call_return: Arc::new(mainnet::handle_call_return::<SPEC>),
             calculate_gas_refund: Arc::new(mainnet::calculate_gas_refund::<SPEC>),
             reimburse_caller: Arc::new(mainnet::handle_reimburse_caller::<SPEC, EXT, DB>),
@@ -160,25 +177,6 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
         }
     }
 
-    /// Handler for the optimism
-    #[cfg(feature = "optimism")]
-    pub fn optimism<SPEC: Spec>() -> Self {
-        Self {
-            call_return: optimism::handle_call_return::<SPEC>,
-            calculate_gas_refund: optimism::calculate_gas_refund::<SPEC>,
-            // we reinburse caller the same was as in mainnet.
-            // Refund is calculated differently then mainnet.
-            reimburse_caller: mainnet::handle_reimburse_caller::<SPEC, DB>,
-            reward_beneficiary: optimism::reward_beneficiary::<SPEC, DB>,
-            // In case of halt of deposit transaction return Error.
-            main_return: optimism::main_return::<SPEC, DB>,
-            end: optimism::end_handle::<SPEC, DB>,
-            frame_return: Arc::new(mainnet::frames::handle_frame_return::<SPEC, EXT, DB>),
-            host_log: Arc::new(mainnet::host::handle_host_log::<SPEC, EXT, DB>),
-            host_selfdestruct: Arc::new(mainnet::host::handle_selfdestruct::<SPEC, EXT, DB>),
-        }
-    }
-
     /// Handle call return, depending on instruction result gas will be reimbursed or not.
     pub fn call_return(&self, env: &Env, call_result: InstructionResult, returned_gas: Gas) -> Gas {
         (self.call_return)(env, call_result, returned_gas)
@@ -187,7 +185,7 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
     /// Reimburse the caller with gas that were not spend.
     pub fn reimburse_caller(
         &self,
-        context: &mut Context<'_, EXT, DB>,
+        context: &mut Context<EXT, DB>,
         gas: &Gas,
     ) -> Result<(), EVMError<DB::Error>> {
         (self.reimburse_caller)(context, gas)
@@ -201,7 +199,7 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
     /// Reward beneficiary
     pub fn reward_beneficiary(
         &self,
-        context: &mut Context<'_, EXT, DB>,
+        context: &mut Context<EXT, DB>,
         gas: &Gas,
     ) -> Result<(), EVMError<DB::Error>> {
         (self.reward_beneficiary)(context, gas)
@@ -210,7 +208,7 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
     /// Main return.
     pub fn main_return(
         &self,
-        context: &mut Context<'_, EXT, DB>,
+        context: &mut Context<EXT, DB>,
         call_result: InstructionResult,
         output: Output,
         gas: &Gas,
@@ -221,7 +219,7 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
     /// End handler.
     pub fn end(
         &self,
-        context: &mut Context<'_, EXT, DB>,
+        context: &mut Context<EXT, DB>,
         end_output: Result<ResultAndState, EVMError<DB::Error>>,
     ) -> Result<ResultAndState, EVMError<DB::Error>> {
         (self.end)(context, end_output)
@@ -230,7 +228,7 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
     /// Call frame sub call handler.
     pub fn frame_sub_call(
         &self,
-        context: &mut Context<'_, EXT, DB>,
+        context: &mut Context<EXT, DB>,
         inputs: Box<CallInputs>,
         curent_stack_frame: &mut CallStackFrame,
         shared_memory: &mut SharedMemory,
@@ -247,7 +245,7 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
 
     pub fn frame_sub_create(
         &self,
-        context: &mut Context<'_, EXT, DB>,
+        context: &mut Context<EXT, DB>,
         curent_stack_frame: &mut CallStackFrame,
         inputs: Box<CreateInputs>,
     ) -> Option<Box<CallStackFrame>> {
@@ -257,7 +255,7 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
     /// Frame return
     pub fn frame_return(
         &self,
-        context: &mut Context<'_, EXT, DB>,
+        context: &mut Context<EXT, DB>,
         child_stack_frame: Box<CallStackFrame>,
         parent_stack_frame: Option<&mut Box<CallStackFrame>>,
         shared_memory: &mut SharedMemory,
@@ -275,7 +273,7 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
     /// Call host log handle.
     pub fn host_log(
         &self,
-        context: &mut Context<'_, EXT, DB>,
+        context: &mut Context<EXT, DB>,
         address: Address,
         topics: Vec<B256>,
         data: Bytes,
@@ -286,10 +284,20 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
     /// Call host selfdestruct handle.
     pub fn host_selfdestruct(
         &self,
-        context: &mut Context<'_, EXT, DB>,
+        context: &mut Context<EXT, DB>,
         address: Address,
         target: Address,
     ) -> Option<SelfDestructResult> {
         (self.host_selfdestruct)(context, address, target)
+    }
+
+    /// Validate env.
+    pub fn validate_env(&self, env: &Env) -> Result<(), EVMError<DB::Error>> {
+        (self.validate_env)(env)
+    }
+
+    /// Initial gas
+    pub fn initial_tx_gas(&self, env: &Env) -> u64 {
+        (self.initial_tx_gas)(env)
     }
 }

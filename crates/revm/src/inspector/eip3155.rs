@@ -49,13 +49,13 @@ impl TracerEip3155 {
 }
 
 impl<DB: Database> Inspector<DB> for TracerEip3155 {
-    fn initialize_interp(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
+    fn initialize_interp(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
         self.gas_inspector.initialize_interp(interp, context);
     }
 
     // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
     // all other information can be obtained from interp.
-    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
+    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
         self.gas_inspector.step(interp, context);
         self.stack = interp.stack.clone();
         self.pc = interp.program_counter();
@@ -64,7 +64,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         self.gas = interp.gas.remaining();
     }
 
-    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
+    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
         self.gas_inspector.step_end(interp, context);
         if self.skip {
             self.skip = false;
@@ -76,7 +76,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 
     fn call(
         &mut self,
-        _context: &mut EvmContext<'_, DB>,
+        _context: &mut EvmContext<DB>,
         _inputs: &mut CallInputs,
     ) -> Option<(InterpreterResult, Range<usize>)> {
         None
@@ -84,7 +84,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 
     fn call_end(
         &mut self,
-        context: &mut EvmContext<'_, DB>,
+        context: &mut EvmContext<DB>,
         result: InterpreterResult,
     ) -> InterpreterResult {
         let result = self.gas_inspector.call_end(context, result);
@@ -105,7 +105,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 
     fn create(
         &mut self,
-        _context: &mut EvmContext<'_, DB>,
+        _context: &mut EvmContext<DB>,
         _inputs: &mut CreateInputs,
     ) -> Option<(InterpreterResult, Option<Address>)> {
         None
@@ -113,7 +113,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 
     fn create_end(
         &mut self,
-        context: &mut EvmContext<'_, DB>,
+        context: &mut EvmContext<DB>,
         result: InterpreterResult,
         address: Option<Address>,
     ) -> (InterpreterResult, Option<Address>) {

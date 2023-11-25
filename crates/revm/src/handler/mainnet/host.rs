@@ -8,7 +8,7 @@ use alloc::vec::Vec;
 
 /// Handle host log call.
 pub fn handle_host_log<SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<'_, EXT, DB>,
+    context: &mut Context<EXT, DB>,
     address: Address,
     topics: Vec<B256>,
     data: Bytes,
@@ -23,7 +23,7 @@ pub fn handle_host_log<SPEC: Spec, EXT, DB: Database>(
 
 /// Handle host selfdestruct call.
 pub fn handle_selfdestruct<SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<'_, EXT, DB>,
+    context: &mut Context<EXT, DB>,
     address: Address,
     target: Address,
 ) -> Option<SelfDestructResult> {

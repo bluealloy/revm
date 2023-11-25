@@ -207,11 +207,12 @@ impl JournaledState {
     /// Panics if the caller is not loaded inside of the EVM state.
     /// This is should have been done inside `create_inner`.
     #[inline]
-    pub fn create_account_checkpoint<SPEC: Spec>(
+    pub fn create_account_checkpoint(
         &mut self,
         caller: Address,
         address: Address,
         balance: U256,
+        spec_id: SpecId,
     ) -> Result<JournalCheckpoint, InstructionResult> {
         // Enter subroutine
         let checkpoint = self.checkpoint();
@@ -260,7 +261,7 @@ impl JournaledState {
         account.info.balance = new_balance;
 
         // EIP-161: State trie clearing (invariant-preserving alternative)
-        if SPEC::enabled(SPURIOUS_DRAGON) {
+        if spec_id.is_enabled_in(SPURIOUS_DRAGON) {
             // nonce is going to be reset to zero in AccountCreated journal entry.
             account.info.nonce = 1;
         }

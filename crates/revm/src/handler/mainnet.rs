@@ -1,5 +1,7 @@
 //! Mainnet related handlers.
 
+
+pub mod preexecution;
 pub mod frames;
 pub mod host;
 pub mod main;
@@ -37,7 +39,7 @@ pub fn handle_call_return<SPEC: Spec>(
 
 #[inline]
 pub fn handle_reimburse_caller<SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<'_, EXT, DB>,
+    context: &mut Context<EXT, DB>,
     gas: &Gas,
 ) -> Result<(), EVMError<DB::Error>> {
     let caller = context.evm.env.tx.caller;
@@ -47,7 +49,7 @@ pub fn handle_reimburse_caller<SPEC: Spec, EXT, DB: Database>(
     let (caller_account, _) = context
         .evm
         .journaled_state
-        .load_account(caller, context.evm.db)
+        .load_account(caller, &mut context.evm.db)
         .map_err(EVMError::Database)?;
 
     caller_account.info.balance = caller_account
@@ -61,7 +63,7 @@ pub fn handle_reimburse_caller<SPEC: Spec, EXT, DB: Database>(
 /// Reward beneficiary with gas fee.
 #[inline]
 pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<'_, EXT, DB>,
+    context: &mut Context<EXT, DB>,
     gas: &Gas,
 ) -> Result<(), EVMError<DB::Error>> {
     let beneficiary = context.evm.env.block.coinbase;
@@ -78,7 +80,7 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
     let (coinbase_account, _) = context
         .evm
         .journaled_state
-        .load_account(beneficiary, context.evm.db)
+        .load_account(beneficiary, &mut context.evm.db)
         .map_err(EVMError::Database)?;
 
     coinbase_account.mark_touch();

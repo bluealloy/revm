@@ -11,7 +11,7 @@ use crate::{
 /// Main return handle, returns the output of the transaction.
 #[inline]
 pub fn main_return<EXT, DB: Database>(
-    context: &mut Context<'_, EXT, DB>,
+    context: &mut Context<EXT, DB>,
     call_result: InstructionResult,
     output: Output,
     gas: &Gas,
@@ -57,7 +57,7 @@ pub fn main_return<EXT, DB: Database>(
 /// Mainnet end handle does not change the output.
 #[inline]
 pub fn end_handle<EXT, DB: Database>(
-    _context: &mut Context<'_, EXT, DB>,
+    _context: &mut Context<EXT, DB>,
     evm_output: Result<ResultAndState, EVMError<DB::Error>>,
 ) -> Result<ResultAndState, EVMError<DB::Error>> {
     evm_output

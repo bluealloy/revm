@@ -7,8 +7,8 @@ use crate::{
     journaled_state::JournaledState,
     precompile::{Precompile, Precompiles},
     primitives::{
-        keccak256, Address, AnalysisKind, Bytecode, Bytes, EVMError, Env, Spec, SpecId::*, B256,
-        U256,
+        keccak256, Address, AnalysisKind, Bytecode, Bytes, EVMError, Env, Spec, SpecId, SpecId::*,
+        B256, U256,
     },
     CallStackFrame, FrameOrResult, CALL_STACK_LIMIT,
 };
@@ -16,23 +16,23 @@ use alloc::boxed::Box;
 use core::ops::Range;
 
 /// Main Context structure that contains both EvmContext and external contexts.
-pub struct Context<'a, EXT, DB: Database> {
+pub struct Context<EXT, DB: Database> {
     /// Evm Context.
-    pub evm: EvmContext<'a, DB>,
+    pub evm: EvmContext<DB>,
     /// External generic code.
     pub external: EXT,
 }
 
 /// EVM Data contains all the data that EVM needs to execute.
 #[derive(Debug)]
-pub struct EvmContext<'a, DB: Database> {
+pub struct EvmContext<DB: Database> {
     /// EVM Environment contains all the information about config, block and transaction that
     /// evm needs.
-    pub env: &'a mut Env,
+    pub env: Box<Env>,
     /// EVM State with journaling support.
     pub journaled_state: JournaledState,
     /// Database to load data from.
-    pub db: &'a mut DB,
+    pub db: DB,
     /// Error that happened during execution.
     pub error: Option<DB::Error>,
     /// Precompiles that are available for evm.
@@ -42,7 +42,7 @@ pub struct EvmContext<'a, DB: Database> {
     pub l1_block_info: Option<crate::optimism::L1BlockInfo>,
 }
 
-impl<'a, DB: Database> EvmContext<'a, DB> {
+impl<'a, DB: Database> EvmContext<DB> {
     /// Load access list for berlin hard fork.
     ///
     /// Loading of accounts/storages is needed to make them warm.
@@ -50,7 +50,7 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
     pub fn load_access_list(&mut self) -> Result<(), EVMError<DB::Error>> {
         for (address, slots) in self.env.tx.access_list.iter() {
             self.journaled_state
-                .initial_account_load(*address, slots, self.db)
+                .initial_account_load(*address, slots, &mut self.db)
                 .map_err(EVMError::Database)?;
         }
         Ok(())
@@ -58,7 +58,7 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
 
     /// Return environment.
     pub fn env(&mut self) -> &mut Env {
-        self.env
+        &mut self.env
     }
 
     /// Fetch block hash from database.
@@ -72,7 +72,7 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
     /// Load account and return flags (is_cold, exists)
     pub fn load_account(&mut self, address: Address) -> Option<(bool, bool)> {
         self.journaled_state
-            .load_account_exist(address, self.db)
+            .load_account_exist(address, &mut self.db)
             .map_err(|e| self.error = Some(e))
             .ok()
     }
@@ -90,7 +90,7 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
     pub fn code(&mut self, address: Address) -> Option<(Bytecode, bool)> {
         let (acc, is_cold) = self
             .journaled_state
-            .load_code(address, self.db)
+            .load_code(address, &mut self.db)
             .map_err(|e| self.error = Some(e))
             .ok()?;
         Some((acc.info.code.clone().unwrap(), is_cold))
@@ -114,7 +114,7 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
     pub fn sload(&mut self, address: Address, index: U256) -> Option<(U256, bool)> {
         // account is always warm. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
         self.journaled_state
-            .sload(address, index, self.db)
+            .sload(address, index, &mut self.db)
             .map_err(|e| self.error = Some(e))
             .ok()
     }
@@ -127,7 +127,7 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
         value: U256,
     ) -> Option<(U256, U256, U256, bool)> {
         self.journaled_state
-            .sstore(address, index, value, self.db)
+            .sstore(address, index, value, &mut self.db)
             .map_err(|e| self.error = Some(e))
             .ok()
     }
@@ -143,7 +143,7 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
     }
 
     /// Make create frame.
-    pub fn make_create_frame<SPEC: Spec>(&mut self, inputs: &CreateInputs) -> FrameOrResult {
+    pub fn make_create_frame(&mut self, spec_id: SpecId, inputs: &CreateInputs) -> FrameOrResult {
         // Prepare crate.
         let gas = Gas::new(inputs.gas_limit);
 
@@ -185,7 +185,7 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
         // Load account so it needs to be marked as warm for access list.
         if self
             .journaled_state
-            .load_account(created_address, self.db)
+            .load_account(created_address, &mut self.db)
             .map_err(|e| self.error = Some(e))
             .is_err()
         {
@@ -193,10 +193,11 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
         }
 
         // create account, transfer funds and make the journal checkpoint.
-        let checkpoint = match self.journaled_state.create_account_checkpoint::<SPEC>(
+        let checkpoint = match self.journaled_state.create_account_checkpoint(
             inputs.caller,
             created_address,
             inputs.value,
+            spec_id,
         ) {
             Ok(checkpoint) => checkpoint,
             Err(e) => {
@@ -245,7 +246,10 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
             return return_result(InstructionResult::CallTooDeep);
         }
 
-        let account = match self.journaled_state.load_code(inputs.contract, self.db) {
+        let account = match self
+            .journaled_state
+            .load_code(inputs.contract, &mut self.db)
+        {
             Ok((account, _)) => account,
             Err(e) => {
                 self.error = Some(e);
@@ -269,7 +273,7 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
             &inputs.transfer.source,
             &inputs.transfer.target,
             inputs.transfer.value,
-            self.db,
+            &mut self.db,
         ) {
             //println!("transfer error");
             self.journaled_state.checkpoint_revert(checkpoint);

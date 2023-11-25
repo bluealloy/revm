@@ -1,9 +1,9 @@
 use crate::{
     db::{Database, DatabaseCommit, DatabaseRef},
     evm::{new_evm, Transact},
-    handler::MainnetHandle,
+    handler::{InspectorHandle, MainnetHandle, RegisterHandler},
     primitives::{db::WrapDatabaseRef, EVMError, EVMResult, Env, ExecutionResult, ResultAndState},
-    Inspector,
+    Evm, Inspector,
 };
 
 /// Struct that takes Database and enabled transact to update state directly to database.
@@ -36,7 +36,7 @@ use crate::{
 ///
 #[derive(Clone, Debug)]
 pub struct EvmFactory<DB> {
-    pub env: Env,
+    pub env: Box<Env>,
     pub db: Option<DB>,
 }
 
@@ -70,110 +70,152 @@ impl<DB: Database + DatabaseCommit> EvmFactory<DB> {
 }
 
 impl<DB: Database> EvmFactory<DB> {
+    pub fn execute_evm<
+        'a,
+        OUT,
+        EXT: RegisterHandler<'a, DB, EXT> + 'a,
+        FN: Fn(&mut Evm<'a, EXT, DB>) -> OUT,
+    >(
+        &mut self,
+        external: EXT,
+        exec: FN,
+    ) -> OUT
+    where
+        DB: 'a,
+    {
+        let Some(db) = self.db.take() else {
+            panic!("Database needs to be set");
+        };
+        let env = core::mem::take(&mut self.env);
+        let mut evm = new_evm::<EXT, DB>(env, db, external);
+        let res = exec(&mut evm);
+
+        let (db, env) = evm.into_db_ext();
+        self.env = env;
+        self.db = Some(db);
+
+        res
+    }
     /// Do checks that could make transaction fail before call/create
     pub fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
-        if let Some(db) = self.db.as_mut() {
-            new_evm(&mut self.env, db, MainnetHandle::default()).preverify_transaction()
-        } else {
-            panic!("Database needs to be set");
-        }
+        self.execute_evm(MainnetHandle::default(), |evm| evm.preverify_transaction())
     }
 
     /// Skip preverification steps and execute transaction without writing to DB, return change
     /// state.
     pub fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
-        if let Some(db) = self.db.as_mut() {
-            new_evm(&mut self.env, db, MainnetHandle::default()).transact_preverified()
-        } else {
-            panic!("Database needs to be set");
-        }
+        self.execute_evm(MainnetHandle::default(), |evm| evm.transact_preverified())
     }
 
     /// Execute transaction without writing to DB, return change state.
     pub fn transact(&mut self) -> EVMResult<DB::Error> {
-        if let Some(db) = self.db.as_mut() {
-            new_evm::<_, DB>(&mut self.env, db, MainnetHandle::default()).transact()
-        } else {
-            panic!("Database needs to be set");
-        }
+        self.execute_evm(MainnetHandle::default(), |evm| evm.transact())
     }
 
     /// Execute transaction with given inspector, without wring to DB. Return change state.
-    pub fn inspect<INSP: Inspector<DB>>(&mut self, mut inspector: INSP) -> EVMResult<DB::Error> {
-        if let Some(db) = self.db.as_mut() {
-            new_evm(
-                &mut self.env,
-                db,
-                MainnetHandle::default(),
-                //Some(&mut inspector),
-            )
-            .transact()
-        } else {
-            panic!("Database needs to be set");
-        }
+    pub fn inspect<INSP: Inspector<DB>>(&mut self, inspector: INSP) -> EVMResult<DB::Error> {
+        let insp = InspectorHandle::new(inspector);
+        self.execute_evm(insp, |evm| evm.transact())
     }
 }
 
-impl<'a, DB: DatabaseRef> EvmFactory<DB> {
+impl<DB: DatabaseRef> EvmFactory<DB> {
+    pub fn execute_evm_ref<
+        'a,
+        OUT:'a,
+        EXT: RegisterHandler<'a, WrapDatabaseRef<&'a DB>, EXT> + 'a,
+        FN: Fn(&mut Evm<'a, EXT, WrapDatabaseRef<&'a DB>>) -> OUT,
+    >(
+        &'a self,
+        external: EXT,
+        exec: FN,
+    ) -> OUT
+    where
+        DB: 'a,
+    {
+        //unimplemented!();
+        let Some(db) = self.db.as_ref() else {
+            panic!("Database needs to be set");
+        };
+        let env = self.env.clone();
+        let mut evm = new_evm::<EXT, WrapDatabaseRef<&DB>>(env, WrapDatabaseRef(db), external);
+        let res = exec(&mut evm);
+
+        let (db, env) = evm.into_db_ext();
+        //self.env = env;
+
+        res
+    }
     /// Do checks that could make transaction fail before call/create
     pub fn preverify_transaction_ref(&self) -> Result<(), EVMError<DB::Error>> {
-        if let Some(db) = self.db.as_ref() {
-            new_evm(
-                &mut self.env.clone(),
-                &mut WrapDatabaseRef(db),
-                MainnetHandle::default(),
-            )
-            .preverify_transaction()
-        } else {
-            panic!("Database needs to be set");
-        }
+        // if let Some(db) = self.db.as_ref() {
+        //     new_evm(
+        //         &mut self.env.clone(),
+        //         &mut WrapDatabaseRef(db),
+        //         MainnetHandle::default(),
+        //     )
+        //     .preverify_transaction()
+        // } else {
+        //     panic!("Database needs to be set");
+        // }
+
+        self.execute_evm_ref(MainnetHandle::default(), |mut evm| {
+            evm.preverify_transaction()
+        })
     }
 
     /// Skip preverification steps and execute transaction
     /// without writing to DB, return change state.
     pub fn transact_preverified_ref(&self) -> EVMResult<DB::Error> {
-        if let Some(db) = self.db.as_ref() {
-            new_evm::<MainnetHandle, _>(
-                &mut self.env.clone(),
-                &mut WrapDatabaseRef(db),
-                MainnetHandle::default(),
-            )
-            .transact_preverified()
-        } else {
-            panic!("Database needs to be set");
-        }
+        // if let Some(db) = self.db.as_ref() {
+        //     new_evm::<MainnetHandle, _>(
+        //         &mut self.env.clone(),
+        //         &mut WrapDatabaseRef(db),
+        //         MainnetHandle::default(),
+        //     )
+        //     .transact_preverified()
+        // } else {
+        //     panic!("Database needs to be set");
+        // }
+
+        self.execute_evm_ref(MainnetHandle::default(), |mut evm| {
+            evm.transact_preverified()
+        })
     }
 
     /// Execute transaction without writing to DB, return change state.
     pub fn transact_ref(&self) -> EVMResult<DB::Error> {
-        if let Some(db) = self.db.as_ref() {
-            new_evm::<MainnetHandle, _>(
-                &mut self.env.clone(),
-                &mut WrapDatabaseRef(db),
-                MainnetHandle::default(),
-            )
-            .transact()
-        } else {
-            panic!("Database needs to be set");
-        }
+        // if let Some(db) = self.db.as_ref() {
+        //     new_evm::<MainnetHandle, _>(
+        //         &mut self.env.clone(),
+        //         &mut WrapDatabaseRef(db),
+        //         MainnetHandle::default(),
+        //     )
+        //     .transact()
+        // } else {
+        //     panic!("Database needs to be set");
+        // }
+        self.execute_evm_ref(MainnetHandle::default(), |mut evm| evm.transact())
     }
 
     /// Execute transaction with given inspector, without wring to DB. Return change state.
-    pub fn inspect_ref<I: Inspector<WrapDatabaseRef<&'a DB>>>(
+    pub fn inspect_ref<'a, I: Inspector<WrapDatabaseRef<&'a DB>> + 'a>(
         &'a self,
-        mut inspector: I,
+        inspector: I,
     ) -> EVMResult<DB::Error> {
-        if let Some(db) = self.db.as_ref() {
-            new_evm(
-                &mut self.env.clone(),
-                &mut WrapDatabaseRef(db),
-                MainnetHandle::default(),
-                //Some(&mut inspector),
-            )
-            .transact()
-        } else {
-            panic!("Database needs to be set");
-        }
+        // if let Some(db) = self.db.as_ref() {
+        //     new_evm(
+        //         &mut self.env.clone(),
+        //         &mut WrapDatabaseRef(db),
+        //         InspectorHandle::new(inspector),
+        //     )
+        //     .transact()
+        // } else {
+        //     panic!("Database needs to be set");
+        // }
+
+        let insp = InspectorHandle::new(inspector);
+        self.execute_evm_ref(insp, |mut evm| evm.transact())
     }
 }
 
@@ -184,7 +226,7 @@ impl<DB> EvmFactory<DB> {
     }
 
     /// Creates a new [EVM] instance with the given environment.
-    pub fn with_env(env: Env) -> Self {
+    pub fn with_env(env: Box<Env>) -> Self {
         Self { env, db: None }
     }
 

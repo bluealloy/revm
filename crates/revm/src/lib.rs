@@ -10,10 +10,11 @@ compile_error!("`with-serde` feature has been renamed to `serde`.");
 #[macro_use]
 extern crate alloc;
 
-pub mod db;
-mod evm_factory;
 mod context;
+pub mod db;
 mod evm;
+mod evm_builder;
+mod evm_factory;
 mod frame;
 pub mod handler;
 mod inspector;
@@ -23,15 +24,16 @@ mod journaled_state;
 pub mod optimism;
 
 pub type DummyStateDB = InMemoryDB;
+pub use context::{Context, EvmContext};
 #[cfg(feature = "std")]
 pub use db::{
     CacheState, DBBox, State, StateBuilder, StateDBBox, TransitionAccount, TransitionState,
 };
 pub use db::{Database, DatabaseCommit, DatabaseRef, InMemoryDB};
-pub use evm_factory::{new, EvmFactory};
-pub use context::{EvmContext,Context};
 pub use evm::{new_evm, Evm, Transact, CALL_STACK_LIMIT};
-pub use frame::{CallStackFrame,FrameOrResult};
+//pub use evm_builder::EvmBuilder;
+pub use evm_factory::{new, EvmFactory};
+pub use frame::{CallStackFrame, FrameOrResult};
 pub use journaled_state::{JournalCheckpoint, JournalEntry, JournaledState};
 
 // reexport `revm_precompiles`

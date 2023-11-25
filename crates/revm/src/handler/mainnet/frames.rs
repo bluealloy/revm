@@ -9,7 +9,7 @@ use core::ops::Range;
 
 /// Handle frame return.
 pub fn handle_frame_return<SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<'_, EXT, DB>,
+    context: &mut Context<EXT, DB>,
     child_stack_frame: Box<CallStackFrame>,
     parent_stack_frame: Option<&mut Box<CallStackFrame>>,
     shared_memory: &mut SharedMemory,
@@ -47,7 +47,7 @@ pub fn handle_frame_return<SPEC: Spec, EXT, DB: Database>(
 
 /// Handle frame sub call.
 pub fn handle_frame_sub_call<SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<'_, EXT, DB>,
+    context: &mut Context<EXT, DB>,
     inputs: Box<CallInputs>,
     curent_stack_frame: &mut CallStackFrame,
     shared_memory: &mut SharedMemory,
@@ -71,11 +71,11 @@ pub fn handle_frame_sub_call<SPEC: Spec, EXT, DB: Database>(
 
 /// Handle frame sub create.
 pub fn handle_frame_sub_create<SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<'_, EXT, DB>,
+    context: &mut Context<EXT, DB>,
     curent_stack_frame: &mut CallStackFrame,
     inputs: Box<CreateInputs>,
 ) -> Option<Box<CallStackFrame>> {
-    match context.evm.make_create_frame::<SPEC>(&inputs) {
+    match context.evm.make_create_frame(SPEC::SPEC_ID, &inputs) {
         FrameOrResult::Frame(new_frame) => Some(new_frame),
         FrameOrResult::Result(result) => {
             // insert result of the failed creation of create CallStackFrame.

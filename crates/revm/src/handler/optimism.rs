@@ -12,6 +12,28 @@ use crate::{
 };
 use core::ops::Mul;
 
+pub struct OptimismHandle {}
+
+impl<'a, DB: Database> RegisterHandler<'a, DB, ()> for OptimismHandle {
+    fn register_handler<SPEC: Spec>(
+        &self,
+        mut handler: Handler<'a, Evm<'a, SPEC, (), DB>, (), DB>,
+    ) -> Handler<'a, Evm<'a, SPEC, (), DB>, (), DB>
+    where
+        DB: 'a,
+        (): Sized,
+    {
+        handler.call_return = Arc::new(optimism::handle_call_return::<SPEC>);
+        handler.calculate_gas_refund = Arc::new(optimism::calculate_gas_refund::<SPEC>);
+        // we reinburse caller the same was as in mainnet.
+        // Refund is calculated differently then mainnet.
+        handler.reward_beneficiary = Arc::new(reward_beneficiary::<SPEC, DB>);
+        // In case of halt of deposit transaction return Error.
+        handler.main_return = Arc::new(optimism::main_return::<SPEC, DB>);
+        handler.end = Arc::new(optimism::end_handle::<SPEC, DB>);
+    }
+}
+
 /// Handle output of the transaction
 #[inline]
 pub fn handle_call_return<SPEC: Spec>(
@@ -92,7 +114,7 @@ pub fn calculate_gas_refund<SPEC: Spec>(env: &Env, gas: &Gas) -> u64 {
 /// Reward beneficiary with gas fee.
 #[inline]
 pub fn reward_beneficiary<SPEC: Spec, DB: Database>(
-    context: &mut EvmContext<'_, DB>,
+    context: &mut EvmContext<DB>,
     gas: &Gas,
 ) -> Result<(), EVMError<DB::Error>> {
     let is_deposit = context.env.cfg.optimism && context.env.tx.optimism.source_hash.is_some();
@@ -146,7 +168,7 @@ pub fn reward_beneficiary<SPEC: Spec, DB: Database>(
 /// Main return handle, returns the output of the transaction.
 #[inline]
 pub fn main_return<SPEC: Spec, DB: Database>(
-    context: &mut EvmContext<'_, DB>,
+    context: &mut EvmContext<DB>,
     call_result: InstructionResult,
     output: Output,
     gas: &Gas,
@@ -171,7 +193,7 @@ pub fn main_return<SPEC: Spec, DB: Database>(
 /// Deposit transaction can't be reverted and is always successful.
 #[inline]
 pub fn end_handle<SPEC: Spec, DB: Database>(
-    context: &mut EvmContext<'_, DB>,
+    context: &mut EvmContext<DB>,
     evm_output: Result<ResultAndState, EVMError<DB::Error>>,
 ) -> Result<ResultAndState, EVMError<DB::Error>> {
     evm_output.or_else(|err| {

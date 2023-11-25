@@ -18,6 +18,7 @@ use crate::{
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use auto_impl::auto_impl;
 use core::{fmt, marker::PhantomData};
+use specification::SpecId;
 
 #[cfg(feature = "optimism")]
 use crate::optimism;
@@ -25,18 +26,17 @@ use crate::optimism;
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
 
-pub struct Evm<'a, SPEC: Spec + 'static, EXT, DB: Database> {
+pub struct Evm<'a, EXT, DB: Database> {
     /// Context of execution, containing both EVM and external context.
-    pub context: Context<'a, EXT, DB>,
+    pub context: Context<EXT, DB>,
     /// Handler of EVM that contains all the logic.
     pub handler: Handler<'a, Self, EXT, DB>,
-    /// Phantom data
-    _phantomdata: PhantomData<SPEC>,
+    /// Specification id.
+    pub spec_id: SpecId,
 }
 
-impl<SPEC, EXT, DB> fmt::Debug for Evm<'_, SPEC, EXT, DB>
+impl<EXT, DB> fmt::Debug for Evm<'_, EXT, DB>
 where
-    SPEC: Spec,
     EXT: fmt::Debug,
     DB: Database + fmt::Debug,
     DB::Error: fmt::Debug,
@@ -105,18 +105,30 @@ impl<'a, SPEC: Spec, DB: Database> Evm<'a, SPEC, DB> {
     }
 }
 
-impl<'a, SPEC: Spec, EXT, DB: Database> Evm<'a, SPEC, EXT, DB>
+impl<'a, EXT, DB: Database> Evm<'a, EXT, DB>
 where
     EXT: RegisterHandler<'a, DB, EXT>,
 {
+    pub fn new(context: Context<EXT, DB>, handler: Handler<'a, Self, EXT, DB>) -> Evm<'a, EXT, DB> {
+        let spec_id = handler.spec_id;
+        Evm {
+            context,
+            handler,
+            spec_id,
+        }
+    }
+
+    /// TODO add spec_id as variable.
     pub fn new_with_spec(
-        db: &'a mut DB,
-        env: &'a mut Env,
+        db: DB,
+        env: Box<Env>,
         external: EXT,
+        handler: Handler<'a, Self, EXT, DB>,
         precompiles: Precompiles,
     ) -> Self {
+        let spec_id = handler.spec_id;
         let journaled_state = JournaledState::new(
-            SPEC::SPEC_ID,
+            spec_id,
             precompiles
                 .addresses()
                 .into_iter()
@@ -125,13 +137,13 @@ where
         );
 
         // temporary here. Factory should create handler and register external handles.
-        let mut handler = external.register_handler::<SPEC>(Handler::mainnet::<SPEC>());
+        //let mut handler = external.register_handler::<SPEC>(Handler::mainnet::<SPEC>());
 
         // temporary here. Factory should override this handle.
-        if env.cfg.is_beneficiary_reward_disabled() {
-            // do nothing
-            handler.reward_beneficiary = Arc::new(|_, _| Ok(()));
-        }
+        //if env.cfg.is_beneficiary_reward_disabled() {
+        //    // do nothing
+        //    handler.reward_beneficiary = Arc::new(|_, _| Ok(()));
+        //}
 
         Self {
             context: Context {
@@ -146,8 +158,8 @@ where
                 },
                 external,
             },
+            spec_id,
             handler,
-            _phantomdata: PhantomData {},
         }
     }
 
@@ -226,17 +238,10 @@ where
 
     /// Pre verify transaction.
     pub fn preverify_transaction_inner(&mut self) -> Result<(), EVMError<DB::Error>> {
+        self.handler.validate_env(&self.context.evm.env)?;
+        let initial_gas_spend = self.handler.initial_tx_gas(&self.context.evm.env);
+
         let env = self.env();
-
-        // Important: validate block before tx.
-        env.validate_block_env::<SPEC>()?;
-        env.validate_tx::<SPEC>()?;
-
-        let initial_gas_spend = initial_tx_gas::<SPEC>(
-            &env.tx.data,
-            env.tx.transact_to.is_create(),
-            &env.tx.access_list,
-        );
 
         // Additional check to see if limit is big enough to cover initial gas.
         if initial_gas_spend > env.tx.gas_limit {
@@ -249,7 +254,7 @@ where
             .context
             .evm
             .journaled_state
-            .load_account(tx_caller, self.context.evm.db)
+            .load_account(tx_caller, &mut self.context.evm.db)
             .map_err(EVMError::Database)?;
 
         self.context
@@ -276,6 +281,7 @@ where
             let Some(enveloped_tx) = &env.tx.optimism.enveloped_tx else {
                 panic!("[OPTIMISM] Failed to load enveloped transaction.");
             };
+            // TODO specs
             let tx_l1_cost = l1_block_info.calculate_tx_l1_cost::<SPEC>(enveloped_tx);
 
             // storage l1 block info for later use.
@@ -286,22 +292,18 @@ where
             U256::ZERO
         };
 
-        let initial_gas_spend = initial_tx_gas::<SPEC>(
-            &tx_data,
-            env.tx.transact_to.is_create(),
-            &env.tx.access_list,
-        );
+        let initial_gas_spend = self.handler.initial_tx_gas(&self.context.evm.env);
 
         // load coinbase
         // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
-        if SPEC::enabled(SHANGHAI) {
+        if self.spec_id.is_enabled_in(SHANGHAI) {
             self.context
                 .evm
                 .journaled_state
                 .initial_account_load(
                     self.context.evm.env.block.coinbase,
                     &[],
-                    self.context.evm.db,
+                    &mut self.context.evm.db,
                 )
                 .map_err(EVMError::Database)?;
         }
@@ -313,6 +315,7 @@ where
 
         #[cfg(feature = "optimism")]
         if self.context.evm.env.cfg.optimism {
+            // TODO spec
             Evm::<SPEC, DB>::commit_mint_value(
                 tx_caller,
                 self.context.evm.env.tx.optimism.mint,
@@ -321,6 +324,7 @@ where
             )?;
 
             let is_deposit = self.context.evm.env.tx.optimism.source_hash.is_some();
+            // TODO spec
             Evm::<SPEC, DB>::remove_l1_cost(
                 is_deposit,
                 tx_caller,
@@ -331,7 +335,7 @@ where
         }
 
         let (caller_account, _) = journal
-            .load_account(tx_caller, self.context.evm.db)
+            .load_account(tx_caller, &mut self.context.evm.db)
             .map_err(EVMError::Database)?;
 
         // Subtract gas costs from the caller's account.
@@ -340,7 +344,7 @@ where
             U256::from(tx_gas_limit).saturating_mul(self.context.evm.env.effective_gas_price());
 
         // EIP-4844
-        if SPEC::enabled(CANCUN) {
+        if self.spec_id.is_enabled_in(CANCUN) {
             let data_fee = self
                 .context
                 .evm
@@ -385,15 +389,16 @@ where
                     0..0,
                 )
             }
-            TransactTo::Create(scheme) => {
-                self.context.evm.make_create_frame::<SPEC>(&CreateInputs {
+            TransactTo::Create(scheme) => self.context.evm.make_create_frame(
+                self.spec_id,
+                &CreateInputs {
                     caller: tx_caller,
                     scheme,
                     value: tx_value,
                     init_code: tx_data,
                     gas_limit: transact_gas_limit,
-                })
-            }
+                },
+            ),
         };
         // Some only if it is create.
         let mut created_address = None;
@@ -416,13 +421,13 @@ where
 
         // handle output of call/create calls.
         let mut gas = handler.call_return(
-            context.evm.env,
+            &mut context.evm.env,
             interpreter_result.result,
             interpreter_result.gas,
         );
 
         // set refund. Refund amount depends on hardfork.
-        gas.set_refund(handler.calculate_gas_refund(context.evm.env, &gas) as i64);
+        gas.set_refund(handler.calculate_gas_refund(&mut context.evm.env, &gas) as i64);
 
         // Reimburse the caller
         handler.reimburse_caller(context, &gas)?;
@@ -442,21 +447,23 @@ where
 }
 
 /// EVM transaction interface.
-#[auto_impl(&mut, Box)]
-pub trait Transact<DBError> {
+pub trait Transact<DB: Database, EXT> {
     /// Run checks that could make transaction fail before call/create.
-    fn preverify_transaction(&mut self) -> Result<(), EVMError<DBError>>;
+    fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>>;
 
     /// Skip pre-verification steps and execute the transaction.
-    fn transact_preverified(&mut self) -> EVMResult<DBError>;
+    fn transact_preverified(&mut self) -> EVMResult<DB::Error>;
 
     /// Execute transaction by running pre-verification steps and then transaction itself.
-    fn transact(&mut self) -> EVMResult<DBError>;
+    fn transact(&mut self) -> EVMResult<DB::Error>;
+
+    /// Into database and extern type.
+    fn into_db_ext(self) -> (DB, Box<Env>)
+    where
+        Self: Sized;
 }
 
-impl<'a, SPEC: Spec + 'static, EXT: RegisterHandler<'a, DB, EXT>, DB: Database> Transact<DB::Error>
-    for Evm<'a, SPEC, EXT, DB>
-{
+impl<'a, EXT: RegisterHandler<'a, DB, EXT>, DB: Database> Transact<DB, EXT> for Evm<'a, EXT, DB> {
     #[inline]
     fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
         self.preverify_transaction_inner()
@@ -475,9 +482,14 @@ impl<'a, SPEC: Spec + 'static, EXT: RegisterHandler<'a, DB, EXT>, DB: Database> 
             .and_then(|()| self.transact_preverified_inner());
         self.handler.end(&mut self.context, output)
     }
+
+    #[inline]
+    fn into_db_ext(self) -> (DB, Box<Env>) {
+        (self.context.evm.db, self.context.evm.env)
+    }
 }
 
-impl<'a, SPEC: Spec + 'static, EXT, DB: Database> Host for Evm<'a, SPEC, EXT, DB> {
+impl<'a, EXT, DB: Database> Host for Evm<'a, EXT, DB> {
     fn env(&mut self) -> &mut Env {
         self.context.evm.env()
     }
@@ -535,20 +547,22 @@ impl<'a, SPEC: Spec + 'static, EXT, DB: Database> Host for Evm<'a, SPEC, EXT, DB
 }
 
 /// Creates new EVM instance with erased types.
-pub fn new_evm<'a, EXT: RegisterHandler<'a, DB, EXT> + 'a, DB: Database>(
-    env: &'a mut Env,
-    db: &'a mut DB,
+pub fn new_evm<'a, EXT: RegisterHandler<'a, DB, EXT> + 'a, DB: Database + 'a>(
+    env: Box<Env>,
+    db: DB,
     external: EXT,
-) -> Box<dyn Transact<DB::Error> + 'a> {
+) -> Evm<'a, EXT, DB> {
     macro_rules! create_evm {
-        ($spec:ident) => {
-            Box::new(Evm::<'a, $spec, EXT, DB>::new_with_spec(
+        ($spec:ident) => {{
+            let handler = external.register_handler::<$spec>(Handler::mainnet::<$spec>());
+            Evm::new_with_spec(
                 db,
                 env,
                 external,
+                handler,
                 Precompiles::new(revm_precompile::SpecId::from_spec_id($spec::SPEC_ID)).clone(),
-            ))
-        };
+            )
+        }};
     }
 
     use specification::*;
