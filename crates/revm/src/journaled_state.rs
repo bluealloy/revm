@@ -1,7 +1,7 @@
 use crate::interpreter::{InstructionResult, SelfDestructResult};
 use crate::primitives::{
-    db::Database, hash_map::Entry, Account, Address, Bytecode, HashMap, Log, Spec, SpecId::*,
-    State, StorageSlot, TransientStorage, KECCAK_EMPTY, PRECOMPILE3, U256,
+    db::Database, hash_map::Entry, Account, Address, Bytecode, HashMap, Log, SpecId::*, State,
+    StorageSlot, TransientStorage, KECCAK_EMPTY, PRECOMPILE3, U256,
 };
 use alloc::vec::Vec;
 use core::mem;

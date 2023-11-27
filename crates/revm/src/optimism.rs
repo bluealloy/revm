@@ -1,6 +1,11 @@
 //! Optimism-specific constants, types, and helpers.
 
-use crate::primitives::{address, db::Database, Address, Bytes, Spec, SpecId, U256};
+use crate::{
+    primitives::{
+        address, db::Database, Address, Bytes, EVMError, InvalidTransaction, Spec, SpecId, U256,
+    },
+    JournaledState,
+};
 use core::ops::Mul;
 
 const ZERO_BYTE_COST: u64 = 4;
@@ -18,6 +23,60 @@ pub const BASE_FEE_RECIPIENT: Address = address!("420000000000000000000000000000
 
 /// The address of the L1Block contract.
 pub const L1_BLOCK_CONTRACT: Address = address!("4200000000000000000000000000000000000015");
+
+/// If the transaction is a deposit with a `mint` value, add the mint value
+/// in wei to the caller's balance. This should be persisted to the database
+/// prior to the rest of execution.
+pub(crate) fn commit_mint_value<DB: Database>(
+    tx_caller: Address,
+    tx_mint: Option<u128>,
+    db: &mut DB,
+    journal: &mut JournaledState,
+) -> Result<(), EVMError<DB::Error>> {
+    if let Some(mint) = tx_mint {
+        journal
+            .load_account(tx_caller, db)
+            .map_err(EVMError::Database)?
+            .0
+            .info
+            .balance += U256::from(mint);
+        journal.checkpoint();
+    }
+    Ok(())
+}
+
+/// If the transaction is not a deposit transaction, subtract the L1 data fee from the
+/// caller's balance directly after minting the requested amount of ETH.
+pub(crate) fn remove_l1_cost<DB: Database>(
+    is_deposit: bool,
+    tx_caller: Address,
+    l1_cost: U256,
+    db: &mut DB,
+    journal: &mut JournaledState,
+) -> Result<(), EVMError<DB::Error>> {
+    if is_deposit {
+        return Ok(());
+    }
+    let acc = journal
+        .load_account(tx_caller, db)
+        .map_err(EVMError::Database)?
+        .0;
+    if l1_cost.gt(&acc.info.balance) {
+        let u64_cost = if U256::from(u64::MAX).lt(&l1_cost) {
+            u64::MAX
+        } else {
+            l1_cost.as_limbs()[0]
+        };
+        return Err(EVMError::Transaction(
+            InvalidTransaction::LackOfFundForMaxFee {
+                fee: u64_cost,
+                balance: acc.info.balance,
+            },
+        ));
+    }
+    acc.info.balance = acc.info.balance.saturating_sub(l1_cost);
+    Ok(())
+}
 
 /// L1 block info
 ///
@@ -59,7 +118,7 @@ impl L1BlockInfo {
     ///
     /// Prior to regolith, an extra 68 non-zero bytes were included in the rollup data costs to
     /// account for the empty signature.
-    pub fn data_gas<SPEC: Spec>(&self, input: &Bytes) -> U256 {
+    pub fn data_gas(&self, input: &Bytes, spec_id: SpecId) -> U256 {
         let mut rollup_data_gas_cost = U256::from(input.iter().fold(0, |acc, byte| {
             acc + if *byte == 0x00 {
                 ZERO_BYTE_COST
@@ -69,7 +128,7 @@ impl L1BlockInfo {
         }));
 
         // Prior to regolith, an extra 68 non zero bytes were included in the rollup data costs.
-        if !SPEC::enabled(SpecId::REGOLITH) {
+        if !spec_id.is_enabled_in(SpecId::REGOLITH) {
             rollup_data_gas_cost += U256::from(NON_ZERO_BYTE_COST).mul(U256::from(68));
         }
 
@@ -77,13 +136,13 @@ impl L1BlockInfo {
     }
 
     /// Calculate the gas cost of a transaction based on L1 block data posted on L2
-    pub fn calculate_tx_l1_cost<SPEC: Spec>(&self, input: &Bytes) -> U256 {
+    pub fn calculate_tx_l1_cost(&self, input: &Bytes, spec_id: SpecId) -> U256 {
         // If the input is not a deposit transaction, the default value is zero.
         if input.is_empty() || input.first() == Some(&0x7F) {
             return U256::ZERO;
         }
 
-        let rollup_data_gas_cost = self.data_gas::<SPEC>(input);
+        let rollup_data_gas_cost = self.data_gas(input, spec_id);
         rollup_data_gas_cost
             .saturating_add(self.l1_fee_overhead)
             .saturating_mul(self.l1_base_fee)
@@ -112,12 +171,12 @@ mod tests {
         // gas cost = 3 non-zero bytes * NON_ZERO_BYTE_COST + NON_ZERO_BYTE_COST * 68
         // gas cost = 3 * 16 + 68 * 16 = 1136
         let input = bytes!("FACADE");
-        let bedrock_data_gas = l1_block_info.data_gas::<BedrockSpec>(&input);
+        let bedrock_data_gas = l1_block_info.data_gas(&input, SpecId::BEDROCK);
         assert_eq!(bedrock_data_gas, U256::from(1136));
 
         // Regolith has no added 68 non zero bytes
         // gas cost = 3 * 16 = 48
-        let regolith_data_gas = l1_block_info.data_gas::<RegolithSpec>(&input);
+        let regolith_data_gas = l1_block_info.data_gas(&input, SpecId::REGOLITH);
         assert_eq!(regolith_data_gas, U256::from(48));
     }
 
@@ -136,12 +195,12 @@ mod tests {
         // gas cost = 3 non-zero * NON_ZERO_BYTE_COST + 2 * ZERO_BYTE_COST + NON_ZERO_BYTE_COST * 68
         // gas cost = 3 * 16 + 2 * 4 + 68 * 16 = 1144
         let input = bytes!("FA00CA00DE");
-        let bedrock_data_gas = l1_block_info.data_gas::<BedrockSpec>(&input);
+        let bedrock_data_gas = l1_block_info.data_gas(&input, SpecId::BEDROCK);
         assert_eq!(bedrock_data_gas, U256::from(1144));
 
         // Regolith has no added 68 non zero bytes
         // gas cost = 3 * 16 + 2 * 4 = 56
-        let regolith_data_gas = l1_block_info.data_gas::<RegolithSpec>(&input);
+        let regolith_data_gas = l1_block_info.data_gas(&input, SpecId::REGOLITH);
         assert_eq!(regolith_data_gas, U256::from(56));
     }
 
@@ -154,17 +213,17 @@ mod tests {
         };
 
         let input = bytes!("FACADE");
-        let gas_cost = l1_block_info.calculate_tx_l1_cost::<RegolithSpec>(&input);
+        let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::REGOLITH);
         assert_eq!(gas_cost, U256::from(1048));
 
         // Zero rollup data gas cost should result in zero
         let input = bytes!("");
-        let gas_cost = l1_block_info.calculate_tx_l1_cost::<RegolithSpec>(&input);
+        let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::REGOLITH);
         assert_eq!(gas_cost, U256::ZERO);
 
         // Deposit transactions with the EIP-2718 type of 0x7F should result in zero
         let input = bytes!("7FFACADE");
-        let gas_cost = l1_block_info.calculate_tx_l1_cost::<RegolithSpec>(&input);
+        let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::REGOLITH);
         assert_eq!(gas_cost, U256::ZERO);
     }
 }

@@ -20,7 +20,6 @@ pub struct CallStackFrame {
     pub interpreter: Interpreter,
 }
 
-
 /// Contains either a frame or a result.
 pub enum FrameOrResult {
     /// Boxed stack frame

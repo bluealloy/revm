@@ -94,7 +94,7 @@ fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm) {
             ..Default::default()
         };
         let mut shared_memory = SharedMemory::new();
-        let mut host = DummyHost::new(evm.env.clone());
+        let mut host = DummyHost::new(*evm.env.clone());
         let instruction_table = make_instruction_table::<DummyHost, BerlinSpec>();
         b.iter(move || {
             // replace memory with empty memory to use it inside interpreter.

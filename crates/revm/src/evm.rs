@@ -1,24 +1,25 @@
 use crate::{
-    db::Database,
+    db::{Database, EmptyDB},
+    evm_builder::EvmBuilder,
     handler::Handler,
-    handler::RegisterHandler,
+    handler::{MainnetHandle, RegisterHandler},
     interpreter::{
-        gas::initial_tx_gas, opcode::InstructionTables, CallContext, CallInputs, CallScheme,
-        CreateInputs, Host, Interpreter, InterpreterAction, InterpreterResult, SelfDestructResult,
-        SharedMemory, Transfer,
+        opcode::InstructionTables, CallContext, CallInputs, CallScheme, CreateInputs, Host,
+        Interpreter, InterpreterAction, InterpreterResult, SelfDestructResult, SharedMemory,
+        Transfer,
     },
     journaled_state::JournaledState,
     precompile::Precompiles,
     primitives::{
-        specification, Address, Bytecode, Bytes, EVMError, EVMResult, Env, InvalidTransaction,
-        Output, Spec, SpecId::*, TransactTo, B256, U256,
+        specification::{self, SpecId},
+        Address, Bytecode, Bytes, EVMError, EVMResult, Env, InvalidTransaction, Output,
+        SpecId::*,
+        TransactTo, B256, U256,
     },
     CallStackFrame, Context, EvmContext, FrameOrResult,
 };
-use alloc::{boxed::Box, sync::Arc, vec::Vec};
-use auto_impl::auto_impl;
-use core::{fmt, marker::PhantomData};
-use specification::SpecId;
+use alloc::{boxed::Box, vec::Vec};
+use core::fmt;
 
 #[cfg(feature = "optimism")]
 use crate::optimism;
@@ -48,63 +49,6 @@ where
     }
 }
 
-#[cfg(feature = "optimism")]
-impl<'a, SPEC: Spec, DB: Database> Evm<'a, SPEC, DB> {
-    /// If the transaction is not a deposit transaction, subtract the L1 data fee from the
-    /// caller's balance directly after minting the requested amount of ETH.
-    fn remove_l1_cost(
-        is_deposit: bool,
-        tx_caller: Address,
-        l1_cost: U256,
-        db: &mut DB,
-        journal: &mut JournaledState,
-    ) -> Result<(), EVMError<DB::Error>> {
-        if is_deposit {
-            return Ok(());
-        }
-        let acc = journal
-            .load_account(tx_caller, db)
-            .map_err(EVMError::Database)?
-            .0;
-        if l1_cost.gt(&acc.info.balance) {
-            let u64_cost = if U256::from(u64::MAX).lt(&l1_cost) {
-                u64::MAX
-            } else {
-                l1_cost.as_limbs()[0]
-            };
-            return Err(EVMError::Transaction(
-                InvalidTransaction::LackOfFundForMaxFee {
-                    fee: u64_cost,
-                    balance: acc.info.balance,
-                },
-            ));
-        }
-        acc.info.balance = acc.info.balance.saturating_sub(l1_cost);
-        Ok(())
-    }
-
-    /// If the transaction is a deposit with a `mint` value, add the mint value
-    /// in wei to the caller's balance. This should be persisted to the database
-    /// prior to the rest of execution.
-    fn commit_mint_value(
-        tx_caller: Address,
-        tx_mint: Option<u128>,
-        db: &mut DB,
-        journal: &mut JournaledState,
-    ) -> Result<(), EVMError<DB::Error>> {
-        if let Some(mint) = tx_mint {
-            journal
-                .load_account(tx_caller, db)
-                .map_err(EVMError::Database)?
-                .0
-                .info
-                .balance += U256::from(mint);
-            journal.checkpoint();
-        }
-        Ok(())
-    }
-}
-
 impl<'a, EXT, DB: Database> Evm<'a, EXT, DB>
 where
     EXT: RegisterHandler<'a, DB, EXT>,
@@ -116,6 +60,17 @@ where
             handler,
             spec_id,
         }
+    }
+
+    /// Returns evm builder.
+    pub fn builder() -> EvmBuilder<'a, MainnetHandle, EmptyDB> {
+        EvmBuilder::default()
+    }
+
+    /// Allow for evm setting to be modified by feeding current evm
+    /// to the builder for modifications.
+    pub fn modify(self) -> EvmBuilder<'a, EXT, DB> {
+        EvmBuilder::new(self)
     }
 
     /// TODO add spec_id as variable.
@@ -136,15 +91,6 @@ where
                 .collect::<Vec<_>>(),
         );
 
-        // temporary here. Factory should create handler and register external handles.
-        //let mut handler = external.register_handler::<SPEC>(Handler::mainnet::<SPEC>());
-
-        // temporary here. Factory should override this handle.
-        //if env.cfg.is_beneficiary_reward_disabled() {
-        //    // do nothing
-        //    handler.reward_beneficiary = Arc::new(|_, _| Ok(()));
-        //}
-
         Self {
             context: Context {
                 evm: EvmContext {
@@ -163,6 +109,7 @@ where
         }
     }
 
+    /// Runs main call loop.
     #[inline]
     pub fn run<FN>(
         &mut self,
@@ -282,7 +229,7 @@ where
                 panic!("[OPTIMISM] Failed to load enveloped transaction.");
             };
             // TODO specs
-            let tx_l1_cost = l1_block_info.calculate_tx_l1_cost::<SPEC>(enveloped_tx);
+            let tx_l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, self.spec_id);
 
             // storage l1 block info for later use.
             self.context.evm.l1_block_info = Some(l1_block_info);
@@ -315,8 +262,7 @@ where
 
         #[cfg(feature = "optimism")]
         if self.context.evm.env.cfg.optimism {
-            // TODO spec
-            Evm::<SPEC, DB>::commit_mint_value(
+            crate::optimism::commit_mint_value(
                 tx_caller,
                 self.context.evm.env.tx.optimism.mint,
                 self.context.evm.db,
@@ -324,8 +270,7 @@ where
             )?;
 
             let is_deposit = self.context.evm.env.tx.optimism.source_hash.is_some();
-            // TODO spec
-            Evm::<SPEC, DB>::remove_l1_cost(
+            crate::optimism::remove_l1_cost(
                 is_deposit,
                 tx_caller,
                 tx_l1_cost,

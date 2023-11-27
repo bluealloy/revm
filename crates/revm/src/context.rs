@@ -19,11 +19,11 @@ use core::ops::Range;
 pub struct Context<EXT, DB: Database> {
     /// Evm Context.
     pub evm: EvmContext<DB>,
-    /// External generic code.
+    /// External contexts.
     pub external: EXT,
 }
 
-/// EVM Data contains all the data that EVM needs to execute.
+/// EVM contexts contains data that EVM needs for execution.
 #[derive(Debug)]
 pub struct EvmContext<DB: Database> {
     /// EVM Environment contains all the information about config, block and transaction that
@@ -43,6 +43,18 @@ pub struct EvmContext<DB: Database> {
 }
 
 impl<'a, DB: Database> EvmContext<DB> {
+    pub fn new(db: DB) -> Self {
+        Self {
+            env: Box::default(),
+            journaled_state: JournaledState::new(SpecId::LATEST, vec![]),
+            db,
+            error: None,
+            precompiles: Precompiles::default(),
+            #[cfg(feature = "optimism")]
+            l1_block_info: None,
+        }
+    }
+
     /// Load access list for berlin hard fork.
     ///
     /// Loading of accounts/storages is needed to make them warm.

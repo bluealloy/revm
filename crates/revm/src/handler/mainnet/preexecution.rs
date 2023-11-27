@@ -1,10 +1,8 @@
 use revm_interpreter::gas;
 
 use crate::{
-    interpreter::{Gas, InstructionResult, SuccessOrHalt},
-    primitives::{db::Database, EVMError, ExecutionResult, Output, ResultAndState},
+    primitives::{db::Database, EVMError},
     primitives::{Env, Spec},
-    Context,
 };
 
 /// Validate environment for the mainnet.

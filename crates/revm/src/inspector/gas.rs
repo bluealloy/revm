@@ -83,11 +83,7 @@ mod tests {
     }
 
     impl<DB: Database> Inspector<DB> for StackInspector {
-        fn initialize_interp(
-            &mut self,
-            interp: &mut Interpreter,
-            context: &mut EvmContext<DB>,
-        ) {
+        fn initialize_interp(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
             self.gas_inspector.initialize_interp(interp, context);
         }
 

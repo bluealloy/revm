@@ -2,35 +2,37 @@
 
 use super::mainnet;
 use crate::{
+    handler::RegisterHandler,
     interpreter::{return_ok, return_revert, Gas, InstructionResult},
     optimism,
     primitives::{
         db::Database, Account, EVMError, Env, ExecutionResult, Halt, HashMap, InvalidTransaction,
         Output, ResultAndState, Spec, SpecId::REGOLITH, U256,
     },
-    EvmContext,
+    Evm, EvmContext, Handler,
 };
+use alloc::sync::Arc;
 use core::ops::Mul;
 
 pub struct OptimismHandle {}
 
-impl<'a, DB: Database> RegisterHandler<'a, DB, ()> for OptimismHandle {
+impl<'a, DB: Database> RegisterHandler<'a, DB, OptimismHandle> for OptimismHandle {
     fn register_handler<SPEC: Spec>(
         &self,
-        mut handler: Handler<'a, Evm<'a, SPEC, (), DB>, (), DB>,
-    ) -> Handler<'a, Evm<'a, SPEC, (), DB>, (), DB>
+        mut handler: Handler<'a, Evm<'a, OptimismHandle, DB>, (), DB>,
+    ) -> Handler<'a, Evm<'a, (), DB>, (), DB>
     where
         DB: 'a,
         (): Sized,
     {
-        handler.call_return = Arc::new(optimism::handle_call_return::<SPEC>);
-        handler.calculate_gas_refund = Arc::new(optimism::calculate_gas_refund::<SPEC>);
+        handler.call_return = Arc::new(handle_call_return::<SPEC>);
+        handler.calculate_gas_refund = Arc::new(calculate_gas_refund::<SPEC>);
         // we reinburse caller the same was as in mainnet.
         // Refund is calculated differently then mainnet.
         handler.reward_beneficiary = Arc::new(reward_beneficiary::<SPEC, DB>);
         // In case of halt of deposit transaction return Error.
-        handler.main_return = Arc::new(optimism::main_return::<SPEC, DB>);
-        handler.end = Arc::new(optimism::end_handle::<SPEC, DB>);
+        handler.main_return = Arc::new(main_return::<SPEC, DB>);
+        handler.end = Arc::new(end_handle::<SPEC, DB>);
     }
 }
 
@@ -173,7 +175,7 @@ pub fn main_return<SPEC: Spec, DB: Database>(
     output: Output,
     gas: &Gas,
 ) -> Result<ResultAndState, EVMError<DB::Error>> {
-    let result = mainnet::main_return::<DB>(context, call_result, output, gas)?;
+    let result = mainnet::main::main_return::<DB>(context, call_result, output, gas)?;
 
     if result.result.is_halt() {
         // Post-regolith, if the transaction is a deposit transaction and it haults,
