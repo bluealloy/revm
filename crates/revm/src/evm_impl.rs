@@ -3,7 +3,6 @@ use crate::{
     handler::Handler,
     inspector_instruction,
     interpreter::{
-        analysis::to_analysed,
         gas,
         gas::initial_tx_gas,
         opcode::{make_boxed_instruction_table, make_instruction_table, InstructionTables},
@@ -13,14 +12,16 @@ use crate::{
     journaled_state::{JournalCheckpoint, JournaledState},
     precompile::{self, Precompile, Precompiles},
     primitives::{
-        keccak256, Address, AnalysisKind, Bytecode, Bytes, EVMError, EVMResult, Env,
-        InvalidTransaction, Log, Output, Spec, SpecId::*, TransactTo, B256, U256,
+        keccak256, Address, Bytecode, Bytes, EVMError, EVMResult, Env, InvalidTransaction, Log,
+        Output, Spec, SpecId::*, TransactTo, B256, U256,
     },
     EVMData, Inspector,
 };
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use auto_impl::auto_impl;
 use core::{fmt, marker::PhantomData};
+use std::cell::RefCell;
+use std::sync::RwLock;
 
 #[cfg(feature = "optimism")]
 use crate::optimism;
@@ -37,6 +38,8 @@ pub struct EVMImpl<'a, GSPEC: Spec, DB: Database> {
     pub handler: Handler<DB>,
     _phantomdata: PhantomData<GSPEC>,
 }
+
+unsafe impl<'a, DB: Database> Send for EVMData<'a, DB> {}
 
 impl<GSPEC, DB> fmt::Debug for EVMImpl<'_, GSPEC, DB>
 where
@@ -550,7 +553,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         let bytecode = Bytes::copy_from_slice(prepared_create.contract.bytecode.bytecode());
 
         // Create new interpreter and execute init code
-        let (exit_reason, mut bytes, mut gas) = self.run_interpreter(
+        let (exit_reason, mut bytes, mut gas) = self.run_rwasm_interpreter(
             prepared_create.contract,
             prepared_create.gas.limit(),
             false,
@@ -645,9 +648,112 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         }
     }
 
+    #[cfg(feature = "runtime")]
+    fn add_storage_bindings(
+        &mut self,
+        contract: Box<Contract>,
+        runtime: &mut fluentbase_runtime::Runtime,
+    ) {
+        use fluentbase_runtime::RuntimeContext;
+        use fluentbase_rwasm::{AsContext, Caller};
+        use std::sync::Mutex;
+        let mut data = Arc::new(Mutex::new(&mut self.data));
+
+        runtime.add_binding(
+            "env",
+            "evm_sload",
+            move |mut caller: Caller<'_, RuntimeContext>, key_offset: u32, value_offset: u32| {
+                let mut key: [u8; 32] = [0; 32];
+                caller
+                    .exported_memory()
+                    .read(caller.as_context(), key_offset as usize, &mut key)
+                    .unwrap();
+                let key = U256::from_be_bytes(key);
+                use std::borrow::BorrowMut;
+                data.borrow_mut().lock().unwrap().sload(Address::ZERO, key);
+                // let context = caller.data_mut().context.as_mut().unwrap();
+                // (*context).borrow_mut().sload(Address::ZERO, key);
+                // if let Some(context) = caller.data_mut().context {
+                //     context.sload(Address::ZERO, key);
+                // }
+                let mut value: [u8; 32] = [0; 32];
+                caller
+                    .exported_memory()
+                    .read(caller.as_context(), value_offset as usize, &mut value)
+                    .unwrap();
+            },
+        );
+        // runtime.add_binding(
+        //     "env",
+        //     "evm_sstore",
+        //     |mut caller: Caller<'_, RuntimeContext<&EVMData<'a, DB>>>,
+        //      key_offset: u32,
+        //      value_offset: u32| {
+        //         let mut key: [u8; 32] = [0; 32];
+        //         caller
+        //             .exported_memory()
+        //             .read(caller.as_context(), key_offset as usize, &mut key)
+        //             .unwrap();
+        //         let mut value: [u8; 32] = [0; 32];
+        //         caller
+        //             .exported_memory()
+        //             .read(caller.as_context(), value_offset as usize, &mut value)
+        //             .unwrap();
+        //     },
+        // );
+    }
+
+    #[cfg(feature = "runtime")]
+    pub fn run_rwasm_interpreter(
+        &mut self,
+        contract: Box<Contract>,
+        gas_limit: u64,
+        _is_static: bool,
+        state: u32,
+        _shared_memory: &mut SharedMemory,
+    ) -> (InstructionResult, Bytes, Gas) {
+        use fluentbase_runtime::{Runtime, RuntimeContext};
+        let bytecode = contract.bytecode.original_bytecode_slice();
+        let mut output = vec![0u8; 1024];
+        let input = &contract.input;
+        let import_linker = Runtime::new_linker();
+        let ctx = RuntimeContext::new(bytecode)
+            // .with_context(RefCell::new(&mut self.data))
+            .with_input(input.to_vec())
+            .with_state(state)
+            .with_fuel_limit(gas_limit as u32);
+        let runtime = Runtime::new(ctx, &import_linker);
+        if runtime.is_err() {
+            return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
+        }
+        let mut runtime = runtime.unwrap();
+        self.add_storage_bindings(contract, &mut runtime);
+        let result = runtime.call();
+        if result.is_err() {
+            return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
+        }
+        let execution_result = result.unwrap();
+        let execution_output = execution_result.data().output();
+        if execution_output.len() > output.len() {
+            return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
+        }
+        let len = execution_output.len();
+        output[0..len].copy_from_slice(execution_output.as_slice());
+        let exit_code = execution_result.data().exit_code();
+        if exit_code < 0 {
+            return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
+        }
+        (
+            InstructionResult::Stop,
+            Bytes::copy_from_slice(&output),
+            Gas::new(gas_limit),
+        )
+    }
+
     /// Create a Interpreter and run it.
     /// Returns the exit reason, return value and gas from interpreter
-    pub fn run_interpreter(
+    #[cfg(not(feature = "runtime"))]
+    pub fn run_rwasm_interpreter(
         &mut self,
         contract: Box<Contract>,
         gas_limit: u64,
@@ -657,28 +763,17 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
     ) -> (InstructionResult, Bytes, Gas) {
         let bytecode = contract.bytecode.original_bytecode_slice();
         let mut output = vec![0u8; 1024];
-
         let input = &contract.input;
-        loop {
-            let out_len_or_err = SDK::rwasm_transact(
-                bytecode,
-                input.as_ref(),
-                output.as_mut_slice(),
-                state,
-                gas_limit as u32,
-            );
-
-            if out_len_or_err < -1005 {
-                if output.len() < out_len_or_err as usize {
-                    output = vec![0u8; out_len_or_err as usize];
-                    continue;
-                }
-            } else if out_len_or_err < 0 {
-                return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
-            }
-            break;
+        let err = SDK::rwasm_transact(
+            bytecode,
+            input.as_ref(),
+            output.as_mut_slice(),
+            state,
+            gas_limit as u32,
+        );
+        if err < 0 {
+            return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
         }
-
         (
             InstructionResult::Stop,
             Bytes::copy_from_slice(&output),
@@ -845,7 +940,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             self.call_precompile(precompile, inputs, prepared_call.gas)
         } else if !prepared_call.contract.bytecode.is_empty() {
             // Create interpreter and execute subcall
-            let (exit_reason, bytes, gas) = self.run_interpreter(
+            let (exit_reason, bytes, gas) = self.run_rwasm_interpreter(
                 prepared_call.contract,
                 prepared_call.gas.limit(),
                 inputs.is_static,

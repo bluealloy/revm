@@ -22,6 +22,12 @@ pub struct EVMData<'a, DB: Database> {
     pub l1_block_info: Option<crate::optimism::L1BlockInfo>,
 }
 
+impl<'a, DB: Database> Clone for EVMData<'a, DB> {
+    fn clone(&self) -> Self {
+        todo!("not implemented")
+    }
+}
+
 impl<'a, DB: Database> EVMData<'a, DB> {
     /// Load access list for berlin hardfork.
     ///

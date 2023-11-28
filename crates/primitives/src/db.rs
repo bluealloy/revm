@@ -12,9 +12,9 @@ pub use components::{
 
 /// EVM database interface.
 #[auto_impl(&mut, Box)]
-pub trait Database {
+pub trait Database: Send + Sync {
     /// The database error type.
-    type Error;
+    type Error: Send + Sync;
 
     /// Get basic account information.
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
@@ -43,9 +43,9 @@ pub trait DatabaseCommit {
 /// Use [`WrapDatabaseRef`] to provide [`Database`] implementation for a type
 /// that only implements this trait.
 #[auto_impl(&, &mut, Box, Rc, Arc)]
-pub trait DatabaseRef {
+pub trait DatabaseRef: Send + Sync {
     /// The database error type.
-    type Error;
+    type Error: Send + Sync;
 
     /// Get basic account information.
     fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
@@ -98,12 +98,12 @@ impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
 /// Wraps a `dyn DatabaseRef` to provide a [`Database`] implementation.
 #[doc(hidden)]
 #[deprecated = "use `WrapDatabaseRef` instead"]
-pub struct RefDBWrapper<'a, E> {
+pub struct RefDBWrapper<'a, E: Send> {
     pub db: &'a dyn DatabaseRef<Error = E>,
 }
 
 #[allow(deprecated)]
-impl<'a, E> RefDBWrapper<'a, E> {
+impl<'a, E: Send> RefDBWrapper<'a, E> {
     #[inline]
     pub fn new(db: &'a dyn DatabaseRef<Error = E>) -> Self {
         Self { db }
@@ -111,7 +111,7 @@ impl<'a, E> RefDBWrapper<'a, E> {
 }
 
 #[allow(deprecated)]
-impl<'a, E> Database for RefDBWrapper<'a, E> {
+impl<'a, E: Send + Sync> Database for RefDBWrapper<'a, E> {
     type Error = E;
 
     #[inline]

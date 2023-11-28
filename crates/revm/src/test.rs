@@ -25,13 +25,13 @@ struct TestDb {
 }
 
 impl TestDb {
-    pub fn add_account(&mut self, address: Address, account_info: AccountInfo) {
+    fn add_account(&mut self, address: Address, account_info: AccountInfo) {
         self.accounts.insert(address, account_info);
     }
 }
 
 impl DatabaseCommit for TestDb {
-    fn commit(&mut self, changes: HashMap<Address, Account>) {
+    fn commit(&mut self, _changes: HashMap<Address, Account>) {
         todo!()
     }
 }
@@ -52,11 +52,11 @@ impl Database for TestDb {
         panic!("not possible now :(")
     }
 
-    fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error> {
+    fn storage(&mut self, _address: Address, _index: U256) -> Result<U256, Self::Error> {
         todo!()
     }
 
-    fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error> {
+    fn block_hash(&mut self, _number: U256) -> Result<B256, Self::Error> {
         todo!()
     }
 }
