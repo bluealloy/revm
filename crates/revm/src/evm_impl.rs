@@ -20,8 +20,6 @@ use crate::{
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use auto_impl::auto_impl;
 use core::{fmt, marker::PhantomData};
-use std::cell::RefCell;
-use std::sync::RwLock;
 
 #[cfg(feature = "optimism")]
 use crate::optimism;
@@ -652,30 +650,29 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
     fn add_storage_bindings(
         &mut self,
         contract: Box<Contract>,
-        runtime: &mut fluentbase_runtime::Runtime,
+        runtime: &mut fluentbase_runtime::Runtime<'a, &mut EVMData<'a, DB>>,
     ) {
         use fluentbase_runtime::RuntimeContext;
         use fluentbase_rwasm::{AsContext, Caller};
-        use std::sync::Mutex;
-        let mut data = Arc::new(Mutex::new(&mut self.data));
 
         runtime.add_binding(
             "env",
             "evm_sload",
-            move |mut caller: Caller<'_, RuntimeContext>, key_offset: u32, value_offset: u32| {
+            |mut caller: Caller<'_, RuntimeContext<'a, &mut EVMData<'a, DB>>>,
+             key_offset: u32,
+             value_offset: u32| {
                 let mut key: [u8; 32] = [0; 32];
                 caller
                     .exported_memory()
                     .read(caller.as_context(), key_offset as usize, &mut key)
                     .unwrap();
                 let key = U256::from_be_bytes(key);
-                use std::borrow::BorrowMut;
-                data.borrow_mut().lock().unwrap().sload(Address::ZERO, key);
-                // let context = caller.data_mut().context.as_mut().unwrap();
-                // (*context).borrow_mut().sload(Address::ZERO, key);
-                // if let Some(context) = caller.data_mut().context {
-                //     context.sload(Address::ZERO, key);
-                // }
+                caller
+                    .data_mut()
+                    .context
+                    .as_mut()
+                    .unwrap()
+                    .sload(Address::ZERO, key);
                 let mut value: [u8; 32] = [0; 32];
                 caller
                     .exported_memory()
@@ -716,13 +713,13 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         let bytecode = contract.bytecode.original_bytecode_slice();
         let mut output = vec![0u8; 1024];
         let input = &contract.input;
-        let import_linker = Runtime::new_linker();
-        let ctx = RuntimeContext::new(bytecode)
+        let import_linker = Runtime::<'a, &mut EVMData<'a, DB>>::new_linker();
+        let ctx = RuntimeContext::<'a, &mut EVMData<'a, DB>>::new(bytecode)
             // .with_context(RefCell::new(&mut self.data))
             .with_input(input.to_vec())
             .with_state(state)
             .with_fuel_limit(gas_limit as u32);
-        let runtime = Runtime::new(ctx, &import_linker);
+        let runtime = Runtime::<'a, &mut EVMData<'a, DB>>::new(ctx, &import_linker);
         if runtime.is_err() {
             return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
         }
