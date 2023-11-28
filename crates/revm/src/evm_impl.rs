@@ -37,8 +37,6 @@ pub struct EVMImpl<'a, GSPEC: Spec, DB: Database> {
     _phantomdata: PhantomData<GSPEC>,
 }
 
-unsafe impl<'a, DB: Database> Send for EVMData<'a, DB> {}
-
 impl<GSPEC, DB> fmt::Debug for EVMImpl<'_, GSPEC, DB>
 where
     GSPEC: Spec,
@@ -648,9 +646,8 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
 
     #[cfg(feature = "runtime")]
     fn add_storage_bindings(
-        &mut self,
         contract: Box<Contract>,
-        runtime: &mut fluentbase_runtime::Runtime<'a, &mut EVMData<'a, DB>>,
+        runtime: &mut fluentbase_runtime::Runtime<'_, EVMData<'a, DB>>,
     ) {
         use fluentbase_runtime::RuntimeContext;
         use fluentbase_rwasm::{AsContext, AsContextMut, Caller};
@@ -660,7 +657,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         runtime.add_binding(
             "env",
             "_evm_sload",
-            move |mut caller: Caller<'_, RuntimeContext<'a, &mut EVMData<'a, DB>>>,
+            move |mut caller: Caller<'_, RuntimeContext<'_, EVMData<'a, DB>>>,
                   key_offset: u32,
                   value_offset: u32| {
                 let mut key: [u8; 32] = [0; 32];
@@ -686,7 +683,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         runtime.add_binding(
             "env",
             "_evm_sstore",
-            move |mut caller: Caller<'_, RuntimeContext<'a, &mut EVMData<'a, DB>>>,
+            move |mut caller: Caller<'_, RuntimeContext<'_, EVMData<'a, DB>>>,
                   key_offset: u32,
                   value_offset: u32| {
                 let mut key: [u8; 32] = [0; 32];
@@ -724,18 +721,18 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         let bytecode = contract.bytecode.original_bytecode_slice();
         let mut output = vec![0u8; 1024];
         let input = &contract.input;
-        let import_linker = Runtime::<'a, &mut EVMData<'a, DB>>::new_linker();
-        let ctx = RuntimeContext::<'a, &mut EVMData<'a, DB>>::new(bytecode)
-            // .with_context(RefCell::new(&mut self.data))
+        let import_linker = Runtime::<'_, EVMData<'a, DB>>::new_linker();
+        let ctx = RuntimeContext::<'_, EVMData<'a, DB>>::new(bytecode)
+            .with_context(&mut self.data)
             .with_input(input.to_vec())
             .with_state(state)
             .with_fuel_limit(gas_limit as u32);
-        let runtime = Runtime::<'a, &mut EVMData<'a, DB>>::new(ctx, &import_linker);
+        let runtime = Runtime::<'_, EVMData<'a, DB>>::new(ctx, &import_linker);
         if runtime.is_err() {
             return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
         }
         let mut runtime = runtime.unwrap();
-        self.add_storage_bindings(contract, &mut runtime);
+        Self::add_storage_bindings(contract, &mut runtime);
         let result = runtime.call();
         if result.is_err() {
             return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
