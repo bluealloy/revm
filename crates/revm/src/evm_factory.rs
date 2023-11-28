@@ -3,7 +3,7 @@ use crate::{
     evm::{new_evm, Transact},
     handler::{InspectorHandle, MainnetHandle, RegisterHandler},
     primitives::{db::WrapDatabaseRef, EVMError, EVMResult, Env, ExecutionResult, ResultAndState},
-    Evm, Inspector,
+    Context, Evm, EvmContext, Inspector,
 };
 
 /// Struct that takes Database and enabled transact to update state directly to database.
@@ -90,7 +90,10 @@ impl<DB: Database> EvmFactory<DB> {
         let mut evm = new_evm::<EXT, DB>(env, db, external);
         let res = exec(&mut evm);
 
-        let (db, env) = evm.into_db_ext();
+        let Context {
+            evm: EvmContext { db, env, .. },
+            ..
+        } = evm.into_context();
         self.env = env;
         self.db = Some(db);
 

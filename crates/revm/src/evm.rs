@@ -12,7 +12,7 @@ use crate::{
     precompile::Precompiles,
     primitives::{
         specification::{self, SpecId},
-        Address, Bytecode, Bytes, EVMError, EVMResult, Env, InvalidTransaction, Output,
+        Address, Bytecode, Bytes, EVMError, EVMResult, Env, HashSet, InvalidTransaction, Output,
         SpecId::*,
         TransactTo, B256, U256,
     },
@@ -49,6 +49,13 @@ where
     }
 }
 
+impl<'a> Evm<'a, MainnetHandle, EmptyDB> {
+    /// Returns evm builder.
+    pub fn builder() -> EvmBuilder<'a, MainnetHandle, EmptyDB> {
+        EvmBuilder::default()
+    }
+}
+
 impl<'a, EXT, DB: Database> Evm<'a, EXT, DB>
 where
     EXT: RegisterHandler<'a, DB, EXT>,
@@ -62,15 +69,24 @@ where
         }
     }
 
-    /// Returns evm builder.
-    pub fn builder() -> EvmBuilder<'a, MainnetHandle, EmptyDB> {
-        EvmBuilder::default()
-    }
-
     /// Allow for evm setting to be modified by feeding current evm
     /// to the builder for modifications.
     pub fn modify(self) -> EvmBuilder<'a, EXT, DB> {
         EvmBuilder::new(self)
+    }
+
+    /// Modify spec id, this will create new EVM that matches this spec id.
+    pub fn modify_spec_id(self, spec_id: SpecId) -> Self {
+        if self.spec_id == spec_id {
+            return self;
+        }
+        self.modify().with_spec_id(spec_id).build()
+    }
+
+    /// Returns internal database and external struct.
+    #[inline]
+    pub fn into_context(self) -> Context<EXT, DB> {
+        self.context
     }
 
     /// TODO add spec_id as variable.
@@ -88,7 +104,7 @@ where
                 .addresses()
                 .into_iter()
                 .cloned()
-                .collect::<Vec<_>>(),
+                .collect::<HashSet<_>>(),
         );
 
         Self {
@@ -401,11 +417,6 @@ pub trait Transact<DB: Database, EXT> {
 
     /// Execute transaction by running pre-verification steps and then transaction itself.
     fn transact(&mut self) -> EVMResult<DB::Error>;
-
-    /// Into database and extern type.
-    fn into_db_ext(self) -> (DB, Box<Env>)
-    where
-        Self: Sized;
 }
 
 impl<'a, EXT: RegisterHandler<'a, DB, EXT>, DB: Database> Transact<DB, EXT> for Evm<'a, EXT, DB> {
@@ -426,11 +437,6 @@ impl<'a, EXT: RegisterHandler<'a, DB, EXT>, DB: Database> Transact<DB, EXT> for 
             .preverify_transaction_inner()
             .and_then(|()| self.transact_preverified_inner());
         self.handler.end(&mut self.context, output)
-    }
-
-    #[inline]
-    fn into_db_ext(self) -> (DB, Box<Env>) {
-        (self.context.evm.db, self.context.evm.env)
     }
 }
 

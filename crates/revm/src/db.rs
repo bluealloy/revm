@@ -21,3 +21,5 @@ pub use states::{
 compile_error!(
     "`web3db` feature is deprecated, drop-in replacement can be found with feature `ethersdb`"
 );
+
+pub type DummyStateDB = InMemoryDB;

@@ -23,16 +23,14 @@ mod journaled_state;
 #[cfg(feature = "optimism")]
 pub mod optimism;
 
-pub type DummyStateDB = InMemoryDB;
 pub use context::{Context, EvmContext};
 #[cfg(feature = "std")]
 pub use db::{
     CacheState, DBBox, State, StateBuilder, StateDBBox, TransitionAccount, TransitionState,
 };
-pub use db::{Database, DatabaseCommit, DatabaseRef, InMemoryDB};
+pub use db::{Database, DatabaseCommit, DatabaseRef, DummyStateDB, InMemoryDB};
 pub use evm::{new_evm, Evm, Transact, CALL_STACK_LIMIT};
-//pub use evm_builder::EvmBuilder;
-pub use evm_factory::{new, EvmFactory};
+pub use evm_builder::EvmBuilder;
 pub use frame::{CallStackFrame, FrameOrResult};
 pub use journaled_state::{JournalCheckpoint, JournalEntry, JournaledState};
 

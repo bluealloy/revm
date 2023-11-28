@@ -147,8 +147,10 @@ mod tests {
     #[cfg(not(feature = "optimism"))]
     fn test_gas_inspector() {
         use crate::db::BenchmarkDB;
+        use crate::handler::InspectorHandle;
         use crate::interpreter::opcode;
         use crate::primitives::{address, Bytecode, Bytes, TransactTo};
+        use crate::{Evm, Transact};
 
         let contract_data: Bytes = Bytes::from(vec![
             opcode::PUSH1,
@@ -167,15 +169,24 @@ mod tests {
         ]);
         let bytecode = Bytecode::new_raw(contract_data);
 
-        let mut evm = crate::new();
-        evm.database(BenchmarkDB::new_bytecode(bytecode.clone()));
-        evm.env.tx.caller = address!("1000000000000000000000000000000000000000");
-        evm.env.tx.transact_to =
-            TransactTo::Call(address!("0000000000000000000000000000000000000000"));
-        evm.env.tx.gas_limit = 21100;
+        let mut evm = Evm::builder()
+            .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
+            .with_external(InspectorHandle::<BenchmarkDB, StackInspector>::new(
+                StackInspector::default(),
+            ))
+            .modify_tx_env(|tx| {
+                tx.clear();
+                tx.caller = address!("1000000000000000000000000000000000000000");
+                tx.transact_to =
+                    TransactTo::Call(address!("0000000000000000000000000000000000000000"));
+                tx.gas_limit = 21100;
+            })
+            .build();
 
-        let mut inspector = StackInspector::default();
-        evm.inspect(&mut inspector).unwrap();
+        // run evm.
+        evm.transact().unwrap();
+
+        let inspector = evm.into_context().external.inspector;
 
         // starting from 100gas
         let steps = vec![

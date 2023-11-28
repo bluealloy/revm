@@ -471,6 +471,12 @@ impl BlockEnv {
             .as_ref()
             .map(|a| a.excess_blob_gas)
     }
+
+    /// Clears environment and resets fields to default values.
+    #[inline]
+    pub fn clear(&mut self) {
+        *self = Self::default();
+    }
 }
 
 impl Default for BlockEnv {
@@ -555,6 +561,12 @@ impl TxEnv {
     #[inline]
     pub fn get_total_blob_gas(&self) -> u64 {
         GAS_PER_BLOB * self.blob_hashes.len() as u64
+    }
+
+    /// Clears environment and resets fields to default values.
+    #[inline]
+    pub fn clear(&mut self) {
+        *self = Self::default();
     }
 }
 

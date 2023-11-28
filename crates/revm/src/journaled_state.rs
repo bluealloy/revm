@@ -1,7 +1,7 @@
 use crate::interpreter::{InstructionResult, SelfDestructResult};
 use crate::primitives::{
-    db::Database, hash_map::Entry, Account, Address, Bytecode, HashMap, Log, SpecId::*, State,
-    StorageSlot, TransientStorage, KECCAK_EMPTY, PRECOMPILE3, U256,
+    db::Database, hash_map::Entry, Account, Address, Bytecode, HashMap, HashSet, Log, SpecId::*,
+    State, StorageSlot, TransientStorage, KECCAK_EMPTY, PRECOMPILE3, U256,
 };
 use alloc::vec::Vec;
 use core::mem;
@@ -29,9 +29,7 @@ pub struct JournaledState {
     /// Precompiles addresses are used to check if loaded address
     /// should be considered cold or hot loaded. It is cloned from
     /// EvmContext to be directly accessed from JournaledState.
-    ///
-    /// Note that addresses are sorted.
-    pub precompile_addresses: Vec<Address>,
+    pub precompile_addresses: HashSet<Address>,
 }
 
 impl JournaledState {
@@ -45,7 +43,7 @@ impl JournaledState {
     /// # Note
     ///
     /// Precompile addresses should be sorted.
-    pub fn new(spec: SpecId, precompile_addresses: Vec<Address>) -> JournaledState {
+    pub fn new(spec: SpecId, precompile_addresses: HashSet<Address>) -> JournaledState {
         Self {
             state: HashMap::new(),
             transient_storage: TransientStorage::default(),
@@ -227,7 +225,7 @@ impl JournaledState {
         // Account is not precompile.
         if account.info.code_hash != KECCAK_EMPTY
             || account.info.nonce != 0
-            || self.precompile_addresses.binary_search(&address).is_ok()
+            || self.precompile_addresses.contains(&address)
         {
             self.checkpoint_revert(checkpoint);
             return Err(InstructionResult::CreateCollision);
@@ -540,7 +538,7 @@ impl JournaledState {
                     .push(JournalEntry::AccountLoaded { address });
 
                 // precompiles are warm loaded so we need to take that into account
-                let is_cold = self.precompile_addresses.binary_search(&address).is_err();
+                let is_cold = !self.precompile_addresses.contains(&address);
 
                 (vac.insert(account), is_cold)
             }

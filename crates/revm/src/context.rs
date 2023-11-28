@@ -7,8 +7,8 @@ use crate::{
     journaled_state::JournaledState,
     precompile::{Precompile, Precompiles},
     primitives::{
-        keccak256, Address, AnalysisKind, Bytecode, Bytes, EVMError, Env, Spec, SpecId, SpecId::*,
-        B256, U256,
+        keccak256, Address, AnalysisKind, Bytecode, Bytes, EVMError, Env, HashSet, Spec, SpecId,
+        SpecId::*, B256, U256,
     },
     CallStackFrame, FrameOrResult, CALL_STACK_LIMIT,
 };
@@ -46,13 +46,36 @@ impl<'a, DB: Database> EvmContext<DB> {
     pub fn new(db: DB) -> Self {
         Self {
             env: Box::default(),
-            journaled_state: JournaledState::new(SpecId::LATEST, vec![]),
+            journaled_state: JournaledState::new(SpecId::LATEST, HashSet::new()),
             db,
             error: None,
             precompiles: Precompiles::default(),
             #[cfg(feature = "optimism")]
             l1_block_info: None,
         }
+    }
+
+    /// New context with database and environment.
+    pub fn new_with_env(db: DB, env: Box<Env>) -> Self {
+        Self {
+            env,
+            journaled_state: JournaledState::new(SpecId::LATEST, HashSet::new()),
+            db,
+            error: None,
+            precompiles: Precompiles::default(),
+            #[cfg(feature = "optimism")]
+            l1_block_info: None,
+        }
+    }
+
+    /// Sets precompiles
+    pub fn set_precompiles(&mut self, precompiles: Precompiles) {
+        self.journaled_state.precompile_addresses = precompiles
+            .addresses()
+            .into_iter()
+            .cloned()
+            .collect::<HashSet<_>>();
+        self.precompiles = precompiles;
     }
 
     /// Load access list for berlin hard fork.

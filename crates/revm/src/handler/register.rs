@@ -67,6 +67,7 @@ impl<'handler, DB: Database, INS: GetInspector<'handler, DB>> RegisterHandler<'h
         Self: Sized,
         DB: 'handler,
     {
+        println!("Register handle");
         // Every instruction inside flat table that is going to be wrapped by inspector calls.
         let flat_instruction_table =
             make_instruction_table::<Evm<'handler, InspectorHandle<'handler, DB, INS>, DB>, SPEC>();

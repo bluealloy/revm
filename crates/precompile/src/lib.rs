@@ -19,7 +19,7 @@ mod modexp;
 mod secp256k1;
 pub mod utilities;
 
-use alloc::{boxed::Box, collections::BTreeMap, vec::Vec};
+use alloc::boxed::Box;
 use core::{fmt, hash::Hash};
 use once_cell::race::OnceBox;
 #[doc(hidden)]
@@ -56,9 +56,10 @@ impl PrecompileOutput {
         }
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Default, Debug)]
 pub struct Precompiles {
-    pub inner: Vec<PrecompileWithAddress>,
+    /// Precompiles.
+    pub inner: HashMap<Address, Precompile>,
 }
 
 impl Precompiles {
@@ -66,22 +67,7 @@ impl Precompiles {
     ///
     /// Other precompiles with overwrite existing precompiles.
     pub fn extend(&mut self, other: impl IntoIterator<Item = PrecompileWithAddress>) {
-        self.inner = self
-            .inner
-            .iter()
-            .cloned()
-            .chain(other)
-            .map(|i| (i.0, i.1.clone()))
-            .collect::<BTreeMap<Address, Precompile>>()
-            .into_iter()
-            .map(|(k, v)| PrecompileWithAddress(k, v))
-            .collect::<Vec<_>>();
-    }
-}
-
-impl Default for Precompiles {
-    fn default() -> Self {
-        Self::new(SpecId::LATEST).clone() //berlin
+        self.inner.extend(other.into_iter().map(Into::into));
     }
 }
 
@@ -143,14 +129,17 @@ impl Precompiles {
     pub fn homestead() -> &'static Self {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
-            let mut inner = vec![
-                secp256k1::ECRECOVER,
-                hash::SHA256,
-                hash::RIPEMD160,
-                identity::FUN,
-            ];
-            inner.sort_unstable_by_key(|i| i.0);
-            Box::new(Self { inner })
+            let mut precompiles = Precompiles::default();
+            precompiles.extend(
+                [
+                    secp256k1::ECRECOVER,
+                    hash::SHA256,
+                    hash::RIPEMD160,
+                    identity::FUN,
+                ]
+                .into_iter(),
+            );
+            Box::new(precompiles)
         })
     }
 
@@ -245,7 +234,7 @@ impl Precompiles {
     /// Returns an iterator over the precompiles addresses.
     #[inline]
     pub fn addresses(&self) -> impl IntoIterator<Item = &Address> {
-        self.inner.iter().map(|i| &i.0)
+        self.inner.keys()
     }
 
     /// Is the given address a precompile.
@@ -258,10 +247,7 @@ impl Precompiles {
     #[inline]
     pub fn get(&self, address: &Address) -> Option<Precompile> {
         //return None;
-        self.inner
-            .binary_search_by_key(address, |i| i.0)
-            .ok()
-            .map(|i| self.inner[i].1.clone())
+        self.inner.get(address).cloned()
     }
 
     /// Is the precompiles list empty.

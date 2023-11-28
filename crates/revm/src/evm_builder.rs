@@ -1,13 +1,16 @@
-use revm_interpreter::primitives::SpecId;
+//! Evm Builder.
 
 use crate::{
     db::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef},
     handler::{MainnetHandle, RegisterHandler},
-    primitives::LatestSpec,
+    primitives::{BlockEnv, CfgEnv, Env, TxEnv},
+    primitives::{LatestSpec, SpecId},
     Context, Evm, EvmContext, Handler,
 };
 
-/// Evm Builder
+/// Evm Builder allows building or modifying EVM.
+/// Note that some of the methods that changes underlying structures
+///  will reset the registered handler to default mainnet.
 pub struct EvmBuilder<'a, EXT, DB: Database> {
     evm: EvmContext<DB>,
     external: EXT,
@@ -61,6 +64,30 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, EXT, DB> {
         self
     }
 
+    /// Modify Environment of EVM.
+    pub fn modify_env(mut self, f: impl FnOnce(&mut Env)) -> Self {
+        f(&mut self.evm.env);
+        self
+    }
+
+    /// Modify Transaction Environment of EVM.
+    pub fn modify_tx_env(mut self, f: impl FnOnce(&mut TxEnv)) -> Self {
+        f(&mut self.evm.env.tx);
+        self
+    }
+
+    /// Modify Block Environment of EVM.
+    pub fn modify_block_env(mut self, f: impl FnOnce(&mut BlockEnv)) -> Self {
+        f(&mut self.evm.env.block);
+        self
+    }
+
+    /// Modify Config Environment of EVM.
+    pub fn modify_cfg_env(mut self, f: impl FnOnce(&mut CfgEnv)) -> Self {
+        f(&mut self.evm.env.cfg);
+        self
+    }
+
     /// Sets the [`Database`] that will be used by [`Evm`].
     ///
     /// # Note
@@ -96,15 +123,21 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, EXT, DB> {
     /// # Note
     ///
     /// When changed it will reset the handler to default mainnet.
-    pub fn with_external<OEXT>(self, external: OEXT) -> EvmBuilder<'a, OEXT, DB> {
+    pub fn with_external<OEXT: RegisterHandler<'a, DB, OEXT>>(
+        self,
+        external: OEXT,
+    ) -> EvmBuilder<'a, OEXT, DB> {
+        let handler = external.register_handler::<LatestSpec>(Handler::mainnet::<LatestSpec>());
         EvmBuilder {
             evm: self.evm,
             external: external,
-            handler: Handler::mainnet::<LatestSpec>(),
+            handler,
             spec_id: self.spec_id,
         }
     }
 
+    /// Register Handler that modifies the behavior of EVM.
+    /// Check [`Handler`] for more information.
     pub fn register_handler<H: RegisterHandler<'a, DB, EXT>>(
         self,
         handler: H,

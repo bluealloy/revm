@@ -1,13 +1,21 @@
+//! Handler contains all the logic that is specific to the Evm.
+//! It is used to define different behavior depending on the chain (Optimism,Mainnet) or
+//! hardfork (Berlin, London, ..).
+
 pub mod mainnet;
 #[cfg(feature = "optimism")]
 pub mod optimism;
 pub mod register;
 
 pub use register::{InspectorHandle, MainnetHandle, RegisterHandler};
-use revm_precompile::{Address, Bytes, B256};
 
 use crate::{
-    interpreter::{Gas, InstructionResult},
+    interpreter::{
+        opcode::{make_instruction_table, InstructionTables},
+        CallInputs, CreateInputs, Gas, Host, InstructionResult, InterpreterResult,
+        SelfDestructResult, SharedMemory,
+    },
+    precompile::{Address, Bytes, B256},
     primitives::{
         db::Database, EVMError, EVMResultGeneric, Env, Output, ResultAndState, Spec, SpecId,
     },
@@ -15,10 +23,6 @@ use crate::{
 };
 use alloc::sync::Arc;
 use core::ops::Range;
-use revm_interpreter::{
-    opcode::{make_instruction_table, InstructionTables},
-    CallInputs, CreateInputs, Host, InterpreterResult, SelfDestructResult, SharedMemory,
-};
 
 /// Handle call return and return final gas value.
 pub type CallReturnHandle<'a> = Arc<dyn Fn(&Env, InstructionResult, Gas) -> Gas + 'a>;
