@@ -30,7 +30,7 @@ pub trait RegisterHandler<'a, DB: Database, EXT> {
 #[derive(Default)]
 pub struct MainnetHandle {}
 
-impl<'a, DB: Database> RegisterHandler<'a, DB, Self> for MainnetHandle {}
+impl<'a, EXT, DB: Database> RegisterHandler<'a, DB, EXT> for MainnetHandle {}
 
 pub struct InspectorHandle<'a, DB: Database, GI: GetInspector<'a, DB>> {
     pub inspector: GI,

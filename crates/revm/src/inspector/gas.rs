@@ -146,11 +146,11 @@ mod tests {
     #[test]
     #[cfg(not(feature = "optimism"))]
     fn test_gas_inspector() {
-        use crate::db::BenchmarkDB;
-        use crate::handler::InspectorHandle;
-        use crate::interpreter::opcode;
-        use crate::primitives::{address, Bytecode, Bytes, TransactTo};
-        use crate::{Evm, Transact};
+        use crate::{
+            db::BenchmarkDB,
+            interpreter::opcode,
+            primitives::{address, Bytecode, Bytes, TransactTo},
+        };
 
         let contract_data: Bytes = Bytes::from(vec![
             opcode::PUSH1,

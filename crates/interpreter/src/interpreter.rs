@@ -8,10 +8,9 @@ pub use contract::Contract;
 pub use shared_memory::{next_multiple_of_32, SharedMemory};
 pub use stack::{Stack, STACK_LIMIT};
 
-use crate::primitives::Bytes;
 use crate::{
-    push, push_b256, return_ok, return_revert, CallInputs, CreateInputs, Gas, Host,
-    InstructionResult,
+    primitives::Bytes, push, push_b256, return_ok, return_revert, CallInputs, CreateInputs, Gas,
+    Host, InstructionResult,
 };
 use alloc::boxed::Box;
 use core::cmp::min;
@@ -19,14 +18,6 @@ use core::ops::Range;
 use revm_primitives::{Address, U256};
 
 pub use self::shared_memory::EMPTY_SHARED_MEMORY;
-
-/// EIP-170: Contract code size limit
-///
-/// By default this limit is 0x6000 (~25kb)
-pub const MAX_CODE_SIZE: usize = 0x6000;
-
-/// EIP-3860: Limit and meter initcode
-pub const MAX_INITCODE_SIZE: usize = 2 * MAX_CODE_SIZE;
 
 #[derive(Debug)]
 pub struct Interpreter {

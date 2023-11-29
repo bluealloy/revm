@@ -1,7 +1,4 @@
-use crate::AccountInfo;
-use crate::U256;
-use crate::{Account, Bytecode};
-use crate::{Address, B256};
+use crate::{Account, AccountInfo, Address, Bytecode, B256, U256};
 use auto_impl::auto_impl;
 use hashbrown::HashMap as Map;
 

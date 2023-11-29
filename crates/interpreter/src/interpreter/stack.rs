@@ -8,9 +8,9 @@ use core::fmt;
 /// EVM interpreter stack limit.
 pub const STACK_LIMIT: usize = 1024;
 
-/// EVM stack.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+/// EVM stack with [STACK_LIMIT] capacity of words.
+#[derive(Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Stack {
     /// The underlying data of the stack.
     data: Vec<U256>,
@@ -62,6 +62,12 @@ impl Stack {
     #[inline]
     pub fn data(&self) -> &Vec<U256> {
         &self.data
+    }
+
+    /// Consumes the stack and returns the underlying data.
+    #[inline]
+    pub fn into_data(self) -> Vec<U256> {
+        self.data
     }
 
     /// Removes the topmost element from the stack and returns it, or `StackUnderflow` if it is
@@ -301,6 +307,25 @@ impl Stack {
         } else {
             Err(InstructionResult::StackUnderflow)
         }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for Stack {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let mut data = Vec::<U256>::deserialize(deserializer)?;
+        if data.len() > STACK_LIMIT {
+            return Err(serde::de::Error::custom(alloc::format!(
+                "stack size exceeds limit: {} > {}",
+                data.len(),
+                STACK_LIMIT
+            )));
+        }
+        data.reserve(STACK_LIMIT - data.len());
+        Ok(Self { data })
     }
 }
 

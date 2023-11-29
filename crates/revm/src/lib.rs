@@ -37,6 +37,7 @@ pub use frame::{CallStackFrame, FrameOrResult};
 pub use handler::Handler;
 pub use inspector::{inspector_instruction, inspectors, Inspector};
 pub use journaled_state::{JournalCheckpoint, JournalEntry, JournaledState};
+// export Optimism types, helpers, and constants
 #[cfg(feature = "optimism")]
 pub use optimism::{L1BlockInfo, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RECIPIENT};
 

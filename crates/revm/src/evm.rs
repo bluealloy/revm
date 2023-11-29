@@ -2,7 +2,7 @@
 use crate::optimism;
 use crate::{
     db::{Database, EmptyDB},
-    evm_builder::{BuilderStage, EvmBuilder, SettingExternal, SettingDb},
+    evm_builder::{BuilderStage, EvmBuilder, SettingDb, SettingExternal},
     handler::Handler,
     handler::{MainnetHandle, RegisterHandler},
     interpreter::{
@@ -51,7 +51,7 @@ where
 
 impl<'a> Evm<'a, MainnetHandle, EmptyDB> {
     /// Returns evm builder.
-    pub fn builder() -> EvmBuilder<'a, SettingDb, MainnetHandle, EmptyDB> {
+    pub fn builder() -> EvmBuilder<'a, SettingDb, (), MainnetHandle, EmptyDB> {
         EvmBuilder::default()
     }
 }
@@ -74,7 +74,7 @@ where
 
     /// Allow for evm setting to be modified by feeding current evm
     /// to the builder for modifications.
-    pub fn modify(self) -> EvmBuilder<'a, SettingExternal, EXT, DB> {
+    pub fn modify(self) -> EvmBuilder<'a, SettingExternal, EXT, EXT, DB> {
         EvmBuilder::new(self)
     }
 

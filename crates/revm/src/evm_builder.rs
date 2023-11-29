@@ -13,11 +13,18 @@ use crate::{
 /// Evm Builder allows building or modifying EVM.
 /// Note that some of the methods that changes underlying structures
 ///  will reset the registered handler to default mainnet.
-pub struct EvmBuilder<'a, STAGE: BuilderStage, EXT: RegisterHandler<'a, DB, EXT>, DB: Database> {
+pub struct EvmBuilder<
+    'a,
+    Stage: BuilderStage,
+    EXT,
+    HREG: RegisterHandler<'a, DB, EXT>,
+    DB: Database,
+> {
     evm: EvmContext<DB>,
     external: EXT,
+    handle_registrator: HREG,
     handler: Handler<'a, Evm<'a, EXT, DB>, EXT, DB>,
-    phantom: PhantomData<STAGE>,
+    phantom: PhantomData<Stage>,
 }
 
 pub trait BuilderStage {}
@@ -28,18 +35,77 @@ impl BuilderStage for SettingDb {}
 pub struct SettingExternal;
 impl BuilderStage for SettingExternal {}
 
-impl<'a> Default for EvmBuilder<'a, SettingDb, MainnetHandle, EmptyDB> {
+impl<'a> Default for EvmBuilder<'a, SettingDb, (), MainnetHandle, EmptyDB> {
     fn default() -> Self {
         Self {
             evm: EvmContext::new(EmptyDB::default()),
-            external: MainnetHandle::default(),
+            external: (),
+            handle_registrator: MainnetHandle::default(),
             handler: Handler::mainnet::<LatestSpec>(),
             phantom: PhantomData,
         }
     }
 }
 
-impl<'a, EXT: RegisterHandler<'a, DB, EXT>, DB: Database> EvmBuilder<'a, SettingExternal, EXT, DB> {}
+impl<'a, EXT, HREG: RegisterHandler<'a, DB, EXT>, DB: Database>
+    EvmBuilder<'a, SettingDb, EXT, HREG, DB>
+{
+    /// Sets the [`Database`] that will be used by [`Evm`].
+    ///
+    /// # Note
+    ///
+    /// When changed it will reset the handler to default mainnet.
+    pub fn with_db<ODB: Database>(
+        self,
+        db: ODB,
+    ) -> EvmBuilder<'a, SettingExternal, EXT, MainnetHandle, ODB> {
+        EvmBuilder {
+            evm: EvmContext::new(db),
+            external: self.external,
+            handle_registrator: MainnetHandle::default(),
+            handler: Handler::mainnet::<LatestSpec>(),
+            phantom: PhantomData,
+        }
+    }
+    /// Sets the [`DatabaseRef`] that will be used by [`Evm`].
+    ///
+    /// # Note
+    ///
+    /// When changed it will reset the handler to default mainnet.
+    pub fn with_ref_db<ODB: DatabaseRef, OHREG: RegisterHandler<'a, WrapDatabaseRef<ODB>, EXT>>(
+        self,
+        db: ODB,
+    ) -> EvmBuilder<'a, SettingExternal, EXT, OHREG, WrapDatabaseRef<ODB>> {
+        let present_spec_id = self.handler.spec_id;
+
+        let mut builder = EvmBuilder {
+            evm: EvmContext::new(WrapDatabaseRef(db)),
+            external: self.external,
+            handle_registrator: MainnetHandle::default(),
+            handler: Handler::mainnet::<LatestSpec>(),
+            phantom: PhantomData,
+        };
+        //builder.handler = builder.create_handler(present_spec_id);
+        builder
+    }
+}
+
+impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingExternal, EXT, MainnetHandle, DB> {
+    pub fn new(evm: Evm<'a, EXT, DB>) -> Self {
+        Self {
+            evm: evm.context.evm,
+            external: evm.context.external,
+            handle_registrator: MainnetHandle::default(),
+            handler: evm.handler,
+            phantom: PhantomData,
+        }
+    }
+}
+
+impl<'a, EXT, HREG: RegisterHandler<'a, DB, EXT>, DB: Database>
+    EvmBuilder<'a, SettingExternal, EXT, HREG, DB>
+{
+}
 /*
 impl<'a, EXT: RegisterHandler<'a,DB,EXT>, DB: Database> EvmBuilder<'a, EXT, DB> {
     pub fn new(evm: Evm<'a, EXT, DB>) -> Self {
@@ -132,38 +198,6 @@ impl<'a, EXT: RegisterHandler<'a,DB,EXT>, DB: Database> EvmBuilder<'a, EXT, DB> 
     pub fn modify_cfg_env(mut self, f: impl FnOnce(&mut CfgEnv)) -> Self {
         f(&mut self.evm.env.cfg);
         self
-    }
-
-    /// Sets the [`Database`] that will be used by [`Evm`].
-    ///
-    /// # Note
-    ///
-    /// When changed it will reset the handler to default mainnet.
-    pub fn with_db<ODB: Database>(self, db: ODB) -> EvmBuilder<'a, EXT, ODB> {
-        EvmBuilder {
-            evm: EvmContext::new(db),
-            external: self.external,
-            handler: Handler::mainnet::<LatestSpec>(),
-        }
-    }
-    /// Sets the [`DatabaseRef`] that will be used by [`Evm`].
-    ///
-    /// # Note
-    ///
-    /// When changed it will reset the handler to default mainnet.
-    pub fn with_ref_db<RDB: DatabaseRef>(
-        self,
-        db: RDB,
-    ) -> EvmBuilder<'a, EXT, WrapDatabaseRef<RDB>> {
-        let present_spec_id = self.handler.spec_id;
-
-        let mut builder = EvmBuilder {
-            evm: EvmContext::new(WrapDatabaseRef(db)),
-            external: self.external,
-            handler: Handler::mainnet::<LatestSpec>(),
-        };
-        builder.handler = builder.create_handler(present_spec_id);
-        builder
     }
 
     /// Sets the external data that can be used by Handler inside EVM.

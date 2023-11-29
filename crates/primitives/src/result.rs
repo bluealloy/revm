@@ -1,5 +1,5 @@
 use crate::{Address, Bytes, Log, State, U256};
-use alloc::vec::Vec;
+use alloc::{boxed::Box, vec::Vec};
 use core::fmt;
 
 /// Result of EVM execution.
@@ -126,7 +126,7 @@ impl Output {
 }
 
 /// Main EVM error.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum EVMError<DBError> {
     /// Transaction validation error.
@@ -157,7 +157,7 @@ impl<DBError> From<InvalidTransaction> for EVMError<DBError> {
 }
 
 /// Transaction validation error.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InvalidTransaction {
     /// When using the EIP-1559 fee model introduced in the London upgrade, transactions specify two primary fee fields:
@@ -180,8 +180,8 @@ pub enum InvalidTransaction {
     RejectCallerWithCode,
     /// Transaction account does not have enough amount of ether to cover transferred value and gas_limit*gas_price.
     LackOfFundForMaxFee {
-        fee: u64,
-        balance: U256,
+        fee: Box<U256>,
+        balance: Box<U256>,
     },
     /// Overflow payment in transaction.
     OverflowPaymentInTransaction,
@@ -216,12 +216,36 @@ pub enum InvalidTransaction {
     TooManyBlobs,
     /// Blob transaction contains a versioned hash with an incorrect version
     BlobVersionNotSupported,
-    /// System transactions are not supported
-    /// post-regolith hardfork.
+    /// System transactions are not supported post-regolith hardfork.
+    ///
+    /// Before the Regolith hardfork, there was a special field in the `Deposit` transaction
+    /// type that differentiated between `system` and `user` deposit transactions. This field
+    /// was deprecated in the Regolith hardfork, and this error is thrown if a `Deposit` transaction
+    /// is found with this field set to `true` after the hardfork activation.
+    ///
+    /// In addition, this error is internal, and bubbles up into a [Halt::FailedDeposit] error
+    /// in the `revm` handler for the consumer to easily handle. This is due to a state transition
+    /// rule on OP Stack chains where, if for any reason a deposit transaction fails, the transaction
+    /// must still be included in the block, the sender nonce is bumped, the `mint` value persists, and
+    /// special gas accounting rules are applied. Normally on L1, [EVMError::Transaction] errors
+    /// are cause for non-inclusion, so a special [Halt] variant was introduced to handle this
+    /// case for failed deposit transactions.
     #[cfg(feature = "optimism")]
     DepositSystemTxPostRegolith,
-    /// Deposit transaction haults bubble up to the global main return handler,
-    /// wiping state and only increasing the nonce + persisting the mint value.
+    /// Deposit transaction haults bubble up to the global main return handler, wiping state and
+    /// only increasing the nonce + persisting the mint value.
+    ///
+    /// This is a catch-all error for any deposit transaction that is results in a [Halt] error
+    /// post-regolith hardfork. This allows for a consumer to easily handle special cases where
+    /// a deposit transaction fails during validation, but must still be included in the block.
+    ///
+    /// In addition, this error is internal, and bubbles up into a [Halt::FailedDeposit] error
+    /// in the `revm` handler for the consumer to easily handle. This is due to a state transition
+    /// rule on OP Stack chains where, if for any reason a deposit transaction fails, the transaction
+    /// must still be included in the block, the sender nonce is bumped, the `mint` value persists, and
+    /// special gas accounting rules are applied. Normally on L1, [EVMError::Transaction] errors
+    /// are cause for non-inclusion, so a special [Halt] variant was introduced to handle this
+    /// case for failed deposit transactions.
     #[cfg(feature = "optimism")]
     HaltedDepositPostRegolith,
 }
@@ -306,7 +330,7 @@ impl<DBError> From<InvalidHeader> for EVMError<DBError> {
     }
 }
 
-/// Errors related to misconfiguration of a [`BlockEnv`].
+/// Errors related to misconfiguration of a [`crate::env::BlockEnv`].
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum InvalidHeader {
