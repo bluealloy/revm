@@ -181,8 +181,12 @@ fn ec_operation(input: &[u8], gas_limit: u64) -> PrecompileResult {
     if input.len() < 1 {
         return Err(Error::EcOpsInvalidOperation);
     }
-    let operation = EcOperation::try_from(input[0])?;
-    operation.execute(&input[1..], gas_limit)
+    for i in 0..input.len() {
+        if let Ok(operation) = EcOperation::try_from(input[i]) {
+            return operation.execute(&input[i + 1..], gas_limit);
+        }
+    }
+    return Err(Error::EcOpsInvalidOperation);
 }
 
 const CURVE_NAME_SECP256K1: &[u8] = &[
