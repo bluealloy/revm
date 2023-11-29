@@ -74,7 +74,7 @@ where
 
     /// Allow for evm setting to be modified by feeding current evm
     /// to the builder for modifications.
-    pub fn modify(self) -> EvmBuilder<'a, SettingExternal, EXT, EXT, DB> {
+    pub fn modify(self) -> EvmBuilder<'a, SettingExternal, EXT, MainnetHandle, DB> {
         EvmBuilder::new(self)
     }
 
@@ -83,7 +83,9 @@ where
         if self.spec_id() == spec_id {
             return self;
         }
-        self.modify().with_spec_id(spec_id).build()
+        //self.modify().with_spec_id(spec_id).build()
+        // TODO
+        self
     }
 
     /// Returns internal database and external struct.

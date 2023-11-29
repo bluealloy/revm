@@ -72,10 +72,10 @@ impl<'a, EXT, HREG: RegisterHandler<'a, DB, EXT>, DB: Database>
     /// # Note
     ///
     /// When changed it will reset the handler to default mainnet.
-    pub fn with_ref_db<ODB: DatabaseRef, OHREG: RegisterHandler<'a, WrapDatabaseRef<ODB>, EXT>>(
+    pub fn with_ref_db<ODB: DatabaseRef>(
         self,
         db: ODB,
-    ) -> EvmBuilder<'a, SettingExternal, EXT, OHREG, WrapDatabaseRef<ODB>> {
+    ) -> EvmBuilder<'a, SettingExternal, EXT, MainnetHandle, WrapDatabaseRef<ODB>> {
         let present_spec_id = self.handler.spec_id;
 
         let mut builder = EvmBuilder {
