@@ -15,6 +15,7 @@ revm-precompile = { path = "../precompile", version = "2.2.0", default-features 
 
 #misc
 auto_impl = { version = "1.1", default-features = false }
+once_cell = { version = "1.18", default-features = false }
 
 # Optional
 serde = { version = "1.0", features = ["derive", "rc"], optional = true }

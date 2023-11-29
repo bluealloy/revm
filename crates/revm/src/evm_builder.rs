@@ -1,9 +1,11 @@
 //! Evm Builder.
 
+use core::marker::PhantomData;
+
 use crate::{
     db::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef},
     handler::{MainnetHandle, RegisterHandler},
-    primitives::{BlockEnv, CfgEnv, Env, TxEnv},
+    primitives::{BlockEnv, CfgEnv, Env, Spec, TxEnv},
     primitives::{LatestSpec, SpecId},
     Context, Evm, EvmContext, Handler,
 };
@@ -11,31 +13,40 @@ use crate::{
 /// Evm Builder allows building or modifying EVM.
 /// Note that some of the methods that changes underlying structures
 ///  will reset the registered handler to default mainnet.
-pub struct EvmBuilder<'a, EXT, DB: Database> {
+pub struct EvmBuilder<'a, STAGE: BuilderStage, EXT: RegisterHandler<'a, DB, EXT>, DB: Database> {
     evm: EvmContext<DB>,
     external: EXT,
     handler: Handler<'a, Evm<'a, EXT, DB>, EXT, DB>,
-    spec_id: SpecId,
+    phantom: PhantomData<STAGE>,
 }
 
-impl<'a> Default for EvmBuilder<'a, MainnetHandle, EmptyDB> {
+pub trait BuilderStage {}
+
+pub struct SettingDb;
+impl BuilderStage for SettingDb {}
+
+pub struct SettingExternal;
+impl BuilderStage for SettingExternal {}
+
+impl<'a> Default for EvmBuilder<'a, SettingDb, MainnetHandle, EmptyDB> {
     fn default() -> Self {
         Self {
             evm: EvmContext::new(EmptyDB::default()),
             external: MainnetHandle::default(),
             handler: Handler::mainnet::<LatestSpec>(),
-            spec_id: SpecId::LATEST,
+            phantom: PhantomData,
         }
     }
 }
 
-impl<'a, EXT, DB: Database> EvmBuilder<'a, EXT, DB> {
+impl<'a, EXT: RegisterHandler<'a, DB, EXT>, DB: Database> EvmBuilder<'a, SettingExternal, EXT, DB> {}
+/*
+impl<'a, EXT: RegisterHandler<'a,DB,EXT>, DB: Database> EvmBuilder<'a, EXT, DB> {
     pub fn new(evm: Evm<'a, EXT, DB>) -> Self {
         Self {
             evm: evm.context.evm,
             external: evm.context.external,
             handler: evm.handler,
-            spec_id: evm.spec_id,
         }
     }
 
@@ -47,7 +58,43 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, EXT, DB> {
                 external: self.external,
             },
             handler: self.handler,
-            spec_id: self.spec_id,
+        }
+    }
+
+    /// Creates the Handler with Generic Spec.
+    fn create_handle_generic<SPEC: Spec + 'static>(
+        &self,
+    ) -> Handler<'a, Evm<'a, EXT, DB>, EXT, DB> {
+        self.external.register_handle(Handler::mainnet::<SPEC>())
+    }
+
+    /// Creates the Handler with variable SpecId, inside it will call function with Generic Spec.
+    fn create_handler(&self, spec_id: SpecId) -> Handler<'a, Evm<'a, EXT, DB>, EXT, DB> {
+        use crate::primitives::specification::*;
+        match spec_id {
+            SpecId::FRONTIER | SpecId::FRONTIER_THAWING => {
+                self.create_handle_generic::<FrontierSpec>()
+            }
+            SpecId::HOMESTEAD | SpecId::DAO_FORK => self.create_handle_generic::<HomesteadSpec>(),
+            SpecId::TANGERINE => self.create_handle_generic::<TangerineSpec>(),
+            SpecId::SPURIOUS_DRAGON => self.create_handle_generic::<SpuriousDragonSpec>(),
+            SpecId::BYZANTIUM => self.create_handle_generic::<ByzantiumSpec>(),
+            SpecId::PETERSBURG | SpecId::CONSTANTINOPLE => {
+                self.create_handle_generic::<PetersburgSpec>()
+            }
+            SpecId::ISTANBUL | SpecId::MUIR_GLACIER => self.create_handle_generic::<IstanbulSpec>(),
+            SpecId::BERLIN => self.create_handle_generic::<BerlinSpec>(),
+            SpecId::LONDON | SpecId::ARROW_GLACIER | SpecId::GRAY_GLACIER => {
+                self.create_handle_generic::<LondonSpec>()
+            }
+            SpecId::MERGE => self.create_handle_generic::<MergeSpec>(),
+            SpecId::SHANGHAI => self.create_handle_generic::<ShanghaiSpec>(),
+            SpecId::CANCUN => self.create_handle_generic::<CancunSpec>(),
+            SpecId::LATEST => self.create_handle_generic::<LatestSpec>(),
+            #[cfg(feature = "optimism")]
+            SpecId::BEDROCK => self.create_handle_generic::<BedrockSpec>(),
+            #[cfg(feature = "optimism")]
+            SpecId::REGOLITH => self.create_handle_generic::<RegolithSpec>(),
         }
     }
 
@@ -58,9 +105,8 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, EXT, DB> {
     ///
     /// When changed it will reset the handler to default mainnet.
     pub fn with_spec_id(mut self, spec_id: SpecId) -> Self {
-        self.spec_id = spec_id;
         // TODO add match for other spec
-        self.handler = Handler::mainnet::<LatestSpec>();
+        self.handler = self.create_handler(spec_id);
         self
     }
 
@@ -98,7 +144,6 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, EXT, DB> {
             evm: EvmContext::new(db),
             external: self.external,
             handler: Handler::mainnet::<LatestSpec>(),
-            spec_id: self.spec_id,
         }
     }
     /// Sets the [`DatabaseRef`] that will be used by [`Evm`].
@@ -110,12 +155,15 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, EXT, DB> {
         self,
         db: RDB,
     ) -> EvmBuilder<'a, EXT, WrapDatabaseRef<RDB>> {
-        EvmBuilder {
+        let present_spec_id = self.handler.spec_id;
+
+        let mut builder = EvmBuilder {
             evm: EvmContext::new(WrapDatabaseRef(db)),
             external: self.external,
             handler: Handler::mainnet::<LatestSpec>(),
-            spec_id: self.spec_id,
-        }
+        };
+        builder.handler = builder.create_handler(present_spec_id);
+        builder
     }
 
     /// Sets the external data that can be used by Handler inside EVM.
@@ -132,8 +180,17 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, EXT, DB> {
             evm: self.evm,
             external: external,
             handler,
-            spec_id: self.spec_id,
         }
+
+        let present_spec_id = self.handler.spec_id;
+
+        let mut builder = EvmBuilder {
+            evm: EvmContext::new(WrapDatabaseRef(db)),
+            external: self.external,
+            handler: Handler::mainnet::<LatestSpec>(),
+        };
+        builder.handler = builder.create_handler(present_spec_id);
+        builder
     }
 
     /// Register Handler that modifies the behavior of EVM.
@@ -146,7 +203,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, EXT, DB> {
             evm: self.evm,
             external: self.external,
             handler: handler.register_handler::<LatestSpec>(self.handler),
-            spec_id: self.spec_id,
         }
     }
 }
+*/

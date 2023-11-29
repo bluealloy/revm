@@ -10,18 +10,20 @@ compile_error!("`with-serde` feature has been renamed to `serde`.");
 #[macro_use]
 extern crate alloc;
 
+// Define modules.
+
 mod context;
 pub mod db;
 mod evm;
 mod evm_builder;
-mod evm_factory;
 mod frame;
 pub mod handler;
 mod inspector;
 mod journaled_state;
-
 #[cfg(feature = "optimism")]
 pub mod optimism;
+
+// Export items.
 
 pub use context::{Context, EvmContext};
 #[cfg(feature = "std")]
@@ -32,26 +34,17 @@ pub use db::{Database, DatabaseCommit, DatabaseRef, DummyStateDB, InMemoryDB};
 pub use evm::{new_evm, Evm, Transact, CALL_STACK_LIMIT};
 pub use evm_builder::EvmBuilder;
 pub use frame::{CallStackFrame, FrameOrResult};
+pub use handler::Handler;
+pub use inspector::{inspector_instruction, inspectors, Inspector};
 pub use journaled_state::{JournalCheckpoint, JournalEntry, JournaledState};
-
-// reexport `revm_precompiles`
-#[doc(inline)]
-pub use revm_precompile as precompile;
-
-// reexport `revm_interpreter`
-#[doc(inline)]
-pub use revm_interpreter as interpreter;
-
-// reexport `revm_primitives`
-#[doc(inline)]
-pub use revm_interpreter::primitives;
-
-// reexport inspector implementations
-pub use inspector::inspectors;
-pub use inspector::{inspector_instruction, Inspector};
-
-// export Optimism types, helpers, and constants
 #[cfg(feature = "optimism")]
 pub use optimism::{L1BlockInfo, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RECIPIENT};
 
-pub use handler::Handler;
+// Reexport libraries
+
+#[doc(inline)]
+pub use revm_interpreter as interpreter;
+#[doc(inline)]
+pub use revm_interpreter::primitives;
+#[doc(inline)]
+pub use revm_precompile as precompile;

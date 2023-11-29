@@ -1,6 +1,8 @@
+#[cfg(feature = "optimism")]
+use crate::optimism;
 use crate::{
     db::{Database, EmptyDB},
-    evm_builder::EvmBuilder,
+    evm_builder::{BuilderStage, EvmBuilder, SettingExternal, SettingDb},
     handler::Handler,
     handler::{MainnetHandle, RegisterHandler},
     interpreter::{
@@ -21,19 +23,17 @@ use crate::{
 use alloc::{boxed::Box, vec::Vec};
 use core::fmt;
 
-#[cfg(feature = "optimism")]
-use crate::optimism;
-
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
 
+/// EVM instance containing both internal EVM context and external context (if specified)
+/// and the handler that dictates the logic of EVM (or hardfork specification).
 pub struct Evm<'a, EXT, DB: Database> {
     /// Context of execution, containing both EVM and external context.
     pub context: Context<EXT, DB>,
-    /// Handler of EVM that contains all the logic.
+    /// Handler of EVM that contains all the logic. Handler contains specification id
+    /// and it different depending on the specified fork.
     pub handler: Handler<'a, Self, EXT, DB>,
-    /// Specification id.
-    pub spec_id: SpecId,
 }
 
 impl<EXT, DB> fmt::Debug for Evm<'_, EXT, DB>
@@ -51,7 +51,7 @@ where
 
 impl<'a> Evm<'a, MainnetHandle, EmptyDB> {
     /// Returns evm builder.
-    pub fn builder() -> EvmBuilder<'a, MainnetHandle, EmptyDB> {
+    pub fn builder() -> EvmBuilder<'a, SettingDb, MainnetHandle, EmptyDB> {
         EvmBuilder::default()
     }
 }
@@ -60,24 +60,27 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB>
 where
     EXT: RegisterHandler<'a, DB, EXT>,
 {
+    /// Create new EVM.
     pub fn new(context: Context<EXT, DB>, handler: Handler<'a, Self, EXT, DB>) -> Evm<'a, EXT, DB> {
-        let spec_id = handler.spec_id;
-        Evm {
-            context,
-            handler,
-            spec_id,
-        }
+        Evm { context, handler }
+    }
+
+    /// Returns specification (hardfork) that the EVM is instanced with.
+    ///
+    /// SpecId depends on the handler.
+    pub fn spec_id(&self) -> SpecId {
+        self.handler.spec_id
     }
 
     /// Allow for evm setting to be modified by feeding current evm
     /// to the builder for modifications.
-    pub fn modify(self) -> EvmBuilder<'a, EXT, DB> {
+    pub fn modify(self) -> EvmBuilder<'a, SettingExternal, EXT, DB> {
         EvmBuilder::new(self)
     }
 
     /// Modify spec id, this will create new EVM that matches this spec id.
     pub fn modify_spec_id(self, spec_id: SpecId) -> Self {
-        if self.spec_id == spec_id {
+        if self.spec_id() == spec_id {
             return self;
         }
         self.modify().with_spec_id(spec_id).build()
@@ -97,9 +100,8 @@ where
         handler: Handler<'a, Self, EXT, DB>,
         precompiles: Precompiles,
     ) -> Self {
-        let spec_id = handler.spec_id;
         let journaled_state = JournaledState::new(
-            spec_id,
+            handler.spec_id,
             precompiles
                 .addresses()
                 .into_iter()
@@ -120,7 +122,6 @@ where
                 },
                 external,
             },
-            spec_id,
             handler,
         }
     }
@@ -259,7 +260,7 @@ where
 
         // load coinbase
         // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
-        if self.spec_id.is_enabled_in(SHANGHAI) {
+        if self.spec_id().is_enabled_in(SHANGHAI) {
             self.context
                 .evm
                 .journaled_state
@@ -305,7 +306,7 @@ where
             U256::from(tx_gas_limit).saturating_mul(self.context.evm.env.effective_gas_price());
 
         // EIP-4844
-        if self.spec_id.is_enabled_in(CANCUN) {
+        if self.handler.spec_id.is_enabled_in(CANCUN) {
             let data_fee = self
                 .context
                 .evm
@@ -351,7 +352,7 @@ where
                 )
             }
             TransactTo::Create(scheme) => self.context.evm.make_create_frame(
-                self.spec_id,
+                self.spec_id(),
                 &CreateInputs {
                     caller: tx_caller,
                     scheme,

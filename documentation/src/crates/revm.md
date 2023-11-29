@@ -1,10 +1,10 @@
 # Rust Ethereum Virtual Machine (revm)
 
-The `crate` is focused on the implementation of Ethereum Virtual Machine (EVM) including database handling, state journaling, and an inspection system for observing and logging the execution of EVM. This crate pulls together everything described prior to deliver the rust evm.
+The `crate` is focused on the implementation of Ethereum Virtual Machine (EVM) including call loop and host implementation, database handling, state journaling, logic handlers and an inspection system for observing and logging the execution of EVM. This crate pulls together everything described prior to deliver the rust evm.
 
 Modules:
 
-- `db`: This module includes structures and functions for database interaction.
+- `db`: This module includes structures and functions for database interaction. It is a glue between EVM and database. It transforms or aggregates the EVM changes.
 - `evm`: This module contains a Struct that takes Database and enabled transact to update state directly to database. Additionally it allows user to set all environment parameters.
 - `evm_impl`: This module includes more specific implementations related to the EVM regarding state transitions.
 - `inspector`: This module introduces the `Inspector` trait and its implementations for observing the EVM execution.

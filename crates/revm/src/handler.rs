@@ -2,13 +2,16 @@
 //! It is used to define different behavior depending on the chain (Optimism,Mainnet) or
 //! hardfork (Berlin, London, ..).
 
+// Modules.
 pub mod mainnet;
 #[cfg(feature = "optimism")]
 pub mod optimism;
 pub mod register;
 
+// Exports.
 pub use register::{InspectorHandle, MainnetHandle, RegisterHandler};
 
+// Includes.
 use crate::{
     interpreter::{
         opcode::{make_instruction_table, InstructionTables},
@@ -17,12 +20,14 @@ use crate::{
     },
     precompile::{Address, Bytes, B256},
     primitives::{
-        db::Database, EVMError, EVMResultGeneric, Env, Output, ResultAndState, Spec, SpecId,
+        db::Database, specification::*, EVMError, EVMResultGeneric, Env, Output, ResultAndState,
+        Spec, SpecId,
     },
     CallStackFrame, Context,
 };
 use alloc::sync::Arc;
 use core::ops::Range;
+use once_cell::race::OnceBox;
 
 /// Handle call return and return final gas value.
 pub type CallReturnHandle<'a> = Arc<dyn Fn(&Env, InstructionResult, Gas) -> Gas + 'a>;
