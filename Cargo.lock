@@ -89,6 +89,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "alloy-primitives"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a3877a2fa7474d9367d01ab43e33a4a4eeedf9bf7ec481533520686e956703b"
+dependencies = [
+ "alloy-rlp",
+ "bytes",
+ "cfg-if",
+ "const-hex",
+ "derive_more",
+ "hex-literal",
+ "itoa",
+ "proptest",
+ "rand",
+ "ruint",
+ "serde",
+ "tiny-keccak",
+]
+
+[[package]]
 name = "alloy-rlp"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -109,6 +129,36 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.39",
+]
+
+[[package]]
+name = "alloy-sol-macro"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "123b602fbffdfb514183bcca2e5e7428b41ed5d59580ae70bf8eca937d165427"
+dependencies = [
+ "const-hex",
+ "dunce",
+ "heck 0.4.1",
+ "indexmap",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.39",
+ "syn-solidity",
+ "tiny-keccak",
+]
+
+[[package]]
+name = "alloy-sol-types"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8c4c333ed7d5a4d87e3b8ad2ce230d4f9347b9e43faf98ad16ba58bf318cd023"
+dependencies = [
+ "alloy-primitives 0.5.1",
+ "alloy-sol-macro",
+ "const-hex",
+ "serde",
 ]
 
 [[package]]
@@ -1036,12 +1086,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "derive"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72e3ae26c830a573f2e231fc2475f71fce4705609097cb9523abfc4007caed0b"
-
-[[package]]
 name = "derive_arbitrary"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1798,9 +1842,9 @@ dependencies = [
 name = "fluentbase-sdk"
 version = "0.1.0"
 dependencies = [
- "alloy-primitives",
- "alloy-rlp",
- "derive",
+ "alloy-primitives 0.4.2",
+ "alloy-sol-types",
+ "byteorder",
  "eth_trie",
  "fluentbase-poseidon",
  "fluentbase-runtime",
@@ -1808,6 +1852,7 @@ dependencies = [
  "halo2curves 0.3.1",
  "k256",
  "keccak-hash",
+ "lazy_static",
 ]
 
 [[package]]
@@ -3681,6 +3726,7 @@ dependencies = [
 name = "revm-interpreter"
 version = "1.3.0"
 dependencies = [
+ "fluentbase-sdk",
  "revm-primitives",
  "serde",
 ]
@@ -3704,7 +3750,7 @@ dependencies = [
 name = "revm-primitives"
 version = "1.3.0"
 dependencies = [
- "alloy-primitives",
+ "alloy-primitives 0.4.2",
  "alloy-rlp",
  "auto_impl",
  "bitflags 2.4.1",
@@ -4510,6 +4556,18 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "syn-solidity"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cf07302c875aa7e1ee4fb811fdf2a0436bb04640639539003dcab2e049a9d1fe"
+dependencies = [
+ "paste",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.39",
 ]
 
 [[package]]

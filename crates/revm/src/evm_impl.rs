@@ -723,14 +723,16 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         let mut output = vec![0u8; 1024];
         let import_linker = Runtime::<'_, EVMData<'a, DB>>::new_linker();
         let contract_input = ContractInput {
-            input: contract.input.clone(),
-            bytecode: Bytes::copy_from_slice(contract.bytecode.original_bytecode_slice()),
-            hash: contract.hash,
-            address: contract.address,
-            caller: contract.caller,
-            value: contract.value,
+            input: contract.input.as_ref().to_vec(),
+            bytecode: contract.bytecode.original_bytecode_slice().to_vec(),
+            hash: Default::default(),    // contract.hash,
+            address: Default::default(), // contract.address,
+            caller: Default::default(),  // contract.caller,
+            value: Default::default(),   // contract.value,
+            block_hash: Default::default(),
+            balance: Default::default(),
         };
-        let raw_contract_input = contract_input.into_vec();
+        let raw_contract_input = contract_input.encode();
         let ctx = RuntimeContext::<'_, EVMData<'a, DB>>::new(bytecode)
             .with_context(&mut self.data)
             .with_input(raw_contract_input)

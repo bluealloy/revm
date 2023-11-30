@@ -7,6 +7,7 @@ use alloc::vec::Vec;
 pub use dummy::DummyHost;
 
 mod dummy;
+mod fluent;
 
 /// EVM context host.
 pub trait Host {
