@@ -4,7 +4,7 @@ use core::marker::PhantomData;
 
 use crate::{
     db::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef},
-    handler::{MainnetHandle, RegisterHandler},
+    handler::HandleRegister,
     primitives::{BlockEnv, CfgEnv, Env, Spec, TxEnv},
     primitives::{LatestSpec, SpecId},
     Context, Evm, EvmContext, Handler,
@@ -13,17 +13,11 @@ use crate::{
 /// Evm Builder allows building or modifying EVM.
 /// Note that some of the methods that changes underlying structures
 ///  will reset the registered handler to default mainnet.
-pub struct EvmBuilder<
-    'a,
-    Stage: BuilderStage,
-    EXT,
-    HREG: RegisterHandler<'a, DB, EXT>,
-    DB: Database,
-> {
+pub struct EvmBuilder<'a, Stage: BuilderStage, EXT, DB: Database> {
     evm: EvmContext<DB>,
     external: EXT,
-    handle_registrator: HREG,
     handler: Handler<'a, Evm<'a, EXT, DB>, EXT, DB>,
+    handle_registers: Vec<HandleRegister<'a, EXT, DB>>,
     phantom: PhantomData<Stage>,
 }
 
@@ -35,35 +29,30 @@ impl BuilderStage for SettingDb {}
 pub struct SettingExternal;
 impl BuilderStage for SettingExternal {}
 
-impl<'a> Default for EvmBuilder<'a, SettingDb, (), MainnetHandle, EmptyDB> {
+impl<'a> Default for EvmBuilder<'a, SettingDb, (), EmptyDB> {
     fn default() -> Self {
         Self {
             evm: EvmContext::new(EmptyDB::default()),
             external: (),
-            handle_registrator: MainnetHandle::default(),
             handler: Handler::mainnet::<LatestSpec>(),
+            handle_registers: Vec::new(),
             phantom: PhantomData,
         }
     }
 }
 
-impl<'a, EXT, HREG: RegisterHandler<'a, DB, EXT>, DB: Database>
-    EvmBuilder<'a, SettingDb, EXT, HREG, DB>
-{
+impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingDb, EXT, DB> {
     /// Sets the [`Database`] that will be used by [`Evm`].
     ///
     /// # Note
     ///
     /// When changed it will reset the handler to default mainnet.
-    pub fn with_db<ODB: Database>(
-        self,
-        db: ODB,
-    ) -> EvmBuilder<'a, SettingExternal, EXT, MainnetHandle, ODB> {
+    pub fn with_db<ODB: Database>(self, db: ODB) -> EvmBuilder<'a, SettingExternal, EXT, ODB> {
         EvmBuilder {
             evm: EvmContext::new(db),
             external: self.external,
-            handle_registrator: MainnetHandle::default(),
             handler: Handler::mainnet::<LatestSpec>(),
+            handle_registers: Vec::new(),
             phantom: PhantomData,
         }
     }
@@ -75,37 +64,33 @@ impl<'a, EXT, HREG: RegisterHandler<'a, DB, EXT>, DB: Database>
     pub fn with_ref_db<ODB: DatabaseRef>(
         self,
         db: ODB,
-    ) -> EvmBuilder<'a, SettingExternal, EXT, MainnetHandle, WrapDatabaseRef<ODB>> {
+    ) -> EvmBuilder<'a, SettingExternal, EXT, WrapDatabaseRef<ODB>> {
         let present_spec_id = self.handler.spec_id;
 
         let mut builder = EvmBuilder {
             evm: EvmContext::new(WrapDatabaseRef(db)),
             external: self.external,
-            handle_registrator: MainnetHandle::default(),
             handler: Handler::mainnet::<LatestSpec>(),
+            handle_registers: Vec::new(),
             phantom: PhantomData,
         };
-        //builder.handler = builder.create_handler(present_spec_id);
         builder
     }
 }
 
-impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingExternal, EXT, MainnetHandle, DB> {
+impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingExternal, EXT, DB> {
     pub fn new(evm: Evm<'a, EXT, DB>) -> Self {
         Self {
             evm: evm.context.evm,
             external: evm.context.external,
-            handle_registrator: MainnetHandle::default(),
             handler: evm.handler,
+            handle_registers: Vec::new(),
             phantom: PhantomData,
         }
     }
 }
 
-impl<'a, EXT, HREG: RegisterHandler<'a, DB, EXT>, DB: Database>
-    EvmBuilder<'a, SettingExternal, EXT, HREG, DB>
-{
-}
+impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingExternal, EXT, DB> {}
 /*
 impl<'a, EXT: RegisterHandler<'a,DB,EXT>, DB: Database> EvmBuilder<'a, EXT, DB> {
     pub fn new(evm: Evm<'a, EXT, DB>) -> Self {

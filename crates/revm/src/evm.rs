@@ -4,7 +4,6 @@ use crate::{
     db::{Database, EmptyDB},
     evm_builder::{BuilderStage, EvmBuilder, SettingDb, SettingExternal},
     handler::Handler,
-    handler::{MainnetHandle, RegisterHandler},
     interpreter::{
         opcode::InstructionTables, CallContext, CallInputs, CallScheme, CreateInputs, Host,
         Interpreter, InterpreterAction, InterpreterResult, SelfDestructResult, SharedMemory,
@@ -21,7 +20,7 @@ use crate::{
     CallStackFrame, Context, EvmContext, FrameOrResult,
 };
 use alloc::{boxed::Box, vec::Vec};
-use core::fmt;
+use core::{fmt, ops::Deref};
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -49,17 +48,14 @@ where
     }
 }
 
-impl<'a> Evm<'a, MainnetHandle, EmptyDB> {
+impl<'a> Evm<'a, (), EmptyDB> {
     /// Returns evm builder.
-    pub fn builder() -> EvmBuilder<'a, SettingDb, (), MainnetHandle, EmptyDB> {
+    pub fn builder() -> EvmBuilder<'a, SettingDb, (), EmptyDB> {
         EvmBuilder::default()
     }
 }
 
-impl<'a, EXT, DB: Database> Evm<'a, EXT, DB>
-where
-    EXT: RegisterHandler<'a, DB, EXT>,
-{
+impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
     /// Create new EVM.
     pub fn new(context: Context<EXT, DB>, handler: Handler<'a, Self, EXT, DB>) -> Evm<'a, EXT, DB> {
         Evm { context, handler }
@@ -74,7 +70,7 @@ where
 
     /// Allow for evm setting to be modified by feeding current evm
     /// to the builder for modifications.
-    pub fn modify(self) -> EvmBuilder<'a, SettingExternal, EXT, MainnetHandle, DB> {
+    pub fn modify(self) -> EvmBuilder<'a, SettingExternal, EXT, DB> {
         EvmBuilder::new(self)
     }
 
@@ -422,7 +418,7 @@ pub trait Transact<DB: Database, EXT> {
     fn transact(&mut self) -> EVMResult<DB::Error>;
 }
 
-impl<'a, EXT: RegisterHandler<'a, DB, EXT>, DB: Database> Transact<DB, EXT> for Evm<'a, EXT, DB> {
+impl<'a, EXT, DB: Database> Transact<DB, EXT> for Evm<'a, EXT, DB> {
     #[inline]
     fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
         self.preverify_transaction_inner()
@@ -501,19 +497,18 @@ impl<'a, EXT, DB: Database> Host for Evm<'a, EXT, DB> {
 }
 
 /// Creates new EVM instance with erased types.
-pub fn new_evm<'a, EXT: RegisterHandler<'a, DB, EXT> + 'a, DB: Database + 'a>(
+pub fn new_evm<'a, EXT, DB: Database + 'a>(
     env: Box<Env>,
     db: DB,
     external: EXT,
 ) -> Evm<'a, EXT, DB> {
     macro_rules! create_evm {
         ($spec:ident) => {{
-            let handler = external.register_handler::<$spec>(Handler::mainnet::<$spec>());
             Evm::new_with_spec(
                 db,
                 env,
                 external,
-                handler,
+                Handler::mainnet::<$spec>(),
                 Precompiles::new(revm_precompile::SpecId::from_spec_id($spec::SPEC_ID)).clone(),
             )
         }};

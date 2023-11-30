@@ -9,7 +9,7 @@ pub mod optimism;
 pub mod register;
 
 // Exports.
-pub use register::{InspectorHandle, MainnetHandle, RegisterHandler};
+pub use register::{inspector_handle_register, HandleRegister};
 
 // Includes.
 use crate::{
@@ -130,12 +130,12 @@ pub type InitialTxGasHandle<'a> = Arc<dyn Fn(&Env) -> u64 + 'a>;
 pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
     /// Specification ID.
     pub spec_id: SpecId,
+    /// Instruction table type.
+    pub instruction_table: InstructionTables<'a, H>,
     /// Initial tx gas.
     pub initial_tx_gas: InitialTxGasHandle<'a>,
     /// Validate Env
     pub validate_env: ValidateEnvHandle<'a, DB>,
-    /// Instruction table type.
-    pub instruction_table: InstructionTables<'a, H>,
     // Uses env, call result and returned gas from the call to determine the gas
     // that is returned from transaction execution..
     pub call_return: CallReturnHandle<'a>,

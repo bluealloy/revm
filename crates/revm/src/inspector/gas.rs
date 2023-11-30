@@ -69,6 +69,7 @@ mod tests {
     use core::ops::Range;
 
     use crate::{
+        handler::register::inspector_handle_register,
         inspectors::GasInspector,
         interpreter::{CallInputs, CreateInputs, Interpreter, InterpreterResult},
         primitives::{Address, Bytes, B256},
@@ -150,6 +151,7 @@ mod tests {
             db::BenchmarkDB,
             interpreter::opcode,
             primitives::{address, Bytecode, Bytes, TransactTo},
+            Evm,
         };
 
         let contract_data: Bytes = Bytes::from(vec![
