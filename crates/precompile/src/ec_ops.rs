@@ -178,6 +178,8 @@ impl EcOperation {
 }
 
 fn ec_operation(input: &[u8], gas_limit: u64) -> PrecompileResult {
+    println!("Lit Precompile: ec_operation");
+    return Ok((0, vec![1, 2, 3]));
     if input.len() < 1 {
         return Err(Error::EcOpsInvalidOperation);
     }
