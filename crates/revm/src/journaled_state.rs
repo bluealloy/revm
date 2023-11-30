@@ -752,10 +752,14 @@ impl JournaledState {
 /// that precompiles are in range of 1 to N.
 #[inline(always)]
 pub fn is_precompile(address: B160, num_of_precompiles: usize) -> bool {
-    // hardcode for 0x00000000000000000000000000000000000000F5
+    // hardcode for 0x00000000000000000000000000000000000000F5 for lit DERIVE_CAIT_SITH_PUBKEY
     let cait_sith_precompile_address =
         B160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 245]);
-    if address == cait_sith_precompile_address {
+
+    // hardcode 0x000000000000000000000000000000000000012c for lit EC_OPERATION
+    let ec_operation_precompile_address =
+        B160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 44]);
+    if address == cait_sith_precompile_address || address == ec_operation_precompile_address {
         return true;
     }
     if !address[..18].iter().all(|i| *i == 0) {
@@ -771,8 +775,15 @@ mod test {
 
     #[test]
     fn test_is_precompile() {
+        // for lit DERIVE_CAIT_SITH_PUBKEY
         assert!(is_precompile(
             B160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 245]),
+            2,
+        ));
+
+        // for lit EC_OPERATION
+        assert!(is_precompile(
+            B160([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 44]),
             2,
         ));
 
