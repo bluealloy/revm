@@ -2,9 +2,14 @@
 
 use core::marker::PhantomData;
 
+use revm_interpreter::opcode::make_instruction_table;
+
 use crate::{
     db::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef},
-    handler::HandleRegister,
+    handler::{
+        register::{self, RawInstructionTable},
+        HandleRegister,
+    },
     primitives::{BlockEnv, CfgEnv, Env, Spec, TxEnv},
     primitives::{LatestSpec, SpecId},
     Context, Evm, EvmContext, Handler,
@@ -23,13 +28,16 @@ pub struct EvmBuilder<'a, Stage: BuilderStage, EXT, DB: Database> {
 
 pub trait BuilderStage {}
 
-pub struct SettingDb;
-impl BuilderStage for SettingDb {}
+pub struct SettingDbStage;
+impl BuilderStage for SettingDbStage {}
 
-pub struct SettingExternal;
-impl BuilderStage for SettingExternal {}
+pub struct SettingExternalStage;
+impl BuilderStage for SettingExternalStage {}
 
-impl<'a> Default for EvmBuilder<'a, SettingDb, (), EmptyDB> {
+pub struct SettingHandlerStage;
+impl BuilderStage for SettingHandlerStage {}
+
+impl<'a> Default for EvmBuilder<'a, SettingDbStage, (), EmptyDB> {
     fn default() -> Self {
         Self {
             evm: EvmContext::new(EmptyDB::default()),
@@ -41,13 +49,13 @@ impl<'a> Default for EvmBuilder<'a, SettingDb, (), EmptyDB> {
     }
 }
 
-impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingDb, EXT, DB> {
+impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingDbStage, EXT, DB> {
     /// Sets the [`Database`] that will be used by [`Evm`].
     ///
     /// # Note
     ///
     /// When changed it will reset the handler to default mainnet.
-    pub fn with_db<ODB: Database>(self, db: ODB) -> EvmBuilder<'a, SettingExternal, EXT, ODB> {
+    pub fn with_db<ODB: Database>(self, db: ODB) -> EvmBuilder<'a, SettingExternalStage, EXT, ODB> {
         EvmBuilder {
             evm: EvmContext::new(db),
             external: self.external,
@@ -64,7 +72,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingDb, EXT, DB> {
     pub fn with_ref_db<ODB: DatabaseRef>(
         self,
         db: ODB,
-    ) -> EvmBuilder<'a, SettingExternal, EXT, WrapDatabaseRef<ODB>> {
+    ) -> EvmBuilder<'a, SettingExternalStage, EXT, WrapDatabaseRef<ODB>> {
         let present_spec_id = self.handler.spec_id;
 
         let mut builder = EvmBuilder {
@@ -78,30 +86,47 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingDb, EXT, DB> {
     }
 }
 
-impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingExternal, EXT, DB> {
-    pub fn new(evm: Evm<'a, EXT, DB>) -> Self {
-        Self {
-            evm: evm.context.evm,
-            external: evm.context.external,
-            handler: evm.handler,
+impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingExternalStage, EXT, DB> {
+    pub fn with_empty_external(self) -> EvmBuilder<'a, SettingExternalStage, (), DB> {
+        EvmBuilder {
+            evm: self.evm,
+            external: (),
+            handler: Handler::mainnet::<LatestSpec>(),
+            handle_registers: Vec::new(),
+            phantom: PhantomData,
+        }
+    }
+
+    pub fn with_external<OEXT>(
+        self,
+        external: OEXT,
+    ) -> EvmBuilder<'a, SettingHandlerStage, OEXT, DB> {
+        EvmBuilder {
+            evm: self.evm,
+            external: external,
+            handler: Handler::mainnet::<LatestSpec>(),
             handle_registers: Vec::new(),
             phantom: PhantomData,
         }
     }
 }
 
-impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingExternal, EXT, DB> {}
-/*
-impl<'a, EXT: RegisterHandler<'a,DB,EXT>, DB: Database> EvmBuilder<'a, EXT, DB> {
+impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingHandlerStage, EXT, DB> {
+    /// Creates new build from EVM, evm is consumed and all field are moved to Builder.
+    ///
+    /// Builder is in SettingHandlerStage and both database and external are set.
     pub fn new(evm: Evm<'a, EXT, DB>) -> Self {
         Self {
             evm: evm.context.evm,
             external: evm.context.external,
             handler: evm.handler,
+            // TODO move registers from EVM
+            handle_registers: Vec::new(),
+            phantom: PhantomData,
         }
     }
 
-    /// Build Evm.
+    /// Consumes the Builder and build the Build Evm.
     pub fn build(self) -> Evm<'a, EXT, DB> {
         Evm {
             context: Context {
@@ -116,7 +141,15 @@ impl<'a, EXT: RegisterHandler<'a,DB,EXT>, DB: Database> EvmBuilder<'a, EXT, DB> 
     fn create_handle_generic<SPEC: Spec + 'static>(
         &self,
     ) -> Handler<'a, Evm<'a, EXT, DB>, EXT, DB> {
-        self.external.register_handle(Handler::mainnet::<SPEC>())
+        let mut handler = Handler::mainnet::<SPEC>();
+        let raw_table =
+            RawInstructionTable::PlainRaw(make_instruction_table::<Evm<'a, EXT, DB>, SPEC>());
+        // apply all registers to default handeler and raw mainnet instruction table.
+        for register in self.handle_registers.iter() {
+            register(&mut handler, &mut RawInstructionTable::Default);
+        }
+        handler.instruction_table = raw_table.into_arc();
+        handler
     }
 
     /// Creates the Handler with variable SpecId, inside it will call function with Generic Spec.
@@ -154,13 +187,24 @@ impl<'a, EXT: RegisterHandler<'a,DB,EXT>, DB: Database> EvmBuilder<'a, EXT, DB> 
     ///
     /// # Note
     ///
-    /// When changed it will reset the handler to default mainnet.
+    /// When changed it will reapply all handle registers.
     pub fn with_spec_id(mut self, spec_id: SpecId) -> Self {
         // TODO add match for other spec
         self.handler = self.create_handler(spec_id);
         self
     }
 
+    /// Register Handler that modifies the behavior of EVM.
+    /// Check [`Handler`] for more information.
+    pub fn push_handler(mut self, handle_register: register::Register<'a, EXT, DB>) -> Self {
+        //self.handle_registers.push(handle_register);
+        self
+    }
+}
+
+// Accessed always.
+
+impl<'a, STAGE: BuilderStage, EXT, DB: Database> EvmBuilder<'a, STAGE, EXT, DB> {
     /// Modify Environment of EVM.
     pub fn modify_env(mut self, f: impl FnOnce(&mut Env)) -> Self {
         f(&mut self.evm.env);
@@ -184,45 +228,4 @@ impl<'a, EXT: RegisterHandler<'a,DB,EXT>, DB: Database> EvmBuilder<'a, EXT, DB> 
         f(&mut self.evm.env.cfg);
         self
     }
-
-    /// Sets the external data that can be used by Handler inside EVM.
-    ///
-    /// # Note
-    ///
-    /// When changed it will reset the handler to default mainnet.
-    pub fn with_external<OEXT: RegisterHandler<'a, DB, OEXT>>(
-        self,
-        external: OEXT,
-    ) -> EvmBuilder<'a, OEXT, DB> {
-        let handler = external.register_handler::<LatestSpec>(Handler::mainnet::<LatestSpec>());
-        EvmBuilder {
-            evm: self.evm,
-            external: external,
-            handler,
-        }
-
-        let present_spec_id = self.handler.spec_id;
-
-        let mut builder = EvmBuilder {
-            evm: EvmContext::new(WrapDatabaseRef(db)),
-            external: self.external,
-            handler: Handler::mainnet::<LatestSpec>(),
-        };
-        builder.handler = builder.create_handler(present_spec_id);
-        builder
-    }
-
-    /// Register Handler that modifies the behavior of EVM.
-    /// Check [`Handler`] for more information.
-    pub fn register_handler<H: RegisterHandler<'a, DB, EXT>>(
-        self,
-        handler: H,
-    ) -> EvmBuilder<'a, EXT, DB> {
-        EvmBuilder {
-            evm: self.evm,
-            external: self.external,
-            handler: handler.register_handler::<LatestSpec>(self.handler),
-        }
-    }
 }
-*/

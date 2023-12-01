@@ -6,7 +6,7 @@ use crate::{
     CallStackFrame, Evm, FrameOrResult, Inspector,
 };
 use alloc::sync::Arc;
-use revm_interpreter::opcode::{BoxedInstructionTable, InstructionTable};
+use revm_interpreter::opcode::{BoxedInstructionTable, InstructionTable, InstructionTables};
 
 pub trait GetInspector<'a, DB: Database> {
     fn get_inspector(&mut self) -> &mut dyn Inspector<DB>;
@@ -30,9 +30,24 @@ pub enum RawInstructionTable<'a, EXT, DB: Database> {
     BoxedRaw(BoxedInstructionTable<'a, Evm<'a, EXT, DB>>),
 }
 
+impl<'a, EXT, DB: Database> RawInstructionTable<'a, EXT, DB> {
+    pub fn into_arc(self) -> InstructionTables<'a, Evm<'a, EXT, DB>> {
+        match self {
+            Self::Default => unimplemented!("Default instruction table is not supported"),
+            Self::PlainRaw(table) => InstructionTables::Plain(Arc::new(table)),
+            Self::BoxedRaw(table) => InstructionTables::Boxed(Arc::new(table)),
+        }
+    }
+}
+
 // Note that
 pub type HandleRegister<'a, EXT, DB> =
-    Arc<dyn Fn(&mut EvmHandler<'a, EXT, DB>, &mut RawInstructionTable<'a, EXT, DB>)>;
+    Box<dyn Fn(&mut EvmHandler<'a, EXT, DB>, &mut RawInstructionTable<'a, EXT, DB>)>;
+
+pub enum Register<'a, EXT, DB: Database> {
+    Plain(fn(&'a mut EvmHandler<'a, EXT, DB>, &'a mut RawInstructionTable<'a, EXT, DB>)),
+    Box(Box<dyn Fn(&'a mut EvmHandler<'a, EXT, DB>, &'a mut RawInstructionTable<'a, EXT, DB>)>),
+}
 
 pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     handler: &'a mut EvmHandler<'a, EXT, DB>,

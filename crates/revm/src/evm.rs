@@ -2,7 +2,7 @@
 use crate::optimism;
 use crate::{
     db::{Database, EmptyDB},
-    evm_builder::{BuilderStage, EvmBuilder, SettingDb, SettingExternal},
+    evm_builder::{EvmBuilder, SettingDbStage, SettingHandlerStage},
     handler::Handler,
     interpreter::{
         opcode::InstructionTables, CallContext, CallInputs, CallScheme, CreateInputs, Host,
@@ -20,7 +20,7 @@ use crate::{
     CallStackFrame, Context, EvmContext, FrameOrResult,
 };
 use alloc::{boxed::Box, vec::Vec};
-use core::{fmt, ops::Deref};
+use core::fmt;
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -50,7 +50,7 @@ where
 
 impl<'a> Evm<'a, (), EmptyDB> {
     /// Returns evm builder.
-    pub fn builder() -> EvmBuilder<'a, SettingDb, (), EmptyDB> {
+    pub fn builder() -> EvmBuilder<'a, SettingDbStage, (), EmptyDB> {
         EvmBuilder::default()
     }
 }
@@ -70,7 +70,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
 
     /// Allow for evm setting to be modified by feeding current evm
     /// to the builder for modifications.
-    pub fn modify(self) -> EvmBuilder<'a, SettingExternal, EXT, DB> {
+    pub fn modify(self) -> EvmBuilder<'a, SettingHandlerStage, EXT, DB> {
         EvmBuilder::new(self)
     }
 

@@ -69,7 +69,7 @@ mod tests {
     use core::ops::Range;
 
     use crate::{
-        handler::register::inspector_handle_register,
+        handler::register::{inspector_handle_register, GetInspector},
         inspectors::GasInspector,
         interpreter::{CallInputs, CreateInputs, Interpreter, InterpreterResult},
         primitives::{Address, Bytes, B256},
@@ -81,6 +81,12 @@ mod tests {
         pc: usize,
         gas_inspector: GasInspector,
         gas_remaining_steps: Vec<(usize, u64)>,
+    }
+
+    impl<DB: Database> GetInspector<'_, DB> for StackInspector {
+        fn get_inspector(&mut self) -> &mut dyn Inspector<DB> {
+            self
+        }
     }
 
     impl<DB: Database> Inspector<DB> for StackInspector {
@@ -147,11 +153,13 @@ mod tests {
     #[test]
     #[cfg(not(feature = "optimism"))]
     fn test_gas_inspector() {
+        use alloc::sync::Arc;
+
         use crate::{
             db::BenchmarkDB,
             interpreter::opcode,
             primitives::{address, Bytecode, Bytes, TransactTo},
-            Evm,
+            Evm, Transact, handler::register::Register,
         };
 
         let contract_data: Bytes = Bytes::from(vec![
@@ -171,11 +179,9 @@ mod tests {
         ]);
         let bytecode = Bytecode::new_raw(contract_data);
 
-        let mut evm = Evm::builder()
+        let mut evm: Evm<'_, StackInspector, BenchmarkDB> = Evm::builder()
             .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
-            .with_external(InspectorHandle::<BenchmarkDB, StackInspector>::new(
-                StackInspector::default(),
-            ))
+            .with_external(StackInspector::default())
             .modify_tx_env(|tx| {
                 tx.clear();
                 tx.caller = address!("1000000000000000000000000000000000000000");
@@ -183,12 +189,14 @@ mod tests {
                     TransactTo::Call(address!("0000000000000000000000000000000000000000"));
                 tx.gas_limit = 21100;
             })
+            .push_handler(Register::Plain(inspector_handle_register))
+            .push_handler(Register::Box(Box::new(inspector_handle_register)))
             .build();
 
         // run evm.
         evm.transact().unwrap();
 
-        let inspector = evm.into_context().external.inspector;
+        let inspector = evm.into_context().external;
 
         // starting from 100gas
         let steps = vec![
