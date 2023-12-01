@@ -1,6 +1,13 @@
 
 # Evm Builder
 
-Is a helper function that allows easier setting of database external and logic structures.
+Is a helper that allows easier setting of database, external and logic structures.
 
-There is a dependency between Database, External and Spec types so setting Database will reset External and Handle field while setting External field would reset Handler. Note that Database will never be reset.
+It ties dependency between Database, External and Spec and allows setting custom logic. As there is a dependency between them setting Database will reset External and Handle field while setting External field would reset Handler. Note that Database will never be reset.
+
+Simple example of using `EvmBuilder` is
+
+```
+
+Evm::build().with_empty_db().with_empty_external()
+```

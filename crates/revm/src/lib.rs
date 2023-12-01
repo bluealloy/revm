@@ -15,7 +15,7 @@ extern crate alloc;
 mod context;
 pub mod db;
 mod evm;
-mod evm_builder;
+mod builder;
 mod frame;
 pub mod handler;
 mod inspector;
@@ -31,8 +31,8 @@ pub use db::{
     CacheState, DBBox, State, StateBuilder, StateDBBox, TransitionAccount, TransitionState,
 };
 pub use db::{Database, DatabaseCommit, DatabaseRef, DummyStateDB, InMemoryDB};
-pub use evm::{new_evm, Evm, Transact, CALL_STACK_LIMIT};
-pub use evm_builder::EvmBuilder;
+pub use evm::{Evm, CALL_STACK_LIMIT};
+pub use builder::EvmBuilder;
 pub use frame::{CallStackFrame, FrameOrResult};
 pub use handler::Handler;
 pub use inspector::{inspector_instruction, inspectors, Inspector};

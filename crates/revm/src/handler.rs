@@ -131,11 +131,13 @@ pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
     /// Specification ID.
     pub spec_id: SpecId,
     /// Instruction table type.
-    pub instruction_table: InstructionTables<'a, H>,
+    pub instruction_table: Option<InstructionTables<'a, H>>,
     /// Initial tx gas.
     pub initial_tx_gas: InitialTxGasHandle<'a>,
     /// Validate Env
     pub validate_env: ValidateEnvHandle<'a, DB>,
+    /// Validate Transaction against the state.
+    
     // Uses env, call result and returned gas from the call to determine the gas
     // that is returned from transaction execution..
     pub call_return: CallReturnHandle<'a>,
@@ -167,6 +169,7 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
     pub fn mainnet<SPEC: Spec + 'static>() -> Self {
         Self {
             spec_id: SPEC::SPEC_ID,
+            instruction_table: Some(InstructionTables::Plain(make_instruction_table::<H, SPEC>())),
             initial_tx_gas: Arc::new(mainnet::preexecution::initial_tx_gas::<SPEC>),
             validate_env: Arc::new(mainnet::preexecution::validate_env::<SPEC, DB>),
             call_return: Arc::new(mainnet::handle_call_return::<SPEC>),
@@ -175,9 +178,6 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
             reward_beneficiary: Arc::new(mainnet::reward_beneficiary::<SPEC, EXT, DB>),
             main_return: Arc::new(mainnet::main::main_return::<EXT, DB>),
             end: Arc::new(mainnet::main::end_handle::<EXT, DB>),
-            instruction_table: InstructionTables::Plain(Arc::new(
-                make_instruction_table::<H, SPEC>(),
-            )),
             frame_return: Arc::new(mainnet::frames::handle_frame_return::<SPEC, EXT, DB>),
             frame_sub_call: Arc::new(mainnet::frames::handle_frame_sub_call::<SPEC, EXT, DB>),
             frame_sub_create: Arc::new(mainnet::frames::handle_frame_sub_create::<SPEC, EXT, DB>),

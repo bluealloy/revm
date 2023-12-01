@@ -2,7 +2,7 @@
 use crate::optimism;
 use crate::{
     db::{Database, EmptyDB},
-    evm_builder::{EvmBuilder, SettingDbStage, SettingHandlerStage},
+    builder::{EvmBuilder, SettingDbStage, SettingHandlerStage},
     handler::Handler,
     interpreter::{
         opcode::InstructionTables, CallContext, CallInputs, CallScheme, CreateInputs, Host,
@@ -198,8 +198,8 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
         }
     }
 
-    /// Pre verify transaction.
-    pub fn preverify_transaction_inner(&mut self) -> Result<(), EVMError<DB::Error>> {
+    /// Pre verify transaction. Returns initial gas spend
+    pub fn preverify_transaction_inner(&mut self) -> Result<u64, EVMError<DB::Error>> {
         self.handler.validate_env(&self.context.evm.env)?;
         let initial_gas_spend = self.handler.initial_tx_gas(&self.context.evm.env);
 
@@ -223,11 +223,13 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
             .evm
             .env
             .validate_tx_against_state(caller_account)
-            .map_err(Into::into)
+            .map_err(Into::into)?;
+
+        Ok(initial_gas_spend)
     }
 
     /// Transact preverified transaction.
-    pub fn transact_preverified_inner(&mut self) -> EVMResult<DB::Error> {
+    pub fn transact_preverified_inner(&mut self, initial_gas_spend: u64) -> EVMResult<DB::Error> {
         let env = &self.context.evm.env;
         let tx_caller = env.tx.caller;
         let tx_value = env.tx.value;
@@ -253,8 +255,6 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
         } else {
             U256::ZERO
         };
-
-        let initial_gas_spend = self.handler.initial_tx_gas(&self.context.evm.env);
 
         // load coinbase
         // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
@@ -367,11 +367,22 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
         let interpreter_result = match first_stack_frame {
             FrameOrResult::Frame(first_stack_frame) => {
                 created_address = first_stack_frame.created_address;
-                let table = self.handler.instruction_table.clone();
-                match table {
+                // take instruction talbe
+                let table = self
+                    .handler
+                    .instruction_table
+                    .take()
+                    .expect("Instruction table should be present");
+
+                // run main loop
+                let output = match &table {
                     InstructionTables::Plain(table) => self.run(&table, first_stack_frame),
                     InstructionTables::Boxed(table) => self.run(&table, first_stack_frame),
-                }
+                };
+                // return instruction table
+                self.handler.instruction_table = Some(table);
+
+                output
             }
             FrameOrResult::Result(interpreter_result) => interpreter_result,
         };
@@ -406,27 +417,16 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
     }
 }
 
-/// EVM transaction interface.
-pub trait Transact<DB: Database, EXT> {
-    /// Run checks that could make transaction fail before call/create.
-    fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>>;
-
-    /// Skip pre-verification steps and execute the transaction.
-    fn transact_preverified(&mut self) -> EVMResult<DB::Error>;
-
-    /// Execute transaction by running pre-verification steps and then transaction itself.
-    fn transact(&mut self) -> EVMResult<DB::Error>;
-}
-
-impl<'a, EXT, DB: Database> Transact<DB, EXT> for Evm<'a, EXT, DB> {
+impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
     #[inline]
     fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
-        self.preverify_transaction_inner()
+        self.preverify_transaction_inner().map(|_| ())
     }
 
     #[inline]
     fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
-        let output = self.transact_preverified_inner();
+        let initial_gas_spend = self.handler.initial_tx_gas(&self.context.evm.env);
+        let output = self.transact_preverified_inner(initial_gas_spend);
         self.handler.end(&mut self.context, output)
     }
 
@@ -434,7 +434,7 @@ impl<'a, EXT, DB: Database> Transact<DB, EXT> for Evm<'a, EXT, DB> {
     fn transact(&mut self) -> EVMResult<DB::Error> {
         let output = self
             .preverify_transaction_inner()
-            .and_then(|()| self.transact_preverified_inner());
+            .and_then(|initial_gas_spend| self.transact_preverified_inner(initial_gas_spend));
         self.handler.end(&mut self.context, output)
     }
 }
@@ -493,48 +493,6 @@ impl<'a, EXT, DB: Database> Host for Evm<'a, EXT, DB> {
     fn selfdestruct(&mut self, address: Address, target: Address) -> Option<SelfDestructResult> {
         self.handler
             .host_selfdestruct(&mut self.context, address, target)
-    }
-}
-
-/// Creates new EVM instance with erased types.
-pub fn new_evm<'a, EXT, DB: Database + 'a>(
-    env: Box<Env>,
-    db: DB,
-    external: EXT,
-) -> Evm<'a, EXT, DB> {
-    macro_rules! create_evm {
-        ($spec:ident) => {{
-            Evm::new_with_spec(
-                db,
-                env,
-                external,
-                Handler::mainnet::<$spec>(),
-                Precompiles::new(revm_precompile::SpecId::from_spec_id($spec::SPEC_ID)).clone(),
-            )
-        }};
-    }
-
-    use specification::*;
-    match env.cfg.spec_id {
-        SpecId::FRONTIER | SpecId::FRONTIER_THAWING => create_evm!(FrontierSpec),
-        SpecId::HOMESTEAD | SpecId::DAO_FORK => create_evm!(HomesteadSpec),
-        SpecId::TANGERINE => create_evm!(TangerineSpec),
-        SpecId::SPURIOUS_DRAGON => create_evm!(SpuriousDragonSpec),
-        SpecId::BYZANTIUM => create_evm!(ByzantiumSpec),
-        SpecId::PETERSBURG | SpecId::CONSTANTINOPLE => create_evm!(PetersburgSpec),
-        SpecId::ISTANBUL | SpecId::MUIR_GLACIER => create_evm!(IstanbulSpec),
-        SpecId::BERLIN => create_evm!(BerlinSpec),
-        SpecId::LONDON | SpecId::ARROW_GLACIER | SpecId::GRAY_GLACIER => {
-            create_evm!(LondonSpec)
-        }
-        SpecId::MERGE => create_evm!(MergeSpec),
-        SpecId::SHANGHAI => create_evm!(ShanghaiSpec),
-        SpecId::CANCUN => create_evm!(CancunSpec),
-        SpecId::LATEST => create_evm!(LatestSpec),
-        #[cfg(feature = "optimism")]
-        SpecId::BEDROCK => create_evm!(BedrockSpec),
-        #[cfg(feature = "optimism")]
-        SpecId::REGOLITH => create_evm!(RegolithSpec),
     }
 }
 

@@ -22,63 +22,42 @@ pub trait GetInspector<'a, DB: Database> {
 ///
 pub type EvmHandler<'a, EXT, DB> = Handler<'a, Evm<'a, EXT, DB>, EXT, DB>;
 
-#[derive(Default)]
-pub enum RawInstructionTable<'a, EXT, DB: Database> {
-    #[default]
-    Default,
-    PlainRaw(InstructionTable<Evm<'a, EXT, DB>>),
-    BoxedRaw(BoxedInstructionTable<'a, Evm<'a, EXT, DB>>),
-}
+pub type EvmInstructionTables<'a, EXT, DB> = InstructionTables<'a, Evm<'a, EXT, DB>>;
 
-impl<'a, EXT, DB: Database> RawInstructionTable<'a, EXT, DB> {
-    pub fn into_arc(self) -> InstructionTables<'a, Evm<'a, EXT, DB>> {
-        match self {
-            Self::Default => unimplemented!("Default instruction table is not supported"),
-            Self::PlainRaw(table) => InstructionTables::Plain(Arc::new(table)),
-            Self::BoxedRaw(table) => InstructionTables::Boxed(Arc::new(table)),
-        }
-    }
-}
+// Handle register
+pub type HandleRegister<'a, EXT, DB> = fn(&mut EvmHandler<'a, EXT, DB>);
 
-// Note that
-pub type HandleRegister<'a, EXT, DB> =
-    Box<dyn Fn(&mut EvmHandler<'a, EXT, DB>, &mut RawInstructionTable<'a, EXT, DB>)>;
+// Boxed handle register
+pub type HandleRegisterBox<'a, EXT, DB> = Box<dyn Fn(&mut EvmHandler<'a, EXT, DB>)>;
 
-pub enum Register<'a, EXT, DB: Database> {
-    Plain(fn(&'a mut EvmHandler<'a, EXT, DB>, &'a mut RawInstructionTable<'a, EXT, DB>)),
-    Box(Box<dyn Fn(&'a mut EvmHandler<'a, EXT, DB>, &'a mut RawInstructionTable<'a, EXT, DB>)>),
+pub enum HandleRegisters<'a, EXT, DB: Database> {
+    Plain(HandleRegister<'a, EXT, DB>),
+    Box(HandleRegisterBox<'a, EXT, DB>),
 }
 
 pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     handler: &'a mut EvmHandler<'a, EXT, DB>,
-    instruction_table: &'a mut RawInstructionTable<'a, EXT, DB>,
 ) {
     let spec_id = handler.spec_id;
-    let taken_table = core::mem::take(instruction_table);
     // Every instruction inside flat table that is going to be wrapped by inspector calls.
-    match taken_table {
-        RawInstructionTable::PlainRaw(table) => {
-            *instruction_table = RawInstructionTable::BoxedRaw(
-                table
-                    .into_iter()
-                    .map(|i| inspector_instruction(i))
-                    .collect::<Vec<_>>()
-                    .try_into()
-                    .unwrap_or_else(|_| unreachable!()),
-            );
-        }
-        RawInstructionTable::BoxedRaw(table) => {
-            *instruction_table = RawInstructionTable::BoxedRaw(
-                table
-                    .into_iter()
-                    .map(|i| inspector_instruction(i))
-                    .collect::<Vec<_>>()
-                    .try_into()
-                    .unwrap_or_else(|_| unreachable!()),
-            );
-        }
-        _ => unreachable!(),
-    }
+    let table = handler
+        .instruction_table
+        .take()
+        .expect("Handler must have instruction table");
+    let table = match table {
+        EvmInstructionTables::Plain(table) => table
+            .into_iter()
+            .map(|i| inspector_instruction(i))
+            .collect::<Vec<_>>(),
+        EvmInstructionTables::Boxed(table) => table
+            .into_iter()
+            .map(|i| inspector_instruction(i))
+            .collect::<Vec<_>>(),
+    };
+
+    handler.instruction_table = Some(EvmInstructionTables::Boxed(
+        table.try_into().unwrap_or_else(|_| unreachable!()),
+    ));
 
     // handle sub create
     handler.frame_sub_create = Arc::new(

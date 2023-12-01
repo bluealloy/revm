@@ -1,19 +1,13 @@
 //! Evm Builder.
 
-use core::marker::PhantomData;
-
-use revm_interpreter::opcode::make_instruction_table;
-
 use crate::{
     db::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef},
-    handler::{
-        register::{self, RawInstructionTable},
-        HandleRegister,
-    },
-    primitives::{BlockEnv, CfgEnv, Env, Spec, TxEnv},
-    primitives::{LatestSpec, SpecId},
+    handler::{register, HandleRegister},
+    interpreter::opcode::make_instruction_table,
+    primitives::{BlockEnv, CfgEnv, Env, LatestSpec, Spec, SpecId, TxEnv},
     Context, Evm, EvmContext, Handler,
 };
+use core::marker::PhantomData;
 
 /// Evm Builder allows building or modifying EVM.
 /// Note that some of the methods that changes underlying structures
@@ -22,7 +16,7 @@ pub struct EvmBuilder<'a, Stage: BuilderStage, EXT, DB: Database> {
     evm: EvmContext<DB>,
     external: EXT,
     handler: Handler<'a, Evm<'a, EXT, DB>, EXT, DB>,
-    handle_registers: Vec<HandleRegister<'a, EXT, DB>>,
+    handle_registers: Vec<register::HandleRegisters<'a, EXT, DB>>,
     phantom: PhantomData<Stage>,
 }
 
@@ -50,6 +44,20 @@ impl<'a> Default for EvmBuilder<'a, SettingDbStage, (), EmptyDB> {
 }
 
 impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingDbStage, EXT, DB> {
+    /// Sets the [`EmptyDB`] as the [`Database`] that will be used by [`Evm`].
+    ///
+    /// # Note
+    ///
+    /// When changed it will reset the handler to the mainnet.
+    pub fn with_empty_db(self) -> EvmBuilder<'a, SettingExternalStage, EXT, EmptyDB> {
+        EvmBuilder {
+            evm: EvmContext::new(EmptyDB::default()),
+            external: self.external,
+            handler: Handler::mainnet::<LatestSpec>(),
+            handle_registers: Vec::new(),
+            phantom: PhantomData,
+        }
+    }
     /// Sets the [`Database`] that will be used by [`Evm`].
     ///
     /// # Note
@@ -73,21 +81,29 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingDbStage, EXT, DB> {
         self,
         db: ODB,
     ) -> EvmBuilder<'a, SettingExternalStage, EXT, WrapDatabaseRef<ODB>> {
-        let present_spec_id = self.handler.spec_id;
-
-        let mut builder = EvmBuilder {
+        EvmBuilder {
             evm: EvmContext::new(WrapDatabaseRef(db)),
             external: self.external,
             handler: Handler::mainnet::<LatestSpec>(),
             handle_registers: Vec::new(),
             phantom: PhantomData,
-        };
-        builder
+        }
+    }
+
+    /// Build the [`Evm`] with [`EmptyDB`], [`LatestSpec`] and mainnet handler.
+    pub fn build(self) -> Evm<'a, EXT, DB> {
+        Evm {
+            context: Context {
+                evm: self.evm,
+                external: self.external,
+            },
+            handler: self.handler,
+        }
     }
 }
 
 impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingExternalStage, EXT, DB> {
-    pub fn with_empty_external(self) -> EvmBuilder<'a, SettingExternalStage, (), DB> {
+    pub fn with_empty_external(self) -> EvmBuilder<'a, SettingHandlerStage, (), DB> {
         EvmBuilder {
             evm: self.evm,
             external: (),
@@ -107,6 +123,17 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingExternalStage, EXT, DB> {
             handler: Handler::mainnet::<LatestSpec>(),
             handle_registers: Vec::new(),
             phantom: PhantomData,
+        }
+    }
+
+    /// Consumes the Builder and build the Build Evm with default mainnet handler.
+    pub fn build(self) -> Evm<'a, EXT, DB> {
+        Evm {
+            context: Context {
+                evm: self.evm,
+                external: self.external,
+            },
+            handler: self.handler,
         }
     }
 }
@@ -142,13 +169,13 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingHandlerStage, EXT, DB> {
         &self,
     ) -> Handler<'a, Evm<'a, EXT, DB>, EXT, DB> {
         let mut handler = Handler::mainnet::<SPEC>();
-        let raw_table =
-            RawInstructionTable::PlainRaw(make_instruction_table::<Evm<'a, EXT, DB>, SPEC>());
         // apply all registers to default handeler and raw mainnet instruction table.
         for register in self.handle_registers.iter() {
-            register(&mut handler, &mut RawInstructionTable::Default);
+            register(&mut handler);
+            if handler.instruction_table.is_none() {
+                panic!("Handler must have instruction table")
+            }
         }
-        handler.instruction_table = raw_table.into_arc();
         handler
     }
 
@@ -194,9 +221,18 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingHandlerStage, EXT, DB> {
         self
     }
 
+    pub fn push_handler(mut self, handle_register: register::HandleRegister<'a, EXT, DB>) -> Self {
+        self.handle_registers
+            .push(register::HandleRegisters::Plain(handle_register));
+        self
+    }
+
     /// Register Handler that modifies the behavior of EVM.
     /// Check [`Handler`] for more information.
-    pub fn push_handler(mut self, handle_register: register::Register<'a, EXT, DB>) -> Self {
+    pub fn push_handler_box(
+        mut self,
+        handle_register: register::HandleRegisterBox<'a, EXT, DB>,
+    ) -> Self {
         //self.handle_registers.push(handle_register);
         self
     }
@@ -227,5 +263,74 @@ impl<'a, STAGE: BuilderStage, EXT, DB: Database> EvmBuilder<'a, STAGE, EXT, DB> 
     pub fn modify_cfg_env(mut self, f: impl FnOnce(&mut CfgEnv)) -> Self {
         f(&mut self.evm.env.cfg);
         self
+    }
+
+    /// Clear Environment of EVM.
+    pub fn clear_env(mut self) -> Self {
+        self.evm.env.clear();
+        self
+    }
+
+    /// Clear Transaction environment of EVM.
+    pub fn clear_tx_env(mut self) -> Self {
+        self.evm.env.tx.clear();
+        self
+    }
+    /// Clear Block environment of EVM.
+    pub fn clear_block_env(mut self) -> Self {
+        self.evm.env.block.clear();
+        self
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::SpecId;
+    use crate::{
+        db::EmptyDB, handler::register::inspector_handle_register, inspectors::NoOpInspector, Evm,
+    };
+
+    #[test]
+    fn simple_build() {
+        // build without external with latest spec
+        Evm::builder().build();
+        // build with empty db
+        Evm::builder().with_empty_db().build();
+        // build with_db
+        Evm::builder().with_db(EmptyDB::default()).build();
+        // build with empty external
+        Evm::builder().with_empty_db().with_empty_external().build();
+        // build with some external
+        Evm::builder().with_empty_db().with_external(()).build();
+        // build with spec
+        Evm::builder()
+            .with_empty_db()
+            .with_empty_external()
+            .with_spec_id(SpecId::HOMESTEAD)
+            .build();
+
+        // with with Env change in multiple places
+        Evm::builder()
+            .with_empty_db()
+            .modify_tx_env(|tx| tx.gas_limit = 10)
+            .with_empty_external()
+            .build();
+        Evm::builder().modify_tx_env(|tx| tx.gas_limit = 10).build();
+        Evm::builder()
+            .with_empty_db()
+            .modify_tx_env(|tx| tx.gas_limit = 10)
+            .build();
+        Evm::builder()
+            .with_empty_db()
+            .with_empty_external()
+            .modify_tx_env(|tx| tx.gas_limit = 10)
+            .build();
+
+        // with inspector handle
+        Evm::builder()
+            .with_empty_db()
+            .with_external(NoOpInspector::default())
+            .push_handler(inspector_handle_register)
+            .build();
     }
 }
