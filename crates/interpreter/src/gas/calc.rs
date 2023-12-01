@@ -187,55 +187,66 @@ pub fn sload_cost<SPEC: Spec>(is_cold: bool) -> u64 {
 
 #[allow(clippy::collapsible_else_if)]
 pub fn sstore_cost<SPEC: Spec>(
-    original: U256,
-    current: U256,
-    new: U256,
-    gas: u64,
-    is_cold: bool,
-) -> Option<u64> {
-    // TODO untangle this mess and make it more elegant
-    let (gas_sload, gas_sstore_reset) = if SPEC::enabled(BERLIN) {
-        (WARM_STORAGE_READ_COST, SSTORE_RESET - COLD_SLOAD_COST)
-    } else {
-        (sload_cost::<SPEC>(is_cold), SSTORE_RESET)
+    original: U256, 
+    current: U256, 
+    new: U256, 
+    gas: u64, 
+    is_cold: bool, 
+) -> Option<u64> { 
+    if gas <= CALL_STIPEND {
+        return None;
+    }
+
+    let (gas_sload, gas_sstore_reset) = if SPEC::enabled(BERLIN) { 
+        (WARM_STORAGE_READ_COST, SSTORE_RESET - COLD_SLOAD_COST) 
+    } else { 
+        (sload_cost::<SPEC>(is_cold), SSTORE_RESET) 
     };
 
-    // https://eips.ethereum.org/EIPS/eip-2200
-    // It’s a combined version of EIP-1283 and EIP-1706
     let gas_cost = if SPEC::enabled(ISTANBUL) {
-        // EIP-1706
-        if gas <= CALL_STIPEND {
-            return None;
-        }
-
-        // EIP-1283
-        if new == current {
-            gas_sload
-        } else {
-            if original == current {
-                if original == U256::ZERO {
-                    SSTORE_SET
-                } else {
-                    gas_sstore_reset
-                }
-            } else {
-                gas_sload
-            }
-        }
+        calculate_istanbul_gas_cost(original, current, new, gas_sload, gas_sstore_reset)
     } else {
-        if current == U256::ZERO && new != U256::ZERO {
-            SSTORE_SET
-        } else {
-            gas_sstore_reset
-        }
+        calculate_non_istanbul_gas_cost(current, new, gas_sstore_reset)
     };
-    // In EIP-2929 we charge extra if the slot has not been used yet in this transaction
-    if SPEC::enabled(BERLIN) && is_cold {
-        Some(gas_cost + COLD_SLOAD_COST)
+
+    if SPEC::enabled(BERLIN) && is_cold { 
+        Some(gas_cost + COLD_SLOAD_COST) 
+    } else { 
+        Some(gas_cost) 
+    } 
+}
+
+
+fn calculate_istanbul_gas_cost(
+    original: U256, 
+    current: U256, 
+    new: U256, 
+    gas_sload: u64, 
+    gas_sstore_reset: u64
+) -> u64 {
+    if new == current {
+        return gas_sload;
+    }
+    if original == current {
+        return if original == U256::ZERO { SSTORE_SET } else { gas_sstore_reset };
+    }
+
+    gas_sload
+}
+
+fn calculate_non_istanbul_gas_cost(
+    current: U256, 
+    new: U256, 
+    gas_sstore_reset: u64
+) -> u64 {
+    if current == U256::ZERO && new != U256::ZERO {
+        SSTORE_SET
     } else {
-        Some(gas_cost)
+        gas_sstore_reset
     }
 }
+
+
 
 pub fn selfdestruct_cost<SPEC: Spec>(res: SelfDestructResult) -> u64 {
     // EIP-161: State trie clearing (invariant-preserving alternative)
