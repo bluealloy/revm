@@ -137,7 +137,6 @@ pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
     /// Validate Env
     pub validate_env: ValidateEnvHandle<'a, DB>,
     /// Validate Transaction against the state.
-    
     // Uses env, call result and returned gas from the call to determine the gas
     // that is returned from transaction execution..
     pub call_return: CallReturnHandle<'a>,

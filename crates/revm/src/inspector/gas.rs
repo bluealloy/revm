@@ -157,9 +157,10 @@ mod tests {
 
         use crate::{
             db::BenchmarkDB,
+            handler::register::Register,
             interpreter::opcode,
             primitives::{address, Bytecode, Bytes, TransactTo},
-            Evm, Transact, handler::register::Register,
+            Evm, Transact,
         };
 
         let contract_data: Bytes = Bytes::from(vec![

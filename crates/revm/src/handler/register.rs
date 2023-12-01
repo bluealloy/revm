@@ -36,7 +36,7 @@ pub enum HandleRegisters<'a, EXT, DB: Database> {
 }
 
 pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
-    handler: &'a mut EvmHandler<'a, EXT, DB>,
+    handler: &mut EvmHandler<'a, EXT, DB>,
 ) {
     let spec_id = handler.spec_id;
     // Every instruction inside flat table that is going to be wrapped by inspector calls.

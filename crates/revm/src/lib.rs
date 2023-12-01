@@ -12,10 +12,10 @@ extern crate alloc;
 
 // Define modules.
 
+mod builder;
 mod context;
 pub mod db;
 mod evm;
-mod builder;
 mod frame;
 pub mod handler;
 mod inspector;
@@ -25,6 +25,7 @@ pub mod optimism;
 
 // Export items.
 
+pub use builder::EvmBuilder;
 pub use context::{Context, EvmContext};
 #[cfg(feature = "std")]
 pub use db::{
@@ -32,7 +33,6 @@ pub use db::{
 };
 pub use db::{Database, DatabaseCommit, DatabaseRef, DummyStateDB, InMemoryDB};
 pub use evm::{Evm, CALL_STACK_LIMIT};
-pub use builder::EvmBuilder;
 pub use frame::{CallStackFrame, FrameOrResult};
 pub use handler::Handler;
 pub use inspector::{inspector_instruction, inspectors, Inspector};

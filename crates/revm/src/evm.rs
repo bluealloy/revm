@@ -1,8 +1,8 @@
 #[cfg(feature = "optimism")]
 use crate::optimism;
 use crate::{
-    db::{Database, EmptyDB},
     builder::{EvmBuilder, SettingDbStage, SettingHandlerStage},
+    db::{Database, EmptyDB},
     handler::Handler,
     interpreter::{
         opcode::InstructionTables, CallContext, CallInputs, CallScheme, CreateInputs, Host,
