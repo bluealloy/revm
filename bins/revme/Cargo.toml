@@ -7,10 +7,9 @@ license = "MIT"
 repository = "https://github.com/bluealloy/revm"
 description = "Rust Ethereum Virtual Machine Executable"
 version = "0.2.0"
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-hash-db = "0.15"
+hash-db = "0.16"
 hashbrown = "0.14"
 indicatif = "0.17"
 plain_hasher = "0.2"

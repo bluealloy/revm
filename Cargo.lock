@@ -1339,6 +1339,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d23bd4e7b5eda0d0f3a307e8b381fdc8ba9000f26fbe912250c0a4cc3956364a"
 
 [[package]]
+name = "hash-db"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e7d7786361d7425ae2fe4f9e407eb0efaa0840f5212d109cc018c40c35c6ab4"
+
+[[package]]
 name = "hashbrown"
 version = "0.14.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2433,7 +2439,7 @@ name = "revme"
 version = "0.2.0"
 dependencies = [
  "alloy-rlp",
- "hash-db",
+ "hash-db 0.16.0",
  "hashbrown",
  "indicatif",
  "plain_hasher",
@@ -3326,7 +3332,7 @@ version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a1631b201eb031b563d2e85ca18ec8092508e262a3196ce9bd10a67ec87b9f5c"
 dependencies = [
- "hash-db",
+ "hash-db 0.15.2",
  "rlp",
 ]
 
