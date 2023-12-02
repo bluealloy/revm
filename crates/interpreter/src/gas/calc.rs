@@ -187,21 +187,21 @@ pub fn sload_cost<SPEC: Spec>(is_cold: bool) -> u64 {
 
 #[allow(clippy::collapsible_else_if)]
 pub fn sstore_cost<SPEC: Spec>(
-    original: U256, 
-    current: U256, 
-    new: U256, 
-    gas: u64, 
-    is_cold: bool, 
+    original: U256,
+    current: U256,
+    new: U256,
+    gas: u64,
+    is_cold: bool,
 ) -> Option<u64> {
     // EIP-1706 check specific to Istanbul
     if SPEC::enabled(ISTANBUL) && gas <= CALL_STIPEND {
         return None;
     }
 
-    let (gas_sload, gas_sstore_reset) = if SPEC::enabled(BERLIN) { 
-        (WARM_STORAGE_READ_COST, SSTORE_RESET - COLD_SLOAD_COST) 
-    } else { 
-        (sload_cost::<SPEC>(is_cold), SSTORE_RESET) 
+    let (gas_sload, gas_sstore_reset) = if SPEC::enabled(BERLIN) {
+        (WARM_STORAGE_READ_COST, SSTORE_RESET - COLD_SLOAD_COST)
+    } else {
+        (sload_cost::<SPEC>(is_cold), SSTORE_RESET)
     };
 
     let gas_cost = if SPEC::enabled(ISTANBUL) {
@@ -210,43 +210,38 @@ pub fn sstore_cost<SPEC: Spec>(
         calculate_non_istanbul_gas_cost(current, new, gas_sstore_reset)
     };
 
-    if SPEC::enabled(BERLIN) && is_cold { 
-        Some(gas_cost + COLD_SLOAD_COST) 
-    } else { 
-        Some(gas_cost) 
-    } 
+    if SPEC::enabled(BERLIN) && is_cold {
+        Some(gas_cost + COLD_SLOAD_COST)
+    } else {
+        Some(gas_cost)
+    }
 }
 
-
 fn calculate_istanbul_gas_cost(
-    original: U256, 
-    current: U256, 
+    original: U256,
+    current: U256,
     new: U256,
-    gas_sload: u64, 
-    gas_sstore_reset: u64
+    gas_sload: u64,
+    gas_sstore_reset: u64,
 ) -> u64 {
     if new == current {
         gas_sload
+    } else if original == current && original == U256::ZERO {
+        SSTORE_SET
     } else if original == current {
-        if original == U256::ZERO { SSTORE_SET } else { gas_sstore_reset }
+        gas_sstore_reset
     } else {
         gas_sload
     }
 }
 
-fn calculate_non_istanbul_gas_cost(
-    current: U256, 
-    new: U256, 
-    gas_sstore_reset: u64
-) -> u64 {
+fn calculate_non_istanbul_gas_cost(current: U256, new: U256, gas_sstore_reset: u64) -> u64 {
     if current == U256::ZERO && new != U256::ZERO {
         SSTORE_SET
     } else {
         gas_sstore_reset
     }
 }
-
-
 
 pub fn selfdestruct_cost<SPEC: Spec>(res: SelfDestructResult) -> u64 {
     // EIP-161: State trie clearing (invariant-preserving alternative)
