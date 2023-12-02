@@ -1,11 +1,12 @@
 use alloy_rlp::{RlpEncodable, RlpMaxEncodedLen};
 use hash_db::Hasher;
 use plain_hasher::PlainHasher;
+use reference_trie::ReferenceTrieStream;
 use revm::{
     db::PlainAccount,
     primitives::{keccak256, Address, Log, B256, U256},
 };
-use triehash::sec_trie_root;
+use trie_root::sec_trie_root;
 
 pub fn log_rlp_hash(logs: &[Log]) -> B256 {
     let mut out = Vec::with_capacity(alloy_rlp::list_length(logs));
@@ -37,11 +38,12 @@ impl TrieAccount {
         Self {
             nonce: acc.info.nonce,
             balance: acc.info.balance,
-            root_hash: sec_trie_root::<KeccakHasher, _, _, _>(
+            root_hash: sec_trie_root::<KeccakHasher, ReferenceTrieStream, _, _, _>(
                 acc.storage
                     .iter()
                     .filter(|(_k, &v)| v != U256::ZERO)
                     .map(|(k, v)| (k.to_be_bytes::<32>(), alloy_rlp::encode_fixed_size(v))),
+                None,
             ),
             code_hash: acc.info.code_hash,
         }
@@ -55,7 +57,7 @@ where
     A: AsRef<[u8]>,
     B: AsRef<[u8]>,
 {
-    sec_trie_root::<KeccakHasher, _, _, _>(input)
+    sec_trie_root::<KeccakHasher, ReferenceTrieStream, _, _, _>(input, None)
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
