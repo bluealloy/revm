@@ -192,8 +192,9 @@ pub fn sstore_cost<SPEC: Spec>(
     new: U256, 
     gas: u64, 
     is_cold: bool, 
-) -> Option<u64> { 
-    if gas <= CALL_STIPEND {
+) -> Option<u64> {
+    // EIP-1706 check specific to Istanbul
+    if SPEC::enabled(ISTANBUL) && gas <= CALL_STIPEND {
         return None;
     }
 
@@ -220,18 +221,17 @@ pub fn sstore_cost<SPEC: Spec>(
 fn calculate_istanbul_gas_cost(
     original: U256, 
     current: U256, 
-    new: U256, 
+    new: U256,
     gas_sload: u64, 
     gas_sstore_reset: u64
 ) -> u64 {
     if new == current {
-        return gas_sload;
+        gas_sload
+    } else if original == current {
+        if original == U256::ZERO { SSTORE_SET } else { gas_sstore_reset }
+    } else {
+        gas_sload
     }
-    if original == current {
-        return if original == U256::ZERO { SSTORE_SET } else { gas_sstore_reset };
-    }
-
-    gas_sload
 }
 
 fn calculate_non_istanbul_gas_cost(
