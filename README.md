@@ -72,9 +72,16 @@ TODO needs to be updated. Benches can now be found inside `crates/revm/benches`
 cargo run --package revm-test --release --bin snailtracer
 ```
 
+The following flamegraph will require installing [flamegraph] by running `cargo install flamegraph`.
+
+[flamegraph]: https://docs.rs/crate/flamegraph/0.1.6
+
 ```shell
 cargo flamegraph --root --freq 4000 --min-width 0.001 --package revm-test --bin snailtracer
 ```
+
+This command will produce a flamegraph image output to `flamegraph.svg`.
+Flamegraph also requires sudo mode to run (hence the `--root` cli arg) and will prompt you for your password if not in sudo mode already.
 
 ## Running example
 
