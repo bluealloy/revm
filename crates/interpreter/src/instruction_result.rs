@@ -43,7 +43,7 @@ pub enum InstructionResult {
     /// Error on created contract that begins with EF
     CreateContractStartingWithEF,
     /// EIP-3860: Limit and meter initcode. Initcode size limit exceeded.
-    CreateInitcodeSizeLimit,
+    CreateInitCodeSizeLimit,
 
     /// Fatal external error. Returned by database.
     FatalExternalError,
@@ -87,7 +87,7 @@ impl InstructionResult {
                 | Self::NonceOverflow
                 | Self::CreateContractSizeLimit
                 | Self::CreateContractStartingWithEF
-                | Self::CreateInitcodeSizeLimit
+                | Self::CreateInitCodeSizeLimit
                 | Self::FatalExternalError
         )
     }
@@ -190,7 +190,7 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::CreateContractStartingWithEF => {
                 Self::Halt(Halt::CreateContractSizeLimit)
             }
-            InstructionResult::CreateInitcodeSizeLimit => Self::Halt(Halt::CreateInitcodeSizeLimit),
+            InstructionResult::CreateInitCodeSizeLimit => Self::Halt(Halt::CreateInitCodeSizeLimit),
             InstructionResult::FatalExternalError => Self::FatalExternalError,
         }
     }
