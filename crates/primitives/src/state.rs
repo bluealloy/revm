@@ -113,7 +113,7 @@ impl Account {
         self.status.contains(AccountStatus::Created)
     }
 
-    /// Is account empty, check if nonce and balance are zero and code is empty.
+    /// Is account empty.
     pub fn is_empty(&self) -> bool {
         self.info.is_empty()
     }
@@ -131,7 +131,7 @@ impl From<AccountInfo> for Account {
         Self {
             info,
             storage: HashMap::new(),
-            status: AccountStatus::Loaded,
+            status: Default::default(),
         }
     }
 }
