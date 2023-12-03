@@ -108,7 +108,7 @@ impl Env {
                 .map(|limit| limit.saturating_mul(2))
                 .unwrap_or(MAX_INITCODE_SIZE);
             if self.tx.data.len() > max_initcode_size {
-                return Err(InvalidTransaction::CreateInitcodeSizeLimit);
+                return Err(InvalidTransaction::CreateInitCodeSizeLimit);
             }
         }
 
