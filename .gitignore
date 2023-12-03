@@ -6,7 +6,7 @@ target
 .idea
 pkg/
 
-
+tests
 bins/revme/temp_folder
 bins/revme/tests
 ethereumjs-util.js
