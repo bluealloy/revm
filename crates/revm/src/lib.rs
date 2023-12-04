@@ -1,4 +1,6 @@
-#![warn(unreachable_pub)]
+#![doc = include_str!("../../../README.md")]
+#![warn(rustdoc::all, unreachable_pub)]
+#![allow(rustdoc::bare_urls)]
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 #![deny(unused_must_use, rust_2018_idioms)]

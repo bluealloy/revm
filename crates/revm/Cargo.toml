@@ -9,6 +9,10 @@ repository = "https://github.com/bluealloy/revm"
 version = "3.5.0"
 readme = "../../README.md"
 
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
 [dependencies]
 revm-interpreter = { path = "../interpreter", version = "1.3.0", default-features = false }
 revm-precompile = { path = "../precompile", version = "2.2.0", default-features = false }

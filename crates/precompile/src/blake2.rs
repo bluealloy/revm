@@ -9,7 +9,7 @@ pub const FUN: PrecompileWithAddress = PrecompileWithAddress(
     Precompile::Standard(run as StandardPrecompileFn),
 );
 
-/// reference: https://eips.ethereum.org/EIPS/eip-152
+/// reference: <https://eips.ethereum.org/EIPS/eip-152>
 /// input format:
 /// [4 bytes for rounds][64 bytes for h][128 bytes for m][8 bytes for t_0][8 bytes for t_1][1 byte for f]
 fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
@@ -55,7 +55,7 @@ fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
 }
 
 mod algo {
-    /// SIGMA from spec: https://datatracker.ietf.org/doc/html/rfc7693#section-2.7
+    /// SIGMA from spec: <https://datatracker.ietf.org/doc/html/rfc7693#section-2.7>
     const SIGMA: [[usize; 16]; 10] = [
         [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
         [14, 10, 4, 8, 9, 15, 13, 6, 1, 12, 0, 2, 11, 7, 5, 3],
@@ -69,7 +69,7 @@ mod algo {
         [10, 2, 8, 4, 7, 6, 1, 5, 15, 11, 9, 14, 3, 12, 13, 0],
     ];
 
-    /// got IV from: https://en.wikipedia.org/wiki/BLAKE_(hash_function)
+    /// got IV from: <https://en.wikipedia.org/wiki/BLAKE_(hash_function)>
     const IV: [u64; 8] = [
         0x6a09e667f3bcc908,
         0xbb67ae8584caa73b,
@@ -83,7 +83,7 @@ mod algo {
 
     #[inline(always)]
     #[allow(clippy::many_single_char_names)]
-    /// G function: https://tools.ietf.org/html/rfc7693#section-3.1
+    /// G function: <https://tools.ietf.org/html/rfc7693#section-3.1>
     fn g(v: &mut [u64], a: usize, b: usize, c: usize, d: usize, x: u64, y: u64) {
         v[a] = v[a].wrapping_add(v[b]).wrapping_add(x);
         v[d] = (v[d] ^ v[a]).rotate_right(32);

@@ -548,7 +548,7 @@ impl JournaledState {
 
     /// Load account from database to JournaledState.
     ///
-    /// Return boolean pair where first is `is_cold`` second bool `is_exists`.
+    /// Return boolean pair where first is `is_cold` second bool `is_exists`.
     #[inline]
     pub fn load_account_exist<DB: Database>(
         &mut self,

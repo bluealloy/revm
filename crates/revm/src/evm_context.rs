@@ -111,7 +111,7 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
             .ok()
     }
 
-    /// Storage change of storage slot, before storing `sload`` will be called for that slot.
+    /// Storage change of storage slot, before storing `sload` will be called for that slot.
     pub fn sstore(
         &mut self,
         address: Address,
