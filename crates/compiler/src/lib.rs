@@ -1,20 +1,22 @@
+#![no_std]
+extern crate alloc;
+
+use alloc::boxed::Box;
 use fluentbase_sdk::evm::{
     contract_read_address, contract_read_bytecode, contract_read_caller, contract_read_env,
-    contract_read_hash, contract_read_input, contract_read_value, ContractInput,
+    contract_read_hash, contract_read_input, contract_read_value,
 };
-#[no_std]
 use fluentbase_sdk::{SysPlatformSDK, SDK};
 use revm_interpreter::opcode::make_instruction_table;
 use revm_interpreter::{Contract, FluentHost, InstructionResult, Interpreter, SharedMemory};
-use revm_precompile::primitives::{
-    Address, Bytecode, Bytes, Env, LondonSpec, TransactTo, B256, U256,
-};
+use revm_precompile::primitives::{Address, Bytecode, Bytes, Env, LondonSpec, B256, U256};
+
+const INPUT_BYTECODE: [u8; 25 * 1024] = [0x7f; 25 * 1024];
 
 #[no_mangle]
 extern "C" fn main() {
     // read input
     let input = contract_read_input();
-    let bytecode = contract_read_bytecode();
     let hash = contract_read_hash();
     let address = contract_read_address();
     let caller = contract_read_caller();
@@ -22,7 +24,7 @@ extern "C" fn main() {
     // init contract
     let contract = Contract::new(
         Bytes::from(input),
-        Bytecode::new_raw(Bytes::from(bytecode)),
+        Bytecode::new_raw(Bytes::from(INPUT_BYTECODE)),
         B256::from(hash),
         Address::from(address),
         Address::from(caller),

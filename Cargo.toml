@@ -4,9 +4,11 @@ members = ["bins/*", "crates/*"]
 default-members = ["crates/revm"]
 
 [profile.release]
+panic = "abort"
 lto = true
 codegen-units = 1
 opt-level = 'z'
+strip = true
 
 [profile.ethtests]
 inherits = "test"
