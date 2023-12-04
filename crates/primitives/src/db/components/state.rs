@@ -1,5 +1,5 @@
 //! State database component from [`crate::db::Database`]
-//! it is used inside [crate::db::DatabaseComponents`]
+//! it is used inside [`crate::db::DatabaseComponents`]
 
 use crate::{AccountInfo, Address, Bytecode, B256, U256};
 use alloc::sync::Arc;

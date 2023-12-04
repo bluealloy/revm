@@ -12,6 +12,10 @@ readme = "../../README.md"
 # Don't need to run build script outside of this repo
 exclude = ["build.rs", "src/kzg/*.txt"]
 
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
 [dependencies]
 alloy-primitives = { version = "0.5", default-features = false, features = [
     "rlp",
