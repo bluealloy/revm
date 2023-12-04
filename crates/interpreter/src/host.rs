@@ -5,6 +5,7 @@ use crate::{
 };
 use alloc::vec::Vec;
 pub use dummy::DummyHost;
+pub use fluent::FluentHost;
 
 mod dummy;
 mod fluent;

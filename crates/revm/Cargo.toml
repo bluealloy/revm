@@ -26,7 +26,9 @@ auto_impl = { version = "1.1", default-features = false }
 
 # Optionalc-kzg
 serde = { version = "1.0", features = ["derive", "rc"], optional = true }
-serde_json = { version = "1.0", features = ["preserve_order"], optional = true }
+#serde_json = { version = "1.0", features = ["preserve_order"], optional = true }
+
+serde_json = { version = "1.0.108", default-features = false, features = ["alloc"] }
 
 # ethersdb
 tokio = { version = "1.33", features = [
@@ -45,9 +47,9 @@ criterion = "0.5"
 hex-literal = "0.4.1"
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "runtime"]
+default = ["std", "c-kzg", "secp256k1", "runtime", "serde"]
 std = ["revm-interpreter/std", "revm-precompile/std"]
-serde = ["dep:serde", "dep:serde_json", "revm-interpreter/serde"]
+serde = ["dep:serde", "revm-interpreter/serde"]
 arbitrary = ["revm-interpreter/arbitrary"]
 
 # enable runtime for fluentbase

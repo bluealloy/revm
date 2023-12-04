@@ -30,6 +30,9 @@ secp256k1 = { version = "0.28.0", default-features = false, features = [
 
 [features]
 default = ["std", "c-kzg", "secp256k1"]
+serde = [
+    "revm-primitives/serde",
+]
 std = [
     "revm-primitives/std",
     "k256/std",

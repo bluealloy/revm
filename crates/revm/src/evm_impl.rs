@@ -722,6 +722,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         let bytecode = contract.bytecode.original_bytecode_slice();
         let mut output = vec![0u8; 1024];
         let import_linker = Runtime::<'_, EVMData<'a, DB>>::new_linker();
+        let json_env = serde_json::to_vec(&self.data.env).unwrap();
         let contract_input = ContractInput {
             input: contract.input.as_ref().to_vec(),
             bytecode: contract.bytecode.original_bytecode_slice().to_vec(),
@@ -731,6 +732,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             value: Default::default(),   // contract.value,
             block_hash: Default::default(),
             balance: Default::default(),
+            env: json_env,
         };
         let raw_contract_input = contract_input.encode();
         let ctx = RuntimeContext::<'_, EVMData<'a, DB>>::new(bytecode)

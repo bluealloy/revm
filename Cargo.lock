@@ -3723,6 +3723,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "revm-compiler"
+version = "3.5.0"
+dependencies = [
+ "fluentbase-sdk",
+ "revm-interpreter",
+ "revm-precompile",
+ "serde_json",
+]
+
+[[package]]
 name = "revm-interpreter"
 version = "1.3.0"
 dependencies = [
