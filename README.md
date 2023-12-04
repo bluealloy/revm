@@ -89,6 +89,10 @@ Flamegraph also requires sudo mode to run (hence the `--root` cli arg) and will 
 cargo run -p revm --features ethersdb --example fork_ref_transact
 ```
 
+```shell
+cargo run -p revm --features std,serde,optimism --example custom_precompile
+```
+
 # Used by:
 
 * [Foundry](https://github.com/foundry-rs/foundry) is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.

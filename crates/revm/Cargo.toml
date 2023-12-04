@@ -78,6 +78,11 @@ name = "fork_ref_transact"
 path = "../../examples/fork_ref_transact.rs"
 required-features = ["ethersdb"]
 
+[[example]]
+name = "custom_precompile"
+path = "../../examples/custom_precompile.rs"
+required-features = ["optimism", "std", "serde"]
+
 [[bench]]
 name = "bench"
 path = "benches/bench.rs"
