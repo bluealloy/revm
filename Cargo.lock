@@ -1767,6 +1767,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-poseidon"
 version = "0.1.0"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#1a628e397320abae05979c07046430f5171ce044"
 dependencies = [
  "bitvec 1.0.1",
  "halo2curves 0.3.1",
@@ -1777,6 +1778,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-runtime"
 version = "0.1.0"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#1a628e397320abae05979c07046430f5171ce044"
 dependencies = [
  "bincode",
  "bitvec 1.0.1",
@@ -1814,6 +1816,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-rwasm"
 version = "0.30.0"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#1a628e397320abae05979c07046430f5171ce044"
 dependencies = [
  "byteorder",
  "downcast-rs",
@@ -1831,6 +1834,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-rwasm-core"
 version = "0.1.0"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#1a628e397320abae05979c07046430f5171ce044"
 dependencies = [
  "downcast-rs",
  "libm",
@@ -1841,6 +1845,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-sdk"
 version = "0.1.0"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#1a628e397320abae05979c07046430f5171ce044"
 dependencies = [
  "alloy-primitives 0.4.2",
  "alloy-sol-types",
