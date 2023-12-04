@@ -12,6 +12,9 @@ compile_error!("`with-serde` feature has been renamed to `serde`.");
 #[macro_use]
 extern crate alloc;
 
+#[cfg(any(test, feature = "test-utils"))]
+pub mod test_utils;
+
 pub mod db;
 mod evm;
 mod evm_context;

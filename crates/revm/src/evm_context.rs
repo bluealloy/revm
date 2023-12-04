@@ -266,7 +266,6 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
             inputs.transfer.value,
             self.db,
         ) {
-            //println!("transfer error");
             self.journaled_state.checkpoint_revert(checkpoint);
             return return_result(e);
         }
@@ -430,5 +429,97 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
 
         interpreter_result.result = InstructionResult::Return;
         (interpreter_result, address)
+    }
+}
+
+/// Test utilities for the [`EvmContext`].
+#[cfg(any(test, feature = "test-utils"))]
+pub(crate) mod test_utils {
+    use super::*;
+    use crate::db::EmptyDB;
+    use crate::primitives::address;
+    use crate::primitives::SpecId;
+
+    /// Mock caller address.
+    pub const MOCK_CALLER: Address = address!("0000000000000000000000000000000000000000");
+
+    /// Creates `CallInputs` that calls a provided contract address from the mock caller.
+    pub fn create_mock_call_inputs(to: Address) -> CallInputs {
+        CallInputs {
+            contract: to,
+            transfer: revm_interpreter::Transfer {
+                source: MOCK_CALLER,
+                target: to,
+                value: U256::ZERO,
+            },
+            input: Bytes::new(),
+            gas_limit: 0,
+            context: revm_interpreter::CallContext {
+                address: MOCK_CALLER,
+                caller: MOCK_CALLER,
+                code_address: MOCK_CALLER,
+                apparent_value: U256::ZERO,
+                scheme: revm_interpreter::CallScheme::Call,
+            },
+            is_static: false,
+        }
+    }
+
+    /// Returns a new `EvmContext` with an empty journaled state.
+    pub fn create_empty_evm_context<'a>(
+        env: &'a mut Env,
+        db: &'a mut EmptyDB,
+    ) -> EvmContext<'a, EmptyDB> {
+        EvmContext {
+            env,
+            journaled_state: JournaledState::new(SpecId::CANCUN, vec![]),
+            db,
+            error: None,
+            precompiles: Precompiles::default(),
+            #[cfg(feature = "optimism")]
+            l1_block_info: None,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{primitives::address, JournalEntry};
+
+    // Tests that the `EVMContext::make_call_frame` function returns an error if the
+    // call stack is too deep.
+    #[test]
+    fn test_make_call_frame_stack_too_deep() {
+        let mut env = Env::default();
+        let mut db = crate::db::EmptyDB::default();
+        let mut evm_context = test_utils::create_empty_evm_context(&mut env, &mut db);
+        evm_context.journaled_state.depth = CALL_STACK_LIMIT as usize + 1;
+        let contract = address!("dead10000000000000000000000000000001dead");
+        let call_inputs = test_utils::create_mock_call_inputs(contract);
+
+        let res = evm_context.make_call_frame(&call_inputs, 0..0);
+        let err = res.unwrap_err();
+        assert_eq!(err.result, InstructionResult::CallTooDeep);
+    }
+
+    // Tests that the `EVMContext::make_call_frame` function returns an error if the
+    // transfer fails on the journaled state. It also verifies that the revert was
+    // checkpointed on the journaled state correctly.
+    #[test]
+    fn test_make_call_frame_transfer_revert() {
+        let mut env = Env::default();
+        let mut db = crate::db::EmptyDB::default();
+        let mut evm_context = test_utils::create_empty_evm_context(&mut env, &mut db);
+        let contract = address!("dead10000000000000000000000000000001dead");
+        let mut call_inputs = test_utils::create_mock_call_inputs(contract);
+        call_inputs.transfer.value = U256::from(1);
+
+        let res = evm_context.make_call_frame(&call_inputs, 0..0);
+        let err = res.unwrap_err();
+        assert_eq!(err.result, InstructionResult::OutOfFund);
+        let checkpointed = vec![vec![JournalEntry::AccountLoaded { address: contract }]];
+        assert_eq!(evm_context.journaled_state.journal, checkpointed);
+        assert_eq!(evm_context.journaled_state.depth, 0);
     }
 }
