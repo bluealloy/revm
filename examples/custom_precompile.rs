@@ -21,19 +21,19 @@ fn precompile_func(_input: &[u8], _gas_limit: u64) -> PrecompileResult {
     // [0xFF, caller, 100,   0,          0,        0,          0       ]
     println!("---> Inside the precompile function!");
 
-    let zero = 0x00 as u8;
-    let push1 = 0x60 as u8;
-    let hundred = 0x64 as u8;
-    let push20 = 0x73 as u8;
+    let zero = 0x00_u8;
+    let push1 = 0x60_u8;
+    let hundred = 0x64_u8;
+    let push20 = 0x73_u8;
     let to = address!("deadca11deadca11deadca11deadca11deadca11");
-    let call = 0xF1 as u8;
+    let call = 0xF1_u8;
 
     let gas_used = 0;
     let ret_bytes = [
         &[
             push1, zero, push1, zero, push1, zero, push1, zero, push1, hundred, push20,
         ],
-        &to.as_slice()[..],
+        to.as_slice(),
         &[push1, MINIMUM_GAS_LIMIT, call],
     ]
     .concat();
