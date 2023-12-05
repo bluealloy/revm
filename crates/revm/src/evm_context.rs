@@ -271,7 +271,6 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
         }
 
         if let Some(precompile) = self.precompiles.get(&inputs.contract) {
-            //println!("Call precompile");
             let result = self.call_precompile(precompile, inputs, gas);
             if matches!(result.result, return_ok!()) {
                 self.journaled_state.checkpoint_commit();
@@ -436,6 +435,7 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
 #[cfg(any(test, feature = "test-utils"))]
 pub(crate) mod test_utils {
     use super::*;
+    use crate::db::CacheDB;
     use crate::db::EmptyDB;
     use crate::primitives::address;
     use crate::primitives::SpecId;
@@ -465,6 +465,42 @@ pub(crate) mod test_utils {
         }
     }
 
+    /// Creates an evm context with a cache db backend.
+    /// Additionally loads the mock caller account into the db,
+    /// and sets the balance to the provided U256 value.
+    pub fn create_cache_db_evm_context_with_balance<'a>(
+        env: &'a mut Env,
+        db: &'a mut CacheDB<EmptyDB>,
+        balance: U256,
+    ) -> EvmContext<'a, CacheDB<EmptyDB>> {
+        db.insert_account_info(
+            test_utils::MOCK_CALLER,
+            crate::primitives::AccountInfo {
+                nonce: 0,
+                balance,
+                code_hash: B256::default(),
+                code: None,
+            },
+        );
+        create_cache_db_evm_context(env, db)
+    }
+
+    /// Creates a cached db evm context.
+    pub fn create_cache_db_evm_context<'a>(
+        env: &'a mut Env,
+        db: &'a mut CacheDB<EmptyDB>,
+    ) -> EvmContext<'a, CacheDB<EmptyDB>> {
+        EvmContext {
+            env,
+            journaled_state: JournaledState::new(SpecId::CANCUN, vec![]),
+            db,
+            error: None,
+            precompiles: Precompiles::default(),
+            #[cfg(feature = "optimism")]
+            l1_block_info: None,
+        }
+    }
+
     /// Returns a new `EvmContext` with an empty journaled state.
     pub fn create_empty_evm_context<'a>(
         env: &'a mut Env,
@@ -485,19 +521,21 @@ pub(crate) mod test_utils {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{primitives::address, JournalEntry};
+    use crate::db::{CacheDB, EmptyDB};
+    use crate::primitives::address;
+    use crate::JournalEntry;
+    use test_utils::*;
 
     // Tests that the `EVMContext::make_call_frame` function returns an error if the
     // call stack is too deep.
     #[test]
     fn test_make_call_frame_stack_too_deep() {
         let mut env = Env::default();
-        let mut db = crate::db::EmptyDB::default();
+        let mut db = EmptyDB::default();
         let mut evm_context = test_utils::create_empty_evm_context(&mut env, &mut db);
         evm_context.journaled_state.depth = CALL_STACK_LIMIT as usize + 1;
         let contract = address!("dead10000000000000000000000000000001dead");
         let call_inputs = test_utils::create_mock_call_inputs(contract);
-
         let res = evm_context.make_call_frame(&call_inputs, 0..0);
         let err = res.unwrap_err();
         assert_eq!(err.result, InstructionResult::CallTooDeep);
@@ -509,17 +547,53 @@ mod tests {
     #[test]
     fn test_make_call_frame_transfer_revert() {
         let mut env = Env::default();
-        let mut db = crate::db::EmptyDB::default();
+        let mut db = EmptyDB::default();
         let mut evm_context = test_utils::create_empty_evm_context(&mut env, &mut db);
         let contract = address!("dead10000000000000000000000000000001dead");
         let mut call_inputs = test_utils::create_mock_call_inputs(contract);
         call_inputs.transfer.value = U256::from(1);
-
         let res = evm_context.make_call_frame(&call_inputs, 0..0);
         let err = res.unwrap_err();
         assert_eq!(err.result, InstructionResult::OutOfFund);
         let checkpointed = vec![vec![JournalEntry::AccountLoaded { address: contract }]];
         assert_eq!(evm_context.journaled_state.journal, checkpointed);
         assert_eq!(evm_context.journaled_state.depth, 0);
+    }
+
+    #[test]
+    fn test_make_call_frame_missing_code_context() {
+        let mut env = Env::default();
+        let mut cdb = CacheDB::new(EmptyDB::default());
+        let bal = U256::from(3_000_000_000_u128);
+        let mut evm_context = create_cache_db_evm_context_with_balance(&mut env, &mut cdb, bal);
+        let contract = address!("dead10000000000000000000000000000001dead");
+        let call_inputs = test_utils::create_mock_call_inputs(contract);
+        let res = evm_context.make_call_frame(&call_inputs, 0..0);
+        assert_eq!(res.unwrap_err().result, InstructionResult::Stop);
+    }
+
+    #[test]
+    fn test_make_call_frame_succeeds() {
+        let mut env = Env::default();
+        let mut cdb = CacheDB::new(EmptyDB::default());
+        let bal = U256::from(3_000_000_000_u128);
+        let by = Bytecode::new_raw(Bytes::from(vec![0x60, 0x00, 0x60, 0x00]));
+        let contract = address!("dead10000000000000000000000000000001dead");
+        cdb.insert_account_info(
+            contract,
+            crate::primitives::AccountInfo {
+                nonce: 0,
+                balance: bal,
+                code_hash: by.clone().hash_slow(),
+                code: Some(by),
+            },
+        );
+        let mut evm_context = create_cache_db_evm_context_with_balance(&mut env, &mut cdb, bal);
+        let call_inputs = test_utils::create_mock_call_inputs(contract);
+        let res = evm_context.make_call_frame(&call_inputs, 0..0);
+        let frame = res.unwrap();
+        assert_eq!(frame.is_create, false);
+        assert_eq!(frame.created_address, None);
+        assert_eq!(frame.subcall_return_memory_range, 0..0);
     }
 }
