@@ -12,10 +12,8 @@ use crate::{
     journaled_state::JournaledState,
     precompile::Precompiles,
     primitives::{
-        specification::{self, SpecId},
-        Address, Bytecode, Bytes, EVMError, EVMResult, Env, HashSet, InvalidTransaction, Output,
-        SpecId::*,
-        TransactTo, B256, U256,
+        specification::SpecId, Address, Bytecode, Bytes, EVMError, EVMResult, Env, HashSet, Output,
+        SpecId::*, TransactTo, B256, U256,
     },
     CallStackFrame, Context, EvmContext, FrameOrResult,
 };
@@ -198,44 +196,9 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
         }
     }
 
-    /// Pre verify transaction. Returns initial gas spend
-    pub fn preverify_transaction_inner(&mut self) -> Result<u64, EVMError<DB::Error>> {
-        self.handler.validate_env(&self.context.evm.env)?;
-        let initial_gas_spend = self.handler.initial_tx_gas(&self.context.evm.env);
-
-        let env = self.env();
-
-        // Additional check to see if limit is big enough to cover initial gas.
-        if initial_gas_spend > env.tx.gas_limit {
-            return Err(InvalidTransaction::CallGasCostMoreThanGasLimit.into());
-        }
-
-        // load acc
-        let tx_caller = env.tx.caller;
-        let (caller_account, _) = self
-            .context
-            .evm
-            .journaled_state
-            .load_account(tx_caller, &mut self.context.evm.db)
-            .map_err(EVMError::Database)?;
-
-        self.context
-            .evm
-            .env
-            .validate_tx_against_state(caller_account)
-            .map_err(Into::into)?;
-
-        Ok(initial_gas_spend)
-    }
-
     /// Transact preverified transaction.
     pub fn transact_preverified_inner(&mut self, initial_gas_spend: u64) -> EVMResult<DB::Error> {
-        let env = &self.context.evm.env;
-        let tx_caller = env.tx.caller;
-        let tx_value = env.tx.value;
-        let tx_data = env.tx.data.clone();
-        let tx_gas_limit = env.tx.gas_limit;
-
+        let tx_caller = self.context.evm.env.tx.caller;
         // the L1-cost fee is only computed for Optimism non-deposit transactions.
         #[cfg(feature = "optimism")]
         let tx_l1_cost = if env.cfg.optimism && env.tx.optimism.source_hash.is_none() {
@@ -272,11 +235,11 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
 
         self.context.evm.load_access_list()?;
 
-        // load acc
-        let journal = &mut self.context.evm.journaled_state;
-
         #[cfg(feature = "optimism")]
         if self.context.evm.env.cfg.optimism {
+            // load acc
+            let journal = &mut self.context.evm.journaled_state;
+
             crate::optimism::commit_mint_value(
                 tx_caller,
                 self.context.evm.env.tx.optimism.mint,
@@ -294,68 +257,42 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
             )?;
         }
 
-        let (caller_account, _) = journal
-            .load_account(tx_caller, &mut self.context.evm.db)
-            .map_err(EVMError::Database)?;
+        // deduce caller balance with its limit.
+        self.handler.deduct_caller(&mut self.context)?;
 
-        // Subtract gas costs from the caller's account.
-        // We need to saturate the gas cost to prevent underflow in case that `disable_balance_check` is enabled.
-        let mut gas_cost =
-            U256::from(tx_gas_limit).saturating_mul(self.context.evm.env.effective_gas_price());
-
-        // EIP-4844
-        if self.handler.spec_id.is_enabled_in(CANCUN) {
-            let data_fee = self
-                .context
-                .evm
-                .env
-                .calc_data_fee()
-                .expect("already checked");
-            gas_cost = gas_cost.saturating_add(data_fee);
-        }
-
-        caller_account.info.balance = caller_account.info.balance.saturating_sub(gas_cost);
-
-        // touch account so we know it is changed.
-        caller_account.mark_touch();
-
-        let transact_gas_limit = tx_gas_limit - initial_gas_spend;
+        // gas limit used in calls.
+        let transact_gas_limit = self.context.evm.env.tx.gas_limit - initial_gas_spend;
 
         // call inner handling of call/create
         let first_stack_frame = match self.context.evm.env.tx.transact_to {
-            TransactTo::Call(address) => {
-                // Nonce is already checked
-                caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
-
-                self.context.evm.make_call_frame(
-                    &CallInputs {
-                        contract: address,
-                        transfer: Transfer {
-                            source: tx_caller,
-                            target: address,
-                            value: tx_value,
-                        },
-                        input: tx_data,
-                        gas_limit: transact_gas_limit,
-                        context: CallContext {
-                            caller: tx_caller,
-                            address,
-                            code_address: address,
-                            apparent_value: tx_value,
-                            scheme: CallScheme::Call,
-                        },
-                        is_static: false,
+            TransactTo::Call(address) => self.context.evm.make_call_frame(
+                &CallInputs {
+                    contract: address,
+                    transfer: Transfer {
+                        source: tx_caller,
+                        target: address,
+                        value: self.context.evm.env.tx.value,
                     },
-                    0..0,
-                )
-            }
+                    input: self.context.evm.env.tx.data.clone(),
+                    gas_limit: transact_gas_limit,
+                    context: CallContext {
+                        caller: tx_caller,
+                        address,
+                        code_address: address,
+                        apparent_value: self.context.evm.env.tx.value,
+                        scheme: CallScheme::Call,
+                    },
+                    is_static: false,
+                },
+                0..0,
+            ),
             TransactTo::Create(scheme) => self.context.evm.make_create_frame(
                 self.spec_id(),
                 &CreateInputs {
                     caller: tx_caller,
                     scheme,
-                    value: tx_value,
-                    init_code: tx_data,
+                    value: self.context.evm.env.tx.value,
+                    init_code: self.context.evm.env.tx.data.clone(),
                     gas_limit: transact_gas_limit,
                 },
             ),
@@ -419,22 +356,27 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
 
 impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
     #[inline]
-    fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
-        self.preverify_transaction_inner().map(|_| ())
+    pub fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
+        self.handler.validate_env(&self.context.evm.env)?;
+        self.handler.initial_tx_gas(&self.context.evm.env)?;
+        self.handler.validate_tx_against_state(&mut self.context)?;
+        Ok(())
     }
 
     #[inline]
-    fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
-        let initial_gas_spend = self.handler.initial_tx_gas(&self.context.evm.env);
+    pub fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
+        let initial_gas_spend = self.handler.initial_tx_gas(&self.context.evm.env)?;
         let output = self.transact_preverified_inner(initial_gas_spend);
         self.handler.end(&mut self.context, output)
     }
 
     #[inline]
-    fn transact(&mut self) -> EVMResult<DB::Error> {
-        let output = self
-            .preverify_transaction_inner()
-            .and_then(|initial_gas_spend| self.transact_preverified_inner(initial_gas_spend));
+    pub fn transact(&mut self) -> EVMResult<DB::Error> {
+        self.handler.validate_env(&self.context.evm.env)?;
+        let initial_gas_spend = self.handler.initial_tx_gas(&self.context.evm.env)?;
+        self.handler.validate_tx_against_state(&mut self.context)?;
+
+        let output = self.transact_preverified_inner(initial_gas_spend);
         self.handler.end(&mut self.context, output)
     }
 }

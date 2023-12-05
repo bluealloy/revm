@@ -7,7 +7,12 @@ pub mod preexecution;
 
 use crate::{
     interpreter::{return_ok, return_revert, Gas, InstructionResult},
-    primitives::{db::Database, EVMError, Env, Spec, SpecId::LONDON, U256},
+    primitives::{
+        db::Database,
+        EVMError, Env, Spec,
+        SpecId::{CANCUN, LONDON},
+        TransactTo, U256,
+    },
     Context,
 };
 
@@ -34,6 +39,43 @@ pub fn handle_call_return<SPEC: Spec>(
         _ => {}
     }
     gas
+}
+
+#[inline]
+pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<EXT, DB>,
+) -> Result<(), EVMError<DB::Error>> {
+    // load caller's account.
+    let (caller_account, _) = context
+        .evm
+        .journaled_state
+        .load_account(context.evm.env.tx.caller, &mut context.evm.db)
+        .map_err(EVMError::Database)?;
+
+    // Subtract gas costs from the caller's account.
+    // We need to saturate the gas cost to prevent underflow in case that `disable_balance_check` is enabled.
+    let mut gas_cost = U256::from(context.evm.env.tx.gas_limit)
+        .saturating_mul(context.evm.env.effective_gas_price());
+
+    // EIP-4844
+    if SPEC::enabled(CANCUN) {
+        let data_fee = context.evm.env.calc_data_fee().expect("already checked");
+        gas_cost = gas_cost.saturating_add(data_fee);
+    }
+
+    // set new caller account balance.
+    caller_account.info.balance = caller_account.info.balance.saturating_sub(gas_cost);
+
+    // touch account so we know it is changed.
+    caller_account.mark_touch();
+
+    // bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
+    if matches!(context.evm.env.tx.transact_to, TransactTo::Call(_)) {
+        // Nonce is already checked
+        caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
+    }
+
+    Ok(())
 }
 
 #[inline]

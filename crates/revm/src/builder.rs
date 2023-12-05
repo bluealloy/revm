@@ -171,7 +171,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingHandlerStage, EXT, DB> {
         let mut handler = Handler::mainnet::<SPEC>();
         // apply all registers to default handeler and raw mainnet instruction table.
         for register in self.handle_registers.iter() {
-            register(&mut handler);
+            register.register(&mut handler);
             if handler.instruction_table.is_none() {
                 panic!("Handler must have instruction table")
             }

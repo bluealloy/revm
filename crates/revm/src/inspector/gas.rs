@@ -153,14 +153,11 @@ mod tests {
     #[test]
     #[cfg(not(feature = "optimism"))]
     fn test_gas_inspector() {
-        use alloc::sync::Arc;
-
         use crate::{
             db::BenchmarkDB,
-            handler::register::Register,
             interpreter::opcode,
             primitives::{address, Bytecode, Bytes, TransactTo},
-            Evm, Transact,
+            Evm,
         };
 
         let contract_data: Bytes = Bytes::from(vec![
@@ -190,8 +187,8 @@ mod tests {
                     TransactTo::Call(address!("0000000000000000000000000000000000000000"));
                 tx.gas_limit = 21100;
             })
-            .push_handler(Register::Plain(inspector_handle_register))
-            .push_handler(Register::Box(Box::new(inspector_handle_register)))
+            .push_handler(inspector_handle_register)
+            .push_handler_box(Box::new(inspector_handle_register))
             .build();
 
         // run evm.

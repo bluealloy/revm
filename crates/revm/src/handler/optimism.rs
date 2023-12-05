@@ -113,6 +113,14 @@ pub fn calculate_gas_refund<SPEC: Spec>(env: &Env, gas: &Gas) -> u64 {
     }
 }
 
+/// Deduct max balance from caller
+#[inline]
+pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<EXT, DB>,
+) -> Result<(), EVMError<DB::Error>> {
+    mainnet::deduct_caller::<SPEC, EXT, DB>(context)
+}
+
 /// Reward beneficiary with gas fee.
 #[inline]
 pub fn reward_beneficiary<SPEC: Spec, DB: Database>(

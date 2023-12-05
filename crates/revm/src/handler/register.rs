@@ -35,6 +35,15 @@ pub enum HandleRegisters<'a, EXT, DB: Database> {
     Box(HandleRegisterBox<'a, EXT, DB>),
 }
 
+impl<'a, EXT, DB: Database> HandleRegisters<'a, EXT, DB> {
+    pub fn register(&self, handler: &mut EvmHandler<'a, EXT, DB>) {
+        match self {
+            HandleRegisters::Plain(f) => f(handler),
+            HandleRegisters::Box(f) => f(handler),
+        }
+    }
+}
+
 pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     handler: &mut EvmHandler<'a, EXT, DB>,
 ) {

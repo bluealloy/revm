@@ -40,7 +40,6 @@ pub(crate) fn commit_mint_value<DB: Database>(
             .0
             .info
             .balance += U256::from(mint);
-        journal.checkpoint();
     }
     Ok(())
 }
