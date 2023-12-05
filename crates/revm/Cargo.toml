@@ -37,6 +37,7 @@ futures = { version = "0.3.29", optional = true }
 ethers-contract = { version = "2.0.11", default-features = false }
 anyhow = "1.0.75"
 criterion = "0.5"
+indicatif = "0.17"
 
 [features]
 default = ["std", "c-kzg", "secp256k1"]
@@ -79,6 +80,11 @@ with-serde = []
 name = "fork_ref_transact"
 path = "../../examples/fork_ref_transact.rs"
 required-features = ["ethersdb"]
+
+[[example]]
+name = "generate_block_traces"
+path = "../../examples/generate_block_traces.rs"
+required-features = ["std", "serde", "ethersdb"]
 
 [[bench]]
 name = "bench"

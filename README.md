@@ -83,10 +83,17 @@ cargo flamegraph --root --freq 4000 --min-width 0.001 --package revm-test --bin 
 This command will produce a flamegraph image output to `flamegraph.svg`.
 Flamegraph also requires sudo mode to run (hence the `--root` cli arg) and will prompt you for your password if not in sudo mode already.
 
-## Running example
+## Running examples
 
 ```shell
 cargo run -p revm --features ethersdb --example fork_ref_transact
+```
+
+Generate block traces and write them to json files in a new `traces/` directory.
+Each file corresponds to a transaction in the block and is named as such: `<tx index>.json`.
+
+```shell
+cargo run -p revm --features std,serde,ethersdb --example generate_block_traces
 ```
 
 # Used by:
