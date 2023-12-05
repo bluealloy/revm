@@ -1,8 +1,8 @@
-use ethers_core::types::{Block, Transaction};
+use ethers_core::types::{Block, BlockId, Transaction, H160};
 use ethers_providers::{Http, Middleware, Provider, ProviderError};
 use indicatif::ProgressBar;
 use revm::db::{CacheDB, EmptyDB};
-use revm::primitives::{Address, Bytes, Env, TxEnv, U256};
+use revm::primitives::{AccountInfo, Address, Bytecode, Bytes, Env, TxEnv, U256};
 use revm::EVM;
 use std::sync::{Arc, Mutex};
 use structopt::StructOpt;
@@ -17,8 +17,8 @@ pub struct TestError {
 
 #[derive(Debug, Error)]
 pub enum TestErrorKind {
-    #[error("evm error")]
-    EvmError,
+    #[error("evm error {0:?}")]
+    EvmError(String),
     #[error("End block number ({end_block:?}) is greater than latest block number ({latest})")]
     EndBlockTooHigh { end_block: Option<u64>, latest: u64 },
     #[error("Provider error: {0:?}")]
@@ -88,7 +88,7 @@ async fn setup_traversal(
 
 /// Fetch a block with transactions
 async fn fetch_block_with_txs(
-    client: &Arc<Provider<Http>>,
+    client: Arc<Provider<Http>>,
     block_number: u64,
 ) -> Result<Block<Transaction>, TestError> {
     let block = client
@@ -102,16 +102,67 @@ async fn fetch_block_with_txs(
     Ok(block)
 }
 
-fn exec_tx(evm: &mut EVM<CacheDB<EmptyDB>>, tx: Transaction) -> Result<(), TestError> {
+async fn account_info_at_block(
+    client: Arc<Provider<Http>>,
+    address: Address,
+    block_number: u64,
+) -> Result<AccountInfo, TestError> {
+    let add = H160::from(address.0 .0);
+    let block_number = Some(BlockId::from(block_number));
+    let nonce = client.get_transaction_count(add, block_number).await;
+    let balance = client.get_balance(add, block_number).await;
+    let code = client.get_code(add, block_number).await;
+    let bytecode = code.unwrap_or_else(|e| panic!("ethers get code error: {e:?}"));
+    let bytecode = Bytecode::new_raw(bytecode.0.into());
+    let code_hash = bytecode.hash_slow();
+    Ok(AccountInfo::new(
+        U256::from_limbs(
+            balance
+                .unwrap_or_else(|e| panic!("ethers get balance error: {e:?}"))
+                .0,
+        ),
+        nonce
+            .unwrap_or_else(|e| panic!("ethers get nonce error: {e:?}"))
+            .as_u64(),
+        code_hash,
+        bytecode,
+    ))
+}
+
+// todo: fix this so the account info is only loaded if it's not already in the db
+// todo: fix this so all accounts and storage is loaded for the txs
+async fn exec_tx(
+    evm: Arc<Mutex<EVM<CacheDB<EmptyDB>>>>,
+    client: Arc<Provider<Http>>,
+    bn: u64,
+    tx: Transaction,
+) -> Result<(), TestError> {
     let mut tx_env = TxEnv::default();
     tx_env.caller = Address::from_slice(tx.from.as_bytes());
+    let bn = bn.checked_sub(1).unwrap_or(0);
+    let sender = account_info_at_block(Arc::clone(&client), tx_env.caller, bn).await?;
+    {
+        let mut temp = evm.lock().unwrap();
+        let db = temp.db.as_mut().unwrap();
+        db.insert_account_info(tx_env.caller, sender);
+    }
+    let dest = tx
+        .to
+        .map(|a| Address::from_slice(a.as_bytes()))
+        .unwrap_or_default();
+    let info = account_info_at_block(Arc::clone(&client), dest, bn).await?;
+    {
+        let mut temp = evm.lock().unwrap();
+        let db = temp.db.as_mut().unwrap();
+        db.insert_account_info(dest, info);
+    }
     tx_env.gas_limit = tx.gas.as_u64();
-    tx_env.gas_price = U256::from(tx.gas_price.map(|g| g.as_u64()).unwrap_or_default());
-    tx_env.value = U256::from(tx.value.as_u64());
+    tx_env.gas_price = U256::from(tx.gas_price.map(|g| g.as_u128()).unwrap_or_default());
+    tx_env.value = U256::from(tx.value.as_u128());
     tx_env.data = Bytes::from(tx.input.to_vec());
     tx_env.nonce = Some(tx.nonce.as_u64());
     tx_env.chain_id = tx.chain_id.map(|id| id.as_u64());
-    tx_env.gas_priority_fee = tx.max_priority_fee_per_gas.map(|g| U256::from(g.as_u64()));
+    tx_env.gas_priority_fee = tx.max_priority_fee_per_gas.map(|g| U256::from(g.as_u128()));
     tx_env.access_list = tx
         .access_list
         .map(|al| {
@@ -128,12 +179,14 @@ fn exec_tx(evm: &mut EVM<CacheDB<EmptyDB>>, tx: Transaction) -> Result<(), TestE
                 .collect()
         })
         .unwrap_or_default();
-    evm.env.tx = tx_env;
-    let res = evm.transact().map_err(|_| TestError {
-        name: "traverse".to_string(),
-        kind: TestErrorKind::EvmError,
-    })?;
-    println!("{:?}", res);
+    {
+        let mut evm = evm.lock().unwrap();
+        evm.env.tx = tx_env;
+        evm.transact().map_err(|e| TestError {
+            name: "traverse".to_string(),
+            kind: TestErrorKind::EvmError(format!("{:?}", e)),
+        })?;
+    }
     Ok(())
 }
 
@@ -144,32 +197,40 @@ async fn driver(cmd: &Cmd) -> Result<(), TestError> {
     let console_bar = Arc::new(ProgressBar::new(env.range()));
     let elapsed = Arc::new(Mutex::new(std::time::Duration::ZERO));
 
-    let mut evm = EVM::new();
-    evm.database(CacheDB::new(EmptyDB::default()));
-    evm.env = Env::default();
+    let evm = Arc::new(Mutex::new(EVM::new()));
+    {
+        let mut init = evm.lock().unwrap();
+        init.database(CacheDB::new(EmptyDB::default()));
+        init.env = Env::default();
+    }
 
     for block_number in env.start..=env.end {
-        let block = fetch_block_with_txs(&provider, block_number).await?;
-        println!("{:?}", block);
-        evm.env.block.number = block
-            .number
-            .map(|n| U256::from(n.as_u64()))
-            .unwrap_or_default();
-        evm.env.block.timestamp = U256::from(block.timestamp.as_u128());
-        evm.env.block.difficulty = U256::from(block.difficulty.as_u64());
-        evm.env.block.gas_limit = U256::from(block.gas_limit.as_u64());
-        evm.env.block.coinbase = block
-            .author
-            .map(|a| Address::from_slice(a.as_bytes()))
-            .unwrap_or_default();
-        evm.env.block.basefee = block
-            .base_fee_per_gas
-            .map(|g| U256::from(g.as_u128()))
-            .unwrap_or_default();
-        for tx in block.transactions {
-            println!("Executing tx: {:?}", tx);
-            exec_tx(&mut evm, tx)?;
+        let block = fetch_block_with_txs(Arc::clone(&provider), block_number).await?;
+        {
+            let mut block_env = evm.lock().unwrap();
+            block_env.env.block.number = block
+                .number
+                .map(|n| U256::from(n.as_u64()))
+                .unwrap_or_default();
+            block_env.env.block.timestamp = U256::from(block.timestamp.as_u128());
+            block_env.env.block.difficulty = U256::from(block.difficulty.as_u64());
+            block_env.env.block.gas_limit = U256::from(block.gas_limit.as_u64());
+            block_env.env.block.coinbase = block
+                .author
+                .map(|a| Address::from_slice(a.as_bytes()))
+                .unwrap_or_default();
+            block_env.env.block.basefee = block
+                .base_fee_per_gas
+                .map(|g| U256::from(g.as_u128()))
+                .unwrap_or_default();
         }
+
+        for tx in block.transactions {
+            let evm_clone = Arc::clone(&evm);
+            let cloned_provider = Arc::clone(&provider);
+            let _ = exec_tx(evm_clone, cloned_provider, block_number, tx).await?;
+        }
+        // todo: fix async logic so this only increments after all txs in block are executed
         console_bar.inc(1);
     }
 
