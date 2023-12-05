@@ -1,3 +1,4 @@
+use crate::interpreter::MAX_INITCODE_SIZE;
 use crate::{
     db::Database,
     handler::Handler,
@@ -495,26 +496,18 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
 
         // translate WASM binary to rWASM
         // TODO catch 'buffer small' error and expand buffer till output fits into it
-        let mut rwasm_bytecode = vec![0u8; 0];
+        let mut rwasm_bytecode = vec![0u8; MAX_INITCODE_SIZE * 4];
 
-        let mut out_len_or_err: i32;
-        loop {
-            out_len_or_err = SDK::rwasm_compile(&inputs.init_code, &mut rwasm_bytecode[..]);
-            if out_len_or_err < 0 {
-                return Err(CreateResult {
-                    result: InstructionResult::FatalExternalError,
-                    created_address: None,
-                    gas,
-                    return_value: Bytes::new(),
-                });
-            }
-            if out_len_or_err > rwasm_bytecode.len() as i32 {
-                rwasm_bytecode = vec![0u8; out_len_or_err as usize];
-                continue;
-            }
-            rwasm_bytecode = rwasm_bytecode[..out_len_or_err as usize].to_vec();
-            break;
+        let error_code_or_len = SDK::rwasm_compile(&inputs.init_code, &mut rwasm_bytecode[..]);
+        if error_code_or_len < 0 {
+            return Err(CreateResult {
+                result: InstructionResult::FatalExternalError,
+                created_address: None,
+                gas,
+                return_value: Bytes::new(),
+            });
         }
+        rwasm_bytecode = rwasm_bytecode[..error_code_or_len as usize].to_vec();
 
         let bytecode = Bytecode::new_raw(Bytes::copy_from_slice(&rwasm_bytecode));
 
