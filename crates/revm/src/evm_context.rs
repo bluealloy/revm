@@ -592,7 +592,7 @@ mod tests {
         let call_inputs = test_utils::create_mock_call_inputs(contract);
         let res = evm_context.make_call_frame(&call_inputs, 0..0);
         let frame = res.unwrap();
-        assert_eq!(frame.is_create, false);
+        assert!(!frame.is_create);
         assert_eq!(frame.created_address, None);
         assert_eq!(frame.subcall_return_memory_range, 0..0);
     }
