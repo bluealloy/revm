@@ -7,8 +7,8 @@ use auto_impl::auto_impl;
 use core::ops::Deref;
 
 #[auto_impl(&mut, Box)]
-pub trait State: Send + Sync {
-    type Error: Send + Sync;
+pub trait State {
+    type Error;
 
     /// Get basic account information.
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
@@ -21,8 +21,8 @@ pub trait State: Send + Sync {
 }
 
 #[auto_impl(&, &mut, Box, Rc, Arc)]
-pub trait StateRef: Send + Sync {
-    type Error: Send + Sync;
+pub trait StateRef {
+    type Error;
 
     /// Get basic account information.
     fn basic(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;

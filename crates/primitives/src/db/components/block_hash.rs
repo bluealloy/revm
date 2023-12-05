@@ -7,16 +7,16 @@ use auto_impl::auto_impl;
 use core::ops::Deref;
 
 #[auto_impl(&mut, Box)]
-pub trait BlockHash: Send + Sync {
-    type Error: Send + Sync;
+pub trait BlockHash {
+    type Error;
 
     /// Get block hash by block number
     fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error>;
 }
 
 #[auto_impl(&, &mut, Box, Rc, Arc)]
-pub trait BlockHashRef: Send + Sync {
-    type Error: Send + Sync;
+pub trait BlockHashRef {
+    type Error;
 
     /// Get block hash by block number
     fn block_hash(&self, number: U256) -> Result<B256, Self::Error>;
