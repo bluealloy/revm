@@ -137,9 +137,11 @@ async fn exec_tx(
     bn: u64,
     tx: Transaction,
 ) -> Result<(), TestError> {
-    let mut tx_env = TxEnv::default();
-    tx_env.caller = Address::from_slice(tx.from.as_bytes());
-    let bn = bn.checked_sub(1).unwrap_or(0);
+    let mut tx_env = TxEnv {
+        caller: Address::from_slice(tx.from.as_bytes()),
+        ..Default::default()
+    };
+    let bn = bn.saturating_sub(1);
     let sender = account_info_at_block(Arc::clone(&client), tx_env.caller, bn).await?;
     {
         let mut temp = evm.lock().unwrap();
@@ -228,7 +230,7 @@ async fn driver(cmd: &Cmd) -> Result<(), TestError> {
         for tx in block.transactions {
             let evm_clone = Arc::clone(&evm);
             let cloned_provider = Arc::clone(&provider);
-            let _ = exec_tx(evm_clone, cloned_provider, block_number, tx).await?;
+            exec_tx(evm_clone, cloned_provider, block_number, tx).await?;
         }
         // todo: fix async logic so this only increments after all txs in block are executed
         console_bar.inc(1);
