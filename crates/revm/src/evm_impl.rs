@@ -547,7 +547,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             prepared_create.contract,
             prepared_create.gas.limit(),
             false,
-            0,
+            1, // STATE_DEPLOY
             shared_memory,
         );
 
@@ -557,22 +557,22 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                 // if ok, check contract creation limit and calculate gas deduction on output len.
                 //
                 // EIP-3541: Reject new contract code starting with the 0xEF byte
-                if GSPEC::enabled(LONDON) && !bytes.is_empty() && bytes.first() == Some(&0xEF) {
-                    self.data
-                        .journaled_state
-                        .checkpoint_revert(prepared_create.checkpoint);
-                    return CreateResult {
-                        result: InstructionResult::CreateContractStartingWithEF,
-                        created_address: Some(prepared_create.created_address),
-                        gas,
-                        return_value: bytes,
-                    };
-                }
+                // if GSPEC::enabled(LONDON) && !bytes.is_empty() && bytes.first() == Some(&0xEF) {
+                //     self.data
+                //         .journaled_state
+                //         .checkpoint_revert(prepared_create.checkpoint);
+                //     return CreateResult {
+                //         result: InstructionResult::CreateContractStartingWithEF,
+                //         created_address: Some(prepared_create.created_address),
+                //         gas,
+                //         return_value: bytecode,
+                //     };
+                // }
 
                 // EIP-170: Contract code size limit
                 // By default limit is 0x6000 (~25kb)
                 if GSPEC::enabled(SPURIOUS_DRAGON)
-                    && bytes.len()
+                    && bytecode.len()
                         > self
                             .data
                             .env
@@ -955,7 +955,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                 prepared_call.contract,
                 prepared_call.gas.limit(),
                 inputs.is_static,
-                1,
+                0, // STATE_MAIN
                 shared_memory,
             );
             CallResult {
