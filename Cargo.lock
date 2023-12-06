@@ -1774,7 +1774,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-poseidon"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#fb0a929a742435f35fd09b89e5e622a27965266d"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#50908735513a7b4c088e5f3a7aab8b42115150bf"
 dependencies = [
  "bitvec 1.0.1",
  "halo2curves 0.3.1",
@@ -1785,7 +1785,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-runtime"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#fb0a929a742435f35fd09b89e5e622a27965266d"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#50908735513a7b4c088e5f3a7aab8b42115150bf"
 dependencies = [
  "bincode",
  "bitvec 1.0.1",
@@ -1822,7 +1822,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-rwasm"
 version = "0.30.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#fb0a929a742435f35fd09b89e5e622a27965266d"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#50908735513a7b4c088e5f3a7aab8b42115150bf"
 dependencies = [
  "byteorder",
  "downcast-rs",
@@ -1839,7 +1839,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-sdk"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#fb0a929a742435f35fd09b89e5e622a27965266d"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#50908735513a7b4c088e5f3a7aab8b42115150bf"
 dependencies = [
  "alloy-primitives 0.4.2",
  "alloy-sol-types",
