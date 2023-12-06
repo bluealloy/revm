@@ -9,24 +9,22 @@ use crate::{
     interpreter::{return_ok, return_revert, Gas, InstructionResult},
     primitives::{
         db::Database,
-        EVMError, Env, Spec,
-        SpecId::{CANCUN, LONDON},
+        Account, EVMError, Env, Spec,
+        SpecId::{CANCUN, LONDON, SHANGHAI},
         TransactTo, U256,
     },
     Context,
 };
 
-/// Handle output of the transaction
-#[inline]
-pub fn handle_call_return<SPEC: Spec>(
+pub fn handle_call_return_with_refund_flag<SPEC: Spec>(
     env: &Env,
     call_result: InstructionResult,
     returned_gas: Gas,
+    refund_enabled: bool,
 ) -> Gas {
-    let tx_gas_limit = env.tx.gas_limit;
     // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
-    let mut gas = Gas::new(tx_gas_limit);
-    gas.record_cost(tx_gas_limit);
+    let mut gas = Gas::new(env.tx.gas_limit);
+    gas.record_cost(env.tx.gas_limit);
 
     match call_result {
         return_ok!() => {
@@ -38,7 +36,81 @@ pub fn handle_call_return<SPEC: Spec>(
         }
         _ => {}
     }
+    // Calculate gas refund for transaction.
+    // If config is set to disable gas refund, it will return 0.
+    // If spec is set to london, it will decrease the maximum refund amount to 5th part of
+    // gas spend. (Before london it was 2th part of gas spend)
+    if refund_enabled {
+        // EIP-3529: Reduction in refunds
+        gas.set_final_refund::<SPEC>()
+    };
+
     gas
+}
+
+/// Handle output of the transaction
+#[inline]
+pub fn handle_call_return<SPEC: Spec>(
+    env: &Env,
+    call_result: InstructionResult,
+    returned_gas: Gas,
+) -> Gas {
+    handle_call_return_with_refund_flag::<SPEC>(env, call_result, returned_gas, true)
+}
+
+pub(crate) fn deduct_caller_inner<SPEC: Spec>(caller_account: &mut Account, env: &Env) {
+    // Subtract gas costs from the caller's account.
+    // We need to saturate the gas cost to prevent underflow in case that `disable_balance_check` is enabled.
+    let mut gas_cost = U256::from(env.tx.gas_limit).saturating_mul(env.effective_gas_price());
+
+    // EIP-4844
+    if SPEC::enabled(CANCUN) {
+        let data_fee = env.calc_data_fee().expect("already checked");
+        gas_cost = gas_cost.saturating_add(data_fee);
+    }
+
+    // set new caller account balance.
+    caller_account.info.balance = caller_account.info.balance.saturating_sub(gas_cost);
+
+    // bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
+    if matches!(env.tx.transact_to, TransactTo::Call(_)) {
+        // Nonce is already checked
+        caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
+    }
+
+    // touch account so we know it is changed.
+    caller_account.mark_touch();
+}
+
+/// Main load handle
+#[inline]
+pub fn main_load<SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<EXT, DB>,
+) -> Result<(), EVMError<DB::Error>> {
+    // the L1-cost fee is only computed for Optimism non-deposit transactions.
+    #[cfg(feature = "optimism")]
+    if env.cfg.optimism && env.tx.optimism.source_hash.is_none() {
+        let l1_block_info =
+            optimism::L1BlockInfo::try_fetch(self.context.evm.db).map_err(EVMError::Database)?;
+
+        // storage l1 block info for later use.
+        self.context.evm.l1_block_info = Some(l1_block_info);
+
+        tx_l1_cost
+    }
+
+    // load coinbase
+    // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
+    if SPEC::enabled(SHANGHAI) {
+        context
+            .evm
+            .journaled_state
+            .initial_account_load(context.evm.env.block.coinbase, &[], &mut context.evm.db)
+            .map_err(EVMError::Database)?;
+    }
+
+    context.evm.load_access_list()?;
+    Ok(())
 }
 
 #[inline]
@@ -52,28 +124,8 @@ pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
         .load_account(context.evm.env.tx.caller, &mut context.evm.db)
         .map_err(EVMError::Database)?;
 
-    // Subtract gas costs from the caller's account.
-    // We need to saturate the gas cost to prevent underflow in case that `disable_balance_check` is enabled.
-    let mut gas_cost = U256::from(context.evm.env.tx.gas_limit)
-        .saturating_mul(context.evm.env.effective_gas_price());
-
-    // EIP-4844
-    if SPEC::enabled(CANCUN) {
-        let data_fee = context.evm.env.calc_data_fee().expect("already checked");
-        gas_cost = gas_cost.saturating_add(data_fee);
-    }
-
-    // set new caller account balance.
-    caller_account.info.balance = caller_account.info.balance.saturating_sub(gas_cost);
-
-    // touch account so we know it is changed.
-    caller_account.mark_touch();
-
-    // bump the nonce for calls. Nonce for CREATE will be bumped in `handle_create`.
-    if matches!(context.evm.env.tx.transact_to, TransactTo::Call(_)) {
-        // Nonce is already checked
-        caller_account.info.nonce = caller_account.info.nonce.saturating_add(1);
-    }
+    // deduct gas cost from caller's account.
+    deduct_caller_inner::<SPEC>(caller_account, &context.evm.env);
 
     Ok(())
 }
@@ -131,23 +183,6 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
         .saturating_add(coinbase_gas_price * U256::from(gas.spend() - gas.refunded() as u64));
 
     Ok(())
-}
-
-/// Calculate gas refund for transaction.
-///
-/// If config is set to disable gas refund, it will return 0.
-///
-/// If spec is set to london, it will decrease the maximum refund amount to 5th part of
-/// gas spend. (Before london it was 2th part of gas spend)
-#[inline]
-pub fn calculate_gas_refund<SPEC: Spec>(env: &Env, gas: &Gas) -> u64 {
-    if env.cfg.is_gas_refund_disabled() {
-        0
-    } else {
-        // EIP-3529: Reduction in refunds
-        let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 };
-        (gas.refunded() as u64).min(gas.spend() / max_refund_quotient)
-    }
 }
 
 #[cfg(test)]

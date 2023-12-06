@@ -24,59 +24,6 @@ pub const BASE_FEE_RECIPIENT: Address = address!("420000000000000000000000000000
 /// The address of the L1Block contract.
 pub const L1_BLOCK_CONTRACT: Address = address!("4200000000000000000000000000000000000015");
 
-/// If the transaction is a deposit with a `mint` value, add the mint value
-/// in wei to the caller's balance. This should be persisted to the database
-/// prior to the rest of execution.
-pub(crate) fn commit_mint_value<DB: Database>(
-    tx_caller: Address,
-    tx_mint: Option<u128>,
-    db: &mut DB,
-    journal: &mut JournaledState,
-) -> Result<(), EVMError<DB::Error>> {
-    if let Some(mint) = tx_mint {
-        journal
-            .load_account(tx_caller, db)
-            .map_err(EVMError::Database)?
-            .0
-            .info
-            .balance += U256::from(mint);
-    }
-    Ok(())
-}
-
-/// If the transaction is not a deposit transaction, subtract the L1 data fee from the
-/// caller's balance directly after minting the requested amount of ETH.
-pub(crate) fn remove_l1_cost<DB: Database>(
-    is_deposit: bool,
-    tx_caller: Address,
-    l1_cost: U256,
-    db: &mut DB,
-    journal: &mut JournaledState,
-) -> Result<(), EVMError<DB::Error>> {
-    if is_deposit {
-        return Ok(());
-    }
-    let acc = journal
-        .load_account(tx_caller, db)
-        .map_err(EVMError::Database)?
-        .0;
-    if l1_cost.gt(&acc.info.balance) {
-        let u64_cost = if U256::from(u64::MAX).lt(&l1_cost) {
-            u64::MAX
-        } else {
-            l1_cost.as_limbs()[0]
-        };
-        return Err(EVMError::Transaction(
-            InvalidTransaction::LackOfFundForMaxFee {
-                fee: u64_cost,
-                balance: acc.info.balance,
-            },
-        ));
-    }
-    acc.info.balance = acc.info.balance.saturating_sub(l1_cost);
-    Ok(())
-}
-
 /// L1 block info
 ///
 /// We can extract L1 epoch data from each L2 block, by looking at the `setL1BlockValues`

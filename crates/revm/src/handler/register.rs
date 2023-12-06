@@ -2,24 +2,16 @@ use crate::{
     db::Database,
     handler::Handler,
     inspector_instruction,
-    interpreter::{InterpreterResult, SelfDestructResult},
+    interpreter::{opcode::InstructionTables, InterpreterResult, SelfDestructResult},
     CallStackFrame, Evm, FrameOrResult, Inspector,
 };
 use alloc::sync::Arc;
-use revm_interpreter::opcode::{BoxedInstructionTable, InstructionTable, InstructionTables};
 
 pub trait GetInspector<'a, DB: Database> {
     fn get_inspector(&mut self) -> &mut dyn Inspector<DB>;
 }
 
-/// Wants
-/// List of function that would modify the handler
-/// Functions need to be Spec aware. Generic over Spec.
-/// They dont need to be tied to one structure, so they need to be generic over trait.
-///
-/// Problems:
-/// Trait Remove it
-///
+/// EVM Handler
 pub type EvmHandler<'a, EXT, DB> = Handler<'a, Evm<'a, EXT, DB>, EXT, DB>;
 
 pub type EvmInstructionTables<'a, EXT, DB> = InstructionTables<'a, Evm<'a, EXT, DB>>;

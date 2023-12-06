@@ -2,8 +2,7 @@
 
 use crate::{
     db::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef},
-    handler::{register, HandleRegister},
-    interpreter::opcode::make_instruction_table,
+    handler::register,
     primitives::{BlockEnv, CfgEnv, Env, LatestSpec, Spec, SpecId, TxEnv},
     Context, Evm, EvmContext, Handler,
 };
@@ -221,7 +220,10 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingHandlerStage, EXT, DB> {
         self
     }
 
-    pub fn push_handler(mut self, handle_register: register::HandleRegister<'a, EXT, DB>) -> Self {
+    pub fn append_handler(
+        mut self,
+        handle_register: register::HandleRegister<'a, EXT, DB>,
+    ) -> Self {
         self.handle_registers
             .push(register::HandleRegisters::Plain(handle_register));
         self
@@ -229,11 +231,12 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingHandlerStage, EXT, DB> {
 
     /// Register Handler that modifies the behavior of EVM.
     /// Check [`Handler`] for more information.
-    pub fn push_handler_box(
+    pub fn append_handler_box(
         mut self,
         handle_register: register::HandleRegisterBox<'a, EXT, DB>,
     ) -> Self {
-        //self.handle_registers.push(handle_register);
+        self.handle_registers
+            .push(register::HandleRegisters::Box(handle_register));
         self
     }
 }
@@ -266,18 +269,18 @@ impl<'a, STAGE: BuilderStage, EXT, DB: Database> EvmBuilder<'a, STAGE, EXT, DB> 
     }
 
     /// Clear Environment of EVM.
-    pub fn clear_env(mut self) -> Self {
+    pub fn with_clear_env(mut self) -> Self {
         self.evm.env.clear();
         self
     }
 
     /// Clear Transaction environment of EVM.
-    pub fn clear_tx_env(mut self) -> Self {
+    pub fn with_clear_tx_env(mut self) -> Self {
         self.evm.env.tx.clear();
         self
     }
     /// Clear Block environment of EVM.
-    pub fn clear_block_env(mut self) -> Self {
+    pub fn with_clear_block_env(mut self) -> Self {
         self.evm.env.block.clear();
         self
     }
@@ -330,7 +333,7 @@ mod test {
         Evm::builder()
             .with_empty_db()
             .with_external(NoOpInspector::default())
-            .push_handler(inspector_handle_register)
+            .append_handler(inspector_handle_register)
             .build();
     }
 }

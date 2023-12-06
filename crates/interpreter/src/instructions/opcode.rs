@@ -7,7 +7,6 @@ use crate::{
     Host, Interpreter,
 };
 use alloc::boxed::Box;
-use alloc::sync::Arc;
 use core::fmt;
 
 /// EVM opcode function signature.

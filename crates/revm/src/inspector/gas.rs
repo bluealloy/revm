@@ -187,8 +187,7 @@ mod tests {
                     TransactTo::Call(address!("0000000000000000000000000000000000000000"));
                 tx.gas_limit = 21100;
             })
-            .push_handler(inspector_handle_register)
-            .push_handler_box(Box::new(inspector_handle_register))
+            .append_handler(inspector_handle_register)
             .build();
 
         // run evm.

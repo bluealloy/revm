@@ -97,6 +97,11 @@ pub fn handle_call_return<SPEC: Spec>(
         }
         _ => {}
     }
+    // Prior to Regolith, deposit transactions did not receive gas refunds.
+    if !is_deposit && SPEC::enabled(REGOLITH) {
+        gas.set_final_refund::<SPEC>()
+    }
+
     gas
 }
 
@@ -118,7 +123,55 @@ pub fn calculate_gas_refund<SPEC: Spec>(env: &Env, gas: &Gas) -> u64 {
 pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
 ) -> Result<(), EVMError<DB::Error>> {
-    mainnet::deduct_caller::<SPEC, EXT, DB>(context)
+    // load caller's account.
+    let (caller_account, _) = context
+        .evm
+        .journaled_state
+        .load_account(context.evm.env.tx.caller, &mut context.evm.db)
+        .map_err(EVMError::Database)?;
+
+    // If the transaction is a deposit with a `mint` value, add the mint value
+    // in wei to the caller's balance. This should be persisted to the database
+    // prior to the rest of execution.
+    if let Some(mint) = context.evm.env.tx.optimism.mint {
+        caller_account.info.balance += U256::from(mint);
+    }
+
+    // We deduct caller max balance after minting and before deducing the
+    // l1 cost, max values is already checked in pre_validate but l1 cost wasn't.
+    mainnet::deduct_caller::<SPEC, EXT, DB>(context)?;
+
+    // If the transaction is not a deposit transaction, subtract the L1 data fee from the
+    // caller's balance directly after minting the requested amount of ETH.
+    if env.tx.optimism.source_hash.is_none() {
+        // get envelope
+        let Some(enveloped_tx) = &context.env.tx.optimism.enveloped_tx else {
+            panic!("[OPTIMISM] Failed to load enveloped transaction.");
+        };
+
+        // TODO specs
+        let tx_l1_cost = self
+            .context
+            .evm
+            .l1_block_info
+            .expect("L1BlockInfo should be loaded")
+            .calculate_tx_l1_cost(enveloped_tx, self.spec_id);
+
+        if tx_l1_cost.gt(&acc.info.balance) {
+            let u64_cost = if U256::from(u64::MAX).lt(&l1_cost) {
+                u64::MAX
+            } else {
+                tx_l1_cost.as_limbs()[0]
+            };
+            return Err(EVMError::Transaction(
+                InvalidTransaction::LackOfFundForMaxFee {
+                    fee: u64_cost,
+                    balance: acc.info.balance,
+                },
+            ));
+        }
+        acc.info.balance = acc.info.balance.saturating_sub(l1_cost);
+    }
 }
 
 /// Reward beneficiary with gas fee.

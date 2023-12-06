@@ -5,17 +5,14 @@ use crate::{
     db::{Database, EmptyDB},
     handler::Handler,
     interpreter::{
-        opcode::InstructionTables, CallContext, CallInputs, CallScheme, CreateInputs, Host,
-        Interpreter, InterpreterAction, InterpreterResult, SelfDestructResult, SharedMemory,
-        Transfer,
+        opcode::InstructionTables, Host, Interpreter, InterpreterAction, InterpreterResult,
+        SelfDestructResult, SharedMemory,
     },
-    journaled_state::JournaledState,
-    precompile::Precompiles,
     primitives::{
-        specification::SpecId, Address, Bytecode, Bytes, EVMError, EVMResult, Env, HashSet, Output,
-        SpecId::*, TransactTo, B256, U256,
+        specification::SpecId, Address, Bytecode, Bytes, EVMError, EVMResult, Env, Output,
+        TransactTo, B256, U256,
     },
-    CallStackFrame, Context, EvmContext, FrameOrResult,
+    CallStackFrame, Context, FrameOrResult,
 };
 use alloc::{boxed::Box, vec::Vec};
 use core::fmt;
@@ -23,8 +20,10 @@ use core::fmt;
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
 
-/// EVM instance containing both internal EVM context and external context (if specified)
+/// EVM instance containing both internal EVM context and external context
 /// and the handler that dictates the logic of EVM (or hardfork specification).
+///
+///
 pub struct Evm<'a, EXT, DB: Database> {
     /// Context of execution, containing both EVM and external context.
     pub context: Context<EXT, DB>,
@@ -41,7 +40,7 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Evm")
-            .field("data", &self.context.evm)
+            .field("evm context", &self.context.evm)
             .finish_non_exhaustive()
     }
 }
@@ -66,6 +65,40 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
         self.handler.spec_id
     }
 
+    /// Pre verify transaction by checking Environment, initial gas spend and if caller
+    /// has enough balance to pay for the gas.
+    #[inline]
+    pub fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
+        self.handler.validate_env(&self.context.evm.env)?;
+        self.handler
+            .validate_initial_tx_gas(&self.context.evm.env)?;
+        self.handler.validate_tx_against_state(&mut self.context)?;
+        Ok(())
+    }
+
+    /// Transact pre-verified transaction, this function will not validate the transaction.
+    #[inline]
+    pub fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
+        let initial_gas_spend = self
+            .handler
+            .validate_initial_tx_gas(&self.context.evm.env)?;
+        let output = self.transact_preverified_inner(initial_gas_spend);
+        self.handler.end(&mut self.context, output)
+    }
+
+    /// Transact transaction, this function will validate the transaction.
+    #[inline]
+    pub fn transact(&mut self) -> EVMResult<DB::Error> {
+        self.handler.validate_env(&self.context.evm.env)?;
+        let initial_gas_spend = self
+            .handler
+            .validate_initial_tx_gas(&self.context.evm.env)?;
+        self.handler.validate_tx_against_state(&mut self.context)?;
+
+        let output = self.transact_preverified_inner(initial_gas_spend);
+        self.handler.end(&mut self.context, output)
+    }
+
     /// Allow for evm setting to be modified by feeding current evm
     /// to the builder for modifications.
     pub fn modify(self) -> EvmBuilder<'a, SettingHandlerStage, EXT, DB> {
@@ -88,43 +121,51 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
         self.context
     }
 
-    /// TODO add spec_id as variable.
-    pub fn new_with_spec(
-        db: DB,
-        env: Box<Env>,
-        external: EXT,
-        handler: Handler<'a, Self, EXT, DB>,
-        precompiles: Precompiles,
-    ) -> Self {
-        let journaled_state = JournaledState::new(
-            handler.spec_id,
-            precompiles
-                .addresses()
-                .into_iter()
-                .cloned()
-                .collect::<HashSet<_>>(),
-        );
+    /// Start the main loop.
+    pub fn start_the_loop(
+        &mut self,
+        first_stack_frame: FrameOrResult,
+    ) -> (InterpreterResult, Output) {
+        // Some only if it is create.
+        let mut created_address = None;
 
-        Self {
-            context: Context {
-                evm: EvmContext {
-                    env,
-                    journaled_state,
-                    db,
-                    error: None,
-                    precompiles,
-                    #[cfg(feature = "optimism")]
-                    l1_block_info: None,
-                },
-                external,
-            },
-            handler,
-        }
+        // start main loop if CallStackFrame is created correctly
+        let result = match first_stack_frame {
+            FrameOrResult::Frame(first_stack_frame) => {
+                created_address = first_stack_frame.created_address;
+                // take instruction talbe
+                let table = self
+                    .handler
+                    .instruction_table
+                    .take()
+                    .expect("Instruction table should be present");
+
+                // run main loop
+                let output = match &table {
+                    InstructionTables::Plain(table) => self.run_the_loop(&table, first_stack_frame),
+                    InstructionTables::Boxed(table) => self.run_the_loop(&table, first_stack_frame),
+                };
+
+                // return instruction table
+                self.handler.instruction_table = Some(table);
+
+                output
+            }
+            FrameOrResult::Result(interpreter_result) => interpreter_result,
+        };
+
+        // output of execution
+        let main_output = match self.context.evm.env.tx.transact_to {
+            TransactTo::Call(_) => Output::Call(result.output.clone()),
+            TransactTo::Create(_) => Output::Create(result.output.clone(), created_address),
+        };
+
+        (result, main_output)
     }
 
     /// Runs main call loop.
     #[inline]
-    pub fn run<FN>(
+    pub fn run_the_loop<FN>(
         &mut self,
         instruction_table: &[FN; 256],
         first_frame: Box<CallStackFrame>,
@@ -196,188 +237,33 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
         }
     }
 
-    /// Transact preverified transaction.
-    pub fn transact_preverified_inner(&mut self, initial_gas_spend: u64) -> EVMResult<DB::Error> {
-        let tx_caller = self.context.evm.env.tx.caller;
-        // the L1-cost fee is only computed for Optimism non-deposit transactions.
-        #[cfg(feature = "optimism")]
-        let tx_l1_cost = if env.cfg.optimism && env.tx.optimism.source_hash.is_none() {
-            let l1_block_info = optimism::L1BlockInfo::try_fetch(self.context.evm.db)
-                .map_err(EVMError::Database)?;
+    /// Transact pre-verified transaction.
+    fn transact_preverified_inner(&mut self, initial_gas_spend: u64) -> EVMResult<DB::Error> {
+        let hndl = &mut self.handler;
+        let ctx = &mut self.context;
 
-            let Some(enveloped_tx) = &env.tx.optimism.enveloped_tx else {
-                panic!("[OPTIMISM] Failed to load enveloped transaction.");
-            };
-            // TODO specs
-            let tx_l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, self.spec_id);
-
-            // storage l1 block info for later use.
-            self.context.evm.l1_block_info = Some(l1_block_info);
-
-            tx_l1_cost
-        } else {
-            U256::ZERO
-        };
-
-        // load coinbase
-        // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
-        if self.spec_id().is_enabled_in(SHANGHAI) {
-            self.context
-                .evm
-                .journaled_state
-                .initial_account_load(
-                    self.context.evm.env.block.coinbase,
-                    &[],
-                    &mut self.context.evm.db,
-                )
-                .map_err(EVMError::Database)?;
-        }
-
-        self.context.evm.load_access_list()?;
-
-        #[cfg(feature = "optimism")]
-        if self.context.evm.env.cfg.optimism {
-            // load acc
-            let journal = &mut self.context.evm.journaled_state;
-
-            crate::optimism::commit_mint_value(
-                tx_caller,
-                self.context.evm.env.tx.optimism.mint,
-                self.context.evm.db,
-                journal,
-            )?;
-
-            let is_deposit = self.context.evm.env.tx.optimism.source_hash.is_some();
-            crate::optimism::remove_l1_cost(
-                is_deposit,
-                tx_caller,
-                tx_l1_cost,
-                self.context.evm.db,
-                journal,
-            )?;
-        }
-
+        // load access list and beneficiary if needed.
+        hndl.main_load(ctx)?;
         // deduce caller balance with its limit.
-        self.handler.deduct_caller(&mut self.context)?;
-
+        hndl.deduct_caller(ctx)?;
         // gas limit used in calls.
-        let transact_gas_limit = self.context.evm.env.tx.gas_limit - initial_gas_spend;
+        let first_frame =
+            hndl.create_first_frame(ctx, ctx.evm.env.tx.gas_limit - initial_gas_spend);
 
-        // call inner handling of call/create
-        let first_stack_frame = match self.context.evm.env.tx.transact_to {
-            TransactTo::Call(address) => self.context.evm.make_call_frame(
-                &CallInputs {
-                    contract: address,
-                    transfer: Transfer {
-                        source: tx_caller,
-                        target: address,
-                        value: self.context.evm.env.tx.value,
-                    },
-                    input: self.context.evm.env.tx.data.clone(),
-                    gas_limit: transact_gas_limit,
-                    context: CallContext {
-                        caller: tx_caller,
-                        address,
-                        code_address: address,
-                        apparent_value: self.context.evm.env.tx.value,
-                        scheme: CallScheme::Call,
-                    },
-                    is_static: false,
-                },
-                0..0,
-            ),
-            TransactTo::Create(scheme) => self.context.evm.make_create_frame(
-                self.spec_id(),
-                &CreateInputs {
-                    caller: tx_caller,
-                    scheme,
-                    value: self.context.evm.env.tx.value,
-                    init_code: self.context.evm.env.tx.data.clone(),
-                    gas_limit: transact_gas_limit,
-                },
-            ),
-        };
-        // Some only if it is create.
-        let mut created_address = None;
+        // Starts the main running loop.
+        let (result, main_output) = self.start_the_loop(first_frame);
 
-        // start main loop if CallStackFrame is created correctly
-        let interpreter_result = match first_stack_frame {
-            FrameOrResult::Frame(first_stack_frame) => {
-                created_address = first_stack_frame.created_address;
-                // take instruction talbe
-                let table = self
-                    .handler
-                    .instruction_table
-                    .take()
-                    .expect("Instruction table should be present");
-
-                // run main loop
-                let output = match &table {
-                    InstructionTables::Plain(table) => self.run(&table, first_stack_frame),
-                    InstructionTables::Boxed(table) => self.run(&table, first_stack_frame),
-                };
-                // return instruction table
-                self.handler.instruction_table = Some(table);
-
-                output
-            }
-            FrameOrResult::Result(interpreter_result) => interpreter_result,
-        };
-
-        let handler = &self.handler;
-        let context = &mut self.context;
+        let hndl = &mut self.handler;
+        let ctx = &mut self.context;
 
         // handle output of call/create calls.
-        let mut gas = handler.call_return(
-            &mut context.evm.env,
-            interpreter_result.result,
-            interpreter_result.gas,
-        );
-
-        // set refund. Refund amount depends on hardfork.
-        gas.set_refund(handler.calculate_gas_refund(&mut context.evm.env, &gas) as i64);
-
+        let gas = hndl.call_return(&ctx.evm.env, result.result, result.gas);
         // Reimburse the caller
-        handler.reimburse_caller(context, &gas)?;
-
+        hndl.reimburse_caller(ctx, &gas)?;
         // Reward beneficiary
-        handler.reward_beneficiary(context, &gas)?;
-
-        // output of execution
-        let output = match context.evm.env.tx.transact_to {
-            TransactTo::Call(_) => Output::Call(interpreter_result.output),
-            TransactTo::Create(_) => Output::Create(interpreter_result.output, created_address),
-        };
-
+        hndl.reward_beneficiary(ctx, &gas)?;
         // main return
-        handler.main_return(context, interpreter_result.result, output, &gas)
-    }
-}
-
-impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
-    #[inline]
-    pub fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
-        self.handler.validate_env(&self.context.evm.env)?;
-        self.handler.initial_tx_gas(&self.context.evm.env)?;
-        self.handler.validate_tx_against_state(&mut self.context)?;
-        Ok(())
-    }
-
-    #[inline]
-    pub fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
-        let initial_gas_spend = self.handler.initial_tx_gas(&self.context.evm.env)?;
-        let output = self.transact_preverified_inner(initial_gas_spend);
-        self.handler.end(&mut self.context, output)
-    }
-
-    #[inline]
-    pub fn transact(&mut self) -> EVMResult<DB::Error> {
-        self.handler.validate_env(&self.context.evm.env)?;
-        let initial_gas_spend = self.handler.initial_tx_gas(&self.context.evm.env)?;
-        self.handler.validate_tx_against_state(&mut self.context)?;
-
-        let output = self.transact_preverified_inner(initial_gas_spend);
-        self.handler.end(&mut self.context, output)
+        hndl.main_return(ctx, result.result, main_output, &gas)
     }
 }
 

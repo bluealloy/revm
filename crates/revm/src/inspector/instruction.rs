@@ -1,12 +1,6 @@
-use crate::{
-    handler::{inspector_handle_register, register::GetInspector},
-    Evm,
-};
-use alloc::sync::Arc;
+use crate::{handler::register::GetInspector, Evm};
 use revm_interpreter::{
-    opcode::{BoxedInstruction, Instruction},
-    primitives::db::Database,
-    InstructionResult, Interpreter,
+    opcode::BoxedInstruction, primitives::db::Database, InstructionResult, Interpreter,
 };
 
 /// Outer closure that calls Inspector for every instruction.

@@ -22,7 +22,7 @@ use crate::{
     primitives::{
         db::Database, EVMError, EVMResultGeneric, Env, Output, ResultAndState, Spec, SpecId,
     },
-    CallStackFrame, Context,
+    CallStackFrame, Context, FrameOrResult,
 };
 use alloc::sync::Arc;
 use core::ops::Range;
@@ -30,19 +30,22 @@ use core::ops::Range;
 /// Handle call return and return final gas value.
 pub type CallReturnHandle<'a> = Arc<dyn Fn(&Env, InstructionResult, Gas) -> Gas + 'a>;
 
+/// Load access list account, precompiles and beneficiary.
+/// There is not need to load Caller as it is assumed that
+/// it will be loaded in DeductCallerHandle.
+pub type MainLoadHandle<'a, EXT, DB> =
+    Arc<dyn Fn(&mut Context<EXT, DB>) -> Result<(), EVMError<<DB as Database>::Error>> + 'a>;
+
 /// Deduct the caller to its limit.
-type DeductCallerHandle<'a, EXT, DB> =
+pub type DeductCallerHandle<'a, EXT, DB> =
     Arc<dyn Fn(&mut Context<EXT, DB>) -> EVMResultGeneric<(), <DB as Database>::Error> + 'a>;
 
 /// Reimburse the caller with ethereum it didn't spent.
-type ReimburseCallerHandle<'a, EXT, DB> =
+pub type ReimburseCallerHandle<'a, EXT, DB> =
     Arc<dyn Fn(&mut Context<EXT, DB>, &Gas) -> EVMResultGeneric<(), <DB as Database>::Error> + 'a>;
 
 /// Reward beneficiary with transaction rewards.
-type RewardBeneficiaryHandle<'a, EXT, DB> = ReimburseCallerHandle<'a, EXT, DB>;
-
-/// Calculate gas refund for transaction.
-pub type CalculateGasRefundHandle<'a> = Arc<dyn Fn(&Env, &Gas) -> u64 + 'a>;
+pub type RewardBeneficiaryHandle<'a, EXT, DB> = ReimburseCallerHandle<'a, EXT, DB>;
 
 /// Main return handle, takes state from journal and transforms internal result to external.
 pub type MainReturnHandle<'a, EXT, DB> = Arc<
@@ -73,6 +76,10 @@ pub type FrameReturnHandle<'a, EXT, DB> = Arc<
         ) -> Option<InterpreterResult>
         + 'a,
 >;
+
+/// Create first frame.
+pub type CreateFirstFrame<'a, EXT, DB> =
+    Arc<dyn Fn(&mut Context<EXT, DB>, u64) -> FrameOrResult + 'a>;
 
 /// Call to the host from Interpreter to save the log.
 pub type HostLogHandle<'a, EXT, DB> =
@@ -129,7 +136,7 @@ pub type ValidateTxEnvAgainstState<'a, EXT, DB> =
     Arc<dyn Fn(&mut Context<EXT, DB>) -> Result<(), EVMError<<DB as Database>::Error>> + 'a>;
 
 /// Initial gas calculation handle
-pub type InitialTxGasHandle<'a, DB> =
+pub type ValidateInitialTxGasHandle<'a, DB> =
     Arc<dyn Fn(&Env) -> Result<u64, EVMError<<DB as Database>::Error>> + 'a>;
 
 /// Handler acts as a proxy and allow to define different behavior for different
@@ -141,8 +148,8 @@ pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
     /// Instruction table type.
     pub instruction_table: Option<InstructionTables<'a, H>>,
     /// Initial tx gas.
-    pub initial_tx_gas: InitialTxGasHandle<'a, DB>,
-    /// Validate transactions agains state data.
+    pub validate_initial_tx_gas: ValidateInitialTxGasHandle<'a, DB>,
+    /// Validate transactions against state data.
     pub validate_tx_against_state: ValidateTxEnvAgainstState<'a, EXT, DB>,
     /// Validate Env
     pub validate_env: ValidateEnvHandle<'a, DB>,
@@ -150,19 +157,20 @@ pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
     /// Uses env, call result and returned gas from the call to determine the gas
     /// that is returned from transaction execution..
     pub call_return: CallReturnHandle<'a>,
+    /// Main load handle
+    pub main_load_handle: MainLoadHandle<'a, EXT, DB>,
     /// Deduct max value from the caller.
     pub deduct_caller: DeductCallerHandle<'a, EXT, DB>,
     /// Reimburse the caller with ethereum it didn't spent.
     pub reimburse_caller: ReimburseCallerHandle<'a, EXT, DB>,
     /// Reward the beneficiary with caller fee.
     pub reward_beneficiary: RewardBeneficiaryHandle<'a, EXT, DB>,
-    /// Calculate gas refund for transaction.
-    /// Some chains have it disabled.
-    pub calculate_gas_refund: CalculateGasRefundHandle<'a>,
     /// Main return handle, returns the output of the transact.
     pub main_return: MainReturnHandle<'a, EXT, DB>,
     /// End handle.
     pub end: EndHandle<'a, EXT, DB>,
+    /// Create Main frame
+    pub create_first_frame: CreateFirstFrame<'a, EXT, DB>,
     /// Frame return
     pub frame_return: FrameReturnHandle<'a, EXT, DB>,
     /// Frame sub call
@@ -181,17 +189,20 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
         Self {
             spec_id: SPEC::SPEC_ID,
             instruction_table: Some(InstructionTables::Plain(make_instruction_table::<H, SPEC>())),
-            initial_tx_gas: Arc::new(mainnet::preexecution::initial_tx_gas::<SPEC, DB>),
+            validate_initial_tx_gas: Arc::new(
+                mainnet::preexecution::validate_initial_tx_gas::<SPEC, DB>,
+            ),
             validate_env: Arc::new(mainnet::preexecution::validate_env::<SPEC, DB>),
             validate_tx_against_state: Arc::new(
                 mainnet::preexecution::validate_tx_against_state::<SPEC, EXT, DB>,
             ),
             call_return: Arc::new(mainnet::handle_call_return::<SPEC>),
-            calculate_gas_refund: Arc::new(mainnet::calculate_gas_refund::<SPEC>),
+            main_load_handle: Arc::new(mainnet::main_load::<SPEC, EXT, DB>),
             deduct_caller: Arc::new(mainnet::deduct_caller::<SPEC, EXT, DB>),
             reimburse_caller: Arc::new(mainnet::handle_reimburse_caller::<SPEC, EXT, DB>),
             reward_beneficiary: Arc::new(mainnet::reward_beneficiary::<SPEC, EXT, DB>),
             main_return: Arc::new(mainnet::main::main_return::<EXT, DB>),
+            create_first_frame: Arc::new(mainnet::frames::create_first_frame::<SPEC, EXT, DB>),
             end: Arc::new(mainnet::main::end_handle::<EXT, DB>),
             frame_return: Arc::new(mainnet::frames::handle_frame_return::<SPEC, EXT, DB>),
             frame_sub_call: Arc::new(mainnet::frames::handle_frame_sub_call::<SPEC, EXT, DB>),
@@ -218,11 +229,6 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
     /// Deduct caller to its limit.
     pub fn deduct_caller(&self, context: &mut Context<EXT, DB>) -> Result<(), EVMError<DB::Error>> {
         (self.deduct_caller)(context)
-    }
-
-    /// Calculate gas refund for transaction. Some chains have it disabled.
-    pub fn calculate_gas_refund(&self, env: &Env, gas: &Gas) -> u64 {
-        (self.calculate_gas_refund)(env, gas)
     }
 
     /// Reward beneficiary
@@ -326,8 +332,8 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
     }
 
     /// Initial gas
-    pub fn initial_tx_gas(&self, env: &Env) -> Result<u64, EVMError<DB::Error>> {
-        (self.initial_tx_gas)(env)
+    pub fn validate_initial_tx_gas(&self, env: &Env) -> Result<u64, EVMError<DB::Error>> {
+        (self.validate_initial_tx_gas)(env)
     }
 
     /// Validate ttansaction against the state.
@@ -336,5 +342,19 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
         context: &mut Context<EXT, DB>,
     ) -> Result<(), EVMError<DB::Error>> {
         (self.validate_tx_against_state)(context)
+    }
+
+    /// Create first call frame.
+    pub fn create_first_frame(
+        &self,
+        context: &mut Context<EXT, DB>,
+        gas_limit: u64,
+    ) -> FrameOrResult {
+        (self.create_first_frame)(context, gas_limit)
+    }
+
+    /// Main load
+    pub fn main_load(&self, context: &mut Context<EXT, DB>) -> Result<(), EVMError<DB::Error>> {
+        (self.main_load_handle)(context)
     }
 }
