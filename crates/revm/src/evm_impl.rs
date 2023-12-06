@@ -25,7 +25,6 @@ use core::{fmt, marker::PhantomData};
 #[cfg(feature = "optimism")]
 use crate::optimism;
 
-use fluentbase_sdk::evm::ContractInput;
 use fluentbase_sdk::{RwasmPlatformSDK, SDK};
 
 /// EVM call stack limit.
@@ -733,12 +732,15 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             .with_input(contract.input.as_ref().to_vec())
             .with_state(state)
             .with_fuel_limit(gas_limit as u32);
-        let runtime = Runtime::<'_, EVMData<'a, DB>>::new(ctx, &import_linker);
+        let runtime = Runtime::<'_, EVMData<'a, DB>>::new_uninit(ctx, &import_linker);
         if runtime.is_err() {
             return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
         }
         let mut runtime = runtime.unwrap();
         Self::add_storage_bindings(contract, &mut runtime);
+        if let Err(_) = runtime.instantiate() {
+            return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
+        }
         let result = runtime.call();
         if result.is_err() {
             return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));

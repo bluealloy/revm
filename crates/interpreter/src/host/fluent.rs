@@ -4,7 +4,7 @@ use crate::{
     CallInputs, CreateInputs, Gas, Host, InstructionResult, SelfDestructResult, SharedMemory,
 };
 use alloc::vec::Vec;
-use fluentbase_sdk::{evm::contract_read_block_hash, EvmPlatformSDK, SDK};
+use fluentbase_sdk::{EvmPlatformSDK, SDK};
 
 /// A dummy [Host] implementation.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -46,7 +46,7 @@ impl Host for FluentHost {
 
     #[inline]
     fn block_hash(&mut self, _number: U256) -> Option<B256> {
-        Some(contract_read_block_hash())
+        Some(B256::ZERO)
     }
 
     #[inline]
