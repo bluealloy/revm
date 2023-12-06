@@ -714,7 +714,6 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
     ) -> (InstructionResult, Bytes, Gas) {
         use fluentbase_runtime::{Runtime, RuntimeContext};
         let bytecode = contract.bytecode.original_bytecode_slice();
-        let mut output = vec![0u8; 1024];
         let import_linker = Runtime::<'_, EVMData<'a, DB>>::new_linker();
         // let json_env = serde_json::to_vec(&self.data.env).unwrap();
         // let contract_input = ContractInput {
@@ -746,10 +745,8 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         }
         let execution_result = result.unwrap();
         let execution_output = execution_result.data().output();
-        if execution_output.len() > output.len() {
-            return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
-        }
         let len = execution_output.len();
+        let mut output = vec![0u8; len];
         output[0..len].copy_from_slice(execution_output.as_slice());
         let exit_code = execution_result.data().exit_code();
         if exit_code != 0 {
