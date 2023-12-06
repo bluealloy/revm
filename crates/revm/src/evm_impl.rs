@@ -540,7 +540,8 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             Err(e) => return e,
         };
 
-        let bytecode = Bytes::copy_from_slice(prepared_create.contract.bytecode.bytecode());
+        let bytecode =
+            Bytes::copy_from_slice(prepared_create.contract.bytecode.original_bytecode_slice());
 
         // Create new interpreter and execute init code
         let (exit_reason, mut bytes, mut gas) = self.run_rwasm_interpreter(
