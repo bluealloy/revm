@@ -737,6 +737,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
         }
         let mut runtime = runtime.unwrap();
+        runtime.register_bindings();
         Self::add_storage_bindings(contract, &mut runtime);
         if let Err(_) = runtime.instantiate() {
             return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
