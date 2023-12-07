@@ -61,7 +61,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     ));
 
     // handle sub create
-    handler.frame_sub_create = Arc::new(
+    handler.frame.frame_sub_create = Arc::new(
         move |context, frame, mut inputs| -> Option<Box<CallStackFrame>> {
             if let Some((result, address)) = context
                 .external
@@ -89,7 +89,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     );
 
     // handle sub call
-    handler.frame_sub_call = Arc::new(
+    handler.frame.frame_sub_call = Arc::new(
         move |context, mut inputs, frame, memory, return_memory_offset| -> Option<Box<_>> {
             // inspector handle
             let inspector = &mut context.external.get_inspector();
@@ -118,8 +118,8 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     );
 
     // return frame handle
-    let old_handle = handler.frame_return.clone();
-    handler.frame_return = Arc::new(
+    let old_handle = handler.frame.frame_return.clone();
+    handler.frame.frame_return = Arc::new(
         move |context, mut child, parent, memory, mut result| -> Option<InterpreterResult> {
             let inspector = &mut context.external.get_inspector();
             result = if child.is_create {

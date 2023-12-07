@@ -1,18 +1,13 @@
 # Rust Ethereum Virtual Machine (revm)
 
-The `crate` is focused on the implementation of Ethereum Virtual Machine (EVM) including call loop and host implementation, database handling, state journaling, logic handlers and an inspection system for observing and logging the execution of EVM. This crate pulls together everything described prior to deliver the rust evm.
+The `crate` is focused on the implementation of Ethereum Virtual Machine (EVM) including call loop and host implementation, database handling, state journaling and powerful logic handlers that can be overwritten. This crate pulls Primitives, Interpreter and Precompiles together to deliver the rust evm.
 
 Modules:
-
+- `evm`: This is main module that executed EVM calls.
+- `builder`: This modules build the Evm, sets database, handlers and other parameters. Here is where we set handlers for specific fork or external state for inspection.
 - `db`: This module includes structures and functions for database interaction. It is a glue between EVM and database. It transforms or aggregates the EVM changes.
-- `evm`: This module contains a Struct that takes Database and enabled transact to update state directly to database. Additionally it allows user to set all environment parameters.
-- `evm_impl`: This module includes more specific implementations related to the EVM regarding state transitions.
-- `inspector`: This module introduces the `Inspector` trait and its implementations for observing the EVM execution.
+- `inspector`: This module introduces the `Inspector` trait and its implementations for observing the EVM execution. This was main way to inspect EVM execution before the Builder and Handlers were introduced. It is still enabled through the Builder.
 - `journaled_state`: This module manages the state of the EVM and implements a journaling system to handle changes and reverts.
-
-External Crates:
-
-- `alloc`: The alloc crate is used to provide the ability to allocate memory on the heap. It's a part of Rust's standard library that can be used in environments without a full host OS.
 
 Re-exported Crates:
 

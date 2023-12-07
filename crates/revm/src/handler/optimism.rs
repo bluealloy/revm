@@ -239,7 +239,7 @@ pub fn main_return<SPEC: Spec, DB: Database>(
     let result = mainnet::main::main_return::<DB>(context, call_result, output, gas)?;
 
     if result.result.is_halt() {
-        // Post-regolith, if the transaction is a deposit transaction and it haults,
+        // Post-regolith, if the transaction is a deposit transaction and it halts,
         // we bubble up to the global return handler. The mint value will be persisted
         // and the caller nonce will be incremented there.
         let is_deposit = context.env.tx.optimism.source_hash.is_some();

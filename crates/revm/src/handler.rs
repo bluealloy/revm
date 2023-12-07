@@ -139,20 +139,16 @@ pub type ValidateTxEnvAgainstState<'a, EXT, DB> =
 pub type ValidateInitialTxGasHandle<'a, DB> =
     Arc<dyn Fn(&Env) -> Result<u64, EVMError<<DB as Database>::Error>> + 'a>;
 
-/// Handler acts as a proxy and allow to define different behavior for different
-/// sections of the code. This allows nice integration of different chains or
-/// to disable some mainnet behavior.
-pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
-    /// Specification ID.
-    pub spec_id: SpecId,
-    /// Instruction table type.
-    pub instruction_table: Option<InstructionTables<'a, H>>,
+pub struct ValidationHandles<'a, EXT, DB: Database> {
     /// Initial tx gas.
     pub validate_initial_tx_gas: ValidateInitialTxGasHandle<'a, DB>,
     /// Validate transactions against state data.
     pub validate_tx_against_state: ValidateTxEnvAgainstState<'a, EXT, DB>,
     /// Validate Env
     pub validate_env: ValidateEnvHandle<'a, DB>,
+}
+
+pub struct MainHandles<'a, EXT, DB: Database> {
     /// Validate Transaction against the state.
     /// Uses env, call result and returned gas from the call to determine the gas
     /// that is returned from transaction execution..
@@ -169,6 +165,9 @@ pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
     pub main_return: MainReturnHandle<'a, EXT, DB>,
     /// End handle.
     pub end: EndHandle<'a, EXT, DB>,
+}
+
+pub struct FrameHandles<'a, EXT, DB: Database> {
     /// Create Main frame
     pub create_first_frame: CreateFirstFrame<'a, EXT, DB>,
     /// Frame return
@@ -177,6 +176,22 @@ pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
     pub frame_sub_call: FrameSubCallHandle<'a, EXT, DB>,
     /// Frame sub crate
     pub frame_sub_create: FrameSubCreateHandle<'a, EXT, DB>,
+}
+
+/// Handler acts as a proxy and allow to define different behavior for different
+/// sections of the code. This allows nice integration of different chains or
+/// to disable some mainnet behavior.
+pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
+    /// Specification ID.
+    pub spec_id: SpecId,
+    /// Instruction table type.
+    pub instruction_table: Option<InstructionTables<'a, H>>,
+    /// Validity handles.
+    pub validation: ValidationHandles<'a, EXT, DB>,
+    /// Main handles.
+    pub main: MainHandles<'a, EXT, DB>,
+    /// Frame handles.
+    pub frame: FrameHandles<'a, EXT, DB>,
     /// Host log handle.
     pub host_log: HostLogHandle<'a, EXT, DB>,
     /// Host selfdestruct handle.
@@ -189,24 +204,32 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
         Self {
             spec_id: SPEC::SPEC_ID,
             instruction_table: Some(InstructionTables::Plain(make_instruction_table::<H, SPEC>())),
-            validate_initial_tx_gas: Arc::new(
-                mainnet::preexecution::validate_initial_tx_gas::<SPEC, DB>,
-            ),
-            validate_env: Arc::new(mainnet::preexecution::validate_env::<SPEC, DB>),
-            validate_tx_against_state: Arc::new(
-                mainnet::preexecution::validate_tx_against_state::<SPEC, EXT, DB>,
-            ),
-            call_return: Arc::new(mainnet::handle_call_return::<SPEC>),
-            main_load_handle: Arc::new(mainnet::main_load::<SPEC, EXT, DB>),
-            deduct_caller: Arc::new(mainnet::deduct_caller::<SPEC, EXT, DB>),
-            reimburse_caller: Arc::new(mainnet::handle_reimburse_caller::<SPEC, EXT, DB>),
-            reward_beneficiary: Arc::new(mainnet::reward_beneficiary::<SPEC, EXT, DB>),
-            main_return: Arc::new(mainnet::main::main_return::<EXT, DB>),
-            create_first_frame: Arc::new(mainnet::frames::create_first_frame::<SPEC, EXT, DB>),
-            end: Arc::new(mainnet::main::end_handle::<EXT, DB>),
-            frame_return: Arc::new(mainnet::frames::handle_frame_return::<SPEC, EXT, DB>),
-            frame_sub_call: Arc::new(mainnet::frames::handle_frame_sub_call::<SPEC, EXT, DB>),
-            frame_sub_create: Arc::new(mainnet::frames::handle_frame_sub_create::<SPEC, EXT, DB>),
+            validation: ValidationHandles {
+                validate_initial_tx_gas: Arc::new(
+                    mainnet::preexecution::validate_initial_tx_gas::<SPEC, DB>,
+                ),
+                validate_env: Arc::new(mainnet::preexecution::validate_env::<SPEC, DB>),
+                validate_tx_against_state: Arc::new(
+                    mainnet::preexecution::validate_tx_against_state::<SPEC, EXT, DB>,
+                ),
+            },
+            main: MainHandles {
+                call_return: Arc::new(mainnet::handle_call_return::<SPEC>),
+                main_load_handle: Arc::new(mainnet::main_load::<SPEC, EXT, DB>),
+                deduct_caller: Arc::new(mainnet::deduct_caller::<SPEC, EXT, DB>),
+                reimburse_caller: Arc::new(mainnet::handle_reimburse_caller::<SPEC, EXT, DB>),
+                reward_beneficiary: Arc::new(mainnet::reward_beneficiary::<SPEC, EXT, DB>),
+                main_return: Arc::new(mainnet::main::main_return::<EXT, DB>),
+                end: Arc::new(mainnet::main::end_handle::<EXT, DB>),
+            },
+            frame: FrameHandles {
+                create_first_frame: Arc::new(mainnet::frames::create_first_frame::<SPEC, EXT, DB>),
+                frame_return: Arc::new(mainnet::frames::handle_frame_return::<SPEC, EXT, DB>),
+                frame_sub_call: Arc::new(mainnet::frames::handle_frame_sub_call::<SPEC, EXT, DB>),
+                frame_sub_create: Arc::new(
+                    mainnet::frames::handle_frame_sub_create::<SPEC, EXT, DB>,
+                ),
+            },
             host_log: Arc::new(mainnet::host::handle_host_log::<SPEC, EXT, DB>),
             host_selfdestruct: Arc::new(mainnet::host::handle_selfdestruct::<SPEC, EXT, DB>),
         }
@@ -214,7 +237,7 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
 
     /// Handle call return, depending on instruction result gas will be reimbursed or not.
     pub fn call_return(&self, env: &Env, call_result: InstructionResult, returned_gas: Gas) -> Gas {
-        (self.call_return)(env, call_result, returned_gas)
+        (self.main.call_return)(env, call_result, returned_gas)
     }
 
     /// Reimburse the caller with gas that were not spend.
@@ -223,12 +246,12 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
         context: &mut Context<EXT, DB>,
         gas: &Gas,
     ) -> Result<(), EVMError<DB::Error>> {
-        (self.reimburse_caller)(context, gas)
+        (self.main.reimburse_caller)(context, gas)
     }
 
     /// Deduct caller to its limit.
     pub fn deduct_caller(&self, context: &mut Context<EXT, DB>) -> Result<(), EVMError<DB::Error>> {
-        (self.deduct_caller)(context)
+        (self.main.deduct_caller)(context)
     }
 
     /// Reward beneficiary
@@ -237,7 +260,7 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
         context: &mut Context<EXT, DB>,
         gas: &Gas,
     ) -> Result<(), EVMError<DB::Error>> {
-        (self.reward_beneficiary)(context, gas)
+        (self.main.reward_beneficiary)(context, gas)
     }
 
     /// Main return.
@@ -248,7 +271,7 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
         output: Output,
         gas: &Gas,
     ) -> Result<ResultAndState, EVMError<DB::Error>> {
-        (self.main_return)(context, call_result, output, gas)
+        (self.main.main_return)(context, call_result, output, gas)
     }
 
     /// End handler.
@@ -257,7 +280,7 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
         context: &mut Context<EXT, DB>,
         end_output: Result<ResultAndState, EVMError<DB::Error>>,
     ) -> Result<ResultAndState, EVMError<DB::Error>> {
-        (self.end)(context, end_output)
+        (self.main.end)(context, end_output)
     }
 
     /// Call frame sub call handler.
@@ -269,7 +292,7 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
         shared_memory: &mut SharedMemory,
         return_memory_offset: Range<usize>,
     ) -> Option<Box<CallStackFrame>> {
-        (self.frame_sub_call)(
+        (self.frame.frame_sub_call)(
             context,
             inputs,
             curent_stack_frame,
@@ -284,7 +307,7 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
         curent_stack_frame: &mut CallStackFrame,
         inputs: Box<CreateInputs>,
     ) -> Option<Box<CallStackFrame>> {
-        (self.frame_sub_create)(context, curent_stack_frame, inputs)
+        (self.frame.frame_sub_create)(context, curent_stack_frame, inputs)
     }
 
     /// Frame return
@@ -296,7 +319,7 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
         shared_memory: &mut SharedMemory,
         result: InterpreterResult,
     ) -> Option<InterpreterResult> {
-        (self.frame_return)(
+        (self.frame.frame_return)(
             context,
             child_stack_frame,
             parent_stack_frame,
@@ -328,12 +351,12 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
 
     /// Validate env.
     pub fn validate_env(&self, env: &Env) -> Result<(), EVMError<DB::Error>> {
-        (self.validate_env)(env)
+        (self.validation.validate_env)(env)
     }
 
     /// Initial gas
     pub fn validate_initial_tx_gas(&self, env: &Env) -> Result<u64, EVMError<DB::Error>> {
-        (self.validate_initial_tx_gas)(env)
+        (self.validation.validate_initial_tx_gas)(env)
     }
 
     /// Validate ttansaction against the state.
@@ -341,7 +364,7 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
         &self,
         context: &mut Context<EXT, DB>,
     ) -> Result<(), EVMError<DB::Error>> {
-        (self.validate_tx_against_state)(context)
+        (self.validation.validate_tx_against_state)(context)
     }
 
     /// Create first call frame.
@@ -350,11 +373,11 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
         context: &mut Context<EXT, DB>,
         gas_limit: u64,
     ) -> FrameOrResult {
-        (self.create_first_frame)(context, gas_limit)
+        (self.frame.create_first_frame)(context, gas_limit)
     }
 
     /// Main load
     pub fn main_load(&self, context: &mut Context<EXT, DB>) -> Result<(), EVMError<DB::Error>> {
-        (self.main_load_handle)(context)
+        (self.main.main_load_handle)(context)
     }
 }

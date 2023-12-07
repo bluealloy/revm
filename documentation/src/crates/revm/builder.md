@@ -3,11 +3,7 @@
 
 It creates the EVM and applies different handler, and allows setting external context and custom logic.
 
-EVM inside revm consist of the few parts `Context` and `Handler`.
-
-Context represent the state that is needed for execution and handler contains list of functions that act as a logic.
-
-`Context` is additionally split between `EvmContext` and `External` context. `External` context is fully generic without any trait restrains and its purpose is to allow custom handlers to have access to internal state (For example external contexts can be a Inspector). While `EvmContext` is internal and contains `Database`, Environment, JournaledState and Precompiles.
+`Evm` inside revm consist of the few parts `Context` and `Handler`. `Context` is additionally split between `EvmContext` and `External` context. Read here for more information [`Evm`](./evm.md) internals.
 
 Handler is.. it is not generic but has a specification identification variable. It contains list of function that are wrapped around `Arc`. Functions (aka handles) are grouped by functionality on:
 * preverification functions. Are related to the preverification of set Environment data. 
