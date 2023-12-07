@@ -1774,7 +1774,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-poseidon"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#4ef47cc95ff955b0fdda8ef76a1a10b0a819c02a"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#0dfa9388543f31741296a639ed97b5de05fb5e0d"
 dependencies = [
  "bitvec 1.0.1",
  "halo2curves 0.3.1",
@@ -1785,7 +1785,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-runtime"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#4ef47cc95ff955b0fdda8ef76a1a10b0a819c02a"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#0dfa9388543f31741296a639ed97b5de05fb5e0d"
 dependencies = [
  "bincode",
  "bitvec 1.0.1",
@@ -1822,7 +1822,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-rwasm"
 version = "0.30.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#4ef47cc95ff955b0fdda8ef76a1a10b0a819c02a"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#0dfa9388543f31741296a639ed97b5de05fb5e0d"
 dependencies = [
  "byteorder",
  "downcast-rs",
@@ -1839,7 +1839,7 @@ dependencies = [
 [[package]]
 name = "fluentbase-sdk"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#4ef47cc95ff955b0fdda8ef76a1a10b0a819c02a"
+source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#0dfa9388543f31741296a639ed97b5de05fb5e0d"
 dependencies = [
  "alloy-primitives 0.4.2",
  "alloy-sol-types",
@@ -2963,9 +2963,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.18.0"
+version = "1.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd8b5dd2ae5ed71462c540258bedcb51965123ad7e7ccf4b9a8cafaa4a63576d"
+checksum = "3fdb12b2476b595f9358c5161aa467c2438859caa136dec86c26fdd2efe17b92"
 
 [[package]]
 name = "oorandom"
@@ -4158,7 +4158,7 @@ version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2acea373acb8c21ecb5a23741452acd2593ed44ee3d343e72baaa143bc89d0d5"
 dependencies = [
- "secp256k1-sys 0.9.0",
+ "secp256k1-sys 0.9.1",
 ]
 
 [[package]]
@@ -4172,9 +4172,9 @@ dependencies = [
 
 [[package]]
 name = "secp256k1-sys"
-version = "0.9.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09e67c467c38fd24bd5499dc9a18183b31575c12ee549197e3e20d57aa4fe3b7"
+checksum = "4dd97a086ec737e30053fd5c46f097465d25bb81dd3608825f65298c4c98be83"
 dependencies = [
  "cc",
 ]
