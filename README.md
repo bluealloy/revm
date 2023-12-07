@@ -66,22 +66,31 @@ run tests with command: `cargo run --release -- statetest tests/GeneralStateTest
 
 ## Running benchmarks
 
-TODO needs to be updated. Benches can now be found inside `crates/revm/benches`
+Benches can be found in [`crates/revm/benches`](./crates/revm/benches).
+
+Currently, available benches include the following.
+- *analysis*
+- *snailtracer*
+- *transfer*
+
+To run the `snailtracer` bench, execute the `cargo bench` subcommand below.
 
 ```shell
-cargo run --package revm-test --release --bin snailtracer
+cargo bench --package revm --profile release -- snailtracer
 ```
 
-The following flamegraph will require installing [flamegraph] by running `cargo install flamegraph`.
-
-[flamegraph]: https://docs.rs/crate/flamegraph/0.1.6
+Using [flamegraph][flamegraph], you can create a visualization breaking down the runtime of various
+sections of the bench execution - a flame graph. Executing the `cargo flamegraph` subcommand requires
+installing [flamegraph][flamegraph] by running `cargo install flamegraph`.
 
 ```shell
-cargo flamegraph --root --freq 4000 --min-width 0.001 --package revm-test --bin snailtracer
+cargo flamegraph --root --freq 4000 --min-width 0.001 --package revm --bench bench -- snailtracer
 ```
 
 This command will produce a flamegraph image output to `flamegraph.svg`.
 Flamegraph also requires sudo mode to run (hence the `--root` cli arg) and will prompt you for your password if not in sudo mode already.
+
+[flamegraph]: https://docs.rs/crate/flamegraph/0.1.6
 
 ## Running examples
 
