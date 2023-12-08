@@ -515,45 +515,11 @@ impl BundleState {
         (plain_state, reverts.into_plain_state_reverts())
     }
 
-    /// Extend the state with state that is build on top of it.
+    /// Extend the bundle with other state
     ///
-    /// If storage was wiped in `other` state, copy `this` plain state
-    /// and put it inside `other` revert (if there is no duplicates of course).
-    ///
-    /// If `this` and `other` accounts were both destroyed invalidate second
-    /// wipe flag (from `other`). As wiping from database should be done only once
-    /// and we already transferred all potentially missing storages to the `other` revert.
-    ///
-    /// Additionally update the `other` state only if `other` is not flagged as destroyed.
-    pub fn extend(&mut self, mut other: Self) {
-        // iterate over reverts and if its storage is wiped try to add previous bundle
-        // state as there is potential missing slots.
-        for (address, revert) in other.reverts.iter_mut().flatten() {
-            if revert.wipe_storage {
-                // If there is wipe storage in `other` revert
-                // we need to move storage from present state.
-                if let Some(this_account) = self.state.get_mut(address) {
-                    // As this account was destroyed inside `other` bundle.
-                    // we are fine to wipe/drain this storage and put it inside revert.
-                    for (key, value) in this_account.storage.drain() {
-                        revert
-                            .storage
-                            .entry(key)
-                            .or_insert(RevertToSlot::Some(value.present_value));
-                    }
-
-                    // nullify `other` wipe as primary database wipe is done in `this`.
-                    if this_account.was_destroyed() {
-                        revert.wipe_storage = false;
-                    }
-                }
-            }
-
-            // Increment reverts size for each of the updated reverts.
-            self.reverts_size += revert.size_hint();
-        }
-
-        for (address, other_account) in other.state {
+    /// Update the `other` state only if `other` is not flagged as destroyed.
+    pub fn extend_state(&mut self, other_state: HashMap<Address, BundleAccount>){
+        for (address, other_account) in other_state {
             match self.state.entry(address) {
                 hash_map::Entry::Occupied(mut entry) => {
                     let this = entry.get_mut();
@@ -586,10 +552,50 @@ impl BundleState {
                 }
             }
         }
+    }
+    /// Extend the state with state that is build on top of it.
+    ///
+    /// If storage was wiped in `other` state, copy `this` plain state
+    /// and put it inside `other` revert (if there is no duplicates of course).
+    ///
+    /// If `this` and `other` accounts were both destroyed invalidate second
+    /// wipe flag (from `other`). As wiping from database should be done only once
+    /// and we already transferred all potentially missing storages to the `other` revert.
+    pub fn extend(&mut self, mut other: Self) {
+        // iterate over reverts and if its storage is wiped try to add previous bundle
+        // state as there is potential missing slots.
+        for (address, revert) in other.reverts.iter_mut().flatten() {
+            if revert.wipe_storage {
+                // If there is wipe storage in `other` revert
+                // we need to move storage from present state.
+                if let Some(this_account) = self.state.get_mut(address) {
+                    // As this account was destroyed inside `other` bundle.
+                    // we are fine to wipe/drain this storage and put it inside revert.
+                    for (key, value) in this_account.storage.drain() {
+                        revert
+                            .storage
+                            .entry(key)
+                            .or_insert(RevertToSlot::Some(value.present_value));
+                    }
+
+                    // nullify `other` wipe as primary database wipe is done in `this`.
+                    if this_account.was_destroyed() {
+                        revert.wipe_storage = false;
+                    }
+                }
+            }
+
+            // Increment reverts size for each of the updated reverts.
+            self.reverts_size += revert.size_hint();
+        }
+        // Extension of state
+        self.extend_state(other.state);
         // Contract can be just extended, when counter is introduced we will take into account that.
         self.contracts.extend(other.contracts);
         // Reverts can be just extended
         self.reverts.extend(other.reverts);
+    
+
     }
 
     /// Take first N raw reverts from the [BundleState].
@@ -665,13 +671,12 @@ impl BundleState {
     ///
     /// Reverts are not updated.
     pub fn prepend_state(&mut self, mut other: BundleState) {
-        let other_len = other.reverts.len();
         // take this bundle
         let this_bundle = std::mem::take(self);
-        // extend other bundle with this
-        other.extend(this_bundle);
-        // discard other reverts
-        other.take_n_reverts(other_len);
+        // extend other bundle state with this
+        other.extend_state(this_bundle.state);
+        // extend other contracts
+        other.contracts.extend(this_bundle.contracts);
         // swap bundles
         std::mem::swap(self, &mut other)
     }
