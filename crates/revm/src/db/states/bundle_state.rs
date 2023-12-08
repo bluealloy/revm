@@ -658,6 +658,23 @@ impl BundleState {
             }
         }
     }
+
+
+    /// Prepends present the state with the given BundleState.
+    /// It adds changes from the given state but does not override any existing changes.
+    ///
+    /// Reverts are not updated.
+    pub fn prepend_state(&mut self, mut other: BundleState) {
+        let other_len = other.reverts.len();
+        // take this bundle
+        let this_bundle = std::mem::take(self);
+        // extend other bundle with this
+        other.extend(this_bundle);
+        // discard other reverts
+        other.take_n_reverts(other_len);
+        // swap bundles
+        std::mem::swap(self, &mut other)
+    }
 }
 
 #[cfg(test)]
@@ -999,5 +1016,37 @@ mod tests {
         // take last revert
         let taken_reverts = extended.take_n_reverts(1);
         assert_eq!(taken_reverts, bundle2.reverts);
+    }
+
+    #[test]
+    fn prepend_state() {
+        let address1 = account1();
+        let address2 = account2();
+
+        let account1 = AccountInfo { nonce: 1, ..Default::default() };
+        let account1_changed = AccountInfo { nonce: 1, ..Default::default() };
+        let account2 = AccountInfo { nonce: 1, ..Default::default() };
+
+        let present_state = BundleState::builder(2..=2)
+            .state_present_account_info(address1, account1_changed.clone())
+            .build();
+        assert_eq!(present_state.reverts.len(), 1);
+        let previous_state = BundleState::builder(1..=1)
+            .state_present_account_info(address1, account1)
+            .state_present_account_info(address2, account2.clone())
+            .build();
+        assert_eq!(previous_state.reverts.len(), 1);
+
+        let mut test = present_state;
+
+        test.prepend_state(previous_state);
+
+        assert_eq!(test.state.len(), 2);
+        // reverts num should stay the same.
+        assert_eq!(test.reverts.len(), 1);
+        // account1 is not overwritten.
+        assert_eq!(test.state.get(&address1).unwrap().info, Some(account1_changed));
+        // account2 got inserted
+        assert_eq!(test.state.get(&address2).unwrap().info, Some(account2));
     }
 }
