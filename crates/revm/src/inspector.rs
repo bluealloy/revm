@@ -2,7 +2,7 @@ use core::ops::Range;
 
 use crate::{
     interpreter::{CallInputs, CreateInputs, Interpreter},
-    primitives::{db::Database, Address, Bytes, B256, U256},
+    primitives::{db::Database, Address, Log, U256},
     EvmContext,
 };
 use auto_impl::auto_impl;
@@ -54,21 +54,6 @@ pub trait Inspector<DB: Database> {
         let _ = context;
     }
 
-    /// Called when a log is emitted.
-    #[inline]
-    fn log(
-        &mut self,
-        context: &mut EvmContext<DB>,
-        address: &Address,
-        topics: &[B256],
-        data: &Bytes,
-    ) {
-        let _ = context;
-        let _ = address;
-        let _ = topics;
-        let _ = data;
-    }
-
     /// Called after `step` when the instruction has been executed.
     ///
     /// Setting `interp.instruction_result` to anything other than [crate::interpreter::InstructionResult::Continue] alters the execution
@@ -77,6 +62,13 @@ pub trait Inspector<DB: Database> {
     fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
         let _ = interp;
         let _ = context;
+    }
+
+    /// Called when a log is emitted.
+    #[inline]
+    fn log(&mut self, context: &mut EvmContext<DB>, log: &Log) {
+        let _ = context;
+        let _ = log;
     }
 
     /// Called whenever a call to a contract is about to start.

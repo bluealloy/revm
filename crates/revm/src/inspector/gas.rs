@@ -72,7 +72,7 @@ mod tests {
         handler::register::{inspector_handle_register, GetInspector},
         inspectors::GasInspector,
         interpreter::{CallInputs, CreateInputs, Interpreter, InterpreterResult},
-        primitives::{Address, Bytes, B256},
+        primitives::{Address, Log},
         Database, EvmContext, Inspector,
     };
 
@@ -99,14 +99,8 @@ mod tests {
             self.gas_inspector.step(interp, context);
         }
 
-        fn log(
-            &mut self,
-            context: &mut EvmContext<DB>,
-            address: &Address,
-            topics: &[B256],
-            data: &Bytes,
-        ) {
-            self.gas_inspector.log(context, address, topics, data);
+        fn log(&mut self, context: &mut EvmContext<DB>, log: &Log) {
+            self.gas_inspector.log(context, log);
         }
 
         fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
