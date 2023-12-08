@@ -500,7 +500,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         let error_code_or_len = SDK::rwasm_compile(&inputs.init_code, &mut rwasm_bytecode[..]);
         if error_code_or_len < 0 {
             return Err(CreateResult {
-                result: InstructionResult::FatalExternalError,
+                result: InstructionResult::Revert,
                 created_address: None,
                 gas,
                 return_value: Bytes::new(),

@@ -224,6 +224,8 @@ pub enum InvalidTransaction {
     /// wiping state and only increasing the nonce + persisting the mint value.
     #[cfg(feature = "optimism")]
     HaltedDepositPostRegolith,
+    /// Error that happens when rWASM compilation failes
+    RwasmCompilationFailed,
 }
 
 #[cfg(feature = "std")]
@@ -295,6 +297,9 @@ impl fmt::Display for InvalidTransaction {
                     f,
                     "Deposit transaction halted post-regolith. Error will be bubbled up to main return handler."
                 )
+            }
+            InvalidTransaction::RwasmCompilationFailed => {
+                write!(f, "rWASM compilation failed.")
             }
         }
     }
