@@ -639,14 +639,16 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
     }
 
     #[cfg(feature = "runtime")]
-    fn add_storage_bindings(
+    fn add_evm_bindings(
         contract: Box<Contract>,
         runtime: &mut fluentbase_runtime::Runtime<'_, EVMData<'a, DB>>,
     ) {
         use fluentbase_runtime::RuntimeContext;
         use fluentbase_rwasm::{AsContext, AsContextMut, Caller};
 
-        let address = contract.address;
+        let contract_caller = contract.caller;
+        let contract_address = contract.address;
+        let contract_value = contract.value;
 
         runtime.add_binding(
             "env",
@@ -659,15 +661,15 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                     .exported_memory()
                     .read(caller.as_context(), key_offset as usize, &mut key)
                     .unwrap();
-                let key = U256::from_be_bytes(key);
+                let key = U256::from_le_bytes(key);
                 let (value, _is_cold) = caller
                     .data_mut()
                     .context
                     .as_mut()
                     .unwrap()
-                    .sload(address, key)
+                    .sload(contract_address, key)
                     .unwrap_or_default();
-                let value: [u8; 32] = value.to_be_bytes();
+                let value: [u8; 32] = value.to_le_bytes();
                 caller
                     .exported_memory()
                     .write(caller.as_context_mut(), value_offset as usize, &value)
@@ -685,19 +687,43 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                     .exported_memory()
                     .read(caller.as_context(), key_offset as usize, &mut key)
                     .unwrap();
-                let key = U256::from_be_bytes(key);
+                let key = U256::from_le_bytes(key);
                 let mut value: [u8; 32] = [0; 32];
                 caller
                     .exported_memory()
                     .read(caller.as_context(), value_offset as usize, &mut value)
                     .unwrap();
-                let value = U256::from_be_bytes(value);
+                let value = U256::from_le_bytes(value);
                 caller
                     .data_mut()
                     .context
                     .as_mut()
                     .unwrap()
-                    .sstore(address, key, value);
+                    .sstore(contract_address, key, value);
+            },
+        );
+        runtime.add_binding(
+            "env",
+            "_evm_caller",
+            move |mut caller: Caller<'_, RuntimeContext<'_, EVMData<'a, DB>>>,
+                  value_offset: u32| {
+                caller.write_memory(value_offset as usize, contract_caller.as_slice());
+            },
+        );
+        runtime.add_binding(
+            "env",
+            "_evm_callvalue",
+            move |mut caller: Caller<'_, RuntimeContext<'_, EVMData<'a, DB>>>,
+                  value_offset: u32| {
+                caller.write_memory(value_offset as usize, &contract_value.to_le_bytes::<32>()[..]);
+            },
+        );
+        runtime.add_binding(
+            "env",
+            "_evm_address",
+            move |mut caller: Caller<'_, RuntimeContext<'_, EVMData<'a, DB>>>,
+                  value_offset: u32| {
+                caller.write_memory(value_offset as usize, contract_address.as_slice());
             },
         );
     }
@@ -738,7 +764,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         }
         let mut runtime = runtime.unwrap();
         runtime.register_bindings();
-        Self::add_storage_bindings(contract, &mut runtime);
+        Self::add_evm_bindings(contract, &mut runtime);
         if let Err(_) = runtime.instantiate() {
             return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
         }

@@ -14,8 +14,8 @@ use alloc::boxed::Box;
 
 /// EIP-170: Contract code size limit
 ///
-/// By default this limit is 0x6000 (~25kb)
-pub const MAX_CODE_SIZE: usize = 0x6000;
+/// By default this limit is 0x6000 (~384kb)
+pub const MAX_CODE_SIZE: usize = 0x60000;
 
 /// EIP-3860: Limit and meter initcode
 pub const MAX_INITCODE_SIZE: usize = 2 * MAX_CODE_SIZE;
