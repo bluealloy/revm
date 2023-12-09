@@ -117,7 +117,8 @@ pub fn reward_beneficiary<SPEC: Spec, DB: Database>(
 /// gas spend. (Before london it was 2th part of gas spend)
 #[inline]
 pub fn calculate_gas_refund<SPEC: Spec>(env: &Env, gas: &Gas) -> u64 {
-    if env.cfg.is_gas_refund_disabled() {
+    // no refund for anchor tx and gas refund disabled.
+    if env.tx.taiko.is_anchor || env.cfg.is_gas_refund_disabled() {
         0
     } else {
         // EIP-3529: Reduction in refunds
