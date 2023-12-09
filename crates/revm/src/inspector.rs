@@ -12,10 +12,12 @@ mod customprinter;
 #[cfg(all(feature = "std", feature = "serde"))]
 mod eip3155;
 mod gas;
-mod instruction;
+mod handler_register;
 mod noop;
 
-pub use instruction::inspector_instruction;
+// Exports.
+
+pub use handler_register::{inspector_handle_register, inspector_instruction, GetInspector};
 use revm_interpreter::InterpreterResult;
 /// [Inspector] implementations.
 pub mod inspectors {

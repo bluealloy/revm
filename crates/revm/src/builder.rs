@@ -3,7 +3,7 @@
 use crate::{
     db::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef},
     handler::register,
-    primitives::{BlockEnv, CfgEnv, Env, LatestSpec, Spec, SpecId, TxEnv},
+    primitives::{BlockEnv, CfgEnv, Env, LatestSpec, SpecId, TxEnv},
     Context, Evm, EvmContext, Handler,
 };
 use core::marker::PhantomData;
@@ -15,18 +15,23 @@ pub struct EvmBuilder<'a, Stage: BuilderStage, EXT, DB: Database> {
     evm: EvmContext<DB>,
     external: EXT,
     handler: Handler<'a, Evm<'a, EXT, DB>, EXT, DB>,
-    handle_registers: Vec<register::HandleRegisters<'a, EXT, DB>>,
     phantom: PhantomData<Stage>,
 }
 
+/// Trait that unlocks builder stages.
 pub trait BuilderStage {}
 
+/// First stage of the builder allows setting the database.
 pub struct SettingDbStage;
 impl BuilderStage for SettingDbStage {}
 
+/// Second stage of the builder allows setting the external context.
+/// Requires the database to be set.
 pub struct SettingExternalStage;
 impl BuilderStage for SettingExternalStage {}
 
+/// Third stage of the builder allows setting the handler.
+/// Requires the database and external context to be set.
 pub struct SettingHandlerStage;
 impl BuilderStage for SettingHandlerStage {}
 
@@ -36,7 +41,6 @@ impl<'a> Default for EvmBuilder<'a, SettingDbStage, (), EmptyDB> {
             evm: EvmContext::new(EmptyDB::default()),
             external: (),
             handler: Handler::mainnet::<LatestSpec>(),
-            handle_registers: Vec::new(),
             phantom: PhantomData,
         }
     }
@@ -53,7 +57,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingDbStage, EXT, DB> {
             evm: EvmContext::new(EmptyDB::default()),
             external: self.external,
             handler: Handler::mainnet::<LatestSpec>(),
-            handle_registers: Vec::new(),
+
             phantom: PhantomData,
         }
     }
@@ -67,7 +71,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingDbStage, EXT, DB> {
             evm: EvmContext::new(db),
             external: self.external,
             handler: Handler::mainnet::<LatestSpec>(),
-            handle_registers: Vec::new(),
+
             phantom: PhantomData,
         }
     }
@@ -84,7 +88,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingDbStage, EXT, DB> {
             evm: EvmContext::new(WrapDatabaseRef(db)),
             external: self.external,
             handler: Handler::mainnet::<LatestSpec>(),
-            handle_registers: Vec::new(),
+
             phantom: PhantomData,
         }
     }
@@ -102,17 +106,18 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingDbStage, EXT, DB> {
 }
 
 impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingExternalStage, EXT, DB> {
-    pub fn with_empty_external(self) -> EvmBuilder<'a, SettingHandlerStage, (), DB> {
+    /// Sets empty external context.
+    pub fn without_external_context(self) -> EvmBuilder<'a, SettingHandlerStage, (), DB> {
         EvmBuilder {
             evm: self.evm,
             external: (),
             handler: Handler::mainnet::<LatestSpec>(),
-            handle_registers: Vec::new(),
             phantom: PhantomData,
         }
     }
 
-    pub fn with_external<OEXT>(
+    /// Sets the external context that will be used by [`Evm`].
+    pub fn with_external_context<OEXT>(
         self,
         external: OEXT,
     ) -> EvmBuilder<'a, SettingHandlerStage, OEXT, DB> {
@@ -120,7 +125,6 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingExternalStage, EXT, DB> {
             evm: self.evm,
             external: external,
             handler: Handler::mainnet::<LatestSpec>(),
-            handle_registers: Vec::new(),
             phantom: PhantomData,
         }
     }
@@ -146,8 +150,6 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingHandlerStage, EXT, DB> {
             evm: evm.context.evm,
             external: evm.context.external,
             handler: evm.handler,
-            // TODO move registers from EVM
-            handle_registers: Vec::new(),
             phantom: PhantomData,
         }
     }
@@ -163,51 +165,6 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingHandlerStage, EXT, DB> {
         }
     }
 
-    /// Creates the Handler with Generic Spec.
-    fn create_handle_generic<SPEC: Spec + 'static>(
-        &self,
-    ) -> Handler<'a, Evm<'a, EXT, DB>, EXT, DB> {
-        let mut handler = Handler::mainnet::<SPEC>();
-        // apply all registers to default handeler and raw mainnet instruction table.
-        for register in self.handle_registers.iter() {
-            register.register(&mut handler);
-            if handler.instruction_table.is_none() {
-                panic!("Handler must have instruction table")
-            }
-        }
-        handler
-    }
-
-    /// Creates the Handler with variable SpecId, inside it will call function with Generic Spec.
-    fn create_handler(&self, spec_id: SpecId) -> Handler<'a, Evm<'a, EXT, DB>, EXT, DB> {
-        use crate::primitives::specification::*;
-        match spec_id {
-            SpecId::FRONTIER | SpecId::FRONTIER_THAWING => {
-                self.create_handle_generic::<FrontierSpec>()
-            }
-            SpecId::HOMESTEAD | SpecId::DAO_FORK => self.create_handle_generic::<HomesteadSpec>(),
-            SpecId::TANGERINE => self.create_handle_generic::<TangerineSpec>(),
-            SpecId::SPURIOUS_DRAGON => self.create_handle_generic::<SpuriousDragonSpec>(),
-            SpecId::BYZANTIUM => self.create_handle_generic::<ByzantiumSpec>(),
-            SpecId::PETERSBURG | SpecId::CONSTANTINOPLE => {
-                self.create_handle_generic::<PetersburgSpec>()
-            }
-            SpecId::ISTANBUL | SpecId::MUIR_GLACIER => self.create_handle_generic::<IstanbulSpec>(),
-            SpecId::BERLIN => self.create_handle_generic::<BerlinSpec>(),
-            SpecId::LONDON | SpecId::ARROW_GLACIER | SpecId::GRAY_GLACIER => {
-                self.create_handle_generic::<LondonSpec>()
-            }
-            SpecId::MERGE => self.create_handle_generic::<MergeSpec>(),
-            SpecId::SHANGHAI => self.create_handle_generic::<ShanghaiSpec>(),
-            SpecId::CANCUN => self.create_handle_generic::<CancunSpec>(),
-            SpecId::LATEST => self.create_handle_generic::<LatestSpec>(),
-            #[cfg(feature = "optimism")]
-            SpecId::BEDROCK => self.create_handle_generic::<BedrockSpec>(),
-            #[cfg(feature = "optimism")]
-            SpecId::REGOLITH => self.create_handle_generic::<RegolithSpec>(),
-        }
-    }
-
     /// Sets specification Id , that will mark the version of EVM.
     /// It represent the hard fork of ethereum.
     ///
@@ -215,28 +172,28 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingHandlerStage, EXT, DB> {
     ///
     /// When changed it will reapply all handle registers.
     pub fn with_spec_id(mut self, spec_id: SpecId) -> Self {
-        // TODO add match for other spec
-        self.handler = self.create_handler(spec_id);
+        self.handler = self.handler.change_spec_id(spec_id);
         self
     }
 
-    pub fn append_handler(
+    /// Appends the handler register to the handler.
+    pub fn append_handler_register(
         mut self,
         handle_register: register::HandleRegister<'a, EXT, DB>,
     ) -> Self {
-        self.handle_registers
-            .push(register::HandleRegisters::Plain(handle_register));
+        self.handler
+            .append_handle_register(register::HandleRegisters::Plain(handle_register));
         self
     }
 
     /// Register Handler that modifies the behavior of EVM.
     /// Check [`Handler`] for more information.
-    pub fn append_handler_box(
+    pub fn append_handler_register_box(
         mut self,
         handle_register: register::HandleRegisterBox<'a, EXT, DB>,
     ) -> Self {
-        self.handle_registers
-            .push(register::HandleRegisters::Box(handle_register));
+        self.handler
+            .append_handle_register(register::HandleRegisters::Box(handle_register));
         self
     }
 }
@@ -290,7 +247,7 @@ impl<'a, STAGE: BuilderStage, EXT, DB: Database> EvmBuilder<'a, STAGE, EXT, DB> 
 mod test {
     use super::SpecId;
     use crate::{
-        db::EmptyDB, handler::register::inspector_handle_register, inspectors::NoOpInspector, Evm,
+        db::EmptyDB, inspector::inspector_handle_register, inspectors::NoOpInspector, Evm,
     };
 
     #[test]
@@ -302,13 +259,19 @@ mod test {
         // build with_db
         Evm::builder().with_db(EmptyDB::default()).build();
         // build with empty external
-        Evm::builder().with_empty_db().with_empty_external().build();
+        Evm::builder()
+            .with_empty_db()
+            .without_external_context()
+            .build();
         // build with some external
-        Evm::builder().with_empty_db().with_external(()).build();
+        Evm::builder()
+            .with_empty_db()
+            .with_external_context(())
+            .build();
         // build with spec
         Evm::builder()
             .with_empty_db()
-            .with_empty_external()
+            .without_external_context()
             .with_spec_id(SpecId::HOMESTEAD)
             .build();
 
@@ -316,7 +279,7 @@ mod test {
         Evm::builder()
             .with_empty_db()
             .modify_tx_env(|tx| tx.gas_limit = 10)
-            .with_empty_external()
+            .without_external_context()
             .build();
         Evm::builder().modify_tx_env(|tx| tx.gas_limit = 10).build();
         Evm::builder()
@@ -325,15 +288,30 @@ mod test {
             .build();
         Evm::builder()
             .with_empty_db()
-            .with_empty_external()
+            .without_external_context()
             .modify_tx_env(|tx| tx.gas_limit = 10)
             .build();
 
         // with inspector handle
         Evm::builder()
             .with_empty_db()
-            .with_external(NoOpInspector::default())
-            .append_handler(inspector_handle_register)
+            .with_external_context(NoOpInspector::default())
+            .append_handler_register(inspector_handle_register)
+            .build();
+    }
+
+    #[test]
+    fn build_modify_build() {
+        let evm = Evm::builder()
+            .with_empty_db()
+            .without_external_context()
+            .with_spec_id(SpecId::HOMESTEAD)
+            .build();
+
+        let evm = evm.modify().with_spec_id(SpecId::FRONTIER).build();
+        let _ = evm
+            .modify()
+            .modify_tx_env(|tx| tx.chain_id = Some(2))
             .build();
     }
 }

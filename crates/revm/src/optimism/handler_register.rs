@@ -1,8 +1,7 @@
 //! Handler related to Optimism chain
 
-use super::mainnet;
 use crate::{
-    handler::RegisterHandler,
+    handler::{mainnet, RegisterHandler},
     interpreter::{return_ok, return_revert, Gas, InstructionResult},
     optimism,
     primitives::{
@@ -14,26 +13,15 @@ use crate::{
 use alloc::sync::Arc;
 use core::ops::Mul;
 
-pub struct OptimismHandle {}
-
-impl<'a, DB: Database> RegisterHandler<'a, DB, OptimismHandle> for OptimismHandle {
-    fn register_handler<SPEC: Spec>(
-        &self,
-        mut handler: Handler<'a, Evm<'a, OptimismHandle, DB>, (), DB>,
-    ) -> Handler<'a, Evm<'a, (), DB>, (), DB>
-    where
-        DB: 'a,
-        (): Sized,
-    {
-        handler.call_return = Arc::new(handle_call_return::<SPEC>);
-        handler.calculate_gas_refund = Arc::new(calculate_gas_refund::<SPEC>);
-        // we reinburse caller the same was as in mainnet.
-        // Refund is calculated differently then mainnet.
-        handler.reward_beneficiary = Arc::new(reward_beneficiary::<SPEC, DB>);
-        // In case of halt of deposit transaction return Error.
-        handler.main_return = Arc::new(main_return::<SPEC, DB>);
-        handler.end = Arc::new(end_handle::<SPEC, DB>);
-    }
+pub fn optimism_handle_register<'a, DB: Database, EXT>(handler: &mut EvmHandler<'a, EXT, DB>) {
+    handler.call_return = Arc::new(handle_call_return::<SPEC>);
+    handler.calculate_gas_refund = Arc::new(calculate_gas_refund::<SPEC>);
+    // we reinburse caller the same was as in mainnet.
+    // Refund is calculated differently then mainnet.
+    handler.reward_beneficiary = Arc::new(reward_beneficiary::<SPEC, DB>);
+    // In case of halt of deposit transaction return Error.
+    handler.main_return = Arc::new(main_return::<SPEC, DB>);
+    handler.end = Arc::new(end_handle::<SPEC, DB>);
 }
 
 /// Handle output of the transaction

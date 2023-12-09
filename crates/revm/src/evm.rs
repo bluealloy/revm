@@ -9,7 +9,7 @@ use crate::{
         SelfDestructResult, SharedMemory,
     },
     primitives::{
-        specification::SpecId, Address, Bytecode, Bytes, EVMError, EVMResult, Env, Output,
+        specification::SpecId, Address, Bytecode, Bytes, EVMError, EVMResult, Env, Log, Output,
         TransactTo, B256, U256,
     },
     CallStackFrame, Context, FrameOrResult,
@@ -69,10 +69,13 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
     /// has enough balance to pay for the gas.
     #[inline]
     pub fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
-        self.handler.validate_env(&self.context.evm.env)?;
+        self.handler.validation().env(&self.context.evm.env)?;
         self.handler
-            .validate_initial_tx_gas(&self.context.evm.env)?;
-        self.handler.validate_tx_against_state(&mut self.context)?;
+            .validation()
+            .initial_tx_gas(&self.context.evm.env)?;
+        self.handler
+            .validation()
+            .tx_against_state(&mut self.context)?;
         Ok(())
     }
 
@@ -81,22 +84,26 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
     pub fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
         let initial_gas_spend = self
             .handler
-            .validate_initial_tx_gas(&self.context.evm.env)?;
+            .validation()
+            .initial_tx_gas(&self.context.evm.env)?;
         let output = self.transact_preverified_inner(initial_gas_spend);
-        self.handler.end(&mut self.context, output)
+        self.handler.main().end(&mut self.context, output)
     }
 
     /// Transact transaction, this function will validate the transaction.
     #[inline]
     pub fn transact(&mut self) -> EVMResult<DB::Error> {
-        self.handler.validate_env(&self.context.evm.env)?;
+        self.handler.validation().env(&self.context.evm.env)?;
         let initial_gas_spend = self
             .handler
-            .validate_initial_tx_gas(&self.context.evm.env)?;
-        self.handler.validate_tx_against_state(&mut self.context)?;
+            .validation()
+            .initial_tx_gas(&self.context.evm.env)?;
+        self.handler
+            .validation()
+            .tx_against_state(&mut self.context)?;
 
         let output = self.transact_preverified_inner(initial_gas_spend);
-        self.handler.end(&mut self.context, output)
+        self.handler.main().end(&mut self.context, output)
     }
 
     /// Allow for evm setting to be modified by feeding current evm
@@ -110,9 +117,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
         if self.spec_id() == spec_id {
             return self;
         }
-        //self.modify().with_spec_id(spec_id).build()
-        // TODO
-        self
+        self.modify().with_spec_id(spec_id).build()
     }
 
     /// Returns internal database and external struct.
@@ -136,8 +141,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
                 // take instruction talbe
                 let table = self
                     .handler
-                    .instruction_table
-                    .take()
+                    .take_instruction_table()
                     .expect("Instruction table should be present");
 
                 // run main loop
@@ -147,7 +151,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
                 };
 
                 // return instruction table
-                self.handler.instruction_table = Some(table);
+                self.handler.set_instruction_table(table);
 
                 output
             }
@@ -198,7 +202,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
                 InterpreterAction::SubCall {
                     inputs,
                     return_memory_offset,
-                } => self.handler.frame_sub_call(
+                } => self.handler.frame().sub_call(
                     &mut self.context,
                     inputs,
                     stack_frame,
@@ -207,7 +211,8 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
                 ),
                 InterpreterAction::Create { inputs } => {
                     self.handler
-                        .frame_sub_create(&mut self.context, stack_frame, inputs)
+                        .frame()
+                        .sub_create(&mut self.context, stack_frame, inputs)
                 }
                 InterpreterAction::Return { result } => {
                     // free memory context.
@@ -216,7 +221,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
                     let child = call_stack.pop().unwrap();
                     let parent = call_stack.last_mut();
 
-                    if let Some(result) = self.handler.frame_return(
+                    if let Some(result) = self.handler.frame().frame_return(
                         &mut self.context,
                         child,
                         parent,
@@ -243,12 +248,13 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
         let ctx = &mut self.context;
 
         // load access list and beneficiary if needed.
-        hndl.main_load(ctx)?;
+        hndl.main().load(ctx)?;
         // deduce caller balance with its limit.
-        hndl.deduct_caller(ctx)?;
+        hndl.main().deduct_caller(ctx)?;
         // gas limit used in calls.
-        let first_frame =
-            hndl.create_first_frame(ctx, ctx.evm.env.tx.gas_limit - initial_gas_spend);
+        let first_frame = hndl
+            .frame()
+            .create_first_frame(ctx, ctx.evm.env.tx.gas_limit - initial_gas_spend);
 
         // Starts the main running loop.
         let (result, main_output) = self.start_the_loop(first_frame);
@@ -257,13 +263,16 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
         let ctx = &mut self.context;
 
         // handle output of call/create calls.
-        let gas = hndl.call_return(&ctx.evm.env, result.result, result.gas);
+        let gas = hndl
+            .frame()
+            .first_frame_return(&ctx.evm.env, result.result, result.gas);
         // Reimburse the caller
-        hndl.reimburse_caller(ctx, &gas)?;
+        hndl.main().reimburse_caller(ctx, &gas)?;
         // Reward beneficiary
-        hndl.reward_beneficiary(ctx, &gas)?;
+        hndl.main().reward_beneficiary(ctx, &gas)?;
         // main return
-        hndl.main_return(ctx, result.result, main_output, &gas)
+        hndl.main()
+            .main_return(ctx, result.result, main_output, &gas)
     }
 }
 
@@ -314,13 +323,20 @@ impl<'a, EXT, DB: Database> Host for Evm<'a, EXT, DB> {
     }
 
     fn log(&mut self, address: Address, topics: Vec<B256>, data: Bytes) {
-        self.handler
-            .host_log(&mut self.context, address, topics, data);
+        self.context.evm.journaled_state.log(Log {
+            address,
+            topics,
+            data,
+        });
     }
 
     fn selfdestruct(&mut self, address: Address, target: Address) -> Option<SelfDestructResult> {
-        self.handler
-            .host_selfdestruct(&mut self.context, address, target)
+        self.context
+            .evm
+            .journaled_state
+            .selfdestruct(address, target, &mut self.context.evm.db)
+            .map_err(|e| self.context.evm.error = Some(e))
+            .ok()
     }
 }
 

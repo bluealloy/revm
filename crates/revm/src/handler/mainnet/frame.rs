@@ -1,14 +1,14 @@
 use crate::{
     db::Database,
     interpreter::{
-        CallContext, CallInputs, CreateInputs, InterpreterResult, SharedMemory, Transfer,
+        return_ok, return_revert, CallContext, CallInputs, CallScheme, CreateInputs, Gas,
+        InstructionResult, InterpreterResult, SharedMemory, Transfer,
     },
-    primitives::{Spec, TransactTo},
+    primitives::{Env, Spec, TransactTo},
     CallStackFrame, Context, FrameOrResult,
 };
 use alloc::boxed::Box;
 use core::ops::Range;
-use revm_interpreter::CallScheme;
 
 /// Creates first fmrae
 pub fn create_first_frame<SPEC: Spec, EXT, DB: Database>(
@@ -49,6 +49,49 @@ pub fn create_first_frame<SPEC: Spec, EXT, DB: Database>(
             },
         ),
     }
+}
+
+/// Helper function called inside [`main_call_return`]
+pub fn frame_return_with_refund_flag<SPEC: Spec>(
+    env: &Env,
+    call_result: InstructionResult,
+    returned_gas: Gas,
+    refund_enabled: bool,
+) -> Gas {
+    // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
+    let mut gas = Gas::new(env.tx.gas_limit);
+    gas.record_cost(env.tx.gas_limit);
+
+    match call_result {
+        return_ok!() => {
+            gas.erase_cost(returned_gas.remaining());
+            gas.record_refund(returned_gas.refunded());
+        }
+        return_revert!() => {
+            gas.erase_cost(returned_gas.remaining());
+        }
+        _ => {}
+    }
+    // Calculate gas refund for transaction.
+    // If config is set to disable gas refund, it will return 0.
+    // If spec is set to london, it will decrease the maximum refund amount to 5th part of
+    // gas spend. (Before london it was 2th part of gas spend)
+    if refund_enabled {
+        // EIP-3529: Reduction in refunds
+        gas.set_final_refund::<SPEC>()
+    };
+
+    gas
+}
+
+/// Handle output of the transaction
+#[inline]
+pub fn main_frame_return<SPEC: Spec>(
+    env: &Env,
+    call_result: InstructionResult,
+    returned_gas: Gas,
+) -> Gas {
+    frame_return_with_refund_flag::<SPEC>(env, call_result, returned_gas, true)
 }
 
 /// Handle frame return.
@@ -128,5 +171,53 @@ pub fn handle_frame_sub_create<SPEC: Spec, EXT, DB: Database>(
                 .insert_create_output(result, None);
             None
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use revm_interpreter::primitives::CancunSpec;
+
+    use super::*;
+
+    #[test]
+    fn test_consume_gas() {
+        let mut env = Env::default();
+        env.tx.gas_limit = 100;
+
+        let gas = main_frame_return::<CancunSpec>(&env, InstructionResult::Stop, Gas::new(90));
+        assert_eq!(gas.remaining(), 90);
+        assert_eq!(gas.spend(), 10);
+        assert_eq!(gas.refunded(), 0);
+    }
+
+    #[test]
+    fn test_consume_gas_with_refund() {
+        let mut env = Env::default();
+        env.tx.gas_limit = 100;
+
+        let mut return_gas = Gas::new(90);
+        return_gas.record_refund(30);
+
+        let gas = main_frame_return::<CancunSpec>(&env, InstructionResult::Stop, return_gas);
+        assert_eq!(gas.remaining(), 90);
+        assert_eq!(gas.spend(), 10);
+        assert_eq!(gas.refunded(), 30);
+
+        let gas = main_frame_return::<CancunSpec>(&env, InstructionResult::Revert, return_gas);
+        assert_eq!(gas.remaining(), 90);
+        assert_eq!(gas.spend(), 10);
+        assert_eq!(gas.refunded(), 0);
+    }
+
+    #[test]
+    fn test_revert_gas() {
+        let mut env = Env::default();
+        env.tx.gas_limit = 100;
+
+        let gas = main_frame_return::<CancunSpec>(&env, InstructionResult::Revert, Gas::new(90));
+        assert_eq!(gas.remaining(), 90);
+        assert_eq!(gas.spend(), 10);
+        assert_eq!(gas.refunded(), 0);
     }
 }

@@ -9,7 +9,6 @@ use core::ops::Range;
 #[derive(Debug)]
 pub struct CallStackFrame {
     /// True if it is create false if it is call.
-    /// TODO make a enum for this.
     pub is_create: bool,
     /// Journal checkpoint
     pub checkpoint: JournalCheckpoint,

@@ -66,15 +66,14 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 
 #[cfg(test)]
 mod tests {
-    use core::ops::Range;
-
     use crate::{
-        handler::register::{inspector_handle_register, GetInspector},
+        inspector::{inspector_handle_register, GetInspector},
         inspectors::GasInspector,
         interpreter::{CallInputs, CreateInputs, Interpreter, InterpreterResult},
         primitives::{Address, Log},
         Database, EvmContext, Inspector,
     };
+    use core::ops::Range;
 
     #[derive(Default, Debug)]
     struct StackInspector {
@@ -173,7 +172,7 @@ mod tests {
 
         let mut evm: Evm<'_, StackInspector, BenchmarkDB> = Evm::builder()
             .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
-            .with_external(StackInspector::default())
+            .with_external_context(StackInspector::default())
             .modify_tx_env(|tx| {
                 tx.clear();
                 tx.caller = address!("1000000000000000000000000000000000000000");
@@ -181,7 +180,7 @@ mod tests {
                     TransactTo::Call(address!("0000000000000000000000000000000000000000"));
                 tx.gas_limit = 21100;
             })
-            .append_handler(inspector_handle_register)
+            .append_handler_register(inspector_handle_register)
             .build();
 
         // run evm.

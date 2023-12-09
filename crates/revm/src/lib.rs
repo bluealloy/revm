@@ -35,7 +35,9 @@ pub use db::{Database, DatabaseCommit, DatabaseRef, DummyStateDB, InMemoryDB};
 pub use evm::{Evm, CALL_STACK_LIMIT};
 pub use frame::{CallStackFrame, FrameOrResult};
 pub use handler::Handler;
-pub use inspector::{inspector_instruction, inspectors, Inspector};
+pub use inspector::{
+    inspector_handle_register, inspector_instruction, inspectors, GetInspector, Inspector,
+};
 pub use journaled_state::{JournalCheckpoint, JournalEntry, JournaledState};
 // export Optimism types, helpers, and constants
 #[cfg(feature = "optimism")]

@@ -13,6 +13,7 @@ pub fn validate_env<SPEC: Spec, DB: Database>(env: &Env) -> Result<(), EVMError<
     Ok(())
 }
 
+/// Validates transaction against the state.
 pub fn validate_tx_against_state<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
 ) -> Result<(), EVMError<DB::Error>> {
@@ -33,6 +34,7 @@ pub fn validate_tx_against_state<SPEC: Spec, EXT, DB: Database>(
     Ok(())
 }
 
+/// Validate initial transaction gas.
 pub fn validate_initial_tx_gas<SPEC: Spec, DB: Database>(
     env: &Env,
 ) -> Result<u64, EVMError<DB::Error>> {
