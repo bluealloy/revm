@@ -1,18 +1,11 @@
 //! Mainnet related handlers.
-use core::str::FromStr;
 use revm_interpreter::primitives::EVMError;
 
 use crate::{
     interpreter::{return_ok, return_revert, Gas, InstructionResult},
-    primitives::{db::Database, Address, Env, Spec, SpecId::LONDON, U256},
+    primitives::{db::Database, Env, Spec, SpecId::LONDON, U256},
     EVMData,
 };
-use once_cell::sync::Lazy;
-
-static TREASURY: Lazy<Address> = Lazy::new(|| {
-    Address::from_str("0xdf09A0afD09a63fb04ab3573922437e1e637dE8b")
-        .expect("invalid treasury account")
-});
 
 /// Handle output of the transaction
 pub fn handle_call_return<SPEC: Spec>(
@@ -23,7 +16,7 @@ pub fn handle_call_return<SPEC: Spec>(
     let tx_gas_limit = env.tx.gas_limit;
     // Spend the gas limit. Gas is reimbursed when the tx returns successfully.
     let mut gas = Gas::new(tx_gas_limit);
-    if env.is_anchor() {
+    if env.tx.taiko.is_anchor {
         return gas;
     }
     gas.record_cost(tx_gas_limit);
@@ -48,7 +41,7 @@ pub fn handle_reimburse_caller<SPEC: Spec, DB: Database>(
     gas_refund: u64,
 ) -> Result<(), EVMError<DB::Error>> {
     let _ = data;
-    if data.env.is_anchor() {
+    if data.env.tx.taiko.is_anchor {
         return Ok(());
     }
     let caller = data.env.tx.caller;
@@ -75,7 +68,7 @@ pub fn reward_beneficiary<SPEC: Spec, DB: Database>(
     gas: &Gas,
     gas_refund: u64,
 ) -> Result<(), EVMError<DB::Error>> {
-    if data.env.is_anchor() {
+    if data.env.tx.taiko.is_anchor {
         return Ok(());
     }
     let beneficiary = data.env.block.coinbase;
@@ -100,7 +93,7 @@ pub fn reward_beneficiary<SPEC: Spec, DB: Database>(
         .balance
         .saturating_add(coinbase_gas_price * U256::from(gas.spend() - gas_refund));
 
-    let treasury = *TREASURY;
+    let treasury = data.env.tx.taiko.treasury;
     let basefee = data.env.block.basefee;
 
     let (treasury_account, _) = data

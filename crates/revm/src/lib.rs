@@ -15,6 +15,9 @@ mod journaled_state;
 #[cfg(feature = "optimism")]
 pub mod optimism;
 
+#[cfg(feature = "taiko")]
+pub mod taiko;
+
 #[cfg(all(feature = "with-serde", not(feature = "serde")))]
 compile_error!("`with-serde` feature has been renamed to `serde`.");
 

@@ -5,19 +5,15 @@ use crate::{
 };
 use core::cmp::{min, Ordering};
 
+#[cfg(feature = "taiko")]
+use crate::taiko::env::TaikoFields;
+
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Env {
     pub cfg: CfgEnv,
     pub block: BlockEnv,
     pub tx: TxEnv,
-}
-
-#[cfg(feature = "taiko")]
-impl Env {
-    pub fn is_anchor(&self) -> bool {
-        self.tx.index == 0
-    }
 }
 
 /// The block environment.
@@ -136,10 +132,6 @@ impl BlockEnv {
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TxEnv {
-    /// The index of the transaction in the block.
-    #[cfg(feature = "taiko")]
-    pub index: usize,
-
     /// Caller aka Author aka transaction signer.
     pub caller: Address,
     /// The gas limit of the transaction.
@@ -194,6 +186,10 @@ pub struct TxEnv {
     #[cfg_attr(feature = "serde", serde(flatten))]
     #[cfg(feature = "optimism")]
     pub optimism: OptimismFields,
+
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[cfg(feature = "taiko")]
+    pub taiko: TaikoFields,
 }
 
 impl TxEnv {
@@ -439,9 +435,6 @@ impl Default for BlockEnv {
 impl Default for TxEnv {
     fn default() -> Self {
         Self {
-            #[cfg(feature = "taiko")]
-            index: 0,
-
             caller: Address::ZERO,
             gas_limit: u64::MAX,
             gas_price: U256::ZERO,
@@ -456,6 +449,8 @@ impl Default for TxEnv {
             max_fee_per_blob_gas: None,
             #[cfg(feature = "optimism")]
             optimism: OptimismFields::default(),
+            #[cfg(feature = "taiko")]
+            taiko: TaikoFields::default(),
         }
     }
 }
@@ -663,7 +658,7 @@ impl Env {
         }
 
         #[cfg(feature = "taiko")]
-        if self.is_anchor() {
+        if self.tx.taiko.is_anchor {
             return Ok(());
         }
 

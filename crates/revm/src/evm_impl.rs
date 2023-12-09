@@ -194,7 +194,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let tx_data = env.tx.data.clone();
         let tx_gas_limit = env.tx.gas_limit;
         #[cfg(feature = "taiko")]
-        let is_anchor = env.is_anchor();
+        let is_anchor = env.tx.taiko.is_anchor;
 
         #[cfg(feature = "optimism")]
         let tx_l1_cost = {
