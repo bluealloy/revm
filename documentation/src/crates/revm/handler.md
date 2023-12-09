@@ -8,6 +8,14 @@ Functions can be grouped in four categories and are marked in that way in the co
 * Frame functions: `FrameHandler`
 * Internal functions: `InstractionTable`
 
+### Handle Registers
+
+Simple function that is used to modify handler functions. Amazing thing about them is that they can be done over generic external type. For example this allows to have a register over trait that would allow to add hooks to the any type that implements the trait, that trait can be a GetInspector trait so anyone that implement it would be able to register inspector related functions. It is used inside the `EvmBuilder` to change behaviour of the default mainnet Handler.
+
+Order of the registers is important as they are called in the order they are registered. And it matters if register overrides the previous handle or just wraps it, overriding handle can disrupt the logic of previous registered handles.
+
+Registers are very powerful as they allow modification of any part of the Evm and with additional of the `External` context it becomes a powerful combo. Simple example would be to register new precompiles for the Evm.
+
 ### ValidationHandler
 
 Consist of functions that are used to validate transaction and block data. They are called before the execution of the transaction and they are used to check if the data (`Environment`) is valid. They are called in the following order:
@@ -68,9 +76,3 @@ TODO
 ### InstructionTable
 
 Is a list of 256 function pointers that are used to execute instructions. They have two types, first is simple function that is faster and second is BoxedInstraction that has a small performance penalty but allows to capture the data. Look at the Interpreter documentation for more information.
-
-### Handle Registers
-
-Simple function that is used to modify handler functions. Amazing thing about them is that they can be done over generic external type. For example this allows to have a register over trait that would allow to add hooks to the any type that implements the trait, that trait can be a GetInspector trait so anyone that implement it would be able to register inspector related functions. It is used inside the `EvmBuilder` to change behaviour of the default mainnet Handler.
-
-Order of the registers is important as they are called in the order they are registered. And it matters if register overrides the previous handle or just wraps it, overriding handle can disrupt the logic of previous registered handles.
