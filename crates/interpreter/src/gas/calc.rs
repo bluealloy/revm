@@ -198,22 +198,25 @@ pub fn sstore_cost<SPEC: Spec>(
         return None;
     }
 
-    let (gas_sload, gas_sstore_reset) = if SPEC::enabled(BERLIN) {
-        (WARM_STORAGE_READ_COST, SSTORE_RESET - COLD_SLOAD_COST)
+    if SPEC::enabled(BERLIN) {
+        // Berlin specification logic
+        let (gas_sload, gas_sstore_reset) = (WARM_STORAGE_READ_COST, SSTORE_RESET - COLD_SLOAD_COST);
+        
+        let gas_cost = istanbul_sstore_cost(original, current, new, gas_sload, gas_sstore_reset);
+        
+        if is_cold {
+            return Some(gas_cost + COLD_SLOAD_COST);
+        } else {
+            return Some(gas_cost);
+        }
+    } else if SPEC::enabled(ISTANBUL) {
+        // Istanbul logic
+        let (gas_sload, gas_sstore_reset) = (sload_cost::<SPEC>(is_cold), SSTORE_RESET);
+        return Some(istanbul_sstore_cost(original, current, new, gas_sload, gas_sstore_reset));
     } else {
-        (sload_cost::<SPEC>(is_cold), SSTORE_RESET)
-    };
-
-    let gas_cost = if SPEC::enabled(ISTANBUL) {
-        istanbul_sstore_cost(original, current, new, gas_sload, gas_sstore_reset)
-    } else {
-        calculate_non_istanbul_gas_cost(current, new, gas_sstore_reset)
-    };
-
-    if SPEC::enabled(BERLIN) && is_cold {
-        Some(gas_cost + COLD_SLOAD_COST)
-    } else {
-        Some(gas_cost)
+        // Non-Berlin and non-Istanbul logic
+        let gas_sstore_reset = SSTORE_RESET;
+        return Some(non_istanbul_sstore_cost(current, new, gas_sstore_reset));
     }
 }
 
@@ -236,7 +239,7 @@ fn istanbul_sstore_cost(
     }
 }
 
-fn calculate_non_istanbul_gas_cost(current: U256, new: U256, gas_sstore_reset: u64) -> u64 {
+fn non_istanbul_sstore_cost(current: U256, new: U256, gas_sstore_reset: u64) -> u64 {
     if current == U256::ZERO && new != U256::ZERO {
         SSTORE_SET
     } else {
