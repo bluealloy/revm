@@ -205,7 +205,7 @@ pub fn sstore_cost<SPEC: Spec>(
     };
 
     let gas_cost = if SPEC::enabled(ISTANBUL) {
-        calculate_istanbul_gas_cost(original, current, new, gas_sload, gas_sstore_reset)
+        istanbul_sstore_cost(original, current, new, gas_sload, gas_sstore_reset)
     } else {
         calculate_non_istanbul_gas_cost(current, new, gas_sstore_reset)
     };
@@ -217,7 +217,8 @@ pub fn sstore_cost<SPEC: Spec>(
     }
 }
 
-fn calculate_istanbul_gas_cost(
+#[inline(always)]
+fn istanbul_sstore_cost(
     original: U256,
     current: U256,
     new: U256,
