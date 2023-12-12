@@ -1,4 +1,4 @@
-use crate::primitives::{Eval, Halt};
+use crate::primitives::{Eval, Halt, OutOfGasError};
 
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
@@ -47,6 +47,48 @@ pub enum InstructionResult {
 
     /// Fatal external error. Returned by database.
     FatalExternalError,
+}
+
+impl From<Eval> for InstructionResult {
+    fn from(value: Eval) -> Self {
+        match value {
+            Eval::Return => InstructionResult::Return,
+            Eval::Stop => InstructionResult::Stop,
+            Eval::SelfDestruct => InstructionResult::SelfDestruct,
+        }
+    }
+}
+
+impl From<Halt> for InstructionResult {
+    fn from(value: Halt) -> Self {
+        match value {
+            Halt::OutOfGas(OutOfGasError::BasicOutOfGas) => Self::OutOfGas,
+            Halt::OutOfGas(OutOfGasError::InvalidOperand) => Self::InvalidOperandOOG,
+            Halt::OutOfGas(OutOfGasError::Memory) => Self::MemoryOOG,
+            Halt::OutOfGas(OutOfGasError::MemoryLimit) => Self::MemoryLimitOOG,
+            Halt::OutOfGas(OutOfGasError::Precompile) => Self::PrecompileOOG,
+            Halt::OpcodeNotFound => Self::OpcodeNotFound,
+            Halt::InvalidFEOpcode => Self::InvalidFEOpcode,
+            Halt::InvalidJump => Self::InvalidJump,
+            Halt::NotActivated => Self::NotActivated,
+            Halt::StackOverflow => Self::StackOverflow,
+            Halt::StackUnderflow => Self::StackUnderflow,
+            Halt::OutOfOffset => Self::OutOfOffset,
+            Halt::CreateCollision => Self::CreateCollision,
+            Halt::PrecompileError => Self::PrecompileError,
+            Halt::NonceOverflow => Self::NonceOverflow,
+            Halt::CreateContractSizeLimit => Self::CreateContractSizeLimit,
+            Halt::CreateContractStartingWithEF => Self::CreateContractStartingWithEF,
+            Halt::CreateInitCodeSizeLimit => Self::CreateInitCodeSizeLimit,
+            Halt::OverflowPayment => Self::OverflowPayment,
+            Halt::StateChangeDuringStaticCall => Self::StateChangeDuringStaticCall,
+            Halt::CallNotAllowedInsideStatic => Self::CallNotAllowedInsideStatic,
+            Halt::OutOfFund => Self::OutOfFund,
+            Halt::CallTooDeep => Self::CallTooDeep,
+            #[cfg(feature = "optimism")]
+            Halt::FailedDeposit => Self::FatalExternalError,
+        }
+    }
 }
 
 impl InstructionResult {
