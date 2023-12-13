@@ -10,6 +10,7 @@ pub type EmptyDB = EmptyDBTyped<Infallible>;
 /// An empty database that always returns default values when queried.
 ///
 /// This is generic over a type which is used as the database error type.
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EmptyDBTyped<E> {
     _phantom: PhantomData<E>,
 }
