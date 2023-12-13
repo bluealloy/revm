@@ -18,6 +18,7 @@ pub type InMemoryDB = CacheDB<EmptyDB>;
 /// whereas contracts are identified by their code hash, and are stored in the `contracts` map.
 /// The [DbAccount] holds the code hash of the contract, which is used to look up the contract in the `contracts` map.
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CacheDB<ExtDB: DatabaseRef> {
     /// Account info where None means it is not existing. Not existing state is needed for Pre TANGERINE forks.
     /// `code` is always `None`, and bytecode can be found in `contracts`.
@@ -288,6 +289,7 @@ impl<ExtDB: DatabaseRef> DatabaseRef for CacheDB<ExtDB> {
 }
 
 #[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct DbAccount {
     pub info: AccountInfo,
     /// If account is selfdestructed or newly created, storage will be cleared.
@@ -330,6 +332,7 @@ impl From<AccountInfo> for DbAccount {
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AccountState {
     /// Before Spurious Dragon hardfork there was a difference between empty and not existing.
     /// And we are flagging it here.
