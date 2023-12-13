@@ -456,4 +456,28 @@ mod tests {
         assert_eq!(new_state.storage(account, key0), Ok(U256::ZERO));
         assert_eq!(new_state.storage(account, key1), Ok(value1));
     }
+
+    #[cfg(feature = "serde")]
+    #[test]
+    fn test_serialize_deserialize_cachedb() {
+        let account = Address::with_last_byte(69);
+        let nonce = 420;
+        let mut init_state = CacheDB::new(EmptyDB::default());
+        init_state.insert_account_info(
+            account,
+            AccountInfo {
+                nonce,
+                ..Default::default()
+            },
+        );
+
+        let serialized = serde_json::to_string(&init_state).unwrap();
+        let deserialized: CacheDB<EmptyDB> = serde_json::from_str(&serialized).unwrap();
+
+        assert!(deserialized.accounts.get(&account).is_some());
+        assert_eq!(
+            deserialized.accounts.get(&account).unwrap().info.nonce,
+            nonce
+        );
+    }
 }
