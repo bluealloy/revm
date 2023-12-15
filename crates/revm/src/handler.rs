@@ -18,9 +18,8 @@ use crate::{
     },
     primitives::{db::Database, Spec, SpecId},
 };
-use register::HandleRegisters;
-
-use self::register::EvmHandler;
+use alloc::vec::Vec;
+use register::{EvmHandler, HandleRegisters};
 
 /// Handler acts as a proxy and allow to define different behavior for different
 /// sections of the code. This allows nice integration of different chains or
@@ -108,6 +107,7 @@ impl<'a, EXT: 'a, DB: Database + 'a> EvmHandler<'a, EXT, DB> {
             return self;
         }
         use crate::primitives::specification::*;
+        // We are transitioning from var to generic spec.
         match spec_id {
             SpecId::FRONTIER | SpecId::FRONTIER_THAWING => {
                 self.create_handle_generic::<FrontierSpec>()

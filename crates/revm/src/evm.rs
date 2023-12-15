@@ -22,8 +22,6 @@ pub const CALL_STACK_LIMIT: u64 = 1024;
 
 /// EVM instance containing both internal EVM context and external context
 /// and the handler that dictates the logic of EVM (or hardfork specification).
-///
-///
 pub struct Evm<'a, EXT, DB: Database> {
     /// Context of execution, containing both EVM and external context.
     pub context: Context<EXT, DB>,
@@ -46,7 +44,7 @@ where
 }
 
 impl<'a> Evm<'a, (), EmptyDB> {
-    /// Returns evm builder.
+    /// Returns evm builder with empty database and empty external context.
     pub fn builder() -> EvmBuilder<'a, SettingDbStage, (), EmptyDB> {
         EvmBuilder::default()
     }
@@ -58,6 +56,14 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
         Evm { context, handler }
     }
 
+    /// Allow for evm setting to be modified by feeding current evm
+    /// into the builder for modifications.
+    pub fn modify(self) -> EvmBuilder<'a, SettingHandlerStage, EXT, DB> {
+        EvmBuilder::new(self)
+    }
+}
+
+impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     /// Returns specification (hardfork) that the EVM is instanced with.
     ///
     /// SpecId depends on the handler.
@@ -79,7 +85,9 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
         Ok(())
     }
 
-    /// Transact pre-verified transaction, this function will not validate the transaction.
+    /// Transact pre-verified transaction
+    ///
+    /// This function will not validate the transaction.
     #[inline]
     pub fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
         let initial_gas_spend = self
@@ -90,7 +98,9 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
         self.handler.main().end(&mut self.context, output)
     }
 
-    /// Transact transaction, this function will validate the transaction.
+    /// Transact transaction
+    ///
+    /// This function will validate the transaction.
     #[inline]
     pub fn transact(&mut self) -> EVMResult<DB::Error> {
         self.handler.validation().env(&self.context.evm.env)?;
@@ -104,12 +114,6 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
 
         let output = self.transact_preverified_inner(initial_gas_spend);
         self.handler.main().end(&mut self.context, output)
-    }
-
-    /// Allow for evm setting to be modified by feeding current evm
-    /// to the builder for modifications.
-    pub fn modify(self) -> EvmBuilder<'a, SettingHandlerStage, EXT, DB> {
-        EvmBuilder::new(self)
     }
 
     /// Modify spec id, this will create new EVM that matches this spec id.
@@ -131,7 +135,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
         &mut self,
         first_stack_frame: FrameOrResult,
     ) -> (InterpreterResult, Output) {
-        // Some only if it is create.
+        // Created address will be something only if it is create.
         let mut created_address = None;
 
         // start main loop if CallStackFrame is created correctly
@@ -150,7 +154,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
                     InstructionTables::Boxed(table) => self.run_the_loop(&table, first_stack_frame),
                 };
 
-                // return instruction table
+                // return back instruction table
                 self.handler.set_instruction_table(table);
 
                 output
@@ -188,7 +192,8 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
 
         shared_memory.new_context();
 
-        let mut stack_frame = call_stack.first_mut().unwrap();
+        // peek last stack frame.
+        let mut stack_frame = call_stack.last_mut().unwrap();
 
         loop {
             // run interpreter
@@ -276,7 +281,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
     }
 }
 
-impl<'a, EXT, DB: Database> Host for Evm<'a, EXT, DB> {
+impl<EXT, DB: Database> Host for Evm<'_, EXT, DB> {
     fn env(&mut self) -> &mut Env {
         self.context.evm.env()
     }

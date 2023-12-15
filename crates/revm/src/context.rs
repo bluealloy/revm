@@ -43,6 +43,17 @@ pub struct EvmContext<DB: Database> {
 }
 
 impl<'a, DB: Database> EvmContext<DB> {
+    pub fn with_db<ODB: Database>(self, db: ODB) -> EvmContext<ODB> {
+        EvmContext {
+            env: self.env,
+            journaled_state: self.journaled_state,
+            db,
+            error: None,
+            precompiles: self.precompiles,
+            #[cfg(feature = "optimism")]
+            l1_block_info: self.l1_block_info,
+        }
+    }
     pub fn new(db: DB) -> Self {
         Self {
             env: Box::default(),

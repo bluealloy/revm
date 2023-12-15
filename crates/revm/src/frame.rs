@@ -3,6 +3,7 @@ use crate::{
     primitives::Address,
     JournalCheckpoint,
 };
+use alloc::boxed::Box;
 use core::ops::Range;
 
 /// Call CallStackFrame.

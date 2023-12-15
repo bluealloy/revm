@@ -1,7 +1,7 @@
 [workspace]
 members = [
     #"bins/revme",
-    #"bins/revm-test",
+    "bins/revm-test",
     "crates/revm",
     "crates/primitives",
     "crates/interpreter",

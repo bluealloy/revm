@@ -4,7 +4,7 @@ use crate::{
     interpreter::{opcode, Interpreter, InterpreterResult},
     CallStackFrame, Evm, FrameOrResult, Inspector, JournalEntry,
 };
-use alloc::sync::Arc;
+use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use revm_interpreter::{opcode::BoxedInstruction, InstructionResult};
 
 pub trait GetInspector<'a, DB: Database> {

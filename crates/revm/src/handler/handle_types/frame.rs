@@ -6,7 +6,7 @@ use crate::{
     primitives::{db::Database, Env, Spec},
     CallStackFrame, Context, FrameOrResult,
 };
-use alloc::sync::Arc;
+use alloc::{boxed::Box, sync::Arc};
 use core::ops::Range;
 
 /// Creates the first frame.

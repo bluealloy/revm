@@ -19,7 +19,7 @@ mod modexp;
 mod secp256k1;
 pub mod utilities;
 
-use alloc::boxed::Box;
+use alloc::{boxed::Box, vec::Vec};
 use core::{fmt, hash::Hash};
 use once_cell::race::OnceBox;
 #[doc(hidden)]

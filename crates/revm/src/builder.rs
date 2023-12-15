@@ -10,7 +10,7 @@ use core::marker::PhantomData;
 
 /// Evm Builder allows building or modifying EVM.
 /// Note that some of the methods that changes underlying structures
-///  will reset the registered handler to default mainnet.
+/// will reset the registered handler to default mainnet.
 pub struct EvmBuilder<'a, Stage: BuilderStage, EXT, DB: Database> {
     evm: EvmContext<DB>,
     external: EXT,
@@ -46,7 +46,7 @@ impl<'a> Default for EvmBuilder<'a, SettingDbStage, (), EmptyDB> {
     }
 }
 
-impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingDbStage, EXT, DB> {
+impl<'a, BS: BuilderStage, EXT, DB: Database> EvmBuilder<'a, BS, EXT, DB> {
     /// Sets the [`EmptyDB`] as the [`Database`] that will be used by [`Evm`].
     ///
     /// # Note
@@ -54,7 +54,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingDbStage, EXT, DB> {
     /// When changed it will reset the handler to the mainnet.
     pub fn with_empty_db(self) -> EvmBuilder<'a, SettingExternalStage, EXT, EmptyDB> {
         EvmBuilder {
-            evm: EvmContext::new(EmptyDB::default()),
+            evm: self.evm.with_db(EmptyDB::default()),
             external: self.external,
             handler: Handler::mainnet::<LatestSpec>(),
 
@@ -68,7 +68,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingDbStage, EXT, DB> {
     /// When changed it will reset the handler to default mainnet.
     pub fn with_db<ODB: Database>(self, db: ODB) -> EvmBuilder<'a, SettingExternalStage, EXT, ODB> {
         EvmBuilder {
-            evm: EvmContext::new(db),
+            evm: self.evm.with_db(db),
             external: self.external,
             handler: Handler::mainnet::<LatestSpec>(),
 
@@ -85,7 +85,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingDbStage, EXT, DB> {
         db: ODB,
     ) -> EvmBuilder<'a, SettingExternalStage, EXT, WrapDatabaseRef<ODB>> {
         EvmBuilder {
-            evm: EvmContext::new(WrapDatabaseRef(db)),
+            evm: self.evm.with_db(WrapDatabaseRef(db)),
             external: self.external,
             handler: Handler::mainnet::<LatestSpec>(),
 
@@ -129,16 +129,22 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingExternalStage, EXT, DB> {
         }
     }
 
-    /// Consumes the Builder and build the Build Evm with default mainnet handler.
-    pub fn build(self) -> Evm<'a, EXT, DB> {
-        Evm {
-            context: Context {
-                evm: self.evm,
-                external: self.external,
-            },
-            handler: self.handler,
-        }
+    /// Modify Database of EVM.
+    pub fn modify_db(mut self, f: impl FnOnce(&mut DB)) -> Self {
+        f(&mut self.evm.db);
+        self
     }
+
+    // Consumes the Builder and build the Build Evm with default mainnet handler.
+    // pub fn build(self) -> Evm<'a, EXT, DB> {
+    //     Evm {
+    //         context: Context {
+    //             evm: self.evm,
+    //             external: self.external,
+    //         },
+    //         handler: self.handler,
+    //     }
+    // }
 }
 
 impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingHandlerStage, EXT, DB> {
@@ -154,16 +160,22 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingHandlerStage, EXT, DB> {
         }
     }
 
-    /// Consumes the Builder and build the Build Evm.
-    pub fn build(self) -> Evm<'a, EXT, DB> {
-        Evm {
-            context: Context {
-                evm: self.evm,
-                external: self.external,
-            },
-            handler: self.handler,
-        }
+    /// Modify Database of EVM.
+    pub fn modify_db(mut self, f: impl FnOnce(&mut DB)) -> Self {
+        f(&mut self.evm.db);
+        self
     }
+
+    // Consumes the Builder and build the Build Evm.
+    // pub fn build(self) -> Evm<'a, EXT, DB> {
+    //     Evm {
+    //         context: Context {
+    //             evm: self.evm,
+    //             external: self.external,
+    //         },
+    //         handler: self.handler,
+    //     }
+    // }
 
     /// Sets specification Id , that will mark the version of EVM.
     /// It represent the hard fork of ethereum.
