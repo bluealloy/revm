@@ -10,6 +10,7 @@ use revm::{
         address, b256, calc_excess_blob_gas, keccak256, Bytecode, Env, HashMap, SpecId, TransactTo,
         B256, U256,
     },
+    Evm,
 };
 use std::{
     io::stdout,
@@ -205,7 +206,7 @@ pub fn execute_test_suite(
                 continue;
             }
 
-            env.cfg.spec_id = spec_name.to_spec_id();
+            let spec_id = spec_name.to_spec_id();
 
             for (index, test) in tests.into_iter().enumerate() {
                 env.tx.gas_limit = unit.transaction.gas_limit[test.indexes.gas].saturating_to();
@@ -244,21 +245,25 @@ pub fn execute_test_suite(
 
                 let mut cache = cache_state.clone();
                 cache.set_state_clear_flag(SpecId::enabled(
-                    env.cfg.spec_id,
+                    spec_id,
                     revm::primitives::SpecId::SPURIOUS_DRAGON,
                 ));
                 let mut state = revm::db::State::builder()
                     .with_cached_prestate(cache)
                     .with_bundle_update()
                     .build();
-                let mut evm = revm::new();
-                evm.database(&mut state);
-                evm.env = env.clone();
+                let mut evm = Evm::builder()
+                    .with_db(&mut state)
+                    .modify_env(|e| *e = env.clone())
+                    .without_external_context()
+                    .with_spec_id(spec_id)
+                    .build();
 
                 // do the deed
                 let timer = Instant::now();
                 let exec_result = if trace {
-                    evm.inspect_commit(TracerEip3155::new(Box::new(stdout()), false, false))
+                    //evm.inspect_commit(TracerEip3155::new(Box::new(stdout()), false, false))
+                    unimplemented!();
                 } else {
                     evm.transact_commit()
                 };
@@ -306,7 +311,7 @@ pub fn execute_test_suite(
                         });
                     }
 
-                    let db = evm.db.as_ref().unwrap();
+                    let db = evm.context.evm.db;
                     let state_root = state_merkle_trie_root(db.cache.trie_account());
 
                     if state_root != test.hash {
@@ -332,24 +337,25 @@ pub fn execute_test_suite(
                 }
 
                 // re build to run with tracing
-                let mut cache = cache_state.clone();
-                cache.set_state_clear_flag(SpecId::enabled(
-                    env.cfg.spec_id,
-                    revm::primitives::SpecId::SPURIOUS_DRAGON,
-                ));
-                let mut state = revm::db::StateBuilder::default()
-                    .with_cached_prestate(cache)
-                    .build();
-                evm.database(&mut state);
+                // let mut cache = cache_state.clone();
+                // cache.set_state_clear_flag(SpecId::enabled(
+                //     env.cfg.spec_id,
+                //     revm::primitives::SpecId::SPURIOUS_DRAGON,
+                // ));
+                // let mut state = revm::db::StateBuilder::default()
+                //     .with_cached_prestate(cache)
+                //     .build();
+                // evm.database(&mut state);
 
                 let path = path.display();
                 println!("\nTraces:");
-                let _ = evm.inspect_commit(TracerEip3155::new(Box::new(stdout()), false, false));
+                //let _ = evm.modify().reset_handler_with_external_context(TracerEip3155::new(Box::new(stdout()), false, false))
+                //.
 
                 println!("\nExecution result: {exec_result:#?}");
                 println!("\nExpected exception: {:?}", test.expect_exception);
                 println!("\nState before: {cache_state:#?}");
-                println!("\nState after: {:#?}", evm.db().unwrap().cache);
+                //println!("\nState after: {:#?}", evm.db().unwrap().cache);
                 println!("\nEnvironment: {env:#?}");
                 println!("\nTest name: {name:?} (index: {index}, path: {path}) failed:\n{e}");
 

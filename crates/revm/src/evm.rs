@@ -2,15 +2,15 @@
 use crate::optimism;
 use crate::{
     builder::{EvmBuilder, SettingDbStage, SettingHandlerStage},
-    db::{Database, EmptyDB},
+    db::{Database, DatabaseCommit, EmptyDB},
     handler::Handler,
     interpreter::{
         opcode::InstructionTables, Host, Interpreter, InterpreterAction, InterpreterResult,
         SelfDestructResult, SharedMemory,
     },
     primitives::{
-        specification::SpecId, Address, Bytecode, Bytes, EVMError, EVMResult, Env, Log, Output,
-        TransactTo, B256, U256,
+        specification::SpecId, Address, Bytecode, Bytes, EVMError, EVMResult, Env, ExecutionResult,
+        Log, Output, ResultAndState, TransactTo, B256, U256,
     },
     CallStackFrame, Context, FrameOrResult,
 };
@@ -40,6 +40,15 @@ where
         f.debug_struct("Evm")
             .field("evm context", &self.context.evm)
             .finish_non_exhaustive()
+    }
+}
+
+impl<'a, EXT, DB: Database + DatabaseCommit> Evm<'a, EXT, DB> {
+    /// Commit the changes to the database.
+    pub fn transact_commit(&mut self) -> Result<ExecutionResult, EVMError<DB::Error>> {
+        let ResultAndState { result, state } = self.transact()?;
+        self.context.evm.db.commit(state);
+        Ok(result)
     }
 }
 

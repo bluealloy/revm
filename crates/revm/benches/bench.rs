@@ -31,20 +31,23 @@ fn analysis(c: &mut Criterion) {
         .sample_size(10);
 
     let raw = Bytecode::new_raw(contract_data.clone());
-    let mut evm = evm.modify().with_db(BenchmarkDB::new_bytecode(raw)).build();
+    let mut evm = evm
+        .modify()
+        .reset_handler_with_db(BenchmarkDB::new_bytecode(raw))
+        .build();
     bench_transact(&mut g, &mut evm);
 
     let checked = Bytecode::new_raw(contract_data.clone()).to_checked();
     let mut evm = evm
         .modify()
-        .with_db(BenchmarkDB::new_bytecode(checked))
+        .reset_handler_with_db(BenchmarkDB::new_bytecode(checked))
         .build();
     bench_transact(&mut g, &mut evm);
 
     let analysed = to_analysed(Bytecode::new_raw(contract_data));
     let mut evm = evm
         .modify()
-        .with_db(BenchmarkDB::new_bytecode(analysed))
+        .reset_handler_with_db(BenchmarkDB::new_bytecode(analysed))
         .build();
     bench_transact(&mut g, &mut evm);
 
