@@ -594,8 +594,6 @@ impl BundleState {
         self.contracts.extend(other.contracts);
         // Reverts can be just extended
         self.reverts.extend(other.reverts);
-    
-
     }
 
     /// Take first N raw reverts from the [BundleState].
@@ -664,7 +662,6 @@ impl BundleState {
             }
         }
     }
-
 
     /// Prepends present the state with the given BundleState.
     /// It adds changes from the given state but does not override any existing changes.
