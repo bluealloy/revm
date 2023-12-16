@@ -7,7 +7,7 @@ use alloc::{
     collections::{BTreeMap, BTreeSet},
     vec::Vec,
 };
-use core::ops::RangeInclusive;
+use core::{mem, ops::RangeInclusive};
 use revm_interpreter::primitives::{
     hash_map::{self, Entry},
     AccountInfo, Address, Bytecode, HashMap, HashSet, StorageSlot, B256, KECCAK_EMPTY, U256,
@@ -518,7 +518,7 @@ impl BundleState {
     /// Extend the bundle with other state
     ///
     /// Update the `other` state only if `other` is not flagged as destroyed.
-    pub fn extend_state(&mut self, other_state: HashMap<Address, BundleAccount>){
+    pub fn extend_state(&mut self, other_state: HashMap<Address, BundleAccount>) {
         for (address, other_account) in other_state {
             match self.state.entry(address) {
                 hash_map::Entry::Occupied(mut entry) => {
@@ -672,13 +672,13 @@ impl BundleState {
     /// Reverts are not updated.
     pub fn prepend_state(&mut self, mut other: BundleState) {
         // take this bundle
-        let this_bundle = std::mem::take(self);
+        let this_bundle = mem::take(self);
         // extend other bundle state with this
         other.extend_state(this_bundle.state);
         // extend other contracts
         other.contracts.extend(this_bundle.contracts);
         // swap bundles
-        std::mem::swap(self, &mut other)
+        mem::swap(self, &mut other)
     }
 }
 
@@ -1028,9 +1028,18 @@ mod tests {
         let address1 = account1();
         let address2 = account2();
 
-        let account1 = AccountInfo { nonce: 1, ..Default::default() };
-        let account1_changed = AccountInfo { nonce: 1, ..Default::default() };
-        let account2 = AccountInfo { nonce: 1, ..Default::default() };
+        let account1 = AccountInfo {
+            nonce: 1,
+            ..Default::default()
+        };
+        let account1_changed = AccountInfo {
+            nonce: 1,
+            ..Default::default()
+        };
+        let account2 = AccountInfo {
+            nonce: 1,
+            ..Default::default()
+        };
 
         let present_state = BundleState::builder(2..=2)
             .state_present_account_info(address1, account1_changed.clone())
@@ -1050,7 +1059,10 @@ mod tests {
         // reverts num should stay the same.
         assert_eq!(test.reverts.len(), 1);
         // account1 is not overwritten.
-        assert_eq!(test.state.get(&address1).unwrap().info, Some(account1_changed));
+        assert_eq!(
+            test.state.get(&address1).unwrap().info,
+            Some(account1_changed)
+        );
         // account2 got inserted
         assert_eq!(test.state.get(&address2).unwrap().info, Some(account2));
     }
