@@ -263,6 +263,11 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
         // load access list and beneficiary if needed.
         hndl.main().load(ctx)?;
+
+        // load precompiles
+        let precompiles = hndl.main().load_precompiles();
+        ctx.evm.set_precompiles(precompiles);
+
         // deduce caller balance with its limit.
         hndl.main().deduct_caller(ctx)?;
         // gas limit used in calls.

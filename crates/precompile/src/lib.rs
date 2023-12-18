@@ -64,14 +64,14 @@ pub struct Precompiles {
 
 impl Precompiles {
     /// Returns the precompiles for the given spec.
-    pub fn new(spec: SpecId) -> &'static Self {
+    pub fn new(spec: PrecompileSpecId) -> &'static Self {
         match spec {
-            SpecId::HOMESTEAD => Self::homestead(),
-            SpecId::BYZANTIUM => Self::byzantium(),
-            SpecId::ISTANBUL => Self::istanbul(),
-            SpecId::BERLIN => Self::berlin(),
-            SpecId::CANCUN => Self::cancun(),
-            SpecId::LATEST => Self::latest(),
+            PrecompileSpecId::HOMESTEAD => Self::homestead(),
+            PrecompileSpecId::BYZANTIUM => Self::byzantium(),
+            PrecompileSpecId::ISTANBUL => Self::istanbul(),
+            PrecompileSpecId::BERLIN => Self::berlin(),
+            PrecompileSpecId::CANCUN => Self::cancun(),
+            PrecompileSpecId::LATEST => Self::latest(),
         }
     }
 
@@ -243,7 +243,7 @@ impl From<PrecompileWithAddress> for (Address, Precompile) {
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
-pub enum SpecId {
+pub enum PrecompileSpecId {
     HOMESTEAD,
     BYZANTIUM,
     ISTANBUL,
@@ -252,7 +252,7 @@ pub enum SpecId {
     LATEST,
 }
 
-impl SpecId {
+impl PrecompileSpecId {
     /// Returns the appropriate precompile Spec for the primitive [SpecId](revm_primitives::SpecId)
     pub const fn from_spec_id(spec_id: revm_primitives::SpecId) -> Self {
         use revm_primitives::SpecId::*;

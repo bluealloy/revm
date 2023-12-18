@@ -9,7 +9,7 @@ pub use frame::{
     handle_frame_sub_create, main_frame_return,
 };
 pub use main::{
-    deduct_caller_inner, main_deduct_caller, main_end, main_load, main_reimburse_caller,
-    main_return, main_reward_beneficiary,
+    deduct_caller_inner, main_deduct_caller, main_end, main_load, main_load_precompiles,
+    main_reimburse_caller, main_return, main_reward_beneficiary,
 };
 pub use validation::{validate_env, validate_initial_tx_gas, validate_tx_against_state};

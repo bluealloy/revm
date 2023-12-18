@@ -12,6 +12,18 @@ pub trait GetInspector<'a, DB: Database> {
 }
 
 /// Register Inspector handles that interact with Inspector instance.
+///
+///
+/// # Note
+///
+/// Most of the functions are wrapped for Inspector usage expect
+/// the SubCreate and SubCall calls that got overwritten.
+///
+/// Few instructions handlers are wrapped twice once for `step`` and `step_end`
+/// and in case of Logs and Selfdestruct wrapper is wrapped again for the
+/// `log` and `selfdestruct` calls.
+///
+/// `frame_return` is also wrapped so that Inspector could call `call_end` or `create_end`.
 pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     handler: &mut EvmHandler<'a, EXT, DB>,
 ) {
@@ -35,10 +47,11 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     // Register inspector Log instruction.
     let mut inspect_log = |index: u8| {
         table.get_mut(index as usize).map(|i| {
-            Box::new(
-                |interpreter: &mut Interpreter, host: &mut Evm<'a, EXT, DB>| {
+            let old = core::mem::replace(i, Box::new(|_, _| ()));
+            *i = Box::new(
+                move |interpreter: &mut Interpreter, host: &mut Evm<'a, EXT, DB>| {
                     let old_log_len = host.context.evm.journaled_state.logs.len();
-                    i(interpreter, host);
+                    old(interpreter, host);
                     // check if log was added. It is possible that revert happened
                     // cause of gas or stack underflow.
                     if host.context.evm.journaled_state.logs.len() == old_log_len + 1 {
@@ -72,10 +85,11 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
 
     // register selfdestruct function.
     table.get_mut(opcode::SELFDESTRUCT as usize).map(|i| {
-        Box::new(
-            |interpreter: &mut Interpreter, host: &mut Evm<'a, EXT, DB>| {
+        let old = core::mem::replace(i, Box::new(|_, _| ()));
+        *i = Box::new(
+            move |interpreter: &mut Interpreter, host: &mut Evm<'a, EXT, DB>| {
                 // execute selfdestruct
-                i(interpreter, host);
+                old(interpreter, host);
                 // check if selfdestruct was successful and if journal entry is made.
                 if let Some(JournalEntry::AccountDestroyed {
                     address,
@@ -101,6 +115,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
         )
     });
 
+    // cast vector to array.
     handler.instruction_table = Some(EvmInstructionTables::Boxed(
         table.try_into().unwrap_or_else(|_| unreachable!()),
     ));

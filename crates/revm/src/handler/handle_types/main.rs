@@ -6,6 +6,10 @@ use crate::{
     Context,
 };
 use alloc::sync::Arc;
+use revm_precompile::Precompiles;
+
+/// Loads precompiles into Evm
+pub type MainLoadPrecompiles<'a> = Arc<dyn Fn() -> Precompiles + 'a>;
 
 /// Load access list account, precompiles and beneficiary.
 /// There is not need to load Caller as it is assumed that
@@ -49,6 +53,8 @@ pub type EndHandle<'a, EXT, DB> = Arc<
 
 /// Handles related to main function.
 pub struct MainHandler<'a, EXT, DB: Database> {
+    /// Load precompiles
+    pub precompiles: MainLoadPrecompiles<'a>,
     /// Main load handle
     pub load: MainLoadHandle<'a, EXT, DB>,
     /// Deduct max value from the caller.
@@ -67,6 +73,7 @@ impl<'a, EXT: 'a, DB: Database + 'a> MainHandler<'a, EXT, DB> {
     /// Creates mainnet MainHandles.
     pub fn new<SPEC: Spec + 'a>() -> Self {
         Self {
+            precompiles: Arc::new(mainnet::main_load_precompiles::<SPEC>),
             load: Arc::new(mainnet::main_load::<SPEC, EXT, DB>),
             deduct_caller: Arc::new(mainnet::main_deduct_caller::<SPEC, EXT, DB>),
             reimburse_caller: Arc::new(mainnet::main_reimburse_caller::<SPEC, EXT, DB>),
@@ -124,5 +131,10 @@ impl<'a, EXT, DB: Database> MainHandler<'a, EXT, DB> {
     /// Main load
     pub fn load(&self, context: &mut Context<EXT, DB>) -> Result<(), EVMError<DB::Error>> {
         (self.load)(context)
+    }
+
+    /// Load precompiles
+    pub fn load_precompiles(&self) -> Precompiles {
+        (self.precompiles)()
     }
 }

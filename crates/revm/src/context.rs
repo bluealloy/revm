@@ -81,7 +81,7 @@ impl<'a, DB: Database> EvmContext<DB> {
 
     /// Sets precompiles
     pub fn set_precompiles(&mut self, precompiles: Precompiles) {
-        self.journaled_state.precompile_addresses = precompiles
+        self.journaled_state.warm_preloaded_addresses = precompiles
             .addresses()
             .into_iter()
             .cloned()

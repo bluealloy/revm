@@ -2,7 +2,7 @@ use crate::{
     inspectors::GasInspector,
     interpreter::{opcode, CallInputs, CreateInputs, Interpreter, InterpreterResult},
     primitives::{db::Database, hex, Address, U256},
-    EvmContext, Inspector,
+    EvmContext, GetInspector, Inspector,
 };
 use core::ops::Range;
 use serde_json::json;
@@ -24,6 +24,12 @@ pub struct TracerEip3155 {
     gas: u64,
     mem_size: usize,
     skip: bool,
+}
+
+impl<'a, DB: Database> GetInspector<'a, DB> for TracerEip3155 {
+    fn get_inspector(&mut self) -> &mut dyn Inspector<DB> {
+        self
+    }
 }
 
 impl TracerEip3155 {

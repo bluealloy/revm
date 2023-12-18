@@ -26,24 +26,28 @@ pub struct JournaledState {
     /// Spec is needed for two things SpuriousDragon's `EIP-161 State clear`,
     /// and for Cancun's `EIP-6780: SELFDESTRUCT in same transaction`
     pub spec: SpecId,
-    /// Precompiles addresses are used to check if loaded address
-    /// should be considered cold or hot loaded. It is cloned from
-    /// EvmContext to be directly accessed from JournaledState.
-    pub precompile_addresses: HashSet<Address>,
+    /// Warm loaded addresses are used to check if loaded address
+    /// should be considered cold or warm loaded when the account
+    /// is first accessed.
+    ///
+    /// Note that this not include newly loaded accounts, account and storage
+    /// is considered warm if it is found in the `State`.
+    pub warm_preloaded_addresses: HashSet<Address>,
 }
 
 impl JournaledState {
     /// Create new JournaledState.
     ///
-    /// precompile_addresses is used to determine if address is precompile or not.
+    /// warm_preloaded_addresses is used to determine if address is considered warm loaded.
+    /// In ordinary case this is precompile or beneficiary.
     ///
     /// Note: This function will journal state after Spurious Dragon fork.
     /// And will not take into account if account is not existing or empty.
     ///
     /// # Note
     ///
-    /// Precompile addresses should be sorted.
-    pub fn new(spec: SpecId, precompile_addresses: HashSet<Address>) -> JournaledState {
+    ///
+    pub fn new(spec: SpecId, warm_preloaded_addresses: HashSet<Address>) -> JournaledState {
         Self {
             state: HashMap::new(),
             transient_storage: TransientStorage::default(),
@@ -51,7 +55,7 @@ impl JournaledState {
             journal: vec![vec![]],
             depth: 0,
             spec,
-            precompile_addresses,
+            warm_preloaded_addresses,
         }
     }
 
@@ -59,6 +63,12 @@ impl JournaledState {
     #[inline]
     pub fn state(&mut self) -> &mut State {
         &mut self.state
+    }
+
+    /// Sets SpecId.
+    #[inline]
+    pub fn set_spec_id(&mut self, spec: SpecId) {
+        self.spec = spec;
     }
 
     /// Mark account as touched as only touched accounts will be added to state.
@@ -225,7 +235,7 @@ impl JournaledState {
         // Account is not precompile.
         if account.info.code_hash != KECCAK_EMPTY
             || account.info.nonce != 0
-            || self.precompile_addresses.contains(&address)
+            || self.warm_preloaded_addresses.contains(&address)
         {
             self.checkpoint_revert(checkpoint);
             return Err(InstructionResult::CreateCollision);
@@ -538,7 +548,7 @@ impl JournaledState {
                     .push(JournalEntry::AccountLoaded { address });
 
                 // precompiles are warm loaded so we need to take that into account
-                let is_cold = !self.precompile_addresses.contains(&address);
+                let is_cold = !self.warm_preloaded_addresses.contains(&address);
 
                 (vac.insert(account), is_cold)
             }

@@ -40,7 +40,7 @@ fn main() {
 
     let mut evm = evm
         .modify()
-        .with_db(BenchmarkDB::new_bytecode(bytecode_checked))
+        .reset_handler_with_db(BenchmarkDB::new_bytecode(bytecode_checked))
         .build();
 
     let timer = Instant::now();
@@ -51,7 +51,7 @@ fn main() {
 
     let mut evm = evm
         .modify()
-        .with_db(BenchmarkDB::new_bytecode(bytecode_analysed))
+        .reset_handler_with_db(BenchmarkDB::new_bytecode(bytecode_analysed))
         .build();
 
     let timer = Instant::now();

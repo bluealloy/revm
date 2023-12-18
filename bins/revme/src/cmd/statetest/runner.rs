@@ -4,13 +4,15 @@ use super::{
 };
 use indicatif::ProgressBar;
 use revm::{
+    db::EmptyDB,
+    inspector_handle_register,
     inspectors::TracerEip3155,
     interpreter::CreateScheme,
     primitives::{
         address, b256, calc_excess_blob_gas, keccak256, Bytecode, Env, HashMap, SpecId, TransactTo,
         B256, U256,
     },
-    Evm,
+    Evm, State,
 };
 use std::{
     io::stdout,
@@ -311,8 +313,8 @@ pub fn execute_test_suite(
                         });
                     }
 
-                    let db = evm.context.evm.db;
-                    let state_root = state_merkle_trie_root(db.cache.trie_account());
+                    let state_root =
+                        state_merkle_trie_root(evm.context.evm.db.cache.trie_account());
 
                     if state_root != test.hash {
                         return Err(TestError {
@@ -337,25 +339,31 @@ pub fn execute_test_suite(
                 }
 
                 // re build to run with tracing
-                // let mut cache = cache_state.clone();
-                // cache.set_state_clear_flag(SpecId::enabled(
-                //     env.cfg.spec_id,
-                //     revm::primitives::SpecId::SPURIOUS_DRAGON,
-                // ));
-                // let mut state = revm::db::StateBuilder::default()
-                //     .with_cached_prestate(cache)
-                //     .build();
+                let mut cache = cache_state.clone();
+                cache.set_state_clear_flag(SpecId::enabled(
+                    spec_id,
+                    revm::primitives::SpecId::SPURIOUS_DRAGON,
+                ));
+                let state: State<EmptyDB> = revm::db::StateBuilder::default()
+                    .with_cached_prestate(cache)
+                    .build();
                 // evm.database(&mut state);
 
                 let path = path.display();
                 println!("\nTraces:");
-                //let _ = evm.modify().reset_handler_with_external_context(TracerEip3155::new(Box::new(stdout()), false, false))
-                //.
+                let mut evm = evm
+                    .modify()
+                    .reset_handler_with_db(state)
+                    .with_external_context(TracerEip3155::new(Box::new(stdout()), false, false))
+                    .append_handler_register(inspector_handle_register)
+                    .build();
+                let _ = evm.transact_commit();
 
                 println!("\nExecution result: {exec_result:#?}");
                 println!("\nExpected exception: {:?}", test.expect_exception);
                 println!("\nState before: {cache_state:#?}");
-                //println!("\nState after: {:#?}", evm.db().unwrap().cache);
+                println!("\nState after: {:#?}", evm.context.evm.db.cache);
+                println!("\nSpecification: {spec_id:?}");
                 println!("\nEnvironment: {env:#?}");
                 println!("\nTest name: {name:?} (index: {index}, path: {path}) failed:\n{e}");
 

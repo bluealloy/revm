@@ -2,6 +2,8 @@
 //!
 //! They handle initial setup of the EVM, call loop and the final return of the EVM
 
+use revm_precompile::{PrecompileSpecId, Precompiles};
+
 use crate::{
     interpreter::{Gas, InstructionResult, SuccessOrHalt},
     primitives::{
@@ -13,11 +15,19 @@ use crate::{
     Context,
 };
 
+/// Main precompile load
+pub fn main_load_precompiles<SPEC: Spec>() -> Precompiles {
+    Precompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID)).clone()
+}
+
 /// Main load handle
 #[inline]
 pub fn main_load<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
 ) -> Result<(), EVMError<DB::Error>> {
+    // set journaling state flag.
+    context.evm.journaled_state.set_spec_id(SPEC::SPEC_ID);
+
     // the L1-cost fee is only computed for Optimism non-deposit transactions.
     #[cfg(feature = "optimism")]
     if env.cfg.optimism && env.tx.optimism.source_hash.is_none() {

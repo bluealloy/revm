@@ -11,8 +11,8 @@ pub use validation::{
 };
 
 pub use main::{
-    DeductCallerHandle, EndHandle, MainHandler, MainLoadHandle, MainReturnHandle,
-    ReimburseCallerHandle, RewardBeneficiaryHandle,
+    DeductCallerHandle, EndHandle, MainHandler, MainLoadHandle, MainLoadPrecompiles,
+    MainReturnHandle, ReimburseCallerHandle, RewardBeneficiaryHandle,
 };
 
 pub use frame::{
