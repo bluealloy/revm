@@ -158,6 +158,84 @@ spec!(REGOLITH, RegolithSpec);
 #[cfg(feature = "optimism")]
 spec!(CANYON, CanyonSpec);
 
+#[macro_export]
+macro_rules! spec_to_generic {
+    ($spec_id:expr, $e:expr) => {
+        // We are transitioning from var to generic spec.
+        match $spec_id {
+            $crate::SpecId::FRONTIER | SpecId::FRONTIER_THAWING => {
+                type SPEC = $crate::FrontierSpec;
+                $e
+            }
+            $crate::SpecId::HOMESTEAD | SpecId::DAO_FORK => {
+                type SPEC = $crate::HomesteadSpec;
+                $e
+            }
+            $crate::SpecId::TANGERINE => {
+                type SPEC = $crate::TangerineSpec;
+                $e
+            }
+            $crate::SpecId::SPURIOUS_DRAGON => {
+                type SPEC = $crate::SpuriousDragonSpec;
+                $e
+            }
+            $crate::SpecId::BYZANTIUM => {
+                type SPEC = $crate::ByzantiumSpec;
+                $e
+            }
+            $crate::SpecId::PETERSBURG | $crate::SpecId::CONSTANTINOPLE => {
+                type SPEC = $crate::PetersburgSpec;
+                $e
+            }
+            $crate::SpecId::ISTANBUL | $crate::SpecId::MUIR_GLACIER => {
+                type SPEC = $crate::IstanbulSpec;
+                $e
+            }
+            $crate::SpecId::BERLIN => {
+                type SPEC = $crate::BerlinSpec;
+                $e
+            }
+            $crate::SpecId::LONDON
+            | $crate::SpecId::ARROW_GLACIER
+            | $crate::SpecId::GRAY_GLACIER => {
+                type SPEC = $crate::LondonSpec;
+                $e
+            }
+            $crate::SpecId::MERGE => {
+                type SPEC = $crate::MergeSpec;
+                $e
+            }
+            $crate::SpecId::SHANGHAI => {
+                type SPEC = $crate::ShanghaiSpec;
+                $e
+            }
+            $crate::SpecId::CANCUN => {
+                type SPEC = $crate::CancunSpec;
+                $e
+            }
+            $crate::SpecId::LATEST => {
+                type SPEC = $crate::LatestSpec;
+                $e
+            }
+            #[cfg(feature = "optimism")]
+            $crate::SpecId::BEDROCK => {
+                type SPEC = $crate::BedrockSpec;
+                $e
+            }
+            #[cfg(feature = "optimism")]
+            $crate::SpecId::REGOLITH => {
+                type SPEC = $crate::RegolithSpec;
+                $e
+            }
+            #[cfg(feature = "optimism")]
+            $crate::SpecId::CANYON => {
+                type SPEC = $crate::CanyonSpec;
+                $e
+            }
+        }
+    };
+}
+
 #[cfg(feature = "optimism")]
 #[cfg(test)]
 mod tests {

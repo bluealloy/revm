@@ -1,9 +1,4 @@
-use crate::{
-    primitives::{
-        address, db::Database, Address, Bytes, EVMError, InvalidTransaction, Spec, SpecId, U256,
-    },
-    JournaledState,
-};
+use crate::primitives::{address, db::Database, Address, Bytes, SpecId, U256};
 use core::ops::Mul;
 
 const ZERO_BYTE_COST: u64 = 4;
@@ -98,7 +93,7 @@ impl L1BlockInfo {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::primitives::{bytes, specification::*};
+    use crate::primitives::bytes;
 
     #[test]
     fn test_data_gas_non_zero_bytes() {

@@ -16,7 +16,7 @@ use crate::{
         opcode::{make_instruction_table, InstructionTables},
         Host,
     },
-    primitives::{db::Database, Spec, SpecId},
+    primitives::{db::Database, spec_to_generic, Spec, SpecId},
 };
 use alloc::vec::Vec;
 use register::{EvmHandler, HandleRegisters};
@@ -106,32 +106,13 @@ impl<'a, EXT: 'a, DB: Database + 'a> EvmHandler<'a, EXT, DB> {
         if self.spec_id == spec_id {
             return self;
         }
-        use crate::primitives::specification::*;
-        // We are transitioning from var to generic spec.
-        match spec_id {
-            SpecId::FRONTIER | SpecId::FRONTIER_THAWING => {
-                self.create_handle_generic::<FrontierSpec>()
-            }
-            SpecId::HOMESTEAD | SpecId::DAO_FORK => self.create_handle_generic::<HomesteadSpec>(),
-            SpecId::TANGERINE => self.create_handle_generic::<TangerineSpec>(),
-            SpecId::SPURIOUS_DRAGON => self.create_handle_generic::<SpuriousDragonSpec>(),
-            SpecId::BYZANTIUM => self.create_handle_generic::<ByzantiumSpec>(),
-            SpecId::PETERSBURG | SpecId::CONSTANTINOPLE => {
-                self.create_handle_generic::<PetersburgSpec>()
-            }
-            SpecId::ISTANBUL | SpecId::MUIR_GLACIER => self.create_handle_generic::<IstanbulSpec>(),
-            SpecId::BERLIN => self.create_handle_generic::<BerlinSpec>(),
-            SpecId::LONDON | SpecId::ARROW_GLACIER | SpecId::GRAY_GLACIER => {
-                self.create_handle_generic::<LondonSpec>()
-            }
-            SpecId::MERGE => self.create_handle_generic::<MergeSpec>(),
-            SpecId::SHANGHAI => self.create_handle_generic::<ShanghaiSpec>(),
-            SpecId::CANCUN => self.create_handle_generic::<CancunSpec>(),
-            SpecId::LATEST => self.create_handle_generic::<LatestSpec>(),
-            #[cfg(feature = "optimism")]
-            SpecId::BEDROCK => self.create_handle_generic::<BedrockSpec>(),
-            #[cfg(feature = "optimism")]
-            SpecId::REGOLITH => self.create_handle_generic::<RegolithSpec>(),
+
+        let registers = core::mem::take(&mut self.registers);
+        let mut handler = spec_to_generic!(self.spec_id, Handler::mainnet::<SPEC>());
+        // apply all registers to default handeler and raw mainnet instruction table.
+        for register in registers {
+            handler.append_handle_register(register)
         }
+        handler
     }
 }

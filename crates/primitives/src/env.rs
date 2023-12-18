@@ -760,13 +760,15 @@ mod tests {
     #[test]
     fn test_validate_tx_against_state_deposit_tx() {
         // Set the optimism flag and source hash.
+
+        use crate::LatestSpec;
         let mut env = Env::default();
         env.cfg.optimism = true;
         env.tx.optimism.source_hash = Some(B256::ZERO);
 
         // Nonce and balance checks should be skipped for deposit transactions.
         assert!(env
-            .validate_tx_against_state(&mut Account::default())
+            .validate_tx_against_state::<LatestSpec>(&mut Account::default())
             .is_ok());
     }
 

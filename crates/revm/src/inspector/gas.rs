@@ -67,7 +67,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 #[cfg(test)]
 mod tests {
     use crate::{
-        inspector::{inspector_handle_register, GetInspector},
+        inspector::GetInspector,
         inspectors::GasInspector,
         interpreter::{CallInputs, CreateInputs, Interpreter, InterpreterResult},
         primitives::{Address, Log},
@@ -148,6 +148,7 @@ mod tests {
     fn test_gas_inspector() {
         use crate::{
             db::BenchmarkDB,
+            inspector::inspector_handle_register,
             interpreter::opcode,
             primitives::{address, Bytecode, Bytes, TransactTo},
             Evm,
