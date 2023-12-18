@@ -50,8 +50,8 @@ impl<DB: Database> Handler<DB> {
     pub fn taiko<SPEC: Spec>() -> Self {
         use crate::taiko::handler;
         Self {
-            call_return: handler::handle_call_return::<SPEC>,
-            calculate_gas_refund: handler::calculate_gas_refund::<SPEC>,
+            call_return: mainnet::handle_call_return::<SPEC>,
+            calculate_gas_refund: mainnet::calculate_gas_refund::<SPEC>,
             reimburse_caller: handler::handle_reimburse_caller::<SPEC, DB>,
             reward_beneficiary: handler::reward_beneficiary::<SPEC, DB>,
         }

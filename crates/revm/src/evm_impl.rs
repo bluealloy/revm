@@ -413,7 +413,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         let journaled_state = JournaledState::new(precompiles.len(), GSPEC::SPEC_ID);
 
         #[cfg(feature = "optimism")]
-        let handler = if env.cfg.optimism {
+        let handler: Handler<DB> = if env.cfg.optimism {
             Handler::optimism::<GSPEC>()
         } else {
             Handler::mainnet::<GSPEC>()
