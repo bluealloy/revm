@@ -1,5 +1,3 @@
-#[cfg(feature = "optimism")]
-use crate::optimism;
 use crate::{
     builder::{EvmBuilder, SettingDbStage, SettingHandlerStage},
     db::{Database, DatabaseCommit, EmptyDB},

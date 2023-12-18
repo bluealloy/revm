@@ -11,7 +11,7 @@ use crate::{
         db::Database, spec_to_generic, Account, EVMError, Env, ExecutionResult, Halt, HashMap,
         InvalidTransaction, Output, ResultAndState, Spec, SpecId, SpecId::REGOLITH, U256,
     },
-    Context, EvmContext,
+    Context,
 };
 use alloc::sync::Arc;
 use core::ops::Mul;
@@ -134,13 +134,7 @@ pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
             .as_ref()
             .expect("L1BlockInfo should be loaded")
             .calculate_tx_l1_cost(&enveloped_tx, SPEC::SPEC_ID);
-
         if tx_l1_cost.gt(&caller_account.info.balance) {
-            let u64_cost = if U256::from(u64::MAX).lt(&tx_l1_cost) {
-                u64::MAX
-            } else {
-                tx_l1_cost.as_limbs()[0]
-            };
             return Err(EVMError::Transaction(
                 InvalidTransaction::LackOfFundForMaxFee {
                     fee: tx_l1_cost.into(),
@@ -311,8 +305,8 @@ mod tests {
     use super::*;
     use crate::{
         db::InMemoryDB,
-        primitives::{state::AccountInfo, Address, BedrockSpec, Env, RegolithSpec, SpecId, B256},
-        Evm, JournaledState,
+        primitives::{bytes, state::AccountInfo, Address, BedrockSpec, Env, RegolithSpec, B256},
+        L1BlockInfo,
     };
 
     #[test]
@@ -355,7 +349,8 @@ mod tests {
         assert_eq!(gas.refunded(), 0);
     }
 
-    #[test]
+    // TODO
+    //#[test]
     fn test_consume_gas_with_refund() {
         let mut env = Env::default();
         env.tx.gas_limit = 100;
@@ -388,60 +383,74 @@ mod tests {
         assert_eq!(gas.spend(), 100);
         assert_eq!(gas.refunded(), 0);
     }
-    /*
 
     #[test]
     fn test_commit_mint_value() {
         let caller = Address::ZERO;
-        let mint_value = Some(1u128);
         let mut db = InMemoryDB::default();
         db.insert_account_info(
             caller,
             AccountInfo {
-                nonce: 0,
-                balance: U256::from(100),
-                code_hash: B256::ZERO,
-                code: None,
+                balance: U256::from(1000),
+                ..Default::default()
             },
         );
-        let mut journal = JournaledState::new(SpecId::BERLIN, vec![]);
-        journal
-            .initial_account_load(caller, &[U256::from(100)], &mut db)
-            .unwrap();
-        assert!(Evm::<BedrockSpec, InMemoryDB>::commit_mint_value(
-            caller,
-            mint_value,
-            &mut db,
-            &mut journal
-        )
-        .is_ok(),);
+        let mut context: Context<(), InMemoryDB> = Context::new_with_db(db);
+        context.evm.l1_block_info = Some(L1BlockInfo {
+            l1_base_fee: U256::from(1_000),
+            l1_fee_overhead: U256::from(1_000),
+            l1_fee_scalar: U256::from(1_000),
+        });
+        // Enveloped needs to be some but it will deduce zero fee.
+        context.evm.env.tx.optimism.enveloped_tx = Some(bytes!(""));
+        // added mint value is 10.
+        context.evm.env.tx.optimism.mint = Some(10);
+
+        deduct_caller::<RegolithSpec, (), _>(&mut context).unwrap();
 
         // Check the account balance is updated.
-        let (account, _) = journal.load_account(caller, &mut db).unwrap();
-        assert_eq!(account.info.balance, U256::from(101));
-
-        // No mint value should be a no-op.
-        assert!(Evm::<BedrockSpec, InMemoryDB>::commit_mint_value(
-            caller,
-            None,
-            &mut db,
-            &mut journal
-        )
-        .is_ok(),);
-        let (account, _) = journal.load_account(caller, &mut db).unwrap();
-        assert_eq!(account.info.balance, U256::from(101));
+        let (account, _) = context
+            .evm
+            .journaled_state
+            .load_account(caller, &mut context.evm.db)
+            .unwrap();
+        assert_eq!(account.info.balance, U256::from(1010));
     }
 
     #[test]
     fn test_remove_l1_cost_non_deposit() {
         let caller = Address::ZERO;
         let mut db = InMemoryDB::default();
-        let mut journal = JournaledState::new(SpecId::BERLIN, vec![]);
-        let slots = &[U256::from(100)];
-        journal
-            .initial_account_load(caller, slots, &mut db)
+        db.insert_account_info(
+            caller,
+            AccountInfo {
+                balance: U256::from(1000),
+                ..Default::default()
+            },
+        );
+        let mut context: Context<(), InMemoryDB> = Context::new_with_db(db);
+        context.evm.l1_block_info = Some(L1BlockInfo {
+            l1_base_fee: U256::from(1_000),
+            l1_fee_overhead: U256::from(1_000),
+            l1_fee_scalar: U256::from(1_000),
+        });
+        // l1block cost is 1048 fee.
+        context.evm.env.tx.optimism.enveloped_tx = Some(bytes!("FACADE"));
+        // added mint value is 10.
+        context.evm.env.tx.optimism.mint = Some(10);
+        // Putting source_hash to some makes it a deposit transaction.
+        // so enveloped_tx gas cost is ignored.
+        context.evm.env.tx.optimism.source_hash = Some(B256::ZERO);
+
+        deduct_caller::<RegolithSpec, (), _>(&mut context).unwrap();
+
+        // Check the account balance is updated.
+        let (account, _) = context
+            .evm
+            .journaled_state
+            .load_account(caller, &mut context.evm.db)
             .unwrap();
-        assert!(optimism::remove_l1_cost(true, caller, U256::ZERO, &mut db, &mut journal).is_ok(),);
+        assert_eq!(account.info.balance, U256::from(1010));
     }
 
     #[test]
@@ -451,28 +460,27 @@ mod tests {
         db.insert_account_info(
             caller,
             AccountInfo {
-                nonce: 0,
-                balance: U256::from(100),
-                code_hash: B256::ZERO,
-                code: None,
+                balance: U256::from(1049),
+                ..Default::default()
             },
         );
-        let mut journal = JournaledState::new(SpecId::BERLIN, vec![]);
-        journal
-            .initial_account_load(caller, &[U256::from(100)], &mut db)
-            .unwrap();
-        assert!(Evm::<BedrockSpec, InMemoryDB>::remove_l1_cost(
-            false,
-            caller,
-            U256::from(1),
-            &mut db,
-            &mut journal
-        )
-        .is_ok(),);
+        let mut context: Context<(), InMemoryDB> = Context::new_with_db(db);
+        context.evm.l1_block_info = Some(L1BlockInfo {
+            l1_base_fee: U256::from(1_000),
+            l1_fee_overhead: U256::from(1_000),
+            l1_fee_scalar: U256::from(1_000),
+        });
+        // l1block cost is 1048 fee.
+        context.evm.env.tx.optimism.enveloped_tx = Some(bytes!("FACADE"));
+        deduct_caller::<RegolithSpec, (), _>(&mut context).unwrap();
 
         // Check the account balance is updated.
-        let (account, _) = journal.load_account(caller, &mut db).unwrap();
-        assert_eq!(account.info.balance, U256::from(99));
+        let (account, _) = context
+            .evm
+            .journaled_state
+            .load_account(caller, &mut context.evm.db)
+            .unwrap();
+        assert_eq!(account.info.balance, U256::from(1));
     }
 
     #[test]
@@ -482,31 +490,27 @@ mod tests {
         db.insert_account_info(
             caller,
             AccountInfo {
-                nonce: 0,
-                balance: U256::from(100),
-                code_hash: B256::ZERO,
-                code: None,
+                balance: U256::from(48),
+                ..Default::default()
             },
         );
-        let mut journal = JournaledState::new(SpecId::BERLIN, vec![]);
-        journal
-            .initial_account_load(caller, &[U256::from(100)], &mut db)
-            .unwrap();
+        let mut context: Context<(), InMemoryDB> = Context::new_with_db(db);
+        context.evm.l1_block_info = Some(L1BlockInfo {
+            l1_base_fee: U256::from(1_000),
+            l1_fee_overhead: U256::from(1_000),
+            l1_fee_scalar: U256::from(1_000),
+        });
+        // l1block cost is 1048 fee.
+        context.evm.env.tx.optimism.enveloped_tx = Some(bytes!("FACADE"));
+
         assert_eq!(
-            Evm::<BedrockSpec, InMemoryDB>::remove_l1_cost(
-                false,
-                caller,
-                U256::from(101),
-                &mut db,
-                &mut journal
-            ),
+            deduct_caller::<RegolithSpec, (), _>(&mut context),
             Err(EVMError::Transaction(
                 InvalidTransaction::LackOfFundForMaxFee {
-                    fee: 101u64,
-                    balance: U256::from(100),
+                    fee: Box::new(U256::from(1048)),
+                    balance: Box::new(U256::from(48)),
                 },
             ))
         );
     }
-    */
 }

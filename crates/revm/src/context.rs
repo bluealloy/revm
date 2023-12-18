@@ -1,5 +1,5 @@
 use crate::{
-    db::Database,
+    db::{Database, EmptyDB},
     interpreter::{
         analysis::to_analysed, gas, return_ok, CallInputs, Contract, CreateInputs, Gas,
         InstructionResult, Interpreter, InterpreterResult, MAX_CODE_SIZE,
@@ -21,6 +21,26 @@ pub struct Context<EXT, DB: Database> {
     pub evm: EvmContext<DB>,
     /// External contexts.
     pub external: EXT,
+}
+
+impl<EXT, DB: Database> Context<EXT, DB> {
+    /// Creates empty context. This is useful for testing.
+    pub fn new_empty() -> Context<(), EmptyDB> {
+        Context {
+            evm: EvmContext::new(EmptyDB::new()),
+            external: (),
+        }
+    }
+}
+
+impl<DB: Database> Context<(), DB> {
+    /// Creates new context with database.
+    pub fn new_with_db(db: DB) -> Context<(), DB> {
+        Context {
+            evm: EvmContext::new_with_env(db, Box::new(Env::default())),
+            external: (),
+        }
+    }
 }
 
 /// EVM contexts contains data that EVM needs for execution.
