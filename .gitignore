@@ -12,4 +12,5 @@ bins/revme/tests
 ethereumjs-util.js
 book
 
+.DS_Store
 libzktrie.so
