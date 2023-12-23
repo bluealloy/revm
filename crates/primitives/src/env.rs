@@ -75,10 +75,6 @@ impl Env {
             }
         }
 
-        let gas_limit = self.tx.gas_limit;
-        let effective_gas_price = self.effective_gas_price();
-        let is_create = self.tx.transact_to.is_create();
-
         // BASEFEE tx check
         if SPEC::enabled(SpecId::LONDON) {
             if let Some(priority_fee) = self.tx.gas_priority_fee {
@@ -87,21 +83,24 @@ impl Env {
                     return Err(InvalidTransaction::PriorityFeeGreaterThanMaxFee);
                 }
             }
-            let basefee = self.block.basefee;
 
             // check minimal cost against basefee
-            if !self.cfg.is_base_fee_check_disabled() && effective_gas_price < basefee {
+            if !self.cfg.is_base_fee_check_disabled()
+                && self.effective_gas_price() < self.block.basefee
+            {
                 return Err(InvalidTransaction::GasPriceLessThanBasefee);
             }
         }
 
         // Check if gas_limit is more than block_gas_limit
-        if !self.cfg.is_block_gas_limit_disabled() && U256::from(gas_limit) > self.block.gas_limit {
+        if !self.cfg.is_block_gas_limit_disabled()
+            && U256::from(self.tx.gas_limit) > self.block.gas_limit
+        {
             return Err(InvalidTransaction::CallerGasLimitMoreThanBlock);
         }
 
         // EIP-3860: Limit and meter initcode
-        if SPEC::enabled(SpecId::SHANGHAI) && is_create {
+        if SPEC::enabled(SpecId::SHANGHAI) && self.tx.transact_to.is_create() {
             let max_initcode_size = self
                 .cfg
                 .limit_contract_code_size
@@ -136,7 +135,6 @@ impl Env {
                 }
 
                 // there must be at least one blob
-                // assert len(tx.blob_versioned_hashes) > 0
                 if self.tx.blob_hashes.is_empty() {
                     return Err(InvalidTransaction::EmptyBlobs);
                 }
