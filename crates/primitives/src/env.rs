@@ -352,12 +352,12 @@ impl CfgEnv {
         false
     }
 
-    #[cfg(feaure = "optional_beneficiary_reward")]
+    #[cfg(feature = "optional_beneficiary_reward")]
     pub fn is_beneficiary_reward_disabled(&self) -> bool {
         self.disable_beneficiary_reward
     }
 
-    #[cfg(not(feaure = "optional_beneficiary_reward"))]
+    #[cfg(not(feature = "optional_beneficiary_reward"))]
     pub fn is_beneficiary_reward_disabled(&self) -> bool {
         false
     }
