@@ -34,6 +34,7 @@ dev = [
     "optional_eip3607",
     "optional_gas_refund",
     "optional_no_base_fee",
+    "optional_beneficiary_reward",
 ]
 memory_limit = ["revm-primitives/memory_limit"]
 optional_balance_check = ["revm-primitives/optional_balance_check"]
