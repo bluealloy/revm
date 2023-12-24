@@ -205,18 +205,18 @@ pub fn sstore_cost<SPEC: Spec>(
         let gas_cost = istanbul_sstore_cost(original, current, new, gas_sload, gas_sstore_reset);
         
         if is_cold {
-            return Some(gas_cost + COLD_SLOAD_COST);
+            Some(gas_cost + COLD_SLOAD_COST)
         } else {
-            return Some(gas_cost);
+            Some(gas_cost)
         }
     } else if SPEC::enabled(ISTANBUL) {
         // Istanbul logic
         let (gas_sload, gas_sstore_reset) = (sload_cost::<SPEC>(is_cold), SSTORE_RESET);
-        return Some(istanbul_sstore_cost(original, current, new, gas_sload, gas_sstore_reset));
+        Some(istanbul_sstore_cost(original, current, new, gas_sload, gas_sstore_reset))
     } else {
         // Non-Berlin and non-Istanbul logic
         let gas_sstore_reset = SSTORE_RESET;
-        return Some(non_istanbul_sstore_cost(current, new, gas_sstore_reset));
+        Some(non_istanbul_sstore_cost(current, new, gas_sstore_reset))
     }
 }
 
