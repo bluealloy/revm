@@ -100,7 +100,7 @@ impl Gas {
         true
     }
 
-    /// used in memory_resize! macro to record gas used for memory expansion.
+    /// used in shared_memory_resize! macro to record gas used for memory expansion.
     #[inline]
     pub fn record_memory(&mut self, gas_memory: u64) -> bool {
         if gas_memory > self.memory {
