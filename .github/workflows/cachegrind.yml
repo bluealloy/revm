@@ -37,7 +37,7 @@ jobs:
         id: valgrind_results
         run: |
             echo "### Valgrind Cachegrind Results"
-            echo "::set-output name=out::$(cat cachegrind_results.txt)"
+            echo "::set-output name=out::$(cat cachegrind_results.txt)" >> "$GITHUB_OUTPUT"
 
       - name: debug step
         run: echo "${{ steps.valgrind_results.outputs.out }}"
