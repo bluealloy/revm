@@ -37,8 +37,7 @@ jobs:
         id: valgrind_results
         run: |
             echo "### Valgrind Cachegrind Results"
-            cat cachegrind_results.txt
-
+            echo "::set-output name=out::$(cat cachegrind_results.txt)"
 
       - name: Comment on PR
         uses: peter-evans/create-or-update-comment@v3
