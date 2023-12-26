@@ -25,20 +25,18 @@ jobs:
         run: |
           sudo apt-get install -y kcachegrind
 
-
       - name: Run Valgrind
         run: |
           cargo b -r -p revm-test --bin snailtracer
           valgrind --tool=cachegrind target/release/snailtracer
 
           # Extract relevant information from cachegrind.out file
-          CACHEGRIND_OUTPUT=$(cg_annotate cachegrind.out.*)
+          cg_annotate cachegrind.out.* > cachegrind_results.txt
 
-          # Print the information in a pretty format
+          # Print the content of the file
           echo "### Valgrind Cachegrind Results ###"
-          echo "```
-          $CACHEGRIND_OUTPUT
-          ```"
+          cat cachegrind_results.txt
+
 
       - name: Comment on PR
         uses: peter-evans/create-or-update-comment@v3
