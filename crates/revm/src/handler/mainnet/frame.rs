@@ -51,7 +51,7 @@ pub fn create_first_frame<SPEC: Spec, EXT, DB: Database>(
     }
 }
 
-/// Helper function called inside [`main_call_return`]
+/// Helper function called inside [`main_frame_return`]
 pub fn frame_return_with_refund_flag<SPEC: Spec>(
     env: &Env,
     call_result: InstructionResult,

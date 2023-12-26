@@ -16,7 +16,7 @@ use crate::{
 use alloc::sync::Arc;
 use core::ops::Mul;
 
-pub fn optimism_handle_register<'a, DB: Database, EXT>(handler: &mut EvmHandler<'a, EXT, DB>) {
+pub fn optimism_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, EXT, DB>) {
     spec_to_generic!(handler.spec_id, {
         // Refund is calculated differently then mainnet.
         handler.frame.first_frame_return = Arc::new(handle_call_return::<SPEC>);

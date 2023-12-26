@@ -274,7 +274,7 @@ mod tests {
 
 #[cfg(feature = "optimism")]
 #[cfg(test)]
-mod tests {
+mod optimism_tests {
     use super::*;
 
     #[test]

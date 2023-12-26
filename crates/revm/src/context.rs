@@ -539,7 +539,7 @@ pub(crate) mod test_utils {
     /// Creates an evm context with a cache db backend.
     /// Additionally loads the mock caller account into the db,
     /// and sets the balance to the provided U256 value.
-    pub fn create_cache_db_evm_context_with_balance<'a>(
+    pub fn create_cache_db_evm_context_with_balance(
         env: Box<Env>,
         mut db: CacheDB<EmptyDB>,
         balance: U256,
@@ -557,7 +557,7 @@ pub(crate) mod test_utils {
     }
 
     /// Creates a cached db evm context.
-    pub fn create_cache_db_evm_context<'a>(
+    pub fn create_cache_db_evm_context(
         env: Box<Env>,
         db: CacheDB<EmptyDB>,
     ) -> EvmContext<CacheDB<EmptyDB>> {

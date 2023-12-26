@@ -19,7 +19,7 @@ pub trait GetInspector<'a, DB: Database> {
 /// Most of the functions are wrapped for Inspector usage expect
 /// the SubCreate and SubCall calls that got overwritten.
 ///
-/// Few instructions handlers are wrapped twice once for `step`` and `step_end`
+/// Few instructions handlers are wrapped twice once for `step` and `step_end`
 /// and in case of Logs and Selfdestruct wrapper is wrapped again for the
 /// `log` and `selfdestruct` calls.
 ///
