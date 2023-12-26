@@ -37,8 +37,7 @@ jobs:
         id: valgrind_results
         run: |
           echo "### Valgrind Cachegrind Results"
-          echo "$(cat cachegrind_results.txt)" > $GITHUB_OUTPUT
-
+          python -m "import os; os.environ['GITHUB_STATE'] = open('cachegrind_results.txt', 'r').read()"
 
       - name: debug step
         run: echo "${{ steps.valgrind_results.outputs }}"
