@@ -46,6 +46,6 @@ jobs:
           issue-number: ${{ github.event.number }}
           body: |
             ```
-                ${{ steps.valgrind_results.outputs }} 
+                ${{ steps.valgrind_results.outputs.result }} 
             ```
 
