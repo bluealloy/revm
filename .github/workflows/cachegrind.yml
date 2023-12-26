@@ -13,6 +13,8 @@ jobs:
 
       - name: Setup | Rust
         uses: ATiltedTree/setup-rust@v1
+        with:
+          rust-version: stable
 
       - name: Run Valgrind
         run: |
