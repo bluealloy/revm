@@ -6,8 +6,8 @@ use ethers_providers::{Http, Provider};
 use indicatif::ProgressBar;
 use revm::db::{CacheDB, EthersDB, StateBuilder};
 use revm::inspectors::TracerEip3155;
-use revm::primitives::{Address, Env, TransactTo, U256};
-use revm::EVM;
+use revm::primitives::{Address, TransactTo, U256};
+use revm::{inspector_handle_register, Evm};
 use std::fs::OpenOptions;
 use std::io::BufWriter;
 use std::io::Write;
@@ -74,25 +74,27 @@ async fn main() -> anyhow::Result<()> {
     let state_db = EthersDB::new(Arc::clone(&client), Some(prev_id)).expect("panic");
     let cache_db: CacheDB<EthersDB<Provider<Http>>> = CacheDB::new(state_db);
     let mut state = StateBuilder::new_with_database(cache_db).build();
-    let mut evm = EVM::new();
-    evm.database(&mut state);
-
-    let mut env = Env::default();
-    if let Some(number) = block.number {
-        let nn = number.0[0];
-        env.block.number = U256::from(nn);
-    }
-    local_fill!(env.block.coinbase, block.author);
-    local_fill!(env.block.timestamp, Some(block.timestamp), U256::from_limbs);
-    local_fill!(
-        env.block.difficulty,
-        Some(block.difficulty),
-        U256::from_limbs
-    );
-    local_fill!(env.block.gas_limit, Some(block.gas_limit), U256::from_limbs);
-    if let Some(base_fee) = block.base_fee_per_gas {
-        local_fill!(env.block.basefee, Some(base_fee), U256::from_limbs);
-    }
+    let mut evm = Evm::builder()
+        .with_db(&mut state)
+        .with_external_context(TracerEip3155::new(Box::new(std::io::stdout()), true, true))
+        .modify_block_env(|b| {
+            if let Some(number) = block.number {
+                let nn = number.0[0];
+                b.number = U256::from(nn);
+            }
+            local_fill!(b.coinbase, block.author);
+            local_fill!(b.timestamp, Some(block.timestamp), U256::from_limbs);
+            local_fill!(b.difficulty, Some(block.difficulty), U256::from_limbs);
+            local_fill!(b.gas_limit, Some(block.gas_limit), U256::from_limbs);
+            if let Some(base_fee) = block.base_fee_per_gas {
+                local_fill!(b.basefee, Some(base_fee), U256::from_limbs);
+            }
+        })
+        .modify_cfg_env(|c| {
+            c.chain_id = chain_id;
+        })
+        .append_handler_register(inspector_handle_register)
+        .build();
 
     let txs = block.transactions.len();
     println!("Found {txs} transactions.");
@@ -104,45 +106,49 @@ async fn main() -> anyhow::Result<()> {
     std::fs::create_dir_all("traces").expect("Failed to create traces directory");
 
     // Fill in CfgEnv
-    env.cfg.chain_id = chain_id;
     for tx in block.transactions {
-        env.tx.caller = Address::from(tx.from.as_fixed_bytes());
-        env.tx.gas_limit = tx.gas.as_u64();
-        local_fill!(env.tx.gas_price, tx.gas_price, U256::from_limbs);
-        local_fill!(env.tx.value, Some(tx.value), U256::from_limbs);
-        env.tx.data = tx.input.0.into();
-        let mut gas_priority_fee = U256::ZERO;
-        local_fill!(
-            gas_priority_fee,
-            tx.max_priority_fee_per_gas,
-            U256::from_limbs
-        );
-        env.tx.gas_priority_fee = Some(gas_priority_fee);
-        env.tx.chain_id = Some(chain_id);
-        env.tx.nonce = Some(tx.nonce.as_u64());
-        if let Some(access_list) = tx.access_list {
-            env.tx.access_list = access_list
-                .0
-                .into_iter()
-                .map(|item| {
-                    let new_keys: Vec<U256> = item
-                        .storage_keys
+        evm = evm
+            .modify()
+            .modify_tx_env(|etx| {
+                etx.caller = Address::from(tx.from.as_fixed_bytes());
+                etx.gas_limit = tx.gas.as_u64();
+                local_fill!(etx.gas_price, tx.gas_price, U256::from_limbs);
+                local_fill!(etx.value, Some(tx.value), U256::from_limbs);
+                etx.data = tx.input.0.into();
+                let mut gas_priority_fee = U256::ZERO;
+                local_fill!(
+                    gas_priority_fee,
+                    tx.max_priority_fee_per_gas,
+                    U256::from_limbs
+                );
+                etx.gas_priority_fee = Some(gas_priority_fee);
+                etx.chain_id = Some(chain_id);
+                etx.nonce = Some(tx.nonce.as_u64());
+                if let Some(access_list) = tx.access_list {
+                    etx.access_list = access_list
+                        .0
                         .into_iter()
-                        .map(|h256| U256::from_le_bytes(h256.0))
+                        .map(|item| {
+                            let new_keys: Vec<U256> = item
+                                .storage_keys
+                                .into_iter()
+                                .map(|h256| U256::from_le_bytes(h256.0))
+                                .collect();
+                            (Address::from(item.address.as_fixed_bytes()), new_keys)
+                        })
                         .collect();
-                    (Address::from(item.address.as_fixed_bytes()), new_keys)
-                })
-                .collect();
-        } else {
-            env.tx.access_list = Default::default();
-        }
+                } else {
+                    etx.access_list = Default::default();
+                }
 
-        env.tx.transact_to = match tx.to {
-            Some(to_address) => TransactTo::Call(Address::from(to_address.as_fixed_bytes())),
-            None => TransactTo::create(),
-        };
-
-        evm.env = env.clone();
+                etx.transact_to = match tx.to {
+                    Some(to_address) => {
+                        TransactTo::Call(Address::from(to_address.as_fixed_bytes()))
+                    }
+                    None => TransactTo::create(),
+                };
+            })
+            .build();
 
         // Construct the file writer to write the trace to
         let tx_number = tx.transaction_index.unwrap().0[0];
@@ -154,8 +160,8 @@ async fn main() -> anyhow::Result<()> {
         let writer = FlushWriter::new(Arc::clone(&inner));
 
         // Inspect and commit the transaction to the EVM
-        let inspector = TracerEip3155::new(Box::new(writer), true, true);
-        if let Err(error) = evm.inspect_commit(inspector) {
+        evm.context.external.set_writer(Box::new(writer));
+        if let Err(error) = evm.transact_commit() {
             println!("Got error: {:?}", error);
         }
 

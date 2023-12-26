@@ -55,7 +55,7 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
     /// Creates handler with variable spec id, inside it will call `mainnet::<SPEC>` for
     /// appropriate spec.
     pub fn mainnet_with_spec(spec_id: SpecId) -> Self {
-        spec_to_generic!(spec_id, { Self::mainnet::<SPEC>() })
+        spec_to_generic!(spec_id, Self::mainnet::<SPEC>())
     }
 
     /// Specification ID.

@@ -160,7 +160,7 @@ spec!(CANYON, CanyonSpec);
 
 #[macro_export]
 macro_rules! spec_to_generic {
-    ($spec_id:expr, $e:block) => {{
+    ($spec_id:expr, $e:expr) => {{
         // We are transitioning from var to generic spec.
         match $spec_id {
             $crate::SpecId::FRONTIER | SpecId::FRONTIER_THAWING => {
@@ -244,31 +244,31 @@ mod tests {
     fn spec_to_generic() {
         use SpecId::*;
 
-        // spec_to_generic!(FRONTIER, assert_eq!(SPEC::SPEC_ID, FRONTIER));
-        // spec_to_generic!(FRONTIER_THAWING, assert_eq!(SPEC::SPEC_ID, FRONTIER));
-        // spec_to_generic!(HOMESTEAD, assert_eq!(SPEC::SPEC_ID, HOMESTEAD));
-        // spec_to_generic!(DAO_FORK, assert_eq!(SPEC::SPEC_ID, HOMESTEAD));
-        // spec_to_generic!(TANGERINE, assert_eq!(SPEC::SPEC_ID, TANGERINE));
-        // spec_to_generic!(SPURIOUS_DRAGON, assert_eq!(SPEC::SPEC_ID, SPURIOUS_DRAGON));
-        // spec_to_generic!(BYZANTIUM, assert_eq!(SPEC::SPEC_ID, BYZANTIUM));
-        // spec_to_generic!(CONSTANTINOPLE, assert_eq!(SPEC::SPEC_ID, PETERSBURG));
-        // spec_to_generic!(PETERSBURG, assert_eq!(SPEC::SPEC_ID, PETERSBURG));
-        // spec_to_generic!(ISTANBUL, assert_eq!(SPEC::SPEC_ID, ISTANBUL));
-        // spec_to_generic!(MUIR_GLACIER, assert_eq!(SPEC::SPEC_ID, ISTANBUL));
-        // spec_to_generic!(BERLIN, assert_eq!(SPEC::SPEC_ID, BERLIN));
-        // spec_to_generic!(LONDON, assert_eq!(SPEC::SPEC_ID, LONDON));
-        // spec_to_generic!(ARROW_GLACIER, assert_eq!(SPEC::SPEC_ID, LONDON));
-        // spec_to_generic!(GRAY_GLACIER, assert_eq!(SPEC::SPEC_ID, LONDON));
-        // spec_to_generic!(MERGE, assert_eq!(SPEC::SPEC_ID, MERGE));
-        // #[cfg(feature = "optimism")]
-        // spec_to_generic!(BEDROCK, assert_eq!(SPEC::SPEC_ID, BEDROCK));
-        // #[cfg(feature = "optimism")]
-        // spec_to_generic!(REGOLITH, assert_eq!(SPEC::SPEC_ID, REGOLITH));
-        // spec_to_generic!(SHANGHAI, assert_eq!(SPEC::SPEC_ID, SHANGHAI));
-        // #[cfg(feature = "optimism")]
-        // spec_to_generic!(CANYON, assert_eq!(SPEC::SPEC_ID, CANYON));
-        // spec_to_generic!(CANCUN, assert_eq!(SPEC::SPEC_ID, CANCUN));
-        // spec_to_generic!(LATEST, assert_eq!(SPEC::SPEC_ID, LATEST));
+        spec_to_generic!(FRONTIER, assert_eq!(SPEC::SPEC_ID, FRONTIER));
+        spec_to_generic!(FRONTIER_THAWING, assert_eq!(SPEC::SPEC_ID, FRONTIER));
+        spec_to_generic!(HOMESTEAD, assert_eq!(SPEC::SPEC_ID, HOMESTEAD));
+        spec_to_generic!(DAO_FORK, assert_eq!(SPEC::SPEC_ID, HOMESTEAD));
+        spec_to_generic!(TANGERINE, assert_eq!(SPEC::SPEC_ID, TANGERINE));
+        spec_to_generic!(SPURIOUS_DRAGON, assert_eq!(SPEC::SPEC_ID, SPURIOUS_DRAGON));
+        spec_to_generic!(BYZANTIUM, assert_eq!(SPEC::SPEC_ID, BYZANTIUM));
+        spec_to_generic!(CONSTANTINOPLE, assert_eq!(SPEC::SPEC_ID, PETERSBURG));
+        spec_to_generic!(PETERSBURG, assert_eq!(SPEC::SPEC_ID, PETERSBURG));
+        spec_to_generic!(ISTANBUL, assert_eq!(SPEC::SPEC_ID, ISTANBUL));
+        spec_to_generic!(MUIR_GLACIER, assert_eq!(SPEC::SPEC_ID, ISTANBUL));
+        spec_to_generic!(BERLIN, assert_eq!(SPEC::SPEC_ID, BERLIN));
+        spec_to_generic!(LONDON, assert_eq!(SPEC::SPEC_ID, LONDON));
+        spec_to_generic!(ARROW_GLACIER, assert_eq!(SPEC::SPEC_ID, LONDON));
+        spec_to_generic!(GRAY_GLACIER, assert_eq!(SPEC::SPEC_ID, LONDON));
+        spec_to_generic!(MERGE, assert_eq!(SPEC::SPEC_ID, MERGE));
+        #[cfg(feature = "optimism")]
+        spec_to_generic!(BEDROCK, assert_eq!(SPEC::SPEC_ID, BEDROCK));
+        #[cfg(feature = "optimism")]
+        spec_to_generic!(REGOLITH, assert_eq!(SPEC::SPEC_ID, REGOLITH));
+        spec_to_generic!(SHANGHAI, assert_eq!(SPEC::SPEC_ID, SHANGHAI));
+        #[cfg(feature = "optimism")]
+        spec_to_generic!(CANYON, assert_eq!(SPEC::SPEC_ID, CANYON));
+        spec_to_generic!(CANCUN, assert_eq!(SPEC::SPEC_ID, CANCUN));
+        spec_to_generic!(LATEST, assert_eq!(SPEC::SPEC_ID, LATEST));
     }
 }
 

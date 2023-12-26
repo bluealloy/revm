@@ -26,6 +26,13 @@ pub struct TracerEip3155 {
     skip: bool,
 }
 
+impl TracerEip3155 {
+    /// Sets the writer to use for the output.
+    pub fn set_writer(&mut self, writer: Box<dyn Write>) {
+        self.output = writer;
+    }
+}
+
 impl<'a, DB: Database> GetInspector<'a, DB> for TracerEip3155 {
     fn get_inspector(&mut self) -> &mut dyn Inspector<DB> {
         self

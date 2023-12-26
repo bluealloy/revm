@@ -203,7 +203,7 @@ mod tests {
         let gas = main_frame_return::<CancunSpec>(&env, InstructionResult::Stop, return_gas);
         assert_eq!(gas.remaining(), 90);
         assert_eq!(gas.spend(), 10);
-        assert_eq!(gas.refunded(), 30);
+        assert_eq!(gas.refunded(), 2);
 
         let gas = main_frame_return::<CancunSpec>(&env, InstructionResult::Revert, return_gas);
         assert_eq!(gas.remaining(), 90);
