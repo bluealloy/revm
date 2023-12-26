@@ -33,17 +33,19 @@ jobs:
           # Extract relevant information from cachegrind.out file
           cg_annotate cachegrind.out.* > cachegrind_results.txt
 
-          # Print the content of the file
-          echo "### Valgrind Cachegrind Results ###"
-          cat cachegrind_results.txt
+      - name: Valgrind results
+        id: valgrind_results
+        run: |
+            echo "### Valgrind Cachegrind Results"
+            echo cachegrind_results.txt
+
 
       - name: Comment on PR
         uses: peter-evans/create-or-update-comment@v3
         with:
           issue-number: ${{ github.event.number }}
           body: |
-            ### Valgrind Cachegrind Results ###
             ```
-              $(cat cachegrind_results.txt) 
+                ${{ steps.set_results.outputs.valgrind_results }}
             ```
 
