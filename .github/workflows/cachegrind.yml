@@ -1,0 +1,44 @@
+name: Valgrind Cachegrind
+
+on:
+  pull_request:
+    paths:
+      - '**/*.rs' # Adjust this path based on your project structure
+
+jobs:
+  valgrind:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Rust
+        uses: actions/setup-rust@v1
+
+      - name: Run Valgrind
+        run: |
+          cargo b -r -p revm-test --bin snailtracer
+          valgrind --tool=cachegrind target/release/snailtracer
+
+          # Extract relevant information from cachegrind.out file
+          CACHEGRIND_OUTPUT=$(cg_annotate cachegrind.out.*)
+
+          # Print the information in a pretty format
+          echo "### Valgrind Cachegrind Results ###"
+          echo "```
+          $CACHEGRIND_OUTPUT
+          ```"
+
+      - name: Comment on PR
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          issue-number: ${{ github.event.number }}
+          body: |
+            ### Valgrind Cachegrind Results ###
+            ```
+            ${{ steps.run_valgrind.outputs.stdout }}
+            ```
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+
