@@ -37,5 +37,4 @@ jobs:
             ```
             ${{ steps.run_valgrind.outputs.stdout }}
             ```
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
 
