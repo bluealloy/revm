@@ -40,7 +40,7 @@ jobs:
           python -c "import os; os.environ['GITHUB_OUTPUT'] = f"out={open('cachegrind_results.txt', 'r').read()}"
 
       - name: debug step
-        run: echo "${{ steps.valgrind_results.outputs }}"
+        run: echo "${{ steps.valgrind_results.outputs.out }}"
 
 
       - name: Comment on PR
@@ -49,7 +49,7 @@ jobs:
           issue-number: ${{ github.event.number }}
           body: |
             ```
-                ${{ steps.valgrind_results.outputs }}
+                ${{ steps.valgrind_results.outputs.out }}
             ```
 
 
