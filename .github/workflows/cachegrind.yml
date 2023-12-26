@@ -21,6 +21,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y valgrind
 
+      - name: Install cg_annotate
+        run: |
+          sudo apt-get install -y kcachegrind
+
+
       - name: Run Valgrind
         run: |
           cargo b -r -p revm-test --bin snailtracer
