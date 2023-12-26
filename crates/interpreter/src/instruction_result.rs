@@ -1,4 +1,4 @@
-use crate::primitives::{Eval, Halt};
+use crate::primitives::{Eval, Halt, OutOfGasError};
 
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
@@ -43,10 +43,52 @@ pub enum InstructionResult {
     /// Error on created contract that begins with EF
     CreateContractStartingWithEF,
     /// EIP-3860: Limit and meter initcode. Initcode size limit exceeded.
-    CreateInitcodeSizeLimit,
+    CreateInitCodeSizeLimit,
 
     /// Fatal external error. Returned by database.
     FatalExternalError,
+}
+
+impl From<Eval> for InstructionResult {
+    fn from(value: Eval) -> Self {
+        match value {
+            Eval::Return => InstructionResult::Return,
+            Eval::Stop => InstructionResult::Stop,
+            Eval::SelfDestruct => InstructionResult::SelfDestruct,
+        }
+    }
+}
+
+impl From<Halt> for InstructionResult {
+    fn from(value: Halt) -> Self {
+        match value {
+            Halt::OutOfGas(OutOfGasError::BasicOutOfGas) => Self::OutOfGas,
+            Halt::OutOfGas(OutOfGasError::InvalidOperand) => Self::InvalidOperandOOG,
+            Halt::OutOfGas(OutOfGasError::Memory) => Self::MemoryOOG,
+            Halt::OutOfGas(OutOfGasError::MemoryLimit) => Self::MemoryLimitOOG,
+            Halt::OutOfGas(OutOfGasError::Precompile) => Self::PrecompileOOG,
+            Halt::OpcodeNotFound => Self::OpcodeNotFound,
+            Halt::InvalidFEOpcode => Self::InvalidFEOpcode,
+            Halt::InvalidJump => Self::InvalidJump,
+            Halt::NotActivated => Self::NotActivated,
+            Halt::StackOverflow => Self::StackOverflow,
+            Halt::StackUnderflow => Self::StackUnderflow,
+            Halt::OutOfOffset => Self::OutOfOffset,
+            Halt::CreateCollision => Self::CreateCollision,
+            Halt::PrecompileError => Self::PrecompileError,
+            Halt::NonceOverflow => Self::NonceOverflow,
+            Halt::CreateContractSizeLimit => Self::CreateContractSizeLimit,
+            Halt::CreateContractStartingWithEF => Self::CreateContractStartingWithEF,
+            Halt::CreateInitCodeSizeLimit => Self::CreateInitCodeSizeLimit,
+            Halt::OverflowPayment => Self::OverflowPayment,
+            Halt::StateChangeDuringStaticCall => Self::StateChangeDuringStaticCall,
+            Halt::CallNotAllowedInsideStatic => Self::CallNotAllowedInsideStatic,
+            Halt::OutOfFund => Self::OutOfFund,
+            Halt::CallTooDeep => Self::CallTooDeep,
+            #[cfg(feature = "optimism")]
+            Halt::FailedDeposit => Self::FatalExternalError,
+        }
+    }
 }
 
 impl InstructionResult {
@@ -87,7 +129,7 @@ impl InstructionResult {
                 | Self::NonceOverflow
                 | Self::CreateContractSizeLimit
                 | Self::CreateContractStartingWithEF
-                | Self::CreateInitcodeSizeLimit
+                | Self::CreateInitCodeSizeLimit
                 | Self::FatalExternalError
         )
     }
@@ -190,7 +232,7 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::CreateContractStartingWithEF => {
                 Self::Halt(Halt::CreateContractSizeLimit)
             }
-            InstructionResult::CreateInitcodeSizeLimit => Self::Halt(Halt::CreateInitcodeSizeLimit),
+            InstructionResult::CreateInitCodeSizeLimit => Self::Halt(Halt::CreateInitCodeSizeLimit),
             InstructionResult::FatalExternalError => Self::FatalExternalError,
         }
     }

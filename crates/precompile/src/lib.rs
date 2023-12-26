@@ -1,6 +1,7 @@
 //! # revm-precompile
 //!
 //! Implementations of EVM precompiled contracts.
+#![warn(rustdoc::all)]
 #![warn(unused_crate_dependencies)]
 #![deny(unused_must_use, rust_2018_idioms)]
 #![cfg_attr(not(feature = "std"), no_std)]

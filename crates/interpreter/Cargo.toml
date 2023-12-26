@@ -9,6 +9,10 @@ repository = "https://github.com/bluealloy/revm"
 version = "1.3.0"
 readme = "../../README.md"
 
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
 [dependencies]
 revm-primitives = { path = "../primitives", version = "1.3.0", default-features = false }
 
@@ -30,6 +34,7 @@ dev = [
     "optional_eip3607",
     "optional_gas_refund",
     "optional_no_base_fee",
+    "optional_beneficiary_reward",
 ]
 memory_limit = ["revm-primitives/memory_limit"]
 optional_balance_check = ["revm-primitives/optional_balance_check"]

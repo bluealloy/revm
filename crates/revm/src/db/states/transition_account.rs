@@ -109,7 +109,7 @@ impl TransitionAccount {
                         if value.original_value() == slot.present_value() {
                             entry.remove();
                         } else {
-                            // is value is different, update transition present value;
+                            // if value is different, update transition present value;
                             value.present_value = slot.present_value;
                         }
                     }

@@ -114,7 +114,7 @@ impl Env {
                 .map(|limit| limit.saturating_mul(2))
                 .unwrap_or(MAX_INITCODE_SIZE);
             if self.tx.data.len() > max_initcode_size {
-                return Err(InvalidTransaction::CreateInitcodeSizeLimit);
+                return Err(InvalidTransaction::CreateInitCodeSizeLimit);
             }
         }
 
@@ -359,12 +359,12 @@ impl CfgEnv {
         false
     }
 
-    #[cfg(feaure = "optional_beneficiary_reward")]
+    #[cfg(feature = "optional_beneficiary_reward")]
     pub fn is_beneficiary_reward_disabled(&self) -> bool {
         self.disable_beneficiary_reward
     }
 
-    #[cfg(not(feaure = "optional_beneficiary_reward"))]
+    #[cfg(not(feature = "optional_beneficiary_reward"))]
     pub fn is_beneficiary_reward_disabled(&self) -> bool {
         false
     }
