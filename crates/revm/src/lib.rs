@@ -45,7 +45,6 @@ pub use optimism::{L1BlockInfo, BASE_FEE_RECIPIENT, L1_BLOCK_CONTRACT, L1_FEE_RE
 
 // Reexport libraries
 
-use primitives::CfgEnv;
 #[doc(inline)]
 pub use revm_interpreter as interpreter;
 #[doc(inline)]

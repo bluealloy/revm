@@ -52,6 +52,12 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
         }
     }
 
+    /// Creates handler with variable spec id, inside it will call `mainnet::<SPEC>` for
+    /// appropriate spec.
+    pub fn mainnet_with_spec(spec_id: SpecId) -> Self {
+        spec_to_generic!(spec_id, { Self::mainnet::<SPEC>() })
+    }
+
     /// Specification ID.
     pub fn spec_id(&self) -> SpecId {
         self.spec_id
@@ -108,7 +114,7 @@ impl<'a, EXT: 'a, DB: Database + 'a> EvmHandler<'a, EXT, DB> {
         }
 
         let registers = core::mem::take(&mut self.registers);
-        let mut handler = spec_to_generic!(self.spec_id, Handler::mainnet::<SPEC>());
+        let mut handler = Handler::mainnet_with_spec(spec_id);
         // apply all registers to default handeler and raw mainnet instruction table.
         for register in registers {
             handler.append_handle_register(register)

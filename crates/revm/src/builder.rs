@@ -56,7 +56,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingDbStage, EXT, DB> {
         EvmBuilder {
             evm: self.evm.with_db(EmptyDB::default()),
             external: self.external,
-            handler: Handler::mainnet::<LatestSpec>(),
+            handler: Handler::mainnet_with_spec(self.handler.spec_id),
 
             phantom: PhantomData,
         }
@@ -70,7 +70,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingDbStage, EXT, DB> {
         EvmBuilder {
             evm: self.evm.with_db(db),
             external: self.external,
-            handler: Handler::mainnet::<LatestSpec>(),
+            handler: Handler::mainnet_with_spec(self.handler.spec_id),
 
             phantom: PhantomData,
         }
@@ -87,7 +87,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingDbStage, EXT, DB> {
         EvmBuilder {
             evm: self.evm.with_db(WrapDatabaseRef(db)),
             external: self.external,
-            handler: Handler::mainnet::<LatestSpec>(),
+            handler: Handler::mainnet_with_spec(self.handler.spec_id),
 
             phantom: PhantomData,
         }
@@ -100,7 +100,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingExternalStage, EXT, DB> {
         EvmBuilder {
             evm: self.evm,
             external: (),
-            handler: Handler::mainnet::<LatestSpec>(),
+            handler: Handler::mainnet_with_spec(self.handler.spec_id),
             phantom: PhantomData,
         }
     }
@@ -113,7 +113,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingExternalStage, EXT, DB> {
         EvmBuilder {
             evm: self.evm,
             external: external,
-            handler: Handler::mainnet::<LatestSpec>(),
+            handler: Handler::mainnet_with_spec(self.handler.spec_id),
             phantom: PhantomData,
         }
     }
@@ -198,7 +198,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingHandlerStage, EXT, DB> {
         EvmBuilder {
             evm: self.evm,
             external: external_context,
-            handler: Handler::mainnet::<LatestSpec>(),
+            handler: Handler::mainnet_with_spec(self.handler.spec_id),
             phantom: PhantomData,
         }
     }
@@ -229,7 +229,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingHandlerStage, EXT, DB> {
         EvmBuilder {
             evm: self.evm.with_db(EmptyDB::default()),
             external: self.external,
-            handler: Handler::mainnet::<LatestSpec>(),
+            handler: Handler::mainnet_with_spec(self.handler.spec_id),
             phantom: PhantomData,
         }
     }
@@ -242,7 +242,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingHandlerStage, EXT, DB> {
         EvmBuilder {
             evm: self.evm.with_db(db),
             external: self.external,
-            handler: Handler::mainnet::<LatestSpec>(),
+            handler: Handler::mainnet_with_spec(self.handler.spec_id),
 
             phantom: PhantomData,
         }
@@ -268,7 +268,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingHandlerStage, EXT, DB> {
         EvmBuilder {
             evm: self.evm.with_db(WrapDatabaseRef(db)),
             external: self.external,
-            handler: Handler::mainnet::<LatestSpec>(),
+            handler: Handler::mainnet_with_spec(self.handler.spec_id),
 
             phantom: PhantomData,
         }
