@@ -40,7 +40,7 @@ jobs:
           python -c "import os; os.environ['GITHUB_STATE'] = open('cachegrind_results.txt', 'r').read()"
 
       - name: debug step
-        run: echo "${{ steps.valgrind_results.outputs }}"
+        run: echo "${{ steps.valgrind_results.state }}"
 
 
       - name: Comment on PR
