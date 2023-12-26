@@ -11,8 +11,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Rust
-        uses: actions/setup-rust@v1
+      - name: Setup | Rust
+        uses: ATiltedTree/setup-rust@v1
 
       - name: Run Valgrind
         run: |
