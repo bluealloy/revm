@@ -2,8 +2,9 @@ name: Valgrind Cachegrind
 
 on:
   pull_request:
-    paths:
-      - '**/*.rs' # Adjust this path based on your project structure
+    types:
+      - opened
+      - synchronize
 
 jobs:
   valgrind:
@@ -40,5 +41,4 @@ jobs:
             ${{ steps.run_valgrind.outputs.stdout }}
             ```
         repo-token: ${{ secrets.GITHUB_TOKEN }}
-
 
