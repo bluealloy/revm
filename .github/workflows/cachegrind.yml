@@ -37,7 +37,7 @@ jobs:
         id: valgrind_results
         run: |
             echo "### Valgrind Cachegrind Results"
-            echo cachegrind_results.txt
+            cat cachegrind_results.txt
 
 
       - name: Comment on PR
@@ -46,6 +46,6 @@ jobs:
           issue-number: ${{ github.event.number }}
           body: |
             ```
-                ${{ steps.set_results.outputs.valgrind_results }}
+                ${{ steps.valgrind_results.outputs }} 
             ```
 
