@@ -2,10 +2,7 @@ name: Valgrind Cachegrind
 
 on:
   pull_request:
-    types:
-      - opened
-      - synchronize
-
+    branches: [main]
 jobs:
   valgrind:
     runs-on: ubuntu-latest
