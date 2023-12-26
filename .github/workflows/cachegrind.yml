@@ -44,6 +44,6 @@ jobs:
           body: |
             ### Valgrind Cachegrind Results ###
             ```
-            ${{ steps.run_valgrind.outputs.stdout }}
+              $(cat cachegrind_results.txt) 
             ```
 
