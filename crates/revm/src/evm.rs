@@ -157,8 +157,8 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
                 // run main loop
                 let output = match &table {
-                    InstructionTables::Plain(table) => self.run_the_loop(&table, first_stack_frame),
-                    InstructionTables::Boxed(table) => self.run_the_loop(&table, first_stack_frame),
+                    InstructionTables::Plain(table) => self.run_the_loop(table, first_stack_frame),
+                    InstructionTables::Boxed(table) => self.run_the_loop(table, first_stack_frame),
                 };
 
                 // return back instruction table

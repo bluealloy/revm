@@ -81,15 +81,12 @@ impl Precompiles {
         static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
         INSTANCE.get_or_init(|| {
             let mut precompiles = Precompiles::default();
-            precompiles.extend(
-                [
-                    secp256k1::ECRECOVER,
-                    hash::SHA256,
-                    hash::RIPEMD160,
-                    identity::FUN,
-                ]
-                .into_iter(),
-            );
+            precompiles.extend([
+                secp256k1::ECRECOVER,
+                hash::SHA256,
+                hash::RIPEMD160,
+                identity::FUN,
+            ]);
             Box::new(precompiles)
         })
     }

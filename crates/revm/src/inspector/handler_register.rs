@@ -46,7 +46,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
 
     // Register inspector Log instruction.
     let mut inspect_log = |index: u8| {
-        table.get_mut(index as usize).map(|i| {
+        if let Some(i) = table.get_mut(index as usize) {
             let old = core::mem::replace(i, Box::new(|_, _| ()));
             *i = Box::new(
                 move |interpreter: &mut Interpreter, host: &mut Evm<'a, EXT, DB>| {
@@ -74,7 +74,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
                     }
                 },
             )
-        });
+        }
     };
 
     inspect_log(opcode::LOG0);
@@ -84,7 +84,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     inspect_log(opcode::LOG4);
 
     // register selfdestruct function.
-    table.get_mut(opcode::SELFDESTRUCT as usize).map(|i| {
+    if let Some(i) = table.get_mut(opcode::SELFDESTRUCT as usize) {
         let old = core::mem::replace(i, Box::new(|_, _| ()));
         *i = Box::new(
             move |interpreter: &mut Interpreter, host: &mut Evm<'a, EXT, DB>| {
@@ -113,7 +113,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
                 }
             },
         )
-    });
+    }
 
     // cast vector to array.
     handler.instruction_table = Some(EvmInstructionTables::Boxed(

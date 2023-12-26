@@ -112,7 +112,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SettingExternalStage, EXT, DB> {
     ) -> EvmBuilder<'a, SettingHandlerStage, OEXT, DB> {
         EvmBuilder {
             evm: self.evm,
-            external: external,
+            external,
             handler: Handler::mainnet_with_spec(self.handler.spec_id),
             phantom: PhantomData,
         }
