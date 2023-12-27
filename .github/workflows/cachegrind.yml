@@ -38,19 +38,12 @@ jobs:
         run: |
           cat cachegrind_results.txt
           contents=$(<cachegrind_results.txt)
-          printf "out=%s" "${contents//$'\n'/\\n}" >> "$GITHUB_OUTPUT"
-          printf "%s" "${contents//$'\n'/\\n}" >> "$GITHUB_STEP_SUMMARY"
+          printf "out=`%s`" "${contents}" >> "$GITHUB_OUTPUT"
+          printf "%s" "${contents}" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload Valgrind results
-        id: valgrind_artifact
-        uses: actions/upload-artifact@v2
+      - name: Comment link to step summary on PR
+        uses: unsplash/comment-on-pr@v1
         with:
-          name: Valgrind results
-          path: cachegrind_results.txt
-        
-      - name: Comment with artifact link
-        uses: peter-evans/create-or-update-comment@v1
-        with:
-          issue-number: ${{ github.event.number }}
-          body: |
-            Valgrind results: [View Artifact](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/Valgrind%20results)
+          message: |
+            **Valgrind results**
+            See the [step summary](${{ steps.valgrind_results.outputs.step_summary }}) for more details.
