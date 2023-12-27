@@ -38,7 +38,7 @@ jobs:
         run: |
           cat cachegrind_results.txt
           contents=$(<cachegrind_results.txt)
-          printf "out=%s" "${contents//$'\n'/\\n}" >> $GITHUB_OUTPUT
+          printf "out=%s" "${contents//$'\n'/\\n}" >> "$GITHUB_OUTPUT"
       
       - name: Setup cURL for filebin
         run: |
@@ -46,14 +46,16 @@ jobs:
       
       - name: Upload to filebin
         run: |
-          name=$(printf "cachegrind_results-%s.txt" "${GITHUB_SHA}")
+          random_hash=$(uuidgen | tr '[:upper:]' '[:lower:]' | tr -d '-')
+          name=$(printf "cachegrind_results-%s-%s.txt" "${GITHUB_SHA}" "${random_hash}")
+          url=$(printf "https://filebin.net/revmfilebin/$name")
           curl -X 'POST' \
-          'https://filebin.net/revmfilebin/$name' \
+          $url \
           -H 'accept: application/json' \
           -H 'Content-Type: application/octet-stream' \
           --data-binary '@cachegrind_results.txt'
 
-          printf "url_name=https://filebin.net/revmfilebin/$name" >> $GITHUB_OUTPUT
+          echo "url_name=https://filebin.net/revmfilebin/$name" >> "$GITHUB_OUTPUT"
 
       - name: Comment on PR
         uses: peter-evans/create-or-update-comment@v1
