@@ -38,11 +38,28 @@ jobs:
         run: |
           cat cachegrind_results.txt
           contents=$(<cachegrind_results.txt)
-          printf "%s" "${contents}" >> "$GITHUB_STEP_SUMMARY"
+          printf "out=%s" "${contents//$'\n'/\\n}" >> $GITHUB_OUTPUT
+      
+      - name: Upload to filebin
+        run: |
+          name = printf "cachegrind_results-%s.txt" "${GITHUB_SHA}"
+          curl -X 'POST' \
+          'https://filebin.net/revmfilebin/$name' \
+          -H 'accept: application/json' \
+          -H 'Content-Type: application/octet-stream' \
+          --data-binary '@cachegrind_results.txt'
 
-      - name: Upload Valgrind results
-        uses: actions/upload-artifact@v2
-        with:
-          name: Valgrind results
-          path: cachegrind_results.txt
+          printf "url_name=https://filebin.net/revmfilebin/$name" >> $GITHUB_OUTPUT
+
+        - name: Comment on PR
+          uses: peter-evans/create-or-update-comment@v1
+          with:
+            issue-number: ${{ github.event.number }}
+            body: |
+              See the results of the Valgrind Cachegrind run [here](${{ steps.valgrind_results.outputs.url_name }}).
+
+
+      
+
+
       
