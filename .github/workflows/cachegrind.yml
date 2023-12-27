@@ -42,8 +42,10 @@ jobs:
           printf "%s" "${contents}" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Comment link to step summary on PR
-        uses: unsplash/comment-on-pr@v1
+        uses: peter-evans/create-or-update-comment@v1
         with:
-          message: |
-            **Valgrind results**
-            See the [step summary](${{ steps.valgrind_results.outputs.step_summary }}) for more details.
+          issue-number: ${{ github.event.number }}
+          body: |
+            See the [step summary](${{ steps.valgrind_results.outputs.step_summary_url }}) for more details.
+
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
