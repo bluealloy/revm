@@ -39,31 +39,18 @@ jobs:
           cat cachegrind_results.txt
           contents=$(<cachegrind_results.txt)
           printf "out=%s" "${contents//$'\n'/\\n}" >> "$GITHUB_OUTPUT"
+          printf "%s" "${contents//$'\n'/\\n}" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Comment on PR (Part 1)
-        uses: marocchino/sticky-pull-request-comment@v2
+      - name: Upload Valgrind results
+        id: valgrind_artifact
+        uses: actions/upload-artifact@v2
         with:
-          header: plan
-          message: |
-            #### Valgrind Cachegrind Results (Part 1)
-            <details><summary>Show Plan</summary>
-
-            ```
-            ${{ steps.valgrind_results.outputs.out | head -n 1000 }}
-            ```
-
-            </details>
-
-      - name: Comment on PR (Part 2)
-        uses: marocchino/sticky-pull-request-comment@v2
+          name: Valgrind results
+          path: cachegrind_results.txt
+        
+      - name: Comment with artifact link
+        uses: peter-evans/create-or-update-comment@v1
         with:
-          header: plan
-          message: |
-            #### Valgrind Cachegrind Results (Part 2)
-            <details><summary>Show Plan</summary>
-
-            ```
-            ${{ steps.valgrind_results.outputs.out | sed -n '1001,2000p' }}
-            ```
-
-            </details>
+          issue-number: ${{ github.event.number }}
+          body: |
+            Valgrind results: ${{ steps.valgrind_artifact.outputs.artifact_url }}
