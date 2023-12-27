@@ -28,11 +28,12 @@ jobs:
       - name: Run Valgrind
         run: |
           cargo b -r -p revm-test --bin snailtracer
-          valgrind --tool=cachegrind target/release/snailtracer > cachegrind_results.txt
+          valgrind --tool=cachegrind target/release/snailtracer >> cachegrind_results.txt
 
       - name: Valgrind results
         id: valgrind_results
         run: |
+          cat cachegrind_results.txt
           contents=$(<cachegrind_results.txt)
           printf "out=%s" "${contents//$'\n'/\\n}" >> "$GITHUB_OUTPUT"
 
