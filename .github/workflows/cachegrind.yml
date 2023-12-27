@@ -36,7 +36,8 @@ jobs:
       - name: Valgrind results
         id: valgrind_results
         run: |
-          echo '::set-output name=out::$(echo "$(<cachegrind_results.txt)")'
+          contents=$(<cachegrind_results.txt)
+          printf "out=%s" "${contents//$'\n'/\\n}" >> "$GITHUB_OUTPUT"
 
       - name: Comment on PR
         uses: peter-evans/create-or-update-comment@v3
