@@ -35,7 +35,7 @@ jobs:
 
       - name: Valgrind results
         id: valgrind_results
-        run: export GITHUB_STEP_SUMMARY="out=$(<cachegrind_results.txt)"
+        run: echo "out=$(<cachegrind_results.txt)" >> $GITHUB_STEP_SUMMARY
 
       - name: Comment on PR
         uses: peter-evans/create-or-update-comment@v3
@@ -44,7 +44,4 @@ jobs:
           body: |
             ```
                 ${{ steps.valgrind_results.summary }}
-                
             ```
-
-
