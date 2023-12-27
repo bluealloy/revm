@@ -40,31 +40,9 @@ jobs:
           contents=$(<cachegrind_results.txt)
           printf "%s" "${contents}" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload this to a gist
-        id: api_request
-        uses: actions/github-script@v3
+      - name: Upload Valgrind results
+        uses: actions/upload-artifact@v2
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            const content = fs.readFileSync('cachegrind_results.txt', 'utf8');
-            const response = await github.gists.create({
-              files: {
-                'cachegrind_results.txt': {
-                  content: content
-                }
-              }
-            });
-            console.log(response.data.html_url);
-            core.setOutput("summary_url", response.data.html_url);
-
-
-      - name: Comment link to step summary on PR
-        uses: peter-evans/create-or-update-comment@v1
-        with:
-          issue-number: ${{ github.event.number }}
-          body: |
-            ${{ steps.valgrind_results.outputs.mkdn }}
-            [Valgrind Cachegrind Results](${{ steps.api_request.outputs.summary_url }})
-
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: Valgrind results
+          path: cachegrind_results.txt
+      
