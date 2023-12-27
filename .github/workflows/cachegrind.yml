@@ -38,14 +38,24 @@ jobs:
         run: |
           cat cachegrind_results.txt
           contents=$(<cachegrind_results.txt)
-          printf "out=`%s`" "${contents}" >> "$GITHUB_OUTPUT"
           printf "%s" "${contents}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Make GitHub API request
+        id: api_request
+        run: |
+          API_URL="https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs"
+          API_RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" $API_URL)
+          
+          # go through "jobs" array and find the job with the name "valgrind"
+          # then get the "html_url" field from that job
+          JOB_URL=$(echo $API_RESPONSE | jq -r '.jobs[] | select(.name == "valgrind") | .html_url')
+          printf "job_url=`%s/summary_raw`" "${JOB_URL}" >> "$GITHUB_OUTPUT"
 
       - name: Comment link to step summary on PR
         uses: peter-evans/create-or-update-comment@v1
         with:
           issue-number: ${{ github.event.number }}
           body: |
-            See the [step summary](${{ steps.valgrind_results.outputs.step_summary_url }}) for more details.
+            See the [step summary](${{ steps.api_request.outputs.job_url }}) for more details.
 
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
