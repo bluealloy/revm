@@ -40,21 +40,23 @@ jobs:
           contents=$(<cachegrind_results.txt)
           printf "%s" "${contents}" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Make GitHub API request
+      - name: Upload this to a gist
         id: api_request
-        run: |
-          set -m
-          API_URL="https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs"
-          API_RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" $API_URL)
-          
-          # go through "jobs" array and find the job with the name "valgrind"
-          # then get the "html_url" field from that job
-          SUMMARY_URL=$(echo $API_RESPONSE | jq -r '.jobs[] | select(.name == "valgrind") | .html_url')
-          printf "mkdn=`%s/summary_raw`" "${SUMMARY_URL}" >> "$GITHUB_OUTPUT"
-
-      - name: Print output
-        run: |
-          echo "${{ steps.valgrind_results.outputs.mkdn }}"
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const content = fs.readFileSync('cachegrind_results.txt', 'utf8');
+            const response = await github.gists.create({
+              files: {
+                'cachegrind_results.txt': {
+                  content: content
+                }
+              }
+            });
+            console.log(response.data.html_url);
+            core.setOutput("summary_url", response.data.html_url);
 
       - name: Comment link to step summary on PR
         uses: peter-evans/create-or-update-comment@v1
