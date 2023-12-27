@@ -35,8 +35,8 @@ jobs:
 
       - name: Valgrind results
         id: valgrind_results
-        out=$(<cachegrind_results.txt)
-        echo "out=$out" >> $GITHUB_OUTPUTg
+          out=$(<cachegrind_results.txt)
+          echo "out=$out" >> $GITHUB_OUTPUTg
 
       - name: Comment on PR
         uses: peter-evans/create-or-update-comment@v3
