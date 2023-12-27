@@ -21,45 +21,20 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y valgrind
 
-      - name: Install cg_annotate
-        run: |
-          sudo apt-get install -y kcachegrind
-
       - name: Run Valgrind
         run: |
           cargo b -r -p revm-test --bin snailtracer
-          valgrind --tool=cachegrind target/release/snailtracer
-
-          # Extract relevant information from cachegrind.out file
-          cg_annotate cachegrind.out.* > cachegrind_results.txt
+          valgrind --tool=cachegrind target/release/snailtracer 2>&1 | tee cachegrind_results.txt
 
       - name: Valgrind results
         id: valgrind_results
         run: |
-          cat cachegrind_results.txt
-          contents=$(<cachegrind_results.txt)
-          printf "out=%s" "${contents//$'\n'/\\n}" >> "$GITHUB_OUTPUT"
-      
-      - name: Setup cURL for filebin
-        run: |
-          sudo apt-get install -y curl
-      
-      - name: Upload file to GitHub and get URL
-        id: upload-comment
-        run: |
-          UPLOAD_URL=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            -X POST \
-            -H "Accept: application/vnd.github.v3+json" \
-            -d '{"body":"Uploaded file: [temp_file.txt]($UPLOAD_URL)"}' \
-            "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.number }}/comments" \
-            --upload-file cachegrind_results.txt | jq -r .url)
-          
-          printf "file_url=%s" "${UPLOAD_URL}" >> "$GITHUB_OUTPUT"
+          contents=$(printf "%s" "$(head -c 64000 cachegrind_results.txt)")
+          # dump line by line into a file
+          printf "Valgrind Results:\n\n\`\`\`\n%s\n\`\`\`" "$contents" > results.md
 
-      - name: Comment on issue with file link
+      - name: Comment on PR
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          gh issue comment ${{ github.event.number }} -b "Uploaded file: [temp_file.txt](${{ steps.upload-comment.outputs.file_url }})"
-      
-
-
-      
+          gh pr comment ${{ github.event.pull_request.number }} --body-file results.md
