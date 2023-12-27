@@ -50,13 +50,14 @@ jobs:
           # go through "jobs" array and find the job with the name "valgrind"
           # then get the "html_url" field from that job
           SUMMARY_URL=$(echo $API_RESPONSE | jq -r '.jobs[] | select(.name == "valgrind") | .html_url')
-          printf "summary_url=`%s/summary_raw`" "${SUMMARY_URL}" >> "$GITHUB_OUTPUT"
+          printf "mkdn=`%s/summary_raw`" "${SUMMARY_URL}" >> "$GITHUB_OUTPUT"
 
       - name: Comment link to step summary on PR
         uses: peter-evans/create-or-update-comment@v1
         with:
           issue-number: ${{ github.event.number }}
           body: |
+            ${{ steps.valgrind_results.outputs.mkdn }}
             [Valgrind Cachegrind Results](${{ steps.api_request.outputs.summary_url }})
 
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
