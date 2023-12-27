@@ -28,10 +28,7 @@ jobs:
       - name: Run Valgrind
         run: |
           cargo b -r -p revm-test --bin snailtracer
-          valgrind --tool=cachegrind target/release/snailtracer
-
-          # Extract relevant information from cachegrind.out file
-          cg_annotate cachegrind.out.* > cachegrind_results.txt
+          valgrind --tool=cachegrind target/release/snailtracer > cachegrind_results.txt
 
       - name: Valgrind results
         id: valgrind_results
