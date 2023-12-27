@@ -52,6 +52,10 @@ jobs:
           SUMMARY_URL=$(echo $API_RESPONSE | jq -r '.jobs[] | select(.name == "valgrind") | .html_url')
           printf "mkdn=`%s/summary_raw`" "${SUMMARY_URL}" >> "$GITHUB_OUTPUT"
 
+      - name: Print output
+        run: |
+          echo "${{ steps.valgrind_results.outputs.mkdn }}"
+
       - name: Comment link to step summary on PR
         uses: peter-evans/create-or-update-comment@v1
         with:
