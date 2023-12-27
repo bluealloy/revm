@@ -53,4 +53,4 @@ jobs:
         with:
           issue-number: ${{ github.event.number }}
           body: |
-            Valgrind results: ${{ steps.valgrind_artifact.outputs.artifact_url }}
+            Valgrind results: [View Artifact](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts/Valgrind%20results)
