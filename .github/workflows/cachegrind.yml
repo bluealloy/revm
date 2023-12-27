@@ -41,18 +41,15 @@ jobs:
           printf "out=%s" "${contents//$'\n'/\\n}" >> "$GITHUB_OUTPUT"
 
       - name: Comment on PR
-        uses: actions/github-script@0.9.0
-        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const output = `#### Valgrind Cachegrind 📖\n`
+          header: plan
+          message: |
+            #### Valgrind Cachegrind Results
+            <details><summary>Show Plan</summary>
 
-            output += `${{ steps.valgrind_results.outputs.out }}`
+            ```
+            ${{ steps.valgrind_results.outputs.out }}
+            ```
 
-            github.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: output
-            })```
+            </details>
