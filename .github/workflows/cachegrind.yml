@@ -48,10 +48,14 @@ jobs:
         id: filebin
         run: |
           random_hash=$(uuidgen | tr '[:upper:]' '[:lower:]' | tr -d '-')
+          new_random_hash=$(echo $random_hash | cut -c1-8)
+          bin_name=$(printf "revmfilebin-%s" "${new_random_hash}")
           name=$(printf "cachegrind_results-%s-%s.txt" "${GITHUB_SHA}" "${random_hash}")
-          url=$(printf "https://filebin.net/revmfilebin/$name")
+          url=$(printf "https://filebin.net/")
           curl -X 'POST' \
           $url \
+          -H bin: $bin_name \
+          -H filename: "$name" \
           -H 'accept: application/json' \
           -H 'Content-Type: application/octet-stream' \
           --data-binary '@cachegrind_results.txt'
@@ -63,8 +67,7 @@ jobs:
         with:
           issue-number: ${{ github.event.number }}
           body: |
-            See the results of the Valgrind Cachegrind run [here](${{ steps.filebin.outputs.url_name }}).
-
+            See the results of the Valgrind Cachegrind run [here](${{ steps.filebin.outputs.url_name }}) :file_folder: {:target="_blank"}.
 
       
 
