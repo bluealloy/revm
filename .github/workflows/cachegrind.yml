@@ -28,7 +28,10 @@ jobs:
       - name: Run Valgrind
         run: |
           cargo b -r -p revm-test --bin snailtracer
-          valgrind --tool=cachegrind target/release/snailtracer >> cachegrind_results.txt
+          valgrind --tool=cachegrind target/release/snailtracer
+
+          # Extract relevant information from cachegrind.out file
+          cg_annotate cachegrind.out.* > cachegrind_results.txt
 
       - name: Valgrind results
         id: valgrind_results
@@ -38,10 +41,18 @@ jobs:
           printf "out=%s" "${contents//$'\n'/\\n}" >> "$GITHUB_OUTPUT"
 
       - name: Comment on PR
-        uses: peter-evans/create-or-update-comment@v3
+        uses: actions/github-script@0.9.0
+        if: github.event_name == 'pull_request'
         with:
-          issue-number: ${{ github.event.number }}
-          body: |
-            ```
-                ${{ steps.valgrind_results.outputs.out }}
-            ```
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Valgrind Cachegrind 📖\n`
+
+            output += `${{ steps.valgrind_results.outputs.out }}`
+
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })```
