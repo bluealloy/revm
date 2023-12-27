@@ -58,6 +58,7 @@ jobs:
             console.log(response.data.html_url);
             core.setOutput("summary_url", response.data.html_url);
 
+
       - name: Comment link to step summary on PR
         uses: peter-evans/create-or-update-comment@v1
         with:
