@@ -90,10 +90,7 @@ fn transfer(c: &mut Criterion) {
     g.finish();
 }
 
-fn bench_transact<'a, EXT>(
-    g: &mut BenchmarkGroup<'_, WallTime>,
-    evm: &mut Evm<'a, EXT, BenchmarkDB>,
-) {
+fn bench_transact<EXT>(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm<'_, EXT, BenchmarkDB>) {
     let state = match evm.context.evm.db.0.state {
         BytecodeState::Raw => "raw",
         BytecodeState::Checked { .. } => "checked",
