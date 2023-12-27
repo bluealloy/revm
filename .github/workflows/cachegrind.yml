@@ -36,10 +36,7 @@ jobs:
       - name: Valgrind results
         id: valgrind_results
         run: |
-          cat <<EOF >> "$GITHUB_OUTPUT"
-          out=$(<cachegrind_results.txt)
-          EOF
-
+          echo "::set-output name=out::$(cat cachegrind_results.txt)"
 
       - name: Comment on PR
         uses: peter-evans/create-or-update-comment@v3
