@@ -40,9 +40,13 @@ jobs:
           contents=$(<cachegrind_results.txt)
           printf "out=%s" "${contents//$'\n'/\\n}" >> $GITHUB_OUTPUT
       
+      - name: Setup cURL for filebin
+        run: |
+          sudo apt-get install -y curl
+      
       - name: Upload to filebin
         run: |
-          name = printf "cachegrind_results-%s.txt" "${GITHUB_SHA}"
+          name=$(printf "cachegrind_results-%s.txt" "${GITHUB_SHA}")
           curl -X 'POST' \
           'https://filebin.net/revmfilebin/$name' \
           -H 'accept: application/json' \
