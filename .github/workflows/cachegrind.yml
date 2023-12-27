@@ -35,7 +35,7 @@ jobs:
 
       - name: Valgrind results
         id: valgrind_results
-        run: echo "out=$(<cachegrind_results.txt)" >> $GITHUB_STEP_SUMMARY
+        run: echo "out=$(<cachegrind_results.txt)" >> $GITHUB_OUTPUT
 
       - name: Comment on PR
         uses: peter-evans/create-or-update-comment@v3
@@ -43,5 +43,5 @@ jobs:
           issue-number: ${{ github.event.number }}
           body: |
             ```
-                ${{ steps.valgrind_results.summary }}
+                ${{ steps.valgrind_results.outputs.out }}
             ```
