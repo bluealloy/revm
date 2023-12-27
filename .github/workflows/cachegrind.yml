@@ -35,6 +35,7 @@ jobs:
 
       - name: Valgrind results
         id: valgrind_results
+        run: |
           out=$(<cachegrind_results.txt)
           echo "out=$out" >> $GITHUB_OUTPUTg
 
