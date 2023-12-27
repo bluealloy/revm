@@ -57,6 +57,6 @@ jobs:
         with:
           issue-number: ${{ github.event.number }}
           body: |
-            See the [step summary](${{ steps.api_request.outputs.summary_url }}) for more details.
+            [Valgrind Cachegrind Results](${{ steps.api_request.outputs.summary_url }})
 
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
