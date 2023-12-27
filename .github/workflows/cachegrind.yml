@@ -51,12 +51,12 @@ jobs:
 
           printf "url_name=https://filebin.net/revmfilebin/$name" >> $GITHUB_OUTPUT
 
-        - name: Comment on PR
-          uses: peter-evans/create-or-update-comment@v1
-          with:
-            issue-number: ${{ github.event.number }}
-            body: |
-              See the results of the Valgrind Cachegrind run [here](${{ steps.valgrind_results.outputs.url_name }}).
+      - name: Comment on PR
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          issue-number: ${{ github.event.number }}
+          body: |
+            See the results of the Valgrind Cachegrind run [here](${{ steps.valgrind_results.outputs.url_name }}).
 
 
       
