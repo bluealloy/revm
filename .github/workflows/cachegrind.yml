@@ -40,16 +40,30 @@ jobs:
           contents=$(<cachegrind_results.txt)
           printf "out=%s" "${contents//$'\n'/\\n}" >> "$GITHUB_OUTPUT"
 
-      - name: Comment on PR
+      - name: Comment on PR (Part 1)
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: plan
           message: |
-            #### Valgrind Cachegrind Results
+            #### Valgrind Cachegrind Results (Part 1)
             <details><summary>Show Plan</summary>
 
             ```
-            ${{ steps.valgrind_results.outputs.out }}
+            ${{ steps.valgrind_results.outputs.out | head -n 1000 }}
+            ```
+
+            </details>
+
+      - name: Comment on PR (Part 2)
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: plan
+          message: |
+            #### Valgrind Cachegrind Results (Part 2)
+            <details><summary>Show Plan</summary>
+
+            ```
+            ${{ steps.valgrind_results.outputs.out | sed -n '1001,2000p' }}
             ```
 
             </details>
