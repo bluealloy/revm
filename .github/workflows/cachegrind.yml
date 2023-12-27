@@ -45,6 +45,7 @@ jobs:
           sudo apt-get install -y curl
       
       - name: Upload to filebin
+        id: filebin
         run: |
           random_hash=$(uuidgen | tr '[:upper:]' '[:lower:]' | tr -d '-')
           name=$(printf "cachegrind_results-%s-%s.txt" "${GITHUB_SHA}" "${random_hash}")
@@ -62,7 +63,7 @@ jobs:
         with:
           issue-number: ${{ github.event.number }}
           body: |
-            See the results of the Valgrind Cachegrind run [here](${{ steps.valgrind_results.outputs.url_name }}).
+            See the results of the Valgrind Cachegrind run [here](${{ steps.filebin.outputs.url_name }}).
 
 
       
