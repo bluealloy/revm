@@ -53,11 +53,12 @@ jobs:
             -d '{"body":"Uploaded file: [temp_file.txt]($UPLOAD_URL)"}' \
             "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments" \
             --upload-file cachegrind_results.txt | jq -r .url)
-          echo "::set-output name=UPLOAD_URL::$UPLOAD_URL"
+          
+          printf "file_url=%s" "${UPLOAD_URL//$'\n'/\\n}" >> "$GITHUB_OUTPUT"
 
       - name: Comment on issue with file link
         run: |
-          gh issue comment ${{ github.event.issue.number }} -b "Uploaded file: [temp_file.txt]($UPLOAD_URL)"
+          gh issue comment ${{ github.event.issue.number }} -b "Uploaded file: [temp_file.txt](${{ steps.upload-comment.outputs.file_url }})"
       
 
 
