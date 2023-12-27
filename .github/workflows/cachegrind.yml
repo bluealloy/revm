@@ -54,7 +54,7 @@ jobs:
           url=$(printf "https://filebin.net/")
           curl -X 'POST' \
           $url \
-          -H bin: $bin_name \
+          -H bin: "$bin_name" \
           -H filename: "$name" \
           -H 'accept: application/json' \
           -H 'Content-Type: application/octet-stream' \
@@ -68,6 +68,8 @@ jobs:
           issue-number: ${{ github.event.number }}
           body: |
             See the results of the Valgrind Cachegrind run [here](${{ steps.filebin.outputs.url_name }}) :file_folder: {:target="_blank"}.
+
+            This link will expire in 6 days from now!
 
       
 
