@@ -49,14 +49,14 @@ jobs:
           
           # go through "jobs" array and find the job with the name "valgrind"
           # then get the "html_url" field from that job
-          JOB_URL=$(echo $API_RESPONSE | jq -r '.jobs[] | select(.name == "valgrind") | .html_url')
-          printf "job_url=`%s/summary_raw`" "${JOB_URL}" >> "$GITHUB_OUTPUT"
+          SUMMARY_URL=$(echo $API_RESPONSE | jq -r '.jobs[] | select(.name == "valgrind") | .html_url')
+          printf "summary_url=`%s/summary_raw`" "${SUMMARY_URL}" >> "$GITHUB_OUTPUT"
 
       - name: Comment link to step summary on PR
         uses: peter-evans/create-or-update-comment@v1
         with:
           issue-number: ${{ github.event.number }}
           body: |
-            See the [step summary](${{ steps.api_request.outputs.job_url }}) for more details.
+            See the [step summary](${{ steps.api_request.outputs.summary_url }}) for more details.
 
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
