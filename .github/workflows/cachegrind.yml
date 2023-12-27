@@ -44,33 +44,20 @@ jobs:
         run: |
           sudo apt-get install -y curl
       
-      - name: Upload to filebin
-        id: filebin
+      - name: Upload file to GitHub and get URL
+        id: upload-comment
         run: |
-          random_hash=$(uuidgen | tr '[:upper:]' '[:lower:]' | tr -d '-')
-          new_random_hash=$(echo $random_hash | cut -c1-8)
-          bin_name=$(printf "revmfilebin-%s" "${new_random_hash}")
-          name=$(printf "cachegrind_results-%s-%s.txt" "${GITHUB_SHA}" "${random_hash}")
-          url=$(printf "https://filebin.net/")
-          curl -X 'POST' \
-          $url \
-          -H bin: "$bin_name" \
-          -H filename: "$name" \
-          -H 'accept: application/json' \
-          -H 'Content-Type: application/octet-stream' \
-          --data-binary '@cachegrind_results.txt'
+          UPLOAD_URL=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            -d '{"body":"Uploaded file: [temp_file.txt]($UPLOAD_URL)"}' \
+            "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/comments" \
+            --upload-file cachegrind_results.txt | jq -r .url)
+          echo "::set-output name=UPLOAD_URL::$UPLOAD_URL"
 
-          echo "url_name=https://filebin.net/revmfilebin/$name" >> "$GITHUB_OUTPUT"
-
-      - name: Comment on PR
-        uses: peter-evans/create-or-update-comment@v1
-        with:
-          issue-number: ${{ github.event.number }}
-          body: |
-            See the results of the Valgrind Cachegrind run [here](${{ steps.filebin.outputs.url_name }}) :file_folder: {:target="_blank"}.
-
-            This link will expire in 6 days from now!
-
+      - name: Comment on issue with file link
+        run: |
+          gh issue comment ${{ github.event.issue.number }} -b "Uploaded file: [temp_file.txt]($UPLOAD_URL)"
       
 
 
