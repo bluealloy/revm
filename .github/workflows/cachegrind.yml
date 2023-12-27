@@ -43,6 +43,7 @@ jobs:
       - name: Make GitHub API request
         id: api_request
         run: |
+          set -m
           API_URL="https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs"
           API_RESPONSE=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" $API_URL)
           
