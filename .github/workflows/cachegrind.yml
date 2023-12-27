@@ -36,7 +36,7 @@ jobs:
       - name: Valgrind results
         id: valgrind_results
         run: |
-          echo '::set-output name=out::echo "$(<cachegrind_results.txt)"'
+          echo '::set-output name=out::$(echo "$(<cachegrind_results.txt)")'
 
       - name: Comment on PR
         uses: peter-evans/create-or-update-comment@v3
