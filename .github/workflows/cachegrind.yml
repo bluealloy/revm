@@ -6,6 +6,7 @@ on:
 
 jobs:
   valgrind:
+    permissions: write-all
     runs-on: ubuntu-latest
 
     permissions:
