@@ -4,13 +4,14 @@ on:
   pull_request:
     branches: [main]
 
-permissions:
-  issues: write
-  pull-requests: write
-
 jobs:
   valgrind:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
 
     steps:
       - name: Checkout code
@@ -37,6 +38,13 @@ jobs:
           contents=$(printf "%s" "$(head -c 64000 cachegrind_results.txt)")
           # dump line by line into a file
           printf "Valgrind Results:\n\n\`\`\`\n%s\n\`\`\`" "$contents" > results.md
+
+      - name: Comment PR (test)
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            Test successful !
+          reactions: rocket
 
       - name: Comment on PR
         env:
