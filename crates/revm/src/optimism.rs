@@ -1,6 +1,6 @@
 //! Optimism-specific constants, types, and helpers.
 
-use crate::primitives::{address, db::Database, Address, Bytes, Spec, SpecId, U256};
+use crate::primitives::{address, db::Database, Address, Spec, SpecId, U256};
 use core::ops::Mul;
 
 const ZERO_BYTE_COST: u64 = 4;
@@ -59,7 +59,7 @@ impl L1BlockInfo {
     ///
     /// Prior to regolith, an extra 68 non-zero bytes were included in the rollup data costs to
     /// account for the empty signature.
-    pub fn data_gas<SPEC: Spec>(&self, input: &Bytes) -> U256 {
+    pub fn data_gas<SPEC: Spec>(&self, input: &[u8]) -> U256 {
         let mut rollup_data_gas_cost = U256::from(input.iter().fold(0, |acc, byte| {
             acc + if *byte == 0x00 {
                 ZERO_BYTE_COST
@@ -77,7 +77,7 @@ impl L1BlockInfo {
     }
 
     /// Calculate the gas cost of a transaction based on L1 block data posted on L2
-    pub fn calculate_tx_l1_cost<SPEC: Spec>(&self, input: &Bytes) -> U256 {
+    pub fn calculate_tx_l1_cost<SPEC: Spec>(&self, input: &[u8]) -> U256 {
         // If the input is not a deposit transaction, the default value is zero.
         if input.is_empty() || input.first() == Some(&0x7F) {
             return U256::ZERO;
