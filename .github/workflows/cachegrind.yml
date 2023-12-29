@@ -4,13 +4,10 @@ on:
   pull_request:
     branches: [main]
 
-permissions:
-  issues: write
-  pull-requests: write
-
 jobs:
   valgrind:
     runs-on: ubuntu-latest
+    permissions: write-all
 
     steps:
       - name: Checkout code
