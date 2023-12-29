@@ -48,7 +48,7 @@ impl<M: Middleware> EthersDB<M> {
 }
 
 impl<M: Middleware> DatabaseRef for EthersDB<M> {
-    type Error = ();
+    type Error = M::Error;
 
     fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         let add = eH160::from(address.0 .0);
@@ -60,22 +60,12 @@ impl<M: Middleware> DatabaseRef for EthersDB<M> {
             tokio::join!(nonce, balance, code)
         };
         let (nonce, balance, code) = self.block_on(f);
-        // panic on not getting data?
-        let bytecode = code.unwrap_or_else(|e| panic!("ethers get code error: {e:?}"));
-        let bytecode = Bytecode::new_raw(bytecode.0.into());
+
+        let balance = U256::from_limbs(balance?.0);
+        let nonce = nonce?.as_u64();
+        let bytecode = Bytecode::new_raw(code?.0.into());
         let code_hash = bytecode.hash_slow();
-        Ok(Some(AccountInfo::new(
-            U256::from_limbs(
-                balance
-                    .unwrap_or_else(|e| panic!("ethers get balance error: {e:?}"))
-                    .0,
-            ),
-            nonce
-                .unwrap_or_else(|e| panic!("ethers get nonce error: {e:?}"))
-                .as_u64(),
-            code_hash,
-            bytecode,
-        )))
+        Ok(Some(AccountInfo::new(balance, nonce, code_hash, bytecode)))
     }
 
     fn code_by_hash_ref(&self, _code_hash: B256) -> Result<Bytecode, Self::Error> {
@@ -115,7 +105,7 @@ impl<M: Middleware> DatabaseRef for EthersDB<M> {
 }
 
 impl<M: Middleware> Database for EthersDB<M> {
-    type Error = ();
+    type Error = M::Error;
 
     #[inline]
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
