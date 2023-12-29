@@ -37,4 +37,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh pr comment ${{ github.event.pull_request.number }} --body-file results.md
+          gh pr comment ${{ github.event.pull_request.number }} --edit-last --body-file results.md
