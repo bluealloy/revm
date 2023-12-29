@@ -195,7 +195,8 @@ pub fn evm_inner<'a, DB: Database>(
                 db,
                 env,
                 insp,
-                Precompiles::new(revm_precompile::SpecId::from_spec_id($spec::SPEC_ID)).clone(),
+                Precompiles::empty().clone(),
+                // Precompiles::new(revm_precompile::SpecId::from_spec_id($spec::SPEC_ID)).clone(),
             )) as Box<dyn Transact<DB::Error> + 'a>
         };
     }

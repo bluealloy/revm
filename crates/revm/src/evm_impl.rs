@@ -715,7 +715,10 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             "_evm_callvalue",
             move |mut caller: Caller<'_, RuntimeContext<'_, EVMData<'a, DB>>>,
                   value_offset: u32| {
-                caller.write_memory(value_offset as usize, &contract_value.to_le_bytes::<32>()[..]);
+                caller.write_memory(
+                    value_offset as usize,
+                    &contract_value.to_le_bytes::<32>()[..],
+                );
             },
         );
         runtime.add_binding(

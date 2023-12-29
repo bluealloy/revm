@@ -2,10 +2,7 @@
 extern crate alloc;
 
 use alloc::boxed::Box;
-use fluentbase_sdk::evm::{
-    contract_read_address, contract_read_bytecode, contract_read_caller, contract_read_env,
-    contract_read_hash, contract_read_input, contract_read_value,
-};
+use fluentbase_sdk::evm::ExecutionContext;
 use fluentbase_sdk::{SysPlatformSDK, SDK};
 use revm_interpreter::opcode::make_instruction_table;
 use revm_interpreter::{Contract, FluentHost, InstructionResult, Interpreter, SharedMemory};
@@ -16,26 +13,18 @@ const INPUT_BYTECODE: [u8; 25 * 1024] = [0x7f; 25 * 1024];
 #[no_mangle]
 extern "C" fn main() {
     // read input
-    let input = contract_read_input();
-    let hash = contract_read_hash();
-    let address = contract_read_address();
-    let caller = contract_read_caller();
-    let value = contract_read_value();
+    let mut ctx = ExecutionContext::default();
     // init contract
     let contract = Contract::new(
-        Bytes::from(input),
+        Bytes::copy_from_slice(ctx.get_contract_input().as_slice()),
         Bytecode::new_raw(Bytes::from(INPUT_BYTECODE)),
-        B256::from(hash),
-        Address::from(address),
-        Address::from(caller),
-        U256::from(value),
+        B256::from(ctx.get_contract_code_hash().0),
+        Address::from(ctx.get_contract_address().into_array()),
+        Address::from(ctx.get_contract_caller().into_array()),
+        *ctx.get_contract_value(),
     );
     // read env input (we use json for testing purposes)
-    let env = {
-        let json_env = contract_read_env();
-        let env: Env = serde_json::from_slice(&json_env.as_slice()).unwrap();
-        env
-    };
+    let env = { Env::default() };
     let mut shared_memory = SharedMemory::new();
     let (return_code, return_offset, return_len) = {
         let mut vm = Interpreter::new(

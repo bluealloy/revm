@@ -230,6 +230,15 @@ impl Precompiles {
         Self::cancun()
     }
 
+    pub fn empty() -> &'static Self {
+        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
+        INSTANCE.get_or_init(|| {
+            Box::new(Self {
+                inner: Default::default(),
+            })
+        })
+    }
+
     /// Returns the precompiles for the given spec.
     pub fn new(spec: SpecId) -> &'static Self {
         match spec {
