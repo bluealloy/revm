@@ -8,6 +8,7 @@ jobs:
   valgrind:
     permissions: write-all
     runs-on: ubuntu-latest
+    permissions: write-all
 
     steps:
       - name: Checkout code
