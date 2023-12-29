@@ -35,13 +35,6 @@ jobs:
           # dump line by line into a file
           printf "Valgrind Results:\n\n\`\`\`\n%s\n\`\`\`" "$contents" > results.md
 
-      - name: Comment PR (test)
-        uses: thollander/actions-comment-pull-request@v2
-        with:
-          message: |
-            Test successful !
-          reactions: rocket
-
       - name: Comment on PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
