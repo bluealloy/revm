@@ -311,22 +311,16 @@ fn xfer_cost(is_call_or_callcode: bool, transfers_value: bool) -> u64 {
 
 #[inline]
 fn new_cost<SPEC: Spec>(is_call_or_staticcall: bool, is_new: bool, transfers_value: bool) -> u64 {
-    if is_call_or_staticcall {
-        // EIP-161: State trie clearing (invariant-preserving alternative)
-        if SPEC::enabled(SPURIOUS_DRAGON) {
-            if transfers_value && is_new {
-                NEWACCOUNT
-            } else {
-                0
-            }
-        } else if is_new {
-            NEWACCOUNT
-        } else {
-            0
-        }
-    } else {
-        0
+    if !is_call_or_staticcall || !is_new {
+        return 0;
     }
+
+    // EIP-161: State trie clearing (invariant-preserving alternative)
+    if SPEC::enabled(SPURIOUS_DRAGON) && !transfers_value {
+        return 0;
+    }
+
+    NEWACCOUNT
 }
 
 #[inline]
