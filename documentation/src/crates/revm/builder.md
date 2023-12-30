@@ -9,12 +9,12 @@ Builder ties dependencies between generic `Database`, `External` context and `Sp
 
 Simple example of using `EvmBuilder`:
 
-```rust
-use revm::evm::Evm;
+```rust,ignore
+  use crate::evm::Evm;
 
-// build Evm with default values.
-let mut evm = Evm::builder().build();
-evm.transact();
+  // build Evm with default values.
+  let mut evm = Evm::builder().build();
+  evm.transact();
 ```
 
 ## Builder Stages
@@ -47,50 +47,50 @@ Additionally function that is very important is `evm.modify()` that allows modif
 # Examples
 
 Example of using builder to create Evm with inspector:
-```rust
-    use crate::{
-        db::EmptyDB, Context, EvmContext, inspector::inspector_handle_register, inspectors::NoOpInspector, Evm,
-    };
+```rust,ignore
+  use crate::{
+      db::EmptyDB, Context, EvmContext, inspector::inspector_handle_register, inspectors::NoOpInspector, Evm,
+  };
 
-    // create the builder
-    let evm = Evm::builder()
-        .with_db(EmptyDB::default())
-        .with_external_context(NoOpInspector)
-        // register will modify Handler and call NoOpInspector.
-        .append_handler_register(inspector_handle_register)
-        // this would not compile as we already locked the builder generics.
-        // .with_db(..)
-        // alternative fn is reset_handler_with_db(..)
-        .build();
-    
-    // extract evm context.
-    let Context {
-        external,
-        evm: EvmContext { db, .. },
-    } = evm.into_context();
+  // create the builder
+  let evm = Evm::builder()
+      .with_db(EmptyDB::default())
+      .with_external_context(NoOpInspector)
+      // register will modify Handler and call NoOpInspector.
+      .append_handler_register(inspector_handle_register)
+      // this would not compile as we already locked the builder generics.
+      // .with_db(..)
+      // alternative fn is reset_handler_with_db(..)
+      .build();
+  
+  // extract evm context.
+  let Context {
+      external,
+      evm: EvmContext { db, .. },
+  } = evm.into_context();
 ```
 
 Example of changing spec id and Environment of already build evm.
-```rust
-    use crate::{Evm,SpecId::BERLIN};
+```rust,ignore
+  use crate::{Evm,SpecId::BERLIN};
 
-    // create default evm
-    let evm = Evm::builder().build();
+  // create default evm
+  let evm = Evm::builder().build();
 
-    // modify evm spec
-    let evm = evm.modify().spec_id(BERLIN).build();
+  // modify evm spec
+  let evm = evm.modify().spec_id(BERLIN).build();
 
-    // shortcut for above is
-    let mut evm = evm.modify_spec_id(BERLIN);
-    
-    //execute the evm
-    evm.transact();
+  // shortcut for above is
+  let mut evm = evm.modify_spec_id(BERLIN);
 
-    // Example of modifying the tx env.
-    let mut evm = evm.modify().modify_tx_env(|env| env.gas_price = 0.into()).build();
+  //execute the evm
+  evm.transact();
 
-    // execute the evm with modified tx env.
-    evm.transact();
+  // Example of modifying the tx env.
+  let mut evm = evm.modify().modify_tx_env(|env| env.gas_price = 0.into()).build();
+
+  // execute the evm with modified tx env.
+  evm.transact();
 ```
 
 ## Appending handler registers
