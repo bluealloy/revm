@@ -325,8 +325,10 @@ impl JournaledState {
                 }
                 JournalEntry::BalanceTransfer { from, to, balance } => {
                     // we don't need to check overflow and underflow when adding and subtracting the balance.
-                    state.get_mut(&from).unwrap().info.balance += balance;
-                    state.get_mut(&to).unwrap().info.balance -= balance;
+                    let from = state.get_mut(&from).unwrap();
+                    from.info.balance += balance;
+                    let to = state.get_mut(&to).unwrap();
+                    to.info.balance -= balance;
                 }
                 JournalEntry::NonceChange { address } => {
                     state.get_mut(&address).unwrap().info.nonce -= 1;
