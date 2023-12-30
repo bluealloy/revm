@@ -325,10 +325,8 @@ impl JournaledState {
                 }
                 JournalEntry::BalanceTransfer { from, to, balance } => {
                     // we don't need to check overflow and underflow when adding and subtracting the balance.
-                    let from = state.get_mut(&from).unwrap();
-                    from.info.balance += balance;
-                    let to = state.get_mut(&to).unwrap();
-                    to.info.balance -= balance;
+                    state.get_mut(&from).unwrap().info.balance += balance;
+                    state.get_mut(&to).unwrap().info.balance -= balance;
                 }
                 JournalEntry::NonceChange { address } => {
                     state.get_mut(&address).unwrap().info.nonce -= 1;
@@ -694,9 +692,19 @@ impl JournaledState {
             // If it is none nothing should be inserted.
             self.transient_storage.remove(&(address, key))
         } else {
-            self.transient_storage
+            // insert values
+            let previous_value = self
+                .transient_storage
                 .insert((address, key), new)
-                .filter(|&previous_value| previous_value != new)
+                .unwrap_or_default();
+
+            // check if previous value is same
+            if previous_value != new {
+                // if it is different, insert previous values inside journal.
+                Some(previous_value)
+            } else {
+                None
+            }
         };
 
         if let Some(had_value) = had_value {
