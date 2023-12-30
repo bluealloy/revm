@@ -1,0 +1,49 @@
+name: Valgrind Cachegrind
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  valgrind:
+    runs-on: ubuntu-latest
+    permissions: write-all
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup | Rust
+        uses: ATiltedTree/setup-rust@v1
+        with:
+          rust-version: stable
+
+      - name: Install Valgrind
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y valgrind
+
+      - name: Run Valgrind
+        run: |
+          cargo b -r -p revm-test --bin snailtracer
+          valgrind --tool=cachegrind target/release/snailtracer 2>&1 | tee cachegrind_results.txt
+
+      - name: Valgrind results
+        id: valgrind_results
+        run: |
+          contents=$(printf "%s" "$(head -c 64000 cachegrind_results.txt)")
+          # dump line by line into a file
+          printf "Valgrind Results:\n\n\`\`\`\n%s\n\`\`\`" "$contents" > results.md
+
+      - name: Comment on PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Try to edit the last comment
+          if gh pr comment ${{ github.event.pull_request.number }} --edit-last --body-file results.md; then
+            echo "Successfully edited last comment."
+          else
+            echo "Failed to edit last comment. Trying to add a new comment instead!"
+            # If editing last comment fails, try to add a new comment
+            gh pr comment ${{ github.event.pull_request.number }} --body-file results.md
+          fi
