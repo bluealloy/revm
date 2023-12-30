@@ -26,13 +26,11 @@ To dive deeper into the `Evm` logic  check [`Handler`](../handler.md) documentat
 
 # Functionalities
 
-`Evm` is build with a `EvmBuilder` that allows setting of `Database`, `External` context and `Handler`. Builder is created with `Evm::builder()` function. For more information on building check [`EvmBuilder`](./builder.md) documentation.
+Function of Evm is to start execution but setting up what Evm is going to execute is done by `EvmBuilder`.
 
-After building `Evm` it can be used to execute transactions. There are three functions that can be used to execute transactions:
-* preverify - that only preverifies transaction information.
-* transact preverified - is next step after preverification that executes transaction.
-* transact - it calls both preverifies and it executes transaction.
-
-If we want to modify `Evm` for example change the specification ID we can use `.modify()` function that would give us the `EvmBuilder` and we can set new specification that would build new `Evm` from it, as setting new specification would need to reset the `Handler` functions.
-
-More on the builder can be found in [`EvmBuilder`](./builder.md) documentation. 
+Main function inside evm are:
+* `preverify` - that only preverifies transaction information.
+* `transact preverified` - is next step after preverification that executes transaction.
+* `transact` - it calls both preverifies and it executes transaction.
+* `builder` and `modify` function - allows building or modifying the Evm, more on this can be found in [`EvmBuilder`](./builder.md) documentation. This is main way of creating Evm.
+* `into_context` - is used we want to get the `Context` from the Evm.

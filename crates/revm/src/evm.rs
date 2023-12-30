@@ -41,7 +41,7 @@ where
     }
 }
 
-impl<'a, EXT, DB: Database + DatabaseCommit> Evm<'a, EXT, DB> {
+impl<EXT, DB: Database + DatabaseCommit> Evm<'_, EXT, DB> {
     /// Commit the changes to the database.
     pub fn transact_commit(&mut self) -> Result<ExecutionResult, EVMError<DB::Error>> {
         let ResultAndState { result, state } = self.transact()?;
@@ -128,7 +128,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         if self.spec_id() == spec_id {
             return self;
         }
-        self.modify().with_spec_id(spec_id).build()
+        self.modify().spec_id(spec_id).build()
     }
 
     /// Returns internal database and external struct.

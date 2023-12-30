@@ -147,7 +147,7 @@ mod test {
                 tx.value = crate::primitives::U256::ZERO;
             })
             .with_external_context(CustomPrintTracer::default())
-            .with_spec_id(SpecId::BERLIN)
+            .spec_id(SpecId::BERLIN)
             .append_handler_register(inspector_handle_register)
             .build();
 

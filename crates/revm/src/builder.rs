@@ -101,39 +101,6 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
             phantom: PhantomData,
         }
     }
-
-    /// Appends the handler register to the handler.
-    pub fn append_handler_register(
-        mut self,
-        handle_register: register::HandleRegister<'a, EXT, DB>,
-    ) -> EvmBuilder<'_, HandlerStage, EXT, DB> {
-        self.handler
-            .append_handle_register(register::HandleRegisters::Plain(handle_register));
-        EvmBuilder {
-            evm: self.evm,
-            external: self.external,
-            handler: self.handler,
-
-            phantom: PhantomData,
-        }
-    }
-
-    /// Register Handler that modifies the behavior of EVM.
-    /// Check [`Handler`] for more information.
-    pub fn append_handler_register_box(
-        mut self,
-        handle_register: register::HandleRegisterBox<'a, EXT, DB>,
-    ) -> Self {
-        self.handler
-            .append_handle_register(register::HandleRegisters::Box(handle_register));
-        EvmBuilder {
-            evm: self.evm,
-            external: self.external,
-            handler: self.handler,
-
-            phantom: PhantomData,
-        }
-    }
 }
 
 impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
@@ -147,27 +114,6 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
             handler: evm.handler,
             phantom: PhantomData,
         }
-    }
-
-    /// Appends the handler register to the handler.
-    pub fn append_handler_register(
-        mut self,
-        handle_register: register::HandleRegister<'a, EXT, DB>,
-    ) -> Self {
-        self.handler
-            .append_handle_register(register::HandleRegisters::Plain(handle_register));
-        self
-    }
-
-    /// Register Handler that modifies the behavior of EVM.
-    /// Check [`Handler`] for more information.
-    pub fn append_handler_register_box(
-        mut self,
-        handle_register: register::HandleRegisterBox<'a, EXT, DB>,
-    ) -> Self {
-        self.handler
-            .append_handle_register(register::HandleRegisters::Box(handle_register));
-        self
     }
 
     /// Sets the [`EmptyDB`] and resets the [`Handler`]
@@ -235,6 +181,39 @@ impl<'a, STAGE: BuilderStage, EXT, DB: Database> EvmBuilder<'a, STAGE, EXT, DB> 
         }
     }
 
+    /// Appends the handler register to the handler.
+    pub fn append_handler_register(
+        mut self,
+        handle_register: register::HandleRegister<'a, EXT, DB>,
+    ) -> EvmBuilder<'_, HandlerStage, EXT, DB> {
+        self.handler
+            .append_handle_register(register::HandleRegisters::Plain(handle_register));
+        EvmBuilder {
+            evm: self.evm,
+            external: self.external,
+            handler: self.handler,
+
+            phantom: PhantomData,
+        }
+    }
+
+    /// Register Handler that modifies the behavior of EVM.
+    /// Check [`Handler`] for more information.
+    pub fn append_handler_register_box(
+        mut self,
+        handle_register: register::HandleRegisterBox<'a, EXT, DB>,
+    ) -> EvmBuilder<'_, HandlerStage, EXT, DB> {
+        self.handler
+            .append_handle_register(register::HandleRegisters::Box(handle_register));
+        EvmBuilder {
+            evm: self.evm,
+            external: self.external,
+            handler: self.handler,
+
+            phantom: PhantomData,
+        }
+    }
+
     /// Sets specification Id , that will mark the version of EVM.
     /// It represent the hard fork of ethereum.
     ///
@@ -242,7 +221,7 @@ impl<'a, STAGE: BuilderStage, EXT, DB: Database> EvmBuilder<'a, STAGE, EXT, DB> 
     ///
     /// When changed it will reapply all handle registers, this can be
     /// expensive operation depending on registers.
-    pub fn with_spec_id(mut self, spec_id: SpecId) -> Self {
+    pub fn spec_id(mut self, spec_id: SpecId) -> Self {
         self.handler = self.handler.change_spec_id(spec_id);
         EvmBuilder {
             evm: self.evm,
@@ -311,7 +290,8 @@ impl<'a, STAGE: BuilderStage, EXT, DB: Database> EvmBuilder<'a, STAGE, EXT, DB> 
 mod test {
     use super::SpecId;
     use crate::{
-        db::EmptyDB, inspector::inspector_handle_register, inspectors::NoOpInspector, Evm,
+        db::EmptyDB, inspector::inspector_handle_register, inspectors::NoOpInspector, Context, Evm,
+        EvmContext,
     };
 
     #[test]
@@ -332,7 +312,7 @@ mod test {
         // build with spec
         Evm::builder()
             .with_empty_db()
-            .with_spec_id(SpecId::HOMESTEAD)
+            .spec_id(SpecId::HOMESTEAD)
             .build();
 
         // with with Env change in multiple places
@@ -356,16 +336,31 @@ mod test {
             .with_external_context(NoOpInspector)
             .append_handler_register(inspector_handle_register)
             .build();
+
+        // create the builder
+        let evm = Evm::builder()
+            .with_db(EmptyDB::default())
+            .with_external_context(NoOpInspector)
+            .append_handler_register(inspector_handle_register)
+            // this would not compile
+            // .with_db(..)
+            .build();
+
+        let Context {
+            external,
+            evm: EvmContext { db, .. },
+        } = evm.into_context();
+        let _ = (external, db);
     }
 
     #[test]
     fn build_modify_build() {
         let evm = Evm::builder()
             .with_empty_db()
-            .with_spec_id(SpecId::HOMESTEAD)
+            .spec_id(SpecId::HOMESTEAD)
             .build();
 
-        let evm = evm.modify().with_spec_id(SpecId::FRONTIER).build();
+        let evm = evm.modify().spec_id(SpecId::FRONTIER).build();
         let _ = evm
             .modify()
             .modify_tx_env(|tx| tx.chain_id = Some(2))

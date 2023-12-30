@@ -257,7 +257,7 @@ pub fn execute_test_suite(
                 let mut evm = Evm::builder()
                     .with_db(&mut state)
                     .modify_env(|e| *e = env.clone())
-                    .with_spec_id(spec_id)
+                    .spec_id(spec_id)
                     .build();
 
                 // do the deed
