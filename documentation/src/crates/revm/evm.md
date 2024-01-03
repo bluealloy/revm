@@ -10,7 +10,7 @@ It is consisting of two main parts the `Context` and the `Handler`. `Context` re
 
 `Evm` implements the [`Host`](./../interpreter/host.md) trait, which defines an interface for the interaction of the EVM Interpreter with its environment (or "host"), encompassing essential operations such as account and storage access, creating logs, and invoking sub calls and selfdestruct.
 
-Data structures of block and transaction can be found inside `Environment`. And more information on journaled state can be found in [`JournaledState`](../revm_journaled_state/journaled_state.md) documentation.
+Data structures of block and transaction can be found inside `Environment`. And more information on journaled state can be found in [`JournaledState`](../revm/journaled_state.md) documentation.
 
 ## Runtime
 
@@ -22,7 +22,7 @@ First loop, the call loop, implements stack of `Frames` and it is responsible fo
 
 Second loop is `Interpreter` loop that loops over bytecode opcodes and executes instruction. It is called from the call loop and it is responsible for executing bytecode instructions. It is implemented in [`Interpreter`](../revm_interpreter/interpreter.md) crate.
 
-To dive deeper into the `Evm` logic  check [`Handler`](../handler.md) documentation.
+To dive deeper into the `Evm` logic  check [`Handler`](./handler.md) documentation.
 
 # Functionalities
 

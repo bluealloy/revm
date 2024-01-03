@@ -16,17 +16,11 @@ pub type Instruction<H> = fn(&mut Interpreter, &mut H);
 /// 256 EVM opcodes.
 pub type InstructionTable<H> = [Instruction<H>; 256];
 
-/// Arc over plain instruction table
-//pub type InstructionTableArc<H> = Arc<InstructionTable<H>>;
-
 /// EVM opcode function signature.
 pub type BoxedInstruction<'a, H> = Box<dyn Fn(&mut Interpreter, &mut H) + 'a>;
 
 /// A table of instructions.
 pub type BoxedInstructionTable<'a, H> = [BoxedInstruction<'a, H>; 256];
-
-// /// Arc over instruction table
-// pub type BoxedInstructionTableArc<'a, H> = Arc<BoxedInstructionTable<'a, H>>;
 
 /// Instruction set that contains plain instruction table that contains simple `fn` function pointer.
 /// and Boxed `Fn` variant that contains `Box<dyn Fn()>` function pointer that can be used with closured.

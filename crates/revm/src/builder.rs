@@ -158,9 +158,9 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
     pub fn reset_handler_with_external_context<OEXT>(
         self,
         external: OEXT,
-    ) -> EvmBuilder<'a, SetGenericStage, OEXT, EmptyDB> {
+    ) -> EvmBuilder<'a, SetGenericStage, OEXT, DB> {
         EvmBuilder {
-            evm: self.evm.with_db(EmptyDB::default()),
+            evm: self.evm,
             external,
             handler: Handler::mainnet_with_spec(self.handler.spec_id),
             phantom: PhantomData,

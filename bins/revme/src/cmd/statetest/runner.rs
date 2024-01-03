@@ -1,6 +1,6 @@
 use super::{
     merkle_trie::{log_rlp_hash, state_merkle_trie_root},
-    models::{SpecName, TestSuite},
+    models::{SpecName, Test, TestSuite},
 };
 use indicatif::ProgressBar;
 use revm::{
@@ -9,12 +9,13 @@ use revm::{
     inspectors::TracerEip3155,
     interpreter::CreateScheme,
     primitives::{
-        address, b256, calc_excess_blob_gas, keccak256, Bytecode, Env, HashMap, SpecId, TransactTo,
-        B256, U256,
+        address, b256, calc_excess_blob_gas, keccak256, Bytecode, EVMResultGeneric, Env,
+        ExecutionResult, HashMap, SpecId, TransactTo, B256, U256,
     },
     Evm, State,
 };
 use std::{
+    convert::Infallible,
     io::stdout,
     path::{Path, PathBuf},
     sync::atomic::Ordering,
@@ -97,6 +98,65 @@ fn skip_test(path: &Path) -> bool {
         | "loopMul.json"
         | "CALLBlake2f_MaxRounds.json"
     ) || path_str.contains("stEOF")
+}
+
+fn check_evm_execution<EXT>(
+    test: &Test,
+    test_name: &str,
+    exec_result: &EVMResultGeneric<ExecutionResult, Infallible>,
+    evm: &Evm<'_, EXT, &mut State<EmptyDB>>,
+) -> Result<(), TestError> {
+    // if we expect exception revm should return error from execution.
+    // So we do not check logs and state root.
+    //
+    // Note that some tests that have exception and run tests from before state clear
+    // would touch the caller account and make it appear in state root calculation.
+    // This is not something that we would expect as invalid tx should not touch state.
+    // but as this is a cleanup of invalid tx it is not properly defined and in the end
+    // it does not matter.
+    // Test where this happens: `tests/GeneralStateTests/stTransactionTest/NoSrcAccountCreate.json`
+    // and you can check that we have only two "hash" values for before and after state clear.
+    match (&test.expect_exception, exec_result) {
+        // do nothing
+        (None, Ok(_)) => (),
+        // return okay, exception is expected.
+        (Some(_), Err(_)) => return Ok(()),
+        _ => {
+            return Err(TestError {
+                name: test_name.to_string(),
+                kind: TestErrorKind::UnexpectedException {
+                    expected_exception: test.expect_exception.clone(),
+                    got_exception: exec_result.clone().err().map(|e| e.to_string()),
+                },
+            });
+        }
+    }
+
+    let logs_root = log_rlp_hash(&exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
+
+    if logs_root != test.logs {
+        return Err(TestError {
+            name: test_name.to_string(),
+            kind: TestErrorKind::LogsRootMismatch {
+                got: logs_root,
+                expected: test.logs,
+            },
+        });
+    }
+
+    let state_root = state_merkle_trie_root(evm.context.evm.db.cache.trie_account());
+
+    if state_root != test.hash {
+        return Err(TestError {
+            name: test_name.to_string(),
+            kind: TestErrorKind::StateRootMismatch {
+                got: state_root,
+                expected: test.hash,
+            },
+        });
+    }
+
+    Ok(())
 }
 
 pub fn execute_test_suite(
@@ -262,74 +322,33 @@ pub fn execute_test_suite(
 
                 // do the deed
                 let timer = Instant::now();
-                let exec_result = if trace {
-                    //evm.inspect_commit(TracerEip3155::new(Box::new(stdout()), false, false))
-                    unimplemented!();
+                let (e, exec_result) = if trace {
+                    let mut evm = evm
+                        .modify()
+                        .reset_handler_with_external_context(TracerEip3155::new(
+                            Box::new(stdout()),
+                            false,
+                            true,
+                        ))
+                        .append_handler_register(inspector_handle_register)
+                        .build();
+                    let res = evm.transact_commit();
+
+                    let Err(e) = check_evm_execution(&test, &name, &res, &evm) else {
+                        continue;
+                    };
+                    // reset external context
+                    (e, res)
                 } else {
-                    evm.transact_commit()
+                    let res = evm.transact_commit();
+
+                    // dump state and traces if test failed
+                    let Err(e) = check_evm_execution(&test, &name, &res, &evm) else {
+                        continue;
+                    };
+                    (e, res)
                 };
                 *elapsed.lock().unwrap() += timer.elapsed();
-
-                // validate results
-                // this is in a closure so we can have a common printing routine for errors
-                let check = || {
-                    // if we expect exception revm should return error from execution.
-                    // So we do not check logs and state root.
-                    //
-                    // Note that some tests that have exception and run tests from before state clear
-                    // would touch the caller account and make it appear in state root calculation.
-                    // This is not something that we would expect as invalid tx should not touch state.
-                    // but as this is a cleanup of invalid tx it is not properly defined and in the end
-                    // it does not matter.
-                    // Test where this happens: `tests/GeneralStateTests/stTransactionTest/NoSrcAccountCreate.json`
-                    // and you can check that we have only two "hash" values for before and after state clear.
-                    match (&test.expect_exception, &exec_result) {
-                        // do nothing
-                        (None, Ok(_)) => (),
-                        // return okay, exception is expected.
-                        (Some(_), Err(_)) => return Ok(()),
-                        _ => {
-                            return Err(TestError {
-                                name: name.clone(),
-                                kind: TestErrorKind::UnexpectedException {
-                                    expected_exception: test.expect_exception.clone(),
-                                    got_exception: exec_result.clone().err().map(|e| e.to_string()),
-                                },
-                            });
-                        }
-                    }
-
-                    let logs_root =
-                        log_rlp_hash(&exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
-
-                    if logs_root != test.logs {
-                        return Err(TestError {
-                            name: name.clone(),
-                            kind: TestErrorKind::LogsRootMismatch {
-                                got: logs_root,
-                                expected: test.logs,
-                            },
-                        });
-                    }
-
-                    let state_root =
-                        state_merkle_trie_root(evm.context.evm.db.cache.trie_account());
-
-                    if state_root != test.hash {
-                        return Err(TestError {
-                            name: name.clone(),
-                            kind: TestErrorKind::StateRootMismatch {
-                                got: state_root,
-                                expected: test.hash,
-                            },
-                        });
-                    }
-
-                    Ok(())
-                };
-
-                // dump state and traces if test failed
-                let Err(e) = check() else { continue };
 
                 // print only once
                 static FAILED: AtomicBool = AtomicBool::new(false);
@@ -343,16 +362,16 @@ pub fn execute_test_suite(
                     spec_id,
                     revm::primitives::SpecId::SPURIOUS_DRAGON,
                 ));
-                let state: State<EmptyDB> = revm::db::StateBuilder::default()
+                let state = revm::db::State::builder()
                     .with_cached_prestate(cache)
+                    .with_bundle_update()
                     .build();
-                // evm.database(&mut state);
 
                 let path = path.display();
                 println!("\nTraces:");
-                let mut evm = evm
-                    .modify()
-                    .reset_handler_with_db(state)
+                let mut evm = Evm::builder()
+                    .spec_id(spec_id)
+                    .with_db(state)
                     .with_external_context(TracerEip3155::new(Box::new(stdout()), false, false))
                     .append_handler_register(inspector_handle_register)
                     .build();

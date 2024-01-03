@@ -52,18 +52,20 @@ Example of using builder to create Evm with inspector:
       db::EmptyDB, Context, EvmContext, inspector::inspector_handle_register, inspectors::NoOpInspector, Evm,
   };
 
-  // create the builder
+  // Create the evm.
   let evm = Evm::builder()
       .with_db(EmptyDB::default())
       .with_external_context(NoOpInspector)
-      // register will modify Handler and call NoOpInspector.
+      // Register will modify Handler and call NoOpInspector.
       .append_handler_register(inspector_handle_register)
-      // this would not compile as we already locked the builder generics.
-      // .with_db(..)
+      // .with_db(..) would not compile as we already locked the builder generics,
       // alternative fn is reset_handler_with_db(..)
       .build();
   
-  // extract evm context.
+  // Execute the evm.
+  let _out = evm.transact();
+  
+  // Extract evm context.
   let Context {
       external,
       evm: EvmContext { db, .. },
@@ -74,22 +76,22 @@ Example of changing spec id and Environment of already build evm.
 ```rust,ignore
   use crate::{Evm,SpecId::BERLIN};
 
-  // create default evm
+  // Create default evm.
   let evm = Evm::builder().build();
 
-  // modify evm spec
+  // Modify evm spec.
   let evm = evm.modify().spec_id(BERLIN).build();
 
-  // shortcut for above is
+  // Shortcut for above.
   let mut evm = evm.modify_spec_id(BERLIN);
 
-  //execute the evm
+  // Execute the evm.
   evm.transact();
 
   // Example of modifying the tx env.
   let mut evm = evm.modify().modify_tx_env(|env| env.gas_price = 0.into()).build();
 
-  // execute the evm with modified tx env.
+  // Execute the evm with modified tx env.
   evm.transact();
 ```
 
@@ -98,4 +100,4 @@ Example of changing spec id and Environment of already build evm.
 Handler registers are simple function that allow modifying the `Handler` logic by replacing 
 the handler functions. They are used to add custom logic to the evm execution but as they are free to modify the `Handler` in any form they want there can be conflicts if handlers that override the same function are added.
 
-Most common use case for adding new logic to `Handler` is `Inspector` that is used to inspect the execution of the evm. Example of this can be found in [`Inspector`](../revm_inspector/inspector.md) documentation.
+Most common use case for adding new logic to `Handler` is `Inspector` that is used to inspect the execution of the evm. Example of this can be found in [`Inspector`](./revm/inspector.md) documentation.
