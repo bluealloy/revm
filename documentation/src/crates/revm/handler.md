@@ -5,7 +5,7 @@ Is logic part of the Evm, it contains the Specification ID, and list of function
 Functions can be grouped in four categories and are marked in that way in the code:
 * Validation functions: `ValidateHandler`
 * Main functions: `MainHandler`
-* Frame functions: `FrameHandler`
+* Frame functions: `ExecutionLoopHandler`
 * Internal functions: `InstractionTable`
 
 ### Handle Registers
@@ -67,7 +67,7 @@ Logic when running transaction consist of few stages that are implemented as a h
   It returns the changes state and the result of the execution.
 
 
-### FrameHandler
+### ExecutionLoopHandler
 
 Consist of the function that handles the call stack and the first loop. They are called in the following order:
 

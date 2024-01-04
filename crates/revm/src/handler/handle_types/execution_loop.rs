@@ -58,7 +58,7 @@ pub type FrameSubCreateHandle<'a, EXT, DB> = Arc<
 >;
 
 /// Handles related to stack frames.
-pub struct FrameHandler<'a, EXT, DB: Database> {
+pub struct ExecutionLoopHandler<'a, EXT, DB: Database> {
     /// Create Main frame
     pub create_first_frame: CreateFirstFrameHandle<'a, EXT, DB>,
     /// Validate Transaction against the state.
@@ -73,12 +73,12 @@ pub struct FrameHandler<'a, EXT, DB: Database> {
     pub sub_create: FrameSubCreateHandle<'a, EXT, DB>,
 }
 
-impl<'a, EXT: 'a, DB: Database + 'a> FrameHandler<'a, EXT, DB> {
-    /// Creates mainnet FrameHandler..
+impl<'a, EXT: 'a, DB: Database + 'a> ExecutionLoopHandler<'a, EXT, DB> {
+    /// Creates mainnet ExecutionLoopHandler..
     pub fn new<SPEC: Spec + 'a>() -> Self {
         Self {
-            first_frame_return: Arc::new(mainnet::main_frame_return::<SPEC>),
             create_first_frame: Arc::new(mainnet::create_first_frame::<SPEC, EXT, DB>),
+            first_frame_return: Arc::new(mainnet::main_frame_return::<SPEC>),
             frame_return: Arc::new(mainnet::handle_frame_return::<SPEC, EXT, DB>),
             sub_call: Arc::new(mainnet::handle_frame_sub_call::<SPEC, EXT, DB>),
             sub_create: Arc::new(mainnet::handle_frame_sub_create::<SPEC, EXT, DB>),
@@ -86,7 +86,7 @@ impl<'a, EXT: 'a, DB: Database + 'a> FrameHandler<'a, EXT, DB> {
     }
 }
 
-impl<'a, EXT, DB: Database> FrameHandler<'a, EXT, DB> {
+impl<'a, EXT, DB: Database> ExecutionLoopHandler<'a, EXT, DB> {
     /// Create first call frame.
     pub fn create_first_frame(
         &self,

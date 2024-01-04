@@ -33,10 +33,12 @@ pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
     pub registers: Vec<HandleRegisters<'a, EXT, DB>>,
     /// Validity handles.
     pub validation: ValidationHandler<'a, EXT, DB>,
-    /// Main handles.
-    pub main: MainHandler<'a, EXT, DB>,
-    /// Frame handles.
-    pub frame: FrameHandler<'a, EXT, DB>,
+    /// Pre execution handle
+    pub pre_execution: PreExecutionHandler<'a, EXT, DB>,
+    /// post Execution handle
+    pub post_execution: PostExecutionHandler<'a, EXT, DB>,
+    /// Execution loop that handles frames.
+    pub execution_loop: ExecutionLoopHandler<'a, EXT, DB>,
 }
 
 impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
@@ -47,8 +49,9 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
             instruction_table: Some(InstructionTables::Plain(make_instruction_table::<H, SPEC>())),
             registers: Vec::new(),
             validation: ValidationHandler::new::<SPEC>(),
-            main: MainHandler::new::<SPEC>(),
-            frame: FrameHandler::new::<SPEC>(),
+            pre_execution: PreExecutionHandler::new::<SPEC>(),
+            post_execution: PostExecutionHandler::new::<SPEC>(),
+            execution_loop: ExecutionLoopHandler::new::<SPEC>(),
         }
     }
 
@@ -73,14 +76,19 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
         self.instruction_table = Some(table);
     }
 
-    /// Returns reference to main handler.
-    pub fn main(&self) -> &MainHandler<'a, EXT, DB> {
-        &self.main
+    /// Returns reference to pre execution handler.
+    pub fn pre_execution(&self) -> &PreExecutionHandler<'a, EXT, DB> {
+        &self.pre_execution
+    }
+
+    /// Returns reference to pre execution handler.
+    pub fn post_execution(&self) -> &PostExecutionHandler<'a, EXT, DB> {
+        &self.post_execution
     }
 
     /// Returns reference to frame handler.
-    pub fn frame(&self) -> &FrameHandler<'a, EXT, DB> {
-        &self.frame
+    pub fn execution_loop(&self) -> &ExecutionLoopHandler<'a, EXT, DB> {
+        &self.execution_loop
     }
 
     /// Returns reference to validation handler.

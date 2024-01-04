@@ -102,7 +102,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             .validation()
             .initial_tx_gas(&self.context.evm.env)?;
         let output = self.transact_preverified_inner(initial_gas_spend);
-        self.handler.main().end(&mut self.context, output)
+        self.handler.post_execution().end(&mut self.context, output)
     }
 
     /// Transact transaction
@@ -120,7 +120,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             .tx_against_state(&mut self.context)?;
 
         let output = self.transact_preverified_inner(initial_gas_spend);
-        self.handler.main().end(&mut self.context, output)
+        self.handler.post_execution().end(&mut self.context, output)
     }
 
     /// Modify spec id, this will create new EVM that matches this spec id.
@@ -214,7 +214,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                 InterpreterAction::SubCall {
                     inputs,
                     return_memory_offset,
-                } => self.handler.frame().sub_call(
+                } => self.handler.execution_loop().sub_call(
                     &mut self.context,
                     inputs,
                     stack_frame,
@@ -223,7 +223,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                 ),
                 InterpreterAction::Create { inputs } => {
                     self.handler
-                        .frame()
+                        .execution_loop()
                         .sub_create(&mut self.context, stack_frame, inputs)
                 }
                 InterpreterAction::Return { result } => {
@@ -233,7 +233,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                     let child = call_stack.pop().unwrap();
                     let parent = call_stack.last_mut();
 
-                    if let Some(result) = self.handler.frame().frame_return(
+                    if let Some(result) = self.handler.execution_loop().frame_return(
                         &mut self.context,
                         child,
                         parent,
@@ -260,17 +260,17 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         let ctx = &mut self.context;
 
         // load access list and beneficiary if needed.
-        hndl.main().load(ctx)?;
+        hndl.pre_execution().load_accounts(ctx)?;
 
         // load precompiles
-        let precompiles = hndl.main().load_precompiles();
+        let precompiles = hndl.pre_execution().load_precompiles();
         ctx.evm.set_precompiles(precompiles);
 
         // deduce caller balance with its limit.
-        hndl.main().deduct_caller(ctx)?;
+        hndl.pre_execution().deduct_caller(ctx)?;
         // gas limit used in calls.
         let first_frame = hndl
-            .frame()
+            .execution_loop()
             .create_first_frame(ctx, ctx.evm.env.tx.gas_limit - initial_gas_spend);
 
         // Starts the main running loop.
@@ -281,15 +281,15 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
         // handle output of call/create calls.
         let gas = hndl
-            .frame()
+            .execution_loop()
             .first_frame_return(&ctx.evm.env, result.result, result.gas);
         // Reimburse the caller
-        hndl.main().reimburse_caller(ctx, &gas)?;
+        hndl.post_execution().reimburse_caller(ctx, &gas)?;
         // Reward beneficiary
-        hndl.main().reward_beneficiary(ctx, &gas)?;
-        // main return
-        hndl.main()
-            .main_return(ctx, result.result, main_output, &gas)
+        hndl.post_execution().reward_beneficiary(ctx, &gas)?;
+        // Returns output of transaction.
+        hndl.post_execution()
+            .output(ctx, result.result, main_output, &gas)
     }
 }
 

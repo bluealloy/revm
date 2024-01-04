@@ -83,6 +83,8 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     inspect_log(opcode::LOG3);
     inspect_log(opcode::LOG4);
 
+    // wrap first frame create and main frame return.
+
     // register selfdestruct function.
     if let Some(i) = table.get_mut(opcode::SELFDESTRUCT as usize) {
         let old = core::mem::replace(i, Box::new(|_, _| ()));
@@ -121,7 +123,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     ));
 
     // handle sub create
-    handler.frame.sub_create = Arc::new(
+    handler.execution_loop.sub_create = Arc::new(
         move |context, frame, mut inputs| -> Option<Box<CallStackFrame>> {
             let inspector = context.external.get_inspector();
             if let Some((result, address)) = inspector.create(&mut context.evm, &mut inputs) {
@@ -146,7 +148,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     );
 
     // handle sub call
-    handler.frame.sub_call = Arc::new(
+    handler.execution_loop.sub_call = Arc::new(
         move |context, mut inputs, frame, memory, return_memory_offset| -> Option<Box<_>> {
             // inspector handle
             let inspector = context.external.get_inspector();
@@ -175,8 +177,8 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     );
 
     // return frame handle
-    let old_handle = handler.frame.frame_return.clone();
-    handler.frame.frame_return = Arc::new(
+    let old_handle = handler.execution_loop.frame_return.clone();
+    handler.execution_loop.frame_return = Arc::new(
         move |context, mut child, parent, memory, mut result| -> Option<InterpreterResult> {
             let inspector = &mut context.external.get_inspector();
             result = if child.is_create {

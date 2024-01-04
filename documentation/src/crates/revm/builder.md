@@ -100,4 +100,4 @@ Example of changing spec id and Environment of already build evm.
 Handler registers are simple function that allow modifying the `Handler` logic by replacing 
 the handler functions. They are used to add custom logic to the evm execution but as they are free to modify the `Handler` in any form they want there can be conflicts if handlers that override the same function are added.
 
-Most common use case for adding new logic to `Handler` is `Inspector` that is used to inspect the execution of the evm. Example of this can be found in [`Inspector`](./revm/inspector.md) documentation.
+Most common use case for adding new logic to `Handler` is `Inspector` that is used to inspect the execution of the evm. Example of this can be found in [`Inspector`](./inspector.md) documentation.

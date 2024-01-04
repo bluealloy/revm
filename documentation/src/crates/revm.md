@@ -2,6 +2,8 @@
 
 The `crate` is focused on the implementation of Ethereum Virtual Machine (EVM) including call loop and host implementation, database handling, state journaling and powerful logic handlers that can be overwritten. This crate pulls Primitives, Interpreter and Precompiles together to deliver the rust evm.
 
+Starting point of the documentation should be a (`Evm`)[./revm/evm.md] that is main structure of EVM. Then i would recomend reading about the `EvmBuilder` that is used to create the `Evm` and modify. After that you can read about the `Handler` that is used to modify the logic of the Evm and it will tie with how introspection of Evm can be done. And lastly you can read about the `Inspector` that is legacy interface for inspecting execution that is repurposed as one of example of handler registers.
+
 Modules:
 - `evm`: This is main module that executed EVM calls.
 - `builder`: This modules build the Evm, sets database, handlers and other parameters. Here is where we set handlers for specific fork or external state for inspection.
