@@ -19,12 +19,12 @@ use core::ops::Mul;
 pub fn optimism_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, EXT, DB>) {
     spec_to_generic!(handler.spec_id, {
         // Refund is calculated differently then mainnet.
-        handler.frame.first_frame_return = Arc::new(handle_call_return::<SPEC>);
-        // we reinburse caller the same was as in mainnet.
-        handler.main.reward_beneficiary = Arc::new(reward_beneficiary::<SPEC, EXT, DB>);
+        handler.execution_loop.first_frame_return = Arc::new(handle_call_return::<SPEC>);
+        // we reimburse caller the same was as in mainnet.
+        handler.post_execution.reward_beneficiary = Arc::new(reward_beneficiary::<SPEC, EXT, DB>);
         // In case of halt of deposit transaction return Error.
-        handler.main.main_return = Arc::new(main_return::<SPEC, EXT, DB>);
-        handler.main.end = Arc::new(end_handle::<SPEC, EXT, DB>);
+        handler.post_execution.output = Arc::new(main_return::<SPEC, EXT, DB>);
+        handler.post_execution.end = Arc::new(end_handle::<SPEC, EXT, DB>);
     });
 }
 
@@ -159,7 +159,7 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
 
     // transfer fee to coinbase/beneficiary.
     if !disable_coinbase_tip {
-        mainnet::main_reward_beneficiary::<SPEC, EXT, DB>(context, gas)?;
+        mainnet::reward_beneficiary::<SPEC, EXT, DB>(context, gas)?;
     }
 
     if context.evm.env.cfg.optimism && !is_deposit {
@@ -213,7 +213,7 @@ pub fn main_return<SPEC: Spec, EXT, DB: Database>(
     output: Output,
     gas: &Gas,
 ) -> Result<ResultAndState, EVMError<DB::Error>> {
-    let result = mainnet::main_return::<EXT, DB>(context, call_result, output, gas)?;
+    let result = mainnet::output::<EXT, DB>(context, call_result, output, gas)?;
 
     if result.result.is_halt() {
         // Post-regolith, if the transaction is a deposit transaction and it halts,
