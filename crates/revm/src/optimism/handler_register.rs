@@ -23,8 +23,8 @@ pub fn optimism_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, 
         // we reimburse caller the same was as in mainnet.
         handler.post_execution.reward_beneficiary = Arc::new(reward_beneficiary::<SPEC, EXT, DB>);
         // In case of halt of deposit transaction return Error.
-        handler.post_execution.output = Arc::new(main_return::<SPEC, EXT, DB>);
-        handler.post_execution.end = Arc::new(end_handle::<SPEC, EXT, DB>);
+        handler.post_execution.output = Arc::new(output::<SPEC, EXT, DB>);
+        handler.post_execution.end = Arc::new(end::<SPEC, EXT, DB>);
     });
 }
 
@@ -207,7 +207,7 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
 
 /// Main return handle, returns the output of the transaction.
 #[inline]
-pub fn main_return<SPEC: Spec, EXT, DB: Database>(
+pub fn output<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     call_result: InstructionResult,
     output: Output,
@@ -232,7 +232,7 @@ pub fn main_return<SPEC: Spec, EXT, DB: Database>(
 /// Optimism end handle changes output if the transaction is a deposit transaction.
 /// Deposit transaction can't be reverted and is always successful.
 #[inline]
-pub fn end_handle<SPEC: Spec, EXT, DB: Database>(
+pub fn end<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     evm_output: Result<ResultAndState, EVMError<DB::Error>>,
 ) -> Result<ResultAndState, EVMError<DB::Error>> {
