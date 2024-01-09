@@ -263,7 +263,18 @@ mod tests {
     use crate::InstructionResult;
 
     #[test]
-    fn test_() {
+    fn all_results_are_covered() {
+        let result = InstructionResult::Continue;
+        match result {
+            return_error!() => {}
+            return_revert!() => (),
+            return_ok!() => {}
+            InstructionResult::CallOrCreate => (),
+        }
+    }
+
+    #[test]
+    fn test_results() {
         let ok_results = vec![
             InstructionResult::Continue,
             InstructionResult::Stop,
