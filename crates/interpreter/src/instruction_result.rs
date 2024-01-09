@@ -91,6 +91,50 @@ impl From<Halt> for InstructionResult {
     }
 }
 
+#[macro_export]
+macro_rules! return_ok {
+    () => {
+        InstructionResult::Continue
+            | InstructionResult::Stop
+            | InstructionResult::Return
+            | InstructionResult::SelfDestruct
+    };
+}
+
+#[macro_export]
+macro_rules! return_revert {
+    () => {
+        InstructionResult::Revert | InstructionResult::CallTooDeep | InstructionResult::OutOfFund
+    };
+}
+
+macro_rules! return_error {
+    () => {
+        InstructionResult::OutOfGas
+            | InstructionResult::MemoryOOG
+            | InstructionResult::MemoryLimitOOG
+            | InstructionResult::PrecompileOOG
+            | InstructionResult::InvalidOperandOOG
+            | InstructionResult::OpcodeNotFound
+            | InstructionResult::CallNotAllowedInsideStatic
+            | InstructionResult::StateChangeDuringStaticCall
+            | InstructionResult::InvalidFEOpcode
+            | InstructionResult::InvalidJump
+            | InstructionResult::NotActivated
+            | InstructionResult::StackUnderflow
+            | InstructionResult::StackOverflow
+            | InstructionResult::OutOfOffset
+            | InstructionResult::CreateCollision
+            | InstructionResult::OverflowPayment
+            | InstructionResult::PrecompileError
+            | InstructionResult::NonceOverflow
+            | InstructionResult::CreateContractSizeLimit
+            | InstructionResult::CreateContractStartingWithEF
+            | InstructionResult::CreateInitCodeSizeLimit
+            | InstructionResult::FatalExternalError
+    };
+}
+
 impl InstructionResult {
     /// Returns whether the result is a success.
     #[inline]
@@ -107,31 +151,7 @@ impl InstructionResult {
     /// Returns whether the result is an error.
     #[inline]
     pub fn is_error(self) -> bool {
-        matches!(
-            self,
-            Self::OutOfGas
-                | Self::MemoryOOG
-                | Self::MemoryLimitOOG
-                | Self::PrecompileOOG
-                | Self::InvalidOperandOOG
-                | Self::OpcodeNotFound
-                | Self::CallNotAllowedInsideStatic
-                | Self::StateChangeDuringStaticCall
-                | Self::InvalidFEOpcode
-                | Self::InvalidJump
-                | Self::NotActivated
-                | Self::StackUnderflow
-                | Self::StackOverflow
-                | Self::OutOfOffset
-                | Self::CreateCollision
-                | Self::OverflowPayment
-                | Self::PrecompileError
-                | Self::NonceOverflow
-                | Self::CreateContractSizeLimit
-                | Self::CreateContractStartingWithEF
-                | Self::CreateInitCodeSizeLimit
-                | Self::FatalExternalError
-        )
+        matches!(self, return_error!())
     }
 }
 
@@ -238,19 +258,77 @@ impl From<InstructionResult> for SuccessOrHalt {
     }
 }
 
-#[macro_export]
-macro_rules! return_ok {
-    () => {
-        InstructionResult::Continue
-            | InstructionResult::Stop
-            | InstructionResult::Return
-            | InstructionResult::SelfDestruct
-    };
-}
+#[cfg(test)]
+mod tests {
+    use crate::InstructionResult;
 
-#[macro_export]
-macro_rules! return_revert {
-    () => {
-        InstructionResult::Revert | InstructionResult::CallTooDeep | InstructionResult::OutOfFund
-    };
+    #[test]
+    fn all_results_are_covered() {
+        let result = InstructionResult::Continue;
+        match result {
+            return_error!() => {}
+            return_revert!() => (),
+            return_ok!() => {}
+            InstructionResult::CallOrCreate => (),
+        }
+    }
+
+    #[test]
+    fn test_results() {
+        let ok_results = vec![
+            InstructionResult::Continue,
+            InstructionResult::Stop,
+            InstructionResult::Return,
+            InstructionResult::SelfDestruct,
+        ];
+
+        for result in ok_results {
+            assert!(result.is_ok());
+            assert!(!result.is_revert());
+            assert!(!result.is_error());
+        }
+
+        let revert_results = vec![
+            InstructionResult::Revert,
+            InstructionResult::CallTooDeep,
+            InstructionResult::OutOfFund,
+        ];
+
+        for result in revert_results {
+            assert!(!result.is_ok());
+            assert!(result.is_revert());
+            assert!(!result.is_error());
+        }
+
+        let error_results = vec![
+            InstructionResult::OutOfGas,
+            InstructionResult::MemoryOOG,
+            InstructionResult::MemoryLimitOOG,
+            InstructionResult::PrecompileOOG,
+            InstructionResult::InvalidOperandOOG,
+            InstructionResult::OpcodeNotFound,
+            InstructionResult::CallNotAllowedInsideStatic,
+            InstructionResult::StateChangeDuringStaticCall,
+            InstructionResult::InvalidFEOpcode,
+            InstructionResult::InvalidJump,
+            InstructionResult::NotActivated,
+            InstructionResult::StackUnderflow,
+            InstructionResult::StackOverflow,
+            InstructionResult::OutOfOffset,
+            InstructionResult::CreateCollision,
+            InstructionResult::OverflowPayment,
+            InstructionResult::PrecompileError,
+            InstructionResult::NonceOverflow,
+            InstructionResult::CreateContractSizeLimit,
+            InstructionResult::CreateContractStartingWithEF,
+            InstructionResult::CreateInitCodeSizeLimit,
+            InstructionResult::FatalExternalError,
+        ];
+
+        for result in error_results {
+            assert!(!result.is_ok());
+            assert!(!result.is_revert());
+            assert!(result.is_error());
+        }
+    }
 }
