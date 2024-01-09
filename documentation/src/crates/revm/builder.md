@@ -14,7 +14,7 @@ Simple example of using `EvmBuilder`:
 
   // build Evm with default values.
   let mut evm = Evm::builder().build();
-  evm.transact();
+  let output = evm.transact();
 ```
 
 ## Builder Stages
@@ -63,7 +63,7 @@ Example of using builder to create Evm with inspector:
       .build();
   
   // Execute the evm.
-  let _out = evm.transact();
+  let output = evm.transact();
   
   // Extract evm context.
   let Context {
@@ -86,13 +86,13 @@ Example of changing spec id and Environment of already build evm.
   let mut evm = evm.modify_spec_id(BERLIN);
 
   // Execute the evm.
-  evm.transact();
+  let output1 = evm.transact();
 
   // Example of modifying the tx env.
   let mut evm = evm.modify().modify_tx_env(|env| env.gas_price = 0.into()).build();
 
   // Execute the evm with modified tx env.
-  evm.transact();
+  let output2 = evm.transact();
 ```
 
 ## Appending handler registers

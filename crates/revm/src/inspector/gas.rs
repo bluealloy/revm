@@ -144,7 +144,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(not(feature = "optimism"))]
     fn test_gas_inspector() {
         use crate::{
             db::BenchmarkDB,

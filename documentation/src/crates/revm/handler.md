@@ -1,16 +1,19 @@
 # Handler
 
-Is logic part of the Evm, it contains the Specification ID, and list of functions that do the logic and list of registers that can change the behaviour of the Handler.
+Is logic part of the Evm, it contains the Specification ID, list of functions that do the logic and list of registers that can change behavior of the Handler when `Handler` is build.
 
-Functions can be grouped in four categories and are marked in that way in the code:
+Functions can be grouped in five categories and are marked in that way in the code:
 * Validation functions: `ValidateHandler`
-* Main functions: `MainHandler`
-* Frame functions: `ExecutionLoopHandler`
-* Internal functions: `InstractionTable`
+* Pre execution functions: `PreExecutionHandler`
+* Execution loop functions: `LoopExecutionHandler`
+* Post execution functions: `PostExecutionHandler`
+* Instruction table: `InstructionTable`
 
 ### Handle Registers
 
-Simple function that is used to modify handler functions. Amazing thing about them is that they can be done over generic external type. For example this allows to have a register over trait that would allow to add hooks to the any type that implements the trait, that trait can be a GetInspector trait so anyone that implement it would be able to register inspector related functions. It is used inside the `EvmBuilder` to change behaviour of the default mainnet Handler.
+Simple function that is used to modify handler functions. Amazing thing about them is that they can be done over generic external type. For example this allows to have a register over trait that would allow to add hooks to the any type that implements the trait, that trait can be a GetInspector trait so anyone that implement it would be able to register inspector related functions. It is used inside the `EvmBuilder` to change behavior of the default mainnet Handler.
+
+Handle registers are set in `EvmBuilder`.
 
 Order of the registers is important as they are called in the order they are registered. And it matters if register overrides the previous handle or just wraps it, overriding handle can disrupt the logic of previous registered handles.
 
@@ -32,26 +35,52 @@ Consist of functions that are used to validate transaction and block data. They 
     
     It loads the caller account and checks those information. Among them the nonce, if there is enough balance to pay for max gas spent and balance transferred. 
 
-### MainHandler
+### PreExecutionHandler
 
-Consist of functions that are used to execute transaction. They are called in the following order:
+Consist of functions that are called before execution loop. They are called in the following order:
 
-Logic when running transaction consist of few stages that are implemented as a handle calls:
-* main_load
+* load
    
     Loads access list and beneficiary from `Database`. Cold load is done here.
+
+* load precompiles
+   
+    Load precompiles.
 
 * deduct_caller:
   
     Deducts values from the caller to the maximum amount of gas that can be spent on the transaction. This loads the caller account from the `Database`.
 
-* create_first_frame and start_the_loop
-    
-    These two handles main call loop that creates and handles stack of frames. It is responsible for handling subcalls and its return outputs and call Interpreter loop to execute bytecode instructions.
+### ExecutionLoopHandler
 
-* call_return
+Consist of the function that handles the call stack and the first loop. They are called in the following order:
+
+* create_first_frame
+    
+    This handler crates first frame of the call stack. It is called only once per transaction.
+
+* first_frame_return
   
-    Handler that allows processing of the returned output from the call. It calculated refunded gas and final spent gas.
+    This handler is called after the first frame is executed. It is used to calculate the gas that is returned from the first frame.
+
+* frame_return
+
+    This handler is called after every frame is executed (Expect first), it will calculate the gas that is returned from the frame and apply output to the parent frame.
+
+* sub_call
+    Create new call frame or return the Interpreter result if the call is not possible (has a error) or it is precompile call.
+
+* sub_crate
+  
+    Create new create call frame, create new account and execute bytecode that outputs the code of the new account.
+
+### InstructionTable
+
+Is a list of 256 function pointers that are used to execute instructions. They have two types, first is simple function that is faster and second is BoxedInstraction that has a small performance penalty but allows to capture the data. Look at the Interpreter documentation for more information.
+
+### PostExecutionHandler
+
+Is a list of functions that are called after the execution loop. They are called in the following order:
 
 * reimburse_caller
     
@@ -62,17 +91,10 @@ Logic when running transaction consist of few stages that are implemented as a h
     
     At the end of every transaction beneficiary needs to be rewarded with the fee.
 
-* main_return
+* output
 
-  It returns the changes state and the result of the execution.
+    It returns the changes state and the result of the execution.
 
-
-### ExecutionLoopHandler
-
-Consist of the function that handles the call stack and the first loop. They are called in the following order:
-
-TODO
-
-### InstructionTable
-
-Is a list of 256 function pointers that are used to execute instructions. They have two types, first is simple function that is faster and second is BoxedInstraction that has a small performance penalty but allows to capture the data. Look at the Interpreter documentation for more information.
+* end
+  
+    It will be called always as the last function of the handler.

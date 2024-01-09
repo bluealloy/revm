@@ -14,7 +14,7 @@ Data structures of block and transaction can be found inside `Environment`. And 
 
 ## Runtime
 
-Runtime consist of list of functions from `Handler` that are called in predefined order. They are grouped by functionality on `Verification`, `Main`, `Frame` and `Instruction` functions. Verification function are related to the preverification of set `Environment` data. Main function is the main logic of the transaction execution. Frame function handles call and creates and sub calls. And Instruction functions are instruction table that executes opcodes.
+Runtime consist of list of functions from `Handler` that are called in predefined order. They are grouped by functionality on `Verification`, `PreExecution`, `ExecutionLoop`, `PostExecution` and `Instruction` functions. Verification function are related to the preverification of set `Environment` data. Pre/Post execution function are function that deduct and reward caller beneficiary. And `ExecutionLoop` functions handles initial call and creates and sub calls. `Instruction` functions are instruction table that is used inside Interpreter to execute opcodes.
 
 `Evm` execution runs **two** loops. First loop is call loop that everything starts with, it creates call frames, handles subcalls and its return outputs and call Interpreter loop to execute bytecode instructions it is handled by `ExecutionLoopHandler`. Second loop is `Interpreter` loop that loops over bytecode opcodes and executes instruction from `InstructionTable`.
 
@@ -32,5 +32,5 @@ Main function inside evm are:
 * `preverify` - that only preverifies transaction information.
 * `transact preverified` - is next step after preverification that executes transaction.
 * `transact` - it calls both preverifies and it executes transaction.
-* `builder` and `modify` function - allows building or modifying the Evm, more on this can be found in [`EvmBuilder`](./builder.md) documentation. This is main way of creating Evm.
+* `builder` and `modify` function - allows building or modifying the Evm, more on this can be found in [`EvmBuilder`](./builder.md) documentation. `builder` is main way of creating Evm and `modify` allows you to modify parts of it without dissolving `Evm`.
 * `into_context` - is used we want to get the `Context` from the Evm.

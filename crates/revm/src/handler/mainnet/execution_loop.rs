@@ -1,57 +1,36 @@
 use crate::{
     db::Database,
     interpreter::{
-        return_ok, return_revert, CallContext, CallInputs, CallScheme, CreateInputs, Gas,
-        InstructionResult, InterpreterResult, SharedMemory, Transfer,
+        return_ok, return_revert, CallInputs, CreateInputs, Gas, InstructionResult,
+        InterpreterResult, SharedMemory,
     },
     primitives::{Env, Spec, TransactTo},
-    CallStackFrame, Context, FrameOrResult,
+    CallStackFrame, Context, FrameData, FrameOrResult,
 };
 use alloc::boxed::Box;
 use core::ops::Range;
 
-/// Creates first fmrae
+/// Creates first frame.
+#[inline]
 pub fn create_first_frame<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     gas_limit: u64,
 ) -> FrameOrResult {
     // call inner handling of call/create
     match context.evm.env.tx.transact_to {
-        TransactTo::Call(address) => context.evm.make_call_frame(
-            &CallInputs {
-                contract: address,
-                transfer: Transfer {
-                    source: context.evm.env.tx.caller,
-                    target: address,
-                    value: context.evm.env.tx.value,
-                },
-                input: context.evm.env.tx.data.clone(),
-                gas_limit,
-                context: CallContext {
-                    caller: context.evm.env.tx.caller,
-                    address,
-                    code_address: address,
-                    apparent_value: context.evm.env.tx.value,
-                    scheme: CallScheme::Call,
-                },
-                is_static: false,
-            },
+        TransactTo::Call(_) => context.evm.make_call_frame(
+            &CallInputs::new(&context.evm.env.tx, gas_limit).unwrap(),
             0..0,
         ),
-        TransactTo::Create(scheme) => context.evm.make_create_frame(
+        TransactTo::Create(_) => context.evm.make_create_frame(
             SPEC::SPEC_ID,
-            &CreateInputs {
-                caller: context.evm.env.tx.caller,
-                scheme,
-                value: context.evm.env.tx.value,
-                init_code: context.evm.env.tx.data.clone(),
-                gas_limit,
-            },
+            &CreateInputs::new(&context.evm.env.tx, gas_limit).unwrap(),
         ),
     }
 }
 
-/// Helper function called inside [`main_frame_return`]
+/// Helper function called inside [`first_frame_return`]
+#[inline]
 pub fn frame_return_with_refund_flag<SPEC: Spec>(
     env: &Env,
     call_result: InstructionResult,
@@ -86,7 +65,7 @@ pub fn frame_return_with_refund_flag<SPEC: Spec>(
 
 /// Handle output of the transaction
 #[inline]
-pub fn main_frame_return<SPEC: Spec>(
+pub fn first_frame_return<SPEC: Spec>(
     env: &Env,
     call_result: InstructionResult,
     returned_gas: Gas,
@@ -95,45 +74,51 @@ pub fn main_frame_return<SPEC: Spec>(
 }
 
 /// Handle frame return.
-pub fn handle_frame_return<SPEC: Spec, EXT, DB: Database>(
+#[inline]
+pub fn frame_return<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     child_stack_frame: Box<CallStackFrame>,
     parent_stack_frame: Option<&mut Box<CallStackFrame>>,
     shared_memory: &mut SharedMemory,
     result: InterpreterResult,
 ) -> Option<InterpreterResult> {
-    // break from loop if this is last CallStackFrame.
-    if child_stack_frame.is_create {
-        let Some(parent_stack_frame) = parent_stack_frame else {
-            return Some(
-                context
-                    .evm
-                    .create_return::<SPEC>(result, child_stack_frame)
-                    .0,
+    match child_stack_frame.frame_data {
+        FrameData::Create { created_address } => {
+            let result = context.evm.create_return::<SPEC>(
+                result,
+                created_address,
+                child_stack_frame.checkpoint,
             );
-        };
-        let (result, address) = context.evm.create_return::<SPEC>(result, child_stack_frame);
-        parent_stack_frame
-            .interpreter
-            .insert_create_output(result, Some(address))
-    } else {
-        let Some(parent_stack_frame) = parent_stack_frame else {
-            return Some(context.evm.call_return(result, child_stack_frame));
-        };
-        let subcall_memory_return_offset = child_stack_frame.subcall_return_memory_range.clone();
-        let result = context.evm.call_return(result, child_stack_frame);
+            let Some(parent_stack_frame) = parent_stack_frame else {
+                return Some(result);
+            };
+            parent_stack_frame
+                .interpreter
+                .insert_create_output(result, Some(created_address))
+        }
+        FrameData::Call {
+            return_memory_range,
+        } => {
+            let result = context
+                .evm
+                .call_return(result, child_stack_frame.checkpoint);
+            let Some(parent_stack_frame) = parent_stack_frame else {
+                return Some(result);
+            };
 
-        parent_stack_frame.interpreter.insert_call_output(
-            shared_memory,
-            result,
-            subcall_memory_return_offset,
-        )
+            parent_stack_frame.interpreter.insert_call_output(
+                shared_memory,
+                result,
+                return_memory_range,
+            )
+        }
     }
     None
 }
 
 /// Handle frame sub call.
-pub fn handle_frame_sub_call<SPEC: Spec, EXT, DB: Database>(
+#[inline]
+pub fn sub_call<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     inputs: Box<CallInputs>,
     curent_stack_frame: &mut CallStackFrame,
@@ -157,7 +142,8 @@ pub fn handle_frame_sub_call<SPEC: Spec, EXT, DB: Database>(
 }
 
 /// Handle frame sub create.
-pub fn handle_frame_sub_create<SPEC: Spec, EXT, DB: Database>(
+#[inline]
+pub fn sub_create<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     curent_stack_frame: &mut CallStackFrame,
     inputs: Box<CreateInputs>,
@@ -185,7 +171,7 @@ mod tests {
         let mut env = Env::default();
         env.tx.gas_limit = 100;
 
-        let gas = main_frame_return::<CancunSpec>(&env, InstructionResult::Stop, Gas::new(90));
+        let gas = first_frame_return::<CancunSpec>(&env, InstructionResult::Stop, Gas::new(90));
         assert_eq!(gas.remaining(), 90);
         assert_eq!(gas.spend(), 10);
         assert_eq!(gas.refunded(), 0);
@@ -200,12 +186,12 @@ mod tests {
         let mut return_gas = Gas::new(90);
         return_gas.record_refund(30);
 
-        let gas = main_frame_return::<CancunSpec>(&env, InstructionResult::Stop, return_gas);
+        let gas = first_frame_return::<CancunSpec>(&env, InstructionResult::Stop, return_gas);
         assert_eq!(gas.remaining(), 90);
         assert_eq!(gas.spend(), 10);
         assert_eq!(gas.refunded(), 2);
 
-        let gas = main_frame_return::<CancunSpec>(&env, InstructionResult::Revert, return_gas);
+        let gas = first_frame_return::<CancunSpec>(&env, InstructionResult::Revert, return_gas);
         assert_eq!(gas.remaining(), 90);
         assert_eq!(gas.spend(), 10);
         assert_eq!(gas.refunded(), 0);
@@ -216,7 +202,7 @@ mod tests {
         let mut env = Env::default();
         env.tx.gas_limit = 100;
 
-        let gas = main_frame_return::<CancunSpec>(&env, InstructionResult::Revert, Gas::new(90));
+        let gas = first_frame_return::<CancunSpec>(&env, InstructionResult::Revert, Gas::new(90));
         assert_eq!(gas.remaining(), 90);
         assert_eq!(gas.spend(), 10);
         assert_eq!(gas.refunded(), 0);

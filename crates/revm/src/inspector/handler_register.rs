@@ -1,11 +1,15 @@
 use crate::{
     db::Database,
     handler::register::{EvmHandler, EvmInstructionTables},
-    interpreter::{opcode, Interpreter, InterpreterResult},
-    CallStackFrame, Evm, FrameOrResult, Inspector, JournalEntry,
+    interpreter::{
+        opcode, opcode::BoxedInstruction, CallInputs, InstructionResult, Interpreter,
+        InterpreterResult,
+    },
+    primitives::TransactTo,
+    CallStackFrame, Evm, FrameData, FrameOrResult, Inspector, JournalEntry,
 };
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
-use revm_interpreter::{opcode::BoxedInstruction, InstructionResult};
+use revm_interpreter::CreateInputs;
 
 pub trait GetInspector<'a, DB: Database> {
     fn get_inspector(&mut self) -> &mut dyn Inspector<DB>;
@@ -16,14 +20,20 @@ pub trait GetInspector<'a, DB: Database> {
 ///
 /// # Note
 ///
-/// Most of the functions are wrapped for Inspector usage expect
-/// the SubCreate and SubCall calls that got overwritten.
+/// Handles that are overwritten:
+/// * SubCreate
+/// * SubCall
+/// * CreateFirstFrame
+///
 ///
 /// Few instructions handlers are wrapped twice once for `step` and `step_end`
 /// and in case of Logs and Selfdestruct wrapper is wrapped again for the
 /// `log` and `selfdestruct` calls.
 ///
 /// `frame_return` is also wrapped so that Inspector could call `call_end` or `create_end`.
+///
+/// `create_first_frame` is also wrapped so that Inspector could call `call` and `crate` on it.
+/// While return for first frame is handled by `frame_return`.
 pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     handler: &mut EvmHandler<'a, EXT, DB>,
 ) {
@@ -84,6 +94,37 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     inspect_log(opcode::LOG4);
 
     // wrap first frame create and main frame return.
+    handler.execution_loop.create_first_frame =
+        Arc::new(move |context, gas_limit| -> FrameOrResult {
+            // call inner handling of call/create
+            match context.evm.env.tx.transact_to {
+                TransactTo::Call(_) => {
+                    let mut call_inputs = CallInputs::new(&context.evm.env.tx, gas_limit).unwrap();
+                    // call inspector and return of inspector returns result.
+                    if let Some(output) = context
+                        .external
+                        .get_inspector()
+                        .call(&mut context.evm, &mut call_inputs)
+                    {
+                        return FrameOrResult::Result(output.0);
+                    }
+                    // first call frame does not have return range.
+                    context.evm.make_call_frame(&call_inputs, 0..0)
+                }
+                TransactTo::Create(_) => {
+                    let mut create_inputs =
+                        CreateInputs::new(&context.evm.env.tx, gas_limit).unwrap();
+                    if let Some(output) = context
+                        .external
+                        .get_inspector()
+                        .create(&mut context.evm, &mut create_inputs)
+                    {
+                        return FrameOrResult::Result(output.0);
+                    };
+                    context.evm.make_create_frame(spec_id, &create_inputs)
+                }
+            }
+        });
 
     // register selfdestruct function.
     if let Some(i) = table.get_mut(opcode::SELFDESTRUCT as usize) {
@@ -138,7 +179,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
                 }
                 FrameOrResult::Result(result) => {
                     let (result, address) =
-                        inspector.create_end(&mut context.evm, result, frame.created_address);
+                        inspector.create_end(&mut context.evm, result, frame.created_address());
                     // insert result of the failed creation of create CallStackFrame.
                     frame.interpreter.insert_create_output(result, address);
                     None
@@ -181,13 +222,16 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     handler.execution_loop.frame_return = Arc::new(
         move |context, mut child, parent, memory, mut result| -> Option<InterpreterResult> {
             let inspector = &mut context.external.get_inspector();
-            result = if child.is_create {
-                let (result, address) =
-                    inspector.create_end(&mut context.evm, result, child.created_address);
-                child.created_address = address;
-                result
-            } else {
-                inspector.call_end(&mut context.evm, result)
+            result = match &mut child.frame_data {
+                FrameData::Create { created_address } => {
+                    let (result, address) =
+                        inspector.create_end(&mut context.evm, result, Some(*created_address));
+                    if let Some(address) = address {
+                        *created_address = address;
+                    }
+                    result
+                }
+                FrameData::Call { .. } => inspector.call_end(&mut context.evm, result),
             };
             old_handle(context, child, parent, memory, result)
         },

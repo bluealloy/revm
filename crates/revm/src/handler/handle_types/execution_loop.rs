@@ -78,10 +78,10 @@ impl<'a, EXT: 'a, DB: Database + 'a> ExecutionLoopHandler<'a, EXT, DB> {
     pub fn new<SPEC: Spec + 'a>() -> Self {
         Self {
             create_first_frame: Arc::new(mainnet::create_first_frame::<SPEC, EXT, DB>),
-            first_frame_return: Arc::new(mainnet::main_frame_return::<SPEC>),
-            frame_return: Arc::new(mainnet::handle_frame_return::<SPEC, EXT, DB>),
-            sub_call: Arc::new(mainnet::handle_frame_sub_call::<SPEC, EXT, DB>),
-            sub_create: Arc::new(mainnet::handle_frame_sub_create::<SPEC, EXT, DB>),
+            first_frame_return: Arc::new(mainnet::first_frame_return::<SPEC>),
+            frame_return: Arc::new(mainnet::frame_return::<SPEC, EXT, DB>),
+            sub_call: Arc::new(mainnet::sub_call::<SPEC, EXT, DB>),
+            sub_create: Arc::new(mainnet::sub_create::<SPEC, EXT, DB>),
         }
     }
 }

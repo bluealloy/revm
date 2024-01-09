@@ -148,7 +148,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         // start main loop if CallStackFrame is created correctly
         let result = match first_stack_frame {
             FrameOrResult::Frame(first_stack_frame) => {
-                created_address = first_stack_frame.created_address;
+                created_address = first_stack_frame.created_address();
                 // take instruction talbe
                 let table = self
                     .handler

@@ -1,7 +1,3 @@
-//! Handler contains all the logic that is specific to the Evm.
-//! It is used to define different behavior depending on the chain (Optimism,Mainnet) or
-//! hardfork (Berlin, London, ..).
-
 // Modules.
 mod handle_types;
 pub mod mainnet;

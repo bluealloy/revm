@@ -1,5 +1,3 @@
-//! Evm Builder.
-
 use crate::{
     db::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef},
     handler::register,

@@ -10,7 +10,7 @@ use crate::{
         keccak256, Address, AnalysisKind, Bytecode, Bytes, EVMError, Env, HashSet, Spec, SpecId,
         SpecId::*, B256, U256,
     },
-    CallStackFrame, FrameOrResult, CALL_STACK_LIMIT,
+    CallStackFrame, FrameData, FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
 };
 use alloc::boxed::Box;
 use core::ops::Range;
@@ -280,10 +280,8 @@ impl<DB: Database> EvmContext<DB> {
         ));
 
         FrameOrResult::new_frame(CallStackFrame {
-            is_create: true,
             checkpoint,
-            created_address: Some(created_address),
-            subcall_return_memory_range: 0..0,
+            frame_data: FrameData::Create { created_address },
             interpreter: Interpreter::new(contract, gas.limit(), false),
         })
     }
@@ -292,7 +290,7 @@ impl<DB: Database> EvmContext<DB> {
     pub fn make_call_frame(
         &mut self,
         inputs: &CallInputs,
-        return_memory_offset: Range<usize>,
+        return_memory_range: Range<usize>,
     ) -> FrameOrResult {
         let gas = Gas::new(inputs.gas_limit);
 
@@ -359,10 +357,10 @@ impl<DB: Database> EvmContext<DB> {
             ));
             // Create interpreter and execute subcall and push new CallStackFrame.
             FrameOrResult::new_frame(CallStackFrame {
-                is_create: false,
                 checkpoint,
-                created_address: None,
-                subcall_return_memory_range: return_memory_offset,
+                frame_data: FrameData::Call {
+                    return_memory_range,
+                },
                 interpreter: Interpreter::new(contract, gas.limit(), inputs.is_static),
             })
         } else {
@@ -416,13 +414,13 @@ impl<DB: Database> EvmContext<DB> {
     pub fn call_return(
         &mut self,
         interpreter_result: InterpreterResult,
-        frame: Box<CallStackFrame>,
+        journal_checkpoint: JournalCheckpoint,
     ) -> InterpreterResult {
         // revert changes or not.
         if matches!(interpreter_result.result, return_ok!()) {
             self.journaled_state.checkpoint_commit();
         } else {
-            self.journaled_state.checkpoint_revert(frame.checkpoint);
+            self.journaled_state.checkpoint_revert(journal_checkpoint);
         }
         interpreter_result
     }
@@ -432,13 +430,14 @@ impl<DB: Database> EvmContext<DB> {
     pub fn create_return<SPEC: Spec>(
         &mut self,
         mut interpreter_result: InterpreterResult,
-        frame: Box<CallStackFrame>,
-    ) -> (InterpreterResult, Address) {
-        let address = frame.created_address.unwrap();
+        address: Address,
+        journal_checkpoint: JournalCheckpoint,
+    ) -> InterpreterResult {
+        //let address = frame.created_address.unwrap();
         // if return is not ok revert and return.
         if !matches!(interpreter_result.result, return_ok!()) {
-            self.journaled_state.checkpoint_revert(frame.checkpoint);
-            return (interpreter_result, address);
+            self.journaled_state.checkpoint_revert(journal_checkpoint);
+            return interpreter_result;
         }
         // Host error if present on execution
         // if ok, check contract creation limit and calculate gas deduction on output len.
@@ -448,9 +447,9 @@ impl<DB: Database> EvmContext<DB> {
             && !interpreter_result.output.is_empty()
             && interpreter_result.output.first() == Some(&0xEF)
         {
-            self.journaled_state.checkpoint_revert(frame.checkpoint);
+            self.journaled_state.checkpoint_revert(journal_checkpoint);
             interpreter_result.result = InstructionResult::CreateContractStartingWithEF;
-            return (interpreter_result, address);
+            return interpreter_result;
         }
 
         // EIP-170: Contract code size limit
@@ -463,9 +462,9 @@ impl<DB: Database> EvmContext<DB> {
                     .limit_contract_code_size
                     .unwrap_or(MAX_CODE_SIZE)
         {
-            self.journaled_state.checkpoint_revert(frame.checkpoint);
+            self.journaled_state.checkpoint_revert(journal_checkpoint);
             interpreter_result.result = InstructionResult::CreateContractSizeLimit;
-            return (interpreter_result, frame.created_address.unwrap());
+            return interpreter_result;
         }
         let gas_for_code = interpreter_result.output.len() as u64 * gas::CODEDEPOSIT;
         if !interpreter_result.gas.record_cost(gas_for_code) {
@@ -474,9 +473,9 @@ impl<DB: Database> EvmContext<DB> {
             // final gas fee for adding the contract code to the state, the contract
             //  creation fails (i.e. goes out-of-gas) rather than leaving an empty contract.
             if SPEC::enabled(HOMESTEAD) {
-                self.journaled_state.checkpoint_revert(frame.checkpoint);
+                self.journaled_state.checkpoint_revert(journal_checkpoint);
                 interpreter_result.result = InstructionResult::OutOfGas;
-                return (interpreter_result, address);
+                return interpreter_result;
             } else {
                 interpreter_result.output = Bytes::new();
             }
@@ -499,7 +498,7 @@ impl<DB: Database> EvmContext<DB> {
         self.journaled_state.set_code(address, bytecode);
 
         interpreter_result.result = InstructionResult::Return;
-        (interpreter_result, address)
+        interpreter_result
     }
 }
 /// Test utilities for the [`EvmContext`].
@@ -669,8 +668,12 @@ mod tests {
         let FrameOrResult::Frame(frame) = res else {
             panic!("Expected FrameOrResult::Frame");
         };
-        assert!(!frame.is_create);
-        assert_eq!(frame.created_address, None);
-        assert_eq!(frame.subcall_return_memory_range, 0..0);
+        assert!(!frame.is_create());
+        assert_eq!(
+            frame.frame_data,
+            FrameData::Call {
+                return_memory_range: 0..0
+            }
+        );
     }
 }

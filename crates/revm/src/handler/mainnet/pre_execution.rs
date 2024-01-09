@@ -14,13 +14,14 @@ use crate::{
 };
 
 /// Main precompile load
-pub fn main_load_precompiles<SPEC: Spec>() -> Precompiles {
+#[inline]
+pub fn load_precompiles<SPEC: Spec>() -> Precompiles {
     Precompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID)).clone()
 }
 
 /// Main load handle
 #[inline]
-pub fn main_load<SPEC: Spec, EXT, DB: Database>(
+pub fn load<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
 ) -> Result<(), EVMError<DB::Error>> {
     // set journaling state flag.
@@ -51,6 +52,7 @@ pub fn main_load<SPEC: Spec, EXT, DB: Database>(
 }
 
 /// Helper function that deducts the caller balance.
+#[inline]
 pub fn deduct_caller_inner<SPEC: Spec>(caller_account: &mut Account, env: &Env) {
     // Subtract gas costs from the caller's account.
     // We need to saturate the gas cost to prevent underflow in case that `disable_balance_check` is enabled.
@@ -75,8 +77,9 @@ pub fn deduct_caller_inner<SPEC: Spec>(caller_account: &mut Account, env: &Env) 
     caller_account.mark_touch();
 }
 
+/// Deducts the caller balance to the transaction limit.
 #[inline]
-pub fn main_deduct_caller<SPEC: Spec, EXT, DB: Database>(
+pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
 ) -> Result<(), EVMError<DB::Error>> {
     // load caller's account.
