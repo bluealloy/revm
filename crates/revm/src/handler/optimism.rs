@@ -5,8 +5,8 @@ use crate::{
     interpreter::{return_ok, return_revert, Gas, InstructionResult},
     optimism,
     primitives::{
-        db::Database, Account, EVMError, Env, ExecutionResult, Halt, HashMap, InvalidTransaction,
-        Output, ResultAndState, Spec, SpecId::REGOLITH, U256,
+        db::Database, Account, EVMError, Env, ExecutionResult, HaltReason, HashMap,
+        InvalidTransaction, Output, ResultAndState, Spec, SpecId::REGOLITH, U256,
     },
     EvmContext,
 };
@@ -225,7 +225,7 @@ pub fn end_handle<SPEC: Spec, DB: Database>(
 
             Ok(ResultAndState {
                 result: ExecutionResult::Halt {
-                    reason: Halt::FailedDeposit,
+                    reason: HaltReason::FailedDeposit,
                     gas_used,
                 },
                 state,
