@@ -6,9 +6,6 @@
 #![deny(unused_must_use, rust_2018_idioms)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(all(feature = "with-serde", not(feature = "serde")))]
-compile_error!("`with-serde` feature has been renamed to `serde`.");
-
 #[macro_use]
 extern crate alloc;
 
@@ -37,7 +34,7 @@ pub use context::{Context, EvmContext};
 pub use db::{
     CacheState, DBBox, State, StateBuilder, StateDBBox, TransitionAccount, TransitionState,
 };
-pub use db::{Database, DatabaseCommit, DatabaseRef, DummyStateDB, InMemoryDB};
+pub use db::{Database, DatabaseCommit, DatabaseRef, InMemoryDB};
 pub use evm::{Evm, CALL_STACK_LIMIT};
 pub use frame::{CallStackFrame, FrameData, FrameOrResult};
 pub use handler::Handler;

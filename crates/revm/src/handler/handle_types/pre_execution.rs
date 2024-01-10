@@ -20,7 +20,7 @@ pub type LoadAccountsHandle<'a, EXT, DB> =
 pub type DeductCallerHandle<'a, EXT, DB> =
     Arc<dyn Fn(&mut Context<EXT, DB>) -> EVMResultGeneric<(), <DB as Database>::Error> + 'a>;
 
-/// Handles related to main function.
+/// Handles related to pre execution before the stack loop is started.
 pub struct PreExecutionHandler<'a, EXT, DB: Database> {
     /// Load precompiles
     pub load_precompiles: LoadPrecompilesHandle<'a>,

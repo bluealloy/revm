@@ -15,7 +15,7 @@ use crate::{
 use alloc::boxed::Box;
 use core::ops::Range;
 
-/// Main Context structure that contains both EvmContext and external contexts.
+/// Main Context structure that contains both EvmContext and External context.
 pub struct Context<EXT, DB: Database> {
     /// Evm Context.
     pub evm: EvmContext<DB>,

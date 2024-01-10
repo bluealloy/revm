@@ -37,7 +37,7 @@ pub type EndHandle<'a, EXT, DB> = Arc<
         + 'a,
 >;
 
-/// Handles related to main function.
+/// Handles related to post execution after the stack loop is finished.
 pub struct PostExecutionHandler<'a, EXT, DB: Database> {
     /// Reimburse the caller with ethereum it didn't spent.
     pub reimburse_caller: ReimburseCallerHandle<'a, EXT, DB>,

@@ -59,7 +59,11 @@ impl<'a> Evm<'a, (), EmptyDB> {
 
 impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
     /// Create new EVM.
-    pub fn new(context: Context<EXT, DB>, handler: Handler<'a, Self, EXT, DB>) -> Evm<'a, EXT, DB> {
+    pub fn new(
+        mut context: Context<EXT, DB>,
+        handler: Handler<'a, Self, EXT, DB>,
+    ) -> Evm<'a, EXT, DB> {
+        context.evm.journaled_state.set_spec_id(handler.spec_id);
         Evm { context, handler }
     }
 

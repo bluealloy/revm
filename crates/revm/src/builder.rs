@@ -24,8 +24,8 @@ pub trait BuilderStage {}
 pub struct SetGenericStage;
 impl BuilderStage for SetGenericStage {}
 
-/// Second stage of the builder allows setting the external context.
-/// Requires the database to be set.
+/// Second stage of the builder allows appending handler registers.
+/// Requires the database and external context to be set.
 pub struct HandlerStage;
 impl BuilderStage for HandlerStage {}
 
@@ -42,38 +42,24 @@ impl<'a> Default for EvmBuilder<'a, SetGenericStage, (), EmptyDB> {
 
 impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
     /// Sets the [`EmptyDB`] as the [`Database`] that will be used by [`Evm`].
-    ///
-    /// # Note
-    ///
-    /// When changed it will reset the handler to the mainnet.
     pub fn with_empty_db(self) -> EvmBuilder<'a, SetGenericStage, EXT, EmptyDB> {
         EvmBuilder {
             evm: self.evm.with_db(EmptyDB::default()),
             external: self.external,
             handler: Handler::mainnet_with_spec(self.handler.spec_id),
-
             phantom: PhantomData,
         }
     }
     /// Sets the [`Database`] that will be used by [`Evm`].
-    ///
-    /// # Note
-    ///
-    /// When changed it will reset the handler to default mainnet.
     pub fn with_db<ODB: Database>(self, db: ODB) -> EvmBuilder<'a, SetGenericStage, EXT, ODB> {
         EvmBuilder {
             evm: self.evm.with_db(db),
             external: self.external,
             handler: Handler::mainnet_with_spec(self.handler.spec_id),
-
             phantom: PhantomData,
         }
     }
     /// Sets the [`DatabaseRef`] that will be used by [`Evm`].
-    ///
-    /// # Note
-    ///
-    /// When changed it will reset the handler to default mainnet.
     pub fn with_ref_db<ODB: DatabaseRef>(
         self,
         db: ODB,
@@ -82,7 +68,6 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
             evm: self.evm.with_db(WrapDatabaseRef(db)),
             external: self.external,
             handler: Handler::mainnet_with_spec(self.handler.spec_id),
-
             phantom: PhantomData,
         }
     }
@@ -102,7 +87,8 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
 }
 
 impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
-    /// Creates new build from EVM, evm is consumed and all field are moved to Builder.
+    /// Creates new builder from Evm, Evm is consumed and all field are moved to Builder.
+    /// It will preserve set handler and context.
     ///
     /// Builder is in HandlerStage and both database and external are set.
     pub fn new(evm: Evm<'a, EXT, DB>) -> Self {
@@ -114,7 +100,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
         }
     }
 
-    /// Sets the [`EmptyDB`] and resets the [`Handler`]
+    /// Sets the [`EmptyDB`] and resets the [`Handler`] to default mainnet.
     pub fn reset_handler_with_empty_db(self) -> EvmBuilder<'a, HandlerStage, EXT, EmptyDB> {
         EvmBuilder {
             evm: self.evm.with_db(EmptyDB::default()),
@@ -124,7 +110,8 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
         }
     }
 
-    /// Sets the [`Database`] that will be used by [`Evm`].
+    /// Sets the [`Database`] that will be used by [`Evm`]
+    /// and resets the [`Handler`] to default mainnet.
     pub fn reset_handler_with_db<ODB: Database>(
         self,
         db: ODB,
@@ -138,7 +125,8 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
         }
     }
 
-    /// Resets [`Handler`] and sets the [`DatabaseRef`] that will be used by [`Evm`].
+    /// Resets [`Handler`] and sets the [`DatabaseRef`] that will be used by [`Evm`]
+    /// and resets the [`Handler`] to default mainnet.
     pub fn reset_handler_with_ref_db<ODB: DatabaseRef>(
         self,
         db: ODB,
@@ -152,7 +140,8 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
         }
     }
 
-    /// Resets [`Handler`] and sets new `External` context type.
+    /// Resets [`Handler`] and sets new `ExternalContext` type.
+    ///  and resets the [`Handler`] to default mainnet.
     pub fn reset_handler_with_external_context<OEXT>(
         self,
         external: OEXT,
@@ -166,20 +155,22 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
     }
 }
 
-// Accessed always.
 impl<'a, STAGE: BuilderStage, EXT, DB: Database> EvmBuilder<'a, STAGE, EXT, DB> {
     /// Builds the [`Evm`].
     pub fn build(self) -> Evm<'a, EXT, DB> {
-        Evm {
-            context: Context {
+        Evm::new(
+            Context {
                 evm: self.evm,
                 external: self.external,
             },
-            handler: self.handler,
-        }
+            self.handler,
+        )
     }
 
-    /// Appends the handler register to the handler.
+    /// Register Handler that modifies the behavior of EVM.
+    /// Check [`Handler`] for more information.
+    ///
+    /// When called, EvmBuilder will transition from [`SetGenericStage`] to [`HandlerStage`].
     pub fn append_handler_register(
         mut self,
         handle_register: register::HandleRegister<'a, EXT, DB>,
@@ -197,6 +188,8 @@ impl<'a, STAGE: BuilderStage, EXT, DB: Database> EvmBuilder<'a, STAGE, EXT, DB> 
 
     /// Register Handler that modifies the behavior of EVM.
     /// Check [`Handler`] for more information.
+    ///
+    /// When called, EvmBuilder will transition from [`SetGenericStage`] to [`HandlerStage`].
     pub fn append_handler_register_box(
         mut self,
         handle_register: register::HandleRegisterBox<'a, EXT, DB>,
@@ -353,11 +346,13 @@ mod test {
 
     #[test]
     fn build_modify_build() {
+        // build evm
         let evm = Evm::builder()
             .with_empty_db()
             .spec_id(SpecId::HOMESTEAD)
             .build();
 
+        // modify evm
         let evm = evm.modify().spec_id(SpecId::FRONTIER).build();
         let _ = evm
             .modify()
