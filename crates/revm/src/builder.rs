@@ -170,7 +170,7 @@ impl<'a, STAGE: BuilderStage, EXT, DB: Database> EvmBuilder<'a, STAGE, EXT, DB> 
     /// Register Handler that modifies the behavior of EVM.
     /// Check [`Handler`] for more information.
     ///
-    /// When called, EvmBuilder will transition from [`SetGenericStage`] to [`HandlerStage`].
+    /// When called, EvmBuilder will transition from SetGenericStage to HandlerStage.
     pub fn append_handler_register(
         mut self,
         handle_register: register::HandleRegister<'a, EXT, DB>,
@@ -189,7 +189,7 @@ impl<'a, STAGE: BuilderStage, EXT, DB: Database> EvmBuilder<'a, STAGE, EXT, DB> 
     /// Register Handler that modifies the behavior of EVM.
     /// Check [`Handler`] for more information.
     ///
-    /// When called, EvmBuilder will transition from [`SetGenericStage`] to [`HandlerStage`].
+    /// When called, EvmBuilder will transition from SetGenericStage to HandlerStage.
     pub fn append_handler_register_box(
         mut self,
         handle_register: register::HandleRegisterBox<'a, EXT, DB>,
