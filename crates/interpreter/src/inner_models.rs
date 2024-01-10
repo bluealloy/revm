@@ -1,5 +1,5 @@
 pub use crate::primitives::CreateScheme;
-use crate::primitives::{Address, Bytes, B256, U256};
+use crate::primitives::{Address, Bytes, U256};
 
 /// Inputs for a call.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -43,16 +43,6 @@ impl CreateInputs {
             CreateScheme::Create2 { salt } => self
                 .caller
                 .create2_from_code(salt.to_be_bytes(), &self.init_code),
-        }
-    }
-
-    /// Returns the address that this create call will create, without calculating the init code hash.
-    ///
-    /// Note: `hash` must be `keccak256(&self.init_code)`.
-    pub fn created_address_with_hash(&self, nonce: u64, hash: &B256) -> Address {
-        match self.scheme {
-            CreateScheme::Create => self.caller.create(nonce),
-            CreateScheme::Create2 { salt } => self.caller.create2(salt.to_be_bytes(), hash),
         }
     }
 }
