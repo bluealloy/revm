@@ -230,7 +230,7 @@ impl<DB: Database> EvmContext<DB> {
 
         // Check if caller has enough balance to send to the created contract.
         if caller_balance < inputs.value {
-            return return_error(InstructionResult::OutOfFund);
+            return return_error(InstructionResult::OutOfFunds);
         }
 
         // Increase nonce of caller and check if it overflows
@@ -631,7 +631,7 @@ mod tests {
         let FrameOrResult::Result(err) = res else {
             panic!("Expected FrameOrResult::Result");
         };
-        assert_eq!(err.result, InstructionResult::OutOfFund);
+        assert_eq!(err.result, InstructionResult::OutOfFunds);
         let checkpointed = vec![vec![JournalEntry::AccountLoaded { address: contract }]];
         assert_eq!(evm_context.journaled_state.journal, checkpointed);
         assert_eq!(evm_context.journaled_state.depth, 0);

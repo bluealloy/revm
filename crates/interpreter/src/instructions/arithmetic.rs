@@ -5,7 +5,7 @@ use crate::{
     Host, InstructionResult, Interpreter,
 };
 
-pub fn wrapped_add<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn wrapping_add<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, op1, op2);
     *op2 = op1.wrapping_add(*op2);
