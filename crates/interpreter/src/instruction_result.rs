@@ -108,6 +108,7 @@ macro_rules! return_revert {
     };
 }
 
+#[macro_export]
 macro_rules! return_error {
     () => {
         InstructionResult::OutOfGas
@@ -248,8 +249,8 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::OverflowPayment => Self::Halt(Halt::OverflowPayment), // Check for first call is done separately.
             InstructionResult::PrecompileError => Self::Halt(Halt::PrecompileError),
             InstructionResult::NonceOverflow => Self::Halt(Halt::NonceOverflow),
-            InstructionResult::CreateContractSizeLimit => Self::Halt(Halt::CreateContractSizeLimit),
-            InstructionResult::CreateContractStartingWithEF => {
+            InstructionResult::CreateContractSizeLimit
+            | InstructionResult::CreateContractStartingWithEF => {
                 Self::Halt(Halt::CreateContractSizeLimit)
             }
             InstructionResult::CreateInitCodeSizeLimit => Self::Halt(Halt::CreateInitCodeSizeLimit),
@@ -264,12 +265,11 @@ mod tests {
 
     #[test]
     fn all_results_are_covered() {
-        let result = InstructionResult::Continue;
-        match result {
+        match InstructionResult::Continue {
             return_error!() => {}
-            return_revert!() => (),
+            return_revert!() => {}
             return_ok!() => {}
-            InstructionResult::CallOrCreate => (),
+            InstructionResult::CallOrCreate => {}
         }
     }
 
