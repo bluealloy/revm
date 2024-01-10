@@ -46,9 +46,9 @@ checksum = "0942ffc6dcaadf03badf6e6a2d0228460359d5e34b57ccdc720b7382dfbd5ec5"
 
 [[package]]
 name = "alloy-primitives"
-version = "0.5.4"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c234f92024707f224510ff82419b2be0e1d8e1fd911defcac5a085cd7f83898"
+checksum = "3729132072f369bc4e8e6e070f9cf4deb3490fc9b9eea6f71f75ec19406df811"
 dependencies = [
  "alloy-rlp",
  "arbitrary",
@@ -60,6 +60,7 @@ dependencies = [
  "ethereum_ssz",
  "hex-literal",
  "itoa",
+ "k256",
  "keccak-asm",
  "proptest",
  "proptest-derive",
