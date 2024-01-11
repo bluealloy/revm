@@ -59,6 +59,7 @@ serde = [
     "c-kzg?/serde",
 ]
 arbitrary = ["std", "alloy-primitives/arbitrary", "bitflags/arbitrary"]
+asm-keccak = ["alloy-primitives/asm-keccak"]
 
 optimism = []
 
