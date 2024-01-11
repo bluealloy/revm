@@ -7,8 +7,8 @@ use crate::{
     journaled_state::JournaledState,
     precompile::{Precompile, Precompiles},
     primitives::{
-        keccak256, Address, AnalysisKind, Bytecode, Bytes, EVMError, Env, Spec, SpecId::*, B256,
-        U256,
+        keccak256, Address, AnalysisKind, Bytecode, Bytes, CreateScheme, EVMError, Env, Spec,
+        SpecId::*, B256, U256,
     },
     CallStackFrame, CALL_STACK_LIMIT,
 };
@@ -174,8 +174,14 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
         }
 
         // Create address
-        let code_hash = keccak256(&inputs.init_code);
-        let created_address = inputs.created_address_with_hash(old_nonce, &code_hash);
+        let mut init_code_hash = B256::ZERO;
+        let created_address = match inputs.scheme {
+            CreateScheme::Create => inputs.caller.create(old_nonce),
+            CreateScheme::Create2 { salt } => {
+                init_code_hash = keccak256(&inputs.init_code);
+                inputs.caller.create2(salt.to_be_bytes(), init_code_hash)
+            }
+        };
 
         // Load account so it needs to be marked as warm for access list.
         if self
@@ -204,7 +210,7 @@ impl<'a, DB: Database> EvmContext<'a, DB> {
         let contract = Box::new(Contract::new(
             Bytes::new(),
             bytecode,
-            code_hash,
+            init_code_hash,
             created_address,
             inputs.caller,
             inputs.value,
