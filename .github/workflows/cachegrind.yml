@@ -45,5 +45,8 @@ jobs:
           else
             echo "Failed to edit last comment. Trying to add a new comment instead!"
             # If editing last comment fails, try to add a new comment
-            gh pr comment ${{ github.event.pull_request.number }} --body-file results.md
+            if ! gh pr comment ${{ github.event.pull_request.number }} --body-file results.md; then
+              echo "Comment failed to be made, printing out results here:"
+              cat results.md
+            fi
           fi

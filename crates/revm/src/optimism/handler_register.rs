@@ -8,8 +8,8 @@ use crate::{
     interpreter::{return_ok, return_revert, Gas, InstructionResult},
     optimism,
     primitives::{
-        db::Database, spec_to_generic, Account, EVMError, Env, ExecutionResult, Halt, HashMap,
-        InvalidTransaction, Output, ResultAndState, Spec, SpecId, SpecId::REGOLITH, U256,
+        db::Database, spec_to_generic, Account, EVMError, Env, ExecutionResult, HaltReason,
+        HashMap, InvalidTransaction, Output, ResultAndState, Spec, SpecId, SpecId::REGOLITH, U256,
     },
     Context,
 };
@@ -289,7 +289,7 @@ pub fn end<SPEC: Spec, EXT, DB: Database>(
 
             Ok(ResultAndState {
                 result: ExecutionResult::Halt {
-                    reason: Halt::FailedDeposit,
+                    reason: HaltReason::FailedDeposit,
                     gas_used,
                 },
                 state,

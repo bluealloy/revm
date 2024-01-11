@@ -24,6 +24,7 @@ default = ["std"]
 std = ["revm-primitives/std"]
 serde = ["dep:serde", "revm-primitives/serde"]
 arbitrary = ["std", "revm-primitives/arbitrary"]
+asm-keccak = ["revm-primitives/asm-keccak"]
 
 optimism = ["revm-primitives/optimism"]
 
