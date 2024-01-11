@@ -44,6 +44,7 @@ default = ["std", "c-kzg", "secp256k1"]
 std = ["revm-interpreter/std", "revm-precompile/std"]
 serde = ["dep:serde", "dep:serde_json", "revm-interpreter/serde"]
 arbitrary = ["revm-interpreter/arbitrary"]
+asm-keccak = ["revm-interpreter/asm-keccak", "revm-precompile/asm-keccak"]
 
 test-utils = []
 

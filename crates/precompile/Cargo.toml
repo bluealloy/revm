@@ -43,6 +43,7 @@ std = [
     "c-kzg?/std",
     "secp256k1?/std",
 ]
+asm-keccak = ["revm-primitives/asm-keccak"]
 
 optimism = ["revm-primitives/optimism"]
 
