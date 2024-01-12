@@ -97,7 +97,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     handler.execution_loop.create_first_frame =
         Arc::new(move |context, gas_limit| -> FrameOrResult {
             // call inner handling of call/create
-            match context.evm.env.tx.transact_to {
+            let mut first_frame = match context.evm.env.tx.transact_to {
                 TransactTo::Call(_) => {
                     let mut call_inputs = CallInputs::new(&context.evm.env.tx, gas_limit).unwrap();
                     // call inspector and return of inspector returns result.
@@ -123,7 +123,17 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
                     };
                     context.evm.make_create_frame(spec_id, &create_inputs)
                 }
+            };
+
+            // call initialize interpreter from inspector.
+            if let FrameOrResult::Frame(ref mut frame) = first_frame {
+                context
+                    .external
+                    .get_inspector()
+                    .initialize_interp(&mut frame.interpreter, &mut context.evm);
             }
+
+            first_frame
         });
 
     // register selfdestruct function.
@@ -278,8 +288,15 @@ pub fn inspector_instruction<
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::inspectors::NoOpInspector;
-    use crate::{db::EmptyDB, interpreter::opcode::*, primitives::BerlinSpec, Evm};
+    use crate::{
+        db::EmptyDB,
+        inspector::GetInspector,
+        inspectors::NoOpInspector,
+        interpreter::{opcode::*, CallInputs, CreateInputs, Interpreter, InterpreterResult},
+        primitives::{Address, BerlinSpec},
+        Database, Evm, EvmContext, Inspector,
+    };
+    use core::ops::Range;
 
     #[test]
     fn test_make_boxed_instruction_table() {
@@ -291,5 +308,129 @@ mod tests {
                 inst,
                 inspector_instruction,
             );
+    }
+
+    #[derive(Default, Debug)]
+    struct StackInspector {
+        initialize_interp_called: bool,
+        step: u32,
+        step_end: u32,
+        call: bool,
+        call_end: bool,
+    }
+
+    impl<DB: Database> GetInspector<'_, DB> for StackInspector {
+        fn get_inspector(&mut self) -> &mut dyn Inspector<DB> {
+            self
+        }
+    }
+
+    impl<DB: Database> Inspector<DB> for StackInspector {
+        fn initialize_interp(&mut self, _interp: &mut Interpreter, _context: &mut EvmContext<DB>) {
+            if self.initialize_interp_called {
+                assert!(false, "initialize_interp should not be called twice")
+            }
+            self.initialize_interp_called = true;
+        }
+
+        fn step(&mut self, _interp: &mut Interpreter, _context: &mut EvmContext<DB>) {
+            self.step += 1;
+        }
+
+        fn step_end(&mut self, _interp: &mut Interpreter, _context: &mut EvmContext<DB>) {
+            self.step_end += 1;
+        }
+
+        fn call(
+            &mut self,
+            _context: &mut EvmContext<DB>,
+            _call: &mut CallInputs,
+        ) -> Option<(InterpreterResult, Range<usize>)> {
+            if self.call {
+                assert!(false, "call should not be called twice")
+            }
+            self.call = true;
+            None
+        }
+
+        fn call_end(
+            &mut self,
+            _context: &mut EvmContext<DB>,
+            result: InterpreterResult,
+        ) -> InterpreterResult {
+            if self.call_end {
+                assert!(false, "call_end should not be called twice")
+            }
+            self.call_end = true;
+            result
+        }
+
+        fn create(
+            &mut self,
+            _context: &mut EvmContext<DB>,
+            _call: &mut CreateInputs,
+        ) -> Option<(InterpreterResult, Option<Address>)> {
+            None
+        }
+
+        fn create_end(
+            &mut self,
+            _context: &mut EvmContext<DB>,
+            result: InterpreterResult,
+            address: Option<Address>,
+        ) -> (InterpreterResult, Option<Address>) {
+            (result, address)
+        }
+    }
+
+    #[test]
+    fn test_gas_inspector() {
+        use crate::{
+            db::BenchmarkDB,
+            inspector::inspector_handle_register,
+            interpreter::opcode,
+            primitives::{address, Bytecode, Bytes, TransactTo},
+            Evm,
+        };
+
+        let contract_data: Bytes = Bytes::from(vec![
+            opcode::PUSH1,
+            0x1,
+            opcode::PUSH1,
+            0xb,
+            opcode::PUSH1,
+            0x1,
+            opcode::PUSH1,
+            0x1,
+            opcode::PUSH1,
+            0x1,
+            opcode::CREATE,
+            opcode::STOP,
+        ]);
+        let bytecode = Bytecode::new_raw(contract_data);
+
+        let mut evm: Evm<'_, StackInspector, BenchmarkDB> = Evm::builder()
+            .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
+            .with_external_context(StackInspector::default())
+            .modify_tx_env(|tx| {
+                tx.clear();
+                tx.caller = address!("1000000000000000000000000000000000000000");
+                tx.transact_to =
+                    TransactTo::Call(address!("0000000000000000000000000000000000000000"));
+                tx.gas_limit = 21100;
+            })
+            .append_handler_register(inspector_handle_register)
+            .build();
+
+        // run evm.
+        evm.transact().unwrap();
+
+        let inspector = evm.into_context().external;
+
+        assert_eq!(inspector.step, 6);
+        assert_eq!(inspector.step_end, 6);
+        assert_eq!(inspector.initialize_interp_called, true);
+        assert_eq!(inspector.call, true);
+        assert_eq!(inspector.call_end, true);
     }
 }
