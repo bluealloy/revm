@@ -429,8 +429,8 @@ mod tests {
 
         assert_eq!(inspector.step, 6);
         assert_eq!(inspector.step_end, 6);
-        assert_eq!(inspector.initialize_interp_called, true);
-        assert_eq!(inspector.call, true);
-        assert_eq!(inspector.call_end, true);
+        assert!(inspector.initialize_interp_called);
+        assert!(inspector.call);
+        assert!(inspector.call_end);
     }
 }
