@@ -258,7 +258,7 @@ pub fn create<const IS_CREATE2: bool, H: Host, SPEC: Spec>(
                 .map(|limit| limit.saturating_mul(2))
                 .unwrap_or(MAX_INITCODE_SIZE);
             if len > max_initcode_size {
-                interpreter.instruction_result = InstructionResult::CreateInitcodeSizeLimit;
+                interpreter.instruction_result = InstructionResult::CreateInitCodeSizeLimit;
                 return;
             }
             gas!(interpreter, gas::initcode_cost(len as u64));

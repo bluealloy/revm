@@ -17,8 +17,8 @@ pub const BERLIN: PrecompileWithAddress = PrecompileWithAddress(
     Precompile::Standard(berlin_run as StandardPrecompileFn),
 );
 
-/// See: https://eips.ethereum.org/EIPS/eip-198
-/// See: https://etherscan.io/address/0000000000000000000000000000000000000005
+/// See: <https://eips.ethereum.org/EIPS/eip-198>
+/// See: <https://etherscan.io/address/0000000000000000000000000000000000000005>
 fn byzantium_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     run_inner(input, gas_limit, 0, |a, b, c, d| {
         byzantium_gas_calc(a, b, c, d)

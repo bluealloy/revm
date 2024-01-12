@@ -102,10 +102,10 @@ impl BundleAccount {
             match slot {
                 RevertToSlot::Some(value) => {
                     // Don't overwrite original values if present
-                    // if storage is not present set original values as current value.
+                    // if storage is not present set original value as current value.
                     self.storage
                         .entry(key)
-                        .or_insert(StorageSlot::new_changed(value, U256::ZERO))
+                        .or_insert(StorageSlot::new(value))
                         .present_value = value;
                 }
                 RevertToSlot::Destroyed => {
@@ -140,7 +140,7 @@ impl BundleAccount {
             |updated_storage: &StorageWithOriginalValues| -> HashMap<U256, RevertToSlot> {
                 updated_storage
                     .iter()
-                    .filter(|s| s.1.previous_or_original_value != s.1.present_value)
+                    .filter(|s| s.1.is_changed())
                     .map(|(key, value)| {
                         (*key, RevertToSlot::Some(value.previous_or_original_value))
                     })

@@ -1,3 +1,10 @@
+# v3.6.0
+
+Big renaming long overdue:
+* EVMImpl to Evm, 
+* EVM to EvmFactory
+* EVMData to EvmContext
+
 
 # v3.5.0
 date 02.10.2023

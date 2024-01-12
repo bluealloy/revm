@@ -10,65 +10,99 @@ on:
   pull_request:
     branches: [main, "release/**"]
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
-  tests-stable:
-    name: Tests (Stable)
+  test:
+    name: test ${{ matrix.rust }} ${{ matrix.flags }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: ["stable", "beta", "nightly"]
+        flags: ["--no-default-features", "", "--all-features"]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust }}
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test --workspace ${{ matrix.flags }}
+
+  test-no-std:
+    name: test no_std
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Checkout sources
-        uses: actions/checkout@v3
-
-      - name: Install toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
         with:
           targets: riscv32imac-unknown-none-elf
+      - run: cargo check --target riscv32imac-unknown-none-elf --no-default-features
 
-      - uses: Swatinem/rust-cache@v2
-        with:
-          cache-on-failure: true
-
-      - name: cargo test
-        run: cargo test --workspace
-
-      - name: cargo test all features
-        run: cargo test --workspace --all-features
-      
-      - name: cargo check no_std
-        run: cargo check --target riscv32imac-unknown-none-elf --no-default-features
-
-  lint:
-    name: Lint
+  check-no-default-features:
+    name: check no-default-features
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Checkout sources
-        uses: actions/checkout@v3
-
-      - name: Install toolchain
-        uses: dtolnay/rust-toolchain@nightly
-        with:
-          components: rustfmt, clippy
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          cache-on-failure: true
-
-      - name: cargo fmt
-        run: cargo +nightly fmt --all -- --check
-
-      - name: cargo clippy
-        run: cargo +nightly clippy --workspace --all-features -- -D warnings
-
-      - name: cargo check no-default-features
-        run: |
+      - uses: actions/checkout@v3
+      - run: |
           cd crates/revm
           cargo check --no-default-features
-      - name: cargo check serde
-        run: |
+  
+  check-serde:
+    name: check serde
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
           cd crates/revm
           cargo check --no-default-features --features serde
-      - name: cargo check std
-        run: |
+
+  check-std:
+    name: check std
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
           cd crates/revm
           cargo check --no-default-features --features std
+
+  clippy:
+    name: clippy
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@clippy
+      - run: cargo +nightly clippy --workspace --all-targets --all-features
+        env:
+          RUSTFLAGS: -Dwarnings
+
+  docs:
+    name: docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rust-docs
+      - run: cargo doc --workspace --all-features --no-deps --document-private-items
+        env:
+          RUSTDOCFLAGS: "--cfg docsrs -D warnings"
+
+  fmt:
+    name: fmt
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt
+      - run: cargo +nightly fmt --all --check

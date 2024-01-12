@@ -321,22 +321,16 @@ fn xfer_cost(is_call_or_callcode: bool, transfers_value: bool) -> u64 {
 
 #[inline]
 fn new_cost<SPEC: Spec>(is_call_or_staticcall: bool, is_new: bool, transfers_value: bool) -> u64 {
-    if is_call_or_staticcall {
-        // EIP-161: State trie clearing (invariant-preserving alternative)
-        if SPEC::enabled(SPURIOUS_DRAGON) {
-            if transfers_value && is_new {
-                NEWACCOUNT
-            } else {
-                0
-            }
-        } else if is_new {
-            NEWACCOUNT
-        } else {
-            0
-        }
-    } else {
-        0
+    if !is_call_or_staticcall || !is_new {
+        return 0;
     }
+
+    // EIP-161: State trie clearing (invariant-preserving alternative)
+    if SPEC::enabled(SPURIOUS_DRAGON) && !transfers_value {
+        return 0;
+    }
+
+    NEWACCOUNT
 }
 
 #[inline]
@@ -349,7 +343,7 @@ pub fn memory_gas(a: usize) -> u64 {
 
 /// Initial gas that is deducted for transaction to be included.
 /// Initial gas contains initial stipend gas, gas for access list and input data.
-pub fn initial_tx_gas<SPEC: Spec>(
+pub fn validate_initial_tx_gas<SPEC: Spec>(
     input: &[u8],
     is_create: bool,
     access_list: &[(Address, Vec<U256>)],

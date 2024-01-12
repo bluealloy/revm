@@ -7,7 +7,6 @@ use crate::{
     Host, Interpreter,
 };
 use alloc::boxed::Box;
-use alloc::sync::Arc;
 use core::fmt;
 
 /// EVM opcode function signature.
@@ -17,17 +16,11 @@ pub type Instruction<H> = fn(&mut Interpreter, &mut H);
 /// 256 EVM opcodes.
 pub type InstructionTable<H> = [Instruction<H>; 256];
 
-/// Arc over plain instruction table
-pub type InstructionTableArc<H> = Arc<InstructionTable<H>>;
-
 /// EVM opcode function signature.
 pub type BoxedInstruction<'a, H> = Box<dyn Fn(&mut Interpreter, &mut H) + 'a>;
 
 /// A table of instructions.
 pub type BoxedInstructionTable<'a, H> = [BoxedInstruction<'a, H>; 256];
-
-/// Arc over instruction table
-pub type BoxedInstructionTableArc<'a, H> = Arc<BoxedInstructionTable<'a, H>>;
 
 /// Instruction set that contains plain instruction table that contains simple `fn` function pointer.
 /// and Boxed `Fn` variant that contains `Box<dyn Fn()>` function pointer that can be used with closured.
@@ -35,18 +28,9 @@ pub type BoxedInstructionTableArc<'a, H> = Arc<BoxedInstructionTable<'a, H>>;
 /// Note that `Plain` variant gives us 10-20% faster Interpreter execution.
 ///
 /// Boxed variant can be used to wrap plain function pointer with closure.
-pub enum InstructionTables<'a, H> {
-    Plain(InstructionTableArc<H>),
-    Boxed(BoxedInstructionTableArc<'a, H>),
-}
-
-impl<'a, H> Clone for InstructionTables<'a, H> {
-    fn clone(&self) -> Self {
-        match self {
-            Self::Plain(table) => Self::Plain(table.clone()),
-            Self::Boxed(table) => Self::Boxed(table.clone()),
-        }
-    }
+pub enum InstructionTables<'a, H: Host> {
+    Plain(InstructionTable<H>),
+    Boxed(BoxedInstructionTable<'a, H>),
 }
 
 macro_rules! opcodes {
@@ -95,7 +79,7 @@ pub fn make_boxed_instruction_table<'a, H, SPEC, FN>(
     outer: FN,
 ) -> BoxedInstructionTable<'a, H>
 where
-    H: Host + 'a,
+    H: Host,
     SPEC: Spec + 'static,
     FN: Fn(Instruction<H>) -> BoxedInstruction<'a, H>,
 {
