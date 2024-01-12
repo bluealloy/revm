@@ -2,7 +2,7 @@ use crate::{
     inspectors::GasInspector,
     interpreter::{opcode, CallInputs, CreateInputs, Interpreter, InterpreterResult},
     primitives::{db::Database, hex, Address, U256},
-    EvmContext, Inspector,
+    EvmContext, GetInspector, Inspector,
 };
 use core::ops::Range;
 use serde_json::json;
@@ -27,6 +27,19 @@ pub struct TracerEip3155 {
 }
 
 impl TracerEip3155 {
+    /// Sets the writer to use for the output.
+    pub fn set_writer(&mut self, writer: Box<dyn Write>) {
+        self.output = writer;
+    }
+}
+
+impl<'a, DB: Database> GetInspector<'a, DB> for TracerEip3155 {
+    fn get_inspector(&mut self) -> &mut dyn Inspector<DB> {
+        self
+    }
+}
+
+impl TracerEip3155 {
     pub fn new(output: Box<dyn Write>, trace_mem: bool, trace_return_data: bool) -> Self {
         Self {
             output,
@@ -44,13 +57,13 @@ impl TracerEip3155 {
 }
 
 impl<DB: Database> Inspector<DB> for TracerEip3155 {
-    fn initialize_interp(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
+    fn initialize_interp(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
         self.gas_inspector.initialize_interp(interp, context);
     }
 
     // get opcode by calling `interp.contract.opcode(interp.program_counter())`.
     // all other information can be obtained from interp.
-    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
+    fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
         self.gas_inspector.step(interp, context);
         self.stack = interp.stack.data().clone();
         self.pc = interp.program_counter();
@@ -59,7 +72,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         self.gas = interp.gas.remaining();
     }
 
-    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
+    fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
         self.gas_inspector.step_end(interp, context);
         if self.skip {
             self.skip = false;
@@ -74,7 +87,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 
     fn call(
         &mut self,
-        _context: &mut EvmContext<'_, DB>,
+        _context: &mut EvmContext<DB>,
         _inputs: &mut CallInputs,
     ) -> Option<(InterpreterResult, Range<usize>)> {
         None
@@ -82,7 +95,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 
     fn call_end(
         &mut self,
-        context: &mut EvmContext<'_, DB>,
+        context: &mut EvmContext<DB>,
         result: InterpreterResult,
     ) -> InterpreterResult {
         let result = self.gas_inspector.call_end(context, result);
@@ -103,7 +116,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 
     fn create(
         &mut self,
-        _context: &mut EvmContext<'_, DB>,
+        _context: &mut EvmContext<DB>,
         _inputs: &mut CreateInputs,
     ) -> Option<(InterpreterResult, Option<Address>)> {
         None
@@ -111,7 +124,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
 
     fn create_end(
         &mut self,
-        context: &mut EvmContext<'_, DB>,
+        context: &mut EvmContext<DB>,
         result: InterpreterResult,
         address: Option<Address>,
     ) -> (InterpreterResult, Option<Address>) {

@@ -28,7 +28,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
     fn initialize_interp(
         &mut self,
         interp: &mut crate::interpreter::Interpreter,
-        _context: &mut EvmContext<'_, DB>,
+        _context: &mut EvmContext<DB>,
     ) {
         self.gas_remaining = interp.gas.limit();
     }
@@ -36,7 +36,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
     fn step_end(
         &mut self,
         interp: &mut crate::interpreter::Interpreter,
-        _context: &mut EvmContext<'_, DB>,
+        _context: &mut EvmContext<DB>,
     ) {
         let last_gas = core::mem::replace(&mut self.gas_remaining, interp.gas.remaining());
         self.last_gas_cost = last_gas.saturating_sub(self.last_gas_cost);
@@ -44,7 +44,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 
     fn call_end(
         &mut self,
-        _context: &mut EvmContext<'_, DB>,
+        _context: &mut EvmContext<DB>,
         mut result: InterpreterResult,
     ) -> InterpreterResult {
         if result.result.is_error() {
@@ -56,7 +56,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 
     fn create_end(
         &mut self,
-        _context: &mut EvmContext<'_, DB>,
+        _context: &mut EvmContext<DB>,
         result: InterpreterResult,
         address: Option<Address>,
     ) -> (InterpreterResult, Option<Address>) {
@@ -66,14 +66,14 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 
 #[cfg(test)]
 mod tests {
-    use core::ops::Range;
-
     use crate::{
+        inspector::GetInspector,
         inspectors::GasInspector,
         interpreter::{CallInputs, CreateInputs, Interpreter, InterpreterResult},
-        primitives::{Address, Bytes, B256},
+        primitives::{Address, Log},
         Database, EvmContext, Inspector,
     };
+    use core::ops::Range;
 
     #[derive(Default, Debug)]
     struct StackInspector {
@@ -82,31 +82,27 @@ mod tests {
         gas_remaining_steps: Vec<(usize, u64)>,
     }
 
+    impl<DB: Database> GetInspector<'_, DB> for StackInspector {
+        fn get_inspector(&mut self) -> &mut dyn Inspector<DB> {
+            self
+        }
+    }
+
     impl<DB: Database> Inspector<DB> for StackInspector {
-        fn initialize_interp(
-            &mut self,
-            interp: &mut Interpreter,
-            context: &mut EvmContext<'_, DB>,
-        ) {
+        fn initialize_interp(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
             self.gas_inspector.initialize_interp(interp, context);
         }
 
-        fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
+        fn step(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
             self.pc = interp.program_counter();
             self.gas_inspector.step(interp, context);
         }
 
-        fn log(
-            &mut self,
-            context: &mut EvmContext<'_, DB>,
-            address: &Address,
-            topics: &[B256],
-            data: &Bytes,
-        ) {
-            self.gas_inspector.log(context, address, topics, data);
+        fn log(&mut self, context: &mut EvmContext<DB>, log: &Log) {
+            self.gas_inspector.log(context, log);
         }
 
-        fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<'_, DB>) {
+        fn step_end(&mut self, interp: &mut Interpreter, context: &mut EvmContext<DB>) {
             self.gas_inspector.step_end(interp, context);
             self.gas_remaining_steps
                 .push((self.pc, self.gas_inspector.gas_remaining()));
@@ -114,7 +110,7 @@ mod tests {
 
         fn call(
             &mut self,
-            context: &mut EvmContext<'_, DB>,
+            context: &mut EvmContext<DB>,
             call: &mut CallInputs,
         ) -> Option<(InterpreterResult, Range<usize>)> {
             self.gas_inspector.call(context, call)
@@ -122,7 +118,7 @@ mod tests {
 
         fn call_end(
             &mut self,
-            context: &mut EvmContext<'_, DB>,
+            context: &mut EvmContext<DB>,
             result: InterpreterResult,
         ) -> InterpreterResult {
             self.gas_inspector.call_end(context, result)
@@ -130,7 +126,7 @@ mod tests {
 
         fn create(
             &mut self,
-            context: &mut EvmContext<'_, DB>,
+            context: &mut EvmContext<DB>,
             call: &mut CreateInputs,
         ) -> Option<(InterpreterResult, Option<Address>)> {
             self.gas_inspector.create(context, call);
@@ -139,7 +135,7 @@ mod tests {
 
         fn create_end(
             &mut self,
-            context: &mut EvmContext<'_, DB>,
+            context: &mut EvmContext<DB>,
             result: InterpreterResult,
             address: Option<Address>,
         ) -> (InterpreterResult, Option<Address>) {
@@ -148,12 +144,13 @@ mod tests {
     }
 
     #[test]
-    #[cfg(not(feature = "optimism"))]
     fn test_gas_inspector() {
         use crate::{
             db::BenchmarkDB,
+            inspector::inspector_handle_register,
             interpreter::opcode,
             primitives::{address, Bytecode, Bytes, TransactTo},
+            Evm,
         };
 
         let contract_data: Bytes = Bytes::from(vec![
@@ -173,15 +170,23 @@ mod tests {
         ]);
         let bytecode = Bytecode::new_raw(contract_data);
 
-        let mut evm = crate::new();
-        evm.database(BenchmarkDB::new_bytecode(bytecode.clone()));
-        evm.env.tx.caller = address!("1000000000000000000000000000000000000000");
-        evm.env.tx.transact_to =
-            TransactTo::Call(address!("0000000000000000000000000000000000000000"));
-        evm.env.tx.gas_limit = 21100;
+        let mut evm: Evm<'_, StackInspector, BenchmarkDB> = Evm::builder()
+            .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
+            .with_external_context(StackInspector::default())
+            .modify_tx_env(|tx| {
+                tx.clear();
+                tx.caller = address!("1000000000000000000000000000000000000000");
+                tx.transact_to =
+                    TransactTo::Call(address!("0000000000000000000000000000000000000000"));
+                tx.gas_limit = 21100;
+            })
+            .append_handler_register(inspector_handle_register)
+            .build();
 
-        let mut inspector = StackInspector::default();
-        evm.inspect(&mut inspector).unwrap();
+        // run evm.
+        evm.transact().unwrap();
+
+        let inspector = evm.into_context().external;
 
         // starting from 100gas
         let steps = vec![

@@ -19,6 +19,12 @@ pub struct Env {
 }
 
 impl Env {
+    /// Resets environment to default values.
+    #[inline]
+    pub fn clear(&mut self) {
+        *self = Self::default();
+    }
+
     /// Calculates the effective gas price of the transaction.
     #[inline]
     pub fn effective_gas_price(&self) -> U256 {
@@ -174,7 +180,7 @@ impl Env {
 
     /// Validate transaction against state.
     #[inline]
-    pub fn validate_tx_against_state(
+    pub fn validate_tx_against_state<SPEC: Spec>(
         &self,
         account: &mut Account,
     ) -> Result<(), InvalidTransaction> {
@@ -211,7 +217,7 @@ impl Env {
             .and_then(|gas_cost| gas_cost.checked_add(self.tx.value))
             .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
 
-        if SpecId::enabled(self.cfg.spec_id, SpecId::CANCUN) {
+        if SPEC::enabled(SpecId::CANCUN) {
             let data_fee = self.calc_data_fee().expect("already checked");
             balance_check = balance_check
                 .checked_add(U256::from(data_fee))
@@ -241,8 +247,9 @@ impl Env {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct CfgEnv {
+    /// Chain ID of the EVM, it will be compared to the transaction's Chain ID.
+    /// Chain ID is introduced EIP-155
     pub chain_id: u64,
-    pub spec_id: SpecId,
     /// KZG Settings for point evaluation precompile. By default, this is loaded from the ethereum mainnet trusted setup.
     #[cfg(feature = "c-kzg")]
     #[cfg_attr(feature = "serde", serde(skip))]
@@ -375,7 +382,6 @@ impl Default for CfgEnv {
     fn default() -> Self {
         Self {
             chain_id: 1,
-            spec_id: SpecId::LATEST,
             perf_analyse_created_bytecodes: AnalysisKind::default(),
             limit_contract_code_size: None,
             #[cfg(feature = "c-kzg")]
@@ -470,6 +476,12 @@ impl BlockEnv {
             .as_ref()
             .map(|a| a.excess_blob_gas)
     }
+
+    /// Clears environment and resets fields to default values.
+    #[inline]
+    pub fn clear(&mut self) {
+        *self = Self::default();
+    }
 }
 
 impl Default for BlockEnv {
@@ -554,6 +566,12 @@ impl TxEnv {
     #[inline]
     pub fn get_total_blob_gas(&self) -> u64 {
         GAS_PER_BLOB * self.blob_hashes.len() as u64
+    }
+
+    /// Clears environment and resets fields to default values.
+    #[inline]
+    pub fn clear(&mut self) {
+        *self = Self::default();
     }
 }
 
@@ -740,13 +758,15 @@ mod tests {
     #[test]
     fn test_validate_tx_against_state_deposit_tx() {
         // Set the optimism flag and source hash.
+
+        use crate::LatestSpec;
         let mut env = Env::default();
         env.cfg.optimism = true;
         env.tx.optimism.source_hash = Some(B256::ZERO);
 
         // Nonce and balance checks should be skipped for deposit transactions.
         assert!(env
-            .validate_tx_against_state(&mut Account::default())
+            .validate_tx_against_state::<LatestSpec>(&mut Account::default())
             .is_ok());
     }
 

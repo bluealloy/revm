@@ -333,7 +333,7 @@ pub fn memory_gas(a: usize) -> u64 {
 
 /// Initial gas that is deducted for transaction to be included.
 /// Initial gas contains initial stipend gas, gas for access list and input data.
-pub fn initial_tx_gas<SPEC: Spec>(
+pub fn validate_initial_tx_gas<SPEC: Spec>(
     input: &[u8],
     is_create: bool,
     access_list: &[(Address, Vec<U256>)],

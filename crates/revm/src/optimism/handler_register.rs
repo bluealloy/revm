@@ -1,16 +1,32 @@
 //! Handler related to Optimism chain
 
-use super::mainnet;
 use crate::{
+    handler::{
+        mainnet::{self, deduct_caller_inner},
+        register::EvmHandler,
+    },
     interpreter::{return_ok, return_revert, Gas, InstructionResult},
     optimism,
     primitives::{
-        db::Database, Account, EVMError, Env, ExecutionResult, HaltReason, HashMap,
-        InvalidTransaction, Output, ResultAndState, Spec, SpecId::REGOLITH, U256,
+        db::Database, spec_to_generic, Account, EVMError, Env, ExecutionResult, HaltReason,
+        HashMap, InvalidTransaction, Output, ResultAndState, Spec, SpecId, SpecId::REGOLITH, U256,
     },
-    EvmContext,
+    Context,
 };
+use alloc::sync::Arc;
 use core::ops::Mul;
+
+pub fn optimism_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, EXT, DB>) {
+    spec_to_generic!(handler.spec_id, {
+        // Refund is calculated differently then mainnet.
+        handler.execution_loop.first_frame_return = Arc::new(handle_call_return::<SPEC>);
+        // we reimburse caller the same was as in mainnet.
+        handler.post_execution.reward_beneficiary = Arc::new(reward_beneficiary::<SPEC, EXT, DB>);
+        // In case of halt of deposit transaction return Error.
+        handler.post_execution.output = Arc::new(output::<SPEC, EXT, DB>);
+        handler.post_execution.end = Arc::new(end::<SPEC, EXT, DB>);
+    });
+}
 
 /// Handle output of the transaction
 #[inline]
@@ -73,53 +89,97 @@ pub fn handle_call_return<SPEC: Spec>(
         }
         _ => {}
     }
+    // Prior to Regolith, deposit transactions did not receive gas refunds.
+    if !is_deposit && SPEC::enabled(REGOLITH) {
+        gas.set_final_refund::<SPEC>()
+    }
+
     gas
 }
 
+/// Deduct max balance from caller
 #[inline]
-pub fn calculate_gas_refund<SPEC: Spec>(env: &Env, gas: &Gas) -> u64 {
-    let is_deposit = env.cfg.optimism && env.tx.optimism.source_hash.is_some();
+pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<EXT, DB>,
+) -> Result<(), EVMError<DB::Error>> {
+    // load caller's account.
+    let (caller_account, _) = context
+        .evm
+        .journaled_state
+        .load_account(context.evm.env.tx.caller, &mut context.evm.db)
+        .map_err(EVMError::Database)?;
 
-    // Prior to Regolith, deposit transactions did not receive gas refunds.
-    let is_gas_refund_disabled = env.cfg.optimism && is_deposit && !SPEC::enabled(REGOLITH);
-    if is_gas_refund_disabled {
-        0
-    } else {
-        mainnet::calculate_gas_refund::<SPEC>(env, gas)
+    // If the transaction is a deposit with a `mint` value, add the mint value
+    // in wei to the caller's balance. This should be persisted to the database
+    // prior to the rest of execution.
+    if let Some(mint) = context.evm.env.tx.optimism.mint {
+        caller_account.info.balance += U256::from(mint);
     }
+
+    // We deduct caller max balance after minting and before deducing the
+    // l1 cost, max values is already checked in pre_validate but l1 cost wasn't.
+    deduct_caller_inner::<SPEC>(caller_account, &context.evm.env);
+
+    // If the transaction is not a deposit transaction, subtract the L1 data fee from the
+    // caller's balance directly after minting the requested amount of ETH.
+    if context.evm.env.tx.optimism.source_hash.is_none() {
+        // get envelope
+        let Some(enveloped_tx) = context.evm.env.tx.optimism.enveloped_tx.clone() else {
+            panic!("[OPTIMISM] Failed to load enveloped transaction.");
+        };
+
+        let tx_l1_cost = context
+            .evm
+            .l1_block_info
+            .as_ref()
+            .expect("L1BlockInfo should be loaded")
+            .calculate_tx_l1_cost(&enveloped_tx, SPEC::SPEC_ID);
+        if tx_l1_cost.gt(&caller_account.info.balance) {
+            return Err(EVMError::Transaction(
+                InvalidTransaction::LackOfFundForMaxFee {
+                    fee: tx_l1_cost.into(),
+                    balance: caller_account.info.balance.into(),
+                },
+            ));
+        }
+        caller_account.info.balance = caller_account.info.balance.saturating_sub(tx_l1_cost);
+    }
+    Ok(())
 }
 
 /// Reward beneficiary with gas fee.
 #[inline]
-pub fn reward_beneficiary<SPEC: Spec, DB: Database>(
-    context: &mut EvmContext<'_, DB>,
+pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<EXT, DB>,
     gas: &Gas,
 ) -> Result<(), EVMError<DB::Error>> {
-    let is_deposit = context.env.cfg.optimism && context.env.tx.optimism.source_hash.is_some();
-    let disable_coinbase_tip = context.env.cfg.optimism && is_deposit;
+    let is_deposit =
+        context.evm.env.cfg.optimism && context.evm.env.tx.optimism.source_hash.is_some();
+    let disable_coinbase_tip = context.evm.env.cfg.optimism && is_deposit;
 
     // transfer fee to coinbase/beneficiary.
     if !disable_coinbase_tip {
-        mainnet::reward_beneficiary::<SPEC, DB>(context, gas)?;
+        mainnet::reward_beneficiary::<SPEC, EXT, DB>(context, gas)?;
     }
 
-    if context.env.cfg.optimism && !is_deposit {
+    if context.evm.env.cfg.optimism && !is_deposit {
         // If the transaction is not a deposit transaction, fees are paid out
         // to both the Base Fee Vault as well as the L1 Fee Vault.
-        let Some(l1_block_info) = context.l1_block_info.clone() else {
+        let Some(l1_block_info) = context.evm.l1_block_info.clone() else {
             panic!("[OPTIMISM] Failed to load L1 block information.");
         };
 
-        let Some(enveloped_tx) = &context.env.tx.optimism.enveloped_tx else {
+        let Some(enveloped_tx) = &context.evm.env.tx.optimism.enveloped_tx else {
             panic!("[OPTIMISM] Failed to load enveloped transaction.");
         };
 
-        let l1_cost = l1_block_info.calculate_tx_l1_cost::<SPEC>(enveloped_tx);
+        let l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, SPEC::SPEC_ID);
 
         // Send the L1 cost of the transaction to the L1 Fee Vault.
         let Ok((l1_fee_vault_account, _)) = context
+            .evm
             .journaled_state
-            .load_account(optimism::L1_FEE_RECIPIENT, context.db)
+            .load_account(optimism::L1_FEE_RECIPIENT, &mut context.evm.db)
         else {
             panic!("[OPTIMISM] Failed to load L1 Fee Vault account");
         };
@@ -128,13 +188,15 @@ pub fn reward_beneficiary<SPEC: Spec, DB: Database>(
 
         // Send the base fee of the transaction to the Base Fee Vault.
         let Ok((base_fee_vault_account, _)) = context
+            .evm
             .journaled_state
-            .load_account(optimism::BASE_FEE_RECIPIENT, context.db)
+            .load_account(optimism::BASE_FEE_RECIPIENT, &mut context.evm.db)
         else {
             panic!("[OPTIMISM] Failed to load Base Fee Vault account");
         };
         base_fee_vault_account.mark_touch();
         base_fee_vault_account.info.balance += context
+            .evm
             .env
             .block
             .basefee
@@ -145,20 +207,20 @@ pub fn reward_beneficiary<SPEC: Spec, DB: Database>(
 
 /// Main return handle, returns the output of the transaction.
 #[inline]
-pub fn main_return<SPEC: Spec, DB: Database>(
-    context: &mut EvmContext<'_, DB>,
+pub fn output<SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<EXT, DB>,
     call_result: InstructionResult,
     output: Output,
     gas: &Gas,
 ) -> Result<ResultAndState, EVMError<DB::Error>> {
-    let result = mainnet::main_return::<DB>(context, call_result, output, gas)?;
+    let result = mainnet::output::<EXT, DB>(context, call_result, output, gas)?;
 
     if result.result.is_halt() {
-        // Post-regolith, if the transaction is a deposit transaction and it haults,
+        // Post-regolith, if the transaction is a deposit transaction and it halts,
         // we bubble up to the global return handler. The mint value will be persisted
         // and the caller nonce will be incremented there.
-        let is_deposit = context.env.tx.optimism.source_hash.is_some();
-        let optimism_regolith = context.env.cfg.optimism && SPEC::enabled(REGOLITH);
+        let is_deposit = context.evm.env.tx.optimism.source_hash.is_some();
+        let optimism_regolith = context.evm.env.cfg.optimism && SPEC::enabled(REGOLITH);
         if is_deposit && optimism_regolith {
             return Err(EVMError::Transaction(
                 InvalidTransaction::HaltedDepositPostRegolith,
@@ -170,14 +232,14 @@ pub fn main_return<SPEC: Spec, DB: Database>(
 /// Optimism end handle changes output if the transaction is a deposit transaction.
 /// Deposit transaction can't be reverted and is always successful.
 #[inline]
-pub fn end_handle<SPEC: Spec, DB: Database>(
-    context: &mut EvmContext<'_, DB>,
+pub fn end<SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<EXT, DB>,
     evm_output: Result<ResultAndState, EVMError<DB::Error>>,
 ) -> Result<ResultAndState, EVMError<DB::Error>> {
     evm_output.or_else(|err| {
         if matches!(err, EVMError::Transaction(_))
-            && context.env().cfg.optimism
-            && context.env().tx.optimism.source_hash.is_some()
+            && context.evm.env().cfg.optimism
+            && context.evm.env().tx.optimism.source_hash.is_some()
         {
             // If the transaction is a deposit transaction and it failed
             // for any reason, the caller nonce must be bumped, and the
@@ -185,13 +247,14 @@ pub fn end_handle<SPEC: Spec, DB: Database>(
             // also returned as a special Halt variant so that consumers can more
             // easily distinguish between a failed deposit and a failed
             // normal transaction.
-            let caller = context.env().tx.caller;
+            let caller = context.evm.env().tx.caller;
 
             // Increment sender nonce and account balance for the mint amount. Deposits
             // always persist the mint amount, even if the transaction fails.
             let account = {
                 let mut acc = Account::from(
                     context
+                        .evm
                         .db
                         .basic(caller)
                         .unwrap_or_default()
@@ -201,7 +264,7 @@ pub fn end_handle<SPEC: Spec, DB: Database>(
                 acc.info.balance = acc
                     .info
                     .balance
-                    .saturating_add(U256::from(context.env().tx.optimism.mint.unwrap_or(0)));
+                    .saturating_add(U256::from(context.evm.env().tx.optimism.mint.unwrap_or(0)));
                 acc.mark_touch();
                 acc
             };
@@ -212,13 +275,14 @@ pub fn end_handle<SPEC: Spec, DB: Database>(
             // of the transaction for non system transactions and 0 for system
             // transactions.
             let is_system_tx = context
+                .evm
                 .env()
                 .tx
                 .optimism
                 .is_system_transaction
                 .unwrap_or(false);
             let gas_used = if SPEC::enabled(REGOLITH) || !is_system_tx {
-                context.env().tx.gas_limit
+                context.evm.env().tx.gas_limit
             } else {
                 0
             };
@@ -238,9 +302,12 @@ pub fn end_handle<SPEC: Spec, DB: Database>(
 
 #[cfg(test)]
 mod tests {
-    use crate::primitives::{BedrockSpec, RegolithSpec, B256};
-
     use super::*;
+    use crate::{
+        db::InMemoryDB,
+        primitives::{bytes, state::AccountInfo, Address, BedrockSpec, Env, RegolithSpec, B256},
+        L1BlockInfo,
+    };
 
     #[test]
     fn test_revert_gas() {
@@ -314,5 +381,135 @@ mod tests {
         assert_eq!(gas.remaining(), 0);
         assert_eq!(gas.spend(), 100);
         assert_eq!(gas.refunded(), 0);
+    }
+
+    #[test]
+    fn test_commit_mint_value() {
+        let caller = Address::ZERO;
+        let mut db = InMemoryDB::default();
+        db.insert_account_info(
+            caller,
+            AccountInfo {
+                balance: U256::from(1000),
+                ..Default::default()
+            },
+        );
+        let mut context: Context<(), InMemoryDB> = Context::new_with_db(db);
+        context.evm.l1_block_info = Some(L1BlockInfo {
+            l1_base_fee: U256::from(1_000),
+            l1_fee_overhead: U256::from(1_000),
+            l1_fee_scalar: U256::from(1_000),
+        });
+        // Enveloped needs to be some but it will deduce zero fee.
+        context.evm.env.tx.optimism.enveloped_tx = Some(bytes!(""));
+        // added mint value is 10.
+        context.evm.env.tx.optimism.mint = Some(10);
+
+        deduct_caller::<RegolithSpec, (), _>(&mut context).unwrap();
+
+        // Check the account balance is updated.
+        let (account, _) = context
+            .evm
+            .journaled_state
+            .load_account(caller, &mut context.evm.db)
+            .unwrap();
+        assert_eq!(account.info.balance, U256::from(1010));
+    }
+
+    #[test]
+    fn test_remove_l1_cost_non_deposit() {
+        let caller = Address::ZERO;
+        let mut db = InMemoryDB::default();
+        db.insert_account_info(
+            caller,
+            AccountInfo {
+                balance: U256::from(1000),
+                ..Default::default()
+            },
+        );
+        let mut context: Context<(), InMemoryDB> = Context::new_with_db(db);
+        context.evm.l1_block_info = Some(L1BlockInfo {
+            l1_base_fee: U256::from(1_000),
+            l1_fee_overhead: U256::from(1_000),
+            l1_fee_scalar: U256::from(1_000),
+        });
+        // l1block cost is 1048 fee.
+        context.evm.env.tx.optimism.enveloped_tx = Some(bytes!("FACADE"));
+        // added mint value is 10.
+        context.evm.env.tx.optimism.mint = Some(10);
+        // Putting source_hash to some makes it a deposit transaction.
+        // so enveloped_tx gas cost is ignored.
+        context.evm.env.tx.optimism.source_hash = Some(B256::ZERO);
+
+        deduct_caller::<RegolithSpec, (), _>(&mut context).unwrap();
+
+        // Check the account balance is updated.
+        let (account, _) = context
+            .evm
+            .journaled_state
+            .load_account(caller, &mut context.evm.db)
+            .unwrap();
+        assert_eq!(account.info.balance, U256::from(1010));
+    }
+
+    #[test]
+    fn test_remove_l1_cost() {
+        let caller = Address::ZERO;
+        let mut db = InMemoryDB::default();
+        db.insert_account_info(
+            caller,
+            AccountInfo {
+                balance: U256::from(1049),
+                ..Default::default()
+            },
+        );
+        let mut context: Context<(), InMemoryDB> = Context::new_with_db(db);
+        context.evm.l1_block_info = Some(L1BlockInfo {
+            l1_base_fee: U256::from(1_000),
+            l1_fee_overhead: U256::from(1_000),
+            l1_fee_scalar: U256::from(1_000),
+        });
+        // l1block cost is 1048 fee.
+        context.evm.env.tx.optimism.enveloped_tx = Some(bytes!("FACADE"));
+        deduct_caller::<RegolithSpec, (), _>(&mut context).unwrap();
+
+        // Check the account balance is updated.
+        let (account, _) = context
+            .evm
+            .journaled_state
+            .load_account(caller, &mut context.evm.db)
+            .unwrap();
+        assert_eq!(account.info.balance, U256::from(1));
+    }
+
+    #[test]
+    fn test_remove_l1_cost_lack_of_funds() {
+        let caller = Address::ZERO;
+        let mut db = InMemoryDB::default();
+        db.insert_account_info(
+            caller,
+            AccountInfo {
+                balance: U256::from(48),
+                ..Default::default()
+            },
+        );
+        let mut context: Context<(), InMemoryDB> = Context::new_with_db(db);
+        context.evm.l1_block_info = Some(L1BlockInfo {
+            l1_base_fee: U256::from(1_000),
+            l1_fee_overhead: U256::from(1_000),
+            l1_fee_scalar: U256::from(1_000),
+        });
+        // l1block cost is 1048 fee.
+        context.evm.env.tx.optimism.enveloped_tx = Some(bytes!("FACADE"));
+
+        assert_eq!(
+            deduct_caller::<RegolithSpec, (), _>(&mut context),
+            Err(EVMError::Transaction(
+                InvalidTransaction::LackOfFundForMaxFee {
+                    fee: Box::new(U256::from(1048)),
+                    balance: Box::new(U256::from(48)),
+                },
+            ))
+        );
     }
 }

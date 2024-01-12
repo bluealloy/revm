@@ -1,17 +1,36 @@
-# EVM Module Documentation
+# EVM
 
-This document provides the documentation for the `EVM` module.
+`Evm` is the primary structure that implements the Ethereum Virtual Machine (EVM), a stack-based virtual machine that executes Ethereum smart contracts.
 
-## The `EVM`
+## What is inside
 
-The primary struct in this module is `EVM`. The EVM struct is generic over a type DB. This means that when you use the EVM struct, you can specify the type that DB should represent. It adds flexibility to the struct, allowing it to store different types of databases or data structures in the db field depending on the use case. The `EVM` struct enables `transact` to update the state directly to the database. Additionally, it allows the user to set all environment parameters.
+It is consisting of two main parts the `Context` and the `Handler`. `Context` represent the state that is needed for execution and `Handler` contains list of functions that act as a logic.
 
-The parameters that can be set are divided between `Config`, `Block`, and `Transaction` (tx). For transacting on the EVM, you can call `transact_commit` that will automatically apply changes to the database.
+`Context` is additionally split between `EvmContext` and `External` context. `EvmContext` is internal and contains `Database`, `Environment`, `JournaledState` and `Precompiles`. And `External` context is fully generic without any trait restrains and its purpose is to allow custom handlers to save state in runtime or allows hooks to be added (For example external contexts can be a Inspector), more on its usage can be seen in [`EvmBuilder`](./builder.md).
 
-## Database Abstractions
+`Evm` implements the [`Host`](./../interpreter/host.md) trait, which defines an interface for the interaction of the EVM Interpreter with its environment (or "host"), encompassing essential operations such as account and storage access, creating logs, and invoking sub calls and selfdestruct.
 
-You can implement the traits Database, DatabaseRef or Database + DatabaseCommit depending on the desired handling of the struct.
+Data structures of block and transaction can be found inside `Environment`. And more information on journaled state can be found in [`JournaledState`](../revm/journaled_state.md) documentation.
 
-- `Database`: Has mutable `self` in its functions. It's useful if you want to modify your cache or update some statistics on `get` calls. This trait enables `preverify_transaction`, `transact_preverified`, `transact` and `inspect` functions.
-- `DatabaseRef`: Takes a reference on the object, this is useful if you only have a reference on the state and don't want to update anything on it. It enables `previerify_transaction`, `transact_preverified_ref`, `transact_ref` and `inspect_ref` functions.
-- `Database + DatabaseCommit`: Allows directly committing changes of a transaction. It enables `transact_commit` and `inspect_commit` functions.
+## Runtime
+
+Runtime consist of list of functions from `Handler` that are called in predefined order. They are grouped by functionality on `Verification`, `PreExecution`, `ExecutionLoop`, `PostExecution` and `Instruction` functions. Verification function are related to the preverification of set `Environment` data. Pre/Post execution function are function that deduct and reward caller beneficiary. And `ExecutionLoop` functions handles initial call and creates and sub calls. `Instruction` functions are instruction table that is used inside Interpreter to execute opcodes.
+
+`Evm` execution runs **two** loops. First loop is call loop that everything starts with, it creates call frames, handles subcalls and its return outputs and call Interpreter loop to execute bytecode instructions it is handled by `ExecutionLoopHandler`. Second loop is `Interpreter` loop that loops over bytecode opcodes and executes instruction from `InstructionTable`.
+
+First loop, the call loop, implements stack of `Frames` and it is responsible for handling sub calls and its return outputs. At the start Evm creates first `Frame` that contains `Interpreter` and starts the loop. `Interpreter` returns the `InterpreterAction` and action can be a `Return` of a call this means this interpreter finished its run or `SubCall`/`SubCreate` that means that new `Frame` needs to be created and pushed to the stack. When `Interpreter` returns `Return` action `Frame` is popped from the stack and its return value is pushed to the parent `Frame` stack. When `Interpreter` returns `SubCall`/`SubCreate` action new `Frame` is created and pushed to the stack and the loop continues. When the stack is empty the loop finishes.
+
+Second loop is `Interpreter` loop that loops over bytecode opcodes and executes instruction. It is called from the call loop and it is responsible for executing bytecode instructions. It is implemented in [`Interpreter`](../interpreter.md) crate.
+
+To dive deeper into the `Evm` logic  check [`Handler`](./handler.md) documentation.
+
+# Functionalities
+
+Function of Evm is to start execution but setting up what Evm is going to execute is done by `EvmBuilder`.
+
+Main function inside evm are:
+* `preverify` - that only preverifies transaction information.
+* `transact preverified` - is next step after preverification that executes transaction.
+* `transact` - it calls both preverifies and it executes transaction.
+* `builder` and `modify` function - allows building or modifying the Evm, more on this can be found in [`EvmBuilder`](./builder.md) documentation. `builder` is main way of creating Evm and `modify` allows you to modify parts of it without dissolving `Evm`.
+* `into_context` - is used we want to get the `Context` from the Evm.

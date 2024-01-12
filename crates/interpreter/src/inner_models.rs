@@ -1,3 +1,5 @@
+use revm_primitives::{TransactTo, TxEnv};
+
 pub use crate::primitives::CreateScheme;
 use crate::primitives::{Address, Bytes, U256};
 
@@ -35,7 +37,47 @@ pub struct CreateInputs {
     pub gas_limit: u64,
 }
 
+impl CallInputs {
+    pub fn new(tx_env: &TxEnv, gas_limit: u64) -> Option<Self> {
+        let TransactTo::Call(address) = tx_env.transact_to else {
+            return None;
+        };
+
+        Some(CallInputs {
+            contract: address,
+            transfer: Transfer {
+                source: tx_env.caller,
+                target: address,
+                value: tx_env.value,
+            },
+            input: tx_env.data.clone(),
+            gas_limit,
+            context: CallContext {
+                caller: tx_env.caller,
+                address,
+                code_address: address,
+                apparent_value: tx_env.value,
+                scheme: CallScheme::Call,
+            },
+            is_static: false,
+        })
+    }
+}
+
 impl CreateInputs {
+    pub fn new(tx_env: &TxEnv, gas_limit: u64) -> Option<Self> {
+        let TransactTo::Create(scheme) = tx_env.transact_to else {
+            return None;
+        };
+
+        Some(CreateInputs {
+            caller: tx_env.caller,
+            scheme,
+            value: tx_env.value,
+            init_code: tx_env.data.clone(),
+            gas_limit,
+        })
+    }
     /// Returns the address that this create call will create.
     pub fn created_address(&self, nonce: u64) -> Address {
         match self.scheme {

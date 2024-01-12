@@ -95,8 +95,7 @@ impl Interpreter {
 
     /// When sub create call returns we can insert output of that call into this interpreter.
     pub fn insert_create_output(&mut self, result: InterpreterResult, address: Option<Address>) {
-        let interpreter = self;
-        interpreter.return_data_buffer = match result.result {
+        self.return_data_buffer = match result.result {
             // Save data to return data buffer if the create reverted
             return_revert!() => result.output,
             // Otherwise clear it
@@ -105,19 +104,19 @@ impl Interpreter {
 
         match result.result {
             return_ok!() => {
-                push_b256!(interpreter, address.unwrap_or_default().into_word());
-                interpreter.gas.erase_cost(result.gas.remaining());
-                interpreter.gas.record_refund(result.gas.refunded());
+                push_b256!(self, address.unwrap_or_default().into_word());
+                self.gas.erase_cost(result.gas.remaining());
+                self.gas.record_refund(result.gas.refunded());
             }
             return_revert!() => {
-                push!(interpreter, U256::ZERO);
-                interpreter.gas.erase_cost(result.gas.remaining());
+                push!(self, U256::ZERO);
+                self.gas.erase_cost(result.gas.remaining());
             }
             InstructionResult::FatalExternalError => {
-                interpreter.instruction_result = InstructionResult::FatalExternalError;
+                self.instruction_result = InstructionResult::FatalExternalError;
             }
             _ => {
-                push!(interpreter, U256::ZERO);
+                push!(self, U256::ZERO);
             }
         }
     }
@@ -135,28 +134,27 @@ impl Interpreter {
         let out_offset = memory_return_offset.start;
         let out_len = memory_return_offset.len();
 
-        let interpreter = self;
-        interpreter.return_data_buffer = result.output;
-        let target_len = min(out_len, interpreter.return_data_buffer.len());
+        self.return_data_buffer = result.output;
+        let target_len = min(out_len, self.return_data_buffer.len());
 
         match result.result {
             return_ok!() => {
                 // return unspend gas.
-                interpreter.gas.erase_cost(result.gas.remaining());
-                interpreter.gas.record_refund(result.gas.refunded());
-                shared_memory.set(out_offset, &interpreter.return_data_buffer[..target_len]);
-                push!(interpreter, U256::from(1));
+                self.gas.erase_cost(result.gas.remaining());
+                self.gas.record_refund(result.gas.refunded());
+                shared_memory.set(out_offset, &self.return_data_buffer[..target_len]);
+                push!(self, U256::from(1));
             }
             return_revert!() => {
-                interpreter.gas.erase_cost(result.gas.remaining());
-                shared_memory.set(out_offset, &interpreter.return_data_buffer[..target_len]);
-                push!(interpreter, U256::ZERO);
+                self.gas.erase_cost(result.gas.remaining());
+                shared_memory.set(out_offset, &self.return_data_buffer[..target_len]);
+                push!(self, U256::ZERO);
             }
             InstructionResult::FatalExternalError => {
-                interpreter.instruction_result = InstructionResult::FatalExternalError;
+                self.instruction_result = InstructionResult::FatalExternalError;
             }
             _ => {
-                push!(interpreter, U256::ZERO);
+                push!(self, U256::ZERO);
             }
         }
     }
