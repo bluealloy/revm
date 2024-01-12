@@ -176,7 +176,7 @@ pub fn sload_cost<SPEC: Spec>(is_cold: bool) -> u64 {
         }
     } else if SPEC::enabled(ISTANBUL) {
         // EIP-1884: Repricing for trie-size-dependent opcodes
-        800
+        INSTANBUL_SLOAD_GAS
     } else if SPEC::enabled(TANGERINE) {
         // EIP-150: Gas cost changes for IO-heavy operations
         200
@@ -193,57 +193,56 @@ pub fn sstore_cost<SPEC: Spec>(
     gas: u64,
     is_cold: bool,
 ) -> Option<u64> {
-    // EIP-1706 check specific to Istanbul
+    // EIP-1706 Disable SSTORE with gasleft lower than call stipend
     if SPEC::enabled(ISTANBUL) && gas <= CALL_STIPEND {
         return None;
     }
 
     if SPEC::enabled(BERLIN) {
         // Berlin specification logic
-        let (gas_sload, gas_sstore_reset) = (WARM_STORAGE_READ_COST, SSTORE_RESET - COLD_SLOAD_COST);
-        
-        let gas_cost = istanbul_sstore_cost(original, current, new, gas_sload, gas_sstore_reset);
-        
+        let mut gas_cost = istanbul_sstore_cost::<WARM_STORAGE_READ_COST, WARM_SSTORE_RESET>(
+            original, current, new,
+        );
+
         if is_cold {
-            Some(gas_cost + COLD_SLOAD_COST)
-        } else {
-            Some(gas_cost)
+            gas_cost += COLD_SLOAD_COST;
         }
+        Some(gas_cost)
     } else if SPEC::enabled(ISTANBUL) {
         // Istanbul logic
-        let (gas_sload, gas_sstore_reset) = (sload_cost::<SPEC>(is_cold), SSTORE_RESET);
-        Some(istanbul_sstore_cost(original, current, new, gas_sload, gas_sstore_reset))
+        Some(istanbul_sstore_cost::<INSTANBUL_SLOAD_GAS, SSTORE_RESET>(
+            original, current, new,
+        ))
     } else {
-        // Non-Berlin and non-Istanbul logic
-        let gas_sstore_reset = SSTORE_RESET;
-        Some(non_istanbul_sstore_cost(current, new, gas_sstore_reset))
+        // Frontier logic
+        Some(frontier_sstore_cost(current, new))
     }
 }
 
+/// EIP-2200: Structured Definitions for Net Gas Metering
 #[inline(always)]
-fn istanbul_sstore_cost(
+fn istanbul_sstore_cost<const SLOAD_GAS: u64, const SSTORE_RESET_GAS: u64>(
     original: U256,
     current: U256,
     new: U256,
-    gas_sload: u64,
-    gas_sstore_reset: u64,
 ) -> u64 {
     if new == current {
-        gas_sload
+        SLOAD_GAS
     } else if original == current && original == U256::ZERO {
         SSTORE_SET
     } else if original == current {
-        gas_sstore_reset
+        SSTORE_RESET_GAS
     } else {
-        gas_sload
+        SLOAD_GAS
     }
 }
 
-fn non_istanbul_sstore_cost(current: U256, new: U256, gas_sstore_reset: u64) -> u64 {
+/// Frontier sstore cost just had two cases set and reset values
+fn frontier_sstore_cost(current: U256, new: U256) -> u64 {
     if current == U256::ZERO && new != U256::ZERO {
         SSTORE_SET
     } else {
-        gas_sstore_reset
+        SSTORE_RESET
     }
 }
 
