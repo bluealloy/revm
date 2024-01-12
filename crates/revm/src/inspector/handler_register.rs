@@ -328,7 +328,7 @@ mod tests {
     impl<DB: Database> Inspector<DB> for StackInspector {
         fn initialize_interp(&mut self, _interp: &mut Interpreter, _context: &mut EvmContext<DB>) {
             if self.initialize_interp_called {
-                assert!(false, "initialize_interp should not be called twice")
+                unreachable!("initialize_interp should not be called twice")
             }
             self.initialize_interp_called = true;
         }
@@ -347,7 +347,7 @@ mod tests {
             _call: &mut CallInputs,
         ) -> Option<(InterpreterResult, Range<usize>)> {
             if self.call {
-                assert!(false, "call should not be called twice")
+                unreachable!("call should not be called twice")
             }
             self.call = true;
             None
@@ -359,7 +359,7 @@ mod tests {
             result: InterpreterResult,
         ) -> InterpreterResult {
             if self.call_end {
-                assert!(false, "call_end should not be called twice")
+                unreachable!("call_end should not be called twice")
             }
             self.call_end = true;
             result
