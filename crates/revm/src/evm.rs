@@ -346,7 +346,8 @@ impl<EXT, DB: Database> Host for Evm<'_, EXT, DB> {
     fn log(&mut self, address: Address, topics: Vec<B256>, data: Bytes) {
         self.context.evm.journaled_state.log(Log {
             address,
-            data: LogData::new(topics, data).expect("Invalid LogData: Number of topics should be <= 4")
+            data: LogData::new(topics, data)
+                .expect("Invalid LogData: Number of topics should be <= 4"),
         });
     }
 

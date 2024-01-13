@@ -20,7 +20,6 @@ rustdoc-args = ["--cfg", "docsrs"]
 alloy-primitives = { version = "0.6", default-features = false, features = [
     "rlp",
 ] }
-alloy-rlp = { version = "0.3", default-features = false, features = ["derive"] }
 hashbrown = "0.14"
 auto_impl = "1.1"
 bitvec = { version = "1", default-features = false, features = ["alloc"] }
@@ -44,7 +43,6 @@ hex = "0.4"
 default = ["std", "c-kzg"]
 std = [
     "alloy-primitives/std",
-    "alloy-rlp/std",
     "hex/std",
     "bitvec/std",
     "bitflags/std",

@@ -109,7 +109,8 @@ impl Host for DummyHost {
     fn log(&mut self, address: Address, topics: Vec<B256>, data: Bytes) {
         self.log.push(Log {
             address,
-            data: LogData::new(topics, data).expect("Invalid LogData: Number of topics should be <= 4")
+            data: LogData::new(topics, data)
+                .expect("Invalid LogData: Number of topics should be <= 4"),
         })
     }
 
