@@ -7,8 +7,8 @@ use crate::{
         SelfDestructResult, SharedMemory,
     },
     primitives::{
-        specification::SpecId, Address, Bytecode, Bytes, EVMError, EVMResult, Env, ExecutionResult,
-        Log, LogData, Output, ResultAndState, TransactTo, B256, U256,
+        specification::SpecId, Address, Bytecode, EVMError, EVMResult, Env, ExecutionResult, Log,
+        LogData, Output, ResultAndState, TransactTo, B256, U256,
     },
     CallStackFrame, Context, FrameOrResult,
 };
@@ -343,11 +343,10 @@ impl<EXT, DB: Database> Host for Evm<'_, EXT, DB> {
         self.context.evm.tstore(address, index, value)
     }
 
-    fn log(&mut self, address: Address, topics: Vec<B256>, data: Bytes) {
+    fn log(&mut self, address: Address, log_data: LogData) {
         self.context.evm.journaled_state.log(Log {
             address,
-            data: LogData::new(topics, data)
-                .expect("Invalid LogData: Number of topics should be <= 4"),
+            data: log_data,
         });
     }
 
