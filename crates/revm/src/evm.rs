@@ -8,7 +8,7 @@ use crate::{
     },
     primitives::{
         specification::SpecId, Address, Bytecode, Bytes, EVMError, EVMResult, Env, ExecutionResult,
-        Log, Output, ResultAndState, TransactTo, B256, U256,
+        Log, LogData, Output, ResultAndState, TransactTo, B256, U256,
     },
     CallStackFrame, Context, FrameOrResult,
 };
@@ -346,8 +346,7 @@ impl<EXT, DB: Database> Host for Evm<'_, EXT, DB> {
     fn log(&mut self, address: Address, topics: Vec<B256>, data: Bytes) {
         self.context.evm.journaled_state.log(Log {
             address,
-            topics,
-            data,
+            data: LogData::new(topics, data).expect("Invalid LogData: Number of topics should be <= 4")
         });
     }
 
