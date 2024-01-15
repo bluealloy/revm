@@ -42,7 +42,7 @@ pub fn codecopy<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
         return;
     }
     let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
-    let code_offset = as_usize_saturated!(code_offset);
+    let code_offset = as_usize_saturated!(interpreter, code_offset);
     shared_memory_resize!(interpreter, memory_offset, len);
 
     // Note: this can't panic because we resized memory to fit.
@@ -57,7 +57,7 @@ pub fn codecopy<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
 pub fn calldataload<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::VERYLOW);
     pop!(interpreter, index);
-    let index = as_usize_saturated!(index);
+    let index = as_usize_saturated!(interpreter, index);
     let load = if index < interpreter.contract.input.len() {
         let have_bytes = 32.min(interpreter.contract.input.len() - index);
         let mut bytes = [0u8; 32];
@@ -88,7 +88,7 @@ pub fn calldatacopy<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
         return;
     }
     let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
-    let data_offset = as_usize_saturated!(data_offset);
+    let data_offset = as_usize_saturated!(interpreter, data_offset);
     shared_memory_resize!(interpreter, memory_offset, len);
 
     // Note: this can't panic because we resized memory to fit.
@@ -116,7 +116,7 @@ pub fn returndatacopy<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host:
     pop!(interpreter, memory_offset, offset, len);
     let len = as_usize_or_fail!(interpreter, len);
     gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
-    let data_offset = as_usize_saturated!(offset);
+    let data_offset = as_usize_saturated!(interpreter, offset);
     let (data_end, overflow) = data_offset.overflowing_add(len);
     if overflow || data_end > interpreter.return_data_buffer.len() {
         interpreter.instruction_result = InstructionResult::OutOfOffset;
