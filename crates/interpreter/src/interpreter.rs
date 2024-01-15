@@ -289,20 +289,14 @@ pub enum NextAction {
 /// It provides methods to determine the next action based on the result of the operation.
 pub struct CreateOutcome {
     // The result of the interpreter operation.
-    result: InterpreterResult,
+    pub result: InterpreterResult,
     // An optional address associated with the create operation.
-    address: Option<Address>,
+    pub address: Option<Address>,
 }
 
 impl CreateOutcome {
     pub fn new(result: InterpreterResult, address: Option<Address>) -> Self {
         Self { result, address }
-    }
-    pub fn result(&self) -> &InterpreterResult {
-        &self.result
-    }
-    pub fn address(&self) -> Option<Address> {
-        self.address
     }
     /// Retrieves the data buffer based on the interpreter's result.
     ///

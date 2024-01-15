@@ -119,7 +119,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
                         .get_inspector()
                         .create(&mut context.evm, &mut create_inputs)
                     {
-                        return FrameOrResult::Result(output.result().clone());
+                        return FrameOrResult::Result(output.result);
                     };
                     context.evm.make_create_frame(spec_id, &create_inputs)
                 }
@@ -239,7 +239,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
                         result.clone(),
                         Some(*created_address),
                     );
-                    if let Some(address) = create_outcome.address() {
+                    if let Some(address) = create_outcome.address {
                         *created_address = address;
                     }
                     result
