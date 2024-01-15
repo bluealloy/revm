@@ -176,7 +176,7 @@ impl JournaledState {
         let from_balance = &mut from_account.info.balance;
         *from_balance = from_balance
             .checked_sub(balance)
-            .ok_or(InstructionResult::OutOfFund)?;
+            .ok_or(InstructionResult::OutOfFunds)?;
 
         // add balance to
         let to_account = &mut self.state.get_mut(to).unwrap();

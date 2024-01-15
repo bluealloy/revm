@@ -14,7 +14,7 @@ pub enum InstructionResult {
     // revert codes
     Revert = 0x10, // revert opcode
     CallTooDeep,
-    OutOfFund,
+    OutOfFunds,
 
     // Actions
     CallOrCreate = 0x20,
@@ -62,11 +62,13 @@ impl From<SuccessReason> for InstructionResult {
 impl From<HaltReason> for InstructionResult {
     fn from(value: HaltReason) -> Self {
         match value {
-            HaltReason::OutOfGas(OutOfGasError::BasicOutOfGas) => Self::OutOfGas,
-            HaltReason::OutOfGas(OutOfGasError::InvalidOperand) => Self::InvalidOperandOOG,
-            HaltReason::OutOfGas(OutOfGasError::Memory) => Self::MemoryOOG,
-            HaltReason::OutOfGas(OutOfGasError::MemoryLimit) => Self::MemoryLimitOOG,
-            HaltReason::OutOfGas(OutOfGasError::Precompile) => Self::PrecompileOOG,
+            HaltReason::OutOfGas(error) => match error {
+                OutOfGasError::Basic => Self::OutOfGas,
+                OutOfGasError::InvalidOperand => Self::InvalidOperandOOG,
+                OutOfGasError::Memory => Self::MemoryOOG,
+                OutOfGasError::MemoryLimit => Self::MemoryLimitOOG,
+                OutOfGasError::Precompile => Self::PrecompileOOG,
+            },
             HaltReason::OpcodeNotFound => Self::OpcodeNotFound,
             HaltReason::InvalidFEOpcode => Self::InvalidFEOpcode,
             HaltReason::InvalidJump => Self::InvalidJump,
@@ -83,7 +85,7 @@ impl From<HaltReason> for InstructionResult {
             HaltReason::OverflowPayment => Self::OverflowPayment,
             HaltReason::StateChangeDuringStaticCall => Self::StateChangeDuringStaticCall,
             HaltReason::CallNotAllowedInsideStatic => Self::CallNotAllowedInsideStatic,
-            HaltReason::OutOfFund => Self::OutOfFund,
+            HaltReason::OutOfFunds => Self::OutOfFunds,
             HaltReason::CallTooDeep => Self::CallTooDeep,
             #[cfg(feature = "optimism")]
             HaltReason::FailedDeposit => Self::FatalExternalError,
@@ -104,7 +106,7 @@ macro_rules! return_ok {
 #[macro_export]
 macro_rules! return_revert {
     () => {
-        InstructionResult::Revert | InstructionResult::CallTooDeep | InstructionResult::OutOfFund
+        InstructionResult::Revert | InstructionResult::CallTooDeep | InstructionResult::OutOfFunds
     };
 }
 
@@ -216,22 +218,18 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::Revert => Self::Revert,
             InstructionResult::CallOrCreate => Self::InternalCallOrCreate, // used only in interpreter loop
             InstructionResult::CallTooDeep => Self::Halt(HaltReason::CallTooDeep), // not gonna happen for first call
-            InstructionResult::OutOfFund => Self::Halt(HaltReason::OutOfFund), // Check for first call is done separately.
-            InstructionResult::OutOfGas => Self::Halt(HaltReason::OutOfGas(
-                revm_primitives::OutOfGasError::BasicOutOfGas,
-            )),
-            InstructionResult::MemoryLimitOOG => Self::Halt(HaltReason::OutOfGas(
-                revm_primitives::OutOfGasError::MemoryLimit,
-            )),
-            InstructionResult::MemoryOOG => {
-                Self::Halt(HaltReason::OutOfGas(revm_primitives::OutOfGasError::Memory))
+            InstructionResult::OutOfFunds => Self::Halt(HaltReason::OutOfFunds), // Check for first call is done separately.
+            InstructionResult::OutOfGas => Self::Halt(HaltReason::OutOfGas(OutOfGasError::Basic)),
+            InstructionResult::MemoryLimitOOG => {
+                Self::Halt(HaltReason::OutOfGas(OutOfGasError::MemoryLimit))
             }
-            InstructionResult::PrecompileOOG => Self::Halt(HaltReason::OutOfGas(
-                revm_primitives::OutOfGasError::Precompile,
-            )),
-            InstructionResult::InvalidOperandOOG => Self::Halt(HaltReason::OutOfGas(
-                revm_primitives::OutOfGasError::InvalidOperand,
-            )),
+            InstructionResult::MemoryOOG => Self::Halt(HaltReason::OutOfGas(OutOfGasError::Memory)),
+            InstructionResult::PrecompileOOG => {
+                Self::Halt(HaltReason::OutOfGas(OutOfGasError::Precompile))
+            }
+            InstructionResult::InvalidOperandOOG => {
+                Self::Halt(HaltReason::OutOfGas(OutOfGasError::InvalidOperand))
+            }
             InstructionResult::OpcodeNotFound => Self::Halt(HaltReason::OpcodeNotFound),
             InstructionResult::CallNotAllowedInsideStatic => {
                 Self::Halt(HaltReason::CallNotAllowedInsideStatic)
@@ -293,7 +291,7 @@ mod tests {
         let revert_results = vec![
             InstructionResult::Revert,
             InstructionResult::CallTooDeep,
-            InstructionResult::OutOfFund,
+            InstructionResult::OutOfFunds,
         ];
 
         for result in revert_results {

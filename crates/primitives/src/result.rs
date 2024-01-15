@@ -388,7 +388,7 @@ pub enum HaltReason {
     OverflowPayment,
     StateChangeDuringStaticCall,
     CallNotAllowedInsideStatic,
-    OutOfFund,
+    OutOfFunds,
     CallTooDeep,
 
     /* Optimism errors */
@@ -400,7 +400,7 @@ pub enum HaltReason {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum OutOfGasError {
     // Basic OOG error
-    BasicOutOfGas,
+    Basic,
     // Tried to expand past REVM limit
     MemoryLimit,
     // Basic OOG error from memory expansion
