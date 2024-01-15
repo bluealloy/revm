@@ -119,19 +119,28 @@ impl Interpreter {
     /// - Updates gas costs and records refunds in the interpreter's `gas` field.
     /// - May alter `instruction_result` in case of external errors.
     pub fn insert_create_outcome(&mut self, create_outcome: CreateOutcome) {
-        self.return_data_buffer = create_outcome.data_buffer();
+        let instruction_result = create_outcome.instruction_result();
 
-        match create_outcome.next_action() {
-            NextAction::Continue => {
-                push_b256!(self, create_outcome.address.unwrap_or_default().into_word());
-                self.gas.erase_cost(create_outcome.result.gas.remaining());
-                self.gas.record_refund(create_outcome.result.gas.refunded());
+        self.return_data_buffer = if instruction_result.is_revert() {
+            // Save data to return data buffer if the create reverted
+            create_outcome.output().to_owned()
+        } else {
+            // Otherwise clear it
+            Bytes::new()
+        };
+
+        match instruction_result {
+            return_ok!() => {
+                let address = create_outcome.address;
+                push_b256!(self, address.unwrap_or_default().into_word());
+                self.gas.erase_cost(create_outcome.gas().remaining());
+                self.gas.record_refund(create_outcome.gas().refunded());
             }
-            NextAction::Revert => {
+            return_revert!() => {
                 push!(self, U256::ZERO);
-                self.gas.erase_cost(create_outcome.result.gas.remaining());
+                self.gas.erase_cost(create_outcome.gas().remaining());
             }
-            NextAction::ExternalErr => {
+            InstructionResult::FatalExternalError => {
                 self.instruction_result = InstructionResult::FatalExternalError;
             }
             _ => {
@@ -272,17 +281,6 @@ impl Interpreter {
     }
 }
 
-/// Enum representing the next action to be taken based on the interpreter's result.
-pub enum NextAction {
-    /// Indicates that the operation should continue.
-    Continue,
-    /// Indicates that the operation should revert.
-    Revert,
-    /// Indicates an external error occurred during the operation.
-    ExternalErr,
-    /// Indicates any other outcome not covered by the above variants.
-    Other,
-}
 /// Represents the outcome of a create operation in an interpreter.
 ///
 /// This struct holds the result of the operation along with an optional address.
@@ -295,37 +293,68 @@ pub struct CreateOutcome {
 }
 
 impl CreateOutcome {
+    /// Constructs a new `CreateOutcome`.
+    ///
+    /// # Arguments
+    ///
+    /// * `result` - An `InterpreterResult` representing the result of the interpreter operation.
+    /// * `address` - An optional `Address` associated with the create operation.
+    ///
+    /// # Returns
+    ///
+    /// A new `CreateOutcome` instance.
     pub fn new(result: InterpreterResult, address: Option<Address>) -> Self {
         Self { result, address }
     }
-    /// Retrieves the data buffer based on the interpreter's result.
+    /// Determines if the outcome of the create operation was a revert.
     ///
-    /// If the result is `Revert`, `CallTooDeep`, or `OutOfFund`, it returns the associated output.
-    /// Otherwise, it returns an empty `Bytes` object.
-    pub fn data_buffer(&self) -> Bytes {
-        match self.result.result {
-            InstructionResult::Revert
-            | InstructionResult::CallTooDeep
-            | InstructionResult::OutOfFund => self.result.output.clone(),
-            _ => Bytes::new(),
-        }
+    /// This method checks the `result` field of the `InterpreterResult` contained
+    /// within `CreateOutcome` to determine if the operation has resulted in a revert.
+    /// # Returns
+    ///
+    /// * `true` if the create operation resulted in a revert.
+    /// * `false` otherwise.
+
+    pub fn is_revert(&self) -> bool {
+        matches!(self.result.result, return_revert!())
     }
 
-    /// Determines the next action to take based on the interpreter's result.
+    /// Retrieves a reference to the `InstructionResult` from the `InterpreterResult`.
     ///
-    /// Returns a variant of `NextAction` enum, which indicates whether to continue,
-    /// revert, handle an external error, or take another action.
-    pub fn next_action(&self) -> NextAction {
-        match self.result.result {
-            InstructionResult::Continue
-            | InstructionResult::Stop
-            | InstructionResult::Return
-            | InstructionResult::SelfDestruct => NextAction::Continue,
-            InstructionResult::Revert
-            | InstructionResult::CallTooDeep
-            | InstructionResult::OutOfFund => NextAction::Revert,
-            InstructionResult::FatalExternalError => NextAction::ExternalErr,
-            _ => NextAction::Other,
-        }
+    /// This method provides access to the `InstructionResult` which represents the
+    /// outcome of the instruction execution. It encapsulates the result information
+    /// such as whether the instruction was executed successfully, resulted in a revert,
+    /// or encountered a fatal error.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the `InstructionResult`.
+    pub fn instruction_result(&self) -> &InstructionResult {
+        &self.result.result
+    }
+
+    /// Retrieves a reference to the output bytes from the `InterpreterResult`.
+    ///
+    /// This method returns the output of the interpreted operation. The output is
+    /// typically used when the operation successfully completes and returns data.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the output `Bytes`.
+    pub fn output(&self) -> &Bytes {
+        &self.result.output
+    }
+
+    /// Retrieves a reference to the `Gas` details from the `InterpreterResult`.
+    ///
+    /// This method provides access to the gas details of the operation, which includes
+    /// information about gas used, remaining, and refunded. It is essential for
+    /// understanding the gas consumption of the operation.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the `Gas` details.
+    pub fn gas(&self) -> &Gas {
+        &self.result.gas
     }
 }
