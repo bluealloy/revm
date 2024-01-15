@@ -2417,7 +2417,6 @@ name = "revm-primitives"
 version = "1.3.0"
 dependencies = [
  "alloy-primitives",
- "alloy-rlp",
  "auto_impl",
  "bitflags 2.4.1",
  "bitvec",

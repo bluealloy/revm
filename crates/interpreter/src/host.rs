@@ -1,8 +1,7 @@
 use crate::{
-    primitives::{Address, Bytecode, Bytes, Env, B256, U256},
+    primitives::{Address, Bytecode, Env, Log, B256, U256},
     SelfDestructResult,
 };
-use alloc::vec::Vec;
 
 mod dummy;
 pub use dummy::DummyHost;
@@ -48,8 +47,8 @@ pub trait Host {
     /// Set the transient storage value of `address` at `index`.
     fn tstore(&mut self, address: Address, index: U256, value: U256);
 
-    /// Emit a log owned by `address` with given `topics` and `data`.
-    fn log(&mut self, address: Address, topics: Vec<B256>, data: Bytes);
+    /// Emit a log owned by `address` with given `LogData`.
+    fn log(&mut self, log: Log);
 
     /// Mark `address` to be deleted, with funds transferred to `target`.
     fn selfdestruct(&mut self, address: Address, target: Address) -> Option<SelfDestructResult>;

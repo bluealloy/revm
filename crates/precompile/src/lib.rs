@@ -27,7 +27,7 @@ use once_cell::race::OnceBox;
 pub use revm_primitives as primitives;
 pub use revm_primitives::{
     precompile::{PrecompileError as Error, *},
-    Address, Bytes, HashMap, B256,
+    Address, Bytes, HashMap, Log, B256,
 };
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
@@ -39,13 +39,6 @@ pub struct PrecompileOutput {
     pub cost: u64,
     pub output: Vec<u8>,
     pub logs: Vec<Log>,
-}
-
-#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
-pub struct Log {
-    pub address: Address,
-    pub topics: Vec<B256>,
-    pub data: Bytes,
 }
 
 impl PrecompileOutput {
