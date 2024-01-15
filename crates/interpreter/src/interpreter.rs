@@ -306,18 +306,6 @@ impl CreateOutcome {
     pub fn new(result: InterpreterResult, address: Option<Address>) -> Self {
         Self { result, address }
     }
-    /// Determines if the outcome of the create operation was a revert.
-    ///
-    /// This method checks the `result` field of the `InterpreterResult` contained
-    /// within `CreateOutcome` to determine if the operation has resulted in a revert.
-    /// # Returns
-    ///
-    /// * `true` if the create operation resulted in a revert.
-    /// * `false` otherwise.
-
-    pub fn is_revert(&self) -> bool {
-        matches!(self.result.result, return_revert!())
-    }
 
     /// Retrieves a reference to the `InstructionResult` from the `InterpreterResult`.
     ///
