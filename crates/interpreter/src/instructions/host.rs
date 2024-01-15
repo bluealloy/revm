@@ -1,7 +1,7 @@
 use crate::{
     gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
     interpreter::{Interpreter, InterpreterAction},
-    primitives::{Address, Bytes, LogData, Spec, SpecId::*, B256, U256},
+    primitives::{Address, Bytes, Log, LogData, Spec, SpecId::*, B256, U256},
     CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, Host, InstructionResult,
     Transfer, MAX_INITCODE_SIZE,
 };
@@ -211,10 +211,12 @@ pub fn log<const N: usize, H: Host>(interpreter: &mut Interpreter, host: &mut H)
         topics.push(B256::from(unsafe { interpreter.stack.pop_unsafe() }));
     }
 
-    let log_data =
-        LogData::new(topics, data).expect("Invalid LogData: Number of topics should be <= 4");
+    let log = Log {
+        address: interpreter.contract.address,
+        data: LogData::new(topics, data).expect("LogData should have <=4 topics"),
+    };
 
-    host.log(interpreter.contract.address, log_data);
+    host.log(log);
 }
 
 pub fn selfdestruct<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {

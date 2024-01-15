@@ -1,5 +1,5 @@
 use crate::{
-    primitives::{Address, Bytecode, Env, LogData, B256, U256},
+    primitives::{Address, Bytecode, Env, Log, B256, U256},
     SelfDestructResult,
 };
 
@@ -48,7 +48,7 @@ pub trait Host {
     fn tstore(&mut self, address: Address, index: U256, value: U256);
 
     /// Emit a log owned by `address` with given `LogData`.
-    fn log(&mut self, address: Address, log_data: LogData);
+    fn log(&mut self, log: Log);
 
     /// Mark `address` to be deleted, with funds transferred to `target`.
     fn selfdestruct(&mut self, address: Address, target: Address) -> Option<SelfDestructResult>;

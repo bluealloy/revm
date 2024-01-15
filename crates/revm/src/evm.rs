@@ -8,7 +8,7 @@ use crate::{
     },
     primitives::{
         specification::SpecId, Address, Bytecode, EVMError, EVMResult, Env, ExecutionResult, Log,
-        LogData, Output, ResultAndState, TransactTo, B256, U256,
+        Output, ResultAndState, TransactTo, B256, U256,
     },
     CallStackFrame, Context, FrameOrResult,
 };
@@ -343,11 +343,8 @@ impl<EXT, DB: Database> Host for Evm<'_, EXT, DB> {
         self.context.evm.tstore(address, index, value)
     }
 
-    fn log(&mut self, address: Address, log_data: LogData) {
-        self.context.evm.journaled_state.log(Log {
-            address,
-            data: log_data,
-        });
+    fn log(&mut self, log: Log) {
+        self.context.evm.journaled_state.log(log);
     }
 
     fn selfdestruct(&mut self, address: Address, target: Address) -> Option<SelfDestructResult> {
