@@ -107,7 +107,7 @@ pub fn extcodecopy<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mu
         return;
     }
     let memory_offset = as_usize_or_fail!(interpreter, memory_offset);
-    let code_offset = min(as_usize_saturated!(interpreter, code_offset), code.len());
+    let code_offset = min(as_usize_saturated!(code_offset), code.len());
     shared_memory_resize!(interpreter, memory_offset, len);
 
     // Note: this can't panic because we resized memory to fit.
@@ -121,7 +121,7 @@ pub fn blockhash<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
     pop_top!(interpreter, number);
 
     if let Some(diff) = host.env().block.number.checked_sub(*number) {
-        let diff = as_usize_saturated!(interpreter, diff);
+        let diff = as_usize_saturated!(diff);
         // blockhash should push zero if number is same as current block number.
         if diff <= BLOCK_HASH_HISTORY && diff != 0 {
             let Some(hash) = host.block_hash(*number) else {

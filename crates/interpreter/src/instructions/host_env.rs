@@ -62,7 +62,7 @@ pub fn blob_hash<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut 
     check!(interpreter, CANCUN);
     gas!(interpreter, gas::VERYLOW);
     pop_top!(interpreter, index);
-    let i = as_usize_saturated!(interpreter, index);
+    let i = as_usize_saturated!(index);
     *index = match host.env().tx.blob_hashes.get(i) {
         Some(hash) => U256::from_be_bytes(hash.0),
         None => U256::ZERO,

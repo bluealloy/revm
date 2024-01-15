@@ -189,14 +189,8 @@ macro_rules! as_u64_saturated {
 }
 
 macro_rules! as_usize_saturated {
-    ($interp:expr, $v:expr) => {
-        match ::core::convert::TryInto::<usize>::try_into(as_u64_saturated!($v)) {
-            Ok(val) => val,
-            Err(_) => {
-                $interp.instruction_result = InstructionResult::InvalidOperandOOG;
-                return;
-            }
-        }
+    ($v:expr) => {
+        ::core::convert::TryInto::<usize>::try_into(as_u64_saturated!($v)).unwrap_or(usize::MAX)
     };
 }
 
