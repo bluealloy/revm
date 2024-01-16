@@ -231,7 +231,8 @@ impl Env {
             .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
 
         if SPEC::enabled(SpecId::CANCUN) {
-            let data_fee = self.calc_data_fee().expect("already checked");
+            // if the tx is not a blob tx, this will be None, so we add zero
+            let data_fee = self.calc_max_data_fee().unwrap_or_default();
             balance_check = balance_check
                 .checked_add(U256::from(data_fee))
                 .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
