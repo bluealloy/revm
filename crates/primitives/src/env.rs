@@ -53,7 +53,7 @@ impl Env {
     /// `max_fee_per_blob_gas * total_blob_gas`, on top of regular gas costs.
     ///
     /// See EIP-4844:
-    /// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md#execution-layer-validation
+    /// <https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md#execution-layer-validation>
     pub fn calc_max_data_fee(&self) -> Option<U256> {
         self.tx.max_fee_per_blob_gas.map(|max_fee_per_blob_gas| {
             max_fee_per_blob_gas.saturating_mul(U256::from(self.tx.get_total_blob_gas()))
