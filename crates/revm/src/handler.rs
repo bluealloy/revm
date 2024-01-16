@@ -45,6 +45,18 @@ impl<DB: Database> Handler<DB> {
         }
     }
 
+    /// Handler for the taiko
+    #[cfg(feature = "taiko")]
+    pub fn taiko<SPEC: Spec>() -> Self {
+        use crate::taiko::handler;
+        Self {
+            call_return: mainnet::handle_call_return::<SPEC>,
+            calculate_gas_refund: mainnet::calculate_gas_refund::<SPEC>,
+            reimburse_caller: handler::handle_reimburse_caller::<SPEC, DB>,
+            reward_beneficiary: handler::reward_beneficiary::<SPEC, DB>,
+        }
+    }
+
     /// Handler for the optimism
     #[cfg(feature = "optimism")]
     pub fn optimism<SPEC: Spec>() -> Self {

@@ -41,6 +41,7 @@ serde = ["dep:serde", "dep:serde_json", "revm-interpreter/serde"]
 arbitrary = ["revm-interpreter/arbitrary"]
 
 optimism = ["revm-interpreter/optimism", "revm-precompile/optimism"]
+taiko = ["revm-interpreter/taiko", "revm-precompile/taiko"]
 
 ethersdb = ["std", "tokio", "futures", "ethers-providers", "ethers-core"]
 

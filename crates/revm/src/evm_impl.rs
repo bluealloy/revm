@@ -196,6 +196,8 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
         let tx_value = env.tx.value;
         let tx_data = env.tx.data.clone();
         let tx_gas_limit = env.tx.gas_limit;
+        #[cfg(feature = "taiko")]
+        let is_anchor = env.tx.taiko.is_anchor;
 
         #[cfg(feature = "optimism")]
         let tx_l1_cost = {
@@ -281,8 +283,15 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> Transact<DB::Error>
             gas_cost = gas_cost.saturating_add(data_fee);
         }
 
-        caller_account.info.balance = caller_account.info.balance.saturating_sub(gas_cost);
+        #[cfg(feature = "taiko")]
+        if !is_anchor {
+            caller_account.info.balance = caller_account.info.balance.saturating_sub(gas_cost);
+        }
 
+        #[cfg(not(feature = "taiko"))]
+        {
+            caller_account.info.balance = caller_account.info.balance.saturating_sub(gas_cost);
+        }
         // touch account so we know it is changed.
         caller_account.mark_touch();
 
@@ -405,6 +414,18 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
         precompiles: Precompiles,
     ) -> Self {
         let journaled_state = JournaledState::new(precompiles.len(), GSPEC::SPEC_ID);
+
+        #[cfg(feature = "optimism")]
+        let handler: Handler<DB> = if env.cfg.optimism {
+            Handler::optimism::<GSPEC>()
+        } else {
+            Handler::mainnet::<GSPEC>()
+        };
+        #[cfg(feature = "taiko")]
+        let handler = Handler::taiko::<GSPEC>();
+        #[cfg(not(any(feature = "optimism", feature = "taiko")))]
+        let handler = Handler::mainnet::<GSPEC>();
+
         Self {
             data: EVMData {
                 env,
@@ -416,7 +437,7 @@ impl<'a, GSPEC: Spec, DB: Database, const INSPECT: bool> EVMImpl<'a, GSPEC, DB, 
                 l1_block_info: None,
             },
             inspector,
-            handler: Handler::mainnet::<GSPEC>(),
+            handler,
             _phantomdata: PhantomData {},
         }
     }

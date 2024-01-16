@@ -94,12 +94,13 @@ pub struct OptimismFields {
     pub enveloped_tx: Option<Bytes>,
 }
 
-#[cfg(feature = "taiko")]
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TaikoFields {
-    pub is_anchor: bool
+    pub treasury: Address,
+    pub is_anchor: bool,
 }
+
 
 impl BlockEnv {
     /// Takes `blob_excess_gas` saves it inside env
@@ -193,8 +194,7 @@ pub struct TxEnv {
 
     #[cfg_attr(feature = "serde", serde(flatten))]
     #[cfg(feature = "taiko")]
-    pub optimism: TaikoFields,
-
+    pub taiko: TaikoFields,
 }
 
 impl TxEnv {
@@ -656,11 +656,6 @@ impl Env {
             return Ok(());
         }
 
-        #[cfg(feature = "taiko")]
-        if self.cfg.taiko {
-            // TODO(Cecilia): do we do anything with this?
-        }
-
         // Check that the transaction's nonce is correct
         if let Some(tx) = self.tx.nonce {
             let state = account.info.nonce;
@@ -685,6 +680,11 @@ impl Env {
             balance_check = balance_check
                 .checked_add(U256::from(data_fee))
                 .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
+        }
+
+        #[cfg(feature = "taiko")]
+        if self.cfg.taiko && self.tx.taiko.is_anchor {
+            return Ok(());
         }
 
         // Check if account has enough balance for gas_limit*gas_price and value transfer.
