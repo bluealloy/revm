@@ -60,7 +60,7 @@ pub fn deduct_caller_inner<SPEC: Spec>(caller_account: &mut Account, env: &Env) 
 
     // EIP-4844
     if SPEC::enabled(CANCUN) {
-        let data_fee = env.calc_data_fee().expect("already checked");
+        let data_fee = env.calc_max_data_fee().expect("already checked");
         gas_cost = gas_cost.saturating_add(data_fee);
     }
 
