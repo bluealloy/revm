@@ -51,7 +51,7 @@ jobs:
       - run: |
           cd crates/revm
           cargo check --no-default-features
-  
+
   check-serde:
     name: check serde
     runs-on: ubuntu-latest
