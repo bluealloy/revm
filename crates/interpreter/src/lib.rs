@@ -12,6 +12,7 @@ extern crate alloc;
 #[macro_use]
 mod macros;
 
+mod create_outcome;
 pub mod gas;
 mod host;
 mod inner_models;
@@ -20,14 +21,15 @@ pub mod instructions;
 mod interpreter;
 
 // Reexport primary types.
+pub use create_outcome::CreateOutcome;
 pub use gas::Gas;
 pub use host::{DummyHost, Host};
 pub use inner_models::*;
 pub use instruction_result::*;
 pub use instructions::{opcode, Instruction, OpCode, OPCODE_JUMPMAP};
 pub use interpreter::{
-    analysis, next_multiple_of_32, BytecodeLocked, Contract, CreateOutcome, Interpreter,
-    InterpreterAction, InterpreterResult, SharedMemory, Stack, EMPTY_SHARED_MEMORY, STACK_LIMIT,
+    analysis, next_multiple_of_32, BytecodeLocked, Contract, Interpreter, InterpreterAction,
+    InterpreterResult, SharedMemory, Stack, EMPTY_SHARED_MEMORY, STACK_LIMIT,
 };
 pub use primitives::{MAX_CODE_SIZE, MAX_INITCODE_SIZE};
 

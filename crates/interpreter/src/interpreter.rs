@@ -9,13 +9,13 @@ pub use shared_memory::{next_multiple_of_32, SharedMemory};
 pub use stack::{Stack, STACK_LIMIT};
 
 use crate::{
-    primitives::Bytes, push, push_b256, return_ok, return_revert, CallInputs, CreateInputs, Gas,
-    Host, InstructionResult,
+    primitives::Bytes, push, push_b256, return_ok, return_revert, CallInputs, CreateInputs,
+    CreateOutcome, Gas, Host, InstructionResult,
 };
 use alloc::boxed::Box;
 use core::cmp::min;
 use core::ops::Range;
-use revm_primitives::{Address, U256};
+use revm_primitives::U256;
 
 pub use self::shared_memory::EMPTY_SHARED_MEMORY;
 
@@ -105,17 +105,17 @@ impl Interpreter {
     /// # Behavior
     ///
     /// The function updates the `return_data_buffer` with the data from `create_outcome`.
-    /// Depending on the `next_action` indicated by `create_outcome`, it performs one of the following:
+    /// Depending on the `InstructionResult` indicated by `create_outcome`, it performs one of the following:
     ///
-    /// - `NextAction::Continue`: Pushes the address from `create_outcome` to the stack, updates gas costs, and records any gas refunds.
-    /// - `NextAction::Revert`: Pushes `U256::ZERO` to the stack and updates gas costs.
-    /// - `NextAction::ExternalErr`: Sets the `instruction_result` to `InstructionResult::FatalExternalError`.
-    /// - Other actions: Pushes `U256::ZERO` to the stack.
+    /// - `Ok`: Pushes the address from `create_outcome` to the stack, updates gas costs, and records any gas refunds.
+    /// - `Revert`: Pushes `U256::ZERO` to the stack and updates gas costs.
+    /// - `FatalExternalError`: Sets the `instruction_result` to `InstructionResult::FatalExternalError`.
+    /// - `Default`: Pushes `U256::ZERO` to the stack.
     ///
     /// # Side Effects
     ///
     /// - Updates `return_data_buffer` with the data from `create_outcome`.
-    /// - Modifies the stack by pushing values depending on the `next_action`.
+    /// - Modifies the stack by pushing values depending on the `InstructionResult`.
     /// - Updates gas costs and records refunds in the interpreter's `gas` field.
     /// - May alter `instruction_result` in case of external errors.
     pub fn insert_create_outcome(&mut self, create_outcome: CreateOutcome) {
@@ -278,71 +278,5 @@ impl Interpreter {
                 gas: self.gas,
             },
         }
-    }
-}
-
-/// Represents the outcome of a create operation in an interpreter.
-///
-/// This struct holds the result of the operation along with an optional address.
-/// It provides methods to determine the next action based on the result of the operation.
-pub struct CreateOutcome {
-    // The result of the interpreter operation.
-    pub result: InterpreterResult,
-    // An optional address associated with the create operation.
-    pub address: Option<Address>,
-}
-
-impl CreateOutcome {
-    /// Constructs a new `CreateOutcome`.
-    ///
-    /// # Arguments
-    ///
-    /// * `result` - An `InterpreterResult` representing the result of the interpreter operation.
-    /// * `address` - An optional `Address` associated with the create operation.
-    ///
-    /// # Returns
-    ///
-    /// A new `CreateOutcome` instance.
-    pub fn new(result: InterpreterResult, address: Option<Address>) -> Self {
-        Self { result, address }
-    }
-
-    /// Retrieves a reference to the `InstructionResult` from the `InterpreterResult`.
-    ///
-    /// This method provides access to the `InstructionResult` which represents the
-    /// outcome of the instruction execution. It encapsulates the result information
-    /// such as whether the instruction was executed successfully, resulted in a revert,
-    /// or encountered a fatal error.
-    ///
-    /// # Returns
-    ///
-    /// A reference to the `InstructionResult`.
-    pub fn instruction_result(&self) -> &InstructionResult {
-        &self.result.result
-    }
-
-    /// Retrieves a reference to the output bytes from the `InterpreterResult`.
-    ///
-    /// This method returns the output of the interpreted operation. The output is
-    /// typically used when the operation successfully completes and returns data.
-    ///
-    /// # Returns
-    ///
-    /// A reference to the output `Bytes`.
-    pub fn output(&self) -> &Bytes {
-        &self.result.output
-    }
-
-    /// Retrieves a reference to the `Gas` details from the `InterpreterResult`.
-    ///
-    /// This method provides access to the gas details of the operation, which includes
-    /// information about gas used, remaining, and refunded. It is essential for
-    /// understanding the gas consumption of the operation.
-    ///
-    /// # Returns
-    ///
-    /// A reference to the `Gas` details.
-    pub fn gas(&self) -> &Gas {
-        &self.result.gas
     }
 }
