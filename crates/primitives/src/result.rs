@@ -135,6 +135,11 @@ pub enum EVMError<DBError> {
     Header(InvalidHeader),
     /// Database error.
     Database(DBError),
+    /// Custom error.
+    ///
+    /// Currently implemented for the Optimism handler. This is an interim solution pending
+    /// the development of a more generic error mechanism for integration with custom handlers.
+    Custom(String),
 }
 
 #[cfg(feature = "std")]
@@ -146,6 +151,7 @@ impl<DBError: fmt::Display> fmt::Display for EVMError<DBError> {
             EVMError::Transaction(e) => write!(f, "Transaction error: {e:?}"),
             EVMError::Header(e) => write!(f, "Header error: {e:?}"),
             EVMError::Database(e) => write!(f, "Database error: {e}"),
+            EVMError::Custom(e) => write!(f, "Custom error: {e}"),
         }
     }
 }
