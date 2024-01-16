@@ -94,6 +94,13 @@ pub struct OptimismFields {
     pub enveloped_tx: Option<Bytes>,
 }
 
+#[cfg(feature = "taiko")]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct TaikoFields {
+    pub is_anchor: bool
+}
+
 impl BlockEnv {
     /// Takes `blob_excess_gas` saves it inside env
     /// and calculates `blob_fee` with [`BlobGasAndFee`].
@@ -183,6 +190,11 @@ pub struct TxEnv {
     #[cfg_attr(feature = "serde", serde(flatten))]
     #[cfg(feature = "optimism")]
     pub optimism: OptimismFields,
+
+    #[cfg_attr(feature = "serde", serde(flatten))]
+    #[cfg(feature = "taiko")]
+    pub optimism: TaikoFields,
+
 }
 
 impl TxEnv {
@@ -306,6 +318,9 @@ pub struct CfgEnv {
     /// compilation with the optimism feature flag.
     #[cfg(feature = "optimism")]
     pub optimism: bool,
+
+    #[cfg(feature = "taiko")]
+    pub taiko: bool,
 }
 
 impl CfgEnv {
@@ -368,6 +383,16 @@ impl CfgEnv {
     pub fn is_optimism(&self) -> bool {
         false
     }
+
+    #[cfg(feature = "taiko")]
+    pub fn is_taiko(&self) -> bool {
+        self.taiko
+    }
+
+    #[cfg(not(feature = "taiko"))]
+    pub fn is_taiko(&self) -> bool {
+        false
+    }
 }
 
 /// What bytecode analysis to perform.
@@ -406,6 +431,8 @@ impl Default for CfgEnv {
             disable_base_fee: false,
             #[cfg(feature = "optimism")]
             optimism: false,
+            #[cfg(feature = "taiko")]
+            taiko: false,
         }
     }
 }
@@ -442,6 +469,8 @@ impl Default for TxEnv {
             max_fee_per_blob_gas: None,
             #[cfg(feature = "optimism")]
             optimism: OptimismFields::default(),
+            #[cfg(feature = "taiko")]
+            taiko: TaikoFields::default(),
         }
     }
 }
@@ -501,6 +530,11 @@ impl Env {
             if self.tx.optimism.source_hash.is_some() {
                 return Ok(());
             }
+        }
+
+        #[cfg(feature = "taiko")]
+        if self.cfg.taiko {
+            // TODO:(Cecilia)
         }
 
         let gas_limit = self.tx.gas_limit;
@@ -622,6 +656,11 @@ impl Env {
             return Ok(());
         }
 
+        #[cfg(feature = "taiko")]
+        if self.cfg.taiko {
+            // TODO(Cecilia): do we do anything with this?
+        }
+
         // Check that the transaction's nonce is correct
         if let Some(tx) = self.tx.nonce {
             let state = account.info.nonce;
@@ -709,6 +748,12 @@ mod tests {
         assert!(env
             .validate_tx_against_state(&mut Account::default())
             .is_ok());
+    }
+
+    #[cfg(feature = "taiko")]
+    #[test]
+    fn test_taiko() {
+        // TODO(Cecilia): taiko tests
     }
 
     #[test]

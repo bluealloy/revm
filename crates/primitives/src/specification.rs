@@ -31,6 +31,8 @@ pub enum SpecId {
     BEDROCK = 128,
     #[cfg(feature = "optimism")]
     REGOLITH = 129,
+    #[cfg(feature = "taiko")]
+    KATLA = 100, // TODO(Cecilia): update this range of bits
     LATEST = u8::MAX,
 }
 
@@ -58,6 +60,10 @@ impl SpecId {
                 return false;
             }
         }
+        #[cfg(feature = "taiko")]
+        {
+            // TODO(Cecilia):  update this range of bits
+        }
 
         our as u8 >= other as u8
     }
@@ -84,6 +90,8 @@ impl From<&str> for SpecId {
             "Bedrock" => SpecId::BEDROCK,
             #[cfg(feature = "optimism")]
             "Regolith" => SpecId::REGOLITH,
+            #[cfg(feature = "taiko")]
+            "Katla" => SpecId::KATLA,
             _ => Self::LATEST,
         }
     }
@@ -107,6 +115,17 @@ pub trait Spec: Sized {
             let after_merge = spec_id > SpecId::MERGE;
 
             if is_self_optimism && input_not_optimism && after_merge {
+                return false;
+            }
+        }
+        #[cfg(feature = "taiko")]
+        {
+            // TODO(Cecilia):  update this range of bits
+            let is_self_taiko = Self::SPEC_ID == SpecId::KATLA;
+            let input_not_taiko = spec_id != SpecId::KATLA;
+            let after_merge = spec_id > SpecId::MERGE;
+            
+            if is_self_taiko && input_not_taiko && after_merge {
                 return false;
             }
         }
@@ -152,6 +171,10 @@ spec!(BEDROCK, BedrockSpec);
 #[cfg(feature = "optimism")]
 spec!(REGOLITH, RegolithSpec);
 
+// Taiko Hardforks
+#[cfg(feature = "taiko")]
+spec!(KATLA, KatlaSpec);
+
 #[cfg(feature = "optimism")]
 #[cfg(test)]
 mod tests {
@@ -195,5 +218,23 @@ mod tests {
         assert!(!SpecId::enabled(SpecId::REGOLITH, SpecId::LATEST));
         assert!(SpecId::enabled(SpecId::REGOLITH, SpecId::BEDROCK));
         assert!(SpecId::enabled(SpecId::REGOLITH, SpecId::REGOLITH));
+    }
+}
+
+#[cfg(feature = "taiko")]
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    // TODO(Cecilia):  update this range of bits
+    #[test]
+    fn test_katla_post_merge_hardforks() {
+        assert!(SpecId::enabled(SpecId::MERGE));
+        assert!(!SpecId::enabled(SpecId::SHANGHAI));
+        assert!(!SpecId::enabled(SpecId::CANCUN));
+        assert!(!SpecId::enabled(SpecId::LATEST));
+        assert!(!SpecId::enabled(SpecId::BEDROCK));
+        assert!(!SpecId::enabled(SpecId::REGOLITH));
+        assert!(SpecId::enabled(SpecId::KATLA));
     }
 }

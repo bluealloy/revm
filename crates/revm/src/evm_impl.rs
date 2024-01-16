@@ -21,6 +21,9 @@ use revm_precompile::{Precompile, Precompiles};
 #[cfg(feature = "optimism")]
 use crate::optimism;
 
+#[cfg(feature = "taiko")]
+use crate::taiko;
+
 pub struct EVMData<'a, DB: Database> {
     pub env: &'a mut Env,
     pub journaled_state: JournaledState,
