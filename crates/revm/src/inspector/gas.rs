@@ -66,6 +66,8 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 
 #[cfg(test)]
 mod tests {
+    use revm_interpreter::CallOutcome;
+
     use crate::{
         inspector::GetInspector,
         inspectors::GasInspector,
@@ -73,7 +75,6 @@ mod tests {
         primitives::{Address, Log},
         Database, EvmContext, Inspector,
     };
-    use core::ops::Range;
 
     #[derive(Default, Debug)]
     struct StackInspector {
@@ -112,7 +113,7 @@ mod tests {
             &mut self,
             context: &mut EvmContext<DB>,
             call: &mut CallInputs,
-        ) -> Option<(InterpreterResult, Range<usize>)> {
+        ) -> Option<CallOutcome> {
             self.gas_inspector.call(context, call)
         }
 

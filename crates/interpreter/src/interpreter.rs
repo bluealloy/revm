@@ -9,8 +9,8 @@ pub use shared_memory::{next_multiple_of_32, SharedMemory};
 pub use stack::{Stack, STACK_LIMIT};
 
 use crate::{
-    primitives::Bytes, push, push_b256, return_ok, return_revert, CallInputs, CreateInputs, Gas,
-    Host, InstructionResult,
+    primitives::Bytes, push, push_b256, return_ok, return_revert, CallInputs, CallOutcome,
+    CreateInputs, Gas, Host, InstructionResult,
 };
 use alloc::boxed::Box;
 use core::cmp::min;
@@ -128,25 +128,24 @@ impl Interpreter {
     pub fn insert_call_output(
         &mut self,
         shared_memory: &mut SharedMemory,
-        result: InterpreterResult,
-        memory_return_offset: Range<usize>,
+        call_outcome: CallOutcome,
     ) {
-        let out_offset = memory_return_offset.start;
-        let out_len = memory_return_offset.len();
+        let out_offset = call_outcome.memory_offset_start();
+        let out_len = call_outcome.memory_length();
 
-        self.return_data_buffer = result.output;
+        self.return_data_buffer = call_outcome.output().to_owned();
         let target_len = min(out_len, self.return_data_buffer.len());
 
-        match result.result {
+        match call_outcome.instruction_result() {
             return_ok!() => {
                 // return unspend gas.
-                self.gas.erase_cost(result.gas.remaining());
-                self.gas.record_refund(result.gas.refunded());
+                self.gas.erase_cost(call_outcome.gas().remaining());
+                self.gas.record_refund(call_outcome.gas().refunded());
                 shared_memory.set(out_offset, &self.return_data_buffer[..target_len]);
                 push!(self, U256::from(1));
             }
             return_revert!() => {
-                self.gas.erase_cost(result.gas.remaining());
+                self.gas.erase_cost(call_outcome.gas().remaining());
                 shared_memory.set(out_offset, &self.return_data_buffer[..target_len]);
                 push!(self, U256::ZERO);
             }
