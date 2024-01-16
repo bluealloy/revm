@@ -205,10 +205,10 @@ macro_rules! as_usize_or_fail {
             $interp.instruction_result = $reason;
             return;
         }
-        let Ok(val) = match ::core::convert::TryInto::<usize>::try_into(x[0])  else {
-                $interp.instruction_result = $reason;
-                return;
-        }
+        let Ok(val) = ::core::convert::TryInto::<usize>::try_into(x[0]) else {
+            $interp.instruction_result = $reason;
+            return;
+        };
         val
     }};
 }
