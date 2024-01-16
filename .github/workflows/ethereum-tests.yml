@@ -30,23 +30,20 @@ jobs:
           path: ethtests
           submodules: recursive
 
+      - name: Install toolchain
+        uses: dtolnay/rust-toolchain@stable
+
       - uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
 
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: ${{matrix.target}}
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          use-cross: true
-          command: run
-          args: --target ${{matrix.target}}
-            --profile ${{ matrix.profile }} -p revme -- statetest
-            ethtests/GeneralStateTests/
-            ethtests/LegacyTests/Constantinople/GeneralStateTests/
-            ethtests/EIPTests/StateTests/stEIP1153-transientStorage/
-            ethtests/EIPTests/StateTests/stEIP4844-blobtransactions/
-            ethtests/EIPTests/StateTests/stEIP5656-MCOPY/
+      - name: Install cross
+        run: cargo install cross
+
+      - name: Run Ethereum tests
+        run: |
+          cross run --target ${{matrix.target}} --profile ${{ matrix.profile }} -p revme -- statetest \
+            ethtests/GeneralStateTests/ \
+            ethtests/LegacyTests/Constantinople/GeneralStateTests/ \
+            ethtests/EIPTests/StateTests/stEIP1153-transientStorage/ \
+            ethtests/EIPTests/StateTests/stEIP4844-blobtransactions/ \
