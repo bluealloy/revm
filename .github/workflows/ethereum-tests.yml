@@ -43,10 +43,10 @@ jobs:
         with:
           use-cross: true
           command: run
-          args: --target ${{matrix.target}} \
-            --profile ${{ matrix.profile }} -p revme -- statetest \
-            ethtests/GeneralStateTests/ \
-            ethtests/LegacyTests/Constantinople/GeneralStateTests/ \
-            ethtests/EIPTests/StateTests/stEIP1153-transientStorage/ \
-            ethtests/EIPTests/StateTests/stEIP4844-blobtransactions/ \
+          args: --target ${{matrix.target}}
+            --profile ${{ matrix.profile }} -p revme -- statetest
+            ethtests/GeneralStateTests/
+            ethtests/LegacyTests/Constantinople/GeneralStateTests/
+            ethtests/EIPTests/StateTests/stEIP1153-transientStorage/
+            ethtests/EIPTests/StateTests/stEIP4844-blobtransactions/
             ethtests/EIPTests/StateTests/stEIP5656-MCOPY/
