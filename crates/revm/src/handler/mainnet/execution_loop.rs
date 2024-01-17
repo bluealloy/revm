@@ -111,7 +111,7 @@ pub fn frame_return<SPEC: Spec, EXT, DB: Database>(
 
             parent_stack_frame
                 .interpreter
-                .insert_call_output(shared_memory, call_outcome)
+                .insert_call_outcome(shared_memory, call_outcome)
         }
     }
     None
@@ -135,7 +135,7 @@ pub fn sub_call<SPEC: Spec, EXT, DB: Database>(
             let call_outcome = CallOutcome::new(result, return_memory_offset);
             curent_stack_frame
                 .interpreter
-                .insert_call_output(shared_memory, call_outcome);
+                .insert_call_outcome(shared_memory, call_outcome);
             None
         }
     }

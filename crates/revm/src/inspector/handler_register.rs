@@ -204,7 +204,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
             // inspector handle
             let inspector = context.external.get_inspector();
             if let Some(call_outcome) = inspector.call(&mut context.evm, &mut inputs) {
-                frame.interpreter.insert_call_output(memory, call_outcome);
+                frame.interpreter.insert_call_outcome(memory, call_outcome);
                 return None;
             }
             match context
@@ -219,7 +219,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
                     // inspector handle
                     let result = inspector.call_end(&mut context.evm, result);
                     let call_outcome = CallOutcome::new(result, return_memory_offset);
-                    frame.interpreter.insert_call_output(memory, call_outcome);
+                    frame.interpreter.insert_call_outcome(memory, call_outcome);
                     None
                 }
             }

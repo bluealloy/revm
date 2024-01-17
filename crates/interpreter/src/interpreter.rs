@@ -150,16 +150,34 @@ impl Interpreter {
         }
     }
 
-    /// When sub call returns we can insert output of that call into this interpreter.
+    /// Inserts the outcome of a call into the virtual machine's state.
     ///
-    /// Note that shared memory is required as a input field.
-    /// As SharedMemory inside Interpreter is taken and replaced with empty (not valid) memory.
-    pub fn insert_call_output(
+    /// This function takes the result of a call, represented by `CallOutcome`,
+    /// and updates the virtual machine's state accordingly. It involves updating
+    /// the return data buffer, handling gas accounting, and setting the memory
+    /// in shared storage based on the outcome of the call.
+    ///
+    /// # Arguments
+    ///
+    /// * `shared_memory` - A mutable reference to the shared memory used by the virtual machine.
+    /// * `call_outcome` - The outcome of the call to be processed, containing details such as
+    ///   instruction result, gas information, and output data.
+    ///
+    /// # Behavior
+    ///
+    /// The function first copies the output data from the call outcome to the virtual machine's
+    /// return data buffer. It then checks the instruction result from the call outcome:
+    ///
+    /// - `return_ok!()`: Processes successful execution, refunds gas, and updates shared memory.
+    /// - `return_revert!()`: Handles a revert by only updating the gas usage and shared memory.
+    /// - `InstructionResult::FatalExternalError`: Sets the instruction result to a fatal external error.
+    /// - Any other result: No specific action is taken.
+    pub fn insert_call_outcome(
         &mut self,
         shared_memory: &mut SharedMemory,
         call_outcome: CallOutcome,
     ) {
-        let out_offset = call_outcome.memory_offset_start();
+        let out_offset = call_outcome.memory_start();
         let out_len = call_outcome.memory_length();
 
         self.return_data_buffer = call_outcome.output().to_owned();
@@ -168,8 +186,10 @@ impl Interpreter {
         match call_outcome.instruction_result() {
             return_ok!() => {
                 // return unspend gas.
-                self.gas.erase_cost(call_outcome.gas().remaining());
-                self.gas.record_refund(call_outcome.gas().refunded());
+                let remaining = call_outcome.gas().remaining();
+                let refunded = call_outcome.gas().refunded();
+                self.gas.erase_cost(remaining);
+                self.gas.record_refund(refunded);
                 shared_memory.set(out_offset, &self.return_data_buffer[..target_len]);
                 push!(self, U256::from(1));
             }
