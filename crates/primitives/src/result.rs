@@ -137,8 +137,7 @@ pub enum EVMError<DBError> {
     Database(DBError),
     /// Custom error.
     ///
-    /// Currently implemented for the Optimism handler. This is an interim solution pending
-    /// the development of a more generic error mechanism for integration with custom handlers.
+    /// Useful for handler registers where custom logic would want to return their own custom error.
     Custom(String),
 }
 
