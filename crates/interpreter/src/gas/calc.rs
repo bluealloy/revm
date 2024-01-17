@@ -176,7 +176,7 @@ pub fn sload_cost<SPEC: Spec>(is_cold: bool) -> u64 {
         }
     } else if SPEC::enabled(ISTANBUL) {
         // EIP-1884: Repricing for trie-size-dependent opcodes
-        800
+        INSTANBUL_SLOAD_GAS
     } else if SPEC::enabled(TANGERINE) {
         // EIP-150: Gas cost changes for IO-heavy operations
         200
@@ -193,47 +193,56 @@ pub fn sstore_cost<SPEC: Spec>(
     gas: u64,
     is_cold: bool,
 ) -> Option<u64> {
-    // TODO untangle this mess and make it more elegant
-    let (gas_sload, gas_sstore_reset) = if SPEC::enabled(BERLIN) {
-        (WARM_STORAGE_READ_COST, SSTORE_RESET - COLD_SLOAD_COST)
-    } else {
-        (sload_cost::<SPEC>(is_cold), SSTORE_RESET)
-    };
+    // EIP-1706 Disable SSTORE with gasleft lower than call stipend
+    if SPEC::enabled(ISTANBUL) && gas <= CALL_STIPEND {
+        return None;
+    }
 
-    // https://eips.ethereum.org/EIPS/eip-2200
-    // It’s a combined version of EIP-1283 and EIP-1706
-    let gas_cost = if SPEC::enabled(ISTANBUL) {
-        // EIP-1706
-        if gas <= CALL_STIPEND {
-            return None;
-        }
+    if SPEC::enabled(BERLIN) {
+        // Berlin specification logic
+        let mut gas_cost = istanbul_sstore_cost::<WARM_STORAGE_READ_COST, WARM_SSTORE_RESET>(
+            original, current, new,
+        );
 
-        // EIP-1283
-        if new == current {
-            gas_sload
-        } else {
-            if original == current {
-                if original == U256::ZERO {
-                    SSTORE_SET
-                } else {
-                    gas_sstore_reset
-                }
-            } else {
-                gas_sload
-            }
+        if is_cold {
+            gas_cost += COLD_SLOAD_COST;
         }
-    } else {
-        if current == U256::ZERO && new != U256::ZERO {
-            SSTORE_SET
-        } else {
-            gas_sstore_reset
-        }
-    };
-    // In EIP-2929 we charge extra if the slot has not been used yet in this transaction
-    if SPEC::enabled(BERLIN) && is_cold {
-        Some(gas_cost + COLD_SLOAD_COST)
-    } else {
         Some(gas_cost)
+    } else if SPEC::enabled(ISTANBUL) {
+        // Istanbul logic
+        Some(istanbul_sstore_cost::<INSTANBUL_SLOAD_GAS, SSTORE_RESET>(
+            original, current, new,
+        ))
+    } else {
+        // Frontier logic
+        Some(frontier_sstore_cost(current, new))
+    }
+}
+
+/// EIP-2200: Structured Definitions for Net Gas Metering
+#[inline(always)]
+fn istanbul_sstore_cost<const SLOAD_GAS: u64, const SSTORE_RESET_GAS: u64>(
+    original: U256,
+    current: U256,
+    new: U256,
+) -> u64 {
+    if new == current {
+        SLOAD_GAS
+    } else if original == current && original == U256::ZERO {
+        SSTORE_SET
+    } else if original == current {
+        SSTORE_RESET_GAS
+    } else {
+        SLOAD_GAS
+    }
+}
+
+/// Frontier sstore cost just had two cases set and reset values
+fn frontier_sstore_cost(current: U256, new: U256) -> u64 {
+    if current == U256::ZERO && new != U256::ZERO {
+        SSTORE_SET
+    } else {
+        SSTORE_RESET
     }
 }
 

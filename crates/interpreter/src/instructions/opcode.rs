@@ -94,7 +94,7 @@ where
 opcodes! {
     0x00 => STOP => control::stop,
 
-    0x01 => ADD        => arithmetic::wrapped_add,
+    0x01 => ADD        => arithmetic::wrapping_add,
     0x02 => MUL        => arithmetic::wrapping_mul,
     0x03 => SUB        => arithmetic::wrapping_sub,
     0x04 => DIV        => arithmetic::div,

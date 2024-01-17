@@ -10,7 +10,6 @@ on:
   pull_request:
     branches: [main, "release/**"]
 
-
 jobs:
   tests-stable:
     name: Ethereum Tests (Stable)
@@ -19,6 +18,7 @@ jobs:
     strategy:
       matrix:
         profile: [ethtests, release]
+        target: [i686-unknown-linux-gnu, x86_64-unknown-linux-gnu]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
@@ -37,11 +37,13 @@ jobs:
         with:
           cache-on-failure: true
 
+      - name: Install cross
+        run: cargo install cross
+
       - name: Run Ethereum tests
         run: |
-          cargo run --profile ${{ matrix.profile }} -p revme -- statetest \
+          cross run --target ${{matrix.target}} --profile ${{ matrix.profile }} -p revme -- statetest \
             ethtests/GeneralStateTests/ \
             ethtests/LegacyTests/Constantinople/GeneralStateTests/ \
             ethtests/EIPTests/StateTests/stEIP1153-transientStorage/ \
             ethtests/EIPTests/StateTests/stEIP4844-blobtransactions/ \
-            ethtests/EIPTests/StateTests/stEIP5656-MCOPY/

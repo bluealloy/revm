@@ -9,25 +9,20 @@ use core::marker::PhantomData;
 /// Evm Builder allows building or modifying EVM.
 /// Note that some of the methods that changes underlying structures
 /// will reset the registered handler to default mainnet.
-pub struct EvmBuilder<'a, Stage: BuilderStage, EXT, DB: Database> {
+pub struct EvmBuilder<'a, BuilderStage, EXT, DB: Database> {
     evm: EvmContext<DB>,
     external: EXT,
     handler: Handler<'a, Evm<'a, EXT, DB>, EXT, DB>,
-    phantom: PhantomData<Stage>,
+    phantom: PhantomData<BuilderStage>,
 }
-
-/// Trait that unlocks builder stages.
-pub trait BuilderStage {}
 
 /// First stage of the builder allows setting generic variables.
 /// Generic variables are database and external context.
 pub struct SetGenericStage;
-impl BuilderStage for SetGenericStage {}
 
 /// Second stage of the builder allows appending handler registers.
 /// Requires the database and external context to be set.
 pub struct HandlerStage;
-impl BuilderStage for HandlerStage {}
 
 impl<'a> Default for EvmBuilder<'a, SetGenericStage, (), EmptyDB> {
     fn default() -> Self {
@@ -155,7 +150,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
     }
 }
 
-impl<'a, STAGE: BuilderStage, EXT, DB: Database> EvmBuilder<'a, STAGE, EXT, DB> {
+impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> {
     /// Builds the [`Evm`].
     pub fn build(self) -> Evm<'a, EXT, DB> {
         Evm::new(

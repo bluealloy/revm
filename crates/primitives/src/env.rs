@@ -47,6 +47,19 @@ impl Env {
         })
     }
 
+    /// Calculates the maximum [EIP-4844] `data_fee` of the transaction.
+    ///
+    /// This is used for ensuring that the user has at least enough funds to pay the
+    /// `max_fee_per_blob_gas * total_blob_gas`, on top of regular gas costs.
+    ///
+    /// See EIP-4844:
+    /// <https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md#execution-layer-validation>
+    pub fn calc_max_data_fee(&self) -> Option<U256> {
+        self.tx.max_fee_per_blob_gas.map(|max_fee_per_blob_gas| {
+            max_fee_per_blob_gas.saturating_mul(U256::from(self.tx.get_total_blob_gas()))
+        })
+    }
+
     /// Validate the block environment.
     #[inline]
     pub fn validate_block_env<SPEC: Spec>(&self) -> Result<(), InvalidHeader> {
@@ -218,7 +231,8 @@ impl Env {
             .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
 
         if SPEC::enabled(SpecId::CANCUN) {
-            let data_fee = self.calc_data_fee().expect("already checked");
+            // if the tx is not a blob tx, this will be None, so we add zero
+            let data_fee = self.calc_max_data_fee().unwrap_or_default();
             balance_check = balance_check
                 .checked_add(U256::from(data_fee))
                 .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
@@ -560,7 +574,7 @@ pub struct TxEnv {
 }
 
 impl TxEnv {
-    /// See [EIP-4844] and [`Env::calc_data_fee`].
+    /// See [EIP-4844], [`Env::calc_data_fee`], and [`Env::calc_max_data_fee`].
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     #[inline]
