@@ -2,6 +2,7 @@
 //! It is a great tool if some debugging is needed.
 
 use core::ops::Range;
+use revm_interpreter::CreateOutcome;
 
 use crate::{
     inspectors::GasInspector,
@@ -73,7 +74,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         context: &mut EvmContext<DB>,
         result: InterpreterResult,
         address: Option<Address>,
-    ) -> (InterpreterResult, Option<Address>) {
+    ) -> CreateOutcome {
         self.gas_inspector.create_end(context, result, address)
     }
 
@@ -97,7 +98,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         &mut self,
         _context: &mut EvmContext<DB>,
         inputs: &mut CreateInputs,
-    ) -> Option<(InterpreterResult, Option<Address>)> {
+    ) -> Option<CreateOutcome> {
         println!(
             "CREATE CALL: caller:{:?}, scheme:{:?}, value:{:?}, init_code:{:?}, gas:{:?}",
             inputs.caller, inputs.scheme, inputs.value, inputs.init_code, inputs.gas_limit
