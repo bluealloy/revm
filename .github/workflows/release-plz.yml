@@ -1,0 +1,41 @@
+# Documentation: https://release-plz.ieni.dev/docs
+name: Release-plz
+
+permissions:
+  pull-requests: write
+  contents: write
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  release-plz:
+    name: Release-plz
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        # Commits the cargo lock (generally a good practice for upstream libraries)
+      - name: Commit Cargo.lock
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add Cargo.lock
+          git commit -m "Update Cargo.lock" || echo "No changes to commit"
+        # This will run the release-plz action
+        # The action dectect API breaking changes detection with cargo-semver-checks.
+        # Semver is auto incremneted based on this
+        # A PR with the semver bump is created with a new release tag and changelog
+        # if you configure the cargo registry token, the action will also publish the new version to crates.io
+      - name: Run release-plz
+        uses: MarcoIeni/release-plz-action@v0.5
+        env:
+        # The admin of the repository with need to configure the following secrets:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}

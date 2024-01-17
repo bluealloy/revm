@@ -21,7 +21,8 @@ revm = { path = "../../crates/revm", version = "3.5.0", default-features = false
     "c-kzg",
 ] }
 alloy-rlp = { version = "0.3", default-features = false, features = [
-    "arrayvec",
+    "arrayvec", 
+    "derive",
 ] }
 serde = { version = "1.0", features = ["derive", "rc"] }
 serde_json = { version = "1.0", features = ["preserve_order"] }

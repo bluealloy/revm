@@ -1,4 +1,4 @@
-use crate::primitives::{hash_map::Entry, Bytecode, Bytes, HashMap, U256};
+use crate::primitives::{hash_map::Entry, Bytecode, HashMap, U256};
 use crate::{
     primitives::{Address, Env, Log, B256, KECCAK_EMPTY},
     Host, SelfDestructResult,
@@ -106,12 +106,8 @@ impl Host for DummyHost {
     }
 
     #[inline]
-    fn log(&mut self, address: Address, topics: Vec<B256>, data: Bytes) {
-        self.log.push(Log {
-            address,
-            topics,
-            data,
-        })
+    fn log(&mut self, log: Log) {
+        self.log.push(log)
     }
 
     #[inline]

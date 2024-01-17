@@ -190,7 +190,7 @@ macro_rules! as_u64_saturated {
 
 macro_rules! as_usize_saturated {
     ($v:expr) => {
-        as_u64_saturated!($v) as usize
+        ::core::convert::TryInto::<usize>::try_into(as_u64_saturated!($v)).unwrap_or(usize::MAX)
     };
 }
 
@@ -205,6 +205,10 @@ macro_rules! as_usize_or_fail {
             $interp.instruction_result = $reason;
             return;
         }
-        x[0] as usize
+        let Ok(val) = ::core::convert::TryInto::<usize>::try_into(x[0]) else {
+            $interp.instruction_result = $reason;
+            return;
+        };
+        val
     }};
 }
