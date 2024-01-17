@@ -119,7 +119,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
                         .get_inspector()
                         .create(&mut context.evm, &mut create_inputs)
                     {
-                        return FrameOrResult::Result(output.0);
+                        return FrameOrResult::Result(output.result);
                     };
                     context.evm.make_create_frame(spec_id, &create_inputs)
                 }
@@ -177,8 +177,8 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     handler.execution_loop.sub_create = Arc::new(
         move |context, frame, mut inputs| -> Option<Box<CallStackFrame>> {
             let inspector = context.external.get_inspector();
-            if let Some((result, address)) = inspector.create(&mut context.evm, &mut inputs) {
-                frame.interpreter.insert_create_output(result, address);
+            if let Some(create_outcome) = inspector.create(&mut context.evm, &mut inputs) {
+                frame.interpreter.insert_create_outcome(create_outcome);
                 return None;
             }
 
@@ -188,10 +188,10 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
                     Some(new_frame)
                 }
                 FrameOrResult::Result(result) => {
-                    let (result, address) =
+                    let create_outcome =
                         inspector.create_end(&mut context.evm, result, frame.created_address());
                     // insert result of the failed creation of create CallStackFrame.
-                    frame.interpreter.insert_create_output(result, address);
+                    frame.interpreter.insert_create_outcome(create_outcome);
                     None
                 }
             }
@@ -233,9 +233,12 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
             let inspector = &mut context.external.get_inspector();
             result = match &mut child.frame_data {
                 FrameData::Create { created_address } => {
-                    let (result, address) =
-                        inspector.create_end(&mut context.evm, result, Some(*created_address));
-                    if let Some(address) = address {
+                    let create_outcome = inspector.create_end(
+                        &mut context.evm,
+                        result.clone(),
+                        Some(*created_address),
+                    );
+                    if let Some(address) = create_outcome.address {
                         *created_address = address;
                     }
                     result
@@ -295,6 +298,8 @@ mod tests {
         primitives::{Address, BerlinSpec},
         Database, Evm, EvmContext, Inspector,
     };
+
+    use revm_interpreter::CreateOutcome;
 
     #[test]
     fn test_make_boxed_instruction_table() {
@@ -367,7 +372,7 @@ mod tests {
             &mut self,
             _context: &mut EvmContext<DB>,
             _call: &mut CreateInputs,
-        ) -> Option<(InterpreterResult, Option<Address>)> {
+        ) -> Option<CreateOutcome> {
             None
         }
 
@@ -376,8 +381,8 @@ mod tests {
             _context: &mut EvmContext<DB>,
             result: InterpreterResult,
             address: Option<Address>,
-        ) -> (InterpreterResult, Option<Address>) {
-            (result, address)
+        ) -> CreateOutcome {
+            CreateOutcome::new(result, address)
         }
     }
 
