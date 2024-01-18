@@ -1,5 +1,3 @@
-use core::ops::Range;
-
 use crate::{
     interpreter::{CallInputs, CreateInputs, Interpreter},
     primitives::{db::Database, Address, Log, U256},
@@ -18,7 +16,8 @@ mod noop;
 // Exports.
 
 pub use handler_register::{inspector_handle_register, inspector_instruction, GetInspector};
-use revm_interpreter::InterpreterResult;
+use revm_interpreter::{CallOutcome, CreateOutcome, InterpreterResult};
+
 /// [Inspector] implementations.
 pub mod inspectors {
     #[cfg(feature = "std")]
@@ -81,7 +80,7 @@ pub trait Inspector<DB: Database> {
         &mut self,
         context: &mut EvmContext<DB>,
         inputs: &mut CallInputs,
-    ) -> Option<(InterpreterResult, Range<usize>)> {
+    ) -> Option<CallOutcome> {
         let _ = context;
         let _ = inputs;
         None
@@ -109,7 +108,7 @@ pub trait Inspector<DB: Database> {
         &mut self,
         context: &mut EvmContext<DB>,
         inputs: &mut CreateInputs,
-    ) -> Option<(InterpreterResult, Option<Address>)> {
+    ) -> Option<CreateOutcome> {
         let _ = context;
         let _ = inputs;
         None
@@ -125,9 +124,9 @@ pub trait Inspector<DB: Database> {
         context: &mut EvmContext<DB>,
         result: InterpreterResult,
         address: Option<Address>,
-    ) -> (InterpreterResult, Option<Address>) {
+    ) -> CreateOutcome {
         let _ = context;
-        (result, address)
+        CreateOutcome::new(result, address)
     }
 
     /// Called when a contract has been self-destructed with funds transferred to target.

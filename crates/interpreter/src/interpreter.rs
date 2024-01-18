@@ -8,14 +8,15 @@ pub use contract::Contract;
 pub use shared_memory::{next_multiple_of_32, SharedMemory};
 pub use stack::{Stack, STACK_LIMIT};
 
+use crate::alloc::borrow::ToOwned;
 use crate::{
-    primitives::Bytes, push, push_b256, return_ok, return_revert, CallInputs, CreateInputs, Gas,
-    Host, InstructionResult,
+    primitives::Bytes, push, push_b256, return_ok, return_revert, CallInputs, CallOutcome,
+    CreateInputs, CreateOutcome, Gas, Host, InstructionResult,
 };
 use alloc::boxed::Box;
 use core::cmp::min;
 use core::ops::Range;
-use revm_primitives::{Address, U256};
+use revm_primitives::U256;
 
 pub use self::shared_memory::EMPTY_SHARED_MEMORY;
 
@@ -93,24 +94,52 @@ impl Interpreter {
         }
     }
 
-    /// When sub create call returns we can insert output of that call into this interpreter.
-    pub fn insert_create_output(&mut self, result: InterpreterResult, address: Option<Address>) {
-        self.return_data_buffer = match result.result {
+    /// Inserts the output of a `create` call into the interpreter.
+    ///
+    /// This function is used after a `create` call has been executed. It processes the outcome
+    /// of that call and updates the state of the interpreter accordingly.
+    ///
+    /// # Arguments
+    ///
+    /// * `create_outcome` - A `CreateOutcome` struct containing the results of the `create` call.
+    ///
+    /// # Behavior
+    ///
+    /// The function updates the `return_data_buffer` with the data from `create_outcome`.
+    /// Depending on the `InstructionResult` indicated by `create_outcome`, it performs one of the following:
+    ///
+    /// - `Ok`: Pushes the address from `create_outcome` to the stack, updates gas costs, and records any gas refunds.
+    /// - `Revert`: Pushes `U256::ZERO` to the stack and updates gas costs.
+    /// - `FatalExternalError`: Sets the `instruction_result` to `InstructionResult::FatalExternalError`.
+    /// - `Default`: Pushes `U256::ZERO` to the stack.
+    ///
+    /// # Side Effects
+    ///
+    /// - Updates `return_data_buffer` with the data from `create_outcome`.
+    /// - Modifies the stack by pushing values depending on the `InstructionResult`.
+    /// - Updates gas costs and records refunds in the interpreter's `gas` field.
+    /// - May alter `instruction_result` in case of external errors.
+    pub fn insert_create_outcome(&mut self, create_outcome: CreateOutcome) {
+        let instruction_result = create_outcome.instruction_result();
+
+        self.return_data_buffer = if instruction_result.is_revert() {
             // Save data to return data buffer if the create reverted
-            return_revert!() => result.output,
+            create_outcome.output().to_owned()
+        } else {
             // Otherwise clear it
-            _ => Bytes::new(),
+            Bytes::new()
         };
 
-        match result.result {
+        match instruction_result {
             return_ok!() => {
+                let address = create_outcome.address;
                 push_b256!(self, address.unwrap_or_default().into_word());
-                self.gas.erase_cost(result.gas.remaining());
-                self.gas.record_refund(result.gas.refunded());
+                self.gas.erase_cost(create_outcome.gas().remaining());
+                self.gas.record_refund(create_outcome.gas().refunded());
             }
             return_revert!() => {
                 push!(self, U256::ZERO);
-                self.gas.erase_cost(result.gas.remaining());
+                self.gas.erase_cost(create_outcome.gas().remaining());
             }
             InstructionResult::FatalExternalError => {
                 self.instruction_result = InstructionResult::FatalExternalError;
@@ -121,32 +150,51 @@ impl Interpreter {
         }
     }
 
-    /// When sub call returns we can insert output of that call into this interpreter.
+    /// Inserts the outcome of a call into the virtual machine's state.
     ///
-    /// Note that shared memory is required as a input field.
-    /// As SharedMemory inside Interpreter is taken and replaced with empty (not valid) memory.
-    pub fn insert_call_output(
+    /// This function takes the result of a call, represented by `CallOutcome`,
+    /// and updates the virtual machine's state accordingly. It involves updating
+    /// the return data buffer, handling gas accounting, and setting the memory
+    /// in shared storage based on the outcome of the call.
+    ///
+    /// # Arguments
+    ///
+    /// * `shared_memory` - A mutable reference to the shared memory used by the virtual machine.
+    /// * `call_outcome` - The outcome of the call to be processed, containing details such as
+    ///   instruction result, gas information, and output data.
+    ///
+    /// # Behavior
+    ///
+    /// The function first copies the output data from the call outcome to the virtual machine's
+    /// return data buffer. It then checks the instruction result from the call outcome:
+    ///
+    /// - `return_ok!()`: Processes successful execution, refunds gas, and updates shared memory.
+    /// - `return_revert!()`: Handles a revert by only updating the gas usage and shared memory.
+    /// - `InstructionResult::FatalExternalError`: Sets the instruction result to a fatal external error.
+    /// - Any other result: No specific action is taken.
+    pub fn insert_call_outcome(
         &mut self,
         shared_memory: &mut SharedMemory,
-        result: InterpreterResult,
-        memory_return_offset: Range<usize>,
+        call_outcome: CallOutcome,
     ) {
-        let out_offset = memory_return_offset.start;
-        let out_len = memory_return_offset.len();
+        let out_offset = call_outcome.memory_start();
+        let out_len = call_outcome.memory_length();
 
-        self.return_data_buffer = result.output;
+        self.return_data_buffer = call_outcome.output().to_owned();
         let target_len = min(out_len, self.return_data_buffer.len());
 
-        match result.result {
+        match call_outcome.instruction_result() {
             return_ok!() => {
                 // return unspend gas.
-                self.gas.erase_cost(result.gas.remaining());
-                self.gas.record_refund(result.gas.refunded());
+                let remaining = call_outcome.gas().remaining();
+                let refunded = call_outcome.gas().refunded();
+                self.gas.erase_cost(remaining);
+                self.gas.record_refund(refunded);
                 shared_memory.set(out_offset, &self.return_data_buffer[..target_len]);
                 push!(self, U256::from(1));
             }
             return_revert!() => {
-                self.gas.erase_cost(result.gas.remaining());
+                self.gas.erase_cost(call_outcome.gas().remaining());
                 shared_memory.set(out_offset, &self.return_data_buffer[..target_len]);
                 push!(self, U256::ZERO);
             }

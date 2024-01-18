@@ -1,7 +1,7 @@
 use crate::{
     db::Database,
     interpreter::{
-        return_ok, return_revert, CallInputs, CreateInputs, Gas, InstructionResult,
+        return_ok, return_revert, CallInputs, CreateInputs, CreateOutcome, Gas, InstructionResult,
         InterpreterResult, SharedMemory,
     },
     primitives::{Env, Spec, TransactTo},
@@ -9,6 +9,7 @@ use crate::{
 };
 use alloc::boxed::Box;
 use core::ops::Range;
+use revm_interpreter::CallOutcome;
 
 /// Creates first frame.
 #[inline]
@@ -92,9 +93,10 @@ pub fn frame_return<SPEC: Spec, EXT, DB: Database>(
             let Some(parent_stack_frame) = parent_stack_frame else {
                 return Some(result);
             };
+            let create_outcome = CreateOutcome::new(result, Some(created_address));
             parent_stack_frame
                 .interpreter
-                .insert_create_output(result, Some(created_address))
+                .insert_create_outcome(create_outcome)
         }
         FrameData::Call {
             return_memory_range,
@@ -105,12 +107,11 @@ pub fn frame_return<SPEC: Spec, EXT, DB: Database>(
             let Some(parent_stack_frame) = parent_stack_frame else {
                 return Some(result);
             };
+            let call_outcome = CallOutcome::new(result, return_memory_range);
 
-            parent_stack_frame.interpreter.insert_call_output(
-                shared_memory,
-                result,
-                return_memory_range,
-            )
+            parent_stack_frame
+                .interpreter
+                .insert_call_outcome(shared_memory, call_outcome)
         }
     }
     None
@@ -131,11 +132,10 @@ pub fn sub_call<SPEC: Spec, EXT, DB: Database>(
     {
         FrameOrResult::Frame(new_frame) => Some(new_frame),
         FrameOrResult::Result(result) => {
-            curent_stack_frame.interpreter.insert_call_output(
-                shared_memory,
-                result,
-                return_memory_offset,
-            );
+            let call_outcome = CallOutcome::new(result, return_memory_offset);
+            curent_stack_frame
+                .interpreter
+                .insert_call_outcome(shared_memory, call_outcome);
             None
         }
     }
@@ -151,10 +151,11 @@ pub fn sub_create<SPEC: Spec, EXT, DB: Database>(
     match context.evm.make_create_frame(SPEC::SPEC_ID, &inputs) {
         FrameOrResult::Frame(new_frame) => Some(new_frame),
         FrameOrResult::Result(result) => {
+            let create_outcome = CreateOutcome::new(result, None);
             // insert result of the failed creation of create CallStackFrame.
             curent_stack_frame
                 .interpreter
-                .insert_create_output(result, None);
+                .insert_create_outcome(create_outcome);
             None
         }
     }

@@ -20,7 +20,8 @@ pub fn optimism_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, 
     spec_to_generic!(handler.spec_id, {
         // Refund is calculated differently then mainnet.
         handler.execution_loop.first_frame_return = Arc::new(handle_call_return::<SPEC>);
-        // we reimburse caller the same was as in mainnet.
+        // An estimated batch cost is charged from the caller and added to L1 Fee Vault.
+        handler.pre_execution.deduct_caller = Arc::new(deduct_caller::<SPEC, EXT, DB>);
         handler.post_execution.reward_beneficiary = Arc::new(reward_beneficiary::<SPEC, EXT, DB>);
         // In case of halt of deposit transaction return Error.
         handler.post_execution.output = Arc::new(output::<SPEC, EXT, DB>);
@@ -125,7 +126,9 @@ pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
     if context.evm.env.tx.optimism.source_hash.is_none() {
         // get envelope
         let Some(enveloped_tx) = context.evm.env.tx.optimism.enveloped_tx.clone() else {
-            panic!("[OPTIMISM] Failed to load enveloped transaction.");
+            return Err(EVMError::Custom(
+                "[OPTIMISM] Failed to load enveloped transaction.".to_string(),
+            ));
         };
 
         let tx_l1_cost = context
@@ -166,11 +169,15 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
         // If the transaction is not a deposit transaction, fees are paid out
         // to both the Base Fee Vault as well as the L1 Fee Vault.
         let Some(l1_block_info) = context.evm.l1_block_info.clone() else {
-            panic!("[OPTIMISM] Failed to load L1 block information.");
+            return Err(EVMError::Custom(
+                "[OPTIMISM] Failed to load L1 block information.".to_string(),
+            ));
         };
 
         let Some(enveloped_tx) = &context.evm.env.tx.optimism.enveloped_tx else {
-            panic!("[OPTIMISM] Failed to load enveloped transaction.");
+            return Err(EVMError::Custom(
+                "[OPTIMISM] Failed to load enveloped transaction.".to_string(),
+            ));
         };
 
         let l1_cost = l1_block_info.calculate_tx_l1_cost(enveloped_tx, SPEC::SPEC_ID);
@@ -181,7 +188,9 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
             .journaled_state
             .load_account(optimism::L1_FEE_RECIPIENT, &mut context.evm.db)
         else {
-            panic!("[OPTIMISM] Failed to load L1 Fee Vault account");
+            return Err(EVMError::Custom(
+                "[OPTIMISM] Failed to load L1 Fee Vault account.".to_string(),
+            ));
         };
         l1_fee_vault_account.mark_touch();
         l1_fee_vault_account.info.balance += l1_cost;
@@ -192,7 +201,9 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
             .journaled_state
             .load_account(optimism::BASE_FEE_RECIPIENT, &mut context.evm.db)
         else {
-            panic!("[OPTIMISM] Failed to load Base Fee Vault account");
+            return Err(EVMError::Custom(
+                "[OPTIMISM] Failed to load Base Fee Vault account.".to_string(),
+            ));
         };
         base_fee_vault_account.mark_touch();
         base_fee_vault_account.info.balance += context

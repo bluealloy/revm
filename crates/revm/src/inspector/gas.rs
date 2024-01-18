@@ -1,5 +1,7 @@
 //! GasIspector. Helper Inspector to calculate gas for others.
 
+use revm_interpreter::CreateOutcome;
+
 use crate::{
     interpreter::InterpreterResult,
     primitives::{db::Database, Address},
@@ -59,13 +61,16 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         _context: &mut EvmContext<DB>,
         result: InterpreterResult,
         address: Option<Address>,
-    ) -> (InterpreterResult, Option<Address>) {
-        (result, address)
+    ) -> CreateOutcome {
+        CreateOutcome::new(result, address)
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use revm_interpreter::CallOutcome;
+    use revm_interpreter::CreateOutcome;
+
     use crate::{
         inspector::GetInspector,
         inspectors::GasInspector,
@@ -73,7 +78,6 @@ mod tests {
         primitives::{Address, Log},
         Database, EvmContext, Inspector,
     };
-    use core::ops::Range;
 
     #[derive(Default, Debug)]
     struct StackInspector {
@@ -112,7 +116,7 @@ mod tests {
             &mut self,
             context: &mut EvmContext<DB>,
             call: &mut CallInputs,
-        ) -> Option<(InterpreterResult, Range<usize>)> {
+        ) -> Option<CallOutcome> {
             self.gas_inspector.call(context, call)
         }
 
@@ -128,7 +132,7 @@ mod tests {
             &mut self,
             context: &mut EvmContext<DB>,
             call: &mut CreateInputs,
-        ) -> Option<(InterpreterResult, Option<Address>)> {
+        ) -> Option<CreateOutcome> {
             self.gas_inspector.create(context, call);
             None
         }
@@ -138,7 +142,7 @@ mod tests {
             context: &mut EvmContext<DB>,
             result: InterpreterResult,
             address: Option<Address>,
-        ) -> (InterpreterResult, Option<Address>) {
+        ) -> CreateOutcome {
             self.gas_inspector.create_end(context, result, address)
         }
     }

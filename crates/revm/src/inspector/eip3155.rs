@@ -4,7 +4,9 @@ use crate::{
     primitives::{db::Database, hex, Address, U256},
     EvmContext, GetInspector, Inspector,
 };
-use core::ops::Range;
+
+use revm_interpreter::CallOutcome;
+use revm_interpreter::CreateOutcome;
 use serde_json::json;
 use std::io::Write;
 
@@ -89,7 +91,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         &mut self,
         _context: &mut EvmContext<DB>,
         _inputs: &mut CallInputs,
-    ) -> Option<(InterpreterResult, Range<usize>)> {
+    ) -> Option<CallOutcome> {
         None
     }
 
@@ -118,7 +120,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         &mut self,
         _context: &mut EvmContext<DB>,
         _inputs: &mut CreateInputs,
-    ) -> Option<(InterpreterResult, Option<Address>)> {
+    ) -> Option<CreateOutcome> {
         None
     }
 
@@ -127,7 +129,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         context: &mut EvmContext<DB>,
         result: InterpreterResult,
         address: Option<Address>,
-    ) -> (InterpreterResult, Option<Address>) {
+    ) -> CreateOutcome {
         self.gas_inspector.create_end(context, result, address)
     }
 }

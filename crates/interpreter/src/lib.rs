@@ -12,6 +12,8 @@ extern crate alloc;
 #[macro_use]
 mod macros;
 
+mod call_outcome;
+mod create_outcome;
 pub mod gas;
 mod host;
 mod inner_models;
@@ -20,6 +22,8 @@ pub mod instructions;
 mod interpreter;
 
 // Reexport primary types.
+pub use call_outcome::CallOutcome;
+pub use create_outcome::CreateOutcome;
 pub use gas::Gas;
 pub use host::{DummyHost, Host};
 pub use inner_models::*;
