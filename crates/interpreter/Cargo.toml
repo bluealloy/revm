@@ -17,7 +17,7 @@ serde = { version = "1.0", default-features = false, features = ["derive", "rc"]
 
 [features]
 default = ["std"]
-std = ["revm-primitives/std"]
+std = ["serde?/std", "revm-primitives/std"]
 serde = ["dep:serde", "revm-primitives/serde"]
 arbitrary = ["std", "revm-primitives/arbitrary"]
 

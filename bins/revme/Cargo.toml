@@ -24,8 +24,12 @@ alloy-rlp = { version = "0.3", default-features = false, features = [
     "arrayvec",
 ] }
 serde = { version = "1.0", default-features = false, features = ["derive", "rc"] }
-serde_json = { version = "1.0", default-features = false }
+serde_json = { version = "1.0", default-features = false, features = ["alloc"]}
 structopt = "0.3"
 thiserror = "1.0"
 triehash = "0.8"
 walkdir = "2.4"
+
+[features]
+default = ["std"]
+std = ["serde/std", "serde_json/std", "alloy-rlp/std", "revm/std"]

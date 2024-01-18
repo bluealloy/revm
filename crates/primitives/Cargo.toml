@@ -38,13 +38,7 @@ hex = { version = "0.4", default-features = false }
 
 [features]
 default = ["std", "c-kzg"]
-std = [
-    "alloy-primitives/std",
-    "alloy-rlp/std",
-    "hex/std",
-    "bitvec/std",
-    "bitflags/std",
-]
+std = ["serde?/std", "alloy-rlp/std", "hex/std", "bitvec/std", "bitflags/std"]
 serde = [
     "dep:serde",
     "alloy-primitives/serde",
