@@ -20,7 +20,8 @@ pub fn optimism_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, 
     spec_to_generic!(handler.spec_id, {
         // Refund is calculated differently then mainnet.
         handler.execution_loop.first_frame_return = Arc::new(handle_call_return::<SPEC>);
-        // we reimburse caller the same was as in mainnet.
+        // An estimated batch cost is charged from the caller and added to L1 Fee Vault.
+        handler.pre_execution.deduct_caller = Arc::new(deduct_caller::<SPEC, EXT, DB>);
         handler.post_execution.reward_beneficiary = Arc::new(reward_beneficiary::<SPEC, EXT, DB>);
         // In case of halt of deposit transaction return Error.
         handler.post_execution.output = Arc::new(output::<SPEC, EXT, DB>);
