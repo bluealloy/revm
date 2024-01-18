@@ -1,6 +1,7 @@
 pub mod merkle_trie;
 pub mod models;
 mod runner;
+pub mod utils;
 
 pub use runner::TestError as Error;
 

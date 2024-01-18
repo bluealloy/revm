@@ -2447,6 +2447,7 @@ dependencies = [
  "hash-db",
  "hashbrown",
  "indicatif",
+ "k256",
  "plain_hasher",
  "revm",
  "serde",
