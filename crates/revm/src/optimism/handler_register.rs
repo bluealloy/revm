@@ -90,7 +90,8 @@ pub fn handle_call_return<SPEC: Spec>(
         _ => {}
     }
     // Prior to Regolith, deposit transactions did not receive gas refunds.
-    if !is_deposit && SPEC::enabled(REGOLITH) {
+    let is_gas_refund_disabled = is_optimism && is_deposit && !is_regolith;
+    if !is_gas_refund_disabled {
         gas.set_final_refund::<SPEC>()
     }
 
