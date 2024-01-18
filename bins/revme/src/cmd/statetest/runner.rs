@@ -14,6 +14,7 @@ use revm::{
     },
     Evm, State,
 };
+use serde_json::json;
 use std::{
     convert::Infallible,
     io::{stderr, stdout},
@@ -111,7 +112,32 @@ fn check_evm_execution<EXT>(
     test_name: &str,
     exec_result: &EVMResultGeneric<ExecutionResult, Infallible>,
     evm: &Evm<'_, EXT, &mut State<EmptyDB>>,
+    is_json_trace: bool,
 ) -> Result<(), TestError> {
+    let logs_root = log_rlp_hash(&exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
+    let state_root = state_merkle_trie_root(evm.context.evm.db.cache.trie_account());
+
+    let print_json_output = |error: Option<String>| {
+        if is_json_trace {
+            let json = json!({
+                    "stateRoot": state_root,
+                    "logsRoot": logs_root,
+                    "output": exec_result.as_ref().ok().and_then(|r| r.output().cloned()).unwrap_or_default(),
+                    "gasUsed": exec_result.as_ref().ok().map(|r| r.gas_used()).unwrap_or_default(),
+                    "pass": error.is_none(),
+                    "errorMsg": error.unwrap_or_default(),
+                    "evmResult": exec_result.as_ref().err().map(|e| e.to_string()).unwrap_or("Ok".to_string()),
+                    "postLogsHash": logs_root,
+                    "fork": evm.handler.spec_id(),
+                    "test": test_name,
+                    "d": test.indexes.data,
+                    "g": test.indexes.gas,
+                    "v": test.indexes.value,
+            });
+            eprintln!("{json}");
+        }
+    };
+
     // if we expect exception revm should return error from execution.
     // So we do not check logs and state root.
     //
@@ -128,12 +154,14 @@ fn check_evm_execution<EXT>(
             // check output
             if let Some((expected_output, output)) = expected_output.zip(result.output()) {
                 if expected_output != output {
+                    let kind = TestErrorKind::UnexpecteOutput {
+                        expected_output: Some(expected_output.clone()),
+                        got_output: result.output().cloned(),
+                    };
+                    print_json_output(Some(kind.to_string()));
                     return Err(TestError {
                         name: test_name.to_string(),
-                        kind: TestErrorKind::UnexpecteOutput {
-                            expected_output: Some(expected_output.clone()),
-                            got_output: result.output().cloned(),
-                        },
+                        kind,
                     });
                 }
             }
@@ -141,39 +169,43 @@ fn check_evm_execution<EXT>(
         // return okay, exception is expected.
         (Some(_), Err(_)) => return Ok(()),
         _ => {
+            let kind = TestErrorKind::UnexpectedException {
+                expected_exception: test.expect_exception.clone(),
+                got_exception: exec_result.clone().err().map(|e| e.to_string()),
+            };
+            print_json_output(Some(kind.to_string()));
             return Err(TestError {
                 name: test_name.to_string(),
-                kind: TestErrorKind::UnexpectedException {
-                    expected_exception: test.expect_exception.clone(),
-                    got_exception: exec_result.clone().err().map(|e| e.to_string()),
-                },
+                kind,
             });
         }
     }
 
-    let logs_root = log_rlp_hash(&exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
-
     if logs_root != test.logs {
+        let kind = TestErrorKind::LogsRootMismatch {
+            got: logs_root,
+            expected: test.logs,
+        };
+        print_json_output(Some(kind.to_string()));
         return Err(TestError {
             name: test_name.to_string(),
-            kind: TestErrorKind::LogsRootMismatch {
-                got: logs_root,
-                expected: test.logs,
-            },
+            kind,
         });
     }
-
-    let state_root = state_merkle_trie_root(evm.context.evm.db.cache.trie_account());
 
     if state_root != test.hash {
+        let kind = TestErrorKind::StateRootMismatch {
+            got: state_root,
+            expected: test.hash,
+        };
+        print_json_output(Some(kind.to_string()));
         return Err(TestError {
             name: test_name.to_string(),
-            kind: TestErrorKind::StateRootMismatch {
-                got: state_root,
-                expected: test.hash,
-            },
+            kind,
         });
     }
+
+    print_json_output(None);
 
     Ok(())
 }
@@ -360,7 +392,8 @@ pub fn execute_test_suite(
                         .build();
                     let res = evm.transact_commit();
 
-                    let Err(e) = check_evm_execution(&test, unit.out.as_ref(), &name, &res, &evm)
+                    let Err(e) =
+                        check_evm_execution(&test, unit.out.as_ref(), &name, &res, &evm, trace)
                     else {
                         continue;
                     };
@@ -370,8 +403,9 @@ pub fn execute_test_suite(
                     let res = evm.transact_commit();
 
                     // dump state and traces if test failed
-                    let Err(e) = check_evm_execution(&test, unit.out.as_ref(), &name, &res, &evm)
-                    else {
+                    let output =
+                        check_evm_execution(&test, unit.out.as_ref(), &name, &res, &evm, trace);
+                    let Err(e) = output else {
                         continue;
                     };
                     (e, res)
@@ -381,7 +415,7 @@ pub fn execute_test_suite(
                 // print only once or
                 // if we are already in trace mode, just return error
                 static FAILED: AtomicBool = AtomicBool::new(false);
-                if FAILED.swap(true, Ordering::SeqCst) || trace {
+                if FAILED.swap(true, Ordering::SeqCst) {
                     return Err(e);
                 }
 
