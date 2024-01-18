@@ -1,7 +1,7 @@
+use alloc::boxed::Box;
 pub use c_kzg::{BYTES_PER_G1_POINT, BYTES_PER_G2_POINT};
 use core::fmt::Display;
 use derive_more::{AsMut, AsRef, Deref, DerefMut};
-use std::error::Error;
 
 /// Number of G1 Points.
 pub const NUM_G1_POINTS: usize = 4096;
@@ -129,4 +129,5 @@ impl Display for KzgErrors {
     }
 }
 
-impl Error for KzgErrors {}
+#[cfg(feature = "std")]
+impl std::error::Error for KzgErrors {}

@@ -5,6 +5,7 @@ mod constants;
 
 pub use calc::*;
 pub use constants::*;
+use revm_primitives::{Spec, SpecId::LONDON};
 
 /// Represents the state of gas during execution.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
@@ -80,6 +81,16 @@ impl Gas {
         self.refunded += refund;
     }
 
+    /// Set a refund value for final refund.
+    ///
+    /// Max refund value is limited to Nth part (depending of fork) of gas spend.
+    ///
+    /// Related to EIP-3529: Reduction in refunds
+    pub fn set_final_refund<SPEC: Spec>(&mut self) {
+        let max_refund_quotient = if SPEC::enabled(LONDON) { 5 } else { 2 };
+        self.refunded = (self.refunded() as u64).min(self.spend() / max_refund_quotient) as i64;
+    }
+
     /// Set a refund value
     pub fn set_refund(&mut self, refund: i64) {
         self.refunded = refund;
@@ -100,7 +111,7 @@ impl Gas {
         true
     }
 
-    /// used in memory_resize! macro to record gas used for memory expansion.
+    /// used in shared_memory_resize! macro to record gas used for memory expansion.
     #[inline]
     pub fn record_memory(&mut self, gas_memory: u64) -> bool {
         if gas_memory > self.memory {

@@ -21,7 +21,7 @@ pub struct SharedMemory {
     checkpoints: Vec<usize>,
     /// Invariant: equals `self.checkpoints.last()`
     last_checkpoint: usize,
-    /// Memory limit. See [`crate::CfgEnv`].
+    /// Memory limit. See [`CfgEnv`](revm_primitives::CfgEnv).
     #[cfg(feature = "memory_limit")]
     memory_limit: u64,
 }

@@ -12,19 +12,22 @@ readme = "../../README.md"
 # Don't need to run build script outside of this repo
 exclude = ["build.rs", "src/kzg/*.txt"]
 
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
 [dependencies]
-alloy-primitives = { version = "0.5", default-features = false, features = [
+alloy-primitives = { version = "0.6", default-features = false, features = [
     "rlp",
 ] }
-alloy-rlp = { version = "0.3", default-features = false, features = ["derive"] }
 hashbrown = "0.14"
 auto_impl = "1.1"
 bitvec = { version = "1", default-features = false, features = ["alloc"] }
-bitflags = { version = "2.4.1", default-features = false }
+bitflags = { version = "2.4.2", default-features = false }
 
 # For setting the CfgEnv KZGSettings. Enabled by c-kzg flag.
 c-kzg = { version = "0.4.0", default-features = false, optional = true }
-once_cell = { version = "1.18", default-features = false, optional = true }
+once_cell = { version = "1.19", default-features = false, optional = true }
 
 # utility
 enumn = "0.1"
@@ -38,7 +41,13 @@ hex = { version = "0.4", default-features = false }
 
 [features]
 default = ["std", "c-kzg"]
-std = ["serde?/std", "alloy-rlp/std", "hex/std", "bitvec/std", "bitflags/std"]
+std = [
+    "serde?/std",
+    "alloy-primitives/std",
+    "hex/std",
+    "bitvec/std",
+    "bitflags/std",
+]
 serde = [
     "dep:serde",
     "alloy-primitives/serde",
@@ -49,6 +58,7 @@ serde = [
     "c-kzg?/serde",
 ]
 arbitrary = ["std", "alloy-primitives/arbitrary", "bitflags/arbitrary"]
+asm-keccak = ["alloy-primitives/asm-keccak"]
 
 optimism = []
 

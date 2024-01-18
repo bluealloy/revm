@@ -19,6 +19,12 @@ pub struct Env {
 }
 
 impl Env {
+    /// Resets environment to default values.
+    #[inline]
+    pub fn clear(&mut self) {
+        *self = Self::default();
+    }
+
     /// Calculates the effective gas price of the transaction.
     #[inline]
     pub fn effective_gas_price(&self) -> U256 {
@@ -38,6 +44,19 @@ impl Env {
     pub fn calc_data_fee(&self) -> Option<U256> {
         self.block.get_blob_gasprice().map(|blob_gas_price| {
             U256::from(blob_gas_price).saturating_mul(U256::from(self.tx.get_total_blob_gas()))
+        })
+    }
+
+    /// Calculates the maximum [EIP-4844] `data_fee` of the transaction.
+    ///
+    /// This is used for ensuring that the user has at least enough funds to pay the
+    /// `max_fee_per_blob_gas * total_blob_gas`, on top of regular gas costs.
+    ///
+    /// See EIP-4844:
+    /// <https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md#execution-layer-validation>
+    pub fn calc_max_data_fee(&self) -> Option<U256> {
+        self.tx.max_fee_per_blob_gas.map(|max_fee_per_blob_gas| {
+            max_fee_per_blob_gas.saturating_mul(U256::from(self.tx.get_total_blob_gas()))
         })
     }
 
@@ -75,10 +94,6 @@ impl Env {
             }
         }
 
-        let gas_limit = self.tx.gas_limit;
-        let effective_gas_price = self.effective_gas_price();
-        let is_create = self.tx.transact_to.is_create();
-
         // BASEFEE tx check
         if SPEC::enabled(SpecId::LONDON) {
             if let Some(priority_fee) = self.tx.gas_priority_fee {
@@ -87,28 +102,31 @@ impl Env {
                     return Err(InvalidTransaction::PriorityFeeGreaterThanMaxFee);
                 }
             }
-            let basefee = self.block.basefee;
 
             // check minimal cost against basefee
-            if !self.cfg.is_base_fee_check_disabled() && effective_gas_price < basefee {
+            if !self.cfg.is_base_fee_check_disabled()
+                && self.effective_gas_price() < self.block.basefee
+            {
                 return Err(InvalidTransaction::GasPriceLessThanBasefee);
             }
         }
 
         // Check if gas_limit is more than block_gas_limit
-        if !self.cfg.is_block_gas_limit_disabled() && U256::from(gas_limit) > self.block.gas_limit {
+        if !self.cfg.is_block_gas_limit_disabled()
+            && U256::from(self.tx.gas_limit) > self.block.gas_limit
+        {
             return Err(InvalidTransaction::CallerGasLimitMoreThanBlock);
         }
 
         // EIP-3860: Limit and meter initcode
-        if SPEC::enabled(SpecId::SHANGHAI) && is_create {
+        if SPEC::enabled(SpecId::SHANGHAI) && self.tx.transact_to.is_create() {
             let max_initcode_size = self
                 .cfg
                 .limit_contract_code_size
                 .map(|limit| limit.saturating_mul(2))
                 .unwrap_or(MAX_INITCODE_SIZE);
             if self.tx.data.len() > max_initcode_size {
-                return Err(InvalidTransaction::CreateInitcodeSizeLimit);
+                return Err(InvalidTransaction::CreateInitCodeSizeLimit);
             }
         }
 
@@ -136,7 +154,6 @@ impl Env {
                 }
 
                 // there must be at least one blob
-                // assert len(tx.blob_versioned_hashes) > 0
                 if self.tx.blob_hashes.is_empty() {
                     return Err(InvalidTransaction::EmptyBlobs);
                 }
@@ -176,7 +193,7 @@ impl Env {
 
     /// Validate transaction against state.
     #[inline]
-    pub fn validate_tx_against_state(
+    pub fn validate_tx_against_state<SPEC: Spec>(
         &self,
         account: &mut Account,
     ) -> Result<(), InvalidTransaction> {
@@ -213,8 +230,9 @@ impl Env {
             .and_then(|gas_cost| gas_cost.checked_add(self.tx.value))
             .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
 
-        if SpecId::enabled(self.cfg.spec_id, SpecId::CANCUN) {
-            let data_fee = self.calc_data_fee().expect("already checked");
+        if SPEC::enabled(SpecId::CANCUN) {
+            // if the tx is not a blob tx, this will be None, so we add zero
+            let data_fee = self.calc_max_data_fee().unwrap_or_default();
             balance_check = balance_check
                 .checked_add(U256::from(data_fee))
                 .ok_or(InvalidTransaction::OverflowPaymentInTransaction)?;
@@ -243,8 +261,9 @@ impl Env {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct CfgEnv {
+    /// Chain ID of the EVM, it will be compared to the transaction's Chain ID.
+    /// Chain ID is introduced EIP-155
     pub chain_id: u64,
-    pub spec_id: SpecId,
     /// KZG Settings for point evaluation precompile. By default, this is loaded from the ethereum mainnet trusted setup.
     #[cfg(feature = "c-kzg")]
     #[cfg_attr(feature = "serde", serde(skip))]
@@ -352,12 +371,12 @@ impl CfgEnv {
         false
     }
 
-    #[cfg(feaure = "optional_beneficiary_reward")]
+    #[cfg(feature = "optional_beneficiary_reward")]
     pub fn is_beneficiary_reward_disabled(&self) -> bool {
         self.disable_beneficiary_reward
     }
 
-    #[cfg(not(feaure = "optional_beneficiary_reward"))]
+    #[cfg(not(feature = "optional_beneficiary_reward"))]
     pub fn is_beneficiary_reward_disabled(&self) -> bool {
         false
     }
@@ -377,7 +396,6 @@ impl Default for CfgEnv {
     fn default() -> Self {
         Self {
             chain_id: 1,
-            spec_id: SpecId::LATEST,
             perf_analyse_created_bytecodes: AnalysisKind::default(),
             limit_contract_code_size: None,
             #[cfg(feature = "c-kzg")]
@@ -472,6 +490,12 @@ impl BlockEnv {
             .as_ref()
             .map(|a| a.excess_blob_gas)
     }
+
+    /// Clears environment and resets fields to default values.
+    #[inline]
+    pub fn clear(&mut self) {
+        *self = Self::default();
+    }
 }
 
 impl Default for BlockEnv {
@@ -550,12 +574,18 @@ pub struct TxEnv {
 }
 
 impl TxEnv {
-    /// See [EIP-4844] and [`Env::calc_data_fee`].
+    /// See [EIP-4844], [`Env::calc_data_fee`], and [`Env::calc_max_data_fee`].
     ///
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     #[inline]
     pub fn get_total_blob_gas(&self) -> u64 {
         GAS_PER_BLOB * self.blob_hashes.len() as u64
+    }
+
+    /// Clears environment and resets fields to default values.
+    #[inline]
+    pub fn clear(&mut self) {
+        *self = Self::default();
     }
 }
 
@@ -742,13 +772,15 @@ mod tests {
     #[test]
     fn test_validate_tx_against_state_deposit_tx() {
         // Set the optimism flag and source hash.
+
+        use crate::LatestSpec;
         let mut env = Env::default();
         env.cfg.optimism = true;
         env.tx.optimism.source_hash = Some(B256::ZERO);
 
         // Nonce and balance checks should be skipped for deposit transactions.
         assert!(env
-            .validate_tx_against_state(&mut Account::default())
+            .validate_tx_against_state::<LatestSpec>(&mut Account::default())
             .is_ok());
     }
 
