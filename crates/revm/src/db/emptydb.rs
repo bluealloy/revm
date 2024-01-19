@@ -1,3 +1,4 @@
+use alloc::string::ToString;
 use core::{convert::Infallible, fmt, marker::PhantomData};
 use revm_interpreter::primitives::{
     db::{Database, DatabaseRef},
