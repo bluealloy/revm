@@ -22,8 +22,13 @@ pub struct Cmd {
     #[structopt(short = "s", long)]
     single_thread: bool,
     /// Output results in JSON format.
+    /// It will stop second run of evm on failure.
     #[structopt(long)]
     json: bool,
+    /// Output outcome in JSON format. If json is true, this is implied.
+    /// It will stop second run of evm on failure.
+    #[structopt(short = "o", long)]
+    json_outcome: bool,
 }
 
 impl Cmd {
@@ -32,11 +37,7 @@ impl Cmd {
         for path in &self.path {
             println!("\nRunning tests in {}...", path.display());
             let test_files = find_all_json_tests(path);
-            run(
-                test_files,
-                if self.json { true } else { self.single_thread },
-                self.json,
-            )?
+            run(test_files, self.single_thread, self.json, self.json_outcome)?
         }
         Ok(())
     }

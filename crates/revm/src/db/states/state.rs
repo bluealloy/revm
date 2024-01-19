@@ -315,9 +315,9 @@ mod tests {
 
         let test_number = BLOCK_HASH_HISTORY as u64 + 2;
 
-        let block1_hash = keccak256(U256::from(1).to_be_bytes::<{ U256::BYTES }>());
-        let block2_hash = keccak256(U256::from(2).to_be_bytes::<{ U256::BYTES }>());
-        let block_test_hash = keccak256(U256::from(test_number).to_be_bytes::<{ U256::BYTES }>());
+        let block1_hash = keccak256(U256::from(1).to_string().as_bytes());
+        let block2_hash = keccak256(U256::from(2).to_string().as_bytes());
+        let block_test_hash = keccak256(U256::from(test_number).to_string().as_bytes());
 
         assert_eq!(
             state.block_hashes,

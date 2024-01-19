@@ -113,13 +113,13 @@ fn check_evm_execution<EXT>(
     test_name: &str,
     exec_result: &EVMResultGeneric<ExecutionResult, Infallible>,
     evm: &Evm<'_, EXT, &mut State<EmptyDB>>,
-    is_json_trace: bool,
+    print_json_outcome: bool,
 ) -> Result<(), TestError> {
     let logs_root = log_rlp_hash(&exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
     let state_root = state_merkle_trie_root(evm.context.evm.db.cache.trie_account());
 
     let print_json_output = |error: Option<String>| {
-        if is_json_trace {
+        if print_json_outcome {
             let json = json!({
                     "stateRoot": state_root,
                     "logsRoot": logs_root,
@@ -215,6 +215,7 @@ pub fn execute_test_suite(
     path: &Path,
     elapsed: &Arc<Mutex<Duration>>,
     trace: bool,
+    print_json_outcome: bool,
 ) -> Result<(), TestError> {
     if skip_test(path) {
         return Ok(());
@@ -252,7 +253,7 @@ pub fn execute_test_suite(
         env.block.basefee = unit.env.current_base_fee.unwrap_or_default();
         env.block.difficulty = unit.env.current_difficulty;
         // after the Merge prevrandao replaces mix_hash field in block and replaced difficulty opcode in EVM.
-        env.block.prevrandao = Some(unit.env.current_difficulty.to_be_bytes().into());
+        env.block.prevrandao = unit.env.current_random;
         // EIP-4844
         if let (Some(parent_blob_gas_used), Some(parent_excess_blob_gas)) = (
             unit.env.parent_blob_gas_used,
@@ -361,9 +362,14 @@ pub fn execute_test_suite(
                         .build();
                     let res = evm.transact_commit();
 
-                    let Err(e) =
-                        check_evm_execution(&test, unit.out.as_ref(), &name, &res, &evm, trace)
-                    else {
+                    let Err(e) = check_evm_execution(
+                        &test,
+                        unit.out.as_ref(),
+                        &name,
+                        &res,
+                        &evm,
+                        print_json_outcome,
+                    ) else {
                         continue;
                     };
                     // reset external context
@@ -372,8 +378,14 @@ pub fn execute_test_suite(
                     let res = evm.transact_commit();
 
                     // dump state and traces if test failed
-                    let output =
-                        check_evm_execution(&test, unit.out.as_ref(), &name, &res, &evm, trace);
+                    let output = check_evm_execution(
+                        &test,
+                        unit.out.as_ref(),
+                        &name,
+                        &res,
+                        &evm,
+                        print_json_outcome,
+                    );
                     let Err(e) = output else {
                         continue;
                     };
@@ -428,8 +440,14 @@ pub fn run(
     test_files: Vec<PathBuf>,
     mut single_thread: bool,
     trace: bool,
+    mut print_outcome: bool,
 ) -> Result<(), TestError> {
+    // trace implies print_outcome
     if trace {
+        print_outcome = true;
+    }
+    // print_outcome or trace implies single_thread
+    if print_outcome {
         single_thread = true;
     }
     let n_files = test_files.len();
@@ -471,7 +489,7 @@ pub fn run(
                 (prev_idx, test_path)
             };
 
-            if let Err(err) = execute_test_suite(&test_path, &elapsed, trace) {
+            if let Err(err) = execute_test_suite(&test_path, &elapsed, trace, print_outcome) {
                 endjob.store(true, Ordering::SeqCst);
                 return Err(err);
             }
