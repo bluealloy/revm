@@ -92,7 +92,7 @@ pub fn handle_call_return<SPEC: Spec>(
     // Prior to Regolith, deposit transactions did not receive gas refunds.
     let is_gas_refund_disabled = is_optimism && is_deposit && !is_regolith;
     if !is_gas_refund_disabled {
-        gas.set_final_refund::<SPEC>()
+        gas.set_final_refund::<SPEC>();
     }
 
     gas
@@ -373,7 +373,7 @@ mod tests {
         let gas = handle_call_return::<RegolithSpec>(&env, InstructionResult::Stop, ret_gas);
         assert_eq!(gas.remaining(), 90);
         assert_eq!(gas.spend(), 10);
-        assert_eq!(gas.refunded(), 20);
+        assert_eq!(gas.refunded(), 2); // min(20, 10/5)
 
         let gas = handle_call_return::<RegolithSpec>(&env, InstructionResult::Revert, ret_gas);
         assert_eq!(gas.remaining(), 90);
