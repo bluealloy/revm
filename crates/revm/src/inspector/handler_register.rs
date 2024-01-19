@@ -9,7 +9,7 @@ use crate::{
     CallStackFrame, Evm, FrameData, FrameOrResult, Inspector, JournalEntry,
 };
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
-use revm_interpreter::CreateInputs;
+use revm_interpreter::{CallOutcome, CreateInputs};
 
 pub trait GetInspector<'a, DB: Database> {
     fn get_inspector(&mut self) -> &mut dyn Inspector<DB>;
@@ -106,7 +106,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
                         .get_inspector()
                         .call(&mut context.evm, &mut call_inputs)
                     {
-                        return FrameOrResult::Result(output.0);
+                        return FrameOrResult::Result(output.interpreter_result);
                     }
                     // first call frame does not have return range.
                     context.evm.make_call_frame(&call_inputs, 0..0)
@@ -203,8 +203,8 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
         move |context, mut inputs, frame, memory, return_memory_offset| -> Option<Box<_>> {
             // inspector handle
             let inspector = context.external.get_inspector();
-            if let Some((result, range)) = inspector.call(&mut context.evm, &mut inputs) {
-                frame.interpreter.insert_call_output(memory, result, range);
+            if let Some(call_outcome) = inspector.call(&mut context.evm, &mut inputs) {
+                frame.interpreter.insert_call_outcome(memory, call_outcome);
                 return None;
             }
             match context
@@ -218,9 +218,8 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
                 FrameOrResult::Result(result) => {
                     // inspector handle
                     let result = inspector.call_end(&mut context.evm, result);
-                    frame
-                        .interpreter
-                        .insert_call_output(memory, result, return_memory_offset);
+                    let call_outcome = CallOutcome::new(result, return_memory_offset);
+                    frame.interpreter.insert_call_outcome(memory, call_outcome);
                     None
                 }
             }
@@ -299,7 +298,7 @@ mod tests {
         primitives::{Address, BerlinSpec},
         Database, Evm, EvmContext, Inspector,
     };
-    use core::ops::Range;
+
     use revm_interpreter::CreateOutcome;
 
     #[test]
@@ -349,7 +348,7 @@ mod tests {
             &mut self,
             _context: &mut EvmContext<DB>,
             _call: &mut CallInputs,
-        ) -> Option<(InterpreterResult, Range<usize>)> {
+        ) -> Option<CallOutcome> {
             if self.call {
                 unreachable!("call should not be called twice")
             }

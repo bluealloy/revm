@@ -17,11 +17,11 @@ rustdoc-args = ["--cfg", "docsrs"]
 revm-primitives = { path = "../primitives", version = "1.3.0", default-features = false }
 
 # optional
-serde = { version = "1.0", features = ["derive", "rc"], optional = true }
+serde = { version = "1.0", default-features = false, features = ["derive", "rc"], optional = true }
 
 [features]
 default = ["std"]
-std = ["revm-primitives/std"]
+std = ["serde?/std", "revm-primitives/std"]
 serde = ["dep:serde", "revm-primitives/serde"]
 arbitrary = ["std", "revm-primitives/arbitrary"]
 asm-keccak = ["revm-primitives/asm-keccak"]

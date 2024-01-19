@@ -1,7 +1,7 @@
 //! Custom print inspector, it has step level information of execution.
 //! It is a great tool if some debugging is needed.
 
-use core::ops::Range;
+use revm_interpreter::CallOutcome;
 use revm_interpreter::CreateOutcome;
 
 use crate::{
@@ -82,7 +82,7 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         &mut self,
         _context: &mut EvmContext<DB>,
         inputs: &mut CallInputs,
-    ) -> Option<(InterpreterResult, Range<usize>)> {
+    ) -> Option<CallOutcome> {
         println!(
             "SM CALL:   {:?}, context:{:?}, is_static:{:?}, transfer:{:?}, input_size:{:?}",
             inputs.contract,

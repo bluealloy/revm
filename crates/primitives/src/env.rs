@@ -257,8 +257,8 @@ impl Env {
 }
 
 /// EVM configuration.
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 #[non_exhaustive]
 pub struct CfgEnv {
     /// Chain ID of the EVM, it will be compared to the transaction's Chain ID.

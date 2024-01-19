@@ -1,6 +1,7 @@
 pub mod merkle_trie;
 pub mod models;
 mod runner;
+pub mod utils;
 
 pub use runner::TestError as Error;
 
@@ -31,7 +32,11 @@ impl Cmd {
         for path in &self.path {
             println!("\nRunning tests in {}...", path.display());
             let test_files = find_all_json_tests(path);
-            run(test_files, self.single_thread, self.json)?
+            run(
+                test_files,
+                if self.json { true } else { self.single_thread },
+                self.json,
+            )?
         }
         Ok(())
     }
