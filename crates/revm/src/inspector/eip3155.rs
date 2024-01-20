@@ -98,9 +98,10 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
     fn call_end(
         &mut self,
         context: &mut EvmContext<DB>,
+        inputs: &CallInputs,
         result: InterpreterResult,
     ) -> InterpreterResult {
-        let result = self.gas_inspector.call_end(context, result);
+        let result = self.gas_inspector.call_end(context, inputs, result);
         if context.journaled_state.depth() == 0 {
             let log_line = json!({
                 //stateroot
@@ -127,10 +128,12 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
     fn create_end(
         &mut self,
         context: &mut EvmContext<DB>,
+        inputs: &CreateInputs,
         result: InterpreterResult,
         address: Option<Address>,
     ) -> CreateOutcome {
-        self.gas_inspector.create_end(context, result, address)
+        self.gas_inspector
+            .create_end(context, inputs, result, address)
     }
 }
 

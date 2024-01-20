@@ -94,9 +94,11 @@ pub trait Inspector<DB: Database> {
     fn call_end(
         &mut self,
         context: &mut EvmContext<DB>,
+        inputs: &CallInputs,
         result: InterpreterResult,
     ) -> InterpreterResult {
         let _ = context;
+        let _ = inputs;
         result
     }
 
@@ -122,10 +124,12 @@ pub trait Inspector<DB: Database> {
     fn create_end(
         &mut self,
         context: &mut EvmContext<DB>,
+        inputs: &CreateInputs,
         result: InterpreterResult,
         address: Option<Address>,
     ) -> CreateOutcome {
         let _ = context;
+        let _ = inputs;
         CreateOutcome::new(result, address)
     }
 

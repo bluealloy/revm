@@ -64,18 +64,21 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
     fn call_end(
         &mut self,
         context: &mut EvmContext<DB>,
+        inputs: &CallInputs,
         result: InterpreterResult,
     ) -> InterpreterResult {
-        self.gas_inspector.call_end(context, result)
+        self.gas_inspector.call_end(context, inputs, result)
     }
 
     fn create_end(
         &mut self,
         context: &mut EvmContext<DB>,
+        inputs: &CreateInputs,
         result: InterpreterResult,
         address: Option<Address>,
     ) -> CreateOutcome {
-        self.gas_inspector.create_end(context, result, address)
+        self.gas_inspector
+            .create_end(context, inputs, result, address)
     }
 
     fn call(
