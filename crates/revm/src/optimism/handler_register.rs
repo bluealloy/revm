@@ -19,7 +19,7 @@ use core::ops::Mul;
 pub fn optimism_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, EXT, DB>) {
     spec_to_generic!(handler.spec_id, {
         // Refund is calculated differently then mainnet.
-        handler.execution_loop.first_frame_return = Arc::new(handle_call_return::<SPEC>);
+        handler.execution_loop.first_frame_return = Arc::new(first_frame_return::<SPEC>);
         // An estimated batch cost is charged from the caller and added to L1 Fee Vault.
         handler.pre_execution.deduct_caller = Arc::new(deduct_caller::<SPEC, EXT, DB>);
         handler.post_execution.reward_beneficiary = Arc::new(reward_beneficiary::<SPEC, EXT, DB>);
@@ -31,7 +31,7 @@ pub fn optimism_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, 
 
 /// Handle output of the transaction
 #[inline]
-pub fn handle_call_return<SPEC: Spec>(
+pub fn first_frame_return<SPEC: Spec>(
     env: &Env,
     call_result: InstructionResult,
     returned_gas: Gas,
@@ -91,8 +91,9 @@ pub fn handle_call_return<SPEC: Spec>(
         _ => {}
     }
     // Prior to Regolith, deposit transactions did not receive gas refunds.
-    if !is_deposit && SPEC::enabled(REGOLITH) {
-        gas.set_final_refund::<SPEC>()
+    let is_gas_refund_disabled = is_optimism && is_deposit && !is_regolith;
+    if !is_gas_refund_disabled {
+        gas.set_final_refund::<SPEC>();
     }
 
     gas
@@ -327,7 +328,7 @@ mod tests {
         env.cfg.optimism = true;
         env.tx.optimism.source_hash = None;
 
-        let gas = handle_call_return::<BedrockSpec>(&env, InstructionResult::Revert, Gas::new(90));
+        let gas = first_frame_return::<BedrockSpec>(&env, InstructionResult::Revert, Gas::new(90));
         assert_eq!(gas.remaining(), 90);
         assert_eq!(gas.spend(), 10);
         assert_eq!(gas.refunded(), 0);
@@ -340,7 +341,7 @@ mod tests {
         env.cfg.optimism = false;
         env.tx.optimism.source_hash = None;
 
-        let gas = handle_call_return::<BedrockSpec>(&env, InstructionResult::Revert, Gas::new(90));
+        let gas = first_frame_return::<BedrockSpec>(&env, InstructionResult::Revert, Gas::new(90));
         // else branch takes all gas.
         assert_eq!(gas.remaining(), 0);
         assert_eq!(gas.spend(), 100);
@@ -354,7 +355,7 @@ mod tests {
         env.cfg.optimism = true;
         env.tx.optimism.source_hash = Some(B256::ZERO);
 
-        let gas = handle_call_return::<RegolithSpec>(&env, InstructionResult::Stop, Gas::new(90));
+        let gas = first_frame_return::<RegolithSpec>(&env, InstructionResult::Stop, Gas::new(90));
         assert_eq!(gas.remaining(), 90);
         assert_eq!(gas.spend(), 10);
         assert_eq!(gas.refunded(), 0);
@@ -370,12 +371,12 @@ mod tests {
         let mut ret_gas = Gas::new(90);
         ret_gas.record_refund(20);
 
-        let gas = handle_call_return::<RegolithSpec>(&env, InstructionResult::Stop, ret_gas);
+        let gas = first_frame_return::<RegolithSpec>(&env, InstructionResult::Stop, ret_gas);
         assert_eq!(gas.remaining(), 90);
         assert_eq!(gas.spend(), 10);
-        assert_eq!(gas.refunded(), 20);
+        assert_eq!(gas.refunded(), 2); // min(20, 10/5)
 
-        let gas = handle_call_return::<RegolithSpec>(&env, InstructionResult::Revert, ret_gas);
+        let gas = first_frame_return::<RegolithSpec>(&env, InstructionResult::Revert, ret_gas);
         assert_eq!(gas.remaining(), 90);
         assert_eq!(gas.spend(), 10);
         assert_eq!(gas.refunded(), 0);
@@ -388,7 +389,7 @@ mod tests {
         env.cfg.optimism = true;
         env.tx.optimism.source_hash = Some(B256::ZERO);
 
-        let gas = handle_call_return::<BedrockSpec>(&env, InstructionResult::Stop, Gas::new(90));
+        let gas = first_frame_return::<BedrockSpec>(&env, InstructionResult::Stop, Gas::new(90));
         assert_eq!(gas.remaining(), 0);
         assert_eq!(gas.spend(), 100);
         assert_eq!(gas.refunded(), 0);
