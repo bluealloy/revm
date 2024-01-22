@@ -88,8 +88,9 @@ pub trait Inspector<DB: Database> {
 
     /// Called when a call to a contract has concluded.
     ///
-    /// InstructionResulting anything other than the values passed to this function (`(ret, remaining_gas,
-    /// out)`) will alter the result of the call.
+    /// The returned [InterpreterResult] is used as the result of the call.
+    ///
+    /// This allows the inspector to modify the given `result` before returning it.
     #[inline]
     fn call_end(
         &mut self,
