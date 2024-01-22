@@ -53,6 +53,35 @@ pub struct Interpreter {
     pub next_action: Option<InterpreterAction>,
 }
 
+/// The result of an interpreter operation.
+#[derive(Debug, Clone)]
+pub struct InterpreterResult {
+    /// The result of the instruction execution.
+    pub result: InstructionResult,
+    /// The output of the instruction execution.
+    pub output: Bytes,
+    /// The gas usage information.
+    pub gas: Gas,
+}
+
+#[derive(Debug, Clone)]
+pub enum InterpreterAction {
+    SubCall {
+        /// Call inputs
+        inputs: Box<CallInputs>,
+        /// The offset into `self.memory` of the return data.
+        ///
+        /// This value must be ignored if `self.return_len` is 0.
+        return_memory_offset: Range<usize>,
+    },
+    Create {
+        inputs: Box<CreateInputs>,
+    },
+    Return {
+        result: InterpreterResult,
+    },
+}
+
 impl Interpreter {
     /// Create new interpreter
     pub fn new(contract: Box<Contract>, gas_limit: u64, is_static: bool) -> Self {
@@ -276,17 +305,6 @@ impl Interpreter {
     }
 }
 
-/// The result of an interpreter operation.
-#[derive(Debug, Clone)]
-pub struct InterpreterResult {
-    /// The result of the instruction execution.
-    pub result: InstructionResult,
-    /// The output of the instruction execution.
-    pub output: Bytes,
-    /// The gas usage information.
-    pub gas: Gas,
-}
-
 impl InterpreterResult {
     /// Returns whether the instruction result is a success.
     #[inline]
@@ -305,22 +323,4 @@ impl InterpreterResult {
     pub const fn is_error(&self) -> bool {
         self.result.is_error()
     }
-}
-
-#[derive(Debug, Clone)]
-pub enum InterpreterAction {
-    SubCall {
-        /// Call inputs
-        inputs: Box<CallInputs>,
-        /// The offset into `self.memory` of the return data.
-        ///
-        /// This value must be ignored if `self.return_len` is 0.
-        return_memory_offset: Range<usize>,
-    },
-    Create {
-        inputs: Box<CreateInputs>,
-    },
-    Return {
-        result: InterpreterResult,
-    },
 }
