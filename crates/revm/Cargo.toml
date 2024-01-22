@@ -23,7 +23,7 @@ auto_impl = { version = "1.1", default-features = false }
 
 # Optional
 serde = { version = "1.0", default-features = false, features = ["derive", "rc"], optional = true }
-serde_json = { version = "1.0", default-features = false, features = ["alloc", "preserve_order"], optional = true }
+serde_json = { version = "1.0", default-features = false, features = ["alloc"], optional = true }
 
 # ethersdb
 tokio = { version = "1.35", features = [
@@ -42,7 +42,7 @@ indicatif = "0.17"
 
 [features]
 default = ["std", "c-kzg", "secp256k1"]
-std = ["serde?/std", "serde_json?/std", "revm-interpreter/std", "revm-precompile/std"]
+std = ["serde?/std", "serde_json?/std", "serde_json?/preserve_order", "revm-interpreter/std", "revm-precompile/std"]
 serde = ["dep:serde", "dep:serde_json", "revm-interpreter/serde"]
 arbitrary = ["revm-interpreter/arbitrary"]
 asm-keccak = ["revm-interpreter/asm-keccak", "revm-precompile/asm-keccak"]
