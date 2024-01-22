@@ -43,14 +43,15 @@ pub fn burntpix(c: &mut Criterion) {
     let mut evm = Evm::builder()
         .modify_tx_env(|tx| {
             tx.caller = address!("1000000000000000000000000000000000000000");
-            tx.transact_to = TransactTo::Call(BURNTPIX_ADDRESS.clone());
+            tx.transact_to = TransactTo::Call(*BURNTPIX_ADDRESS);
             tx.data = run_call_data.clone().into();
         })
         .with_db(db)
         .build();
 
-    let id = format!("burntpix");
-    g.bench_function(id, |b| b.iter(|| evm.transact().unwrap()));
+    g.bench_function("burntpix".to_string(), |b| {
+        b.iter(|| evm.transact().unwrap())
+    });
 
     // transact again to get the return data and create the svg
     let tx_result = evm.transact().unwrap().result;
@@ -106,7 +107,7 @@ fn init_db() -> CacheDB<EmptyDB> {
             state.balance,
             state.nonce.unwrap_or(0),
             B256::from_str(&code_hash).unwrap(),
-            Bytecode::new_raw(code.into()),
+            Bytecode::new_raw(code),
         );
 
         cache_db.insert_account_info(*addr, account_info);
