@@ -102,7 +102,9 @@ pub trait Inspector<DB: Database> {
 
     /// Called when a contract is about to be created.
     ///
-    /// InstructionResulting anything other than [crate::interpreter::InstructionResult::Continue] overrides the result of the creation.
+    /// If this returns `Some` then the [CreateOutcome] is used to override the result of the creation.
+    ///
+    /// If this returns `None` then the creation proceeds as normal.
     #[inline]
     fn create(
         &mut self,
