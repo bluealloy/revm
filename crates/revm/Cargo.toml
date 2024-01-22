@@ -39,6 +39,10 @@ ethers-contract = { version = "2.0.11", default-features = false }
 anyhow = "1.0.79"
 criterion = "0.5"
 indicatif = "0.17"
+alloy-sol-macro = "0.6.0"
+alloy-sol-types = "0.6.0"
+lazy_static = "1.4.0"
+regex = "1.10.3"
 
 [features]
 default = ["std", "c-kzg", "secp256k1"]
@@ -86,5 +90,5 @@ required-features = ["std", "serde", "ethersdb"]
 
 [[bench]]
 name = "bench"
-path = "benches/bench.rs"
+path = "benches/mod.rs"
 harness = false
