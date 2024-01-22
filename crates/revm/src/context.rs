@@ -99,6 +99,11 @@ impl<DB: Database> EvmContext<DB> {
         }
     }
 
+    /// Returns the configured EVM spec ID.
+    pub const fn spec_id(&self) -> SpecId {
+        self.journaled_state.spec
+    }
+
     /// Sets precompiles
     pub fn set_precompiles(&mut self, precompiles: Precompiles) {
         self.journaled_state.warm_preloaded_addresses =
