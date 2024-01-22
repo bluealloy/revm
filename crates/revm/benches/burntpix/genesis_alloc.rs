@@ -33,7 +33,7 @@ lazy_static! {
                 .unwrap(),
         );
         state.insert(
-            BURNTPIX_ADDRESS.clone(),
+            *BURNTPIX_ADDRESS,
             GenesisAccount {
                 nonce: None,
                 balance: U256::from(0),
