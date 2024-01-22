@@ -53,10 +53,14 @@ pub struct Interpreter {
     pub next_action: Option<InterpreterAction>,
 }
 
+/// The result of an interpreter operation.
 #[derive(Debug, Clone)]
 pub struct InterpreterResult {
+    /// The result of the instruction execution.
     pub result: InstructionResult,
+    /// The output of the instruction execution.
     pub output: Bytes,
+    /// The gas usage information.
     pub gas: Gas,
 }
 
@@ -298,5 +302,25 @@ impl Interpreter {
                 gas: self.gas,
             },
         }
+    }
+}
+
+impl InterpreterResult {
+    /// Returns whether the instruction result is a success.
+    #[inline]
+    pub const fn is_ok(&self) -> bool {
+        self.result.is_ok()
+    }
+
+    /// Returns whether the instruction result is a revert.
+    #[inline]
+    pub const fn is_revert(&self) -> bool {
+        self.result.is_ok()
+    }
+
+    /// Returns whether the instruction result is an error.
+    #[inline]
+    pub const fn is_error(&self) -> bool {
+        self.result.is_error()
     }
 }
