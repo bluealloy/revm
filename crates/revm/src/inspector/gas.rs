@@ -5,7 +5,7 @@ use revm_interpreter::{CallInputs, CreateInputs, CreateOutcome};
 use crate::{
     interpreter::InterpreterResult,
     primitives::{db::Database, Address},
-    EvmContext, Inspector,
+    EvmContext, GetInspector, Inspector,
 };
 
 /// Helper [Inspector] that keeps track of gas.
@@ -23,6 +23,12 @@ impl GasInspector {
 
     pub fn last_gas_cost(&self) -> u64 {
         self.last_gas_cost
+    }
+}
+
+impl<DB: Database> GetInspector<'_, DB> for GasInspector {
+    fn get_inspector(&mut self) -> &mut dyn Inspector<DB> {
+        self
     }
 }
 

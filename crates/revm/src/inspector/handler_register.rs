@@ -96,7 +96,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     inspect_log(opcode::LOG4);
 
     // call and create input stack shared between handlers. They are used to share
-    // inputs in *_end Inspector calls. 
+    // inputs in *_end Inspector calls.
     let call_input_stack = Rc::<RefCell<Vec<_>>>::new(RefCell::new(Vec::new()));
     let create_input_stack = Rc::<RefCell<Vec<_>>>::new(RefCell::new(Vec::new()));
 
