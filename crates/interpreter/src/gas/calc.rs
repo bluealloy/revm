@@ -271,14 +271,8 @@ pub fn selfdestruct_cost<SPEC: Spec>(res: SelfDestructResult) -> u64 {
     gas
 }
 
-pub fn call_cost<SPEC: Spec>(
-    transfers_value: bool,
-    is_new: bool,
-    is_cold: bool,
-    is_call_or_callcode: bool,
-    is_call_or_staticcall: bool,
-) -> u64 {
-    let call_gas = if SPEC::enabled(BERLIN) {
+pub fn call_gas<SPEC: Spec>(is_cold: bool) -> u64 {
+    if SPEC::enabled(BERLIN) {
         if is_cold {
             COLD_ACCOUNT_ACCESS_COST
         } else {
@@ -289,9 +283,17 @@ pub fn call_cost<SPEC: Spec>(
         700
     } else {
         40
-    };
+    }
+}
 
-    call_gas
+pub fn call_cost<SPEC: Spec>(
+    transfers_value: bool,
+    is_new: bool,
+    is_cold: bool,
+    is_call_or_callcode: bool,
+    is_call_or_staticcall: bool,
+) -> u64 {
+    call_gas::<SPEC>(is_cold)
         + xfer_cost(is_call_or_callcode, transfers_value)
         + new_cost::<SPEC>(is_call_or_staticcall, is_new, transfers_value)
 }
