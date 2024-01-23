@@ -3724,6 +3724,7 @@ dependencies = [
  "revm-interpreter",
  "revm-precompile",
  "serde",
+ "serde_json",
  "tokio",
 ]
 
