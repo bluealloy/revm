@@ -111,11 +111,11 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
                 TransactTo::Call(_) => {
                     let mut call_inputs = CallInputs::new(&context.evm.env.tx, gas_limit).unwrap();
                     // call inspector and return of inspector returns result.
-                    if let Some(output) = context
-                        .external
-                        .get_inspector()
-                        .call(&mut context.evm, &mut call_inputs)
-                    {
+                    if let Some(output) = context.external.get_inspector().call(
+                        &mut context.evm,
+                        &mut call_inputs,
+                        0..usize::MAX,
+                    ) {
                         return FrameOrResult::Result(output.interpreter_result);
                     }
                     // first call frame does not have return range.
@@ -228,7 +228,9 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
         move |context, mut inputs, frame, memory, return_memory_offset| -> Option<Box<_>> {
             // inspector handle
             let inspector = context.external.get_inspector();
-            if let Some(call_outcome) = inspector.call(&mut context.evm, &mut inputs) {
+            if let Some(call_outcome) =
+                inspector.call(&mut context.evm, &mut inputs, return_memory_offset.clone())
+            {
                 frame.interpreter.insert_call_outcome(memory, call_outcome);
                 return None;
             }
@@ -320,6 +322,8 @@ pub fn inspector_instruction<
 
 #[cfg(test)]
 mod tests {
+    use core::ops::Range;
+
     use super::*;
     use crate::{
         db::EmptyDB,
@@ -379,6 +383,7 @@ mod tests {
             &mut self,
             _context: &mut EvmContext<DB>,
             _call: &mut CallInputs,
+            _return_memory_offset: Range<usize>,
         ) -> Option<CallOutcome> {
             if self.call {
                 unreachable!("call should not be called twice")

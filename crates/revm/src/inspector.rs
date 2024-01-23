@@ -1,3 +1,5 @@
+use core::ops::Range;
+
 use crate::{
     interpreter::{CallInputs, CreateInputs, Interpreter},
     primitives::{db::Database, Address, Log, U256},
@@ -80,9 +82,11 @@ pub trait Inspector<DB: Database> {
         &mut self,
         context: &mut EvmContext<DB>,
         inputs: &mut CallInputs,
+        return_memory_offset: Range<usize>,
     ) -> Option<CallOutcome> {
         let _ = context;
         let _ = inputs;
+        let _ = return_memory_offset;
         None
     }
 
