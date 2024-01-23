@@ -1,3 +1,7 @@
+mod call_helpers;
+
+pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges};
+
 use crate::{
     gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
     interpreter::{Interpreter, InterpreterAction},
@@ -307,169 +311,208 @@ pub fn create<const IS_CREATE2: bool, H: Host, SPEC: Spec>(
 }
 
 pub fn call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
-    call_inner::<SPEC, H>(CallScheme::Call, interpreter, host);
-}
-
-pub fn call_code<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
-    call_inner::<SPEC, H>(CallScheme::CallCode, interpreter, host);
-}
-
-pub fn delegate_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
-    call_inner::<SPEC, H>(CallScheme::DelegateCall, interpreter, host);
-}
-
-pub fn static_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
-    call_inner::<SPEC, H>(CallScheme::StaticCall, interpreter, host);
-}
-
-pub fn call_inner<SPEC: Spec, H: Host>(
-    scheme: CallScheme,
-    interpreter: &mut Interpreter,
-    host: &mut H,
-) {
-    match scheme {
-        // EIP-7: DELEGATECALL
-        CallScheme::DelegateCall => check!(interpreter, HOMESTEAD),
-        // EIP-214: New opcode STATICCALL
-        CallScheme::StaticCall => check!(interpreter, BYZANTIUM),
-        _ => (),
-    }
-
     pop!(interpreter, local_gas_limit);
     pop_address!(interpreter, to);
-
     // max gas limit is not possible in real ethereum situation.
-    // But for tests we would not like to fail on this.
-    // Gas limit for subcall is taken as min of this value and current gas limit.
     let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
 
-    let value = match scheme {
-        CallScheme::CallCode => {
-            pop!(interpreter, value);
-            value
-        }
-        CallScheme::Call => {
-            pop!(interpreter, value);
-            if interpreter.is_static && value != U256::ZERO {
-                interpreter.instruction_result = InstructionResult::CallNotAllowedInsideStatic;
-                return;
-            }
-            value
-        }
-        CallScheme::DelegateCall | CallScheme::StaticCall => U256::ZERO,
-    };
+    pop!(interpreter, value);
+    if interpreter.is_static && value != U256::ZERO {
+        interpreter.instruction_result = InstructionResult::CallNotAllowedInsideStatic;
+        return;
+    }
 
-    pop!(interpreter, in_offset, in_len, out_offset, out_len);
-
-    let in_len = as_usize_or_fail!(interpreter, in_len);
-    let input = if in_len != 0 {
-        let in_offset = as_usize_or_fail!(interpreter, in_offset);
-        shared_memory_resize!(interpreter, in_offset, in_len);
-        Bytes::copy_from_slice(interpreter.shared_memory.slice(in_offset, in_len))
-    } else {
-        Bytes::new()
-    };
-
-    let out_len = as_usize_or_fail!(interpreter, out_len);
-    let out_offset = if out_len != 0 {
-        let out_offset = as_usize_or_fail!(interpreter, out_offset);
-        shared_memory_resize!(interpreter, out_offset, out_len);
-        out_offset
-    } else {
-        usize::MAX //unrealistic value so we are sure it is not used
-    };
-
-    let context = match scheme {
-        CallScheme::Call | CallScheme::StaticCall => CallContext {
-            address: to,
-            caller: interpreter.contract.address,
-            code_address: to,
-            apparent_value: value,
-            scheme,
-        },
-        CallScheme::CallCode => CallContext {
-            address: interpreter.contract.address,
-            caller: interpreter.contract.address,
-            code_address: to,
-            apparent_value: value,
-            scheme,
-        },
-        CallScheme::DelegateCall => CallContext {
-            address: interpreter.contract.address,
-            caller: interpreter.contract.caller,
-            code_address: to,
-            apparent_value: interpreter.contract.value,
-            scheme,
-        },
-    };
-
-    let transfer = match scheme {
-        CallScheme::Call => Transfer {
-            source: interpreter.contract.address,
-            target: to,
-            value,
-        },
-        CallScheme::CallCode => Transfer {
-            source: interpreter.contract.address,
-            target: interpreter.contract.address,
-            value,
-        },
-        _ => {
-            //this is dummy send for StaticCall and DelegateCall, it should do nothing and dont touch anything.
-            Transfer {
-                source: interpreter.contract.address,
-                target: interpreter.contract.address,
-                value: U256::ZERO,
-            }
-        }
-    };
-
-    // load account and calculate gas cost.
-    let Some((is_cold, exist)) = host.load_account(to) else {
-        interpreter.instruction_result = InstructionResult::FatalExternalError;
+    let Some((input, return_memory_offset)) = get_memory_input_and_out_ranges(interpreter) else {
         return;
     };
-    let is_new = !exist;
 
-    gas!(
+    let Some(mut gas_limit) = calc_call_gas::<H, SPEC>(
         interpreter,
-        gas::call_cost::<SPEC>(
-            value != U256::ZERO,
-            is_new,
-            is_cold,
-            matches!(scheme, CallScheme::Call | CallScheme::CallCode),
-            matches!(scheme, CallScheme::Call | CallScheme::StaticCall),
-        )
-    );
-
-    // EIP-150: Gas cost changes for IO-heavy operations
-    let mut gas_limit = if SPEC::enabled(TANGERINE) {
-        let gas = interpreter.gas().remaining();
-        // take l64 part of gas_limit
-        min(gas - gas / 64, local_gas_limit)
-    } else {
-        local_gas_limit
+        host,
+        to,
+        value != U256::ZERO,
+        local_gas_limit,
+        true,
+        true,
+    ) else {
+        return;
     };
 
     gas!(interpreter, gas_limit);
 
     // add call stipend if there is value to be transferred.
-    if matches!(scheme, CallScheme::Call | CallScheme::CallCode) && transfer.value != U256::ZERO {
+    if value != U256::ZERO {
         gas_limit = gas_limit.saturating_add(gas::CALL_STIPEND);
     }
-    let is_static = matches!(scheme, CallScheme::StaticCall) || interpreter.is_static;
 
     // Call host to interact with target contract
     interpreter.next_action = Some(InterpreterAction::SubCall {
         inputs: Box::new(CallInputs {
             contract: to,
-            transfer,
+            transfer: Transfer {
+                source: interpreter.contract.address,
+                target: to,
+                value,
+            },
             input,
             gas_limit,
-            context,
-            is_static,
+            context: CallContext {
+                address: to,
+                caller: interpreter.contract.address,
+                code_address: to,
+                apparent_value: value,
+                scheme: CallScheme::Call,
+            },
+            is_static: interpreter.is_static,
         }),
-        return_memory_offset: out_offset..out_offset + out_len,
+        return_memory_offset,
+    });
+    interpreter.instruction_result = InstructionResult::CallOrCreate;
+}
+
+pub fn call_code<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+    pop!(interpreter, local_gas_limit);
+    pop_address!(interpreter, to);
+    // max gas limit is not possible in real ethereum situation.
+    let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
+
+    pop!(interpreter, value);
+    let Some((input, return_memory_offset)) = get_memory_input_and_out_ranges(interpreter) else {
+        return;
+    };
+
+    let Some(mut gas_limit) = calc_call_gas::<H, SPEC>(
+        interpreter,
+        host,
+        to,
+        value != U256::ZERO,
+        local_gas_limit,
+        true,
+        false,
+    ) else {
+        return;
+    };
+
+    gas!(interpreter, gas_limit);
+
+    // add call stipend if there is value to be transferred.
+    if value != U256::ZERO {
+        gas_limit = gas_limit.saturating_add(gas::CALL_STIPEND);
+    }
+
+    // Call host to interact with target contract
+    interpreter.next_action = Some(InterpreterAction::SubCall {
+        inputs: Box::new(CallInputs {
+            contract: to,
+            transfer: Transfer {
+                source: interpreter.contract.address,
+                target: interpreter.contract.address,
+                value,
+            },
+            input,
+            gas_limit,
+            context: CallContext {
+                address: interpreter.contract.address,
+                caller: interpreter.contract.address,
+                code_address: to,
+                apparent_value: value,
+                scheme: CallScheme::CallCode,
+            },
+            is_static: interpreter.is_static,
+        }),
+        return_memory_offset,
+    });
+    interpreter.instruction_result = InstructionResult::CallOrCreate;
+}
+
+pub fn delegate_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+    check!(interpreter, HOMESTEAD);
+    pop!(interpreter, local_gas_limit);
+    pop_address!(interpreter, to);
+    // max gas limit is not possible in real ethereum situation.
+    let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
+
+    let Some((input, return_memory_offset)) = get_memory_input_and_out_ranges(interpreter) else {
+        return;
+    };
+
+    let Some(gas_limit) =
+        calc_call_gas::<H, SPEC>(interpreter, host, to, false, local_gas_limit, false, false)
+    else {
+        return;
+    };
+
+    gas!(interpreter, gas_limit);
+
+    // Call host to interact with target contract
+    interpreter.next_action = Some(InterpreterAction::SubCall {
+        inputs: Box::new(CallInputs {
+            contract: to,
+            // This is dummy send for StaticCall and DelegateCall,
+            // it should do nothing and not touch anything.
+            transfer: Transfer {
+                source: interpreter.contract.address,
+                target: interpreter.contract.address,
+                value: U256::ZERO,
+            },
+            input,
+            gas_limit,
+            context: CallContext {
+                address: interpreter.contract.address,
+                caller: interpreter.contract.caller,
+                code_address: to,
+                apparent_value: interpreter.contract.value,
+                scheme: CallScheme::DelegateCall,
+            },
+            is_static: interpreter.is_static,
+        }),
+        return_memory_offset,
+    });
+    interpreter.instruction_result = InstructionResult::CallOrCreate;
+}
+
+pub fn static_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+    check!(interpreter, BYZANTIUM);
+    pop!(interpreter, local_gas_limit);
+    pop_address!(interpreter, to);
+    // max gas limit is not possible in real ethereum situation.
+    let local_gas_limit = u64::try_from(local_gas_limit).unwrap_or(u64::MAX);
+
+    let value = U256::ZERO;
+    let Some((input, return_memory_offset)) = get_memory_input_and_out_ranges(interpreter) else {
+        return;
+    };
+
+    let Some(gas_limit) =
+        calc_call_gas::<H, SPEC>(interpreter, host, to, false, local_gas_limit, false, true)
+    else {
+        return;
+    };
+    gas!(interpreter, gas_limit);
+
+    // Call host to interact with target contract
+    interpreter.next_action = Some(InterpreterAction::SubCall {
+        inputs: Box::new(CallInputs {
+            contract: to,
+            // This is dummy send for StaticCall and DelegateCall,
+            // it should do nothing and not touch anything.
+            transfer: Transfer {
+                source: interpreter.contract.address,
+                target: interpreter.contract.address,
+                value: U256::ZERO,
+            },
+            input,
+            gas_limit,
+            context: CallContext {
+                address: to,
+                caller: interpreter.contract.address,
+                code_address: to,
+                apparent_value: value,
+                scheme: CallScheme::StaticCall,
+            },
+            is_static: true,
+        }),
+        return_memory_offset,
     });
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }

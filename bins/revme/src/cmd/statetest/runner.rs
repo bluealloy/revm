@@ -349,7 +349,6 @@ pub fn execute_test_suite(
                     .build();
 
                 // do the deed
-                let timer = Instant::now();
                 let (e, exec_result) = if trace {
                     let mut evm = evm
                         .modify()
@@ -360,7 +359,10 @@ pub fn execute_test_suite(
                         ))
                         .append_handler_register(inspector_handle_register)
                         .build();
+
+                    let timer = Instant::now();
                     let res = evm.transact_commit();
+                    *elapsed.lock().unwrap() += timer.elapsed();
 
                     let Err(e) = check_evm_execution(
                         &test,
@@ -375,7 +377,9 @@ pub fn execute_test_suite(
                     // reset external context
                     (e, res)
                 } else {
+                    let timer = Instant::now();
                     let res = evm.transact_commit();
+                    *elapsed.lock().unwrap() += timer.elapsed();
 
                     // dump state and traces if test failed
                     let output = check_evm_execution(
@@ -391,7 +395,6 @@ pub fn execute_test_suite(
                     };
                     (e, res)
                 };
-                *elapsed.lock().unwrap() += timer.elapsed();
 
                 // print only once or
                 // if we are already in trace mode, just return error
