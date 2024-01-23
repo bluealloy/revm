@@ -5,6 +5,7 @@ use crate::{
     EvmContext, GetInspector, Inspector,
 };
 
+use core::ops::Range;
 use revm_interpreter::CallOutcome;
 use revm_interpreter::CreateOutcome;
 use serde_json::json;
@@ -91,6 +92,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         &mut self,
         _context: &mut EvmContext<DB>,
         _inputs: &mut CallInputs,
+        _return_memory_offset: Range<usize>,
     ) -> Option<CallOutcome> {
         None
     }
