@@ -14,9 +14,6 @@ mod evm_impl;
 pub mod handler;
 mod inspector;
 mod journaled_state;
-#[cfg(feature = "runtime")]
-#[cfg(test)]
-mod test;
 
 #[cfg(feature = "optimism")]
 pub mod optimism;

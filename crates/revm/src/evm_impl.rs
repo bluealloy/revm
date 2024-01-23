@@ -20,7 +20,7 @@ use crate::{
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use auto_impl::auto_impl;
 use core::{fmt, marker::PhantomData};
-use fluentbase_rwasm::rwasm::{Compiler, CompilerConfig, CompilerError};
+use fluentbase_rwasm::rwasm::{Compiler, CompilerConfig, CompilerError, FuncOrExport};
 use fluentbase_types::{STATE_DEPLOY, STATE_MAIN};
 
 #[cfg(feature = "optimism")]
@@ -494,14 +494,15 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             }
         };
 
-        let bytecode = Self::translate_wasm_to_rwasm(&inputs.init_code).map_err(|_| {
-            return CreateResult {
-                result: InstructionResult::Revert,
-                created_address: None,
-                gas,
-                return_value: Bytes::new(),
-            };
-        })?;
+        let bytecode =
+            Self::translate_wasm_to_rwasm(&inputs.init_code, "deploy").map_err(|_| {
+                return CreateResult {
+                    result: InstructionResult::Revert,
+                    created_address: None,
+                    gas,
+                    return_value: Bytes::new(),
+                };
+            })?;
 
         let contract = Box::new(Contract::new(
             Bytes::new(),
@@ -520,14 +521,18 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         })
     }
 
-    fn translate_wasm_to_rwasm(input: &Bytes) -> Result<Bytes, CompilerError> {
+    fn translate_wasm_to_rwasm(
+        input: &Bytes,
+        func_name: &'static str,
+    ) -> Result<Bytes, CompilerError> {
         use fluentbase_runtime::Runtime;
         let import_linker = Runtime::<()>::new_linker();
         let mut compiler = Compiler::new_with_linker(
             input.as_ref(),
-            CompilerConfig::default().fuel_consume(true),
+            CompilerConfig::default(),
             Some(&import_linker),
         )?;
+        compiler.translate(FuncOrExport::Export(func_name))?;
         let output = compiler.finalize()?;
         Ok(Bytes::from(output))
     }
@@ -556,7 +561,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         // Host error if present on execution
         match exit_reason {
             return_ok!() => {
-                let mut bytes = match Self::translate_wasm_to_rwasm(&bytes) {
+                let mut bytes = match Self::translate_wasm_to_rwasm(&bytes, "main") {
                     Err(_) => {
                         self.data
                             .journaled_state
@@ -574,17 +579,17 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                 // if ok, check contract creation limit and calculate gas deduction on output len.
                 //
                 // EIP-3541: Reject new contract code starting with the 0xEF byte
-                if GSPEC::enabled(LONDON) && !bytes.is_empty() && bytes.first() == Some(&0xEF) {
-                    self.data
-                        .journaled_state
-                        .checkpoint_revert(prepared_create.checkpoint);
-                    return CreateResult {
-                        result: InstructionResult::CreateContractStartingWithEF,
-                        created_address: Some(prepared_create.created_address),
-                        gas,
-                        return_value: bytes,
-                    };
-                }
+                // if GSPEC::enabled(LONDON) && !bytes.is_empty() && bytes.first() == Some(&0xEF) {
+                //     self.data
+                //         .journaled_state
+                //         .checkpoint_revert(prepared_create.checkpoint);
+                //     return CreateResult {
+                //         result: InstructionResult::CreateContractStartingWithEF,
+                //         created_address: Some(prepared_create.created_address),
+                //         gas,
+                //         return_value: bytes,
+                //     };
+                // }
 
                 // EIP-170: Contract code size limit
                 // By default limit is 0x6000 (~25kb)

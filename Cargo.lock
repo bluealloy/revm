@@ -3724,9 +3724,7 @@ dependencies = [
  "revm-interpreter",
  "revm-precompile",
  "serde",
- "serde_json",
  "tokio",
- "wat",
 ]
 
 [[package]]
@@ -3736,6 +3734,24 @@ dependencies = [
  "fluentbase-sdk",
  "revm-interpreter",
  "revm-precompile",
+]
+
+[[package]]
+name = "revm-e2e"
+version = "0.1.0"
+dependencies = [
+ "fluentbase-codec",
+ "fluentbase-runtime",
+ "fluentbase-rwasm",
+ "fluentbase-sdk",
+ "fluentbase-types",
+ "hashbrown",
+ "hex",
+ "hex-literal",
+ "revm",
+ "revm-interpreter",
+ "revm-precompile",
+ "wat",
 ]
 
 [[package]]
