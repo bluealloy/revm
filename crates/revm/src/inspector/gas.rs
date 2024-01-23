@@ -1,11 +1,11 @@
 //! GasIspector. Helper Inspector to calculate gas for others.
 
-use revm_interpreter::CreateOutcome;
+use revm_interpreter::{CallInputs, CreateInputs, CreateOutcome};
 
 use crate::{
     interpreter::InterpreterResult,
     primitives::{db::Database, Address},
-    EvmContext, Inspector,
+    EvmContext, GetInspector, Inspector,
 };
 
 /// Helper [Inspector] that keeps track of gas.
@@ -23,6 +23,12 @@ impl GasInspector {
 
     pub fn last_gas_cost(&self) -> u64 {
         self.last_gas_cost
+    }
+}
+
+impl<DB: Database> GetInspector<'_, DB> for GasInspector {
+    fn get_inspector(&mut self) -> &mut dyn Inspector<DB> {
+        self
     }
 }
 
@@ -47,6 +53,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
     fn call_end(
         &mut self,
         _context: &mut EvmContext<DB>,
+        _inputs: &CallInputs,
         mut result: InterpreterResult,
     ) -> InterpreterResult {
         if result.result.is_error() {
@@ -59,6 +66,7 @@ impl<DB: Database> Inspector<DB> for GasInspector {
     fn create_end(
         &mut self,
         _context: &mut EvmContext<DB>,
+        _inputs: &CreateInputs,
         result: InterpreterResult,
         address: Option<Address>,
     ) -> CreateOutcome {
@@ -123,9 +131,10 @@ mod tests {
         fn call_end(
             &mut self,
             context: &mut EvmContext<DB>,
+            inputs: &CallInputs,
             result: InterpreterResult,
         ) -> InterpreterResult {
-            self.gas_inspector.call_end(context, result)
+            self.gas_inspector.call_end(context, inputs, result)
         }
 
         fn create(
@@ -140,10 +149,12 @@ mod tests {
         fn create_end(
             &mut self,
             context: &mut EvmContext<DB>,
+            inputs: &CreateInputs,
             result: InterpreterResult,
             address: Option<Address>,
         ) -> CreateOutcome {
-            self.gas_inspector.create_end(context, result, address)
+            self.gas_inspector
+                .create_end(context, inputs, result, address)
         }
     }
 

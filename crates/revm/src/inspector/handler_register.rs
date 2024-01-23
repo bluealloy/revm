@@ -1,3 +1,5 @@
+use core::cell::RefCell;
+
 use crate::{
     db::Database,
     handler::register::{EvmHandler, EvmInstructionTables},
@@ -8,7 +10,7 @@ use crate::{
     primitives::TransactTo,
     CallStackFrame, Evm, FrameData, FrameOrResult, Inspector, JournalEntry,
 };
-use alloc::{boxed::Box, sync::Arc, vec::Vec};
+use alloc::{boxed::Box, rc::Rc, sync::Arc, vec::Vec};
 use revm_interpreter::{CallOutcome, CreateInputs};
 
 pub trait GetInspector<'a, DB: Database> {
@@ -93,6 +95,14 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     inspect_log(opcode::LOG3);
     inspect_log(opcode::LOG4);
 
+    // call and create input stack shared between handlers. They are used to share
+    // inputs in *_end Inspector calls.
+    let call_input_stack = Rc::<RefCell<Vec<_>>>::new(RefCell::new(Vec::new()));
+    let create_input_stack = Rc::<RefCell<Vec<_>>>::new(RefCell::new(Vec::new()));
+
+    let create_input_stack_inner = create_input_stack.clone();
+    let call_input_stack_inner = call_input_stack.clone();
+
     // wrap first frame create and main frame return.
     handler.execution_loop.create_first_frame =
         Arc::new(move |context, gas_limit| -> FrameOrResult {
@@ -109,7 +119,11 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
                         return FrameOrResult::Result(output.interpreter_result);
                     }
                     // first call frame does not have return range.
-                    context.evm.make_call_frame(&call_inputs, 0..0)
+                    let out = context.evm.make_call_frame(&call_inputs, 0..0);
+                    call_input_stack_inner
+                        .borrow_mut()
+                        .push(Box::new(call_inputs));
+                    out
                 }
                 TransactTo::Create(_) => {
                     let mut create_inputs =
@@ -121,7 +135,11 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
                     {
                         return FrameOrResult::Result(output.result);
                     };
-                    context.evm.make_create_frame(spec_id, &create_inputs)
+                    let out = context.evm.make_create_frame(spec_id, &create_inputs);
+                    create_input_stack_inner
+                        .borrow_mut()
+                        .push(Box::new(create_inputs));
+                    out
                 }
             };
 
@@ -174,6 +192,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     ));
 
     // handle sub create
+    let create_input_stack_inner = create_input_stack.clone();
     handler.execution_loop.sub_create = Arc::new(
         move |context, frame, mut inputs| -> Option<Box<CallStackFrame>> {
             let inspector = context.external.get_inspector();
@@ -185,11 +204,16 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
             match context.evm.make_create_frame(spec_id, &inputs) {
                 FrameOrResult::Frame(mut new_frame) => {
                     inspector.initialize_interp(&mut new_frame.interpreter, &mut context.evm);
+                    create_input_stack_inner.borrow_mut().push(inputs);
                     Some(new_frame)
                 }
                 FrameOrResult::Result(result) => {
-                    let create_outcome =
-                        inspector.create_end(&mut context.evm, result, frame.created_address());
+                    let create_outcome = inspector.create_end(
+                        &mut context.evm,
+                        &inputs,
+                        result,
+                        frame.created_address(),
+                    );
                     // insert result of the failed creation of create CallStackFrame.
                     frame.interpreter.insert_create_outcome(create_outcome);
                     None
@@ -199,6 +223,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     );
 
     // handle sub call
+    let call_input_stack_inner = call_input_stack.clone();
     handler.execution_loop.sub_call = Arc::new(
         move |context, mut inputs, frame, memory, return_memory_offset| -> Option<Box<_>> {
             // inspector handle
@@ -213,11 +238,12 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
             {
                 FrameOrResult::Frame(mut new_frame) => {
                     inspector.initialize_interp(&mut new_frame.interpreter, &mut context.evm);
+                    call_input_stack_inner.borrow_mut().push(inputs);
                     Some(new_frame)
                 }
                 FrameOrResult::Result(result) => {
                     // inspector handle
-                    let result = inspector.call_end(&mut context.evm, result);
+                    let result = inspector.call_end(&mut context.evm, &inputs, result);
                     let call_outcome = CallOutcome::new(result, return_memory_offset);
                     frame.interpreter.insert_call_outcome(memory, call_outcome);
                     None
@@ -233,8 +259,10 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
             let inspector = &mut context.external.get_inspector();
             result = match &mut child.frame_data {
                 FrameData::Create { created_address } => {
+                    let create_input = create_input_stack.borrow_mut().pop().unwrap();
                     let create_outcome = inspector.create_end(
                         &mut context.evm,
+                        &create_input,
                         result.clone(),
                         Some(*created_address),
                     );
@@ -243,7 +271,10 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
                     }
                     result
                 }
-                FrameData::Call { .. } => inspector.call_end(&mut context.evm, result),
+                FrameData::Call { .. } => {
+                    let call_input = call_input_stack.borrow_mut().pop().unwrap();
+                    inspector.call_end(&mut context.evm, &call_input, result)
+                }
             };
             old_handle(context, child, parent, memory, result)
         },
@@ -359,6 +390,7 @@ mod tests {
         fn call_end(
             &mut self,
             _context: &mut EvmContext<DB>,
+            _inputs: &CallInputs,
             result: InterpreterResult,
         ) -> InterpreterResult {
             if self.call_end {
@@ -379,6 +411,7 @@ mod tests {
         fn create_end(
             &mut self,
             _context: &mut EvmContext<DB>,
+            _inputs: &CreateInputs,
             result: InterpreterResult,
             address: Option<Address>,
         ) -> CreateOutcome {
