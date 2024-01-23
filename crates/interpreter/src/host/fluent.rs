@@ -4,7 +4,7 @@ use crate::{
     CallInputs, CreateInputs, Gas, Host, InstructionResult, SelfDestructResult, SharedMemory,
 };
 use alloc::vec::Vec;
-use fluentbase_sdk::{EvmPlatformSDK, SDK};
+use fluentbase_sdk::{Bytes32, LowLevelAPI, LowLevelSDK};
 
 /// A dummy [Host] implementation.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -66,8 +66,10 @@ impl Host for FluentHost {
 
     #[inline]
     fn sload(&mut self, __address: Address, index: U256) -> Option<(U256, bool)> {
+        let mut key: Bytes32 = Default::default();
+        key.copy_from_slice(index.as_le_slice());
         let mut result: [u8; 32] = [0; 32];
-        SDK::evm_sload(index.as_le_slice(), &mut result);
+        LowLevelSDK::zktrie_load(&key, &mut result);
         let result = U256::from_le_slice(&result);
         Some((result, true))
     }
@@ -79,7 +81,9 @@ impl Host for FluentHost {
         index: U256,
         value: U256,
     ) -> Option<(U256, U256, U256, bool)> {
-        SDK::evm_sstore(index.as_le_slice(), value.as_le_slice());
+        let mut key: Bytes32 = Default::default();
+        key.copy_from_slice(index.as_le_slice());
+        LowLevelSDK::zktrie_store(&key, &key);
         Some((U256::ZERO, U256::ZERO, value, true))
     }
 

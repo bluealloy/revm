@@ -3,7 +3,7 @@ use crate::{
     primitives::{Spec, B256, KECCAK_EMPTY, U256},
     Host, InstructionResult, Interpreter,
 };
-use fluentbase_sdk::{CryptoPlatformSDK, SDK};
+use fluentbase_sdk::{LowLevelAPI, LowLevelSDK};
 
 pub fn keccak256<H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
     pop!(interpreter, from, len);
@@ -15,7 +15,7 @@ pub fn keccak256<H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
         let from = as_usize_or_fail!(interpreter, from);
         shared_memory_resize!(interpreter, from, len);
         let mut hash = B256::ZERO;
-        SDK::crypto_keccak256(
+        LowLevelSDK::crypto_keccak256(
             interpreter.shared_memory.slice(from, len),
             hash.as_mut_slice(),
         );

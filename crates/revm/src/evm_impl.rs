@@ -1,4 +1,3 @@
-use crate::interpreter::MAX_INITCODE_SIZE;
 use crate::{
     db::Database,
     handler::Handler,
@@ -21,11 +20,13 @@ use crate::{
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use auto_impl::auto_impl;
 use core::{fmt, marker::PhantomData};
+use fluentbase_rwasm::rwasm::{Compiler, CompilerConfig, CompilerError};
+use fluentbase_types::{STATE_DEPLOY, STATE_MAIN};
 
 #[cfg(feature = "optimism")]
 use crate::optimism;
 
-use fluentbase_sdk::{RwasmPlatformSDK, SDK};
+use fluentbase_sdk::evm::{ContractInput, ContractOutput};
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -493,26 +494,18 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             }
         };
 
-        // translate WASM binary to rWASM
-        // TODO catch 'buffer small' error and expand buffer till output fits into it
-        let mut rwasm_bytecode = vec![0u8; MAX_INITCODE_SIZE * 4];
-
-        let error_code_or_len = SDK::rwasm_compile(&inputs.init_code, &mut rwasm_bytecode[..]);
-        if error_code_or_len < 0 {
-            return Err(CreateResult {
+        let bytecode = Self::translate_wasm_to_rwasm(&inputs.init_code).map_err(|_| {
+            return CreateResult {
                 result: InstructionResult::Revert,
                 created_address: None,
                 gas,
                 return_value: Bytes::new(),
-            });
-        }
-        rwasm_bytecode = rwasm_bytecode[..error_code_or_len as usize].to_vec();
-
-        let bytecode = Bytecode::new_raw(Bytes::copy_from_slice(&rwasm_bytecode));
+            };
+        })?;
 
         let contract = Box::new(Contract::new(
             Bytes::new(),
-            bytecode,
+            Bytecode::new_raw(bytecode),
             code_hash,
             created_address,
             inputs.caller,
@@ -527,6 +520,18 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         })
     }
 
+    fn translate_wasm_to_rwasm(input: &Bytes) -> Result<Bytes, CompilerError> {
+        use fluentbase_runtime::Runtime;
+        let import_linker = Runtime::<()>::new_linker();
+        let mut compiler = Compiler::new_with_linker(
+            input.as_ref(),
+            CompilerConfig::default().fuel_consume(true),
+            Some(&import_linker),
+        )?;
+        let output = compiler.finalize()?;
+        Ok(Bytes::from(output))
+    }
+
     /// EVM create opcode for both initial crate and CREATE and CREATE2 opcodes.
     fn create_inner(
         &mut self,
@@ -539,40 +544,52 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             Err(e) => return e,
         };
 
-        let bytecode =
-            Bytes::copy_from_slice(prepared_create.contract.bytecode.original_bytecode_slice());
-
         // Create new interpreter and execute init code
-        let (exit_reason, mut bytes, mut gas) = self.run_rwasm_interpreter(
+        let (exit_reason, bytes, mut gas) = self.run_rwasm_interpreter(
             prepared_create.contract,
             prepared_create.gas.limit(),
             false,
-            1, // STATE_DEPLOY
+            STATE_DEPLOY,
             shared_memory,
         );
 
         // Host error if present on execution
         match exit_reason {
             return_ok!() => {
+                let mut bytes = match Self::translate_wasm_to_rwasm(&bytes) {
+                    Err(_) => {
+                        self.data
+                            .journaled_state
+                            .checkpoint_revert(prepared_create.checkpoint);
+                        return CreateResult {
+                            result: InstructionResult::CreateContractStartingWithEF,
+                            created_address: Some(prepared_create.created_address),
+                            gas,
+                            return_value: bytes,
+                        };
+                    }
+                    Ok(result) => result,
+                };
+
                 // if ok, check contract creation limit and calculate gas deduction on output len.
                 //
                 // EIP-3541: Reject new contract code starting with the 0xEF byte
-                // if GSPEC::enabled(LONDON) && !bytes.is_empty() && bytes.first() == Some(&0xEF) {
-                //     self.data
-                //         .journaled_state
-                //         .checkpoint_revert(prepared_create.checkpoint);
-                //     return CreateResult {
-                //         result: InstructionResult::CreateContractStartingWithEF,
-                //         created_address: Some(prepared_create.created_address),
-                //         gas,
-                //         return_value: bytecode,
-                //     };
-                // }
+                if GSPEC::enabled(LONDON) && !bytes.is_empty() && bytes.first() == Some(&0xEF) {
+                    self.data
+                        .journaled_state
+                        .checkpoint_revert(prepared_create.checkpoint);
+                    return CreateResult {
+                        result: InstructionResult::CreateContractStartingWithEF,
+                        created_address: Some(prepared_create.created_address),
+                        gas,
+                        return_value: bytes,
+                    };
+                }
 
                 // EIP-170: Contract code size limit
                 // By default limit is 0x6000 (~25kb)
                 if GSPEC::enabled(SPURIOUS_DRAGON)
-                    && bytecode.len()
+                    && bytes.len()
                         > self
                             .data
                             .env
@@ -614,9 +631,10 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                 }
                 // if we have enough gas
                 self.data.journaled_state.checkpoint_commit();
-                self.data
-                    .journaled_state
-                    .set_code(prepared_create.created_address, Bytecode::new_raw(bytecode));
+                self.data.journaled_state.set_code(
+                    prepared_create.created_address,
+                    Bytecode::new_raw(bytes.clone()),
+                );
                 CreateResult {
                     result: InstructionResult::Return,
                     created_address: Some(prepared_create.created_address),
@@ -639,99 +657,6 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
     }
 
     #[cfg(feature = "runtime")]
-    fn add_evm_bindings(
-        contract: Box<Contract>,
-        runtime: &mut fluentbase_runtime::Runtime<'_, EVMData<'a, DB>>,
-    ) {
-        use fluentbase_runtime::RuntimeContext;
-        use fluentbase_rwasm::{AsContext, AsContextMut, Caller};
-
-        let contract_caller = contract.caller;
-        let contract_address = contract.address;
-        let contract_value = contract.value;
-
-        runtime.add_binding(
-            "env",
-            "_evm_sload",
-            move |mut caller: Caller<'_, RuntimeContext<'_, EVMData<'a, DB>>>,
-                  key_offset: u32,
-                  value_offset: u32| {
-                let mut key: [u8; 32] = [0; 32];
-                caller
-                    .exported_memory()
-                    .read(caller.as_context(), key_offset as usize, &mut key)
-                    .unwrap();
-                let key = U256::from_le_bytes(key);
-                let (value, _is_cold) = caller
-                    .data_mut()
-                    .context
-                    .as_mut()
-                    .unwrap()
-                    .sload(contract_address, key)
-                    .unwrap_or_default();
-                let value: [u8; 32] = value.to_le_bytes();
-                caller
-                    .exported_memory()
-                    .write(caller.as_context_mut(), value_offset as usize, &value)
-                    .unwrap();
-            },
-        );
-        runtime.add_binding(
-            "env",
-            "_evm_sstore",
-            move |mut caller: Caller<'_, RuntimeContext<'_, EVMData<'a, DB>>>,
-                  key_offset: u32,
-                  value_offset: u32| {
-                let mut key: [u8; 32] = [0; 32];
-                caller
-                    .exported_memory()
-                    .read(caller.as_context(), key_offset as usize, &mut key)
-                    .unwrap();
-                let key = U256::from_le_bytes(key);
-                let mut value: [u8; 32] = [0; 32];
-                caller
-                    .exported_memory()
-                    .read(caller.as_context(), value_offset as usize, &mut value)
-                    .unwrap();
-                let value = U256::from_le_bytes(value);
-                caller
-                    .data_mut()
-                    .context
-                    .as_mut()
-                    .unwrap()
-                    .sstore(contract_address, key, value);
-            },
-        );
-        runtime.add_binding(
-            "env",
-            "_evm_caller",
-            move |mut caller: Caller<'_, RuntimeContext<'_, EVMData<'a, DB>>>,
-                  value_offset: u32| {
-                caller.write_memory(value_offset as usize, contract_caller.as_slice());
-            },
-        );
-        runtime.add_binding(
-            "env",
-            "_evm_callvalue",
-            move |mut caller: Caller<'_, RuntimeContext<'_, EVMData<'a, DB>>>,
-                  value_offset: u32| {
-                caller.write_memory(
-                    value_offset as usize,
-                    &contract_value.to_le_bytes::<32>()[..],
-                );
-            },
-        );
-        runtime.add_binding(
-            "env",
-            "_evm_address",
-            move |mut caller: Caller<'_, RuntimeContext<'_, EVMData<'a, DB>>>,
-                  value_offset: u32| {
-                caller.write_memory(value_offset as usize, contract_address.as_slice());
-            },
-        );
-    }
-
-    #[cfg(feature = "runtime")]
     pub fn run_rwasm_interpreter(
         &mut self,
         contract: Box<Contract>,
@@ -740,55 +665,77 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         state: u32,
         _shared_memory: &mut SharedMemory,
     ) -> (InstructionResult, Bytes, Gas) {
+        use fluentbase_codec::{BufferDecoder, Encoder};
         use fluentbase_runtime::{Runtime, RuntimeContext};
-        let bytecode = contract.bytecode.original_bytecode_slice();
-        let import_linker = Runtime::<'_, EVMData<'a, DB>>::new_linker();
-        // let json_env = serde_json::to_vec(&self.data.env).unwrap();
-        // let contract_input = ContractInput {
-        //     input: contract.input.as_ref().to_vec(),
-        //     bytecode: contract.bytecode.original_bytecode_slice().to_vec(),
-        //     hash: Default::default(),    // contract.hash,
-        //     address: Default::default(), // contract.address,
-        //     caller: Default::default(),  // contract.caller,
-        //     value: Default::default(),   // contract.value,
-        //     block_hash: Default::default(),
-        //     balance: Default::default(),
-        //     env: json_env,
-        // };
-        // let raw_contract_input = contract_input.encode();
-        let ctx = RuntimeContext::<'_, EVMData<'a, DB>>::new(bytecode)
-            .with_context(&mut self.data)
-            .with_input(contract.input.as_ref().to_vec())
-            .with_state(state)
-            .with_fuel_limit(gas_limit as u32);
-        let runtime = Runtime::<'_, EVMData<'a, DB>>::new_uninit(ctx, &import_linker);
-        if runtime.is_err() {
-            return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
-        }
-        let mut runtime = runtime.unwrap();
-        runtime.register_bindings();
-        Self::add_evm_bindings(contract, &mut runtime);
-        if let Err(_) = runtime.instantiate() {
-            return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
-        }
-        let result = runtime.call();
-        if result.is_err() {
-            return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
-        }
-        let execution_result = result.unwrap();
-        let execution_output = execution_result.data().output();
-        let len = execution_output.len();
-        let mut output = vec![0u8; len];
-        output[0..len].copy_from_slice(execution_output.as_slice());
+        // let contract_address = contract.address.clone();
+        let bytecode = Bytes::copy_from_slice(contract.bytecode.original_bytecode_slice());
+        let hash_keccak256 = contract.bytecode.hash_slow();
+        let execution_result = {
+            let import_linker = Runtime::<'_, EVMData<'a, DB>>::new_linker();
+            let contract_input = ContractInput {
+                env_chain_id: self.data.env.cfg.chain_id,
+                contract_address: contract.address,
+                contract_caller: contract.caller,
+                contract_bytecode: bytecode.clone(),
+                contract_code_size: bytecode.len() as u32,
+                contract_code_hash: hash_keccak256,
+                contract_input_size: contract.input.len() as u32,
+                contract_input: contract.input,
+                contract_value: contract.value,
+                block_hash: Default::default(),
+                block_coinbase: self.data.env.block.coinbase,
+                block_timestamp: self.data.env.block.timestamp.as_limbs()[0],
+                block_number: self.data.env.block.number.as_limbs()[0],
+                block_difficulty: self.data.env.block.difficulty.as_limbs()[0],
+                block_gas_limit: self.data.env.block.gas_limit.as_limbs()[0],
+                block_base_fee: self.data.env.block.basefee,
+                tx_gas_price: self.data.env.tx.gas_price,
+                tx_gas_priority_fee: self.data.env.tx.gas_priority_fee,
+                tx_caller: self.data.env.tx.caller,
+                // tx_blob_hashes: self.data.env.tx.blob_hashes.clone(),
+                // tx_blob_gas_price: 0,
+            };
+            let raw_input = contract_input.encode_to_vec(0);
+            let ctx = RuntimeContext::<'_, EVMData<'a, DB>>::new(bytecode.as_ref())
+                .with_context(&mut self.data)
+                .with_input(raw_input)
+                .with_state(state)
+                .with_fuel_limit(gas_limit as u32);
+            let runtime = Runtime::<'_, EVMData<'a, DB>>::new_uninit(ctx, &import_linker);
+            if runtime.is_err() {
+                return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
+            }
+            let mut runtime = runtime.unwrap();
+            runtime.register_bindings();
+            if let Err(_) = runtime.instantiate() {
+                return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
+            }
+            let result = runtime.call();
+            if result.is_err() {
+                return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
+            }
+            result.unwrap()
+        };
+        let contract_output = {
+            let mut buffer_decoder =
+                BufferDecoder::new(execution_result.data().output().as_slice());
+            let mut contract_output = ContractOutput::default();
+            ContractOutput::decode_body(&mut buffer_decoder, 0, &mut contract_output);
+            contract_output
+        };
         let exit_code = execution_result.data().exit_code();
         if exit_code != 0 {
             return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
         }
-        (
-            InstructionResult::Stop,
-            Bytes::copy_from_slice(&output),
-            Gas::new(gas_limit),
-        )
+        let return_data = contract_output.return_data;
+        // for log in contract_output.logs.iter() {
+        //     self.log(
+        //         contract_address.clone(),
+        //         log.topics.clone(),
+        //         Bytes::copy_from_slice(log.data.as_slice()),
+        //     )
+        // }
+        (InstructionResult::Stop, return_data, Gas::new(gas_limit))
     }
 
     /// Create a Interpreter and run it.
@@ -985,7 +932,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                 prepared_call.contract,
                 prepared_call.gas.limit(),
                 inputs.is_static,
-                0, // STATE_MAIN
+                STATE_MAIN,
                 shared_memory,
             );
             CallResult {

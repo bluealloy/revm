@@ -2,13 +2,10 @@
 extern crate alloc;
 
 use alloc::boxed::Box;
-use fluentbase_sdk::evm::ExecutionContext;
-use fluentbase_sdk::{SysPlatformSDK, SDK};
+use fluentbase_sdk::evm::{ExecutionContext, U256};
 use revm_interpreter::opcode::make_instruction_table;
 use revm_interpreter::{Contract, FluentHost, InstructionResult, Interpreter, SharedMemory};
-use revm_precompile::primitives::{Address, Bytecode, Bytes, Env, LondonSpec, B256, U256};
-
-const INPUT_BYTECODE: [u8; 25 * 1024] = [0x7f; 25 * 1024];
+use revm_precompile::primitives::{BlockEnv, Bytecode, CfgEnv, Env, LondonSpec, TxEnv, LONDON};
 
 #[no_mangle]
 extern "C" fn main() {
@@ -16,15 +13,32 @@ extern "C" fn main() {
     let mut ctx = ExecutionContext::default();
     // init contract
     let contract = Contract::new(
-        Bytes::copy_from_slice(ctx.get_contract_input().as_slice()),
-        Bytecode::new_raw(Bytes::from(INPUT_BYTECODE)),
-        B256::from(ctx.get_contract_code_hash().0),
-        Address::from(ctx.get_contract_address().into_array()),
-        Address::from(ctx.get_contract_caller().into_array()),
-        *ctx.get_contract_value(),
+        ExecutionContext::contract_input(),
+        Bytecode::new_raw(ExecutionContext::contract_bytecode()),
+        ExecutionContext::contract_code_hash(),
+        ExecutionContext::contract_address(),
+        ExecutionContext::contract_caller(),
+        ExecutionContext::contract_value(),
     );
     // read env input (we use json for testing purposes)
-    let env = { Env::default() };
+    let mut cfg_env = CfgEnv::default();
+    cfg_env.chain_id = ExecutionContext::env_chain_id().clone();
+    cfg_env.spec_id = LONDON;
+    let env = Env {
+        cfg: cfg_env,
+        block: BlockEnv {
+            number: U256::from(ExecutionContext::block_number().clone()),
+            coinbase: ExecutionContext::block_coinbase().clone(),
+            timestamp: U256::from(ExecutionContext::block_timestamp().clone()),
+            gas_limit: U256::from(ExecutionContext::block_gas_limit().clone()),
+            basefee: U256::from(ExecutionContext::block_base_fee().clone()),
+            difficulty: U256::from(ExecutionContext::block_difficulty().clone()),
+            ..Default::default()
+        },
+        tx: TxEnv {
+            ..Default::default()
+        },
+    };
     let mut shared_memory = SharedMemory::new();
     let (return_code, return_offset, return_len) = {
         let mut vm = Interpreter::new(
@@ -38,11 +52,14 @@ extern "C" fn main() {
             &make_instruction_table::<FluentHost, LondonSpec>(),
             &mut fluent_host,
         );
+        // for log in fluent_host.log.iter() {
+        //     ctx.emit_log(log.topics.clone(), log.data.to_vec());
+        // }
         (return_code, vm.return_offset, vm.return_len)
     };
     let return_data = shared_memory.slice(return_offset, return_len);
     if return_data.len() > 0 {
-        SDK::sys_write(return_data);
+        ctx.emit_return(return_data);
     }
     match return_code {
         InstructionResult::Continue
@@ -50,7 +67,8 @@ extern "C" fn main() {
         | InstructionResult::Return
         | InstructionResult::SelfDestruct => {}
         _ => {
-            SDK::sys_halt(-1);
+            ctx.exit(-1);
         }
     }
+    ctx.exit(0);
 }

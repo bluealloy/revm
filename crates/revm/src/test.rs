@@ -4,7 +4,7 @@ use crate::{
     },
     Database, DatabaseCommit, EVM,
 };
-use fluentbase_sdk::{RwasmPlatformSDK, SDK};
+use fluentbase_sdk::{LowLevelAPI, LowLevelSDK};
 use hex_literal::hex;
 use revm_interpreter::primitives::{Env, TransactTo};
 
@@ -15,7 +15,7 @@ fn wat2rwasm(wat: &str) -> Vec<u8> {
 
 fn wasm2rwasm(wasm_binary: &[u8]) -> Vec<u8> {
     let mut output = vec![0u8; 1024 * 1024];
-    SDK::rwasm_compile(wasm_binary, output.as_mut_slice());
+    LowLevelSDK::rwasm_compile(wasm_binary, output.as_mut_slice());
     output
 }
 
