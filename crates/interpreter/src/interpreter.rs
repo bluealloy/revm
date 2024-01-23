@@ -315,7 +315,7 @@ impl InterpreterResult {
     /// Returns whether the instruction result is a revert.
     #[inline]
     pub const fn is_revert(&self) -> bool {
-        self.result.is_ok()
+        self.result.is_revert()
     }
 
     /// Returns whether the instruction result is an error.
