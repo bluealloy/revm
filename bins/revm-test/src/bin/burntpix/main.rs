@@ -99,35 +99,27 @@ fn try_from_hex_to_u32(hex: &str) -> eyre::Result<u32> {
     u32::from_str_radix(trimmed, 16).map_err(|e| eyre::eyre!("Failed to parse hex: {}", e))
 }
 
-fn insert_account_info(cache_db: &mut CacheDB<EmptyDB>, addr: &Address, code: &Bytes) {
-    let code_hash = hex::encode(keccak256(code));
+fn insert_account_info(cache_db: &mut CacheDB<EmptyDB>, addr: Address, code: Bytes) {
+    let code_hash = hex::encode(keccak256(code.clone()));
     let account_info = AccountInfo::new(
         U256::from(0),
         0,
         B256::from_str(&code_hash).unwrap(),
-        Bytecode::new_raw(code.clone()),
+        Bytecode::new_raw(code),
     );
-    cache_db.insert_account_info(*addr, account_info);
+    cache_db.insert_account_info(addr, account_info);
 }
 
 fn init_db() -> CacheDB<EmptyDB> {
     let mut cache_db = CacheDB::new(EmptyDB::default());
 
-    insert_account_info(&mut cache_db, &BURNTPIX_ADDRESS_ONE, &BURNTPIX_BYTECODE_ONE);
+    insert_account_info(&mut cache_db, BURNTPIX_ADDRESS_ONE, BURNTPIX_BYTECODE_ONE);
+    insert_account_info(&mut cache_db, BURNTPIX_MAIN_ADDRESS, BURNTPIX_BYTECODE_TWO);
+    insert_account_info(&mut cache_db, BURNTPIX_ADDRESS_TWO, BURNTPIX_BYTECODE_THREE);
     insert_account_info(
         &mut cache_db,
-        &BURNTPIX_MAIN_ADDRESS,
-        &BURNTPIX_BYTECODE_TWO,
-    );
-    insert_account_info(
-        &mut cache_db,
-        &BURNTPIX_ADDRESS_TWO,
-        &BURNTPIX_BYTECODE_THREE,
-    );
-    insert_account_info(
-        &mut cache_db,
-        &BURNTPIX_ADDRESS_THREE,
-        &BURNTPIX_BYTECODE_FOUR,
+        BURNTPIX_ADDRESS_THREE,
+        BURNTPIX_BYTECODE_FOUR,
     );
 
     cache_db
