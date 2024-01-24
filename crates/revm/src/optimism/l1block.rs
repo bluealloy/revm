@@ -4,9 +4,23 @@ use core::ops::Mul;
 const ZERO_BYTE_COST: u64 = 4;
 const NON_ZERO_BYTE_COST: u64 = 16;
 
+/// The two 4-byte Ecotone fee scalar values are packed into the same storage slot as the 8-byte sequence number.
+/// Byte offset within the storage slot of the 4-byte baseFeeScalar attribute.
+const BASE_FEE_SCALAR_OFFSET: usize = 16;
+/// The two 4-byte Ecotone fee scalar values are packed into the same storage slot as the 8-byte sequence number.
+/// Byte offset within the storage slot of the 4-byte blobBaseFeeScalar attribute.
+const BLOB_BASE_FEE_SCALAR_OFFSET: usize = 20;
+
 const L1_BASE_FEE_SLOT: U256 = U256::from_limbs([1u64, 0, 0, 0]);
 const L1_OVERHEAD_SLOT: U256 = U256::from_limbs([5u64, 0, 0, 0]);
 const L1_SCALAR_SLOT: U256 = U256::from_limbs([6u64, 0, 0, 0]);
+
+/// [ECOTONE_L1_BLOB_BASE_FEE_SLOT] was added in the Ecotone upgrade and stores the L1 blobBaseFee attribute.
+const ECOTONE_L1_BLOB_BASE_FEE_SLOT: U256 = U256::from_limbs([7u64, 0, 0, 0]);
+
+/// As of the ecotone upgrade, this storage slot stores the 32-bit basefeeScalar and blobBaseFeeScalar attributes at
+/// offsets [BASE_FEE_SCALAR_OFFSET] and [BLOB_BASE_FEE_SCALAR_OFFSET] respectively.
+const ECOTONE_L1_FEE_SCALARS_SLOT: U256 = U256::from_limbs([3u64, 0, 0, 0]);
 
 /// The address of L1 fee recipient.
 pub const L1_FEE_RECIPIENT: Address = address!("420000000000000000000000000000000000001A");
@@ -28,28 +42,57 @@ pub const L1_BLOCK_CONTRACT: Address = address!("4200000000000000000000000000000
 /// uint64 _sequenceNumber, bytes32 _batcherHash, uint256 _l1FeeOverhead, uint256 _l1FeeScalar)
 ///
 /// For now, we only care about the fields necessary for L1 cost calculation.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct L1BlockInfo {
     /// The base fee of the L1 origin block.
     pub l1_base_fee: U256,
-    /// The current L1 fee overhead.
-    pub l1_fee_overhead: U256,
+    /// The current L1 fee overhead. None if Ecotone is activated.
+    pub l1_fee_overhead: Option<U256>,
     /// The current L1 fee scalar.
-    pub l1_fee_scalar: U256,
+    pub l1_base_fee_scalar: U256,
+    /// The current L1 blob base fee. None if Ecotone is not activated.
+    pub l1_blob_base_fee: Option<U256>,
+    /// The current L1 blob base fee scalar. None if Ecotone is not activated.
+    pub l1_blob_base_fee_scalar: Option<U256>,
 }
 
 impl L1BlockInfo {
     /// Try to fetch the L1 block info from the database.
-    pub fn try_fetch<DB: Database>(db: &mut DB) -> Result<L1BlockInfo, DB::Error> {
-        let l1_base_fee = db.storage(L1_BLOCK_CONTRACT, L1_BASE_FEE_SLOT)?;
-        let l1_fee_overhead = db.storage(L1_BLOCK_CONTRACT, L1_OVERHEAD_SLOT)?;
-        let l1_fee_scalar = db.storage(L1_BLOCK_CONTRACT, L1_SCALAR_SLOT)?;
+    pub fn try_fetch<DB: Database>(db: &mut DB, spec_id: SpecId) -> Result<L1BlockInfo, DB::Error> {
+        if !spec_id.is_enabled_in(SpecId::ECOTONE) {
+            let l1_base_fee = db.storage(L1_BLOCK_CONTRACT, L1_BASE_FEE_SLOT)?;
+            let l1_fee_overhead = db.storage(L1_BLOCK_CONTRACT, L1_OVERHEAD_SLOT)?;
+            let l1_fee_scalar = db.storage(L1_BLOCK_CONTRACT, L1_SCALAR_SLOT)?;
 
-        Ok(L1BlockInfo {
-            l1_base_fee,
-            l1_fee_overhead,
-            l1_fee_scalar,
-        })
+            Ok(L1BlockInfo {
+                l1_base_fee,
+                l1_fee_overhead: Some(l1_fee_overhead),
+                l1_base_fee_scalar: l1_fee_scalar,
+                ..Default::default()
+            })
+        } else {
+            let l1_base_fee = db.storage(L1_BLOCK_CONTRACT, L1_BASE_FEE_SLOT)?;
+            let l1_blob_base_fee = db.storage(L1_BLOCK_CONTRACT, ECOTONE_L1_BLOB_BASE_FEE_SLOT)?;
+            let l1_fee_scalars = db
+                .storage(L1_BLOCK_CONTRACT, ECOTONE_L1_FEE_SCALARS_SLOT)?
+                .to_be_bytes::<32>();
+
+            let l1_base_fee_scalar = U256::from_be_slice(
+                l1_fee_scalars[BASE_FEE_SCALAR_OFFSET..BASE_FEE_SCALAR_OFFSET + 4].as_ref(),
+            );
+            let l1_blob_base_fee_scalar = U256::from_be_slice(
+                l1_fee_scalars[BLOB_BASE_FEE_SCALAR_OFFSET..BLOB_BASE_FEE_SCALAR_OFFSET + 4]
+                    .as_ref(),
+            );
+
+            Ok(L1BlockInfo {
+                l1_base_fee,
+                l1_base_fee_scalar,
+                l1_blob_base_fee: Some(l1_blob_base_fee),
+                l1_blob_base_fee_scalar: Some(l1_blob_base_fee_scalar),
+                ..Default::default()
+            })
+        }
     }
 
     /// Calculate the data gas for posting the transaction on L1. Calldata costs 16 gas per non-zero
@@ -74,19 +117,59 @@ impl L1BlockInfo {
         rollup_data_gas_cost
     }
 
-    /// Calculate the gas cost of a transaction based on L1 block data posted on L2
+    /// Calculate the gas cost of a transaction based on L1 block data posted on L2, depending on the [SpecId] passed.
     pub fn calculate_tx_l1_cost(&self, input: &[u8], spec_id: SpecId) -> U256 {
-        // If the input is not a deposit transaction, the default value is zero.
+        // If the input is a deposit transaction or empty, the default value is zero.
         if input.is_empty() || input.first() == Some(&0x7F) {
             return U256::ZERO;
         }
 
+        // TODO: There is an edgecase where, for the very first Ecotone block (unless it is activated at Genesis), we
+        // must use the Bedrock cost function. This may be a bit annoying to do here. The best way to do this will
+        // likely be by checking if the Ecotone parameters are unset, i.e. L1 blob base fee == Some(0).
+        if spec_id.is_enabled_in(SpecId::ECOTONE) {
+            self.calculate_tx_l1_cost_ecotone(input, spec_id)
+        } else {
+            self.calculate_tx_l1_cost_bedrock(input, spec_id)
+        }
+    }
+
+    /// Calculate the gas cost of a transaction based on L1 block data posted on L2, pre-Ecotone.
+    fn calculate_tx_l1_cost_bedrock(&self, input: &[u8], spec_id: SpecId) -> U256 {
         let rollup_data_gas_cost = self.data_gas(input, spec_id);
         rollup_data_gas_cost
-            .saturating_add(self.l1_fee_overhead)
+            .saturating_add(self.l1_fee_overhead.unwrap_or_default())
             .saturating_mul(self.l1_base_fee)
-            .saturating_mul(self.l1_fee_scalar)
-            / U256::from(1_000_000)
+            .saturating_mul(self.l1_base_fee_scalar)
+            .wrapping_div(U256::from(1_000_000))
+    }
+
+    /// Calculate the gas cost of a transaction based on L1 block data posted on L2, post-Ecotone.
+    ///
+    /// [SpecId::ECOTONE] L1 cost function:
+    /// `(calldataGas/16)*(l1BaseFee*16*l1BaseFeeScalar + l1BlobBaseFee*l1BlobBaseFeeScalar)/1e6`
+    ///
+    /// We divide "calldataGas" by 16 to change from units of calldata gas to "estimated # of bytes when compressed".
+    /// Known as "compressedTxSize" in the spec.
+    ///
+    /// Function is actually computed as follows for better precision under integer arithmetic:
+    /// `calldataGas*(l1BaseFee*16*l1BaseFeeScalar + l1BlobBaseFee*l1BlobBaseFeeScalar)/16e6`
+    fn calculate_tx_l1_cost_ecotone(&self, input: &[u8], spec_id: SpecId) -> U256 {
+        let rollup_data_gas_cost = self.data_gas(input, spec_id);
+
+        let calldata_cost_per_byte = self
+            .l1_base_fee
+            .saturating_mul(U256::from(16))
+            .saturating_mul(self.l1_base_fee_scalar);
+        let blob_cost_per_byte = self
+            .l1_blob_base_fee
+            .unwrap_or_default()
+            .saturating_mul(self.l1_blob_base_fee_scalar.unwrap_or_default());
+
+        calldata_cost_per_byte
+            .saturating_add(blob_cost_per_byte)
+            .saturating_mul(rollup_data_gas_cost)
+            .wrapping_div(U256::from(1_000_000 * 16))
     }
 }
 
@@ -99,8 +182,9 @@ mod tests {
     fn test_data_gas_non_zero_bytes() {
         let l1_block_info = L1BlockInfo {
             l1_base_fee: U256::from(1_000_000),
-            l1_fee_overhead: U256::from(1_000_000),
-            l1_fee_scalar: U256::from(1_000_000),
+            l1_fee_overhead: Some(U256::from(1_000_000)),
+            l1_base_fee_scalar: U256::from(1_000_000),
+            ..Default::default()
         };
 
         // 0xFACADE = 6 nibbles = 3 bytes
@@ -123,8 +207,9 @@ mod tests {
     fn test_data_gas_zero_bytes() {
         let l1_block_info = L1BlockInfo {
             l1_base_fee: U256::from(1_000_000),
-            l1_fee_overhead: U256::from(1_000_000),
-            l1_fee_scalar: U256::from(1_000_000),
+            l1_fee_overhead: Some(U256::from(1_000_000)),
+            l1_base_fee_scalar: U256::from(1_000_000),
+            ..Default::default()
         };
 
         // 0xFA00CA00DE = 10 nibbles = 5 bytes
@@ -147,8 +232,9 @@ mod tests {
     fn test_calculate_tx_l1_cost() {
         let l1_block_info = L1BlockInfo {
             l1_base_fee: U256::from(1_000),
-            l1_fee_overhead: U256::from(1_000),
-            l1_fee_scalar: U256::from(1_000),
+            l1_fee_overhead: Some(U256::from(1_000)),
+            l1_base_fee_scalar: U256::from(1_000),
+            ..Default::default()
         };
 
         let input = bytes!("FACADE");
