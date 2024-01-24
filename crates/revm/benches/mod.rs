@@ -11,7 +11,6 @@ use revm::{
 };
 use revm_interpreter::{opcode::make_instruction_table, SharedMemory, EMPTY_SHARED_MEMORY};
 use std::time::Duration;
-pub mod burntpix;
 
 fn analysis(c: &mut Criterion) {
     let evm = Evm::builder()
@@ -134,7 +133,6 @@ criterion_group!(
     analysis,
     snailtracer,
     transfer,
-    burntpix::burntpix,
 );
 criterion_main!(benches);
 
