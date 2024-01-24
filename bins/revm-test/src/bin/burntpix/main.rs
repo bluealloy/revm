@@ -1,7 +1,7 @@
 use alloy_sol_macro::sol;
 use alloy_sol_types::SolCall;
 
-use genesis_alloc::{genesis_alloc, BURNTPIX_SC_ADDRESS};
+use genesis_alloc::GenesisAlloc;
 use regex::bytes::Regex;
 use revm::{
     db::{CacheDB, EmptyDB},
@@ -11,12 +11,14 @@ use revm::{
     },
     Evm,
 };
+use static_data::BURNTPIX_MAIN_ADDRESS;
 
 use std::fs::File;
 use std::{error::Error, time::Instant};
 
 use std::{io::Write, str::FromStr};
 pub mod genesis_alloc;
+pub mod static_data;
 
 sol! {
     #[derive(Debug, PartialEq, Eq)]
@@ -24,9 +26,6 @@ sol! {
         function run( uint32 seed, uint256 iterations) returns (string);
     }
 }
-
-const DEFAULT_SEED: &str = "0xF1FD58E";
-const DEFAULT_ITERATIONS: &str = "0x7A120";
 
 fn main() {
     let (seed, iterations) = try_init_env_vars().expect("Failed to parse env vars");
@@ -38,7 +37,7 @@ fn main() {
     let mut evm = Evm::builder()
         .modify_tx_env(|tx| {
             tx.caller = address!("1000000000000000000000000000000000000000");
-            tx.transact_to = TransactTo::Call(BURNTPIX_SC_ADDRESS);
+            tx.transact_to = TransactTo::Call(BURNTPIX_MAIN_ADDRESS);
             tx.data = run_call_data.clone().into();
         })
         .with_db(db)
@@ -84,6 +83,8 @@ fn svg(filename: String, svg_data: &[u8]) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+const DEFAULT_SEED: &str = "0";
+const DEFAULT_ITERATIONS: &str = "0x7A120";
 fn try_init_env_vars() -> Result<(u32, U256), Box<dyn Error>> {
     let seed_from_env = std::env::var("SEED").unwrap_or(DEFAULT_SEED.to_string());
     let seed: u32 = try_from_hex_to_u32(&seed_from_env)?;
@@ -100,7 +101,7 @@ fn try_from_hex_to_u32(hex: &str) -> eyre::Result<u32> {
 fn init_db() -> CacheDB<EmptyDB> {
     let mut cache_db = CacheDB::new(EmptyDB::default());
 
-    let (contracts, storage) = genesis_alloc();
+    let GenesisAlloc { contracts, storage } = GenesisAlloc::new();
 
     for (addr, code) in contracts.iter() {
         let code_hash = hex::encode(keccak256(code));
@@ -114,7 +115,7 @@ fn init_db() -> CacheDB<EmptyDB> {
     }
 
     for (slot, value) in storage.iter() {
-        let _ = cache_db.insert_account_storage(BURNTPIX_SC_ADDRESS, *slot, *value);
+        let _ = cache_db.insert_account_storage(BURNTPIX_MAIN_ADDRESS, *slot, *value);
     }
     cache_db
 }
