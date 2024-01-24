@@ -1,8 +1,9 @@
 use revm::primitives::{address, bytes, Address, Bytes, U256};
 use std::{collections::HashMap, str::FromStr};
 
-/// Generating genesis allocs as from https://github.com/karalabe/burntpix-benchmark/blob/main/genesis.json
+/// Generating genesis allocs as from <https://github.com/karalabe/burntpix-benchmark/blob/main/genesis.json>
 pub const BURNTPIX_SC_ADDRESS: Address = address!("49206861766520746f6f206d7563682074696d65");
+
 pub fn genesis_alloc() -> (HashMap<Address, Bytes>, HashMap<U256, U256>) {
     let mut address_to_bytecode = HashMap::new();
     address_to_bytecode.insert(
