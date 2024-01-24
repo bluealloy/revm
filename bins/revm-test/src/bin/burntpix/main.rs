@@ -1,7 +1,7 @@
 use alloy_sol_macro::sol;
 use alloy_sol_types::SolCall;
 
-use genesis_alloc::{BURNTPIX_ADDRESS, GENESIS_ALLOCS};
+use genesis_alloc::{genesis_alloc, BURNTPIX_SC_ADDRESS};
 use regex::bytes::Regex;
 use revm::{
     db::{CacheDB, EmptyDB},
@@ -38,11 +38,12 @@ fn main() {
     let mut evm = Evm::builder()
         .modify_tx_env(|tx| {
             tx.caller = address!("1000000000000000000000000000000000000000");
-            tx.transact_to = TransactTo::Call(*BURNTPIX_ADDRESS);
+            tx.transact_to = TransactTo::Call(BURNTPIX_SC_ADDRESS);
             tx.data = run_call_data.clone().into();
         })
         .with_db(db)
         .build();
+
     let started = Instant::now();
     let tx_result = evm.transact().unwrap().result;
     let return_data = match tx_result {
@@ -60,7 +61,8 @@ fn main() {
     };
 
     // remove returndata offset and length from output
-    let data = &return_data[64..];
+    let returndata_offset = 64;
+    let data = &return_data[returndata_offset..];
 
     // remove trailing zeros
     let re = Regex::new(r"[0\x00]+$").unwrap();
@@ -69,6 +71,7 @@ fn main() {
 
     svg(file_name, &trimmed_data).expect("Failed to store svg");
 }
+
 fn svg(filename: String, svg_data: &[u8]) -> Result<(), Box<dyn Error>> {
     let current_dir = std::env::current_dir()?;
     let svg_dir = current_dir.join("burntpix").join("svgs");
@@ -96,25 +99,22 @@ fn try_from_hex_to_u32(hex: &str) -> eyre::Result<u32> {
 
 fn init_db() -> CacheDB<EmptyDB> {
     let mut cache_db = CacheDB::new(EmptyDB::default());
-    for (addr, state) in GENESIS_ALLOCS.iter() {
-        let code = state.code.clone().expect("Code is required");
+
+    let (contracts, storage) = genesis_alloc();
+
+    for (addr, code) in contracts.iter() {
         let code_hash = hex::encode(keccak256(&code));
         let account_info = AccountInfo::new(
-            state.balance,
-            state.nonce.unwrap_or(0),
+            U256::from(0),
+            0,
             B256::from_str(&code_hash).unwrap(),
-            Bytecode::new_raw(code),
+            Bytecode::new_raw(code.clone()),
         );
-
         cache_db.insert_account_info(*addr, account_info);
+    }
 
-        if let Some(storage) = &state.storage {
-            for (key, value) in storage.iter() {
-                cache_db
-                    .insert_account_storage(*addr, *key, *value)
-                    .unwrap();
-            }
-        }
+    for (slot, value) in storage.iter() {
+        let _ = cache_db.insert_account_storage(BURNTPIX_SC_ADDRESS, *slot, value.clone());
     }
     cache_db
 }
