@@ -93,7 +93,7 @@ fn try_init_env_vars() -> Result<(u32, U256), Box<dyn Error>> {
 }
 
 fn try_from_hex_to_u32(hex: &str) -> eyre::Result<u32> {
-    let trimmed = hex.strip_prefix("0x").unwrap_or(&hex);
+    let trimmed = hex.strip_prefix("0x").unwrap_or(hex);
     u32::from_str_radix(trimmed, 16).map_err(|e| eyre::eyre!("Failed to parse hex: {}", e))
 }
 
@@ -103,7 +103,7 @@ fn init_db() -> CacheDB<EmptyDB> {
     let (contracts, storage) = genesis_alloc();
 
     for (addr, code) in contracts.iter() {
-        let code_hash = hex::encode(keccak256(&code));
+        let code_hash = hex::encode(keccak256(code));
         let account_info = AccountInfo::new(
             U256::from(0),
             0,
@@ -114,7 +114,7 @@ fn init_db() -> CacheDB<EmptyDB> {
     }
 
     for (slot, value) in storage.iter() {
-        let _ = cache_db.insert_account_storage(BURNTPIX_SC_ADDRESS, *slot, value.clone());
+        let _ = cache_db.insert_account_storage(BURNTPIX_SC_ADDRESS, *slot, *value);
     }
     cache_db
 }
