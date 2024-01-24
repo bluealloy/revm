@@ -86,5 +86,5 @@ required-features = ["std", "serde", "ethersdb"]
 
 [[bench]]
 name = "bench"
-path = "benches/mod.rs"
+path = "benches/bench.rs"
 harness = false

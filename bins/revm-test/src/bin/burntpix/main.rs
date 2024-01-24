@@ -1,23 +1,24 @@
 use alloy_sol_macro::sol;
 use alloy_sol_types::SolCall;
-
-use genesis_alloc::GenesisAlloc;
 use regex::bytes::Regex;
 use revm::{
     db::{CacheDB, EmptyDB},
     primitives::{
-        address, hex, keccak256, AccountInfo, Bytecode, ExecutionResult, Output, TransactTo, B256,
-        U256,
+        address, hex, keccak256, AccountInfo, Address, Bytecode, Bytes, ExecutionResult, Output,
+        TransactTo, B256, U256,
     },
     Evm,
 };
-use static_data::BURNTPIX_MAIN_ADDRESS;
+use static_data::{
+    BURNTPIX_ADDRESS_ONE, BURNTPIX_ADDRESS_THREE, BURNTPIX_ADDRESS_TWO, BURNTPIX_BYTECODE_FOUR,
+    BURNTPIX_BYTECODE_ONE, BURNTPIX_BYTECODE_THREE, BURNTPIX_BYTECODE_TWO, BURNTPIX_MAIN_ADDRESS,
+    STORAGE_ONE, STORAGE_TWO, STORAGE_ZERO,
+};
 
 use std::fs::File;
 use std::{error::Error, time::Instant};
 
 use std::{io::Write, str::FromStr};
-pub mod genesis_alloc;
 pub mod static_data;
 
 sol! {
@@ -83,7 +84,7 @@ fn svg(filename: String, svg_data: &[u8]) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-const DEFAULT_SEED: &str = "0";
+const DEFAULT_SEED: &str = "0xF1FD58E";
 const DEFAULT_ITERATIONS: &str = "0x7A120";
 fn try_init_env_vars() -> Result<(u32, U256), Box<dyn Error>> {
     let seed_from_env = std::env::var("SEED").unwrap_or(DEFAULT_SEED.to_string());
@@ -98,24 +99,60 @@ fn try_from_hex_to_u32(hex: &str) -> eyre::Result<u32> {
     u32::from_str_radix(trimmed, 16).map_err(|e| eyre::eyre!("Failed to parse hex: {}", e))
 }
 
+fn insert_account_info(cache_db: &mut CacheDB<EmptyDB>, addr: &Address, code: &Bytes) {
+    let code_hash = hex::encode(keccak256(code));
+    let account_info = AccountInfo::new(
+        U256::from(0),
+        0,
+        B256::from_str(&code_hash).unwrap(),
+        Bytecode::new_raw(code.clone()),
+    );
+    cache_db.insert_account_info(*addr, account_info);
+}
+
 fn init_db() -> CacheDB<EmptyDB> {
     let mut cache_db = CacheDB::new(EmptyDB::default());
 
-    let GenesisAlloc { contracts, storage } = GenesisAlloc::new();
+    insert_account_info(&mut cache_db, &BURNTPIX_ADDRESS_ONE, &BURNTPIX_BYTECODE_ONE);
+    insert_account_info(
+        &mut cache_db,
+        &BURNTPIX_MAIN_ADDRESS,
+        &BURNTPIX_BYTECODE_TWO,
+    );
+    insert_account_info(
+        &mut cache_db,
+        &BURNTPIX_ADDRESS_TWO,
+        &BURNTPIX_BYTECODE_THREE,
+    );
+    insert_account_info(
+        &mut cache_db,
+        &BURNTPIX_ADDRESS_THREE,
+        &BURNTPIX_BYTECODE_FOUR,
+    );
 
-    for (addr, code) in contracts.iter() {
-        let code_hash = hex::encode(keccak256(code));
-        let account_info = AccountInfo::new(
+    cache_db
+        .insert_account_storage(
+            BURNTPIX_MAIN_ADDRESS,
             U256::from(0),
-            0,
-            B256::from_str(&code_hash).unwrap(),
-            Bytecode::new_raw(code.clone()),
-        );
-        cache_db.insert_account_info(*addr, account_info);
-    }
+            U256::from_be_bytes(*STORAGE_ZERO),
+        )
+        .unwrap();
 
-    for (slot, value) in storage.iter() {
-        let _ = cache_db.insert_account_storage(BURNTPIX_MAIN_ADDRESS, *slot, *value);
-    }
+    cache_db
+        .insert_account_storage(
+            BURNTPIX_MAIN_ADDRESS,
+            U256::from(1),
+            U256::from_be_bytes(*STORAGE_ONE),
+        )
+        .unwrap();
+
+    cache_db
+        .insert_account_storage(
+            BURNTPIX_MAIN_ADDRESS,
+            U256::from(2),
+            U256::from_be_bytes(*STORAGE_TWO),
+        )
+        .unwrap();
+
     cache_db
 }
