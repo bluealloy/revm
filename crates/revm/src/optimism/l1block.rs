@@ -22,6 +22,9 @@ const ECOTONE_L1_BLOB_BASE_FEE_SLOT: U256 = U256::from_limbs([7u64, 0, 0, 0]);
 /// offsets [BASE_FEE_SCALAR_OFFSET] and [BLOB_BASE_FEE_SCALAR_OFFSET] respectively.
 const ECOTONE_L1_FEE_SCALARS_SLOT: U256 = U256::from_limbs([3u64, 0, 0, 0]);
 
+/// An empty 64-bit set of scalar values.
+const EMPTY_SCALARS: [u8; 8] = [0u8; 8];
+
 /// The address of L1 fee recipient.
 pub const L1_FEE_RECIPIENT: Address = address!("420000000000000000000000000000000000001A");
 
@@ -54,6 +57,8 @@ pub struct L1BlockInfo {
     pub l1_blob_base_fee: Option<U256>,
     /// The current L1 blob base fee scalar. None if Ecotone is not activated.
     pub l1_blob_base_fee_scalar: Option<U256>,
+    /// True if Ecotone is activated, but the L1 fee scalars have not yet been set.
+    pub(crate) empty_scalars: bool,
 }
 
 impl L1BlockInfo {
@@ -85,11 +90,17 @@ impl L1BlockInfo {
                     .as_ref(),
             );
 
+            // Check if the L1 fee scalars are empty. If so, we use the Bedrock cost function.
+            let empty_scalars = l1_blob_base_fee == U256::ZERO
+                && l1_fee_scalars[BASE_FEE_SCALAR_OFFSET..BLOB_BASE_FEE_SCALAR_OFFSET + 4]
+                    == EMPTY_SCALARS;
+
             Ok(L1BlockInfo {
                 l1_base_fee,
                 l1_base_fee_scalar,
                 l1_blob_base_fee: Some(l1_blob_base_fee),
                 l1_blob_base_fee_scalar: Some(l1_blob_base_fee_scalar),
+                empty_scalars,
                 ..Default::default()
             })
         }
@@ -124,9 +135,6 @@ impl L1BlockInfo {
             return U256::ZERO;
         }
 
-        // TODO: There is an edgecase where, for the very first Ecotone block (unless it is activated at Genesis), we
-        // must use the Bedrock cost function. This may be a bit annoying to do here. The best way to do this will
-        // likely be by checking if the Ecotone parameters are unset, i.e. L1 blob base fee == Some(0).
         if spec_id.is_enabled_in(SpecId::ECOTONE) {
             self.calculate_tx_l1_cost_ecotone(input, spec_id)
         } else {
@@ -155,8 +163,14 @@ impl L1BlockInfo {
     /// Function is actually computed as follows for better precision under integer arithmetic:
     /// `calldataGas*(l1BaseFee*16*l1BaseFeeScalar + l1BlobBaseFee*l1BlobBaseFeeScalar)/16e6`
     fn calculate_tx_l1_cost_ecotone(&self, input: &[u8], spec_id: SpecId) -> U256 {
-        let rollup_data_gas_cost = self.data_gas(input, spec_id);
+        // There is an edgecase where, for the very first Ecotone block (unless it is activated at Genesis), we must
+        // use the Bedrock cost function. To determine if this is the case, we can check if the Ecotone parameters are
+        // unset.
+        if self.empty_scalars {
+            return self.calculate_tx_l1_cost_bedrock(input, spec_id);
+        }
 
+        let rollup_data_gas_cost = self.data_gas(input, spec_id);
         let calldata_cost_per_byte = self
             .l1_base_fee
             .saturating_mul(U256::from(16))
