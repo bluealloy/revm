@@ -78,6 +78,24 @@ struct CallResult {
     return_value: Bytes,
 }
 
+enum BytecodeType {
+    Rwasm,
+    Evm,
+    Wasm,
+}
+
+impl BytecodeType {
+    pub(crate) fn from_slice(input: &[u8]) -> Self {
+        if input.len() >= 4 && input[0..4] == [0x00, 0x61, 0x73, 0x6d] {
+            Self::Wasm
+        } else if input.len() >= 1 && input[0] == 0xef {
+            Self::Rwasm
+        } else {
+            Self::Evm
+        }
+    }
+}
+
 /// EVM transaction interface.
 #[auto_impl(&mut, Box)]
 pub trait Transact<DBError> {
@@ -494,15 +512,18 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             }
         };
 
-        let bytecode =
-            Self::translate_wasm_to_rwasm(&inputs.init_code, "deploy").map_err(|_| {
-                return CreateResult {
-                    result: InstructionResult::Revert,
-                    created_address: None,
-                    gas,
-                    return_value: Bytes::new(),
-                };
-            })?;
+        let bytecode = match BytecodeType::from_slice(inputs.init_code.as_ref()) {
+            BytecodeType::Wasm => Self::translate_wasm_to_rwasm(&inputs.init_code, "deploy")
+                .map_err(|_| {
+                    return CreateResult {
+                        result: InstructionResult::Revert,
+                        created_address: None,
+                        gas,
+                        return_value: Bytes::new(),
+                    };
+                })?,
+            _ => inputs.init_code.clone(),
+        };
 
         let contract = Box::new(Contract::new(
             Bytes::new(),
@@ -550,7 +571,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         };
 
         // Create new interpreter and execute init code
-        let (exit_reason, bytes, mut gas) = self.run_rwasm_interpreter(
+        let (exit_reason, bytes, mut gas) = self.run_interpreter(
             prepared_create.contract,
             prepared_create.gas.limit(),
             false,
@@ -561,19 +582,22 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         // Host error if present on execution
         match exit_reason {
             return_ok!() => {
-                let mut bytes = match Self::translate_wasm_to_rwasm(&bytes, "main") {
-                    Err(_) => {
-                        self.data
-                            .journaled_state
-                            .checkpoint_revert(prepared_create.checkpoint);
-                        return CreateResult {
-                            result: InstructionResult::CreateContractStartingWithEF,
-                            created_address: Some(prepared_create.created_address),
-                            gas,
-                            return_value: bytes,
-                        };
-                    }
-                    Ok(result) => result,
+                let mut bytes = match BytecodeType::from_slice(inputs.init_code.as_ref()) {
+                    BytecodeType::Wasm => match Self::translate_wasm_to_rwasm(&bytes, "main") {
+                        Err(_) => {
+                            self.data
+                                .journaled_state
+                                .checkpoint_revert(prepared_create.checkpoint);
+                            return CreateResult {
+                                result: InstructionResult::CreateContractStartingWithEF,
+                                created_address: Some(prepared_create.created_address),
+                                gas,
+                                return_value: bytes,
+                            };
+                        }
+                        Ok(result) => result,
+                    },
+                    _ => bytes,
                 };
 
                 // if ok, check contract creation limit and calculate gas deduction on output len.
@@ -657,6 +681,27 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                     gas,
                     return_value: bytes,
                 }
+            }
+        }
+    }
+
+    pub fn run_interpreter(
+        &mut self,
+        contract: Box<Contract>,
+        gas_limit: u64,
+        is_static: bool,
+        state: u32,
+        shared_memory: &mut SharedMemory,
+    ) -> (InstructionResult, Bytes, Gas) {
+        match BytecodeType::from_slice(contract.bytecode.bytecode()) {
+            BytecodeType::Rwasm => {
+                self.run_rwasm_interpreter(contract, gas_limit, is_static, state, shared_memory)
+            }
+            BytecodeType::Evm => {
+                self.run_evm_interpreter(contract, gas_limit, is_static, shared_memory)
+            }
+            BytecodeType::Wasm => {
+                panic!("not supported wasm runtime")
             }
         }
     }
@@ -933,7 +978,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             self.call_precompile(precompile, inputs, prepared_call.gas)
         } else if !prepared_call.contract.bytecode.is_empty() {
             // Create interpreter and execute subcall
-            let (exit_reason, bytes, gas) = self.run_rwasm_interpreter(
+            let (exit_reason, bytes, gas) = self.run_interpreter(
                 prepared_call.contract,
                 prepared_call.gas.limit(),
                 inputs.is_static,

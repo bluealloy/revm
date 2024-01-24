@@ -27,7 +27,7 @@ auto_impl = { version = "1.1", default-features = false }
 
 # Optionalc-kzg
 serde = { version = "1.0", default-features = false, features = ["derive", "rc"], optional = true }
-serde_json = { version = "1.0", features = ["preserve_order"], optional = true }
+serde_json = { version = "1.0.108", default-features = false, features = ["alloc"] }
 
 # ethersdb
 tokio = { version = "1.33", features = [
