@@ -38,14 +38,14 @@ impl GenesisAlloc {
 
     fn populate_storage(&mut self) {
         self.storage
-            .insert(U256::ZERO, U256::from_str(STORAGE_ZERO).unwrap());
+            .insert(U256::ZERO, U256::from_be_bytes(*STORAGE_ZERO));
         self.storage.insert(
             U256::from_str("0x1").unwrap(),
-            U256::from_str(STORAGE_ONE).unwrap(),
+            U256::from_be_bytes(*STORAGE_ONE),
         );
         self.storage.insert(
             U256::from_str("0x2").unwrap(),
-            U256::from_str(STORAGE_TWO).unwrap(),
+            U256::from_be_bytes(*STORAGE_TWO),
         );
     }
 }
