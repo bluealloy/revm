@@ -628,16 +628,30 @@ impl BundleState {
         if let Some(reverts) = self.reverts.pop() {
             for (address, revert_account) in reverts.into_iter() {
                 self.reverts_size -= revert_account.size_hint();
-                if let Entry::Occupied(mut entry) = self.state.entry(address) {
-                    let account = entry.get_mut();
-                    self.state_size -= account.size_hint();
-                    if account.revert(revert_account) {
-                        entry.remove();
-                    } else {
-                        self.state_size += account.size_hint();
+                match self.state.entry(address) {
+                    Entry::Occupied(mut entry) => {
+                        let account = entry.get_mut();
+                        self.state_size -= account.size_hint();
+                        if account.revert(revert_account) {
+                            entry.remove();
+                        } else {
+                            self.state_size += account.size_hint();
+                        }
                     }
-                } else {
-                    unreachable!("Account {address:?} {revert_account:?} for revert should exist");
+                    Entry::Vacant(entry) => {
+                        // create empty account that we will revert on.
+                        // Only place where this account is not existing is if revert is DeleteIt.
+                        let mut account = BundleAccount::new(
+                            None,
+                            None,
+                            HashMap::new(),
+                            AccountStatus::LoadedNotExisting,
+                        );
+                        if !account.revert(revert_account) {
+                            self.state_size += account.size_hint();
+                            entry.insert(account);
+                        }
+                    }
                 }
             }
             return true;
@@ -960,6 +974,31 @@ mod tests {
     fn test_sanity_path() {
         sanity_path(test_bundle1(), test_bundle2());
         sanity_path(test_bundle3(), test_bundle4());
+    }
+
+    #[test]
+    fn test_multi_reverts_with_delete() {
+        let mut state = BundleBuilder::new(0..=3)
+            .revert_address(0, account1())
+            .revert_account_info(2, account1(), Some(Some(AccountInfo::default())))
+            .revert_account_info(3, account1(), Some(None))
+            .build();
+
+        state.revert_latest();
+        // state for account one was deleted
+        assert_eq!(state.state.get(&account1()), None);
+
+        state.revert_latest();
+        // state is set to
+        assert_eq!(
+            state.state.get(&account1()),
+            Some(&BundleAccount::new(
+                None,
+                Some(AccountInfo::default()),
+                HashMap::new(),
+                AccountStatus::Changed
+            ))
+        );
     }
 
     #[test]

@@ -92,8 +92,16 @@ impl BundleAccount {
             AccountInfoRevert::DoNothing => (),
             AccountInfoRevert::DeleteIt => {
                 self.info = None;
-                self.storage = HashMap::new();
-                return true;
+                if self.original_info.is_none() {
+                    self.storage = HashMap::new();
+                    return true;
+                } else {
+                    // set all storage to zero but preserve original values.
+                    self.storage.iter_mut().for_each(|(_, v)| {
+                        v.present_value = U256::ZERO;
+                    });
+                    return false;
+                }
             }
             AccountInfoRevert::RevertTo(info) => self.info = Some(info),
         };
