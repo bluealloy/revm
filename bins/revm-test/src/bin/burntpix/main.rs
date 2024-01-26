@@ -84,7 +84,7 @@ fn svg(filename: String, svg_data: &[u8]) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-const DEFAULT_SEED: &str = "0xF1FD58E";
+const DEFAULT_SEED: &str = "0";
 const DEFAULT_ITERATIONS: &str = "0x7A120";
 fn try_init_env_vars() -> Result<(u32, U256), Box<dyn Error>> {
     let seed_from_env = std::env::var("SEED").unwrap_or(DEFAULT_SEED.to_string());
@@ -113,13 +113,25 @@ fn insert_account_info(cache_db: &mut CacheDB<EmptyDB>, addr: Address, code: Byt
 fn init_db() -> CacheDB<EmptyDB> {
     let mut cache_db = CacheDB::new(EmptyDB::default());
 
-    insert_account_info(&mut cache_db, BURNTPIX_ADDRESS_ONE, BURNTPIX_BYTECODE_ONE);
-    insert_account_info(&mut cache_db, BURNTPIX_MAIN_ADDRESS, BURNTPIX_BYTECODE_TWO);
-    insert_account_info(&mut cache_db, BURNTPIX_ADDRESS_TWO, BURNTPIX_BYTECODE_THREE);
+    insert_account_info(
+        &mut cache_db,
+        BURNTPIX_ADDRESS_ONE,
+        BURNTPIX_BYTECODE_ONE.clone(),
+    );
+    insert_account_info(
+        &mut cache_db,
+        BURNTPIX_MAIN_ADDRESS,
+        BURNTPIX_BYTECODE_TWO.clone(),
+    );
+    insert_account_info(
+        &mut cache_db,
+        BURNTPIX_ADDRESS_TWO,
+        BURNTPIX_BYTECODE_THREE.clone(),
+    );
     insert_account_info(
         &mut cache_db,
         BURNTPIX_ADDRESS_THREE,
-        BURNTPIX_BYTECODE_FOUR,
+        BURNTPIX_BYTECODE_FOUR.clone(),
     );
 
     cache_db
