@@ -69,7 +69,7 @@ impl TestingContext {
             cfg: Default::default(),
             block: Default::default(),
             tx: TxEnv {
-                gas_limit: 1_000_000,
+                gas_limit: 10_000_000,
                 transact_to: TransactTo::Create(CreateScheme::Create),
                 data: Bytes::copy_from_slice(input_binary),
                 caller,

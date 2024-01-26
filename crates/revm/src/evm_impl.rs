@@ -21,7 +21,7 @@ use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use auto_impl::auto_impl;
 use core::{fmt, marker::PhantomData};
 use fluentbase_rwasm::rwasm::{Compiler, CompilerConfig, CompilerError, FuncOrExport};
-use fluentbase_types::{STATE_DEPLOY, STATE_MAIN};
+use fluentbase_types::{Account, AccountDb, STATE_DEPLOY, STATE_MAIN};
 
 #[cfg(feature = "optimism")]
 use crate::optimism;
@@ -717,7 +717,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
     ) -> (InstructionResult, Bytes, Gas) {
         use fluentbase_codec::{BufferDecoder, Encoder};
         use fluentbase_runtime::{Runtime, RuntimeContext};
-        // let contract_address = contract.address.clone();
+        let contract_address = contract.address.clone();
         let bytecode = Bytes::copy_from_slice(contract.bytecode.original_bytecode_slice());
         let hash_keccak256 = contract.bytecode.hash_slow();
         let execution_result = {
@@ -778,13 +778,22 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
         }
         let return_data = contract_output.return_data;
-        // for log in contract_output.logs.iter() {
-        //     self.log(
-        //         contract_address.clone(),
-        //         log.topics.clone(),
-        //         Bytes::copy_from_slice(log.data.as_slice()),
-        //     )
-        // }
+        for log in contract_output.logs.iter() {
+            let topics = if let Some(topics) = log.topic0 {
+                topics.to_vec()
+            } else if let Some(topics) = log.topic1 {
+                topics.to_vec()
+            } else if let Some(topics) = log.topic2 {
+                topics.to_vec()
+            } else if let Some(topics) = log.topic3 {
+                topics.to_vec()
+            } else if let Some(topics) = log.topic4 {
+                topics.to_vec()
+            } else {
+                Default::default()
+            };
+            self.log(contract_address.clone(), topics, log.data.clone())
+        }
         (InstructionResult::Stop, return_data, Gas::new(gas_limit))
     }
 
@@ -1008,6 +1017,29 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         }
 
         ret
+    }
+}
+
+impl<'a, GSPEC: Spec + 'static, DB: Database> AccountDb for EVMImpl<'a, GSPEC, DB> {
+    fn get_account(&mut self, address: &Address) -> Option<Account> {
+        self.data.account(*address).map(|acc| Account {
+            balance: acc.balance,
+            nonce: acc.nonce,
+            code_hash: acc.code_hash,
+            code: acc.code.map(|code| code.bytecode),
+        })
+    }
+
+    fn update_account(&mut self, _address: &Address, _account: &Account) {
+        todo!()
+    }
+
+    fn get_storage(&mut self, address: &Address, index: &U256) -> Option<U256> {
+        self.data.sload(*address, *index).map(|val| val.0)
+    }
+
+    fn update_storage(&mut self, address: &Address, index: &U256, value: &U256) {
+        self.data.sstore(*address, *index, *value);
     }
 }
 

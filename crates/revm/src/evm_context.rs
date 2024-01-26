@@ -1,6 +1,6 @@
 use crate::db::Database;
 use crate::journaled_state::JournaledState;
-use crate::primitives::{Address, Bytecode, EVMError, Env, B256, U256};
+use crate::primitives::{AccountInfo, Address, Bytecode, EVMError, Env, B256, U256};
 use revm_precompile::Precompiles;
 
 /// EVM Data contains all the data that EVM needs to execute.
@@ -61,6 +61,14 @@ impl<'a, DB: Database> EVMData<'a, DB> {
             .load_account_exist(address, self.db)
             .map_err(|e| self.error = Some(e))
             .ok()
+    }
+
+    pub fn account(&mut self, address: Address) -> Option<AccountInfo> {
+        self.journaled_state
+            .load_account(address, &mut self.db)
+            .map_err(|e| self.error = Some(e))
+            .ok()
+            .map(|(acc, _)| acc.info.clone())
     }
 
     /// Return account balance and is_cold flag.
