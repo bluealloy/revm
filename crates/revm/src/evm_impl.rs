@@ -26,7 +26,7 @@ use fluentbase_types::{Account, AccountDb, STATE_DEPLOY, STATE_MAIN};
 #[cfg(feature = "optimism")]
 use crate::optimism;
 
-use fluentbase_sdk::evm::{ContractInput, ContractOutput};
+use fluentbase_sdk::evm::ContractInput;
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -547,7 +547,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         func_name: &'static str,
     ) -> Result<Bytes, CompilerError> {
         use fluentbase_runtime::Runtime;
-        let import_linker = Runtime::<()>::new_linker();
+        let import_linker = Runtime::<()>::new_shared_linker();
         let mut compiler = Compiler::new_with_linker(
             input.as_ref(),
             CompilerConfig::default(),
@@ -715,13 +715,12 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         state: u32,
         _shared_memory: &mut SharedMemory,
     ) -> (InstructionResult, Bytes, Gas) {
-        use fluentbase_codec::{BufferDecoder, Encoder};
+        use fluentbase_codec::Encoder;
         use fluentbase_runtime::{Runtime, RuntimeContext};
-        let contract_address = contract.address.clone();
         let bytecode = Bytes::copy_from_slice(contract.bytecode.original_bytecode_slice());
         let hash_keccak256 = contract.bytecode.hash_slow();
         let execution_result = {
-            let import_linker = Runtime::<'_, EVMData<'a, DB>>::new_linker();
+            let import_linker = Runtime::<'_, EVMData<'a, DB>>::new_shared_linker();
             let contract_input = ContractInput {
                 env_chain_id: self.data.env.cfg.chain_id,
                 contract_address: contract.address,
@@ -766,35 +765,15 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             }
             result.unwrap()
         };
-        let contract_output = {
-            let mut buffer_decoder =
-                BufferDecoder::new(execution_result.data().output().as_slice());
-            let mut contract_output = ContractOutput::default();
-            ContractOutput::decode_body(&mut buffer_decoder, 0, &mut contract_output);
-            contract_output
-        };
         let exit_code = execution_result.data().exit_code();
         if exit_code != 0 {
             return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
         }
-        let return_data = contract_output.return_data;
-        for log in contract_output.logs.iter() {
-            let topics = if let Some(topics) = log.topic0 {
-                topics.to_vec()
-            } else if let Some(topics) = log.topic1 {
-                topics.to_vec()
-            } else if let Some(topics) = log.topic2 {
-                topics.to_vec()
-            } else if let Some(topics) = log.topic3 {
-                topics.to_vec()
-            } else if let Some(topics) = log.topic4 {
-                topics.to_vec()
-            } else {
-                Default::default()
-            };
-            self.log(contract_address.clone(), topics, log.data.clone())
-        }
-        (InstructionResult::Stop, return_data, Gas::new(gas_limit))
+        (
+            InstructionResult::Stop,
+            Bytes::from(execution_result.data().output().clone()),
+            Gas::new(gas_limit),
+        )
     }
 
     /// Create a Interpreter and run it.
@@ -1040,6 +1019,21 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> AccountDb for EVMImpl<'a, GSPEC, D
 
     fn update_storage(&mut self, address: &Address, index: &U256, value: &U256) {
         self.data.sstore(*address, *index, *value);
+    }
+
+    fn transfer(&mut self, from: &Address, to: &Address, value: &U256) -> bool {
+        match self
+            .data
+            .journaled_state
+            .transfer(from, to, *value, self.data.db)
+        {
+            Ok(_) => true,
+            Err(_) => false,
+        }
+    }
+
+    fn emit_log(&mut self, address: &Address, topics: &[B256], data: Bytes) {
+        self.log(address.clone(), topics.to_vec(), data)
     }
 }
 

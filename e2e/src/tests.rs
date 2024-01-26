@@ -22,7 +22,7 @@ fn wat2rwasm(wat: &str) -> Vec<u8> {
 }
 
 fn wasm2rwasm(wasm_binary: &[u8]) -> Vec<u8> {
-    let import_linker = Runtime::<()>::new_linker();
+    let import_linker = Runtime::<()>::new_sovereign_linker();
     let mut compiler =
         Compiler::new_with_linker(wasm_binary, CompilerConfig::default(), Some(&import_linker))
             .unwrap();
