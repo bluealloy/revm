@@ -53,7 +53,7 @@ pub struct L1BlockInfo {
     pub l1_fee_overhead: Option<U256>,
     /// The current L1 fee scalar.
     pub l1_base_fee_scalar: U256,
-    /// The current L1 blob base fee. None if Ecotone is not activated.
+    /// The current L1 blob base fee. None if Ecotone is not activated, except if `empty_scalars` is `true`.
     pub l1_blob_base_fee: Option<U256>,
     /// The current L1 blob base fee scalar. None if Ecotone is not activated.
     pub l1_blob_base_fee_scalar: Option<U256>,
@@ -90,10 +90,12 @@ impl L1BlockInfo {
                     .as_ref(),
             );
 
-            // Check if the L1 fee scalars are empty. If so, we use the Bedrock cost function.
+            // Check if the L1 fee scalars are empty. If so, we use the Bedrock cost function. The L1 fee overhead is 
+            // only necessary if `empty_scalars` is true, as it was deprecated in Ecotone.
             let empty_scalars = l1_blob_base_fee == U256::ZERO
                 && l1_fee_scalars[BASE_FEE_SCALAR_OFFSET..BLOB_BASE_FEE_SCALAR_OFFSET + 4]
                     == EMPTY_SCALARS;
+            let l1_fee_overhead = empty_scalars.then(|| db.storage(L1_BLOCK_CONTRACT, L1_OVERHEAD_SLOT)).transpose()?;
 
             Ok(L1BlockInfo {
                 l1_base_fee,
@@ -101,6 +103,7 @@ impl L1BlockInfo {
                 l1_blob_base_fee: Some(l1_blob_base_fee),
                 l1_blob_base_fee_scalar: Some(l1_blob_base_fee_scalar),
                 empty_scalars,
+                l1_fee_overhead,
                 ..Default::default()
             })
         }
@@ -264,5 +267,40 @@ mod tests {
         let input = bytes!("7FFACADE");
         let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::REGOLITH);
         assert_eq!(gas_cost, U256::ZERO);
+    }
+
+    #[test]
+    fn test_calculate_tx_l1_cost_ecotone() {
+        let mut l1_block_info = L1BlockInfo {
+            l1_base_fee: U256::from(1_000),
+            l1_base_fee_scalar: U256::from(1_000),
+            l1_blob_base_fee: Some(U256::from(1_000)),
+            l1_blob_base_fee_scalar: Some(U256::from(1_000)),
+            l1_fee_overhead: Some(U256::from(1_000)),
+            ..Default::default()
+        };
+
+        // calldataGas * (l1BaseFee * 16 * l1BaseFeeScalar + l1BlobBaseFee * l1BlobBaseFeeScalar) / (16 * 1e6)
+        // = (16 * 3) * (1000 * 16 * 1000 + 1000 * 1000) / (16 * 1e6)
+        // = 51
+        let input = bytes!("FACADE");
+        let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::ECOTONE);
+        assert_eq!(gas_cost, U256::from(51));
+
+        // Zero rollup data gas cost should result in zero
+        let input = bytes!("");
+        let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::ECOTONE);
+        assert_eq!(gas_cost, U256::ZERO);
+
+        // Deposit transactions with the EIP-2718 type of 0x7F should result in zero
+        let input = bytes!("7FFACADE");
+        let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::ECOTONE);
+        assert_eq!(gas_cost, U256::ZERO);
+
+        // If the scalars are empty, the bedrock cost function should be used.
+        l1_block_info.empty_scalars = true;
+        let input = bytes!("FACADE");
+        let gas_cost = l1_block_info.calculate_tx_l1_cost(&input, SpecId::ECOTONE);
+        assert_eq!(gas_cost, U256::from(1048));
     }
 }
