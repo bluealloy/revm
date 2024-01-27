@@ -64,8 +64,9 @@ pub struct L1BlockInfo {
 impl L1BlockInfo {
     /// Try to fetch the L1 block info from the database.
     pub fn try_fetch<DB: Database>(db: &mut DB, spec_id: SpecId) -> Result<L1BlockInfo, DB::Error> {
+        let l1_base_fee = db.storage(L1_BLOCK_CONTRACT, L1_BASE_FEE_SLOT)?;
+
         if !spec_id.is_enabled_in(SpecId::ECOTONE) {
-            let l1_base_fee = db.storage(L1_BLOCK_CONTRACT, L1_BASE_FEE_SLOT)?;
             let l1_fee_overhead = db.storage(L1_BLOCK_CONTRACT, L1_OVERHEAD_SLOT)?;
             let l1_fee_scalar = db.storage(L1_BLOCK_CONTRACT, L1_SCALAR_SLOT)?;
 
@@ -76,7 +77,6 @@ impl L1BlockInfo {
                 ..Default::default()
             })
         } else {
-            let l1_base_fee = db.storage(L1_BLOCK_CONTRACT, L1_BASE_FEE_SLOT)?;
             let l1_blob_base_fee = db.storage(L1_BLOCK_CONTRACT, ECOTONE_L1_BLOB_BASE_FEE_SLOT)?;
             let l1_fee_scalars = db
                 .storage(L1_BLOCK_CONTRACT, ECOTONE_L1_FEE_SCALARS_SLOT)?
@@ -90,12 +90,14 @@ impl L1BlockInfo {
                     .as_ref(),
             );
 
-            // Check if the L1 fee scalars are empty. If so, we use the Bedrock cost function. The L1 fee overhead is 
+            // Check if the L1 fee scalars are empty. If so, we use the Bedrock cost function. The L1 fee overhead is
             // only necessary if `empty_scalars` is true, as it was deprecated in Ecotone.
             let empty_scalars = l1_blob_base_fee == U256::ZERO
                 && l1_fee_scalars[BASE_FEE_SCALAR_OFFSET..BLOB_BASE_FEE_SCALAR_OFFSET + 4]
                     == EMPTY_SCALARS;
-            let l1_fee_overhead = empty_scalars.then(|| db.storage(L1_BLOCK_CONTRACT, L1_OVERHEAD_SLOT)).transpose()?;
+            let l1_fee_overhead = empty_scalars
+                .then(|| db.storage(L1_BLOCK_CONTRACT, L1_OVERHEAD_SLOT))
+                .transpose()?;
 
             Ok(L1BlockInfo {
                 l1_base_fee,
@@ -104,7 +106,6 @@ impl L1BlockInfo {
                 l1_blob_base_fee_scalar: Some(l1_blob_base_fee_scalar),
                 empty_scalars,
                 l1_fee_overhead,
-                ..Default::default()
             })
         }
     }
