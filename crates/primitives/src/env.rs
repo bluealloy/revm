@@ -738,10 +738,10 @@ pub enum AnalysisKind {
 }
 
 #[cfg(test)]
-mod tests {
+#[cfg(feature = "optimism")]
+mod op_tests {
     use super::*;
 
-    #[cfg(feature = "optimism")]
     #[test]
     fn test_validate_sys_tx() {
         // Set the optimism flag to true and mark
@@ -758,7 +758,6 @@ mod tests {
         assert!(env.validate_tx::<crate::BedrockSpec>().is_ok());
     }
 
-    #[cfg(feature = "optimism")]
     #[test]
     fn test_validate_deposit_tx() {
         // Set the optimism flag and source hash.
@@ -768,7 +767,6 @@ mod tests {
         assert!(env.validate_tx::<crate::RegolithSpec>().is_ok());
     }
 
-    #[cfg(feature = "optimism")]
     #[test]
     fn test_validate_tx_against_state_deposit_tx() {
         // Set the optimism flag and source hash.
@@ -783,6 +781,11 @@ mod tests {
             .validate_tx_against_state::<LatestSpec>(&mut Account::default())
             .is_ok());
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
 
     #[test]
     fn test_validate_tx_chain_id() {
