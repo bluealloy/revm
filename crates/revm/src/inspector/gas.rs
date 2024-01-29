@@ -1,10 +1,8 @@
 //! GasIspector. Helper Inspector to calculate gas for others.
 
-use revm_interpreter::{CallInputs, CreateInputs, CreateOutcome};
-
 use crate::{
-    interpreter::InterpreterResult,
-    primitives::{db::Database, Address},
+    interpreter::{CallInputs, CreateInputs, CreateOutcome, InterpreterResult},
+    primitives::db::Database,
     EvmContext, GetInspector, Inspector,
 };
 
@@ -67,10 +65,9 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         &mut self,
         _context: &mut EvmContext<DB>,
         _inputs: &CreateInputs,
-        result: InterpreterResult,
-        address: Option<Address>,
+        outcome: CreateOutcome,
     ) -> CreateOutcome {
-        CreateOutcome::new(result, address)
+        outcome
     }
 }
 
@@ -85,7 +82,7 @@ mod tests {
         inspector::GetInspector,
         inspectors::GasInspector,
         interpreter::{CallInputs, CreateInputs, Interpreter, InterpreterResult},
-        primitives::{Address, Log},
+        primitives::Log,
         Database, EvmContext, Inspector,
     };
 
@@ -153,11 +150,9 @@ mod tests {
             &mut self,
             context: &mut EvmContext<DB>,
             inputs: &CreateInputs,
-            result: InterpreterResult,
-            address: Option<Address>,
+            outcome: CreateOutcome,
         ) -> CreateOutcome {
-            self.gas_inspector
-                .create_end(context, inputs, result, address)
+            self.gas_inspector.create_end(context, inputs, outcome)
         }
     }
 

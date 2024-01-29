@@ -51,15 +51,18 @@ Consist of functions that are called before execution loop. They are called in t
   
     Deducts values from the caller to the maximum amount of gas that can be spent on the transaction. This loads the caller account from the `Database`.
 
-### ExecutionLoopHandler
+### ExecutionHandler
 
 Consist of the function that handles the call stack and the first loop. They are called in the following order:
 
-* create_first_frame
-    
-    This handler crates first frame of the call stack. It is called only once per transaction.
+* call
+    Create new call frame or return the Interpreter result if the call is not possible (has a error) or it is precompile call.
 
-* first_frame_return
+* create
+  
+    Create new create call frame, create new account and execute bytecode that outputs the code of the new account.
+
+* last_frame_return
   
     This handler is called after the first frame is executed. It is used to calculate the gas that is returned from the first frame.
 
@@ -67,12 +70,6 @@ Consist of the function that handles the call stack and the first loop. They are
 
     This handler is called after every frame is executed (Expect first), it will calculate the gas that is returned from the frame and apply output to the parent frame.
 
-* sub_call
-    Create new call frame or return the Interpreter result if the call is not possible (has a error) or it is precompile call.
-
-* sub_crate
-  
-    Create new create call frame, create new account and execute bytecode that outputs the code of the new account.
 
 ### InstructionTable
 

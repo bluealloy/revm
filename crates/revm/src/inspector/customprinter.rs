@@ -76,11 +76,9 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         &mut self,
         context: &mut EvmContext<DB>,
         inputs: &CreateInputs,
-        result: InterpreterResult,
-        address: Option<Address>,
+        outcome: CreateOutcome,
     ) -> CreateOutcome {
-        self.gas_inspector
-            .create_end(context, inputs, result, address)
+        self.gas_inspector.create_end(context, inputs, outcome)
     }
 
     fn call(

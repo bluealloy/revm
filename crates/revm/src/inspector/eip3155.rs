@@ -1,7 +1,7 @@
 use crate::{
     inspectors::GasInspector,
     interpreter::{opcode, CallInputs, CreateInputs, Interpreter, InterpreterResult},
-    primitives::{db::Database, hex, Address, U256},
+    primitives::{db::Database, hex, U256},
     EvmContext, GetInspector, Inspector,
 };
 
@@ -131,11 +131,9 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
         &mut self,
         context: &mut EvmContext<DB>,
         inputs: &CreateInputs,
-        result: InterpreterResult,
-        address: Option<Address>,
+        outcome: CreateOutcome,
     ) -> CreateOutcome {
-        self.gas_inspector
-            .create_end(context, inputs, result, address)
+        self.gas_inspector.create_end(context, inputs, outcome)
     }
 }
 

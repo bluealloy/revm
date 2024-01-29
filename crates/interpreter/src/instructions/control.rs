@@ -61,13 +61,13 @@ fn return_inner(interpreter: &mut Interpreter, instruction_result: InstructionRe
         output = interpreter.shared_memory.slice(offset, len).to_vec().into()
     }
     interpreter.instruction_result = instruction_result;
-    interpreter.next_action = Some(crate::InterpreterAction::Return {
+    interpreter.next_action = crate::InterpreterAction::Return {
         result: InterpreterResult {
             output,
             gas: interpreter.gas,
             result: instruction_result,
         },
-    });
+    };
 }
 
 pub fn ret<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {

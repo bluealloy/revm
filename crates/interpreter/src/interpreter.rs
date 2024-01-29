@@ -50,7 +50,7 @@ pub struct Interpreter {
     ///
     /// Set inside CALL or CREATE instructions and RETURN or REVERT instructions. Additionally those instructions will set
     /// InstructionResult to CallOrCreate/Return/Revert so we know the reason.
-    pub next_action: Option<InterpreterAction>,
+    pub next_action: InterpreterAction,
 }
 
 /// The result of an interpreter operation.
@@ -64,9 +64,10 @@ pub struct InterpreterResult {
     pub gas: Gas,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub enum InterpreterAction {
-    SubCall {
+    /// CALL, CALLCODE, DELEGATECALL or STATICCALL instruction called.
+    Call {
         /// Call inputs
         inputs: Box<CallInputs>,
         /// The offset into `self.memory` of the return data.
@@ -74,12 +75,43 @@ pub enum InterpreterAction {
         /// This value must be ignored if `self.return_len` is 0.
         return_memory_offset: Range<usize>,
     },
-    Create {
-        inputs: Box<CreateInputs>,
-    },
-    Return {
-        result: InterpreterResult,
-    },
+    /// CREATE or CREATE2 instruction called.
+    Create { inputs: Box<CreateInputs> },
+    /// Interpreter finished execution.
+    Return { result: InterpreterResult },
+    /// Run
+    #[default]
+    Run,
+}
+
+impl InterpreterAction {
+    /// Returns true if action is call.
+    pub fn is_call(&self) -> bool {
+        matches!(self, InterpreterAction::Call { .. })
+    }
+
+    /// Returns true if action is create.
+    pub fn is_create(&self) -> bool {
+        matches!(self, InterpreterAction::Create { .. })
+    }
+
+    /// Returns true if action is return.
+    pub fn is_return(&self) -> bool {
+        matches!(self, InterpreterAction::Return { .. })
+    }
+
+    /// Returns true if action is run.
+    pub fn is_run(&self) -> bool {
+        matches!(self, InterpreterAction::Run)
+    }
+
+    /// Returns result if action is return.
+    pub fn into_result_return(self) -> Option<InterpreterResult> {
+        match self {
+            InterpreterAction::Return { result } => Some(result),
+            _ => None,
+        }
+    }
 }
 
 impl Interpreter {
@@ -94,7 +126,7 @@ impl Interpreter {
             return_data_buffer: Bytes::new(),
             shared_memory: EMPTY_SHARED_MEMORY,
             stack: Stack::new(),
-            next_action: None,
+            next_action: InterpreterAction::Run,
         }
     }
 
@@ -281,7 +313,7 @@ impl Interpreter {
     where
         FN: Fn(&mut Interpreter, &mut H),
     {
-        self.next_action = None;
+        self.next_action = InterpreterAction::Run;
         self.instruction_result = InstructionResult::Continue;
         self.shared_memory = shared_memory;
         // main loop
@@ -290,8 +322,8 @@ impl Interpreter {
         }
 
         // Return next action if it is some.
-        if let Some(action) = self.next_action.take() {
-            return action;
+        if !self.next_action.is_run() {
+            return core::mem::take(&mut self.next_action);
         }
         // If not, return action without output.
         InterpreterAction::Return {

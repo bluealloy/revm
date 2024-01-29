@@ -132,12 +132,11 @@ pub trait Inspector<DB: Database> {
         &mut self,
         context: &mut EvmContext<DB>,
         inputs: &CreateInputs,
-        result: InterpreterResult,
-        address: Option<Address>,
+        outcome: CreateOutcome,
     ) -> CreateOutcome {
         let _ = context;
         let _ = inputs;
-        CreateOutcome::new(result, address)
+        outcome
     }
 
     /// Called when a contract has been self-destructed with funds transferred to target.

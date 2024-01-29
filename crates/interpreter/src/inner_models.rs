@@ -62,6 +62,10 @@ impl CallInputs {
             is_static: false,
         })
     }
+
+    pub fn new_boxed(tx_env: &TxEnv, gas_limit: u64) -> Option<Box<Self>> {
+        Self::new(tx_env, gas_limit).map(Box::new)
+    }
 }
 
 impl CreateInputs {
@@ -78,6 +82,11 @@ impl CreateInputs {
             gas_limit,
         })
     }
+
+    pub fn new_boxed(tx_env: &TxEnv, gas_limit: u64) -> Option<Box<Self>> {
+        Self::new(tx_env, gas_limit).map(Box::new)
+    }
+
     /// Returns the address that this create call will create.
     pub fn created_address(&self, nonce: u64) -> Address {
         match self.scheme {

@@ -166,7 +166,7 @@ pub enum SuccessOrHalt {
     FatalExternalError,
     /// Internal instruction that signals Interpreter should continue running.
     InternalContinue,
-    /// Internal instruction that signals subcall.
+    /// Internal instruction that signals call or create.
     InternalCallOrCreate,
 }
 
