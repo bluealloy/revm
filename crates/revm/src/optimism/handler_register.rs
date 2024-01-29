@@ -343,7 +343,7 @@ mod tests {
             0..0,
         ));
         last_frame_return::<SPEC, _, _>(&mut ctx, &mut first_frame);
-        first_frame.gas().clone()
+        *first_frame.gas()
     }
 
     #[test]
