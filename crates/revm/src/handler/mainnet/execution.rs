@@ -149,7 +149,7 @@ mod tests {
             0..0,
         ));
         frame_return_with_refund_flag::<CancunSpec>(&env, &mut first_frame, true);
-        first_frame.gas().clone()
+        *first_frame.gas()
     }
 
     #[test]
