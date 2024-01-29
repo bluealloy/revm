@@ -5,7 +5,7 @@ use crate::{
 };
 use alloc::boxed::Box;
 use core::ops::Range;
-use revm_interpreter::{CallOutcome, CreateOutcome, Gas, InterpreterResult};
+use revm_interpreter::{CallOutcome, CreateOutcome, Gas, InstructionResult, InterpreterResult};
 
 /// Call CallStackFrame.
 #[derive(Debug)]
@@ -23,6 +23,7 @@ pub struct CreateFrame {
     /// Frame data
     pub frame_data: FrameData,
 }
+
 #[derive(Debug)]
 pub struct FrameData {
     /// Journal checkpoint
@@ -84,7 +85,7 @@ impl FrameResult {
 
     /// Returns reference to interpreter result.
     #[inline]
-    pub fn instruction_result(&self) -> &InterpreterResult {
+    pub fn interpreter_result(&self) -> &InterpreterResult {
         match self {
             FrameResult::Call(outcome) => &outcome.result,
             FrameResult::Create(outcome) => &outcome.result,
@@ -98,6 +99,12 @@ impl FrameResult {
             FrameResult::Call(outcome) => &mut outcome.result,
             FrameResult::Create(outcome) => &mut outcome.result,
         }
+    }
+
+    /// Return Instruction result.
+    #[inline]
+    pub fn instruction_result(&self) -> InstructionResult {
+        self.interpreter_result().result
     }
 }
 
@@ -183,6 +190,7 @@ impl Frame {
 }
 
 impl FrameOrResult {
+    /// Creates new create frame.
     pub fn new_create_frame(
         created_address: Address,
         checkpoint: JournalCheckpoint,
@@ -191,6 +199,7 @@ impl FrameOrResult {
         Self::Frame(Frame::new_create(created_address, checkpoint, interpreter))
     }
 
+    /// Creates new call frame.
     pub fn new_call_frame(
         return_memory_range: Range<usize>,
         checkpoint: JournalCheckpoint,
@@ -201,5 +210,26 @@ impl FrameOrResult {
             checkpoint,
             interpreter,
         ))
+    }
+
+    /// Creates new create result.
+    pub fn new_create_result(
+        interpreter_result: InterpreterResult,
+        address: Option<Address>,
+    ) -> Self {
+        FrameOrResult::Result(FrameResult::Create(CreateOutcome {
+            result: interpreter_result,
+            address,
+        }))
+    }
+
+    pub fn new_call_result(
+        interpreter_result: InterpreterResult,
+        memory_offset: Range<usize>,
+    ) -> Self {
+        FrameOrResult::Result(FrameResult::Call(CallOutcome {
+            result: interpreter_result,
+            memory_offset,
+        }))
     }
 }

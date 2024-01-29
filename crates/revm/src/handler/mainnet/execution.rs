@@ -18,7 +18,7 @@ pub fn frame_return_with_refund_flag<SPEC: Spec>(
     frame_result: &mut FrameResult,
     refund_enabled: bool,
 ) {
-    let instruction_result = frame_result.instruction_result().result;
+    let instruction_result = frame_result.interpreter_result().result;
     let gas = frame_result.gas_mut();
     let remaining = gas.remaining();
     let refunded = gas.refunded();

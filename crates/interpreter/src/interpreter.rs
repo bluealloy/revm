@@ -79,9 +79,9 @@ pub enum InterpreterAction {
     Create { inputs: Box<CreateInputs> },
     /// Interpreter finished execution.
     Return { result: InterpreterResult },
-    /// Run
+    /// No action
     #[default]
-    Run,
+    None,
 }
 
 impl InterpreterAction {
@@ -100,9 +100,14 @@ impl InterpreterAction {
         matches!(self, InterpreterAction::Return { .. })
     }
 
-    /// Returns true if action is run.
-    pub fn is_run(&self) -> bool {
-        matches!(self, InterpreterAction::Run)
+    /// Returns true if action is none.
+    pub fn is_none(&self) -> bool {
+        matches!(self, InterpreterAction::None)
+    }
+
+    /// Returns true if action is some.
+    pub fn is_some(&self) -> bool {
+        !self.is_none()
     }
 
     /// Returns result if action is return.
@@ -126,7 +131,7 @@ impl Interpreter {
             return_data_buffer: Bytes::new(),
             shared_memory: EMPTY_SHARED_MEMORY,
             stack: Stack::new(),
-            next_action: InterpreterAction::Run,
+            next_action: InterpreterAction::None,
         }
     }
 
@@ -313,7 +318,7 @@ impl Interpreter {
     where
         FN: Fn(&mut Interpreter, &mut H),
     {
-        self.next_action = InterpreterAction::Run;
+        self.next_action = InterpreterAction::None;
         self.instruction_result = InstructionResult::Continue;
         self.shared_memory = shared_memory;
         // main loop
@@ -322,10 +327,10 @@ impl Interpreter {
         }
 
         // Return next action if it is some.
-        if !self.next_action.is_run() {
+        if self.next_action.is_some() {
             return core::mem::take(&mut self.next_action);
         }
-        // If not, return action without output.
+        // If not, return action without output as it is a halt.
         InterpreterAction::Return {
             result: InterpreterResult {
                 result: self.instruction_result,

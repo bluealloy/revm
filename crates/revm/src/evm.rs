@@ -144,7 +144,6 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
     /// Starts the main loop and returns outcome of the execution.
     pub fn start_the_loop(&mut self, first_frame: Frame) -> FrameResult {
-        // start main loop if CallStackFrame is created correctly
         // take instruction talbe
         let table = self
             .handler
@@ -161,14 +160,6 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         self.handler.set_instruction_table(table);
 
         frame_result
-
-        // // output of execution
-        // let main_output = match self.context.evm.env.tx.transact_to {
-        //     TransactTo::Call(_) => Output::Call(result.output.clone()),
-        //     TransactTo::Create(_) => Output::Create(result.output.clone(), created_address),
-        // };
-
-        // (result, main_output)
     }
 
     /// Runs main call loop.
@@ -230,7 +221,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                         }
                     })
                 }
-                InterpreterAction::Run => continue,
+                InterpreterAction::None => unreachable!("InterpreterAction::None is not expected"),
             };
 
             // handle result

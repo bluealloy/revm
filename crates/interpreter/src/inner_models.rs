@@ -38,6 +38,7 @@ pub struct CreateInputs {
 }
 
 impl CallInputs {
+    /// Creates new call inputs.
     pub fn new(tx_env: &TxEnv, gas_limit: u64) -> Option<Self> {
         let TransactTo::Call(address) = tx_env.transact_to else {
             return None;
@@ -63,12 +64,14 @@ impl CallInputs {
         })
     }
 
+    /// Returns boxed call inputs.
     pub fn new_boxed(tx_env: &TxEnv, gas_limit: u64) -> Option<Box<Self>> {
         Self::new(tx_env, gas_limit).map(Box::new)
     }
 }
 
 impl CreateInputs {
+    /// Creates new create inputs.
     pub fn new(tx_env: &TxEnv, gas_limit: u64) -> Option<Self> {
         let TransactTo::Create(scheme) = tx_env.transact_to else {
             return None;
@@ -83,6 +86,7 @@ impl CreateInputs {
         })
     }
 
+    /// Returns boxed create inputs.
     pub fn new_boxed(tx_env: &TxEnv, gas_limit: u64) -> Option<Box<Self>> {
         Self::new(tx_env, gas_limit).map(Box::new)
     }

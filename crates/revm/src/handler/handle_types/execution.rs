@@ -38,9 +38,8 @@ pub type InsertCreateOutcomeHandle<'a, EXT, DB> =
 
 /// Handles related to stack frames.
 pub struct ExecutionHandler<'a, EXT, DB: Database> {
-    /// Validate Transaction against the state.
-    /// Uses env, call result and returned gas from the call to determine the gas
-    /// that is returned from transaction execution..
+    /// Handles last frame return, modified gas for refund and
+    /// sets tx gas limit.
     pub last_frame_return: LastFrameReturnHandle<'a, EXT, DB>,
     /// Frame call
     pub call: FrameCallHandle<'a, EXT, DB>,
@@ -57,11 +56,10 @@ pub struct ExecutionHandler<'a, EXT, DB: Database> {
 }
 
 impl<'a, EXT: 'a, DB: Database + 'a> ExecutionHandler<'a, EXT, DB> {
-    /// Creates mainnet ExecutionHandler..
+    /// Creates mainnet ExecutionHandler.
     pub fn new<SPEC: Spec + 'a>() -> Self {
         Self {
             last_frame_return: Arc::new(mainnet::last_frame_return::<SPEC, EXT, DB>),
-            //frame_return: Arc::new(mainnet::frame_return::<SPEC, EXT, DB>),
             call: Arc::new(mainnet::call::<SPEC, EXT, DB>),
             call_return: Arc::new(mainnet::call_return::<EXT, DB>),
             insert_call_outcome: Arc::new(mainnet::insert_call_outcome),
@@ -74,6 +72,7 @@ impl<'a, EXT: 'a, DB: Database + 'a> ExecutionHandler<'a, EXT, DB> {
 
 impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
     /// Handle call return, depending on instruction result gas will be reimbursed or not.
+    #[inline]
     pub fn last_frame_return(
         &self,
         context: &mut Context<EXT, DB>,
@@ -83,6 +82,7 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
     }
 
     /// Call frame call handler.
+    #[inline]
     pub fn call(
         &self,
         context: &mut Context<EXT, DB>,
@@ -93,6 +93,7 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
     }
 
     /// Call registered handler for call return.
+    #[inline]
     pub fn call_return(
         &self,
         context: &mut Context<EXT, DB>,
@@ -103,6 +104,7 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
     }
 
     /// Call registered handler for inserting call outcome.
+    #[inline]
     pub fn insert_call_outcome(
         &self,
         context: &mut Context<EXT, DB>,
@@ -114,6 +116,7 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
     }
 
     /// Call Create frame
+    #[inline]
     pub fn create(
         &self,
         context: &mut Context<EXT, DB>,
@@ -123,6 +126,7 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
     }
 
     /// Call handler for create return.
+    #[inline]
     pub fn create_return(
         &self,
         context: &mut Context<EXT, DB>,
@@ -133,6 +137,7 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
     }
 
     /// Call handler for inserting create outcome.
+    #[inline]
     pub fn insert_create_outcome(
         &self,
         context: &mut Context<EXT, DB>,
@@ -141,22 +146,4 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
     ) {
         (self.insert_create_outcome)(context, frame, outcome)
     }
-
-    // /// Frame return
-    // pub fn frame_return(
-    //     &self,
-    //     context: &mut Context<EXT, DB>,
-    //     child_stack_frame: Box<CallStackFrame>,
-    //     parent_stack_frame: Option<&mut Box<CallStackFrame>>,
-    //     shared_memory: &mut SharedMemory,
-    //     result: InterpreterResult,
-    // ) -> Option<InterpreterResult> {
-    //     (self.frame_return)(
-    //         context,
-    //         child_stack_frame,
-    //         parent_stack_frame,
-    //         shared_memory,
-    //         result,
-    //     )
-    // }
 }

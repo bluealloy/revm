@@ -75,9 +75,6 @@ pub fn reimburse_caller<SPEC: Spec, EXT, DB: Database>(
 pub fn output<EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     result: FrameResult,
-    // call_result: InstructionResult,
-    // output: Output,
-    // gas: &Gas,
 ) -> Result<ResultAndState, EVMError<DB::Error>> {
     // used gas with refund calculated.
     let gas_refunded = result.gas().refunded() as u64;

@@ -8,7 +8,7 @@ use revm_interpreter::CreateOutcome;
 
 use crate::{
     inspectors::GasInspector,
-    interpreter::{opcode, CallInputs, CreateInputs, Interpreter, InterpreterResult},
+    interpreter::{opcode, CallInputs, CreateInputs, Interpreter},
     primitives::{Address, U256},
     Database, EvmContext, GetInspector, Inspector,
 };
@@ -67,9 +67,9 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         &mut self,
         context: &mut EvmContext<DB>,
         inputs: &CallInputs,
-        result: InterpreterResult,
-    ) -> InterpreterResult {
-        self.gas_inspector.call_end(context, inputs, result)
+        outcome: CallOutcome,
+    ) -> CallOutcome {
+        self.gas_inspector.call_end(context, inputs, outcome)
     }
 
     fn create_end(

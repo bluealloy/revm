@@ -10,11 +10,10 @@ use crate::{
         keccak256, Address, AnalysisKind, Bytecode, Bytes, CreateScheme, EVMError, Env, HashSet,
         Spec, SpecId, SpecId::*, B256, U256,
     },
-    FrameOrResult, FrameResult, JournalCheckpoint, CALL_STACK_LIMIT,
+    FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
 };
 use alloc::boxed::Box;
 use core::ops::Range;
-use revm_interpreter::{CallOutcome, CreateOutcome};
 
 /// Main Context structure that contains both EvmContext and External context.
 pub struct Context<EXT, DB: Database> {
@@ -217,14 +216,14 @@ impl<DB: Database> EvmContext<DB> {
         let gas = Gas::new(inputs.gas_limit);
 
         let return_error = |e| {
-            FrameOrResult::Result(FrameResult::Create(CreateOutcome::new(
+            FrameOrResult::new_create_result(
                 InterpreterResult {
                     result: e,
                     gas,
                     output: Bytes::new(),
                 },
                 None,
-            )))
+            )
         };
 
         // Check depth
@@ -310,14 +309,14 @@ impl<DB: Database> EvmContext<DB> {
         let gas = Gas::new(inputs.gas_limit);
 
         let return_result = |instruction_result: InstructionResult| {
-            FrameOrResult::Result(FrameResult::Call(CallOutcome::new(
+            FrameOrResult::new_call_result(
                 InterpreterResult {
                     result: instruction_result,
                     gas,
                     output: Bytes::new(),
                 },
                 return_memory_range.clone(),
-            )))
+            )
         };
 
         // Check depth
@@ -365,10 +364,7 @@ impl<DB: Database> EvmContext<DB> {
             } else {
                 self.journaled_state.checkpoint_revert(checkpoint);
             }
-            FrameOrResult::Result(FrameResult::Call(CallOutcome::new(
-                result,
-                return_memory_range,
-            )))
+            FrameOrResult::new_call_result(result, return_memory_range)
         } else if !bytecode.is_empty() {
             let contract = Box::new(Contract::new_with_context(
                 inputs.input.clone(),
@@ -451,7 +447,6 @@ impl<DB: Database> EvmContext<DB> {
         address: Address,
         journal_checkpoint: JournalCheckpoint,
     ) {
-        // let address = frame.created_address.unwrap();
         // if return is not ok revert and return.
         if !matches!(interpreter_result.result, return_ok!()) {
             self.journaled_state.checkpoint_revert(journal_checkpoint);
@@ -625,7 +620,7 @@ mod tests {
             panic!("Expected FrameOrResult::Result");
         };
         assert_eq!(
-            err.instruction_result().result,
+            err.interpreter_result().result,
             InstructionResult::CallTooDeep
         );
     }
@@ -646,7 +641,7 @@ mod tests {
             panic!("Expected FrameOrResult::Result");
         };
         assert_eq!(
-            result.instruction_result().result,
+            result.interpreter_result().result,
             InstructionResult::OutOfFunds
         );
         let checkpointed = vec![vec![JournalEntry::AccountLoaded { address: contract }]];
@@ -666,7 +661,7 @@ mod tests {
         let FrameOrResult::Result(result) = res else {
             panic!("Expected FrameOrResult::Result");
         };
-        assert_eq!(result.instruction_result().result, InstructionResult::Stop);
+        assert_eq!(result.interpreter_result().result, InstructionResult::Stop);
     }
 
     #[test]

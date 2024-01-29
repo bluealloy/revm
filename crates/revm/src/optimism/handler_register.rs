@@ -42,7 +42,7 @@ pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
     let tx_gas_limit = env.tx.gas_limit;
     let is_regolith = SPEC::enabled(REGOLITH);
 
-    let instruction_result = frame_result.instruction_result().result;
+    let instruction_result = frame_result.interpreter_result().result;
     let gas = frame_result.gas_mut();
     let remaining = gas.remaining();
     let refunded = gas.refunded();

@@ -177,7 +177,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
         Arc::new(move |ctx, frame, shared_memory, mut outcome| {
             let inspector = ctx.external.get_inspector();
             let call_inputs = call_input_stack_inner.borrow_mut().pop().unwrap();
-            outcome.result = inspector.call_end(&mut ctx.evm, &call_inputs, outcome.result);
+            outcome = inspector.call_end(&mut ctx.evm, &call_inputs, outcome);
             old_handle(ctx, frame, shared_memory, outcome)
         });
 
@@ -198,8 +198,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
         match frame_result {
             FrameResult::Call(outcome) => {
                 let call_inputs = call_input_stack.borrow_mut().pop().unwrap();
-                outcome.result =
-                    inspector.call_end(&mut ctx.evm, &call_inputs, outcome.result.clone());
+                *outcome = inspector.call_end(&mut ctx.evm, &call_inputs, outcome.clone());
             }
             FrameResult::Create(outcome) => {
                 let create_inputs = create_input_stack.borrow_mut().pop().unwrap();
@@ -257,7 +256,7 @@ mod tests {
         db::EmptyDB,
         inspector::GetInspector,
         inspectors::NoOpInspector,
-        interpreter::{opcode::*, CallInputs, CreateInputs, Interpreter, InterpreterResult},
+        interpreter::{opcode::*, CallInputs, CreateInputs, Interpreter},
         primitives::BerlinSpec,
         Database, Evm, EvmContext, Inspector,
     };
@@ -324,13 +323,13 @@ mod tests {
             &mut self,
             _context: &mut EvmContext<DB>,
             _inputs: &CallInputs,
-            result: InterpreterResult,
-        ) -> InterpreterResult {
+            outcome: CallOutcome,
+        ) -> CallOutcome {
             if self.call_end {
                 unreachable!("call_end should not be called twice")
             }
             self.call_end = true;
-            result
+            outcome
         }
 
         fn create(
