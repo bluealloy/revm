@@ -5,6 +5,7 @@ use revm_primitives::{Address, Bytes};
 ///
 /// This struct holds the result of the operation along with an optional address.
 /// It provides methods to determine the next action based on the result of the operation.
+#[derive(Debug, Clone)]
 pub struct CreateOutcome {
     // The result of the interpreter operation.
     pub result: InterpreterResult,

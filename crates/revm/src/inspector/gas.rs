@@ -1,10 +1,10 @@
 //! GasIspector. Helper Inspector to calculate gas for others.
 
-use revm_interpreter::{CallInputs, CreateInputs, CreateOutcome};
+use revm_interpreter::CallOutcome;
 
 use crate::{
-    interpreter::InterpreterResult,
-    primitives::{db::Database, Address},
+    interpreter::{CallInputs, CreateInputs, CreateOutcome},
+    primitives::db::Database,
     EvmContext, GetInspector, Inspector,
 };
 
@@ -54,23 +54,25 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         &mut self,
         _context: &mut EvmContext<DB>,
         _inputs: &CallInputs,
-        mut result: InterpreterResult,
-    ) -> InterpreterResult {
-        if result.result.is_error() {
-            result.gas.record_cost(result.gas.remaining());
+        mut outcome: CallOutcome,
+    ) -> CallOutcome {
+        if outcome.result.result.is_error() {
+            outcome
+                .result
+                .gas
+                .record_cost(outcome.result.gas.remaining());
             self.gas_remaining = 0;
         }
-        result
+        outcome
     }
 
     fn create_end(
         &mut self,
         _context: &mut EvmContext<DB>,
         _inputs: &CreateInputs,
-        result: InterpreterResult,
-        address: Option<Address>,
+        outcome: CreateOutcome,
     ) -> CreateOutcome {
-        CreateOutcome::new(result, address)
+        outcome
     }
 }
 
@@ -84,8 +86,8 @@ mod tests {
     use crate::{
         inspector::GetInspector,
         inspectors::GasInspector,
-        interpreter::{CallInputs, CreateInputs, Interpreter, InterpreterResult},
-        primitives::{Address, Log},
+        interpreter::{CallInputs, CreateInputs, Interpreter},
+        primitives::Log,
         Database, EvmContext, Inspector,
     };
 
@@ -135,9 +137,9 @@ mod tests {
             &mut self,
             context: &mut EvmContext<DB>,
             inputs: &CallInputs,
-            result: InterpreterResult,
-        ) -> InterpreterResult {
-            self.gas_inspector.call_end(context, inputs, result)
+            outcome: CallOutcome,
+        ) -> CallOutcome {
+            self.gas_inspector.call_end(context, inputs, outcome)
         }
 
         fn create(
@@ -153,11 +155,9 @@ mod tests {
             &mut self,
             context: &mut EvmContext<DB>,
             inputs: &CreateInputs,
-            result: InterpreterResult,
-            address: Option<Address>,
+            outcome: CreateOutcome,
         ) -> CreateOutcome {
-            self.gas_inspector
-                .create_end(context, inputs, result, address)
+            self.gas_inspector.create_end(context, inputs, outcome)
         }
     }
 

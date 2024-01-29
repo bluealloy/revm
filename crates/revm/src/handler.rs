@@ -34,7 +34,7 @@ pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
     /// post Execution handle
     pub post_execution: PostExecutionHandler<'a, EXT, DB>,
     /// Execution loop that handles frames.
-    pub execution_loop: ExecutionLoopHandler<'a, EXT, DB>,
+    pub execution: ExecutionHandler<'a, EXT, DB>,
 }
 
 impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
@@ -47,7 +47,7 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
             validation: ValidationHandler::new::<SPEC>(),
             pre_execution: PreExecutionHandler::new::<SPEC>(),
             post_execution: PostExecutionHandler::new::<SPEC>(),
-            execution_loop: ExecutionLoopHandler::new::<SPEC>(),
+            execution: ExecutionHandler::new::<SPEC>(),
         }
     }
 
@@ -83,8 +83,8 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
     }
 
     /// Returns reference to frame handler.
-    pub fn execution_loop(&self) -> &ExecutionLoopHandler<'a, EXT, DB> {
-        &self.execution_loop
+    pub fn execution(&self) -> &ExecutionHandler<'a, EXT, DB> {
+        &self.execution
     }
 
     /// Returns reference to validation handler.

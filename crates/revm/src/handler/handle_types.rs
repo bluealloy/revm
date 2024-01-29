@@ -1,6 +1,6 @@
 // Modules
 
-pub mod execution_loop;
+pub mod execution;
 pub mod post_execution;
 pub mod pre_execution;
 pub mod validation;
@@ -11,9 +11,9 @@ pub use validation::{
     ValidateEnvHandle, ValidateInitialTxGasHandle, ValidateTxEnvAgainstState, ValidationHandler,
 };
 
-pub use execution_loop::{
-    CreateFirstFrameHandle, ExecutionLoopHandler, FrameReturnHandle, FrameSubCallHandle,
-    FrameSubCreateHandle,
+pub use execution::{
+    ExecutionHandler, FrameCallHandle, FrameCallReturnHandle, FrameCreateHandle,
+    FrameCreateReturnHandle, InsertCallOutcomeHandle, InsertCreateOutcomeHandle,
 };
 
 pub use pre_execution::{

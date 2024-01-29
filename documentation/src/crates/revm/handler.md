@@ -5,7 +5,7 @@ Is logic part of the Evm, it contains the Specification ID, list of functions th
 Functions can be grouped in five categories and are marked in that way in the code:
 * Validation functions: `ValidateHandler`
 * Pre execution functions: `PreExecutionHandler`
-* Execution loop functions: `LoopExecutionHandler`
+* Execution functions: `ExecutionHandler`
 * Post execution functions: `PostExecutionHandler`
 * Instruction table: `InstructionTable`
 
@@ -37,7 +37,7 @@ Consist of functions that are used to validate transaction and block data. They 
 
 ### PreExecutionHandler
 
-Consist of functions that are called before execution loop. They are called in the following order:
+Consist of functions that are called before execution. They are called in the following order:
 
 * load
    
@@ -51,28 +51,34 @@ Consist of functions that are called before execution loop. They are called in t
   
     Deducts values from the caller to the maximum amount of gas that can be spent on the transaction. This loads the caller account from the `Database`.
 
-### ExecutionLoopHandler
+### ExecutionHandler
 
-Consist of the function that handles the call stack and the first loop. They are called in the following order:
+Consist of the function that handle the execution of the transaction and the stack of the call frames.
 
-* create_first_frame
-    
-    This handler crates first frame of the call stack. It is called only once per transaction.
+* call
+    Create new call frame or return the frame result. Returning of frame result is done if we are calling precompile or the new frame is not created. If FrameReturn is returned then next function that is called would be `insert_call_outcome`. It is called on every frame.
 
-* first_frame_return
+* call_return
+    Called after call frame returns from execution. It is used to calculate the gas that is returned from the frame and create the FrameResult that is used to apply the outcome to parent frame in `insert_call_outcome`
+
+* insert_call_outcome
+    Inserts the call outcome to the parent frame. It is called on every frame that is created except the first one. for first frame we use `last_frame_return`.
+
+* create
   
-    This handler is called after the first frame is executed. It is used to calculate the gas that is returned from the first frame.
+    Create new create call frame, create new account and execute bytecode that outputs the code of the new account.
 
-* frame_return
+* create_return
 
     This handler is called after every frame is executed (Expect first), it will calculate the gas that is returned from the frame and apply output to the parent frame.
 
-* sub_call
-    Create new call frame or return the Interpreter result if the call is not possible (has a error) or it is precompile call.
+* insert_create_outcome
 
-* sub_crate
+    This handler is called after every frame is executed (Expect first), it will calculate the gas that is returned from the frame and apply output to the parent frame.
+
+* last_frame_return
   
-    Create new create call frame, create new account and execute bytecode that outputs the code of the new account.
+    This handler is called after last frame is returned. It is used to calculate the gas that is returned from the first frame and incorporate transaction gas limit (first frame had gas_limit-initial_gas).
 
 ### InstructionTable
 
@@ -80,7 +86,7 @@ Is a list of 256 function pointers that are used to execute instructions. They h
 
 ### PostExecutionHandler
 
-Is a list of functions that are called after the execution loop. They are called in the following order:
+Is a list of functions that are called after the execution. They are called in the following order:
 
 * reimburse_caller
     

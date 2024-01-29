@@ -9,10 +9,11 @@ use revm_primitives::Bytes;
 ///
 /// # Fields
 ///
-/// * `interpreter_result` - The result of the interpreter's execution, including output data and gas usage.
+/// * `result` - The result of the interpreter's execution, including output data and gas usage.
 /// * `memory_offset` - The range in memory where the output data is located.
+#[derive(Clone, Debug)]
 pub struct CallOutcome {
-    pub interpreter_result: InterpreterResult,
+    pub result: InterpreterResult,
     pub memory_offset: Range<usize>,
 }
 
@@ -23,11 +24,11 @@ impl CallOutcome {
     ///
     /// # Arguments
     ///
-    /// * `interpreter_result` - The result of the interpreter's execution.
+    /// * `result` - The result of the interpreter's execution.
     /// * `memory_offset` - The range in memory indicating where the output data is stored.
-    pub fn new(interpreter_result: InterpreterResult, memory_offset: Range<usize>) -> Self {
+    pub fn new(result: InterpreterResult, memory_offset: Range<usize>) -> Self {
         Self {
-            interpreter_result,
+            result,
             memory_offset,
         }
     }
@@ -40,7 +41,7 @@ impl CallOutcome {
     ///
     /// A reference to the `InstructionResult`.
     pub fn instruction_result(&self) -> &InstructionResult {
-        &self.interpreter_result.result
+        &self.result.result
     }
 
     /// Returns the gas usage information.
@@ -51,7 +52,7 @@ impl CallOutcome {
     ///
     /// An instance of `Gas` representing the gas usage.
     pub fn gas(&self) -> Gas {
-        self.interpreter_result.gas
+        self.result.gas
     }
 
     /// Returns a reference to the output data.
@@ -62,7 +63,7 @@ impl CallOutcome {
     ///
     /// A reference to the output data as `Bytes`.
     pub fn output(&self) -> &Bytes {
-        &self.interpreter_result.output
+        &self.result.output
     }
 
     /// Returns the start position of the memory offset.

@@ -3,17 +3,18 @@ use crate::{
     db::{Database, DatabaseCommit, EmptyDB},
     handler::Handler,
     interpreter::{
-        opcode::InstructionTables, Host, Interpreter, InterpreterAction, InterpreterResult,
-        SelfDestructResult, SharedMemory,
+        opcode::InstructionTables, Host, Interpreter, InterpreterAction, SelfDestructResult,
+        SharedMemory,
     },
     primitives::{
         specification::SpecId, Address, Bytecode, EVMError, EVMResult, Env, ExecutionResult, Log,
-        Output, ResultAndState, TransactTo, B256, U256,
+        ResultAndState, TransactTo, B256, U256,
     },
-    CallStackFrame, Context, FrameOrResult,
+    Context, Frame, FrameOrResult, FrameResult,
 };
-use alloc::{boxed::Box, vec::Vec};
+use alloc::vec::Vec;
 use core::fmt;
+use revm_interpreter::{CallInputs, CreateInputs};
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -141,45 +142,24 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         self.context
     }
 
-    /// Start the main loop.
-    pub fn start_the_loop(
-        &mut self,
-        first_stack_frame: FrameOrResult,
-    ) -> (InterpreterResult, Output) {
-        // Created address will be something only if it is create.
-        let mut created_address = None;
+    /// Starts the main loop and returns outcome of the execution.
+    pub fn start_the_loop(&mut self, first_frame: Frame) -> FrameResult {
+        // take instruction talbe
+        let table = self
+            .handler
+            .take_instruction_table()
+            .expect("Instruction table should be present");
 
-        // start main loop if CallStackFrame is created correctly
-        let result = match first_stack_frame {
-            FrameOrResult::Frame(first_stack_frame) => {
-                created_address = first_stack_frame.created_address();
-                // take instruction talbe
-                let table = self
-                    .handler
-                    .take_instruction_table()
-                    .expect("Instruction table should be present");
-
-                // run main loop
-                let output = match &table {
-                    InstructionTables::Plain(table) => self.run_the_loop(table, first_stack_frame),
-                    InstructionTables::Boxed(table) => self.run_the_loop(table, first_stack_frame),
-                };
-
-                // return back instruction table
-                self.handler.set_instruction_table(table);
-
-                output
-            }
-            FrameOrResult::Result(interpreter_result) => interpreter_result,
+        // run main loop
+        let frame_result = match &table {
+            InstructionTables::Plain(table) => self.run_the_loop(table, first_frame),
+            InstructionTables::Boxed(table) => self.run_the_loop(table, first_frame),
         };
 
-        // output of execution
-        let main_output = match self.context.evm.env.tx.transact_to {
-            TransactTo::Call(_) => Output::Call(result.output.clone()),
-            TransactTo::Create(_) => Output::Create(result.output.clone(), created_address),
-        };
+        // return back instruction table
+        self.handler.set_instruction_table(table);
 
-        (result, main_output)
+        frame_result
     }
 
     /// Runs main call loop.
@@ -187,12 +167,12 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     pub fn run_the_loop<FN>(
         &mut self,
         instruction_table: &[FN; 256],
-        first_frame: Box<CallStackFrame>,
-    ) -> InterpreterResult
+        first_frame: Frame,
+    ) -> FrameResult
     where
         FN: Fn(&mut Interpreter, &mut Self),
     {
-        let mut call_stack: Vec<Box<CallStackFrame>> = Vec::with_capacity(1025);
+        let mut call_stack: Vec<Frame> = Vec::with_capacity(1025);
         call_stack.push(first_frame);
 
         #[cfg(feature = "memory_limit")]
@@ -208,92 +188,121 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
         loop {
             // run interpreter
-            let action = stack_frame
-                .interpreter
-                .run(shared_memory, instruction_table, self);
+            let interpreter = &mut stack_frame.frame_data_mut().interpreter;
+            let next_action = interpreter.run(shared_memory, instruction_table, self);
             // take shared memory back.
-            shared_memory = stack_frame.interpreter.take_memory();
+            shared_memory = interpreter.take_memory();
 
-            let new_frame = match action {
-                InterpreterAction::SubCall {
+            let exec = &mut self.handler.execution;
+            let frame_or_result = match next_action {
+                InterpreterAction::Call {
                     inputs,
                     return_memory_offset,
-                } => self.handler.execution_loop().sub_call(
-                    &mut self.context,
-                    inputs,
-                    stack_frame,
-                    &mut shared_memory,
-                    return_memory_offset,
-                ),
-                InterpreterAction::Create { inputs } => {
-                    self.handler
-                        .execution_loop()
-                        .sub_create(&mut self.context, stack_frame, inputs)
-                }
+                } => exec.call(&mut self.context, inputs, return_memory_offset),
+                InterpreterAction::Create { inputs } => exec.create(&mut self.context, inputs),
                 InterpreterAction::Return { result } => {
                     // free memory context.
                     shared_memory.free_context();
 
-                    let child = call_stack.pop().unwrap();
-                    let parent = call_stack.last_mut();
+                    // pop last frame from the stack and consume it to create FrameResult.
+                    let returned_frame = call_stack
+                        .pop()
+                        .expect("We just returned from Interpreter frame");
 
-                    if let Some(result) = self.handler.execution_loop().frame_return(
-                        &mut self.context,
-                        child,
-                        parent,
-                        &mut shared_memory,
-                        result,
-                    ) {
-                        return result;
-                    }
-                    stack_frame = call_stack.last_mut().unwrap();
-                    continue;
+                    let ctx = &mut self.context;
+                    FrameOrResult::Result(match returned_frame {
+                        Frame::Call(frame) => {
+                            // return_call
+                            FrameResult::Call(exec.call_return(ctx, frame, result))
+                        }
+                        Frame::Create(frame) => {
+                            // return_create
+                            FrameResult::Create(exec.create_return(ctx, frame, result))
+                        }
+                    })
                 }
+                InterpreterAction::None => unreachable!("InterpreterAction::None is not expected"),
             };
-            if let Some(new_frame) = new_frame {
-                shared_memory.new_context();
-                call_stack.push(new_frame);
+
+            // handle result
+            match frame_or_result {
+                FrameOrResult::Frame(frame) => {
+                    shared_memory.new_context();
+                    call_stack.push(frame);
+                    stack_frame = call_stack.last_mut().unwrap();
+                }
+                FrameOrResult::Result(result) => {
+                    let Some(top_frame) = call_stack.last_mut() else {
+                        // Break the look if there are no more frames.
+                        return result;
+                    };
+                    stack_frame = top_frame;
+                    let ctx = &mut self.context;
+                    // Insert result to the top frame.
+                    match result {
+                        FrameResult::Call(outcome) => {
+                            // return_call
+                            exec.insert_call_outcome(ctx, stack_frame, &mut shared_memory, outcome)
+                        }
+                        FrameResult::Create(outcome) => {
+                            // return_create
+                            exec.insert_create_outcome(ctx, stack_frame, outcome)
+                        }
+                    }
+                }
             }
-            stack_frame = call_stack.last_mut().unwrap();
         }
     }
 
     /// Transact pre-verified transaction.
     fn transact_preverified_inner(&mut self, initial_gas_spend: u64) -> EVMResult<DB::Error> {
-        let hndl = &mut self.handler;
         let ctx = &mut self.context;
+        let pre_exec = self.handler.pre_execution();
 
         // load access list and beneficiary if needed.
-        hndl.pre_execution().load_accounts(ctx)?;
+        pre_exec.load_accounts(ctx)?;
 
         // load precompiles
-        let precompiles = hndl.pre_execution().load_precompiles();
+        let precompiles = pre_exec.load_precompiles();
         ctx.evm.set_precompiles(precompiles);
 
         // deduce caller balance with its limit.
-        hndl.pre_execution().deduct_caller(ctx)?;
-        // gas limit used in calls.
-        let first_frame = hndl
-            .execution_loop()
-            .create_first_frame(ctx, ctx.evm.env.tx.gas_limit - initial_gas_spend);
+        pre_exec.deduct_caller(ctx)?;
+
+        let gas_limit = ctx.evm.env.tx.gas_limit - initial_gas_spend;
+
+        let exec = self.handler.execution();
+        // call inner handling of call/create
+        let first_frame_or_result = match ctx.evm.env.tx.transact_to {
+            TransactTo::Call(_) => exec.call(
+                ctx,
+                CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
+                0..0,
+            ),
+            TransactTo::Create(_) => exec.create(
+                ctx,
+                CreateInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
+            ),
+        };
 
         // Starts the main running loop.
-        let (result, main_output) = self.start_the_loop(first_frame);
+        let mut result = match first_frame_or_result {
+            FrameOrResult::Frame(first_frame) => self.start_the_loop(first_frame),
+            FrameOrResult::Result(result) => result,
+        };
 
-        let hndl = &mut self.handler;
         let ctx = &mut self.context;
 
         // handle output of call/create calls.
-        let gas = hndl
-            .execution_loop()
-            .first_frame_return(&ctx.evm.env, result.result, result.gas);
+        self.handler.execution().last_frame_return(ctx, &mut result);
+
+        let post_exec = self.handler.post_execution();
         // Reimburse the caller
-        hndl.post_execution().reimburse_caller(ctx, &gas)?;
+        post_exec.reimburse_caller(ctx, result.gas())?;
         // Reward beneficiary
-        hndl.post_execution().reward_beneficiary(ctx, &gas)?;
+        post_exec.reward_beneficiary(ctx, result.gas())?;
         // Returns output of transaction.
-        hndl.post_execution()
-            .output(ctx, result.result, main_output, &gas)
+        post_exec.output(ctx, result)
     }
 }
 

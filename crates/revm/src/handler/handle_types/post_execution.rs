@@ -1,9 +1,9 @@
 // Includes.
 use crate::{
     handler::mainnet,
-    interpreter::{Gas, InstructionResult},
-    primitives::{db::Database, EVMError, EVMResultGeneric, Output, ResultAndState, Spec},
-    Context,
+    interpreter::Gas,
+    primitives::{db::Database, EVMError, EVMResultGeneric, ResultAndState, Spec},
+    Context, FrameResult,
 };
 use alloc::sync::Arc;
 
@@ -18,9 +18,7 @@ pub type RewardBeneficiaryHandle<'a, EXT, DB> = ReimburseCallerHandle<'a, EXT, D
 pub type OutputHandle<'a, EXT, DB> = Arc<
     dyn Fn(
             &mut Context<EXT, DB>,
-            InstructionResult,
-            Output,
-            &Gas,
+            FrameResult,
         ) -> Result<ResultAndState, EVMError<<DB as Database>::Error>>
         + 'a,
 >;
@@ -83,11 +81,9 @@ impl<'a, EXT, DB: Database> PostExecutionHandler<'a, EXT, DB> {
     pub fn output(
         &self,
         context: &mut Context<EXT, DB>,
-        call_result: InstructionResult,
-        output: Output,
-        gas: &Gas,
+        result: FrameResult,
     ) -> Result<ResultAndState, EVMError<DB::Error>> {
-        (self.output)(context, call_result, output, gas)
+        (self.output)(context, result)
     }
 
     /// End handler.

@@ -18,7 +18,7 @@ mod noop;
 // Exports.
 
 pub use handler_register::{inspector_handle_register, inspector_instruction, GetInspector};
-use revm_interpreter::{CallOutcome, CreateOutcome, InterpreterResult};
+use revm_interpreter::{CallOutcome, CreateOutcome};
 
 /// [Inspector] implementations.
 pub mod inspectors {
@@ -92,7 +92,7 @@ pub trait Inspector<DB: Database> {
 
     /// Called when a call to a contract has concluded.
     ///
-    /// The returned [InterpreterResult] is used as the result of the call.
+    /// The returned [CallOutcome] is used as the result of the call.
     ///
     /// This allows the inspector to modify the given `result` before returning it.
     #[inline]
@@ -100,11 +100,11 @@ pub trait Inspector<DB: Database> {
         &mut self,
         context: &mut EvmContext<DB>,
         inputs: &CallInputs,
-        result: InterpreterResult,
-    ) -> InterpreterResult {
+        outcome: CallOutcome,
+    ) -> CallOutcome {
         let _ = context;
         let _ = inputs;
-        result
+        outcome
     }
 
     /// Called when a contract is about to be created.
@@ -132,12 +132,11 @@ pub trait Inspector<DB: Database> {
         &mut self,
         context: &mut EvmContext<DB>,
         inputs: &CreateInputs,
-        result: InterpreterResult,
-        address: Option<Address>,
+        outcome: CreateOutcome,
     ) -> CreateOutcome {
         let _ = context;
         let _ = inputs;
-        CreateOutcome::new(result, address)
+        outcome
     }
 
     /// Called when a contract has been self-destructed with funds transferred to target.

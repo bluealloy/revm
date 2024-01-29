@@ -1,7 +1,7 @@
-use revm_primitives::{TransactTo, TxEnv};
+use crate::primitives::{Address, Bytes, TransactTo, TxEnv, U256};
+use alloc::boxed::Box;
 
 pub use crate::primitives::CreateScheme;
-use crate::primitives::{Address, Bytes, U256};
 
 /// Inputs for a call.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -38,6 +38,7 @@ pub struct CreateInputs {
 }
 
 impl CallInputs {
+    /// Creates new call inputs.
     pub fn new(tx_env: &TxEnv, gas_limit: u64) -> Option<Self> {
         let TransactTo::Call(address) = tx_env.transact_to else {
             return None;
@@ -62,9 +63,15 @@ impl CallInputs {
             is_static: false,
         })
     }
+
+    /// Returns boxed call inputs.
+    pub fn new_boxed(tx_env: &TxEnv, gas_limit: u64) -> Option<Box<Self>> {
+        Self::new(tx_env, gas_limit).map(Box::new)
+    }
 }
 
 impl CreateInputs {
+    /// Creates new create inputs.
     pub fn new(tx_env: &TxEnv, gas_limit: u64) -> Option<Self> {
         let TransactTo::Create(scheme) = tx_env.transact_to else {
             return None;
@@ -78,6 +85,12 @@ impl CreateInputs {
             gas_limit,
         })
     }
+
+    /// Returns boxed create inputs.
+    pub fn new_boxed(tx_env: &TxEnv, gas_limit: u64) -> Option<Box<Self>> {
+        Self::new(tx_env, gas_limit).map(Box::new)
+    }
+
     /// Returns the address that this create call will create.
     pub fn created_address(&self, nonce: u64) -> Address {
         match self.scheme {

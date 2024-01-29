@@ -1,9 +1,9 @@
 use crate::{
-    interpreter::{Gas, InstructionResult, SuccessOrHalt},
+    interpreter::{Gas, SuccessOrHalt},
     primitives::{
         db::Database, EVMError, ExecutionResult, Output, ResultAndState, Spec, SpecId::LONDON, U256,
     },
-    Context,
+    Context, FrameResult,
 };
 
 /// Mainnet end handle does not change the output.
@@ -74,18 +74,18 @@ pub fn reimburse_caller<SPEC: Spec, EXT, DB: Database>(
 #[inline]
 pub fn output<EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
-    call_result: InstructionResult,
-    output: Output,
-    gas: &Gas,
+    result: FrameResult,
 ) -> Result<ResultAndState, EVMError<DB::Error>> {
     // used gas with refund calculated.
-    let gas_refunded = gas.refunded() as u64;
-    let final_gas_used = gas.spend() - gas_refunded;
+    let gas_refunded = result.gas().refunded() as u64;
+    let final_gas_used = result.gas().spend() - gas_refunded;
+    let output = result.output();
+    let instruction_result = result.into_interpreter_result();
 
     // reset journal and return present state.
     let (state, logs) = context.evm.journaled_state.finalize();
 
-    let result = match call_result.into() {
+    let result = match instruction_result.result.into() {
         SuccessOrHalt::Success(reason) => ExecutionResult::Success {
             reason,
             gas_used: final_gas_used,
@@ -109,7 +109,7 @@ pub fn output<EXT, DB: Database>(
         }
         // Only two internal return flags.
         SuccessOrHalt::InternalContinue | SuccessOrHalt::InternalCallOrCreate => {
-            panic!("Internal return flags should remain internal {call_result:?}")
+            panic!("Internal return flags should remain internal {instruction_result:?}")
         }
     };
 

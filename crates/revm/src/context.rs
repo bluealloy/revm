@@ -10,7 +10,7 @@ use crate::{
         keccak256, Address, AnalysisKind, Bytecode, Bytes, CreateScheme, EVMError, Env, HashSet,
         Spec, SpecId, SpecId::*, B256, U256,
     },
-    CallStackFrame, FrameData, FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
+    FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
 };
 use alloc::boxed::Box;
 use core::ops::Range;
@@ -23,7 +23,7 @@ pub struct Context<EXT, DB: Database> {
     pub external: EXT,
 }
 
-impl<EXT, DB: Database> Context<EXT, DB> {
+impl Context<(), EmptyDB> {
     /// Creates empty context. This is useful for testing.
     pub fn new_empty() -> Context<(), EmptyDB> {
         Context {
@@ -216,11 +216,14 @@ impl<DB: Database> EvmContext<DB> {
         let gas = Gas::new(inputs.gas_limit);
 
         let return_error = |e| {
-            FrameOrResult::Result(InterpreterResult {
-                result: e,
-                gas,
-                output: Bytes::new(),
-            })
+            FrameOrResult::new_create_result(
+                InterpreterResult {
+                    result: e,
+                    gas,
+                    output: Bytes::new(),
+                },
+                None,
+            )
         };
 
         // Check depth
@@ -290,11 +293,11 @@ impl<DB: Database> EvmContext<DB> {
             inputs.value,
         ));
 
-        FrameOrResult::new_frame(CallStackFrame {
+        FrameOrResult::new_create_frame(
+            created_address,
             checkpoint,
-            frame_data: FrameData::Create { created_address },
-            interpreter: Interpreter::new(contract, gas.limit(), false),
-        })
+            Interpreter::new(contract, gas.limit(), false),
+        )
     }
 
     /// Make call frame
@@ -306,11 +309,14 @@ impl<DB: Database> EvmContext<DB> {
         let gas = Gas::new(inputs.gas_limit);
 
         let return_result = |instruction_result: InstructionResult| {
-            FrameOrResult::Result(InterpreterResult {
-                result: instruction_result,
-                gas,
-                output: Bytes::new(),
-            })
+            FrameOrResult::new_call_result(
+                InterpreterResult {
+                    result: instruction_result,
+                    gas,
+                    output: Bytes::new(),
+                },
+                return_memory_range.clone(),
+            )
         };
 
         // Check depth
@@ -358,7 +364,7 @@ impl<DB: Database> EvmContext<DB> {
             } else {
                 self.journaled_state.checkpoint_revert(checkpoint);
             }
-            FrameOrResult::Result(result)
+            FrameOrResult::new_call_result(result, return_memory_range)
         } else if !bytecode.is_empty() {
             let contract = Box::new(Contract::new_with_context(
                 inputs.input.clone(),
@@ -366,14 +372,12 @@ impl<DB: Database> EvmContext<DB> {
                 code_hash,
                 &inputs.context,
             ));
-            // Create interpreter and execute subcall and push new CallStackFrame.
-            FrameOrResult::new_frame(CallStackFrame {
+            // Create interpreter and executes call and push new CallStackFrame.
+            FrameOrResult::new_call_frame(
+                return_memory_range,
                 checkpoint,
-                frame_data: FrameData::Call {
-                    return_memory_range,
-                },
-                interpreter: Interpreter::new(contract, gas.limit(), inputs.is_static),
-            })
+                Interpreter::new(contract, gas.limit(), inputs.is_static),
+            )
         } else {
             self.journaled_state.checkpoint_commit();
             return_result(InstructionResult::Stop)
@@ -424,31 +428,29 @@ impl<DB: Database> EvmContext<DB> {
     #[inline]
     pub fn call_return(
         &mut self,
-        interpreter_result: InterpreterResult,
+        interpreter_result: &InterpreterResult,
         journal_checkpoint: JournalCheckpoint,
-    ) -> InterpreterResult {
+    ) {
         // revert changes or not.
         if matches!(interpreter_result.result, return_ok!()) {
             self.journaled_state.checkpoint_commit();
         } else {
             self.journaled_state.checkpoint_revert(journal_checkpoint);
         }
-        interpreter_result
     }
 
     /// Handles create return.
     #[inline]
     pub fn create_return<SPEC: Spec>(
         &mut self,
-        mut interpreter_result: InterpreterResult,
+        interpreter_result: &mut InterpreterResult,
         address: Address,
         journal_checkpoint: JournalCheckpoint,
-    ) -> InterpreterResult {
-        //let address = frame.created_address.unwrap();
+    ) {
         // if return is not ok revert and return.
         if !matches!(interpreter_result.result, return_ok!()) {
             self.journaled_state.checkpoint_revert(journal_checkpoint);
-            return interpreter_result;
+            return;
         }
         // Host error if present on execution
         // if ok, check contract creation limit and calculate gas deduction on output len.
@@ -460,7 +462,7 @@ impl<DB: Database> EvmContext<DB> {
         {
             self.journaled_state.checkpoint_revert(journal_checkpoint);
             interpreter_result.result = InstructionResult::CreateContractStartingWithEF;
-            return interpreter_result;
+            return;
         }
 
         // EIP-170: Contract code size limit
@@ -475,7 +477,7 @@ impl<DB: Database> EvmContext<DB> {
         {
             self.journaled_state.checkpoint_revert(journal_checkpoint);
             interpreter_result.result = InstructionResult::CreateContractSizeLimit;
-            return interpreter_result;
+            return;
         }
         let gas_for_code = interpreter_result.output.len() as u64 * gas::CODEDEPOSIT;
         if !interpreter_result.gas.record_cost(gas_for_code) {
@@ -486,7 +488,7 @@ impl<DB: Database> EvmContext<DB> {
             if SPEC::enabled(HOMESTEAD) {
                 self.journaled_state.checkpoint_revert(journal_checkpoint);
                 interpreter_result.result = InstructionResult::OutOfGas;
-                return interpreter_result;
+                return;
             } else {
                 interpreter_result.output = Bytes::new();
             }
@@ -509,7 +511,6 @@ impl<DB: Database> EvmContext<DB> {
         self.journaled_state.set_code(address, bytecode);
 
         interpreter_result.result = InstructionResult::Return;
-        interpreter_result
     }
 }
 /// Test utilities for the [`EvmContext`].
@@ -601,7 +602,7 @@ mod tests {
     use super::*;
     use crate::db::{CacheDB, EmptyDB};
     use crate::primitives::address;
-    use crate::JournalEntry;
+    use crate::{Frame, JournalEntry};
     use test_utils::*;
 
     // Tests that the `EVMContext::make_call_frame` function returns an error if the
@@ -618,7 +619,10 @@ mod tests {
         let FrameOrResult::Result(err) = res else {
             panic!("Expected FrameOrResult::Result");
         };
-        assert_eq!(err.result, InstructionResult::CallTooDeep);
+        assert_eq!(
+            err.interpreter_result().result,
+            InstructionResult::CallTooDeep
+        );
     }
 
     // Tests that the `EVMContext::make_call_frame` function returns an error if the
@@ -633,10 +637,13 @@ mod tests {
         let mut call_inputs = test_utils::create_mock_call_inputs(contract);
         call_inputs.transfer.value = U256::from(1);
         let res = evm_context.make_call_frame(&call_inputs, 0..0);
-        let FrameOrResult::Result(err) = res else {
+        let FrameOrResult::Result(result) = res else {
             panic!("Expected FrameOrResult::Result");
         };
-        assert_eq!(err.result, InstructionResult::OutOfFunds);
+        assert_eq!(
+            result.interpreter_result().result,
+            InstructionResult::OutOfFunds
+        );
         let checkpointed = vec![vec![JournalEntry::AccountLoaded { address: contract }]];
         assert_eq!(evm_context.journaled_state.journal, checkpointed);
         assert_eq!(evm_context.journaled_state.depth, 0);
@@ -651,10 +658,10 @@ mod tests {
         let contract = address!("dead10000000000000000000000000000001dead");
         let call_inputs = test_utils::create_mock_call_inputs(contract);
         let res = evm_context.make_call_frame(&call_inputs, 0..0);
-        let FrameOrResult::Result(res) = res else {
+        let FrameOrResult::Result(result) = res else {
             panic!("Expected FrameOrResult::Result");
         };
-        assert_eq!(res.result, InstructionResult::Stop);
+        assert_eq!(result.interpreter_result().result, InstructionResult::Stop);
     }
 
     #[test]
@@ -676,15 +683,9 @@ mod tests {
         let mut evm_context = create_cache_db_evm_context_with_balance(Box::new(env), cdb, bal);
         let call_inputs = test_utils::create_mock_call_inputs(contract);
         let res = evm_context.make_call_frame(&call_inputs, 0..0);
-        let FrameOrResult::Frame(frame) = res else {
-            panic!("Expected FrameOrResult::Frame");
+        let FrameOrResult::Frame(Frame::Call(call_frame)) = res else {
+            panic!("Expected FrameOrResult::Frame(Frame::Call(..))");
         };
-        assert!(!frame.is_create());
-        assert_eq!(
-            frame.frame_data,
-            FrameData::Call {
-                return_memory_range: 0..0
-            }
-        );
+        assert_eq!(call_frame.return_memory_range, 0..0,);
     }
 }

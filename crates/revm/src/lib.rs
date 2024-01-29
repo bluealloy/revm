@@ -36,7 +36,7 @@ pub use db::{
 };
 pub use db::{Database, DatabaseCommit, DatabaseRef, InMemoryDB};
 pub use evm::{Evm, CALL_STACK_LIMIT};
-pub use frame::{CallStackFrame, FrameData, FrameOrResult};
+pub use frame::{CallFrame, CreateFrame, Frame, FrameData, FrameOrResult, FrameResult};
 pub use handler::Handler;
 pub use inspector::{
     inspector_handle_register, inspector_instruction, inspectors, GetInspector, Inspector,
