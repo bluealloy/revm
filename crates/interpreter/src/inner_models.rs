@@ -1,7 +1,7 @@
-use revm_primitives::{TransactTo, TxEnv};
+use crate::primitives::{Address, Bytes, TransactTo, TxEnv, U256};
+use alloc::boxed::Box;
 
 pub use crate::primitives::CreateScheme;
-use crate::primitives::{Address, Bytes, U256};
 
 /// Inputs for a call.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
