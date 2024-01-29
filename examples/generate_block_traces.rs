@@ -153,7 +153,11 @@ async fn main() -> anyhow::Result<()> {
         // Construct the file writer to write the trace to
         let tx_number = tx.transaction_index.unwrap().0[0];
         let file_name = format!("traces/{}.json", tx_number);
-        let write = OpenOptions::new().write(true).create(true).open(file_name);
+        let write = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(file_name);
         let inner = Arc::new(Mutex::new(BufWriter::new(
             write.expect("Failed to open file"),
         )));
