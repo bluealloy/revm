@@ -258,6 +258,8 @@ impl PrecompileSpecId {
             LATEST => Self::LATEST,
             #[cfg(feature = "optimism")]
             BEDROCK | REGOLITH | CANYON => Self::BERLIN,
+            #[cfg(feature = "optimism")]
+            ECOTONE => Self::CANCUN,
         }
     }
 }

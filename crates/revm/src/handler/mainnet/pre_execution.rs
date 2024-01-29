@@ -30,8 +30,9 @@ pub fn load<SPEC: Spec, EXT, DB: Database>(
     // the L1-cost fee is only computed for Optimism non-deposit transactions.
     #[cfg(feature = "optimism")]
     if context.evm.env.cfg.optimism && context.evm.env.tx.optimism.source_hash.is_none() {
-        let l1_block_info = crate::optimism::L1BlockInfo::try_fetch(&mut context.evm.db)
-            .map_err(EVMError::Database)?;
+        let l1_block_info =
+            crate::optimism::L1BlockInfo::try_fetch(&mut context.evm.db, SPEC::SPEC_ID)
+                .map_err(EVMError::Database)?;
 
         // storage l1 block info for later use.
         context.evm.l1_block_info = Some(l1_block_info);

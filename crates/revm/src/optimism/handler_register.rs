@@ -438,8 +438,9 @@ mod tests {
         let mut context: Context<(), InMemoryDB> = Context::new_with_db(db);
         context.evm.l1_block_info = Some(L1BlockInfo {
             l1_base_fee: U256::from(1_000),
-            l1_fee_overhead: U256::from(1_000),
-            l1_fee_scalar: U256::from(1_000),
+            l1_fee_overhead: Some(U256::from(1_000)),
+            l1_base_fee_scalar: U256::from(1_000),
+            ..Default::default()
         });
         // Enveloped needs to be some but it will deduce zero fee.
         context.evm.env.tx.optimism.enveloped_tx = Some(bytes!(""));
@@ -471,8 +472,9 @@ mod tests {
         let mut context: Context<(), InMemoryDB> = Context::new_with_db(db);
         context.evm.l1_block_info = Some(L1BlockInfo {
             l1_base_fee: U256::from(1_000),
-            l1_fee_overhead: U256::from(1_000),
-            l1_fee_scalar: U256::from(1_000),
+            l1_fee_overhead: Some(U256::from(1_000)),
+            l1_base_fee_scalar: U256::from(1_000),
+            ..Default::default()
         });
         // l1block cost is 1048 fee.
         context.evm.env.tx.optimism.enveloped_tx = Some(bytes!("FACADE"));
@@ -507,8 +509,9 @@ mod tests {
         let mut context: Context<(), InMemoryDB> = Context::new_with_db(db);
         context.evm.l1_block_info = Some(L1BlockInfo {
             l1_base_fee: U256::from(1_000),
-            l1_fee_overhead: U256::from(1_000),
-            l1_fee_scalar: U256::from(1_000),
+            l1_fee_overhead: Some(U256::from(1_000)),
+            l1_base_fee_scalar: U256::from(1_000),
+            ..Default::default()
         });
         // l1block cost is 1048 fee.
         context.evm.env.tx.optimism.enveloped_tx = Some(bytes!("FACADE"));
@@ -537,8 +540,9 @@ mod tests {
         let mut context: Context<(), InMemoryDB> = Context::new_with_db(db);
         context.evm.l1_block_info = Some(L1BlockInfo {
             l1_base_fee: U256::from(1_000),
-            l1_fee_overhead: U256::from(1_000),
-            l1_fee_scalar: U256::from(1_000),
+            l1_fee_overhead: Some(U256::from(1_000)),
+            l1_base_fee_scalar: U256::from(1_000),
+            ..Default::default()
         });
         // l1block cost is 1048 fee.
         context.evm.env.tx.optimism.enveloped_tx = Some(bytes!("FACADE"));
