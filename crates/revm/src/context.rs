@@ -544,6 +544,7 @@ pub(crate) mod test_utils {
                 scheme: revm_interpreter::CallScheme::Call,
             },
             is_static: false,
+            return_memory_offset: 0..0,
         }
     }
 
