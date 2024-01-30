@@ -17,17 +17,13 @@ pub trait GetInspector<'a, DB: Database> {
 ///
 /// # Note
 ///
-/// Handles that are overwritten:
-/// * SubCreate
-/// * SubCall
-/// * CreateFirstFrame
+/// Inspector handle register does not override any existing handlers, and it
+/// calls them before (or after) calling Inspector. This means that it is safe
+/// to use this register with any other register.
 ///
-///
-/// Few instructions handlers are wrapped twice once for `step` and `step_end`
+/// A few instructions handlers are wrapped twice once for `step` and `step_end`
 /// and in case of Logs and Selfdestruct wrapper is wrapped again for the
 /// `log` and `selfdestruct` calls.
-///
-/// `frame_return` is also wrapped so that Inspector could call `call_end` or `create_end`.
 pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     handler: &mut EvmHandler<'a, EXT, DB>,
 ) {
