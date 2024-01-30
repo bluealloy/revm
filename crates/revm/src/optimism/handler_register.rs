@@ -120,7 +120,7 @@ pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
         context.evm.l1_block_info = Some(l1_block_info);
     }
 
-    optimism::load_accounts::<SPEC, EXT, DB>(context)
+    mainnet::load_accounts::<SPEC, EXT, DB>(context)
 }
 
 /// Deduct max balance from caller
