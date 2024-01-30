@@ -60,6 +60,7 @@ pub enum SpecId {
     SHANGHAI = 18,
     CANYON = 19,
     CANCUN = 20,
+    ECOTONE = 21,
     LATEST = u8::MAX,
 }
 
@@ -102,6 +103,8 @@ impl From<&str> for SpecId {
             "Regolith" => SpecId::REGOLITH,
             #[cfg(feature = "optimism")]
             "Canyon" => SpecId::CANYON,
+            #[cfg(feature = "optimism")]
+            "Ecotone" => SpecId::ECOTONE,
             _ => Self::LATEST,
         }
     }
@@ -157,6 +160,8 @@ spec!(BEDROCK, BedrockSpec);
 spec!(REGOLITH, RegolithSpec);
 #[cfg(feature = "optimism")]
 spec!(CANYON, CanyonSpec);
+#[cfg(feature = "optimism")]
+spec!(ECOTONE, EcotoneSpec);
 
 #[macro_export]
 macro_rules! spec_to_generic {
@@ -230,6 +235,11 @@ macro_rules! spec_to_generic {
             #[cfg(feature = "optimism")]
             $crate::SpecId::CANYON => {
                 use $crate::CanyonSpec as SPEC;
+                $e
+            }
+            #[cfg(feature = "optimism")]
+            $crate::SpecId::ECOTONE => {
+                use $crate::EcotoneSpec as SPEC;
                 $e
             }
         }
@@ -337,5 +347,29 @@ mod optimism_tests {
         assert!(SpecId::enabled(SpecId::CANYON, SpecId::BEDROCK));
         assert!(SpecId::enabled(SpecId::CANYON, SpecId::REGOLITH));
         assert!(SpecId::enabled(SpecId::CANYON, SpecId::CANYON));
+    }
+
+    #[test]
+    fn test_ecotone_post_merge_hardforks() {
+        assert!(EcotoneSpec::enabled(SpecId::MERGE));
+        assert!(EcotoneSpec::enabled(SpecId::SHANGHAI));
+        assert!(EcotoneSpec::enabled(SpecId::CANCUN));
+        assert!(!EcotoneSpec::enabled(SpecId::LATEST));
+        assert!(EcotoneSpec::enabled(SpecId::BEDROCK));
+        assert!(EcotoneSpec::enabled(SpecId::REGOLITH));
+        assert!(EcotoneSpec::enabled(SpecId::CANYON));
+        assert!(EcotoneSpec::enabled(SpecId::ECOTONE));
+    }
+
+    #[test]
+    fn test_ecotone_post_merge_hardforks_spec_id() {
+        assert!(SpecId::enabled(SpecId::ECOTONE, SpecId::MERGE));
+        assert!(SpecId::enabled(SpecId::ECOTONE, SpecId::SHANGHAI));
+        assert!(SpecId::enabled(SpecId::ECOTONE, SpecId::CANCUN));
+        assert!(!SpecId::enabled(SpecId::ECOTONE, SpecId::LATEST));
+        assert!(SpecId::enabled(SpecId::ECOTONE, SpecId::BEDROCK));
+        assert!(SpecId::enabled(SpecId::ECOTONE, SpecId::REGOLITH));
+        assert!(SpecId::enabled(SpecId::ECOTONE, SpecId::CANYON));
+        assert!(SpecId::enabled(SpecId::ECOTONE, SpecId::ECOTONE));
     }
 }

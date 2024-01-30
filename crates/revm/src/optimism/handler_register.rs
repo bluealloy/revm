@@ -109,10 +109,12 @@ pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
 pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
 ) -> Result<(), EVMError<DB::Error>> {
-    #[cfg(feature = "optimism")]
+    // the L1-cost fee is only computed for Optimism non-deposit transactions.
+
     if context.evm.env.cfg.optimism && context.evm.env.tx.optimism.source_hash.is_none() {
-        let l1_block_info = crate::optimism::L1BlockInfo::try_fetch(&mut context.evm.db)
-            .map_err(EVMError::Database)?;
+        let l1_block_info =
+            crate::optimism::L1BlockInfo::try_fetch(&mut context.evm.db, SPEC::SPEC_ID)
+                .map_err(EVMError::Database)?;
 
         // storage l1 block info for later use.
         context.evm.l1_block_info = Some(l1_block_info);
@@ -457,8 +459,9 @@ mod tests {
         let mut context: Context<(), InMemoryDB> = Context::new_with_db(db);
         context.evm.l1_block_info = Some(L1BlockInfo {
             l1_base_fee: U256::from(1_000),
-            l1_fee_overhead: U256::from(1_000),
-            l1_fee_scalar: U256::from(1_000),
+            l1_fee_overhead: Some(U256::from(1_000)),
+            l1_base_fee_scalar: U256::from(1_000),
+            ..Default::default()
         });
         // Enveloped needs to be some but it will deduce zero fee.
         context.evm.env.tx.optimism.enveloped_tx = Some(bytes!(""));
@@ -490,8 +493,9 @@ mod tests {
         let mut context: Context<(), InMemoryDB> = Context::new_with_db(db);
         context.evm.l1_block_info = Some(L1BlockInfo {
             l1_base_fee: U256::from(1_000),
-            l1_fee_overhead: U256::from(1_000),
-            l1_fee_scalar: U256::from(1_000),
+            l1_fee_overhead: Some(U256::from(1_000)),
+            l1_base_fee_scalar: U256::from(1_000),
+            ..Default::default()
         });
         // l1block cost is 1048 fee.
         context.evm.env.tx.optimism.enveloped_tx = Some(bytes!("FACADE"));
@@ -526,8 +530,9 @@ mod tests {
         let mut context: Context<(), InMemoryDB> = Context::new_with_db(db);
         context.evm.l1_block_info = Some(L1BlockInfo {
             l1_base_fee: U256::from(1_000),
-            l1_fee_overhead: U256::from(1_000),
-            l1_fee_scalar: U256::from(1_000),
+            l1_fee_overhead: Some(U256::from(1_000)),
+            l1_base_fee_scalar: U256::from(1_000),
+            ..Default::default()
         });
         // l1block cost is 1048 fee.
         context.evm.env.tx.optimism.enveloped_tx = Some(bytes!("FACADE"));
@@ -556,8 +561,9 @@ mod tests {
         let mut context: Context<(), InMemoryDB> = Context::new_with_db(db);
         context.evm.l1_block_info = Some(L1BlockInfo {
             l1_base_fee: U256::from(1_000),
-            l1_fee_overhead: U256::from(1_000),
-            l1_fee_scalar: U256::from(1_000),
+            l1_fee_overhead: Some(U256::from(1_000)),
+            l1_base_fee_scalar: U256::from(1_000),
+            ..Default::default()
         });
         // l1block cost is 1048 fee.
         context.evm.env.tx.optimism.enveloped_tx = Some(bytes!("FACADE"));
