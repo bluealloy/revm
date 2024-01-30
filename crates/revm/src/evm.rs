@@ -276,7 +276,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         let first_frame_or_result = match ctx.evm.env.tx.transact_to {
             TransactTo::Call(_) => exec.call(
                 ctx,
-                CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
+                CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit, 0..0).unwrap(),
                 0..0,
             ),
             TransactTo::Create(_) => exec.create(
