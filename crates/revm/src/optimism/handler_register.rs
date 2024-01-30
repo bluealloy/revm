@@ -18,6 +18,8 @@ use core::ops::Mul;
 
 pub fn optimism_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, EXT, DB>) {
     spec_to_generic!(handler.spec_id, {
+        // load l1 data
+        handler.pre_execution.load_accounts = Arc::new(load_accounts::<SPEC, EXT, DB>);
         // Refund is calculated differently then mainnet.
         handler.execution.last_frame_return = Arc::new(last_frame_return::<SPEC, EXT, DB>);
         // An estimated batch cost is charged from the caller and added to L1 Fee Vault.
@@ -100,6 +102,25 @@ pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
     if !is_gas_refund_disabled {
         gas.set_final_refund::<SPEC>();
     }
+}
+
+/// Load account (make them warm) and l1 data from database.
+#[inline]
+pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<EXT, DB>,
+) -> Result<(), EVMError<DB::Error>> {
+    // the L1-cost fee is only computed for Optimism non-deposit transactions.
+
+    if context.evm.env.cfg.optimism && context.evm.env.tx.optimism.source_hash.is_none() {
+        let l1_block_info =
+            crate::optimism::L1BlockInfo::try_fetch(&mut context.evm.db, SPEC::SPEC_ID)
+                .map_err(EVMError::Database)?;
+
+        // storage l1 block info for later use.
+        context.evm.l1_block_info = Some(l1_block_info);
+    }
+
+    mainnet::load_accounts::<SPEC, EXT, DB>(context)
 }
 
 /// Deduct max balance from caller

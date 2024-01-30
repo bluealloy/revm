@@ -35,7 +35,7 @@ impl<'a, EXT: 'a, DB: Database + 'a> PreExecutionHandler<'a, EXT, DB> {
     pub fn new<SPEC: Spec + 'a>() -> Self {
         Self {
             load_precompiles: Arc::new(mainnet::load_precompiles::<SPEC>),
-            load_accounts: Arc::new(mainnet::load::<SPEC, EXT, DB>),
+            load_accounts: Arc::new(mainnet::load_accounts::<SPEC, EXT, DB>),
             deduct_caller: Arc::new(mainnet::deduct_caller::<SPEC, EXT, DB>),
         }
     }
