@@ -308,7 +308,7 @@ mod tests {
 
         fn call(
             &mut self,
-            _context: &mut EvmContext<DB>,
+            context: &mut EvmContext<DB>,
             _call: &mut CallInputs,
             _return_memory_offset: Range<usize>,
         ) -> Option<CallOutcome> {
@@ -316,36 +316,40 @@ mod tests {
                 unreachable!("call should not be called twice")
             }
             self.call = true;
+            assert_eq!(context.journaled_state.depth(), 0);
             None
         }
 
         fn call_end(
             &mut self,
-            _context: &mut EvmContext<DB>,
+            context: &mut EvmContext<DB>,
             _inputs: &CallInputs,
             outcome: CallOutcome,
         ) -> CallOutcome {
             if self.call_end {
                 unreachable!("call_end should not be called twice")
             }
+            assert_eq!(context.journaled_state.depth(), 0);
             self.call_end = true;
             outcome
         }
 
         fn create(
             &mut self,
-            _context: &mut EvmContext<DB>,
+            context: &mut EvmContext<DB>,
             _call: &mut CreateInputs,
         ) -> Option<CreateOutcome> {
+            assert_eq!(context.journaled_state.depth(), 0);
             None
         }
 
         fn create_end(
             &mut self,
-            _context: &mut EvmContext<DB>,
+            context: &mut EvmContext<DB>,
             _inputs: &CreateInputs,
             outcome: CreateOutcome,
         ) -> CreateOutcome {
+            assert_eq!(context.journaled_state.depth(), 0);
             outcome
         }
     }
