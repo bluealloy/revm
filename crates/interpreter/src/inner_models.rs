@@ -1,7 +1,7 @@
 pub use crate::primitives::CreateScheme;
 use crate::primitives::{Address, Bytes, TransactTo, TxEnv, U256};
 use alloc::boxed::Box;
-use std::ops::Range as Ranger;
+use core::ops::Range as Ranger;
 /// Inputs for a call.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
