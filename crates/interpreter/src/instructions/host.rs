@@ -364,6 +364,7 @@ pub fn call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
                 scheme: CallScheme::Call,
             },
             is_static: interpreter.is_static,
+            return_memory_offset: return_memory_offset.clone(),
         }),
         return_memory_offset,
     };
@@ -419,6 +420,7 @@ pub fn call_code<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut 
                 scheme: CallScheme::CallCode,
             },
             is_static: interpreter.is_static,
+            return_memory_offset: return_memory_offset.clone(),
         }),
         return_memory_offset,
     };
@@ -465,6 +467,7 @@ pub fn delegate_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &
                 scheme: CallScheme::DelegateCall,
             },
             is_static: interpreter.is_static,
+            return_memory_offset: return_memory_offset.clone(),
         }),
         return_memory_offset,
     };
@@ -511,6 +514,7 @@ pub fn static_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mu
                 scheme: CallScheme::StaticCall,
             },
             is_static: true,
+            return_memory_offset: return_memory_offset.clone(),
         }),
         return_memory_offset,
     };
