@@ -7,7 +7,9 @@ use crate::{
     Evm, FrameOrResult, FrameResult, Inspector, JournalEntry,
 };
 use alloc::{boxed::Box, rc::Rc, sync::Arc, vec::Vec};
+use auto_impl::auto_impl;
 
+#[auto_impl(&mut, Box)]
 pub trait GetInspector<'a, DB: Database> {
     fn get_inspector(&mut self) -> &mut dyn Inspector<DB>;
 }
