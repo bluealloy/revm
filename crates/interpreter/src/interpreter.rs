@@ -70,10 +70,6 @@ pub enum InterpreterAction {
     Call {
         /// Call inputs
         inputs: Box<CallInputs>,
-        // /// The offset into `self.memory` of the return data.
-        // ///
-        // /// This value must be ignored if `self.return_len` is 0.
-        // return_memory_offset: Range<usize>,
     },
     /// CREATE or CREATE2 instruction called.
     Create { inputs: Box<CreateInputs> },
