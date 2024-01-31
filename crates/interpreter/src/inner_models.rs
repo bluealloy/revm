@@ -1,7 +1,7 @@
 pub use crate::primitives::CreateScheme;
 use crate::primitives::{Address, Bytes, TransactTo, TxEnv, U256};
 use alloc::boxed::Box;
-use core::ops::Range as Ranger;
+use core::ops::Range;
 /// Inputs for a call.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -19,7 +19,7 @@ pub struct CallInputs {
     /// Whether this is a static call.
     pub is_static: bool,
     /// The return memory offset where the output of the call is written.
-    pub return_memory_offset: Ranger<usize>,
+    pub return_memory_offset: Range<usize>,
 }
 
 /// Inputs for a create call.
@@ -43,7 +43,7 @@ impl CallInputs {
     pub fn new(
         tx_env: &TxEnv,
         gas_limit: u64,
-        return_memory_offset: Ranger<usize>,
+        return_memory_offset: Range<usize>,
     ) -> Option<Self> {
         let TransactTo::Call(address) = tx_env.transact_to else {
             return None;
@@ -74,7 +74,7 @@ impl CallInputs {
     pub fn new_boxed(
         tx_env: &TxEnv,
         gas_limit: u64,
-        return_memory_offset: Ranger<usize>,
+        return_memory_offset: Range<usize>,
     ) -> Option<Box<Self>> {
         Self::new(tx_env, gas_limit, return_memory_offset).map(Box::new)
     }
