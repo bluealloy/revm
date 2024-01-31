@@ -2,6 +2,7 @@ pub use crate::primitives::CreateScheme;
 use crate::primitives::{Address, Bytes, TransactTo, TxEnv, U256};
 use alloc::boxed::Box;
 use core::ops::Range;
+
 /// Inputs for a call.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -40,11 +41,7 @@ pub struct CreateInputs {
 
 impl CallInputs {
     /// Creates new call inputs.
-    pub fn new(
-        tx_env: &TxEnv,
-        gas_limit: u64,
-        return_memory_offset: Range<usize>,
-    ) -> Option<Self> {
+    pub fn new(tx_env: &TxEnv, gas_limit: u64, return_memory_offset: Range<usize>) -> Option<Self> {
         let TransactTo::Call(address) = tx_env.transact_to else {
             return None;
         };
