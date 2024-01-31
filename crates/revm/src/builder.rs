@@ -135,6 +135,12 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
         }
     }
 
+    /// Resets [`Handler`] to default mainnet.
+    pub fn reset_handler(self) -> EvmBuilder<'a, SetGenericStage, EXT, DB> {
+        self.handler = Handler::mainnet_with_spec(self.handler.spec_id);
+        self
+    }
+
     /// Resets [`Handler`] and sets new `ExternalContext` type.
     ///  and resets the [`Handler`] to default mainnet.
     pub fn reset_handler_with_external_context<OEXT>(
