@@ -195,10 +195,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
             let exec = &mut self.handler.execution;
             let frame_or_result = match next_action {
-                InterpreterAction::Call {
-                    inputs,
-                    return_memory_offset,
-                } => exec.call(&mut self.context, inputs, return_memory_offset),
+                InterpreterAction::Call { inputs } => exec.call(&mut self.context, inputs, 0..0),
                 InterpreterAction::Create { inputs } => exec.create(&mut self.context, inputs),
                 InterpreterAction::Return { result } => {
                     // free memory context.
