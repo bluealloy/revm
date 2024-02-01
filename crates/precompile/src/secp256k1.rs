@@ -6,9 +6,27 @@ pub const ECRECOVER: PrecompileWithAddress = PrecompileWithAddress(
     Precompile::Standard(ec_recover_run),
 );
 
-pub use self::secp256k1::ecrecover;
+#[cfg(all(target_os = "zkvm", target_vendor = "succinct"))]
+#[allow(clippy::module_inception)]
+mod secp256k1 {
+    use crate::B256;
+    use revm_primitives::keccak256;
 
-#[cfg(not(feature = "secp256k1"))]
+    pub fn ecrecover(sig: &[u8; 65], msg: &B256) -> Result<B256, anyhow::Error> {
+        let recovered_key = sp1_precompiles::secp256k1::ecrecover(sig, msg)?;
+
+        let mut hash = keccak256(&recovered_key[1..]);
+
+        // truncate to 20 bytes
+        hash[..12].fill(0);
+        Ok(hash)
+    } 
+}
+
+#[cfg(all(
+    not(all(target_os = "zkvm", target_vendor = "succinct")),
+    not(feature = "secp256k1")
+))]
 #[allow(clippy::module_inception)]
 mod secp256k1 {
     use k256::ecdsa::{Error, RecoveryId, Signature, VerifyingKey};
@@ -40,7 +58,10 @@ mod secp256k1 {
     }
 }
 
-#[cfg(feature = "secp256k1")]
+#[cfg(all(
+    not(all(target_os = "zkvm", target_vendor = "succinct")),
+    feature = "secp256k1"
+))]
 #[allow(clippy::module_inception)]
 mod secp256k1 {
     use revm_primitives::{alloy_primitives::B512, keccak256, B256};
@@ -51,6 +72,7 @@ mod secp256k1 {
 
     // Silence the unused crate dependency warning.
     use k256 as _;
+    use sp1_precompiles as _;
 
     pub fn ecrecover(sig: &B512, recid: u8, msg: &B256) -> Result<B256, secp256k1::Error> {
         let recid = RecoveryId::from_i32(recid as i32).expect("recovery ID is valid");

@@ -17,7 +17,6 @@ microbench = "0.5"
 plain_hasher = "0.2"
 revm = { path = "../../crates/revm", version = "7.2.0", default-features = false, features = [
     "ethersdb",
-    "std",
     "serde-json",
     "c-kzg",
 ] }
@@ -25,10 +24,14 @@ alloy-rlp = { version = "0.3", default-features = false, features = [
     "arrayvec",
     "derive",
 ] }
-serde = { version = "1.0", features = ["derive", "rc"] }
-serde_json = { version = "1.0", features = ["preserve_order"] }
+serde = { version = "1.0", default-features = false, features = ["derive", "rc"] }
+serde_json = { version = "1.0", default-features = false, features = ["alloc"]}
 structopt = "0.3"
 thiserror = "1.0"
 triehash = "0.8"
 walkdir = "2.5"
 k256 = { version = "0.13.3", features = ["ecdsa"] }
+
+[features]
+default = ["std"]
+std = ["serde/std", "serde_json/std", "alloy-rlp/std", "revm/std"]

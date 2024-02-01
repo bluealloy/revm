@@ -251,6 +251,8 @@ impl PrecompileSpecId {
             BEDROCK | REGOLITH | CANYON => Self::BERLIN,
             #[cfg(feature = "optimism")]
             ECOTONE => Self::CANCUN,
+            #[cfg(feature = "taiko")]
+            KATLA => Self::BERLIN, // TODO(Cecilia): what is this?
         }
     }
 }

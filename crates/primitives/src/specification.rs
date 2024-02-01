@@ -5,7 +5,7 @@ pub use SpecId::*;
 /// Specification IDs and their activation block.
 ///
 /// Information was obtained from the [Ethereum Execution Specifications](https://github.com/ethereum/execution-specs)
-#[cfg(not(feature = "optimism"))]
+#[cfg(all(not(feature = "optimism"), not(feature = "taiko")))]
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, enumn::N)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -35,7 +35,7 @@ pub enum SpecId {
 /// Specification IDs and their activation block.
 ///
 /// Information was obtained from the [Ethereum Execution Specifications](https://github.com/ethereum/execution-specs)
-#[cfg(feature = "optimism")]
+#[cfg(all(feature = "optimism", not(feature = "taiko")))]
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, enumn::N)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -64,6 +64,42 @@ pub enum SpecId {
     ECOTONE = 21,
     #[default]
     LATEST = u8::MAX,
+}
+
+/// Specification IDs and their activation block.
+///
+/// Information was obtained from the [Ethereum Execution Specifications](https://github.com/ethereum/execution-specs)
+#[cfg(all(feature = "taiko", not(feature = "optimism")))]
+#[repr(u8)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, enumn::N)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum SpecId {
+    FRONTIER = 0,
+    FRONTIER_THAWING = 1,
+    HOMESTEAD = 2,
+    DAO_FORK = 3,
+    TANGERINE = 4,
+    SPURIOUS_DRAGON = 5,
+    BYZANTIUM = 6,
+    CONSTANTINOPLE = 7,
+    PETERSBURG = 8,
+    ISTANBUL = 9,
+    MUIR_GLACIER = 10,
+    BERLIN = 11,
+    LONDON = 12,
+    ARROW_GLACIER = 13,
+    GRAY_GLACIER = 14,
+    MERGE = 15,
+    SHANGHAI = 16,
+    KATLA = 17, // KATLA is before CANCUN, aka does not have 4844
+    CANCUN = 18,
+    LATEST = u8::MAX,
+}
+
+impl Default for SpecId {
+    fn default() -> Self {
+        Self::LATEST
+    }
 }
 
 impl SpecId {
@@ -99,14 +135,16 @@ impl From<&str> for SpecId {
             "Merge" => Self::MERGE,
             "Shanghai" => Self::SHANGHAI,
             "Cancun" => Self::CANCUN,
-            #[cfg(feature = "optimism")]
+           #[cfg(all(feature = "optimism", not(feature = "taiko")))]
             "Bedrock" => SpecId::BEDROCK,
-            #[cfg(feature = "optimism")]
+           #[cfg(all(feature = "optimism", not(feature = "taiko")))]
             "Regolith" => SpecId::REGOLITH,
-            #[cfg(feature = "optimism")]
+           #[cfg(all(feature = "optimism", not(feature = "taiko")))]
             "Canyon" => SpecId::CANYON,
-            #[cfg(feature = "optimism")]
+           #[cfg(all(feature = "optimism", not(feature = "taiko")))]
             "Ecotone" => SpecId::ECOTONE,
+            #[cfg(all(feature = "taiko", not(feature = "optimism")))]
+            "Katla" => SpecId::KATLA,
             _ => Self::LATEST,
         }
     }
@@ -133,15 +171,17 @@ impl From<SpecId> for &'static str {
             SpecId::MERGE => "Merge",
             SpecId::SHANGHAI => "Shanghai",
             SpecId::CANCUN => "Cancun",
-            #[cfg(feature = "optimism")]
+           #[cfg(all(feature = "optimism", not(feature = "taiko")))]
             SpecId::BEDROCK => "Bedrock",
-            #[cfg(feature = "optimism")]
+           #[cfg(all(feature = "optimism", not(feature = "taiko")))]
             SpecId::REGOLITH => "Regolith",
-            #[cfg(feature = "optimism")]
+           #[cfg(all(feature = "optimism", not(feature = "taiko")))]
             SpecId::CANYON => "Canyon",
-            #[cfg(feature = "optimism")]
+           #[cfg(all(feature = "optimism", not(feature = "taiko")))]
             SpecId::ECOTONE => "Ecotone",
             SpecId::LATEST => "Latest",
+            #[cfg(all(feature = "taiko", not(feature = "optimism")))]
+            SpecId::KATLA => "Katla",
         }
     }
 }
@@ -190,14 +230,18 @@ spec!(CANCUN, CancunSpec);
 spec!(LATEST, LatestSpec);
 
 // Optimism Hardforks
-#[cfg(feature = "optimism")]
+#[cfg(all(feature = "optimism", not(feature = "taiko")))]
 spec!(BEDROCK, BedrockSpec);
-#[cfg(feature = "optimism")]
+#[cfg(all(feature = "optimism", not(feature = "taiko")))]
 spec!(REGOLITH, RegolithSpec);
-#[cfg(feature = "optimism")]
+#[cfg(all(feature = "optimism", not(feature = "taiko")))]
 spec!(CANYON, CanyonSpec);
-#[cfg(feature = "optimism")]
+#[cfg(all(feature = "optimism", not(feature = "taiko")))]
 spec!(ECOTONE, EcotoneSpec);
+
+// Taiko Hardforks
+#[cfg(all(feature = "taiko", not(feature = "optimism")))]
+spec!(KATLA, KatlaSpec);
 
 #[macro_export]
 macro_rules! spec_to_generic {
@@ -258,24 +302,29 @@ macro_rules! spec_to_generic {
                 use $crate::LatestSpec as SPEC;
                 $e
             }
-            #[cfg(feature = "optimism")]
+           #[cfg(all(feature = "optimism", not(feature = "taiko")))]
             $crate::SpecId::BEDROCK => {
                 use $crate::BedrockSpec as SPEC;
                 $e
             }
-            #[cfg(feature = "optimism")]
+           #[cfg(all(feature = "optimism", not(feature = "taiko")))]
             $crate::SpecId::REGOLITH => {
                 use $crate::RegolithSpec as SPEC;
                 $e
             }
-            #[cfg(feature = "optimism")]
+           #[cfg(all(feature = "optimism", not(feature = "taiko")))]
             $crate::SpecId::CANYON => {
                 use $crate::CanyonSpec as SPEC;
                 $e
             }
-            #[cfg(feature = "optimism")]
+           #[cfg(all(feature = "optimism", not(feature = "taiko")))]
             $crate::SpecId::ECOTONE => {
                 use $crate::EcotoneSpec as SPEC;
+                $e
+            }
+            #[cfg(all(feature = "taiko", not(feature = "optimism")))]
+            $crate::SpecId::KATLA => {
+                use $crate::KatlaSpec as SPEC;
                 $e
             }
         }
@@ -306,19 +355,19 @@ mod tests {
         spec_to_generic!(ARROW_GLACIER, assert_eq!(SPEC::SPEC_ID, LONDON));
         spec_to_generic!(GRAY_GLACIER, assert_eq!(SPEC::SPEC_ID, LONDON));
         spec_to_generic!(MERGE, assert_eq!(SPEC::SPEC_ID, MERGE));
-        #[cfg(feature = "optimism")]
+       #[cfg(all(feature = "optimism", not(feature = "taiko")))]
         spec_to_generic!(BEDROCK, assert_eq!(SPEC::SPEC_ID, BEDROCK));
-        #[cfg(feature = "optimism")]
+       #[cfg(all(feature = "optimism", not(feature = "taiko")))]
         spec_to_generic!(REGOLITH, assert_eq!(SPEC::SPEC_ID, REGOLITH));
         spec_to_generic!(SHANGHAI, assert_eq!(SPEC::SPEC_ID, SHANGHAI));
-        #[cfg(feature = "optimism")]
+       #[cfg(all(feature = "optimism", not(feature = "taiko")))]
         spec_to_generic!(CANYON, assert_eq!(SPEC::SPEC_ID, CANYON));
         spec_to_generic!(CANCUN, assert_eq!(SPEC::SPEC_ID, CANCUN));
         spec_to_generic!(LATEST, assert_eq!(SPEC::SPEC_ID, LATEST));
     }
 }
 
-#[cfg(feature = "optimism")]
+#[cfg(all(feature = "optimism", not(feature = "taiko")))]
 #[cfg(test)]
 mod optimism_tests {
     use super::*;
@@ -407,5 +456,21 @@ mod optimism_tests {
         assert!(SpecId::enabled(SpecId::ECOTONE, SpecId::REGOLITH));
         assert!(SpecId::enabled(SpecId::ECOTONE, SpecId::CANYON));
         assert!(SpecId::enabled(SpecId::ECOTONE, SpecId::ECOTONE));
+    }
+}
+
+#[cfg(all(feature = "taiko", not(feature = "optimism")))]
+#[cfg(test)]
+mod taiko_tests {
+    use super::*;
+
+    // TODO(Cecilia):  update this range of bits
+    #[test]
+    fn test_katla_post_merge_hardforks() {
+        assert!(SpecId::enabled(SpecId::KATLA, SpecId::MERGE));
+        assert!(SpecId::enabled(SpecId::KATLA, SpecId::SHANGHAI));
+        assert!(!SpecId::enabled(SpecId::KATLA, SpecId::CANCUN));
+        assert!(!SpecId::enabled(SpecId::KATLA, SpecId::LATEST));
+        assert!(SpecId::enabled(SpecId::KATLA, SpecId::KATLA));
     }
 }

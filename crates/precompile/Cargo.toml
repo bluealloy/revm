@@ -32,12 +32,15 @@ secp256k1 = { version = "0.28.2", default-features = false, features = [
     "rand",
     "global-context",
 ], optional = true }
+sp1-precompiles = { git = "https://github.com/succinctlabs/sp1.git" }
+
 
 [dev-dependencies]
 criterion = { version = "0.5" }
 
 [features]
 default = ["std", "c-kzg", "secp256k1", "portable"]
+
 std = [
     "revm-primitives/std",
     "k256/std",
@@ -50,6 +53,7 @@ std = [
 asm-keccak = ["revm-primitives/asm-keccak"]
 
 optimism = ["revm-primitives/optimism"]
+taiko = ["revm-primitives/taiko"]
 # Optimism default handler enabled Optimism handler register by default in EvmBuilder.
 optimism-default-handler = [
     "optimism",

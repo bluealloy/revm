@@ -39,6 +39,7 @@ optimism-default-handler = [
 negate-optimism-default-handler = [
     "revm-primitives/negate-optimism-default-handler",
 ]
+taiko = ["revm-primitives/taiko"]
 
 dev = [
     "memory_limit",

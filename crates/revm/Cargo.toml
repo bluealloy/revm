@@ -47,7 +47,7 @@ criterion = "0.5"
 indicatif = "0.17"
 
 [features]
-default = ["std", "c-kzg", "secp256k1", "portable"]
+default = ["std", "c-kzg", "secp256k1", "portable", "taiko"]
 std = [
     "serde?/std",
     "serde_json?/std",
@@ -64,6 +64,7 @@ portable = ["revm-precompile/portable", "revm-interpreter/portable"]
 test-utils = []
 
 optimism = ["revm-interpreter/optimism", "revm-precompile/optimism"]
+taiko = ["revm-interpreter/taiko", "revm-precompile/taiko"]
 # Optimism default handler enabled Optimism handler register by default in EvmBuilder.
 optimism-default-handler = [
     "optimism",

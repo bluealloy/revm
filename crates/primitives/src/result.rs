@@ -179,11 +179,6 @@ impl<DBError> From<InvalidTransaction> for EVMError<DBError> {
     }
 }
 
-impl<DBError> From<InvalidHeader> for EVMError<DBError> {
-    fn from(value: InvalidHeader) -> Self {
-        Self::Header(value)
-    }
-}
 
 /// Transaction validation error.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -277,6 +272,10 @@ pub enum InvalidTransaction {
     /// case for failed deposit transactions.
     #[cfg(feature = "optimism")]
     HaltedDepositPostRegolith,
+
+    /// Anchor check failed
+    #[cfg(feature = "taiko")]
+    InvalidAnchorTransaction,
 }
 
 #[cfg(feature = "std")]
@@ -329,25 +328,35 @@ impl fmt::Display for InvalidTransaction {
             Self::BlobGasPriceGreaterThanMax => {
                 write!(f, "blob gas price is greater than max fee per blob gas")
             }
-            Self::EmptyBlobs => write!(f, "empty blobs"),
-            Self::BlobCreateTransaction => write!(f, "blob create transaction"),
-            Self::TooManyBlobs => write!(f, "too many blobs"),
-            Self::BlobVersionNotSupported => write!(f, "blob version not supported"),
+            InvalidTransaction::EmptyBlobs => write!(f, "Empty blobs"),
+            InvalidTransaction::BlobCreateTransaction => write!(f, "Blob create transaction"),
+            InvalidTransaction::TooManyBlobs => write!(f, "Too many blobs"),
+            InvalidTransaction::BlobVersionNotSupported => write!(f, "Blob version not supported"),
             #[cfg(feature = "optimism")]
-            Self::DepositSystemTxPostRegolith => {
+            InvalidTransaction::DepositSystemTxPostRegolith => {
                 write!(
                     f,
-                    "deposit system transactions post regolith hardfork are not supported"
+                    "Deposit system transactions post regolith hardfork are not supported"
                 )
             }
             #[cfg(feature = "optimism")]
-            Self::HaltedDepositPostRegolith => {
+            InvalidTransaction::HaltedDepositPostRegolith => {
                 write!(
                     f,
-                    "deposit transaction halted post-regolith; error will be bubbled up to main return handler"
+                    "Deposit transaction halted post-regolith. Error will be bubbled up to main return handler."
                 )
+            }
+            #[cfg(feature = "taiko")]
+            InvalidTransaction::InvalidAnchorTransaction => {
+                write!(f, "Invalid Anchor transaction.")
             }
         }
+    }
+}
+
+impl<DBError> From<InvalidHeader> for EVMError<DBError> {
+    fn from(invalid: InvalidHeader) -> Self {
+        EVMError::Header(invalid)
     }
 }
 

@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         rust: ["stable", "beta", "nightly"]
-        flags: ["--no-default-features", "", "--all-features"]
+        flags: ["--no-default-features", "", "--features taiko"]
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@master
@@ -92,7 +92,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rust-docs
-      - run: cargo doc --workspace --all-features --no-deps --document-private-items
+      - run: cargo doc --workspace --features taiko --no-deps --document-private-items
         env:
           RUSTDOCFLAGS: "--cfg docsrs -D warnings"
 
