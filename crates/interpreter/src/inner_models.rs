@@ -41,7 +41,7 @@ pub struct CreateInputs {
 
 impl CallInputs {
     /// Creates new call inputs.
-    pub fn new(tx_env: &TxEnv, gas_limit: u64, return_memory_offset: Range<usize>) -> Option<Self> {
+    pub fn new(tx_env: &TxEnv, gas_limit: u64) -> Option<Self> {
         let TransactTo::Call(address) = tx_env.transact_to else {
             return None;
         };
@@ -63,17 +63,13 @@ impl CallInputs {
                 scheme: CallScheme::Call,
             },
             is_static: false,
-            return_memory_offset,
+            return_memory_offset: 0..0,
         })
     }
 
     /// Returns boxed call inputs.
-    pub fn new_boxed(
-        tx_env: &TxEnv,
-        gas_limit: u64,
-        return_memory_offset: Range<usize>,
-    ) -> Option<Box<Self>> {
-        Self::new(tx_env, gas_limit, return_memory_offset).map(Box::new)
+    pub fn new_boxed(tx_env: &TxEnv, gas_limit: u64) -> Option<Box<Self>> {
+        Self::new(tx_env, gas_limit).map(Box::new)
     }
 }
 
