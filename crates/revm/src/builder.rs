@@ -231,7 +231,7 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
     }
 
     /// Allows modification of Evm Environment.
-    pub fn modify_env(mut self, f: impl FnOnce(&mut Env)) -> Self {
+    pub fn modify_env(mut self, f: impl FnOnce(&mut Box<Env>)) -> Self {
         f(&mut self.evm.env);
         self
     }
