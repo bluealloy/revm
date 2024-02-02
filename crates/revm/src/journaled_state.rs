@@ -449,7 +449,7 @@ impl JournaledState {
         if address != target {
             // Both accounts are loaded before this point, `address` as we execute its contract.
             // and `target` at the beginning of the function.
-            let acc_balance = self.state.get_mut(&target).unwrap().info.balance;
+            let acc_balance = self.state.get_mut(&address).unwrap().info.balance;
 
             let target_account = self.state.get_mut(&target).unwrap();
             Self::touch_account(self.journal.last_mut().unwrap(), &target, target_account);
