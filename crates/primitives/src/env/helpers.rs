@@ -9,6 +9,13 @@ pub struct CfgEnvWithSpecId {
     pub spec_id: SpecId,
 }
 
+impl CfgEnvWithSpecId {
+    /// Returns new `CfgEnvWithSpecId` instance.
+    pub fn new(cfg_env: CfgEnv, spec_id: SpecId) -> Self {
+        Self { cfg_env, spec_id }
+    }
+}
+
 /// Evm environment with the chain spec id.
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct EnvWithSpecId {
@@ -16,4 +23,11 @@ pub struct EnvWithSpecId {
     pub env: Box<Env>,
     /// Specification identification.
     pub spec_id: SpecId,
+}
+
+impl EnvWithSpecId {
+    /// Returns new `EnvWithSpecId` instance.
+    pub fn new(env: Box<Env>, spec_id: SpecId) -> Self {
+        Self { env, spec_id }
+    }
 }
