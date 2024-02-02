@@ -32,9 +32,13 @@ once_cell = { version = "1.19", default-features = false, optional = true }
 # utility
 enumn = "0.1"
 derive_more = { version = "0.99", optional = true }
+cfg-if = "1"
 
 # optional
-serde = { version = "1.0", default-features = false, features = ["derive", "rc"], optional = true }
+serde = { version = "1.0", default-features = false, features = [
+    "derive",
+    "rc",
+], optional = true }
 
 [build-dependencies]
 hex = { version = "0.4", default-features = false }

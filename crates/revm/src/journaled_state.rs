@@ -446,17 +446,17 @@ impl JournaledState {
     ) -> Result<SelfDestructResult, DB::Error> {
         let (is_cold, target_exists) = self.load_account_exist(target, db)?;
 
-        let acc = if address != target {
+        if address != target {
             // Both accounts are loaded before this point, `address` as we execute its contract.
             // and `target` at the beginning of the function.
-            let [acc, target_account] = self.state.get_many_mut([&address, &target]).unwrap();
-            Self::touch_account(self.journal.last_mut().unwrap(), &target, target_account);
-            target_account.info.balance += acc.info.balance;
-            acc
-        } else {
-            self.state.get_mut(&address).unwrap()
-        };
+            let acc_balance = self.state.get_mut(&target).unwrap().info.balance;
 
+            let target_account = self.state.get_mut(&target).unwrap();
+            Self::touch_account(self.journal.last_mut().unwrap(), &target, target_account);
+            target_account.info.balance += acc_balance;
+        }
+
+        let acc = self.state.get_mut(&address).unwrap();
         let balance = acc.info.balance;
         let previously_destroyed = acc.is_selfdestructed();
         let is_cancun_enabled = SpecId::enabled(self.spec, CANCUN);
