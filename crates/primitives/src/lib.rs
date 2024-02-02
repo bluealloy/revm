@@ -21,6 +21,7 @@ pub mod specification;
 pub mod state;
 pub mod utilities;
 
+pub use ahash::RandomState;
 pub use alloy_primitives::{
     self, address, b256, bytes, fixed_bytes, hex, hex_literal, ruint, uint, Address, Bytes,
     FixedBytes, Log, LogData, B256, I256, U256,
@@ -30,7 +31,6 @@ pub use bytecode::*;
 pub use constants::*;
 pub use env::*;
 pub use hashbrown::{hash_map, hash_set, HashMap, HashSet};
-pub use ahash::RandomState;
 #[cfg(feature = "c-kzg")]
 pub use kzg::{EnvKzgSettings, KzgSettings};
 pub use precompile::*;
