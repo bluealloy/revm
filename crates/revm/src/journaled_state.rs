@@ -4,7 +4,7 @@ use crate::primitives::{
     SpecId::*, State, StorageSlot, TransientStorage, KECCAK_EMPTY, PRECOMPILE3, U256,
 };
 use alloc::vec::Vec;
-use core::{hash::BuildHasher, mem};
+use core::mem;
 use revm_interpreter::primitives::SpecId;
 
 /// JournalState is internal EVM state that is used to contain state and track changes to that state.
