@@ -1,10 +1,10 @@
 use crate::interpreter::{InstructionResult, SelfDestructResult};
 use crate::primitives::{
-    db::Database, hash_map::Entry, Account, Address, Bytecode, HashMap, HashSet, Log, SpecId::*,
+    db::Database, hash_map::Entry, Account, Address, Bytecode, HashMap, HashSet, RandomState, Log, SpecId::*,
     State, StorageSlot, TransientStorage, KECCAK_EMPTY, PRECOMPILE3, U256,
 };
 use alloc::vec::Vec;
-use core::mem;
+use core::{mem, hash::BuildHasher};
 use revm_interpreter::primitives::SpecId;
 
 /// JournalState is internal EVM state that is used to contain state and track changes to that state.
@@ -50,7 +50,7 @@ impl JournaledState {
     pub fn new(spec: SpecId, warm_preloaded_addresses: HashSet<Address>) -> JournaledState {
         Self {
             state: HashMap::new(),
-            transient_storage: TransientStorage::default(),
+            transient_storage: TransientStorage::with_hasher(RandomState::new()),
             logs: Vec::new(),
             journal: vec![vec![]],
             depth: 0,

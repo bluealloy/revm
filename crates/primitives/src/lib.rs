@@ -30,6 +30,7 @@ pub use bytecode::*;
 pub use constants::*;
 pub use env::*;
 pub use hashbrown::{hash_map, hash_set, HashMap, HashSet};
+pub use ahash::RandomState;
 #[cfg(feature = "c-kzg")]
 pub use kzg::{EnvKzgSettings, KzgSettings};
 pub use precompile::*;
