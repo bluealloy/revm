@@ -1,6 +1,6 @@
 use revm::{
     db::BenchmarkDB,
-    primitives::{Bytecode, TransactTo, U256},
+    primitives::{Bytecode, TransactTo},
     Evm,
 };
 use std::time::Duration;
@@ -20,7 +20,7 @@ fn main() {
         panic!("Couldn't decode contents: {:?}", error);
     });
 
-    let ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+    let zero_address = "0x0000000000000000000000000000000000000000";
 
     // BenchmarkDB is dummy state that implements Database trait.
     // the bytecode is deployed at zero address.
@@ -32,7 +32,7 @@ fn main() {
                 .parse()
                 .unwrap();
             tx.transact_to = TransactTo::Call(
-                ZERO_ADDRESS
+                zero_address
                     .parse()
                     .unwrap(),
             );
