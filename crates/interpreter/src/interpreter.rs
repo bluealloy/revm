@@ -15,7 +15,6 @@ use crate::{
 };
 use alloc::boxed::Box;
 use core::cmp::min;
-
 use revm_primitives::U256;
 
 pub use self::shared_memory::EMPTY_SHARED_MEMORY;
