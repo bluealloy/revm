@@ -1,6 +1,6 @@
 use core::ops::{Deref, DerefMut};
 
-use super::{CfgEnv, Env, SpecId};
+use super::{BlockEnv, CfgEnv, Env, SpecId, TxEnv};
 
 /// Configuration environment with the chain spec id.
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
@@ -45,6 +45,18 @@ impl EnvWithSpecId {
     /// Returns new `EnvWithSpecId` instance.
     pub fn new(env: Box<Env>, spec_id: SpecId) -> Self {
         Self { env, spec_id }
+    }
+
+    /// Takes `CfgEnvWithSpecId` and returns new `EnvWithSpecId` instance.
+    pub fn new_with_cfg_env(cfg: CfgEnvWithSpecId, block: BlockEnv, tx: TxEnv) -> Self {
+        Self::new(
+            Box::new(Env {
+                cfg: cfg.cfg_env,
+                block,
+                tx,
+            }),
+            cfg.spec_id,
+        )
     }
 }
 
