@@ -195,7 +195,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
             let exec = &mut self.handler.execution;
             let frame_or_result = match next_action {
-                InterpreterAction::Call { inputs } => exec.call(&mut self.context, inputs, 0..0),
+                InterpreterAction::Call { inputs } => exec.call(&mut self.context, inputs),
                 InterpreterAction::Create { inputs } => exec.create(&mut self.context, inputs),
                 InterpreterAction::Return { result } => {
                     // free memory context.
@@ -274,7 +274,6 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             TransactTo::Call(_) => exec.call(
                 ctx,
                 CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
-                0..0,
             ),
             TransactTo::Create(_) => exec.create(
                 ctx,
