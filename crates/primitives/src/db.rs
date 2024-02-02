@@ -1,9 +1,5 @@
-use crate::AccountInfo;
-use crate::U256;
-use crate::{Account, Bytecode};
-use crate::{Address, B256};
+use crate::{Account, AccountInfo, Address, Bytecode, HashMap, B256, U256};
 use auto_impl::auto_impl;
-use hashbrown::HashMap as Map;
 
 pub mod components;
 pub use components::{
@@ -33,7 +29,7 @@ pub trait Database {
 #[auto_impl(&mut, Box)]
 pub trait DatabaseCommit {
     /// Commit changes to the database.
-    fn commit(&mut self, changes: Map<Address, Account>);
+    fn commit(&mut self, changes: HashMap<Address, Account>);
 }
 
 /// EVM database interface.
