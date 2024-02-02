@@ -1,3 +1,7 @@
+pub mod helpers;
+
+pub use helpers::{CfgEnvWithSpecId, EnvWithSpecId};
+
 use crate::{
     alloc::vec::Vec, calc_blob_gasprice, Account, Address, Bytes, InvalidHeader,
     InvalidTransaction, Spec, SpecId, B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK,
