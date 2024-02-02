@@ -83,13 +83,8 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
 
     /// Call frame call handler.
     #[inline]
-    pub fn call(
-        &self,
-        context: &mut Context<EXT, DB>,
-        inputs: Box<CallInputs>,
-        return_memory_offset: Range<usize>,
-    ) -> FrameOrResult {
-        (self.call)(context, inputs, return_memory_offset)
+    pub fn call(&self, context: &mut Context<EXT, DB>, inputs: Box<CallInputs>) -> FrameOrResult {
+        (self.call)(context, inputs.clone(), inputs.return_memory_offset)
     }
 
     /// Call registered handler for call return.
