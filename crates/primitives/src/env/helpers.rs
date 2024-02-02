@@ -1,3 +1,5 @@
+use core::ops::{Deref, DerefMut};
+
 use super::{CfgEnv, Env, SpecId};
 
 /// Configuration environment with the chain spec id.
@@ -16,6 +18,20 @@ impl CfgEnvWithSpecId {
     }
 }
 
+impl DerefMut for CfgEnvWithSpecId {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.cfg_env
+    }
+}
+
+impl Deref for CfgEnvWithSpecId {
+    type Target = CfgEnv;
+
+    fn deref(&self) -> &Self::Target {
+        &self.cfg_env
+    }
+}
+
 /// Evm environment with the chain spec id.
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct EnvWithSpecId {
@@ -29,5 +45,19 @@ impl EnvWithSpecId {
     /// Returns new `EnvWithSpecId` instance.
     pub fn new(env: Box<Env>, spec_id: SpecId) -> Self {
         Self { env, spec_id }
+    }
+}
+
+impl DerefMut for EnvWithSpecId {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.env
+    }
+}
+
+impl Deref for EnvWithSpecId {
+    type Target = Env;
+
+    fn deref(&self) -> &Self::Target {
+        &self.env
     }
 }
