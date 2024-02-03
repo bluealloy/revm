@@ -81,6 +81,20 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
             phantom: PhantomData,
         }
     }
+
+    /// Sets the mainnet handler with latest spec.
+    ///
+    /// Enabled only with `optimism_default_handler`` feature.
+    #[cfg(feature = "optimism_default_handler")]
+    pub fn mainnet(mut self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
+        self.handler = Handler::mainnet_with_spec(self.handler.spec_id);
+        EvmBuilder {
+            evm: self.evm,
+            external: self.external,
+            handler: self.handler,
+            phantom: PhantomData,
+        }
+    }
 }
 
 impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
@@ -103,6 +117,20 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
             evm: self.evm.with_db(EmptyDB::default()),
             external: self.external,
             handler: EvmBuilder::<'a, HandlerStage, EXT, EmptyDB>::handler(self.handler.spec_id),
+            phantom: PhantomData,
+        }
+    }
+
+    /// Resets the [`Handler`] and sets base mainnet handler.
+    ///
+    /// Enabled only with `optimism_default_handler`` feature.
+    #[cfg(feature = "optimism_default_handler")]
+    pub fn reset_handler_with_mainnet(mut self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
+        self.handler = Handler::mainnet_with_spec(self.handler.spec_id);
+        EvmBuilder {
+            evm: self.evm,
+            external: self.external,
+            handler: self.handler,
             phantom: PhantomData,
         }
     }
@@ -157,10 +185,10 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
     ///
     /// This is useful for adding optimism handle register.
     fn handler(spec_id: SpecId) -> Handler<'a, Evm<'a, EXT, DB>, EXT, DB> {
-        #[cfg(not(feature = "optimism"))]
+        #[cfg(not(feature = "optimism_default_handler"))]
         return Handler::mainnet_with_spec(spec_id);
 
-        #[cfg(feature = "optimism")]
+        #[cfg(feature = "optimism_default_handler")]
         {
             use crate::{handler::register::HandleRegisters, optimism::optimism_handle_register};
 
