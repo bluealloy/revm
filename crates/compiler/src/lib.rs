@@ -59,7 +59,7 @@ extern "C" fn main() {
     };
     let return_data = shared_memory.slice(return_offset, return_len);
     if return_data.len() > 0 {
-        ctx.emit_return(return_data);
+        // ctx.emit_return(return_data);
     }
     match return_code {
         InstructionResult::Continue

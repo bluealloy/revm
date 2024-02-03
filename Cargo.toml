@@ -6,9 +6,12 @@ default-members = ["crates/revm"]
 [profile.release]
 panic = "abort"
 lto = true
-codegen-units = 1
 opt-level = 'z'
-strip = true
+strip = false
+debug = false
+debug-assertions = false
+rpath = false
+codegen-units = 1
 
 [profile.ethtests]
 inherits = "test"

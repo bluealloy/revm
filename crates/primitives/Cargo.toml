@@ -22,6 +22,9 @@ auto_impl = "1.1"
 bitvec = { version = "1", default-features = false, features = ["alloc"] }
 bitflags = { version = "2.4.1", default-features = false }
 
+# fluentbase
+fluentbase-sdk = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
+
 # For setting the CfgEnv KZGSettings. Enabled by c-kzg flag.
 c-kzg = { version = "0.4.0", default-features = false, optional = true }
 once_cell = { version = "1.18", default-features = false, optional = true }

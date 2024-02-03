@@ -10,18 +10,19 @@
   (type (;8;) (func (param i32 i32 i32 i32)))
   (type (;9;) (func (param i32 i64) (result i32)))
   (type (;10;) (func))
-  (type (;11;) (func (result i32)))
+  (type (;11;) (func (param i32 i32 i64 i32)))
   (type (;12;) (func (param i32 i32 i32 i32) (result i32)))
-  (type (;13;) (func (param i32 i32 i32 i32 i32) (result i32)))
-  (type (;14;) (func (param i32 i64 i64 i32)))
-  (type (;15;) (func (param i32 i64 i64 i64 i64)))
-  (import "fluentbase_v1alpha" "_zktrie_load" (func (;0;) (type 4)))
-  (import "fluentbase_v1alpha" "_zktrie_store" (func (;1;) (type 4)))
-  (import "fluentbase_v1alpha" "_crypto_keccak256" (func (;2;) (type 0)))
-  (import "fluentbase_v1alpha" "_sys_read" (func (;3;) (type 0)))
-  (import "fluentbase_v1alpha" "_sys_write" (func (;4;) (type 4)))
-  (import "fluentbase_v1alpha" "_sys_halt" (func (;5;) (type 6)))
-  (func (;6;) (type 4) (param i32 i32)
+  (type (;13;) (func (result i32)))
+  (type (;14;) (func (param i32 i32 i32 i32 i32) (result i32)))
+  (type (;15;) (func (param i32 i64 i64 i32)))
+  (type (;16;) (func (param i32 i64 i64 i64 i64)))
+  (import "fluentbase_v1alpha" "_zktrie_load" (func $_ZN14fluentbase_sdk8bindings12_zktrie_load17h5dacc55b0acc0547E (type 4)))
+  (import "fluentbase_v1alpha" "_zktrie_store" (func $_ZN14fluentbase_sdk8bindings13_zktrie_store17h31a2f7ef003d593dE (type 4)))
+  (import "fluentbase_v1alpha" "_crypto_keccak256" (func $_ZN14fluentbase_sdk8bindings17_crypto_keccak25617he52c37d966ddb4e1E (type 0)))
+  (import "fluentbase_v1alpha" "_sys_read" (func $_ZN14fluentbase_sdk8bindings9_sys_read17h0e59dd5971d7a0a6E (type 0)))
+  (import "fluentbase_v1alpha" "_sys_write" (func $_ZN14fluentbase_sdk8bindings10_sys_write17h33853d632b3e3e0cE (type 4)))
+  (import "fluentbase_v1alpha" "_sys_halt" (func $_ZN14fluentbase_sdk8bindings9_sys_halt17h9a09771f2c6044e5E (type 6)))
+  (func $_ZN102_$LT$core..iter..adapters..zip..Zip$LT$A$C$B$GT$$u20$as$u20$core..iter..traits..iterator..Iterator$GT$4next17h69abafeb65d956cfE (type 4) (param i32 i32)
     (local i32 i32 i64)
     block  ;; label = @1
       block  ;; label = @2
@@ -62,7 +63,7 @@
     local.get 0
     local.get 2
     i32.store)
-  (func (;7;) (type 7) (param i32 i32 i32 i32 i32 i32)
+  (func $_ZN106_$LT$core..ops..range..Range$LT$usize$GT$$u20$as$u20$core..slice..index..SliceIndex$LT$$u5b$T$u5d$$GT$$GT$9index_mut17h78d34861cf7f2935E (type 7) (param i32 i32 i32 i32 i32 i32)
     block  ;; label = @1
       block  ;; label = @2
         local.get 2
@@ -76,13 +77,13 @@
         local.get 2
         local.get 4
         local.get 5
-        call 8
+        call $_ZN4core5slice5index24slice_end_index_len_fail17h6372e465cf26b33aE
         unreachable
       end
       local.get 1
       local.get 2
       local.get 5
-      call 9
+      call $_ZN4core5slice5index22slice_index_order_fail17h5c05174755728e22E
       unreachable
     end
     local.get 0
@@ -97,13 +98,13 @@
     i32.shl
     i32.add
     i32.store)
-  (func (;8;) (type 0) (param i32 i32 i32)
+  (func $_ZN4core5slice5index24slice_end_index_len_fail17h6372e465cf26b33aE (type 0) (param i32 i32 i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 48
     i32.sub
     local.tee 3
-    global.set 0
+    global.set $__stack_pointer
     local.get 3
     local.get 0
     i32.store
@@ -128,7 +129,7 @@
     i32.const 2
     i32.store offset=12
     local.get 3
-    i32.const 1053724
+    i32.const 1053756
     i32.store offset=8
     local.get 3
     i32.const 1
@@ -150,15 +151,15 @@
     i32.const 8
     i32.add
     local.get 2
-    call 65
+    call $_ZN4core9panicking9panic_fmt17h78607b33a29a727dE
     unreachable)
-  (func (;9;) (type 0) (param i32 i32 i32)
+  (func $_ZN4core5slice5index22slice_index_order_fail17h5c05174755728e22E (type 0) (param i32 i32 i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 48
     i32.sub
     local.tee 3
-    global.set 0
+    global.set $__stack_pointer
     local.get 3
     local.get 0
     i32.store
@@ -183,7 +184,7 @@
     i32.const 2
     i32.store offset=12
     local.get 3
-    i32.const 1053776
+    i32.const 1053808
     i32.store offset=8
     local.get 3
     i32.const 1
@@ -205,9 +206,9 @@
     i32.const 8
     i32.add
     local.get 2
-    call 65
+    call $_ZN4core9panicking9panic_fmt17h78607b33a29a727dE
     unreachable)
-  (func (;10;) (type 5) (param i32) (result i32)
+  (func $_ZN15revm_primitives8bytecode8Bytecode3len17hc42e37652ab1f973E (type 5) (param i32) (result i32)
     block  ;; label = @1
       block  ;; label = @2
         block  ;; label = @3
@@ -235,7 +236,7 @@
     end
     local.get 0
     i32.load)
-  (func (;11;) (type 8) (param i32 i32 i32 i32)
+  (func $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory3set17h2ada5bba06a88ed9E (type 8) (param i32 i32 i32 i32)
     block  ;; label = @1
       local.get 3
       i32.eqz
@@ -251,9 +252,9 @@
       local.get 2
       local.get 3
       i32.const 1048672
-      call 12
+      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$15copy_from_slice17he2812e5d7db47a7cE
     end)
-  (func (;12;) (type 1) (param i32 i32 i32 i32 i32)
+  (func $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$15copy_from_slice17he2812e5d7db47a7cE (type 1) (param i32 i32 i32 i32 i32)
     block  ;; label = @1
       local.get 1
       local.get 3
@@ -262,82 +263,184 @@
       local.get 0
       local.get 2
       local.get 1
-      call 323
-      drop
+      memory.copy
       return
     end
     local.get 1
     local.get 3
     local.get 4
-    call 269
+    call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$15copy_from_slice17len_mismatch_fail17h93d5590d3e243978E
     unreachable)
-  (func (;13;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory6resize17h81ab5ea4f2a66711E (type 4) (param i32 i32)
     local.get 0
     local.get 0
     i32.load offset=24
     local.get 1
     i32.add
-    call 14)
-  (func (;14;) (type 4) (param i32 i32)
-    (local i32 i32 i32)
+    call $_ZN5alloc3vec16Vec$LT$T$C$A$GT$6resize17hf594465c13336e0dE)
+  (func $_ZN5alloc3vec16Vec$LT$T$C$A$GT$6resize17hf594465c13336e0dE (type 4) (param i32 i32)
+    (local i32 i32 i32 i32 i32)
+    global.get $__stack_pointer
+    i32.const 32
+    i32.sub
+    local.tee 2
+    global.set $__stack_pointer
     block  ;; label = @1
       local.get 1
       local.get 0
       i32.load offset=8
-      local.tee 2
+      local.tee 3
       i32.le_u
       br_if 0 (;@1;)
+      block  ;; label = @2
+        local.get 0
+        i32.load offset=4
+        local.tee 4
+        local.get 3
+        i32.sub
+        local.get 1
+        local.get 3
+        i32.sub
+        local.tee 5
+        i32.ge_u
+        br_if 0 (;@2;)
+        block  ;; label = @3
+          local.get 3
+          local.get 5
+          i32.add
+          local.tee 1
+          local.get 3
+          i32.lt_u
+          br_if 0 (;@3;)
+          local.get 4
+          i32.const 1
+          i32.shl
+          local.tee 6
+          local.get 1
+          local.get 6
+          local.get 1
+          i32.gt_u
+          select
+          local.tee 1
+          i32.const 8
+          local.get 1
+          i32.const 8
+          i32.gt_u
+          select
+          local.tee 1
+          i32.const -1
+          i32.xor
+          i32.const 31
+          i32.shr_u
+          local.set 6
+          block  ;; label = @4
+            block  ;; label = @5
+              local.get 4
+              br_if 0 (;@5;)
+              local.get 2
+              i32.const 0
+              i32.store offset=24
+              br 1 (;@4;)
+            end
+            local.get 2
+            local.get 4
+            i32.store offset=28
+            local.get 2
+            i32.const 1
+            i32.store offset=24
+            local.get 2
+            local.get 0
+            i32.load
+            i32.store offset=20
+          end
+          local.get 2
+          i32.const 8
+          i32.add
+          local.get 6
+          local.get 1
+          local.get 2
+          i32.const 20
+          i32.add
+          call $_ZN5alloc7raw_vec11finish_grow17h026552b8eeb0ab7dE
+          local.get 2
+          i32.load offset=12
+          local.set 4
+          block  ;; label = @4
+            local.get 2
+            i32.load offset=8
+            br_if 0 (;@4;)
+            local.get 0
+            local.get 1
+            i32.store offset=4
+            local.get 0
+            local.get 4
+            i32.store
+            br 2 (;@2;)
+          end
+          local.get 4
+          i32.const -2147483647
+          i32.eq
+          br_if 1 (;@2;)
+          local.get 4
+          i32.eqz
+          br_if 0 (;@3;)
+          local.get 2
+          i32.const 16
+          i32.add
+          i32.load
+          call $__rust_alloc_error_handler
+          unreachable
+        end
+        call $_ZN5alloc7raw_vec17capacity_overflow17h26cdf55d7b744af0E
+        unreachable
+      end
       local.get 0
-      local.get 1
-      local.get 2
-      i32.sub
-      local.tee 1
-      call 251
-      local.get 1
+      i32.load
+      local.get 3
+      i32.add
+      local.set 1
+      local.get 5
       i32.const 1
-      local.get 1
+      local.get 5
       i32.const 1
       i32.gt_u
       select
-      local.tee 3
+      local.tee 4
       i32.const -1
       i32.add
-      local.set 1
-      local.get 0
-      i32.load
-      local.get 0
-      i32.load offset=8
-      local.tee 4
-      i32.add
-      local.set 2
+      local.set 5
       block  ;; label = @2
         loop  ;; label = @3
-          local.get 2
+          local.get 1
           i32.const 0
           i32.store8
-          local.get 1
+          local.get 5
           i32.eqz
           br_if 1 (;@2;)
-          local.get 1
+          local.get 5
           i32.const -1
           i32.add
-          local.set 1
-          local.get 2
+          local.set 5
+          local.get 1
           i32.const 1
           i32.add
-          local.set 2
+          local.set 1
           br 0 (;@3;)
         end
       end
-      local.get 4
       local.get 3
+      local.get 4
       i32.add
       local.set 1
     end
     local.get 0
     local.get 1
-    i32.store offset=8)
-  (func (;15;) (type 7) (param i32 i32 i32 i32 i32 i32)
+    i32.store offset=8
+    local.get 2
+    i32.const 32
+    i32.add
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory8set_data17h3f7d44d75dcea53aE (type 7) (param i32 i32 i32 i32 i32 i32)
     (local i32)
     block  ;; label = @1
       local.get 2
@@ -370,7 +473,7 @@
       i32.add
       local.get 5
       i32.const 1048688
-      call 12
+      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$15copy_from_slice17he2812e5d7db47a7cE
       local.get 6
       local.get 0
       local.get 5
@@ -379,7 +482,7 @@
       local.get 3
       local.get 5
       i32.sub
-      call 16
+      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4fill17h7c0405ca34c69bbbE
       return
     end
     local.get 0
@@ -390,8 +493,8 @@
     i32.add
     i32.add
     local.get 3
-    call 16)
-  (func (;16;) (type 4) (param i32 i32)
+    call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4fill17h7c0405ca34c69bbbE)
+  (func $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4fill17h7c0405ca34c69bbbE (type 4) (param i32 i32)
     block  ;; label = @1
       loop  ;; label = @2
         local.get 1
@@ -411,9 +514,9 @@
         br 0 (;@2;)
       end
     end)
-  (func (;17;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE (type 4) (param i32 i32)
     (local i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 32
     i32.sub
     local.set 2
@@ -492,13 +595,13 @@
     i32.add
     i64.load
     i64.store)
-  (func (;18;) (type 2) (param i32 i32 i32) (result i32)
+  (func $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E (type 2) (param i32 i32 i32) (result i32)
     (local i32 i32 i32 i32 i32 i32 i32 i64)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 16
     i32.sub
     local.tee 3
-    global.set 0
+    global.set $__stack_pointer
     i32.const 92
     local.set 4
     block  ;; label = @1
@@ -560,7 +663,7 @@
                 local.get 1
                 local.get 8
                 i32.const 1048792
-                call 12
+                call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$15copy_from_slice17he2812e5d7db47a7cE
                 local.get 5
                 local.get 7
                 i32.const 3
@@ -695,8 +798,7 @@
         i32.const 3
         i32.shl
         i32.sub
-        call 324
-        drop
+        memory.fill
       end
       local.get 0
       local.get 6
@@ -707,35 +809,35 @@
     local.get 3
     i32.const 16
     i32.add
-    global.set 0
+    global.set $__stack_pointer
     local.get 4)
-  (func (;19;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter11interpreter5stack5Stack11pop2_unsafe17hd11983c9ec7c10f1E (type 4) (param i32 i32)
     local.get 0
     local.get 1
-    call 17
-    local.get 0
-    i32.const 32
-    i32.add
-    local.get 1
-    call 17)
-  (func (;20;) (type 4) (param i32 i32)
-    local.get 0
-    local.get 1
-    call 17
+    call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
     local.get 0
     i32.const 32
     i32.add
     local.get 1
-    call 17
+    call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE)
+  (func $_ZN16revm_interpreter11interpreter5stack5Stack11pop3_unsafe17h0d9a54433668eefaE (type 4) (param i32 i32)
+    local.get 0
+    local.get 1
+    call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
+    local.get 0
+    i32.const 32
+    i32.add
+    local.get 1
+    call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
     local.get 0
     i32.const 64
     i32.add
     local.get 1
-    call 17)
-  (func (;21;) (type 4) (param i32 i32)
+    call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE)
+  (func $_ZN16revm_interpreter11interpreter5stack5Stack14pop_top_unsafe17hbc17cf69c18efab0E (type 4) (param i32 i32)
     local.get 0
     local.get 1
-    call 17
+    call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
     local.get 0
     local.get 1
     i32.load offset=8
@@ -747,15 +849,15 @@
     i32.const -32
     i32.add
     i32.store offset=32)
-  (func (;22;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter11interpreter5stack5Stack15pop2_top_unsafe17hc83abd83baf7fcd0E (type 4) (param i32 i32)
     local.get 0
     local.get 1
-    call 17
+    call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
     local.get 0
     i32.const 32
     i32.add
     local.get 1
-    call 17
+    call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
     local.get 0
     local.get 1
     i32.load offset=8
@@ -767,16 +869,16 @@
     i32.const -32
     i32.add
     i32.store offset=64)
-  (func (;23;) (type 3) (param i32 i32) (result i32)
+  (func $_ZN16revm_interpreter11interpreter5stack5Stack9push_b25617h9651a07fd013b1c6E (type 3) (param i32 i32) (result i32)
     (local i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 32
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     local.get 2
     local.get 1
-    call 24
+    call $_ZN5ruint5bytes42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$13from_be_bytes17h0c680f4a4c5d4c24E
     i32.const 92
     local.set 1
     block  ;; label = @1
@@ -831,11 +933,11 @@
     local.get 2
     i32.const 32
     i32.add
-    global.set 0
+    global.set $__stack_pointer
     local.get 1)
-  (func (;24;) (type 4) (param i32 i32)
+  (func $_ZN5ruint5bytes42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$13from_be_bytes17h0c680f4a4c5d4c24E (type 4) (param i32 i32)
     (local i32 i32 i64)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 32
     i32.sub
     local.tee 2
@@ -956,7 +1058,7 @@
     i32.add
     i64.load
     i64.store)
-  (func (;25;) (type 3) (param i32 i32) (result i32)
+  (func $_ZN16revm_interpreter11interpreter8contract8Contract13is_valid_jump17hdb194394a8f05d62E (type 3) (param i32 i32) (result i32)
     (local i32 i32)
     i32.const 0
     local.set 2
@@ -992,13 +1094,13 @@
       local.set 2
     end
     local.get 2)
-  (func (;26;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions10arithmetic10signextend17h16bfa4b945689c17E (type 4) (param i32 i32)
     (local i32 i64 i64 i32 i32 i32 i32 i32 i32 i64 i32 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 176
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -1052,7 +1154,7 @@
             local.get 0
             i32.const 68
             i32.add
-            call 21
+            call $_ZN16revm_interpreter11interpreter5stack5Stack14pop_top_unsafe17hbc17cf69c18efab0E
             local.get 2
             i32.const 8
             i32.add
@@ -1116,7 +1218,7 @@
             local.get 2
             i32.const 136
             i32.add
-            call 27
+            call $_ZN4core3cmp10PartialOrd2lt17h4a68c573623068aaE
             i32.eqz
             br_if 3 (;@1;)
             block  ;; label = @5
@@ -1435,7 +1537,7 @@
             local.get 2
             i32.const 104
             i32.add
-            call 28
+            call $_ZN5ruint3add42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$15overflowing_sub17h23f74ed7a9b46f7eE
             local.get 2
             i32.const 40
             i32.add
@@ -1595,7 +1697,7 @@
               local.get 2
               i32.const 40
               i32.add
-              call 29
+              call $_ZN5ruint4bits74_$LT$impl$u20$core..ops..bit..Not$u20$for$u20$ruint..Uint$LT$_$C$_$GT$$GT$3not17h093829249c092abaE
               i32.const 0
               local.set 0
               block  ;; label = @6
@@ -1712,28 +1814,28 @@
         local.get 14
         i32.const 4
         i32.const 1051296
-        call 30
+        call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
         unreachable
       end
       i32.const -1
       i32.const 4
       i32.const 1051312
-      call 30
+      call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
       unreachable
     end
     local.get 2
     i32.const 176
     i32.add
-    global.set 0)
-  (func (;27;) (type 3) (param i32 i32) (result i32)
+    global.set $__stack_pointer)
+  (func $_ZN4core3cmp10PartialOrd2lt17h4a68c573623068aaE (type 3) (param i32 i32) (result i32)
     local.get 0
     local.get 1
-    call 103
+    call $_ZN5ruint3cmp69_$LT$impl$u20$core..cmp..Ord$u20$for$u20$ruint..Uint$LT$_$C$_$GT$$GT$3cmp17h35b780eff5efc12eE
     i32.const 255
     i32.and
     i32.const 255
     i32.eq)
-  (func (;28;) (type 0) (param i32 i32 i32)
+  (func $_ZN5ruint3add42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$15overflowing_sub17h23f74ed7a9b46f7eE (type 0) (param i32 i32 i32)
     (local i64 i32 i64 i32 i64 i64 i64)
     i64.const 0
     local.set 3
@@ -1823,7 +1925,7 @@
       local.set 4
       br 0 (;@1;)
     end)
-  (func (;29;) (type 4) (param i32 i32)
+  (func $_ZN5ruint4bits74_$LT$impl$u20$core..ops..bit..Not$u20$for$u20$ruint..Uint$LT$_$C$_$GT$$GT$3not17h093829249c092abaE (type 4) (param i32 i32)
     (local i32 i32)
     i32.const 0
     local.set 2
@@ -1878,13 +1980,13 @@
       local.set 2
       br 0 (;@1;)
     end)
-  (func (;30;) (type 0) (param i32 i32 i32)
+  (func $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E (type 0) (param i32 i32 i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 48
     i32.sub
     local.tee 3
-    global.set 0
+    global.set $__stack_pointer
     local.get 3
     local.get 1
     i32.store offset=4
@@ -1909,7 +2011,7 @@
     i32.const 2
     i32.store offset=12
     local.get 3
-    i32.const 1053320
+    i32.const 1053352
     i32.store offset=8
     local.get 3
     i32.const 1
@@ -1931,15 +2033,15 @@
     i32.const 8
     i32.add
     local.get 2
-    call 65
+    call $_ZN4core9panicking9panic_fmt17h78607b33a29a727dE
     unreachable)
-  (func (;31;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions10arithmetic11wrapped_add17h4eed5397b9455a14E (type 4) (param i32 i32)
     (local i32 i64 i64 i32 i32 i32 i64 i64)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 112
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -1991,7 +2093,7 @@
         local.get 0
         i32.const 68
         i32.add
-        call 21
+        call $_ZN16revm_interpreter11interpreter5stack5Stack14pop_top_unsafe17hbc17cf69c18efab0E
         local.get 2
         i32.const 8
         i32.add
@@ -2044,7 +2146,7 @@
         local.get 2
         i32.load offset=104
         local.tee 0
-        call 32
+        call $_ZN5ruint3add42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$15overflowing_add17h60a141a9a37ca851E
         local.get 2
         i32.const 40
         i32.add
@@ -2104,8 +2206,8 @@
     local.get 2
     i32.const 112
     i32.add
-    global.set 0)
-  (func (;32;) (type 0) (param i32 i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN5ruint3add42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$15overflowing_add17h60a141a9a37ca851E (type 0) (param i32 i32 i32)
     (local i32 i64 i32 i64 i64)
     i32.const 0
     local.set 3
@@ -2188,13 +2290,13 @@
       local.set 3
       br 0 (;@1;)
     end)
-  (func (;33;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions10arithmetic12wrapping_mul17hf7a01e00a1e55f8cE (type 4) (param i32 i32)
     (local i32 i64 i64 i32 i64 i64 i64 i64 i64)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 192
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -2246,7 +2348,7 @@
         local.get 0
         i32.const 68
         i32.add
-        call 21
+        call $_ZN16revm_interpreter11interpreter5stack5Stack14pop_top_unsafe17hbc17cf69c18efab0E
         local.get 2
         i64.load offset=176
         local.set 6
@@ -2269,7 +2371,7 @@
         i64.load offset=152
         local.tee 8
         i64.const 0
-        call 326
+        call $__multi3
         local.get 2
         i32.const 8
         i32.add
@@ -2279,7 +2381,7 @@
         i64.const 0
         local.get 8
         i64.const 0
-        call 326
+        call $__multi3
         local.get 2
         i32.const 56
         i32.add
@@ -2289,7 +2391,7 @@
         i64.const 0
         local.get 8
         i64.const 0
-        call 326
+        call $__multi3
         local.get 2
         i32.const 88
         i32.add
@@ -2298,7 +2400,7 @@
         local.get 3
         local.get 8
         i64.const 0
-        call 326
+        call $__multi3
         local.get 2
         i32.const 120
         i32.add
@@ -2306,7 +2408,7 @@
         i64.const 0
         local.get 3
         i64.const 0
-        call 326
+        call $__multi3
         local.get 2
         i32.const 24
         i32.add
@@ -2314,7 +2416,7 @@
         i64.const 0
         local.get 3
         i64.const 0
-        call 326
+        call $__multi3
         local.get 2
         i32.const 72
         i32.add
@@ -2322,7 +2424,7 @@
         i64.const 0
         local.get 3
         i64.const 0
-        call 326
+        call $__multi3
         local.get 2
         i32.const 104
         i32.add
@@ -2330,7 +2432,7 @@
         i64.const 0
         local.get 7
         i64.const 0
-        call 326
+        call $__multi3
         local.get 2
         i32.const 40
         i32.add
@@ -2338,7 +2440,7 @@
         i64.const 0
         local.get 7
         i64.const 0
-        call 326
+        call $__multi3
         local.get 0
         local.get 2
         i64.load offset=136
@@ -2463,14 +2565,14 @@
     local.get 2
     i32.const 192
     i32.add
-    global.set 0)
-  (func (;34;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions10arithmetic12wrapping_sub17hfe2bb86b76f74c0dE (type 4) (param i32 i32)
     (local i32 i64 i64 i32 i32 i32 i64 i64)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 112
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -2522,7 +2624,7 @@
         local.get 0
         i32.const 68
         i32.add
-        call 21
+        call $_ZN16revm_interpreter11interpreter5stack5Stack14pop_top_unsafe17hbc17cf69c18efab0E
         local.get 2
         i32.const 8
         i32.add
@@ -2575,7 +2677,7 @@
         local.get 2
         i32.load offset=104
         local.tee 0
-        call 28
+        call $_ZN5ruint3add42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$15overflowing_sub17h23f74ed7a9b46f7eE
         local.get 2
         i32.const 40
         i32.add
@@ -2635,14 +2737,14 @@
     local.get 2
     i32.const 112
     i32.add
-    global.set 0)
-  (func (;35;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions10arithmetic3div17h1febda87ad5fb231E (type 4) (param i32 i32)
     (local i32 i64 i64 i32 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 112
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -2694,7 +2796,7 @@
         local.get 0
         i32.const 68
         i32.add
-        call 21
+        call $_ZN16revm_interpreter11interpreter5stack5Stack14pop_top_unsafe17hbc17cf69c18efab0E
         local.get 2
         i32.const 8
         i32.add
@@ -2742,7 +2844,7 @@
         i32.load offset=72
         local.tee 0
         i32.const 1049040
-        call 36
+        call $_ZN4core3cmp9PartialEq2ne17h890fd8e14ff88a52E
         i32.eqz
         br_if 1 (;@1;)
         local.get 5
@@ -2780,7 +2882,7 @@
         i32.const 40
         i32.add
         i32.const 1049072
-        call 37
+        call $_ZN5ruint3div42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$12wrapping_div17hdfef4b595c9049cbE
         local.get 8
         local.get 2
         i32.const 80
@@ -2818,25 +2920,25 @@
     local.get 2
     i32.const 112
     i32.add
-    global.set 0)
-  (func (;36;) (type 3) (param i32 i32) (result i32)
+    global.set $__stack_pointer)
+  (func $_ZN4core3cmp9PartialEq2ne17h890fd8e14ff88a52E (type 3) (param i32 i32) (result i32)
     local.get 0
     local.get 1
-    call 39
+    call $_ZN69_$LT$T$u20$as$u20$core..array..equality..SpecArrayEq$LT$U$C$_$GT$$GT$7spec_eq17hfd0ca212b18d6496E
     i32.const 1
     i32.xor)
-  (func (;37;) (type 8) (param i32 i32 i32 i32)
+  (func $_ZN5ruint3div42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$12wrapping_div17hdfef4b595c9049cbE (type 8) (param i32 i32 i32 i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 64
     i32.sub
     local.tee 4
-    global.set 0
+    global.set $__stack_pointer
     local.get 4
     local.get 1
     local.get 2
     local.get 3
-    call 243
+    call $_ZN5ruint3div42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$7div_rem17h9e65b4e146b5c3c3E
     local.get 0
     i32.const 24
     i32.add
@@ -2868,14 +2970,14 @@
     local.get 4
     i32.const 64
     i32.add
-    global.set 0)
-  (func (;38;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions10arithmetic3exp17h7181ac92d9425db3E (type 4) (param i32 i32)
     (local i32 i64 i64 i64 i64 i32 i64 i32 i64 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i64 i64 i64 i64 i64 i64 i64 i64 i64)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 624
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         block  ;; label = @3
@@ -2893,7 +2995,7 @@
             local.get 0
             i32.const 68
             i32.add
-            call 21
+            call $_ZN16revm_interpreter11interpreter5stack5Stack14pop_top_unsafe17hbc17cf69c18efab0E
             local.get 2
             i64.load offset=608
             local.set 3
@@ -2947,7 +3049,7 @@
               i32.const 328
               i32.add
               i32.const 1049040
-              call 39
+              call $_ZN69_$LT$T$u20$as$u20$core..array..equality..SpecArrayEq$LT$U$C$_$GT$$GT$7spec_eq17hfd0ca212b18d6496E
               i32.eqz
               br_if 0 (;@5;)
               i64.const 10
@@ -2999,7 +3101,7 @@
               i32.const 328
               i32.add
               i32.const 1049040
-              call 36
+              call $_ZN4core3cmp9PartialEq2ne17h890fd8e14ff88a52E
               i32.eqz
               br_if 0 (;@5;)
               i64.const 256
@@ -3178,7 +3280,7 @@
             i32.const 1049645
             i32.const 37
             i32.const 1049684
-            call 40
+            call $_ZN4core9panicking5panic17hdd77bb12897b1389E
             unreachable
           end
           local.get 0
@@ -3389,7 +3491,7 @@
                         local.get 15
                         local.get 14
                         i32.const 1051100
-                        call 41
+                        call $_ZN4core5slice5index74_$LT$impl$u20$core..ops..index..Index$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$5index17h817b97e52695da18E
                         local.get 2
                         i32.load offset=292
                         local.set 9
@@ -3439,7 +3541,7 @@
                           local.get 2
                           i32.const 556
                           i32.add
-                          call 6
+                          call $_ZN102_$LT$core..iter..adapters..zip..Zip$LT$A$C$B$GT$$u20$as$u20$core..iter..traits..iterator..Iterator$GT$4next17h69abafeb65d956cfE
                           local.get 2
                           i32.load offset=272
                           local.tee 9
@@ -3453,7 +3555,7 @@
                           i64.const 0
                           local.get 10
                           i64.const 0
-                          call 326
+                          call $__multi3
                           local.get 9
                           local.get 2
                           i64.load offset=256
@@ -3493,7 +3595,7 @@
                       local.get 14
                       local.get 15
                       i32.const 1051116
-                      call 42
+                      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$12split_at_mut17h56d0f218626cbf09E
                       local.get 2
                       i32.load offset=568
                       local.set 20
@@ -3545,7 +3647,7 @@
                           local.get 2
                           i32.const 556
                           i32.add
-                          call 6
+                          call $_ZN102_$LT$core..iter..adapters..zip..Zip$LT$A$C$B$GT$$u20$as$u20$core..iter..traits..iterator..Iterator$GT$4next17h69abafeb65d956cfE
                           local.get 2
                           i32.load offset=312
                           local.tee 9
@@ -3559,7 +3661,7 @@
                           i64.const 0
                           local.get 10
                           i64.const 0
-                          call 326
+                          call $__multi3
                           local.get 9
                           local.get 2
                           i64.load offset=296
@@ -3657,7 +3759,7 @@
                   local.get 14
                   i32.const 1
                   i32.const 1051132
-                  call 43
+                  call $_ZN4core5slice5index77_$LT$impl$u20$core..ops..index..IndexMut$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$9index_mut17h1f87ba885802abacE
                   local.get 2
                   i32.load offset=252
                   local.set 14
@@ -3781,7 +3883,7 @@
           local.get 2
           i32.const 456
           i32.add
-          call 32
+          call $_ZN5ruint3add42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$15overflowing_add17h60a141a9a37ca851E
           local.get 2
           i32.load8_u offset=616
           br_if 0 (;@3;)
@@ -3831,7 +3933,7 @@
           local.get 2
           i32.const 488
           i32.add
-          call 44
+          call $_ZN5ruint4from88_$LT$impl$u20$core..convert..TryFrom$LT$ruint..Uint$LT$_$C$_$GT$$GT$$u20$for$u20$u64$GT$8try_from17hc8f38f2ebfa9e5b1E
           local.get 2
           i64.load offset=584
           i64.eqz
@@ -3934,7 +4036,7 @@
           i32.const 520
           i32.add
           i32.const 1049040
-          call 36
+          call $_ZN4core3cmp9PartialEq2ne17h890fd8e14ff88a52E
           i32.eqz
           br_if 1 (;@2;)
           block  ;; label = @4
@@ -3957,7 +4059,7 @@
             i64.const 0
             local.get 6
             i64.const 0
-            call 326
+            call $__multi3
             local.get 2
             i32.const 216
             i32.add
@@ -3965,7 +4067,7 @@
             i64.const 0
             local.get 5
             i64.const 0
-            call 326
+            call $__multi3
             local.get 2
             i32.const 200
             i32.add
@@ -3973,7 +4075,7 @@
             i64.const 0
             local.get 4
             i64.const 0
-            call 326
+            call $__multi3
             local.get 2
             i32.const 184
             i32.add
@@ -3981,7 +4083,7 @@
             i64.const 0
             local.get 3
             i64.const 0
-            call 326
+            call $__multi3
             local.get 2
             i32.const 168
             i32.add
@@ -3989,7 +4091,7 @@
             i64.const 0
             local.get 6
             i64.const 0
-            call 326
+            call $__multi3
             local.get 2
             i32.const 152
             i32.add
@@ -3997,7 +4099,7 @@
             i64.const 0
             local.get 5
             i64.const 0
-            call 326
+            call $__multi3
             local.get 2
             i32.const 136
             i32.add
@@ -4005,7 +4107,7 @@
             i64.const 0
             local.get 4
             i64.const 0
-            call 326
+            call $__multi3
             local.get 2
             i32.const 120
             i32.add
@@ -4013,7 +4115,7 @@
             i64.const 0
             local.get 6
             i64.const 0
-            call 326
+            call $__multi3
             local.get 2
             i32.const 104
             i32.add
@@ -4021,7 +4123,7 @@
             i64.const 0
             local.get 5
             i64.const 0
-            call 326
+            call $__multi3
             local.get 24
             local.get 6
             i64.mul
@@ -4137,7 +4239,7 @@
           local.get 8
           local.get 6
           local.get 8
-          call 326
+          call $__multi3
           local.get 2
           i32.const 72
           i32.add
@@ -4145,7 +4247,7 @@
           local.get 8
           local.get 5
           local.get 8
-          call 326
+          call $__multi3
           local.get 2
           i32.const 40
           i32.add
@@ -4153,7 +4255,7 @@
           local.get 8
           local.get 4
           local.get 8
-          call 326
+          call $__multi3
           local.get 2
           i32.const 8
           i32.add
@@ -4161,7 +4263,7 @@
           local.get 8
           local.get 3
           local.get 8
-          call 326
+          call $__multi3
           local.get 2
           i32.const 56
           i32.add
@@ -4169,7 +4271,7 @@
           local.get 8
           local.get 5
           local.get 8
-          call 326
+          call $__multi3
           local.get 2
           i32.const 24
           i32.add
@@ -4177,7 +4279,7 @@
           local.get 8
           local.get 4
           local.get 8
-          call 326
+          call $__multi3
           local.get 2
           i32.const 584
           i32.add
@@ -4384,20 +4486,20 @@
     local.get 2
     i32.const 624
     i32.add
-    global.set 0)
-  (func (;39;) (type 3) (param i32 i32) (result i32)
+    global.set $__stack_pointer)
+  (func $_ZN69_$LT$T$u20$as$u20$core..array..equality..SpecArrayEq$LT$U$C$_$GT$$GT$7spec_eq17hfd0ca212b18d6496E (type 3) (param i32 i32) (result i32)
     local.get 0
     local.get 1
     i32.const 32
-    call 322
+    call $memcmp
     i32.eqz)
-  (func (;40;) (type 0) (param i32 i32 i32)
+  (func $_ZN4core9panicking5panic17hdd77bb12897b1389E (type 0) (param i32 i32 i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 32
     i32.sub
     local.tee 3
-    global.set 0
+    global.set $__stack_pointer
     local.get 3
     i32.const 12
     i32.add
@@ -4407,7 +4509,7 @@
     i32.const 1
     i32.store offset=4
     local.get 3
-    i32.const 1054832
+    i32.const 1054848
     i32.store offset=8
     local.get 3
     local.get 1
@@ -4422,9 +4524,9 @@
     i32.store
     local.get 3
     local.get 2
-    call 65
+    call $_ZN4core9panicking9panic_fmt17h78607b33a29a727dE
     unreachable)
-  (func (;41;) (type 1) (param i32 i32 i32 i32 i32)
+  (func $_ZN4core5slice5index74_$LT$impl$u20$core..ops..index..Index$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$5index17h817b97e52695da18E (type 1) (param i32 i32 i32 i32 i32)
     block  ;; label = @1
       local.get 3
       local.get 2
@@ -4433,7 +4535,7 @@
       local.get 3
       local.get 2
       local.get 4
-      call 8
+      call $_ZN4core5slice5index24slice_end_index_len_fail17h6372e465cf26b33aE
       unreachable
     end
     local.get 0
@@ -4442,7 +4544,7 @@
     local.get 0
     local.get 1
     i32.store)
-  (func (;42;) (type 1) (param i32 i32 i32 i32 i32)
+  (func $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$12split_at_mut17h56d0f218626cbf09E (type 1) (param i32 i32 i32 i32 i32)
     block  ;; label = @1
       local.get 2
       local.get 3
@@ -4451,7 +4553,7 @@
       i32.const 1049737
       i32.const 35
       local.get 4
-      call 40
+      call $_ZN4core9panicking5panic17hdd77bb12897b1389E
       unreachable
     end
     local.get 0
@@ -4474,7 +4576,7 @@
     i32.shl
     i32.add
     i32.store offset=8)
-  (func (;43;) (type 1) (param i32 i32 i32 i32 i32)
+  (func $_ZN4core5slice5index77_$LT$impl$u20$core..ops..index..IndexMut$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$9index_mut17h1f87ba885802abacE (type 1) (param i32 i32 i32 i32 i32)
     block  ;; label = @1
       local.get 2
       local.get 3
@@ -4483,7 +4585,7 @@
       local.get 3
       local.get 2
       local.get 4
-      call 233
+      call $_ZN4core5slice5index26slice_start_index_len_fail17hab50c0479c16b22eE
       unreachable
     end
     local.get 0
@@ -4498,10 +4600,10 @@
     i32.shl
     i32.add
     i32.store)
-  (func (;44;) (type 4) (param i32 i32)
+  (func $_ZN5ruint4from88_$LT$impl$u20$core..convert..TryFrom$LT$ruint..Uint$LT$_$C$_$GT$$GT$$u20$for$u20$u64$GT$8try_from17hc8f38f2ebfa9e5b1E (type 4) (param i32 i32)
     (local i32 i64)
     local.get 1
-    call 192
+    call $_ZN5ruint4bits42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$7bit_len17h7c8ec1b7defe77d3E
     local.set 2
     local.get 1
     i64.load
@@ -4538,13 +4640,13 @@
     local.get 0
     local.get 3
     i64.store)
-  (func (;45;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions10arithmetic3rem17h94c60e3d8cb43fddE (type 4) (param i32 i32)
     (local i32 i64 i64 i32 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 112
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -4596,7 +4698,7 @@
         local.get 0
         i32.const 68
         i32.add
-        call 21
+        call $_ZN16revm_interpreter11interpreter5stack5Stack14pop_top_unsafe17hbc17cf69c18efab0E
         local.get 2
         i32.const 8
         i32.add
@@ -4644,7 +4746,7 @@
         i32.load offset=72
         local.tee 0
         i32.const 1049040
-        call 36
+        call $_ZN4core3cmp9PartialEq2ne17h890fd8e14ff88a52E
         i32.eqz
         br_if 1 (;@1;)
         local.get 5
@@ -4682,7 +4784,7 @@
         i32.const 40
         i32.add
         i32.const 1049088
-        call 46
+        call $_ZN5ruint3div42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$12wrapping_rem17h42d736bdc3affe63E
         local.get 8
         local.get 2
         i32.const 80
@@ -4720,19 +4822,19 @@
     local.get 2
     i32.const 112
     i32.add
-    global.set 0)
-  (func (;46;) (type 8) (param i32 i32 i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN5ruint3div42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$12wrapping_rem17h42d736bdc3affe63E (type 8) (param i32 i32 i32 i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 64
     i32.sub
     local.tee 4
-    global.set 0
+    global.set $__stack_pointer
     local.get 4
     local.get 1
     local.get 2
     local.get 3
-    call 243
+    call $_ZN5ruint3div42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$7div_rem17h9e65b4e146b5c3c3E
     local.get 0
     i32.const 24
     i32.add
@@ -4764,14 +4866,14 @@
     local.get 4
     i32.const 64
     i32.add
-    global.set 0)
-  (func (;47;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions10arithmetic4sdiv17h7286a5b2369da035E (type 4) (param i32 i32)
     (local i32 i64 i64 i32 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 176
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -4826,7 +4928,7 @@
               local.get 0
               i32.const 68
               i32.add
-              call 21
+              call $_ZN16revm_interpreter11interpreter5stack5Stack14pop_top_unsafe17hbc17cf69c18efab0E
               local.get 2
               i32.const 8
               i32.add
@@ -4909,7 +5011,7 @@
               local.get 2
               i32.const 80
               i32.add
-              call 48
+              call $_ZN16revm_interpreter12instructions4i25615i256_sign_compl17h9bb3eb0fb2f5d674E
               local.tee 5
               i32.const 255
               i32.and
@@ -4918,7 +5020,7 @@
               local.get 2
               i32.const 8
               i32.add
-              call 48
+              call $_ZN16revm_interpreter12instructions4i25615i256_sign_compl17h9bb3eb0fb2f5d674E
               local.tee 6
               i32.const 255
               i32.and
@@ -4929,7 +5031,7 @@
               i32.const 8
               i32.add
               i32.const 1049104
-              call 39
+              call $_ZN69_$LT$T$u20$as$u20$core..array..equality..SpecArrayEq$LT$U$C$_$GT$$GT$7spec_eq17hfd0ca212b18d6496E
               i32.eqz
               br_if 2 (;@3;)
               local.get 2
@@ -4954,14 +5056,14 @@
               local.get 2
               i32.const 40
               i32.add
-              call 39
+              call $_ZN69_$LT$T$u20$as$u20$core..array..equality..SpecArrayEq$LT$U$C$_$GT$$GT$7spec_eq17hfd0ca212b18d6496E
               i32.eqz
               br_if 2 (;@3;)
               local.get 2
               i32.const 40
               i32.add
               i32.const 1049104
-              call 49
+              call $_ZN16revm_interpreter12instructions4i2569two_compl17h97815a8edeab869cE
               br 3 (;@2;)
             end
             local.get 0
@@ -5073,7 +5175,7 @@
         i32.const 40
         i32.add
         i32.const 1049224
-        call 37
+        call $_ZN5ruint3div42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$12wrapping_div17hdfef4b595c9049cbE
         local.get 2
         local.get 2
         i64.load offset=136
@@ -5152,7 +5254,7 @@
         local.get 2
         i32.const 112
         i32.add
-        call 49
+        call $_ZN16revm_interpreter12instructions4i2569two_compl17h97815a8edeab869cE
       end
       local.get 0
       local.get 2
@@ -5192,17 +5294,17 @@
     local.get 2
     i32.const 176
     i32.add
-    global.set 0)
-  (func (;48;) (type 5) (param i32) (result i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions4i25615i256_sign_compl17h9bb3eb0fb2f5d674E (type 5) (param i32) (result i32)
     (local i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 32
     i32.sub
     local.tee 1
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       local.get 0
-      call 101
+      call $_ZN16revm_interpreter12instructions4i2569i256_sign17heb2d3a3890da611cE
       local.tee 2
       i32.const 255
       i32.and
@@ -5211,7 +5313,7 @@
       br_if 0 (;@1;)
       local.get 1
       local.get 0
-      call 49
+      call $_ZN16revm_interpreter12instructions4i2569two_compl17h97815a8edeab869cE
       local.get 0
       i32.const 24
       i32.add
@@ -5244,15 +5346,15 @@
     local.get 1
     i32.const 32
     i32.add
-    global.set 0
+    global.set $__stack_pointer
     local.get 2)
-  (func (;49;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions4i2569two_compl17h97815a8edeab869cE (type 4) (param i32 i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 80
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     local.get 2
     i32.const 48
     i32.add
@@ -5284,7 +5386,7 @@
     i32.const 48
     i32.add
     local.get 1
-    call 28
+    call $_ZN5ruint3add42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$15overflowing_sub17h23f74ed7a9b46f7eE
     local.get 0
     i32.const 24
     i32.add
@@ -5322,14 +5424,14 @@
     local.get 2
     i32.const 80
     i32.add
-    global.set 0)
-  (func (;50;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions10arithmetic4smod17hcd87a0f484d331fcE (type 4) (param i32 i32)
     (local i32 i64 i64 i32 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 176
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -5383,7 +5485,7 @@
             local.get 0
             i32.const 68
             i32.add
-            call 21
+            call $_ZN16revm_interpreter11interpreter5stack5Stack14pop_top_unsafe17hbc17cf69c18efab0E
             local.get 2
             i32.const 8
             i32.add
@@ -5428,7 +5530,7 @@
             i32.load offset=72
             local.tee 0
             i32.const 1049040
-            call 36
+            call $_ZN4core3cmp9PartialEq2ne17h890fd8e14ff88a52E
             i32.eqz
             br_if 3 (;@1;)
             local.get 2
@@ -5468,7 +5570,7 @@
             local.get 2
             i32.const 8
             i32.add
-            call 48
+            call $_ZN16revm_interpreter12instructions4i25615i256_sign_compl17h9bb3eb0fb2f5d674E
             i32.const 255
             i32.and
             local.tee 5
@@ -5477,7 +5579,7 @@
             local.get 2
             i32.const 80
             i32.add
-            call 48
+            call $_ZN16revm_interpreter12instructions4i25615i256_sign_compl17h9bb3eb0fb2f5d674E
             drop
             local.get 2
             i32.const 144
@@ -5572,7 +5674,7 @@
             i32.const 40
             i32.add
             i32.const 1049240
-            call 46
+            call $_ZN5ruint3div42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$12wrapping_rem17h42d736bdc3affe63E
             local.get 2
             local.get 2
             i64.load offset=136
@@ -5620,7 +5722,7 @@
             local.get 2
             i32.const 112
             i32.add
-            call 49
+            call $_ZN16revm_interpreter12instructions4i2569two_compl17h97815a8edeab869cE
             br 2 (;@2;)
           end
           local.get 0
@@ -5685,14 +5787,14 @@
     local.get 2
     i32.const 176
     i32.add
-    global.set 0)
-  (func (;51;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions10arithmetic6addmod17hefc70b5b1536eb5fE (type 4) (param i32 i32)
     (local i32 i64 i64 i32 i32 i32 i32 i32 i32 i64 i64)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 304
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -5744,7 +5846,7 @@
         local.get 0
         i32.const 68
         i32.add
-        call 22
+        call $_ZN16revm_interpreter11interpreter5stack5Stack15pop2_top_unsafe17hc83abd83baf7fcd0E
         local.get 2
         i32.const 8
         i32.add
@@ -5867,7 +5969,7 @@
         local.get 2
         i32.const 144
         i32.add
-        call 52
+        call $_ZN5ruint7modular42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$10reduce_mod17h4bd611ee4bb8062fE
         local.get 2
         i32.const 208
         i32.add
@@ -5877,7 +5979,7 @@
         local.get 2
         i32.const 144
         i32.add
-        call 52
+        call $_ZN5ruint7modular42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$10reduce_mod17h4bd611ee4bb8062fE
         local.get 2
         i32.const 72
         i32.add
@@ -5887,7 +5989,7 @@
         local.get 2
         i32.const 208
         i32.add
-        call 32
+        call $_ZN5ruint3add42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$15overflowing_add17h60a141a9a37ca851E
         local.get 2
         i32.const 240
         i32.add
@@ -5930,7 +6032,7 @@
             local.get 2
             i32.const 144
             i32.add
-            call 53
+            call $_ZN4core3cmp10PartialOrd2ge17hc7e9bf8836209409E
             i32.eqz
             br_if 1 (;@3;)
           end
@@ -5971,7 +6073,7 @@
           local.get 2
           i32.const 144
           i32.add
-          call 28
+          call $_ZN5ruint3add42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$15overflowing_sub17h23f74ed7a9b46f7eE
           local.get 8
           local.get 5
           i64.load
@@ -6060,24 +6162,24 @@
     local.get 2
     i32.const 304
     i32.add
-    global.set 0)
-  (func (;52;) (type 0) (param i32 i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN5ruint7modular42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$10reduce_mod17h4bd611ee4bb8062fE (type 0) (param i32 i32 i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 64
     i32.sub
     local.tee 3
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 2
         i32.const 1049040
-        call 39
+        call $_ZN69_$LT$T$u20$as$u20$core..array..equality..SpecArrayEq$LT$U$C$_$GT$$GT$7spec_eq17hfd0ca212b18d6496E
         br_if 0 (;@2;)
         block  ;; label = @3
           local.get 1
           local.get 2
-          call 53
+          call $_ZN4core3cmp10PartialOrd2ge17hc7e9bf8836209409E
           i32.eqz
           br_if 0 (;@3;)
           local.get 3
@@ -6148,7 +6250,7 @@
           i32.add
           local.get 3
           i32.const 1051488
-          call 46
+          call $_ZN5ruint3div42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$12wrapping_rem17h42d736bdc3affe63E
         end
         local.get 0
         local.get 1
@@ -6202,22 +6304,22 @@
     local.get 3
     i32.const 64
     i32.add
-    global.set 0)
-  (func (;53;) (type 3) (param i32 i32) (result i32)
+    global.set $__stack_pointer)
+  (func $_ZN4core3cmp10PartialOrd2ge17hc7e9bf8836209409E (type 3) (param i32 i32) (result i32)
     local.get 0
     local.get 1
-    call 103
+    call $_ZN5ruint3cmp69_$LT$impl$u20$core..cmp..Ord$u20$for$u20$ruint..Uint$LT$_$C$_$GT$$GT$3cmp17h35b780eff5efc12eE
     i32.const 255
     i32.and
     i32.const 2
     i32.lt_u)
-  (func (;54;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions10arithmetic6mulmod17had96f629ce2b1666E (type 4) (param i32 i32)
     (local i32 i64 i64 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i64 i64 i32 i64 i64 i64 i64 i64 i64 i64 i64 i32 i32 i64 i64 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 880
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -6272,7 +6374,7 @@
               local.get 0
               i32.const 68
               i32.add
-              call 22
+              call $_ZN16revm_interpreter11interpreter5stack5Stack15pop2_top_unsafe17hc83abd83baf7fcd0E
               local.get 2
               i32.const 712
               i32.add
@@ -6377,7 +6479,7 @@
               block  ;; label = @6
                 local.get 7
                 i32.const 1049040
-                call 39
+                call $_ZN69_$LT$T$u20$as$u20$core..array..equality..SpecArrayEq$LT$U$C$_$GT$$GT$7spec_eq17hfd0ca212b18d6496E
                 br_if 0 (;@6;)
                 local.get 2
                 i32.const 704
@@ -6385,7 +6487,7 @@
                 i32.const 8
                 i32.const 64
                 i32.const 1
-                call 55
+                call $_ZN5alloc5alloc6Global10alloc_impl17h2c7b164b60447d0fE.40
                 local.get 2
                 i32.load offset=704
                 local.tee 8
@@ -6495,7 +6597,7 @@
             br 3 (;@1;)
           end
           i32.const 64
-          call 56
+          call $__rust_alloc_error_handler
           unreachable
         end
         local.get 6
@@ -6695,7 +6797,7 @@
                 local.get 13
                 local.get 6
                 i32.const 1051100
-                call 41
+                call $_ZN4core5slice5index74_$LT$impl$u20$core..ops..index..Index$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$5index17h817b97e52695da18E
                 local.get 2
                 i32.load offset=668
                 local.set 0
@@ -6745,7 +6847,7 @@
                   local.get 2
                   i32.const 848
                   i32.add
-                  call 6
+                  call $_ZN102_$LT$core..iter..adapters..zip..Zip$LT$A$C$B$GT$$u20$as$u20$core..iter..traits..iterator..Iterator$GT$4next17h69abafeb65d956cfE
                   local.get 2
                   i32.load offset=648
                   local.tee 0
@@ -6759,7 +6861,7 @@
                   i64.const 0
                   local.get 4
                   i64.const 0
-                  call 326
+                  call $__multi3
                   local.get 0
                   local.get 2
                   i64.load offset=632
@@ -6799,7 +6901,7 @@
               local.get 6
               local.get 13
               i32.const 1051116
-              call 42
+              call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$12split_at_mut17h56d0f218626cbf09E
               local.get 2
               i32.load offset=860
               local.set 15
@@ -6851,7 +6953,7 @@
                   local.get 2
                   i32.const 848
                   i32.add
-                  call 6
+                  call $_ZN102_$LT$core..iter..adapters..zip..Zip$LT$A$C$B$GT$$u20$as$u20$core..iter..traits..iterator..Iterator$GT$4next17h69abafeb65d956cfE
                   local.get 2
                   i32.load offset=688
                   local.tee 0
@@ -6865,7 +6967,7 @@
                   i64.const 0
                   local.get 4
                   i64.const 0
-                  call 326
+                  call $__multi3
                   local.get 0
                   local.get 2
                   i64.load offset=672
@@ -6944,7 +7046,7 @@
             local.get 6
             i32.const 1
             i32.const 1051132
-            call 43
+            call $_ZN4core5slice5index77_$LT$impl$u20$core..ops..index..IndexMut$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$9index_mut17h1f87ba885802abacE
             local.get 2
             i32.load offset=628
             local.set 6
@@ -6998,7 +7100,7 @@
                       i32.const 4
                       local.get 5
                       i32.const 1050584
-                      call 57
+                      call $_ZN4core5slice5index77_$LT$impl$u20$core..ops..index..IndexMut$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$9index_mut17h0aacf0e028cf6aceE
                       i32.const 8
                       local.set 5
                       i32.const 56
@@ -7038,7 +7140,7 @@
                       i32.const 8
                       local.get 5
                       i32.const 1050600
-                      call 57
+                      call $_ZN4core5slice5index77_$LT$impl$u20$core..ops..index..IndexMut$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$9index_mut17h0aacf0e028cf6aceE
                       local.get 2
                       i32.load offset=608
                       local.set 14
@@ -7085,7 +7187,7 @@
                           local.get 21
                           local.get 22
                           i32.wrap_i64
-                          call 325
+                          call $__ashlti3
                           local.get 2
                           i64.load offset=592
                           local.get 11
@@ -7145,7 +7247,7 @@
                           i32.const 1049712
                           i32.const 25
                           i32.const 1050616
-                          call 40
+                          call $_ZN4core9panicking5panic17hdd77bb12897b1389E
                           unreachable
                         end
                         block  ;; label = @11
@@ -7218,7 +7320,7 @@
                           i64.const 0
                           local.get 4
                           i64.const 0
-                          call 326
+                          call $__multi3
                           local.get 2
                           i32.const 240
                           i32.add
@@ -7243,7 +7345,7 @@
                           i64.extend_i32_u
                           local.get 3
                           i64.const 0
-                          call 326
+                          call $__multi3
                           local.get 4
                           local.get 3
                           local.get 2
@@ -7276,7 +7378,7 @@
                             i64.const 1
                             local.get 4
                             i64.const 0
-                            call 326
+                            call $__multi3
                             local.get 6
                             local.get 0
                             i32.add
@@ -7407,7 +7509,7 @@
                         i64.const 0
                         local.get 4
                         i64.const 0
-                        call 326
+                        call $__multi3
                         local.get 2
                         i32.const 304
                         i32.add
@@ -7432,7 +7534,7 @@
                         i64.extend_i32_u
                         local.get 3
                         i64.const 0
-                        call 326
+                        call $__multi3
                         local.get 4
                         local.get 3
                         local.get 2
@@ -7481,7 +7583,7 @@
                             i64.const 1
                             local.get 4
                             i64.const 0
-                            call 326
+                            call $__multi3
                             local.get 14
                             local.get 2
                             i32.const 296
@@ -7547,7 +7649,7 @@
                           i64.const 1
                           local.get 4
                           i64.const 0
-                          call 326
+                          call $__multi3
                           local.get 0
                           i32.const 8
                           i32.add
@@ -7629,7 +7731,7 @@
                       local.get 11
                       local.get 13
                       i32.const 1050648
-                      call 42
+                      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$12split_at_mut17h56d0f218626cbf09E
                       local.get 2
                       i32.const 860
                       i32.add
@@ -7645,30 +7747,30 @@
                       local.get 14
                       local.get 13
                       i32.const 1050664
-                      call 58
+                      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$15copy_from_slice17h89b6e539a65d1282E
                       local.get 5
                       local.get 0
-                      call 59
+                      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4fill17had74dd1a9d75e087E
                       local.get 14
                       local.get 13
-                      call 59
+                      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4fill17had74dd1a9d75e087E
                       br 6 (;@3;)
                     end
                     i32.const 1050448
                     i32.const 15
                     i32.const 1050568
-                    call 60
+                    call $_ZN4core6option13expect_failed17he404d1d7baeabd29E
                     unreachable
                   end
                   local.get 15
                   local.get 11
-                  call 59
+                  call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4fill17had74dd1a9d75e087E
                   br 4 (;@3;)
                 end
                 i32.const 1
                 i32.const 0
                 i32.const 1050632
-                call 30
+                call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
                 unreachable
               end
               local.get 15
@@ -7747,7 +7849,7 @@
                   i64.const 0
                   local.get 17
                   i64.const 0
-                  call 326
+                  call $__multi3
                   local.get 2
                   i32.const 48
                   i32.add
@@ -7772,7 +7874,7 @@
                   i64.extend_i32_u
                   local.get 3
                   i64.const 0
-                  call 326
+                  call $__multi3
                   block  ;; label = @8
                     local.get 17
                     local.get 3
@@ -7821,7 +7923,7 @@
                   i64.const 0
                   local.get 4
                   i64.const 0
-                  call 326
+                  call $__multi3
                   block  ;; label = @8
                     local.get 17
                     local.get 2
@@ -7876,7 +7978,7 @@
                     i64.const 0
                     local.get 22
                     i64.const 0
-                    call 326
+                    call $__multi3
                     local.get 2
                     local.get 2
                     i32.const 16
@@ -7900,7 +8002,7 @@
                     i64.const 0
                     local.get 4
                     i64.const 0
-                    call 326
+                    call $__multi3
                     local.get 6
                     local.get 0
                     i32.add
@@ -8001,7 +8103,7 @@
                 local.get 18
                 i32.wrap_i64
                 local.tee 6
-                call 325
+                call $__ashlti3
                 local.get 2
                 i32.const 192
                 i32.add
@@ -8071,7 +8173,7 @@
                 i64.const 0
                 local.get 4
                 i64.const 0
-                call 326
+                call $__multi3
                 local.get 2
                 i32.const 176
                 i32.add
@@ -8096,7 +8198,7 @@
                 i64.extend_i32_u
                 local.get 3
                 i64.const 0
-                call 326
+                call $__multi3
                 block  ;; label = @7
                   local.get 3
                   local.get 4
@@ -8150,7 +8252,7 @@
                 i64.const 0
                 local.get 24
                 i64.const 0
-                call 326
+                call $__multi3
                 block  ;; label = @7
                   local.get 17
                   local.get 2
@@ -8223,7 +8325,7 @@
                     i64.const 0
                     local.get 24
                     i64.const 0
-                    call 326
+                    call $__multi3
                     local.get 2
                     i32.const 128
                     i32.add
@@ -8249,7 +8351,7 @@
                     i64.const 0
                     local.get 25
                     i64.const 0
-                    call 326
+                    call $__multi3
                     local.get 14
                     local.get 17
                     local.get 18
@@ -8338,7 +8440,7 @@
                     i64.extend_i32_u
                     i64.sub
                     local.get 6
-                    call 327
+                    call $__lshrti3
                     local.get 2
                     i32.const 112
                     i32.add
@@ -8358,7 +8460,7 @@
                   i64.const 0
                   local.get 24
                   i64.const 0
-                  call 326
+                  call $__multi3
                   local.get 2
                   i32.const 80
                   i32.add
@@ -8384,7 +8486,7 @@
                   i64.const 0
                   local.get 25
                   i64.const 0
-                  call 326
+                  call $__multi3
                   local.get 0
                   i32.const 8
                   i32.add
@@ -8565,7 +8667,7 @@
           i64.const 0
           local.get 3
           i64.const 0
-          call 326
+          call $__multi3
           local.get 2
           i32.const 560
           i32.add
@@ -8590,7 +8692,7 @@
           i64.extend_i32_u
           local.get 21
           i64.const 0
-          call 326
+          call $__multi3
           block  ;; label = @4
             local.get 3
             local.get 21
@@ -8639,7 +8741,7 @@
           i64.const 0
           local.get 26
           i64.const 0
-          call 326
+          call $__multi3
           block  ;; label = @4
             local.get 3
             local.get 2
@@ -8770,7 +8872,7 @@
                       local.get 0
                       local.get 13
                       i32.const 1050868
-                      call 30
+                      call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
                       unreachable
                     end
                     local.get 9
@@ -8783,7 +8885,7 @@
                     local.get 5
                     local.get 13
                     i32.const 1050884
-                    call 30
+                    call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
                     unreachable
                   end
                   local.get 2
@@ -8793,7 +8895,7 @@
                   local.get 13
                   local.get 11
                   i32.const 1050788
-                  call 41
+                  call $_ZN4core5slice5index74_$LT$impl$u20$core..ops..index..Index$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$5index17h817b97e52695da18E
                   local.get 15
                   local.get 11
                   local.get 2
@@ -8801,11 +8903,11 @@
                   local.get 2
                   i32.load offset=540
                   i32.const 1050804
-                  call 58
+                  call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$15copy_from_slice17h89b6e539a65d1282E
                   local.get 14
                   local.get 13
                   local.get 11
-                  call 61
+                  call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$11copy_within17h8bf14fea97656706E
                   local.get 14
                   local.get 29
                   i32.const 3
@@ -8822,18 +8924,18 @@
                   i32.const 1
                   i32.add
                   i32.const 1050836
-                  call 43
+                  call $_ZN4core5slice5index77_$LT$impl$u20$core..ops..index..IndexMut$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$9index_mut17h1f87ba885802abacE
                   local.get 2
                   i32.load offset=528
                   local.get 2
                   i32.load offset=532
-                  call 59
+                  call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4fill17had74dd1a9d75e087E
                   br 4 (;@3;)
                 end
                 local.get 5
                 local.get 13
                 i32.const 1050852
-                call 30
+                call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
                 unreachable
               end
               local.get 2
@@ -8843,7 +8945,7 @@
               local.get 3
               local.get 22
               i32.wrap_i64
-              call 325
+              call $__ashlti3
               local.get 14
               local.get 5
               i32.const 3
@@ -8893,7 +8995,7 @@
                 local.get 14
                 local.get 13
                 i32.const 1050900
-                call 7
+                call $_ZN106_$LT$core..ops..range..Range$LT$usize$GT$$u20$as$u20$core..slice..index..SliceIndex$LT$$u5b$T$u5d$$GT$$GT$9index_mut17h78d34861cf7f2935E
                 local.get 2
                 i32.load offset=504
                 local.set 5
@@ -8941,7 +9043,7 @@
                     local.get 2
                     i32.const 848
                     i32.add
-                    call 6
+                    call $_ZN102_$LT$core..iter..adapters..zip..Zip$LT$A$C$B$GT$$u20$as$u20$core..iter..traits..iterator..Iterator$GT$4next17h69abafeb65d956cfE
                     local.get 2
                     i32.load offset=488
                     local.tee 0
@@ -8955,7 +9057,7 @@
                     i64.const 0
                     i64.const -1
                     i64.const 0
-                    call 326
+                    call $__multi3
                     local.get 0
                     local.get 0
                     i64.load
@@ -9009,7 +9111,7 @@
               i64.const 0
               local.get 26
               i64.const 0
-              call 326
+              call $__multi3
               local.get 2
               i32.const 440
               i32.add
@@ -9035,7 +9137,7 @@
               i64.const 0
               local.get 20
               i64.const 0
-              call 326
+              call $__multi3
               local.get 4
               local.get 3
               local.get 21
@@ -9135,7 +9237,7 @@
                     local.get 14
                     local.get 13
                     i32.const 1050916
-                    call 7
+                    call $_ZN106_$LT$core..ops..range..Range$LT$usize$GT$$u20$as$u20$core..slice..index..SliceIndex$LT$$u5b$T$u5d$$GT$$GT$9index_mut17h78d34861cf7f2935E
                     local.get 2
                     i32.load offset=392
                     local.set 6
@@ -9149,7 +9251,7 @@
                     local.get 11
                     local.get 19
                     i32.const 1050932
-                    call 41
+                    call $_ZN4core5slice5index74_$LT$impl$u20$core..ops..index..Index$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$5index17h817b97e52695da18E
                     local.get 2
                     i32.load offset=388
                     local.set 5
@@ -9202,7 +9304,7 @@
                         local.get 2
                         i32.const 848
                         i32.add
-                        call 6
+                        call $_ZN102_$LT$core..iter..adapters..zip..Zip$LT$A$C$B$GT$$u20$as$u20$core..iter..traits..iterator..Iterator$GT$4next17h69abafeb65d956cfE
                         local.get 2
                         i32.load offset=368
                         local.tee 0
@@ -9216,7 +9318,7 @@
                         i64.const 0
                         local.get 23
                         i64.const 0
-                        call 326
+                        call $__multi3
                         local.get 0
                         local.get 0
                         i64.load
@@ -9291,7 +9393,7 @@
                   local.get 14
                   local.get 13
                   i32.const 1050948
-                  call 7
+                  call $_ZN106_$LT$core..ops..range..Range$LT$usize$GT$$u20$as$u20$core..slice..index..SliceIndex$LT$$u5b$T$u5d$$GT$$GT$9index_mut17h78d34861cf7f2935E
                   local.get 2
                   i32.load offset=432
                   local.set 5
@@ -9339,7 +9441,7 @@
                       local.get 2
                       i32.const 848
                       i32.add
-                      call 6
+                      call $_ZN102_$LT$core..iter..adapters..zip..Zip$LT$A$C$B$GT$$u20$as$u20$core..iter..traits..iterator..Iterator$GT$4next17h69abafeb65d956cfE
                       local.get 2
                       i32.load offset=416
                       local.tee 0
@@ -9353,7 +9455,7 @@
                       i64.const 0
                       local.get 23
                       i64.const 0
-                      call 326
+                      call $__multi3
                       local.get 0
                       local.get 0
                       i64.load
@@ -9422,7 +9524,7 @@
               local.get 14
               local.get 13
               i32.const 1050964
-              call 7
+              call $_ZN106_$LT$core..ops..range..Range$LT$usize$GT$$u20$as$u20$core..slice..index..SliceIndex$LT$$u5b$T$u5d$$GT$$GT$9index_mut17h78d34861cf7f2935E
               local.get 2
               i32.load offset=348
               local.set 5
@@ -9436,7 +9538,7 @@
               local.get 11
               local.get 11
               i32.const 1050980
-              call 41
+              call $_ZN4core5slice5index74_$LT$impl$u20$core..ops..index..Index$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$5index17h817b97e52695da18E
               local.get 23
               i64.const -1
               i64.add
@@ -9502,7 +9604,7 @@
               local.get 16
               local.get 16
               i32.const 1049920
-              call 30
+              call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
               unreachable
             end
             i32.const 0
@@ -9617,24 +9719,27 @@
     local.get 2
     i32.const 880
     i32.add
-    global.set 0)
-  (func (;55;) (type 8) (param i32 i32 i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN5alloc5alloc6Global10alloc_impl17h2c7b164b60447d0fE.40 (type 8) (param i32 i32 i32 i32)
     block  ;; label = @1
+      local.get 2
+      i32.eqz
+      br_if 0 (;@1;)
       block  ;; label = @2
         local.get 3
         br_if 0 (;@2;)
         i32.const 0
-        i32.load8_u offset=1054852
+        i32.load8_u offset=1054868
         drop
         local.get 1
         local.get 2
-        call 237
+        call $_ZN109_$LT$lol_alloc..trivial_allocators..LeakingAllocator$LT$T$GT$$u20$as$u20$core..alloc..global..GlobalAlloc$GT$5alloc17hafec9583d38d71e9E
         local.set 1
         br 1 (;@1;)
       end
       local.get 2
       local.get 1
-      call 270
+      call $__rust_alloc_zeroed
       local.set 1
     end
     local.get 0
@@ -9643,24 +9748,24 @@
     local.get 0
     local.get 1
     i32.store)
-  (func (;56;) (type 6) (param i32)
+  (func $__rust_alloc_error_handler (type 6) (param i32)
     local.get 0
-    call 267
+    call $__rdl_oom
     unreachable)
-  (func (;57;) (type 1) (param i32 i32 i32 i32 i32)
+  (func $_ZN4core5slice5index77_$LT$impl$u20$core..ops..index..IndexMut$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$9index_mut17h0aacf0e028cf6aceE (type 1) (param i32 i32 i32 i32 i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 16
     i32.sub
     local.tee 5
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       local.get 3
       i32.const -1
       i32.ne
       br_if 0 (;@1;)
       local.get 4
-      call 234
+      call $_ZN4core5slice5index29slice_end_index_overflow_fail17h0236ef53c072f77aE
       unreachable
     end
     local.get 5
@@ -9673,7 +9778,7 @@
     local.get 1
     local.get 2
     local.get 4
-    call 7
+    call $_ZN106_$LT$core..ops..range..Range$LT$usize$GT$$u20$as$u20$core..slice..index..SliceIndex$LT$$u5b$T$u5d$$GT$$GT$9index_mut17h78d34861cf7f2935E
     local.get 5
     i32.load offset=12
     local.set 3
@@ -9687,8 +9792,8 @@
     local.get 5
     i32.const 16
     i32.add
-    global.set 0)
-  (func (;58;) (type 1) (param i32 i32 i32 i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$15copy_from_slice17h89b6e539a65d1282E (type 1) (param i32 i32 i32 i32 i32)
     block  ;; label = @1
       local.get 1
       local.get 3
@@ -9699,16 +9804,15 @@
       local.get 1
       i32.const 3
       i32.shl
-      call 323
-      drop
+      memory.copy
       return
     end
     local.get 1
     local.get 3
     local.get 4
-    call 269
+    call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$15copy_from_slice17len_mismatch_fail17h93d5590d3e243978E
     unreachable)
-  (func (;59;) (type 4) (param i32 i32)
+  (func $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4fill17had74dd1a9d75e087E (type 4) (param i32 i32)
     local.get 1
     i32.const 3
     i32.shl
@@ -9732,13 +9836,13 @@
         br 0 (;@2;)
       end
     end)
-  (func (;60;) (type 0) (param i32 i32 i32)
+  (func $_ZN4core6option13expect_failed17he404d1d7baeabd29E (type 0) (param i32 i32 i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 48
     i32.sub
     local.tee 3
-    global.set 0
+    global.set $__stack_pointer
     local.get 3
     local.get 1
     i32.store offset=12
@@ -9754,7 +9858,7 @@
     i32.const 1
     i32.store offset=20
     local.get 3
-    i32.const 1053260
+    i32.const 1053292
     i32.store offset=16
     local.get 3
     i32.const 2
@@ -9773,9 +9877,9 @@
     i32.const 16
     i32.add
     local.get 2
-    call 65
+    call $_ZN4core9panicking9panic_fmt17h78607b33a29a727dE
     unreachable)
-  (func (;61;) (type 0) (param i32 i32 i32)
+  (func $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$11copy_within17h8bf14fea97656706E (type 0) (param i32 i32 i32)
     block  ;; label = @1
       local.get 1
       local.get 2
@@ -9784,7 +9888,7 @@
       local.get 2
       local.get 1
       i32.const 1050820
-      call 9
+      call $_ZN4core5slice5index22slice_index_order_fail17h5c05174755728e22E
       unreachable
     end
     local.get 0
@@ -9798,22 +9902,21 @@
     i32.sub
     i32.const 3
     i32.shl
-    call 321
-    drop)
-  (func (;62;) (type 4) (param i32 i32)
+    memory.copy)
+  (func $_ZN16revm_interpreter12instructions4host10call_inner17h11b184bb0eec2447E (type 4) (param i32 i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 48
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     local.get 1
-    call 63
+    call $_ZN4core3ptr52drop_in_place$LT$alloy_primitives..bytes_..Bytes$GT$17h6dfb868a0b1f26d6E
     local.get 1
     i64.const 0
     i64.store offset=8
     local.get 1
-    i32.const 1054832
+    i32.const 1054848
     i32.store offset=4
     local.get 1
     i32.const 1049804
@@ -9832,7 +9935,7 @@
     local.get 2
     i32.const 20
     i32.add
-    call 64
+    call $_ZN16revm_interpreter12instructions4host19prepare_call_inputs17h0f3dbc4d5d719726E
     block  ;; label = @1
       local.get 2
       i32.load offset=20
@@ -9847,23 +9950,23 @@
       i32.const 1
       i32.store offset=28
       local.get 2
-      i32.const 1051696
+      i32.const 1051728
       i32.store offset=24
       local.get 2
-      i32.const 1054832
+      i32.const 1054848
       i32.store offset=32
       local.get 2
       i32.const 24
       i32.add
-      i32.const 1051704
-      call 65
+      i32.const 1051736
+      call $_ZN4core9panicking9panic_fmt17h78607b33a29a727dE
       unreachable
     end
     local.get 2
     i32.const 48
     i32.add
-    global.set 0)
-  (func (;63;) (type 6) (param i32)
+    global.set $__stack_pointer)
+  (func $_ZN4core3ptr52drop_in_place$LT$alloy_primitives..bytes_..Bytes$GT$17h6dfb868a0b1f26d6E (type 6) (param i32)
     local.get 0
     i32.const 12
     i32.add
@@ -9875,13 +9978,13 @@
     i32.load
     i32.load offset=8
     call_indirect (type 0))
-  (func (;64;) (type 1) (param i32 i32 i32 i32 i32)
+  (func $_ZN16revm_interpreter12instructions4host19prepare_call_inputs17h0f3dbc4d5d719726E (type 1) (param i32 i32 i32 i32 i32)
     (local i32 i32 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i32 i32 i32 i32 i64)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 336
     i32.sub
     local.tee 5
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         block  ;; label = @3
@@ -9898,7 +10001,7 @@
               i32.const 68
               i32.add
               local.tee 6
-              call 17
+              call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
               block  ;; label = @6
                 block  ;; label = @7
                   block  ;; label = @8
@@ -9911,14 +10014,14 @@
                       i32.const 88
                       i32.add
                       local.get 6
-                      call 17
+                      call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
                       local.get 5
                       i32.const 232
                       i32.add
                       local.get 5
                       i32.const 88
                       i32.add
-                      call 67
+                      call $_ZN5ruint5bytes42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$11to_be_bytes17h8500c5533b092a39E
                       local.get 5
                       i32.const 32
                       i32.add
@@ -9947,7 +10050,7 @@
                       i32.const 88
                       i32.add
                       local.get 5
-                      call 44
+                      call $_ZN5ruint4from88_$LT$impl$u20$core..convert..TryFrom$LT$ruint..Uint$LT$_$C$_$GT$$GT$$u20$for$u20$u64$GT$8try_from17hc8f38f2ebfa9e5b1E
                       local.get 5
                       i64.load offset=88
                       local.set 7
@@ -9972,7 +10075,7 @@
                   i32.const 88
                   i32.add
                   local.get 6
-                  call 17
+                  call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
                   local.get 0
                   i32.load8_u offset=89
                   i32.eqz
@@ -9981,7 +10084,7 @@
                   i32.const 88
                   i32.add
                   i32.const 1049040
-                  call 36
+                  call $_ZN4core3cmp9PartialEq2ne17h890fd8e14ff88a52E
                   i32.eqz
                   br_if 4 (;@3;)
                   local.get 0
@@ -10022,7 +10125,7 @@
                 i32.const 56
                 i32.add
                 local.get 6
-                call 17
+                call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
                 br 4 (;@2;)
               end
               local.get 0
@@ -10094,22 +10197,22 @@
               i32.const 88
               i32.add
               local.get 6
-              call 17
+              call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
               local.get 5
               i32.const 120
               i32.add
               local.get 6
-              call 17
+              call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
               local.get 5
               i32.const 152
               i32.add
               local.get 6
-              call 17
+              call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
               local.get 5
               i32.const 184
               i32.add
               local.get 6
-              call 17
+              call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
               local.get 5
               i32.const 128
               i32.add
@@ -10176,7 +10279,7 @@
               i64.const 0
               i64.store offset=224 align=4
               local.get 5
-              i32.const 1054832
+              i32.const 1054848
               i32.store offset=220
               local.get 5
               i32.const 1049804
@@ -10262,7 +10365,7 @@
                 i64.const 3
                 i64.mul
                 i64.add
-                call 69
+                call $_ZN16revm_interpreter3gas3Gas13record_memory17hd4732adc5333f5c8E
                 br_if 0 (;@6;)
                 local.get 0
                 i32.const 82
@@ -10273,7 +10376,7 @@
               i32.load offset=84
               local.tee 18
               local.get 19
-              call 13
+              call $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory6resize17h81ab5ea4f2a66711E
               local.get 18
               i32.load offset=24
               local.set 20
@@ -10288,7 +10391,7 @@
             i32.add
             i32.add
             local.get 6
-            call 78
+            call $_ZN5bytes5bytes5Bytes15copy_from_slice17h5525fc47c66dd636E
             br 2 (;@2;)
           end
           local.get 0
@@ -10393,7 +10496,7 @@
                       i64.const 3
                       i64.mul
                       i64.add
-                      call 69
+                      call $_ZN16revm_interpreter3gas3Gas13record_memory17hd4732adc5333f5c8E
                       br_if 0 (;@9;)
                       local.get 0
                       i32.const 82
@@ -10403,7 +10506,7 @@
                     local.get 0
                     i32.load offset=84
                     local.get 18
-                    call 13
+                    call $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory6resize17h81ab5ea4f2a66711E
                   end
                   local.get 3
                   local.get 2
@@ -10992,7 +11095,7 @@
                   local.get 5
                   i32.const 304
                   i32.add
-                  call 36
+                  call $_ZN4core3cmp9PartialEq2ne17h890fd8e14ff88a52E
                   select
                   i64.const 2600
                   local.get 1
@@ -11075,7 +11178,7 @@
                   i32.const 232
                   i32.add
                   i32.const 1049040
-                  call 36
+                  call $_ZN4core3cmp9PartialEq2ne17h890fd8e14ff88a52E
                   i32.eqz
                   br_if 3 (;@4;)
                   i64.const -1
@@ -11110,13 +11213,14 @@
           local.set 2
           i32.const 216
           i32.const 8
-          call 79
+          call $_ZN5alloc5alloc15exchange_malloc17hff92c31848a15536E
+          local.tee 0
           local.get 5
           i32.const 88
           i32.add
           i32.const 92
-          call 323
-          local.tee 0
+          memory.copy
+          local.get 0
           local.get 1
           i32.store8 offset=92
           local.get 0
@@ -11140,8 +11244,7 @@
           i32.const 232
           i32.add
           i32.const 72
-          call 323
-          drop
+          memory.copy
           local.get 0
           local.get 7
           i64.store offset=184
@@ -11185,7 +11288,7 @@
             local.get 6
             i32.const 96
             i32.add
-            call 63
+            call $_ZN4core3ptr52drop_in_place$LT$alloy_primitives..bytes_..Bytes$GT$17h6dfb868a0b1f26d6E
           end
           local.get 4
           local.get 0
@@ -11199,22 +11302,22 @@
       local.get 5
       i32.const 216
       i32.add
-      call 63
+      call $_ZN4core3ptr52drop_in_place$LT$alloy_primitives..bytes_..Bytes$GT$17h6dfb868a0b1f26d6E
     end
     local.get 5
     i32.const 336
     i32.add
-    global.set 0)
-  (func (;65;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN4core9panicking9panic_fmt17h78607b33a29a727dE (type 4) (param i32 i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 16
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     local.get 2
-    i32.const 1054832
-    call 297
+    i32.const 1054848
+    call $_ZN36_$LT$T$u20$as$u20$core..any..Any$GT$7type_id17hed637ffe26dba6a3E
     block  ;; label = @1
       local.get 2
       i64.load
@@ -11232,18 +11335,18 @@
       br_if 0 (;@1;)
       local.get 2
       local.get 2
-      call 4
+      call $_ZN14fluentbase_sdk8bindings10_sys_write17h33853d632b3e3e0cE
     end
     i32.const -71
-    call 5
+    call $_ZN14fluentbase_sdk8bindings9_sys_halt17h9a09771f2c6044e5E
     unreachable)
-  (func (;66;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions4host11extcodecopy17he5f3fe4085b53f99E (type 4) (param i32 i32)
     (local i32 i32 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i32 i32 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 128
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         block  ;; label = @3
@@ -11264,12 +11367,12 @@
                   i32.const 68
                   i32.add
                   local.tee 3
-                  call 17
+                  call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
                   local.get 2
                   local.get 2
                   i32.const 32
                   i32.add
-                  call 67
+                  call $_ZN5ruint5bytes42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$11to_be_bytes17h8500c5533b092a39E
                   local.get 0
                   i32.load offset=76
                   i32.const 3
@@ -11279,7 +11382,7 @@
                   i32.const 32
                   i32.add
                   local.get 3
-                  call 20
+                  call $_ZN16revm_interpreter11interpreter5stack5Stack11pop3_unsafe17h0d9a54433668eefaE
                   local.get 2
                   i32.const 120
                   i32.add
@@ -11331,7 +11434,7 @@
                   local.get 2
                   i32.const 32
                   i32.add
-                  call 68
+                  call $_ZN91_$LT$revm_interpreter..host..fluent..FluentHost$u20$as$u20$revm_interpreter..host..Host$GT$4code17h5522fa2c1d3bc2b1E
                   local.get 2
                   i32.load offset=32
                   i32.const 3
@@ -11457,7 +11560,7 @@
                   i64.ne
                   br_if 4 (;@3;)
                   local.get 2
-                  call 10
+                  call $_ZN15revm_primitives8bytecode8Bytecode3len17hc42e37652ab1f973E
                   local.set 17
                   i32.const 81
                   local.set 3
@@ -11512,14 +11615,14 @@
                     i64.const 3
                     i64.mul
                     i64.add
-                    call 69
+                    call $_ZN16revm_interpreter3gas3Gas13record_memory17hd4732adc5333f5c8E
                     i32.eqz
                     br_if 5 (;@3;)
                     local.get 0
                     i32.load offset=84
                     local.tee 3
                     local.get 20
-                    call 13
+                    call $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory6resize17h81ab5ea4f2a66711E
                   end
                   local.get 3
                   local.get 18
@@ -11548,7 +11651,7 @@
                   i32.const 20
                   i32.add
                   i32.load
-                  call 15
+                  call $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory8set_data17h3f7d44d75dcea53aE
                   br 5 (;@2;)
                 end
                 local.get 0
@@ -11564,7 +11667,7 @@
             local.get 2
             i32.const 32
             i32.add
-            call 70
+            call $_ZN4core3ptr99drop_in_place$LT$core..option..Option$LT$$LP$revm_primitives..bytecode..Bytecode$C$bool$RP$$GT$$GT$17h1fd612e1d427b40fE
             local.get 0
             i32.const 101
             i32.store8 offset=88
@@ -11578,15 +11681,15 @@
         i32.store8 offset=88
       end
       local.get 2
-      call 71
+      call $_ZN4core3ptr56drop_in_place$LT$revm_primitives..bytecode..Bytecode$GT$17h95597c762dd38d5eE
     end
     local.get 2
     i32.const 128
     i32.add
-    global.set 0)
-  (func (;67;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN5ruint5bytes42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$11to_be_bytes17h8500c5533b092a39E (type 4) (param i32 i32)
     (local i32 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 32
     i32.sub
     local.tee 2
@@ -11680,21 +11783,21 @@
       local.set 3
       br 0 (;@1;)
     end)
-  (func (;68;) (type 6) (param i32)
+  (func $_ZN91_$LT$revm_interpreter..host..fluent..FluentHost$u20$as$u20$revm_interpreter..host..Host$GT$4code17h5522fa2c1d3bc2b1E (type 6) (param i32)
     (local i32 i32 i32 i32 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 48
     i32.sub
     local.tee 1
-    global.set 0
+    global.set $__stack_pointer
     local.get 1
     i32.const 0
     i32.store8 offset=11
     local.get 1
     i32.const 8
-    call 247
+    call $_ZN6bitvec3ptr4span24BitSpan$LT$M$C$T$C$O$GT$8elements17h5d0308a19b191769E
     local.tee 2
-    call 248
+    call $_ZN5alloc7raw_vec19RawVec$LT$T$C$A$GT$11allocate_in17h2bbe64e20104d869E
     local.get 1
     i32.const 0
     i32.store offset=20
@@ -11759,7 +11862,7 @@
             i32.load8_u
             i32.and
             local.set 7
-            i32.const 1054832
+            i32.const 1054848
             local.set 6
             br 1 (;@3;)
           end
@@ -11825,7 +11928,7 @@
           i32.const 12
           i32.add
           i32.const 1
-          call 251
+          call $_ZN5alloc3vec16Vec$LT$T$C$A$GT$7reserve17h5e3e1fe311d12a20E
           local.get 1
           i32.load offset=12
           local.set 3
@@ -11849,7 +11952,7 @@
     local.set 7
     i32.const 20
     i32.const 4
-    call 79
+    call $_ZN5alloc5alloc15exchange_malloc17hff92c31848a15536E
     local.tee 2
     local.get 7
     i32.store offset=16
@@ -11895,8 +11998,8 @@
     local.get 1
     i32.const 48
     i32.add
-    global.set 0)
-  (func (;69;) (type 9) (param i32 i64) (result i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter3gas3Gas13record_memory17hd4732adc5333f5c8E (type 9) (param i32 i64) (result i32)
     (local i32 i64 i64)
     i32.const 1
     local.set 2
@@ -11934,7 +12037,7 @@
       local.set 2
     end
     local.get 2)
-  (func (;70;) (type 6) (param i32)
+  (func $_ZN4core3ptr99drop_in_place$LT$core..option..Option$LT$$LP$revm_primitives..bytecode..Bytecode$C$bool$RP$$GT$$GT$17h1fd612e1d427b40fE (type 6) (param i32)
     block  ;; label = @1
       local.get 0
       i32.load
@@ -11942,13 +12045,13 @@
       i32.eq
       br_if 0 (;@1;)
       local.get 0
-      call 71
+      call $_ZN4core3ptr56drop_in_place$LT$revm_primitives..bytecode..Bytecode$GT$17h95597c762dd38d5eE
     end)
-  (func (;71;) (type 6) (param i32)
+  (func $_ZN4core3ptr56drop_in_place$LT$revm_primitives..bytecode..Bytecode$GT$17h95597c762dd38d5eE (type 6) (param i32)
     local.get 0
     i32.const 12
     i32.add
-    call 63
+    call $_ZN4core3ptr52drop_in_place$LT$alloy_primitives..bytes_..Bytes$GT$17h6dfb868a0b1f26d6E
     block  ;; label = @1
       local.get 0
       i32.load
@@ -11958,15 +12061,15 @@
       local.get 0
       i32.const 8
       i32.add
-      call 231
+      call $_ZN4core3ptr55drop_in_place$LT$revm_primitives..bytecode..JumpMap$GT$17he22e81048f0419fcE
     end)
-  (func (;72;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions4host11extcodehash17he079fecf5c4f7d74E (type 4) (param i32 i32)
     (local i32 i32 i32 i64 i64)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 64
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         block  ;; label = @3
@@ -11986,12 +12089,12 @@
         i32.const 68
         i32.add
         local.tee 4
-        call 17
+        call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
         local.get 2
         local.get 2
         i32.const 32
         i32.add
-        call 67
+        call $_ZN5ruint5bytes42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$11to_be_bytes17h8500c5533b092a39E
         i32.const 80
         local.set 3
         local.get 0
@@ -12026,7 +12129,7 @@
         i64.store
         local.get 4
         i32.const 1049392
-        call 23
+        call $_ZN16revm_interpreter11interpreter5stack5Stack9push_b25617h9651a07fd013b1c6E
         local.tee 3
         i32.const 255
         i32.and
@@ -12041,14 +12144,14 @@
     local.get 2
     i32.const 64
     i32.add
-    global.set 0)
-  (func (;73;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions4host11extcodesize17h1c2c03b5f48265f2E (type 4) (param i32 i32)
     (local i32 i32 i64 i64 i64 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 64
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -12063,16 +12166,16 @@
         local.get 0
         i32.const 68
         i32.add
-        call 17
+        call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
         local.get 2
         local.get 2
         i32.const 32
         i32.add
-        call 67
+        call $_ZN5ruint5bytes42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$11to_be_bytes17h8500c5533b092a39E
         local.get 2
         i32.const 32
         i32.add
-        call 68
+        call $_ZN91_$LT$revm_interpreter..host..fluent..FluentHost$u20$as$u20$revm_interpreter..host..Host$GT$4code17h5522fa2c1d3bc2b1E
         block  ;; label = @3
           local.get 2
           i32.load offset=32
@@ -12082,7 +12185,7 @@
           local.get 2
           i32.const 32
           i32.add
-          call 70
+          call $_ZN4core3ptr99drop_in_place$LT$core..option..Option$LT$$LP$revm_primitives..bytecode..Bytecode$C$bool$RP$$GT$$GT$17h1fd612e1d427b40fE
           local.get 0
           i32.const 101
           i32.store8 offset=88
@@ -12163,7 +12266,7 @@
               i64.add
               i64.store
               local.get 2
-              call 10
+              call $_ZN15revm_primitives8bytecode8Bytecode3len17hc42e37652ab1f973E
               local.set 7
               i32.const 92
               local.set 3
@@ -12209,7 +12312,7 @@
           i64.store
         end
         local.get 2
-        call 71
+        call $_ZN4core3ptr56drop_in_place$LT$revm_primitives..bytecode..Bytecode$GT$17h95597c762dd38d5eE
         br 1 (;@1;)
       end
       local.get 0
@@ -12219,8 +12322,8 @@
     local.get 2
     i32.const 64
     i32.add
-    global.set 0)
-  (func (;74;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions4host11selfbalance17hd336897cda90890eE (type 4) (param i32 i32)
     (local i64 i64 i32)
     block  ;; label = @1
       local.get 0
@@ -12301,17 +12404,17 @@
     local.get 0
     i32.const 92
     i32.store8 offset=88)
-  (func (;75;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions4host11static_call17h9fe3352b780f5f0bE (type 4) (param i32 i32)
     i32.const 3
     local.get 0
-    call 62)
-  (func (;76;) (type 4) (param i32 i32)
+    call $_ZN16revm_interpreter12instructions4host10call_inner17h11b184bb0eec2447E)
+  (func $_ZN16revm_interpreter12instructions4host12selfdestruct17h4656683b12421600E (type 4) (param i32 i32)
     (local i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 64
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     i32.const 87
     local.set 3
     block  ;; label = @1
@@ -12332,12 +12435,12 @@
       local.get 0
       i32.const 68
       i32.add
-      call 17
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
       local.get 2
       local.get 2
       i32.const 32
       i32.add
-      call 67
+      call $_ZN5ruint5bytes42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$11to_be_bytes17h8500c5533b092a39E
       local.get 2
       i32.const 44
       i32.add
@@ -12347,16 +12450,16 @@
       i32.const 1
       i32.store offset=36
       local.get 2
-      i32.const 1051556
+      i32.const 1051588
       i32.store offset=32
       local.get 2
-      i32.const 1054832
+      i32.const 1054848
       i32.store offset=40
       local.get 2
       i32.const 32
       i32.add
-      i32.const 1051644
-      call 65
+      i32.const 1051676
+      call $_ZN4core9panicking9panic_fmt17h78607b33a29a727dE
       unreachable
     end
     local.get 0
@@ -12365,33 +12468,32 @@
     local.get 2
     i32.const 64
     i32.add
-    global.set 0)
-  (func (;77;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions4host13delegate_call17ha12cb61ddd2b57ddE (type 4) (param i32 i32)
     i32.const 2
     local.get 0
-    call 62)
-  (func (;78;) (type 0) (param i32 i32 i32)
-    (local i32 i32)
-    global.get 0
+    call $_ZN16revm_interpreter12instructions4host10call_inner17h11b184bb0eec2447E)
+  (func $_ZN5bytes5bytes5Bytes15copy_from_slice17h5525fc47c66dd636E (type 0) (param i32 i32 i32)
+    (local i32 i32 i32)
+    global.get $__stack_pointer
     i32.const 32
     i32.sub
     local.tee 3
-    global.set 0
+    global.set $__stack_pointer
     local.get 3
     i32.const 8
     i32.add
     local.get 2
-    i32.const 0
-    call 254
+    call $_ZN5alloc7raw_vec19RawVec$LT$T$C$A$GT$11allocate_in17hd355458426c13535E
     local.get 3
     i32.load offset=12
     local.set 4
     local.get 3
     i32.load offset=8
+    local.tee 5
     local.get 1
     local.get 2
-    call 323
-    local.set 1
+    memory.copy
     local.get 3
     local.get 2
     i32.store offset=28
@@ -12399,22 +12501,25 @@
     local.get 4
     i32.store offset=24
     local.get 3
-    local.get 1
+    local.get 5
     i32.store offset=20
     local.get 0
     local.get 3
     i32.const 20
     i32.add
-    call 262
+    call $_ZN92_$LT$bytes..bytes..Bytes$u20$as$u20$core..convert..From$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$4from17hdedf9d6d985a652fE
     local.get 3
     i32.const 32
     i32.add
-    global.set 0)
-  (func (;79;) (type 3) (param i32 i32) (result i32)
+    global.set $__stack_pointer)
+  (func $_ZN5alloc5alloc15exchange_malloc17hff92c31848a15536E (type 3) (param i32 i32) (result i32)
+    i32.const 0
+    i32.load8_u offset=1054868
+    drop
     block  ;; label = @1
       local.get 1
       local.get 0
-      call 236
+      call $_ZN109_$LT$lol_alloc..trivial_allocators..LeakingAllocator$LT$T$GT$$u20$as$u20$core..alloc..global..GlobalAlloc$GT$5alloc17hafec9583d38d71e9E
       local.tee 1
       i32.eqz
       br_if 0 (;@1;)
@@ -12422,15 +12527,15 @@
       return
     end
     local.get 0
-    call 56
+    call $__rust_alloc_error_handler
     unreachable)
-  (func (;80;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions4host21prepare_create_inputs17h6fd31d994882df7eE (type 4) (param i32 i32)
     (local i32 i32 i32 i32 i32 i32 i64 i64 i64 i64 i64 i64)
-    global.get 0
-    i32.const 160
+    global.get $__stack_pointer
+    i32.const 144
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -12443,12 +12548,12 @@
         br 1 (;@1;)
       end
       local.get 0
-      call 63
+      call $_ZN4core3ptr52drop_in_place$LT$alloy_primitives..bytes_..Bytes$GT$17h6dfb868a0b1f26d6E
       local.get 0
       i64.const 0
       i64.store offset=8
       local.get 0
-      i32.const 1054832
+      i32.const 1054848
       i32.store offset=4
       local.get 0
       i32.const 1049804
@@ -12471,7 +12576,7 @@
                 local.get 0
                 i32.const 68
                 i32.add
-                call 20
+                call $_ZN16revm_interpreter11interpreter5stack5Stack11pop3_unsafe17h0d9a54433668eefaE
                 local.get 2
                 i32.const 24
                 i32.add
@@ -12537,7 +12642,7 @@
                   i64.const 0
                   i64.store offset=136 align=4
                   local.get 2
-                  i32.const 1054832
+                  i32.const 1054848
                   i32.store offset=132
                   local.get 2
                   i32.const 1049804
@@ -12617,7 +12722,7 @@
                     i64.const 3
                     i64.mul
                     i64.add
-                    call 69
+                    call $_ZN16revm_interpreter3gas3Gas13record_memory17hd4732adc5333f5c8E
                     br_if 0 (;@8;)
                     local.get 0
                     i32.const 82
@@ -12627,7 +12732,7 @@
                   local.get 0
                   i32.load offset=84
                   local.get 6
-                  call 13
+                  call $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory6resize17h81ab5ea4f2a66711E
                   local.get 0
                   i32.load offset=84
                   local.tee 5
@@ -12644,7 +12749,7 @@
                 i32.add
                 i32.add
                 local.get 3
-                call 78
+                call $_ZN5bytes5bytes5Bytes15copy_from_slice17h5525fc47c66dd636E
                 br 4 (;@2;)
               end
               local.get 0
@@ -12731,24 +12836,11 @@
         i64.add
         i64.store offset=32
         local.get 2
-        i32.const 144
-        i32.add
-        i32.const 8
-        i32.add
-        local.tee 3
-        local.get 2
-        i32.const 128
-        i32.add
-        i32.const 8
-        i32.add
-        i64.load align=4
-        i64.store
-        local.get 2
         i32.const 32
         i32.add
         i32.const 8
         i32.add
-        local.tee 5
+        local.tee 3
         local.get 0
         i32.load offset=80
         local.tee 0
@@ -12761,23 +12853,19 @@
         i32.add
         i32.const 16
         i32.add
-        local.tee 4
+        local.tee 5
         local.get 0
         i32.const 120
         i32.add
         i32.load
         i32.store
         local.get 2
-        local.get 2
-        i64.load offset=128 align=4
-        i64.store offset=144
-        local.get 2
         local.get 0
         i64.load offset=104
         i64.store offset=32
         i32.const 120
         i32.const 8
-        call 79
+        call $_ZN5alloc5alloc15exchange_malloc17hff92c31848a15536E
         local.tee 0
         i64.const 0
         i64.store
@@ -12786,14 +12874,18 @@
         i64.store offset=88
         local.get 0
         local.get 2
-        i64.load offset=144
-        i64.store offset=40
+        i64.load offset=128 align=4
+        i64.store offset=40 align=4
         local.get 0
         i32.const 48
         i32.add
-        local.get 3
-        i64.load
-        i64.store
+        local.get 2
+        i32.const 128
+        i32.add
+        i32.const 8
+        i32.add
+        i64.load align=4
+        i64.store align=4
         local.get 0
         local.get 2
         i64.load
@@ -12829,18 +12921,18 @@
         local.get 0
         i32.const 104
         i32.add
-        local.get 5
+        local.get 3
         i64.load
         i64.store
         local.get 0
         i32.const 112
         i32.add
-        local.get 4
+        local.get 5
         i32.load
         i32.store
         local.get 1
         i32.load
-        call 81
+        call $_ZN4core3ptr118drop_in_place$LT$core..option..Option$LT$alloc..boxed..Box$LT$revm_interpreter..inner_models..CreateInputs$GT$$GT$$GT$17hd27b2dea338f0bccE
         local.get 1
         local.get 0
         i32.store
@@ -12852,13 +12944,13 @@
       local.get 2
       i32.const 128
       i32.add
-      call 63
+      call $_ZN4core3ptr52drop_in_place$LT$alloy_primitives..bytes_..Bytes$GT$17h6dfb868a0b1f26d6E
     end
     local.get 2
-    i32.const 160
+    i32.const 144
     i32.add
-    global.set 0)
-  (func (;81;) (type 6) (param i32)
+    global.set $__stack_pointer)
+  (func $_ZN4core3ptr118drop_in_place$LT$core..option..Option$LT$alloc..boxed..Box$LT$revm_interpreter..inner_models..CreateInputs$GT$$GT$$GT$17hd27b2dea338f0bccE (type 6) (param i32)
     block  ;; label = @1
       local.get 0
       i32.eqz
@@ -12866,15 +12958,15 @@
       local.get 0
       i32.const 40
       i32.add
-      call 63
+      call $_ZN4core3ptr52drop_in_place$LT$alloy_primitives..bytes_..Bytes$GT$17h6dfb868a0b1f26d6E
     end)
-  (func (;82;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions4host21prepare_create_inputs17ha5897f422a449596E (type 4) (param i32 i32)
     (local i32 i32 i64 i32 i32 i32 i32 i32 i64 i64 i64 i64 i64)
-    global.get 0
-    i32.const 192
+    global.get $__stack_pointer
+    i32.const 176
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -12887,12 +12979,12 @@
         br 1 (;@1;)
       end
       local.get 0
-      call 63
+      call $_ZN4core3ptr52drop_in_place$LT$alloy_primitives..bytes_..Bytes$GT$17h6dfb868a0b1f26d6E
       local.get 0
       i64.const 0
       i64.store offset=8
       local.get 0
-      i32.const 1054832
+      i32.const 1054848
       i32.store offset=4
       local.get 0
       i32.const 1049804
@@ -12916,7 +13008,7 @@
                 i32.const 68
                 i32.add
                 local.tee 3
-                call 20
+                call $_ZN16revm_interpreter11interpreter5stack5Stack11pop3_unsafe17h0d9a54433668eefaE
                 local.get 2
                 i32.const 24
                 i32.add
@@ -12983,7 +13075,7 @@
                   i64.const 0
                   i64.store offset=136 align=4
                   local.get 2
-                  i32.const 1054832
+                  i32.const 1054848
                   i32.store offset=132
                   local.get 2
                   i32.const 1049804
@@ -13063,7 +13155,7 @@
                     i64.const 3
                     i64.mul
                     i64.add
-                    call 69
+                    call $_ZN16revm_interpreter3gas3Gas13record_memory17hd4732adc5333f5c8E
                     br_if 0 (;@8;)
                     local.get 0
                     i32.const 82
@@ -13073,7 +13165,7 @@
                   local.get 0
                   i32.load offset=84
                   local.get 8
-                  call 13
+                  call $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory6resize17h81ab5ea4f2a66711E
                   local.get 0
                   i32.load offset=84
                   local.tee 7
@@ -13090,7 +13182,7 @@
                 i32.add
                 i32.add
                 local.get 5
-                call 78
+                call $_ZN5bytes5bytes5Bytes15copy_from_slice17h5525fc47c66dd636E
                 br 4 (;@2;)
               end
               local.get 0
@@ -13126,7 +13218,7 @@
         i32.const 144
         i32.add
         local.get 3
-        call 17
+        call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
         i32.const 80
         local.set 3
         local.get 0
@@ -13208,24 +13300,11 @@
         i64.add
         i64.store offset=32
         local.get 2
-        i32.const 176
-        i32.add
-        i32.const 8
-        i32.add
-        local.tee 3
-        local.get 2
-        i32.const 128
-        i32.add
-        i32.const 8
-        i32.add
-        i64.load align=4
-        i64.store
-        local.get 2
         i32.const 32
         i32.add
         i32.const 8
         i32.add
-        local.tee 5
+        local.tee 3
         local.get 0
         i32.load offset=80
         local.tee 0
@@ -13238,23 +13317,19 @@
         i32.add
         i32.const 16
         i32.add
-        local.tee 7
+        local.tee 5
         local.get 0
         i32.const 120
         i32.add
         i32.load
         i32.store
         local.get 2
-        local.get 2
-        i64.load offset=128 align=4
-        i64.store offset=176
-        local.get 2
         local.get 0
         i64.load offset=104
         i64.store offset=32
         i32.const 120
         i32.const 8
-        call 79
+        call $_ZN5alloc5alloc15exchange_malloc17hff92c31848a15536E
         local.tee 0
         i64.const 1
         i64.store
@@ -13294,14 +13369,18 @@
         i64.store
         local.get 0
         local.get 2
-        i64.load offset=176
-        i64.store offset=40
+        i64.load offset=128 align=4
+        i64.store offset=40 align=4
         local.get 0
         i32.const 48
         i32.add
-        local.get 3
-        i64.load
-        i64.store
+        local.get 2
+        i32.const 128
+        i32.add
+        i32.const 8
+        i32.add
+        i64.load align=4
+        i64.store align=4
         local.get 0
         local.get 2
         i64.load
@@ -13336,13 +13415,13 @@
         local.get 0
         i32.const 112
         i32.add
-        local.get 7
+        local.get 5
         i32.load
         i32.store
         local.get 0
         i32.const 104
         i32.add
-        local.get 5
+        local.get 3
         i64.load
         i64.store
         local.get 0
@@ -13351,7 +13430,7 @@
         i64.store offset=96
         local.get 1
         i32.load
-        call 81
+        call $_ZN4core3ptr118drop_in_place$LT$core..option..Option$LT$alloc..boxed..Box$LT$revm_interpreter..inner_models..CreateInputs$GT$$GT$$GT$17hd27b2dea338f0bccE
         local.get 1
         local.get 0
         i32.store
@@ -13363,19 +13442,1256 @@
       local.get 2
       i32.const 128
       i32.add
-      call 63
+      call $_ZN4core3ptr52drop_in_place$LT$alloy_primitives..bytes_..Bytes$GT$17h6dfb868a0b1f26d6E
     end
     local.get 2
-    i32.const 192
+    i32.const 176
     i32.add
-    global.set 0)
-  (func (;83;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions4host3log17h13e4bd4e120f2083E (type 4) (param i32 i32)
+    (local i32 i32 i64 i64 i64 i64 i64 i64 i64 i32 i32 i32 i32 i32)
+    global.get $__stack_pointer
+    i32.const 144
+    i32.sub
+    local.tee 2
+    global.set $__stack_pointer
+    block  ;; label = @1
+      block  ;; label = @2
+        block  ;; label = @3
+          block  ;; label = @4
+            block  ;; label = @5
+              block  ;; label = @6
+                local.get 0
+                i32.load8_u offset=89
+                br_if 0 (;@6;)
+                local.get 0
+                i32.const 76
+                i32.add
+                i32.load
+                i32.const 2
+                i32.lt_u
+                br_if 1 (;@5;)
+                local.get 2
+                i32.const 16
+                i32.add
+                local.get 0
+                i32.const 68
+                i32.add
+                local.tee 3
+                call $_ZN16revm_interpreter11interpreter5stack5Stack11pop2_unsafe17hd11983c9ec7c10f1E
+                block  ;; label = @7
+                  block  ;; label = @8
+                    local.get 2
+                    i32.const 56
+                    i32.add
+                    i64.load
+                    i64.const 0
+                    i64.ne
+                    br_if 0 (;@8;)
+                    local.get 2
+                    i32.const 64
+                    i32.add
+                    i64.load
+                    i64.const 0
+                    i64.ne
+                    br_if 0 (;@8;)
+                    local.get 2
+                    i32.const 72
+                    i32.add
+                    i64.load
+                    i64.eqz
+                    br_if 1 (;@7;)
+                  end
+                  local.get 0
+                  i32.const 84
+                  i32.store8 offset=88
+                  br 6 (;@1;)
+                end
+                block  ;; label = @7
+                  local.get 0
+                  i64.load offset=16
+                  i64.const -1
+                  local.get 0
+                  i32.const 24
+                  i32.add
+                  i64.load
+                  local.tee 4
+                  local.get 2
+                  i64.load offset=48
+                  local.tee 5
+                  i64.const 3
+                  i64.shl
+                  i64.const 34359738360
+                  i64.and
+                  i64.const 1500
+                  i64.add
+                  local.tee 6
+                  i64.add
+                  local.tee 7
+                  local.get 7
+                  local.get 4
+                  i64.lt_u
+                  select
+                  local.tee 4
+                  i64.ge_u
+                  br_if 0 (;@7;)
+                  local.get 0
+                  i32.const 80
+                  i32.store8 offset=88
+                  br 6 (;@1;)
+                end
+                local.get 2
+                i64.load offset=40
+                local.set 8
+                local.get 2
+                i64.load offset=32
+                local.set 9
+                local.get 2
+                i64.load offset=24
+                local.set 7
+                local.get 2
+                i64.load offset=16
+                local.set 10
+                local.get 0
+                local.get 4
+                i64.store offset=24
+                local.get 0
+                i32.const 32
+                i32.add
+                local.tee 11
+                local.get 11
+                i64.load
+                local.get 6
+                i64.add
+                i64.store
+                block  ;; label = @7
+                  block  ;; label = @8
+                    local.get 5
+                    i32.wrap_i64
+                    local.tee 11
+                    br_if 0 (;@8;)
+                    local.get 2
+                    i64.const 0
+                    i64.store offset=92 align=4
+                    local.get 2
+                    i32.const 1054848
+                    i32.store offset=88
+                    local.get 2
+                    i32.const 1049804
+                    i32.store offset=84
+                    br 1 (;@7;)
+                  end
+                  local.get 7
+                  i64.const 0
+                  i64.ne
+                  br_if 3 (;@4;)
+                  local.get 9
+                  i64.const 0
+                  i64.ne
+                  br_if 3 (;@4;)
+                  local.get 8
+                  i64.eqz
+                  i32.eqz
+                  br_if 3 (;@4;)
+                  i32.const -1
+                  local.get 10
+                  i32.wrap_i64
+                  local.tee 12
+                  local.get 11
+                  i32.add
+                  local.tee 13
+                  local.get 13
+                  local.get 12
+                  i32.lt_u
+                  select
+                  local.tee 13
+                  i32.const 0
+                  local.get 13
+                  i32.sub
+                  i32.const 31
+                  i32.and
+                  i32.add
+                  local.tee 14
+                  local.get 13
+                  i32.lt_u
+                  br_if 4 (;@3;)
+                  block  ;; label = @8
+                    local.get 14
+                    local.get 0
+                    i32.load offset=84
+                    local.tee 13
+                    i32.load offset=8
+                    local.get 13
+                    i32.load offset=24
+                    local.tee 15
+                    i32.sub
+                    i32.le_u
+                    br_if 0 (;@8;)
+                    block  ;; label = @9
+                      local.get 0
+                      i32.const 16
+                      i32.add
+                      local.get 14
+                      i32.const 5
+                      i32.shr_u
+                      i64.extend_i32_u
+                      local.tee 4
+                      local.get 4
+                      i64.mul
+                      i64.const 9
+                      i64.shr_u
+                      local.get 4
+                      i64.const 3
+                      i64.mul
+                      i64.add
+                      call $_ZN16revm_interpreter3gas3Gas13record_memory17hd4732adc5333f5c8E
+                      br_if 0 (;@9;)
+                      local.get 0
+                      i32.const 82
+                      i32.store8 offset=88
+                      br 8 (;@1;)
+                    end
+                    local.get 0
+                    i32.load offset=84
+                    local.tee 13
+                    local.get 14
+                    call $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory6resize17h81ab5ea4f2a66711E
+                    local.get 13
+                    i32.load offset=24
+                    local.set 15
+                  end
+                  local.get 2
+                  i32.const 84
+                  i32.add
+                  local.get 13
+                  i32.load
+                  local.get 15
+                  local.get 12
+                  i32.add
+                  i32.add
+                  local.get 11
+                  call $_ZN5bytes5bytes5Bytes15copy_from_slice17h5525fc47c66dd636E
+                end
+                i32.const 3
+                local.set 11
+                local.get 0
+                i32.load offset=76
+                i32.const 3
+                i32.lt_u
+                br_if 4 (;@2;)
+                local.get 2
+                i32.const 8
+                i32.add
+                i32.const 3
+                call $_ZN5alloc7raw_vec19RawVec$LT$T$C$A$GT$11allocate_in17h452847963d6fe6cfE
+                local.get 2
+                i32.const 0
+                i32.store offset=108
+                local.get 2
+                local.get 2
+                i64.load offset=8
+                i64.store offset=100 align=4
+                loop  ;; label = @7
+                  block  ;; label = @8
+                    local.get 11
+                    br_if 0 (;@8;)
+                    local.get 2
+                    i32.const 16
+                    i32.add
+                    i32.const 8
+                    i32.add
+                    local.get 0
+                    i32.load offset=80
+                    local.tee 0
+                    i32.const 112
+                    i32.add
+                    i64.load align=1
+                    i64.store
+                    local.get 2
+                    i32.const 32
+                    i32.add
+                    local.get 0
+                    i32.const 120
+                    i32.add
+                    i32.load align=1
+                    i32.store
+                    local.get 2
+                    local.get 0
+                    i64.load offset=104 align=1
+                    i64.store offset=16
+                    local.get 2
+                    i32.const 112
+                    i32.add
+                    i32.const 8
+                    i32.add
+                    local.get 2
+                    i32.const 84
+                    i32.add
+                    i32.const 8
+                    i32.add
+                    i64.load align=4
+                    i64.store
+                    local.get 2
+                    local.get 2
+                    i64.load offset=84 align=4
+                    i64.store offset=112
+                    local.get 1
+                    local.get 2
+                    i32.const 16
+                    i32.add
+                    local.get 2
+                    i32.const 100
+                    i32.add
+                    local.get 2
+                    i32.const 112
+                    i32.add
+                    call $_ZN91_$LT$revm_interpreter..host..fluent..FluentHost$u20$as$u20$revm_interpreter..host..Host$GT$3log17h3c481d6674a8ea9fE
+                    br 7 (;@1;)
+                  end
+                  local.get 2
+                  i32.const 16
+                  i32.add
+                  local.get 3
+                  call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
+                  local.get 11
+                  i32.const -1
+                  i32.add
+                  local.set 11
+                  local.get 2
+                  i32.const 112
+                  i32.add
+                  local.get 2
+                  i32.const 16
+                  i32.add
+                  call $_ZN5ruint5bytes42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$11to_be_bytes17h8500c5533b092a39E
+                  local.get 2
+                  i32.const 100
+                  i32.add
+                  local.get 2
+                  i32.const 112
+                  i32.add
+                  call $_ZN5alloc3vec16Vec$LT$T$C$A$GT$4push17h6128cc9e362182f5E
+                  br 0 (;@7;)
+                end
+              end
+              local.get 0
+              i32.const 87
+              i32.store8 offset=88
+              br 4 (;@1;)
+            end
+            local.get 0
+            i32.const 91
+            i32.store8 offset=88
+            br 3 (;@1;)
+          end
+          local.get 0
+          i32.const 84
+          i32.store8 offset=88
+          br 2 (;@1;)
+        end
+        local.get 0
+        i32.const 81
+        i32.store8 offset=88
+        br 1 (;@1;)
+      end
+      local.get 0
+      i32.const 91
+      i32.store8 offset=88
+      local.get 2
+      i32.const 84
+      i32.add
+      call $_ZN4core3ptr52drop_in_place$LT$alloy_primitives..bytes_..Bytes$GT$17h6dfb868a0b1f26d6E
+    end
+    local.get 2
+    i32.const 144
+    i32.add
+    global.set $__stack_pointer)
+  (func $_ZN5alloc7raw_vec19RawVec$LT$T$C$A$GT$11allocate_in17h452847963d6fe6cfE (type 4) (param i32 i32)
+    (local i32 i32)
+    block  ;; label = @1
+      block  ;; label = @2
+        local.get 1
+        br_if 0 (;@2;)
+        i32.const 1
+        local.set 2
+        br 1 (;@1;)
+      end
+      i32.const 0
+      i32.load8_u offset=1054868
+      drop
+      i32.const 1
+      local.get 1
+      i32.const 5
+      i32.shl
+      local.tee 3
+      call $_ZN109_$LT$lol_alloc..trivial_allocators..LeakingAllocator$LT$T$GT$$u20$as$u20$core..alloc..global..GlobalAlloc$GT$5alloc17hafec9583d38d71e9E
+      local.tee 2
+      br_if 0 (;@1;)
+      local.get 3
+      call $__rust_alloc_error_handler
+      unreachable
+    end
+    local.get 0
+    local.get 1
+    i32.store offset=4
+    local.get 0
+    local.get 2
+    i32.store)
+  (func $_ZN91_$LT$revm_interpreter..host..fluent..FluentHost$u20$as$u20$revm_interpreter..host..Host$GT$3log17h3c481d6674a8ea9fE (type 8) (param i32 i32 i32 i32)
+    (local i32)
+    global.get $__stack_pointer
+    i32.const 48
+    i32.sub
+    local.tee 4
+    global.set $__stack_pointer
+    local.get 4
+    i32.const 44
+    i32.add
+    local.get 1
+    i32.const 16
+    i32.add
+    i32.load align=1
+    i32.store
+    local.get 4
+    i32.const 36
+    i32.add
+    local.get 1
+    i32.const 8
+    i32.add
+    i64.load align=1
+    i64.store align=4
+    local.get 4
+    i32.const 8
+    i32.add
+    local.get 2
+    i32.const 8
+    i32.add
+    i32.load
+    i32.store
+    local.get 4
+    i32.const 20
+    i32.add
+    local.get 3
+    i32.const 8
+    i32.add
+    i64.load align=4
+    i64.store align=4
+    local.get 4
+    local.get 1
+    i64.load align=1
+    i64.store offset=28 align=4
+    local.get 4
+    local.get 2
+    i64.load align=4
+    i64.store
+    local.get 4
+    local.get 3
+    i64.load align=4
+    i64.store offset=12 align=4
+    block  ;; label = @1
+      local.get 0
+      i32.const 600
+      i32.add
+      i32.load
+      local.tee 1
+      local.get 0
+      i32.const 596
+      i32.add
+      i32.load
+      i32.ne
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 592
+      i32.add
+      local.get 1
+      call $_ZN5alloc7raw_vec19RawVec$LT$T$C$A$GT$16reserve_for_push17hc6388ae5fa9646a8E
+      local.get 0
+      i32.load offset=600
+      local.set 1
+    end
+    local.get 0
+    i32.load offset=592
+    local.get 1
+    i32.const 48
+    i32.mul
+    i32.add
+    local.get 4
+    i32.const 48
+    memory.copy
+    local.get 0
+    local.get 1
+    i32.const 1
+    i32.add
+    i32.store offset=600
+    local.get 4
+    i32.const 48
+    i32.add
+    global.set $__stack_pointer)
+  (func $_ZN5alloc3vec16Vec$LT$T$C$A$GT$4push17h6128cc9e362182f5E (type 4) (param i32 i32)
+    (local i32)
+    block  ;; label = @1
+      local.get 0
+      i32.load offset=8
+      local.tee 2
+      local.get 0
+      i32.load offset=4
+      i32.ne
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 2
+      call $_ZN5alloc7raw_vec19RawVec$LT$T$C$A$GT$16reserve_for_push17hcac8f2c80ab75d63E
+      local.get 0
+      i32.load offset=8
+      local.set 2
+    end
+    local.get 0
+    local.get 2
+    i32.const 1
+    i32.add
+    i32.store offset=8
+    local.get 0
+    i32.load
+    local.get 2
+    i32.const 5
+    i32.shl
+    i32.add
+    local.tee 0
+    local.get 1
+    i64.load align=1
+    i64.store align=1
+    local.get 0
+    i32.const 8
+    i32.add
+    local.get 1
+    i32.const 8
+    i32.add
+    i64.load align=1
+    i64.store align=1
+    local.get 0
+    i32.const 16
+    i32.add
+    local.get 1
+    i32.const 16
+    i32.add
+    i64.load align=1
+    i64.store align=1
+    local.get 0
+    i32.const 24
+    i32.add
+    local.get 1
+    i32.const 24
+    i32.add
+    i64.load align=1
+    i64.store align=1)
+  (func $_ZN16revm_interpreter12instructions4host3log17h1ddbbad50aceb7feE (type 4) (param i32 i32)
+    (local i32 i32 i64 i64 i64 i64 i64 i64 i64 i32 i32 i32 i32 i32)
+    global.get $__stack_pointer
+    i32.const 144
+    i32.sub
+    local.tee 2
+    global.set $__stack_pointer
+    block  ;; label = @1
+      block  ;; label = @2
+        block  ;; label = @3
+          block  ;; label = @4
+            block  ;; label = @5
+              block  ;; label = @6
+                local.get 0
+                i32.load8_u offset=89
+                br_if 0 (;@6;)
+                local.get 0
+                i32.const 76
+                i32.add
+                i32.load
+                i32.const 2
+                i32.lt_u
+                br_if 1 (;@5;)
+                local.get 2
+                i32.const 16
+                i32.add
+                local.get 0
+                i32.const 68
+                i32.add
+                local.tee 3
+                call $_ZN16revm_interpreter11interpreter5stack5Stack11pop2_unsafe17hd11983c9ec7c10f1E
+                block  ;; label = @7
+                  block  ;; label = @8
+                    local.get 2
+                    i32.const 56
+                    i32.add
+                    i64.load
+                    i64.const 0
+                    i64.ne
+                    br_if 0 (;@8;)
+                    local.get 2
+                    i32.const 64
+                    i32.add
+                    i64.load
+                    i64.const 0
+                    i64.ne
+                    br_if 0 (;@8;)
+                    local.get 2
+                    i32.const 72
+                    i32.add
+                    i64.load
+                    i64.eqz
+                    br_if 1 (;@7;)
+                  end
+                  local.get 0
+                  i32.const 84
+                  i32.store8 offset=88
+                  br 6 (;@1;)
+                end
+                block  ;; label = @7
+                  local.get 0
+                  i64.load offset=16
+                  i64.const -1
+                  local.get 0
+                  i32.const 24
+                  i32.add
+                  i64.load
+                  local.tee 4
+                  local.get 2
+                  i64.load offset=48
+                  local.tee 5
+                  i64.const 3
+                  i64.shl
+                  i64.const 34359738360
+                  i64.and
+                  i64.const 1125
+                  i64.add
+                  local.tee 6
+                  i64.add
+                  local.tee 7
+                  local.get 7
+                  local.get 4
+                  i64.lt_u
+                  select
+                  local.tee 4
+                  i64.ge_u
+                  br_if 0 (;@7;)
+                  local.get 0
+                  i32.const 80
+                  i32.store8 offset=88
+                  br 6 (;@1;)
+                end
+                local.get 2
+                i64.load offset=40
+                local.set 8
+                local.get 2
+                i64.load offset=32
+                local.set 9
+                local.get 2
+                i64.load offset=24
+                local.set 7
+                local.get 2
+                i64.load offset=16
+                local.set 10
+                local.get 0
+                local.get 4
+                i64.store offset=24
+                local.get 0
+                i32.const 32
+                i32.add
+                local.tee 11
+                local.get 11
+                i64.load
+                local.get 6
+                i64.add
+                i64.store
+                block  ;; label = @7
+                  block  ;; label = @8
+                    local.get 5
+                    i32.wrap_i64
+                    local.tee 11
+                    br_if 0 (;@8;)
+                    local.get 2
+                    i64.const 0
+                    i64.store offset=92 align=4
+                    local.get 2
+                    i32.const 1054848
+                    i32.store offset=88
+                    local.get 2
+                    i32.const 1049804
+                    i32.store offset=84
+                    br 1 (;@7;)
+                  end
+                  local.get 7
+                  i64.const 0
+                  i64.ne
+                  br_if 3 (;@4;)
+                  local.get 9
+                  i64.const 0
+                  i64.ne
+                  br_if 3 (;@4;)
+                  local.get 8
+                  i64.eqz
+                  i32.eqz
+                  br_if 3 (;@4;)
+                  i32.const -1
+                  local.get 10
+                  i32.wrap_i64
+                  local.tee 12
+                  local.get 11
+                  i32.add
+                  local.tee 13
+                  local.get 13
+                  local.get 12
+                  i32.lt_u
+                  select
+                  local.tee 13
+                  i32.const 0
+                  local.get 13
+                  i32.sub
+                  i32.const 31
+                  i32.and
+                  i32.add
+                  local.tee 14
+                  local.get 13
+                  i32.lt_u
+                  br_if 4 (;@3;)
+                  block  ;; label = @8
+                    local.get 14
+                    local.get 0
+                    i32.load offset=84
+                    local.tee 13
+                    i32.load offset=8
+                    local.get 13
+                    i32.load offset=24
+                    local.tee 15
+                    i32.sub
+                    i32.le_u
+                    br_if 0 (;@8;)
+                    block  ;; label = @9
+                      local.get 0
+                      i32.const 16
+                      i32.add
+                      local.get 14
+                      i32.const 5
+                      i32.shr_u
+                      i64.extend_i32_u
+                      local.tee 4
+                      local.get 4
+                      i64.mul
+                      i64.const 9
+                      i64.shr_u
+                      local.get 4
+                      i64.const 3
+                      i64.mul
+                      i64.add
+                      call $_ZN16revm_interpreter3gas3Gas13record_memory17hd4732adc5333f5c8E
+                      br_if 0 (;@9;)
+                      local.get 0
+                      i32.const 82
+                      i32.store8 offset=88
+                      br 8 (;@1;)
+                    end
+                    local.get 0
+                    i32.load offset=84
+                    local.tee 13
+                    local.get 14
+                    call $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory6resize17h81ab5ea4f2a66711E
+                    local.get 13
+                    i32.load offset=24
+                    local.set 15
+                  end
+                  local.get 2
+                  i32.const 84
+                  i32.add
+                  local.get 13
+                  i32.load
+                  local.get 15
+                  local.get 12
+                  i32.add
+                  i32.add
+                  local.get 11
+                  call $_ZN5bytes5bytes5Bytes15copy_from_slice17h5525fc47c66dd636E
+                end
+                i32.const 2
+                local.set 11
+                local.get 0
+                i32.load offset=76
+                i32.const 2
+                i32.lt_u
+                br_if 4 (;@2;)
+                local.get 2
+                i32.const 8
+                i32.add
+                i32.const 2
+                call $_ZN5alloc7raw_vec19RawVec$LT$T$C$A$GT$11allocate_in17h452847963d6fe6cfE
+                local.get 2
+                i32.const 0
+                i32.store offset=108
+                local.get 2
+                local.get 2
+                i64.load offset=8
+                i64.store offset=100 align=4
+                loop  ;; label = @7
+                  block  ;; label = @8
+                    local.get 11
+                    br_if 0 (;@8;)
+                    local.get 2
+                    i32.const 16
+                    i32.add
+                    i32.const 8
+                    i32.add
+                    local.get 0
+                    i32.load offset=80
+                    local.tee 0
+                    i32.const 112
+                    i32.add
+                    i64.load align=1
+                    i64.store
+                    local.get 2
+                    i32.const 32
+                    i32.add
+                    local.get 0
+                    i32.const 120
+                    i32.add
+                    i32.load align=1
+                    i32.store
+                    local.get 2
+                    local.get 0
+                    i64.load offset=104 align=1
+                    i64.store offset=16
+                    local.get 2
+                    i32.const 112
+                    i32.add
+                    i32.const 8
+                    i32.add
+                    local.get 2
+                    i32.const 84
+                    i32.add
+                    i32.const 8
+                    i32.add
+                    i64.load align=4
+                    i64.store
+                    local.get 2
+                    local.get 2
+                    i64.load offset=84 align=4
+                    i64.store offset=112
+                    local.get 1
+                    local.get 2
+                    i32.const 16
+                    i32.add
+                    local.get 2
+                    i32.const 100
+                    i32.add
+                    local.get 2
+                    i32.const 112
+                    i32.add
+                    call $_ZN91_$LT$revm_interpreter..host..fluent..FluentHost$u20$as$u20$revm_interpreter..host..Host$GT$3log17h3c481d6674a8ea9fE
+                    br 7 (;@1;)
+                  end
+                  local.get 2
+                  i32.const 16
+                  i32.add
+                  local.get 3
+                  call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
+                  local.get 11
+                  i32.const -1
+                  i32.add
+                  local.set 11
+                  local.get 2
+                  i32.const 112
+                  i32.add
+                  local.get 2
+                  i32.const 16
+                  i32.add
+                  call $_ZN5ruint5bytes42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$11to_be_bytes17h8500c5533b092a39E
+                  local.get 2
+                  i32.const 100
+                  i32.add
+                  local.get 2
+                  i32.const 112
+                  i32.add
+                  call $_ZN5alloc3vec16Vec$LT$T$C$A$GT$4push17h6128cc9e362182f5E
+                  br 0 (;@7;)
+                end
+              end
+              local.get 0
+              i32.const 87
+              i32.store8 offset=88
+              br 4 (;@1;)
+            end
+            local.get 0
+            i32.const 91
+            i32.store8 offset=88
+            br 3 (;@1;)
+          end
+          local.get 0
+          i32.const 84
+          i32.store8 offset=88
+          br 2 (;@1;)
+        end
+        local.get 0
+        i32.const 81
+        i32.store8 offset=88
+        br 1 (;@1;)
+      end
+      local.get 0
+      i32.const 91
+      i32.store8 offset=88
+      local.get 2
+      i32.const 84
+      i32.add
+      call $_ZN4core3ptr52drop_in_place$LT$alloy_primitives..bytes_..Bytes$GT$17h6dfb868a0b1f26d6E
+    end
+    local.get 2
+    i32.const 144
+    i32.add
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions4host3log17h2a5aa94488fda99aE (type 4) (param i32 i32)
+    (local i32 i32 i64 i64 i64 i64 i64 i64 i64 i32 i32 i32 i32 i32)
+    global.get $__stack_pointer
+    i32.const 144
+    i32.sub
+    local.tee 2
+    global.set $__stack_pointer
+    block  ;; label = @1
+      block  ;; label = @2
+        block  ;; label = @3
+          block  ;; label = @4
+            block  ;; label = @5
+              local.get 0
+              i32.load8_u offset=89
+              br_if 0 (;@5;)
+              local.get 0
+              i32.const 76
+              i32.add
+              i32.load
+              i32.const 2
+              i32.lt_u
+              br_if 1 (;@4;)
+              local.get 2
+              i32.const 16
+              i32.add
+              local.get 0
+              i32.const 68
+              i32.add
+              local.tee 3
+              call $_ZN16revm_interpreter11interpreter5stack5Stack11pop2_unsafe17hd11983c9ec7c10f1E
+              block  ;; label = @6
+                block  ;; label = @7
+                  local.get 2
+                  i32.const 56
+                  i32.add
+                  i64.load
+                  i64.const 0
+                  i64.ne
+                  br_if 0 (;@7;)
+                  local.get 2
+                  i32.const 64
+                  i32.add
+                  i64.load
+                  i64.const 0
+                  i64.ne
+                  br_if 0 (;@7;)
+                  local.get 2
+                  i32.const 72
+                  i32.add
+                  i64.load
+                  i64.eqz
+                  br_if 1 (;@6;)
+                end
+                local.get 0
+                i32.const 84
+                i32.store8 offset=88
+                br 5 (;@1;)
+              end
+              block  ;; label = @6
+                local.get 0
+                i64.load offset=16
+                i64.const -1
+                local.get 0
+                i32.const 24
+                i32.add
+                i64.load
+                local.tee 4
+                local.get 2
+                i64.load offset=48
+                local.tee 5
+                i64.const 3
+                i64.shl
+                i64.const 34359738360
+                i64.and
+                i64.const 750
+                i64.add
+                local.tee 6
+                i64.add
+                local.tee 7
+                local.get 7
+                local.get 4
+                i64.lt_u
+                select
+                local.tee 4
+                i64.ge_u
+                br_if 0 (;@6;)
+                local.get 0
+                i32.const 80
+                i32.store8 offset=88
+                br 5 (;@1;)
+              end
+              local.get 2
+              i64.load offset=40
+              local.set 8
+              local.get 2
+              i64.load offset=32
+              local.set 9
+              local.get 2
+              i64.load offset=24
+              local.set 7
+              local.get 2
+              i64.load offset=16
+              local.set 10
+              local.get 0
+              local.get 4
+              i64.store offset=24
+              local.get 0
+              i32.const 32
+              i32.add
+              local.tee 11
+              local.get 11
+              i64.load
+              local.get 6
+              i64.add
+              i64.store
+              block  ;; label = @6
+                block  ;; label = @7
+                  local.get 5
+                  i32.wrap_i64
+                  local.tee 11
+                  br_if 0 (;@7;)
+                  local.get 2
+                  i64.const 0
+                  i64.store offset=92 align=4
+                  local.get 2
+                  i32.const 1054848
+                  i32.store offset=88
+                  local.get 2
+                  i32.const 1049804
+                  i32.store offset=84
+                  br 1 (;@6;)
+                end
+                local.get 7
+                i64.const 0
+                i64.ne
+                br_if 3 (;@3;)
+                local.get 9
+                i64.const 0
+                i64.ne
+                br_if 3 (;@3;)
+                local.get 8
+                i64.eqz
+                i32.eqz
+                br_if 3 (;@3;)
+                i32.const -1
+                local.get 10
+                i32.wrap_i64
+                local.tee 12
+                local.get 11
+                i32.add
+                local.tee 13
+                local.get 13
+                local.get 12
+                i32.lt_u
+                select
+                local.tee 13
+                i32.const 0
+                local.get 13
+                i32.sub
+                i32.const 31
+                i32.and
+                i32.add
+                local.tee 14
+                local.get 13
+                i32.lt_u
+                br_if 4 (;@2;)
+                block  ;; label = @7
+                  local.get 14
+                  local.get 0
+                  i32.load offset=84
+                  local.tee 13
+                  i32.load offset=8
+                  local.get 13
+                  i32.load offset=24
+                  local.tee 15
+                  i32.sub
+                  i32.le_u
+                  br_if 0 (;@7;)
+                  block  ;; label = @8
+                    local.get 0
+                    i32.const 16
+                    i32.add
+                    local.get 14
+                    i32.const 5
+                    i32.shr_u
+                    i64.extend_i32_u
+                    local.tee 4
+                    local.get 4
+                    i64.mul
+                    i64.const 9
+                    i64.shr_u
+                    local.get 4
+                    i64.const 3
+                    i64.mul
+                    i64.add
+                    call $_ZN16revm_interpreter3gas3Gas13record_memory17hd4732adc5333f5c8E
+                    br_if 0 (;@8;)
+                    local.get 0
+                    i32.const 82
+                    i32.store8 offset=88
+                    br 7 (;@1;)
+                  end
+                  local.get 0
+                  i32.load offset=84
+                  local.tee 13
+                  local.get 14
+                  call $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory6resize17h81ab5ea4f2a66711E
+                  local.get 13
+                  i32.load offset=24
+                  local.set 15
+                end
+                local.get 2
+                i32.const 84
+                i32.add
+                local.get 13
+                i32.load
+                local.get 15
+                local.get 12
+                i32.add
+                i32.add
+                local.get 11
+                call $_ZN5bytes5bytes5Bytes15copy_from_slice17h5525fc47c66dd636E
+              end
+              block  ;; label = @6
+                local.get 0
+                i32.load offset=76
+                i32.eqz
+                br_if 0 (;@6;)
+                local.get 2
+                i32.const 8
+                i32.add
+                i32.const 1
+                call $_ZN5alloc7raw_vec19RawVec$LT$T$C$A$GT$11allocate_in17h452847963d6fe6cfE
+                local.get 2
+                i32.const 0
+                i32.store offset=108
+                local.get 2
+                local.get 2
+                i64.load offset=8
+                i64.store offset=100 align=4
+                local.get 2
+                i32.const 16
+                i32.add
+                local.get 3
+                call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
+                local.get 2
+                i32.const 112
+                i32.add
+                local.get 2
+                i32.const 16
+                i32.add
+                call $_ZN5ruint5bytes42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$11to_be_bytes17h8500c5533b092a39E
+                local.get 2
+                i32.const 100
+                i32.add
+                local.get 2
+                i32.const 112
+                i32.add
+                call $_ZN5alloc3vec16Vec$LT$T$C$A$GT$4push17h6128cc9e362182f5E
+                local.get 2
+                i32.const 16
+                i32.add
+                i32.const 8
+                i32.add
+                local.get 0
+                i32.load offset=80
+                local.tee 0
+                i32.const 112
+                i32.add
+                i64.load align=1
+                i64.store
+                local.get 2
+                i32.const 32
+                i32.add
+                local.get 0
+                i32.const 120
+                i32.add
+                i32.load align=1
+                i32.store
+                local.get 2
+                local.get 0
+                i64.load offset=104 align=1
+                i64.store offset=16
+                local.get 2
+                i32.const 112
+                i32.add
+                i32.const 8
+                i32.add
+                local.get 2
+                i32.const 84
+                i32.add
+                i32.const 8
+                i32.add
+                i64.load align=4
+                i64.store
+                local.get 2
+                local.get 2
+                i64.load offset=84 align=4
+                i64.store offset=112
+                local.get 1
+                local.get 2
+                i32.const 16
+                i32.add
+                local.get 2
+                i32.const 100
+                i32.add
+                local.get 2
+                i32.const 112
+                i32.add
+                call $_ZN91_$LT$revm_interpreter..host..fluent..FluentHost$u20$as$u20$revm_interpreter..host..Host$GT$3log17h3c481d6674a8ea9fE
+                br 5 (;@1;)
+              end
+              local.get 0
+              i32.const 91
+              i32.store8 offset=88
+              local.get 2
+              i32.const 84
+              i32.add
+              call $_ZN4core3ptr52drop_in_place$LT$alloy_primitives..bytes_..Bytes$GT$17h6dfb868a0b1f26d6E
+              br 4 (;@1;)
+            end
+            local.get 0
+            i32.const 87
+            i32.store8 offset=88
+            br 3 (;@1;)
+          end
+          local.get 0
+          i32.const 91
+          i32.store8 offset=88
+          br 2 (;@1;)
+        end
+        local.get 0
+        i32.const 84
+        i32.store8 offset=88
+        br 1 (;@1;)
+      end
+      local.get 0
+      i32.const 81
+      i32.store8 offset=88
+    end
+    local.get 2
+    i32.const 144
+    i32.add
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions4host3log17h93f072e3455d2123E (type 4) (param i32 i32)
     (local i32 i64 i64 i64 i64 i64 i64 i64 i32 i32 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 96
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         block  ;; label = @3
@@ -13393,7 +14709,7 @@
           local.get 0
           i32.const 68
           i32.add
-          call 19
+          call $_ZN16revm_interpreter11interpreter5stack5Stack11pop2_unsafe17hd11983c9ec7c10f1E
           block  ;; label = @4
             block  ;; label = @5
               local.get 2
@@ -13490,7 +14806,7 @@
                 i64.const 0
                 i64.store offset=76 align=4
                 local.get 2
-                i32.const 1054832
+                i32.const 1054848
                 i32.store offset=72
                 local.get 2
                 i32.const 1049804
@@ -13565,14 +14881,14 @@
                 i64.const 3
                 i64.mul
                 i64.add
-                call 69
+                call $_ZN16revm_interpreter3gas3Gas13record_memory17hd4732adc5333f5c8E
                 i32.eqz
                 br_if 2 (;@4;)
                 local.get 0
                 i32.load offset=84
                 local.tee 10
                 local.get 14
-                call 13
+                call $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory6resize17h81ab5ea4f2a66711E
                 local.get 10
                 i32.load offset=24
                 local.set 13
@@ -13587,7 +14903,7 @@
               i32.add
               i32.add
               local.get 11
-              call 78
+              call $_ZN5bytes5bytes5Bytes15copy_from_slice17h5525fc47c66dd636E
             end
             local.get 2
             i32.const 8
@@ -13625,7 +14941,7 @@
             local.get 2
             i32.const 68
             i32.add
-            call 84
+            call $_ZN91_$LT$revm_interpreter..host..fluent..FluentHost$u20$as$u20$revm_interpreter..host..Host$GT$3log17h3c481d6674a8ea9fE
             br 3 (;@1;)
           end
           local.get 0
@@ -13645,105 +14961,14 @@
     local.get 2
     i32.const 96
     i32.add
-    global.set 0)
-  (func (;84;) (type 8) (param i32 i32 i32 i32)
-    (local i32)
-    global.get 0
-    i32.const 48
-    i32.sub
-    local.tee 4
-    global.set 0
-    local.get 4
-    i32.const 44
-    i32.add
-    local.get 1
-    i32.const 16
-    i32.add
-    i32.load align=1
-    i32.store
-    local.get 4
-    i32.const 36
-    i32.add
-    local.get 1
-    i32.const 8
-    i32.add
-    i64.load align=1
-    i64.store align=4
-    local.get 4
-    i32.const 8
-    i32.add
-    local.get 2
-    i32.const 8
-    i32.add
-    i32.load
-    i32.store
-    local.get 4
-    i32.const 20
-    i32.add
-    local.get 3
-    i32.const 8
-    i32.add
-    i64.load align=4
-    i64.store align=4
-    local.get 4
-    local.get 1
-    i64.load align=1
-    i64.store offset=28 align=4
-    local.get 4
-    local.get 2
-    i64.load align=4
-    i64.store
-    local.get 4
-    local.get 3
-    i64.load align=4
-    i64.store offset=12 align=4
-    block  ;; label = @1
-      local.get 0
-      i32.const 600
-      i32.add
-      i32.load
-      local.tee 1
-      local.get 0
-      i32.const 596
-      i32.add
-      i32.load
-      i32.ne
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 592
-      i32.add
-      local.get 1
-      call 241
-      local.get 0
-      i32.load offset=600
-      local.set 1
-    end
-    local.get 0
-    i32.load offset=592
-    local.get 1
-    i32.const 48
-    i32.mul
-    i32.add
-    local.get 4
-    i32.const 48
-    call 323
-    drop
-    local.get 0
-    local.get 1
-    i32.const 1
-    i32.add
-    i32.store offset=600
-    local.get 4
-    i32.const 48
-    i32.add
-    global.set 0)
-  (func (;85;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions4host3log17hd9462f6da0590324E (type 4) (param i32 i32)
     (local i32 i32 i64 i64 i64 i64 i64 i64 i64 i32 i32 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 144
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         block  ;; label = @3
@@ -13767,1154 +14992,7 @@
                 i32.const 68
                 i32.add
                 local.tee 3
-                call 19
-                block  ;; label = @7
-                  block  ;; label = @8
-                    local.get 2
-                    i32.const 56
-                    i32.add
-                    i64.load
-                    i64.const 0
-                    i64.ne
-                    br_if 0 (;@8;)
-                    local.get 2
-                    i32.const 64
-                    i32.add
-                    i64.load
-                    i64.const 0
-                    i64.ne
-                    br_if 0 (;@8;)
-                    local.get 2
-                    i32.const 72
-                    i32.add
-                    i64.load
-                    i64.eqz
-                    br_if 1 (;@7;)
-                  end
-                  local.get 0
-                  i32.const 84
-                  i32.store8 offset=88
-                  br 6 (;@1;)
-                end
-                block  ;; label = @7
-                  local.get 0
-                  i64.load offset=16
-                  i64.const -1
-                  local.get 0
-                  i32.const 24
-                  i32.add
-                  i64.load
-                  local.tee 4
-                  local.get 2
-                  i64.load offset=48
-                  local.tee 5
-                  i64.const 3
-                  i64.shl
-                  i64.const 34359738360
-                  i64.and
-                  i64.const 1125
-                  i64.add
-                  local.tee 6
-                  i64.add
-                  local.tee 7
-                  local.get 7
-                  local.get 4
-                  i64.lt_u
-                  select
-                  local.tee 4
-                  i64.ge_u
-                  br_if 0 (;@7;)
-                  local.get 0
-                  i32.const 80
-                  i32.store8 offset=88
-                  br 6 (;@1;)
-                end
-                local.get 2
-                i64.load offset=40
-                local.set 8
-                local.get 2
-                i64.load offset=32
-                local.set 9
-                local.get 2
-                i64.load offset=24
-                local.set 7
-                local.get 2
-                i64.load offset=16
-                local.set 10
-                local.get 0
-                local.get 4
-                i64.store offset=24
-                local.get 0
-                i32.const 32
-                i32.add
-                local.tee 11
-                local.get 11
-                i64.load
-                local.get 6
-                i64.add
-                i64.store
-                block  ;; label = @7
-                  block  ;; label = @8
-                    local.get 5
-                    i32.wrap_i64
-                    local.tee 11
-                    br_if 0 (;@8;)
-                    local.get 2
-                    i64.const 0
-                    i64.store offset=92 align=4
-                    local.get 2
-                    i32.const 1054832
-                    i32.store offset=88
-                    local.get 2
-                    i32.const 1049804
-                    i32.store offset=84
-                    br 1 (;@7;)
-                  end
-                  local.get 7
-                  i64.const 0
-                  i64.ne
-                  br_if 3 (;@4;)
-                  local.get 9
-                  i64.const 0
-                  i64.ne
-                  br_if 3 (;@4;)
-                  local.get 8
-                  i64.eqz
-                  i32.eqz
-                  br_if 3 (;@4;)
-                  i32.const -1
-                  local.get 10
-                  i32.wrap_i64
-                  local.tee 12
-                  local.get 11
-                  i32.add
-                  local.tee 13
-                  local.get 13
-                  local.get 12
-                  i32.lt_u
-                  select
-                  local.tee 13
-                  i32.const 0
-                  local.get 13
-                  i32.sub
-                  i32.const 31
-                  i32.and
-                  i32.add
-                  local.tee 14
-                  local.get 13
-                  i32.lt_u
-                  br_if 4 (;@3;)
-                  block  ;; label = @8
-                    local.get 14
-                    local.get 0
-                    i32.load offset=84
-                    local.tee 13
-                    i32.load offset=8
-                    local.get 13
-                    i32.load offset=24
-                    local.tee 15
-                    i32.sub
-                    i32.le_u
-                    br_if 0 (;@8;)
-                    block  ;; label = @9
-                      local.get 0
-                      i32.const 16
-                      i32.add
-                      local.get 14
-                      i32.const 5
-                      i32.shr_u
-                      i64.extend_i32_u
-                      local.tee 4
-                      local.get 4
-                      i64.mul
-                      i64.const 9
-                      i64.shr_u
-                      local.get 4
-                      i64.const 3
-                      i64.mul
-                      i64.add
-                      call 69
-                      br_if 0 (;@9;)
-                      local.get 0
-                      i32.const 82
-                      i32.store8 offset=88
-                      br 8 (;@1;)
-                    end
-                    local.get 0
-                    i32.load offset=84
-                    local.tee 13
-                    local.get 14
-                    call 13
-                    local.get 13
-                    i32.load offset=24
-                    local.set 15
-                  end
-                  local.get 2
-                  i32.const 84
-                  i32.add
-                  local.get 13
-                  i32.load
-                  local.get 15
-                  local.get 12
-                  i32.add
-                  i32.add
-                  local.get 11
-                  call 78
-                end
-                i32.const 2
-                local.set 11
-                local.get 0
-                i32.load offset=76
-                i32.const 2
-                i32.lt_u
-                br_if 4 (;@2;)
-                local.get 2
-                i32.const 8
-                i32.add
-                i32.const 2
-                call 86
-                local.get 2
-                i32.const 0
-                i32.store offset=108
-                local.get 2
-                local.get 2
-                i64.load offset=8
-                i64.store offset=100 align=4
-                loop  ;; label = @7
-                  block  ;; label = @8
-                    local.get 11
-                    br_if 0 (;@8;)
-                    local.get 2
-                    i32.const 16
-                    i32.add
-                    i32.const 8
-                    i32.add
-                    local.get 0
-                    i32.load offset=80
-                    local.tee 0
-                    i32.const 112
-                    i32.add
-                    i64.load align=1
-                    i64.store
-                    local.get 2
-                    i32.const 32
-                    i32.add
-                    local.get 0
-                    i32.const 120
-                    i32.add
-                    i32.load align=1
-                    i32.store
-                    local.get 2
-                    local.get 0
-                    i64.load offset=104 align=1
-                    i64.store offset=16
-                    local.get 2
-                    i32.const 112
-                    i32.add
-                    i32.const 8
-                    i32.add
-                    local.get 2
-                    i32.const 84
-                    i32.add
-                    i32.const 8
-                    i32.add
-                    i64.load align=4
-                    i64.store
-                    local.get 2
-                    local.get 2
-                    i64.load offset=84 align=4
-                    i64.store offset=112
-                    local.get 1
-                    local.get 2
-                    i32.const 16
-                    i32.add
-                    local.get 2
-                    i32.const 100
-                    i32.add
-                    local.get 2
-                    i32.const 112
-                    i32.add
-                    call 84
-                    br 7 (;@1;)
-                  end
-                  local.get 2
-                  i32.const 16
-                  i32.add
-                  local.get 3
-                  call 17
-                  local.get 11
-                  i32.const -1
-                  i32.add
-                  local.set 11
-                  local.get 2
-                  i32.const 112
-                  i32.add
-                  local.get 2
-                  i32.const 16
-                  i32.add
-                  call 67
-                  local.get 2
-                  i32.const 100
-                  i32.add
-                  local.get 2
-                  i32.const 112
-                  i32.add
-                  call 87
-                  br 0 (;@7;)
-                end
-              end
-              local.get 0
-              i32.const 87
-              i32.store8 offset=88
-              br 4 (;@1;)
-            end
-            local.get 0
-            i32.const 91
-            i32.store8 offset=88
-            br 3 (;@1;)
-          end
-          local.get 0
-          i32.const 84
-          i32.store8 offset=88
-          br 2 (;@1;)
-        end
-        local.get 0
-        i32.const 81
-        i32.store8 offset=88
-        br 1 (;@1;)
-      end
-      local.get 0
-      i32.const 91
-      i32.store8 offset=88
-      local.get 2
-      i32.const 84
-      i32.add
-      call 63
-    end
-    local.get 2
-    i32.const 144
-    i32.add
-    global.set 0)
-  (func (;86;) (type 4) (param i32 i32)
-    (local i32 i32)
-    block  ;; label = @1
-      block  ;; label = @2
-        local.get 1
-        br_if 0 (;@2;)
-        i32.const 1
-        local.set 2
-        br 1 (;@1;)
-      end
-      i32.const 0
-      i32.load8_u offset=1054852
-      drop
-      i32.const 1
-      local.get 1
-      i32.const 5
-      i32.shl
-      local.tee 3
-      call 237
-      local.tee 2
-      br_if 0 (;@1;)
-      local.get 3
-      call 56
-      unreachable
-    end
-    local.get 0
-    local.get 1
-    i32.store offset=4
-    local.get 0
-    local.get 2
-    i32.store)
-  (func (;87;) (type 4) (param i32 i32)
-    (local i32)
-    block  ;; label = @1
-      local.get 0
-      i32.load offset=8
-      local.tee 2
-      local.get 0
-      i32.load offset=4
-      i32.ne
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 2
-      call 235
-      local.get 0
-      i32.load offset=8
-      local.set 2
-    end
-    local.get 0
-    local.get 2
-    i32.const 1
-    i32.add
-    i32.store offset=8
-    local.get 0
-    i32.load
-    local.get 2
-    i32.const 5
-    i32.shl
-    i32.add
-    local.tee 0
-    local.get 1
-    i64.load align=1
-    i64.store align=1
-    local.get 0
-    i32.const 8
-    i32.add
-    local.get 1
-    i32.const 8
-    i32.add
-    i64.load align=1
-    i64.store align=1
-    local.get 0
-    i32.const 16
-    i32.add
-    local.get 1
-    i32.const 16
-    i32.add
-    i64.load align=1
-    i64.store align=1
-    local.get 0
-    i32.const 24
-    i32.add
-    local.get 1
-    i32.const 24
-    i32.add
-    i64.load align=1
-    i64.store align=1)
-  (func (;88;) (type 4) (param i32 i32)
-    (local i32 i32 i64 i64 i64 i64 i64 i64 i64 i32 i32 i32 i32 i32)
-    global.get 0
-    i32.const 144
-    i32.sub
-    local.tee 2
-    global.set 0
-    block  ;; label = @1
-      block  ;; label = @2
-        block  ;; label = @3
-          block  ;; label = @4
-            block  ;; label = @5
-              block  ;; label = @6
-                local.get 0
-                i32.load8_u offset=89
-                br_if 0 (;@6;)
-                local.get 0
-                i32.const 76
-                i32.add
-                i32.load
-                i32.const 2
-                i32.lt_u
-                br_if 1 (;@5;)
-                local.get 2
-                i32.const 16
-                i32.add
-                local.get 0
-                i32.const 68
-                i32.add
-                local.tee 3
-                call 19
-                block  ;; label = @7
-                  block  ;; label = @8
-                    local.get 2
-                    i32.const 56
-                    i32.add
-                    i64.load
-                    i64.const 0
-                    i64.ne
-                    br_if 0 (;@8;)
-                    local.get 2
-                    i32.const 64
-                    i32.add
-                    i64.load
-                    i64.const 0
-                    i64.ne
-                    br_if 0 (;@8;)
-                    local.get 2
-                    i32.const 72
-                    i32.add
-                    i64.load
-                    i64.eqz
-                    br_if 1 (;@7;)
-                  end
-                  local.get 0
-                  i32.const 84
-                  i32.store8 offset=88
-                  br 6 (;@1;)
-                end
-                block  ;; label = @7
-                  local.get 0
-                  i64.load offset=16
-                  i64.const -1
-                  local.get 0
-                  i32.const 24
-                  i32.add
-                  i64.load
-                  local.tee 4
-                  local.get 2
-                  i64.load offset=48
-                  local.tee 5
-                  i64.const 3
-                  i64.shl
-                  i64.const 34359738360
-                  i64.and
-                  i64.const 1500
-                  i64.add
-                  local.tee 6
-                  i64.add
-                  local.tee 7
-                  local.get 7
-                  local.get 4
-                  i64.lt_u
-                  select
-                  local.tee 4
-                  i64.ge_u
-                  br_if 0 (;@7;)
-                  local.get 0
-                  i32.const 80
-                  i32.store8 offset=88
-                  br 6 (;@1;)
-                end
-                local.get 2
-                i64.load offset=40
-                local.set 8
-                local.get 2
-                i64.load offset=32
-                local.set 9
-                local.get 2
-                i64.load offset=24
-                local.set 7
-                local.get 2
-                i64.load offset=16
-                local.set 10
-                local.get 0
-                local.get 4
-                i64.store offset=24
-                local.get 0
-                i32.const 32
-                i32.add
-                local.tee 11
-                local.get 11
-                i64.load
-                local.get 6
-                i64.add
-                i64.store
-                block  ;; label = @7
-                  block  ;; label = @8
-                    local.get 5
-                    i32.wrap_i64
-                    local.tee 11
-                    br_if 0 (;@8;)
-                    local.get 2
-                    i64.const 0
-                    i64.store offset=92 align=4
-                    local.get 2
-                    i32.const 1054832
-                    i32.store offset=88
-                    local.get 2
-                    i32.const 1049804
-                    i32.store offset=84
-                    br 1 (;@7;)
-                  end
-                  local.get 7
-                  i64.const 0
-                  i64.ne
-                  br_if 3 (;@4;)
-                  local.get 9
-                  i64.const 0
-                  i64.ne
-                  br_if 3 (;@4;)
-                  local.get 8
-                  i64.eqz
-                  i32.eqz
-                  br_if 3 (;@4;)
-                  i32.const -1
-                  local.get 10
-                  i32.wrap_i64
-                  local.tee 12
-                  local.get 11
-                  i32.add
-                  local.tee 13
-                  local.get 13
-                  local.get 12
-                  i32.lt_u
-                  select
-                  local.tee 13
-                  i32.const 0
-                  local.get 13
-                  i32.sub
-                  i32.const 31
-                  i32.and
-                  i32.add
-                  local.tee 14
-                  local.get 13
-                  i32.lt_u
-                  br_if 4 (;@3;)
-                  block  ;; label = @8
-                    local.get 14
-                    local.get 0
-                    i32.load offset=84
-                    local.tee 13
-                    i32.load offset=8
-                    local.get 13
-                    i32.load offset=24
-                    local.tee 15
-                    i32.sub
-                    i32.le_u
-                    br_if 0 (;@8;)
-                    block  ;; label = @9
-                      local.get 0
-                      i32.const 16
-                      i32.add
-                      local.get 14
-                      i32.const 5
-                      i32.shr_u
-                      i64.extend_i32_u
-                      local.tee 4
-                      local.get 4
-                      i64.mul
-                      i64.const 9
-                      i64.shr_u
-                      local.get 4
-                      i64.const 3
-                      i64.mul
-                      i64.add
-                      call 69
-                      br_if 0 (;@9;)
-                      local.get 0
-                      i32.const 82
-                      i32.store8 offset=88
-                      br 8 (;@1;)
-                    end
-                    local.get 0
-                    i32.load offset=84
-                    local.tee 13
-                    local.get 14
-                    call 13
-                    local.get 13
-                    i32.load offset=24
-                    local.set 15
-                  end
-                  local.get 2
-                  i32.const 84
-                  i32.add
-                  local.get 13
-                  i32.load
-                  local.get 15
-                  local.get 12
-                  i32.add
-                  i32.add
-                  local.get 11
-                  call 78
-                end
-                i32.const 3
-                local.set 11
-                local.get 0
-                i32.load offset=76
-                i32.const 3
-                i32.lt_u
-                br_if 4 (;@2;)
-                local.get 2
-                i32.const 8
-                i32.add
-                i32.const 3
-                call 86
-                local.get 2
-                i32.const 0
-                i32.store offset=108
-                local.get 2
-                local.get 2
-                i64.load offset=8
-                i64.store offset=100 align=4
-                loop  ;; label = @7
-                  block  ;; label = @8
-                    local.get 11
-                    br_if 0 (;@8;)
-                    local.get 2
-                    i32.const 16
-                    i32.add
-                    i32.const 8
-                    i32.add
-                    local.get 0
-                    i32.load offset=80
-                    local.tee 0
-                    i32.const 112
-                    i32.add
-                    i64.load align=1
-                    i64.store
-                    local.get 2
-                    i32.const 32
-                    i32.add
-                    local.get 0
-                    i32.const 120
-                    i32.add
-                    i32.load align=1
-                    i32.store
-                    local.get 2
-                    local.get 0
-                    i64.load offset=104 align=1
-                    i64.store offset=16
-                    local.get 2
-                    i32.const 112
-                    i32.add
-                    i32.const 8
-                    i32.add
-                    local.get 2
-                    i32.const 84
-                    i32.add
-                    i32.const 8
-                    i32.add
-                    i64.load align=4
-                    i64.store
-                    local.get 2
-                    local.get 2
-                    i64.load offset=84 align=4
-                    i64.store offset=112
-                    local.get 1
-                    local.get 2
-                    i32.const 16
-                    i32.add
-                    local.get 2
-                    i32.const 100
-                    i32.add
-                    local.get 2
-                    i32.const 112
-                    i32.add
-                    call 84
-                    br 7 (;@1;)
-                  end
-                  local.get 2
-                  i32.const 16
-                  i32.add
-                  local.get 3
-                  call 17
-                  local.get 11
-                  i32.const -1
-                  i32.add
-                  local.set 11
-                  local.get 2
-                  i32.const 112
-                  i32.add
-                  local.get 2
-                  i32.const 16
-                  i32.add
-                  call 67
-                  local.get 2
-                  i32.const 100
-                  i32.add
-                  local.get 2
-                  i32.const 112
-                  i32.add
-                  call 87
-                  br 0 (;@7;)
-                end
-              end
-              local.get 0
-              i32.const 87
-              i32.store8 offset=88
-              br 4 (;@1;)
-            end
-            local.get 0
-            i32.const 91
-            i32.store8 offset=88
-            br 3 (;@1;)
-          end
-          local.get 0
-          i32.const 84
-          i32.store8 offset=88
-          br 2 (;@1;)
-        end
-        local.get 0
-        i32.const 81
-        i32.store8 offset=88
-        br 1 (;@1;)
-      end
-      local.get 0
-      i32.const 91
-      i32.store8 offset=88
-      local.get 2
-      i32.const 84
-      i32.add
-      call 63
-    end
-    local.get 2
-    i32.const 144
-    i32.add
-    global.set 0)
-  (func (;89;) (type 4) (param i32 i32)
-    (local i32 i32 i64 i64 i64 i64 i64 i64 i64 i32 i32 i32 i32 i32)
-    global.get 0
-    i32.const 144
-    i32.sub
-    local.tee 2
-    global.set 0
-    block  ;; label = @1
-      block  ;; label = @2
-        block  ;; label = @3
-          block  ;; label = @4
-            block  ;; label = @5
-              local.get 0
-              i32.load8_u offset=89
-              br_if 0 (;@5;)
-              local.get 0
-              i32.const 76
-              i32.add
-              i32.load
-              i32.const 2
-              i32.lt_u
-              br_if 1 (;@4;)
-              local.get 2
-              i32.const 16
-              i32.add
-              local.get 0
-              i32.const 68
-              i32.add
-              local.tee 3
-              call 19
-              block  ;; label = @6
-                block  ;; label = @7
-                  local.get 2
-                  i32.const 56
-                  i32.add
-                  i64.load
-                  i64.const 0
-                  i64.ne
-                  br_if 0 (;@7;)
-                  local.get 2
-                  i32.const 64
-                  i32.add
-                  i64.load
-                  i64.const 0
-                  i64.ne
-                  br_if 0 (;@7;)
-                  local.get 2
-                  i32.const 72
-                  i32.add
-                  i64.load
-                  i64.eqz
-                  br_if 1 (;@6;)
-                end
-                local.get 0
-                i32.const 84
-                i32.store8 offset=88
-                br 5 (;@1;)
-              end
-              block  ;; label = @6
-                local.get 0
-                i64.load offset=16
-                i64.const -1
-                local.get 0
-                i32.const 24
-                i32.add
-                i64.load
-                local.tee 4
-                local.get 2
-                i64.load offset=48
-                local.tee 5
-                i64.const 3
-                i64.shl
-                i64.const 34359738360
-                i64.and
-                i64.const 750
-                i64.add
-                local.tee 6
-                i64.add
-                local.tee 7
-                local.get 7
-                local.get 4
-                i64.lt_u
-                select
-                local.tee 4
-                i64.ge_u
-                br_if 0 (;@6;)
-                local.get 0
-                i32.const 80
-                i32.store8 offset=88
-                br 5 (;@1;)
-              end
-              local.get 2
-              i64.load offset=40
-              local.set 8
-              local.get 2
-              i64.load offset=32
-              local.set 9
-              local.get 2
-              i64.load offset=24
-              local.set 7
-              local.get 2
-              i64.load offset=16
-              local.set 10
-              local.get 0
-              local.get 4
-              i64.store offset=24
-              local.get 0
-              i32.const 32
-              i32.add
-              local.tee 11
-              local.get 11
-              i64.load
-              local.get 6
-              i64.add
-              i64.store
-              block  ;; label = @6
-                block  ;; label = @7
-                  local.get 5
-                  i32.wrap_i64
-                  local.tee 11
-                  br_if 0 (;@7;)
-                  local.get 2
-                  i64.const 0
-                  i64.store offset=92 align=4
-                  local.get 2
-                  i32.const 1054832
-                  i32.store offset=88
-                  local.get 2
-                  i32.const 1049804
-                  i32.store offset=84
-                  br 1 (;@6;)
-                end
-                local.get 7
-                i64.const 0
-                i64.ne
-                br_if 3 (;@3;)
-                local.get 9
-                i64.const 0
-                i64.ne
-                br_if 3 (;@3;)
-                local.get 8
-                i64.eqz
-                i32.eqz
-                br_if 3 (;@3;)
-                i32.const -1
-                local.get 10
-                i32.wrap_i64
-                local.tee 12
-                local.get 11
-                i32.add
-                local.tee 13
-                local.get 13
-                local.get 12
-                i32.lt_u
-                select
-                local.tee 13
-                i32.const 0
-                local.get 13
-                i32.sub
-                i32.const 31
-                i32.and
-                i32.add
-                local.tee 14
-                local.get 13
-                i32.lt_u
-                br_if 4 (;@2;)
-                block  ;; label = @7
-                  local.get 14
-                  local.get 0
-                  i32.load offset=84
-                  local.tee 13
-                  i32.load offset=8
-                  local.get 13
-                  i32.load offset=24
-                  local.tee 15
-                  i32.sub
-                  i32.le_u
-                  br_if 0 (;@7;)
-                  block  ;; label = @8
-                    local.get 0
-                    i32.const 16
-                    i32.add
-                    local.get 14
-                    i32.const 5
-                    i32.shr_u
-                    i64.extend_i32_u
-                    local.tee 4
-                    local.get 4
-                    i64.mul
-                    i64.const 9
-                    i64.shr_u
-                    local.get 4
-                    i64.const 3
-                    i64.mul
-                    i64.add
-                    call 69
-                    br_if 0 (;@8;)
-                    local.get 0
-                    i32.const 82
-                    i32.store8 offset=88
-                    br 7 (;@1;)
-                  end
-                  local.get 0
-                  i32.load offset=84
-                  local.tee 13
-                  local.get 14
-                  call 13
-                  local.get 13
-                  i32.load offset=24
-                  local.set 15
-                end
-                local.get 2
-                i32.const 84
-                i32.add
-                local.get 13
-                i32.load
-                local.get 15
-                local.get 12
-                i32.add
-                i32.add
-                local.get 11
-                call 78
-              end
-              block  ;; label = @6
-                local.get 0
-                i32.load offset=76
-                i32.eqz
-                br_if 0 (;@6;)
-                local.get 2
-                i32.const 8
-                i32.add
-                i32.const 1
-                call 86
-                local.get 2
-                i32.const 0
-                i32.store offset=108
-                local.get 2
-                local.get 2
-                i64.load offset=8
-                i64.store offset=100 align=4
-                local.get 2
-                i32.const 16
-                i32.add
-                local.get 3
-                call 17
-                local.get 2
-                i32.const 112
-                i32.add
-                local.get 2
-                i32.const 16
-                i32.add
-                call 67
-                local.get 2
-                i32.const 100
-                i32.add
-                local.get 2
-                i32.const 112
-                i32.add
-                call 87
-                local.get 2
-                i32.const 16
-                i32.add
-                i32.const 8
-                i32.add
-                local.get 0
-                i32.load offset=80
-                local.tee 0
-                i32.const 112
-                i32.add
-                i64.load align=1
-                i64.store
-                local.get 2
-                i32.const 32
-                i32.add
-                local.get 0
-                i32.const 120
-                i32.add
-                i32.load align=1
-                i32.store
-                local.get 2
-                local.get 0
-                i64.load offset=104 align=1
-                i64.store offset=16
-                local.get 2
-                i32.const 112
-                i32.add
-                i32.const 8
-                i32.add
-                local.get 2
-                i32.const 84
-                i32.add
-                i32.const 8
-                i32.add
-                i64.load align=4
-                i64.store
-                local.get 2
-                local.get 2
-                i64.load offset=84 align=4
-                i64.store offset=112
-                local.get 1
-                local.get 2
-                i32.const 16
-                i32.add
-                local.get 2
-                i32.const 100
-                i32.add
-                local.get 2
-                i32.const 112
-                i32.add
-                call 84
-                br 5 (;@1;)
-              end
-              local.get 0
-              i32.const 91
-              i32.store8 offset=88
-              local.get 2
-              i32.const 84
-              i32.add
-              call 63
-              br 4 (;@1;)
-            end
-            local.get 0
-            i32.const 87
-            i32.store8 offset=88
-            br 3 (;@1;)
-          end
-          local.get 0
-          i32.const 91
-          i32.store8 offset=88
-          br 2 (;@1;)
-        end
-        local.get 0
-        i32.const 84
-        i32.store8 offset=88
-        br 1 (;@1;)
-      end
-      local.get 0
-      i32.const 81
-      i32.store8 offset=88
-    end
-    local.get 2
-    i32.const 144
-    i32.add
-    global.set 0)
-  (func (;90;) (type 4) (param i32 i32)
-    (local i32 i32 i64 i64 i64 i64 i64 i64 i64 i32 i32 i32 i32 i32)
-    global.get 0
-    i32.const 144
-    i32.sub
-    local.tee 2
-    global.set 0
-    block  ;; label = @1
-      block  ;; label = @2
-        block  ;; label = @3
-          block  ;; label = @4
-            block  ;; label = @5
-              block  ;; label = @6
-                local.get 0
-                i32.load8_u offset=89
-                br_if 0 (;@6;)
-                local.get 0
-                i32.const 76
-                i32.add
-                i32.load
-                i32.const 2
-                i32.lt_u
-                br_if 1 (;@5;)
-                local.get 2
-                i32.const 16
-                i32.add
-                local.get 0
-                i32.const 68
-                i32.add
-                local.tee 3
-                call 19
+                call $_ZN16revm_interpreter11interpreter5stack5Stack11pop2_unsafe17hd11983c9ec7c10f1E
                 block  ;; label = @7
                   block  ;; label = @8
                     local.get 2
@@ -15010,7 +15088,7 @@
                     i64.const 0
                     i64.store offset=92 align=4
                     local.get 2
-                    i32.const 1054832
+                    i32.const 1054848
                     i32.store offset=88
                     local.get 2
                     i32.const 1049804
@@ -15080,7 +15158,7 @@
                       i64.const 3
                       i64.mul
                       i64.add
-                      call 69
+                      call $_ZN16revm_interpreter3gas3Gas13record_memory17hd4732adc5333f5c8E
                       br_if 0 (;@9;)
                       local.get 0
                       i32.const 82
@@ -15091,7 +15169,7 @@
                     i32.load offset=84
                     local.tee 13
                     local.get 14
-                    call 13
+                    call $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory6resize17h81ab5ea4f2a66711E
                     local.get 13
                     i32.load offset=24
                     local.set 15
@@ -15106,7 +15184,7 @@
                   i32.add
                   i32.add
                   local.get 11
-                  call 78
+                  call $_ZN5bytes5bytes5Bytes15copy_from_slice17h5525fc47c66dd636E
                 end
                 i32.const 4
                 local.set 11
@@ -15119,7 +15197,7 @@
                 i32.const 8
                 i32.add
                 i32.const 4
-                call 86
+                call $_ZN5alloc7raw_vec19RawVec$LT$T$C$A$GT$11allocate_in17h452847963d6fe6cfE
                 local.get 2
                 i32.const 0
                 i32.store offset=108
@@ -15181,14 +15259,14 @@
                     local.get 2
                     i32.const 112
                     i32.add
-                    call 84
+                    call $_ZN91_$LT$revm_interpreter..host..fluent..FluentHost$u20$as$u20$revm_interpreter..host..Host$GT$3log17h3c481d6674a8ea9fE
                     br 7 (;@1;)
                   end
                   local.get 2
                   i32.const 16
                   i32.add
                   local.get 3
-                  call 17
+                  call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
                   local.get 11
                   i32.const -1
                   i32.add
@@ -15199,14 +15277,14 @@
                   local.get 2
                   i32.const 16
                   i32.add
-                  call 67
+                  call $_ZN5ruint5bytes42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$11to_be_bytes17h8500c5533b092a39E
                   local.get 2
                   i32.const 100
                   i32.add
                   local.get 2
                   i32.const 112
                   i32.add
-                  call 87
+                  call $_ZN5alloc3vec16Vec$LT$T$C$A$GT$4push17h6128cc9e362182f5E
                   br 0 (;@7;)
                 end
               end
@@ -15236,23 +15314,23 @@
       local.get 2
       i32.const 84
       i32.add
-      call 63
+      call $_ZN4core3ptr52drop_in_place$LT$alloy_primitives..bytes_..Bytes$GT$17h6dfb868a0b1f26d6E
     end
     local.get 2
     i32.const 144
     i32.add
-    global.set 0)
-  (func (;91;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions4host4call17hc2dbdd347129afd5E (type 4) (param i32 i32)
     i32.const 0
     local.get 0
-    call 62)
-  (func (;92;) (type 4) (param i32 i32)
+    call $_ZN16revm_interpreter12instructions4host10call_inner17h11b184bb0eec2447E)
+  (func $_ZN16revm_interpreter12instructions4host5sload17haacebf1fcf265926E (type 4) (param i32 i32)
     (local i32 i32 i64 i64)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 128
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         block  ;; label = @3
@@ -15268,7 +15346,7 @@
           local.get 0
           i32.const 68
           i32.add
-          call 17
+          call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
           local.get 2
           i32.const 64
           i32.add
@@ -15299,7 +15377,7 @@
           local.get 2
           i32.const 64
           i32.add
-          call 0
+          call $_ZN14fluentbase_sdk8bindings12_zktrie_load17h5dacc55b0acc0547E
           local.get 2
           i32.const 96
           i32.add
@@ -15480,18 +15558,18 @@
     local.get 2
     i32.const 128
     i32.add
-    global.set 0)
-  (func (;93;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions4host5tload17h26f02c25a7f4146eE (type 4) (param i32 i32)
     local.get 0
     i32.const 90
     i32.store8 offset=88)
-  (func (;94;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions4host6create17hb891d3e2d8e198baE (type 4) (param i32 i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 16
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     local.get 2
     i32.const 0
     i32.store offset=12
@@ -15499,26 +15577,26 @@
     local.get 2
     i32.const 12
     i32.add
-    call 82
+    call $_ZN16revm_interpreter12instructions4host21prepare_create_inputs17h6fd31d994882df7eE
     block  ;; label = @1
       local.get 2
       i32.load offset=12
       i32.eqz
       br_if 0 (;@1;)
-      call 95
+      call $_ZN91_$LT$revm_interpreter..host..fluent..FluentHost$u20$as$u20$revm_interpreter..host..Host$GT$6create17h70c9cc5acbdfe64aE
       unreachable
     end
     local.get 2
     i32.const 16
     i32.add
-    global.set 0)
-  (func (;95;) (type 10)
+    global.set $__stack_pointer)
+  (func $_ZN91_$LT$revm_interpreter..host..fluent..FluentHost$u20$as$u20$revm_interpreter..host..Host$GT$6create17h70c9cc5acbdfe64aE (type 10)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 32
     i32.sub
     local.tee 0
-    global.set 0
+    global.set $__stack_pointer
     local.get 0
     i32.const 20
     i32.add
@@ -15528,24 +15606,24 @@
     i32.const 1
     i32.store offset=12
     local.get 0
-    i32.const 1051760
+    i32.const 1051792
     i32.store offset=8
     local.get 0
-    i32.const 1054832
+    i32.const 1054848
     i32.store offset=16
     local.get 0
     i32.const 8
     i32.add
-    i32.const 1051768
-    call 65
+    i32.const 1051800
+    call $_ZN4core9panicking9panic_fmt17h78607b33a29a727dE
     unreachable)
-  (func (;96;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions4host6create17hc55071fd8b1d72bbE (type 4) (param i32 i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 16
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     local.get 2
     i32.const 0
     i32.store offset=12
@@ -15553,26 +15631,26 @@
     local.get 2
     i32.const 12
     i32.add
-    call 80
+    call $_ZN16revm_interpreter12instructions4host21prepare_create_inputs17ha5897f422a449596E
     block  ;; label = @1
       local.get 2
       i32.load offset=12
       i32.eqz
       br_if 0 (;@1;)
-      call 95
+      call $_ZN91_$LT$revm_interpreter..host..fluent..FluentHost$u20$as$u20$revm_interpreter..host..Host$GT$6create17h70c9cc5acbdfe64aE
       unreachable
     end
     local.get 2
     i32.const 16
     i32.add
-    global.set 0)
-  (func (;97;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions4host6sstore17hec6e21385bf0a71dE (type 4) (param i32 i32)
     (local i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i64 i64 i64 i64)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 320
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         block  ;; label = @3
@@ -15601,7 +15679,7 @@
                 local.get 0
                 i32.const 68
                 i32.add
-                call 19
+                call $_ZN16revm_interpreter11interpreter5stack5Stack11pop2_unsafe17hd11983c9ec7c10f1E
                 local.get 2
                 i32.const 192
                 i32.add
@@ -15691,14 +15769,13 @@
                 local.get 2
                 i32.const 192
                 i32.add
-                call 1
+                call $_ZN14fluentbase_sdk8bindings13_zktrie_store17h31a2f7ef003d593dE
                 local.get 2
                 i32.const 224
                 i32.add
                 i32.const 0
                 i32.const 64
-                call 324
-                drop
+                memory.fill
                 local.get 2
                 i32.const 96
                 i32.add
@@ -15706,8 +15783,7 @@
                 i32.const 224
                 i32.add
                 i32.const 96
-                call 323
-                drop
+                memory.copy
                 local.get 2
                 i32.const 8
                 i32.add
@@ -15890,7 +15966,7 @@
                   local.get 2
                   i32.const 96
                   i32.add
-                  call 39
+                  call $_ZN69_$LT$T$u20$as$u20$core..array..equality..SpecArrayEq$LT$U$C$_$GT$$GT$7spec_eq17hfd0ca212b18d6496E
                   br_if 0 (;@7;)
                   local.get 2
                   i32.const 192
@@ -15898,7 +15974,7 @@
                   local.get 2
                   i32.const 96
                   i32.add
-                  call 39
+                  call $_ZN69_$LT$T$u20$as$u20$core..array..equality..SpecArrayEq$LT$U$C$_$GT$$GT$7spec_eq17hfd0ca212b18d6496E
                   i32.eqz
                   br_if 0 (;@7;)
                   i64.const 22100
@@ -15907,7 +15983,7 @@
                   i32.const 192
                   i32.add
                   i32.const 1049040
-                  call 39
+                  call $_ZN69_$LT$T$u20$as$u20$core..array..equality..SpecArrayEq$LT$U$C$_$GT$$GT$7spec_eq17hfd0ca212b18d6496E
                   select
                   local.set 20
                 end
@@ -15950,14 +16026,14 @@
                 local.get 2
                 i32.const 64
                 i32.add
-                call 39
+                call $_ZN69_$LT$T$u20$as$u20$core..array..equality..SpecArrayEq$LT$U$C$_$GT$$GT$7spec_eq17hfd0ca212b18d6496E
                 br_if 4 (;@2;)
                 block  ;; label = @7
                   local.get 2
                   local.get 2
                   i32.const 32
                   i32.add
-                  call 39
+                  call $_ZN69_$LT$T$u20$as$u20$core..array..equality..SpecArrayEq$LT$U$C$_$GT$$GT$7spec_eq17hfd0ca212b18d6496E
                   i32.eqz
                   br_if 0 (;@7;)
                   i64.const 4800
@@ -15966,14 +16042,14 @@
                   i32.const 64
                   i32.add
                   i32.const 1049040
-                  call 39
+                  call $_ZN69_$LT$T$u20$as$u20$core..array..equality..SpecArrayEq$LT$U$C$_$GT$$GT$7spec_eq17hfd0ca212b18d6496E
                   br_if 5 (;@2;)
                 end
                 i64.const 0
                 local.set 18
                 local.get 2
                 i32.const 1049040
-                call 36
+                call $_ZN4core3cmp9PartialEq2ne17h890fd8e14ff88a52E
                 i32.eqz
                 br_if 3 (;@3;)
                 i64.const -4800
@@ -15982,7 +16058,7 @@
                 i32.const 32
                 i32.add
                 i32.const 1049040
-                call 39
+                call $_ZN69_$LT$T$u20$as$u20$core..array..equality..SpecArrayEq$LT$U$C$_$GT$$GT$7spec_eq17hfd0ca212b18d6496E
                 i32.eqz
                 br_if 2 (;@4;)
                 br 3 (;@3;)
@@ -16003,7 +16079,7 @@
           i32.const 64
           i32.add
           i32.const 1049040
-          call 39
+          call $_ZN69_$LT$T$u20$as$u20$core..array..equality..SpecArrayEq$LT$U$C$_$GT$$GT$7spec_eq17hfd0ca212b18d6496E
           select
           local.set 18
         end
@@ -16011,13 +16087,13 @@
         local.get 2
         i32.const 64
         i32.add
-        call 39
+        call $_ZN69_$LT$T$u20$as$u20$core..array..equality..SpecArrayEq$LT$U$C$_$GT$$GT$7spec_eq17hfd0ca212b18d6496E
         i32.eqz
         br_if 0 (;@2;)
         block  ;; label = @3
           local.get 2
           i32.const 1049040
-          call 39
+          call $_ZN69_$LT$T$u20$as$u20$core..array..equality..SpecArrayEq$LT$U$C$_$GT$$GT$7spec_eq17hfd0ca212b18d6496E
           br_if 0 (;@3;)
           local.get 18
           i64.const 2800
@@ -16043,14 +16119,14 @@
     local.get 2
     i32.const 320
     i32.add
-    global.set 0)
-  (func (;98;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions4host7balance17hc5033a19f4fecbdbE (type 4) (param i32 i32)
     (local i32 i64 i64 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 64
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -16069,12 +16145,12 @@
       local.get 0
       i32.const 68
       i32.add
-      call 17
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
       local.get 2
       local.get 2
       i32.const 32
       i32.add
-      call 67
+      call $_ZN5ruint5bytes42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$11to_be_bytes17h8500c5533b092a39E
       block  ;; label = @2
         local.get 0
         i64.load offset=16
@@ -16156,14 +16232,14 @@
     local.get 2
     i32.const 64
     i32.add
-    global.set 0)
-  (func (;99;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions4host9blockhash17h1ea1e957d4d03281E (type 4) (param i32 i32)
     (local i32 i64 i64 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 112
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -16254,7 +16330,7 @@
         i32.const -32
         i32.add
         local.tee 0
-        call 28
+        call $_ZN5ruint3add42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$15overflowing_sub17h23f74ed7a9b46f7eE
         block  ;; label = @3
           block  ;; label = @4
             local.get 2
@@ -16333,7 +16409,7 @@
         local.get 2
         i32.const 40
         i32.add
-        call 24
+        call $_ZN5ruint5bytes42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$13from_be_bytes17h0c680f4a4c5d4c24E
         local.get 0
         i32.const 24
         i32.add
@@ -16377,12 +16453,12 @@
     local.get 2
     i32.const 112
     i32.add
-    global.set 0)
-  (func (;100;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions4host9call_code17hf4fe3bba01d8f816E (type 4) (param i32 i32)
     i32.const 1
     local.get 0
-    call 62)
-  (func (;101;) (type 5) (param i32) (result i32)
+    call $_ZN16revm_interpreter12instructions4host10call_inner17h11b184bb0eec2447E)
+  (func $_ZN16revm_interpreter12instructions4i2569i256_sign17heb2d3a3890da611cE (type 5) (param i32) (result i32)
     block  ;; label = @1
       local.get 0
       i64.load offset=24
@@ -16394,18 +16470,18 @@
     end
     local.get 0
     i32.const 1049040
-    call 36)
-  (func (;102;) (type 3) (param i32 i32) (result i32)
+    call $_ZN4core3cmp9PartialEq2ne17h890fd8e14ff88a52E)
+  (func $_ZN16revm_interpreter12instructions4i2568i256_cmp17h8016e799301f4d9fE (type 3) (param i32 i32) (result i32)
     (local i32 i32)
     block  ;; label = @1
       i32.const -1
       local.get 0
-      call 101
+      call $_ZN16revm_interpreter12instructions4i2569i256_sign17heb2d3a3890da611cE
       local.tee 2
       i32.const 255
       i32.and
       local.get 1
-      call 101
+      call $_ZN16revm_interpreter12instructions4i2569i256_sign17heb2d3a3890da611cE
       local.tee 3
       i32.const 255
       i32.and
@@ -16420,11 +16496,11 @@
       br_if 0 (;@1;)
       local.get 0
       local.get 1
-      call 103
+      call $_ZN5ruint3cmp69_$LT$impl$u20$core..cmp..Ord$u20$for$u20$ruint..Uint$LT$_$C$_$GT$$GT$3cmp17h35b780eff5efc12eE
       local.set 2
     end
     local.get 2)
-  (func (;103;) (type 3) (param i32 i32) (result i32)
+  (func $_ZN5ruint3cmp69_$LT$impl$u20$core..cmp..Ord$u20$for$u20$ruint..Uint$LT$_$C$_$GT$$GT$3cmp17h35b780eff5efc12eE (type 3) (param i32 i32) (result i32)
     (local i32 i32 i32 i32 i64 i64)
     i32.const 24
     local.set 2
@@ -16466,728 +16542,7 @@
       br_if 0 (;@1;)
     end
     local.get 3)
-  (func (;104;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    i32.const 91
-    local.set 4
-    block  ;; label = @1
-      local.get 0
-      i32.const 76
-      i32.add
-      i32.load
-      local.tee 5
-      i32.const 5
-      i32.lt_u
-      br_if 0 (;@1;)
-      i32.const 92
-      local.set 4
-      local.get 5
-      i32.const 1
-      i32.add
-      local.tee 6
-      i32.const 1024
-      i32.gt_u
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 6
-      i32.store offset=76
-      local.get 0
-      i32.load offset=68
-      local.get 5
-      i32.const 5
-      i32.shl
-      i32.add
-      local.tee 0
-      local.get 0
-      i32.const -160
-      i32.add
-      local.tee 4
-      i64.load
-      i64.store
-      local.get 0
-      i32.const 8
-      i32.add
-      local.get 4
-      i32.const 8
-      i32.add
-      i64.load
-      i64.store
-      local.get 0
-      i32.const 16
-      i32.add
-      local.get 4
-      i32.const 16
-      i32.add
-      i64.load
-      i64.store
-      local.get 0
-      i32.const 24
-      i32.add
-      local.get 4
-      i32.const 24
-      i32.add
-      i64.load
-      i64.store
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.store8 offset=88)
-  (func (;105;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    i32.const 91
-    local.set 4
-    block  ;; label = @1
-      local.get 0
-      i32.const 76
-      i32.add
-      i32.load
-      local.tee 5
-      i32.const 14
-      i32.lt_u
-      br_if 0 (;@1;)
-      i32.const 92
-      local.set 4
-      local.get 5
-      i32.const 1
-      i32.add
-      local.tee 6
-      i32.const 1024
-      i32.gt_u
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 6
-      i32.store offset=76
-      local.get 0
-      i32.load offset=68
-      local.get 5
-      i32.const 5
-      i32.shl
-      i32.add
-      local.tee 0
-      local.get 0
-      i32.const -448
-      i32.add
-      local.tee 4
-      i64.load
-      i64.store
-      local.get 0
-      i32.const 8
-      i32.add
-      local.get 4
-      i32.const 8
-      i32.add
-      i64.load
-      i64.store
-      local.get 0
-      i32.const 16
-      i32.add
-      local.get 4
-      i32.const 16
-      i32.add
-      i64.load
-      i64.store
-      local.get 0
-      i32.const 24
-      i32.add
-      local.get 4
-      i32.const 24
-      i32.add
-      i64.load
-      i64.store
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.store8 offset=88)
-  (func (;106;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    i32.const 91
-    local.set 4
-    block  ;; label = @1
-      local.get 0
-      i32.const 76
-      i32.add
-      i32.load
-      local.tee 5
-      i32.const 16
-      i32.lt_u
-      br_if 0 (;@1;)
-      i32.const 92
-      local.set 4
-      local.get 5
-      i32.const 1
-      i32.add
-      local.tee 6
-      i32.const 1024
-      i32.gt_u
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 6
-      i32.store offset=76
-      local.get 0
-      i32.load offset=68
-      local.get 5
-      i32.const 5
-      i32.shl
-      i32.add
-      local.tee 0
-      local.get 0
-      i32.const -512
-      i32.add
-      local.tee 4
-      i64.load
-      i64.store
-      local.get 0
-      i32.const 8
-      i32.add
-      local.get 4
-      i32.const 8
-      i32.add
-      i64.load
-      i64.store
-      local.get 0
-      i32.const 16
-      i32.add
-      local.get 4
-      i32.const 16
-      i32.add
-      i64.load
-      i64.store
-      local.get 0
-      i32.const 24
-      i32.add
-      local.get 4
-      i32.const 24
-      i32.add
-      i64.load
-      i64.store
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.store8 offset=88)
-  (func (;107;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    i32.const 91
-    local.set 4
-    block  ;; label = @1
-      local.get 0
-      i32.const 76
-      i32.add
-      i32.load
-      local.tee 5
-      i32.const 15
-      i32.lt_u
-      br_if 0 (;@1;)
-      i32.const 92
-      local.set 4
-      local.get 5
-      i32.const 1
-      i32.add
-      local.tee 6
-      i32.const 1024
-      i32.gt_u
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 6
-      i32.store offset=76
-      local.get 0
-      i32.load offset=68
-      local.get 5
-      i32.const 5
-      i32.shl
-      i32.add
-      local.tee 0
-      local.get 0
-      i32.const -480
-      i32.add
-      local.tee 4
-      i64.load
-      i64.store
-      local.get 0
-      i32.const 8
-      i32.add
-      local.get 4
-      i32.const 8
-      i32.add
-      i64.load
-      i64.store
-      local.get 0
-      i32.const 16
-      i32.add
-      local.get 4
-      i32.const 16
-      i32.add
-      i64.load
-      i64.store
-      local.get 0
-      i32.const 24
-      i32.add
-      local.get 4
-      i32.const 24
-      i32.add
-      i64.load
-      i64.store
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.store8 offset=88)
-  (func (;108;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    i32.const 91
-    local.set 4
-    block  ;; label = @1
-      local.get 0
-      i32.const 76
-      i32.add
-      i32.load
-      local.tee 5
-      i32.const 3
-      i32.lt_u
-      br_if 0 (;@1;)
-      i32.const 92
-      local.set 4
-      local.get 5
-      i32.const 1
-      i32.add
-      local.tee 6
-      i32.const 1024
-      i32.gt_u
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 6
-      i32.store offset=76
-      local.get 0
-      i32.load offset=68
-      local.get 5
-      i32.const 5
-      i32.shl
-      i32.add
-      local.tee 0
-      local.get 0
-      i32.const -96
-      i32.add
-      local.tee 4
-      i64.load
-      i64.store
-      local.get 0
-      i32.const 8
-      i32.add
-      local.get 4
-      i32.const 8
-      i32.add
-      i64.load
-      i64.store
-      local.get 0
-      i32.const 16
-      i32.add
-      local.get 4
-      i32.const 16
-      i32.add
-      i64.load
-      i64.store
-      local.get 0
-      i32.const 24
-      i32.add
-      local.get 4
-      i32.const 24
-      i32.add
-      i64.load
-      i64.store
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.store8 offset=88)
-  (func (;109;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    i32.const 91
-    local.set 4
-    block  ;; label = @1
-      local.get 0
-      i32.const 76
-      i32.add
-      i32.load
-      local.tee 5
-      i32.const 10
-      i32.lt_u
-      br_if 0 (;@1;)
-      i32.const 92
-      local.set 4
-      local.get 5
-      i32.const 1
-      i32.add
-      local.tee 6
-      i32.const 1024
-      i32.gt_u
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 6
-      i32.store offset=76
-      local.get 0
-      i32.load offset=68
-      local.get 5
-      i32.const 5
-      i32.shl
-      i32.add
-      local.tee 0
-      local.get 0
-      i32.const -320
-      i32.add
-      local.tee 4
-      i64.load
-      i64.store
-      local.get 0
-      i32.const 8
-      i32.add
-      local.get 4
-      i32.const 8
-      i32.add
-      i64.load
-      i64.store
-      local.get 0
-      i32.const 16
-      i32.add
-      local.get 4
-      i32.const 16
-      i32.add
-      i64.load
-      i64.store
-      local.get 0
-      i32.const 24
-      i32.add
-      local.get 4
-      i32.const 24
-      i32.add
-      i64.load
-      i64.store
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.store8 offset=88)
-  (func (;110;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    i32.const 91
-    local.set 4
-    block  ;; label = @1
-      local.get 0
-      i32.const 76
-      i32.add
-      i32.load
-      local.tee 5
-      i32.const 8
-      i32.lt_u
-      br_if 0 (;@1;)
-      i32.const 92
-      local.set 4
-      local.get 5
-      i32.const 1
-      i32.add
-      local.tee 6
-      i32.const 1024
-      i32.gt_u
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 6
-      i32.store offset=76
-      local.get 0
-      i32.load offset=68
-      local.get 5
-      i32.const 5
-      i32.shl
-      i32.add
-      local.tee 0
-      local.get 0
-      i32.const -256
-      i32.add
-      local.tee 4
-      i64.load
-      i64.store
-      local.get 0
-      i32.const 8
-      i32.add
-      local.get 4
-      i32.const 8
-      i32.add
-      i64.load
-      i64.store
-      local.get 0
-      i32.const 16
-      i32.add
-      local.get 4
-      i32.const 16
-      i32.add
-      i64.load
-      i64.store
-      local.get 0
-      i32.const 24
-      i32.add
-      local.get 4
-      i32.const 24
-      i32.add
-      i64.load
-      i64.store
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.store8 offset=88)
-  (func (;111;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions5stack3dup17h026f962fa3cf71fdE (type 4) (param i32 i32)
     (local i64 i64 i32 i32 i32)
     block  ;; label = @1
       local.get 0
@@ -17290,7 +16645,7 @@
     local.get 0
     local.get 4
     i32.store8 offset=88)
-  (func (;112;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions5stack3dup17h0707228dc2820a4eE (type 4) (param i32 i32)
     (local i64 i64 i32 i32 i32)
     block  ;; label = @1
       local.get 0
@@ -17336,7 +16691,7 @@
       i32.add
       i32.load
       local.tee 5
-      i32.const 4
+      i32.const 5
       i32.lt_u
       br_if 0 (;@1;)
       i32.const 92
@@ -17359,7 +16714,7 @@
       i32.add
       local.tee 0
       local.get 0
-      i32.const -128
+      i32.const -160
       i32.add
       local.tee 4
       i64.load
@@ -17393,110 +16748,7 @@
     local.get 0
     local.get 4
     i32.store8 offset=88)
-  (func (;113;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    i32.const 91
-    local.set 4
-    block  ;; label = @1
-      local.get 0
-      i32.const 76
-      i32.add
-      i32.load
-      local.tee 5
-      i32.const 2
-      i32.lt_u
-      br_if 0 (;@1;)
-      i32.const 92
-      local.set 4
-      local.get 5
-      i32.const 1
-      i32.add
-      local.tee 6
-      i32.const 1024
-      i32.gt_u
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 6
-      i32.store offset=76
-      local.get 0
-      i32.load offset=68
-      local.get 5
-      i32.const 5
-      i32.shl
-      i32.add
-      local.tee 0
-      local.get 0
-      i32.const -64
-      i32.add
-      local.tee 4
-      i64.load
-      i64.store
-      local.get 0
-      i32.const 8
-      i32.add
-      local.get 4
-      i32.const 8
-      i32.add
-      i64.load
-      i64.store
-      local.get 0
-      i32.const 16
-      i32.add
-      local.get 4
-      i32.const 16
-      i32.add
-      i64.load
-      i64.store
-      local.get 0
-      i32.const 24
-      i32.add
-      local.get 4
-      i32.const 24
-      i32.add
-      i64.load
-      i64.store
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.store8 offset=88)
-  (func (;114;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions5stack3dup17h1c230eebeb11518fE (type 4) (param i32 i32)
     (local i64 i64 i32 i32 i32)
     block  ;; label = @1
       local.get 0
@@ -17599,7 +16851,7 @@
     local.get 0
     local.get 4
     i32.store8 offset=88)
-  (func (;115;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions5stack3dup17h32f3c26b0e76c05eE (type 4) (param i32 i32)
     (local i64 i64 i32 i32 i32)
     block  ;; label = @1
       local.get 0
@@ -17645,7 +16897,7 @@
       i32.add
       i32.load
       local.tee 5
-      i32.const 9
+      i32.const 2
       i32.lt_u
       br_if 0 (;@1;)
       i32.const 92
@@ -17668,7 +16920,7 @@
       i32.add
       local.tee 0
       local.get 0
-      i32.const -288
+      i32.const -64
       i32.add
       local.tee 4
       i64.load
@@ -17702,7 +16954,831 @@
     local.get 0
     local.get 4
     i32.store8 offset=88)
-  (func (;116;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions5stack3dup17h409b8bde882c231bE (type 4) (param i32 i32)
+    (local i64 i64 i32 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    i32.const 91
+    local.set 4
+    block  ;; label = @1
+      local.get 0
+      i32.const 76
+      i32.add
+      i32.load
+      local.tee 5
+      i32.const 8
+      i32.lt_u
+      br_if 0 (;@1;)
+      i32.const 92
+      local.set 4
+      local.get 5
+      i32.const 1
+      i32.add
+      local.tee 6
+      i32.const 1024
+      i32.gt_u
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 6
+      i32.store offset=76
+      local.get 0
+      i32.load offset=68
+      local.get 5
+      i32.const 5
+      i32.shl
+      i32.add
+      local.tee 0
+      local.get 0
+      i32.const -256
+      i32.add
+      local.tee 4
+      i64.load
+      i64.store
+      local.get 0
+      i32.const 8
+      i32.add
+      local.get 4
+      i32.const 8
+      i32.add
+      i64.load
+      i64.store
+      local.get 0
+      i32.const 16
+      i32.add
+      local.get 4
+      i32.const 16
+      i32.add
+      i64.load
+      i64.store
+      local.get 0
+      i32.const 24
+      i32.add
+      local.get 4
+      i32.const 24
+      i32.add
+      i64.load
+      i64.store
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.store8 offset=88)
+  (func $_ZN16revm_interpreter12instructions5stack3dup17h415d9b218b448693E (type 4) (param i32 i32)
+    (local i64 i64 i32 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    i32.const 91
+    local.set 4
+    block  ;; label = @1
+      local.get 0
+      i32.const 76
+      i32.add
+      i32.load
+      local.tee 5
+      i32.const 3
+      i32.lt_u
+      br_if 0 (;@1;)
+      i32.const 92
+      local.set 4
+      local.get 5
+      i32.const 1
+      i32.add
+      local.tee 6
+      i32.const 1024
+      i32.gt_u
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 6
+      i32.store offset=76
+      local.get 0
+      i32.load offset=68
+      local.get 5
+      i32.const 5
+      i32.shl
+      i32.add
+      local.tee 0
+      local.get 0
+      i32.const -96
+      i32.add
+      local.tee 4
+      i64.load
+      i64.store
+      local.get 0
+      i32.const 8
+      i32.add
+      local.get 4
+      i32.const 8
+      i32.add
+      i64.load
+      i64.store
+      local.get 0
+      i32.const 16
+      i32.add
+      local.get 4
+      i32.const 16
+      i32.add
+      i64.load
+      i64.store
+      local.get 0
+      i32.const 24
+      i32.add
+      local.get 4
+      i32.const 24
+      i32.add
+      i64.load
+      i64.store
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.store8 offset=88)
+  (func $_ZN16revm_interpreter12instructions5stack3dup17h4500136d9af1d4dbE (type 4) (param i32 i32)
+    (local i64 i64 i32 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    i32.const 91
+    local.set 4
+    block  ;; label = @1
+      local.get 0
+      i32.const 76
+      i32.add
+      i32.load
+      local.tee 5
+      i32.const 13
+      i32.lt_u
+      br_if 0 (;@1;)
+      i32.const 92
+      local.set 4
+      local.get 5
+      i32.const 1
+      i32.add
+      local.tee 6
+      i32.const 1024
+      i32.gt_u
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 6
+      i32.store offset=76
+      local.get 0
+      i32.load offset=68
+      local.get 5
+      i32.const 5
+      i32.shl
+      i32.add
+      local.tee 0
+      local.get 0
+      i32.const -416
+      i32.add
+      local.tee 4
+      i64.load
+      i64.store
+      local.get 0
+      i32.const 8
+      i32.add
+      local.get 4
+      i32.const 8
+      i32.add
+      i64.load
+      i64.store
+      local.get 0
+      i32.const 16
+      i32.add
+      local.get 4
+      i32.const 16
+      i32.add
+      i64.load
+      i64.store
+      local.get 0
+      i32.const 24
+      i32.add
+      local.get 4
+      i32.const 24
+      i32.add
+      i64.load
+      i64.store
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.store8 offset=88)
+  (func $_ZN16revm_interpreter12instructions5stack3dup17h4e25a27ab54b47ecE (type 4) (param i32 i32)
+    (local i64 i64 i32 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    i32.const 91
+    local.set 4
+    block  ;; label = @1
+      local.get 0
+      i32.const 76
+      i32.add
+      i32.load
+      local.tee 5
+      i32.const 4
+      i32.lt_u
+      br_if 0 (;@1;)
+      i32.const 92
+      local.set 4
+      local.get 5
+      i32.const 1
+      i32.add
+      local.tee 6
+      i32.const 1024
+      i32.gt_u
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 6
+      i32.store offset=76
+      local.get 0
+      i32.load offset=68
+      local.get 5
+      i32.const 5
+      i32.shl
+      i32.add
+      local.tee 0
+      local.get 0
+      i32.const -128
+      i32.add
+      local.tee 4
+      i64.load
+      i64.store
+      local.get 0
+      i32.const 8
+      i32.add
+      local.get 4
+      i32.const 8
+      i32.add
+      i64.load
+      i64.store
+      local.get 0
+      i32.const 16
+      i32.add
+      local.get 4
+      i32.const 16
+      i32.add
+      i64.load
+      i64.store
+      local.get 0
+      i32.const 24
+      i32.add
+      local.get 4
+      i32.const 24
+      i32.add
+      i64.load
+      i64.store
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.store8 offset=88)
+  (func $_ZN16revm_interpreter12instructions5stack3dup17h7198652407c83b36E (type 4) (param i32 i32)
+    (local i64 i64 i32 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    i32.const 91
+    local.set 4
+    block  ;; label = @1
+      local.get 0
+      i32.const 76
+      i32.add
+      i32.load
+      local.tee 5
+      i32.const 16
+      i32.lt_u
+      br_if 0 (;@1;)
+      i32.const 92
+      local.set 4
+      local.get 5
+      i32.const 1
+      i32.add
+      local.tee 6
+      i32.const 1024
+      i32.gt_u
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 6
+      i32.store offset=76
+      local.get 0
+      i32.load offset=68
+      local.get 5
+      i32.const 5
+      i32.shl
+      i32.add
+      local.tee 0
+      local.get 0
+      i32.const -512
+      i32.add
+      local.tee 4
+      i64.load
+      i64.store
+      local.get 0
+      i32.const 8
+      i32.add
+      local.get 4
+      i32.const 8
+      i32.add
+      i64.load
+      i64.store
+      local.get 0
+      i32.const 16
+      i32.add
+      local.get 4
+      i32.const 16
+      i32.add
+      i64.load
+      i64.store
+      local.get 0
+      i32.const 24
+      i32.add
+      local.get 4
+      i32.const 24
+      i32.add
+      i64.load
+      i64.store
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.store8 offset=88)
+  (func $_ZN16revm_interpreter12instructions5stack3dup17h96acb7e46e1663a9E (type 4) (param i32 i32)
+    (local i64 i64 i32 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    i32.const 91
+    local.set 4
+    block  ;; label = @1
+      local.get 0
+      i32.const 76
+      i32.add
+      i32.load
+      local.tee 5
+      i32.const 11
+      i32.lt_u
+      br_if 0 (;@1;)
+      i32.const 92
+      local.set 4
+      local.get 5
+      i32.const 1
+      i32.add
+      local.tee 6
+      i32.const 1024
+      i32.gt_u
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 6
+      i32.store offset=76
+      local.get 0
+      i32.load offset=68
+      local.get 5
+      i32.const 5
+      i32.shl
+      i32.add
+      local.tee 0
+      local.get 0
+      i32.const -352
+      i32.add
+      local.tee 4
+      i64.load
+      i64.store
+      local.get 0
+      i32.const 8
+      i32.add
+      local.get 4
+      i32.const 8
+      i32.add
+      i64.load
+      i64.store
+      local.get 0
+      i32.const 16
+      i32.add
+      local.get 4
+      i32.const 16
+      i32.add
+      i64.load
+      i64.store
+      local.get 0
+      i32.const 24
+      i32.add
+      local.get 4
+      i32.const 24
+      i32.add
+      i64.load
+      i64.store
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.store8 offset=88)
+  (func $_ZN16revm_interpreter12instructions5stack3dup17ha9cb1943d6a76f1dE (type 4) (param i32 i32)
+    (local i64 i64 i32 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    i32.const 91
+    local.set 4
+    block  ;; label = @1
+      local.get 0
+      i32.const 76
+      i32.add
+      i32.load
+      local.tee 5
+      i32.const 7
+      i32.lt_u
+      br_if 0 (;@1;)
+      i32.const 92
+      local.set 4
+      local.get 5
+      i32.const 1
+      i32.add
+      local.tee 6
+      i32.const 1024
+      i32.gt_u
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 6
+      i32.store offset=76
+      local.get 0
+      i32.load offset=68
+      local.get 5
+      i32.const 5
+      i32.shl
+      i32.add
+      local.tee 0
+      local.get 0
+      i32.const -224
+      i32.add
+      local.tee 4
+      i64.load
+      i64.store
+      local.get 0
+      i32.const 8
+      i32.add
+      local.get 4
+      i32.const 8
+      i32.add
+      i64.load
+      i64.store
+      local.get 0
+      i32.const 16
+      i32.add
+      local.get 4
+      i32.const 16
+      i32.add
+      i64.load
+      i64.store
+      local.get 0
+      i32.const 24
+      i32.add
+      local.get 4
+      i32.const 24
+      i32.add
+      i64.load
+      i64.store
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.store8 offset=88)
+  (func $_ZN16revm_interpreter12instructions5stack3dup17hab6fda39da108179E (type 4) (param i32 i32)
+    (local i64 i64 i32 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    i32.const 91
+    local.set 4
+    block  ;; label = @1
+      local.get 0
+      i32.const 76
+      i32.add
+      i32.load
+      local.tee 5
+      i32.const 14
+      i32.lt_u
+      br_if 0 (;@1;)
+      i32.const 92
+      local.set 4
+      local.get 5
+      i32.const 1
+      i32.add
+      local.tee 6
+      i32.const 1024
+      i32.gt_u
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 6
+      i32.store offset=76
+      local.get 0
+      i32.load offset=68
+      local.get 5
+      i32.const 5
+      i32.shl
+      i32.add
+      local.tee 0
+      local.get 0
+      i32.const -448
+      i32.add
+      local.tee 4
+      i64.load
+      i64.store
+      local.get 0
+      i32.const 8
+      i32.add
+      local.get 4
+      i32.const 8
+      i32.add
+      i64.load
+      i64.store
+      local.get 0
+      i32.const 16
+      i32.add
+      local.get 4
+      i32.const 16
+      i32.add
+      i64.load
+      i64.store
+      local.get 0
+      i32.const 24
+      i32.add
+      local.get 4
+      i32.const 24
+      i32.add
+      i64.load
+      i64.store
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.store8 offset=88)
+  (func $_ZN16revm_interpreter12instructions5stack3dup17hb03b165fe39aec32E (type 4) (param i32 i32)
     (local i64 i64 i32 i32 i32)
     block  ;; label = @1
       local.get 0
@@ -17806,7 +17882,7 @@
     local.get 0
     local.get 5
     i32.store8 offset=88)
-  (func (;117;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions5stack3dup17hb2e0cf04daa1c383E (type 4) (param i32 i32)
     (local i64 i64 i32 i32 i32)
     block  ;; label = @1
       local.get 0
@@ -17852,7 +17928,7 @@
       i32.add
       i32.load
       local.tee 5
-      i32.const 11
+      i32.const 9
       i32.lt_u
       br_if 0 (;@1;)
       i32.const 92
@@ -17875,7 +17951,7 @@
       i32.add
       local.tee 0
       local.get 0
-      i32.const -352
+      i32.const -288
       i32.add
       local.tee 4
       i64.load
@@ -17909,7 +17985,7 @@
     local.get 0
     local.get 4
     i32.store8 offset=88)
-  (func (;118;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions5stack3dup17he6bd311c1db7cb35E (type 4) (param i32 i32)
     (local i64 i64 i32 i32 i32)
     block  ;; label = @1
       local.get 0
@@ -17955,7 +18031,7 @@
       i32.add
       i32.load
       local.tee 5
-      i32.const 13
+      i32.const 15
       i32.lt_u
       br_if 0 (;@1;)
       i32.const 92
@@ -17978,7 +18054,7 @@
       i32.add
       local.tee 0
       local.get 0
-      i32.const -416
+      i32.const -480
       i32.add
       local.tee 4
       i64.load
@@ -18012,7 +18088,7 @@
     local.get 0
     local.get 4
     i32.store8 offset=88)
-  (func (;119;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions5stack3dup17hf5dd0526919443d9E (type 4) (param i32 i32)
     (local i64 i64 i32 i32 i32)
     block  ;; label = @1
       local.get 0
@@ -18058,7 +18134,7 @@
       i32.add
       i32.load
       local.tee 5
-      i32.const 7
+      i32.const 10
       i32.lt_u
       br_if 0 (;@1;)
       i32.const 92
@@ -18081,7 +18157,7 @@
       i32.add
       local.tee 0
       local.get 0
-      i32.const -224
+      i32.const -320
       i32.add
       local.tee 4
       i64.load
@@ -18115,7 +18191,7 @@
     local.get 0
     local.get 4
     i32.store8 offset=88)
-  (func (;120;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions5stack3pop17h812875fb5a8c44f1E (type 4) (param i32 i32)
     (local i64 i64 i32)
     block  ;; label = @1
       local.get 0
@@ -18171,1141 +18247,7 @@
     local.get 0
     i32.const 91
     i32.store8 offset=88)
-  (func (;121;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 68
-      i32.add
-      local.get 0
-      i32.load offset=56
-      local.tee 4
-      i32.const 25
-      call 18
-      local.tee 5
-      i32.const 255
-      i32.and
-      i32.const 102
-      i32.eq
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 5
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.const 25
-    i32.add
-    i32.store offset=56)
-  (func (;122;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 68
-      i32.add
-      local.get 0
-      i32.load offset=56
-      local.tee 4
-      i32.const 12
-      call 18
-      local.tee 5
-      i32.const 255
-      i32.and
-      i32.const 102
-      i32.eq
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 5
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.const 12
-    i32.add
-    i32.store offset=56)
-  (func (;123;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 68
-      i32.add
-      local.get 0
-      i32.load offset=56
-      local.tee 4
-      i32.const 16
-      call 18
-      local.tee 5
-      i32.const 255
-      i32.and
-      i32.const 102
-      i32.eq
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 5
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.const 16
-    i32.add
-    i32.store offset=56)
-  (func (;124;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 68
-      i32.add
-      local.get 0
-      i32.load offset=56
-      local.tee 4
-      i32.const 1
-      call 18
-      local.tee 5
-      i32.const 255
-      i32.and
-      i32.const 102
-      i32.eq
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 5
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.const 1
-    i32.add
-    i32.store offset=56)
-  (func (;125;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 68
-      i32.add
-      local.get 0
-      i32.load offset=56
-      local.tee 4
-      i32.const 17
-      call 18
-      local.tee 5
-      i32.const 255
-      i32.and
-      i32.const 102
-      i32.eq
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 5
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.const 17
-    i32.add
-    i32.store offset=56)
-  (func (;126;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 68
-      i32.add
-      local.get 0
-      i32.load offset=56
-      local.tee 4
-      i32.const 10
-      call 18
-      local.tee 5
-      i32.const 255
-      i32.and
-      i32.const 102
-      i32.eq
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 5
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.const 10
-    i32.add
-    i32.store offset=56)
-  (func (;127;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 68
-      i32.add
-      local.get 0
-      i32.load offset=56
-      local.tee 4
-      i32.const 3
-      call 18
-      local.tee 5
-      i32.const 255
-      i32.and
-      i32.const 102
-      i32.eq
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 5
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.const 3
-    i32.add
-    i32.store offset=56)
-  (func (;128;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 68
-      i32.add
-      local.get 0
-      i32.load offset=56
-      local.tee 4
-      i32.const 4
-      call 18
-      local.tee 5
-      i32.const 255
-      i32.and
-      i32.const 102
-      i32.eq
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 5
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.const 4
-    i32.add
-    i32.store offset=56)
-  (func (;129;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 68
-      i32.add
-      local.get 0
-      i32.load offset=56
-      local.tee 4
-      i32.const 6
-      call 18
-      local.tee 5
-      i32.const 255
-      i32.and
-      i32.const 102
-      i32.eq
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 5
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.const 6
-    i32.add
-    i32.store offset=56)
-  (func (;130;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 68
-      i32.add
-      local.get 0
-      i32.load offset=56
-      local.tee 4
-      i32.const 28
-      call 18
-      local.tee 5
-      i32.const 255
-      i32.and
-      i32.const 102
-      i32.eq
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 5
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.const 28
-    i32.add
-    i32.store offset=56)
-  (func (;131;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 68
-      i32.add
-      local.get 0
-      i32.load offset=56
-      local.tee 4
-      i32.const 23
-      call 18
-      local.tee 5
-      i32.const 255
-      i32.and
-      i32.const 102
-      i32.eq
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 5
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.const 23
-    i32.add
-    i32.store offset=56)
-  (func (;132;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 68
-      i32.add
-      local.get 0
-      i32.load offset=56
-      local.tee 4
-      i32.const 14
-      call 18
-      local.tee 5
-      i32.const 255
-      i32.and
-      i32.const 102
-      i32.eq
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 5
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.const 14
-    i32.add
-    i32.store offset=56)
-  (func (;133;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 68
-      i32.add
-      local.get 0
-      i32.load offset=56
-      local.tee 4
-      i32.const 11
-      call 18
-      local.tee 5
-      i32.const 255
-      i32.and
-      i32.const 102
-      i32.eq
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 5
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.const 11
-    i32.add
-    i32.store offset=56)
-  (func (;134;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 68
-      i32.add
-      local.get 0
-      i32.load offset=56
-      local.tee 4
-      i32.const 21
-      call 18
-      local.tee 5
-      i32.const 255
-      i32.and
-      i32.const 102
-      i32.eq
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 5
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.const 21
-    i32.add
-    i32.store offset=56)
-  (func (;135;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 68
-      i32.add
-      local.get 0
-      i32.load offset=56
-      local.tee 4
-      i32.const 7
-      call 18
-      local.tee 5
-      i32.const 255
-      i32.and
-      i32.const 102
-      i32.eq
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 5
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.const 7
-    i32.add
-    i32.store offset=56)
-  (func (;136;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 68
-      i32.add
-      local.get 0
-      i32.load offset=56
-      local.tee 4
-      i32.const 13
-      call 18
-      local.tee 5
-      i32.const 255
-      i32.and
-      i32.const 102
-      i32.eq
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 5
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.const 13
-    i32.add
-    i32.store offset=56)
-  (func (;137;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 68
-      i32.add
-      local.get 0
-      i32.load offset=56
-      local.tee 4
-      i32.const 5
-      call 18
-      local.tee 5
-      i32.const 255
-      i32.and
-      i32.const 102
-      i32.eq
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 5
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.const 5
-    i32.add
-    i32.store offset=56)
-  (func (;138;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 68
-      i32.add
-      local.get 0
-      i32.load offset=56
-      local.tee 4
-      i32.const 30
-      call 18
-      local.tee 5
-      i32.const 255
-      i32.and
-      i32.const 102
-      i32.eq
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 5
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.const 30
-    i32.add
-    i32.store offset=56)
-  (func (;139;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions5stack4push17h0dabfb3e94cc7bc8E (type 4) (param i32 i32)
     (local i64 i64 i32 i32)
     block  ;; label = @1
       local.get 0
@@ -19351,7 +18293,7 @@
       i32.load offset=56
       local.tee 4
       i32.const 19
-      call 18
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
       local.tee 5
       i32.const 255
       i32.and
@@ -19368,385 +18310,7 @@
     i32.const 19
     i32.add
     i32.store offset=56)
-  (func (;140;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 68
-      i32.add
-      local.get 0
-      i32.load offset=56
-      local.tee 4
-      i32.const 26
-      call 18
-      local.tee 5
-      i32.const 255
-      i32.and
-      i32.const 102
-      i32.eq
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 5
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.const 26
-    i32.add
-    i32.store offset=56)
-  (func (;141;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 68
-      i32.add
-      local.get 0
-      i32.load offset=56
-      local.tee 4
-      i32.const 32
-      call 18
-      local.tee 5
-      i32.const 255
-      i32.and
-      i32.const 102
-      i32.eq
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 5
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.const 32
-    i32.add
-    i32.store offset=56)
-  (func (;142;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 68
-      i32.add
-      local.get 0
-      i32.load offset=56
-      local.tee 4
-      i32.const 9
-      call 18
-      local.tee 5
-      i32.const 255
-      i32.and
-      i32.const 102
-      i32.eq
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 5
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.const 9
-    i32.add
-    i32.store offset=56)
-  (func (;143;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 68
-      i32.add
-      local.get 0
-      i32.load offset=56
-      local.tee 4
-      i32.const 24
-      call 18
-      local.tee 5
-      i32.const 255
-      i32.and
-      i32.const 102
-      i32.eq
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 5
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.const 24
-    i32.add
-    i32.store offset=56)
-  (func (;144;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 68
-      i32.add
-      local.get 0
-      i32.load offset=56
-      local.tee 4
-      i32.const 8
-      call 18
-      local.tee 5
-      i32.const 255
-      i32.and
-      i32.const 102
-      i32.eq
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 5
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.const 8
-    i32.add
-    i32.store offset=56)
-  (func (;145;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 68
-      i32.add
-      local.get 0
-      i32.load offset=56
-      local.tee 4
-      i32.const 15
-      call 18
-      local.tee 5
-      i32.const 255
-      i32.and
-      i32.const 102
-      i32.eq
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 5
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.const 15
-    i32.add
-    i32.store offset=56)
-  (func (;146;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions5stack4push17h137c26be0667da52E (type 4) (param i32 i32)
     (local i64 i64 i32 i32)
     block  ;; label = @1
       local.get 0
@@ -19792,7 +18356,7 @@
       i32.load offset=56
       local.tee 4
       i32.const 31
-      call 18
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
       local.tee 5
       i32.const 255
       i32.and
@@ -19809,7 +18373,7 @@
     i32.const 31
     i32.add
     i32.store offset=56)
-  (func (;147;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions5stack4push17h18df35740233def3E (type 4) (param i32 i32)
     (local i64 i64 i32 i32)
     block  ;; label = @1
       local.get 0
@@ -19854,8 +18418,8 @@
       local.get 0
       i32.load offset=56
       local.tee 4
-      i32.const 2
-      call 18
+      i32.const 17
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
       local.tee 5
       i32.const 255
       i32.and
@@ -19869,10 +18433,10 @@
     end
     local.get 0
     local.get 4
-    i32.const 2
+    i32.const 17
     i32.add
     i32.store offset=56)
-  (func (;148;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions5stack4push17h26681f2af15bf4f3E (type 4) (param i32 i32)
     (local i64 i64 i32 i32)
     block  ;; label = @1
       local.get 0
@@ -19917,8 +18481,8 @@
       local.get 0
       i32.load offset=56
       local.tee 4
-      i32.const 20
-      call 18
+      i32.const 4
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
       local.tee 5
       i32.const 255
       i32.and
@@ -19932,10 +18496,10 @@
     end
     local.get 0
     local.get 4
-    i32.const 20
+    i32.const 4
     i32.add
     i32.store offset=56)
-  (func (;149;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions5stack4push17h28f38e5ba31e2093E (type 4) (param i32 i32)
     (local i64 i64 i32 i32)
     block  ;; label = @1
       local.get 0
@@ -19980,8 +18544,8 @@
       local.get 0
       i32.load offset=56
       local.tee 4
-      i32.const 22
-      call 18
+      i32.const 10
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
       local.tee 5
       i32.const 255
       i32.and
@@ -19995,10 +18559,10 @@
     end
     local.get 0
     local.get 4
-    i32.const 22
+    i32.const 10
     i32.add
     i32.store offset=56)
-  (func (;150;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions5stack4push17h337f4a96c5b95b16E (type 4) (param i32 i32)
     (local i64 i64 i32 i32)
     block  ;; label = @1
       local.get 0
@@ -20043,8 +18607,8 @@
       local.get 0
       i32.load offset=56
       local.tee 4
-      i32.const 18
-      call 18
+      i32.const 32
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
       local.tee 5
       i32.const 255
       i32.and
@@ -20058,73 +18622,10 @@
     end
     local.get 0
     local.get 4
-    i32.const 18
-    i32.add
-    i32.store offset=56)
-  (func (;151;) (type 4) (param i32 i32)
-    (local i64 i64 i32 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
     i32.const 32
     i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 68
-      i32.add
-      local.get 0
-      i32.load offset=56
-      local.tee 4
-      i32.const 27
-      call 18
-      local.tee 5
-      i32.const 255
-      i32.and
-      i32.const 102
-      i32.eq
-      br_if 0 (;@1;)
-      local.get 0
-      local.get 5
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 4
-    i32.const 27
-    i32.add
     i32.store offset=56)
-  (func (;152;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions5stack4push17h33a7c0356be6e348E (type 4) (param i32 i32)
     (local i64 i64 i32 i32)
     block  ;; label = @1
       local.get 0
@@ -20170,7 +18671,7 @@
       i32.load offset=56
       local.tee 4
       i32.const 29
-      call 18
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
       local.tee 5
       i32.const 255
       i32.and
@@ -20187,7 +18688,1582 @@
     i32.const 29
     i32.add
     i32.store offset=56)
-  (func (;153;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions5stack4push17h4c66b032170de472E (type 4) (param i32 i32)
+    (local i64 i64 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 68
+      i32.add
+      local.get 0
+      i32.load offset=56
+      local.tee 4
+      i32.const 26
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
+      local.tee 5
+      i32.const 255
+      i32.and
+      i32.const 102
+      i32.eq
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 5
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.const 26
+    i32.add
+    i32.store offset=56)
+  (func $_ZN16revm_interpreter12instructions5stack4push17h4f330339ddd48d5aE (type 4) (param i32 i32)
+    (local i64 i64 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 68
+      i32.add
+      local.get 0
+      i32.load offset=56
+      local.tee 4
+      i32.const 8
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
+      local.tee 5
+      i32.const 255
+      i32.and
+      i32.const 102
+      i32.eq
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 5
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.const 8
+    i32.add
+    i32.store offset=56)
+  (func $_ZN16revm_interpreter12instructions5stack4push17h5ad0db67ee10d7a4E (type 4) (param i32 i32)
+    (local i64 i64 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 68
+      i32.add
+      local.get 0
+      i32.load offset=56
+      local.tee 4
+      i32.const 11
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
+      local.tee 5
+      i32.const 255
+      i32.and
+      i32.const 102
+      i32.eq
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 5
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.const 11
+    i32.add
+    i32.store offset=56)
+  (func $_ZN16revm_interpreter12instructions5stack4push17h80a536b0936f1dccE (type 4) (param i32 i32)
+    (local i64 i64 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 68
+      i32.add
+      local.get 0
+      i32.load offset=56
+      local.tee 4
+      i32.const 3
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
+      local.tee 5
+      i32.const 255
+      i32.and
+      i32.const 102
+      i32.eq
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 5
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.const 3
+    i32.add
+    i32.store offset=56)
+  (func $_ZN16revm_interpreter12instructions5stack4push17h875681ac83cd731cE (type 4) (param i32 i32)
+    (local i64 i64 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 68
+      i32.add
+      local.get 0
+      i32.load offset=56
+      local.tee 4
+      i32.const 15
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
+      local.tee 5
+      i32.const 255
+      i32.and
+      i32.const 102
+      i32.eq
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 5
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.const 15
+    i32.add
+    i32.store offset=56)
+  (func $_ZN16revm_interpreter12instructions5stack4push17h892800bf823110b9E (type 4) (param i32 i32)
+    (local i64 i64 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 68
+      i32.add
+      local.get 0
+      i32.load offset=56
+      local.tee 4
+      i32.const 9
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
+      local.tee 5
+      i32.const 255
+      i32.and
+      i32.const 102
+      i32.eq
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 5
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.const 9
+    i32.add
+    i32.store offset=56)
+  (func $_ZN16revm_interpreter12instructions5stack4push17h8d6fdedef0d7076aE (type 4) (param i32 i32)
+    (local i64 i64 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 68
+      i32.add
+      local.get 0
+      i32.load offset=56
+      local.tee 4
+      i32.const 22
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
+      local.tee 5
+      i32.const 255
+      i32.and
+      i32.const 102
+      i32.eq
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 5
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.const 22
+    i32.add
+    i32.store offset=56)
+  (func $_ZN16revm_interpreter12instructions5stack4push17h92817f963690c32bE (type 4) (param i32 i32)
+    (local i64 i64 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 68
+      i32.add
+      local.get 0
+      i32.load offset=56
+      local.tee 4
+      i32.const 2
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
+      local.tee 5
+      i32.const 255
+      i32.and
+      i32.const 102
+      i32.eq
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 5
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.const 2
+    i32.add
+    i32.store offset=56)
+  (func $_ZN16revm_interpreter12instructions5stack4push17h95a8d8073047afd9E (type 4) (param i32 i32)
+    (local i64 i64 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 68
+      i32.add
+      local.get 0
+      i32.load offset=56
+      local.tee 4
+      i32.const 27
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
+      local.tee 5
+      i32.const 255
+      i32.and
+      i32.const 102
+      i32.eq
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 5
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.const 27
+    i32.add
+    i32.store offset=56)
+  (func $_ZN16revm_interpreter12instructions5stack4push17h9ea136db769c3630E (type 4) (param i32 i32)
+    (local i64 i64 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 68
+      i32.add
+      local.get 0
+      i32.load offset=56
+      local.tee 4
+      i32.const 20
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
+      local.tee 5
+      i32.const 255
+      i32.and
+      i32.const 102
+      i32.eq
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 5
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.const 20
+    i32.add
+    i32.store offset=56)
+  (func $_ZN16revm_interpreter12instructions5stack4push17h9eb2d4ca24efeb46E (type 4) (param i32 i32)
+    (local i64 i64 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 68
+      i32.add
+      local.get 0
+      i32.load offset=56
+      local.tee 4
+      i32.const 21
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
+      local.tee 5
+      i32.const 255
+      i32.and
+      i32.const 102
+      i32.eq
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 5
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.const 21
+    i32.add
+    i32.store offset=56)
+  (func $_ZN16revm_interpreter12instructions5stack4push17ha05222dfce6b10abE (type 4) (param i32 i32)
+    (local i64 i64 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 68
+      i32.add
+      local.get 0
+      i32.load offset=56
+      local.tee 4
+      i32.const 7
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
+      local.tee 5
+      i32.const 255
+      i32.and
+      i32.const 102
+      i32.eq
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 5
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.const 7
+    i32.add
+    i32.store offset=56)
+  (func $_ZN16revm_interpreter12instructions5stack4push17hac5e8138a3a0900dE (type 4) (param i32 i32)
+    (local i64 i64 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 68
+      i32.add
+      local.get 0
+      i32.load offset=56
+      local.tee 4
+      i32.const 25
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
+      local.tee 5
+      i32.const 255
+      i32.and
+      i32.const 102
+      i32.eq
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 5
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.const 25
+    i32.add
+    i32.store offset=56)
+  (func $_ZN16revm_interpreter12instructions5stack4push17hb1f9da1e5ef9f102E (type 4) (param i32 i32)
+    (local i64 i64 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 68
+      i32.add
+      local.get 0
+      i32.load offset=56
+      local.tee 4
+      i32.const 30
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
+      local.tee 5
+      i32.const 255
+      i32.and
+      i32.const 102
+      i32.eq
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 5
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.const 30
+    i32.add
+    i32.store offset=56)
+  (func $_ZN16revm_interpreter12instructions5stack4push17hba61c9afd0742688E (type 4) (param i32 i32)
+    (local i64 i64 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 68
+      i32.add
+      local.get 0
+      i32.load offset=56
+      local.tee 4
+      i32.const 13
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
+      local.tee 5
+      i32.const 255
+      i32.and
+      i32.const 102
+      i32.eq
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 5
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.const 13
+    i32.add
+    i32.store offset=56)
+  (func $_ZN16revm_interpreter12instructions5stack4push17hcd1fd949a2397f83E (type 4) (param i32 i32)
+    (local i64 i64 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 68
+      i32.add
+      local.get 0
+      i32.load offset=56
+      local.tee 4
+      i32.const 28
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
+      local.tee 5
+      i32.const 255
+      i32.and
+      i32.const 102
+      i32.eq
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 5
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.const 28
+    i32.add
+    i32.store offset=56)
+  (func $_ZN16revm_interpreter12instructions5stack4push17hcf6acec4cf02c2f1E (type 4) (param i32 i32)
+    (local i64 i64 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 68
+      i32.add
+      local.get 0
+      i32.load offset=56
+      local.tee 4
+      i32.const 24
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
+      local.tee 5
+      i32.const 255
+      i32.and
+      i32.const 102
+      i32.eq
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 5
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.const 24
+    i32.add
+    i32.store offset=56)
+  (func $_ZN16revm_interpreter12instructions5stack4push17hd10e642b0b849fbdE (type 4) (param i32 i32)
+    (local i64 i64 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 68
+      i32.add
+      local.get 0
+      i32.load offset=56
+      local.tee 4
+      i32.const 23
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
+      local.tee 5
+      i32.const 255
+      i32.and
+      i32.const 102
+      i32.eq
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 5
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.const 23
+    i32.add
+    i32.store offset=56)
+  (func $_ZN16revm_interpreter12instructions5stack4push17hd449f5dd66d0f441E (type 4) (param i32 i32)
+    (local i64 i64 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 68
+      i32.add
+      local.get 0
+      i32.load offset=56
+      local.tee 4
+      i32.const 18
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
+      local.tee 5
+      i32.const 255
+      i32.and
+      i32.const 102
+      i32.eq
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 5
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.const 18
+    i32.add
+    i32.store offset=56)
+  (func $_ZN16revm_interpreter12instructions5stack4push17hd776495f5f1d708cE (type 4) (param i32 i32)
+    (local i64 i64 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 68
+      i32.add
+      local.get 0
+      i32.load offset=56
+      local.tee 4
+      i32.const 16
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
+      local.tee 5
+      i32.const 255
+      i32.and
+      i32.const 102
+      i32.eq
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 5
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.const 16
+    i32.add
+    i32.store offset=56)
+  (func $_ZN16revm_interpreter12instructions5stack4push17hdd993b2b622fab7cE (type 4) (param i32 i32)
+    (local i64 i64 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 68
+      i32.add
+      local.get 0
+      i32.load offset=56
+      local.tee 4
+      i32.const 14
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
+      local.tee 5
+      i32.const 255
+      i32.and
+      i32.const 102
+      i32.eq
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 5
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.const 14
+    i32.add
+    i32.store offset=56)
+  (func $_ZN16revm_interpreter12instructions5stack4push17hedd84beab58a81b5E (type 4) (param i32 i32)
+    (local i64 i64 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 68
+      i32.add
+      local.get 0
+      i32.load offset=56
+      local.tee 4
+      i32.const 5
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
+      local.tee 5
+      i32.const 255
+      i32.and
+      i32.const 102
+      i32.eq
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 5
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.const 5
+    i32.add
+    i32.store offset=56)
+  (func $_ZN16revm_interpreter12instructions5stack4push17hf2e8bb50985284a6E (type 4) (param i32 i32)
+    (local i64 i64 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 68
+      i32.add
+      local.get 0
+      i32.load offset=56
+      local.tee 4
+      i32.const 6
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
+      local.tee 5
+      i32.const 255
+      i32.and
+      i32.const 102
+      i32.eq
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 5
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.const 6
+    i32.add
+    i32.store offset=56)
+  (func $_ZN16revm_interpreter12instructions5stack4push17hf7708b7beff7c3afE (type 4) (param i32 i32)
+    (local i64 i64 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 68
+      i32.add
+      local.get 0
+      i32.load offset=56
+      local.tee 4
+      i32.const 12
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
+      local.tee 5
+      i32.const 255
+      i32.and
+      i32.const 102
+      i32.eq
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 5
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.const 12
+    i32.add
+    i32.store offset=56)
+  (func $_ZN16revm_interpreter12instructions5stack4push17hfe54a67bc333c4d6E (type 4) (param i32 i32)
+    (local i64 i64 i32 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 68
+      i32.add
+      local.get 0
+      i32.load offset=56
+      local.tee 4
+      i32.const 1
+      call $_ZN16revm_interpreter11interpreter5stack5Stack10push_slice17h3e5268874214f404E
+      local.tee 5
+      i32.const 255
+      i32.and
+      i32.const 102
+      i32.eq
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 5
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 4
+    i32.const 1
+    i32.add
+    i32.store offset=56)
+  (func $_ZN16revm_interpreter12instructions5stack4swap17h150aad087c71f6ebE (type 4) (param i32 i32)
     (local i64 i64 i32)
     block  ;; label = @1
       local.get 0
@@ -20231,7 +20307,7 @@
       i32.add
       i32.load
       local.tee 4
-      i32.const 17
+      i32.const 15
       i32.lt_u
       br_if 0 (;@1;)
       local.get 0
@@ -20241,21 +20317,21 @@
       i32.const -1
       i32.add
       local.get 4
-      i32.const -17
+      i32.const -15
       i32.add
-      call 154
+      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4swap17hd4b66add2d693797E
       return
     end
     local.get 0
     i32.const 91
     i32.store8 offset=88)
-  (func (;154;) (type 8) (param i32 i32 i32 i32)
+  (func $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4swap17hd4b66add2d693797E (type 8) (param i32 i32 i32 i32)
     (local i32 i64 i64 i64 i32 i64 i32 i64)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 32
     i32.sub
     local.tee 4
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 2
@@ -20269,13 +20345,13 @@
         local.get 3
         local.get 1
         i32.const 1048808
-        call 30
+        call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
         unreachable
       end
       local.get 2
       local.get 1
       i32.const 1048808
-      call 30
+      call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
       unreachable
     end
     local.get 0
@@ -20355,690 +20431,8 @@
     local.get 4
     i32.const 32
     i32.add
-    global.set 0)
-  (func (;155;) (type 4) (param i32 i32)
-    (local i64 i64 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 76
-      i32.add
-      i32.load
-      local.tee 4
-      i32.const 4
-      i32.lt_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.load offset=68
-      local.get 4
-      local.get 4
-      i32.const -1
-      i32.add
-      local.get 4
-      i32.const -4
-      i32.add
-      call 154
-      return
-    end
-    local.get 0
-    i32.const 91
-    i32.store8 offset=88)
-  (func (;156;) (type 4) (param i32 i32)
-    (local i64 i64 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 76
-      i32.add
-      i32.load
-      local.tee 4
-      i32.const 12
-      i32.lt_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.load offset=68
-      local.get 4
-      local.get 4
-      i32.const -1
-      i32.add
-      local.get 4
-      i32.const -12
-      i32.add
-      call 154
-      return
-    end
-    local.get 0
-    i32.const 91
-    i32.store8 offset=88)
-  (func (;157;) (type 4) (param i32 i32)
-    (local i64 i64 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 76
-      i32.add
-      i32.load
-      local.tee 4
-      i32.const 14
-      i32.lt_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.load offset=68
-      local.get 4
-      local.get 4
-      i32.const -1
-      i32.add
-      local.get 4
-      i32.const -14
-      i32.add
-      call 154
-      return
-    end
-    local.get 0
-    i32.const 91
-    i32.store8 offset=88)
-  (func (;158;) (type 4) (param i32 i32)
-    (local i64 i64 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 76
-      i32.add
-      i32.load
-      local.tee 4
-      i32.const 2
-      i32.lt_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.load offset=68
-      local.get 4
-      local.get 4
-      i32.const -1
-      i32.add
-      local.get 4
-      i32.const -2
-      i32.add
-      call 154
-      return
-    end
-    local.get 0
-    i32.const 91
-    i32.store8 offset=88)
-  (func (;159;) (type 4) (param i32 i32)
-    (local i64 i64 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 76
-      i32.add
-      i32.load
-      local.tee 4
-      i32.const 9
-      i32.lt_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.load offset=68
-      local.get 4
-      local.get 4
-      i32.const -1
-      i32.add
-      local.get 4
-      i32.const -9
-      i32.add
-      call 154
-      return
-    end
-    local.get 0
-    i32.const 91
-    i32.store8 offset=88)
-  (func (;160;) (type 4) (param i32 i32)
-    (local i64 i64 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 76
-      i32.add
-      i32.load
-      local.tee 4
-      i32.const 13
-      i32.lt_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.load offset=68
-      local.get 4
-      local.get 4
-      i32.const -1
-      i32.add
-      local.get 4
-      i32.const -13
-      i32.add
-      call 154
-      return
-    end
-    local.get 0
-    i32.const 91
-    i32.store8 offset=88)
-  (func (;161;) (type 4) (param i32 i32)
-    (local i64 i64 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 76
-      i32.add
-      i32.load
-      local.tee 4
-      i32.const 8
-      i32.lt_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.load offset=68
-      local.get 4
-      local.get 4
-      i32.const -1
-      i32.add
-      local.get 4
-      i32.const -8
-      i32.add
-      call 154
-      return
-    end
-    local.get 0
-    i32.const 91
-    i32.store8 offset=88)
-  (func (;162;) (type 4) (param i32 i32)
-    (local i64 i64 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 76
-      i32.add
-      i32.load
-      local.tee 4
-      i32.const 3
-      i32.lt_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.load offset=68
-      local.get 4
-      local.get 4
-      i32.const -1
-      i32.add
-      local.get 4
-      i32.const -3
-      i32.add
-      call 154
-      return
-    end
-    local.get 0
-    i32.const 91
-    i32.store8 offset=88)
-  (func (;163;) (type 4) (param i32 i32)
-    (local i64 i64 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 76
-      i32.add
-      i32.load
-      local.tee 4
-      i32.const 5
-      i32.lt_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.load offset=68
-      local.get 4
-      local.get 4
-      i32.const -1
-      i32.add
-      local.get 4
-      i32.const -5
-      i32.add
-      call 154
-      return
-    end
-    local.get 0
-    i32.const 91
-    i32.store8 offset=88)
-  (func (;164;) (type 4) (param i32 i32)
-    (local i64 i64 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 76
-      i32.add
-      i32.load
-      local.tee 4
-      i32.const 6
-      i32.lt_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.load offset=68
-      local.get 4
-      local.get 4
-      i32.const -1
-      i32.add
-      local.get 4
-      i32.const -6
-      i32.add
-      call 154
-      return
-    end
-    local.get 0
-    i32.const 91
-    i32.store8 offset=88)
-  (func (;165;) (type 4) (param i32 i32)
-    (local i64 i64 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 76
-      i32.add
-      i32.load
-      local.tee 4
-      i32.const 10
-      i32.lt_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.load offset=68
-      local.get 4
-      local.get 4
-      i32.const -1
-      i32.add
-      local.get 4
-      i32.const -10
-      i32.add
-      call 154
-      return
-    end
-    local.get 0
-    i32.const 91
-    i32.store8 offset=88)
-  (func (;166;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions5stack4swap17h29016944fbe9194aE (type 4) (param i32 i32)
     (local i64 i64 i32)
     block  ;; label = @1
       local.get 0
@@ -21094,13 +20488,199 @@
       local.get 4
       i32.const -11
       i32.add
-      call 154
+      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4swap17hd4b66add2d693797E
       return
     end
     local.get 0
     i32.const 91
     i32.store8 offset=88)
-  (func (;167;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions5stack4swap17h47ed2a55173c899fE (type 4) (param i32 i32)
+    (local i64 i64 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 76
+      i32.add
+      i32.load
+      local.tee 4
+      i32.const 9
+      i32.lt_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.load offset=68
+      local.get 4
+      local.get 4
+      i32.const -1
+      i32.add
+      local.get 4
+      i32.const -9
+      i32.add
+      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4swap17hd4b66add2d693797E
+      return
+    end
+    local.get 0
+    i32.const 91
+    i32.store8 offset=88)
+  (func $_ZN16revm_interpreter12instructions5stack4swap17h5add1b93399dc6b7E (type 4) (param i32 i32)
+    (local i64 i64 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 76
+      i32.add
+      i32.load
+      local.tee 4
+      i32.const 6
+      i32.lt_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.load offset=68
+      local.get 4
+      local.get 4
+      i32.const -1
+      i32.add
+      local.get 4
+      i32.const -6
+      i32.add
+      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4swap17hd4b66add2d693797E
+      return
+    end
+    local.get 0
+    i32.const 91
+    i32.store8 offset=88)
+  (func $_ZN16revm_interpreter12instructions5stack4swap17h5bdff933bac6366dE (type 4) (param i32 i32)
+    (local i64 i64 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 76
+      i32.add
+      i32.load
+      local.tee 4
+      i32.const 13
+      i32.lt_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.load offset=68
+      local.get 4
+      local.get 4
+      i32.const -1
+      i32.add
+      local.get 4
+      i32.const -13
+      i32.add
+      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4swap17hd4b66add2d693797E
+      return
+    end
+    local.get 0
+    i32.const 91
+    i32.store8 offset=88)
+  (func $_ZN16revm_interpreter12instructions5stack4swap17h632954d2419b6f70E (type 4) (param i32 i32)
     (local i64 i64 i32)
     block  ;; label = @1
       local.get 0
@@ -21156,13 +20736,571 @@
       local.get 4
       i32.const -16
       i32.add
-      call 154
+      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4swap17hd4b66add2d693797E
       return
     end
     local.get 0
     i32.const 91
     i32.store8 offset=88)
-  (func (;168;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions5stack4swap17h647bcf8e44383f36E (type 4) (param i32 i32)
+    (local i64 i64 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 76
+      i32.add
+      i32.load
+      local.tee 4
+      i32.const 14
+      i32.lt_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.load offset=68
+      local.get 4
+      local.get 4
+      i32.const -1
+      i32.add
+      local.get 4
+      i32.const -14
+      i32.add
+      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4swap17hd4b66add2d693797E
+      return
+    end
+    local.get 0
+    i32.const 91
+    i32.store8 offset=88)
+  (func $_ZN16revm_interpreter12instructions5stack4swap17h6de0f98af0833cb4E (type 4) (param i32 i32)
+    (local i64 i64 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 76
+      i32.add
+      i32.load
+      local.tee 4
+      i32.const 3
+      i32.lt_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.load offset=68
+      local.get 4
+      local.get 4
+      i32.const -1
+      i32.add
+      local.get 4
+      i32.const -3
+      i32.add
+      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4swap17hd4b66add2d693797E
+      return
+    end
+    local.get 0
+    i32.const 91
+    i32.store8 offset=88)
+  (func $_ZN16revm_interpreter12instructions5stack4swap17h8a23fda82160c8cbE (type 4) (param i32 i32)
+    (local i64 i64 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 76
+      i32.add
+      i32.load
+      local.tee 4
+      i32.const 2
+      i32.lt_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.load offset=68
+      local.get 4
+      local.get 4
+      i32.const -1
+      i32.add
+      local.get 4
+      i32.const -2
+      i32.add
+      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4swap17hd4b66add2d693797E
+      return
+    end
+    local.get 0
+    i32.const 91
+    i32.store8 offset=88)
+  (func $_ZN16revm_interpreter12instructions5stack4swap17h97dccf3922b56a05E (type 4) (param i32 i32)
+    (local i64 i64 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 76
+      i32.add
+      i32.load
+      local.tee 4
+      i32.const 4
+      i32.lt_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.load offset=68
+      local.get 4
+      local.get 4
+      i32.const -1
+      i32.add
+      local.get 4
+      i32.const -4
+      i32.add
+      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4swap17hd4b66add2d693797E
+      return
+    end
+    local.get 0
+    i32.const 91
+    i32.store8 offset=88)
+  (func $_ZN16revm_interpreter12instructions5stack4swap17ha4bba3bc9e93c158E (type 4) (param i32 i32)
+    (local i64 i64 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 76
+      i32.add
+      i32.load
+      local.tee 4
+      i32.const 12
+      i32.lt_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.load offset=68
+      local.get 4
+      local.get 4
+      i32.const -1
+      i32.add
+      local.get 4
+      i32.const -12
+      i32.add
+      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4swap17hd4b66add2d693797E
+      return
+    end
+    local.get 0
+    i32.const 91
+    i32.store8 offset=88)
+  (func $_ZN16revm_interpreter12instructions5stack4swap17hb59a49f677f6f9caE (type 4) (param i32 i32)
+    (local i64 i64 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 76
+      i32.add
+      i32.load
+      local.tee 4
+      i32.const 8
+      i32.lt_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.load offset=68
+      local.get 4
+      local.get 4
+      i32.const -1
+      i32.add
+      local.get 4
+      i32.const -8
+      i32.add
+      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4swap17hd4b66add2d693797E
+      return
+    end
+    local.get 0
+    i32.const 91
+    i32.store8 offset=88)
+  (func $_ZN16revm_interpreter12instructions5stack4swap17hc1b9a289b1ba844cE (type 4) (param i32 i32)
+    (local i64 i64 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 76
+      i32.add
+      i32.load
+      local.tee 4
+      i32.const 10
+      i32.lt_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.load offset=68
+      local.get 4
+      local.get 4
+      i32.const -1
+      i32.add
+      local.get 4
+      i32.const -10
+      i32.add
+      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4swap17hd4b66add2d693797E
+      return
+    end
+    local.get 0
+    i32.const 91
+    i32.store8 offset=88)
+  (func $_ZN16revm_interpreter12instructions5stack4swap17hc8784d742c158b14E (type 4) (param i32 i32)
+    (local i64 i64 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 76
+      i32.add
+      i32.load
+      local.tee 4
+      i32.const 5
+      i32.lt_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.load offset=68
+      local.get 4
+      local.get 4
+      i32.const -1
+      i32.add
+      local.get 4
+      i32.const -5
+      i32.add
+      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4swap17hd4b66add2d693797E
+      return
+    end
+    local.get 0
+    i32.const 91
+    i32.store8 offset=88)
+  (func $_ZN16revm_interpreter12instructions5stack4swap17hd6a05e1d0458568aE (type 4) (param i32 i32)
+    (local i64 i64 i32)
+    block  ;; label = @1
+      local.get 0
+      i64.load offset=16
+      i64.const -1
+      local.get 0
+      i32.const 24
+      i32.add
+      i64.load
+      local.tee 2
+      i64.const 3
+      i64.add
+      local.tee 3
+      local.get 3
+      local.get 2
+      i64.lt_u
+      select
+      local.tee 2
+      i64.ge_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.const 80
+      i32.store8 offset=88
+      return
+    end
+    local.get 0
+    local.get 2
+    i64.store offset=24
+    local.get 0
+    i32.const 32
+    i32.add
+    local.tee 4
+    local.get 4
+    i64.load
+    i64.const 3
+    i64.add
+    i64.store
+    block  ;; label = @1
+      local.get 0
+      i32.const 76
+      i32.add
+      i32.load
+      local.tee 4
+      i32.const 17
+      i32.lt_u
+      br_if 0 (;@1;)
+      local.get 0
+      i32.load offset=68
+      local.get 4
+      local.get 4
+      i32.const -1
+      i32.add
+      local.get 4
+      i32.const -17
+      i32.add
+      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4swap17hd4b66add2d693797E
+      return
+    end
+    local.get 0
+    i32.const 91
+    i32.store8 offset=88)
+  (func $_ZN16revm_interpreter12instructions5stack4swap17hefd3752424be936dE (type 4) (param i32 i32)
     (local i64 i64 i32)
     block  ;; label = @1
       local.get 0
@@ -21218,81 +21356,19 @@
       local.get 4
       i32.const -7
       i32.add
-      call 154
+      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4swap17hd4b66add2d693797E
       return
     end
     local.get 0
     i32.const 91
     i32.store8 offset=88)
-  (func (;169;) (type 4) (param i32 i32)
-    (local i64 i64 i32)
-    block  ;; label = @1
-      local.get 0
-      i64.load offset=16
-      i64.const -1
-      local.get 0
-      i32.const 24
-      i32.add
-      i64.load
-      local.tee 2
-      i64.const 3
-      i64.add
-      local.tee 3
-      local.get 3
-      local.get 2
-      i64.lt_u
-      select
-      local.tee 2
-      i64.ge_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.const 80
-      i32.store8 offset=88
-      return
-    end
-    local.get 0
-    local.get 2
-    i64.store offset=24
-    local.get 0
-    i32.const 32
-    i32.add
-    local.tee 4
-    local.get 4
-    i64.load
-    i64.const 3
-    i64.add
-    i64.store
-    block  ;; label = @1
-      local.get 0
-      i32.const 76
-      i32.add
-      i32.load
-      local.tee 4
-      i32.const 15
-      i32.lt_u
-      br_if 0 (;@1;)
-      local.get 0
-      i32.load offset=68
-      local.get 4
-      local.get 4
-      i32.const -1
-      i32.add
-      local.get 4
-      i32.const -15
-      i32.add
-      call 154
-      return
-    end
-    local.get 0
-    i32.const 91
-    i32.store8 offset=88)
-  (func (;170;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions6memory5mload17hb2ac6ccc199b41ffE (type 4) (param i32 i32)
     (local i32 i64 i64 i32 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 64
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -21341,7 +21417,7 @@
         local.get 0
         i32.const 68
         i32.add
-        call 17
+        call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
         i32.const 84
         local.set 5
         block  ;; label = @3
@@ -21414,14 +21490,14 @@
             i64.const 3
             i64.mul
             i64.add
-            call 69
+            call $_ZN16revm_interpreter3gas3Gas13record_memory17hd4732adc5333f5c8E
             i32.eqz
             br_if 1 (;@3;)
             local.get 0
             i32.load offset=84
             local.tee 5
             local.get 8
-            call 13
+            call $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory6resize17h81ab5ea4f2a66711E
             local.get 5
             i32.load offset=24
             local.set 7
@@ -21435,7 +21511,7 @@
           local.get 6
           i32.add
           i32.add
-          call 24
+          call $_ZN5ruint5bytes42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$13from_be_bytes17h0c680f4a4c5d4c24E
           block  ;; label = @4
             local.get 0
             i32.load offset=76
@@ -21505,8 +21581,8 @@
     local.get 2
     i32.const 64
     i32.add
-    global.set 0)
-  (func (;171;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions6memory5msize17h319874c669c7239dE (type 4) (param i32 i32)
     (local i64 i64 i32 i32 i32)
     block  ;; label = @1
       local.get 0
@@ -21596,13 +21672,13 @@
     local.get 0
     i32.const 92
     i32.store8 offset=88)
-  (func (;172;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions6memory6mstore17h92f249c6f88604d3E (type 4) (param i32 i32)
     (local i32 i64 i64 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 96
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -21656,7 +21732,7 @@
             local.get 0
             i32.const 68
             i32.add
-            call 19
+            call $_ZN16revm_interpreter11interpreter5stack5Stack11pop2_unsafe17hd11983c9ec7c10f1E
             local.get 2
             i32.const 8
             i32.add
@@ -21751,7 +21827,7 @@
                 i64.const 3
                 i64.mul
                 i64.add
-                call 69
+                call $_ZN16revm_interpreter3gas3Gas13record_memory17hd4732adc5333f5c8E
                 br_if 0 (;@6;)
                 local.get 0
                 i32.const 82
@@ -21762,20 +21838,20 @@
               i32.load offset=84
               local.tee 5
               local.get 7
-              call 13
+              call $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory6resize17h81ab5ea4f2a66711E
             end
             local.get 2
             i32.const 32
             i32.add
             local.get 2
-            call 67
+            call $_ZN5ruint5bytes42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$11to_be_bytes17h8500c5533b092a39E
             local.get 5
             local.get 6
             local.get 2
             i32.const 32
             i32.add
             i32.const 32
-            call 11
+            call $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory3set17h2ada5bba06a88ed9E
             br 3 (;@1;)
           end
           local.get 0
@@ -21795,14 +21871,14 @@
     local.get 2
     i32.const 96
     i32.add
-    global.set 0)
-  (func (;173;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions6memory7mstore817h1a455f5a3b816795E (type 4) (param i32 i32)
     (local i32 i64 i64 i32 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 64
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -21854,7 +21930,7 @@
             local.get 0
             i32.const 68
             i32.add
-            call 19
+            call $_ZN16revm_interpreter11interpreter5stack5Stack11pop2_unsafe17hd11983c9ec7c10f1E
             local.get 2
             i64.load offset=8
             i64.const 0
@@ -21922,7 +21998,7 @@
                 i64.const 3
                 i64.mul
                 i64.add
-                call 69
+                call $_ZN16revm_interpreter3gas3Gas13record_memory17hd4732adc5333f5c8E
                 br_if 0 (;@6;)
                 local.get 0
                 i32.const 82
@@ -21933,7 +22009,7 @@
               i32.load offset=84
               local.tee 5
               local.get 7
-              call 13
+              call $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory6resize17h81ab5ea4f2a66711E
             end
             local.get 2
             local.get 8
@@ -21942,7 +22018,7 @@
             local.get 6
             local.get 2
             i32.const 1
-            call 11
+            call $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory3set17h2ada5bba06a88ed9E
             br 3 (;@1;)
           end
           local.get 0
@@ -21962,14 +22038,14 @@
     local.get 2
     i32.const 64
     i32.add
-    global.set 0)
-  (func (;174;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions6system12calldatacopy17hec567de0366887e9E (type 4) (param i32 i32)
     (local i32 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i32 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 96
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         block  ;; label = @3
@@ -21985,7 +22061,7 @@
             local.get 0
             i32.const 68
             i32.add
-            call 20
+            call $_ZN16revm_interpreter11interpreter5stack5Stack11pop3_unsafe17h0d9a54433668eefaE
             block  ;; label = @5
               block  ;; label = @6
                 local.get 2
@@ -22165,7 +22241,7 @@
                 i64.const 3
                 i64.mul
                 i64.add
-                call 69
+                call $_ZN16revm_interpreter3gas3Gas13record_memory17hd4732adc5333f5c8E
                 br_if 0 (;@6;)
                 local.get 0
                 i32.const 82
@@ -22176,7 +22252,7 @@
               i32.load offset=84
               local.tee 16
               local.get 17
-              call 13
+              call $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory6resize17h81ab5ea4f2a66711E
             end
             local.get 16
             local.get 15
@@ -22197,7 +22273,7 @@
             i32.load offset=4
             local.get 0
             i32.load offset=8
-            call 15
+            call $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory8set_data17h3f7d44d75dcea53aE
             br 3 (;@1;)
           end
           local.get 0
@@ -22217,14 +22293,14 @@
     local.get 2
     i32.const 96
     i32.add
-    global.set 0)
-  (func (;175;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions6system12calldataload17hc43738ea508d9202E (type 4) (param i32 i32)
     (local i32 i64 i64 i32 i32 i32 i32 i32 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 112
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -22276,7 +22352,7 @@
         i32.const 68
         i32.add
         local.tee 6
-        call 17
+        call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
         block  ;; label = @3
           block  ;; label = @4
             local.get 0
@@ -22367,7 +22443,7 @@
           i32.load offset=4
           local.get 8
           i32.const 1049344
-          call 176
+          call $_ZN106_$LT$core..ops..range..Range$LT$usize$GT$$u20$as$u20$core..slice..index..SliceIndex$LT$$u5b$T$u5d$$GT$$GT$5index17h9a9f7e26ff193f9cE
           local.get 2
           i32.const 80
           i32.add
@@ -22377,7 +22453,7 @@
           local.get 2
           i32.load offset=12
           i32.const 1049360
-          call 12
+          call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$15copy_from_slice17he2812e5d7db47a7cE
           local.get 2
           i32.const 48
           i32.add
@@ -22411,7 +22487,7 @@
         local.get 2
         i32.const 48
         i32.add
-        call 23
+        call $_ZN16revm_interpreter11interpreter5stack5Stack9push_b25617h9651a07fd013b1c6E
         local.tee 5
         i32.const 255
         i32.and
@@ -22430,8 +22506,8 @@
     local.get 2
     i32.const 112
     i32.add
-    global.set 0)
-  (func (;176;) (type 7) (param i32 i32 i32 i32 i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN106_$LT$core..ops..range..Range$LT$usize$GT$$u20$as$u20$core..slice..index..SliceIndex$LT$$u5b$T$u5d$$GT$$GT$5index17h9a9f7e26ff193f9cE (type 7) (param i32 i32 i32 i32 i32 i32)
     block  ;; label = @1
       block  ;; label = @2
         local.get 2
@@ -22445,13 +22521,13 @@
         local.get 2
         local.get 4
         local.get 5
-        call 8
+        call $_ZN4core5slice5index24slice_end_index_len_fail17h6372e465cf26b33aE
         unreachable
       end
       local.get 1
       local.get 2
       local.get 5
-      call 9
+      call $_ZN4core5slice5index22slice_index_order_fail17h5c05174755728e22E
       unreachable
     end
     local.get 0
@@ -22464,7 +22540,7 @@
     local.get 1
     i32.add
     i32.store)
-  (func (;177;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions6system12calldatasize17h835be6902ac1ac3dE (type 4) (param i32 i32)
     (local i64 i64 i32)
     block  ;; label = @1
       local.get 0
@@ -22547,13 +22623,13 @@
     local.get 0
     i32.const 92
     i32.store8 offset=88)
-  (func (;178;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions6system14returndatacopy17h970c5620137d24d8E (type 4) (param i32 i32)
     (local i32 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i32 i32 i32 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 112
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         block  ;; label = @3
@@ -22571,7 +22647,7 @@
             local.get 0
             i32.const 68
             i32.add
-            call 20
+            call $_ZN16revm_interpreter11interpreter5stack5Stack11pop3_unsafe17h0d9a54433668eefaE
             block  ;; label = @5
               block  ;; label = @6
                 local.get 2
@@ -22782,7 +22858,7 @@
                 i64.const 3
                 i64.mul
                 i64.add
-                call 69
+                call $_ZN16revm_interpreter3gas3Gas13record_memory17hd4732adc5333f5c8E
                 br_if 0 (;@6;)
                 local.get 0
                 i32.const 82
@@ -22793,7 +22869,7 @@
               i32.load offset=84
               local.tee 15
               local.get 19
-              call 13
+              call $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory6resize17h81ab5ea4f2a66711E
               local.get 0
               i32.load offset=8
               local.set 17
@@ -22807,14 +22883,14 @@
             i32.load offset=4
             local.get 17
             i32.const 1049376
-            call 176
+            call $_ZN106_$LT$core..ops..range..Range$LT$usize$GT$$u20$as$u20$core..slice..index..SliceIndex$LT$$u5b$T$u5d$$GT$$GT$5index17h9a9f7e26ff193f9cE
             local.get 15
             local.get 18
             local.get 2
             i32.load offset=8
             local.get 2
             i32.load offset=12
-            call 11
+            call $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory3set17h2ada5bba06a88ed9E
             br 3 (;@1;)
           end
           local.get 0
@@ -22834,8 +22910,8 @@
     local.get 2
     i32.const 112
     i32.add
-    global.set 0)
-  (func (;179;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions6system14returndatasize17h03eff29db6c997b9E (type 4) (param i32 i32)
     (local i64 i64 i32)
     block  ;; label = @1
       local.get 0
@@ -22917,7 +22993,7 @@
     local.get 0
     i32.const 92
     i32.store8 offset=88)
-  (func (;180;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions6system3gas17hab27ec127225011bE (type 4) (param i32 i32)
     (local i64 i64 i64 i32)
     block  ;; label = @1
       local.get 0
@@ -22999,13 +23075,13 @@
     local.get 0
     i32.const 92
     i32.store8 offset=88)
-  (func (;181;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions6system6caller17h2bf7f9aed1859a8aE (type 4) (param i32 i32)
     (local i32 i32 i64 i64 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 64
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     i32.const 80
     local.set 3
     block  ;; label = @1
@@ -23104,7 +23180,7 @@
         i32.const 68
         i32.add
         local.get 2
-        call 23
+        call $_ZN16revm_interpreter11interpreter5stack5Stack9push_b25617h9651a07fd013b1c6E
         local.tee 3
         i32.const 255
         i32.and
@@ -23119,14 +23195,14 @@
     local.get 2
     i32.const 64
     i32.add
-    global.set 0)
-  (func (;182;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions6system7address17hc0bbc0ec2b90caf4E (type 4) (param i32 i32)
     (local i32 i32 i64 i64 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 64
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     i32.const 80
     local.set 3
     block  ;; label = @1
@@ -23225,7 +23301,7 @@
         i32.const 68
         i32.add
         local.get 2
-        call 23
+        call $_ZN16revm_interpreter11interpreter5stack5Stack9push_b25617h9651a07fd013b1c6E
         local.tee 3
         i32.const 255
         i32.and
@@ -23240,14 +23316,14 @@
     local.get 2
     i32.const 64
     i32.add
-    global.set 0)
-  (func (;183;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions6system8codecopy17h25c9c3604444432dE (type 4) (param i32 i32)
     (local i32 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i32 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 96
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         block  ;; label = @3
@@ -23263,7 +23339,7 @@
             local.get 0
             i32.const 68
             i32.add
-            call 20
+            call $_ZN16revm_interpreter11interpreter5stack5Stack11pop3_unsafe17h0d9a54433668eefaE
             block  ;; label = @5
               block  ;; label = @6
                 local.get 2
@@ -23443,7 +23519,7 @@
                 i64.const 3
                 i64.mul
                 i64.add
-                call 69
+                call $_ZN16revm_interpreter3gas3Gas13record_memory17hd4732adc5333f5c8E
                 br_if 0 (;@6;)
                 local.get 0
                 i32.const 82
@@ -23454,7 +23530,7 @@
               i32.load offset=84
               local.tee 16
               local.get 17
-              call 13
+              call $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory6resize17h81ab5ea4f2a66711E
             end
             local.get 16
             local.get 15
@@ -23488,7 +23564,7 @@
             i32.gt_u
             select
             local.get 17
-            call 15
+            call $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory8set_data17h3f7d44d75dcea53aE
             br 3 (;@1;)
           end
           local.get 0
@@ -23508,8 +23584,8 @@
     local.get 2
     i32.const 96
     i32.add
-    global.set 0)
-  (func (;184;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions6system8codesize17h8b11876545c208f1E (type 4) (param i32 i32)
     (local i64 i64 i32)
     block  ;; label = @1
       local.get 0
@@ -23594,7 +23670,7 @@
     local.get 0
     i32.const 92
     i32.store8 offset=88)
-  (func (;185;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions6system9callvalue17h6621d5685c7b5c60E (type 4) (param i32 i32)
     (local i64 i64 i32 i32 i64)
     block  ;; label = @1
       local.get 0
@@ -23694,13 +23770,13 @@
     local.get 0
     i32.const 92
     i32.store8 offset=88)
-  (func (;186;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions6system9keccak25617hfe500612d3a58902E (type 4) (param i32 i32)
     (local i32 i32 i64 i64 i64 i64 i64 i64 i64 i32 i32 i32 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 96
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -23715,7 +23791,7 @@
         i32.const 68
         i32.add
         local.tee 3
-        call 19
+        call $_ZN16revm_interpreter11interpreter5stack5Stack11pop2_unsafe17hd11983c9ec7c10f1E
         block  ;; label = @3
           block  ;; label = @4
             local.get 2
@@ -23908,14 +23984,14 @@
               i64.const 3
               i64.mul
               i64.add
-              call 69
+              call $_ZN16revm_interpreter3gas3Gas13record_memory17hd4732adc5333f5c8E
               i32.eqz
               br_if 2 (;@3;)
               local.get 0
               i32.load offset=84
               local.tee 11
               local.get 15
-              call 13
+              call $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory6resize17h81ab5ea4f2a66711E
             end
             local.get 2
             i32.const 24
@@ -23947,7 +24023,7 @@
             i32.add
             local.get 12
             local.get 2
-            call 2
+            call $_ZN14fluentbase_sdk8bindings17_crypto_keccak25617he52c37d966ddb4e1E
             local.get 2
             i32.const 64
             i32.add
@@ -23981,7 +24057,7 @@
           local.get 2
           i32.const 64
           i32.add
-          call 23
+          call $_ZN16revm_interpreter11interpreter5stack5Stack9push_b25617h9651a07fd013b1c6E
           local.tee 11
           i32.const 255
           i32.and
@@ -24001,14 +24077,14 @@
     local.get 2
     i32.const 96
     i32.add
-    global.set 0)
-  (func (;187;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions7bitwise2eq17h291cb5038eccd265E (type 4) (param i32 i32)
     (local i32 i64 i64 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 80
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -24060,7 +24136,7 @@
         local.get 0
         i32.const 68
         i32.add
-        call 21
+        call $_ZN16revm_interpreter11interpreter5stack5Stack14pop_top_unsafe17hbc17cf69c18efab0E
         local.get 2
         i32.const 8
         i32.add
@@ -24107,7 +24183,7 @@
         local.get 2
         i32.load offset=72
         local.tee 0
-        call 39
+        call $_ZN69_$LT$T$u20$as$u20$core..array..equality..SpecArrayEq$LT$U$C$_$GT$$GT$7spec_eq17hfd0ca212b18d6496E
         local.set 5
         local.get 0
         i64.const 0
@@ -24135,14 +24211,14 @@
     local.get 2
     i32.const 80
     i32.add
-    global.set 0)
-  (func (;188;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions7bitwise2gt17he6a277feab3aef67E (type 4) (param i32 i32)
     (local i32 i64 i64 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 80
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -24194,7 +24270,7 @@
         local.get 0
         i32.const 68
         i32.add
-        call 21
+        call $_ZN16revm_interpreter11interpreter5stack5Stack14pop_top_unsafe17hbc17cf69c18efab0E
         local.get 2
         i32.const 8
         i32.add
@@ -24241,7 +24317,7 @@
         local.get 2
         i32.load offset=72
         local.tee 0
-        call 103
+        call $_ZN5ruint3cmp69_$LT$impl$u20$core..cmp..Ord$u20$for$u20$ruint..Uint$LT$_$C$_$GT$$GT$3cmp17h35b780eff5efc12eE
         local.set 5
         local.get 0
         i64.const 0
@@ -24273,14 +24349,14 @@
     local.get 2
     i32.const 80
     i32.add
-    global.set 0)
-  (func (;189;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions7bitwise2lt17hf68d5ba7c18f6965E (type 4) (param i32 i32)
     (local i32 i64 i64 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 80
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -24332,7 +24408,7 @@
         local.get 0
         i32.const 68
         i32.add
-        call 21
+        call $_ZN16revm_interpreter11interpreter5stack5Stack14pop_top_unsafe17hbc17cf69c18efab0E
         local.get 2
         i32.const 8
         i32.add
@@ -24379,7 +24455,7 @@
         local.get 2
         i32.load offset=72
         local.tee 0
-        call 27
+        call $_ZN4core3cmp10PartialOrd2lt17h4a68c573623068aaE
         local.set 5
         local.get 0
         i64.const 0
@@ -24407,14 +24483,14 @@
     local.get 2
     i32.const 80
     i32.add
-    global.set 0)
-  (func (;190;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions7bitwise3not17hb17d3a687b807745E (type 4) (param i32 i32)
     (local i32 i64 i64 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 64
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -24509,7 +24585,7 @@
         local.get 2
         i32.const 32
         i32.add
-        call 29
+        call $_ZN5ruint4bits74_$LT$impl$u20$core..ops..bit..Not$u20$for$u20$ruint..Uint$LT$_$C$_$GT$$GT$3not17h093829249c092abaE
         local.get 5
         local.get 2
         i32.const 24
@@ -24541,14 +24617,14 @@
     local.get 2
     i32.const 64
     i32.add
-    global.set 0)
-  (func (;191;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions7bitwise3sar17hc3bc1c1944a60874E (type 4) (param i32 i32)
     (local i32 i64 i64 i32 i32 i32 i32 i32 i32 i32 i32 i32 i64 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 176
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         block  ;; label = @3
@@ -24609,7 +24685,7 @@
                           local.get 0
                           i32.const 68
                           i32.add
-                          call 21
+                          call $_ZN16revm_interpreter11interpreter5stack5Stack14pop_top_unsafe17hbc17cf69c18efab0E
                           local.get 2
                           i32.const 8
                           i32.add
@@ -24655,12 +24731,12 @@
                           local.get 2
                           i32.load offset=168
                           local.tee 5
-                          call 48
+                          call $_ZN16revm_interpreter12instructions4i25615i256_sign_compl17h9bb3eb0fb2f5d674E
                           local.set 0
                           block  ;; label = @12
                             local.get 5
                             i32.const 1049040
-                            call 39
+                            call $_ZN69_$LT$T$u20$as$u20$core..array..equality..SpecArrayEq$LT$U$C$_$GT$$GT$7spec_eq17hfd0ca212b18d6496E
                             br_if 0 (;@12;)
                             local.get 6
                             i64.const 0
@@ -24680,7 +24756,7 @@
                             local.get 2
                             i32.const 136
                             i32.add
-                            call 53
+                            call $_ZN4core3cmp10PartialOrd2ge17hc7e9bf8836209409E
                             br_if 0 (;@12;)
                             local.get 2
                             i32.const 136
@@ -24725,7 +24801,7 @@
                             local.get 2
                             i32.const 136
                             i32.add
-                            call 192
+                            call $_ZN5ruint4bits42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$7bit_len17h7c8ec1b7defe77d3E
                             local.set 7
                             local.get 2
                             i64.load offset=136
@@ -24784,7 +24860,7 @@
                               i32.const 104
                               i32.add
                               i32.const 1049536
-                              call 28
+                              call $_ZN5ruint3add42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$15overflowing_sub17h23f74ed7a9b46f7eE
                               local.get 2
                               i32.const 72
                               i32.add
@@ -24982,7 +25058,7 @@
                                     i32.const 4
                                     i32.const 4
                                     i32.const 1051344
-                                    call 30
+                                    call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
                                     unreachable
                                   end
                                   i32.const 3
@@ -25249,7 +25325,7 @@
                               i32.const 104
                               i32.add
                               i32.const 1049536
-                              call 32
+                              call $_ZN5ruint3add42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$15overflowing_add17h60a141a9a37ca851E
                               local.get 2
                               i32.const 72
                               i32.add
@@ -25284,7 +25360,7 @@
                               local.get 2
                               i32.const 72
                               i32.add
-                              call 49
+                              call $_ZN16revm_interpreter12instructions4i2569two_compl17h97815a8edeab869cE
                               br 9 (;@4;)
                             end
                             local.get 2
@@ -25475,7 +25551,7 @@
                                   i32.const 4
                                   i32.const 4
                                   i32.const 1051344
-                                  call 30
+                                  call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
                                   unreachable
                                 end
                                 i32.const 3
@@ -25786,38 +25862,38 @@
                       local.get 2
                       i32.const 256
                       i32.store offset=136
-                      i32.const 1053960
+                      i32.const 1054008
                       i32.const 43
                       local.get 2
                       i32.const 136
                       i32.add
                       i32.const 1049788
                       i32.const 1049516
-                      call 193
+                      call $_ZN4core6result13unwrap_failed17h38a5f72e87633eadE
                       unreachable
                     end
                     local.get 8
                     i32.const 4
                     i32.const 1051328
-                    call 30
+                    call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
                     unreachable
                   end
                   i32.const 4
                   i32.const 4
                   i32.const 1051376
-                  call 30
+                  call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
                   unreachable
                 end
                 local.get 8
                 i32.const 4
                 i32.const 1051328
-                call 30
+                call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
                 unreachable
               end
               i32.const 4
               i32.const 4
               i32.const 1051376
-              call 30
+              call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
               unreachable
             end
             local.get 2
@@ -25877,21 +25953,21 @@
         local.get 2
         i32.const 176
         i32.add
-        global.set 0
+        global.set $__stack_pointer
         return
       end
       local.get 6
       i32.const 4
       i32.const 1051360
-      call 30
+      call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
       unreachable
     end
     local.get 6
     i32.const 4
     i32.const 1051360
-    call 30
+    call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
     unreachable)
-  (func (;192;) (type 5) (param i32) (result i32)
+  (func $_ZN5ruint4bits42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$7bit_len17h7c8ec1b7defe77d3E (type 5) (param i32) (result i32)
     (local i32 i32 i32)
     i32.const 24
     local.set 1
@@ -25954,15 +26030,15 @@
     local.get 1
     i32.const 4
     i32.const 1051264
-    call 30
+    call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
     unreachable)
-  (func (;193;) (type 1) (param i32 i32 i32 i32 i32)
+  (func $_ZN4core6result13unwrap_failed17h38a5f72e87633eadE (type 1) (param i32 i32 i32 i32 i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 64
     i32.sub
     local.tee 5
-    global.set 0
+    global.set $__stack_pointer
     local.get 5
     local.get 1
     i32.store offset=12
@@ -25993,7 +26069,7 @@
     i32.const 2
     i32.store offset=28
     local.get 5
-    i32.const 1053340
+    i32.const 1053372
     i32.store offset=24
     local.get 5
     i32.const 2
@@ -26017,15 +26093,15 @@
     i32.const 24
     i32.add
     local.get 4
-    call 65
+    call $_ZN4core9panicking9panic_fmt17h78607b33a29a727dE
     unreachable)
-  (func (;194;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions7bitwise3sgt17hfd1f1c2ddadd0d27E (type 4) (param i32 i32)
     (local i32 i64 i64 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 80
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -26077,7 +26153,7 @@
         local.get 0
         i32.const 68
         i32.add
-        call 21
+        call $_ZN16revm_interpreter11interpreter5stack5Stack14pop_top_unsafe17hbc17cf69c18efab0E
         local.get 2
         i32.const 8
         i32.add
@@ -26124,7 +26200,7 @@
         local.get 2
         i32.load offset=72
         local.tee 0
-        call 102
+        call $_ZN16revm_interpreter12instructions4i2568i256_cmp17h8016e799301f4d9fE
         local.set 5
         local.get 0
         i64.const 0
@@ -26156,14 +26232,14 @@
     local.get 2
     i32.const 80
     i32.add
-    global.set 0)
-  (func (;195;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions7bitwise3shl17ha2f857f4d762683eE (type 4) (param i32 i32)
     (local i32 i64 i64 i32 i64 i32 i32 i32 i32 i32 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 80
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -26218,7 +26294,7 @@
               local.get 0
               i32.const 68
               i32.add
-              call 21
+              call $_ZN16revm_interpreter11interpreter5stack5Stack14pop_top_unsafe17hbc17cf69c18efab0E
               local.get 2
               i32.load offset=8
               local.set 0
@@ -26648,32 +26724,32 @@
           local.get 11
           i32.const 4
           i32.const 1051280
-          call 30
+          call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
           unreachable
         end
         local.get 11
         i32.const 4
         i32.const 1051296
-        call 30
+        call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
         unreachable
       end
       i32.const -1
       i32.const 4
       i32.const 1051312
-      call 30
+      call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
       unreachable
     end
     local.get 2
     i32.const 80
     i32.add
-    global.set 0)
-  (func (;196;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions7bitwise3shr17h9fef52963f92ae00E (type 4) (param i32 i32)
     (local i32 i64 i64 i32 i64 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 80
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         block  ;; label = @3
@@ -26728,7 +26804,7 @@
               local.get 0
               i32.const 68
               i32.add
-              call 21
+              call $_ZN16revm_interpreter11interpreter5stack5Stack14pop_top_unsafe17hbc17cf69c18efab0E
               local.get 2
               i32.load offset=8
               local.set 0
@@ -26941,7 +27017,7 @@
                     i32.const 4
                     i32.const 4
                     i32.const 1051344
-                    call 30
+                    call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
                     unreachable
                   end
                   i32.const 3
@@ -27214,33 +27290,33 @@
           local.get 12
           i32.const 4
           i32.const 1051328
-          call 30
+          call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
           unreachable
         end
         i32.const 4
         i32.const 4
         i32.const 1051376
-        call 30
+        call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
         unreachable
       end
       local.get 2
       i32.const 80
       i32.add
-      global.set 0
+      global.set $__stack_pointer
       return
     end
     local.get 5
     i32.const 4
     i32.const 1051360
-    call 30
+    call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
     unreachable)
-  (func (;197;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions7bitwise3slt17h3429c75399ed4fdbE (type 4) (param i32 i32)
     (local i32 i64 i64 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 80
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -27292,7 +27368,7 @@
         local.get 0
         i32.const 68
         i32.add
-        call 21
+        call $_ZN16revm_interpreter11interpreter5stack5Stack14pop_top_unsafe17hbc17cf69c18efab0E
         local.get 2
         i32.const 8
         i32.add
@@ -27339,7 +27415,7 @@
         local.get 2
         i32.load offset=72
         local.tee 0
-        call 102
+        call $_ZN16revm_interpreter12instructions4i2568i256_cmp17h8016e799301f4d9fE
         local.set 5
         local.get 0
         i64.const 0
@@ -27371,14 +27447,14 @@
     local.get 2
     i32.const 80
     i32.add
-    global.set 0)
-  (func (;198;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions7bitwise4byte17hbc2bc06f45c33460E (type 4) (param i32 i32)
     (local i32 i64 i64 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 48
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -27430,7 +27506,7 @@
         local.get 0
         i32.const 68
         i32.add
-        call 21
+        call $_ZN16revm_interpreter11interpreter5stack5Stack14pop_top_unsafe17hbc17cf69c18efab0E
         local.get 2
         i32.load offset=40
         local.set 0
@@ -27525,14 +27601,14 @@
     local.get 2
     i32.const 48
     i32.add
-    global.set 0)
-  (func (;199;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions7bitwise5bitor17h2ad41e4a4b92fe8aE (type 4) (param i32 i32)
     (local i32 i64 i64 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 80
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -27584,7 +27660,7 @@
         local.get 0
         i32.const 68
         i32.add
-        call 21
+        call $_ZN16revm_interpreter11interpreter5stack5Stack14pop_top_unsafe17hbc17cf69c18efab0E
         local.get 2
         i32.const 8
         i32.add
@@ -27726,14 +27802,14 @@
     local.get 2
     i32.const 80
     i32.add
-    global.set 0)
-  (func (;200;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions7bitwise6bitand17h55004cd35210b725E (type 4) (param i32 i32)
     (local i32 i64 i64 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 80
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -27785,7 +27861,7 @@
         local.get 0
         i32.const 68
         i32.add
-        call 21
+        call $_ZN16revm_interpreter11interpreter5stack5Stack14pop_top_unsafe17hbc17cf69c18efab0E
         local.get 2
         i32.const 8
         i32.add
@@ -27927,14 +28003,14 @@
     local.get 2
     i32.const 80
     i32.add
-    global.set 0)
-  (func (;201;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions7bitwise6bitxor17haa2c42d11eb23859E (type 4) (param i32 i32)
     (local i32 i64 i64 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 80
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -27986,7 +28062,7 @@
         local.get 0
         i32.const 68
         i32.add
-        call 21
+        call $_ZN16revm_interpreter11interpreter5stack5Stack14pop_top_unsafe17hbc17cf69c18efab0E
         local.get 2
         i32.const 8
         i32.add
@@ -28128,8 +28204,8 @@
     local.get 2
     i32.const 80
     i32.add
-    global.set 0)
-  (func (;202;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions7bitwise6iszero17h2e3d81e1ea0be433E (type 4) (param i32 i32)
     (local i64 i64 i32)
     block  ;; label = @1
       local.get 0
@@ -28185,7 +28261,7 @@
       i32.add
       local.tee 0
       i32.const 1049040
-      call 39
+      call $_ZN69_$LT$T$u20$as$u20$core..array..equality..SpecArrayEq$LT$U$C$_$GT$$GT$7spec_eq17hfd0ca212b18d6496E
       local.set 4
       local.get 0
       i64.const 0
@@ -28209,7 +28285,7 @@
     local.get 0
     i32.const 91
     i32.store8 offset=88)
-  (func (;203;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions7control2pc17heefb1fce6aec27f9E (type 4) (param i32 i32)
     (local i64 i64 i32 i32 i32)
     block  ;; label = @1
       local.get 0
@@ -28302,13 +28378,13 @@
     local.get 0
     i32.const 92
     i32.store8 offset=88)
-  (func (;204;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions7control3ret17hc60e36c55594c078E (type 4) (param i32 i32)
     (local i32 i32 i32 i32 i32 i32 i64)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 64
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     i32.const 91
     local.set 3
     block  ;; label = @1
@@ -28323,7 +28399,7 @@
       local.get 0
       i32.const 68
       i32.add
-      call 19
+      call $_ZN16revm_interpreter11interpreter5stack5Stack11pop2_unsafe17hd11983c9ec7c10f1E
       i32.const 84
       local.set 3
       local.get 2
@@ -28423,13 +28499,13 @@
           i64.const 3
           i64.mul
           i64.add
-          call 69
+          call $_ZN16revm_interpreter3gas3Gas13record_memory17hd4732adc5333f5c8E
           i32.eqz
           br_if 2 (;@1;)
           local.get 0
           i32.load offset=84
           local.get 7
-          call 13
+          call $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory6resize17h81ab5ea4f2a66711E
         end
         local.get 0
         local.get 5
@@ -28447,14 +28523,14 @@
     local.get 2
     i32.const 64
     i32.add
-    global.set 0)
-  (func (;205;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions7control4jump17h6ff867663f5bacf0E (type 4) (param i32 i32)
     (local i32 i64 i64 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 32
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -28504,7 +28580,7 @@
           local.get 0
           i32.const 68
           i32.add
-          call 17
+          call $_ZN16revm_interpreter11interpreter5stack5Stack10pop_unsafe17h21d7f8c1ceed045bE
           local.get 2
           i64.load offset=8
           i64.const 0
@@ -28530,7 +28606,7 @@
             local.get 2
             i32.load
             local.tee 6
-            call 25
+            call $_ZN16revm_interpreter11interpreter8contract8Contract13is_valid_jump17hdb194394a8f05d62E
             br_if 0 (;@4;)
             local.get 0
             i32.const 89
@@ -28559,18 +28635,18 @@
     local.get 2
     i32.const 32
     i32.add
-    global.set 0)
-  (func (;206;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions7control4stop17h9e8d25d1765c5164E (type 4) (param i32 i32)
     local.get 0
     i32.const 1
     i32.store8 offset=88)
-  (func (;207;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions7control5jumpi17h3e7a8d99416b6ef7E (type 4) (param i32 i32)
     (local i32 i64 i64 i32 i64 i64 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 96
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -28623,7 +28699,7 @@
           local.get 0
           i32.const 68
           i32.add
-          call 19
+          call $_ZN16revm_interpreter11interpreter5stack5Stack11pop2_unsafe17hd11983c9ec7c10f1E
           local.get 2
           i64.load offset=56
           local.set 6
@@ -28666,7 +28742,7 @@
           i64.store
           local.get 2
           i32.const 1049040
-          call 36
+          call $_ZN4core3cmp9PartialEq2ne17h890fd8e14ff88a52E
           i32.eqz
           br_if 2 (;@1;)
           local.get 3
@@ -28691,7 +28767,7 @@
             local.get 7
             i32.wrap_i64
             local.tee 8
-            call 25
+            call $_ZN16revm_interpreter11interpreter8contract8Contract13is_valid_jump17hdb194394a8f05d62E
             br_if 0 (;@4;)
             local.get 0
             i32.const 89
@@ -28720,14 +28796,14 @@
     local.get 2
     i32.const 96
     i32.add
-    global.set 0)
-  (func (;208;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions7control6revert17h2b941fd03ee81cecE (type 4) (param i32 i32)
     (local i32 i32 i32 i32 i32 i32 i64)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 64
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     i32.const 91
     local.set 3
     block  ;; label = @1
@@ -28742,7 +28818,7 @@
       local.get 0
       i32.const 68
       i32.add
-      call 19
+      call $_ZN16revm_interpreter11interpreter5stack5Stack11pop2_unsafe17hd11983c9ec7c10f1E
       i32.const 84
       local.set 3
       local.get 2
@@ -28842,13 +28918,13 @@
           i64.const 3
           i64.mul
           i64.add
-          call 69
+          call $_ZN16revm_interpreter3gas3Gas13record_memory17hd4732adc5333f5c8E
           i32.eqz
           br_if 2 (;@1;)
           local.get 0
           i32.load offset=84
           local.get 7
-          call 13
+          call $_ZN16revm_interpreter11interpreter13shared_memory12SharedMemory6resize17h81ab5ea4f2a66711E
         end
         local.get 0
         local.get 5
@@ -28866,12 +28942,12 @@
     local.get 2
     i32.const 64
     i32.add
-    global.set 0)
-  (func (;209;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions7control7invalid17h6584b5a9a6257abeE (type 4) (param i32 i32)
     local.get 0
     i32.const 88
     i32.store8 offset=88)
-  (func (;210;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions7control8jumpdest17he81dc9f788d94ac6E (type 4) (param i32 i32)
     (local i64)
     block  ;; label = @1
       local.get 0
@@ -28907,11 +28983,11 @@
     local.get 0
     i32.const 80
     i32.store8 offset=88)
-  (func (;211;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions7control9not_found17h36545584def7de70E (type 4) (param i32 i32)
     local.get 0
     i32.const 85
     i32.store8 offset=88)
-  (func (;212;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions8host_env10difficulty17h61a27c91f5882979E (type 4) (param i32 i32)
     (local i64 i64 i32)
     block  ;; label = @1
       local.get 0
@@ -29002,7 +29078,7 @@
     local.get 0
     i32.const 92
     i32.store8 offset=88)
-  (func (;213;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions8host_env6number17h80675fe0c6a82a33E (type 4) (param i32 i32)
     (local i64 i64 i32)
     block  ;; label = @1
       local.get 0
@@ -29093,13 +29169,13 @@
     local.get 0
     i32.const 92
     i32.store8 offset=88)
-  (func (;214;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions8host_env6origin17h61676736524b230cE (type 4) (param i32 i32)
     (local i32 i32 i64 i64)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 64
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     i32.const 80
     local.set 3
     block  ;; label = @1
@@ -29197,7 +29273,7 @@
         i32.const 68
         i32.add
         local.get 2
-        call 23
+        call $_ZN16revm_interpreter11interpreter5stack5Stack9push_b25617h9651a07fd013b1c6E
         local.tee 3
         i32.const 255
         i32.and
@@ -29212,8 +29288,8 @@
     local.get 2
     i32.const 64
     i32.add
-    global.set 0)
-  (func (;215;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions8host_env7basefee17hff446d5ee71ff981E (type 4) (param i32 i32)
     (local i64 i64 i32)
     block  ;; label = @1
       local.get 0
@@ -29304,7 +29380,7 @@
     local.get 0
     i32.const 92
     i32.store8 offset=88)
-  (func (;216;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions8host_env7chainid17h2e99dc944b54a35cE (type 4) (param i32 i32)
     (local i64 i64 i32)
     block  ;; label = @1
       local.get 0
@@ -29388,13 +29464,13 @@
     local.get 0
     i32.const 92
     i32.store8 offset=88)
-  (func (;217;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions8host_env8coinbase17hc9969e0cb52f7b66E (type 4) (param i32 i32)
     (local i32 i32 i64 i64)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 64
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     i32.const 80
     local.set 3
     block  ;; label = @1
@@ -29490,7 +29566,7 @@
         i32.const 68
         i32.add
         local.get 2
-        call 23
+        call $_ZN16revm_interpreter11interpreter5stack5Stack9push_b25617h9651a07fd013b1c6E
         local.tee 3
         i32.const 255
         i32.and
@@ -29505,8 +29581,8 @@
     local.get 2
     i32.const 64
     i32.add
-    global.set 0)
-  (func (;218;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions8host_env8gaslimit17h33dee1260903298eE (type 4) (param i32 i32)
     (local i64 i64 i32)
     block  ;; label = @1
       local.get 0
@@ -29597,13 +29673,13 @@
     local.get 0
     i32.const 92
     i32.store8 offset=88)
-  (func (;219;) (type 4) (param i32 i32)
+  (func $_ZN16revm_interpreter12instructions8host_env8gasprice17he27e448bffb0a912E (type 4) (param i32 i32)
     (local i32 i64 i64 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 176
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -29729,7 +29805,7 @@
           local.get 1
           i32.const 288
           i32.add
-          call 32
+          call $_ZN5ruint3add42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$15overflowing_add17h60a141a9a37ca851E
           local.get 2
           i32.const 72
           i32.add
@@ -29785,7 +29861,7 @@
           local.get 2
           i32.const 72
           i32.add
-          call 103
+          call $_ZN5ruint3cmp69_$LT$impl$u20$core..cmp..Ord$u20$for$u20$ruint..Uint$LT$_$C$_$GT$$GT$3cmp17h35b780eff5efc12eE
           i32.const 255
           i32.and
           i32.const 1
@@ -29916,8 +29992,8 @@
     local.get 2
     i32.const 176
     i32.add
-    global.set 0)
-  (func (;220;) (type 4) (param i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16revm_interpreter12instructions8host_env9timestamp17hbdccdd91b34d769fE (type 4) (param i32 i32)
     (local i64 i64 i32)
     block  ;; label = @1
       local.get 0
@@ -30008,12 +30084,12 @@
     local.get 0
     i32.const 92
     i32.store8 offset=88)
-  (func (;221;) (type 3) (param i32 i32) (result i32)
+  (func $_ZN45_$LT$$LP$$RP$$u20$as$u20$core..fmt..Debug$GT$3fmt17hf0c895c6d907224dE (type 3) (param i32 i32) (result i32)
     local.get 1
-    i32.const 1053638
+    i32.const 1053670
     i32.const 2
-    call 222)
-  (func (;222;) (type 2) (param i32 i32 i32) (result i32)
+    call $_ZN4core3fmt9Formatter3pad17hd71b536b72e63aedE)
+  (func $_ZN4core3fmt9Formatter3pad17hd71b536b72e63aedE (type 2) (param i32 i32 i32) (result i32)
     (local i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
     block  ;; label = @1
       block  ;; label = @2
@@ -30881,7 +30957,7 @@
       local.set 4
     end
     local.get 4)
-  (func (;223;) (type 3) (param i32 i32) (result i32)
+  (func $_ZN4core3fmt3num52_$LT$impl$u20$core..fmt..Debug$u20$for$u20$usize$GT$3fmt17hea4032c988ec61f8E (type 3) (param i32 i32) (result i32)
     (local i32)
     block  ;; label = @1
       local.get 1
@@ -30897,26 +30973,24 @@
         br_if 0 (;@2;)
         local.get 0
         local.get 1
-        call 224
+        call $_ZN4core3fmt3num3imp52_$LT$impl$u20$core..fmt..Display$u20$for$u20$u32$GT$3fmt17he696c0e431156bceE
         return
       end
       local.get 0
-      i32.load
       local.get 1
-      call 225
+      call $_ZN4core3fmt3num53_$LT$impl$u20$core..fmt..UpperHex$u20$for$u20$i32$GT$3fmt17h530163d4b7ad6298E
       return
     end
     local.get 0
-    i32.load
     local.get 1
-    call 226)
-  (func (;224;) (type 3) (param i32 i32) (result i32)
+    call $_ZN4core3fmt3num53_$LT$impl$u20$core..fmt..LowerHex$u20$for$u20$i32$GT$3fmt17h59a2a9f4232cc2e7E)
+  (func $_ZN4core3fmt3num3imp52_$LT$impl$u20$core..fmt..Display$u20$for$u20$u32$GT$3fmt17he696c0e431156bceE (type 3) (param i32 i32) (result i32)
     (local i32 i32 i64 i64 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 48
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     i32.const 39
     local.set 3
     block  ;; label = @1
@@ -30959,7 +31033,7 @@
         local.tee 7
         i32.const 1
         i32.shl
-        i32.const 1053438
+        i32.const 1053470
         i32.add
         i32.load16_u align=1
         i32.store16 align=1
@@ -30975,7 +31049,7 @@
         i32.and
         i32.const 1
         i32.shl
-        i32.const 1053438
+        i32.const 1053470
         i32.add
         i32.load16_u align=1
         i32.store16 align=1
@@ -31024,7 +31098,7 @@
       i32.and
       i32.const 1
       i32.shl
-      i32.const 1053438
+      i32.const 1053470
       i32.add
       i32.load16_u align=1
       i32.store16 align=1
@@ -31046,7 +31120,7 @@
         local.get 0
         i32.const 1
         i32.shl
-        i32.const 1053438
+        i32.const 1053470
         i32.add
         i32.load16_u align=1
         i32.store16 align=1
@@ -31066,7 +31140,7 @@
       i32.store8
     end
     local.get 1
-    i32.const 1054832
+    i32.const 1054848
     i32.const 0
     local.get 2
     i32.const 9
@@ -31076,20 +31150,23 @@
     i32.const 39
     local.get 3
     i32.sub
-    call 298
+    call $_ZN4core3fmt9Formatter12pad_integral17h7a951cd58b7dcc45E
     local.set 3
     local.get 2
     i32.const 48
     i32.add
-    global.set 0
+    global.set $__stack_pointer
     local.get 3)
-  (func (;225;) (type 3) (param i32 i32) (result i32)
+  (func $_ZN4core3fmt3num53_$LT$impl$u20$core..fmt..UpperHex$u20$for$u20$i32$GT$3fmt17h530163d4b7ad6298E (type 3) (param i32 i32) (result i32)
     (local i32 i32 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 128
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
+    local.get 0
+    i32.load
+    local.set 0
     i32.const 127
     local.set 3
     loop  ;; label = @1
@@ -31133,12 +31210,12 @@
       br_if 0 (;@1;)
       local.get 4
       i32.const 128
-      i32.const 1053420
-      call 233
+      i32.const 1053452
+      call $_ZN4core5slice5index26slice_start_index_len_fail17hab50c0479c16b22eE
       unreachable
     end
     local.get 1
-    i32.const 1053436
+    i32.const 1053468
     i32.const 2
     local.get 5
     i32.const 129
@@ -31146,20 +31223,23 @@
     i32.const 1
     i32.add
     i32.sub
-    call 298
+    call $_ZN4core3fmt9Formatter12pad_integral17h7a951cd58b7dcc45E
     local.set 0
     local.get 2
     i32.const 128
     i32.add
-    global.set 0
+    global.set $__stack_pointer
     local.get 0)
-  (func (;226;) (type 3) (param i32 i32) (result i32)
+  (func $_ZN4core3fmt3num53_$LT$impl$u20$core..fmt..LowerHex$u20$for$u20$i32$GT$3fmt17h59a2a9f4232cc2e7E (type 3) (param i32 i32) (result i32)
     (local i32 i32 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 128
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
+    local.get 0
+    i32.load
+    local.set 0
     i32.const 127
     local.set 3
     loop  ;; label = @1
@@ -31203,12 +31283,12 @@
       br_if 0 (;@1;)
       local.get 4
       i32.const 128
-      i32.const 1053420
-      call 233
+      i32.const 1053452
+      call $_ZN4core5slice5index26slice_start_index_len_fail17hab50c0479c16b22eE
       unreachable
     end
     local.get 1
-    i32.const 1053436
+    i32.const 1053468
     i32.const 2
     local.get 5
     i32.const 129
@@ -31216,22 +31296,22 @@
     i32.const 1
     i32.add
     i32.sub
-    call 298
+    call $_ZN4core3fmt9Formatter12pad_integral17h7a951cd58b7dcc45E
     local.set 0
     local.get 2
     i32.const 128
     i32.add
-    global.set 0
+    global.set $__stack_pointer
     local.get 0)
-  (func (;227;) (type 6) (param i32))
-  (func (;228;) (type 6) (param i32))
-  (func (;229;) (type 6) (param i32))
-  (func (;230;) (type 6) (param i32)
+  (func $_ZN4core3ptr131drop_in_place$LT$hashbrown..map..HashMap$LT$ruint..Uint$LT$256_usize$C$4_usize$GT$$C$ruint..Uint$LT$256_usize$C$4_usize$GT$$GT$$GT$17h25e1b927072d6484E (type 6) (param i32))
+  (func $_ZN4core3ptr26drop_in_place$LT$usize$GT$17h4cf244900c27a4afE (type 6) (param i32))
+  (func $_ZN4core3ptr29drop_in_place$LT$$LP$$RP$$GT$17hb7829e134b937c17E (type 6) (param i32))
+  (func $_ZN4core3ptr46drop_in_place$LT$revm_primitives..env..Env$GT$17hf045bab379302350E (type 6) (param i32)
     local.get 0
     i32.const 400
     i32.add
-    call 63)
-  (func (;231;) (type 6) (param i32)
+    call $_ZN4core3ptr52drop_in_place$LT$alloy_primitives..bytes_..Bytes$GT$17h6dfb868a0b1f26d6E)
+  (func $_ZN4core3ptr55drop_in_place$LT$revm_primitives..bytecode..JumpMap$GT$17he22e81048f0419fcE (type 6) (param i32)
     (local i32)
     local.get 0
     i32.load
@@ -31248,9 +31328,9 @@
       i32.ne
       br_if 0 (;@1;)
       local.get 0
-      call 232
+      call $_ZN5alloc4sync16Arc$LT$T$C$A$GT$9drop_slow17h305b51d57009a74bE
     end)
-  (func (;232;) (type 6) (param i32)
+  (func $_ZN5alloc4sync16Arc$LT$T$C$A$GT$9drop_slow17h305b51d57009a74bE (type 6) (param i32)
     (local i32)
     block  ;; label = @1
       local.get 0
@@ -31271,13 +31351,40 @@
       i32.ne
       drop
     end)
-  (func (;233;) (type 0) (param i32 i32 i32)
+  (func $_ZN4core5slice5index29slice_end_index_overflow_fail17h0236ef53c072f77aE (type 6) (param i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
+    i32.const 32
+    i32.sub
+    local.tee 1
+    global.set $__stack_pointer
+    local.get 1
+    i32.const 20
+    i32.add
+    i64.const 0
+    i64.store align=4
+    local.get 1
+    i32.const 1
+    i32.store offset=12
+    local.get 1
+    i32.const 1053868
+    i32.store offset=8
+    local.get 1
+    i32.const 1054848
+    i32.store offset=16
+    local.get 1
+    i32.const 8
+    i32.add
+    local.get 0
+    call $_ZN4core9panicking9panic_fmt17h78607b33a29a727dE
+    unreachable)
+  (func $_ZN4core5slice5index26slice_start_index_len_fail17hab50c0479c16b22eE (type 0) (param i32 i32 i32)
+    (local i32)
+    global.get $__stack_pointer
     i32.const 48
     i32.sub
     local.tee 3
-    global.set 0
+    global.set $__stack_pointer
     local.get 3
     local.get 0
     i32.store
@@ -31302,7 +31409,7 @@
     i32.const 2
     i32.store offset=12
     local.get 3
-    i32.const 1053692
+    i32.const 1053724
     i32.store offset=8
     local.get 3
     i32.const 1
@@ -31324,42 +31431,15 @@
     i32.const 8
     i32.add
     local.get 2
-    call 65
+    call $_ZN4core9panicking9panic_fmt17h78607b33a29a727dE
     unreachable)
-  (func (;234;) (type 6) (param i32)
-    (local i32)
-    global.get 0
-    i32.const 32
-    i32.sub
-    local.tee 1
-    global.set 0
-    local.get 1
-    i32.const 20
-    i32.add
-    i64.const 0
-    i64.store align=4
-    local.get 1
-    i32.const 1
-    i32.store offset=12
-    local.get 1
-    i32.const 1053836
-    i32.store offset=8
-    local.get 1
-    i32.const 1054832
-    i32.store offset=16
-    local.get 1
-    i32.const 8
-    i32.add
-    local.get 0
-    call 65
-    unreachable)
-  (func (;235;) (type 4) (param i32 i32)
+  (func $_ZN5alloc7raw_vec19RawVec$LT$T$C$A$GT$16reserve_for_push17hcac8f2c80ab75d63E (type 4) (param i32 i32)
     (local i32 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 32
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     i32.const 0
     local.set 3
     block  ;; label = @1
@@ -31424,7 +31504,7 @@
       local.get 2
       i32.const 20
       i32.add
-      call 240
+      call $_ZN5alloc7raw_vec11finish_grow17h57d9fa6e346b878fE
       local.get 2
       i32.load offset=12
       local.set 3
@@ -31451,23 +31531,16 @@
     end
     local.get 3
     local.get 1
-    call 238
+    call $_ZN5alloc7raw_vec14handle_reserve17h7b8a866c605ec769E
     local.get 2
     i32.const 32
     i32.add
-    global.set 0)
-  (func (;236;) (type 3) (param i32 i32) (result i32)
-    i32.const 0
-    i32.load8_u offset=1054852
-    drop
-    local.get 0
-    local.get 1
-    call 237)
-  (func (;237;) (type 3) (param i32 i32) (result i32)
+    global.set $__stack_pointer)
+  (func $_ZN109_$LT$lol_alloc..trivial_allocators..LeakingAllocator$LT$T$GT$$u20$as$u20$core..alloc..global..GlobalAlloc$GT$5alloc17hafec9583d38d71e9E (type 3) (param i32 i32) (result i32)
     (local i32 i32)
     block  ;; label = @1
       i32.const 0
-      i32.load offset=1054844
+      i32.load offset=1054860
       local.tee 2
       local.get 0
       i32.rem_u
@@ -31481,7 +31554,7 @@
       local.get 3
       i32.sub
       local.tee 2
-      i32.store offset=1054844
+      i32.store offset=1054860
     end
     block  ;; label = @1
       local.get 2
@@ -31489,7 +31562,7 @@
       i32.add
       local.tee 0
       i32.const 0
-      i32.load offset=1054848
+      i32.load offset=1054864
       i32.le_u
       br_if 0 (;@1;)
       block  ;; label = @2
@@ -31508,7 +31581,7 @@
         return
       end
       i32.const 0
-      i32.load offset=1054848
+      i32.load offset=1054864
       local.set 3
       i32.const 0
       local.get 2
@@ -31519,9 +31592,9 @@
       i32.const -65536
       i32.and
       i32.add
-      i32.store offset=1054848
+      i32.store offset=1054864
       i32.const 0
-      i32.load offset=1054844
+      i32.load offset=1054860
       local.get 2
       local.get 2
       local.get 3
@@ -31534,9 +31607,9 @@
     end
     i32.const 0
     local.get 0
-    i32.store offset=1054844
+    i32.store offset=1054860
     local.get 2)
-  (func (;238;) (type 4) (param i32 i32)
+  (func $_ZN5alloc7raw_vec14handle_reserve17h7b8a866c605ec769E (type 4) (param i32 i32)
     block  ;; label = @1
       block  ;; label = @2
         local.get 0
@@ -31547,20 +31620,20 @@
         i32.eqz
         br_if 1 (;@1;)
         local.get 1
-        call 56
+        call $__rust_alloc_error_handler
         unreachable
       end
       return
     end
-    call 239
+    call $_ZN5alloc7raw_vec17capacity_overflow17h26cdf55d7b744af0E
     unreachable)
-  (func (;239;) (type 10)
+  (func $_ZN5alloc7raw_vec17capacity_overflow17h26cdf55d7b744af0E (type 10)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 32
     i32.sub
     local.tee 0
-    global.set 0
+    global.set $__stack_pointer
     local.get 0
     i32.const 20
     i32.add
@@ -31570,141 +31643,24 @@
     i32.const 1
     i32.store offset=12
     local.get 0
-    i32.const 1052880
+    i32.const 1052912
     i32.store offset=8
     local.get 0
-    i32.const 1054832
+    i32.const 1054848
     i32.store offset=16
     local.get 0
     i32.const 8
     i32.add
-    i32.const 1052888
-    call 65
+    i32.const 1052920
+    call $_ZN4core9panicking9panic_fmt17h78607b33a29a727dE
     unreachable)
-  (func (;240;) (type 8) (param i32 i32 i32 i32)
-    (local i32 i32)
-    global.get 0
-    i32.const 16
-    i32.sub
-    local.tee 4
-    global.set 0
-    block  ;; label = @1
-      block  ;; label = @2
-        block  ;; label = @3
-          block  ;; label = @4
-            local.get 1
-            i32.eqz
-            br_if 0 (;@4;)
-            local.get 2
-            i32.const -1
-            i32.le_s
-            br_if 1 (;@3;)
-            block  ;; label = @5
-              block  ;; label = @6
-                local.get 3
-                i32.load offset=4
-                i32.eqz
-                br_if 0 (;@6;)
-                block  ;; label = @7
-                  local.get 3
-                  i32.const 8
-                  i32.add
-                  i32.load
-                  local.tee 5
-                  br_if 0 (;@7;)
-                  local.get 4
-                  i32.const 8
-                  i32.add
-                  local.get 1
-                  local.get 2
-                  call 316
-                  local.get 4
-                  i32.load offset=12
-                  local.set 5
-                  local.get 4
-                  i32.load offset=8
-                  local.set 3
-                  br 2 (;@5;)
-                end
-                local.get 3
-                i32.load
-                local.get 5
-                local.get 1
-                local.get 2
-                call 293
-                local.set 3
-                local.get 2
-                local.set 5
-                br 1 (;@5;)
-              end
-              local.get 4
-              local.get 1
-              local.get 2
-              call 316
-              local.get 4
-              i32.load offset=4
-              local.set 5
-              local.get 4
-              i32.load
-              local.set 3
-            end
-            block  ;; label = @5
-              local.get 3
-              i32.eqz
-              br_if 0 (;@5;)
-              local.get 0
-              local.get 3
-              i32.store offset=4
-              local.get 0
-              i32.const 8
-              i32.add
-              local.get 5
-              i32.store
-              i32.const 0
-              local.set 2
-              br 4 (;@1;)
-            end
-            local.get 0
-            local.get 1
-            i32.store offset=4
-            local.get 0
-            i32.const 8
-            i32.add
-            local.get 2
-            i32.store
-            br 2 (;@2;)
-          end
-          local.get 0
-          i32.const 0
-          i32.store offset=4
-          local.get 0
-          i32.const 8
-          i32.add
-          local.get 2
-          i32.store
-          br 1 (;@2;)
-        end
-        local.get 0
-        i32.const 0
-        i32.store offset=4
-      end
-      i32.const 1
-      local.set 2
-    end
-    local.get 0
-    local.get 2
-    i32.store
-    local.get 4
-    i32.const 16
-    i32.add
-    global.set 0)
-  (func (;241;) (type 4) (param i32 i32)
+  (func $_ZN5alloc7raw_vec19RawVec$LT$T$C$A$GT$16reserve_for_push17hc6388ae5fa9646a8E (type 4) (param i32 i32)
     (local i32 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 32
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     i32.const 0
     local.set 3
     block  ;; label = @1
@@ -31771,7 +31727,7 @@
       local.get 2
       i32.const 20
       i32.add
-      call 240
+      call $_ZN5alloc7raw_vec11finish_grow17h57d9fa6e346b878fE
       local.get 2
       i32.load offset=12
       local.set 3
@@ -31798,19 +31754,138 @@
     end
     local.get 3
     local.get 1
-    call 238
+    call $_ZN5alloc7raw_vec14handle_reserve17h7b8a866c605ec769E
     local.get 2
     i32.const 32
     i32.add
-    global.set 0)
-  (func (;242;) (type 0) (param i32 i32 i32))
-  (func (;243;) (type 8) (param i32 i32 i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN5alloc7raw_vec11finish_grow17h57d9fa6e346b878fE (type 8) (param i32 i32 i32 i32)
+    (local i32 i32)
+    global.get $__stack_pointer
+    i32.const 16
+    i32.sub
+    local.tee 4
+    global.set $__stack_pointer
+    block  ;; label = @1
+      block  ;; label = @2
+        block  ;; label = @3
+          block  ;; label = @4
+            local.get 1
+            i32.eqz
+            br_if 0 (;@4;)
+            local.get 2
+            i32.const -1
+            i32.le_s
+            br_if 1 (;@3;)
+            block  ;; label = @5
+              block  ;; label = @6
+                local.get 3
+                i32.load offset=4
+                i32.eqz
+                br_if 0 (;@6;)
+                block  ;; label = @7
+                  local.get 3
+                  i32.const 8
+                  i32.add
+                  i32.load
+                  local.tee 5
+                  br_if 0 (;@7;)
+                  local.get 4
+                  i32.const 8
+                  i32.add
+                  local.get 1
+                  local.get 2
+                  i32.const 0
+                  call $_ZN5alloc5alloc6Global10alloc_impl17h2c7b164b60447d0fE.40
+                  local.get 4
+                  i32.load offset=12
+                  local.set 5
+                  local.get 4
+                  i32.load offset=8
+                  local.set 3
+                  br 2 (;@5;)
+                end
+                local.get 3
+                i32.load
+                local.get 5
+                local.get 1
+                local.get 2
+                call $__rust_realloc
+                local.set 3
+                local.get 2
+                local.set 5
+                br 1 (;@5;)
+              end
+              local.get 4
+              local.get 1
+              local.get 2
+              i32.const 0
+              call $_ZN5alloc5alloc6Global10alloc_impl17h2c7b164b60447d0fE.40
+              local.get 4
+              i32.load offset=4
+              local.set 5
+              local.get 4
+              i32.load
+              local.set 3
+            end
+            block  ;; label = @5
+              local.get 3
+              i32.eqz
+              br_if 0 (;@5;)
+              local.get 0
+              local.get 3
+              i32.store offset=4
+              local.get 0
+              i32.const 8
+              i32.add
+              local.get 5
+              i32.store
+              i32.const 0
+              local.set 2
+              br 4 (;@1;)
+            end
+            local.get 0
+            local.get 1
+            i32.store offset=4
+            local.get 0
+            i32.const 8
+            i32.add
+            local.get 2
+            i32.store
+            br 2 (;@2;)
+          end
+          local.get 0
+          i32.const 0
+          i32.store offset=4
+          local.get 0
+          i32.const 8
+          i32.add
+          local.get 2
+          i32.store
+          br 1 (;@2;)
+        end
+        local.get 0
+        i32.const 0
+        i32.store offset=4
+      end
+      i32.const 1
+      local.set 2
+    end
+    local.get 0
+    local.get 2
+    i32.store
+    local.get 4
+    i32.const 16
+    i32.add
+    global.set $__stack_pointer)
+  (func $_ZN5bytes5bytes11static_drop17h289b099a1c56c645E (type 0) (param i32 i32 i32))
+  (func $_ZN5ruint3div42_$LT$impl$u20$ruint..Uint$LT$_$C$_$GT$$GT$7div_rem17h9e65b4e146b5c3c3E (type 8) (param i32 i32 i32 i32)
     (local i32 i32 i32 i32 i32 i32 i32 i32 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i32 i32 i32 i64 i32 i32 i32 i32 i64 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 656
     i32.sub
     local.tee 4
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         block  ;; label = @3
@@ -31820,7 +31895,7 @@
                 block  ;; label = @7
                   local.get 2
                   i32.const 1049040
-                  call 36
+                  call $_ZN4core3cmp9PartialEq2ne17h890fd8e14ff88a52E
                   i32.eqz
                   br_if 0 (;@7;)
                   i32.const 4
@@ -31859,7 +31934,7 @@
                     i32.const 4
                     local.get 5
                     i32.const 1050584
-                    call 57
+                    call $_ZN4core5slice5index77_$LT$impl$u20$core..ops..index..IndexMut$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$9index_mut17h0aacf0e028cf6aceE
                     i32.const 24
                     local.set 3
                     local.get 4
@@ -31897,7 +31972,7 @@
                     i32.const 4
                     local.get 6
                     i32.const 1050600
-                    call 57
+                    call $_ZN4core5slice5index77_$LT$impl$u20$core..ops..index..IndexMut$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$9index_mut17h0aacf0e028cf6aceE
                     local.get 4
                     i32.load offset=608
                     local.set 9
@@ -31944,7 +32019,7 @@
                         local.get 13
                         local.get 14
                         i32.wrap_i64
-                        call 325
+                        call $__ashlti3
                         local.get 4
                         i64.load offset=592
                         local.get 7
@@ -32004,7 +32079,7 @@
                         i32.const 1049712
                         i32.const 25
                         i32.const 1050616
-                        call 40
+                        call $_ZN4core9panicking5panic17hdd77bb12897b1389E
                         unreachable
                       end
                       block  ;; label = @10
@@ -32077,7 +32152,7 @@
                         i64.const 0
                         local.get 16
                         i64.const 0
-                        call 326
+                        call $__multi3
                         local.get 4
                         i32.const 240
                         i32.add
@@ -32102,7 +32177,7 @@
                         i64.extend_i32_u
                         local.get 15
                         i64.const 0
-                        call 326
+                        call $__multi3
                         local.get 16
                         local.get 15
                         local.get 4
@@ -32135,7 +32210,7 @@
                           i64.const 1
                           local.get 16
                           i64.const 0
-                          call 326
+                          call $__multi3
                           local.get 6
                           local.get 3
                           i32.add
@@ -32266,7 +32341,7 @@
                       i64.const 0
                       local.get 16
                       i64.const 0
-                      call 326
+                      call $__multi3
                       local.get 4
                       i32.const 304
                       i32.add
@@ -32291,7 +32366,7 @@
                       i64.extend_i32_u
                       local.get 15
                       i64.const 0
-                      call 326
+                      call $__multi3
                       local.get 16
                       local.get 15
                       local.get 4
@@ -32340,7 +32415,7 @@
                           i64.const 1
                           local.get 16
                           i64.const 0
-                          call 326
+                          call $__multi3
                           local.get 9
                           local.get 4
                           i32.const 296
@@ -32406,7 +32481,7 @@
                         i64.const 1
                         local.get 16
                         i64.const 0
-                        call 326
+                        call $__multi3
                         local.get 3
                         i32.const 8
                         i32.add
@@ -32488,7 +32563,7 @@
                     local.get 7
                     local.get 10
                     i32.const 1050648
-                    call 42
+                    call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$12split_at_mut17h56d0f218626cbf09E
                     local.get 4
                     i32.const 640
                     i32.add
@@ -32504,19 +32579,19 @@
                     local.get 9
                     local.get 10
                     i32.const 1050664
-                    call 58
+                    call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$15copy_from_slice17h89b6e539a65d1282E
                     local.get 5
                     local.get 3
-                    call 59
+                    call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4fill17had74dd1a9d75e087E
                     local.get 9
                     local.get 10
-                    call 59
+                    call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4fill17had74dd1a9d75e087E
                     br 7 (;@1;)
                   end
                   i32.const 1050448
                   i32.const 15
                   i32.const 1050568
-                  call 60
+                  call $_ZN4core6option13expect_failed17he404d1d7baeabd29E
                   unreachable
                 end
                 local.get 4
@@ -32531,24 +32606,24 @@
                 i32.const 1051164
                 i32.store offset=628
                 local.get 4
-                i32.const 1054832
+                i32.const 1054848
                 i32.store offset=636
                 local.get 4
                 i32.const 628
                 i32.add
                 local.get 3
-                call 65
+                call $_ZN4core9panicking9panic_fmt17h78607b33a29a727dE
                 unreachable
               end
               local.get 8
               local.get 7
-              call 59
+              call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4fill17had74dd1a9d75e087E
               br 4 (;@1;)
             end
             i32.const 1
             i32.const 0
             i32.const 1050632
-            call 30
+            call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
             unreachable
           end
           local.get 8
@@ -32627,7 +32702,7 @@
               i64.const 0
               local.get 17
               i64.const 0
-              call 326
+              call $__multi3
               local.get 4
               i32.const 48
               i32.add
@@ -32652,7 +32727,7 @@
               i64.extend_i32_u
               local.get 15
               i64.const 0
-              call 326
+              call $__multi3
               block  ;; label = @6
                 local.get 17
                 local.get 15
@@ -32701,7 +32776,7 @@
               i64.const 0
               local.get 16
               i64.const 0
-              call 326
+              call $__multi3
               block  ;; label = @6
                 local.get 17
                 local.get 4
@@ -32756,7 +32831,7 @@
                 i64.const 0
                 local.get 14
                 i64.const 0
-                call 326
+                call $__multi3
                 local.get 4
                 local.get 4
                 i32.const 16
@@ -32780,7 +32855,7 @@
                 i64.const 0
                 local.get 16
                 i64.const 0
-                call 326
+                call $__multi3
                 local.get 6
                 local.get 3
                 i32.add
@@ -32881,7 +32956,7 @@
             local.get 18
             i32.wrap_i64
             local.tee 6
-            call 325
+            call $__ashlti3
             local.get 4
             i32.const 192
             i32.add
@@ -32951,7 +33026,7 @@
             i64.const 0
             local.get 16
             i64.const 0
-            call 326
+            call $__multi3
             local.get 4
             i32.const 176
             i32.add
@@ -32976,7 +33051,7 @@
             i64.extend_i32_u
             local.get 15
             i64.const 0
-            call 326
+            call $__multi3
             block  ;; label = @5
               local.get 15
               local.get 16
@@ -33030,7 +33105,7 @@
             i64.const 0
             local.get 20
             i64.const 0
-            call 326
+            call $__multi3
             block  ;; label = @5
               local.get 17
               local.get 4
@@ -33103,7 +33178,7 @@
                 i64.const 0
                 local.get 20
                 i64.const 0
-                call 326
+                call $__multi3
                 local.get 4
                 i32.const 128
                 i32.add
@@ -33129,7 +33204,7 @@
                 i64.const 0
                 local.get 21
                 i64.const 0
-                call 326
+                call $__multi3
                 local.get 9
                 local.get 17
                 local.get 18
@@ -33218,7 +33293,7 @@
                 i64.extend_i32_u
                 i64.sub
                 local.get 6
-                call 327
+                call $__lshrti3
                 local.get 4
                 i32.const 112
                 i32.add
@@ -33238,7 +33313,7 @@
               i64.const 0
               local.get 20
               i64.const 0
-              call 326
+              call $__multi3
               local.get 4
               i32.const 80
               i32.add
@@ -33264,7 +33339,7 @@
               i64.const 0
               local.get 21
               i64.const 0
-              call 326
+              call $__multi3
               local.get 3
               i32.const 8
               i32.add
@@ -33445,7 +33520,7 @@
       i64.const 0
       local.get 15
       i64.const 0
-      call 326
+      call $__multi3
       local.get 4
       i32.const 560
       i32.add
@@ -33470,7 +33545,7 @@
       i64.extend_i32_u
       local.get 13
       i64.const 0
-      call 326
+      call $__multi3
       block  ;; label = @2
         local.get 15
         local.get 13
@@ -33519,7 +33594,7 @@
       i64.const 0
       local.get 22
       i64.const 0
-      call 326
+      call $__multi3
       block  ;; label = @2
         local.get 15
         local.get 4
@@ -33650,7 +33725,7 @@
                   local.get 3
                   local.get 10
                   i32.const 1050868
-                  call 30
+                  call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
                   unreachable
                 end
                 local.get 28
@@ -33663,7 +33738,7 @@
                 local.get 5
                 local.get 10
                 i32.const 1050884
-                call 30
+                call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
                 unreachable
               end
               local.get 4
@@ -33673,7 +33748,7 @@
               local.get 10
               local.get 7
               i32.const 1050788
-              call 41
+              call $_ZN4core5slice5index74_$LT$impl$u20$core..ops..index..Index$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$5index17h817b97e52695da18E
               local.get 8
               local.get 7
               local.get 4
@@ -33681,11 +33756,11 @@
               local.get 4
               i32.load offset=540
               i32.const 1050804
-              call 58
+              call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$15copy_from_slice17h89b6e539a65d1282E
               local.get 9
               local.get 10
               local.get 7
-              call 61
+              call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$11copy_within17h8bf14fea97656706E
               local.get 9
               local.get 25
               i32.const 3
@@ -33702,18 +33777,18 @@
               i32.const 1
               i32.add
               i32.const 1050836
-              call 43
+              call $_ZN4core5slice5index77_$LT$impl$u20$core..ops..index..IndexMut$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$9index_mut17h1f87ba885802abacE
               local.get 4
               i32.load offset=528
               local.get 4
               i32.load offset=532
-              call 59
+              call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$4fill17had74dd1a9d75e087E
               br 4 (;@1;)
             end
             local.get 5
             local.get 10
             i32.const 1050852
-            call 30
+            call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
             unreachable
           end
           local.get 4
@@ -33723,7 +33798,7 @@
           local.get 15
           local.get 14
           i32.wrap_i64
-          call 325
+          call $__ashlti3
           local.get 9
           local.get 5
           i32.const 3
@@ -33773,7 +33848,7 @@
             local.get 9
             local.get 10
             i32.const 1050900
-            call 7
+            call $_ZN106_$LT$core..ops..range..Range$LT$usize$GT$$u20$as$u20$core..slice..index..SliceIndex$LT$$u5b$T$u5d$$GT$$GT$9index_mut17h78d34861cf7f2935E
             local.get 4
             i32.load offset=504
             local.set 5
@@ -33821,7 +33896,7 @@
                 local.get 4
                 i32.const 628
                 i32.add
-                call 6
+                call $_ZN102_$LT$core..iter..adapters..zip..Zip$LT$A$C$B$GT$$u20$as$u20$core..iter..traits..iterator..Iterator$GT$4next17h69abafeb65d956cfE
                 local.get 4
                 i32.load offset=488
                 local.tee 3
@@ -33835,7 +33910,7 @@
                 i64.const 0
                 i64.const -1
                 i64.const 0
-                call 326
+                call $__multi3
                 local.get 3
                 local.get 3
                 i64.load
@@ -33889,7 +33964,7 @@
           i64.const 0
           local.get 22
           i64.const 0
-          call 326
+          call $__multi3
           local.get 4
           i32.const 440
           i32.add
@@ -33915,7 +33990,7 @@
           i64.const 0
           local.get 12
           i64.const 0
-          call 326
+          call $__multi3
           local.get 16
           local.get 15
           local.get 13
@@ -34015,7 +34090,7 @@
                 local.get 9
                 local.get 10
                 i32.const 1050916
-                call 7
+                call $_ZN106_$LT$core..ops..range..Range$LT$usize$GT$$u20$as$u20$core..slice..index..SliceIndex$LT$$u5b$T$u5d$$GT$$GT$9index_mut17h78d34861cf7f2935E
                 local.get 4
                 i32.load offset=392
                 local.set 6
@@ -34029,7 +34104,7 @@
                 local.get 7
                 local.get 11
                 i32.const 1050932
-                call 41
+                call $_ZN4core5slice5index74_$LT$impl$u20$core..ops..index..Index$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$5index17h817b97e52695da18E
                 local.get 4
                 i32.load offset=388
                 local.set 5
@@ -34082,7 +34157,7 @@
                     local.get 4
                     i32.const 628
                     i32.add
-                    call 6
+                    call $_ZN102_$LT$core..iter..adapters..zip..Zip$LT$A$C$B$GT$$u20$as$u20$core..iter..traits..iterator..Iterator$GT$4next17h69abafeb65d956cfE
                     local.get 4
                     i32.load offset=368
                     local.tee 3
@@ -34096,7 +34171,7 @@
                     i64.const 0
                     local.get 19
                     i64.const 0
-                    call 326
+                    call $__multi3
                     local.get 3
                     local.get 3
                     i64.load
@@ -34171,7 +34246,7 @@
               local.get 9
               local.get 10
               i32.const 1050948
-              call 7
+              call $_ZN106_$LT$core..ops..range..Range$LT$usize$GT$$u20$as$u20$core..slice..index..SliceIndex$LT$$u5b$T$u5d$$GT$$GT$9index_mut17h78d34861cf7f2935E
               local.get 4
               i32.load offset=432
               local.set 5
@@ -34219,7 +34294,7 @@
                   local.get 4
                   i32.const 628
                   i32.add
-                  call 6
+                  call $_ZN102_$LT$core..iter..adapters..zip..Zip$LT$A$C$B$GT$$u20$as$u20$core..iter..traits..iterator..Iterator$GT$4next17h69abafeb65d956cfE
                   local.get 4
                   i32.load offset=416
                   local.tee 3
@@ -34233,7 +34308,7 @@
                   i64.const 0
                   local.get 19
                   i64.const 0
-                  call 326
+                  call $__multi3
                   local.get 3
                   local.get 3
                   i64.load
@@ -34302,7 +34377,7 @@
           local.get 9
           local.get 10
           i32.const 1050964
-          call 7
+          call $_ZN106_$LT$core..ops..range..Range$LT$usize$GT$$u20$as$u20$core..slice..index..SliceIndex$LT$$u5b$T$u5d$$GT$$GT$9index_mut17h78d34861cf7f2935E
           local.get 4
           i32.load offset=348
           local.set 5
@@ -34316,7 +34391,7 @@
           local.get 7
           local.get 7
           i32.const 1050980
-          call 41
+          call $_ZN4core5slice5index74_$LT$impl$u20$core..ops..index..Index$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$5index17h817b97e52695da18E
           local.get 19
           i64.const -1
           i64.add
@@ -34382,7 +34457,7 @@
           local.get 31
           local.get 31
           i32.const 1049920
-          call 30
+          call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
           unreachable
         end
         i32.const 0
@@ -34477,14 +34552,14 @@
     local.get 4
     i32.const 656
     i32.add
-    global.set 0)
-  (func (;244;) (type 3) (param i32 i32) (result i32)
+    global.set $__stack_pointer)
+  (func $_ZN72_$LT$ruint..from..FromUintError$LT$T$GT$$u20$as$u20$core..fmt..Debug$GT$3fmt17h3e5a37caa37c0f5aE (type 3) (param i32 i32) (result i32)
     (local i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 16
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     local.get 2
     local.get 0
     i32.const 8
@@ -34515,16 +34590,16 @@
     i32.const 4
     i32.add
     local.get 0
-    i32.const 6
-    call 245
+    i32.const 1051512
+    call $_ZN4core3fmt8builders10DebugTuple5field17hbc9d984656bef3fdE
     local.get 0
     i32.const 4
     i32.add
-    i32.const 6
-    call 245
+    i32.const 1051512
+    call $_ZN4core3fmt8builders10DebugTuple5field17hbc9d984656bef3fdE
     local.get 2
-    i32.const 7
-    call 245
+    i32.const 1051528
+    call $_ZN4core3fmt8builders10DebugTuple5field17hbc9d984656bef3fdE
     local.set 0
     local.get 2
     i32.load8_u offset=12
@@ -34572,7 +34647,7 @@
         local.set 0
         local.get 1
         i32.load offset=20
-        i32.const 1053391
+        i32.const 1053423
         i32.const 1
         local.get 1
         i32.const 24
@@ -34584,7 +34659,7 @@
       end
       local.get 1
       i32.load offset=20
-      i32.const 1053256
+      i32.const 1053288
       i32.const 1
       local.get 1
       i32.const 24
@@ -34597,15 +34672,15 @@
     local.get 2
     i32.const 16
     i32.add
-    global.set 0
+    global.set $__stack_pointer
     local.get 0)
-  (func (;245;) (type 2) (param i32 i32 i32) (result i32)
+  (func $_ZN4core3fmt8builders10DebugTuple5field17hbc9d984656bef3fdE (type 2) (param i32 i32 i32) (result i32)
     (local i32 i32 i32 i32 i32 i64)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 64
     i32.sub
     local.tee 3
-    global.set 0
+    global.set $__stack_pointer
     local.get 0
     i32.load
     local.set 4
@@ -34628,8 +34703,8 @@
         local.set 5
         local.get 6
         i32.load offset=20
-        i32.const 1053384
-        i32.const 1053388
+        i32.const 1053416
+        i32.const 1053420
         local.get 4
         select
         i32.const 2
@@ -34646,6 +34721,7 @@
         local.get 1
         local.get 6
         local.get 2
+        i32.load offset=12
         call_indirect (type 3)
         local.set 5
         br 1 (;@1;)
@@ -34657,7 +34733,7 @@
         local.set 5
         local.get 6
         i32.load offset=20
-        i32.const 1053389
+        i32.const 1053421
         i32.const 2
         local.get 6
         i32.const 24
@@ -34678,7 +34754,7 @@
       local.get 3
       i32.const 52
       i32.add
-      i32.const 1053356
+      i32.const 1053388
       i32.store
       local.get 3
       local.get 6
@@ -34720,11 +34796,12 @@
       i32.const 28
       i32.add
       local.get 2
+      i32.load offset=12
       call_indirect (type 3)
       br_if 0 (;@1;)
       local.get 3
       i32.load offset=48
-      i32.const 1053386
+      i32.const 1053418
       i32.const 2
       local.get 3
       i32.load offset=52
@@ -34743,41 +34820,9 @@
     local.get 3
     i32.const 64
     i32.add
-    global.set 0
+    global.set $__stack_pointer
     local.get 0)
-  (func (;246;) (type 3) (param i32 i32) (result i32)
-    (local i32)
-    local.get 0
-    i32.load
-    local.set 0
-    block  ;; label = @1
-      local.get 1
-      i32.load offset=28
-      local.tee 2
-      i32.const 16
-      i32.and
-      br_if 0 (;@1;)
-      block  ;; label = @2
-        local.get 2
-        i32.const 32
-        i32.and
-        br_if 0 (;@2;)
-        local.get 0
-        local.get 1
-        call 224
-        return
-      end
-      local.get 0
-      i32.load
-      local.get 1
-      call 225
-      return
-    end
-    local.get 0
-    i32.load
-    local.get 1
-    call 226)
-  (func (;247;) (type 5) (param i32) (result i32)
+  (func $_ZN6bitvec3ptr4span24BitSpan$LT$M$C$T$C$O$GT$8elements17h5d0308a19b191769E (type 5) (param i32) (result i32)
     local.get 0
     i32.const 3
     i32.shr_u
@@ -34794,47 +34839,47 @@
     i32.const 0
     i32.ne
     i32.add)
-  (func (;248;) (type 4) (param i32 i32)
-    (local i32 i32)
-    global.get 0
-    i32.const 16
-    i32.sub
-    local.tee 2
-    global.set 0
+  (func $_ZN5alloc7raw_vec19RawVec$LT$T$C$A$GT$11allocate_in17h2bbe64e20104d869E (type 4) (param i32 i32)
+    (local i32)
     block  ;; label = @1
       block  ;; label = @2
+        block  ;; label = @3
+          block  ;; label = @4
+            local.get 1
+            br_if 0 (;@4;)
+            i32.const 1
+            local.set 2
+            br 1 (;@3;)
+          end
+          local.get 1
+          i32.const -1
+          i32.le_s
+          br_if 1 (;@2;)
+          i32.const 0
+          i32.load8_u offset=1054868
+          drop
+          i32.const 1
+          local.get 1
+          call $_ZN109_$LT$lol_alloc..trivial_allocators..LeakingAllocator$LT$T$GT$$u20$as$u20$core..alloc..global..GlobalAlloc$GT$5alloc17hafec9583d38d71e9E
+          local.tee 2
+          i32.eqz
+          br_if 2 (;@1;)
+        end
+        local.get 0
         local.get 1
-        br_if 0 (;@2;)
-        i32.const 1
-        local.set 3
-        br 1 (;@1;)
+        i32.store offset=4
+        local.get 0
+        local.get 2
+        i32.store
+        return
       end
-      local.get 2
-      i32.const 8
-      i32.add
-      i32.const 1
-      local.get 1
-      i32.const 0
-      call 55
-      local.get 2
-      i32.load offset=8
-      local.tee 3
-      br_if 0 (;@1;)
-      local.get 1
-      call 56
+      call $_ZN5alloc7raw_vec17capacity_overflow17h26cdf55d7b744af0E
       unreachable
     end
-    local.get 0
     local.get 1
-    i32.store offset=4
-    local.get 0
-    local.get 3
-    i32.store
-    local.get 2
-    i32.const 16
-    i32.add
-    global.set 0)
-  (func (;249;) (type 1) (param i32 i32 i32 i32 i32)
+    call $__rust_alloc_error_handler
+    unreachable)
+  (func $_ZN6bitvec6domain23Domain$LT$M$C$T$C$O$GT$12partial_tail17hfff75a98b443bfcfE (type 1) (param i32 i32 i32 i32 i32)
     local.get 0
     local.get 1
     i32.store
@@ -34880,23 +34925,23 @@
     i64.extend_i32_u
     i64.or
     i64.store offset=16 align=4)
-  (func (;250;) (type 1) (param i32 i32 i32 i32 i32)
+  (func $_ZN6bitvec6domain23Domain$LT$M$C$T$C$O$GT$5empty17h140ff1cd60087037E (type 1) (param i32 i32 i32 i32 i32)
     local.get 0
     i32.const 0
     i32.store offset=16
     local.get 0
-    i32.const 1054832
+    i32.const 1054848
     i32.store
     local.get 0
     i64.const 0
     i64.store offset=4 align=4)
-  (func (;251;) (type 4) (param i32 i32)
+  (func $_ZN5alloc3vec16Vec$LT$T$C$A$GT$7reserve17h5e3e1fe311d12a20E (type 4) (param i32 i32)
     (local i32 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 32
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       local.get 0
       i32.load offset=4
@@ -34967,7 +35012,7 @@
         local.get 2
         i32.const 20
         i32.add
-        call 292
+        call $_ZN5alloc7raw_vec11finish_grow17h0d9ea2316dbad97dE
         local.get 2
         i32.load offset=12
         local.set 5
@@ -34994,112 +35039,110 @@
       end
       local.get 5
       local.get 1
-      call 238
+      call $_ZN5alloc7raw_vec14handle_reserve17h7b8a866c605ec769E
     end
     local.get 2
     i32.const 32
     i32.add
-    global.set 0)
-  (func (;252;) (type 10)
+    global.set $__stack_pointer)
+  (func $main (type 10)
     (local i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i64 i32 i32 i32 i32 i64 i64 i64 i64 i64 i64 i64)
-    global.get 0
-    i32.const 3440
+    global.get $__stack_pointer
+    i32.const 3392
     i32.sub
     local.tee 0
-    global.set 0
-    local.get 0
-    i32.const 0
-    i32.store offset=88
+    global.set $__stack_pointer
     local.get 0
     i64.const 0
-    i64.store offset=1376
+    i64.store offset=720
     local.get 0
-    i32.const 1376
+    i32.const 720
     i32.add
     i32.const 92
     i32.const 8
-    call 3
+    call $_ZN14fluentbase_sdk8bindings9_sys_read17h0e59dd5971d7a0a6E
     local.get 0
     i64.const 0
-    i64.store offset=2408 align=4
+    i64.store offset=2360 align=4
     local.get 0
-    i32.const 1054832
-    i32.store offset=2404
+    i32.const 1054848
+    i32.store offset=2356
     local.get 0
-    i32.const 1054368
-    i32.store offset=2400
+    i32.const 1054384
+    i32.store offset=2352
     local.get 0
-    i32.const 80
+    i32.const 72
     i32.add
     local.get 0
-    i32.const 1376
+    i32.const 720
     i32.add
-    call 253
+    call $_ZN16fluentbase_codec7encoder25FieldEncoder$LT$T$C$_$GT$22decode_field_header_at17hca838d3404a64889E
     block  ;; label = @1
       local.get 0
-      i32.load offset=84
+      i32.load offset=76
       local.tee 1
       i32.eqz
       br_if 0 (;@1;)
       local.get 0
-      i32.const 72
+      i32.const 1328
       i32.add
       local.get 0
-      i32.load offset=80
+      i32.load offset=72
       local.tee 2
       local.get 1
       i32.add
       local.tee 1
-      i32.const 1
-      call 254
+      call $_ZN5alloc3vec9from_elem17h65df4acde1849288E
       local.get 0
       i32.const 64
       i32.add
       local.get 0
-      i32.load offset=72
-      local.tee 3
-      local.get 1
-      i32.const 1054484
-      call 255
+      i32.load offset=1328
+      local.get 0
+      i32.load offset=1336
+      i32.const 1054500
+      call $_ZN84_$LT$alloc..vec..Vec$LT$T$C$A$GT$$u20$as$u20$core..ops..index..IndexMut$LT$I$GT$$GT$9index_mut17h1d9e0f2e1e313b6bE
       local.get 0
       i32.load offset=64
       local.get 0
       i32.load offset=68
       local.get 0
-      i32.const 1376
-      i32.add
-      i32.const 8
-      i32.const 1054484
-      call 12
+      i64.load offset=720
+      i32.const 1054500
+      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$15copy_from_slice17heddfaa84447a2290E
       local.get 0
       i32.const 56
       i32.add
       local.get 2
       local.get 1
-      local.get 3
-      local.get 1
-      i32.const 1054484
-      call 256
+      local.get 0
+      i32.load offset=1328
+      local.tee 3
+      local.get 0
+      i32.load offset=1336
+      local.tee 4
+      i32.const 1054500
+      call $_ZN106_$LT$core..ops..range..Range$LT$usize$GT$$u20$as$u20$core..slice..index..SliceIndex$LT$$u5b$T$u5d$$GT$$GT$9index_mut17h9004c64f6e681a9fE
       local.get 0
       i32.load offset=56
       local.get 2
       local.get 0
       i32.load offset=60
-      call 3
+      call $_ZN14fluentbase_sdk8bindings9_sys_read17h0e59dd5971d7a0a6E
       local.get 3
-      local.get 1
+      local.get 4
       local.get 0
-      i32.const 2400
+      i32.const 2352
       i32.add
-      call 257
+      call $_ZN16fluentbase_codec7encoder25FieldEncoder$LT$T$C$_$GT$20decode_field_body_at17hbb4c75929c0363dfE
     end
     local.get 0
-    i32.const 248
+    i32.const 224
     i32.add
     i32.const 8
     i32.add
     local.get 0
-    i32.const 2400
+    i32.const 2352
     i32.add
     i32.const 8
     i32.add
@@ -35107,37 +35150,37 @@
     i64.store
     local.get 0
     local.get 0
-    i64.load offset=2400 align=4
-    i64.store offset=248
+    i64.load offset=2352 align=4
+    i64.store offset=224
     local.get 0
     i64.const 0
-    i64.store offset=1376
+    i64.store offset=720
     local.get 0
-    i32.const 1376
+    i32.const 720
     i32.add
     i32.const 48
     i32.const 8
-    call 3
+    call $_ZN14fluentbase_sdk8bindings9_sys_read17h0e59dd5971d7a0a6E
     local.get 0
     i64.const 0
-    i64.store offset=2408 align=4
+    i64.store offset=2360 align=4
     local.get 0
-    i32.const 1054832
-    i32.store offset=2404
+    i32.const 1054848
+    i32.store offset=2356
     local.get 0
-    i32.const 1054368
-    i32.store offset=2400
+    i32.const 1054384
+    i32.store offset=2352
     local.get 0
-    i32.const 656
+    i32.const 608
     i32.add
     local.set 1
     local.get 0
     i32.const 48
     i32.add
     local.get 0
-    i32.const 1376
+    i32.const 720
     i32.add
-    call 253
+    call $_ZN16fluentbase_codec7encoder25FieldEncoder$LT$T$C$_$GT$22decode_field_header_at17hca838d3404a64889E
     block  ;; label = @1
       local.get 0
       i32.load offset=52
@@ -35145,7 +35188,7 @@
       i32.eqz
       br_if 0 (;@1;)
       local.get 0
-      i32.const 40
+      i32.const 1328
       i32.add
       local.get 0
       i32.load offset=48
@@ -35153,58 +35196,59 @@
       local.get 2
       i32.add
       local.tee 2
-      i32.const 1
-      call 254
+      call $_ZN5alloc3vec9from_elem17h65df4acde1849288E
+      local.get 0
+      i32.const 40
+      i32.add
+      local.get 0
+      i32.load offset=1328
+      local.get 0
+      i32.load offset=1336
+      i32.const 1054484
+      call $_ZN84_$LT$alloc..vec..Vec$LT$T$C$A$GT$$u20$as$u20$core..ops..index..IndexMut$LT$I$GT$$GT$9index_mut17h1d9e0f2e1e313b6bE
+      local.get 0
+      i32.load offset=40
+      local.get 0
+      i32.load offset=44
+      local.get 0
+      i64.load offset=720
+      i32.const 1054484
+      call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$15copy_from_slice17heddfaa84447a2290E
       local.get 0
       i32.const 32
       i32.add
-      local.get 0
-      i32.load offset=40
-      local.tee 4
+      local.get 3
       local.get 2
-      i32.const 1054468
-      call 255
+      local.get 0
+      i32.load offset=1328
+      local.tee 4
+      local.get 0
+      i32.load offset=1336
+      local.tee 5
+      i32.const 1054484
+      call $_ZN106_$LT$core..ops..range..Range$LT$usize$GT$$u20$as$u20$core..slice..index..SliceIndex$LT$$u5b$T$u5d$$GT$$GT$9index_mut17h9004c64f6e681a9fE
       local.get 0
       i32.load offset=32
+      local.get 3
       local.get 0
       i32.load offset=36
-      local.get 0
-      i32.const 1376
-      i32.add
-      i32.const 8
-      i32.const 1054468
-      call 12
-      local.get 0
-      i32.const 24
-      i32.add
-      local.get 3
-      local.get 2
+      call $_ZN14fluentbase_sdk8bindings9_sys_read17h0e59dd5971d7a0a6E
       local.get 4
-      local.get 2
-      i32.const 1054468
-      call 256
+      local.get 5
       local.get 0
-      i32.load offset=24
-      local.get 3
-      local.get 0
-      i32.load offset=28
-      call 3
-      local.get 4
-      local.get 2
-      local.get 0
-      i32.const 2400
+      i32.const 2352
       i32.add
-      call 257
+      call $_ZN16fluentbase_codec7encoder25FieldEncoder$LT$T$C$_$GT$20decode_field_body_at17hbb4c75929c0363dfE
     end
     local.get 1
     local.get 0
-    i64.load offset=2400 align=4
+    i64.load offset=2352 align=4
     i64.store align=4
     local.get 1
     i32.const 8
     i32.add
     local.get 0
-    i32.const 2400
+    i32.const 2352
     i32.add
     i32.const 8
     i32.add
@@ -35215,23 +35259,23 @@
     local.set 1
     local.get 0
     i32.const 0
-    i32.store offset=644
+    i32.store offset=596
     local.get 0
-    i32.const 1376
+    i32.const 1328
     i32.add
     i32.const 24
     i32.add
     i64.const 0
     i64.store
     local.get 0
-    i32.const 1376
+    i32.const 1328
     i32.add
     i32.const 16
     i32.add
     i64.const 0
     i64.store
     local.get 0
-    i32.const 1376
+    i32.const 1328
     i32.add
     i32.const 8
     i32.add
@@ -35239,22 +35283,22 @@
     i64.store
     local.get 0
     i64.const 0
-    i64.store offset=1376
+    i64.store offset=1328
     local.get 0
-    i32.const 1376
+    i32.const 1328
     i32.add
     i32.const 60
     i32.const 32
-    call 3
+    call $_ZN14fluentbase_sdk8bindings9_sys_read17h0e59dd5971d7a0a6E
     local.get 0
-    i32.const 2400
+    i32.const 2352
     i32.add
     i32.const 24
     i32.add
     i64.const 0
     i64.store
     local.get 0
-    i32.const 2400
+    i32.const 2352
     i32.add
     i32.const 16
     i32.add
@@ -35265,7 +35309,7 @@
     i64.store
     local.get 0
     i64.const 0
-    i64.store offset=2400
+    i64.store offset=2352
     block  ;; label = @1
       loop  ;; label = @2
         local.get 1
@@ -35273,16 +35317,16 @@
         i32.eq
         br_if 1 (;@1;)
         local.get 0
-        i32.const 2400
+        i32.const 2352
         i32.add
         local.get 1
         i32.add
         local.get 0
-        i32.const 1376
+        i32.const 1328
         i32.add
         i32.const 32
         local.get 1
-        call 258
+        call $_ZN16fluentbase_codec6buffer13BufferDecoder7read_u817hd656c346132b91d6E
         i32.store8
         local.get 1
         i32.const 1
@@ -35292,12 +35336,12 @@
       end
     end
     local.get 0
-    i32.const 672
+    i32.const 624
     i32.add
     i32.const 24
     i32.add
     local.get 0
-    i32.const 2400
+    i32.const 2352
     i32.add
     i32.const 24
     i32.add
@@ -35305,12 +35349,12 @@
     i64.load
     i64.store
     local.get 0
-    i32.const 672
+    i32.const 624
     i32.add
     i32.const 16
     i32.add
     local.get 0
-    i32.const 2400
+    i32.const 2352
     i32.add
     i32.const 16
     i32.add
@@ -35318,12 +35362,12 @@
     i64.load
     i64.store
     local.get 0
-    i32.const 672
+    i32.const 624
     i32.add
     i32.const 8
     i32.add
     local.get 0
-    i32.const 2400
+    i32.const 2352
     i32.add
     i32.const 8
     i32.add
@@ -35332,10 +35376,10 @@
     i64.store
     local.get 0
     local.get 0
-    i64.load offset=2400
-    i64.store offset=672
+    i64.load offset=2352
+    i64.store offset=624
     local.get 0
-    i32.const 1376
+    i32.const 1328
     i32.add
     i32.const 16
     i32.add
@@ -35343,7 +35387,7 @@
     i32.const 0
     i32.store
     local.get 0
-    i32.const 1376
+    i32.const 1328
     i32.add
     i32.const 8
     i32.add
@@ -35352,13 +35396,13 @@
     i64.store
     local.get 0
     i64.const 0
-    i64.store offset=1376
+    i64.store offset=1328
     local.get 0
-    i32.const 1376
+    i32.const 1328
     i32.add
     i32.const 8
     i32.const 20
-    call 3
+    call $_ZN14fluentbase_sdk8bindings9_sys_read17h0e59dd5971d7a0a6E
     local.get 1
     i32.const 0
     i32.store
@@ -35367,16 +35411,16 @@
     i64.store
     local.get 0
     i64.const 0
-    i64.store offset=2400
+    i64.store offset=2352
     local.get 0
-    i32.const 1376
+    i32.const 1328
     i32.add
     local.get 0
-    i32.const 2400
+    i32.const 2352
     i32.add
-    call 259
+    call $_ZN16fluentbase_codec7encoder25FieldEncoder$LT$T$C$_$GT$22decode_field_header_at17h3a5b912a80ec5ed1E
     local.get 0
-    i32.const 264
+    i32.const 240
     i32.add
     i32.const 16
     i32.add
@@ -35384,7 +35428,7 @@
     i32.load
     i32.store
     local.get 0
-    i32.const 264
+    i32.const 240
     i32.add
     i32.const 8
     i32.add
@@ -35393,8 +35437,8 @@
     i64.store
     local.get 0
     local.get 0
-    i64.load offset=2400
-    i64.store offset=264
+    i64.load offset=2352
+    i64.store offset=240
     local.get 4
     i32.const 0
     i32.store
@@ -35403,13 +35447,13 @@
     i64.store
     local.get 0
     i64.const 0
-    i64.store offset=1376
+    i64.store offset=1328
     local.get 0
-    i32.const 1376
+    i32.const 1328
     i32.add
     i32.const 28
     i32.const 20
-    call 3
+    call $_ZN14fluentbase_sdk8bindings9_sys_read17h0e59dd5971d7a0a6E
     local.get 1
     i32.const 0
     i32.store
@@ -35418,16 +35462,16 @@
     i64.store
     local.get 0
     i64.const 0
-    i64.store offset=2400
+    i64.store offset=2352
     local.get 0
-    i32.const 1376
+    i32.const 1328
     i32.add
     local.get 0
-    i32.const 2400
+    i32.const 2352
     i32.add
-    call 259
+    call $_ZN16fluentbase_codec7encoder25FieldEncoder$LT$T$C$_$GT$22decode_field_header_at17h3a5b912a80ec5ed1E
     local.get 0
-    i32.const 288
+    i32.const 264
     i32.add
     i32.const 16
     i32.add
@@ -35435,7 +35479,7 @@
     i32.load
     i32.store
     local.get 0
-    i32.const 288
+    i32.const 264
     i32.add
     i32.const 8
     i32.add
@@ -35444,10 +35488,10 @@
     i64.store
     local.get 0
     local.get 0
-    i64.load offset=2400
-    i64.store offset=288
+    i64.load offset=2352
+    i64.store offset=264
     local.get 0
-    i32.const 1376
+    i32.const 1328
     i32.add
     i32.const 24
     i32.add
@@ -35462,13 +35506,13 @@
     i64.store
     local.get 0
     i64.const 0
-    i64.store offset=1376
+    i64.store offset=1328
     local.get 0
-    i32.const 1376
+    i32.const 1328
     i32.add
     i32.const 104
     i32.const 32
-    call 3
+    call $_ZN14fluentbase_sdk8bindings9_sys_read17h0e59dd5971d7a0a6E
     local.get 3
     i64.const 0
     i64.store
@@ -35480,16 +35524,16 @@
     i64.store
     local.get 0
     i64.const 0
-    i64.store offset=2400
+    i64.store offset=2352
     local.get 0
-    i32.const 1376
+    i32.const 1328
     i32.add
     local.get 0
-    i32.const 2400
+    i32.const 2352
     i32.add
-    call 260
+    call $_ZN16fluentbase_codec7encoder25FieldEncoder$LT$T$C$_$GT$22decode_field_header_at17h8eae7dcc74fcd2c7E
     local.get 0
-    i32.const 768
+    i32.const 720
     i32.add
     i32.const 24
     i32.add
@@ -35497,7 +35541,7 @@
     i64.load
     i64.store
     local.get 0
-    i32.const 768
+    i32.const 720
     i32.add
     i32.const 16
     i32.add
@@ -35505,7 +35549,7 @@
     i64.load
     i64.store
     local.get 0
-    i32.const 768
+    i32.const 720
     i32.add
     i32.const 8
     i32.add
@@ -35514,10 +35558,10 @@
     i64.store
     local.get 0
     local.get 0
-    i64.load offset=2400
-    i64.store offset=768
+    i64.load offset=2352
+    i64.store offset=720
     local.get 0
-    i32.const 644
+    i32.const 596
     i32.add
     i32.const 20
     i32.add
@@ -35525,7 +35569,7 @@
     local.set 7
     local.get 3
     local.get 0
-    i32.const 644
+    i32.const 596
     i32.add
     i32.const 24
     i32.add
@@ -35534,7 +35578,7 @@
     i32.store
     local.get 1
     local.get 0
-    i32.const 644
+    i32.const 596
     i32.add
     i32.const 16
     i32.add
@@ -35543,7 +35587,7 @@
     i64.store
     local.get 2
     local.get 0
-    i32.const 644
+    i32.const 596
     i32.add
     i32.const 8
     i32.add
@@ -35552,9 +35596,9 @@
     i64.store
     local.get 0
     local.get 0
-    i64.load offset=644 align=4
+    i64.load offset=596 align=4
     local.tee 10
-    i64.store offset=2400
+    i64.store offset=2352
     block  ;; label = @1
       block  ;; label = @2
         local.get 10
@@ -35575,15 +35619,15 @@
         i64.store
         local.get 0
         local.get 0
-        i64.load offset=644 align=4
-        i64.store offset=1376
+        i64.load offset=596 align=4
+        i64.store offset=1328
         br 1 (;@1;)
       end
       local.get 0
-      i32.const 16
+      i32.const 24
       i32.add
       local.get 0
-      i32.const 2400
+      i32.const 2352
       i32.add
       i32.const 20
       i32.add
@@ -35592,58 +35636,69 @@
       i32.const 33
       i32.add
       local.tee 3
-      i32.const 0
-      call 254
+      call $_ZN5alloc7raw_vec19RawVec$LT$T$C$A$GT$11allocate_in17h2bbe64e20104d869E
       local.get 0
       i32.const 0
-      i32.store offset=3436
+      i32.store offset=3388
       local.get 0
       local.get 0
-      i64.load offset=16
-      i64.store offset=3428 align=4
-      local.get 0
-      i32.const 3428
-      i32.add
+      i64.load offset=24
+      i64.store offset=3380 align=4
       local.get 1
       i32.load
-      local.tee 1
+      local.set 1
+      local.get 0
+      i32.const 3380
+      i32.add
+      local.get 2
+      call $_ZN5alloc3vec16Vec$LT$T$C$A$GT$7reserve17h5e3e1fe311d12a20E
+      local.get 0
+      i32.load offset=3380
+      local.get 0
+      i32.load offset=3388
+      local.tee 4
+      i32.add
       local.get 1
       local.get 2
-      i32.add
-      call 261
+      memory.copy
       local.get 0
-      i32.const 3428
+      local.get 4
+      local.get 2
+      i32.add
+      i32.store offset=3388
+      local.get 0
+      i32.const 3380
       i32.add
       local.get 3
-      call 14
+      call $_ZN5alloc3vec16Vec$LT$T$C$A$GT$6resize17hf594465c13336e0dE
       local.get 0
-      i32.const 1376
+      i32.const 1328
       i32.add
       i32.const 12
       i32.add
       local.get 0
-      i32.const 3428
+      i32.const 3380
       i32.add
-      call 262
+      call $_ZN92_$LT$bytes..bytes..Bytes$u20$as$u20$core..convert..From$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$4from17hdedf9d6d985a652fE
       local.get 0
       local.get 2
-      i32.store offset=1380
+      i32.store offset=1332
       local.get 0
       i32.const 1
-      i32.store offset=1376
+      i32.store offset=1328
       local.get 0
-      i32.const 2400
+      i32.const 2352
       i32.add
       i32.const 12
       i32.add
-      call 63
+      call $_ZN4core3ptr52drop_in_place$LT$alloy_primitives..bytes_..Bytes$GT$17h6dfb868a0b1f26d6E
       local.get 0
-      i32.load offset=2400
+      i32.load offset=2352
       i32.const 2
       i32.lt_u
       br_if 0 (;@1;)
       local.get 0
-      i32.load offset=2408
+      i32.load offset=2360
       local.tee 1
       local.get 1
       i32.load
@@ -35656,42 +35711,42 @@
       i32.ne
       br_if 0 (;@1;)
       local.get 0
-      i32.const 2408
+      i32.const 2360
       i32.add
-      call 232
+      call $_ZN5alloc4sync16Arc$LT$T$C$A$GT$9drop_slow17h305b51d57009a74bE
     end
     local.get 0
-    i32.const 1392
+    i32.const 1344
     i32.add
     i32.load
     local.set 8
     local.get 0
-    i32.const 1400
+    i32.const 1352
     i32.add
     i32.load
     local.set 11
     local.get 0
-    i32.const 1396
+    i32.const 1348
     i32.add
     i32.load
     local.set 9
     local.get 0
-    i32.load offset=1388
+    i32.load offset=1340
     local.set 12
     local.get 0
-    i32.const 1376
+    i32.const 1328
     i32.add
-    call 263
+    call $_ZN4core3ptr61drop_in_place$LT$revm_primitives..bytecode..BytecodeState$GT$17hdde10a8a63491ec9E
     local.get 0
     local.get 9
-    i32.store offset=3428
+    i32.store offset=3380
     block  ;; label = @1
       local.get 9
       i32.const 536870912
       i32.ge_u
       br_if 0 (;@1;)
       local.get 0
-      i32.const 8
+      i32.const 16
       i32.add
       local.get 9
       i32.const 3
@@ -35702,17 +35757,16 @@
       i32.const 0
       i32.ne
       i32.add
-      i32.const 0
-      call 254
+      call $_ZN5alloc7raw_vec19RawVec$LT$T$C$A$GT$11allocate_in17h2bbe64e20104d869E
       local.get 0
-      i32.load offset=8
+      i32.load offset=16
       local.set 4
       local.get 0
-      i32.load offset=12
+      i32.load offset=20
       local.set 13
       local.get 0
       local.get 9
-      i32.store offset=3424
+      i32.store offset=3376
       block  ;; label = @2
         local.get 13
         i32.const 536870912
@@ -35723,7 +35777,7 @@
         i32.const 3
         i32.shl
         local.tee 1
-        i32.store offset=3428
+        i32.store offset=3380
         block  ;; label = @3
           local.get 1
           local.get 9
@@ -35733,7 +35787,7 @@
           i32.const 3
           i32.shl
           local.tee 14
-          call 247
+          call $_ZN6bitvec3ptr4span24BitSpan$LT$M$C$T$C$O$GT$8elements17h5d0308a19b191769E
           local.set 2
           i32.const 0
           local.set 1
@@ -35776,11 +35830,11 @@
                             br_if 0 (;@12;)
                             i32.const 4
                             i32.const 20
-                            call 236
+                            call $_ZN5alloc5alloc6Global10alloc_impl17h2c7b164b60447d0fE.380
                             local.tee 1
                             br_if 1 (;@11;)
                             i32.const 20
-                            call 56
+                            call $__rust_alloc_error_handler
                             unreachable
                           end
                           local.get 1
@@ -35804,14 +35858,14 @@
                           br 6 (;@5;)
                         end
                         local.get 0
-                        i32.const 2400
+                        i32.const 2352
                         i32.add
                         i32.const 20
                         i32.add
                         local.get 9
                         i32.store
                         local.get 0
-                        i32.const 2400
+                        i32.const 2352
                         i32.add
                         i32.const 16
                         i32.add
@@ -35831,7 +35885,7 @@
                         i64.const 4294967297
                         i64.store align=4
                         local.get 0
-                        i32.const 1376
+                        i32.const 1328
                         i32.add
                         i32.const 8
                         i32.add
@@ -35841,12 +35895,12 @@
                         local.get 0
                         local.get 2
                         i64.load align=4
-                        i64.store offset=1376
+                        i64.store offset=1328
                         local.get 12
                         i32.eqz
                         br_if 1 (;@9;)
                         local.get 0
-                        i32.const 216
+                        i32.const 192
                         i32.add
                         i32.const 8
                         i32.add
@@ -35854,49 +35908,49 @@
                         i32.load
                         i32.store
                         local.get 0
-                        i32.const 232
+                        i32.const 208
                         i32.add
                         i32.const 8
                         i32.add
                         local.get 0
-                        i32.const 248
-                        i32.add
-                        i32.const 8
-                        i32.add
-                        i64.load
-                        i64.store
-                        local.get 0
-                        i32.const 184
-                        i32.add
-                        i32.const 8
-                        i32.add
-                        local.get 0
-                        i32.const 672
+                        i32.const 224
                         i32.add
                         i32.const 8
                         i32.add
                         i64.load
                         i64.store
                         local.get 0
-                        i32.const 184
+                        i32.const 160
+                        i32.add
+                        i32.const 8
+                        i32.add
+                        local.get 0
+                        i32.const 624
+                        i32.add
+                        i32.const 8
+                        i32.add
+                        i64.load
+                        i64.store
+                        local.get 0
+                        i32.const 160
                         i32.add
                         i32.const 16
                         i32.add
                         local.get 0
-                        i32.const 672
+                        i32.const 624
                         i32.add
                         i32.const 16
                         i32.add
                         i64.load
                         i64.store
                         local.get 0
-                        i32.const 184
+                        i32.const 160
                         i32.add
                         i32.const 24
                         i32.add
                         local.tee 13
                         local.get 0
-                        i32.const 672
+                        i32.const 624
                         i32.add
                         i32.const 24
                         i32.add
@@ -35905,18 +35959,46 @@
                         i64.store
                         local.get 0
                         local.get 0
-                        i64.load offset=1376
-                        i64.store offset=216
+                        i64.load offset=1328
+                        i64.store offset=192
                         local.get 0
                         local.get 0
-                        i64.load offset=248
-                        i64.store offset=232
+                        i64.load offset=224
+                        i64.store offset=208
                         local.get 0
                         local.get 0
-                        i64.load offset=672
-                        i64.store offset=184
+                        i64.load offset=624
+                        i64.store offset=160
                         local.get 0
-                        i32.const 128
+                        i32.const 104
+                        i32.add
+                        i32.const 16
+                        i32.add
+                        local.get 0
+                        i32.const 240
+                        i32.add
+                        i32.const 16
+                        i32.add
+                        i32.load
+                        i32.store
+                        local.get 0
+                        i32.const 104
+                        i32.add
+                        i32.const 8
+                        i32.add
+                        local.get 0
+                        i32.const 240
+                        i32.add
+                        i32.const 8
+                        i32.add
+                        i64.load
+                        i64.store
+                        local.get 0
+                        local.get 0
+                        i64.load offset=240
+                        i64.store offset=104
+                        local.get 0
+                        i32.const 80
                         i32.add
                         i32.const 16
                         i32.add
@@ -35928,7 +36010,7 @@
                         i32.load
                         i32.store
                         local.get 0
-                        i32.const 128
+                        i32.const 80
                         i32.add
                         i32.const 8
                         i32.add
@@ -35942,43 +36024,15 @@
                         local.get 0
                         local.get 0
                         i64.load offset=264
-                        i64.store offset=128
+                        i64.store offset=80
                         local.get 0
-                        i32.const 104
-                        i32.add
-                        i32.const 16
-                        i32.add
-                        local.get 0
-                        i32.const 288
-                        i32.add
-                        i32.const 16
-                        i32.add
-                        i32.load
-                        i32.store
-                        local.get 0
-                        i32.const 104
-                        i32.add
-                        i32.const 8
-                        i32.add
-                        local.get 0
-                        i32.const 288
-                        i32.add
-                        i32.const 8
-                        i32.add
-                        i64.load
-                        i64.store
-                        local.get 0
-                        local.get 0
-                        i64.load offset=288
-                        i64.store offset=104
-                        local.get 0
-                        i32.const 152
+                        i32.const 128
                         i32.add
                         i32.const 24
                         i32.add
                         local.tee 14
                         local.get 0
-                        i32.const 768
+                        i32.const 720
                         i32.add
                         i32.const 24
                         i32.add
@@ -35986,12 +36040,12 @@
                         i64.load
                         i64.store
                         local.get 0
-                        i32.const 152
+                        i32.const 128
                         i32.add
                         i32.const 16
                         i32.add
                         local.get 0
-                        i32.const 768
+                        i32.const 720
                         i32.add
                         i32.const 16
                         i32.add
@@ -35999,12 +36053,12 @@
                         i64.load
                         i64.store
                         local.get 0
-                        i32.const 152
+                        i32.const 128
                         i32.add
                         i32.const 8
                         i32.add
                         local.get 0
-                        i32.const 768
+                        i32.const 720
                         i32.add
                         i32.const 8
                         i32.add
@@ -36013,188 +36067,49 @@
                         i64.store
                         local.get 0
                         local.get 0
-                        i64.load offset=768
-                        i64.store offset=152
+                        i64.load offset=720
+                        i64.store offset=128
                         local.get 0
                         i64.const 0
-                        i64.store offset=1376
+                        i64.store offset=1328
                         local.get 0
-                        i32.const 1376
+                        i32.const 1328
                         i32.add
                         i32.const 0
                         i32.const 8
-                        call 3
+                        call $_ZN14fluentbase_sdk8bindings9_sys_read17h0e59dd5971d7a0a6E
                         local.get 0
                         i64.const 0
-                        i64.store offset=2400
+                        i64.store offset=2352
                         local.get 0
-                        i32.const 1376
+                        i32.const 1328
                         i32.add
                         local.get 0
-                        i32.const 2400
+                        i32.const 2352
                         i32.add
-                        call 264
+                        call $_ZN16fluentbase_codec7encoder25FieldEncoder$LT$T$C$_$GT$22decode_field_header_at17h2057b7e6ddc7eee8E
                         local.get 0
-                        i64.load offset=2400
+                        i64.load offset=2352
                         local.set 15
                         local.get 0
                         i64.const 0
-                        i64.store offset=1376
+                        i64.store offset=1328
                         local.get 0
-                        i32.const 1376
+                        i32.const 1328
                         i32.add
                         i32.const 196
                         i32.const 8
-                        call 3
+                        call $_ZN14fluentbase_sdk8bindings9_sys_read17h0e59dd5971d7a0a6E
                         local.get 0
                         i64.const 0
-                        i64.store offset=2400
+                        i64.store offset=2352
                         local.get 0
-                        i32.const 1376
+                        i32.const 1328
                         i32.add
                         local.get 0
-                        i32.const 2400
+                        i32.const 2352
                         i32.add
-                        call 264
-                        local.get 0
-                        i32.const 584
-                        i32.add
-                        i32.const 8
-                        i32.add
-                        i64.const 0
-                        i64.store
-                        local.get 0
-                        i32.const 584
-                        i32.add
-                        i32.const 16
-                        i32.add
-                        i64.const 0
-                        i64.store
-                        local.get 0
-                        i64.const 0
-                        i64.store offset=584
-                        local.get 0
-                        i64.load offset=2400
-                        local.set 16
-                        local.get 0
-                        i32.const 1376
-                        i32.add
-                        i32.const 16
-                        i32.add
-                        local.tee 9
-                        i32.const 0
-                        i32.store
-                        local.get 3
-                        i64.const 0
-                        i64.store
-                        local.get 0
-                        i64.const 0
-                        i64.store offset=1376
-                        local.get 0
-                        i32.const 1376
-                        i32.add
-                        i32.const 168
-                        i32.const 20
-                        call 3
-                        local.get 2
-                        i32.const 0
-                        i32.store
-                        local.get 0
-                        i32.const 2400
-                        i32.add
-                        i32.const 8
-                        i32.add
-                        local.tee 4
-                        i64.const 0
-                        i64.store
-                        local.get 0
-                        i64.const 0
-                        i64.store offset=2400
-                        local.get 0
-                        i32.const 1376
-                        i32.add
-                        local.get 0
-                        i32.const 2400
-                        i32.add
-                        call 259
-                        local.get 0
-                        i32.const 456
-                        i32.add
-                        i32.const 16
-                        i32.add
-                        local.get 2
-                        i32.load
-                        i32.store
-                        local.get 0
-                        i32.const 456
-                        i32.add
-                        i32.const 8
-                        i32.add
-                        local.get 4
-                        i64.load
-                        i64.store
-                        local.get 0
-                        local.get 0
-                        i64.load offset=2400
-                        i64.store offset=456
-                        local.get 0
-                        i64.const 0
-                        i64.store offset=1376
-                        local.get 0
-                        i32.const 1376
-                        i32.add
-                        i32.const 188
-                        i32.const 8
-                        call 3
-                        local.get 0
-                        i64.const 0
-                        i64.store offset=2400
-                        local.get 0
-                        i32.const 1376
-                        i32.add
-                        local.get 0
-                        i32.const 2400
-                        i32.add
-                        call 264
-                        local.get 0
-                        i32.const 560
-                        i32.add
-                        i32.const 8
-                        i32.add
-                        i64.const 0
-                        i64.store
-                        local.get 0
-                        i32.const 560
-                        i32.add
-                        i32.const 16
-                        i32.add
-                        i64.const 0
-                        i64.store
-                        local.get 0
-                        i64.const 0
-                        i64.store offset=560
-                        local.get 0
-                        i64.load offset=2400
-                        local.set 17
-                        local.get 0
-                        i64.const 0
-                        i64.store offset=1376
-                        local.get 0
-                        i32.const 1376
-                        i32.add
-                        i32.const 212
-                        i32.const 8
-                        call 3
-                        local.get 0
-                        i64.const 0
-                        i64.store offset=2400
-                        local.get 0
-                        i32.const 1376
-                        i32.add
-                        local.get 0
-                        i32.const 2400
-                        i32.add
-                        call 264
+                        call $_ZN16fluentbase_codec7encoder25FieldEncoder$LT$T$C$_$GT$22decode_field_header_at17h2057b7e6ddc7eee8E
                         local.get 0
                         i32.const 536
                         i32.add
@@ -36213,10 +36128,149 @@
                         i64.const 0
                         i64.store offset=536
                         local.get 0
-                        i64.load offset=2400
+                        i64.load offset=2352
+                        local.set 16
+                        local.get 0
+                        i32.const 1328
+                        i32.add
+                        i32.const 16
+                        i32.add
+                        local.tee 9
+                        i32.const 0
+                        i32.store
+                        local.get 3
+                        i64.const 0
+                        i64.store
+                        local.get 0
+                        i64.const 0
+                        i64.store offset=1328
+                        local.get 0
+                        i32.const 1328
+                        i32.add
+                        i32.const 168
+                        i32.const 20
+                        call $_ZN14fluentbase_sdk8bindings9_sys_read17h0e59dd5971d7a0a6E
+                        local.get 2
+                        i32.const 0
+                        i32.store
+                        local.get 0
+                        i32.const 2352
+                        i32.add
+                        i32.const 8
+                        i32.add
+                        local.tee 4
+                        i64.const 0
+                        i64.store
+                        local.get 0
+                        i64.const 0
+                        i64.store offset=2352
+                        local.get 0
+                        i32.const 1328
+                        i32.add
+                        local.get 0
+                        i32.const 2352
+                        i32.add
+                        call $_ZN16fluentbase_codec7encoder25FieldEncoder$LT$T$C$_$GT$22decode_field_header_at17h3a5b912a80ec5ed1E
+                        local.get 0
+                        i32.const 432
+                        i32.add
+                        i32.const 16
+                        i32.add
+                        local.get 2
+                        i32.load
+                        i32.store
+                        local.get 0
+                        i32.const 432
+                        i32.add
+                        i32.const 8
+                        i32.add
+                        local.get 4
+                        i64.load
+                        i64.store
+                        local.get 0
+                        local.get 0
+                        i64.load offset=2352
+                        i64.store offset=432
+                        local.get 0
+                        i64.const 0
+                        i64.store offset=1328
+                        local.get 0
+                        i32.const 1328
+                        i32.add
+                        i32.const 188
+                        i32.const 8
+                        call $_ZN14fluentbase_sdk8bindings9_sys_read17h0e59dd5971d7a0a6E
+                        local.get 0
+                        i64.const 0
+                        i64.store offset=2352
+                        local.get 0
+                        i32.const 1328
+                        i32.add
+                        local.get 0
+                        i32.const 2352
+                        i32.add
+                        call $_ZN16fluentbase_codec7encoder25FieldEncoder$LT$T$C$_$GT$22decode_field_header_at17h2057b7e6ddc7eee8E
+                        local.get 0
+                        i32.const 512
+                        i32.add
+                        i32.const 8
+                        i32.add
+                        i64.const 0
+                        i64.store
+                        local.get 0
+                        i32.const 512
+                        i32.add
+                        i32.const 16
+                        i32.add
+                        i64.const 0
+                        i64.store
+                        local.get 0
+                        i64.const 0
+                        i64.store offset=512
+                        local.get 0
+                        i64.load offset=2352
+                        local.set 17
+                        local.get 0
+                        i64.const 0
+                        i64.store offset=1328
+                        local.get 0
+                        i32.const 1328
+                        i32.add
+                        i32.const 212
+                        i32.const 8
+                        call $_ZN14fluentbase_sdk8bindings9_sys_read17h0e59dd5971d7a0a6E
+                        local.get 0
+                        i64.const 0
+                        i64.store offset=2352
+                        local.get 0
+                        i32.const 1328
+                        i32.add
+                        local.get 0
+                        i32.const 2352
+                        i32.add
+                        call $_ZN16fluentbase_codec7encoder25FieldEncoder$LT$T$C$_$GT$22decode_field_header_at17h2057b7e6ddc7eee8E
+                        local.get 0
+                        i32.const 488
+                        i32.add
+                        i32.const 8
+                        i32.add
+                        i64.const 0
+                        i64.store
+                        local.get 0
+                        i32.const 488
+                        i32.add
+                        i32.const 16
+                        i32.add
+                        i64.const 0
+                        i64.store
+                        local.get 0
+                        i64.const 0
+                        i64.store offset=488
+                        local.get 0
+                        i64.load offset=2352
                         local.set 18
                         local.get 0
-                        i32.const 1376
+                        i32.const 1328
                         i32.add
                         i32.const 24
                         i32.add
@@ -36230,15 +36284,15 @@
                         i64.store
                         local.get 0
                         i64.const 0
-                        i64.store offset=1376
+                        i64.store offset=1328
                         local.get 0
-                        i32.const 1376
+                        i32.const 1328
                         i32.add
                         i32.const 220
                         i32.const 32
-                        call 3
+                        call $_ZN14fluentbase_sdk8bindings9_sys_read17h0e59dd5971d7a0a6E
                         local.get 0
-                        i32.const 2400
+                        i32.const 2352
                         i32.add
                         i32.const 24
                         i32.add
@@ -36253,14 +36307,14 @@
                         i64.store
                         local.get 0
                         i64.const 0
-                        i64.store offset=2400
+                        i64.store offset=2352
                         local.get 0
-                        i32.const 1376
+                        i32.const 1328
                         i32.add
                         local.get 0
-                        i32.const 2400
+                        i32.const 2352
                         i32.add
-                        call 260
+                        call $_ZN16fluentbase_codec7encoder25FieldEncoder$LT$T$C$_$GT$22decode_field_header_at17h8eae7dcc74fcd2c7E
                         local.get 5
                         local.get 3
                         i64.load
@@ -36278,32 +36332,32 @@
                         i64.store
                         local.get 0
                         local.get 0
-                        i64.load offset=2400
+                        i64.load offset=2352
                         local.tee 21
-                        i64.store offset=768
+                        i64.store offset=720
                         local.get 0
-                        i32.const 2400
+                        i32.const 2352
                         i32.add
                         i32.const 28
                         i32.add
                         local.get 10
                         i64.store align=4
                         local.get 0
-                        i32.const 504
+                        i32.const 456
                         i32.add
                         i32.const 24
                         i32.add
                         local.get 10
                         i64.store
                         local.get 0
-                        i32.const 504
+                        i32.const 456
                         i32.add
                         i32.const 16
                         i32.add
                         local.get 19
                         i64.store
                         local.get 0
-                        i32.const 504
+                        i32.const 456
                         i32.add
                         i32.const 8
                         i32.add
@@ -36311,112 +36365,94 @@
                         i64.store
                         local.get 0
                         local.get 21
-                        i64.store offset=504
+                        i64.store offset=456
                         local.get 0
                         i64.const 0
-                        i64.store offset=1376
+                        i64.store offset=1328
                         local.get 0
-                        i32.const 1376
+                        i32.const 1328
                         i32.add
                         i32.const 204
                         i32.const 8
-                        call 3
+                        call $_ZN14fluentbase_sdk8bindings9_sys_read17h0e59dd5971d7a0a6E
                         local.get 0
                         i64.const 0
-                        i64.store offset=2400
+                        i64.store offset=2352
                         local.get 0
-                        i32.const 1376
+                        i32.const 1328
                         i32.add
                         local.get 0
-                        i32.const 2400
+                        i32.const 2352
                         i32.add
-                        call 264
+                        call $_ZN16fluentbase_codec7encoder25FieldEncoder$LT$T$C$_$GT$22decode_field_header_at17h2057b7e6ddc7eee8E
                         local.get 0
-                        i32.const 480
-                        i32.add
-                        i32.const 8
-                        i32.add
-                        i64.const 0
-                        i64.store
-                        local.get 0
-                        i32.const 480
-                        i32.add
-                        i32.const 16
-                        i32.add
-                        i64.const 0
-                        i64.store
-                        local.get 0
-                        i64.const 0
-                        i64.store offset=480
-                        local.get 0
-                        i64.load offset=2400
+                        i64.load offset=2352
                         local.set 10
                         local.get 0
-                        i32.const 2400
+                        i32.const 2352
                         i32.add
-                        call 265
+                        call $_ZN73_$LT$revm_primitives..env..BlockEnv$u20$as$u20$core..default..Default$GT$7default17hb78c1de200d00755E
                         local.get 0
-                        i32.const 420
+                        i32.const 396
                         i32.add
                         local.get 0
-                        i32.const 2400
+                        i32.const 2352
                         i32.add
                         i32.const 212
                         i32.add
                         i32.const 33
-                        call 323
-                        drop
+                        memory.copy
                         local.get 0
-                        i32.const 312
+                        i32.const 288
                         i32.add
                         i32.const 8
                         i32.add
                         i64.const 0
                         i64.store
                         local.get 0
-                        i32.const 312
+                        i32.const 288
                         i32.add
                         i32.const 16
                         i32.add
                         i32.const 0
                         i32.store
                         local.get 0
-                        i32.const 368
+                        i32.const 344
                         i32.add
                         i32.const 8
                         i32.add
                         i64.const 0
                         i64.store
                         local.get 0
-                        i32.const 368
+                        i32.const 344
                         i32.add
                         i32.const 16
                         i32.add
                         i64.const 0
                         i64.store
                         local.get 0
-                        i32.const 368
+                        i32.const 344
                         i32.add
                         i32.const 24
                         i32.add
                         i64.const 0
                         i64.store
                         local.get 0
-                        i32.const 400
+                        i32.const 376
                         i32.add
                         i32.const 8
                         i32.add
                         i64.const 0
                         i64.store
                         local.get 0
-                        i32.const 400
+                        i32.const 376
                         i32.add
                         i32.const 16
                         i32.add
                         i32.const 0
                         i32.store
                         local.get 0
-                        i32.const 608
+                        i32.const 560
                         i32.add
                         i32.const 24
                         i32.add
@@ -36424,7 +36460,7 @@
                         i64.load
                         i64.store
                         local.get 0
-                        i32.const 608
+                        i32.const 560
                         i32.add
                         i32.const 16
                         i32.add
@@ -36432,7 +36468,7 @@
                         i64.load
                         i64.store
                         local.get 0
-                        i32.const 608
+                        i32.const 560
                         i32.add
                         i32.const 8
                         i32.add
@@ -36441,33 +36477,33 @@
                         i64.store
                         local.get 0
                         i64.const 0
-                        i64.store offset=312
+                        i64.store offset=288
                         local.get 0
                         i64.const 0
-                        i64.store offset=368
+                        i64.store offset=344
                         local.get 0
                         i64.const 0
-                        i64.store offset=400
+                        i64.store offset=376
                         local.get 0
                         local.get 0
-                        i64.load offset=2400
-                        i64.store offset=608
+                        i64.load offset=2352
+                        i64.store offset=560
                         local.get 0
-                        i32.const 336
+                        i32.const 312
                         i32.add
                         i32.const 24
                         i32.add
                         i64.const 0
                         i64.store
                         local.get 0
-                        i32.const 336
+                        i32.const 312
                         i32.add
                         i32.const 16
                         i32.add
                         i64.const 0
                         i64.store
                         local.get 0
-                        i32.const 336
+                        i32.const 312
                         i32.add
                         i32.const 8
                         i32.add
@@ -36475,24 +36511,29 @@
                         i64.store
                         local.get 0
                         i64.const 0
-                        i64.store offset=336
+                        i64.store offset=312
                         local.get 0
+                        i32.const 8
+                        i32.add
                         i32.const 4096
-                        call 248
+                        call $_ZN5alloc7raw_vec19RawVec$LT$T$C$A$GT$11allocate_in17h2bbe64e20104d869E
+                        i32.const 0
+                        i32.load8_u offset=1054868
+                        drop
                         local.get 0
-                        i32.load offset=4
+                        i32.load offset=12
                         local.set 2
                         local.get 0
-                        i32.load
+                        i32.load offset=8
                         local.set 3
                         i32.const 4
                         i32.const 128
-                        call 236
+                        call $_ZN109_$LT$lol_alloc..trivial_allocators..LeakingAllocator$LT$T$GT$$u20$as$u20$core..alloc..global..GlobalAlloc$GT$5alloc17hafec9583d38d71e9E
                         local.tee 4
                         i32.eqz
                         br_if 2 (;@8;)
                         local.get 0
-                        i32.const 644
+                        i32.const 596
                         i32.add
                         i32.const 16
                         i32.add
@@ -36500,22 +36541,22 @@
                         i64.store align=4
                         local.get 0
                         i32.const 0
-                        i32.store offset=668
+                        i32.store offset=620
                         local.get 0
                         local.get 4
-                        i32.store offset=656
+                        i32.store offset=608
                         local.get 0
                         i32.const 0
-                        i32.store offset=652
+                        i32.store offset=604
                         local.get 0
                         local.get 3
-                        i32.store offset=644
+                        i32.store offset=596
                         local.get 0
                         local.get 2
-                        i32.store offset=648
+                        i32.store offset=600
                         i32.const 144
                         i32.const 8
-                        call 79
+                        call $_ZN5alloc5alloc15exchange_malloc17hff92c31848a15536E
                         local.tee 2
                         local.get 12
                         i32.store offset=16
@@ -36529,7 +36570,7 @@
                         i32.const 8
                         i32.add
                         local.get 0
-                        i32.const 232
+                        i32.const 208
                         i32.add
                         i32.const 8
                         i32.add
@@ -36537,17 +36578,17 @@
                         i64.store
                         local.get 2
                         local.get 0
-                        i64.load offset=232
+                        i64.load offset=208
                         i64.store
                         local.get 2
                         local.get 0
-                        i64.load offset=216
+                        i64.load offset=192
                         i64.store offset=20 align=4
                         local.get 2
                         i32.const 28
                         i32.add
                         local.get 0
-                        i32.const 216
+                        i32.const 192
                         i32.add
                         i32.const 8
                         i32.add
@@ -36555,13 +36596,13 @@
                         i32.store
                         local.get 2
                         local.get 0
-                        i64.load offset=184
+                        i64.load offset=160
                         i64.store offset=40
                         local.get 2
                         i32.const 48
                         i32.add
                         local.get 0
-                        i32.const 184
+                        i32.const 160
                         i32.add
                         i32.const 8
                         i32.add
@@ -36571,7 +36612,7 @@
                         i32.const 56
                         i32.add
                         local.get 0
-                        i32.const 184
+                        i32.const 160
                         i32.add
                         i32.const 16
                         i32.add
@@ -36593,7 +36634,7 @@
                         i32.const 88
                         i32.add
                         local.get 0
-                        i32.const 152
+                        i32.const 128
                         i32.add
                         i32.const 16
                         i32.add
@@ -36603,7 +36644,7 @@
                         i32.const 80
                         i32.add
                         local.get 0
-                        i32.const 152
+                        i32.const 128
                         i32.add
                         i32.const 8
                         i32.add
@@ -36611,17 +36652,17 @@
                         i64.store
                         local.get 2
                         local.get 0
-                        i64.load offset=152
+                        i64.load offset=128
                         i64.store offset=72
                         local.get 2
                         local.get 0
-                        i64.load offset=128
+                        i64.load offset=104
                         i64.store offset=104
                         local.get 2
                         i32.const 112
                         i32.add
                         local.get 0
-                        i32.const 128
+                        i32.const 104
                         i32.add
                         i32.const 8
                         i32.add
@@ -36631,7 +36672,7 @@
                         i32.const 120
                         i32.add
                         local.get 0
-                        i32.const 128
+                        i32.const 104
                         i32.add
                         i32.const 16
                         i32.add
@@ -36639,13 +36680,13 @@
                         i32.store
                         local.get 2
                         local.get 0
-                        i64.load offset=104
+                        i64.load offset=80
                         i64.store offset=124 align=4
                         local.get 2
                         i32.const 132
                         i32.add
                         local.get 0
-                        i32.const 104
+                        i32.const 80
                         i32.add
                         i32.const 8
                         i32.add
@@ -36655,28 +36696,28 @@
                         i32.const 140
                         i32.add
                         local.get 0
-                        i32.const 104
+                        i32.const 80
                         i32.add
                         i32.const 16
                         i32.add
                         i32.load
                         i32.store
                         local.get 0
-                        i32.const 672
+                        i32.const 624
                         i32.add
                         i32.const 48
                         i32.add
                         i64.const 0
                         i64.store
                         local.get 0
-                        i32.const 672
+                        i32.const 624
                         i32.add
                         i32.const 40
                         i32.add
                         i64.const 0
                         i64.store
                         local.get 0
-                        i32.const 672
+                        i32.const 624
                         i32.add
                         i32.const 32
                         i32.add
@@ -36690,208 +36731,113 @@
                         local.set 1
                         i32.const 8
                         i32.const 32768
-                        call 236
+                        call $_ZN5alloc5alloc6Global10alloc_impl17h2c7b164b60447d0fE.380
                         local.tee 3
                         i32.eqz
                         br_if 3 (;@7;)
                         local.get 0
-                        i32.const 744
+                        i32.const 696
                         i32.add
                         i64.const 1024
                         i64.store
                         local.get 0
                         local.get 1
-                        i32.store offset=728
+                        i32.store offset=680
                         local.get 0
                         local.get 2
-                        i32.store offset=752
+                        i32.store offset=704
                         local.get 0
                         i64.const -1
-                        i64.store offset=688
+                        i64.store offset=640
                         local.get 0
                         local.get 3
-                        i32.store offset=740
+                        i32.store offset=692
                         i32.const 0
                         local.set 1
                         local.get 0
                         i32.const 0
-                        i32.store16 offset=760
+                        i32.store16 offset=712
                         local.get 0
                         i64.const 0
-                        i64.store offset=732 align=4
+                        i64.store offset=684 align=4
                         local.get 0
                         i64.const 0
-                        i64.store offset=680
+                        i64.store offset=632
                         local.get 0
-                        i32.const 1054832
-                        i32.store offset=676
+                        i32.const 1054848
+                        i32.store offset=628
                         local.get 0
-                        i32.const 1054500
-                        i32.store offset=672
+                        i32.const 1054516
+                        i32.store offset=624
                         local.get 0
                         local.get 0
-                        i32.const 644
+                        i32.const 596
                         i32.add
-                        i32.store offset=756
+                        i32.store offset=708
                         local.get 0
-                        i32.const 1920
+                        i32.const 1872
                         i32.add
                         i64.const 1
                         i64.store
                         local.get 0
-                        i32.const 1928
+                        i32.const 1880
                         i32.add
                         i32.const 65282
                         i32.store16
                         local.get 0
                         i32.const 0
-                        i32.store offset=1912
+                        i32.store offset=1864
                         local.get 0
-                        i32.const 1376
+                        i32.const 1328
                         i32.add
-                        call 265
+                        call $_ZN73_$LT$revm_primitives..env..BlockEnv$u20$as$u20$core..default..Default$GT$7default17hb78c1de200d00755E
                         local.get 0
-                        i32.const 1376
+                        i32.const 1328
                         i32.add
                         i32.const 528
                         i32.add
                         i32.const 0
                         i32.store
                         local.get 0
-                        i32.const 1376
+                        i32.const 1328
                         i32.add
                         i32.const 520
                         i32.add
                         i64.const 0
                         i64.store
                         local.get 0
-                        i32.const 1888
+                        i32.const 1840
                         i32.add
                         i64.const 0
                         i64.store
                         local.get 0
-                        i32.const 1800
-                        i32.add
-                        i64.const 0
-                        i64.store
-                        local.get 0
-                        i32.const 1792
-                        i32.add
-                        i64.const -1
-                        i64.store
-                        local.get 0
-                        i32.const 1376
-                        i32.add
-                        i32.const 432
-                        i32.add
-                        i64.const 0
-                        i64.store
-                        local.get 0
-                        i32.const 1376
-                        i32.add
-                        i32.const 440
-                        i32.add
-                        i64.const 0
-                        i64.store
-                        local.get 0
-                        i32.const 1376
-                        i32.add
-                        i32.const 448
+                        i32.const 1752
                         i32.add
                         i64.const 0
                         i64.store
                         local.get 0
                         i32.const 1744
                         i32.add
-                        i64.const 0
+                        i64.const -1
                         i64.store
                         local.get 0
-                        i32.const 1736
+                        i32.const 1328
                         i32.add
-                        i64.const 2
-                        i64.store
-                        local.get 0
-                        i32.const 1376
-                        i32.add
-                        i32.const 376
+                        i32.const 432
                         i32.add
                         i64.const 0
                         i64.store
                         local.get 0
-                        i32.const 1376
+                        i32.const 1328
                         i32.add
-                        i32.const 384
-                        i32.add
-                        i32.const 0
-                        i32.store
-                        local.get 0
-                        i32.const 1832
+                        i32.const 440
                         i32.add
                         i64.const 0
                         i64.store
                         local.get 0
-                        i32.const 1376
+                        i32.const 1328
                         i32.add
-                        i32.const 464
-                        i32.add
-                        i64.const 0
-                        i64.store
-                        local.get 0
-                        i32.const 1376
-                        i32.add
-                        i32.const 472
-                        i32.add
-                        i64.const 0
-                        i64.store
-                        local.get 0
-                        i32.const 1376
-                        i32.add
-                        i32.const 480
-                        i32.add
-                        i64.const 0
-                        i64.store
-                        local.get 0
-                        i32.const 1784
-                        i32.add
-                        i64.const 0
-                        i64.store
-                        local.get 0
-                        i32.const 1780
-                        i32.add
-                        i32.const 1054832
-                        i32.store
-                        local.get 0
-                        i32.const 1776
-                        i32.add
-                        i32.const 1054832
-                        i32.store
-                        local.get 0
-                        i32.const 1872
-                        i32.add
-                        i32.const 0
-                        i32.store
-                        local.get 0
-                        i32.const 1864
-                        i32.add
-                        i64.const 4
-                        i64.store
-                        local.get 0
-                        i32.const 1640
-                        i32.add
-                        i64.const 0
-                        i64.store
-                        local.get 0
-                        i32.const 1876
-                        i32.add
-                        i64.const 1
-                        i64.store align=4
-                        local.get 0
-                        i32.const 1884
-                        i32.add
-                        i32.const 0
-                        i32.store
-                        local.get 0
-                        i32.const 1656
+                        i32.const 448
                         i32.add
                         i64.const 0
                         i64.store
@@ -36901,19 +36847,113 @@
                         i64.const 0
                         i64.store
                         local.get 0
-                        i64.const 0
-                        i64.store offset=1624
+                        i32.const 1688
+                        i32.add
+                        i64.const 2
+                        i64.store
                         local.get 0
-                        i32.const 2400
+                        i32.const 1328
+                        i32.add
+                        i32.const 376
+                        i32.add
+                        i64.const 0
+                        i64.store
+                        local.get 0
+                        i32.const 1328
+                        i32.add
+                        i32.const 384
+                        i32.add
+                        i32.const 0
+                        i32.store
+                        local.get 0
+                        i32.const 1784
+                        i32.add
+                        i64.const 0
+                        i64.store
+                        local.get 0
+                        i32.const 1328
+                        i32.add
+                        i32.const 464
+                        i32.add
+                        i64.const 0
+                        i64.store
+                        local.get 0
+                        i32.const 1328
+                        i32.add
+                        i32.const 472
+                        i32.add
+                        i64.const 0
+                        i64.store
+                        local.get 0
+                        i32.const 1328
+                        i32.add
+                        i32.const 480
+                        i32.add
+                        i64.const 0
+                        i64.store
+                        local.get 0
+                        i32.const 1736
+                        i32.add
+                        i64.const 0
+                        i64.store
+                        local.get 0
+                        i32.const 1732
+                        i32.add
+                        i32.const 1054848
+                        i32.store
+                        local.get 0
+                        i32.const 1728
+                        i32.add
+                        i32.const 1054848
+                        i32.store
+                        local.get 0
+                        i32.const 1824
+                        i32.add
+                        i32.const 0
+                        i32.store
+                        local.get 0
+                        i32.const 1816
+                        i32.add
+                        i64.const 4
+                        i64.store
+                        local.get 0
+                        i32.const 1592
+                        i32.add
+                        i64.const 0
+                        i64.store
+                        local.get 0
+                        i32.const 1828
+                        i32.add
+                        i64.const 1
+                        i64.store align=4
+                        local.get 0
+                        i32.const 1836
+                        i32.add
+                        i32.const 0
+                        i32.store
+                        local.get 0
+                        i32.const 1608
+                        i32.add
+                        i64.const 0
+                        i64.store
+                        local.get 0
+                        i32.const 1648
+                        i32.add
+                        i64.const 0
+                        i64.store
+                        local.get 0
+                        i64.const 0
+                        i64.store offset=1576
+                        local.get 0
+                        i32.const 2352
                         i32.add
                         local.get 0
-                        i32.const 1376
+                        i32.const 1328
                         i32.add
                         i32.const 560
-                        call 323
-                        drop
+                        memory.copy
                         local.get 0
-                        i32.const 2400
+                        i32.const 2352
                         i32.add
                         i32.const 600
                         i32.add
@@ -36921,52 +36961,52 @@
                         i32.const 0
                         i32.store
                         local.get 0
-                        i32.const 2400
+                        i32.const 2352
                         i32.add
                         i32.const 568
                         i32.add
                         i32.const 0
-                        i64.load offset=1051800
+                        i64.load offset=1051832
                         local.tee 19
                         i64.store
                         local.get 0
-                        i32.const 2400
+                        i32.const 2352
                         i32.add
                         i32.const 584
                         i32.add
                         local.get 19
                         i64.store
                         local.get 0
-                        i32.const 768
+                        i32.const 720
                         i32.add
                         i32.const 8
                         i32.add
                         local.get 0
-                        i32.const 608
+                        i32.const 560
                         i32.add
                         i32.const 8
                         i32.add
                         i64.load
                         i64.store
                         local.get 0
-                        i32.const 768
+                        i32.const 720
                         i32.add
                         i32.const 16
                         i32.add
                         local.get 0
-                        i32.const 608
+                        i32.const 560
                         i32.add
                         i32.const 16
                         i32.add
                         i64.load
                         i64.store
                         local.get 0
-                        i32.const 768
+                        i32.const 720
                         i32.add
                         i32.const 24
                         i32.add
                         local.get 0
-                        i32.const 608
+                        i32.const 560
                         i32.add
                         i32.const 24
                         i32.add
@@ -36974,88 +37014,26 @@
                         i64.store
                         local.get 0
                         i64.const 4
-                        i64.store offset=2992
+                        i64.store offset=2944
                         local.get 0
                         i32.const 0
-                        i64.load offset=1051792
+                        i64.load offset=1051824
                         local.tee 20
-                        i64.store offset=2960
+                        i64.store offset=2912
                         local.get 0
                         local.get 20
-                        i64.store offset=2976
+                        i64.store offset=2928
                         local.get 0
                         local.get 16
-                        i64.store offset=800
-                        local.get 0
-                        local.get 0
-                        i64.load offset=608
-                        i64.store offset=768
-                        local.get 0
-                        i32.const 768
-                        i32.add
-                        i32.const 56
-                        i32.add
-                        local.get 0
-                        i32.const 584
-                        i32.add
-                        i32.const 16
-                        i32.add
-                        i64.load
-                        i64.store
-                        local.get 0
-                        i32.const 768
-                        i32.add
-                        i32.const 48
-                        i32.add
-                        local.get 0
-                        i32.const 584
-                        i32.add
-                        i32.const 8
-                        i32.add
-                        i64.load
-                        i64.store
-                        local.get 0
-                        local.get 0
-                        i64.load offset=584
-                        i64.store offset=808
-                        local.get 0
-                        local.get 17
-                        i64.store offset=832
-                        local.get 0
-                        i32.const 768
-                        i32.add
-                        i32.const 88
-                        i32.add
-                        local.get 0
-                        i32.const 560
-                        i32.add
-                        i32.const 16
-                        i32.add
-                        i64.load
-                        i64.store
-                        local.get 0
-                        i32.const 768
-                        i32.add
-                        i32.const 80
-                        i32.add
-                        local.get 0
-                        i32.const 560
-                        i32.add
-                        i32.const 8
-                        i32.add
-                        i64.load
-                        i64.store
+                        i64.store offset=752
                         local.get 0
                         local.get 0
                         i64.load offset=560
-                        i64.store offset=840
+                        i64.store offset=720
                         local.get 0
-                        local.get 18
-                        i64.store offset=864
-                        local.get 0
-                        i32.const 768
+                        i32.const 720
                         i32.add
-                        i32.const 120
+                        i32.const 56
                         i32.add
                         local.get 0
                         i32.const 536
@@ -37065,9 +37043,9 @@
                         i64.load
                         i64.store
                         local.get 0
-                        i32.const 768
+                        i32.const 720
                         i32.add
-                        i32.const 112
+                        i32.const 48
                         i32.add
                         local.get 0
                         i32.const 536
@@ -37079,82 +37057,93 @@
                         local.get 0
                         local.get 0
                         i64.load offset=536
-                        i64.store offset=872
+                        i64.store offset=760
                         local.get 0
-                        i32.const 920
+                        local.get 17
+                        i64.store offset=784
+                        local.get 0
+                        i32.const 720
+                        i32.add
+                        i32.const 88
                         i32.add
                         local.get 0
-                        i32.const 504
+                        i32.const 512
+                        i32.add
+                        i32.const 16
+                        i32.add
+                        i64.load
+                        i64.store
+                        local.get 0
+                        i32.const 720
+                        i32.add
+                        i32.const 80
+                        i32.add
+                        local.get 0
+                        i32.const 512
+                        i32.add
+                        i32.const 8
+                        i32.add
+                        i64.load
+                        i64.store
+                        local.get 0
+                        local.get 0
+                        i64.load offset=512
+                        i64.store offset=792
+                        local.get 0
+                        local.get 18
+                        i64.store offset=816
+                        local.get 0
+                        i32.const 720
+                        i32.add
+                        i32.const 120
+                        i32.add
+                        local.get 0
+                        i32.const 488
+                        i32.add
+                        i32.const 16
+                        i32.add
+                        i64.load
+                        i64.store
+                        local.get 0
+                        i32.const 720
+                        i32.add
+                        i32.const 112
+                        i32.add
+                        local.get 0
+                        i32.const 488
+                        i32.add
+                        i32.const 8
+                        i32.add
+                        i64.load
+                        i64.store
+                        local.get 0
+                        local.get 0
+                        i64.load offset=488
+                        i64.store offset=824
+                        local.get 0
+                        i32.const 872
+                        i32.add
+                        local.get 0
+                        i32.const 456
                         i32.add
                         i32.const 24
                         i32.add
                         i64.load
                         i64.store
                         local.get 0
-                        i32.const 768
+                        i32.const 720
                         i32.add
                         i32.const 144
-                        i32.add
-                        local.get 0
-                        i32.const 504
-                        i32.add
-                        i32.const 16
-                        i32.add
-                        i64.load
-                        i64.store
-                        local.get 0
-                        i32.const 904
-                        i32.add
-                        local.get 0
-                        i32.const 504
-                        i32.add
-                        i32.const 8
-                        i32.add
-                        i64.load
-                        i64.store
-                        local.get 0
-                        local.get 0
-                        i64.load offset=504
-                        i64.store offset=896
-                        local.get 0
-                        local.get 10
-                        i64.store offset=928
-                        local.get 0
-                        i32.const 952
-                        i32.add
-                        local.get 0
-                        i32.const 480
-                        i32.add
-                        i32.const 16
-                        i32.add
-                        i64.load
-                        i64.store
-                        local.get 0
-                        i32.const 944
-                        i32.add
-                        local.get 0
-                        i32.const 480
-                        i32.add
-                        i32.const 8
-                        i32.add
-                        i64.load
-                        i64.store
-                        local.get 0
-                        local.get 0
-                        i64.load offset=480
-                        i64.store offset=936
-                        local.get 0
-                        i32.const 976
                         i32.add
                         local.get 0
                         i32.const 456
                         i32.add
                         i32.const 16
                         i32.add
-                        i32.load
-                        i32.store
+                        i64.load
+                        i64.store
                         local.get 0
-                        i32.const 968
+                        i32.const 856
                         i32.add
                         local.get 0
                         i32.const 456
@@ -37166,78 +37155,116 @@
                         local.get 0
                         local.get 0
                         i64.load offset=456
-                        i64.store offset=960
+                        i64.store offset=848
                         local.get 0
-                        i32.const 980
-                        i32.add
+                        local.get 10
+                        i64.store offset=880
                         local.get 0
-                        i32.const 420
+                        i32.const 904
                         i32.add
-                        i32.const 33
-                        call 323
-                        drop
-                        local.get 0
-                        i32.const 1016
-                        i32.add
-                        i32.const 0
-                        i32.const 40
-                        call 324
-                        drop
-                        local.get 0
-                        i32.const 768
-                        i32.add
-                        i32.const 376
-                        i32.add
-                        local.get 0
-                        i32.const 400
-                        i32.add
-                        i32.const 8
-                        i32.add
-                        i64.load
+                        i64.const 0
                         i64.store
                         local.get 0
-                        i32.const 768
+                        i32.const 896
                         i32.add
-                        i32.const 384
+                        i64.const 0
+                        i64.store
+                        local.get 0
+                        i64.const 0
+                        i64.store offset=888
+                        local.get 0
+                        i32.const 928
                         i32.add
                         local.get 0
-                        i32.const 400
+                        i32.const 432
                         i32.add
                         i32.const 16
                         i32.add
                         i32.load
                         i32.store
                         local.get 0
-                        i32.const 768
-                        i32.add
-                        i32.const 432
+                        i32.const 920
                         i32.add
                         local.get 0
-                        i32.const 368
+                        i32.const 432
                         i32.add
                         i32.const 8
                         i32.add
                         i64.load
                         i64.store
                         local.get 0
-                        i32.const 768
+                        local.get 0
+                        i64.load offset=432
+                        i64.store offset=912
+                        local.get 0
+                        i32.const 932
+                        i32.add
+                        local.get 0
+                        i32.const 396
+                        i32.add
+                        i32.const 33
+                        memory.copy
+                        local.get 0
+                        i32.const 968
+                        i32.add
+                        i32.const 0
+                        i32.const 40
+                        memory.fill
+                        local.get 0
+                        i32.const 720
+                        i32.add
+                        i32.const 376
+                        i32.add
+                        local.get 0
+                        i32.const 376
+                        i32.add
+                        i32.const 8
+                        i32.add
+                        i64.load
+                        i64.store
+                        local.get 0
+                        i32.const 720
+                        i32.add
+                        i32.const 384
+                        i32.add
+                        local.get 0
+                        i32.const 376
+                        i32.add
+                        i32.const 16
+                        i32.add
+                        i32.load
+                        i32.store
+                        local.get 0
+                        i32.const 720
+                        i32.add
+                        i32.const 432
+                        i32.add
+                        local.get 0
+                        i32.const 344
+                        i32.add
+                        i32.const 8
+                        i32.add
+                        i64.load
+                        i64.store
+                        local.get 0
+                        i32.const 720
                         i32.add
                         i32.const 440
                         i32.add
                         local.get 0
-                        i32.const 368
+                        i32.const 344
                         i32.add
                         i32.const 16
                         i32.add
                         i64.load
                         i64.store
                         local.get 0
-                        i32.const 768
+                        i32.const 720
                         i32.add
                         i32.const 448
                         i32.add
                         local.get 0
-                        i32.const 368
+                        i32.const 344
                         i32.add
                         i32.const 24
                         i32.add
@@ -37245,85 +37272,85 @@
                         i64.store
                         local.get 0
                         i64.const 2
-                        i64.store offset=1128
+                        i64.store offset=1080
                         local.get 0
                         i64.const 0
-                        i64.store offset=1088
+                        i64.store offset=1040
                         local.get 0
                         i64.const -1
-                        i64.store offset=1184
-                        local.get 0
-                        i64.const 0
-                        i64.store offset=1176
-                        local.get 0
-                        i32.const 1054832
-                        i32.store offset=1172
-                        local.get 0
-                        i32.const 1054832
-                        i32.store offset=1168
-                        local.get 0
-                        local.get 0
-                        i64.load offset=400
                         i64.store offset=1136
                         local.get 0
+                        i64.const 0
+                        i64.store offset=1128
                         local.get 0
-                        i64.load offset=368
-                        i64.store offset=1192
+                        i32.const 1054848
+                        i32.store offset=1124
                         local.get 0
-                        i32.const 768
+                        i32.const 1054848
+                        i32.store offset=1120
+                        local.get 0
+                        local.get 0
+                        i64.load offset=376
+                        i64.store offset=1088
+                        local.get 0
+                        local.get 0
+                        i64.load offset=344
+                        i64.store offset=1144
+                        local.get 0
+                        i32.const 720
                         i32.add
                         i32.const 480
                         i32.add
                         local.get 0
-                        i32.const 336
+                        i32.const 312
                         i32.add
                         i32.const 24
                         i32.add
                         i64.load
                         i64.store
                         local.get 0
-                        i32.const 768
+                        i32.const 720
                         i32.add
                         i32.const 472
                         i32.add
                         local.get 0
-                        i32.const 336
+                        i32.const 312
                         i32.add
                         i32.const 16
                         i32.add
                         i64.load
                         i64.store
                         local.get 0
-                        i32.const 768
+                        i32.const 720
                         i32.add
                         i32.const 464
                         i32.add
                         local.get 0
-                        i32.const 336
+                        i32.const 312
                         i32.add
                         i32.const 8
                         i32.add
                         i64.load
                         i64.store
                         local.get 0
-                        i32.const 768
+                        i32.const 720
                         i32.add
                         i32.const 528
                         i32.add
                         local.get 0
-                        i32.const 312
+                        i32.const 288
                         i32.add
                         i32.const 16
                         i32.add
                         i32.load
                         i32.store
                         local.get 0
-                        i32.const 768
+                        i32.const 720
                         i32.add
                         i32.const 520
                         i32.add
                         local.get 0
-                        i32.const 312
+                        i32.const 288
                         i32.add
                         i32.const 8
                         i32.add
@@ -37331,32 +37358,32 @@
                         i64.store
                         local.get 0
                         i64.const 0
-                        i64.store offset=1272
+                        i64.store offset=1224
                         local.get 0
                         i64.const 4294967296
-                        i64.store offset=1264
+                        i64.store offset=1216
                         local.get 0
                         i64.const 4
-                        i64.store offset=1256
+                        i64.store offset=1208
                         local.get 0
                         i32.const 3074
-                        i32.store16 offset=1320
+                        i32.store16 offset=1272
                         local.get 0
                         local.get 15
-                        i64.store offset=1312
+                        i64.store offset=1264
                         local.get 0
                         i32.const 0
-                        i32.store offset=1304
-                        local.get 0
-                        local.get 0
-                        i64.load offset=336
-                        i64.store offset=1224
+                        i32.store offset=1256
                         local.get 0
                         local.get 0
                         i64.load offset=312
-                        i64.store offset=1280
+                        i64.store offset=1176
                         local.get 0
-                        i32.const 768
+                        local.get 0
+                        i64.load offset=288
+                        i64.store offset=1232
+                        local.get 0
+                        i32.const 720
                         i32.add
                         i32.const 568
                         i32.add
@@ -37364,9 +37391,9 @@
                         i64.store
                         local.get 0
                         local.get 20
-                        i64.store offset=1328
+                        i64.store offset=1280
                         local.get 0
-                        i32.const 768
+                        i32.const 720
                         i32.add
                         i32.const 584
                         i32.add
@@ -37374,9 +37401,9 @@
                         i64.store
                         local.get 0
                         local.get 20
-                        i64.store offset=1344
+                        i64.store offset=1296
                         local.get 0
-                        i32.const 768
+                        i32.const 720
                         i32.add
                         i32.const 600
                         i32.add
@@ -37385,14 +37412,14 @@
                         i32.store
                         local.get 0
                         local.get 0
-                        i64.load offset=2992
-                        i64.store offset=1360
+                        i64.load offset=2944
+                        i64.store offset=1312
                         local.get 0
-                        i32.const 2400
+                        i32.const 2352
                         i32.add
-                        call 230
+                        call $_ZN4core3ptr46drop_in_place$LT$revm_primitives..env..Env$GT$17hf045bab379302350E
                         local.get 0
-                        i32.const 2400
+                        i32.const 2352
                         i32.add
                         local.set 2
                         block  ;; label = @11
@@ -37409,7 +37436,7 @@
                             i32.xor
                             i32.const 2
                             i32.shl
-                            i32.const 1051808
+                            i32.const 1051840
                             i32.add
                             i32.load
                             i32.store
@@ -37425,35 +37452,34 @@
                           end
                         end
                         local.get 0
-                        i32.const 1376
+                        i32.const 1328
                         i32.add
                         local.get 0
-                        i32.const 2400
+                        i32.const 2352
                         i32.add
                         i32.const 1024
-                        call 323
-                        drop
+                        memory.copy
                         block  ;; label = @11
                           loop  ;; label = @12
                             local.get 0
-                            i32.load8_u offset=760
+                            i32.load8_u offset=712
                             local.tee 3
                             br_if 1 (;@11;)
                             local.get 0
                             local.get 0
-                            i32.load offset=728
+                            i32.load offset=680
                             local.tee 1
                             i32.const 1
                             i32.add
-                            i32.store offset=728
+                            i32.store offset=680
                             local.get 0
-                            i32.const 672
+                            i32.const 624
                             i32.add
                             local.get 0
-                            i32.const 768
+                            i32.const 720
                             i32.add
                             local.get 0
-                            i32.const 1376
+                            i32.const 1328
                             i32.add
                             local.get 1
                             i32.load8_u
@@ -37466,32 +37492,26 @@
                           end
                         end
                         local.get 0
-                        i32.load offset=732
-                        local.set 5
-                        local.get 0
-                        i32.load offset=736
-                        local.set 4
-                        local.get 0
-                        i32.const 768
+                        i32.const 720
                         i32.add
-                        call 230
+                        call $_ZN4core3ptr46drop_in_place$LT$revm_primitives..env..Env$GT$17hf045bab379302350E
                         local.get 0
-                        i32.const 1332
+                        i32.const 1284
                         i32.add
                         i32.load
-                        call 227
+                        call $_ZN4core3ptr131drop_in_place$LT$hashbrown..map..HashMap$LT$ruint..Uint$LT$256_usize$C$4_usize$GT$$C$ruint..Uint$LT$256_usize$C$4_usize$GT$$GT$$GT$17h25e1b927072d6484E
                         local.get 0
-                        i32.const 1348
+                        i32.const 1300
                         i32.add
                         i32.load
-                        call 227
+                        call $_ZN4core3ptr131drop_in_place$LT$hashbrown..map..HashMap$LT$ruint..Uint$LT$256_usize$C$4_usize$GT$$C$ruint..Uint$LT$256_usize$C$4_usize$GT$$GT$$GT$17h25e1b927072d6484E
                         local.get 0
-                        i32.load offset=1360
+                        i32.load offset=1312
                         i32.const 12
                         i32.add
                         local.set 2
                         local.get 0
-                        i32.const 1368
+                        i32.const 1320
                         i32.add
                         i32.load
                         local.set 1
@@ -37505,7 +37525,7 @@
                             i32.add
                             local.set 1
                             local.get 2
-                            call 63
+                            call $_ZN4core3ptr52drop_in_place$LT$alloy_primitives..bytes_..Bytes$GT$17h6dfb868a0b1f26d6E
                             local.get 2
                             i32.const 48
                             i32.add
@@ -37514,104 +37534,27 @@
                           end
                         end
                         local.get 0
-                        i32.load offset=752
+                        i32.load offset=704
                         local.tee 1
-                        call 63
+                        call $_ZN4core3ptr52drop_in_place$LT$alloy_primitives..bytes_..Bytes$GT$17h6dfb868a0b1f26d6E
                         local.get 1
                         i32.const 16
                         i32.add
-                        call 63
+                        call $_ZN4core3ptr52drop_in_place$LT$alloy_primitives..bytes_..Bytes$GT$17h6dfb868a0b1f26d6E
                         local.get 1
                         i32.const 32
                         i32.add
-                        call 231
+                        call $_ZN4core3ptr55drop_in_place$LT$revm_primitives..bytecode..JumpMap$GT$17he22e81048f0419fcE
                         local.get 0
-                        i32.const 672
+                        i32.const 624
                         i32.add
-                        call 63
-                        block  ;; label = @11
-                          local.get 4
-                          i32.eqz
-                          br_if 0 (;@11;)
-                          local.get 0
-                          i32.load offset=644
-                          local.get 0
-                          i32.load offset=668
-                          local.get 5
-                          i32.add
-                          i32.add
-                          local.set 6
-                          block  ;; label = @12
-                            block  ;; label = @13
-                              local.get 0
-                              i32.load offset=88
-                              local.tee 1
-                              i32.eqz
-                              br_if 0 (;@13;)
-                              local.get 0
-                              i32.load offset=96
-                              local.set 2
-                              local.get 0
-                              i32.load offset=92
-                              local.set 5
-                              br 1 (;@12;)
-                            end
-                            local.get 0
-                            i64.const 0
-                            i64.store offset=96 align=4
-                            i32.const 1054832
-                            local.set 5
-                            local.get 0
-                            i32.const 1054832
-                            i32.store offset=92
-                            i32.const 1054368
-                            local.set 1
-                            local.get 0
-                            i32.const 1054368
-                            i32.store offset=88
-                            i32.const 0
-                            local.set 2
-                          end
-                          local.get 0
-                          i32.const 2400
-                          i32.add
-                          local.get 6
-                          local.get 4
-                          call 78
-                          local.get 0
-                          i32.const 100
-                          i32.add
-                          local.get 5
-                          local.get 2
-                          local.get 1
-                          i32.load offset=8
-                          call_indirect (type 0)
-                          local.get 0
-                          i32.const 88
-                          i32.add
-                          i32.const 8
-                          i32.add
-                          local.get 0
-                          i32.const 2400
-                          i32.add
-                          i32.const 8
-                          i32.add
-                          i64.load align=4
-                          i64.store
-                          local.get 0
-                          local.get 0
-                          i64.load offset=2400 align=4
-                          i64.store offset=88
-                        end
+                        call $_ZN4core3ptr52drop_in_place$LT$alloy_primitives..bytes_..Bytes$GT$17h6dfb868a0b1f26d6E
                         local.get 3
                         i32.const 4
                         i32.ge_u
                         br_if 4 (;@6;)
-                        local.get 0
-                        i32.const 88
-                        i32.add
                         i32.const 0
-                        call 266
+                        call $_ZN14fluentbase_sdk3evm16ExecutionContext4exit17h06236b21fbb30e49E
                         unreachable
                       end
                       i32.const 1
@@ -37639,26 +37582,23 @@
                     i32.const 1048824
                     i32.const 14
                     local.get 0
-                    i32.const 2400
+                    i32.const 2352
                     i32.add
                     i32.const 1049772
                     i32.const 1048928
-                    call 193
+                    call $_ZN4core6result13unwrap_failed17h38a5f72e87633eadE
                     unreachable
                   end
                   i32.const 128
-                  call 56
+                  call $__rust_alloc_error_handler
                   unreachable
                 end
                 i32.const 32768
-                call 56
+                call $__rust_alloc_error_handler
                 unreachable
               end
-              local.get 0
-              i32.const 88
-              i32.add
               i32.const -1
-              call 266
+              call $_ZN14fluentbase_sdk3evm16ExecutionContext4exit17h06236b21fbb30e49E
               unreachable
             end
             local.get 1
@@ -37669,14 +37609,14 @@
           end
         end
         local.get 0
-        i32.const 1376
+        i32.const 1328
         i32.add
         i32.const 12
         i32.add
         i32.const 1
         i32.store
         local.get 0
-        i32.const 2400
+        i32.const 2352
         i32.add
         i32.const 12
         i32.add
@@ -37684,50 +37624,50 @@
         i64.store align=4
         local.get 0
         i32.const 2
-        i32.store offset=2404
+        i32.store offset=2356
         local.get 0
-        i32.const 1054548
-        i32.store offset=2400
+        i32.const 1054564
+        i32.store offset=2352
         local.get 0
         i32.const 1
-        i32.store offset=1380
+        i32.store offset=1332
         local.get 0
         local.get 0
-        i32.const 1376
+        i32.const 1328
         i32.add
-        i32.store offset=2408
+        i32.store offset=2360
         local.get 0
         local.get 0
-        i32.const 3428
+        i32.const 3380
         i32.add
-        i32.store offset=1384
+        i32.store offset=1336
         local.get 0
         local.get 0
-        i32.const 3424
+        i32.const 3376
         i32.add
-        i32.store offset=1376
+        i32.store offset=1328
         local.get 0
-        i32.const 2400
+        i32.const 2352
         i32.add
-        i32.const 1054772
-        call 65
+        i32.const 1054788
+        call $_ZN4core9panicking9panic_fmt17h78607b33a29a727dE
         unreachable
       end
-      i32.const 1054788
+      i32.const 1054804
       i32.const 28
-      i32.const 1054816
-      call 60
+      i32.const 1054832
+      call $_ZN4core6option13expect_failed17he404d1d7baeabd29E
       unreachable
     end
     local.get 0
-    i32.const 1376
+    i32.const 1328
     i32.add
     i32.const 12
     i32.add
     i32.const 1
     i32.store
     local.get 0
-    i32.const 2400
+    i32.const 2352
     i32.add
     i32.const 12
     i32.add
@@ -37735,45 +37675,45 @@
     i64.store align=4
     local.get 0
     i32.const 2
-    i32.store offset=2404
-    local.get 0
-    i32.const 1054548
-    i32.store offset=2400
+    i32.store offset=2356
     local.get 0
     i32.const 1054564
-    i32.store offset=1384
+    i32.store offset=2352
+    local.get 0
+    i32.const 1054580
+    i32.store offset=1336
     local.get 0
     i32.const 1
-    i32.store offset=1380
+    i32.store offset=1332
     local.get 0
     local.get 0
-    i32.const 1376
+    i32.const 1328
     i32.add
-    i32.store offset=2408
+    i32.store offset=2360
     local.get 0
     local.get 0
-    i32.const 3428
+    i32.const 3380
     i32.add
-    i32.store offset=1376
+    i32.store offset=1328
     local.get 0
-    i32.const 2400
+    i32.const 2352
     i32.add
-    i32.const 1054660
-    call 65
+    i32.const 1054676
+    call $_ZN4core9panicking9panic_fmt17h78607b33a29a727dE
     unreachable)
-  (func (;253;) (type 4) (param i32 i32)
+  (func $_ZN16fluentbase_codec7encoder25FieldEncoder$LT$T$C$_$GT$22decode_field_header_at17hca838d3404a64889E (type 4) (param i32 i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 16
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     local.get 2
     i32.const 8
     i32.add
     local.get 1
     i32.const 8
-    call 311
+    call $_ZN16fluentbase_codec6buffer13BufferDecoder17read_bytes_header17hbdefa648257c8988E
     local.get 2
     i32.load offset=12
     local.set 1
@@ -37787,14 +37727,14 @@
     local.get 2
     i32.const 16
     i32.add
-    global.set 0)
-  (func (;254;) (type 0) (param i32 i32 i32)
-    (local i32)
-    global.get 0
+    global.set $__stack_pointer)
+  (func $_ZN5alloc3vec9from_elem17h65df4acde1849288E (type 4) (param i32 i32)
+    (local i32 i32)
+    global.get $__stack_pointer
     i32.const 16
     i32.sub
-    local.tee 3
-    global.set 0
+    local.tee 2
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         block  ;; label = @3
@@ -37802,65 +37742,53 @@
             local.get 1
             br_if 0 (;@4;)
             i32.const 1
-            local.set 2
+            local.set 3
             br 1 (;@3;)
           end
           local.get 1
           i32.const -1
           i32.le_s
           br_if 1 (;@2;)
-          block  ;; label = @4
-            block  ;; label = @5
-              local.get 2
-              br_if 0 (;@5;)
-              local.get 3
-              i32.const 8
-              i32.add
-              local.get 1
-              call 283
-              local.get 3
-              i32.load offset=8
-              local.set 2
-              br 1 (;@4;)
-            end
-            local.get 3
-            i32.const 1
-            local.get 1
-            i32.const 1
-            call 55
-            local.get 3
-            i32.load
-            local.set 2
-          end
           local.get 2
+          i32.const 8
+          i32.add
+          local.get 1
+          i32.const 1
+          call $_ZN5alloc5alloc6Global10alloc_impl17h2c7b164b60447d0fE.639
+          local.get 2
+          i32.load offset=8
+          local.tee 3
           i32.eqz
           br_if 2 (;@1;)
         end
         local.get 0
         local.get 1
+        i32.store offset=8
+        local.get 0
+        local.get 1
         i32.store offset=4
         local.get 0
-        local.get 2
-        i32.store
         local.get 3
+        i32.store
+        local.get 2
         i32.const 16
         i32.add
-        global.set 0
+        global.set $__stack_pointer
         return
       end
-      call 239
+      call $_ZN5alloc7raw_vec17capacity_overflow17h26cdf55d7b744af0E
       unreachable
     end
     local.get 1
-    call 56
+    call $__rust_alloc_error_handler
     unreachable)
-  (func (;255;) (type 8) (param i32 i32 i32 i32)
+  (func $_ZN84_$LT$alloc..vec..Vec$LT$T$C$A$GT$$u20$as$u20$core..ops..index..IndexMut$LT$I$GT$$GT$9index_mut17h1d9e0f2e1e313b6bE (type 8) (param i32 i32 i32 i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 16
     i32.sub
     local.tee 4
-    global.set 0
+    global.set $__stack_pointer
     local.get 4
     i32.const 8
     i32.add
@@ -37869,7 +37797,7 @@
     local.get 1
     local.get 2
     local.get 3
-    call 256
+    call $_ZN106_$LT$core..ops..range..Range$LT$usize$GT$$u20$as$u20$core..slice..index..SliceIndex$LT$$u5b$T$u5d$$GT$$GT$9index_mut17h9004c64f6e681a9fE
     local.get 4
     i32.load offset=12
     local.set 3
@@ -37883,8 +37811,24 @@
     local.get 4
     i32.const 16
     i32.add
-    global.set 0)
-  (func (;256;) (type 7) (param i32 i32 i32 i32 i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$15copy_from_slice17heddfaa84447a2290E (type 11) (param i32 i32 i64 i32)
+    block  ;; label = @1
+      local.get 1
+      i32.const 8
+      i32.ne
+      br_if 0 (;@1;)
+      local.get 0
+      local.get 2
+      i64.store align=1
+      return
+    end
+    local.get 1
+    i32.const 8
+    local.get 3
+    call $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$15copy_from_slice17len_mismatch_fail17h93d5590d3e243978E
+    unreachable)
+  (func $_ZN106_$LT$core..ops..range..Range$LT$usize$GT$$u20$as$u20$core..slice..index..SliceIndex$LT$$u5b$T$u5d$$GT$$GT$9index_mut17h9004c64f6e681a9fE (type 7) (param i32 i32 i32 i32 i32 i32)
     block  ;; label = @1
       block  ;; label = @2
         local.get 2
@@ -37898,13 +37842,13 @@
         local.get 2
         local.get 4
         local.get 5
-        call 8
+        call $_ZN4core5slice5index24slice_end_index_len_fail17h6372e465cf26b33aE
         unreachable
       end
       local.get 1
       local.get 2
       local.get 5
-      call 9
+      call $_ZN4core5slice5index22slice_index_order_fail17h5c05174755728e22E
       unreachable
     end
     local.get 0
@@ -37917,19 +37861,19 @@
     local.get 1
     i32.add
     i32.store)
-  (func (;257;) (type 0) (param i32 i32 i32)
+  (func $_ZN16fluentbase_codec7encoder25FieldEncoder$LT$T$C$_$GT$20decode_field_body_at17hbb4c75929c0363dfE (type 0) (param i32 i32 i32)
     (local i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 32
     i32.sub
     local.tee 3
-    global.set 0
+    global.set $__stack_pointer
     local.get 3
     i32.const 8
     i32.add
     local.get 0
     local.get 1
-    call 311
+    call $_ZN16fluentbase_codec6buffer13BufferDecoder17read_bytes_header17hbdefa648257c8988E
     local.get 3
     local.get 3
     i32.load offset=8
@@ -37940,8 +37884,8 @@
     i32.add
     local.get 0
     local.get 1
-    i32.const 1054304
-    call 176
+    i32.const 1054336
+    call $_ZN106_$LT$core..ops..range..Range$LT$usize$GT$$u20$as$u20$core..slice..index..SliceIndex$LT$$u5b$T$u5d$$GT$$GT$5index17h9a9f7e26ff193f9cE
     local.get 3
     i32.const 16
     i32.add
@@ -37949,7 +37893,7 @@
     i32.load
     local.get 3
     i32.load offset=4
-    call 78
+    call $_ZN5bytes5bytes5Bytes15copy_from_slice17h5525fc47c66dd636E
     local.get 2
     i32.const 12
     i32.add
@@ -37979,8 +37923,8 @@
     local.get 3
     i32.const 32
     i32.add
-    global.set 0)
-  (func (;258;) (type 2) (param i32 i32 i32) (result i32)
+    global.set $__stack_pointer)
+  (func $_ZN16fluentbase_codec6buffer13BufferDecoder7read_u817hd656c346132b91d6E (type 2) (param i32 i32 i32) (result i32)
     block  ;; label = @1
       local.get 1
       local.get 2
@@ -37994,10 +37938,10 @@
     end
     local.get 2
     local.get 1
-    i32.const 1054288
-    call 30
+    i32.const 1054320
+    call $_ZN4core9panicking18panic_bounds_check17hcafbc5434e2cd720E
     unreachable)
-  (func (;259;) (type 4) (param i32 i32)
+  (func $_ZN16fluentbase_codec7encoder25FieldEncoder$LT$T$C$_$GT$22decode_field_header_at17h3a5b912a80ec5ed1E (type 4) (param i32 i32)
     (local i32)
     i32.const 0
     local.set 2
@@ -38013,7 +37957,7 @@
         local.get 0
         i32.const 20
         local.get 2
-        call 258
+        call $_ZN16fluentbase_codec6buffer13BufferDecoder7read_u817hd656c346132b91d6E
         i32.store8
         local.get 2
         i32.const 1
@@ -38022,7 +37966,7 @@
         br 0 (;@2;)
       end
     end)
-  (func (;260;) (type 4) (param i32 i32)
+  (func $_ZN16fluentbase_codec7encoder25FieldEncoder$LT$T$C$_$GT$22decode_field_header_at17h8eae7dcc74fcd2c7E (type 4) (param i32 i32)
     (local i32)
     i32.const 0
     local.set 2
@@ -38038,7 +37982,7 @@
         local.get 1
         local.get 2
         i32.add
-        call 315
+        call $_ZN16fluentbase_codec9primitive79_$LT$impl$u20$fluentbase_codec..encoder..Encoder$LT$u64$GT$$u20$for$u20$u64$GT$13decode_header17h9d6a0b57f651f769E
         local.get 2
         i32.const 8
         i32.add
@@ -38046,30 +37990,7 @@
         br 0 (;@2;)
       end
     end)
-  (func (;261;) (type 0) (param i32 i32 i32)
-    (local i32)
-    local.get 0
-    local.get 2
-    local.get 1
-    i32.sub
-    local.tee 2
-    call 251
-    local.get 0
-    i32.load
-    local.get 0
-    i32.load offset=8
-    local.tee 3
-    i32.add
-    local.get 1
-    local.get 2
-    call 323
-    drop
-    local.get 0
-    local.get 3
-    local.get 2
-    i32.add
-    i32.store offset=8)
-  (func (;262;) (type 4) (param i32 i32)
+  (func $_ZN92_$LT$bytes..bytes..Bytes$u20$as$u20$core..convert..From$LT$alloc..vec..Vec$LT$u8$GT$$GT$$GT$4from17hdedf9d6d985a652fE (type 4) (param i32 i32)
     (local i32 i32 i32 i32)
     local.get 1
     i32.load
@@ -38084,7 +38005,7 @@
         local.tee 4
         i32.eq
         br_if 0 (;@2;)
-        call 284
+        call $_ZN5alloc5alloc15exchange_malloc17hff92c31848a15536E.55
         local.tee 1
         i32.const 1
         i32.store offset=8
@@ -38094,24 +38015,24 @@
         local.get 1
         local.get 2
         i32.store
-        i32.const 1053132
+        i32.const 1053164
         local.set 5
         br 1 (;@1;)
       end
       block  ;; label = @2
         local.get 4
         br_if 0 (;@2;)
-        i32.const 1052972
+        i32.const 1053004
         local.set 5
         i32.const 0
         local.set 3
-        i32.const 1054832
+        i32.const 1054848
         local.set 2
         i32.const 0
         local.set 1
         br 1 (;@1;)
       end
-      i32.const 1053088
+      i32.const 1053120
       local.set 5
       block  ;; label = @2
         local.get 2
@@ -38129,7 +38050,7 @@
       i32.const 1
       i32.or
       local.set 1
-      i32.const 1053076
+      i32.const 1053108
       local.set 5
       local.get 4
       local.set 3
@@ -38146,7 +38067,7 @@
     local.get 0
     local.get 5
     i32.store)
-  (func (;263;) (type 6) (param i32)
+  (func $_ZN4core3ptr61drop_in_place$LT$revm_primitives..bytecode..BytecodeState$GT$17hdde10a8a63491ec9E (type 6) (param i32)
     (local i32)
     block  ;; label = @1
       local.get 0
@@ -38170,15 +38091,22 @@
       local.get 0
       i32.const 8
       i32.add
-      call 232
+      call $_ZN5alloc4sync16Arc$LT$T$C$A$GT$9drop_slow17h305b51d57009a74bE
     end)
-  (func (;264;) (type 4) (param i32 i32)
+  (func $_ZN5alloc5alloc6Global10alloc_impl17h2c7b164b60447d0fE.380 (type 3) (param i32 i32) (result i32)
+    i32.const 0
+    i32.load8_u offset=1054868
+    drop
+    local.get 0
+    local.get 1
+    call $_ZN109_$LT$lol_alloc..trivial_allocators..LeakingAllocator$LT$T$GT$$u20$as$u20$core..alloc..global..GlobalAlloc$GT$5alloc17hafec9583d38d71e9E)
+  (func $_ZN16fluentbase_codec7encoder25FieldEncoder$LT$T$C$_$GT$22decode_field_header_at17h2057b7e6ddc7eee8E (type 4) (param i32 i32)
     local.get 0
     i32.const 8
     i32.const 0
     local.get 1
-    call 315)
-  (func (;265;) (type 6) (param i32)
+    call $_ZN16fluentbase_codec9primitive79_$LT$impl$u20$fluentbase_codec..encoder..Encoder$LT$u64$GT$$u20$for$u20$u64$GT$13decode_header17h9d6a0b57f651f769E)
+  (func $_ZN73_$LT$revm_primitives..env..BlockEnv$u20$as$u20$core..default..Default$GT$7default17hb78c1de200d00755E (type 6) (param i32)
     local.get 0
     i64.const 0
     i64.store offset=32
@@ -38251,8 +38179,7 @@
     i32.add
     i32.const 0
     i32.const 64
-    call 324
-    drop
+    memory.fill
     local.get 0
     i32.const 16
     i32.add
@@ -38290,96 +38217,17 @@
     local.get 0
     i64.const 1
     i64.store)
-  (func (;266;) (type 4) (param i32 i32)
-    (local i32 i32 i32 i64 i32 i32)
-    global.get 0
-    i32.const 32
-    i32.sub
-    local.tee 2
-    global.set 0
-    block  ;; label = @1
-      local.get 0
-      i32.load
-      i32.eqz
-      br_if 0 (;@1;)
-      local.get 2
-      i32.const 8
-      i32.const 0
-      call 254
-      local.get 2
-      i32.const 20
-      i32.add
-      i32.const 8
-      i32.add
-      local.tee 3
-      i32.const 0
-      i32.store
-      local.get 2
-      local.get 2
-      i64.load
-      i64.store offset=20 align=4
-      local.get 2
-      i32.const 20
-      i32.add
-      i32.const 8
-      call 14
-      local.get 2
-      i32.const 8
-      i32.add
-      i32.const 8
-      i32.add
-      local.tee 4
-      local.get 3
-      i32.load
-      local.tee 3
-      i32.store
-      local.get 2
-      local.get 2
-      i64.load offset=20 align=4
-      local.tee 5
-      i64.store offset=8
-      local.get 0
-      i32.load offset=4
-      local.set 6
-      local.get 0
-      i32.load offset=8
-      local.set 0
-      local.get 5
-      i32.wrap_i64
-      local.tee 7
-      local.get 3
-      i32.const 0
-      local.get 3
-      call 310
-      local.get 7
-      local.get 3
-      i32.const 4
-      local.get 0
-      call 310
-      local.get 2
-      i32.const 8
-      i32.add
-      local.get 6
-      local.get 6
-      local.get 0
-      i32.add
-      call 261
-      local.get 2
-      i32.load offset=8
-      local.get 4
-      i32.load
-      call 4
-    end
-    local.get 1
-    call 5
+  (func $_ZN14fluentbase_sdk3evm16ExecutionContext4exit17h06236b21fbb30e49E (type 6) (param i32)
+    local.get 0
+    call $_ZN14fluentbase_sdk8bindings9_sys_halt17h9a09771f2c6044e5E
     unreachable)
-  (func (;267;) (type 6) (param i32)
+  (func $__rdl_oom (type 6) (param i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 48
     i32.sub
     local.tee 1
-    global.set 0
+    global.set $__stack_pointer
     local.get 1
     local.get 0
     i32.store offset=12
@@ -38392,7 +38240,7 @@
     i32.const 2
     i32.store offset=20
     local.get 1
-    i32.const 1052940
+    i32.const 1052972
     i32.store offset=16
     local.get 1
     i32.const 1
@@ -38410,18 +38258,18 @@
     local.get 1
     i32.const 16
     i32.add
-    call 268
+    call $_ZN4core9panicking18panic_nounwind_fmt17hc0791cac263d58dbE
     unreachable)
-  (func (;268;) (type 6) (param i32)
+  (func $_ZN4core9panicking18panic_nounwind_fmt17hc0791cac263d58dbE (type 6) (param i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 16
     i32.sub
     local.tee 1
-    global.set 0
+    global.set $__stack_pointer
     local.get 1
-    i32.const 1054832
-    call 297
+    i32.const 1054848
+    call $_ZN36_$LT$T$u20$as$u20$core..any..Any$GT$7type_id17hed637ffe26dba6a3E
     block  ;; label = @1
       local.get 1
       i64.load
@@ -38439,18 +38287,18 @@
       br_if 0 (;@1;)
       local.get 1
       local.get 1
-      call 4
+      call $_ZN14fluentbase_sdk8bindings10_sys_write17h33853d632b3e3e0cE
     end
     i32.const -71
-    call 5
+    call $_ZN14fluentbase_sdk8bindings9_sys_halt17h9a09771f2c6044e5E
     unreachable)
-  (func (;269;) (type 0) (param i32 i32 i32)
+  (func $_ZN4core5slice29_$LT$impl$u20$$u5b$T$u5d$$GT$15copy_from_slice17len_mismatch_fail17h93d5590d3e243978E (type 0) (param i32 i32 i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 48
     i32.sub
     local.tee 3
-    global.set 0
+    global.set $__stack_pointer
     local.get 3
     local.get 1
     i32.store offset=4
@@ -38475,7 +38323,7 @@
     i32.const 3
     i32.store offset=12
     local.get 3
-    i32.const 1053908
+    i32.const 1053940
     i32.store offset=8
     local.get 3
     i32.const 1
@@ -38497,24 +38345,42 @@
     i32.const 8
     i32.add
     local.get 2
-    call 65
+    call $_ZN4core9panicking9panic_fmt17h78607b33a29a727dE
     unreachable)
-  (func (;270;) (type 3) (param i32 i32) (result i32)
+  (func $__rust_realloc (type 12) (param i32 i32 i32 i32) (result i32)
+    block  ;; label = @1
+      local.get 2
+      local.get 3
+      call $_ZN109_$LT$lol_alloc..trivial_allocators..LeakingAllocator$LT$T$GT$$u20$as$u20$core..alloc..global..GlobalAlloc$GT$5alloc17hafec9583d38d71e9E
+      local.tee 2
+      i32.eqz
+      br_if 0 (;@1;)
+      local.get 2
+      local.get 0
+      local.get 1
+      local.get 3
+      local.get 1
+      local.get 3
+      i32.lt_u
+      select
+      memory.copy
+    end
+    local.get 2)
+  (func $__rust_alloc_zeroed (type 3) (param i32 i32) (result i32)
     block  ;; label = @1
       local.get 1
       local.get 0
-      call 237
+      call $_ZN109_$LT$lol_alloc..trivial_allocators..LeakingAllocator$LT$T$GT$$u20$as$u20$core..alloc..global..GlobalAlloc$GT$5alloc17hafec9583d38d71e9E
       local.tee 1
       i32.eqz
       br_if 0 (;@1;)
       local.get 1
       i32.const 0
       local.get 0
-      call 324
-      drop
+      memory.fill
     end
     local.get 1)
-  (func (;271;) (type 8) (param i32 i32 i32 i32)
+  (func $_ZN5bytes5bytes21promotable_even_clone17hd468b97c29517d37E (type 8) (param i32 i32 i32 i32)
     (local i32)
     block  ;; label = @1
       local.get 1
@@ -38532,17 +38398,17 @@
       i32.and
       local.get 2
       local.get 3
-      call 272
+      call $_ZN5bytes5bytes17shallow_clone_vec17h614494a527a799e2E
       return
     end
     local.get 0
     local.get 4
     local.get 2
     local.get 3
-    call 273)
-  (func (;272;) (type 7) (param i32 i32 i32 i32 i32 i32)
+    call $_ZN5bytes5bytes17shallow_clone_arc17h717d01f08ffd8b55E)
+  (func $_ZN5bytes5bytes17shallow_clone_vec17h614494a527a799e2E (type 7) (param i32 i32 i32 i32 i32 i32)
     (local i32)
-    call 284
+    call $_ZN5alloc5alloc15exchange_malloc17hff92c31848a15536E.55
     local.tee 6
     i32.const 2
     i32.store offset=8
@@ -38581,7 +38447,7 @@
       local.get 4
       i32.store offset=4
       local.get 0
-      i32.const 1053132
+      i32.const 1053164
       i32.store
       return
     end
@@ -38589,8 +38455,8 @@
     local.get 3
     local.get 4
     local.get 5
-    call 273)
-  (func (;273;) (type 8) (param i32 i32 i32 i32)
+    call $_ZN5bytes5bytes17shallow_clone_arc17h717d01f08ffd8b55E)
+  (func $_ZN5bytes5bytes17shallow_clone_arc17h717d01f08ffd8b55E (type 8) (param i32 i32 i32 i32)
     (local i32)
     local.get 1
     local.get 1
@@ -38614,24 +38480,24 @@
       local.get 2
       i32.store offset=4
       local.get 0
-      i32.const 1053132
+      i32.const 1053164
       i32.store
       return
     end
-    call 285
+    call $_ZN5bytes5abort17ha8d211cfc2e2ccbeE
     unreachable)
-  (func (;274;) (type 8) (param i32 i32 i32 i32)
+  (func $_ZN5bytes5bytes22promotable_even_to_vec17h2e9cd581e931c919E (type 8) (param i32 i32 i32 i32)
     local.get 0
     local.get 1
     local.get 2
     local.get 3
-    i32.const 8
-    call 276)
-  (func (;275;) (type 5) (param i32) (result i32)
+    i32.const 6
+    call $_ZN5bytes5bytes17promotable_to_vec17h4714d2accf66454eE)
+  (func $_ZN4core3ops8function6FnOnce9call_once17h0a34c19583b8c35eE (type 5) (param i32) (result i32)
     local.get 0
     i32.const -2
     i32.and)
-  (func (;276;) (type 1) (param i32 i32 i32 i32 i32)
+  (func $_ZN5bytes5bytes17promotable_to_vec17h4714d2accf66454eE (type 1) (param i32 i32 i32 i32 i32)
     block  ;; label = @1
       local.get 1
       i32.load
@@ -38643,10 +38509,10 @@
       local.get 1
       local.get 4
       call_indirect (type 5)
+      local.tee 1
       local.get 2
       local.get 3
-      call 321
-      local.set 1
+      memory.copy
       local.get 0
       local.get 3
       i32.store offset=8
@@ -38666,8 +38532,8 @@
     local.get 1
     local.get 2
     local.get 3
-    call 281)
-  (func (;277;) (type 0) (param i32 i32 i32)
+    call $_ZN5bytes5bytes18shared_to_vec_impl17h9bcc3f3ab075ccb7E)
+  (func $_ZN5bytes5bytes20promotable_even_drop17hdfd7578dbedae2deE (type 0) (param i32 i32 i32)
     block  ;; label = @1
       local.get 0
       i32.load
@@ -38681,12 +38547,12 @@
       i32.and
       local.get 1
       local.get 2
-      call 278
+      call $_ZN5bytes5bytes16free_boxed_slice17h0a8c1701e83825ccE
       return
     end
     local.get 0
-    call 279)
-  (func (;278;) (type 0) (param i32 i32 i32)
+    call $_ZN5bytes5bytes14release_shared17h13a9eadde7bbab3eE)
+  (func $_ZN5bytes5bytes16free_boxed_slice17h0a8c1701e83825ccE (type 0) (param i32 i32 i32)
     local.get 1
     local.get 0
     i32.sub
@@ -38696,9 +38562,9 @@
     i32.xor
     i32.const 31
     i32.shr_u
-    i32.const 1053100
-    call 280)
-  (func (;279;) (type 6) (param i32)
+    i32.const 1053132
+    call $_ZN4core6result19Result$LT$T$C$E$GT$6unwrap17hacfec0fc1fe73d98E)
+  (func $_ZN5bytes5bytes14release_shared17h13a9eadde7bbab3eE (type 6) (param i32)
     (local i32)
     local.get 0
     local.get 0
@@ -38718,16 +38584,16 @@
       i32.xor
       i32.const 31
       i32.shr_u
-      i32.const 1053116
-      call 280
+      i32.const 1053148
+      call $_ZN4core6result19Result$LT$T$C$E$GT$6unwrap17hacfec0fc1fe73d98E
     end)
-  (func (;280;) (type 4) (param i32 i32)
+  (func $_ZN4core6result19Result$LT$T$C$E$GT$6unwrap17hacfec0fc1fe73d98E (type 4) (param i32 i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 16
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       local.get 0
       i32.eqz
@@ -38735,25 +38601,25 @@
       local.get 2
       i32.const 16
       i32.add
-      global.set 0
+      global.set $__stack_pointer
       return
     end
-    i32.const 1053960
+    i32.const 1054008
     i32.const 43
     local.get 2
     i32.const 15
     i32.add
-    i32.const 1052956
+    i32.const 1052988
     local.get 1
-    call 193
+    call $_ZN4core6result13unwrap_failed17h38a5f72e87633eadE
     unreachable)
-  (func (;281;) (type 8) (param i32 i32 i32 i32)
-    (local i32 i32)
-    global.get 0
+  (func $_ZN5bytes5bytes18shared_to_vec_impl17h9bcc3f3ab075ccb7E (type 8) (param i32 i32 i32 i32)
+    (local i32 i32 i32)
+    global.get $__stack_pointer
     i32.const 16
     i32.sub
     local.tee 4
-    global.set 0
+    global.set $__stack_pointer
     local.get 1
     i32.const 0
     local.get 1
@@ -38773,24 +38639,23 @@
         i32.const 8
         i32.add
         local.get 3
-        i32.const 0
-        call 254
+        call $_ZN5alloc7raw_vec19RawVec$LT$T$C$A$GT$11allocate_in17hd355458426c13535E
         local.get 4
         i32.load offset=12
         local.set 5
         local.get 4
         i32.load offset=8
+        local.tee 6
         local.get 2
         local.get 3
-        call 323
-        local.set 2
+        memory.copy
         local.get 1
-        call 279
+        call $_ZN5bytes5bytes14release_shared17h13a9eadde7bbab3eE
         local.get 0
         local.get 5
         i32.store offset=4
         local.get 0
-        local.get 2
+        local.get 6
         i32.store
         br 1 (;@1;)
       end
@@ -38799,10 +38664,10 @@
       local.set 5
       local.get 1
       i32.load
+      local.tee 1
       local.get 2
       local.get 3
-      call 321
-      local.set 1
+      memory.copy
       local.get 0
       local.get 5
       i32.store offset=4
@@ -38816,23 +38681,72 @@
     local.get 4
     i32.const 16
     i32.add
-    global.set 0)
-  (func (;282;) (type 5) (param i32) (result i32)
+    global.set $__stack_pointer)
+  (func $_ZN4core3ops8function6FnOnce9call_once17hb5106b5780fbc80bE (type 5) (param i32) (result i32)
     local.get 0)
-  (func (;283;) (type 4) (param i32 i32)
-    (local i32)
-    global.get 0
+  (func $_ZN5alloc7raw_vec19RawVec$LT$T$C$A$GT$11allocate_in17hd355458426c13535E (type 4) (param i32 i32)
+    (local i32 i32)
+    global.get $__stack_pointer
     i32.const 16
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
+    block  ;; label = @1
+      block  ;; label = @2
+        block  ;; label = @3
+          block  ;; label = @4
+            local.get 1
+            br_if 0 (;@4;)
+            i32.const 1
+            local.set 3
+            br 1 (;@3;)
+          end
+          local.get 1
+          i32.const -1
+          i32.le_s
+          br_if 1 (;@2;)
+          local.get 2
+          i32.const 8
+          i32.add
+          local.get 1
+          call $_ZN63_$LT$alloc..alloc..Global$u20$as$u20$core..alloc..Allocator$GT$8allocate17h15badb2e48cc057cE.53
+          local.get 2
+          i32.load offset=8
+          local.tee 3
+          i32.eqz
+          br_if 2 (;@1;)
+        end
+        local.get 0
+        local.get 1
+        i32.store offset=4
+        local.get 0
+        local.get 3
+        i32.store
+        local.get 2
+        i32.const 16
+        i32.add
+        global.set $__stack_pointer
+        return
+      end
+      call $_ZN5alloc7raw_vec17capacity_overflow17h26cdf55d7b744af0E
+      unreachable
+    end
+    local.get 1
+    call $__rust_alloc_error_handler
+    unreachable)
+  (func $_ZN63_$LT$alloc..alloc..Global$u20$as$u20$core..alloc..Allocator$GT$8allocate17h15badb2e48cc057cE.53 (type 4) (param i32 i32)
+    (local i32)
+    global.get $__stack_pointer
+    i32.const 16
+    i32.sub
+    local.tee 2
+    global.set $__stack_pointer
     local.get 2
     i32.const 8
     i32.add
     i32.const 1
     local.get 1
-    i32.const 0
-    call 55
+    call $_ZN5alloc5alloc6Global10alloc_impl17h2c7b164b60447d0fE.54
     local.get 2
     i32.load offset=12
     local.set 1
@@ -38846,21 +38760,34 @@
     local.get 2
     i32.const 16
     i32.add
-    global.set 0)
-  (func (;284;) (type 11) (result i32)
+    global.set $__stack_pointer)
+  (func $_ZN5alloc5alloc6Global10alloc_impl17h2c7b164b60447d0fE.54 (type 0) (param i32 i32 i32)
+    i32.const 0
+    i32.load8_u offset=1054868
+    drop
+    local.get 1
+    local.get 2
+    call $_ZN109_$LT$lol_alloc..trivial_allocators..LeakingAllocator$LT$T$GT$$u20$as$u20$core..alloc..global..GlobalAlloc$GT$5alloc17hafec9583d38d71e9E
+    local.set 1
+    local.get 0
+    local.get 2
+    i32.store offset=4
+    local.get 0
+    local.get 1
+    i32.store)
+  (func $_ZN5alloc5alloc15exchange_malloc17hff92c31848a15536E.55 (type 13) (result i32)
     (local i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 16
     i32.sub
     local.tee 0
-    global.set 0
+    global.set $__stack_pointer
     local.get 0
     i32.const 8
     i32.add
     i32.const 4
     i32.const 12
-    i32.const 0
-    call 55
+    call $_ZN5alloc5alloc6Global10alloc_impl17h2c7b164b60447d0fE.54
     block  ;; label = @1
       local.get 0
       i32.load offset=8
@@ -38870,38 +38797,38 @@
       local.get 0
       i32.const 16
       i32.add
-      global.set 0
+      global.set $__stack_pointer
       local.get 1
       return
     end
     i32.const 12
-    call 56
+    call $__rust_alloc_error_handler
     unreachable)
-  (func (;285;) (type 10)
-    i32.const 1053144
+  (func $_ZN5bytes5abort17ha8d211cfc2e2ccbeE (type 10)
+    i32.const 1053176
     i32.const 5
-    i32.const 1053240
-    call 40
+    i32.const 1053272
+    call $_ZN4core9panicking5panic17hdd77bb12897b1389E
     unreachable)
-  (func (;286;) (type 8) (param i32 i32 i32 i32)
+  (func $_ZN5bytes5bytes12shared_clone17h095e55d9ce1c4f25E (type 8) (param i32 i32 i32 i32)
     local.get 0
     local.get 1
     i32.load
     local.get 2
     local.get 3
-    call 273)
-  (func (;287;) (type 8) (param i32 i32 i32 i32)
+    call $_ZN5bytes5bytes17shallow_clone_arc17h717d01f08ffd8b55E)
+  (func $_ZN5bytes5bytes13shared_to_vec17hfb170822ac024a44E (type 8) (param i32 i32 i32 i32)
     local.get 0
     local.get 1
     i32.load
     local.get 2
     local.get 3
-    call 281)
-  (func (;288;) (type 0) (param i32 i32 i32)
+    call $_ZN5bytes5bytes18shared_to_vec_impl17h9bcc3f3ab075ccb7E)
+  (func $_ZN5bytes5bytes11shared_drop17h95d75e5adfcc5206E (type 0) (param i32 i32 i32)
     local.get 0
     i32.load
-    call 279)
-  (func (;289;) (type 8) (param i32 i32 i32 i32)
+    call $_ZN5bytes5bytes14release_shared17h13a9eadde7bbab3eE)
+  (func $_ZN5bytes5bytes20promotable_odd_clone17he095523fe87517c4E (type 8) (param i32 i32 i32 i32)
     (local i32)
     block  ;; label = @1
       local.get 1
@@ -38917,22 +38844,22 @@
       local.get 4
       local.get 2
       local.get 3
-      call 272
+      call $_ZN5bytes5bytes17shallow_clone_vec17h614494a527a799e2E
       return
     end
     local.get 0
     local.get 4
     local.get 2
     local.get 3
-    call 273)
-  (func (;290;) (type 8) (param i32 i32 i32 i32)
+    call $_ZN5bytes5bytes17shallow_clone_arc17h717d01f08ffd8b55E)
+  (func $_ZN5bytes5bytes21promotable_odd_to_vec17h81b77b5defe28943E (type 8) (param i32 i32 i32 i32)
     local.get 0
     local.get 1
     local.get 2
     local.get 3
-    i32.const 9
-    call 276)
-  (func (;291;) (type 0) (param i32 i32 i32)
+    i32.const 7
+    call $_ZN5bytes5bytes17promotable_to_vec17h4714d2accf66454eE)
+  (func $_ZN5bytes5bytes19promotable_odd_drop17h51b1a0502597f726E (type 0) (param i32 i32 i32)
     block  ;; label = @1
       local.get 0
       i32.load
@@ -38944,18 +38871,18 @@
       local.get 0
       local.get 1
       local.get 2
-      call 278
+      call $_ZN5bytes5bytes16free_boxed_slice17h0a8c1701e83825ccE
       return
     end
     local.get 0
-    call 279)
-  (func (;292;) (type 8) (param i32 i32 i32 i32)
+    call $_ZN5bytes5bytes14release_shared17h13a9eadde7bbab3eE)
+  (func $_ZN5alloc7raw_vec11finish_grow17h0d9ea2316dbad97dE (type 8) (param i32 i32 i32 i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 16
     i32.sub
     local.tee 4
-    global.set 0
+    global.set $__stack_pointer
     block  ;; label = @1
       block  ;; label = @2
         block  ;; label = @3
@@ -38984,8 +38911,7 @@
                 i32.add
                 i32.const 1
                 local.get 2
-                i32.const 0
-                call 55
+                call $_ZN5alloc5alloc6Global10alloc_impl17h2c7b164b60447d0fE.54
                 local.get 4
                 i32.load offset=12
                 local.set 3
@@ -38999,7 +38925,7 @@
               local.get 1
               i32.const 1
               local.get 2
-              call 293
+              call $__rust_realloc
               local.set 1
               local.get 2
               local.set 3
@@ -39007,7 +38933,7 @@
             end
             local.get 4
             local.get 2
-            call 283
+            call $_ZN63_$LT$alloc..alloc..Global$u20$as$u20$core..alloc..Allocator$GT$8allocate17h15badb2e48cc057cE.53
             local.get 4
             i32.load offset=4
             local.set 3
@@ -39067,28 +38993,8 @@
     local.get 4
     i32.const 16
     i32.add
-    global.set 0)
-  (func (;293;) (type 12) (param i32 i32 i32 i32) (result i32)
-    block  ;; label = @1
-      local.get 2
-      local.get 3
-      call 237
-      local.tee 2
-      i32.eqz
-      br_if 0 (;@1;)
-      local.get 2
-      local.get 0
-      local.get 1
-      local.get 3
-      local.get 1
-      local.get 3
-      i32.lt_u
-      select
-      call 323
-      drop
-    end
-    local.get 2)
-  (func (;294;) (type 8) (param i32 i32 i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN5bytes5bytes12static_clone17h500ac9a3757a54f5E (type 8) (param i32 i32 i32 i32)
     local.get 0
     i32.const 0
     i32.store offset=12
@@ -39099,30 +39005,29 @@
     local.get 2
     i32.store offset=4
     local.get 0
-    i32.const 1052972
+    i32.const 1053004
     i32.store)
-  (func (;295;) (type 8) (param i32 i32 i32 i32)
-    (local i32 i32)
-    global.get 0
+  (func $_ZN5bytes5bytes13static_to_vec17h96f59b74c33849d5E (type 8) (param i32 i32 i32 i32)
+    (local i32 i32 i32)
+    global.get $__stack_pointer
     i32.const 16
     i32.sub
     local.tee 4
-    global.set 0
+    global.set $__stack_pointer
     local.get 4
     i32.const 8
     i32.add
     local.get 3
-    i32.const 0
-    call 254
+    call $_ZN5alloc7raw_vec19RawVec$LT$T$C$A$GT$11allocate_in17hd355458426c13535E
     local.get 4
     i32.load offset=12
     local.set 5
     local.get 4
     i32.load offset=8
+    local.tee 6
     local.get 2
     local.get 3
-    call 323
-    local.set 2
+    memory.copy
     local.get 0
     local.get 3
     i32.store offset=8
@@ -39130,27 +39035,57 @@
     local.get 5
     i32.store offset=4
     local.get 0
-    local.get 2
+    local.get 6
     i32.store
     local.get 4
     i32.const 16
     i32.add
-    global.set 0)
-  (func (;296;) (type 3) (param i32 i32) (result i32)
+    global.set $__stack_pointer)
+  (func $_ZN42_$LT$$RF$T$u20$as$u20$core..fmt..Debug$GT$3fmt17h77f7e4967f331b03E (type 3) (param i32 i32) (result i32)
+    (local i32)
+    local.get 0
+    i32.load
+    local.set 0
+    block  ;; label = @1
+      local.get 1
+      i32.load offset=28
+      local.tee 2
+      i32.const 16
+      i32.and
+      br_if 0 (;@1;)
+      block  ;; label = @2
+        local.get 2
+        i32.const 32
+        i32.and
+        br_if 0 (;@2;)
+        local.get 0
+        local.get 1
+        call $_ZN4core3fmt3num3imp52_$LT$impl$u20$core..fmt..Display$u20$for$u20$u32$GT$3fmt17he696c0e431156bceE
+        return
+      end
+      local.get 0
+      local.get 1
+      call $_ZN4core3fmt3num53_$LT$impl$u20$core..fmt..UpperHex$u20$for$u20$i32$GT$3fmt17h530163d4b7ad6298E
+      return
+    end
+    local.get 0
+    local.get 1
+    call $_ZN4core3fmt3num53_$LT$impl$u20$core..fmt..LowerHex$u20$for$u20$i32$GT$3fmt17h59a2a9f4232cc2e7E)
+  (func $_ZN4core3ops8function6FnOnce9call_once17h3b98e4a5ab67f033E (type 3) (param i32 i32) (result i32)
     local.get 0
     i32.load
     drop
     loop (result i32)  ;; label = @1
       br 0 (;@1;)
     end)
-  (func (;297;) (type 4) (param i32 i32)
+  (func $_ZN36_$LT$T$u20$as$u20$core..any..Any$GT$7type_id17hed637ffe26dba6a3E (type 4) (param i32 i32)
     local.get 0
     i64.const 568815540544143123
     i64.store offset=8
     local.get 0
     i64.const 5657071353825360256
     i64.store)
-  (func (;298;) (type 13) (param i32 i32 i32 i32 i32) (result i32)
+  (func $_ZN4core3fmt9Formatter12pad_integral17h7a951cd58b7dcc45E (type 14) (param i32 i32 i32 i32 i32) (result i32)
     (local i32 i32 i32 i32 i32 i32 i32 i32)
     local.get 0
     i32.load offset=28
@@ -39236,7 +39171,7 @@
         local.get 6
         local.get 1
         local.get 2
-        call 299
+        call $_ZN4core3fmt9Formatter12pad_integral12write_prefix17h43684999422d0638E
         br_if 1 (;@1;)
         local.get 8
         local.get 3
@@ -39264,7 +39199,7 @@
         local.get 6
         local.get 1
         local.get 2
-        call 299
+        call $_ZN4core3fmt9Formatter12pad_integral12write_prefix17h43684999422d0638E
         br_if 1 (;@1;)
         local.get 8
         local.get 3
@@ -39303,7 +39238,7 @@
         local.get 6
         local.get 1
         local.get 2
-        call 299
+        call $_ZN4core3fmt9Formatter12pad_integral12write_prefix17h43684999422d0638E
         br_if 1 (;@1;)
         local.get 11
         local.get 7
@@ -39419,7 +39354,7 @@
       local.get 6
       local.get 1
       local.get 2
-      call 299
+      call $_ZN4core3fmt9Formatter12pad_integral12write_prefix17h43684999422d0638E
       br_if 0 (;@1;)
       local.get 9
       local.get 3
@@ -39461,7 +39396,7 @@
       return
     end
     local.get 10)
-  (func (;299;) (type 13) (param i32 i32 i32 i32 i32) (result i32)
+  (func $_ZN4core3fmt9Formatter12pad_integral12write_prefix17h43684999422d0638E (type 14) (param i32 i32 i32 i32 i32) (result i32)
     (local i32)
     block  ;; label = @1
       block  ;; label = @2
@@ -39493,14 +39428,14 @@
     local.get 1
     i32.load offset=12
     call_indirect (type 2))
-  (func (;300;) (type 3) (param i32 i32) (result i32)
+  (func $_ZN44_$LT$$RF$T$u20$as$u20$core..fmt..Display$GT$3fmt17h743d7417ec5e8687E (type 3) (param i32 i32) (result i32)
     local.get 1
     local.get 0
     i32.load
     local.get 0
     i32.load offset=4
-    call 222)
-  (func (;301;) (type 3) (param i32 i32) (result i32)
+    call $_ZN4core3fmt9Formatter3pad17hd71b536b72e63aedE)
+  (func $_ZN42_$LT$$RF$T$u20$as$u20$core..fmt..Debug$GT$3fmt17h02a298d5b218d667E (type 3) (param i32 i32) (result i32)
     local.get 0
     i32.load
     local.get 1
@@ -39508,13 +39443,13 @@
     i32.load offset=4
     i32.load offset=12
     call_indirect (type 3))
-  (func (;302;) (type 2) (param i32 i32 i32) (result i32)
+  (func $_ZN4core3fmt5write17h85c2d164d6b9d548E (type 2) (param i32 i32 i32) (result i32)
     (local i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 48
     i32.sub
     local.tee 3
-    global.set 0
+    global.set $__stack_pointer
     local.get 3
     i32.const 36
     i32.add
@@ -39717,7 +39652,7 @@
                   i32.add
                   local.tee 12
                   i32.load offset=4
-                  i32.const 10
+                  i32.const 8
                   i32.ne
                   br_if 1 (;@6;)
                   local.get 12
@@ -39755,7 +39690,7 @@
                   i32.add
                   local.tee 10
                   i32.load offset=4
-                  i32.const 10
+                  i32.const 8
                   i32.ne
                   br_if 1 (;@6;)
                   local.get 10
@@ -39838,10 +39773,10 @@
     local.get 3
     i32.const 48
     i32.add
-    global.set 0
+    global.set $__stack_pointer
     local.get 1)
-  (func (;303;) (type 6) (param i32))
-  (func (;304;) (type 2) (param i32 i32 i32) (result i32)
+  (func $_ZN4core3ptr102drop_in_place$LT$$RF$core..iter..adapters..copied..Copied$LT$core..slice..iter..Iter$LT$u8$GT$$GT$$GT$17h8916d5767b34df94E (type 6) (param i32))
+  (func $_ZN68_$LT$core..fmt..builders..PadAdapter$u20$as$u20$core..fmt..Write$GT$9write_str17h85101c618d2f4861E (type 2) (param i32 i32 i32) (result i32)
     (local i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)
     local.get 0
     i32.load offset=4
@@ -40108,7 +40043,7 @@
             i32.eqz
             br_if 0 (;@4;)
             local.get 4
-            i32.const 1053380
+            i32.const 1053412
             i32.const 4
             local.get 3
             i32.load offset=12
@@ -40159,7 +40094,7 @@
       local.set 6
     end
     local.get 6)
-  (func (;305;) (type 3) (param i32 i32) (result i32)
+  (func $_ZN68_$LT$core..fmt..builders..PadAdapter$u20$as$u20$core..fmt..Write$GT$10write_char17h2f9f00c342b8af4cE (type 3) (param i32 i32) (result i32)
     (local i32 i32)
     local.get 0
     i32.load offset=4
@@ -40175,7 +40110,7 @@
       i32.eqz
       br_if 0 (;@1;)
       local.get 3
-      i32.const 1053380
+      i32.const 1053412
       i32.const 4
       local.get 2
       i32.load offset=12
@@ -40195,30 +40130,30 @@
     local.get 2
     i32.load offset=16
     call_indirect (type 3))
-  (func (;306;) (type 3) (param i32 i32) (result i32)
+  (func $_ZN4core3fmt5Write9write_fmt17he38a55ddba5b1872E (type 3) (param i32 i32) (result i32)
     local.get 0
-    i32.const 1053356
+    i32.const 1053388
     local.get 1
-    call 302)
-  (func (;307;) (type 3) (param i32 i32) (result i32)
+    call $_ZN4core3fmt5write17h85c2d164d6b9d548E)
+  (func $_ZN42_$LT$$RF$T$u20$as$u20$core..fmt..Debug$GT$3fmt17h230b339e38f0e400E (type 3) (param i32 i32) (result i32)
     local.get 1
-    i32.const 1053638
+    i32.const 1053670
     i32.const 2
-    call 222)
-  (func (;308;) (type 3) (param i32 i32) (result i32)
+    call $_ZN4core3fmt9Formatter3pad17hd71b536b72e63aedE)
+  (func $_ZN67_$LT$core..array..TryFromSliceError$u20$as$u20$core..fmt..Debug$GT$3fmt17h122553129a7a0e27E (type 3) (param i32 i32) (result i32)
     (local i32 i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 16
     i32.sub
     local.tee 2
-    global.set 0
+    global.set $__stack_pointer
     local.get 2
     local.get 0
     i32.store
     local.get 2
     local.get 1
     i32.load offset=20
-    i32.const 1053932
+    i32.const 1053980
     i32.const 17
     local.get 1
     i32.const 24
@@ -40240,8 +40175,8 @@
     i32.const 4
     i32.add
     local.get 2
-    i32.const 11
-    call 245
+    i32.const 1053964
+    call $_ZN4core3fmt8builders10DebugTuple5field17hbc9d984656bef3fdE
     local.set 1
     local.get 2
     i32.load8_u offset=12
@@ -40289,7 +40224,7 @@
         local.set 1
         local.get 0
         i32.load offset=20
-        i32.const 1053391
+        i32.const 1053423
         i32.const 1
         local.get 0
         i32.const 24
@@ -40301,7 +40236,7 @@
       end
       local.get 0
       i32.load offset=20
-      i32.const 1053256
+      i32.const 1053288
       i32.const 1
       local.get 0
       i32.const 24
@@ -40314,12 +40249,12 @@
     local.get 2
     i32.const 16
     i32.add
-    global.set 0
+    global.set $__stack_pointer
     local.get 1)
-  (func (;309;) (type 3) (param i32 i32) (result i32)
+  (func $_ZN69_$LT$core..alloc..layout..LayoutError$u20$as$u20$core..fmt..Debug$GT$3fmt17h424dac20ac50bdadE (type 3) (param i32 i32) (result i32)
     local.get 1
     i32.load offset=20
-    i32.const 1053949
+    i32.const 1053997
     i32.const 11
     local.get 1
     i32.const 24
@@ -40327,69 +40262,37 @@
     i32.load
     i32.load offset=12
     call_indirect (type 2))
-  (func (;310;) (type 8) (param i32 i32 i32 i32)
-    block  ;; label = @1
-      block  ;; label = @2
-        local.get 1
-        local.get 2
-        i32.lt_u
-        br_if 0 (;@2;)
-        local.get 1
-        local.get 2
-        i32.sub
-        local.tee 1
-        i32.const 3
-        i32.le_u
-        br_if 1 (;@1;)
-        local.get 0
-        local.get 2
-        i32.add
-        local.get 3
-        i32.store align=1
-        return
-      end
-      local.get 2
-      local.get 1
-      i32.const 1054320
-      call 233
-      unreachable
-    end
-    i32.const 4
-    local.get 1
-    i32.const 1054180
-    call 8
-    unreachable)
-  (func (;311;) (type 0) (param i32 i32 i32)
+  (func $_ZN16fluentbase_codec6buffer13BufferDecoder17read_bytes_header17hbdefa648257c8988E (type 0) (param i32 i32 i32)
     (local i32)
     local.get 1
     local.get 2
     i32.const 0
-    call 312
+    call $_ZN16fluentbase_codec6buffer13BufferDecoder8read_u3217ha667767e72c95079E
     local.set 3
     local.get 0
     local.get 1
     local.get 2
     i32.const 4
-    call 312
+    call $_ZN16fluentbase_codec6buffer13BufferDecoder8read_u3217ha667767e72c95079E
     i32.store offset=4
     local.get 0
     local.get 3
     i32.store)
-  (func (;312;) (type 2) (param i32 i32 i32) (result i32)
+  (func $_ZN16fluentbase_codec6buffer13BufferDecoder8read_u3217ha667767e72c95079E (type 2) (param i32 i32 i32) (result i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 32
     i32.sub
     local.tee 3
-    global.set 0
+    global.set $__stack_pointer
     local.get 3
     i32.const 16
     i32.add
     local.get 0
     local.get 1
     local.get 2
-    i32.const 1054336
-    call 313
+    i32.const 1054352
+    call $_ZN4core5slice5index74_$LT$impl$u20$core..ops..index..Index$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$5index17h69b68cd648119e6fE
     local.get 3
     i32.const 8
     i32.add
@@ -40398,22 +40301,22 @@
     local.get 3
     i32.load offset=20
     i32.const 4
-    i32.const 1054116
-    call 314
+    i32.const 1054164
+    call $_ZN4core5slice5index74_$LT$impl$u20$core..ops..index..Index$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$5index17h2db4d8e346656db5E
     block  ;; label = @1
       local.get 3
       i32.load offset=12
       i32.const 4
       i32.eq
       br_if 0 (;@1;)
-      i32.const 1053960
+      i32.const 1054008
       i32.const 43
       local.get 3
       i32.const 31
       i32.add
-      i32.const 1054004
-      i32.const 1054132
-      call 193
+      i32.const 1054052
+      i32.const 1054180
+      call $_ZN4core6result13unwrap_failed17h38a5f72e87633eadE
       unreachable
     end
     local.get 3
@@ -40423,9 +40326,9 @@
     local.get 3
     i32.const 32
     i32.add
-    global.set 0
+    global.set $__stack_pointer
     local.get 2)
-  (func (;313;) (type 1) (param i32 i32 i32 i32 i32)
+  (func $_ZN4core5slice5index74_$LT$impl$u20$core..ops..index..Index$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$5index17h69b68cd648119e6fE (type 1) (param i32 i32 i32 i32 i32)
     block  ;; label = @1
       local.get 2
       local.get 3
@@ -40434,7 +40337,7 @@
       local.get 3
       local.get 2
       local.get 4
-      call 233
+      call $_ZN4core5slice5index26slice_start_index_len_fail17hab50c0479c16b22eE
       unreachable
     end
     local.get 0
@@ -40447,13 +40350,13 @@
     local.get 3
     i32.add
     i32.store)
-  (func (;314;) (type 1) (param i32 i32 i32 i32 i32)
+  (func $_ZN4core5slice5index74_$LT$impl$u20$core..ops..index..Index$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$5index17h2db4d8e346656db5E (type 1) (param i32 i32 i32 i32 i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 16
     i32.sub
     local.tee 5
-    global.set 0
+    global.set $__stack_pointer
     local.get 5
     i32.const 8
     i32.add
@@ -40462,7 +40365,7 @@
     local.get 1
     local.get 2
     local.get 4
-    call 176
+    call $_ZN106_$LT$core..ops..range..Range$LT$usize$GT$$u20$as$u20$core..slice..index..SliceIndex$LT$$u5b$T$u5d$$GT$$GT$5index17h9a9f7e26ff193f9cE
     local.get 5
     i32.load offset=12
     local.set 4
@@ -40476,22 +40379,22 @@
     local.get 5
     i32.const 16
     i32.add
-    global.set 0)
-  (func (;315;) (type 8) (param i32 i32 i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN16fluentbase_codec9primitive79_$LT$impl$u20$fluentbase_codec..encoder..Encoder$LT$u64$GT$$u20$for$u20$u64$GT$13decode_header17h9d6a0b57f651f769E (type 8) (param i32 i32 i32 i32)
     (local i32)
-    global.get 0
+    global.get $__stack_pointer
     i32.const 32
     i32.sub
     local.tee 4
-    global.set 0
+    global.set $__stack_pointer
     local.get 4
     i32.const 16
     i32.add
     local.get 0
     local.get 1
     local.get 2
-    i32.const 1054352
-    call 313
+    i32.const 1054368
+    call $_ZN4core5slice5index74_$LT$impl$u20$core..ops..index..Index$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$5index17h69b68cd648119e6fE
     local.get 4
     i32.const 8
     i32.add
@@ -40500,22 +40403,22 @@
     local.get 4
     i32.load offset=20
     i32.const 8
-    i32.const 1054148
-    call 314
+    i32.const 1054196
+    call $_ZN4core5slice5index74_$LT$impl$u20$core..ops..index..Index$LT$I$GT$$u20$for$u20$$u5b$T$u5d$$GT$5index17h2db4d8e346656db5E
     block  ;; label = @1
       local.get 4
       i32.load offset=12
       i32.const 8
       i32.eq
       br_if 0 (;@1;)
-      i32.const 1053960
+      i32.const 1054008
       i32.const 43
       local.get 4
       i32.const 31
       i32.add
-      i32.const 1054004
-      i32.const 1054164
-      call 193
+      i32.const 1054052
+      i32.const 1054212
+      call $_ZN4core6result13unwrap_failed17h38a5f72e87633eadE
       unreachable
     end
     local.get 3
@@ -40526,694 +40429,152 @@
     local.get 4
     i32.const 32
     i32.add
-    global.set 0)
-  (func (;316;) (type 0) (param i32 i32 i32)
+    global.set $__stack_pointer)
+  (func $_ZN5alloc7raw_vec11finish_grow17h026552b8eeb0ab7dE (type 8) (param i32 i32 i32 i32)
+    (local i32)
+    global.get $__stack_pointer
+    i32.const 16
+    i32.sub
+    local.tee 4
+    global.set $__stack_pointer
     block  ;; label = @1
-      local.get 2
-      i32.eqz
-      br_if 0 (;@1;)
-      i32.const 0
-      i32.load8_u offset=1054852
-      drop
-      local.get 1
-      local.get 2
-      call 237
-      local.set 1
-    end
-    local.get 0
-    local.get 2
-    i32.store offset=4
-    local.get 0
-    local.get 1
-    i32.store)
-  (func (;317;) (type 2) (param i32 i32 i32) (result i32)
-    (local i32 i32 i32 i32 i32 i32 i32 i32)
-    block  ;; label = @1
-      block  ;; label = @2
-        local.get 2
-        i32.const 16
-        i32.ge_u
-        br_if 0 (;@2;)
-        local.get 0
-        local.set 3
-        br 1 (;@1;)
-      end
-      local.get 0
-      i32.const 0
-      local.get 0
-      i32.sub
-      i32.const 3
-      i32.and
-      local.tee 4
-      i32.add
-      local.set 5
-      block  ;; label = @2
-        local.get 4
-        i32.eqz
-        br_if 0 (;@2;)
-        local.get 0
-        local.set 3
-        local.get 1
-        local.set 6
-        loop  ;; label = @3
-          local.get 3
-          local.get 6
-          i32.load8_u
-          i32.store8
-          local.get 6
-          i32.const 1
-          i32.add
-          local.set 6
-          local.get 3
-          i32.const 1
-          i32.add
-          local.tee 3
-          local.get 5
-          i32.lt_u
-          br_if 0 (;@3;)
-        end
-      end
-      local.get 5
-      local.get 2
-      local.get 4
-      i32.sub
-      local.tee 7
-      i32.const -4
-      i32.and
-      local.tee 8
-      i32.add
-      local.set 3
       block  ;; label = @2
         block  ;; label = @3
           local.get 1
-          local.get 4
-          i32.add
-          local.tee 9
-          i32.const 3
-          i32.and
           i32.eqz
           br_if 0 (;@3;)
-          local.get 8
-          i32.const 1
-          i32.lt_s
+          local.get 2
+          i32.const -1
+          i32.le_s
           br_if 1 (;@2;)
-          local.get 9
-          i32.const 3
-          i32.shl
-          local.tee 6
-          i32.const 24
-          i32.and
-          local.set 2
-          local.get 9
-          i32.const -4
-          i32.and
-          local.tee 10
-          i32.const 4
-          i32.add
-          local.set 1
-          i32.const 0
-          local.get 6
-          i32.sub
-          i32.const 24
-          i32.and
-          local.set 4
-          local.get 10
-          i32.load
-          local.set 6
-          loop  ;; label = @4
-            local.get 5
-            local.get 6
-            local.get 2
-            i32.shr_u
-            local.get 1
-            i32.load
-            local.tee 6
-            local.get 4
-            i32.shl
-            i32.or
-            i32.store
-            local.get 1
-            i32.const 4
-            i32.add
-            local.set 1
-            local.get 5
-            i32.const 4
-            i32.add
-            local.tee 5
-            local.get 3
-            i32.lt_u
-            br_if 0 (;@4;)
-            br 2 (;@2;)
-          end
-        end
-        local.get 8
-        i32.const 1
-        i32.lt_s
-        br_if 0 (;@2;)
-        local.get 9
-        local.set 1
-        loop  ;; label = @3
-          local.get 5
-          local.get 1
-          i32.load
-          i32.store
-          local.get 1
-          i32.const 4
-          i32.add
-          local.set 1
-          local.get 5
-          i32.const 4
-          i32.add
-          local.tee 5
-          local.get 3
-          i32.lt_u
-          br_if 0 (;@3;)
-        end
-      end
-      local.get 7
-      i32.const 3
-      i32.and
-      local.set 2
-      local.get 9
-      local.get 8
-      i32.add
-      local.set 1
-    end
-    block  ;; label = @1
-      local.get 2
-      i32.eqz
-      br_if 0 (;@1;)
-      local.get 3
-      local.get 2
-      i32.add
-      local.set 5
-      loop  ;; label = @2
-        local.get 3
-        local.get 1
-        i32.load8_u
-        i32.store8
-        local.get 1
-        i32.const 1
-        i32.add
-        local.set 1
-        local.get 3
-        i32.const 1
-        i32.add
-        local.tee 3
-        local.get 5
-        i32.lt_u
-        br_if 0 (;@2;)
-      end
-    end
-    local.get 0)
-  (func (;318;) (type 2) (param i32 i32 i32) (result i32)
-    (local i32 i32 i32 i32 i32 i32 i32 i32)
-    block  ;; label = @1
-      block  ;; label = @2
-        block  ;; label = @3
           block  ;; label = @4
-            local.get 0
-            local.get 1
-            i32.sub
-            local.get 2
-            i32.ge_u
-            br_if 0 (;@4;)
-            local.get 1
-            local.get 2
-            i32.add
-            local.set 3
-            local.get 0
-            local.get 2
-            i32.add
-            local.set 4
-            block  ;; label = @5
-              local.get 2
-              i32.const 16
-              i32.ge_u
-              br_if 0 (;@5;)
-              local.get 0
-              local.set 5
-              br 3 (;@2;)
-            end
-            local.get 4
-            i32.const -4
-            i32.and
-            local.set 5
-            i32.const 0
-            local.get 4
-            i32.const 3
-            i32.and
-            local.tee 6
-            i32.sub
-            local.set 7
-            block  ;; label = @5
-              local.get 6
-              i32.eqz
-              br_if 0 (;@5;)
-              local.get 1
-              local.get 2
-              i32.add
-              i32.const -1
-              i32.add
-              local.set 8
-              loop  ;; label = @6
-                local.get 4
-                i32.const -1
-                i32.add
-                local.tee 4
-                local.get 8
-                i32.load8_u
-                i32.store8
-                local.get 8
-                i32.const -1
-                i32.add
-                local.set 8
-                local.get 5
-                local.get 4
-                i32.lt_u
-                br_if 0 (;@6;)
-              end
-            end
-            local.get 5
-            local.get 2
-            local.get 6
-            i32.sub
-            local.tee 9
-            i32.const -4
-            i32.and
-            local.tee 6
-            i32.sub
-            local.set 4
             block  ;; label = @5
               local.get 3
-              local.get 7
-              i32.add
-              local.tee 7
-              i32.const 3
-              i32.and
+              i32.load offset=4
               i32.eqz
               br_if 0 (;@5;)
-              local.get 6
-              i32.const 1
-              i32.lt_s
-              br_if 2 (;@3;)
-              local.get 7
-              i32.const 3
-              i32.shl
-              local.tee 8
-              i32.const 24
-              i32.and
-              local.set 2
-              local.get 7
-              i32.const -4
-              i32.and
-              local.tee 10
-              i32.const -4
-              i32.add
-              local.set 1
-              i32.const 0
-              local.get 8
-              i32.sub
-              i32.const 24
-              i32.and
-              local.set 3
-              local.get 10
-              i32.load
-              local.set 8
-              loop  ;; label = @6
-                local.get 5
-                i32.const -4
-                i32.add
-                local.tee 5
-                local.get 8
+              block  ;; label = @6
                 local.get 3
-                i32.shl
-                local.get 1
-                i32.load
-                local.tee 8
-                local.get 2
-                i32.shr_u
-                i32.or
-                i32.store
-                local.get 1
-                i32.const -4
+                i32.const 8
                 i32.add
-                local.set 1
-                local.get 4
-                local.get 5
-                i32.lt_u
+                i32.load
+                local.tee 1
                 br_if 0 (;@6;)
-                br 3 (;@3;)
+                local.get 4
+                i32.const 8
+                i32.add
+                local.get 2
+                i32.const 0
+                call $_ZN5alloc5alloc6Global10alloc_impl17h2c7b164b60447d0fE.639
+                local.get 4
+                i32.load offset=12
+                local.set 3
+                local.get 4
+                i32.load offset=8
+                local.set 1
+                br 2 (;@4;)
               end
-            end
-            local.get 6
-            i32.const 1
-            i32.lt_s
-            br_if 1 (;@3;)
-            local.get 9
-            local.get 1
-            i32.add
-            i32.const -4
-            i32.add
-            local.set 1
-            loop  ;; label = @5
-              local.get 5
-              i32.const -4
-              i32.add
-              local.tee 5
-              local.get 1
+              local.get 3
               i32.load
-              i32.store
               local.get 1
-              i32.const -4
-              i32.add
-              local.set 1
-              local.get 4
-              local.get 5
-              i32.lt_u
-              br_if 0 (;@5;)
-              br 2 (;@3;)
-            end
-          end
-          block  ;; label = @4
-            block  ;; label = @5
+              i32.const 1
               local.get 2
-              i32.const 16
-              i32.ge_u
-              br_if 0 (;@5;)
-              local.get 0
-              local.set 4
+              call $__rust_realloc
+              local.set 1
+              local.get 2
+              local.set 3
               br 1 (;@4;)
             end
-            local.get 0
-            i32.const 0
-            local.get 0
-            i32.sub
-            i32.const 3
-            i32.and
-            local.tee 3
-            i32.add
-            local.set 5
-            block  ;; label = @5
-              local.get 3
-              i32.eqz
-              br_if 0 (;@5;)
-              local.get 0
-              local.set 4
-              local.get 1
-              local.set 8
-              loop  ;; label = @6
-                local.get 4
-                local.get 8
-                i32.load8_u
-                i32.store8
-                local.get 8
-                i32.const 1
-                i32.add
-                local.set 8
-                local.get 4
-                i32.const 1
-                i32.add
-                local.tee 4
-                local.get 5
-                i32.lt_u
-                br_if 0 (;@6;)
-              end
-            end
-            local.get 5
+            local.get 4
             local.get 2
-            local.get 3
-            i32.sub
-            local.tee 9
-            i32.const -4
-            i32.and
-            local.tee 6
-            i32.add
-            local.set 4
-            block  ;; label = @5
-              block  ;; label = @6
-                local.get 1
-                local.get 3
-                i32.add
-                local.tee 7
-                i32.const 3
-                i32.and
-                i32.eqz
-                br_if 0 (;@6;)
-                local.get 6
-                i32.const 1
-                i32.lt_s
-                br_if 1 (;@5;)
-                local.get 7
-                i32.const 3
-                i32.shl
-                local.tee 8
-                i32.const 24
-                i32.and
-                local.set 2
-                local.get 7
-                i32.const -4
-                i32.and
-                local.tee 10
-                i32.const 4
-                i32.add
-                local.set 1
-                i32.const 0
-                local.get 8
-                i32.sub
-                i32.const 24
-                i32.and
-                local.set 3
-                local.get 10
-                i32.load
-                local.set 8
-                loop  ;; label = @7
-                  local.get 5
-                  local.get 8
-                  local.get 2
-                  i32.shr_u
-                  local.get 1
-                  i32.load
-                  local.tee 8
-                  local.get 3
-                  i32.shl
-                  i32.or
-                  i32.store
-                  local.get 1
-                  i32.const 4
-                  i32.add
-                  local.set 1
-                  local.get 5
-                  i32.const 4
-                  i32.add
-                  local.tee 5
-                  local.get 4
-                  i32.lt_u
-                  br_if 0 (;@7;)
-                  br 2 (;@5;)
-                end
-              end
-              local.get 6
-              i32.const 1
-              i32.lt_s
-              br_if 0 (;@5;)
-              local.get 7
-              local.set 1
-              loop  ;; label = @6
-                local.get 5
-                local.get 1
-                i32.load
-                i32.store
-                local.get 1
-                i32.const 4
-                i32.add
-                local.set 1
-                local.get 5
-                i32.const 4
-                i32.add
-                local.tee 5
-                local.get 4
-                i32.lt_u
-                br_if 0 (;@6;)
-              end
-            end
-            local.get 9
-            i32.const 3
-            i32.and
-            local.set 2
-            local.get 7
-            local.get 6
-            i32.add
+            i32.const 0
+            call $_ZN5alloc5alloc6Global10alloc_impl17h2c7b164b60447d0fE.639
+            local.get 4
+            i32.load offset=4
+            local.set 3
+            local.get 4
+            i32.load
             local.set 1
           end
-          local.get 2
-          i32.eqz
-          br_if 2 (;@1;)
-          local.get 4
-          local.get 2
-          i32.add
-          local.set 5
-          loop  ;; label = @4
-            local.get 4
+          block  ;; label = @4
             local.get 1
-            i32.load8_u
-            i32.store8
-            local.get 1
-            i32.const 1
-            i32.add
-            local.set 1
-            local.get 4
-            i32.const 1
-            i32.add
-            local.tee 4
-            local.get 5
-            i32.lt_u
+            i32.eqz
             br_if 0 (;@4;)
+            local.get 0
+            local.get 1
+            i32.store offset=4
+            local.get 0
+            i32.const 8
+            i32.add
+            local.get 3
+            i32.store
+            i32.const 0
+            local.set 1
             br 3 (;@1;)
           end
+          i32.const 1
+          local.set 1
+          local.get 0
+          i32.const 1
+          i32.store offset=4
+          local.get 0
+          i32.const 8
+          i32.add
+          local.get 2
+          i32.store
+          br 2 (;@1;)
         end
-        local.get 9
-        i32.const 3
-        i32.and
-        local.tee 1
-        i32.eqz
-        br_if 1 (;@1;)
-        local.get 7
-        i32.const 0
-        local.get 6
-        i32.sub
-        i32.add
-        local.set 3
-        local.get 4
-        local.get 1
-        i32.sub
-        local.set 5
-      end
-      local.get 3
-      i32.const -1
-      i32.add
-      local.set 1
-      loop  ;; label = @2
-        local.get 4
-        i32.const -1
-        i32.add
-        local.tee 4
-        local.get 1
-        i32.load8_u
-        i32.store8
-        local.get 1
-        i32.const -1
-        i32.add
-        local.set 1
-        local.get 5
-        local.get 4
-        i32.lt_u
-        br_if 0 (;@2;)
-      end
-    end
-    local.get 0)
-  (func (;319;) (type 2) (param i32 i32 i32) (result i32)
-    (local i32 i32 i32)
-    block  ;; label = @1
-      block  ;; label = @2
-        local.get 2
-        i32.const 16
-        i32.ge_u
-        br_if 0 (;@2;)
         local.get 0
-        local.set 3
+        i32.const 0
+        i32.store offset=4
+        local.get 0
+        i32.const 8
+        i32.add
+        local.get 2
+        i32.store
+        i32.const 1
+        local.set 1
         br 1 (;@1;)
       end
       local.get 0
       i32.const 0
-      local.get 0
-      i32.sub
-      i32.const 3
-      i32.and
-      local.tee 4
-      i32.add
-      local.set 5
-      block  ;; label = @2
-        local.get 4
-        i32.eqz
-        br_if 0 (;@2;)
-        local.get 0
-        local.set 3
-        loop  ;; label = @3
-          local.get 3
-          local.get 1
-          i32.store8
-          local.get 3
-          i32.const 1
-          i32.add
-          local.tee 3
-          local.get 5
-          i32.lt_u
-          br_if 0 (;@3;)
-        end
-      end
-      local.get 5
-      local.get 2
-      local.get 4
-      i32.sub
-      local.tee 4
-      i32.const -4
-      i32.and
-      local.tee 2
-      i32.add
-      local.set 3
+      i32.store offset=4
+      i32.const 1
+      local.set 1
+    end
+    local.get 0
+    local.get 1
+    i32.store
+    local.get 4
+    i32.const 16
+    i32.add
+    global.set $__stack_pointer)
+  (func $_ZN5alloc5alloc6Global10alloc_impl17h2c7b164b60447d0fE.639 (type 0) (param i32 i32 i32)
+    block  ;; label = @1
       block  ;; label = @2
         local.get 2
-        i32.const 1
-        i32.lt_s
         br_if 0 (;@2;)
+        i32.const 0
+        i32.load8_u offset=1054868
+        drop
+        i32.const 1
         local.get 1
-        i32.const 255
-        i32.and
-        i32.const 16843009
-        i32.mul
+        call $_ZN109_$LT$lol_alloc..trivial_allocators..LeakingAllocator$LT$T$GT$$u20$as$u20$core..alloc..global..GlobalAlloc$GT$5alloc17hafec9583d38d71e9E
         local.set 2
-        loop  ;; label = @3
-          local.get 5
-          local.get 2
-          i32.store
-          local.get 5
-          i32.const 4
-          i32.add
-          local.tee 5
-          local.get 3
-          i32.lt_u
-          br_if 0 (;@3;)
-        end
+        br 1 (;@1;)
       end
-      local.get 4
-      i32.const 3
-      i32.and
+      local.get 1
+      i32.const 1
+      call $__rust_alloc_zeroed
       local.set 2
     end
-    block  ;; label = @1
-      local.get 2
-      i32.eqz
-      br_if 0 (;@1;)
-      local.get 3
-      local.get 2
-      i32.add
-      local.set 5
-      loop  ;; label = @2
-        local.get 3
-        local.get 1
-        i32.store8
-        local.get 3
-        i32.const 1
-        i32.add
-        local.tee 3
-        local.get 5
-        i32.lt_u
-        br_if 0 (;@2;)
-      end
-    end
-    local.get 0)
-  (func (;320;) (type 2) (param i32 i32 i32) (result i32)
+    local.get 0
+    local.get 1
+    i32.store offset=4
+    local.get 0
+    local.get 2
+    i32.store)
+  (func $_ZN17compiler_builtins3mem6memcmp17h934ee432a6c6c000E (type 2) (param i32 i32 i32) (result i32)
     (local i32 i32 i32)
     i32.const 0
     local.set 3
@@ -41254,27 +40615,12 @@
       local.set 3
     end
     local.get 3)
-  (func (;321;) (type 2) (param i32 i32 i32) (result i32)
+  (func $memcmp (type 2) (param i32 i32 i32) (result i32)
     local.get 0
     local.get 1
     local.get 2
-    call 318)
-  (func (;322;) (type 2) (param i32 i32 i32) (result i32)
-    local.get 0
-    local.get 1
-    local.get 2
-    call 320)
-  (func (;323;) (type 2) (param i32 i32 i32) (result i32)
-    local.get 0
-    local.get 1
-    local.get 2
-    call 317)
-  (func (;324;) (type 2) (param i32 i32 i32) (result i32)
-    local.get 0
-    local.get 1
-    local.get 2
-    call 319)
-  (func (;325;) (type 14) (param i32 i64 i64 i32)
+    call $_ZN17compiler_builtins3mem6memcmp17h934ee432a6c6c000E)
+  (func $__ashlti3 (type 15) (param i32 i64 i64 i32)
     (local i64)
     block  ;; label = @1
       block  ;; label = @2
@@ -41324,7 +40670,7 @@
     local.get 0
     local.get 2
     i64.store offset=8)
-  (func (;326;) (type 15) (param i32 i64 i64 i64 i64)
+  (func $__multi3 (type 16) (param i32 i64 i64 i64 i64)
     (local i64 i64 i64 i64 i64 i64)
     local.get 0
     local.get 3
@@ -41386,7 +40732,7 @@
     i64.add
     i64.add
     i64.store offset=8)
-  (func (;327;) (type 14) (param i32 i64 i64 i32)
+  (func $__lshrti3 (type 15) (param i32 i64 i64 i32)
     (local i64)
     block  ;; label = @1
       block  ;; label = @2
@@ -41438,12 +40784,12 @@
     i64.store offset=8)
   (table (;0;) 179 179 funcref)
   (memory (;0;) 17)
-  (global (;0;) (mut i32) (i32.const 1048576))
-  (global (;1;) i32 (i32.const 1054853))
-  (global (;2;) i32 (i32.const 1054864))
+  (global $__stack_pointer (mut i32) (i32.const 1048576))
+  (global (;1;) i32 (i32.const 1054869))
+  (global (;2;) i32 (i32.const 1054880))
   (export "memory" (memory 0))
-  (export "main" (func 252))
+  (export "main" (func $main))
   (export "__data_end" (global 1))
   (export "__heap_base" (global 2))
-  (elem (;0;) (i32.const 1) func 224 300 249 250 301 223 246 275 282 296 307 229 221 228 244 294 295 242 116 113 108 112 104 111 119 110 115 109 117 114 118 105 107 106 158 162 155 163 164 168 161 159 165 166 156 160 157 169 167 153 83 89 85 88 90 211 96 91 100 204 77 94 75 208 209 76 206 31 33 34 35 47 45 50 51 54 38 26 189 188 197 194 187 202 200 199 201 190 198 195 196 191 186 182 98 214 181 185 175 177 174 184 183 219 73 66 179 178 72 99 217 220 213 212 218 216 74 215 93 120 170 172 173 92 97 205 207 203 171 180 210 124 147 127 128 137 129 135 144 142 126 133 122 136 132 145 123 125 150 139 148 134 149 131 143 121 140 151 130 152 138 146 141 309 271 274 277 289 290 291 286 287 288 303 304 305 306 308)
-  (data (;0;) (i32.const 1048576) "\00/Users/dmitry/Documents/monarch/revm-rwasm/crates/interpreter/src/interpreter/shared_memory.rs\00\01\00\10\00^\00\00\00\e9\00\00\001\00\00\00\01\00\10\00^\00\00\00\00\01\00\00\0e\00\00\00/Users/dmitry/Documents/monarch/revm-rwasm/crates/interpreter/src/interpreter/stack.rs\00\00\80\00\10\00V\00\00\00\ff\00\00\00&\00\00\00\80\00\10\00V\00\00\00\dd\00\00\00\13\00\00\00it is analyzed/Users/dmitry/Documents/monarch/revm-rwasm/crates/interpreter/src/interpreter/contract.rs\00\06\01\10\00Y\00\00\00\22\00\00\009\00\00\00/Users/dmitry/Documents/monarch/revm-rwasm/crates/interpreter/src/instructions/arithmetic.rs\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00p\01\10\00\5c\00\00\00\1e\00\00\00\14\00\00\00p\01\10\00\5c\00\00\00,\00\00\00\14\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\80/Users/dmitry/Documents/monarch/revm-rwasm/crates/interpreter/src/instructions/i256.rs\00\000\02\10\00V\00\00\00U\00\00\00\11\00\00\000\02\10\00V\00\00\00o\00\00\00\11\00\00\00/Users/dmitry/Documents/monarch/revm-rwasm/crates/interpreter/src/instructions/system.rs\a8\02\10\00X\00\00\00F\00\00\00H\00\00\00\a8\02\10\00X\00\00\00F\00\00\00\1d\00\00\00\a8\02\10\00X\00\00\00\88\00\00\00,\00\00\00\c5\d2F\01\86\f7#<\92~}\b2\dc\c7\03\c0\e5\00\b6S\ca\82';{\fa\d8\04]\85\a4p/Users/dmitry/Documents/monarch/revm-rwasm/crates/interpreter/src/instructions/bitwise.rs\00\00\00P\03\10\00Y\00\00\00s\00\00\00*\00\00\00\00\00\00\00\01\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00/Users/dmitry/Documents/monarch/revm-rwasm/crates/interpreter/src/gas/calc.rsassertion failed: value != U256::ZERO\00\00\e0\03\10\00M\00\00\00F\00\00\00\05\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00attempt to divide by zeroassertion failed: mid <= self.len()\0c\00\00\00\00\00\00\00\01\00\00\00\0d\00\00\00\0e\00\00\00\0c\00\00\00\04\00\00\00\0f\00\00\00\10\00\00\00\11\00\00\00\12\00\00\00/Users/dmitry/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ruint-1.11.1/src/algorithms/add.rs\00\00\00\d8\04\10\00e\00\00\00\07\00\00\00'\00\00\00\fd\07\f5\07\ed\07\e5\07\dd\07\d5\07\ce\07\c6\07\bf\07\b7\07\b0\07\a8\07\a1\07\9a\07\92\07\8b\07\84\07}\07v\07o\07h\07a\07[\07T\07M\07G\07@\079\073\07,\07&\07 \07\19\07\13\07\0d\07\07\07\00\07\fa\06\f4\06\ee\06\e8\06\e2\06\dc\06\d6\06\d1\06\cb\06\c5\06\bf\06\ba\06\b4\06\ae\06\a9\06\a3\06\9e\06\98\06\93\06\8d\06\88\06\83\06}\06x\06s\06n\06i\06d\06^\06Y\06T\06O\06J\06E\06@\06<\067\062\06-\06(\06$\06\1f\06\1a\06\16\06\11\06\0c\06\08\06\03\06\ff\05\fa\05\f6\05\f1\05\ed\05\e9\05\e4\05\e0\05\dc\05\d7\05\d3\05\cf\05\cb\05\c6\05\c2\05\be\05\ba\05\b6\05\b2\05\ae\05\aa\05\a6\05\a2\05\9e\05\9a\05\96\05\92\05\8e\05\8a\05\86\05\83\05\7f\05{\05w\05t\05p\05l\05h\05e\05a\05^\05Z\05V\05S\05O\05L\05H\05E\05A\05>\05:\057\054\050\05-\05*\05&\05#\05 \05\1c\05\19\05\16\05\13\05\0f\05\0c\05\09\05\06\05\03\05\00\05\fc\04\f9\04\f6\04\f3\04\f0\04\ed\04\ea\04\e7\04\e4\04\e1\04\de\04\db\04\d8\04\d5\04\d2\04\cf\04\cc\04\ca\04\c7\04\c4\04\c1\04\be\04\bb\04\b9\04\b6\04\b3\04\b0\04\ad\04\ab\04\a8\04\a5\04\a3\04\a0\04\9d\04\9b\04\98\04\95\04\93\04\90\04\8d\04\8b\04\88\04\86\04\83\04\81\04~\04|\04y\04w\04t\04r\04o\04m\04j\04h\04e\04c\04a\04^\04\5c\04Y\04W\04U\04R\04P\04N\04K\04I\04G\04D\04B\04@\04>\04;\049\047\045\042\040\04.\04,\04*\04(\04%\04#\04!\04\1f\04\1d\04\1b\04\19\04\17\04\14\04\12\04\10\04\0e\04\0c\04\0a\04\08\04\06\04\04\04\02\04\00\04Divisor is zero/Users/dmitry/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ruint-1.11.1/src/algorithms/div/mod.rs_\07\10\00i\00\00\005\00\00\00\0a\00\00\00_\07\10\00i\00\00\006\00\00\00\1f\00\00\00_\07\10\00i\00\00\00<\00\00\00\17\00\00\00_\07\10\00i\00\00\00S\00\00\00\19\00\00\00_\07\10\00i\00\00\00[\00\00\00 \00\00\00_\07\10\00i\00\00\00G\00\00\00,\00\00\00_\07\10\00i\00\00\00H\00\00\00\13\00\00\00/Users/dmitry/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ruint-1.11.1/src/algorithms/div/knuth.rs\008\08\10\00k\00\00\00\ba\00\00\00'\00\00\008\08\10\00k\00\00\00\ba\00\00\00\0d\00\00\008\08\10\00k\00\00\00\bb\00\00\00\0f\00\00\008\08\10\00k\00\00\00\bd\00\00\00\0e\00\00\008\08\10\00k\00\00\00x\00\00\00&\00\00\008\08\10\00k\00\00\00y\00\00\00\16\00\00\008\08\10\00k\00\00\00\7f\00\00\00&\00\00\008\08\10\00k\00\00\00\ad\00\00\003\00\00\008\08\10\00k\00\00\00\92\00\00\00;\00\00\008\08\10\00k\00\00\00\92\00\00\00S\00\00\008\08\10\00k\00\00\00\9b\00\00\00;\00\00\008\08\10\00k\00\00\00\a4\00\00\005\00\00\008\08\10\00k\00\00\00\a4\00\00\00I\00\00\00/Users/dmitry/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ruint-1.11.1/src/algorithms/mul.rs\00\00\00t\09\10\00e\00\00\00o\00\00\00\1f\00\00\00t\09\10\00e\00\00\00f\00\00\00&\00\00\00t\09\10\00e\00\00\00q\00\00\00\17\00\00\00Division by zero\0c\0a\10\00\10\00\00\00/Users/dmitry/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ruint-1.11.1/src/bits.rs\00$\0a\10\00[\00\00\00o\00\00\00\1b\00\00\00$\0a\10\00[\00\00\00\12\01\00\00!\00\00\00$\0a\10\00[\00\00\00)\01\00\00\1d\00\00\00$\0a\10\00[\00\00\00*\01\00\00\1e\00\00\00$\0a\10\00[\00\00\00p\01\00\00!\00\00\00$\0a\10\00[\00\00\00p\01\00\00\11\00\00\00$\0a\10\00[\00\00\00\81\01\00\00\1d\00\00\00$\0a\10\00[\00\00\00\82\01\00\00\1e\00\00\00/Users/dmitry/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ruint-1.11.1/src/modular.rs\00\00\00\0b\10\00^\00\00\00\18\00\00\00\0d\00\00\00OverflowSelfdestruct is not supported for this host\00x\0b\10\00+\00\00\00/Users/dmitry/Documents/monarch/revm-rwasm/crates/interpreter/src/host/fluent.rs\ac\0b\10\00P\00\00\00r\00\00\00\09\00\00\00Call is not supported for this host\00\0c\0c\10\00#\00\00\00\ac\0b\10\00P\00\00\00\84\00\00\00\09\00\00\00Create is not supported for this host\00\00\00H\0c\10\00%\00\00\00\ac\0b\10\00P\00\00\00{\00\00\00\09\00\00\00\ff\ff\ff\ff\ff\ff\ff\ff\88\0c\10\00\00\00\00\00\00\00\00\00\00\00\00\00\13\00\00\00\14\00\00\00\15\00\00\00\16\00\00\00\17\00\00\00\18\00\00\00\19\00\00\00\1a\00\00\00\1b\00\00\00\1c\00\00\00\1d\00\00\00\1e\00\00\00\1f\00\00\00 \00\00\00!\00\00\00\22\00\00\00#\00\00\00$\00\00\00%\00\00\00&\00\00\00'\00\00\00(\00\00\00)\00\00\00*\00\00\00+\00\00\00,\00\00\00-\00\00\00.\00\00\00/\00\00\000\00\00\001\00\00\002\00\00\003\00\00\004\00\00\005\00\00\006\00\00\007\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\009\00\00\00:\00\00\00;\00\00\00<\00\00\00=\00\00\00>\00\00\008\00\00\008\00\00\008\00\00\008\00\00\00?\00\00\008\00\00\008\00\00\00@\00\00\00A\00\00\00B\00\00\00C\00\00\00D\00\00\00E\00\00\00F\00\00\00G\00\00\00H\00\00\00I\00\00\00J\00\00\00K\00\00\00L\00\00\00M\00\00\00N\00\00\008\00\00\008\00\00\008\00\00\008\00\00\00O\00\00\00P\00\00\00Q\00\00\00R\00\00\00S\00\00\00T\00\00\00U\00\00\00V\00\00\00W\00\00\00X\00\00\00Y\00\00\00Z\00\00\00[\00\00\00\5c\00\00\008\00\00\008\00\00\00]\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\00^\00\00\00_\00\00\00`\00\00\00a\00\00\00b\00\00\00c\00\00\00d\00\00\00e\00\00\00f\00\00\00g\00\00\00h\00\00\00i\00\00\00j\00\00\00k\00\00\00l\00\00\00m\00\00\00n\00\00\00o\00\00\00p\00\00\00q\00\00\00r\00\00\00s\00\00\00t\00\00\00u\00\00\00v\00\00\00w\00\00\00w\00\00\008\00\00\008\00\00\008\00\00\008\00\00\008\00\00\00x\00\00\00y\00\00\00z\00\00\00{\00\00\00|\00\00\00}\00\00\00~\00\00\00\7f\00\00\00\80\00\00\00\81\00\00\00\82\00\00\00\83\00\00\00w\00\00\00w\00\00\00w\00\00\00w\00\00\00\84\00\00\00\85\00\00\00\86\00\00\00\87\00\00\00\88\00\00\00\89\00\00\00\8a\00\00\00\8b\00\00\00\8c\00\00\00\8d\00\00\00\8e\00\00\00\8f\00\00\00\90\00\00\00\91\00\00\00\92\00\00\00\93\00\00\00\94\00\00\00\95\00\00\00\96\00\00\00\97\00\00\00\98\00\00\00\99\00\00\00\9a\00\00\00\9b\00\00\00\9c\00\00\00\9d\00\00\00\9e\00\00\00\9f\00\00\00\a0\00\00\00\a1\00\00\00\a2\00\00\00\a3\00\00\00library/alloc/src/raw_vec.rscapacity overflow\00\00\00\bc\10\10\00\11\00\00\00\a0\10\10\00\1c\00\00\00\17\02\00\00\05\00\00\00memory allocation of  bytes failed\00\00\e8\10\10\00\15\00\00\00\fd\10\10\00\0d\00\00\00\0c\00\00\00\00\00\00\00\01\00\00\00\a4\00\00\00\10\00\00\00\11\00\00\00\12\00\00\00/Users/dmitry/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bytes-1.5.0/src/bytes.rs\00\a5\00\00\00\a6\00\00\00\a7\00\00\00\a8\00\00\00\a9\00\00\00\aa\00\00\008\11\10\00[\00\00\00\03\04\00\002\00\00\008\11\10\00[\00\00\00\11\04\00\00I\00\00\00\ab\00\00\00\ac\00\00\00\ad\00\00\00abort/Users/dmitry/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bytes-1.5.0/src/lib.rs\00\00\dd\11\10\00Y\00\00\00s\00\00\00\09\00\00\00)\00\00\00p\18\10\00\00\00\00\00index out of bounds: the len is  but the index is \00\00T\12\10\00 \00\00\00t\12\10\00\12\00\00\00: \00\00p\18\10\00\00\00\00\00\98\12\10\00\02\00\00\00\ae\00\00\00\0c\00\00\00\04\00\00\00\af\00\00\00\b0\00\00\00\b1\00\00\00    , ,\0a((\0a,library/core/src/fmt/num.rs\00\d0\12\10\00\1b\00\00\00i\00\00\00\17\00\00\000x00010203040506070809101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899()range start index  out of range for slice of length \c8\13\10\00\12\00\00\00\da\13\10\00\22\00\00\00range end index \0c\14\10\00\10\00\00\00\da\13\10\00\22\00\00\00slice index starts at  but ends at \00,\14\10\00\16\00\00\00B\14\10\00\0d\00\00\00attempted to index slice up to maximum usize`\14\10\00,\00\00\00source slice length () does not match destination slice length (\94\14\10\00\15\00\00\00\a9\14\10\00+\00\00\00H\12\10\00\01\00\00\00TryFromSliceErrorLayoutErrorcalled `Result::unwrap()` on an `Err` value\00\0c\00\00\00\00\00\00\00\01\00\00\00\b2\00\00\00/Users/dmitry/.cargo/registry/src/index.crates.io-6f17d22bba15001f/byteorder-1.5.0/src/lib.rs\00\00\00D\15\10\00]\00\00\00V\08\00\00\1f\00\00\00D\15\10\00]\00\00\00V\08\00\000\00\00\00D\15\10\00]\00\00\00[\08\00\00\1f\00\00\00D\15\10\00]\00\00\00[\08\00\000\00\00\00D\15\10\00]\00\00\00z\08\00\00\0c\00\00\00/Users/dmitry/.cargo/git/checkouts/fluentbase-7646915b8a80fc76/3b54c4c/codec/src/buffer.rs\00\00\f4\15\10\00Z\00\00\00\97\00\00\00\09\00\00\00\f4\15\10\00Z\00\00\00\a9\00\00\00\15\00\00\00\f4\15\10\00Z\00\00\00p\00\00\00\05\00\00\00\f4\15\10\00Z\00\00\00\9d\00\00\00\05\00\00\00\f4\15\10\00Z\00\00\00\9f\00\00\00\05\00\00\00\10\00\00\00\11\00\00\00\12\00\00\00/Users/dmitry/.cargo/git/checkouts/fluentbase-7646915b8a80fc76/3b54c4c/sdk/src/evm.rs\00\00\00\ac\16\10\00U\00\00\00\80\00\00\00\05\00\00\00\ac\16\10\00U\00\00\00\83\00\00\00\05\00\00\00\10\00\00\00\11\00\00\00\12\00\00\00bit-vector capacity exceeded:  > \00\00\000\17\10\00\1e\00\00\00N\17\10\00\03\00\00\00\ff\ff\ff\1f/Users/dmitry/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bitvec-1.0.1/src/vec.rs\00\00h\17\10\00Z\00\00\00T\02\00\00\09\00\00\00/Users/dmitry/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bitvec-1.0.1/src/vec/api.rs\00\00\d4\17\10\00^\00\00\00\bf\01\00\00\09\00\00\00bit-vector capacity exceeded\d4\17\10\00^\00\00\00\d3\00\00\00\0e\00\00\00\10\00\00\00\11\00\00\00\12\00\00\00"))
+  (elem (;0;) (i32.const 1) func $_ZN4core3fmt3num3imp52_$LT$impl$u20$core..fmt..Display$u20$for$u20$u32$GT$3fmt17he696c0e431156bceE $_ZN44_$LT$$RF$T$u20$as$u20$core..fmt..Display$GT$3fmt17h743d7417ec5e8687E $_ZN6bitvec6domain23Domain$LT$M$C$T$C$O$GT$12partial_tail17hfff75a98b443bfcfE $_ZN6bitvec6domain23Domain$LT$M$C$T$C$O$GT$5empty17h140ff1cd60087037E $_ZN42_$LT$$RF$T$u20$as$u20$core..fmt..Debug$GT$3fmt17h02a298d5b218d667E $_ZN4core3ops8function6FnOnce9call_once17h0a34c19583b8c35eE $_ZN4core3ops8function6FnOnce9call_once17hb5106b5780fbc80bE $_ZN4core3ops8function6FnOnce9call_once17h3b98e4a5ab67f033E $_ZN4core3ptr29drop_in_place$LT$$LP$$RP$$GT$17hb7829e134b937c17E $_ZN45_$LT$$LP$$RP$$u20$as$u20$core..fmt..Debug$GT$3fmt17hf0c895c6d907224dE $_ZN4core3ptr26drop_in_place$LT$usize$GT$17h4cf244900c27a4afE $_ZN72_$LT$ruint..from..FromUintError$LT$T$GT$$u20$as$u20$core..fmt..Debug$GT$3fmt17h3e5a37caa37c0f5aE $_ZN5bytes5bytes12static_clone17h500ac9a3757a54f5E $_ZN5bytes5bytes13static_to_vec17h96f59b74c33849d5E $_ZN5bytes5bytes11static_drop17h289b099a1c56c645E $_ZN4core3fmt3num52_$LT$impl$u20$core..fmt..Debug$u20$for$u20$usize$GT$3fmt17hea4032c988ec61f8E $_ZN42_$LT$$RF$T$u20$as$u20$core..fmt..Debug$GT$3fmt17h77f7e4967f331b03E $_ZN16revm_interpreter12instructions5stack3dup17hb03b165fe39aec32E $_ZN16revm_interpreter12instructions5stack3dup17h32f3c26b0e76c05eE $_ZN16revm_interpreter12instructions5stack3dup17h415d9b218b448693E $_ZN16revm_interpreter12instructions5stack3dup17h4e25a27ab54b47ecE $_ZN16revm_interpreter12instructions5stack3dup17h0707228dc2820a4eE $_ZN16revm_interpreter12instructions5stack3dup17h026f962fa3cf71fdE $_ZN16revm_interpreter12instructions5stack3dup17ha9cb1943d6a76f1dE $_ZN16revm_interpreter12instructions5stack3dup17h409b8bde882c231bE $_ZN16revm_interpreter12instructions5stack3dup17hb2e0cf04daa1c383E $_ZN16revm_interpreter12instructions5stack3dup17hf5dd0526919443d9E $_ZN16revm_interpreter12instructions5stack3dup17h96acb7e46e1663a9E $_ZN16revm_interpreter12instructions5stack3dup17h1c230eebeb11518fE $_ZN16revm_interpreter12instructions5stack3dup17h4500136d9af1d4dbE $_ZN16revm_interpreter12instructions5stack3dup17hab6fda39da108179E $_ZN16revm_interpreter12instructions5stack3dup17he6bd311c1db7cb35E $_ZN16revm_interpreter12instructions5stack3dup17h7198652407c83b36E $_ZN16revm_interpreter12instructions5stack4swap17h8a23fda82160c8cbE $_ZN16revm_interpreter12instructions5stack4swap17h6de0f98af0833cb4E $_ZN16revm_interpreter12instructions5stack4swap17h97dccf3922b56a05E $_ZN16revm_interpreter12instructions5stack4swap17hc8784d742c158b14E $_ZN16revm_interpreter12instructions5stack4swap17h5add1b93399dc6b7E $_ZN16revm_interpreter12instructions5stack4swap17hefd3752424be936dE $_ZN16revm_interpreter12instructions5stack4swap17hb59a49f677f6f9caE $_ZN16revm_interpreter12instructions5stack4swap17h47ed2a55173c899fE $_ZN16revm_interpreter12instructions5stack4swap17hc1b9a289b1ba844cE $_ZN16revm_interpreter12instructions5stack4swap17h29016944fbe9194aE $_ZN16revm_interpreter12instructions5stack4swap17ha4bba3bc9e93c158E $_ZN16revm_interpreter12instructions5stack4swap17h5bdff933bac6366dE $_ZN16revm_interpreter12instructions5stack4swap17h647bcf8e44383f36E $_ZN16revm_interpreter12instructions5stack4swap17h150aad087c71f6ebE $_ZN16revm_interpreter12instructions5stack4swap17h632954d2419b6f70E $_ZN16revm_interpreter12instructions5stack4swap17hd6a05e1d0458568aE $_ZN16revm_interpreter12instructions4host3log17h93f072e3455d2123E $_ZN16revm_interpreter12instructions4host3log17h2a5aa94488fda99aE $_ZN16revm_interpreter12instructions4host3log17h1ddbbad50aceb7feE $_ZN16revm_interpreter12instructions4host3log17h13e4bd4e120f2083E $_ZN16revm_interpreter12instructions4host3log17hd9462f6da0590324E $_ZN16revm_interpreter12instructions7control9not_found17h36545584def7de70E $_ZN16revm_interpreter12instructions4host6create17hb891d3e2d8e198baE $_ZN16revm_interpreter12instructions4host4call17hc2dbdd347129afd5E $_ZN16revm_interpreter12instructions4host9call_code17hf4fe3bba01d8f816E $_ZN16revm_interpreter12instructions7control3ret17hc60e36c55594c078E $_ZN16revm_interpreter12instructions4host13delegate_call17ha12cb61ddd2b57ddE $_ZN16revm_interpreter12instructions4host6create17hc55071fd8b1d72bbE $_ZN16revm_interpreter12instructions4host11static_call17h9fe3352b780f5f0bE $_ZN16revm_interpreter12instructions7control6revert17h2b941fd03ee81cecE $_ZN16revm_interpreter12instructions7control7invalid17h6584b5a9a6257abeE $_ZN16revm_interpreter12instructions4host12selfdestruct17h4656683b12421600E $_ZN16revm_interpreter12instructions7control4stop17h9e8d25d1765c5164E $_ZN16revm_interpreter12instructions10arithmetic11wrapped_add17h4eed5397b9455a14E $_ZN16revm_interpreter12instructions10arithmetic12wrapping_mul17hf7a01e00a1e55f8cE $_ZN16revm_interpreter12instructions10arithmetic12wrapping_sub17hfe2bb86b76f74c0dE $_ZN16revm_interpreter12instructions10arithmetic3div17h1febda87ad5fb231E $_ZN16revm_interpreter12instructions10arithmetic4sdiv17h7286a5b2369da035E $_ZN16revm_interpreter12instructions10arithmetic3rem17h94c60e3d8cb43fddE $_ZN16revm_interpreter12instructions10arithmetic4smod17hcd87a0f484d331fcE $_ZN16revm_interpreter12instructions10arithmetic6addmod17hefc70b5b1536eb5fE $_ZN16revm_interpreter12instructions10arithmetic6mulmod17had96f629ce2b1666E $_ZN16revm_interpreter12instructions10arithmetic3exp17h7181ac92d9425db3E $_ZN16revm_interpreter12instructions10arithmetic10signextend17h16bfa4b945689c17E $_ZN16revm_interpreter12instructions7bitwise2lt17hf68d5ba7c18f6965E $_ZN16revm_interpreter12instructions7bitwise2gt17he6a277feab3aef67E $_ZN16revm_interpreter12instructions7bitwise3slt17h3429c75399ed4fdbE $_ZN16revm_interpreter12instructions7bitwise3sgt17hfd1f1c2ddadd0d27E $_ZN16revm_interpreter12instructions7bitwise2eq17h291cb5038eccd265E $_ZN16revm_interpreter12instructions7bitwise6iszero17h2e3d81e1ea0be433E $_ZN16revm_interpreter12instructions7bitwise6bitand17h55004cd35210b725E $_ZN16revm_interpreter12instructions7bitwise5bitor17h2ad41e4a4b92fe8aE $_ZN16revm_interpreter12instructions7bitwise6bitxor17haa2c42d11eb23859E $_ZN16revm_interpreter12instructions7bitwise3not17hb17d3a687b807745E $_ZN16revm_interpreter12instructions7bitwise4byte17hbc2bc06f45c33460E $_ZN16revm_interpreter12instructions7bitwise3shl17ha2f857f4d762683eE $_ZN16revm_interpreter12instructions7bitwise3shr17h9fef52963f92ae00E $_ZN16revm_interpreter12instructions7bitwise3sar17hc3bc1c1944a60874E $_ZN16revm_interpreter12instructions6system9keccak25617hfe500612d3a58902E $_ZN16revm_interpreter12instructions6system7address17hc0bbc0ec2b90caf4E $_ZN16revm_interpreter12instructions4host7balance17hc5033a19f4fecbdbE $_ZN16revm_interpreter12instructions8host_env6origin17h61676736524b230cE $_ZN16revm_interpreter12instructions6system6caller17h2bf7f9aed1859a8aE $_ZN16revm_interpreter12instructions6system9callvalue17h6621d5685c7b5c60E $_ZN16revm_interpreter12instructions6system12calldataload17hc43738ea508d9202E $_ZN16revm_interpreter12instructions6system12calldatasize17h835be6902ac1ac3dE $_ZN16revm_interpreter12instructions6system12calldatacopy17hec567de0366887e9E $_ZN16revm_interpreter12instructions6system8codesize17h8b11876545c208f1E $_ZN16revm_interpreter12instructions6system8codecopy17h25c9c3604444432dE $_ZN16revm_interpreter12instructions8host_env8gasprice17he27e448bffb0a912E $_ZN16revm_interpreter12instructions4host11extcodesize17h1c2c03b5f48265f2E $_ZN16revm_interpreter12instructions4host11extcodecopy17he5f3fe4085b53f99E $_ZN16revm_interpreter12instructions6system14returndatasize17h03eff29db6c997b9E $_ZN16revm_interpreter12instructions6system14returndatacopy17h970c5620137d24d8E $_ZN16revm_interpreter12instructions4host11extcodehash17he079fecf5c4f7d74E $_ZN16revm_interpreter12instructions4host9blockhash17h1ea1e957d4d03281E $_ZN16revm_interpreter12instructions8host_env8coinbase17hc9969e0cb52f7b66E $_ZN16revm_interpreter12instructions8host_env9timestamp17hbdccdd91b34d769fE $_ZN16revm_interpreter12instructions8host_env6number17h80675fe0c6a82a33E $_ZN16revm_interpreter12instructions8host_env10difficulty17h61a27c91f5882979E $_ZN16revm_interpreter12instructions8host_env8gaslimit17h33dee1260903298eE $_ZN16revm_interpreter12instructions8host_env7chainid17h2e99dc944b54a35cE $_ZN16revm_interpreter12instructions4host11selfbalance17hd336897cda90890eE $_ZN16revm_interpreter12instructions8host_env7basefee17hff446d5ee71ff981E $_ZN16revm_interpreter12instructions4host5tload17h26f02c25a7f4146eE $_ZN16revm_interpreter12instructions5stack3pop17h812875fb5a8c44f1E $_ZN16revm_interpreter12instructions6memory5mload17hb2ac6ccc199b41ffE $_ZN16revm_interpreter12instructions6memory6mstore17h92f249c6f88604d3E $_ZN16revm_interpreter12instructions6memory7mstore817h1a455f5a3b816795E $_ZN16revm_interpreter12instructions4host5sload17haacebf1fcf265926E $_ZN16revm_interpreter12instructions4host6sstore17hec6e21385bf0a71dE $_ZN16revm_interpreter12instructions7control4jump17h6ff867663f5bacf0E $_ZN16revm_interpreter12instructions7control5jumpi17h3e7a8d99416b6ef7E $_ZN16revm_interpreter12instructions7control2pc17heefb1fce6aec27f9E $_ZN16revm_interpreter12instructions6memory5msize17h319874c669c7239dE $_ZN16revm_interpreter12instructions6system3gas17hab27ec127225011bE $_ZN16revm_interpreter12instructions7control8jumpdest17he81dc9f788d94ac6E $_ZN16revm_interpreter12instructions5stack4push17hfe54a67bc333c4d6E $_ZN16revm_interpreter12instructions5stack4push17h92817f963690c32bE $_ZN16revm_interpreter12instructions5stack4push17h80a536b0936f1dccE $_ZN16revm_interpreter12instructions5stack4push17h26681f2af15bf4f3E $_ZN16revm_interpreter12instructions5stack4push17hedd84beab58a81b5E $_ZN16revm_interpreter12instructions5stack4push17hf2e8bb50985284a6E $_ZN16revm_interpreter12instructions5stack4push17ha05222dfce6b10abE $_ZN16revm_interpreter12instructions5stack4push17h4f330339ddd48d5aE $_ZN16revm_interpreter12instructions5stack4push17h892800bf823110b9E $_ZN16revm_interpreter12instructions5stack4push17h28f38e5ba31e2093E $_ZN16revm_interpreter12instructions5stack4push17h5ad0db67ee10d7a4E $_ZN16revm_interpreter12instructions5stack4push17hf7708b7beff7c3afE $_ZN16revm_interpreter12instructions5stack4push17hba61c9afd0742688E $_ZN16revm_interpreter12instructions5stack4push17hdd993b2b622fab7cE $_ZN16revm_interpreter12instructions5stack4push17h875681ac83cd731cE $_ZN16revm_interpreter12instructions5stack4push17hd776495f5f1d708cE $_ZN16revm_interpreter12instructions5stack4push17h18df35740233def3E $_ZN16revm_interpreter12instructions5stack4push17hd449f5dd66d0f441E $_ZN16revm_interpreter12instructions5stack4push17h0dabfb3e94cc7bc8E $_ZN16revm_interpreter12instructions5stack4push17h9ea136db769c3630E $_ZN16revm_interpreter12instructions5stack4push17h9eb2d4ca24efeb46E $_ZN16revm_interpreter12instructions5stack4push17h8d6fdedef0d7076aE $_ZN16revm_interpreter12instructions5stack4push17hd10e642b0b849fbdE $_ZN16revm_interpreter12instructions5stack4push17hcf6acec4cf02c2f1E $_ZN16revm_interpreter12instructions5stack4push17hac5e8138a3a0900dE $_ZN16revm_interpreter12instructions5stack4push17h4c66b032170de472E $_ZN16revm_interpreter12instructions5stack4push17h95a8d8073047afd9E $_ZN16revm_interpreter12instructions5stack4push17hcd1fd949a2397f83E $_ZN16revm_interpreter12instructions5stack4push17h33a7c0356be6e348E $_ZN16revm_interpreter12instructions5stack4push17hb1f9da1e5ef9f102E $_ZN16revm_interpreter12instructions5stack4push17h137c26be0667da52E $_ZN16revm_interpreter12instructions5stack4push17h337f4a96c5b95b16E $_ZN69_$LT$core..alloc..layout..LayoutError$u20$as$u20$core..fmt..Debug$GT$3fmt17h424dac20ac50bdadE $_ZN5bytes5bytes21promotable_even_clone17hd468b97c29517d37E $_ZN5bytes5bytes22promotable_even_to_vec17h2e9cd581e931c919E $_ZN5bytes5bytes20promotable_even_drop17hdfd7578dbedae2deE $_ZN5bytes5bytes20promotable_odd_clone17he095523fe87517c4E $_ZN5bytes5bytes21promotable_odd_to_vec17h81b77b5defe28943E $_ZN5bytes5bytes19promotable_odd_drop17h51b1a0502597f726E $_ZN5bytes5bytes12shared_clone17h095e55d9ce1c4f25E $_ZN5bytes5bytes13shared_to_vec17hfb170822ac024a44E $_ZN5bytes5bytes11shared_drop17h95d75e5adfcc5206E $_ZN4core3ptr102drop_in_place$LT$$RF$core..iter..adapters..copied..Copied$LT$core..slice..iter..Iter$LT$u8$GT$$GT$$GT$17h8916d5767b34df94E $_ZN68_$LT$core..fmt..builders..PadAdapter$u20$as$u20$core..fmt..Write$GT$9write_str17h85101c618d2f4861E $_ZN68_$LT$core..fmt..builders..PadAdapter$u20$as$u20$core..fmt..Write$GT$10write_char17h2f9f00c342b8af4cE $_ZN4core3fmt5Write9write_fmt17he38a55ddba5b1872E $_ZN42_$LT$$RF$T$u20$as$u20$core..fmt..Debug$GT$3fmt17h230b339e38f0e400E $_ZN67_$LT$core..array..TryFromSliceError$u20$as$u20$core..fmt..Debug$GT$3fmt17h122553129a7a0e27E)
+  (data $.rodata (i32.const 1048576) "\00/Users/dmitry/Documents/monarch/revm-rwasm/crates/interpreter/src/interpreter/shared_memory.rs\00\01\00\10\00^\00\00\00\e9\00\00\001\00\00\00\01\00\10\00^\00\00\00\00\01\00\00\0e\00\00\00/Users/dmitry/Documents/monarch/revm-rwasm/crates/interpreter/src/interpreter/stack.rs\00\00\80\00\10\00V\00\00\00\ff\00\00\00&\00\00\00\80\00\10\00V\00\00\00\dd\00\00\00\13\00\00\00it is analyzed/Users/dmitry/Documents/monarch/revm-rwasm/crates/interpreter/src/interpreter/contract.rs\00\06\01\10\00Y\00\00\00\22\00\00\009\00\00\00/Users/dmitry/Documents/monarch/revm-rwasm/crates/interpreter/src/instructions/arithmetic.rs\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00p\01\10\00\5c\00\00\00\1e\00\00\00\14\00\00\00p\01\10\00\5c\00\00\00,\00\00\00\14\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\80/Users/dmitry/Documents/monarch/revm-rwasm/crates/interpreter/src/instructions/i256.rs\00\000\02\10\00V\00\00\00U\00\00\00\11\00\00\000\02\10\00V\00\00\00o\00\00\00\11\00\00\00/Users/dmitry/Documents/monarch/revm-rwasm/crates/interpreter/src/instructions/system.rs\a8\02\10\00X\00\00\00F\00\00\00H\00\00\00\a8\02\10\00X\00\00\00F\00\00\00\1d\00\00\00\a8\02\10\00X\00\00\00\88\00\00\00,\00\00\00\c5\d2F\01\86\f7#<\92~}\b2\dc\c7\03\c0\e5\00\b6S\ca\82';{\fa\d8\04]\85\a4p/Users/dmitry/Documents/monarch/revm-rwasm/crates/interpreter/src/instructions/bitwise.rs\00\00\00P\03\10\00Y\00\00\00s\00\00\00*\00\00\00\00\00\00\00\01\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00/Users/dmitry/Documents/monarch/revm-rwasm/crates/interpreter/src/gas/calc.rsassertion failed: value != U256::ZERO\00\00\e0\03\10\00M\00\00\00F\00\00\00\05\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00attempt to divide by zeroassertion failed: mid <= self.len()\09\00\00\00\00\00\00\00\01\00\00\00\0a\00\00\00\0b\00\00\00\0c\00\00\00\04\00\00\00\0c\00\00\00\0d\00\00\00\0e\00\00\00\0f\00\00\00/Users/dmitry/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ruint-1.11.1/src/algorithms/add.rs\00\00\00\d8\04\10\00e\00\00\00\07\00\00\00'\00\00\00\fd\07\f5\07\ed\07\e5\07\dd\07\d5\07\ce\07\c6\07\bf\07\b7\07\b0\07\a8\07\a1\07\9a\07\92\07\8b\07\84\07}\07v\07o\07h\07a\07[\07T\07M\07G\07@\079\073\07,\07&\07 \07\19\07\13\07\0d\07\07\07\00\07\fa\06\f4\06\ee\06\e8\06\e2\06\dc\06\d6\06\d1\06\cb\06\c5\06\bf\06\ba\06\b4\06\ae\06\a9\06\a3\06\9e\06\98\06\93\06\8d\06\88\06\83\06}\06x\06s\06n\06i\06d\06^\06Y\06T\06O\06J\06E\06@\06<\067\062\06-\06(\06$\06\1f\06\1a\06\16\06\11\06\0c\06\08\06\03\06\ff\05\fa\05\f6\05\f1\05\ed\05\e9\05\e4\05\e0\05\dc\05\d7\05\d3\05\cf\05\cb\05\c6\05\c2\05\be\05\ba\05\b6\05\b2\05\ae\05\aa\05\a6\05\a2\05\9e\05\9a\05\96\05\92\05\8e\05\8a\05\86\05\83\05\7f\05{\05w\05t\05p\05l\05h\05e\05a\05^\05Z\05V\05S\05O\05L\05H\05E\05A\05>\05:\057\054\050\05-\05*\05&\05#\05 \05\1c\05\19\05\16\05\13\05\0f\05\0c\05\09\05\06\05\03\05\00\05\fc\04\f9\04\f6\04\f3\04\f0\04\ed\04\ea\04\e7\04\e4\04\e1\04\de\04\db\04\d8\04\d5\04\d2\04\cf\04\cc\04\ca\04\c7\04\c4\04\c1\04\be\04\bb\04\b9\04\b6\04\b3\04\b0\04\ad\04\ab\04\a8\04\a5\04\a3\04\a0\04\9d\04\9b\04\98\04\95\04\93\04\90\04\8d\04\8b\04\88\04\86\04\83\04\81\04~\04|\04y\04w\04t\04r\04o\04m\04j\04h\04e\04c\04a\04^\04\5c\04Y\04W\04U\04R\04P\04N\04K\04I\04G\04D\04B\04@\04>\04;\049\047\045\042\040\04.\04,\04*\04(\04%\04#\04!\04\1f\04\1d\04\1b\04\19\04\17\04\14\04\12\04\10\04\0e\04\0c\04\0a\04\08\04\06\04\04\04\02\04\00\04Divisor is zero/Users/dmitry/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ruint-1.11.1/src/algorithms/div/mod.rs_\07\10\00i\00\00\005\00\00\00\0a\00\00\00_\07\10\00i\00\00\006\00\00\00\1f\00\00\00_\07\10\00i\00\00\00<\00\00\00\17\00\00\00_\07\10\00i\00\00\00S\00\00\00\19\00\00\00_\07\10\00i\00\00\00[\00\00\00 \00\00\00_\07\10\00i\00\00\00G\00\00\00,\00\00\00_\07\10\00i\00\00\00H\00\00\00\13\00\00\00/Users/dmitry/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ruint-1.11.1/src/algorithms/div/knuth.rs\008\08\10\00k\00\00\00\ba\00\00\00'\00\00\008\08\10\00k\00\00\00\ba\00\00\00\0d\00\00\008\08\10\00k\00\00\00\bb\00\00\00\0f\00\00\008\08\10\00k\00\00\00\bd\00\00\00\0e\00\00\008\08\10\00k\00\00\00x\00\00\00&\00\00\008\08\10\00k\00\00\00y\00\00\00\16\00\00\008\08\10\00k\00\00\00\7f\00\00\00&\00\00\008\08\10\00k\00\00\00\ad\00\00\003\00\00\008\08\10\00k\00\00\00\92\00\00\00;\00\00\008\08\10\00k\00\00\00\92\00\00\00S\00\00\008\08\10\00k\00\00\00\9b\00\00\00;\00\00\008\08\10\00k\00\00\00\a4\00\00\005\00\00\008\08\10\00k\00\00\00\a4\00\00\00I\00\00\00/Users/dmitry/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ruint-1.11.1/src/algorithms/mul.rs\00\00\00t\09\10\00e\00\00\00o\00\00\00\1f\00\00\00t\09\10\00e\00\00\00f\00\00\00&\00\00\00t\09\10\00e\00\00\00q\00\00\00\17\00\00\00Division by zero\0c\0a\10\00\10\00\00\00/Users/dmitry/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ruint-1.11.1/src/bits.rs\00$\0a\10\00[\00\00\00o\00\00\00\1b\00\00\00$\0a\10\00[\00\00\00\12\01\00\00!\00\00\00$\0a\10\00[\00\00\00)\01\00\00\1d\00\00\00$\0a\10\00[\00\00\00*\01\00\00\1e\00\00\00$\0a\10\00[\00\00\00p\01\00\00!\00\00\00$\0a\10\00[\00\00\00p\01\00\00\11\00\00\00$\0a\10\00[\00\00\00\81\01\00\00\1d\00\00\00$\0a\10\00[\00\00\00\82\01\00\00\1e\00\00\00/Users/dmitry/.cargo/registry/src/index.crates.io-6f17d22bba15001f/ruint-1.11.1/src/modular.rs\00\00\00\0b\10\00^\00\00\00\18\00\00\00\0d\00\00\00Overflow\0b\00\00\00\04\00\00\00\04\00\00\00\10\00\00\00\0b\00\00\00\04\00\00\00\04\00\00\00\11\00\00\00Selfdestruct is not supported for this host\00\98\0b\10\00+\00\00\00/Users/dmitry/Documents/monarch/revm-rwasm/crates/interpreter/src/host/fluent.rs\cc\0b\10\00P\00\00\00r\00\00\00\09\00\00\00Call is not supported for this host\00,\0c\10\00#\00\00\00\cc\0b\10\00P\00\00\00\84\00\00\00\09\00\00\00Create is not supported for this host\00\00\00h\0c\10\00%\00\00\00\cc\0b\10\00P\00\00\00{\00\00\00\09\00\00\00\ff\ff\ff\ff\ff\ff\ff\ff\a8\0c\10\00\00\00\00\00\00\00\00\00\00\00\00\00\12\00\00\00\13\00\00\00\14\00\00\00\15\00\00\00\16\00\00\00\17\00\00\00\18\00\00\00\19\00\00\00\1a\00\00\00\1b\00\00\00\1c\00\00\00\1d\00\00\00\1e\00\00\00\1f\00\00\00 \00\00\00!\00\00\00\22\00\00\00#\00\00\00$\00\00\00%\00\00\00&\00\00\00'\00\00\00(\00\00\00)\00\00\00*\00\00\00+\00\00\00,\00\00\00-\00\00\00.\00\00\00/\00\00\000\00\00\001\00\00\002\00\00\003\00\00\004\00\00\005\00\00\006\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\008\00\00\009\00\00\00:\00\00\00;\00\00\00<\00\00\00=\00\00\007\00\00\007\00\00\007\00\00\007\00\00\00>\00\00\007\00\00\007\00\00\00?\00\00\00@\00\00\00A\00\00\00B\00\00\00C\00\00\00D\00\00\00E\00\00\00F\00\00\00G\00\00\00H\00\00\00I\00\00\00J\00\00\00K\00\00\00L\00\00\00M\00\00\007\00\00\007\00\00\007\00\00\007\00\00\00N\00\00\00O\00\00\00P\00\00\00Q\00\00\00R\00\00\00S\00\00\00T\00\00\00U\00\00\00V\00\00\00W\00\00\00X\00\00\00Y\00\00\00Z\00\00\00[\00\00\007\00\00\007\00\00\00\5c\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\00]\00\00\00^\00\00\00_\00\00\00`\00\00\00a\00\00\00b\00\00\00c\00\00\00d\00\00\00e\00\00\00f\00\00\00g\00\00\00h\00\00\00i\00\00\00j\00\00\00k\00\00\00l\00\00\00m\00\00\00n\00\00\00o\00\00\00p\00\00\00q\00\00\00r\00\00\00s\00\00\00t\00\00\00u\00\00\00v\00\00\00v\00\00\007\00\00\007\00\00\007\00\00\007\00\00\007\00\00\00w\00\00\00x\00\00\00y\00\00\00z\00\00\00{\00\00\00|\00\00\00}\00\00\00~\00\00\00\7f\00\00\00\80\00\00\00\81\00\00\00\82\00\00\00v\00\00\00v\00\00\00v\00\00\00v\00\00\00\83\00\00\00\84\00\00\00\85\00\00\00\86\00\00\00\87\00\00\00\88\00\00\00\89\00\00\00\8a\00\00\00\8b\00\00\00\8c\00\00\00\8d\00\00\00\8e\00\00\00\8f\00\00\00\90\00\00\00\91\00\00\00\92\00\00\00\93\00\00\00\94\00\00\00\95\00\00\00\96\00\00\00\97\00\00\00\98\00\00\00\99\00\00\00\9a\00\00\00\9b\00\00\00\9c\00\00\00\9d\00\00\00\9e\00\00\00\9f\00\00\00\a0\00\00\00\a1\00\00\00\a2\00\00\00library/alloc/src/raw_vec.rscapacity overflow\00\00\00\dc\10\10\00\11\00\00\00\c0\10\10\00\1c\00\00\00\17\02\00\00\05\00\00\00memory allocation of  bytes failed\00\00\08\11\10\00\15\00\00\00\1d\11\10\00\0d\00\00\00\09\00\00\00\00\00\00\00\01\00\00\00\a3\00\00\00\0d\00\00\00\0e\00\00\00\0f\00\00\00/Users/dmitry/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bytes-1.5.0/src/bytes.rs\00\a4\00\00\00\a5\00\00\00\a6\00\00\00\a7\00\00\00\a8\00\00\00\a9\00\00\00X\11\10\00[\00\00\00\03\04\00\002\00\00\00X\11\10\00[\00\00\00\11\04\00\00I\00\00\00\aa\00\00\00\ab\00\00\00\ac\00\00\00abort/Users/dmitry/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bytes-1.5.0/src/lib.rs\00\00\fd\11\10\00Y\00\00\00s\00\00\00\09\00\00\00)\00\00\00\80\18\10\00\00\00\00\00index out of bounds: the len is  but the index is \00\00t\12\10\00 \00\00\00\94\12\10\00\12\00\00\00: \00\00\80\18\10\00\00\00\00\00\b8\12\10\00\02\00\00\00\ad\00\00\00\0c\00\00\00\04\00\00\00\ae\00\00\00\af\00\00\00\b0\00\00\00    , ,\0a((\0a,library/core/src/fmt/num.rs\00\f0\12\10\00\1b\00\00\00i\00\00\00\17\00\00\000x00010203040506070809101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899()range start index  out of range for slice of length \e8\13\10\00\12\00\00\00\fa\13\10\00\22\00\00\00range end index ,\14\10\00\10\00\00\00\fa\13\10\00\22\00\00\00slice index starts at  but ends at \00L\14\10\00\16\00\00\00b\14\10\00\0d\00\00\00attempted to index slice up to maximum usize\80\14\10\00,\00\00\00source slice length () does not match destination slice length (\b4\14\10\00\15\00\00\00\c9\14\10\00+\00\00\00h\12\10\00\01\00\00\00\ad\00\00\00\04\00\00\00\04\00\00\00\b1\00\00\00TryFromSliceErrorLayoutErrorcalled `Result::unwrap()` on an `Err` value\00\09\00\00\00\00\00\00\00\01\00\00\00\b2\00\00\00/Users/dmitry/.cargo/registry/src/index.crates.io-6f17d22bba15001f/byteorder-1.5.0/src/lib.rs\00\00\00t\15\10\00]\00\00\00V\08\00\00\1f\00\00\00t\15\10\00]\00\00\00V\08\00\000\00\00\00t\15\10\00]\00\00\00[\08\00\00\1f\00\00\00t\15\10\00]\00\00\00[\08\00\000\00\00\00/Users/dmitry/.cargo/git/checkouts/fluentbase-7646915b8a80fc76/68df7da/codec/src/buffer.rs\00\00\14\16\10\00Z\00\00\00\9a\00\00\00\09\00\00\00\14\16\10\00Z\00\00\00\ac\00\00\00\15\00\00\00\14\16\10\00Z\00\00\00\a0\00\00\00\05\00\00\00\14\16\10\00Z\00\00\00\a2\00\00\00\05\00\00\00\0d\00\00\00\0e\00\00\00\0f\00\00\00/Users/dmitry/.cargo/git/checkouts/fluentbase-7646915b8a80fc76/68df7da/sdk/src/evm.rs\00\00\00\bc\16\10\00U\00\00\00r\00\00\00\05\00\00\00\bc\16\10\00U\00\00\00u\00\00\00\05\00\00\00\0d\00\00\00\0e\00\00\00\0f\00\00\00bit-vector capacity exceeded:  > \00\00\00@\17\10\00\1e\00\00\00^\17\10\00\03\00\00\00\ff\ff\ff\1f/Users/dmitry/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bitvec-1.0.1/src/vec.rs\00\00x\17\10\00Z\00\00\00T\02\00\00\09\00\00\00/Users/dmitry/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bitvec-1.0.1/src/vec/api.rs\00\00\e4\17\10\00^\00\00\00\bf\01\00\00\09\00\00\00bit-vector capacity exceeded\e4\17\10\00^\00\00\00\d3\00\00\00\0e\00\00\00\0d\00\00\00\0e\00\00\00\0f\00\00\00"))

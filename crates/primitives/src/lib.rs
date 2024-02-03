@@ -12,6 +12,7 @@ mod bytecode;
 mod constants;
 pub mod db;
 pub mod env;
+mod keccak256;
 #[cfg(feature = "c-kzg")]
 pub mod kzg;
 mod log;
@@ -30,6 +31,7 @@ pub use bytecode::*;
 pub use constants::*;
 pub use env::*;
 pub use hashbrown::{hash_map, hash_set, HashMap, HashSet};
+pub use keccak256::keccak256;
 #[cfg(feature = "c-kzg")]
 pub use kzg::{EnvKzgSettings, KzgSettings};
 pub use log::*;

@@ -2871,6 +2871,7 @@ dependencies = [
  "c-kzg",
  "derive_more",
  "enumn",
+ "fluentbase-sdk",
  "hashbrown",
  "hex",
  "once_cell",
