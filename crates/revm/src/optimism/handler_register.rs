@@ -183,10 +183,10 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
 ) -> Result<(), EVMError<DB::Error>> {
     let is_deposit =
         context.evm.env.cfg.optimism && context.evm.env.tx.optimism.source_hash.is_some();
-    let disable_coinbase_tip = context.evm.env.cfg.optimism && is_deposit;
+    let disable_beneficiary_tip = context.evm.env.cfg.optimism && is_deposit;
 
-    // transfer fee to coinbase/beneficiary.
-    if !disable_coinbase_tip {
+    // transfer fee to beneficiary.
+    if !disable_beneficiary_tip {
         mainnet::reward_beneficiary::<SPEC, EXT, DB>(context, gas)?;
     }
 

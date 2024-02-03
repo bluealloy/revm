@@ -68,7 +68,7 @@ pub struct AccountInfo {
 #[derive(Debug, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Env {
-    pub current_coinbase: Address,
+    pub current_beneficiary: Address,
     pub current_difficulty: U256,
     pub current_gas_limit: U256,
     pub current_number: U256,

@@ -11,9 +11,9 @@ pub fn chainid<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H)
     push!(interpreter, U256::from(host.env().cfg.chain_id));
 }
 
-pub fn coinbase<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn beneficiary<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
     gas!(interpreter, gas::BASE);
-    push_b256!(interpreter, host.env().block.coinbase.into_word());
+    push_b256!(interpreter, host.env().block.beneficiary.into_word());
 }
 
 pub fn timestamp<H: Host>(interpreter: &mut Interpreter, host: &mut H) {

@@ -247,7 +247,7 @@ pub fn execute_test_suite(
 
         // block env
         env.block.number = unit.env.current_number;
-        env.block.coinbase = unit.env.current_coinbase;
+        env.block.beneficiary = unit.env.current_beneficiary;
         env.block.timestamp = unit.env.current_timestamp;
         env.block.gas_limit = unit.env.current_gas_limit;
         env.block.basefee = unit.env.current_base_fee.unwrap_or_default();

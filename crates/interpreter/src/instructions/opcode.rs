@@ -159,7 +159,7 @@ opcodes! {
     0x3E => RETURNDATACOPY => system::returndatacopy::<H, SPEC>,
     0x3F => EXTCODEHASH    => host::extcodehash::<H, SPEC>,
     0x40 => BLOCKHASH      => host::blockhash,
-    0x41 => COINBASE       => host_env::coinbase,
+    0x41 => BENEFICIARY    => host_env::beneficiary,
     0x42 => TIMESTAMP      => host_env::timestamp,
     0x43 => NUMBER         => host_env::number,
     0x44 => DIFFICULTY     => host_env::difficulty::<H, SPEC>,
@@ -604,7 +604,7 @@ const fn opcode_gas_info(opcode: u8, spec: SpecId) -> OpInfo {
             0 // not enabled
         }),
         BLOCKHASH => OpInfo::gas(gas::BLOCKHASH),
-        COINBASE => OpInfo::gas(gas::BASE),
+        BENEFICIARY => OpInfo::gas(gas::BASE),
         TIMESTAMP => OpInfo::gas(gas::BASE),
         NUMBER => OpInfo::gas(gas::BASE),
         DIFFICULTY => OpInfo::gas(gas::BASE),

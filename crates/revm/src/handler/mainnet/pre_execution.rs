@@ -27,13 +27,13 @@ pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
     // set journaling state flag.
     context.evm.journaled_state.set_spec_id(SPEC::SPEC_ID);
 
-    // load coinbase
-    // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
+    // load beneficiary
+    // EIP-3651: Warm BENEFICIARY. Starts the `BENEFICIARY` address warm
     if SPEC::enabled(SHANGHAI) {
         context
             .evm
             .journaled_state
-            .initial_account_load(context.evm.env.block.coinbase, &[], &mut context.evm.db)
+            .initial_account_load(context.evm.env.block.beneficiary, &[], &mut context.evm.db)
             .map_err(EVMError::Database)?;
     }
 

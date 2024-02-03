@@ -18,7 +18,7 @@ fn main() {
     // BenchmarkDB is dummy state that implements Database trait.
     let mut evm = Evm::builder()
         .modify_tx_env(|tx| {
-            // execution globals block hash/gas_limit/coinbase/timestamp..
+            // execution globals block hash/gas_limit/beneficiary/timestamp..
             tx.caller = address!("1000000000000000000000000000000000000000");
             tx.transact_to = TransactTo::Call(address!("0000000000000000000000000000000000000000"));
             //evm.env.tx.data = Bytes::from(hex::decode("30627b7c").unwrap());
