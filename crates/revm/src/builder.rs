@@ -1,7 +1,7 @@
 use crate::{
     db::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef},
     handler::register,
-    primitives::{BlockEnv, CfgEnv, Env, LatestSpec, SpecId, TxEnv},
+    primitives::{BlockEnv, CfgEnv, Env, SpecId, TxEnv},
     Context, Evm, EvmContext, Handler,
 };
 use core::marker::PhantomData;
@@ -29,7 +29,7 @@ impl<'a> Default for EvmBuilder<'a, SetGenericStage, (), EmptyDB> {
         Self {
             evm: EvmContext::new(EmptyDB::default()),
             external: (),
-            handler: Handler::mainnet::<LatestSpec>(),
+            handler: EvmBuilder::<'a, SetGenericStage, (), EmptyDB>::handler(SpecId::LATEST),
             phantom: PhantomData,
         }
     }
@@ -41,7 +41,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
         EvmBuilder {
             evm: self.evm.with_db(EmptyDB::default()),
             external: self.external,
-            handler: Handler::mainnet_with_spec(self.handler.spec_id),
+            handler: EvmBuilder::<'a, SetGenericStage, EXT, EmptyDB>::handler(self.handler.spec_id),
             phantom: PhantomData,
         }
     }
@@ -50,7 +50,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
         EvmBuilder {
             evm: self.evm.with_db(db),
             external: self.external,
-            handler: Handler::mainnet_with_spec(self.handler.spec_id),
+            handler: EvmBuilder::<'a, SetGenericStage, EXT, ODB>::handler(self.handler.spec_id),
             phantom: PhantomData,
         }
     }
@@ -62,7 +62,9 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
         EvmBuilder {
             evm: self.evm.with_db(WrapDatabaseRef(db)),
             external: self.external,
-            handler: Handler::mainnet_with_spec(self.handler.spec_id),
+            handler: EvmBuilder::<'a, SetGenericStage, EXT, WrapDatabaseRef<ODB>>::handler(
+                self.handler.spec_id,
+            ),
             phantom: PhantomData,
         }
     }
@@ -75,7 +77,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
         EvmBuilder {
             evm: self.evm,
             external,
-            handler: Handler::mainnet_with_spec(self.handler.spec_id),
+            handler: EvmBuilder::<'a, SetGenericStage, OEXT, DB>::handler(self.handler.spec_id),
             phantom: PhantomData,
         }
     }
@@ -100,7 +102,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
         EvmBuilder {
             evm: self.evm.with_db(EmptyDB::default()),
             external: self.external,
-            handler: Handler::mainnet_with_spec(self.handler.spec_id),
+            handler: EvmBuilder::<'a, HandlerStage, EXT, EmptyDB>::handler(self.handler.spec_id),
             phantom: PhantomData,
         }
     }
@@ -114,8 +116,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
         EvmBuilder {
             evm: self.evm.with_db(db),
             external: self.external,
-            handler: Handler::mainnet_with_spec(self.handler.spec_id),
-
+            handler: EvmBuilder::<'a, SetGenericStage, EXT, ODB>::handler(self.handler.spec_id),
             phantom: PhantomData,
         }
     }
@@ -129,8 +130,9 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
         EvmBuilder {
             evm: self.evm.with_db(WrapDatabaseRef(db)),
             external: self.external,
-            handler: Handler::mainnet_with_spec(self.handler.spec_id),
-
+            handler: EvmBuilder::<'a, SetGenericStage, EXT, WrapDatabaseRef<ODB>>::handler(
+                self.handler.spec_id,
+            ),
             phantom: PhantomData,
         }
     }
@@ -144,13 +146,32 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
         EvmBuilder {
             evm: self.evm,
             external,
-            handler: Handler::mainnet_with_spec(self.handler.spec_id),
+            handler: EvmBuilder::<'a, SetGenericStage, OEXT, DB>::handler(self.handler.spec_id),
             phantom: PhantomData,
         }
     }
 }
 
 impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> {
+    /// Creates the default handler.
+    ///
+    /// This is useful for adding optimism handle register.
+    fn handler(spec_id: SpecId) -> Handler<'a, Evm<'a, EXT, DB>, EXT, DB> {
+        #[cfg(not(feature = "optimism"))]
+        return Handler::mainnet_with_spec(spec_id);
+
+        #[cfg(feature = "optimism")]
+        {
+            use crate::{handler::register::HandleRegisters, optimism::optimism_handle_register};
+
+            let mut handler = Handler::mainnet_with_spec(spec_id);
+            handler.append_handle_register(HandleRegisters::Plain(
+                optimism_handle_register::<DB, EXT>,
+            ));
+            handler
+        }
+    }
+
     /// Builds the [`Evm`].
     pub fn build(self) -> Evm<'a, EXT, DB> {
         Evm::new(
@@ -273,7 +294,7 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
 
     /// Resets [`Handler`] to default mainnet.
     pub fn reset_handler(mut self) -> Self {
-        self.handler = Handler::mainnet_with_spec(self.handler.spec_id);
+        self.handler = Self::handler(self.handler.spec_id);
         self
     }
 }
