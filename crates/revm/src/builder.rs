@@ -4,8 +4,8 @@ use crate::{
     primitives::{BlockEnv, CfgEnv, CfgEnvWithSpecId, Env, EnvWithSpecId, SpecId, TxEnv},
     Context, Evm, EvmContext, Handler,
 };
-use core::marker::PhantomData;
 use alloc::boxed::Box;
+use core::marker::PhantomData;
 
 /// Evm Builder allows building or modifying EVM.
 /// Note that some of the methods that changes underlying structures
@@ -165,7 +165,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
 
     /// Sets the mainnet handler with latest spec.
     ///
-    /// Enabled only with `optimism_default_handler`` feature.
+    /// Enabled only with `optimism_default_handler` feature.
     #[cfg(feature = "optimism_default_handler")]
     pub fn mainnet(mut self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
         self.handler = Handler::mainnet_with_spec(self.handler.spec_id);
@@ -207,7 +207,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
 
     /// Resets the [`Handler`] and sets base mainnet handler.
     ///
-    /// Enabled only with `optimism_default_handler`` feature.
+    /// Enabled only with `optimism_default_handler` feature.
     #[cfg(feature = "optimism_default_handler")]
     pub fn reset_handler_with_mainnet(mut self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
         self.handler = Handler::mainnet_with_spec(self.handler.spec_id);
