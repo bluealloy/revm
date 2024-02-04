@@ -83,17 +83,6 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         self.handler.spec_id
     }
 
-    /// Returns [`EnvWithSpecId`].
-    pub fn into_env_with_spec_id(self) -> EnvWithSpecId {
-        let spec_id = self.spec_id();
-        EnvWithSpecId {
-            env: self.context.evm.env,
-            spec_id,
-            #[cfg(feature = "optimism")]
-            is_optimism: self.handler.is_optimism(),
-        }
-    }
-
     /// Pre verify transaction by checking Environment, initial gas spend and if caller
     /// has enough balance to pay for the gas.
     #[inline]
@@ -151,6 +140,20 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     #[inline]
     pub fn into_context(self) -> Context<EXT, DB> {
         self.context
+    }
+
+    /// Returns [`EnvWithSpecId`].
+    pub fn into_db_and_env_with_spec_id(self) -> (DB, EnvWithSpecId) {
+        let spec_id = self.spec_id();
+        (
+            self.context.evm.db,
+            EnvWithSpecId {
+                env: self.context.evm.env,
+                spec_id,
+                #[cfg(feature = "optimism")]
+                is_optimism: self.handler.is_optimism(),
+            },
+        )
     }
 
     /// Starts the main loop and returns outcome of the execution.
