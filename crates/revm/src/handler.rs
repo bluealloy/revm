@@ -13,6 +13,7 @@ use crate::{
         Host,
     },
     primitives::{db::Database, spec_to_generic, Spec, SpecId},
+    Evm,
 };
 use alloc::vec::Vec;
 use register::{EvmHandler, HandleRegisters};
@@ -23,6 +24,9 @@ use register::{EvmHandler, HandleRegisters};
 pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
     /// Specification ID.
     pub spec_id: SpecId,
+    #[cfg(feature = "optimism")]
+    /// Is optimism handler.
+    pub is_optimism: bool,
     /// Instruction table type.
     pub instruction_table: Option<InstructionTables<'a, H>>,
     /// Registers that will be called on initialization.
@@ -37,18 +41,51 @@ pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
     pub execution: ExecutionHandler<'a, EXT, DB>,
 }
 
-impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
+impl<'a, EXT, DB: Database + 'a> EvmHandler<'a, EXT, DB> {
     /// Handler for the mainnet
     pub fn mainnet<SPEC: Spec + 'static>() -> Self {
         Self {
             spec_id: SPEC::SPEC_ID,
-            instruction_table: Some(InstructionTables::Plain(make_instruction_table::<H, SPEC>())),
+            #[cfg(feature = "optimism")]
+            is_optimism: false,
+            instruction_table: Some(InstructionTables::Plain(make_instruction_table::<
+                Evm<'a, EXT, DB>,
+                SPEC,
+            >())),
             registers: Vec::new(),
             validation: ValidationHandler::new::<SPEC>(),
             pre_execution: PreExecutionHandler::new::<SPEC>(),
             post_execution: PostExecutionHandler::new::<SPEC>(),
             execution: ExecutionHandler::new::<SPEC>(),
         }
+    }
+
+    /// Is optimism enabled.
+    pub fn is_optimism(&self) -> bool {
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "optimism")] {
+                self.is_optimism
+            } else {
+                false
+            }
+        }
+    }
+
+    /// Handler for optimism
+    #[cfg(feature = "optimism")]
+    pub fn optimism<SPEC: Spec + 'static>() -> Self {
+        let mut handler = Self::mainnet::<SPEC>();
+        handler.is_optimism = true;
+        handler.append_handle_register(HandleRegisters::Plain(
+            crate::optimism::optimism_handle_register::<DB, EXT>,
+        ));
+        handler
+    }
+
+    /// Optimism with spec. Similar to [`Self::mainnet_with_spec`]
+    #[cfg(feature = "optimism")]
+    pub fn optimism_with_spec(spec_id: SpecId) -> Self {
+        spec_to_generic!(spec_id, Self::optimism::<SPEC>())
     }
 
     /// Creates handler with variable spec id, inside it will call `mainnet::<SPEC>` for
@@ -63,12 +100,12 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
     }
 
     /// Take instruction table.
-    pub fn take_instruction_table(&mut self) -> Option<InstructionTables<'a, H>> {
+    pub fn take_instruction_table(&mut self) -> Option<InstructionTables<'a, Evm<'a, EXT, DB>>> {
         self.instruction_table.take()
     }
 
     /// Set instruction table.
-    pub fn set_instruction_table(&mut self, table: InstructionTables<'a, H>) {
+    pub fn set_instruction_table(&mut self, table: InstructionTables<'a, Evm<'a, EXT, DB>>) {
         self.instruction_table = Some(table);
     }
 
@@ -91,9 +128,7 @@ impl<'a, H: Host, EXT: 'a, DB: Database + 'a> Handler<'a, H, EXT, DB> {
     pub fn validation(&self) -> &ValidationHandler<'a, EXT, DB> {
         &self.validation
     }
-}
 
-impl<'a, EXT: 'a, DB: Database + 'a> EvmHandler<'a, EXT, DB> {
     /// Append handle register.
     pub fn append_handle_register(&mut self, register: HandleRegisters<'a, EXT, DB>) {
         register.register(self);

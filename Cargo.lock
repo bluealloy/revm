@@ -2427,6 +2427,7 @@ version = "3.5.0"
 dependencies = [
  "anyhow",
  "auto_impl",
+ "cfg-if",
  "criterion",
  "ethers-contract",
  "ethers-core",

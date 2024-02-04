@@ -10,9 +10,13 @@ use core::marker::PhantomData;
 /// Note that some of the methods that changes underlying structures
 /// will reset the registered handler to default mainnet.
 pub struct EvmBuilder<'a, BuilderStage, EXT, DB: Database> {
+    /// Evm context containing database journal, and precompiles.
     evm: EvmContext<DB>,
+    /// External context that will be used by EVM.
     external: EXT,
+    /// Handler that will be used by EVM. It contains handle registers
     handler: Handler<'a, Evm<'a, EXT, DB>, EXT, DB>,
+    /// Phantom data to mark the stage of the builder.
     phantom: PhantomData<BuilderStage>,
 }
 
@@ -26,10 +30,14 @@ pub struct HandlerStage;
 
 impl<'a> Default for EvmBuilder<'a, SetGenericStage, (), EmptyDB> {
     fn default() -> Self {
+        let is_optimism = cfg!(feature = "optimism_default_handler");
         Self {
             evm: EvmContext::new(EmptyDB::default()),
             external: (),
-            handler: EvmBuilder::<'a, SetGenericStage, (), EmptyDB>::handler(SpecId::LATEST),
+            handler: EvmBuilder::<'a, SetGenericStage, (), EmptyDB>::handler(
+                SpecId::LATEST,
+                is_optimism,
+            ),
             phantom: PhantomData,
         }
     }
@@ -41,7 +49,10 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
         EvmBuilder {
             evm: self.evm.with_db(EmptyDB::default()),
             external: self.external,
-            handler: EvmBuilder::<'a, SetGenericStage, EXT, EmptyDB>::handler(self.handler.spec_id),
+            handler: EvmBuilder::<'a, SetGenericStage, EXT, EmptyDB>::handler(
+                self.handler.spec_id,
+                self.handler.is_optimism(),
+            ),
             phantom: PhantomData,
         }
     }
@@ -50,7 +61,10 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
         EvmBuilder {
             evm: self.evm.with_db(db),
             external: self.external,
-            handler: EvmBuilder::<'a, SetGenericStage, EXT, ODB>::handler(self.handler.spec_id),
+            handler: EvmBuilder::<'a, SetGenericStage, EXT, ODB>::handler(
+                self.handler.spec_id,
+                self.handler.is_optimism(),
+            ),
             phantom: PhantomData,
         }
     }
@@ -64,6 +78,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
             external: self.external,
             handler: EvmBuilder::<'a, SetGenericStage, EXT, WrapDatabaseRef<ODB>>::handler(
                 self.handler.spec_id,
+                self.handler.is_optimism(),
             ),
             phantom: PhantomData,
         }
@@ -77,7 +92,24 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
         EvmBuilder {
             evm: self.evm,
             external,
-            handler: EvmBuilder::<'a, SetGenericStage, OEXT, DB>::handler(self.handler.spec_id),
+            handler: EvmBuilder::<'a, SetGenericStage, OEXT, DB>::handler(
+                self.handler.spec_id,
+                self.handler.is_optimism(),
+            ),
+            phantom: PhantomData,
+        }
+    }
+
+    /// Sets the Optimism handler with latest spec.
+    ///
+    /// If `optimism_default_handler` feature is enabled this is not needed.
+    #[cfg(feature = "optimism")]
+    pub fn optimism(mut self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
+        self.handler = Handler::optimism_with_spec(self.handler.spec_id);
+        EvmBuilder {
+            evm: self.evm,
+            external: self.external,
+            handler: self.handler,
             phantom: PhantomData,
         }
     }
@@ -116,7 +148,10 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
         EvmBuilder {
             evm: self.evm.with_db(EmptyDB::default()),
             external: self.external,
-            handler: EvmBuilder::<'a, HandlerStage, EXT, EmptyDB>::handler(self.handler.spec_id),
+            handler: EvmBuilder::<'a, HandlerStage, EXT, EmptyDB>::handler(
+                self.handler.spec_id,
+                self.handler.is_optimism(),
+            ),
             phantom: PhantomData,
         }
     }
@@ -144,7 +179,10 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
         EvmBuilder {
             evm: self.evm.with_db(db),
             external: self.external,
-            handler: EvmBuilder::<'a, SetGenericStage, EXT, ODB>::handler(self.handler.spec_id),
+            handler: EvmBuilder::<'a, SetGenericStage, EXT, ODB>::handler(
+                self.handler.spec_id,
+                self.handler.is_optimism(),
+            ),
             phantom: PhantomData,
         }
     }
@@ -160,6 +198,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
             external: self.external,
             handler: EvmBuilder::<'a, SetGenericStage, EXT, WrapDatabaseRef<ODB>>::handler(
                 self.handler.spec_id,
+                self.handler.is_optimism(),
             ),
             phantom: PhantomData,
         }
@@ -174,7 +213,10 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
         EvmBuilder {
             evm: self.evm,
             external,
-            handler: EvmBuilder::<'a, SetGenericStage, OEXT, DB>::handler(self.handler.spec_id),
+            handler: EvmBuilder::<'a, SetGenericStage, OEXT, DB>::handler(
+                self.handler.spec_id,
+                self.handler.is_optimism(),
+            ),
             phantom: PhantomData,
         }
     }
@@ -184,19 +226,18 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
     /// Creates the default handler.
     ///
     /// This is useful for adding optimism handle register.
-    fn handler(spec_id: SpecId) -> Handler<'a, Evm<'a, EXT, DB>, EXT, DB> {
-        #[cfg(not(feature = "optimism_default_handler"))]
-        return Handler::mainnet_with_spec(spec_id);
-
-        #[cfg(feature = "optimism_default_handler")]
-        {
-            use crate::{handler::register::HandleRegisters, optimism::optimism_handle_register};
-
-            let mut handler = Handler::mainnet_with_spec(spec_id);
-            handler.append_handle_register(HandleRegisters::Plain(
-                optimism_handle_register::<DB, EXT>,
-            ));
-            handler
+    fn handler(spec_id: SpecId, is_optimism: bool) -> Handler<'a, Evm<'a, EXT, DB>, EXT, DB> {
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "optimism")] {
+                if is_optimism {
+                    Handler::optimism_with_spec(spec_id)
+                } else {
+                    Handler::mainnet_with_spec(spec_id)
+                }
+            } else {
+                let _ = is_optimism;
+                Handler::mainnet_with_spec(spec_id)
+            }
         }
     }
 
@@ -322,7 +363,7 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
 
     /// Resets [`Handler`] to default mainnet.
     pub fn reset_handler(mut self) -> Self {
-        self.handler = Self::handler(self.handler.spec_id);
+        self.handler = Self::handler(self.handler.spec_id, self.handler.is_optimism());
         self
     }
 }
