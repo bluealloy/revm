@@ -1,7 +1,7 @@
 use crate::{
     db::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef},
     handler::register,
-    primitives::{BlockEnv, CfgEnv, Env, SpecId, TxEnv},
+    primitives::{BlockEnv, CfgEnv, CfgEnvWithSpecId, Env, EnvWithSpecId, SpecId, TxEnv},
     Context, Evm, EvmContext, Handler,
 };
 use core::marker::PhantomData;
@@ -95,6 +95,54 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
             handler: EvmBuilder::<'a, SetGenericStage, OEXT, DB>::handler(
                 self.handler.spec_id,
                 self.handler.is_optimism(),
+            ),
+            phantom: PhantomData,
+        }
+    }
+
+    /// Sets Builder with [`CfgEnvWithSpecId`].
+    pub fn with_env_with_spec_id(
+        mut self,
+        env_and_spec_id: EnvWithSpecId,
+    ) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
+        self.evm.env = env_and_spec_id.env;
+        cfg_if::cfg_if! {
+        if #[cfg(feature = "optimism")] {
+            let is_optimism = env_and_spec_id.is_optimism;
+        } else {
+            let is_optimism = false;
+        }};
+        EvmBuilder {
+            evm: self.evm,
+            external: self.external,
+            handler: EvmBuilder::<'a, HandlerStage, EXT, DB>::handler(
+                env_and_spec_id.spec_id,
+                is_optimism,
+            ),
+            phantom: PhantomData,
+        }
+    }
+
+    /// Sets Builder with [`CfgEnvWithSpecId`].
+    pub fn with_cfg_env_with_spec_id(
+        mut self,
+        cfg_env_and_spec_id: CfgEnvWithSpecId,
+    ) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
+        self.evm.env.cfg = cfg_env_and_spec_id.cfg_env;
+
+        cfg_if::cfg_if! {
+        if #[cfg(feature = "optimism")] {
+            let is_optimism = cfg_env_and_spec_id.is_optimism;
+        } else {
+            let is_optimism = false;
+        }};
+
+        EvmBuilder {
+            evm: self.evm,
+            external: self.external,
+            handler: EvmBuilder::<'a, HandlerStage, EXT, DB>::handler(
+                cfg_env_and_spec_id.spec_id,
+                is_optimism,
             ),
             phantom: PhantomData,
         }
