@@ -7,8 +7,8 @@ use crate::{
         SharedMemory,
     },
     primitives::{
-        specification::SpecId, Address, Bytecode, EVMError, EVMResult, Env, ExecutionResult, Log,
-        ResultAndState, TransactTo, B256, U256,
+        specification::SpecId, Address, Bytecode, EVMError, EVMResult, Env, EnvWithSpecId,
+        ExecutionResult, Log, ResultAndState, TransactTo, B256, U256,
     },
     Context, Frame, FrameOrResult, FrameResult,
 };
@@ -81,6 +81,17 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     /// SpecId depends on the handler.
     pub fn spec_id(&self) -> SpecId {
         self.handler.spec_id
+    }
+
+    /// Returns [`EnvWithSpecId`].
+    pub fn into_env_with_spec_id(self) -> EnvWithSpecId {
+        let spec_id = self.spec_id();
+        EnvWithSpecId {
+            env: self.context.evm.env,
+            spec_id,
+            #[cfg(feature = "optimism")]
+            is_optimism: self.handler.is_optimism(),
+        }
     }
 
     /// Pre verify transaction by checking Environment, initial gas spend and if caller
