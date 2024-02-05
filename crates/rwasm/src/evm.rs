@@ -1,7 +1,7 @@
 use crate::{
     db::{Database, DatabaseCommit, DatabaseRef},
-    evm_impl::{EVMImpl, Transact},
     primitives::{specification, EVMError, EVMResult, Env, ExecutionResult},
+    r#impl::{EVMImpl, Transact},
 };
 use alloc::boxed::Box;
 use revm_primitives::{db::WrapDatabaseRef, ResultAndState};

@@ -5,20 +5,22 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[macro_use]
+extern crate fluentbase_sdk;
+#[macro_use]
 extern crate alloc;
 
+mod context;
 pub mod db;
 mod evm;
-mod evm_context;
-mod evm_impl;
 pub mod handler;
-mod journaled_state;
+mod r#impl;
+mod journal;
 
 mod gas;
-pub mod mainnet;
 mod types;
 
 pub type DummyStateDB = InMemoryDB;
+pub use context::EVMData;
 #[cfg(feature = "std")]
 pub use db::{
     CacheState,
@@ -31,10 +33,9 @@ pub use db::{
 };
 pub use db::{Database, DatabaseCommit, DatabaseRef, InMemoryDB};
 pub use evm::{evm_inner, new, EVM};
-pub use evm_context::EVMData;
-pub use evm_impl::{EVMImpl, Transact, CALL_STACK_LIMIT};
 pub use handler::Handler;
-pub use journaled_state::{JournalCheckpoint, JournalEntry, JournaledState};
+pub use journal::{JournalCheckpoint, JournalEntry, JournaledState};
+pub use r#impl::{EVMImpl, Transact, CALL_STACK_LIMIT};
 // reexport `revm_primitives`
 #[doc(inline)]
 pub use revm_primitives as primitives;

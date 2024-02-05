@@ -2,7 +2,7 @@ use crate::{
     db::Database,
     gas::Gas,
     handler::Handler,
-    journaled_state::{JournalCheckpoint, JournaledState},
+    journal::{JournalCheckpoint, JournaledState},
     primitives::{
         keccak256,
         Address,
@@ -48,23 +48,11 @@ struct CallInputsTransfer {
     value: U256,
 }
 
-pub enum CallScheme {
-    /// `CALL`
-    Call,
-    /// `CALLCODE`
-    CallCode,
-    /// `DELEGATECALL`
-    DelegateCall,
-    /// `STATICCALL`
-    StaticCall,
-}
-
 struct CallInputsContext {
     caller: Address,
     address: Address,
     code_address: Address,
     apparent_value: U256,
-    scheme: CallScheme,
 }
 
 struct CallInputs {
@@ -247,7 +235,6 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                         address,
                         code_address: address,
                         apparent_value: tx_value,
-                        scheme: CallScheme::Call,
                     },
                     is_static: false,
                 });

@@ -1,6 +1,6 @@
 use crate::{
     db::Database,
-    journaled_state::JournaledState,
+    journal::JournaledState,
     primitives::{AccountInfo, Address, Bytecode, EVMError, Env, B256, U256},
 };
 
