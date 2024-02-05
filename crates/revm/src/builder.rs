@@ -101,8 +101,8 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
         }
     }
 
-    /// Sets Builder with [`CfgEnvWithHandlerCfg`].
-    pub fn with_env_with_spec_id(
+    /// Sets Builder with [`EnvWithHandlerCfg`].
+    pub fn with_env_with_handler_cfg(
         mut self,
         env_and_spec_id: EnvWithHandlerCfg,
     ) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
@@ -116,7 +116,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
     }
 
     /// Sets Builder with [`CfgEnvWithHandlerCfg`].
-    pub fn with_cfg_env_with_spec_id(
+    pub fn with_cfg_env_with_handler_cfg(
         mut self,
         cfg_env_and_spec_id: CfgEnvWithHandlerCfg,
     ) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
@@ -128,6 +128,19 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
             handler: EvmBuilder::<'a, HandlerStage, EXT, DB>::handler(
                 cfg_env_and_spec_id.handler_cfg,
             ),
+            phantom: PhantomData,
+        }
+    }
+
+    /// Sets Builder with [`HandlerCfg`]
+    pub fn with_handler_cfg(
+        self,
+        handler_cfg: HandlerCfg,
+    ) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
+        EvmBuilder {
+            evm: self.evm,
+            external: self.external,
+            handler: EvmBuilder::<'a, HandlerStage, EXT, DB>::handler(handler_cfg),
             phantom: PhantomData,
         }
     }
@@ -308,7 +321,7 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
     ///
     /// When changed it will reapply all handle registers, this can be
     /// expensive operation depending on registers.
-    pub fn spec_id(mut self, spec_id: SpecId) -> Self {
+    pub fn with_spec_id(mut self, spec_id: SpecId) -> Self {
         self.handler = self.handler.change_spec_id(spec_id);
         EvmBuilder {
             evm: self.evm,
@@ -405,7 +418,7 @@ mod test {
         // build with spec
         Evm::builder()
             .with_empty_db()
-            .spec_id(SpecId::HOMESTEAD)
+            .with_spec_id(SpecId::HOMESTEAD)
             .build();
 
         // with with Env change in multiple places
@@ -451,11 +464,11 @@ mod test {
         // build evm
         let evm = Evm::builder()
             .with_empty_db()
-            .spec_id(SpecId::HOMESTEAD)
+            .with_spec_id(SpecId::HOMESTEAD)
             .build();
 
         // modify evm
-        let evm = evm.modify().spec_id(SpecId::FRONTIER).build();
+        let evm = evm.modify().with_spec_id(SpecId::FRONTIER).build();
         let _ = evm
             .modify()
             .modify_tx_env(|tx| tx.chain_id = Some(2))
