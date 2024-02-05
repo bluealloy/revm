@@ -1,6 +1,6 @@
-pub mod helpers;
+pub mod handler_cfg;
 
-pub use helpers::{CfgEnvWithSpecId, EnvWithSpecId};
+pub use handler_cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
 
 use crate::{
     alloc::vec::Vec, calc_blob_gasprice, Account, Address, Bytes, InvalidHeader,

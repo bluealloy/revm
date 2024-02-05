@@ -129,7 +129,7 @@ fn check_evm_execution<EXT>(
                     "errorMsg": error.unwrap_or_default(),
                     "evmResult": exec_result.as_ref().err().map(|e| e.to_string()).unwrap_or("Ok".to_string()),
                     "postLogsHash": logs_root,
-                    "fork": evm.handler.spec_id(),
+                    "fork": evm.handler.cfg().spec_id,
                     "test": test_name,
                     "d": test.indexes.data,
                     "g": test.indexes.gas,

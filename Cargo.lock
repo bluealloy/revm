@@ -2473,6 +2473,7 @@ dependencies = [
  "bitflags 2.4.2",
  "bitvec",
  "c-kzg",
+ "cfg-if",
  "derive_more",
  "enumn",
  "hashbrown",
