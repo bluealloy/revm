@@ -7,8 +7,8 @@
 The project has 4 main crates that are used to build revm. These are:
 
 - `revm`: The main EVM library.
-- `primitives`: Primitive data types.
 - `interpreter`: Execution loop with instructions.
+- `primitives`: Primitive data types.
 - `precompile`: EVM precompiles.
 
 ## Testing with the binaries
