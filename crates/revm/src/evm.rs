@@ -7,8 +7,8 @@ use crate::{
         SharedMemory,
     },
     primitives::{
-        specification::SpecId, Address, Bytecode, EVMError, EVMResult, Env, ExecutionResult, Log,
-        ResultAndState, TransactTo, B256, U256,
+        specification::SpecId, Address, Bytecode, EVMError, EVMResult, Env, EnvWithHandlerCfg,
+        ExecutionResult, HandlerCfg, Log, ResultAndState, TransactTo, B256, U256,
     },
     Context, Frame, FrameOrResult, FrameResult,
 };
@@ -64,7 +64,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
         mut context: Context<EXT, DB>,
         handler: Handler<'a, Self, EXT, DB>,
     ) -> Evm<'a, EXT, DB> {
-        context.evm.journaled_state.set_spec_id(handler.spec_id);
+        context.evm.journaled_state.set_spec_id(handler.cfg.spec_id);
         Evm { context, handler }
     }
 
@@ -80,7 +80,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     ///
     /// SpecId depends on the handler.
     pub fn spec_id(&self) -> SpecId {
-        self.handler.spec_id
+        self.handler.cfg.spec_id
     }
 
     /// Pre verify transaction by checking Environment, initial gas spend and if caller
@@ -140,6 +140,21 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     #[inline]
     pub fn into_context(self) -> Context<EXT, DB> {
         self.context
+    }
+
+    pub fn handler_cfg(&self) -> &HandlerCfg {
+        &self.handler.cfg
+    }
+
+    /// Returns [`EnvWithHandlerCfg`].
+    pub fn into_db_and_env_with_spec_id(self) -> (DB, EnvWithHandlerCfg) {
+        (
+            self.context.evm.db,
+            EnvWithHandlerCfg {
+                env: self.context.evm.env,
+                handler_cfg: self.handler.cfg,
+            },
+        )
     }
 
     /// Starts the main loop and returns outcome of the execution.

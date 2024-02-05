@@ -1,3 +1,7 @@
+pub mod handler_cfg;
+
+pub use handler_cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
+
 use crate::{
     alloc::vec::Vec, calc_blob_gasprice, Account, Address, Bytes, InvalidHeader,
     InvalidTransaction, Spec, SpecId, B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK,
@@ -79,21 +83,6 @@ impl Env {
     /// Return initial spend gas (Gas needed to execute transaction).
     #[inline]
     pub fn validate_tx<SPEC: Spec>(&self) -> Result<(), InvalidTransaction> {
-        #[cfg(feature = "optimism")]
-        if self.cfg.optimism {
-            // Do not allow for a system transaction to be processed if Regolith is enabled.
-            if self.tx.optimism.is_system_transaction.unwrap_or(false)
-                && SPEC::enabled(SpecId::REGOLITH)
-            {
-                return Err(InvalidTransaction::DepositSystemTxPostRegolith);
-            }
-
-            // Do not perform any extra validation for deposit transactions, they are pre-verified on L1.
-            if self.tx.optimism.source_hash.is_some() {
-                return Ok(());
-            }
-        }
-
         // BASEFEE tx check
         if SPEC::enabled(SpecId::LONDON) {
             if let Some(priority_fee) = self.tx.gas_priority_fee {
@@ -204,13 +193,6 @@ impl Env {
             return Err(InvalidTransaction::RejectCallerWithCode);
         }
 
-        // On Optimism, deposit transactions do not have verification on the nonce
-        // nor the balance of the account.
-        #[cfg(feature = "optimism")]
-        if self.cfg.optimism && self.tx.optimism.source_hash.is_some() {
-            return Ok(());
-        }
-
         // Check that the transaction's nonce is correct
         if let Some(tx) = self.tx.nonce {
             let state = account.info.nonce;
@@ -310,14 +292,6 @@ pub struct CfgEnv {
     /// By default, it is set to `false`.
     #[cfg(feature = "optional_beneficiary_reward")]
     pub disable_beneficiary_reward: bool,
-    /// Enables Optimism's execution changes for deposit transactions and fee
-    /// collection. Hot toggling the optimism field gives applications built
-    /// on revm the ability to switch optimism execution on and off at runtime,
-    /// allowing for features like multichain fork testing. Setting this field
-    /// to false will disable all optimism execution changes regardless of
-    /// compilation with the optimism feature flag.
-    #[cfg(feature = "optimism")]
-    pub optimism: bool,
 }
 
 impl CfgEnv {
@@ -380,16 +354,6 @@ impl CfgEnv {
     pub fn is_beneficiary_reward_disabled(&self) -> bool {
         false
     }
-
-    #[cfg(feature = "optimism")]
-    pub fn is_optimism(&self) -> bool {
-        self.optimism
-    }
-
-    #[cfg(not(feature = "optimism"))]
-    pub fn is_optimism(&self) -> bool {
-        false
-    }
 }
 
 impl Default for CfgEnv {
@@ -414,8 +378,6 @@ impl Default for CfgEnv {
             disable_base_fee: false,
             #[cfg(feature = "optional_beneficiary_reward")]
             disable_beneficiary_reward: false,
-            #[cfg(feature = "optimism")]
-            optimism: false,
         }
     }
 }
@@ -735,52 +697,6 @@ pub enum AnalysisKind {
     /// Perform bytecode analysis.
     #[default]
     Analyse,
-}
-
-#[cfg(test)]
-#[cfg(feature = "optimism")]
-mod op_tests {
-    use super::*;
-
-    #[test]
-    fn test_validate_sys_tx() {
-        // Set the optimism flag to true and mark
-        // the tx as a system transaction.
-        let mut env = Env::default();
-        env.cfg.optimism = true;
-        env.tx.optimism.is_system_transaction = Some(true);
-        assert_eq!(
-            env.validate_tx::<crate::RegolithSpec>(),
-            Err(InvalidTransaction::DepositSystemTxPostRegolith)
-        );
-
-        // Pre-regolith system transactions should be allowed.
-        assert!(env.validate_tx::<crate::BedrockSpec>().is_ok());
-    }
-
-    #[test]
-    fn test_validate_deposit_tx() {
-        // Set the optimism flag and source hash.
-        let mut env = Env::default();
-        env.cfg.optimism = true;
-        env.tx.optimism.source_hash = Some(B256::ZERO);
-        assert!(env.validate_tx::<crate::RegolithSpec>().is_ok());
-    }
-
-    #[test]
-    fn test_validate_tx_against_state_deposit_tx() {
-        // Set the optimism flag and source hash.
-
-        use crate::LatestSpec;
-        let mut env = Env::default();
-        env.cfg.optimism = true;
-        env.tx.optimism.source_hash = Some(B256::ZERO);
-
-        // Nonce and balance checks should be skipped for deposit transactions.
-        assert!(env
-            .validate_tx_against_state::<LatestSpec>(&mut Account::default())
-            .is_ok());
-    }
 }
 
 #[cfg(test)]

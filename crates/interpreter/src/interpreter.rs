@@ -54,7 +54,7 @@ pub struct Interpreter {
 }
 
 /// The result of an interpreter operation.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InterpreterResult {
     /// The result of the instruction execution.
     pub result: InstructionResult,

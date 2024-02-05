@@ -20,10 +20,16 @@ revm-precompile = { path = "../precompile", version = "2.2.0", default-features 
 
 # misc
 auto_impl = { version = "1.1", default-features = false }
+cfg-if = "1.0"
 
 # Optional
-serde = { version = "1.0", default-features = false, features = ["derive", "rc"], optional = true }
-serde_json = { version = "1.0", default-features = false, features = ["alloc"], optional = true }
+serde = { version = "1.0", default-features = false, features = [
+    "derive",
+    "rc",
+], optional = true }
+serde_json = { version = "1.0", default-features = false, features = [
+    "alloc",
+], optional = true }
 
 # ethersdb
 tokio = { version = "1.35", features = [
@@ -42,7 +48,13 @@ indicatif = "0.17"
 
 [features]
 default = ["std", "c-kzg", "secp256k1"]
-std = ["serde?/std", "serde_json?/std", "serde_json?/preserve_order", "revm-interpreter/std", "revm-precompile/std"]
+std = [
+    "serde?/std",
+    "serde_json?/std",
+    "serde_json?/preserve_order",
+    "revm-interpreter/std",
+    "revm-precompile/std",
+]
 serde = ["dep:serde", "dep:serde_json", "revm-interpreter/serde"]
 arbitrary = ["revm-interpreter/arbitrary"]
 asm-keccak = ["revm-interpreter/asm-keccak", "revm-precompile/asm-keccak"]
@@ -50,8 +62,18 @@ asm-keccak = ["revm-interpreter/asm-keccak", "revm-precompile/asm-keccak"]
 test-utils = []
 
 optimism = ["revm-interpreter/optimism", "revm-precompile/optimism"]
+# Optimism default handler enabled Optimism handler register by default in EvmBuilder.
+optimism_default_handler = ["optimism"]
+negate_optimism_default_handler = []
 
-ethersdb = ["std", "tokio", "futures", "ethers-providers", "ethers-core"]
+
+ethersdb = [
+    "std",
+    "tokio",
+    "futures",
+    "ethers-providers",
+    "ethers-core",
+] # Negate optimism default handler 
 
 dev = [
     "memory_limit",

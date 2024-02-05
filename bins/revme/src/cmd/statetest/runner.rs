@@ -129,7 +129,7 @@ fn check_evm_execution<EXT>(
                     "errorMsg": error.unwrap_or_default(),
                     "evmResult": exec_result.as_ref().err().map(|e| e.to_string()).unwrap_or("Ok".to_string()),
                     "postLogsHash": logs_root,
-                    "fork": evm.handler.spec_id(),
+                    "fork": evm.handler.cfg().spec_id,
                     "test": test_name,
                     "d": test.indexes.data,
                     "g": test.indexes.gas,
@@ -240,7 +240,7 @@ pub fn execute_test_suite(
             cache_state.insert_account_with_storage(address, acc_info, info.storage);
         }
 
-        let mut env = Env::default();
+        let mut env = Box::<Env>::default();
         // for mainnet
         env.cfg.chain_id = 1;
         // env.cfg.spec_id is set down the road
