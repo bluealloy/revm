@@ -1,5 +1,4 @@
 use fluentbase_runtime::Runtime;
-use fluentbase_rwasm::rwasm::{Compiler, CompilerConfig, FuncOrExport};
 use hashbrown::HashMap;
 use hex_literal::hex;
 use revm::primitives::{
@@ -11,6 +10,7 @@ use revm::primitives::{
 use revm::EVM;
 use revm_interpreter::CreateScheme;
 use revm_precompile::Bytes;
+use rwasm_codegen::{Compiler, CompilerConfig, FuncOrExport};
 
 fn wat2wasm(wat: &str) -> Vec<u8> {
     wat::parse_str(wat).unwrap()

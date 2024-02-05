@@ -15,10 +15,8 @@ pub fn keccak256<H: Host>(interpreter: &mut Interpreter<'_>, _host: &mut H) {
         let from = as_usize_or_fail!(interpreter, from);
         shared_memory_resize!(interpreter, from, len);
         let mut hash = B256::ZERO;
-        LowLevelSDK::crypto_keccak256(
-            interpreter.shared_memory.slice(from, len),
-            hash.as_mut_slice(),
-        );
+        let data = interpreter.shared_memory.slice(from, len);
+        LowLevelSDK::crypto_keccak256(data.as_ptr(), data.len() as u32, hash.as_mut_ptr());
         hash
     };
 

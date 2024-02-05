@@ -20,7 +20,8 @@ fluentbase-types = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", b
 
 # rwasm runtime
 fluentbase-runtime = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", optional = true }
-fluentbase-rwasm = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", optional = true }
+rwasm = { git = "https://github.com/fluentlabs-xyz/rwasm.git", branch = "devel", optional = true }
+rwasm-codegen = { git = "https://github.com/fluentlabs-xyz/rwasm.git", branch = "devel", optional = true }
 
 #misc
 auto_impl = { version = "1.1", default-features = false }
@@ -51,7 +52,7 @@ serde = ["dep:serde", "revm-interpreter/serde"]
 arbitrary = ["revm-interpreter/arbitrary"]
 
 # enable runtime for fluentbase
-runtime = ["fluentbase-sdk/runtime", "dep:fluentbase-runtime", "dep:fluentbase-rwasm"]
+runtime = ["fluentbase-sdk/runtime", "dep:fluentbase-runtime", "dep:rwasm", "dep:rwasm-codegen"]
 
 optimism = ["revm-interpreter/optimism", "revm-precompile/optimism"]
 

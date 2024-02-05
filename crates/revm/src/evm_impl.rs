@@ -20,8 +20,8 @@ use crate::{
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use auto_impl::auto_impl;
 use core::{fmt, marker::PhantomData};
-use fluentbase_rwasm::rwasm::{Compiler, CompilerConfig, CompilerError, FuncOrExport};
 use fluentbase_types::{Account, AccountDb, STATE_DEPLOY, STATE_MAIN};
+use rwasm_codegen::{Compiler, CompilerConfig, CompilerError, FuncOrExport};
 
 #[cfg(feature = "optimism")]
 use crate::optimism;
@@ -731,6 +731,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                 contract_input_size: contract.input.len() as u32,
                 contract_input: contract.input,
                 contract_value: contract.value,
+                contract_is_static: false,
                 block_hash: Default::default(),
                 block_coinbase: self.data.env.block.coinbase,
                 block_timestamp: self.data.env.block.timestamp.as_limbs()[0],

@@ -15,7 +15,8 @@ fluentbase-types = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", b
 
 # rwasm runtime
 fluentbase-runtime = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel" }
-fluentbase-rwasm = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel" }
+rwasm = { git = "https://github.com/fluentlabs-xyz/rwasm.git", branch = "devel" }
+rwasm-codegen = { git = "https://github.com/fluentlabs-xyz/rwasm.git", branch = "devel" }
 
 hex = "0.4.3"
 hex-literal = "0.4.1"
