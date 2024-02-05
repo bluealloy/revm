@@ -2768,6 +2768,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "revm-rwasm"
+version = "3.5.0"
+dependencies = [
+ "anyhow",
+ "auto_impl",
+ "criterion",
+ "ethers-contract",
+ "ethers-core",
+ "ethers-providers",
+ "fluentbase-codec 0.1.0",
+ "fluentbase-runtime 0.1.0",
+ "fluentbase-sdk",
+ "fluentbase-types 0.1.0",
+ "futures",
+ "hex-literal",
+ "revm-primitives",
+ "rwasm",
+ "rwasm-codegen",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "revm-test"
 version = "0.1.0"
 dependencies = [

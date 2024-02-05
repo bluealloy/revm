@@ -1,8 +1,9 @@
 use crate::Address;
 
 /// EIP-170: Contract code size limit
-/// By default limit is 0x6000 (~384kb)
-pub const MAX_CODE_SIZE: usize = 0x60000;
+/// By default limit is 0x6000 (~24kb)
+pub const MAX_CODE_SIZE: usize = 0x6000;
+pub const RWASM_MAX_CODE_SIZE: usize = 0x60000;
 
 /// Number of blocks hashes that EVM can access in the past
 pub const BLOCK_HASH_HISTORY: usize = 256;
@@ -11,6 +12,7 @@ pub const BLOCK_HASH_HISTORY: usize = 256;
 ///
 /// Limit of maximum initcode size is 2 * MAX_CODE_SIZE
 pub const MAX_INITCODE_SIZE: usize = 2 * MAX_CODE_SIZE;
+pub const RWASM_MAX_INITCODE_SIZE: usize = 2 * MAX_CODE_SIZE;
 
 /// Precompile 3 is special in few places
 pub const PRECOMPILE3: Address =

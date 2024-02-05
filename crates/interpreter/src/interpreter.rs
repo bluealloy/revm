@@ -3,22 +3,20 @@ mod contract;
 mod shared_memory;
 mod stack;
 
+use crate::{primitives::Bytes, Gas, Host, InstructionResult};
+use alloc::boxed::Box;
 pub use analysis::BytecodeLocked;
 pub use contract::Contract;
 pub use shared_memory::{next_multiple_of_32, SharedMemory};
 pub use stack::{Stack, STACK_LIMIT};
 
-use crate::primitives::Bytes;
-use crate::{Gas, Host, InstructionResult};
-use alloc::boxed::Box;
-
 /// EIP-170: Contract code size limit
 ///
-/// By default this limit is 0x6000 (~384kb)
-pub const MAX_CODE_SIZE: usize = 0x60000;
+/// By default this limit is 0x6000 (~24kb)
+pub const MAX_CODE_SIZE: usize = revm_primitives::MAX_CODE_SIZE;
 
 /// EIP-3860: Limit and meter initcode
-pub const MAX_INITCODE_SIZE: usize = 2 * MAX_CODE_SIZE;
+pub const MAX_INITCODE_SIZE: usize = revm_primitives::MAX_INITCODE_SIZE;
 
 #[derive(Debug)]
 pub struct Interpreter<'a> {
@@ -97,7 +95,8 @@ impl<'a> Interpreter<'a> {
     #[inline]
     pub fn program_counter(&self) -> usize {
         // SAFETY: `instruction_pointer` should be at an offset from the start of the bytecode.
-        // In practice this is always true unless a caller modifies the `instruction_pointer` field manually.
+        // In practice this is always true unless a caller modifies the `instruction_pointer` field
+        // manually.
         unsafe {
             self.instruction_pointer
                 .offset_from(self.contract.bytecode.as_ptr()) as usize
@@ -114,8 +113,8 @@ impl<'a> Interpreter<'a> {
         let opcode = unsafe { *self.instruction_pointer };
 
         // Safety: In analysis we are doing padding of bytecode so that we are sure that last
-        // byte instruction is STOP so we are safe to just increment program_counter bcs on last instruction
-        // it will do noop and just stop execution of this contract
+        // byte instruction is STOP so we are safe to just increment program_counter bcs on last
+        // instruction it will do noop and just stop execution of this contract
         self.instruction_pointer = unsafe { self.instruction_pointer.offset(1) };
 
         // execute instruction.

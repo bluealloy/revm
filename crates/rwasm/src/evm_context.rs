@@ -3,7 +3,6 @@ use crate::{
     journaled_state::JournaledState,
     primitives::{AccountInfo, Address, Bytecode, EVMError, Env, B256, U256},
 };
-use revm_precompile::Precompiles;
 
 /// EVM Data contains all the data that EVM needs to execute.
 #[derive(Debug)]
@@ -17,11 +16,6 @@ pub struct EVMData<'a, DB: Database> {
     pub db: &'a mut DB,
     /// Error that happened during execution.
     pub error: Option<DB::Error>,
-    /// Precompiles that are available for evm.
-    pub precompiles: Precompiles,
-    /// Used as temporary value holder to store L1 block info.
-    #[cfg(feature = "optimism")]
-    pub l1_block_info: Option<crate::optimism::L1BlockInfo>,
 }
 
 impl<'a, DB: Database> EVMData<'a, DB> {
@@ -121,15 +115,5 @@ impl<'a, DB: Database> EVMData<'a, DB> {
             .sstore(address, index, value, self.db)
             .map_err(|e| self.error = Some(e))
             .ok()
-    }
-
-    /// Returns transient storage value.
-    pub fn tload(&mut self, address: Address, index: U256) -> U256 {
-        self.journaled_state.tload(address, index)
-    }
-
-    /// Stores transient storage value.
-    pub fn tstore(&mut self, address: Address, index: U256, value: U256) {
-        self.journaled_state.tstore(address, index, value)
     }
 }
