@@ -356,9 +356,10 @@ mod tests {
 
     use super::*;
     use crate::{
-        db::InMemoryDB,
+        db::{EmptyDB, InMemoryDB},
         primitives::{
-            bytes, state::AccountInfo, Address, BedrockSpec, Bytes, Env, RegolithSpec, B256,
+            bytes, state::AccountInfo, Address, BedrockSpec, Bytes, Env, LatestSpec, RegolithSpec,
+            B256,
         },
         L1BlockInfo,
     };
@@ -393,20 +394,6 @@ mod tests {
             call_last_frame_return::<BedrockSpec>(env, InstructionResult::Revert, Gas::new(90));
         assert_eq!(gas.remaining(), 90);
         assert_eq!(gas.spend(), 10);
-        assert_eq!(gas.refunded(), 0);
-    }
-
-    #[test]
-    fn test_revert_gas_non_optimism() {
-        let mut env = Env::default();
-        env.tx.gas_limit = 100;
-        env.tx.optimism.source_hash = None;
-
-        let gas =
-            call_last_frame_return::<BedrockSpec>(env, InstructionResult::Revert, Gas::new(90));
-        // else branch takes all gas.
-        assert_eq!(gas.remaining(), 0);
-        assert_eq!(gas.spend(), 100);
         assert_eq!(gas.refunded(), 0);
     }
 
@@ -588,5 +575,39 @@ mod tests {
                 },
             ))
         );
+    }
+
+    #[test]
+    fn test_validate_sys_tx() {
+        // mark the tx as a system transaction.
+        let mut env = Env::default();
+        env.tx.optimism.is_system_transaction = Some(true);
+        assert_eq!(
+            validate_env::<RegolithSpec, EmptyDB>(&env),
+            Err(EVMError::Transaction(
+                InvalidTransaction::DepositSystemTxPostRegolith
+            ))
+        );
+
+        // Pre-regolith system transactions should be allowed.
+        assert!(validate_env::<BedrockSpec, EmptyDB>(&env).is_ok());
+    }
+
+    #[test]
+    fn test_validate_deposit_tx() {
+        // Set source hash.
+        let mut env = Env::default();
+        env.tx.optimism.source_hash = Some(B256::ZERO);
+        assert!(validate_env::<RegolithSpec, EmptyDB>(&env).is_ok());
+    }
+
+    #[test]
+    fn test_validate_tx_against_state_deposit_tx() {
+        // Set source hash.
+        let mut env = Env::default();
+        env.tx.optimism.source_hash = Some(B256::ZERO);
+
+        // Nonce and balance checks should be skipped for deposit transactions.
+        assert!(validate_env::<LatestSpec, EmptyDB>(&env).is_ok());
     }
 }

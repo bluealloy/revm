@@ -31,7 +31,11 @@ pub struct HandlerStage;
 
 impl<'a> Default for EvmBuilder<'a, SetGenericStage, (), EmptyDB> {
     fn default() -> Self {
-        let is_optimism = cfg!(feature = "optimism_default_handler");
+        let is_optimism = cfg!(all(
+            feature = "optimism_default_handler",
+            not(feature = "negate_optimism_default_handler")
+        ));
+
         Self {
             evm: EvmContext::new(EmptyDB::default()),
             external: (),

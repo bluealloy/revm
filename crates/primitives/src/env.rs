@@ -700,49 +700,6 @@ pub enum AnalysisKind {
 }
 
 #[cfg(test)]
-#[cfg(feature = "optimism")]
-mod op_tests {
-    use super::*;
-
-    #[test]
-    fn test_validate_sys_tx() {
-        // Set the optimism flag to true and mark
-        // the tx as a system transaction.
-        let mut env = Env::default();
-        env.tx.optimism.is_system_transaction = Some(true);
-        assert_eq!(
-            env.validate_tx::<crate::RegolithSpec>(),
-            Err(InvalidTransaction::DepositSystemTxPostRegolith)
-        );
-
-        // Pre-regolith system transactions should be allowed.
-        assert!(env.validate_tx::<crate::BedrockSpec>().is_ok());
-    }
-
-    #[test]
-    fn test_validate_deposit_tx() {
-        // Set the optimism flag and source hash.
-        let mut env = Env::default();
-        env.tx.optimism.source_hash = Some(B256::ZERO);
-        assert!(env.validate_tx::<crate::RegolithSpec>().is_ok());
-    }
-
-    #[test]
-    fn test_validate_tx_against_state_deposit_tx() {
-        // Set the optimism flag and source hash.
-
-        use crate::LatestSpec;
-        let mut env = Env::default();
-        env.tx.optimism.source_hash = Some(B256::ZERO);
-
-        // Nonce and balance checks should be skipped for deposit transactions.
-        assert!(env
-            .validate_tx_against_state::<LatestSpec>(&mut Account::default())
-            .is_ok());
-    }
-}
-
-#[cfg(test)]
 mod tests {
     use super::*;
 

@@ -63,9 +63,16 @@ test-utils = []
 
 optimism = ["revm-interpreter/optimism", "revm-precompile/optimism"]
 # Optimism default handler enabled Optimism handler register by default in EvmBuilder.
-optimism_default_handler = ["optimism"]
+negate_optimism_default_handler = []
 
-ethersdb = ["std", "tokio", "futures", "ethers-providers", "ethers-core"]
+optimism_default_handler = ["optimism"]
+ethersdb = [
+    "std",
+    "tokio",
+    "futures",
+    "ethers-providers",
+    "ethers-core",
+] # Negate optimism default handler 
 
 dev = [
     "memory_limit",
