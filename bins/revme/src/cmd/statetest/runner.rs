@@ -345,7 +345,7 @@ pub fn execute_test_suite(
                 let mut evm = Evm::builder()
                     .with_db(&mut state)
                     .modify_env(|e| *e = env.clone())
-                    .spec_id(spec_id)
+                    .with_spec_id(spec_id)
                     .build();
 
                 // do the deed
@@ -417,7 +417,7 @@ pub fn execute_test_suite(
                 let path = path.display();
                 println!("\nTraces:");
                 let mut evm = Evm::builder()
-                    .spec_id(spec_id)
+                    .with_spec_id(spec_id)
                     .with_db(state)
                     .with_external_context(TracerEip3155::new(Box::new(stdout()), false, false))
                     .append_handler_register(inspector_handle_register)

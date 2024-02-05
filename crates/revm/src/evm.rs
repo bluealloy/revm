@@ -133,7 +133,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         if self.spec_id() == spec_id {
             return self;
         }
-        self.modify().spec_id(spec_id).build()
+        self.modify().with_spec_id(spec_id).build()
     }
 
     /// Returns internal database and external struct.
