@@ -112,9 +112,9 @@ dependencies = [
 
 [[package]]
 name = "alloy-sol-types"
-version = "0.6.0"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "783eb720b73d38f9d4c1fb9890e4db6bc8c708f7aa77d3071a19e06091ecd1c9"
+checksum = "6c08f62ded7ce03513bfb60ef5cad4fff5d4f67eac6feb4df80426b7b9ffb06e"
 dependencies = [
  "alloy-primitives",
  "alloy-sol-macro",
