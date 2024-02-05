@@ -27,6 +27,7 @@ use rwasm_codegen::{Compiler, CompilerConfig, CompilerError, FuncOrExport};
 use crate::optimism;
 
 use fluentbase_sdk::evm::ContractInput;
+use fluentbase_sdk::{LowLevelAPI, LowLevelSDK};
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -788,19 +789,21 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         state: u32,
         shared_memory: &mut SharedMemory,
     ) -> (InstructionResult, Bytes, Gas) {
-        let bytecode = contract.bytecode.original_bytecode_slice();
-        let mut output = vec![0u8; 1024];
-        let input = &contract.input;
-        let err = SDK::rwasm_transact(
-            bytecode,
-            input.as_ref(),
-            output.as_mut_slice(),
-            state,
+        let err = LowLevelSDK::rwasm_transact(
+            contract.address.as_slice(),
+            contract.value.as_slice(),
+            contract.input.as_ref(),
+            &mut [],
             gas_limit as u32,
+            false,
+            is_static,
         );
-        if err < 0 {
+        if err != 0 {
             return (InstructionResult::Revert, Bytes::new(), Gas::new(gas_limit));
         }
+        let output_size = LowLevelSDK::sys_output_size();
+        let mut output = vec![0u8; output_size as usize];
+        LowLevelSDK::sys_read_output(output.as_mut_ptr(), 0, output_size);
         (
             InstructionResult::Stop,
             Bytes::copy_from_slice(&output),
