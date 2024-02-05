@@ -70,7 +70,7 @@ impl CfgEnvWithHandlerCfg {
     /// Enables the optimism feature.
     #[cfg(feature = "optimism")]
     pub fn enable_optimism(&mut self) {
-        self.is_optimism = true;
+        self.handler_cfg.is_optimism = true;
     }
 }
 
@@ -112,37 +112,37 @@ impl EnvWithHandlerCfg {
 
     /// Takes `CfgEnvWithHandlerCfg` and returns new `EnvWithHandlerCfg` instance.
     pub fn new_with_cfg_env(cfg: CfgEnvWithHandlerCfg, block: BlockEnv, tx: TxEnv) -> Self {
-        #[cfg(feature = "optimism")]
-        {
-            let mut new = Self::new(
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "optimism")] {
+                let mut new = Self::new(
+                    Box::new(Env {
+                        cfg: cfg.cfg_env,
+                        block,
+                        tx,
+                    }),
+                    cfg.handler_cfg.spec_id,
+                );
+                if cfg.handler_cfg.is_optimism {
+                    new.enable_optimism()
+                }
+                new
+            } else {
+            Self::new(
                 Box::new(Env {
                     cfg: cfg.cfg_env,
                     block,
                     tx,
                 }),
                 cfg.handler_cfg.spec_id,
-            );
-            if cfg.handler_cfg.is_optimism {
-                new.enable_optimism()
+            )
             }
-            new
         }
-
-        #[cfg(not(feature = "optimism"))]
-        Self::new(
-            Box::new(Env {
-                cfg: cfg.cfg_env,
-                block,
-                tx,
-            }),
-            cfg.handler_cfg.spec_id,
-        )
     }
 
     /// Enables the optimism handle register.
     #[cfg(feature = "optimism")]
     pub fn enable_optimism(&mut self) {
-        self.is_optimism = true;
+        self.handler_cfg.is_optimism = true;
     }
 }
 

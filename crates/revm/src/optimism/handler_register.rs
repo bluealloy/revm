@@ -17,7 +17,7 @@ use alloc::sync::Arc;
 use core::ops::Mul;
 
 pub fn optimism_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, EXT, DB>) {
-    spec_to_generic!(handler.spec_id, {
+    spec_to_generic!(handler.cfg.spec_id, {
         // validate environment
         handler.validation.env = Arc::new(validate_env::<SPEC, DB>);
         // load l1 data

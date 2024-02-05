@@ -46,7 +46,7 @@ impl<'a, EXT, DB: Database + 'a> EvmHandler<'a, EXT, DB> {
     pub fn new(cfg: HandlerCfg) -> Self {
         cfg_if::cfg_if! {
             if #[cfg(feature = "optimism")] {
-                if is_optimism {
+                if cfg.is_optimism {
                     Handler::optimism_with_spec(cfg.spec_id)
                 } else {
                     Handler::mainnet_with_spec(cfg.spec_id)
