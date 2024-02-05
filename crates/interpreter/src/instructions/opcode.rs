@@ -63,22 +63,21 @@ macro_rules! opcodes {
             map
         };
 
+        /// Make instruction table.
+        pub const fn make_instruction_table<H: Host, SPEC: Spec>() -> InstructionTable<H> {
+            let mut result: InstructionTable<H> = [control::not_found; 256];
+            $(result[$val] = $f;)*
+            result
+        }
+
         /// Returns the instruction function for the given opcode and spec.
-        pub fn instruction<H: Host, SPEC: Spec>(opcode: u8) -> Instruction<H> {
+        pub const fn instruction<H: Host, SPEC: Spec>(opcode: u8) -> Instruction<H> {
             match opcode {
                 $($name => $f,)*
                 _ => control::not_found,
             }
         }
     };
-}
-
-/// Make instruction table.
-pub fn make_instruction_table<H: Host, SPEC: Spec>() -> InstructionTable<H> {
-    core::array::from_fn(|i| {
-        debug_assert!(i <= u8::MAX as usize);
-        instruction::<H, SPEC>(i as u8)
-    })
 }
 
 /// Make boxed instruction table that calls `outer` closure for every instruction.

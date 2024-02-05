@@ -10,7 +10,7 @@ use revm_precompile::primitives::{BlockEnv, Bytecode, CfgEnv, Env, LondonSpec, T
 #[no_mangle]
 extern "C" fn main() {
     // read input
-    let mut ctx = ExecutionContext::default();
+    let ctx = ExecutionContext::default();
     // init contract
     let contract = Contract::new(
         ExecutionContext::contract_input(),

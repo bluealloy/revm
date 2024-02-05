@@ -20,6 +20,7 @@ use crate::{
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use auto_impl::auto_impl;
 use core::{fmt, marker::PhantomData};
+use fluentbase_codec::Encoder;
 use fluentbase_types::{Account, AccountDb, STATE_DEPLOY, STATE_MAIN};
 use rwasm_codegen::{Compiler, CompilerConfig, CompilerError, FuncOrExport};
 
@@ -27,7 +28,6 @@ use rwasm_codegen::{Compiler, CompilerConfig, CompilerError, FuncOrExport};
 use crate::optimism;
 
 use fluentbase_sdk::evm::ContractInput;
-use fluentbase_sdk::{LowLevelAPI, LowLevelSDK};
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -716,7 +716,6 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         state: u32,
         _shared_memory: &mut SharedMemory,
     ) -> (InstructionResult, Bytes, Gas) {
-        use fluentbase_codec::Encoder;
         use fluentbase_runtime::{Runtime, RuntimeContext};
         let bytecode = Bytes::copy_from_slice(contract.bytecode.original_bytecode_slice());
         let hash_keccak256 = contract.bytecode.hash_slow();

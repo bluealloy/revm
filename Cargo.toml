@@ -3,6 +3,21 @@ resolver = "2"
 members = ["bins/*", "crates/*", "e2e"]
 default-members = ["crates/revm"]
 
+[workspace.dependencies]
+#fluentbase-codec = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
+#fluentbase-sdk = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
+#fluentbase-runtime = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel" }
+#fluentbase-types = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
+fluentbase-codec = { path = "../fluentbase/crates/codec", default-features = false }
+fluentbase-sdk = { path = "../fluentbase/crates/sdk", default-features = false }
+fluentbase-runtime = { path = "../fluentbase/crates/runtime", default-features = false }
+fluentbase-types = { path = "../fluentbase/crates/types", default-features = false }
+
+# rwasm
+rwasm = { git = "https://github.com/fluentlabs-xyz/rwasm.git", branch = "devel" }
+rwasm-codegen = { git = "https://github.com/fluentlabs-xyz/rwasm.git", branch = "devel" }
+
+
 [profile.release]
 panic = "abort"
 lto = true

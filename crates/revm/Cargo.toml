@@ -14,14 +14,14 @@ revm-interpreter = { path = "../interpreter", version = "1.3.0", default-feature
 revm-precompile = { path = "../precompile", version = "2.2.0", default-features = false }
 
 # rwasm
-fluentbase-codec = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
-fluentbase-sdk = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
-fluentbase-types = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
+fluentbase-codec = { workspace = true, default-features = false }
+fluentbase-sdk = { workspace = true, default-features = false, features = ["evm"] }
+fluentbase-types = { workspace = true, default-features = false }
 
 # rwasm runtime
-fluentbase-runtime = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", optional = true }
-rwasm = { git = "https://github.com/fluentlabs-xyz/rwasm.git", branch = "devel", optional = true }
-rwasm-codegen = { git = "https://github.com/fluentlabs-xyz/rwasm.git", branch = "devel", optional = true }
+fluentbase-runtime = { workspace = true, optional = true }
+rwasm = { workspace = true, optional = true }
+rwasm-codegen = { workspace = true, optional = true }
 
 #misc
 auto_impl = { version = "1.1", default-features = false }

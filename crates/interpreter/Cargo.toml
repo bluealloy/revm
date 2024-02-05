@@ -13,8 +13,7 @@ readme = "../../README.md"
 revm-primitives = { path = "../primitives", version = "1.3.0", default-features = false }
 
 # rwasm
-fluentbase-sdk = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false, features = ["evm"] }
-#fluentbase-sdk = { path = "../../../fluentbase/sdk", default-features = false }
+fluentbase-sdk = { workspace = true, default-features = false, features = ["evm"] }
 
 # optional
 serde = { version = "1.0", default-features = false, features = ["derive", "rc"], optional = true }
