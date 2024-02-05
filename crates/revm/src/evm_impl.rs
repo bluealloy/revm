@@ -791,7 +791,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
     ) -> (InstructionResult, Bytes, Gas) {
         let err = LowLevelSDK::rwasm_transact(
             contract.address.as_slice(),
-            contract.value.as_slice(),
+            contract.value.as_le_slice(),
             contract.input.as_ref(),
             &mut [],
             gas_limit as u32,
