@@ -182,9 +182,9 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
     }
 
     /// Creates the Handler with variable SpecId, inside it will call function with Generic Spec.
-    pub fn change_spec_id(mut self, spec_id: SpecId) -> EvmHandler<'a, EXT, DB> {
+    pub fn modify_spec_id(&mut self, spec_id: SpecId) {
         if self.cfg.spec_id == spec_id {
-            return self;
+            return;
         }
 
         let registers = core::mem::take(&mut self.registers);
@@ -195,7 +195,7 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
             handler.append_handle_register(register)
         }
         handler.cfg = self.cfg();
-        handler
+        *self = handler;
     }
 }
 
