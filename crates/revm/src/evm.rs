@@ -7,7 +7,7 @@ use crate::{
         SharedMemory,
     },
     primitives::{
-        specification::SpecId, Address, BlockEnv, Bytecode, EVMError, EVMResult, Env,
+        specification::SpecId, Address, BlockEnv, Bytecode, CfgEnv, EVMError, EVMResult, Env,
         EnvWithHandlerCfg, ExecutionResult, HandlerCfg, Log, ResultAndState, TransactTo, TxEnv,
         B256, U256,
     },
@@ -111,6 +111,17 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         self.handler.post_execution().end(&mut self.context, output)
     }
 
+    /// Returns the reference of handler configuration
+    #[inline]
+    pub fn handler_cfg(&self) -> &HandlerCfg {
+        &self.handler.cfg
+    }
+
+    #[inline]
+    pub fn cfg(&self) -> &CfgEnv {
+        &self.env().cfg
+    }
+
     /// Returns the reference of transaction
     #[inline]
     pub fn tx(&self) -> &TxEnv {
@@ -162,10 +173,6 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     #[inline]
     pub fn into_context(self) -> Context<EXT, DB> {
         self.context
-    }
-
-    pub fn handler_cfg(&self) -> &HandlerCfg {
-        &self.handler.cfg
     }
 
     /// Returns database and [`EnvWithHandlerCfg`].
@@ -344,8 +351,11 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 }
 
 impl<EXT, DB: Database> Host for Evm<'_, EXT, DB> {
-    fn env(&mut self) -> &mut Env {
-        self.context.evm.env()
+    fn env_mut(&mut self) -> &mut Env {
+        &mut self.context.evm.env
+    }
+    fn env(&self) -> &Env {
+        &self.context.evm.env
     }
 
     fn block_hash(&mut self, number: U256) -> Option<B256> {
