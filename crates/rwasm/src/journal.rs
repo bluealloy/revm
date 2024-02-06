@@ -14,7 +14,7 @@ use crate::{
         KECCAK_EMPTY,
         U256,
     },
-    types::{InstructionResult, SelfDestructResult},
+    types::SelfDestructResult,
 };
 use alloc::vec::Vec;
 use core::mem;
@@ -161,10 +161,10 @@ impl JournaledState {
     ) -> Result<(), ExitCode> {
         // load accounts
         self.load_account(*from, db)
-            .map_err(|_| InstructionResult::FatalExternalError)?;
+            .map_err(|_| ExitCode::FatalExternalError)?;
 
         self.load_account(*to, db)
-            .map_err(|_| InstructionResult::FatalExternalError)?;
+            .map_err(|_| ExitCode::FatalExternalError)?;
 
         // sub balance from
         let from_account = &mut self.state.get_mut(from).unwrap();
@@ -172,7 +172,7 @@ impl JournaledState {
         let from_balance = &mut from_account.info.balance;
         *from_balance = from_balance
             .checked_sub(balance)
-            .ok_or(InstructionResult::InsufficientBalance)?;
+            .ok_or(ExitCode::InsufficientBalance)?;
 
         // add balance to
         let to_account = &mut self.state.get_mut(to).unwrap();
@@ -180,7 +180,7 @@ impl JournaledState {
         let to_balance = &mut to_account.info.balance;
         *to_balance = to_balance
             .checked_add(balance)
-            .ok_or(InstructionResult::OverflowPayment)?;
+            .ok_or(ExitCode::OverflowPayment)?;
         // Overflow of U256 balance is not possible to happen on mainnet. We don't bother to return
         // funds from from_acc.
 
@@ -215,7 +215,7 @@ impl JournaledState {
         caller: Address,
         address: Address,
         balance: U256,
-    ) -> Result<JournalCheckpoint, InstructionResult> {
+    ) -> Result<JournalCheckpoint, ExitCode> {
         // Enter subroutine
         let checkpoint = self.checkpoint();
 
@@ -229,7 +229,7 @@ impl JournaledState {
         // Account is not precompile.
         if account.info.code_hash != KECCAK_EMPTY || account.info.nonce != 0 {
             self.checkpoint_revert(checkpoint);
-            return Err(InstructionResult::CreateCollision);
+            return Err(ExitCode::CreateCollision);
         }
 
         // set account status to created.
@@ -256,7 +256,7 @@ impl JournaledState {
         // Add balance to created account, as we already have target here.
         let Some(new_balance) = account.info.balance.checked_add(balance) else {
             self.checkpoint_revert(checkpoint);
-            return Err(InstructionResult::OverflowPayment);
+            return Err(ExitCode::OverflowPayment);
         };
         account.info.balance = new_balance;
 

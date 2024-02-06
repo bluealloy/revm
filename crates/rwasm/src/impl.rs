@@ -2,10 +2,9 @@ use crate::{
     db::Database,
     gas::Gas,
     handler::Handler,
-    journal::{JournalCheckpoint, JournaledState},
+    journal::JournaledState,
     primitives::{
         keccak256,
-        Address,
         Bytecode,
         Bytes,
         EVMError,
@@ -17,12 +16,21 @@ use crate::{
         TransactTo,
         U256,
     },
+    types::{
+        CallCreateResult,
+        CallInputs,
+        CallInputsContext,
+        CallInputsTransfer,
+        CreateInputs,
+        PreparedCall,
+        PreparedCreate,
+    },
     EVMData,
 };
 use core::marker::PhantomData;
 use fluentbase_sdk::{LowLevelAPI, LowLevelSDK};
 use fluentbase_types::{AccountDb, ExitCode, STATE_DEPLOY, STATE_MAIN};
-use revm_primitives::{CreateScheme, B256, RWASM_MAX_CODE_SIZE};
+use revm_primitives::{CreateScheme, RWASM_MAX_CODE_SIZE};
 use rwasm_codegen::{Compiler, CompilerConfig, CompilerError, FuncOrExport};
 
 /// EVM call stack limit.
@@ -32,71 +40,6 @@ pub struct EVMImpl<'a, GSPEC: Spec, DB: Database> {
     pub data: EVMData<'a, DB>,
     pub handler: Handler<DB>,
     _pd: PhantomData<GSPEC>,
-}
-
-struct CreateInputs {
-    caller: Address,
-    value: U256,
-    init_code: Bytes,
-    salt: Option<U256>,
-    gas_limit: u64,
-}
-
-struct CallInputsTransfer {
-    source: Address,
-    target: Address,
-    value: U256,
-}
-
-struct CallInputsContext {
-    caller: Address,
-    address: Address,
-    code_address: Address,
-    apparent_value: U256,
-}
-
-struct CallInputs {
-    contract: Address,
-    gas_limit: u64,
-    transfer: CallInputsTransfer,
-    input: Bytes,
-    context: CallInputsContext,
-    is_static: bool,
-}
-
-struct PreparedCreate {
-    created_address: Address,
-    gas: Gas,
-    checkpoint: JournalCheckpoint,
-    bytecode: Bytes,
-    caller: Address,
-    value: U256,
-}
-
-struct CallCreateResult {
-    result: ExitCode,
-    created_address: Option<Address>,
-    gas: Gas,
-    return_value: Bytes,
-}
-
-impl CallCreateResult {
-    fn from_error(result: ExitCode, gas: Gas) -> Self {
-        Self {
-            result,
-            created_address: None,
-            gas,
-            return_value: Bytes::new(),
-        }
-    }
-}
-
-struct PreparedCall {
-    gas: Gas,
-    checkpoint: JournalCheckpoint,
-    bytecode: Bytes,
-    code_hash: B256,
-    input: Bytes,
 }
 
 /// EVM transaction interface.
@@ -446,9 +389,10 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         &mut self,
         bytecode: &Bytes,
         input: &Bytes,
-        _state: u32,
+        state: u32,
         fuel: Gas,
     ) -> (ExitCode, Bytes, Gas) {
+        let mut fuel_remaining = fuel.remaining() as u32;
         let err_code = LowLevelSDK::sys_exec(
             bytecode.as_ptr(),
             bytecode.len() as u32,
@@ -456,7 +400,8 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             input.len() as u32,
             core::ptr::null_mut(),
             0,
-            fuel.remaining() as u32,
+            &mut fuel_remaining as *mut u32,
+            state,
         );
         let output_size = LowLevelSDK::sys_output_size();
         let mut output_buffer = vec![0u8; output_size as usize];

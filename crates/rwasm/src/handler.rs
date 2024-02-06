@@ -118,7 +118,7 @@ impl<DB: Database> Handler<DB> {
 }
 
 mod mainnet {
-    use crate::{gas::Gas, types::InstructionResult, EVMData};
+    use crate::{gas::Gas, EVMData};
     use fluentbase_types::ExitCode;
     use revm_primitives::{
         db::Database,
@@ -139,7 +139,7 @@ mod mainnet {
     #[inline]
     pub(crate) fn handle_call_return<SPEC: Spec>(
         env: &Env,
-        call_result: InstructionResult,
+        call_result: ExitCode,
         returned_gas: Gas,
     ) -> Gas {
         let mut gas = Gas::new(env.tx.gas_limit);
@@ -288,7 +288,7 @@ mod mainnet {
             let mut env = Env::default();
             env.tx.gas_limit = 100;
 
-            let gas = handle_call_return::<CancunSpec>(&env, InstructionResult::Ok, Gas::new(90));
+            let gas = handle_call_return::<CancunSpec>(&env, ExitCode::Ok, Gas::new(90));
             assert_eq!(gas.remaining(), 90);
             assert_eq!(gas.spend(), 10);
             assert_eq!(gas.refunded(), 0);
@@ -302,12 +302,12 @@ mod mainnet {
             let mut return_gas = Gas::new(90);
             return_gas.record_refund(30);
 
-            let gas = handle_call_return::<CancunSpec>(&env, InstructionResult::Ok, return_gas);
+            let gas = handle_call_return::<CancunSpec>(&env, ExitCode::Ok, return_gas);
             assert_eq!(gas.remaining(), 90);
             assert_eq!(gas.spend(), 10);
             assert_eq!(gas.refunded(), 30);
 
-            let gas = handle_call_return::<CancunSpec>(&env, InstructionResult::Panic, return_gas);
+            let gas = handle_call_return::<CancunSpec>(&env, ExitCode::Panic, return_gas);
             assert_eq!(gas.remaining(), 90);
             assert_eq!(gas.spend(), 10);
             assert_eq!(gas.refunded(), 0);
@@ -318,8 +318,7 @@ mod mainnet {
             let mut env = Env::default();
             env.tx.gas_limit = 100;
 
-            let gas =
-                handle_call_return::<CancunSpec>(&env, InstructionResult::Panic, Gas::new(90));
+            let gas = handle_call_return::<CancunSpec>(&env, ExitCode::Panic, Gas::new(90));
             assert_eq!(gas.remaining(), 90);
             assert_eq!(gas.spend(), 10);
             assert_eq!(gas.refunded(), 0);

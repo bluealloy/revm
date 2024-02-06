@@ -1211,6 +1211,7 @@ dependencies = [
 name = "fluentbase-runtime"
 version = "0.1.0"
 dependencies = [
+ "byteorder",
  "fluentbase-poseidon 0.1.0",
  "fluentbase-types 0.1.0",
  "fluentbase-zktrie 0.1.0",
@@ -1242,6 +1243,7 @@ dependencies = [
 name = "fluentbase-sdk"
 version = "0.1.0"
 dependencies = [
+ "byteorder",
  "fluentbase-codec 0.1.0",
  "fluentbase-runtime 0.1.0",
  "fluentbase-types 0.1.0",
@@ -2719,6 +2721,7 @@ dependencies = [
  "revm",
  "revm-interpreter",
  "revm-precompile",
+ "revm-rwasm",
  "rwasm",
  "rwasm-codegen",
  "wat",
