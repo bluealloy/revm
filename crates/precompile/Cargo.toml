@@ -26,7 +26,7 @@ c-kzg = { version = "0.4.0", default-features = false, optional = true }
 
 # ecRecover precompile
 k256 = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
-secp256k1 = { version = "0.28.1", default-features = false, features = [
+secp256k1 = { version = "0.28.2", default-features = false, features = [
     "alloc",
     "recovery",
 ], optional = true }
