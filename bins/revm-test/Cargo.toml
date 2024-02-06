@@ -12,7 +12,7 @@ microbench = "0.5"
 alloy-sol-macro = "0.6.2"
 alloy-sol-types = "0.6.2"
 regex = "1.10.3"
-eyre = "0.6.8"
+eyre = "0.6.12"
 
 
 [[bin]]
