@@ -371,6 +371,21 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             };
         }
 
+        let mut bytes = match Self::translate_wasm_to_rwasm(&bytes, "main") {
+            Err(_) => {
+                self.data
+                    .journaled_state
+                    .checkpoint_revert(prepared_create.checkpoint);
+                return CallCreateResult {
+                    result: ExitCode::CompilationError,
+                    created_address: Some(prepared_create.created_address),
+                    gas,
+                    return_value: bytes,
+                };
+            }
+            Ok(result) => result,
+        };
+
         // if we have enough gas
         self.data.journaled_state.checkpoint_commit();
         self.data.journaled_state.set_code(
@@ -390,7 +405,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         bytecode: &Bytes,
         input: &Bytes,
         state: u32,
-        fuel: Gas,
+        mut fuel: Gas,
     ) -> (ExitCode, Bytes, Gas) {
         let mut fuel_remaining = fuel.remaining() as u32;
         let err_code = LowLevelSDK::sys_exec(
@@ -406,6 +421,8 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         let output_size = LowLevelSDK::sys_output_size();
         let mut output_buffer = vec![0u8; output_size as usize];
         LowLevelSDK::sys_read_output(output_buffer.as_mut_ptr(), 0, output_size);
+        let fuel_spent = fuel.remaining() as u32 - fuel_remaining;
+        fuel.record_cost(fuel_spent as u64);
         (err_code.into(), output_buffer.into(), fuel)
     }
 

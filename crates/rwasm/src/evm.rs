@@ -29,30 +29,30 @@ use revm_primitives::{db::WrapDatabaseRef, ResultAndState};
 /// /// # Example
 ///
 /// ```
-/// # use revm_rwasm::EVM;        // Assuming this struct is in 'your_crate_name'
+/// # use revm_rwasm::RWASM;        // Assuming this struct is in 'your_crate_name'
 /// # struct SomeDatabase;  // Mocking a database type for the purpose of this example
 /// # struct Env;           // Assuming the type Env is defined somewhere
 ///
-/// let evm: EVM<SomeDatabase> = EVM::new();
+/// let evm: RWASM<SomeDatabase> = RWASM::new();
 /// assert!(evm.db.is_none());
 /// ```
 #[derive(Clone, Debug)]
-pub struct EVM<DB> {
+pub struct RWASM<DB> {
     pub env: Env,
     pub db: Option<DB>,
 }
 
-pub fn new<DB>() -> EVM<DB> {
-    EVM::new()
+pub fn new<DB>() -> RWASM<DB> {
+    RWASM::new()
 }
 
-impl<DB> Default for EVM<DB> {
+impl<DB> Default for RWASM<DB> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<DB: Database + DatabaseCommit> EVM<DB> {
+impl<DB: Database + DatabaseCommit> RWASM<DB> {
     /// Execute transaction and apply result to database
     pub fn transact_commit(&mut self) -> Result<ExecutionResult, EVMError<DB::Error>> {
         let ResultAndState { result, state } = self.transact()?;
@@ -61,7 +61,7 @@ impl<DB: Database + DatabaseCommit> EVM<DB> {
     }
 }
 
-impl<DB: Database> EVM<DB> {
+impl<DB: Database> RWASM<DB> {
     /// Do checks that could make transaction fail before call/create
     pub fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
         if let Some(db) = self.db.as_mut() {
@@ -91,7 +91,7 @@ impl<DB: Database> EVM<DB> {
     }
 }
 
-impl<'a, DB: DatabaseRef> EVM<DB> {
+impl<'a, DB: DatabaseRef> RWASM<DB> {
     /// Do checks that could make transaction fail before call/create
     pub fn preverify_transaction_ref(&self) -> Result<(), EVMError<DB::Error>> {
         if let Some(db) = self.db.as_ref() {
@@ -121,13 +121,13 @@ impl<'a, DB: DatabaseRef> EVM<DB> {
     }
 }
 
-impl<DB> EVM<DB> {
-    /// Creates a new [EVM] instance with the default environment,
+impl<DB> RWASM<DB> {
+    /// Creates a new [RWASM] instance with the default environment,
     pub fn new() -> Self {
         Self::with_env(Default::default())
     }
 
-    /// Creates a new [EVM] instance with the given environment.
+    /// Creates a new [RWASM] instance with the given environment.
     pub fn with_env(env: Env) -> Self {
         Self { env, db: None }
     }

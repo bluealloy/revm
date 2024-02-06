@@ -32,7 +32,7 @@ pub use db::{
     TransitionState,
 };
 pub use db::{Database, DatabaseCommit, DatabaseRef, InMemoryDB};
-pub use evm::{evm_inner, new, EVM};
+pub use evm::{evm_inner, new, RWASM};
 pub use handler::Handler;
 pub use journal::{JournalCheckpoint, JournalEntry, JournaledState};
 pub use r#impl::{EVMImpl, Transact, CALL_STACK_LIMIT};

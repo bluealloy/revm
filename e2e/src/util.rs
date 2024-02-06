@@ -24,8 +24,8 @@ pub(crate) fn wat2wasm(wat: &str) -> Vec<u8> {
 
 #[derive(Default, Clone)]
 pub(crate) struct TestingContext {
-    accounts: HashMap<Address, AccountInfo>,
-    sender: Option<Address>,
+    pub(crate) accounts: HashMap<Address, AccountInfo>,
+    pub(crate) sender: Option<Address>,
 }
 
 impl TestingContext {
@@ -94,40 +94,40 @@ impl TestingContext {
     }
 }
 
-impl revm::DatabaseCommit for TestingContext {
-    fn commit(&mut self, _changes: HashMap<Address, Account>) {
-        todo!()
-    }
-}
-
-impl revm::Database for TestingContext {
-    type Error = ();
-
-    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
-        if let Some(acc) = self.accounts.get(&address) {
-            return Ok(Some(acc.clone()));
-        }
-        self.accounts.insert(address, AccountInfo::default());
-        Ok(Some(self.accounts.get(&address).cloned().unwrap()))
-    }
-
-    fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
-        for account in self.accounts.values() {
-            if account.code_hash == code_hash {
-                return Ok(account.code.clone().unwrap());
-            }
-        }
-        panic!("not possible now :(")
-    }
-
-    fn storage(&mut self, _address: Address, _index: U256) -> Result<U256, Self::Error> {
-        todo!()
-    }
-
-    fn block_hash(&mut self, _number: U256) -> Result<B256, Self::Error> {
-        todo!()
-    }
-}
+// impl revm::DatabaseCommit for TestingContext {
+//     fn commit(&mut self, _changes: HashMap<Address, Account>) {
+//         todo!()
+//     }
+// }
+//
+// impl revm::Database for TestingContext {
+//     type Error = ();
+//
+//     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
+//         if let Some(acc) = self.accounts.get(&address) {
+//             return Ok(Some(acc.clone()));
+//         }
+//         self.accounts.insert(address, AccountInfo::default());
+//         Ok(Some(self.accounts.get(&address).cloned().unwrap()))
+//     }
+//
+//     fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
+//         for account in self.accounts.values() {
+//             if account.code_hash == code_hash {
+//                 return Ok(account.code.clone().unwrap());
+//             }
+//         }
+//         panic!("not possible now :(")
+//     }
+//
+//     fn storage(&mut self, _address: Address, _index: U256) -> Result<U256, Self::Error> {
+//         todo!()
+//     }
+//
+//     fn block_hash(&mut self, _number: U256) -> Result<B256, Self::Error> {
+//         todo!()
+//     }
+// }
 
 pub(crate) struct SuccessResult {
     pub(crate) reason: Eval,

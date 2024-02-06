@@ -244,7 +244,7 @@ mod mainnet {
 
         let result = match call_result {
             ExitCode::Ok => ExecutionResult::Success {
-                reason: Eval::Stop,
+                reason: Eval::Return,
                 gas_used: final_gas_used,
                 gas_refunded,
                 logs,
