@@ -78,7 +78,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> Transact<DB::Error> for EVMImpl<'a
 
 impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
     pub fn new(db: &'a mut DB, env: &'a mut Env) -> Self {
-        let journaled_state = JournaledState::new(GSPEC::SPEC_ID);
+        let journaled_state = JournaledState::new();
         Self {
             data: EVMData {
                 env,

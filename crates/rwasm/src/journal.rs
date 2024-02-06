@@ -19,7 +19,6 @@ use crate::{
 use alloc::vec::Vec;
 use core::mem;
 use fluentbase_types::ExitCode;
-use revm_primitives::SpecId;
 
 /// JournalState is internal EVM state that is used to contain state and track changes to that
 /// state. It contains journal of changes that happened to state so that they can be reverted.
@@ -34,10 +33,6 @@ pub struct JournaledState {
     pub depth: usize,
     /// journal with changes that happened between calls.
     pub journal: Vec<Vec<JournalEntry>>,
-    /// Ethereum before EIP-161 differently defined empty and not-existing account
-    /// Spec is needed for two things SpuriousDragon's `EIP-161 State clear`,
-    /// and for Cancun's `EIP-6780: SELFDESTRUCT in same transaction`
-    pub spec: SpecId,
 }
 
 impl JournaledState {
@@ -51,13 +46,12 @@ impl JournaledState {
     /// # Note
     ///
     /// Precompile addresses should be sorted.
-    pub fn new(spec: SpecId) -> JournaledState {
+    pub fn new() -> JournaledState {
         Self {
             state: HashMap::new(),
             logs: Vec::new(),
             journal: vec![vec![]],
             depth: 0,
-            spec,
         }
     }
 
@@ -518,17 +512,8 @@ impl JournaledState {
         address: Address,
         db: &mut DB,
     ) -> Result<(bool, bool), DB::Error> {
-        let is_spurious_dragon_enabled = SpecId::enabled(self.spec, SPURIOUS_DRAGON);
         let (acc, is_cold) = self.load_account(address, db)?;
-
-        let exist = if is_spurious_dragon_enabled {
-            !acc.is_empty()
-        } else {
-            let is_existing = !acc.is_loaded_as_not_existing();
-            let is_touched = acc.is_touched();
-            is_existing || is_touched
-        };
-        Ok((is_cold, exist))
+        Ok((is_cold, !acc.is_empty()))
     }
 
     /// Loads code.
