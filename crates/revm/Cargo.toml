@@ -32,7 +32,7 @@ serde_json = { version = "1.0", default-features = false, features = [
 ], optional = true }
 
 # ethersdb
-tokio = { version = "1.35", features = [
+tokio = { version = "1.36", features = [
     "rt-multi-thread",
     "macros",
 ], optional = true }
