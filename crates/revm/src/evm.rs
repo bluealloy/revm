@@ -129,11 +129,8 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     }
 
     /// Modify spec id, this will create new EVM that matches this spec id.
-    pub fn modify_spec_id(self, spec_id: SpecId) -> Self {
-        if self.spec_id() == spec_id {
-            return self;
-        }
-        self.modify().with_spec_id(spec_id).build()
+    pub fn modify_spec_id(&mut self, spec_id: SpecId) {
+        self.handler.modify_spec_id(spec_id);
     }
 
     /// Returns internal database and external struct.

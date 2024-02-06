@@ -322,7 +322,7 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
     /// When changed it will reapply all handle registers, this can be
     /// expensive operation depending on registers.
     pub fn with_spec_id(mut self, spec_id: SpecId) -> Self {
-        self.handler = self.handler.change_spec_id(spec_id);
+        self.handler.modify_spec_id(spec_id);
         EvmBuilder {
             evm: self.evm,
             external: self.external,
