@@ -18,6 +18,8 @@ use crate::{
 use alloc::vec::Vec;
 use register::{EvmHandler, HandleRegisters};
 
+use self::register::{HandleRegister, HandleRegisterBox};
+
 /// Handler acts as a proxy and allow to define different behavior for different
 /// sections of the code. This allows nice integration of different chains or
 /// to disable some mainnet behavior.
@@ -38,7 +40,7 @@ pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
     pub execution: ExecutionHandler<'a, EXT, DB>,
 }
 
-impl<'a, EXT, DB: Database + 'a> EvmHandler<'a, EXT, DB> {
+impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
     /// Created new Handler with given configuration.
     ///
     /// Internaly it calls `mainnet_with_spec` with the given spec id.
@@ -141,6 +143,33 @@ impl<'a, EXT, DB: Database + 'a> EvmHandler<'a, EXT, DB> {
         self.registers.push(register);
     }
 
+    /// Append plain handle register.
+    pub fn append_handle_register_plain(&mut self, register: HandleRegister<'a, EXT, DB>) {
+        register(self);
+        self.registers.push(HandleRegisters::Plain(register));
+    }
+
+    /// Append boxed handle register.
+    pub fn append_handle_register_box(&mut self, register: HandleRegisterBox<'a, EXT, DB>) {
+        register(self);
+        self.registers.push(HandleRegisters::Box(register));
+    }
+
+    /// Pop last handle register and reapply all registers that are left.
+    pub fn pop_handle_register(&mut self) -> Option<HandleRegisters<'a, EXT, DB>> {
+        let out = self.registers.pop();
+        if out.is_some() {
+            let registers = core::mem::take(&mut self.registers);
+            let mut base_handler = Handler::mainnet_with_spec(self.cfg.spec_id);
+            // apply all registers to default handeler and raw mainnet instruction table.
+            for register in registers {
+                base_handler.append_handle_register(register)
+            }
+            *self = base_handler;
+        }
+        out
+    }
+
     /// Creates the Handler with Generic Spec.
     pub fn create_handle_generic<SPEC: Spec + 'static>(&mut self) -> EvmHandler<'a, EXT, DB> {
         let registers = core::mem::take(&mut self.registers);
@@ -167,5 +196,40 @@ impl<'a, EXT, DB: Database + 'a> EvmHandler<'a, EXT, DB> {
         }
         handler.cfg = self.cfg();
         handler
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use core::cell::RefCell;
+
+    use crate::{db::EmptyDB, primitives::EVMError};
+    use alloc::{rc::Rc, sync::Arc};
+
+    use super::*;
+
+    #[test]
+    fn test_handler_register_pop() {
+        let register = |inner: &Rc<RefCell<i32>>| -> HandleRegisterBox<'_, (), EmptyDB> {
+            let inner = inner.clone();
+            Box::new(move |h| {
+                *inner.borrow_mut() += 1;
+                h.post_execution.output = Arc::new(|_, _| Err(EVMError::Custom("test".to_string())))
+            })
+        };
+
+        let mut handler = EvmHandler::<(), EmptyDB>::new(HandlerCfg::new(SpecId::LATEST));
+        let test = Rc::new(RefCell::new(0));
+
+        handler.append_handle_register_box(register(&test));
+        assert_eq!(*test.borrow(), 1);
+
+        handler.append_handle_register_box(register(&test));
+        assert_eq!(*test.borrow(), 2);
+
+        assert!(handler.pop_handle_register().is_some());
+
+        // first handler is reapplied
+        assert_eq!(*test.borrow(), 3);
     }
 }

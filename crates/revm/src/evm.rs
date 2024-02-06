@@ -146,8 +146,8 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         &self.handler.cfg
     }
 
-    /// Returns [`EnvWithHandlerCfg`].
-    pub fn into_db_and_env_with_spec_id(self) -> (DB, EnvWithHandlerCfg) {
+    /// Returns database and [`EnvWithHandlerCfg`].
+    pub fn into_db_and_env_with_handler_cfg(self) -> (DB, EnvWithHandlerCfg) {
         (
             self.context.evm.db,
             EnvWithHandlerCfg {
