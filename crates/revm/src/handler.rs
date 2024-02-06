@@ -144,13 +144,13 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
     }
 
     /// Append plain handle register.
-    pub fn append_handled_register_plain(&mut self, register: HandleRegister<'a, EXT, DB>) {
+    pub fn append_handler_register_plain(&mut self, register: HandleRegister<'a, EXT, DB>) {
         register(self);
         self.registers.push(HandleRegisters::Plain(register));
     }
 
     /// Append boxed handle register.
-    pub fn append_handled_register_box(&mut self, register: HandleRegisterBox<'a, EXT, DB>) {
+    pub fn append_handler_register_box(&mut self, register: HandleRegisterBox<'a, EXT, DB>) {
         register(self);
         self.registers.push(HandleRegisters::Box(register));
     }
@@ -221,10 +221,10 @@ mod test {
         let mut handler = EvmHandler::<(), EmptyDB>::new(HandlerCfg::new(SpecId::LATEST));
         let test = Rc::new(RefCell::new(0));
 
-        handler.append_handled_register_box(register(&test));
+        handler.append_handler_register_box(register(&test));
         assert_eq!(*test.borrow(), 1);
 
-        handler.append_handled_register_box(register(&test));
+        handler.append_handler_register_box(register(&test));
         assert_eq!(*test.borrow(), 2);
 
         assert!(handler.pop_handle_register().is_some());
