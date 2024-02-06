@@ -73,7 +73,7 @@ ethersdb = [
     "futures",
     "ethers-providers",
     "ethers-core",
-] # Negate optimism default handler 
+] # Negate optimism default handler
 
 dev = [
     "memory_limit",
