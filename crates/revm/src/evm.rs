@@ -117,9 +117,16 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         &self.handler.cfg
     }
 
+    /// Returns the reference of Env configuration
     #[inline]
     pub fn cfg(&self) -> &CfgEnv {
         &self.env().cfg
+    }
+
+    /// Returns the mutable reference of Env configuration
+    #[inline]
+    pub fn cfg_mut(&mut self) -> &mut CfgEnv {
+        &mut self.context.evm.env.cfg
     }
 
     /// Returns the reference of transaction
