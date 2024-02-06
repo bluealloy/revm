@@ -79,7 +79,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@clippy
-      - run: cargo +nightly clippy --workspace --all-targets --all-features
+      - run: cargo clippy --workspace --all-targets --all-features
         env:
           RUSTFLAGS: -Dwarnings
 
@@ -105,4 +105,4 @@ jobs:
       - uses: dtolnay/rust-toolchain@nightly
         with:
           components: rustfmt
-      - run: cargo +nightly fmt --all --check
+      - run: cargo fmt --all --check
