@@ -115,11 +115,11 @@ impl EnvWithHandlerCfg {
         cfg_if::cfg_if! {
             if #[cfg(feature = "optimism")] {
                 let mut new = Self::new(
-                    Box::new(Env {
-                        cfg: cfg.cfg_env,
+                    Env::boxed(
+                        cfg.cfg_env,
                         block,
                         tx,
-                    }),
+                    ),
                     cfg.handler_cfg.spec_id,
                 );
                 if cfg.handler_cfg.is_optimism {
@@ -128,11 +128,11 @@ impl EnvWithHandlerCfg {
                 new
             } else {
             Self::new(
-                Box::new(Env {
-                    cfg: cfg.cfg_env,
+                Env::boxed(
+                    cfg.cfg_env,
                     block,
                     tx,
-                }),
+                ),
                 cfg.handler_cfg.spec_id,
             )
             }

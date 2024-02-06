@@ -7,8 +7,9 @@ use crate::{
         SharedMemory,
     },
     primitives::{
-        specification::SpecId, Address, Bytecode, EVMError, EVMResult, Env, EnvWithHandlerCfg,
-        ExecutionResult, HandlerCfg, Log, ResultAndState, TransactTo, B256, U256,
+        specification::SpecId, Address, BlockEnv, Bytecode, EVMError, EVMResult, Env,
+        EnvWithHandlerCfg, ExecutionResult, HandlerCfg, Log, ResultAndState, TransactTo, TxEnv,
+        B256, U256,
     },
     Context, Frame, FrameOrResult, FrameResult,
 };
@@ -108,6 +109,30 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             .initial_tx_gas(&self.context.evm.env)?;
         let output = self.transact_preverified_inner(initial_gas_spend);
         self.handler.post_execution().end(&mut self.context, output)
+    }
+
+    /// Returns the reference of transaction
+    #[inline]
+    pub fn tx(&self) -> &TxEnv {
+        &self.context.evm.env.tx
+    }
+
+    /// Returns the mutable reference of transaction
+    #[inline]
+    pub fn tx_mut(&mut self) -> &mut TxEnv {
+        &mut self.context.evm.env.tx
+    }
+
+    /// Returns the reference of block
+    #[inline]
+    pub fn block(&self) -> &BlockEnv {
+        &self.context.evm.env.block
+    }
+
+    /// Returns the mutable reference of block
+    #[inline]
+    pub fn block_mut(&mut self) -> &mut BlockEnv {
+        &mut self.context.evm.env.block
     }
 
     /// Transact transaction

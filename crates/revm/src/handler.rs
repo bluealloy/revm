@@ -84,7 +84,7 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
     pub fn optimism<SPEC: Spec + 'static>() -> Self {
         let mut handler = Self::mainnet::<SPEC>();
         handler.cfg.is_optimism = true;
-        handler.append_handle_register(HandleRegisters::Plain(
+        handler.append_handled_register(HandleRegisters::Plain(
             crate::optimism::optimism_handle_register::<DB, EXT>,
         ));
         handler
@@ -138,19 +138,19 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
     }
 
     /// Append handle register.
-    pub fn append_handle_register(&mut self, register: HandleRegisters<'a, EXT, DB>) {
+    pub fn append_handled_register(&mut self, register: HandleRegisters<'a, EXT, DB>) {
         register.register(self);
         self.registers.push(register);
     }
 
     /// Append plain handle register.
-    pub fn append_handle_register_plain(&mut self, register: HandleRegister<'a, EXT, DB>) {
+    pub fn append_handled_register_plain(&mut self, register: HandleRegister<'a, EXT, DB>) {
         register(self);
         self.registers.push(HandleRegisters::Plain(register));
     }
 
     /// Append boxed handle register.
-    pub fn append_handle_register_box(&mut self, register: HandleRegisterBox<'a, EXT, DB>) {
+    pub fn append_handled_register_box(&mut self, register: HandleRegisterBox<'a, EXT, DB>) {
         register(self);
         self.registers.push(HandleRegisters::Box(register));
     }
@@ -163,7 +163,7 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
             let mut base_handler = Handler::mainnet_with_spec(self.cfg.spec_id);
             // apply all registers to default handeler and raw mainnet instruction table.
             for register in registers {
-                base_handler.append_handle_register(register)
+                base_handler.append_handled_register(register)
             }
             *self = base_handler;
         }
@@ -176,7 +176,7 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
         let mut base_handler = Handler::mainnet::<SPEC>();
         // apply all registers to default handeler and raw mainnet instruction table.
         for register in registers {
-            base_handler.append_handle_register(register)
+            base_handler.append_handled_register(register)
         }
         base_handler
     }
@@ -192,7 +192,7 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
         let mut handler = Handler::mainnet_with_spec(spec_id);
         // apply all registers to default handeler and raw mainnet instruction table.
         for register in registers {
-            handler.append_handle_register(register)
+            handler.append_handled_register(register)
         }
         handler.cfg = self.cfg();
         *self = handler;
@@ -221,10 +221,10 @@ mod test {
         let mut handler = EvmHandler::<(), EmptyDB>::new(HandlerCfg::new(SpecId::LATEST));
         let test = Rc::new(RefCell::new(0));
 
-        handler.append_handle_register_box(register(&test));
+        handler.append_handled_register_box(register(&test));
         assert_eq!(*test.borrow(), 1);
 
-        handler.append_handle_register_box(register(&test));
+        handler.append_handled_register_box(register(&test));
         assert_eq!(*test.borrow(), 2);
 
         assert!(handler.pop_handle_register().is_some());
