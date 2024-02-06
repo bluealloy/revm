@@ -29,6 +29,12 @@ impl Env {
         *self = Self::default();
     }
 
+    /// Create boxed [Env].
+    #[inline]
+    pub fn boxed(cfg: CfgEnv, block: BlockEnv, tx: TxEnv) -> Box<Self> {
+        Box::new(Self { cfg, block, tx })
+    }
+
     /// Calculates the effective gas price of the transaction.
     #[inline]
     pub fn effective_gas_price(&self) -> U256 {

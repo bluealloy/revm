@@ -34,7 +34,12 @@ impl DummyHost {
 
 impl Host for DummyHost {
     #[inline]
-    fn env(&mut self) -> &mut Env {
+    fn env(&self) -> &Env {
+        &self.env
+    }
+
+    #[inline]
+    fn env_mut(&mut self) -> &mut Env {
         &mut self.env
     }
 

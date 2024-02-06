@@ -8,8 +8,11 @@ pub use dummy::DummyHost;
 
 /// EVM context host.
 pub trait Host {
+    /// Returns a reference to the environment.
+    fn env(&self) -> &Env;
+
     /// Returns a mutable reference to the environment.
-    fn env(&mut self) -> &mut Env;
+    fn env_mut(&mut self) -> &mut Env;
 
     /// Load an account.
     ///

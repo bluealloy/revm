@@ -285,7 +285,7 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
         handle_register: register::HandleRegister<'a, EXT, DB>,
     ) -> EvmBuilder<'_, HandlerStage, EXT, DB> {
         self.handler
-            .append_handle_register(register::HandleRegisters::Plain(handle_register));
+            .append_handled_register(register::HandleRegisters::Plain(handle_register));
         EvmBuilder {
             evm: self.evm,
             external: self.external,
@@ -304,7 +304,7 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
         handle_register: register::HandleRegisterBox<'a, EXT, DB>,
     ) -> EvmBuilder<'_, HandlerStage, EXT, DB> {
         self.handler
-            .append_handle_register(register::HandleRegisters::Box(handle_register));
+            .append_handled_register(register::HandleRegisters::Box(handle_register));
         EvmBuilder {
             evm: self.evm,
             external: self.external,
@@ -350,15 +350,33 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
         self
     }
 
+    /// Sets Evm Environment.
+    pub fn with_env(mut self, env: Box<Env>) -> Self {
+        self.evm.env = env;
+        self
+    }
+
     /// Allows modification of Evm's Transaction Environment.
     pub fn modify_tx_env(mut self, f: impl FnOnce(&mut TxEnv)) -> Self {
         f(&mut self.evm.env.tx);
         self
     }
 
+    /// Sets Evm's Transaction Environment.
+    pub fn with_tx_env(mut self, tx_env: TxEnv) -> Self {
+        self.evm.env.tx = tx_env;
+        self
+    }
+
     /// Allows modification of Evm's Block Environment.
     pub fn modify_block_env(mut self, f: impl FnOnce(&mut BlockEnv)) -> Self {
         f(&mut self.evm.env.block);
+        self
+    }
+
+    /// Sets Evm's Block Environment.
+    pub fn with_block_env(mut self, block_env: BlockEnv) -> Self {
+        self.evm.env.block = block_env;
         self
     }
 
