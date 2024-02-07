@@ -154,7 +154,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     let old_handle = handler.execution.call.clone();
     handler.execution.call = Arc::new(move |ctx, mut inputs| -> FrameOrResult {
         let inspector = ctx.external.get_inspector();
-        let mems = inputs.return_memory_offset.clone();
+        let _mems = inputs.return_memory_offset.clone();
         // call inspector callto change input or return outcome.
         if let Some(outcome) = inspector.call(&mut ctx.evm, &mut inputs) {
             call_input_stack_inner.borrow_mut().push(inputs.clone());
