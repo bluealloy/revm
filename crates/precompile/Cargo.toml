@@ -22,7 +22,10 @@ sha2 = { version = "0.10", default-features = false }
 aurora-engine-modexp = { version = "1.0", default-features = false }
 
 # Optional KZG point evaluation precompile
-c-kzg = { version = "0.4.0", default-features = false, optional = true }
+c-kzg = { version = "0.4.1", default-features = false, optional = true }
+
+# TODO: make specific feature for this in c-kzg-4844
+blst = { version = "0.3.11", default-features = false, optional = true }
 
 # ecRecover precompile
 k256 = { version = "0.13.3", default-features = false, features = ["ecdsa"] }
@@ -50,7 +53,9 @@ optimism = ["revm-primitives/optimism"]
 # These libraries may not work on all no_std platforms as they depend on C.
 
 # Enables the KZG point evaluation precompile.
-c-kzg = ["dep:c-kzg", "revm-primitives/c-kzg"]
+# TODO: remove `blst` dep when `c-kzg` has a portable feature
+c-kzg = ["dep:c-kzg", "revm-primitives/c-kzg", "dep:blst", "blst?/portable"]
+
 # Use `secp256k1` as a faster alternative to `k256`.
 # The problem that `secp256k1` has is it fails to build for `wasm` target on Windows and Mac as it is c lib.
 # In Linux it passes. If you don't require to build wasm on win/mac, it is safe to use it and it is enabled by default.
