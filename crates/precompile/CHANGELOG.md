@@ -1,3 +1,45 @@
+# Changelog
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [3.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v2.2.0...revm-precompile-v3.0.0) - 2024-02-07
+
+Precompiles are refactored from list to HashMap, this allows adding arbitrary precompiles to the list.
+
+### Added
+- *(op)* Ecotone hardfork ([#1009](https://github.com/bluealloy/revm/pull/1009))
+- EvmBuilder and External Contexts ([#888](https://github.com/bluealloy/revm/pull/888))
+- add asm-keccak feature ([#972](https://github.com/bluealloy/revm/pull/972))
+- `Canyon` hardfork behind `optimism` feature flag ([#871](https://github.com/bluealloy/revm/pull/871))
+- *(interpreter)* add more helper methods to memory ([#794](https://github.com/bluealloy/revm/pull/794))
+- *(precompile)* use Aurora modexp lib. ([#769](https://github.com/bluealloy/revm/pull/769))
+- derive more traits ([#745](https://github.com/bluealloy/revm/pull/745))
+
+### Fixed
+- *(ci)* Workflow Touchups ([#901](https://github.com/bluealloy/revm/pull/901))
+
+### Other
+- bump c-kzg and enable blst portable feature ([#1059](https://github.com/bluealloy/revm/pull/1059))
+- *(deps)* bump secp256k1 from 0.28.1 to 0.28.2 ([#1038](https://github.com/bluealloy/revm/pull/1038))
+- *(Cancun)* update Cancun precompiles docs ([#1015](https://github.com/bluealloy/revm/pull/1015))
+- *(log)* use alloy_primitives::Log ([#975](https://github.com/bluealloy/revm/pull/975))
+- *(deps)* bump k256 from 0.13.2 to 0.13.3 ([#959](https://github.com/bluealloy/revm/pull/959))
+- *(deps)* bump secp256k1 from 0.28.0 to 0.28.1 ([#954](https://github.com/bluealloy/revm/pull/954))
+- *(deps)* bump once_cell from 1.18.0 to 1.19.0 ([#908](https://github.com/bluealloy/revm/pull/908))
+- bump k256 and use normalize_s ([#870](https://github.com/bluealloy/revm/pull/870))
+- simplify use statements ([#864](https://github.com/bluealloy/revm/pull/864))
+- *(precompiles)* Make PrecompileWithAddress field public, from impl ([#857](https://github.com/bluealloy/revm/pull/857))
+- change addresses to iterator and add into_addresses ([#855](https://github.com/bluealloy/revm/pull/855))
+- bump c-kzg to v0.4.0 ([#849](https://github.com/bluealloy/revm/pull/849))
+- Refactor precompile list from Hash to vec ([#823](https://github.com/bluealloy/revm/pull/823))
+- *(eip4844)* update kzg trusted setup ([#822](https://github.com/bluealloy/revm/pull/822))
+- secp256k1 from 0.27 to 0.28 ([#817](https://github.com/bluealloy/revm/pull/817))
+- for now support 1.69 rust compiler ([#814](https://github.com/bluealloy/revm/pull/814))
+- document everything, dedup existing docs ([#741](https://github.com/bluealloy/revm/pull/741))
 
 # v2.2.0
 date 02.10.2023

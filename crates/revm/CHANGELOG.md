@@ -1,10 +1,118 @@
-# v3.6.0
+# Changelog
+All notable changes to this project will be documented in this file.
 
-Big renaming long overdue:
-* EVMImpl to Evm, 
-* EVM to EvmFactory
-* EVMData to EvmContext
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [4.0.0](https://github.com/bluealloy/revm/compare/revm-v3.5.0...revm-v4.0.0) - 2024-02-07
+
+Refactored the logic inside Handler and added EvmBuilder that allows overwriting the default behavior.
+Few major renaming: EVMImpl to Evm, EVM to EvmFactory and EVMData to EvmContext.
+
+### Added
+- *(handler)* Change spec id on &mut ([#1055](https://github.com/bluealloy/revm/pull/1055))
+- *(Handler)* add push and pop of hanler registers ([#1053](https://github.com/bluealloy/revm/pull/1053))
+- tweeks for v4.0 revm release ([#1048](https://github.com/bluealloy/revm/pull/1048))
+- *(op)* Ecotone hardfork ([#1009](https://github.com/bluealloy/revm/pull/1009))
+- *(inspector)* Share call/create inputs in Inspector call_end/create_end ([#1003](https://github.com/bluealloy/revm/pull/1003))
+- Convert optimism panic into graceful error ([#982](https://github.com/bluealloy/revm/pull/982))
+- EvmBuilder and External Contexts ([#888](https://github.com/bluealloy/revm/pull/888))
+- add asm-keccak feature ([#972](https://github.com/bluealloy/revm/pull/972))
+- *(ethersdb)* propagate errors instead of panicking in basic_ref ([#935](https://github.com/bluealloy/revm/pull/935))
+- *(revm)* implement prepend_state for BundleState ([#907](https://github.com/bluealloy/revm/pull/907))
+- add serde derives for `CacheDB` under "serde" flag ([#911](https://github.com/bluealloy/revm/pull/911))
+- *(examples)* generate block traces ([#895](https://github.com/bluealloy/revm/pull/895))
+- *(revm)* Evm Context Tests and test-utils Feature ([#903](https://github.com/bluealloy/revm/pull/903))
+- `Canyon` hardfork behind `optimism` feature flag ([#871](https://github.com/bluealloy/revm/pull/871))
+- Loop call stack ([#851](https://github.com/bluealloy/revm/pull/851))
+- transition account balance delta ([#843](https://github.com/bluealloy/revm/pull/843))
+- *(cfg)* optionally disable beneficiary reward ([#834](https://github.com/bluealloy/revm/pull/834))
+- add more `auto_impl`s to revm traits ([#799](https://github.com/bluealloy/revm/pull/799))
+- *(interpreter)* add more helper methods to memory ([#794](https://github.com/bluealloy/revm/pull/794))
+- derive more traits ([#745](https://github.com/bluealloy/revm/pull/745))
+- add methods to `CreateInput` for calculating created address ([#793](https://github.com/bluealloy/revm/pull/793))
+- *(revm)* implement DatabaseRef trait for EthersDB ([#774](https://github.com/bluealloy/revm/pull/774))
+
+### Fixed
+- fix previous commit ([#1044](https://github.com/bluealloy/revm/pull/1044))
+- *(State)* Preserve original values on delete revert ([#1010](https://github.com/bluealloy/revm/pull/1010))
+- optimism gas refunds ([#989](https://github.com/bluealloy/revm/pull/989))
+- dont calculate initcode keccak on CREATE ([#969](https://github.com/bluealloy/revm/pull/969))
+- *(ci)* Workflow Touchups ([#901](https://github.com/bluealloy/revm/pull/901))
+- safer stack ([#879](https://github.com/bluealloy/revm/pull/879))
+- *(op)* Base Goerli `op-reth` sync patches ([#824](https://github.com/bluealloy/revm/pull/824))
+- fix typos in revm crate ([#821](https://github.com/bluealloy/revm/pull/821))
+- Optimism execution ([#789](https://github.com/bluealloy/revm/pull/789))
+- rename `DatabaseRef` trait functions to `*_ref` ([#795](https://github.com/bluealloy/revm/pull/795))
+
+### Other
+- bump c-kzg and enable blst portable feature ([#1059](https://github.com/bluealloy/revm/pull/1059))
+- spelling on last commit ([#1058](https://github.com/bluealloy/revm/pull/1058))
+- helper functions around Env ([#1057](https://github.com/bluealloy/revm/pull/1057))
+- *(deps)* bump tokio from 1.35.1 to 1.36.0 ([#1052](https://github.com/bluealloy/revm/pull/1052))
+- *(EvmBuilder)* rename builder functions to HandlerCfg ([#1050](https://github.com/bluealloy/revm/pull/1050))
+- *(deps)* bump ethers-contract from 2.0.11 to 2.0.13 ([#1034](https://github.com/bluealloy/revm/pull/1034))
+- *(std)* Add std HashMap,HashSet ([#1041](https://github.com/bluealloy/revm/pull/1041))
+- group handlers ([#1030](https://github.com/bluealloy/revm/pull/1030))
+- *(Inspector)* add inspector depth test ([#1028](https://github.com/bluealloy/revm/pull/1028))
+- *(op)* Move op l1 block load to op handler ([#1026](https://github.com/bluealloy/revm/pull/1026))
+- *(clippy)* nightly clippy ([#1025](https://github.com/bluealloy/revm/pull/1025))
+- *(Execution)* Granular handles create/call,call_return,insert_call_outcome ([#1024](https://github.com/bluealloy/revm/pull/1024))
+- *(Inspector)* Add return_memory_offset to Inspector::call ([#1006](https://github.com/bluealloy/revm/pull/1006))
+- update call end docs ([#1000](https://github.com/bluealloy/revm/pull/1000))
+- add getter for specId ([#998](https://github.com/bluealloy/revm/pull/998))
+- Remove preserve_order in serde_json ([#997](https://github.com/bluealloy/revm/pull/997))
+- update create docs ([#999](https://github.com/bluealloy/revm/pull/999))
+- *(revme)* EmptyDb Blockhash string, json-outcome flag, set prevrandao in statetest ([#994](https://github.com/bluealloy/revm/pull/994))
+- *(Inspector)* add CallOutcome to call/call_end ([#985](https://github.com/bluealloy/revm/pull/985))
+- set deduct_caller in optimism handler ([#988](https://github.com/bluealloy/revm/pull/988))
+- fix serde std flags for no-std build ([#987](https://github.com/bluealloy/revm/pull/987))
+- *(Inspector)* Add CreateOutcome in create/create_end return ([#980](https://github.com/bluealloy/revm/pull/980))
+- *(log)* use alloy_primitives::Log ([#975](https://github.com/bluealloy/revm/pull/975))
+- *(EvmBuilder)* Remove unnecessary BuilderStage trait ([#979](https://github.com/bluealloy/revm/pull/979))
+- enhance readability ([#968](https://github.com/bluealloy/revm/pull/968))
+- *(interpreter)* refactor sstore_cost ([#974](https://github.com/bluealloy/revm/pull/974))
+- *(interpreter)* improve enum naming ([#962](https://github.com/bluealloy/revm/pull/962))
+- *(deps)* bump anyhow from 1.0.77 to 1.0.79 ([#950](https://github.com/bluealloy/revm/pull/950))
+- relax Bytes requirement and use slice instead ([#937](https://github.com/bluealloy/revm/pull/937))
+- *(deps)* bump futures from 0.3.29 to 0.3.30 ([#927](https://github.com/bluealloy/revm/pull/927))
+- *(deps)* bump anyhow from 1.0.75 to 1.0.76 ([#921](https://github.com/bluealloy/revm/pull/921))
+- *(deps)* bump tokio from 1.34.0 to 1.35.0 ([#909](https://github.com/bluealloy/revm/pull/909))
+- *(revm)* leverage StorageSlot methods, where appropriate ([#899](https://github.com/bluealloy/revm/pull/899))
+- relax state generic ([#881](https://github.com/bluealloy/revm/pull/881))
+- clippy ([#877](https://github.com/bluealloy/revm/pull/877))
+- *(deps)* bump ethers-contract from 2.0.10 to 2.0.11 ([#867](https://github.com/bluealloy/revm/pull/867))
+- bump k256 and use normalize_s ([#870](https://github.com/bluealloy/revm/pull/870))
+- simplify use statements ([#864](https://github.com/bluealloy/revm/pull/864))
+- Fix error message for LackOfFundForMaxFee ([#858](https://github.com/bluealloy/revm/pull/858))
+- Fix rustdoc warnings ([#859](https://github.com/bluealloy/revm/pull/859))
+- *(deps)* bump tokio from 1.33.0 to 1.34.0 ([#856](https://github.com/bluealloy/revm/pull/856))
+- change addresses to iterator and add into_addresses ([#855](https://github.com/bluealloy/revm/pull/855))
+- use keccak256 for blockhash ([#854](https://github.com/bluealloy/revm/pull/854))
+- review safety comments ([#811](https://github.com/bluealloy/revm/pull/811))
+- *(deps)* bump futures from 0.3.28 to 0.3.29 ([#839](https://github.com/bluealloy/revm/pull/839))
+- *(state)* consistent selfdestruct status transition ([#847](https://github.com/bluealloy/revm/pull/847))
+- *(state)* move account status transitions to `AccountStatus` ([#844](https://github.com/bluealloy/revm/pull/844))
+- *(state)* simplify control flow in `CacheState::apply_evm_state` ([#842](https://github.com/bluealloy/revm/pull/842))
+- Refactor precompile list from Hash to vec ([#823](https://github.com/bluealloy/revm/pull/823))
+- *(state)* make `State::apply_transition` pub ([#832](https://github.com/bluealloy/revm/pull/832))
+- *(state)* make bundle state non-optional ([#828](https://github.com/bluealloy/revm/pull/828))
+- Refactor evm data to its file ([#815](https://github.com/bluealloy/revm/pull/815))
+- for now support 1.69 rust compiler ([#814](https://github.com/bluealloy/revm/pull/814))
+- refactor main return to handle ([#808](https://github.com/bluealloy/revm/pull/808))
+- *(SharedMemory)* small refactor; tests ([#806](https://github.com/bluealloy/revm/pull/806))
+- use `array::from_fn` in `make_instruction_table` ([#809](https://github.com/bluealloy/revm/pull/809))
+- remove `step` and `step_end` return result ([#804](https://github.com/bluealloy/revm/pull/804))
+- Instruction table ([#759](https://github.com/bluealloy/revm/pull/759))
+- getter for  field of ([#792](https://github.com/bluealloy/revm/pull/792))
+- Shared memory between calls ([#673](https://github.com/bluealloy/revm/pull/673))
+- Fix typos ([#790](https://github.com/bluealloy/revm/pull/790))
+- *(deps)* bump tokio from 1.32.0 to 1.33.0 ([#785](https://github.com/bluealloy/revm/pull/785))
+- Use upstream create and create2 implementations ([#775](https://github.com/bluealloy/revm/pull/775))
+- reorder JournalState impl ([#772](https://github.com/bluealloy/revm/pull/772))
+- document everything, dedup existing docs ([#741](https://github.com/bluealloy/revm/pull/741))
 
 # v3.5.0
 date 02.10.2023
