@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [4.0.0](https://github.com/bluealloy/revm/compare/revm-v3.5.0...revm-v4.0.0) - 2024-02-07
 
+Refactored the logic inside Handler and added EvmBuilder that allows overwriting the default behavior.
+Few major renaming: EVMImpl to Evm, EVM to EvmFactory and EVMData to EvmContext.
+
 ### Added
 - *(handler)* Change spec id on &mut ([#1055](https://github.com/bluealloy/revm/pull/1055))
 - *(Handler)* add push and pop of hanler registers ([#1053](https://github.com/bluealloy/revm/pull/1053))
@@ -110,13 +113,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use upstream create and create2 implementations ([#775](https://github.com/bluealloy/revm/pull/775))
 - reorder JournalState impl ([#772](https://github.com/bluealloy/revm/pull/772))
 - document everything, dedup existing docs ([#741](https://github.com/bluealloy/revm/pull/741))
-# v3.6.0
-
-Big renaming long overdue:
-* EVMImpl to Evm, 
-* EVM to EvmFactory
-* EVMData to EvmContext
-
 
 # v3.5.0
 date 02.10.2023

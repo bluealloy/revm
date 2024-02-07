@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v1.3.0...revm-interpreter-v2.0.0) - 2024-02-07
 
+Iterpreter will not be called in recursive calls but would return Action ( CALL/CREATE) that will be executed by the main loop.
+
 ### Added
 - tweeks for v4.0 revm release ([#1048](https://github.com/bluealloy/revm/pull/1048))
 - add `BytecodeLocked::original_bytecode` ([#1037](https://github.com/bluealloy/revm/pull/1037))

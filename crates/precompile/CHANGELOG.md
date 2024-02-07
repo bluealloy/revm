@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0](https://github.com/bluealloy/revm/compare/revm-precompile-v2.2.0...revm-precompile-v3.0.0) - 2024-02-07
 
+Precompiles are refactored from list to HashMap, this allows adding arbitrary precompiles to the list.
+
 ### Added
 - *(op)* Ecotone hardfork ([#1009](https://github.com/bluealloy/revm/pull/1009))
 - EvmBuilder and External Contexts ([#888](https://github.com/bluealloy/revm/pull/888))
