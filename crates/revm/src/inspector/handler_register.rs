@@ -156,7 +156,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
         let inspector = ctx.external.get_inspector();
         let mems = inputs.return_memory_offset.clone();
         // call inspector callto change input or return outcome.
-        if let Some(outcome) = inspector.call(&mut ctx.evm, &mut inputs, mems) {
+        if let Some(outcome) = inspector.call(&mut ctx.evm, &mut inputs) {
             call_input_stack_inner.borrow_mut().push(inputs.clone());
             return FrameOrResult::Result(FrameResult::Call(outcome));
         }
@@ -250,7 +250,6 @@ pub fn inspector_instruction<
 
 #[cfg(test)]
 mod tests {
-    use core::ops::Range;
 
     use super::*;
     use crate::{
@@ -311,7 +310,6 @@ mod tests {
             &mut self,
             context: &mut EvmContext<DB>,
             _call: &mut CallInputs,
-            _return_memory_offset: Range<usize>,
         ) -> Option<CallOutcome> {
             if self.call {
                 unreachable!("call should not be called twice")
