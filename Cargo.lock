@@ -2776,6 +2776,7 @@ version = "3.5.0"
 dependencies = [
  "anyhow",
  "auto_impl",
+ "byteorder",
  "criterion",
  "ethers-contract",
  "ethers-core",

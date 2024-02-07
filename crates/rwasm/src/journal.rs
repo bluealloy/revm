@@ -1,688 +1,213 @@
-use crate::{
-    primitives::{
-        db::Database,
-        hash_map::Entry,
-        Account,
-        Address,
-        Bytecode,
-        HashMap,
-        Log,
-        Spec,
-        SpecId::*,
-        State,
-        StorageSlot,
-        KECCAK_EMPTY,
-        U256,
-    },
-    types::SelfDestructResult,
-};
-use alloc::vec::Vec;
-use core::mem;
-use fluentbase_types::ExitCode;
+use byteorder::{ByteOrder, LittleEndian};
+use fluentbase_sdk::{Bytes32, LowLevelAPI, LowLevelSDK};
+use fluentbase_types::{ExitCode, POSEIDON_EMPTY};
+use revm_primitives::{Address, Bytes, B256, U256};
 
-/// JournalState is internal EVM state that is used to contain state and track changes to that
-/// state. It contains journal of changes that happened to state so that they can be reverted.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct JournaledState {
-    /// Current state.
-    pub state: State,
-    /// logs
-    pub logs: Vec<Log>,
-    /// how deep are we in call stack.
-    pub depth: usize,
-    /// journal with changes that happened between calls.
-    pub journal: Vec<Vec<JournalEntry>>,
+pub(crate) const JZKT_CODESIZE_FIELD: u32 = 0;
+pub(crate) const JZKT_NONCE_FIELD: u32 = 1;
+pub(crate) const JZKT_CODE_HASH_FIELD: u32 = 2;
+pub(crate) const JZKT_BALANCE_FIELD: u32 = 3;
+
+/// Compression flags for upper fields, we compress
+/// only code hash and balance fields (0b1100)
+pub(crate) const JZKT_COMPRESSION_FLAGS: u32 = 12;
+
+/// EIP-170: Contract code size limit
+///
+/// By default this limit is 0x6000 (~24kb)
+pub(crate) const MAX_CODE_SIZE: u32 = 0x6000;
+
+pub(crate) struct Account {
+    pub(crate) address: Address,
+    pub(crate) code_size: u64,
+    pub(crate) nonce: u64,
+    pub(crate) code_hash: B256,
+    pub(crate) balance: U256,
 }
 
-impl JournaledState {
-    /// Create new JournaledState.
-    ///
-    /// precompile_addresses is used to determine if address is precompile or not.
-    ///
-    /// Note: This function will journal state after Spurious Dragon fork.
-    /// And will not take into account if account is not existing or empty.
-    ///
-    /// # Note
-    ///
-    /// Precompile addresses should be sorted.
-    pub fn new() -> JournaledState {
+pub(crate) type AccountCheckpoint = (u32, u32);
+
+impl Default for Account {
+    fn default() -> Self {
         Self {
-            state: HashMap::new(),
-            logs: Vec::new(),
-            journal: vec![vec![]],
-            depth: 0,
+            address: Address::ZERO,
+            code_size: 0,
+            nonce: 0,
+            code_hash: POSEIDON_EMPTY,
+            balance: U256::ZERO,
+        }
+    }
+}
+
+impl Account {
+    pub(crate) fn new(address: Address) -> Self {
+        Self {
+            address,
+            ..Default::default()
         }
     }
 
-    /// Return reference to state.
-    #[inline]
-    pub fn state(&mut self) -> &mut State {
-        &mut self.state
+    pub(crate) fn new_from_jzkt(address: Address) -> Self {
+        let mut result = Self::new(address);
+        let address_word = address.into_word();
+        // code size and nonce
+        let mut buffer = [0u8; 32];
+        LowLevelSDK::jzkt_get(
+            address_word.as_ptr(),
+            JZKT_CODESIZE_FIELD,
+            buffer.as_mut_ptr(),
+        );
+        result.code_size = LittleEndian::read_u64(&buffer);
+        LowLevelSDK::jzkt_get(address_word.as_ptr(), JZKT_NONCE_FIELD, buffer.as_mut_ptr());
+        result.nonce = LittleEndian::read_u64(&buffer);
+        // code hash
+        LowLevelSDK::jzkt_get(
+            address_word.as_ptr(),
+            JZKT_CODE_HASH_FIELD,
+            result.code_hash.as_mut_ptr(),
+        );
+        // balance
+        let balance_mut = unsafe { result.balance.as_le_slice_mut() };
+        LowLevelSDK::jzkt_get(
+            address_word.as_ptr(),
+            JZKT_BALANCE_FIELD,
+            balance_mut.as_mut_ptr(),
+        );
+        result
     }
 
-    /// Mark account as touched as only touched accounts will be added to state.
-    /// This is especially important for state clear where touched empty accounts needs to
-    /// be removed from state.
-    #[inline]
-    pub fn touch(&mut self, address: &Address) {
-        if let Some(account) = self.state.get_mut(address) {
-            Self::touch_account(self.journal.last_mut().unwrap(), address, account);
-        }
+    pub(crate) fn write_to_jzkt(&self) {
+        let mut values: [Bytes32; 4] = [[0u8; 32]; 4];
+        // code size and nonce
+        LittleEndian::write_u64(
+            &mut values[JZKT_CODESIZE_FIELD as usize][..],
+            self.code_size,
+        );
+        LittleEndian::write_u64(&mut values[JZKT_NONCE_FIELD as usize][..], self.nonce);
+        // code hash and balance
+        values[JZKT_CODE_HASH_FIELD as usize].copy_from_slice(self.code_hash.as_slice());
+        values[JZKT_BALANCE_FIELD as usize].copy_from_slice(&self.balance.to_be_bytes::<32>());
+        // update jzkt state
+        let address_word = self.address.into_word();
+        LowLevelSDK::jzkt_update(
+            address_word.as_ptr(),
+            JZKT_COMPRESSION_FLAGS,
+            values.as_ptr(),
+            32 * values.len() as u32,
+        );
     }
 
-    /// Mark account as touched.
-    #[inline]
-    fn touch_account(journal: &mut Vec<JournalEntry>, address: &Address, account: &mut Account) {
-        if !account.is_touched() {
-            journal.push(JournalEntry::AccountTouched { address: *address });
-            account.mark_touch();
-        }
+    pub(crate) fn inc_nonce(&mut self) -> u64 {
+        let prev_nonce = self.nonce;
+        self.nonce += 1;
+        assert_ne!(self.nonce, u64::MAX);
+        prev_nonce
     }
 
-    /// Does cleanup and returns modified state.
-    #[inline]
-    pub fn finalize(&mut self) -> (State, Vec<Log>) {
-        let state = mem::take(&mut self.state);
-
-        let logs = mem::take(&mut self.logs);
-        self.journal = vec![vec![]];
-        self.depth = 0;
-        (state, logs)
+    pub(crate) fn load_bytecode(&self) -> Bytes {
+        let mut bytecode = vec![0u8; self.code_size as usize];
+        LowLevelSDK::jzkt_preimage_copy(self.code_hash.as_ptr(), bytecode.as_mut_ptr());
+        bytecode.into()
     }
 
-    /// Returns the _loaded_ [Account] for the given address.
-    ///
-    /// This assumes that the account has already been loaded.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the account has not been loaded and is missing from the state set.
-    #[inline]
-    pub fn account(&self, address: Address) -> &Account {
-        self.state
-            .get(&address)
-            .expect("Account expected to be loaded") // Always assume that acc is already loaded
+    pub(crate) fn change_bytecode(&mut self, code: &Bytes) {
+        let address_word = self.address.into_word();
+        // refresh code hash
+        LowLevelSDK::crypto_poseidon(
+            code.as_ptr(),
+            code.len() as u32,
+            self.code_hash.as_mut_ptr(),
+        );
+        // write new changes into ZKT
+        self.write_to_jzkt();
+        // make sure preimage of this hash is stored
+        LowLevelSDK::jzkt_update_preimage(
+            address_word.as_ptr(),
+            JZKT_CODE_HASH_FIELD,
+            code.as_ptr(),
+            code.len() as u32,
+        );
     }
 
-    /// Returns call depth.
-    #[inline]
-    pub fn depth(&self) -> u64 {
-        self.depth as u64
+    pub(crate) fn checkpoint() -> AccountCheckpoint {
+        LowLevelSDK::jzkt_checkpoint()
     }
 
-    /// use it only if you know that acc is warm
-    /// Assume account is warm
-    #[inline]
-    pub fn set_code(&mut self, address: Address, code: Bytecode) {
-        let account = self.state.get_mut(&address).unwrap();
-        Self::touch_account(self.journal.last_mut().unwrap(), &address, account);
-
-        self.journal
-            .last_mut()
-            .unwrap()
-            .push(JournalEntry::CodeChange { address });
-
-        account.info.code_hash = code.hash_slow();
-        account.info.code = Some(code);
+    pub(crate) fn commit() -> B256 {
+        let mut root = B256::ZERO;
+        LowLevelSDK::jzkt_commit(root.as_mut_ptr());
+        root
     }
 
-    pub fn inc_nonce(&mut self, address: Address) -> Option<u64> {
-        let account = self.state.get_mut(&address).unwrap();
-        // Check if nonce is going to overflow.
-        if account.info.nonce == u64::MAX {
-            return None;
-        }
-        Self::touch_account(self.journal.last_mut().unwrap(), &address, account);
-        self.journal
-            .last_mut()
-            .unwrap()
-            .push(JournalEntry::NonceChange { address });
-
-        account.info.nonce += 1;
-
-        Some(account.info.nonce)
+    pub(crate) fn rollback(checkpoint: AccountCheckpoint) {
+        LowLevelSDK::jzkt_rollback(checkpoint.0, checkpoint.1);
     }
 
-    /// Transfers balance from two accounts. Returns error if sender balance is not enough.
-    #[inline]
-    pub fn transfer<DB: Database>(
-        &mut self,
-        from: &Address,
-        to: &Address,
-        balance: U256,
-        db: &mut DB,
-    ) -> Result<(), ExitCode> {
-        // load accounts
-        self.load_account(*from, db)
-            .map_err(|_| ExitCode::FatalExternalError)?;
-
-        self.load_account(*to, db)
-            .map_err(|_| ExitCode::FatalExternalError)?;
-
-        // sub balance from
-        let from_account = &mut self.state.get_mut(from).unwrap();
-        Self::touch_account(self.journal.last_mut().unwrap(), from, from_account);
-        let from_balance = &mut from_account.info.balance;
-        *from_balance = from_balance
-            .checked_sub(balance)
-            .ok_or(ExitCode::InsufficientBalance)?;
-
-        // add balance to
-        let to_account = &mut self.state.get_mut(to).unwrap();
-        Self::touch_account(self.journal.last_mut().unwrap(), to, to_account);
-        let to_balance = &mut to_account.info.balance;
-        *to_balance = to_balance
-            .checked_add(balance)
-            .ok_or(ExitCode::OverflowPayment)?;
-        // Overflow of U256 balance is not possible to happen on mainnet. We don't bother to return
-        // funds from from_acc.
-
-        self.journal
-            .last_mut()
-            .unwrap()
-            .push(JournalEntry::BalanceTransfer {
-                from: *from,
-                to: *to,
-                balance,
-            });
-
-        Ok(())
-    }
-
-    /// Create account or return false if collision is detected.
-    ///
-    /// There are few steps done:
-    /// 1. Make created account warm loaded (AccessList) and this should be done before subroutine
-    ///    checkpoint is created.
-    /// 2. Check if there is collision of newly created account with existing one.
-    /// 3. Mark created account as created.
-    /// 4. Add fund to created account
-    /// 5. Increment nonce of created account if SpuriousDragon is active
-    /// 6. Decrease balance of caller account.
-    ///
-    /// Safety: It is assumed that caller balance is already checked and that
-    /// caller is already loaded inside evm. This is already done inside `create_inner`
-    #[inline]
-    pub fn create_account_checkpoint<SPEC: Spec>(
-        &mut self,
-        caller: Address,
-        address: Address,
-        balance: U256,
-    ) -> Result<JournalCheckpoint, ExitCode> {
-        // Enter subroutine
-        let checkpoint = self.checkpoint();
-
-        // Newly created account is present, as we just loaded it.
-        let account = self.state.get_mut(&address).unwrap();
-        let last_journal = self.journal.last_mut().unwrap();
-
-        // New account can be created if:
-        // Bytecode is not empty.
-        // Nonce is not zero
-        // Account is not precompile.
-        if account.info.code_hash != KECCAK_EMPTY || account.info.nonce != 0 {
-            self.checkpoint_revert(checkpoint);
+    pub(crate) fn create_account_checkpoint(
+        caller: &mut Account,
+        callee: &mut Account,
+        amount: U256,
+    ) -> Result<AccountCheckpoint, ExitCode> {
+        let checkpoint: AccountCheckpoint = Self::checkpoint();
+        // make sure there is no creation collision
+        if callee.code_hash != POSEIDON_EMPTY || callee.nonce != 0 {
+            LowLevelSDK::jzkt_rollback(checkpoint.0, checkpoint.1);
             return Err(ExitCode::CreateCollision);
         }
-
-        // set account status to created.
-        account.mark_created();
-
-        // this entry will revert set nonce.
-        last_journal.push(JournalEntry::AccountCreated { address });
-        account.info.code = None;
-
-        // Set all storages to default value. They need to be present to act as accessed slots in
-        // access list. it shouldn't be possible for them to have different values then zero
-        // as code is not existing for this account, but because tests can change that
-        // assumption we are doing it.
-        let empty = StorageSlot::default();
-        account
-            .storage
-            .iter_mut()
-            .for_each(|(_, slot)| *slot = empty.clone());
-
-        // touch account. This is important as for pre SpuriousDragon account could be
-        // saved even empty.
-        Self::touch_account(last_journal, &address, account);
-
-        // Add balance to created account, as we already have target here.
-        let Some(new_balance) = account.info.balance.checked_add(balance) else {
-            self.checkpoint_revert(checkpoint);
-            return Err(ExitCode::OverflowPayment);
-        };
-        account.info.balance = new_balance;
-
-        // EIP-161: State trie clearing (invariant-preserving alternative)
-        if SPEC::enabled(SPURIOUS_DRAGON) {
-            // nonce is going to be reset to zero in AccountCreated journal entry.
-            account.info.nonce = 1;
-        }
-
-        // Sub balance from caller
-        let caller_account = self.state.get_mut(&caller).unwrap();
-        // Balance is already checked in `create_inner`, so it is safe to just subtract.
-        caller_account.info.balance -= balance;
-
-        // add journal entry of transferred balance
-        last_journal.push(JournalEntry::BalanceTransfer {
-            from: caller,
-            to: address,
-            balance,
-        });
-
+        // change balance from caller and callee
+        caller.balance.checked_sub(amount).ok_or_else(|| {
+            LowLevelSDK::jzkt_rollback(checkpoint.0, checkpoint.1);
+            ExitCode::InsufficientBalance
+        })?;
+        callee.balance = callee.balance.checked_add(amount).ok_or_else(|| {
+            LowLevelSDK::jzkt_rollback(checkpoint.0, checkpoint.1);
+            ExitCode::OverflowPayment
+        })?;
+        // change nonce (we are always on spurious dragon)
+        caller.nonce = 1;
         Ok(checkpoint)
     }
 
-    /// Revert all changes that happened in given journal entries.
-    #[inline]
-    fn journal_revert(state: &mut State, journal_entries: Vec<JournalEntry>) {
-        for entry in journal_entries.into_iter().rev() {
-            match entry {
-                JournalEntry::AccountLoaded { address } => {
-                    state.remove(&address);
-                }
-                JournalEntry::AccountTouched { address } => {
-                    // remove touched status
-                    state.get_mut(&address).unwrap().unmark_touch();
-                }
-                JournalEntry::AccountDestroyed {
-                    address,
-                    target,
-                    was_destroyed,
-                    had_balance,
-                } => {
-                    let account = state.get_mut(&address).unwrap();
-                    // set previous state of selfdestructed flag, as there could be multiple
-                    // selfdestructs in one transaction.
-                    if was_destroyed {
-                        // flag is still selfdestructed
-                        account.mark_selfdestruct();
-                    } else {
-                        // flag that is not selfdestructed
-                        account.unmark_selfdestruct();
-                    }
-                    account.info.balance += had_balance;
-
-                    if address != target {
-                        let target = state.get_mut(&target).unwrap();
-                        target.info.balance -= had_balance;
-                    }
-                }
-                JournalEntry::BalanceTransfer { from, to, balance } => {
-                    // we don't need to check overflow and underflow when adding and subtracting the
-                    // balance.
-                    let from = state.get_mut(&from).unwrap();
-                    from.info.balance += balance;
-                    let to = state.get_mut(&to).unwrap();
-                    to.info.balance -= balance;
-                }
-                JournalEntry::NonceChange { address } => {
-                    state.get_mut(&address).unwrap().info.nonce -= 1;
-                }
-                JournalEntry::AccountCreated { address } => {
-                    let account = &mut state.get_mut(&address).unwrap();
-                    account.unmark_created();
-                    account.info.nonce = 0;
-                }
-                JournalEntry::StorageChange {
-                    address,
-                    key,
-                    had_value,
-                } => {
-                    let storage = &mut state.get_mut(&address).unwrap().storage;
-                    if let Some(had_value) = had_value {
-                        storage.get_mut(&key).unwrap().present_value = had_value;
-                    } else {
-                        storage.remove(&key);
-                    }
-                }
-                JournalEntry::CodeChange { address } => {
-                    let acc = state.get_mut(&address).unwrap();
-                    acc.info.code_hash = KECCAK_EMPTY;
-                    acc.info.code = None;
-                }
-            }
-        }
+    pub(crate) fn sub_balance(&mut self, amount: U256) -> Result<(), ExitCode> {
+        self.balance = self
+            .balance
+            .checked_sub(amount)
+            .ok_or(ExitCode::InsufficientBalance)?;
+        Ok(())
     }
 
-    /// Makes a checkpoint that in case of Revert can bring back state to this point.
-    #[inline]
-    pub fn checkpoint(&mut self) -> JournalCheckpoint {
-        let checkpoint = JournalCheckpoint {
-            log_i: self.logs.len(),
-            journal_i: self.journal.len(),
-        };
-        self.depth += 1;
-        self.journal.push(Default::default());
-        checkpoint
+    pub(crate) fn sub_balance_saturating(&mut self, amount: U256) {
+        self.balance = self.balance.saturating_sub(amount);
     }
 
-    /// Commit the checkpoint.
-    #[inline]
-    pub fn checkpoint_commit(&mut self) {
-        self.depth -= 1;
+    pub(crate) fn add_balance(&mut self, amount: U256) -> Result<(), ExitCode> {
+        self.balance = self
+            .balance
+            .checked_add(amount)
+            .ok_or(ExitCode::OverflowPayment)?;
+        Ok(())
     }
 
-    /// Reverts all changes to state until given checkpoint.
-    #[inline]
-    pub fn checkpoint_revert(&mut self, checkpoint: JournalCheckpoint) {
-        let state = &mut self.state;
-        self.depth -= 1;
-        // iterate over last N journals sets and revert our global state
-        let journal_len = self.journal.len();
-        self.journal
-            .iter_mut()
-            .rev()
-            .take(journal_len - checkpoint.journal_i)
-            .for_each(|cs| Self::journal_revert(state, mem::take(cs)));
-        self.logs.truncate(checkpoint.log_i);
-        self.journal.truncate(checkpoint.journal_i);
+    pub(crate) fn add_balance_saturating(&mut self, amount: U256) {
+        self.balance = self.balance.saturating_add(amount);
     }
 
-    /// Performans selfdestruct action.
-    /// Transfers balance from address to target. Check if target exist/is_cold
-    ///
-    /// Note: balance will be lost if [address] and [target] are the same BUT when
-    /// current spec enables Cancun, this happens only when the account associated to [address]
-    /// is created in the same tx
-    ///
-    /// references:
-    ///  * https://github.com/ethereum/go-ethereum/blob/141cd425310b503c5678e674a8c3872cf46b7086/core/vm/instructions.go#L832-L833
-    ///  * https://github.com/ethereum/go-ethereum/blob/141cd425310b503c5678e674a8c3872cf46b7086/core/state/statedb.go#L449
-    ///  * https://eips.ethereum.org/EIPS/eip-6780
-    #[inline]
-    pub fn selfdestruct<DB: Database>(
-        &mut self,
-        address: Address,
-        target: Address,
-        db: &mut DB,
-    ) -> Result<SelfDestructResult, DB::Error> {
-        let (is_cold, target_exists) = self.load_account_exist(target, db)?;
-
-        let acc = if address != target {
-            // Both accounts are loaded before this point, `address` as we execute its contract.
-            // and `target` at the beginning of the function.
-            let [acc, target_account] = self.state.get_many_mut([&address, &target]).unwrap();
-            Self::touch_account(self.journal.last_mut().unwrap(), &target, target_account);
-            target_account.info.balance += acc.info.balance;
-            acc
-        } else {
-            self.state.get_mut(&address).unwrap()
-        };
-
-        let balance = acc.info.balance;
-        let previously_destroyed = acc.is_selfdestructed();
-
-        // EIP-6780 (Cancun hard-fork): selfdestruct only if contract is created in the same tx
-        let journal_entry = if acc.is_created() {
-            acc.mark_selfdestruct();
-            acc.info.balance = U256::ZERO;
-            Some(JournalEntry::AccountDestroyed {
-                address,
-                target,
-                was_destroyed: previously_destroyed,
-                had_balance: balance,
-            })
-        } else if address != target {
-            acc.info.balance = U256::ZERO;
-            Some(JournalEntry::BalanceTransfer {
-                from: address,
-                to: target,
-                balance,
-            })
-        } else {
-            // State is not changed:
-            // * if we are after Cancun upgrade and
-            // * Selfdestruct account that is created in the same transaction and
-            // * Specify the target is same as selfdestructed account. The balance stays unchanged.
-            None
-        };
-
-        if let Some(entry) = journal_entry {
-            self.journal.last_mut().unwrap().push(entry);
-        };
-
-        Ok(SelfDestructResult {
-            had_value: balance != U256::ZERO,
-            is_cold,
-            target_exists,
-            previously_destroyed,
-        })
+    pub(crate) fn transfer(
+        from: &mut Account,
+        to: &mut Account,
+        amount: U256,
+    ) -> Result<(), ExitCode> {
+        // update balances
+        from.sub_balance(amount)?;
+        to.add_balance(amount)?;
+        // commit new balances into jzkt
+        from.write_to_jzkt();
+        to.write_to_jzkt();
+        Ok(())
     }
 
-    /// Initial load of account. This load will not be tracked inside journal
-    #[inline]
-    pub fn initial_account_load<DB: Database>(
-        &mut self,
-        address: Address,
-        slots: &[U256],
-        db: &mut DB,
-    ) -> Result<&mut Account, DB::Error> {
-        // load or get account.
-        let account = match self.state.entry(address) {
-            Entry::Occupied(entry) => entry.into_mut(),
-            Entry::Vacant(vac) => vac.insert(
-                db.basic(address)?
-                    .map(|i| i.into())
-                    .unwrap_or(Account::new_not_existing()),
-            ),
-        };
-        // preload storages.
-        for slot in slots {
-            if let Entry::Vacant(entry) = account.storage.entry(*slot) {
-                let storage = db.storage(address, *slot)?;
-                entry.insert(StorageSlot::new(storage));
-            }
-        }
-        Ok(account)
+    #[inline(always)]
+    pub(crate) fn is_not_empty(&self) -> bool {
+        self.nonce != 0 || self.code_hash != POSEIDON_EMPTY
     }
-
-    /// load account into memory. return if it is cold or warm accessed
-    #[inline]
-    pub fn load_account<DB: Database>(
-        &mut self,
-        address: Address,
-        db: &mut DB,
-    ) -> Result<(&mut Account, bool), DB::Error> {
-        Ok(match self.state.entry(address) {
-            Entry::Occupied(entry) => (entry.into_mut(), false),
-            Entry::Vacant(vac) => {
-                let account = if let Some(account) = db.basic(address)? {
-                    account.into()
-                } else {
-                    Account::new_not_existing()
-                };
-                self.journal
-                    .last_mut()
-                    .unwrap()
-                    .push(JournalEntry::AccountLoaded { address });
-                (vac.insert(account), false)
-            }
-        })
-    }
-
-    /// Load account from database to JournaledState.
-    ///
-    /// Return boolean pair where first is `is_cold`` second bool `is_exists`.
-    #[inline]
-    pub fn load_account_exist<DB: Database>(
-        &mut self,
-        address: Address,
-        db: &mut DB,
-    ) -> Result<(bool, bool), DB::Error> {
-        let (acc, is_cold) = self.load_account(address, db)?;
-        Ok((is_cold, !acc.is_empty()))
-    }
-
-    /// Loads code.
-    #[inline]
-    pub fn load_code<DB: Database>(
-        &mut self,
-        address: Address,
-        db: &mut DB,
-    ) -> Result<(&mut Account, bool), DB::Error> {
-        let (acc, is_cold) = self.load_account(address, db)?;
-        if acc.info.code.is_none() {
-            if acc.info.code_hash == KECCAK_EMPTY {
-                let empty = Bytecode::new();
-                acc.info.code = Some(empty);
-            } else {
-                let code = db.code_by_hash(acc.info.code_hash)?;
-                acc.info.code = Some(code);
-            }
-        }
-        Ok((acc, is_cold))
-    }
-
-    /// Load storage slot
-    ///
-    /// # Note
-    ///
-    /// Account is already present and loaded.
-    #[inline]
-    pub fn sload<DB: Database>(
-        &mut self,
-        address: Address,
-        key: U256,
-        db: &mut DB,
-    ) -> Result<(U256, bool), DB::Error> {
-        let account = self.state.get_mut(&address).unwrap(); // assume acc is warm
-                                                             // only if account is created in this tx we can assume that storage is empty.
-        let is_newly_created = account.is_created();
-        let load = match account.storage.entry(key) {
-            Entry::Occupied(occ) => (occ.get().present_value, false),
-            Entry::Vacant(vac) => {
-                // if storage was cleared, we don't need to ping db.
-                let value = if is_newly_created {
-                    U256::ZERO
-                } else {
-                    db.storage(address, key)?
-                };
-                // add it to journal as cold loaded.
-                self.journal
-                    .last_mut()
-                    .unwrap()
-                    .push(JournalEntry::StorageChange {
-                        address,
-                        key,
-                        had_value: None,
-                    });
-
-                vac.insert(StorageSlot::new(value));
-
-                (value, true)
-            }
-        };
-        Ok(load)
-    }
-
-    /// Stores storage slot.
-    /// And returns (original,present,new) slot value.
-    ///
-    /// Note:
-    ///
-    /// account should already be present in our state.
-    #[inline]
-    pub fn sstore<DB: Database>(
-        &mut self,
-        address: Address,
-        key: U256,
-        new: U256,
-        db: &mut DB,
-    ) -> Result<(U256, U256, U256, bool), DB::Error> {
-        // assume that acc exists and load the slot.
-        let (present, is_cold) = self.sload(address, key, db)?;
-        let acc = self.state.get_mut(&address).unwrap();
-
-        // if there is no original value in dirty return present value, that is our original.
-        let slot = acc.storage.get_mut(&key).unwrap();
-
-        // new value is same as present, we don't need to do anything
-        if present == new {
-            return Ok((slot.previous_or_original_value, present, new, is_cold));
-        }
-
-        self.journal
-            .last_mut()
-            .unwrap()
-            .push(JournalEntry::StorageChange {
-                address,
-                key,
-                had_value: Some(present),
-            });
-        // insert value into present state.
-        slot.present_value = new;
-        Ok((slot.previous_or_original_value, present, new, is_cold))
-    }
-
-    /// push log into subroutine
-    #[inline]
-    pub fn log(&mut self, log: Log) {
-        self.logs.push(log);
-    }
-}
-
-/// Journal entries that are used to track changes to the state and are used to revert it.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum JournalEntry {
-    /// Used to mark account that is warm inside EVM in regards to EIP-2929 AccessList.
-    /// Action: We will add Account to state.
-    /// Revert: we will remove account from state.
-    AccountLoaded { address: Address },
-    /// Mark account to be destroyed and journal balance to be reverted
-    /// Action: Mark account and transfer the balance
-    /// Revert: Unmark the account and transfer balance back
-    AccountDestroyed {
-        address: Address,
-        target: Address,
-        was_destroyed: bool, // if account had already been destroyed before this journal entry
-        had_balance: U256,
-    },
-    /// Loading account does not mean that account will need to be added to MerkleTree (touched).
-    /// Only when account is called (to execute contract or transfer balance) only then account is
-    /// made touched. Action: Mark account touched
-    /// Revert: Unmark account touched
-    AccountTouched { address: Address },
-    /// Transfer balance between two accounts
-    /// Action: Transfer balance
-    /// Revert: Transfer balance back
-    BalanceTransfer {
-        from: Address,
-        to: Address,
-        balance: U256,
-    },
-    /// Increment nonce
-    /// Action: Increment nonce by one
-    /// Revert: Decrement nonce by one
-    NonceChange {
-        address: Address, //geth has nonce value,
-    },
-    /// Create account:
-    /// Actions: Mark account as created
-    /// Revert: Unmart account as created and reset nonce to zero.
-    AccountCreated { address: Address },
-    /// It is used to track both storage change and warm load of storage slot. For warm load in
-    /// regard to EIP-2929 AccessList had_value will be None
-    /// Action: Storage change or warm load
-    /// Revert: Revert to previous value or remove slot from storage
-    StorageChange {
-        address: Address,
-        key: U256,
-        had_value: Option<U256>, /* if none, storage slot was cold loaded from db and needs to
-                                  * be removed */
-    },
-    /// Code changed
-    /// Action: Account code changed
-    /// Revert: Revert to previous bytecode.
-    CodeChange { address: Address },
-}
-
-/// SubRoutine checkpoint that will help us to go back from this
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct JournalCheckpoint {
-    log_i: usize,
-    journal_i: usize,
 }

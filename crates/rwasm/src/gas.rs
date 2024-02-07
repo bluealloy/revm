@@ -110,11 +110,4 @@ impl Gas {
         }
         true
     }
-
-    #[doc(hidden)]
-    #[deprecated = "use `record_refund` instead"]
-    #[inline]
-    pub fn gas_refund(&mut self, refund: i64) {
-        self.record_refund(refund);
-    }
 }

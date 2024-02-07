@@ -131,6 +131,7 @@ mod mainnet {
         Output,
         ResultAndState,
         Spec,
+        State,
         LONDON,
         U256,
     };
@@ -163,18 +164,18 @@ mod mainnet {
         gas: &Gas,
     ) -> Result<(), EVMError<DB::Error>> {
         let _ = data;
-        let caller = data.env.tx.caller;
-        let effective_gas_price = data.env.effective_gas_price();
-
+        // let caller = data.env.tx.caller;
+        // let effective_gas_price = data.env.effective_gas_price();
+        //
         // return balance of not spend gas.
-        let (caller_account, _) = data
-            .journaled_state
-            .load_account(caller, data.db)
-            .map_err(EVMError::Database)?;
-
-        caller_account.info.balance = caller_account.info.balance.saturating_add(
-            effective_gas_price * U256::from(gas.remaining() + gas.refunded() as u64),
-        );
+        // let (caller_account, _) = data
+        //     .journaled_state
+        //     .load_account(caller, data.db)
+        //     .map_err(EVMError::Database)?;
+        //
+        // caller_account.info.balance = caller_account.info.balance.saturating_add(
+        //     effective_gas_price * U256::from(gas.remaining() + gas.refunded() as u64),
+        // );
 
         Ok(())
     }
@@ -185,27 +186,28 @@ mod mainnet {
         data: &mut EVMData<'_, DB>,
         gas: &Gas,
     ) -> Result<(), EVMError<DB::Error>> {
-        let beneficiary = data.env.block.coinbase;
-        let effective_gas_price = data.env.effective_gas_price();
-
-        // transfer fee to coinbase/beneficiary.
-        // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
-        let coinbase_gas_price = if SPEC::enabled(LONDON) {
-            effective_gas_price.saturating_sub(data.env.block.basefee)
-        } else {
-            effective_gas_price
-        };
-
-        let (coinbase_account, _) = data
-            .journaled_state
-            .load_account(beneficiary, data.db)
-            .map_err(EVMError::Database)?;
-
-        coinbase_account.mark_touch();
-        coinbase_account.info.balance = coinbase_account
-            .info
-            .balance
-            .saturating_add(coinbase_gas_price * U256::from(gas.spend() - gas.refunded() as u64));
+        // let beneficiary = data.env.block.coinbase;
+        // let effective_gas_price = data.env.effective_gas_price();
+        //
+        // // transfer fee to coinbase/beneficiary.
+        // // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
+        // let coinbase_gas_price = if SPEC::enabled(LONDON) {
+        //     effective_gas_price.saturating_sub(data.env.block.basefee)
+        // } else {
+        //     effective_gas_price
+        // };
+        //
+        // let (coinbase_account, _) = data
+        //     .journaled_state
+        //     .load_account(beneficiary, data.db)
+        //     .map_err(EVMError::Database)?;
+        //
+        // coinbase_account.mark_touch();
+        // coinbase_account.info.balance = coinbase_account
+        //     .info
+        //     .balance
+        //     .saturating_add(coinbase_gas_price * U256::from(gas.spend() - gas.refunded() as
+        // u64));
 
         Ok(())
     }
@@ -239,15 +241,12 @@ mod mainnet {
         let gas_refunded = gas.refunded() as u64;
         let final_gas_used = gas.spend() - gas_refunded;
 
-        // reset journal and return present state.
-        let (state, logs) = data.journaled_state.finalize();
-
         let result = match call_result {
             ExitCode::Ok => ExecutionResult::Success {
                 reason: Eval::Return,
                 gas_used: final_gas_used,
                 gas_refunded,
-                logs,
+                logs: vec![],
                 output,
             },
             ExitCode::Panic => ExecutionResult::Revert {
@@ -257,16 +256,16 @@ mod mainnet {
                     Output::Create(return_value, _) => return_value,
                 },
             },
-            ExitCode::FatalExternalError => {
-                return Err(EVMError::Database(data.error.take().unwrap()));
-            }
             _ => ExecutionResult::Halt {
                 reason: Halt::OutOfGas(OutOfGasError::BasicOutOfGas),
                 gas_used: final_gas_used,
             },
         };
 
-        Ok(ResultAndState { result, state })
+        Ok(ResultAndState {
+            result,
+            state: State::new(),
+        })
     }
 
     /// Mainnet end handle does not change the output.
