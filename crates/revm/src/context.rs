@@ -13,7 +13,6 @@ use crate::{
     FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
 };
 use alloc::boxed::Box;
-use core::ops::Range;
 
 /// Main Context structure that contains both EvmContext and External context.
 pub struct Context<EXT, DB: Database> {
@@ -301,11 +300,7 @@ impl<DB: Database> EvmContext<DB> {
     }
 
     /// Make call frame
-    pub fn make_call_frame(
-        &mut self,
-        inputs: &CallInputs,
-        return_memory_range: Range<usize>,
-    ) -> FrameOrResult {
+    pub fn make_call_frame(&mut self, inputs: &CallInputs) -> FrameOrResult {
         let gas = Gas::new(inputs.gas_limit);
 
         let return_result = |instruction_result: InstructionResult| {
@@ -315,7 +310,7 @@ impl<DB: Database> EvmContext<DB> {
                     gas,
                     output: Bytes::new(),
                 },
-                return_memory_range.clone(),
+                inputs.return_memory_offset.clone(),
             )
         };
 
@@ -364,7 +359,7 @@ impl<DB: Database> EvmContext<DB> {
             } else {
                 self.journaled_state.checkpoint_revert(checkpoint);
             }
-            FrameOrResult::new_call_result(result, return_memory_range)
+            FrameOrResult::new_call_result(result, inputs.return_memory_offset.clone())
         } else if !bytecode.is_empty() {
             let contract = Box::new(Contract::new_with_context(
                 inputs.input.clone(),
@@ -374,7 +369,7 @@ impl<DB: Database> EvmContext<DB> {
             ));
             // Create interpreter and executes call and push new CallStackFrame.
             FrameOrResult::new_call_frame(
-                return_memory_range,
+                inputs.return_memory_offset.clone(),
                 checkpoint,
                 Interpreter::new(contract, gas.limit(), inputs.is_static),
             )
@@ -616,7 +611,7 @@ mod tests {
         evm_context.journaled_state.depth = CALL_STACK_LIMIT as usize + 1;
         let contract = address!("dead10000000000000000000000000000001dead");
         let call_inputs = test_utils::create_mock_call_inputs(contract);
-        let res = evm_context.make_call_frame(&call_inputs, 0..0);
+        let res = evm_context.make_call_frame(&call_inputs);
         let FrameOrResult::Result(err) = res else {
             panic!("Expected FrameOrResult::Result");
         };
@@ -637,7 +632,7 @@ mod tests {
         let contract = address!("dead10000000000000000000000000000001dead");
         let mut call_inputs = test_utils::create_mock_call_inputs(contract);
         call_inputs.transfer.value = U256::from(1);
-        let res = evm_context.make_call_frame(&call_inputs, 0..0);
+        let res = evm_context.make_call_frame(&call_inputs);
         let FrameOrResult::Result(result) = res else {
             panic!("Expected FrameOrResult::Result");
         };
@@ -658,7 +653,7 @@ mod tests {
         let mut evm_context = create_cache_db_evm_context_with_balance(Box::new(env), cdb, bal);
         let contract = address!("dead10000000000000000000000000000001dead");
         let call_inputs = test_utils::create_mock_call_inputs(contract);
-        let res = evm_context.make_call_frame(&call_inputs, 0..0);
+        let res = evm_context.make_call_frame(&call_inputs);
         let FrameOrResult::Result(result) = res else {
             panic!("Expected FrameOrResult::Result");
         };
@@ -683,7 +678,7 @@ mod tests {
         );
         let mut evm_context = create_cache_db_evm_context_with_balance(Box::new(env), cdb, bal);
         let call_inputs = test_utils::create_mock_call_inputs(contract);
-        let res = evm_context.make_call_frame(&call_inputs, 0..0);
+        let res = evm_context.make_call_frame(&call_inputs);
         let FrameOrResult::Frame(Frame::Call(call_frame)) = res else {
             panic!("Expected FrameOrResult::Frame(Frame::Call(..))");
         };
