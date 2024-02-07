@@ -133,7 +133,6 @@ mod mainnet {
         Spec,
         State,
         LONDON,
-        U256,
     };
 
     /// Handle output of the transaction
@@ -161,7 +160,7 @@ mod mainnet {
     #[inline]
     pub(crate) fn handle_reimburse_caller<SPEC: Spec, DB: Database>(
         data: &mut EVMData<'_, DB>,
-        gas: &Gas,
+        _gas: &Gas,
     ) -> Result<(), EVMError<DB::Error>> {
         let _ = data;
         // let caller = data.env.tx.caller;
@@ -183,8 +182,8 @@ mod mainnet {
     /// Reward beneficiary with gas fee.
     #[inline]
     pub(crate) fn reward_beneficiary<SPEC: Spec, DB: Database>(
-        data: &mut EVMData<'_, DB>,
-        gas: &Gas,
+        _data: &mut EVMData<'_, DB>,
+        _gas: &Gas,
     ) -> Result<(), EVMError<DB::Error>> {
         // let beneficiary = data.env.block.coinbase;
         // let effective_gas_price = data.env.effective_gas_price();
@@ -232,7 +231,7 @@ mod mainnet {
     /// Main return handle, returns the output of the transaction.
     #[inline]
     pub(crate) fn main_return<DB: Database>(
-        data: &mut EVMData<'_, DB>,
+        _data: &mut EVMData<'_, DB>,
         call_result: ExitCode,
         output: Output,
         gas: &Gas,

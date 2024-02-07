@@ -1,7 +1,11 @@
-use core::{convert::Infallible, fmt, marker::PhantomData};
+use core::{convert::Infallible, marker::PhantomData};
 use revm_primitives::{
     db::{Database, DatabaseRef},
-    AccountInfo, Address, Bytecode, B256, U256,
+    AccountInfo,
+    Address,
+    Bytecode,
+    B256,
+    U256,
 };
 
 /// An empty database that always returns default values when queried.

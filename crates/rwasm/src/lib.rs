@@ -3,9 +3,8 @@
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 #![deny(unused_must_use, rust_2018_idioms)]
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(dead_code)]
 
-#[macro_use]
-extern crate fluentbase_sdk;
 #[macro_use]
 extern crate alloc;
 

@@ -1,6 +1,6 @@
-use crate::{gas::Gas, journal::AccountCheckpoint};
+use crate::gas::Gas;
 use fluentbase_types::ExitCode;
-use revm_primitives::{Address, Bytes, B256, U256};
+use revm_primitives::{Address, Bytes};
 
 pub(crate) struct CallCreateResult {
     pub(crate) result: ExitCode,

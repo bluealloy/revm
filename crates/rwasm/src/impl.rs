@@ -20,7 +20,7 @@ use crate::{
 };
 use core::marker::PhantomData;
 use fluentbase_sdk::{LowLevelAPI, LowLevelSDK};
-use fluentbase_types::{AccountDb, ExitCode, STATE_DEPLOY, STATE_MAIN};
+use fluentbase_types::{ExitCode, STATE_DEPLOY, STATE_MAIN};
 use revm_primitives::{CreateScheme, RWASM_MAX_CODE_SIZE};
 use rwasm_codegen::{Compiler, CompilerConfig, CompilerError, FuncOrExport};
 
@@ -80,11 +80,9 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
 
     /// Pre verify transaction.
     pub fn preverify_transaction_inner(&mut self) -> Result<(), EVMError<DB::Error>> {
-        let env = self.data.env();
-
         // Important: validate block before tx.
-        env.validate_block_env::<GSPEC>()?;
-        env.validate_tx::<GSPEC>()?;
+        self.data.env.validate_block_env::<GSPEC>()?;
+        self.data.env.validate_tx::<GSPEC>()?;
 
         // load acc
         // TODO: "warmup and verify tx caller?"
@@ -99,7 +97,6 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         //     .env
         //     .validate_tx_against_state(caller_account)
         //     .map_err(Into::into)
-
         Ok(())
     }
 
@@ -288,7 +285,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             };
         }
 
-        let mut bytes = match Self::translate_wasm_to_rwasm(&bytes, "main") {
+        let bytes = match Self::translate_wasm_to_rwasm(&bytes, "main") {
             Err(_) => {
                 Account::rollback(checkpoint);
                 return CallCreateResult {
