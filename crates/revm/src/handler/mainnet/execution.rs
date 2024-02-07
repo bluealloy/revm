@@ -62,8 +62,7 @@ pub fn call<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     inputs: Box<CallInputs>,
 ) -> FrameOrResult {
-    let mems = inputs.return_memory_offset.clone();
-    context.evm.make_call_frame(&inputs, mems)
+    context.evm.make_call_frame(&inputs)
 }
 
 #[inline]
