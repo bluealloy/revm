@@ -215,6 +215,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
         self.handler = Handler::mainnet_with_spec(self.handler.cfg.spec_id);
         EvmBuilder {
             context: self.context,
+            handler: self.handler,
             phantom: PhantomData,
         }
     }

@@ -73,15 +73,7 @@ fn verify_kzg_proof(
     proof: &Bytes48,
     kzg_settings: &KzgSettings,
 ) -> bool {
-    match KzgProof::verify_kzg_proof(commitment, z, y, proof, kzg_settings) {
-        Ok(ok) => ok,
-        #[cfg(not(debug_assertions))]
-        Err(_) => false,
-        #[cfg(debug_assertions)]
-        Err(e) => {
-            panic!("verify_kzg_proof returned an error: {e:?}");
-        }
-    }
+    KzgProof::verify_kzg_proof(commitment, z, y, proof, kzg_settings).unwrap_or(false)
 }
 
 #[inline]
