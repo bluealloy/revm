@@ -7,8 +7,8 @@ use crate::{
     journaled_state::JournaledState,
     precompile::{Precompile, Precompiles},
     primitives::{
-        keccak256, Address, AnalysisKind, Bytecode, Bytes, CreateScheme, EVMError, Env, HashSet,
-        Spec, SpecId, SpecId::*, B256, U256,
+        keccak256, Address, AnalysisKind, Bytecode, Bytes, CreateScheme, EVMError, Env, HandlerCfg,
+        HashSet, Spec, SpecId, SpecId::*, B256, U256,
     },
     FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
 };
@@ -21,6 +21,24 @@ pub struct Context<EXT, DB: Database> {
     pub evm: EvmContext<DB>,
     /// External contexts.
     pub external: EXT,
+}
+
+impl<EXT: Clone, DB: Database + Clone> Clone for Context<EXT, DB>
+where
+    DB::Error: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            evm: self.evm.clone(),
+            external: self.external.clone(),
+        }
+    }
+}
+
+impl Default for Context<(), EmptyDB> {
+    fn default() -> Self {
+        Self::new_empty()
+    }
 }
 
 impl Context<(), EmptyDB> {
@@ -43,6 +61,28 @@ impl<DB: Database> Context<(), DB> {
     }
 }
 
+impl<EXT, DB: Database> Context<EXT, DB> {
+    /// Creates new context with external and database.
+    pub fn new(evm: EvmContext<DB>, external: EXT) -> Context<EXT, DB> {
+        Context { evm, external }
+    }
+}
+
+/// Context with handler configuration.
+pub struct ContextWithHandlerCfg<EXT, DB: Database> {
+    /// Context of execution.
+    pub context: Context<EXT, DB>,
+    /// Handler configuration.
+    pub cfg: HandlerCfg,
+}
+
+impl<EXT, DB: Database> ContextWithHandlerCfg<EXT, DB> {
+    /// Creates new context with handler configuration.
+    pub fn new(context: Context<EXT, DB>, cfg: HandlerCfg) -> Self {
+        Self { cfg, context }
+    }
+}
+
 /// EVM contexts contains data that EVM needs for execution.
 #[derive(Debug)]
 pub struct EvmContext<DB: Database> {
@@ -60,6 +100,23 @@ pub struct EvmContext<DB: Database> {
     /// Used as temporary value holder to store L1 block info.
     #[cfg(feature = "optimism")]
     pub l1_block_info: Option<crate::optimism::L1BlockInfo>,
+}
+
+impl<DB: Database + Clone> Clone for EvmContext<DB>
+where
+    DB::Error: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            env: self.env.clone(),
+            journaled_state: self.journaled_state.clone(),
+            db: self.db.clone(),
+            error: self.error.clone(),
+            precompiles: self.precompiles.clone(),
+            #[cfg(feature = "optimism")]
+            l1_block_info: self.l1_block_info.clone(),
+        }
+    }
 }
 
 impl<DB: Database> EvmContext<DB> {

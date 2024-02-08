@@ -29,7 +29,7 @@ pub mod optimism;
 // Export items.
 
 pub use builder::EvmBuilder;
-pub use context::{Context, EvmContext};
+pub use context::{Context, ContextWithHandlerCfg, EvmContext};
 #[cfg(feature = "std")]
 pub use db::{
     CacheState, DBBox, State, StateBuilder, StateDBBox, TransitionAccount, TransitionState,
