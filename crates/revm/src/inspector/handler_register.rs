@@ -8,6 +8,7 @@ use crate::{
 };
 use alloc::{boxed::Box, rc::Rc, sync::Arc, vec::Vec};
 
+/// Provides access to an `Inspector` instance.
 pub trait GetInspector<'a, DB: Database> {
     fn get_inspector(&mut self) -> &mut dyn Inspector<DB>;
 }
