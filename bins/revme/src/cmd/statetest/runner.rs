@@ -73,7 +73,7 @@ fn skip_test(path: &Path) -> bool {
         name,
         // funky test with `bigint 0x00` value in json :) not possible to happen on mainnet and require
         // custom json parser. https://github.com/ethereum/tests/issues/971
-        | "ValueOverflow.json"
+        |"ValueOverflow.json"| "ValueOverflowParis.json"
 
         // precompiles having storage is not possible
         | "RevertPrecompiledTouch_storage.json"
@@ -255,7 +255,10 @@ pub fn execute_test_suite(
         // after the Merge prevrandao replaces mix_hash field in block and replaced difficulty opcode in EVM.
         env.block.prevrandao = unit.env.current_random;
         // EIP-4844
-        if let (Some(parent_blob_gas_used), Some(parent_excess_blob_gas)) = (
+        if let Some(current_excess_blob_gas) = unit.env.current_excess_blob_gas {
+            env.block
+                .set_blob_excess_gas_and_price(current_excess_blob_gas.to());
+        } else if let (Some(parent_blob_gas_used), Some(parent_excess_blob_gas)) = (
             unit.env.parent_blob_gas_used,
             unit.env.parent_excess_blob_gas,
         ) {
