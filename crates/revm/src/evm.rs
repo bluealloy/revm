@@ -11,7 +11,7 @@ use crate::{
         EnvWithHandlerCfg, ExecutionResult, HandlerCfg, Log, ResultAndState, TransactTo, TxEnv,
         B256, U256,
     },
-    Context, Frame, FrameOrResult, FrameResult,
+    Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult,
 };
 use alloc::vec::Vec;
 use core::fmt;
@@ -183,6 +183,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     }
 
     /// Returns database and [`EnvWithHandlerCfg`].
+    #[inline]
     pub fn into_db_and_env_with_handler_cfg(self) -> (DB, EnvWithHandlerCfg) {
         (
             self.context.evm.db,
@@ -191,6 +192,12 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                 handler_cfg: self.handler.cfg,
             },
         )
+    }
+
+    /// Returns [Context] and [HandlerCfg].
+    #[inline]
+    pub fn into_context_with_handler_cfg(self) -> ContextWithHandlerCfg<EXT, DB> {
+        ContextWithHandlerCfg::new(self.context, self.handler.cfg)
     }
 
     /// Starts the main loop and returns outcome of the execution.

@@ -399,4 +399,13 @@ mod tests {
         assert!(inspector.call);
         assert!(inspector.call_end);
     }
+
+    #[test]
+    fn test_inspector_reg() {
+        let mut noop = NoOpInspector;
+        let _evm = Evm::builder()
+            .with_external_context(&mut noop)
+            .append_handler_register(inspector_handle_register)
+            .build();
+    }
 }
