@@ -20,6 +20,8 @@ pub fn optimism_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, 
     spec_to_generic!(handler.cfg.spec_id, {
         // validate environment
         handler.validation.env = Arc::new(validate_env::<SPEC, DB>);
+        // Validate transaction against state.
+        handler.validation.tx_against_state = Arc::new(validate_tx_against_state::<SPEC, EXT, DB>);
         // load l1 data
         handler.pre_execution.load_accounts = Arc::new(load_accounts::<SPEC, EXT, DB>);
         // An estimated batch cost is charged from the caller and added to L1 Fee Vault.
@@ -50,6 +52,16 @@ pub fn validate_env<SPEC: Spec, DB: Database>(env: &Env) -> Result<(), EVMError<
 
     env.validate_tx::<SPEC>()?;
     Ok(())
+}
+
+/// Don not perform any extra validation for deposit transactions, they are pre-verified on L1.
+pub fn validate_tx_against_state<SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<EXT, DB>,
+) -> Result<(), EVMError<DB::Error>> {
+    if context.evm.env.tx.optimism.source_hash.is_some() {
+        return Ok(());
+    }
+    mainnet::validate_tx_against_state::<SPEC, EXT, DB>(context)
 }
 
 /// Handle output of the transaction
