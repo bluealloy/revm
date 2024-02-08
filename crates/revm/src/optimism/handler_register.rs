@@ -21,7 +21,7 @@ pub fn optimism_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, 
         // validate environment
         handler.validation.env = Arc::new(validate_env::<SPEC, DB>);
         // Validate transaction against state.
-        handler.validation.tx_against_state = Arc::new(validate_tx_against_state::<SPEC, DB>);
+        handler.validation.tx_against_state = Arc::new(validate_tx_against_state::<SPEC, EXT, DB>);
         // load l1 data
         handler.pre_execution.load_accounts = Arc::new(load_accounts::<SPEC, EXT, DB>);
         // An estimated batch cost is charged from the caller and added to L1 Fee Vault.
