@@ -101,20 +101,23 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
 
     /// Sets Builder with [`EnvWithHandlerCfg`].
     pub fn with_env_with_handler_cfg(
-        mut self,
+        self,
         env_with_handler_cfg: EnvWithHandlerCfg,
-    ) -> EvmBuilder<'a, SetGenericStage, EXT, DB> {
-        self.context.evm.env = env_with_handler_cfg.env;
-        self.handler =
-            EvmBuilder::<'a, HandlerStage, EXT, DB>::handler(env_with_handler_cfg.handler_cfg);
-        self
+    ) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
+        EvmBuilder {
+            context: self.context,
+            handler: EvmBuilder::<'a, HandlerStage, EXT, DB>::handler(
+                env_with_handler_cfg.handler_cfg,
+            ),
+            phantom: PhantomData,
+        }
     }
 
     /// Sets Builder with [`ContextWithHandlerCfg`].
     pub fn with_context_with_handler_cfg<OEXT, ODB: Database>(
         self,
         context_with_handler_cfg: ContextWithHandlerCfg<OEXT, ODB>,
-    ) -> EvmBuilder<'a, SetGenericStage, OEXT, ODB> {
+    ) -> EvmBuilder<'a, HandlerStage, OEXT, ODB> {
         EvmBuilder {
             context: context_with_handler_cfg.context,
             handler: EvmBuilder::<'a, HandlerStage, OEXT, ODB>::handler(
@@ -172,8 +175,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
     pub fn mainnet(mut self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
         self.handler = Handler::mainnet_with_spec(self.handler.cfg.spec_id);
         EvmBuilder {
-            evm: self.context.evm,
-            external: self.external,
+            context: self.context,
             handler: self.handler,
             phantom: PhantomData,
         }
@@ -212,8 +214,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
     pub fn reset_handler_with_mainnet(mut self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
         self.handler = Handler::mainnet_with_spec(self.handler.cfg.spec_id);
         EvmBuilder {
-            evm: self.context.evm,
-            external: self.external,
+            external: self.context,
             handler: self.handler,
             phantom: PhantomData,
         }
