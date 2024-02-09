@@ -287,7 +287,7 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
         handle_register: register::HandleRegister<'a, EXT, DB>,
     ) -> EvmBuilder<'_, HandlerStage, EXT, DB> {
         self.handler
-            .append_handled_register(register::HandleRegisters::Plain(handle_register));
+            .append_handler_register(register::HandleRegisters::Plain(handle_register));
         EvmBuilder {
             context: self.context,
             handler: self.handler,
@@ -305,7 +305,7 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
         handle_register: register::HandleRegisterBox<'a, EXT, DB>,
     ) -> EvmBuilder<'_, HandlerStage, EXT, DB> {
         self.handler
-            .append_handled_register(register::HandleRegisters::Box(handle_register));
+            .append_handler_register(register::HandleRegisters::Box(handle_register));
         EvmBuilder {
             context: self.context,
             handler: self.handler,
