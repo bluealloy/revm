@@ -181,8 +181,8 @@ impl Precompiles {
 
     /// Returns the precompile for the given address.
     #[inline]
-    pub fn get(&self, address: &Address) -> Option<Precompile> {
-        self.inner.get(address).cloned()
+    pub fn get(&self, address: &Address) -> Option<&Precompile> {
+        self.inner.get(address)
     }
 
     /// Is the precompiles list empty.

@@ -1,14 +1,13 @@
 use super::calc_linear_cost_u32;
-use crate::{Error, Precompile, PrecompileResult, PrecompileWithAddress, StandardPrecompileFn};
-use sha2::*;
+use crate::{Error, Precompile, PrecompileResult, PrecompileWithAddress};
+use sha2::Digest;
 
-pub const SHA256: PrecompileWithAddress = PrecompileWithAddress(
-    crate::u64_to_address(2),
-    Precompile::Standard(sha256_run as StandardPrecompileFn),
-);
+pub const SHA256: PrecompileWithAddress =
+    PrecompileWithAddress(crate::u64_to_address(2), Precompile::Standard(sha256_run));
+
 pub const RIPEMD160: PrecompileWithAddress = PrecompileWithAddress(
     crate::u64_to_address(3),
-    Precompile::Standard(ripemd160_run as StandardPrecompileFn),
+    Precompile::Standard(ripemd160_run),
 );
 
 /// See: <https://ethereum.github.io/yellowpaper/paper.pdf>
@@ -32,8 +31,11 @@ fn ripemd160_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
     if gas_used > gas_limit {
         Err(Error::OutOfGas)
     } else {
-        let mut ret = [0u8; 32];
-        ret[12..32].copy_from_slice(&ripemd::Ripemd160::digest(input));
-        Ok((gas_used, ret.to_vec()))
+        let mut hasher = ripemd::Ripemd160::new();
+        hasher.update(input);
+
+        let mut output = [0u8; 32];
+        hasher.finalize_into((&mut output[12..]).into());
+        Ok((gas_used, output.to_vec()))
     }
 }

@@ -164,7 +164,7 @@ impl<DB: Database> EvmContext<DB> {
     /// Sets precompiles
     pub fn set_precompiles(&mut self, precompiles: Precompiles) {
         self.journaled_state.warm_preloaded_addresses =
-            precompiles.addresses().cloned().collect::<HashSet<_>>();
+            precompiles.addresses().copied().collect::<HashSet<_>>();
         self.precompiles = precompiles;
     }
 
@@ -415,7 +415,7 @@ impl<DB: Database> EvmContext<DB> {
         }
 
         if let Some(precompile) = self.precompiles.get(&inputs.contract) {
-            let result = self.call_precompile(precompile, inputs, gas);
+            let result = self.call_precompile(precompile.clone(), inputs, gas);
             if matches!(result.result, return_ok!()) {
                 self.journaled_state.checkpoint_commit();
             } else {
