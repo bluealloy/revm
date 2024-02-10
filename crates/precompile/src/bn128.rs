@@ -118,8 +118,13 @@ fn read_point(input: &[u8], pos: usize) -> Result<bn::G1, Error> {
 fn run_add(input: &[u8]) -> Result<Vec<u8>, Error> {
     use bn::AffineG1;
 
-    let mut input = input.to_vec();
-    input.resize(ADD_INPUT_LEN, 0);
+    let input = if input.len() < ADD_INPUT_LEN {
+        let mut input = input.to_vec();
+        input.resize(ADD_INPUT_LEN, 0);
+        input
+    } else {
+        input[..ADD_INPUT_LEN].to_vec()
+    };
 
     let p1 = read_point(&input, 0)?;
     let p2 = read_point(&input, 64)?;
