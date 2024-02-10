@@ -1,6 +1,4 @@
-use crate::{
-    utilities::get_right_padded, Error, Precompile, PrecompileResult, PrecompileWithAddress,
-};
+use crate::{utilities::right_pad, Error, Precompile, PrecompileResult, PrecompileWithAddress};
 use alloc::vec::Vec;
 use revm_primitives::{alloy_primitives::B512, B256};
 
@@ -74,7 +72,7 @@ fn ec_recover_run(input: &[u8], target_gas: u64) -> PrecompileResult {
         return Err(Error::OutOfGas);
     }
 
-    let input = get_right_padded::<128>(input, 0);
+    let input = right_pad::<128>(input);
 
     // `v` must be a 32-byte big-endian integer equal to 27 or 28.
     if !(input[32..63].iter().all(|&b| b == 0) && matches!(input[63], 27 | 28)) {

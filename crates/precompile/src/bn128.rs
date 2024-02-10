@@ -1,6 +1,5 @@
 use crate::{
-    utilities::get_right_padded, Address, Error, Precompile, PrecompileResult,
-    PrecompileWithAddress,
+    utilities::right_pad, Address, Error, Precompile, PrecompileResult, PrecompileWithAddress,
 };
 use alloc::vec::Vec;
 use bn::{AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
@@ -134,7 +133,7 @@ fn new_g1_point(px: Fq, py: Fq) -> Result<G1, Error> {
 }
 
 fn run_add(input: &[u8]) -> Result<Vec<u8>, Error> {
-    let input = get_right_padded::<ADD_INPUT_LEN>(input, 0);
+    let input = right_pad::<ADD_INPUT_LEN>(input);
 
     let p1 = read_point(&input[..64])?;
     let p2 = read_point(&input[64..])?;
@@ -155,7 +154,7 @@ fn run_add(input: &[u8]) -> Result<Vec<u8>, Error> {
 }
 
 fn run_mul(input: &[u8]) -> Result<Vec<u8>, Error> {
-    let input = get_right_padded::<MUL_INPUT_LEN>(input, 0);
+    let input = right_pad::<MUL_INPUT_LEN>(input);
 
     let p = read_point(&input[..64])?;
 
