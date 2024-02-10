@@ -101,14 +101,14 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
 
     /// Sets Builder with [`EnvWithHandlerCfg`].
     pub fn with_env_with_handler_cfg(
-        self,
+        mut self,
         env_with_handler_cfg: EnvWithHandlerCfg,
     ) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
+        let EnvWithHandlerCfg { env, handler_cfg } = env_with_handler_cfg;
+        self.context.evm.env = env;
         EvmBuilder {
             context: self.context,
-            handler: EvmBuilder::<'a, HandlerStage, EXT, DB>::handler(
-                env_with_handler_cfg.handler_cfg,
-            ),
+            handler: EvmBuilder::<'a, HandlerStage, EXT, DB>::handler(handler_cfg),
             phantom: PhantomData,
         }
     }
