@@ -76,12 +76,12 @@ pub fn make_instruction_table<H: Host, SPEC: Spec>() -> InstructionTable<H> {
 /// Make boxed instruction table that calls `outer` closure for every instruction.
 pub fn make_boxed_instruction_table<'a, H, SPEC, FN>(
     table: InstructionTable<H>,
-    outer: FN,
+    mut outer: FN,
 ) -> BoxedInstructionTable<'a, H>
 where
     H: Host,
     SPEC: Spec + 'static,
-    FN: Fn(Instruction<H>) -> BoxedInstruction<'a, H>,
+    FN: FnMut(Instruction<H>) -> BoxedInstruction<'a, H>,
 {
     core::array::from_fn(|i| outer(table[i]))
 }
