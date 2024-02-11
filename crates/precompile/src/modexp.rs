@@ -37,7 +37,8 @@ fn calculate_iteration_count(exp_length: u64, exp_highp: &U256) -> u64 {
     } else if exp_length <= 32 {
         iteration_count = exp_highp.bit_len() as u64 - 1;
     } else if exp_length > 32 {
-        iteration_count = (8 * (exp_length - 32)) + max(1, exp_highp.bit_len() as u64) - 1;
+        iteration_count = (8u64.saturating_mul(exp_length - 32))
+            .saturating_add(max(1, exp_highp.bit_len() as u64) - 1);
     }
 
     max(iteration_count, 1)

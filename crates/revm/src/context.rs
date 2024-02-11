@@ -415,7 +415,7 @@ impl<DB: Database> EvmContext<DB> {
         }
 
         if let Some(precompile) = self.precompiles.get(&inputs.contract) {
-            let result = self.call_precompile(precompile.clone(), inputs, gas);
+            let result = self.call_precompile(precompile, inputs, gas);
             if matches!(result.result, return_ok!()) {
                 self.journaled_state.checkpoint_commit();
             } else {
