@@ -1,10 +1,13 @@
 use crate::{
-    primitives::U256, Address, Error, Precompile, PrecompileResult, PrecompileWithAddress,
+    utilities::get_right_padded, Address, Error, Precompile, PrecompileResult,
+    PrecompileWithAddress,
 };
 use alloc::vec::Vec;
+use bn::{AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
 
 pub mod add {
     use super::*;
+
     const ADDRESS: Address = crate::u64_to_address(6);
 
     pub const ISTANBUL: PrecompileWithAddress = PrecompileWithAddress(
@@ -30,7 +33,9 @@ pub mod add {
 
 pub mod mul {
     use super::*;
+
     const ADDRESS: Address = crate::u64_to_address(7);
+
     pub const ISTANBUL: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
         Precompile::Standard(|input: &[u8], gas_limit: u64| -> PrecompileResult {
@@ -54,6 +59,7 @@ pub mod mul {
 
 pub mod pair {
     use super::*;
+
     const ADDRESS: Address = crate::u64_to_address(8);
 
     const ISTANBUL_PAIR_PER_POINT: u64 = 34_000;
@@ -94,19 +100,31 @@ const MUL_INPUT_LEN: usize = 128;
 /// Pair element length.
 const PAIR_ELEMENT_LEN: usize = 192;
 
-/// Reads the `x` and `y` points from an input at a given position.
-fn read_point(input: &[u8], pos: usize) -> Result<bn::G1, Error> {
-    use bn::{AffineG1, Fq, Group, G1};
+/// Reads a single `Fq` from the input slice.
+///
+/// # Panics
+///
+/// Panics if the input is not at least 32 bytes long.
+#[inline]
+fn read_fq(input: &[u8]) -> Result<Fq, Error> {
+    Fq::from_slice(&input[..32]).map_err(|_| Error::Bn128FieldPointNotAMember)
+}
 
-    let mut px_buf = [0u8; 32];
-    px_buf.copy_from_slice(&input[pos..(pos + 32)]);
-    let px = Fq::from_slice(&px_buf).map_err(|_| Error::Bn128FieldPointNotAMember)?;
+/// Reads the `x` and `y` points from the input slice.
+///
+/// # Panics
+///
+/// Panics if the input is not at least 64 bytes long.
+#[inline]
+fn read_point(input: &[u8]) -> Result<G1, Error> {
+    let px = read_fq(&input[0..32])?;
+    let py = read_fq(&input[32..64])?;
+    new_g1_point(px, py)
+}
 
-    let mut py_buf = [0u8; 32];
-    py_buf.copy_from_slice(&input[(pos + 32)..(pos + 64)]);
-    let py = Fq::from_slice(&py_buf).map_err(|_| Error::Bn128FieldPointNotAMember)?;
-
-    if px == Fq::zero() && py == bn::Fq::zero() {
+/// Creates a new `G1` point from the given `x` and `y` coordinates.
+fn new_g1_point(px: Fq, py: Fq) -> Result<G1, Error> {
+    if px == Fq::zero() && py == Fq::zero() {
         Ok(G1::zero())
     } else {
         AffineG1::new(px, py)
@@ -116,18 +134,10 @@ fn read_point(input: &[u8], pos: usize) -> Result<bn::G1, Error> {
 }
 
 fn run_add(input: &[u8]) -> Result<Vec<u8>, Error> {
-    use bn::AffineG1;
+    let input = get_right_padded::<ADD_INPUT_LEN>(input, 0);
 
-    let input = if input.len() < ADD_INPUT_LEN {
-        let mut input = input.to_vec();
-        input.resize(ADD_INPUT_LEN, 0);
-        input
-    } else {
-        input[..ADD_INPUT_LEN].to_vec()
-    };
-
-    let p1 = read_point(&input, 0)?;
-    let p2 = read_point(&input, 64)?;
+    let p1 = read_point(&input[..64])?;
+    let p2 = read_point(&input[64..])?;
 
     let mut output = [0u8; 64];
     if let Some(sum) = AffineG1::from_jacobian(p1 + p2) {
@@ -145,24 +155,18 @@ fn run_add(input: &[u8]) -> Result<Vec<u8>, Error> {
 }
 
 fn run_mul(input: &[u8]) -> Result<Vec<u8>, Error> {
-    use bn::AffineG1;
+    let input = get_right_padded::<MUL_INPUT_LEN>(input, 0);
 
-    let mut input = input.to_vec();
-    input.resize(MUL_INPUT_LEN, 0);
+    let p = read_point(&input[..64])?;
 
-    let p = read_point(&input, 0)?;
-
-    let mut fr_buf = [0u8; 32];
-    fr_buf.copy_from_slice(&input[64..96]);
-    // Fr::from_slice can only fail on incorrect length, and this is not a case.
-    let fr = bn::Fr::from_slice(&fr_buf[..]).unwrap();
+    // `Fr::from_slice` can only fail when the length is not 32.
+    let fr = bn::Fr::from_slice(&input[64..96]).unwrap();
 
     let mut out = [0u8; 64];
     if let Some(mul) = AffineG1::from_jacobian(p * fr) {
         mul.x().to_big_endian(&mut out[..32]).unwrap();
         mul.y().to_big_endian(&mut out[32..]).unwrap();
     }
-
     Ok(out.to_vec())
 }
 
@@ -177,68 +181,52 @@ fn run_pair(
         return Err(Error::OutOfGas);
     }
 
-    use bn::{AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
-
     if input.len() % PAIR_ELEMENT_LEN != 0 {
         return Err(Error::Bn128PairLength);
     }
 
-    let output = if input.is_empty() {
-        U256::from(1)
+    let success = if input.is_empty() {
+        true
     } else {
         let elements = input.len() / PAIR_ELEMENT_LEN;
-        let mut vals = Vec::with_capacity(elements);
 
-        const PEL: usize = PAIR_ELEMENT_LEN;
-
+        let mut mul = Gt::one();
         for idx in 0..elements {
-            let mut buf = [0u8; 32];
-
-            buf.copy_from_slice(&input[(idx * PEL)..(idx * PEL + 32)]);
-            let ax = Fq::from_slice(&buf).map_err(|_| Error::Bn128FieldPointNotAMember)?;
-            buf.copy_from_slice(&input[(idx * PEL + 32)..(idx * PEL + 64)]);
-            let ay = Fq::from_slice(&buf).map_err(|_| Error::Bn128FieldPointNotAMember)?;
-            buf.copy_from_slice(&input[(idx * PEL + 64)..(idx * PEL + 96)]);
-            let bay = Fq::from_slice(&buf).map_err(|_| Error::Bn128FieldPointNotAMember)?;
-            buf.copy_from_slice(&input[(idx * PEL + 96)..(idx * PEL + 128)]);
-            let bax = Fq::from_slice(&buf).map_err(|_| Error::Bn128FieldPointNotAMember)?;
-            buf.copy_from_slice(&input[(idx * PEL + 128)..(idx * PEL + 160)]);
-            let bby = Fq::from_slice(&buf).map_err(|_| Error::Bn128FieldPointNotAMember)?;
-            buf.copy_from_slice(&input[(idx * PEL + 160)..(idx * PEL + 192)]);
-            let bbx = Fq::from_slice(&buf).map_err(|_| Error::Bn128FieldPointNotAMember)?;
-
-            let a = {
-                if ax.is_zero() && ay.is_zero() {
-                    G1::zero()
-                } else {
-                    G1::from(AffineG1::new(ax, ay).map_err(|_| Error::Bn128AffineGFailedToCreate)?)
-                }
+            let read_fq_at = |n: usize| {
+                debug_assert!(n < PAIR_ELEMENT_LEN / 32);
+                let start = idx * PAIR_ELEMENT_LEN + n * 32;
+                // SAFETY: We're reading `6 * 32 == PAIR_ELEMENT_LEN` bytes from `input[idx..]`
+                // per iteration. This is guaranteed to be in-bounds.
+                let slice = unsafe { input.get_unchecked(start..start + 32) };
+                Fq::from_slice(slice).map_err(|_| Error::Bn128FieldPointNotAMember)
             };
+            let ax = read_fq_at(0)?;
+            let ay = read_fq_at(1)?;
+            let bay = read_fq_at(2)?;
+            let bax = read_fq_at(3)?;
+            let bby = read_fq_at(4)?;
+            let bbx = read_fq_at(5)?;
+
+            let a = new_g1_point(ax, ay)?;
             let b = {
                 let ba = Fq2::new(bax, bay);
                 let bb = Fq2::new(bbx, bby);
-
                 if ba.is_zero() && bb.is_zero() {
                     G2::zero()
                 } else {
                     G2::from(AffineG2::new(ba, bb).map_err(|_| Error::Bn128AffineGFailedToCreate)?)
                 }
             };
-            vals.push((a, b))
+
+            mul = mul * bn::pairing(a, b);
         }
 
-        let mul = vals
-            .into_iter()
-            .fold(Gt::one(), |s, (a, b)| s * bn::pairing(a, b));
-
-        if mul == Gt::one() {
-            U256::from(1)
-        } else {
-            U256::ZERO
-        }
+        mul == Gt::one()
     };
 
-    Ok((gas_used, output.to_be_bytes_vec()))
+    let mut out = [0u8; 32];
+    out[31] = success as u8;
+    Ok((gas_used, out.to_vec()))
 }
 
 /*
