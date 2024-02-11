@@ -176,7 +176,7 @@ impl Precompiles {
     /// Is the given address a precompile.
     #[inline]
     pub fn contains(&self, address: &Address) -> bool {
-        self.get(address).is_some()
+        self.inner.contains_key(address)
     }
 
     /// Returns the precompile for the given address.

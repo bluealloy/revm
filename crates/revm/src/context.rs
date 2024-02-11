@@ -164,7 +164,7 @@ impl<DB: Database> EvmContext<DB> {
     /// Sets precompiles
     pub fn set_precompiles(&mut self, precompiles: Precompiles) {
         self.journaled_state.warm_preloaded_addresses =
-            precompiles.addresses().cloned().collect::<HashSet<_>>();
+            precompiles.addresses().copied().collect::<HashSet<_>>();
         self.precompiles = precompiles;
     }
 

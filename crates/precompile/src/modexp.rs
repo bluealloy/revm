@@ -1,7 +1,7 @@
 use crate::{
     primitives::U256,
     utilities::{get_right_padded, get_right_padded_vec, left_padding, left_padding_vec},
-    Error, Precompile, PrecompileResult, PrecompileWithAddress, StandardPrecompileFn,
+    Error, Precompile, PrecompileResult, PrecompileWithAddress,
 };
 use alloc::vec::Vec;
 use aurora_engine_modexp::modexp;
@@ -9,13 +9,11 @@ use core::cmp::{max, min};
 
 pub const BYZANTIUM: PrecompileWithAddress = PrecompileWithAddress(
     crate::u64_to_address(5),
-    Precompile::Standard(byzantium_run as StandardPrecompileFn),
+    Precompile::Standard(byzantium_run),
 );
 
-pub const BERLIN: PrecompileWithAddress = PrecompileWithAddress(
-    crate::u64_to_address(5),
-    Precompile::Standard(berlin_run as StandardPrecompileFn),
-);
+pub const BERLIN: PrecompileWithAddress =
+    PrecompileWithAddress(crate::u64_to_address(5), Precompile::Standard(berlin_run));
 
 /// See: <https://eips.ethereum.org/EIPS/eip-198>
 /// See: <https://etherscan.io/address/0000000000000000000000000000000000000005>
@@ -39,7 +37,8 @@ fn calculate_iteration_count(exp_length: u64, exp_highp: &U256) -> u64 {
     } else if exp_length <= 32 {
         iteration_count = exp_highp.bit_len() as u64 - 1;
     } else if exp_length > 32 {
-        iteration_count = (8 * (exp_length - 32)) + max(1, exp_highp.bit_len() as u64) - 1;
+        iteration_count = (8u64.saturating_mul(exp_length - 32))
+            .saturating_add(max(1, exp_highp.bit_len() as u64) - 1);
     }
 
     max(iteration_count, 1)
@@ -139,12 +138,7 @@ fn byzantium_gas_calc(base_len: u64, exp_len: u64, mod_len: u64, exp_highp: &U25
     let iter_count = U256::from(calculate_iteration_count(exp_len, exp_highp));
     // mul * iter_count bounded by 2^195 < 2^256 (no overflow)
     let gas = (mul * iter_count) / U256::from(20);
-
-    if gas.as_limbs()[1] != 0 || gas.as_limbs()[2] != 0 || gas.as_limbs()[3] != 0 {
-        u64::MAX
-    } else {
-        gas.as_limbs()[0]
-    }
+    gas.saturating_to()
 }
 
 // Calculate gas cost according to EIP 2565:
@@ -163,12 +157,7 @@ fn berlin_gas_calc(base_length: u64, exp_length: u64, mod_length: u64, exp_highp
     let multiplication_complexity = calculate_multiplication_complexity(base_length, mod_length);
     let iteration_count = calculate_iteration_count(exp_length, exp_highp);
     let gas = (multiplication_complexity * U256::from(iteration_count)) / U256::from(3);
-
-    if gas.as_limbs()[1] != 0 || gas.as_limbs()[2] != 0 || gas.as_limbs()[3] != 0 {
-        u64::MAX
-    } else {
-        max(200, gas.as_limbs()[0])
-    }
+    max(200, gas.saturating_to())
 }
 
 #[cfg(test)]
