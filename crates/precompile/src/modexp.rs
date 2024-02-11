@@ -1,6 +1,6 @@
 use crate::{
     primitives::U256,
-    utilities::{get_right_padded, get_right_padded_vec, left_pad, left_pad_vec},
+    utilities::{left_pad, left_pad_vec, right_pad_with_offset, right_pad_with_offset_vec},
     Error, Precompile, PrecompileResult, PrecompileWithAddress,
 };
 use alloc::vec::Vec;
@@ -59,9 +59,9 @@ where
     const HEADER_LENGTH: usize = 96;
 
     // Extract the header.
-    let base_len = U256::from_be_bytes(get_right_padded::<32>(input, 0).into_owned());
-    let exp_len = U256::from_be_bytes(get_right_padded::<32>(input, 32).into_owned());
-    let mod_len = U256::from_be_bytes(get_right_padded::<32>(input, 64).into_owned());
+    let base_len = U256::from_be_bytes(right_pad_with_offset::<32>(input, 0).into_owned());
+    let exp_len = U256::from_be_bytes(right_pad_with_offset::<32>(input, 32).into_owned());
+    let mod_len = U256::from_be_bytes(right_pad_with_offset::<32>(input, 64).into_owned());
 
     // cast base and modulus to usize, it does not make sense to handle larger values
     let Ok(base_len) = usize::try_from(base_len) else {
@@ -94,7 +94,7 @@ where
 
     let exp_highp = {
         // get right padded bytes so if data.len is less then exp_len we will get right padded zeroes.
-        let right_padded_highp = get_right_padded::<32>(input, base_len);
+        let right_padded_highp = right_pad_with_offset::<32>(input, base_len);
         // If exp_len is less then 32 bytes get only exp_len bytes and do left padding.
         let out = left_pad::<32>(&right_padded_highp[..exp_highp_len]);
         U256::from_be_bytes(out.into_owned())
@@ -108,9 +108,9 @@ where
     }
 
     // Padding is needed if the input does not contain all 3 values.
-    let base = get_right_padded_vec(input, 0, base_len);
-    let exponent = get_right_padded_vec(input, base_len, exp_len);
-    let modulus = get_right_padded_vec(input, base_len.saturating_add(exp_len), mod_len);
+    let base = right_pad_with_offset_vec(input, 0, base_len);
+    let exponent = right_pad_with_offset_vec(input, base_len, exp_len);
+    let modulus = right_pad_with_offset_vec(input, base_len.saturating_add(exp_len), mod_len);
 
     // Call the modexp.
     let output = modexp(&base, &exponent, &modulus);

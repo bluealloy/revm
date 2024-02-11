@@ -5,7 +5,7 @@ use core::cmp::min;
 ///
 /// Returns the first `LEN` bytes if it does not need padding.
 #[inline(always)]
-pub fn get_right_padded<const LEN: usize>(data: &[u8], offset: usize) -> Cow<'_, [u8; LEN]> {
+pub fn right_pad_with_offset<const LEN: usize>(data: &[u8], offset: usize) -> Cow<'_, [u8; LEN]> {
     right_pad(data.get(offset..).unwrap_or_default())
 }
 
@@ -13,7 +13,7 @@ pub fn get_right_padded<const LEN: usize>(data: &[u8], offset: usize) -> Cow<'_,
 ///
 /// Returns the first `len` bytes if it does not need padding.
 #[inline(always)]
-pub fn get_right_padded_vec(data: &[u8], offset: usize, len: usize) -> Cow<'_, [u8]> {
+pub fn right_pad_with_offset_vec(data: &[u8], offset: usize, len: usize) -> Cow<'_, [u8]> {
     right_pad_vec(data.get(offset..).unwrap_or_default(), len)
 }
 
@@ -84,26 +84,26 @@ mod tests {
     #[test]
     fn get_with_right_padding() {
         let data = [1, 2, 3, 4];
-        let padded = get_right_padded::<8>(&data, 4);
+        let padded = right_pad_with_offset::<8>(&data, 4);
         assert!(matches!(padded, Cow::Owned(_)));
         assert_eq!(padded[..], [0, 0, 0, 0, 0, 0, 0, 0]);
-        let padded = get_right_padded_vec(&data, 4, 8);
+        let padded = right_pad_with_offset_vec(&data, 4, 8);
         assert!(matches!(padded, Cow::Owned(_)));
         assert_eq!(padded[..], [0, 0, 0, 0, 0, 0, 0, 0]);
 
         let data = [1, 2, 3, 4, 5, 6, 7, 8];
-        let padded = get_right_padded::<8>(&data, 0);
+        let padded = right_pad_with_offset::<8>(&data, 0);
         assert!(matches!(padded, Cow::Borrowed(_)));
         assert_eq!(padded[..], [1, 2, 3, 4, 5, 6, 7, 8]);
-        let padded = get_right_padded_vec(&data, 0, 8);
+        let padded = right_pad_with_offset_vec(&data, 0, 8);
         assert!(matches!(padded, Cow::Borrowed(_)));
         assert_eq!(padded[..], [1, 2, 3, 4, 5, 6, 7, 8]);
 
         let data = [1, 2, 3, 4, 5, 6, 7, 8];
-        let padded = get_right_padded::<8>(&data, 4);
+        let padded = right_pad_with_offset::<8>(&data, 4);
         assert!(matches!(padded, Cow::Owned(_)));
         assert_eq!(padded[..], [5, 6, 7, 8, 0, 0, 0, 0]);
-        let padded = get_right_padded_vec(&data, 4, 8);
+        let padded = right_pad_with_offset_vec(&data, 4, 8);
         assert!(matches!(padded, Cow::Owned(_)));
         assert_eq!(padded[..], [5, 6, 7, 8, 0, 0, 0, 0]);
     }
