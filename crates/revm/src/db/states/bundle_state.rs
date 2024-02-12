@@ -32,13 +32,16 @@ pub struct BundleBuilder {
 /// Option for [`BundleState`] when converting it to the plain state.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum OriginalValuesKnown {
-    /// Check changed with original values that [BundleState] has
-    /// If we dont expect parent blocks to be committed or unwinded from database
-    /// this option should be used.
+    /// Check changed with original values that [BundleState] has.
+    ///
+    /// If we don't expect parent blocks to be committed or unwinded from database, this option
+    /// should be used.
     Yes,
-    /// Dont check original values, see CheckOriginalValues for more info.
-    /// If Bundle can be split or extended we would not be sure about
-    /// original values so this option should be used.
+    /// Don't check original values, see the implementation of [BundleState::into_plain_state] for
+    /// more info.
+    ///
+    /// If the Bundle can be split or extended, we would not be sure about original values, in that
+    /// case this option should be used.
     No,
 }
 impl OriginalValuesKnown {
@@ -262,9 +265,6 @@ pub struct BundleState {
     pub contracts: HashMap<B256, Bytecode>,
     /// Changes to revert.
     ///
-    /// If `should_collect_reverts` flag was set to `false`,
-    /// the revert for any given block will be just an empty array.
-    ///  
     /// Note: Inside vector is *not* sorted by address.
     /// But it is unique by address.
     pub reverts: Reverts,
