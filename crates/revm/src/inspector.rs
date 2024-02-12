@@ -83,7 +83,6 @@ pub trait Inspector<DB: Database> {
     ) -> Option<CallOutcome> {
         let _ = context;
         let _ = inputs;
-        let _ = inputs.return_memory_offset;
         None
     }
 
