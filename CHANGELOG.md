@@ -1,5 +1,27 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v28 tag
+date: 12.02.2023
+
+Small release, function renaming and some helper functions added.
+
+* revm: 4.0.0 -> 5.0.0 (⚠️ API breaking changes)
+* revm-interpreter: 2.0.0 -> 2.1.0 (✓ API compatible changes)
+* revm-precompile: 3.0.0 -> 4.0.0 (⚠️ API breaking changes)
+* revm-test: 0.1.0
+
+# v27 tag
+date: 07.02.2023
+
+Refactor of Evm logic as list of handlers inside EvmHandler and EvmBuilder that open up the Evm and allow overwriting the default behavior.
+Change how call loop (Previously it was recursion) is handled in Evm
+
+* revm: v4.0.0
+* revm-precompile: v3.0.0
+* revm-primitives: v2.0.0
+* revm-interpreter: v2.0.0
+* revme: 0.2.1
+
 # v26 tag
 date 02.10.2023
 

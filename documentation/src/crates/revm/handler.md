@@ -11,7 +11,7 @@ Functions can be grouped in five categories and are marked in that way in the co
 
 ### Handle Registers
 
-Simple function that is used to modify handler functions. Amazing thing about them is that they can be done over generic external type. For example this allows to have a register over trait that would allow to add hooks to the any type that implements the trait, that trait can be a GetInspector trait so anyone that implement it would be able to register inspector related functions. It is used inside the `EvmBuilder` to change behavior of the default mainnet Handler.
+Simple function that is used to modify handler functions. Amazing thing about them is that they can be done over generic external type. For example this allows to have a register over trait that would allow to add hooks to the any type that implements the trait, that trait can be a `GetInspector` trait so anyone that implement it would be able to register inspector related functions. `GetInspector` is implemented on every `Inspector` and it is used inside the `EvmBuilder` to change behavior of the default mainnet Handler.
 
 Handle registers are set in `EvmBuilder`.
 

@@ -7,10 +7,11 @@ use crate::{
         SharedMemory,
     },
     primitives::{
-        specification::SpecId, Address, Bytecode, EVMError, EVMResult, Env, ExecutionResult, Log,
-        ResultAndState, TransactTo, B256, U256,
+        specification::SpecId, Address, BlockEnv, Bytecode, CfgEnv, EVMError, EVMResult, Env,
+        EnvWithHandlerCfg, ExecutionResult, HandlerCfg, Log, ResultAndState, TransactTo, TxEnv,
+        B256, U256,
     },
-    Context, Frame, FrameOrResult, FrameResult,
+    Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult,
 };
 use alloc::vec::Vec;
 use core::fmt;
@@ -64,7 +65,7 @@ impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
         mut context: Context<EXT, DB>,
         handler: Handler<'a, Self, EXT, DB>,
     ) -> Evm<'a, EXT, DB> {
-        context.evm.journaled_state.set_spec_id(handler.spec_id);
+        context.evm.journaled_state.set_spec_id(handler.cfg.spec_id);
         Evm { context, handler }
     }
 
@@ -80,7 +81,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     ///
     /// SpecId depends on the handler.
     pub fn spec_id(&self) -> SpecId {
-        self.handler.spec_id
+        self.handler.cfg.spec_id
     }
 
     /// Pre verify transaction by checking Environment, initial gas spend and if caller
@@ -110,6 +111,48 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         self.handler.post_execution().end(&mut self.context, output)
     }
 
+    /// Returns the reference of handler configuration
+    #[inline]
+    pub fn handler_cfg(&self) -> &HandlerCfg {
+        &self.handler.cfg
+    }
+
+    /// Returns the reference of Env configuration
+    #[inline]
+    pub fn cfg(&self) -> &CfgEnv {
+        &self.env().cfg
+    }
+
+    /// Returns the mutable reference of Env configuration
+    #[inline]
+    pub fn cfg_mut(&mut self) -> &mut CfgEnv {
+        &mut self.context.evm.env.cfg
+    }
+
+    /// Returns the reference of transaction
+    #[inline]
+    pub fn tx(&self) -> &TxEnv {
+        &self.context.evm.env.tx
+    }
+
+    /// Returns the mutable reference of transaction
+    #[inline]
+    pub fn tx_mut(&mut self) -> &mut TxEnv {
+        &mut self.context.evm.env.tx
+    }
+
+    /// Returns the reference of block
+    #[inline]
+    pub fn block(&self) -> &BlockEnv {
+        &self.context.evm.env.block
+    }
+
+    /// Returns the mutable reference of block
+    #[inline]
+    pub fn block_mut(&mut self) -> &mut BlockEnv {
+        &mut self.context.evm.env.block
+    }
+
     /// Transact transaction
     ///
     /// This function will validate the transaction.
@@ -129,17 +172,32 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     }
 
     /// Modify spec id, this will create new EVM that matches this spec id.
-    pub fn modify_spec_id(self, spec_id: SpecId) -> Self {
-        if self.spec_id() == spec_id {
-            return self;
-        }
-        self.modify().spec_id(spec_id).build()
+    pub fn modify_spec_id(&mut self, spec_id: SpecId) {
+        self.handler.modify_spec_id(spec_id);
     }
 
     /// Returns internal database and external struct.
     #[inline]
     pub fn into_context(self) -> Context<EXT, DB> {
         self.context
+    }
+
+    /// Returns database and [`EnvWithHandlerCfg`].
+    #[inline]
+    pub fn into_db_and_env_with_handler_cfg(self) -> (DB, EnvWithHandlerCfg) {
+        (
+            self.context.evm.db,
+            EnvWithHandlerCfg {
+                env: self.context.evm.env,
+                handler_cfg: self.handler.cfg,
+            },
+        )
+    }
+
+    /// Returns [Context] and [HandlerCfg].
+    #[inline]
+    pub fn into_context_with_handler_cfg(self) -> ContextWithHandlerCfg<EXT, DB> {
+        ContextWithHandlerCfg::new(self.context, self.handler.cfg)
     }
 
     /// Starts the main loop and returns outcome of the execution.
@@ -303,8 +361,11 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 }
 
 impl<EXT, DB: Database> Host for Evm<'_, EXT, DB> {
-    fn env(&mut self) -> &mut Env {
-        self.context.evm.env()
+    fn env_mut(&mut self) -> &mut Env {
+        &mut self.context.evm.env
+    }
+    fn env(&self) -> &Env {
+        &self.context.evm.env
     }
 
     fn block_hash(&mut self, number: U256) -> Option<B256> {

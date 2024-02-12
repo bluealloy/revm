@@ -1,3 +1,77 @@
+# Changelog
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [2.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v1.3.0...revm-primitives-v2.0.0) - 2024-02-07
+
+### Added
+- tweeks for v4.0 revm release ([#1048](https://github.com/bluealloy/revm/pull/1048))
+- *(op)* Ecotone hardfork ([#1009](https://github.com/bluealloy/revm/pull/1009))
+- *(revme)* make it runnable by goevmlab ([#990](https://github.com/bluealloy/revm/pull/990))
+- Convert optimism panic into graceful error ([#982](https://github.com/bluealloy/revm/pull/982))
+- EvmBuilder and External Contexts ([#888](https://github.com/bluealloy/revm/pull/888))
+- add asm-keccak feature ([#972](https://github.com/bluealloy/revm/pull/972))
+- `Canyon` hardfork behind `optimism` feature flag ([#871](https://github.com/bluealloy/revm/pull/871))
+- Loop call stack ([#851](https://github.com/bluealloy/revm/pull/851))
+- transition account balance delta ([#843](https://github.com/bluealloy/revm/pull/843))
+- *(cfg)* optionally disable beneficiary reward ([#834](https://github.com/bluealloy/revm/pull/834))
+- add is_empty_code_hash fn ([#826](https://github.com/bluealloy/revm/pull/826))
+- *(revme)* format kzg setup ([#818](https://github.com/bluealloy/revm/pull/818))
+- add more `auto_impl`s to revm traits ([#799](https://github.com/bluealloy/revm/pull/799))
+- *(interpreter)* add more helper methods to memory ([#794](https://github.com/bluealloy/revm/pull/794))
+- add changed storage slots iter ([#801](https://github.com/bluealloy/revm/pull/801))
+- derive more traits ([#745](https://github.com/bluealloy/revm/pull/745))
+
+### Fixed
+- use maximum possible data fee for 4844 balance checks ([#981](https://github.com/bluealloy/revm/pull/981))
+- make revm-primitives no-std with c-kzg feature ([#933](https://github.com/bluealloy/revm/pull/933))
+- *(ci)* Workflow Touchups ([#901](https://github.com/bluealloy/revm/pull/901))
+- *(op)* Base Goerli `op-reth` sync patches ([#824](https://github.com/bluealloy/revm/pull/824))
+- rename `DatabaseRef` trait functions to `*_ref` ([#795](https://github.com/bluealloy/revm/pull/795))
+- *(primitives)* Error Primitive Display + Error Implementations ([#770](https://github.com/bluealloy/revm/pull/770))
+
+### Other
+- bump c-kzg and enable blst portable feature ([#1059](https://github.com/bluealloy/revm/pull/1059))
+- helper functions around Env ([#1057](https://github.com/bluealloy/revm/pull/1057))
+- *(std)* Add std HashMap,HashSet ([#1041](https://github.com/bluealloy/revm/pull/1041))
+- *(op)* Move op l1 block load to op handler ([#1026](https://github.com/bluealloy/revm/pull/1026))
+- add some docs to StorageSlot ([#1019](https://github.com/bluealloy/revm/pull/1019))
+- fix serde std flags for no-std build ([#987](https://github.com/bluealloy/revm/pull/987))
+- *(deps)* bump bitflags from 2.4.1 to 2.4.2 ([#983](https://github.com/bluealloy/revm/pull/983))
+- *(log)* use alloy_primitives::Log ([#975](https://github.com/bluealloy/revm/pull/975))
+- enhance readability ([#968](https://github.com/bluealloy/revm/pull/968))
+- *(interpreter)* improve enum naming ([#962](https://github.com/bluealloy/revm/pull/962))
+- *(deps)* alloy 0.6 ([#963](https://github.com/bluealloy/revm/pull/963))
+- *(primitives)* improve readability of Env.validate_tx() ([#924](https://github.com/bluealloy/revm/pull/924))
+- *(primitives)* optimize AccountInfo.is_empty() ([#922](https://github.com/bluealloy/revm/pull/922))
+- *(deps)* bump once_cell from 1.18.0 to 1.19.0 ([#908](https://github.com/bluealloy/revm/pull/908))
+- fix case for CreateInitCodeSizeLimit error ([#896](https://github.com/bluealloy/revm/pull/896))
+- Add docs to `optimism` `InvalidTransaction` errors. ([#884](https://github.com/bluealloy/revm/pull/884))
+- *(deps)* run `cargo update`, bump alloy-primitives ([#880](https://github.com/bluealloy/revm/pull/880))
+- *(primitives)* don't duplicate the SpecId::enabled() logic ([#869](https://github.com/bluealloy/revm/pull/869))
+- simplify use statements ([#864](https://github.com/bluealloy/revm/pull/864))
+- cargo fmt and removed extra newlines ([#860](https://github.com/bluealloy/revm/pull/860))
+- Fix error message for LackOfFundForMaxFee ([#858](https://github.com/bluealloy/revm/pull/858))
+- Fix rustdoc warnings ([#859](https://github.com/bluealloy/revm/pull/859))
+- bump c-kzg to v0.4.0 ([#849](https://github.com/bluealloy/revm/pull/849))
+- *(state)* move account status transitions to `AccountStatus` ([#844](https://github.com/bluealloy/revm/pull/844))
+- decode KZG points directly into the buffers ([#840](https://github.com/bluealloy/revm/pull/840))
+- *(deps)* make derive-more optional ([#827](https://github.com/bluealloy/revm/pull/827))
+- *(eip4844)* update kzg trusted setup ([#822](https://github.com/bluealloy/revm/pull/822))
+- *(deps)* bump bitflags from 2.4.0 to 2.4.1 ([#803](https://github.com/bluealloy/revm/pull/803))
+- include alloy-primitives std feature ([#788](https://github.com/bluealloy/revm/pull/788))
+- *(primitives)* OptimismFields Docs Cleanup ([#778](https://github.com/bluealloy/revm/pull/778))
+- Remove dead state trait function ([#779](https://github.com/bluealloy/revm/pull/779))
+- Verify account is empty checks ([#780](https://github.com/bluealloy/revm/pull/780))
+- *(primitives)* Clean up the account typs with docs ([#776](https://github.com/bluealloy/revm/pull/776))
+- Use upstream create and create2 implementations ([#775](https://github.com/bluealloy/revm/pull/775))
+- Implement display and error for precompile error ([#777](https://github.com/bluealloy/revm/pull/777))
+- reorder env members ([#771](https://github.com/bluealloy/revm/pull/771))
+- document everything, dedup existing docs ([#741](https://github.com/bluealloy/revm/pull/741))
 
 # v1.3.0
 date 02.10.2023

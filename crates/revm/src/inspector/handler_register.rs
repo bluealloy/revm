@@ -9,8 +9,14 @@ use crate::{
 use alloc::{boxed::Box, rc::Rc, sync::Arc, vec::Vec};
 
 /// Provides access to an `Inspector` instance.
-pub trait GetInspector<'a, DB: Database> {
+pub trait GetInspector<DB: Database> {
     fn get_inspector(&mut self) -> &mut dyn Inspector<DB>;
+}
+
+impl<DB: Database, INSP: Inspector<DB>> GetInspector<DB> for INSP {
+    fn get_inspector(&mut self) -> &mut dyn Inspector<DB> {
+        self
+    }
 }
 
 /// Register Inspector handles that interact with Inspector instance.
@@ -18,18 +24,14 @@ pub trait GetInspector<'a, DB: Database> {
 ///
 /// # Note
 ///
-/// Handles that are overwritten:
-/// * SubCreate
-/// * SubCall
-/// * CreateFirstFrame
+/// Inspector handle register does not override any existing handlers, and it
+/// calls them before (or after) calling Inspector. This means that it is safe
+/// to use this register with any other register.
 ///
-///
-/// Few instructions handlers are wrapped twice once for `step` and `step_end`
+/// A few instructions handlers are wrapped twice once for `step` and `step_end`
 /// and in case of Logs and Selfdestruct wrapper is wrapped again for the
 /// `log` and `selfdestruct` calls.
-///
-/// `frame_return` is also wrapped so that Inspector could call `call_end` or `create_end`.
-pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
+pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<DB>>(
     handler: &mut EvmHandler<'a, EXT, DB>,
 ) {
     // Every instruction inside flat table that is going to be wrapped by inspector calls.
@@ -215,7 +217,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
 /// Outer closure that calls Inspector for every instruction.
 pub fn inspector_instruction<
     'a,
-    INSP: GetInspector<'a, DB>,
+    INSP: GetInspector<DB>,
     DB: Database,
     Instruction: Fn(&mut Interpreter, &mut Evm<'a, INSP, DB>) + 'a,
 >(
@@ -255,7 +257,6 @@ mod tests {
     use super::*;
     use crate::{
         db::EmptyDB,
-        inspector::GetInspector,
         inspectors::NoOpInspector,
         interpreter::{opcode::*, CallInputs, CreateInputs, Interpreter},
         primitives::BerlinSpec,
@@ -283,12 +284,6 @@ mod tests {
         step_end: u32,
         call: bool,
         call_end: bool,
-    }
-
-    impl<DB: Database> GetInspector<'_, DB> for StackInspector {
-        fn get_inspector(&mut self) -> &mut dyn Inspector<DB> {
-            self
-        }
     }
 
     impl<DB: Database> Inspector<DB> for StackInspector {
@@ -403,5 +398,14 @@ mod tests {
         assert!(inspector.initialize_interp_called);
         assert!(inspector.call);
         assert!(inspector.call_end);
+    }
+
+    #[test]
+    fn test_inspector_reg() {
+        let mut noop = NoOpInspector;
+        let _evm = Evm::builder()
+            .with_external_context(&mut noop)
+            .append_handler_register(inspector_handle_register)
+            .build();
     }
 }

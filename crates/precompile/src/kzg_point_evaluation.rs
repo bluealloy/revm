@@ -3,6 +3,9 @@ use c_kzg::{Bytes32, Bytes48, KzgProof, KzgSettings};
 use revm_primitives::{hex_literal::hex, Env};
 use sha2::{Digest, Sha256};
 
+// TODO: remove when we have `portable` feature in `c-kzg`
+use blst as _;
+
 pub const POINT_EVALUATION: PrecompileWithAddress =
     PrecompileWithAddress(ADDRESS, Precompile::Env(run));
 
@@ -70,15 +73,7 @@ fn verify_kzg_proof(
     proof: &Bytes48,
     kzg_settings: &KzgSettings,
 ) -> bool {
-    match KzgProof::verify_kzg_proof(commitment, z, y, proof, kzg_settings) {
-        Ok(ok) => ok,
-        #[cfg(not(debug_assertions))]
-        Err(_) => false,
-        #[cfg(debug_assertions)]
-        Err(e) => {
-            panic!("verify_kzg_proof returned an error: {e:?}");
-        }
-    }
+    KzgProof::verify_kzg_proof(commitment, z, y, proof, kzg_settings).unwrap_or(false)
 }
 
 #[inline]

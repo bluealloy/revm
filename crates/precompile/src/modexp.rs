@@ -1,7 +1,7 @@
 use crate::{
     primitives::U256,
-    utilities::{get_right_padded, get_right_padded_vec, left_padding, left_padding_vec},
-    Error, Precompile, PrecompileResult, PrecompileWithAddress, StandardPrecompileFn,
+    utilities::{left_pad, left_pad_vec, right_pad_with_offset, right_pad_with_offset_vec},
+    Error, Precompile, PrecompileResult, PrecompileWithAddress,
 };
 use alloc::vec::Vec;
 use aurora_engine_modexp::modexp;
@@ -9,13 +9,11 @@ use core::cmp::{max, min};
 
 pub const BYZANTIUM: PrecompileWithAddress = PrecompileWithAddress(
     crate::u64_to_address(5),
-    Precompile::Standard(byzantium_run as StandardPrecompileFn),
+    Precompile::Standard(byzantium_run),
 );
 
-pub const BERLIN: PrecompileWithAddress = PrecompileWithAddress(
-    crate::u64_to_address(5),
-    Precompile::Standard(berlin_run as StandardPrecompileFn),
-);
+pub const BERLIN: PrecompileWithAddress =
+    PrecompileWithAddress(crate::u64_to_address(5), Precompile::Standard(berlin_run));
 
 /// See: <https://eips.ethereum.org/EIPS/eip-198>
 /// See: <https://etherscan.io/address/0000000000000000000000000000000000000005>
@@ -39,7 +37,8 @@ fn calculate_iteration_count(exp_length: u64, exp_highp: &U256) -> u64 {
     } else if exp_length <= 32 {
         iteration_count = exp_highp.bit_len() as u64 - 1;
     } else if exp_length > 32 {
-        iteration_count = (8 * (exp_length - 32)) + max(1, exp_highp.bit_len() as u64) - 1;
+        iteration_count = (8u64.saturating_mul(exp_length - 32))
+            .saturating_add(max(1, exp_highp.bit_len() as u64) - 1);
     }
 
     max(iteration_count, 1)
@@ -60,9 +59,9 @@ where
     const HEADER_LENGTH: usize = 96;
 
     // Extract the header.
-    let base_len = U256::from_be_bytes(get_right_padded::<32>(input, 0));
-    let exp_len = U256::from_be_bytes(get_right_padded::<32>(input, 32));
-    let mod_len = U256::from_be_bytes(get_right_padded::<32>(input, 64));
+    let base_len = U256::from_be_bytes(right_pad_with_offset::<32>(input, 0).into_owned());
+    let exp_len = U256::from_be_bytes(right_pad_with_offset::<32>(input, 32).into_owned());
+    let mod_len = U256::from_be_bytes(right_pad_with_offset::<32>(input, 64).into_owned());
 
     // cast base and modulus to usize, it does not make sense to handle larger values
     let Ok(base_len) = usize::try_from(base_len) else {
@@ -95,10 +94,10 @@ where
 
     let exp_highp = {
         // get right padded bytes so if data.len is less then exp_len we will get right padded zeroes.
-        let right_padded_highp = get_right_padded::<32>(input, base_len);
+        let right_padded_highp = right_pad_with_offset::<32>(input, base_len);
         // If exp_len is less then 32 bytes get only exp_len bytes and do left padding.
-        let out = left_padding::<32>(&right_padded_highp[..exp_highp_len]);
-        U256::from_be_bytes(out)
+        let out = left_pad::<32>(&right_padded_highp[..exp_highp_len]);
+        U256::from_be_bytes(out.into_owned())
     };
 
     // calculate gas spent.
@@ -109,15 +108,15 @@ where
     }
 
     // Padding is needed if the input does not contain all 3 values.
-    let base = get_right_padded_vec(input, 0, base_len);
-    let exponent = get_right_padded_vec(input, base_len, exp_len);
-    let modulus = get_right_padded_vec(input, base_len.saturating_add(exp_len), mod_len);
+    let base = right_pad_with_offset_vec(input, 0, base_len);
+    let exponent = right_pad_with_offset_vec(input, base_len, exp_len);
+    let modulus = right_pad_with_offset_vec(input, base_len.saturating_add(exp_len), mod_len);
 
     // Call the modexp.
     let output = modexp(&base, &exponent, &modulus);
 
     // left pad the result to modulus length. bytes will always by less or equal to modulus length.
-    Ok((gas_cost, left_padding_vec(&output, mod_len)))
+    Ok((gas_cost, left_pad_vec(&output, mod_len).into_owned()))
 }
 
 fn byzantium_gas_calc(base_len: u64, exp_len: u64, mod_len: u64, exp_highp: &U256) -> u64 {
@@ -139,12 +138,7 @@ fn byzantium_gas_calc(base_len: u64, exp_len: u64, mod_len: u64, exp_highp: &U25
     let iter_count = U256::from(calculate_iteration_count(exp_len, exp_highp));
     // mul * iter_count bounded by 2^195 < 2^256 (no overflow)
     let gas = (mul * iter_count) / U256::from(20);
-
-    if gas.as_limbs()[1] != 0 || gas.as_limbs()[2] != 0 || gas.as_limbs()[3] != 0 {
-        u64::MAX
-    } else {
-        gas.as_limbs()[0]
-    }
+    gas.saturating_to()
 }
 
 // Calculate gas cost according to EIP 2565:
@@ -163,12 +157,7 @@ fn berlin_gas_calc(base_length: u64, exp_length: u64, mod_length: u64, exp_highp
     let multiplication_complexity = calculate_multiplication_complexity(base_length, mod_length);
     let iteration_count = calculate_iteration_count(exp_length, exp_highp);
     let gas = (multiplication_complexity * U256::from(iteration_count)) / U256::from(3);
-
-    if gas.as_limbs()[1] != 0 || gas.as_limbs()[2] != 0 || gas.as_limbs()[3] != 0 {
-        u64::MAX
-    } else {
-        max(200, gas.as_limbs()[0])
-    }
+    max(200, gas.saturating_to())
 }
 
 #[cfg(test)]

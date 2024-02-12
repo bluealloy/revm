@@ -62,7 +62,7 @@ fn analyze(code: &[u8]) -> JumpMap {
 #[derive(Clone)]
 pub struct BytecodeLocked {
     bytecode: Bytes,
-    len: usize,
+    original_len: usize,
     jump_map: JumpMap,
 }
 
@@ -70,7 +70,7 @@ impl fmt::Debug for BytecodeLocked {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("BytecodeLocked")
             .field("bytecode", &self.bytecode)
-            .field("len", &self.len)
+            .field("original_len", &self.original_len)
             .field(
                 "jump_map",
                 &crate::primitives::hex::encode(self.jump_map.as_slice()),
@@ -96,7 +96,7 @@ impl TryFrom<Bytecode> for BytecodeLocked {
         if let BytecodeState::Analysed { len, jump_map } = bytecode.state {
             Ok(BytecodeLocked {
                 bytecode: bytecode.bytecode,
-                len,
+                original_len: len,
                 jump_map,
             })
         } else {
@@ -115,13 +115,13 @@ impl BytecodeLocked {
     /// Returns the length of the bytecode.
     #[inline]
     pub fn len(&self) -> usize {
-        self.len
+        self.original_len
     }
 
     /// Returns whether the bytecode is empty.
     #[inline]
     pub fn is_empty(&self) -> bool {
-        self.len == 0
+        self.original_len == 0
     }
 
     /// Calculate hash of the bytecode.
@@ -139,26 +139,33 @@ impl BytecodeLocked {
         Bytecode {
             bytecode: self.bytecode,
             state: BytecodeState::Analysed {
-                len: self.len,
+                len: self.original_len,
                 jump_map: self.jump_map,
             },
         }
     }
 
-    /// Returns the bytecode as a byte slice.
+    /// Returns a reference to the bytecode.
+    /// Note that this is the analyzed bytecode, which contains extra padding.
     #[inline]
-    pub fn bytecode(&self) -> &[u8] {
+    pub fn bytecode(&self) -> &Bytes {
         &self.bytecode
+    }
+
+    /// Returns the `Bytes` of the original bytecode by slicing the analyzed bytecode.
+    #[inline]
+    pub fn original_bytecode(&self) -> Bytes {
+        self.bytecode.slice(..self.original_len)
     }
 
     /// Returns the original bytecode as a byte slice.
     #[inline]
     pub fn original_bytecode_slice(&self) -> &[u8] {
-        match self.bytecode.get(..self.len) {
+        match self.bytecode.get(..self.original_len) {
             Some(slice) => slice,
             None => debug_unreachable!(
                 "original_bytecode_slice OOB: {} > {}",
-                self.len,
+                self.original_len,
                 self.bytecode.len()
             ),
         }

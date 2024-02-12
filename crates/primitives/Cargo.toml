@@ -6,7 +6,7 @@ keywords = ["no_std", "ethereum", "evm", "revm", "types"]
 license = "MIT"
 name = "revm-primitives"
 repository = "https://github.com/bluealloy/revm"
-version = "1.3.0"
+version = "2.0.0"
 readme = "../../README.md"
 
 # Don't need to run build script outside of this repo
@@ -26,15 +26,21 @@ bitvec = { version = "1", default-features = false, features = ["alloc"] }
 bitflags = { version = "2.4.2", default-features = false }
 
 # For setting the CfgEnv KZGSettings. Enabled by c-kzg flag.
-c-kzg = { version = "0.4.0", default-features = false, optional = true }
+c-kzg = { version = "0.4.1", default-features = false, optional = true }
 once_cell = { version = "1.19", default-features = false, optional = true }
+# TODO: make specific feature for this in c-kzg-4844
+blst = { version = "0.3.11", default-features = false, optional = true }
 
 # utility
 enumn = "0.1"
 derive_more = { version = "0.99", optional = true }
+cfg-if = "1"
 
 # optional
-serde = { version = "1.0", default-features = false, features = ["derive", "rc"], optional = true }
+serde = { version = "1.0", default-features = false, features = [
+    "derive",
+    "rc",
+], optional = true }
 
 [build-dependencies]
 hex = { version = "0.4", default-features = false }
@@ -80,4 +86,5 @@ optional_no_base_fee = []
 optional_beneficiary_reward = []
 
 # See comments in `revm-precompile`
-c-kzg = ["dep:c-kzg", "dep:once_cell", "dep:derive_more"]
+# TODO: remove `blst` dep when `c-kzg` has a portable feature
+c-kzg = ["dep:c-kzg", "dep:once_cell", "dep:derive_more", "dep:blst", "blst?/portable"]
