@@ -8,7 +8,7 @@ use crate::{
     CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
 };
 use alloc::boxed::Box;
-use core::ops::Range;
+
 use revm_interpreter::{CallOutcome, InterpreterResult};
 
 /// Helper function called inside [`last_frame_return`]
@@ -61,11 +61,8 @@ pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
 pub fn call<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     inputs: Box<CallInputs>,
-    return_memory_offset: Range<usize>,
 ) -> FrameOrResult {
-    context
-        .evm
-        .make_call_frame(&inputs, return_memory_offset.clone())
+    context.evm.make_call_frame(&inputs)
 }
 
 #[inline]

@@ -1,7 +1,7 @@
+pub use crate::primitives::CreateScheme;
 use crate::primitives::{Address, Bytes, TransactTo, TxEnv, U256};
 use alloc::boxed::Box;
-
-pub use crate::primitives::CreateScheme;
+use core::ops::Range;
 
 /// Inputs for a call.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -19,6 +19,8 @@ pub struct CallInputs {
     pub context: CallContext,
     /// Whether this is a static call.
     pub is_static: bool,
+    /// The return memory offset where the output of the call is written.
+    pub return_memory_offset: Range<usize>,
 }
 
 /// Inputs for a create call.
@@ -61,6 +63,7 @@ impl CallInputs {
                 scheme: CallScheme::Call,
             },
             is_static: false,
+            return_memory_offset: 0..0,
         })
     }
 
@@ -106,7 +109,7 @@ impl CreateInputs {
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum CallScheme {
-    /// `CALL`
+    /// `CALL`.
     Call,
     /// `CALLCODE`
     CallCode,

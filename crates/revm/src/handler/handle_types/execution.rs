@@ -5,7 +5,7 @@ use crate::{
     CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
 };
 use alloc::{boxed::Box, sync::Arc};
-use core::ops::Range;
+
 use revm_interpreter::{CallOutcome, CreateOutcome, InterpreterResult};
 
 /// Handles first frame return handle.
@@ -14,7 +14,7 @@ pub type LastFrameReturnHandle<'a, EXT, DB> =
 
 /// Handle sub call.
 pub type FrameCallHandle<'a, EXT, DB> =
-    Arc<dyn Fn(&mut Context<EXT, DB>, Box<CallInputs>, Range<usize>) -> FrameOrResult + 'a>;
+    Arc<dyn Fn(&mut Context<EXT, DB>, Box<CallInputs>) -> FrameOrResult + 'a>;
 
 /// Handle call return
 pub type FrameCallReturnHandle<'a, EXT, DB> =
@@ -83,13 +83,8 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
 
     /// Call frame call handler.
     #[inline]
-    pub fn call(
-        &self,
-        context: &mut Context<EXT, DB>,
-        inputs: Box<CallInputs>,
-        return_memory_offset: Range<usize>,
-    ) -> FrameOrResult {
-        (self.call)(context, inputs, return_memory_offset)
+    pub fn call(&self, context: &mut Context<EXT, DB>, inputs: Box<CallInputs>) -> FrameOrResult {
+        (self.call)(context, inputs.clone())
     }
 
     /// Call registered handler for call return.

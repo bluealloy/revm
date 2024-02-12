@@ -72,7 +72,6 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 
 #[cfg(test)]
 mod tests {
-    use core::ops::Range;
 
     use revm_interpreter::CallOutcome;
     use revm_interpreter::CreateOutcome;
@@ -115,9 +114,8 @@ mod tests {
             &mut self,
             context: &mut EvmContext<DB>,
             call: &mut CallInputs,
-            return_memory_offset: Range<usize>,
         ) -> Option<CallOutcome> {
-            self.gas_inspector.call(context, call, return_memory_offset)
+            self.gas_inspector.call(context, call)
         }
 
         fn call_end(
