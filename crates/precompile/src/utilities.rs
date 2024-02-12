@@ -1,42 +1,148 @@
-use alloc::vec::Vec;
+use alloc::borrow::Cow;
 use core::cmp::min;
 
-/// Get an array from the data, if data does not contain `start` to `len` bytes,
-/// add right padding with zeroes.
+/// Right-pads the given slice at `offset` with zeroes until `LEN`.
+///
+/// Returns the first `LEN` bytes if it does not need padding.
 #[inline(always)]
-pub fn get_right_padded<const LEN: usize>(data: &[u8], offset: usize) -> [u8; LEN] {
-    let mut padded = [0; LEN];
-    let start = min(offset, data.len());
-    let end = min(start.saturating_add(LEN), data.len());
-    padded[..end - start].copy_from_slice(&data[start..end]);
-    padded
+pub fn right_pad_with_offset<const LEN: usize>(data: &[u8], offset: usize) -> Cow<'_, [u8; LEN]> {
+    right_pad(data.get(offset..).unwrap_or_default())
 }
 
-/// Get a vector of the data, if data does not contain the slice of `start` to `len`,
-/// right pad missing part with zeroes.
+/// Right-pads the given slice at `offset` with zeroes until `len`.
+///
+/// Returns the first `len` bytes if it does not need padding.
 #[inline(always)]
-pub fn get_right_padded_vec(data: &[u8], offset: usize, len: usize) -> Vec<u8> {
-    let mut padded = vec![0; len];
-    let start = min(offset, data.len());
-    let end = min(start.saturating_add(len), data.len());
-    padded[..end - start].copy_from_slice(&data[start..end]);
-    padded
+pub fn right_pad_with_offset_vec(data: &[u8], offset: usize, len: usize) -> Cow<'_, [u8]> {
+    right_pad_vec(data.get(offset..).unwrap_or_default(), len)
 }
 
-/// Left padding until `len`. If data is more then len, truncate the right most bytes.
+/// Right-pads the given slice with zeroes until `LEN`.
+///
+/// Returns the first `LEN` bytes if it does not need padding.
 #[inline(always)]
-pub fn left_padding<const LEN: usize>(data: &[u8]) -> [u8; LEN] {
-    let mut padded = [0; LEN];
-    let end = min(LEN, data.len());
-    padded[LEN - end..].copy_from_slice(&data[..end]);
-    padded
+pub fn right_pad<const LEN: usize>(data: &[u8]) -> Cow<'_, [u8; LEN]> {
+    if let Some(data) = data.get(..LEN) {
+        Cow::Borrowed(data.try_into().unwrap())
+    } else {
+        let mut padded = [0; LEN];
+        let end = min(LEN, data.len());
+        padded[..end].copy_from_slice(&data[..end]);
+        Cow::Owned(padded)
+    }
 }
 
-/// Left padding until `len`. If data is more then len, truncate the right most bytes.
+/// Right-pads the given slice with zeroes until `len`.
+///
+/// Returns the first `len` bytes if it does not need padding.
 #[inline(always)]
-pub fn left_padding_vec(data: &[u8], len: usize) -> Vec<u8> {
-    let mut padded = vec![0; len];
-    let end = min(len, data.len());
-    padded[len - end..].copy_from_slice(&data[..end]);
-    padded
+pub fn right_pad_vec(data: &[u8], len: usize) -> Cow<'_, [u8]> {
+    if let Some(data) = data.get(..len) {
+        Cow::Borrowed(data)
+    } else {
+        let mut padded = vec![0; len];
+        let end = min(len, data.len());
+        padded[..end].copy_from_slice(&data[..end]);
+        Cow::Owned(padded)
+    }
+}
+
+/// Left-pads the given slice with zeroes until `LEN`.
+///
+/// Returns the first `LEN` bytes if it does not need padding.
+#[inline(always)]
+pub fn left_pad<const LEN: usize>(data: &[u8]) -> Cow<'_, [u8; LEN]> {
+    if let Some(data) = data.get(..LEN) {
+        Cow::Borrowed(data.try_into().unwrap())
+    } else {
+        let mut padded = [0; LEN];
+        let end = min(LEN, data.len());
+        padded[LEN - end..].copy_from_slice(&data[..end]);
+        Cow::Owned(padded)
+    }
+}
+
+/// Left-pads the given slice with zeroes until `len`.
+///
+/// Returns the first `len` bytes if it does not need padding.
+#[inline(always)]
+pub fn left_pad_vec(data: &[u8], len: usize) -> Cow<'_, [u8]> {
+    if let Some(data) = data.get(..len) {
+        Cow::Borrowed(data)
+    } else {
+        let mut padded = vec![0; len];
+        let end = min(len, data.len());
+        padded[len - end..].copy_from_slice(&data[..end]);
+        Cow::Owned(padded)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn get_with_right_padding() {
+        let data = [1, 2, 3, 4];
+        let padded = right_pad_with_offset::<8>(&data, 4);
+        assert!(matches!(padded, Cow::Owned(_)));
+        assert_eq!(padded[..], [0, 0, 0, 0, 0, 0, 0, 0]);
+        let padded = right_pad_with_offset_vec(&data, 4, 8);
+        assert!(matches!(padded, Cow::Owned(_)));
+        assert_eq!(padded[..], [0, 0, 0, 0, 0, 0, 0, 0]);
+
+        let data = [1, 2, 3, 4, 5, 6, 7, 8];
+        let padded = right_pad_with_offset::<8>(&data, 0);
+        assert!(matches!(padded, Cow::Borrowed(_)));
+        assert_eq!(padded[..], [1, 2, 3, 4, 5, 6, 7, 8]);
+        let padded = right_pad_with_offset_vec(&data, 0, 8);
+        assert!(matches!(padded, Cow::Borrowed(_)));
+        assert_eq!(padded[..], [1, 2, 3, 4, 5, 6, 7, 8]);
+
+        let data = [1, 2, 3, 4, 5, 6, 7, 8];
+        let padded = right_pad_with_offset::<8>(&data, 4);
+        assert!(matches!(padded, Cow::Owned(_)));
+        assert_eq!(padded[..], [5, 6, 7, 8, 0, 0, 0, 0]);
+        let padded = right_pad_with_offset_vec(&data, 4, 8);
+        assert!(matches!(padded, Cow::Owned(_)));
+        assert_eq!(padded[..], [5, 6, 7, 8, 0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn right_padding() {
+        let data = [1, 2, 3, 4];
+        let padded = right_pad::<8>(&data);
+        assert!(matches!(padded, Cow::Owned(_)));
+        assert_eq!(padded[..], [1, 2, 3, 4, 0, 0, 0, 0]);
+        let padded = right_pad_vec(&data, 8);
+        assert!(matches!(padded, Cow::Owned(_)));
+        assert_eq!(padded[..], [1, 2, 3, 4, 0, 0, 0, 0]);
+
+        let data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        let padded = right_pad::<8>(&data);
+        assert!(matches!(padded, Cow::Borrowed(_)));
+        assert_eq!(padded[..], [1, 2, 3, 4, 5, 6, 7, 8]);
+        let padded = right_pad_vec(&data, 8);
+        assert!(matches!(padded, Cow::Borrowed(_)));
+        assert_eq!(padded[..], [1, 2, 3, 4, 5, 6, 7, 8]);
+    }
+
+    #[test]
+    fn left_padding() {
+        let data = [1, 2, 3, 4];
+        let padded = left_pad::<8>(&data);
+        assert!(matches!(padded, Cow::Owned(_)));
+        assert_eq!(padded[..], [0, 0, 0, 0, 1, 2, 3, 4]);
+        let padded = left_pad_vec(&data, 8);
+        assert!(matches!(padded, Cow::Owned(_)));
+        assert_eq!(padded[..], [0, 0, 0, 0, 1, 2, 3, 4]);
+
+        let data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        let padded = left_pad::<8>(&data);
+        assert!(matches!(padded, Cow::Borrowed(_)));
+        assert_eq!(padded[..], [1, 2, 3, 4, 5, 6, 7, 8]);
+        let padded = left_pad_vec(&data, 8);
+        assert!(matches!(padded, Cow::Borrowed(_)));
+        assert_eq!(padded[..], [1, 2, 3, 4, 5, 6, 7, 8]);
+    }
 }
