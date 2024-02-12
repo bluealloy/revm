@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.0](https://github.com/bluealloy/revm/compare/revm-v4.0.0...revm-v5.0.0) - 2024-02-12
+
+### Fixed
+- properly set context env ([#1070](https://github.com/bluealloy/revm/pull/1070))
+- typo on internal append_handle_register methods ([#1069](https://github.com/bluealloy/revm/pull/1069))
+- *(op)* skip validation on deposit tx ([#1065](https://github.com/bluealloy/revm/pull/1065))
+
+### Other
+- *(precompile)* make use of padding utilities, simplify secp256k1 ([#1073](https://github.com/bluealloy/revm/pull/1073))
+- *(revm)* Add helpers to Build Revm with Context ([#1068](https://github.com/bluealloy/revm/pull/1068))
+- *(revme)* statetests new format and return error ([#1066](https://github.com/bluealloy/revm/pull/1066))
+
 ## [4.0.0](https://github.com/bluealloy/revm/compare/revm-v3.5.0...revm-v4.0.0) - 2024-02-07
 
 Refactored the logic inside Handler and added EvmBuilder that allows overwriting the default behavior.

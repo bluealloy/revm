@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v2.0.0...revm-interpreter-v2.1.0) - 2024-02-12
+
+### Added
+- *(interpreter)* relax `make_boxed_instruction_table::FN` to `FnMut` ([#1076](https://github.com/bluealloy/revm/pull/1076))
+
 ## [2.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v1.3.0...revm-interpreter-v2.0.0) - 2024-02-07
 
 Iterpreter will not be called in recursive calls but would return Action ( CALL/CREATE) that will be executed by the main loop.

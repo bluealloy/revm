@@ -2322,7 +2322,7 @@ dependencies = [
 
 [[package]]
 name = "revm"
-version = "4.0.0"
+version = "5.0.0"
 dependencies = [
  "anyhow",
  "auto_impl",
@@ -2342,7 +2342,7 @@ dependencies = [
 
 [[package]]
 name = "revm-interpreter"
-version = "2.0.0"
+version = "2.1.0"
 dependencies = [
  "revm-primitives",
  "serde",
@@ -2350,7 +2350,7 @@ dependencies = [
 
 [[package]]
 name = "revm-precompile"
-version = "3.0.0"
+version = "4.0.0"
 dependencies = [
  "aurora-engine-modexp",
  "blst",
