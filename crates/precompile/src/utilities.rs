@@ -1,5 +1,4 @@
 use alloc::borrow::Cow;
-use core::cmp::min;
 
 /// Right-pads the given slice at `offset` with zeroes until `LEN`.
 ///
@@ -26,8 +25,7 @@ pub fn right_pad<const LEN: usize>(data: &[u8]) -> Cow<'_, [u8; LEN]> {
         Cow::Borrowed(data.try_into().unwrap())
     } else {
         let mut padded = [0; LEN];
-        let end = min(LEN, data.len());
-        padded[..end].copy_from_slice(&data[..end]);
+        padded[..data.len()].copy_from_slice(data);
         Cow::Owned(padded)
     }
 }
@@ -41,8 +39,7 @@ pub fn right_pad_vec(data: &[u8], len: usize) -> Cow<'_, [u8]> {
         Cow::Borrowed(data)
     } else {
         let mut padded = vec![0; len];
-        let end = min(len, data.len());
-        padded[..end].copy_from_slice(&data[..end]);
+        padded[..data.len()].copy_from_slice(data);
         Cow::Owned(padded)
     }
 }
@@ -56,8 +53,7 @@ pub fn left_pad<const LEN: usize>(data: &[u8]) -> Cow<'_, [u8; LEN]> {
         Cow::Borrowed(data.try_into().unwrap())
     } else {
         let mut padded = [0; LEN];
-        let end = min(LEN, data.len());
-        padded[LEN - end..].copy_from_slice(&data[..end]);
+        padded[LEN - data.len()..].copy_from_slice(data);
         Cow::Owned(padded)
     }
 }
@@ -71,8 +67,7 @@ pub fn left_pad_vec(data: &[u8], len: usize) -> Cow<'_, [u8]> {
         Cow::Borrowed(data)
     } else {
         let mut padded = vec![0; len];
-        let end = min(len, data.len());
-        padded[len - end..].copy_from_slice(&data[..end]);
+        padded[len - data.len()..].copy_from_slice(data);
         Cow::Owned(padded)
     }
 }
