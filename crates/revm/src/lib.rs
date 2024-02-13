@@ -28,7 +28,7 @@ pub mod optimism;
 
 // Export items.
 
-pub use builder::EvmBuilder;
+pub use builder::{EvmBuilder, HandlerStage, SetGenericStage};
 pub use context::{Context, ContextWithHandlerCfg, EvmContext};
 #[cfg(feature = "std")]
 pub use db::{
