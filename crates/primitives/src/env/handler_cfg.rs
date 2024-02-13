@@ -71,6 +71,14 @@ impl CfgEnvWithHandlerCfg {
         }
     }
 
+    /// Returns new instance of `CfgEnvWithHandlerCfg` with the handler configuration.
+    pub fn new_with_handler_cfg(cfg_env: CfgEnv, handler_cfg: HandlerCfg) -> Self {
+        Self {
+            cfg_env,
+            handler_cfg,
+        }
+    }
+
     /// Enables the optimism feature.
     #[cfg(feature = "optimism")]
     pub fn enable_optimism(&mut self) {
