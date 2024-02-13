@@ -1,5 +1,5 @@
 use crate::{Error, Precompile, PrecompileResult, PrecompileWithAddress};
-use core::convert::TryInto;
+use revm_primitives::Bytes;
 
 const F_ROUND: u64 = 1;
 const INPUT_LENGTH: usize = 213;
@@ -10,7 +10,9 @@ pub const FUN: PrecompileWithAddress =
 /// reference: <https://eips.ethereum.org/EIPS/eip-152>
 /// input format:
 /// [4 bytes for rounds][64 bytes for h][128 bytes for m][8 bytes for t_0][8 bytes for t_1][1 byte for f]
-fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
+fn run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
+    let input = &input[..];
+
     if input.len() != INPUT_LENGTH {
         return Err(Error::Blake2WrongLength);
     }
@@ -49,7 +51,7 @@ fn run(input: &[u8], gas_limit: u64) -> PrecompileResult {
         out[i..i + 8].copy_from_slice(&h.to_le_bytes());
     }
 
-    Ok((gas_used, out.to_vec()))
+    Ok((gas_used, out.into()))
 }
 
 mod algo {

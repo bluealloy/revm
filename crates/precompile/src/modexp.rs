@@ -1,11 +1,11 @@
 use crate::{
     primitives::U256,
-    utilities::{left_pad, left_pad_vec, right_pad_with_offset, right_pad_with_offset_vec},
+    utilities::{left_pad, left_pad_vec, right_pad_vec, right_pad_with_offset},
     Error, Precompile, PrecompileResult, PrecompileWithAddress,
 };
-use alloc::vec::Vec;
 use aurora_engine_modexp::modexp;
 use core::cmp::{max, min};
+use revm_primitives::Bytes;
 
 pub const BYZANTIUM: PrecompileWithAddress = PrecompileWithAddress(
     crate::u64_to_address(5),
@@ -17,13 +17,13 @@ pub const BERLIN: PrecompileWithAddress =
 
 /// See: <https://eips.ethereum.org/EIPS/eip-198>
 /// See: <https://etherscan.io/address/0000000000000000000000000000000000000005>
-fn byzantium_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
+fn byzantium_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     run_inner(input, gas_limit, 0, |a, b, c, d| {
         byzantium_gas_calc(a, b, c, d)
     })
 }
 
-pub fn berlin_run(input: &[u8], gas_limit: u64) -> PrecompileResult {
+pub fn berlin_run(input: &Bytes, gas_limit: u64) -> PrecompileResult {
     run_inner(input, gas_limit, 200, |a, b, c, d| {
         berlin_gas_calc(a, b, c, d)
     })
@@ -52,6 +52,7 @@ where
     if min_gas > gas_limit {
         return Err(Error::OutOfGas);
     }
+
     // The format of input is:
     // <length_of_BASE> <length_of_EXPONENT> <length_of_MODULUS> <BASE> <EXPONENT> <MODULUS>
     // Where every length is a 32-byte left-padded integer representing the number of bytes
@@ -71,12 +72,12 @@ where
         return Err(Error::ModexpModOverflow);
     };
 
-    // Handle a special case when both the base and mod length is zero
+    // Handle a special case when both the base and mod length are zero.
     if base_len == 0 && mod_len == 0 {
-        return Ok((min_gas, Vec::new()));
+        return Ok((min_gas, Bytes::new()));
     }
 
-    // cast exponent length to usize, it does not make sense to handle larger values.
+    // Cast exponent length to usize, since it does not make sense to handle larger values.
     let Ok(exp_len) = usize::try_from(exp_len) else {
         return Err(Error::ModexpModOverflow);
     };
@@ -84,13 +85,8 @@ where
     // Used to extract ADJUSTED_EXPONENT_LENGTH.
     let exp_highp_len = min(exp_len, 32);
 
-    // throw away the header data as we already extracted lengths.
-    let input = if input.len() >= 96 {
-        &input[HEADER_LENGTH..]
-    } else {
-        // or set input to zero if there is no more data
-        &[]
-    };
+    // Throw away the header data as we already extracted lengths.
+    let input = input.get(HEADER_LENGTH..).unwrap_or_default();
 
     let exp_highp = {
         // get right padded bytes so if data.len is less then exp_len we will get right padded zeroes.
@@ -100,23 +96,24 @@ where
         U256::from_be_bytes(out.into_owned())
     };
 
-    // calculate gas spent.
+    // Check if we have enough gas.
     let gas_cost = calc_gas(base_len as u64, exp_len as u64, mod_len as u64, &exp_highp);
-    // check if we have enough gas.
     if gas_cost > gas_limit {
         return Err(Error::OutOfGas);
     }
 
     // Padding is needed if the input does not contain all 3 values.
-    let base = right_pad_with_offset_vec(input, 0, base_len);
-    let exponent = right_pad_with_offset_vec(input, base_len, exp_len);
-    let modulus = right_pad_with_offset_vec(input, base_len.saturating_add(exp_len), mod_len);
+    let input_len = base_len.saturating_add(exp_len).saturating_add(mod_len);
+    let input = right_pad_vec(input, input_len);
+    let (base, input) = input.split_at(base_len);
+    let (exponent, modulus) = input.split_at(exp_len);
+    debug_assert_eq!(modulus.len(), mod_len);
 
     // Call the modexp.
-    let output = modexp(&base, &exponent, &modulus);
+    let output = modexp(base, exponent, modulus);
 
     // left pad the result to modulus length. bytes will always by less or equal to modulus length.
-    Ok((gas_cost, left_pad_vec(&output, mod_len).into_owned()))
+    Ok((gas_cost, left_pad_vec(&output, mod_len).into_owned().into()))
 }
 
 fn byzantium_gas_calc(base_len: u64, exp_len: u64, mod_len: u64, exp_highp: &U256) -> u64 {
@@ -163,6 +160,7 @@ fn berlin_gas_calc(base_length: u64, exp_length: u64, mod_length: u64, exp_highp
 #[cfg(test)]
 mod tests {
     use super::*;
+    use alloc::vec::Vec;
     use revm_primitives::hex;
 
     struct Test {
@@ -343,8 +341,7 @@ mod tests {
     #[test]
     fn test_byzantium_modexp_gas() {
         for (test, &test_gas) in TESTS.iter().zip(BYZANTIUM_GAS.iter()) {
-            let input = hex::decode(test.input).unwrap();
-
+            let input = hex::decode(test.input).unwrap().into();
             let res = byzantium_run(&input, 100_000_000).unwrap();
             let expected = hex::decode(test.expected).unwrap();
             assert_eq!(
@@ -359,7 +356,7 @@ mod tests {
     #[test]
     fn test_berlin_modexp_gas() {
         for (test, &test_gas) in TESTS.iter().zip(BERLIN_GAS.iter()) {
-            let input = hex::decode(test.input).unwrap();
+            let input = hex::decode(test.input).unwrap().into();
             let res = berlin_run(&input, 100_000_000).unwrap();
             let expected = hex::decode(test.expected).unwrap();
             assert_eq!(
@@ -373,7 +370,7 @@ mod tests {
 
     #[test]
     fn test_berlin_modexp_empty_input() {
-        let res = berlin_run(&[], 100_000).unwrap();
+        let res = berlin_run(&Bytes::new(), 100_000).unwrap();
         let expected: Vec<u8> = Vec::new();
         assert_eq!(res.1, expected)
     }

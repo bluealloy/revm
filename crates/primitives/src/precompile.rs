@@ -1,14 +1,14 @@
 use crate::Env;
-use alloc::vec::Vec;
+use alloy_primitives::Bytes;
 use core::fmt;
 
 /// A precompile operation result.
 ///
 /// Returns either `Ok((gas_used, return_bytes))` or `Err(error)`.
-pub type PrecompileResult = Result<(u64, Vec<u8>), PrecompileError>;
+pub type PrecompileResult = Result<(u64, Bytes), PrecompileError>;
 
-pub type StandardPrecompileFn = fn(&[u8], u64) -> PrecompileResult;
-pub type EnvPrecompileFn = fn(&[u8], u64, env: &Env) -> PrecompileResult;
+pub type StandardPrecompileFn = fn(&Bytes, u64) -> PrecompileResult;
+pub type EnvPrecompileFn = fn(&Bytes, u64, env: &Env) -> PrecompileResult;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum PrecompileError {

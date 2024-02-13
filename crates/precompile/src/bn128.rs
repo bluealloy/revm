@@ -1,8 +1,8 @@
 use crate::{
     utilities::right_pad, Address, Error, Precompile, PrecompileResult, PrecompileWithAddress,
 };
-use alloc::vec::Vec;
 use bn::{AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
+use revm_primitives::Bytes;
 
 pub mod add {
     use super::*;
@@ -11,8 +11,8 @@ pub mod add {
 
     pub const ISTANBUL: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
-        Precompile::Standard(|input: &[u8], target_gas: u64| -> PrecompileResult {
-            if 150 > target_gas {
+        Precompile::Standard(|input, gas_limit| {
+            if 150 > gas_limit {
                 return Err(Error::OutOfGas);
             }
             Ok((150, super::run_add(input)?))
@@ -21,8 +21,8 @@ pub mod add {
 
     pub const BYZANTIUM: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
-        Precompile::Standard(|input: &[u8], target_gas: u64| -> PrecompileResult {
-            if 500 > target_gas {
+        Precompile::Standard(|input, gas_limit| {
+            if 500 > gas_limit {
                 return Err(Error::OutOfGas);
             }
             Ok((500, super::run_add(input)?))
@@ -37,7 +37,7 @@ pub mod mul {
 
     pub const ISTANBUL: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
-        Precompile::Standard(|input: &[u8], gas_limit: u64| -> PrecompileResult {
+        Precompile::Standard(|input, gas_limit| {
             if 6_000 > gas_limit {
                 return Err(Error::OutOfGas);
             }
@@ -47,7 +47,7 @@ pub mod mul {
 
     pub const BYZANTIUM: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
-        Precompile::Standard(|input: &[u8], gas_limit: u64| -> PrecompileResult {
+        Precompile::Standard(|input, gas_limit| {
             if 40_000 > gas_limit {
                 return Err(Error::OutOfGas);
             }
@@ -65,12 +65,12 @@ pub mod pair {
     const ISTANBUL_PAIR_BASE: u64 = 45_000;
     pub const ISTANBUL: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
-        Precompile::Standard(|input: &[u8], target_gas: u64| -> PrecompileResult {
+        Precompile::Standard(|input, gas_limit| {
             super::run_pair(
                 input,
                 ISTANBUL_PAIR_PER_POINT,
                 ISTANBUL_PAIR_BASE,
-                target_gas,
+                gas_limit,
             )
         }),
     );
@@ -79,12 +79,12 @@ pub mod pair {
     const BYZANTIUM_PAIR_BASE: u64 = 100_000;
     pub const BYZANTIUM: PrecompileWithAddress = PrecompileWithAddress(
         ADDRESS,
-        Precompile::Standard(|input: &[u8], target_gas: u64| -> PrecompileResult {
+        Precompile::Standard(|input, gas_limit| {
             super::run_pair(
                 input,
                 BYZANTIUM_PAIR_PER_POINT,
                 BYZANTIUM_PAIR_BASE,
-                target_gas,
+                gas_limit,
             )
         }),
     );
@@ -132,7 +132,7 @@ fn new_g1_point(px: Fq, py: Fq) -> Result<G1, Error> {
     }
 }
 
-fn run_add(input: &[u8]) -> Result<Vec<u8>, Error> {
+fn run_add(input: &[u8]) -> Result<Bytes, Error> {
     let input = right_pad::<ADD_INPUT_LEN>(input);
 
     let p1 = read_point(&input[..64])?;
@@ -153,7 +153,7 @@ fn run_add(input: &[u8]) -> Result<Vec<u8>, Error> {
     Ok(output.into())
 }
 
-fn run_mul(input: &[u8]) -> Result<Vec<u8>, Error> {
+fn run_mul(input: &[u8]) -> Result<Bytes, Error> {
     let input = right_pad::<MUL_INPUT_LEN>(input);
 
     let p = read_point(&input[..64])?;
@@ -166,7 +166,7 @@ fn run_mul(input: &[u8]) -> Result<Vec<u8>, Error> {
         mul.x().to_big_endian(&mut out[..32]).unwrap();
         mul.y().to_big_endian(&mut out[32..]).unwrap();
     }
-    Ok(out.to_vec())
+    Ok(out.into())
 }
 
 fn run_pair(
@@ -225,7 +225,7 @@ fn run_pair(
 
     let mut out = [0u8; 32];
     out[31] = success as u8;
-    Ok((gas_used, out.to_vec()))
+    Ok((gas_used, out.into()))
 }
 
 /*
