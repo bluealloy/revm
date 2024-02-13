@@ -17,10 +17,18 @@ pub struct HandlerCfg {
 impl HandlerCfg {
     /// Creates new `HandlerCfg` instance.
     pub fn new(spec_id: SpecId) -> Self {
+        cfg_if::cfg_if! {
+            if #[cfg(all(feature = "optimism_default_handler",
+                not(feature = "negate_optimism_default_handler")))] {
+                    let is_optimism: true;
+            } else if #[cfg(feature = "optimism")] {
+                let is_optimism = false;
+            }
+        }
         Self {
             spec_id,
             #[cfg(feature = "optimism")]
-            is_optimism: false,
+            is_optimism,
         }
     }
 
@@ -59,11 +67,7 @@ impl CfgEnvWithHandlerCfg {
     pub fn new(cfg_env: CfgEnv, spec_id: SpecId) -> Self {
         Self {
             cfg_env,
-            handler_cfg: HandlerCfg {
-                spec_id,
-                #[cfg(feature = "optimism")]
-                is_optimism: false,
-            },
+            handler_cfg: HandlerCfg::new(spec_id),
         }
     }
 
@@ -102,11 +106,7 @@ impl EnvWithHandlerCfg {
     pub fn new(env: Box<Env>, spec_id: SpecId) -> Self {
         Self {
             env,
-            handler_cfg: HandlerCfg {
-                spec_id,
-                #[cfg(feature = "optimism")]
-                is_optimism: false,
-            },
+            handler_cfg: HandlerCfg::new(spec_id),
         }
     }
 
