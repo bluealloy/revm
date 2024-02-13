@@ -103,13 +103,14 @@ where
     }
 
     // Padding is needed if the input does not contain all 3 values.
-    let input = right_pad_vec(input, base_len + exp_len + mod_len);
+    let input_len = base_len.saturating_add(exp_len).saturating_add(mod_len);
+    let input = right_pad_vec(input, input_len);
     let (base, input) = input.split_at(base_len);
     let (exponent, modulus) = input.split_at(exp_len);
     debug_assert_eq!(modulus.len(), mod_len);
 
     // Call the modexp.
-    let output = modexp(&base, &exponent, &modulus);
+    let output = modexp(base, exponent, modulus);
 
     // left pad the result to modulus length. bytes will always by less or equal to modulus length.
     Ok((gas_cost, left_pad_vec(&output, mod_len).into_owned().into()))
