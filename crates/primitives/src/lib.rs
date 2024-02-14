@@ -13,6 +13,8 @@ mod bytecode;
 mod constants;
 pub mod db;
 pub mod env;
+pub mod eof;
+
 #[cfg(feature = "c-kzg")]
 pub mod kzg;
 pub mod precompile;
