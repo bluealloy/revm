@@ -17,10 +17,18 @@ pub struct HandlerCfg {
 impl HandlerCfg {
     /// Creates new `HandlerCfg` instance.
     pub fn new(spec_id: SpecId) -> Self {
+        cfg_if::cfg_if! {
+            if #[cfg(all(feature = "optimism_default_handler",
+                not(feature = "negate_optimism_default_handler")))] {
+                    let is_optimism: true;
+            } else if #[cfg(feature = "optimism")] {
+                let is_optimism = false;
+            }
+        }
         Self {
             spec_id,
             #[cfg(feature = "optimism")]
-            is_optimism: false,
+            is_optimism,
         }
     }
 
@@ -55,16 +63,19 @@ pub struct CfgEnvWithHandlerCfg {
 }
 
 impl CfgEnvWithHandlerCfg {
-    /// Returns new `CfgEnvWithHandlerCfg` instance.
-    pub fn new(cfg_env: CfgEnv, spec_id: SpecId) -> Self {
+    /// Returns new instance of `CfgEnvWithHandlerCfg` with the handler configuration.
+    pub fn new(cfg_env: CfgEnv, handler_cfg: HandlerCfg) -> Self {
         Self {
             cfg_env,
-            handler_cfg: HandlerCfg {
-                spec_id,
-                #[cfg(feature = "optimism")]
-                is_optimism: false,
-            },
+            handler_cfg,
         }
+    }
+
+    /// Returns new `CfgEnvWithHandlerCfg` instance with the chain spec id.
+    ///
+    /// is_optimism will be set to default value depending on `optimism_default_handler` feature.
+    pub fn new_with_spec_id(cfg_env: CfgEnv, spec_id: SpecId) -> Self {
+        Self::new(cfg_env, HandlerCfg::new(spec_id))
     }
 
     /// Enables the optimism feature.
@@ -99,44 +110,20 @@ pub struct EnvWithHandlerCfg {
 
 impl EnvWithHandlerCfg {
     /// Returns new `EnvWithHandlerCfg` instance.
-    pub fn new(env: Box<Env>, spec_id: SpecId) -> Self {
-        Self {
-            env,
-            handler_cfg: HandlerCfg {
-                spec_id,
-                #[cfg(feature = "optimism")]
-                is_optimism: false,
-            },
-        }
+    pub fn new(env: Box<Env>, handler_cfg: HandlerCfg) -> Self {
+        Self { env, handler_cfg }
+    }
+
+    /// Returns new `EnvWithHandlerCfg` instance with the chain spec id.
+    ///
+    /// is_optimism will be set to default value depending on `optimism_default_handler` feature.
+    pub fn new_with_spec_id(env: Box<Env>, spec_id: SpecId) -> Self {
+        Self::new(env, HandlerCfg::new(spec_id))
     }
 
     /// Takes `CfgEnvWithHandlerCfg` and returns new `EnvWithHandlerCfg` instance.
     pub fn new_with_cfg_env(cfg: CfgEnvWithHandlerCfg, block: BlockEnv, tx: TxEnv) -> Self {
-        cfg_if::cfg_if! {
-            if #[cfg(feature = "optimism")] {
-                let mut new = Self::new(
-                    Env::boxed(
-                        cfg.cfg_env,
-                        block,
-                        tx,
-                    ),
-                    cfg.handler_cfg.spec_id,
-                );
-                if cfg.handler_cfg.is_optimism {
-                    new.enable_optimism()
-                }
-                new
-            } else {
-            Self::new(
-                Env::boxed(
-                    cfg.cfg_env,
-                    block,
-                    tx,
-                ),
-                cfg.handler_cfg.spec_id,
-            )
-            }
-        }
+        Self::new(Env::boxed(cfg.cfg_env, block, tx), cfg.handler_cfg)
     }
 
     /// Enables the optimism handle register.
