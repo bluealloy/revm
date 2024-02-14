@@ -9,62 +9,57 @@ use fluentbase_types::ExitCode;
 type CallReturnHandle = fn(&Env, ExitCode, Gas) -> Gas;
 
 /// Reimburse the caller with ethereum it didn't spent.
-type ReimburseCallerHandle<DB> =
-    fn(&mut EVMData<'_, DB>, &Gas) -> EVMResultGeneric<(), <DB as Database>::Error>;
+type ReimburseCallerHandle = fn(&mut EVMData<'_>, &Gas) -> EVMResultGeneric<(), ExitCode>;
 
 /// Reward beneficiary with transaction rewards.
-type RewardBeneficiaryHandle<DB> = ReimburseCallerHandle<DB>;
+type RewardBeneficiaryHandle = ReimburseCallerHandle;
 
 /// Calculate gas refund for transaction.
 type CalculateGasRefundHandle = fn(&Env, &Gas) -> u64;
 
 /// Main return handle, takes state from journal and transforms internal result to external.
-type MainReturnHandle<DB> = fn(
-    &mut EVMData<'_, DB>,
-    ExitCode,
-    Output,
-    &Gas,
-) -> Result<ResultAndState, EVMError<<DB as Database>::Error>>;
+type MainReturnHandle =
+    fn(&mut EVMData<'_>, ExitCode, Output, &Gas) -> Result<ResultAndState, EVMError<ExitCode>>;
 
 /// End handle, takes result and state and returns final result.
 /// This will be called after all the other handlers.
 ///
 /// It is useful for catching errors and returning them in a different way.
-type EndHandle<DB> = fn(
-    &mut EVMData<'_, DB>,
-    evm_output: Result<ResultAndState, EVMError<<DB as Database>::Error>>,
-) -> Result<ResultAndState, EVMError<<DB as Database>::Error>>;
+type EndHandle = fn(
+    &mut EVMData<'_>,
+    evm_output: Result<ResultAndState, EVMError<ExitCode>>,
+) -> Result<ResultAndState, EVMError<ExitCode>>;
 
 /// Handler acts as a proxy and allow to define different behavior for different
 /// sections of the code. This allows nice integration of different chains or
 /// to disable some mainnet behavior.
-pub struct Handler<DB: Database> {
+pub struct Handler {
     // Uses env, call result and returned gas from the call to determine the gas
     // that is returned from transaction execution..
     pub call_return: CallReturnHandle,
     /// Reimburse the caller with ethereum it didn't spent.
-    pub reimburse_caller: ReimburseCallerHandle<DB>,
+    pub reimburse_caller: ReimburseCallerHandle,
     /// Reward the beneficiary with caller fee.
-    pub reward_beneficiary: RewardBeneficiaryHandle<DB>,
+    pub reward_beneficiary: RewardBeneficiaryHandle,
     /// Calculate gas refund for transaction.
     /// Some chains have it disabled.
     pub calculate_gas_refund: CalculateGasRefundHandle,
     /// Main return handle, returns the output of the transact.
-    pub main_return: MainReturnHandle<DB>,
+    pub main_return: MainReturnHandle,
     /// End handle.
-    pub end: EndHandle<DB>,
+    pub end: EndHandle,
 }
 
-impl<DB: Database> Handler<DB> {
+impl Handler {
     /// Handler for the mainnet
     pub fn mainnet<SPEC: Spec>() -> Self {
         Self {
             call_return: mainnet::handle_call_return::<SPEC>,
             calculate_gas_refund: mainnet::calculate_gas_refund::<SPEC>,
-            reimburse_caller: mainnet::handle_reimburse_caller::<SPEC, DB>,
-            reward_beneficiary: mainnet::reward_beneficiary::<SPEC, DB>,
-            main_return: mainnet::main_return::<DB>,
-            end: mainnet::end_handle::<DB>,
+            reimburse_caller: mainnet::handle_reimburse_caller::<SPEC>,
+            reward_beneficiary: mainnet::reward_beneficiary::<SPEC>,
+            main_return: mainnet::main_return,
+            end: mainnet::end_handle,
         }
     }
 
@@ -76,9 +71,9 @@ impl<DB: Database> Handler<DB> {
     /// Reimburse the caller with gas that were not spend.
     pub fn reimburse_caller(
         &self,
-        data: &mut EVMData<'_, DB>,
+        data: &mut EVMData<'_>,
         gas: &Gas,
-    ) -> Result<(), EVMError<DB::Error>> {
+    ) -> Result<(), EVMError<ExitCode>> {
         (self.reimburse_caller)(data, gas)
     }
 
@@ -90,29 +85,29 @@ impl<DB: Database> Handler<DB> {
     /// Reward beneficiary
     pub fn reward_beneficiary(
         &self,
-        data: &mut EVMData<'_, DB>,
+        data: &mut EVMData<'_>,
         gas: &Gas,
-    ) -> Result<(), EVMError<DB::Error>> {
+    ) -> Result<(), EVMError<ExitCode>> {
         (self.reward_beneficiary)(data, gas)
     }
 
     /// Main return.
     pub fn main_return(
         &self,
-        data: &mut EVMData<'_, DB>,
+        data: &mut EVMData<'_>,
         call_result: ExitCode,
         output: Output,
         gas: &Gas,
-    ) -> Result<ResultAndState, EVMError<DB::Error>> {
+    ) -> Result<ResultAndState, EVMError<ExitCode>> {
         (self.main_return)(data, call_result, output, gas)
     }
 
     /// End handler.
     pub fn end(
         &self,
-        data: &mut EVMData<'_, DB>,
-        end_output: Result<ResultAndState, EVMError<DB::Error>>,
-    ) -> Result<ResultAndState, EVMError<DB::Error>> {
+        data: &mut EVMData<'_>,
+        end_output: Result<ResultAndState, EVMError<ExitCode>>,
+    ) -> Result<ResultAndState, EVMError<ExitCode>> {
         (self.end)(data, end_output)
     }
 }
@@ -158,10 +153,10 @@ mod mainnet {
     }
 
     #[inline]
-    pub(crate) fn handle_reimburse_caller<SPEC: Spec, DB: Database>(
-        data: &mut EVMData<'_, DB>,
+    pub(crate) fn handle_reimburse_caller<SPEC: Spec>(
+        data: &mut EVMData<'_>,
         _gas: &Gas,
-    ) -> Result<(), EVMError<DB::Error>> {
+    ) -> Result<(), EVMError<ExitCode>> {
         let _ = data;
         // let caller = data.env.tx.caller;
         // let effective_gas_price = data.env.effective_gas_price();
@@ -181,10 +176,10 @@ mod mainnet {
 
     /// Reward beneficiary with gas fee.
     #[inline]
-    pub(crate) fn reward_beneficiary<SPEC: Spec, DB: Database>(
-        _data: &mut EVMData<'_, DB>,
+    pub(crate) fn reward_beneficiary<SPEC: Spec>(
+        _data: &mut EVMData<'_>,
         _gas: &Gas,
-    ) -> Result<(), EVMError<DB::Error>> {
+    ) -> Result<(), EVMError<ExitCode>> {
         // let beneficiary = data.env.block.coinbase;
         // let effective_gas_price = data.env.effective_gas_price();
         //
@@ -230,12 +225,12 @@ mod mainnet {
 
     /// Main return handle, returns the output of the transaction.
     #[inline]
-    pub(crate) fn main_return<DB: Database>(
-        _data: &mut EVMData<'_, DB>,
+    pub(crate) fn main_return(
+        _data: &mut EVMData<'_>,
         call_result: ExitCode,
         output: Output,
         gas: &Gas,
-    ) -> Result<ResultAndState, EVMError<DB::Error>> {
+    ) -> Result<ResultAndState, EVMError<ExitCode>> {
         // used gas with refund calculated.
         let gas_refunded = gas.refunded() as u64;
         let final_gas_used = gas.spend() - gas_refunded;
@@ -269,10 +264,10 @@ mod mainnet {
 
     /// Mainnet end handle does not change the output.
     #[inline]
-    pub(crate) fn end_handle<DB: Database>(
-        _data: &mut EVMData<'_, DB>,
-        evm_output: Result<ResultAndState, EVMError<DB::Error>>,
-    ) -> Result<ResultAndState, EVMError<DB::Error>> {
+    pub(crate) fn end_handle(
+        _data: &mut EVMData<'_>,
+        evm_output: Result<ResultAndState, EVMError<ExitCode>>,
+    ) -> Result<ResultAndState, EVMError<ExitCode>> {
         evm_output
     }
 

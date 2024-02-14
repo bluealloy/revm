@@ -1,5 +1,4 @@
 use crate::{
-    db::Database,
     gas::Gas,
     handler::Handler,
     journal::Account,
@@ -27,9 +26,9 @@ use rwasm_codegen::{Compiler, CompilerConfig, CompilerError, FuncOrExport};
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
 
-pub struct EVMImpl<'a, GSPEC: Spec, DB: Database> {
-    pub data: EVMData<'a, DB>,
-    pub handler: Handler<DB>,
+pub struct EVMImpl<'a, GSPEC: Spec> {
+    pub data: EVMData<'a>,
+    pub handler: Handler,
     depth: u64,
     _pd: PhantomData<GSPEC>,
 }
@@ -47,20 +46,20 @@ pub trait Transact<DBError> {
     fn transact(&mut self) -> EVMResult<DBError>;
 }
 
-impl<'a, GSPEC: Spec + 'static, DB: Database> Transact<DB::Error> for EVMImpl<'a, GSPEC, DB> {
+impl<'a, GSPEC: Spec + 'static> Transact<ExitCode> for EVMImpl<'a, GSPEC> {
     #[inline]
-    fn preverify_transaction(&mut self) -> Result<(), EVMError<DB::Error>> {
+    fn preverify_transaction(&mut self) -> Result<(), EVMError<ExitCode>> {
         self.preverify_transaction_inner()
     }
 
     #[inline]
-    fn transact_preverified(&mut self) -> EVMResult<DB::Error> {
+    fn transact_preverified(&mut self) -> EVMResult<ExitCode> {
         let output = self.transact_preverified_inner();
         self.handler.end(&mut self.data, output)
     }
 
     #[inline]
-    fn transact(&mut self) -> EVMResult<DB::Error> {
+    fn transact(&mut self) -> EVMResult<ExitCode> {
         let output = self
             .preverify_transaction_inner()
             .and_then(|()| self.transact_preverified_inner());
@@ -68,10 +67,10 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> Transact<DB::Error> for EVMImpl<'a
     }
 }
 
-impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
-    pub fn new(db: &'a mut DB, env: &'a mut Env) -> Self {
+impl<'a, GSPEC: Spec + 'static> EVMImpl<'a, GSPEC> {
+    pub fn new(env: &'a mut Env) -> Self {
         Self {
-            data: EVMData { env, db },
+            data: EVMData { env },
             handler: Handler::mainnet::<GSPEC>(),
             _pd: PhantomData {},
             depth: 0,
@@ -79,7 +78,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
     }
 
     /// Pre verify transaction.
-    pub fn preverify_transaction_inner(&mut self) -> Result<(), EVMError<DB::Error>> {
+    pub fn preverify_transaction_inner(&mut self) -> Result<(), EVMError<ExitCode>> {
         // Important: validate block before tx.
         self.data.env.validate_block_env::<GSPEC>()?;
         self.data.env.validate_tx::<GSPEC>()?;
@@ -101,7 +100,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
     }
 
     /// Transact preverified transaction.
-    pub fn transact_preverified_inner(&mut self) -> EVMResult<DB::Error> {
+    pub fn transact_preverified_inner(&mut self) -> EVMResult<ExitCode> {
         let env = &self.data.env;
         let tx_caller = env.tx.caller;
         let tx_value = env.tx.value;

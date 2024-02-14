@@ -1,9 +1,7 @@
 use crate::util::{check_success, wat2wasm, TestingContext};
-use hashbrown::HashMap;
+use fluentbase_sdk::LowLevelSDK;
 use revm::primitives::{
     address,
-    Account,
-    AccountInfo,
     Address,
     Bytecode,
     Bytes,
@@ -15,8 +13,6 @@ use revm::primitives::{
     ResultAndState,
     TransactTo,
     TxEnv,
-    B256,
-    U256,
 };
 
 impl TestingContext {
@@ -37,7 +33,6 @@ impl TestingContext {
                 ..Default::default()
             },
         });
-        evm.database(self.clone());
         evm.transact().unwrap()
     }
 
@@ -57,7 +52,6 @@ impl TestingContext {
                 ..Default::default()
             },
         });
-        evm.database(self.clone());
         let res = evm.transact().unwrap();
         match &res.result {
             ExecutionResult::Success { output, .. } => match output {
@@ -74,44 +68,10 @@ impl TestingContext {
     }
 }
 
-impl revm_rwasm::DatabaseCommit for TestingContext {
-    fn commit(&mut self, _changes: HashMap<Address, Account>) {
-        todo!()
-    }
-}
-
-impl revm_rwasm::Database for TestingContext {
-    type Error = ();
-
-    fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
-        if let Some(acc) = self.accounts.get(&address) {
-            return Ok(Some(acc.clone()));
-        }
-        self.accounts.insert(address, AccountInfo::default());
-        Ok(Some(self.accounts.get(&address).cloned().unwrap()))
-    }
-
-    fn code_by_hash(&mut self, code_hash: B256) -> Result<Bytecode, Self::Error> {
-        for account in self.accounts.values() {
-            if account.code_hash == code_hash {
-                return Ok(account.code.clone().unwrap());
-            }
-        }
-        panic!("not possible now :(")
-    }
-
-    fn storage(&mut self, _address: Address, _index: U256) -> Result<U256, Self::Error> {
-        todo!()
-    }
-
-    fn block_hash(&mut self, _number: U256) -> Result<B256, Self::Error> {
-        todo!()
-    }
-}
-
 #[test]
 fn test_greeting() {
     let mut ctx = TestingContext::default();
+    LowLevelSDK::with_test_input();
     let res = check_success(ctx.deploy_wasm_contract(
         address!("0000000000000000000000000000000000000000"),
         &wat2wasm(include_str!("../bin/greeting-deploy.wat")),
