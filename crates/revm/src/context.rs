@@ -130,6 +130,7 @@ impl<DB: Database> EvmContext<DB> {
             l1_block_info: self.l1_block_info,
         }
     }
+
     pub fn new(db: DB) -> Self {
         Self {
             env: Box::default(),
@@ -444,7 +445,6 @@ impl<DB: Database> EvmContext<DB> {
         gas: Gas,
     ) -> InterpreterResult {
         let input_data = &inputs.input;
-
         let out = match precompile {
             Precompile::Standard(fun) => fun(input_data, gas.limit()),
             Precompile::Env(fun) => fun(input_data, gas.limit(), self.env()),
@@ -460,13 +460,13 @@ impl<DB: Database> EvmContext<DB> {
             Ok((gas_used, data)) => {
                 if result.gas.record_cost(gas_used) {
                     result.result = InstructionResult::Return;
-                    result.output = Bytes::from(data);
+                    result.output = data;
                 } else {
                     result.result = InstructionResult::PrecompileOOG;
                 }
             }
             Err(e) => {
-                result.result = if crate::precompile::Error::OutOfGas == e {
+                result.result = if e == crate::precompile::Error::OutOfGas {
                     InstructionResult::PrecompileOOG
                 } else {
                     InstructionResult::PrecompileError
