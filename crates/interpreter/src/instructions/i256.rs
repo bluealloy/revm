@@ -151,4 +151,54 @@ mod tests {
         assert_eq!(i256_div(one_hundred, minus_one), neg_one_hundred);
         assert_eq!(i256_div(one_hundred, two), fifty);
     }
+    #[test]
+    fn test_i256_sign() {
+        assert_eq!(i256_sign(&U256::ZERO), Sign::Zero);
+        assert_eq!(i256_sign(&U256::from(1)), Sign::Plus);
+        assert_eq!(i256_sign(&MIN_NEGATIVE_VALUE), Sign::Minus);
+    }
+
+    #[test]
+    fn test_i256_sign_compl() {
+        let mut positive = U256::from(1);
+        let mut negative = MIN_NEGATIVE_VALUE;
+        assert_eq!(i256_sign_compl(&mut positive), Sign::Plus);
+        assert_eq!(i256_sign_compl(&mut negative), Sign::Minus);
+    }
+
+    #[test]
+    fn test_two_compl() {
+        let value = U256::from(1);
+        assert_eq!(two_compl(value), U256::MAX);
+    }
+
+    #[test]
+    fn test_two_compl_mut() {
+        let mut value = U256::from(1);
+        two_compl_mut(&mut value);
+        assert_eq!(value, U256::MAX);
+    }
+
+    #[test]
+    fn test_i256_cmp() {
+        assert_eq!(i256_cmp(&U256::from(1), &U256::from(2)), Ordering::Less);
+        assert_eq!(i256_cmp(&U256::from(2), &U256::from(2)), Ordering::Equal);
+        assert_eq!(i256_cmp(&U256::from(3), &U256::from(2)), Ordering::Greater);
+    }
+
+    #[test]
+    fn test_i256_div() {
+        let one = U256::from(1);
+        let two = U256::from(2);
+        assert_eq!(i256_div(MIN_NEGATIVE_VALUE, one), MIN_NEGATIVE_VALUE);
+        assert_eq!(i256_div(U256::from(4), two), U256::from(2));
+    }
+
+    #[test]
+    fn test_i256_mod() {
+        let one = U256::from(1);
+        let two = U256::from(2);
+        assert_eq!(i256_mod(U256::from(4), two), U256::ZERO);
+        assert_eq!(i256_mod(U256::from(3), two), one);
+    }
 }
