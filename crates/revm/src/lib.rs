@@ -34,6 +34,7 @@ pub use context::{Context, ContextWithHandlerCfg, EvmContext};
 pub use db::{
     CacheState, DBBox, State, StateBuilder, StateDBBox, TransitionAccount, TransitionState,
 };
+use futures as _;
 pub use db::{Database, DatabaseCommit, DatabaseRef, InMemoryDB};
 pub use evm::{Evm, CALL_STACK_LIMIT};
 pub use frame::{CallFrame, CreateFrame, Frame, FrameData, FrameOrResult, FrameResult};
