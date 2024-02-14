@@ -71,7 +71,7 @@ impl TestingContext {
 #[test]
 fn test_greeting() {
     let mut ctx = TestingContext::default();
-    LowLevelSDK::with_test_input();
+    // LowLevelSDK::with_test_input();
     let res = check_success(ctx.deploy_wasm_contract(
         address!("0000000000000000000000000000000000000000"),
         &wat2wasm(include_str!("../bin/greeting-deploy.wat")),
