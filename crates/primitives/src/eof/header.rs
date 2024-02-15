@@ -1,6 +1,8 @@
+use super::decode_helpers::{consume_u16, consume_u8};
+
 /// EOF Header containing
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct Header {
+pub struct EofHeader {
     /// Size of EOF types section.
     /// types section includes num of input and outputs and max stack size.
     pub types_size: u16,
@@ -12,6 +14,10 @@ pub struct Header {
     pub container_sizes: Vec<u16>,
     /// EOF data size.
     pub data_size: u16,
+    /// sum code sizes
+    pub sum_code_sizes: usize,
+    /// sum container sizes
+    pub sum_container_sizes: usize,
 }
 
 const KIND_TERMINAL: u8 = 0;
@@ -21,24 +27,7 @@ const KIND_CONTAINER: u8 = 3;
 const KIND_DATA: u8 = 4;
 
 #[inline]
-fn consume_u8(input: &[u8]) -> Result<(&[u8], u8), ()> {
-    if input.is_empty() {
-        return Err(());
-    }
-    Ok((&input[1..], input[0]))
-}
-
-#[inline]
-fn consume_u16(input: &[u8]) -> Result<(&[u8], u16), ()> {
-    if input.len() < 2 {
-        return Err(());
-    }
-    let (int_bytes, rest) = input.split_at(2);
-    Ok((rest, u16::from_be_bytes([int_bytes[0], int_bytes[1]])))
-}
-
-#[inline]
-fn consume_header_section_size(input: &[u8]) -> Result<(&[u8], Vec<u16>), ()> {
+fn consume_header_section_size(input: &[u8]) -> Result<(&[u8], Vec<u16>, usize), ()> {
     // num_sections	2 bytes	0x0001-0xFFFF
     // 16-bit unsigned big-endian integer denoting the number of the sections
     let (input, num_sections) = consume_u16(input)?;
@@ -50,6 +39,7 @@ fn consume_header_section_size(input: &[u8]) -> Result<(&[u8], Vec<u16>), ()> {
         return Err(());
     }
     let mut sizes = Vec::with_capacity(num_sections as usize);
+    let mut sum = 0;
     for i in 0..num_sections as usize {
         // size	2 bytes	0x0001-0xFFFF
         // 16-bit unsigned big-endian integer denoting the length of the section content
@@ -57,30 +47,51 @@ fn consume_header_section_size(input: &[u8]) -> Result<(&[u8], Vec<u16>), ()> {
         if code_size == 0 {
             return Err(());
         }
+        sum += code_size as usize;
         sizes.push(code_size);
     }
 
-    Ok((&input[byte_size..], sizes))
+    Ok((&input[byte_size..], sizes, sum))
 }
 
-impl Header {
-    /// Create new EOF Header.
-    pub fn new(
-        types_size: u16,
-        code_sizes: Vec<u16>,
-        container_sizes: Vec<u16>,
-        data_size: u16,
-    ) -> Self {
-        Self {
-            types_size,
-            code_sizes,
-            container_sizes,
-            data_size,
-        }
+impl EofHeader {
+    /// Length of the header in bytes.
+    ///
+    /// Length is calculated as:
+    /// magic 2 byte +
+    /// version 1 byte +
+    /// types section 3 bytes +
+    /// code section 3 bytes +
+    /// num_code_sections * 2 +
+    /// if num_container_sections != 0 { container section 3 bytes} +
+    /// num_container_sections * 2 +
+    /// data section 3 bytes +
+    /// terminator 1 byte
+    ///
+    /// It is minimum 15 bytes (there is at least one code section).
+    pub fn len(&self) -> usize {
+        let optional_container_sizes = if self.container_sizes.is_empty() {
+            0
+        } else {
+            3 + self.container_sizes.len() * 2
+        };
+        13 + self.code_sizes.len() * 2 + optional_container_sizes
     }
 
-    pub fn decode(input: &mut [u8]) -> Result<Self, ()> {
-        let mut header = Header::default();
+    pub fn types_items(&self) -> usize {
+        self.types_size as usize / 4
+    }
+
+    pub fn body_len(&self) -> usize {
+        self.sum_code_sizes + self.sum_container_sizes + self.data_size as usize
+    }
+
+    pub fn eof_len(&self) -> usize {
+        self.len() + self.body_len()
+    }
+
+    pub fn decode(input: &[u8]) -> Result<(Self, &[u8]), ()> {
+        let mut header = EofHeader::default();
 
         // magic	2 bytes	0xEF00	EOF prefix
         let (input, kind) = consume_u16(input)?;
@@ -112,16 +123,18 @@ impl Header {
         }
 
         // code_sections_sizes
-        let (input, code_sizes) = consume_header_section_size(input)?;
-        header.code_sizes = code_sizes;
+        let (input, sizes, sum) = consume_header_section_size(input)?;
+        header.code_sizes = sizes;
+        header.sum_code_sizes = sum;
 
         let (input, kind_container_or_data) = consume_u8(input)?;
 
         let input = match kind_container_or_data {
             KIND_CONTAINER => {
                 // container_sections_sizes
-                let (input, container_sizes) = consume_header_section_size(input)?;
-                header.container_sizes = container_sizes;
+                let (input, sizes, sum) = consume_header_section_size(input)?;
+                header.container_sizes = sizes;
+                header.sum_container_sizes = sum;
                 input
             }
             KIND_DATA => input,
@@ -135,13 +148,43 @@ impl Header {
         let (input, data_size) = consume_u16(input)?;
         header.data_size = data_size;
 
-        // terminator	1 byte	0x00	marks the end of the header
+        // terminator	1 byte	0x00	marks the end of the EofHeader
         let (_, terminator) = consume_u8(input)?;
         if terminator != KIND_TERMINAL {
             return Err(());
         }
 
-        Ok(header)
+        Ok((header, input))
+    }
+
+    pub fn validate(&self) -> Result<(), ()> {
+        // minimum valid header size is 15 bytes (Checked in decode)
+        // version must be 0x01  (Checked in decode)
+
+        // types_size is divisible by 4
+        if self.types_size % 4 != 0 {
+            return Err(());
+        }
+
+        // the number of code sections must be equal to types_size / 4
+        if self.code_sizes.len() != self.types_size as usize / 4 {
+            return Err(());
+        }
+        // the number of code sections must not exceed 1024
+        if self.code_sizes.len() > 1024 {
+            return Err(());
+        }
+        // code_size may not be 0
+        if self.code_sizes.is_empty() {
+            return Err(());
+        }
+        // the number of container sections must not exceed 256
+        if self.container_sizes.len() > 256 {
+            return Err(());
+        }
+        // container_size may not be 0, but container sections are optional
+        // (Checked in decode)
+        Ok(())
     }
 }
 
@@ -153,7 +196,7 @@ mod tests {
     #[test]
     fn sanity_header_decode() {
         let mut input = hex!("ef000101000402000100010400000000800000fe");
-        let header = Header::decode(&mut input).unwrap();
+        let (header, _) = EofHeader::decode(&mut input).unwrap();
         assert_eq!(header.types_size, 4);
         assert_eq!(header.code_sizes, vec![1]);
         assert_eq!(header.container_sizes, vec![]);
@@ -163,6 +206,6 @@ mod tests {
     #[test]
     fn decode_header_not_terminated() {
         let mut input = hex!("ef0001010004");
-        assert_eq!(Header::decode(&mut input), Err(()));
+        assert_eq!(EofHeader::decode(&mut input), Err(()));
     }
 }
