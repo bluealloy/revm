@@ -34,7 +34,7 @@ impl<'a> Default for EvmBuilder<'a, SetGenericStage, (), EmptyDB> {
             if #[cfg(all(feature = "optimism_default_handler",
                 not(feature = "negate_optimism_default_handler")))] {
                     let mut handler_cfg = HandlerCfg::new(SpecId::LATEST);
-                    /// set is_optimism to true by default.
+                    // set is_optimism to true by default.
                     handler_cfg.is_optimism = true;
 
             } else {
