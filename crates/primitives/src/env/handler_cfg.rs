@@ -20,7 +20,7 @@ impl HandlerCfg {
         cfg_if::cfg_if! {
             if #[cfg(all(feature = "optimism_default_handler",
                 not(feature = "negate_optimism_default_handler")))] {
-                    let is_optimism: true;
+                    let is_optimism = true;
             } else if #[cfg(feature = "optimism")] {
                 let is_optimism = false;
             }
