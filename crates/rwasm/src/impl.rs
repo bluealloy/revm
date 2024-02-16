@@ -1,13 +1,22 @@
+use core::marker::PhantomData;
+
+use fluentbase_sdk::{LowLevelAPI, LowLevelSDK};
+use fluentbase_types::{ExitCode, STATE_DEPLOY, STATE_MAIN};
+use rwasm_codegen::{Compiler, CompilerConfig, CompilerError, FuncOrExport, ImportLinkerDefaults};
+
+use revm_primitives::{CreateScheme, RWASM_MAX_CODE_SIZE};
+
 use crate::{
+    EVMData,
     gas::Gas,
     handler::Handler,
     journal::Account,
     primitives::{
-        keccak256,
         Bytes,
+        Env,
         EVMError,
         EVMResult,
-        Env,
+        keccak256,
         Output,
         Spec,
         SpecId::*,
@@ -15,13 +24,7 @@ use crate::{
         U256,
     },
     types::CallCreateResult,
-    EVMData,
 };
-use core::marker::PhantomData;
-use fluentbase_sdk::{LowLevelAPI, LowLevelSDK};
-use fluentbase_types::{ExitCode, STATE_DEPLOY, STATE_MAIN};
-use revm_primitives::{CreateScheme, RWASM_MAX_CODE_SIZE};
-use rwasm_codegen::{Compiler, CompilerConfig, CompilerError, FuncOrExport};
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -204,16 +207,33 @@ impl<'a, GSPEC: Spec + 'static> EVMImpl<'a, GSPEC> {
         input: &Bytes,
         func_name: &'static str,
     ) -> Result<Bytes, CompilerError> {
-        use fluentbase_runtime::Runtime;
-        let import_linker = Runtime::<()>::new_shared_linker();
-        let mut compiler = Compiler::new_with_linker(
-            input.as_ref(),
-            CompilerConfig::default(),
-            Some(&import_linker),
-        )?;
-        compiler.translate(FuncOrExport::Export(func_name))?;
-        let output = compiler.finalize()?;
-        Ok(Bytes::from(output))
+        #[cfg(feature = "runtime")]
+        {
+            use fluentbase_runtime::Runtime;
+            let import_linker = Runtime::<()>::new_shared_linker();
+            let mut compiler = Compiler::new_with_linker(
+                input.as_ref(),
+                CompilerConfig::default(),
+                Some(&import_linker),
+            )?;
+            compiler.translate(FuncOrExport::Export(func_name))?;
+            let output = compiler.finalize()?;
+            return Ok(Bytes::from(output))
+        };
+        #[cfg(not(feature = "runtime"))]
+        {
+            use rwasm_codegen::{ImportLinker, ImportLinkerV1AlphaDefaults};
+            let mut import_linker = ImportLinker::default();
+            ImportLinkerV1AlphaDefaults::register_import_funcs(&mut import_linker, None);
+            let mut compiler = Compiler::new_with_linker(
+                input.as_ref(),
+                CompilerConfig::default(),
+                Some(&import_linker),
+            )?;
+            compiler.translate(FuncOrExport::Export(func_name))?;
+            let output = compiler.finalize()?;
+            return Ok(Bytes::from(output))
+        };
     }
 
     /// EVM create opcode for both initial crate and CREATE and CREATE2 opcodes.

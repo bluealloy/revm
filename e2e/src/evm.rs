@@ -1,13 +1,15 @@
-use crate::util::{check_success, wat2wasm, TestingContext};
 use hex_literal::hex;
+
 use revm::primitives::{address, Eval, Output};
+
+use crate::util::{check_success, TestingContext};
 
 #[test]
 fn test_greeting() {
     let mut ctx = TestingContext::default();
     let res = check_success(ctx.deploy_contract(
         address!("0000000000000000000000000000000000000000"),
-        &wat2wasm(include_str!("../bin/greeting-deploy.wat")),
+        include_bytes!("../bin/greeting-deploy.wasm"),
     ));
     assert_eq!(res.reason, Eval::Return);
     let address = match res.output {

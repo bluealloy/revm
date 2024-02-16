@@ -1164,7 +1164,6 @@ dependencies = [
 [[package]]
 name = "fluentbase-codec"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#29674c2b07fdeef13d2ec2f90faa95230729ab70"
 dependencies = [
  "alloy-primitives",
  "byteorder",
@@ -1177,7 +1176,6 @@ dependencies = [
 [[package]]
 name = "fluentbase-poseidon"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#29674c2b07fdeef13d2ec2f90faa95230729ab70"
 dependencies = [
  "bitvec",
  "halo2curves 0.3.1",
@@ -1188,7 +1186,6 @@ dependencies = [
 [[package]]
 name = "fluentbase-runtime"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#29674c2b07fdeef13d2ec2f90faa95230729ab70"
 dependencies = [
  "byteorder",
  "fluentbase-poseidon",
@@ -1205,7 +1202,6 @@ dependencies = [
 [[package]]
 name = "fluentbase-sdk"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#29674c2b07fdeef13d2ec2f90faa95230729ab70"
 dependencies = [
  "byteorder",
  "fluentbase-codec",
@@ -1218,12 +1214,10 @@ dependencies = [
 [[package]]
 name = "fluentbase-types"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#29674c2b07fdeef13d2ec2f90faa95230729ab70"
 dependencies = [
  "alloy-primitives",
  "hashbrown",
  "rwasm",
- "rwasm-codegen",
  "strum",
  "strum_macros",
 ]
@@ -1231,7 +1225,6 @@ dependencies = [
 [[package]]
 name = "fluentbase-zktrie"
 version = "0.1.0"
-source = "git+https://github.com/fluentlabs-xyz/fluentbase.git?branch=devel#29674c2b07fdeef13d2ec2f90faa95230729ab70"
 dependencies = [
  "byteorder",
  "fluentbase-poseidon",
@@ -1487,7 +1480,7 @@ dependencies = [
 [[package]]
 name = "halo2curves"
 version = "0.3.1"
-source = "git+https://github.com/scroll-tech/halo2curves?branch=0.3.1-derive-serde#969f1e44d9713ee4cd552563bd0c762c5d53b56e"
+source = "git+https://github.com/fluentlabs-xyz/halo2curves?branch=0.3.1-derive-serde#969f1e44d9713ee4cd552563bd0c762c5d53b56e"
 dependencies = [
  "ff 0.12.1",
  "group 0.12.1",
@@ -2718,7 +2711,6 @@ dependencies = [
  "auto_impl",
  "byteorder",
  "criterion",
- "ethers-contract",
  "ethers-core",
  "ethers-providers",
  "fluentbase-codec",
@@ -2966,7 +2958,6 @@ dependencies = [
 [[package]]
 name = "rwasm"
 version = "0.30.0"
-source = "git+https://github.com/fluentlabs-xyz/rwasm.git?branch=devel#a8c14817d2e5219177b60831b2082ba538dd96ea"
 dependencies = [
  "byteorder",
  "downcast-rs",
@@ -2975,20 +2966,15 @@ dependencies = [
  "paste",
  "smallvec",
  "spin 0.9.8",
- "strum",
- "strum_macros",
  "wasmparser-nostd",
 ]
 
 [[package]]
 name = "rwasm-codegen"
 version = "0.30.0"
-source = "git+https://github.com/fluentlabs-xyz/rwasm.git?branch=devel#a8c14817d2e5219177b60831b2082ba538dd96ea"
 dependencies = [
  "byteorder",
  "rwasm",
- "strum",
- "strum_macros",
 ]
 
 [[package]]

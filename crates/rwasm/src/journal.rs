@@ -105,6 +105,7 @@ impl Account {
     }
 
     pub(crate) fn load_bytecode(&self) -> Bytes {
+        let bytecode_len = LowLevelSDK::jzkt_preimage_size(self.code_hash.as_ptr());
         let mut bytecode = vec![0u8; self.code_size as usize];
         LowLevelSDK::jzkt_preimage_copy(self.code_hash.as_ptr(), bytecode.as_mut_ptr());
         bytecode.into()
@@ -118,15 +119,17 @@ impl Account {
             code.len() as u32,
             self.code_hash.as_mut_ptr(),
         );
+        self.code_size = code.len() as u64;
         // write new changes into ZKT
         self.write_to_jzkt();
         // make sure preimage of this hash is stored
-        LowLevelSDK::jzkt_update_preimage(
+        let r = LowLevelSDK::jzkt_update_preimage(
             address_word.as_ptr(),
             JZKT_CODE_HASH_FIELD,
             code.as_ptr(),
             code.len() as u32,
         );
+        assert!(r);
     }
 
     pub(crate) fn checkpoint() -> AccountCheckpoint {
