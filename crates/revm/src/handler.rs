@@ -195,6 +195,7 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
             handler.append_handler_register(register)
         }
         handler.cfg = self.cfg();
+        handler.cfg.spec_id = spec_id;
         *self = handler;
     }
 }
