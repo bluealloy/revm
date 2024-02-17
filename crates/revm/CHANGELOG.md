@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.0.0](https://github.com/bluealloy/revm/compare/revm-v5.0.0...revm-v6.0.0) - 2024-02-17
+
+### Added
+- improve OriginalValuesKnown docs ([#1083](https://github.com/bluealloy/revm/pull/1083))
+
+### Fixed
+- rename and pass optimism-default-handler to revm-primitives ([#1098](https://github.com/bluealloy/revm/pull/1098))
+- modify cfg spec_id ([#1095](https://github.com/bluealloy/revm/pull/1095)) ([#1096](https://github.com/bluealloy/revm/pull/1096))
+- optimism compilation ([#1091](https://github.com/bluealloy/revm/pull/1091))
+
+### Other
+- *(state)* avoid cloning full account ([#1097](https://github.com/bluealloy/revm/pull/1097))
+- *(precompile)* use `Bytes` in precompile functions ([#1085](https://github.com/bluealloy/revm/pull/1085))
+- Add memory offset ([#1032](https://github.com/bluealloy/revm/pull/1032))
+
 ## [5.0.0](https://github.com/bluealloy/revm/compare/revm-v4.0.0...revm-v5.0.0) - 2024-02-12
 
 ### Fixed
