@@ -67,6 +67,9 @@ arbitrary = ["std", "alloy-primitives/arbitrary", "bitflags/arbitrary"]
 asm-keccak = ["alloy-primitives/asm-keccak"]
 
 optimism = []
+# Optimism default handler enabled Optimism handler register by default in EvmBuilder.
+optimism-default-handler = ["optimism"]
+negate-optimism-default-handler = []
 
 dev = [
     "memory_limit",
@@ -87,4 +90,10 @@ optional_beneficiary_reward = []
 
 # See comments in `revm-precompile`
 # TODO: remove `blst` dep when `c-kzg` has a portable feature
-c-kzg = ["dep:c-kzg", "dep:once_cell", "dep:derive_more", "dep:blst", "blst?/portable"]
+c-kzg = [
+    "dep:c-kzg",
+    "dep:once_cell",
+    "dep:derive_more",
+    "dep:blst",
+    "blst?/portable",
+]

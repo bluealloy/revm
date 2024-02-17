@@ -18,8 +18,8 @@ impl HandlerCfg {
     /// Creates new `HandlerCfg` instance.
     pub fn new(spec_id: SpecId) -> Self {
         cfg_if::cfg_if! {
-            if #[cfg(all(feature = "optimism_default_handler",
-                not(feature = "negate_optimism_default_handler")))] {
+            if #[cfg(all(feature = "optimism-default-handler",
+                not(feature = "negate-optimism-default-handler")))] {
                     let is_optimism = true;
             } else if #[cfg(feature = "optimism")] {
                 let is_optimism = false;
@@ -73,7 +73,7 @@ impl CfgEnvWithHandlerCfg {
 
     /// Returns new `CfgEnvWithHandlerCfg` instance with the chain spec id.
     ///
-    /// is_optimism will be set to default value depending on `optimism_default_handler` feature.
+    /// is_optimism will be set to default value depending on `optimism-default-handler` feature.
     pub fn new_with_spec_id(cfg_env: CfgEnv, spec_id: SpecId) -> Self {
         Self::new(cfg_env, HandlerCfg::new(spec_id))
     }
@@ -116,7 +116,7 @@ impl EnvWithHandlerCfg {
 
     /// Returns new `EnvWithHandlerCfg` instance with the chain spec id.
     ///
-    /// is_optimism will be set to default value depending on `optimism_default_handler` feature.
+    /// is_optimism will be set to default value depending on `optimism-default-handler` feature.
     pub fn new_with_spec_id(env: Box<Env>, spec_id: SpecId) -> Self {
         Self::new(env, HandlerCfg::new(spec_id))
     }

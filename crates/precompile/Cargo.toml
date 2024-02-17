@@ -49,6 +49,14 @@ std = [
 asm-keccak = ["revm-primitives/asm-keccak"]
 
 optimism = ["revm-primitives/optimism"]
+# Optimism default handler enabled Optimism handler register by default in EvmBuilder.
+optimism-default-handler = [
+    "optimism",
+    "revm-primitives/optimism-default-handler",
+]
+negate-optimism-default-handler = [
+    "revm-primitives/negate-optimism-default-handler",
+]
 
 # These libraries may not work on all no_std platforms as they depend on C.
 
