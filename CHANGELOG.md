@@ -1,5 +1,16 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v29 tag
+date: 17.02.2023
+
+Small release, `return_memory_range` included inside `CallInput`.
+Few fixes.
+
+revm: 5.0.0 -> 6.0.0 (⚠️ API breaking changes)
+revm-interpreter: 2.1.0 -> 3.0.0 (⚠️ API breaking changes)
+revm-primitives: 2.0.0 -> 2.0.1 (✓ API compatible changes)
+revm-precompile: 4.0.0 -> 4.0.1 (✓ API compatible changes)
+
 # v28 tag
 date: 12.02.2023
 
