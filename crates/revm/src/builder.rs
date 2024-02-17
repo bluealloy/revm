@@ -31,8 +31,8 @@ pub struct HandlerStage;
 impl<'a> Default for EvmBuilder<'a, SetGenericStage, (), EmptyDB> {
     fn default() -> Self {
         cfg_if::cfg_if! {
-            if #[cfg(all(feature = "optimism_default_handler",
-                not(feature = "negate_optimism_default_handler")))] {
+            if #[cfg(all(feature = "optimism-default-handler",
+                not(feature = "negate-optimism-default-handler")))] {
                     let mut handler_cfg = HandlerCfg::new(SpecId::LATEST);
                     // set is_optimism to true by default.
                     handler_cfg.is_optimism = true;
@@ -157,7 +157,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
 
     /// Sets the Optimism handler with latest spec.
     ///
-    /// If `optimism_default_handler` feature is enabled this is not needed.
+    /// If `optimism-default-handler` feature is enabled this is not needed.
     #[cfg(feature = "optimism")]
     pub fn optimism(mut self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
         self.handler = Handler::optimism_with_spec(self.handler.cfg.spec_id);
@@ -170,8 +170,8 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
 
     /// Sets the mainnet handler with latest spec.
     ///
-    /// Enabled only with `optimism_default_handler` feature.
-    #[cfg(feature = "optimism_default_handler")]
+    /// Enabled only with `optimism-default-handler` feature.
+    #[cfg(feature = "optimism-default-handler")]
     pub fn mainnet(mut self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
         self.handler = Handler::mainnet_with_spec(self.handler.cfg.spec_id);
         EvmBuilder {
@@ -209,8 +209,8 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
 
     /// Resets the [`Handler`] and sets base mainnet handler.
     ///
-    /// Enabled only with `optimism_default_handler` feature.
-    #[cfg(feature = "optimism_default_handler")]
+    /// Enabled only with `optimism-default-handler` feature.
+    #[cfg(feature = "optimism-default-handler")]
     pub fn reset_handler_with_mainnet(mut self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
         self.handler = Handler::mainnet_with_spec(self.handler.cfg.spec_id);
         EvmBuilder {
