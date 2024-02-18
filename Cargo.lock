@@ -46,9 +46,9 @@ checksum = "0942ffc6dcaadf03badf6e6a2d0228460359d5e34b57ccdc720b7382dfbd5ec5"
 
 [[package]]
 name = "alloy-primitives"
-version = "0.6.2"
+version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4b6fb2b432ff223d513db7f908937f63c252bee0af9b82bfd25b0a5dd1eb0d8"
+checksum = "ef197eb250c64962003cb08b90b17f0882c192f4a6f2f544809d424fd7cb0e7d"
 dependencies = [
  "alloy-rlp",
  "arbitrary",
@@ -94,9 +94,9 @@ dependencies = [
 
 [[package]]
 name = "alloy-sol-macro"
-version = "0.6.2"
+version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b0b5ab0cb07c21adf9d72e988b34e8200ce648c2bba8d009183bb1c50fb1216"
+checksum = "82e92100dee7fd1e44abbe0ef6607f18758cf0ad4e483f4c65ff5c8d85428a6d"
 dependencies = [
  "const-hex",
  "dunce",
@@ -2315,7 +2315,7 @@ dependencies = [
 
 [[package]]
 name = "revm"
-version = "5.0.0"
+version = "6.0.0"
 dependencies = [
  "anyhow",
  "auto_impl",
@@ -2335,7 +2335,7 @@ dependencies = [
 
 [[package]]
 name = "revm-interpreter"
-version = "2.1.0"
+version = "3.0.0"
 dependencies = [
  "revm-primitives",
  "serde",
@@ -2343,7 +2343,7 @@ dependencies = [
 
 [[package]]
 name = "revm-precompile"
-version = "4.0.0"
+version = "4.0.1"
 dependencies = [
  "aurora-engine-modexp",
  "blst",
@@ -2359,7 +2359,7 @@ dependencies = [
 
 [[package]]
 name = "revm-primitives"
-version = "2.0.0"
+version = "2.0.1"
 dependencies = [
  "alloy-primitives",
  "auto_impl",
@@ -2975,9 +2975,9 @@ dependencies = [
 
 [[package]]
 name = "syn-solidity"
-version = "0.6.2"
+version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "63bef2e2c735acbc06874eca3a8506f02a3c4700e6e748afc92cc2e4220e8a03"
+checksum = "e656cbcef8a77543b5accbd76f60f9e0bc4be364b0aba4263a6f313f8a355511"
 dependencies = [
  "paste",
  "proc-macro2",

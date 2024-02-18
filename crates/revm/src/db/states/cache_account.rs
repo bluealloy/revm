@@ -100,7 +100,7 @@ impl CacheAccount {
 
     /// Fetch account info if it exist.
     pub fn account_info(&self) -> Option<AccountInfo> {
-        self.account.clone().map(|a| a.info)
+        self.account.as_ref().map(|a| a.info.clone())
     }
 
     /// Dissolve account into components.
@@ -282,7 +282,7 @@ impl CacheAccount {
         storage: StorageWithOriginalValues,
     ) -> TransitionAccount {
         let previous_status = self.status;
-        let previous_info = self.account.clone().map(|a| a.info);
+        let previous_info = self.account.as_ref().map(|a| a.info.clone());
         let mut this_storage = self
             .account
             .take()
@@ -303,7 +303,7 @@ impl CacheAccount {
         self.account = Some(changed_account);
 
         TransitionAccount {
-            info: self.account.clone().map(|a| a.info),
+            info: self.account.as_ref().map(|a| a.info.clone()),
             status: self.status,
             previous_info,
             previous_status,
