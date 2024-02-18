@@ -350,10 +350,12 @@ impl<DB: Database> EvmContext<DB> {
             inputs.value,
         ));
 
+        // TODO(eof) flag.
+
         FrameOrResult::new_create_frame(
             created_address,
             checkpoint,
-            Interpreter::new(contract, gas.limit(), false),
+            Interpreter::new(contract, gas.limit(), false, false),
         )
     }
 
@@ -425,11 +427,12 @@ impl<DB: Database> EvmContext<DB> {
                 code_hash,
                 &inputs.context,
             ));
+            // TODO(eof) flag
             // Create interpreter and executes call and push new CallStackFrame.
             FrameOrResult::new_call_frame(
                 inputs.return_memory_offset.clone(),
                 checkpoint,
-                Interpreter::new(contract, gas.limit(), inputs.is_static),
+                Interpreter::new(contract, gas.limit(), inputs.is_static, false),
             )
         } else {
             self.journaled_state.checkpoint_commit();

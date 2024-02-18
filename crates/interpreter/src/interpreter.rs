@@ -45,6 +45,8 @@ pub struct Interpreter {
     pub return_data_buffer: Bytes,
     /// Whether the interpreter is in "staticcall" mode, meaning no state changes can happen.
     pub is_static: bool,
+    /// Whether we are Interpreting the Ethereum Object Format (EOF) bytecode.
+    pub is_eof: bool,
     /// Actions that the EVM should do.
     ///
     /// Set inside CALL or CREATE instructions and RETURN or REVERT instructions. Additionally those instructions will set
@@ -116,13 +118,14 @@ impl InterpreterAction {
 
 impl Interpreter {
     /// Create new interpreter
-    pub fn new(contract: Box<Contract>, gas_limit: u64, is_static: bool) -> Self {
+    pub fn new(contract: Box<Contract>, gas_limit: u64, is_static: bool, is_eof: bool) -> Self {
         Self {
             instruction_pointer: contract.bytecode.as_ptr(),
             contract,
             gas: Gas::new(gas_limit),
             instruction_result: InstructionResult::Continue,
             is_static,
+            is_eof,
             return_data_buffer: Bytes::new(),
             shared_memory: EMPTY_SHARED_MEMORY,
             stack: Stack::new(),

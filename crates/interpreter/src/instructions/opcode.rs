@@ -185,7 +185,7 @@ opcodes! {
     0x58 => PC       => control::pc,
     0x59 => MSIZE    => memory::msize,
     0x5A => GAS      => system::gas,
-    0x5B => JUMPDEST => control::jumpdest,
+    0x5B => JUMPDEST => control::jumpdest_or_nop,
     0x5C => TLOAD    => host::tload::<H, SPEC>,
     0x5D => TSTORE   => host::tstore::<H, SPEC>,
     0x5E => MCOPY    => memory::mcopy::<H, SPEC>,
@@ -900,6 +900,7 @@ pub const fn spec_opcode_gas(spec_id: SpecId) -> &'static [OpInfo; 256] {
         MERGE,
         SHANGHAI,
         CANCUN,
+        PRAGUE,
         LATEST,
     )
 }

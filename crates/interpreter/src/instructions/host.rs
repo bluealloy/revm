@@ -45,6 +45,7 @@ pub fn selfbalance<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mu
 }
 
 pub fn extcodesize<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+    panic_on_eof!(interpreter);
     pop_address!(interpreter, address);
     let Some((code, is_cold)) = host.code(address) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
@@ -70,6 +71,7 @@ pub fn extcodesize<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mu
 
 /// EIP-1052: EXTCODEHASH opcode
 pub fn extcodehash<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+    panic_on_eof!(interpreter);
     check!(interpreter, CONSTANTINOPLE);
     pop_address!(interpreter, address);
     let Some((code_hash, is_cold)) = host.code_hash(address) else {
@@ -94,6 +96,7 @@ pub fn extcodehash<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mu
 }
 
 pub fn extcodecopy<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+    panic_on_eof!(interpreter);
     pop_address!(interpreter, address);
     pop!(interpreter, memory_offset, code_offset, len_u256);
 
@@ -151,7 +154,7 @@ pub fn sload<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
 }
 
 pub fn sstore<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
-    check_staticcall!(interpreter);
+    error_on_static_call!(interpreter);
 
     pop!(interpreter, index, value);
     let Some((original, old, new, is_cold)) =
@@ -171,7 +174,7 @@ pub fn sstore<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) 
 /// Store value to transient storage
 pub fn tstore<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     check!(interpreter, CANCUN);
-    check_staticcall!(interpreter);
+    error_on_static_call!(interpreter);
     gas!(interpreter, gas::WARM_STORAGE_READ_COST);
 
     pop!(interpreter, index, value);
@@ -191,7 +194,7 @@ pub fn tload<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
 }
 
 pub fn log<const N: usize, H: Host>(interpreter: &mut Interpreter, host: &mut H) {
-    check_staticcall!(interpreter);
+    error_on_static_call!(interpreter);
 
     pop!(interpreter, offset, len);
     let len = as_usize_or_fail!(interpreter, len);
@@ -224,7 +227,8 @@ pub fn log<const N: usize, H: Host>(interpreter: &mut Interpreter, host: &mut H)
 }
 
 pub fn selfdestruct<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
-    check_staticcall!(interpreter);
+    panic_on_eof!(interpreter);
+    error_on_static_call!(interpreter);
     pop_address!(interpreter, target);
 
     let Some(res) = host.selfdestruct(interpreter.contract.address, target) else {
@@ -245,7 +249,8 @@ pub fn create<const IS_CREATE2: bool, H: Host, SPEC: Spec>(
     interpreter: &mut Interpreter,
     host: &mut H,
 ) {
-    check_staticcall!(interpreter);
+    panic_on_eof!(interpreter);
+    error_on_static_call!(interpreter);
 
     // EIP-1014: Skinny CREATE2
     if IS_CREATE2 {
@@ -311,6 +316,7 @@ pub fn create<const IS_CREATE2: bool, H: Host, SPEC: Spec>(
 }
 
 pub fn call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+    panic_on_eof!(interpreter);
     pop!(interpreter, local_gas_limit);
     pop_address!(interpreter, to);
     // max gas limit is not possible in real ethereum situation.
@@ -371,6 +377,7 @@ pub fn call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
 }
 
 pub fn call_code<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+    panic_on_eof!(interpreter);
     pop!(interpreter, local_gas_limit);
     pop_address!(interpreter, to);
     // max gas limit is not possible in real ethereum situation.
@@ -426,6 +433,7 @@ pub fn call_code<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut 
 }
 
 pub fn delegate_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+    panic_on_eof!(interpreter);
     check!(interpreter, HOMESTEAD);
     pop!(interpreter, local_gas_limit);
     pop_address!(interpreter, to);
@@ -472,6 +480,7 @@ pub fn delegate_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &
 }
 
 pub fn static_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
+    panic_on_eof!(interpreter);
     check!(interpreter, BYZANTIUM);
     pop!(interpreter, local_gas_limit);
     pop_address!(interpreter, to);

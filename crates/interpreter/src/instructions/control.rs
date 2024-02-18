@@ -6,7 +6,16 @@ use crate::{
     Host, InstructionResult, Interpreter, InterpreterResult,
 };
 
+pub fn rjump<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+    gas!(interpreter, gas::BASE);
+}
+
+pub fn rjumpi<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {}
+
+pub fn rjumpv<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {}
+
 pub fn jump<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+    panic_on_eof!(interpreter);
     gas!(interpreter, gas::MID);
     pop!(interpreter, dest);
     let dest = as_usize_or_fail!(interpreter, dest, InstructionResult::InvalidJump);
@@ -21,6 +30,7 @@ pub fn jump<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
 }
 
 pub fn jumpi<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+    panic_on_eof!(interpreter);
     gas!(interpreter, gas::HIGH);
     pop!(interpreter, dest, value);
     if value != U256::ZERO {
@@ -36,11 +46,12 @@ pub fn jumpi<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     }
 }
 
-pub fn jumpdest<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+pub fn jumpdest_or_nop<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::JUMPDEST);
 }
 
 pub fn pc<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+    panic_on_eof!(interpreter);
     gas!(interpreter, gas::BASE);
     // - 1 because we have already advanced the instruction pointer in `Interpreter::step`
     push!(interpreter, U256::from(interpreter.program_counter() - 1));

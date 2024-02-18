@@ -26,8 +26,9 @@ pub enum SpecId {
     ARROW_GLACIER = 13,   // Arrow Glacier	        13773000
     GRAY_GLACIER = 14,    // Gray Glacier	        15050000
     MERGE = 15,           // Paris/Merge	        15537394 (TTD: 58750000000000000000000)
-    SHANGHAI = 16,        // Shanghai	            17034870 (TS: 1681338455)
-    CANCUN = 17,          // Cancun	                TBD
+    SHANGHAI = 16,        // Shanghai	            17034870 (Timestamp: 1681338455)
+    CANCUN = 17,          // Cancun	                TBD (Timestamp: 1710338135)
+    PRAGUE = 18,          // Praque                 TBD
     LATEST = u8::MAX,
 }
 
@@ -61,6 +62,7 @@ pub enum SpecId {
     CANYON = 19,
     CANCUN = 20,
     ECOTONE = 21,
+    PRAGUE = 22,
     LATEST = u8::MAX,
 }
 
@@ -97,6 +99,7 @@ impl From<&str> for SpecId {
             "Merge" => Self::MERGE,
             "Shanghai" => Self::SHANGHAI,
             "Cancun" => Self::CANCUN,
+            "Prague" => Self::PRAGUE,
             #[cfg(feature = "optimism")]
             "Bedrock" => SpecId::BEDROCK,
             #[cfg(feature = "optimism")]
@@ -150,6 +153,7 @@ spec!(LONDON, LondonSpec);
 spec!(MERGE, MergeSpec);
 spec!(SHANGHAI, ShanghaiSpec);
 spec!(CANCUN, CancunSpec);
+spec!(PRAGUE, PragueSpec);
 
 spec!(LATEST, LatestSpec);
 
@@ -222,6 +226,10 @@ macro_rules! spec_to_generic {
                 use $crate::LatestSpec as SPEC;
                 $e
             }
+            $crate::SpecId::PRAGUE => {
+                use $crate::PragueSpec as SPEC;
+                $e
+            }
             #[cfg(feature = "optimism")]
             $crate::SpecId::BEDROCK => {
                 use $crate::BedrockSpec as SPEC;
@@ -278,6 +286,7 @@ mod tests {
         #[cfg(feature = "optimism")]
         spec_to_generic!(CANYON, assert_eq!(SPEC::SPEC_ID, CANYON));
         spec_to_generic!(CANCUN, assert_eq!(SPEC::SPEC_ID, CANCUN));
+        spec_to_generic!(PRAGUE, assert_eq!(SPEC::SPEC_ID, PRAGUE));
         spec_to_generic!(LATEST, assert_eq!(SPEC::SPEC_ID, LATEST));
     }
 }

@@ -44,9 +44,11 @@ pub enum InstructionResult {
     CreateContractStartingWithEF,
     /// EIP-3860: Limit and meter initcode. Initcode size limit exceeded.
     CreateInitCodeSizeLimit,
-
+    /* External error */
     /// Fatal external error. Returned by database.
     FatalExternalError,
+    /* EOF */
+    OpcodeDisabledInEof,
 }
 
 impl From<SuccessReason> for InstructionResult {
@@ -135,6 +137,7 @@ macro_rules! return_error {
             | InstructionResult::CreateContractStartingWithEF
             | InstructionResult::CreateInitCodeSizeLimit
             | InstructionResult::FatalExternalError
+            | InstructionResult::OpcodeDisabledInEof
     };
 }
 
@@ -255,6 +258,8 @@ impl From<InstructionResult> for SuccessOrHalt {
                 Self::Halt(HaltReason::CreateInitCodeSizeLimit)
             }
             InstructionResult::FatalExternalError => Self::FatalExternalError,
+            // TODO(EOF) Check how to propagate error that should be a EVM panic!
+            InstructionResult::OpcodeDisabledInEof => Self::FatalExternalError,
         }
     }
 }

@@ -30,11 +30,13 @@ pub fn caller<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
 }
 
 pub fn codesize<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+    panic_on_eof!(interpreter);
     gas!(interpreter, gas::BASE);
     push!(interpreter, U256::from(interpreter.contract.bytecode.len()));
 }
 
 pub fn codecopy<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+    panic_on_eof!(interpreter);
     pop!(interpreter, memory_offset, code_offset, len);
     let len = as_usize_or_fail!(interpreter, len);
     gas_or_fail!(interpreter, gas::verylowcopy_cost(len as u64));
@@ -133,6 +135,7 @@ pub fn returndatacopy<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host:
 }
 
 pub fn gas<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+    panic_on_eof!(interpreter);
     gas!(interpreter, gas::BASE);
     push!(interpreter, U256::from(interpreter.gas.remaining()));
 }

@@ -1,7 +1,16 @@
-macro_rules! check_staticcall {
+macro_rules! error_on_static_call {
     ($interp:expr) => {
         if $interp.is_static {
             $interp.instruction_result = InstructionResult::StateChangeDuringStaticCall;
+            return;
+        }
+    };
+}
+
+macro_rules! panic_on_eof {
+    ($interp:expr) => {
+        if $interp.is_static {
+            $interp.instruction_result = InstructionResult::OpcodeDisabledInEof;
             return;
         }
     };

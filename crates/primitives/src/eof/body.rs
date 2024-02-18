@@ -8,7 +8,7 @@ pub struct EofBody {
     code_section: Vec<Bytes>,
     container_section: Vec<Bytes>,
     data_section: Bytes,
-    is_full_data: bool,
+    is_data_filled: bool,
 }
 
 impl EofBody {
@@ -48,7 +48,7 @@ impl EofBody {
         }
 
         body.data_section = input.slice(start..);
-        body.is_full_data = body.data_section.len() == header.data_size as usize;
+        body.is_data_filled = body.data_section.len() == header.data_size as usize;
 
         Ok(body)
     }
