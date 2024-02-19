@@ -105,7 +105,6 @@ impl Account {
     }
 
     pub(crate) fn load_bytecode(&self) -> Bytes {
-        let bytecode_len = LowLevelSDK::jzkt_preimage_size(self.code_hash.as_ptr());
         let mut bytecode = vec![0u8; self.code_size as usize];
         LowLevelSDK::jzkt_preimage_copy(self.code_hash.as_ptr(), bytecode.as_mut_ptr());
         bytecode.into()
