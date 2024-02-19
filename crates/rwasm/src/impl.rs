@@ -1,22 +1,13 @@
-use core::marker::PhantomData;
-
-use fluentbase_sdk::{LowLevelAPI, LowLevelSDK};
-use fluentbase_types::{ExitCode, STATE_DEPLOY, STATE_MAIN};
-use rwasm_codegen::{Compiler, CompilerConfig, CompilerError, FuncOrExport, ImportLinkerDefaults};
-
-use revm_primitives::{CreateScheme, RWASM_MAX_CODE_SIZE};
-
 use crate::{
-    EVMData,
     gas::Gas,
     handler::Handler,
     journal::Account,
     primitives::{
+        keccak256,
         Bytes,
-        Env,
         EVMError,
         EVMResult,
-        keccak256,
+        Env,
         Output,
         Spec,
         SpecId::*,
@@ -24,7 +15,13 @@ use crate::{
         U256,
     },
     types::CallCreateResult,
+    EVMData,
 };
+use core::marker::PhantomData;
+use fluentbase_sdk::{LowLevelAPI, LowLevelSDK};
+use fluentbase_types::{ExitCode, STATE_DEPLOY, STATE_MAIN};
+use revm_primitives::{CreateScheme, RWASM_MAX_CODE_SIZE};
+use rwasm_codegen::{Compiler, CompilerConfig, CompilerError, FuncOrExport};
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -218,7 +215,7 @@ impl<'a, GSPEC: Spec + 'static> EVMImpl<'a, GSPEC> {
             )?;
             compiler.translate(FuncOrExport::Export(func_name))?;
             let output = compiler.finalize()?;
-            return Ok(Bytes::from(output))
+            return Ok(Bytes::from(output));
         };
         #[cfg(not(feature = "runtime"))]
         {
@@ -232,7 +229,7 @@ impl<'a, GSPEC: Spec + 'static> EVMImpl<'a, GSPEC> {
             )?;
             compiler.translate(FuncOrExport::Export(func_name))?;
             let output = compiler.finalize()?;
-            return Ok(Bytes::from(output))
+            return Ok(Bytes::from(output));
         };
     }
 

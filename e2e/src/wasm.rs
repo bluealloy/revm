@@ -119,7 +119,7 @@ fn test_contract_input_check_recode() {
     let block_coinbase: Address = address!("0000000000000000000000000000000000000012");
     let env_chain_id = 23;
 
-    let contract_input_data_str = "i am contract input";
+    let contract_input_data_str = "i am a contract input";
 
     let db = InMemoryAccountDb::default();
     let storage = ZkTrieStateDb::new_empty(db);
