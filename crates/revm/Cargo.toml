@@ -55,7 +55,8 @@ std = [
     "revm-interpreter/std",
     "revm-precompile/std",
 ]
-serde = ["dep:serde", "dep:serde_json", "revm-interpreter/serde"]
+serde = ["dep:serde", "revm-interpreter/serde"]
+serde-json = ["serde", "dep:serde_json"]
 arbitrary = ["revm-interpreter/arbitrary"]
 asm-keccak = ["revm-interpreter/asm-keccak", "revm-precompile/asm-keccak"]
 
@@ -72,7 +73,6 @@ negate-optimism-default-handler = [
     "revm-precompile/negate-optimism-default-handler",
     "revm-interpreter/negate-optimism-default-handler",
 ]
-
 
 ethersdb = [
     "std",

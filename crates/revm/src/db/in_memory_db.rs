@@ -457,7 +457,7 @@ mod tests {
         assert_eq!(new_state.storage(account, key1), Ok(value1));
     }
 
-    #[cfg(feature = "serde")]
+    #[cfg(feature = "serde-json")]
     #[test]
     fn test_serialize_deserialize_cachedb() {
         let account = Address::with_last_byte(69);
