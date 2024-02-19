@@ -70,7 +70,7 @@ impl TestingContext {
             cfg: Default::default(),
             block: Default::default(),
             tx: TxEnv {
-                gas_limit: 10_000_000,
+                gas_limit: 1_000_000_000,
                 transact_to: TransactTo::Create(CreateScheme::Create),
                 data: Bytes::copy_from_slice(input_binary),
                 caller,
@@ -152,11 +152,16 @@ pub(crate) fn check_success(res: ResultAndState) -> SuccessResult {
             logs,
             output,
         },
-        ExecutionResult::Revert { output, .. } => {
-            panic!("reverted: {}", hex::encode(output))
+
+        ExecutionResult::Revert {
+            output, gas_used, ..
+        } => {
+            panic!("reverted (gas_used {}): {}", gas_used, hex::encode(output))
         }
-        ExecutionResult::Halt { reason, .. } => {
-            panic!("halted: {:?}", reason)
+        ExecutionResult::Halt {
+            reason, gas_used, ..
+        } => {
+            panic!("halted (gas_used {}): {:?}", gas_used, reason)
         }
     }
 }
