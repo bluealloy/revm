@@ -162,6 +162,7 @@ impl<DB: Database> EvmContext<DB> {
     }
 
     /// Sets precompiles
+    #[inline]
     pub fn set_precompiles(&mut self, precompiles: Precompiles) {
         self.journaled_state.warm_preloaded_addresses =
             precompiles.addresses().copied().collect::<HashSet<_>>();
@@ -172,6 +173,7 @@ impl<DB: Database> EvmContext<DB> {
     ///
     /// Loading of accounts/storages is needed to make them warm.
     #[inline]
+    #[must_use]
     pub fn load_access_list(&mut self) -> Result<(), EVMError<DB::Error>> {
         for (address, slots) in self.env.tx.access_list.iter() {
             self.journaled_state
@@ -182,11 +184,14 @@ impl<DB: Database> EvmContext<DB> {
     }
 
     /// Return environment.
+    #[inline]
     pub fn env(&mut self) -> &mut Env {
         &mut self.env
     }
 
     /// Fetch block hash from database.
+    #[inline]
+    #[must_use]
     pub fn block_hash(&mut self, number: U256) -> Option<B256> {
         self.db
             .block_hash(number)
@@ -195,6 +200,8 @@ impl<DB: Database> EvmContext<DB> {
     }
 
     /// Load account and return flags (is_cold, exists)
+    #[inline]
+    #[must_use]
     pub fn load_account(&mut self, address: Address) -> Option<(bool, bool)> {
         self.journaled_state
             .load_account_exist(address, &mut self.db)
@@ -203,6 +210,8 @@ impl<DB: Database> EvmContext<DB> {
     }
 
     /// Return account balance and is_cold flag.
+    #[inline]
+    #[must_use]
     pub fn balance(&mut self, address: Address) -> Option<(U256, bool)> {
         self.journaled_state
             .load_account(address, &mut self.db)
@@ -212,6 +221,8 @@ impl<DB: Database> EvmContext<DB> {
     }
 
     /// Return account code and if address is cold loaded.
+    #[inline]
+    #[must_use]
     pub fn code(&mut self, address: Address) -> Option<(Bytecode, bool)> {
         let (acc, is_cold) = self
             .journaled_state
@@ -222,6 +233,8 @@ impl<DB: Database> EvmContext<DB> {
     }
 
     /// Get code hash of address.
+    #[inline]
+    #[must_use]
     pub fn code_hash(&mut self, address: Address) -> Option<(B256, bool)> {
         let (acc, is_cold) = self
             .journaled_state
@@ -236,6 +249,8 @@ impl<DB: Database> EvmContext<DB> {
     }
 
     /// Load storage slot, if storage is not present inside the account then it will be loaded from database.
+    #[inline]
+    #[must_use]
     pub fn sload(&mut self, address: Address, index: U256) -> Option<(U256, bool)> {
         // account is always warm. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
         self.journaled_state
@@ -245,6 +260,8 @@ impl<DB: Database> EvmContext<DB> {
     }
 
     /// Storage change of storage slot, before storing `sload` will be called for that slot.
+    #[inline]
+    #[must_use]
     pub fn sstore(
         &mut self,
         address: Address,
@@ -258,16 +275,20 @@ impl<DB: Database> EvmContext<DB> {
     }
 
     /// Returns transient storage value.
+    #[inline]
     pub fn tload(&mut self, address: Address, index: U256) -> U256 {
         self.journaled_state.tload(address, index)
     }
 
     /// Stores transient storage value.
+    #[inline]
     pub fn tstore(&mut self, address: Address, index: U256, value: U256) {
         self.journaled_state.tstore(address, index, value)
     }
 
     /// Make create frame.
+    #[inline]
+    #[must_use]
     pub fn make_create_frame(&mut self, spec_id: SpecId, inputs: &CreateInputs) -> FrameOrResult {
         // Prepare crate.
         let gas = Gas::new(inputs.gas_limit);
@@ -358,6 +379,8 @@ impl<DB: Database> EvmContext<DB> {
     }
 
     /// Make call frame
+    #[inline]
+    #[must_use]
     pub fn make_call_frame(&mut self, inputs: &CallInputs) -> FrameOrResult {
         let gas = Gas::new(inputs.gas_limit);
 
@@ -395,7 +418,9 @@ impl<DB: Database> EvmContext<DB> {
 
         // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
         if inputs.transfer.value == U256::ZERO {
-            self.load_account(inputs.context.address);
+            if self.load_account(inputs.context.address).is_none() {
+                return return_result(InstructionResult::FatalExternalError);
+            };
             self.journaled_state.touch(&inputs.context.address);
         }
 
@@ -438,6 +463,7 @@ impl<DB: Database> EvmContext<DB> {
     }
 
     /// Call precompile contract
+    #[inline]
     fn call_precompile(
         &mut self,
         precompile: Precompile,
