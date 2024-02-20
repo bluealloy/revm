@@ -42,7 +42,7 @@ futures = { version = "0.3.30", optional = true }
 
 [dev-dependencies]
 ethers-contract = { version = "2.0.13", default-features = false }
-anyhow = "1.0.79"
+anyhow = "1.0.80"
 criterion = "0.5"
 indicatif = "0.17"
 
