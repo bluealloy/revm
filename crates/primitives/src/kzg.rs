@@ -1,9 +1,6 @@
 mod env_settings;
 mod trusted_setup_points;
 
-// TODO: remove when we have `portable` feature in `c-kzg`
-use blst as _;
-
 pub use c_kzg::KzgSettings;
 pub use env_settings::EnvKzgSettings;
 pub use trusted_setup_points::{
