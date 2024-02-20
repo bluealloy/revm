@@ -8,6 +8,11 @@ use crate::{
 
 pub fn rjump<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::BASE);
+    let offset = 0;
+    // In spec it is +3 but pointer is already incremented in
+    // `Interpreter::step` so for revm is +2.
+    interpreter.instruction_pointer =
+        unsafe { interpreter.instruction_pointer.byte_offset(offset + 2) };
 }
 
 pub fn rjumpi<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {}
@@ -110,4 +115,15 @@ pub fn invalid<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
 /// Unknown opcode. This opcode halts the execution.
 pub fn unknown<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.instruction_result = InstructionResult::OpcodeNotFound;
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::{opcode::RJUMP, Interpreter};
+
+    #[test]
+    fn sanity_rjump() {
+        let interp = Interpreter::new_bytecode(Bytes::from([RJUMP, 0x00, 0x00]));
+    }
 }

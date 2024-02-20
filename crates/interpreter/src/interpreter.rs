@@ -54,6 +54,12 @@ pub struct Interpreter {
     pub next_action: InterpreterAction,
 }
 
+impl Default for Interpreter {
+    fn default() -> Self {
+        Self::new(Box::new(Contract::default()), 0, false, false)
+    }
+}
+
 /// The result of an interpreter operation.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InterpreterResult {
@@ -131,6 +137,24 @@ impl Interpreter {
             stack: Stack::new(),
             next_action: InterpreterAction::None,
         }
+    }
+
+    /// Test related helper
+    #[cfg(test)]
+    pub fn new_bytecode(bytecode: Bytes) -> Self {
+        Self::new(
+            Box::new(Contract::new(
+                Bytes::new(),
+                crate::primitives::Bytecode::new_raw(bytecode),
+                crate::primitives::B256::default(),
+                crate::primitives::Address::default(),
+                crate::primitives::Address::default(),
+                U256::ZERO,
+            )),
+            0,
+            false,
+            false,
+        )
     }
 
     /// Inserts the output of a `create` call into the interpreter.
