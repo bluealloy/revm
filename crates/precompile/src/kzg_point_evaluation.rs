@@ -3,9 +3,6 @@ use c_kzg::{Bytes32, Bytes48, KzgProof, KzgSettings};
 use revm_primitives::{hex_literal::hex, Bytes, Env};
 use sha2::{Digest, Sha256};
 
-// TODO: remove when we have `portable` feature in `c-kzg`
-use blst as _;
-
 pub const POINT_EVALUATION: PrecompileWithAddress =
     PrecompileWithAddress(ADDRESS, Precompile::Env(run));
 

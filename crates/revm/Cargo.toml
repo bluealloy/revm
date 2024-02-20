@@ -47,7 +47,7 @@ criterion = "0.5"
 indicatif = "0.17"
 
 [features]
-default = ["std", "c-kzg", "secp256k1"]
+default = ["std", "c-kzg", "secp256k1", "portable"]
 std = [
     "serde?/std",
     "serde_json?/std",
@@ -59,6 +59,7 @@ serde = ["dep:serde", "revm-interpreter/serde"]
 serde-json = ["serde", "dep:serde_json"]
 arbitrary = ["revm-interpreter/arbitrary"]
 asm-keccak = ["revm-interpreter/asm-keccak", "revm-precompile/asm-keccak"]
+portable = ["revm-precompile/portable", "revm-interpreter/portable"]
 
 test-utils = []
 

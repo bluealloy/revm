@@ -28,6 +28,7 @@ std = ["serde?/std", "revm-primitives/std"]
 serde = ["dep:serde", "revm-primitives/serde"]
 arbitrary = ["std", "revm-primitives/arbitrary"]
 asm-keccak = ["revm-primitives/asm-keccak"]
+portable = ["revm-primitives/portable"]
 
 optimism = ["revm-primitives/optimism"]
 # Optimism default handler enabled Optimism handler register by default in EvmBuilder.
