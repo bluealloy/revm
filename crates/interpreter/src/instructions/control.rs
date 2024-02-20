@@ -50,6 +50,12 @@ pub fn jumpdest_or_nop<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::JUMPDEST);
 }
 
+pub fn callf<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {}
+
+pub fn retf<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {}
+
+pub fn jumpf<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {}
+
 pub fn pc<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     panic_on_eof!(interpreter);
     gas!(interpreter, gas::BASE);

@@ -306,10 +306,10 @@ opcodes! {
     // 0xCD
     // 0xCE
     // 0xCF
-    // 0xD0
-    // 0xD1
-    // 0xD2
-    // 0xD3
+    0xD0 => DATALOAD => data::data_load,
+    0xD1 => DATALOADN => data::data_loadn,
+    0xD2 => DATASIZE => data::data_size,
+    0xD3 => DATACOPY => data::data_copy,
     // 0xD4
     // 0xD5
     // 0xD6
@@ -322,33 +322,33 @@ opcodes! {
     // 0xDD
     // 0xDE
     // 0xDF
-    // 0xE0
-    // 0xE1
-    // 0xE2
-    // 0xE3
-    // 0xE4
-    // 0xE5
-    // 0xE6
-    // 0xE7
-    // 0xE8
+    0xE0 => RJUMP => control::rjump,
+    0xE1 => RJUMPI => control::rjumpi,
+    0xE2 => RJUMPV => control::rjumpv,
+    0xE3 => CALLF => control::callf,
+    0xE4 => RETF => control::retf,
+    0xE5 => JUMPF => control::jumpf,
+    0xE6 => DUPN => stack::dupn,
+    0xE7 => SWAPN => stack::swapn,
+    0xE8 => EXCHANGE => stack::exchange,
     // 0xE9
     // 0xEA
     // 0xEB
-    // 0xEC
-    // 0xED
-    // 0xEE
+    0xEC => CRATE3 => contract::create3::<H>,
+    0xED => CREATE4 => contract::create4::<H>,
+    0xEE => RETURNCONTRACT => contract::return_contract::<H>,
     // 0xEF
-    0xF0 => CREATE       => host::create::<false, H, SPEC>,
-    0xF1 => CALL         => host::call::<H, SPEC>,
-    0xF2 => CALLCODE     => host::call_code::<H, SPEC>,
+    0xF0 => CREATE       => contract::create::<false, H, SPEC>,
+    0xF1 => CALL         => contract::call::<H, SPEC>,
+    0xF2 => CALLCODE     => contract::call_code::<H, SPEC>,
     0xF3 => RETURN       => control::ret,
-    0xF4 => DELEGATECALL => host::delegate_call::<H, SPEC>,
-    0xF5 => CREATE2      => host::create::<true, H, SPEC>,
+    0xF4 => DELEGATECALL => contract::delegate_call::<H, SPEC>,
+    0xF5 => CREATE2      => contract::create::<true, H, SPEC>,
     // 0xF6
-    // 0xF7
+    0xF7 => RETURNDATALOAD => system::returndataload::<H>,
     // 0xF8
     // 0xF9
-    0xFA => STATICCALL   => host::static_call::<H, SPEC>,
+    0xFA => STATICCALL   => contract::static_call::<H, SPEC>,
     // 0xFB
     // 0xFC
     0xFD => REVERT       => control::revert::<H, SPEC>,
