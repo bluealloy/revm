@@ -22,7 +22,7 @@ sha2 = { version = "0.10", default-features = false }
 aurora-engine-modexp = { version = "1.0", default-features = false }
 
 # Optional KZG point evaluation precompile
-c-kzg = { version = "0.4.1", default-features = false, optional = true }
+c-kzg = { version = "0.4.2", default-features = false, optional = true }
 
 # TODO: make specific feature for this in c-kzg-4844
 blst = { version = "0.3.11", default-features = false, optional = true }
