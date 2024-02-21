@@ -1,7 +1,7 @@
 use crate::{
     handler::mainnet,
     interpreter::{CallInputs, CreateInputs, SharedMemory},
-    primitives::{db::Database, Spec},
+    primitives::{db::Database, EVMError, Spec},
     CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
 };
 use std::{boxed::Box, sync::Arc};
@@ -9,32 +9,69 @@ use std::{boxed::Box, sync::Arc};
 use revm_interpreter::{CallOutcome, CreateOutcome, InterpreterResult};
 
 /// Handles first frame return handle.
-pub type LastFrameReturnHandle<'a, EXT, DB> =
-    Arc<dyn Fn(&mut Context<EXT, DB>, &mut FrameResult) + 'a>;
+pub type LastFrameReturnHandle<'a, EXT, DB> = Arc<
+    dyn Fn(&mut Context<EXT, DB>, &mut FrameResult) -> Result<(), EVMError<<DB as Database>::Error>>
+        + 'a,
+>;
 
 /// Handle sub call.
-pub type FrameCallHandle<'a, EXT, DB> =
-    Arc<dyn Fn(&mut Context<EXT, DB>, Box<CallInputs>) -> FrameOrResult + 'a>;
+pub type FrameCallHandle<'a, EXT, DB> = Arc<
+    dyn Fn(
+            &mut Context<EXT, DB>,
+            Box<CallInputs>,
+        ) -> Result<FrameOrResult, EVMError<<DB as Database>::Error>>
+        + 'a,
+>;
 
 /// Handle call return
-pub type FrameCallReturnHandle<'a, EXT, DB> =
-    Arc<dyn Fn(&mut Context<EXT, DB>, Box<CallFrame>, InterpreterResult) -> CallOutcome + 'a>;
+pub type FrameCallReturnHandle<'a, EXT, DB> = Arc<
+    dyn Fn(
+            &mut Context<EXT, DB>,
+            Box<CallFrame>,
+            InterpreterResult,
+        ) -> Result<CallOutcome, EVMError<<DB as Database>::Error>>
+        + 'a,
+>;
 
 /// Insert call outcome to the parent
-pub type InsertCallOutcomeHandle<'a, EXT, DB> =
-    Arc<dyn Fn(&mut Context<EXT, DB>, &mut Frame, &mut SharedMemory, CallOutcome) + 'a>;
+pub type InsertCallOutcomeHandle<'a, EXT, DB> = Arc<
+    dyn Fn(
+            &mut Context<EXT, DB>,
+            &mut Frame,
+            &mut SharedMemory,
+            CallOutcome,
+        ) -> Result<(), EVMError<<DB as Database>::Error>>
+        + 'a,
+>;
 
 /// Handle sub create.
-pub type FrameCreateHandle<'a, EXT, DB> =
-    Arc<dyn Fn(&mut Context<EXT, DB>, Box<CreateInputs>) -> FrameOrResult + 'a>;
+pub type FrameCreateHandle<'a, EXT, DB> = Arc<
+    dyn Fn(
+            &mut Context<EXT, DB>,
+            Box<CreateInputs>,
+        ) -> Result<FrameOrResult, EVMError<<DB as Database>::Error>>
+        + 'a,
+>;
 
 /// Handle create return
-pub type FrameCreateReturnHandle<'a, EXT, DB> =
-    Arc<dyn Fn(&mut Context<EXT, DB>, Box<CreateFrame>, InterpreterResult) -> CreateOutcome + 'a>;
+pub type FrameCreateReturnHandle<'a, EXT, DB> = Arc<
+    dyn Fn(
+            &mut Context<EXT, DB>,
+            Box<CreateFrame>,
+            InterpreterResult,
+        ) -> Result<CreateOutcome, EVMError<<DB as Database>::Error>>
+        + 'a,
+>;
 
 /// Insert call outcome to the parent
-pub type InsertCreateOutcomeHandle<'a, EXT, DB> =
-    Arc<dyn Fn(&mut Context<EXT, DB>, &mut Frame, CreateOutcome) + 'a>;
+pub type InsertCreateOutcomeHandle<'a, EXT, DB> = Arc<
+    dyn Fn(
+            &mut Context<EXT, DB>,
+            &mut Frame,
+            CreateOutcome,
+        ) -> Result<(), EVMError<<DB as Database>::Error>>
+        + 'a,
+>;
 
 /// Handles related to stack frames.
 pub struct ExecutionHandler<'a, EXT, DB: Database> {
@@ -77,13 +114,17 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
         &self,
         context: &mut Context<EXT, DB>,
         frame_result: &mut FrameResult,
-    ) {
+    ) -> Result<(), EVMError<DB::Error>> {
         (self.last_frame_return)(context, frame_result)
     }
 
     /// Call frame call handler.
     #[inline]
-    pub fn call(&self, context: &mut Context<EXT, DB>, inputs: Box<CallInputs>) -> FrameOrResult {
+    pub fn call(
+        &self,
+        context: &mut Context<EXT, DB>,
+        inputs: Box<CallInputs>,
+    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
         (self.call)(context, inputs.clone())
     }
 
@@ -94,7 +135,7 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
         context: &mut Context<EXT, DB>,
         frame: Box<CallFrame>,
         interpreter_result: InterpreterResult,
-    ) -> CallOutcome {
+    ) -> Result<CallOutcome, EVMError<DB::Error>> {
         (self.call_return)(context, frame, interpreter_result)
     }
 
@@ -106,7 +147,7 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
         frame: &mut Frame,
         shared_memory: &mut SharedMemory,
         outcome: CallOutcome,
-    ) {
+    ) -> Result<(), EVMError<DB::Error>> {
         (self.insert_call_outcome)(context, frame, shared_memory, outcome)
     }
 
@@ -116,7 +157,7 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
         &self,
         context: &mut Context<EXT, DB>,
         inputs: Box<CreateInputs>,
-    ) -> FrameOrResult {
+    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
         (self.create)(context, inputs)
     }
 
@@ -127,7 +168,7 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
         context: &mut Context<EXT, DB>,
         frame: Box<CreateFrame>,
         interpreter_result: InterpreterResult,
-    ) -> CreateOutcome {
+    ) -> Result<CreateOutcome, EVMError<DB::Error>> {
         (self.create_return)(context, frame, interpreter_result)
     }
 
@@ -138,7 +179,7 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
         context: &mut Context<EXT, DB>,
         frame: &mut Frame,
         outcome: CreateOutcome,
-    ) {
+    ) -> Result<(), EVMError<DB::Error>> {
         (self.insert_create_outcome)(context, frame, outcome)
     }
 }

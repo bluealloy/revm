@@ -35,8 +35,7 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
     let (coinbase_account, _) = context
         .evm
         .journaled_state
-        .load_account(beneficiary, &mut context.evm.db)
-        .map_err(EVMError::Database)?;
+        .load_account(beneficiary, &mut context.evm.db)?;
 
     coinbase_account.mark_touch();
     coinbase_account.info.balance = coinbase_account
@@ -59,8 +58,7 @@ pub fn reimburse_caller<SPEC: Spec, EXT, DB: Database>(
     let (caller_account, _) = context
         .evm
         .journaled_state
-        .load_account(caller, &mut context.evm.db)
-        .map_err(EVMError::Database)?;
+        .load_account(caller, &mut context.evm.db)?;
 
     caller_account.info.balance = caller_account
         .info
@@ -76,6 +74,7 @@ pub fn output<EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     result: FrameResult,
 ) -> Result<ResultAndState, EVMError<DB::Error>> {
+    core::mem::replace(&mut context.evm.error, Ok(()))?;
     // used gas with refund calculated.
     let gas_refunded = result.gas().refunded() as u64;
     let final_gas_used = result.gas().spend() - gas_refunded;
@@ -104,11 +103,10 @@ pub fn output<EXT, DB: Database>(
             reason,
             gas_used: final_gas_used,
         },
-        SuccessOrHalt::FatalExternalError => {
-            return Err(EVMError::Database(context.evm.error.take().unwrap()));
-        }
         // Only two internal return flags.
-        SuccessOrHalt::InternalContinue | SuccessOrHalt::InternalCallOrCreate => {
+        SuccessOrHalt::FatalExternalError
+        | SuccessOrHalt::InternalContinue
+        | SuccessOrHalt::InternalCallOrCreate => {
             panic!("Internal return flags should remain internal {instruction_result:?}")
         }
     };

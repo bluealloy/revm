@@ -22,8 +22,7 @@ pub fn validate_tx_against_state<SPEC: Spec, EXT, DB: Database>(
     let (caller_account, _) = context
         .evm
         .journaled_state
-        .load_account(tx_caller, &mut context.evm.db)
-        .map_err(EVMError::Database)?;
+        .load_account(tx_caller, &mut context.evm.db)?;
 
     context
         .evm

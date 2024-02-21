@@ -69,7 +69,7 @@ pub fn validate_tx_against_state<SPEC: Spec, EXT, DB: Database>(
 pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     frame_result: &mut FrameResult,
-) {
+) -> Result<(), EVMError<DB::Error>> {
     let env = context.evm.env();
     let is_deposit = env.tx.optimism.source_hash.is_some();
     let tx_system = env.tx.optimism.is_system_transaction;
@@ -134,6 +134,7 @@ pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
     if !is_gas_refund_disabled {
         gas.set_final_refund::<SPEC>();
     }
+    Ok(())
 }
 
 /// Load account (make them warm) and l1 data from database.
@@ -164,8 +165,7 @@ pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
     let (caller_account, _) = context
         .evm
         .journaled_state
-        .load_account(context.evm.env.tx.caller, &mut context.evm.db)
-        .map_err(EVMError::Database)?;
+        .load_account(context.evm.env.tx.caller, &mut context.evm.db)?;
 
     // If the transaction is a deposit with a `mint` value, add the mint value
     // in wei to the caller's balance. This should be persisted to the database
@@ -392,7 +392,7 @@ mod tests {
             },
             0..0,
         ));
-        last_frame_return::<SPEC, _, _>(&mut ctx, &mut first_frame);
+        last_frame_return::<SPEC, _, _>(&mut ctx, &mut first_frame).unwrap();
         *first_frame.gas()
     }
 

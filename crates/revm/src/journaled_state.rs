@@ -1,7 +1,7 @@
 use crate::interpreter::{InstructionResult, SelfDestructResult};
 use crate::primitives::{
-    db::Database, hash_map::Entry, Account, Address, Bytecode, HashMap, HashSet, Log, SpecId::*,
-    State, StorageSlot, TransientStorage, KECCAK_EMPTY, PRECOMPILE3, U256,
+    db::Database, hash_map::Entry, Account, Address, Bytecode, EVMError, HashMap, HashSet, Log,
+    SpecId::*, State, StorageSlot, TransientStorage, KECCAK_EMPTY, PRECOMPILE3, U256,
 };
 use core::mem;
 use revm_interpreter::primitives::SpecId;
@@ -138,6 +138,7 @@ impl JournaledState {
         account.info.code = Some(code);
     }
 
+    #[inline]
     pub fn inc_nonce(&mut self, address: Address) -> Option<u64> {
         let account = self.state.get_mut(&address).unwrap();
         // Check if nonce is going to overflow.
@@ -163,29 +164,29 @@ impl JournaledState {
         to: &Address,
         balance: U256,
         db: &mut DB,
-    ) -> Result<(), InstructionResult> {
+    ) -> Result<Option<InstructionResult>, EVMError<DB::Error>> {
         // load accounts
-        self.load_account(*from, db)
-            .map_err(|_| InstructionResult::FatalExternalError)?;
-
-        self.load_account(*to, db)
-            .map_err(|_| InstructionResult::FatalExternalError)?;
+        self.load_account(*from, db)?;
+        self.load_account(*to, db)?;
 
         // sub balance from
         let from_account = &mut self.state.get_mut(from).unwrap();
         Self::touch_account(self.journal.last_mut().unwrap(), from, from_account);
         let from_balance = &mut from_account.info.balance;
-        *from_balance = from_balance
-            .checked_sub(balance)
-            .ok_or(InstructionResult::OutOfFunds)?;
+
+        let Some(from_balance_incr) = from_balance.checked_sub(balance) else {
+            return Ok(Some(InstructionResult::OutOfFunds));
+        };
+        *from_balance = from_balance_incr;
 
         // add balance to
         let to_account = &mut self.state.get_mut(to).unwrap();
         Self::touch_account(self.journal.last_mut().unwrap(), to, to_account);
         let to_balance = &mut to_account.info.balance;
-        *to_balance = to_balance
-            .checked_add(balance)
-            .ok_or(InstructionResult::OverflowPayment)?;
+        let Some(to_balance_decr) = to_balance.checked_add(balance) else {
+            return Ok(Some(InstructionResult::OverflowPayment));
+        };
+        *to_balance = to_balance_decr;
         // Overflow of U256 balance is not possible to happen on mainnet. We don't bother to return funds from from_acc.
 
         self.journal
@@ -197,7 +198,7 @@ impl JournaledState {
                 balance,
             });
 
-        Ok(())
+        Ok(None)
     }
 
     /// Create account or return false if collision is detected.
@@ -444,7 +445,7 @@ impl JournaledState {
         address: Address,
         target: Address,
         db: &mut DB,
-    ) -> Result<SelfDestructResult, DB::Error> {
+    ) -> Result<SelfDestructResult, EVMError<DB::Error>> {
         let (is_cold, target_exists) = self.load_account_exist(target, db)?;
 
         if address != target {
@@ -506,12 +507,13 @@ impl JournaledState {
         address: Address,
         slots: &[U256],
         db: &mut DB,
-    ) -> Result<&mut Account, DB::Error> {
+    ) -> Result<&mut Account, EVMError<DB::Error>> {
         // load or get account.
         let account = match self.state.entry(address) {
             Entry::Occupied(entry) => entry.into_mut(),
             Entry::Vacant(vac) => vac.insert(
-                db.basic(address)?
+                db.basic(address)
+                    .map_err(EVMError::Database)?
                     .map(|i| i.into())
                     .unwrap_or(Account::new_not_existing()),
             ),
@@ -519,7 +521,7 @@ impl JournaledState {
         // preload storages.
         for slot in slots {
             if let Entry::Vacant(entry) = account.storage.entry(*slot) {
-                let storage = db.storage(address, *slot)?;
+                let storage = db.storage(address, *slot).map_err(EVMError::Database)?;
                 entry.insert(StorageSlot::new(storage));
             }
         }
@@ -532,15 +534,16 @@ impl JournaledState {
         &mut self,
         address: Address,
         db: &mut DB,
-    ) -> Result<(&mut Account, bool), DB::Error> {
+    ) -> Result<(&mut Account, bool), EVMError<DB::Error>> {
         Ok(match self.state.entry(address) {
             Entry::Occupied(entry) => (entry.into_mut(), false),
             Entry::Vacant(vac) => {
-                let account = if let Some(account) = db.basic(address)? {
-                    account.into()
-                } else {
-                    Account::new_not_existing()
-                };
+                let account =
+                    if let Some(account) = db.basic(address).map_err(EVMError::Database)? {
+                        account.into()
+                    } else {
+                        Account::new_not_existing()
+                    };
 
                 // journal loading of account. AccessList touch.
                 self.journal
@@ -564,7 +567,7 @@ impl JournaledState {
         &mut self,
         address: Address,
         db: &mut DB,
-    ) -> Result<(bool, bool), DB::Error> {
+    ) -> Result<(bool, bool), EVMError<DB::Error>> {
         let is_spurious_dragon_enabled = SpecId::enabled(self.spec, SPURIOUS_DRAGON);
         let (acc, is_cold) = self.load_account(address, db)?;
 
@@ -584,14 +587,16 @@ impl JournaledState {
         &mut self,
         address: Address,
         db: &mut DB,
-    ) -> Result<(&mut Account, bool), DB::Error> {
+    ) -> Result<(&mut Account, bool), EVMError<DB::Error>> {
         let (acc, is_cold) = self.load_account(address, db)?;
         if acc.info.code.is_none() {
             if acc.info.code_hash == KECCAK_EMPTY {
                 let empty = Bytecode::new();
                 acc.info.code = Some(empty);
             } else {
-                let code = db.code_by_hash(acc.info.code_hash)?;
+                let code = db
+                    .code_by_hash(acc.info.code_hash)
+                    .map_err(EVMError::Database)?;
                 acc.info.code = Some(code);
             }
         }
@@ -609,7 +614,7 @@ impl JournaledState {
         address: Address,
         key: U256,
         db: &mut DB,
-    ) -> Result<(U256, bool), DB::Error> {
+    ) -> Result<(U256, bool), EVMError<DB::Error>> {
         let account = self.state.get_mut(&address).unwrap(); // assume acc is warm
                                                              // only if account is created in this tx we can assume that storage is empty.
         let is_newly_created = account.is_created();
@@ -620,7 +625,7 @@ impl JournaledState {
                 let value = if is_newly_created {
                     U256::ZERO
                 } else {
-                    db.storage(address, key)?
+                    db.storage(address, key).map_err(EVMError::Database)?
                 };
                 // add it to journal as cold loaded.
                 self.journal
@@ -653,7 +658,7 @@ impl JournaledState {
         key: U256,
         new: U256,
         db: &mut DB,
-    ) -> Result<SStoreResult, DB::Error> {
+    ) -> Result<SStoreResult, EVMError<DB::Error>> {
         // assume that acc exists and load the slot.
         let (present, is_cold) = self.sload(address, key, db)?;
         let acc = self.state.get_mut(&address).unwrap();

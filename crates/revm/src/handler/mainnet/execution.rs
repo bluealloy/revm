@@ -4,7 +4,7 @@ use crate::{
         return_ok, return_revert, CallInputs, CreateInputs, CreateOutcome, Gas, InstructionResult,
         SharedMemory,
     },
-    primitives::{Env, Spec},
+    primitives::{EVMError, Env, Spec},
     CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
 };
 use std::boxed::Box;
@@ -52,8 +52,9 @@ pub fn frame_return_with_refund_flag<SPEC: Spec>(
 pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     frame_result: &mut FrameResult,
-) {
-    frame_return_with_refund_flag::<SPEC>(&context.evm.env, frame_result, true)
+) -> Result<(), EVMError<DB::Error>> {
+    frame_return_with_refund_flag::<SPEC>(&context.evm.env, frame_result, true);
+    Ok(())
 }
 
 /// Handle frame sub call.
@@ -61,7 +62,7 @@ pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
 pub fn call<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     inputs: Box<CallInputs>,
-) -> FrameOrResult {
+) -> Result<FrameOrResult, EVMError<DB::Error>> {
     context.evm.make_call_frame(&inputs)
 }
 
@@ -70,24 +71,29 @@ pub fn call_return<EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     frame: Box<CallFrame>,
     interpreter_result: InterpreterResult,
-) -> CallOutcome {
+) -> Result<CallOutcome, EVMError<DB::Error>> {
     context
         .evm
         .call_return(&interpreter_result, frame.frame_data.checkpoint);
-    CallOutcome::new(interpreter_result, frame.return_memory_range)
+    Ok(CallOutcome::new(
+        interpreter_result,
+        frame.return_memory_range,
+    ))
 }
 
 #[inline]
 pub fn insert_call_outcome<EXT, DB: Database>(
-    _context: &mut Context<EXT, DB>,
+    context: &mut Context<EXT, DB>,
     frame: &mut Frame,
     shared_memory: &mut SharedMemory,
     outcome: CallOutcome,
-) {
+) -> Result<(), EVMError<DB::Error>> {
+    core::mem::replace(&mut context.evm.error, Ok(()))?;
     frame
         .frame_data_mut()
         .interpreter
-        .insert_call_outcome(shared_memory, outcome)
+        .insert_call_outcome(shared_memory, outcome);
+    Ok(())
 }
 
 /// Handle frame sub create.
@@ -95,7 +101,7 @@ pub fn insert_call_outcome<EXT, DB: Database>(
 pub fn create<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     inputs: Box<CreateInputs>,
-) -> FrameOrResult {
+) -> Result<FrameOrResult, EVMError<DB::Error>> {
     context.evm.make_create_frame(SPEC::SPEC_ID, &inputs)
 }
 
@@ -104,25 +110,30 @@ pub fn create_return<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     frame: Box<CreateFrame>,
     mut interpreter_result: InterpreterResult,
-) -> CreateOutcome {
+) -> Result<CreateOutcome, EVMError<DB::Error>> {
     context.evm.create_return::<SPEC>(
         &mut interpreter_result,
         frame.created_address,
         frame.frame_data.checkpoint,
     );
-    CreateOutcome::new(interpreter_result, Some(frame.created_address))
+    Ok(CreateOutcome::new(
+        interpreter_result,
+        Some(frame.created_address),
+    ))
 }
 
 #[inline]
 pub fn insert_create_outcome<EXT, DB: Database>(
-    _context: &mut Context<EXT, DB>,
+    context: &mut Context<EXT, DB>,
     frame: &mut Frame,
     outcome: CreateOutcome,
-) {
+) -> Result<(), EVMError<DB::Error>> {
+    core::mem::replace(&mut context.evm.error, Ok(()))?;
     frame
         .frame_data_mut()
         .interpreter
-        .insert_create_outcome(outcome)
+        .insert_create_outcome(outcome);
+    Ok(())
 }
 
 #[cfg(test)]

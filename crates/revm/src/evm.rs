@@ -201,7 +201,10 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     }
 
     /// Starts the main loop and returns outcome of the execution.
-    pub fn start_the_loop(&mut self, first_frame: Frame) -> FrameResult {
+    pub fn start_the_loop(
+        &mut self,
+        first_frame: Frame,
+    ) -> Result<FrameResult, EVMError<DB::Error>> {
         // take instruction talbe
         let table = self
             .handler
@@ -226,7 +229,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         &mut self,
         instruction_table: &[FN; 256],
         first_frame: Frame,
-    ) -> FrameResult
+    ) -> Result<FrameResult, EVMError<DB::Error>>
     where
         FN: Fn(&mut Interpreter, &mut Self),
     {
@@ -248,13 +251,17 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             // run interpreter
             let interpreter = &mut stack_frame.frame_data_mut().interpreter;
             let next_action = interpreter.run(shared_memory, instruction_table, self);
+
+            // take error and break the loop if there is any.
+            // This error is set From Interpreter when its interacting with Host.
+            core::mem::replace(&mut self.context.evm.error, Ok(()))?;
             // take shared memory back.
             shared_memory = interpreter.take_memory();
 
             let exec = &mut self.handler.execution;
             let frame_or_result = match next_action {
-                InterpreterAction::Call { inputs } => exec.call(&mut self.context, inputs),
-                InterpreterAction::Create { inputs } => exec.create(&mut self.context, inputs),
+                InterpreterAction::Call { inputs } => exec.call(&mut self.context, inputs)?,
+                InterpreterAction::Create { inputs } => exec.create(&mut self.context, inputs)?,
                 InterpreterAction::Return { result } => {
                     // free memory context.
                     shared_memory.free_context();
@@ -268,11 +275,11 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                     FrameOrResult::Result(match returned_frame {
                         Frame::Call(frame) => {
                             // return_call
-                            FrameResult::Call(exec.call_return(ctx, frame, result))
+                            FrameResult::Call(exec.call_return(ctx, frame, result)?)
                         }
                         Frame::Create(frame) => {
                             // return_create
-                            FrameResult::Create(exec.create_return(ctx, frame, result))
+                            FrameResult::Create(exec.create_return(ctx, frame, result)?)
                         }
                     })
                 }
@@ -289,7 +296,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                 FrameOrResult::Result(result) => {
                     let Some(top_frame) = call_stack.last_mut() else {
                         // Break the look if there are no more frames.
-                        return result;
+                        return Ok(result);
                     };
                     stack_frame = top_frame;
                     let ctx = &mut self.context;
@@ -297,11 +304,11 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                     match result {
                         FrameResult::Call(outcome) => {
                             // return_call
-                            exec.insert_call_outcome(ctx, stack_frame, &mut shared_memory, outcome)
+                            exec.insert_call_outcome(ctx, stack_frame, &mut shared_memory, outcome)?
                         }
                         FrameResult::Create(outcome) => {
                             // return_create
-                            exec.insert_create_outcome(ctx, stack_frame, outcome)
+                            exec.insert_create_outcome(ctx, stack_frame, outcome)?
                         }
                     }
                 }
@@ -332,23 +339,25 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             TransactTo::Call(_) => exec.call(
                 ctx,
                 CallInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
-            ),
+            )?,
             TransactTo::Create(_) => exec.create(
                 ctx,
                 CreateInputs::new_boxed(&ctx.evm.env.tx, gas_limit).unwrap(),
-            ),
+            )?,
         };
 
         // Starts the main running loop.
         let mut result = match first_frame_or_result {
-            FrameOrResult::Frame(first_frame) => self.start_the_loop(first_frame),
+            FrameOrResult::Frame(first_frame) => self.start_the_loop(first_frame)?,
             FrameOrResult::Result(result) => result,
         };
 
         let ctx = &mut self.context;
 
         // handle output of call/create calls.
-        self.handler.execution().last_frame_return(ctx, &mut result);
+        self.handler
+            .execution()
+            .last_frame_return(ctx, &mut result)?;
 
         let post_exec = self.handler.post_execution();
         // Reimburse the caller
@@ -369,31 +378,59 @@ impl<EXT, DB: Database> Host for Evm<'_, EXT, DB> {
     }
 
     fn block_hash(&mut self, number: U256) -> Option<B256> {
-        self.context.evm.block_hash(number)
+        self.context
+            .evm
+            .block_hash(number)
+            .map_err(|e| self.context.evm.error = Err(e))
+            .ok()
     }
 
     fn load_account(&mut self, address: Address) -> Option<(bool, bool)> {
-        self.context.evm.load_account(address)
+        self.context
+            .evm
+            .load_account(address)
+            .map_err(|e| self.context.evm.error = Err(e))
+            .ok()
     }
 
     fn balance(&mut self, address: Address) -> Option<(U256, bool)> {
-        self.context.evm.balance(address)
+        self.context
+            .evm
+            .balance(address)
+            .map_err(|e| self.context.evm.error = Err(e))
+            .ok()
     }
 
     fn code(&mut self, address: Address) -> Option<(Bytecode, bool)> {
-        self.context.evm.code(address)
+        self.context
+            .evm
+            .code(address)
+            .map_err(|e| self.context.evm.error = Err(e))
+            .ok()
     }
 
     fn code_hash(&mut self, address: Address) -> Option<(B256, bool)> {
-        self.context.evm.code_hash(address)
+        self.context
+            .evm
+            .code_hash(address)
+            .map_err(|e| self.context.evm.error = Err(e))
+            .ok()
     }
 
     fn sload(&mut self, address: Address, index: U256) -> Option<(U256, bool)> {
-        self.context.evm.sload(address, index)
+        self.context
+            .evm
+            .sload(address, index)
+            .map_err(|e| self.context.evm.error = Err(e))
+            .ok()
     }
 
     fn sstore(&mut self, address: Address, index: U256, value: U256) -> Option<SStoreResult> {
-        self.context.evm.sstore(address, index, value)
+        self.context
+            .evm
+            .sstore(address, index, value)
+            .map_err(|e| self.context.evm.error = Err(e))
+            .ok()
     }
 
     fn tload(&mut self, address: Address, index: U256) -> U256 {
@@ -413,7 +450,7 @@ impl<EXT, DB: Database> Host for Evm<'_, EXT, DB> {
             .evm
             .journaled_state
             .selfdestruct(address, target, &mut self.context.evm.db)
-            .map_err(|e| self.context.evm.error = Some(e))
+            .map_err(|e| self.context.evm.error = Err(e))
             .ok()
     }
 }
