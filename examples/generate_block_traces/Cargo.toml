@@ -1,0 +1,20 @@
+[package]
+edition = "2021"
+name = "generate_block_traces"
+publish = false
+version = "0.0.0"
+
+[workspace]
+
+[dependencies]
+anyhow = "1.0"
+ethers-core = {version = "2.0"}
+ethers-providers = {version = "2.0"}
+indicatif = "0.17.8"
+tokio = {version = "1.28", features = [
+  "rt-multi-thread",
+  "macros",
+]}
+
+revm = {git = "https://github.com/bluealloy/revm", features = ["ethersdb", "std", "serde-json"]}
+revm-primitives = {git = "https://github.com/bluealloy/revm"}
