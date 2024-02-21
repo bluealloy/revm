@@ -3,12 +3,13 @@ pub mod handler_cfg;
 pub use handler_cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
 
 use crate::{
-    alloc::vec::Vec, calc_blob_gasprice, Account, Address, Bytes, InvalidHeader,
-    InvalidTransaction, Spec, SpecId, B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK,
-    MAX_INITCODE_SIZE, U256, VERSIONED_HASH_VERSION_KZG,
+    calc_blob_gasprice, Account, Address, Bytes, InvalidHeader, InvalidTransaction, Spec, SpecId,
+    B256, GAS_PER_BLOB, KECCAK_EMPTY, MAX_BLOB_NUMBER_PER_BLOCK, MAX_INITCODE_SIZE, U256,
+    VERSIONED_HASH_VERSION_KZG,
 };
-use alloc::boxed::Box;
 use core::cmp::{min, Ordering};
+use std::boxed::Box;
+use std::vec::Vec;
 
 /// EVM environment configuration.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]

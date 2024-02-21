@@ -3,7 +3,7 @@ use crate::primitives::{
     db::Database, hash_map::Entry, Account, Address, Bytecode, HashMap, HashSet, Log, SpecId::*,
     State, StorageSlot, TransientStorage, KECCAK_EMPTY, PRECOMPILE3, U256,
 };
-use alloc::vec::Vec;
+use std::vec::Vec;
 use core::mem;
 use revm_interpreter::primitives::SpecId;
 

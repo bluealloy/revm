@@ -13,7 +13,7 @@ use crate::{
     },
     Context, FrameResult,
 };
-use alloc::sync::Arc;
+use std::sync::Arc;
 use core::ops::Mul;
 
 pub fn optimism_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, EXT, DB>) {

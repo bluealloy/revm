@@ -3,7 +3,7 @@ use crate::{
     primitives::{Address, Output},
     JournalCheckpoint,
 };
-use alloc::boxed::Box;
+use std::boxed::Box;
 use core::ops::Range;
 use revm_interpreter::{CallOutcome, CreateOutcome, Gas, InstructionResult, InterpreterResult};
 

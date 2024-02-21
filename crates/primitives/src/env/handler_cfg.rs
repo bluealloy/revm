@@ -1,5 +1,5 @@
 use super::{BlockEnv, CfgEnv, Env, SpecId, TxEnv};
-use alloc::boxed::Box;
+use std::boxed::Box;
 use core::ops::{Deref, DerefMut};
 
 /// Handler configuration fields. It is used to configure the handler.

@@ -4,7 +4,7 @@ use crate::primitives::{
     U256,
 };
 use crate::Database;
-use alloc::vec::Vec;
+use std::vec::Vec;
 use core::convert::Infallible;
 
 /// A [Database] implementation that stores all state changes in memory.

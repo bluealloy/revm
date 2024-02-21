@@ -2,7 +2,7 @@
 //! it is used inside [`crate::db::DatabaseComponents`]
 
 use crate::{AccountInfo, Address, Bytecode, B256, U256};
-use alloc::sync::Arc;
+use std::sync::Arc;
 use auto_impl::auto_impl;
 use core::ops::Deref;
 

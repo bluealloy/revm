@@ -8,7 +8,8 @@
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 
 #[macro_use]
-extern crate alloc;
+#[cfg(not(feature = "std"))]
+extern crate alloc as std;
 
 mod blake2;
 mod bn128;
@@ -20,7 +21,7 @@ mod modexp;
 mod secp256k1;
 pub mod utilities;
 
-use alloc::{boxed::Box, vec::Vec};
+use std::{boxed::Box, vec::Vec};
 use core::{fmt, hash::Hash};
 use once_cell::race::OnceBox;
 #[doc(hidden)]

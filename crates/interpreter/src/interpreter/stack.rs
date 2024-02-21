@@ -2,7 +2,7 @@ use crate::{
     primitives::{B256, U256},
     InstructionResult,
 };
-use alloc::vec::Vec;
+use std::vec::Vec;
 use core::fmt;
 
 /// EVM interpreter stack limit.
@@ -318,7 +318,7 @@ impl<'de> serde::Deserialize<'de> for Stack {
     {
         let mut data = Vec::<U256>::deserialize(deserializer)?;
         if data.len() > STACK_LIMIT {
-            return Err(serde::de::Error::custom(alloc::format!(
+            return Err(serde::de::Error::custom(std::format!(
                 "stack size exceeds limit: {} > {}",
                 data.len(),
                 STACK_LIMIT

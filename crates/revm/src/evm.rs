@@ -13,7 +13,7 @@ use crate::{
     },
     Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult,
 };
-use alloc::vec::Vec;
+use std::vec::Vec;
 use core::fmt;
 use revm_interpreter::{CallInputs, CreateInputs};
 

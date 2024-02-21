@@ -2,7 +2,7 @@ use super::{
     changes::PlainStorageRevert, AccountStatus, BundleAccount, PlainStateReverts,
     StorageWithOriginalValues,
 };
-use alloc::vec::Vec;
+use std::vec::Vec;
 use core::ops::{Deref, DerefMut};
 use revm_interpreter::primitives::{AccountInfo, Address, HashMap, U256};
 

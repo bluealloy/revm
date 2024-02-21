@@ -1,6 +1,6 @@
 use super::{cache::CacheState, state::DBBox, BundleState, State, TransitionState};
 use crate::db::EmptyDB;
-use alloc::collections::BTreeMap;
+use std::collections::BTreeMap;
 use revm_interpreter::primitives::{
     db::{Database, DatabaseRef, WrapDatabaseRef},
     B256,

@@ -6,7 +6,7 @@ use crate::{
     primitives::{Spec, SpecId},
     Host, Interpreter,
 };
-use alloc::boxed::Box;
+use std::boxed::Box;
 use core::fmt;
 
 /// EVM opcode function signature.

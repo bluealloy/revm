@@ -1,4 +1,4 @@
-use alloc::boxed::Box;
+use std::boxed::Box;
 pub use c_kzg::{BYTES_PER_G1_POINT, BYTES_PER_G2_POINT};
 use core::fmt::Display;
 use derive_more::{AsMut, AsRef, Deref, DerefMut};

@@ -3,7 +3,7 @@ use crate::primitives::{
     bitvec::prelude::{bitvec, BitVec, Lsb0},
     keccak256, Bytecode, BytecodeState, Bytes, JumpMap, B256, KECCAK_EMPTY,
 };
-use alloc::sync::Arc;
+use std::sync::Arc;
 use core::fmt;
 
 /// Perform bytecode analysis.

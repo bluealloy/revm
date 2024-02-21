@@ -12,7 +12,7 @@ use crate::{
     },
     FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
 };
-use alloc::boxed::Box;
+use std::boxed::Box;
 
 /// Main Context structure that contains both EvmContext and External context.
 pub struct Context<EXT, DB: Database> {

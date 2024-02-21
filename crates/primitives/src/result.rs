@@ -1,5 +1,5 @@
 use crate::{Address, Bytes, Log, State, U256};
-use alloc::{boxed::Box, string::String, vec::Vec};
+use std::{boxed::Box, string::String, vec::Vec};
 use core::fmt;
 
 /// Result of EVM execution.

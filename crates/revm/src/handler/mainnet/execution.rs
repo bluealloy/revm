@@ -7,7 +7,7 @@ use crate::{
     primitives::{Env, Spec},
     CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
 };
-use alloc::boxed::Box;
+use std::boxed::Box;
 
 use revm_interpreter::{CallOutcome, InterpreterResult};
 

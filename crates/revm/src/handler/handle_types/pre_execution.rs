@@ -4,7 +4,7 @@ use crate::{
     primitives::{db::Database, EVMError, EVMResultGeneric, Spec},
     Context,
 };
-use alloc::sync::Arc;
+use std::sync::Arc;
 use revm_precompile::Precompiles;
 
 /// Loads precompiles into Evm

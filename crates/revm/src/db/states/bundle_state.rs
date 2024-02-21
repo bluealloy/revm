@@ -3,7 +3,7 @@ use super::{
     reverts::{AccountInfoRevert, Reverts},
     AccountRevert, AccountStatus, BundleAccount, PlainStateReverts, RevertToSlot, TransitionState,
 };
-use alloc::{
+use std::{
     collections::{BTreeMap, BTreeSet},
     vec::Vec,
 };
