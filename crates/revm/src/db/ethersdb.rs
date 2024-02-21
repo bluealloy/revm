@@ -3,31 +3,36 @@ use crate::{Database, DatabaseRef};
 use ethers_core::types::{BlockId, H160 as eH160, H256, U64 as eU64};
 use ethers_providers::Middleware;
 use std::sync::Arc;
+use tokio::runtime::{Handle, Runtime};
 
 #[derive(Debug)]
 pub struct EthersDB<M: Middleware> {
     client: Arc<M>,
+    runtime: Option<Runtime>,
     block_number: Option<BlockId>,
 }
 
 impl<M: Middleware> EthersDB<M> {
     /// create ethers db connector inputs are url and block on what we are basing our database (None for latest)
     pub fn new(client: Arc<M>, block_number: Option<BlockId>) -> Option<Self> {
+        let runtime = Handle::try_current()
+            .is_err()
+            .then(|| Runtime::new().unwrap());
+
         let client = client;
 
         let mut out = Self {
             client,
+            runtime,
             block_number: None,
         };
 
-        out.block_number = if let Some(bn) = block_number {
-            Some(bn)
+        out.block_number = if block_number.is_some() {
+            block_number
         } else {
-            let current_block_number = tokio::runtime::Handle::current()
-                .block_on(out.client.get_block_number())
-                .ok()?;
-
-            Some(BlockId::from(current_block_number))
+            Some(BlockId::from(
+                out.block_on(out.client.get_block_number()).ok()?,
+            ))
         };
 
         Some(out)
@@ -35,7 +40,10 @@ impl<M: Middleware> EthersDB<M> {
 
     /// internal utility function to call tokio feature and wait for output
     fn block_on<F: core::future::Future>(&self, f: F) -> F::Output {
-        tokio::runtime::Handle::current().block_on(f)
+        match &self.runtime {
+            Some(runtime) => runtime.block_on(f),
+            None => futures::executor::block_on(f),
+        }
     }
 }
 
