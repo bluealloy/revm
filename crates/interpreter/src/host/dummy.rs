@@ -1,7 +1,7 @@
 use crate::primitives::{hash_map::Entry, Bytecode, HashMap, U256};
 use crate::{
     primitives::{Address, Env, Log, B256, KECCAK_EMPTY},
-    Host, SelfDestructResult,
+    Host, SStoreResult, SelfDestructResult,
 };
 use std::vec::Vec;
 
@@ -80,12 +80,7 @@ impl Host for DummyHost {
     }
 
     #[inline]
-    fn sstore(
-        &mut self,
-        _address: Address,
-        index: U256,
-        value: U256,
-    ) -> Option<(U256, U256, U256, bool)> {
+    fn sstore(&mut self, _address: Address, index: U256, value: U256) -> Option<SStoreResult> {
         let (present, is_cold) = match self.storage.entry(index) {
             Entry::Occupied(mut entry) => (entry.insert(value), false),
             Entry::Vacant(entry) => {
@@ -94,7 +89,12 @@ impl Host for DummyHost {
             }
         };
 
-        Some((U256::ZERO, present, value, is_cold))
+        Some(SStoreResult {
+            original_value: U256::ZERO,
+            present_value: present,
+            new_value: value,
+            is_cold,
+        })
     }
 
     #[inline]
