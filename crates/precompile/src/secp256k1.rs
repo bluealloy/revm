@@ -19,7 +19,7 @@ mod secp256k1 {
         // normalize signature and flip recovery id if needed.
         if let Some(sig_normalized) = sig.normalize_s() {
             sig = sig_normalized;
-            recid = recid ^ 1;
+            recid ^= 1;
         }
         let recid = RecoveryId::from_byte(recid).expect("recovery ID is valid");
 

@@ -173,7 +173,6 @@ impl<DB: Database> EvmContext<DB> {
     ///
     /// Loading of accounts/storages is needed to make them warm.
     #[inline]
-    #[must_use]
     pub fn load_access_list(&mut self) -> Result<(), EVMError<DB::Error>> {
         for (address, slots) in self.env.tx.access_list.iter() {
             self.journaled_state

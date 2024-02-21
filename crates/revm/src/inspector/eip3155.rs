@@ -148,7 +148,7 @@ impl<DB: Database> Inspector<DB> for TracerEip3155 {
             gas: hex_number(self.gas),
             gas_cost: hex_number(self.gas_inspector.last_gas_cost()),
             stack: self.stack.iter().map(hex_number_u256).collect(),
-            depth: context.journaled_state.depth() as u64,
+            depth: context.journaled_state.depth(),
             return_data: "0x".to_string(),
             refund: "0x0".to_string(),
             mem_size: self.mem_size.to_string(),
