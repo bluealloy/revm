@@ -251,6 +251,10 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             // run interpreter
             let interpreter = &mut stack_frame.frame_data_mut().interpreter;
             let next_action = interpreter.run(shared_memory, instruction_table, self);
+
+            // take error and break the loop if there is any.
+            // This error is set From Interpreter when its interacting with Host.
+            core::mem::replace(&mut self.context.evm.error, Ok(()))?;
             // take shared memory back.
             shared_memory = interpreter.take_memory();
 

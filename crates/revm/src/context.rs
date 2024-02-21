@@ -190,14 +190,12 @@ impl<DB: Database> EvmContext<DB> {
 
     /// Fetch block hash from database.
     #[inline]
-    #[must_use]
     pub fn block_hash(&mut self, number: U256) -> Result<B256, EVMError<DB::Error>> {
         self.db.block_hash(number).map_err(EVMError::Database)
     }
 
     /// Load account and return flags (is_cold, exists)
     #[inline]
-    #[must_use]
     pub fn load_account(&mut self, address: Address) -> Result<(bool, bool), EVMError<DB::Error>> {
         self.journaled_state
             .load_account_exist(address, &mut self.db)
@@ -205,7 +203,6 @@ impl<DB: Database> EvmContext<DB> {
 
     /// Return account balance and is_cold flag.
     #[inline]
-    #[must_use]
     pub fn balance(&mut self, address: Address) -> Result<(U256, bool), EVMError<DB::Error>> {
         self.journaled_state
             .load_account(address, &mut self.db)
@@ -214,7 +211,6 @@ impl<DB: Database> EvmContext<DB> {
 
     /// Return account code and if address is cold loaded.
     #[inline]
-    #[must_use]
     pub fn code(&mut self, address: Address) -> Result<(Bytecode, bool), EVMError<DB::Error>> {
         self.journaled_state
             .load_code(address, &mut self.db)
@@ -223,7 +219,6 @@ impl<DB: Database> EvmContext<DB> {
 
     /// Get code hash of address.
     #[inline]
-    #[must_use]
     pub fn code_hash(&mut self, address: Address) -> Result<(B256, bool), EVMError<DB::Error>> {
         let (acc, is_cold) = self.journaled_state.load_code(address, &mut self.db)?;
         if acc.is_empty() {
@@ -234,7 +229,6 @@ impl<DB: Database> EvmContext<DB> {
 
     /// Load storage slot, if storage is not present inside the account then it will be loaded from database.
     #[inline]
-    #[must_use]
     pub fn sload(
         &mut self,
         address: Address,
@@ -246,7 +240,6 @@ impl<DB: Database> EvmContext<DB> {
 
     /// Storage change of storage slot, before storing `sload` will be called for that slot.
     #[inline]
-    #[must_use]
     pub fn sstore(
         &mut self,
         address: Address,
@@ -271,7 +264,6 @@ impl<DB: Database> EvmContext<DB> {
 
     /// Make create frame.
     #[inline]
-    #[must_use]
     pub fn make_create_frame(
         &mut self,
         spec_id: SpecId,
@@ -359,7 +351,6 @@ impl<DB: Database> EvmContext<DB> {
 
     /// Make call frame
     #[inline]
-    #[must_use]
     pub fn make_call_frame(
         &mut self,
         inputs: &CallInputs,
