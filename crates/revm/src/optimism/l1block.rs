@@ -64,6 +64,12 @@ pub struct L1BlockInfo {
 impl L1BlockInfo {
     /// Try to fetch the L1 block info from the database.
     pub fn try_fetch<DB: Database>(db: &mut DB, spec_id: SpecId) -> Result<L1BlockInfo, DB::Error> {
+        // Ensure the L1 Block account is loaded into the cache after Ecotone. With EIP-4788, it is no longer the case
+        // that the L1 block account is loaded into the cache prior to the first inquiry for the L1 block info.
+        if spec_id.is_enabled_in(SpecId::CANCUN) {
+            let _ = db.basic(L1_BLOCK_CONTRACT)?;
+        }
+
         let l1_base_fee = db.storage(L1_BLOCK_CONTRACT, L1_BASE_FEE_SLOT)?;
 
         if !spec_id.is_enabled_in(SpecId::ECOTONE) {
