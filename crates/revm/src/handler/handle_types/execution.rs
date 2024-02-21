@@ -1,7 +1,7 @@
 use crate::{
     handler::mainnet,
     interpreter::{CallInputs, CreateInputs, SharedMemory},
-    primitives::{db::Database, Spec},
+    primitives::{db::Database,EVMError, Spec},
     CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
 };
 use std::{boxed::Box, sync::Arc};
@@ -33,8 +33,14 @@ pub type FrameCreateReturnHandle<'a, EXT, DB> =
     Arc<dyn Fn(&mut Context<EXT, DB>, Box<CreateFrame>, InterpreterResult) -> CreateOutcome + 'a>;
 
 /// Insert call outcome to the parent
-pub type InsertCreateOutcomeHandle<'a, EXT, DB> =
-    Arc<dyn Fn(&mut Context<EXT, DB>, &mut Frame, CreateOutcome) + 'a>;
+pub type InsertCreateOutcomeHandle<'a, EXT, DB> = Arc<
+    dyn Fn(
+            &mut Context<EXT, DB>,
+            &mut Frame,
+            CreateOutcome,
+        ) -> Result<(), EVMError<<DB as Database>::Error>>
+        + 'a,
+>;
 
 /// Handles related to stack frames.
 pub struct ExecutionHandler<'a, EXT, DB: Database> {
