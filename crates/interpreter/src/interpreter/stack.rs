@@ -2,8 +2,8 @@ use crate::{
     primitives::{B256, U256},
     InstructionResult,
 };
-use std::vec::Vec;
 use core::fmt;
+use std::vec::Vec;
 
 /// EVM interpreter stack limit.
 pub const STACK_LIMIT: usize = 1024;

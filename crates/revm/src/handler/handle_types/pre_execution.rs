@@ -4,8 +4,8 @@ use crate::{
     primitives::{db::Database, EVMError, EVMResultGeneric, Spec},
     Context,
 };
-use std::sync::Arc;
 use revm_precompile::Precompiles;
+use std::sync::Arc;
 
 /// Loads precompiles into Evm
 pub type LoadPrecompilesHandle<'a> = Arc<dyn Fn() -> Precompiles + 'a>;

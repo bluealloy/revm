@@ -21,7 +21,6 @@ mod modexp;
 mod secp256k1;
 pub mod utilities;
 
-use std::{boxed::Box, vec::Vec};
 use core::{fmt, hash::Hash};
 use once_cell::race::OnceBox;
 #[doc(hidden)]
@@ -30,6 +29,7 @@ pub use revm_primitives::{
     precompile::{PrecompileError as Error, *},
     Address, Bytes, HashMap, Log, B256,
 };
+use std::{boxed::Box, vec::Vec};
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base

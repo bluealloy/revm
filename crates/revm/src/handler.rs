@@ -15,8 +15,8 @@ use crate::{
     primitives::{db::Database, spec_to_generic, HandlerCfg, Spec, SpecId},
     Evm,
 };
-use std::vec::Vec;
 use register::{EvmHandler, HandleRegisters};
+use std::vec::Vec;
 
 use self::register::{HandleRegister, HandleRegisterBox};
 
