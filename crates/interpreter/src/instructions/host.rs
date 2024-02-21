@@ -7,7 +7,7 @@ use crate::{
     interpreter::{Interpreter, InterpreterAction},
     primitives::{Address, Bytes, Log, LogData, Spec, SpecId::*, B256, U256},
     CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, Host, InstructionResult,
-    Transfer, MAX_INITCODE_SIZE,
+    SStoreResult, Transfer, MAX_INITCODE_SIZE,
 };
 use core::cmp::min;
 use revm_primitives::BLOCK_HASH_HISTORY;
@@ -154,8 +154,12 @@ pub fn sstore<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) 
     check_staticcall!(interpreter);
 
     pop!(interpreter, index, value);
-    let Some((original, old, new, is_cold)) =
-        host.sstore(interpreter.contract.address, index, value)
+    let Some(SStoreResult {
+        original_value: original,
+        present_value: old,
+        new_value: new,
+        is_cold,
+    }) = host.sstore(interpreter.contract.address, index, value)
     else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;

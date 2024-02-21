@@ -12,6 +12,7 @@ use crate::{
     },
     FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
 };
+use revm_interpreter::SStoreResult;
 use std::boxed::Box;
 
 /// Main Context structure that contains both EvmContext and External context.
@@ -261,12 +262,7 @@ impl<DB: Database> EvmContext<DB> {
     /// Storage change of storage slot, before storing `sload` will be called for that slot.
     #[inline]
     #[must_use]
-    pub fn sstore(
-        &mut self,
-        address: Address,
-        index: U256,
-        value: U256,
-    ) -> Option<(U256, U256, U256, bool)> {
+    pub fn sstore(&mut self, address: Address, index: U256, value: U256) -> Option<SStoreResult> {
         self.journaled_state
             .sstore(address, index, value, &mut self.db)
             .map_err(|e| self.error = Some(e))

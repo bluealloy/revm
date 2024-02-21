@@ -3,8 +3,8 @@ use crate::{
     db::{Database, DatabaseCommit, EmptyDB},
     handler::Handler,
     interpreter::{
-        opcode::InstructionTables, Host, Interpreter, InterpreterAction, SelfDestructResult,
-        SharedMemory,
+        opcode::InstructionTables, Host, Interpreter, InterpreterAction, SStoreResult,
+        SelfDestructResult, SharedMemory,
     },
     primitives::{
         specification::SpecId, Address, BlockEnv, Bytecode, CfgEnv, EVMError, EVMResult, Env,
@@ -392,12 +392,7 @@ impl<EXT, DB: Database> Host for Evm<'_, EXT, DB> {
         self.context.evm.sload(address, index)
     }
 
-    fn sstore(
-        &mut self,
-        address: Address,
-        index: U256,
-        value: U256,
-    ) -> Option<(U256, U256, U256, bool)> {
+    fn sstore(&mut self, address: Address, index: U256, value: U256) -> Option<SStoreResult> {
         self.context.evm.sstore(address, index, value)
     }
 

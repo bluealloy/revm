@@ -25,7 +25,7 @@ mod interpreter;
 pub use call_outcome::CallOutcome;
 pub use create_outcome::CreateOutcome;
 pub use gas::Gas;
-pub use host::{DummyHost, Host};
+pub use host::{DummyHost, Host, SStoreResult};
 pub use inner_models::*;
 pub use instruction_result::*;
 pub use instructions::{opcode, Instruction, OpCode, OPCODE_JUMPMAP};
