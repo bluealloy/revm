@@ -56,8 +56,12 @@ pub trait Host {
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SStoreResult {
+    /// Value of the storage when it is first read
     pub original_value: U256,
+    /// Current value of the storage
     pub present_value: U256,
+    /// Values that that is set
     pub new_value: U256,
+    /// Is storage slot loaded from database
     pub is_cold: bool,
 }
