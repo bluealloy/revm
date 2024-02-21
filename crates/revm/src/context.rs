@@ -177,8 +177,7 @@ impl<DB: Database> EvmContext<DB> {
     pub fn load_access_list(&mut self) -> Result<(), EVMError<DB::Error>> {
         for (address, slots) in self.env.tx.access_list.iter() {
             self.journaled_state
-                .initial_account_load(*address, slots, &mut self.db)
-                .map_err(EVMError::Database)?;
+                .initial_account_load(*address, slots, &mut self.db)?;
         }
         Ok(())
     }
@@ -390,14 +389,14 @@ impl<DB: Database> EvmContext<DB> {
         }
 
         // Transfer value from caller to called account
-        if let Err(e) = self.journaled_state.transfer(
+        if let Some(result) = self.journaled_state.transfer(
             &inputs.transfer.source,
             &inputs.transfer.target,
             inputs.transfer.value,
             &mut self.db,
-        ) {
+        )? {
             self.journaled_state.checkpoint_revert(checkpoint);
-            return return_result(e);
+            return return_result(result);
         }
 
         if let Some(precompile) = self.precompiles.get(&inputs.contract) {

@@ -179,7 +179,7 @@ impl Interpreter {
                 self.gas.erase_cost(create_outcome.gas().remaining());
             }
             InstructionResult::FatalExternalError => {
-                self.instruction_result = InstructionResult::FatalExternalError;
+                panic!("Fatal external error in insert_create_outcome");
             }
             _ => {
                 push!(self, U256::ZERO);
@@ -237,7 +237,7 @@ impl Interpreter {
                 push!(self, U256::ZERO);
             }
             InstructionResult::FatalExternalError => {
-                self.instruction_result = InstructionResult::FatalExternalError;
+                panic!("Fatal external error in insert_call_outcome");
             }
             _ => {
                 push!(self, U256::ZERO);
