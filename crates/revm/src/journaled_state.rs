@@ -5,6 +5,7 @@ use crate::primitives::{
 };
 use core::mem;
 use revm_interpreter::primitives::SpecId;
+use revm_interpreter::SStoreResult;
 use std::vec::Vec;
 
 /// JournalState is internal EVM state that is used to contain state and track changes to that state.
@@ -652,7 +653,7 @@ impl JournaledState {
         key: U256,
         new: U256,
         db: &mut DB,
-    ) -> Result<(U256, U256, U256, bool), DB::Error> {
+    ) -> Result<SStoreResult, DB::Error> {
         // assume that acc exists and load the slot.
         let (present, is_cold) = self.sload(address, key, db)?;
         let acc = self.state.get_mut(&address).unwrap();
@@ -662,7 +663,12 @@ impl JournaledState {
 
         // new value is same as present, we don't need to do anything
         if present == new {
-            return Ok((slot.previous_or_original_value, present, new, is_cold));
+            return Ok(SStoreResult {
+                original_value: slot.previous_or_original_value,
+                present_value: present,
+                new_value: new,
+                is_cold,
+            });
         }
 
         self.journal
@@ -675,7 +681,12 @@ impl JournaledState {
             });
         // insert value into present state.
         slot.present_value = new;
-        Ok((slot.previous_or_original_value, present, new, is_cold))
+        Ok(SStoreResult {
+            original_value: slot.previous_or_original_value,
+            present_value: present,
+            new_value: new,
+            is_cold,
+        })
     }
 
     /// Read transient storage tied to the account.
