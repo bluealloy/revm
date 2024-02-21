@@ -112,7 +112,7 @@ required-features = ["ethersdb"]
 [[example]]
 name = "generate_block_traces"
 path = "../../examples/generate_block_traces.rs"
-required-features = ["std", "serde", "ethersdb"]
+required-features = ["std", "serde-json", "ethersdb"]
 
 [[bench]]
 name = "bench"
