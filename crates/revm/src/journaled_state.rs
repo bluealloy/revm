@@ -3,9 +3,9 @@ use crate::primitives::{
     db::Database, hash_map::Entry, Account, Address, Bytecode, HashMap, HashSet, Log, SpecId::*,
     State, StorageSlot, TransientStorage, KECCAK_EMPTY, PRECOMPILE3, U256,
 };
-use alloc::vec::Vec;
 use core::mem;
 use revm_interpreter::primitives::SpecId;
+use std::vec::Vec;
 
 /// JournalState is internal EVM state that is used to contain state and track changes to that state.
 /// It contains journal of changes that happened to state so that they can be reverted.

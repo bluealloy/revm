@@ -9,9 +9,9 @@ use crate::{
     CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, Host, InstructionResult,
     Transfer, MAX_INITCODE_SIZE,
 };
-use alloc::{boxed::Box, vec::Vec};
 use core::cmp::min;
 use revm_primitives::BLOCK_HASH_HISTORY;
+use std::{boxed::Box, vec::Vec};
 
 pub fn balance<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     pop_address!(interpreter, address);

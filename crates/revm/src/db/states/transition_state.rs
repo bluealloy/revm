@@ -1,6 +1,6 @@
 use super::TransitionAccount;
-use alloc::vec::Vec;
 use revm_interpreter::primitives::{hash_map::Entry, Address, HashMap};
+use std::vec::Vec;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TransitionState {

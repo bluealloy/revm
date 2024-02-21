@@ -6,8 +6,8 @@ use crate::{
     primitives::{Spec, SpecId},
     Host, Interpreter,
 };
-use alloc::boxed::Box;
 use core::fmt;
+use std::boxed::Box;
 
 /// EVM opcode function signature.
 pub type Instruction<H> = fn(&mut Interpreter, &mut H);

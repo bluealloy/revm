@@ -3,14 +3,14 @@ use super::{
     CacheAccount, StateBuilder, TransitionAccount, TransitionState,
 };
 use crate::db::EmptyDB;
-use alloc::{
-    boxed::Box,
-    collections::{btree_map, BTreeMap},
-    vec::Vec,
-};
 use revm_interpreter::primitives::{
     db::{Database, DatabaseCommit},
     hash_map, Account, AccountInfo, Address, Bytecode, HashMap, B256, BLOCK_HASH_HISTORY, U256,
+};
+use std::{
+    boxed::Box,
+    collections::{btree_map, BTreeMap},
+    vec::Vec,
 };
 
 /// Database boxed with a lifetime and Send.

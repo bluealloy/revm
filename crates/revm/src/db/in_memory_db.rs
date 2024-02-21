@@ -4,8 +4,8 @@ use crate::primitives::{
     U256,
 };
 use crate::Database;
-use alloc::vec::Vec;
 use core::convert::Infallible;
+use std::vec::Vec;
 
 /// A [Database] implementation that stores all state changes in memory.
 pub type InMemoryDB = CacheDB<EmptyDB>;

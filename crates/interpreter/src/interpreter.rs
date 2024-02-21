@@ -8,14 +8,14 @@ pub use contract::Contract;
 pub use shared_memory::{next_multiple_of_32, SharedMemory};
 pub use stack::{Stack, STACK_LIMIT};
 
-use crate::alloc::borrow::ToOwned;
 use crate::{
     primitives::Bytes, push, push_b256, return_ok, return_revert, CallInputs, CallOutcome,
     CreateInputs, CreateOutcome, Gas, Host, InstructionResult,
 };
-use alloc::boxed::Box;
 use core::cmp::min;
 use revm_primitives::U256;
+use std::borrow::ToOwned;
+use std::boxed::Box;
 
 pub use self::shared_memory::EMPTY_SHARED_MEMORY;
 

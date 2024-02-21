@@ -13,9 +13,9 @@ use crate::{
     },
     Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult,
 };
-use alloc::vec::Vec;
 use core::fmt;
 use revm_interpreter::{CallInputs, CreateInputs};
+use std::vec::Vec;
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;

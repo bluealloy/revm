@@ -3,14 +3,14 @@ use super::{
     reverts::{AccountInfoRevert, Reverts},
     AccountRevert, AccountStatus, BundleAccount, PlainStateReverts, RevertToSlot, TransitionState,
 };
-use alloc::{
-    collections::{BTreeMap, BTreeSet},
-    vec::Vec,
-};
 use core::{mem, ops::RangeInclusive};
 use revm_interpreter::primitives::{
     hash_map::{self, Entry},
     AccountInfo, Address, Bytecode, HashMap, HashSet, StorageSlot, B256, KECCAK_EMPTY, U256,
+};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    vec::Vec,
 };
 
 /// This builder is used to help to facilitate the initialization of `BundleState` struct

@@ -6,8 +6,8 @@ use crate::{
     },
     Context, ContextWithHandlerCfg, Evm, Handler,
 };
-use alloc::boxed::Box;
 use core::marker::PhantomData;
+use std::boxed::Box;
 
 /// Evm Builder allows building or modifying EVM.
 /// Note that some of the methods that changes underlying structures

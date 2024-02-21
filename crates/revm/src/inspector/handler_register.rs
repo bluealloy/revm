@@ -6,7 +6,7 @@ use crate::{
     interpreter::{opcode, opcode::BoxedInstruction, InstructionResult, Interpreter},
     Evm, FrameOrResult, FrameResult, Inspector, JournalEntry,
 };
-use alloc::{boxed::Box, rc::Rc, sync::Arc, vec::Vec};
+use std::{boxed::Box, rc::Rc, sync::Arc, vec::Vec};
 
 /// Provides access to an `Inspector` instance.
 pub trait GetInspector<DB: Database> {

@@ -160,8 +160,8 @@ fn berlin_gas_calc(base_length: u64, exp_length: u64, mod_length: u64, exp_highp
 #[cfg(test)]
 mod tests {
     use super::*;
-    use alloc::vec::Vec;
     use revm_primitives::hex;
+    use std::vec::Vec;
 
     struct Test {
         input: &'static str,
