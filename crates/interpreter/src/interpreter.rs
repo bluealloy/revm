@@ -156,8 +156,9 @@ impl Interpreter {
     /// - Updates gas costs and records refunds in the interpreter's `gas` field.
     /// - May alter `instruction_result` in case of external errors.
     pub fn insert_create_outcome(&mut self, create_outcome: CreateOutcome) {
-        let instruction_result = create_outcome.instruction_result();
+        self.instruction_result = InstructionResult::Continue;
 
+        let instruction_result = create_outcome.instruction_result();
         self.return_data_buffer = if instruction_result.is_revert() {
             // Save data to return data buffer if the create reverted
             create_outcome.output().to_owned()
@@ -213,6 +214,7 @@ impl Interpreter {
         shared_memory: &mut SharedMemory,
         call_outcome: CallOutcome,
     ) {
+        self.instruction_result = InstructionResult::Continue;
         let out_offset = call_outcome.memory_start();
         let out_len = call_outcome.memory_length();
 
@@ -314,7 +316,6 @@ impl Interpreter {
         FN: Fn(&mut Interpreter, &mut H),
     {
         self.next_action = InterpreterAction::None;
-        self.instruction_result = InstructionResult::Continue;
         self.shared_memory = shared_memory;
         // main loop
         while self.instruction_result == InstructionResult::Continue {
