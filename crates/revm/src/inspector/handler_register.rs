@@ -4,6 +4,7 @@ use crate::{
     db::Database,
     handler::register::{EvmHandler, EvmInstructionTables},
     interpreter::{opcode, opcode::BoxedInstruction, InstructionResult, Interpreter},
+    primitives::EVMError,
     Evm, FrameOrResult, FrameResult, Inspector, JournalEntry,
 };
 use std::{boxed::Box, rc::Rc, sync::Arc, vec::Vec};
@@ -134,45 +135,49 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<DB>>(
     // Create handle
     let create_input_stack_inner = create_input_stack.clone();
     let old_handle = handler.execution.create.clone();
-    handler.execution.create = Arc::new(move |ctx, mut inputs| -> FrameOrResult {
-        let inspector = ctx.external.get_inspector();
-        // call inspector create to change input or return outcome.
-        if let Some(outcome) = inspector.create(&mut ctx.evm, &mut inputs) {
+    handler.execution.create = Arc::new(
+        move |ctx, mut inputs| -> Result<FrameOrResult, EVMError<DB::Error>> {
+            let inspector = ctx.external.get_inspector();
+            // call inspector create to change input or return outcome.
+            if let Some(outcome) = inspector.create(&mut ctx.evm, &mut inputs) {
+                create_input_stack_inner.borrow_mut().push(inputs.clone());
+                return Ok(FrameOrResult::Result(FrameResult::Create(outcome)));
+            }
             create_input_stack_inner.borrow_mut().push(inputs.clone());
-            return FrameOrResult::Result(FrameResult::Create(outcome));
-        }
-        create_input_stack_inner.borrow_mut().push(inputs.clone());
 
-        let mut frame_or_result = old_handle(ctx, inputs);
+            let mut frame_or_result = old_handle(ctx, inputs);
 
-        let inspector = ctx.external.get_inspector();
-        if let FrameOrResult::Frame(frame) = &mut frame_or_result {
-            inspector.initialize_interp(&mut frame.frame_data_mut().interpreter, &mut ctx.evm)
-        }
-        frame_or_result
-    });
+            let inspector = ctx.external.get_inspector();
+            if let Ok(FrameOrResult::Frame(frame)) = &mut frame_or_result {
+                inspector.initialize_interp(&mut frame.frame_data_mut().interpreter, &mut ctx.evm)
+            }
+            frame_or_result
+        },
+    );
 
     // Call handler
     let call_input_stack_inner = call_input_stack.clone();
     let old_handle = handler.execution.call.clone();
-    handler.execution.call = Arc::new(move |ctx, mut inputs| -> FrameOrResult {
-        let inspector = ctx.external.get_inspector();
-        let _mems = inputs.return_memory_offset.clone();
-        // call inspector callto change input or return outcome.
-        if let Some(outcome) = inspector.call(&mut ctx.evm, &mut inputs) {
+    handler.execution.call = Arc::new(
+        move |ctx, mut inputs| -> Result<FrameOrResult, EVMError<DB::Error>> {
+            let inspector = ctx.external.get_inspector();
+            let _mems = inputs.return_memory_offset.clone();
+            // call inspector callto change input or return outcome.
+            if let Some(outcome) = inspector.call(&mut ctx.evm, &mut inputs) {
+                call_input_stack_inner.borrow_mut().push(inputs.clone());
+                return Ok(FrameOrResult::Result(FrameResult::Call(outcome)));
+            }
             call_input_stack_inner.borrow_mut().push(inputs.clone());
-            return FrameOrResult::Result(FrameResult::Call(outcome));
-        }
-        call_input_stack_inner.borrow_mut().push(inputs.clone());
 
-        let mut frame_or_result = old_handle(ctx, inputs);
+            let mut frame_or_result = old_handle(ctx, inputs);
 
-        let inspector = ctx.external.get_inspector();
-        if let FrameOrResult::Frame(frame) = &mut frame_or_result {
-            inspector.initialize_interp(&mut frame.frame_data_mut().interpreter, &mut ctx.evm)
-        }
-        frame_or_result
-    });
+            let inspector = ctx.external.get_inspector();
+            if let Ok(FrameOrResult::Frame(frame)) = &mut frame_or_result {
+                inspector.initialize_interp(&mut frame.frame_data_mut().interpreter, &mut ctx.evm)
+            }
+            frame_or_result
+        },
+    );
 
     // call outcome
     let call_input_stack_inner = call_input_stack.clone();

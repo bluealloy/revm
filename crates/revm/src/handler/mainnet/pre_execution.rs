@@ -76,8 +76,7 @@ pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
     let (caller_account, _) = context
         .evm
         .journaled_state
-        .load_account(context.evm.env.tx.caller, &mut context.evm.db)
-        .map_err(EVMError::Database)?;
+        .load_account(context.evm.env.tx.caller, &mut context.evm.db)?;
 
     // deduct gas cost from caller's account.
     deduct_caller_inner::<SPEC>(caller_account, &context.evm.env);

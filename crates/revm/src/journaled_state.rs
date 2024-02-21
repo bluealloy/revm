@@ -1,7 +1,7 @@
 use crate::interpreter::{InstructionResult, SelfDestructResult};
 use crate::primitives::{
-    db::Database, hash_map::Entry, Account, Address, Bytecode, HashMap, HashSet, Log, SpecId::*,
-    State, StorageSlot, TransientStorage, KECCAK_EMPTY, PRECOMPILE3, U256,
+    db::Database, hash_map::Entry, Account, Address, Bytecode, EVMError, HashMap, HashSet, Log,
+    SpecId::*, State, StorageSlot, TransientStorage, KECCAK_EMPTY, PRECOMPILE3, U256,
 };
 use core::mem;
 use revm_interpreter::primitives::SpecId;
@@ -443,7 +443,7 @@ impl JournaledState {
         address: Address,
         target: Address,
         db: &mut DB,
-    ) -> Result<SelfDestructResult, DB::Error> {
+    ) -> Result<SelfDestructResult, EVMError<DB::Error>> {
         let (is_cold, target_exists) = self.load_account_exist(target, db)?;
 
         if address != target {
@@ -531,15 +531,16 @@ impl JournaledState {
         &mut self,
         address: Address,
         db: &mut DB,
-    ) -> Result<(&mut Account, bool), DB::Error> {
+    ) -> Result<(&mut Account, bool), EVMError<DB::Error>> {
         Ok(match self.state.entry(address) {
             Entry::Occupied(entry) => (entry.into_mut(), false),
             Entry::Vacant(vac) => {
-                let account = if let Some(account) = db.basic(address)? {
-                    account.into()
-                } else {
-                    Account::new_not_existing()
-                };
+                let account =
+                    if let Some(account) = db.basic(address).map_err(EVMError::Database)? {
+                        account.into()
+                    } else {
+                        Account::new_not_existing()
+                    };
 
                 // journal loading of account. AccessList touch.
                 self.journal
@@ -563,7 +564,7 @@ impl JournaledState {
         &mut self,
         address: Address,
         db: &mut DB,
-    ) -> Result<(bool, bool), DB::Error> {
+    ) -> Result<(bool, bool), EVMError<DB::Error>> {
         let is_spurious_dragon_enabled = SpecId::enabled(self.spec, SPURIOUS_DRAGON);
         let (acc, is_cold) = self.load_account(address, db)?;
 
@@ -583,14 +584,16 @@ impl JournaledState {
         &mut self,
         address: Address,
         db: &mut DB,
-    ) -> Result<(&mut Account, bool), DB::Error> {
+    ) -> Result<(&mut Account, bool), EVMError<DB::Error>> {
         let (acc, is_cold) = self.load_account(address, db)?;
         if acc.info.code.is_none() {
             if acc.info.code_hash == KECCAK_EMPTY {
                 let empty = Bytecode::new();
                 acc.info.code = Some(empty);
             } else {
-                let code = db.code_by_hash(acc.info.code_hash)?;
+                let code = db
+                    .code_by_hash(acc.info.code_hash)
+                    .map_err(EVMError::Database)?;
                 acc.info.code = Some(code);
             }
         }
@@ -608,7 +611,7 @@ impl JournaledState {
         address: Address,
         key: U256,
         db: &mut DB,
-    ) -> Result<(U256, bool), DB::Error> {
+    ) -> Result<(U256, bool), EVMError<DB::Error>> {
         let account = self.state.get_mut(&address).unwrap(); // assume acc is warm
                                                              // only if account is created in this tx we can assume that storage is empty.
         let is_newly_created = account.is_created();
@@ -619,7 +622,7 @@ impl JournaledState {
                 let value = if is_newly_created {
                     U256::ZERO
                 } else {
-                    db.storage(address, key)?
+                    db.storage(address, key).map_err(EVMError::Database)?
                 };
                 // add it to journal as cold loaded.
                 self.journal
@@ -652,7 +655,7 @@ impl JournaledState {
         key: U256,
         new: U256,
         db: &mut DB,
-    ) -> Result<(U256, U256, U256, bool), DB::Error> {
+    ) -> Result<(U256, U256, U256, bool), EVMError<DB::Error>> {
         // assume that acc exists and load the slot.
         let (present, is_cold) = self.sload(address, key, db)?;
         let acc = self.state.get_mut(&address).unwrap();
