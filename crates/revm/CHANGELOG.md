@@ -6,6 +6,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.1.0](https://github.com/bluealloy/revm/compare/revm-v6.0.0...revm-v6.1.0) - 2024-02-22
+
+### Added
+- bump c-kzg, add portable feature, make it default ([#1106](https://github.com/bluealloy/revm/pull/1106))
+- split off serde_json dependency to its own feature ([#1104](https://github.com/bluealloy/revm/pull/1104))
+
+### Fixed
+- replace tuple in sstore return with struct ([#1115](https://github.com/bluealloy/revm/pull/1115))
+- fix EthersDB deadlock ([#1089](https://github.com/bluealloy/revm/pull/1089))
+- Handle fatal db error on load_account ([#1111](https://github.com/bluealloy/revm/pull/1111))
+
+### Other
+- Ensure `L1Block` is in the cache ([#1121](https://github.com/bluealloy/revm/pull/1121))
+- Fix feature name for generate_block_traces example ([#1120](https://github.com/bluealloy/revm/pull/1120))
+- *(refactor)* Propagate fatal error ([#1116](https://github.com/bluealloy/revm/pull/1116))
+- Revert "fix EthersDB deadlock ([#1089](https://github.com/bluealloy/revm/pull/1089))" ([#1118](https://github.com/bluealloy/revm/pull/1118))
+- Remove DatabaseRef bound on CacheDB ([#1113](https://github.com/bluealloy/revm/pull/1113))
+- clippy cleanup ([#1112](https://github.com/bluealloy/revm/pull/1112))
+- *(deps)* bump anyhow from 1.0.79 to 1.0.80 ([#1108](https://github.com/bluealloy/revm/pull/1108))
+- improve EIP-3155 implementation ([#1105](https://github.com/bluealloy/revm/pull/1105))
+
 ## [6.0.0](https://github.com/bluealloy/revm/compare/revm-v5.0.0...revm-v6.0.0) - 2024-02-17
 
 ### Added

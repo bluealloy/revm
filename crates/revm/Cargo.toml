@@ -6,7 +6,7 @@ keywords = ["no_std", "ethereum", "evm", "revm"]
 license = "MIT"
 name = "revm"
 repository = "https://github.com/bluealloy/revm"
-version = "6.0.0"
+version = "6.1.0"
 readme = "../../README.md"
 
 [package.metadata.docs.rs]
@@ -15,8 +15,8 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 # revm
-revm-interpreter = { path = "../interpreter", version = "3.0.0", default-features = false }
-revm-precompile = { path = "../precompile", version = "4.0.1", default-features = false }
+revm-interpreter = { path = "../interpreter", version = "3.1.0", default-features = false }
+revm-precompile = { path = "../precompile", version = "4.1.0", default-features = false }
 
 # misc
 auto_impl = { version = "1.1", default-features = false }

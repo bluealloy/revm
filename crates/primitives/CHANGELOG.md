@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0](https://github.com/bluealloy/revm/compare/revm-primitives-v2.0.1...revm-primitives-v2.1.0) - 2024-02-22
+
+### Added
+- bump c-kzg, add portable feature, make it default ([#1106](https://github.com/bluealloy/revm/pull/1106))
+
+### Other
+- clippy cleanup ([#1112](https://github.com/bluealloy/revm/pull/1112))
+
 ## [2.0.1](https://github.com/bluealloy/revm/compare/revm-primitives-v2.0.0...revm-primitives-v2.0.1) - 2024-02-17
 
 ### Fixed

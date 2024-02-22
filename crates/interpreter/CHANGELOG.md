@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v3.0.0...revm-interpreter-v3.1.0) - 2024-02-22
+
+### Added
+- bump c-kzg, add portable feature, make it default ([#1106](https://github.com/bluealloy/revm/pull/1106))
+
+### Fixed
+- replace tuple in sstore return with struct ([#1115](https://github.com/bluealloy/revm/pull/1115))
+- *(db)* Set instruction result at outcome insert ([#1117](https://github.com/bluealloy/revm/pull/1117))
+
+### Other
+- adding more test for i256 ([#1090](https://github.com/bluealloy/revm/pull/1090))
+- *(refactor)* Propagate fatal error ([#1116](https://github.com/bluealloy/revm/pull/1116))
+- clippy cleanup ([#1112](https://github.com/bluealloy/revm/pull/1112))
+
 ## [3.0.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v2.1.0...revm-interpreter-v3.0.0) - 2024-02-17
 
 ### Fixed
