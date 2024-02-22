@@ -7,8 +7,8 @@ use bitvec::{
     vec::BitVec,
 };
 use core::fmt::Debug;
-use std::sync::Arc;
 use legacy::JumpMap;
+use std::sync::Arc;
 
 /// State of the [`Bytecode`] analysis.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

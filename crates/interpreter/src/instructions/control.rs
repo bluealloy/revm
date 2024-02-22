@@ -8,16 +8,50 @@ use crate::{
 
 pub fn rjump<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::BASE);
-    let offset = 0;
+    let offset = unsafe { *interpreter.instruction_pointer.cast::<i16>() } as isize;
+
     // In spec it is +3 but pointer is already incremented in
     // `Interpreter::step` so for revm is +2.
-    interpreter.instruction_pointer =
-        unsafe { interpreter.instruction_pointer.byte_offset(offset + 2) };
+    interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(offset + 2) };
 }
 
-pub fn rjumpi<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {}
+pub fn rjumpi<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+    gas!(interpreter, gas::CONDITION_JUMP_GAS);
+    pop!(interpreter, condition);
+    // In spec it is +3 but pointer is already incremented in
+    // `Interpreter::step` so for revm is +2.
+    let mut offset = 2;
+    if !condition.is_zero() {
+        offset += unsafe { *interpreter.instruction_pointer.cast::<i16>() } as isize;
+    }
 
-pub fn rjumpv<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {}
+    interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(offset) };
+}
+
+pub fn rjumpv<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+    gas!(interpreter, gas::CONDITION_JUMP_GAS);
+    pop!(interpreter, case);
+    let case = as_isize_saturated!(case);
+
+    let max_index = interpreter.instruction_pointer.cast::<u8>() as isize;
+
+    // In spec it is (max_index+1)*2 but pointer is already incremented in
+    // `Interpreter::step` so for revm it is max_index*2 for destinations and +1 for max_index.
+    let mut offset = max_index * 2 + 1;
+
+    if case <= max_index {
+        offset += unsafe {
+            interpreter
+                .instruction_pointer
+                // offset for max_index that is one byte
+                .offset(1)
+                .cast::<i16>()
+                .offset(case)
+        } as isize;
+    }
+
+    interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(offset) };
+}
 
 pub fn jump<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     panic_on_eof!(interpreter);
@@ -125,5 +159,14 @@ mod test {
     #[test]
     fn sanity_rjump() {
         let interp = Interpreter::new_bytecode(Bytes::from([RJUMP, 0x00, 0x00]));
+    }
+
+    #[test]
+    fn ptr() {
+        let mut a = [1, 2, 3, 4, 5];
+        let ptr = a.as_ptr();
+        let ptr = ptr.cast::<u16>();
+        let slice = unsafe { core::slice::from_raw_parts(ptr, 2) };
+        assert_eq!(slice, [3, 4]);
     }
 }

@@ -9,9 +9,9 @@ use crate::{
     CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, Host, InstructionResult,
     Transfer, MAX_INITCODE_SIZE,
 };
-use std::{boxed::Box, vec::Vec};
 use core::cmp::min;
 use revm_primitives::BLOCK_HASH_HISTORY;
+use std::{boxed::Box, vec::Vec};
 
 pub fn create3<H: Host>(interpreter: &mut Interpreter, host: &mut H) {}
 
