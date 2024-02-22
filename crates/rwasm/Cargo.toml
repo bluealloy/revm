@@ -21,6 +21,8 @@ revm-primitives = { path = "../primitives", version = "1.3.0", default-features 
 fluentbase-codec = { workspace = true, default-features = false }
 fluentbase-sdk = { workspace = true, default-features = false, features = ["evm"] }
 fluentbase-types = { workspace = true, default-features = false }
+#fluentbase-core = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
+fluentbase-core = { path = "../../../fluentbase/crates/core", default-features = false }
 
 # rwasm runtime
 fluentbase-runtime = { workspace = true, optional = true, default-features = false }

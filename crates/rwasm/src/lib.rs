@@ -12,7 +12,6 @@ mod context;
 mod evm;
 pub mod handler;
 mod r#impl;
-mod journal;
 
 mod gas;
 mod types;

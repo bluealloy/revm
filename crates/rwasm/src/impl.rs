@@ -1,7 +1,6 @@
 use crate::{
     gas::Gas,
     handler::Handler,
-    journal::Account,
     primitives::{
         keccak256,
         Bytes,
@@ -18,6 +17,7 @@ use crate::{
     EVMData,
 };
 use core::marker::PhantomData;
+use fluentbase_core::account::Account;
 use fluentbase_sdk::{LowLevelAPI, LowLevelSDK};
 use fluentbase_types::{ExitCode, STATE_DEPLOY, STATE_MAIN};
 use revm_primitives::{CreateScheme, RWASM_MAX_CODE_SIZE};
@@ -115,7 +115,7 @@ impl<'a, GSPEC: Spec + 'static> EVMImpl<'a, GSPEC> {
         }
         // TODO: "warmup access list"
 
-        let mut caller_account = Account::new_from_jzkt(tx_caller);
+        let mut caller_account = Account::new_from_jzkt(&tx_caller);
 
         // Subtract gas costs from the caller's account.
         // We need to saturate the gas cost to prevent underflow in case that
@@ -136,7 +136,7 @@ impl<'a, GSPEC: Spec + 'static> EVMImpl<'a, GSPEC> {
         let (call_result, ret_gas, output) = match self.data.env.tx.transact_to {
             TransactTo::Call(address) => {
                 caller_account.inc_nonce();
-                let mut callee_account = Account::new_from_jzkt(address);
+                let mut callee_account = Account::new_from_jzkt(&address);
                 let result = self.call_inner(
                     &mut caller_account,
                     &mut callee_account,
@@ -183,7 +183,7 @@ impl<'a, GSPEC: Spec + 'static> EVMImpl<'a, GSPEC> {
 
         // Reward beneficiary
         if !data.env.cfg.is_beneficiary_reward_disabled() {
-            let mut coinbase_account = Account::new_from_jzkt(block_coinbase);
+            let mut coinbase_account = Account::new_from_jzkt(&block_coinbase);
             let effective_gas_price = data.env.effective_gas_price();
             // EIP-1559 discard basefee for coinbase transfer. Basefee amount of gas is discarded.
             let coinbase_gas_price = if GSPEC::enabled(LONDON) {
@@ -263,7 +263,7 @@ impl<'a, GSPEC: Spec + 'static> EVMImpl<'a, GSPEC> {
         // TODO: "Load account so it needs to be marked as warm for access list"
 
         // create account, transfer funds and make the journal checkpoint.
-        let mut contract_account = Account::new_from_jzkt(created_address);
+        let mut contract_account = Account::new_from_jzkt(&created_address);
         let checkpoint = match Account::create_account_checkpoint(
             caller_account,
             &mut contract_account,
