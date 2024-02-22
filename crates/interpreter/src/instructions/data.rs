@@ -5,7 +5,7 @@ use crate::{
     CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, Host, InstructionResult,
     Transfer, MAX_INITCODE_SIZE,
 };
-use alloc::{boxed::Box, vec::Vec};
+use std::{boxed::Box, vec::Vec};
 
 pub fn data_load<H: Host>(interpreter: &mut Interpreter, host: &mut H) {}
 

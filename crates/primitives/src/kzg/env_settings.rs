@@ -2,9 +2,9 @@ use super::{
     trusted_setup_points::{G1_POINTS, G2_POINTS},
     KzgSettings,
 };
-use alloc::{boxed::Box, sync::Arc};
 use core::hash::{Hash, Hasher};
 use once_cell::race::OnceBox;
+use std::{boxed::Box, sync::Arc};
 
 /// KZG Settings that allow us to specify a custom trusted setup.
 /// or use hardcoded default settings.

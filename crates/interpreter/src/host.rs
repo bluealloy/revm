@@ -37,12 +37,7 @@ pub trait Host {
     /// Set storage value of account address at index.
     ///
     /// Returns (original, present, new, is_cold).
-    fn sstore(
-        &mut self,
-        address: Address,
-        index: U256,
-        value: U256,
-    ) -> Option<(U256, U256, U256, bool)>;
+    fn sstore(&mut self, address: Address, index: U256, value: U256) -> Option<SStoreResult>;
 
     /// Get the transient storage value of `address` at `index`.
     fn tload(&mut self, address: Address, index: U256) -> U256;
@@ -55,4 +50,18 @@ pub trait Host {
 
     /// Mark `address` to be deleted, with funds transferred to `target`.
     fn selfdestruct(&mut self, address: Address, target: Address) -> Option<SelfDestructResult>;
+}
+
+/// Represents the result of an `sstore` operation.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct SStoreResult {
+    /// Value of the storage when it is first read
+    pub original_value: U256,
+    /// Current value of the storage
+    pub present_value: U256,
+    /// New value that is set
+    pub new_value: U256,
+    /// Is storage slot loaded from database
+    pub is_cold: bool,
 }

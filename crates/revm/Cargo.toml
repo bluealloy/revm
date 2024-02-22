@@ -42,12 +42,12 @@ futures = { version = "0.3.30", optional = true }
 
 [dev-dependencies]
 ethers-contract = { version = "2.0.13", default-features = false }
-anyhow = "1.0.79"
+anyhow = "1.0.80"
 criterion = "0.5"
 indicatif = "0.17"
 
 [features]
-default = ["std", "c-kzg", "secp256k1"]
+default = ["std", "c-kzg", "secp256k1", "portable"]
 std = [
     "serde?/std",
     "serde_json?/std",
@@ -55,9 +55,11 @@ std = [
     "revm-interpreter/std",
     "revm-precompile/std",
 ]
-serde = ["dep:serde", "dep:serde_json", "revm-interpreter/serde"]
+serde = ["dep:serde", "revm-interpreter/serde"]
+serde-json = ["serde", "dep:serde_json"]
 arbitrary = ["revm-interpreter/arbitrary"]
 asm-keccak = ["revm-interpreter/asm-keccak", "revm-precompile/asm-keccak"]
+portable = ["revm-precompile/portable", "revm-interpreter/portable"]
 
 test-utils = []
 
@@ -72,7 +74,6 @@ negate-optimism-default-handler = [
     "revm-precompile/negate-optimism-default-handler",
     "revm-interpreter/negate-optimism-default-handler",
 ]
-
 
 ethersdb = [
     "std",
@@ -111,7 +112,7 @@ required-features = ["ethersdb"]
 [[example]]
 name = "generate_block_traces"
 path = "../../examples/generate_block_traces.rs"
-required-features = ["std", "serde", "ethersdb"]
+required-features = ["std", "serde-json", "ethersdb"]
 
 [[bench]]
 name = "bench"

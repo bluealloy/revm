@@ -5,8 +5,8 @@ use crate::primitives::{
     legacy::JumpMap,
     Bytecode, BytecodeState, Bytes, B256, KECCAK_EMPTY,
 };
-use alloc::sync::Arc;
 use core::fmt;
+use std::sync::Arc;
 
 /// Perform bytecode analysis.
 ///

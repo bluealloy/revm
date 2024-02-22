@@ -3,11 +3,11 @@ use crate::{
     interpreter::{Interpreter, InterpreterAction},
     primitives::{Address, Bytes, Log, LogData, Spec, SpecId::*, B256, U256},
     CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, Host, InstructionResult,
-    Transfer, MAX_INITCODE_SIZE,
+    SStoreResult, Transfer, MAX_INITCODE_SIZE,
 };
-use alloc::{boxed::Box, vec::Vec};
 use core::cmp::min;
 use revm_primitives::BLOCK_HASH_HISTORY;
+use std::{boxed::Box, vec::Vec};
 
 pub fn balance<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     pop_address!(interpreter, address);
@@ -153,8 +153,12 @@ pub fn sstore<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) 
     error_on_static_call!(interpreter);
 
     pop!(interpreter, index, value);
-    let Some((original, old, new, is_cold)) =
-        host.sstore(interpreter.contract.address, index, value)
+    let Some(SStoreResult {
+        original_value: original,
+        present_value: old,
+        new_value: new,
+        is_cold,
+    }) = host.sstore(interpreter.contract.address, index, value)
     else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;

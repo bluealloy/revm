@@ -3,8 +3,8 @@ use revm::{
     primitives::{Bytecode, TransactTo, U256},
     Evm,
 };
+
 use std::time::Duration;
-extern crate alloc;
 
 fn main() {
     // BenchmarkDB is dummy state that implements Database trait.

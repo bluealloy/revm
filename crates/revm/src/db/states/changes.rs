@@ -1,6 +1,6 @@
 use super::RevertToSlot;
-use alloc::vec::Vec;
 use revm_interpreter::primitives::{AccountInfo, Address, Bytecode, B256, U256};
+use std::vec::Vec;
 
 /// accounts/storages/contracts for inclusion into database.
 /// Structure is made so it is easier to apply directly to database

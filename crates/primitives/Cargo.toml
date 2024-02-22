@@ -26,10 +26,8 @@ bitvec = { version = "1", default-features = false, features = ["alloc"] }
 bitflags = { version = "2.4.2", default-features = false }
 
 # For setting the CfgEnv KZGSettings. Enabled by c-kzg flag.
-c-kzg = { version = "0.4.1", default-features = false, optional = true }
+c-kzg = { version = "0.4.2", default-features = false, optional = true }
 once_cell = { version = "1.19", default-features = false, optional = true }
-# TODO: make specific feature for this in c-kzg-4844
-blst = { version = "0.3.11", default-features = false, optional = true }
 
 # utility
 enumn = "0.1"
@@ -46,7 +44,7 @@ serde = { version = "1.0", default-features = false, features = [
 hex = { version = "0.4", default-features = false }
 
 [features]
-default = ["std", "c-kzg"]
+default = ["std", "c-kzg", "portable"]
 std = [
     "serde?/std",
     "alloy-primitives/std",
@@ -65,6 +63,7 @@ serde = [
 ]
 arbitrary = ["std", "alloy-primitives/arbitrary", "bitflags/arbitrary"]
 asm-keccak = ["alloy-primitives/asm-keccak"]
+portable = ["c-kzg?/portable"]
 
 optimism = []
 # Optimism default handler enabled Optimism handler register by default in EvmBuilder.
@@ -89,11 +88,8 @@ optional_no_base_fee = []
 optional_beneficiary_reward = []
 
 # See comments in `revm-precompile`
-# TODO: remove `blst` dep when `c-kzg` has a portable feature
 c-kzg = [
     "dep:c-kzg",
     "dep:once_cell",
     "dep:derive_more",
-    "dep:blst",
-    "blst?/portable",
 ]

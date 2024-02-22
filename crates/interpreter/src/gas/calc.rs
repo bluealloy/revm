@@ -1,7 +1,7 @@
 use super::constants::*;
 use crate::inner_models::SelfDestructResult;
 use crate::primitives::{Address, Spec, SpecId::*, U256};
-use alloc::vec::Vec;
+use std::vec::Vec;
 
 #[allow(clippy::collapsible_else_if)]
 pub fn sstore_refund<SPEC: Spec>(original: U256, current: U256, new: U256) -> i64 {

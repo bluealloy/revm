@@ -12,7 +12,8 @@ use crate::{
     },
     FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
 };
-use alloc::boxed::Box;
+use revm_interpreter::SStoreResult;
+use std::boxed::Box;
 
 /// Main Context structure that contains both EvmContext and External context.
 pub struct Context<EXT, DB: Database> {
@@ -93,7 +94,7 @@ pub struct EvmContext<DB: Database> {
     /// Database to load data from.
     pub db: DB,
     /// Error that happened during execution.
-    pub error: Option<DB::Error>,
+    pub error: Result<(), EVMError<DB::Error>>,
     /// Precompiles that are available for evm.
     pub precompiles: Precompiles,
     /// Used as temporary value holder to store L1 block info.
@@ -124,7 +125,7 @@ impl<DB: Database> EvmContext<DB> {
             env: self.env,
             journaled_state: self.journaled_state,
             db,
-            error: None,
+            error: Ok(()),
             precompiles: self.precompiles,
             #[cfg(feature = "optimism")]
             l1_block_info: self.l1_block_info,
@@ -136,7 +137,7 @@ impl<DB: Database> EvmContext<DB> {
             env: Box::default(),
             journaled_state: JournaledState::new(SpecId::LATEST, HashSet::new()),
             db,
-            error: None,
+            error: Ok(()),
             precompiles: Precompiles::default(),
             #[cfg(feature = "optimism")]
             l1_block_info: None,
@@ -149,7 +150,7 @@ impl<DB: Database> EvmContext<DB> {
             env,
             journaled_state: JournaledState::new(SpecId::LATEST, HashSet::new()),
             db,
-            error: None,
+            error: Ok(()),
             precompiles: Precompiles::default(),
             #[cfg(feature = "optimism")]
             l1_block_info: None,
@@ -162,6 +163,7 @@ impl<DB: Database> EvmContext<DB> {
     }
 
     /// Sets precompiles
+    #[inline]
     pub fn set_precompiles(&mut self, precompiles: Precompiles) {
         self.journaled_state.warm_preloaded_addresses =
             precompiles.addresses().copied().collect::<HashSet<_>>();
@@ -175,112 +177,110 @@ impl<DB: Database> EvmContext<DB> {
     pub fn load_access_list(&mut self) -> Result<(), EVMError<DB::Error>> {
         for (address, slots) in self.env.tx.access_list.iter() {
             self.journaled_state
-                .initial_account_load(*address, slots, &mut self.db)
-                .map_err(EVMError::Database)?;
+                .initial_account_load(*address, slots, &mut self.db)?;
         }
         Ok(())
     }
 
     /// Return environment.
+    #[inline]
     pub fn env(&mut self) -> &mut Env {
         &mut self.env
     }
 
     /// Fetch block hash from database.
-    pub fn block_hash(&mut self, number: U256) -> Option<B256> {
-        self.db
-            .block_hash(number)
-            .map_err(|e| self.error = Some(e))
-            .ok()
+    #[inline]
+    pub fn block_hash(&mut self, number: U256) -> Result<B256, EVMError<DB::Error>> {
+        self.db.block_hash(number).map_err(EVMError::Database)
     }
 
     /// Load account and return flags (is_cold, exists)
-    pub fn load_account(&mut self, address: Address) -> Option<(bool, bool)> {
+    #[inline]
+    pub fn load_account(&mut self, address: Address) -> Result<(bool, bool), EVMError<DB::Error>> {
         self.journaled_state
             .load_account_exist(address, &mut self.db)
-            .map_err(|e| self.error = Some(e))
-            .ok()
     }
 
     /// Return account balance and is_cold flag.
-    pub fn balance(&mut self, address: Address) -> Option<(U256, bool)> {
+    #[inline]
+    pub fn balance(&mut self, address: Address) -> Result<(U256, bool), EVMError<DB::Error>> {
         self.journaled_state
             .load_account(address, &mut self.db)
-            .map_err(|e| self.error = Some(e))
-            .ok()
             .map(|(acc, is_cold)| (acc.info.balance, is_cold))
     }
 
     /// Return account code and if address is cold loaded.
-    pub fn code(&mut self, address: Address) -> Option<(Bytecode, bool)> {
-        let (acc, is_cold) = self
-            .journaled_state
+    #[inline]
+    pub fn code(&mut self, address: Address) -> Result<(Bytecode, bool), EVMError<DB::Error>> {
+        self.journaled_state
             .load_code(address, &mut self.db)
-            .map_err(|e| self.error = Some(e))
-            .ok()?;
-        Some((acc.info.code.clone().unwrap(), is_cold))
+            .map(|(a, is_cold)| (a.info.code.clone().unwrap(), is_cold))
     }
 
     /// Get code hash of address.
-    pub fn code_hash(&mut self, address: Address) -> Option<(B256, bool)> {
-        let (acc, is_cold) = self
-            .journaled_state
-            .load_code(address, &mut self.db)
-            .map_err(|e| self.error = Some(e))
-            .ok()?;
+    #[inline]
+    pub fn code_hash(&mut self, address: Address) -> Result<(B256, bool), EVMError<DB::Error>> {
+        let (acc, is_cold) = self.journaled_state.load_code(address, &mut self.db)?;
         if acc.is_empty() {
-            return Some((B256::ZERO, is_cold));
+            return Ok((B256::ZERO, is_cold));
         }
-
-        Some((acc.info.code_hash, is_cold))
+        Ok((acc.info.code_hash, is_cold))
     }
 
     /// Load storage slot, if storage is not present inside the account then it will be loaded from database.
-    pub fn sload(&mut self, address: Address, index: U256) -> Option<(U256, bool)> {
+    #[inline]
+    pub fn sload(
+        &mut self,
+        address: Address,
+        index: U256,
+    ) -> Result<(U256, bool), EVMError<DB::Error>> {
         // account is always warm. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
-        self.journaled_state
-            .sload(address, index, &mut self.db)
-            .map_err(|e| self.error = Some(e))
-            .ok()
+        self.journaled_state.sload(address, index, &mut self.db)
     }
 
     /// Storage change of storage slot, before storing `sload` will be called for that slot.
+    #[inline]
     pub fn sstore(
         &mut self,
         address: Address,
         index: U256,
         value: U256,
-    ) -> Option<(U256, U256, U256, bool)> {
+    ) -> Result<SStoreResult, EVMError<DB::Error>> {
         self.journaled_state
             .sstore(address, index, value, &mut self.db)
-            .map_err(|e| self.error = Some(e))
-            .ok()
     }
 
     /// Returns transient storage value.
+    #[inline]
     pub fn tload(&mut self, address: Address, index: U256) -> U256 {
         self.journaled_state.tload(address, index)
     }
 
     /// Stores transient storage value.
+    #[inline]
     pub fn tstore(&mut self, address: Address, index: U256, value: U256) {
         self.journaled_state.tstore(address, index, value)
     }
 
     /// Make create frame.
-    pub fn make_create_frame(&mut self, spec_id: SpecId, inputs: &CreateInputs) -> FrameOrResult {
+    #[inline]
+    pub fn make_create_frame(
+        &mut self,
+        spec_id: SpecId,
+        inputs: &CreateInputs,
+    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
         // Prepare crate.
         let gas = Gas::new(inputs.gas_limit);
 
         let return_error = |e| {
-            FrameOrResult::new_create_result(
+            Ok(FrameOrResult::new_create_result(
                 InterpreterResult {
                     result: e,
                     gas,
                     output: Bytes::new(),
                 },
                 None,
-            )
+            ))
         };
 
         // Check depth
@@ -289,9 +289,7 @@ impl<DB: Database> EvmContext<DB> {
         }
 
         // Fetch balance of caller.
-        let Some((caller_balance, _)) = self.balance(inputs.caller) else {
-            return return_error(InstructionResult::FatalExternalError);
-        };
+        let (caller_balance, _) = self.balance(inputs.caller)?;
 
         // Check if caller has enough balance to send to the created contract.
         if caller_balance < inputs.value {
@@ -317,14 +315,8 @@ impl<DB: Database> EvmContext<DB> {
         };
 
         // Load account so it needs to be marked as warm for access list.
-        if self
-            .journaled_state
-            .load_account(created_address, &mut self.db)
-            .map_err(|e| self.error = Some(e))
-            .is_err()
-        {
-            return return_error(InstructionResult::FatalExternalError);
-        }
+        self.journaled_state
+            .load_account(created_address, &mut self.db)?;
 
         // create account, transfer funds and make the journal checkpoint.
         let checkpoint = match self.journaled_state.create_account_checkpoint(
@@ -352,26 +344,30 @@ impl<DB: Database> EvmContext<DB> {
 
         // TODO(eof) flag.
 
-        FrameOrResult::new_create_frame(
+        Ok(FrameOrResult::new_create_frame(
             created_address,
             checkpoint,
             Interpreter::new(contract, gas.limit(), false, false),
-        )
+        ))
     }
 
     /// Make call frame
-    pub fn make_call_frame(&mut self, inputs: &CallInputs) -> FrameOrResult {
+    #[inline]
+    pub fn make_call_frame(
+        &mut self,
+        inputs: &CallInputs,
+    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
         let gas = Gas::new(inputs.gas_limit);
 
         let return_result = |instruction_result: InstructionResult| {
-            FrameOrResult::new_call_result(
+            Ok(FrameOrResult::new_call_result(
                 InterpreterResult {
                     result: instruction_result,
                     gas,
                     output: Bytes::new(),
                 },
                 inputs.return_memory_offset.clone(),
-            )
+            ))
         };
 
         // Check depth
@@ -379,16 +375,9 @@ impl<DB: Database> EvmContext<DB> {
             return return_result(InstructionResult::CallTooDeep);
         }
 
-        let account = match self
+        let (account, _) = self
             .journaled_state
-            .load_code(inputs.contract, &mut self.db)
-        {
-            Ok((account, _)) => account,
-            Err(e) => {
-                self.error = Some(e);
-                return return_result(InstructionResult::FatalExternalError);
-            }
-        };
+            .load_code(inputs.contract, &mut self.db)?;
         let code_hash = account.info.code_hash();
         let bytecode = account.info.code.clone().unwrap_or_default();
 
@@ -397,19 +386,19 @@ impl<DB: Database> EvmContext<DB> {
 
         // Touch address. For "EIP-158 State Clear", this will erase empty accounts.
         if inputs.transfer.value == U256::ZERO {
-            self.load_account(inputs.context.address);
+            self.load_account(inputs.context.address)?;
             self.journaled_state.touch(&inputs.context.address);
         }
 
         // Transfer value from caller to called account
-        if let Err(e) = self.journaled_state.transfer(
+        if let Some(result) = self.journaled_state.transfer(
             &inputs.transfer.source,
             &inputs.transfer.target,
             inputs.transfer.value,
             &mut self.db,
-        ) {
+        )? {
             self.journaled_state.checkpoint_revert(checkpoint);
-            return return_result(e);
+            return return_result(result);
         }
 
         if let Some(precompile) = self.precompiles.get(&inputs.contract) {
@@ -419,7 +408,10 @@ impl<DB: Database> EvmContext<DB> {
             } else {
                 self.journaled_state.checkpoint_revert(checkpoint);
             }
-            FrameOrResult::new_call_result(result, inputs.return_memory_offset.clone())
+            Ok(FrameOrResult::new_call_result(
+                result,
+                inputs.return_memory_offset.clone(),
+            ))
         } else if !bytecode.is_empty() {
             let contract = Box::new(Contract::new_with_context(
                 inputs.input.clone(),
@@ -429,11 +421,11 @@ impl<DB: Database> EvmContext<DB> {
             ));
             // TODO(eof) flag
             // Create interpreter and executes call and push new CallStackFrame.
-            FrameOrResult::new_call_frame(
+            Ok(FrameOrResult::new_call_frame(
                 inputs.return_memory_offset.clone(),
                 checkpoint,
                 Interpreter::new(contract, gas.limit(), inputs.is_static, false),
-            )
+            ))
         } else {
             self.journaled_state.checkpoint_commit();
             return_result(InstructionResult::Stop)
@@ -441,6 +433,7 @@ impl<DB: Database> EvmContext<DB> {
     }
 
     /// Call precompile contract
+    #[inline]
     fn call_precompile(
         &mut self,
         precompile: Precompile,
@@ -632,7 +625,7 @@ pub(crate) mod test_utils {
             env,
             journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
             db,
-            error: None,
+            error: Ok(()),
             precompiles: Precompiles::default(),
             #[cfg(feature = "optimism")]
             l1_block_info: None,
@@ -645,7 +638,7 @@ pub(crate) mod test_utils {
             env,
             journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
             db,
-            error: None,
+            error: Ok(()),
             precompiles: Precompiles::default(),
             #[cfg(feature = "optimism")]
             l1_block_info: None,
@@ -672,7 +665,7 @@ mod tests {
         let contract = address!("dead10000000000000000000000000000001dead");
         let call_inputs = test_utils::create_mock_call_inputs(contract);
         let res = evm_context.make_call_frame(&call_inputs);
-        let FrameOrResult::Result(err) = res else {
+        let Ok(FrameOrResult::Result(err)) = res else {
             panic!("Expected FrameOrResult::Result");
         };
         assert_eq!(
@@ -693,7 +686,7 @@ mod tests {
         let mut call_inputs = test_utils::create_mock_call_inputs(contract);
         call_inputs.transfer.value = U256::from(1);
         let res = evm_context.make_call_frame(&call_inputs);
-        let FrameOrResult::Result(result) = res else {
+        let Ok(FrameOrResult::Result(result)) = res else {
             panic!("Expected FrameOrResult::Result");
         };
         assert_eq!(
@@ -714,7 +707,7 @@ mod tests {
         let contract = address!("dead10000000000000000000000000000001dead");
         let call_inputs = test_utils::create_mock_call_inputs(contract);
         let res = evm_context.make_call_frame(&call_inputs);
-        let FrameOrResult::Result(result) = res else {
+        let Ok(FrameOrResult::Result(result)) = res else {
             panic!("Expected FrameOrResult::Result");
         };
         assert_eq!(result.interpreter_result().result, InstructionResult::Stop);
@@ -739,7 +732,7 @@ mod tests {
         let mut evm_context = create_cache_db_evm_context_with_balance(Box::new(env), cdb, bal);
         let call_inputs = test_utils::create_mock_call_inputs(contract);
         let res = evm_context.make_call_frame(&call_inputs);
-        let FrameOrResult::Frame(Frame::Call(call_frame)) = res else {
+        let Ok(FrameOrResult::Frame(Frame::Call(call_frame))) = res else {
             panic!("Expected FrameOrResult::Frame(Frame::Call(..))");
         };
         assert_eq!(call_frame.return_memory_range, 0..0,);

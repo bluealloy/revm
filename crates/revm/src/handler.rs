@@ -15,8 +15,8 @@ use crate::{
     primitives::{db::Database, spec_to_generic, HandlerCfg, Spec, SpecId},
     Evm,
 };
-use alloc::vec::Vec;
 use register::{EvmHandler, HandleRegisters};
+use std::vec::Vec;
 
 use self::register::{HandleRegister, HandleRegisterBox};
 
@@ -205,7 +205,7 @@ mod test {
     use core::cell::RefCell;
 
     use crate::{db::EmptyDB, primitives::EVMError};
-    use alloc::{rc::Rc, sync::Arc};
+    use std::{rc::Rc, sync::Arc};
 
     use super::*;
 

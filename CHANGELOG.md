@@ -1,7 +1,7 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
 # v29 tag
-date: 17.02.2023
+date: 17.02.2024
 
 Small release, `return_memory_range` included inside `CallInput`.
 Few fixes.
@@ -12,7 +12,7 @@ revm-primitives: 2.0.0 -> 2.0.1 (✓ API compatible changes)
 revm-precompile: 4.0.0 -> 4.0.1 (✓ API compatible changes)
 
 # v28 tag
-date: 12.02.2023
+date: 12.02.2024
 
 Small release, function renaming and some helper functions added.
 
@@ -22,7 +22,7 @@ Small release, function renaming and some helper functions added.
 * revm-test: 0.1.0
 
 # v27 tag
-date: 07.02.2023
+date: 07.02.2024
 
 Refactor of Evm logic as list of handlers inside EvmHandler and EvmBuilder that open up the Evm and allow overwriting the default behavior.
 Change how call loop (Previously it was recursion) is handled in Evm

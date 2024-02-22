@@ -78,8 +78,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@clippy
-      - run: cargo +nightly clippy --workspace --all-targets --all-features
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo clippy --workspace --all-targets --all-features
         env:
           RUSTFLAGS: -Dwarnings
 
@@ -89,7 +89,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@nightly
+      - uses: dtolnay/rust-toolchain@stable
         with:
           components: rust-docs
       - run: cargo doc --workspace --all-features --no-deps --document-private-items
@@ -102,7 +102,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@nightly
+      - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
-      - run: cargo +nightly fmt --all --check
+      - run: cargo fmt --all --check

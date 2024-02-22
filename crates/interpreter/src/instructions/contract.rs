@@ -9,7 +9,7 @@ use crate::{
     CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, Host, InstructionResult,
     Transfer, MAX_INITCODE_SIZE,
 };
-use alloc::{boxed::Box, vec::Vec};
+use std::{boxed::Box, vec::Vec};
 use core::cmp::min;
 use revm_primitives::BLOCK_HASH_HISTORY;
 

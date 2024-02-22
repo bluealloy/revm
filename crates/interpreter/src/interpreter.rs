@@ -8,14 +8,14 @@ pub use contract::Contract;
 pub use shared_memory::{next_multiple_of_32, SharedMemory};
 pub use stack::{Stack, STACK_LIMIT};
 
-use crate::alloc::borrow::ToOwned;
 use crate::{
     primitives::Bytes, push, push_b256, return_ok, return_revert, CallInputs, CallOutcome,
     CreateInputs, CreateOutcome, Gas, Host, InstructionResult,
 };
-use alloc::boxed::Box;
 use core::cmp::min;
 use revm_primitives::U256;
+use std::borrow::ToOwned;
+use std::boxed::Box;
 
 pub use self::shared_memory::EMPTY_SHARED_MEMORY;
 
@@ -183,8 +183,9 @@ impl Interpreter {
     /// - Updates gas costs and records refunds in the interpreter's `gas` field.
     /// - May alter `instruction_result` in case of external errors.
     pub fn insert_create_outcome(&mut self, create_outcome: CreateOutcome) {
-        let instruction_result = create_outcome.instruction_result();
+        self.instruction_result = InstructionResult::Continue;
 
+        let instruction_result = create_outcome.instruction_result();
         self.return_data_buffer = if instruction_result.is_revert() {
             // Save data to return data buffer if the create reverted
             create_outcome.output().to_owned()
@@ -205,7 +206,7 @@ impl Interpreter {
                 self.gas.erase_cost(create_outcome.gas().remaining());
             }
             InstructionResult::FatalExternalError => {
-                self.instruction_result = InstructionResult::FatalExternalError;
+                panic!("Fatal external error in insert_create_outcome");
             }
             _ => {
                 push!(self, U256::ZERO);
@@ -240,6 +241,7 @@ impl Interpreter {
         shared_memory: &mut SharedMemory,
         call_outcome: CallOutcome,
     ) {
+        self.instruction_result = InstructionResult::Continue;
         let out_offset = call_outcome.memory_start();
         let out_len = call_outcome.memory_length();
 
@@ -262,7 +264,7 @@ impl Interpreter {
                 push!(self, U256::ZERO);
             }
             InstructionResult::FatalExternalError => {
-                self.instruction_result = InstructionResult::FatalExternalError;
+                panic!("Fatal external error in insert_call_outcome");
             }
             _ => {
                 push!(self, U256::ZERO);
@@ -341,7 +343,6 @@ impl Interpreter {
         FN: Fn(&mut Interpreter, &mut H),
     {
         self.next_action = InterpreterAction::None;
-        self.instruction_result = InstructionResult::Continue;
         self.shared_memory = shared_memory;
         // main loop
         while self.instruction_result == InstructionResult::Continue {

@@ -2,12 +2,12 @@ pub mod eof;
 pub mod legacy;
 
 use crate::{hex, keccak256, Bytes, B256, KECCAK_EMPTY};
-use alloc::{sync::Arc, vec::Vec};
 use bitvec::{
     prelude::{bitvec, Lsb0},
     vec::BitVec,
 };
 use core::fmt::Debug;
+use std::sync::Arc;
 use legacy::JumpMap;
 
 /// State of the [`Bytecode`] analysis.

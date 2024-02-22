@@ -5,7 +5,7 @@ use crate::{
     primitives::{db::Database, EVMError, EVMResultGeneric, ResultAndState, Spec},
     Context, FrameResult,
 };
-use alloc::sync::Arc;
+use std::sync::Arc;
 
 /// Reimburse the caller with ethereum it didn't spent.
 pub type ReimburseCallerHandle<'a, EXT, DB> =

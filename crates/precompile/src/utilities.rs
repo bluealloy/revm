@@ -1,4 +1,4 @@
-use alloc::borrow::Cow;
+use std::borrow::Cow;
 
 /// Right-pads the given slice at `offset` with zeroes until `LEN`.
 ///
