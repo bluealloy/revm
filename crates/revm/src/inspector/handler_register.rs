@@ -1,12 +1,12 @@
-use core::cell::RefCell;
-
 use crate::{
     db::Database,
-    handler::register::{EvmHandler, EvmInstructionTables},
+    handler::register::EvmHandler,
     interpreter::{opcode, opcode::BoxedInstruction, InstructionResult, Interpreter},
     primitives::EVMError,
     Evm, FrameOrResult, FrameResult, Inspector, JournalEntry,
 };
+use core::cell::RefCell;
+use revm_interpreter::opcode::InstructionTables;
 use std::{boxed::Box, rc::Rc, sync::Arc, vec::Vec};
 
 /// Provides access to an `Inspector` instance.
@@ -41,11 +41,11 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<DB>>(
         .take()
         .expect("Handler must have instruction table");
     let mut table = match table {
-        EvmInstructionTables::Plain(table) => table
+        InstructionTables::Plain(table) => table
             .into_iter()
             .map(|i| inspector_instruction(i))
             .collect::<Vec<_>>(),
-        EvmInstructionTables::Boxed(table) => table
+        InstructionTables::Boxed(table) => table
             .into_iter()
             .map(|i| inspector_instruction(i))
             .collect::<Vec<_>>(),
@@ -123,7 +123,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<DB>>(
     }
 
     // cast vector to array.
-    handler.instruction_table = Some(EvmInstructionTables::Boxed(
+    handler.instruction_table = Some(InstructionTables::Boxed(
         table.try_into().unwrap_or_else(|_| unreachable!()),
     ));
 
