@@ -195,9 +195,8 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
         }
     }
 
-    /// Modifies the [`Evm`] being built by specifying a handler to use.
-    ///
-    /// This can be used to easily construct an EVM with a _specific_ handler.
+    /// This modifies the [EvmBuilder] to make it easy to construct an [`Evm`] with a _specific_
+    /// handler.
     ///
     /// # Example
     /// ```rust
