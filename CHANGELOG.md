@@ -1,5 +1,17 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v30 tag
+date: 23.02.2024
+
+Small release.
+Fixes db panic propagation and OP l1block load after cancun.
+
+revme: 0.2.1 -> 0.2.2 (✓ API compatible changes)
+revm: 6.0.0 -> 6.1.0 (✓ API compatible changes)
+revm-interpreter: 3.0.0 -> 3.1.0 (✓ API compatible changes)
+revm-primitives: 2.0.1 -> 2.1.0 (✓ API compatible changes)
+revm-precompile: 4.0.1 -> 4.1.0 (✓ API compatible changes)
+
 # v29 tag
 date: 17.02.2024
 
