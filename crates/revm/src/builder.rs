@@ -200,7 +200,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
     ///
     /// # Example
     /// ```rust
-    ///
+    /// use revm::{EvmBuilder, Handler, primitives::{SpecId, HandlerCfg}};
     /// let builder = EvmBuilder::default();
     /// // set up empty handler cfg
     /// let handler = HandlerCfg::new(SpecId::LATEST);
