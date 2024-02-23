@@ -195,6 +195,36 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
         }
     }
 
+    /// Modifies the [`Evm`] being built by specifying a handler to use.
+    ///
+    /// This can be used to easily construct an EVM with a _specific_ handler.
+    ///
+    /// # Example
+    /// ```rust
+    ///
+    /// let builder = EvmBuilder::default();
+    /// // set up empty handler cfg
+    /// let handler = HandlerCfg::new(SpecId::LATEST);
+    /// let builder = builder.with_handler_cfg(handler);
+    ///
+    /// // get the desired handler
+    /// let mainnet = Handler::mainnet();
+    /// let builder = builder.with_handler(mainnet);
+    ///
+    /// // build the EVM
+    /// let evm = builder.build();
+    /// ```
+    pub fn with_handler(
+        self,
+        handler: Handler<'a, Evm<'a, EXT, DB>, EXT, DB>,
+    ) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
+        EvmBuilder {
+            context: self.context,
+            handler,
+            phantom: PhantomData,
+        }
+    }
+
     /// Sets the [`EmptyDB`] and resets the [`Handler`] to default mainnet.
     pub fn reset_handler_with_empty_db(self) -> EvmBuilder<'a, HandlerStage, EXT, EmptyDB> {
         EvmBuilder {
