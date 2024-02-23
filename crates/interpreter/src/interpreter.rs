@@ -311,7 +311,7 @@ impl Interpreter {
     ///
     /// Internally it will increment instruction pointer by one.
     #[inline(always)]
-    fn step<FN, H: Host>(&mut self, instruction_table: &[FN; 256], host: &mut H)
+    pub(crate) fn step<FN, H: Host>(&mut self, instruction_table: &[FN; 256], host: &mut H)
     where
         FN: Fn(&mut Interpreter, &mut H),
     {

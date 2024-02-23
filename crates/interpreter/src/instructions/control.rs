@@ -1,53 +1,54 @@
-use revm_primitives::Bytes;
-
 use crate::{
     gas,
-    primitives::{Spec, U256},
+    primitives::{Bytes, Spec, U256},
     Host, InstructionResult, Interpreter, InterpreterResult,
 };
 
-pub fn rjump<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
-    gas!(interpreter, gas::BASE);
-    let offset = unsafe { *interpreter.instruction_pointer.cast::<i16>() } as isize;
+fn read_i16(ptr: *const u8) -> i16 {
+    unsafe { i16::from_be_bytes(core::slice::from_raw_parts(ptr, 2).try_into().unwrap()) }
+}
 
+pub fn rjump<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+    error_on_disabled_eof!(interpreter);
+    gas!(interpreter, gas::BASE);
+    let offset = read_i16(interpreter.instruction_pointer) as isize;
     // In spec it is +3 but pointer is already incremented in
     // `Interpreter::step` so for revm is +2.
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(offset + 2) };
 }
 
 pub fn rjumpi<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+    error_on_disabled_eof!(interpreter);
     gas!(interpreter, gas::CONDITION_JUMP_GAS);
     pop!(interpreter, condition);
     // In spec it is +3 but pointer is already incremented in
     // `Interpreter::step` so for revm is +2.
     let mut offset = 2;
     if !condition.is_zero() {
-        offset += unsafe { *interpreter.instruction_pointer.cast::<i16>() } as isize;
+        offset += read_i16(interpreter.instruction_pointer) as isize;
     }
 
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(offset) };
 }
 
 pub fn rjumpv<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+    error_on_disabled_eof!(interpreter);
     gas!(interpreter, gas::CONDITION_JUMP_GAS);
     pop!(interpreter, case);
     let case = as_isize_saturated!(case);
 
-    let max_index = interpreter.instruction_pointer.cast::<u8>() as isize;
-
-    // In spec it is (max_index+1)*2 but pointer is already incremented in
-    // `Interpreter::step` so for revm it is max_index*2 for destinations and +1 for max_index.
-    let mut offset = max_index * 2 + 1;
+    let max_index = unsafe { *interpreter.instruction_pointer } as isize;
+    // for number of items we are adding 1 to max_index, multiply by 2 as each offset is 2 bytes
+    // and add 1 for max_index itself. Note that revm already incremented the instruction pointer
+    let mut offset = (max_index + 1) * 2 + 1;
 
     if case <= max_index {
-        offset += unsafe {
+        offset += read_i16(unsafe {
             interpreter
                 .instruction_pointer
                 // offset for max_index that is one byte
-                .offset(1)
-                .cast::<i16>()
-                .offset(case)
-        } as isize;
+                .offset(1 + case * 2)
+        }) as isize;
     }
 
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(offset) };
@@ -89,11 +90,17 @@ pub fn jumpdest_or_nop<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::JUMPDEST);
 }
 
-pub fn callf<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {}
+pub fn callf<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+    error_on_disabled_eof!(interpreter);
+}
 
-pub fn retf<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {}
+pub fn retf<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+    error_on_disabled_eof!(interpreter);
+}
 
-pub fn jumpf<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {}
+pub fn jumpf<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+    error_on_disabled_eof!(interpreter);
+}
 
 pub fn pc<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     panic_on_eof!(interpreter);
@@ -153,20 +160,94 @@ pub fn unknown<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
 
 #[cfg(test)]
 mod test {
+    use revm_primitives::PragueSpec;
+
     use super::*;
-    use crate::{opcode::RJUMP, Interpreter};
+    use crate::{
+        opcode::{make_instruction_table, NOP, RJUMP, RJUMPI, RJUMPV, STOP},
+        DummyHost, Gas, Interpreter,
+    };
 
     #[test]
-    fn sanity_rjump() {
-        let interp = Interpreter::new_bytecode(Bytes::from([RJUMP, 0x00, 0x00]));
+    fn rjump() {
+        let table = make_instruction_table::<_, PragueSpec>();
+        let mut host = DummyHost::default();
+        let mut interp = Interpreter::new_bytecode(Bytes::from([RJUMP, 0x00, 0x02, STOP, STOP]));
+        interp.is_eof = true;
+        interp.gas = Gas::new(10000);
+
+        interp.step(&table, &mut host);
+        assert_eq!(interp.program_counter(), 5);
     }
 
     #[test]
-    fn ptr() {
-        let mut a = [1, 2, 3, 4, 5];
-        let ptr = a.as_ptr();
-        let ptr = ptr.cast::<u16>();
-        let slice = unsafe { core::slice::from_raw_parts(ptr, 2) };
-        assert_eq!(slice, [3, 4]);
+    fn rjumpi() {
+        let table = make_instruction_table::<_, PragueSpec>();
+        let mut host = DummyHost::default();
+        let mut interp = Interpreter::new_bytecode(Bytes::from([
+            RJUMPI, 0x00, 0x03, RJUMPI, 0x00, 0x01, STOP, STOP,
+        ]));
+        interp.is_eof = true;
+        interp.stack.push(U256::from(1)).unwrap();
+        interp.stack.push(U256::from(0)).unwrap();
+        interp.gas = Gas::new(10000);
+
+        // dont jump
+        interp.step(&table, &mut host);
+        assert_eq!(interp.program_counter(), 3);
+        // jumps to last opcode
+        interp.step(&table, &mut host);
+        assert_eq!(interp.program_counter(), 7);
+    }
+
+    #[test]
+    fn rjumpv() {
+        let table = make_instruction_table::<_, PragueSpec>();
+        let mut host = DummyHost::default();
+        let mut interp = Interpreter::new_bytecode(Bytes::from([
+            RJUMPV,
+            0x01, // max index, 0 and 1
+            0x00, // first x0001
+            0x01,
+            0x00, // second 0x002
+            0x02,
+            NOP,
+            NOP,
+            NOP,
+            RJUMP,
+            0xFF,
+            (-12i8) as u8,
+            STOP,
+        ]));
+        interp.is_eof = true;
+        interp.gas = Gas::new(1000);
+
+        // more then max_index
+        interp.stack.push(U256::from(10)).unwrap();
+        interp.step(&table, &mut host);
+        assert_eq!(interp.program_counter(), 6);
+
+        // cleanup
+        interp.step(&table, &mut host);
+        interp.step(&table, &mut host);
+        interp.step(&table, &mut host);
+        interp.step(&table, &mut host);
+        assert_eq!(interp.program_counter(), 0);
+
+        // jump to first index of vtable
+        interp.stack.push(U256::from(0)).unwrap();
+        interp.step(&table, &mut host);
+        assert_eq!(interp.program_counter(), 7);
+
+        // cleanup
+        interp.step(&table, &mut host);
+        interp.step(&table, &mut host);
+        interp.step(&table, &mut host);
+        assert_eq!(interp.program_counter(), 0);
+
+        // jump to second index of vtable
+        interp.stack.push(U256::from(1)).unwrap();
+        interp.step(&table, &mut host);
+        assert_eq!(interp.program_counter(), 8);
     }
 }

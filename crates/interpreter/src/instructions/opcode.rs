@@ -86,6 +86,8 @@ where
     core::array::from_fn(|i| outer(table[i]))
 }
 
+pub const NOP: u8 = JUMPDEST;
+
 // When adding new opcodes:
 // 1. add the opcode to the list below; make sure it's sorted by opcode value
 // 2. add its gas info in the `opcode_gas_info` function below
