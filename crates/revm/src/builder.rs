@@ -201,13 +201,14 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
     /// # Example
     /// ```rust
     /// use revm::{EvmBuilder, Handler, primitives::{SpecId, HandlerCfg}};
+    /// use revm_interpreter::primitives::CancunSpec;
     /// let builder = EvmBuilder::default();
     /// // set up empty handler cfg
     /// let handler = HandlerCfg::new(SpecId::LATEST);
     /// let builder = builder.with_handler_cfg(handler);
     ///
     /// // get the desired handler
-    /// let mainnet = Handler::mainnet();
+    /// let mainnet = Handler::mainnet::<CancunSpec>();
     /// let builder = builder.with_handler(mainnet);
     ///
     /// // build the EVM
