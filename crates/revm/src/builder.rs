@@ -195,36 +195,6 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
         }
     }
 
-    /// This modifies the [EvmBuilder] to make it easy to construct an [`Evm`] with a _specific_
-    /// handler.
-    ///
-    /// # Example
-    /// ```rust
-    /// use revm::{EvmBuilder, Handler, primitives::{SpecId, HandlerCfg}};
-    /// use revm_interpreter::primitives::CancunSpec;
-    /// let builder = EvmBuilder::default();
-    /// // set up empty handler cfg
-    /// let handler = HandlerCfg::new(SpecId::LATEST);
-    /// let builder = builder.with_handler_cfg(handler);
-    ///
-    /// // get the desired handler
-    /// let mainnet = Handler::mainnet::<CancunSpec>();
-    /// let builder = builder.with_handler(mainnet);
-    ///
-    /// // build the EVM
-    /// let evm = builder.build();
-    /// ```
-    pub fn with_handler(
-        self,
-        handler: Handler<'a, Evm<'a, EXT, DB>, EXT, DB>,
-    ) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
-        EvmBuilder {
-            context: self.context,
-            handler,
-            phantom: PhantomData,
-        }
-    }
-
     /// Sets the [`EmptyDB`] and resets the [`Handler`] to default mainnet.
     pub fn reset_handler_with_empty_db(self) -> EvmBuilder<'a, HandlerStage, EXT, EmptyDB> {
         EvmBuilder {
@@ -301,6 +271,33 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
     /// This is useful for adding optimism handle register.
     fn handler(handler_cfg: HandlerCfg) -> Handler<'a, Evm<'a, EXT, DB>, EXT, DB> {
         Handler::new(handler_cfg)
+    }
+
+    /// This modifies the [EvmBuilder] to make it easy to construct an [`Evm`] with a _specific_
+    /// handler.
+    ///
+    /// # Example
+    /// ```rust
+    /// use revm::{EvmBuilder, Handler, primitives::{SpecId, HandlerCfg}};
+    /// use revm_interpreter::primitives::CancunSpec;
+    /// let builder = EvmBuilder::default();
+    ///
+    /// // get the desired handler
+    /// let mainnet = Handler::mainnet::<CancunSpec>();
+    /// let builder = builder.with_handler(mainnet);
+    ///
+    /// // build the EVM
+    /// let evm = builder.build();
+    /// ```
+    pub fn with_handler(
+        self,
+        handler: Handler<'a, Evm<'a, EXT, DB>, EXT, DB>,
+    ) -> EvmBuilder<'a, BuilderStage, EXT, DB> {
+        EvmBuilder {
+            context: self.context,
+            handler,
+            phantom: PhantomData,
+        }
     }
 
     /// Builds the [`Evm`].
