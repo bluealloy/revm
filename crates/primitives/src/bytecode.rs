@@ -1,60 +1,44 @@
 pub mod eof;
 pub mod legacy;
 
-use crate::{hex, keccak256, Bytes, B256, KECCAK_EMPTY};
-use bitvec::{
-    prelude::{bitvec, Lsb0},
-    vec::BitVec,
-};
-use core::fmt::Debug;
-use legacy::JumpMap;
-use std::sync::Arc;
+pub use eof::Eof;
+pub use legacy::{JumpTable, LegacyAnalyzedBytecode};
+
+use crate::{keccak256, Bytes, B256, KECCAK_EMPTY};
 
 /// State of the [`Bytecode`] analysis.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum BytecodeState {
+pub enum Bytecode {
     /// No analysis has been performed.
-    Raw,
-    /// The bytecode has been checked for validity.
-    Checked { len: usize },
+    LegacyRaw(Bytes),
     /// The bytecode has been analyzed for valid jump destinations.
-    Analysed { len: usize, jump_map: JumpMap },
-}
-
-#[derive(Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Bytecode {
-    pub bytecode: Bytes,
-    pub state: BytecodeState,
-}
-
-impl Debug for Bytecode {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.debug_struct("Bytecode")
-            .field("bytecode", &self.bytecode)
-            .field("state", &self.state)
-            .finish()
-    }
+    LegacyAnalyzed(LegacyAnalyzedBytecode),
+    /// Ethereum Object Format
+    Eof(Eof),
 }
 
 impl Default for Bytecode {
     #[inline]
     fn default() -> Self {
-        Bytecode::new()
+        // Creates a new legacy analyzed [`Bytecode`] with exactly one STOP opcode.
+        Self::new()
     }
 }
 
 impl Bytecode {
-    /// Creates a new [`Bytecode`] with exactly one STOP opcode.
+    // Creates a new legacy analyzed [`Bytecode`] with exactly one STOP opcode.
     #[inline]
     pub fn new() -> Self {
-        Bytecode {
-            bytecode: Bytes::from_static(&[0]),
-            state: BytecodeState::Analysed {
-                len: 0,
-                jump_map: JumpMap(Arc::new(bitvec![u8, Lsb0; 0])),
-            },
+        Self::LegacyAnalyzed(LegacyAnalyzedBytecode::default())
+    }
+
+    /// Return jump table if bytecode is analyzed
+    #[inline]
+    pub fn legacy_jump_table(&self) -> Option<&JumpTable> {
+        match &self {
+            Self::LegacyAnalyzed(analyzed) => Some(analyzed.jump_table()),
+            _ => None,
         }
     }
 
@@ -67,13 +51,15 @@ impl Bytecode {
         }
     }
 
+    /// Return true if bytecode is EOF.
+    pub fn is_eof(&self) -> bool {
+        matches!(self, Self::Eof(_))
+    }
+
     /// Creates a new raw [`Bytecode`].
     #[inline]
     pub fn new_raw(bytecode: Bytes) -> Self {
-        Self {
-            bytecode,
-            state: BytecodeState::Raw,
-        }
+        Self::LegacyRaw(bytecode)
     }
 
     /// Create new checked bytecode
@@ -81,37 +67,59 @@ impl Bytecode {
     /// # Safety
     ///
     /// Bytecode need to end with STOP (0x00) opcode as checked bytecode assumes
-    /// that it is safe to iterate over bytecode without checking lengths
-    pub unsafe fn new_checked(bytecode: Bytes, len: usize) -> Self {
-        Self {
+    /// that it is safe to iteßrate over bytecode without checking lengths
+    pub unsafe fn new_analyzed(
+        bytecode: Bytes,
+        original_len: usize,
+        jump_table: JumpTable,
+    ) -> Self {
+        Self::LegacyAnalyzed(LegacyAnalyzedBytecode::new(
             bytecode,
-            state: BytecodeState::Checked { len },
-        }
+            original_len,
+            jump_table,
+        ))
     }
 
     /// Returns a reference to the bytecode.
+    /// In case of EOF this will be the first code section.
     #[inline]
-    pub fn bytes(&self) -> &Bytes {
-        &self.bytecode
+    pub fn bytecode_bytes(&self) -> Bytes {
+        match self {
+            Self::LegacyRaw(bytes) => bytes.clone(),
+            Self::LegacyAnalyzed(analyzed) => analyzed.original_bytes(),
+            Self::Eof(eof) => eof
+                .body
+                .code(0)
+                .expect("Valid EOF has at least one code section")
+                .clone(),
+        }
+    }
+
+    /// Returns false if bytecode can't be executed in Interpreter.
+    pub fn is_execution_ready(&self) -> bool {
+        match self {
+            Self::LegacyRaw(_) => false,
+            _ => true,
+        }
     }
 
     /// Returns a reference to the original bytecode.
     #[inline]
     pub fn original_bytes(&self) -> Bytes {
-        match self.state {
-            BytecodeState::Raw => self.bytecode.clone(),
-            BytecodeState::Checked { len } | BytecodeState::Analysed { len, .. } => {
-                self.bytecode.slice(0..len)
-            }
+        match self {
+            Self::LegacyRaw(bytes) => bytes.clone(),
+            Self::LegacyAnalyzed(analyzed) => analyzed.original_bytes(),
+            Self::Eof(eof) => eof.raw().expect("TODO see if we should remove Option"),
         }
     }
 
-    /// Returns the length of the bytecode.
+    /// Returns the length of the raw bytes.
     #[inline]
     pub fn len(&self) -> usize {
-        match self.state {
-            BytecodeState::Raw => self.bytecode.len(),
-            BytecodeState::Checked { len, .. } | BytecodeState::Analysed { len, .. } => len,
+        match self {
+            Self::LegacyRaw(bytes) => bytes.len(),
+            Self::LegacyAnalyzed(analyzed) => analyzed.original_len(),
+            Self::Eof(eof) => eof.len(),
         }
     }
 
@@ -119,27 +127,5 @@ impl Bytecode {
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
-    }
-
-    /// Returns the [`BytecodeState`].
-    #[inline]
-    pub fn state(&self) -> &BytecodeState {
-        &self.state
-    }
-
-    pub fn to_checked(self) -> Self {
-        match self.state {
-            BytecodeState::Raw => {
-                let len = self.bytecode.len();
-                let mut padded_bytecode = Vec::with_capacity(len + 33);
-                padded_bytecode.extend_from_slice(&self.bytecode);
-                padded_bytecode.resize(len + 33, 0);
-                Self {
-                    bytecode: padded_bytecode.into(),
-                    state: BytecodeState::Checked { len },
-                }
-            }
-            _ => self,
-        }
     }
 }

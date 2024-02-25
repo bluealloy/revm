@@ -3,7 +3,6 @@ mod contract;
 mod shared_memory;
 mod stack;
 
-pub use analysis::BytecodeLocked;
 pub use contract::Contract;
 pub use shared_memory::{next_multiple_of_32, SharedMemory};
 pub use stack::{Stack, STACK_LIMIT};
@@ -21,15 +20,21 @@ pub use self::shared_memory::EMPTY_SHARED_MEMORY;
 
 #[derive(Debug)]
 pub struct Interpreter {
-    /// Contract information and invoking data
-    pub contract: Box<Contract>,
     /// The current instruction pointer.
     pub instruction_pointer: *const u8,
+    /// The gas state.
+    pub gas: Gas,
+    /// Contract information and invoking data
+    pub contract: Box<Contract>,
     /// The execution control flag. If this is not set to `Continue`, the interpreter will stop
     /// execution.
     pub instruction_result: InstructionResult,
-    /// The gas state.
-    pub gas: Gas,
+    /// Currently run Bytecode that instruction result will point to.
+    /// Bytecode is owned by the contract.
+    pub bytecode: Bytes,
+    /// Whether we are Interpreting the Ethereum Object Format (EOF) bytecode.
+    /// This is local field that is set from `contract.is_eof()`.
+    pub is_eof: bool,
     /// Shared memory.
     ///
     /// Note: This field is only set while running the interpreter loop.
@@ -37,6 +42,8 @@ pub struct Interpreter {
     pub shared_memory: SharedMemory,
     /// Stack.
     pub stack: Stack,
+    /// CALLF, RETF stack.
+    pub callf_stack: Vec<(usize, usize)>,
     /// The return data buffer for internal calls.
     /// It has multi usage:
     ///
@@ -45,8 +52,6 @@ pub struct Interpreter {
     pub return_data_buffer: Bytes,
     /// Whether the interpreter is in "staticcall" mode, meaning no state changes can happen.
     pub is_static: bool,
-    /// Whether we are Interpreting the Ethereum Object Format (EOF) bytecode.
-    pub is_eof: bool,
     /// Actions that the EVM should do.
     ///
     /// Set inside CALL or CREATE instructions and RETURN or REVERT instructions. Additionally those instructions will set
@@ -56,7 +61,7 @@ pub struct Interpreter {
 
 impl Default for Interpreter {
     fn default() -> Self {
-        Self::new(Box::new(Contract::default()), 0, false, false)
+        Self::new(Box::new(Contract::default()), 0, false)
     }
 }
 
@@ -124,12 +129,19 @@ impl InterpreterAction {
 
 impl Interpreter {
     /// Create new interpreter
-    pub fn new(contract: Box<Contract>, gas_limit: u64, is_static: bool, is_eof: bool) -> Self {
+    pub fn new(contract: Box<Contract>, gas_limit: u64, is_static: bool) -> Self {
+        if !contract.bytecode.is_execution_ready() {
+            panic!("Contract is not execution ready {:?}", contract.bytecode);
+        }
+        let is_eof = contract.bytecode.is_eof();
+        let bytecode = contract.bytecode.bytecode_bytes();
         Self {
-            instruction_pointer: contract.bytecode.as_ptr(),
+            instruction_pointer: bytecode.as_ptr(),
+            bytecode,
             contract,
             gas: Gas::new(gas_limit),
             instruction_result: InstructionResult::Continue,
+            callf_stack: vec![(0, 0)],
             is_static,
             is_eof,
             return_data_buffer: Bytes::new(),
@@ -146,13 +158,12 @@ impl Interpreter {
             Box::new(Contract::new(
                 Bytes::new(),
                 crate::primitives::Bytecode::new_raw(bytecode),
-                crate::primitives::B256::default(),
+                None,
                 crate::primitives::Address::default(),
                 crate::primitives::Address::default(),
                 U256::ZERO,
             )),
             0,
-            false,
             false,
         )
     }
@@ -301,10 +312,7 @@ impl Interpreter {
     pub fn program_counter(&self) -> usize {
         // SAFETY: `instruction_pointer` should be at an offset from the start of the bytecode.
         // In practice this is always true unless a caller modifies the `instruction_pointer` field manually.
-        unsafe {
-            self.instruction_pointer
-                .offset_from(self.contract.bytecode.as_ptr()) as usize
-        }
+        unsafe { self.instruction_pointer.offset_from(self.bytecode.as_ptr()) as usize }
     }
 
     /// Executes the instruction at the current instruction pointer.

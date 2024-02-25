@@ -44,8 +44,8 @@ impl<ExtDB: Default> Default for CacheDB<ExtDB> {
 impl<ExtDB> CacheDB<ExtDB> {
     pub fn new(db: ExtDB) -> Self {
         let mut contracts = HashMap::new();
-        contracts.insert(KECCAK_EMPTY, Bytecode::new());
-        contracts.insert(B256::ZERO, Bytecode::new());
+        contracts.insert(KECCAK_EMPTY, Bytecode::default());
+        contracts.insert(B256::ZERO, Bytecode::default());
         Self {
             accounts: HashMap::new(),
             contracts,

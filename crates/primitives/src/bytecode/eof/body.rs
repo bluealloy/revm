@@ -2,7 +2,8 @@ use crate::Bytes;
 
 use super::{EofHeader, TypesSection};
 
-#[derive(Default, Clone, Debug)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EofBody {
     types_section: Vec<TypesSection>,
     code_section: Vec<Bytes>,
@@ -12,6 +13,11 @@ pub struct EofBody {
 }
 
 impl EofBody {
+    // Get code section
+    pub fn code(&self, index: usize) -> Option<&Bytes> {
+        self.code_section.get(index)
+    }
+
     pub fn decode(input: &Bytes, header: &EofHeader) -> Result<Self, ()> {
         let header_len = header.len();
         let partial_body_len = header.sum_code_sizes + header.sum_container_sizes;

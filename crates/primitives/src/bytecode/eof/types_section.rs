@@ -1,6 +1,7 @@
 use super::decode_helpers::{consume_u16, consume_u8};
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, Copy)]
+#[derive(Debug, Clone, Default, Hash, PartialEq, Eq, Copy)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct TypesSection {
     /// inputs	1 byte	0x00-0x7F	number of stack elements the code section consumes
     pub inputs: u8,

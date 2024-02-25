@@ -1,7 +1,8 @@
 use super::decode_helpers::{consume_u16, consume_u8};
 
 /// EOF Header containing
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct EofHeader {
     /// Size of EOF types section.
     /// types section includes num of input and outputs and max stack size.

@@ -47,8 +47,11 @@ pub enum InstructionResult {
     /* External error */
     /// Fatal external error. Returned by database.
     FatalExternalError,
-    /* EOF */
+    /// Opcode called that are not found in EOF.
+    /// This should not happen if the bytecode is validated correctly.
     OpcodeDisabledInEof,
+    /// Legacy contract is calling opcode that is enabled only in EOF.
+    EOFOpcodeDisabledInLegacy,
 }
 
 impl From<SuccessReason> for InstructionResult {
@@ -138,6 +141,7 @@ macro_rules! return_error {
             | InstructionResult::CreateInitCodeSizeLimit
             | InstructionResult::FatalExternalError
             | InstructionResult::OpcodeDisabledInEof
+            | InstructionResult::EOFOpcodeDisabledInLegacy
     };
 }
 
@@ -260,6 +264,8 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::FatalExternalError => Self::FatalExternalError,
             // TODO(EOF) Check how to propagate error that should be a EVM panic!
             InstructionResult::OpcodeDisabledInEof => Self::FatalExternalError,
+            // TODO(EOF) make proper error
+            InstructionResult::EOFOpcodeDisabledInLegacy => Self::FatalExternalError,
         }
     }
 }

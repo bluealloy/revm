@@ -116,7 +116,7 @@ pub fn extcodecopy<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mu
     // Note: this can't panic because we resized memory to fit.
     interpreter
         .shared_memory
-        .set_data(memory_offset, code_offset, len, code.bytes());
+        .set_data(memory_offset, code_offset, len, &code.original_bytes());
 }
 
 pub fn blockhash<H: Host>(interpreter: &mut Interpreter, host: &mut H) {

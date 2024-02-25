@@ -1,4 +1,4 @@
-use super::analysis::{to_analysed, BytecodeLocked};
+use super::analysis::to_analysed;
 use crate::primitives::{Address, Bytecode, Bytes, Env, TransactTo, B256, U256};
 use crate::CallContext;
 
@@ -9,9 +9,9 @@ pub struct Contract {
     pub input: Bytes,
     /// Bytecode contains contract code, size of original code, analysis with gas block and jump table.
     /// Note that current code is extended with push padding and STOP at end.
-    pub bytecode: BytecodeLocked,
-    /// Bytecode hash.
-    pub hash: B256,
+    pub bytecode: Bytecode,
+    /// Bytecode hash for legacy. For EOF this would be None.
+    pub hash: Option<B256>,
     /// Contract address
     pub address: Address,
     /// Caller of the EVM.
@@ -26,7 +26,7 @@ impl Contract {
     pub fn new(
         input: Bytes,
         bytecode: Bytecode,
-        hash: B256,
+        hash: Option<B256>,
         address: Address,
         caller: Address,
         value: U256,
@@ -45,7 +45,7 @@ impl Contract {
 
     /// Creates a new contract from the given [`Env`].
     #[inline]
-    pub fn new_env(env: &Env, bytecode: Bytecode, hash: B256) -> Self {
+    pub fn new_env(env: &Env, bytecode: Bytecode, hash: Option<B256>) -> Self {
         let contract_address = match env.tx.transact_to {
             TransactTo::Call(caller) => caller,
             TransactTo::Create(..) => Address::ZERO,
@@ -65,7 +65,7 @@ impl Contract {
     pub fn new_with_context(
         input: Bytes,
         bytecode: Bytecode,
-        hash: B256,
+        hash: Option<B256>,
         call_context: &CallContext,
     ) -> Self {
         Self::new(
@@ -81,6 +81,9 @@ impl Contract {
     /// Returns whether the given position is a valid jump destination.
     #[inline]
     pub fn is_valid_jump(&self, pos: usize) -> bool {
-        self.bytecode.jump_map().is_valid(pos)
+        self.bytecode
+            .legacy_jump_table()
+            .map(|i| i.is_valid(pos))
+            .unwrap_or(false)
     }
 }

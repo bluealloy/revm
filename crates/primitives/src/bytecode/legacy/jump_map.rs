@@ -9,17 +9,17 @@ use std::{sync::Arc, vec::Vec};
 /// A map of valid `jump` destinations.
 #[derive(Clone, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct JumpMap(pub Arc<BitVec<u8>>);
+pub struct JumpTable(pub Arc<BitVec<u8>>);
 
-impl Debug for JumpMap {
+impl Debug for JumpTable {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.debug_struct("JumpMap")
+        f.debug_struct("JumpTable")
             .field("map", &hex::encode(self.0.as_raw_slice()))
             .finish()
     }
 }
 
-impl JumpMap {
+impl JumpTable {
     /// Get the raw bytes of the jump map
     #[inline]
     pub fn as_slice(&self) -> &[u8] {

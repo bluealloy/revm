@@ -52,7 +52,7 @@ pub fn codecopy<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
         memory_offset,
         code_offset,
         len,
-        interpreter.contract.bytecode.original_bytecode_slice(),
+        &interpreter.contract.bytecode.original_bytes(),
     );
 }
 

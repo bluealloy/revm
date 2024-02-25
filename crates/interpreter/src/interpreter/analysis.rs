@@ -1,11 +1,11 @@
+use revm_primitives::LegacyAnalyzedBytecode;
+
 use crate::opcode;
 use crate::primitives::{
     bitvec::prelude::{bitvec, BitVec, Lsb0},
-    keccak256,
-    legacy::JumpMap,
-    Bytecode, BytecodeState, Bytes, B256, KECCAK_EMPTY,
+    legacy::JumpTable,
+    Bytecode,
 };
-use core::fmt;
 use std::sync::Arc;
 
 /// Perform bytecode analysis.
@@ -14,25 +14,21 @@ use std::sync::Arc;
 ///
 /// If the bytecode is already analyzed, it is returned as-is.
 pub fn to_analysed(bytecode: Bytecode) -> Bytecode {
-    let (bytecode, len) = match bytecode.state {
-        BytecodeState::Raw => {
-            let len = bytecode.bytecode.len();
-            let checked = bytecode.to_checked();
-            (checked.bytecode, len)
+    let (bytes, len) = match bytecode {
+        Bytecode::LegacyRaw(bytecode) => {
+            let len = bytecode.len();
+            (bytecode, len)
         }
-        BytecodeState::Checked { len } => (bytecode.bytecode, len),
-        _ => return bytecode,
+        Bytecode::LegacyAnalyzed(analyzed) => return Bytecode::LegacyAnalyzed(analyzed),
+        _ => unreachable!("TODO(eof) Support for EOF"),
     };
-    let jump_map = analyze(bytecode.as_ref());
+    let jump_table = analyze(bytes.as_ref());
 
-    Bytecode {
-        bytecode,
-        state: BytecodeState::Analysed { len, jump_map },
-    }
+    Bytecode::LegacyAnalyzed(LegacyAnalyzedBytecode::new(bytes, len, jump_table))
 }
 
 /// Analyze bytecode to build a jump map.
-fn analyze(code: &[u8]) -> JumpMap {
+fn analyze(code: &[u8]) -> JumpTable {
     let mut jumps: BitVec<u8> = bitvec![u8, Lsb0; 0; code.len()];
 
     let range = code.as_ptr_range();
@@ -57,125 +53,5 @@ fn analyze(code: &[u8]) -> JumpMap {
         }
     }
 
-    JumpMap(Arc::new(jumps))
-}
-
-/// An analyzed bytecode.
-#[derive(Clone)]
-pub struct BytecodeLocked {
-    bytecode: Bytes,
-    original_len: usize,
-    jump_map: JumpMap,
-}
-
-impl fmt::Debug for BytecodeLocked {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("BytecodeLocked")
-            .field("bytecode", &self.bytecode)
-            .field("original_len", &self.original_len)
-            .field(
-                "jump_map",
-                &crate::primitives::hex::encode(self.jump_map.as_slice()),
-            )
-            .finish()
-    }
-}
-
-impl Default for BytecodeLocked {
-    #[inline]
-    fn default() -> Self {
-        Bytecode::default()
-            .try_into()
-            .expect("Bytecode default is analysed code")
-    }
-}
-
-impl TryFrom<Bytecode> for BytecodeLocked {
-    type Error = ();
-
-    #[inline]
-    fn try_from(bytecode: Bytecode) -> Result<Self, Self::Error> {
-        if let BytecodeState::Analysed { len, jump_map } = bytecode.state {
-            Ok(BytecodeLocked {
-                bytecode: bytecode.bytecode,
-                original_len: len,
-                jump_map,
-            })
-        } else {
-            Err(())
-        }
-    }
-}
-
-impl BytecodeLocked {
-    /// Returns a raw pointer to the underlying byte slice.
-    #[inline]
-    pub fn as_ptr(&self) -> *const u8 {
-        self.bytecode.as_ptr()
-    }
-
-    /// Returns the length of the bytecode.
-    #[inline]
-    pub fn len(&self) -> usize {
-        self.original_len
-    }
-
-    /// Returns whether the bytecode is empty.
-    #[inline]
-    pub fn is_empty(&self) -> bool {
-        self.original_len == 0
-    }
-
-    /// Calculate hash of the bytecode.
-    #[inline]
-    pub fn hash_slow(&self) -> B256 {
-        if self.is_empty() {
-            KECCAK_EMPTY
-        } else {
-            keccak256(self.original_bytecode_slice())
-        }
-    }
-
-    #[inline]
-    pub fn unlock(self) -> Bytecode {
-        Bytecode {
-            bytecode: self.bytecode,
-            state: BytecodeState::Analysed {
-                len: self.original_len,
-                jump_map: self.jump_map,
-            },
-        }
-    }
-
-    /// Returns a reference to the bytecode.
-    /// Note that this is the analyzed bytecode, which contains extra padding.
-    #[inline]
-    pub fn bytecode(&self) -> &Bytes {
-        &self.bytecode
-    }
-
-    /// Returns the `Bytes` of the original bytecode by slicing the analyzed bytecode.
-    #[inline]
-    pub fn original_bytecode(&self) -> Bytes {
-        self.bytecode.slice(..self.original_len)
-    }
-
-    /// Returns the original bytecode as a byte slice.
-    #[inline]
-    pub fn original_bytecode_slice(&self) -> &[u8] {
-        match self.bytecode.get(..self.original_len) {
-            Some(slice) => slice,
-            None => debug_unreachable!(
-                "original_bytecode_slice OOB: {} > {}",
-                self.original_len,
-                self.bytecode.len()
-            ),
-        }
-    }
-
-    /// Returns a reference to the jump map.
-    #[inline]
-    pub fn jump_map(&self) -> &JumpMap {
-        &self.jump_map
-    }
+    JumpTable(Arc::new(jumps))
 }

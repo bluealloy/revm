@@ -62,8 +62,7 @@ pub fn jump<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     if interpreter.contract.is_valid_jump(dest) {
         // SAFETY: In analysis we are checking create our jump table and we do check above to be
         // sure that jump is safe to execute.
-        interpreter.instruction_pointer =
-            unsafe { interpreter.contract.bytecode.as_ptr().add(dest) };
+        interpreter.instruction_pointer = unsafe { interpreter.bytecode.as_ptr().add(dest) };
     } else {
         interpreter.instruction_result = InstructionResult::InvalidJump;
     }
@@ -78,8 +77,7 @@ pub fn jumpi<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
         if interpreter.contract.is_valid_jump(dest) {
             // SAFETY: In analysis we are checking if jump is valid destination and
             // this `if` makes this unsafe block safe.
-            interpreter.instruction_pointer =
-                unsafe { interpreter.contract.bytecode.as_ptr().add(dest) };
+            interpreter.instruction_pointer = unsafe { interpreter.bytecode.as_ptr().add(dest) };
         } else {
             interpreter.instruction_result = InstructionResult::InvalidJump
         }
@@ -92,6 +90,15 @@ pub fn jumpdest_or_nop<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
 
 pub fn callf<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
+    gas!(interpreter, gas::LOW);
+
+    let idx = read_i16(interpreter.instruction_pointer) as isize;
+    // TODO Check stack with EOF types.
+    if interpreter.callf_stack.len() < 1024 {
+        // TODO(EOF) change error
+        interpreter.instruction_result = InstructionResult::CallStackOverflow;
+        return;
+    }
 }
 
 pub fn retf<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {

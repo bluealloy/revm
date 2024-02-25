@@ -8,6 +8,8 @@ pub use body::EofBody;
 pub use header::EofHeader;
 pub use types_section::TypesSection;
 
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Eof {
     pub header: EofHeader,
     pub body: EofBody,
@@ -15,6 +17,15 @@ pub struct Eof {
 }
 
 impl Eof {
+    /// Returns len of the header and body in bytes.
+    pub fn len(&self) -> usize {
+        self.header.len() + self.header.body_len()
+    }
+
+    pub fn raw(&self) -> Option<Bytes> {
+        self.raw.clone()
+    }
+
     pub fn decode(raw: Bytes) -> Result<Self, ()> {
         let (header, _) = EofHeader::decode(&raw)?;
         let body = EofBody::decode(&raw, &header)?;

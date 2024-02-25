@@ -591,7 +591,7 @@ impl JournaledState {
         let (acc, is_cold) = self.load_account(address, db)?;
         if acc.info.code.is_none() {
             if acc.info.code_hash == KECCAK_EMPTY {
-                let empty = Bytecode::new();
+                let empty = Bytecode::default();
                 acc.info.code = Some(empty);
             } else {
                 let code = db

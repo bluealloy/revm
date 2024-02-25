@@ -305,12 +305,13 @@ impl<DB: Database> EvmContext<DB> {
         }
 
         // Create address
-        let mut init_code_hash = B256::ZERO;
+        let mut init_code_hash = None;
         let created_address = match inputs.scheme {
             CreateScheme::Create => inputs.caller.create(old_nonce),
             CreateScheme::Create2 { salt } => {
-                init_code_hash = keccak256(&inputs.init_code);
-                inputs.caller.create2(salt.to_be_bytes(), init_code_hash)
+                let hash = keccak256(&inputs.init_code);
+                init_code_hash = Some(hash);
+                inputs.caller.create2(salt.to_be_bytes(), hash)
             }
         };
 
@@ -347,7 +348,7 @@ impl<DB: Database> EvmContext<DB> {
         Ok(FrameOrResult::new_create_frame(
             created_address,
             checkpoint,
-            Interpreter::new(contract, gas.limit(), false, false),
+            Interpreter::new(contract, gas.limit(), false),
         ))
     }
 
@@ -416,7 +417,7 @@ impl<DB: Database> EvmContext<DB> {
             let contract = Box::new(Contract::new_with_context(
                 inputs.input.clone(),
                 bytecode,
-                code_hash,
+                Some(code_hash),
                 &inputs.context,
             ));
             // TODO(eof) flag
@@ -424,7 +425,7 @@ impl<DB: Database> EvmContext<DB> {
             Ok(FrameOrResult::new_call_frame(
                 inputs.return_memory_offset.clone(),
                 checkpoint,
-                Interpreter::new(contract, gas.limit(), inputs.is_static, false),
+                Interpreter::new(contract, gas.limit(), inputs.is_static),
             ))
         } else {
             self.journaled_state.checkpoint_commit();
@@ -547,9 +548,6 @@ impl<DB: Database> EvmContext<DB> {
         // Do analysis of bytecode straight away.
         let bytecode = match self.env.cfg.perf_analyse_created_bytecodes {
             AnalysisKind::Raw => Bytecode::new_raw(interpreter_result.output.clone()),
-            AnalysisKind::Check => {
-                Bytecode::new_raw(interpreter_result.output.clone()).to_checked()
-            }
             AnalysisKind::Analyse => {
                 to_analysed(Bytecode::new_raw(interpreter_result.output.clone()))
             }

@@ -699,8 +699,6 @@ pub enum CreateScheme {
 pub enum AnalysisKind {
     /// Do not perform bytecode analysis.
     Raw,
-    /// Check the bytecode for validity.
-    Check,
     /// Perform bytecode analysis.
     #[default]
     Analyse,

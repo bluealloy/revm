@@ -9,8 +9,8 @@ macro_rules! error_on_static_call {
 
 macro_rules! error_on_disabled_eof {
     ($interp:expr) => {
-        if $interp.is_static {
-            $interp.instruction_result = InstructionResult::OpcodeDisabledInEof;
+        if !$interp.is_eof {
+            $interp.instruction_result = InstructionResult::EOFOpcodeDisabledInLegacy;
             return;
         }
     };
