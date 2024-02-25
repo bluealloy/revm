@@ -90,7 +90,7 @@ where
     fn clone(&self) -> Self {
         Self {
             context: self.context.clone(),
-            cfg: self.cfg.clone(),
+            cfg: self.cfg,
         }
     }
 }
