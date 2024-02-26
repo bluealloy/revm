@@ -14,6 +14,7 @@ use crate::{
     Context, FrameResult,
 };
 use core::ops::Mul;
+use std::string::ToString;
 use std::sync::Arc;
 
 pub fn optimism_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, EXT, DB>) {
