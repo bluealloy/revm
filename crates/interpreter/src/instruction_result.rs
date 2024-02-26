@@ -52,6 +52,10 @@ pub enum InstructionResult {
     OpcodeDisabledInEof,
     /// Legacy contract is calling opcode that is enabled only in EOF.
     EOFOpcodeDisabledInLegacy,
+    /// EOF function stack overflow
+    EOFFunctionStackOverflow,
+    /// EOF idx is out of bounds
+    EOFCodeIdxOutOfBounds,
 }
 
 impl From<SuccessReason> for InstructionResult {
@@ -142,6 +146,8 @@ macro_rules! return_error {
             | InstructionResult::FatalExternalError
             | InstructionResult::OpcodeDisabledInEof
             | InstructionResult::EOFOpcodeDisabledInLegacy
+            | InstructionResult::EOFFunctionStackOverflow
+            | InstructionResult::EOFCodeIdxOutOfBounds
     };
 }
 
@@ -266,6 +272,10 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::OpcodeDisabledInEof => Self::FatalExternalError,
             // TODO(EOF) make proper error
             InstructionResult::EOFOpcodeDisabledInLegacy => Self::FatalExternalError,
+            // TODO(EOF)
+            InstructionResult::EOFFunctionStackOverflow => Self::FatalExternalError,
+            // TODO(EOF)
+            InstructionResult::EOFCodeIdxOutOfBounds => Self::FatalExternalError,
         }
     }
 }

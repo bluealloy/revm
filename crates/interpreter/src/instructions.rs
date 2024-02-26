@@ -14,5 +14,6 @@ pub mod memory;
 pub mod opcode;
 pub mod stack;
 pub mod system;
+pub mod utility;
 
 pub use opcode::{Instruction, OpCode, OPCODE_JUMPMAP};

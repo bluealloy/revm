@@ -9,10 +9,10 @@ pub use stack::{Stack, STACK_LIMIT};
 
 use crate::{
     primitives::Bytes, push, push_b256, return_ok, return_revert, CallInputs, CallOutcome,
-    CreateInputs, CreateOutcome, Gas, Host, InstructionResult,
+    CreateInputs, CreateOutcome, FunctionStack, Gas, Host, InstructionResult,
 };
 use core::cmp::min;
-use revm_primitives::U256;
+use revm_primitives::{Bytecode, U256};
 use std::borrow::ToOwned;
 use std::boxed::Box;
 
@@ -42,8 +42,8 @@ pub struct Interpreter {
     pub shared_memory: SharedMemory,
     /// Stack.
     pub stack: Stack,
-    /// CALLF, RETF stack.
-    pub callf_stack: Vec<(usize, usize)>,
+    /// EOF function stack.
+    pub function_stack: FunctionStack,
     /// The return data buffer for internal calls.
     /// It has multi usage:
     ///
@@ -141,7 +141,7 @@ impl Interpreter {
             contract,
             gas: Gas::new(gas_limit),
             instruction_result: InstructionResult::Continue,
-            callf_stack: vec![(0, 0)],
+            function_stack: FunctionStack::default(),
             is_static,
             is_eof,
             return_data_buffer: Bytes::new(),
@@ -166,6 +166,19 @@ impl Interpreter {
             0,
             false,
         )
+    }
+
+    /// Load EOF code into interpreter. PC is assumed to be correctly set
+    pub(crate) fn load_eof_code(&mut self, idx: usize, pc: usize) {
+        // SAFETY: eof flag is true only if bytecode is Eof.
+        let Bytecode::Eof(eof) = &self.contract.bytecode else {
+            panic!("Expected EOF bytecode")
+        };
+        let Some(code) = eof.body.code(idx) else {
+            panic!("Code not found")
+        };
+        self.bytecode = code.clone();
+        self.instruction_pointer = unsafe { self.bytecode.as_ptr().offset(pc as isize) };
     }
 
     /// Inserts the output of a `create` call into the interpreter.

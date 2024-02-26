@@ -1,12 +1,9 @@
+use super::utility::{read_i16, read_u16};
 use crate::{
     gas,
     primitives::{Bytes, Spec, U256},
     Host, InstructionResult, Interpreter, InterpreterResult,
 };
-
-fn read_i16(ptr: *const u8) -> i16 {
-    unsafe { i16::from_be_bytes(core::slice::from_raw_parts(ptr, 2).try_into().unwrap()) }
-}
 
 pub fn rjump<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
@@ -92,21 +89,44 @@ pub fn callf<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, gas::LOW);
 
-    let idx = read_i16(interpreter.instruction_pointer) as isize;
+    let idx = read_u16(interpreter.instruction_pointer) as usize;
     // TODO Check stack with EOF types.
-    if interpreter.callf_stack.len() < 1024 {
-        // TODO(EOF) change error
-        interpreter.instruction_result = InstructionResult::CallStackOverflow;
+
+    if interpreter.function_stack.return_stack_len() == 1024 {
+        interpreter.instruction_result = InstructionResult::EOFFunctionStackOverflow;
         return;
     }
+
+    // push current idx and PC to the callf stack.
+    // PC is incremented by 2 to point to the next instruction after callf.
+    interpreter
+        .function_stack
+        .push(interpreter.program_counter() + 2, idx);
+
+    interpreter.load_eof_code(idx, 0)
 }
 
 pub fn retf<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
+    gas!(interpreter, gas::RETF_GAS);
+
+    let Some(fframe) = interpreter.function_stack.pop() else {
+        panic!("Expected function frame")
+    };
+
+    interpreter.load_eof_code(fframe.idx, fframe.pc);
 }
 
 pub fn jumpf<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
+    gas!(interpreter, gas::LOW);
+
+    let idx = read_u16(interpreter.instruction_pointer) as usize;
+
+    // TODO(EOF) do types stack checks
+
+    interpreter.function_stack.set_current_code_idx(idx);
+    interpreter.load_eof_code(idx, 0)
 }
 
 pub fn pc<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
@@ -256,5 +276,17 @@ mod test {
         interp.stack.push(U256::from(1)).unwrap();
         interp.step(&table, &mut host);
         assert_eq!(interp.program_counter(), 8);
+    }
+
+    #[test]
+    fn callf() {
+        let table = make_instruction_table::<_, PragueSpec>();
+        let mut host = DummyHost::default();
+        let mut interp = Interpreter::new_bytecode(Bytes::from([RJUMP, 0x00, 0x02, STOP, STOP]));
+        interp.is_eof = true;
+        interp.gas = Gas::new(10000);
+
+        interp.step(&table, &mut host);
+        assert_eq!(interp.program_counter(), 5);
     }
 }

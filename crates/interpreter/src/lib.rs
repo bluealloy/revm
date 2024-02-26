@@ -14,6 +14,7 @@ mod macros;
 
 mod call_outcome;
 mod create_outcome;
+mod function_stack;
 pub mod gas;
 mod host;
 mod inner_models;
@@ -24,6 +25,7 @@ mod interpreter;
 // Reexport primary types.
 pub use call_outcome::CallOutcome;
 pub use create_outcome::CreateOutcome;
+pub use function_stack::{FunctionReturnFrame, FunctionStack};
 pub use gas::Gas;
 pub use host::{DummyHost, Host, SStoreResult};
 pub use inner_models::*;
