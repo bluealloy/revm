@@ -1,11 +1,17 @@
 /// Function return frame.
 /// Needed information for returning from a function.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct FunctionReturnFrame {
     /// The index of the code container that this frame is executing.
     pub idx: usize,
     /// The program counter where frame execution should continue.
     pub pc: usize,
+}
+
+impl FunctionReturnFrame {
+    pub fn new(idx: usize, pc: usize) -> Self {
+        Self { idx, pc }
+    }
 }
 
 #[derive(Debug, Default)]

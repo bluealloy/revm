@@ -29,7 +29,7 @@ impl TypesSection {
     }
 
     pub fn validate(&self) -> Result<(), ()> {
-        if self.inputs <= 0x7f || self.outputs <= 0x80 || self.max_stack_size <= 0x03FF {
+        if self.inputs > 0x7f || self.outputs > 0x80 || self.max_stack_size > 0x03FF {
             return Err(());
         }
         Ok(())

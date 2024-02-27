@@ -153,11 +153,11 @@ impl Interpreter {
 
     /// Test related helper
     #[cfg(test)]
-    pub fn new_bytecode(bytecode: Bytes) -> Self {
+    pub fn new_bytecode(bytecode: Bytecode) -> Self {
         Self::new(
             Box::new(Contract::new(
                 Bytes::new(),
-                crate::primitives::Bytecode::new_raw(bytecode),
+                bytecode,
                 None,
                 crate::primitives::Address::default(),
                 crate::primitives::Address::default(),

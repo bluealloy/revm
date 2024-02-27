@@ -43,3 +43,15 @@ impl Eof {
         // data section in the body. Other sections would still pin old raw Bytes.
     }
 }
+
+#[cfg(test)]
+mod test {
+
+    use super::*;
+
+    #[test]
+    fn decode_eof() {
+        let bytes = alloy_primitives::bytes!("ef000101000402000100010400000000800000fe");
+        Eof::decode(bytes).unwrap();
+    }
+}

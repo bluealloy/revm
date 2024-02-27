@@ -13,14 +13,14 @@ use std::sync::Arc;
 /// The analysis finds and caches valid jump destinations for later execution as an optimization step.
 ///
 /// If the bytecode is already analyzed, it is returned as-is.
+#[inline]
 pub fn to_analysed(bytecode: Bytecode) -> Bytecode {
     let (bytes, len) = match bytecode {
         Bytecode::LegacyRaw(bytecode) => {
             let len = bytecode.len();
             (bytecode, len)
         }
-        Bytecode::LegacyAnalyzed(analyzed) => return Bytecode::LegacyAnalyzed(analyzed),
-        _ => unreachable!("TODO(eof) Support for EOF"),
+        n => return n,
     };
     let jump_table = analyze(bytes.as_ref());
 

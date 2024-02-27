@@ -187,19 +187,21 @@ pub fn unknown<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
 
 #[cfg(test)]
 mod test {
-    use revm_primitives::PragueSpec;
+    use revm_primitives::{bytes, eof::EofBody, Bytecode, Eof, PragueSpec};
 
     use super::*;
     use crate::{
-        opcode::{make_instruction_table, NOP, RJUMP, RJUMPI, RJUMPV, STOP},
-        DummyHost, Gas, Interpreter,
+        opcode::{make_instruction_table, CALLF, JUMPF, NOP, RETF, RJUMP, RJUMPI, RJUMPV, STOP},
+        DummyHost, FunctionReturnFrame, Gas, Interpreter,
     };
 
     #[test]
     fn rjump() {
         let table = make_instruction_table::<_, PragueSpec>();
         let mut host = DummyHost::default();
-        let mut interp = Interpreter::new_bytecode(Bytes::from([RJUMP, 0x00, 0x02, STOP, STOP]));
+        let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(Bytes::from([
+            RJUMP, 0x00, 0x02, STOP, STOP,
+        ])));
         interp.is_eof = true;
         interp.gas = Gas::new(10000);
 
@@ -211,9 +213,9 @@ mod test {
     fn rjumpi() {
         let table = make_instruction_table::<_, PragueSpec>();
         let mut host = DummyHost::default();
-        let mut interp = Interpreter::new_bytecode(Bytes::from([
+        let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(Bytes::from([
             RJUMPI, 0x00, 0x03, RJUMPI, 0x00, 0x01, STOP, STOP,
-        ]));
+        ])));
         interp.is_eof = true;
         interp.stack.push(U256::from(1)).unwrap();
         interp.stack.push(U256::from(0)).unwrap();
@@ -231,7 +233,7 @@ mod test {
     fn rjumpv() {
         let table = make_instruction_table::<_, PragueSpec>();
         let mut host = DummyHost::default();
-        let mut interp = Interpreter::new_bytecode(Bytes::from([
+        let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(Bytes::from([
             RJUMPV,
             0x01, // max index, 0 and 1
             0x00, // first x0001
@@ -245,7 +247,7 @@ mod test {
             0xFF,
             (-12i8) as u8,
             STOP,
-        ]));
+        ])));
         interp.is_eof = true;
         interp.gas = Gas::new(1000);
 
@@ -278,15 +280,56 @@ mod test {
         assert_eq!(interp.program_counter(), 8);
     }
 
+    fn dummy_eof() -> Eof {
+        let bytes = bytes!("ef000101000402000100010400000000800000fe");
+        Eof::decode(bytes).unwrap()
+    }
+
     #[test]
-    fn callf() {
+    fn callf_retf() {
         let table = make_instruction_table::<_, PragueSpec>();
         let mut host = DummyHost::default();
-        let mut interp = Interpreter::new_bytecode(Bytes::from([RJUMP, 0x00, 0x02, STOP, STOP]));
-        interp.is_eof = true;
+        let mut eof = dummy_eof();
+
+        eof.body.code_section.clear();
+        eof.header.code_sizes.clear();
+
+        let bytes1 = Bytes::from([CALLF, 0x00, 0x01, JUMPF, 0x00, 0x01]);
+        eof.header.code_sizes.push(bytes1.len() as u16);
+        eof.body.code_section.push(bytes1.clone());
+        let bytes2 = Bytes::from([STOP, RETF]);
+        eof.header.code_sizes.push(bytes2.len() as u16);
+        eof.body.code_section.push(bytes2.clone());
+
+        let mut interp = Interpreter::new_bytecode(Bytecode::Eof(eof));
         interp.gas = Gas::new(10000);
 
+        assert_eq!(interp.function_stack.current_code_idx, 0);
+        assert!(interp.function_stack.return_stack.is_empty());
+
+        // CALLF
         interp.step(&table, &mut host);
-        assert_eq!(interp.program_counter(), 5);
+
+        assert_eq!(interp.function_stack.current_code_idx, 1);
+        assert_eq!(
+            interp.function_stack.return_stack[0],
+            FunctionReturnFrame::new(0, 3)
+        );
+        assert_eq!(interp.instruction_pointer, bytes2.as_ptr());
+
+        // STOP
+        interp.step(&table, &mut host);
+        // RETF
+        interp.step(&table, &mut host);
+
+        assert_eq!(interp.function_stack.current_code_idx, 0);
+        assert_eq!(interp.function_stack.return_stack, Vec::new());
+        assert_eq!(interp.program_counter(), 3);
+
+        // JUMPF
+        interp.step(&table, &mut host);
+        assert_eq!(interp.function_stack.current_code_idx, 1);
+        assert_eq!(interp.function_stack.return_stack, Vec::new());
+        assert_eq!(interp.instruction_pointer, bytes2.as_ptr());
     }
 }

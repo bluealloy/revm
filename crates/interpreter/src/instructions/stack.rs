@@ -83,7 +83,7 @@ pub fn exchange<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
 
 #[cfg(test)]
 mod test {
-    use revm_primitives::PragueSpec;
+    use revm_primitives::{Bytecode, PragueSpec};
 
     use super::*;
     use crate::{
@@ -96,8 +96,9 @@ mod test {
     fn dupn() {
         let table = make_instruction_table::<_, PragueSpec>();
         let mut host = DummyHost::default();
-        let mut interp =
-            Interpreter::new_bytecode(Bytes::from([DUPN, 0x00, DUPN, 0x01, DUPN, 0x02]));
+        let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(Bytes::from([
+            DUPN, 0x00, DUPN, 0x01, DUPN, 0x02,
+        ])));
         interp.is_eof = true;
         interp.gas = Gas::new(10000);
 
@@ -115,7 +116,8 @@ mod test {
     fn swapn() {
         let table = make_instruction_table::<_, PragueSpec>();
         let mut host = DummyHost::default();
-        let mut interp = Interpreter::new_bytecode(Bytes::from([SWAPN, 0x00, SWAPN, 0x01]));
+        let mut interp =
+            Interpreter::new_bytecode(Bytecode::LegacyRaw(Bytes::from([SWAPN, 0x00, SWAPN, 0x01])));
         interp.is_eof = true;
         interp.gas = Gas::new(10000);
 
@@ -134,7 +136,9 @@ mod test {
     fn exchange() {
         let table = make_instruction_table::<_, PragueSpec>();
         let mut host = DummyHost::default();
-        let mut interp = Interpreter::new_bytecode(Bytes::from([EXCHANGE, 0x00, EXCHANGE, 0x11]));
+        let mut interp = Interpreter::new_bytecode(Bytecode::LegacyRaw(Bytes::from([
+            EXCHANGE, 0x00, EXCHANGE, 0x11,
+        ])));
         interp.is_eof = true;
         interp.gas = Gas::new(10000);
 
