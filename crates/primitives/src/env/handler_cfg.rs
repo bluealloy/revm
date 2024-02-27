@@ -139,6 +139,11 @@ impl EnvWithHandlerCfg {
         }
     }
 
+    /// Returns the specification id.
+    pub const fn spec_id(&self) -> SpecId {
+        self.handler_cfg.spec_id
+    }
+
     /// Enables the optimism handle register.
     #[cfg(feature = "optimism")]
     pub fn enable_optimism(&mut self) {
