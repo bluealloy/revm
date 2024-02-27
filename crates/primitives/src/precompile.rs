@@ -1,6 +1,7 @@
 use crate::{Bytes, Env};
 use core::fmt;
 use dyn_clone::DynClone;
+use std::boxed::Box;
 
 /// A precompile operation result.
 ///
