@@ -187,7 +187,7 @@ pub fn unknown<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
 
 #[cfg(test)]
 mod test {
-    use revm_primitives::{bytes, eof::EofBody, Bytecode, Eof, PragueSpec};
+    use revm_primitives::{bytes, Bytecode, Eof, PragueSpec};
 
     use super::*;
     use crate::{
@@ -286,7 +286,7 @@ mod test {
     }
 
     #[test]
-    fn callf_retf() {
+    fn callf_retf_jumpf() {
         let table = make_instruction_table::<_, PragueSpec>();
         let mut host = DummyHost::default();
         let mut eof = dummy_eof();
