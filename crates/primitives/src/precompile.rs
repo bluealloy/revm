@@ -1,6 +1,6 @@
-use crate::Env;
-use alloy_primitives::Bytes;
+use crate::{Bytes, Env};
 use core::fmt;
+use dyn_clone::DynClone;
 
 /// A precompile operation result.
 ///
@@ -9,6 +9,33 @@ pub type PrecompileResult = Result<(u64, Bytes), PrecompileError>;
 
 pub type StandardPrecompileFn = fn(&Bytes, u64) -> PrecompileResult;
 pub type EnvPrecompileFn = fn(&Bytes, u64, env: &Env) -> PrecompileResult;
+
+/// Clonable precompile trait. It is used to create a boxed precompile.
+pub trait ClonablePrecompileTrait: DynClone + Send + Sync {
+    fn call(&self, bytes: &Bytes, gas_price: u64, env: &Env) -> PrecompileResult;
+}
+
+dyn_clone::clone_trait_object!(ClonablePrecompileTrait);
+
+/// Box over clonable precompile trait.
+pub type BoxedPrecompileTrait = Box<dyn ClonablePrecompileTrait>;
+
+#[derive(Clone)]
+pub enum Precompile {
+    Standard(StandardPrecompileFn),
+    Env(EnvPrecompileFn),
+    BoxedEnv(BoxedPrecompileTrait),
+}
+
+impl fmt::Debug for Precompile {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Precompile::Standard(_) => f.write_str("Standard"),
+            Precompile::Env(_) => f.write_str("Env"),
+            Precompile::BoxedEnv(_) => f.write_str("BoxedEnv"),
+        }
+    }
+}
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum PrecompileError {
@@ -61,5 +88,24 @@ impl fmt::Display for PrecompileError {
                 write!(f, "verifying blob kzg proof failed")
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn clonable_box_compiles() {
+        #[derive(Clone)]
+        struct MyPrecompile {}
+
+        impl ClonablePrecompileTrait for MyPrecompile {
+            fn call(&self, _bytes: &Bytes, _gas_price: u64, _env: &Env) -> PrecompileResult {
+                PrecompileResult::Err(PrecompileError::OutOfGas)
+            }
+        }
+
+        let _ = Precompile::BoxedEnv(Box::new(MyPrecompile {}));
     }
 }

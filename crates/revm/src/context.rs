@@ -453,6 +453,7 @@ impl<DB: Database> EvmContext<DB> {
         let out = match precompile {
             Precompile::Standard(fun) => fun(input_data, gas.limit()),
             Precompile::Env(fun) => fun(input_data, gas.limit(), self.env()),
+            Precompile::BoxedEnv(fun) => fun.call(input_data, gas.limit(), self.env()),
         };
 
         let mut result = InterpreterResult {
