@@ -51,6 +51,14 @@ impl Bytecode {
         }
     }
 
+    /// Return reference to the EOF if bytecode is EOF.
+    pub fn eof(&self) -> Option<&Eof> {
+        match self {
+            Self::Eof(eof) => Some(eof),
+            _ => None,
+        }
+    }
+
     /// Return true if bytecode is EOF.
     pub fn is_eof(&self) -> bool {
         matches!(self, Self::Eof(_))

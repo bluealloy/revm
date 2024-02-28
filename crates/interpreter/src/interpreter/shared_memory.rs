@@ -259,7 +259,6 @@ impl SharedMemory {
             self.slice_mut(memory_offset, len).fill(0);
             return;
         }
-
         let data_end = min(data_offset + len, data.len());
         let data_len = data_end - data_offset;
         debug_assert!(data_offset < data.len() && data_end <= data.len());

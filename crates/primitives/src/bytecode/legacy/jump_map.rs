@@ -1,10 +1,6 @@
-use crate::{hex, keccak256, Bytes, B256, KECCAK_EMPTY};
-use bitvec::{
-    prelude::{bitvec, Lsb0},
-    vec::BitVec,
-};
-use core::fmt::Debug;
-use std::{sync::Arc, vec::Vec};
+use crate::hex;
+use bitvec::vec::BitVec;
+use std::{fmt::Debug, sync::Arc};
 
 /// A map of valid `jump` destinations.
 #[derive(Clone, Default, PartialEq, Eq, Hash)]

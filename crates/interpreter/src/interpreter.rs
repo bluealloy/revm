@@ -12,7 +12,7 @@ use crate::{
     CreateInputs, CreateOutcome, FunctionStack, Gas, Host, InstructionResult,
 };
 use core::cmp::min;
-use revm_primitives::{Bytecode, U256};
+use revm_primitives::{Bytecode, Eof, U256};
 use std::borrow::ToOwned;
 use std::boxed::Box;
 
@@ -149,6 +149,11 @@ impl Interpreter {
             stack: Stack::new(),
             next_action: InterpreterAction::None,
         }
+    }
+
+    #[inline]
+    pub fn eof(&self) -> Option<&Eof> {
+        self.contract.bytecode.eof()
     }
 
     /// Test related helper
