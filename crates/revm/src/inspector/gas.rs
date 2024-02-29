@@ -5,7 +5,7 @@ use revm_interpreter::CallOutcome;
 use crate::{
     interpreter::{CallInputs, CreateInputs, CreateOutcome},
     primitives::db::Database,
-    EvmContext, GetInspector, Inspector,
+    EvmContext, Inspector,
 };
 
 /// Helper [Inspector] that keeps track of gas.
@@ -23,12 +23,6 @@ impl GasInspector {
 
     pub fn last_gas_cost(&self) -> u64 {
         self.last_gas_cost
-    }
-}
-
-impl<DB: Database> GetInspector<'_, DB> for GasInspector {
-    fn get_inspector(&mut self) -> &mut dyn Inspector<DB> {
-        self
     }
 }
 
@@ -78,13 +72,11 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 
 #[cfg(test)]
 mod tests {
-    use core::ops::Range;
 
     use revm_interpreter::CallOutcome;
     use revm_interpreter::CreateOutcome;
 
     use crate::{
-        inspector::GetInspector,
         inspectors::GasInspector,
         interpreter::{CallInputs, CreateInputs, Interpreter},
         primitives::Log,
@@ -96,12 +88,6 @@ mod tests {
         pc: usize,
         gas_inspector: GasInspector,
         gas_remaining_steps: Vec<(usize, u64)>,
-    }
-
-    impl<DB: Database> GetInspector<'_, DB> for StackInspector {
-        fn get_inspector(&mut self) -> &mut dyn Inspector<DB> {
-            self
-        }
     }
 
     impl<DB: Database> Inspector<DB> for StackInspector {
@@ -128,9 +114,8 @@ mod tests {
             &mut self,
             context: &mut EvmContext<DB>,
             call: &mut CallInputs,
-            return_memory_offset: Range<usize>,
         ) -> Option<CallOutcome> {
-            self.gas_inspector.call(context, call, return_memory_offset)
+            self.gas_inspector.call(context, call)
         }
 
         fn call_end(

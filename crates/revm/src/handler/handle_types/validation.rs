@@ -3,7 +3,7 @@ use crate::{
     primitives::{db::Database, EVMError, Env, Spec},
     Context,
 };
-use alloc::sync::Arc;
+use std::sync::Arc;
 
 /// Handle that validates env.
 pub type ValidateEnvHandle<'a, DB> =

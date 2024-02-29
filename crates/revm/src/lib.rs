@@ -1,13 +1,13 @@
-#![doc = include_str!("../../../README.md")]
+#![doc = "Revm is a Rust EVM implementation."]
 #![warn(rustdoc::all, unreachable_pub)]
 #![allow(rustdoc::bare_urls)]
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
-#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 #![deny(unused_must_use, rust_2018_idioms)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[macro_use]
-extern crate alloc;
+#[cfg(not(feature = "std"))]
+extern crate alloc as std;
 
 // Define modules.
 
@@ -29,8 +29,7 @@ pub mod optimism;
 // Export items.
 
 pub use builder::EvmBuilder;
-pub use context::{Context, EvmContext};
-#[cfg(feature = "std")]
+pub use context::{Context, ContextWithHandlerCfg, EvmContext};
 pub use db::{
     CacheState, DBBox, State, StateBuilder, StateDBBox, TransitionAccount, TransitionState,
 };

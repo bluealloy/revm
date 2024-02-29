@@ -6,18 +6,17 @@ keywords = ["ethereum", "evm"]
 license = "MIT"
 repository = "https://github.com/bluealloy/revm"
 description = "Rust Ethereum Virtual Machine Executable"
-version = "0.2.0"
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+version = "0.2.2"
 
 [dependencies]
 hash-db = "0.15"
 hashbrown = "0.14"
 indicatif = "0.17"
 plain_hasher = "0.2"
-revm = { path = "../../crates/revm", version = "3.5.0", default-features = false, features = [
+revm = { path = "../../crates/revm", version = "6.1.0", default-features = false, features = [
     "ethersdb",
     "std",
-    "serde",
+    "serde-json",
     "c-kzg",
 ] }
 alloy-rlp = { version = "0.3", default-features = false, features = [

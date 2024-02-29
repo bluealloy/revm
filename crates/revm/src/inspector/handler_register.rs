@@ -1,15 +1,23 @@
-use core::cell::RefCell;
-
 use crate::{
     db::Database,
-    handler::register::{EvmHandler, EvmInstructionTables},
+    handler::register::EvmHandler,
     interpreter::{opcode, opcode::BoxedInstruction, InstructionResult, Interpreter},
+    primitives::EVMError,
     Evm, FrameOrResult, FrameResult, Inspector, JournalEntry,
 };
-use alloc::{boxed::Box, rc::Rc, sync::Arc, vec::Vec};
+use core::cell::RefCell;
+use revm_interpreter::opcode::InstructionTables;
+use std::{boxed::Box, rc::Rc, sync::Arc, vec::Vec};
 
-pub trait GetInspector<'a, DB: Database> {
+/// Provides access to an `Inspector` instance.
+pub trait GetInspector<DB: Database> {
     fn get_inspector(&mut self) -> &mut dyn Inspector<DB>;
+}
+
+impl<DB: Database, INSP: Inspector<DB>> GetInspector<DB> for INSP {
+    fn get_inspector(&mut self) -> &mut dyn Inspector<DB> {
+        self
+    }
 }
 
 /// Register Inspector handles that interact with Inspector instance.
@@ -17,18 +25,14 @@ pub trait GetInspector<'a, DB: Database> {
 ///
 /// # Note
 ///
-/// Handles that are overwritten:
-/// * SubCreate
-/// * SubCall
-/// * CreateFirstFrame
+/// Inspector handle register does not override any existing handlers, and it
+/// calls them before (or after) calling Inspector. This means that it is safe
+/// to use this register with any other register.
 ///
-///
-/// Few instructions handlers are wrapped twice once for `step` and `step_end`
+/// A few instructions handlers are wrapped twice once for `step` and `step_end`
 /// and in case of Logs and Selfdestruct wrapper is wrapped again for the
 /// `log` and `selfdestruct` calls.
-///
-/// `frame_return` is also wrapped so that Inspector could call `call_end` or `create_end`.
-pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
+pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<DB>>(
     handler: &mut EvmHandler<'a, EXT, DB>,
 ) {
     // Every instruction inside flat table that is going to be wrapped by inspector calls.
@@ -37,11 +41,11 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
         .take()
         .expect("Handler must have instruction table");
     let mut table = match table {
-        EvmInstructionTables::Plain(table) => table
+        InstructionTables::Plain(table) => table
             .into_iter()
             .map(|i| inspector_instruction(i))
             .collect::<Vec<_>>(),
-        EvmInstructionTables::Boxed(table) => table
+        InstructionTables::Boxed(table) => table
             .into_iter()
             .map(|i| inspector_instruction(i))
             .collect::<Vec<_>>(),
@@ -119,7 +123,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     }
 
     // cast vector to array.
-    handler.instruction_table = Some(EvmInstructionTables::Boxed(
+    handler.instruction_table = Some(InstructionTables::Boxed(
         table.try_into().unwrap_or_else(|_| unreachable!()),
     ));
 
@@ -131,44 +135,49 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
     // Create handle
     let create_input_stack_inner = create_input_stack.clone();
     let old_handle = handler.execution.create.clone();
-    handler.execution.create = Arc::new(move |ctx, mut inputs| -> FrameOrResult {
-        let inspector = ctx.external.get_inspector();
-        // call inspector create to change input or return outcome.
-        if let Some(outcome) = inspector.create(&mut ctx.evm, &mut inputs) {
+    handler.execution.create = Arc::new(
+        move |ctx, mut inputs| -> Result<FrameOrResult, EVMError<DB::Error>> {
+            let inspector = ctx.external.get_inspector();
+            // call inspector create to change input or return outcome.
+            if let Some(outcome) = inspector.create(&mut ctx.evm, &mut inputs) {
+                create_input_stack_inner.borrow_mut().push(inputs.clone());
+                return Ok(FrameOrResult::Result(FrameResult::Create(outcome)));
+            }
             create_input_stack_inner.borrow_mut().push(inputs.clone());
-            return FrameOrResult::Result(FrameResult::Create(outcome));
-        }
-        create_input_stack_inner.borrow_mut().push(inputs.clone());
 
-        let mut frame_or_result = old_handle(ctx, inputs);
+            let mut frame_or_result = old_handle(ctx, inputs);
 
-        let inspector = ctx.external.get_inspector();
-        if let FrameOrResult::Frame(frame) = &mut frame_or_result {
-            inspector.initialize_interp(&mut frame.frame_data_mut().interpreter, &mut ctx.evm)
-        }
-        frame_or_result
-    });
+            let inspector = ctx.external.get_inspector();
+            if let Ok(FrameOrResult::Frame(frame)) = &mut frame_or_result {
+                inspector.initialize_interp(&mut frame.frame_data_mut().interpreter, &mut ctx.evm)
+            }
+            frame_or_result
+        },
+    );
 
     // Call handler
     let call_input_stack_inner = call_input_stack.clone();
     let old_handle = handler.execution.call.clone();
-    handler.execution.call = Arc::new(move |ctx, mut inputs, range| -> FrameOrResult {
-        let inspector = ctx.external.get_inspector();
-        // call inspector callto change input or return outcome.
-        if let Some(outcome) = inspector.call(&mut ctx.evm, &mut inputs, range.clone()) {
+    handler.execution.call = Arc::new(
+        move |ctx, mut inputs| -> Result<FrameOrResult, EVMError<DB::Error>> {
+            let inspector = ctx.external.get_inspector();
+            let _mems = inputs.return_memory_offset.clone();
+            // call inspector callto change input or return outcome.
+            if let Some(outcome) = inspector.call(&mut ctx.evm, &mut inputs) {
+                call_input_stack_inner.borrow_mut().push(inputs.clone());
+                return Ok(FrameOrResult::Result(FrameResult::Call(outcome)));
+            }
             call_input_stack_inner.borrow_mut().push(inputs.clone());
-            return FrameOrResult::Result(FrameResult::Call(outcome));
-        }
-        call_input_stack_inner.borrow_mut().push(inputs.clone());
 
-        let mut frame_or_result = old_handle(ctx, inputs, range);
+            let mut frame_or_result = old_handle(ctx, inputs);
 
-        let inspector = ctx.external.get_inspector();
-        if let FrameOrResult::Frame(frame) = &mut frame_or_result {
-            inspector.initialize_interp(&mut frame.frame_data_mut().interpreter, &mut ctx.evm)
-        }
-        frame_or_result
-    });
+            let inspector = ctx.external.get_inspector();
+            if let Ok(FrameOrResult::Frame(frame)) = &mut frame_or_result {
+                inspector.initialize_interp(&mut frame.frame_data_mut().interpreter, &mut ctx.evm)
+            }
+            frame_or_result
+        },
+    );
 
     // call outcome
     let call_input_stack_inner = call_input_stack.clone();
@@ -213,7 +222,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<'a, DB>>(
 /// Outer closure that calls Inspector for every instruction.
 pub fn inspector_instruction<
     'a,
-    INSP: GetInspector<'a, DB>,
+    INSP: GetInspector<DB>,
     DB: Database,
     Instruction: Fn(&mut Interpreter, &mut Evm<'a, INSP, DB>) + 'a,
 >(
@@ -249,12 +258,10 @@ pub fn inspector_instruction<
 
 #[cfg(test)]
 mod tests {
-    use core::ops::Range;
 
     use super::*;
     use crate::{
         db::EmptyDB,
-        inspector::GetInspector,
         inspectors::NoOpInspector,
         interpreter::{opcode::*, CallInputs, CreateInputs, Interpreter},
         primitives::BerlinSpec,
@@ -284,12 +291,6 @@ mod tests {
         call_end: bool,
     }
 
-    impl<DB: Database> GetInspector<'_, DB> for StackInspector {
-        fn get_inspector(&mut self) -> &mut dyn Inspector<DB> {
-            self
-        }
-    }
-
     impl<DB: Database> Inspector<DB> for StackInspector {
         fn initialize_interp(&mut self, _interp: &mut Interpreter, _context: &mut EvmContext<DB>) {
             if self.initialize_interp_called {
@@ -310,7 +311,6 @@ mod tests {
             &mut self,
             context: &mut EvmContext<DB>,
             _call: &mut CallInputs,
-            _return_memory_offset: Range<usize>,
         ) -> Option<CallOutcome> {
             if self.call {
                 unreachable!("call should not be called twice")
@@ -403,5 +403,14 @@ mod tests {
         assert!(inspector.initialize_interp_called);
         assert!(inspector.call);
         assert!(inspector.call_end);
+    }
+
+    #[test]
+    fn test_inspector_reg() {
+        let mut noop = NoOpInspector;
+        let _evm = Evm::builder()
+            .with_external_context(&mut noop)
+            .append_handler_register(inspector_handle_register)
+            .build();
     }
 }

@@ -8,16 +8,21 @@ use crate::{
     interpreter::{return_ok, return_revert, Gas, InstructionResult},
     optimism,
     primitives::{
-        db::Database, spec_to_generic, Account, EVMError, ExecutionResult, HaltReason, HashMap,
-        InvalidTransaction, ResultAndState, Spec, SpecId, SpecId::REGOLITH, U256,
+        db::Database, spec_to_generic, Account, EVMError, Env, ExecutionResult, HaltReason,
+        HashMap, InvalidTransaction, ResultAndState, Spec, SpecId, SpecId::REGOLITH, U256,
     },
     Context, FrameResult,
 };
-use alloc::sync::Arc;
 use core::ops::Mul;
+use std::string::ToString;
+use std::sync::Arc;
 
 pub fn optimism_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, EXT, DB>) {
-    spec_to_generic!(handler.spec_id, {
+    spec_to_generic!(handler.cfg.spec_id, {
+        // validate environment
+        handler.validation.env = Arc::new(validate_env::<SPEC, DB>);
+        // Validate transaction against state.
+        handler.validation.tx_against_state = Arc::new(validate_tx_against_state::<SPEC, EXT, DB>);
         // load l1 data
         handler.pre_execution.load_accounts = Arc::new(load_accounts::<SPEC, EXT, DB>);
         // An estimated batch cost is charged from the caller and added to L1 Fee Vault.
@@ -31,15 +36,43 @@ pub fn optimism_handle_register<DB: Database, EXT>(handler: &mut EvmHandler<'_, 
     });
 }
 
+/// Validate environment for the Optimism chain.
+pub fn validate_env<SPEC: Spec, DB: Database>(env: &Env) -> Result<(), EVMError<DB::Error>> {
+    // Do not perform any extra validation for deposit transactions, they are pre-verified on L1.
+    if env.tx.optimism.source_hash.is_some() {
+        return Ok(());
+    }
+    // Important: validate block before tx.
+    env.validate_block_env::<SPEC>()?;
+
+    // Do not allow for a system transaction to be processed if Regolith is enabled.
+    let tx = &env.tx.optimism;
+    if tx.is_system_transaction.unwrap_or(false) && SPEC::enabled(SpecId::REGOLITH) {
+        return Err(InvalidTransaction::DepositSystemTxPostRegolith.into());
+    }
+
+    env.validate_tx::<SPEC>()?;
+    Ok(())
+}
+
+/// Don not perform any extra validation for deposit transactions, they are pre-verified on L1.
+pub fn validate_tx_against_state<SPEC: Spec, EXT, DB: Database>(
+    context: &mut Context<EXT, DB>,
+) -> Result<(), EVMError<DB::Error>> {
+    if context.evm.env.tx.optimism.source_hash.is_some() {
+        return Ok(());
+    }
+    mainnet::validate_tx_against_state::<SPEC, EXT, DB>(context)
+}
+
 /// Handle output of the transaction
 #[inline]
 pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     frame_result: &mut FrameResult,
-) {
+) -> Result<(), EVMError<DB::Error>> {
     let env = context.evm.env();
     let is_deposit = env.tx.optimism.source_hash.is_some();
-    let is_optimism = env.cfg.optimism;
     let tx_system = env.tx.optimism.is_system_transaction;
     let tx_gas_limit = env.tx.gas_limit;
     let is_regolith = SPEC::enabled(REGOLITH);
@@ -67,7 +100,7 @@ pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
             //   - Deposit transactions (all) report their gas used as normal. Refunds
             //     enabled.
             //   - Regular transactions report their gas used as normal.
-            if is_optimism && (!is_deposit || is_regolith) {
+            if !is_deposit || is_regolith {
                 // For regular transactions prior to Regolith and all transactions after
                 // Regolith, gas is reported as normal.
                 gas.erase_cost(remaining);
@@ -91,17 +124,18 @@ pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
             //   - Deposit transactions (all) report the actual gas used as the amount of
             //     gas used on failure. Refunds on remaining gas enabled.
             //   - Regular transactions receive a refund on remaining gas as normal.
-            if is_optimism && (!is_deposit || is_regolith) {
+            if !is_deposit || is_regolith {
                 gas.erase_cost(remaining);
             }
         }
         _ => {}
     }
     // Prior to Regolith, deposit transactions did not receive gas refunds.
-    let is_gas_refund_disabled = is_optimism && is_deposit && !is_regolith;
+    let is_gas_refund_disabled = env.cfg.is_gas_refund_disabled() || (is_deposit && !is_regolith);
     if !is_gas_refund_disabled {
         gas.set_final_refund::<SPEC>();
     }
+    Ok(())
 }
 
 /// Load account (make them warm) and l1 data from database.
@@ -111,7 +145,7 @@ pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
 ) -> Result<(), EVMError<DB::Error>> {
     // the L1-cost fee is only computed for Optimism non-deposit transactions.
 
-    if context.evm.env.cfg.optimism && context.evm.env.tx.optimism.source_hash.is_none() {
+    if context.evm.env.tx.optimism.source_hash.is_none() {
         let l1_block_info =
             crate::optimism::L1BlockInfo::try_fetch(&mut context.evm.db, SPEC::SPEC_ID)
                 .map_err(EVMError::Database)?;
@@ -132,8 +166,7 @@ pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
     let (caller_account, _) = context
         .evm
         .journaled_state
-        .load_account(context.evm.env.tx.caller, &mut context.evm.db)
-        .map_err(EVMError::Database)?;
+        .load_account(context.evm.env.tx.caller, &mut context.evm.db)?;
 
     // If the transaction is a deposit with a `mint` value, add the mint value
     // in wei to the caller's balance. This should be persisted to the database
@@ -181,16 +214,14 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     gas: &Gas,
 ) -> Result<(), EVMError<DB::Error>> {
-    let is_deposit =
-        context.evm.env.cfg.optimism && context.evm.env.tx.optimism.source_hash.is_some();
-    let disable_coinbase_tip = context.evm.env.cfg.optimism && is_deposit;
+    let is_deposit = context.evm.env.tx.optimism.source_hash.is_some();
 
     // transfer fee to coinbase/beneficiary.
-    if !disable_coinbase_tip {
+    if !is_deposit {
         mainnet::reward_beneficiary::<SPEC, EXT, DB>(context, gas)?;
     }
 
-    if context.evm.env.cfg.optimism && !is_deposit {
+    if !is_deposit {
         // If the transaction is not a deposit transaction, fees are paid out
         // to both the Base Fee Vault as well as the L1 Fee Vault.
         let Some(l1_block_info) = context.evm.l1_block_info.clone() else {
@@ -254,8 +285,7 @@ pub fn output<SPEC: Spec, EXT, DB: Database>(
         // we bubble up to the global return handler. The mint value will be persisted
         // and the caller nonce will be incremented there.
         let is_deposit = context.evm.env.tx.optimism.source_hash.is_some();
-        let optimism_regolith = context.evm.env.cfg.optimism && SPEC::enabled(REGOLITH);
-        if is_deposit && optimism_regolith {
+        if is_deposit && SPEC::enabled(REGOLITH) {
             return Err(EVMError::Transaction(
                 InvalidTransaction::HaltedDepositPostRegolith,
             ));
@@ -272,7 +302,6 @@ pub fn end<SPEC: Spec, EXT, DB: Database>(
 ) -> Result<ResultAndState, EVMError<DB::Error>> {
     evm_output.or_else(|err| {
         if matches!(err, EVMError::Transaction(_))
-            && context.evm.env().cfg.optimism
             && context.evm.env().tx.optimism.source_hash.is_some()
         {
             // If the transaction is a deposit transaction and it failed
@@ -340,9 +369,10 @@ mod tests {
 
     use super::*;
     use crate::{
-        db::InMemoryDB,
+        db::{EmptyDB, InMemoryDB},
         primitives::{
-            bytes, state::AccountInfo, Address, BedrockSpec, Bytes, Env, RegolithSpec, B256,
+            bytes, state::AccountInfo, Address, BedrockSpec, Bytes, Env, LatestSpec, RegolithSpec,
+            B256,
         },
         L1BlockInfo,
     };
@@ -363,7 +393,7 @@ mod tests {
             },
             0..0,
         ));
-        last_frame_return::<SPEC, _, _>(&mut ctx, &mut first_frame);
+        last_frame_return::<SPEC, _, _>(&mut ctx, &mut first_frame).unwrap();
         *first_frame.gas()
     }
 
@@ -371,7 +401,6 @@ mod tests {
     fn test_revert_gas() {
         let mut env = Env::default();
         env.tx.gas_limit = 100;
-        env.cfg.optimism = true;
         env.tx.optimism.source_hash = None;
 
         let gas =
@@ -382,25 +411,9 @@ mod tests {
     }
 
     #[test]
-    fn test_revert_gas_non_optimism() {
-        let mut env = Env::default();
-        env.tx.gas_limit = 100;
-        env.cfg.optimism = false;
-        env.tx.optimism.source_hash = None;
-
-        let gas =
-            call_last_frame_return::<BedrockSpec>(env, InstructionResult::Revert, Gas::new(90));
-        // else branch takes all gas.
-        assert_eq!(gas.remaining(), 0);
-        assert_eq!(gas.spend(), 100);
-        assert_eq!(gas.refunded(), 0);
-    }
-
-    #[test]
     fn test_consume_gas() {
         let mut env = Env::default();
         env.tx.gas_limit = 100;
-        env.cfg.optimism = true;
         env.tx.optimism.source_hash = Some(B256::ZERO);
 
         let gas =
@@ -414,7 +427,6 @@ mod tests {
     fn test_consume_gas_with_refund() {
         let mut env = Env::default();
         env.tx.gas_limit = 100;
-        env.cfg.optimism = true;
         env.tx.optimism.source_hash = Some(B256::ZERO);
 
         let mut ret_gas = Gas::new(90);
@@ -436,7 +448,6 @@ mod tests {
     fn test_consume_gas_sys_deposit_tx() {
         let mut env = Env::default();
         env.tx.gas_limit = 100;
-        env.cfg.optimism = true;
         env.tx.optimism.source_hash = Some(B256::ZERO);
 
         let gas = call_last_frame_return::<BedrockSpec>(env, InstructionResult::Stop, Gas::new(90));
@@ -577,5 +588,39 @@ mod tests {
                 },
             ))
         );
+    }
+
+    #[test]
+    fn test_validate_sys_tx() {
+        // mark the tx as a system transaction.
+        let mut env = Env::default();
+        env.tx.optimism.is_system_transaction = Some(true);
+        assert_eq!(
+            validate_env::<RegolithSpec, EmptyDB>(&env),
+            Err(EVMError::Transaction(
+                InvalidTransaction::DepositSystemTxPostRegolith
+            ))
+        );
+
+        // Pre-regolith system transactions should be allowed.
+        assert!(validate_env::<BedrockSpec, EmptyDB>(&env).is_ok());
+    }
+
+    #[test]
+    fn test_validate_deposit_tx() {
+        // Set source hash.
+        let mut env = Env::default();
+        env.tx.optimism.source_hash = Some(B256::ZERO);
+        assert!(validate_env::<RegolithSpec, EmptyDB>(&env).is_ok());
+    }
+
+    #[test]
+    fn test_validate_tx_against_state_deposit_tx() {
+        // Set source hash.
+        let mut env = Env::default();
+        env.tx.optimism.source_hash = Some(B256::ZERO);
+
+        // Nonce and balance checks should be skipped for deposit transactions.
+        assert!(validate_env::<LatestSpec, EmptyDB>(&env).is_ok());
     }
 }

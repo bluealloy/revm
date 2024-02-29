@@ -73,7 +73,7 @@ fn skip_test(path: &Path) -> bool {
         name,
         // funky test with `bigint 0x00` value in json :) not possible to happen on mainnet and require
         // custom json parser. https://github.com/ethereum/tests/issues/971
-        | "ValueOverflow.json"
+        |"ValueOverflow.json"| "ValueOverflowParis.json"
 
         // precompiles having storage is not possible
         | "RevertPrecompiledTouch_storage.json"
@@ -129,7 +129,7 @@ fn check_evm_execution<EXT>(
                     "errorMsg": error.unwrap_or_default(),
                     "evmResult": exec_result.as_ref().err().map(|e| e.to_string()).unwrap_or("Ok".to_string()),
                     "postLogsHash": logs_root,
-                    "fork": evm.handler.spec_id(),
+                    "fork": evm.handler.cfg().spec_id,
                     "test": test_name,
                     "d": test.indexes.data,
                     "g": test.indexes.gas,
@@ -240,7 +240,7 @@ pub fn execute_test_suite(
             cache_state.insert_account_with_storage(address, acc_info, info.storage);
         }
 
-        let mut env = Env::default();
+        let mut env = Box::<Env>::default();
         // for mainnet
         env.cfg.chain_id = 1;
         // env.cfg.spec_id is set down the road
@@ -255,7 +255,10 @@ pub fn execute_test_suite(
         // after the Merge prevrandao replaces mix_hash field in block and replaced difficulty opcode in EVM.
         env.block.prevrandao = unit.env.current_random;
         // EIP-4844
-        if let (Some(parent_blob_gas_used), Some(parent_excess_blob_gas)) = (
+        if let Some(current_excess_blob_gas) = unit.env.current_excess_blob_gas {
+            env.block
+                .set_blob_excess_gas_and_price(current_excess_blob_gas.to());
+        } else if let (Some(parent_blob_gas_used), Some(parent_excess_blob_gas)) = (
             unit.env.parent_blob_gas_used,
             unit.env.parent_excess_blob_gas,
         ) {
@@ -345,7 +348,7 @@ pub fn execute_test_suite(
                 let mut evm = Evm::builder()
                     .with_db(&mut state)
                     .modify_env(|e| *e = env.clone())
-                    .spec_id(spec_id)
+                    .with_spec_id(spec_id)
                     .build();
 
                 // do the deed
@@ -417,7 +420,7 @@ pub fn execute_test_suite(
                 let path = path.display();
                 println!("\nTraces:");
                 let mut evm = Evm::builder()
-                    .spec_id(spec_id)
+                    .with_spec_id(spec_id)
                     .with_db(state)
                     .with_external_context(TracerEip3155::new(Box::new(stdout()), false, false))
                     .append_handler_register(inspector_handle_register)

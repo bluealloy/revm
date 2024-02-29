@@ -3,9 +3,9 @@ use crate::{
     primitives::{Address, Output},
     JournalCheckpoint,
 };
-use alloc::boxed::Box;
 use core::ops::Range;
 use revm_interpreter::{CallOutcome, CreateOutcome, Gas, InstructionResult, InterpreterResult};
+use std::boxed::Box;
 
 /// Call CallStackFrame.
 #[derive(Debug)]

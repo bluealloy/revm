@@ -1,10 +1,10 @@
 use super::{cache::CacheState, state::DBBox, BundleState, State, TransitionState};
 use crate::db::EmptyDB;
-use alloc::collections::BTreeMap;
 use revm_interpreter::primitives::{
     db::{Database, DatabaseRef, WrapDatabaseRef},
     B256,
 };
+use std::collections::BTreeMap;
 
 /// Allows building of State and initializing it with different options.
 #[derive(Clone, Debug, PartialEq, Eq)]

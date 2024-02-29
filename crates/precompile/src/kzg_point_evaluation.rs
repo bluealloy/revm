@@ -1,6 +1,6 @@
 use crate::{Address, Error, Precompile, PrecompileResult, PrecompileWithAddress};
 use c_kzg::{Bytes32, Bytes48, KzgProof, KzgSettings};
-use revm_primitives::{hex_literal::hex, Env};
+use revm_primitives::{hex_literal::hex, Bytes, Env};
 use sha2::{Digest, Sha256};
 
 pub const POINT_EVALUATION: PrecompileWithAddress =
@@ -24,7 +24,7 @@ const RETURN_VALUE: &[u8; 64] = &hex!(
 /// | versioned_hash |  z  |  y  | commitment | proof |
 /// |     32         | 32  | 32  |     48     |   48  |
 /// with z and y being padded 32 byte big endian values
-fn run(input: &[u8], gas_limit: u64, env: &Env) -> PrecompileResult {
+fn run(input: &Bytes, gas_limit: u64, env: &Env) -> PrecompileResult {
     if gas_limit < GAS_COST {
         return Err(Error::OutOfGas);
     }
@@ -51,7 +51,7 @@ fn run(input: &[u8], gas_limit: u64, env: &Env) -> PrecompileResult {
     }
 
     // Return FIELD_ELEMENTS_PER_BLOB and BLS_MODULUS as padded 32 byte big endian values
-    Ok((GAS_COST, RETURN_VALUE.to_vec()))
+    Ok((GAS_COST, RETURN_VALUE.into()))
 }
 
 /// `VERSIONED_HASH_VERSION_KZG ++ sha256(commitment)[1..]`
@@ -70,15 +70,7 @@ fn verify_kzg_proof(
     proof: &Bytes48,
     kzg_settings: &KzgSettings,
 ) -> bool {
-    match KzgProof::verify_kzg_proof(commitment, z, y, proof, kzg_settings) {
-        Ok(ok) => ok,
-        #[cfg(not(debug_assertions))]
-        Err(_) => false,
-        #[cfg(debug_assertions)]
-        Err(e) => {
-            panic!("verify_kzg_proof returned an error: {e:?}");
-        }
-    }
+    KzgProof::verify_kzg_proof(commitment, z, y, proof, kzg_settings).unwrap_or(false)
 }
 
 #[inline]
@@ -121,8 +113,8 @@ mod tests {
         let expected_output = hex!("000000000000000000000000000000000000000000000000000000000000100073eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001");
         let gas = 50000;
         let env = Env::default();
-        let (actual_gas, actual_output) = run(&input, gas, &env).unwrap();
+        let (actual_gas, actual_output) = run(&input.into(), gas, &env).unwrap();
         assert_eq!(actual_gas, gas);
-        assert_eq!(actual_output, expected_output);
+        assert_eq!(actual_output[..], expected_output);
     }
 }

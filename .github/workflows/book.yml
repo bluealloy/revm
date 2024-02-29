@@ -81,7 +81,7 @@ jobs:
         run: mdbook build documentation
 
       - name: Build docs
-        run: RUSTDOCFLAGS="--enable-index-page -Zunstable-options" cargo +nightly doc --all --no-deps
+        run: RUSTDOCFLAGS="--enable-index-page -Zunstable-options" cargo doc --all --no-deps
 
       - name: Move docs to book folder
         run: |

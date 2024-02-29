@@ -6,7 +6,7 @@ keywords = ["no_std", "ethereum", "evm", "revm"]
 license = "MIT"
 name = "revm"
 repository = "https://github.com/bluealloy/revm"
-version = "3.5.0"
+version = "6.1.0"
 readme = "../../README.md"
 
 [package.metadata.docs.rs]
@@ -15,18 +15,24 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
 # revm
-revm-interpreter = { path = "../interpreter", version = "1.3.0", default-features = false }
-revm-precompile = { path = "../precompile", version = "2.2.0", default-features = false }
+revm-interpreter = { path = "../interpreter", version = "3.1.0", default-features = false }
+revm-precompile = { path = "../precompile", version = "4.1.0", default-features = false }
 
 # misc
-auto_impl = { version = "1.1", default-features = false }
+auto_impl = { version = "1.2", default-features = false }
+cfg-if = "1.0"
 
 # Optional
-serde = { version = "1.0", default-features = false, features = ["derive", "rc"], optional = true }
-serde_json = { version = "1.0", default-features = false, features = ["alloc"], optional = true }
+serde = { version = "1.0", default-features = false, features = [
+    "derive",
+    "rc",
+], optional = true }
+serde_json = { version = "1.0", default-features = false, features = [
+    "alloc",
+], optional = true }
 
 # ethersdb
-tokio = { version = "1.35", features = [
+tokio = { version = "1.36", features = [
     "rt-multi-thread",
     "macros",
 ], optional = true }
@@ -35,23 +41,47 @@ ethers-core = { version = "2.0", optional = true }
 futures = { version = "0.3.30", optional = true }
 
 [dev-dependencies]
-ethers-contract = { version = "2.0.11", default-features = false }
-anyhow = "1.0.79"
+ethers-contract = { version = "2.0.13", default-features = false }
+anyhow = "1.0.80"
 criterion = "0.5"
 indicatif = "0.17"
 
 [features]
-default = ["std", "c-kzg", "secp256k1"]
-std = ["serde?/std", "serde_json?/std", "serde_json?/preserve_order", "revm-interpreter/std", "revm-precompile/std"]
-serde = ["dep:serde", "dep:serde_json", "revm-interpreter/serde"]
+default = ["std", "c-kzg", "secp256k1", "portable"]
+std = [
+    "serde?/std",
+    "serde_json?/std",
+    "serde_json?/preserve_order",
+    "revm-interpreter/std",
+    "revm-precompile/std",
+]
+serde = ["dep:serde", "revm-interpreter/serde"]
+serde-json = ["serde", "dep:serde_json"]
 arbitrary = ["revm-interpreter/arbitrary"]
 asm-keccak = ["revm-interpreter/asm-keccak", "revm-precompile/asm-keccak"]
+portable = ["revm-precompile/portable", "revm-interpreter/portable"]
 
 test-utils = []
 
 optimism = ["revm-interpreter/optimism", "revm-precompile/optimism"]
+# Optimism default handler enabled Optimism handler register by default in EvmBuilder.
+optimism-default-handler = [
+    "optimism",
+    "revm-precompile/optimism-default-handler",
+    "revm-interpreter/optimism-default-handler",
+]
+negate-optimism-default-handler = [
+    "revm-precompile/negate-optimism-default-handler",
+    "revm-interpreter/negate-optimism-default-handler",
+]
 
-ethersdb = ["std", "tokio", "futures", "ethers-providers", "ethers-core"]
+ethersdb = [
+    "std",
+    "tokio",
+    "futures",
+    "ethers-providers",
+    "ethers-core",
+] # Negate optimism default handler
 
 dev = [
     "memory_limit",
@@ -82,7 +112,7 @@ required-features = ["ethersdb"]
 [[example]]
 name = "generate_block_traces"
 path = "../../examples/generate_block_traces.rs"
-required-features = ["std", "serde", "ethersdb"]
+required-features = ["std", "serde-json", "ethersdb"]
 
 [[bench]]
 name = "bench"

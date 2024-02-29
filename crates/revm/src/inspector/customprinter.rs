@@ -1,8 +1,6 @@
 //! Custom print inspector, it has step level information of execution.
 //! It is a great tool if some debugging is needed.
 
-use core::ops::Range;
-
 use revm_interpreter::CallOutcome;
 use revm_interpreter::CreateOutcome;
 
@@ -10,7 +8,7 @@ use crate::{
     inspectors::GasInspector,
     interpreter::{opcode, CallInputs, CreateInputs, Interpreter},
     primitives::{Address, U256},
-    Database, EvmContext, GetInspector, Inspector,
+    Database, EvmContext, Inspector,
 };
 
 /// Custom print [Inspector], it has step level information of execution.
@@ -19,12 +17,6 @@ use crate::{
 #[derive(Clone, Debug, Default)]
 pub struct CustomPrintTracer {
     gas_inspector: GasInspector,
-}
-
-impl<'a, DB: Database> GetInspector<'a, DB> for CustomPrintTracer {
-    fn get_inspector(&mut self) -> &mut dyn Inspector<DB> {
-        self
-    }
 }
 
 impl<DB: Database> Inspector<DB> for CustomPrintTracer {
@@ -85,7 +77,6 @@ impl<DB: Database> Inspector<DB> for CustomPrintTracer {
         &mut self,
         _context: &mut EvmContext<DB>,
         inputs: &mut CallInputs,
-        _return_memory_offset: Range<usize>,
     ) -> Option<CallOutcome> {
         println!(
             "SM CALL:   {:?}, context:{:?}, is_static:{:?}, transfer:{:?}, input_size:{:?}",
@@ -152,7 +143,7 @@ mod test {
                 tx.value = crate::primitives::U256::ZERO;
             })
             .with_external_context(CustomPrintTracer::default())
-            .spec_id(SpecId::BERLIN)
+            .with_spec_id(SpecId::BERLIN)
             .append_handler_register(inspector_handle_register)
             .build();
 

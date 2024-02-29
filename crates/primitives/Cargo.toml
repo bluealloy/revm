@@ -6,7 +6,7 @@ keywords = ["no_std", "ethereum", "evm", "revm", "types"]
 license = "MIT"
 name = "revm-primitives"
 repository = "https://github.com/bluealloy/revm"
-version = "1.3.0"
+version = "2.1.0"
 readme = "../../README.md"
 
 # Don't need to run build script outside of this repo
@@ -21,12 +21,12 @@ alloy-primitives = { version = "0.6", default-features = false, features = [
     "rlp",
 ] }
 hashbrown = "0.14"
-auto_impl = "1.1"
+auto_impl = "1.2"
 bitvec = { version = "1", default-features = false, features = ["alloc"] }
 bitflags = { version = "2.4.2", default-features = false }
 
 # For setting the CfgEnv KZGSettings. Enabled by c-kzg flag.
-c-kzg = { version = "0.4.0", default-features = false, optional = true }
+c-kzg = { version = "0.4.2", default-features = false, optional = true }
 once_cell = { version = "1.19", default-features = false, optional = true }
 
 # utility
@@ -44,7 +44,7 @@ serde = { version = "1.0", default-features = false, features = [
 hex = { version = "0.4", default-features = false }
 
 [features]
-default = ["std", "c-kzg"]
+default = ["std", "c-kzg", "portable"]
 std = [
     "serde?/std",
     "alloy-primitives/std",
@@ -63,8 +63,12 @@ serde = [
 ]
 arbitrary = ["std", "alloy-primitives/arbitrary", "bitflags/arbitrary"]
 asm-keccak = ["alloy-primitives/asm-keccak"]
+portable = ["c-kzg?/portable"]
 
 optimism = []
+# Optimism default handler enabled Optimism handler register by default in EvmBuilder.
+optimism-default-handler = ["optimism"]
+negate-optimism-default-handler = []
 
 dev = [
     "memory_limit",
@@ -84,4 +88,8 @@ optional_no_base_fee = []
 optional_beneficiary_reward = []
 
 # See comments in `revm-precompile`
-c-kzg = ["dep:c-kzg", "dep:once_cell", "dep:derive_more"]
+c-kzg = [
+    "dep:c-kzg",
+    "dep:once_cell",
+    "dep:derive_more",
+]
