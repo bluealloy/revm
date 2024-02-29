@@ -37,6 +37,8 @@ pub const TRANSACTION_ZERO_DATA: u64 = 4;
 pub const TRANSACTION_NON_ZERO_DATA_INIT: u64 = 16;
 pub const TRANSACTION_NON_ZERO_DATA_FRONTIER: u64 = 68;
 
+pub const EOF_CREATE_GAS: u64 = 32000;
+
 // berlin eip2929 constants
 pub const ACCESS_LIST_ADDRESS: u64 = 2400;
 pub const ACCESS_LIST_STORAGE_KEY: u64 = 1900;

@@ -1,6 +1,6 @@
 use super::constants::*;
-use crate::inner_models::SelfDestructResult;
 use crate::primitives::{Address, Spec, SpecId::*, U256};
+use crate::SelfDestructResult;
 use std::vec::Vec;
 
 #[allow(clippy::collapsible_else_if)]

@@ -12,23 +12,25 @@ extern crate alloc as std;
 #[macro_use]
 mod macros;
 
+mod call_inputs;
 mod call_outcome;
+mod create_inputs;
 mod create_outcome;
 mod function_stack;
 pub mod gas;
 mod host;
-mod inner_models;
 mod instruction_result;
 pub mod instructions;
 mod interpreter;
 
 // Reexport primary types.
+pub use call_inputs::{CallContext, CallInputs, CallScheme, Transfer};
 pub use call_outcome::CallOutcome;
+pub use create_inputs::{CreateInputs, CreateScheme};
 pub use create_outcome::CreateOutcome;
 pub use function_stack::{FunctionReturnFrame, FunctionStack};
 pub use gas::Gas;
-pub use host::{DummyHost, Host, SStoreResult};
-pub use inner_models::*;
+pub use host::{DummyHost, Host, SStoreResult, SelfDestructResult};
 pub use instruction_result::*;
 pub use instructions::{opcode, Instruction, OpCode, OPCODE_JUMPMAP};
 pub use interpreter::{

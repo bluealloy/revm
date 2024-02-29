@@ -336,8 +336,8 @@ opcodes! {
     // 0xE9
     // 0xEA
     // 0xEB
-    0xEC => CRATE3 => contract::create3::<H>,
-    0xED => CREATE4 => contract::create4::<H>,
+    0xEC => EOFCREATE => contract::eofcrate::<H>,
+    0xED => CREATE4 => contract::txcreate::<H>,
     0xEE => RETURNCONTRACT => contract::return_contract::<H>,
     // 0xEF
     0xF0 => CREATE       => contract::create::<false, H, SPEC>,
@@ -348,10 +348,10 @@ opcodes! {
     0xF5 => CREATE2      => contract::create::<true, H, SPEC>,
     // 0xF6
     0xF7 => RETURNDATALOAD => system::returndataload::<H>,
-    // 0xF8
-    // 0xF9
+    0xF8 => EXTCALL => contract::extcall::<H>,
+    0xF9 => EXFCALL => contract::extdcall::<H>,
     0xFA => STATICCALL   => contract::static_call::<H, SPEC>,
-    // 0xFB
+    0xFB => EXTSCALL => contract::extscall::<H>,
     // 0xFC
     0xFD => REVERT       => control::revert::<H, SPEC>,
     0xFE => INVALID      => control::invalid,

@@ -1,13 +1,12 @@
 use crate::{
     gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
-    interpreter::{Interpreter, InterpreterAction},
+    interpreter::Interpreter,
     primitives::{Address, Bytes, Log, LogData, Spec, SpecId::*, B256, U256},
-    CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, Host, InstructionResult,
-    SStoreResult, Transfer, MAX_INITCODE_SIZE,
+    Host, InstructionResult, SStoreResult,
 };
 use core::cmp::min;
 use revm_primitives::BLOCK_HASH_HISTORY;
-use std::{boxed::Box, vec::Vec};
+use std::vec::Vec;
 
 pub fn balance<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     pop_address!(interpreter, address);

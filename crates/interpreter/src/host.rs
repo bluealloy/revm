@@ -1,7 +1,4 @@
-use crate::{
-    primitives::{Address, Bytecode, Env, Log, B256, U256},
-    SelfDestructResult,
-};
+use crate::primitives::{Address, Bytecode, Env, Log, B256, U256};
 
 mod dummy;
 pub use dummy::DummyHost;
@@ -64,4 +61,14 @@ pub struct SStoreResult {
     pub new_value: U256,
     /// Is storage slot loaded from database
     pub is_cold: bool,
+}
+
+/// Result of a call that resulted in a self destruct.
+#[derive(Default, Clone, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct SelfDestructResult {
+    pub had_value: bool,
+    pub target_exists: bool,
+    pub is_cold: bool,
+    pub previously_destroyed: bool,
 }

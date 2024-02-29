@@ -3,27 +3,32 @@ mod call_helpers;
 pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges};
 
 use crate::{
-    gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
+    gas::{self, EOF_CREATE_GAS},
     interpreter::{Interpreter, InterpreterAction},
-    primitives::{Address, Bytes, Log, LogData, Spec, SpecId::*, B256, U256},
+    primitives::{Address, Bytes, Spec, SpecId::*, B256, U256},
     CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, Host, InstructionResult,
     Transfer, MAX_INITCODE_SIZE,
 };
-use core::cmp::min;
-use revm_primitives::BLOCK_HASH_HISTORY;
-use std::{boxed::Box, vec::Vec};
+use std::boxed::Box;
 
-pub fn create3<H: Host>(interpreter: &mut Interpreter, host: &mut H) {}
+pub fn eofcrate<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
+    error_on_disabled_eof!(interpreter);
+    gas!(interpreter, EOF_CREATE_GAS);
+    let initcontainer_index = unsafe { *interpreter.instruction_pointer };
+    pop!(interpreter, value, salt, data_offset, data_size);
 
-pub fn create4<H: Host>(interpreter: &mut Interpreter, host: &mut H) {}
+    interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(1) };
+}
+
+pub fn txcreate<H: Host>(interpreter: &mut Interpreter, host: &mut H) {}
 
 pub fn return_contract<H: Host>(interpreter: &mut Interpreter, host: &mut H) {}
 
-pub fn call2<H: Host>(interpreter: &mut Interpreter, host: &mut H) {}
+pub fn extcall<H: Host>(interpreter: &mut Interpreter, host: &mut H) {}
 
-pub fn delegate_call2<H: Host>(interpreter: &mut Interpreter, host: &mut H) {}
+pub fn extdcall<H: Host>(interpreter: &mut Interpreter, host: &mut H) {}
 
-pub fn static_call2<H: Host>(interpreter: &mut Interpreter, host: &mut H) {}
+pub fn extscall<H: Host>(interpreter: &mut Interpreter, host: &mut H) {}
 
 pub fn create<const IS_CREATE2: bool, H: Host, SPEC: Spec>(
     interpreter: &mut Interpreter,
