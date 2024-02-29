@@ -3,7 +3,7 @@ use crate::{Database, DatabaseRef};
 use ethers_core::types::{BlockId, H160 as eH160, H256, U64 as eU64};
 use ethers_providers::Middleware;
 use std::sync::Arc;
-use tokio::runtime::{Builder, Handle};
+use tokio::runtime::{Builder, Handle, RuntimeFlavor};
 
 #[derive(Debug)]
 pub struct EthersDB<M: Middleware> {
@@ -32,13 +32,30 @@ impl<M: Middleware> EthersDB<M> {
     }
 
     /// internal utility function to call tokio feature and wait for output
-    fn block_on<F: core::future::Future>(&self, f: F) -> F::Output {
+    fn block_on<F>(&self, f: F) -> F::Output
+    where
+        F: core::future::Future + Send,
+        F::Output: Send,
+    {
         match Handle::try_current() {
-            Ok(handle) => tokio::task::block_in_place(move || handle.block_on(f)),
+            Ok(handle) => match handle.runtime_flavor() {
+                RuntimeFlavor::CurrentThread => std::thread::scope(move |s| {
+                    s.spawn(move || {
+                        Builder::new_current_thread()
+                            .enable_all()
+                            .build()
+                            .unwrap()
+                            .block_on(f)
+                    })
+                    .join()
+                    .unwrap()
+                }),
+                _ => tokio::task::block_in_place(move || handle.block_on(f)),
+            },
             Err(_) => Builder::new_current_thread()
                 .enable_all()
                 .build()
-                .expect("Fail to build current_thread runtime")
+                .unwrap()
                 .block_on(f),
         }
     }
@@ -50,7 +67,7 @@ impl<M: Middleware> DatabaseRef for EthersDB<M> {
     fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         let add = eH160::from(address.0 .0);
 
-        let f = async {
+        let f = async move {
             let nonce = self.client.get_transaction_count(add, self.block_number);
             let balance = self.client.get_balance(add, self.block_number);
             let code = self.client.get_code(add, self.block_number);
