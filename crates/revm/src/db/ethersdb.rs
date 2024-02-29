@@ -39,6 +39,8 @@ impl<M: Middleware> EthersDB<M> {
     {
         match Handle::try_current() {
             Ok(handle) => match handle.runtime_flavor() {
+                // This essentially equals to tokio::task::spawn_blocking because tokio doesn't
+                // allow current_thread runtime to block_in_place
                 RuntimeFlavor::CurrentThread => std::thread::scope(move |s| {
                     s.spawn(move || {
                         Builder::new_current_thread()
