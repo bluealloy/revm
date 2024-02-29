@@ -141,6 +141,18 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
         &mut self.context.evm.env.tx
     }
 
+    /// Returns the reference of database
+    #[inline]
+    pub fn db(&self) -> &DB {
+        &self.context.evm.db
+    }
+
+    /// Returns the mutable reference of database
+    #[inline]
+    pub fn db_mut(&mut self) -> &mut DB {
+        &mut self.context.evm.db
+    }
+
     /// Returns the reference of block
     #[inline]
     pub fn block(&self) -> &BlockEnv {
