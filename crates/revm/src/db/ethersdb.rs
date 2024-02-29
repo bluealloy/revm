@@ -34,7 +34,11 @@ impl<M: Middleware> EthersDB<M> {
     /// internal utility function to call tokio feature and wait for output
     fn block_on<F: core::future::Future>(&self, f: F) -> F::Output {
         match Handle::try_current() {
-            Ok(handle) => handle.block_on(f),
+            Ok(handle) => {
+                tokio::task::block_in_place(move || {
+                    handle.block_on(f)
+                })
+            }
             Err(_) => Builder::new_current_thread()
                 .enable_all()
                 .build()
