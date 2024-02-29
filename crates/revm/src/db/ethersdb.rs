@@ -67,7 +67,7 @@ impl<M: Middleware> DatabaseRef for EthersDB<M> {
     fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
         let add = eH160::from(address.0 .0);
 
-        let f = async move {
+        let f = async {
             let nonce = self.client.get_transaction_count(add, self.block_number);
             let balance = self.client.get_balance(add, self.block_number);
             let code = self.client.get_code(add, self.block_number);
