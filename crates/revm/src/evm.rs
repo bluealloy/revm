@@ -146,7 +146,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     pub fn db(&self) -> &DB {
         &self.context.evm.db
     }
-    
+
     /// Returns the mutable reference of database
     #[inline]
     pub fn db_mut(&mut self) -> &mut DB {
