@@ -5,7 +5,7 @@ use ethers_providers::Middleware;
 use std::sync::Arc;
 use tokio::runtime::{Builder, Handle, RuntimeFlavor};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct EthersDB<M: Middleware> {
     client: Arc<M>,
     block_number: Option<BlockId>,
