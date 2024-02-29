@@ -1,6 +1,6 @@
+pub mod evmrunner;
 pub mod format_kzg_setup;
 pub mod statetest;
-pub mod evmrunner;
 
 use structopt::{clap::AppSettings, StructOpt};
 

@@ -1,12 +1,12 @@
+use core::fmt::Display;
 use revm::{
     db::BenchmarkDB,
     primitives::{Bytecode, TransactTo},
     Evm,
 };
-use std::time::Duration;
 use std::fs;
 use std::path::PathBuf;
-use core::fmt::Display;
+use std::time::Duration;
 use structopt::StructOpt;
 
 extern crate alloc;
@@ -19,7 +19,7 @@ pub enum Errors {
 }
 
 impl std::error::Error for Errors {}
- 
+
 impl Display for Errors {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
@@ -48,7 +48,6 @@ impl Cmd {
         if !self.path.exists() {
             return Err(Errors::PathNotExists);
         }
- 
 
         let contents = fs::read_to_string(&self.path).map_err(|_| Errors::InvalidFile)?;
         let contents_str = contents.to_string();
@@ -59,17 +58,15 @@ impl Cmd {
         // BenchmarkDB is dummy state that implements Database trait.
         // the bytecode is deployed at zero address.
         let mut evm = Evm::builder()
-            .with_db(BenchmarkDB::new_bytecode(Bytecode::new_raw(bytecode.into())))
+            .with_db(BenchmarkDB::new_bytecode(Bytecode::new_raw(
+                bytecode.into(),
+            )))
             .modify_tx_env(|tx| {
                 // execution globals block hash/gas_limit/coinbase/timestamp..
                 tx.caller = "0x0000000000000000000000000000000000000001"
                     .parse()
                     .unwrap();
-                tx.transact_to = TransactTo::Call(
-                    zero_address
-                        .parse()
-                        .unwrap(),
-                );
+                tx.transact_to = TransactTo::Call(zero_address.parse().unwrap());
             })
             .build();
 
