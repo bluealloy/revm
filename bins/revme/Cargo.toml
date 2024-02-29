@@ -10,8 +10,10 @@ version = "0.2.2"
 
 [dependencies]
 hash-db = "0.15"
+hex = "0.4"
 hashbrown = "0.14"
 indicatif = "0.17"
+microbench = "0.5"
 plain_hasher = "0.2"
 revm = { path = "../../crates/revm", version = "6.1.0", default-features = false, features = [
     "ethersdb",

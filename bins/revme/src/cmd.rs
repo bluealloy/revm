@@ -1,5 +1,6 @@
 pub mod format_kzg_setup;
 pub mod statetest;
+pub mod evmrunner;
 
 use structopt::{clap::AppSettings, StructOpt};
 
@@ -13,6 +14,8 @@ pub enum MainCmd {
         about = "Format kzg settings from a trusted setup file (.txt) into binary format (.bin)"
     )]
     FormatKzgSetup(format_kzg_setup::Cmd),
+    #[structopt(about = "Run evm script directly")]
+    Evm(evmrunner::Cmd),
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -21,6 +24,8 @@ pub enum Error {
     Statetest(#[from] statetest::Error),
     #[error(transparent)]
     KzgErrors(#[from] format_kzg_setup::KzgErrors),
+    #[error(transparent)]
+    EvmRunnerErrors(#[from] evmrunner::Errors),
 }
 
 impl MainCmd {
@@ -28,6 +33,7 @@ impl MainCmd {
         match self {
             Self::Statetest(cmd) => cmd.run().map_err(Into::into),
             Self::FormatKzgSetup(cmd) => cmd.run().map_err(Into::into),
+            Self::Evm(cmd) => cmd.run().map_err(Into::into),
         }
     }
 }
