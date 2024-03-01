@@ -14,7 +14,9 @@ pub enum MainCmd {
         about = "Format kzg settings from a trusted setup file (.txt) into binary format (.bin)"
     )]
     FormatKzgSetup(format_kzg_setup::Cmd),
-    #[structopt(about = "Run evm script directly")]
+    #[structopt(
+        about = "Evm runner command allows running arbitrary evm bytecode.\nBytecode can be provided from cli or from file with --path option."
+    )]
     Evm(evmrunner::Cmd),
 }
 

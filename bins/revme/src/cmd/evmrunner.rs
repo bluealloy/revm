@@ -1,60 +1,75 @@
-use core::fmt::Display;
 use revm::{
     db::BenchmarkDB,
-    primitives::{Bytecode, TransactTo},
+    primitives::{Address, Bytecode, TransactTo},
     Evm,
 };
-use std::fs;
+use std::io::Error as IoError;
 use std::path::PathBuf;
 use std::time::Duration;
+use std::{borrow::Cow, fs};
 use structopt::StructOpt;
 
 extern crate alloc;
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Errors {
+    #[error("The specified path does not exist")]
     PathNotExists,
-    InvalidFile,
+    #[error("Invalid bytecode")]
+    InvalidBytecode,
+    #[error("Invalid input")]
+    InvalidInput,
+    #[error("EVM Error")]
     EVMError,
+    #[error(transparent)]
+    Io(IoError),
 }
 
-impl std::error::Error for Errors {}
-
-impl Display for Errors {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        match self {
-            Errors::PathNotExists => write!(f, "The specified path does not exist"),
-            Errors::InvalidFile => write!(f, "Invalid EVM script"),
-            Errors::EVMError => write!(f, "VM error"),
-        }
+impl From<IoError> for Errors {
+    fn from(e: IoError) -> Self {
+        Errors::Io(e)
     }
 }
 
-/// EvmRunner command
+/// Evm runner command allows running arbitrary evm bytecode.
+/// Bytecode can be provided from cli or from file with --path option.
 #[derive(StructOpt, Debug)]
 pub struct Cmd {
-    /// Path to file containing the evm script.
-    #[structopt(required = true)]
-    path: PathBuf,
-    /// Run in benchmarking mode
+    /// Bytecode to be executed.
+    #[structopt(default_value = "")]
+    bytecode: String,
+    /// Path to file containing the evm bytecode.
+    /// Overrides the bytecode option.
+    #[structopt(long)]
+    path: Option<PathBuf>,
+    /// Run in benchmarking mode.
     #[structopt(long)]
     bench: bool,
+    /// Input bytes.
+    #[structopt(long, default_value = "")]
+    input: String,
+    /// Print the state.
+    #[structopt(long)]
+    state: bool,
 }
 
 impl Cmd {
     /// Run statetest command.
     pub fn run(&self) -> Result<(), Errors> {
-        // check if path exists.
-        if !self.path.exists() {
-            return Err(Errors::PathNotExists);
-        }
+        let bytecode_str: Cow<'_, str> = if let Some(path) = &self.path {
+            // check if path exists.
+            if !path.exists() {
+                return Err(Errors::PathNotExists);
+            }
+            fs::read_to_string(path)?.to_owned().into()
+        } else {
+            self.bytecode.as_str().into()
+        };
 
-        let contents = fs::read_to_string(&self.path).map_err(|_| Errors::InvalidFile)?;
-        let contents_str = contents.to_string();
-        let bytecode = hex::decode(contents_str.trim()).map_err(|_| Errors::InvalidFile)?;
-
-        let zero_address = "0x0000000000000000000000000000000000000000";
-
+        let bytecode = hex::decode(bytecode_str.trim()).map_err(|_| Errors::InvalidBytecode)?;
+        let input = hex::decode(self.input.trim())
+            .map_err(|_| Errors::InvalidInput)?
+            .into();
         // BenchmarkDB is dummy state that implements Database trait.
         // the bytecode is deployed at zero address.
         let mut evm = Evm::builder()
@@ -66,7 +81,8 @@ impl Cmd {
                 tx.caller = "0x0000000000000000000000000000000000000001"
                     .parse()
                     .unwrap();
-                tx.transact_to = TransactTo::Call(zero_address.parse().unwrap());
+                tx.transact_to = TransactTo::Call(Address::ZERO);
+                tx.data = input;
             })
             .build();
 
@@ -78,8 +94,11 @@ impl Cmd {
                 let _ = evm.transact().unwrap();
             });
         } else {
-            evm.transact().map_err(|_| Errors::EVMError)?;
-            // TODO: print the result
+            let out = evm.transact().map_err(|_| Errors::EVMError)?;
+            println!("Result: {:#?}", out.result);
+            if self.state {
+                println!("State: {:#?}", out.state);
+            }
         }
         Ok(())
     }
