@@ -1,7 +1,7 @@
 use crate::{Bytes, Env};
 use core::fmt;
 use dyn_clone::DynClone;
-use std::boxed::Box;
+use std::{boxed::Box, sync::Arc};
 
 /// A precompile operation result.
 ///
@@ -11,21 +11,63 @@ pub type PrecompileResult = Result<(u64, Bytes), PrecompileError>;
 pub type StandardPrecompileFn = fn(&Bytes, u64) -> PrecompileResult;
 pub type EnvPrecompileFn = fn(&Bytes, u64, env: &Env) -> PrecompileResult;
 
-/// Clonable precompile trait. It is used to create a boxed precompile.
-pub trait ClonablePrecompileTrait: DynClone + Send + Sync {
+/// Stateful precompile trait. It is used to create
+/// a arc precompile Precompile::Stateful.
+pub trait StatefulPrecompile: Sync + Send {
     fn call(&self, bytes: &Bytes, gas_price: u64, env: &Env) -> PrecompileResult;
 }
 
-dyn_clone::clone_trait_object!(ClonablePrecompileTrait);
+/// Mutable stateful precompile trait. It is used to create
+/// a boxed precompile in Precompile::StatefulMut.
+pub trait StatefulPrecompileMut: DynClone + Send + Sync {
+    fn call_mut(&mut self, bytes: &Bytes, gas_price: u64, env: &Env) -> PrecompileResult;
+}
 
-/// Box over clonable precompile trait.
-pub type BoxedPrecompileTrait = Box<dyn ClonablePrecompileTrait>;
+dyn_clone::clone_trait_object!(StatefulPrecompileMut);
 
+/// Arc over stateful precompile.
+pub type StatefulPrecompileArc = Arc<dyn StatefulPrecompile>;
+
+/// Box over mutable stateful precompile
+pub type StatefulPrecompileBox = Box<dyn StatefulPrecompileMut>;
+
+/// Precompile and its handlers.
 #[derive(Clone)]
 pub enum Precompile {
+    /// Standard simple precompile that takes input and gas limit.
     Standard(StandardPrecompileFn),
+    /// Similar to Standard but takes reference to environment.
     Env(EnvPrecompileFn),
-    BoxedEnv(BoxedPrecompileTrait),
+    /// Stateful precompile that is Arc over [`StatefulPrecompile`] trait.
+    /// It takes a reference to input, gas limit and environment.
+    Stateful(StatefulPrecompileArc),
+    /// Mutable stateful precompile that is Box over [`StatefulPrecompileMut`] trait.
+    /// It takes a reference to input, gas limit and environment.
+    StatefulMut(StatefulPrecompileBox),
+}
+
+impl From<StandardPrecompileFn> for Precompile {
+    fn from(p: StandardPrecompileFn) -> Self {
+        Precompile::Standard(p)
+    }
+}
+
+impl From<EnvPrecompileFn> for Precompile {
+    fn from(p: EnvPrecompileFn) -> Self {
+        Precompile::Env(p)
+    }
+}
+
+impl From<StatefulPrecompileArc> for Precompile {
+    fn from(p: StatefulPrecompileArc) -> Self {
+        Precompile::Stateful(p)
+    }
+}
+
+impl From<StatefulPrecompileBox> for Precompile {
+    fn from(p: StatefulPrecompileBox) -> Self {
+        Precompile::StatefulMut(p)
+    }
 }
 
 impl fmt::Debug for Precompile {
@@ -33,7 +75,30 @@ impl fmt::Debug for Precompile {
         match self {
             Precompile::Standard(_) => f.write_str("Standard"),
             Precompile::Env(_) => f.write_str("Env"),
-            Precompile::BoxedEnv(_) => f.write_str("BoxedEnv"),
+            Precompile::Stateful(_) => f.write_str("Stateful"),
+            Precompile::StatefulMut(_) => f.write_str("StatefulMut"),
+        }
+    }
+}
+
+impl Precompile {
+    /// Create a new stateful precompile.
+    pub fn new_stateful<P: StatefulPrecompile + 'static>(p: P) -> Self {
+        Self::Stateful(Arc::new(p))
+    }
+
+    /// Create a new mutable stateful precompile.
+    pub fn new_stateful_mut<P: StatefulPrecompileMut + 'static>(p: P) -> Self {
+        Self::StatefulMut(Box::new(p))
+    }
+
+    /// Call the precompile with the given input and gas limit and return the result.
+    pub fn call(&mut self, bytes: &Bytes, gas_price: u64, env: &Env) -> PrecompileResult {
+        match self {
+            Precompile::Standard(p) => p(bytes, gas_price),
+            Precompile::Env(p) => p(bytes, gas_price, env),
+            Precompile::Stateful(p) => p.call(bytes, gas_price, env),
+            Precompile::StatefulMut(p) => p.call_mut(bytes, gas_price, env),
         }
     }
 }
@@ -97,16 +162,27 @@ mod test {
     use super::*;
 
     #[test]
-    fn clonable_box_compiles() {
-        #[derive(Clone)]
+    fn stateful_precompile_mut() {
+        #[derive(Default, Clone)]
         struct MyPrecompile {}
 
-        impl ClonablePrecompileTrait for MyPrecompile {
-            fn call(&self, _bytes: &Bytes, _gas_price: u64, _env: &Env) -> PrecompileResult {
+        impl StatefulPrecompileMut for MyPrecompile {
+            fn call_mut(
+                &mut self,
+                _bytes: &Bytes,
+                _gas_price: u64,
+                _env: &Env,
+            ) -> PrecompileResult {
                 PrecompileResult::Err(PrecompileError::OutOfGas)
             }
         }
 
-        let _ = Precompile::BoxedEnv(Box::new(MyPrecompile {}));
+        let mut p = Precompile::new_stateful_mut(MyPrecompile::default());
+        match &mut p {
+            Precompile::StatefulMut(p) => {
+                let _ = p.call_mut(&Bytes::new(), 0, &Env::default());
+            }
+            _ => panic!("not a state"),
+        }
     }
 }
