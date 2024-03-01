@@ -183,7 +183,7 @@ pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
     // caller's balance directly after minting the requested amount of ETH.
     if context.evm.env.tx.optimism.source_hash.is_none() {
         // get envelope
-        let Some(enveloped_tx) = context.evm.env.tx.optimism.enveloped_tx.clone() else {
+        let Some(enveloped_tx) = &context.evm.env.tx.optimism.enveloped_tx else {
             return Err(EVMError::Custom(
                 "[OPTIMISM] Failed to load enveloped transaction.".to_string(),
             ));
@@ -194,7 +194,7 @@ pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
             .l1_block_info
             .as_ref()
             .expect("L1BlockInfo should be loaded")
-            .calculate_tx_l1_cost(&enveloped_tx, SPEC::SPEC_ID);
+            .calculate_tx_l1_cost(enveloped_tx, SPEC::SPEC_ID);
         if tx_l1_cost.gt(&caller_account.info.balance) {
             return Err(EVMError::Transaction(
                 InvalidTransaction::LackOfFundForMaxFee {
@@ -224,7 +224,7 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
     if !is_deposit {
         // If the transaction is not a deposit transaction, fees are paid out
         // to both the Base Fee Vault as well as the L1 Fee Vault.
-        let Some(l1_block_info) = context.evm.l1_block_info.clone() else {
+        let Some(l1_block_info) = &context.evm.l1_block_info else {
             return Err(EVMError::Custom(
                 "[OPTIMISM] Failed to load L1 block information.".to_string(),
             ));
