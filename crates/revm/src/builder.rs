@@ -273,6 +273,33 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
         Handler::new(handler_cfg)
     }
 
+    /// This modifies the [EvmBuilder] to make it easy to construct an [`Evm`] with a _specific_
+    /// handler.
+    ///
+    /// # Example
+    /// ```rust
+    /// use revm::{EvmBuilder, Handler, primitives::{SpecId, HandlerCfg}};
+    /// use revm_interpreter::primitives::CancunSpec;
+    /// let builder = EvmBuilder::default();
+    ///
+    /// // get the desired handler
+    /// let mainnet = Handler::mainnet::<CancunSpec>();
+    /// let builder = builder.with_handler(mainnet);
+    ///
+    /// // build the EVM
+    /// let evm = builder.build();
+    /// ```
+    pub fn with_handler(
+        self,
+        handler: Handler<'a, Evm<'a, EXT, DB>, EXT, DB>,
+    ) -> EvmBuilder<'a, BuilderStage, EXT, DB> {
+        EvmBuilder {
+            context: self.context,
+            handler,
+            phantom: PhantomData,
+        }
+    }
+
     /// Builds the [`Evm`].
     pub fn build(self) -> Evm<'a, EXT, DB> {
         Evm::new(self.context, self.handler)

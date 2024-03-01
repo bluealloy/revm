@@ -19,7 +19,7 @@ revm-interpreter = { path = "../interpreter", version = "3.1.0", default-feature
 revm-precompile = { path = "../precompile", version = "4.1.0", default-features = false }
 
 # misc
-auto_impl = { version = "1.1", default-features = false }
+auto_impl = { version = "1.2", default-features = false }
 cfg-if = "1.0"
 
 # Optional
@@ -38,7 +38,6 @@ tokio = { version = "1.36", features = [
 ], optional = true }
 ethers-providers = { version = "2.0", optional = true }
 ethers-core = { version = "2.0", optional = true }
-futures = { version = "0.3.30", optional = true }
 
 [dev-dependencies]
 ethers-contract = { version = "2.0.13", default-features = false }
@@ -78,7 +77,6 @@ negate-optimism-default-handler = [
 ethersdb = [
     "std",
     "tokio",
-    "futures",
     "ethers-providers",
     "ethers-core",
 ] # Negate optimism default handler

@@ -83,6 +83,18 @@ impl<EXT, DB: Database> ContextWithHandlerCfg<EXT, DB> {
     }
 }
 
+impl<EXT: Clone, DB: Database + Clone> Clone for ContextWithHandlerCfg<EXT, DB>
+where
+    DB::Error: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            context: self.context.clone(),
+            cfg: self.cfg,
+        }
+    }
+}
+
 /// EVM contexts contains data that EVM needs for execution.
 #[derive(Debug)]
 pub struct EvmContext<DB: Database> {
