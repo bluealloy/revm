@@ -165,6 +165,22 @@ impl Stack {
         (pop1, pop2, pop3, pop4)
     }
 
+    /// Pops 4 values from the stack.
+    ///
+    /// # Safety
+    ///
+    /// The caller is responsible for checking the length of the stack.
+    #[inline]
+    pub unsafe fn pop5_unsafe(&mut self) -> (U256, U256, U256, U256, U256) {
+        let pop1 = self.pop_unsafe();
+        let pop2 = self.pop_unsafe();
+        let pop3 = self.pop_unsafe();
+        let pop4 = self.pop_unsafe();
+        let pop5 = self.pop_unsafe();
+
+        (pop1, pop2, pop3, pop4, pop5)
+    }
+
     /// Push a new value into the stack. If it will exceed the stack limit,
     /// returns `StackOverflow` error and leaves the stack unchanged.
     #[inline]

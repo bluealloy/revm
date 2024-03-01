@@ -17,10 +17,47 @@ pub fn eofcrate<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
     let initcontainer_index = unsafe { *interpreter.instruction_pointer };
     pop!(interpreter, value, salt, data_offset, data_size);
 
+    let Some(sub_container) = interpreter
+        .eof()
+        .expect("EOF is set")
+        .body
+        .container_section
+        .get(initcontainer_index as usize)
+    else {
+        // TODO(EOF) handle error
+        return;
+    };
+
+    // Send container for execution container is preverified.
+    // Create EofCreate()
+
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(1) };
 }
 
-pub fn txcreate<H: Host>(interpreter: &mut Interpreter, host: &mut H) {}
+pub fn txcreate<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
+    error_on_disabled_eof!(interpreter);
+    gas!(interpreter, EOF_CREATE_GAS);
+    pop!(
+        interpreter,
+        tx_initcode_hash,
+        value,
+        salt,
+        data_offset,
+        data_size
+    );
+    // TODO(EOF) get initcode from TxEnv.
+    let initcode = Bytes::new();
+
+    // TODO(EOF) deduct gas for validation
+    gas!(interpreter, 10);
+    // TODO(EOF) validate initcode, we should do this only once.
+    // TODO check if data container is full
+
+    // TODO deduct gas for hash of initcode. Should this be done at the start after we got initcode?
+
+    interpreter.next_action = InterpreterAction::None; //Create { inputs: () }
+    interpreter.instruction_result = InstructionResult::CallOrCreate;
+}
 
 pub fn return_contract<H: Host>(interpreter: &mut Interpreter, host: &mut H) {}
 
