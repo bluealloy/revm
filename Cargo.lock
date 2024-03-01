@@ -2324,7 +2324,6 @@ dependencies = [
  "ethers-contract",
  "ethers-core",
  "ethers-providers",
- "futures",
  "indicatif",
  "revm-interpreter",
  "revm-precompile",

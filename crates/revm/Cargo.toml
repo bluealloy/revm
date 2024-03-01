@@ -38,7 +38,6 @@ tokio = { version = "1.36", features = [
 ], optional = true }
 ethers-providers = { version = "2.0", optional = true }
 ethers-core = { version = "2.0", optional = true }
-futures = { version = "0.3.30", optional = true }
 
 [dev-dependencies]
 ethers-contract = { version = "2.0.13", default-features = false }
@@ -78,7 +77,6 @@ negate-optimism-default-handler = [
 ethersdb = [
     "std",
     "tokio",
-    "futures",
     "ethers-providers",
     "ethers-core",
 ] # Negate optimism default handler
