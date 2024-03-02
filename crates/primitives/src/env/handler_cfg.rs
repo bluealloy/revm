@@ -1,3 +1,5 @@
+use crate::block::Block;
+
 use super::{BlockEnv, CfgEnv, Env, SpecId, TxEnv};
 use core::ops::{Deref, DerefMut};
 use std::boxed::Box;
@@ -101,28 +103,28 @@ impl Deref for CfgEnvWithHandlerCfg {
 
 /// Evm environment with the chain spec id.
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
-pub struct EnvWithHandlerCfg {
+pub struct EnvWithHandlerCfg<BLOCK: Block> {
     /// Evm enironment.
-    pub env: Box<Env>,
+    pub env: Box<Env<BLOCK>>,
     /// Handler configuration fields.
     pub handler_cfg: HandlerCfg,
 }
 
-impl EnvWithHandlerCfg {
+impl<BLOCK: Block> EnvWithHandlerCfg<BLOCK> {
     /// Returns new `EnvWithHandlerCfg` instance.
-    pub fn new(env: Box<Env>, handler_cfg: HandlerCfg) -> Self {
+    pub fn new(env: Box<Env<BLOCK>>, handler_cfg: HandlerCfg) -> Self {
         Self { env, handler_cfg }
     }
 
     /// Returns new `EnvWithHandlerCfg` instance with the chain spec id.
     ///
     /// is_optimism will be set to default value depending on `optimism-default-handler` feature.
-    pub fn new_with_spec_id(env: Box<Env>, spec_id: SpecId) -> Self {
+    pub fn new_with_spec_id(env: Box<Env<BLOCK>>, spec_id: SpecId) -> Self {
         Self::new(env, HandlerCfg::new(spec_id))
     }
 
     /// Takes `CfgEnvWithHandlerCfg` and returns new `EnvWithHandlerCfg` instance.
-    pub fn new_with_cfg_env(cfg: CfgEnvWithHandlerCfg, block: BlockEnv, tx: TxEnv) -> Self {
+    pub fn new_with_cfg_env(cfg: CfgEnvWithHandlerCfg, block: BLOCK, tx: TxEnv) -> Self {
         Self::new(Env::boxed(cfg.cfg_env, block, tx), cfg.handler_cfg)
     }
 
@@ -138,14 +140,14 @@ impl EnvWithHandlerCfg {
     }
 }
 
-impl DerefMut for EnvWithHandlerCfg {
+impl<BLOCK: Block> DerefMut for EnvWithHandlerCfg<BLOCK> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.env
     }
 }
 
-impl Deref for EnvWithHandlerCfg {
-    type Target = Env;
+impl<BLOCK: Block> Deref for EnvWithHandlerCfg<BLOCK> {
+    type Target = Env<BLOCK>;
 
     fn deref(&self) -> &Self::Target {
         &self.env

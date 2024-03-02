@@ -1,4 +1,5 @@
-use crate::{Bytes, Env};
+use crate::{block::Block, BlockEnv, Bytes, Env};
+
 use core::fmt;
 use dyn_clone::DynClone;
 use std::{boxed::Box, sync::Arc};
@@ -9,18 +10,18 @@ use std::{boxed::Box, sync::Arc};
 pub type PrecompileResult = Result<(u64, Bytes), PrecompileError>;
 
 pub type StandardPrecompileFn = fn(&Bytes, u64) -> PrecompileResult;
-pub type EnvPrecompileFn = fn(&Bytes, u64, env: &Env) -> PrecompileResult;
+pub type EnvPrecompileFn = fn(&Bytes, u64, env: &Env<BlockEnv>) -> PrecompileResult;
 
 /// Stateful precompile trait. It is used to create
 /// a arc precompile Precompile::Stateful.
 pub trait StatefulPrecompile: Sync + Send {
-    fn call(&self, bytes: &Bytes, gas_price: u64, env: &Env) -> PrecompileResult;
+    fn call(&self, bytes: &Bytes, gas_price: u64, env: &Env<BlockEnv>) -> PrecompileResult;
 }
 
 /// Mutable stateful precompile trait. It is used to create
 /// a boxed precompile in Precompile::StatefulMut.
 pub trait StatefulPrecompileMut: DynClone + Send + Sync {
-    fn call_mut(&mut self, bytes: &Bytes, gas_price: u64, env: &Env) -> PrecompileResult;
+    fn call_mut(&mut self, bytes: &Bytes, gas_price: u64, env: &Env<BlockEnv>) -> PrecompileResult;
 }
 
 dyn_clone::clone_trait_object!(StatefulPrecompileMut);
@@ -93,7 +94,7 @@ impl Precompile {
     }
 
     /// Call the precompile with the given input and gas limit and return the result.
-    pub fn call(&mut self, bytes: &Bytes, gas_price: u64, env: &Env) -> PrecompileResult {
+    pub fn call(&mut self, bytes: &Bytes, gas_price: u64, env: &Env<BlockEnv>) -> PrecompileResult {
         match self {
             Precompile::Standard(p) => p(bytes, gas_price),
             Precompile::Env(p) => p(bytes, gas_price, env),
@@ -171,7 +172,7 @@ mod test {
                 &mut self,
                 _bytes: &Bytes,
                 _gas_price: u64,
-                _env: &Env,
+                _env: &Env<BlockEnv>,
             ) -> PrecompileResult {
                 PrecompileResult::Err(PrecompileError::OutOfGas)
             }

@@ -1,3 +1,4 @@
+pub mod block;
 pub mod handler_cfg;
 
 pub use handler_cfg::{CfgEnvWithHandlerCfg, EnvWithHandlerCfg, HandlerCfg};
@@ -11,19 +12,21 @@ use core::cmp::{min, Ordering};
 use std::boxed::Box;
 use std::vec::Vec;
 
+use self::block::Block;
+
 /// EVM environment configuration.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Env {
+pub struct Env<BLOCK: Block> {
     /// Configuration of the EVM itself.
     pub cfg: CfgEnv,
     /// Configuration of the block the transaction is in.
-    pub block: BlockEnv,
+    pub block: BLOCK,
     /// Configuration of the transaction that is being executed.
     pub tx: TxEnv,
 }
 
-impl Env {
+impl<BLOCK: Block> Env<BLOCK> {
     /// Resets environment to default values.
     #[inline]
     pub fn clear(&mut self) {
@@ -32,7 +35,7 @@ impl Env {
 
     /// Create boxed [Env].
     #[inline]
-    pub fn boxed(cfg: CfgEnv, block: BlockEnv, tx: TxEnv) -> Box<Self> {
+    pub fn boxed(cfg: CfgEnv, block: BLOCK, tx: TxEnv) -> Box<Self> {
         Box::new(Self { cfg, block, tx })
     }
 
@@ -40,7 +43,7 @@ impl Env {
     #[inline]
     pub fn effective_gas_price(&self) -> U256 {
         if let Some(priority_fee) = self.tx.gas_priority_fee {
-            min(self.tx.gas_price, self.block.basefee + priority_fee)
+            min(self.tx.gas_price, self.block.env().basefee + priority_fee)
         } else {
             self.tx.gas_price
         }
@@ -53,7 +56,7 @@ impl Env {
     /// [EIP-4844]: https://eips.ethereum.org/EIPS/eip-4844
     #[inline]
     pub fn calc_data_fee(&self) -> Option<U256> {
-        self.block.get_blob_gasprice().map(|blob_gas_price| {
+        self.block.env().get_blob_gasprice().map(|blob_gas_price| {
             U256::from(blob_gas_price).saturating_mul(U256::from(self.tx.get_total_blob_gas()))
         })
     }
@@ -75,11 +78,11 @@ impl Env {
     #[inline]
     pub fn validate_block_env<SPEC: Spec>(&self) -> Result<(), InvalidHeader> {
         // `prevrandao` is required for the merge
-        if SPEC::enabled(SpecId::MERGE) && self.block.prevrandao.is_none() {
+        if SPEC::enabled(SpecId::MERGE) && self.block.env().prevrandao.is_none() {
             return Err(InvalidHeader::PrevrandaoNotSet);
         }
         // `excess_blob_gas` is required for Cancun
-        if SPEC::enabled(SpecId::CANCUN) && self.block.blob_excess_gas_and_price.is_none() {
+        if SPEC::enabled(SpecId::CANCUN) && self.block.env().blob_excess_gas_and_price.is_none() {
             return Err(InvalidHeader::ExcessBlobGasNotSet);
         }
         Ok(())
@@ -101,7 +104,7 @@ impl Env {
 
             // check minimal cost against basefee
             if !self.cfg.is_base_fee_check_disabled()
-                && self.effective_gas_price() < self.block.basefee
+                && self.effective_gas_price() < self.block.env().basefee
             {
                 return Err(InvalidTransaction::GasPriceLessThanBasefee);
             }
@@ -109,7 +112,7 @@ impl Env {
 
         // Check if gas_limit is more than block_gas_limit
         if !self.cfg.is_block_gas_limit_disabled()
-            && U256::from(self.tx.gas_limit) > self.block.gas_limit
+            && U256::from(self.tx.gas_limit) > self.block.env().gas_limit
         {
             return Err(InvalidTransaction::CallerGasLimitMoreThanBlock);
         }
@@ -144,7 +147,11 @@ impl Env {
             // Presence of max_fee_per_blob_gas means that this is blob transaction.
             if let Some(max) = self.tx.max_fee_per_blob_gas {
                 // ensure that the user was willing to at least pay the current blob gasprice
-                let price = self.block.get_blob_gasprice().expect("already checked");
+                let price = self
+                    .block
+                    .env()
+                    .get_blob_gasprice()
+                    .expect("already checked");
                 if U256::from(price) > max {
                     return Err(InvalidTransaction::BlobGasPriceGreaterThanMax);
                 }
@@ -712,7 +719,7 @@ mod tests {
 
     #[test]
     fn test_validate_tx_chain_id() {
-        let mut env = Env::default();
+        let mut env: Env<BlockEnv> = Env::default();
         env.tx.chain_id = Some(1);
         env.cfg.chain_id = 2;
         assert_eq!(
@@ -723,7 +730,7 @@ mod tests {
 
     #[test]
     fn test_validate_tx_access_list() {
-        let mut env = Env::default();
+        let mut env: Env<BlockEnv> = Env::default();
         env.tx.access_list = vec![(Address::ZERO, vec![])];
         assert_eq!(
             env.validate_tx::<crate::FrontierSpec>(),
