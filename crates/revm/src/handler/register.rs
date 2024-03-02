@@ -10,7 +10,6 @@ pub type EvmInstructionTables<'a, EXT, DB> = InstructionTables<'a, Evm<'a, EXT, 
 // Handle register
 pub type HandleRegister<EXT, DB> = for<'a> fn(&mut EvmHandler<'a, EXT, DB>);
 
-
 // Boxed handle register
 pub type HandleRegisterBox<EXT, DB> = Box<dyn for<'a> Fn(&mut EvmHandler<'a, EXT, DB>)>;
 

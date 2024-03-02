@@ -1,5 +1,3 @@
-use std::{convert::Infallible, error::Error};
-
 use revm::{
     db::{CacheDB, EmptyDB, WrapDatabaseRef},
     handler::register::HandleRegister,
@@ -8,20 +6,25 @@ use revm::{
     primitives::ResultAndState,
     DatabaseCommit, DatabaseRef, Evm,
 };
+use std::error::Error;
 
-struct DebugContext<EXT, DB: DatabaseRef> {
-    ext: EXT,
-    register_handles_fn: HandleRegister<EXT, WrapDatabaseRef<DB>>,
+trait DatabaseRefDebugError: DatabaseRef<Error = Self::DBError> {
+    type DBError: std::fmt::Debug + Error + Send + Sync + 'static;
 }
 
-fn run_transaction<'a, 'w, EXT, DB: DatabaseRef>(
+impl<DBError, DB> DatabaseRefDebugError for DB
+where
+    DB: DatabaseRef<Error = DBError>,
+    DBError: std::fmt::Debug + Error + Send + Sync + 'static,
+{
+    type DBError = DBError;
+}
+
+fn run_transaction<EXT, DB: DatabaseRefDebugError>(
     db: DB,
     ext: EXT,
     register_handles_fn: HandleRegister<EXT, WrapDatabaseRef<DB>>,
-) -> anyhow::Result<(ResultAndState, DB)>
-where
-    <DB as DatabaseRef>::Error: std::fmt::Debug + Error + Send + Sync + 'static,
-{
+) -> anyhow::Result<(ResultAndState, DB)> {
     let mut evm = Evm::builder()
         .with_ref_db(db)
         .with_external_context(ext)
@@ -32,14 +35,11 @@ where
     Ok((result, evm.into_context().evm.db.0))
 }
 
-fn run_transaction_and_commit_with_ext<'a, EXT, DB: DatabaseRef + DatabaseCommit>(
+fn run_transaction_and_commit_with_ext<EXT, DB: DatabaseRefDebugError + DatabaseCommit>(
     db: DB,
     ext: EXT,
     register_handles_fn: HandleRegister<EXT, WrapDatabaseRef<DB>>,
-) -> anyhow::Result<()>
-where
-    <DB as DatabaseRef>::Error: std::fmt::Debug + Error + Send + Sync + 'static,
-{
+) -> anyhow::Result<()> {
     let (ResultAndState { state: changes, .. }, mut db) =
         { run_transaction(db, ext, register_handles_fn)? };
 
@@ -48,7 +48,7 @@ where
     Ok(())
 }
 
-fn run_transaction_and_commit<'db>(db: &mut CacheDB<EmptyDB>) -> anyhow::Result<()> {
+fn run_transaction_and_commit(db: &mut CacheDB<EmptyDB>) -> anyhow::Result<()> {
     let rdb = &*db;
     let mut evm = Evm::builder()
         .with_ref_db(rdb)
@@ -69,7 +69,6 @@ fn main() -> anyhow::Result<()> {
 
     let mut tracer = TracerEip3155::new(Box::new(std::io::stdout()), true, true);
 
-    //let db = WrapDatabaseRef(&cache_db);
     run_transaction_and_commit_with_ext(&mut cache_db, &mut tracer, inspector_handle_register)?;
     run_transaction_and_commit(&mut cache_db)?;
 
