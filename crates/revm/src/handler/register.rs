@@ -8,7 +8,7 @@ pub type EvmHandler<'a, EXT, DB> = Handler<'a, Evm<'a, EXT, DB>, EXT, DB>;
 pub type EvmInstructionTables<'a, EXT, DB> = InstructionTables<'a, Evm<'a, EXT, DB>>;
 
 // Handle register
-pub type HandleRegister<'a, EXT, DB> = fn(&mut EvmHandler<'a, EXT, DB>);
+pub type HandleRegister<'a, EXT, DB> = for<'evm> fn(&'evm mut EvmHandler<'a, EXT, DB>);
 
 // Boxed handle register
 pub type HandleRegisterBox<'a, EXT, DB> = Box<dyn Fn(&mut EvmHandler<'a, EXT, DB>)>;
