@@ -103,7 +103,7 @@ pub fn sar<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host: &mut H) {
 
     let value_sign = i256_sign_compl(op2);
 
-    *op2 = if *op2 == U256::ZERO || op1 >= U256::from(256) {
+    *op2 = if value_sign == Sign::Zero || op1 >= U256::from(256) {
         match value_sign {
             // value is 0 or >=1, pushing 0
             Sign::Plus | Sign::Zero => U256::ZERO,
