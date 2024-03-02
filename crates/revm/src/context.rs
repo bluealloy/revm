@@ -411,8 +411,8 @@ impl<DB: Database> EvmContext<DB> {
             return return_result(result);
         }
 
-        if let Some(precompile) = self.precompiles.get(&inputs.contract) {
-            let result = self.call_precompile(precompile, inputs, gas);
+        if let Some(precompile) = self.precompiles.get_mut(&inputs.contract) {
+            let result = Self::call_precompile(precompile, &inputs.input, gas, &self.env);
             if matches!(result.result, return_ok!()) {
                 self.journaled_state.checkpoint_commit();
             } else {
@@ -444,16 +444,12 @@ impl<DB: Database> EvmContext<DB> {
     /// Call precompile contract
     #[inline]
     fn call_precompile(
-        &mut self,
-        precompile: Precompile,
-        inputs: &CallInputs,
+        precompile: &mut Precompile,
+        input_data: &Bytes,
         gas: Gas,
+        env: &Env,
     ) -> InterpreterResult {
-        let input_data = &inputs.input;
-        let out = match precompile {
-            Precompile::Standard(fun) => fun(input_data, gas.limit()),
-            Precompile::Env(fun) => fun(input_data, gas.limit(), self.env()),
-        };
+        let out = precompile.call(input_data, gas.limit(), env);
 
         let mut result = InterpreterResult {
             result: InstructionResult::Return,
