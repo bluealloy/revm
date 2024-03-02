@@ -18,6 +18,13 @@ pub struct Eof {
     pub raw: Option<Bytes>,
 }
 
+impl Default for Eof {
+    fn default() -> Self {
+        // TODO(EOF) make proper minimal EOF.
+        Eof::decode("ef000101000402000100010400000000800000fe".into()).unwrap()
+    }
+}
+
 impl Eof {
     /// Returns len of the header and body in bytes.
     pub fn len(&self) -> usize {

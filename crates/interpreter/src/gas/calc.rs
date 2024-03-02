@@ -3,6 +3,7 @@ use crate::primitives::{Address, Spec, SpecId::*, U256};
 use crate::SelfDestructResult;
 use std::vec::Vec;
 
+#[inline]
 #[allow(clippy::collapsible_else_if)]
 pub fn sstore_refund<SPEC: Spec>(original: U256, current: U256, new: U256) -> i64 {
     if SPEC::enabled(ISTANBUL) {
@@ -55,14 +56,7 @@ pub fn sstore_refund<SPEC: Spec>(original: U256, current: U256, new: U256) -> i6
 
 #[inline]
 pub fn create2_cost(len: usize) -> Option<u64> {
-    let base = CREATE;
-    // ceil(len / 32.0)
-    let len = len as u64;
-    let sha_addup_base = (len / 32) + u64::from((len % 32) != 0);
-    let sha_addup = KECCAK256WORD.checked_mul(sha_addup_base)?;
-    let gas = base.checked_add(sha_addup)?;
-
-    Some(gas)
+    CREATE.checked_add(cost_per_word::<KECCAK256WORD>(len.try_into().ok()?)?)
 }
 
 #[inline]
@@ -105,9 +99,7 @@ pub fn exp_cost<SPEC: Spec>(power: U256) -> Option<u64> {
 
 #[inline]
 pub fn verylowcopy_cost(len: u64) -> Option<u64> {
-    let wordd = len / 32;
-    let wordr = len % 32;
-    VERYLOW.checked_add(COPY.checked_mul(if wordr == 0 { wordd } else { wordd + 1 })?)
+    VERYLOW.checked_add(cost_per_word::<COPY>(len)?)
 }
 
 #[inline]
@@ -129,6 +121,7 @@ pub fn extcodecopy_cost<SPEC: Spec>(len: u64, is_cold: bool) -> Option<u64> {
     base_gas.checked_add(COPY.checked_mul(if wordr == 0 { wordd } else { wordd + 1 })?)
 }
 
+#[inline]
 pub fn account_access_gas<SPEC: Spec>(is_cold: bool) -> u64 {
     if SPEC::enabled(BERLIN) {
         if is_cold {
@@ -143,15 +136,22 @@ pub fn account_access_gas<SPEC: Spec>(is_cold: bool) -> u64 {
     }
 }
 
+#[inline]
 pub fn log_cost(n: u8, len: u64) -> Option<u64> {
     LOG.checked_add(LOGDATA.checked_mul(len)?)?
         .checked_add(LOGTOPIC * n as u64)
 }
 
+#[inline]
 pub fn keccak256_cost(len: u64) -> Option<u64> {
+    KECCAK256.checked_add(cost_per_word::<KECCAK256WORD>(len)?)
+}
+
+#[inline]
+pub fn cost_per_word<const MULTIPLE: u64>(len: u64) -> Option<u64> {
     let wordd = len / 32;
     let wordr = len % 32;
-    KECCAK256.checked_add(KECCAK256WORD.checked_mul(if wordr == 0 { wordd } else { wordd + 1 })?)
+    MULTIPLE.checked_mul(if wordr == 0 { wordd } else { wordd + 1 })
 }
 
 /// EIP-3860: Limit and meter initcode
@@ -161,9 +161,7 @@ pub fn keccak256_cost(len: u64) -> Option<u64> {
 /// This cannot overflow as the initcode length is assumed to be checked.
 #[inline]
 pub fn initcode_cost(len: u64) -> u64 {
-    let wordd = len / 32;
-    let wordr = len % 32;
-    INITCODE_WORD_COST * if wordr == 0 { wordd } else { wordd + 1 }
+    cost_per_word::<INITCODE_WORD_COST>(len).unwrap()
 }
 
 #[inline]
@@ -185,7 +183,7 @@ pub fn sload_cost<SPEC: Spec>(is_cold: bool) -> u64 {
     }
 }
 
-#[allow(clippy::collapsible_else_if)]
+#[inline]
 pub fn sstore_cost<SPEC: Spec>(
     original: U256,
     current: U256,
@@ -238,6 +236,7 @@ fn istanbul_sstore_cost<const SLOAD_GAS: u64, const SSTORE_RESET_GAS: u64>(
 }
 
 /// Frontier sstore cost just had two cases set and reset values
+#[inline(always)]
 fn frontier_sstore_cost(current: U256, new: U256) -> u64 {
     if current == U256::ZERO && new != U256::ZERO {
         SSTORE_SET
@@ -246,6 +245,7 @@ fn frontier_sstore_cost(current: U256, new: U256) -> u64 {
     }
 }
 
+#[inline]
 pub fn selfdestruct_cost<SPEC: Spec>(res: SelfDestructResult) -> u64 {
     // EIP-161: State trie clearing (invariant-preserving alternative)
     let should_charge_topup = if SPEC::enabled(SPURIOUS_DRAGON) {
@@ -271,6 +271,7 @@ pub fn selfdestruct_cost<SPEC: Spec>(res: SelfDestructResult) -> u64 {
     gas
 }
 
+#[inline]
 pub fn call_gas<SPEC: Spec>(is_cold: bool) -> u64 {
     if SPEC::enabled(BERLIN) {
         if is_cold {
@@ -286,6 +287,7 @@ pub fn call_gas<SPEC: Spec>(is_cold: bool) -> u64 {
     }
 }
 
+#[inline]
 pub fn call_cost<SPEC: Spec>(
     transfers_value: bool,
     is_new: bool,
@@ -344,6 +346,7 @@ pub fn memory_gas(a: usize) -> u64 {
 
 /// Initial gas that is deducted for transaction to be included.
 /// Initial gas contains initial stipend gas, gas for access list and input data.
+#[inline]
 pub fn validate_initial_tx_gas<SPEC: Spec>(
     input: &[u8],
     is_create: bool,

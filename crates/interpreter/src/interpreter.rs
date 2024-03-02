@@ -9,7 +9,7 @@ pub use stack::{Stack, STACK_LIMIT};
 
 use crate::{
     primitives::Bytes, push, push_b256, return_ok, return_revert, CallInputs, CallOutcome,
-    CreateInputs, CreateOutcome, FunctionStack, Gas, Host, InstructionResult,
+    CreateInputs, CreateOutcome, EofCreateInput, FunctionStack, Gas, Host, InstructionResult,
 };
 use core::cmp::min;
 use revm_primitives::{Bytecode, Eof, U256};
@@ -84,9 +84,16 @@ pub enum InterpreterAction {
         inputs: Box<CallInputs>,
     },
     /// CREATE or CREATE2 instruction called.
-    Create { inputs: Box<CreateInputs> },
+    Create {
+        inputs: Box<CreateInputs>,
+    },
+    EofCreate {
+        inputs: Box<EofCreateInput>,
+    },
     /// Interpreter finished execution.
-    Return { result: InterpreterResult },
+    Return {
+        result: InterpreterResult,
+    },
     /// No action
     #[default]
     None,

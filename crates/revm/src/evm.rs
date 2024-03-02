@@ -274,6 +274,9 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             let frame_or_result = match next_action {
                 InterpreterAction::Call { inputs } => exec.call(&mut self.context, inputs)?,
                 InterpreterAction::Create { inputs } => exec.create(&mut self.context, inputs)?,
+                InterpreterAction::EofCreate { inputs } => {
+                    exec.eofcreate(&mut self.context, inputs)?
+                }
                 InterpreterAction::Return { result } => {
                     // free memory context.
                     shared_memory.free_context();

@@ -3,11 +3,11 @@ mod call_helpers;
 pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges};
 
 use crate::{
-    gas::{self, EOF_CREATE_GAS},
+    gas::{self, cost_per_word, BASE, EOF_CREATE_GAS, KECCAK256WORD},
     interpreter::{Interpreter, InterpreterAction},
-    primitives::{Address, Bytes, Spec, SpecId::*, B256, U256},
-    CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, Host, InstructionResult,
-    Transfer, MAX_INITCODE_SIZE,
+    primitives::{Address, Bytes, Eof, Spec, SpecId::*, B256, U256},
+    CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, EofCreateInput, Host,
+    InstructionResult, Transfer, MAX_INITCODE_SIZE,
 };
 use std::boxed::Box;
 
@@ -48,14 +48,43 @@ pub fn txcreate<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
     // TODO(EOF) get initcode from TxEnv.
     let initcode = Bytes::new();
 
-    // TODO(EOF) deduct gas for validation
-    gas!(interpreter, 10);
-    // TODO(EOF) validate initcode, we should do this only once.
+    // deduct gas for validation
+    gas_or_fail!(interpreter, cost_per_word::<BASE>(initcode.len() as u64));
+
     // TODO check if data container is full
+    let Ok(eof) = Eof::decode(initcode.clone()) else {
+        push!(interpreter, U256::ZERO);
+        return;
+    };
 
-    // TODO deduct gas for hash of initcode. Should this be done at the start after we got initcode?
+    // Data section should be full, push zero to stack and return if not.
+    if !eof.body.is_data_filled {
+        push!(interpreter, U256::ZERO);
+        return;
+    }
 
-    interpreter.next_action = InterpreterAction::None; //Create { inputs: () }
+    // TODO(EOF) validate initcode, we should do this only once and cache result.
+
+    // deduct gas for hash.
+    gas_or_fail!(
+        interpreter,
+        cost_per_word::<KECCAK256WORD>(initcode.len() as u64)
+    );
+
+    // TODO(EOF) calculate contract address;
+    let created_address = Address::ZERO;
+
+    let gas_limit = interpreter.gas().remaining();
+    gas!(interpreter, gas_limit);
+    interpreter.next_action = InterpreterAction::EofCreate {
+        inputs: Box::new(EofCreateInput::new(
+            interpreter.contract.address,
+            created_address,
+            value,
+            eof,
+            gas_limit,
+        )),
+    };
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 

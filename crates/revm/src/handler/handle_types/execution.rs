@@ -90,6 +90,12 @@ pub struct ExecutionHandler<'a, EXT, DB: Database> {
     pub create_return: FrameCreateReturnHandle<'a, EXT, DB>,
     /// Insert create outcome.
     pub insert_create_outcome: InsertCreateOutcomeHandle<'a, EXT, DB>,
+    /// Frame EofCreate
+    pub eofcreate: FrameCreateHandle<'a, EXT, DB>,
+    /// EofCrate return
+    pub eofcreate_return: FrameCreateReturnHandle<'a, EXT, DB>,
+    /// Insert EofCreate outcome.
+    pub insert_eofcreate_outcome: InsertCreateOutcomeHandle<'a, EXT, DB>,
 }
 
 impl<'a, EXT: 'a, DB: Database + 'a> ExecutionHandler<'a, EXT, DB> {
