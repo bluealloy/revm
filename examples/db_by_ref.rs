@@ -49,15 +49,18 @@ fn run_transaction_and_commit_with_ext<EXT, DB: DatabaseRefDebugError + Database
 }
 
 fn run_transaction_and_commit(db: &mut CacheDB<EmptyDB>) -> anyhow::Result<()> {
-    let rdb = &*db;
-    let mut evm = Evm::builder()
-        .with_ref_db(rdb)
-        .with_external_context(NoOpInspector)
-        .append_handler_register(inspector_handle_register)
-        .build();
+    let ResultAndState { state: changes, .. } = {
+        let rdb = &*db;
 
-    let ResultAndState { state: changes, .. } = evm.transact()?;
-    drop(evm);
+        let mut evm = Evm::builder()
+            .with_ref_db(rdb)
+            .with_external_context(NoOpInspector)
+            .append_handler_register(inspector_handle_register)
+            .build();
+
+        evm.transact()?
+    };
+
     // No compiler error because there is no lifetime parameter for the `HandleRegister` function
     db.commit(changes);
 
