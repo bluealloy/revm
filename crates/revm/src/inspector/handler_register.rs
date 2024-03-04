@@ -131,6 +131,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<DB>>(
     // inputs in *_end Inspector calls.
     let call_input_stack = Rc::<RefCell<Vec<_>>>::new(RefCell::new(Vec::new()));
     let create_input_stack = Rc::<RefCell<Vec<_>>>::new(RefCell::new(Vec::new()));
+    let eofcreate_input_stack = Rc::<RefCell<Vec<_>>>::new(RefCell::new(Vec::new()));
 
     // Create handle
     let create_input_stack_inner = create_input_stack.clone();
@@ -179,6 +180,8 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<DB>>(
         },
     );
 
+    // TODO(EOF) EOF create call.
+
     // call outcome
     let call_input_stack_inner = call_input_stack.clone();
     let old_handle = handler.execution.insert_call_outcome.clone();
@@ -200,6 +203,8 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<DB>>(
         old_handle(ctx, frame, outcome)
     });
 
+    // TODO(EOF) EOF create handle.
+
     // last frame outcome
     let old_handle = handler.execution.last_frame_return.clone();
     handler.execution.last_frame_return = Arc::new(move |ctx, frame_result| {
@@ -212,6 +217,11 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<DB>>(
             FrameResult::Create(outcome) => {
                 let create_inputs = create_input_stack.borrow_mut().pop().unwrap();
                 *outcome = inspector.create_end(&mut ctx.evm, &create_inputs, outcome.clone());
+            }
+            FrameResult::EofCreate(outcome) => {
+                let eofcreate_inputs = eofcreate_input_stack.borrow_mut().pop().unwrap();
+                *outcome =
+                    inspector.eofcreate_end(&mut ctx.evm, &eofcreate_inputs, outcome.clone());
             }
         }
         //inspector.last_frame_return(ctx, frame_result);

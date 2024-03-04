@@ -4,7 +4,9 @@ use crate::{
     JournalCheckpoint,
 };
 use core::ops::Range;
-use revm_interpreter::{CallOutcome, CreateOutcome, Gas, InstructionResult, InterpreterResult};
+use revm_interpreter::{
+    CallOutcome, CreateOutcome, EofCreateOutcome, Gas, InstructionResult, InterpreterResult,
+};
 use std::boxed::Box;
 
 /// Call CallStackFrame.
@@ -24,6 +26,13 @@ pub struct CreateFrame {
     pub frame_data: FrameData,
 }
 
+/// Eof Create Frame.
+#[derive(Debug)]
+pub struct EofCreateFrame {
+    pub created_address: Address,
+    pub frame_data: FrameData,
+}
+
 #[derive(Debug)]
 pub struct FrameData {
     /// Journal checkpoint
@@ -37,11 +46,13 @@ pub struct FrameData {
 pub enum Frame {
     Call(Box<CallFrame>),
     Create(Box<CreateFrame>),
+    EofCreate(Box<EofCreateFrame>),
 }
 
 pub enum FrameResult {
     Call(CallOutcome),
     Create(CreateOutcome),
+    EofCreate(EofCreateOutcome),
 }
 
 impl FrameResult {
@@ -51,6 +62,7 @@ impl FrameResult {
         match self {
             FrameResult::Call(outcome) => outcome.result,
             FrameResult::Create(outcome) => outcome.result,
+            FrameResult::EofCreate(outcome) => outcome.result,
         }
     }
 
@@ -62,6 +74,9 @@ impl FrameResult {
             FrameResult::Create(outcome) => {
                 Output::Create(outcome.result.output.clone(), outcome.address)
             }
+            FrameResult::EofCreate(outcome) => {
+                panic!("EofCreateOutcome does not have output");
+            }
         }
     }
 
@@ -71,6 +86,7 @@ impl FrameResult {
         match self {
             FrameResult::Call(outcome) => &outcome.result.gas,
             FrameResult::Create(outcome) => &outcome.result.gas,
+            FrameResult::EofCreate(outcome) => &outcome.result.gas,
         }
     }
 
@@ -80,6 +96,7 @@ impl FrameResult {
         match self {
             FrameResult::Call(outcome) => &mut outcome.result.gas,
             FrameResult::Create(outcome) => &mut outcome.result.gas,
+            FrameResult::EofCreate(outcome) => &mut outcome.result.gas,
         }
     }
 
@@ -89,6 +106,7 @@ impl FrameResult {
         match self {
             FrameResult::Call(outcome) => &outcome.result,
             FrameResult::Create(outcome) => &outcome.result,
+            FrameResult::EofCreate(outcome) => &outcome.result,
         }
     }
 
@@ -98,6 +116,7 @@ impl FrameResult {
         match self {
             FrameResult::Call(outcome) => &mut outcome.result,
             FrameResult::Create(outcome) => &mut outcome.result,
+            FrameResult::EofCreate(outcome) => &mut outcome.result,
         }
     }
 
@@ -169,6 +188,7 @@ impl Frame {
         match self {
             Frame::Call(call_frame) => call_frame.frame_data,
             Frame::Create(create_frame) => create_frame.frame_data,
+            Frame::EofCreate(eof_create_frame) => eof_create_frame.frame_data,
         }
     }
 
@@ -177,6 +197,7 @@ impl Frame {
         match self {
             Self::Call(call_frame) => &call_frame.frame_data,
             Self::Create(create_frame) => &create_frame.frame_data,
+            Self::EofCreate(eof_create_frame) => &eof_create_frame.frame_data,
         }
     }
 
@@ -185,6 +206,7 @@ impl Frame {
         match self {
             Self::Call(call_frame) => &mut call_frame.frame_data,
             Self::Create(create_frame) => &mut create_frame.frame_data,
+            Self::EofCreate(eof_create_frame) => &mut eof_create_frame.frame_data,
         }
     }
 }

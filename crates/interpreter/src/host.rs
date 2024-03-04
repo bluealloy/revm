@@ -3,12 +3,6 @@ use crate::primitives::{Address, Bytecode, Env, Log, B256, U256};
 mod dummy;
 pub use dummy::DummyHost;
 
-/*
-
-Trait as table of opcodes. We dont need that
-// We needs static table of opcodes that know what Host we are accessing.
-*/
-
 /// EVM context host.
 pub trait Host {
     /// Returns a reference to the environment.

@@ -1,33 +1,24 @@
 use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
     db::{Database, DatabaseCommit, EmptyDB},
-    handler::{mainnet, Handler},
+    handler::Handler,
     interpreter::{
         opcode::InstructionTables, Host, Interpreter, InterpreterAction, SStoreResult,
         SelfDestructResult, SharedMemory,
     },
     primitives::{
-        specification::BerlinSpec, specification::SpecId, Address, BlockEnv, Bytecode, CfgEnv,
-        EVMError, EVMResult, Env, EnvWithHandlerCfg, ExecutionResult, HandlerCfg, Log,
-        ResultAndState, TransactTo, TxEnv, B256, U256,
+        specification::SpecId, Address, BlockEnv, Bytecode, CfgEnv, EVMError, EVMResult, Env,
+        EnvWithHandlerCfg, ExecutionResult, HandlerCfg, Log, ResultAndState, TransactTo, TxEnv,
+        B256, U256,
     },
     Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult,
 };
 use core::fmt;
-use revm_interpreter::{
-    opcode::{make_instruction_table, InstructionTable},
-    CallInputs, CreateInputs,
-};
+use revm_interpreter::{CallInputs, CreateInputs};
 use std::vec::Vec;
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
-
-const fn host_instruction_table<'a, EXT, DB: Database>() -> InstructionTable<Evm<'a, EXT, DB>> {
-    let mut table = make_instruction_table::<Evm<'a, EXT, DB>, BerlinSpec>();
-    table[0xf0] = |interpreter, evm| {};
-    table
-}
 
 /// EVM instance containing both internal EVM context and external context
 /// and the handler that dictates the logic of EVM (or hardfork specification).
@@ -306,6 +297,10 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                             // return_create
                             FrameResult::Create(exec.create_return(ctx, frame, result)?)
                         }
+                        Frame::EofCreate(frame) => {
+                            // return_eofcreate
+                            FrameResult::EofCreate(exec.eofcreate_return(ctx, frame, result)?)
+                        }
                     })
                 }
                 InterpreterAction::None => unreachable!("InterpreterAction::None is not expected"),
@@ -334,6 +329,10 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                         FrameResult::Create(outcome) => {
                             // return_create
                             exec.insert_create_outcome(ctx, stack_frame, outcome)?
+                        }
+                        FrameResult::EofCreate(outcome) => {
+                            // return_eofcreate
+                            exec.insert_eofcreate_outcome(ctx, stack_frame, outcome)?
                         }
                     }
                 }

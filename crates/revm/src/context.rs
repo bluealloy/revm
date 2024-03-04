@@ -12,7 +12,7 @@ use crate::{
     },
     FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
 };
-use revm_interpreter::SStoreResult;
+use revm_interpreter::{EofCreateInput, SStoreResult};
 use std::boxed::Box;
 
 /// Main Context structure that contains both EvmContext and External context.
@@ -276,6 +276,16 @@ impl<DB: Database> EvmContext<DB> {
 
     /// Make create frame.
     #[inline]
+    pub fn make_eofcreate_frame(
+        &mut self,
+        spec_id: SpecId,
+        inputs: &EofCreateInput,
+    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
+        unimplemented!("TODO(EOF) make_eofcreate_frame")
+    }
+
+    /// Make create frame.
+    #[inline]
     pub fn make_create_frame(
         &mut self,
         spec_id: SpecId,
@@ -494,6 +504,15 @@ impl<DB: Database> EvmContext<DB> {
         } else {
             self.journaled_state.checkpoint_revert(journal_checkpoint);
         }
+    }
+
+    pub fn eofcreate_return<SPEC: Spec>(
+        &mut self,
+        interpreter_result: &mut InterpreterResult,
+        address: Address,
+        journal_checkpoint: JournalCheckpoint,
+    ) {
+        unimplemented!("TODO(EOF) eofcreate_return")
     }
 
     /// Handles create return.

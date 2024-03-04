@@ -7,6 +7,7 @@ pub use contract::Contract;
 pub use shared_memory::{next_multiple_of_32, SharedMemory};
 pub use stack::{Stack, STACK_LIMIT};
 
+use crate::EofCreateOutcome;
 use crate::{
     primitives::Bytes, push, push_b256, return_ok, return_revert, CallInputs, CallOutcome,
     CreateInputs, CreateOutcome, EofCreateInput, FunctionStack, Gas, Host, InstructionResult,
@@ -248,6 +249,10 @@ impl Interpreter {
                 push!(self, U256::ZERO);
             }
         }
+    }
+
+    pub fn insert_eofcreate_outcome(&mut self, create_outcome: EofCreateOutcome) {
+        // TODO(EOF)
     }
 
     /// Inserts the outcome of a call into the virtual machine's state.
