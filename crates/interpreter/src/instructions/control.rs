@@ -55,14 +55,7 @@ pub fn jump<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     panic_on_eof!(interpreter);
     gas!(interpreter, gas::MID);
     pop!(interpreter, dest);
-    let dest = as_usize_or_fail!(interpreter, dest, InstructionResult::InvalidJump);
-    if interpreter.contract.is_valid_jump(dest) {
-        // SAFETY: In analysis we are checking create our jump table and we do check above to be
-        // sure that jump is safe to execute.
-        interpreter.instruction_pointer = unsafe { interpreter.bytecode.as_ptr().add(dest) };
-    } else {
-        interpreter.instruction_result = InstructionResult::InvalidJump;
-    }
+    jump_inner(interpreter, dest);
 }
 
 pub fn jumpi<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
@@ -70,14 +63,19 @@ pub fn jumpi<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     gas!(interpreter, gas::HIGH);
     pop!(interpreter, dest, value);
     if value != U256::ZERO {
-        let dest = as_usize_or_fail!(interpreter, dest, InstructionResult::InvalidJump);
-        if interpreter.contract.is_valid_jump(dest) {
-            // SAFETY: In analysis we are checking if jump is valid destination and
-            // this `if` makes this unsafe block safe.
-            interpreter.instruction_pointer = unsafe { interpreter.bytecode.as_ptr().add(dest) };
-        } else {
-            interpreter.instruction_result = InstructionResult::InvalidJump
-        }
+        jump_inner(interpreter, dest);
+    }
+}
+
+#[inline(always)]
+fn jump_inner(interpreter: &mut Interpreter, dest: U256) {
+    let dest = as_usize_or_fail!(interpreter, dest, InstructionResult::InvalidJump);
+    if interpreter.contract.is_valid_jump(dest) {
+        // SAFETY: In analysis we are checking create our jump table and we do check above to be
+        // sure that jump is safe to execute.
+        interpreter.instruction_pointer = unsafe { interpreter.bytecode.as_ptr().add(dest) };
+    } else {
+        interpreter.instruction_result = InstructionResult::InvalidJump;
     }
 }
 

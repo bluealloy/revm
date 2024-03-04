@@ -41,7 +41,7 @@ impl HandlerCfg {
         }
     }
 
-    /// Returns true if the optimism feature is enabled and flag is set to true.
+    /// Returns `true` if the optimism feature is enabled and flag is set to `true`.
     pub fn is_optimism(&self) -> bool {
         cfg_if::cfg_if! {
             if #[cfg(feature = "optimism")] {

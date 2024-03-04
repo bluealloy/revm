@@ -20,7 +20,7 @@ mod modexp;
 mod secp256k1;
 pub mod utilities;
 
-use core::{fmt, hash::Hash};
+use core::hash::Hash;
 use once_cell::race::OnceBox;
 #[doc(hidden)]
 pub use revm_primitives as primitives;
@@ -181,8 +181,14 @@ impl Precompiles {
 
     /// Returns the precompile for the given address.
     #[inline]
-    pub fn get(&self, address: &Address) -> Option<Precompile> {
-        self.inner.get(address).cloned()
+    pub fn get(&self, address: &Address) -> Option<&Precompile> {
+        self.inner.get(address)
+    }
+
+    /// Returns the precompile for the given address.
+    #[inline]
+    pub fn get_mut(&mut self, address: &Address) -> Option<&mut Precompile> {
+        self.inner.get_mut(address)
     }
 
     /// Is the precompiles list empty.
@@ -200,21 +206,6 @@ impl Precompiles {
     /// Other precompiles with overwrite existing precompiles.
     pub fn extend(&mut self, other: impl IntoIterator<Item = PrecompileWithAddress>) {
         self.inner.extend(other.into_iter().map(Into::into));
-    }
-}
-
-#[derive(Clone)]
-pub enum Precompile {
-    Standard(StandardPrecompileFn),
-    Env(EnvPrecompileFn),
-}
-
-impl fmt::Debug for Precompile {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Precompile::Standard(_) => f.write_str("Standard"),
-            Precompile::Env(_) => f.write_str("Env"),
-        }
     }
 }
 

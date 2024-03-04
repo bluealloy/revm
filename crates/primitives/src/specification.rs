@@ -113,7 +113,7 @@ impl From<&str> for SpecId {
     }
 }
 
-pub trait Spec: Sized {
+pub trait Spec: Sized + 'static {
     /// The specification ID.
     const SPEC_ID: SpecId;
 
