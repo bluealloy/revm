@@ -1,17 +1,36 @@
 mod call_helpers;
 
 pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges};
+use revm_primitives::keccak256;
 
 use crate::{
     gas::{self, cost_per_word, BASE, EOF_CREATE_GAS, KECCAK256WORD},
     interpreter::{Interpreter, InterpreterAction},
     primitives::{Address, Bytes, Eof, Spec, SpecId::*, B256, U256},
-    CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, EofCreateInput, Host,
+    CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, EOFCreateInput, Host,
     InstructionResult, Transfer, MAX_INITCODE_SIZE,
 };
+use core::ops::Range;
 use std::boxed::Box;
 
-pub fn eofcrate<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn resize_memory(
+    interpreter: &mut Interpreter,
+    offset: U256,
+    len: U256,
+) -> Option<Range<usize>> {
+    let len = as_usize_or_fail_ret!(interpreter, len, None);
+    if len != 0 {
+        let offset = as_usize_or_fail_ret!(interpreter, offset, None);
+        shared_memory_resize!(interpreter, offset, len, None);
+        // range is checked in shared_memory_resize! macro and it is bounded by usize.
+        Some(offset..offset + len)
+    } else {
+        //unrealistic value so we are sure it is not used
+        Some(usize::MAX..usize::MAX)
+    }
+}
+
+pub fn eofcreate<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, EOF_CREATE_GAS);
     let initcontainer_index = unsafe { *interpreter.instruction_pointer };
@@ -23,18 +42,51 @@ pub fn eofcrate<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
         .body
         .container_section
         .get(initcontainer_index as usize)
+        .cloned()
     else {
         // TODO(EOF) handle error
         return;
     };
 
+    // resize memory and get return range.
+    let Some(return_range) = resize_memory(interpreter, data_offset, data_size) else {
+        return;
+    };
+
+    let eof = Eof::decode(sub_container.clone()).expect("Subcontainer is verified");
+
+    if !eof.body.is_data_filled {
+        // should be always false as it is verified by eof verification.
+        panic!("Panic if data section is not full");
+    }
+
+    // deduct gas for hash that is needed to calculate address.
+    gas_or_fail!(
+        interpreter,
+        cost_per_word::<KECCAK256WORD>(sub_container.len() as u64)
+    );
+
+    let created_address = interpreter
+        .contract
+        .caller
+        .create2(salt.to_be_bytes(), keccak256(sub_container));
+
     // Send container for execution container is preverified.
-    // Create EofCreate()
+    interpreter.next_action = InterpreterAction::EOFCreate {
+        inputs: Box::new(EOFCreateInput::new(
+            interpreter.contract.address,
+            created_address,
+            value,
+            eof,
+            interpreter.gas().remaining(),
+            return_range,
+        )),
+    };
 
     interpreter.instruction_pointer = unsafe { interpreter.instruction_pointer.offset(1) };
 }
 
-pub fn txcreate<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn txcreate<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     error_on_disabled_eof!(interpreter);
     gas!(interpreter, EOF_CREATE_GAS);
     pop!(
@@ -45,6 +97,13 @@ pub fn txcreate<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
         data_offset,
         data_size
     );
+    // TODO(EOF) check when memory resize should be done
+    let Some(return_range) = resize_memory(interpreter, data_offset, data_size) else {
+        return;
+    };
+
+    let tx_initcode_hash = B256::from(tx_initcode_hash);
+
     // TODO(EOF) get initcode from TxEnv.
     let initcode = Bytes::new();
 
@@ -71,18 +130,24 @@ pub fn txcreate<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
         cost_per_word::<KECCAK256WORD>(initcode.len() as u64)
     );
 
-    // TODO(EOF) calculate contract address;
-    let created_address = Address::ZERO;
+    // Create new address
+    let created_address = interpreter
+        .contract
+        .caller
+        .create2(salt.to_be_bytes(), tx_initcode_hash);
 
     let gas_limit = interpreter.gas().remaining();
+    // spend all gas and reimburse it after call ends.
     gas!(interpreter, gas_limit);
-    interpreter.next_action = InterpreterAction::EofCreate {
-        inputs: Box::new(EofCreateInput::new(
+
+    interpreter.next_action = InterpreterAction::EOFCreate {
+        inputs: Box::new(EOFCreateInput::new(
             interpreter.contract.address,
             created_address,
             value,
             eof,
             gas_limit,
+            return_range,
         )),
     };
     interpreter.instruction_result = InstructionResult::CallOrCreate;

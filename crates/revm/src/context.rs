@@ -12,7 +12,7 @@ use crate::{
     },
     FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
 };
-use revm_interpreter::{EofCreateInput, SStoreResult};
+use revm_interpreter::{EOFCreateInput, SStoreResult};
 use std::boxed::Box;
 
 /// Main Context structure that contains both EvmContext and External context.
@@ -275,13 +275,80 @@ impl<DB: Database> EvmContext<DB> {
     }
 
     /// Make create frame.
+    /// TODO(EOF) refactor with crate function.
     #[inline]
     pub fn make_eofcreate_frame(
         &mut self,
         spec_id: SpecId,
-        inputs: &EofCreateInput,
+        inputs: &EOFCreateInput,
     ) -> Result<FrameOrResult, EVMError<DB::Error>> {
-        unimplemented!("TODO(EOF) make_eofcreate_frame")
+        // Prepare crate.
+        let gas = Gas::new(inputs.gas_limit);
+
+        let return_error = |e| {
+            Ok(FrameOrResult::new_eofcreate_result(
+                InterpreterResult {
+                    result: e,
+                    gas,
+                    output: Bytes::new(),
+                },
+                inputs.created_address,
+                inputs.return_memory_range.clone(),
+            ))
+        };
+
+        // Check depth
+        if self.journaled_state.depth() > CALL_STACK_LIMIT {
+            return return_error(InstructionResult::CallTooDeep);
+        }
+
+        // Fetch balance of caller.
+        let (caller_balance, _) = self.balance(inputs.caller)?;
+
+        // Check if caller has enough balance to send to the created contract.
+        if caller_balance < inputs.value {
+            return return_error(InstructionResult::OutOfFunds);
+        }
+
+        // Increase nonce of caller and check if it overflows
+        if self.journaled_state.inc_nonce(inputs.caller).is_none() {
+            return return_error(InstructionResult::Return);
+        }
+
+        // Load account so it needs to be marked as warm for access list.
+        self.journaled_state
+            .load_account(inputs.created_address, &mut self.db)?;
+
+        // create account, transfer funds and make the journal checkpoint.
+        let checkpoint = match self.journaled_state.create_account_checkpoint(
+            inputs.caller,
+            inputs.created_address,
+            inputs.value,
+            spec_id,
+        ) {
+            Ok(checkpoint) => checkpoint,
+            Err(e) => {
+                return return_error(e);
+            }
+        };
+
+        let contract = Box::new(Contract::new(
+            Bytes::new(),
+            Bytecode::Eof(inputs.eof_init_code.clone()),
+            None,
+            inputs.created_address,
+            inputs.caller,
+            inputs.value,
+        ));
+
+        // TODO(eof) flag.
+
+        Ok(FrameOrResult::new_eofcreate_frame(
+            inputs.created_address,
+            inputs.return_memory_range.clone(),
+            checkpoint,
+            Interpreter::new(contract, gas.limit(), false),
+        ))
     }
 
     /// Make create frame.

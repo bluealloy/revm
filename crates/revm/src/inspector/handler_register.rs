@@ -218,7 +218,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<DB>>(
                 let create_inputs = create_input_stack.borrow_mut().pop().unwrap();
                 *outcome = inspector.create_end(&mut ctx.evm, &create_inputs, outcome.clone());
             }
-            FrameResult::EofCreate(outcome) => {
+            FrameResult::EOFCreate(outcome) => {
                 let eofcreate_inputs = eofcreate_input_stack.borrow_mut().pop().unwrap();
                 *outcome =
                     inspector.eofcreate_end(&mut ctx.evm, &eofcreate_inputs, outcome.clone());

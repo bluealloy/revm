@@ -359,7 +359,7 @@ opcodes! {
     // 0xE9
     // 0xEA
     // 0xEB
-    0xEC => EOFCREATE => contract::eofcrate::<H>,
+    0xEC => EOFCREATE => contract::eofcreate::<H>,
     0xED => CREATE4 => contract::txcreate::<H>,
     0xEE => RETURNCONTRACT => contract::return_contract::<H>,
     // 0xEF

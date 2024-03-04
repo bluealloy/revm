@@ -1,37 +1,41 @@
-use crate::primitives::{Address, Bytes, Eof, TransactTo, TxEnv, U256};
+use crate::primitives::{Address, Eof, U256};
 use core::ops::Range;
-use std::boxed::Box;
 
 /// Inputs for create call.
 #[derive(Debug, Default, Clone)]
-pub struct EofCreateInput {
+pub struct EOFCreateInput {
     /// Caller of Eof Craate
     pub caller: Address,
+    /// New contract address.
+    pub created_address: Address,
     /// Values of ether transfered
     pub value: U256,
     /// Init eof code that is going to be executed.
     pub eof_init_code: Eof,
     /// Gas limit for the create call.
     pub gas_limit: u64,
-    /// Created address,
-    pub created_address: Address,
+    /// Return memory range. If EOF creation Reverts it can return the
+    /// the memmory range.
+    pub return_memory_range: Range<usize>,
 }
 
-impl EofCreateInput {
-    /// Returns a new instance of EofCreateInput.
+impl EOFCreateInput {
+    /// Returns a new instance of EOFCreateInput.
     pub fn new(
         caller: Address,
         created_address: Address,
         value: U256,
         eof_init_code: Eof,
         gas_limit: u64,
-    ) -> EofCreateInput {
-        EofCreateInput {
+        return_memory_range: Range<usize>,
+    ) -> EOFCreateInput {
+        EOFCreateInput {
             caller,
+            created_address,
             value,
             eof_init_code,
             gas_limit,
-            created_address,
+            return_memory_range,
         }
     }
 }

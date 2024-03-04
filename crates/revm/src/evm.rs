@@ -274,9 +274,8 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
             let frame_or_result = match next_action {
                 InterpreterAction::Call { inputs } => exec.call(&mut self.context, inputs)?,
                 InterpreterAction::Create { inputs } => exec.create(&mut self.context, inputs)?,
-                InterpreterAction::EofCreate { inputs } => {
-                    //exec.eofcreate(&mut self.context, inputs)?
-                    panic!("test")
+                InterpreterAction::EOFCreate { inputs } => {
+                    exec.eofcreate(&mut self.context, inputs)?
                 }
                 InterpreterAction::Return { result } => {
                     // free memory context.
@@ -297,9 +296,9 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                             // return_create
                             FrameResult::Create(exec.create_return(ctx, frame, result)?)
                         }
-                        Frame::EofCreate(frame) => {
+                        Frame::EOFCreate(frame) => {
                             // return_eofcreate
-                            FrameResult::EofCreate(exec.eofcreate_return(ctx, frame, result)?)
+                            FrameResult::EOFCreate(exec.eofcreate_return(ctx, frame, result)?)
                         }
                     })
                 }
@@ -330,7 +329,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                             // return_create
                             exec.insert_create_outcome(ctx, stack_frame, outcome)?
                         }
-                        FrameResult::EofCreate(outcome) => {
+                        FrameResult::EOFCreate(outcome) => {
                             // return_eofcreate
                             exec.insert_eofcreate_outcome(ctx, stack_frame, outcome)?
                         }

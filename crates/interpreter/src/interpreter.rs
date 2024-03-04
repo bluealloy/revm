@@ -7,10 +7,10 @@ pub use contract::Contract;
 pub use shared_memory::{next_multiple_of_32, SharedMemory};
 pub use stack::{Stack, STACK_LIMIT};
 
-use crate::EofCreateOutcome;
+use crate::EOFCreateOutcome;
 use crate::{
     primitives::Bytes, push, push_b256, return_ok, return_revert, CallInputs, CallOutcome,
-    CreateInputs, CreateOutcome, EofCreateInput, FunctionStack, Gas, Host, InstructionResult,
+    CreateInputs, CreateOutcome, EOFCreateInput, FunctionStack, Gas, Host, InstructionResult,
 };
 use core::cmp::min;
 use revm_primitives::{Bytecode, Eof, U256};
@@ -88,8 +88,8 @@ pub enum InterpreterAction {
     Create {
         inputs: Box<CreateInputs>,
     },
-    EofCreate {
-        inputs: Box<EofCreateInput>,
+    EOFCreate {
+        inputs: Box<EOFCreateInput>,
     },
     /// Interpreter finished execution.
     Return {
@@ -251,7 +251,7 @@ impl Interpreter {
         }
     }
 
-    pub fn insert_eofcreate_outcome(&mut self, create_outcome: EofCreateOutcome) {
+    pub fn insert_eofcreate_outcome(&mut self, create_outcome: EOFCreateOutcome) {
         // TODO(EOF)
     }
 

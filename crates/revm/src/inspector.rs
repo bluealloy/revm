@@ -1,5 +1,5 @@
 use crate::{
-    interpreter::{CallInputs, CreateInputs, EofCreateInput, EofCreateOutcome, Interpreter},
+    interpreter::{CallInputs, CreateInputs, EOFCreateInput, EOFCreateOutcome, Interpreter},
     primitives::{db::Database, Address, Log, U256},
     EvmContext,
 };
@@ -138,8 +138,8 @@ pub trait Inspector<DB: Database> {
     fn eofcreate(
         &mut self,
         context: &mut EvmContext<DB>,
-        inputs: &mut EofCreateInput,
-    ) -> Option<EofCreateOutcome> {
+        inputs: &mut EOFCreateInput,
+    ) -> Option<EOFCreateOutcome> {
         let _ = context;
         let _ = inputs;
         None
@@ -148,9 +148,9 @@ pub trait Inspector<DB: Database> {
     fn eofcreate_end(
         &mut self,
         context: &mut EvmContext<DB>,
-        inputs: &EofCreateInput,
-        outcome: EofCreateOutcome,
-    ) -> EofCreateOutcome {
+        inputs: &EOFCreateInput,
+        outcome: EOFCreateOutcome,
+    ) -> EOFCreateOutcome {
         let _ = context;
         let _ = inputs;
         outcome
