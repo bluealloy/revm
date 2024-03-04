@@ -30,5 +30,5 @@ serde_json = { version = "1.0", features = ["preserve_order"] }
 structopt = "0.3"
 thiserror = "1.0"
 triehash = "0.8"
-walkdir = "2.4"
+walkdir = "2.5"
 k256 = { version = "0.13.3", features = ["ecdsa"] }
