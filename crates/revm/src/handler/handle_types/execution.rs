@@ -73,6 +73,37 @@ pub type InsertCreateOutcomeHandle<'a, EXT, DB> = Arc<
         + 'a,
 >;
 
+/*
+
+
+
+    trait NewFrame {
+        fn new(interpreter, Host) -> Option<Box<dyn NewFrame>>;
+    }
+
+    trait Host {
+        ...
+        ..
+        fn frames(&self) -> Vec<Box<dyn FrameBuilder>>;
+    }
+
+    trait RunFrame {
+        fn init_frame(&mut self, Context, shared_memory) -> RunOrReturn {}
+
+        fn run(&mut self, host: Host, instruction_table, shared_memory) -> FrameOrReturn;
+
+        fn insert_result_to_parent(self, parent_interpreter: &mut Interpreter, shared_memory);
+
+        /// Needed for child frame to access it.
+        fn interpreter(&mut self) -> &mut Interpreter;
+
+    }
+
+    trait FirstFrame {
+        fn output(&self) -> &FrameResult;
+    }
+*/
+
 /// Handles related to stack frames.
 pub struct ExecutionHandler<'a, EXT, DB: Database> {
     /// Handles last frame return, modified gas for refund and
@@ -109,6 +140,9 @@ impl<'a, EXT: 'a, DB: Database + 'a> ExecutionHandler<'a, EXT, DB> {
             create: Arc::new(mainnet::create::<SPEC, EXT, DB>),
             create_return: Arc::new(mainnet::create_return::<SPEC, EXT, DB>),
             insert_create_outcome: Arc::new(mainnet::insert_create_outcome),
+            eofcreate: Arc::new(mainnet::create::<SPEC, EXT, DB>),
+            eofcreate_return: Arc::new(mainnet::create_return::<SPEC, EXT, DB>),
+            insert_eofcreate_outcome: Arc::new(mainnet::insert_create_outcome),
         }
     }
 }

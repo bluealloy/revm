@@ -1,24 +1,33 @@
 use crate::{
     builder::{EvmBuilder, HandlerStage, SetGenericStage},
     db::{Database, DatabaseCommit, EmptyDB},
-    handler::Handler,
+    handler::{mainnet, Handler},
     interpreter::{
         opcode::InstructionTables, Host, Interpreter, InterpreterAction, SStoreResult,
         SelfDestructResult, SharedMemory,
     },
     primitives::{
-        specification::SpecId, Address, BlockEnv, Bytecode, CfgEnv, EVMError, EVMResult, Env,
-        EnvWithHandlerCfg, ExecutionResult, HandlerCfg, Log, ResultAndState, TransactTo, TxEnv,
-        B256, U256,
+        specification::BerlinSpec, specification::SpecId, Address, BlockEnv, Bytecode, CfgEnv,
+        EVMError, EVMResult, Env, EnvWithHandlerCfg, ExecutionResult, HandlerCfg, Log,
+        ResultAndState, TransactTo, TxEnv, B256, U256,
     },
     Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult,
 };
 use core::fmt;
-use revm_interpreter::{CallInputs, CreateInputs};
+use revm_interpreter::{
+    opcode::{make_instruction_table, InstructionTable},
+    CallInputs, CreateInputs,
+};
 use std::vec::Vec;
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
+
+const fn host_instruction_table<'a, EXT, DB: Database>() -> InstructionTable<Evm<'a, EXT, DB>> {
+    let mut table = make_instruction_table::<Evm<'a, EXT, DB>, BerlinSpec>();
+    table[0xf0] = |interpreter, evm| {};
+    table
+}
 
 /// EVM instance containing both internal EVM context and external context
 /// and the handler that dictates the logic of EVM (or hardfork specification).
@@ -275,7 +284,8 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
                 InterpreterAction::Call { inputs } => exec.call(&mut self.context, inputs)?,
                 InterpreterAction::Create { inputs } => exec.create(&mut self.context, inputs)?,
                 InterpreterAction::EofCreate { inputs } => {
-                    exec.eofcreate(&mut self.context, inputs)?
+                    //exec.eofcreate(&mut self.context, inputs)?
+                    panic!("test")
                 }
                 InterpreterAction::Return { result } => {
                     // free memory context.
