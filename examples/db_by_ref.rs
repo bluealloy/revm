@@ -40,6 +40,8 @@ fn run_transaction_and_commit_with_ext<EXT, DB: DatabaseRefDebugError + Database
     ext: EXT,
     register_handles_fn: HandleRegister<EXT, WrapDatabaseRef<DB>>,
 ) -> anyhow::Result<()> {
+    // To circumvent borrow checker issues, we need to move the database into the
+    // transaction and return it after the transaction is done.
     let (ResultAndState { state: changes, .. }, mut db) =
         { run_transaction(db, ext, register_handles_fn)? };
 
