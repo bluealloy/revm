@@ -94,7 +94,7 @@ impl Bytecode {
     pub fn bytecode_bytes(&self) -> Bytes {
         match self {
             Self::LegacyRaw(bytes) => bytes.clone(),
-            Self::LegacyAnalyzed(analyzed) => analyzed.original_bytes(),
+            Self::LegacyAnalyzed(analyzed) => analyzed.bytes(),
             Self::Eof(eof) => eof
                 .body
                 .code(0)

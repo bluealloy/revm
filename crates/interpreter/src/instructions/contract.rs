@@ -153,13 +153,21 @@ pub fn txcreate<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
-pub fn return_contract<H: Host>(interpreter: &mut Interpreter, host: &mut H) {}
+pub fn return_contract<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
+    error_on_disabled_eof!(interpreter);
+}
 
-pub fn extcall<H: Host>(interpreter: &mut Interpreter, host: &mut H) {}
+pub fn extcall<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
+    error_on_disabled_eof!(interpreter);
+}
 
-pub fn extdcall<H: Host>(interpreter: &mut Interpreter, host: &mut H) {}
+pub fn extdcall<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
+    error_on_disabled_eof!(interpreter);
+}
 
-pub fn extscall<H: Host>(interpreter: &mut Interpreter, host: &mut H) {}
+pub fn extscall<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
+    error_on_disabled_eof!(interpreter);
+}
 
 pub fn create<const IS_CREATE2: bool, H: Host, SPEC: Spec>(
     interpreter: &mut Interpreter,

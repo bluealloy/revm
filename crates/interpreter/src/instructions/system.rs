@@ -134,7 +134,9 @@ pub fn returndatacopy<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, _host:
     }
 }
 
-pub fn returndataload<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {}
+pub fn returndataload<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+    error_on_disabled_eof!(interpreter);
+}
 
 pub fn gas<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
     panic_on_eof!(interpreter);

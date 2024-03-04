@@ -1,4 +1,4 @@
-use revm_primitives::LegacyAnalyzedBytecode;
+use revm_primitives::{Bytes, LegacyAnalyzedBytecode};
 
 use crate::opcode;
 use crate::primitives::{
@@ -18,7 +18,10 @@ pub fn to_analysed(bytecode: Bytecode) -> Bytecode {
     let (bytes, len) = match bytecode {
         Bytecode::LegacyRaw(bytecode) => {
             let len = bytecode.len();
-            (bytecode, len)
+            let mut padded_bytecode = Vec::with_capacity(len + 33);
+            padded_bytecode.extend_from_slice(&bytecode);
+            padded_bytecode.resize(len + 33, 0);
+            (Bytes::from(padded_bytecode), len)
         }
         n => return n,
     };

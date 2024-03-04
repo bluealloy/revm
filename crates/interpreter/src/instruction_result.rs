@@ -271,7 +271,7 @@ impl From<InstructionResult> for SuccessOrHalt {
             // TODO(EOF) Check how to propagate error that should be a EVM panic!
             InstructionResult::OpcodeDisabledInEof => Self::FatalExternalError,
             // TODO(EOF) make proper error
-            InstructionResult::EOFOpcodeDisabledInLegacy => Self::FatalExternalError,
+            InstructionResult::EOFOpcodeDisabledInLegacy => Self::Halt(HaltReason::OpcodeNotFound),
             // TODO(EOF)
             InstructionResult::EOFFunctionStackOverflow => Self::FatalExternalError,
             // TODO(EOF)

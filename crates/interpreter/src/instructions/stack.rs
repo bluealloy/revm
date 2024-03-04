@@ -52,6 +52,7 @@ pub fn swap<const N: usize, H: Host>(interpreter: &mut Interpreter, _host: &mut 
 }
 
 pub fn dupn<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+    error_on_disabled_eof!(interpreter);
     gas!(interpreter, gas::VERYLOW);
     let imm = unsafe { *interpreter.instruction_pointer };
     if let Err(result) = interpreter.stack.dup(imm as usize + 1) {
@@ -61,6 +62,7 @@ pub fn dupn<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
 }
 
 pub fn swapn<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+    error_on_disabled_eof!(interpreter);
     gas!(interpreter, gas::VERYLOW);
     let imm = unsafe { *interpreter.instruction_pointer };
     if let Err(result) = interpreter.stack.swap(imm as usize + 1) {
@@ -70,6 +72,7 @@ pub fn swapn<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
 }
 
 pub fn exchange<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
+    error_on_disabled_eof!(interpreter);
     gas!(interpreter, gas::VERYLOW);
     let imm = unsafe { *interpreter.instruction_pointer };
     let n = (imm >> 4) + 1;
