@@ -112,6 +112,11 @@ name = "generate_block_traces"
 path = "../../examples/generate_block_traces.rs"
 required-features = ["std", "serde-json", "ethersdb"]
 
+[[example]]
+name = "db_by_ref"
+path = "../../examples/db_by_ref.rs"
+required-features = ["std", "serde-json"]
+
 [[bench]]
 name = "bench"
 path = "benches/bench.rs"
