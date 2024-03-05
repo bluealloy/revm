@@ -5,7 +5,7 @@ use crate::primitives::{
 };
 use core::mem;
 use revm_interpreter::primitives::SpecId;
-use revm_interpreter::SStoreResult;
+use revm_interpreter::{LoadAccountResult, SStoreResult};
 use std::vec::Vec;
 
 /// JournalState is internal EVM state that is used to contain state and track changes to that state.
@@ -446,7 +446,7 @@ impl JournaledState {
         target: Address,
         db: &mut DB,
     ) -> Result<SelfDestructResult, EVMError<DB::Error>> {
-        let (is_cold, target_exists) = self.load_account_exist(target, db)?;
+        let load_result = self.load_account_exist(target, db)?;
 
         if address != target {
             // Both accounts are loaded before this point, `address` as we execute its contract.
@@ -494,8 +494,8 @@ impl JournaledState {
 
         Ok(SelfDestructResult {
             had_value: balance != U256::ZERO,
-            is_cold,
-            target_exists,
+            is_cold: load_result.is_cold,
+            target_exists: !load_result.is_not_existing,
             previously_destroyed,
         })
     }
@@ -567,7 +567,7 @@ impl JournaledState {
         &mut self,
         address: Address,
         db: &mut DB,
-    ) -> Result<(bool, bool), EVMError<DB::Error>> {
+    ) -> Result<LoadAccountResult, EVMError<DB::Error>> {
         let is_spurious_dragon_enabled = SpecId::enabled(self.spec, SPURIOUS_DRAGON);
         let (acc, is_cold) = self.load_account(address, db)?;
 
@@ -578,7 +578,11 @@ impl JournaledState {
             let is_touched = acc.is_touched();
             is_existing || is_touched
         };
-        Ok((is_cold, exist))
+
+        Ok(LoadAccountResult {
+            is_not_existing: !exist,
+            is_cold,
+        })
     }
 
     /// Loads code.

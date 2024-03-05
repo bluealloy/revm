@@ -10,7 +10,7 @@ use crate::{
     CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, EOFCreateInput, Host,
     InstructionResult, Transfer, MAX_INITCODE_SIZE,
 };
-use core::ops::Range;
+use core::{cmp::max, ops::Range};
 use std::boxed::Box;
 
 pub fn resize_memory(
@@ -45,6 +45,7 @@ pub fn eofcreate<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
         .cloned()
     else {
         // TODO(EOF) handle error
+        interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
 
@@ -157,8 +158,59 @@ pub fn return_contract<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
     error_on_disabled_eof!(interpreter);
 }
 
-pub fn extcall<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
+pub fn extcall<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     error_on_disabled_eof!(interpreter);
+    panic_on_eof!(interpreter);
+    pop_address!(interpreter, to);
+    pop!(interpreter, value);
+    if interpreter.is_static && value != U256::ZERO {
+        interpreter.instruction_result = InstructionResult::CallNotAllowedInsideStatic;
+        return;
+    }
+
+    // TODO(EOF) check if destination is EOF.
+    let Some((input, return_memory_offset)) = get_memory_input_and_out_ranges(interpreter) else {
+        return;
+    };
+
+    let Some(mut gas_limit) = calc_call_gas::<H, SPEC>(
+        interpreter,
+        host,
+        to,
+        value != U256::ZERO,
+        u64::MAX,
+        true,
+        true,
+    ) else {
+        return;
+    };
+
+    let mut gas_limit = max(gas_limit, 5000);
+    gas!(interpreter, gas_limit);
+
+    // Call host to interact with target contract
+    interpreter.next_action = InterpreterAction::Call {
+        inputs: Box::new(CallInputs {
+            contract: to,
+            transfer: Transfer {
+                source: interpreter.contract.address,
+                target: to,
+                value,
+            },
+            input,
+            gas_limit,
+            context: CallContext {
+                address: to,
+                caller: interpreter.contract.address,
+                code_address: to,
+                apparent_value: value,
+                scheme: CallScheme::Call,
+            },
+            is_static: interpreter.is_static,
+            return_memory_offset,
+        }),
+    };
+    interpreter.instruction_result = InstructionResult::CallOrCreate;
 }
 
 pub fn extdcall<H: Host>(interpreter: &mut Interpreter, host: &mut H) {

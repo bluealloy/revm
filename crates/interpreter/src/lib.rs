@@ -34,7 +34,7 @@ pub use eof_create_inputs::EOFCreateInput;
 pub use eof_create_outcome::EOFCreateOutcome;
 pub use function_stack::{FunctionReturnFrame, FunctionStack};
 pub use gas::Gas;
-pub use host::{DummyHost, Host, SStoreResult, SelfDestructResult};
+pub use host::{DummyHost, Host, LoadAccountResult, SStoreResult, SelfDestructResult};
 pub use instruction_result::*;
 pub use instructions::{opcode, Instruction, OpCode, OPCODE_JUMPMAP};
 pub use interpreter::{

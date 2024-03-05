@@ -36,6 +36,8 @@ pub struct Interpreter {
     /// Whether we are Interpreting the Ethereum Object Format (EOF) bytecode.
     /// This is local field that is set from `contract.is_eof()`.
     pub is_eof: bool,
+    /// Is init flag for eof create
+    pub is_eof_init: bool,
     /// Shared memory.
     ///
     /// Note: This field is only set while running the interpreter loop.
@@ -152,11 +154,18 @@ impl Interpreter {
             function_stack: FunctionStack::default(),
             is_static,
             is_eof,
+            is_eof_init: false,
             return_data_buffer: Bytes::new(),
             shared_memory: EMPTY_SHARED_MEMORY,
             stack: Stack::new(),
             next_action: InterpreterAction::None,
         }
+    }
+
+    /// Set set is_eof_init to true, this is used to enable `RETURNCONTRACT` opcode.
+    #[inline]
+    pub fn set_is_eof_init(&mut self) {
+        self.is_eof_init = true;
     }
 
     #[inline]
@@ -252,7 +261,33 @@ impl Interpreter {
     }
 
     pub fn insert_eofcreate_outcome(&mut self, create_outcome: EOFCreateOutcome) {
-        // TODO(EOF)
+        let instruction_result = create_outcome.instruction_result();
+
+        self.return_data_buffer = if *instruction_result == InstructionResult::Revert {
+            // Save data to return data buffer if the create reverted
+            create_outcome.output().to_owned()
+        } else {
+            // Otherwise clear it
+            Bytes::new()
+        };
+
+        match instruction_result {
+            InstructionResult::EofCreate => {
+                push_b256!(self, create_outcome.address.into_word());
+                self.gas.erase_cost(create_outcome.gas().remaining());
+                self.gas.record_refund(create_outcome.gas().refunded());
+            }
+            return_revert!() => {
+                push!(self, U256::ZERO);
+                self.gas.erase_cost(create_outcome.gas().remaining());
+            }
+            InstructionResult::FatalExternalError => {
+                panic!("Fatal external error in insert_eofcreate_outcome");
+            }
+            _ => {
+                push!(self, U256::ZERO);
+            }
+        }
     }
 
     /// Inserts the outcome of a call into the virtual machine's state.

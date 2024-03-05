@@ -3,8 +3,8 @@ use crate::{
     db::{Database, DatabaseCommit, EmptyDB},
     handler::Handler,
     interpreter::{
-        opcode::InstructionTables, Host, Interpreter, InterpreterAction, SStoreResult,
-        SelfDestructResult, SharedMemory,
+        opcode::InstructionTables, Host, Interpreter, InterpreterAction, LoadAccountResult,
+        SStoreResult, SelfDestructResult, SharedMemory,
     },
     primitives::{
         specification::SpecId, Address, BlockEnv, Bytecode, CfgEnv, EVMError, EVMResult, Env,
@@ -408,7 +408,7 @@ impl<EXT, DB: Database> Host for Evm<'_, EXT, DB> {
             .ok()
     }
 
-    fn load_account(&mut self, address: Address) -> Option<(bool, bool)> {
+    fn load_account(&mut self, address: Address) -> Option<LoadAccountResult> {
         self.context
             .evm
             .load_account(address)

@@ -14,7 +14,7 @@ pub trait Host {
     /// Load an account.
     ///
     /// Returns (is_cold, is_new_account)
-    fn load_account(&mut self, address: Address) -> Option<(bool, bool)>;
+    fn load_account(&mut self, address: Address) -> Option<LoadAccountResult>;
 
     /// Get the block hash of the given block `number`.
     fn block_hash(&mut self, number: U256) -> Option<B256>;
@@ -61,6 +61,14 @@ pub struct SStoreResult {
     pub new_value: U256,
     /// Is storage slot loaded from database
     pub is_cold: bool,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct LoadAccountResult {
+    /// Is account cold loaded
+    pub is_cold: bool,
+    /// Is account new
+    pub is_not_existing: bool,
 }
 
 /// Result of a call that resulted in a self destruct.

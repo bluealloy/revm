@@ -2,13 +2,13 @@ use crate::{
     db::{Database, EmptyDB},
     interpreter::{
         analysis::to_analysed, gas, return_ok, CallInputs, Contract, CreateInputs, Gas,
-        InstructionResult, Interpreter, InterpreterResult, MAX_CODE_SIZE,
+        InstructionResult, Interpreter, InterpreterResult, MAX_CODE_SIZE, LoadAccountResult,
     },
     journaled_state::JournaledState,
     precompile::{Precompile, Precompiles},
     primitives::{
-        keccak256, Address, AnalysisKind, Bytecode, Bytes, CreateScheme, EVMError, Env, HandlerCfg,
-        HashSet, Spec, SpecId, SpecId::*, B256, U256,
+        keccak256, Address, AnalysisKind, Bytecode, Bytes, CreateScheme, EVMError, Env, Eof,
+        HandlerCfg, HashSet, Spec, SpecId, SpecId::*, B256, U256,
     },
     FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
 };
@@ -208,7 +208,7 @@ impl<DB: Database> EvmContext<DB> {
 
     /// Load account and return flags (is_cold, exists)
     #[inline]
-    pub fn load_account(&mut self, address: Address) -> Result<(bool, bool), EVMError<DB::Error>> {
+    pub fn load_account(&mut self, address: Address) -> Result<LoadAccountResult, EVMError<DB::Error>> {
         self.journaled_state
             .load_account_exist(address, &mut self.db)
     }
@@ -340,14 +340,16 @@ impl<DB: Database> EvmContext<DB> {
             inputs.caller,
             inputs.value,
         ));
-
-        // TODO(eof) flag.
+        
+        let mut interpreter = Interpreter::new(contract, gas.limit(), false);
+        // EOF init will enabled RETURNCONTRACT opcode.
+        interpreter.set_is_eof_init();
 
         Ok(FrameOrResult::new_eofcreate_frame(
             inputs.created_address,
             inputs.return_memory_range.clone(),
             checkpoint,
-            Interpreter::new(contract, gas.limit(), false),
+            interpreter,
         ))
     }
 
@@ -573,13 +575,31 @@ impl<DB: Database> EvmContext<DB> {
         }
     }
 
+    /// If error is present revert changes, otherwise save EOF bytecode.
     pub fn eofcreate_return<SPEC: Spec>(
         &mut self,
         interpreter_result: &mut InterpreterResult,
         address: Address,
         journal_checkpoint: JournalCheckpoint,
     ) {
-        unimplemented!("TODO(EOF) eofcreate_return")
+        if interpreter_result.result != InstructionResult::EofCreate {
+            self.journaled_state.checkpoint_revert(journal_checkpoint);
+            return;
+        }
+        // Note that we still execute Return opcode and return the bytes.
+        // In EOF those opcodes should abort execution.
+        // For Return that returns bytes is okay as gas is still protecting us from ddos
+        // and if it fails on oog, behaviour will be same as if it failed on return.
+
+        // commit changes reduces depth by -1.
+        self.journaled_state.checkpoint_commit();
+
+        let bytecode =
+            Eof::decode(interpreter_result.output.clone()).expect("Eof is already verified");
+        self.journaled_state
+            .set_code(address, Bytecode::Eof(bytecode));
+
+        interpreter_result.result = InstructionResult::Return;
     }
 
     /// Handles create return.

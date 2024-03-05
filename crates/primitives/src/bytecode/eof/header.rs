@@ -1,4 +1,5 @@
 use super::decode_helpers::{consume_u16, consume_u8};
+use std::vec::Vec;
 
 /// EOF Header containing
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]

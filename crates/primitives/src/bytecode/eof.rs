@@ -8,7 +8,7 @@ pub use header::EofHeader;
 pub use types_section::TypesSection;
 
 use crate::Bytes;
-use std::cmp::min;
+use core::cmp::min;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

@@ -1,6 +1,6 @@
-use crate::Bytes;
-
 use super::{EofHeader, TypesSection};
+use crate::Bytes;
+use std::vec::Vec;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

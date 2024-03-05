@@ -43,30 +43,35 @@ pub fn calc_call_gas<H: Host, SPEC: Spec>(
     is_call_or_callcode: bool,
     is_call_or_staticcall: bool,
 ) -> Option<u64> {
-    let Some((is_cold, exist)) = host.load_account(to) else {
+    let Some(load_result) = host.load_account(to) else {
         interpreter.instruction_result = InstructionResult::FatalExternalError;
         return None;
     };
-    let is_new = !exist;
+    let is_new = !load_result.is_not_existing;
 
-    let call_cost = gas::call_cost::<SPEC>(
-        has_transfer,
-        is_new,
-        is_cold,
-        is_call_or_callcode,
-        is_call_or_staticcall,
-    );
-
-    gas!(interpreter, call_cost, None);
-
-    // EIP-150: Gas cost changes for IO-heavy operations
-    let gas_limit = if SPEC::enabled(TANGERINE) {
-        let gas = interpreter.gas().remaining();
-        // take l64 part of gas_limit
-        min(gas - gas / 64, local_gas_limit)
+    if interpreter.is_eof {
+        // TODO(EOF)
+        None
     } else {
-        local_gas_limit
-    };
+        let call_cost = gas::call_cost::<SPEC>(
+            has_transfer,
+            is_new,
+            load_result.is_cold,
+            is_call_or_callcode,
+            is_call_or_staticcall,
+        );
 
-    Some(gas_limit)
+        gas!(interpreter, call_cost, None);
+
+        // EIP-150: Gas cost changes for IO-heavy operations
+        let gas_limit = if SPEC::enabled(TANGERINE) {
+            let gas = interpreter.gas().remaining();
+            // take l64 part of gas_limit
+            min(gas - gas / 64, local_gas_limit)
+        } else {
+            local_gas_limit
+        };
+
+        Some(gas_limit)
+    }
 }
