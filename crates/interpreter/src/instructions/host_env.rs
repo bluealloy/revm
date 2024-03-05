@@ -1,6 +1,6 @@
 use crate::{
     gas,
-    primitives::{Spec, SpecId::*, U256},
+    primitives::{block::Block, Spec, SpecId::*, U256},
     Host, InstructionResult, Interpreter,
 };
 
@@ -13,31 +13,31 @@ pub fn chainid<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H)
 
 pub fn coinbase<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
     gas!(interpreter, gas::BASE);
-    push_b256!(interpreter, host.env().block.coinbase.into_word());
+    push_b256!(interpreter, host.env().block.env().coinbase.into_word());
 }
 
 pub fn timestamp<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, host.env().block.timestamp);
+    push!(interpreter, host.env().block.env().timestamp);
 }
 
 pub fn number<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, host.env().block.number);
+    push!(interpreter, host.env().block.env().number);
 }
 
 pub fn difficulty<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     gas!(interpreter, gas::BASE);
     if SPEC::enabled(MERGE) {
-        push_b256!(interpreter, host.env().block.prevrandao.unwrap());
+        push_b256!(interpreter, host.env().block.env().prevrandao.unwrap());
     } else {
-        push!(interpreter, host.env().block.difficulty);
+        push!(interpreter, host.env().block.env().difficulty);
     }
 }
 
 pub fn gaslimit<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
     gas!(interpreter, gas::BASE);
-    push!(interpreter, host.env().block.gas_limit);
+    push!(interpreter, host.env().block.env().gas_limit);
 }
 
 pub fn gasprice<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
@@ -49,7 +49,7 @@ pub fn gasprice<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
 pub fn basefee<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     check!(interpreter, LONDON);
     gas!(interpreter, gas::BASE);
-    push!(interpreter, host.env().block.basefee);
+    push!(interpreter, host.env().block.env().basefee);
 }
 
 pub fn origin<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
@@ -75,6 +75,12 @@ pub fn blob_basefee<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &m
     gas!(interpreter, gas::BASE);
     push!(
         interpreter,
-        U256::from(host.env().block.get_blob_gasprice().unwrap_or_default())
+        U256::from(
+            host.env()
+                .block
+                .env()
+                .get_blob_gasprice()
+                .unwrap_or_default()
+        )
     );
 }

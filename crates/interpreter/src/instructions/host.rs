@@ -5,7 +5,7 @@ pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges};
 use crate::{
     gas::{self, COLD_ACCOUNT_ACCESS_COST, WARM_STORAGE_READ_COST},
     interpreter::{Interpreter, InterpreterAction},
-    primitives::{Address, Bytes, Log, LogData, Spec, SpecId::*, B256, U256},
+    primitives::{block::Block, Address, Bytes, Log, LogData, Spec, SpecId::*, B256, U256},
     CallContext, CallInputs, CallScheme, CreateInputs, CreateScheme, Host, InstructionResult,
     SStoreResult, Transfer, MAX_INITCODE_SIZE,
 };
@@ -124,7 +124,7 @@ pub fn blockhash<H: Host>(interpreter: &mut Interpreter, host: &mut H) {
     gas!(interpreter, gas::BLOCKHASH);
     pop_top!(interpreter, number);
 
-    if let Some(diff) = host.env().block.number.checked_sub(*number) {
+    if let Some(diff) = host.env().block.env().number.checked_sub(*number) {
         let diff = as_usize_saturated!(diff);
         // blockhash should push zero if number is same as current block number.
         if diff <= BLOCK_HASH_HISTORY && diff != 0 {

@@ -2,7 +2,8 @@ use crate::{
     db::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef},
     handler::register,
     primitives::{
-        BlockEnv, CfgEnv, CfgEnvWithHandlerCfg, Env, EnvWithHandlerCfg, HandlerCfg, SpecId, TxEnv,
+        block::Block, BlockEnv, CfgEnv, CfgEnvWithHandlerCfg, Env, EnvWithHandlerCfg, HandlerCfg,
+        SpecId, TxEnv,
     },
     Context, ContextWithHandlerCfg, Evm, Handler,
 };
@@ -50,7 +51,7 @@ impl<'a> Default for EvmBuilder<'a, SetGenericStage, (), EmptyDB> {
     }
 }
 
-impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
+impl<'a, EXT, DB: Database, BLOCK: Block> EvmBuilder<'a, SetGenericStage, EXT, DB> {
     /// Sets the [`EmptyDB`] as the [`Database`] that will be used by [`Evm`].
     pub fn with_empty_db(self) -> EvmBuilder<'a, SetGenericStage, EXT, EmptyDB> {
         EvmBuilder {
@@ -102,7 +103,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
     /// Sets Builder with [`EnvWithHandlerCfg`].
     pub fn with_env_with_handler_cfg(
         mut self,
-        env_with_handler_cfg: EnvWithHandlerCfg,
+        env_with_handler_cfg: EnvWithHandlerCfg<BLOCK>,
     ) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
         let EnvWithHandlerCfg { env, handler_cfg } = env_with_handler_cfg;
         self.context.evm.env = env;
@@ -265,7 +266,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
     }
 }
 
-impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> {
+impl<'a, BuilderStage, EXT, DB: Database, BLOCK: Block> EvmBuilder<'a, BuilderStage, EXT, DB> {
     /// Creates the default handler.
     ///
     /// This is useful for adding optimism handle register.

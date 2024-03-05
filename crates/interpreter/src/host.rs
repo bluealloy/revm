@@ -5,14 +5,16 @@ use crate::{
 
 mod dummy;
 pub use dummy::DummyHost;
+use revm_primitives::block::Block;
 
 /// EVM context host.
 pub trait Host {
+    type Block: Block;
     /// Returns a reference to the environment.
-    fn env(&self) -> &Env;
+    fn env(&self) -> &Env<Self::Block>;
 
     /// Returns a mutable reference to the environment.
-    fn env_mut(&mut self) -> &mut Env;
+    fn env_mut(&mut self) -> &mut Env<Self::Block>;
 
     /// Load an account.
     ///
