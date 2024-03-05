@@ -400,7 +400,7 @@ impl<EXT, DB: Database> Host for Evm<'_, EXT, DB> {
     fn load_account(&mut self, address: Address) -> Option<(bool, bool)> {
         self.context
             .evm
-            .load_account(address)
+            .load_account_exist(address)
             .map_err(|e| self.context.evm.error = Err(e))
             .ok()
     }
