@@ -1,9 +1,9 @@
 use super::calc_linear_cost_u32;
-use crate::{Error, Precompile, PrecompileResult, PrecompileWithAddress};
+use crate::{Error, PrecompileResult, PrecompileWithAddress};
 use revm_primitives::Bytes;
 
 pub const FUN: PrecompileWithAddress =
-    PrecompileWithAddress(crate::u64_to_address(4), Precompile::Standard(identity_run));
+    PrecompileWithAddress(crate::u64_to_address(4), identity_run);
 
 /// The base cost of the operation.
 const IDENTITY_BASE: u64 = 15;

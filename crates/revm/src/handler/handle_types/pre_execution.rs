@@ -2,13 +2,14 @@
 use crate::{
     handler::mainnet,
     primitives::{db::Database, EVMError, EVMResultGeneric, Spec},
-    Context,
+    Context, EvmContext,
 };
 use revm_precompile::Precompiles;
 use std::sync::Arc;
 
 /// Loads precompiles into Evm
-pub type LoadPrecompilesHandle<'a> = Arc<dyn Fn() -> Precompiles + 'a>;
+pub type LoadPrecompilesHandle<'a, EXT, DB> =
+    Arc<dyn Fn() -> Precompiles<EvmContext<DB>, EXT> + 'a>;
 
 /// Load access list accounts and beneficiary.
 /// There is no need to load Caller as it is assumed that
@@ -23,7 +24,7 @@ pub type DeductCallerHandle<'a, EXT, DB> =
 /// Handles related to pre execution before the stack loop is started.
 pub struct PreExecutionHandler<'a, EXT, DB: Database> {
     /// Load precompiles
-    pub load_precompiles: LoadPrecompilesHandle<'a>,
+    pub load_precompiles: LoadPrecompilesHandle<'a, EXT, DB>,
     /// Main load handle
     pub load_accounts: LoadAccountsHandle<'a, EXT, DB>,
     /// Deduct max value from the caller.
@@ -34,7 +35,7 @@ impl<'a, EXT: 'a, DB: Database + 'a> PreExecutionHandler<'a, EXT, DB> {
     /// Creates mainnet MainHandles.
     pub fn new<SPEC: Spec + 'a>() -> Self {
         Self {
-            load_precompiles: Arc::new(mainnet::load_precompiles::<SPEC>),
+            load_precompiles: Arc::new(mainnet::load_precompiles::<SPEC, EXT, DB>),
             load_accounts: Arc::new(mainnet::load_accounts::<SPEC, EXT, DB>),
             deduct_caller: Arc::new(mainnet::deduct_caller::<SPEC, EXT, DB>),
         }
@@ -53,7 +54,7 @@ impl<'a, EXT, DB: Database> PreExecutionHandler<'a, EXT, DB> {
     }
 
     /// Load precompiles
-    pub fn load_precompiles(&self) -> Precompiles {
+    pub fn load_precompiles(&self) -> Precompiles<EvmContext<DB>, EXT> {
         (self.load_precompiles)()
     }
 }

@@ -15,7 +15,6 @@ rustdoc-args = ["--cfg", "docsrs"]
 [dependencies]
 revm-primitives = { path = "../primitives", version = "2.1.0", default-features = false }
 bn = { package = "substrate-bn", version = "0.6", default-features = false }
-once_cell = { version = "1.19", default-features = false, features = ["alloc"] }
 ripemd = { version = "0.1", default-features = false }
 sha2 = { version = "0.10", default-features = false }
 # modexp precompile
@@ -37,7 +36,6 @@ default = ["std", "c-kzg", "secp256k1", "portable"]
 std = [
     "revm-primitives/std",
     "k256/std",
-    "once_cell/std",
     "ripemd/std",
     "sha2/std",
     "c-kzg?/std",

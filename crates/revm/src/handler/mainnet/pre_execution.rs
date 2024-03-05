@@ -10,12 +10,12 @@ use crate::{
         SpecId::{CANCUN, SHANGHAI},
         TransactTo, U256,
     },
-    Context,
+    Context, EvmContext,
 };
 
 /// Main precompile load
 #[inline]
-pub fn load_precompiles<SPEC: Spec>() -> Precompiles {
+pub fn load_precompiles<SPEC: Spec, EXT, DB: Database>() -> Precompiles<EvmContext<DB>, EXT> {
     Precompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID)).clone()
 }
 

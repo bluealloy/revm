@@ -2353,7 +2353,6 @@ dependencies = [
  "aurora-engine-modexp",
  "c-kzg",
  "k256",
- "once_cell",
  "revm-primitives",
  "ripemd",
  "secp256k1",

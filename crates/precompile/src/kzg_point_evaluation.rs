@@ -1,10 +1,9 @@
-use crate::{Address, Error, Precompile, PrecompileResult, PrecompileWithAddress};
+use crate::{Address, EnvPrecompileWithAddress, Error, PrecompileResult};
 use c_kzg::{Bytes32, Bytes48, KzgProof, KzgSettings};
 use revm_primitives::{hex_literal::hex, Bytes, Env};
 use sha2::{Digest, Sha256};
 
-pub const POINT_EVALUATION: PrecompileWithAddress =
-    PrecompileWithAddress(ADDRESS, Precompile::Env(run));
+pub const POINT_EVALUATION: EnvPrecompileWithAddress = EnvPrecompileWithAddress(ADDRESS, run);
 
 const ADDRESS: Address = crate::u64_to_address(0x0A);
 const GAS_COST: u64 = 50_000;
