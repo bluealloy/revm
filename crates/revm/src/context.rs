@@ -94,7 +94,7 @@ impl<EXT, DB: Database> Context<EXT, DB> {
         input_data: &Bytes,
         gas: Gas,
     ) -> Option<InterpreterResult> {
-        let out = self.precompiles.call_mut(
+        let out = self.precompiles.call(
             address,
             input_data,
             gas.limit(),

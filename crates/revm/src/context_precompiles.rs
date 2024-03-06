@@ -1,23 +1,22 @@
 use crate::{
     precompile::{Precompile, PrecompileResult},
-    primitives::{db::Database, Address, Bytes},
+    primitives::{db::Database, Address, Bytes,HashMap},
     EvmContext,
 };
 use core::ops::{Deref, DerefMut};
 use dyn_clone::DynClone;
 use revm_precompile::Precompiles;
-use std::collections::HashMap;
 use std::{boxed::Box, sync::Arc};
 
 /// Precompile and its handlers.
 pub enum ContextPrecompile<DB: Database, EXTCTX> {
     /// Ordinary precompiles
     Ordinary(Precompile),
-    /// Stateful precompile that is Arc over [`StatefulPrecompile`] trait.
-    /// It takes a reference to input, gas limit and environment.
+    /// Stateful precompile that is Arc over [`ContextStatefulPrecompile`] trait.
+    /// It takes a reference to input, gas limit and Context.
     ContextStateful(ContextStatefulPrecompileArc<EvmContext<DB>, EXTCTX>),
-    /// Mutable stateful precompile that is Box over [`StatefulPrecompileMut`] trait.
-    /// It takes a reference to input, gas limit and environment.
+    /// Mutable stateful precompile that is Box over [`ContextStatefulPrecompileMut`] trait.
+    /// It takes a reference to input, gas limit and context.
     ContextStatefulMut(ContextStatefulPrecompileBox<EvmContext<DB>, EXTCTX>),
 }
 
@@ -54,8 +53,10 @@ impl<DB: Database, EXTCTX> ContextPrecompiles<DB, EXTCTX> {
         self.inner.extend(other.into_iter().map(Into::into));
     }
 
+    /// Call precompile and executes it. Returns the result of the precompile execution.
+    /// None if the precompile does not exist.
     #[inline]
-    pub fn call_mut(
+    pub fn call(
         &mut self,
         addess: Address,
         bytes: &Bytes,
@@ -97,8 +98,8 @@ impl<DB: Database, EXTCTX> DerefMut for ContextPrecompiles<DB, EXTCTX> {
     }
 }
 
-/// Stateful precompile trait with a generic context. It is used to create
-/// a arc precompile Precompile::Stateful.
+/// Context aware stateful precompile trait. It is used to create
+/// a arc precompile in [`ContextPrecompile`].
 pub trait ContextStatefulPrecompile<EVMCTX, EXTCTX>: Sync + Send {
     fn call(
         &self,
@@ -109,8 +110,8 @@ pub trait ContextStatefulPrecompile<EVMCTX, EXTCTX>: Sync + Send {
     ) -> PrecompileResult;
 }
 
-/// Mutable stateful precompile trait. It is used to create
-/// a boxed precompile in Precompile::StatefulMut.
+/// Context aware mutable stateful precompile trait. It is used to create
+/// a boxed precompile in [`ContextPrecompile`].
 pub trait ContextStatefulPrecompileMut<EVMCTX, EXTCTX>: DynClone + Send + Sync {
     fn call_mut(
         &mut self,
@@ -123,11 +124,11 @@ pub trait ContextStatefulPrecompileMut<EVMCTX, EXTCTX>: DynClone + Send + Sync {
 
 dyn_clone::clone_trait_object!(<EVMCTX, EXTCTX> ContextStatefulPrecompileMut<EVMCTX, EXTCTX>);
 
-/// Arc over stateful precompile.
+/// Arc over context stateful precompile.
 pub type ContextStatefulPrecompileArc<EVMCTX, EXTCTX> =
     Arc<dyn ContextStatefulPrecompile<EVMCTX, EXTCTX>>;
 
-/// Box over mutable stateful precompile
+/// Box over context mutable stateful precompile
 pub type ContextStatefulPrecompileBox<EVMCTX, EXTCTX> =
     Box<dyn ContextStatefulPrecompileMut<EVMCTX, EXTCTX>>;
 
