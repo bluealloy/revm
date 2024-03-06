@@ -110,10 +110,9 @@ impl FrameResult {
 
 /// Contains either a frame or a result.
 pub enum FrameOrResult {
-    /// Boxed call frame,
+    /// Boxed call or create frame.
     Frame(Frame),
-    /// Boxed create frame
-    /// Interpreter result
+    /// Call or create result.
     Result(FrameResult),
 }
 
@@ -186,6 +185,16 @@ impl Frame {
             Self::Call(call_frame) => &mut call_frame.frame_data,
             Self::Create(create_frame) => &mut create_frame.frame_data,
         }
+    }
+
+    /// Returns a reference to the interpreter.
+    pub fn interpreter(&self) -> &Interpreter {
+        &self.frame_data().interpreter
+    }
+
+    /// Returns a mutable reference to the interpreter.
+    pub fn interpreter_mut(&mut self) -> &mut Interpreter {
+        &mut self.frame_data_mut().interpreter
     }
 }
 

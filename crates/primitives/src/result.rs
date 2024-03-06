@@ -52,14 +52,6 @@ impl ExecutionResult {
         matches!(self, Self::Halt { .. })
     }
 
-    /// Return logs, if execution is not successful, function will return empty vec.
-    pub fn logs(&self) -> Vec<Log> {
-        match self {
-            Self::Success { logs, .. } => logs.clone(),
-            _ => Vec::new(),
-        }
-    }
-
     /// Returns the output data of the execution.
     ///
     /// Returns `None` if the execution was halted.
@@ -82,7 +74,15 @@ impl ExecutionResult {
         }
     }
 
-    /// Consumes the type and returns logs, if execution is not successful, function will return empty vec.
+    /// Returns the logs if execution is successful, or an empty list otherwise.
+    pub fn logs(&self) -> &[Log] {
+        match self {
+            Self::Success { logs, .. } => logs,
+            _ => &[],
+        }
+    }
+
+    /// Consumes `self` and returns the logs if execution is successful, or an empty list otherwise.
     pub fn into_logs(self) -> Vec<Log> {
         match self {
             Self::Success { logs, .. } => logs,
@@ -90,12 +90,13 @@ impl ExecutionResult {
         }
     }
 
+    /// Returns the gas used.
     pub fn gas_used(&self) -> u64 {
-        let (Self::Success { gas_used, .. }
-        | Self::Revert { gas_used, .. }
-        | Self::Halt { gas_used, .. }) = self;
-
-        *gas_used
+        match *self {
+            Self::Success { gas_used, .. }
+            | Self::Revert { gas_used, .. }
+            | Self::Halt { gas_used, .. } => gas_used,
+        }
     }
 }
 
@@ -121,6 +122,14 @@ impl Output {
         match self {
             Output::Call(data) => data,
             Output::Create(data, _) => data,
+        }
+    }
+
+    /// Returns the created address, if any.
+    pub fn address(&self) -> Option<&Address> {
+        match self {
+            Output::Call(_) => None,
+            Output::Create(_, address) => address.as_ref(),
         }
     }
 }

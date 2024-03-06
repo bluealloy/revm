@@ -5,7 +5,7 @@ mod stack;
 
 pub use analysis::BytecodeLocked;
 pub use contract::Contract;
-pub use shared_memory::{next_multiple_of_32, SharedMemory};
+pub use shared_memory::{next_multiple_of_32, SharedMemory, EMPTY_SHARED_MEMORY};
 pub use stack::{Stack, STACK_LIMIT};
 
 use crate::{
@@ -16,8 +16,6 @@ use core::cmp::min;
 use revm_primitives::U256;
 use std::borrow::ToOwned;
 use std::boxed::Box;
-
-pub use self::shared_memory::EMPTY_SHARED_MEMORY;
 
 #[derive(Debug)]
 pub struct Interpreter {

@@ -11,11 +11,13 @@ use std::{boxed::Box, rc::Rc, sync::Arc, vec::Vec};
 
 /// Provides access to an `Inspector` instance.
 pub trait GetInspector<DB: Database> {
-    fn get_inspector(&mut self) -> &mut dyn Inspector<DB>;
+    /// Returns the associated `Inspector`.
+    fn get_inspector(&mut self) -> &mut impl Inspector<DB>;
 }
 
 impl<DB: Database, INSP: Inspector<DB>> GetInspector<DB> for INSP {
-    fn get_inspector(&mut self) -> &mut dyn Inspector<DB> {
+    #[inline(always)]
+    fn get_inspector(&mut self) -> &mut impl Inspector<DB> {
         self
     }
 }
@@ -37,8 +39,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<DB>>(
 ) {
     // Every instruction inside flat table that is going to be wrapped by inspector calls.
     let table = handler
-        .instruction_table
-        .take()
+        .take_instruction_table()
         .expect("Handler must have instruction table");
     let mut table = match table {
         InstructionTables::Plain(table) => table
@@ -123,7 +124,7 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<DB>>(
     }
 
     // cast vector to array.
-    handler.instruction_table = Some(InstructionTables::Boxed(
+    handler.set_instruction_table(InstructionTables::Boxed(
         table.try_into().unwrap_or_else(|_| unreachable!()),
     ));
 
@@ -146,10 +147,10 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<DB>>(
             create_input_stack_inner.borrow_mut().push(inputs.clone());
 
             let mut frame_or_result = old_handle(ctx, inputs);
-
-            let inspector = ctx.external.get_inspector();
             if let Ok(FrameOrResult::Frame(frame)) = &mut frame_or_result {
-                inspector.initialize_interp(&mut frame.frame_data_mut().interpreter, &mut ctx.evm)
+                ctx.external
+                    .get_inspector()
+                    .initialize_interp(frame.interpreter_mut(), &mut ctx.evm)
             }
             frame_or_result
         },
@@ -160,20 +161,18 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<DB>>(
     let old_handle = handler.execution.call.clone();
     handler.execution.call = Arc::new(
         move |ctx, mut inputs| -> Result<FrameOrResult, EVMError<DB::Error>> {
-            let inspector = ctx.external.get_inspector();
-            let _mems = inputs.return_memory_offset.clone();
-            // call inspector callto change input or return outcome.
-            if let Some(outcome) = inspector.call(&mut ctx.evm, &mut inputs) {
-                call_input_stack_inner.borrow_mut().push(inputs.clone());
+            // Call inspector to change input or return outcome.
+            let outcome = ctx.external.get_inspector().call(&mut ctx.evm, &mut inputs);
+            call_input_stack_inner.borrow_mut().push(inputs.clone());
+            if let Some(outcome) = outcome {
                 return Ok(FrameOrResult::Result(FrameResult::Call(outcome)));
             }
-            call_input_stack_inner.borrow_mut().push(inputs.clone());
 
             let mut frame_or_result = old_handle(ctx, inputs);
-
-            let inspector = ctx.external.get_inspector();
             if let Ok(FrameOrResult::Frame(frame)) = &mut frame_or_result {
-                inspector.initialize_interp(&mut frame.frame_data_mut().interpreter, &mut ctx.evm)
+                ctx.external
+                    .get_inspector()
+                    .initialize_interp(frame.interpreter_mut(), &mut ctx.evm)
             }
             frame_or_result
         },
@@ -184,9 +183,11 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<DB>>(
     let old_handle = handler.execution.insert_call_outcome.clone();
     handler.execution.insert_call_outcome =
         Arc::new(move |ctx, frame, shared_memory, mut outcome| {
-            let inspector = ctx.external.get_inspector();
             let call_inputs = call_input_stack_inner.borrow_mut().pop().unwrap();
-            outcome = inspector.call_end(&mut ctx.evm, &call_inputs, outcome);
+            outcome = ctx
+                .external
+                .get_inspector()
+                .call_end(&mut ctx.evm, &call_inputs, outcome);
             old_handle(ctx, frame, shared_memory, outcome)
         });
 
@@ -194,9 +195,11 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<DB>>(
     let create_input_stack_inner = create_input_stack.clone();
     let old_handle = handler.execution.insert_create_outcome.clone();
     handler.execution.insert_create_outcome = Arc::new(move |ctx, frame, mut outcome| {
-        let inspector = ctx.external.get_inspector();
         let create_inputs = create_input_stack_inner.borrow_mut().pop().unwrap();
-        outcome = inspector.create_end(&mut ctx.evm, &create_inputs, outcome);
+        outcome = ctx
+            .external
+            .get_inspector()
+            .create_end(&mut ctx.evm, &create_inputs, outcome);
         old_handle(ctx, frame, outcome)
     });
 
@@ -214,7 +217,6 @@ pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<DB>>(
                 *outcome = inspector.create_end(&mut ctx.evm, &create_inputs, outcome.clone());
             }
         }
-        //inspector.last_frame_return(ctx, frame_result);
         old_handle(ctx, frame_result)
     });
 }
