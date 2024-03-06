@@ -1,7 +1,7 @@
 use crate::{
     interpreter::{Gas, SuccessOrHalt},
     primitives::{
-        db::Database, EVMError, ExecutionResult, Output, ResultAndState, Spec, SpecId::LONDON, U256,
+        db::Database, EVMError, ExecutionResult, ResultAndState, Spec, SpecId::LONDON, U256,
     },
     Context, FrameResult,
 };
@@ -94,10 +94,7 @@ pub fn output<EXT, DB: Database>(
         },
         SuccessOrHalt::Revert => ExecutionResult::Revert {
             gas_used: final_gas_used,
-            output: match output {
-                Output::Call(return_value) => return_value,
-                Output::Create(return_value, _) => return_value,
-            },
+            output: output.into_data(),
         },
         SuccessOrHalt::Halt(reason) => ExecutionResult::Halt {
             reason,

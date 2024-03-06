@@ -13,7 +13,7 @@ use crate::{
     },
     ContextPrecompiles, FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
 };
-use revm_interpreter::SStoreResult;
+use revm_interpreter::{SStoreResult, SelfDestructResult};
 use std::boxed::Box;
 
 /// Main Context structure that contains both EvmContext and External context.
@@ -237,7 +237,7 @@ where
 }
 
 /// EVM contexts contains data that EVM needs for execution.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct EvmContext<DB: Database> {
     /// EVM Environment contains all the information about config, block and transaction that
     /// evm needs.
@@ -292,7 +292,8 @@ impl<DB: Database> EvmContext<DB> {
         }
     }
 
-    /// New context with database and environment.
+    /// Creates a new context with the given environment and database.
+    #[inline]
     pub fn new_with_env(db: DB, env: Box<Env>) -> Self {
         Self {
             env,
@@ -304,7 +305,24 @@ impl<DB: Database> EvmContext<DB> {
         }
     }
 
+    /// Sets the database.
+    ///
+    /// Note that this will ignore the previous `error` if set.
+    #[inline]
+    pub fn with_db<ODB: Database>(self, db: ODB) -> EvmContext<ODB> {
+        EvmContext {
+            env: self.env,
+            journaled_state: self.journaled_state,
+            db,
+            error: Ok(()),
+            precompiles: self.precompiles,
+            #[cfg(feature = "optimism")]
+            l1_block_info: self.l1_block_info,
+        }
+    }
+
     /// Returns the configured EVM spec ID.
+    #[inline]
     pub const fn spec_id(&self) -> SpecId {
         self.journaled_state.spec
     }
@@ -333,9 +351,29 @@ impl<DB: Database> EvmContext<DB> {
         self.db.block_hash(number).map_err(EVMError::Database)
     }
 
-    /// Load account and return flags (is_cold, exists)
+    /// Mark account as touched as only touched accounts will be added to state.
     #[inline]
-    pub fn load_account(&mut self, address: Address) -> Result<(bool, bool), EVMError<DB::Error>> {
+    pub fn touch(&mut self, address: &Address) {
+        self.journaled_state.touch(address);
+    }
+
+    /// Loads an account into memory. Returns `true` if it is cold accessed.
+    #[inline]
+    pub fn load_account(
+        &mut self,
+        address: Address,
+    ) -> Result<(&mut Account, bool), EVMError<DB::Error>> {
+        self.journaled_state.load_account(address, &mut self.db)
+    }
+
+    /// Load account from database to JournaledState.
+    ///
+    /// Return boolean pair where first is `is_cold` second bool `exists`.
+    #[inline]
+    pub fn load_account_exist(
+        &mut self,
+        address: Address,
+    ) -> Result<(bool, bool), EVMError<DB::Error>> {
         self.journaled_state
             .load_account_exist(address, &mut self.db)
     }
@@ -399,6 +437,17 @@ impl<DB: Database> EvmContext<DB> {
     #[inline]
     pub fn tstore(&mut self, address: Address, index: U256, value: U256) {
         self.journaled_state.tstore(address, index, value)
+    }
+
+    /// Selfdestructs the account.
+    #[inline]
+    pub fn selfdestruct(
+        &mut self,
+        address: Address,
+        target: Address,
+    ) -> Result<SelfDestructResult, EVMError<DB::Error>> {
+        self.journaled_state
+            .selfdestruct(address, target, &mut self.db)
     }
 
     /// Make create frame.

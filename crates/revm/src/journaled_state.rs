@@ -95,7 +95,6 @@ impl JournaledState {
     #[inline]
     pub fn finalize(&mut self) -> (State, Vec<Log>) {
         let state = mem::take(&mut self.state);
-
         let logs = mem::take(&mut self.logs);
         self.journal = vec![vec![]];
         self.depth = 0;
@@ -568,9 +567,10 @@ impl JournaledState {
         address: Address,
         db: &mut DB,
     ) -> Result<(bool, bool), EVMError<DB::Error>> {
-        let is_spurious_dragon_enabled = SpecId::enabled(self.spec, SPURIOUS_DRAGON);
+        let spec = self.spec;
         let (acc, is_cold) = self.load_account(address, db)?;
 
+        let is_spurious_dragon_enabled = SpecId::enabled(spec, SPURIOUS_DRAGON);
         let exist = if is_spurious_dragon_enabled {
             !acc.is_empty()
         } else {
@@ -605,9 +605,9 @@ impl JournaledState {
 
     /// Load storage slot
     ///
-    /// # Note
+    /// # Panics
     ///
-    /// Account is already present and loaded.
+    /// Panics if the account is not present in the state.
     #[inline]
     pub fn sload<DB: Database>(
         &mut self,
@@ -615,8 +615,9 @@ impl JournaledState {
         key: U256,
         db: &mut DB,
     ) -> Result<(U256, bool), EVMError<DB::Error>> {
-        let account = self.state.get_mut(&address).unwrap(); // assume acc is warm
-                                                             // only if account is created in this tx we can assume that storage is empty.
+        // assume acc is warm
+        let account = self.state.get_mut(&address).unwrap();
+        // only if account is created in this tx we can assume that storage is empty.
         let is_newly_created = account.is_created();
         let load = match account.storage.entry(key) {
             Entry::Occupied(occ) => (occ.get().present_value, false),

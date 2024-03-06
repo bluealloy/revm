@@ -502,10 +502,9 @@ mod test {
 
         let Context {
             external,
-            evm: EvmContext { db, .. },
+            evm: EvmContext { db: _, .. },
             ..
         } = evm.into_context();
-        let _ = (external, db);
     }
 
     #[test]

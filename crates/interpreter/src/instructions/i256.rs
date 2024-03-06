@@ -136,10 +136,8 @@ mod tests {
         let one = U256::from(1);
         let one_hundred = U256::from(100);
         let fifty = U256::from(50);
-        let _fifty_sign = Sign::Plus;
         let two = U256::from(2);
         let neg_one_hundred = U256::from(100);
-        let _neg_one_hundred_sign = Sign::Minus;
         let minus_one = U256::from(1);
         let max_value = U256::from(2).pow(U256::from(255)) - U256::from(1);
         let neg_max_value = U256::from(2).pow(U256::from(255)) - U256::from(1);
