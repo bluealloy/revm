@@ -64,7 +64,7 @@ pub fn call<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     inputs: Box<CallInputs>,
 ) -> Result<FrameOrResult, EVMError<DB::Error>> {
-    context.evm.make_call_frame(&inputs)
+    context.make_call_frame(&inputs)
 }
 
 #[inline]

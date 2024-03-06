@@ -2327,6 +2327,7 @@ dependencies = [
  "auto_impl",
  "cfg-if",
  "criterion",
+ "dyn-clone",
  "ethers-contract",
  "ethers-core",
  "ethers-providers",

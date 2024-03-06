@@ -21,6 +21,7 @@ revm-precompile = { path = "../precompile", version = "4.1.0", default-features 
 # misc
 auto_impl = { version = "1.2", default-features = false }
 cfg-if = "1.0"
+dyn-clone = "1.0"
 
 # Optional
 serde = { version = "1.0", default-features = false, features = [

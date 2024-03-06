@@ -10,13 +10,15 @@ use crate::{
         SpecId::{CANCUN, SHANGHAI},
         TransactTo, U256,
     },
-    Context,
+    Context, ContextPrecompiles,
 };
 
 /// Main precompile load
 #[inline]
-pub fn load_precompiles<SPEC: Spec>() -> Precompiles {
-    Precompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID)).clone()
+pub fn load_precompiles<SPEC: Spec, EXT, DB: Database>() -> ContextPrecompiles<DB, EXT> {
+    Precompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID))
+        .clone()
+        .into()
 }
 
 /// Main load handle
