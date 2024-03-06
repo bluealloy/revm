@@ -607,7 +607,7 @@ impl JournaledState {
     ///
     /// # Panics
     ///
-    /// Panics if the account is present in the state.
+    /// Panics if the account is not present in the state.
     #[inline]
     pub fn sload<DB: Database>(
         &mut self,
