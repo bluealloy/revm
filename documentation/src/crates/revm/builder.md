@@ -103,7 +103,7 @@ use crate::{
     db::EmptyDB,
     inspector::inspector_handle_register,
     inspectors::NoOpInspector,
-    primitives::{Address, Bytes, ContextStatefulPrecompile, Precompile, PrecompileResult},
+    primitives::{Address, Bytes, ContextStatefulPrecompile, ContextPrecompile, PrecompileResult},
     Context, Evm, EvmContext,
 };
 use std::sync::Arc;
@@ -131,7 +131,7 @@ fn main() {
                 let mut precompiles = precompiles.clone();
                 precompiles.extend([(
                     Address::ZERO,
-                    Precompile::ContextStateful(Arc::new(CustomPrecompile)),
+                    ContextPrecompile::ContextStateful(Arc::new(CustomPrecompile)),
                 )]);
                 precompiles
             });

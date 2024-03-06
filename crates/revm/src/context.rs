@@ -6,8 +6,8 @@ use crate::{
     },
     journaled_state::JournaledState,
     primitives::{
-        keccak256, Address, AnalysisKind, Bytecode, Bytes, CreateScheme, EVMError, Env, HandlerCfg,
-        HashSet, Spec,
+        keccak256, Account, Address, AnalysisKind, Bytecode, Bytes, CreateScheme, EVMError, Env,
+        HandlerCfg, HashSet, Spec,
         SpecId::{self, *},
         B256, U256,
     },
@@ -237,7 +237,7 @@ where
 }
 
 /// EVM contexts contains data that EVM needs for execution.
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct EvmContext<DB: Database> {
     /// EVM Environment contains all the information about config, block and transaction that
     /// evm needs.
@@ -270,17 +270,6 @@ where
 }
 
 impl<DB: Database> EvmContext<DB> {
-    pub fn with_db<ODB: Database>(self, db: ODB) -> EvmContext<ODB> {
-        EvmContext {
-            env: self.env,
-            journaled_state: self.journaled_state,
-            db,
-            error: Ok(()),
-            #[cfg(feature = "optimism")]
-            l1_block_info: self.l1_block_info,
-        }
-    }
-
     pub fn new(db: DB) -> Self {
         Self {
             env: Box::default(),
@@ -315,7 +304,6 @@ impl<DB: Database> EvmContext<DB> {
             journaled_state: self.journaled_state,
             db,
             error: Ok(()),
-            precompiles: self.precompiles,
             #[cfg(feature = "optimism")]
             l1_block_info: self.l1_block_info,
         }

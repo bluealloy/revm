@@ -501,7 +501,7 @@ mod test {
             .build();
 
         let Context {
-            external,
+            external: _,
             evm: EvmContext { db: _, .. },
             ..
         } = evm.into_context();
