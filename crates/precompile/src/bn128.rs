@@ -1,4 +1,6 @@
-use crate::{utilities::right_pad, Address, Error, PrecompileResult, PrecompileWithAddress};
+use crate::{
+    utilities::right_pad, Address, Error, Precompile, PrecompileResult, PrecompileWithAddress,
+};
 use bn::{AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
 use revm_primitives::Bytes;
 
@@ -7,21 +9,25 @@ pub mod add {
 
     const ADDRESS: Address = crate::u64_to_address(6);
 
-    pub const ISTANBUL: PrecompileWithAddress =
-        PrecompileWithAddress(ADDRESS, |input, gas_limit| {
+    pub const ISTANBUL: PrecompileWithAddress = PrecompileWithAddress(
+        ADDRESS,
+        Precompile::Standard(|input, gas_limit| {
             if 150 > gas_limit {
                 return Err(Error::OutOfGas);
             }
             Ok((150, super::run_add(input)?))
-        });
+        }),
+    );
 
-    pub const BYZANTIUM: PrecompileWithAddress =
-        PrecompileWithAddress(ADDRESS, |input, gas_limit| {
+    pub const BYZANTIUM: PrecompileWithAddress = PrecompileWithAddress(
+        ADDRESS,
+        Precompile::Standard(|input, gas_limit| {
             if 500 > gas_limit {
                 return Err(Error::OutOfGas);
             }
             Ok((500, super::run_add(input)?))
-        });
+        }),
+    );
 }
 
 pub mod mul {
@@ -29,21 +35,25 @@ pub mod mul {
 
     const ADDRESS: Address = crate::u64_to_address(7);
 
-    pub const ISTANBUL: PrecompileWithAddress =
-        PrecompileWithAddress(ADDRESS, |input, gas_limit| {
+    pub const ISTANBUL: PrecompileWithAddress = PrecompileWithAddress(
+        ADDRESS,
+        Precompile::Standard(|input, gas_limit| {
             if 6_000 > gas_limit {
                 return Err(Error::OutOfGas);
             }
             Ok((6_000, super::run_mul(input)?))
-        });
+        }),
+    );
 
-    pub const BYZANTIUM: PrecompileWithAddress =
-        PrecompileWithAddress(ADDRESS, |input, gas_limit| {
+    pub const BYZANTIUM: PrecompileWithAddress = PrecompileWithAddress(
+        ADDRESS,
+        Precompile::Standard(|input, gas_limit| {
             if 40_000 > gas_limit {
                 return Err(Error::OutOfGas);
             }
             Ok((40_000, super::run_mul(input)?))
-        });
+        }),
+    );
 }
 
 pub mod pair {
@@ -53,27 +63,31 @@ pub mod pair {
 
     const ISTANBUL_PAIR_PER_POINT: u64 = 34_000;
     const ISTANBUL_PAIR_BASE: u64 = 45_000;
-    pub const ISTANBUL: PrecompileWithAddress =
-        PrecompileWithAddress(ADDRESS, |input, gas_limit| {
+    pub const ISTANBUL: PrecompileWithAddress = PrecompileWithAddress(
+        ADDRESS,
+        Precompile::Standard(|input, gas_limit| {
             super::run_pair(
                 input,
                 ISTANBUL_PAIR_PER_POINT,
                 ISTANBUL_PAIR_BASE,
                 gas_limit,
             )
-        });
+        }),
+    );
 
     const BYZANTIUM_PAIR_PER_POINT: u64 = 80_000;
     const BYZANTIUM_PAIR_BASE: u64 = 100_000;
-    pub const BYZANTIUM: PrecompileWithAddress =
-        PrecompileWithAddress(ADDRESS, |input, gas_limit| {
+    pub const BYZANTIUM: PrecompileWithAddress = PrecompileWithAddress(
+        ADDRESS,
+        Precompile::Standard(|input, gas_limit| {
             super::run_pair(
                 input,
                 BYZANTIUM_PAIR_PER_POINT,
                 BYZANTIUM_PAIR_BASE,
                 gas_limit,
             )
-        });
+        }),
+    );
 }
 
 /// Input length for the add operation.

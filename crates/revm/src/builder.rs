@@ -443,8 +443,8 @@ mod test {
         db::EmptyDB,
         inspector::inspector_handle_register,
         inspectors::NoOpInspector,
-        primitives::{Address, Bytes, ContextStatefulPrecompile, Precompile, PrecompileResult},
-        Context, Evm, EvmContext,
+        primitives::{Address, Bytes, PrecompileResult},
+        Context, ContextPrecompile, ContextStatefulPrecompile, Evm, EvmContext,
     };
     use std::sync::Arc;
 
@@ -549,7 +549,7 @@ mod test {
                     let mut precompiles = precompiles.clone();
                     precompiles.extend([(
                         Address::ZERO,
-                        Precompile::ContextStateful(Arc::new(CustomPrecompile)),
+                        ContextPrecompile::ContextStateful(Arc::new(CustomPrecompile)),
                     )]);
                     precompiles
                 });

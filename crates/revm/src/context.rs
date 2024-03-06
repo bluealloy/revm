@@ -5,12 +5,13 @@ use crate::{
         InstructionResult, Interpreter, InterpreterResult, MAX_CODE_SIZE,
     },
     journaled_state::JournaledState,
-    precompile::Precompiles,
     primitives::{
         keccak256, Address, AnalysisKind, Bytecode, Bytes, CreateScheme, EVMError, Env, HandlerCfg,
-        HashSet, Spec, SpecId, SpecId::*, B256, U256,
+        HashSet, Spec,
+        SpecId::{self, *},
+        B256, U256,
     },
-    FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
+    ContextPrecompiles, FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
 };
 use revm_interpreter::SStoreResult;
 use std::boxed::Box;
@@ -22,7 +23,7 @@ pub struct Context<EXT, DB: Database> {
     /// External contexts.
     pub external: EXT,
     /// Precompiles that are available for evm.
-    pub precompiles: Precompiles<EvmContext<DB>, EXT>,
+    pub precompiles: ContextPrecompiles<DB, EXT>,
 }
 
 impl<EXT: Clone, DB: Database + Clone> Clone for Context<EXT, DB>
@@ -50,7 +51,7 @@ impl Context<(), EmptyDB> {
         Context {
             evm: EvmContext::new(EmptyDB::new()),
             external: (),
-            precompiles: Precompiles::default(),
+            precompiles: ContextPrecompiles::default(),
         }
     }
 }
@@ -61,7 +62,7 @@ impl<DB: Database> Context<(), DB> {
         Context {
             evm: EvmContext::new_with_env(db, Box::default()),
             external: (),
-            precompiles: Precompiles::default(),
+            precompiles: ContextPrecompiles::default(),
         }
     }
 }
@@ -72,13 +73,13 @@ impl<EXT, DB: Database> Context<EXT, DB> {
         Context {
             evm,
             external,
-            precompiles: Precompiles::default(),
+            precompiles: ContextPrecompiles::default(),
         }
     }
 
     /// Sets precompiles
     #[inline]
-    pub fn set_precompiles(&mut self, precompiles: Precompiles<EvmContext<DB>, EXT>) {
+    pub fn set_precompiles(&mut self, precompiles: ContextPrecompiles<DB, EXT>) {
         // set warm loaded addresses.
         self.evm.journaled_state.warm_preloaded_addresses =
             precompiles.addresses().copied().collect::<HashSet<_>>();
@@ -93,12 +94,13 @@ impl<EXT, DB: Database> Context<EXT, DB> {
         input_data: &Bytes,
         gas: Gas,
     ) -> Option<InterpreterResult> {
-        let precompile = self.precompiles.get_mut(&address)?;
-        let out = if precompile.is_standard() {
-            precompile.call_ordinary(input_data, gas.limit(), self.evm.env())
-        } else {
-            precompile.call_with_context(input_data, gas.limit(), &mut self.evm, &mut self.external)
-        };
+        let out = self.precompiles.call_mut(
+            address,
+            input_data,
+            gas.limit(),
+            &mut self.evm,
+            &mut self.external,
+        )?;
 
         let mut result = InterpreterResult {
             result: InstructionResult::Return,
@@ -645,7 +647,7 @@ pub(crate) mod test_utils {
                 l1_block_info: None,
             },
             external: (),
-            precompiles: Precompiles::default(),
+            precompiles: ContextPrecompiles::default(),
         }
     }
 

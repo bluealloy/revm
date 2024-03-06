@@ -21,13 +21,14 @@ mod secp256k1;
 pub mod utilities;
 
 use core::hash::Hash;
+use once_cell::race::OnceBox;
 #[doc(hidden)]
 pub use revm_primitives as primitives;
 pub use revm_primitives::{
     precompile::{PrecompileError as Error, *},
     Address, Bytes, HashMap, Log, B256,
 };
-use std::vec::Vec;
+use std::{boxed::Box, vec::Vec};
 
 pub fn calc_linear_cost_u32(len: usize, base: u64, word: u64) -> u64 {
     (len as u64 + 32 - 1) / 32 * word + base
@@ -49,32 +50,15 @@ impl PrecompileOutput {
         }
     }
 }
-
-#[derive(Debug)]
-pub struct Precompiles<CTX, EXTCXT> {
+#[derive(Clone, Default, Debug)]
+pub struct Precompiles {
     /// Precompiles.
-    pub inner: HashMap<Address, Precompile<CTX, EXTCXT>>,
+    pub inner: HashMap<Address, Precompile>,
 }
 
-impl<CTX, EXTCTX> Clone for Precompiles<CTX, EXTCTX> {
-    fn clone(&self) -> Self {
-        Self {
-            inner: self.inner.clone(),
-        }
-    }
-}
-
-impl<CTX, EXTCXT> Default for Precompiles<CTX, EXTCXT> {
-    fn default() -> Self {
-        Self {
-            inner: HashMap::default(),
-        }
-    }
-}
-
-impl<CTX, EXTCXT> Precompiles<CTX, EXTCXT> {
+impl Precompiles {
     /// Returns the precompiles for the given spec.
-    pub fn new(spec: PrecompileSpecId) -> Self {
+    pub fn new(spec: PrecompileSpecId) -> &'static Self {
         match spec {
             PrecompileSpecId::HOMESTEAD => Self::homestead(),
             PrecompileSpecId::BYZANTIUM => Self::byzantium(),
@@ -86,113 +70,100 @@ impl<CTX, EXTCXT> Precompiles<CTX, EXTCXT> {
     }
 
     /// Returns precompiles for Homestead spec.
-    pub fn homestead() -> Self {
-        let mut precompiles = Precompiles::default();
-        precompiles.extend([
-            secp256k1::ECRECOVER,
-            hash::SHA256,
-            hash::RIPEMD160,
-            identity::FUN,
-        ]);
-        precompiles
+    pub fn homestead() -> &'static Self {
+        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
+        INSTANCE.get_or_init(|| {
+            let mut precompiles = Precompiles::default();
+            precompiles.extend([
+                secp256k1::ECRECOVER,
+                hash::SHA256,
+                hash::RIPEMD160,
+                identity::FUN,
+            ]);
+            Box::new(precompiles)
+        })
     }
 
     /// Returns precompiles for Byzantium spec.
-    pub fn byzantium() -> Self {
-        let mut precompiles = Precompiles::default();
-        precompiles.extend([
-            secp256k1::ECRECOVER,
-            hash::SHA256,
-            hash::RIPEMD160,
-            identity::FUN,
-            // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
-            // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
-            bn128::add::BYZANTIUM,
-            bn128::mul::BYZANTIUM,
-            bn128::pair::BYZANTIUM,
-            // EIP-198: Big integer modular exponentiation.
-            modexp::BYZANTIUM,
-        ]);
-        precompiles
+    pub fn byzantium() -> &'static Self {
+        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
+        INSTANCE.get_or_init(|| {
+            let mut precompiles = Self::homestead().clone();
+            precompiles.extend([
+                // EIP-196: Precompiled contracts for addition and scalar multiplication on the elliptic curve alt_bn128.
+                // EIP-197: Precompiled contracts for optimal ate pairing check on the elliptic curve alt_bn128.
+                bn128::add::BYZANTIUM,
+                bn128::mul::BYZANTIUM,
+                bn128::pair::BYZANTIUM,
+                // EIP-198: Big integer modular exponentiation.
+                modexp::BYZANTIUM,
+            ]);
+            Box::new(precompiles)
+        })
     }
 
     /// Returns precompiles for Istanbul spec.
-    pub fn istanbul() -> Self {
-        let mut precompiles = Precompiles::default();
-        precompiles.extend([
-            secp256k1::ECRECOVER,
-            hash::SHA256,
-            hash::RIPEMD160,
-            identity::FUN,
-            // EIP-152: Add BLAKE2 compression function `F` precompile.
-            blake2::FUN,
-            // EIP-1108: Reduce alt_bn128 precompile gas costs.
-            bn128::add::ISTANBUL,
-            bn128::mul::ISTANBUL,
-            bn128::pair::ISTANBUL,
-            modexp::BYZANTIUM,
-        ]);
-        precompiles
+    pub fn istanbul() -> &'static Self {
+        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
+        INSTANCE.get_or_init(|| {
+            let mut precompiles = Self::byzantium().clone();
+            precompiles.extend([
+                // EIP-152: Add BLAKE2 compression function `F` precompile.
+                blake2::FUN,
+                // EIP-1108: Reduce alt_bn128 precompile gas costs.
+                bn128::add::ISTANBUL,
+                bn128::mul::ISTANBUL,
+                bn128::pair::ISTANBUL,
+            ]);
+            Box::new(precompiles)
+        })
     }
 
     /// Returns precompiles for Berlin spec.
-    pub fn berlin() -> Self {
-        let mut precompiles = Self::default();
-        precompiles.extend([
-            secp256k1::ECRECOVER,
-            hash::SHA256,
-            hash::RIPEMD160,
-            identity::FUN,
-            blake2::FUN,
-            bn128::add::ISTANBUL,
-            bn128::mul::ISTANBUL,
-            bn128::pair::ISTANBUL,
-            // EIP-2565: ModExp Gas Cost.
-            modexp::BERLIN,
-        ]);
-        precompiles
+    pub fn berlin() -> &'static Self {
+        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
+        INSTANCE.get_or_init(|| {
+            let mut precompiles = Self::istanbul().clone();
+            precompiles.extend([
+                // EIP-2565: ModExp Gas Cost.
+                modexp::BERLIN,
+            ]);
+            Box::new(precompiles)
+        })
     }
 
     /// Returns precompiles for Cancun spec.
     ///
     /// If the `c-kzg` feature is not enabled KZG Point Evaluation precompile will not be included,
     /// effectively making this the same as Berlin.
-    pub fn cancun() -> Self {
-        let precompiles = Self::default();
+    pub fn cancun() -> &'static Self {
+        static INSTANCE: OnceBox<Precompiles> = OnceBox::new();
+        INSTANCE.get_or_init(|| {
+            let precompiles = Self::berlin().clone();
 
-        // Don't include KZG point evaluation precompile in no_std builds.
-        #[cfg(feature = "c-kzg")]
-        let precompiles = {
-            let mut precompiles = precompiles;
-            precompiles.extend([
-                secp256k1::ECRECOVER,
-                hash::SHA256,
-                hash::RIPEMD160,
-                identity::FUN,
-                blake2::FUN,
-                bn128::add::ISTANBUL,
-                bn128::mul::ISTANBUL,
-                bn128::pair::ISTANBUL,
-                modexp::BERLIN,
-            ]);
-            precompiles.extend([
-                // EIP-4844: Shard Blob Transactions
-                kzg_point_evaluation::POINT_EVALUATION,
-            ]);
-            precompiles
-        };
+            // Don't include KZG point evaluation precompile in no_std builds.
+            #[cfg(feature = "c-kzg")]
+            let precompiles = {
+                let mut precompiles = precompiles;
+                precompiles.extend([
+                    // EIP-4844: Shard Blob Transactions
+                    kzg_point_evaluation::POINT_EVALUATION,
+                ]);
+                precompiles
+            };
 
-        precompiles
+            Box::new(precompiles)
+        })
     }
 
     /// Returns the precompiles for the latest spec.
-    pub fn latest() -> Self {
+    pub fn latest() -> &'static Self {
         Self::cancun()
     }
 
     /// Returns an iterator over the precompiles addresses.
     #[inline]
-    pub fn addresses(&self) -> impl Iterator<Item = &Address> + '_ {
+    pub fn addresses(&self) -> impl Iterator<Item = &Address> {
         self.inner.keys()
     }
 
@@ -210,13 +181,13 @@ impl<CTX, EXTCXT> Precompiles<CTX, EXTCXT> {
 
     /// Returns the precompile for the given address.
     #[inline]
-    pub fn get(&self, address: &Address) -> Option<&Precompile<CTX, EXTCXT>> {
+    pub fn get(&self, address: &Address) -> Option<&Precompile> {
         self.inner.get(address)
     }
 
     /// Returns the precompile for the given address.
     #[inline]
-    pub fn get_mut(&mut self, address: &Address) -> Option<&mut Precompile<CTX, EXTCXT>> {
+    pub fn get_mut(&mut self, address: &Address) -> Option<&mut Precompile> {
         self.inner.get_mut(address)
     }
 
@@ -233,41 +204,23 @@ impl<CTX, EXTCXT> Precompiles<CTX, EXTCXT> {
     /// Extends the precompiles with the given precompiles.
     ///
     /// Other precompiles with overwrite existing precompiles.
-    pub fn extend(
-        &mut self,
-        other: impl IntoIterator<Item = impl Into<(Address, Precompile<CTX, EXTCXT>)>>,
-    ) {
+    pub fn extend(&mut self, other: impl IntoIterator<Item = PrecompileWithAddress>) {
         self.inner.extend(other.into_iter().map(Into::into));
     }
 }
 
 #[derive(Clone, Debug)]
-pub struct PrecompileWithAddress(pub Address, pub StandardPrecompileFn);
+pub struct PrecompileWithAddress(pub Address, pub Precompile);
 
-#[derive(Clone, Debug)]
-pub struct EnvPrecompileWithAddress(pub Address, pub EnvPrecompileFn);
-
-impl From<(Address, StandardPrecompileFn)> for PrecompileWithAddress {
-    fn from(value: (Address, StandardPrecompileFn)) -> Self {
+impl From<(Address, Precompile)> for PrecompileWithAddress {
+    fn from(value: (Address, Precompile)) -> Self {
         PrecompileWithAddress(value.0, value.1)
     }
 }
 
-impl From<PrecompileWithAddress> for (Address, StandardPrecompileFn) {
+impl From<PrecompileWithAddress> for (Address, Precompile) {
     fn from(value: PrecompileWithAddress) -> Self {
         (value.0, value.1)
-    }
-}
-
-impl<CTX, EXTCXT> From<PrecompileWithAddress> for (Address, Precompile<CTX, EXTCXT>) {
-    fn from(value: PrecompileWithAddress) -> Self {
-        (value.0, Precompile::Standard(value.1))
-    }
-}
-
-impl<CTX, EXTCXT> From<EnvPrecompileWithAddress> for (Address, Precompile<CTX, EXTCXT>) {
-    fn from(value: EnvPrecompileWithAddress) -> Self {
-        (value.0, Precompile::Env(value.1))
     }
 }
 
