@@ -1,6 +1,6 @@
 use crate::{
     precompile::{Precompile, PrecompileResult},
-    primitives::{db::Database, Address, Bytes,HashMap},
+    primitives::{db::Database, Address, Bytes, HashMap},
     EvmContext,
 };
 use core::ops::{Deref, DerefMut};
