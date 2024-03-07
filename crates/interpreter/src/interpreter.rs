@@ -265,16 +265,17 @@ impl Interpreter {
             // Save data to return data buffer if the create reverted
             create_outcome.output().to_owned()
         } else {
-            // Otherwise clear it
+            // Otherwise clear it. Note that RETURN opcode should abort.
             Bytes::new()
         };
 
         match instruction_result {
-            InstructionResult::EofCreate => {
+            InstructionResult::ReturnContract => {
                 push_b256!(self, create_outcome.address.into_word());
                 self.gas.erase_cost(create_outcome.gas().remaining());
                 self.gas.record_refund(create_outcome.gas().refunded());
             }
+            // TODO(EOF) check what do to with Depth call and out of fund errors.
             return_revert!() => {
                 push!(self, U256::ZERO);
                 self.gas.erase_cost(create_outcome.gas().remaining());

@@ -446,14 +446,11 @@ impl<DB: Database> EvmContext<DB> {
         spec_id: SpecId,
         inputs: &EOFCreateInput,
     ) -> Result<FrameOrResult, EVMError<DB::Error>> {
-        // Prepare crate.
-        let gas = Gas::new(inputs.gas_limit);
-
         let return_error = |e| {
             Ok(FrameOrResult::new_eofcreate_result(
                 InterpreterResult {
                     result: e,
-                    gas,
+                    gas: Gas::new(inputs.gas_limit),
                     output: Bytes::new(),
                 },
                 inputs.created_address,
@@ -462,6 +459,7 @@ impl<DB: Database> EvmContext<DB> {
         };
 
         // Check depth
+        // TODO(EOF) what to do on system error is still discussed.
         if self.journaled_state.depth() > CALL_STACK_LIMIT {
             return return_error(InstructionResult::CallTooDeep);
         }
@@ -476,6 +474,7 @@ impl<DB: Database> EvmContext<DB> {
 
         // Increase nonce of caller and check if it overflows
         if self.journaled_state.inc_nonce(inputs.caller).is_none() {
+            // can't happen on mainnet.
             return return_error(InstructionResult::Return);
         }
 
@@ -498,6 +497,7 @@ impl<DB: Database> EvmContext<DB> {
 
         let contract = Box::new(Contract::new(
             Bytes::new(),
+            // fine to clone as it is Bytes.
             Bytecode::Eof(inputs.eof_init_code.clone()),
             None,
             inputs.created_address,
@@ -505,8 +505,8 @@ impl<DB: Database> EvmContext<DB> {
             inputs.value,
         ));
 
-        let mut interpreter = Interpreter::new(contract, gas.limit(), false);
-        // EOF init will enabled RETURNCONTRACT opcode.
+        let mut interpreter = Interpreter::new(contract, inputs.gas_limit, false);
+        // EOF init will enable RETURNCONTRACT opcode.
         interpreter.set_is_eof_init();
 
         Ok(FrameOrResult::new_eofcreate_frame(
@@ -629,24 +629,28 @@ impl<DB: Database> EvmContext<DB> {
         address: Address,
         journal_checkpoint: JournalCheckpoint,
     ) {
-        if interpreter_result.result != InstructionResult::EofCreate {
+        // Note we still execute RETURN opcode and return the bytes.
+        // In EOF those opcodes should abort execution.
+        //
+        // In RETURN gas is still protecting us from ddos and in oog,
+        // behaviour will be same as if it failed on return.
+        //
+        // Bytes of RETURN will drained in `insert_eofcreate_outcome`.
+        if interpreter_result.result != InstructionResult::ReturnContract {
             self.journaled_state.checkpoint_revert(journal_checkpoint);
             return;
         }
-        // Note that we still execute Return opcode and return the bytes.
-        // In EOF those opcodes should abort execution.
-        // For Return that returns bytes is okay as gas is still protecting us from ddos
-        // and if it fails on oog, behaviour will be same as if it failed on return.
 
         // commit changes reduces depth by -1.
         self.journaled_state.checkpoint_commit();
 
+        // decode bytecode is fast operation.
         let bytecode =
             Eof::decode(interpreter_result.output.clone()).expect("Eof is already verified");
+
+        // TODO(EOF) should we do keccak256 over bytes?
         self.journaled_state
             .set_code(address, Bytecode::Eof(bytecode));
-
-        interpreter_result.result = InstructionResult::Return;
     }
 
     /// Handles create return.

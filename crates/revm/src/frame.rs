@@ -75,8 +75,8 @@ impl FrameResult {
             FrameResult::Create(outcome) => {
                 Output::Create(outcome.result.output.clone(), outcome.address)
             }
-            FrameResult::EOFCreate(outcome) => {
-                panic!("EOFCreateOutcome does not have output");
+            FrameResult::EOFCreate(_) => {
+                panic!("EOFCreate can't be called from external world.");
             }
         }
     }

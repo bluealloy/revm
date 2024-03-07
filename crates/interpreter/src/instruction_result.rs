@@ -10,7 +10,7 @@ pub enum InstructionResult {
     Stop,
     Return,
     SelfDestruct,
-    EofCreate,
+    ReturnContract,
 
     // revert codes
     Revert = 0x10, // revert opcode
@@ -110,7 +110,7 @@ macro_rules! return_ok {
             | InstructionResult::Stop
             | InstructionResult::Return
             | InstructionResult::SelfDestruct
-            | InstructionResult::EofCreate
+            | InstructionResult::ReturnContract
     };
 }
 
@@ -232,7 +232,7 @@ impl From<InstructionResult> for SuccessOrHalt {
             InstructionResult::SelfDestruct => Self::Success(SuccessReason::SelfDestruct),
             InstructionResult::Revert => Self::Revert,
             // TODO EOFCreate is not external opcode.
-            InstructionResult::EofCreate => Self::FatalExternalError,
+            InstructionResult::ReturnContract => Self::FatalExternalError,
             InstructionResult::CallOrCreate => Self::InternalCallOrCreate, // used only in interpreter loop
             InstructionResult::CallTooDeep => Self::Halt(HaltReason::CallTooDeep), // not gonna happen for first call
             InstructionResult::OutOfFunds => Self::Halt(HaltReason::OutOfFunds), // Check for first call is done separately.

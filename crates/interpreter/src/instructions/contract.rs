@@ -131,14 +131,14 @@ pub fn txcreate<H: Host>(interpreter: &mut Interpreter, _host: &mut H) {
         cost_per_word::<KECCAK256WORD>(initcode.len() as u64)
     );
 
-    // Create new address
+    // Create new address. Gas for it is already deducted.
     let created_address = interpreter
         .contract
         .caller
         .create2(salt.to_be_bytes(), tx_initcode_hash);
 
     let gas_limit = interpreter.gas().remaining();
-    // spend all gas and reimburse it after call ends.
+    // spend all gas. It will be reimbursed after frame returns.
     gas!(interpreter, gas_limit);
 
     interpreter.next_action = InterpreterAction::EOFCreate {
