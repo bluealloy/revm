@@ -3,12 +3,11 @@ pub mod block_hash;
 pub mod state;
 
 pub use block_hash::{BlockHash, BlockHashRef};
-use hashbrown::HashMap;
 pub use state::{State, StateRef};
 
 use crate::{
     db::{Database, DatabaseRef},
-    Account, AccountInfo, Address, Bytecode, B256, U256,
+    Account, AccountInfo, Address, Bytecode, HashMap, B256, U256,
 };
 
 use super::DatabaseCommit;
