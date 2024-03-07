@@ -91,6 +91,13 @@ impl<T: DatabaseRef> Database for WrapDatabaseRef<T> {
     }
 }
 
+impl<T: DatabaseRef + DatabaseCommit> DatabaseCommit for WrapDatabaseRef<T> {
+    #[inline]
+    fn commit(&mut self, changes: HashMap<Address, Account>) {
+        self.0.commit(changes)
+    }
+}
+
 /// Wraps a `dyn DatabaseRef` to provide a [`Database`] implementation.
 #[doc(hidden)]
 #[deprecated = "use `WrapDatabaseRef` instead"]
