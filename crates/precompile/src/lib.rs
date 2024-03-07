@@ -163,7 +163,7 @@ impl Precompiles {
 
     /// Returns an iterator over the precompiles addresses.
     #[inline]
-    pub fn addresses(&self) -> impl Iterator<Item = &Address> + '_ {
+    pub fn addresses(&self) -> impl Iterator<Item = &Address> {
         self.inner.keys()
     }
 

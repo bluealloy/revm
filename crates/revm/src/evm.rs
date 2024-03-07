@@ -349,7 +349,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
         // load precompiles
         let precompiles = pre_exec.load_precompiles();
-        ctx.evm.set_precompiles(precompiles);
+        ctx.set_precompiles(precompiles);
 
         // deduce caller balance with its limit.
         pre_exec.deduct_caller(ctx)?;
@@ -411,7 +411,7 @@ impl<EXT, DB: Database> Host for Evm<'_, EXT, DB> {
     fn load_account(&mut self, address: Address) -> Option<LoadAccountResult> {
         self.context
             .evm
-            .load_account(address)
+            .load_account_exist(address)
             .map_err(|e| self.context.evm.error = Err(e))
             .ok()
     }

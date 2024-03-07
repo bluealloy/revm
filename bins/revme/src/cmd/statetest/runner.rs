@@ -115,7 +115,7 @@ fn check_evm_execution<EXT>(
     evm: &Evm<'_, EXT, &mut State<EmptyDB>>,
     print_json_outcome: bool,
 ) -> Result<(), TestError> {
-    let logs_root = log_rlp_hash(&exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
+    let logs_root = log_rlp_hash(exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());
     let state_root = state_merkle_trie_root(evm.context.evm.db.cache.trie_account());
 
     let print_json_output = |error: Option<String>| {

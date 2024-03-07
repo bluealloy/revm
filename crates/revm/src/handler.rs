@@ -26,7 +26,7 @@ pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
     /// Instruction table type.
     pub instruction_table: Option<InstructionTables<'a, H>>,
     /// Registers that will be called on initialization.
-    pub registers: Vec<HandleRegisters<'a, EXT, DB>>,
+    pub registers: Vec<HandleRegisters<EXT, DB>>,
     /// Validity handles.
     pub validation: ValidationHandler<'a, EXT, DB>,
     /// Pre execution handle
@@ -133,25 +133,25 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
     }
 
     /// Append handle register.
-    pub fn append_handler_register(&mut self, register: HandleRegisters<'a, EXT, DB>) {
+    pub fn append_handler_register(&mut self, register: HandleRegisters<EXT, DB>) {
         register.register(self);
         self.registers.push(register);
     }
 
     /// Append plain handle register.
-    pub fn append_handler_register_plain(&mut self, register: HandleRegister<'a, EXT, DB>) {
+    pub fn append_handler_register_plain(&mut self, register: HandleRegister<EXT, DB>) {
         register(self);
         self.registers.push(HandleRegisters::Plain(register));
     }
 
     /// Append boxed handle register.
-    pub fn append_handler_register_box(&mut self, register: HandleRegisterBox<'a, EXT, DB>) {
+    pub fn append_handler_register_box(&mut self, register: HandleRegisterBox<EXT, DB>) {
         register(self);
         self.registers.push(HandleRegisters::Box(register));
     }
 
     /// Pop last handle register and reapply all registers that are left.
-    pub fn pop_handle_register(&mut self) -> Option<HandleRegisters<'a, EXT, DB>> {
+    pub fn pop_handle_register(&mut self) -> Option<HandleRegisters<EXT, DB>> {
         let out = self.registers.pop();
         if out.is_some() {
             let registers = core::mem::take(&mut self.registers);
@@ -206,7 +206,7 @@ mod test {
 
     #[test]
     fn test_handler_register_pop() {
-        let register = |inner: &Rc<RefCell<i32>>| -> HandleRegisterBox<'_, (), EmptyDB> {
+        let register = |inner: &Rc<RefCell<i32>>| -> HandleRegisterBox<(), EmptyDB> {
             let inner = inner.clone();
             Box::new(move |h| {
                 *inner.borrow_mut() += 1;

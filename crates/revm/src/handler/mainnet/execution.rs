@@ -38,14 +38,15 @@ pub fn frame_return_with_refund_flag<SPEC: Spec>(
         }
         _ => {}
     }
+
     // Calculate gas refund for transaction.
     // If config is set to disable gas refund, it will return 0.
     // If spec is set to london, it will decrease the maximum refund amount to 5th part of
     // gas spend. (Before london it was 2th part of gas spend)
     if refund_enabled {
         // EIP-3529: Reduction in refunds
-        gas.set_final_refund::<SPEC>()
-    };
+        gas.set_final_refund::<SPEC>();
+    }
 }
 
 /// Handle output of the transaction
@@ -64,7 +65,7 @@ pub fn call<SPEC: Spec, EXT, DB: Database>(
     context: &mut Context<EXT, DB>,
     inputs: Box<CallInputs>,
 ) -> Result<FrameOrResult, EVMError<DB::Error>> {
-    context.evm.make_call_frame(&inputs)
+    context.make_call_frame(&inputs)
 }
 
 #[inline]

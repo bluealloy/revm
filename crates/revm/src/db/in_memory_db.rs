@@ -428,7 +428,9 @@ mod tests {
 
         let (key, value) = (U256::from(123), U256::from(456));
         let mut new_state = CacheDB::new(init_state);
-        let _ = new_state.insert_account_storage(account, key, value);
+        new_state
+            .insert_account_storage(account, key, value)
+            .unwrap();
 
         assert_eq!(new_state.basic(account).unwrap().unwrap().nonce, nonce);
         assert_eq!(new_state.storage(account, key), Ok(value));
@@ -449,10 +451,14 @@ mod tests {
 
         let (key0, value0) = (U256::from(123), U256::from(456));
         let (key1, value1) = (U256::from(789), U256::from(999));
-        let _ = init_state.insert_account_storage(account, key0, value0);
+        init_state
+            .insert_account_storage(account, key0, value0)
+            .unwrap();
 
         let mut new_state = CacheDB::new(init_state);
-        let _ = new_state.replace_account_storage(account, [(key1, value1)].into());
+        new_state
+            .replace_account_storage(account, [(key1, value1)].into())
+            .unwrap();
 
         assert_eq!(new_state.basic(account).unwrap().unwrap().nonce, nonce);
         assert_eq!(new_state.storage(account, key0), Ok(U256::ZERO));
