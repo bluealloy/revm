@@ -125,6 +125,8 @@ pub enum PrecompileError {
     BlobMismatchedVersion,
     /// The proof verification failed.
     BlobVerifyKzgProofFailed,
+    /// Catch-all variant for other errors.
+    Other(std::string::String),
 }
 
 #[cfg(feature = "std")]
@@ -152,6 +154,9 @@ impl fmt::Display for PrecompileError {
             PrecompileError::BlobMismatchedVersion => write!(f, "mismatched blob version"),
             PrecompileError::BlobVerifyKzgProofFailed => {
                 write!(f, "verifying blob kzg proof failed")
+            }
+            PrecompileError::Other(why) => {
+                write!(f, "other precompile error: {why}")
             }
         }
     }
