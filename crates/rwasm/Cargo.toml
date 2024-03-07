@@ -22,12 +22,14 @@ fluentbase-codec = { workspace = true, default-features = false }
 fluentbase-sdk = { workspace = true, default-features = false, features = ["evm"] }
 fluentbase-types = { workspace = true, default-features = false }
 #fluentbase-core = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "devel", default-features = false }
+#fluentbase-core = { git = "https://github.com/fluentlabs-xyz/fluentbase.git", branch = "FLU-56-based-on-no-tracer", default-features = false }
 fluentbase-core = { path = "../../../fluentbase/crates/core", default-features = false }
 
 # rwasm runtime
 fluentbase-runtime = { workspace = true, optional = true, default-features = false }
 rwasm = { workspace = true, optional = true, default-features = false }
 rwasm-codegen = { workspace = true, optional = true, default-features = false }
+#rwasm-codegen = { path = "../../../rwasm/codegen", optional = true, default-features = false }
 
 #misc
 auto_impl = { version = "1.1", default-features = false }

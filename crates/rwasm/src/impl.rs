@@ -219,9 +219,10 @@ impl<'a, GSPEC: Spec + 'static> EVMImpl<'a, GSPEC> {
         };
         #[cfg(not(feature = "runtime"))]
         {
-            use rwasm_codegen::{ImportLinker, ImportLinkerV1AlphaDefaults};
+            use rwasm_codegen::{ImportLinker, ImportLinkerDefaults};
             let mut import_linker = ImportLinker::default();
-            ImportLinkerV1AlphaDefaults::register_import_funcs(&mut import_linker, None);
+            let import_linker_defaults = ImportLinkerDefaults::new_v1alpha();
+            import_linker_defaults.register_import_funcs(&mut import_linker);
             let mut compiler = Compiler::new_with_linker(
                 input.as_ref(),
                 CompilerConfig::default(),
@@ -314,13 +315,55 @@ impl<'a, GSPEC: Spec + 'static> EVMImpl<'a, GSPEC> {
             Ok(result) => result,
         };
 
-        contract_account.change_bytecode(&bytes);
+        contract_account.update_bytecode(&bytes);
 
         CallCreateResult {
             result: ExitCode::Ok,
             created_address: Some(created_address),
             gas,
             return_value: bytes,
+        }
+    }
+
+    /// EVM create opcode for both initial crate and CREATE and CREATE2 opcodes.
+    fn create_inner_evm(
+        &mut self,
+        caller_account: &mut Account,
+        value: U256,
+        input: Bytes,
+        gas_limit: u64,
+        salt: Option<U256>,
+    ) -> CallCreateResult {
+        let gas = Gas::new(gas_limit);
+
+        // Increase nonce of caller and check if it overflows
+        let mut created_address = fluentbase_sdk::evm::Address::default();
+        let exit_code = match salt {
+            Some(salt) => fluentbase_core::evm::create2::_evm_create2(
+                value.to_be_bytes::<32>().as_ptr(),
+                input.as_ptr(),
+                input.len() as u32,
+                salt.to_be_bytes::<32>().as_ptr(),
+                created_address.as_mut_ptr(),
+                gas_limit as u32,
+            ),
+            None => fluentbase_core::evm::create::_evm_create(
+                value.to_be_bytes::<32>().as_ptr(),
+                input.as_ptr(),
+                input.len() as u32,
+                created_address.as_mut_ptr(),
+                gas_limit as u32,
+            ),
+        };
+        if exit_code != ExitCode::Ok {
+            return return CallCreateResult::from_error(exit_code, gas);
+        }
+
+        CallCreateResult {
+            result: ExitCode::Ok,
+            created_address: Some(created_address),
+            gas,
+            return_value: input,
         }
     }
 
@@ -409,5 +452,37 @@ impl<'a, GSPEC: Spec + 'static> EVMImpl<'a, GSPEC> {
         }
 
         ret
+    }
+
+    /// Main contract call of the EVM.
+    fn call_inner_evm(
+        &mut self,
+        caller_account: &mut Account,
+        callee_account: &mut Account,
+        value: U256,
+        input: Bytes,
+        gas_limit: u64,
+    ) -> CallCreateResult {
+        let gas = Gas::new(gas_limit);
+
+        let exit_code = fluentbase_core::evm::call::_evm_call(
+            gas_limit as u32,
+            caller_account.address.as_ptr(),
+            value.to_be_bytes::<32>().as_ptr(),
+            input.as_ptr(),
+            input.len() as u32,
+            core::ptr::null_mut(),
+            0,
+        );
+        if exit_code != ExitCode::Ok {
+            return return CallCreateResult::from_error(exit_code, gas);
+        }
+
+        CallCreateResult {
+            result: ExitCode::Ok,
+            created_address: None,
+            gas,
+            return_value: Bytes::new(),
+        }
     }
 }

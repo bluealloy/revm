@@ -85,10 +85,10 @@ fn test_greeting_deploy() {
     let contract_wasm_bytes = include_bytes!("../bin/greeting-deploy.wasm");
     let caller_address = address!("000000000000000000000000000000000000000c");
 
-    let contract_input = ContractInput {
-        ..Default::default()
-    };
-    let raw_input = contract_input.encode_to_vec(0);
+    // let contract_input = ContractInput {
+    //     ..Default::default()
+    // };
+    // let raw_input = contract_input.encode_to_vec(0);
 
     let db = InMemoryAccountDb::default();
     let storage = ZkTrieStateDb::new_empty(db);
@@ -148,14 +148,8 @@ fn test_contract_input_check_recode() {
         contract_is_static,
         block_hash,
         block_coinbase,
-        block_timestamp: 0,
-        block_number: 0,
-        block_difficulty: 0,
-        block_gas_limit: 0,
-        block_base_fee: Default::default(),
-        tx_gas_price: Default::default(),
         tx_gas_priority_fee: Some(U256::from_be_slice(&hex!("12345678"))),
-        tx_caller: Default::default(),
+        tx_caller: caller_address,
         ..Default::default()
     };
     let raw_input = contract_input.encode_to_vec(0);

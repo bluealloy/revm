@@ -1,3 +1,5 @@
+#[cfg(feature = "optimism")]
+use crate::optimism;
 use crate::{
     db::Database,
     handler::Handler,
@@ -6,28 +8,54 @@ use crate::{
         gas,
         gas::initial_tx_gas,
         opcode::{make_boxed_instruction_table, make_instruction_table, InstructionTables},
-        return_ok, CallContext, CallInputs, CallScheme, Contract, CreateInputs, Gas, Host,
-        InstructionResult, Interpreter, SelfDestructResult, SharedMemory, Transfer, MAX_CODE_SIZE,
+        return_ok,
+        CallContext,
+        CallInputs,
+        CallScheme,
+        Contract,
+        CreateInputs,
+        Gas,
+        Host,
+        InstructionResult,
+        Interpreter,
+        SelfDestructResult,
+        SharedMemory,
+        Transfer,
+        MAX_CODE_SIZE,
     },
     journaled_state::{JournalCheckpoint, JournaledState},
     precompile::{self, Precompile, Precompiles},
     primitives::{
-        keccak256, Address, Bytecode, Bytes, EVMError, EVMResult, Env, InvalidTransaction, Log,
-        Output, Spec, SpecId::*, TransactTo, B256, U256,
+        keccak256,
+        Address,
+        Bytecode,
+        Bytes,
+        EVMError,
+        EVMResult,
+        Env,
+        InvalidTransaction,
+        Log,
+        Output,
+        Spec,
+        SpecId::*,
+        TransactTo,
+        B256,
+        U256,
     },
-    EVMData, Inspector,
+    EVMData,
+    Inspector,
 };
 use alloc::{boxed::Box, sync::Arc, vec::Vec};
 use auto_impl::auto_impl;
 use core::{fmt, marker::PhantomData};
 use fluentbase_codec::Encoder;
+use fluentbase_sdk::{
+    evm::{ContractInput, ExecutionContext},
+    LowLevelAPI,
+    LowLevelSDK,
+};
 use fluentbase_types::{Account, AccountDb, STATE_DEPLOY, STATE_MAIN};
 use rwasm_codegen::{Compiler, CompilerConfig, CompilerError, FuncOrExport};
-
-#[cfg(feature = "optimism")]
-use crate::optimism;
-
-use fluentbase_sdk::evm::ContractInput;
 
 /// EVM call stack limit.
 pub const CALL_STACK_LIMIT: u64 = 1024;
@@ -342,7 +370,8 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
             .map_err(EVMError::Database)?;
 
         // Subtract gas costs from the caller's account.
-        // We need to saturate the gas cost to prevent underflow in case that `disable_balance_check` is enabled.
+        // We need to saturate the gas cost to prevent underflow in case that
+        // `disable_balance_check` is enabled.
         let mut gas_cost =
             U256::from(tx_gas_limit).saturating_mul(self.data.env.effective_gas_price());
 
@@ -641,9 +670,10 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                     let gas_for_code = bytes.len() as u64 * gas::CODEDEPOSIT;
                     if !gas.record_cost(gas_for_code) {
                         // record code deposit gas cost and check if we are out of gas.
-                        // EIP-2 point 3: If contract creation does not have enough gas to pay for the
-                        // final gas fee for adding the contract code to the state, the contract
-                        //  creation fails (i.e. goes out-of-gas) rather than leaving an empty contract.
+                        // EIP-2 point 3: If contract creation does not have enough gas to pay for
+                        // the final gas fee for adding the contract code to
+                        // the state, the contract  creation fails (i.e.
+                        // goes out-of-gas) rather than leaving an empty contract.
                         if GSPEC::enabled(HOMESTEAD) {
                             self.data
                                 .journaled_state
@@ -722,6 +752,7 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
         let execution_result = {
             let import_linker = Runtime::<'_, EVMData<'a, DB>>::new_shared_linker();
             let contract_input = ContractInput {
+                journal_checkpoint: LowLevelSDK::jzkt_checkpoint().into(),
                 env_chain_id: self.data.env.cfg.chain_id,
                 contract_address: contract.address,
                 contract_caller: contract.caller,
@@ -746,8 +777,8 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> EVMImpl<'a, GSPEC, DB> {
                 // tx_blob_gas_price: 0,
             };
             let raw_input = contract_input.encode_to_vec(0);
-            let ctx = RuntimeContext::<'_, EVMData<'a, DB>>::new(bytecode.as_ref())
-                .with_context(&mut self.data)
+            let mut ctx = RuntimeContext::<'_, EVMData<'a, DB>>::new(bytecode.as_ref());
+            ctx.with_context(&mut self.data)
                 .with_input(raw_input)
                 .with_state(state)
                 .with_fuel_limit(gas_limit as u32);
@@ -1168,9 +1199,10 @@ impl<'a, GSPEC: Spec + 'static, DB: Database> Host for EVMImpl<'a, GSPEC, DB> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    use crate::db::InMemoryDB;
-    use crate::primitives::{specification::BedrockSpec, state::AccountInfo, SpecId};
+    use crate::{
+        db::InMemoryDB,
+        primitives::{specification::BedrockSpec, state::AccountInfo, SpecId},
+    };
 
     #[test]
     fn test_commit_mint_value() {

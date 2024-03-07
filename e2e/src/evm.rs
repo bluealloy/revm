@@ -1,8 +1,6 @@
+use crate::util::{check_success, wat2wasm, TestingContext};
 use hex_literal::hex;
-
 use revm::primitives::{address, Eval, Output};
-
-use crate::util::{check_success, TestingContext};
 
 #[test]
 fn test_greeting() {

@@ -274,14 +274,14 @@ mod mainnet {
     #[cfg(test)]
     mod tests {
         use super::*;
-        use revm_primitives::CancunSpec;
+        type SpecDefault = revm_primitives::CancunSpec;
 
         #[test]
         fn test_consume_gas() {
             let mut env = Env::default();
             env.tx.gas_limit = 100;
 
-            let gas = handle_call_return::<CancunSpec>(&env, ExitCode::Ok, Gas::new(90));
+            let gas = handle_call_return::<SpecDefault>(&env, ExitCode::Ok, Gas::new(90));
             assert_eq!(gas.remaining(), 90);
             assert_eq!(gas.spend(), 10);
             assert_eq!(gas.refunded(), 0);
@@ -295,12 +295,12 @@ mod mainnet {
             let mut return_gas = Gas::new(90);
             return_gas.record_refund(30);
 
-            let gas = handle_call_return::<CancunSpec>(&env, ExitCode::Ok, return_gas);
+            let gas = handle_call_return::<SpecDefault>(&env, ExitCode::Ok, return_gas);
             assert_eq!(gas.remaining(), 90);
             assert_eq!(gas.spend(), 10);
             assert_eq!(gas.refunded(), 30);
 
-            let gas = handle_call_return::<CancunSpec>(&env, ExitCode::Panic, return_gas);
+            let gas = handle_call_return::<SpecDefault>(&env, ExitCode::Panic, return_gas);
             assert_eq!(gas.remaining(), 90);
             assert_eq!(gas.spend(), 10);
             assert_eq!(gas.refunded(), 0);
@@ -311,7 +311,7 @@ mod mainnet {
             let mut env = Env::default();
             env.tx.gas_limit = 100;
 
-            let gas = handle_call_return::<CancunSpec>(&env, ExitCode::Panic, Gas::new(90));
+            let gas = handle_call_return::<SpecDefault>(&env, ExitCode::Panic, Gas::new(90));
             assert_eq!(gas.remaining(), 90);
             assert_eq!(gas.spend(), 10);
             assert_eq!(gas.refunded(), 0);
