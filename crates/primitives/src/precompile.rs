@@ -1,7 +1,7 @@
 use crate::{Bytes, Env};
 use core::fmt;
 use dyn_clone::DynClone;
-use std::{boxed::Box, sync::Arc};
+use std::{boxed::Box, string::String, sync::Arc};
 
 /// A precompile operation result.
 ///
@@ -125,6 +125,14 @@ pub enum PrecompileError {
     BlobMismatchedVersion,
     /// The proof verification failed.
     BlobVerifyKzgProofFailed,
+    /// Catch-all variant for other errors.
+    Other(String),
+}
+
+impl PrecompileError {
+    pub fn other(err: impl Into<String>) -> Self {
+        Self::Other(err.into())
+    }
 }
 
 #[cfg(feature = "std")]
@@ -152,6 +160,9 @@ impl fmt::Display for PrecompileError {
             PrecompileError::BlobMismatchedVersion => write!(f, "mismatched blob version"),
             PrecompileError::BlobVerifyKzgProofFailed => {
                 write!(f, "verifying blob kzg proof failed")
+            }
+            PrecompileError::Other(why) => {
+                write!(f, "other precompile error: {why}")
             }
         }
     }
