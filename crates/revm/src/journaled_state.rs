@@ -96,11 +96,22 @@ impl JournaledState {
     /// This resets the [JournalState] to its initial state in [Self::new]
     #[inline]
     pub fn finalize(&mut self) -> (State, Vec<Log>) {
-        let state = mem::take(&mut self.state);
-        let logs = mem::take(&mut self.logs);
-        self.transient_storage = TransientStorage::default();
-        self.journal = vec![vec![]];
-        self.depth = 0;
+        let Self {
+            state,
+            transient_storage,
+            logs,
+            depth,
+            journal,
+            // kept, see [Self::new]
+            spec: _,
+            warm_preloaded_addresses: _,
+        } = self;
+
+        let state = mem::take(state);
+        let logs = mem::take(logs);
+        *transient_storage = TransientStorage::default();
+        *journal = vec![vec![]];
+        *depth = 0;
         (state, logs)
     }
 
