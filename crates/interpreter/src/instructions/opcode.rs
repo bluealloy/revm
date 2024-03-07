@@ -41,6 +41,21 @@ impl<H: Host> InstructionTables<'_, H> {
     }
 }
 
+impl<'a, H: Host + 'a> InstructionTables<'a, H> {
+    /// Inserts the instruction into the table with the specified index.
+    #[inline]
+    pub fn insert(&mut self, opcode: u8, instruction: Instruction<H>) {
+        match self {
+            Self::Plain(table) => {
+                table[opcode as usize] = instruction;
+            }
+            Self::Boxed(table) => {
+                table[opcode as usize] = Box::new(instruction);
+            }
+        }
+    }
+}
+
 /// Make instruction table.
 #[inline]
 pub const fn make_instruction_table<H: Host, SPEC: Spec>() -> InstructionTable<H> {

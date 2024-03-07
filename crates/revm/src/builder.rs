@@ -443,10 +443,58 @@ mod test {
         db::EmptyDB,
         inspector::inspector_handle_register,
         inspectors::NoOpInspector,
-        primitives::{Address, Bytes, PrecompileResult},
-        Context, ContextPrecompile, ContextStatefulPrecompile, Evm, EvmContext,
+        primitives::{
+            address, keccak256, AccountInfo, Address, Bytecode, Bytes, PrecompileResult,
+            TransactTo, U256,
+        },
+        Context, ContextPrecompile, ContextStatefulPrecompile, Evm, EvmContext, InMemoryDB,
     };
+    use revm_interpreter::{Host, Interpreter};
     use std::sync::Arc;
+
+    #[test]
+    fn simple_add_instruction() {
+        const CUSTOM_INSTRUCTION_COST: u64 = 133;
+        const INITIAL_TX_GAS: u64 = 21000;
+        const EXPECTED_RESULT_GAS: u64 = INITIAL_TX_GAS + CUSTOM_INSTRUCTION_COST;
+        fn custom_instruction(interp: &mut Interpreter, _host: &mut impl Host) {
+            // just spend some gas
+            interp.gas.record_cost(CUSTOM_INSTRUCTION_COST);
+        }
+
+        let single_opcode_bytecode = Bytes::from_static(&[0xEF, 0x00]);
+        let code = Bytecode::new_raw(single_opcode_bytecode.clone());
+        let code_hash = keccak256(&single_opcode_bytecode);
+
+        let to_addr = address!("ffffffffffffffffffffffffffffffffffffffff");
+
+        // create a db with the custom instruction
+        let mut db = InMemoryDB::default();
+        db.insert_account_info(
+            to_addr,
+            AccountInfo {
+                balance: U256::ZERO,
+                nonce: 0,
+                code_hash,
+                code: Some(code),
+            },
+        );
+
+        let mut evm = Evm::builder()
+            .with_db(db)
+            .with_spec_id(SpecId::HOMESTEAD)
+            .append_handler_register(|handler| {
+                let mut table = handler.take_instruction_table().expect("table exists");
+                table.insert(0xEF, custom_instruction).expect("inserted");
+                handler.set_instruction_table(table)
+            })
+            .build();
+
+        evm.env_mut().tx.transact_to = TransactTo::Call(to_addr);
+
+        let result_and_state = evm.transact().unwrap();
+        assert_eq!(result_and_state.result.gas_used(), EXPECTED_RESULT_GAS);
+    }
 
     #[test]
     fn simple_build() {
