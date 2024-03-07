@@ -1,7 +1,7 @@
 use crate::{Bytes, Env};
 use core::fmt;
 use dyn_clone::DynClone;
-use std::{boxed::Box, sync::Arc};
+use std::{boxed::Box, string::String, sync::Arc};
 
 /// A precompile operation result.
 ///
@@ -126,7 +126,13 @@ pub enum PrecompileError {
     /// The proof verification failed.
     BlobVerifyKzgProofFailed,
     /// Catch-all variant for other errors.
-    Other(std::string::String),
+    Other(String),
+}
+
+impl PrecompileError {
+    pub fn other(err: impl Into<String>) -> Self {
+        Self::Other(err.into())
+    }
 }
 
 #[cfg(feature = "std")]
