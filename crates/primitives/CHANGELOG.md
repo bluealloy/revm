@@ -6,6 +6,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0](https://github.com/bluealloy/revm/compare/revm-primitives-v2.1.0...revm-primitives-v3.0.0) - 2024-03-08
+
+### Added
+- *(primitives)* derive Default for SpecId ([#1171](https://github.com/bluealloy/revm/pull/1171))
+- implement DatabaseCommit for DatabaseComponents ([#1163](https://github.com/bluealloy/revm/pull/1163))
+- add PrecompileError::Other ([#1165](https://github.com/bluealloy/revm/pull/1165))
+- use `impl` instead of `dyn` in `GetInspector` ([#1157](https://github.com/bluealloy/revm/pull/1157))
+- Add boxed precompile trait ([#1131](https://github.com/bluealloy/revm/pull/1131))
+
+### Other
+- *(interpreter)* evaluate instruction table constructor at compile time ([#1140](https://github.com/bluealloy/revm/pull/1140))
+- *(deps)* bump auto_impl from 1.1.2 to 1.2.0 ([#1132](https://github.com/bluealloy/revm/pull/1132))
+- add helper function for spec id ([#1130](https://github.com/bluealloy/revm/pull/1130))
+
 ## [2.1.0](https://github.com/bluealloy/revm/compare/revm-primitives-v2.0.1...revm-primitives-v2.1.0) - 2024-02-22
 
 ### Added
