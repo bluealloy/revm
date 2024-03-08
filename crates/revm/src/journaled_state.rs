@@ -93,7 +93,7 @@ impl JournaledState {
 
     /// Does cleanup and returns modified state.
     ///
-    /// This resets the [JournalState] to its initial state in [Self::new]
+    /// This resets the [JournaledState] to its initial state in [Self::new]
     #[inline]
     pub fn finalize(&mut self) -> (State, Vec<Log>) {
         let Self {
