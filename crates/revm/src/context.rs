@@ -1,19 +1,20 @@
+mod context_precompiles;
+mod evm_context;
+
+pub use context_precompiles::{
+    ContextPrecompile, ContextPrecompiles, ContextStatefulPrecompile, ContextStatefulPrecompileArc,
+    ContextStatefulPrecompileBox, ContextStatefulPrecompileMut,
+};
+pub use evm_context::EvmContext;
+
 use crate::{
     db::{Database, EmptyDB},
     interpreter::{
-        analysis::to_analysed, gas, return_ok, CallInputs, Contract, CreateInputs, Gas,
-        InstructionResult, Interpreter, InterpreterResult, MAX_CODE_SIZE,
+        return_ok, CallInputs, Contract, Gas, InstructionResult, Interpreter, InterpreterResult,
     },
-    journaled_state::JournaledState,
-    primitives::{
-        keccak256, Account, Address, AnalysisKind, Bytecode, Bytes, CreateScheme, EVMError, Env,
-        HandlerCfg, HashSet, Spec,
-        SpecId::{self, *},
-        B256, U256,
-    },
-    ContextPrecompiles, FrameOrResult, JournalCheckpoint, CALL_STACK_LIMIT,
+    primitives::{Address, Bytes, EVMError, HandlerCfg, HashSet, U256},
+    FrameOrResult, CALL_STACK_LIMIT,
 };
-use revm_interpreter::{SStoreResult, SelfDestructResult};
 use std::boxed::Box;
 
 /// Main Context structure that contains both EvmContext and External context.
@@ -23,7 +24,7 @@ pub struct Context<EXT, DB: Database> {
     /// External contexts.
     pub external: EXT,
     /// Precompiles that are available for evm.
-    pub precompiles: ContextPrecompiles<DB, EXT>,
+    pub precompiles: ContextPrecompiles<DB>,
 }
 
 impl<EXT: Clone, DB: Database + Clone> Clone for Context<EXT, DB>
@@ -79,7 +80,7 @@ impl<EXT, DB: Database> Context<EXT, DB> {
 
     /// Sets precompiles
     #[inline]
-    pub fn set_precompiles(&mut self, precompiles: ContextPrecompiles<DB, EXT>) {
+    pub fn set_precompiles(&mut self, precompiles: ContextPrecompiles<DB>) {
         // set warm loaded addresses.
         self.evm.journaled_state.warm_preloaded_addresses =
             precompiles.addresses().copied().collect::<HashSet<_>>();
@@ -94,13 +95,9 @@ impl<EXT, DB: Database> Context<EXT, DB> {
         input_data: &Bytes,
         gas: Gas,
     ) -> Option<InterpreterResult> {
-        let out = self.precompiles.call(
-            address,
-            input_data,
-            gas.limit(),
-            &mut self.evm,
-            &mut self.external,
-        )?;
+        let out = self
+            .precompiles
+            .call(address, input_data, gas.limit(), &mut self.evm)?;
 
         let mut result = InterpreterResult {
             result: InstructionResult::Return,
@@ -154,8 +151,9 @@ impl<EXT, DB: Database> Context<EXT, DB> {
 
         let (account, _) = self
             .evm
+            .inner
             .journaled_state
-            .load_code(inputs.contract, &mut self.evm.db)?;
+            .load_code(inputs.contract, &mut self.evm.inner.db)?;
         let code_hash = account.info.code_hash();
         let bytecode = account.info.code.clone().unwrap_or_default();
 
@@ -169,11 +167,11 @@ impl<EXT, DB: Database> Context<EXT, DB> {
         }
 
         // Transfer value from caller to called account
-        if let Some(result) = self.evm.journaled_state.transfer(
+        if let Some(result) = self.evm.inner.journaled_state.transfer(
             &inputs.transfer.source,
             &inputs.transfer.target,
             inputs.transfer.value,
-            &mut self.evm.db,
+            &mut self.evm.inner.db,
         )? {
             self.evm.journaled_state.checkpoint_revert(checkpoint);
             return return_result(result);
@@ -236,392 +234,18 @@ where
     }
 }
 
-/// EVM contexts contains data that EVM needs for execution.
-#[derive(Debug)]
-pub struct EvmContext<DB: Database> {
-    /// EVM Environment contains all the information about config, block and transaction that
-    /// evm needs.
-    pub env: Box<Env>,
-    /// EVM State with journaling support.
-    pub journaled_state: JournaledState,
-    /// Database to load data from.
-    pub db: DB,
-    /// Error that happened during execution.
-    pub error: Result<(), EVMError<DB::Error>>,
-    /// Used as temporary value holder to store L1 block info.
-    #[cfg(feature = "optimism")]
-    pub l1_block_info: Option<crate::optimism::L1BlockInfo>,
-}
-
-impl<DB: Database + Clone> Clone for EvmContext<DB>
-where
-    DB::Error: Clone,
-{
-    fn clone(&self) -> Self {
-        Self {
-            env: self.env.clone(),
-            journaled_state: self.journaled_state.clone(),
-            db: self.db.clone(),
-            error: self.error.clone(),
-            #[cfg(feature = "optimism")]
-            l1_block_info: self.l1_block_info.clone(),
-        }
-    }
-}
-
-impl<DB: Database> EvmContext<DB> {
-    pub fn new(db: DB) -> Self {
-        Self {
-            env: Box::default(),
-            journaled_state: JournaledState::new(SpecId::LATEST, HashSet::new()),
-            db,
-            error: Ok(()),
-            #[cfg(feature = "optimism")]
-            l1_block_info: None,
-        }
-    }
-
-    /// Creates a new context with the given environment and database.
-    #[inline]
-    pub fn new_with_env(db: DB, env: Box<Env>) -> Self {
-        Self {
-            env,
-            journaled_state: JournaledState::new(SpecId::LATEST, HashSet::new()),
-            db,
-            error: Ok(()),
-            #[cfg(feature = "optimism")]
-            l1_block_info: None,
-        }
-    }
-
-    /// Sets the database.
-    ///
-    /// Note that this will ignore the previous `error` if set.
-    #[inline]
-    pub fn with_db<ODB: Database>(self, db: ODB) -> EvmContext<ODB> {
-        EvmContext {
-            env: self.env,
-            journaled_state: self.journaled_state,
-            db,
-            error: Ok(()),
-            #[cfg(feature = "optimism")]
-            l1_block_info: self.l1_block_info,
-        }
-    }
-
-    /// Returns the configured EVM spec ID.
-    #[inline]
-    pub const fn spec_id(&self) -> SpecId {
-        self.journaled_state.spec
-    }
-
-    /// Load access list for berlin hard fork.
-    ///
-    /// Loading of accounts/storages is needed to make them warm.
-    #[inline]
-    pub fn load_access_list(&mut self) -> Result<(), EVMError<DB::Error>> {
-        for (address, slots) in self.env.tx.access_list.iter() {
-            self.journaled_state
-                .initial_account_load(*address, slots, &mut self.db)?;
-        }
-        Ok(())
-    }
-
-    /// Return environment.
-    #[inline]
-    pub fn env(&mut self) -> &mut Env {
-        &mut self.env
-    }
-
-    /// Fetch block hash from database.
-    #[inline]
-    pub fn block_hash(&mut self, number: U256) -> Result<B256, EVMError<DB::Error>> {
-        self.db.block_hash(number).map_err(EVMError::Database)
-    }
-
-    /// Mark account as touched as only touched accounts will be added to state.
-    #[inline]
-    pub fn touch(&mut self, address: &Address) {
-        self.journaled_state.touch(address);
-    }
-
-    /// Loads an account into memory. Returns `true` if it is cold accessed.
-    #[inline]
-    pub fn load_account(
-        &mut self,
-        address: Address,
-    ) -> Result<(&mut Account, bool), EVMError<DB::Error>> {
-        self.journaled_state.load_account(address, &mut self.db)
-    }
-
-    /// Load account from database to JournaledState.
-    ///
-    /// Return boolean pair where first is `is_cold` second bool `exists`.
-    #[inline]
-    pub fn load_account_exist(
-        &mut self,
-        address: Address,
-    ) -> Result<(bool, bool), EVMError<DB::Error>> {
-        self.journaled_state
-            .load_account_exist(address, &mut self.db)
-    }
-
-    /// Return account balance and is_cold flag.
-    #[inline]
-    pub fn balance(&mut self, address: Address) -> Result<(U256, bool), EVMError<DB::Error>> {
-        self.journaled_state
-            .load_account(address, &mut self.db)
-            .map(|(acc, is_cold)| (acc.info.balance, is_cold))
-    }
-
-    /// Return account code and if address is cold loaded.
-    #[inline]
-    pub fn code(&mut self, address: Address) -> Result<(Bytecode, bool), EVMError<DB::Error>> {
-        self.journaled_state
-            .load_code(address, &mut self.db)
-            .map(|(a, is_cold)| (a.info.code.clone().unwrap(), is_cold))
-    }
-
-    /// Get code hash of address.
-    #[inline]
-    pub fn code_hash(&mut self, address: Address) -> Result<(B256, bool), EVMError<DB::Error>> {
-        let (acc, is_cold) = self.journaled_state.load_code(address, &mut self.db)?;
-        if acc.is_empty() {
-            return Ok((B256::ZERO, is_cold));
-        }
-        Ok((acc.info.code_hash, is_cold))
-    }
-
-    /// Load storage slot, if storage is not present inside the account then it will be loaded from database.
-    #[inline]
-    pub fn sload(
-        &mut self,
-        address: Address,
-        index: U256,
-    ) -> Result<(U256, bool), EVMError<DB::Error>> {
-        // account is always warm. reference on that statement https://eips.ethereum.org/EIPS/eip-2929 see `Note 2:`
-        self.journaled_state.sload(address, index, &mut self.db)
-    }
-
-    /// Storage change of storage slot, before storing `sload` will be called for that slot.
-    #[inline]
-    pub fn sstore(
-        &mut self,
-        address: Address,
-        index: U256,
-        value: U256,
-    ) -> Result<SStoreResult, EVMError<DB::Error>> {
-        self.journaled_state
-            .sstore(address, index, value, &mut self.db)
-    }
-
-    /// Returns transient storage value.
-    #[inline]
-    pub fn tload(&mut self, address: Address, index: U256) -> U256 {
-        self.journaled_state.tload(address, index)
-    }
-
-    /// Stores transient storage value.
-    #[inline]
-    pub fn tstore(&mut self, address: Address, index: U256, value: U256) {
-        self.journaled_state.tstore(address, index, value)
-    }
-
-    /// Selfdestructs the account.
-    #[inline]
-    pub fn selfdestruct(
-        &mut self,
-        address: Address,
-        target: Address,
-    ) -> Result<SelfDestructResult, EVMError<DB::Error>> {
-        self.journaled_state
-            .selfdestruct(address, target, &mut self.db)
-    }
-
-    /// Make create frame.
-    #[inline]
-    pub fn make_create_frame(
-        &mut self,
-        spec_id: SpecId,
-        inputs: &CreateInputs,
-    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
-        // Prepare crate.
-        let gas = Gas::new(inputs.gas_limit);
-
-        let return_error = |e| {
-            Ok(FrameOrResult::new_create_result(
-                InterpreterResult {
-                    result: e,
-                    gas,
-                    output: Bytes::new(),
-                },
-                None,
-            ))
-        };
-
-        // Check depth
-        if self.journaled_state.depth() > CALL_STACK_LIMIT {
-            return return_error(InstructionResult::CallTooDeep);
-        }
-
-        // Fetch balance of caller.
-        let (caller_balance, _) = self.balance(inputs.caller)?;
-
-        // Check if caller has enough balance to send to the created contract.
-        if caller_balance < inputs.value {
-            return return_error(InstructionResult::OutOfFunds);
-        }
-
-        // Increase nonce of caller and check if it overflows
-        let old_nonce;
-        if let Some(nonce) = self.journaled_state.inc_nonce(inputs.caller) {
-            old_nonce = nonce - 1;
-        } else {
-            return return_error(InstructionResult::Return);
-        }
-
-        // Create address
-        let mut init_code_hash = B256::ZERO;
-        let created_address = match inputs.scheme {
-            CreateScheme::Create => inputs.caller.create(old_nonce),
-            CreateScheme::Create2 { salt } => {
-                init_code_hash = keccak256(&inputs.init_code);
-                inputs.caller.create2(salt.to_be_bytes(), init_code_hash)
-            }
-        };
-
-        // Load account so it needs to be marked as warm for access list.
-        self.journaled_state
-            .load_account(created_address, &mut self.db)?;
-
-        // create account, transfer funds and make the journal checkpoint.
-        let checkpoint = match self.journaled_state.create_account_checkpoint(
-            inputs.caller,
-            created_address,
-            inputs.value,
-            spec_id,
-        ) {
-            Ok(checkpoint) => checkpoint,
-            Err(e) => {
-                return return_error(e);
-            }
-        };
-
-        let bytecode = Bytecode::new_raw(inputs.init_code.clone());
-
-        let contract = Box::new(Contract::new(
-            Bytes::new(),
-            bytecode,
-            init_code_hash,
-            created_address,
-            inputs.caller,
-            inputs.value,
-        ));
-
-        Ok(FrameOrResult::new_create_frame(
-            created_address,
-            checkpoint,
-            Interpreter::new(contract, gas.limit(), false),
-        ))
-    }
-
-    /// Handles call return.
-    #[inline]
-    pub fn call_return(
-        &mut self,
-        interpreter_result: &InterpreterResult,
-        journal_checkpoint: JournalCheckpoint,
-    ) {
-        // revert changes or not.
-        if matches!(interpreter_result.result, return_ok!()) {
-            self.journaled_state.checkpoint_commit();
-        } else {
-            self.journaled_state.checkpoint_revert(journal_checkpoint);
-        }
-    }
-
-    /// Handles create return.
-    #[inline]
-    pub fn create_return<SPEC: Spec>(
-        &mut self,
-        interpreter_result: &mut InterpreterResult,
-        address: Address,
-        journal_checkpoint: JournalCheckpoint,
-    ) {
-        // if return is not ok revert and return.
-        if !matches!(interpreter_result.result, return_ok!()) {
-            self.journaled_state.checkpoint_revert(journal_checkpoint);
-            return;
-        }
-        // Host error if present on execution
-        // if ok, check contract creation limit and calculate gas deduction on output len.
-        //
-        // EIP-3541: Reject new contract code starting with the 0xEF byte
-        if SPEC::enabled(LONDON)
-            && !interpreter_result.output.is_empty()
-            && interpreter_result.output.first() == Some(&0xEF)
-        {
-            self.journaled_state.checkpoint_revert(journal_checkpoint);
-            interpreter_result.result = InstructionResult::CreateContractStartingWithEF;
-            return;
-        }
-
-        // EIP-170: Contract code size limit
-        // By default limit is 0x6000 (~25kb)
-        if SPEC::enabled(SPURIOUS_DRAGON)
-            && interpreter_result.output.len()
-                > self
-                    .env
-                    .cfg
-                    .limit_contract_code_size
-                    .unwrap_or(MAX_CODE_SIZE)
-        {
-            self.journaled_state.checkpoint_revert(journal_checkpoint);
-            interpreter_result.result = InstructionResult::CreateContractSizeLimit;
-            return;
-        }
-        let gas_for_code = interpreter_result.output.len() as u64 * gas::CODEDEPOSIT;
-        if !interpreter_result.gas.record_cost(gas_for_code) {
-            // record code deposit gas cost and check if we are out of gas.
-            // EIP-2 point 3: If contract creation does not have enough gas to pay for the
-            // final gas fee for adding the contract code to the state, the contract
-            //  creation fails (i.e. goes out-of-gas) rather than leaving an empty contract.
-            if SPEC::enabled(HOMESTEAD) {
-                self.journaled_state.checkpoint_revert(journal_checkpoint);
-                interpreter_result.result = InstructionResult::OutOfGas;
-                return;
-            } else {
-                interpreter_result.output = Bytes::new();
-            }
-        }
-        // if we have enough gas we can commit changes.
-        self.journaled_state.checkpoint_commit();
-
-        // Do analysis of bytecode straight away.
-        let bytecode = match self.env.cfg.perf_analyse_created_bytecodes {
-            AnalysisKind::Raw => Bytecode::new_raw(interpreter_result.output.clone()),
-            AnalysisKind::Check => {
-                Bytecode::new_raw(interpreter_result.output.clone()).to_checked()
-            }
-            AnalysisKind::Analyse => {
-                to_analysed(Bytecode::new_raw(interpreter_result.output.clone()))
-            }
-        };
-
-        // set code
-        self.journaled_state.set_code(address, bytecode);
-
-        interpreter_result.result = InstructionResult::Return;
-    }
-}
 /// Test utilities for the [`EvmContext`].
 #[cfg(any(test, feature = "test-utils"))]
 pub(crate) mod test_utils {
+    use self::evm_context::InnerEvmContext;
+
     use super::*;
-    use crate::db::CacheDB;
-    use crate::db::EmptyDB;
-    use crate::primitives::address;
-    use crate::primitives::SpecId;
+    use crate::{
+        db::{CacheDB, EmptyDB},
+        journaled_state::JournaledState,
+        primitives::{address, Address, Bytes, Env, HashSet, SpecId, B256, U256},
+    };
+    use std::boxed::Box;
 
     /// Mock caller address.
     pub const MOCK_CALLER: Address = address!("0000000000000000000000000000000000000000");
@@ -676,12 +300,15 @@ pub(crate) mod test_utils {
     ) -> Context<(), CacheDB<EmptyDB>> {
         Context {
             evm: EvmContext {
-                env,
-                journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
-                db,
-                error: Ok(()),
-                #[cfg(feature = "optimism")]
-                l1_block_info: None,
+                inner: InnerEvmContext {
+                    env,
+                    journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
+                    db,
+                    error: Ok(()),
+                    #[cfg(feature = "optimism")]
+                    l1_block_info: None,
+                },
+                precompiles: (),
             },
             external: (),
             precompiles: ContextPrecompiles::default(),
@@ -692,12 +319,15 @@ pub(crate) mod test_utils {
     pub fn create_empty_evm_context(env: Box<Env>, db: EmptyDB) -> Context<(), EmptyDB> {
         Context::new(
             EvmContext {
-                env,
-                journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
-                db,
-                error: Ok(()),
-                #[cfg(feature = "optimism")]
-                l1_block_info: None,
+                inner: InnerEvmContext {
+                    env,
+                    journaled_state: JournaledState::new(SpecId::CANCUN, HashSet::new()),
+                    db,
+                    error: Ok(()),
+                    #[cfg(feature = "optimism")]
+                    l1_block_info: None,
+                },
+                precompiles: (),
             },
             (),
         )
@@ -707,10 +337,15 @@ pub(crate) mod test_utils {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::{CacheDB, EmptyDB};
-    use crate::primitives::address;
-    use crate::{Frame, JournalEntry};
     use test_utils::*;
+
+    use crate::{
+        db::{CacheDB, EmptyDB},
+        interpreter::InstructionResult,
+        primitives::{address, Bytecode, Bytes, Env, U256},
+        Frame, FrameOrResult, JournalEntry,
+    };
+    use std::boxed::Box;
 
     // Tests that the `EVMContext::make_call_frame` function returns an error if the
     // call stack is too deep.

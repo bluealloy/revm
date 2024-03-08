@@ -534,11 +534,7 @@ mod test {
             // .with_db(..)
             .build();
 
-        let Context {
-            external: _,
-            evm: EvmContext { db: _, .. },
-            ..
-        } = evm.into_context();
+        let Context { external: _, .. } = evm.into_context();
     }
 
     #[test]
@@ -561,13 +557,12 @@ mod test {
     fn build_custom_precompile() {
         struct CustomPrecompile;
 
-        impl ContextStatefulPrecompile<EvmContext<EmptyDB>, ()> for CustomPrecompile {
+        impl ContextStatefulPrecompile<EvmContext<EmptyDB>> for CustomPrecompile {
             fn call(
                 &self,
                 _input: &Bytes,
                 _gas_price: u64,
                 _context: &mut EvmContext<EmptyDB>,
-                _extctx: &mut (),
             ) -> PrecompileResult {
                 Ok((10, Bytes::new()))
             }

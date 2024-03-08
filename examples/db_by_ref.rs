@@ -32,7 +32,7 @@ fn run_transaction<EXT, DB: DatabaseRefDebugError>(
         .build();
 
     let result = evm.transact()?;
-    Ok((result, evm.into_context().evm.db.0))
+    Ok((result, evm.into_context().evm.inner.db.0))
 }
 
 fn run_transaction_and_commit_with_ext<EXT, DB: DatabaseRefDebugError + DatabaseCommit>(
