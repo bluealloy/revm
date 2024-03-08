@@ -1,12 +1,20 @@
 Because this is workspace with multi libraries, tags will be simplified, and with this document you can match version of project with git tag.
 
+# v32 tag
+date: 08.03.2024
+
+Extends v7.0.0 with more restrictive context precompile.
+
+revm: 7.0.0(yanked) -> 7.1.0 (⚠️ API breaking changes)
+revm-interpreter: 3.2.0 -> 3.3.0 (✓ API compatible changes)
+
 # v31 tag
 date 08.03.2024
 
 Stateful and context aware precompiles types added. Few improvements and fixes.
 
 revme: 0.2.2 -> 0.3.0 (⚠️ API breaking changes)
-revm: 6.1.0 -> 7.0.0 (⚠️ API breaking changes)
+revm: 6.1.0 -> 7.0.0(yanked) (⚠️ API breaking changes)
 revm-interpreter: 3.1.0 -> 3.2.0 (✓ API compatible changes)
 revm-primitives: 2.1.0 -> 3.0.0 (⚠️ API breaking changes)
 revm-precompile: 4.1.0 -> 5.0.0 (⚠️ API breaking changes)

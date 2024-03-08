@@ -2321,7 +2321,7 @@ dependencies = [
 
 [[package]]
 name = "revm"
-version = "7.0.0"
+version = "7.1.0"
 dependencies = [
  "anyhow",
  "auto_impl",
@@ -2341,7 +2341,7 @@ dependencies = [
 
 [[package]]
 name = "revm-interpreter"
-version = "3.2.0"
+version = "3.3.0"
 dependencies = [
  "revm-primitives",
  "serde",

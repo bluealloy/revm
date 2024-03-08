@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v3.2.0...revm-interpreter-v3.3.0) - 2024-03-08
+
+### Added
+- *(interpreter)* OpCode struct constants ([#1173](https://github.com/bluealloy/revm/pull/1173))
+
+
 ## [3.2.0](https://github.com/bluealloy/revm/compare/revm-interpreter-v3.1.0...revm-interpreter-v3.2.0) - 2024-03-08
 
 ### Added
