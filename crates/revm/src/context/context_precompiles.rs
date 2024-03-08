@@ -1,12 +1,13 @@
 use crate::{
     precompile::{Precompile, PrecompileResult},
     primitives::{db::Database, Address, Bytes, HashMap},
-    EvmContext,
 };
 use core::ops::{Deref, DerefMut};
 use dyn_clone::DynClone;
 use revm_precompile::Precompiles;
 use std::{boxed::Box, sync::Arc};
+
+use super::InnerEvmContext;
 
 /// Precompile and its handlers.
 pub enum ContextPrecompile<DB: Database> {
@@ -14,10 +15,10 @@ pub enum ContextPrecompile<DB: Database> {
     Ordinary(Precompile),
     /// Stateful precompile that is Arc over [`ContextStatefulPrecompile`] trait.
     /// It takes a reference to input, gas limit and Context.
-    ContextStateful(ContextStatefulPrecompileArc<EvmContext<DB>>),
+    ContextStateful(ContextStatefulPrecompileArc<DB>),
     /// Mutable stateful precompile that is Box over [`ContextStatefulPrecompileMut`] trait.
     /// It takes a reference to input, gas limit and context.
-    ContextStatefulMut(ContextStatefulPrecompileBox<EvmContext<DB>>),
+    ContextStatefulMut(ContextStatefulPrecompileBox<DB>),
 }
 
 impl<DB: Database> Clone for ContextPrecompile<DB> {
@@ -61,7 +62,7 @@ impl<DB: Database> ContextPrecompiles<DB> {
         addess: Address,
         bytes: &Bytes,
         gas_price: u64,
-        evmctx: &mut EvmContext<DB>,
+        evmctx: &mut InnerEvmContext<DB>,
     ) -> Option<PrecompileResult> {
         let precompile = self.inner.get_mut(&addess)?;
 
@@ -97,23 +98,33 @@ impl<DB: Database> DerefMut for ContextPrecompiles<DB> {
 
 /// Context aware stateful precompile trait. It is used to create
 /// a arc precompile in [`ContextPrecompile`].
-pub trait ContextStatefulPrecompile<EVMCTX>: Sync + Send {
-    fn call(&self, bytes: &Bytes, gas_price: u64, evmctx: &mut EVMCTX) -> PrecompileResult;
+pub trait ContextStatefulPrecompile<DB: Database>: Sync + Send {
+    fn call(
+        &self,
+        bytes: &Bytes,
+        gas_price: u64,
+        evmctx: &mut InnerEvmContext<DB>,
+    ) -> PrecompileResult;
 }
 
 /// Context aware mutable stateful precompile trait. It is used to create
 /// a boxed precompile in [`ContextPrecompile`].
-pub trait ContextStatefulPrecompileMut<EVMCTX>: DynClone + Send + Sync {
-    fn call_mut(&mut self, bytes: &Bytes, gas_price: u64, evmctx: &mut EVMCTX) -> PrecompileResult;
+pub trait ContextStatefulPrecompileMut<DB: Database>: DynClone + Send + Sync {
+    fn call_mut(
+        &mut self,
+        bytes: &Bytes,
+        gas_price: u64,
+        evmctx: &mut InnerEvmContext<DB>,
+    ) -> PrecompileResult;
 }
 
-dyn_clone::clone_trait_object!(<EVMCTX> ContextStatefulPrecompileMut<EVMCTX>);
+dyn_clone::clone_trait_object!(<DB> ContextStatefulPrecompileMut<DB>);
 
 /// Arc over context stateful precompile.
-pub type ContextStatefulPrecompileArc<EVMCTX> = Arc<dyn ContextStatefulPrecompile<EVMCTX>>;
+pub type ContextStatefulPrecompileArc<DB> = Arc<dyn ContextStatefulPrecompile<DB>>;
 
 /// Box over context mutable stateful precompile
-pub type ContextStatefulPrecompileBox<EVMCTX> = Box<dyn ContextStatefulPrecompileMut<EVMCTX>>;
+pub type ContextStatefulPrecompileBox<DB> = Box<dyn ContextStatefulPrecompileMut<DB>>;
 
 impl<DB: Database> From<Precompile> for ContextPrecompile<DB> {
     fn from(p: Precompile) -> Self {
