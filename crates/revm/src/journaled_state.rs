@@ -15,7 +15,7 @@ use std::vec::Vec;
 pub struct JournaledState {
     /// Current state.
     pub state: State,
-    /// EIP 1153 transient storage
+    /// [EIP-1153[(https://eips.ethereum.org/EIPS/eip-1153) transient storage that is discarded after every transactions
     pub transient_storage: TransientStorage,
     /// logs
     pub logs: Vec<Log>,
@@ -92,12 +92,27 @@ impl JournaledState {
     }
 
     /// Does cleanup and returns modified state.
+    ///
+    /// This resets the [JournaledState] to its initial state in [Self::new]
     #[inline]
     pub fn finalize(&mut self) -> (State, Vec<Log>) {
-        let state = mem::take(&mut self.state);
-        let logs = mem::take(&mut self.logs);
-        self.journal = vec![vec![]];
-        self.depth = 0;
+        let Self {
+            state,
+            transient_storage,
+            logs,
+            depth,
+            journal,
+            // kept, see [Self::new]
+            spec: _,
+            warm_preloaded_addresses: _,
+        } = self;
+
+        *transient_storage = TransientStorage::default();
+        *journal = vec![vec![]];
+        *depth = 0;
+        let state = mem::take(state);
+        let logs = mem::take(logs);
+
         (state, logs)
     }
 
