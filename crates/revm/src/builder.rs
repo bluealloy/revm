@@ -443,10 +443,44 @@ mod test {
         db::EmptyDB,
         inspector::inspector_handle_register,
         inspectors::NoOpInspector,
-        primitives::{Address, Bytes, PrecompileResult},
-        Context, ContextPrecompile, ContextStatefulPrecompile, Evm, EvmContext,
+        primitives::{
+            address, AccountInfo, Address, Bytecode, Bytes, PrecompileResult, TransactTo, U256,
+        },
+        Context, ContextPrecompile, ContextStatefulPrecompile, Evm, EvmContext, InMemoryDB,
     };
+    use revm_interpreter::{Host, Interpreter};
     use std::sync::Arc;
+
+    #[test]
+    fn simple_add_instruction() {
+        const CUSTOM_INSTRUCTION_COST: u64 = 133;
+        const INITIAL_TX_GAS: u64 = 21000;
+        const EXPECTED_RESULT_GAS: u64 = INITIAL_TX_GAS + CUSTOM_INSTRUCTION_COST;
+        fn custom_instruction(interp: &mut Interpreter, _host: &mut impl Host) {
+            // just spend some gas
+            interp.gas.record_cost(CUSTOM_INSTRUCTION_COST);
+        }
+
+        let code = Bytecode::new_raw([0xEF, 0x00].into());
+        let code_hash = code.hash_slow();
+        let to_addr = address!("ffffffffffffffffffffffffffffffffffffffff");
+
+        let mut evm = Evm::builder()
+            .with_db(InMemoryDB::default())
+            .modify_db(|db| {
+                db.insert_account_info(to_addr, AccountInfo::new(U256::ZERO, 0, code_hash, code))
+            })
+            .modify_tx_env(|tx| tx.transact_to = TransactTo::Call(to_addr))
+            .append_handler_register(|handler| {
+                if let Some(ref mut table) = handler.instruction_table {
+                    table.insert(0xEF, custom_instruction)
+                }
+            })
+            .build();
+
+        let result_and_state = evm.transact().unwrap();
+        assert_eq!(result_and_state.result.gas_used(), EXPECTED_RESULT_GAS);
+    }
 
     #[test]
     fn simple_build() {
