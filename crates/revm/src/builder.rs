@@ -444,8 +444,7 @@ mod test {
         inspector::inspector_handle_register,
         inspectors::NoOpInspector,
         primitives::{
-            address, keccak256, AccountInfo, Address, Bytecode, Bytes, PrecompileResult,
-            TransactTo, U256,
+            address, AccountInfo, Address, Bytecode, Bytes, PrecompileResult, TransactTo, U256,
         },
         Context, ContextPrecompile, ContextStatefulPrecompile, Evm, EvmContext, InMemoryDB,
     };
@@ -473,10 +472,9 @@ mod test {
             })
             .modify_tx_env(|tx| tx.transact_to = TransactTo::Call(to_addr))
             .append_handler_register(|handler| {
-                handler
-                    .instruction_table
-                    .as_mut()
-                    .map(|table| table.insert(0xEF, custom_instruction));
+                if let Some(ref mut table) = handler.instruction_table {
+                    table.insert(0xEF, custom_instruction)
+                }
             })
             .build();
 
