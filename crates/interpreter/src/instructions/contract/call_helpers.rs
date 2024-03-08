@@ -1,8 +1,10 @@
+use revm_primitives::U256;
+
 use crate::{
-    gas::{self},
+    gas,
     interpreter::Interpreter,
-    primitives::{Address, Bytes, Spec, SpecId::*},
-    Host, InstructionResult,
+    primitives::{Bytes, Spec, SpecId::*},
+    Host, InstructionResult, LoadAccountResult,
 };
 use core::{cmp::min, ops::Range};
 
@@ -12,66 +14,64 @@ pub fn get_memory_input_and_out_ranges(
 ) -> Option<(Bytes, Range<usize>)> {
     pop_ret!(interpreter, in_offset, in_len, out_offset, out_len, None);
 
-    let in_len = as_usize_or_fail_ret!(interpreter, in_len, None);
-    let input = if in_len != 0 {
-        let in_offset = as_usize_or_fail_ret!(interpreter, in_offset, None);
-        shared_memory_resize!(interpreter, in_offset, in_len, None);
-        Bytes::copy_from_slice(interpreter.shared_memory.slice(in_offset, in_len))
-    } else {
-        Bytes::new()
-    };
+    let in_range = resize_memory_and_return_range(interpreter, in_offset, in_len)?;
 
-    let out_len = as_usize_or_fail_ret!(interpreter, out_len, None);
-    let out_offset = if out_len != 0 {
-        let out_offset = as_usize_or_fail_ret!(interpreter, out_offset, None);
-        shared_memory_resize!(interpreter, out_offset, out_len, None);
-        out_offset
+    let mut input = Bytes::new();
+    if !in_range.is_empty() {
+        input = Bytes::copy_from_slice(interpreter.shared_memory.slice_range(in_range));
+    }
+
+    let ret_range = resize_memory_and_return_range(interpreter, out_offset, out_len)?;
+    Some((input, ret_range))
+}
+
+/// Resize memory and return range of memory.
+/// If `len` is 0 dont touch memory and return `usize::MAX` as offset and 0 as length.
+#[inline]
+pub fn resize_memory_and_return_range(
+    interpreter: &mut Interpreter,
+    offset: U256,
+    len: U256,
+) -> Option<Range<usize>> {
+    let len = as_usize_or_fail_ret!(interpreter, len, None);
+    let offset = if len != 0 {
+        let offset = as_usize_or_fail_ret!(interpreter, offset, None);
+        shared_memory_resize!(interpreter, offset, len, None);
+        offset
     } else {
         usize::MAX //unrealistic value so we are sure it is not used
     };
-
-    Some((input, out_offset..out_offset + out_len))
+    Some(offset..offset + len)
 }
 
 #[inline]
 pub fn calc_call_gas<H: Host, SPEC: Spec>(
     interpreter: &mut Interpreter,
-    host: &mut H,
-    to: Address,
+    load_result: LoadAccountResult,
     has_transfer: bool,
     local_gas_limit: u64,
     is_call_or_callcode: bool,
     is_call_or_staticcall: bool,
 ) -> Option<u64> {
-    let Some(load_result) = host.load_account(to) else {
-        interpreter.instruction_result = InstructionResult::FatalExternalError;
-        return None;
-    };
     let is_new = !load_result.is_not_existing;
+    let call_cost = gas::call_cost::<SPEC>(
+        has_transfer,
+        is_new,
+        load_result.is_cold,
+        is_call_or_callcode,
+        is_call_or_staticcall,
+    );
 
-    if interpreter.is_eof {
-        // TODO(EOF)
-        None
+    gas!(interpreter, call_cost, None);
+
+    // EIP-150: Gas cost changes for IO-heavy operations
+    let gas_limit = if SPEC::enabled(TANGERINE) {
+        let gas = interpreter.gas().remaining();
+        // take l64 part of gas_limit
+        min(gas - gas / 64, local_gas_limit)
     } else {
-        let call_cost = gas::call_cost::<SPEC>(
-            has_transfer,
-            is_new,
-            load_result.is_cold,
-            is_call_or_callcode,
-            is_call_or_staticcall,
-        );
+        local_gas_limit
+    };
 
-        gas!(interpreter, call_cost, None);
-
-        // EIP-150: Gas cost changes for IO-heavy operations
-        let gas_limit = if SPEC::enabled(TANGERINE) {
-            let gas = interpreter.gas().remaining();
-            // take l64 part of gas_limit
-            min(gas - gas / 64, local_gas_limit)
-        } else {
-            local_gas_limit
-        };
-
-        Some(gas_limit)
-    }
+    Some(gas_limit)
 }

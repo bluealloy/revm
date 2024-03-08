@@ -1,6 +1,8 @@
 mod call_helpers;
 
-pub use call_helpers::{calc_call_gas, get_memory_input_and_out_ranges};
+pub use call_helpers::{
+    calc_call_gas, get_memory_input_and_out_ranges, resize_memory_and_return_range,
+};
 use revm_primitives::keccak256;
 
 use crate::{
@@ -162,30 +164,45 @@ pub fn extcall<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H)
     error_on_disabled_eof!(interpreter);
     panic_on_eof!(interpreter);
     pop_address!(interpreter, to);
-    pop!(interpreter, value);
+    pop!(interpreter, input_offset, input_size, value);
     if interpreter.is_static && value != U256::ZERO {
         interpreter.instruction_result = InstructionResult::CallNotAllowedInsideStatic;
         return;
     }
 
+    let Some(return_memory_offset) =
+        resize_memory_and_return_range(interpreter, input_offset, input_size)
+    else {
+        return;
+    };
+
     // TODO(EOF) check if destination is EOF.
-    let Some((input, return_memory_offset)) = get_memory_input_and_out_ranges(interpreter) else {
+    let Some(load_result) = host.load_account(to) else {
+        interpreter.instruction_result = InstructionResult::FatalExternalError;
         return;
     };
-
-    let Some(mut gas_limit) = calc_call_gas::<H, SPEC>(
-        interpreter,
-        host,
-        to,
-        value != U256::ZERO,
-        u64::MAX,
-        true,
-        true,
-    ) else {
+    // TODO(EOF) is EOF!
+    if load_result.is_cold {
+        //gas!(interpreter, gas::COLD_ACCOUNT_ACCESS);
         return;
-    };
+    }
 
-    let mut gas_limit = max(gas_limit, 5000);
+    let is_new = !load_result.is_not_existing;
+    let call_cost =
+        gas::call_cost::<SPEC>(value != U256::ZERO, is_new, load_result.is_cold, true, true);
+    gas!(interpreter, call_cost);
+
+    // 7. Calculate the gas available to callee as caller’s
+    // remaining gas reduced by max(ceil(gas/64), MIN_RETAINED_GAS) (MIN_RETAINED_GAS is 5000).
+    let gas_reduce = max(interpreter.gas.remaining() / 64, 5000);
+    let gas_limit = interpreter.gas().remaining().saturating_sub(gas_reduce);
+
+    if gas_limit < 2300 {
+        interpreter.instruction_result = InstructionResult::CallNotAllowedInsideStatic;
+        // TODO(EOF) error;
+        // interpreter.instruction_result = InstructionResult::CallGasTooLow;
+        return;
+    }
     gas!(interpreter, gas_limit);
 
     // Call host to interact with target contract
@@ -308,10 +325,14 @@ pub fn call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
         return;
     };
 
+    let Some(load_result) = host.load_account(to) else {
+        interpreter.instruction_result = InstructionResult::FatalExternalError;
+        return;
+    };
+
     let Some(mut gas_limit) = calc_call_gas::<H, SPEC>(
         interpreter,
-        host,
-        to,
+        load_result,
         value != U256::ZERO,
         local_gas_limit,
         true,
@@ -364,10 +385,14 @@ pub fn call_code<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut 
         return;
     };
 
+    let Some(load_result) = host.load_account(to) else {
+        interpreter.instruction_result = InstructionResult::FatalExternalError;
+        return;
+    };
+
     let Some(mut gas_limit) = calc_call_gas::<H, SPEC>(
         interpreter,
-        host,
-        to,
+        load_result,
         value != U256::ZERO,
         local_gas_limit,
         true,
@@ -420,9 +445,19 @@ pub fn delegate_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &
         return;
     };
 
-    let Some(gas_limit) =
-        calc_call_gas::<H, SPEC>(interpreter, host, to, false, local_gas_limit, false, false)
-    else {
+    let Some(load_result) = host.load_account(to) else {
+        interpreter.instruction_result = InstructionResult::FatalExternalError;
+        return;
+    };
+
+    let Some(gas_limit) = calc_call_gas::<H, SPEC>(
+        interpreter,
+        load_result,
+        false,
+        local_gas_limit,
+        false,
+        false,
+    ) else {
         return;
     };
 
@@ -468,9 +503,19 @@ pub fn static_call<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mu
         return;
     };
 
-    let Some(gas_limit) =
-        calc_call_gas::<H, SPEC>(interpreter, host, to, false, local_gas_limit, false, true)
-    else {
+    let Some(load_result) = host.load_account(to) else {
+        interpreter.instruction_result = InstructionResult::FatalExternalError;
+        return;
+    };
+
+    let Some(gas_limit) = calc_call_gas::<H, SPEC>(
+        interpreter,
+        load_result,
+        false,
+        local_gas_limit,
+        false,
+        true,
+    ) else {
         return;
     };
     gas!(interpreter, gas_limit);

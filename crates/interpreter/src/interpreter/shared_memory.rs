@@ -3,7 +3,7 @@ use revm_primitives::{B256, U256};
 use core::{
     cmp::min,
     fmt,
-    ops::{BitAnd, Not},
+    ops::{BitAnd, Not, Range},
 };
 use std::vec::Vec;
 
@@ -142,13 +142,23 @@ impl SharedMemory {
     #[inline]
     #[cfg_attr(debug_assertions, track_caller)]
     pub fn slice(&self, offset: usize, size: usize) -> &[u8] {
-        let end = offset + size;
+        self.slice_range(offset..offset + size)
+    }
+
+    #[inline]
+    #[cfg_attr(debug_assertions, track_caller)]
+    pub fn slice_range(&self, range: Range<usize>) -> &[u8] {
         let last_checkpoint = self.last_checkpoint;
 
         self.buffer
-            .get(last_checkpoint + offset..last_checkpoint + offset + size)
+            .get(last_checkpoint + range.start..last_checkpoint + range.end)
             .unwrap_or_else(|| {
-                debug_unreachable!("slice OOB: {offset}..{end}; len: {}", self.len())
+                debug_unreachable!(
+                    "slice OOB: {}..{}; len: {}",
+                    range.start,
+                    range.end,
+                    self.len()
+                )
             })
     }
 
