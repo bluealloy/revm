@@ -6,6 +6,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.0.0](https://github.com/bluealloy/revm/compare/revm-v6.1.0...revm-v7.0.0) - 2024-03-08
+
+### Added
+- add insert method on instruction table ([#1167](https://github.com/bluealloy/revm/pull/1167))
+- precompile with generic context ([#1155](https://github.com/bluealloy/revm/pull/1155))
+- use `impl` instead of `dyn` in `GetInspector` ([#1157](https://github.com/bluealloy/revm/pull/1157))
+- add more JournaledState methods to EvmContext ([#1158](https://github.com/bluealloy/revm/pull/1158))
+- add example for using a database by reference ([#1150](https://github.com/bluealloy/revm/pull/1150))
+- Add boxed precompile trait ([#1131](https://github.com/bluealloy/revm/pull/1131))
+- add with_handler method to EvmBuilder ([#1124](https://github.com/bluealloy/revm/pull/1124))
+
+### Fixed
+- *(revme)* revme error output and remove double summary ([#1169](https://github.com/bluealloy/revm/pull/1169))
+- gas cost calculation ([#1166](https://github.com/bluealloy/revm/pull/1166))
+- reset tstorage on finalize ([#1168](https://github.com/bluealloy/revm/pull/1168))
+- make `feature = "optional_gas_refund"` work ([#1134](https://github.com/bluealloy/revm/pull/1134))
+
+### Other
+- *(deps)* bump ethers-contract from 2.0.13 to 2.0.14 ([#1161](https://github.com/bluealloy/revm/pull/1161))
+- *(interpreter)* evaluate instruction table constructor at compile time ([#1140](https://github.com/bluealloy/revm/pull/1140))
+- remove clone for context in handler_register.rs ([#1138](https://github.com/bluealloy/revm/pull/1138))
+- Check runtime dynamically ([#1135](https://github.com/bluealloy/revm/pull/1135))
+- *(deps)* bump auto_impl from 1.1.2 to 1.2.0 ([#1132](https://github.com/bluealloy/revm/pull/1132))
+- Add `db` and `db_mut` to evm ([#1133](https://github.com/bluealloy/revm/pull/1133))
+- add ToString for no_std add exports some types in no_std ([#1128](https://github.com/bluealloy/revm/pull/1128))
+- Add `clone` method to `ContextWithHandlerCfg` ([#1127](https://github.com/bluealloy/revm/pull/1127))
+- remove unused EvmInstructionTables type alias ([#1123](https://github.com/bluealloy/revm/pull/1123))
+
 ## [6.1.0](https://github.com/bluealloy/revm/compare/revm-v6.0.0...revm-v6.1.0) - 2024-02-22
 
 ### Added

@@ -6,7 +6,7 @@ keywords = ["no_std", "ethereum", "evm", "revm", "interpreter"]
 license = "MIT"
 name = "revm-interpreter"
 repository = "https://github.com/bluealloy/revm"
-version = "3.1.0"
+version = "3.2.0"
 readme = "../../README.md"
 
 [package.metadata.docs.rs]
@@ -14,7 +14,7 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dependencies]
-revm-primitives = { path = "../primitives", version = "2.1.0", default-features = false }
+revm-primitives = { path = "../primitives", version = "3.0.0", default-features = false }
 
 # optional
 serde = { version = "1.0", default-features = false, features = [
