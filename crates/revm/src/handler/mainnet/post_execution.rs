@@ -33,7 +33,8 @@ pub fn reward_beneficiary<SPEC: Spec, EXT, DB: Database>(
     };
 
     let (coinbase_account, _) = context
-        .evm.inner
+        .evm
+        .inner
         .journaled_state
         .load_account(beneficiary, &mut context.evm.inner.db)?;
 

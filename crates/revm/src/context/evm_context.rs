@@ -13,8 +13,9 @@ use core::{
 };
 use std::boxed::Box;
 
-//#[derive(Debug)]
+/// EVM context that contains the inner EVM context and precompiles.
 pub struct EvmContext<DB: Database> {
+    /// Inner EVM context.
     pub inner: InnerEvmContext<DB>,
     /// Precompiles that are available for evm.
     pub precompiles: ContextPrecompiles<DB>,
@@ -60,6 +61,7 @@ impl<DB: Database> DerefMut for EvmContext<DB> {
 }
 
 impl<DB: Database> EvmContext<DB> {
+    /// Create new context with database.
     pub fn new(db: DB) -> Self {
         Self {
             inner: InnerEvmContext::new(db),
