@@ -198,9 +198,9 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     #[inline]
     pub fn into_db_and_env_with_handler_cfg(self) -> (DB, EnvWithHandlerCfg) {
         (
-            self.context.evm.db,
+            self.context.evm.inner.db,
             EnvWithHandlerCfg {
-                env: self.context.evm.env,
+                env: self.context.evm.inner.env,
                 handler_cfg: self.handler.cfg,
             },
         )
@@ -338,7 +338,7 @@ impl<EXT, DB: Database> Evm<'_, EXT, DB> {
 
         // load precompiles
         let precompiles = pre_exec.load_precompiles();
-        ctx.set_precompiles(precompiles);
+        ctx.evm.set_precompiles(precompiles);
 
         // deduce caller balance with its limit.
         pre_exec.deduct_caller(ctx)?;
@@ -460,8 +460,9 @@ impl<EXT, DB: Database> Host for Evm<'_, EXT, DB> {
     fn selfdestruct(&mut self, address: Address, target: Address) -> Option<SelfDestructResult> {
         self.context
             .evm
+            .inner
             .journaled_state
-            .selfdestruct(address, target, &mut self.context.evm.db)
+            .selfdestruct(address, target, &mut self.context.evm.inner.db)
             .map_err(|e| self.context.evm.error = Err(e))
             .ok()
     }

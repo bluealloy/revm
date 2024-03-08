@@ -446,7 +446,7 @@ mod test {
         primitives::{
             address, AccountInfo, Address, Bytecode, Bytes, PrecompileResult, TransactTo, U256,
         },
-        Context, ContextPrecompile, ContextStatefulPrecompile, Evm, EvmContext, InMemoryDB,
+        Context, ContextPrecompile, ContextStatefulPrecompile, Evm, InMemoryDB, InnerEvmContext,
     };
     use revm_interpreter::{Host, Interpreter};
     use std::sync::Arc;
@@ -534,11 +534,7 @@ mod test {
             // .with_db(..)
             .build();
 
-        let Context {
-            external: _,
-            evm: EvmContext { db: _, .. },
-            ..
-        } = evm.into_context();
+        let Context { external: _, .. } = evm.into_context();
     }
 
     #[test]
@@ -561,13 +557,12 @@ mod test {
     fn build_custom_precompile() {
         struct CustomPrecompile;
 
-        impl ContextStatefulPrecompile<EvmContext<EmptyDB>, ()> for CustomPrecompile {
+        impl ContextStatefulPrecompile<EmptyDB> for CustomPrecompile {
             fn call(
                 &self,
                 _input: &Bytes,
                 _gas_price: u64,
-                _context: &mut EvmContext<EmptyDB>,
-                _extctx: &mut (),
+                _context: &mut InnerEvmContext<EmptyDB>,
             ) -> PrecompileResult {
                 Ok((10, Bytes::new()))
             }

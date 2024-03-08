@@ -15,7 +15,7 @@ use crate::{
 
 /// Main precompile load
 #[inline]
-pub fn load_precompiles<SPEC: Spec, EXT, DB: Database>() -> ContextPrecompiles<DB, EXT> {
+pub fn load_precompiles<SPEC: Spec, DB: Database>() -> ContextPrecompiles<DB> {
     Precompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID))
         .clone()
         .into()
@@ -32,10 +32,10 @@ pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
     // load coinbase
     // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
     if SPEC::enabled(SHANGHAI) {
-        context.evm.journaled_state.initial_account_load(
-            context.evm.env.block.coinbase,
+        context.evm.inner.journaled_state.initial_account_load(
+            context.evm.inner.env.block.coinbase,
             &[],
-            &mut context.evm.db,
+            &mut context.evm.inner.db,
         )?;
     }
 
@@ -77,11 +77,12 @@ pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
     // load caller's account.
     let (caller_account, _) = context
         .evm
+        .inner
         .journaled_state
-        .load_account(context.evm.env.tx.caller, &mut context.evm.db)?;
+        .load_account(context.evm.inner.env.tx.caller, &mut context.evm.inner.db)?;
 
     // deduct gas cost from caller's account.
-    deduct_caller_inner::<SPEC>(caller_account, &context.evm.env);
+    deduct_caller_inner::<SPEC>(caller_account, &context.evm.inner.env);
 
     Ok(())
 }
