@@ -107,11 +107,12 @@ impl JournaledState {
             warm_preloaded_addresses: _,
         } = self;
 
-        let state = mem::take(state);
-        let logs = mem::take(logs);
         *transient_storage = TransientStorage::default();
         *journal = vec![vec![]];
         *depth = 0;
+        let state = mem::take(state);
+        let logs = mem::take(logs);
+
         (state, logs)
     }
 
