@@ -40,7 +40,8 @@ impl<DB: Database> Inspector<DB> for GasInspector {
         interp: &mut crate::interpreter::Interpreter,
         _context: &mut EvmContext<DB>,
     ) {
-        let last_gas_remaining = core::mem::replace(&mut self.gas_remaining, interp.gas.remaining());
+        let last_gas_remaining =
+            core::mem::replace(&mut self.gas_remaining, interp.gas.remaining());
         self.last_gas_cost = last_gas_remaining.saturating_sub(self.gas_remaining);
     }
 
