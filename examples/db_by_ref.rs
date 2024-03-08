@@ -72,7 +72,7 @@ fn run_transaction_and_commit(db: &mut CacheDB<EmptyDB>) -> anyhow::Result<()> {
 fn main() -> anyhow::Result<()> {
     let mut cache_db = CacheDB::new(EmptyDB::default());
 
-    let mut tracer = TracerEip3155::new(Box::new(std::io::stdout()), true, true);
+    let mut tracer = TracerEip3155::new(Box::new(std::io::stdout()), true);
 
     run_transaction_and_commit_with_ext(&mut cache_db, &mut tracer, inspector_handle_register)?;
     run_transaction_and_commit(&mut cache_db)?;
