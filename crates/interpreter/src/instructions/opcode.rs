@@ -99,6 +99,10 @@ macro_rules! opcodes {
             #[doc = concat!("The `", stringify!($val), "` (\"", stringify!($name),"\") opcode.")]
             pub const $name: u8 = $val;
         )*
+        impl OpCode {$(
+            #[doc = concat!("The `", stringify!($val), "` (\"", stringify!($name),"\") opcode.")]
+            pub const $name: Self = Self($val);
+        )*}
 
         /// Maps each opcode to its name.
         pub const OPCODE_JUMPMAP: [Option<&'static str>; 256] = {
