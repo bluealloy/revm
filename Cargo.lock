@@ -2315,7 +2315,7 @@ dependencies = [
 
 [[package]]
 name = "revm"
-version = "6.1.0"
+version = "6.2.0"
 dependencies = [
  "anyhow",
  "auto_impl",

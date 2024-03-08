@@ -6,7 +6,7 @@ keywords = ["no_std", "ethereum", "evm", "revm"]
 license = "MIT"
 name = "revm"
 repository = "https://github.com/bluealloy/revm"
-version = "6.1.0"
+version = "6.2.0"
 readme = "../../README.md"
 
 [package.metadata.docs.rs]
