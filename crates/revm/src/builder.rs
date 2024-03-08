@@ -485,7 +485,7 @@ mod test {
             .with_spec_id(SpecId::HOMESTEAD)
             .append_handler_register(|handler| {
                 let mut table = handler.take_instruction_table().expect("table exists");
-                table.insert(0xEF, custom_instruction).expect("inserted");
+                table.insert(0xEF, custom_instruction);
                 handler.set_instruction_table(table)
             })
             .build();
