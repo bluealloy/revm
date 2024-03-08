@@ -7,7 +7,7 @@ pub use SpecId::*;
 /// Information was obtained from the [Ethereum Execution Specifications](https://github.com/ethereum/execution-specs)
 #[cfg(not(feature = "optimism"))]
 #[repr(u8)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, enumn::N)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, enumn::N)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SpecId {
     FRONTIER = 0,         // Frontier	            0
@@ -28,6 +28,7 @@ pub enum SpecId {
     MERGE = 15,           // Paris/Merge	        15537394 (TTD: 58750000000000000000000)
     SHANGHAI = 16,        // Shanghai	            17034870 (TS: 1681338455)
     CANCUN = 17,          // Cancun	                TBD
+    #[default]
     LATEST = u8::MAX,
 }
 
@@ -36,7 +37,7 @@ pub enum SpecId {
 /// Information was obtained from the [Ethereum Execution Specifications](https://github.com/ethereum/execution-specs)
 #[cfg(feature = "optimism")]
 #[repr(u8)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, enumn::N)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, enumn::N)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SpecId {
     FRONTIER = 0,
@@ -61,6 +62,7 @@ pub enum SpecId {
     CANYON = 19,
     CANCUN = 20,
     ECOTONE = 21,
+    #[default]
     LATEST = u8::MAX,
 }
 
