@@ -19,7 +19,7 @@ pub struct DatabaseComponents<S, BH> {
 }
 
 #[derive(Debug)]
-pub enum DatabaseComponentError<SE, BHE> {
+pub enum DatabaseComponentError<SE: 'static, BHE: 'static> {
     State(SE),
     BlockHash(BHE),
 }

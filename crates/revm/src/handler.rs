@@ -28,7 +28,7 @@ pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
     /// Registers that will be called on initialization.
     pub registers: Vec<HandleRegisters<EXT, DB>>,
     /// Validity handles.
-    pub validation: ValidationHandler<'a, EXT, DB>,
+    pub validation: ValidationHandler<EXT, DB>,
     /// Pre execution handle
     pub pre_execution: PreExecutionHandler<'a, EXT, DB>,
     /// post Execution handle
@@ -128,7 +128,7 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
     }
 
     /// Returns reference to validation handler.
-    pub fn validation(&self) -> &ValidationHandler<'a, EXT, DB> {
+    pub fn validation(&self) -> &ValidationHandler<EXT, DB> {
         &self.validation
     }
 

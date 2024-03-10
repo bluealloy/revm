@@ -11,4 +11,4 @@ pub use execution::{
 };
 pub use post_execution::{end, output, reimburse_caller, reward_beneficiary};
 pub use pre_execution::{deduct_caller, deduct_caller_inner, load_accounts, load_precompiles};
-pub use validation::{validate_env, validate_initial_tx_gas, validate_tx_against_state};
+pub use validation::{ValidateEnvImpl, ValidateInitialTxGasImpl, ValidateTxAgainstStateImpl};

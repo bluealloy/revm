@@ -8,7 +8,7 @@ pub mod validation;
 // Exports
 
 pub use validation::{
-    ValidateEnvHandle, ValidateInitialTxGasHandle, ValidateTxEnvAgainstState, ValidationHandler,
+    ValidateEnvTrait, ValidateInitialTxGasTrait, ValidateTxAgainstStateTrait, ValidationHandler,
 };
 
 pub use execution::{

@@ -10,7 +10,7 @@ pub use components::{
 #[auto_impl(&mut, Box)]
 pub trait Database {
     /// The database error type.
-    type Error;
+    type Error: 'static;
 
     /// Get basic account information.
     fn basic(&mut self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
@@ -41,7 +41,7 @@ pub trait DatabaseCommit {
 #[auto_impl(&, &mut, Box, Rc, Arc)]
 pub trait DatabaseRef {
     /// The database error type.
-    type Error;
+    type Error: 'static;
 
     /// Get basic account information.
     fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error>;
@@ -114,7 +114,7 @@ impl<'a, E> RefDBWrapper<'a, E> {
 }
 
 #[allow(deprecated)]
-impl<'a, E> Database for RefDBWrapper<'a, E> {
+impl<'a, E: 'static> Database for RefDBWrapper<'a, E> {
     type Error = E;
 
     #[inline]
