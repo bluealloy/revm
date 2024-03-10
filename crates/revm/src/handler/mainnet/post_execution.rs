@@ -103,10 +103,13 @@ pub fn output<EXT, DB: Database>(
             gas_used: final_gas_used,
         },
         // Only two internal return flags.
-        SuccessOrHalt::FatalExternalError
+        flag @ (SuccessOrHalt::FatalExternalError
         | SuccessOrHalt::InternalContinue
-        | SuccessOrHalt::InternalCallOrCreate => {
-            panic!("Internal return flags should remain internal {instruction_result:?}")
+        | SuccessOrHalt::InternalCallOrCreate) => {
+            panic!(
+                "Encountered unexpected internal return flag: {:?} with instruction result: {:?}",
+                flag, instruction_result
+            )
         }
     };
 
