@@ -102,7 +102,7 @@ Generate block traces and write them to json files in a new `traces/` directory.
 Each file corresponds to a transaction in the block and is named as such: `<tx index>.json`.
 
 ```shell
-cargo run -p revm --features std,serde,ethersdb --example generate_block_traces
+cargo run -p revm --features std,serde-json,ethersdb --example generate_block_traces
 ```
 
 # Used by:
