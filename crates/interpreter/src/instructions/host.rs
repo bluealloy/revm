@@ -231,6 +231,7 @@ pub fn log<const N: usize, H: Host>(interpreter: &mut Interpreter, host: &mut H)
 pub fn selfdestruct<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     check_staticcall!(interpreter);
     check_eip5806restricted!(interpreter, host);
+
     pop_address!(interpreter, target);
 
     let Some(res) = host.selfdestruct(interpreter.contract.address, target) else {
