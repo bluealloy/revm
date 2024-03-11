@@ -74,40 +74,42 @@ pub type InsertCreateOutcomeHandle<'a, EXT, DB> = Arc<
 >;
 
 /// Handles related to stack frames.
-pub struct ExecutionHandler<'a, EXT, DB: Database> {
+pub struct ExecutionHandler<EXT, DB: Database> {
     /// Handles last frame return, modified gas for refund and
     /// sets tx gas limit.
-    pub last_frame_return: LastFrameReturnHandle<'a, EXT, DB>,
-    /// Frame call
-    pub call: FrameCallHandle<'a, EXT, DB>,
-    /// Call return
-    pub call_return: FrameCallReturnHandle<'a, EXT, DB>,
-    /// Insert call outcome
-    pub insert_call_outcome: InsertCallOutcomeHandle<'a, EXT, DB>,
-    /// Frame crate
-    pub create: FrameCreateHandle<'a, EXT, DB>,
-    /// Crate return
-    pub create_return: FrameCreateReturnHandle<'a, EXT, DB>,
-    /// Insert create outcome.
-    pub insert_create_outcome: InsertCreateOutcomeHandle<'a, EXT, DB>,
+    // pub last_frame_return: LastFrameReturnHandle<'a, EXT, DB>,
+    // /// Frame call
+    // pub call: FrameCallHandle<'a, EXT, DB>,
+    // /// Call return
+    // pub call_return: FrameCallReturnHandle<'a, EXT, DB>,
+    // /// Insert call outcome
+    // pub insert_call_outcome: InsertCallOutcomeHandle<'a, EXT, DB>,
+    // /// Frame crate
+    // pub create: FrameCreateHandle<'a, EXT, DB>,
+    // /// Crate return
+    // pub create_return: FrameCreateReturnHandle<'a, EXT, DB>,
+    // /// Insert create outcome.
+    // pub insert_create_outcome: InsertCreateOutcomeHandle<'a, EXT, DB>,
+    pub phantom: std::marker::PhantomData<(EXT, DB)>,
 }
 
-impl<'a, EXT: 'a, DB: Database + 'a> ExecutionHandler<'a, EXT, DB> {
+impl<EXT, DB: Database> ExecutionHandler<EXT, DB> {
     /// Creates mainnet ExecutionHandler.
-    pub fn new<SPEC: Spec + 'a>() -> Self {
+    pub fn new<SPEC: Spec>() -> Self {
         Self {
-            last_frame_return: Arc::new(mainnet::last_frame_return::<SPEC, EXT, DB>),
-            call: Arc::new(mainnet::call::<SPEC, EXT, DB>),
-            call_return: Arc::new(mainnet::call_return::<EXT, DB>),
-            insert_call_outcome: Arc::new(mainnet::insert_call_outcome),
-            create: Arc::new(mainnet::create::<SPEC, EXT, DB>),
-            create_return: Arc::new(mainnet::create_return::<SPEC, EXT, DB>),
-            insert_create_outcome: Arc::new(mainnet::insert_create_outcome),
+            // last_frame_return: Arc::new(mainnet::last_frame_return::<SPEC, EXT, DB>),
+            // call: Arc::new(mainnet::call::<SPEC, EXT, DB>),
+            // call_return: Arc::new(mainnet::call_return::<EXT, DB>),
+            // insert_call_outcome: Arc::new(mainnet::insert_call_outcome),
+            // create: Arc::new(mainnet::create::<SPEC, EXT, DB>),
+            // create_return: Arc::new(mainnet::create_return::<SPEC, EXT, DB>),
+            // insert_create_outcome: Arc::new(mainnet::insert_create_outcome),
+            phantom: std::marker::PhantomData,
         }
     }
 }
 
-impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
+impl<EXT, DB: Database> ExecutionHandler<EXT, DB> {
     /// Handle call return, depending on instruction result gas will be reimbursed or not.
     #[inline]
     pub fn last_frame_return(
@@ -115,7 +117,8 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
         context: &mut Context<EXT, DB>,
         frame_result: &mut FrameResult,
     ) -> Result<(), EVMError<DB::Error>> {
-        (self.last_frame_return)(context, frame_result)
+        //(self.last_frame_return)(context, frame_result)
+        Ok(())
     }
 
     /// Call frame call handler.
@@ -125,7 +128,8 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
         context: &mut Context<EXT, DB>,
         inputs: Box<CallInputs>,
     ) -> Result<FrameOrResult, EVMError<DB::Error>> {
-        (self.call)(context, inputs.clone())
+        //(self.call)(context, inputs.clone())
+        Err(EVMError::Custom("t".into()))
     }
 
     /// Call registered handler for call return.
@@ -136,7 +140,8 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
         frame: Box<CallFrame>,
         interpreter_result: InterpreterResult,
     ) -> Result<CallOutcome, EVMError<DB::Error>> {
-        (self.call_return)(context, frame, interpreter_result)
+        //(self.call_return)(context, frame, interpreter_result)
+        Err(EVMError::Custom("t".into()))
     }
 
     /// Call registered handler for inserting call outcome.
@@ -148,7 +153,8 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
         shared_memory: &mut SharedMemory,
         outcome: CallOutcome,
     ) -> Result<(), EVMError<DB::Error>> {
-        (self.insert_call_outcome)(context, frame, shared_memory, outcome)
+        //(self.insert_call_outcome)(context, frame, shared_memory, outcome)
+        Err(EVMError::Custom("t".into()))
     }
 
     /// Call Create frame
@@ -158,7 +164,8 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
         context: &mut Context<EXT, DB>,
         inputs: Box<CreateInputs>,
     ) -> Result<FrameOrResult, EVMError<DB::Error>> {
-        (self.create)(context, inputs)
+        //(self.create)(context, inputs)
+        Err(EVMError::Custom("t".into()))
     }
 
     /// Call handler for create return.
@@ -169,7 +176,8 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
         frame: Box<CreateFrame>,
         interpreter_result: InterpreterResult,
     ) -> Result<CreateOutcome, EVMError<DB::Error>> {
-        (self.create_return)(context, frame, interpreter_result)
+        //(self.create_return)(context, frame, interpreter_result)
+        Err(EVMError::Custom("t".into()))
     }
 
     /// Call handler for inserting create outcome.
@@ -180,6 +188,7 @@ impl<'a, EXT, DB: Database> ExecutionHandler<'a, EXT, DB> {
         frame: &mut Frame,
         outcome: CreateOutcome,
     ) -> Result<(), EVMError<DB::Error>> {
-        (self.insert_create_outcome)(context, frame, outcome)
+        //(self.insert_create_outcome)(context, frame, outcome)
+        Err(EVMError::Custom("t".into()))
     }
 }

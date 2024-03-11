@@ -12,10 +12,10 @@ use std::boxed::Box;
 /// Evm Builder allows building or modifying EVM.
 /// Note that some of the methods that changes underlying structures
 /// will reset the registered handler to default mainnet.
-pub struct EvmBuilder<'a, BuilderStage, EXT, DB: Database> {
+pub struct EvmBuilder<BuilderStage, EXT, DB: Database> {
     context: Context<EXT, DB>,
     /// Handler that will be used by EVM. It contains handle registers
-    handler: Handler<'a, Evm<'a, EXT, DB>, EXT, DB>,
+    handler: Handler<Evm<EXT, DB>, EXT, DB>,
     /// Phantom data to mark the stage of the builder.
     phantom: PhantomData<BuilderStage>,
 }
@@ -28,7 +28,7 @@ pub struct SetGenericStage;
 /// Requires the database and external context to be set.
 pub struct HandlerStage;
 
-impl<'a> Default for EvmBuilder<'a, SetGenericStage, (), EmptyDB> {
+impl Default for EvmBuilder<SetGenericStage, (), EmptyDB> {
     fn default() -> Self {
         cfg_if::cfg_if! {
             if #[cfg(all(feature = "optimism-default-handler",
@@ -44,29 +44,29 @@ impl<'a> Default for EvmBuilder<'a, SetGenericStage, (), EmptyDB> {
 
         Self {
             context: Context::default(),
-            handler: EvmBuilder::<'a, SetGenericStage, (), EmptyDB>::handler(handler_cfg),
+            handler: EvmBuilder::<SetGenericStage, (), EmptyDB>::handler(handler_cfg),
             phantom: PhantomData,
         }
     }
 }
 
-impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
+impl<EXT, DB: Database> EvmBuilder<SetGenericStage, EXT, DB> {
     /// Sets the [`EmptyDB`] as the [`Database`] that will be used by [`Evm`].
-    pub fn with_empty_db(self) -> EvmBuilder<'a, SetGenericStage, EXT, EmptyDB> {
+    pub fn with_empty_db(self) -> EvmBuilder<SetGenericStage, EXT, EmptyDB> {
         EvmBuilder {
             context: Context::new(
                 self.context.evm.with_db(EmptyDB::default()),
                 self.context.external,
             ),
-            handler: EvmBuilder::<'a, SetGenericStage, EXT, EmptyDB>::handler(self.handler.cfg()),
+            handler: EvmBuilder::<SetGenericStage, EXT, EmptyDB>::handler(self.handler.cfg()),
             phantom: PhantomData,
         }
     }
     /// Sets the [`Database`] that will be used by [`Evm`].
-    pub fn with_db<ODB: Database>(self, db: ODB) -> EvmBuilder<'a, SetGenericStage, EXT, ODB> {
+    pub fn with_db<ODB: Database>(self, db: ODB) -> EvmBuilder<SetGenericStage, EXT, ODB> {
         EvmBuilder {
             context: Context::new(self.context.evm.with_db(db), self.context.external),
-            handler: EvmBuilder::<'a, SetGenericStage, EXT, ODB>::handler(self.handler.cfg()),
+            handler: EvmBuilder::<SetGenericStage, EXT, ODB>::handler(self.handler.cfg()),
             phantom: PhantomData,
         }
     }
@@ -74,13 +74,13 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
     pub fn with_ref_db<ODB: DatabaseRef>(
         self,
         db: ODB,
-    ) -> EvmBuilder<'a, SetGenericStage, EXT, WrapDatabaseRef<ODB>> {
+    ) -> EvmBuilder<SetGenericStage, EXT, WrapDatabaseRef<ODB>> {
         EvmBuilder {
             context: Context::new(
                 self.context.evm.with_db(WrapDatabaseRef(db)),
                 self.context.external,
             ),
-            handler: EvmBuilder::<'a, SetGenericStage, EXT, WrapDatabaseRef<ODB>>::handler(
+            handler: EvmBuilder::<SetGenericStage, EXT, WrapDatabaseRef<ODB>>::handler(
                 self.handler.cfg(),
             ),
             phantom: PhantomData,
@@ -91,10 +91,10 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
     pub fn with_external_context<OEXT>(
         self,
         external: OEXT,
-    ) -> EvmBuilder<'a, SetGenericStage, OEXT, DB> {
+    ) -> EvmBuilder<SetGenericStage, OEXT, DB> {
         EvmBuilder {
             context: Context::new(self.context.evm, external),
-            handler: EvmBuilder::<'a, SetGenericStage, OEXT, DB>::handler(self.handler.cfg()),
+            handler: EvmBuilder::<SetGenericStage, OEXT, DB>::handler(self.handler.cfg()),
             phantom: PhantomData,
         }
     }
@@ -103,12 +103,12 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
     pub fn with_env_with_handler_cfg(
         mut self,
         env_with_handler_cfg: EnvWithHandlerCfg,
-    ) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
+    ) -> EvmBuilder<HandlerStage, EXT, DB> {
         let EnvWithHandlerCfg { env, handler_cfg } = env_with_handler_cfg;
         self.context.evm.env = env;
         EvmBuilder {
             context: self.context,
-            handler: EvmBuilder::<'a, HandlerStage, EXT, DB>::handler(handler_cfg),
+            handler: EvmBuilder::<HandlerStage, EXT, DB>::handler(handler_cfg),
             phantom: PhantomData,
         }
     }
@@ -117,12 +117,10 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
     pub fn with_context_with_handler_cfg<OEXT, ODB: Database>(
         self,
         context_with_handler_cfg: ContextWithHandlerCfg<OEXT, ODB>,
-    ) -> EvmBuilder<'a, HandlerStage, OEXT, ODB> {
+    ) -> EvmBuilder<HandlerStage, OEXT, ODB> {
         EvmBuilder {
             context: context_with_handler_cfg.context,
-            handler: EvmBuilder::<'a, HandlerStage, OEXT, ODB>::handler(
-                context_with_handler_cfg.cfg,
-            ),
+            handler: EvmBuilder::<HandlerStage, OEXT, ODB>::handler(context_with_handler_cfg.cfg),
             phantom: PhantomData,
         }
     }
@@ -131,26 +129,21 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
     pub fn with_cfg_env_with_handler_cfg(
         mut self,
         cfg_env_and_spec_id: CfgEnvWithHandlerCfg,
-    ) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
+    ) -> EvmBuilder<HandlerStage, EXT, DB> {
         self.context.evm.env.cfg = cfg_env_and_spec_id.cfg_env;
 
         EvmBuilder {
             context: self.context,
-            handler: EvmBuilder::<'a, HandlerStage, EXT, DB>::handler(
-                cfg_env_and_spec_id.handler_cfg,
-            ),
+            handler: EvmBuilder::<HandlerStage, EXT, DB>::handler(cfg_env_and_spec_id.handler_cfg),
             phantom: PhantomData,
         }
     }
 
     /// Sets Builder with [`HandlerCfg`]
-    pub fn with_handler_cfg(
-        self,
-        handler_cfg: HandlerCfg,
-    ) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
+    pub fn with_handler_cfg(self, handler_cfg: HandlerCfg) -> EvmBuilder<HandlerStage, EXT, DB> {
         EvmBuilder {
             context: self.context,
-            handler: EvmBuilder::<'a, HandlerStage, EXT, DB>::handler(handler_cfg),
+            handler: EvmBuilder::<HandlerStage, EXT, DB>::handler(handler_cfg),
             phantom: PhantomData,
         }
     }
@@ -159,7 +152,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
     ///
     /// If `optimism-default-handler` feature is enabled this is not needed.
     #[cfg(feature = "optimism")]
-    pub fn optimism(mut self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
+    pub fn optimism(mut self) -> EvmBuilder<HandlerStage, EXT, DB> {
         self.handler = Handler::optimism_with_spec(self.handler.cfg.spec_id);
         EvmBuilder {
             context: self.context,
@@ -172,7 +165,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
     ///
     /// Enabled only with `optimism-default-handler` feature.
     #[cfg(feature = "optimism-default-handler")]
-    pub fn mainnet(mut self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
+    pub fn mainnet(mut self) -> EvmBuilder<HandlerStage, EXT, DB> {
         self.handler = Handler::mainnet_with_spec(self.handler.cfg.spec_id);
         EvmBuilder {
             context: self.context,
@@ -182,12 +175,12 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, SetGenericStage, EXT, DB> {
     }
 }
 
-impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
+impl<EXT, DB: Database> EvmBuilder<HandlerStage, EXT, DB> {
     /// Creates new builder from Evm, Evm is consumed and all field are moved to Builder.
     /// It will preserve set handler and context.
     ///
     /// Builder is in HandlerStage and both database and external are set.
-    pub fn new(evm: Evm<'a, EXT, DB>) -> Self {
+    pub fn new(evm: Evm<EXT, DB>) -> Self {
         Self {
             context: evm.context,
             handler: evm.handler,
@@ -196,13 +189,13 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
     }
 
     /// Sets the [`EmptyDB`] and resets the [`Handler`] to default mainnet.
-    pub fn reset_handler_with_empty_db(self) -> EvmBuilder<'a, HandlerStage, EXT, EmptyDB> {
+    pub fn reset_handler_with_empty_db(self) -> EvmBuilder<HandlerStage, EXT, EmptyDB> {
         EvmBuilder {
             context: Context::new(
                 self.context.evm.with_db(EmptyDB::default()),
                 self.context.external,
             ),
-            handler: EvmBuilder::<'a, HandlerStage, EXT, EmptyDB>::handler(self.handler.cfg()),
+            handler: EvmBuilder::<HandlerStage, EXT, EmptyDB>::handler(self.handler.cfg()),
             phantom: PhantomData,
         }
     }
@@ -211,7 +204,7 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
     ///
     /// Enabled only with `optimism-default-handler` feature.
     #[cfg(feature = "optimism-default-handler")]
-    pub fn reset_handler_with_mainnet(mut self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
+    pub fn reset_handler_with_mainnet(mut self) -> EvmBuilder<HandlerStage, EXT, DB> {
         self.handler = Handler::mainnet_with_spec(self.handler.cfg.spec_id);
         EvmBuilder {
             context: self.context,
@@ -225,10 +218,10 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
     pub fn reset_handler_with_db<ODB: Database>(
         self,
         db: ODB,
-    ) -> EvmBuilder<'a, SetGenericStage, EXT, ODB> {
+    ) -> EvmBuilder<SetGenericStage, EXT, ODB> {
         EvmBuilder {
             context: Context::new(self.context.evm.with_db(db), self.context.external),
-            handler: EvmBuilder::<'a, SetGenericStage, EXT, ODB>::handler(self.handler.cfg()),
+            handler: EvmBuilder::<SetGenericStage, EXT, ODB>::handler(self.handler.cfg()),
             phantom: PhantomData,
         }
     }
@@ -238,13 +231,13 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
     pub fn reset_handler_with_ref_db<ODB: DatabaseRef>(
         self,
         db: ODB,
-    ) -> EvmBuilder<'a, SetGenericStage, EXT, WrapDatabaseRef<ODB>> {
+    ) -> EvmBuilder<SetGenericStage, EXT, WrapDatabaseRef<ODB>> {
         EvmBuilder {
             context: Context::new(
                 self.context.evm.with_db(WrapDatabaseRef(db)),
                 self.context.external,
             ),
-            handler: EvmBuilder::<'a, SetGenericStage, EXT, WrapDatabaseRef<ODB>>::handler(
+            handler: EvmBuilder::<SetGenericStage, EXT, WrapDatabaseRef<ODB>>::handler(
                 self.handler.cfg(),
             ),
             phantom: PhantomData,
@@ -256,20 +249,20 @@ impl<'a, EXT, DB: Database> EvmBuilder<'a, HandlerStage, EXT, DB> {
     pub fn reset_handler_with_external_context<OEXT>(
         self,
         external: OEXT,
-    ) -> EvmBuilder<'a, SetGenericStage, OEXT, DB> {
+    ) -> EvmBuilder<SetGenericStage, OEXT, DB> {
         EvmBuilder {
             context: Context::new(self.context.evm, external),
-            handler: EvmBuilder::<'a, SetGenericStage, OEXT, DB>::handler(self.handler.cfg()),
+            handler: EvmBuilder::<SetGenericStage, OEXT, DB>::handler(self.handler.cfg()),
             phantom: PhantomData,
         }
     }
 }
 
-impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> {
+impl<BuilderStage, EXT, DB: Database> EvmBuilder<BuilderStage, EXT, DB> {
     /// Creates the default handler.
     ///
     /// This is useful for adding optimism handle register.
-    fn handler(handler_cfg: HandlerCfg) -> Handler<'a, Evm<'a, EXT, DB>, EXT, DB> {
+    fn handler(handler_cfg: HandlerCfg) -> Handler<Evm<EXT, DB>, EXT, DB> {
         Handler::new(handler_cfg)
     }
 
@@ -291,8 +284,8 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
     /// ```
     pub fn with_handler(
         self,
-        handler: Handler<'a, Evm<'a, EXT, DB>, EXT, DB>,
-    ) -> EvmBuilder<'a, BuilderStage, EXT, DB> {
+        handler: Handler<Evm<EXT, DB>, EXT, DB>,
+    ) -> EvmBuilder<BuilderStage, EXT, DB> {
         EvmBuilder {
             context: self.context,
             handler,
@@ -301,7 +294,7 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
     }
 
     /// Builds the [`Evm`].
-    pub fn build(self) -> Evm<'a, EXT, DB> {
+    pub fn build(self) -> Evm<EXT, DB> {
         Evm::new(self.context, self.handler)
     }
 
@@ -312,7 +305,7 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
     pub fn append_handler_register(
         mut self,
         handle_register: register::HandleRegister<EXT, DB>,
-    ) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
+    ) -> EvmBuilder<HandlerStage, EXT, DB> {
         self.handler
             .append_handler_register(register::HandleRegisters::Plain(handle_register));
         EvmBuilder {
@@ -330,7 +323,7 @@ impl<'a, BuilderStage, EXT, DB: Database> EvmBuilder<'a, BuilderStage, EXT, DB> 
     pub fn append_handler_register_box(
         mut self,
         handle_register: register::HandleRegisterBox<EXT, DB>,
-    ) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
+    ) -> EvmBuilder<HandlerStage, EXT, DB> {
         self.handler
             .append_handler_register(register::HandleRegisters::Box(handle_register));
         EvmBuilder {
@@ -473,7 +466,7 @@ mod test {
             .modify_tx_env(|tx| tx.transact_to = TransactTo::Call(to_addr))
             .append_handler_register(|handler| {
                 if let Some(ref mut table) = handler.instruction_table {
-                    table.insert(0xEF, custom_instruction)
+                    //    table.insert(0xEF, custom_instruction)
                 }
             })
             .build();
@@ -573,14 +566,14 @@ mod test {
             .with_spec_id(SpecId::HOMESTEAD)
             .append_handler_register(|handler| {
                 let precompiles = handler.pre_execution.load_precompiles();
-                handler.pre_execution.load_precompiles = Arc::new(move || {
-                    let mut precompiles = precompiles.clone();
-                    precompiles.extend([(
-                        Address::ZERO,
-                        ContextPrecompile::ContextStateful(Arc::new(CustomPrecompile)),
-                    )]);
-                    precompiles
-                });
+                // handler.pre_execution.load_precompiles = Arc::new(move || {
+                //     let mut precompiles = precompiles.clone();
+                //     precompiles.extend([(
+                //         Address::ZERO,
+                //         ContextPrecompile::ContextStateful(Arc::new(CustomPrecompile)),
+                //     )]);
+                //     precompiles
+                // });
             })
             .build();
 

@@ -17,7 +17,7 @@ pub use execution::{
 };
 
 pub use pre_execution::{
-    DeductCallerHandle, LoadAccountsHandle, LoadPrecompilesHandle, PreExecutionHandler,
+    DeductCallerTrait, LoadAccountsTrait, LoadPrecompilesTrait, PreExecutionHandler,
 };
 
 pub use post_execution::{

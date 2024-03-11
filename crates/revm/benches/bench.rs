@@ -90,7 +90,7 @@ fn transfer(c: &mut Criterion) {
     g.finish();
 }
 
-fn bench_transact<EXT>(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm<'_, EXT, BenchmarkDB>) {
+fn bench_transact<EXT>(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm<EXT, BenchmarkDB>) {
     let state = match evm.context.evm.db.0.state {
         BytecodeState::Raw => "raw",
         BytecodeState::Checked { .. } => "checked",
@@ -100,7 +100,7 @@ fn bench_transact<EXT>(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm<'_, E
     g.bench_function(id, |b| b.iter(|| evm.transact().unwrap()));
 }
 
-fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm<'static, (), BenchmarkDB>) {
+fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm<(), BenchmarkDB>) {
     g.bench_function("eval", |b| {
         let contract = Contract {
             input: evm.context.evm.env.tx.data.clone(),

@@ -5,6 +5,7 @@ use crate::{
     primitives::{db::Database, EVMError, EVMResultGeneric, ResultAndState, Spec},
     Context, FrameResult,
 };
+use core::f64::consts::E;
 use std::sync::Arc;
 
 /// Reimburse the caller with ethereum it didn't spent.
@@ -36,37 +37,40 @@ pub type EndHandle<'a, EXT, DB> = Arc<
 >;
 
 /// Handles related to post execution after the stack loop is finished.
-pub struct PostExecutionHandler<'a, EXT, DB: Database> {
-    /// Reimburse the caller with ethereum it didn't spent.
-    pub reimburse_caller: ReimburseCallerHandle<'a, EXT, DB>,
-    /// Reward the beneficiary with caller fee.
-    pub reward_beneficiary: RewardBeneficiaryHandle<'a, EXT, DB>,
-    /// Main return handle, returns the output of the transact.
-    pub output: OutputHandle<'a, EXT, DB>,
-    /// End handle.
-    pub end: EndHandle<'a, EXT, DB>,
+pub struct PostExecutionHandler<EXT, DB: Database> {
+    // /// Reimburse the caller with ethereum it didn't spent.
+    // pub reimburse_caller: ReimburseCallerHandle<'a, EXT, DB>,
+    // /// Reward the beneficiary with caller fee.
+    // pub reward_beneficiary: RewardBeneficiaryHandle<'a, EXT, DB>,
+    // /// Main return handle, returns the output of the transact.
+    // pub output: OutputHandle<'a, EXT, DB>,
+    // /// End handle.
+    // pub end: EndHandle<'a, EXT, DB>,
+    pub phantom: std::marker::PhantomData<(EXT, DB)>,
 }
 
-impl<'a, EXT: 'a, DB: Database + 'a> PostExecutionHandler<'a, EXT, DB> {
+impl<EXT, DB: Database> PostExecutionHandler<EXT, DB> {
     /// Creates mainnet MainHandles.
-    pub fn new<SPEC: Spec + 'a>() -> Self {
+    pub fn new<SPEC: Spec>() -> Self {
         Self {
-            reimburse_caller: Arc::new(mainnet::reimburse_caller::<SPEC, EXT, DB>),
-            reward_beneficiary: Arc::new(mainnet::reward_beneficiary::<SPEC, EXT, DB>),
-            output: Arc::new(mainnet::output::<EXT, DB>),
-            end: Arc::new(mainnet::end::<EXT, DB>),
+            // reimburse_caller: Arc::new(mainnet::reimburse_caller::<SPEC, EXT, DB>),
+            // reward_beneficiary: Arc::new(mainnet::reward_beneficiary::<SPEC, EXT, DB>),
+            // output: Arc::new(mainnet::output::<EXT, DB>),
+            // end: Arc::new(mainnet::end::<EXT, DB>),
+            phantom: std::marker::PhantomData,
         }
     }
 }
 
-impl<'a, EXT, DB: Database> PostExecutionHandler<'a, EXT, DB> {
+impl<EXT, DB: Database> PostExecutionHandler<EXT, DB> {
     /// Reimburse the caller with gas that were not spend.
     pub fn reimburse_caller(
         &self,
         context: &mut Context<EXT, DB>,
         gas: &Gas,
     ) -> Result<(), EVMError<DB::Error>> {
-        (self.reimburse_caller)(context, gas)
+        //(self.reimburse_caller)(context, gas)
+        Ok(())
     }
     /// Reward beneficiary
     pub fn reward_beneficiary(
@@ -74,7 +78,8 @@ impl<'a, EXT, DB: Database> PostExecutionHandler<'a, EXT, DB> {
         context: &mut Context<EXT, DB>,
         gas: &Gas,
     ) -> Result<(), EVMError<DB::Error>> {
-        (self.reward_beneficiary)(context, gas)
+        //(self.reward_beneficiary)(context, gas)
+        Ok(())
     }
 
     /// Returns the output of transaction.
@@ -83,7 +88,8 @@ impl<'a, EXT, DB: Database> PostExecutionHandler<'a, EXT, DB> {
         context: &mut Context<EXT, DB>,
         result: FrameResult,
     ) -> Result<ResultAndState, EVMError<DB::Error>> {
-        (self.output)(context, result)
+        //(self.output)(context, result)
+        Err(EVMError::Custom("t".into()))
     }
 
     /// End handler.
@@ -92,6 +98,7 @@ impl<'a, EXT, DB: Database> PostExecutionHandler<'a, EXT, DB> {
         context: &mut Context<EXT, DB>,
         end_output: Result<ResultAndState, EVMError<DB::Error>>,
     ) -> Result<ResultAndState, EVMError<DB::Error>> {
-        (self.end)(context, end_output)
+        //(self.end)(context, end_output)
+        Err(EVMError::Custom("t".into()))
     }
 }

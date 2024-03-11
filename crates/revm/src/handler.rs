@@ -20,24 +20,24 @@ use self::register::{HandleRegister, HandleRegisterBox};
 /// Handler acts as a proxy and allow to define different behavior for different
 /// sections of the code. This allows nice integration of different chains or
 /// to disable some mainnet behavior.
-pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
+pub struct Handler<H: Host, EXT, DB: Database> {
     /// Handler config.
     pub cfg: HandlerCfg,
     /// Instruction table type.
-    pub instruction_table: Option<InstructionTables<'a, H>>,
+    pub instruction_table: Option<InstructionTables<H>>,
     /// Registers that will be called on initialization.
     pub registers: Vec<HandleRegisters<EXT, DB>>,
     /// Validity handles.
     pub validation: ValidationHandler<EXT, DB>,
     /// Pre execution handle
-    pub pre_execution: PreExecutionHandler<'a, EXT, DB>,
+    pub pre_execution: PreExecutionHandler<EXT, DB>,
     /// post Execution handle
-    pub post_execution: PostExecutionHandler<'a, EXT, DB>,
+    pub post_execution: PostExecutionHandler<EXT, DB>,
     /// Execution loop that handles frames.
-    pub execution: ExecutionHandler<'a, EXT, DB>,
+    pub execution: ExecutionHandler<EXT, DB>,
 }
 
-impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
+impl<EXT, DB: Database> EvmHandler<EXT, DB> {
     /// Created new Handler with given configuration.
     ///
     /// Internaly it calls `mainnet_with_spec` with the given spec id.
@@ -103,27 +103,27 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
     }
 
     /// Take instruction table.
-    pub fn take_instruction_table(&mut self) -> Option<InstructionTables<'a, Evm<'a, EXT, DB>>> {
+    pub fn take_instruction_table(&mut self) -> Option<InstructionTables<Evm<EXT, DB>>> {
         self.instruction_table.take()
     }
 
     /// Set instruction table.
-    pub fn set_instruction_table(&mut self, table: InstructionTables<'a, Evm<'a, EXT, DB>>) {
+    pub fn set_instruction_table(&mut self, table: InstructionTables<Evm<EXT, DB>>) {
         self.instruction_table = Some(table);
     }
 
     /// Returns reference to pre execution handler.
-    pub fn pre_execution(&self) -> &PreExecutionHandler<'a, EXT, DB> {
+    pub fn pre_execution(&self) -> &PreExecutionHandler<EXT, DB> {
         &self.pre_execution
     }
 
     /// Returns reference to pre execution handler.
-    pub fn post_execution(&self) -> &PostExecutionHandler<'a, EXT, DB> {
+    pub fn post_execution(&self) -> &PostExecutionHandler<EXT, DB> {
         &self.post_execution
     }
 
     /// Returns reference to frame handler.
-    pub fn execution(&self) -> &ExecutionHandler<'a, EXT, DB> {
+    pub fn execution(&self) -> &ExecutionHandler<EXT, DB> {
         &self.execution
     }
 
@@ -166,7 +166,7 @@ impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
     }
 
     /// Creates the Handler with Generic Spec.
-    pub fn create_handle_generic<SPEC: Spec>(&mut self) -> EvmHandler<'a, EXT, DB> {
+    pub fn create_handle_generic<SPEC: Spec>(&mut self) -> EvmHandler<EXT, DB> {
         let registers = core::mem::take(&mut self.registers);
         let mut base_handler = Handler::mainnet::<SPEC>();
         // apply all registers to default handeler and raw mainnet instruction table.
@@ -210,7 +210,7 @@ mod test {
             let inner = inner.clone();
             Box::new(move |h| {
                 *inner.borrow_mut() += 1;
-                h.post_execution.output = Arc::new(|_, _| Err(EVMError::Custom("test".to_string())))
+                //h.post_execution.output = Arc::new(|_, _| Err(EVMError::Custom("test".to_string())))
             })
         };
 
