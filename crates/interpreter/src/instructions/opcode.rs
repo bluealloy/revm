@@ -10,14 +10,14 @@ use core::fmt;
 use std::boxed::Box;
 
 /// EVM opcode function signature.
-pub type Instruction<H> = fn(&mut Interpreter, &mut H);
+pub type InstructionFn<H> = fn(&mut Interpreter, &mut H);
 
 pub trait InstructionTrait<H> {
     fn call(&self, interpreter: &mut Interpreter, host: &mut H);
 }
 
 #[derive(Debug)]
-pub struct PlainInstruction<H>(Instruction<H>);
+pub struct PlainInstruction<H>(InstructionFn<H>);
 
 impl<H> Clone for PlainInstruction<H> {
     fn clone(&self) -> Self {
@@ -149,7 +149,7 @@ macro_rules! opcodes {
         };
 
         /// Returns the instruction function for the given opcode and spec.
-        pub const fn instruction<H: Host, SPEC: Spec>(opcode: u8) -> Instruction<H> {
+        pub const fn instruction<H: Host, SPEC: Spec>(opcode: u8) -> InstructionFn<H> {
             match opcode {
                 $($name => $f,)*
                 _ => control::unknown,

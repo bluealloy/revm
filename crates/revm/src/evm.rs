@@ -259,9 +259,8 @@ impl<EXT, DB: Database> Evm<EXT, DB> {
         loop {
             // run interpreter
             let interpreter = &mut stack_frame.frame_data_mut().interpreter;
-            //let next_action = interpreter.run(shared_memory, instruction_table, self);
-            let next_action = InterpreterAction::None;
-
+            let next_action = interpreter.run(shared_memory, instruction_table, self);
+            
             // take error and break the loop if there is any.
             // This error is set From Interpreter when its interacting with Host.
             core::mem::replace(&mut self.context.evm.error, Ok(()))?;
