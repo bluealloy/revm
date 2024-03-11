@@ -371,7 +371,7 @@ mod optimism_tests {
         assert!(EcotoneSpec::enabled(SpecId::MERGE));
         assert!(EcotoneSpec::enabled(SpecId::SHANGHAI));
         assert!(EcotoneSpec::enabled(SpecId::CANCUN));
-        assert!(EcotoneSpec::enabled(SpecId::PRAGUE));
+        assert!(!EcotoneSpec::enabled(SpecId::PRAGUE));
         assert!(!EcotoneSpec::enabled(SpecId::LATEST));
         assert!(EcotoneSpec::enabled(SpecId::BEDROCK));
         assert!(EcotoneSpec::enabled(SpecId::REGOLITH));
@@ -384,7 +384,7 @@ mod optimism_tests {
         assert!(SpecId::enabled(SpecId::ECOTONE, SpecId::MERGE));
         assert!(SpecId::enabled(SpecId::ECOTONE, SpecId::SHANGHAI));
         assert!(SpecId::enabled(SpecId::ECOTONE, SpecId::CANCUN));
-        assert!(SpecId::enabled(SpecId::ECOTONE, SpecId::PRAGUE));
+        assert!(!SpecId::enabled(SpecId::ECOTONE, SpecId::PRAGUE));
         assert!(!SpecId::enabled(SpecId::ECOTONE, SpecId::LATEST));
         assert!(SpecId::enabled(SpecId::ECOTONE, SpecId::BEDROCK));
         assert!(SpecId::enabled(SpecId::ECOTONE, SpecId::REGOLITH));
