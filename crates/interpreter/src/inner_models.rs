@@ -81,7 +81,7 @@ impl CallInputs {
                 is_static: false,
                 return_memory_offset: 0..0,
             }),
-            _ => None
+            _ => None,
         }
     }
 

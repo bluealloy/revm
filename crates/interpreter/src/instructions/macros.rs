@@ -19,7 +19,9 @@ macro_rules! check {
 
 macro_rules! check_eip5806restricted {
     ($interp:expr, $host:expr) => {
-        if $host.env().tx.transact_to.is_delegatecall() && $host.env().tx.caller != $interp.contract.address {
+        if $host.env().tx.transact_to.is_delegatecall()
+            && $host.env().tx.caller != $interp.contract.address
+        {
             $interp.instruction_result = InstructionResult::Eip5806Restricted;
             return;
         }

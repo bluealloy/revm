@@ -259,9 +259,7 @@ impl From<InstructionResult> for SuccessOrHalt {
                 Self::Halt(HaltReason::CreateInitCodeSizeLimit)
             }
             InstructionResult::FatalExternalError => Self::FatalExternalError,
-            InstructionResult::Eip5806Restricted => {
-                Self::Halt(HaltReason::Eip5806Restricted)
-            },
+            InstructionResult::Eip5806Restricted => Self::Halt(HaltReason::Eip5806Restricted),
         }
     }
 }
