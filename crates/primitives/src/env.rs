@@ -644,6 +644,8 @@ pub struct OptimismFields {
 pub enum TransactTo {
     /// Simple call to an address.
     Call(Address),
+    /// Delegate call to an address.
+    DelegateCall(Address),
     /// Contract creation.
     Create(CreateScheme),
 }
@@ -653,6 +655,12 @@ impl TransactTo {
     #[inline]
     pub fn call(address: Address) -> Self {
         Self::Call(address)
+    }
+
+    /// DelegateCalls the given address.
+    #[inline]
+    pub fn delegatecall(address: Address) -> Self {
+        Self::DelegateCall(address)
     }
 
     /// Creates a contract.
@@ -671,6 +679,12 @@ impl TransactTo {
     #[inline]
     pub fn is_call(&self) -> bool {
         matches!(self, Self::Call(_))
+    }
+
+    /// Returns `true` if the transaction is `DelegateCall`.
+    #[inline]
+    pub fn is_delegatecall(&self) -> bool {
+        matches!(self, Self::DelegateCall(_))
     }
 
     /// Returns `true` if the transaction is `Create` or `Create2`.

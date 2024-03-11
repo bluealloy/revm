@@ -42,29 +42,47 @@ pub struct CreateInputs {
 impl CallInputs {
     /// Creates new call inputs.
     pub fn new(tx_env: &TxEnv, gas_limit: u64) -> Option<Self> {
-        let TransactTo::Call(address) = tx_env.transact_to else {
-            return None;
-        };
-
-        Some(CallInputs {
-            contract: address,
-            transfer: Transfer {
-                source: tx_env.caller,
-                target: address,
-                value: tx_env.value,
-            },
-            input: tx_env.data.clone(),
-            gas_limit,
-            context: CallContext {
-                caller: tx_env.caller,
-                address,
-                code_address: address,
-                apparent_value: tx_env.value,
-                scheme: CallScheme::Call,
-            },
-            is_static: false,
-            return_memory_offset: 0..0,
-        })
+        match tx_env.transact_to {
+            TransactTo::Call(address) => Some(CallInputs {
+                contract: address,
+                transfer: Transfer {
+                    source: tx_env.caller,
+                    target: address,
+                    value: tx_env.value,
+                },
+                input: tx_env.data.clone(),
+                gas_limit,
+                context: CallContext {
+                    caller: tx_env.caller,
+                    address,
+                    code_address: address,
+                    apparent_value: tx_env.value,
+                    scheme: CallScheme::Call,
+                },
+                is_static: false,
+                return_memory_offset: 0..0,
+            }),
+            TransactTo::DelegateCall(address) => Some(CallInputs {
+                contract: address,
+                transfer: Transfer {
+                    source: tx_env.caller,
+                    target: address,
+                    value: U256::ZERO,
+                },
+                input: tx_env.data.clone(),
+                gas_limit,
+                context: CallContext {
+                    caller: tx_env.caller,
+                    address: tx_env.caller,
+                    code_address: address,
+                    apparent_value: U256::ZERO,
+                    scheme: CallScheme::DelegateCall,
+                },
+                is_static: false,
+                return_memory_offset: 0..0,
+            }),
+            _ => None
+        }
     }
 
     /// Returns boxed call inputs.

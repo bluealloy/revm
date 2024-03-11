@@ -152,6 +152,7 @@ pub fn sload<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
 
 pub fn sstore<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     check_staticcall!(interpreter);
+    check_eip5806restricted!(interpreter, host);
 
     pop!(interpreter, index, value);
     let Some(SStoreResult {
@@ -229,6 +230,7 @@ pub fn log<const N: usize, H: Host>(interpreter: &mut Interpreter, host: &mut H)
 
 pub fn selfdestruct<H: Host, SPEC: Spec>(interpreter: &mut Interpreter, host: &mut H) {
     check_staticcall!(interpreter);
+    check_eip5806restricted!(interpreter, host);
     pop_address!(interpreter, target);
 
     let Some(res) = host.selfdestruct(interpreter.contract.address, target) else {
@@ -250,6 +252,7 @@ pub fn create<const IS_CREATE2: bool, H: Host, SPEC: Spec>(
     host: &mut H,
 ) {
     check_staticcall!(interpreter);
+    check_eip5806restricted!(interpreter, host);
 
     // EIP-1014: Skinny CREATE2
     if IS_CREATE2 {

@@ -47,6 +47,9 @@ pub enum InstructionResult {
 
     /// Fatal external error. Returned by database.
     FatalExternalError,
+
+    // EIP-5806 Restricted opcode
+    Eip5806Restricted
 }
 
 impl From<SuccessReason> for InstructionResult {
