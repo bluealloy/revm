@@ -151,22 +151,37 @@ pub enum EVMError<DBError> {
 }
 
 #[cfg(feature = "std")]
-impl<DBError: fmt::Debug + fmt::Display> std::error::Error for EVMError<DBError> {}
+impl<DBError: std::error::Error + 'static> std::error::Error for EVMError<DBError> {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Transaction(e) => Some(e),
+            Self::Header(e) => Some(e),
+            Self::Database(e) => Some(e),
+            Self::Custom(_) => None,
+        }
+    }
+}
 
 impl<DBError: fmt::Display> fmt::Display for EVMError<DBError> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            EVMError::Transaction(e) => write!(f, "Transaction error: {e:?}"),
-            EVMError::Header(e) => write!(f, "Header error: {e:?}"),
-            EVMError::Database(e) => write!(f, "Database error: {e}"),
-            EVMError::Custom(e) => write!(f, "Custom error: {e}"),
+            Self::Transaction(e) => write!(f, "transaction validation error: {e}"),
+            Self::Header(e) => write!(f, "header validation error: {e}"),
+            Self::Database(e) => write!(f, "database error: {e}"),
+            Self::Custom(e) => f.write_str(e),
         }
     }
 }
 
 impl<DBError> From<InvalidTransaction> for EVMError<DBError> {
-    fn from(invalid: InvalidTransaction) -> Self {
-        EVMError::Transaction(invalid)
+    fn from(value: InvalidTransaction) -> Self {
+        Self::Transaction(value)
+    }
+}
+
+impl<DBError> From<InvalidHeader> for EVMError<DBError> {
+    fn from(value: InvalidHeader) -> Self {
+        Self::Header(value)
     }
 }
 
@@ -270,77 +285,69 @@ impl std::error::Error for InvalidTransaction {}
 impl fmt::Display for InvalidTransaction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            InvalidTransaction::PriorityFeeGreaterThanMaxFee => {
-                write!(f, "Priority fee is greater than max fee")
+            Self::PriorityFeeGreaterThanMaxFee => {
+                write!(f, "priority fee is greater than max fee")
             }
-            InvalidTransaction::GasPriceLessThanBasefee => {
-                write!(f, "Gas price is less than basefee")
+            Self::GasPriceLessThanBasefee => {
+                write!(f, "gas price is less than basefee")
             }
-            InvalidTransaction::CallerGasLimitMoreThanBlock => {
-                write!(f, "Caller gas limit exceeds the block gas limit")
+            Self::CallerGasLimitMoreThanBlock => {
+                write!(f, "caller gas limit exceeds the block gas limit")
             }
-            InvalidTransaction::CallGasCostMoreThanGasLimit => {
-                write!(f, "Call gas cost exceeds the gas limit")
+            Self::CallGasCostMoreThanGasLimit => {
+                write!(f, "call gas cost exceeds the gas limit")
             }
-            InvalidTransaction::RejectCallerWithCode => {
-                write!(f, "Reject transactions from senders with deployed code")
+            Self::RejectCallerWithCode => {
+                write!(f, "reject transactions from senders with deployed code")
             }
-            InvalidTransaction::LackOfFundForMaxFee { fee, balance } => {
-                write!(f, "Lack of funds {} for max fee {}", balance, fee)
+            Self::LackOfFundForMaxFee { fee, balance } => {
+                write!(f, "lack of funds ({balance}) for max fee ({fee})")
             }
-            InvalidTransaction::OverflowPaymentInTransaction => {
-                write!(f, "Overflow payment in transaction")
+            Self::OverflowPaymentInTransaction => {
+                write!(f, "overflow payment in transaction")
             }
-            InvalidTransaction::NonceOverflowInTransaction => {
-                write!(f, "Nonce overflow in transaction")
+            Self::NonceOverflowInTransaction => {
+                write!(f, "nonce overflow in transaction")
             }
-            InvalidTransaction::NonceTooHigh { tx, state } => {
-                write!(f, "Nonce too high {}, expected {}", tx, state)
+            Self::NonceTooHigh { tx, state } => {
+                write!(f, "nonce {tx} too high, expected {state}")
             }
-            InvalidTransaction::NonceTooLow { tx, state } => {
-                write!(f, "Nonce {} too low, expected {}", tx, state)
+            Self::NonceTooLow { tx, state } => {
+                write!(f, "nonce {tx} too low, expected {state}")
             }
-            InvalidTransaction::CreateInitCodeSizeLimit => {
-                write!(f, "Create initcode size limit")
+            Self::CreateInitCodeSizeLimit => {
+                write!(f, "create initcode size limit")
             }
-            InvalidTransaction::InvalidChainId => write!(f, "Invalid chain id"),
-            InvalidTransaction::AccessListNotSupported => {
-                write!(f, "Access list not supported")
+            Self::InvalidChainId => write!(f, "invalid chain ID"),
+            Self::AccessListNotSupported => write!(f, "access list not supported"),
+            Self::MaxFeePerBlobGasNotSupported => {
+                write!(f, "max fee per blob gas not supported")
             }
-            InvalidTransaction::MaxFeePerBlobGasNotSupported => {
-                write!(f, "Max fee per blob gas not supported")
+            Self::BlobVersionedHashesNotSupported => {
+                write!(f, "blob versioned hashes not supported")
             }
-            InvalidTransaction::BlobVersionedHashesNotSupported => {
-                write!(f, "Blob versioned hashes not supported")
+            Self::BlobGasPriceGreaterThanMax => {
+                write!(f, "blob gas price is greater than max fee per blob gas")
             }
-            InvalidTransaction::BlobGasPriceGreaterThanMax => {
-                write!(f, "Blob gas price is greater than max fee per blob gas")
-            }
-            InvalidTransaction::EmptyBlobs => write!(f, "Empty blobs"),
-            InvalidTransaction::BlobCreateTransaction => write!(f, "Blob create transaction"),
-            InvalidTransaction::TooManyBlobs => write!(f, "Too many blobs"),
-            InvalidTransaction::BlobVersionNotSupported => write!(f, "Blob version not supported"),
+            Self::EmptyBlobs => write!(f, "empty blobs"),
+            Self::BlobCreateTransaction => write!(f, "blob create transaction"),
+            Self::TooManyBlobs => write!(f, "too many blobs"),
+            Self::BlobVersionNotSupported => write!(f, "blob version not supported"),
             #[cfg(feature = "optimism")]
-            InvalidTransaction::DepositSystemTxPostRegolith => {
+            Self::DepositSystemTxPostRegolith => {
                 write!(
                     f,
-                    "Deposit system transactions post regolith hardfork are not supported"
+                    "deposit system transactions post regolith hardfork are not supported"
                 )
             }
             #[cfg(feature = "optimism")]
-            InvalidTransaction::HaltedDepositPostRegolith => {
+            Self::HaltedDepositPostRegolith => {
                 write!(
                     f,
-                    "Deposit transaction halted post-regolith. Error will be bubbled up to main return handler."
+                    "deposit transaction halted post-regolith; error will be bubbled up to main return handler"
                 )
             }
         }
-    }
-}
-
-impl<DBError> From<InvalidHeader> for EVMError<DBError> {
-    fn from(invalid: InvalidHeader) -> Self {
-        EVMError::Header(invalid)
     }
 }
 
@@ -360,8 +367,8 @@ impl std::error::Error for InvalidHeader {}
 impl fmt::Display for InvalidHeader {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            InvalidHeader::PrevrandaoNotSet => write!(f, "Prevrandao not set"),
-            InvalidHeader::ExcessBlobGasNotSet => write!(f, "Excess blob gas not set"),
+            Self::PrevrandaoNotSet => write!(f, "`prevrandao` not set"),
+            Self::ExcessBlobGasNotSet => write!(f, "`excess_blob_gas` not set"),
         }
     }
 }

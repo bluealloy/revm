@@ -140,31 +140,22 @@ impl std::error::Error for PrecompileError {}
 
 impl fmt::Display for PrecompileError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            PrecompileError::OutOfGas => write!(f, "out of gas"),
-            PrecompileError::Blake2WrongLength => write!(f, "wrong input length for blake2"),
-            PrecompileError::Blake2WrongFinalIndicatorFlag => {
-                write!(f, "wrong final indicator flag for blake2")
-            }
-            PrecompileError::ModexpExpOverflow => write!(f, "modexp exp overflow"),
-            PrecompileError::ModexpBaseOverflow => write!(f, "modexp base overflow"),
-            PrecompileError::ModexpModOverflow => write!(f, "modexp mod overflow"),
-            PrecompileError::Bn128FieldPointNotAMember => {
-                write!(f, "field point not a member of bn128 curve")
-            }
-            PrecompileError::Bn128AffineGFailedToCreate => {
-                write!(f, "failed to create affine g point for bn128 curve")
-            }
-            PrecompileError::Bn128PairLength => write!(f, "bn128 invalid pair length"),
-            PrecompileError::BlobInvalidInputLength => write!(f, "invalid blob input length"),
-            PrecompileError::BlobMismatchedVersion => write!(f, "mismatched blob version"),
-            PrecompileError::BlobVerifyKzgProofFailed => {
-                write!(f, "verifying blob kzg proof failed")
-            }
-            PrecompileError::Other(why) => {
-                write!(f, "other precompile error: {why}")
-            }
-        }
+        let s = match self {
+            Self::OutOfGas => "out of gas",
+            Self::Blake2WrongLength => "wrong input length for blake2",
+            Self::Blake2WrongFinalIndicatorFlag => "wrong final indicator flag for blake2",
+            Self::ModexpExpOverflow => "modexp exp overflow",
+            Self::ModexpBaseOverflow => "modexp base overflow",
+            Self::ModexpModOverflow => "modexp mod overflow",
+            Self::Bn128FieldPointNotAMember => "field point not a member of bn128 curve",
+            Self::Bn128AffineGFailedToCreate => "failed to create affine g point for bn128 curve",
+            Self::Bn128PairLength => "bn128 invalid pair length",
+            Self::BlobInvalidInputLength => "invalid blob input length",
+            Self::BlobMismatchedVersion => "mismatched blob version",
+            Self::BlobVerifyKzgProofFailed => "verifying blob kzg proof failed",
+            Self::Other(s) => s,
+        };
+        f.write_str(s)
     }
 }
 
