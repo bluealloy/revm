@@ -12,8 +12,8 @@ pub use validation::{
 };
 
 pub use execution::{
-    ExecutionHandler, FrameCallHandle, FrameCallReturnHandle, FrameCreateHandle,
-    FrameCreateReturnHandle, InsertCallOutcomeHandle, InsertCreateOutcomeHandle,
+    ExecutionHandler, FrameCallReturnTrait, FrameCallTrait, FrameCreateReturnTrait,
+    FrameCreateTrait, InsertCallOutcomeTrait, InsertCreateOutcomeTrait,
 };
 
 pub use pre_execution::{
@@ -21,5 +21,5 @@ pub use pre_execution::{
 };
 
 pub use post_execution::{
-    EndHandle, OutputHandle, PostExecutionHandler, ReimburseCallerHandle, RewardBeneficiaryHandle,
+    EndTrait, OutputTrait, PostExecutionHandler, ReimburseCallerTrait, RewardBeneficiaryTrait,
 };

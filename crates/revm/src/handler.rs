@@ -199,8 +199,8 @@ impl<EXT, DB: Database> EvmHandler<EXT, DB> {
 mod test {
     use core::cell::RefCell;
 
-    use crate::{db::EmptyDB, primitives::EVMError};
-    use std::{rc::Rc, sync::Arc};
+    use crate::db::EmptyDB;
+    use std::rc::Rc;
 
     use super::*;
 

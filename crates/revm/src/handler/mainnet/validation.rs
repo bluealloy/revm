@@ -9,11 +9,11 @@ use crate::{
 };
 
 #[derive(Clone, Debug)]
-pub struct ValidateEnvImpl<SPEC> {
+pub struct ValidationImpl<SPEC> {
     pub _spec: std::marker::PhantomData<SPEC>,
 }
 
-impl<SPEC: Spec> Default for ValidateEnvImpl<SPEC> {
+impl<SPEC: Spec> Default for ValidationImpl<SPEC> {
     fn default() -> Self {
         Self {
             _spec: std::marker::PhantomData,
@@ -21,7 +21,7 @@ impl<SPEC: Spec> Default for ValidateEnvImpl<SPEC> {
     }
 }
 
-impl<DB: Database, SPEC: Spec> ValidateEnvTrait<DB> for ValidateEnvImpl<SPEC> {
+impl<DB: Database, SPEC: Spec> ValidateEnvTrait<DB> for ValidationImpl<SPEC> {
     fn validate_env(&self, env: &Env) -> Result<(), EVMError<DB::Error>> {
         // Important: validate block before tx.
         env.validate_block_env::<SPEC>()?;
@@ -30,22 +30,7 @@ impl<DB: Database, SPEC: Spec> ValidateEnvTrait<DB> for ValidateEnvImpl<SPEC> {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct ValidateTxAgainstStateImpl<SPEC> {
-    pub _spec: std::marker::PhantomData<SPEC>,
-}
-
-impl<SPEC: Spec> Default for ValidateTxAgainstStateImpl<SPEC> {
-    fn default() -> Self {
-        Self {
-            _spec: std::marker::PhantomData,
-        }
-    }
-}
-
-impl<EXT, DB: Database, SPEC: Spec> ValidateTxAgainstStateTrait<EXT, DB>
-    for ValidateTxAgainstStateImpl<SPEC>
-{
+impl<EXT, DB: Database, SPEC: Spec> ValidateTxAgainstStateTrait<EXT, DB> for ValidationImpl<SPEC> {
     fn validate_tx_against_state(
         &self,
         context: &mut Context<EXT, DB>,
@@ -69,20 +54,7 @@ impl<EXT, DB: Database, SPEC: Spec> ValidateTxAgainstStateTrait<EXT, DB>
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct ValidateInitialTxGasImpl<SPEC> {
-    pub _spec: std::marker::PhantomData<SPEC>,
-}
-
-impl<SPEC: Spec> Default for ValidateInitialTxGasImpl<SPEC> {
-    fn default() -> Self {
-        Self {
-            _spec: std::marker::PhantomData,
-        }
-    }
-}
-
-impl<DB: Database, SPEC: Spec> ValidateInitialTxGasTrait<DB> for ValidateInitialTxGasImpl<SPEC> {
+impl<DB: Database, SPEC: Spec> ValidateInitialTxGasTrait<DB> for ValidationImpl<SPEC> {
     fn validate_initial_tx_gas(&self, env: &Env) -> Result<u64, EVMError<DB::Error>> {
         let input = &env.tx.data;
         let is_create = env.tx.transact_to.is_create();

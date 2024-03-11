@@ -1,10 +1,9 @@
 // Includes.
 use crate::{
-    handler::mainnet,
+    handler::mainnet::PreExecutionImpl,
     primitives::{db::Database, EVMError, Spec},
     Context, ContextPrecompiles,
 };
-use std::sync::Arc;
 
 /// Loads precompiles into Evm
 pub trait LoadPrecompilesTrait<DB: Database>: Send + Sync {
@@ -24,23 +23,21 @@ pub trait DeductCallerTrait<EXT, DB: Database>: Send + Sync {
 
 /// Handles related to pre execution before the stack loop is started.
 pub struct PreExecutionHandler<EXT, DB: Database> {
-    // /// Load precompiles
-    // pub load_precompiles: Box<dyn LoadPrecompilesTrait<DB>>,
-    // /// Main load handle
-    // pub load_accounts: Box<dyn LoadAccountsTrait<EXT, DB>>,
-    // /// Deduct max value from the caller.
-    // pub deduct_caller: Box<dyn DeductCallerTrait<EXT, DB>>,
-    pub phantom: std::marker::PhantomData<(EXT, DB)>,
+    /// Load precompiles
+    pub load_precompiles: Box<dyn LoadPrecompilesTrait<DB>>,
+    /// Main load handle
+    pub load_accounts: Box<dyn LoadAccountsTrait<EXT, DB>>,
+    /// Deduct max value from the caller.
+    pub deduct_caller: Box<dyn DeductCallerTrait<EXT, DB>>,
 }
 
 impl<EXT, DB: Database> PreExecutionHandler<EXT, DB> {
     /// Creates mainnet MainHandles.
     pub fn new<SPEC: Spec>() -> Self {
         Self {
-            //load_precompiles: Arc::new(mainnet::load_precompiles::<SPEC, DB>),
-            //load_accounts: Arc::new(mainnet::load_accounts::<SPEC, EXT, DB>),
-            //deduct_caller: Arc::new(mainnet::deduct_caller::<SPEC, EXT, DB>),
-            phantom: std::marker::PhantomData,
+            load_precompiles: Box::<PreExecutionImpl<SPEC>>::default(),
+            load_accounts: Box::<PreExecutionImpl<SPEC>>::default(),
+            deduct_caller: Box::<PreExecutionImpl<SPEC>>::default(),
         }
     }
 }
@@ -48,19 +45,16 @@ impl<EXT, DB: Database> PreExecutionHandler<EXT, DB> {
 impl<EXT, DB: Database> PreExecutionHandler<EXT, DB> {
     /// Deduct caller to its limit.
     pub fn deduct_caller(&self, context: &mut Context<EXT, DB>) -> Result<(), EVMError<DB::Error>> {
-        //(self.deduct_caller)(context)
-        Ok(())
+        self.deduct_caller.deduct_caller(context)
     }
 
     /// Main load
     pub fn load_accounts(&self, context: &mut Context<EXT, DB>) -> Result<(), EVMError<DB::Error>> {
-        //(self.load_accounts)(context)
-        Ok(())
+        self.load_accounts.load_accounts(context)
     }
 
     /// Load precompiles
     pub fn load_precompiles(&self) -> ContextPrecompiles<DB> {
-        //(self.load_precompiles)()
-        ContextPrecompiles::default()
+        self.load_precompiles.load_precompiles()
     }
 }

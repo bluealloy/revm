@@ -3,6 +3,7 @@
 //! They handle initial setup of the EVM, call loop and the final return of the EVM
 
 use crate::{
+    handler::{DeductCallerTrait, LoadAccountsTrait, LoadPrecompilesTrait},
     precompile::{PrecompileSpecId, Precompiles},
     primitives::{
         db::Database,
@@ -13,34 +14,64 @@ use crate::{
     Context, ContextPrecompiles,
 };
 
-/// Main precompile load
-#[inline]
-pub fn load_precompiles<SPEC: Spec, DB: Database>() -> ContextPrecompiles<DB> {
-    Precompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID))
-        .clone()
-        .into()
+/// PreExecutionImpl implements all traits related to post execution handles.
+#[derive(Clone, Debug)]
+pub struct PreExecutionImpl<SPEC> {
+    pub _spec: std::marker::PhantomData<SPEC>,
 }
 
-/// Main load handle
-#[inline]
-pub fn load_accounts<SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
-) -> Result<(), EVMError<DB::Error>> {
-    // set journaling state flag.
-    context.evm.journaled_state.set_spec_id(SPEC::SPEC_ID);
-
-    // load coinbase
-    // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
-    if SPEC::enabled(SHANGHAI) {
-        context.evm.inner.journaled_state.initial_account_load(
-            context.evm.inner.env.block.coinbase,
-            &[],
-            &mut context.evm.inner.db,
-        )?;
+impl<SPEC: Spec> Default for PreExecutionImpl<SPEC> {
+    fn default() -> Self {
+        Self {
+            _spec: std::marker::PhantomData,
+        }
     }
+}
 
-    context.evm.load_access_list()?;
-    Ok(())
+impl<SPEC: Spec, DB: Database> LoadPrecompilesTrait<DB> for PreExecutionImpl<SPEC> {
+    #[inline]
+    fn load_precompiles(&self) -> ContextPrecompiles<DB> {
+        Precompiles::new(PrecompileSpecId::from_spec_id(SPEC::SPEC_ID))
+            .clone()
+            .into()
+    }
+}
+
+impl<SPEC: Spec, EXT, DB: Database> LoadAccountsTrait<EXT, DB> for PreExecutionImpl<SPEC> {
+    #[inline]
+    fn load_accounts(&self, context: &mut Context<EXT, DB>) -> Result<(), EVMError<DB::Error>> {
+        // set journaling state flag.
+        context.evm.journaled_state.set_spec_id(SPEC::SPEC_ID);
+
+        // load coinbase
+        // EIP-3651: Warm COINBASE. Starts the `COINBASE` address warm
+        if SPEC::enabled(SHANGHAI) {
+            context.evm.inner.journaled_state.initial_account_load(
+                context.evm.inner.env.block.coinbase,
+                &[],
+                &mut context.evm.inner.db,
+            )?;
+        }
+
+        context.evm.load_access_list()?;
+        Ok(())
+    }
+}
+
+impl<SPEC: Spec, EXT, DB: Database> DeductCallerTrait<EXT, DB> for PreExecutionImpl<SPEC> {
+    fn deduct_caller(&self, context: &mut Context<EXT, DB>) -> Result<(), EVMError<DB::Error>> {
+        // load caller's account.
+        let (caller_account, _) = context
+            .evm
+            .inner
+            .journaled_state
+            .load_account(context.evm.inner.env.tx.caller, &mut context.evm.inner.db)?;
+
+        // deduct gas cost from caller's account.
+        deduct_caller_inner::<SPEC>(caller_account, &context.evm.inner.env);
+
+        Ok(())
+    }
 }
 
 /// Helper function that deducts the caller balance.
@@ -67,22 +98,4 @@ pub fn deduct_caller_inner<SPEC: Spec>(caller_account: &mut Account, env: &Env) 
 
     // touch account so we know it is changed.
     caller_account.mark_touch();
-}
-
-/// Deducts the caller balance to the transaction limit.
-#[inline]
-pub fn deduct_caller<SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
-) -> Result<(), EVMError<DB::Error>> {
-    // load caller's account.
-    let (caller_account, _) = context
-        .evm
-        .inner
-        .journaled_state
-        .load_account(context.evm.inner.env.tx.caller, &mut context.evm.inner.db)?;
-
-    // deduct gas cost from caller's account.
-    deduct_caller_inner::<SPEC>(caller_account, &context.evm.inner.env);
-
-    Ok(())
 }

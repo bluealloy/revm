@@ -1,5 +1,9 @@
 use crate::{
     db::Database,
+    handler::{
+        execution::LastFrameReturnTrait, FrameCallReturnTrait, FrameCallTrait,
+        FrameCreateReturnTrait, FrameCreateTrait, InsertCallOutcomeTrait, InsertCreateOutcomeTrait,
+    },
     interpreter::{
         return_ok, return_revert, CallInputs, CreateInputs, CreateOutcome, Gas, InstructionResult,
         SharedMemory,
@@ -10,6 +14,20 @@ use crate::{
 use std::boxed::Box;
 
 use revm_interpreter::{CallOutcome, InterpreterResult};
+
+/// ExecutionImpl implements all traits related to execution.
+#[derive(Clone, Debug)]
+pub struct ExecutionImpl<SPEC> {
+    pub _spec: std::marker::PhantomData<SPEC>,
+}
+
+impl<SPEC: Spec> Default for ExecutionImpl<SPEC> {
+    fn default() -> Self {
+        Self {
+            _spec: std::marker::PhantomData,
+        }
+    }
+}
 
 /// Helper function called inside [`last_frame_return`]
 #[inline]
@@ -48,93 +66,111 @@ pub fn frame_return_with_refund_flag<SPEC: Spec>(
     }
 }
 
-/// Handle output of the transaction
-#[inline]
-pub fn last_frame_return<SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
-    frame_result: &mut FrameResult,
-) -> Result<(), EVMError<DB::Error>> {
-    frame_return_with_refund_flag::<SPEC>(&context.evm.env, frame_result, true);
-    Ok(())
+impl<EXT, DB: Database, SPEC: Spec> LastFrameReturnTrait<EXT, DB> for ExecutionImpl<SPEC> {
+    #[inline]
+    fn last_frame_return(
+        &self,
+        context: &mut Context<EXT, DB>,
+        frame_result: &mut FrameResult,
+    ) -> Result<(), EVMError<DB::Error>> {
+        frame_return_with_refund_flag::<SPEC>(&context.evm.env, frame_result, true);
+        Ok(())
+    }
 }
 
-/// Handle frame sub call.
-#[inline]
-pub fn call<SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
-    inputs: Box<CallInputs>,
-) -> Result<FrameOrResult, EVMError<DB::Error>> {
-    context.evm.make_call_frame(&inputs)
+impl<EXT, DB: Database, SPEC: Spec> FrameCallTrait<EXT, DB> for ExecutionImpl<SPEC> {
+    #[inline]
+    fn call(
+        &self,
+        context: &mut Context<EXT, DB>,
+        inputs: Box<CallInputs>,
+    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
+        context.evm.make_call_frame(&inputs)
+    }
 }
 
-#[inline]
-pub fn call_return<EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
-    frame: Box<CallFrame>,
-    interpreter_result: InterpreterResult,
-) -> Result<CallOutcome, EVMError<DB::Error>> {
-    context
-        .evm
-        .call_return(&interpreter_result, frame.frame_data.checkpoint);
-    Ok(CallOutcome::new(
-        interpreter_result,
-        frame.return_memory_range,
-    ))
+impl<EXT, DB: Database, SPEC: Spec> FrameCallReturnTrait<EXT, DB> for ExecutionImpl<SPEC> {
+    #[inline]
+    fn call_return(
+        &self,
+        context: &mut Context<EXT, DB>,
+        frame: Box<CallFrame>,
+        interpreter_result: InterpreterResult,
+    ) -> Result<CallOutcome, EVMError<DB::Error>> {
+        context
+            .evm
+            .call_return(&interpreter_result, frame.frame_data.checkpoint);
+        Ok(CallOutcome::new(
+            interpreter_result,
+            frame.return_memory_range,
+        ))
+    }
 }
 
-#[inline]
-pub fn insert_call_outcome<EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
-    frame: &mut Frame,
-    shared_memory: &mut SharedMemory,
-    outcome: CallOutcome,
-) -> Result<(), EVMError<DB::Error>> {
-    core::mem::replace(&mut context.evm.error, Ok(()))?;
-    frame
-        .frame_data_mut()
-        .interpreter
-        .insert_call_outcome(shared_memory, outcome);
-    Ok(())
+impl<EXT, DB: Database, SPEC: Spec> InsertCallOutcomeTrait<EXT, DB> for ExecutionImpl<SPEC> {
+    #[inline]
+    fn insert_call_outcome(
+        &self,
+        context: &mut Context<EXT, DB>,
+        frame: &mut Frame,
+        shared_memory: &mut SharedMemory,
+        outcome: CallOutcome,
+    ) -> Result<(), EVMError<DB::Error>> {
+        core::mem::replace(&mut context.evm.error, Ok(()))?;
+        frame
+            .frame_data_mut()
+            .interpreter
+            .insert_call_outcome(shared_memory, outcome);
+        Ok(())
+    }
 }
 
-/// Handle frame sub create.
-#[inline]
-pub fn create<SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
-    inputs: Box<CreateInputs>,
-) -> Result<FrameOrResult, EVMError<DB::Error>> {
-    context.evm.make_create_frame(SPEC::SPEC_ID, &inputs)
+impl<EXT, DB: Database, SPEC: Spec> FrameCreateTrait<EXT, DB> for ExecutionImpl<SPEC> {
+    #[inline]
+    fn create(
+        &self,
+        context: &mut Context<EXT, DB>,
+        inputs: Box<CreateInputs>,
+    ) -> Result<FrameOrResult, EVMError<DB::Error>> {
+        context.evm.make_create_frame(SPEC::SPEC_ID, &inputs)
+    }
 }
 
-#[inline]
-pub fn create_return<SPEC: Spec, EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
-    frame: Box<CreateFrame>,
-    mut interpreter_result: InterpreterResult,
-) -> Result<CreateOutcome, EVMError<DB::Error>> {
-    context.evm.create_return::<SPEC>(
-        &mut interpreter_result,
-        frame.created_address,
-        frame.frame_data.checkpoint,
-    );
-    Ok(CreateOutcome::new(
-        interpreter_result,
-        Some(frame.created_address),
-    ))
+impl<EXT, DB: Database, SPEC: Spec> FrameCreateReturnTrait<EXT, DB> for ExecutionImpl<SPEC> {
+    #[inline]
+    fn create_return(
+        &self,
+        context: &mut Context<EXT, DB>,
+        frame: Box<CreateFrame>,
+        mut interpreter_result: InterpreterResult,
+    ) -> Result<CreateOutcome, EVMError<DB::Error>> {
+        context.evm.create_return::<SPEC>(
+            &mut interpreter_result,
+            frame.created_address,
+            frame.frame_data.checkpoint,
+        );
+        Ok(CreateOutcome::new(
+            interpreter_result,
+            Some(frame.created_address),
+        ))
+    }
 }
 
-#[inline]
-pub fn insert_create_outcome<EXT, DB: Database>(
-    context: &mut Context<EXT, DB>,
-    frame: &mut Frame,
-    outcome: CreateOutcome,
-) -> Result<(), EVMError<DB::Error>> {
-    core::mem::replace(&mut context.evm.error, Ok(()))?;
-    frame
-        .frame_data_mut()
-        .interpreter
-        .insert_create_outcome(outcome);
-    Ok(())
+impl<EXT, DB: Database, SPEC: Spec> InsertCreateOutcomeTrait<EXT, DB> for ExecutionImpl<SPEC> {
+    #[inline]
+    fn insert_create_outcome(
+        &self,
+        context: &mut Context<EXT, DB>,
+        frame: &mut Frame,
+        outcome: CreateOutcome,
+    ) -> Result<(), EVMError<DB::Error>> {
+        core::mem::replace(&mut context.evm.error, Ok(()))?;
+        frame
+            .frame_data_mut()
+            .interpreter
+            .insert_create_outcome(outcome);
+        Ok(())
+    }
 }
 
 #[cfg(test)]

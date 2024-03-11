@@ -3,8 +3,8 @@ use crate::{
     db::{Database, DatabaseCommit, EmptyDB},
     handler::Handler,
     interpreter::{
-        opcode::InstructionTables, Host, Interpreter, InterpreterAction, SStoreResult,
-        SelfDestructResult, SharedMemory,
+        opcode::InstructionTables, Host, InterpreterAction, SStoreResult, SelfDestructResult,
+        SharedMemory,
     },
     primitives::{
         specification::SpecId, Address, BlockEnv, Bytecode, CfgEnv, EVMError, EVMResult, Env,
@@ -260,7 +260,7 @@ impl<EXT, DB: Database> Evm<EXT, DB> {
             // run interpreter
             let interpreter = &mut stack_frame.frame_data_mut().interpreter;
             let next_action = interpreter.run(shared_memory, instruction_table, self);
-            
+
             // take error and break the loop if there is any.
             // This error is set From Interpreter when its interacting with Host.
             core::mem::replace(&mut self.context.evm.error, Ok(()))?;

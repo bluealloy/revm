@@ -1,5 +1,5 @@
 use crate::{
-    handler::mainnet,
+    handler::mainnet::ValidationImpl,
     primitives::{db::Database, EVMError, Env, Spec},
     Context,
 };
@@ -37,10 +37,9 @@ impl<EXT, DB: Database> ValidationHandler<EXT, DB> {
     /// Create new ValidationHandles
     pub fn new<SPEC: Spec>() -> Self {
         Self {
-            initial_tx_gas: Box::new(mainnet::ValidateInitialTxGasImpl::<SPEC>::default()),
-            //env: Arc::new(mainnet::validate_env::<SPEC, DB>),
-            env: Box::new(mainnet::ValidateEnvImpl::<SPEC>::default()),
-            tx_against_state: Box::new(mainnet::ValidateTxAgainstStateImpl::<SPEC>::default()),
+            initial_tx_gas: Box::<ValidationImpl<SPEC>>::default(),
+            env: Box::<ValidationImpl<SPEC>>::default(),
+            tx_against_state: Box::<ValidationImpl<SPEC>>::default(),
         }
     }
 }
