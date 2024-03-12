@@ -12,10 +12,10 @@ use crate::{
     primitives::{db::Database, spec_to_generic, HandlerCfg, Spec, SpecId},
     Evm,
 };
-use register::{EvmHandler, HandleRegisters};
+use register::EvmHandler;
 use std::vec::Vec;
 
-use self::register::{HandleRegister, HandleRegisterBox};
+use self::register::{HandleRegisterBox, HandleRegisterFn};
 
 /// Handler acts as a proxy and allow to define different behavior for different
 /// sections of the code. This allows nice integration of different chains or
@@ -26,7 +26,7 @@ pub struct Handler<H: Host, EXT, DB: Database> {
     /// Instruction table type.
     pub instruction_table: Option<InstructionTables<H>>,
     /// Registers that will be called on initialization.
-    pub registers: Vec<HandleRegisters<EXT, DB>>,
+    pub registers: Vec<HandleRegisterFn<EXT, DB>>,
     /// Validity handles.
     pub validation: ValidationHandler<EXT, DB>,
     /// Pre execution handle
@@ -35,6 +35,21 @@ pub struct Handler<H: Host, EXT, DB: Database> {
     pub post_execution: PostExecutionHandler<EXT, DB>,
     /// Execution loop that handles frames.
     pub execution: ExecutionHandler<EXT, DB>,
+}
+
+impl<H: Host, EXT, DB: Database> Default for Handler<H, EXT, DB> {
+    fn default() -> Self {
+        Self {
+            cfg: HandlerCfg::default(),
+            // TODO
+            instruction_table: None,
+            registers: Vec::new(),
+            validation: ValidationHandler::default(),
+            pre_execution: PreExecutionHandler::default(),
+            post_execution: PostExecutionHandler::default(),
+            execution: ExecutionHandler::default(),
+        }
+    }
 }
 
 impl<EXT, DB: Database> EvmHandler<EXT, DB> {
@@ -133,25 +148,13 @@ impl<EXT, DB: Database> EvmHandler<EXT, DB> {
     }
 
     /// Append handle register.
-    pub fn append_handler_register(&mut self, register: HandleRegisters<EXT, DB>) {
-        register.register(self);
+    pub fn append_handler_register(&mut self, register: HandleRegisterFn<EXT, DB>) {
+        (register)(self);
         self.registers.push(register);
     }
 
-    /// Append plain handle register.
-    pub fn append_handler_register_plain(&mut self, register: HandleRegister<EXT, DB>) {
-        register(self);
-        self.registers.push(HandleRegisters::Plain(register));
-    }
-
-    /// Append boxed handle register.
-    pub fn append_handler_register_box(&mut self, register: HandleRegisterBox<EXT, DB>) {
-        register(self);
-        self.registers.push(HandleRegisters::Box(register));
-    }
-
     /// Pop last handle register and reapply all registers that are left.
-    pub fn pop_handle_register(&mut self) -> Option<HandleRegisters<EXT, DB>> {
+    pub fn pop_handle_register(&mut self) -> Option<HandleRegisterFn<EXT, DB>> {
         let out = self.registers.pop();
         if out.is_some() {
             let registers = core::mem::take(&mut self.registers);
@@ -206,21 +209,21 @@ mod test {
 
     #[test]
     fn test_handler_register_pop() {
-        let register = |inner: &Rc<RefCell<i32>>| -> HandleRegisterBox<(), EmptyDB> {
-            let inner = inner.clone();
-            Box::new(move |h| {
-                *inner.borrow_mut() += 1;
-                //h.post_execution.output = Arc::new(|_, _| Err(EVMError::Custom("test".to_string())))
-            })
-        };
+        // let register = |inner: &Rc<RefCell<i32>>| -> HandleRegisterBox<(), EmptyDB> {
+        //     let inner = inner.clone();
+        //     Box::new(move |h| {
+        //         *inner.borrow_mut() += 1;
+        //         //h.post_execution.output = Arc::new(|_, _| Err(EVMError::Custom("test".to_string())))
+        //     })
+        // };
 
         let mut handler = EvmHandler::<(), EmptyDB>::new(HandlerCfg::new(SpecId::LATEST));
         let test = Rc::new(RefCell::new(0));
 
-        handler.append_handler_register_box(register(&test));
+        //handler.append_handler_register_box(register(&test));
         assert_eq!(*test.borrow(), 1);
 
-        handler.append_handler_register_box(register(&test));
+        //handler.append_handler_register_box(register(&test));
         assert_eq!(*test.borrow(), 2);
 
         assert!(handler.pop_handle_register().is_some());

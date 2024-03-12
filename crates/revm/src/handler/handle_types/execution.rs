@@ -1,7 +1,7 @@
 use crate::{
     handler::mainnet::ExecutionImpl,
     interpreter::{CallInputs, CreateInputs, SharedMemory},
-    primitives::{db::Database, EVMError, Spec},
+    primitives::{db::Database, EVMError, LatestSpec, Spec},
     CallFrame, Context, CreateFrame, Frame, FrameOrResult, FrameResult,
 };
 use std::boxed::Box;
@@ -94,6 +94,12 @@ pub struct ExecutionHandler<EXT, DB: Database> {
     /// Insert create outcome.
     pub insert_create_outcome: Box<dyn InsertCreateOutcomeTrait<EXT, DB>>,
     pub phantom: std::marker::PhantomData<(EXT, DB)>,
+}
+
+impl<EXT, DB: Database> Default for ExecutionHandler<EXT, DB> {
+    fn default() -> Self {
+        Self::new::<LatestSpec>()
+    }
 }
 
 impl<EXT, DB: Database> ExecutionHandler<EXT, DB> {

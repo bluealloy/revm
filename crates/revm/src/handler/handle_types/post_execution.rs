@@ -2,7 +2,7 @@
 use crate::{
     handler::mainnet::PostExecutionImpl,
     interpreter::Gas,
-    primitives::{db::Database, EVMError, EVMResultGeneric, ResultAndState, Spec},
+    primitives::{db::Database, EVMError, EVMResultGeneric, LatestSpec, ResultAndState, Spec},
     Context, FrameResult,
 };
 
@@ -55,6 +55,12 @@ pub struct PostExecutionHandler<EXT, DB: Database> {
     pub output: Box<dyn OutputTrait<EXT, DB>>,
     /// End handle.
     pub end: Box<dyn EndTrait<EXT, DB>>,
+}
+
+impl<EXT, DB: Database> Default for PostExecutionHandler<EXT, DB> {
+    fn default() -> Self {
+        Self::new::<LatestSpec>()
+    }
 }
 
 impl<EXT, DB: Database> PostExecutionHandler<EXT, DB> {

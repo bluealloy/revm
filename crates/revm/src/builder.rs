@@ -1,6 +1,6 @@
 use crate::{
     db::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef},
-    handler::register,
+    handler::register::{self, HandleRegisterFn, HandleRegisterTrait},
     primitives::{
         BlockEnv, CfgEnv, CfgEnvWithHandlerCfg, Env, EnvWithHandlerCfg, HandlerCfg, SpecId, TxEnv,
     },
@@ -76,10 +76,7 @@ impl<EXT, DB: Database> EvmBuilder<SetGenericStage, EXT, DB> {
         db: ODB,
     ) -> EvmBuilder<SetGenericStage, EXT, WrapDatabaseRef<ODB>> {
         EvmBuilder {
-            context: Context::new(
-                self.context.evm.with_db(WrapDatabaseRef(db)),
-                self.context.external,
-            ),
+            context: Context::new(self.context.evm.with_db(db.into()), self.context.external),
             handler: EvmBuilder::<SetGenericStage, EXT, WrapDatabaseRef<ODB>>::handler(
                 self.handler.cfg(),
             ),
@@ -233,10 +230,7 @@ impl<EXT, DB: Database> EvmBuilder<HandlerStage, EXT, DB> {
         db: ODB,
     ) -> EvmBuilder<SetGenericStage, EXT, WrapDatabaseRef<ODB>> {
         EvmBuilder {
-            context: Context::new(
-                self.context.evm.with_db(WrapDatabaseRef(db)),
-                self.context.external,
-            ),
+            context: Context::new(self.context.evm.with_db(db.into()), self.context.external),
             handler: EvmBuilder::<SetGenericStage, EXT, WrapDatabaseRef<ODB>>::handler(
                 self.handler.cfg(),
             ),
@@ -304,10 +298,9 @@ impl<BuilderStage, EXT, DB: Database> EvmBuilder<BuilderStage, EXT, DB> {
     /// When called, EvmBuilder will transition from SetGenericStage to HandlerStage.
     pub fn append_handler_register(
         mut self,
-        handle_register: register::HandleRegister<EXT, DB>,
+        handle_register: HandleRegisterFn<EXT, DB>,
     ) -> EvmBuilder<HandlerStage, EXT, DB> {
-        self.handler
-            .append_handler_register(register::HandleRegisters::Plain(handle_register));
+        self.handler.append_handler_register(handle_register);
         EvmBuilder {
             context: self.context,
             handler: self.handler,
@@ -322,10 +315,9 @@ impl<BuilderStage, EXT, DB: Database> EvmBuilder<BuilderStage, EXT, DB> {
     /// When called, EvmBuilder will transition from SetGenericStage to HandlerStage.
     pub fn append_handler_register_box(
         mut self,
-        handle_register: register::HandleRegisterBox<EXT, DB>,
+        handle_register: register::HandleRegisterFn<EXT, DB>,
     ) -> EvmBuilder<HandlerStage, EXT, DB> {
-        self.handler
-            .append_handler_register(register::HandleRegisters::Box(handle_register));
+        self.handler.append_handler_register(handle_register);
         EvmBuilder {
             context: self.context,
             handler: self.handler,
@@ -440,6 +432,7 @@ mod test {
             address, AccountInfo, Address, Bytecode, Bytes, PrecompileResult, TransactTo, U256,
         },
         Context, ContextPrecompile, ContextStatefulPrecompile, Evm, InMemoryDB, InnerEvmContext,
+        InspectorHandleRegister,
     };
     use revm_interpreter::{Host, Interpreter};
     use std::sync::Arc;
@@ -464,11 +457,11 @@ mod test {
                 db.insert_account_info(to_addr, AccountInfo::new(U256::ZERO, 0, code_hash, code))
             })
             .modify_tx_env(|tx| tx.transact_to = TransactTo::Call(to_addr))
-            .append_handler_register(|handler| {
-                if let Some(ref mut table) = handler.instruction_table {
-                    //    table.insert(0xEF, custom_instruction)
-                }
-            })
+            // .append_handler_register(PlainHandleRegister(|handler| {
+            //     if let Some(ref mut table) = handler.instruction_table {
+            //         //    table.insert(0xEF, custom_instruction)
+            //     }
+            // }))
             .build();
 
         let result_and_state = evm.transact().unwrap();
@@ -564,17 +557,17 @@ mod test {
         let mut evm = Evm::builder()
             .with_empty_db()
             .with_spec_id(SpecId::HOMESTEAD)
-            .append_handler_register(|handler| {
-                let precompiles = handler.pre_execution.load_precompiles();
-                // handler.pre_execution.load_precompiles = Arc::new(move || {
-                //     let mut precompiles = precompiles.clone();
-                //     precompiles.extend([(
-                //         Address::ZERO,
-                //         ContextPrecompile::ContextStateful(Arc::new(CustomPrecompile)),
-                //     )]);
-                //     precompiles
-                // });
-            })
+            //.append_handler_register(PlainHandleRegister(|handler| {
+            //    let precompiles = handler.pre_execution.load_precompiles();
+            // handler.pre_execution.load_precompiles = Arc::new(move || {
+            //     let mut precompiles = precompiles.clone();
+            //     precompiles.extend([(
+            //         Address::ZERO,
+            //         ContextPrecompile::ContextStateful(Arc::new(CustomPrecompile)),
+            //     )]);
+            //     precompiles
+            // });
+            //}))
             .build();
 
         evm.transact().unwrap();

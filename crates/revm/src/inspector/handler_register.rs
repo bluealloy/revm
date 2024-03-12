@@ -1,7 +1,10 @@
 use crate::{
     db::Database,
-    handler::register::EvmHandler,
-    interpreter::{opcode, opcode::BoxedInstruction, InstructionResult, Interpreter},
+    handler::register::{EvmHandler, HandleRegisterTrait},
+    interpreter::{
+        opcode::{self, BoxedInstruction},
+        InstructionResult, Interpreter,
+    },
     primitives::EVMError,
     Evm, FrameOrResult, FrameResult, Inspector, JournalEntry,
 };
@@ -22,6 +25,20 @@ impl<DB: Database, INSP: Inspector<DB>> GetInspector<DB> for INSP {
     }
 }
 
+pub struct InspectorHandleRegister;
+
+impl<EXT: GetInspector<DB>, DB: Database> HandleRegisterTrait<EXT, DB> for InspectorHandleRegister {
+    fn register(&self, handler: &mut EvmHandler<EXT, DB>) {
+        inspector_handle_register(handler)
+    }
+}
+
+impl InspectorHandleRegister {
+    pub fn new_box() -> Box<Self> {
+        Box::new(Self)
+    }
+}
+
 /// Register Inspector handles that interact with Inspector instance.
 ///
 ///
@@ -34,7 +51,7 @@ impl<DB: Database, INSP: Inspector<DB>> GetInspector<DB> for INSP {
 /// A few instructions handlers are wrapped twice once for `step` and `step_end`
 /// and in case of Logs and Selfdestruct wrapper is wrapped again for the
 /// `log` and `selfdestruct` calls.
-pub fn inspector_handle_register<'a, DB: Database, EXT: GetInspector<DB>>(
+pub fn inspector_handle_register<DB: Database, EXT: GetInspector<DB>>(
     handler: &mut EvmHandler<EXT, DB>,
 ) {
     // Every instruction inside flat table that is going to be wrapped by inspector calls.

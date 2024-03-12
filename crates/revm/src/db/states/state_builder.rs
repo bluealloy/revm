@@ -80,7 +80,7 @@ impl<DB: Database> StateBuilder<DB> {
         self,
         database: ODB,
     ) -> StateBuilder<WrapDatabaseRef<ODB>> {
-        self.with_database(WrapDatabaseRef(database))
+        self.with_database(database.into())
     }
 
     /// With boxed version of database.

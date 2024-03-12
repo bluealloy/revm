@@ -1,7 +1,7 @@
 // Includes.
 use crate::{
     handler::mainnet::PreExecutionImpl,
-    primitives::{db::Database, EVMError, Spec},
+    primitives::{db::Database, EVMError, LatestSpec, Spec},
     Context, ContextPrecompiles,
 };
 
@@ -29,6 +29,12 @@ pub struct PreExecutionHandler<EXT, DB: Database> {
     pub load_accounts: Box<dyn LoadAccountsTrait<EXT, DB>>,
     /// Deduct max value from the caller.
     pub deduct_caller: Box<dyn DeductCallerTrait<EXT, DB>>,
+}
+
+impl<EXT, DB: Database> Default for PreExecutionHandler<EXT, DB> {
+    fn default() -> Self {
+        Self::new::<LatestSpec>()
+    }
 }
 
 impl<EXT, DB: Database> PreExecutionHandler<EXT, DB> {

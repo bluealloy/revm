@@ -1,6 +1,6 @@
 use crate::{
     handler::mainnet::ValidationImpl,
-    primitives::{db::Database, EVMError, Env, Spec},
+    primitives::{db::Database, EVMError, Env, LatestSpec, Spec},
     Context,
 };
 
@@ -31,6 +31,12 @@ pub struct ValidationHandler<EXT, DB: Database> {
     pub tx_against_state: Box<dyn ValidateTxAgainstStateTrait<EXT, DB>>,
     /// Validate Env.
     pub env: Box<dyn ValidateEnvTrait<DB>>,
+}
+
+impl<EXT, DB: Database> Default for ValidationHandler<EXT, DB> {
+    fn default() -> Self {
+        Self::new::<LatestSpec>()
+    }
 }
 
 impl<EXT, DB: Database> ValidationHandler<EXT, DB> {

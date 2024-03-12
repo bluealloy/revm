@@ -1,67 +1,63 @@
+use std::convert::Infallible;
+
 use revm::{
     db::{CacheDB, EmptyDB, WrapDatabaseRef},
-    handler::register::HandleRegister,
+    handler::register::{HandleRegisterBox, HandleRegisterFn},
     inspector_handle_register,
-    inspectors::{NoOpInspector, TracerEip3155},
+    inspectors::TracerEip3155,
     primitives::ResultAndState,
-    DatabaseCommit, DatabaseRef, Evm,
+    Database, DatabaseCommit, DatabaseRef, Evm, InspectorHandleRegister,
 };
-use std::error::Error;
 
-trait DatabaseRefDebugError: DatabaseRef<Error = Self::DBError> {
-    type DBError: std::fmt::Debug + Error + Send + Sync + 'static;
-}
-
-impl<DBError, DB> DatabaseRefDebugError for DB
-where
-    DB: DatabaseRef<Error = DBError>,
-    DBError: std::fmt::Debug + Error + Send + Sync + 'static,
-{
-    type DBError = DBError;
-}
-
-fn run_transaction<EXT, DB: DatabaseRefDebugError>(
-    db: DB,
+struct DebugContext<EXT, DB: Database> {
     ext: EXT,
-    register_handles_fn: HandleRegister<EXT, WrapDatabaseRef<DB>>,
-) -> anyhow::Result<(ResultAndState, DB)> {
+    register_handles_fn: HandleRegisterBox<EXT, DB>,
+}
+
+fn run_transaction<EXT>(
+    db: &CacheDB<EmptyDB>,
+    ext: EXT,
+    register_handles_fn: HandleRegisterFn<
+        EXT,
+        WrapDatabaseRef<&dyn DatabaseRef<Error = Infallible>>,
+    >,
+) -> anyhow::Result<ResultAndState> {
     let mut evm = Evm::builder()
-        .with_ref_db(db)
+        .with_ref_db(db as &dyn DatabaseRef<Error = Infallible>)
         .with_external_context(ext)
         .append_handler_register(register_handles_fn)
         .build();
 
     let result = evm.transact()?;
-    Ok((result, evm.into_context().evm.inner.db.0))
+
+    drop(evm);
+
+    Ok(result)
 }
 
-fn run_transaction_and_commit_with_ext<EXT, DB: DatabaseRefDebugError + DatabaseCommit>(
-    db: DB,
+fn run_transaction_and_commit_with_ext<'a, EXT>(
+    db: &mut CacheDB<EmptyDB>,
     ext: EXT,
-    register_handles_fn: HandleRegister<EXT, WrapDatabaseRef<DB>>,
+    register_handles_fn: HandleRegisterFn<
+        EXT,
+        WrapDatabaseRef<&dyn DatabaseRef<Error = Infallible>>,
+    >,
 ) -> anyhow::Result<()> {
-    // To circumvent borrow checker issues, we need to move the database into the
-    // transaction and return it after the transaction is done.
-    let (ResultAndState { state: changes, .. }, mut db) =
-        { run_transaction(db, ext, register_handles_fn)? };
+    let ResultAndState { state: changes, .. } = { run_transaction(db, ext, register_handles_fn)? };
 
+    // Compile error: error[E0502]: cannot borrow `*db` as mutable because it is also borrowed as immutable
+    // The lifetime of `'evm` is extended beyond this function's scope because it is used in the `HandleRegister` function
     db.commit(changes);
 
     Ok(())
 }
 
-fn run_transaction_and_commit(db: &mut CacheDB<EmptyDB>) -> anyhow::Result<()> {
-    let ResultAndState { state: changes, .. } = {
-        let rdb = &*db;
+fn run_transaction_and_commit<'db>(db: &mut CacheDB<EmptyDB>) -> anyhow::Result<()> {
+    let ref_db = &*db;
+    let mut evm = Evm::builder().with_ref_db(ref_db).build();
 
-        let mut evm = Evm::builder()
-            .with_ref_db(rdb)
-            .with_external_context(NoOpInspector)
-            .append_handler_register(inspector_handle_register)
-            .build();
-
-        evm.transact()?
-    };
+    let ResultAndState { state: changes, .. } = evm.transact()?;
+    drop(evm);
 
     // No compiler error because there is no lifetime parameter for the `HandleRegister` function
     db.commit(changes);

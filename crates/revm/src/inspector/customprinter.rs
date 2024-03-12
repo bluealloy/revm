@@ -115,7 +115,7 @@ mod test {
         inspector_handle_register,
         inspectors::CustomPrintTracer,
         primitives::{address, bytes, SpecId},
-        Evm, InMemoryDB,
+        Evm, InMemoryDB, InspectorHandleRegister,
     };
 
     #[test]

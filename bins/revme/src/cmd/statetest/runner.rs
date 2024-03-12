@@ -13,7 +13,7 @@ use revm::{
         calc_excess_blob_gas, keccak256, Bytecode, Bytes, EVMResultGeneric, Env, ExecutionResult,
         SpecId, TransactTo, B256, U256,
     },
-    Evm, State,
+    Evm, InspectorHandleRegister, State,
 };
 use serde_json::json;
 use std::{

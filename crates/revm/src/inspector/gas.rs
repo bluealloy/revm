@@ -74,15 +74,15 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 #[cfg(test)]
 mod tests {
 
-    use revm_interpreter::CallOutcome;
-    use revm_interpreter::CreateOutcome;
-
+    use crate::InspectorHandleRegister;
     use crate::{
         inspectors::GasInspector,
         interpreter::{CallInputs, CreateInputs, Interpreter},
         primitives::Log,
         Database, EvmContext, Inspector,
     };
+    use revm_interpreter::CallOutcome;
+    use revm_interpreter::CreateOutcome;
 
     #[derive(Default, Debug)]
     struct StackInspector {
