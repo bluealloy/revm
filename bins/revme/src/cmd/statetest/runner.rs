@@ -112,7 +112,7 @@ fn check_evm_execution<EXT>(
     expected_output: Option<&Bytes>,
     test_name: &str,
     exec_result: &EVMResultGeneric<ExecutionResult, Infallible>,
-    evm: &Evm<EXT, &mut State<EmptyDB>>,
+    evm: &Evm<'_, EXT, &mut State<EmptyDB>>,
     print_json_outcome: bool,
 ) -> Result<(), TestError> {
     let logs_root = log_rlp_hash(exec_result.as_ref().map(|r| r.logs()).unwrap_or_default());

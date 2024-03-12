@@ -5,7 +5,7 @@ use std::boxed::Box;
 /// Handler configuration fields. It is used to configure the handler.
 /// It contains specification id and the Optimism related field if
 /// optimism feature is enabled.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Default)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub struct HandlerCfg {
     /// Specification identification.
     pub spec_id: SpecId,

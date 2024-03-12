@@ -8,7 +8,6 @@ pub use contract::Contract;
 pub use shared_memory::{next_multiple_of_32, SharedMemory, EMPTY_SHARED_MEMORY};
 pub use stack::{Stack, STACK_LIMIT};
 
-use crate::opcode::InstructionTrait;
 use crate::{
     primitives::Bytes, push, push_b256, return_ok, return_revert, CallInputs, CallOutcome,
     CreateInputs, CreateOutcome, Gas, Host, InstructionResult,
@@ -285,7 +284,7 @@ impl Interpreter {
     #[inline(always)]
     fn step<FN, H: Host>(&mut self, instruction_table: &[FN; 256], host: &mut H)
     where
-        FN: InstructionTrait<H>,
+        FN: Fn(&mut Interpreter, &mut H),
     {
         // Get current opcode.
         let opcode = unsafe { *self.instruction_pointer };
@@ -296,7 +295,7 @@ impl Interpreter {
         self.instruction_pointer = unsafe { self.instruction_pointer.offset(1) };
 
         // execute instruction.
-        instruction_table[opcode as usize].call(self, host)
+        (instruction_table[opcode as usize])(self, host)
     }
 
     /// Take memory and replace it with empty memory.
@@ -312,7 +311,7 @@ impl Interpreter {
         host: &mut H,
     ) -> InterpreterAction
     where
-        FN: InstructionTrait<H>,
+        FN: Fn(&mut Interpreter, &mut H),
     {
         self.next_action = InterpreterAction::None;
         self.shared_memory = shared_memory;

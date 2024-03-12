@@ -12,19 +12,19 @@ use crate::{
     primitives::{db::Database, spec_to_generic, HandlerCfg, Spec, SpecId},
     Evm,
 };
-use register::EvmHandler;
+use register::{EvmHandler, HandleRegisters};
 use std::vec::Vec;
 
-use self::register::{HandleRegisterBox, HandleRegisters};
+use self::register::{HandleRegister, HandleRegisterBox};
 
 /// Handler acts as a proxy and allow to define different behavior for different
 /// sections of the code. This allows nice integration of different chains or
 /// to disable some mainnet behavior.
-pub struct Handler<H: Host, EXT, DB: Database> {
+pub struct Handler<'a, H: Host + 'a, EXT, DB: Database> {
     /// Handler config.
     pub cfg: HandlerCfg,
     /// Instruction table type.
-    pub instruction_table: Option<InstructionTables<H>>,
+    pub instruction_table: Option<InstructionTables<'a, H>>,
     /// Registers that will be called on initialization.
     pub registers: Vec<HandleRegisters<EXT, DB>>,
     /// Validity handles.
@@ -37,22 +37,7 @@ pub struct Handler<H: Host, EXT, DB: Database> {
     pub execution: ExecutionHandler<EXT, DB>,
 }
 
-impl<H: Host, EXT, DB: Database> Default for Handler<H, EXT, DB> {
-    fn default() -> Self {
-        Self {
-            cfg: HandlerCfg::default(),
-            // TODO
-            instruction_table: None,
-            registers: Vec::new(),
-            validation: ValidationHandler::default(),
-            pre_execution: PreExecutionHandler::default(),
-            post_execution: PostExecutionHandler::default(),
-            execution: ExecutionHandler::default(),
-        }
-    }
-}
-
-impl<EXT, DB: Database> EvmHandler<EXT, DB> {
+impl<'a, EXT, DB: Database> EvmHandler<'a, EXT, DB> {
     /// Created new Handler with given configuration.
     ///
     /// Internaly it calls `mainnet_with_spec` with the given spec id.
@@ -112,34 +97,39 @@ impl<EXT, DB: Database> EvmHandler<EXT, DB> {
         spec_to_generic!(spec_id, Self::mainnet::<SPEC>())
     }
 
-    /// Specification ID.
+    /// Handler configuration .
     pub fn cfg(&self) -> HandlerCfg {
         self.cfg
     }
 
+    /// Specification ID
+    pub fn spec_id(&self) -> SpecId {
+        self.cfg.spec_id
+    }
+
     /// Take instruction table.
-    pub fn take_instruction_table(&mut self) -> Option<InstructionTables<Evm<EXT, DB>>> {
+    pub fn take_instruction_table(&mut self) -> Option<InstructionTables<'a, Evm<'a, EXT, DB>>> {
         self.instruction_table.take()
     }
 
     /// Set instruction table.
-    pub fn set_instruction_table(&mut self, table: InstructionTables<Evm<EXT, DB>>) {
+    pub fn set_instruction_table(&mut self, table: InstructionTables<'a, Evm<'a, EXT, DB>>) {
         self.instruction_table = Some(table);
     }
 
     /// Returns reference to pre execution handler.
-    pub fn pre_execution(&self) -> &PreExecutionHandler<EXT, DB> {
-        &self.pre_execution
+    pub fn pre_execution(&mut self) -> &mut PreExecutionHandler<EXT, DB> {
+        &mut self.pre_execution
     }
 
     /// Returns reference to pre execution handler.
-    pub fn post_execution(&self) -> &PostExecutionHandler<EXT, DB> {
-        &self.post_execution
+    pub fn post_execution(&mut self) -> &mut PostExecutionHandler<EXT, DB> {
+        &mut self.post_execution
     }
 
     /// Returns reference to frame handler.
-    pub fn execution(&self) -> &ExecutionHandler<EXT, DB> {
-        &self.execution
+    pub fn execution(&mut self) -> &mut ExecutionHandler<EXT, DB> {
+        &mut self.execution
     }
 
     /// Returns reference to validation handler.
@@ -151,6 +141,18 @@ impl<EXT, DB: Database> EvmHandler<EXT, DB> {
     pub fn append_handler_register(&mut self, register: HandleRegisters<EXT, DB>) {
         register.register(self);
         self.registers.push(register);
+    }
+
+    /// Append plain handle register.
+    pub fn append_handler_register_plain(&mut self, register: HandleRegister<EXT, DB>) {
+        register(self);
+        self.registers.push(HandleRegisters::Plain(register));
+    }
+
+    /// Append boxed handle register.
+    pub fn append_handler_register_box(&mut self, register: HandleRegisterBox<EXT, DB>) {
+        register(self);
+        self.registers.push(HandleRegisters::Box(register));
     }
 
     /// Pop last handle register and reapply all registers that are left.
@@ -169,7 +171,7 @@ impl<EXT, DB: Database> EvmHandler<EXT, DB> {
     }
 
     /// Creates the Handler with Generic Spec.
-    pub fn create_handle_generic<SPEC: Spec>(&mut self) -> EvmHandler<EXT, DB> {
+    pub fn create_handle_generic<SPEC: Spec>(&mut self) -> EvmHandler<'a, EXT, DB> {
         let registers = core::mem::take(&mut self.registers);
         let mut base_handler = Handler::mainnet::<SPEC>();
         // apply all registers to default handeler and raw mainnet instruction table.
@@ -202,28 +204,43 @@ impl<EXT, DB: Database> EvmHandler<EXT, DB> {
 mod test {
     use core::cell::RefCell;
 
-    use crate::db::EmptyDB;
+    use crate::{
+        db::EmptyDB,
+        primitives::{EVMError, ResultAndState},
+        Context, FrameResult,
+    };
     use std::rc::Rc;
 
     use super::*;
 
     #[test]
     fn test_handler_register_pop() {
-        // let register = |inner: &Rc<RefCell<i32>>| -> HandleRegisterBox<(), EmptyDB> {
-        //     let inner = inner.clone();
-        //     Box::new(move |h| {
-        //         *inner.borrow_mut() += 1;
-        //         //h.post_execution.output = Arc::new(|_, _| Err(EVMError::Custom("test".to_string())))
-        //     })
-        // };
+        pub struct ExecOutput;
+        impl<EXT, DB: Database> OutputTrait<EXT, DB> for ExecOutput {
+            fn output(
+                &mut self,
+                context: &mut Context<EXT, DB>,
+                result: FrameResult,
+            ) -> Result<ResultAndState, EVMError<DB::Error>> {
+                Err(EVMError::Custom("test".to_string()))
+            }
+        }
+
+        let register = |inner: &Rc<RefCell<i32>>| -> HandleRegisterBox<(), EmptyDB> {
+            let inner = inner.clone();
+            Box::new(move |h| {
+                *inner.borrow_mut() += 1;
+                h.post_execution.output = Box::new(ExecOutput);
+            })
+        };
 
         let mut handler = EvmHandler::<(), EmptyDB>::new(HandlerCfg::new(SpecId::LATEST));
         let test = Rc::new(RefCell::new(0));
 
-        //handler.append_handler_register_box(register(&test));
+        handler.append_handler_register_box(register(&test));
         assert_eq!(*test.borrow(), 1);
 
-        //handler.append_handler_register_box(register(&test));
+        handler.append_handler_register_box(register(&test));
         assert_eq!(*test.borrow(), 2);
 
         assert!(handler.pop_handle_register().is_some());

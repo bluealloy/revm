@@ -73,14 +73,16 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 
 #[cfg(test)]
 mod tests {
+
+    use revm_interpreter::CallOutcome;
+    use revm_interpreter::CreateOutcome;
+
     use crate::{
         inspectors::GasInspector,
         interpreter::{CallInputs, CreateInputs, Interpreter},
         primitives::Log,
         Database, EvmContext, Inspector,
     };
-    use revm_interpreter::CallOutcome;
-    use revm_interpreter::CreateOutcome;
 
     #[derive(Default, Debug)]
     struct StackInspector {
@@ -172,7 +174,7 @@ mod tests {
         ]);
         let bytecode = Bytecode::new_raw(contract_data);
 
-        let mut evm: Evm<StackInspector, BenchmarkDB> = Evm::builder()
+        let mut evm: Evm<'_, StackInspector, BenchmarkDB> = Evm::builder()
             .with_db(BenchmarkDB::new_bytecode(bytecode.clone()))
             .with_external_context(StackInspector::default())
             .modify_tx_env(|tx| {

@@ -28,7 +28,7 @@ pub use gas::Gas;
 pub use host::{DummyHost, Host, SStoreResult};
 pub use inner_models::*;
 pub use instruction_result::*;
-pub use instructions::{opcode, InstructionFn, OpCode, OPCODE_JUMPMAP};
+pub use instructions::{opcode, Instruction, OpCode, OPCODE_JUMPMAP};
 pub use interpreter::{
     analysis, next_multiple_of_32, BytecodeLocked, Contract, Interpreter, InterpreterAction,
     InterpreterResult, SharedMemory, Stack, EMPTY_SHARED_MEMORY, STACK_LIMIT,

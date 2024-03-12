@@ -59,7 +59,7 @@ impl<E> EmptyDBTyped<E> {
     }
 }
 
-impl<E: 'static> Database for EmptyDBTyped<E> {
+impl<E> Database for EmptyDBTyped<E> {
     type Error = E;
 
     #[inline]
@@ -83,7 +83,7 @@ impl<E: 'static> Database for EmptyDBTyped<E> {
     }
 }
 
-impl<E: 'static> DatabaseRef for EmptyDBTyped<E> {
+impl<E> DatabaseRef for EmptyDBTyped<E> {
     type Error = E;
 
     #[inline]

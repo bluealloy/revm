@@ -63,10 +63,7 @@ impl<M: Middleware> EthersDB<M> {
     }
 }
 
-impl<M: Middleware> DatabaseRef for EthersDB<M>
-where
-    M::Error: 'static,
-{
+impl<M: Middleware> DatabaseRef for EthersDB<M> {
     type Error = M::Error;
 
     fn basic_ref(&self, address: Address) -> Result<Option<AccountInfo>, Self::Error> {
@@ -123,10 +120,7 @@ where
     }
 }
 
-impl<M: Middleware> Database for EthersDB<M>
-where
-    M::Error: 'static,
-{
+impl<M: Middleware> Database for EthersDB<M> {
     type Error = M::Error;
 
     #[inline]

@@ -3,8 +3,8 @@ use crate::{
     db::{Database, DatabaseCommit, EmptyDB},
     handler::Handler,
     interpreter::{
-        opcode::InstructionTables, Host, InterpreterAction, SStoreResult, SelfDestructResult,
-        SharedMemory,
+        opcode::InstructionTables, Host, Interpreter, InterpreterAction, SStoreResult,
+        SelfDestructResult, SharedMemory,
     },
     primitives::{
         specification::SpecId, Address, BlockEnv, Bytecode, CfgEnv, EVMError, EVMResult, Env,
@@ -14,7 +14,7 @@ use crate::{
     Context, ContextWithHandlerCfg, Frame, FrameOrResult, FrameResult,
 };
 use core::fmt;
-use revm_interpreter::{opcode::InstructionTrait, CallInputs, CreateInputs};
+use revm_interpreter::{CallInputs, CreateInputs};
 use std::vec::Vec;
 
 /// EVM call stack limit.
@@ -22,15 +22,15 @@ pub const CALL_STACK_LIMIT: u64 = 1024;
 
 /// EVM instance containing both internal EVM context and external context
 /// and the handler that dictates the logic of EVM (or hardfork specification).
-pub struct Evm<EXT, DB: Database> {
+pub struct Evm<'a, EXT, DB: Database> {
     /// Context of execution, containing both EVM and external context.
     pub context: Context<EXT, DB>,
     /// Handler of EVM that contains all the logic. Handler contains specification id
     /// and it different depending on the specified fork.
-    pub handler: Handler<Self, EXT, DB>,
+    pub handler: Handler<'a, Self, EXT, DB>,
 }
 
-impl<EXT, DB> fmt::Debug for Evm<EXT, DB>
+impl<EXT, DB> fmt::Debug for Evm<'_, EXT, DB>
 where
     EXT: fmt::Debug,
     DB: Database + fmt::Debug,
@@ -43,7 +43,7 @@ where
     }
 }
 
-impl<EXT, DB: Database + DatabaseCommit> Evm<EXT, DB> {
+impl<EXT, DB: Database + DatabaseCommit> Evm<'_, EXT, DB> {
     /// Commit the changes to the database.
     pub fn transact_commit(&mut self) -> Result<ExecutionResult, EVMError<DB::Error>> {
         let ResultAndState { result, state } = self.transact()?;
@@ -52,28 +52,31 @@ impl<EXT, DB: Database + DatabaseCommit> Evm<EXT, DB> {
     }
 }
 
-impl Evm<(), EmptyDB> {
+impl<'a> Evm<'a, (), EmptyDB> {
     /// Returns evm builder with empty database and empty external context.
-    pub fn builder() -> EvmBuilder<SetGenericStage, (), EmptyDB> {
+    pub fn builder() -> EvmBuilder<'a, SetGenericStage, (), EmptyDB> {
         EvmBuilder::default()
     }
 }
 
-impl<EXT, DB: Database> Evm<EXT, DB> {
+impl<'a, EXT, DB: Database> Evm<'a, EXT, DB> {
     /// Create new EVM.
-    pub fn new(mut context: Context<EXT, DB>, handler: Handler<Self, EXT, DB>) -> Evm<EXT, DB> {
+    pub fn new(
+        mut context: Context<EXT, DB>,
+        handler: Handler<'a, Self, EXT, DB>,
+    ) -> Evm<'a, EXT, DB> {
         context.evm.journaled_state.set_spec_id(handler.cfg.spec_id);
         Evm { context, handler }
     }
 
     /// Allow for evm setting to be modified by feeding current evm
     /// into the builder for modifications.
-    pub fn modify(self) -> EvmBuilder<HandlerStage, EXT, DB> {
+    pub fn modify(self) -> EvmBuilder<'a, HandlerStage, EXT, DB> {
         EvmBuilder::new(self)
     }
 }
 
-impl<EXT, DB: Database> Evm<EXT, DB> {
+impl<EXT, DB: Database> Evm<'_, EXT, DB> {
     /// Returns specification (hardfork) that the EVM is instanced with.
     ///
     /// SpecId depends on the handler.
@@ -215,13 +218,13 @@ impl<EXT, DB: Database> Evm<EXT, DB> {
         first_frame: Frame,
     ) -> Result<FrameResult, EVMError<DB::Error>> {
         // take instruction talbe
-        let mut table = self
+        let table = self
             .handler
             .take_instruction_table()
             .expect("Instruction table should be present");
 
         // run main loop
-        let frame_result = match &mut table {
+        let frame_result = match &table {
             InstructionTables::Plain(table) => self.run_the_loop(table, first_frame),
             InstructionTables::Boxed(table) => self.run_the_loop(table, first_frame),
         };
@@ -240,7 +243,7 @@ impl<EXT, DB: Database> Evm<EXT, DB> {
         first_frame: Frame,
     ) -> Result<FrameResult, EVMError<DB::Error>>
     where
-        FN: InstructionTrait<Evm<EXT, DB>>,
+        FN: Fn(&mut Interpreter, &mut Self),
     {
         let mut call_stack: Vec<Frame> = Vec::with_capacity(1025);
         call_stack.push(first_frame);
@@ -378,7 +381,7 @@ impl<EXT, DB: Database> Evm<EXT, DB> {
     }
 }
 
-impl<EXT, DB: Database> Host for Evm<EXT, DB> {
+impl<EXT, DB: Database> Host for Evm<'_, EXT, DB> {
     fn env_mut(&mut self) -> &mut Env {
         &mut self.context.evm.env
     }

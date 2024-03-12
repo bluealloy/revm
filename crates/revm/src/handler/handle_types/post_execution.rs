@@ -9,7 +9,7 @@ use crate::{
 /// Reimburse the caller with ethereum it didn't spent.
 pub trait ReimburseCallerTrait<EXT, DB: Database> {
     fn reimburse_caller(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         gas: &Gas,
     ) -> EVMResultGeneric<(), <DB as Database>::Error>;
@@ -18,7 +18,7 @@ pub trait ReimburseCallerTrait<EXT, DB: Database> {
 /// Reward beneficiary with transaction rewards.
 pub trait RewardBeneficiaryTrait<EXT, DB: Database> {
     fn reward_beneficiary(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         gas: &Gas,
     ) -> EVMResultGeneric<(), <DB as Database>::Error>;
@@ -27,7 +27,7 @@ pub trait RewardBeneficiaryTrait<EXT, DB: Database> {
 /// Main return handle, takes state from journal and transforms internal result to external.
 pub trait OutputTrait<EXT, DB: Database> {
     fn output(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         result: FrameResult,
     ) -> EVMResultGeneric<ResultAndState, <DB as Database>::Error>;
@@ -39,7 +39,7 @@ pub trait OutputTrait<EXT, DB: Database> {
 /// It is useful for catching errors and returning them in a different way.
 pub trait EndTrait<EXT, DB: Database> {
     fn end(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         end_output: Result<ResultAndState, EVMError<<DB as Database>::Error>>,
     ) -> EVMResultGeneric<ResultAndState, <DB as Database>::Error>;
@@ -78,7 +78,7 @@ impl<EXT, DB: Database> PostExecutionHandler<EXT, DB> {
 impl<EXT, DB: Database> PostExecutionHandler<EXT, DB> {
     /// Reimburse the caller with gas that were not spend.
     pub fn reimburse_caller(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         gas: &Gas,
     ) -> Result<(), EVMError<DB::Error>> {
@@ -86,7 +86,7 @@ impl<EXT, DB: Database> PostExecutionHandler<EXT, DB> {
     }
     /// Reward beneficiary
     pub fn reward_beneficiary(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         gas: &Gas,
     ) -> Result<(), EVMError<DB::Error>> {
@@ -95,7 +95,7 @@ impl<EXT, DB: Database> PostExecutionHandler<EXT, DB> {
 
     /// Returns the output of transaction.
     pub fn output(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         result: FrameResult,
     ) -> Result<ResultAndState, EVMError<DB::Error>> {
@@ -104,7 +104,7 @@ impl<EXT, DB: Database> PostExecutionHandler<EXT, DB> {
 
     /// End handler.
     pub fn end(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         end_output: Result<ResultAndState, EVMError<DB::Error>>,
     ) -> Result<ResultAndState, EVMError<DB::Error>> {

@@ -8,7 +8,7 @@ use std::sync::Arc;
 
 #[auto_impl(&mut, Box)]
 pub trait BlockHash {
-    type Error: 'static;
+    type Error;
 
     /// Get block hash by block number
     fn block_hash(&mut self, number: U256) -> Result<B256, Self::Error>;
@@ -16,7 +16,7 @@ pub trait BlockHash {
 
 #[auto_impl(&, &mut, Box, Rc, Arc)]
 pub trait BlockHashRef {
-    type Error: 'static;
+    type Error;
 
     /// Get block hash by block number
     fn block_hash(&self, number: U256) -> Result<B256, Self::Error>;

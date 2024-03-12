@@ -24,7 +24,7 @@ impl<SPEC: Spec> Default for PostExecutionImpl<SPEC> {
 impl<SPEC: Spec, EXT, DB: Database> EndTrait<EXT, DB> for PostExecutionImpl<SPEC> {
     #[inline]
     fn end(
-        &self,
+        &mut self,
         _context: &mut Context<EXT, DB>,
         evm_output: Result<ResultAndState, EVMError<DB::Error>>,
     ) -> Result<ResultAndState, EVMError<DB::Error>> {
@@ -35,7 +35,7 @@ impl<SPEC: Spec, EXT, DB: Database> EndTrait<EXT, DB> for PostExecutionImpl<SPEC
 impl<SPEC: Spec, EXT, DB: Database> RewardBeneficiaryTrait<EXT, DB> for PostExecutionImpl<SPEC> {
     #[inline]
     fn reward_beneficiary(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         gas: &Gas,
     ) -> Result<(), EVMError<DB::Error>> {
@@ -68,7 +68,7 @@ impl<SPEC: Spec, EXT, DB: Database> RewardBeneficiaryTrait<EXT, DB> for PostExec
 
 impl<SPEC: Spec, EXT, DB: Database> ReimburseCallerTrait<EXT, DB> for PostExecutionImpl<SPEC> {
     fn reimburse_caller(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         gas: &Gas,
     ) -> Result<(), EVMError<DB::Error>> {
@@ -93,7 +93,7 @@ impl<SPEC: Spec, EXT, DB: Database> ReimburseCallerTrait<EXT, DB> for PostExecut
 impl<SPEC: Spec, EXT, DB: Database> OutputTrait<EXT, DB> for PostExecutionImpl<SPEC> {
     #[inline]
     fn output(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         result: FrameResult,
     ) -> Result<ResultAndState, EVMError<DB::Error>> {

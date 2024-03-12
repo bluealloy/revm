@@ -13,6 +13,7 @@ use crate::{
 };
 use std::boxed::Box;
 
+use dyn_clone::DynClone;
 use revm_interpreter::{CallOutcome, InterpreterResult};
 
 /// ExecutionImpl implements all traits related to execution.
@@ -69,7 +70,7 @@ pub fn frame_return_with_refund_flag<SPEC: Spec>(
 impl<EXT, DB: Database, SPEC: Spec> LastFrameReturnTrait<EXT, DB> for ExecutionImpl<SPEC> {
     #[inline]
     fn last_frame_return(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         frame_result: &mut FrameResult,
     ) -> Result<(), EVMError<DB::Error>> {
@@ -81,7 +82,7 @@ impl<EXT, DB: Database, SPEC: Spec> LastFrameReturnTrait<EXT, DB> for ExecutionI
 impl<EXT, DB: Database, SPEC: Spec> FrameCallTrait<EXT, DB> for ExecutionImpl<SPEC> {
     #[inline]
     fn call(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         inputs: Box<CallInputs>,
     ) -> Result<FrameOrResult, EVMError<DB::Error>> {
@@ -92,7 +93,7 @@ impl<EXT, DB: Database, SPEC: Spec> FrameCallTrait<EXT, DB> for ExecutionImpl<SP
 impl<EXT, DB: Database, SPEC: Spec> FrameCallReturnTrait<EXT, DB> for ExecutionImpl<SPEC> {
     #[inline]
     fn call_return(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         frame: Box<CallFrame>,
         interpreter_result: InterpreterResult,
@@ -110,7 +111,7 @@ impl<EXT, DB: Database, SPEC: Spec> FrameCallReturnTrait<EXT, DB> for ExecutionI
 impl<EXT, DB: Database, SPEC: Spec> InsertCallOutcomeTrait<EXT, DB> for ExecutionImpl<SPEC> {
     #[inline]
     fn insert_call_outcome(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         frame: &mut Frame,
         shared_memory: &mut SharedMemory,
@@ -128,7 +129,7 @@ impl<EXT, DB: Database, SPEC: Spec> InsertCallOutcomeTrait<EXT, DB> for Executio
 impl<EXT, DB: Database, SPEC: Spec> FrameCreateTrait<EXT, DB> for ExecutionImpl<SPEC> {
     #[inline]
     fn create(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         inputs: Box<CreateInputs>,
     ) -> Result<FrameOrResult, EVMError<DB::Error>> {
@@ -139,7 +140,7 @@ impl<EXT, DB: Database, SPEC: Spec> FrameCreateTrait<EXT, DB> for ExecutionImpl<
 impl<EXT, DB: Database, SPEC: Spec> FrameCreateReturnTrait<EXT, DB> for ExecutionImpl<SPEC> {
     #[inline]
     fn create_return(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         frame: Box<CreateFrame>,
         mut interpreter_result: InterpreterResult,
@@ -159,7 +160,7 @@ impl<EXT, DB: Database, SPEC: Spec> FrameCreateReturnTrait<EXT, DB> for Executio
 impl<EXT, DB: Database, SPEC: Spec> InsertCreateOutcomeTrait<EXT, DB> for ExecutionImpl<SPEC> {
     #[inline]
     fn insert_create_outcome(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         frame: &mut Frame,
         outcome: CreateOutcome,

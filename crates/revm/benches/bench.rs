@@ -9,7 +9,7 @@ use revm::{
     },
     Evm,
 };
-use revm_interpreter::{/*opcode::make_instruction_table,*/ SharedMemory, EMPTY_SHARED_MEMORY,};
+use revm_interpreter::{opcode::make_instruction_table, SharedMemory, EMPTY_SHARED_MEMORY};
 use std::time::Duration;
 
 fn analysis(c: &mut Criterion) {
@@ -70,7 +70,7 @@ fn snailtracer(c: &mut Criterion) {
         .measurement_time(Duration::from_secs(10))
         .sample_size(10);
     bench_transact(&mut g, &mut evm);
-    //bench_eval(&mut g, &mut evm);
+    bench_eval(&mut g, &mut evm);
     g.finish();
 }
 
@@ -90,7 +90,7 @@ fn transfer(c: &mut Criterion) {
     g.finish();
 }
 
-fn bench_transact<EXT>(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm<EXT, BenchmarkDB>) {
+fn bench_transact<EXT>(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm<'_, EXT, BenchmarkDB>) {
     let state = match evm.context.evm.db.0.state {
         BytecodeState::Raw => "raw",
         BytecodeState::Checked { .. } => "checked",
@@ -100,28 +100,28 @@ fn bench_transact<EXT>(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm<EXT, 
     g.bench_function(id, |b| b.iter(|| evm.transact().unwrap()));
 }
 
-// fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm<(), BenchmarkDB>) {
-//     g.bench_function("eval", |b| {
-//         let contract = Contract {
-//             input: evm.context.evm.env.tx.data.clone(),
-//             bytecode: BytecodeLocked::try_from(evm.context.evm.db.0.clone()).unwrap(),
-//             ..Default::default()
-//         };
-//         let mut shared_memory = SharedMemory::new();
-//         let mut host = DummyHost::new(*evm.context.evm.env.clone());
-//         let instruction_table = make_instruction_table::<DummyHost, BerlinSpec>();
-//         b.iter(move || {
-//             // replace memory with empty memory to use it inside interpreter.
-//             // Later return memory back.
-//             let temp = core::mem::replace(&mut shared_memory, EMPTY_SHARED_MEMORY);
-//             let mut interpreter = Interpreter::new(Box::new(contract.clone()), u64::MAX, false);
-//             let res = interpreter.run(temp, &instruction_table, &mut host);
-//             shared_memory = interpreter.take_memory();
-//             host.clear();
-//             res
-//         })
-//     });
-// }
+fn bench_eval(g: &mut BenchmarkGroup<'_, WallTime>, evm: &mut Evm<'static, (), BenchmarkDB>) {
+    g.bench_function("eval", |b| {
+        let contract = Contract {
+            input: evm.context.evm.env.tx.data.clone(),
+            bytecode: BytecodeLocked::try_from(evm.context.evm.db.0.clone()).unwrap(),
+            ..Default::default()
+        };
+        let mut shared_memory = SharedMemory::new();
+        let mut host = DummyHost::new(*evm.context.evm.env.clone());
+        let instruction_table = make_instruction_table::<DummyHost, BerlinSpec>();
+        b.iter(move || {
+            // replace memory with empty memory to use it inside interpreter.
+            // Later return memory back.
+            let temp = core::mem::replace(&mut shared_memory, EMPTY_SHARED_MEMORY);
+            let mut interpreter = Interpreter::new(Box::new(contract.clone()), u64::MAX, false);
+            let res = interpreter.run(temp, &instruction_table, &mut host);
+            shared_memory = interpreter.take_memory();
+            host.clear();
+            res
+        })
+    });
+}
 
 fn bytecode(s: &str) -> Bytecode {
     to_analysed(Bytecode::new_raw(hex::decode(s).unwrap().into()))

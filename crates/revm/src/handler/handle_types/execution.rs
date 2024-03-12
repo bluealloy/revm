@@ -6,30 +6,31 @@ use crate::{
 };
 use std::boxed::Box;
 
+use dyn_clone::DynClone;
 use revm_interpreter::{CallOutcome, CreateOutcome, InterpreterResult};
 
 /// Handles last frame return handle.
-pub trait LastFrameReturnTrait<EXT, DB: Database> {
+pub trait LastFrameReturnTrait<EXT, DB: Database>: DynClone {
     fn last_frame_return(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         frame_result: &mut FrameResult,
     ) -> Result<(), EVMError<DB::Error>>;
 }
 
 /// Handle sub call.
-pub trait FrameCallTrait<EXT, DB: Database> {
+pub trait FrameCallTrait<EXT, DB: Database>: DynClone {
     fn call(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         inputs: Box<CallInputs>,
     ) -> Result<FrameOrResult, EVMError<DB::Error>>;
 }
 
 /// Handle call return
-pub trait FrameCallReturnTrait<EXT, DB: Database> {
+pub trait FrameCallReturnTrait<EXT, DB: Database>: DynClone {
     fn call_return(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         frame: Box<CallFrame>,
         interpreter_result: InterpreterResult,
@@ -37,9 +38,9 @@ pub trait FrameCallReturnTrait<EXT, DB: Database> {
 }
 
 /// Insert call outcome to the parent
-pub trait InsertCallOutcomeTrait<EXT, DB: Database> {
+pub trait InsertCallOutcomeTrait<EXT, DB: Database>: DynClone {
     fn insert_call_outcome(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         frame: &mut Frame,
         shared_memory: &mut SharedMemory,
@@ -48,18 +49,18 @@ pub trait InsertCallOutcomeTrait<EXT, DB: Database> {
 }
 
 /// Handle creation of new create frame.
-pub trait FrameCreateTrait<EXT, DB: Database> {
+pub trait FrameCreateTrait<EXT, DB: Database>: DynClone {
     fn create(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         inputs: Box<CreateInputs>,
     ) -> Result<FrameOrResult, EVMError<DB::Error>>;
 }
 
 /// Handle create frame return
-pub trait FrameCreateReturnTrait<EXT, DB: Database> {
+pub trait FrameCreateReturnTrait<EXT, DB: Database>: DynClone {
     fn create_return(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         frame: Box<CreateFrame>,
         interpreter_result: InterpreterResult,
@@ -67,14 +68,22 @@ pub trait FrameCreateReturnTrait<EXT, DB: Database> {
 }
 
 /// Insert crate frame outcome to the parent
-pub trait InsertCreateOutcomeTrait<EXT, DB: Database> {
+pub trait InsertCreateOutcomeTrait<EXT, DB: Database>: DynClone {
     fn insert_create_outcome(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         frame: &mut Frame,
         outcome: CreateOutcome,
     ) -> Result<(), EVMError<DB::Error>>;
 }
+
+dyn_clone::clone_trait_object!(<EXT,DB> LastFrameReturnTrait<EXT,DB>);
+dyn_clone::clone_trait_object!(<EXT,DB> FrameCallTrait<EXT,DB>);
+dyn_clone::clone_trait_object!(<EXT,DB> FrameCallReturnTrait<EXT,DB>);
+dyn_clone::clone_trait_object!(<EXT,DB> InsertCallOutcomeTrait<EXT,DB>);
+dyn_clone::clone_trait_object!(<EXT,DB> FrameCreateTrait<EXT,DB>);
+dyn_clone::clone_trait_object!(<EXT,DB> FrameCreateReturnTrait<EXT,DB>);
+dyn_clone::clone_trait_object!(<EXT,DB> InsertCreateOutcomeTrait<EXT,DB>);
 
 /// Handles related to stack frames.
 pub struct ExecutionHandler<EXT, DB: Database> {
@@ -122,7 +131,7 @@ impl<EXT, DB: Database> ExecutionHandler<EXT, DB> {
     /// Handle call return, depending on instruction result gas will be reimbursed or not.
     #[inline]
     pub fn last_frame_return(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         frame_result: &mut FrameResult,
     ) -> Result<(), EVMError<DB::Error>> {
@@ -133,7 +142,7 @@ impl<EXT, DB: Database> ExecutionHandler<EXT, DB> {
     /// Call frame call handler.
     #[inline]
     pub fn call(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         inputs: Box<CallInputs>,
     ) -> Result<FrameOrResult, EVMError<DB::Error>> {
@@ -143,7 +152,7 @@ impl<EXT, DB: Database> ExecutionHandler<EXT, DB> {
     /// Call registered handler for call return.
     #[inline]
     pub fn call_return(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         frame: Box<CallFrame>,
         interpreter_result: InterpreterResult,
@@ -155,7 +164,7 @@ impl<EXT, DB: Database> ExecutionHandler<EXT, DB> {
     /// Call registered handler for inserting call outcome.
     #[inline]
     pub fn insert_call_outcome(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         frame: &mut Frame,
         shared_memory: &mut SharedMemory,
@@ -168,7 +177,7 @@ impl<EXT, DB: Database> ExecutionHandler<EXT, DB> {
     /// Call Create frame
     #[inline]
     pub fn create(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         inputs: Box<CreateInputs>,
     ) -> Result<FrameOrResult, EVMError<DB::Error>> {
@@ -178,7 +187,7 @@ impl<EXT, DB: Database> ExecutionHandler<EXT, DB> {
     /// Call handler for create return.
     #[inline]
     pub fn create_return(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         frame: Box<CreateFrame>,
         interpreter_result: InterpreterResult,
@@ -190,7 +199,7 @@ impl<EXT, DB: Database> ExecutionHandler<EXT, DB> {
     /// Call handler for inserting create outcome.
     #[inline]
     pub fn insert_create_outcome(
-        &self,
+        &mut self,
         context: &mut Context<EXT, DB>,
         frame: &mut Frame,
         outcome: CreateOutcome,
