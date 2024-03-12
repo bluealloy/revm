@@ -15,7 +15,7 @@ mod noop;
 
 // Exports.
 
-pub use handler_register::{inspector_handle_register, GetInspector, InspectorHandleRegister};
+pub use handler_register::{inspector_handle_register, GetInspector};
 use revm_interpreter::{CallOutcome, CreateOutcome};
 
 /// [Inspector] implementations.

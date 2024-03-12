@@ -15,7 +15,7 @@ use crate::{
 use register::EvmHandler;
 use std::vec::Vec;
 
-use self::register::{HandleRegisterBox, HandleRegisterFn};
+use self::register::{HandleRegisterBox, HandleRegisters};
 
 /// Handler acts as a proxy and allow to define different behavior for different
 /// sections of the code. This allows nice integration of different chains or
@@ -26,7 +26,7 @@ pub struct Handler<H: Host, EXT, DB: Database> {
     /// Instruction table type.
     pub instruction_table: Option<InstructionTables<H>>,
     /// Registers that will be called on initialization.
-    pub registers: Vec<HandleRegisterFn<EXT, DB>>,
+    pub registers: Vec<HandleRegisters<EXT, DB>>,
     /// Validity handles.
     pub validation: ValidationHandler<EXT, DB>,
     /// Pre execution handle
@@ -148,13 +148,13 @@ impl<EXT, DB: Database> EvmHandler<EXT, DB> {
     }
 
     /// Append handle register.
-    pub fn append_handler_register(&mut self, register: HandleRegisterFn<EXT, DB>) {
-        (register)(self);
+    pub fn append_handler_register(&mut self, register: HandleRegisters<EXT, DB>) {
+        register.register(self);
         self.registers.push(register);
     }
 
     /// Pop last handle register and reapply all registers that are left.
-    pub fn pop_handle_register(&mut self) -> Option<HandleRegisterFn<EXT, DB>> {
+    pub fn pop_handle_register(&mut self) -> Option<HandleRegisters<EXT, DB>> {
         let out = self.registers.pop();
         if out.is_some() {
             let registers = core::mem::take(&mut self.registers);

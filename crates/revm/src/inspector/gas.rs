@@ -73,8 +73,6 @@ impl<DB: Database> Inspector<DB> for GasInspector {
 
 #[cfg(test)]
 mod tests {
-
-    use crate::InspectorHandleRegister;
     use crate::{
         inspectors::GasInspector,
         interpreter::{CallInputs, CreateInputs, Interpreter},

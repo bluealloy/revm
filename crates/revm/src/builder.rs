@@ -1,6 +1,6 @@
 use crate::{
     db::{Database, DatabaseRef, EmptyDB, WrapDatabaseRef},
-    handler::register::{self, HandleRegisterFn, HandleRegisterTrait},
+    handler::register::{self, HandleRegister, HandleRegisters},
     primitives::{
         BlockEnv, CfgEnv, CfgEnvWithHandlerCfg, Env, EnvWithHandlerCfg, HandlerCfg, SpecId, TxEnv,
     },
@@ -298,9 +298,10 @@ impl<BuilderStage, EXT, DB: Database> EvmBuilder<BuilderStage, EXT, DB> {
     /// When called, EvmBuilder will transition from SetGenericStage to HandlerStage.
     pub fn append_handler_register(
         mut self,
-        handle_register: HandleRegisterFn<EXT, DB>,
+        handle_register: HandleRegister<EXT, DB>,
     ) -> EvmBuilder<HandlerStage, EXT, DB> {
-        self.handler.append_handler_register(handle_register);
+        self.handler
+            .append_handler_register(HandleRegisters::Plain(handle_register));
         EvmBuilder {
             context: self.context,
             handler: self.handler,
@@ -315,9 +316,10 @@ impl<BuilderStage, EXT, DB: Database> EvmBuilder<BuilderStage, EXT, DB> {
     /// When called, EvmBuilder will transition from SetGenericStage to HandlerStage.
     pub fn append_handler_register_box(
         mut self,
-        handle_register: register::HandleRegisterFn<EXT, DB>,
+        handle_register: register::HandleRegisterBox<EXT, DB>,
     ) -> EvmBuilder<HandlerStage, EXT, DB> {
-        self.handler.append_handler_register(handle_register);
+        self.handler
+            .append_handler_register(HandleRegisters::Box(handle_register));
         EvmBuilder {
             context: self.context,
             handler: self.handler,
@@ -432,7 +434,6 @@ mod test {
             address, AccountInfo, Address, Bytecode, Bytes, PrecompileResult, TransactTo, U256,
         },
         Context, ContextPrecompile, ContextStatefulPrecompile, Evm, InMemoryDB, InnerEvmContext,
-        InspectorHandleRegister,
     };
     use revm_interpreter::{Host, Interpreter};
     use std::sync::Arc;

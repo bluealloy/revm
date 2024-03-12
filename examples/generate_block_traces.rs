@@ -7,7 +7,7 @@ use indicatif::ProgressBar;
 use revm::db::{CacheDB, EthersDB, StateBuilder};
 use revm::inspectors::TracerEip3155;
 use revm::primitives::{Address, TransactTo, U256};
-use revm::{inspector_handle_register, Evm, InspectorHandleRegister};
+use revm::{inspector_handle_register, Evm};
 use std::fs::OpenOptions;
 use std::io::BufWriter;
 use std::io::Write;

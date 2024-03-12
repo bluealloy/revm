@@ -1,6 +1,6 @@
 use crate::{
     db::Database,
-    handler::register::{EvmHandler, HandleRegisterTrait},
+    handler::register::{EvmHandler, HandleRegisters},
     interpreter::{
         opcode::{self, BoxedInstruction},
         InstructionResult, Interpreter,
@@ -22,20 +22,6 @@ impl<DB: Database, INSP: Inspector<DB>> GetInspector<DB> for INSP {
     #[inline(always)]
     fn get_inspector(&mut self) -> &mut impl Inspector<DB> {
         self
-    }
-}
-
-pub struct InspectorHandleRegister;
-
-impl<EXT: GetInspector<DB>, DB: Database> HandleRegisterTrait<EXT, DB> for InspectorHandleRegister {
-    fn register(&self, handler: &mut EvmHandler<EXT, DB>) {
-        inspector_handle_register(handler)
-    }
-}
-
-impl InspectorHandleRegister {
-    pub fn new_box() -> Box<Self> {
-        Box::new(Self)
     }
 }
 
