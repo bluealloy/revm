@@ -442,7 +442,7 @@ impl JournaledState {
         self.journal.truncate(checkpoint.journal_i);
     }
 
-    /// Performans selfdestruct action.
+    /// Performances selfdestruct action.
     /// Transfers balance from address to target. Check if target exist/is_cold
     ///
     /// Note: balance will be lost if address and target are the same BUT when
