@@ -26,7 +26,7 @@ bitvec = { version = "1", default-features = false, features = ["alloc"] }
 bitflags = { version = "2.4.2", default-features = false }
 
 # For setting the CfgEnv KZGSettings. Enabled by c-kzg flag.
-c-kzg = { version = "0.4.2", default-features = false, optional = true }
+c-kzg = { version = "1.0.0", default-features = false, optional = true }
 once_cell = { version = "1.19", default-features = false, optional = true }
 
 # utility
@@ -89,8 +89,4 @@ optional_no_base_fee = []
 optional_beneficiary_reward = []
 
 # See comments in `revm-precompile`
-c-kzg = [
-    "dep:c-kzg",
-    "dep:once_cell",
-    "dep:derive_more",
-]
+c-kzg = ["dep:c-kzg", "dep:once_cell", "dep:derive_more"]
