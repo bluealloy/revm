@@ -7,6 +7,7 @@ use crate::{
     Host, Interpreter,
 };
 use core::fmt;
+use std::boxed::Box;
 
 /// EVM opcode function signature.
 pub type Instruction<H> = fn(&mut Interpreter, &mut H);
