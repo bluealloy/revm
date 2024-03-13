@@ -466,6 +466,7 @@ mod test {
         let custom_context = CustomContext::default();
         assert_eq!(*custom_context.inner.borrow(), 0);
 
+        let to_capture = custom_context.clone();
         let mut evm = Evm::builder()
             .with_db(InMemoryDB::default())
             .modify_db(|db| {
@@ -475,7 +476,7 @@ mod test {
             // we need to use handle register box to capture the custom context in the handle
             // register
             .append_handler_register_box(Box::new(move |handler| {
-                let custom_context = custom_context.clone();
+                let custom_context = to_capture.clone();
 
                 // we need to use a box to capture the custom context in the instruction
                 let custom_instruction = Box::new(
@@ -499,6 +500,9 @@ mod test {
             .build();
 
         let _result_and_state = evm.transact().unwrap();
+
+        // ensure the custom context was modified
+        assert_eq!(*custom_context.inner.borrow(), 1);
     }
 
     #[test]
