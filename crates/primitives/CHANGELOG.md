@@ -200,7 +200,7 @@ One change:
 # v1.1.0
 date: 04.04.2023
 
-Mosty utility functions, addional checks and convenience changes.
+Mosty utility functions, additional checks and convenience changes.
 Old bytecode that supported gas block was replaced with jumpmap only bitvec.
 
 Changelog: 
