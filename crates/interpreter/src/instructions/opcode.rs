@@ -7,7 +7,6 @@ use crate::{
     Host, Interpreter,
 };
 use core::fmt;
-use std::boxed::Box;
 
 /// EVM opcode function signature.
 pub type Instruction<H> = fn(&mut Interpreter, &mut H);
@@ -42,6 +41,24 @@ impl<H: Host> InstructionTables<'_, H> {
 }
 
 impl<'a, H: Host + 'a> InstructionTables<'a, H> {
+    /// Inserts a boxed instruction into the table with the specified index.
+    ///
+    /// Returns an error if the table is not boxed.
+    #[inline]
+    pub fn insert_boxed(
+        &mut self,
+        opcode: u8,
+        instruction: BoxedInstruction<'a, H>,
+    ) -> Result<(), InsertError> {
+        match self {
+            Self::Plain(_) => Err(InsertError::NotBoxed),
+            Self::Boxed(table) => {
+                table[opcode as usize] = Box::new(instruction);
+                Ok(())
+            }
+        }
+    }
+
     /// Inserts the instruction into the table with the specified index.
     #[inline]
     pub fn insert(&mut self, opcode: u8, instruction: Instruction<H>) {
@@ -54,6 +71,28 @@ impl<'a, H: Host + 'a> InstructionTables<'a, H> {
             }
         }
     }
+
+    /// Converts the instruction table to a boxed variant. If the table is already boxed, this does
+    /// nothing and returns the table unchanged.
+    #[inline]
+    pub fn to_boxed(self) -> InstructionTables<'a, H> {
+        let boxed_tables = match self {
+            Self::Plain(table) => core::array::from_fn(|i| {
+                let instruction: BoxedInstruction<'a, H> = Box::new(table[i]);
+                instruction
+            }),
+            Self::Boxed(table) => table,
+        };
+
+        Self::Boxed(boxed_tables)
+    }
+}
+
+/// An error that can occur when trying to insert instructions into the instruction table.
+#[derive(Debug)]
+pub enum InsertError {
+    /// Tried to insert a boxed instruction into an instruction table which was not boxed.
+    NotBoxed,
 }
 
 /// Make instruction table.
