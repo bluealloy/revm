@@ -282,7 +282,7 @@ impl BundleAccount {
                                     .into_iter()
                                     .map(|t| (t.0, RevertToSlot::Some(t.1.present_value)))
                                     .collect::<HashMap<_, _>>();
-                                for (key, _) in &updated_storage {
+                                for key in updated_storage.keys() {
                                     // as it is not existing inside Destroyed storage this means
                                     // that previous values must be zero
                                     storage.entry(*key).or_insert(RevertToSlot::Destroyed);
