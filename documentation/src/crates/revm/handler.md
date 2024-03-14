@@ -4,11 +4,11 @@ This is the logic part of the Evm.
 It contains the Specification ID, list of functions that do the logic and list of registers that can change behavior of the Handler when it is build.
 
 Functions can be grouped in five categories and are marked in that way in the code:
-* Validation functions: [`ValidationHandler`](/crates/revm/src/handler/handle_types/validation.rs)
-* Pre-execution functions: [`PreExecutionHandler`](/crates/revm/src/handler/handle_types/pre_execution.rs)
-* Execution functions: [`ExecutionHandler`](/crates/revm/src/handler/handle_types/execution.rs)
-* Post-execution functions: [`PostExecutionHandler`](/crates/revm/src/handler/handle_types/post_execution.rs)
-* Instruction table: [`InstructionTable`](/crates/interpreter/src/instructions/opcode.rs)
+* Validation functions: [`ValidationHandler`](https://github.com/bluealloy/revm/blob/main/crates/revm/src/handler/handle_types/validation.rs)
+* Pre-execution functions: [`PreExecutionHandler`](https://github.com/bluealloy/revm/blob/main/crates/revm/src/handler/handle_types/pre_execution.rs)
+* Execution functions: [`ExecutionHandler`](https://github.com/bluealloy/revm/blob/main/crates/revm/src/handler/handle_types/execution.rs)
+* Post-execution functions: [`PostExecutionHandler`](https://github.com/bluealloy/revm/blob/main/crates/revm/src/handler/handle_types/post_execution.rs)
+* Instruction table: [`InstructionTable`](https://github.com/bluealloy/revm/blob/main/crates/interpreter/src/instructions/opcode.rs)
 
 ### Handle Registers
 
@@ -47,6 +47,7 @@ They are called in the following order:
   Loads access list and beneficiary from `Database`. Cold load is done here.
 * `load_precompiles`:
   Retrieves the precompiles for the given spec ID.
+  More info: [precompile](../precompile.md). 
 * `deduct_caller`:
    Deducts values from the caller to calculate the maximum amount of gas that can be spent on the transaction.
    This loads the caller account from the `Database`.
