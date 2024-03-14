@@ -1,14 +1,16 @@
 
 # Evm Builder
 
-It builds or modifies the EVM and applies different handlers, and allows setting external context and registering handler custom logic.
+The builder creates or modifies the EVM and applies different handlers.
+It allows setting external context and registering handler custom logic.
 
 The revm `Evm` consists of `Context` and `Handler`.
 `Context` is additionally split between `EvmContext` (contains generic `Database`) and `External` context (generic without restrain).
-Read [here](./evm.md) for more information on [`Evm`](./evm.md) internals.
+Read [evm](./evm.md) for more information on the internals.
 
-The `Builder` ties dependencies between generic `Database`, `External` context and `Spec` and allows handle registers to be added that implement logic on those generics.
-As they are interconnected, setting `Database` or `ExternalContext` would reset handle registers, so builder stages are introduced to mitigate those misuses.
+The `Builder` ties dependencies between generic `Database`, `External` context and `Spec`.
+It allows handle registers to be added that implement logic on those generics.
+As they are interconnected, setting `Database` or `ExternalContext` resets handle registers, so builder stages are introduced to mitigate those misuses.
 
 Simple example of using `EvmBuilder`:
 
@@ -28,7 +30,7 @@ There are two builder stages that are used to mitigate potential misuse of the b
 
 Functions from one stage are just renamed functions from other stage, it is made so that user is more aware of what underlying function does.
 For example, in `SettingDbStage` we have `with_db` function while in `HandlerStage` we have `reset_handler_with_db`, both of them set the database but the latter also resets the handler.
-There are multiple functions that are common to both stages as in `build`.
+There are multiple functions that are common to both stages such as `build`.
 
 ### Builder naming conventions
 In both stages we have:
@@ -67,7 +69,7 @@ The following example uses the builder to create an `Evm` with inspector:
       .with_external_context(NoOpInspector)
       // Register will modify Handler and call NoOpInspector.
       .append_handler_register(inspector_handle_register)
-      // .with_db(..) would not compile as we already locked the builder generics,
+      // .with_db(..) does not compile as we already locked the builder generics,
       // alternative fn is reset_handler_with_db(..)
       .build();
   

@@ -82,11 +82,11 @@ Consists of functions that handle the execution of the transaction and the stack
 
 * `last_frame_return`:
     This handler is called after last frame is returned.
-    It is used to calculate the gas that is returned from the first frame and incorporate transaction gas limit (first frame had gas_limit-initial_gas).
+    It is used to calculate the gas that is returned from the first frame and incorporate transaction gas limit (the first frame has limit `gas_limit - initial_gas`).
 
 ### InstructionTable
 
-Is a list of 256 function pointers that are used to execute instructions.
+This is a list of 256 function pointers that are used to execute instructions.
 They have two types, first is simple function that is faster and second is `BoxedInstruction` that has a small performance penalty but allows to capture the data.
 Look at the Interpreter documentation for more information.
 

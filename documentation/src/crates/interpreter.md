@@ -10,15 +10,15 @@ It is structured as follows:
 - [host](./interpreter/host.md): Defines the EVM context `Host` trait.
 - [inner_models](./interpreter/inner_models.md): Contains inner data structures used in the EVM implementation.
 - [instruction_result](./interpreter/instruction_result.md): Defines results of instruction execution.
-- [instructions](./interpreter/instructions.md): Defines of the EVM opcodes (instructions).
+- [instructions](./interpreter/instructions.md): Defines the EVM opcodes (i.e. instructions).
 
 ### External Crates:
 
 - [alloc](https://doc.rust-lang.org/alloc/):
-  The alloc crate is used to provide the ability to allocate memory on the heap.
+  The `alloc` crate is used to provide the ability to allocate memory on the heap.
   It's a part of Rust's standard library that can be used in environments without a full host OS.
 - [core](https://doc.rust-lang.org/core/):
-  The core crate is the dependency-free foundation of the Rust standard library.
+  The `core` crate is the dependency-free foundation of the Rust standard library.
   It includes fundamental types, macros, and traits.
 
 ### Re-exports:

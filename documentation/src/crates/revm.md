@@ -1,12 +1,12 @@
 # Rust Ethereum Virtual Machine (revm)
 
-The `crate` is focused on the implementation of Ethereum Virtual Machine (EVM) including call loop and host implementation, database handling, state journaling and powerful logic handlers that can be overwritten.
+The `evm` crate is focused on the implementation of Ethereum Virtual Machine (EVM) including call loop and host implementation, database handling, state journaling and powerful logic handlers that can be overwritten.
 This crate pulls Primitives, Interpreter and Precompiles together to deliver the rust evm.
 
-Starting point of the documentation should be a [`Evm`](./revm/evm.md) that is main structure of EVM.
-Then, I would recommend reading about the `EvmBuilder` that is used to create the `Evm` and modify it.
-After that you can read about the `Handler` that is used to modify the logic of the Evm, and it will tie with how Evm introspection can be done.
-Finally, you can read about the `Inspector`, a legacy interface for inspecting execution that is now repurposed as a handler register example.
+The starting point for reading the documentation is [`Evm`](./revm/evm.md), that is main structure of EVM.
+Then, I read about the [`EvmBuilder`](./revm/builder.md) that is used to create the `Evm` and modify it.
+After, you can read about the [`Handler`](./revm/handler.md) that is used to modify the logic of the Evm, and it will tie with how Evm introspection can be done.
+Finally, you can read about the [`Inspector`](./revm/inspector.md), a legacy interface for inspecting execution that is now repurposed as a handler register example.
 
 ### Modules:
 

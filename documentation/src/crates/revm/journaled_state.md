@@ -107,9 +107,12 @@ This EIP affects the JournaledState module, as the result of executing transacti
 
 ## Rationale
 
-The main motivation behind [EIP-658](https://eips.ethereum.org/EIPS/eip-658) was to provide an unambiguous way to determine the success or failure of a transaction. Before [EIP-658](https://eips.ethereum.org/EIPS/eip-658), users had to rely on checking if a transaction had consumed all gas to guess if it had failed. However, this was not reliable because of the introduction of the `REVERT` opcode in [EIP-140](https://eips.ethereum.org/EIPS/eip-140).
+The main motivation behind [EIP-658](https://eips.ethereum.org/EIPS/eip-658) was to provide an unambiguous way to determine the success or failure of a transaction.
+Before [EIP-658](https://eips.ethereum.org/EIPS/eip-658), users had to rely on checking if a transaction had consumed all gas to guess if it had failed.
+However, this was not reliable because of the introduction of the `REVERT` opcode in [EIP-140](https://eips.ethereum.org/EIPS/eip-140).
 
-Moreover, although full nodes can replay transactions to get their return status, fast nodes can only do this for transactions after their pivot point, and light nodes cannot do it at all. This means that without [EIP-658](https://eips.ethereum.org/EIPS/eip-658), it would be impractical for a non-full node to reliably determine the status of a transaction.
+Moreover, although full nodes can replay transactions to get their return status, fast nodes can only do this for transactions after their pivot point, and light nodes cannot do it at all.
+This means that without [EIP-658](https://eips.ethereum.org/EIPS/eip-658), it is impractical for a non-full node to reliably determine the status of a transaction.
 
 [EIP-658](https://eips.ethereum.org/EIPS/eip-658) addressed this problem by embedding the status code directly in the transaction receipt, making it easily accessible. This change was minimal and non-disruptive, while it significantly improved the clarity and usability of transaction receipts.
 
@@ -135,6 +138,10 @@ This methodology allows Ethereum to maintain an internal record of accessed acco
 
 ## Rationale
 
-- **Security**: Previously, these opcodes were underpriced, making them susceptible to DoS attacks where an attacker would simply send transactions that access or call a large number of accounts. By increasing the gas costs, the EIP intends to mitigate these potential security risks.
+- **Security**:
+  Previously, these opcodes were underpriced, making them susceptible to DoS attacks where an attacker sends transactions that access or call a large number of accounts.
+  By increasing the gas costs, the EIP intends to mitigate these potential security risks.
 
-- **Improving stateless witness sizes**: Stateless Ethereum clients don't maintain the complete state of the blockchain, but instead rely on block "witnesses" (a list of all the accounts, storage, and contract code accessed during transaction execution) to validate transactions. This EIP helps in reducing the size of these witnesses, thereby making stateless Ethereum more viable.
+- **Improving stateless witness sizes**:
+  Stateless Ethereum clients don't maintain the complete state of the blockchain, but instead rely on block "witnesses" (a list of all the accounts, storage, and contract code accessed during transaction execution) to validate transactions.
+  This EIP helps in reducing the size of these witnesses, thereby making stateless Ethereum more viable.

@@ -32,7 +32,6 @@ You can implement this trait for a custom database type `DB` that implements the
 
 To use an inspector, you need to implement the `Inspector` trait.
 For each method, you can decide what you want to do at each point in the EVM execution.
+For example, to capture all `SELFDESTRUCT` operations, implement the `selfdestruct` method.
 
-For example, if you want to log all `SELFDESTRUCT` operations, implement the `selfdestruct` method to write a log entry every time a contract initiates a `selfdestruct` operation.
-
-Remember, the methods in the `Inspector` trait are optional to implement; if you do not need specific functionality, you can use the provided default implementations.
+All methods in the `Inspector` trait are optional to implement; if you do not need specific functionality, you can use the provided default implementations.
